@@ -147,6 +147,18 @@ The orange background is a wink to Bitcoin and when in a circle, it also represe
 - **Start9 support**: By making the whole suite much easier to self-host, it's quite rough right now
 - **API Documentation**: Highly needed to explain what's what
 
+## Infrastructure
+
+Here's the very easy the reproduce infrastructure of the main instances and its backup
+
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/satonomics-org/satonomics/main/assets/infrastructure-dark.svg">
+    <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/satonomics-org/satonomics/main/assets/infrastructure-light.svg">
+    <img alt="kibō" src="https://raw.githubusercontent.com/satonomics-org/satonomics/main/assets/infrastructure-light.svg" width="768" height="auto" style="max-width: 100%;">
+  </picture>
+</p>
+
 ## Iterations
 
 A list of all the previous versions and ideas:
