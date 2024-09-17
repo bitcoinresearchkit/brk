@@ -8,6 +8,18 @@
 
 ![Image of the Satonomics Web App version 0.4.0](./assets/v0.4.0.jpg)
 
+### Brand
+
+- **Satonomics** is now **kibō** 🎉
+
+### Website
+
+- Complete redesign of the website
+- Ditched the whole `node` ecosystem in favor for pure `HTML`/`CSS`/`Javacript`
+- Website is now served by the server
+- Added Trading View attribution link to the settings frame and file in the lightweight charts folder
+- Many other changes
+
 ### Parser
 
 - Changed the block iterator from a custom version of [bitcoin-explorer](https://crates.io/crates/bitcoin-explorer) to the homemade [biter](https://crates.io/crates/biter) which allows the parser to run alongside `bitcoind`
@@ -23,14 +35,11 @@
 - Various first run fixes
 - Added to `-h` which arguments are saved, which is all of them at the time of writing
 
-### App
-
-- Made the app runable without needing to run the server first to generate `types.d.ts`
-- Added Trading View attribution link to the settings frame and file in the lightweight charts folder
-
 ### Server
 
 - Updated the code to support compressed binaries
+- Added serving of the website
+- Improved `Cache-Control` behavior
 
 ## v. 0.3.0 | [853930](https://mempool.space/block/00000000000000000002eb5e9a7950ca2d5d98bd1ed28fc9098aa630d417985d) - 2024/07/26
 

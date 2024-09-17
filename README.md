@@ -149,7 +149,13 @@ The orange background is a wink to Bitcoin and when in a circle, it also represe
 
 ## Infrastructure
 
-Here's the very easy the reproduce infrastructure of the main instances and its backup
+Here's the current infrastructure of the main instance and its backup.
+
+It uses 2 servers, a full and a light one without the parser running but with still datasets syncronized via Syncthing.
+
+Cloudflare is used for their tunnel + CDN services.
+
+> Though it's recommended to change to default **Browser Cache TTL** configuration from `4 Hours` to `Respect Existing Headers` (in `Websites / YOUR_DOMAIN / Caching / Configuration / Browser Cache TTL`)
 
 <p align="center">
   <picture>

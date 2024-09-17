@@ -19,7 +19,29 @@ self.addEventListener("install", (_event) => {
       ]);
     })
   );
+
+  // @ts-ignore
+  self.skipWaiting();
 });
+
+/**
+ * @param {Response | undefined} cachedResponse
+ * @param {Response | undefined} badResponse
+ */
+function pickCorrectResponse(cachedResponse, badResponse) {
+  if (cachedResponse) {
+    return cachedResponse;
+  } else {
+    return caches
+      .match("/")
+      .then((response) => {
+        return response ?? badResponse;
+      })
+      .catch(() => {
+        return badResponse;
+      });
+  }
+}
 
 self.addEventListener("fetch", (_event) => {
   const event = /** @type {any} */ (_event);
@@ -29,22 +51,26 @@ self.addEventListener("fetch", (_event) => {
   const { url, method } = request;
 
   event.respondWith(
-    caches.match(request).then((cache) => {
+    caches.match(request).then((cachedResponse) => {
       return fetch(request)
         .then((response) => {
           // @ts-ignore
           if (url.includes("/api/")) {
             return response;
           }
+
           return caches.open(version).then((cache) => {
-            if (method === "GET" && response.status === 200) {
-              cache.put(request, response.clone());
+            if (response.status === 200) {
+              if (method === "GET") {
+                cache.put(request, response.clone());
+              }
+              return response;
             }
-            return response;
+            return pickCorrectResponse(cachedResponse, response);
           });
         })
         .catch(() => {
-          return cache;
+          return pickCorrectResponse(cachedResponse, undefined);
         });
     })
   );
