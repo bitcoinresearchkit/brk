@@ -49,10 +49,6 @@ fn _dataset_handler(
     query: Query<Params>,
     AppState { routes }: AppState,
 ) -> color_eyre::Result<Response> {
-    if path.contains("favicon") {
-        return Err(eyre!("Don't support favicon"));
-    }
-
     log(&format!(
         "{}{}",
         path,
@@ -98,11 +94,13 @@ fn _dataset_handler(
         match kind {
             Kind::Date => {
                 let datasets = DateMap::<usize>::_read_dir(&route.file_path, &route.serialization);
+
                 process_datasets(headers, kind, &mut chunk, &mut route, query, datasets)?;
             }
             Kind::Height => {
                 let datasets =
                     HeightMap::<usize>::_read_dir(&route.file_path, &route.serialization);
+
                 process_datasets(headers, kind, &mut chunk, &mut route, query, datasets)?;
             }
             _ => panic!(),
@@ -159,7 +157,9 @@ where
         return Err(eyre!("Couldn't find chunk"));
     }
 
-    route.file_path = path.unwrap().to_str().unwrap().to_string();
+    let path = path.unwrap();
+
+    route.file_path = path.to_str().unwrap().to_string();
 
     let offset = match kind {
         Kind::Date => 1,

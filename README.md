@@ -155,7 +155,7 @@ It uses 2 servers, a full and a light one without the parser running but with st
 
 Cloudflare is used for their tunnel + CDN services.
 
-> Though it's recommended to change to default **Browser Cache TTL** configuration from `4 Hours` to `Respect Existing Headers` (in `Websites / YOUR_DOMAIN / Caching / Configuration / Browser Cache TTL`)
+Though it's recommended to change to default **Browser Cache TTL** configuration from `4 Hours` to `Respect Existing Headers` (in `Websites / YOUR_DOMAIN / Caching / Configuration / Browser Cache TTL`) and activate `Always use https`.
 
 <p align="center">
   <picture>

@@ -1,11 +1,19 @@
 use std::path::Path;
 
-use axum::http::{header, HeaderMap};
-use chrono::{DateTime, Utc};
+use axum::{
+    body::Body,
+    http::{header, HeaderMap, Response},
+    response::IntoResponse,
+};
+use chrono::{DateTime, Timelike, Utc};
 use parser::log;
-use reqwest::header::HOST;
+use reqwest::{
+    header::{HOST, IF_MODIFIED_SINCE},
+    StatusCode,
+};
 
 const STALE_IF_ERROR: u64 = 30_000_000; // 1 Year ish
+const MODIFIED_SINCE_FORMAT: &str = "%a, %d %b %Y %H:%M:%S GMT";
 
 pub trait HeaderMapUtils {
     fn get_scheme(&self) -> &str;
@@ -15,6 +23,12 @@ pub trait HeaderMapUtils {
     fn check_if_host_is_localhost(&self) -> bool;
 
     fn insert_cors(&mut self);
+
+    fn get_if_modified_since(&self) -> Option<DateTime<Utc>>;
+    fn check_if_modified_since(
+        &self,
+        path: &Path,
+    ) -> color_eyre::Result<(DateTime<Utc>, Option<Response<Body>>)>;
 
     fn insert_cache_control_immutable(&mut self);
     fn insert_cache_control_revalidate(&mut self, max_age: u64, stale_while_revalidate: u64);
@@ -83,9 +97,47 @@ impl HeaderMapUtils for HeaderMap {
     }
 
     fn insert_last_modified(&mut self, date: DateTime<Utc>) {
-        let formatted = date.format("%a, %d %b %Y %H:%M:%S GMT").to_string();
+        let formatted = date.format(MODIFIED_SINCE_FORMAT).to_string();
 
         self.insert(header::LAST_MODIFIED, formatted.parse().unwrap());
+    }
+
+    fn check_if_modified_since(
+        &self,
+        path: &Path,
+    ) -> color_eyre::Result<(DateTime<Utc>, Option<Response<Body>>)> {
+        let time = path.metadata()?.modified()?;
+        let date: DateTime<Utc> = time.into();
+        let date = date.with_nanosecond(0).unwrap();
+        let mut response_opt = None;
+
+        if let Some(if_modified_since) = self.get_if_modified_since() {
+            if if_modified_since == date {
+                let mut response = (StatusCode::NOT_MODIFIED, "").into_response();
+                let headers = response.headers_mut();
+                headers.insert_cors();
+                response_opt.replace(response);
+            }
+        }
+
+        Ok((date, response_opt))
+    }
+
+    fn get_if_modified_since(&self) -> Option<DateTime<Utc>> {
+        if let Some(modified_since) = self.get(IF_MODIFIED_SINCE) {
+            if let Ok(modified_since) = modified_since.to_str() {
+                let date = DateTime::parse_from_str(
+                    &format!("{modified_since} +00:00"),
+                    &format!("{MODIFIED_SINCE_FORMAT} %z"),
+                );
+
+                if let Ok(x) = date {
+                    return Some(x.to_utc());
+                }
+            }
+        }
+
+        None
     }
 
     // https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/MIME_types/Common_types

@@ -54,14 +54,14 @@ fn value_to_response<T>(value: T) -> Response
 where
     T: Serialize,
 {
-    generic_to_reponse(value, None, 5)
+    generic_to_reponse(value, None, 1)
 }
 
 fn dataset_to_response<T>(dataset: T, chunk: Chunk) -> Response
 where
     T: Serialize,
 {
-    generic_to_reponse(dataset, Some(chunk), 60)
+    generic_to_reponse(dataset, Some(chunk), 5)
 }
 
 pub fn generic_to_reponse<T>(generic: T, chunk: Option<Chunk>, cache_time: u64) -> Response
@@ -71,7 +71,7 @@ where
     let mut response = {
         if let Some(chunk) = chunk {
             Json(WrappedDataset {
-                source: "https://satonomics.xyz",
+                source: "https://kibo.money",
                 chunk,
                 dataset: generic,
             })

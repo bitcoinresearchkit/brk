@@ -15,7 +15,7 @@
 ### Website
 
 - Complete redesign of the website
-- Ditched the whole `node` ecosystem in favor for pure `HTML`/`CSS`/`Javacript`
+- Rewrote the whole application and removed `node`/`npm`/`pnpm` dependencies in favor for pure `HTML`/`CSS`/`Javascript`
 - Website is now served by the server
 - Added Trading View attribution link to the settings frame and file in the lightweight charts folder
 - Many other changes

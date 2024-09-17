@@ -9,7 +9,6 @@ use axum::{
     http::HeaderMap,
     response::{IntoResponse, Response},
 };
-use chrono::{DateTime, Utc};
 use parser::log;
 use reqwest::StatusCode;
 
@@ -47,10 +46,13 @@ pub async fn index_handler(headers: HeaderMap) -> Response {
 }
 
 fn path_to_response(headers: HeaderMap, path: &Path) -> Response {
-    let mut response;
+    let (date, response) = headers.check_if_modified_since(path).unwrap();
 
-    let time = path.metadata().unwrap().modified().unwrap();
-    let date: DateTime<Utc> = time.into();
+    if let Some(response) = response {
+        return response;
+    }
+
+    let mut response;
 
     let is_localhost = headers.check_if_host_is_localhost();
 
@@ -76,7 +78,10 @@ fn path_to_response(headers: HeaderMap, path: &Path) -> Response {
     if !is_localhost {
         let serialized_path = path.to_str().unwrap();
 
-        if serialized_path.contains("fonts/") || serialized_path.contains("assets/pwa/") || serialized_path.contains("packages/") {
+        if serialized_path.contains("fonts/")
+            || serialized_path.contains("assets/pwa/")
+            || serialized_path.contains("packages/")
+        {
             headers.insert_cache_control_immutable();
         } else {
             headers.insert_cache_control_revalidate(10, 50);

@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 
-DATE=$(date -u '+%Y-%m-%d_%H:%M:%S')
+DATE=$(date -u '+%Y-%m-%d_%H-%M-%S')
 OUTPUT="/assets/pwa/${DATE}"
 
 mkdir ".${OUTPUT}"
 cp "./assets/pwa/index.html" ".${OUTPUT}/"
 
-pwa-asset-generator "../assets/logo-dove-orange.svg" ".${OUTPUT}" \
+pwa-asset-generator "../assets/logo-icon.svg" ".${OUTPUT}" \
     --index ".${OUTPUT}/index.html" \
     --manifest "./manifest.webmanifest" \
     --favicon \
@@ -31,20 +31,3 @@ pwa-asset-generator "../assets/logo-dove-light.svg" ".${OUTPUT}" \
     --padding "min(35vh, 35vw)" \
     --path-override "${OUTPUT}" \
     --quality "100"
-
-# pwa-asset-generator "../assets/logo-icon.svg" "./assets" \
-#     --index "./assets/index.html" \
-#     --splash-only \
-#     --background "#fffaf6" \
-#     --padding "min(40vh, 40vw)" \
-#     --path-override "/assets" \
-#     --quality "100"
-
-# pwa-asset-generator "../assets/logo-icon.svg" "./assets" \
-#     --index "./assets/index.html" \
-#     --splash-only \
-#     --dark-mode \
-#     --background "#12100f" \
-#     --padding "min(40vh, 40vw)" \
-#     --path-override "/assets" \
-#     --quality "100"
