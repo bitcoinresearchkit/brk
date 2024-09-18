@@ -2,6 +2,7 @@
 
 /**
  * @import { FilePath, PartialPreset, PartialPresetFolder, PartialPresetTree, Preset, PresetFolder, Series, PriceSeriesType, ResourceDataset, Scale, SerializedPresetsHistory, TimeRange, Unit, Marker, Weighted, DatasetPath, OHLC, FetchedJSON, DatasetValue, FetchedResult, AnyDatasetPath, SeriesBlueprint, BaselineSpecificSeriesBlueprint, CandlestickSpecificSeriesBlueprint, LineSpecificSeriesBlueprint, SpecificSeriesBlueprintWithChart, Signal, Color, SettingsTheme, DatasetCandlestickData } from "./types/self"
+ * @import {createChart as CreateClassicChart, createChartEx as CreateCustomChart} from "./packages/lightweight-charts/v4.2.0/types";
  * @import * as _ from "./packages/ufuzzy/2024-02-21/types"
  * @import { DeepPartial, ChartOptions, IChartApi, IHorzScaleBehavior, WhitespaceData, SingleValueData, ISeriesApi, Time, LogicalRange, SeriesMarker, CandlestickData, SeriesType, BaselineStyleOptions, SeriesOptionsCommon } from "./packages/lightweight-charts/v4.2.0/types"
  * @import { DatePath, HeightPath } from "./types/paths";
@@ -11,84 +12,6 @@
  */
 
 const lazySignals = import("./packages/solid-signals/2024-04-17/script.js");
-
-/**
- * @param {HTMLElement} parent
- * @param {HTMLElement} child
- * @param {number} index
- */
-function insertElementAtIndex(parent, child, index) {
-  if (!index) index = 0;
-  if (index >= parent.children.length) {
-    parent.appendChild(child);
-  } else {
-    parent.insertBefore(child, parent.children[index]);
-  }
-}
-
-/**
- * @param {string} s
- * @returns {string}
- */
-function stringToId(s) {
-  return s.replace(/\W/g, " ").trim().replace(/ +/g, "-").toLowerCase();
-}
-
-/**
- * @param {VoidFunction} callback
- * @param {number} [timeout = 1]
- */
-function runWhenIdle(callback, timeout = 1) {
-  if ("requestIdleCallback" in window) {
-    requestIdleCallback(callback);
-  } else {
-    setTimeout(callback, timeout);
-  }
-}
-
-/**
- * @param {Date} date
- * @returns {string}
- */
-function dateToString(date) {
-  return date.toJSON().split("T")[0];
-}
-
-/**
- * @param {Date} oldest
- * @param {Date} youngest
- * @returns {number}
- */
-function getNumberOfDaysBetweenTwoDates(oldest, youngest) {
-  return Math.round(
-    Math.abs((youngest.getTime() - oldest.getTime()) / ONE_DAY_IN_MS)
-  );
-}
-
-/**
- *
- * @template {(...args: any[]) => any} F
- * @param {F} callback
- * @param {number} [wait=250]
- */
-function debounce(callback, wait = 250) {
-  /** @type {number | undefined} */
-  let timeoutId;
-  /** @type {Parameters<F>} */
-  let latestArgs;
-
-  return (/** @type {Parameters<F>} */ ...args) => {
-    latestArgs = args;
-
-    if (!timeoutId) {
-      timeoutId = window.setTimeout(async () => {
-        await callback(...latestArgs);
-
-        timeoutId = undefined;
-      }, wait);
-    }
-  };
-}
 
 const urlParamsHelpers = {
   whitelist: ["from", "to"],
@@ -160,7 +83,7 @@ const urlParamsHelpers = {
   },
 };
 
-const localeStorageHelpers = {
+const localStorageHelpers = {
   /**
    * @param {string} key
    */
@@ -223,6 +146,74 @@ const utils = {
       return array[this.getRandomIndex(array)];
     },
   },
+  /**
+   *
+   * @template {(...args: any[]) => any} F
+   * @param {F} callback
+   * @param {number} [wait=250]
+   */
+  debounce(callback, wait = 250) {
+    /** @type {number | undefined} */
+    let timeoutId;
+    /** @type {Parameters<F>} */
+    let latestArgs;
+
+    return (/** @type {Parameters<F>} */ ...args) => {
+      latestArgs = args;
+
+      if (!timeoutId) {
+        timeoutId = window.setTimeout(async () => {
+          await callback(...latestArgs);
+
+          timeoutId = undefined;
+        }, wait);
+      }
+    };
+  },
+  /**
+   * @param {string} s
+   * @returns {string}
+   */
+  stringToId(s) {
+    return s.replace(/\W/g, " ").trim().replace(/ +/g, "-").toLowerCase();
+  },
+  /**
+   * @param {VoidFunction} callback
+   * @param {number} [timeout = 1]
+   */
+  runWhenIdle(callback, timeout = 1) {
+    if ("requestIdleCallback" in window) {
+      requestIdleCallback(callback);
+    } else {
+      setTimeout(callback, timeout);
+    }
+  },
+  /**
+   * @param {Date} date
+   * @returns {string}
+   */
+  dateToString(date) {
+    return date.toJSON().split("T")[0];
+  },
+  /**
+   * @param {Time} time
+   */
+  dateFromTime(time) {
+    return typeof time === "string"
+      ? new Date(time)
+      : // @ts-ignore
+        new Date(time.year, time.month, time.day);
+  },
+  /**
+   * @param {Date} oldest
+   * @param {Date} youngest
+   * @returns {number}
+   */
+  getNumberOfDaysBetweenTwoDates(oldest, youngest) {
+    return Math.round(
+      Math.abs((youngest.getTime() - oldest.getTime()) / ONE_DAY_IN_MS)
+    );
+  },
 };
 
 const env = (function initEnv() {
@@ -245,6 +236,7 @@ const env = (function initEnv() {
     macOS,
     iphone,
     ipad,
+    localhost: window.location.hostname === "localhost",
   };
 })();
 
@@ -296,6 +288,182 @@ const dom = {
     });
     observer.observe(element);
   },
+  /**
+   * @param {string} name
+   */
+  createSpanName(name) {
+    const spanName = window.document.createElement("span");
+    spanName.classList.add("name");
+    const [first, second, third] = name.split("-");
+    spanName.innerHTML = first;
+
+    if (second) {
+      const smallRest = window.document.createElement("small");
+      smallRest.innerHTML = `— ${second}`;
+      spanName.append(smallRest);
+
+      if (third) {
+        throw "Shouldn't have more than one dash";
+      }
+    }
+
+    return spanName;
+  },
+  /**
+   * @param {Object} args
+   * @param {string} args.inputName
+   * @param {string} args.inputId
+   * @param {string} args.inputValue
+   * @param {boolean} [args.inputChecked=false]
+   * @param {string} args.labelTitle
+   * @param {(event: MouseEvent) => void} [args.onClick]
+   */
+  createLabeledInput({
+    inputId,
+    inputName,
+    inputValue,
+    inputChecked = false,
+    labelTitle,
+    onClick,
+  }) {
+    const label = window.document.createElement("label");
+
+    const input = window.document.createElement("input");
+    input.type = "radio";
+    input.name = inputName;
+    input.id = inputId;
+    input.value = inputValue;
+    input.checked = inputChecked;
+    label.append(input);
+
+    label.id = `${inputId}-label`;
+    // @ts-ignore
+    label.for = inputId;
+    label.title = labelTitle;
+
+    label.addEventListener("click", onClick || (() => {}));
+
+    return {
+      label,
+      input,
+    };
+  },
+  /**
+   * @param {Object} args
+   * @param {string} args.name
+   * @param {string} args.inputName
+   * @param {string} args.inputId
+   * @param {string} args.inputValue
+   * @param {string} args.labelTitle
+   * @param {(event: MouseEvent) => void} args.onClick
+   */
+  createComplexLabeledInput({
+    inputId,
+    inputName,
+    inputValue,
+    labelTitle,
+    name,
+    onClick,
+  }) {
+    const { label, input } = this.createLabeledInput({
+      inputId,
+      inputName,
+      inputValue,
+      labelTitle,
+      onClick,
+    });
+
+    const spanMain = window.document.createElement("span");
+    spanMain.classList.add("main");
+    label.append(spanMain);
+
+    const spanName = this.createSpanName(name);
+    spanMain.append(spanName);
+
+    return {
+      label,
+      input,
+      spanMain,
+      spanName,
+    };
+  },
+  /**
+   * @param {HTMLElement} parent
+   * @param {HTMLElement} child
+   * @param {number} index
+   */
+  insertElementAtIndex(parent, child, index) {
+    if (!index) index = 0;
+    if (index >= parent.children.length) {
+      parent.appendChild(child);
+    } else {
+      parent.insertBefore(child, parent.children[index]);
+    }
+  },
+};
+
+const locale = {
+  /**
+   * @param {number} value
+   * @param {number} [digits]
+   * @param {Intl.NumberFormatOptions} [options]
+   */
+  numberToUSFormat(value, digits, options) {
+    return value.toLocaleString("en-us", {
+      ...options,
+      minimumFractionDigits: digits,
+      maximumFractionDigits: digits,
+    });
+  },
+  /** @param {number} value  */
+  numberToShortUSFormat(value) {
+    const absoluteValue = Math.abs(value);
+
+    // value = absoluteValue;
+
+    if (isNaN(value)) {
+      return "";
+      // } else if (value === 0) {
+      //   return "0";
+    } else if (absoluteValue < 10) {
+      return locale.numberToUSFormat(value, 3);
+    } else if (absoluteValue < 100) {
+      return locale.numberToUSFormat(value, 2);
+    } else if (absoluteValue < 1_000) {
+      return locale.numberToUSFormat(value, 1);
+    } else if (absoluteValue < 100_000) {
+      return locale.numberToUSFormat(value, 0);
+    } else if (absoluteValue < 1_000_000) {
+      return `${locale.numberToUSFormat(value / 1_000, 1)}K`;
+    } else if (absoluteValue >= 1_000_000_000_000_000_000) {
+      return "Inf.";
+    }
+
+    const log = Math.floor(Math.log10(absoluteValue) - 6);
+
+    const suffices = ["M", "B", "T", "Q"];
+    const letterIndex = Math.floor(log / 3);
+    const letter = suffices[letterIndex];
+
+    const modulused = log % 3;
+
+    if (modulused === 0) {
+      return `${locale.numberToUSFormat(
+        value / (1_000_000 * 1_000 ** letterIndex),
+        3
+      )}${letter}`;
+    } else if (modulused === 1) {
+      return `${locale.numberToUSFormat(
+        value / (1_000_000 * 1_000 ** letterIndex),
+        2
+      )}${letter}`;
+    } else {
+      return `${locale.numberToUSFormat(
+        value / (1_000_000 * 1_000 ** letterIndex),
+        1
+      )}${letter}`;
+    }
+  },
 };
 
 const ONE_SECOND_IN_MS = 1_000;
@@ -333,11 +501,15 @@ const foldersFilterFavoritesCount = dom.getElementById(
 const foldersFilterNewCount = dom.getElementById("folders-filter-new-count");
 const chartListElement = dom.getElementById("chart-list");
 const legendElement = dom.getElementById("legend");
-const bodyStyle = getComputedStyle(window.document.documentElement);
+const style = getComputedStyle(window.document.documentElement);
 const buttonFavorite = dom.getElementById("button-favorite");
 const timeScaleDateButtons = dom.getElementById("timescale-date-buttons");
 const timeScaleHeightButtons = dom.getElementById("timescale-height-buttons");
 const mediumWidth = 768;
+
+const selectedLocalStorageKey = `selected-id`;
+const savedSelectedId = localStorage.getItem(selectedLocalStorageKey);
+const urlSelected = window.document.location.pathname.substring(1);
 
 function initFrameSelectors() {
   const localStorageKey = "checked-frame-selector-label";
@@ -385,7 +557,7 @@ function initFrameSelectors() {
     }
   }
 
-  if (selectedFrameLabel) {
+  if (selectedFrameLabel && (!urlSelected || urlSelected === savedSelectedId)) {
     const frameLabel = window.document.getElementById(selectedFrameLabel);
     if (!frameLabel) throw "Frame should exist";
     frameLabel.click();
@@ -486,8 +658,8 @@ lazySignals.then((importedSignals) => {
 
   /** @type {Signal<Preset>} */
   const selected = signals.createSignal(/** @type {any} */ (undefined));
-  const selectedLocalStorageKey = `selected-id`;
-  const savedSelectedId = localStorage.getItem(selectedLocalStorageKey);
+
+  const isFirstTime = !savedSelectedId;
 
   function createColors() {
     function lightRed() {
@@ -504,7 +676,7 @@ lazySignals.then((importedSignals) => {
       return dark() ? tailwindRed900 : tailwindRed100;
     }
     function orange() {
-      return bodyStyle.getPropertyValue("--orange"); // 550
+      return style.getPropertyValue("--orange"); // 550
     }
     function darkOrange() {
       const tailwindOrange900 = "#7c2d12";
@@ -574,12 +746,12 @@ lazySignals.then((importedSignals) => {
 
     function off() {
       const _ = dark();
-      return bodyStyle.getPropertyValue("--off-color");
+      return style.getPropertyValue("--off-color");
     }
 
     function textColor() {
       const _ = dark();
-      return bodyStyle.getPropertyValue("--color");
+      return style.getPropertyValue("--color");
     }
 
     return {
@@ -5128,9 +5300,6 @@ lazySignals.then((importedSignals) => {
   }
   const partialTree = createPartialTree();
 
-  /** @type {string[]} */
-  const presetsIds = [];
-
   /** @type {Preset[]} */
   const presetsList = [];
 
@@ -5146,33 +5315,42 @@ lazySignals.then((importedSignals) => {
     )
   );
 
-  const favoritesCount = signals.createSignal(0);
-  const newCount = signals.createSignal(0);
+  function initCounters() {
+    const favoritesCount = signals.createSignal(0);
+    const newCount = signals.createSignal(0);
 
-  /** @param {Preset} preset  */
-  function createCountersEffects(preset) {
-    let firstFavoritesRun = true;
+    /** @param {Preset} preset  */
+    function createCountersEffects(preset) {
+      let firstFavoritesRun = true;
 
-    signals.createEffect(() => {
-      if (preset.isFavorite()) {
-        favoritesCount.set((c) => c + 1);
-      } else if (!firstFavoritesRun) {
-        favoritesCount.set((c) => c - 1);
-      }
-      firstFavoritesRun = false;
-    });
+      signals.createEffect(() => {
+        if (preset.isFavorite()) {
+          favoritesCount.set((c) => c + 1);
+        } else if (!firstFavoritesRun) {
+          favoritesCount.set((c) => c - 1);
+        }
+        firstFavoritesRun = false;
+      });
 
-    let firstNewRun = true;
+      let firstNewRun = true;
 
-    signals.createEffect(() => {
-      if (!preset.visited()) {
-        newCount.set((c) => c + 1);
-      } else if (!firstNewRun) {
-        newCount.set((c) => c - 1);
-      }
-      firstNewRun = false;
-    });
+      signals.createEffect(() => {
+        if (!preset.visited()) {
+          newCount.set((c) => c + 1);
+        } else if (!firstNewRun) {
+          newCount.set((c) => c - 1);
+        }
+        firstNewRun = false;
+      });
+    }
+
+    return {
+      favorites: favoritesCount,
+      new: newCount,
+      createEffect: createCountersEffects,
+    };
   }
+  const counters = initCounters();
 
   /** @param {Preset} preset  */
   function presetToVisitedLocalStorageKey(preset) {
@@ -5184,242 +5362,7 @@ lazySignals.then((importedSignals) => {
    * @param {Series | SeriesBlueprint} series
    */
   function presetAndSeriesToLocalStorageKey(preset, series) {
-    return `${preset.id}-${stringToId(series.title)}`;
-  }
-
-  /**
-   * @param {string} name
-   */
-  function createSpanName(name) {
-    const spanName = window.document.createElement("span");
-    spanName.classList.add("name");
-    const [first, second, third] = name.split("-");
-    spanName.innerHTML = first;
-
-    if (second) {
-      const smallRest = window.document.createElement("small");
-      smallRest.innerHTML = `— ${second}`;
-      spanName.append(smallRest);
-
-      if (third) {
-        throw "Shouldn't have more than one dash";
-      }
-    }
-
-    return spanName;
-  }
-
-  /**
-   * @param {Object} args
-   * @param {string} args.inputName
-   * @param {string} args.inputId
-   * @param {string} args.inputValue
-   * @param {boolean} [args.inputChecked=false]
-   * @param {string} args.labelTitle
-   * @param {(event: MouseEvent) => void} [args.onClick]
-   */
-  function createLabeledInput({
-    inputId,
-    inputName,
-    inputValue,
-    inputChecked = false,
-    labelTitle,
-    onClick,
-  }) {
-    const label = window.document.createElement("label");
-
-    const input = window.document.createElement("input");
-    input.type = "radio";
-    input.name = inputName;
-    input.id = inputId;
-    input.value = inputValue;
-    input.checked = inputChecked;
-    label.append(input);
-
-    label.id = `${inputId}-label`;
-    // @ts-ignore
-    label.for = inputId;
-    label.title = labelTitle;
-
-    label.addEventListener("click", onClick || (() => {}));
-
-    return {
-      label,
-      input,
-    };
-  }
-
-  /**
-   * @param {Object} args
-   * @param {string} args.name
-   * @param {string} args.inputName
-   * @param {string} args.inputId
-   * @param {string} args.inputValue
-   * @param {string} args.labelTitle
-   * @param {(event: MouseEvent) => void} args.onClick
-   */
-  function createComplexLabeledInput({
-    inputId,
-    inputName,
-    inputValue,
-    labelTitle,
-    name,
-    onClick,
-  }) {
-    const { label, input } = createLabeledInput({
-      inputId,
-      inputName,
-      inputValue,
-      labelTitle,
-      onClick,
-    });
-
-    const spanMain = window.document.createElement("span");
-    spanMain.classList.add("main");
-    label.append(spanMain);
-
-    const spanName = createSpanName(name);
-    spanMain.append(spanName);
-
-    return {
-      label,
-      input,
-      spanMain,
-      spanName,
-    };
-  }
-
-  /**
-   * @param {Object} args
-   * @param {Preset} args.preset
-   * @param {string} args.frame
-   * @param {string} [args.name]
-   * @param {string} [args.top]
-   * @param {string} [args.id]
-   * @param {Owner | null} [args.owner]
-   */
-  function createPresetLabeledInput({ preset, frame, name, top, id, owner }) {
-    const { input, label, spanMain, spanName } = createComplexLabeledInput({
-      inputId: `${preset.id}-${frame}${id || ""}-selector`,
-      inputValue: preset.id,
-      inputName: `preset-${frame}${id || ""}`,
-      labelTitle: preset.title,
-      name: name || preset.name,
-      onClick: () => selected.set(preset),
-    });
-
-    if (top) {
-      const small = window.document.createElement("small");
-      small.innerHTML = top;
-      label.insertBefore(small, spanMain);
-    }
-
-    const spanEmoji = window.document.createElement("span");
-    spanEmoji.classList.add("emoji");
-    spanEmoji.innerHTML = preset.icon;
-    spanMain.prepend(spanEmoji);
-
-    /** @type {HTMLSpanElement | undefined} */
-    let spanNew;
-
-    if (!preset.visited()) {
-      spanNew = window.document.createElement("span");
-      spanNew.classList.add("new");
-      spanMain.append(spanNew);
-    }
-
-    function createFavoriteEffect() {
-      signals.createEffect(
-        // @ts-ignore
-        (_wasFavorite) => {
-          const wasFavorite = /** @type {boolean} */ (_wasFavorite);
-          const isFavorite = preset.isFavorite();
-
-          if (!wasFavorite && isFavorite) {
-            const iconFavorite = window.document.createElement("svg");
-            spanMain.append(iconFavorite);
-            iconFavorite.outerHTML =
-              '<svg viewBox="0 0 20 20" class="favorite"><path fill-rule="evenodd" d="M10.868 2.884c-.321-.772-1.415-.772-1.736 0l-1.83 4.401-4.753.381c-.833.067-1.171 1.107-.536 1.651l3.62 3.102-1.106 4.637c-.194.813.691 1.456 1.405 1.02L10 15.591l4.069 2.485c.713.436 1.598-.207 1.404-1.02l-1.106-4.637 3.62-3.102c.635-.544.297-1.584-.536-1.65l-4.752-.382-1.831-4.401Z" clip-rule="evenodd" /></svg>';
-          } else if (wasFavorite && !isFavorite) {
-            spanMain.lastElementChild?.remove();
-          }
-
-          return isFavorite;
-        },
-        false
-      );
-    }
-
-    function createCheckEffect() {
-      signals.createEffect(() => {
-        if (selected()?.id === preset.id) {
-          input.checked = true;
-          spanNew?.remove();
-          preset.visited.set(true);
-          localStorage.setItem(presetToVisitedLocalStorageKey(preset), "1");
-          localStorage.setItem(selectedLocalStorageKey, preset.id);
-        } else if (input.checked) {
-          input.checked = false;
-        }
-      });
-    }
-
-    if (owner !== undefined) {
-      signals.runWithOwner(owner, () => {
-        createCheckEffect();
-        createFavoriteEffect();
-      });
-    } else {
-      createCheckEffect();
-      createFavoriteEffect();
-    }
-
-    return label;
-  }
-
-  /**
-   * @param {Object} args
-   * @param {string | Accessor<string>} args.title
-   * @param {string} args.id
-   * @param {Readonly<string[]>} args.choices
-   * @param {string} args.selected
-   */
-  function createField({ title, id, choices, selected }) {
-    const field = window.document.createElement("div");
-    field.classList.add("field");
-
-    const legend = window.document.createElement("legend");
-    if (typeof title === "string") {
-      legend.innerHTML = title;
-    } else {
-      signals.createEffect(() => {
-        legend.innerHTML = title();
-      });
-    }
-    field.append(legend);
-
-    const hr = window.document.createElement("hr");
-    field.append(hr);
-
-    const div = window.document.createElement("div");
-    field.append(div);
-
-    choices.forEach((choice) => {
-      const inputValue = choice.toLowerCase();
-      const { label } = createLabeledInput({
-        inputId: `${id}-${choice.toLowerCase()}`,
-        inputName: id,
-        inputValue,
-        inputChecked: inputValue === selected,
-        labelTitle: choice,
-      });
-
-      const text = window.document.createTextNode(choice);
-      label.append(text);
-      div.append(label);
-    });
-
-    return field;
+    return `${preset.id}-${utils.stringToId(series.title)}`;
   }
 
   /**
@@ -5429,921 +5372,928 @@ lazySignals.then((importedSignals) => {
     return `${preset.id}-favorite`;
   }
 
-  const urlPreset = document.location.pathname.substring(1);
-  /**
-   * @param {PartialPresetTree} partialTree
-   * @param {Accessor<HTMLDivElement | HTMLDetailsElement | null>} parent
-   * @param {FilePath | undefined} path
-   * @returns {Accessor<number>}
-   */
-  function processPartialTree(partialTree, parent, path = undefined) {
-    /** @type {Accessor<number>[]} */
-    const listForSum = [];
+  const reactiveDom = {
+    /**
+     * @param {Object} args
+     * @param {Preset} args.preset
+     * @param {string} args.frame
+     * @param {string} [args.name]
+     * @param {string} [args.top]
+     * @param {string} [args.id]
+     * @param {Owner | null} [args.owner]
+     */
+    createPresetLabeledInput({ preset, frame, name, top, id, owner }) {
+      const { input, label, spanMain, spanName } =
+        dom.createComplexLabeledInput({
+          inputId: `${preset.id}-${frame}${id || ""}-selector`,
+          inputValue: preset.id,
+          inputName: `preset-${frame}${id || ""}`,
+          labelTitle: preset.title,
+          name: name || preset.name,
+          onClick: () => selected.set(preset),
+        });
 
-    const ul = signals.createMemo(
-      // @ts-ignore
-      (_previous) => {
-        const previous = /** @type {HTMLUListElement | null} */ (_previous);
-        previous?.remove();
+      if (top) {
+        const small = window.document.createElement("small");
+        small.innerHTML = top;
+        label.insertBefore(small, spanMain);
+      }
 
-        const _parent = parent();
-        if (_parent) {
-          if ("open" in _parent && !_parent.open) {
-            throw "Set accesor to null instead";
+      const spanEmoji = window.document.createElement("span");
+      spanEmoji.classList.add("emoji");
+      spanEmoji.innerHTML = preset.icon;
+      spanMain.prepend(spanEmoji);
+
+      /** @type {HTMLSpanElement | undefined} */
+      let spanNew;
+
+      if (!preset.visited()) {
+        spanNew = window.document.createElement("span");
+        spanNew.classList.add("new");
+        spanMain.append(spanNew);
+      }
+
+      function createFavoriteEffect() {
+        signals.createEffect(
+          // @ts-ignore
+          (_wasFavorite) => {
+            const wasFavorite = /** @type {boolean} */ (_wasFavorite);
+            const isFavorite = preset.isFavorite();
+
+            if (!wasFavorite && isFavorite) {
+              const iconFavorite = window.document.createElement("svg");
+              spanMain.append(iconFavorite);
+              iconFavorite.outerHTML =
+                '<svg viewBox="0 0 20 20" class="favorite"><path fill-rule="evenodd" d="M10.868 2.884c-.321-.772-1.415-.772-1.736 0l-1.83 4.401-4.753.381c-.833.067-1.171 1.107-.536 1.651l3.62 3.102-1.106 4.637c-.194.813.691 1.456 1.405 1.02L10 15.591l4.069 2.485c.713.436 1.598-.207 1.404-1.02l-1.106-4.637 3.62-3.102c.635-.544.297-1.584-.536-1.65l-4.752-.382-1.831-4.401Z" clip-rule="evenodd" /></svg>';
+            } else if (wasFavorite && !isFavorite) {
+              spanMain.lastElementChild?.remove();
+            }
+
+            return isFavorite;
+          },
+          false
+        );
+      }
+
+      function createCheckEffect() {
+        signals.createEffect(() => {
+          if (selected()?.id === preset.id) {
+            input.checked = true;
+            spanNew?.remove();
+            preset.visited.set(true);
+            localStorage.setItem(presetToVisitedLocalStorageKey(preset), "1");
+            localStorage.setItem(selectedLocalStorageKey, preset.id);
+          } else if (input.checked) {
+            input.checked = false;
           }
+        });
+      }
 
-          const ul = window.document.createElement("ul");
-          _parent.append(ul);
-          return ul;
-        } else {
-          return null;
-        }
-      },
-      null
-    );
+      if (owner !== undefined) {
+        signals.runWithOwner(owner, () => {
+          createCheckEffect();
+          createFavoriteEffect();
+        });
+      } else {
+        createCheckEffect();
+        createFavoriteEffect();
+      }
 
-    partialTree.forEach((anyPartial, partialIndex) => {
-      const renderLi = signals.createSignal(true);
+      return label;
+    },
+    /**
+     * @param {Object} args
+     * @param {string | Accessor<string>} args.title
+     * @param {string} args.id
+     * @param {Readonly<string[]>} args.choices
+     * @param {string} args.selected
+     */
+    createField({ title, id, choices, selected }) {
+      const field = window.document.createElement("div");
+      field.classList.add("field");
 
-      const li = signals.createMemo(
-        // @ts-ignored
+      const legend = window.document.createElement("legend");
+      if (typeof title === "string") {
+        legend.innerHTML = title;
+      } else {
+        signals.createEffect(() => {
+          legend.innerHTML = title();
+        });
+      }
+      field.append(legend);
+
+      const hr = window.document.createElement("hr");
+      field.append(hr);
+
+      const div = window.document.createElement("div");
+      field.append(div);
+
+      choices.forEach((choice) => {
+        const inputValue = choice.toLowerCase();
+        const { label } = dom.createLabeledInput({
+          inputId: `${id}-${choice.toLowerCase()}`,
+          inputName: id,
+          inputValue,
+          inputChecked: inputValue === selected,
+          labelTitle: choice,
+        });
+
+        const text = window.document.createTextNode(choice);
+        label.append(text);
+        div.append(label);
+      });
+
+      return field;
+    },
+  };
+
+  const treeElement = signals.createSignal(
+    /** @type {HTMLDivElement | null} */ (null)
+  );
+
+  function initPresets() {
+    /** @type {string[] | undefined} */
+    const presetsIds = env.localhost ? [] : undefined;
+
+    /**
+     * @param {PartialPresetTree} partialTree
+     * @param {Accessor<HTMLDivElement | HTMLDetailsElement | null>} parent
+     * @param {FilePath | undefined} path
+     * @returns {Accessor<number>}
+     */
+    function recursiveProcessPartialTree(
+      partialTree,
+      parent,
+      path = undefined
+    ) {
+      /** @type {Accessor<number>[]} */
+      const listForSum = [];
+
+      const ul = signals.createMemo(
+        // @ts-ignore
         (_previous) => {
-          const previous = /** @type {HTMLLIElement | null} */ (_previous);
+          const previous = /** @type {HTMLUListElement | null} */ (_previous);
           previous?.remove();
 
-          const _ul = ul();
+          const _parent = parent();
+          if (_parent) {
+            if ("open" in _parent && !_parent.open) {
+              throw "Set accesor to null instead";
+            }
 
-          if (renderLi() && _ul) {
-            const li = window.document.createElement("li");
-            insertElementAtIndex(_ul, li, partialIndex);
-            return li;
+            const ul = window.document.createElement("ul");
+            _parent.append(ul);
+            return ul;
           } else {
             return null;
           }
         },
-        undefined
+        null
       );
 
-      if ("tree" in anyPartial) {
-        const folderId = stringToId(
-          `${(path || [])?.map(({ name }) => name).join(" ")} ${
-            anyPartial.name
-          } folder`
-        );
+      partialTree.forEach((anyPartial, partialIndex) => {
+        const renderLi = signals.createSignal(true);
 
-        /** @type {Omit<PresetFolder, keyof PartialPresetFolder>} */
-        const restFolder = {
-          id: folderId,
-        };
+        const li = signals.createMemo(
+          // @ts-ignored
+          (_previous) => {
+            const previous = /** @type {HTMLLIElement | null} */ (_previous);
+            previous?.remove();
 
-        Object.assign(anyPartial, restFolder);
+            const _ul = ul();
 
-        presetsIds.push(restFolder.id);
-
-        const thisPath = {
-          name: anyPartial.name,
-          id: restFolder.id,
-        };
-
-        const passedDetails = signals.createSignal(
-          /** @type {HTMLDivElement | HTMLDetailsElement | null} */ (null)
-        );
-
-        const childPresetsCount = processPartialTree(
-          anyPartial.tree,
-          passedDetails,
-          [...(path || []), thisPath]
-        );
-
-        listForSum.push(childPresetsCount);
-
-        signals.createEffect(() => {
-          const _li = li();
-
-          if (!_li) {
-            passedDetails.set(null);
-            return;
-          }
-
-          signals.createEffect(() => {
-            if (selected().path.includes(thisPath)) {
-              _li.dataset.highlight = "";
+            if (renderLi() && _ul) {
+              const li = window.document.createElement("li");
+              dom.insertElementAtIndex(_ul, li, partialIndex);
+              return li;
             } else {
-              delete _li.dataset.highlight;
+              return null;
             }
-          });
+          },
+          undefined
+        );
 
-          const details = window.document.createElement("details");
-          const folderOpenLocalStorageKey = `${folderId}-open`;
-          details.open = !!localStorage.getItem(folderOpenLocalStorageKey);
-          details.id = folderId;
-          detailsList.push(details);
-          _li.appendChild(details);
+        if ("tree" in anyPartial) {
+          const folderId = utils.stringToId(
+            `${(path || [])?.map(({ name }) => name).join(" ")} ${
+              anyPartial.name
+            } folder`
+          );
 
-          const summary = window.document.createElement("summary");
-          details.appendChild(summary);
+          /** @type {Omit<PresetFolder, keyof PartialPresetFolder>} */
+          const restFolder = {
+            id: folderId,
+          };
 
-          const spanMarker = window.document.createElement("span");
-          spanMarker.classList.add("marker");
-          spanMarker.innerHTML = "●";
-          summary.append(spanMarker);
+          Object.assign(anyPartial, restFolder);
 
-          const spanName = createSpanName(anyPartial.name);
-          summary.append(spanName);
+          presetsIds?.push(restFolder.id);
 
-          const smallCount = window.document.createElement("small");
-          smallCount.hidden = details.open;
+          const thisPath = {
+            name: anyPartial.name,
+            id: restFolder.id,
+          };
+
+          const passedDetails = signals.createSignal(
+            /** @type {HTMLDivElement | HTMLDetailsElement | null} */ (null)
+          );
+
+          const childPresetsCount = recursiveProcessPartialTree(
+            anyPartial.tree,
+            passedDetails,
+            [...(path || []), thisPath]
+          );
+
+          listForSum.push(childPresetsCount);
+
           signals.createEffect(() => {
-            smallCount.innerHTML = childPresetsCount().toLocaleString();
-          });
-          summary.append(smallCount);
+            const _li = li();
 
-          details.addEventListener("toggle", () => {
-            const open = details.open;
-
-            smallCount.hidden = open;
-
-            if (open) {
-              spanMarker.innerHTML = "○";
-              localStorage.setItem(folderOpenLocalStorageKey, "1");
-              passedDetails.set(details);
-            } else {
-              spanMarker.innerHTML = "●";
-              localStorage.removeItem(folderOpenLocalStorageKey);
+            if (!_li) {
               passedDetails.set(null);
+              return;
             }
-          });
-        });
 
-        function createRenderLiEffect() {
-          signals.createEffect(() => {
-            const count = childPresetsCount();
-            renderLi.set(!!count);
-          });
-        }
-        createRenderLiEffect();
-      } else {
-        const id = `${anyPartial.scale}-to-${stringToId(anyPartial.title)}`;
-
-        /** @type {Omit<Preset, keyof PartialPreset>} */
-        const restPreset = {
-          id,
-          path: path || [],
-          serializedPath: `/ ${[
-            ...(path || []).map(({ name }) => name),
-            anyPartial.name,
-          ].join(" / ")}`,
-          isFavorite: signals.createSignal(false),
-          visited: signals.createSignal(false),
-        };
-
-        Object.assign(anyPartial, restPreset);
-
-        const preset = /** @type {Preset} */ (anyPartial);
-
-        if (urlPreset === preset.id) {
-          selected.set(preset);
-        } else if (!selected() && savedSelectedId === preset.id) {
-          selected.set(preset);
-        }
-
-        preset.isFavorite.set(
-          !!localStorage.getItem(presetToFavoriteLocalStorageKey(preset))
-        );
-        preset.visited.set(
-          !!localStorage.getItem(presetToVisitedLocalStorageKey(preset))
-        );
-
-        createCountersEffects(preset);
-
-        presetsList.push(preset);
-        presetsIds.push(preset.id);
-
-        const hidden = signals.createSignal(true);
-
-        function createHiddenEffect() {
-          signals.createEffect(() => {
-            switch (filter()) {
-              case "all": {
-                hidden.set(false);
-                break;
+            signals.createEffect(() => {
+              if (selected().path.includes(thisPath)) {
+                _li.dataset.highlight = "";
+              } else {
+                delete _li.dataset.highlight;
               }
-              case "favorites": {
-                hidden.set(!preset.isFavorite());
-                break;
+            });
+
+            const details = window.document.createElement("details");
+            const folderOpenLocalStorageKey = `${folderId}-open`;
+            details.open = !!localStorage.getItem(folderOpenLocalStorageKey);
+            details.id = folderId;
+            detailsList.push(details);
+            _li.appendChild(details);
+
+            const summary = window.document.createElement("summary");
+            details.appendChild(summary);
+
+            const spanMarker = window.document.createElement("span");
+            spanMarker.classList.add("marker");
+            spanMarker.innerHTML = "●";
+            summary.append(spanMarker);
+
+            const spanName = dom.createSpanName(anyPartial.name);
+            summary.append(spanName);
+
+            const smallCount = window.document.createElement("small");
+            smallCount.hidden = details.open;
+            signals.createEffect(() => {
+              smallCount.innerHTML = childPresetsCount().toLocaleString();
+            });
+            summary.append(smallCount);
+
+            details.addEventListener("toggle", () => {
+              const open = details.open;
+
+              smallCount.hidden = open;
+
+              if (open) {
+                spanMarker.innerHTML = "○";
+                localStorage.setItem(folderOpenLocalStorageKey, "1");
+                passedDetails.set(details);
+              } else {
+                spanMarker.innerHTML = "●";
+                localStorage.removeItem(folderOpenLocalStorageKey);
+                passedDetails.set(null);
               }
-              case "new": {
-                hidden.set(preset.visited());
-                break;
-              }
-            }
+            });
           });
-        }
-        createHiddenEffect();
 
-        function createRenderLiEffect() {
-          signals.createEffect(() => {
-            renderLi.set(!hidden());
-          });
-        }
-        createRenderLiEffect();
+          function createRenderLiEffect() {
+            signals.createEffect(() => {
+              const count = childPresetsCount();
+              renderLi.set(!!count);
+            });
+          }
+          createRenderLiEffect();
+        } else {
+          const id = `${anyPartial.scale}-to-${utils.stringToId(
+            anyPartial.title
+          )}`;
 
-        signals.createEffect(() => {
-          const _li = li();
+          /** @type {Omit<Preset, keyof PartialPreset>} */
+          const restPreset = {
+            id,
+            path: path || [],
+            serializedPath: `/ ${[
+              ...(path || []).map(({ name }) => name),
+              anyPartial.name,
+            ].join(" / ")}`,
+            isFavorite: signals.createSignal(false),
+            visited: signals.createSignal(false),
+          };
 
-          if (!_li) {
-            return;
+          Object.assign(anyPartial, restPreset);
+
+          const preset = /** @type {Preset} */ (anyPartial);
+          // preset.title = `${preset.scale} To ${preset.title}`;
+
+          if (urlSelected === preset.id) {
+            selected.set(preset);
+          } else if (!selected() && savedSelectedId === preset.id) {
+            selected.set(preset);
           }
 
-          signals.createEffect(() => {
-            if (selected() === preset) {
-              _li.dataset.highlight = "";
-            } else {
-              delete _li.dataset.highlight;
-            }
-          });
+          preset.isFavorite.set(
+            !!localStorage.getItem(presetToFavoriteLocalStorageKey(preset))
+          );
+          preset.visited.set(
+            !!localStorage.getItem(presetToVisitedLocalStorageKey(preset))
+          );
 
-          signals.untrack(() => {
-            const label = createPresetLabeledInput({
-              preset,
-              frame: "folders",
+          counters.createEffect(preset);
+
+          presetsList.push(preset);
+          presetsIds?.push(preset.id);
+
+          const hidden = signals.createSignal(true);
+
+          function createHiddenEffect() {
+            signals.createEffect(() => {
+              switch (filter()) {
+                case "all": {
+                  hidden.set(false);
+                  break;
+                }
+                case "favorites": {
+                  hidden.set(!preset.isFavorite());
+                  break;
+                }
+                case "new": {
+                  hidden.set(preset.visited());
+                  break;
+                }
+              }
             });
-            _li.append(label);
+          }
+          createHiddenEffect();
+
+          function createRenderLiEffect() {
+            signals.createEffect(() => {
+              renderLi.set(!hidden());
+            });
+          }
+          createRenderLiEffect();
+
+          signals.createEffect(() => {
+            const _li = li();
+
+            if (!_li) {
+              return;
+            }
+
+            signals.createEffect(() => {
+              if (selected() === preset) {
+                _li.dataset.highlight = "";
+              } else {
+                delete _li.dataset.highlight;
+              }
+            });
+
+            signals.untrack(() => {
+              const label = reactiveDom.createPresetLabeledInput({
+                preset,
+                frame: "folders",
+              });
+              _li.append(label);
+            });
           });
-        });
 
-        const memo = signals.createMemo(() => (hidden() ? 0 : 1));
-        listForSum.push(memo);
-      }
-    });
-
-    return signals.createMemo(() =>
-      listForSum.reduce((acc, s) => acc + s(), 0)
-    );
-  }
-
-  const tree = window.document.createElement("div");
-  tree.classList.add("tree");
-  foldersFrameElement.append(tree);
-  processPartialTree(partialTree, () => tree);
-
-  function setDefaultSelectedIfNeeded() {
-    if (!selected()) {
-      selected.set(presetsList[0]);
-    }
-  }
-  setDefaultSelectedIfNeeded();
-
-  function checkUniqueIds() {
-    if (presetsIds.length !== new Set(presetsIds).size) {
-      /** @type {Map<string, number>} */
-      const m = new Map();
-
-      presetsIds.forEach((id) => {
-        m.set(id, (m.get(id) || 0) + 1);
+          const memo = signals.createMemo(() => (hidden() ? 0 : 1));
+          listForSum.push(memo);
+        }
       });
 
-      console.log(
-        [...m.entries()]
-          .filter(([_, value]) => value > 1)
-          .map(([key, _]) => key)
+      return signals.createMemo(() =>
+        listForSum.reduce((acc, s) => acc + s(), 0)
       );
-
-      throw Error("ID duplicate");
-    }
-  }
-  checkUniqueIds();
-
-  function createCountersDomUpdateEffect() {
-    foldersFilterAllCount.innerHTML = presetsList.length.toLocaleString();
-
-    signals.createEffect(() => {
-      foldersFilterFavoritesCount.innerHTML = favoritesCount().toLocaleString();
-    });
-
-    signals.createEffect(() => {
-      foldersFilterNewCount.innerHTML = newCount().toLocaleString();
-    });
-  }
-  createCountersDomUpdateEffect();
-
-  function initFilters() {
-    const filterAllInput = /** @type {HTMLInputElement} */ (
-      dom.getElementById("folders-filter-all")
-    );
-    const filterFavoritesInput = /** @type {HTMLInputElement} */ (
-      dom.getElementById("folders-filter-favorites")
-    );
-    const filterNewInput = /** @type {HTMLInputElement} */ (
-      dom.getElementById("folders-filter-new")
-    );
-
-    filterAllInput.addEventListener("change", () => {
-      filter.set("all");
-    });
-    filterFavoritesInput.addEventListener("change", () => {
-      filter.set("favorites");
-    });
-    filterNewInput.addEventListener("change", () => {
-      filter.set("new");
-    });
-
-    signals.createEffect(() => {
-      const f = filter();
-      localStorage.setItem(foldersFilterLocalStorageKey, f);
-      switch (f) {
-        case "all": {
-          filterAllInput.checked = true;
-          break;
-        }
-        case "favorites": {
-          filterFavoritesInput.checked = true;
-          break;
-        }
-        case "new": {
-          filterNewInput.checked = true;
-          break;
-        }
-      }
-    });
-  }
-  initFilters();
-
-  function initCloseAllButton() {
-    dom
-      .getElementById("button-close-all-folders")
-      .addEventListener("click", () => {
-        detailsList.forEach((details) => (details.open = false));
-      });
-  }
-  initCloseAllButton();
-
-  async function goToSelected() {
-    filter.set("all");
-
-    if (!selected()) throw "Selected should be set by now";
-    const selectedId = selected().id;
-
-    const path = selected().path;
-
-    let i = 0;
-    while (i !== path.length) {
-      try {
-        const id = path[i].id;
-        const details = /** @type {HTMLDetailsElement} */ (
-          dom.getElementById(id)
-        );
-        details.open = true;
-        i++;
-      } catch {
-        await utils.yield();
-      }
     }
 
-    await utils.yield();
+    recursiveProcessPartialTree(partialTree, treeElement);
 
-    dom.getElementById(`${selectedId}-folders-selector`).scrollIntoView({
-      behavior: "instant",
-      block: "center",
-    });
-  }
-  goToSelected();
+    function setDefaultSelectedIfNeeded() {
+      if (!selected()) {
+        selected.set(presetsList[0]);
+      }
+    }
+    setDefaultSelectedIfNeeded();
 
-  async function initGoToSelectedButton() {
-    dom
-      .getElementById("button-go-to-selected")
-      .addEventListener("click", () => {
-        goToSelected();
-      });
-  }
-  initGoToSelectedButton();
+    if (env.localhost) {
+      function checkUniqueIds() {
+        if (!presetsIds) {
+          throw "Should be set";
+        } else if (presetsIds.length !== new Set(presetsIds).size) {
+          /** @type {Map<string, number>} */
+          const m = new Map();
 
-  function createUpdateSelectedHeaderEffect() {
-    signals.createEffect(() => {
-      const preset = selected();
-      presetTitle.innerHTML = preset.title;
-      presetDescription.innerHTML = preset.serializedPath;
-    });
-  }
-  createUpdateSelectedHeaderEffect();
+          presetsIds.forEach((id) => {
+            m.set(id, (m.get(id) || 0) + 1);
+          });
 
-  function showSelectedFrame() {
-    selectedFrameElement.style.opacity = "1";
+          console.log(
+            [...m.entries()]
+              .filter(([_, value]) => value > 1)
+              .map(([key, _]) => key)
+          );
+
+          throw Error("ID duplicate");
+        }
+      }
+      checkUniqueIds();
+    }
   }
-  showSelectedFrame();
+  initPresets();
 
   const LOCAL_STORAGE_TIME_RANGE_KEY = "chart-range";
   const URL_PARAMS_TIME_RANGE_FROM_KEY = "from";
   const URL_PARAMS_TIME_RANGE_TO_KEY = "to";
   const HEIGHT_CHUNK_SIZE = 10_000;
 
-  runWhenIdle(() =>
-    import("./packages/lightweight-charts/v4.2.0/script.js").then(
-      ({
-        createChart: createClassicChart,
-        createChartEx: createCustomChart,
-      }) => {
-        /**
-         * @param {Scale} scale
-         * @returns {string}
-         */
-        function getVisibleTimeRangeLocalStorageKey(scale) {
-          return `${LOCAL_STORAGE_TIME_RANGE_KEY}-${scale}`;
+  const scale = signals.createMemo(() => selected().scale);
+  /** @type {Array<(IChartApi & {whitespace: ISeriesApi<"Line">})>} */
+  let charts = [];
+
+  function createSelectedEffect() {
+    let firstRun = true;
+
+    signals.createEffect(
+      // @ts-ignore
+      (_previouslySelected) => {
+        const previouslySelected = /** @type {Preset | undefined} */ (
+          _previouslySelected
+        );
+
+        const preset = selected();
+
+        if (!firstRun && !dom.isHidden(selectedLabelElement)) {
+          selectedLabelElement.click();
+        }
+        firstRun = false;
+
+        if (previouslySelected) {
+          urlParamsHelpers.reset(preset.id);
+          urlParamsHelpers.replaceHistory({ pathname: preset.id });
         }
 
-        /**
-         * @param {Scale} scale
-         * @returns {TimeRange}
-         */
-        function getInitialVisibleTimeRange(scale) {
-          const urlParams = new URLSearchParams(window.location.search);
+        return preset;
+      },
+      undefined
+    );
+  }
+  createSelectedEffect();
 
-          const urlFrom = urlParams.get(URL_PARAMS_TIME_RANGE_FROM_KEY);
-          const urlTo = urlParams.get(URL_PARAMS_TIME_RANGE_TO_KEY);
+  function initSelected() {
+    /**
+     * @param {Object} args
+     * @param {CreateClassicChart} args.createClassicChart
+     * @param {CreateCustomChart} args.createCustomChart
+     */
+    function initSelectedFrame({ createClassicChart, createCustomChart }) {
+      console.log("selected: init");
 
-          if (urlFrom && urlTo) {
-            if (
-              scale === "date" &&
-              urlFrom.includes("-") &&
-              urlTo.includes("-")
-            ) {
-              console.log({
-                from: new Date(urlFrom).toJSON().split("T")[0],
-                to: new Date(urlTo).toJSON().split("T")[0],
-              });
-              return {
-                from: new Date(urlFrom).toJSON().split("T")[0],
-                to: new Date(urlTo).toJSON().split("T")[0],
-              };
-            } else if (
-              scale === "height" &&
-              (!urlFrom.includes("-") || !urlTo.includes("-"))
-            ) {
-              console.log({
-                from: Number(urlFrom),
-                to: Number(urlTo),
-              });
-              return {
-                from: Number(urlFrom),
-                to: Number(urlTo),
-              };
-            }
-          }
+      /**
+       * @param {Scale} scale
+       * @returns {string}
+       */
+      function getVisibleTimeRangeLocalStorageKey(scale) {
+        return `${LOCAL_STORAGE_TIME_RANGE_KEY}-${scale}`;
+      }
 
-          function getSavedTimeRange() {
-            return /** @type {TimeRange | null} */ (
-              JSON.parse(
-                localStorage.getItem(
-                  getVisibleTimeRangeLocalStorageKey(scale)
-                ) || "null"
-              )
-            );
-          }
+      /**
+       * @param {Scale} scale
+       * @returns {TimeRange}
+       */
+      function getInitialVisibleTimeRange(scale) {
+        const urlParams = new URLSearchParams(window.location.search);
 
-          const savedTimeRange = getSavedTimeRange();
+        const urlFrom = urlParams.get(URL_PARAMS_TIME_RANGE_FROM_KEY);
+        const urlTo = urlParams.get(URL_PARAMS_TIME_RANGE_TO_KEY);
 
-          console.log(savedTimeRange);
-
-          if (savedTimeRange) {
-            return savedTimeRange;
-          }
-
-          function getDefaultTimeRange() {
-            switch (scale) {
-              case "date": {
-                const defaultTo = new Date();
-                const defaultFrom = new Date();
-                defaultFrom.setDate(defaultFrom.getUTCDate() - 6 * 30);
-
-                return {
-                  from: defaultFrom.toJSON().split("T")[0],
-                  to: defaultTo.toJSON().split("T")[0],
-                };
-              }
-              case "height": {
-                return {
-                  from: 850_000,
-                  to: 900_000,
-                };
-              }
-            }
-          }
-
-          return getDefaultTimeRange();
-        }
-
-        /**
-         * @param {IChartApi} chart
-         */
-        function setInitialVisibleTimeRange(chart) {
-          const range = visibleTimeRange();
-
-          if (range) {
-            chart.timeScale().setVisibleRange(/** @type {any} */ (range));
-
-            // On small screen it doesn't it might not set it  in time
-            setTimeout(() => {
-              try {
-                chart.timeScale().setVisibleRange(/** @type {any} */ (range));
-              } catch {}
-            }, 50);
-          }
-        }
-
-        const scale = signals.createMemo(() => selected().scale);
-        const activeDatasets = signals.createSignal(
-          /** @type {Set<ResourceDataset<any, any>>} */ (new Set()),
-          {
-            equals: false,
-          }
-        );
-        const visibleTimeRange = signals.createSignal(
-          getInitialVisibleTimeRange(scale())
-        );
-        const visibleDatasetIds = signals.createSignal(
-          /** @type {number[]} */ ([]),
-          {
-            equals: false,
-          }
-        );
-        const lastVisibleDatasetIndex = signals.createMemo(() => {
-          const last = visibleDatasetIds().at(-1);
-          return last !== undefined ? chunkIdToIndex(scale(), last) : undefined;
-        });
-        const priceSeriesType = signals.createSignal(
-          /** @type {PriceSeriesType} */ ("Candlestick")
-        );
-
-        function updateVisibleDatasetIds() {
-          /** @type {number[]} */
-          let ids = [];
-
-          const today = new Date();
-          const { from: rawFrom, to: rawTo } = visibleTimeRange();
-
-          if (typeof rawFrom === "string" && typeof rawTo === "string") {
-            const from = new Date(rawFrom).getUTCFullYear();
-            const to = new Date(rawTo).getUTCFullYear();
-
-            ids = Array.from(
-              { length: to - from + 1 },
-              (_, i) => i + from
-            ).filter((year) => year >= 2009 && year <= today.getUTCFullYear());
-          } else {
-            const from = Math.floor(Number(rawFrom) / HEIGHT_CHUNK_SIZE);
-            const to = Math.floor(Number(rawTo) / HEIGHT_CHUNK_SIZE);
-
-            const length = to - from + 1;
-
-            ids = Array.from(
-              { length },
-              (_, i) => (from + i) * HEIGHT_CHUNK_SIZE
-            );
-          }
-
-          const old = visibleDatasetIds();
-
+        if (urlFrom && urlTo) {
           if (
-            old.length !== ids.length ||
-            old.at(0) !== ids.at(0) ||
-            old.at(-1) !== ids.at(-1)
+            scale === "date" &&
+            urlFrom.includes("-") &&
+            urlTo.includes("-")
           ) {
-            console.log("range:", ids);
-
-            visibleDatasetIds.set(ids);
+            console.log({
+              from: new Date(urlFrom).toJSON().split("T")[0],
+              to: new Date(urlTo).toJSON().split("T")[0],
+            });
+            return {
+              from: new Date(urlFrom).toJSON().split("T")[0],
+              to: new Date(urlTo).toJSON().split("T")[0],
+            };
+          } else if (
+            scale === "height" &&
+            (!urlFrom.includes("-") || !urlTo.includes("-"))
+          ) {
+            console.log({
+              from: Number(urlFrom),
+              to: Number(urlTo),
+            });
+            return {
+              from: Number(urlFrom),
+              to: Number(urlTo),
+            };
           }
         }
-        updateVisibleDatasetIds();
 
-        const debouncedUpdateVisibleDatasetIds = debounce(
-          updateVisibleDatasetIds,
-          100
+        function getSavedTimeRange() {
+          return /** @type {TimeRange | null} */ (
+            JSON.parse(
+              localStorage.getItem(getVisibleTimeRangeLocalStorageKey(scale)) ||
+                "null"
+            )
+          );
+        }
+
+        const savedTimeRange = getSavedTimeRange();
+
+        console.log(savedTimeRange);
+
+        if (savedTimeRange) {
+          return savedTimeRange;
+        }
+
+        function getDefaultTimeRange() {
+          switch (scale) {
+            case "date": {
+              const defaultTo = new Date();
+              const defaultFrom = new Date();
+              defaultFrom.setDate(defaultFrom.getUTCDate() - 6 * 30);
+
+              return {
+                from: defaultFrom.toJSON().split("T")[0],
+                to: defaultTo.toJSON().split("T")[0],
+              };
+            }
+            case "height": {
+              return {
+                from: 850_000,
+                to: 900_000,
+              };
+            }
+          }
+        }
+
+        return getDefaultTimeRange();
+      }
+
+      /**
+       * @param {IChartApi} chart
+       */
+      function setInitialVisibleTimeRange(chart) {
+        const range = visibleTimeRange();
+
+        if (range) {
+          chart.timeScale().setVisibleRange(/** @type {any} */ (range));
+
+          // On small screen it doesn't it might not set it  in time
+          setTimeout(() => {
+            try {
+              chart.timeScale().setVisibleRange(/** @type {any} */ (range));
+            } catch {}
+          }, 50);
+        }
+      }
+
+      const activeDatasets = signals.createSignal(
+        /** @type {Set<ResourceDataset<any, any>>} */ (new Set()),
+        {
+          equals: false,
+        }
+      );
+      const visibleTimeRange = signals.createSignal(
+        getInitialVisibleTimeRange(scale())
+      );
+      const visibleDatasetIds = signals.createSignal(
+        /** @type {number[]} */ ([]),
+        {
+          equals: false,
+        }
+      );
+      const lastVisibleDatasetIndex = signals.createMemo(() => {
+        const last = visibleDatasetIds().at(-1);
+        return last !== undefined ? chunkIdToIndex(scale(), last) : undefined;
+      });
+      const priceSeriesType = signals.createSignal(
+        /** @type {PriceSeriesType} */ ("Candlestick")
+      );
+
+      function updateVisibleDatasetIds() {
+        /** @type {number[]} */
+        let ids = [];
+
+        const today = new Date();
+        const { from: rawFrom, to: rawTo } = visibleTimeRange();
+
+        if (typeof rawFrom === "string" && typeof rawTo === "string") {
+          const from = new Date(rawFrom).getUTCFullYear();
+          const to = new Date(rawTo).getUTCFullYear();
+
+          ids = Array.from(
+            { length: to - from + 1 },
+            (_, i) => i + from
+          ).filter((year) => year >= 2009 && year <= today.getUTCFullYear());
+        } else {
+          const from = Math.floor(Number(rawFrom) / HEIGHT_CHUNK_SIZE);
+          const to = Math.floor(Number(rawTo) / HEIGHT_CHUNK_SIZE);
+
+          const length = to - from + 1;
+
+          ids = Array.from(
+            { length },
+            (_, i) => (from + i) * HEIGHT_CHUNK_SIZE
+          );
+        }
+
+        const old = visibleDatasetIds();
+
+        if (
+          old.length !== ids.length ||
+          old.at(0) !== ids.at(0) ||
+          old.at(-1) !== ids.at(-1)
+        ) {
+          console.log("range:", ids);
+
+          visibleDatasetIds.set(ids);
+        }
+      }
+      updateVisibleDatasetIds();
+
+      const debouncedUpdateVisibleDatasetIds = utils.debounce(
+        updateVisibleDatasetIds,
+        100
+      );
+
+      function saveVisibleRange() {
+        const range = visibleTimeRange();
+
+        urlParamsHelpers.write(
+          URL_PARAMS_TIME_RANGE_FROM_KEY,
+          String(range.from)
         );
 
-        function saveVisibleRange() {
-          const range = visibleTimeRange();
+        urlParamsHelpers.write(URL_PARAMS_TIME_RANGE_TO_KEY, String(range.to));
 
-          urlParamsHelpers.write(
-            URL_PARAMS_TIME_RANGE_FROM_KEY,
-            String(range.from)
-          );
+        localStorage.setItem(
+          getVisibleTimeRangeLocalStorageKey(scale()),
+          JSON.stringify(range)
+        );
+      }
+      const debouncedSaveVisibleRange = utils.debounce(saveVisibleRange, 250);
 
-          urlParamsHelpers.write(
-            URL_PARAMS_TIME_RANGE_TO_KEY,
-            String(range.to)
-          );
+      function createFetchChunksOfVisibleDatasetsEffect() {
+        signals.createEffect(() => {
+          const ids = visibleDatasetIds();
+          const datasets = Array.from(activeDatasets());
 
-          localStorage.setItem(
-            getVisibleTimeRangeLocalStorageKey(scale()),
-            JSON.stringify(range)
-          );
-        }
-        const debouncedSaveVisibleRange = debounce(saveVisibleRange, 250);
+          if (ids.length === 0 || datasets.length === 0) return;
 
-        function createFetchChunksOfVisibleDatasetsEffect() {
-          signals.createEffect(() => {
-            const ids = visibleDatasetIds();
-            const datasets = Array.from(activeDatasets());
-
-            if (ids.length === 0 || datasets.length === 0) return;
-
-            signals.untrack(() => {
-              console.log(ids, datasets);
-              for (let i = 0; i < ids.length; i++) {
-                const id = ids[i];
-                for (let j = 0; j < datasets.length; j++) {
-                  datasets[j].fetch(id);
-                }
+          signals.untrack(() => {
+            console.log(ids, datasets);
+            for (let i = 0; i < ids.length; i++) {
+              const id = ids[i];
+              for (let j = 0; j < datasets.length; j++) {
+                datasets[j].fetch(id);
               }
-            });
+            }
           });
+        });
+      }
+      createFetchChunksOfVisibleDatasetsEffect();
+
+      /**
+       * @class
+       * @implements {IHorzScaleBehavior<number>}
+       */
+      class HorzScaleBehaviorHeight {
+        options() {
+          return /** @type {any} */ (undefined);
         }
-        createFetchChunksOfVisibleDatasetsEffect();
+        setOptions() {}
+        preprocessData() {}
+        updateFormatter() {}
+
+        createConverterToInternalObj() {
+          /** @type {(p: any) => any} */
+          return (price) => price;
+        }
+
+        /** @param {any} item  */
+        key(item) {
+          return item;
+        }
+
+        /** @param {any} item  */
+        cacheKey(item) {
+          return item;
+        }
+
+        /** @param {any} item  */
+        convertHorzItemToInternal(item) {
+          return item;
+        }
+
+        /** @param {any} item  */
+        formatHorzItem(item) {
+          return item;
+        }
+
+        /** @param {any} tickMark  */
+        formatTickmark(tickMark) {
+          return tickMark.time.toLocaleString("en-us");
+        }
+
+        /** @param {any} tickMarks  */
+        maxTickMarkWeight(tickMarks) {
+          return tickMarks.reduce(this.getMarkWithGreaterWeight, tickMarks[0])
+            .weight;
+        }
+
+        /**
+         * @param {any} sortedTimePoints
+         * @param {number} startIndex
+         */
+        fillWeightsForPoints(sortedTimePoints, startIndex) {
+          for (
+            let index = startIndex;
+            index < sortedTimePoints.length;
+            ++index
+          ) {
+            sortedTimePoints[index].timeWeight = this.computeHeightWeight(
+              sortedTimePoints[index].time
+            );
+          }
+        }
+
+        /**
+         * @param {any} a
+         * @param {any} b
+         */
+        getMarkWithGreaterWeight(a, b) {
+          return a.weight > b.weight ? a : b;
+        }
 
         /** @param {number} value  */
-        function numberToShortUSLocale(value) {
-          const absoluteValue = Math.abs(value);
-
-          // value = absoluteValue;
-
-          if (isNaN(value)) {
-            return "";
-            // } else if (value === 0) {
-            //   return "0";
-          } else if (absoluteValue < 10) {
-            return numberToUSLocale(value, 3);
-          } else if (absoluteValue < 100) {
-            return numberToUSLocale(value, 2);
-          } else if (absoluteValue < 1_000) {
-            return numberToUSLocale(value, 1);
-          } else if (absoluteValue < 100_000) {
-            return numberToUSLocale(value, 0);
-          } else if (absoluteValue < 1_000_000) {
-            return `${numberToUSLocale(value / 1_000, 1)}K`;
-          } else if (absoluteValue >= 1_000_000_000_000_000_000) {
-            return "Inf.";
+        computeHeightWeight(value) {
+          // if (value === Math.ceil(value / 1000000) * 1000000) {
+          //   return 12;
+          // }
+          if (value === Math.ceil(value / 100000) * 100000) {
+            return 11;
+          }
+          if (value === Math.ceil(value / 10000) * 10000) {
+            return 10;
+          }
+          if (value === Math.ceil(value / 1000) * 1000) {
+            return 9;
+          }
+          if (value === Math.ceil(value / 100) * 100) {
+            return 8;
+          }
+          if (value === Math.ceil(value / 50) * 50) {
+            return 7;
+          }
+          if (value === Math.ceil(value / 25) * 25) {
+            return 6;
+          }
+          if (value === Math.ceil(value / 10) * 10) {
+            return 5;
+          }
+          if (value === Math.ceil(value / 5) * 5) {
+            return 4;
+          }
+          if (value === Math.ceil(value)) {
+            return 3;
+          }
+          if (value * 2 === Math.ceil(value * 2)) {
+            return 1;
           }
 
-          const log = Math.floor(Math.log10(absoluteValue) - 6);
-
-          const suffices = ["M", "B", "T", "Q"];
-          const letterIndex = Math.floor(log / 3);
-          const letter = suffices[letterIndex];
-
-          const modulused = log % 3;
-
-          if (modulused === 0) {
-            return `${numberToUSLocale(
-              value / (1_000_000 * 1_000 ** letterIndex),
-              3
-            )}${letter}`;
-          } else if (modulused === 1) {
-            return `${numberToUSLocale(
-              value / (1_000_000 * 1_000 ** letterIndex),
-              2
-            )}${letter}`;
-          } else {
-            return `${numberToUSLocale(
-              value / (1_000_000 * 1_000 ** letterIndex),
-              1
-            )}${letter}`;
-          }
+          return 0;
         }
+      }
 
-        /**
-         * @param {number} value
-         * @param {number} [digits]
-         * @param {Intl.NumberFormatOptions} [options]
-         */
-        function numberToUSLocale(value, digits, options) {
-          return value.toLocaleString("en-us", {
-            ...options,
-            minimumFractionDigits: digits,
-            maximumFractionDigits: digits,
-          });
-        }
-
-        /**
-         * @class
-         * @implements {IHorzScaleBehavior<number>}
-         */
-        class HorzScaleBehaviorHeight {
-          options() {
-            return /** @type {any} */ (undefined);
-          }
-          setOptions() {}
-          preprocessData() {}
-          updateFormatter() {}
-
-          createConverterToInternalObj() {
-            /** @type {(p: any) => any} */
-            return (price) => price;
-          }
-
-          /** @param {any} item  */
-          key(item) {
-            return item;
-          }
-
-          /** @param {any} item  */
-          cacheKey(item) {
-            return item;
-          }
-
-          /** @param {any} item  */
-          convertHorzItemToInternal(item) {
-            return item;
-          }
-
-          /** @param {any} item  */
-          formatHorzItem(item) {
-            return item;
-          }
-
-          /** @param {any} tickMark  */
-          formatTickmark(tickMark) {
-            return tickMark.time.toLocaleString("en-us");
-          }
-
-          /** @param {any} tickMarks  */
-          maxTickMarkWeight(tickMarks) {
-            return tickMarks.reduce(this.getMarkWithGreaterWeight, tickMarks[0])
-              .weight;
-          }
-
-          /**
-           * @param {any} sortedTimePoints
-           * @param {number} startIndex
-           */
-          fillWeightsForPoints(sortedTimePoints, startIndex) {
-            for (
-              let index = startIndex;
-              index < sortedTimePoints.length;
-              ++index
-            ) {
-              sortedTimePoints[index].timeWeight = this.computeHeightWeight(
-                sortedTimePoints[index].time
-              );
-            }
-          }
-
-          /**
-           * @param {any} a
-           * @param {any} b
-           */
-          getMarkWithGreaterWeight(a, b) {
-            return a.weight > b.weight ? a : b;
-          }
-
-          /** @param {number} value  */
-          computeHeightWeight(value) {
-            // if (value === Math.ceil(value / 1000000) * 1000000) {
-            //   return 12;
-            // }
-            if (value === Math.ceil(value / 100000) * 100000) {
-              return 11;
-            }
-            if (value === Math.ceil(value / 10000) * 10000) {
-              return 10;
-            }
-            if (value === Math.ceil(value / 1000) * 1000) {
-              return 9;
-            }
-            if (value === Math.ceil(value / 100) * 100) {
-              return 8;
-            }
-            if (value === Math.ceil(value / 50) * 50) {
-              return 7;
-            }
-            if (value === Math.ceil(value / 25) * 25) {
-              return 6;
-            }
-            if (value === Math.ceil(value / 10) * 10) {
-              return 5;
-            }
-            if (value === Math.ceil(value / 5) * 5) {
-              return 4;
-            }
-            if (value === Math.ceil(value)) {
-              return 3;
-            }
-            if (value * 2 === Math.ceil(value * 2)) {
-              return 1;
-            }
-
-            return 0;
-          }
-        }
-
-        /** @arg {{scale: Scale, element: HTMLElement}} args */
-        function createChart({ scale, element }) {
-          /** @satisfies {DeepPartial<ChartOptions>} */
-          const options = {
-            autoSize: true,
-            layout: {
-              fontFamily: "Satoshi Chart",
-              // fontSize: 13,
-              background: { color: "transparent" },
-              attributionLogo: false,
+      /** @arg {{scale: Scale, element: HTMLElement}} args */
+      function createChart({ scale, element }) {
+        /** @satisfies {DeepPartial<ChartOptions>} */
+        const options = {
+          autoSize: true,
+          layout: {
+            fontFamily: "Satoshi Chart",
+            // fontSize: 13,
+            background: { color: "transparent" },
+            attributionLogo: false,
+          },
+          grid: {
+            vertLines: { visible: false },
+            horzLines: { visible: false },
+          },
+          timeScale: {
+            minBarSpacing: 0.05,
+            shiftVisibleRangeOnNewBar: false,
+            allowShiftVisibleRangeOnWhitespaceReplacement: false,
+          },
+          handleScale: {
+            axisDoubleClickReset: {
+              time: false,
             },
-            grid: {
-              vertLines: { visible: false },
-              horzLines: { visible: false },
+          },
+          crosshair: {
+            mode: 0,
+          },
+          localization: {
+            priceFormatter: locale.numberToShortUSFormat,
+            locale: "en-us",
+            ...(scale === "date"
+              ? {
+                  // dateFormat: "EEEE, dd MMM 'yy",
+                }
+              : {}),
+          },
+        };
+
+        /** @type {IChartApi} */
+        let chart;
+
+        if (scale === "date") {
+          chart = createClassicChart(element, options);
+        } else {
+          const horzScaleBehavior = new HorzScaleBehaviorHeight();
+          // @ts-ignore
+          chart = createCustomChart(element, horzScaleBehavior, options);
+        }
+
+        chart.priceScale("right").applyOptions({
+          scaleMargins: {
+            top: 0.075,
+            bottom: 0.05,
+          },
+          minimumWidth: 78,
+        });
+
+        signals.createEffect(() => {
+          const { default: _defaultColor, off: _offColor } = colors;
+
+          const defaultColor = _defaultColor();
+          const offColor = _offColor();
+
+          chart.applyOptions({
+            layout: {
+              textColor: offColor,
+            },
+            rightPriceScale: {
+              borderVisible: false,
             },
             timeScale: {
-              minBarSpacing: 0.05,
-              shiftVisibleRangeOnNewBar: false,
-              allowShiftVisibleRangeOnWhitespaceReplacement: false,
-            },
-            handleScale: {
-              axisDoubleClickReset: {
-                time: false,
-              },
+              borderVisible: false,
             },
             crosshair: {
-              mode: 0,
+              horzLine: {
+                color: defaultColor,
+                labelBackgroundColor: defaultColor,
+              },
+              vertLine: {
+                color: defaultColor,
+                labelBackgroundColor: defaultColor,
+              },
             },
-            localization: {
-              priceFormatter: numberToShortUSLocale,
-              locale: "en-us",
-            },
-          };
-
-          /** @type {IChartApi} */
-          let chart;
-
-          if (scale === "date") {
-            chart = createClassicChart(element, options);
-          } else {
-            const horzScaleBehavior = new HorzScaleBehaviorHeight();
-            // @ts-ignore
-            chart = createCustomChart(element, horzScaleBehavior, options);
-          }
-
-          chart.priceScale("right").applyOptions({
-            scaleMargins: {
-              top: 0.075,
-              bottom: 0.05,
-            },
-            minimumWidth: 78,
           });
+        });
 
-          signals.createEffect(() => {
-            const { default: white, off: gray } = colors;
+        return chart;
+      }
 
-            const color = white();
-
-            chart.applyOptions({
-              layout: {
-                textColor: gray(),
-              },
-              rightPriceScale: {
-                borderVisible: false,
-              },
-              timeScale: {
-                borderVisible: false,
-              },
-              crosshair: {
-                horzLine: {
-                  color: color,
-                  labelBackgroundColor: color,
-                },
-                vertLine: {
-                  color: color,
-                  labelBackgroundColor: color,
-                },
-              },
-            });
-          });
-
-          return chart;
+      function resetChartListElement() {
+        while (
+          chartListElement.lastElementChild?.classList.contains("chart-wrapper")
+        ) {
+          chartListElement.lastElementChild?.remove();
         }
+      }
 
-        function resetChartListElement() {
-          while (
-            chartListElement.lastElementChild?.classList.contains(
-              "chart-wrapper"
+      function initWhitespace() {
+        const whitespaceStartDate = new Date("1970-01-01");
+        const whitespaceStartDateYear = whitespaceStartDate.getUTCFullYear();
+        const whitespaceStartDateMonth = whitespaceStartDate.getUTCMonth();
+        const whitespaceStartDateDate = whitespaceStartDate.getUTCDate();
+        const whitespaceEndDate = new Date("2141-01-01");
+        let whitespaceDateDataset =
+          /** @type {(WhitespaceData | SingleValueData)[]} */ ([]);
+
+        function initDateWhitespace() {
+          whitespaceDateDataset = new Array(
+            utils.getNumberOfDaysBetweenTwoDates(
+              whitespaceStartDate,
+              whitespaceEndDate
             )
-          ) {
-            chartListElement.lastElementChild?.remove();
-          }
-        }
-
-        function initWhitespace() {
-          const whitespaceStartDate = new Date("1970-01-01");
-          const whitespaceStartDateYear = whitespaceStartDate.getUTCFullYear();
-          const whitespaceStartDateMonth = whitespaceStartDate.getUTCMonth();
-          const whitespaceStartDateDate = whitespaceStartDate.getUTCDate();
-          const whitespaceEndDate = new Date("2141-01-01");
-          const whitespaceDateDataset =
-            /** @type {(WhitespaceData | SingleValueData)[]} */ (
-              new Array(
-                getNumberOfDaysBetweenTwoDates(
-                  whitespaceStartDate,
-                  whitespaceEndDate
-                )
-              )
-            );
+          );
           // Hack to be able to scroll freely
           // Setting them all to NaN is much slower
           for (let i = 0; i < whitespaceDateDataset.length; i++) {
@@ -6353,7 +6303,7 @@ lazySignals.then((importedSignals) => {
               whitespaceStartDateDate + i
             );
 
-            const time = dateToString(date);
+            const time = utils.dateToString(date);
 
             if (i === whitespaceDateDataset.length - 1) {
               whitespaceDateDataset[i] = {
@@ -6366,10 +6316,14 @@ lazySignals.then((importedSignals) => {
               };
             }
           }
+        }
 
-          const heightStart = -50_000;
-          const whitespaceHeightDataset = /** @type {WhitespaceData[]} */ (
-            new Array((new Date().getUTCFullYear() - 2009 + 1) * 60_000)
+        const heightStart = -50_000;
+        let whitespaceHeightDataset = /** @type {WhitespaceData[]} */ ([]);
+
+        function initHeightWhitespace() {
+          whitespaceHeightDataset = new Array(
+            (new Date().getUTCFullYear() - 2009 + 1) * 60_000
           );
           for (let i = 0; i < whitespaceHeightDataset.length; i++) {
             const height = heightStart + i;
@@ -6378,243 +6332,259 @@ lazySignals.then((importedSignals) => {
               time: /** @type {Time} */ (height),
             };
           }
-
-          /**
-           * @param {IChartApi} chart
-           * @param {Scale} scale
-           * @returns {ISeriesApi<'Line'>}
-           */
-          function setWhitespace(chart, scale) {
-            const whitespace = chart.addLineSeries();
-
-            if (scale === "date") {
-              whitespace.setData(whitespaceDateDataset);
-            } else {
-              whitespace.setData(whitespaceHeightDataset);
-
-              const time = whitespaceHeightDataset.length;
-              whitespace.update({
-                time: /** @type {Time} */ (time),
-                value: NaN,
-              });
-            }
-
-            return whitespace;
-          }
-
-          return { setWhitespace };
-        }
-        const { setWhitespace } = initWhitespace();
-
-        /**
-         * @param {HTMLElement} parent
-         * @param {number} chartIndex
-         */
-        function createChartDiv(parent, chartIndex) {
-          const chartWrapper = window.document.createElement("div");
-          chartWrapper.classList.add("chart-wrapper");
-          parent.append(chartWrapper);
-
-          const chartDiv = window.document.createElement("div");
-          chartDiv.classList.add("chart-div");
-          chartWrapper.append(chartDiv);
-
-          function createUnitAndModeElements() {
-            const fieldset = window.document.createElement("fieldset");
-            fieldset.dataset.size = "sm";
-            chartWrapper.append(fieldset);
-
-            const unitName = signals.createSignal("");
-
-            const id = `chart-${chartIndex}-mode`;
-
-            const chartModes = /** @type {const} */ (["Linear", "Log"]);
-            const chartMode = signals.createSignal(
-              /** @type {Lowercase<typeof chartModes[number]>} */ (
-                localStorage.getItem(id) ||
-                  chartModes[chartIndex ? 0 : 1].toLowerCase()
-              )
-            );
-
-            const field = createField({
-              choices: chartModes,
-              selected: chartMode(),
-              id,
-              title: unitName,
-            });
-            fieldset.append(field);
-
-            field.addEventListener("change", (event) => {
-              // @ts-ignore
-              const value = event.target.value;
-              localStorage.setItem(id, value);
-              chartMode.set(value);
-            });
-
-            return { unitName, chartMode };
-          }
-          const { unitName, chartMode } = createUnitAndModeElements();
-
-          return { chartDiv, unitName, chartMode };
         }
 
         /**
          * @param {IChartApi} chart
-         */
-        function subscribeVisibleTimeRangeChange(chart) {
-          chart.timeScale().subscribeVisibleTimeRangeChange((range) => {
-            if (!range) return;
-
-            visibleTimeRange.set(range);
-
-            debouncedUpdateVisibleDatasetIds();
-
-            debouncedSaveVisibleRange();
-          });
-        }
-
-        /**
-         * @param {{ chart: IChartApi; visibleLogicalRange?: LogicalRange; visibleTimeRange?: TimeRange }} args
-         */
-        function updateVisiblePriceSeriesType({
-          chart,
-          visibleLogicalRange,
-          visibleTimeRange,
-        }) {
-          try {
-            const width = chart.timeScale().width();
-
-            /** @type {number} */
-            let ratio;
-
-            if (visibleLogicalRange) {
-              ratio =
-                (visibleLogicalRange.to - visibleLogicalRange.from) / width;
-            } else if (visibleTimeRange) {
-              if (scale() === "date") {
-                const to = /** @type {Time} */ (visibleTimeRange.to);
-                const from = /** @type {Time} */ (visibleTimeRange.from);
-
-                ratio =
-                  getNumberOfDaysBetweenTwoDates(
-                    dateFromTime(from),
-                    dateFromTime(to)
-                  ) / width;
-              } else {
-                const to = /** @type {number} */ (visibleTimeRange.to);
-                const from = /** @type {number} */ (visibleTimeRange.from);
-
-                ratio = (to - from) / width;
-              }
-            } else {
-              throw Error();
-            }
-
-            if (ratio <= 0.5) {
-              priceSeriesType.set("Candlestick");
-            } else {
-              priceSeriesType.set("Line");
-            }
-          } catch {}
-        }
-
-        /** @param {Time} time  */
-        function dateFromTime(time) {
-          return typeof time === "string"
-            ? new Date(time)
-            : // @ts-ignore
-              new Date(time.year, time.month, time.day);
-        }
-
-        const debouncedUpdateVisiblePriceSeriesType = debounce(
-          updateVisiblePriceSeriesType,
-          50
-        );
-
-        /**
          * @param {Scale} scale
-         * @param {number} id
+         * @returns {ISeriesApi<'Line'>}
          */
-        function chunkIdToIndex(scale, id) {
-          return scale === "date"
-            ? id - 2009
-            : Math.floor(id / HEIGHT_CHUNK_SIZE);
+        function setWhitespace(chart, scale) {
+          const whitespace = chart.addLineSeries();
+
+          if (scale === "date") {
+            if (!whitespaceDateDataset.length) {
+              initDateWhitespace();
+            }
+
+            whitespace.setData(whitespaceDateDataset);
+          } else {
+            if (!whitespaceHeightDataset.length) {
+              initHeightWhitespace();
+            }
+
+            whitespace.setData(whitespaceHeightDataset);
+
+            const time = whitespaceHeightDataset.length;
+            whitespace.update({
+              time: /** @type {Time} */ (time),
+              value: NaN,
+            });
+          }
+
+          return whitespace;
         }
 
-        function createDatasets() {
-          /** @type {Map<DatePath, ResourceDataset<"date">>} */
-          const date = new Map();
-          /** @type {Map<HeightPath, ResourceDataset<"height">>} */
-          const height = new Map();
+        return { setWhitespace };
+      }
+      const { setWhitespace } = initWhitespace();
 
-          const USE_LOCAL_URL = true;
-          const LOCAL_URL = "/api";
-          const WEB_URL = "https://kibo.money/api";
-          const BACKUP_WEB_URL = "https://backup.kibo.money/api";
+      /**
+       * @param {HTMLElement} parent
+       * @param {number} chartIndex
+       */
+      function createChartDiv(parent, chartIndex) {
+        const chartWrapper = window.document.createElement("div");
+        chartWrapper.classList.add("chart-wrapper");
+        parent.append(chartWrapper);
 
-          const datasetsOwner = signals.getOwner();
+        const chartDiv = window.document.createElement("div");
+        chartDiv.classList.add("chart-div");
+        chartWrapper.append(chartDiv);
 
-          /**
-           * @template {Scale} S
-           * @template {number | OHLC} [T=number]
-           * @param {S} scale
-           * @param {string} path
-           */
-          function createResourceDataset(scale, path) {
-            return /** @type {ResourceDataset<S, T>} */ (
-              signals.runWithOwner(datasetsOwner, () => {
-                /** @typedef {DatasetValue<T extends number ? SingleValueData : CandlestickData>} Value */
+        function createUnitAndModeElements() {
+          const fieldset = window.document.createElement("fieldset");
+          fieldset.dataset.size = "sm";
+          chartWrapper.append(fieldset);
 
-                const baseURL = `${
-                  USE_LOCAL_URL && location.hostname === "localhost"
-                    ? LOCAL_URL
-                    : WEB_URL
-                }/${path}`;
+          const unitName = signals.createSignal("");
 
-                const backupURL = `${
-                  USE_LOCAL_URL && location.hostname === "localhost"
-                    ? LOCAL_URL
-                    : BACKUP_WEB_URL
-                }/${path}`;
+          const id = `chart-${chartIndex}-mode`;
 
-                const fetchedJSONs = new Array(
-                  (new Date().getFullYear() -
-                    new Date("2009-01-01").getFullYear() +
-                    2) *
-                    (scale === "date" ? 1 : 6)
-                )
-                  .fill(null)
-                  .map(() => {
-                    const json = signals.createSignal(
-                      /** @type {FetchedJSON<S, T> | null} */ (null)
-                    );
+          const chartModes = /** @type {const} */ (["Linear", "Log"]);
+          const chartMode = signals.createSignal(
+            /** @type {Lowercase<typeof chartModes[number]>} */ (
+              localStorage.getItem(id) ||
+                chartModes[chartIndex ? 0 : 1].toLowerCase()
+            )
+          );
 
-                    /** @type {FetchedResult<S, T>} */
-                    const fetchedResult = {
-                      at: null,
-                      json,
-                      loading: false,
-                      vec: signals.createMemo(() => {
-                        const map = json()?.dataset.map;
+          const field = reactiveDom.createField({
+            choices: chartModes,
+            selected: chartMode(),
+            id,
+            title: unitName,
+          });
+          fieldset.append(field);
 
-                        if (!map) {
-                          return null;
+          field.addEventListener("change", (event) => {
+            // @ts-ignore
+            const value = event.target.value;
+            localStorage.setItem(id, value);
+            chartMode.set(value);
+          });
+
+          return { unitName, chartMode };
+        }
+        const { unitName, chartMode } = createUnitAndModeElements();
+
+        return { chartDiv, unitName, chartMode };
+      }
+
+      /**
+       * @param {IChartApi} chart
+       */
+      function subscribeVisibleTimeRangeChange(chart) {
+        chart.timeScale().subscribeVisibleTimeRangeChange((range) => {
+          if (!range) return;
+
+          visibleTimeRange.set(range);
+
+          debouncedUpdateVisibleDatasetIds();
+
+          debouncedSaveVisibleRange();
+        });
+      }
+
+      /**
+       * @param {{ chart: IChartApi; visibleLogicalRange?: LogicalRange; visibleTimeRange?: TimeRange }} args
+       */
+      function updateVisiblePriceSeriesType({
+        chart,
+        visibleLogicalRange,
+        visibleTimeRange,
+      }) {
+        try {
+          const width = chart.timeScale().width();
+
+          /** @type {number} */
+          let ratio;
+
+          if (visibleLogicalRange) {
+            ratio = (visibleLogicalRange.to - visibleLogicalRange.from) / width;
+          } else if (visibleTimeRange) {
+            if (scale() === "date") {
+              const to = /** @type {Time} */ (visibleTimeRange.to);
+              const from = /** @type {Time} */ (visibleTimeRange.from);
+
+              ratio =
+                utils.getNumberOfDaysBetweenTwoDates(
+                  utils.dateFromTime(from),
+                  utils.dateFromTime(to)
+                ) / width;
+            } else {
+              const to = /** @type {number} */ (visibleTimeRange.to);
+              const from = /** @type {number} */ (visibleTimeRange.from);
+
+              ratio = (to - from) / width;
+            }
+          } else {
+            throw Error();
+          }
+
+          if (ratio <= 0.5) {
+            priceSeriesType.set("Candlestick");
+          } else {
+            priceSeriesType.set("Line");
+          }
+        } catch {}
+      }
+
+      const debouncedUpdateVisiblePriceSeriesType = utils.debounce(
+        updateVisiblePriceSeriesType,
+        50
+      );
+
+      /**
+       * @param {Scale} scale
+       * @param {number} id
+       */
+      function chunkIdToIndex(scale, id) {
+        return scale === "date"
+          ? id - 2009
+          : Math.floor(id / HEIGHT_CHUNK_SIZE);
+      }
+
+      function createDatasets() {
+        /** @type {Map<DatePath, ResourceDataset<"date">>} */
+        const date = new Map();
+        /** @type {Map<HeightPath, ResourceDataset<"height">>} */
+        const height = new Map();
+
+        const USE_LOCAL_URL = true;
+        const LOCAL_URL = "/api";
+        const WEB_URL = "https://kibo.money/api";
+        const BACKUP_WEB_URL = "https://backup.kibo.money/api";
+
+        const datasetsOwner = signals.getOwner();
+
+        /**
+         * @template {Scale} S
+         * @template {number | OHLC} [T=number]
+         * @param {S} scale
+         * @param {string} path
+         */
+        function createResourceDataset(scale, path) {
+          return /** @type {ResourceDataset<S, T>} */ (
+            signals.runWithOwner(datasetsOwner, () => {
+              /** @typedef {DatasetValue<T extends number ? SingleValueData : CandlestickData>} Value */
+
+              const baseURL = `${
+                USE_LOCAL_URL && env.localhost ? LOCAL_URL : WEB_URL
+              }/${path}`;
+
+              const backupURL = `${
+                USE_LOCAL_URL && env.localhost ? LOCAL_URL : BACKUP_WEB_URL
+              }/${path}`;
+
+              const fetchedJSONs = new Array(
+                (new Date().getFullYear() -
+                  new Date("2009-01-01").getFullYear() +
+                  2) *
+                  (scale === "date" ? 1 : 6)
+              )
+                .fill(null)
+                .map(() => {
+                  const json = signals.createSignal(
+                    /** @type {FetchedJSON<S, T> | null} */ (null)
+                  );
+
+                  /** @type {FetchedResult<S, T>} */
+                  const fetchedResult = {
+                    at: null,
+                    json,
+                    loading: false,
+                    vec: signals.createMemo(() => {
+                      const map = json()?.dataset.map;
+
+                      if (!map) {
+                        return null;
+                      }
+
+                      const chunkId = json()?.chunk.id;
+
+                      if (chunkId === undefined) {
+                        throw `ChunkId ${chunkId} is undefined`;
+                      }
+
+                      if (Array.isArray(map)) {
+                        const values = new Array(map.length);
+
+                        for (let i = 0; i < map.length; i++) {
+                          const value = map[i];
+
+                          values[i] = /** @type {Value} */ ({
+                            time: /** @type {Time} */ (chunkId + i),
+                            ...(typeof value !== "number" && value !== null
+                              ? {
+                                  .../** @type {OHLC} */ (value),
+                                  value: value.close,
+                                }
+                              : {
+                                  value:
+                                    value === null
+                                      ? NaN
+                                      : /** @type {number} */ (value),
+                                }),
+                          });
                         }
 
-                        const chunkId = json()?.chunk.id;
-
-                        if (chunkId === undefined) {
-                          throw `ChunkId ${chunkId} is undefined`;
-                        }
-
-                        if (Array.isArray(map)) {
-                          const values = new Array(map.length);
-
-                          for (let i = 0; i < map.length; i++) {
-                            const value = map[i];
-
-                            values[i] = /** @type {Value} */ ({
-                              time: /** @type {Time} */ (chunkId + i),
+                        return values;
+                      } else {
+                        return Object.entries(map).map(
+                          ([date, value]) =>
+                            /** @type {Value} */ ({
+                              time: date,
                               ...(typeof value !== "number" && value !== null
                                 ? {
                                     .../** @type {OHLC} */ (value),
@@ -6626,1505 +6596,1605 @@ lazySignals.then((importedSignals) => {
                                         ? NaN
                                         : /** @type {number} */ (value),
                                   }),
-                            });
-                          }
+                            })
+                        );
+                      }
+                    }),
+                  };
 
-                          return values;
-                        } else {
-                          return Object.entries(map).map(
-                            ([date, value]) =>
-                              /** @type {Value} */ ({
-                                time: date,
-                                ...(typeof value !== "number" && value !== null
-                                  ? {
-                                      .../** @type {OHLC} */ (value),
-                                      value: value.close,
-                                    }
-                                  : {
-                                      value:
-                                        value === null
-                                          ? NaN
-                                          : /** @type {number} */ (value),
-                                    }),
-                              })
-                          );
-                        }
-                      }),
-                    };
+                  return fetchedResult;
+                });
 
-                    return fetchedResult;
-                  });
+              /**
+               * @param {number} id
+               */
+              async function _fetch(id) {
+                const index = chunkIdToIndex(scale, id);
 
-                /**
-                 * @param {number} id
-                 */
-                async function _fetch(id) {
-                  const index = chunkIdToIndex(scale, id);
+                if (
+                  index < 0 ||
+                  (scale === "date" && id > new Date().getUTCFullYear()) ||
+                  (scale === "height" &&
+                    id > 165 * 365 * (new Date().getUTCFullYear() - 2009))
+                ) {
+                  return;
+                }
+
+                const fetched = fetchedJSONs.at(index);
+
+                if (scale === "height" && index > 0) {
+                  const length = fetchedJSONs.at(index - 1)?.vec()?.length;
+
+                  if (length !== undefined && length < HEIGHT_CHUNK_SIZE) {
+                    return;
+                  }
+                }
+
+                if (!fetched || fetched.loading) {
+                  return;
+                } else if (fetched.at) {
+                  const diff = new Date().getTime() - fetched.at.getTime();
 
                   if (
-                    index < 0 ||
-                    (scale === "date" && id > new Date().getUTCFullYear()) ||
-                    (scale === "height" &&
-                      id > 165 * 365 * (new Date().getUTCFullYear() - 2009))
+                    diff < ONE_MINUTE_IN_MS ||
+                    (index < fetchedJSONs.findLastIndex((json) => json.at) &&
+                      diff < ONE_HOUR_IN_MS)
                   ) {
                     return;
                   }
+                }
 
-                  const fetched = fetchedJSONs.at(index);
+                fetched.loading = true;
 
-                  if (scale === "height" && index > 0) {
-                    const length = fetchedJSONs.at(index - 1)?.vec()?.length;
+                /** @type {Cache | undefined} */
+                let cache;
 
-                    if (length !== undefined && length < HEIGHT_CHUNK_SIZE) {
-                      return;
-                    }
-                  }
+                const urlWithQuery = `${baseURL}?chunk=${id}`;
+                const backupUrlWithQuery = `${backupURL}?chunk=${id}`;
 
-                  if (!fetched || fetched.loading) {
-                    return;
-                  } else if (fetched.at) {
-                    const diff = new Date().getTime() - fetched.at.getTime();
-
-                    if (
-                      diff < ONE_MINUTE_IN_MS ||
-                      (index < fetchedJSONs.findLastIndex((json) => json.at) &&
-                        diff < ONE_HOUR_IN_MS)
-                    ) {
-                      return;
-                    }
-                  }
-
-                  fetched.loading = true;
-
-                  /** @type {Cache | undefined} */
-                  let cache;
-
-                  const urlWithQuery = `${baseURL}?chunk=${id}`;
-                  const backupUrlWithQuery = `${backupURL}?chunk=${id}`;
-
-                  if (!fetched.json()) {
-                    try {
-                      cache = await caches.open("resources");
-
-                      const cachedResponse = await cache.match(urlWithQuery);
-
-                      if (cachedResponse) {
-                        /** @type {FetchedJSON<S, T> | null} */
-                        const json = await convertResponseToJSON(
-                          cachedResponse
-                        );
-
-                        if (json) {
-                          console.log(`cache: ${path}?chunk=${id}`);
-
-                          fetched.json.set(() => json);
-                        }
-                      }
-                    } catch {}
-                  }
-
-                  if (!navigator.onLine) {
-                    fetched.loading = false;
-                    return;
-                  }
-
-                  /** @type {Response | undefined} */
-                  let fetchedResponse;
-
-                  /** @type {RequestInit} */
-                  const fetchConfig = {
-                    signal: AbortSignal.timeout(5000),
-                  };
-
+                if (!fetched.json()) {
                   try {
-                    fetchedResponse = await fetch(urlWithQuery, fetchConfig);
+                    cache = await caches.open("resources");
 
-                    if (!fetchedResponse.ok) {
-                      throw Error;
+                    const cachedResponse = await cache.match(urlWithQuery);
+
+                    if (cachedResponse) {
+                      /** @type {FetchedJSON<S, T> | null} */
+                      const json = await convertResponseToJSON(cachedResponse);
+
+                      if (json) {
+                        console.log(`cache: ${path}?chunk=${id}`);
+
+                        fetched.json.set(() => json);
+                      }
                     }
+                  } catch {}
+                }
+
+                if (!navigator.onLine) {
+                  fetched.loading = false;
+                  return;
+                }
+
+                /** @type {Response | undefined} */
+                let fetchedResponse;
+
+                /** @type {RequestInit} */
+                const fetchConfig = {
+                  signal: AbortSignal.timeout(5000),
+                };
+
+                try {
+                  fetchedResponse = await fetch(urlWithQuery, fetchConfig);
+
+                  if (!fetchedResponse.ok) {
+                    throw Error;
+                  }
+                } catch {
+                  try {
+                    fetchedResponse = await fetch(
+                      backupUrlWithQuery,
+                      fetchConfig
+                    );
                   } catch {
-                    try {
-                      fetchedResponse = await fetch(
-                        backupUrlWithQuery,
-                        fetchConfig
-                      );
-                    } catch {
-                      fetched.loading = false;
-                      return;
-                    }
-
-                    if (!fetchedResponse || !fetchedResponse.ok) {
-                      fetched.loading = false;
-                      return;
-                    }
-                  }
-
-                  const clonedResponse = fetchedResponse.clone();
-
-                  /** @type {FetchedJSON<S, T> | null} */
-                  const json = await convertResponseToJSON(fetchedResponse);
-
-                  if (!json) {
                     fetched.loading = false;
                     return;
                   }
 
-                  console.log(`fetch: ${path}?chunk=${id}`);
-
-                  const previousMap = fetched.json()?.dataset;
-                  const newMap = json.dataset.map;
-
-                  const previousLength = Object.keys(previousMap || []).length;
-                  const newLength = Object.keys(newMap).length;
-
-                  if (!newLength) {
+                  if (!fetchedResponse || !fetchedResponse.ok) {
                     fetched.loading = false;
                     return;
                   }
+                }
 
-                  if (previousLength && previousLength === newLength) {
-                    const previousLastValue = Object.values(
-                      previousMap || []
-                    ).at(-1);
-                    const newLastValue = Object.values(newMap).at(-1);
+                const clonedResponse = fetchedResponse.clone();
 
-                    if (newLastValue === null && previousLastValue === null) {
+                /** @type {FetchedJSON<S, T> | null} */
+                const json = await convertResponseToJSON(fetchedResponse);
+
+                if (!json) {
+                  fetched.loading = false;
+                  return;
+                }
+
+                console.log(`fetch: ${path}?chunk=${id}`);
+
+                const previousMap = fetched.json()?.dataset;
+                const newMap = json.dataset.map;
+
+                const previousLength = Object.keys(previousMap || []).length;
+                const newLength = Object.keys(newMap).length;
+
+                if (!newLength) {
+                  fetched.loading = false;
+                  return;
+                }
+
+                if (previousLength && previousLength === newLength) {
+                  const previousLastValue = Object.values(previousMap || []).at(
+                    -1
+                  );
+                  const newLastValue = Object.values(newMap).at(-1);
+
+                  if (newLastValue === null && previousLastValue === null) {
+                    fetched.at = new Date();
+                    fetched.loading = false;
+                    return;
+                  } else if (typeof newLastValue === "number") {
+                    if (previousLastValue === newLastValue) {
                       fetched.at = new Date();
                       fetched.loading = false;
                       return;
-                    } else if (typeof newLastValue === "number") {
-                      if (previousLastValue === newLastValue) {
-                        fetched.at = new Date();
-                        fetched.loading = false;
-                        return;
-                      }
-                    } else {
-                      const previousLastOHLC = /** @type {OHLC} */ (
-                        previousLastValue
-                      );
-                      const newLastOHLC = /** @type {OHLC} */ (newLastValue);
+                    }
+                  } else {
+                    const previousLastOHLC = /** @type {OHLC} */ (
+                      previousLastValue
+                    );
+                    const newLastOHLC = /** @type {OHLC} */ (newLastValue);
 
-                      if (
-                        previousLastOHLC.open === newLastOHLC.open &&
-                        previousLastOHLC.high === newLastOHLC.high &&
-                        previousLastOHLC.low === newLastOHLC.low &&
-                        previousLastOHLC.close === newLastOHLC.close
-                      ) {
-                        fetched.loading = false;
-                        fetched.at = new Date();
-                        return;
-                      }
+                    if (
+                      previousLastOHLC.open === newLastOHLC.open &&
+                      previousLastOHLC.high === newLastOHLC.high &&
+                      previousLastOHLC.low === newLastOHLC.low &&
+                      previousLastOHLC.close === newLastOHLC.close
+                    ) {
+                      fetched.loading = false;
+                      fetched.at = new Date();
+                      return;
                     }
                   }
-
-                  fetched.json.set(() => json);
-
-                  runWhenIdle(async function () {
-                    try {
-                      await cache?.put(urlWithQuery, clonedResponse);
-                    } catch (_) {}
-                  });
-
-                  fetched.at = new Date();
-                  fetched.loading = false;
                 }
 
-                /** @type {ResourceDataset<S, T>} */
-                const resource = {
-                  scale,
-                  url: baseURL,
-                  fetch: _fetch,
-                  fetchedJSONs,
-                  // drop() {
-                  //   dispose();
-                  //   fetchedJSONs.forEach((fetched) => {
-                  //     fetched.at = null;
-                  //     fetched.json.set(null);
-                  //   });
-                  // },
-                };
+                fetched.json.set(() => json);
 
-                return resource;
-              })
-            );
-          }
+                utils.runWhenIdle(async function () {
+                  try {
+                    await cache?.put(urlWithQuery, clonedResponse);
+                  } catch (_) {}
+                });
 
-          /**
-           * @template {Scale} S
-           * @template {number | OHLC} T
-           * @param {Response} response
-           */
-          async function convertResponseToJSON(response) {
-            try {
-              return /** @type {FetchedJSON<S, T>} */ (await response.json());
-            } catch (_) {
-              return null;
-            }
-          }
-
-          /**
-           * @template {Scale} S
-           * @param {S} scale
-           * @param {DatasetPath<S>} path
-           * @returns {ResourceDataset<S>}
-           */
-          function getOrImport(scale, path) {
-            if (scale === "date") {
-              const found = date.get(/** @type {DatePath} */ (path));
-              if (found) return /** @type {ResourceDataset<S>} */ (found);
-            } else {
-              const found = height.get(/** @type {HeightPath} */ (path));
-              if (found) return /** @type {ResourceDataset<S>} */ (found);
-            }
-
-            /** @type {ResourceDataset<S, any>} */
-            let dataset;
-
-            if (path === `/${scale}-to-price`) {
-              /** @type {ResourceDataset<S, OHLC>} */
-              dataset = createResourceDataset(scale, path);
-            } else {
-              /** @type {ResourceDataset<S, number>} */
-              dataset = createResourceDataset(scale, path);
-            }
-
-            if (scale === "date") {
-              date.set(
-                /** @type {DatePath} */ (path),
-                /** @type {any} */ (dataset)
-              );
-            } else {
-              height.set(
-                /** @type {HeightPath} */ (path),
-                /** @type {any} */ (dataset)
-              );
-            }
-
-            return dataset;
-          }
-
-          return {
-            getOrImport,
-          };
-        }
-
-        const datasets = createDatasets();
-
-        /**
-         * @type {DeepPartial<SeriesOptionsCommon>} */
-        const defaultSeriesOptions = {
-          // @ts-ignore
-          lineWidth: 1.5,
-          priceLineVisible: false,
-          baseLineVisible: false,
-          baseLineColor: "",
-        };
-
-        /**
-         * @param {SpecificSeriesBlueprintWithChart<BaselineSpecificSeriesBlueprint>} args
-         */
-        function createBaseLineSeries({ chart, color, options, owner }) {
-          const topLineColor = color || colors.profit;
-          const bottomLineColor = color || colors.loss;
-
-          function computeColors() {
-            return {
-              topLineColor: topLineColor(),
-              bottomLineColor: bottomLineColor(),
-            };
-          }
-
-          const transparent = "transparent";
-
-          /** @type {DeepPartial<BaselineStyleOptions & SeriesOptionsCommon>} */
-          const seriesOptions = {
-            priceScaleId: "right",
-            ...defaultSeriesOptions,
-            ...options,
-            topFillColor1: transparent,
-            topFillColor2: transparent,
-            bottomFillColor1: transparent,
-            bottomFillColor2: transparent,
-            ...computeColors(),
-          };
-
-          const series = chart.addBaselineSeries(seriesOptions);
-
-          signals.runWithOwner(owner, () => {
-            signals.createEffect(() => {
-              series.applyOptions(computeColors());
-            });
-          });
-
-          return series;
-        }
-
-        /**
-         * @param {SpecificSeriesBlueprintWithChart<CandlestickSpecificSeriesBlueprint>} args
-         */
-        function createCandlesticksSeries({ chart, options, owner }) {
-          function computeColors() {
-            const upColor = colors.profit();
-            const downColor = colors.loss();
-
-            return {
-              upColor,
-              wickUpColor: upColor,
-              downColor,
-              wickDownColor: downColor,
-            };
-          }
-
-          const candlestickSeries = chart.addCandlestickSeries({
-            baseLineVisible: false,
-            borderVisible: false,
-            priceLineVisible: false,
-            baseLineColor: "",
-            borderColor: "",
-            borderDownColor: "",
-            borderUpColor: "",
-            ...options,
-            ...computeColors(),
-          });
-
-          signals.runWithOwner(owner, () => {
-            signals.createEffect(() => {
-              candlestickSeries.applyOptions(computeColors());
-            });
-          });
-
-          return candlestickSeries;
-        }
-
-        /**
-         * @param {SpecificSeriesBlueprintWithChart<LineSpecificSeriesBlueprint>} args
-         */
-        function createLineSeries({ chart, color, options, owner }) {
-          function computeColors() {
-            return {
-              color: color(),
-            };
-          }
-
-          const series = chart.addLineSeries({
-            ...defaultSeriesOptions,
-            ...options,
-            ...computeColors(),
-          });
-
-          signals.runWithOwner(owner, () => {
-            signals.createEffect(() => {
-              series.applyOptions(computeColors());
-            });
-          });
-
-          return series;
-        }
-
-        const hoveredLegend = signals.createSignal(
-          /** @type {{label: HTMLLabelElement, series: Series} | undefined} */ (
-            undefined
-          )
-        );
-        const notHoveredLegendTransparency = "66";
-        /**
-         * @param {Object} args
-         * @param {Series} args.series
-         * @param {Accessor<boolean>} [args.disabled]
-         * @param {string} [args.name]
-         */
-        function createLegend({ series, disabled, name }) {
-          const div = window.document.createElement("div");
-          signals.createEffect(() => {
-            div.hidden = disabled?.() ? true : false;
-          });
-          legendElement.prepend(div);
-
-          const { input, label, spanMain } = createComplexLabeledInput({
-            inputId: `legend-${series.title}`,
-            inputName: `selected-${series.title}${name}`,
-            inputValue: "value",
-            labelTitle: "Click to toggle",
-            name: series.title,
-            onClick: (event) => {
-              event.preventDefault();
-              event.stopPropagation();
-              input.checked = !input.checked;
-              series.active.set(input.checked);
-            },
-          });
-          div.append(label);
-          label.addEventListener("mouseover", () => {
-            const hovered = hoveredLegend();
-
-            if (!hovered || hovered.label !== label) {
-              hoveredLegend.set({ label, series });
-            }
-          });
-          label.addEventListener("mouseleave", () => {
-            hoveredLegend.set(undefined);
-          });
-
-          signals.createEffect(() => {
-            input.checked = series.active();
-          });
-
-          function shouldHighlight() {
-            const hovered = hoveredLegend();
-            return (
-              !hovered ||
-              (hovered.label === label && hovered.series.active()) ||
-              (hovered.label !== label && !hovered.series.active())
-            );
-          }
-
-          const spanColors = window.document.createElement("span");
-          spanColors.classList.add("colors");
-          spanMain.prepend(spanColors);
-          const colors = Array.isArray(series.color)
-            ? series.color
-            : [series.color];
-          colors.forEach((color) => {
-            const spanColor = window.document.createElement("span");
-            spanColors.append(spanColor);
-
-            signals.createEffect(() => {
-              const c = color();
-              if (shouldHighlight()) {
-                spanColor.style.backgroundColor = c;
-              } else {
-                spanColor.style.backgroundColor = `${c}${notHoveredLegendTransparency}`;
+                fetched.at = new Date();
+                fetched.loading = false;
               }
-            });
-          });
 
-          function createHoverEffect() {
-            const initialColors = /** @type {Record<string, any>} */ ({});
-            const darkenedColors = /** @type {Record<string, any>} */ ({});
+              /** @type {ResourceDataset<S, T>} */
+              const resource = {
+                scale,
+                url: baseURL,
+                fetch: _fetch,
+                fetchedJSONs,
+                // drop() {
+                //   dispose();
+                //   fetchedJSONs.forEach((fetched) => {
+                //     fetched.at = null;
+                //     fetched.json.set(null);
+                //   });
+                // },
+              };
 
-            signals.createEffect(
-              // @ts-ignore
-              (previouslyHovered) => {
-                const hovered = hoveredLegend();
-
-                if (!hovered && !previouslyHovered) return hovered;
-
-                const ids = visibleDatasetIds();
-
-                for (let i = 0; i < ids.length; i++) {
-                  const chunkId = ids[i];
-                  const chunkIndex = chunkIdToIndex(scale(), chunkId);
-                  const chunk = series.chunks[chunkIndex]?.();
-
-                  if (!chunk) return;
-
-                  if (hovered) {
-                    const seriesOptions = chunk.options();
-                    if (!seriesOptions) return;
-
-                    initialColors[i] = {};
-                    darkenedColors[i] = {};
-
-                    Object.entries(seriesOptions).forEach(([k, v]) => {
-                      if (k.toLowerCase().includes("color") && v) {
-                        if (typeof v === "string" && !v.startsWith("#")) {
-                          return;
-                        }
-
-                        v = /** @type {string} */ (v).substring(0, 7);
-                        initialColors[i][k] = v;
-                        darkenedColors[i][
-                          k
-                        ] = `${v}${notHoveredLegendTransparency}`;
-                      } else if (k === "lastValueVisible" && v) {
-                        initialColors[i][k] = true;
-                        darkenedColors[i][k] = false;
-                      }
-                    });
-                  }
-
-                  if (shouldHighlight()) {
-                    chunk.applyOptions(initialColors[i]);
-                  } else {
-                    chunk.applyOptions(darkenedColors[i]);
-                  }
-                }
-
-                return hovered;
-              },
-              undefined
-            );
-          }
-          createHoverEffect();
-
-          const anchor = window.document.createElement("a");
-          anchor.href = series.dataset.url;
-          anchor.innerHTML = `<svg viewBox="0 0 16 16"><path d="M8.75 2.75a.75.75 0 0 0-1.5 0v5.69L5.03 6.22a.75.75 0 0 0-1.06 1.06l3.5 3.5a.75.75 0 0 0 1.06 0l3.5-3.5a.75.75 0 0 0-1.06-1.06L8.75 8.44V2.75Z" /><path d="M3.5 9.75a.75.75 0 0 0-1.5 0v1.5A2.75 2.75 0 0 0 4.75 14h6.5A2.75 2.75 0 0 0 14 11.25v-1.5a.75.75 0 0 0-1.5 0v1.5c0 .69-.56 1.25-1.25 1.25h-6.5c-.69 0-1.25-.56-1.25-1.25v-1.5Z" /></svg>`;
-          anchor.target = "_target";
-          anchor.rel = "noopener noreferrer";
-          div.append(anchor);
+              return resource;
+            })
+          );
         }
 
         /**
          * @template {Scale} S
-         * @param {Object} args
-         * @param {ResourceDataset<S>} args.dataset
-         * @param {SeriesBlueprint} args.seriesBlueprint
-         * @param {Preset} args.preset
-         * @param {IChartApi} args.chart
-         * @param {number} args.index
-         * @param {Series[]} args.chartSeries
-         * @param {Accessor<number | undefined>} args.lastVisibleDatasetIndex
-         * @param {VoidFunction} args.setMinMaxMarkersWhenIdle
-         * @param {Accessor<boolean>} [args.disabled]
+         * @template {number | OHLC} T
+         * @param {Response} response
          */
-        function createSeries({
-          chart,
-          preset,
-          index: seriesIndex,
-          disabled: _disabled,
-          lastVisibleDatasetIndex,
-          setMinMaxMarkersWhenIdle,
-          dataset,
-          seriesBlueprint,
-          chartSeries,
-        }) {
-          const { title, color, defaultActive, type, options } =
-            seriesBlueprint;
-
-          /** @type {Signal<ISeriesApi<SeriesType> | undefined>[]} */
-          const chunks = new Array(dataset.fetchedJSONs.length);
-
-          const id = stringToId(title);
-          const storageId = presetAndSeriesToLocalStorageKey(
-            preset,
-            seriesBlueprint
-          );
-
-          const active = signals.createSignal(
-            urlParamsHelpers.readBool(id) ??
-              localeStorageHelpers.readBool(storageId) ??
-              defaultActive ??
-              true
-          );
-
-          const disabled = signals.createMemo(_disabled || (() => false));
-
-          const visible = signals.createMemo(() => active() && !disabled());
-
-          signals.createEffect(() => {
-            if (disabled()) {
-              return;
-            }
-
-            const a = active();
-
-            if (a !== (defaultActive || true)) {
-              urlParamsHelpers.write(id, a);
-              localeStorageHelpers.write(storageId, a);
-            } else {
-              urlParamsHelpers.remove(id);
-              localeStorageHelpers.remove(storageId);
-            }
-          });
-
-          /** @type {Series} */
-          const series = {
-            active,
-            chunks,
-            color: color || [colors.profit, colors.loss],
-            dataset,
-            disabled,
-            id,
-            title,
-            visible,
-          };
-
-          chartSeries.push(series);
-
-          const owner = signals.getOwner();
-
-          dataset.fetchedJSONs.forEach((json, index) => {
-            const chunk = signals.createSignal(
-              /** @type {ISeriesApi<SeriesType> | undefined} */ (undefined)
-            );
-
-            chunks[index] = chunk;
-
-            signals.createEffect(() => {
-              const values = json.vec();
-
-              if (!values) return;
-
-              if (seriesIndex > 0) {
-                const previousSeriesChunk = chartSeries.at(seriesIndex - 1)
-                  ?.chunks[index];
-                const isPreviousSeriesOnChart = previousSeriesChunk?.();
-                if (!isPreviousSeriesOnChart) {
-                  return;
-                }
-              }
-
-              signals.untrack(() => {
-                let s = chunk();
-
-                if (!s) {
-                  switch (type) {
-                    case "Baseline": {
-                      s = createBaseLineSeries({
-                        chart,
-                        color,
-                        options,
-                        owner,
-                      });
-                      break;
-                    }
-                    case "Candlestick": {
-                      s = createCandlesticksSeries({
-                        chart,
-                        options,
-                        owner,
-                      });
-                      break;
-                    }
-                    // case "Histogram": {
-                    //   s = createHistogramSeries({
-                    //     chart,
-                    //     options,
-                    //   });
-                    //   break;
-                    // }
-                    default:
-                    case "Line": {
-                      s = createLineSeries({
-                        chart,
-                        color,
-                        options,
-                        owner,
-                      });
-                      break;
-                    }
-                  }
-
-                  // if (priceScaleOptions) {
-                  //   s.priceScale().applyOptions(priceScaleOptions);
-                  // }
-
-                  chunk.set(s);
-                }
-
-                s.setData(values);
-
-                setMinMaxMarkersWhenIdle();
-              });
-            });
-
-            signals.createEffect(() => {
-              const _chunk = chunk();
-              const currentVec = dataset.fetchedJSONs.at(index)?.vec();
-              const nextVec = dataset.fetchedJSONs.at(index + 1)?.vec();
-
-              if (_chunk && currentVec?.length && nextVec?.length) {
-                _chunk.update(nextVec[0]);
-              }
-            });
-
-            const isChunkLastVisible = signals.createMemo(() => {
-              const last = lastVisibleDatasetIndex();
-              return last !== undefined && last === index;
-            });
-
-            signals.createEffect(() => {
-              chunk()?.applyOptions({
-                lastValueVisible: series.visible() && isChunkLastVisible(),
-              });
-            });
-
-            const shouldChunkBeVisible = signals.createMemo(() => {
-              if (visibleDatasetIds().length) {
-                const start = chunkIdToIndex(
-                  scale(),
-                  /** @type {number} */ (visibleDatasetIds().at(0))
-                );
-                const end = chunkIdToIndex(
-                  scale(),
-                  /** @type {number} */ (visibleDatasetIds().at(-1))
-                );
-
-                if (index >= start && index <= end) {
-                  return true;
-                }
-              }
-
-              return false;
-            });
-
-            let wasChunkVisible = false;
-            const chunkVisible = signals.createMemo(() => {
-              if (series.disabled()) {
-                wasChunkVisible = false;
-              } else {
-                wasChunkVisible = wasChunkVisible || shouldChunkBeVisible();
-              }
-              return wasChunkVisible;
-            });
-
-            signals.createEffect(() => {
-              const visible = series.visible() && chunkVisible();
-              chunk()?.applyOptions({
-                visible,
-              });
-            });
-          });
-
-          createLegend({ series, disabled, name: type });
-
-          return series;
+        async function convertResponseToJSON(response) {
+          try {
+            return /** @type {FetchedJSON<S, T>} */ (await response.json());
+          } catch (_) {
+            return null;
+          }
         }
 
         /**
-         * @param {Object} args
-         * @param {PriceSeriesType} args.type
-         * @param {VoidFunction} args.setMinMaxMarkersWhenIdle
-         * @param {Preset} args.preset
-         * @param {IChartApi} args.chart
-         * @param {Series[]} args.chartSeries
-         * @param {Accessor<number | undefined>} args.lastVisibleDatasetIndex
+         * @template {Scale} S
+         * @param {S} scale
+         * @param {DatasetPath<S>} path
+         * @returns {ResourceDataset<S>}
          */
-        function createPriceSeries({
-          type,
-          setMinMaxMarkersWhenIdle,
+        function getOrImport(scale, path) {
+          if (scale === "date") {
+            const found = date.get(/** @type {DatePath} */ (path));
+            if (found) return /** @type {ResourceDataset<S>} */ (found);
+          } else {
+            const found = height.get(/** @type {HeightPath} */ (path));
+            if (found) return /** @type {ResourceDataset<S>} */ (found);
+          }
+
+          /** @type {ResourceDataset<S, any>} */
+          let dataset;
+
+          if (path === `/${scale}-to-price`) {
+            /** @type {ResourceDataset<S, OHLC>} */
+            dataset = createResourceDataset(scale, path);
+          } else {
+            /** @type {ResourceDataset<S, number>} */
+            dataset = createResourceDataset(scale, path);
+          }
+
+          if (scale === "date") {
+            date.set(
+              /** @type {DatePath} */ (path),
+              /** @type {any} */ (dataset)
+            );
+          } else {
+            height.set(
+              /** @type {HeightPath} */ (path),
+              /** @type {any} */ (dataset)
+            );
+          }
+
+          return dataset;
+        }
+
+        return {
+          getOrImport,
+        };
+      }
+
+      const datasets = createDatasets();
+
+      /**
+       * @type {DeepPartial<SeriesOptionsCommon>} */
+      const defaultSeriesOptions = {
+        // @ts-ignore
+        lineWidth: 1.5,
+        priceLineVisible: false,
+        baseLineVisible: false,
+        baseLineColor: "",
+      };
+
+      /**
+       * @param {SpecificSeriesBlueprintWithChart<BaselineSpecificSeriesBlueprint>} args
+       */
+      function createBaseLineSeries({ chart, color, options, owner }) {
+        const topLineColor = color || colors.profit;
+        const bottomLineColor = color || colors.loss;
+
+        function computeColors() {
+          return {
+            topLineColor: topLineColor(),
+            bottomLineColor: bottomLineColor(),
+          };
+        }
+
+        const transparent = "transparent";
+
+        /** @type {DeepPartial<BaselineStyleOptions & SeriesOptionsCommon>} */
+        const seriesOptions = {
+          priceScaleId: "right",
+          ...defaultSeriesOptions,
+          ...options,
+          topFillColor1: transparent,
+          topFillColor2: transparent,
+          bottomFillColor1: transparent,
+          bottomFillColor2: transparent,
+          ...computeColors(),
+        };
+
+        const series = chart.addBaselineSeries(seriesOptions);
+
+        signals.runWithOwner(owner, () => {
+          signals.createEffect(() => {
+            series.applyOptions(computeColors());
+          });
+        });
+
+        return series;
+      }
+
+      /**
+       * @param {SpecificSeriesBlueprintWithChart<CandlestickSpecificSeriesBlueprint>} args
+       */
+      function createCandlesticksSeries({ chart, options, owner }) {
+        function computeColors() {
+          const upColor = colors.profit();
+          const downColor = colors.loss();
+
+          return {
+            upColor,
+            wickUpColor: upColor,
+            downColor,
+            wickDownColor: downColor,
+          };
+        }
+
+        const candlestickSeries = chart.addCandlestickSeries({
+          baseLineVisible: false,
+          borderVisible: false,
+          priceLineVisible: false,
+          baseLineColor: "",
+          borderColor: "",
+          borderDownColor: "",
+          borderUpColor: "",
+          ...options,
+          ...computeColors(),
+        });
+
+        signals.runWithOwner(owner, () => {
+          signals.createEffect(() => {
+            candlestickSeries.applyOptions(computeColors());
+          });
+        });
+
+        return candlestickSeries;
+      }
+
+      /**
+       * @param {SpecificSeriesBlueprintWithChart<LineSpecificSeriesBlueprint>} args
+       */
+      function createLineSeries({ chart, color, options, owner }) {
+        function computeColors() {
+          return {
+            color: color(),
+          };
+        }
+
+        const series = chart.addLineSeries({
+          ...defaultSeriesOptions,
+          ...options,
+          ...computeColors(),
+        });
+
+        signals.runWithOwner(owner, () => {
+          signals.createEffect(() => {
+            series.applyOptions(computeColors());
+          });
+        });
+
+        return series;
+      }
+
+      const hoveredLegend = signals.createSignal(
+        /** @type {{label: HTMLLabelElement, series: Series} | undefined} */ (
+          undefined
+        )
+      );
+      const notHoveredLegendTransparency = "66";
+      /**
+       * @param {Object} args
+       * @param {Series} args.series
+       * @param {Accessor<boolean>} [args.disabled]
+       * @param {string} [args.name]
+       */
+      function createLegend({ series, disabled, name }) {
+        const div = window.document.createElement("div");
+        signals.createEffect(() => {
+          div.hidden = disabled?.() ? true : false;
+        });
+        legendElement.prepend(div);
+
+        const { input, label, spanMain } = dom.createComplexLabeledInput({
+          inputId: `legend-${series.title}`,
+          inputName: `selected-${series.title}${name}`,
+          inputValue: "value",
+          labelTitle: "Click to toggle",
+          name: series.title,
+          onClick: (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            input.checked = !input.checked;
+            series.active.set(input.checked);
+          },
+        });
+        div.append(label);
+        label.addEventListener("mouseover", () => {
+          const hovered = hoveredLegend();
+
+          if (!hovered || hovered.label !== label) {
+            hoveredLegend.set({ label, series });
+          }
+        });
+        label.addEventListener("mouseleave", () => {
+          hoveredLegend.set(undefined);
+        });
+
+        signals.createEffect(() => {
+          input.checked = series.active();
+        });
+
+        function shouldHighlight() {
+          const hovered = hoveredLegend();
+          return (
+            !hovered ||
+            (hovered.label === label && hovered.series.active()) ||
+            (hovered.label !== label && !hovered.series.active())
+          );
+        }
+
+        const spanColors = window.document.createElement("span");
+        spanColors.classList.add("colors");
+        spanMain.prepend(spanColors);
+        const colors = Array.isArray(series.color)
+          ? series.color
+          : [series.color];
+        colors.forEach((color) => {
+          const spanColor = window.document.createElement("span");
+          spanColors.append(spanColor);
+
+          signals.createEffect(() => {
+            const c = color();
+            if (shouldHighlight()) {
+              spanColor.style.backgroundColor = c;
+            } else {
+              spanColor.style.backgroundColor = `${c}${notHoveredLegendTransparency}`;
+            }
+          });
+        });
+
+        function createHoverEffect() {
+          const initialColors = /** @type {Record<string, any>} */ ({});
+          const darkenedColors = /** @type {Record<string, any>} */ ({});
+
+          signals.createEffect(
+            // @ts-ignore
+            (previouslyHovered) => {
+              const hovered = hoveredLegend();
+
+              if (!hovered && !previouslyHovered) return hovered;
+
+              const ids = visibleDatasetIds();
+
+              for (let i = 0; i < ids.length; i++) {
+                const chunkId = ids[i];
+                const chunkIndex = chunkIdToIndex(scale(), chunkId);
+                const chunk = series.chunks[chunkIndex]?.();
+
+                if (!chunk) return;
+
+                if (hovered) {
+                  const seriesOptions = chunk.options();
+                  if (!seriesOptions) return;
+
+                  initialColors[i] = {};
+                  darkenedColors[i] = {};
+
+                  Object.entries(seriesOptions).forEach(([k, v]) => {
+                    if (k.toLowerCase().includes("color") && v) {
+                      if (typeof v === "string" && !v.startsWith("#")) {
+                        return;
+                      }
+
+                      v = /** @type {string} */ (v).substring(0, 7);
+                      initialColors[i][k] = v;
+                      darkenedColors[i][
+                        k
+                      ] = `${v}${notHoveredLegendTransparency}`;
+                    } else if (k === "lastValueVisible" && v) {
+                      initialColors[i][k] = true;
+                      darkenedColors[i][k] = false;
+                    }
+                  });
+                }
+
+                if (shouldHighlight()) {
+                  chunk.applyOptions(initialColors[i]);
+                } else {
+                  chunk.applyOptions(darkenedColors[i]);
+                }
+              }
+
+              return hovered;
+            },
+            undefined
+          );
+        }
+        createHoverEffect();
+
+        const anchor = window.document.createElement("a");
+        anchor.href = series.dataset.url;
+        anchor.innerHTML = `<svg viewBox="0 0 16 16"><path d="M8.75 2.75a.75.75 0 0 0-1.5 0v5.69L5.03 6.22a.75.75 0 0 0-1.06 1.06l3.5 3.5a.75.75 0 0 0 1.06 0l3.5-3.5a.75.75 0 0 0-1.06-1.06L8.75 8.44V2.75Z" /><path d="M3.5 9.75a.75.75 0 0 0-1.5 0v1.5A2.75 2.75 0 0 0 4.75 14h6.5A2.75 2.75 0 0 0 14 11.25v-1.5a.75.75 0 0 0-1.5 0v1.5c0 .69-.56 1.25-1.25 1.25h-6.5c-.69 0-1.25-.56-1.25-1.25v-1.5Z" /></svg>`;
+        anchor.target = "_target";
+        anchor.rel = "noopener noreferrer";
+        div.append(anchor);
+      }
+
+      /**
+       * @template {Scale} S
+       * @param {Object} args
+       * @param {ResourceDataset<S>} args.dataset
+       * @param {SeriesBlueprint} args.seriesBlueprint
+       * @param {Preset} args.preset
+       * @param {IChartApi} args.chart
+       * @param {number} args.index
+       * @param {Series[]} args.chartSeries
+       * @param {Accessor<number | undefined>} args.lastVisibleDatasetIndex
+       * @param {VoidFunction} args.setMinMaxMarkersWhenIdle
+       * @param {Accessor<boolean>} [args.disabled]
+       */
+      function createSeries({
+        chart,
+        preset,
+        index: seriesIndex,
+        disabled: _disabled,
+        lastVisibleDatasetIndex,
+        setMinMaxMarkersWhenIdle,
+        dataset,
+        seriesBlueprint,
+        chartSeries,
+      }) {
+        const { title, color, defaultActive, type, options } = seriesBlueprint;
+
+        /** @type {Signal<ISeriesApi<SeriesType> | undefined>[]} */
+        const chunks = new Array(dataset.fetchedJSONs.length);
+
+        const id = utils.stringToId(title);
+        const storageId = presetAndSeriesToLocalStorageKey(
           preset,
+          seriesBlueprint
+        );
+
+        const active = signals.createSignal(
+          urlParamsHelpers.readBool(id) ??
+            localStorageHelpers.readBool(storageId) ??
+            defaultActive ??
+            true
+        );
+
+        const disabled = signals.createMemo(_disabled || (() => false));
+
+        const visible = signals.createMemo(() => active() && !disabled());
+
+        signals.createEffect(() => {
+          if (disabled()) {
+            return;
+          }
+
+          const a = active();
+
+          if (a !== (defaultActive || true)) {
+            urlParamsHelpers.write(id, a);
+            localStorageHelpers.write(storageId, a);
+          } else {
+            urlParamsHelpers.remove(id);
+            localStorageHelpers.remove(storageId);
+          }
+        });
+
+        /** @type {Series} */
+        const series = {
+          active,
+          chunks,
+          color: color || [colors.profit, colors.loss],
+          dataset,
+          disabled,
+          id,
+          title,
+          visible,
+        };
+
+        chartSeries.push(series);
+
+        const owner = signals.getOwner();
+
+        dataset.fetchedJSONs.forEach((json, index) => {
+          const chunk = signals.createSignal(
+            /** @type {ISeriesApi<SeriesType> | undefined} */ (undefined)
+          );
+
+          chunks[index] = chunk;
+
+          signals.createEffect(() => {
+            const values = json.vec();
+
+            if (!values) return;
+
+            if (seriesIndex > 0) {
+              const previousSeriesChunk = chartSeries.at(seriesIndex - 1)
+                ?.chunks[index];
+              const isPreviousSeriesOnChart = previousSeriesChunk?.();
+              if (!isPreviousSeriesOnChart) {
+                return;
+              }
+            }
+
+            signals.untrack(() => {
+              let s = chunk();
+
+              if (!s) {
+                switch (type) {
+                  case "Baseline": {
+                    s = createBaseLineSeries({
+                      chart,
+                      color,
+                      options,
+                      owner,
+                    });
+                    break;
+                  }
+                  case "Candlestick": {
+                    s = createCandlesticksSeries({
+                      chart,
+                      options,
+                      owner,
+                    });
+                    break;
+                  }
+                  // case "Histogram": {
+                  //   s = createHistogramSeries({
+                  //     chart,
+                  //     options,
+                  //   });
+                  //   break;
+                  // }
+                  default:
+                  case "Line": {
+                    s = createLineSeries({
+                      chart,
+                      color,
+                      options,
+                      owner,
+                    });
+                    break;
+                  }
+                }
+
+                // if (priceScaleOptions) {
+                //   s.priceScale().applyOptions(priceScaleOptions);
+                // }
+
+                chunk.set(s);
+              }
+
+              s.setData(values);
+
+              setMinMaxMarkersWhenIdle();
+            });
+          });
+
+          signals.createEffect(() => {
+            const _chunk = chunk();
+            const currentVec = dataset.fetchedJSONs.at(index)?.vec();
+            const nextVec = dataset.fetchedJSONs.at(index + 1)?.vec();
+
+            if (_chunk && currentVec?.length && nextVec?.length) {
+              _chunk.update(nextVec[0]);
+            }
+          });
+
+          const isChunkLastVisible = signals.createMemo(() => {
+            const last = lastVisibleDatasetIndex();
+            return last !== undefined && last === index;
+          });
+
+          signals.createEffect(() => {
+            chunk()?.applyOptions({
+              lastValueVisible: series.visible() && isChunkLastVisible(),
+            });
+          });
+
+          const shouldChunkBeVisible = signals.createMemo(() => {
+            if (visibleDatasetIds().length) {
+              const start = chunkIdToIndex(
+                scale(),
+                /** @type {number} */ (visibleDatasetIds().at(0))
+              );
+              const end = chunkIdToIndex(
+                scale(),
+                /** @type {number} */ (visibleDatasetIds().at(-1))
+              );
+
+              if (index >= start && index <= end) {
+                return true;
+              }
+            }
+
+            return false;
+          });
+
+          let wasChunkVisible = false;
+          const chunkVisible = signals.createMemo(() => {
+            if (series.disabled()) {
+              wasChunkVisible = false;
+            } else {
+              wasChunkVisible = wasChunkVisible || shouldChunkBeVisible();
+            }
+            return wasChunkVisible;
+          });
+
+          signals.createEffect(() => {
+            const visible = series.visible() && chunkVisible();
+            chunk()?.applyOptions({
+              visible,
+            });
+          });
+        });
+
+        createLegend({ series, disabled, name: type });
+
+        return series;
+      }
+
+      /**
+       * @param {Object} args
+       * @param {PriceSeriesType} args.type
+       * @param {VoidFunction} args.setMinMaxMarkersWhenIdle
+       * @param {Preset} args.preset
+       * @param {IChartApi} args.chart
+       * @param {Series[]} args.chartSeries
+       * @param {Accessor<number | undefined>} args.lastVisibleDatasetIndex
+       */
+      function createPriceSeries({
+        type,
+        setMinMaxMarkersWhenIdle,
+        preset,
+        chart,
+        chartSeries,
+        lastVisibleDatasetIndex,
+      }) {
+        const s = scale();
+
+        /** @type {AnyDatasetPath} */
+        const datasetPath = `${s}-to-price`;
+
+        const dataset = datasets.getOrImport(s, datasetPath);
+
+        // Don't trigger reactivity by design
+        activeDatasets().add(dataset);
+
+        const title = "Price";
+
+        /** @type {SeriesBlueprint} */
+        let seriesBlueprint;
+
+        if (type === "Candlestick") {
+          seriesBlueprint = {
+            datasetPath,
+            title,
+            type: "Candlestick",
+          };
+        } else {
+          seriesBlueprint = {
+            datasetPath,
+            title,
+            color: colors.default,
+          };
+        }
+
+        const disabled = signals.createMemo(() => priceSeriesType() !== type);
+
+        const priceSeries = createSeries({
+          seriesBlueprint,
+          dataset,
+          preset,
+          index: -1,
           chart,
           chartSeries,
           lastVisibleDatasetIndex,
-        }) {
-          const s = scale();
+          disabled,
+          setMinMaxMarkersWhenIdle,
+        });
 
-          /** @type {AnyDatasetPath} */
-          const datasetPath = `${s}-to-price`;
+        function createLiveCandleUpdateEffect() {
+          signals.createEffect(() => {
+            const latest = webSockets.krakenCandle.latest();
 
-          const dataset = datasets.getOrImport(s, datasetPath);
+            if (!latest) return;
 
-          // Don't trigger reactivity by design
-          activeDatasets().add(dataset);
+            const index = chunkIdToIndex(s, latest.year);
 
-          const title = "Price";
+            const series = priceSeries.chunks.at(index)?.();
 
-          /** @type {SeriesBlueprint} */
-          let seriesBlueprint;
-
-          if (type === "Candlestick") {
-            seriesBlueprint = {
-              datasetPath,
-              title,
-              type: "Candlestick",
-            };
-          } else {
-            seriesBlueprint = {
-              datasetPath,
-              title,
-              color: colors.default,
-            };
-          }
-
-          const disabled = signals.createMemo(() => priceSeriesType() !== type);
-
-          const priceSeries = createSeries({
-            seriesBlueprint,
-            dataset,
-            preset,
-            index: -1,
-            chart,
-            chartSeries,
-            lastVisibleDatasetIndex,
-            disabled,
-            setMinMaxMarkersWhenIdle,
+            series?.update(latest);
           });
-
-          function createLiveCandleUpdateEffect() {
-            signals.createEffect(() => {
-              const latest = webSockets.krakenCandle.latest();
-
-              if (!latest) return;
-
-              const index = chunkIdToIndex(s, latest.year);
-
-              const series = priceSeries.chunks.at(index)?.();
-
-              series?.update(latest);
-            });
-          }
-          createLiveCandleUpdateEffect();
-
-          return priceSeries;
         }
+        createLiveCandleUpdateEffect();
 
-        function resetLegendElement() {
-          legendElement.innerHTML = "";
-        }
+        return priceSeries;
+      }
 
-        /** @type {Array<(IChartApi & {whitespace: ISeriesApi<"Line">})>} */
-        let charts = [];
+      function resetLegendElement() {
+        legendElement.innerHTML = "";
+      }
 
-        function applyPreset() {
-          const preset = selected();
-          const scale = preset.scale;
-          visibleTimeRange.set(getInitialVisibleTimeRange(scale));
+      function applyPreset() {
+        const preset = selected();
+        const scale = preset.scale;
+        visibleTimeRange.set(getInitialVisibleTimeRange(scale));
 
-          activeDatasets.set((s) => {
-            s.clear();
-            return s;
-          });
+        activeDatasets.set((s) => {
+          s.clear();
+          return s;
+        });
 
-          const chartCount = 1 + (preset.bottom?.length ? 1 : 0);
-          const blueprintCount =
-            1 + (preset.top?.length || 0) + (preset.bottom?.length || 0);
-          const chartsBlueprints = [preset.top || [], preset.bottom].flatMap(
-            (list) => (list ? [list] : [])
+        const chartCount = 1 + (preset.bottom?.length ? 1 : 0);
+        const blueprintCount =
+          1 + (preset.top?.length || 0) + (preset.bottom?.length || 0);
+        const chartsBlueprints = [preset.top || [], preset.bottom].flatMap(
+          (list) => (list ? [list] : [])
+        );
+
+        resetLegendElement();
+        resetChartListElement();
+
+        /** @type {Series[]} */
+        const allSeries = [];
+
+        charts = chartsBlueprints.map((seriesBlueprints, chartIndex) => {
+          const { chartDiv, unitName, chartMode } = createChartDiv(
+            chartListElement,
+            chartIndex
           );
 
-          resetLegendElement();
-          resetChartListElement();
+          const chart =
+            /** @type {IChartApi & {whitespace: ISeriesApi<"Line">}} */ (
+              createChart({
+                scale,
+                element: chartDiv,
+              })
+            );
+          chart.whitespace = setWhitespace(chart, scale);
+
+          setInitialVisibleTimeRange(chart);
 
           /** @type {Series[]} */
-          const allSeries = [];
+          const chartSeries = [];
 
-          charts = chartsBlueprints.map((seriesBlueprints, chartIndex) => {
-            const { chartDiv, unitName, chartMode } = createChartDiv(
-              chartListElement,
-              chartIndex
-            );
+          function setMinMaxMarkers() {
+            try {
+              const { from, to } = visibleTimeRange();
 
-            const chart =
-              /** @type {IChartApi & {whitespace: ISeriesApi<"Line">}} */ (
-                createChart({
-                  scale,
-                  element: chartDiv,
-                })
-              );
-            chart.whitespace = setWhitespace(chart, scale);
+              const dateFrom = new Date(String(from));
+              const dateTo = new Date(String(to));
 
-            setInitialVisibleTimeRange(chart);
+              /** @type {Marker | undefined} */
+              let max = undefined;
+              /** @type {Marker | undefined} */
+              let min = undefined;
 
-            /** @type {Series[]} */
-            const chartSeries = [];
+              const ids = visibleDatasetIds();
 
-            function setMinMaxMarkers() {
-              try {
-                const { from, to } = visibleTimeRange();
+              for (let i = 0; i < chartSeries.length; i++) {
+                const { chunks, dataset } = chartSeries[i];
 
-                const dateFrom = new Date(String(from));
-                const dateTo = new Date(String(to));
+                for (let j = 0; j < ids.length; j++) {
+                  const id = ids[j];
 
-                /** @type {Marker | undefined} */
-                let max = undefined;
-                /** @type {Marker | undefined} */
-                let min = undefined;
+                  const chunkIndex = chunkIdToIndex(scale, id);
 
-                const ids = visibleDatasetIds();
+                  const chunk = chunks.at(chunkIndex)?.();
 
-                for (let i = 0; i < chartSeries.length; i++) {
-                  const { chunks, dataset } = chartSeries[i];
+                  if (!chunk || !chunk?.options().visible) continue;
 
-                  for (let j = 0; j < ids.length; j++) {
-                    const id = ids[j];
+                  chunk.setMarkers([]);
 
-                    const chunkIndex = chunkIdToIndex(scale, id);
+                  const isCandlestick = chunk.seriesType() === "Candlestick";
 
-                    const chunk = chunks.at(chunkIndex)?.();
+                  const vec = dataset.fetchedJSONs.at(chunkIndex)?.vec();
 
-                    if (!chunk || !chunk?.options().visible) continue;
+                  if (!vec) return;
 
-                    chunk.setMarkers([]);
+                  for (let k = 0; k < vec.length; k++) {
+                    const data = vec[k];
 
-                    const isCandlestick = chunk.seriesType() === "Candlestick";
+                    let number;
 
-                    const vec = dataset.fetchedJSONs.at(chunkIndex)?.vec();
+                    if (scale === "date") {
+                      const date = utils.dateFromTime(data.time);
 
-                    if (!vec) return;
+                      number = date.getTime();
 
-                    for (let k = 0; k < vec.length; k++) {
-                      const data = vec[k];
-
-                      let number;
-
-                      if (scale === "date") {
-                        const date = dateFromTime(data.time);
-
-                        number = date.getTime();
-
-                        if (date <= dateFrom || date >= dateTo) {
-                          continue;
-                        }
-                      } else {
-                        const height = data.time;
-
-                        number = /** @type {number} */ (height);
-
-                        if (height <= from || height >= to) {
-                          continue;
-                        }
+                      if (date <= dateFrom || date >= dateTo) {
+                        continue;
                       }
+                    } else {
+                      const height = data.time;
 
-                      // @ts-ignore
-                      const high = isCandlestick ? data["high"] : data.value;
-                      // @ts-ignore
-                      const low = isCandlestick ? data["low"] : data.value;
+                      number = /** @type {number} */ (height);
 
-                      if (!max || high > max.value) {
-                        max = {
-                          weight: number,
-                          time: data.time,
-                          value: high,
-                          seriesChunk: chunk,
-                        };
+                      if (height <= from || height >= to) {
+                        continue;
                       }
-                      if (!min || low < min.value) {
-                        min = {
-                          weight: number,
-                          time: data.time,
-                          value: low,
-                          seriesChunk: chunk,
-                        };
-                      }
+                    }
+
+                    // @ts-ignore
+                    const high = isCandlestick ? data["high"] : data.value;
+                    // @ts-ignore
+                    const low = isCandlestick ? data["low"] : data.value;
+
+                    if (!max || high > max.value) {
+                      max = {
+                        weight: number,
+                        time: data.time,
+                        value: high,
+                        seriesChunk: chunk,
+                      };
+                    }
+                    if (!min || low < min.value) {
+                      min = {
+                        weight: number,
+                        time: data.time,
+                        value: low,
+                        seriesChunk: chunk,
+                      };
                     }
                   }
                 }
-
-                /** @type {(SeriesMarker<Time> & Weighted) | undefined} */
-                let minMarker;
-                /** @type {(SeriesMarker<Time> & Weighted) | undefined} */
-                let maxMarker;
-
-                if (min) {
-                  minMarker = {
-                    weight: min.weight,
-                    time: min.time,
-                    color: colors.default(),
-                    position: "belowBar",
-                    shape: "arrowUp",
-                    size: 0,
-                    text: numberToShortUSLocale(min.value),
-                  };
-                }
-
-                if (max) {
-                  maxMarker = {
-                    weight: max.weight,
-                    time: max.time,
-                    color: colors.default(),
-                    position: "aboveBar",
-                    shape: "arrowDown",
-                    size: 0,
-                    text: numberToShortUSLocale(max.value),
-                  };
-                }
-
-                if (
-                  min &&
-                  max &&
-                  min.seriesChunk === max.seriesChunk &&
-                  minMarker &&
-                  maxMarker
-                ) {
-                  min.seriesChunk.setMarkers(
-                    [minMarker, maxMarker].sort((a, b) => a.weight - b.weight)
-                  );
-                } else {
-                  if (min && minMarker) {
-                    min.seriesChunk.setMarkers([minMarker]);
-                  }
-
-                  if (max && maxMarker) {
-                    max.seriesChunk.setMarkers([maxMarker]);
-                  }
-                }
-              } catch (e) {}
-            }
-
-            const setMinMaxMarkersWhenIdle = () =>
-              runWhenIdle(
-                () => {
-                  setMinMaxMarkers();
-                },
-                blueprintCount * 10 + scale === "date" ? 50 : 100
-              );
-
-            function createSetMinMaxMarkersWhenIdleEffect() {
-              signals.createEffect(() => {
-                visibleTimeRange();
-                dark();
-                signals.untrack(setMinMaxMarkersWhenIdle);
-              });
-            }
-            createSetMinMaxMarkersWhenIdleEffect();
-
-            if (!chartIndex) {
-              subscribeVisibleTimeRangeChange(chart);
-
-              updateVisiblePriceSeriesType({
-                chart,
-                visibleTimeRange: visibleTimeRange(),
-              });
-
-              /** @param {PriceSeriesType} type */
-              function _createPriceSeries(type) {
-                return createPriceSeries({
-                  chart,
-                  chartSeries,
-                  lastVisibleDatasetIndex,
-                  preset,
-                  setMinMaxMarkersWhenIdle,
-                  type,
-                });
               }
 
-              const priceCandlestickSeries = _createPriceSeries("Candlestick");
-              const priceLineSeries = _createPriceSeries("Line");
+              /** @type {(SeriesMarker<Time> & Weighted) | undefined} */
+              let minMarker;
+              /** @type {(SeriesMarker<Time> & Weighted) | undefined} */
+              let maxMarker;
 
-              function createLinkPriceSeriesEffect() {
-                signals.createEffect(() => {
-                  priceCandlestickSeries.active.set(priceLineSeries.active());
-                });
-
-                signals.createEffect(() => {
-                  priceLineSeries.active.set(priceCandlestickSeries.active());
-                });
+              if (min) {
+                minMarker = {
+                  weight: min.weight,
+                  time: min.time,
+                  color: colors.default(),
+                  position: "belowBar",
+                  shape: "arrowUp",
+                  size: 0,
+                  text: locale.numberToShortUSFormat(min.value),
+                };
               }
-              createLinkPriceSeriesEffect();
 
-              /** @type {Unit} */
-              const unit = "US Dollars";
-              unitName.set(unit);
-            } else {
-              unitName.set(preset.unit);
-            }
+              if (max) {
+                maxMarker = {
+                  weight: max.weight,
+                  time: max.time,
+                  color: colors.default(),
+                  position: "aboveBar",
+                  shape: "arrowDown",
+                  size: 0,
+                  text: locale.numberToShortUSFormat(max.value),
+                };
+              }
 
-            [...seriesBlueprints]
-              .reverse()
-              .forEach((seriesBlueprint, index) => {
-                const dataset = datasets.getOrImport(
-                  scale,
-                  seriesBlueprint.datasetPath
+              if (
+                min &&
+                max &&
+                min.seriesChunk === max.seriesChunk &&
+                minMarker &&
+                maxMarker
+              ) {
+                min.seriesChunk.setMarkers(
+                  [minMarker, maxMarker].sort((a, b) => a.weight - b.weight)
                 );
+              } else {
+                if (min && minMarker) {
+                  min.seriesChunk.setMarkers([minMarker]);
+                }
 
-                // Don't trigger reactivity by design
-                activeDatasets().add(dataset);
+                if (max && maxMarker) {
+                  max.seriesChunk.setMarkers([maxMarker]);
+                }
+              }
+            } catch (e) {}
+          }
 
-                createSeries({
-                  index,
-                  seriesBlueprint,
-                  chart,
-                  preset,
-                  lastVisibleDatasetIndex,
-                  setMinMaxMarkersWhenIdle,
-                  chartSeries,
-                  dataset,
-                });
-              });
+          const setMinMaxMarkersWhenIdle = () =>
+            utils.runWhenIdle(
+              () => {
+                setMinMaxMarkers();
+              },
+              blueprintCount * 10 + scale === "date" ? 50 : 100
+            );
 
-            setMinMaxMarkers();
+          function createSetMinMaxMarkersWhenIdleEffect() {
+            signals.createEffect(() => {
+              visibleTimeRange();
+              dark();
+              signals.untrack(setMinMaxMarkersWhenIdle);
+            });
+          }
+          createSetMinMaxMarkersWhenIdleEffect();
 
-            activeDatasets.set((s) => s);
+          if (!chartIndex) {
+            subscribeVisibleTimeRangeChange(chart);
 
-            chartSeries.forEach((series) => {
-              allSeries.unshift(series);
-
-              signals.createEffect(() => {
-                series.active();
-                signals.untrack(setMinMaxMarkersWhenIdle);
-              });
+            updateVisiblePriceSeriesType({
+              chart,
+              visibleTimeRange: visibleTimeRange(),
             });
 
-            const chartVisible = signals.createMemo(() =>
-              chartSeries.some((series) => series.visible())
-            );
-
-            function createChartVisibilityEffect() {
-              signals.createEffect(() => {
-                const chartWrapper = chartDiv.parentElement;
-                if (!chartWrapper) throw "Should exist";
-                chartWrapper.hidden = !chartVisible();
+            /** @param {PriceSeriesType} type */
+            function _createPriceSeries(type) {
+              return createPriceSeries({
+                chart,
+                chartSeries,
+                lastVisibleDatasetIndex,
+                preset,
+                setMinMaxMarkersWhenIdle,
+                type,
               });
             }
-            createChartVisibilityEffect();
 
-            function createTimeScaleVisibilityEffect() {
+            const priceCandlestickSeries = _createPriceSeries("Candlestick");
+            const priceLineSeries = _createPriceSeries("Line");
+
+            function createLinkPriceSeriesEffect() {
               signals.createEffect(() => {
-                const visible = chartIndex === chartCount - 1 && chartVisible();
+                priceCandlestickSeries.active.set(priceLineSeries.active());
+              });
 
-                chart.timeScale().applyOptions({
-                  visible,
+              signals.createEffect(() => {
+                priceLineSeries.active.set(priceCandlestickSeries.active());
+              });
+            }
+            createLinkPriceSeriesEffect();
+
+            /** @type {Unit} */
+            const unit = "US Dollars";
+            unitName.set(unit);
+          } else {
+            unitName.set(preset.unit);
+          }
+
+          [...seriesBlueprints].reverse().forEach((seriesBlueprint, index) => {
+            const dataset = datasets.getOrImport(
+              scale,
+              seriesBlueprint.datasetPath
+            );
+
+            // Don't trigger reactivity by design
+            activeDatasets().add(dataset);
+
+            createSeries({
+              index,
+              seriesBlueprint,
+              chart,
+              preset,
+              lastVisibleDatasetIndex,
+              setMinMaxMarkersWhenIdle,
+              chartSeries,
+              dataset,
+            });
+          });
+
+          setMinMaxMarkers();
+
+          activeDatasets.set((s) => s);
+
+          chartSeries.forEach((series) => {
+            allSeries.unshift(series);
+
+            signals.createEffect(() => {
+              series.active();
+              signals.untrack(setMinMaxMarkersWhenIdle);
+            });
+          });
+
+          const chartVisible = signals.createMemo(() =>
+            chartSeries.some((series) => series.visible())
+          );
+
+          function createChartVisibilityEffect() {
+            signals.createEffect(() => {
+              const chartWrapper = chartDiv.parentElement;
+              if (!chartWrapper) throw "Should exist";
+              chartWrapper.hidden = !chartVisible();
+            });
+          }
+          createChartVisibilityEffect();
+
+          function createTimeScaleVisibilityEffect() {
+            signals.createEffect(() => {
+              const visible = chartIndex === chartCount - 1 && chartVisible();
+
+              chart.timeScale().applyOptions({
+                visible,
+              });
+
+              if (chartIndex === 1) {
+                charts[0].timeScale().applyOptions({
+                  visible: !visible,
                 });
+              }
+            });
+          }
+          createTimeScaleVisibilityEffect();
 
-                if (chartIndex === 1) {
-                  charts[0].timeScale().applyOptions({
-                    visible: !visible,
-                  });
-                }
-              });
-            }
-            createTimeScaleVisibilityEffect();
+          signals.createEffect(() =>
+            chart.priceScale("right").applyOptions({
+              mode: chartMode() === "linear" ? 0 : 1,
+            })
+          );
 
-            signals.createEffect(() =>
-              chart.priceScale("right").applyOptions({
-                mode: chartMode() === "linear" ? 0 : 1,
-              })
-            );
+          chart
+            .timeScale()
+            .subscribeVisibleLogicalRangeChange((logicalRange) => {
+              if (!logicalRange) return;
 
-            chart
-              .timeScale()
-              .subscribeVisibleLogicalRangeChange((logicalRange) => {
-                if (!logicalRange) return;
-
-                // Must be the chart with the visible timeScale
-                if (chartIndex === chartCount - 1) {
-                  debouncedUpdateVisiblePriceSeriesType({
-                    chart,
-                    visibleLogicalRange: logicalRange,
-                  });
-                }
-
-                for (
-                  let otherChartIndex = 0;
-                  otherChartIndex <= chartCount - 1;
-                  otherChartIndex++
-                ) {
-                  if (chartIndex !== otherChartIndex) {
-                    charts[otherChartIndex]
-                      .timeScale()
-                      .setVisibleLogicalRange(logicalRange);
-                  }
-                }
-              });
-
-            chart.subscribeCrosshairMove(({ time, sourceEvent }) => {
-              // Don't override crosshair position from scroll event
-              if (time && !sourceEvent) return;
+              // Must be the chart with the visible timeScale
+              if (chartIndex === chartCount - 1) {
+                debouncedUpdateVisiblePriceSeriesType({
+                  chart,
+                  visibleLogicalRange: logicalRange,
+                });
+              }
 
               for (
                 let otherChartIndex = 0;
                 otherChartIndex <= chartCount - 1;
                 otherChartIndex++
               ) {
-                const otherChart = charts[otherChartIndex];
-
-                if (otherChart && chartIndex !== otherChartIndex) {
-                  if (time) {
-                    otherChart.setCrosshairPosition(
-                      NaN,
-                      time,
-                      otherChart.whitespace
-                    );
-                  } else {
-                    // No time when mouse goes outside the chart
-                    otherChart.clearCrosshairPosition();
-                  }
+                if (chartIndex !== otherChartIndex) {
+                  charts[otherChartIndex]
+                    .timeScale()
+                    .setVisibleLogicalRange(logicalRange);
                 }
               }
             });
 
-            return chart;
-          });
-        }
+          chart.subscribeCrosshairMove(({ time, sourceEvent }) => {
+            // Don't override crosshair position from scroll event
+            if (time && !sourceEvent) return;
 
-        function createSelectedEffect() {
-          let firstRun = true;
+            for (
+              let otherChartIndex = 0;
+              otherChartIndex <= chartCount - 1;
+              otherChartIndex++
+            ) {
+              const otherChart = charts[otherChartIndex];
 
-          signals.createEffect(
-            // @ts-ignore
-            (_previouslySelected) => {
-              const previouslySelected = /** @type {Preset | undefined} */ (
-                _previouslySelected
-              );
-
-              const preset = selected();
-
-              if (!firstRun && !dom.isHidden(selectedLabelElement)) {
-                selectedLabelElement.click();
-              }
-              firstRun = false;
-
-              signals.untrack(() => {
-                if (previouslySelected) {
-                  urlParamsHelpers.reset(preset.id);
+              if (otherChart && chartIndex !== otherChartIndex) {
+                if (time) {
+                  otherChart.setCrosshairPosition(
+                    NaN,
+                    time,
+                    otherChart.whitespace
+                  );
+                } else {
+                  // No time when mouse goes outside the chart
+                  otherChart.clearCrosshairPosition();
                 }
-                urlParamsHelpers.replaceHistory({ pathname: preset.id });
-                signals.createRoot(applyPreset);
-              });
-
-              return preset;
-            },
-            undefined
-          );
-        }
-        createSelectedEffect();
-
-        function initTimeScaleElement() {
-          function initScrollButtons() {
-            const buttonBackward = dom.getElementById("button-backward");
-            const buttonBackwardIcon = dom.getElementById(
-              "button-backward-icon"
-            );
-            const buttonBackwardPauseIcon = dom.getElementById(
-              "button-backward-pause-icon"
-            );
-            const buttonForward = dom.getElementById("button-forward");
-            const buttonForwardIcon = dom.getElementById("button-forward-icon");
-            const buttonForwardPauseIcon = dom.getElementById(
-              "button-forward-pause-icon"
-            );
-
-            let interval = /** @type {number | undefined} */ (undefined);
-            let direction = /** @type  {1 | -1 | 0} */ (0);
-
-            const DELAY = 5;
-            const MULTIPLIER = DELAY / 10000;
-
-            function scrollChart() {
-              if (direction <= 0) {
-                buttonForwardIcon.removeAttribute("hidden");
-                buttonForwardPauseIcon.setAttribute("hidden", "");
               }
-              if (direction >= 0) {
-                buttonBackwardIcon.removeAttribute("hidden");
-                buttonBackwardPauseIcon.setAttribute("hidden", "");
-              }
-              if (direction === -1) {
-                buttonBackwardIcon.setAttribute("hidden", "");
-                buttonBackwardPauseIcon.removeAttribute("hidden");
-              }
-              if (direction === 1) {
-                buttonForwardIcon.setAttribute("hidden", "");
-                buttonForwardPauseIcon.removeAttribute("hidden");
-              }
-
-              if (!direction) {
-                clearInterval(interval);
-                return;
-              }
-
-              interval = setInterval(() => {
-                const time = charts.at(-1)?.timeScale();
-
-                if (!time) return;
-
-                const range = time.getVisibleLogicalRange();
-
-                if (!range) return;
-
-                const speed = (range.to - range.from) * MULTIPLIER * direction;
-
-                // @ts-ignore
-                range.from += speed;
-                // @ts-ignore
-                range.to += speed;
-
-                time.setVisibleLogicalRange(range);
-              }, DELAY);
             }
-
-            buttonBackward.addEventListener("click", () => {
-              if (direction !== -1) {
-                direction = -1;
-              } else {
-                direction = 0;
-              }
-              scrollChart();
-            });
-
-            buttonForward.addEventListener("click", () => {
-              if (direction !== 1) {
-                direction = 1;
-              } else {
-                direction = 0;
-              }
-              scrollChart();
-            });
-          }
-          initScrollButtons();
-
-          const GENESIS_DAY = "2009-01-03";
-
-          /**
-           * @param {HTMLButtonElement} button
-           */
-          function setTimeScale(button) {
-            const chart = charts.at(-1);
-            if (!chart) return;
-            const timeScale = chart.timeScale();
-
-            const year = button.dataset.year;
-            let days = button.dataset.days;
-            let toHeight = button.dataset.to;
-
-            if (scale() === "date") {
-              let from = new Date();
-              let to = new Date();
-              to.setUTCHours(0, 0, 0, 0);
-
-              if (!days && typeof button.dataset.yearToDate === "string") {
-                days = String(
-                  Math.ceil(
-                    (to.getTime() -
-                      new Date(`${to.getUTCFullYear()}-01-01`).getTime()) /
-                      ONE_DAY_IN_MS
-                  )
-                );
-              }
-
-              if (year) {
-                from = new Date(`${year}-01-01`);
-                to = new Date(`${year}-12-31`);
-              } else if (days) {
-                from.setDate(from.getUTCDate() - Number(days));
-              } else {
-                from = new Date(GENESIS_DAY);
-              }
-
-              timeScale.setVisibleRange({
-                from: /** @type {Time} */ (from.getTime() / 1000),
-                to: /** @type {Time} */ (to.getTime() / 1000),
-              });
-            } else if (scale() === "height") {
-              timeScale.setVisibleRange({
-                from: /** @type {Time} */ (0),
-                to: /** @type {Time} */ (
-                  Number(toHeight?.slice(0, -1)) * 1_000
-                ),
-              });
-            }
-          }
-
-          /**
-           * @param {HTMLElement} timeScaleButtons
-           */
-          function initGoToButtons(timeScaleButtons) {
-            Array.from(timeScaleButtons.children).forEach((button) => {
-              if (button.tagName !== "BUTTON") throw "Expect a button";
-              button.addEventListener("click", () => {
-                setTimeScale(/** @type {HTMLButtonElement} */ (button));
-              });
-            });
-          }
-          initGoToButtons(timeScaleDateButtons);
-          initGoToButtons(timeScaleHeightButtons);
-
-          function createScaleButtonsToggleEffect() {
-            signals.createEffect(() => {
-              const scaleIsDate = scale() === "date";
-
-              timeScaleDateButtons.hidden = !scaleIsDate;
-              timeScaleHeightButtons.hidden = scaleIsDate;
-            });
-          }
-          createScaleButtonsToggleEffect();
-        }
-        initTimeScaleElement();
-
-        function initFavoriteButton() {
-          buttonFavorite.addEventListener("click", () => {
-            const preset = selected();
-
-            preset.isFavorite.set((f) => {
-              const newState = !f;
-
-              const localStorageKey = presetToFavoriteLocalStorageKey(preset);
-              if (newState) {
-                localStorage.setItem(localStorageKey, "1");
-              } else {
-                localStorage.removeItem(localStorageKey);
-              }
-
-              return newState;
-            });
           });
 
-          signals.createEffect(() => {
-            if (selected().isFavorite()) {
-              buttonFavorite.dataset.highlight = "";
+          return chart;
+        });
+      }
+
+      function createApplyPresetEffect() {
+        signals.createEffect(() => {
+          selected();
+          signals.untrack(() => {
+            signals.createRoot(applyPreset);
+          });
+        });
+      }
+      createApplyPresetEffect();
+
+      function createUpdateSelectedHeaderEffect() {
+        signals.createEffect(() => {
+          const preset = selected();
+          presetTitle.innerHTML = preset.title;
+          presetDescription.innerHTML = preset.serializedPath;
+        });
+      }
+      createUpdateSelectedHeaderEffect();
+
+      function showSelectedFrame() {
+        selectedFrameElement.style.opacity = "1";
+      }
+      showSelectedFrame();
+
+      function initFavoriteButton() {
+        buttonFavorite.addEventListener("click", () => {
+          const preset = selected();
+
+          preset.isFavorite.set((f) => {
+            const newState = !f;
+
+            const localStorageKey = presetToFavoriteLocalStorageKey(preset);
+            if (newState) {
+              localStorage.setItem(localStorageKey, "1");
             } else {
-              delete buttonFavorite.dataset.highlight;
+              localStorage.removeItem(localStorageKey);
             }
+
+            return newState;
           });
-        }
-        initFavoriteButton();
+        });
 
-        function initShareButton() {
-          const shareDiv = dom.getElementById("share-div");
-          const shareContentDiv = dom.getElementById("share-content-div");
+        signals.createEffect(() => {
+          if (selected().isFavorite()) {
+            buttonFavorite.dataset.highlight = "";
+          } else {
+            delete buttonFavorite.dataset.highlight;
+          }
+        });
+      }
+      initFavoriteButton();
 
-          shareDiv.addEventListener("click", () => {
-            shareDiv.hidden = true;
-          });
+      function initShareButton() {
+        const shareDiv = dom.getElementById("share-div");
+        const shareContentDiv = dom.getElementById("share-content-div");
 
-          shareContentDiv.addEventListener("click", (event) => {
-            event.stopPropagation();
-            event.preventDefault();
-          });
+        shareDiv.addEventListener("click", () => {
+          shareDiv.hidden = true;
+        });
 
-          import("./packages/lean-qr/v2.3.4/script.js").then(({ generate }) => {
-            const imgQrcode = /** @type {HTMLImageElement} */ (
-              dom.getElementById("share-img")
-            );
+        shareContentDiv.addEventListener("click", (event) => {
+          event.stopPropagation();
+          event.preventDefault();
+        });
 
-            const anchor = /** @type {HTMLAnchorElement} */ (
-              dom.getElementById("share-anchor")
-            );
+        import("./packages/lean-qr/v2.3.4/script.js").then(({ generate }) => {
+          const imgQrcode = /** @type {HTMLImageElement} */ (
+            dom.getElementById("share-img")
+          );
+
+          const anchor = /** @type {HTMLAnchorElement} */ (
+            dom.getElementById("share-anchor")
+          );
+
+          dom.getElementById("button-share").addEventListener("click", () => {
             const href = window.location.href;
             anchor.href = href;
             anchor.innerHTML = href;
 
-            dom.getElementById("button-share").addEventListener("click", () => {
-              const qrcode = generate(
-                /** @type {any} */ (window.document.location.href)
-              )?.toDataURL({
-                // @ts-ignore
-                padX: 0,
-                padY: 0,
-              });
-              imgQrcode.src = qrcode || "";
+            const qrcode = generate(
+              /** @type {any} */ (window.document.location.href)
+            )?.toDataURL({
+              // @ts-ignore
+              padX: 0,
+              padY: 0,
+            });
+            imgQrcode.src = qrcode || "";
 
-              shareDiv.hidden = false;
+            shareDiv.hidden = false;
+          });
+        });
+      }
+      initShareButton();
+
+      function initTimeScaleElement() {
+        function initScrollButtons() {
+          const buttonBackward = dom.getElementById("button-backward");
+          const buttonBackwardIcon = dom.getElementById("button-backward-icon");
+          const buttonBackwardPauseIcon = dom.getElementById(
+            "button-backward-pause-icon"
+          );
+          const buttonForward = dom.getElementById("button-forward");
+          const buttonForwardIcon = dom.getElementById("button-forward-icon");
+          const buttonForwardPauseIcon = dom.getElementById(
+            "button-forward-pause-icon"
+          );
+
+          let interval = /** @type {number | undefined} */ (undefined);
+          let direction = /** @type  {1 | -1 | 0} */ (0);
+
+          const DELAY = 5;
+          const MULTIPLIER = DELAY / 10000;
+
+          function scrollChart() {
+            if (direction <= 0) {
+              buttonForwardIcon.removeAttribute("hidden");
+              buttonForwardPauseIcon.setAttribute("hidden", "");
+            }
+            if (direction >= 0) {
+              buttonBackwardIcon.removeAttribute("hidden");
+              buttonBackwardPauseIcon.setAttribute("hidden", "");
+            }
+            if (direction === -1) {
+              buttonBackwardIcon.setAttribute("hidden", "");
+              buttonBackwardPauseIcon.removeAttribute("hidden");
+            }
+            if (direction === 1) {
+              buttonForwardIcon.setAttribute("hidden", "");
+              buttonForwardPauseIcon.removeAttribute("hidden");
+            }
+
+            if (!direction) {
+              clearInterval(interval);
+              return;
+            }
+
+            interval = setInterval(() => {
+              const time = charts.at(-1)?.timeScale();
+
+              if (!time) return;
+
+              const range = time.getVisibleLogicalRange();
+
+              if (!range) return;
+
+              const speed = (range.to - range.from) * MULTIPLIER * direction;
+
+              // @ts-ignore
+              range.from += speed;
+              // @ts-ignore
+              range.to += speed;
+
+              time.setVisibleLogicalRange(range);
+            }, DELAY);
+          }
+
+          buttonBackward.addEventListener("click", () => {
+            if (direction !== -1) {
+              direction = -1;
+            } else {
+              direction = 0;
+            }
+            scrollChart();
+          });
+
+          buttonForward.addEventListener("click", () => {
+            if (direction !== 1) {
+              direction = 1;
+            } else {
+              direction = 0;
+            }
+            scrollChart();
+          });
+        }
+        initScrollButtons();
+
+        const GENESIS_DAY = "2009-01-03";
+
+        /**
+         * @param {HTMLButtonElement} button
+         */
+        function setTimeScale(button) {
+          const chart = charts.at(-1);
+          if (!chart) return;
+          const timeScale = chart.timeScale();
+
+          const year = button.dataset.year;
+          let days = button.dataset.days;
+          let toHeight = button.dataset.to;
+
+          if (scale() === "date") {
+            let from = new Date();
+            let to = new Date();
+            to.setUTCHours(0, 0, 0, 0);
+
+            if (!days && typeof button.dataset.yearToDate === "string") {
+              days = String(
+                Math.ceil(
+                  (to.getTime() -
+                    new Date(`${to.getUTCFullYear()}-01-01`).getTime()) /
+                    ONE_DAY_IN_MS
+                )
+              );
+            }
+
+            if (year) {
+              from = new Date(`${year}-01-01`);
+              to = new Date(`${year}-12-31`);
+            } else if (days) {
+              from.setDate(from.getUTCDate() - Number(days));
+            } else {
+              from = new Date(GENESIS_DAY);
+            }
+
+            timeScale.setVisibleRange({
+              from: /** @type {Time} */ (from.getTime() / 1000),
+              to: /** @type {Time} */ (to.getTime() / 1000),
+            });
+          } else if (scale() === "height") {
+            timeScale.setVisibleRange({
+              from: /** @type {Time} */ (0),
+              to: /** @type {Time} */ (Number(toHeight?.slice(0, -1)) * 1_000),
+            });
+          }
+        }
+
+        /**
+         * @param {HTMLElement} timeScaleButtons
+         */
+        function initGoToButtons(timeScaleButtons) {
+          Array.from(timeScaleButtons.children).forEach((button) => {
+            if (button.tagName !== "BUTTON") throw "Expect a button";
+            button.addEventListener("click", () => {
+              setTimeScale(/** @type {HTMLButtonElement} */ (button));
             });
           });
         }
-        initShareButton();
+        initGoToButtons(timeScaleDateButtons);
+        initGoToButtons(timeScaleHeightButtons);
+
+        function createScaleButtonsToggleEffect() {
+          signals.createEffect(() => {
+            const scaleIsDate = scale() === "date";
+
+            timeScaleDateButtons.hidden = !scaleIsDate;
+            timeScaleHeightButtons.hidden = scaleIsDate;
+          });
+        }
+        createScaleButtonsToggleEffect();
       }
-    )
-  );
+      initTimeScaleElement();
+    }
 
-  function initSelected() {}
+    dom.onFirstIntersection(selectedFrameElement, () =>
+      utils.runWhenIdle(() =>
+        import("./packages/lightweight-charts/v4.2.0/script.js").then(
+          ({
+            createChart: createClassicChart,
+            createChartEx: createCustomChart,
+          }) => {
+            initSelectedFrame({
+              createClassicChart,
+              createCustomChart,
+            });
+          }
+        )
+      )
+    );
+  }
+  initSelected();
 
-  function initFolders() {}
+  function initFolders() {
+    function initTreeElement() {
+      treeElement.set(() => {
+        const treeElement = window.document.createElement("div");
+        treeElement.classList.add("tree");
+        foldersFrameElement.append(treeElement);
+        return treeElement;
+      });
+    }
+
+    function createCountersDomUpdateEffect() {
+      foldersFilterAllCount.innerHTML = presetsList.length.toLocaleString();
+
+      signals.createEffect(() => {
+        foldersFilterFavoritesCount.innerHTML = counters
+          .favorites()
+          .toLocaleString();
+      });
+
+      signals.createEffect(() => {
+        foldersFilterNewCount.innerHTML = counters.new().toLocaleString();
+      });
+    }
+
+    function initFilters() {
+      const filterAllInput = /** @type {HTMLInputElement} */ (
+        dom.getElementById("folders-filter-all")
+      );
+      const filterFavoritesInput = /** @type {HTMLInputElement} */ (
+        dom.getElementById("folders-filter-favorites")
+      );
+      const filterNewInput = /** @type {HTMLInputElement} */ (
+        dom.getElementById("folders-filter-new")
+      );
+
+      filterAllInput.addEventListener("change", () => {
+        filter.set("all");
+      });
+      filterFavoritesInput.addEventListener("change", () => {
+        filter.set("favorites");
+      });
+      filterNewInput.addEventListener("change", () => {
+        filter.set("new");
+      });
+
+      signals.createEffect(() => {
+        const f = filter();
+        localStorage.setItem(foldersFilterLocalStorageKey, f);
+        switch (f) {
+          case "all": {
+            filterAllInput.checked = true;
+            break;
+          }
+          case "favorites": {
+            filterFavoritesInput.checked = true;
+            break;
+          }
+          case "new": {
+            filterNewInput.checked = true;
+            break;
+          }
+        }
+      });
+    }
+
+    function initCloseAllButton() {
+      dom
+        .getElementById("button-close-all-folders")
+        .addEventListener("click", () => {
+          detailsList.forEach((details) => (details.open = false));
+        });
+    }
+
+    function initGoToSelectedButton() {
+      dom
+        .getElementById("button-go-to-selected")
+        .addEventListener("click", () => {
+          goToSelected();
+        });
+    }
+
+    async function goToSelected() {
+      filter.set("all");
+
+      if (!selected()) throw "Selected should be set by now";
+      const selectedId = selected().id;
+
+      const path = selected().path;
+
+      let i = 0;
+      while (i !== path.length) {
+        try {
+          const id = path[i].id;
+          const details = /** @type {HTMLDetailsElement} */ (
+            dom.getElementById(id)
+          );
+          details.open = true;
+          i++;
+        } catch {
+          await utils.yield();
+        }
+      }
+
+      await utils.yield();
+
+      dom.getElementById(`${selectedId}-folders-selector`).scrollIntoView({
+        behavior: "instant",
+        block: "center",
+      });
+    }
+
+    dom.onFirstIntersection(foldersFrameElement, () => {
+      console.log("folders: init");
+      initTreeElement();
+      createCountersDomUpdateEffect();
+      initFilters();
+      initCloseAllButton();
+      initGoToSelectedButton();
+      if (isFirstTime) {
+        goToSelected();
+      }
+    });
+  }
+  initFolders();
 
   function initSearch() {
-    function initSearchFrame() {
-      function initNoInputButton() {
-        dom
-          .getElementById("search-no-input-text")
-          .addEventListener("click", () => {
-            selected.set(utils.array.getRandomElement(presetsList));
-          });
-      }
-      initNoInputButton();
-
-      /**
-       * @param {string} [value = '']
-       */
-      function setInputValue(value = "") {
-        searchInputElement.focus();
-        searchInputElement.value = value;
-        searchInputElement.dispatchEvent(new Event("input"));
-      }
-
-      function initResetSearchButton() {
-        const resetSearchButton = dom.getElementById("reset-search");
-        resetSearchButton.addEventListener("click", () => {
-          setInputValue();
+    function initNoInputButton() {
+      dom
+        .getElementById("search-no-input-text")
+        .addEventListener("click", () => {
+          selected.set(utils.array.getRandomElement(presetsList));
         });
-      }
+    }
+
+    /**
+     * @param {string} [value = '']
+     */
+    function setInputValue(value = "") {
+      searchInputElement.focus();
+      searchInputElement.value = value;
+      searchInputElement.dispatchEvent(new Event("input"));
+    }
+
+    function initResetSearchButton() {
+      const resetSearchButton = dom.getElementById("reset-search");
+      resetSearchButton.addEventListener("click", () => {
+        setInputValue();
+      });
+    }
+
+    function initSearchFrame() {
+      console.log("search: init");
+      initNoInputButton();
       initResetSearchButton();
 
       const localStorageSearchKey = "search";
@@ -8229,7 +8299,7 @@ lazySignals.then((importedSignals) => {
             signals.createRoot((_dispose) => {
               const needle = /** @type {string} */ (searchInputElement.value);
 
-              localeStorageHelpers.write(localStorageSearchKey, needle);
+              localStorageHelpers.write(localStorageSearchKey, needle);
 
               dispose?.();
 
@@ -8311,7 +8381,7 @@ lazySignals.then((importedSignals) => {
                 const li = window.document.createElement("li");
                 searchResults.appendChild(li);
 
-                const label = createPresetLabeledInput({
+                const label = reactiveDom.createPresetLabeledInput({
                   preset,
                   frame: "search",
                   name: title,
@@ -8348,16 +8418,29 @@ lazySignals.then((importedSignals) => {
       return preset ? [{ preset, date: new Date(timestamp) }] : [];
     });
 
+    /** @param {Date} date  */
+    function dateToTestedString(date) {
+      return date.toLocaleString().split(",")[0];
+    }
+
     function createUnshiftHistoryEffect() {
       signals.createEffect(() => {
         const preset = selected();
+
+        const head = history.at(0);
+        if (
+          head &&
+          dateToTestedString(new Date()) === dateToTestedString(head.date)
+        ) {
+          return;
+        }
 
         history.unshift({
           date: new Date(),
           preset,
         });
 
-        runWhenIdle(() => {
+        utils.runWhenIdle(() => {
           /** @type {SerializedPresetsHistory} */
           const serializedHistory = history.map(({ preset, date }) => [
             preset.id,
@@ -8378,12 +8461,9 @@ lazySignals.then((importedSignals) => {
     createUnshiftHistoryEffect();
 
     function initHistoryFrame() {
-      const owner = signals.getOwner();
+      console.log("history: init");
 
-      /** @param {Date} date  */
-      function dateToTestedString(date) {
-        return date.toLocaleString().split(",")[0];
-      }
+      const owner = signals.getOwner();
 
       /** @param {Date} date  */
       function dateToDisplayedString(date) {
@@ -8430,7 +8510,7 @@ lazySignals.then((importedSignals) => {
 
           tuples.forEach(({ preset, date }) => {
             historyListElement.append(
-              createPresetLabeledInput({
+              reactiveDom.createPresetLabeledInput({
                 preset,
                 frame: "history",
                 name: preset.title,
@@ -8450,7 +8530,7 @@ lazySignals.then((importedSignals) => {
           const date = new Date();
           const testedString = dateToTestedString(date);
 
-          const label = createPresetLabeledInput({
+          const label = reactiveDom.createPresetLabeledInput({
             preset,
             frame: "history",
             name: preset.title,
@@ -8504,6 +8584,8 @@ lazySignals.then((importedSignals) => {
 
   function initSettings() {
     function initSettingsFrame() {
+      console.log("settings: init");
+
       function initTheme() {
         const inputLight = /** @type {HTMLInputElement} */ (
           dom.getElementById("settings-theme-light-input")
@@ -8843,7 +8925,7 @@ lazySignals.then((importedSignals) => {
         mainElement.style.width = `${width}px`;
         localStorage.setItem(barWidthLocalStorageKey, String(width));
       } else {
-        mainElement.style.width = bodyStyle.getPropertyValue(
+        mainElement.style.width = style.getPropertyValue(
           "--default-main-width"
         );
         localStorage.removeItem(barWidthLocalStorageKey);
@@ -8881,7 +8963,7 @@ lazySignals.then((importedSignals) => {
   }
   initDesktopResizeBar();
 
-  const webSockets = (function initWebsockets() {
+  function initWebsockets() {
     /**
      * @template T
      * @param {(callback: (value: T) => void) => WebSocket} creator
@@ -8970,7 +9052,7 @@ lazySignals.then((importedSignals) => {
 
         const date = new Date(Number(timestamp) * 1000);
 
-        const dateStr = dateToString(date);
+        const dateStr = utils.dateToString(date);
 
         /** @type {DatasetCandlestickData} */
         const candle = {
@@ -9012,5 +9094,6 @@ lazySignals.then((importedSignals) => {
     return {
       krakenCandle,
     };
-  })();
+  }
+  const webSockets = initWebsockets();
 });

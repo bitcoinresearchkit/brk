@@ -1,4 +1,4 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="utf-8" />
@@ -13,7 +13,7 @@
     />
     <link rel="manifest" href="/manifest.webmanifest" />
     <meta name="mobile-web-app-capable" content="yes" />
-    <script defer type="module" crossorigin src="./script.js"></script>
+    <script type="module" crossorigin src="./script.js"></script>
 
     <!-- Styles -->
 
@@ -1114,11 +1114,21 @@
 
           > #timescale {
             margin-top: 1rem;
-
-            border-radius: 9999px;
             display: flex;
-            border: 1px;
             overflow: hidden;
+            z-index: 50;
+
+            @media (max-width: 767px) {
+              margin-bottom: -1.5rem;
+              border-top: 1px;
+              margin-left: -1.5rem;
+              margin-right: -1.5rem;
+            }
+
+            @media (min-width: 768px) {
+              border-radius: 9999px;
+              border: 1px;
+            }
 
             > button {
               flex: 0;
@@ -1273,7 +1283,7 @@
         z-index: 10;
         pointer-events: none;
 
-        &:not(:has(~ #selected-frame:not([hidden]))) {
+        main > &:not(:has(~ #selected-frame:not([hidden]))) {
           display: none;
         }
       }
@@ -1298,7 +1308,7 @@
         localStorage.getItem(settingsThemeLocalStorageKey)
       );
       const preferredColorSchemeMatchMedia = window.matchMedia(
-        "(prefers-color-scheme: dark)",
+        "(prefers-color-scheme: dark)"
       );
       if (
         theme === "dark" ||
@@ -1310,7 +1320,7 @@
       }
 
       const backgroundColor = getComputedStyle(
-        window.document.documentElement,
+        window.document.documentElement
       ).getPropertyValue("--background-color");
       const meta = window.document.createElement("meta");
       meta.name = "theme-color";
@@ -1666,7 +1676,7 @@
       <a
         id="anchor-git"
         title="Git"
-        href="https://github.com/satonomics-org"
+        href="https://github.com/kibo-money"
         target="_blank"
         rel="noopener noreferrer"
       >
@@ -1708,6 +1718,7 @@
 
     <main id="main">
       <script>
+        // Prevent width jumping
         const savedWidth = localStorage.getItem("bar-width");
         if (savedWidth) {
           const mainFrames = window.document.getElementById("frames");

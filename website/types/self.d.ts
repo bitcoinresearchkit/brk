@@ -136,7 +136,7 @@ interface OHLC {
 
 interface ResourceDataset<
   S extends Scale,
-  Type extends OHLC | number = number,
+  Type extends OHLC | number = number
 > {
   scale: S;
   url: string;
@@ -154,7 +154,7 @@ interface FetchedResult<
     SingleValueData | ValuedCandlestickData
   > = DatasetValue<
     Type extends number ? SingleValueData : ValuedCandlestickData
-  >,
+  >
 > {
   at: Date | null;
   json: Signal<FetchedJSON<S, Type> | null>;
@@ -184,7 +184,7 @@ interface FetchedChunk {
 
 type FetchedDataset<
   S extends Scale,
-  Type extends number | OHLC,
+  Type extends number | OHLC
 > = S extends "date" ? FetchedDateDataset<Type> : FetchedHeightDataset<Type>;
 
 interface Versioned {
