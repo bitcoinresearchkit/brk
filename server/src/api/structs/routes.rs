@@ -1,7 +1,7 @@
 use std::{
     collections::{BTreeMap, HashMap},
     fs,
-    path::Path,
+    path::{Path, PathBuf},
 };
 
 use derive_deref::{Deref, DerefMut};
@@ -15,7 +15,7 @@ use super::Paths;
 #[derive(Clone, Debug)]
 pub struct Route {
     pub url_path: String,
-    pub file_path: String,
+    pub file_path: PathBuf,
     pub values_type: String,
     pub serialization: Serialization,
 }
@@ -52,7 +52,7 @@ impl Routes {
 
             let url_path = split_key.iter().join("-");
 
-            let file_path = key.to_owned();
+            let file_path = PathBuf::from(key.to_owned());
             let values_type = value.to_owned();
 
             if last == "date" {

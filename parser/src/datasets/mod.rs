@@ -264,7 +264,7 @@ impl AllDatasets {
     }
 
     pub fn export_meta_files(&self) -> color_eyre::Result<()> {
-        let path_to_type: BTreeMap<&str, &str> = self
+        let path_to_type: BTreeMap<&Path, &str> = self
             .to_any_dataset_vec()
             .into_iter()
             .flat_map(|dataset| {

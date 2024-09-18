@@ -95,21 +95,27 @@ fn _dataset_handler(
             Kind::Date => {
                 let datasets = DateMap::<usize>::_read_dir(&route.file_path, &route.serialization);
 
-                process_datasets(headers, kind, &mut chunk, &mut route, query, datasets)?;
+                process_datasets(&headers, kind, &mut chunk, &mut route, query, datasets)?;
             }
             Kind::Height => {
                 let datasets =
                     HeightMap::<usize>::_read_dir(&route.file_path, &route.serialization);
 
-                process_datasets(headers, kind, &mut chunk, &mut route, query, datasets)?;
+                process_datasets(&headers, kind, &mut chunk, &mut route, query, datasets)?;
             }
             _ => panic!(),
         };
     }
 
+    let (date, response) = headers.check_if_modified_since(&route.file_path).unwrap();
+
+    if let Some(response) = response {
+        return Ok(response);
+    }
+
     let type_name = route.values_type.split("::").last().unwrap();
 
-    let value = match type_name {
+    let mut response = match type_name {
         "u8" => typed_value_to_response::<u8>(kind, &route, chunk)?,
         "u16" => typed_value_to_response::<u16>(kind, &route, chunk)?,
         "u32" => typed_value_to_response::<u32>(kind, &route, chunk)?,
@@ -123,7 +129,10 @@ fn _dataset_handler(
         _ => panic!("Incompatible type: {type_name}"),
     };
 
-    Ok(value)
+    let headers = response.headers_mut();
+    headers.insert_last_modified(date);
+
+    Ok(response)
 }
 
 fn replace_dash_by_underscore(s: &str) -> String {
@@ -131,7 +140,7 @@ fn replace_dash_by_underscore(s: &str) -> String {
 }
 
 fn process_datasets<ChunkId>(
-    headers: HeaderMap,
+    headers: &HeaderMap,
     kind: Kind,
     chunk: &mut Option<Chunk>,
     route: &mut Route,
@@ -159,7 +168,7 @@ where
 
     let path = path.unwrap();
 
-    route.file_path = path.to_str().unwrap().to_string();
+    route.file_path = path.clone();
 
     let offset = match kind {
         Kind::Date => 1,

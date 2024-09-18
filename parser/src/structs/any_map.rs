@@ -1,10 +1,12 @@
+use std::path::{Path, PathBuf};
+
 pub trait AnyMap {
-    fn path(&self) -> &str;
-    fn path_last(&self) -> &Option<String>;
+    fn path(&self) -> &Path;
+    fn path_last(&self) -> &Option<PathBuf>;
 
     fn t_name(&self) -> &str;
 
-    fn exported_path_with_t_name(&self) -> Vec<(&str, &str)> {
+    fn exported_path_with_t_name(&self) -> Vec<(&Path, &str)> {
         let t_name = self.t_name();
 
         if let Some(path_last) = self.path_last() {

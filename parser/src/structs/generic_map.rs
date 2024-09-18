@@ -72,8 +72,8 @@ where
 pub struct GenericMap<Key, Value, ChunkId, Serialized> {
     version: u32,
 
-    path_all: String,
-    path_last: Option<String>,
+    path_all: PathBuf,
+    path_last: Option<PathBuf>,
 
     chunks_in_memory: usize,
 
@@ -118,13 +118,13 @@ where
 
         let path = path.replace(['-', '_', ' '], "/");
 
-        let path_all = format!("{path}/{}", Key::map_name());
+        let path_all = PathBuf::from(format!("{path}/{}", Key::map_name()));
 
         fs::create_dir_all(&path_all).unwrap();
 
         let path_last = {
             if export_last {
-                Some(format!("{path}/last"))
+                Some(PathBuf::from(format!("{path}/last")))
             } else {
                 None
             }
@@ -184,7 +184,7 @@ where
         Self::_read_dir(&self.path_all, &self.serialization)
     }
 
-    pub fn _read_dir(path: &str, serialization: &Serialization) -> BTreeMap<ChunkId, PathBuf> {
+    pub fn _read_dir(path: &Path, serialization: &Serialization) -> BTreeMap<ChunkId, PathBuf> {
         fs::read_dir(path)
             .unwrap()
             .map(|entry| entry.unwrap().path())
@@ -278,11 +278,11 @@ where
     Key: MapKey<ChunkId>,
     Serialized: MapSerialized<Key, Value, ChunkId>,
 {
-    fn path(&self) -> &str {
+    fn path(&self) -> &Path {
         &self.path_all
     }
 
-    fn path_last(&self) -> &Option<String> {
+    fn path_last(&self) -> &Option<PathBuf> {
         &self.path_last
     }
 
@@ -330,7 +330,7 @@ where
                     panic!();
                 });
 
-                let path = format!("{}/{}", self.path_all, chunk_id.to_name());
+                let path = self.path_all.join(chunk_id.to_name());
                 self.serialization.export(Path::new(&path), serialized)?;
 
                 if index == len - 1 {
