@@ -9,8 +9,10 @@
 </p>
 
 <p align="center">
-  A better, FOSS, Bitcoin-only, self-hostable Glassnode.
+  <span>Bitcoin is our only <b><i>hope</i></b> for a better future.</span>
 </p>
+
+*Formerly **Satonomics***
 
 ## Description
 
