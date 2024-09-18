@@ -5837,8 +5837,9 @@ lazySignals.then((importedSignals) => {
 
         if (previouslySelected) {
           urlParamsHelpers.reset(preset.id);
-          urlParamsHelpers.replaceHistory({ pathname: preset.id });
         }
+
+        urlParamsHelpers.replaceHistory({ pathname: preset.id });
 
         return preset;
       },
