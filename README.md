@@ -51,6 +51,16 @@ This project is still in an early stage. Until more people look at the code and 
 - `website`: A web app which displays the generated datasets in various charts
 - `server`: A small server which will serve both the website and the computed datasets via an API
 
+## Roadmap
+
+- **More Datasets/Charts**
+- **Simulations**
+- **Dashboards**
+- **Nostr integration**
+- **API Documentation**
+- **Descriptions**
+- **Start9 support**
+
 ## Setup
 
 ### Requirements
@@ -130,16 +140,6 @@ And start it also with the `run.sh` script instead of `cargo run -r`
 ```
 
 Then the easiest to let others access your server is to use `cloudflared` which will also cache requests. For more information go to: https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/
-
-## Roadmap
-
-- **More Datasets/Charts**
-- **Simulations**
-- **Dashboards**
-- **Nostr integration**
-- **API Documentation**
-- **Descriptions**
-- **Start9 support**
 
 ## Brand
 

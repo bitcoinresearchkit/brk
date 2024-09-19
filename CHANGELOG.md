@@ -4,7 +4,7 @@
 
 ![Image of the kibō Web App version 0.X.Y](./assets/v0.X.Y.jpg)
 
-## v. 0.4.0 | WIP
+## v. 0.4.0 | [861950](https://mempool.space/block/00000000000000000000530d0e30ccf7deeace122dcc99f2668a06c6dad83629) - 2024/09/19
 
 ![Image of the kibō Web App version 0.4.0](./assets/v0.4.0.jpg)
 
