@@ -8027,16 +8027,18 @@ lazySignals.then((importedSignals) => {
 
     dom.onFirstIntersection(selectedFrameElement, () =>
       utils.runWhenIdle(() =>
-        import("./packages/lightweight-charts/v4.2.0/script.js").then(
-          ({
-            createChart: createClassicChart,
-            createChartEx: createCustomChart,
-          }) => {
-            initSelectedFrame({
-              createClassicChart,
-              createCustomChart,
-            });
-          }
+        window.document.fonts.ready.then(() =>
+          import("./packages/lightweight-charts/v4.2.0/script.js").then(
+            ({
+              createChart: createClassicChart,
+              createChartEx: createCustomChart,
+            }) => {
+              initSelectedFrame({
+                createClassicChart,
+                createCustomChart,
+              });
+            }
+          )
         )
       )
     );
