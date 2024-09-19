@@ -47,9 +47,9 @@ This project is still in an early stage. Until more people look at the code and 
 
 ## Structure
 
-- `parser`: The backbone of the project, it does most of the work by parsing and then computing datasets from the timechain.
-- `website`: A web app which displays the generated datasets in various charts and dashboards.
-- `server`: A small server which will serve both their resources
+- `parser`: The backbone of the project, it does most of the work by parsing and then computing datasets from the timechain
+- `website`: A web app which displays the generated datasets in various charts
+- `server`: A small server which will serve both the website and the computed datasets via an API
 
 ## Setup
 
@@ -133,28 +133,13 @@ Then the easiest to let others access your server is to use `cloudflared` which 
 
 ## Roadmap
 
-- **More Datasets/Charts**: If a dataset can be computed, it should exist and have its related charts
-- **Simulations**: Such as DCA simulation over a period of time with various strategies
-- **Dashboards**: For a quick and real-time view of the latest data of all the datasets
-- **Nostr integration**: First to save preferences, later to add some social functionnality
-- **Descriptions**: Add text to describe all charts and what they mean
-- **Start9 support**: By making the whole suite much easier to self-host, it's quite rough right now
-- **API Documentation**: Highly needed to explain what's what
-- **Datasets by block timestamp**: In addition to having datasets by date and height
-
-## Philosophy
-
-- **Best**: Replace Glassnode as the go to
-- **Diverse**: Have as many charts/datasets as possible and something for everyone
-- **Free**: Is and always will be completely free
-- **Open**: With a very permissive license
-- **Trustless**: You can verify and see exactly how each dataset is computed
-- **Independent**: Only one, easily swappable, dependency (Price API)
-- **Educational**: By providing many datasets that can be used to describe how Bitcoin works and why
-- **Timeless**: Be relevant and usable 10 years from now by being independent and not do address tagging
-- **Sovereign**: Be self-hostable on accessible hardware
-- **Versatile**: You can view the data in charts, you can download the data, you can fetch the data via an API
-- **Accessible**: Free Website and API with all the datasets for everyone
+- **More Datasets/Charts**
+- **Simulations**
+- **Dashboards**
+- **Nostr integration**
+- **API Documentation**
+- **Descriptions**
+- **Start9 support**
 
 ## Brand
 
