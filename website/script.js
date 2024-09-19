@@ -8431,6 +8431,7 @@ lazySignals.then((importedSignals) => {
         const head = history.at(0);
         if (
           head &&
+          head.preset === preset &&
           dateToTestedString(new Date()) === dateToTestedString(head.date)
         ) {
           return;
@@ -8452,10 +8453,11 @@ lazySignals.then((importedSignals) => {
             serializedHistory.length = MAX_HISTORY_LENGTH;
           }
 
-          localStorage.setItem(
-            LOCAL_STORAGE_HISTORY_KEY,
-            JSON.stringify(serializedHistory)
-          );
+          const jsonHistory = JSON.stringify(serializedHistory);
+
+          console.log(jsonHistory);
+
+          localStorage.setItem(LOCAL_STORAGE_HISTORY_KEY, jsonHistory);
         });
       });
     }

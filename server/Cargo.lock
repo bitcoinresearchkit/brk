@@ -1814,7 +1814,7 @@ dependencies = [
 
 [[package]]
 name = "parser"
-version = "0.4.0"
+version = "0.4.1"
 dependencies = [
  "allocative",
  "bincode",
@@ -2478,7 +2478,7 @@ dependencies = [
 
 [[package]]
 name = "server"
-version = "0.4.0"
+version = "0.4.1"
 dependencies = [
  "axum",
  "bincode",

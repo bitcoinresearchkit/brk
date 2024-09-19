@@ -133,7 +133,7 @@ impl Routes {
                 .map(|(key, route)| {
                     (
                         key.to_owned(),
-                        format!("{url}/{}", route.url_path.to_owned()),
+                        format!("{url}/api/{}", route.url_path.to_owned()),
                     )
                 })
                 .collect()

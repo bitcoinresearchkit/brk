@@ -50,18 +50,22 @@ self.addEventListener("fetch", (_event) => {
   const request = event.request;
   const { url, method } = request;
 
+  console.log(`service-worker: fetching: ${url}`);
+
   event.respondWith(
     caches.match(request).then((cachedResponse) => {
       return fetch(request)
         .then((response) => {
+          const { status } = response;
+
           // @ts-ignore
           if (url.includes("/api/")) {
             return response;
           }
 
           return caches.open(version).then((cache) => {
-            if (response.status === 200) {
-              if (method === "GET") {
+            if (status === 200 || status === 304) {
+              if (status === 200 && method === "GET") {
                 cache.put(request, response.clone());
               }
               return response;

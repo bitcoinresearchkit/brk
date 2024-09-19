@@ -180,7 +180,7 @@ where
         datasets.get(&ChunkId::from_usize(offseted)).map(|_| {
             let scheme = headers.get_scheme();
             let host = headers.get_host();
-            format!("{scheme}://{host}/{}?chunk={offseted}", route.url_path)
+            format!("{scheme}://{host}/api/{}?chunk={offseted}", route.url_path)
         })
     };
 

@@ -4,6 +4,19 @@
 
 ![Image of the kibō Web App version 0.X.Y](./assets/v0.X.Y.jpg)
 
+## v. 0.4.1 | WIP
+
+![Image of the kibō Web App version 0.4.1](./assets/v0.4.1.jpg)
+
+## Website
+
+- Fixed service worker not passing 304 (not modified) response and instead serving cached responses
+- Fixed history not being properly registered
+
+## Server
+
+- Fixed links in several places missing the `/api` part and thus not working
+
 ## v. 0.4.0 | [861950](https://mempool.space/block/00000000000000000000530d0e30ccf7deeace122dcc99f2668a06c6dad83629) - 2024/09/19
 
 ![Image of the kibō Web App version 0.4.0](./assets/v0.4.0.jpg)
