@@ -8455,8 +8455,6 @@ lazySignals.then((importedSignals) => {
 
           const jsonHistory = JSON.stringify(serializedHistory);
 
-          console.log(jsonHistory);
-
           localStorage.setItem(LOCAL_STORAGE_HISTORY_KEY, jsonHistory);
         });
       });
