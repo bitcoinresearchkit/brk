@@ -2,11 +2,11 @@
 
 ## v. 0.X.Y | WIP
 
-![Image of the Satonomics Web App version 0.X.Y](./assets/v0.X.Y.jpg)
+![Image of the kibō Web App version 0.X.Y](./assets/v0.X.Y.jpg)
 
 ## v. 0.4.0 | WIP
 
-![Image of the Satonomics Web App version 0.4.0](./assets/v0.4.0.jpg)
+![Image of the kibō Web App version 0.4.0](./assets/v0.4.0.jpg)
 
 ### Brand
 

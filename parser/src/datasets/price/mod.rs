@@ -9,7 +9,7 @@ use color_eyre::eyre::Error;
 pub use ohlc::*;
 
 use crate::{
-    price::{Binance, Kraken, Satonomics},
+    price::{Binance, Kibo, Kraken},
     structs::{
         AnyBiMap, AnyDateMap, BiMap, Date, DateMap, DateMapChunkId, Height, HeightMapChunkId,
         MapKey,
@@ -28,8 +28,8 @@ pub struct PriceDatasets {
     binance_1mn: Option<BTreeMap<u32, OHLC>>,
     binance_daily: Option<BTreeMap<Date, OHLC>>,
     binance_har: Option<BTreeMap<u32, OHLC>>,
-    satonomics_by_height: BTreeMap<HeightMapChunkId, Vec<OHLC>>,
-    satonomics_by_date: BTreeMap<DateMapChunkId, BTreeMap<Date, OHLC>>,
+    kibo_by_height: BTreeMap<HeightMapChunkId, Vec<OHLC>>,
+    kibo_by_date: BTreeMap<DateMapChunkId, BTreeMap<Date, OHLC>>,
 
     // Inserted
     pub ohlcs: BiMap<OHLC>,
@@ -94,8 +94,8 @@ impl PriceDatasets {
             binance_har: None,
             kraken_1mn: None,
             kraken_daily: None,
-            satonomics_by_height: BTreeMap::default(),
-            satonomics_by_date: BTreeMap::default(),
+            kibo_by_height: BTreeMap::default(),
+            kibo_by_date: BTreeMap::default(),
 
             ohlcs: BiMap::new_json(1, price_path),
             closes: BiMap::new_bin(1, &f("close")),
@@ -314,7 +314,7 @@ impl PriceDatasets {
             let ohlc = self
                 .get_from_daily_kraken(&date)
                 .or_else(|_| self.get_from_daily_binance(&date))
-                .or_else(|_| self.get_from_date_satonomics(&date))?;
+                .or_else(|_| self.get_from_date_kibo(&date))?;
 
             self.ohlcs.date.insert(date, ohlc);
 
@@ -322,25 +322,25 @@ impl PriceDatasets {
         }
     }
 
-    fn get_from_date_satonomics(&mut self, date: &Date) -> color_eyre::Result<OHLC> {
+    fn get_from_date_kibo(&mut self, date: &Date) -> color_eyre::Result<OHLC> {
         let chunk_id = date.to_chunk_id();
 
         #[allow(clippy::map_entry)]
-        if !self.satonomics_by_date.contains_key(&chunk_id)
+        if !self.kibo_by_date.contains_key(&chunk_id)
             || self
-                .satonomics_by_date
+                .kibo_by_date
                 .get(&chunk_id)
                 .unwrap()
                 .last_key_value()
                 .unwrap()
                 .0
-                <= date
+                < date
         {
-            self.satonomics_by_date
-                .insert(chunk_id, Satonomics::fetch_date_prices(chunk_id)?);
+            self.kibo_by_date
+                .insert(chunk_id, Kibo::fetch_date_prices(chunk_id)?);
         }
 
-        self.satonomics_by_date
+        self.kibo_by_date
             .get(&chunk_id)
             .unwrap()
             .get(date)
@@ -379,7 +379,7 @@ impl PriceDatasets {
                 .last_key_value()
                 .unwrap()
                 .0
-                <= date
+                < date
         {
             self.binance_daily.replace(Binance::fetch_daily_prices()?);
         }
@@ -428,12 +428,11 @@ impl PriceDatasets {
                     .unwrap_or_else(|_| {
                         self.get_from_har_binance(timestamp, previous_timestamp)
                             .unwrap_or_else(|_| {
-                                self.get_from_height_satonomics(&height)
-                                    .unwrap_or_else(|_| {
-                                        let date = Date::from_timestamp(timestamp);
+                                self.get_from_height_kibo(&height).unwrap_or_else(|_| {
+                                    let date = Date::from_timestamp(timestamp);
 
-                                        panic!(
-                                    "Can't find the price for: height: {height} - date: {date}
+                                    panic!(
+                                        "Can't find the price for: height: {height} - date: {date}
 1mn APIs are limited to the last 16 hours for Binance's and the last 10 hours for Kraken's
 How to fix this:
 1. Go to https://www.binance.com/en/trade/BTC_USDT?type=spot
@@ -446,8 +445,8 @@ How to fix this:
 8. Export to a har file (if there is no explicit button, click on the cog button)
 9. Move the file to 'parser/imports/binance.har'
 "
-                                )
-                                    })
+                                    )
+                                })
                             })
                     })
             });
@@ -457,24 +456,24 @@ How to fix this:
         Ok(ohlc)
     }
 
-    fn get_from_height_satonomics(&mut self, height: &Height) -> color_eyre::Result<OHLC> {
+    fn get_from_height_kibo(&mut self, height: &Height) -> color_eyre::Result<OHLC> {
         let chunk_id = height.to_chunk_id();
 
         #[allow(clippy::map_entry)]
-        if !self.satonomics_by_height.contains_key(&chunk_id)
-            || ((chunk_id.to_usize() + self.satonomics_by_height.get(&chunk_id).unwrap().len())
+        if !self.kibo_by_height.contains_key(&chunk_id)
+            || ((chunk_id.to_usize() + self.kibo_by_height.get(&chunk_id).unwrap().len())
                 <= height.to_usize())
         {
-            self.satonomics_by_height
-                .insert(chunk_id, Satonomics::fetch_height_prices(chunk_id)?);
+            self.kibo_by_height
+                .insert(chunk_id, Kibo::fetch_height_prices(chunk_id)?);
         }
 
-        self.satonomics_by_height
+        self.kibo_by_height
             .get(&chunk_id)
             .unwrap()
             .get(height.to_serialized_key().to_usize())
             .cloned()
-            .ok_or(Error::msg("Couldn't find height in satonomics"))
+            .ok_or(Error::msg("Couldn't find height in kibo"))
     }
 
     fn get_from_1mn_kraken(

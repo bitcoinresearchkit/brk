@@ -12,24 +12,24 @@ use crate::{
     MapChunkId,
 };
 
-pub struct Satonomics;
+pub struct Kibo;
 
-const SATONOMICS_OFFICIAL_URL: &str = "https://api.satonomics.xyz";
-const SATONOMICS_OFFICIAL_BACKUP_URL: &str = "https://api-bkp.satonomics.xyz";
+const KIBO_OFFICIAL_URL: &str = "https://kibo.money/api";
+const KIBO_OFFICIAL_BACKUP_URL: &str = "https://backup.kibo.money/api";
 
 const RETRIES: usize = 10;
 
-impl Satonomics {
+impl Kibo {
     fn get_base_url(try_index: usize) -> &'static str {
         if try_index < RETRIES / 2 {
-            SATONOMICS_OFFICIAL_URL
+            KIBO_OFFICIAL_URL
         } else {
-            SATONOMICS_OFFICIAL_BACKUP_URL
+            KIBO_OFFICIAL_BACKUP_URL
         }
     }
 
     pub fn fetch_height_prices(chunk_id: HeightMapChunkId) -> color_eyre::Result<Vec<OHLC>> {
-        log("satonomics: fetch height prices");
+        log("kibo: fetch height prices");
 
         retry(
             |try_index| {
@@ -62,7 +62,7 @@ impl Satonomics {
     }
 
     pub fn fetch_date_prices(chunk_id: DateMapChunkId) -> color_eyre::Result<BTreeMap<Date, OHLC>> {
-        log("satonomics: date height prices");
+        log("kibo: fetch date prices");
 
         retry(
             |try_index| {

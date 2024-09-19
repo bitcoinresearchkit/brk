@@ -1,7 +1,7 @@
 mod binance;
+mod kibo;
 mod kraken;
-mod satonomics;
 
 pub use binance::*;
+pub use kibo::*;
 pub use kraken::*;
-pub use satonomics::*;

@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
     <meta charset="utf-8" />
@@ -1308,7 +1308,7 @@
         localStorage.getItem(settingsThemeLocalStorageKey)
       );
       const preferredColorSchemeMatchMedia = window.matchMedia(
-        "(prefers-color-scheme: dark)"
+        "(prefers-color-scheme: dark)",
       );
       if (
         theme === "dark" ||
@@ -1320,7 +1320,7 @@
       }
 
       const backgroundColor = getComputedStyle(
-        window.document.documentElement
+        window.document.documentElement,
       ).getPropertyValue("--background-color");
       const meta = window.document.createElement("meta");
       meta.name = "theme-color";
@@ -2011,7 +2011,7 @@
           <p>
             Version:
             <a
-              href="https://github.com/satonomics-org/satonomics/blob/main/CHANGELOG.md"
+              href="https://github.com/kibo-money/kibo/blob/main/CHANGELOG.md"
               rel="noopener noreferrer"
               target="_blank"
             >

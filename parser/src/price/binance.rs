@@ -122,7 +122,7 @@ impl Binance {
                         // [timestamp, open, high, low, close, volume, ...]
                         let array = value.as_array().unwrap();
 
-                        let timestamp = (array.first().unwrap().as_u64().unwrap() / 1000) as u32;
+                        let timestamp = (array.first().unwrap().as_u64().unwrap() / 1_000) as u32;
 
                         let get_f32 = |index: usize| {
                             array
@@ -169,8 +169,9 @@ impl Binance {
                         // [timestamp, open, high, low, close, volume, ...]
                         let array = value.as_array().unwrap();
 
-                        let date =
-                            Date::from_timestamp(array.first().unwrap().as_u64().unwrap() as u32);
+                        let date = Date::from_timestamp(
+                            (array.first().unwrap().as_u64().unwrap() / 1_000) as u32,
+                        );
 
                         let get_f32 = |index: usize| {
                             array
