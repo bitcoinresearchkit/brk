@@ -1,12 +1,13 @@
 # Changelog
 
+<!--
 ## v. 0.X.Y | WIP
-
 ![Image of the kibō Web App version 0.X.Y](./assets/v0.X.Y.jpg)
+-->
 
 ## v. 0.4.1 | WIP
 
-![Image of the kibō Web App version 0.4.1](./assets/v0.4.1.jpg)
+<!-- ![Image of the kibō Web App version 0.4.1](./assets/v0.4.1.jpg) -->
 
 ## Website
 
