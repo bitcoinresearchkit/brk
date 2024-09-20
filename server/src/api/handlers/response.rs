@@ -50,7 +50,7 @@ where
     })
 }
 
-fn value_to_response<T>(value: T) -> Response
+pub fn value_to_response<T>(value: T) -> Response
 where
     T: Serialize,
 {

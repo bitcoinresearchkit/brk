@@ -16,9 +16,15 @@
 - Fixed prices on charts not having a wide enough background due to the font not being fully loaded during the creation of the chart
 - Fixed window being moveable on iOS when in standalone mode when it shouldn't be
 
+## Parser
+
+- Added a `/datasets/last` json file with all the latest va
+
 ## Server
 
 - Fixed links in several places missing the `/api` part and thus not working
+- Fixed broken last values routes
+- Add support for the `/datasets/last` file via the `/api/last` route
 
 ## v. 0.4.0 | [861950](https://mempool.space/block/00000000000000000000530d0e30ccf7deeace122dcc99f2668a06c6dad83629) - 2024/09/19
 

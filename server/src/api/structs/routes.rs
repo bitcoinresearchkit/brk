@@ -46,7 +46,12 @@ impl Routes {
                 serialization = Serialization::Json;
             }
 
-            let split_key = split_key.iter().skip(skip).collect_vec();
+            let mut split_key = split_key.iter().skip(skip).collect_vec();
+
+            // Use case for: "../datasets/last": "Value",
+            if split_key.is_empty() {
+                split_key.push(&"last");
+            }
 
             let map_key = split_key.iter().join("_");
 

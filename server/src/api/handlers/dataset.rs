@@ -9,7 +9,10 @@ use color_eyre::{eyre::eyre, owo_colors::OwoColorize};
 use reqwest::StatusCode;
 use serde::Deserialize;
 
-use parser::{log, Date, DateMap, Height, HeightMap, MapChunkId, HEIGHT_MAP_CHUNK_SIZE, OHLC};
+use parser::{
+    log, Date, DateMap, Height, HeightMap, Json, MapChunkId, COMPRESSED_BIN_EXTENSION,
+    HEIGHT_MAP_CHUNK_SIZE, JSON_EXTENSION, OHLC,
+};
 
 use crate::{
     api::structs::{Chunk, Kind, Route},
@@ -17,7 +20,7 @@ use crate::{
     AppState,
 };
 
-use super::response::typed_value_to_response;
+use super::response::{typed_value_to_response, value_to_response};
 
 #[derive(Deserialize)]
 pub struct Params {
@@ -90,22 +93,25 @@ fn _dataset_handler(
 
     let mut chunk = None;
 
-    if kind != Kind::Last {
-        match kind {
-            Kind::Date => {
-                let datasets = DateMap::<usize>::_read_dir(&route.file_path, &route.serialization);
+    match kind {
+        Kind::Date => {
+            let datasets = DateMap::<usize>::_read_dir(&route.file_path, &route.serialization);
 
-                process_datasets(&headers, kind, &mut chunk, &mut route, query, datasets)?;
-            }
-            Kind::Height => {
-                let datasets =
-                    HeightMap::<usize>::_read_dir(&route.file_path, &route.serialization);
+            process_datasets(&headers, kind, &mut chunk, &mut route, query, datasets)?;
+        }
+        Kind::Height => {
+            let datasets = HeightMap::<usize>::_read_dir(&route.file_path, &route.serialization);
 
-                process_datasets(&headers, kind, &mut chunk, &mut route, query, datasets)?;
+            process_datasets(&headers, kind, &mut chunk, &mut route, query, datasets)?;
+        }
+        Kind::Last => {
+            if !route.values_type.ends_with("Value") {
+                route.file_path.set_extension(COMPRESSED_BIN_EXTENSION);
+            } else {
+                route.file_path.set_extension(JSON_EXTENSION);
             }
-            _ => panic!(),
-        };
-    }
+        }
+    };
 
     let (date, response) = headers.check_if_modified_since(&route.file_path).unwrap();
 
@@ -126,6 +132,7 @@ fn _dataset_handler(
         "OHLC" => typed_value_to_response::<OHLC>(kind, &route, chunk)?,
         "Date" => typed_value_to_response::<Date>(kind, &route, chunk)?,
         "Height" => typed_value_to_response::<Height>(kind, &route, chunk)?,
+        "Value" => value_to_response::<serde_json::Value>(Json::import(&route.file_path)?),
         _ => panic!("Incompatible type: {type_name}"),
     };
 

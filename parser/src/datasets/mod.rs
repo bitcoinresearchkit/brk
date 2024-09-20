@@ -28,13 +28,14 @@ pub use constant::*;
 pub use date_metadata::*;
 pub use mining::*;
 pub use price::*;
+use serde_json::Value;
 pub use subs::*;
 pub use transaction::*;
 pub use utxo::*;
 
 use crate::{
     databases::Databases,
-    io::Json,
+    io::{Json, JSON_EXTENSION},
     states::{
         AddressCohortsInputStates,
         AddressCohortsOneShotStates,
@@ -98,9 +99,11 @@ pub struct AllDatasets {
     pub utxo: UTXODatasets,
 }
 
+const DATASETS_PATH: &str = "../datasets";
+
 impl AllDatasets {
     pub fn import() -> color_eyre::Result<Self> {
-        let path = "../datasets";
+        let path = DATASETS_PATH;
 
         let price = PriceDatasets::import(path)?;
 
@@ -264,16 +267,14 @@ impl AllDatasets {
     }
 
     pub fn export_meta_files(&self) -> color_eyre::Result<()> {
-        let path_to_type: BTreeMap<&Path, &str> = self
+        let mut path_to_type: BTreeMap<&Path, &str> = self
             .to_any_dataset_vec()
             .into_iter()
-            .flat_map(|dataset| {
-                dataset
-                    .to_all_map_vec()
-                    .into_iter()
-                    .flat_map(|map| map.exported_path_with_t_name())
-            })
+            .flat_map(|dataset| dataset.to_all_map_vec())
+            .flat_map(|map| map.exported_path_with_t_name())
             .collect();
+
+        path_to_type.insert(Path::new("../datasets/last"), "Value");
 
         let datasets_len = path_to_type.len();
 
@@ -310,9 +311,40 @@ impl AllDatasets {
             .into_par_iter()
             .try_for_each(|dataset| -> color_eyre::Result<()> { dataset.export() })?;
 
+        let mut path_to_last: BTreeMap<String, Value> = BTreeMap::default();
+
         self.to_mut_any_dataset_vec()
             .into_iter()
-            .for_each(|dataset| dataset.post_export());
+            .for_each(|dataset| {
+                dataset.post_export();
+
+                dataset.to_all_map_vec().iter().for_each(|map| {
+                    if let Some(last_path) = map.path_last() {
+                        if let Some(last_value) = map.last_value() {
+                            let mut last_path = last_path.clone();
+                            last_path.pop();
+
+                            let last_path = last_path.to_str().unwrap();
+
+                            let skip = if last_path.starts_with(DATASETS_PATH) {
+                                2
+                            } else {
+                                1
+                            };
+
+                            path_to_last.insert(
+                                last_path.split('/').skip(skip).join("-").to_string(),
+                                last_value,
+                            );
+                        }
+                    }
+                });
+            });
+
+        Json::export(
+            Path::new(&format!("{DATASETS_PATH}/last.{JSON_EXTENSION}")),
+            &path_to_last,
+        )?;
 
         Ok(())
     }

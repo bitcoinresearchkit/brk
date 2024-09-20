@@ -286,6 +286,13 @@ where
         &self.path_last
     }
 
+    fn last_value(&self) -> Option<serde_json::Value> {
+        self.imported
+            .last_key_value()
+            .and_then(|(_, serialized)| serialized.last())
+            .and_then(|v| serde_json::to_value(v).ok())
+    }
+
     fn t_name(&self) -> &str {
         std::any::type_name::<Value>()
     }

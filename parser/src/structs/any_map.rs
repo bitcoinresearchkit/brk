@@ -1,8 +1,12 @@
 use std::path::{Path, PathBuf};
 
+use serde_json::Value;
+
 pub trait AnyMap {
     fn path(&self) -> &Path;
     fn path_last(&self) -> &Option<PathBuf>;
+
+    fn last_value(&self) -> Option<Value>;
 
     fn t_name(&self) -> &str;
 
@@ -15,8 +19,6 @@ pub trait AnyMap {
             vec![(self.path(), t_name)]
         }
     }
-
-    // fn reset(&mut self) -> color_eyre::Result<()>;
 
     fn pre_export(&mut self);
     fn export(&self) -> color_eyre::Result<()>;

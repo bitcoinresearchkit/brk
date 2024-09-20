@@ -10,7 +10,7 @@ mod utils;
 pub use crate::{
     actions::iter_blocks,
     datasets::OHLC,
-    io::{Binary, Json, Serialization},
+    io::{Binary, Json, Serialization, COMPRESSED_BIN_EXTENSION, JSON_EXTENSION},
     structs::{
         Config, Date, DateMap, Height, HeightMap, MapChunkId, SerializedBTreeMap, SerializedVec,
         HEIGHT_MAP_CHUNK_SIZE,
