@@ -9,6 +9,10 @@
 
 <!-- ![Image of the kibō Web App version 0.4.1](./assets/v0.4.1.jpg) -->
 
+## Datasets
+
+- Added `Sell Side Risk Ratio` to all entities
+
 ## Website
 
 - Fixed service worker not passing 304 (not modified) response and instead serving cached responses

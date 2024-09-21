@@ -3411,7 +3411,7 @@ lazySignals.then((importedSignals) => {
           },
           {
             scale,
-            name: `PNL`,
+            name: `PNL - Profit And Loss`,
             title: `${title} Realized Profit And Loss`,
             description: "",
             unit: "US Dollars",
@@ -3433,7 +3433,7 @@ lazySignals.then((importedSignals) => {
           },
           {
             scale,
-            name: `Net PNL`,
+            name: `Net PNL - Net Profit And Loss`,
             title: `${title} Net Realized Profit And Loss`,
             description: "",
             unit: "US Dollars",
@@ -3462,92 +3462,102 @@ lazySignals.then((importedSignals) => {
             ],
           },
           {
-            scale,
-            name: `Cumulative Profit`,
-            title: `${title} Cumulative Realized Profit`,
-            description: "",
-            unit: "US Dollars",
-            icon: "🎊",
-            bottom: [
+            name: "Cumulative",
+            tree: [
               {
-                title: "Cumulative Realized Profit",
-                color: colors.profit,
-                datasetPath: `${scale}-to-${datasetPrefix}cumulative-realized-profit`,
+                scale,
+                name: `Profit`,
+                title: `${title} Cumulative Realized Profit`,
+                description: "",
+                unit: "US Dollars",
+                icon: "🎊",
+                bottom: [
+                  {
+                    title: "Cumulative Realized Profit",
+                    color: colors.profit,
+                    datasetPath: `${scale}-to-${datasetPrefix}cumulative-realized-profit`,
+                  },
+                ],
+              },
+              {
+                scale,
+                name: "Loss",
+                title: `${title} Cumulative Realized Loss`,
+                description: "",
+                unit: "US Dollars",
+                icon: "☠️",
+                bottom: [
+                  {
+                    title: "Cumulative Realized Loss",
+                    color: colors.loss,
+                    datasetPath: `${scale}-to-${datasetPrefix}cumulative-realized-loss`,
+                  },
+                ],
+              },
+              {
+                scale,
+                name: `Net PNL`,
+                title: `${title} Cumulative Net Realized Profit And Loss`,
+                description: "",
+                unit: "US Dollars",
+                icon: "➕",
+                bottom: [
+                  {
+                    title: "Cumulative Net Realized PNL",
+                    type: "Baseline",
+                    datasetPath: `${scale}-to-${datasetPrefix}cumulative-net-realized-profit-and-loss`,
+                  },
+                ],
+              },
+              {
+                scale,
+                name: `Net PNL 30 Day Change`,
+                title: `${title} Cumulative Net Realized Profit And Loss 30 Day Change`,
+                description: "",
+                unit: "US Dollars",
+                icon: "🗓️",
+                bottom: [
+                  {
+                    title: "Cumulative Net Realized PNL 30d Change",
+                    datasetPath: `${scale}-to-${datasetPrefix}cumulative-net-realized-profit-and-loss-1m-net-change`,
+                    type: "Baseline",
+                  },
+                ],
               },
             ],
           },
           {
-            scale,
-            name: "Cumulative Loss",
-            title: `${title} Cumulative Realized Loss`,
-            description: "",
-            unit: "US Dollars",
-            icon: "☠️",
-            bottom: [
+            name: "Value",
+            tree: [
               {
-                title: "Cumulative Realized Loss",
-                color: colors.loss,
-                datasetPath: `${scale}-to-${datasetPrefix}cumulative-realized-loss`,
+                scale,
+                name: `Created`,
+                title: `${title} Value Created`,
+                description: "",
+                unit: "US Dollars",
+                icon: "➕",
+                bottom: [
+                  {
+                    title: "Value",
+                    color: colors.profit,
+                    datasetPath: `${scale}-to-${datasetPrefix}value-created`,
+                  },
+                ],
               },
-            ],
-          },
-          {
-            scale,
-            name: `Cumulative Net PNL`,
-            title: `${title} Cumulative Net Realized Profit And Loss`,
-            description: "",
-            unit: "US Dollars",
-            icon: "➕",
-            bottom: [
               {
-                title: "Cumulative Net Realized PNL",
-                type: "Baseline",
-                datasetPath: `${scale}-to-${datasetPrefix}cumulative-net-realized-profit-and-loss`,
-              },
-            ],
-          },
-          {
-            scale,
-            name: `Cumulative Net PNL 30 Day Change`,
-            title: `${title} Cumulative Net Realized Profit And Loss 30 Day Change`,
-            description: "",
-            unit: "US Dollars",
-            icon: "🗓️",
-            bottom: [
-              {
-                title: "Cumulative Net Realized PNL 30d Change",
-                datasetPath: `${scale}-to-${datasetPrefix}cumulative-net-realized-profit-and-loss-1m-net-change`,
-                type: "Baseline",
-              },
-            ],
-          },
-          {
-            scale,
-            name: `Value Created`,
-            title: `${title} Value Created`,
-            description: "",
-            unit: "US Dollars",
-            icon: "➕",
-            bottom: [
-              {
-                title: "Value",
-                color: colors.profit,
-                datasetPath: `${scale}-to-${datasetPrefix}value-created`,
-              },
-            ],
-          },
-          {
-            scale,
-            name: `Value Destroyed`,
-            title: `${title} Value Destroyed`,
-            description: "",
-            unit: "US Dollars",
-            icon: "☄️",
-            bottom: [
-              {
-                title: "Value",
-                color: colors.loss,
-                datasetPath: `${scale}-to-${datasetPrefix}value-destroyed`,
+                scale,
+                name: `Destroyed`,
+                title: `${title} Value Destroyed`,
+                description: "",
+                unit: "US Dollars",
+                icon: "☄️",
+                bottom: [
+                  {
+                    title: "Value",
+                    color: colors.loss,
+                    datasetPath: `${scale}-to-${datasetPrefix}value-destroyed`,
+                  },
+                ],
               },
             ],
           },
@@ -3571,6 +3581,27 @@ lazySignals.then((importedSignals) => {
               },
             ],
           },
+          .../** @satisfies {PartialPresetTree} */ (
+            scale === "date"
+              ? [
+                  {
+                    scale,
+                    name: `Sell Side Risk Ratio`,
+                    title: `${title} Sell Side Risk Ratio`,
+                    description: "",
+                    unit: "Percentage",
+                    icon: "🥵",
+                    bottom: [
+                      {
+                        title: "Ratio",
+                        datasetPath: `${scale}-to-${datasetPrefix}sell-side-risk-ratio`,
+                        color,
+                      },
+                    ],
+                  },
+                ]
+              : []
+          ),
         ],
       };
     }

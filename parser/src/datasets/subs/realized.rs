@@ -3,8 +3,9 @@ use allocative::Allocative;
 use crate::{
     datasets::{AnyDataset, ComputeData, InsertData, MinInitialStates},
     states::RealizedState,
-    structs::{AnyBiMap, BiMap, Price},
+    structs::{AnyBiMap, AnyDateMap, BiMap, Price},
     utils::ONE_MONTH_IN_DAYS,
+    DateMap,
 };
 
 #[derive(Default, Allocative)]
@@ -26,6 +27,8 @@ pub struct RealizedSubDataset {
     cumulative_realized_loss: BiMap<f32>,
     cumulative_net_realized_profit_and_loss: BiMap<f32>,
     cumulative_net_realized_profit_and_loss_1m_net_change: BiMap<f32>,
+    realized_value: BiMap<f32>,
+    sell_side_risk_ratio: DateMap<f32>,
 }
 
 impl RealizedSubDataset {
@@ -63,6 +66,8 @@ impl RealizedSubDataset {
                 1,
                 &f("cumulative_net_realized_profit_and_loss_1m_net_change"),
             ),
+            realized_value: BiMap::new_bin(1, &f("realized_value")),
+            sell_side_risk_ratio: DateMap::new_bin(1, &f("sell_side_risk_ratio")),
         };
 
         s.min_initial_states
@@ -177,6 +182,19 @@ impl RealizedSubDataset {
                 &mut self.cumulative_net_realized_profit_and_loss,
                 ONE_MONTH_IN_DAYS,
             );
+
+        self.realized_value.multi_insert_add(
+            heights,
+            dates,
+            &mut self.realized_profit,
+            &mut self.realized_loss,
+        );
+
+        self.sell_side_risk_ratio.multi_insert_percentage(
+            dates,
+            &mut self.realized_value.date,
+            &mut market_cap.date,
+        );
     }
 }
 
@@ -214,7 +232,12 @@ impl AnyDataset for RealizedSubDataset {
             &self.cumulative_realized_loss,
             &self.cumulative_net_realized_profit_and_loss,
             &self.cumulative_net_realized_profit_and_loss_1m_net_change,
+            &self.realized_value,
         ]
+    }
+
+    fn to_computed_date_map_vec(&self) -> Vec<&(dyn AnyDateMap + Send + Sync)> {
+        vec![&self.sell_side_risk_ratio]
     }
 
     fn to_computed_mut_bi_map_vec(&mut self) -> Vec<&mut dyn AnyBiMap> {
@@ -226,6 +249,11 @@ impl AnyDataset for RealizedSubDataset {
             &mut self.cumulative_realized_loss,
             &mut self.cumulative_net_realized_profit_and_loss,
             &mut self.cumulative_net_realized_profit_and_loss_1m_net_change,
+            &mut self.realized_value,
         ]
+    }
+
+    fn to_computed_mut_date_map_vec(&mut self) -> Vec<&mut dyn AnyDateMap> {
+        vec![&mut self.sell_side_risk_ratio]
     }
 }
