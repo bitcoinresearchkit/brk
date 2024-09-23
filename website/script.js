@@ -13,104 +13,6 @@
 
 const lazySignals = import("./packages/solid-signals/2024-04-17/script.js");
 
-const urlParamsHelpers = {
-  whitelist: ["from", "to"],
-  /**
-   * @param {Object} args
-   * @param {URLSearchParams} [args.urlParams]
-   * @param {string} [args.pathname]
-   */
-  replaceHistory({ urlParams, pathname }) {
-    urlParams ||= new URLSearchParams(window.location.search);
-    pathname ||= window.location.pathname;
-
-    window.history.replaceState(
-      null,
-      "",
-      `${pathname}?${urlParams.toString()}`
-    );
-  },
-  /**
-   * @param {string} [pathname]
-   */
-  reset(pathname) {
-    const urlParams = new URLSearchParams();
-
-    [...new URLSearchParams(window.location.search).entries()]
-      .filter(([key, _]) => this.whitelist.includes(key))
-      .forEach(([key, value]) => {
-        urlParams.set(key, value);
-      });
-
-    this.replaceHistory({ urlParams, pathname });
-  },
-  /**
-   * @param {string} key
-   * @param {string | boolean | undefined} value
-   */
-  write(key, value) {
-    const urlParams = new URLSearchParams(window.location.search);
-
-    if (value !== undefined) {
-      urlParams.set(key, String(value));
-    } else {
-      urlParams.delete(key);
-    }
-
-    this.replaceHistory({ urlParams });
-  },
-  /**
-   * @param {string} key
-   */
-  remove(key) {
-    this.write(key, undefined);
-  },
-  /**
-   *
-   * @param {string} key
-   * @returns {boolean | null}
-   */
-  readBool(key) {
-    const urlParams = new URLSearchParams(window.location.search);
-
-    const parameter = urlParams.get(key);
-
-    if (parameter) {
-      return utils.isSerializedBooleanTrue(parameter);
-    }
-
-    return null;
-  },
-};
-
-const localStorageHelpers = {
-  /**
-   * @param {string} key
-   */
-  readBool(key) {
-    const saved = localStorage.getItem(key);
-    if (saved) {
-      return utils.isSerializedBooleanTrue(saved);
-    }
-    return null;
-  },
-  /**
-   * @param {string} key
-   * @param {string | boolean | undefined} value
-   */
-  write(key, value) {
-    value !== undefined && value !== null
-      ? localStorage.setItem(key, String(value))
-      : localStorage.removeItem(key);
-  },
-  /**
-   * @param {string} key
-   */
-  remove(key) {
-    this.write(key, undefined);
-  },
-};
-
 const utils = {
   /**
    * @param {string} serialized
@@ -144,6 +46,325 @@ const utils = {
      */
     getRandomElement(array) {
       return array[this.getRandomIndex(array)];
+    },
+  },
+  dom: {
+    /**
+     * @param {string} id
+     * @returns {HTMLElement}
+     */
+    getElementById(id) {
+      const element = window.document.getElementById(id);
+      if (!element) throw `Element with id = "${id}" should exist`;
+      return element;
+    },
+    /**
+     * @param {string} name
+     */
+    queryOrCreateMetaElement(name) {
+      let meta = /** @type {HTMLMetaElement | null} */ (
+        window.document.querySelector(`meta[name="${name}"]`)
+      );
+
+      if (!meta) {
+        meta = window.document.createElement("meta");
+        meta.name = name;
+        elements.head.appendChild(meta);
+      }
+      return meta;
+    },
+    /**
+     * @param {HTMLElement} element
+     */
+    isHidden(element) {
+      return element.tagName !== "BODY" && !element.offsetParent;
+    },
+    /**
+     *
+     * @param {HTMLElement} element
+     * @param {VoidFunction} callback
+     */
+    onFirstIntersection(element, callback) {
+      const observer = new IntersectionObserver((entries) => {
+        for (let i = 0; i < entries.length; i++) {
+          if (entries[i].isIntersecting) {
+            callback();
+            observer.disconnect();
+          }
+        }
+      });
+      observer.observe(element);
+    },
+    /**
+     * @param {string} name
+     */
+    createSpanName(name) {
+      const spanName = window.document.createElement("span");
+      spanName.classList.add("name");
+      const [first, second, third] = name.split("-");
+      spanName.innerHTML = first;
+
+      if (second) {
+        const smallRest = window.document.createElement("small");
+        smallRest.innerHTML = `— ${second}`;
+        spanName.append(smallRest);
+
+        if (third) {
+          throw "Shouldn't have more than one dash";
+        }
+      }
+
+      return spanName;
+    },
+    /**
+     * @param {Object} args
+     * @param {string} args.inputName
+     * @param {string} args.inputId
+     * @param {string} args.inputValue
+     * @param {boolean} [args.inputChecked=false]
+     * @param {string} args.labelTitle
+     * @param {(event: MouseEvent) => void} [args.onClick]
+     */
+    createLabeledInput({
+      inputId,
+      inputName,
+      inputValue,
+      inputChecked = false,
+      labelTitle,
+      onClick,
+    }) {
+      const label = window.document.createElement("label");
+
+      const input = window.document.createElement("input");
+      input.type = "radio";
+      input.name = inputName;
+      input.id = inputId;
+      input.value = inputValue;
+      input.checked = inputChecked;
+      label.append(input);
+
+      label.id = `${inputId}-label`;
+      // @ts-ignore
+      label.for = inputId;
+      label.title = labelTitle;
+
+      label.addEventListener("click", onClick || (() => {}));
+
+      return {
+        label,
+        input,
+      };
+    },
+    /**
+     * @param {Object} args
+     * @param {string} args.name
+     * @param {string} args.inputName
+     * @param {string} args.inputId
+     * @param {string} args.inputValue
+     * @param {string} args.labelTitle
+     * @param {(event: MouseEvent) => void} args.onClick
+     */
+    createComplexLabeledInput({
+      inputId,
+      inputName,
+      inputValue,
+      labelTitle,
+      name,
+      onClick,
+    }) {
+      const { label, input } = this.createLabeledInput({
+        inputId,
+        inputName,
+        inputValue,
+        labelTitle,
+        onClick,
+      });
+
+      const spanMain = window.document.createElement("span");
+      spanMain.classList.add("main");
+      label.append(spanMain);
+
+      const spanName = this.createSpanName(name);
+      spanMain.append(spanName);
+
+      return {
+        label,
+        input,
+        spanMain,
+        spanName,
+      };
+    },
+    /**
+     * @param {HTMLElement} parent
+     * @param {HTMLElement} child
+     * @param {number} index
+     */
+    insertElementAtIndex(parent, child, index) {
+      if (!index) index = 0;
+      if (index >= parent.children.length) {
+        parent.appendChild(child);
+      } else {
+        parent.insertBefore(child, parent.children[index]);
+      }
+    },
+  },
+  url: {
+    whitelist: ["from", "to"],
+    /**
+     * @param {Object} args
+     * @param {URLSearchParams} [args.urlParams]
+     * @param {string} [args.pathname]
+     */
+    replaceHistory({ urlParams, pathname }) {
+      urlParams ||= new URLSearchParams(window.location.search);
+      pathname ||= window.location.pathname;
+
+      window.history.replaceState(
+        null,
+        "",
+        `${pathname}?${urlParams.toString()}`
+      );
+    },
+    /**
+     * @param {string} [pathname]
+     */
+    resetParams(pathname) {
+      const urlParams = new URLSearchParams();
+
+      [...new URLSearchParams(window.location.search).entries()]
+        .filter(([key, _]) => this.whitelist.includes(key))
+        .forEach(([key, value]) => {
+          urlParams.set(key, value);
+        });
+
+      this.replaceHistory({ urlParams, pathname });
+    },
+    /**
+     * @param {string} key
+     * @param {string | boolean | undefined} value
+     */
+    writeParam(key, value) {
+      const urlParams = new URLSearchParams(window.location.search);
+
+      if (value !== undefined) {
+        urlParams.set(key, String(value));
+      } else {
+        urlParams.delete(key);
+      }
+
+      this.replaceHistory({ urlParams });
+    },
+    /**
+     * @param {string} key
+     */
+    removeParam(key) {
+      this.writeParam(key, undefined);
+    },
+    /**
+     *
+     * @param {string} key
+     * @returns {boolean | null}
+     */
+    readBoolParam(key) {
+      const urlParams = new URLSearchParams(window.location.search);
+
+      const parameter = urlParams.get(key);
+
+      if (parameter) {
+        return utils.isSerializedBooleanTrue(parameter);
+      }
+
+      return null;
+    },
+  },
+  locale: {
+    /**
+     * @param {number} value
+     * @param {number} [digits]
+     * @param {Intl.NumberFormatOptions} [options]
+     */
+    numberToUSFormat(value, digits, options) {
+      return value.toLocaleString("en-us", {
+        ...options,
+        minimumFractionDigits: digits,
+        maximumFractionDigits: digits,
+      });
+    },
+    /** @param {number} value  */
+    numberToShortUSFormat(value) {
+      const absoluteValue = Math.abs(value);
+
+      // value = absoluteValue;
+
+      if (isNaN(value)) {
+        return "";
+        // } else if (value === 0) {
+        //   return "0";
+      } else if (absoluteValue < 10) {
+        return utils.locale.numberToUSFormat(value, 3);
+      } else if (absoluteValue < 100) {
+        return utils.locale.numberToUSFormat(value, 2);
+      } else if (absoluteValue < 1_000) {
+        return utils.locale.numberToUSFormat(value, 1);
+      } else if (absoluteValue < 100_000) {
+        return utils.locale.numberToUSFormat(value, 0);
+      } else if (absoluteValue < 1_000_000) {
+        return `${utils.locale.numberToUSFormat(value / 1_000, 1)}K`;
+      } else if (absoluteValue >= 1_000_000_000_000_000_000) {
+        return "Inf.";
+      }
+
+      const log = Math.floor(Math.log10(absoluteValue) - 6);
+
+      const suffices = ["M", "B", "T", "Q"];
+      const letterIndex = Math.floor(log / 3);
+      const letter = suffices[letterIndex];
+
+      const modulused = log % 3;
+
+      if (modulused === 0) {
+        return `${utils.locale.numberToUSFormat(
+          value / (1_000_000 * 1_000 ** letterIndex),
+          3
+        )}${letter}`;
+      } else if (modulused === 1) {
+        return `${utils.locale.numberToUSFormat(
+          value / (1_000_000 * 1_000 ** letterIndex),
+          2
+        )}${letter}`;
+      } else {
+        return `${utils.locale.numberToUSFormat(
+          value / (1_000_000 * 1_000 ** letterIndex),
+          1
+        )}${letter}`;
+      }
+    },
+  },
+  storage: {
+    /**
+     * @param {string} key
+     */
+    readBool(key) {
+      const saved = localStorage.getItem(key);
+      if (saved) {
+        return utils.isSerializedBooleanTrue(saved);
+      }
+      return null;
+    },
+    /**
+     * @param {string} key
+     * @param {string | boolean | undefined} value
+     */
+    write(key, value) {
+      value !== undefined && value !== null
+        ? localStorage.setItem(key, String(value))
+        : localStorage.removeItem(key);
+    },
+    /**
+     * @param {string} key
+     */
+    remove(key) {
+      this.write(key, undefined);
     },
   },
   /**
@@ -211,7 +432,7 @@ const utils = {
    */
   getNumberOfDaysBetweenTwoDates(oldest, youngest) {
     return Math.round(
-      Math.abs((youngest.getTime() - oldest.getTime()) / ONE_DAY_IN_MS)
+      Math.abs((youngest.getTime() - oldest.getTime()) / consts.ONE_DAY_IN_MS)
     );
   },
 };
@@ -240,271 +461,65 @@ const env = (function initEnv() {
   };
 })();
 
-const dom = {
+const consts = (() => {
+  const ONE_SECOND_IN_MS = 1_000;
+  const FIVE_SECOND_IN_MS = 5 * ONE_SECOND_IN_MS;
+  const TEN_SECOND_IN_MS = 2 * FIVE_SECOND_IN_MS;
+  const ONE_MINUTE_IN_MS = 6 * TEN_SECOND_IN_MS;
+  const FIVE_MINUTES_IN_MS = 5 * ONE_MINUTE_IN_MS;
+  const TEN_MINUTES_IN_MS = 2 * FIVE_MINUTES_IN_MS;
+  const ONE_HOUR_IN_MS = 6 * TEN_MINUTES_IN_MS;
+  const ONE_DAY_IN_MS = 24 * ONE_HOUR_IN_MS;
+
+  return {
+    ONE_SECOND_IN_MS,
+    FIVE_SECOND_IN_MS,
+    TEN_SECOND_IN_MS,
+    ONE_MINUTE_IN_MS,
+    FIVE_MINUTES_IN_MS,
+    TEN_MINUTES_IN_MS,
+    ONE_HOUR_IN_MS,
+    ONE_DAY_IN_MS,
+  };
+})();
+
+const ids = {
+  selectedFrameSelectorLabelId: `selected-frame-selector-label`,
+};
+
+const elements = {
   head: window.document.getElementsByTagName("head")[0],
-  /**
-   * @param {string} id
-   * @returns {HTMLElement}
-   */
-  getElementById(id) {
-    const element = window.document.getElementById(id);
-    if (!element) throw `Element with id = "${id}" should exist`;
-    return element;
-  },
-  /**
-   * @param {string} name
-   */
-  queryOrCreateMetaElement(name) {
-    let meta = /** @type {HTMLMetaElement | null} */ (
-      window.document.querySelector(`meta[name="${name}"]`)
-    );
-
-    if (!meta) {
-      meta = window.document.createElement("meta");
-      meta.name = name;
-      this.head.appendChild(meta);
-    }
-    return meta;
-  },
-  /**
-   * @param {HTMLElement} element
-   */
-  isHidden(element) {
-    return element.tagName !== "BODY" && !element.offsetParent;
-  },
-  /**
-   *
-   * @param {HTMLElement} element
-   * @param {VoidFunction} callback
-   */
-  onFirstIntersection(element, callback) {
-    const observer = new IntersectionObserver((entries) => {
-      for (let i = 0; i < entries.length; i++) {
-        if (entries[i].isIntersecting) {
-          callback();
-          observer.disconnect();
-        }
-      }
-    });
-    observer.observe(element);
-  },
-  /**
-   * @param {string} name
-   */
-  createSpanName(name) {
-    const spanName = window.document.createElement("span");
-    spanName.classList.add("name");
-    const [first, second, third] = name.split("-");
-    spanName.innerHTML = first;
-
-    if (second) {
-      const smallRest = window.document.createElement("small");
-      smallRest.innerHTML = `— ${second}`;
-      spanName.append(smallRest);
-
-      if (third) {
-        throw "Shouldn't have more than one dash";
-      }
-    }
-
-    return spanName;
-  },
-  /**
-   * @param {Object} args
-   * @param {string} args.inputName
-   * @param {string} args.inputId
-   * @param {string} args.inputValue
-   * @param {boolean} [args.inputChecked=false]
-   * @param {string} args.labelTitle
-   * @param {(event: MouseEvent) => void} [args.onClick]
-   */
-  createLabeledInput({
-    inputId,
-    inputName,
-    inputValue,
-    inputChecked = false,
-    labelTitle,
-    onClick,
-  }) {
-    const label = window.document.createElement("label");
-
-    const input = window.document.createElement("input");
-    input.type = "radio";
-    input.name = inputName;
-    input.id = inputId;
-    input.value = inputValue;
-    input.checked = inputChecked;
-    label.append(input);
-
-    label.id = `${inputId}-label`;
-    // @ts-ignore
-    label.for = inputId;
-    label.title = labelTitle;
-
-    label.addEventListener("click", onClick || (() => {}));
-
-    return {
-      label,
-      input,
-    };
-  },
-  /**
-   * @param {Object} args
-   * @param {string} args.name
-   * @param {string} args.inputName
-   * @param {string} args.inputId
-   * @param {string} args.inputValue
-   * @param {string} args.labelTitle
-   * @param {(event: MouseEvent) => void} args.onClick
-   */
-  createComplexLabeledInput({
-    inputId,
-    inputName,
-    inputValue,
-    labelTitle,
-    name,
-    onClick,
-  }) {
-    const { label, input } = this.createLabeledInput({
-      inputId,
-      inputName,
-      inputValue,
-      labelTitle,
-      onClick,
-    });
-
-    const spanMain = window.document.createElement("span");
-    spanMain.classList.add("main");
-    label.append(spanMain);
-
-    const spanName = this.createSpanName(name);
-    spanMain.append(spanName);
-
-    return {
-      label,
-      input,
-      spanMain,
-      spanName,
-    };
-  },
-  /**
-   * @param {HTMLElement} parent
-   * @param {HTMLElement} child
-   * @param {number} index
-   */
-  insertElementAtIndex(parent, child, index) {
-    if (!index) index = 0;
-    if (index >= parent.children.length) {
-      parent.appendChild(child);
-    } else {
-      parent.insertBefore(child, parent.children[index]);
-    }
-  },
+  main: utils.dom.getElementById("main"),
+  aside: utils.dom.getElementById("aside"),
+  selectedLabel: utils.dom.getElementById(ids.selectedFrameSelectorLabelId),
+  foldersLabel: utils.dom.getElementById(`folders-frame-selector-label`),
+  searchLabel: utils.dom.getElementById(`search-frame-selector-label`),
+  searchFrame: utils.dom.getElementById("search-frame"),
+  historyFrame: utils.dom.getElementById("history-frame"),
+  settingsFrame: utils.dom.getElementById("settings-frame"),
+  foldersFrame: utils.dom.getElementById("folders-frame"),
+  selectedFrame: utils.dom.getElementById("selected-frame"),
+  historyList: utils.dom.getElementById("history-list"),
+  searchInput: /** @type {HTMLInputElement} */ (
+    utils.dom.getElementById("search-input")
+  ),
+  searchSmall: utils.dom.getElementById("search-small"),
+  searchResults: utils.dom.getElementById("search-results"),
+  presetTitle: utils.dom.getElementById("preset-title"),
+  presetDescription: utils.dom.getElementById("preset-description"),
+  foldersFilterAllCount: utils.dom.getElementById("folders-filter-all-count"),
+  foldersFilterFavoritesCount: utils.dom.getElementById(
+    "folders-filter-favorites-count"
+  ),
+  foldersFilterNewCount: utils.dom.getElementById("folders-filter-new-count"),
+  chartList: utils.dom.getElementById("chart-list"),
+  legend: utils.dom.getElementById("legend"),
+  style: getComputedStyle(window.document.documentElement),
+  buttonFavorite: utils.dom.getElementById("button-favorite"),
+  timeScaleDateButtons: utils.dom.getElementById("timescale-date-buttons"),
+  timeScaleHeightButtons: utils.dom.getElementById("timescale-height-buttons"),
 };
 
-const locale = {
-  /**
-   * @param {number} value
-   * @param {number} [digits]
-   * @param {Intl.NumberFormatOptions} [options]
-   */
-  numberToUSFormat(value, digits, options) {
-    return value.toLocaleString("en-us", {
-      ...options,
-      minimumFractionDigits: digits,
-      maximumFractionDigits: digits,
-    });
-  },
-  /** @param {number} value  */
-  numberToShortUSFormat(value) {
-    const absoluteValue = Math.abs(value);
-
-    // value = absoluteValue;
-
-    if (isNaN(value)) {
-      return "";
-      // } else if (value === 0) {
-      //   return "0";
-    } else if (absoluteValue < 10) {
-      return locale.numberToUSFormat(value, 3);
-    } else if (absoluteValue < 100) {
-      return locale.numberToUSFormat(value, 2);
-    } else if (absoluteValue < 1_000) {
-      return locale.numberToUSFormat(value, 1);
-    } else if (absoluteValue < 100_000) {
-      return locale.numberToUSFormat(value, 0);
-    } else if (absoluteValue < 1_000_000) {
-      return `${locale.numberToUSFormat(value / 1_000, 1)}K`;
-    } else if (absoluteValue >= 1_000_000_000_000_000_000) {
-      return "Inf.";
-    }
-
-    const log = Math.floor(Math.log10(absoluteValue) - 6);
-
-    const suffices = ["M", "B", "T", "Q"];
-    const letterIndex = Math.floor(log / 3);
-    const letter = suffices[letterIndex];
-
-    const modulused = log % 3;
-
-    if (modulused === 0) {
-      return `${locale.numberToUSFormat(
-        value / (1_000_000 * 1_000 ** letterIndex),
-        3
-      )}${letter}`;
-    } else if (modulused === 1) {
-      return `${locale.numberToUSFormat(
-        value / (1_000_000 * 1_000 ** letterIndex),
-        2
-      )}${letter}`;
-    } else {
-      return `${locale.numberToUSFormat(
-        value / (1_000_000 * 1_000 ** letterIndex),
-        1
-      )}${letter}`;
-    }
-  },
-};
-
-const ONE_SECOND_IN_MS = 1_000;
-const FIVE_SECOND_IN_MS = 5 * ONE_SECOND_IN_MS;
-const TEN_SECOND_IN_MS = 2 * FIVE_SECOND_IN_MS;
-const ONE_MINUTE_IN_MS = 6 * TEN_SECOND_IN_MS;
-const FIVE_MINUTES_IN_MS = 5 * ONE_MINUTE_IN_MS;
-const TEN_MINUTES_IN_MS = 2 * FIVE_MINUTES_IN_MS;
-const ONE_HOUR_IN_MS = 6 * TEN_MINUTES_IN_MS;
-const ONE_DAY_IN_MS = 24 * ONE_HOUR_IN_MS;
-
-const mainElement = dom.getElementById("main");
-const asideElement = dom.getElementById("aside");
-const selectedFrameSelectorLabelId = `selected-frame-selector-label`;
-const selectedLabelElement = dom.getElementById(selectedFrameSelectorLabelId);
-const foldersLabelElement = dom.getElementById(`folders-frame-selector-label`);
-const searchLabelElement = dom.getElementById(`search-frame-selector-label`);
-const searchFrameElement = dom.getElementById("search-frame");
-const historyFrameElement = dom.getElementById("history-frame");
-const settingsFrameElement = dom.getElementById("settings-frame");
-const foldersFrameElement = dom.getElementById("folders-frame");
-const selectedFrameElement = dom.getElementById("selected-frame");
-const historyListElement = dom.getElementById("history-list");
-const searchInputElement = /** @type {HTMLInputElement} */ (
-  dom.getElementById("search-input")
-);
-const searchSmall = dom.getElementById("search-small");
-const searchResults = dom.getElementById("search-results");
-const presetTitle = dom.getElementById("preset-title");
-const presetDescription = dom.getElementById("preset-description");
-const foldersFilterAllCount = dom.getElementById("folders-filter-all-count");
-const foldersFilterFavoritesCount = dom.getElementById(
-  "folders-filter-favorites-count"
-);
-const foldersFilterNewCount = dom.getElementById("folders-filter-new-count");
-const chartListElement = dom.getElementById("chart-list");
-const legendElement = dom.getElementById("legend");
-const style = getComputedStyle(window.document.documentElement);
-const buttonFavorite = dom.getElementById("button-favorite");
-const timeScaleDateButtons = dom.getElementById("timescale-date-buttons");
-const timeScaleHeightButtons = dom.getElementById("timescale-height-buttons");
 const mediumWidth = 768;
 
 const selectedLocalStorageKey = `selected-id`;
@@ -515,7 +530,7 @@ function initFrameSelectors() {
   const localStorageKey = "checked-frame-selector-label";
   let selectedFrameLabel = localStorage.getItem(localStorageKey);
 
-  const selectors = dom.getElementById("frame-selectors");
+  const selectors = utils.dom.getElementById("frame-selectors");
 
   const children = Array.from(selectors.children);
 
@@ -562,7 +577,7 @@ function initFrameSelectors() {
     if (!frameLabel) throw "Frame should exist";
     frameLabel.click();
   } else {
-    selectedLabelElement.click();
+    elements.selectedLabel.click();
   }
 
   // When going from mobile view to desktop view, if selected frame was open, go to the folders frame
@@ -570,20 +585,20 @@ function initFrameSelectors() {
     for (let i = 0; i < entries.length; i++) {
       if (
         !entries[i].isIntersecting &&
-        entries[i].target === selectedLabelElement &&
-        selectedFrameLabel === selectedFrameSelectorLabelId
+        entries[i].target === elements.selectedLabel &&
+        selectedFrameLabel === ids.selectedFrameSelectorLabelId
       ) {
-        foldersLabelElement.click();
+        elements.foldersLabel.click();
       }
     }
-  }).observe(selectedLabelElement);
+  }).observe(elements.selectedLabel);
 
   function setSelectedFrameParent() {
     const { clientWidth } = window.document.documentElement;
     if (clientWidth >= mediumWidth) {
-      asideElement.append(selectedFrameElement);
+      elements.aside.append(elements.selectedFrame);
     } else {
-      mainElement.append(selectedFrameElement);
+      elements.main.append(elements.selectedFrame);
     }
   }
   setSelectedFrameParent();
@@ -597,18 +612,18 @@ function createKeyDownEventListener() {
       case "Escape": {
         event.stopPropagation();
         event.preventDefault();
-        foldersLabelElement.click();
+        elements.foldersLabel.click();
         break;
       }
       case "/": {
-        if (window.document.activeElement === searchInputElement) {
+        if (window.document.activeElement === elements.searchInput) {
           return;
         }
 
         event.stopPropagation();
         event.preventDefault();
-        searchLabelElement.click();
-        searchInputElement.focus();
+        elements.searchLabel.click();
+        elements.searchInput.focus();
         break;
       }
     }
@@ -616,29 +631,17 @@ function createKeyDownEventListener() {
 }
 createKeyDownEventListener();
 
-lazySignals.then((importedSignals) => {
-  const {
-    createSignal: _createSignal,
-    createEffect: _createEffect,
-    createMemo: _createMemo,
-    createRoot: _createRoot,
-    untrack: _untrack,
-    getOwner: _getOwner,
-    runWithOwner: _runWithOwner,
-    onCleanup: _onCleanup,
-    flushSync,
-  } = importedSignals;
-
+lazySignals.then((_signals) => {
   const signals = {
-    createSolidSignal: /** @type {CreateSignal} */ (_createSignal),
-    createEffect: /** @type {CreateEffect} */ (_createEffect),
-    createMemo: /** @type {CreateMemo} */ (_createMemo),
-    createRoot: /** @type {CreateRoot} */ (_createRoot),
-    untrack: /** @type {Untrack} */ (_untrack),
-    getOwner: /** @type {GetOwner} */ (_getOwner),
-    runWithOwner: /** @type {RunWithOwner} */ (_runWithOwner),
-    onCleanup: /** @type {OnCleanup} */ (_onCleanup),
-    flushSync,
+    createSolidSignal: /** @type {CreateSignal} */ (_signals.createSignal),
+    createEffect: /** @type {CreateEffect} */ (_signals.createEffect),
+    createMemo: /** @type {CreateMemo} */ (_signals.createMemo),
+    createRoot: /** @type {CreateRoot} */ (_signals.createRoot),
+    untrack: /** @type {Untrack} */ (_signals.untrack),
+    getOwner: /** @type {GetOwner} */ (_signals.getOwner),
+    runWithOwner: /** @type {RunWithOwner} */ (_signals.runWithOwner),
+    onCleanup: /** @type {OnCleanup} */ (_signals.onCleanup),
+    flushSync: _signals.flushSync,
     /**
      * @template T
      * @param {T} initialValue
@@ -676,7 +679,7 @@ lazySignals.then((importedSignals) => {
       return dark() ? tailwindRed900 : tailwindRed100;
     }
     function orange() {
-      return style.getPropertyValue("--orange"); // 550
+      return elements.style.getPropertyValue("--orange"); // 550
     }
     function darkOrange() {
       const tailwindOrange900 = "#7c2d12";
@@ -746,12 +749,12 @@ lazySignals.then((importedSignals) => {
 
     function off() {
       const _ = dark();
-      return style.getPropertyValue("--off-color");
+      return elements.style.getPropertyValue("--off-color");
     }
 
     function textColor() {
       const _ = dark();
-      return style.getPropertyValue("--color");
+      return elements.style.getPropertyValue("--color");
     }
 
     return {
@@ -5415,7 +5418,7 @@ lazySignals.then((importedSignals) => {
      */
     createPresetLabeledInput({ preset, frame, name, top, id, owner }) {
       const { input, label, spanMain, spanName } =
-        dom.createComplexLabeledInput({
+        utils.dom.createComplexLabeledInput({
           inputId: `${preset.id}-${frame}${id || ""}-selector`,
           inputValue: preset.id,
           inputName: `preset-${frame}${id || ""}`,
@@ -5521,7 +5524,7 @@ lazySignals.then((importedSignals) => {
 
       choices.forEach((choice) => {
         const inputValue = choice.toLowerCase();
-        const { label } = dom.createLabeledInput({
+        const { label } = utils.dom.createLabeledInput({
           inputId: `${id}-${choice.toLowerCase()}`,
           inputName: id,
           inputValue,
@@ -5595,7 +5598,7 @@ lazySignals.then((importedSignals) => {
 
             if (renderLi() && _ul) {
               const li = window.document.createElement("li");
-              dom.insertElementAtIndex(_ul, li, partialIndex);
+              utils.dom.insertElementAtIndex(_ul, li, partialIndex);
               return li;
             } else {
               return null;
@@ -5668,7 +5671,7 @@ lazySignals.then((importedSignals) => {
             spanMarker.innerHTML = "●";
             summary.append(spanMarker);
 
-            const spanName = dom.createSpanName(anyPartial.name);
+            const spanName = utils.dom.createSpanName(anyPartial.name);
             summary.append(spanName);
 
             const smallCount = window.document.createElement("small");
@@ -5861,16 +5864,16 @@ lazySignals.then((importedSignals) => {
 
         const preset = selected();
 
-        if (!firstRun && !dom.isHidden(selectedLabelElement)) {
-          selectedLabelElement.click();
+        if (!firstRun && !utils.dom.isHidden(elements.selectedLabel)) {
+          elements.selectedLabel.click();
         }
         firstRun = false;
 
         if (previouslySelected) {
-          urlParamsHelpers.reset(preset.id);
+          utils.url.resetParams(preset.id);
         }
 
-        urlParamsHelpers.replaceHistory({ pathname: preset.id });
+        utils.url.replaceHistory({ pathname: preset.id });
 
         return preset;
       },
@@ -6066,12 +6069,12 @@ lazySignals.then((importedSignals) => {
       function saveVisibleRange() {
         const range = visibleTimeRange();
 
-        urlParamsHelpers.write(
+        utils.url.writeParam(
           URL_PARAMS_TIME_RANGE_FROM_KEY,
           String(range.from)
         );
 
-        urlParamsHelpers.write(URL_PARAMS_TIME_RANGE_TO_KEY, String(range.to));
+        utils.url.writeParam(URL_PARAMS_TIME_RANGE_TO_KEY, String(range.to));
 
         localStorage.setItem(
           getVisibleTimeRangeLocalStorageKey(scale()),
@@ -6241,7 +6244,7 @@ lazySignals.then((importedSignals) => {
             mode: 0,
           },
           localization: {
-            priceFormatter: locale.numberToShortUSFormat,
+            priceFormatter: utils.locale.numberToShortUSFormat,
             locale: "en-us",
             ...(scale === "date"
               ? {
@@ -6304,9 +6307,11 @@ lazySignals.then((importedSignals) => {
 
       function resetChartListElement() {
         while (
-          chartListElement.lastElementChild?.classList.contains("chart-wrapper")
+          elements.chartList.lastElementChild?.classList.contains(
+            "chart-wrapper"
+          )
         ) {
-          chartListElement.lastElementChild?.remove();
+          elements.chartList.lastElementChild?.remove();
         }
       }
 
@@ -6668,9 +6673,9 @@ lazySignals.then((importedSignals) => {
                   const diff = new Date().getTime() - fetched.at.getTime();
 
                   if (
-                    diff < ONE_MINUTE_IN_MS ||
+                    diff < consts.ONE_MINUTE_IN_MS ||
                     (index < fetchedJSONs.findLastIndex((json) => json.at) &&
-                      diff < ONE_HOUR_IN_MS)
+                      diff < consts.ONE_HOUR_IN_MS)
                   ) {
                     return;
                   }
@@ -6887,7 +6892,6 @@ lazySignals.then((importedSignals) => {
           getOrImport,
         };
       }
-
       const datasets = createDatasets();
 
       /**
@@ -7018,9 +7022,9 @@ lazySignals.then((importedSignals) => {
         signals.createEffect(() => {
           div.hidden = disabled?.() ? true : false;
         });
-        legendElement.prepend(div);
+        elements.legend.prepend(div);
 
-        const { input, label, spanMain } = dom.createComplexLabeledInput({
+        const { input, label, spanMain } = utils.dom.createComplexLabeledInput({
           inputId: `legend-${series.title}`,
           inputName: `selected-${series.title}${name}`,
           inputValue: "value",
@@ -7181,8 +7185,8 @@ lazySignals.then((importedSignals) => {
         );
 
         const active = signals.createSignal(
-          urlParamsHelpers.readBool(id) ??
-            localStorageHelpers.readBool(storageId) ??
+          utils.url.readBoolParam(id) ??
+            utils.storage.readBool(storageId) ??
             defaultActive ??
             true
         );
@@ -7199,11 +7203,11 @@ lazySignals.then((importedSignals) => {
           const a = active();
 
           if (a !== (defaultActive || true)) {
-            urlParamsHelpers.write(id, a);
-            localStorageHelpers.write(storageId, a);
+            utils.url.writeParam(id, a);
+            utils.storage.write(storageId, a);
           } else {
-            urlParamsHelpers.remove(id);
-            localStorageHelpers.remove(storageId);
+            utils.url.removeParam(id);
+            utils.storage.remove(storageId);
           }
         });
 
@@ -7440,7 +7444,7 @@ lazySignals.then((importedSignals) => {
       }
 
       function resetLegendElement() {
-        legendElement.innerHTML = "";
+        elements.legend.innerHTML = "";
       }
 
       function applyPreset() {
@@ -7468,7 +7472,7 @@ lazySignals.then((importedSignals) => {
 
         charts = chartsBlueprints.map((seriesBlueprints, chartIndex) => {
           const { chartDiv, unitName, chartMode } = createChartDiv(
-            chartListElement,
+            elements.chartList,
             chartIndex
           );
 
@@ -7581,7 +7585,7 @@ lazySignals.then((importedSignals) => {
                   position: "belowBar",
                   shape: "arrowUp",
                   size: 0,
-                  text: locale.numberToShortUSFormat(min.value),
+                  text: utils.locale.numberToShortUSFormat(min.value),
                 };
               }
 
@@ -7593,7 +7597,7 @@ lazySignals.then((importedSignals) => {
                   position: "aboveBar",
                   shape: "arrowDown",
                   size: 0,
-                  text: locale.numberToShortUSFormat(max.value),
+                  text: utils.locale.numberToShortUSFormat(max.value),
                 };
               }
 
@@ -7816,19 +7820,19 @@ lazySignals.then((importedSignals) => {
       function createUpdateSelectedHeaderEffect() {
         signals.createEffect(() => {
           const preset = selected();
-          presetTitle.innerHTML = preset.title;
-          presetDescription.innerHTML = preset.serializedPath;
+          elements.presetTitle.innerHTML = preset.title;
+          elements.presetDescription.innerHTML = preset.serializedPath;
         });
       }
       createUpdateSelectedHeaderEffect();
 
       function showSelectedFrame() {
-        selectedFrameElement.style.opacity = "1";
+        elements.selectedFrame.style.opacity = "1";
       }
       showSelectedFrame();
 
       function initFavoriteButton() {
-        buttonFavorite.addEventListener("click", () => {
+        elements.buttonFavorite.addEventListener("click", () => {
           const preset = selected();
 
           preset.isFavorite.set((f) => {
@@ -7847,17 +7851,17 @@ lazySignals.then((importedSignals) => {
 
         signals.createEffect(() => {
           if (selected().isFavorite()) {
-            buttonFavorite.dataset.highlight = "";
+            elements.buttonFavorite.dataset.highlight = "";
           } else {
-            delete buttonFavorite.dataset.highlight;
+            delete elements.buttonFavorite.dataset.highlight;
           }
         });
       }
       initFavoriteButton();
 
       function initShareButton() {
-        const shareDiv = dom.getElementById("share-div");
-        const shareContentDiv = dom.getElementById("share-content-div");
+        const shareDiv = utils.dom.getElementById("share-div");
+        const shareContentDiv = utils.dom.getElementById("share-content-div");
 
         shareDiv.addEventListener("click", () => {
           shareDiv.hidden = true;
@@ -7870,43 +7874,49 @@ lazySignals.then((importedSignals) => {
 
         import("./packages/lean-qr/v2.3.4/script.js").then(({ generate }) => {
           const imgQrcode = /** @type {HTMLImageElement} */ (
-            dom.getElementById("share-img")
+            utils.dom.getElementById("share-img")
           );
 
           const anchor = /** @type {HTMLAnchorElement} */ (
-            dom.getElementById("share-anchor")
+            utils.dom.getElementById("share-anchor")
           );
 
-          dom.getElementById("button-share").addEventListener("click", () => {
-            const href = window.location.href;
-            anchor.href = href;
-            anchor.innerHTML = href;
+          utils.dom
+            .getElementById("button-share")
+            .addEventListener("click", () => {
+              const href = window.location.href;
+              anchor.href = href;
+              anchor.innerHTML = href;
 
-            const qrcode = generate(
-              /** @type {any} */ (window.document.location.href)
-            )?.toDataURL({
-              // @ts-ignore
-              padX: 0,
-              padY: 0,
+              const qrcode = generate(
+                /** @type {any} */ (window.document.location.href)
+              )?.toDataURL({
+                // @ts-ignore
+                padX: 0,
+                padY: 0,
+              });
+              imgQrcode.src = qrcode || "";
+
+              shareDiv.hidden = false;
             });
-            imgQrcode.src = qrcode || "";
-
-            shareDiv.hidden = false;
-          });
         });
       }
       initShareButton();
 
       function initTimeScaleElement() {
         function initScrollButtons() {
-          const buttonBackward = dom.getElementById("button-backward");
-          const buttonBackwardIcon = dom.getElementById("button-backward-icon");
-          const buttonBackwardPauseIcon = dom.getElementById(
+          const buttonBackward = utils.dom.getElementById("button-backward");
+          const buttonBackwardIcon = utils.dom.getElementById(
+            "button-backward-icon"
+          );
+          const buttonBackwardPauseIcon = utils.dom.getElementById(
             "button-backward-pause-icon"
           );
-          const buttonForward = dom.getElementById("button-forward");
-          const buttonForwardIcon = dom.getElementById("button-forward-icon");
-          const buttonForwardPauseIcon = dom.getElementById(
+          const buttonForward = utils.dom.getElementById("button-forward");
+          const buttonForwardIcon = utils.dom.getElementById(
+            "button-forward-icon"
+          );
+          const buttonForwardPauseIcon = utils.dom.getElementById(
             "button-forward-pause-icon"
           );
 
@@ -8003,7 +8013,7 @@ lazySignals.then((importedSignals) => {
                 Math.ceil(
                   (to.getTime() -
                     new Date(`${to.getUTCFullYear()}-01-01`).getTime()) /
-                    ONE_DAY_IN_MS
+                    consts.ONE_DAY_IN_MS
                 )
               );
             }
@@ -8040,15 +8050,15 @@ lazySignals.then((importedSignals) => {
             });
           });
         }
-        initGoToButtons(timeScaleDateButtons);
-        initGoToButtons(timeScaleHeightButtons);
+        initGoToButtons(elements.timeScaleDateButtons);
+        initGoToButtons(elements.timeScaleHeightButtons);
 
         function createScaleButtonsToggleEffect() {
           signals.createEffect(() => {
             const scaleIsDate = scale() === "date";
 
-            timeScaleDateButtons.hidden = !scaleIsDate;
-            timeScaleHeightButtons.hidden = scaleIsDate;
+            elements.timeScaleDateButtons.hidden = !scaleIsDate;
+            elements.timeScaleHeightButtons.hidden = scaleIsDate;
           });
         }
         createScaleButtonsToggleEffect();
@@ -8056,7 +8066,7 @@ lazySignals.then((importedSignals) => {
       initTimeScaleElement();
     }
 
-    dom.onFirstIntersection(selectedFrameElement, () =>
+    utils.dom.onFirstIntersection(elements.selectedFrame, () =>
       utils.runWhenIdle(() =>
         window.document.fonts.ready.then(() =>
           import("./packages/lightweight-charts/v4.2.0/script.js").then(
@@ -8081,34 +8091,37 @@ lazySignals.then((importedSignals) => {
       treeElement.set(() => {
         const treeElement = window.document.createElement("div");
         treeElement.classList.add("tree");
-        foldersFrameElement.append(treeElement);
+        elements.foldersFrame.append(treeElement);
         return treeElement;
       });
     }
 
     function createCountersDomUpdateEffect() {
-      foldersFilterAllCount.innerHTML = presetsList.length.toLocaleString();
+      elements.foldersFilterAllCount.innerHTML =
+        presetsList.length.toLocaleString();
 
       signals.createEffect(() => {
-        foldersFilterFavoritesCount.innerHTML = counters
+        elements.foldersFilterFavoritesCount.innerHTML = counters
           .favorites()
           .toLocaleString();
       });
 
       signals.createEffect(() => {
-        foldersFilterNewCount.innerHTML = counters.new().toLocaleString();
+        elements.foldersFilterNewCount.innerHTML = counters
+          .new()
+          .toLocaleString();
       });
     }
 
     function initFilters() {
       const filterAllInput = /** @type {HTMLInputElement} */ (
-        dom.getElementById("folders-filter-all")
+        utils.dom.getElementById("folders-filter-all")
       );
       const filterFavoritesInput = /** @type {HTMLInputElement} */ (
-        dom.getElementById("folders-filter-favorites")
+        utils.dom.getElementById("folders-filter-favorites")
       );
       const filterNewInput = /** @type {HTMLInputElement} */ (
-        dom.getElementById("folders-filter-new")
+        utils.dom.getElementById("folders-filter-new")
       );
 
       filterAllInput.addEventListener("change", () => {
@@ -8142,7 +8155,7 @@ lazySignals.then((importedSignals) => {
     }
 
     function initCloseAllButton() {
-      dom
+      utils.dom
         .getElementById("button-close-all-folders")
         .addEventListener("click", () => {
           detailsList.forEach((details) => (details.open = false));
@@ -8150,7 +8163,7 @@ lazySignals.then((importedSignals) => {
     }
 
     function initGoToSelectedButton() {
-      dom
+      utils.dom
         .getElementById("button-go-to-selected")
         .addEventListener("click", () => {
           goToSelected();
@@ -8170,7 +8183,7 @@ lazySignals.then((importedSignals) => {
         try {
           const id = path[i].id;
           const details = /** @type {HTMLDetailsElement} */ (
-            dom.getElementById(id)
+            utils.dom.getElementById(id)
           );
           details.open = true;
           i++;
@@ -8181,13 +8194,15 @@ lazySignals.then((importedSignals) => {
 
       await utils.yield();
 
-      dom.getElementById(`${selectedId}-folders-selector`).scrollIntoView({
-        behavior: "instant",
-        block: "center",
-      });
+      utils.dom
+        .getElementById(`${selectedId}-folders-selector`)
+        .scrollIntoView({
+          behavior: "instant",
+          block: "center",
+        });
     }
 
-    dom.onFirstIntersection(foldersFrameElement, () => {
+    utils.dom.onFirstIntersection(elements.foldersFrame, () => {
       console.log("folders: init");
       initTreeElement();
       createCountersDomUpdateEffect();
@@ -8203,7 +8218,7 @@ lazySignals.then((importedSignals) => {
 
   function initSearch() {
     function initNoInputButton() {
-      dom
+      utils.dom
         .getElementById("search-no-input-text")
         .addEventListener("click", () => {
           selected.set(utils.array.getRandomElement(presetsList));
@@ -8214,13 +8229,13 @@ lazySignals.then((importedSignals) => {
      * @param {string} [value = '']
      */
     function setInputValue(value = "") {
-      searchInputElement.focus();
-      searchInputElement.value = value;
-      searchInputElement.dispatchEvent(new Event("input"));
+      elements.searchInput.focus();
+      elements.searchInput.value = value;
+      elements.searchInput.dispatchEvent(new Event("input"));
     }
 
     function initResetSearchButton() {
-      const resetSearchButton = dom.getElementById("reset-search");
+      const resetSearchButton = utils.dom.getElementById("reset-search");
       resetSearchButton.addEventListener("click", () => {
         setInputValue();
       });
@@ -8238,7 +8253,7 @@ lazySignals.then((importedSignals) => {
         (preset) => `${preset.title}\t${preset.serializedPath}`
       );
 
-      const searchSmallOgInnerHTML = searchSmall.innerHTML;
+      const searchSmallOgInnerHTML = elements.searchSmall.innerHTML;
 
       const RESULTS_PER_PAGE = 100;
 
@@ -8331,21 +8346,21 @@ lazySignals.then((importedSignals) => {
 
           function inputEvent() {
             signals.createRoot((_dispose) => {
-              const needle = /** @type {string} */ (searchInputElement.value);
+              const needle = /** @type {string} */ (elements.searchInput.value);
 
-              localStorageHelpers.write(localStorageSearchKey, needle);
+              utils.storage.write(localStorageSearchKey, needle);
 
               dispose?.();
 
               dispose = _dispose;
 
-              searchResults.scrollTo({
+              elements.searchResults.scrollTo({
                 top: 0,
               });
 
               if (!needle) {
-                searchSmall.innerHTML = searchSmallOgInnerHTML;
-                searchResults.innerHTML = "";
+                elements.searchSmall.innerHTML = searchSmallOgInnerHTML;
+                elements.searchResults.innerHTML = "";
                 return;
               }
 
@@ -8404,16 +8419,16 @@ lazySignals.then((importedSignals) => {
                 );
               }
 
-              searchSmall.innerHTML = `Found <strong>${
+              elements.searchSmall.innerHTML = `Found <strong>${
                 result?.[0]?.length || 0
               }</strong> preset(s)`;
-              searchResults.innerHTML = "";
+              elements.searchResults.innerHTML = "";
 
               const list = computeResultPage(result, 0);
 
               list.forEach(({ preset, path, title }) => {
                 const li = window.document.createElement("li");
-                searchResults.appendChild(li);
+                elements.searchResults.appendChild(li);
 
                 const label = reactiveDom.createPresetLabeledInput({
                   preset,
@@ -8427,17 +8442,17 @@ lazySignals.then((importedSignals) => {
             });
           }
 
-          if (searchInputElement.value) {
+          if (elements.searchInput.value) {
             inputEvent();
           }
 
-          searchInputElement.addEventListener("input", inputEvent);
+          elements.searchInput.addEventListener("input", inputEvent);
         }
       );
 
       setInputValue(localStorage.getItem(localStorageSearchKey) || "");
     }
-    dom.onFirstIntersection(searchFrameElement, initSearchFrame);
+    utils.dom.onFirstIntersection(elements.searchFrame, initSearchFrame);
   }
   initSearch();
 
@@ -8540,10 +8555,10 @@ lazySignals.then((importedSignals) => {
           const heading = window.document.createElement("h4");
           heading.id = key;
           heading.innerHTML = dateToDisplayedString(tuples[0].date);
-          historyListElement.append(heading);
+          elements.historyList.append(heading);
 
           tuples.forEach(({ preset, date }) => {
-            historyListElement.append(
+            elements.historyList.append(
               reactiveDom.createPresetLabeledInput({
                 preset,
                 frame: "history",
@@ -8582,13 +8597,13 @@ lazySignals.then((importedSignals) => {
             }
 
             grouped[testedString].unshift({ preset, date });
-            dom.getElementById(testedString).after(li);
+            utils.dom.getElementById(testedString).after(li);
           } else {
             const [first, second] = firstTwo;
             /** @param {string | undefined} id  */
             function updateHeading(id) {
               if (!id) return;
-              dom.getElementById(id).innerHTML = dateToDisplayedString(
+              utils.dom.getElementById(id).innerHTML = dateToDisplayedString(
                 grouped[id][0].date
               );
             }
@@ -8600,8 +8615,8 @@ lazySignals.then((importedSignals) => {
             heading.innerHTML = dateToDisplayedString(date);
             heading.id = testedString;
 
-            historyListElement.prepend(li);
-            historyListElement.prepend(heading);
+            elements.historyList.prepend(li);
+            elements.historyList.prepend(heading);
 
             grouped[testedString] = [{ preset, date }];
 
@@ -8612,7 +8627,7 @@ lazySignals.then((importedSignals) => {
       }
       createUpdateHistoryEffect();
     }
-    dom.onFirstIntersection(historyFrameElement, initHistoryFrame);
+    utils.dom.onFirstIntersection(elements.historyFrame, initHistoryFrame);
   }
   initHistory();
 
@@ -8622,13 +8637,13 @@ lazySignals.then((importedSignals) => {
 
       function initTheme() {
         const inputLight = /** @type {HTMLInputElement} */ (
-          dom.getElementById("settings-theme-light-input")
+          utils.dom.getElementById("settings-theme-light-input")
         );
         const inputDark = /** @type {HTMLInputElement} */ (
-          dom.getElementById("settings-theme-dark-input")
+          utils.dom.getElementById("settings-theme-dark-input")
         );
         const inputSystem = /** @type {HTMLInputElement} */ (
-          dom.getElementById("settings-theme-system-input")
+          utils.dom.getElementById("settings-theme-system-input")
         );
 
         const settingsThemeLocalStorageKey = "settings-theme";
@@ -8675,7 +8690,7 @@ lazySignals.then((importedSignals) => {
           const backgroundColor = getComputedStyle(
             window.document.documentElement
           ).getPropertyValue("--background-color");
-          const meta = dom.queryOrCreateMetaElement("theme-color");
+          const meta = utils.dom.queryOrCreateMetaElement("theme-color");
           meta.content = backgroundColor;
         }
 
@@ -8696,7 +8711,7 @@ lazySignals.then((importedSignals) => {
           }
         });
 
-        dom
+        utils.dom
           .getElementById("settings-theme-field")
           .addEventListener("change", (event) => {
             const newTheme = /** @type {SettingsTheme | string} */ (
@@ -8719,7 +8734,7 @@ lazySignals.then((importedSignals) => {
       initTheme();
 
       function initLeaderboard() {
-        const leaderboard = dom.getElementById("leaderboard");
+        const leaderboard = utils.dom.getElementById("leaderboard");
 
         const donations = [
           {
@@ -8881,7 +8896,7 @@ lazySignals.then((importedSignals) => {
           env.safariOnly &&
           (env.macOS || env.ipad || env.iphone)
         ) {
-          const installInstructionsElement = dom.getElementById(
+          const installInstructionsElement = utils.dom.getElementById(
             "settings-install-instructions"
           );
           installInstructionsElement.hidden = false;
@@ -8907,19 +8922,19 @@ lazySignals.then((importedSignals) => {
 
       function initMobileNav() {
         const anchorApi = /** @type {HTMLAnchorElement} */ (
-          dom.getElementById("anchor-api").cloneNode(true)
+          utils.dom.getElementById("anchor-api").cloneNode(true)
         );
 
         const anchorGit = /** @type {HTMLAnchorElement} */ (
-          dom.getElementById("anchor-git").cloneNode(true)
+          utils.dom.getElementById("anchor-git").cloneNode(true)
         );
 
         const anchorNostr = /** @type {HTMLAnchorElement} */ (
-          dom.getElementById("anchor-nostr").cloneNode(true)
+          utils.dom.getElementById("anchor-nostr").cloneNode(true)
         );
 
         const anchorGeyser = /** @type {HTMLAnchorElement} */ (
-          dom.getElementById("anchor-geyser").cloneNode(true)
+          utils.dom.getElementById("anchor-geyser").cloneNode(true)
         );
 
         if (!anchorApi || !anchorGit || !anchorNostr || !anchorGeyser)
@@ -8930,7 +8945,7 @@ lazySignals.then((importedSignals) => {
         anchorNostr.id = "";
         anchorGeyser.id = "";
 
-        const nav = dom.getElementById("settings-nav");
+        const nav = utils.dom.getElementById("settings-nav");
 
         nav.append(anchorApi);
         nav.append(anchorGit);
@@ -8939,12 +8954,12 @@ lazySignals.then((importedSignals) => {
       }
       initMobileNav();
     }
-    dom.onFirstIntersection(settingsFrameElement, initSettingsFrame);
+    utils.dom.onFirstIntersection(elements.settingsFrame, initSettingsFrame);
   }
   initSettings();
 
   function initDesktopResizeBar() {
-    const resizeBar = dom.getElementById("resize-bar");
+    const resizeBar = utils.dom.getElementById("resize-bar");
     let resize = false;
     let startingWidth = 0;
     let startingClientX = 0;
@@ -8956,10 +8971,10 @@ lazySignals.then((importedSignals) => {
      */
     function setBarWidth(width) {
       if (typeof width === "number") {
-        mainElement.style.width = `${width}px`;
+        elements.main.style.width = `${width}px`;
         localStorage.setItem(barWidthLocalStorageKey, String(width));
       } else {
-        mainElement.style.width = style.getPropertyValue(
+        elements.main.style.width = elements.style.getPropertyValue(
           "--default-main-width"
         );
         localStorage.removeItem(barWidthLocalStorageKey);
@@ -8977,7 +8992,7 @@ lazySignals.then((importedSignals) => {
 
     resizeBar.addEventListener("mousedown", (event) => {
       startingClientX = event.clientX;
-      startingWidth = mainElement.clientWidth;
+      startingWidth = elements.main.clientWidth;
       resize = true;
       window.document.documentElement.dataset.resize = "";
       window.addEventListener("mousemove", mouseMoveEvent);

@@ -44,3 +44,6 @@ benches
 
 # Snapshots
 snapshots*/
+
+# Docker
+docker/kibo
