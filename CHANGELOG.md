@@ -22,7 +22,7 @@
 
 ## Parser
 
-- Added a `/datasets/last` json file with all the latest va
+- Added a `/datasets/last` json file with all the latest values
 
 ## Server
 

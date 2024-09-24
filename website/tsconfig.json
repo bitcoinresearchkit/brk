@@ -6,5 +6,5 @@
     "module": "ESNext",
     "outDir": "/tmp/kibo"
   },
-  "exclude": ["assets", "libraries", "ignore"]
+  "exclude": ["assets", "packages", "ignore"]
 }

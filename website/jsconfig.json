@@ -5,5 +5,5 @@
     "target": "ESNext",
     "module": "ESNext"
   },
-  "exclude": ["assets", "libraries", "ignore"]
+  "exclude": ["assets", "packages", "ignore"]
 }

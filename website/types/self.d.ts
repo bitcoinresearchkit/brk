@@ -1,5 +1,3 @@
-type Scale = "date" | "height";
-
 import {
   Accessor,
   Setter,
@@ -21,7 +19,11 @@ import {
 import { DatePath, HeightPath } from "./paths";
 import { Owner } from "../packages/solid-signals/2024-04-17/types/owner";
 
+type Scale = "date" | "height";
+
 type SettingsTheme = "system" | "dark" | "light";
+
+type FoldersFilter = "all" | "favorites" | "new";
 
 type Signal<T> = Accessor<T> & { set: Setter<T> };
 

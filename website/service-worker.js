@@ -12,7 +12,7 @@ self.addEventListener("install", (_event) => {
         "/index.html",
         "/script.js",
         "/packages/solid-signals/2024-04-17/script.js",
-        "/packages/ufuzzy/2024-02-21/script.js",
+        "/packages/ufuzzy/v1.0.14/script.js",
         "/packages/lean-qr/v2.3.4/script.js",
         "/packages/lightweight-charts/v4.2.0/script.js",
         "/fonts/satoshi/2024-09/font.var.woff2",
@@ -59,18 +59,19 @@ self.addEventListener("fetch", (_event) => {
           const { status } = response;
 
           // @ts-ignore
-          if (url.includes("/api/")) {
+          if (method !== "GET" || url.includes("/api/")) {
             return response;
           }
 
           return caches.open(version).then((cache) => {
             if (status === 200 || status === 304) {
-              if (status === 200 && method === "GET") {
+              if (status === 200) {
                 cache.put(request, response.clone());
               }
               return response;
+            } else {
+              return pickCorrectResponse(cachedResponse, response);
             }
-            return pickCorrectResponse(cachedResponse, response);
           });
         })
         .catch(() => {
