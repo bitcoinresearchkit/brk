@@ -15,7 +15,7 @@ self.addEventListener("install", (_event) => {
         "/packages/ufuzzy/v1.0.14/script.js",
         "/packages/lean-qr/v2.3.4/script.js",
         "/packages/lightweight-charts/v4.2.0/script.js",
-        "/fonts/satoshi/2024-09/font.var.woff2",
+        "/assets/fonts/satoshi/2024-09/font.var.woff2",
       ]);
     })
   );

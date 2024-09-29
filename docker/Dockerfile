@@ -1,10 +1,11 @@
 FROM rust:1.81
 
+ENV rpcconnect=localhost
+ENV rpcport=8332
 ENV rpcuser=satoshi
 ENV rpcpassword=nakamoto
-ENV rpcport=8332
 
 WORKDIR /container
 COPY . .
 
-CMD ["sh", "-c", "bash cmd.sh ${rpcuser} ${rpcpassword} ${rpcport}"]
+CMD ["sh", "-c", "bash cmd.sh ${rpcconnect} ${rpcport} ${rpcuser} ${rpcpassword}"]

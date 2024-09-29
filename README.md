@@ -119,6 +119,10 @@ For the first launch, the parser will need several information such as:
 - `--rpcuser`: the username of the RPC credentials to talk to the bitcoin server
 - `--rpcpassword`: the password of the RPC credentials
 
+Optionally you can also specify:
+- `--rpcconnect`: if the bitcoin core server's IP is different than `localhost`
+- `--rpcport`: if the port is different than `8332`
+
 Everything will be saved in a `config.toml` file, which will allow you to simply run `./run.sh` next time
 
 Here's an example

@@ -10,6 +10,10 @@ pub struct Config {
     #[arg(long, value_name = "DIR")]
     pub datadir: Option<String>,
 
+    /// Bitcoin RPC ip, default: localhost, saved
+    #[arg(long, value_name = "IP")]
+    pub rpcconnect: Option<String>,
+
     /// Bitcoin RPC port, default: 8332, saved
     #[arg(long, value_name = "PORT")]
     pub rpcport: Option<u16>,
@@ -40,6 +44,12 @@ impl Config {
 
         if let Some(datadir) = config_args.datadir {
             config_saved.datadir = Some(datadir);
+        }
+
+        if let Some(rpcconnect) = config_args.rpcconnect {
+            config_saved.rpcconnect = Some(rpcconnect);
+        } else {
+            config_saved.rpcconnect = Some("localhost".to_string())
         }
 
         if let Some(rpcport) = config_args.rpcport {

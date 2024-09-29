@@ -15,14 +15,17 @@
 
 ## Website
 
+- Added dashboards
+- Added a Home option
+- Added a library of PDFs viewable inside the app
 - Fixed service worker not passing 304 (not modified) response and instead serving cached responses
 - Fixed history not being properly registered
-- Fixed prices on charts not having a wide enough background due to the font not being fully loaded during the creation of the chart
 - Fixed window being moveable on iOS when in standalone mode when it shouldn't be
 
 ## Parser
 
 - Added a `/datasets/last` json file with all the latest values
+- Added `--rpcconnect` parameter to the config
 
 ## Server
 

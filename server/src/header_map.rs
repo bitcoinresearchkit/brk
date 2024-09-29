@@ -41,6 +41,7 @@ pub trait HeaderMapUtils {
     fn insert_content_type_application_javascript(&mut self);
     fn insert_content_type_application_json(&mut self);
     fn insert_content_type_application_manifest_json(&mut self);
+    fn insert_content_type_application_pdf(&mut self);
     fn insert_content_type_text_css(&mut self);
     fn insert_content_type_text_html(&mut self);
     fn insert_content_type_text_plain(&mut self);
@@ -148,6 +149,7 @@ impl HeaderMapUtils for HeaderMap {
             "html" => self.insert_content_type_text_html(),
             "css" => self.insert_content_type_text_css(),
             "txt" => self.insert_content_type_text_plain(),
+            "pdf" => self.insert_content_type_application_pdf(),
             "woff2" => self.insert_content_type_font_woff2(),
             "ico" => self.insert_content_type_image_icon(),
             "jpg" | "jpeg" => self.insert_content_type_image_jpeg(),
@@ -188,6 +190,10 @@ impl HeaderMapUtils for HeaderMap {
             header::CONTENT_TYPE,
             "application/manifest+json".parse().unwrap(),
         );
+    }
+
+    fn insert_content_type_application_pdf(&mut self) {
+        self.insert(header::CONTENT_TYPE, "application/pdf".parse().unwrap());
     }
 
     fn insert_content_type_text_css(&mut self) {

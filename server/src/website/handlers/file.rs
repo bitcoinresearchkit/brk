@@ -16,7 +16,7 @@ use crate::header_map::HeaderMapUtils;
 
 use super::minify_js;
 
-const WEBSITE_PATH: &str = "../website";
+const WEBSITE_PATH: &str = "../website/";
 
 pub async fn file_handler(headers: HeaderMap, path: extract::Path<String>) -> Response {
     let path = path.0.replace("..", "").replace("\\", "");
@@ -46,6 +46,8 @@ pub async fn index_handler(headers: HeaderMap) -> Response {
 }
 
 fn path_to_response(headers: HeaderMap, path: &Path) -> Response {
+    log(&path.to_str().unwrap().replace(WEBSITE_PATH, ""));
+
     let (date, response) = headers.check_if_modified_since(path).unwrap();
 
     if let Some(response) = response {
@@ -79,8 +81,14 @@ fn path_to_response(headers: HeaderMap, path: &Path) -> Response {
         let serialized_path = path.to_str().unwrap();
 
         if serialized_path.contains("fonts/")
-            || serialized_path.contains("assets/pwa/")
+            || serialized_path.contains("assets/")
             || serialized_path.contains("packages/")
+            || path.extension().is_some_and(|extension| {
+                extension == "pdf"
+                    || extension == "jpg"
+                    || extension == "png"
+                    || extension == "woff2"
+            })
         {
             headers.insert_cache_control_immutable();
         } else {
@@ -94,5 +102,5 @@ fn path_to_response(headers: HeaderMap, path: &Path) -> Response {
 }
 
 fn str_to_path(path: &str) -> PathBuf {
-    PathBuf::from(&format!("{WEBSITE_PATH}/{path}"))
+    PathBuf::from(&format!("{WEBSITE_PATH}{path}"))
 }

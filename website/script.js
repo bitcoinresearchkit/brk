@@ -1,17 +1,56 @@
 // @ts-check
 
 /**
- * @import { FilePath, PartialPreset, PartialPresetFolder, PartialPresetTree, Preset, PresetFolder, Series, PriceSeriesType, ResourceDataset, Scale, SerializedPresetsHistory, TimeRange, Unit, Marker, Weighted, DatasetPath, OHLC, FetchedJSON, DatasetValue, FetchedResult, AnyDatasetPath, SeriesBlueprint, BaselineSpecificSeriesBlueprint, CandlestickSpecificSeriesBlueprint, LineSpecificSeriesBlueprint, SpecificSeriesBlueprintWithChart, Signal, Color, SettingsTheme, DatasetCandlestickData, FoldersFilter } from "./types/self"
+ * @import { OptionPath, PartialOption, PartialOptionsGroup, PartialOptionsTree, Option, OptionsGroup, Series, PriceSeriesType, ResourceDataset, TimeScale, SerializedHistory, TimeRange, Unit, Marker, Weighted, DatasetPath, OHLC, FetchedJSON, DatasetValue, FetchedResult, AnyDatasetPath, SeriesBlueprint, BaselineSpecificSeriesBlueprint, CandlestickSpecificSeriesBlueprint, LineSpecificSeriesBlueprint, SpecificSeriesBlueprintWithChart, Signal, Color, SettingsTheme, DatasetCandlestickData, FoldersFilter, PartialChartOption, ChartOption, AnyPartialOption, ProcessedOptionAddons } from "./types/self"
  * @import {createChart as CreateClassicChart, createChartEx as CreateCustomChart} from "./packages/lightweight-charts/v4.2.0/types";
  * @import * as _ from "./packages/ufuzzy/v1.0.14/types"
  * @import { DeepPartial, ChartOptions, IChartApi, IHorzScaleBehavior, WhitespaceData, SingleValueData, ISeriesApi, Time, LogicalRange, SeriesMarker, CandlestickData, SeriesType, BaselineStyleOptions, SeriesOptionsCommon } from "./packages/lightweight-charts/v4.2.0/types"
- * @import { DatePath, HeightPath } from "./types/paths";
+ * @import { DatePath, HeightPath, LastPath } from "./types/paths";
  * @import { SignalOptions, untrack as Untrack } from "./packages/solid-signals/2024-04-17/types/core"
  * @import { getOwner as GetOwner, onCleanup as OnCleanup, Owner } from "./packages/solid-signals/2024-04-17/types/owner"
  * @import { createSignal as CreateSignal, createEffect as CreateEffect, Accessor, Setter, createMemo as CreateMemo, createRoot as CreateRoot, runWithOwner as RunWithOwner } from "./packages/solid-signals/2024-04-17/types/signals";
  */
 
-const lazySignals = import("./packages/solid-signals/2024-04-17/script.js");
+function importSignals() {
+  return import("./packages/solid-signals/2024-04-17/script.js").then(
+    (_signals) => {
+      const signals = {
+        createSolidSignal: /** @type {CreateSignal} */ (_signals.createSignal),
+        createEffect: /** @type {CreateEffect} */ (_signals.createEffect),
+        createMemo: /** @type {CreateMemo} */ (_signals.createMemo),
+        createRoot: /** @type {CreateRoot} */ (_signals.createRoot),
+        untrack: /** @type {Untrack} */ (_signals.untrack),
+        getOwner: /** @type {GetOwner} */ (_signals.getOwner),
+        runWithOwner: /** @type {RunWithOwner} */ (_signals.runWithOwner),
+        onCleanup: /** @type {OnCleanup} */ (_signals.onCleanup),
+        flushSync: _signals.flushSync,
+        /**
+         * @template T
+         * @param {T} initialValue
+         * @param {SignalOptions<T>} [options]
+         * @returns {Signal<T>}
+         */
+        createSignal(initialValue, options) {
+          const [get, set] = this.createSolidSignal(initialValue, options);
+          // @ts-ignore
+          get.set = set;
+          // @ts-ignore
+          return get;
+        },
+        /**
+         * @param {(dispose: VoidFunction) => void} callback
+         */
+        createUntrackedRoot: (callback) =>
+          signals.untrack(() => {
+            signals.createRoot(callback);
+          }),
+      };
+
+      return signals;
+    }
+  );
+}
+const signalsPromise = importSignals();
 
 const utils = {
   /**
@@ -207,9 +246,27 @@ const utils = {
         parent.insertBefore(child, parent.children[index]);
       }
     },
+    /** @param {string} url */
+    open(url) {
+      console.log(`open: ${url}`);
+      const a = window.document.createElement("a");
+      elements.body.append(a);
+      a.href = url;
+      a.rel = "noopener noreferrer";
+      a.click();
+      a.remove();
+    },
+    /**
+     * @param {string} text
+     */
+    createItalic(text) {
+      const italic = window.document.createElement("i");
+      italic.innerHTML = text;
+      return italic;
+    },
   },
   url: {
-    whitelist: ["from", "to"],
+    chartParamsWhitelist: ["from", "to"],
     /**
      * @param {Object} args
      * @param {URLSearchParams} [args.urlParams]
@@ -226,18 +283,20 @@ const utils = {
       );
     },
     /**
-     * @param {string} [pathname]
+     * @param {Option} option
      */
-    resetParams(pathname) {
+    resetParams(option) {
       const urlParams = new URLSearchParams();
 
-      [...new URLSearchParams(window.location.search).entries()]
-        .filter(([key, _]) => this.whitelist.includes(key))
-        .forEach(([key, value]) => {
-          urlParams.set(key, value);
-        });
+      if (option.kind === "chart") {
+        [...new URLSearchParams(window.location.search).entries()]
+          .filter(([key, _]) => this.chartParamsWhitelist.includes(key))
+          .forEach(([key, value]) => {
+            urlParams.set(key, value);
+          });
+      }
 
-      this.replaceHistory({ urlParams, pathname });
+      this.replaceHistory({ urlParams, pathname: option.id });
     },
     /**
      * @param {string} key
@@ -367,6 +426,19 @@ const utils = {
       this.write(key, undefined);
     },
   },
+  formatters: {
+    dollars: new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }),
+    percentage: new Intl.NumberFormat("en-US", {
+      style: "percent",
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }),
+  },
   /**
    *
    * @template {(...args: any[]) => any} F
@@ -440,6 +512,7 @@ function initEnv() {
   const macOS = userAgent.includes("mac os");
   const iphone = userAgent.includes("iphone");
   const ipad = userAgent.includes("ipad");
+  const ios = iphone || ipad;
 
   return {
     standalone,
@@ -450,6 +523,7 @@ function initEnv() {
     macOS,
     iphone,
     ipad,
+    ios,
     localhost: window.location.hostname === "localhost",
   };
 }
@@ -465,6 +539,10 @@ function createConstants() {
   const ONE_HOUR_IN_MS = 6 * TEN_MINUTES_IN_MS;
   const ONE_DAY_IN_MS = 24 * ONE_HOUR_IN_MS;
 
+  const HEIGHT_CHUNK_SIZE = 10_000;
+
+  const MEDIUM_WIDTH = 768;
+
   return {
     ONE_SECOND_IN_MS,
     FIVE_SECOND_IN_MS,
@@ -474,6 +552,10 @@ function createConstants() {
     TEN_MINUTES_IN_MS,
     ONE_HOUR_IN_MS,
     ONE_DAY_IN_MS,
+
+    HEIGHT_CHUNK_SIZE,
+
+    MEDIUM_WIDTH,
   };
 }
 const consts = createConstants();
@@ -485,8 +567,9 @@ const ids = {
   chartRange: "chart-range",
   from: "from",
   to: "to",
+  checkedFrameSelectorLabel: "checked-frame-selector-label",
   /**
-   * @param {Scale} scale
+   * @param {TimeScale} scale
    */
   visibleTimeRange(scale) {
     return `${ids.chartRange}-${scale}`;
@@ -501,6 +584,7 @@ const ids = {
 
 const elements = {
   head: window.document.getElementsByTagName("head")[0],
+  body: window.document.body,
   main: utils.dom.getElementById("main"),
   aside: utils.dom.getElementById("aside"),
   selectedLabel: utils.dom.getElementById(ids.selectedFrameSelectorLabel),
@@ -517,8 +601,9 @@ const elements = {
   ),
   searchSmall: utils.dom.getElementById("search-small"),
   searchResults: utils.dom.getElementById("search-results"),
-  presetTitle: utils.dom.getElementById("preset-title"),
-  presetDescription: utils.dom.getElementById("preset-description"),
+  selectedTitle: utils.dom.getElementById("selected-title"),
+  selectedDescription: utils.dom.getElementById("selected-description"),
+  selectors: utils.dom.getElementById("frame-selectors"),
   foldersFilterAllCount: utils.dom.getElementById("folders-filter-all-count"),
   foldersFilterFavoritesCount: utils.dom.getElementById(
     "folders-filter-favorites-count"
@@ -530,19 +615,21 @@ const elements = {
   buttonFavorite: utils.dom.getElementById("button-favorite"),
   timeScaleDateButtons: utils.dom.getElementById("timescale-date-buttons"),
   timeScaleHeightButtons: utils.dom.getElementById("timescale-height-buttons"),
+  selectedHeader: utils.dom.getElementById("selected-header"),
+  selectedHr: utils.dom.getElementById("selected-hr"),
+  home: utils.dom.getElementById("home"),
+  charts: utils.dom.getElementById("charts"),
+  dashboards: utils.dom.getElementById("dashboards"),
 };
-
-const mediumWidth = 768;
 
 const savedSelectedId = localStorage.getItem(ids.selectedId);
 const isFirstTime = !savedSelectedId;
 const urlSelected = window.document.location.pathname.substring(1);
 
 function initFrameSelectors() {
-  const localStorageKey = "checked-frame-selector-label";
-  let selectedFrameLabel = localStorage.getItem(localStorageKey);
+  let selectedFrameLabel = localStorage.getItem(ids.checkedFrameSelectorLabel);
 
-  const selectors = utils.dom.getElementById("frame-selectors");
+  const selectors = elements.selectors;
 
   const children = Array.from(selectors.children);
 
@@ -558,7 +645,7 @@ function initFrameSelectors() {
           const id = element.id;
 
           selectedFrameLabel = id;
-          localStorage.setItem(localStorageKey, id);
+          localStorage.setItem(ids.checkedFrameSelectorLabel, id);
 
           const sectionId = element.id.split("-").splice(0, 2).join("-"); // Remove -selector
 
@@ -607,7 +694,7 @@ function initFrameSelectors() {
 
   function setSelectedFrameParent() {
     const { clientWidth } = window.document.documentElement;
-    if (clientWidth >= mediumWidth) {
+    if (clientWidth >= consts.MEDIUM_WIDTH) {
       elements.aside.append(elements.selectedFrame);
     } else {
       elements.main.append(elements.selectedFrame);
@@ -643,32 +730,7 @@ function createKeyDownEventListener() {
 }
 createKeyDownEventListener();
 
-lazySignals.then((_signals) => {
-  const signals = {
-    createSolidSignal: /** @type {CreateSignal} */ (_signals.createSignal),
-    createEffect: /** @type {CreateEffect} */ (_signals.createEffect),
-    createMemo: /** @type {CreateMemo} */ (_signals.createMemo),
-    createRoot: /** @type {CreateRoot} */ (_signals.createRoot),
-    untrack: /** @type {Untrack} */ (_signals.untrack),
-    getOwner: /** @type {GetOwner} */ (_signals.getOwner),
-    runWithOwner: /** @type {RunWithOwner} */ (_signals.runWithOwner),
-    onCleanup: /** @type {OnCleanup} */ (_signals.onCleanup),
-    flushSync: _signals.flushSync,
-    /**
-     * @template T
-     * @param {T} initialValue
-     * @param {SignalOptions<T>} [options]
-     * @returns {Signal<T>}
-     */
-    createSignal(initialValue, options) {
-      const [get, set] = this.createSolidSignal(initialValue, options);
-      // @ts-ignore
-      get.set = set;
-      // @ts-ignore
-      return get;
-    },
-  };
-
+signalsPromise.then((signals) => {
   const dark = signals.createSignal(true);
 
   function createLastHeightResource() {
@@ -685,6 +747,8 @@ lazySignals.then((_signals) => {
     }
     fetchLastHeight();
     setInterval(fetchLastHeight, consts.TEN_SECOND_IN_MS, {});
+
+    return lastHeight;
   }
   const lastHeight = createLastHeightResource();
 
@@ -847,16 +911,6 @@ lazySignals.then((_signals) => {
       thermoCap: green,
       investorCap: rose,
       realizedCap: orange,
-      ethereum: indigo,
-      usdt: emerald,
-      usdc: blue,
-      ust: red,
-      busd: yellow,
-      usdd: emerald,
-      frax: off,
-      dai: amber,
-      tusd: indigo,
-      pyusd: blue,
       darkLiveliness: darkRose,
       liveliness: rose,
       vaultedness: green,
@@ -923,12 +977,461 @@ lazySignals.then((_signals) => {
   }
   const colors = createColors();
 
-  function initPresets() {
-    /** @type {Signal<Preset>} */
+  function importLightweightCharts() {
+    return window.document.fonts.ready.then(() =>
+      import("./packages/lightweight-charts/v4.2.0/script.js").then(
+        ({
+          createChart: createClassicChart,
+          createChartEx: createCustomChart,
+        }) => {
+          /**
+           * @class
+           * @implements {IHorzScaleBehavior<number>}
+           */
+          class HorzScaleBehaviorHeight {
+            options() {
+              return /** @type {any} */ (undefined);
+            }
+            setOptions() {}
+            preprocessData() {}
+            updateFormatter() {}
+
+            createConverterToInternalObj() {
+              /** @type {(p: any) => any} */
+              return (price) => price;
+            }
+
+            /** @param {any} item  */
+            key(item) {
+              return item;
+            }
+
+            /** @param {any} item  */
+            cacheKey(item) {
+              return item;
+            }
+
+            /** @param {any} item  */
+            convertHorzItemToInternal(item) {
+              return item;
+            }
+
+            /** @param {any} item  */
+            formatHorzItem(item) {
+              return item;
+            }
+
+            /** @param {any} tickMark  */
+            formatTickmark(tickMark) {
+              return tickMark.time.toLocaleString("en-us");
+            }
+
+            /** @param {any} tickMarks  */
+            maxTickMarkWeight(tickMarks) {
+              return tickMarks.reduce(
+                this.getMarkWithGreaterWeight,
+                tickMarks[0]
+              ).weight;
+            }
+
+            /**
+             * @param {any} sortedTimePoints
+             * @param {number} startIndex
+             */
+            fillWeightsForPoints(sortedTimePoints, startIndex) {
+              for (
+                let index = startIndex;
+                index < sortedTimePoints.length;
+                ++index
+              ) {
+                sortedTimePoints[index].timeWeight = this.computeHeightWeight(
+                  sortedTimePoints[index].time
+                );
+              }
+            }
+
+            /**
+             * @param {any} a
+             * @param {any} b
+             */
+            getMarkWithGreaterWeight(a, b) {
+              return a.weight > b.weight ? a : b;
+            }
+
+            /** @param {number} value  */
+            computeHeightWeight(value) {
+              // if (value === Math.ceil(value / 1000000) * 1000000) {
+              //   return 12;
+              // }
+              if (value === Math.ceil(value / 100000) * 100000) {
+                return 11;
+              }
+              if (value === Math.ceil(value / 10000) * 10000) {
+                return 10;
+              }
+              if (value === Math.ceil(value / 1000) * 1000) {
+                return 9;
+              }
+              if (value === Math.ceil(value / 100) * 100) {
+                return 8;
+              }
+              if (value === Math.ceil(value / 50) * 50) {
+                return 7;
+              }
+              if (value === Math.ceil(value / 25) * 25) {
+                return 6;
+              }
+              if (value === Math.ceil(value / 10) * 10) {
+                return 5;
+              }
+              if (value === Math.ceil(value / 5) * 5) {
+                return 4;
+              }
+              if (value === Math.ceil(value)) {
+                return 3;
+              }
+              if (value * 2 === Math.ceil(value * 2)) {
+                return 1;
+              }
+
+              return 0;
+            }
+          }
+
+          /**
+           * @param {Object} args
+           * @param {TimeScale} args.scale
+           * @param {HTMLElement} args.element
+           */
+          function createChart({ scale, element }) {
+            /** @satisfies {DeepPartial<ChartOptions>} */
+            const options = {
+              autoSize: true,
+              layout: {
+                fontFamily: "Satoshi Chart",
+                // fontSize: 13,
+                background: { color: "transparent" },
+                attributionLogo: false,
+              },
+              grid: {
+                vertLines: { visible: false },
+                horzLines: { visible: false },
+              },
+              timeScale: {
+                minBarSpacing: 0.05,
+                shiftVisibleRangeOnNewBar: false,
+                allowShiftVisibleRangeOnWhitespaceReplacement: false,
+              },
+              handleScale: {
+                axisDoubleClickReset: {
+                  time: false,
+                },
+              },
+              crosshair: {
+                mode: 0,
+              },
+              localization: {
+                priceFormatter: utils.locale.numberToShortUSFormat,
+                locale: "en-us",
+                ...(scale === "date"
+                  ? {
+                      // dateFormat: "EEEE, dd MMM 'yy",
+                    }
+                  : {}),
+              },
+            };
+
+            /** @type {IChartApi} */
+            let chart;
+
+            if (scale === "date") {
+              chart = createClassicChart(element, options);
+            } else {
+              const horzScaleBehavior = new HorzScaleBehaviorHeight();
+              // @ts-ignore
+              chart = createCustomChart(element, horzScaleBehavior, options);
+            }
+
+            chart.priceScale("right").applyOptions({
+              scaleMargins: {
+                top: 0.075,
+                bottom: 0.05,
+              },
+              minimumWidth: 78,
+            });
+
+            signals.createEffect(() => {
+              const { default: _defaultColor, off: _offColor } = colors;
+
+              const defaultColor = _defaultColor();
+              const offColor = _offColor();
+
+              chart.applyOptions({
+                layout: {
+                  textColor: offColor,
+                },
+                rightPriceScale: {
+                  borderVisible: false,
+                },
+                timeScale: {
+                  borderVisible: false,
+                },
+                crosshair: {
+                  horzLine: {
+                    color: defaultColor,
+                    labelBackgroundColor: defaultColor,
+                  },
+                  vertLine: {
+                    color: defaultColor,
+                    labelBackgroundColor: defaultColor,
+                  },
+                },
+              });
+            });
+
+            return chart;
+          }
+
+          /**
+           * @type {DeepPartial<SeriesOptionsCommon>}
+           */
+          const defaultSeriesOptions = {
+            // @ts-ignore
+            lineWidth: 1.5,
+            priceLineVisible: false,
+            baseLineVisible: false,
+            baseLineColor: "",
+          };
+
+          /**
+           * @param {SpecificSeriesBlueprintWithChart<BaselineSpecificSeriesBlueprint>} args
+           */
+          function createBaseLineSeries({ chart, color, options, owner }) {
+            const topLineColor = color || colors.profit;
+            const bottomLineColor = color || colors.loss;
+
+            function computeColors() {
+              return {
+                topLineColor: topLineColor(),
+                bottomLineColor: bottomLineColor(),
+              };
+            }
+
+            const transparent = "transparent";
+
+            /** @type {DeepPartial<BaselineStyleOptions & SeriesOptionsCommon>} */
+            const seriesOptions = {
+              priceScaleId: "right",
+              ...defaultSeriesOptions,
+              ...options,
+              topFillColor1: transparent,
+              topFillColor2: transparent,
+              bottomFillColor1: transparent,
+              bottomFillColor2: transparent,
+              ...computeColors(),
+            };
+
+            const series = chart.addBaselineSeries(seriesOptions);
+
+            signals.runWithOwner(owner, () => {
+              signals.createEffect(() => {
+                series.applyOptions(computeColors());
+              });
+            });
+
+            return series;
+          }
+
+          /**
+           * @param {SpecificSeriesBlueprintWithChart<CandlestickSpecificSeriesBlueprint>} args
+           */
+          function createCandlesticksSeries({ chart, options, owner }) {
+            function computeColors() {
+              const upColor = colors.profit();
+              const downColor = colors.loss();
+
+              return {
+                upColor,
+                wickUpColor: upColor,
+                downColor,
+                wickDownColor: downColor,
+              };
+            }
+
+            const candlestickSeries = chart.addCandlestickSeries({
+              baseLineVisible: false,
+              borderVisible: false,
+              priceLineVisible: false,
+              baseLineColor: "",
+              borderColor: "",
+              borderDownColor: "",
+              borderUpColor: "",
+              ...options,
+              ...computeColors(),
+            });
+
+            signals.runWithOwner(owner, () => {
+              signals.createEffect(() => {
+                candlestickSeries.applyOptions(computeColors());
+              });
+            });
+
+            return candlestickSeries;
+          }
+
+          /**
+           * @param {SpecificSeriesBlueprintWithChart<LineSpecificSeriesBlueprint>} args
+           */
+          function createLineSeries({ chart, color, options, owner }) {
+            function computeColors() {
+              return {
+                color: color(),
+              };
+            }
+
+            const series = chart.addLineSeries({
+              ...defaultSeriesOptions,
+              ...options,
+              ...computeColors(),
+            });
+
+            signals.runWithOwner(owner, () => {
+              signals.createEffect(() => {
+                series.applyOptions(computeColors());
+              });
+            });
+
+            return series;
+          }
+
+          function initWhitespace() {
+            const whitespaceStartDate = new Date("1970-01-01");
+            const whitespaceStartDateYear =
+              whitespaceStartDate.getUTCFullYear();
+            const whitespaceStartDateMonth = whitespaceStartDate.getUTCMonth();
+            const whitespaceStartDateDate = whitespaceStartDate.getUTCDate();
+            const whitespaceEndDate = new Date("2141-01-01");
+            let whitespaceDateDataset =
+              /** @type {(WhitespaceData | SingleValueData)[]} */ ([]);
+
+            function initDateWhitespace() {
+              whitespaceDateDataset = new Array(
+                utils.getNumberOfDaysBetweenTwoDates(
+                  whitespaceStartDate,
+                  whitespaceEndDate
+                )
+              );
+              // Hack to be able to scroll freely
+              // Setting them all to NaN is much slower
+              for (let i = 0; i < whitespaceDateDataset.length; i++) {
+                const date = new Date(
+                  whitespaceStartDateYear,
+                  whitespaceStartDateMonth,
+                  whitespaceStartDateDate + i
+                );
+
+                const time = utils.dateToString(date);
+
+                if (i === whitespaceDateDataset.length - 1) {
+                  whitespaceDateDataset[i] = {
+                    time,
+                    value: NaN,
+                  };
+                } else {
+                  whitespaceDateDataset[i] = {
+                    time,
+                  };
+                }
+              }
+            }
+
+            const heightStart = -50_000;
+            let whitespaceHeightDataset = /** @type {WhitespaceData[]} */ ([]);
+
+            function initHeightWhitespace() {
+              whitespaceHeightDataset = new Array(
+                (new Date().getUTCFullYear() - 2009 + 1) * 60_000
+              );
+              for (let i = 0; i < whitespaceHeightDataset.length; i++) {
+                const height = heightStart + i;
+
+                whitespaceHeightDataset[i] = {
+                  time: /** @type {Time} */ (height),
+                };
+              }
+            }
+
+            /**
+             * @param {IChartApi} chart
+             * @param {TimeScale} scale
+             * @returns {ISeriesApi<'Line'>}
+             */
+            function setWhitespace(chart, scale) {
+              const whitespace = chart.addLineSeries();
+
+              if (scale === "date") {
+                if (!whitespaceDateDataset.length) {
+                  initDateWhitespace();
+                }
+
+                whitespace.setData(whitespaceDateDataset);
+              } else {
+                if (!whitespaceHeightDataset.length) {
+                  initHeightWhitespace();
+                }
+
+                whitespace.setData(whitespaceHeightDataset);
+
+                const time = whitespaceHeightDataset.length;
+                whitespace.update({
+                  time: /** @type {Time} */ (time),
+                  value: NaN,
+                });
+              }
+
+              return whitespace;
+            }
+
+            return { setWhitespace };
+          }
+          const { setWhitespace } = initWhitespace();
+
+          /**
+           *
+           * @param {Parameters<typeof createChart>[0]} args
+           */
+          function createChartWithWhitespace({ element, scale }) {
+            const chart =
+              /** @type {IChartApi & {whitespace: ISeriesApi<"Line">}} */ (
+                createChart({
+                  scale,
+                  element,
+                })
+              );
+            chart.whitespace = setWhitespace(chart, scale);
+            return chart;
+          }
+
+          return {
+            createChart,
+            createChartWithWhitespace,
+            createBaseLineSeries,
+            createCandlesticksSeries,
+            createLineSeries,
+          };
+        }
+      )
+    );
+  }
+  /** @type {ReturnType<typeof importLightweightCharts> | undefined} */
+  let lightweightChartsPromise = undefined;
+
+  function initOptions() {
+    /** @type {Signal<Option>} */
     const selected = signals.createSignal(/** @type {any} */ (undefined));
 
     /**
-     * @returns {PartialPresetTree}
+     * @returns {PartialOptionsTree}
      */
     function createPartialTree() {
       function initGroups() {
@@ -1441,7 +1944,7 @@ lazySignals.then((_signals) => {
       /**
        *
        * @param {Object} args
-       * @param {Scale} args.scale
+       * @param {TimeScale} args.scale
        * @param {string} args.title
        * @param {Color} args.color
        * @param {Unit} args.unit
@@ -1454,9 +1957,9 @@ lazySignals.then((_signals) => {
        * @param {AnyDatasetPath} [args.key25p]
        * @param {AnyDatasetPath} [args.key10p]
        * @param {AnyDatasetPath} [args.keyMin]
-       * @returns {PartialPreset[]}
+       * @returns {PartialOptionsTree}
        */
-      function createRecapPresets({
+      function createRecapOptions({
         scale,
         unit,
         title,
@@ -1731,14 +2234,14 @@ lazySignals.then((_signals) => {
 
       /**
        * @param {Object} args
-       * @param {Scale} args.scale
+       * @param {TimeScale} args.scale
        * @param {Color} args.color
        * @param {AnyDatasetPath} args.valueDatasetPath
        * @param {AnyDatasetPath} args.ratioDatasetPath
        * @param {string} args.title
-       * @returns {PartialPresetFolder}
+       * @returns {PartialOptionsGroup}
        */
-      function createRatioFolder({
+      function createRatioOptions({
         scale,
         color,
         valueDatasetPath,
@@ -1994,15 +2497,15 @@ lazySignals.then((_signals) => {
       }
 
       /**
-       * @param {Scale} scale
-       * @returns {PartialPresetFolder}
+       * @param {TimeScale} scale
+       * @returns {PartialOptionsGroup}
        */
-      function createMarketPresets(scale) {
+      function createMarketOptions(scale) {
         /**
-         * @param {Scale} scale
-         * @returns {PartialPresetFolder}
+         * @param {TimeScale} scale
+         * @returns {PartialOptionsGroup}
          */
-        function createAveragesPresets(scale) {
+        function createAveragesOptions(scale) {
           return {
             name: "Averages",
             tree: [
@@ -2020,7 +2523,7 @@ lazySignals.then((_signals) => {
                 })),
               },
               ...groups.averages.map(({ name, key }) =>
-                createAveragePresetFolder({
+                createAverageOptions({
                   scale,
                   color: colors[`_${key}`],
                   name,
@@ -2035,14 +2538,14 @@ lazySignals.then((_signals) => {
         /**
          *
          * @param {Object} args
-         * @param {Scale} args.scale
+         * @param {TimeScale} args.scale
          * @param {Color} args.color
          * @param {string} args.name
          * @param {string} args.title
          * @param {AverageName} args.key
-         * @returns {PartialPresetFolder}
+         * @returns {PartialOptionsGroup}
          */
-        function createAveragePresetFolder({ scale, color, name, title, key }) {
+        function createAverageOptions({ scale, color, name, title, key }) {
           return {
             name,
             tree: [
@@ -2061,7 +2564,7 @@ lazySignals.then((_signals) => {
                   },
                 ],
               },
-              createRatioFolder({
+              createRatioOptions({
                 scale,
                 color,
                 ratioDatasetPath: `${scale}-to-market-price-to-price-${key}-sma-ratio`,
@@ -2073,9 +2576,9 @@ lazySignals.then((_signals) => {
         }
 
         /**
-         * @returns {PartialPresetFolder}
+         * @returns {PartialOptionsGroup}
          */
-        function createReturnsPresets() {
+        function createReturnsOptions() {
           return {
             name: "Returns",
             tree: [
@@ -2083,7 +2586,7 @@ lazySignals.then((_signals) => {
                 name: "Total",
                 tree: [
                   ...groups.totalReturns.map(({ name, key }) =>
-                    createReturnsPreset({
+                    createReturnsOption({
                       scale: "date",
                       name,
                       title: `${name} Total`,
@@ -2096,7 +2599,7 @@ lazySignals.then((_signals) => {
                 name: "Compound",
                 tree: [
                   ...groups.compoundReturns.map(({ name, key }) =>
-                    createReturnsPreset({
+                    createReturnsOption({
                       scale: "date",
                       name,
                       title: `${name} Compound`,
@@ -2111,13 +2614,13 @@ lazySignals.then((_signals) => {
 
         /**
          * @param {Object} args
-         * @param {Scale} args.scale
+         * @param {TimeScale} args.scale
          * @param {string} args.name
          * @param {string} args.title
          * @param {`${TotalReturnKey}-total` | `${CompoundReturnKey}-compound`} args.key
-         * @returns {PartialPreset}
+         * @returns {PartialChartOption}
          */
-        function createReturnsPreset({ scale, name, title, key }) {
+        function createReturnsOption({ scale, name, title, key }) {
           return {
             scale,
             name,
@@ -2136,9 +2639,9 @@ lazySignals.then((_signals) => {
         }
 
         /**
-         * @returns {PartialPresetFolder}
+         * @returns {PartialOptionsGroup}
          */
-        function createIndicatorsPresets() {
+        function createIndicatorsOptinos() {
           return {
             name: "Indicators",
             tree: [],
@@ -2171,24 +2674,24 @@ lazySignals.then((_signals) => {
                 },
               ],
             },
-            createAveragesPresets(scale),
+            createAveragesOptions(scale),
             ...(scale === "date"
-              ? [createReturnsPresets(), createIndicatorsPresets()]
+              ? [createReturnsOptions(), createIndicatorsOptinos()]
               : []),
           ],
         };
       }
 
       /**
-       * @param {Scale} scale
-       * @returns {PartialPresetFolder}
+       * @param {TimeScale} scale
+       * @returns {PartialOptionsGroup}
        */
-      function createBlocksPresets(scale) {
+      function createBlocksOptions(scale) {
         return {
           name: "Blocks",
           tree: [
             ...(scale === "date"
-              ? /** @type {PartialPresetTree} */ ([
+              ? /** @type {PartialOptionsTree} */ ([
                   {
                     scale,
                     icon: "🧱",
@@ -2331,7 +2834,7 @@ lazySignals.then((_signals) => {
                   {
                     scale,
                     name: "Size",
-                    tree: createRecapPresets({
+                    tree: createRecapOptions({
                       scale,
                       title: "Block Size",
                       color: colors.off,
@@ -2350,7 +2853,7 @@ lazySignals.then((_signals) => {
                   {
                     scale,
                     name: "Weight",
-                    tree: createRecapPresets({
+                    tree: createRecapOptions({
                       scale,
                       title: "Block Weight",
                       color: colors.off,
@@ -2368,7 +2871,7 @@ lazySignals.then((_signals) => {
                   {
                     scale,
                     name: "VBytes",
-                    tree: createRecapPresets({
+                    tree: createRecapOptions({
                       scale,
                       title: "Block VBytes",
                       color: colors.off,
@@ -2386,7 +2889,7 @@ lazySignals.then((_signals) => {
                   {
                     scale,
                     name: "Interval",
-                    tree: createRecapPresets({
+                    tree: createRecapOptions({
                       scale,
                       title: "Block Interval",
                       color: colors.off,
@@ -2402,7 +2905,7 @@ lazySignals.then((_signals) => {
                     }),
                   },
                 ])
-              : /** @type {PartialPresetTree} */ ([
+              : /** @type {PartialOptionsTree} */ ([
                   {
                     scale,
                     icon: "📏",
@@ -2484,10 +2987,10 @@ lazySignals.then((_signals) => {
       }
 
       /**
-       * @param {Scale} scale
-       * @returns {PartialPresetFolder}
+       * @param {TimeScale} scale
+       * @returns {PartialOptionsGroup}
        */
-      function createMinersPresets(scale) {
+      function createMinersOptions(scale) {
         return {
           name: "Miners",
           tree: [
@@ -2495,7 +2998,7 @@ lazySignals.then((_signals) => {
               name: "Coinbases",
               tree: [
                 ...(scale === "date"
-                  ? /** @type {PartialPresetTree} */ ([
+                  ? /** @type {PartialOptionsTree} */ ([
                       {
                         name: "Last",
                         tree: [
@@ -2648,7 +3151,7 @@ lazySignals.then((_signals) => {
               name: "Subsidies",
               tree: [
                 ...(scale === "date"
-                  ? /** @type {PartialPresetTree} */ ([
+                  ? /** @type {PartialOptionsTree} */ ([
                       {
                         name: "Last",
                         tree: [
@@ -2801,7 +3304,7 @@ lazySignals.then((_signals) => {
               name: "Fees",
               tree: [
                 ...(scale === "date"
-                  ? /** @type {PartialPresetTree} */ ([
+                  ? /** @type {PartialOptionsTree} */ ([
                       {
                         name: "Last",
                         tree: [
@@ -2972,7 +3475,7 @@ lazySignals.then((_signals) => {
             },
 
             ...(scale === "date"
-              ? /** @type {PartialPresetTree} */ ([
+              ? /** @type {PartialOptionsTree} */ ([
                   {
                     scale,
                     icon: "🧮",
@@ -3069,7 +3572,7 @@ lazySignals.then((_signals) => {
             },
 
             ...(scale === "date"
-              ? /** @type {PartialPresetTree} */ ([
+              ? /** @type {PartialOptionsTree} */ ([
                   {
                     scale,
                     icon: "📊",
@@ -3130,10 +3633,10 @@ lazySignals.then((_signals) => {
       }
 
       /**
-       * @param {Scale} scale
-       * @returns {PartialPresetFolder}
+       * @param {TimeScale} scale
+       * @returns {PartialOptionsGroup}
        */
-      function createTransactionsPresets(scale) {
+      function createTransactionsOptions(scale) {
         return {
           name: "Transactions",
           tree: [
@@ -3300,18 +3803,13 @@ lazySignals.then((_signals) => {
 
       /**
        * @param {Object} args
-       * @param {Scale} args.scale
+       * @param {TimeScale} args.scale
        * @param {AnyPossibleCohortId} args.datasetId
        * @param {string} args.title
        * @param {Color} args.color
-       * @returns {PartialPresetFolder}
+       * @returns {PartialOptionsGroup}
        */
-      function createCohortPresetUTXOFolder({
-        scale,
-        color,
-        datasetId,
-        title,
-      }) {
+      function createCohortUTXOOptions({ scale, color, datasetId, title }) {
         const datasetPrefix = datasetIdToPrefix(datasetId);
 
         return {
@@ -3338,18 +3836,13 @@ lazySignals.then((_signals) => {
 
       /**
        * @param {Object} args
-       * @param {Scale} args.scale
+       * @param {TimeScale} args.scale
        * @param {AnyPossibleCohortId} args.datasetId
        * @param {string} args.title
        * @param {Color} args.color
-       * @returns {PartialPresetFolder}
+       * @returns {PartialOptionsGroup}
        */
-      function createCohortPresetRealizedFolder({
-        scale,
-        color,
-        datasetId,
-        title,
-      }) {
+      function createCohortRealizedOptions({ scale, color, datasetId, title }) {
         const datasetPrefix = datasetIdToPrefix(datasetId);
 
         return {
@@ -3370,7 +3863,7 @@ lazySignals.then((_signals) => {
                 },
               ],
             },
-            createRatioFolder({
+            createRatioOptions({
               scale,
               color,
               ratioDatasetPath: `${scale}-to-market-price-to-${datasetPrefix}realized-price-ratio`,
@@ -3619,7 +4112,7 @@ lazySignals.then((_signals) => {
                 },
               ],
             },
-            .../** @satisfies {PartialPresetTree} */ (
+            .../** @satisfies {PartialOptionsTree} */ (
               scale === "date"
                 ? [
                     {
@@ -3646,13 +4139,13 @@ lazySignals.then((_signals) => {
 
       /**
        * @param {Object} args
-       * @param {Scale} args.scale
+       * @param {TimeScale} args.scale
        * @param {AnyPossibleCohortId} args.datasetId
        * @param {string} args.title
        * @param {Color} args.color
-       * @returns {PartialPresetFolder}
+       * @returns {PartialOptionsGroup}
        */
-      function createCohortPresetUnrealizedFolder({
+      function createCohortUnrealizedOptions({
         scale,
         color,
         datasetId,
@@ -3751,18 +4244,13 @@ lazySignals.then((_signals) => {
 
       /**
        * @param {Object} args
-       * @param {Scale} args.scale
+       * @param {TimeScale} args.scale
        * @param {AnyPossibleCohortId} args.datasetId
        * @param {string} args.title
        * @param {Color} args.color
-       * @returns {PartialPresetFolder}
+       * @returns {PartialOptionsGroup}
        */
-      function createCohortPresetSupplyFolder({
-        scale,
-        color,
-        datasetId,
-        title,
-      }) {
+      function createCohortSupplyOptions({ scale, color, datasetId, title }) {
         const datasetPrefix = datasetIdToPrefix(datasetId);
 
         return {
@@ -4019,13 +4507,13 @@ lazySignals.then((_signals) => {
 
       /**
        * @param {Object} args
-       * @param {Scale} args.scale
+       * @param {TimeScale} args.scale
        * @param {AnyPossibleCohortId} args.datasetId
        * @param {string} args.title
        * @param {Color} args.color
-       * @returns {PartialPresetFolder}
+       * @returns {PartialOptionsGroup}
        */
-      function createCohortPresetPricesPaidFolder({
+      function createCohortPricesPaidOptions({
         scale,
         color,
         datasetId,
@@ -4033,7 +4521,7 @@ lazySignals.then((_signals) => {
       }) {
         /**
          * @param {Object} args
-         * @param {Scale} args.scale
+         * @param {TimeScale} args.scale
          * @param {AnyPossibleCohortId} args.cohortId
          * @param {PercentileId} args.id
          * @returns {AnyDatasetPath}
@@ -4086,29 +4574,25 @@ lazySignals.then((_signals) => {
                   };
                 }),
             },
-            ...groups.percentiles.map((percentile) => {
-              /** @type {PartialPreset} */
-              const preset = {
-                scale,
-                name: percentile.name,
-                title: `${title} ${percentile.title}`,
-                description: "",
-                unit: "US Dollars",
-                icon: "🌓",
-                top: [
-                  {
-                    title: percentile.name,
-                    color,
-                    datasetPath: generatePath({
-                      scale,
-                      cohortId: datasetId,
-                      id: percentile.id,
-                    }),
-                  },
-                ],
-              };
-              return preset;
-            }),
+            ...groups.percentiles.map((percentile) => ({
+              scale,
+              name: percentile.name,
+              title: `${title} ${percentile.title}`,
+              description: "",
+              unit: /** @type {const} */ ("US Dollars"),
+              icon: "🌓",
+              top: [
+                {
+                  title: percentile.name,
+                  color,
+                  datasetPath: generatePath({
+                    scale,
+                    cohortId: datasetId,
+                    id: percentile.id,
+                  }),
+                },
+              ],
+            })),
           ],
         };
       }
@@ -4116,45 +4600,39 @@ lazySignals.then((_signals) => {
       /**
        * @param {Object} args
        * @param {string} args.name
-       * @param {Scale} args.scale
+       * @param {TimeScale} args.scale
        * @param {AnyPossibleCohortId} args.datasetId
        * @param {string} args.title
        * @param {Color} args.color
-       * @returns {PartialPresetTree}
+       * @returns {PartialOptionsTree}
        */
-      function createCohortPresetList({
-        name,
-        scale,
-        color,
-        datasetId,
-        title,
-      }) {
+      function createCohortOptions({ name, scale, color, datasetId, title }) {
         return [
-          createCohortPresetUTXOFolder({
+          createCohortUTXOOptions({
             color,
             datasetId,
             scale,
             title,
           }),
-          createCohortPresetRealizedFolder({
+          createCohortRealizedOptions({
             color,
             datasetId,
             scale,
             title,
           }),
-          createCohortPresetUnrealizedFolder({
+          createCohortUnrealizedOptions({
             color,
             datasetId,
             scale,
             title,
           }),
-          createCohortPresetSupplyFolder({
+          createCohortSupplyOptions({
             color,
             datasetId,
             scale,
             title,
           }),
-          createCohortPresetPricesPaidFolder({
+          createCohortPricesPaidOptions({
             color,
             datasetId,
             scale,
@@ -4165,20 +4643,20 @@ lazySignals.then((_signals) => {
 
       /**
        * @param {Object} args
-       * @param {Scale} args.scale
+       * @param {TimeScale} args.scale
        * @param {string} args.name
        * @param {AddressCohortId | ""} args.datasetId
        * @param {Color} args.color
-       * @returns {PartialPresetFolder}
+       * @returns {PartialOptionsGroup}
        */
-      function createLiquidityFolder({ scale, color, name, datasetId }) {
+      function createLiquidityOptions({ scale, color, name, datasetId }) {
         return {
           name: `Split By Liquidity`,
           tree: groups.liquidities.map((liquidity) => {
-            /** @type {PartialPresetFolder} */
+            /** @type {PartialOptionsGroup} */
             const folder = {
               name: liquidity.name,
-              tree: createCohortPresetList({
+              tree: createCohortOptions({
                 title: `${liquidity.name} ${name}`,
                 name: `${liquidity.name} ${name}`,
                 scale,
@@ -4195,14 +4673,14 @@ lazySignals.then((_signals) => {
 
       /**
        * @param {Object} args
-       * @param {Scale} args.scale
+       * @param {TimeScale} args.scale
        * @param {string} args.name
        * @param {AnyPossibleCohortId} args.datasetId
        * @param {string} args.title
        * @param {Color} args.color
-       * @returns {PartialPresetFolder}
+       * @returns {PartialOptionsGroup}
        */
-      function createCohortPresetFolder({
+      function createCohortOptionsGroup({
         scale,
         color,
         name,
@@ -4211,7 +4689,7 @@ lazySignals.then((_signals) => {
       }) {
         return {
           name,
-          tree: createCohortPresetList({
+          tree: createCohortOptions({
             title,
             name,
             scale,
@@ -4222,10 +4700,10 @@ lazySignals.then((_signals) => {
       }
 
       /**
-       * @param {Scale} scale
-       * @returns {PartialPresetFolder}
+       * @param {TimeScale} scale
+       * @returns {PartialOptionsGroup}
        */
-      function createHodlersPresets(scale) {
+      function createHodlersOptions(scale) {
         return {
           name: "Hodlers",
           tree: [
@@ -4259,7 +4737,7 @@ lazySignals.then((_signals) => {
               ],
             },
             ...groups.xth.map(({ key, id, name, legend }) =>
-              createCohortPresetFolder({
+              createCohortOptionsGroup({
                 scale,
                 color: colors[key],
                 name: legend,
@@ -4270,7 +4748,7 @@ lazySignals.then((_signals) => {
             {
               name: "Up To X",
               tree: groups.upTo.map(({ key, id, name }) =>
-                createCohortPresetFolder({
+                createCohortOptionsGroup({
                   scale,
                   color: colors[key],
                   name,
@@ -4282,7 +4760,7 @@ lazySignals.then((_signals) => {
             {
               name: "From X To Y",
               tree: groups.fromXToY.map(({ key, id, name }) =>
-                createCohortPresetFolder({
+                createCohortOptionsGroup({
                   scale,
                   color: colors[key],
                   name,
@@ -4294,7 +4772,7 @@ lazySignals.then((_signals) => {
             {
               name: "From X",
               tree: groups.fromX.map(({ key, id, name }) =>
-                createCohortPresetFolder({
+                createCohortOptionsGroup({
                   scale,
                   color: colors[key],
                   name,
@@ -4306,7 +4784,7 @@ lazySignals.then((_signals) => {
             {
               name: "Years",
               tree: groups.year.map(({ key, id, name }) =>
-                createCohortPresetFolder({
+                createCohortOptionsGroup({
                   scale,
                   color: colors[key],
                   name,
@@ -4321,13 +4799,13 @@ lazySignals.then((_signals) => {
 
       /**
        * @param {Object} args
-       * @param {Scale} args.scale
+       * @param {TimeScale} args.scale
        * @param {string} args.name
        * @param {AddressCohortId} args.datasetId
        * @param {Color} args.color
-       * @returns {PartialPreset}
+       * @returns {PartialChartOption}
        */
-      function createAddressCountPreset({ scale, color, name, datasetId }) {
+      function createAddressCountOption({ scale, color, name, datasetId }) {
         return {
           scale,
           name: `Address Count`,
@@ -4347,14 +4825,14 @@ lazySignals.then((_signals) => {
 
       /**
        * @param {Object} args
-       * @param {Scale} args.scale
+       * @param {TimeScale} args.scale
        * @param {string} args.name
        * @param {AddressCohortId} args.datasetId
        * @param {Color} args.color
        * @param { string} [args.filenameAddon]
-       * @returns {PartialPresetFolder}
+       * @returns {PartialOptionsGroup}
        */
-      function createAddressPresetFolder({
+      function createAddressOptions({
         scale,
         color,
         name,
@@ -4364,15 +4842,15 @@ lazySignals.then((_signals) => {
         return {
           name: filenameAddon ? `${name} - ${filenameAddon}` : name,
           tree: [
-            createAddressCountPreset({ scale, name, datasetId, color }),
-            ...createCohortPresetList({
+            createAddressCountOption({ scale, name, datasetId, color }),
+            ...createCohortOptions({
               title: name,
               scale,
               name,
               color,
               datasetId,
             }),
-            createLiquidityFolder({
+            createLiquidityOptions({
               scale,
               name,
               datasetId,
@@ -4383,10 +4861,10 @@ lazySignals.then((_signals) => {
       }
 
       /**
-       * @param {Scale} scale
-       * @returns {PartialPresetFolder}
+       * @param {TimeScale} scale
+       * @returns {PartialOptionsGroup}
        */
-      function createAddressesPresets(scale) {
+      function createAddressesOptions(scale) {
         return {
           name: "Addresses",
           tree: [
@@ -4453,7 +4931,7 @@ lazySignals.then((_signals) => {
             {
               name: "By Size",
               tree: groups.size.map(({ key, name, size }) =>
-                createAddressPresetFolder({
+                createAddressOptions({
                   scale,
                   color: colors[key],
                   name,
@@ -4466,7 +4944,7 @@ lazySignals.then((_signals) => {
               scale,
               name: "By Type",
               tree: groups.type.map(({ key, name }) =>
-                createAddressPresetFolder({
+                createAddressOptions({
                   scale,
                   color: colors[key],
                   name,
@@ -4479,10 +4957,10 @@ lazySignals.then((_signals) => {
       }
 
       /**
-       * @param {Scale} scale
-       * @returns {PartialPresetFolder}
+       * @param {TimeScale} scale
+       * @returns {PartialOptionsGroup}
        */
-      function createCointimePresets(scale) {
+      function createCointimeOptions(scale) {
         return {
           name: "Cointime Economics",
           tree: [
@@ -4542,7 +5020,7 @@ lazySignals.then((_signals) => {
                         },
                       ],
                     },
-                    createRatioFolder({
+                    createRatioOptions({
                       color: colors.liveliness,
                       ratioDatasetPath: `${scale}-to-market-price-to-active-price-ratio`,
                       scale,
@@ -4569,7 +5047,7 @@ lazySignals.then((_signals) => {
                         },
                       ],
                     },
-                    createRatioFolder({
+                    createRatioOptions({
                       color: colors.vaultedness,
                       ratioDatasetPath: `${scale}-to-market-price-to-vaulted-price-ratio`,
                       scale,
@@ -4596,7 +5074,7 @@ lazySignals.then((_signals) => {
                         },
                       ],
                     },
-                    createRatioFolder({
+                    createRatioOptions({
                       color: colors.liveliness,
                       ratioDatasetPath: `${scale}-to-market-price-to-true-market-mean-ratio`,
                       scale,
@@ -4623,7 +5101,7 @@ lazySignals.then((_signals) => {
                         },
                       ],
                     },
-                    createRatioFolder({
+                    createRatioOptions({
                       color: colors.cointimePrice,
                       ratioDatasetPath: `${scale}-to-market-price-to-cointime-price-ratio`,
                       scale,
@@ -5313,8 +5791,114 @@ lazySignals.then((_signals) => {
 
       return [
         {
+          icon: "🕊️",
+          name: "Home",
+          kind: "home",
+          title: "Home",
+        },
+        {
           name: "Dashboards",
-          tree: [],
+          tree: [
+            {
+              icon: "🌍",
+              name: "Global",
+              title: "Global State Of The Network",
+              description: "",
+              groups: [
+                {
+                  name: "Market",
+                  values: [
+                    {
+                      name: "Dollars Per Bitcoin",
+                      path: "close",
+                      unit: "US Dollars",
+                    },
+                    {
+                      name: "Satoshis Per Dollar",
+                    },
+                    {
+                      name: "Capitalization",
+                      path: "market-cap",
+                      unit: "US Dollars",
+                    },
+                  ],
+                },
+                {
+                  name: "All Time High",
+                  values: [
+                    {
+                      name: "Price",
+                    },
+                    {
+                      name: "Drawdown",
+                    },
+                    {
+                      name: "Date",
+                    },
+                    {
+                      name: "Days Since",
+                    },
+                  ],
+                },
+                {
+                  name: "Simple Moving Averages",
+                  unit: "US Dollars",
+                  values: [
+                    {
+                      name: "1 Week",
+                      path: "price-1w-sma",
+                    },
+                    {
+                      name: "1 Month",
+                      path: "price-1m-sma",
+                    },
+                    {
+                      name: "1 Year",
+                      path: "price-1y-sma",
+                    },
+                    {
+                      name: "4 Year",
+                      path: "price-4y-sma",
+                    },
+                  ],
+                },
+                {
+                  name: "Returns",
+                  unit: "Percentage",
+                  values: [
+                    {
+                      name: "Today (UTC)",
+                      path: "price-1d-total-return",
+                    },
+                    {
+                      name: "1 Week",
+                      // path: "price-1m-total-return",
+                    },
+                    {
+                      name: "1 Month",
+                      path: "price-1m-total-return",
+                    },
+                    {
+                      name: "6 Month",
+                      path: "price-6m-total-return",
+                    },
+                    {
+                      name: "1 Year",
+                      path: "price-1y-total-return",
+                    },
+                    {
+                      name: "4 Year",
+                      path: "price-4y-total-return",
+                    },
+                    {
+                      name: "10 Year",
+                      path: "price-10y-total-return",
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
         },
         {
           name: "Charts",
@@ -5322,51 +5906,126 @@ lazySignals.then((_signals) => {
             {
               name: "By Date",
               tree: [
-                createMarketPresets("date"),
-                createBlocksPresets("date"),
-                createMinersPresets("date"),
-                createTransactionsPresets("date"),
-                ...createCohortPresetList({
+                createMarketOptions("date"),
+                createBlocksOptions("date"),
+                createMinersOptions("date"),
+                createTransactionsOptions("date"),
+                ...createCohortOptions({
                   scale: "date",
                   color: colors.bitcoin,
                   datasetId: "",
                   name: "",
                   title: "",
                 }),
-                createLiquidityFolder({
+                createLiquidityOptions({
                   scale: "date",
                   color: colors.bitcoin,
                   datasetId: "",
                   name: "",
                 }),
-                createHodlersPresets("date"),
-                createAddressesPresets("date"),
-                createCointimePresets("date"),
+                createHodlersOptions("date"),
+                createAddressesOptions("date"),
+                createCointimeOptions("date"),
               ],
             },
             {
               name: "By Height",
               tree: [
-                createMarketPresets("height"),
-                createBlocksPresets("height"),
-                createMinersPresets("height"),
-                createTransactionsPresets("height"),
-                ...createCohortPresetList({
+                createMarketOptions("height"),
+                createBlocksOptions("height"),
+                createMinersOptions("height"),
+                createTransactionsOptions("height"),
+                ...createCohortOptions({
                   scale: "height",
                   color: colors.bitcoin,
                   datasetId: "",
                   name: "",
                   title: "",
                 }),
-                createLiquidityFolder({
+                createLiquidityOptions({
                   scale: "height",
                   color: colors.bitcoin,
                   datasetId: "",
                   name: "",
                 }),
-                createHodlersPresets("height"),
-                createAddressesPresets("height"),
-                createCointimePresets("height"),
+                createHodlersOptions("height"),
+                createAddressesOptions("height"),
+                createCointimeOptions("height"),
+              ],
+            },
+          ],
+        },
+        {
+          name: "Library",
+          tree: [
+            {
+              name: "Satoshi Nakamoto",
+              tree: [
+                {
+                  icon: "📄",
+                  name: "Whitepaper",
+                  file: "satoshi-nakamoto/whitepaper.pdf",
+                },
+              ],
+            },
+            {
+              name: "Nydig",
+              tree: [
+                {
+                  icon: "⚖️",
+                  name: "Bitcoin's Protection Under The First Amendment",
+                  file: "nydig/protection-under-first-amendment.pdf",
+                },
+              ],
+            },
+            {
+              name: "Nakamoto Project",
+              tree: [
+                {
+                  icon: "🇺🇸",
+                  name: "Understanding Bitcoin Adoption In The United States",
+                  file: "nakamoto-project/understanding-bitcoin-adoption-in-the-united-states.pdf",
+                },
+              ],
+            },
+            {
+              name: "Block",
+              tree: [
+                {
+                  icon: "🤔",
+                  name: "Knowledge And Perceptions - 2022 Report",
+                  file: "block/2022-report.pdf",
+                },
+              ],
+            },
+            {
+              name: "Square",
+              tree: [
+                {
+                  icon: "⚡️",
+                  name: "Clean Energy Initiative - 2021 Report",
+                  file: "square/2021-bitcoin-clean-energy-initiative.pdf",
+                },
+              ],
+            },
+            {
+              name: "Braiins",
+              tree: [
+                {
+                  icon: "🦀",
+                  name: "Building Bitcoin In Rust",
+                  file: "braiins/building-bitcoin-in-rust.pdf",
+                },
+              ],
+            },
+            {
+              name: "Glassnode",
+              tree: [
+                {
+                  icon: "🏦",
+                  name: "Cointime Economics",
+                  file: "glassnode/cointime-economics.pdf",
+                },
               ],
             },
           ],
@@ -5375,7 +6034,7 @@ lazySignals.then((_signals) => {
     }
     const partialTree = createPartialTree();
 
-    /** @type {Preset[]} */
+    /** @type {Option[]} */
     const list = [];
 
     /** @type {HTMLDetailsElement[]} */
@@ -5391,12 +6050,12 @@ lazySignals.then((_signals) => {
       const favoritesCount = signals.createSignal(0);
       const newCount = signals.createSignal(0);
 
-      /** @param {Preset} preset  */
-      function createCountersEffects(preset) {
+      /** @param {Option} option  */
+      function createCountersEffects(option) {
         let firstFavoritesRun = true;
 
         signals.createEffect(() => {
-          if (preset.isFavorite()) {
+          if (option.isFavorite()) {
             favoritesCount.set((c) => c + 1);
           } else if (!firstFavoritesRun) {
             favoritesCount.set((c) => c - 1);
@@ -5407,7 +6066,7 @@ lazySignals.then((_signals) => {
         let firstNewRun = true;
 
         signals.createEffect(() => {
-          if (!preset.visited()) {
+          if (!option.visited()) {
             newCount.set((c) => c + 1);
           } else if (!firstNewRun) {
             newCount.set((c) => c - 1);
@@ -5429,26 +6088,26 @@ lazySignals.then((_signals) => {
     );
 
     /** @type {string[] | undefined} */
-    const presetsIds = env.localhost ? [] : undefined;
+    const optionsIds = env.localhost ? [] : undefined;
 
     /**
-     * @param {Preset} preset
+     * @param {Option} option
      */
-    function presetToVisitedKey(preset) {
-      return `${preset.id}-visited`;
+    function optionToVisitedKey(option) {
+      return `${option.id}-visited`;
     }
 
     /**
-     * @param {Preset} preset
+     * @param {Option} option
      */
-    function presetToFavoriteKey(preset) {
-      return `${preset.id}-favorite`;
+    function optionToFavoriteKey(option) {
+      return `${option.id}-favorite`;
     }
 
     /**
-     * @param {PartialPresetTree} partialTree
+     * @param {PartialOptionsTree} partialTree
      * @param {Accessor<HTMLDivElement | HTMLDetailsElement | null>} parent
-     * @param {FilePath | undefined} path
+     * @param {OptionPath | undefined} path
      * @returns {Accessor<number>}
      */
     function recursiveProcessPartialTree(
@@ -5510,31 +6169,31 @@ lazySignals.then((_signals) => {
             } folder`
           );
 
-          /** @type {Omit<PresetFolder, keyof PartialPresetFolder>} */
-          const restFolder = {
+          /** @type {Omit<OptionsGroup, keyof PartialOptionsGroup>} */
+          const groupAddons = {
             id: folderId,
           };
 
-          Object.assign(anyPartial, restFolder);
+          Object.assign(anyPartial, groupAddons);
 
-          presetsIds?.push(restFolder.id);
+          optionsIds?.push(groupAddons.id);
 
           const thisPath = {
             name: anyPartial.name,
-            id: restFolder.id,
+            id: groupAddons.id,
           };
 
           const passedDetails = signals.createSignal(
             /** @type {HTMLDivElement | HTMLDetailsElement | null} */ (null)
           );
 
-          const childPresetsCount = recursiveProcessPartialTree(
+          const childOptionsCount = recursiveProcessPartialTree(
             anyPartial.tree,
             passedDetails,
             [...(path || []), thisPath]
           );
 
-          listForSum.push(childPresetsCount);
+          listForSum.push(childOptionsCount);
 
           signals.createEffect(() => {
             const _li = li();
@@ -5573,7 +6232,7 @@ lazySignals.then((_signals) => {
             const smallCount = window.document.createElement("small");
             smallCount.hidden = details.open;
             signals.createEffect(() => {
-              smallCount.innerHTML = childPresetsCount().toLocaleString();
+              smallCount.innerHTML = childOptionsCount().toLocaleString();
             });
             summary.append(smallCount);
 
@@ -5596,18 +6255,43 @@ lazySignals.then((_signals) => {
 
           function createRenderLiEffect() {
             signals.createEffect(() => {
-              const count = childPresetsCount();
+              const count = childOptionsCount();
               renderLi.set(!!count);
             });
           }
           createRenderLiEffect();
         } else {
-          const id = `${anyPartial.scale}-to-${ids.fromString(
-            anyPartial.title
-          )}`;
+          /** @type {string} */
+          let id;
+          /** @type {Option["kind"]} */
+          let kind;
+          /** @type {string} */
+          let title;
 
-          /** @type {Omit<Preset, keyof PartialPreset>} */
-          const restPreset = {
+          if ("kind" in anyPartial) {
+            kind = anyPartial.kind;
+            id = anyPartial.kind;
+            title = anyPartial.title;
+          } else if ("file" in anyPartial) {
+            kind = "pdf";
+            id = `${ids.fromString(anyPartial.name)}-pdf`;
+            title = anyPartial.name;
+          } else if ("groups" in anyPartial) {
+            kind = "dashboard";
+            id = `dashboard-${ids.fromString(anyPartial.title)}`;
+            title = anyPartial.title;
+          } else if ("unit" in anyPartial) {
+            kind = "chart";
+            id = `chart-${anyPartial.scale}-to-${ids.fromString(
+              anyPartial.title
+            )}`;
+            title = anyPartial.title;
+          } else {
+            throw "Unreachable";
+          }
+
+          /** @type {ProcessedOptionAddons} */
+          const optionAddons = {
             id,
             path: path || [],
             serializedPath: `/ ${[
@@ -5618,28 +6302,27 @@ lazySignals.then((_signals) => {
             visited: signals.createSignal(false),
           };
 
-          Object.assign(anyPartial, restPreset);
+          Object.assign(anyPartial, optionAddons, { kind, title });
 
-          const preset = /** @type {Preset} */ (anyPartial);
-          // preset.title = `${preset.scale} To ${preset.title}`;
+          const option = /** @type {Option} */ (anyPartial);
 
-          if (urlSelected === preset.id) {
-            selected.set(preset);
-          } else if (!selected() && savedSelectedId === preset.id) {
-            selected.set(preset);
+          if (urlSelected === option.id) {
+            selected.set(option);
+          } else if (!selected() && savedSelectedId === option.id) {
+            selected.set(option);
           }
 
-          preset.isFavorite.set(
-            !!localStorage.getItem(presetToFavoriteKey(preset))
+          option.isFavorite.set(
+            !!localStorage.getItem(optionToFavoriteKey(option))
           );
-          preset.visited.set(
-            !!localStorage.getItem(presetToVisitedKey(preset))
+          option.visited.set(
+            !!localStorage.getItem(optionToVisitedKey(option))
           );
 
-          counters.createEffect(preset);
+          counters.createEffect(option);
 
-          list.push(preset);
-          presetsIds?.push(preset.id);
+          list.push(option);
+          optionsIds?.push(option.id);
 
           const hidden = signals.createSignal(true);
 
@@ -5651,11 +6334,11 @@ lazySignals.then((_signals) => {
                   break;
                 }
                 case "favorites": {
-                  hidden.set(!preset.isFavorite());
+                  hidden.set(!option.isFavorite());
                   break;
                 }
                 case "new": {
-                  hidden.set(preset.visited());
+                  hidden.set(option.visited());
                   break;
                 }
               }
@@ -5678,7 +6361,7 @@ lazySignals.then((_signals) => {
             }
 
             signals.createEffect(() => {
-              if (selected() === preset) {
+              if (selected() === option) {
                 _li.dataset.highlight = "";
               } else {
                 delete _li.dataset.highlight;
@@ -5686,8 +6369,8 @@ lazySignals.then((_signals) => {
             });
 
             signals.untrack(() => {
-              const label = reactiveDom.createPresetLabeledInput({
-                preset,
+              const label = reactiveDom.createOptionLabeledInput({
+                option,
                 frame: "folders",
               });
               _li.append(label);
@@ -5714,13 +6397,13 @@ lazySignals.then((_signals) => {
 
     if (env.localhost) {
       function checkUniqueIds() {
-        if (!presetsIds) {
+        if (!optionsIds) {
           throw "Should be set";
-        } else if (presetsIds.length !== new Set(presetsIds).size) {
+        } else if (optionsIds.length !== new Set(optionsIds).size) {
           /** @type {Map<string, number>} */
           const m = new Map();
 
-          presetsIds.forEach((id) => {
+          optionsIds.forEach((id) => {
             m.set(id, (m.get(id) || 0) + 1);
           });
 
@@ -5738,44 +6421,43 @@ lazySignals.then((_signals) => {
 
     return {
       selected,
-      selectedScale: signals.createMemo(() => selected().scale),
       list,
       details: detailsList,
       counters,
       filter,
       treeElement,
-      presetToVisitedKey,
-      presetToFavoriteKey,
+      optionToVisitedKey,
+      optionToFavoriteKey,
       /**
-       * @param {Preset} preset
+       * @param {Option} option
        * @param {Series | SeriesBlueprint} series
        */
-      presetAndSeriesToKey(preset, series) {
-        return `${preset.id}-${ids.fromString(series.title)}`;
+      optionAndSeriesToKey(option, series) {
+        return `${option.id}-${ids.fromString(series.title)}`;
       },
     };
   }
-  const presets = initPresets();
+  const options = initOptions();
 
   const reactiveDom = {
     /**
      * @param {Object} args
-     * @param {Preset} args.preset
+     * @param {Option} args.option
      * @param {string} args.frame
      * @param {string} [args.name]
      * @param {string} [args.top]
      * @param {string} [args.id]
      * @param {Owner | null} [args.owner]
      */
-    createPresetLabeledInput({ preset, frame, name, top, id, owner }) {
+    createOptionLabeledInput({ option, frame, name, top, id, owner }) {
       const { input, label, spanMain, spanName } =
         utils.dom.createComplexLabeledInput({
-          inputId: `${preset.id}-${frame}${id || ""}-selector`,
-          inputValue: preset.id,
-          inputName: `preset-${frame}${id || ""}`,
-          labelTitle: preset.title,
-          name: name || preset.name,
-          onClick: () => presets.selected.set(preset),
+          inputId: `${option.id}-${frame}${id || ""}-selector`,
+          inputValue: option.id,
+          inputName: `option-${frame}${id || ""}`,
+          labelTitle: option.title,
+          name: name || option.name,
+          onClick: () => options.selected.set(option),
         });
 
       if (top) {
@@ -5786,13 +6468,13 @@ lazySignals.then((_signals) => {
 
       const spanEmoji = window.document.createElement("span");
       spanEmoji.classList.add("emoji");
-      spanEmoji.innerHTML = preset.icon;
+      spanEmoji.innerHTML = option.icon;
       spanMain.prepend(spanEmoji);
 
       /** @type {HTMLSpanElement | undefined} */
       let spanNew;
 
-      if (!preset.visited()) {
+      if (!option.visited()) {
         spanNew = window.document.createElement("span");
         spanNew.classList.add("new");
         spanMain.append(spanNew);
@@ -5803,7 +6485,7 @@ lazySignals.then((_signals) => {
           // @ts-ignore
           (_wasFavorite) => {
             const wasFavorite = /** @type {boolean} */ (_wasFavorite);
-            const isFavorite = preset.isFavorite();
+            const isFavorite = option.isFavorite();
 
             if (!wasFavorite && isFavorite) {
               const iconFavorite = window.document.createElement("svg");
@@ -5822,12 +6504,12 @@ lazySignals.then((_signals) => {
 
       function createCheckEffect() {
         signals.createEffect(() => {
-          if (presets.selected()?.id === preset.id) {
+          if (options.selected()?.id === option.id) {
             input.checked = true;
             spanNew?.remove();
-            preset.visited.set(true);
-            localStorage.setItem(presets.presetToVisitedKey(preset), "1");
-            localStorage.setItem(ids.selectedId, preset.id);
+            option.visited.set(true);
+            localStorage.setItem(options.optionToVisitedKey(option), "1");
+            localStorage.setItem(ids.selectedId, option.id);
           } else if (input.checked) {
             input.checked = false;
           }
@@ -5892,676 +6574,21 @@ lazySignals.then((_signals) => {
     },
   };
 
-  const HEIGHT_CHUNK_SIZE = 10_000;
-
   /** @type {Array<(IChartApi & {whitespace: ISeriesApi<"Line">})>} */
   let charts = [];
 
-  function createSelectedEffect() {
-    let firstRun = true;
-
-    signals.createEffect(
-      // @ts-ignore
-      (_previouslySelected) => {
-        const previouslySelected = /** @type {Preset | undefined} */ (
-          _previouslySelected
-        );
-
-        const preset = presets.selected();
-
-        if (!firstRun && !utils.dom.isHidden(elements.selectedLabel)) {
-          elements.selectedLabel.click();
-        }
-        firstRun = false;
-
-        if (previouslySelected) {
-          utils.url.resetParams(preset.id);
-        }
-
-        utils.url.replaceHistory({ pathname: preset.id });
-
-        return preset;
-      },
-      undefined
-    );
-  }
-  createSelectedEffect();
-
   function initSelected() {
-    /**
-     * @param {Object} args
-     * @param {CreateClassicChart} args.createClassicChart
-     * @param {CreateCustomChart} args.createCustomChart
-     */
-    function initSelectedFrame({ createClassicChart, createCustomChart }) {
+    function initSelectedFrame() {
       console.log("selected: init");
 
       /**
-       * @param {Scale} scale
-       * @returns {TimeRange}
-       */
-      function getInitialVisibleTimeRange(scale) {
-        const urlParams = new URLSearchParams(window.location.search);
-
-        const urlFrom = urlParams.get(ids.from);
-        const urlTo = urlParams.get(ids.to);
-
-        if (urlFrom && urlTo) {
-          if (
-            scale === "date" &&
-            urlFrom.includes("-") &&
-            urlTo.includes("-")
-          ) {
-            console.log({
-              from: new Date(urlFrom).toJSON().split("T")[0],
-              to: new Date(urlTo).toJSON().split("T")[0],
-            });
-            return {
-              from: new Date(urlFrom).toJSON().split("T")[0],
-              to: new Date(urlTo).toJSON().split("T")[0],
-            };
-          } else if (
-            scale === "height" &&
-            (!urlFrom.includes("-") || !urlTo.includes("-"))
-          ) {
-            console.log({
-              from: Number(urlFrom),
-              to: Number(urlTo),
-            });
-            return {
-              from: Number(urlFrom),
-              to: Number(urlTo),
-            };
-          }
-        }
-
-        function getSavedTimeRange() {
-          return /** @type {TimeRange | null} */ (
-            JSON.parse(
-              localStorage.getItem(ids.visibleTimeRange(scale)) || "null"
-            )
-          );
-        }
-
-        const savedTimeRange = getSavedTimeRange();
-
-        console.log(savedTimeRange);
-
-        if (savedTimeRange) {
-          return savedTimeRange;
-        }
-
-        function getDefaultTimeRange() {
-          switch (scale) {
-            case "date": {
-              const defaultTo = new Date();
-              const defaultFrom = new Date();
-              defaultFrom.setDate(defaultFrom.getUTCDate() - 6 * 30);
-
-              return {
-                from: defaultFrom.toJSON().split("T")[0],
-                to: defaultTo.toJSON().split("T")[0],
-              };
-            }
-            case "height": {
-              return {
-                from: 850_000,
-                to: 900_000,
-              };
-            }
-          }
-        }
-
-        return getDefaultTimeRange();
-      }
-
-      /**
-       * @param {IChartApi} chart
-       */
-      function setInitialVisibleTimeRange(chart) {
-        const range = visibleTimeRange();
-
-        if (range) {
-          chart.timeScale().setVisibleRange(/** @type {any} */ (range));
-
-          // On small screen it doesn't it might not set it  in time
-          setTimeout(() => {
-            try {
-              chart.timeScale().setVisibleRange(/** @type {any} */ (range));
-            } catch {}
-          }, 50);
-        }
-      }
-
-      const activeDatasets = signals.createSignal(
-        /** @type {Set<ResourceDataset<any, any>>} */ (new Set()),
-        {
-          equals: false,
-        }
-      );
-      const visibleTimeRange = signals.createSignal(
-        getInitialVisibleTimeRange(presets.selectedScale())
-      );
-      const visibleDatasetIds = signals.createSignal(
-        /** @type {number[]} */ ([]),
-        {
-          equals: false,
-        }
-      );
-      const lastVisibleDatasetIndex = signals.createMemo(() => {
-        const last = visibleDatasetIds().at(-1);
-        return last !== undefined
-          ? chunkIdToIndex(presets.selectedScale(), last)
-          : undefined;
-      });
-      const priceSeriesType = signals.createSignal(
-        /** @type {PriceSeriesType} */ ("Candlestick")
-      );
-
-      function updateVisibleDatasetIds() {
-        /** @type {number[]} */
-        let ids = [];
-
-        const today = new Date();
-        const { from: rawFrom, to: rawTo } = visibleTimeRange();
-
-        if (typeof rawFrom === "string" && typeof rawTo === "string") {
-          const from = new Date(rawFrom).getUTCFullYear();
-          const to = new Date(rawTo).getUTCFullYear();
-
-          ids = Array.from(
-            { length: to - from + 1 },
-            (_, i) => i + from
-          ).filter((year) => year >= 2009 && year <= today.getUTCFullYear());
-        } else {
-          const from = Math.floor(Number(rawFrom) / HEIGHT_CHUNK_SIZE);
-          const to = Math.floor(Number(rawTo) / HEIGHT_CHUNK_SIZE);
-
-          const length = to - from + 1;
-
-          ids = Array.from(
-            { length },
-            (_, i) => (from + i) * HEIGHT_CHUNK_SIZE
-          );
-        }
-
-        const old = visibleDatasetIds();
-
-        if (
-          old.length !== ids.length ||
-          old.at(0) !== ids.at(0) ||
-          old.at(-1) !== ids.at(-1)
-        ) {
-          console.log("range:", ids);
-
-          visibleDatasetIds.set(ids);
-        }
-      }
-      updateVisibleDatasetIds();
-
-      const debouncedUpdateVisibleDatasetIds = utils.debounce(
-        updateVisibleDatasetIds,
-        100
-      );
-
-      function saveVisibleRange() {
-        const range = visibleTimeRange();
-        utils.url.writeParam(ids.from, String(range.from));
-        utils.url.writeParam(ids.to, String(range.to));
-        localStorage.setItem(
-          ids.visibleTimeRange(presets.selectedScale()),
-          JSON.stringify(range)
-        );
-      }
-      const debouncedSaveVisibleRange = utils.debounce(saveVisibleRange, 250);
-
-      function createFetchChunksOfVisibleDatasetsEffect() {
-        signals.createEffect(() => {
-          const ids = visibleDatasetIds();
-          const datasets = Array.from(activeDatasets());
-
-          if (ids.length === 0 || datasets.length === 0) return;
-
-          signals.untrack(() => {
-            console.log(ids, datasets);
-            for (let i = 0; i < ids.length; i++) {
-              const id = ids[i];
-              for (let j = 0; j < datasets.length; j++) {
-                datasets[j].fetch(id);
-              }
-            }
-          });
-        });
-      }
-      createFetchChunksOfVisibleDatasetsEffect();
-
-      /**
-       * @class
-       * @implements {IHorzScaleBehavior<number>}
-       */
-      class HorzScaleBehaviorHeight {
-        options() {
-          return /** @type {any} */ (undefined);
-        }
-        setOptions() {}
-        preprocessData() {}
-        updateFormatter() {}
-
-        createConverterToInternalObj() {
-          /** @type {(p: any) => any} */
-          return (price) => price;
-        }
-
-        /** @param {any} item  */
-        key(item) {
-          return item;
-        }
-
-        /** @param {any} item  */
-        cacheKey(item) {
-          return item;
-        }
-
-        /** @param {any} item  */
-        convertHorzItemToInternal(item) {
-          return item;
-        }
-
-        /** @param {any} item  */
-        formatHorzItem(item) {
-          return item;
-        }
-
-        /** @param {any} tickMark  */
-        formatTickmark(tickMark) {
-          return tickMark.time.toLocaleString("en-us");
-        }
-
-        /** @param {any} tickMarks  */
-        maxTickMarkWeight(tickMarks) {
-          return tickMarks.reduce(this.getMarkWithGreaterWeight, tickMarks[0])
-            .weight;
-        }
-
-        /**
-         * @param {any} sortedTimePoints
-         * @param {number} startIndex
-         */
-        fillWeightsForPoints(sortedTimePoints, startIndex) {
-          for (
-            let index = startIndex;
-            index < sortedTimePoints.length;
-            ++index
-          ) {
-            sortedTimePoints[index].timeWeight = this.computeHeightWeight(
-              sortedTimePoints[index].time
-            );
-          }
-        }
-
-        /**
-         * @param {any} a
-         * @param {any} b
-         */
-        getMarkWithGreaterWeight(a, b) {
-          return a.weight > b.weight ? a : b;
-        }
-
-        /** @param {number} value  */
-        computeHeightWeight(value) {
-          // if (value === Math.ceil(value / 1000000) * 1000000) {
-          //   return 12;
-          // }
-          if (value === Math.ceil(value / 100000) * 100000) {
-            return 11;
-          }
-          if (value === Math.ceil(value / 10000) * 10000) {
-            return 10;
-          }
-          if (value === Math.ceil(value / 1000) * 1000) {
-            return 9;
-          }
-          if (value === Math.ceil(value / 100) * 100) {
-            return 8;
-          }
-          if (value === Math.ceil(value / 50) * 50) {
-            return 7;
-          }
-          if (value === Math.ceil(value / 25) * 25) {
-            return 6;
-          }
-          if (value === Math.ceil(value / 10) * 10) {
-            return 5;
-          }
-          if (value === Math.ceil(value / 5) * 5) {
-            return 4;
-          }
-          if (value === Math.ceil(value)) {
-            return 3;
-          }
-          if (value * 2 === Math.ceil(value * 2)) {
-            return 1;
-          }
-
-          return 0;
-        }
-      }
-
-      /** @arg {{scale: Scale, element: HTMLElement}} args */
-      function createChart({ scale, element }) {
-        /** @satisfies {DeepPartial<ChartOptions>} */
-        const options = {
-          autoSize: true,
-          layout: {
-            fontFamily: "Satoshi Chart",
-            // fontSize: 13,
-            background: { color: "transparent" },
-            attributionLogo: false,
-          },
-          grid: {
-            vertLines: { visible: false },
-            horzLines: { visible: false },
-          },
-          timeScale: {
-            minBarSpacing: 0.05,
-            shiftVisibleRangeOnNewBar: false,
-            allowShiftVisibleRangeOnWhitespaceReplacement: false,
-          },
-          handleScale: {
-            axisDoubleClickReset: {
-              time: false,
-            },
-          },
-          crosshair: {
-            mode: 0,
-          },
-          localization: {
-            priceFormatter: utils.locale.numberToShortUSFormat,
-            locale: "en-us",
-            ...(scale === "date"
-              ? {
-                  // dateFormat: "EEEE, dd MMM 'yy",
-                }
-              : {}),
-          },
-        };
-
-        /** @type {IChartApi} */
-        let chart;
-
-        if (scale === "date") {
-          chart = createClassicChart(element, options);
-        } else {
-          const horzScaleBehavior = new HorzScaleBehaviorHeight();
-          // @ts-ignore
-          chart = createCustomChart(element, horzScaleBehavior, options);
-        }
-
-        chart.priceScale("right").applyOptions({
-          scaleMargins: {
-            top: 0.075,
-            bottom: 0.05,
-          },
-          minimumWidth: 78,
-        });
-
-        signals.createEffect(() => {
-          const { default: _defaultColor, off: _offColor } = colors;
-
-          const defaultColor = _defaultColor();
-          const offColor = _offColor();
-
-          chart.applyOptions({
-            layout: {
-              textColor: offColor,
-            },
-            rightPriceScale: {
-              borderVisible: false,
-            },
-            timeScale: {
-              borderVisible: false,
-            },
-            crosshair: {
-              horzLine: {
-                color: defaultColor,
-                labelBackgroundColor: defaultColor,
-              },
-              vertLine: {
-                color: defaultColor,
-                labelBackgroundColor: defaultColor,
-              },
-            },
-          });
-        });
-
-        return chart;
-      }
-
-      function resetChartListElement() {
-        while (
-          elements.chartList.lastElementChild?.classList.contains(
-            "chart-wrapper"
-          )
-        ) {
-          elements.chartList.lastElementChild?.remove();
-        }
-      }
-
-      function initWhitespace() {
-        const whitespaceStartDate = new Date("1970-01-01");
-        const whitespaceStartDateYear = whitespaceStartDate.getUTCFullYear();
-        const whitespaceStartDateMonth = whitespaceStartDate.getUTCMonth();
-        const whitespaceStartDateDate = whitespaceStartDate.getUTCDate();
-        const whitespaceEndDate = new Date("2141-01-01");
-        let whitespaceDateDataset =
-          /** @type {(WhitespaceData | SingleValueData)[]} */ ([]);
-
-        function initDateWhitespace() {
-          whitespaceDateDataset = new Array(
-            utils.getNumberOfDaysBetweenTwoDates(
-              whitespaceStartDate,
-              whitespaceEndDate
-            )
-          );
-          // Hack to be able to scroll freely
-          // Setting them all to NaN is much slower
-          for (let i = 0; i < whitespaceDateDataset.length; i++) {
-            const date = new Date(
-              whitespaceStartDateYear,
-              whitespaceStartDateMonth,
-              whitespaceStartDateDate + i
-            );
-
-            const time = utils.dateToString(date);
-
-            if (i === whitespaceDateDataset.length - 1) {
-              whitespaceDateDataset[i] = {
-                time,
-                value: NaN,
-              };
-            } else {
-              whitespaceDateDataset[i] = {
-                time,
-              };
-            }
-          }
-        }
-
-        const heightStart = -50_000;
-        let whitespaceHeightDataset = /** @type {WhitespaceData[]} */ ([]);
-
-        function initHeightWhitespace() {
-          whitespaceHeightDataset = new Array(
-            (new Date().getUTCFullYear() - 2009 + 1) * 60_000
-          );
-          for (let i = 0; i < whitespaceHeightDataset.length; i++) {
-            const height = heightStart + i;
-
-            whitespaceHeightDataset[i] = {
-              time: /** @type {Time} */ (height),
-            };
-          }
-        }
-
-        /**
-         * @param {IChartApi} chart
-         * @param {Scale} scale
-         * @returns {ISeriesApi<'Line'>}
-         */
-        function setWhitespace(chart, scale) {
-          const whitespace = chart.addLineSeries();
-
-          if (scale === "date") {
-            if (!whitespaceDateDataset.length) {
-              initDateWhitespace();
-            }
-
-            whitespace.setData(whitespaceDateDataset);
-          } else {
-            if (!whitespaceHeightDataset.length) {
-              initHeightWhitespace();
-            }
-
-            whitespace.setData(whitespaceHeightDataset);
-
-            const time = whitespaceHeightDataset.length;
-            whitespace.update({
-              time: /** @type {Time} */ (time),
-              value: NaN,
-            });
-          }
-
-          return whitespace;
-        }
-
-        return { setWhitespace };
-      }
-      const { setWhitespace } = initWhitespace();
-
-      /**
-       * @param {HTMLElement} parent
-       * @param {number} chartIndex
-       */
-      function createChartDiv(parent, chartIndex) {
-        const chartWrapper = window.document.createElement("div");
-        chartWrapper.classList.add("chart-wrapper");
-        parent.append(chartWrapper);
-
-        const chartDiv = window.document.createElement("div");
-        chartDiv.classList.add("chart-div");
-        chartWrapper.append(chartDiv);
-
-        function createUnitAndModeElements() {
-          const fieldset = window.document.createElement("fieldset");
-          fieldset.dataset.size = "sm";
-          chartWrapper.append(fieldset);
-
-          const unitName = signals.createSignal("");
-
-          const id = `chart-${chartIndex}-mode`;
-
-          const chartModes = /** @type {const} */ (["Linear", "Log"]);
-          const chartMode = signals.createSignal(
-            /** @type {Lowercase<typeof chartModes[number]>} */ (
-              localStorage.getItem(id) ||
-                chartModes[chartIndex ? 0 : 1].toLowerCase()
-            )
-          );
-
-          const field = reactiveDom.createField({
-            choices: chartModes,
-            selected: chartMode(),
-            id,
-            title: unitName,
-          });
-          fieldset.append(field);
-
-          field.addEventListener("change", (event) => {
-            // @ts-ignore
-            const value = event.target.value;
-            localStorage.setItem(id, value);
-            chartMode.set(value);
-          });
-
-          return { unitName, chartMode };
-        }
-        const { unitName, chartMode } = createUnitAndModeElements();
-
-        return { chartDiv, unitName, chartMode };
-      }
-
-      /**
-       * @param {IChartApi} chart
-       */
-      function subscribeVisibleTimeRangeChange(chart) {
-        chart.timeScale().subscribeVisibleTimeRangeChange((range) => {
-          if (!range) return;
-
-          visibleTimeRange.set(range);
-
-          debouncedUpdateVisibleDatasetIds();
-
-          debouncedSaveVisibleRange();
-        });
-      }
-
-      /**
-       * @param {{ chart: IChartApi; visibleLogicalRange?: LogicalRange; visibleTimeRange?: TimeRange }} args
-       */
-      function updateVisiblePriceSeriesType({
-        chart,
-        visibleLogicalRange,
-        visibleTimeRange,
-      }) {
-        try {
-          const width = chart.timeScale().width();
-
-          /** @type {number} */
-          let ratio;
-
-          if (visibleLogicalRange) {
-            ratio = (visibleLogicalRange.to - visibleLogicalRange.from) / width;
-          } else if (visibleTimeRange) {
-            if (presets.selectedScale() === "date") {
-              const to = /** @type {Time} */ (visibleTimeRange.to);
-              const from = /** @type {Time} */ (visibleTimeRange.from);
-
-              ratio =
-                utils.getNumberOfDaysBetweenTwoDates(
-                  utils.dateFromTime(from),
-                  utils.dateFromTime(to)
-                ) / width;
-            } else {
-              const to = /** @type {number} */ (visibleTimeRange.to);
-              const from = /** @type {number} */ (visibleTimeRange.from);
-
-              ratio = (to - from) / width;
-            }
-          } else {
-            throw Error();
-          }
-
-          if (ratio <= 0.5) {
-            priceSeriesType.set("Candlestick");
-          } else {
-            priceSeriesType.set("Line");
-          }
-        } catch {}
-      }
-
-      const debouncedUpdateVisiblePriceSeriesType = utils.debounce(
-        updateVisiblePriceSeriesType,
-        50
-      );
-
-      /**
-       * @param {Scale} scale
+       * @param {TimeScale} scale
        * @param {number} id
        */
       function chunkIdToIndex(scale, id) {
         return scale === "date"
           ? id - 2009
-          : Math.floor(id / HEIGHT_CHUNK_SIZE);
+          : Math.floor(id / consts.HEIGHT_CHUNK_SIZE);
       }
 
       function createDatasets() {
@@ -6578,7 +6605,7 @@ lazySignals.then((_signals) => {
         const datasetsOwner = signals.getOwner();
 
         /**
-         * @template {Scale} S
+         * @template {TimeScale} S
          * @template {number | OHLC} [T=number]
          * @param {S} scale
          * @param {string} path
@@ -6694,7 +6721,10 @@ lazySignals.then((_signals) => {
                 if (scale === "height" && index > 0) {
                   const length = fetchedJSONs.at(index - 1)?.vec()?.length;
 
-                  if (length !== undefined && length < HEIGHT_CHUNK_SIZE) {
+                  if (
+                    length !== undefined &&
+                    length < consts.HEIGHT_CHUNK_SIZE
+                  ) {
                     return;
                   }
                 }
@@ -6867,7 +6897,7 @@ lazySignals.then((_signals) => {
         }
 
         /**
-         * @template {Scale} S
+         * @template {TimeScale} S
          * @template {number | OHLC} T
          * @param {Response} response
          */
@@ -6880,7 +6910,7 @@ lazySignals.then((_signals) => {
         }
 
         /**
-         * @template {Scale} S
+         * @template {TimeScale} S
          * @param {S} scale
          * @param {DatasetPath<S>} path
          * @returns {ResourceDataset<S>}
@@ -6927,950 +6957,1510 @@ lazySignals.then((_signals) => {
       const datasets = createDatasets();
 
       /**
-       * @type {DeepPartial<SeriesOptionsCommon>} */
-      const defaultSeriesOptions = {
-        // @ts-ignore
-        lineWidth: 1.5,
-        priceLineVisible: false,
-        baseLineVisible: false,
-        baseLineColor: "",
-      };
-
-      /**
-       * @param {SpecificSeriesBlueprintWithChart<BaselineSpecificSeriesBlueprint>} args
-       */
-      function createBaseLineSeries({ chart, color, options, owner }) {
-        const topLineColor = color || colors.profit;
-        const bottomLineColor = color || colors.loss;
-
-        function computeColors() {
-          return {
-            topLineColor: topLineColor(),
-            bottomLineColor: bottomLineColor(),
-          };
-        }
-
-        const transparent = "transparent";
-
-        /** @type {DeepPartial<BaselineStyleOptions & SeriesOptionsCommon>} */
-        const seriesOptions = {
-          priceScaleId: "right",
-          ...defaultSeriesOptions,
-          ...options,
-          topFillColor1: transparent,
-          topFillColor2: transparent,
-          bottomFillColor1: transparent,
-          bottomFillColor2: transparent,
-          ...computeColors(),
-        };
-
-        const series = chart.addBaselineSeries(seriesOptions);
-
-        signals.runWithOwner(owner, () => {
-          signals.createEffect(() => {
-            series.applyOptions(computeColors());
-          });
-        });
-
-        return series;
-      }
-
-      /**
-       * @param {SpecificSeriesBlueprintWithChart<CandlestickSpecificSeriesBlueprint>} args
-       */
-      function createCandlesticksSeries({ chart, options, owner }) {
-        function computeColors() {
-          const upColor = colors.profit();
-          const downColor = colors.loss();
-
-          return {
-            upColor,
-            wickUpColor: upColor,
-            downColor,
-            wickDownColor: downColor,
-          };
-        }
-
-        const candlestickSeries = chart.addCandlestickSeries({
-          baseLineVisible: false,
-          borderVisible: false,
-          priceLineVisible: false,
-          baseLineColor: "",
-          borderColor: "",
-          borderDownColor: "",
-          borderUpColor: "",
-          ...options,
-          ...computeColors(),
-        });
-
-        signals.runWithOwner(owner, () => {
-          signals.createEffect(() => {
-            candlestickSeries.applyOptions(computeColors());
-          });
-        });
-
-        return candlestickSeries;
-      }
-
-      /**
-       * @param {SpecificSeriesBlueprintWithChart<LineSpecificSeriesBlueprint>} args
-       */
-      function createLineSeries({ chart, color, options, owner }) {
-        function computeColors() {
-          return {
-            color: color(),
-          };
-        }
-
-        const series = chart.addLineSeries({
-          ...defaultSeriesOptions,
-          ...options,
-          ...computeColors(),
-        });
-
-        signals.runWithOwner(owner, () => {
-          signals.createEffect(() => {
-            series.applyOptions(computeColors());
-          });
-        });
-
-        return series;
-      }
-
-      const hoveredLegend = signals.createSignal(
-        /** @type {{label: HTMLLabelElement, series: Series} | undefined} */ (
-          undefined
-        )
-      );
-      const notHoveredLegendTransparency = "66";
-      /**
        * @param {Object} args
-       * @param {Series} args.series
-       * @param {Accessor<boolean>} [args.disabled]
-       * @param {string} [args.name]
+       * @param {Accessor<ChartOption>} args.selected
+       * @param {Awaited<ReturnType<typeof importLightweightCharts>>} args.lightweightCharts
        */
-      function createLegend({ series, disabled, name }) {
-        const div = window.document.createElement("div");
-        signals.createEffect(() => {
-          div.hidden = disabled?.() ? true : false;
-        });
-        elements.legend.prepend(div);
+      function initChartsElement({ selected, lightweightCharts }) {
+        console.log("init chart state");
 
-        const { input, label, spanMain } = utils.dom.createComplexLabeledInput({
-          inputId: `legend-${series.title}`,
-          inputName: `selected-${series.title}${name}`,
-          inputValue: "value",
-          labelTitle: "Click to toggle",
-          name: series.title,
-          onClick: (event) => {
-            event.preventDefault();
-            event.stopPropagation();
-            input.checked = !input.checked;
-            series.active.set(input.checked);
-          },
-        });
-        div.append(label);
-        label.addEventListener("mouseover", () => {
-          const hovered = hoveredLegend();
+        const scale = signals.createMemo(() => selected().scale);
 
-          if (!hovered || hovered.label !== label) {
-            hoveredLegend.set({ label, series });
-          }
-        });
-        label.addEventListener("mouseleave", () => {
-          hoveredLegend.set(undefined);
-        });
+        /**
+         * @returns {TimeRange}
+         */
+        function getInitialVisibleTimeRange() {
+          const urlParams = new URLSearchParams(window.location.search);
 
-        signals.createEffect(() => {
-          input.checked = series.active();
-        });
+          const urlFrom = urlParams.get(ids.from);
+          const urlTo = urlParams.get(ids.to);
 
-        function shouldHighlight() {
-          const hovered = hoveredLegend();
-          return (
-            !hovered ||
-            (hovered.label === label && hovered.series.active()) ||
-            (hovered.label !== label && !hovered.series.active())
-          );
-        }
-
-        const spanColors = window.document.createElement("span");
-        spanColors.classList.add("colors");
-        spanMain.prepend(spanColors);
-        const colors = Array.isArray(series.color)
-          ? series.color
-          : [series.color];
-        colors.forEach((color) => {
-          const spanColor = window.document.createElement("span");
-          spanColors.append(spanColor);
-
-          signals.createEffect(() => {
-            const c = color();
-            if (shouldHighlight()) {
-              spanColor.style.backgroundColor = c;
-            } else {
-              spanColor.style.backgroundColor = `${c}${notHoveredLegendTransparency}`;
+          if (urlFrom && urlTo) {
+            if (
+              scale() === "date" &&
+              urlFrom.includes("-") &&
+              urlTo.includes("-")
+            ) {
+              console.log({
+                from: new Date(urlFrom).toJSON().split("T")[0],
+                to: new Date(urlTo).toJSON().split("T")[0],
+              });
+              return {
+                from: new Date(urlFrom).toJSON().split("T")[0],
+                to: new Date(urlTo).toJSON().split("T")[0],
+              };
+            } else if (
+              scale() === "height" &&
+              (!urlFrom.includes("-") || !urlTo.includes("-"))
+            ) {
+              console.log({
+                from: Number(urlFrom),
+                to: Number(urlTo),
+              });
+              return {
+                from: Number(urlFrom),
+                to: Number(urlTo),
+              };
             }
-          });
-        });
+          }
 
-        function createHoverEffect() {
-          const initialColors = /** @type {Record<string, any>} */ ({});
-          const darkenedColors = /** @type {Record<string, any>} */ ({});
+          function getSavedTimeRange() {
+            return /** @type {TimeRange | null} */ (
+              JSON.parse(
+                localStorage.getItem(ids.visibleTimeRange(scale())) || "null"
+              )
+            );
+          }
 
-          signals.createEffect(
-            // @ts-ignore
-            (previouslyHovered) => {
-              const hovered = hoveredLegend();
+          const savedTimeRange = getSavedTimeRange();
 
-              if (!hovered && !previouslyHovered) return hovered;
+          console.log(savedTimeRange);
 
-              const ids = visibleDatasetIds();
+          if (savedTimeRange) {
+            return savedTimeRange;
+          }
 
-              for (let i = 0; i < ids.length; i++) {
-                const chunkId = ids[i];
-                const chunkIndex = chunkIdToIndex(
-                  presets.selectedScale(),
-                  chunkId
-                );
-                const chunk = series.chunks[chunkIndex]?.();
+          function getDefaultTimeRange() {
+            switch (scale()) {
+              case "date": {
+                const defaultTo = new Date();
+                const defaultFrom = new Date();
+                defaultFrom.setDate(defaultFrom.getUTCDate() - 6 * 30);
 
-                if (!chunk) return;
-
-                if (hovered) {
-                  const seriesOptions = chunk.options();
-                  if (!seriesOptions) return;
-
-                  initialColors[i] = {};
-                  darkenedColors[i] = {};
-
-                  Object.entries(seriesOptions).forEach(([k, v]) => {
-                    if (k.toLowerCase().includes("color") && v) {
-                      if (typeof v === "string" && !v.startsWith("#")) {
-                        return;
-                      }
-
-                      v = /** @type {string} */ (v).substring(0, 7);
-                      initialColors[i][k] = v;
-                      darkenedColors[i][
-                        k
-                      ] = `${v}${notHoveredLegendTransparency}`;
-                    } else if (k === "lastValueVisible" && v) {
-                      initialColors[i][k] = true;
-                      darkenedColors[i][k] = false;
-                    }
-                  });
-                }
-
-                if (shouldHighlight()) {
-                  chunk.applyOptions(initialColors[i]);
-                } else {
-                  chunk.applyOptions(darkenedColors[i]);
-                }
+                return {
+                  from: defaultFrom.toJSON().split("T")[0],
+                  to: defaultTo.toJSON().split("T")[0],
+                };
               }
+              case "height": {
+                return {
+                  from: 850_000,
+                  to: 900_000,
+                };
+              }
+            }
+          }
 
-              return hovered;
-            },
-            undefined
-          );
+          return getDefaultTimeRange();
         }
-        createHoverEffect();
 
-        const anchor = window.document.createElement("a");
-        anchor.href = series.dataset.url;
-        anchor.innerHTML = `<svg viewBox="0 0 16 16"><path d="M8.75 2.75a.75.75 0 0 0-1.5 0v5.69L5.03 6.22a.75.75 0 0 0-1.06 1.06l3.5 3.5a.75.75 0 0 0 1.06 0l3.5-3.5a.75.75 0 0 0-1.06-1.06L8.75 8.44V2.75Z" /><path d="M3.5 9.75a.75.75 0 0 0-1.5 0v1.5A2.75 2.75 0 0 0 4.75 14h6.5A2.75 2.75 0 0 0 14 11.25v-1.5a.75.75 0 0 0-1.5 0v1.5c0 .69-.56 1.25-1.25 1.25h-6.5c-.69 0-1.25-.56-1.25-1.25v-1.5Z" /></svg>`;
-        anchor.target = "_target";
-        anchor.rel = "noopener noreferrer";
-        div.append(anchor);
-      }
+        /**
+         * @param {IChartApi} chart
+         */
+        function setInitialVisibleTimeRange(chart) {
+          const range = visibleTimeRange();
 
-      /**
-       * @template {Scale} S
-       * @param {Object} args
-       * @param {ResourceDataset<S>} args.dataset
-       * @param {SeriesBlueprint} args.seriesBlueprint
-       * @param {Preset} args.preset
-       * @param {IChartApi} args.chart
-       * @param {number} args.index
-       * @param {Series[]} args.chartSeries
-       * @param {Accessor<number | undefined>} args.lastVisibleDatasetIndex
-       * @param {VoidFunction} args.setMinMaxMarkersWhenIdle
-       * @param {Accessor<boolean>} [args.disabled]
-       */
-      function createSeries({
-        chart,
-        preset,
-        index: seriesIndex,
-        disabled: _disabled,
-        lastVisibleDatasetIndex,
-        setMinMaxMarkersWhenIdle,
-        dataset,
-        seriesBlueprint,
-        chartSeries,
-      }) {
-        const { title, color, defaultActive, type, options } = seriesBlueprint;
+          if (range) {
+            chart.timeScale().setVisibleRange(/** @type {any} */ (range));
 
-        /** @type {Signal<ISeriesApi<SeriesType> | undefined>[]} */
-        const chunks = new Array(dataset.fetchedJSONs.length);
+            // On small screen it doesn't it might not set it  in time
+            setTimeout(() => {
+              try {
+                chart.timeScale().setVisibleRange(/** @type {any} */ (range));
+              } catch {}
+            }, 50);
+          }
+        }
 
-        const id = ids.fromString(title);
-        const storageId = presets.presetAndSeriesToKey(preset, seriesBlueprint);
-
-        const active = signals.createSignal(
-          utils.url.readBoolParam(id) ??
-            utils.storage.readBool(storageId) ??
-            defaultActive ??
-            true
+        const activeDatasets = signals.createSignal(
+          /** @type {Set<ResourceDataset<any, any>>} */ (new Set()),
+          {
+            equals: false,
+          }
+        );
+        const visibleTimeRange = signals.createSignal(
+          getInitialVisibleTimeRange()
+        );
+        const visibleDatasetIds = signals.createSignal(
+          /** @type {number[]} */ ([]),
+          {
+            equals: false,
+          }
+        );
+        const lastVisibleDatasetIndex = signals.createMemo(() => {
+          const last = visibleDatasetIds().at(-1);
+          return last !== undefined ? chunkIdToIndex(scale(), last) : undefined;
+        });
+        const priceSeriesType = signals.createSignal(
+          /** @type {PriceSeriesType} */ ("Candlestick")
         );
 
-        const disabled = signals.createMemo(_disabled || (() => false));
+        function updateVisibleDatasetIds() {
+          /** @type {number[]} */
+          let ids = [];
 
-        const visible = signals.createMemo(() => active() && !disabled());
+          const today = new Date();
+          const { from: rawFrom, to: rawTo } = visibleTimeRange();
 
-        signals.createEffect(() => {
-          if (disabled()) {
-            return;
-          }
+          if (typeof rawFrom === "string" && typeof rawTo === "string") {
+            const from = new Date(rawFrom).getUTCFullYear();
+            const to = new Date(rawTo).getUTCFullYear();
 
-          const a = active();
-
-          if (a !== (defaultActive || true)) {
-            utils.url.writeParam(id, a);
-            utils.storage.write(storageId, a);
+            ids = Array.from(
+              { length: to - from + 1 },
+              (_, i) => i + from
+            ).filter((year) => year >= 2009 && year <= today.getUTCFullYear());
           } else {
-            utils.url.removeParam(id);
-            utils.storage.remove(storageId);
+            const from = Math.floor(Number(rawFrom) / consts.HEIGHT_CHUNK_SIZE);
+            const to = Math.floor(Number(rawTo) / consts.HEIGHT_CHUNK_SIZE);
+
+            const length = to - from + 1;
+
+            ids = Array.from(
+              { length },
+              (_, i) => (from + i) * consts.HEIGHT_CHUNK_SIZE
+            );
           }
-        });
 
-        /** @type {Series} */
-        const series = {
-          active,
-          chunks,
-          color: color || [colors.profit, colors.loss],
-          dataset,
-          disabled,
-          id,
-          title,
-          visible,
-        };
+          const old = visibleDatasetIds();
 
-        chartSeries.push(series);
+          if (
+            old.length !== ids.length ||
+            old.at(0) !== ids.at(0) ||
+            old.at(-1) !== ids.at(-1)
+          ) {
+            console.log("range:", ids);
 
-        const owner = signals.getOwner();
+            visibleDatasetIds.set(ids);
+          }
+        }
+        updateVisibleDatasetIds();
+        const debouncedUpdateVisibleDatasetIds = utils.debounce(
+          updateVisibleDatasetIds,
+          100
+        );
 
-        dataset.fetchedJSONs.forEach((json, index) => {
-          const chunk = signals.createSignal(
-            /** @type {ISeriesApi<SeriesType> | undefined} */ (undefined)
+        function saveVisibleRange() {
+          const range = visibleTimeRange();
+          utils.url.writeParam(ids.from, String(range.from));
+          utils.url.writeParam(ids.to, String(range.to));
+          localStorage.setItem(
+            ids.visibleTimeRange(scale()),
+            JSON.stringify(range)
           );
+        }
+        const debouncedSaveVisibleRange = utils.debounce(saveVisibleRange, 250);
 
-          chunks[index] = chunk;
-
+        function createFetchChunksOfVisibleDatasetsEffect() {
           signals.createEffect(() => {
-            const values = json.vec();
+            const ids = visibleDatasetIds();
+            const datasets = Array.from(activeDatasets());
 
-            if (!values) return;
-
-            if (seriesIndex > 0) {
-              const previousSeriesChunk = chartSeries.at(seriesIndex - 1)
-                ?.chunks[index];
-              const isPreviousSeriesOnChart = previousSeriesChunk?.();
-              if (!isPreviousSeriesOnChart) {
-                return;
-              }
-            }
+            if (ids.length === 0 || datasets.length === 0) return;
 
             signals.untrack(() => {
-              let s = chunk();
+              console.log(ids, datasets);
+              for (let i = 0; i < ids.length; i++) {
+                const id = ids[i];
+                for (let j = 0; j < datasets.length; j++) {
+                  datasets[j].fetch(id);
+                }
+              }
+            });
+          });
+        }
+        createFetchChunksOfVisibleDatasetsEffect();
 
-              if (!s) {
-                switch (type) {
-                  case "Baseline": {
-                    s = createBaseLineSeries({
-                      chart,
-                      color,
-                      options,
-                      owner,
+        function resetChartListElement() {
+          while (
+            elements.chartList.lastElementChild?.classList.contains(
+              "chart-wrapper"
+            )
+          ) {
+            elements.chartList.lastElementChild?.remove();
+          }
+        }
+
+        /**
+         * @param {HTMLElement} parent
+         * @param {number} chartIndex
+         */
+        function createChartDiv(parent, chartIndex) {
+          const chartWrapper = window.document.createElement("div");
+          chartWrapper.classList.add("chart-wrapper");
+          parent.append(chartWrapper);
+
+          const chartDiv = window.document.createElement("div");
+          chartDiv.classList.add("chart-div");
+          chartWrapper.append(chartDiv);
+
+          function createUnitAndModeElements() {
+            const fieldset = window.document.createElement("fieldset");
+            fieldset.dataset.size = "sm";
+            chartWrapper.append(fieldset);
+
+            const unitName = signals.createSignal("");
+
+            const id = `chart-${chartIndex}-mode`;
+
+            const chartModes = /** @type {const} */ (["Linear", "Log"]);
+            const chartMode = signals.createSignal(
+              /** @type {Lowercase<typeof chartModes[number]>} */ (
+                localStorage.getItem(id) ||
+                  chartModes[chartIndex ? 0 : 1].toLowerCase()
+              )
+            );
+
+            const field = reactiveDom.createField({
+              choices: chartModes,
+              selected: chartMode(),
+              id,
+              title: unitName,
+            });
+            fieldset.append(field);
+
+            field.addEventListener("change", (event) => {
+              // @ts-ignore
+              const value = event.target.value;
+              localStorage.setItem(id, value);
+              chartMode.set(value);
+            });
+
+            return { unitName, chartMode };
+          }
+          const { unitName, chartMode } = createUnitAndModeElements();
+
+          return { chartDiv, unitName, chartMode };
+        }
+
+        /**
+         * @param {IChartApi} chart
+         */
+        function subscribeVisibleTimeRangeChange(chart) {
+          chart.timeScale().subscribeVisibleTimeRangeChange((range) => {
+            if (!range) return;
+
+            visibleTimeRange.set(range);
+
+            debouncedUpdateVisibleDatasetIds();
+
+            debouncedSaveVisibleRange();
+          });
+        }
+
+        /**
+         * @param {Object} args
+         * @param {IChartApi} args.chart
+         * @param {LogicalRange} [args.visibleLogicalRange]
+         * @param {TimeRange} [args.visibleTimeRange]
+         */
+        function updateVisiblePriceSeriesType({
+          chart,
+          visibleLogicalRange,
+          visibleTimeRange,
+        }) {
+          try {
+            const width = chart.timeScale().width();
+
+            /** @type {number} */
+            let ratio;
+
+            if (visibleLogicalRange) {
+              ratio =
+                (visibleLogicalRange.to - visibleLogicalRange.from) / width;
+            } else if (visibleTimeRange) {
+              if (scale() === "date") {
+                const to = /** @type {Time} */ (visibleTimeRange.to);
+                const from = /** @type {Time} */ (visibleTimeRange.from);
+
+                ratio =
+                  utils.getNumberOfDaysBetweenTwoDates(
+                    utils.dateFromTime(from),
+                    utils.dateFromTime(to)
+                  ) / width;
+              } else {
+                const to = /** @type {number} */ (visibleTimeRange.to);
+                const from = /** @type {number} */ (visibleTimeRange.from);
+
+                ratio = (to - from) / width;
+              }
+            } else {
+              throw Error();
+            }
+
+            if (ratio <= 0.5) {
+              priceSeriesType.set("Candlestick");
+            } else {
+              priceSeriesType.set("Line");
+            }
+          } catch {}
+        }
+        const debouncedUpdateVisiblePriceSeriesType = utils.debounce(
+          updateVisiblePriceSeriesType,
+          50
+        );
+
+        const hoveredLegend = signals.createSignal(
+          /** @type {{label: HTMLLabelElement, series: Series} | undefined} */ (
+            undefined
+          )
+        );
+        const notHoveredLegendTransparency = "66";
+        /**
+         * @param {Object} args
+         * @param {Series} args.series
+         * @param {Accessor<boolean>} [args.disabled]
+         * @param {string} [args.name]
+         */
+        function createLegend({ series, disabled, name }) {
+          const div = window.document.createElement("div");
+          signals.createEffect(() => {
+            div.hidden = disabled?.() ? true : false;
+          });
+          elements.legend.prepend(div);
+
+          const { input, label, spanMain } =
+            utils.dom.createComplexLabeledInput({
+              inputId: `legend-${series.title}`,
+              inputName: `selected-${series.title}${name}`,
+              inputValue: "value",
+              labelTitle: "Click to toggle",
+              name: series.title,
+              onClick: (event) => {
+                event.preventDefault();
+                event.stopPropagation();
+                input.checked = !input.checked;
+                series.active.set(input.checked);
+              },
+            });
+          div.append(label);
+          label.addEventListener("mouseover", () => {
+            const hovered = hoveredLegend();
+
+            if (!hovered || hovered.label !== label) {
+              hoveredLegend.set({ label, series });
+            }
+          });
+          label.addEventListener("mouseleave", () => {
+            hoveredLegend.set(undefined);
+          });
+
+          signals.createEffect(() => {
+            input.checked = series.active();
+          });
+
+          function shouldHighlight() {
+            const hovered = hoveredLegend();
+            return (
+              !hovered ||
+              (hovered.label === label && hovered.series.active()) ||
+              (hovered.label !== label && !hovered.series.active())
+            );
+          }
+
+          const spanColors = window.document.createElement("span");
+          spanColors.classList.add("colors");
+          spanMain.prepend(spanColors);
+          const colors = Array.isArray(series.color)
+            ? series.color
+            : [series.color];
+          colors.forEach((color) => {
+            const spanColor = window.document.createElement("span");
+            spanColors.append(spanColor);
+
+            signals.createEffect(() => {
+              const c = color();
+              if (shouldHighlight()) {
+                spanColor.style.backgroundColor = c;
+              } else {
+                spanColor.style.backgroundColor = `${c}${notHoveredLegendTransparency}`;
+              }
+            });
+          });
+
+          function createHoverEffect() {
+            const initialColors = /** @type {Record<string, any>} */ ({});
+            const darkenedColors = /** @type {Record<string, any>} */ ({});
+
+            signals.createEffect(
+              // @ts-ignore
+              (previouslyHovered) => {
+                const hovered = hoveredLegend();
+
+                if (!hovered && !previouslyHovered) return hovered;
+
+                const ids = visibleDatasetIds();
+
+                for (let i = 0; i < ids.length; i++) {
+                  const chunkId = ids[i];
+                  const chunkIndex = chunkIdToIndex(scale(), chunkId);
+                  const chunk = series.chunks[chunkIndex]?.();
+
+                  if (!chunk) return;
+
+                  if (hovered) {
+                    const seriesOptions = chunk.options();
+                    if (!seriesOptions) return;
+
+                    initialColors[i] = {};
+                    darkenedColors[i] = {};
+
+                    Object.entries(seriesOptions).forEach(([k, v]) => {
+                      if (k.toLowerCase().includes("color") && v) {
+                        if (typeof v === "string" && !v.startsWith("#")) {
+                          return;
+                        }
+
+                        v = /** @type {string} */ (v).substring(0, 7);
+                        initialColors[i][k] = v;
+                        darkenedColors[i][
+                          k
+                        ] = `${v}${notHoveredLegendTransparency}`;
+                      } else if (k === "lastValueVisible" && v) {
+                        initialColors[i][k] = true;
+                        darkenedColors[i][k] = false;
+                      }
                     });
-                    break;
                   }
-                  case "Candlestick": {
-                    s = createCandlesticksSeries({
-                      chart,
-                      options,
-                      owner,
-                    });
-                    break;
-                  }
-                  // case "Histogram": {
-                  //   s = createHistogramSeries({
-                  //     chart,
-                  //     options,
-                  //   });
-                  //   break;
-                  // }
-                  default:
-                  case "Line": {
-                    s = createLineSeries({
-                      chart,
-                      color,
-                      options,
-                      owner,
-                    });
-                    break;
+
+                  if (shouldHighlight()) {
+                    chunk.applyOptions(initialColors[i]);
+                  } else {
+                    chunk.applyOptions(darkenedColors[i]);
                   }
                 }
 
-                // if (priceScaleOptions) {
-                //   s.priceScale().applyOptions(priceScaleOptions);
-                // }
+                return hovered;
+              },
+              undefined
+            );
+          }
+          createHoverEffect();
 
-                chunk.set(s);
-              }
-
-              s.setData(values);
-
-              setMinMaxMarkersWhenIdle();
-            });
-          });
-
-          signals.createEffect(() => {
-            const _chunk = chunk();
-            const currentVec = dataset.fetchedJSONs.at(index)?.vec();
-            const nextVec = dataset.fetchedJSONs.at(index + 1)?.vec();
-
-            if (_chunk && currentVec?.length && nextVec?.length) {
-              _chunk.update(nextVec[0]);
-            }
-          });
-
-          const isChunkLastVisible = signals.createMemo(() => {
-            const last = lastVisibleDatasetIndex();
-            return last !== undefined && last === index;
-          });
-
-          signals.createEffect(() => {
-            chunk()?.applyOptions({
-              lastValueVisible: series.visible() && isChunkLastVisible(),
-            });
-          });
-
-          const shouldChunkBeVisible = signals.createMemo(() => {
-            if (visibleDatasetIds().length) {
-              const start = chunkIdToIndex(
-                presets.selectedScale(),
-                /** @type {number} */ (visibleDatasetIds().at(0))
-              );
-              const end = chunkIdToIndex(
-                presets.selectedScale(),
-                /** @type {number} */ (visibleDatasetIds().at(-1))
-              );
-
-              if (index >= start && index <= end) {
-                return true;
-              }
-            }
-
-            return false;
-          });
-
-          let wasChunkVisible = false;
-          const chunkVisible = signals.createMemo(() => {
-            if (series.disabled()) {
-              wasChunkVisible = false;
-            } else {
-              wasChunkVisible = wasChunkVisible || shouldChunkBeVisible();
-            }
-            return wasChunkVisible;
-          });
-
-          signals.createEffect(() => {
-            const visible = series.visible() && chunkVisible();
-            chunk()?.applyOptions({
-              visible,
-            });
-          });
-        });
-
-        createLegend({ series, disabled, name: type });
-
-        return series;
-      }
-
-      /**
-       * @param {Object} args
-       * @param {PriceSeriesType} args.type
-       * @param {VoidFunction} args.setMinMaxMarkersWhenIdle
-       * @param {Preset} args.preset
-       * @param {IChartApi} args.chart
-       * @param {Series[]} args.chartSeries
-       * @param {Accessor<number | undefined>} args.lastVisibleDatasetIndex
-       */
-      function createPriceSeries({
-        type,
-        setMinMaxMarkersWhenIdle,
-        preset,
-        chart,
-        chartSeries,
-        lastVisibleDatasetIndex,
-      }) {
-        const s = presets.selectedScale();
-
-        /** @type {AnyDatasetPath} */
-        const datasetPath = `${s}-to-price`;
-
-        const dataset = datasets.getOrImport(s, datasetPath);
-
-        // Don't trigger reactivity by design
-        activeDatasets().add(dataset);
-
-        const title = "Price";
-
-        /** @type {SeriesBlueprint} */
-        let seriesBlueprint;
-
-        if (type === "Candlestick") {
-          seriesBlueprint = {
-            datasetPath,
-            title,
-            type: "Candlestick",
-          };
-        } else {
-          seriesBlueprint = {
-            datasetPath,
-            title,
-            color: colors.default,
-          };
+          const anchor = window.document.createElement("a");
+          anchor.href = series.dataset.url;
+          anchor.innerHTML = `<svg viewBox="0 0 16 16"><path d="M8.75 2.75a.75.75 0 0 0-1.5 0v5.69L5.03 6.22a.75.75 0 0 0-1.06 1.06l3.5 3.5a.75.75 0 0 0 1.06 0l3.5-3.5a.75.75 0 0 0-1.06-1.06L8.75 8.44V2.75Z" /><path d="M3.5 9.75a.75.75 0 0 0-1.5 0v1.5A2.75 2.75 0 0 0 4.75 14h6.5A2.75 2.75 0 0 0 14 11.25v-1.5a.75.75 0 0 0-1.5 0v1.5c0 .69-.56 1.25-1.25 1.25h-6.5c-.69 0-1.25-.56-1.25-1.25v-1.5Z" /></svg>`;
+          anchor.target = "_target";
+          anchor.rel = "noopener noreferrer";
+          div.append(anchor);
         }
 
-        const disabled = signals.createMemo(() => priceSeriesType() !== type);
-
-        const priceSeries = createSeries({
-          seriesBlueprint,
+        /**
+         * @template {TimeScale} S
+         * @param {Object} args
+         * @param {ResourceDataset<S>} args.dataset
+         * @param {SeriesBlueprint} args.seriesBlueprint
+         * @param {Option} args.option
+         * @param {IChartApi} args.chart
+         * @param {number} args.index
+         * @param {Series[]} args.chartSeries
+         * @param {Accessor<number | undefined>} args.lastVisibleDatasetIndex
+         * @param {VoidFunction} args.setMinMaxMarkersWhenIdle
+         * @param {Accessor<boolean>} [args.disabled]
+         */
+        function createSeries({
+          chart,
+          option,
+          index: seriesIndex,
+          disabled: _disabled,
+          lastVisibleDatasetIndex,
+          setMinMaxMarkersWhenIdle,
           dataset,
-          preset,
-          index: -1,
+          seriesBlueprint,
+          chartSeries,
+        }) {
+          const {
+            title,
+            color,
+            defaultActive,
+            type,
+            options: seriesOptions,
+          } = seriesBlueprint;
+
+          /** @type {Signal<ISeriesApi<SeriesType> | undefined>[]} */
+          const chunks = new Array(dataset.fetchedJSONs.length);
+
+          const id = ids.fromString(title);
+          const storageId = options.optionAndSeriesToKey(
+            option,
+            seriesBlueprint
+          );
+
+          const active = signals.createSignal(
+            utils.url.readBoolParam(id) ??
+              utils.storage.readBool(storageId) ??
+              defaultActive ??
+              true
+          );
+
+          const disabled = signals.createMemo(_disabled || (() => false));
+
+          const visible = signals.createMemo(() => active() && !disabled());
+
+          signals.createEffect(() => {
+            if (disabled()) {
+              return;
+            }
+
+            const a = active();
+
+            if (a !== (defaultActive || true)) {
+              utils.url.writeParam(id, a);
+              utils.storage.write(storageId, a);
+            } else {
+              utils.url.removeParam(id);
+              utils.storage.remove(storageId);
+            }
+          });
+
+          /** @type {Series} */
+          const series = {
+            active,
+            chunks,
+            color: color || [colors.profit, colors.loss],
+            dataset,
+            disabled,
+            id,
+            title,
+            visible,
+          };
+
+          chartSeries.push(series);
+
+          const owner = signals.getOwner();
+
+          dataset.fetchedJSONs.forEach((json, index) => {
+            const chunk = signals.createSignal(
+              /** @type {ISeriesApi<SeriesType> | undefined} */ (undefined)
+            );
+
+            chunks[index] = chunk;
+
+            signals.createEffect(() => {
+              const values = json.vec();
+
+              if (!values) return;
+
+              if (seriesIndex > 0) {
+                const previousSeriesChunk = chartSeries.at(seriesIndex - 1)
+                  ?.chunks[index];
+                const isPreviousSeriesOnChart = previousSeriesChunk?.();
+                if (!isPreviousSeriesOnChart) {
+                  return;
+                }
+              }
+
+              signals.untrack(() => {
+                let s = chunk();
+
+                if (!s) {
+                  switch (type) {
+                    case "Baseline": {
+                      s = lightweightCharts.createBaseLineSeries({
+                        chart,
+                        color,
+                        options: seriesOptions,
+                        owner,
+                      });
+                      break;
+                    }
+                    case "Candlestick": {
+                      s = lightweightCharts.createCandlesticksSeries({
+                        chart,
+                        options: seriesOptions,
+                        owner,
+                      });
+                      break;
+                    }
+                    // case "Histogram": {
+                    //   s = createHistogramSeries({
+                    //     chart,
+                    //     options,
+                    //   });
+                    //   break;
+                    // }
+                    default:
+                    case "Line": {
+                      s = lightweightCharts.createLineSeries({
+                        chart,
+                        color,
+                        options: seriesOptions,
+                        owner,
+                      });
+                      break;
+                    }
+                  }
+
+                  chunk.set(s);
+                }
+
+                s.setData(values);
+
+                setMinMaxMarkersWhenIdle();
+              });
+            });
+
+            signals.createEffect(() => {
+              const _chunk = chunk();
+              const currentVec = dataset.fetchedJSONs.at(index)?.vec();
+              const nextVec = dataset.fetchedJSONs.at(index + 1)?.vec();
+
+              if (_chunk && currentVec?.length && nextVec?.length) {
+                _chunk.update(nextVec[0]);
+              }
+            });
+
+            const isChunkLastVisible = signals.createMemo(() => {
+              const last = lastVisibleDatasetIndex();
+              return last !== undefined && last === index;
+            });
+
+            signals.createEffect(() => {
+              chunk()?.applyOptions({
+                lastValueVisible: series.visible() && isChunkLastVisible(),
+              });
+            });
+
+            const shouldChunkBeVisible = signals.createMemo(() => {
+              if (visibleDatasetIds().length) {
+                const start = chunkIdToIndex(
+                  scale(),
+                  /** @type {number} */ (visibleDatasetIds().at(0))
+                );
+                const end = chunkIdToIndex(
+                  scale(),
+                  /** @type {number} */ (visibleDatasetIds().at(-1))
+                );
+
+                if (index >= start && index <= end) {
+                  return true;
+                }
+              }
+
+              return false;
+            });
+
+            let wasChunkVisible = false;
+            const chunkVisible = signals.createMemo(() => {
+              if (series.disabled()) {
+                wasChunkVisible = false;
+              } else {
+                wasChunkVisible = wasChunkVisible || shouldChunkBeVisible();
+              }
+              return wasChunkVisible;
+            });
+
+            signals.createEffect(() => {
+              const visible = series.visible() && chunkVisible();
+              chunk()?.applyOptions({
+                visible,
+              });
+            });
+          });
+
+          createLegend({ series, disabled, name: type });
+
+          return series;
+        }
+
+        /**
+         * @param {Object} args
+         * @param {PriceSeriesType} args.type
+         * @param {VoidFunction} args.setMinMaxMarkersWhenIdle
+         * @param {Option} args.option
+         * @param {IChartApi} args.chart
+         * @param {Series[]} args.chartSeries
+         * @param {Accessor<number | undefined>} args.lastVisibleDatasetIndex
+         */
+        function createPriceSeries({
+          type,
+          setMinMaxMarkersWhenIdle,
+          option,
           chart,
           chartSeries,
           lastVisibleDatasetIndex,
-          disabled,
-          setMinMaxMarkersWhenIdle,
-        });
+        }) {
+          const s = scale();
 
-        function createLiveCandleUpdateEffect() {
-          signals.createEffect(() => {
-            const latest = webSockets.krakenCandle.latest();
+          /** @type {AnyDatasetPath} */
+          const datasetPath = `${s}-to-price`;
 
-            if (!latest) return;
+          const dataset = datasets.getOrImport(s, datasetPath);
 
-            const index = chunkIdToIndex(s, latest.year);
+          // Don't trigger reactivity by design
+          activeDatasets().add(dataset);
 
-            const series = priceSeries.chunks.at(index)?.();
+          const title = "Price";
 
-            series?.update(latest);
+          /** @type {SeriesBlueprint} */
+          let seriesBlueprint;
+
+          if (type === "Candlestick") {
+            seriesBlueprint = {
+              datasetPath,
+              title,
+              type: "Candlestick",
+            };
+          } else {
+            seriesBlueprint = {
+              datasetPath,
+              title,
+              color: colors.default,
+            };
+          }
+
+          const disabled = signals.createMemo(() => priceSeriesType() !== type);
+
+          const priceSeries = createSeries({
+            seriesBlueprint,
+            dataset,
+            option,
+            index: -1,
+            chart,
+            chartSeries,
+            lastVisibleDatasetIndex,
+            disabled,
+            setMinMaxMarkersWhenIdle,
           });
+
+          function createLiveCandleUpdateEffect() {
+            signals.createEffect(() => {
+              const latest = webSockets.krakenCandle.latest();
+
+              if (!latest) return;
+
+              const index = chunkIdToIndex(s, latest.year);
+
+              const series = priceSeries.chunks.at(index)?.();
+
+              series?.update(latest);
+            });
+          }
+          createLiveCandleUpdateEffect();
+
+          return priceSeries;
         }
-        createLiveCandleUpdateEffect();
 
-        return priceSeries;
-      }
+        function resetLegendElement() {
+          elements.legend.innerHTML = "";
+        }
 
-      function resetLegendElement() {
-        elements.legend.innerHTML = "";
-      }
+        function initTimeScaleElement() {
+          function initScrollButtons() {
+            const buttonBackward = utils.dom.getElementById("button-backward");
+            const buttonBackwardIcon = utils.dom.getElementById(
+              "button-backward-icon"
+            );
+            const buttonBackwardPauseIcon = utils.dom.getElementById(
+              "button-backward-pause-icon"
+            );
+            const buttonForward = utils.dom.getElementById("button-forward");
+            const buttonForwardIcon = utils.dom.getElementById(
+              "button-forward-icon"
+            );
+            const buttonForwardPauseIcon = utils.dom.getElementById(
+              "button-forward-pause-icon"
+            );
 
-      function applyPreset() {
-        const preset = presets.selected();
-        const scale = preset.scale;
-        visibleTimeRange.set(getInitialVisibleTimeRange(scale));
+            let interval = /** @type {number | undefined} */ (undefined);
+            let direction = /** @type  {1 | -1 | 0} */ (0);
 
-        activeDatasets.set((s) => {
-          s.clear();
-          return s;
-        });
+            const DELAY = 5;
+            const MULTIPLIER = DELAY / 10000;
 
-        const chartCount = 1 + (preset.bottom?.length ? 1 : 0);
-        const blueprintCount =
-          1 + (preset.top?.length || 0) + (preset.bottom?.length || 0);
-        const chartsBlueprints = [preset.top || [], preset.bottom].flatMap(
-          (list) => (list ? [list] : [])
-        );
+            function scrollChart() {
+              if (direction <= 0) {
+                buttonForwardIcon.removeAttribute("hidden");
+                buttonForwardPauseIcon.setAttribute("hidden", "");
+              }
+              if (direction >= 0) {
+                buttonBackwardIcon.removeAttribute("hidden");
+                buttonBackwardPauseIcon.setAttribute("hidden", "");
+              }
+              if (direction === -1) {
+                buttonBackwardIcon.setAttribute("hidden", "");
+                buttonBackwardPauseIcon.removeAttribute("hidden");
+              }
+              if (direction === 1) {
+                buttonForwardIcon.setAttribute("hidden", "");
+                buttonForwardPauseIcon.removeAttribute("hidden");
+              }
 
-        resetLegendElement();
-        resetChartListElement();
+              if (!direction) {
+                clearInterval(interval);
+                return;
+              }
 
-        /** @type {Series[]} */
-        const allSeries = [];
+              interval = setInterval(() => {
+                const time = charts.at(-1)?.timeScale();
 
-        charts = chartsBlueprints.map((seriesBlueprints, chartIndex) => {
-          const { chartDiv, unitName, chartMode } = createChartDiv(
-            elements.chartList,
-            chartIndex
+                if (!time) return;
+
+                const range = time.getVisibleLogicalRange();
+
+                if (!range) return;
+
+                const speed = (range.to - range.from) * MULTIPLIER * direction;
+
+                // @ts-ignore
+                range.from += speed;
+                // @ts-ignore
+                range.to += speed;
+
+                time.setVisibleLogicalRange(range);
+              }, DELAY);
+            }
+
+            buttonBackward.addEventListener("click", () => {
+              if (direction !== -1) {
+                direction = -1;
+              } else {
+                direction = 0;
+              }
+              scrollChart();
+            });
+
+            buttonForward.addEventListener("click", () => {
+              if (direction !== 1) {
+                direction = 1;
+              } else {
+                direction = 0;
+              }
+              scrollChart();
+            });
+          }
+          initScrollButtons();
+
+          const GENESIS_DAY = "2009-01-03";
+
+          /**
+           * @param {HTMLButtonElement} button
+           * @param {ChartOption} option
+           */
+          function setTimeScale(button, option) {
+            const chart = charts.at(-1);
+            if (!chart) return;
+            const timeScale = chart.timeScale();
+
+            const year = button.dataset.year;
+            let days = button.dataset.days;
+            let toHeight = button.dataset.to;
+
+            switch (option.scale) {
+              case "date": {
+                let from = new Date();
+                let to = new Date();
+                to.setUTCHours(0, 0, 0, 0);
+
+                if (!days && typeof button.dataset.yearToDate === "string") {
+                  days = String(
+                    Math.ceil(
+                      (to.getTime() -
+                        new Date(`${to.getUTCFullYear()}-01-01`).getTime()) /
+                        consts.ONE_DAY_IN_MS
+                    )
+                  );
+                }
+
+                if (year) {
+                  from = new Date(`${year}-01-01`);
+                  to = new Date(`${year}-12-31`);
+                } else if (days) {
+                  from.setDate(from.getUTCDate() - Number(days));
+                } else {
+                  from = new Date(GENESIS_DAY);
+                }
+
+                timeScale.setVisibleRange({
+                  from: /** @type {Time} */ (from.getTime() / 1000),
+                  to: /** @type {Time} */ (to.getTime() / 1000),
+                });
+                break;
+              }
+              case "height": {
+                timeScale.setVisibleRange({
+                  from: /** @type {Time} */ (0),
+                  to: /** @type {Time} */ (
+                    Number(toHeight?.slice(0, -1)) * 1_000
+                  ),
+                });
+                break;
+              }
+            }
+          }
+
+          /**
+           * @param {HTMLElement} timeScaleButtons
+           */
+          function initGoToButtons(timeScaleButtons) {
+            Array.from(timeScaleButtons.children).forEach((button) => {
+              if (button.tagName !== "BUTTON") throw "Expect a button";
+              button.addEventListener("click", () => {
+                const option = options.selected();
+                if (option.kind === "chart") {
+                  setTimeScale(
+                    /** @type {HTMLButtonElement} */ (button),
+                    option
+                  );
+                }
+              });
+            });
+          }
+          initGoToButtons(elements.timeScaleDateButtons);
+          initGoToButtons(elements.timeScaleHeightButtons);
+
+          function createScaleButtonsToggleEffect() {
+            signals.createEffect(() => {
+              const scaleIsDate = scale() === "date";
+              elements.timeScaleDateButtons.hidden = !scaleIsDate;
+              elements.timeScaleHeightButtons.hidden = scaleIsDate;
+            });
+          }
+          createScaleButtonsToggleEffect();
+        }
+        initTimeScaleElement();
+
+        /**
+         * @param {ChartOption} option
+         */
+        function applyChartOption(option) {
+          const scale = option.scale;
+          visibleTimeRange.set(getInitialVisibleTimeRange());
+
+          activeDatasets.set((s) => {
+            s.clear();
+            return s;
+          });
+
+          const chartCount = 1 + (option.bottom?.length ? 1 : 0);
+          const blueprintCount =
+            1 + (option.top?.length || 0) + (option.bottom?.length || 0);
+          const chartsBlueprints = [option.top || [], option.bottom].flatMap(
+            (list) => (list ? [list] : [])
           );
 
-          const chart =
-            /** @type {IChartApi & {whitespace: ISeriesApi<"Line">}} */ (
-              createChart({
-                scale,
-                element: chartDiv,
-              })
-            );
-          chart.whitespace = setWhitespace(chart, scale);
-
-          setInitialVisibleTimeRange(chart);
+          resetLegendElement();
+          resetChartListElement();
 
           /** @type {Series[]} */
-          const chartSeries = [];
+          const allSeries = [];
 
-          function setMinMaxMarkers() {
-            try {
-              const { from, to } = visibleTimeRange();
+          charts = chartsBlueprints.map((seriesBlueprints, chartIndex) => {
+            const { chartDiv, unitName, chartMode } = createChartDiv(
+              elements.chartList,
+              chartIndex
+            );
 
-              const dateFrom = new Date(String(from));
-              const dateTo = new Date(String(to));
+            const chart = lightweightCharts.createChartWithWhitespace({
+              scale,
+              element: chartDiv,
+            });
 
-              /** @type {Marker | undefined} */
-              let max = undefined;
-              /** @type {Marker | undefined} */
-              let min = undefined;
+            setInitialVisibleTimeRange(chart);
 
-              const ids = visibleDatasetIds();
+            /** @type {Series[]} */
+            const chartSeries = [];
 
-              for (let i = 0; i < chartSeries.length; i++) {
-                const { chunks, dataset } = chartSeries[i];
+            function setMinMaxMarkers() {
+              try {
+                const { from, to } = visibleTimeRange();
 
-                for (let j = 0; j < ids.length; j++) {
-                  const id = ids[j];
+                const dateFrom = new Date(String(from));
+                const dateTo = new Date(String(to));
 
-                  const chunkIndex = chunkIdToIndex(scale, id);
+                /** @type {Marker | undefined} */
+                let max = undefined;
+                /** @type {Marker | undefined} */
+                let min = undefined;
 
-                  const chunk = chunks.at(chunkIndex)?.();
+                const ids = visibleDatasetIds();
 
-                  if (!chunk || !chunk?.options().visible) continue;
+                for (let i = 0; i < chartSeries.length; i++) {
+                  const { chunks, dataset } = chartSeries[i];
 
-                  chunk.setMarkers([]);
+                  for (let j = 0; j < ids.length; j++) {
+                    const id = ids[j];
 
-                  const isCandlestick = chunk.seriesType() === "Candlestick";
+                    const chunkIndex = chunkIdToIndex(scale, id);
 
-                  const vec = dataset.fetchedJSONs.at(chunkIndex)?.vec();
+                    const chunk = chunks.at(chunkIndex)?.();
 
-                  if (!vec) return;
+                    if (!chunk || !chunk?.options().visible) continue;
 
-                  for (let k = 0; k < vec.length; k++) {
-                    const data = vec[k];
+                    chunk.setMarkers([]);
 
-                    let number;
+                    const isCandlestick = chunk.seriesType() === "Candlestick";
 
-                    if (scale === "date") {
-                      const date = utils.dateFromTime(data.time);
+                    const vec = dataset.fetchedJSONs.at(chunkIndex)?.vec();
 
-                      number = date.getTime();
+                    if (!vec) return;
 
-                      if (date <= dateFrom || date >= dateTo) {
-                        continue;
+                    for (let k = 0; k < vec.length; k++) {
+                      const data = vec[k];
+
+                      let number;
+
+                      if (scale === "date") {
+                        const date = utils.dateFromTime(data.time);
+
+                        number = date.getTime();
+
+                        if (date <= dateFrom || date >= dateTo) {
+                          continue;
+                        }
+                      } else {
+                        const height = data.time;
+
+                        number = /** @type {number} */ (height);
+
+                        if (height <= from || height >= to) {
+                          continue;
+                        }
                       }
-                    } else {
-                      const height = data.time;
 
-                      number = /** @type {number} */ (height);
+                      // @ts-ignore
+                      const high = isCandlestick ? data["high"] : data.value;
+                      // @ts-ignore
+                      const low = isCandlestick ? data["low"] : data.value;
 
-                      if (height <= from || height >= to) {
-                        continue;
+                      if (!max || high > max.value) {
+                        max = {
+                          weight: number,
+                          time: data.time,
+                          value: high,
+                          seriesChunk: chunk,
+                        };
                       }
-                    }
-
-                    // @ts-ignore
-                    const high = isCandlestick ? data["high"] : data.value;
-                    // @ts-ignore
-                    const low = isCandlestick ? data["low"] : data.value;
-
-                    if (!max || high > max.value) {
-                      max = {
-                        weight: number,
-                        time: data.time,
-                        value: high,
-                        seriesChunk: chunk,
-                      };
-                    }
-                    if (!min || low < min.value) {
-                      min = {
-                        weight: number,
-                        time: data.time,
-                        value: low,
-                        seriesChunk: chunk,
-                      };
+                      if (!min || low < min.value) {
+                        min = {
+                          weight: number,
+                          time: data.time,
+                          value: low,
+                          seriesChunk: chunk,
+                        };
+                      }
                     }
                   }
                 }
-              }
 
-              /** @type {(SeriesMarker<Time> & Weighted) | undefined} */
-              let minMarker;
-              /** @type {(SeriesMarker<Time> & Weighted) | undefined} */
-              let maxMarker;
+                /** @type {(SeriesMarker<Time> & Weighted) | undefined} */
+                let minMarker;
+                /** @type {(SeriesMarker<Time> & Weighted) | undefined} */
+                let maxMarker;
 
-              if (min) {
-                minMarker = {
-                  weight: min.weight,
-                  time: min.time,
-                  color: colors.default(),
-                  position: "belowBar",
-                  shape: "arrowUp",
-                  size: 0,
-                  text: utils.locale.numberToShortUSFormat(min.value),
-                };
-              }
-
-              if (max) {
-                maxMarker = {
-                  weight: max.weight,
-                  time: max.time,
-                  color: colors.default(),
-                  position: "aboveBar",
-                  shape: "arrowDown",
-                  size: 0,
-                  text: utils.locale.numberToShortUSFormat(max.value),
-                };
-              }
-
-              if (
-                min &&
-                max &&
-                min.seriesChunk === max.seriesChunk &&
-                minMarker &&
-                maxMarker
-              ) {
-                min.seriesChunk.setMarkers(
-                  [minMarker, maxMarker].sort((a, b) => a.weight - b.weight)
-                );
-              } else {
-                if (min && minMarker) {
-                  min.seriesChunk.setMarkers([minMarker]);
+                if (min) {
+                  minMarker = {
+                    weight: min.weight,
+                    time: min.time,
+                    color: colors.default(),
+                    position: "belowBar",
+                    shape: "arrowUp",
+                    size: 0,
+                    text: utils.locale.numberToShortUSFormat(min.value),
+                  };
                 }
 
-                if (max && maxMarker) {
-                  max.seriesChunk.setMarkers([maxMarker]);
+                if (max) {
+                  maxMarker = {
+                    weight: max.weight,
+                    time: max.time,
+                    color: colors.default(),
+                    position: "aboveBar",
+                    shape: "arrowDown",
+                    size: 0,
+                    text: utils.locale.numberToShortUSFormat(max.value),
+                  };
                 }
-              }
-            } catch (e) {}
-          }
 
-          const setMinMaxMarkersWhenIdle = () =>
-            utils.runWhenIdle(
-              () => {
-                setMinMaxMarkers();
-              },
-              blueprintCount * 10 + scale === "date" ? 50 : 100
-            );
+                if (
+                  min &&
+                  max &&
+                  min.seriesChunk === max.seriesChunk &&
+                  minMarker &&
+                  maxMarker
+                ) {
+                  min.seriesChunk.setMarkers(
+                    [minMarker, maxMarker].sort((a, b) => a.weight - b.weight)
+                  );
+                } else {
+                  if (min && minMarker) {
+                    min.seriesChunk.setMarkers([minMarker]);
+                  }
 
-          function createSetMinMaxMarkersWhenIdleEffect() {
-            signals.createEffect(() => {
-              visibleTimeRange();
-              dark();
-              signals.untrack(setMinMaxMarkersWhenIdle);
-            });
-          }
-          createSetMinMaxMarkersWhenIdleEffect();
+                  if (max && maxMarker) {
+                    max.seriesChunk.setMarkers([maxMarker]);
+                  }
+                }
+              } catch (e) {}
+            }
 
-          if (!chartIndex) {
-            subscribeVisibleTimeRangeChange(chart);
+            const setMinMaxMarkersWhenIdle = () =>
+              utils.runWhenIdle(
+                () => {
+                  setMinMaxMarkers();
+                },
+                blueprintCount * 10 + scale === "date" ? 50 : 100
+              );
 
-            updateVisiblePriceSeriesType({
-              chart,
-              visibleTimeRange: visibleTimeRange(),
-            });
+            function createSetMinMaxMarkersWhenIdleEffect() {
+              signals.createEffect(() => {
+                visibleTimeRange();
+                dark();
+                signals.untrack(setMinMaxMarkersWhenIdle);
+              });
+            }
+            createSetMinMaxMarkersWhenIdleEffect();
 
-            /** @param {PriceSeriesType} type */
-            function _createPriceSeries(type) {
-              return createPriceSeries({
+            if (!chartIndex) {
+              subscribeVisibleTimeRangeChange(chart);
+
+              updateVisiblePriceSeriesType({
                 chart,
-                chartSeries,
-                lastVisibleDatasetIndex,
-                preset,
-                setMinMaxMarkersWhenIdle,
-                type,
+                visibleTimeRange: visibleTimeRange(),
               });
+
+              /** @param {PriceSeriesType} type */
+              function _createPriceSeries(type) {
+                return createPriceSeries({
+                  chart,
+                  chartSeries,
+                  lastVisibleDatasetIndex,
+                  option,
+                  setMinMaxMarkersWhenIdle,
+                  type,
+                });
+              }
+
+              const priceCandlestickSeries = _createPriceSeries("Candlestick");
+              const priceLineSeries = _createPriceSeries("Line");
+
+              function createLinkPriceSeriesEffect() {
+                signals.createEffect(() => {
+                  priceCandlestickSeries.active.set(priceLineSeries.active());
+                });
+
+                signals.createEffect(() => {
+                  priceLineSeries.active.set(priceCandlestickSeries.active());
+                });
+              }
+              createLinkPriceSeriesEffect();
+
+              /** @type {Unit} */
+              const unit = "US Dollars";
+              unitName.set(unit);
+            } else {
+              unitName.set(option.unit);
             }
 
-            const priceCandlestickSeries = _createPriceSeries("Candlestick");
-            const priceLineSeries = _createPriceSeries("Line");
+            [...seriesBlueprints]
+              .reverse()
+              .forEach((seriesBlueprint, index) => {
+                const dataset = datasets.getOrImport(
+                  scale,
+                  seriesBlueprint.datasetPath
+                );
 
-            function createLinkPriceSeriesEffect() {
-              signals.createEffect(() => {
-                priceCandlestickSeries.active.set(priceLineSeries.active());
+                // Don't trigger reactivity by design
+                activeDatasets().add(dataset);
+
+                createSeries({
+                  index,
+                  seriesBlueprint,
+                  chart,
+                  option,
+                  lastVisibleDatasetIndex,
+                  setMinMaxMarkersWhenIdle,
+                  chartSeries,
+                  dataset,
+                });
               });
 
+            setMinMaxMarkers();
+
+            activeDatasets.set((s) => s);
+
+            chartSeries.forEach((series) => {
+              allSeries.unshift(series);
+
               signals.createEffect(() => {
-                priceLineSeries.active.set(priceCandlestickSeries.active());
+                series.active();
+                signals.untrack(setMinMaxMarkersWhenIdle);
               });
-            }
-            createLinkPriceSeriesEffect();
+            });
 
-            /** @type {Unit} */
-            const unit = "US Dollars";
-            unitName.set(unit);
-          } else {
-            unitName.set(preset.unit);
-          }
-
-          [...seriesBlueprints].reverse().forEach((seriesBlueprint, index) => {
-            const dataset = datasets.getOrImport(
-              scale,
-              seriesBlueprint.datasetPath
+            const chartVisible = signals.createMemo(() =>
+              chartSeries.some((series) => series.visible())
             );
 
-            // Don't trigger reactivity by design
-            activeDatasets().add(dataset);
+            function createChartVisibilityEffect() {
+              signals.createEffect(() => {
+                const chartWrapper = chartDiv.parentElement;
+                if (!chartWrapper) throw "Should exist";
+                chartWrapper.hidden = !chartVisible();
+              });
+            }
+            createChartVisibilityEffect();
 
-            createSeries({
-              index,
-              seriesBlueprint,
-              chart,
-              preset,
-              lastVisibleDatasetIndex,
-              setMinMaxMarkersWhenIdle,
-              chartSeries,
-              dataset,
-            });
-          });
+            function createTimeScaleVisibilityEffect() {
+              signals.createEffect(() => {
+                const visible = chartIndex === chartCount - 1 && chartVisible();
 
-          setMinMaxMarkers();
+                chart.timeScale().applyOptions({
+                  visible,
+                });
 
-          activeDatasets.set((s) => s);
+                if (chartIndex === 1) {
+                  charts[0].timeScale().applyOptions({
+                    visible: !visible,
+                  });
+                }
+              });
+            }
+            createTimeScaleVisibilityEffect();
 
-          chartSeries.forEach((series) => {
-            allSeries.unshift(series);
+            signals.createEffect(() =>
+              chart.priceScale("right").applyOptions({
+                mode: chartMode() === "linear" ? 0 : 1,
+              })
+            );
 
-            signals.createEffect(() => {
-              series.active();
-              signals.untrack(setMinMaxMarkersWhenIdle);
-            });
-          });
+            chart
+              .timeScale()
+              .subscribeVisibleLogicalRangeChange((logicalRange) => {
+                if (!logicalRange) return;
 
-          const chartVisible = signals.createMemo(() =>
-            chartSeries.some((series) => series.visible())
-          );
+                // Must be the chart with the visible timeScale
+                if (chartIndex === chartCount - 1) {
+                  debouncedUpdateVisiblePriceSeriesType({
+                    chart,
+                    visibleLogicalRange: logicalRange,
+                  });
+                }
 
-          function createChartVisibilityEffect() {
-            signals.createEffect(() => {
-              const chartWrapper = chartDiv.parentElement;
-              if (!chartWrapper) throw "Should exist";
-              chartWrapper.hidden = !chartVisible();
-            });
-          }
-          createChartVisibilityEffect();
-
-          function createTimeScaleVisibilityEffect() {
-            signals.createEffect(() => {
-              const visible = chartIndex === chartCount - 1 && chartVisible();
-
-              chart.timeScale().applyOptions({
-                visible,
+                for (
+                  let otherChartIndex = 0;
+                  otherChartIndex <= chartCount - 1;
+                  otherChartIndex++
+                ) {
+                  if (chartIndex !== otherChartIndex) {
+                    charts[otherChartIndex]
+                      .timeScale()
+                      .setVisibleLogicalRange(logicalRange);
+                  }
+                }
               });
 
-              if (chartIndex === 1) {
-                charts[0].timeScale().applyOptions({
-                  visible: !visible,
-                });
-              }
-            });
-          }
-          createTimeScaleVisibilityEffect();
-
-          signals.createEffect(() =>
-            chart.priceScale("right").applyOptions({
-              mode: chartMode() === "linear" ? 0 : 1,
-            })
-          );
-
-          chart
-            .timeScale()
-            .subscribeVisibleLogicalRangeChange((logicalRange) => {
-              if (!logicalRange) return;
-
-              // Must be the chart with the visible timeScale
-              if (chartIndex === chartCount - 1) {
-                debouncedUpdateVisiblePriceSeriesType({
-                  chart,
-                  visibleLogicalRange: logicalRange,
-                });
-              }
+            chart.subscribeCrosshairMove(({ time, sourceEvent }) => {
+              // Don't override crosshair position from scroll event
+              if (time && !sourceEvent) return;
 
               for (
                 let otherChartIndex = 0;
                 otherChartIndex <= chartCount - 1;
                 otherChartIndex++
               ) {
-                if (chartIndex !== otherChartIndex) {
-                  charts[otherChartIndex]
-                    .timeScale()
-                    .setVisibleLogicalRange(logicalRange);
+                const otherChart = charts[otherChartIndex];
+
+                if (otherChart && chartIndex !== otherChartIndex) {
+                  if (time) {
+                    otherChart.setCrosshairPosition(
+                      NaN,
+                      time,
+                      otherChart.whitespace
+                    );
+                  } else {
+                    // No time when mouse goes outside the chart
+                    otherChart.clearCrosshairPosition();
+                  }
                 }
               }
             });
 
-          chart.subscribeCrosshairMove(({ time, sourceEvent }) => {
-            // Don't override crosshair position from scroll event
-            if (time && !sourceEvent) return;
+            return chart;
+          });
+        }
 
-            for (
-              let otherChartIndex = 0;
-              otherChartIndex <= chartCount - 1;
-              otherChartIndex++
-            ) {
-              const otherChart = charts[otherChartIndex];
+        function createApplyChartOptionEffect() {
+          signals.createEffect(() => {
+            const option = selected();
+            signals.createUntrackedRoot(() => {
+              applyChartOption(option);
+            });
+          });
+        }
+        createApplyChartOptionEffect();
+      }
 
-              if (otherChart && chartIndex !== otherChartIndex) {
-                if (time) {
-                  otherChart.setCrosshairPosition(
-                    NaN,
-                    time,
-                    otherChart.whitespace
-                  );
-                } else {
-                  // No time when mouse goes outside the chart
-                  otherChart.clearCrosshairPosition();
-                }
+      function createApplyOptionEffect() {
+        const lastChartOption = signals.createSignal(
+          /** @type {ChartOption | null} */ (null)
+        );
+
+        const owner = signals.getOwner();
+
+        let previousElement = /** @type {HTMLElement | undefined} */ (
+          undefined
+        );
+        let firstChartOption = true;
+
+        const lastValues = signals.createSignal(
+          /** @type {Record<LastPath, number> | null} */ (null)
+        );
+
+        const kind = signals.createMemo(() => options.selected().kind);
+
+        function createFetchLastValuesWhenNeededEffect() {
+          let previousHeight = -1;
+          signals.createEffect(() => {
+            if (kind() === "dashboard") {
+              if (previousHeight !== lastHeight()) {
+                fetch("/api/last").then((response) => {
+                  response.json().then((json) => {
+                    if (typeof json === "object") {
+                      lastValues.set(json);
+                      previousHeight = lastHeight();
+                    }
+                  });
+                });
               }
             }
           });
+        }
+        createFetchLastValuesWhenNeededEffect();
 
-          return chart;
-        });
-      }
-
-      function createApplyPresetEffect() {
         signals.createEffect(() => {
-          presets.selected();
+          const option = options.selected();
           signals.untrack(() => {
-            signals.createRoot(applyPreset);
+            if (previousElement) {
+              previousElement.hidden = true;
+              utils.url.resetParams(option);
+            }
+            utils.url.replaceHistory({ pathname: option.id });
+
+            const hideSelectedTop =
+              option.kind === "home" || option.kind === "pdf";
+            elements.selectedHeader.hidden = hideSelectedTop;
+            elements.selectedHr.hidden = hideSelectedTop;
+
+            elements.selectedTitle.innerHTML = option.title;
+            elements.selectedDescription.innerHTML = option.serializedPath;
+
+            /** @type {HTMLElement} */
+            let element;
+
+            switch (option.kind) {
+              case "home": {
+                element = elements.home;
+                break;
+              }
+              case "dashboard": {
+                element = elements.dashboards;
+
+                element.innerHTML = "";
+
+                option.groups.forEach(({ name, values, unit: groupUnit }) => {
+                  const table = window.document.createElement("table");
+                  element.append(table);
+                  const caption = window.document.createElement("caption");
+                  caption.innerHTML = name;
+                  table.append(caption);
+                  const tbody = window.document.createElement("tbody");
+                  table.append(tbody);
+                  values.forEach(({ name, path, unit: valueUnit }) => {
+                    const unit = groupUnit ?? valueUnit;
+                    const tr = window.document.createElement("tr");
+                    tbody.append(tr);
+                    const tdName = window.document.createElement("td");
+                    tdName.innerHTML = name;
+                    tr.append(tdName);
+                    const tdValue = window.document.createElement("td");
+                    signals.createEffect(() => {
+                      if (!path) {
+                        tdValue.append(utils.dom.createItalic("Soon"));
+                        return;
+                      }
+
+                      switch (unit) {
+                        case "US Dollars": {
+                          tdValue.innerHTML = utils.formatters.dollars.format(
+                            lastValues()?.[path] || 0
+                          );
+                          break;
+                        }
+                        case "Percentage": {
+                          tdValue.innerHTML =
+                            utils.formatters.percentage.format(
+                              (lastValues()?.[path] || 0) / 100
+                            );
+                          break;
+                        }
+                        default: {
+                          tdValue.innerHTML = String(
+                            lastValues()?.[path] ?? ""
+                          );
+                        }
+                      }
+                    });
+                    tr.append(tdValue);
+                  });
+                });
+                break;
+              }
+              case "chart": {
+                element = elements.charts;
+
+                lastChartOption.set(option);
+
+                if (firstChartOption) {
+                  lightweightChartsPromise ||= importLightweightCharts();
+                  lightweightChartsPromise.then((lightweightCharts) =>
+                    signals.runWithOwner(owner, () =>
+                      initChartsElement({
+                        selected: /** @type {any} */ (lastChartOption),
+                        lightweightCharts,
+                      })
+                    )
+                  );
+                }
+                firstChartOption = false;
+                break;
+              }
+              case "pdf": {
+                const id = `${option.id}-object`;
+
+                let object = /** @type {HTMLObjectElement | null} */ (
+                  window.document.getElementById(id)
+                );
+
+                if (!object) {
+                  object = window.document.createElement("object");
+                  object.type = "application/pdf";
+                  object.id = id;
+                  const url = `/assets/pdfs/${option.file}`;
+                  object.data = url;
+                  const div = window.document.createElement("div");
+                  div.innerHTML = "No online PDF viewer installed";
+                  object.append(div);
+
+                  if (env.ios) {
+                    object.addEventListener("touchstart", () => {
+                      utils.dom.open(url);
+                    });
+                  }
+
+                  elements.selectedFrame.append(object);
+                }
+                element = object;
+
+                break;
+              }
+            }
+
+            element.hidden = false;
+            previousElement = element;
           });
         });
       }
-      createApplyPresetEffect();
-
-      function createUpdateSelectedHeaderEffect() {
-        signals.createEffect(() => {
-          const preset = presets.selected();
-          elements.presetTitle.innerHTML = preset.title;
-          elements.presetDescription.innerHTML = preset.serializedPath;
-        });
-      }
-      createUpdateSelectedHeaderEffect();
-
-      function showSelectedFrame() {
-        elements.selectedFrame.style.opacity = "1";
-      }
-      showSelectedFrame();
+      createApplyOptionEffect();
 
       function initFavoriteButton() {
         elements.buttonFavorite.addEventListener("click", () => {
-          const preset = presets.selected();
+          const option = options.selected();
 
-          preset.isFavorite.set((f) => {
+          option.isFavorite.set((f) => {
             const newState = !f;
 
-            const localStorageKey = presets.presetToFavoriteKey(preset);
+            const localStorageKey = options.optionToFavoriteKey(option);
             if (newState) {
               localStorage.setItem(localStorageKey, "1");
             } else {
@@ -7882,7 +8472,7 @@ lazySignals.then((_signals) => {
         });
 
         signals.createEffect(() => {
-          if (presets.selected().isFavorite()) {
+          if (options.selected().isFavorite()) {
             elements.buttonFavorite.dataset.highlight = "";
           } else {
             delete elements.buttonFavorite.dataset.highlight;
@@ -7934,193 +8524,28 @@ lazySignals.then((_signals) => {
         });
       }
       initShareButton();
-
-      function initTimeScaleElement() {
-        function initScrollButtons() {
-          const buttonBackward = utils.dom.getElementById("button-backward");
-          const buttonBackwardIcon = utils.dom.getElementById(
-            "button-backward-icon"
-          );
-          const buttonBackwardPauseIcon = utils.dom.getElementById(
-            "button-backward-pause-icon"
-          );
-          const buttonForward = utils.dom.getElementById("button-forward");
-          const buttonForwardIcon = utils.dom.getElementById(
-            "button-forward-icon"
-          );
-          const buttonForwardPauseIcon = utils.dom.getElementById(
-            "button-forward-pause-icon"
-          );
-
-          let interval = /** @type {number | undefined} */ (undefined);
-          let direction = /** @type  {1 | -1 | 0} */ (0);
-
-          const DELAY = 5;
-          const MULTIPLIER = DELAY / 10000;
-
-          function scrollChart() {
-            if (direction <= 0) {
-              buttonForwardIcon.removeAttribute("hidden");
-              buttonForwardPauseIcon.setAttribute("hidden", "");
-            }
-            if (direction >= 0) {
-              buttonBackwardIcon.removeAttribute("hidden");
-              buttonBackwardPauseIcon.setAttribute("hidden", "");
-            }
-            if (direction === -1) {
-              buttonBackwardIcon.setAttribute("hidden", "");
-              buttonBackwardPauseIcon.removeAttribute("hidden");
-            }
-            if (direction === 1) {
-              buttonForwardIcon.setAttribute("hidden", "");
-              buttonForwardPauseIcon.removeAttribute("hidden");
-            }
-
-            if (!direction) {
-              clearInterval(interval);
-              return;
-            }
-
-            interval = setInterval(() => {
-              const time = charts.at(-1)?.timeScale();
-
-              if (!time) return;
-
-              const range = time.getVisibleLogicalRange();
-
-              if (!range) return;
-
-              const speed = (range.to - range.from) * MULTIPLIER * direction;
-
-              // @ts-ignore
-              range.from += speed;
-              // @ts-ignore
-              range.to += speed;
-
-              time.setVisibleLogicalRange(range);
-            }, DELAY);
-          }
-
-          buttonBackward.addEventListener("click", () => {
-            if (direction !== -1) {
-              direction = -1;
-            } else {
-              direction = 0;
-            }
-            scrollChart();
-          });
-
-          buttonForward.addEventListener("click", () => {
-            if (direction !== 1) {
-              direction = 1;
-            } else {
-              direction = 0;
-            }
-            scrollChart();
-          });
-        }
-        initScrollButtons();
-
-        const GENESIS_DAY = "2009-01-03";
-
-        /**
-         * @param {HTMLButtonElement} button
-         */
-        function setTimeScale(button) {
-          const chart = charts.at(-1);
-          if (!chart) return;
-          const timeScale = chart.timeScale();
-
-          const year = button.dataset.year;
-          let days = button.dataset.days;
-          let toHeight = button.dataset.to;
-
-          if (presets.selectedScale() === "date") {
-            let from = new Date();
-            let to = new Date();
-            to.setUTCHours(0, 0, 0, 0);
-
-            if (!days && typeof button.dataset.yearToDate === "string") {
-              days = String(
-                Math.ceil(
-                  (to.getTime() -
-                    new Date(`${to.getUTCFullYear()}-01-01`).getTime()) /
-                    consts.ONE_DAY_IN_MS
-                )
-              );
-            }
-
-            if (year) {
-              from = new Date(`${year}-01-01`);
-              to = new Date(`${year}-12-31`);
-            } else if (days) {
-              from.setDate(from.getUTCDate() - Number(days));
-            } else {
-              from = new Date(GENESIS_DAY);
-            }
-
-            timeScale.setVisibleRange({
-              from: /** @type {Time} */ (from.getTime() / 1000),
-              to: /** @type {Time} */ (to.getTime() / 1000),
-            });
-          } else if (presets.selectedScale() === "height") {
-            timeScale.setVisibleRange({
-              from: /** @type {Time} */ (0),
-              to: /** @type {Time} */ (Number(toHeight?.slice(0, -1)) * 1_000),
-            });
-          }
-        }
-
-        /**
-         * @param {HTMLElement} timeScaleButtons
-         */
-        function initGoToButtons(timeScaleButtons) {
-          Array.from(timeScaleButtons.children).forEach((button) => {
-            if (button.tagName !== "BUTTON") throw "Expect a button";
-            button.addEventListener("click", () => {
-              setTimeScale(/** @type {HTMLButtonElement} */ (button));
-            });
-          });
-        }
-        initGoToButtons(elements.timeScaleDateButtons);
-        initGoToButtons(elements.timeScaleHeightButtons);
-
-        function createScaleButtonsToggleEffect() {
-          signals.createEffect(() => {
-            const scaleIsDate = presets.selectedScale() === "date";
-
-            elements.timeScaleDateButtons.hidden = !scaleIsDate;
-            elements.timeScaleHeightButtons.hidden = scaleIsDate;
-          });
-        }
-        createScaleButtonsToggleEffect();
-      }
-      initTimeScaleElement();
     }
 
-    utils.dom.onFirstIntersection(elements.selectedFrame, () =>
-      utils.runWhenIdle(() =>
-        window.document.fonts.ready.then(() =>
-          import("./packages/lightweight-charts/v4.2.0/script.js").then(
-            ({
-              createChart: createClassicChart,
-              createChartEx: createCustomChart,
-            }) => {
-              initSelectedFrame({
-                createClassicChart,
-                createCustomChart,
-              });
-            }
-          )
-        )
-      )
-    );
+    function createMobileSwitchEffect() {
+      let firstRun = true;
+      signals.createEffect(() => {
+        options.selected();
+
+        if (!firstRun && !utils.dom.isHidden(elements.selectedLabel)) {
+          elements.selectedLabel.click();
+        }
+        firstRun = false;
+      });
+    }
+    createMobileSwitchEffect();
+
+    utils.dom.onFirstIntersection(elements.selectedFrame, initSelectedFrame);
   }
   initSelected();
 
   function initFolders() {
     function initTreeElement() {
-      presets.treeElement.set(() => {
+      options.treeElement.set(() => {
         const treeElement = window.document.createElement("div");
         treeElement.classList.add("tree");
         elements.foldersFrame.append(treeElement);
@@ -8130,16 +8555,16 @@ lazySignals.then((_signals) => {
 
     function createCountersDomUpdateEffect() {
       elements.foldersFilterAllCount.innerHTML =
-        presets.list.length.toLocaleString();
+        options.list.length.toLocaleString();
 
       signals.createEffect(() => {
-        elements.foldersFilterFavoritesCount.innerHTML = presets.counters
+        elements.foldersFilterFavoritesCount.innerHTML = options.counters
           .favorites()
           .toLocaleString();
       });
 
       signals.createEffect(() => {
-        elements.foldersFilterNewCount.innerHTML = presets.counters
+        elements.foldersFilterNewCount.innerHTML = options.counters
           .new()
           .toLocaleString();
       });
@@ -8157,17 +8582,17 @@ lazySignals.then((_signals) => {
       );
 
       filterAllInput.addEventListener("change", () => {
-        presets.filter.set("all");
+        options.filter.set("all");
       });
       filterFavoritesInput.addEventListener("change", () => {
-        presets.filter.set("favorites");
+        options.filter.set("favorites");
       });
       filterNewInput.addEventListener("change", () => {
-        presets.filter.set("new");
+        options.filter.set("new");
       });
 
       signals.createEffect(() => {
-        const f = presets.filter();
+        const f = options.filter();
         localStorage.setItem(ids.foldersFilter, f);
         switch (f) {
           case "all": {
@@ -8190,7 +8615,7 @@ lazySignals.then((_signals) => {
       utils.dom
         .getElementById("button-close-all-folders")
         .addEventListener("click", () => {
-          presets.details.forEach((details) => (details.open = false));
+          options.details.forEach((details) => (details.open = false));
         });
     }
 
@@ -8203,12 +8628,12 @@ lazySignals.then((_signals) => {
     }
 
     async function scrollToSelected() {
-      presets.filter.set("all");
+      options.filter.set("all");
 
-      if (!presets.selected()) throw "Selected should be set by now";
-      const selectedId = presets.selected().id;
+      if (!options.selected()) throw "Selected should be set by now";
+      const selectedId = options.selected().id;
 
-      const path = presets.selected().path;
+      const path = options.selected().path;
 
       let i = 0;
       while (i !== path.length) {
@@ -8251,9 +8676,9 @@ lazySignals.then((_signals) => {
   function initSearch() {
     function initNoInputButton() {
       utils.dom
-        .getElementById("search-no-input-text")
+        .getElementById("search-no-input-text-button")
         .addEventListener("click", () => {
-          presets.selected.set(utils.array.getRandomElement(presets.list));
+          options.selected.set(utils.array.getRandomElement(options.list));
         });
     }
 
@@ -8280,8 +8705,8 @@ lazySignals.then((_signals) => {
 
       const localStorageSearchKey = "search";
 
-      const haystack = presets.list.map(
-        (preset) => `${preset.title}\t${preset.serializedPath}`
+      const haystack = options.list.map(
+        (option) => `${option.title}\t${option.serializedPath}`
       );
 
       const searchSmallOgInnerHTML = elements.searchSmall.innerHTML;
@@ -8295,7 +8720,7 @@ lazySignals.then((_signals) => {
            * @param {number} pageIndex
            */
           function computeResultPage(searchResult, pageIndex) {
-            /** @type {{ preset: Preset, path: string, title: string }[]} */
+            /** @type {{ option: Option, path: string, title: string }[]} */
             let list = [];
 
             let [indexes, info, order] = searchResult || [null, null, null];
@@ -8322,7 +8747,7 @@ lazySignals.then((_signals) => {
                     .split("\t");
 
                   list[i % 100] = {
-                    preset: presets.list[info.idx[infoIdx]],
+                    option: options.list[info.idx[infoIdx]],
                     path,
                     title,
                   };
@@ -8334,7 +8759,7 @@ lazySignals.then((_signals) => {
                   const [title, path] = haystack[index].split("\t");
 
                   list[i % 100] = {
-                    preset: presets.list[index],
+                    option: options.list[index],
                     path,
                     title,
                   };
@@ -8452,17 +8877,17 @@ lazySignals.then((_signals) => {
 
               elements.searchSmall.innerHTML = `Found <strong>${
                 result?.[0]?.length || 0
-              }</strong> preset(s)`;
+              }</strong> result(s)`;
               elements.searchResults.innerHTML = "";
 
               const list = computeResultPage(result, 0);
 
-              list.forEach(({ preset, path, title }) => {
+              list.forEach(({ option, path, title }) => {
                 const li = window.document.createElement("li");
                 elements.searchResults.appendChild(li);
 
-                const label = reactiveDom.createPresetLabeledInput({
-                  preset,
+                const label = reactiveDom.createOptionLabeledInput({
+                  option,
                   frame: "search",
                   name: title,
                   top: path,
@@ -8491,11 +8916,11 @@ lazySignals.then((_signals) => {
     const LOCAL_STORAGE_HISTORY_KEY = "history";
     const MAX_HISTORY_LENGTH = 1_000;
 
-    const history = /** @type {SerializedPresetsHistory} */ (
+    const history = /** @type {SerializedHistory} */ (
       JSON.parse(localStorage.getItem(LOCAL_STORAGE_HISTORY_KEY) || "[]")
-    ).flatMap(([presetId, timestamp]) => {
-      const preset = presets.list.find((preset) => preset.id === presetId);
-      return preset ? [{ preset, date: new Date(timestamp) }] : [];
+    ).flatMap(([optionId, timestamp]) => {
+      const option = options.list.find((option) => option.id === optionId);
+      return option ? [{ option, date: new Date(timestamp) }] : [];
     });
 
     /** @param {Date} date  */
@@ -8505,12 +8930,12 @@ lazySignals.then((_signals) => {
 
     function createUnshiftHistoryEffect() {
       signals.createEffect(() => {
-        const preset = presets.selected();
+        const option = options.selected();
 
         const head = history.at(0);
         if (
           head &&
-          head.preset === preset &&
+          head.option === option &&
           dateToTestedString(new Date()) === dateToTestedString(head.date)
         ) {
           return;
@@ -8518,13 +8943,13 @@ lazySignals.then((_signals) => {
 
         history.unshift({
           date: new Date(),
-          preset,
+          option,
         });
 
         utils.runWhenIdle(() => {
-          /** @type {SerializedPresetsHistory} */
-          const serializedHistory = history.map(({ preset, date }) => [
-            preset.id,
+          /** @type {SerializedHistory} */
+          const serializedHistory = history.map(({ option, date }) => [
+            option.id,
             date.getTime(),
           ]);
 
@@ -8568,11 +8993,11 @@ lazySignals.then((_signals) => {
         });
       }
 
-      const grouped = history.reduce((grouped, { preset, date }) => {
+      const grouped = history.reduce((grouped, { option, date }) => {
         grouped[dateToTestedString(date)] ||= [];
-        grouped[dateToTestedString(date)].push({ preset, date });
+        grouped[dateToTestedString(date)].push({ option, date });
         return grouped;
-      }, /** @type {Record<string, {preset: Preset, date: Date}[]>} */ ({}));
+      }, /** @type {Record<string, {option: Option, date: Date}[]>} */ ({}));
 
       /** @type {[string|undefined, string|undefined]} */
       const firstTwo = [undefined, undefined];
@@ -8588,12 +9013,12 @@ lazySignals.then((_signals) => {
           heading.innerHTML = dateToDisplayedString(tuples[0].date);
           elements.historyList.append(heading);
 
-          tuples.forEach(({ preset, date }) => {
+          tuples.forEach(({ option, date }) => {
             elements.historyList.append(
-              reactiveDom.createPresetLabeledInput({
-                preset,
+              reactiveDom.createOptionLabeledInput({
+                option,
                 frame: "history",
-                name: preset.title,
+                name: option.title,
                 id: date.valueOf().toString(),
                 top: date.toLocaleTimeString(),
                 owner,
@@ -8606,14 +9031,14 @@ lazySignals.then((_signals) => {
 
       function createUpdateHistoryEffect() {
         signals.createEffect(() => {
-          const preset = presets.selected();
+          const option = options.selected();
           const date = new Date();
           const testedString = dateToTestedString(date);
 
-          const label = reactiveDom.createPresetLabeledInput({
-            preset,
+          const label = reactiveDom.createOptionLabeledInput({
+            option,
             frame: "history",
-            name: preset.title,
+            name: option.title,
             id: date.valueOf().toString(),
             top: date.toLocaleTimeString(),
             owner,
@@ -8623,11 +9048,11 @@ lazySignals.then((_signals) => {
           li.append(label);
 
           if (testedString === firstTwo[0]) {
-            if (presets.selected() === grouped[testedString].at(0)?.preset) {
+            if (options.selected() === grouped[testedString].at(0)?.option) {
               return;
             }
 
-            grouped[testedString].unshift({ preset, date });
+            grouped[testedString].unshift({ option, date });
             utils.dom.getElementById(testedString).after(li);
           } else {
             const [first, second] = firstTwo;
@@ -8649,7 +9074,7 @@ lazySignals.then((_signals) => {
             elements.historyList.prepend(li);
             elements.historyList.prepend(heading);
 
-            grouped[testedString] = [{ preset, date }];
+            grouped[testedString] = [{ option, date }];
 
             firstTwo[1] = firstTwo[0];
             firstTwo[0] = testedString;

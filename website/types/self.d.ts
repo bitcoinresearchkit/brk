@@ -16,20 +16,27 @@ import {
   IChartApi,
   ISeriesApi,
 } from "../packages/lightweight-charts/v4.2.0/types";
-import { DatePath, HeightPath } from "./paths";
+import { DatePath, HeightPath, LastPath } from "./paths";
 import { Owner } from "../packages/solid-signals/2024-04-17/types/owner";
 
-type Scale = "date" | "height";
+type GrowToSize<T, N extends number, A extends T[]> = A["length"] extends N
+  ? A
+  : GrowToSize<T, N, [...A, T]>;
 
-type SettingsTheme = "system" | "dark" | "light";
-
-type FoldersFilter = "all" | "favorites" | "new";
+type FixedArray<T, N extends number> = GrowToSize<T, N, []>;
 
 type Signal<T> = Accessor<T> & { set: Setter<T> };
 
+type SettingsTheme = "system" | "dark" | "light";
+type FoldersFilter = "all" | "favorites" | "new";
+
+type TimeScale = "date" | "height";
+
 type TimeRange = Range<Time | number>;
 
-type DatasetPath<S extends Scale> = S extends "date" ? DatePath : HeightPath;
+type DatasetPath<Scale extends TimeScale> = Scale extends "date"
+  ? DatePath
+  : HeightPath;
 
 type AnyDatasetPath = import("./paths").DatePath | import("./paths").HeightPath;
 
@@ -86,48 +93,97 @@ type Unit =
   | "Dollars / (PetaHash / Second)"
   | "";
 
-interface PresetBlueprint {
+interface PartialOption {
+  icon: string;
+  name: string;
+}
+
+interface PartialHomeOption extends PartialOption {
+  kind: "home";
+  title: "Home";
+  name: "Home";
+}
+
+interface PartialDashboardOption extends PartialOption {
+  title: string;
+  description: string;
+  groups: {
+    name: string;
+    unit?: Unit;
+    values: {
+      name: string;
+      path?: LastPath;
+      unit?: Unit;
+    }[];
+  }[];
+}
+
+interface PartialChartOption extends PartialOption {
+  scale: TimeScale;
+  title: string;
+  unit: Unit;
+  description: string;
   top?: SeriesBlueprint[];
   bottom?: SeriesBlueprint[];
 }
 
-interface PartialPreset extends PresetBlueprint {
-  scale: Scale;
-  icon: string;
-  name: string;
-  unit: Unit;
-  title: string;
-  description: string;
+interface PartialPdfOption extends PartialOption {
+  file: string;
 }
 
-interface PartialPresetFolder {
+interface PartialOptionsGroup {
   name: string;
-  tree: PartialPresetTree;
+  tree: PartialOptionsTree;
 }
 
-type PartialPresetTree = (PartialPreset | PartialPresetFolder)[];
+type AnyPartialOption =
+  | PartialHomeOption
+  | PartialPdfOption
+  | PartialDashboardOption
+  | PartialChartOption;
 
-interface Preset extends PartialPreset {
+type PartialOptionsTree = (AnyPartialOption | PartialOptionsGroup)[];
+
+interface ProcessedOptionAddons {
   id: string;
-  path: FilePath;
+  path: OptionPath;
   serializedPath: string;
   isFavorite: Signal<boolean>;
   visited: Signal<boolean>;
 }
 
-type PresetTree = (Preset | PresetFolder)[];
-
-interface PresetFolder extends PartialPresetFolder {
-  id: string;
-  tree: PresetTree;
-}
-
-type FilePath = {
+type OptionPath = {
   id: string;
   name: string;
 }[];
 
-type SerializedPresetsHistory = [string, number][];
+type HomeOption = PartialHomeOption & ProcessedOptionAddons;
+
+interface PdfOption extends PartialPdfOption, ProcessedOptionAddons {
+  kind: "pdf";
+  title: string;
+}
+
+interface DashboardOption
+  extends PartialDashboardOption,
+    ProcessedOptionAddons {
+  kind: "dashboard";
+}
+
+interface ChartOption extends PartialChartOption, ProcessedOptionAddons {
+  kind: "chart";
+}
+
+type Option = HomeOption | PdfOption | DashboardOption | ChartOption;
+
+type OptionsTree = (Option | OptionsGroup)[];
+
+interface OptionsGroup extends PartialOptionsGroup {
+  id: string;
+  tree: OptionsTree;
+}
+
+type SerializedHistory = [string, number][];
 
 interface OHLC {
   open: number;
@@ -137,20 +193,20 @@ interface OHLC {
 }
 
 interface ResourceDataset<
-  S extends Scale,
+  Scale extends TimeScale,
   Type extends OHLC | number = number
 > {
-  scale: S;
+  scale: Scale;
   url: string;
   fetch: (id: number) => void;
-  fetchedJSONs: FetchedResult<S, Type>[];
+  fetchedJSONs: FetchedResult<Scale, Type>[];
   // drop: VoidFunction;
 }
 
 type ValuedCandlestickData = CandlestickData & Valued;
 
 interface FetchedResult<
-  S extends Scale,
+  Scale extends TimeScale,
   Type extends number | OHLC,
   Value extends DatasetValue<
     SingleValueData | ValuedCandlestickData
@@ -159,7 +215,7 @@ interface FetchedResult<
   >
 > {
   at: Date | null;
-  json: Signal<FetchedJSON<S, Type> | null>;
+  json: Signal<FetchedJSON<Scale, Type> | null>;
   vec: Accessor<Value[] | null>;
   loading: boolean;
 }
@@ -170,10 +226,10 @@ interface Valued {
 
 type DatasetValue<T> = T & Valued;
 
-interface FetchedJSON<S extends Scale, Type extends number | OHLC> {
+interface FetchedJSON<Scale extends TimeScale, Type extends number | OHLC> {
   source: FetchedSource;
   chunk: FetchedChunk;
-  dataset: FetchedDataset<S, Type>;
+  dataset: FetchedDataset<Scale, Type>;
 }
 
 type FetchedSource = string;
@@ -185,9 +241,11 @@ interface FetchedChunk {
 }
 
 type FetchedDataset<
-  S extends Scale,
+  Scale extends TimeScale,
   Type extends number | OHLC
-> = S extends "date" ? FetchedDateDataset<Type> : FetchedHeightDataset<Type>;
+> = Scale extends "date"
+  ? FetchedDateDataset<Type>
+  : FetchedHeightDataset<Type>;
 
 interface Versioned {
   version: number;
@@ -211,7 +269,7 @@ interface Series {
   disabled: Accessor<boolean>;
   active: Signal<boolean>;
   visible: Accessor<boolean>;
-  dataset: ResourceDataset<Scale, number>;
+  dataset: ResourceDataset<TimeScale, number>;
 }
 
 interface Marker {
@@ -226,3 +284,9 @@ interface Weighted {
 }
 
 type DatasetCandlestickData = DatasetValue<CandlestickData> & { year: number };
+
+declare global {
+  interface Window {
+    MyNamespace: any;
+  }
+}
