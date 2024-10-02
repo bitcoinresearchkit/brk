@@ -45,6 +45,14 @@ impl Date {
                 .date_naive(),
         )
     }
+
+    pub fn today() -> Self {
+        Self(chrono::offset::Utc::now().date_naive())
+    }
+
+    pub fn yesterday() -> Self {
+        Self(Self::today().checked_sub_days(Days::new(1)).unwrap())
+    }
 }
 
 impl MapKey<DateMapChunkId> for Date {

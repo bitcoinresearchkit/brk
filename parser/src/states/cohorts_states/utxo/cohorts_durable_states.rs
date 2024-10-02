@@ -128,7 +128,12 @@ impl UTXOCohortsDurableStates {
             state
                 .decrement(amount, utxo_count, block_data.price)
                 .unwrap_or_else(|report| {
-                    dbg!(report, block_data, sent_data, previous_last_block_data);
+                    dbg!(
+                        report.to_string(),
+                        block_data,
+                        sent_data,
+                        previous_last_block_data
+                    );
                     panic!()
                 });
         })

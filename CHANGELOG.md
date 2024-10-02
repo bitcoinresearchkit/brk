@@ -5,9 +5,9 @@
 ![Image of the kibō Web App version 0.X.Y](./assets/v0.X.Y.jpg)
 -->
 
-## v. 0.4.1 | WIP
+## v. 0.5.0 | WIP
 
-<!-- ![Image of the kibō Web App version 0.4.1](./assets/v0.4.1.jpg) -->
+<!-- ![Image of the kibō Web App version 0.5.0](./assets/v0.5.0.jpg) -->
 
 ## Datasets
 
@@ -26,6 +26,7 @@
 
 - Added a `/datasets/last` json file with all the latest values
 - Added `--rpcconnect` parameter to the config
+- Added handling of SIGINT and SIGTERM terminal signals which menas you can now safely CTRL+C or kill the parser while it's exporting
 
 ## Server
 

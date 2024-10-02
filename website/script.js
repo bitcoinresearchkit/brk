@@ -5896,6 +5896,40 @@ signalsPromise.then((signals) => {
                     },
                   ],
                 },
+                {
+                  name: "Blockchain",
+                  values: [
+                    {
+                      name: "Height",
+                      path: "last-height",
+                    },
+                    {
+                      name: "Cumulative size",
+                      path: "cumulative-block-size",
+                    },
+                  ],
+                },
+                {
+                  name: "Blocks Mined",
+                  values: [
+                    {
+                      name: "Since UTC",
+                      path: "blocks-mined",
+                    },
+                    {
+                      name: "Weekly Avg.",
+                      path: "blocks-mined-1w-sma",
+                    },
+                    {
+                      name: "Monthly Avg.",
+                      path: "blocks-mined-1m-sma",
+                    },
+                    {
+                      name: "Target",
+                      path: "blocks-mined-1d-target",
+                    },
+                  ],
+                },
               ],
             },
           ],

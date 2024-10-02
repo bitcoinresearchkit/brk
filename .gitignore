@@ -14,6 +14,7 @@ in
 out
 .log
 /datasets
+/datasets2
 /price
 
 # Sync

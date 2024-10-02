@@ -1,3 +1,5 @@
+#!/usr/bin/env bash
+
 echo "Increasing limit of opened files..."
 ulimit -n 1000000
 

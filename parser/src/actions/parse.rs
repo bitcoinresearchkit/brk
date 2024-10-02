@@ -811,6 +811,7 @@ fn pre_process_outputs(
             // Op Return
             // https://mempool.space/tx/139c004f477101c468767983536caaeef568613fab9c2ed9237521f5ff530afd
             // Provably unspendable https://mempool.space/tx/8a68c461a2473653fe0add786f0ca6ebb99b257286166dfb00707be24716af3a#flow=&vout=0
+            #[allow(deprecated)]
             if script.is_op_return() {
                 // TODO: Count fee paid to write said OP_RETURN, beware of coinbase transactions
                 // For coinbase transactions, count miners
@@ -818,9 +819,8 @@ fn pre_process_outputs(
                 provably_unspendable += amount;
 
                 // return None;
-            }
-            // https://mempool.space/tx/8a68c461a2473653fe0add786f0ca6ebb99b257286166dfb00707be24716af3a#flow=&vout=0
-            else if script.is_provably_unspendable() {
+                // https://mempool.space/tx/8a68c461a2473653fe0add786f0ca6ebb99b257286166dfb00707be24716af3a#flow=&vout=0
+            } else if script.is_provably_unspendable() {
                 provably_unspendable += amount;
                 // return None;
             }

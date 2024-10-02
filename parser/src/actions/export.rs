@@ -1,4 +1,4 @@
-use std::thread;
+use std::thread::{self};
 
 use crate::{
     databases::Databases,
@@ -6,6 +6,7 @@ use crate::{
     states::States,
     structs::{Date, Height},
     utils::{log, time},
+    Exit,
 };
 
 pub struct ExportedData<'a> {
@@ -14,6 +15,7 @@ pub struct ExportedData<'a> {
     pub date: Date,
     pub height: Height,
     pub states: Option<&'a States>,
+    pub exit: Exit,
 }
 
 pub fn export(
@@ -23,10 +25,17 @@ pub fn export(
         states,
         height,
         date,
+        exit,
     }: ExportedData,
 ) -> color_eyre::Result<()> {
+    if exit.active() {
+        log("Exit in progress, skipping export");
+        return Ok(());
+    }
+
+    exit.block();
+
     log("Exporting...");
-    log("WARNING: NOT SAFE TO STOP !!!");
 
     time("Total save time", || -> color_eyre::Result<()> {
         time("Datasets saved", || datasets.export())?;
@@ -44,7 +53,7 @@ pub fn export(
         Ok(())
     })?;
 
-    log("Export done - Safe to stop now");
+    exit.unblock();
 
     Ok(())
 }

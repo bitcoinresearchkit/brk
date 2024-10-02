@@ -29,6 +29,14 @@ pub struct Config {
     /// Delay between runs, default: 0, saved
     #[arg(long, value_name = "SECONDS")]
     pub delay: Option<u64>,
+
+    /// Start a dry run, default: false, not saved
+    #[arg(long, default_value_t = false)]
+    pub dry_run: bool,
+
+    /// Record ram usage, default: false, not saved
+    #[arg(long, default_value_t = false)]
+    pub record_ram_usage: bool,
 }
 
 impl Config {

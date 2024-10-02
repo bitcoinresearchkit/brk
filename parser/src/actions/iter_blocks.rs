@@ -15,18 +15,15 @@ use crate::{
     states::{AddressCohortsDurableStates, States, UTXOCohortsDurableStates},
     structs::{Date, DateData, MapKey},
     utils::{generate_allocation_files, log, time},
-    Config, Height,
+    Config, Exit, Height,
 };
 
 pub fn iter_blocks(
     config: &Config,
     rpc: &biter::bitcoincore_rpc::Client,
     approx_block_count: usize,
+    exit: Exit,
 ) -> color_eyre::Result<()> {
-    let should_insert = true;
-    let should_export = true;
-    let study_ram_usage = false;
-
     log("Starting...");
 
     let mut datasets = AllDatasets::import()?;
@@ -132,7 +129,7 @@ pub fn iter_blocks(
 
                     processed_heights.insert(current_block_height);
 
-                    if should_insert && first_unsafe_heights.inserted <= current_block_height {
+                    if first_unsafe_heights.inserted <= current_block_height {
                         let compute_addresses = databases.check_if_needs_to_compute_addresses(
                             current_block_height,
                             blocks_loop_date,
@@ -216,7 +213,7 @@ pub fn iter_blocks(
             });
         }
 
-        if should_export {
+        if !config.dry_run {
             let is_safe = height.is_safe(approx_block_count);
 
             export(ExportedData {
@@ -225,9 +222,10 @@ pub fn iter_blocks(
                 date: blocks_loop_date.unwrap(),
                 height: last_height,
                 states: is_safe.then_some(&states),
+                exit: exit.clone(),
             })?;
 
-            if study_ram_usage {
+            if config.record_ram_usage {
                 time("Exporing allocation files", || {
                     generate_allocation_files(&datasets, &databases, &states, last_height)
                 })?;

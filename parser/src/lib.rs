@@ -12,8 +12,8 @@ pub use crate::{
     datasets::OHLC,
     io::{Binary, Json, Serialization, COMPRESSED_BIN_EXTENSION, JSON_EXTENSION},
     structs::{
-        Config, Date, DateMap, Height, HeightMap, MapChunkId, SerializedBTreeMap, SerializedVec,
-        HEIGHT_MAP_CHUNK_SIZE,
+        Config, Date, DateMap, Exit, Height, HeightMap, MapChunkId, SerializedBTreeMap,
+        SerializedVec, HEIGHT_MAP_CHUNK_SIZE,
     },
     utils::{create_rpc, log, reset_logs},
 };
