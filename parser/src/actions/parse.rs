@@ -126,7 +126,7 @@ pub fn parse(
         (mut txid_to_tx_data, mut txout_index_to_amount_and_address_index),
     ) = thread::scope(|scope| {
         let output_handle = scope.spawn(|| {
-            let mut txouts_parsing_results = pre_process_outputs(
+            let mut txouts_parsing_results = prepare_outputs(
                 &block,
                 compute_addresses,
                 &mut states.address_counters.multisig_addresses,
@@ -144,7 +144,7 @@ pub fn parse(
         });
 
         let input_handle = scope.spawn(|| {
-            pre_process_inputs(
+            prepare_inputs(
                 &block,
                 &mut databases.txid_to_tx_data,
                 &mut databases.txout_index_to_amount,
@@ -780,7 +780,7 @@ pub struct TxoutsParsingResults {
 }
 
 #[allow(clippy::too_many_arguments)]
-fn pre_process_outputs(
+fn prepare_outputs(
     block: &Block,
     compute_addresses: bool,
     multisig_addresses: &mut Counter,
@@ -866,7 +866,7 @@ fn pre_process_outputs(
 }
 
 #[allow(clippy::type_complexity)]
-fn pre_process_inputs<'a>(
+fn prepare_inputs<'a>(
     block: &'a Block,
     txid_to_tx_data_db: &mut TxidToTxData,
     txout_index_to_amount_db: &mut TxoutIndexToAmount,

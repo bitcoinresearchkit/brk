@@ -24,7 +24,6 @@ impl AllAddressesMetadataDataset {
         let mut s = Self {
             min_initial_states: MinInitialStates::default(),
 
-            // TODO: Shouldn't be (like many others)
             created_addreses: BiMap::new_bin(1, &f("created_addresses")),
             empty_addresses: BiMap::new_bin(1, &f("empty_addresses")),
             new_addresses: BiMap::new_bin(1, &f("new_addresses")),

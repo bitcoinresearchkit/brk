@@ -9,6 +9,7 @@ use color_eyre::eyre::Error;
 pub use ohlc::*;
 
 use crate::{
+    log,
     price::{Binance, Kibo, Kraken},
     structs::{
         AnyBiMap, AnyDateMap, BiMap, Date, DateMap, DateMapChunkId, Height, HeightMapChunkId,

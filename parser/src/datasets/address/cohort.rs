@@ -5,7 +5,7 @@ use crate::{
     datasets::{
         AnyDataset, AnyDatasetGroup, ComputeData, InsertData, MinInitialStates, SubDataset,
     },
-    states::{AddressCohortDurableStates, AddressCohortId},
+    states::{AddressCohortId, DurableStates},
     structs::{AddressSplit, AnyBiMap, AnyDateMap, AnyHeightMap, BiMap, Date, Height},
 };
 
@@ -19,10 +19,7 @@ pub struct CohortDataset {
 
     metadata: MetadataDataset,
 
-    pub all: SubDataset,
-    illiquid: SubDataset,
-    liquid: SubDataset,
-    highly_liquid: SubDataset,
+    pub subs: SubDataset,
 }
 
 impl CohortDataset {
@@ -30,24 +27,11 @@ impl CohortDataset {
         let name = id.as_name().map(|s| s.to_owned());
         let split = id.as_split();
 
-        let f = |s: &str| {
-            if let Some(name) = &name {
-                Some(format!("{s}/{name}"))
-            } else {
-                Some(s.to_owned())
-            }
-        };
-
         let mut s = Self {
             min_initial_states: MinInitialStates::default(),
-
             split,
-
             metadata: MetadataDataset::import(parent_path, &name)?,
-            all: SubDataset::import(parent_path, &name)?,
-            illiquid: SubDataset::import(parent_path, &f("illiquid"))?,
-            liquid: SubDataset::import(parent_path, &f("liquid"))?,
-            highly_liquid: SubDataset::import(parent_path, &f("highly_liquid"))?,
+            subs: SubDataset::import(parent_path, &name)?,
         };
 
         s.min_initial_states
@@ -57,7 +41,7 @@ impl CohortDataset {
     }
 
     pub fn sub_datasets_vec(&self) -> Vec<&SubDataset> {
-        vec![&self.all, &self.illiquid, &self.liquid, &self.highly_liquid]
+        vec![&self.subs]
     }
 
     pub fn needs_insert_metadata(&self, height: Height, date: Date) -> bool {
@@ -113,28 +97,14 @@ impl CohortDataset {
     // }
 
     pub fn insert_realized_data(&mut self, insert_data: &InsertData) {
-        let split_realized_state = insert_data
+        let realized_state = insert_data
             .address_cohorts_realized_states
             .as_ref()
             .unwrap()
             .get(&self.split)
             .unwrap();
 
-        self.all
-            .realized
-            .insert(insert_data, &split_realized_state.all);
-
-        self.illiquid
-            .realized
-            .insert(insert_data, &split_realized_state.illiquid);
-
-        self.liquid
-            .realized
-            .insert(insert_data, &split_realized_state.liquid);
-
-        self.highly_liquid
-            .realized
-            .insert(insert_data, &split_realized_state.highly_liquid);
+        self.subs.realized.insert(insert_data, realized_state);
     }
 
     fn insert_metadata(&mut self, insert_data: &InsertData) {
@@ -150,109 +120,26 @@ impl CohortDataset {
         self.metadata.insert(insert_data, address_count);
     }
 
-    fn insert_supply_data(
-        &mut self,
-        insert_data: &InsertData,
-        liquidity_split_state: &AddressCohortDurableStates,
-    ) {
-        self.all.supply.insert(
-            insert_data,
-            &liquidity_split_state.split_durable_states.all.supply_state,
-        );
-
-        self.illiquid.supply.insert(
-            insert_data,
-            &liquidity_split_state
-                .split_durable_states
-                .illiquid
-                .supply_state,
-        );
-
-        self.liquid.supply.insert(
-            insert_data,
-            &liquidity_split_state
-                .split_durable_states
-                .liquid
-                .supply_state,
-        );
-
-        self.highly_liquid.supply.insert(
-            insert_data,
-            &liquidity_split_state
-                .split_durable_states
-                .highly_liquid
-                .supply_state,
-        );
+    fn insert_supply_data(&mut self, insert_data: &InsertData, durable_states: &DurableStates) {
+        self.subs
+            .supply
+            .insert(insert_data, &durable_states.supply_state);
     }
 
-    fn insert_utxo_data(
-        &mut self,
-        insert_data: &InsertData,
-        liquidity_split_state: &AddressCohortDurableStates,
-    ) {
-        self.all.utxo.insert(
-            insert_data,
-            &liquidity_split_state.split_durable_states.all.utxo_state,
-        );
-
-        self.illiquid.utxo.insert(
-            insert_data,
-            &liquidity_split_state
-                .split_durable_states
-                .illiquid
-                .utxo_state,
-        );
-
-        self.liquid.utxo.insert(
-            insert_data,
-            &liquidity_split_state.split_durable_states.liquid.utxo_state,
-        );
-
-        self.highly_liquid.utxo.insert(
-            insert_data,
-            &liquidity_split_state
-                .split_durable_states
-                .highly_liquid
-                .utxo_state,
-        );
+    fn insert_utxo_data(&mut self, insert_data: &InsertData, durable_states: &DurableStates) {
+        self.subs
+            .utxo
+            .insert(insert_data, &durable_states.utxo_state);
     }
 
     fn insert_capitalization_data(
         &mut self,
         insert_data: &InsertData,
-        liquidity_split_state: &AddressCohortDurableStates,
+        durable_states: &DurableStates,
     ) {
-        self.all.capitalization.insert(
-            insert_data,
-            &liquidity_split_state
-                .split_durable_states
-                .all
-                .capitalization_state,
-        );
-
-        self.illiquid.capitalization.insert(
-            insert_data,
-            &liquidity_split_state
-                .split_durable_states
-                .illiquid
-                .capitalization_state,
-        );
-
-        self.liquid.capitalization.insert(
-            insert_data,
-            &liquidity_split_state
-                .split_durable_states
-                .liquid
-                .capitalization_state,
-        );
-
-        self.highly_liquid.capitalization.insert(
-            insert_data,
-            &liquidity_split_state
-                .split_durable_states
-                .highly_liquid
-                .capitalization_state,
-        );
+        self.subs
+            .capitalization
+            .insert(insert_data, &durable_states.capitalization_state);
     }
 
     fn insert_unrealized_data(&mut self, insert_data: &InsertData) {
@@ -263,28 +150,10 @@ impl CohortDataset {
             .get(&self.split)
             .unwrap();
 
-        self.all.unrealized.insert(
+        self.subs.unrealized.insert(
             insert_data,
-            &states.all.unrealized_block_state,
-            &states.all.unrealized_date_state,
-        );
-
-        self.illiquid.unrealized.insert(
-            insert_data,
-            &states.illiquid.unrealized_block_state,
-            &states.illiquid.unrealized_date_state,
-        );
-
-        self.liquid.unrealized.insert(
-            insert_data,
-            &states.liquid.unrealized_block_state,
-            &states.liquid.unrealized_date_state,
-        );
-
-        self.highly_liquid.unrealized.insert(
-            insert_data,
-            &states.highly_liquid.unrealized_block_state,
-            &states.highly_liquid.unrealized_date_state,
+            &states.unrealized_block_state,
+            &states.unrealized_date_state,
         );
     }
 
@@ -296,21 +165,9 @@ impl CohortDataset {
             .get(&self.split)
             .unwrap();
 
-        self.all
+        self.subs
             .price_paid
-            .insert(insert_data, &states.all.price_paid_state);
-
-        self.illiquid
-            .price_paid
-            .insert(insert_data, &states.illiquid.price_paid_state);
-
-        self.liquid
-            .price_paid
-            .insert(insert_data, &states.liquid.price_paid_state);
-
-        self.highly_liquid
-            .price_paid
-            .insert(insert_data, &states.highly_liquid.price_paid_state);
+            .insert(insert_data, &states.price_paid_state);
     }
 
     fn insert_input_data(&mut self, insert_data: &InsertData) {
@@ -321,12 +178,7 @@ impl CohortDataset {
             .get(&self.split)
             .unwrap();
 
-        self.all.input.insert(insert_data, &state.all);
-        self.illiquid.input.insert(insert_data, &state.illiquid);
-        self.liquid.input.insert(insert_data, &state.liquid);
-        self.highly_liquid
-            .input
-            .insert(insert_data, &state.highly_liquid);
+        self.subs.input.insert(insert_data, state);
     }
 
     // fn insert_output_data(&mut self, insert_data: &InsertData) {
@@ -337,7 +189,7 @@ impl CohortDataset {
     //         .get(&self.split)
     //         .unwrap();
 
-    //     self.all.output.insert(insert_data, &state.all);
+    //     self.output.insert(insert_data, &state.all);
     //     self.illiquid.output.insert(insert_data, &state.illiquid);
     //     self.liquid.output.insert(insert_data, &state.liquid);
     //     self.highly_liquid
@@ -346,29 +198,17 @@ impl CohortDataset {
     // }
 
     fn as_vec(&self) -> Vec<&(dyn AnyDataset + Send + Sync)> {
-        vec![
-            self.all.as_vec(),
-            self.illiquid.as_vec(),
-            self.liquid.as_vec(),
-            self.highly_liquid.as_vec(),
-            vec![&self.metadata],
-        ]
-        .into_iter()
-        .flatten()
-        .collect_vec()
+        vec![self.subs.as_vec(), vec![&self.metadata]]
+            .into_iter()
+            .flatten()
+            .collect_vec()
     }
 
     fn as_mut_vec(&mut self) -> Vec<&mut dyn AnyDataset> {
-        vec![
-            self.all.as_mut_vec(),
-            self.illiquid.as_mut_vec(),
-            self.liquid.as_mut_vec(),
-            self.highly_liquid.as_mut_vec(),
-            vec![&mut self.metadata],
-        ]
-        .into_iter()
-        .flatten()
-        .collect_vec()
+        vec![self.subs.as_mut_vec(), vec![&mut self.metadata]]
+            .into_iter()
+            .flatten()
+            .collect_vec()
     }
 
     pub fn insert(&mut self, insert_data: &InsertData) {
@@ -376,34 +216,36 @@ impl CohortDataset {
             return;
         }
 
-        let liquidity_split_processed_address_state = insert_data
+        let address_cohort_durable_states = insert_data
             .states
             .address_cohorts_durable_states
             .as_ref()
             .unwrap()
             .get(&self.split);
 
-        if liquidity_split_processed_address_state.is_none() {
+        if address_cohort_durable_states.is_none() {
             return; // TODO: Check if should panic instead
         }
 
-        let liquidity_split_processed_address_state =
-            liquidity_split_processed_address_state.unwrap();
+        let address_cohort_durable_states = address_cohort_durable_states.unwrap();
 
         if self.needs_insert_metadata(insert_data.height, insert_data.date) {
             self.insert_metadata(insert_data);
         }
 
         if self.needs_insert_utxo(insert_data.height, insert_data.date) {
-            self.insert_utxo_data(insert_data, liquidity_split_processed_address_state);
+            self.insert_utxo_data(insert_data, &address_cohort_durable_states.durable_states);
         }
 
         if self.needs_insert_capitalization(insert_data.height, insert_data.date) {
-            self.insert_capitalization_data(insert_data, liquidity_split_processed_address_state);
+            self.insert_capitalization_data(
+                insert_data,
+                &address_cohort_durable_states.durable_states,
+            );
         }
 
         if self.needs_insert_supply(insert_data.height, insert_data.date) {
-            self.insert_supply_data(insert_data, liquidity_split_processed_address_state);
+            self.insert_supply_data(insert_data, &address_cohort_durable_states.durable_states);
         }
 
         if self.needs_insert_realized(insert_data.height, insert_data.date) {
@@ -478,17 +320,7 @@ impl CohortDataset {
         compute_data: &ComputeData,
         circulating_supply: &mut BiMap<f64>,
     ) {
-        self.all.supply.compute(compute_data, circulating_supply);
-
-        self.illiquid
-            .supply
-            .compute(compute_data, circulating_supply);
-
-        self.liquid.supply.compute(compute_data, circulating_supply);
-
-        self.highly_liquid
-            .supply
-            .compute(compute_data, circulating_supply);
+        self.subs.supply.compute(compute_data, circulating_supply);
     }
 
     fn compute_unrealized_data(
@@ -497,85 +329,28 @@ impl CohortDataset {
         circulating_supply: &mut BiMap<f64>,
         market_cap: &mut BiMap<f32>,
     ) {
-        self.all.unrealized.compute(
+        self.subs.unrealized.compute(
             compute_data,
-            &mut self.all.supply.supply,
-            circulating_supply,
-            market_cap,
-        );
-
-        self.illiquid.unrealized.compute(
-            compute_data,
-            &mut self.illiquid.supply.supply,
-            circulating_supply,
-            market_cap,
-        );
-
-        self.liquid.unrealized.compute(
-            compute_data,
-            &mut self.liquid.supply.supply,
-            circulating_supply,
-            market_cap,
-        );
-
-        self.highly_liquid.unrealized.compute(
-            compute_data,
-            &mut self.highly_liquid.supply.supply,
+            &mut self.subs.supply.supply,
             circulating_supply,
             market_cap,
         );
     }
 
     fn compute_realized_data(&mut self, compute_data: &ComputeData, market_cap: &mut BiMap<f32>) {
-        self.all.realized.compute(compute_data, market_cap);
-
-        self.illiquid.realized.compute(compute_data, market_cap);
-
-        self.liquid.realized.compute(compute_data, market_cap);
-
-        self.highly_liquid
-            .realized
-            .compute(compute_data, market_cap);
+        self.subs.realized.compute(compute_data, market_cap);
     }
 
     fn compute_capitalization_data(&mut self, compute_data: &ComputeData, closes: &mut BiMap<f32>) {
-        self.all
+        self.subs
             .capitalization
-            .compute(compute_data, closes, &mut self.all.supply.supply);
-
-        self.illiquid.capitalization.compute(
-            compute_data,
-            closes,
-            &mut self.illiquid.supply.supply,
-        );
-
-        self.liquid
-            .capitalization
-            .compute(compute_data, closes, &mut self.liquid.supply.supply);
-
-        self.highly_liquid.capitalization.compute(
-            compute_data,
-            closes,
-            &mut self.highly_liquid.supply.supply,
-        );
+            .compute(compute_data, closes, &mut self.subs.supply.supply);
     }
 
     // fn compute_output_data(&mut self, compute_data: &ComputeData) {
     //     self.all
     //         .output
-    //         .compute(compute_data, &mut self.all.supply.total);
-
-    //     self.illiquid
-    //         .output
-    //         .compute(compute_data, &mut self.illiquid.supply.total);
-
-    //     self.liquid
-    //         .output
-    //         .compute(compute_data, &mut self.liquid.supply.total);
-
-    //     self.highly_liquid
-    //         .output
-    //         .compute(compute_data, &mut self.highly_liquid.supply.total);
+    //         .compute(compute_data, &mut self.supply.total);
     // }
 
     pub fn compute(

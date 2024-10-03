@@ -8,7 +8,7 @@ fn main() -> color_eyre::Result<()> {
 
     reset_logs();
 
-    let config = Config::import();
+    let config = Config::import()?;
 
     let rpc = create_rpc(&config).unwrap();
 

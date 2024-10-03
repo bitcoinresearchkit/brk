@@ -10,7 +10,7 @@ pub struct MetadataDataset {
     min_initial_states: MinInitialStates,
 
     // Inserted
-    address_count: BiMap<usize>,
+    address_count: BiMap<f64>,
     // pub output: OutputSubDataset,
     // Sending addresses
     // Receiving addresses
@@ -48,7 +48,7 @@ impl MetadataDataset {
             is_date_last_block,
             ..
         }: &InsertData,
-        address_count: usize,
+        address_count: f64,
     ) {
         self.address_count.height.insert(height, address_count);
 

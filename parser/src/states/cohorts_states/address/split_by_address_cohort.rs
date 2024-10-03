@@ -1,12 +1,18 @@
+use std::ops::AddAssign;
+
 use allocative::Allocative;
 
-use crate::structs::{AddressData, AddressSize, AddressSplit, AddressType};
+use crate::structs::{AddressData, AddressLiquidity, AddressSize, AddressSplit, AddressType};
 
 use super::AddressCohortId;
 
 #[derive(Default, Allocative)]
 pub struct SplitByAddressCohort<T> {
     pub all: T,
+
+    pub illiquid: T,
+    pub liquid: T,
+    pub highly_liquid: T,
 
     pub plankton: T,
     pub shrimp: T,
@@ -29,6 +35,12 @@ impl<T> SplitByAddressCohort<T> {
     pub fn get(&self, split: &AddressSplit) -> Option<&T> {
         match &split {
             AddressSplit::All => Some(&self.all),
+
+            AddressSplit::Liquidity(address_liquidity) => match address_liquidity {
+                AddressLiquidity::Illiquid => Some(&self.illiquid),
+                AddressLiquidity::Liquid => Some(&self.liquid),
+                AddressLiquidity::HighlyLiquid => Some(&self.highly_liquid),
+            },
 
             AddressSplit::Type(address_type) => match address_type {
                 AddressType::P2PK => Some(&self.p2pk),
@@ -61,21 +73,32 @@ impl<T> SplitByAddressCohort<T> {
     pub fn iterate(
         &mut self,
         address_data: &AddressData,
-        iterate: impl Fn(&mut T) -> color_eyre::Result<()>,
+        normal_iteration: impl Fn(&mut T) -> color_eyre::Result<()>,
+        liquified_iteration: impl Fn(AddressLiquidity, &mut T) -> color_eyre::Result<()>,
     ) -> color_eyre::Result<()> {
-        if let Some(state) = self.get_mut_from_split(&AddressSplit::All) {
-            iterate(state)?;
-        }
+        normal_iteration(self.get_mut_from_split(&AddressSplit::All).unwrap())?;
+
+        let mut _liquified_iteration = |address_liquidity| {
+            liquified_iteration(
+                address_liquidity,
+                self.get_mut_from_split(&AddressSplit::Liquidity(address_liquidity))
+                    .unwrap(),
+            )
+        };
+
+        _liquified_iteration(AddressLiquidity::Illiquid)?;
+        _liquified_iteration(AddressLiquidity::Liquid)?;
+        _liquified_iteration(AddressLiquidity::HighlyLiquid)?;
 
         if let Some(state) = self.get_mut_from_split(&AddressSplit::Type(address_data.address_type))
         {
-            iterate(state)?;
+            normal_iteration(state)?;
         }
 
         if let Some(state) = self.get_mut_from_split(&AddressSplit::Size(AddressSize::from_amount(
             address_data.amount,
         ))) {
-            iterate(state)?;
+            normal_iteration(state)?;
         }
 
         Ok(())
@@ -84,6 +107,12 @@ impl<T> SplitByAddressCohort<T> {
     fn get_mut_from_split(&mut self, split: &AddressSplit) -> Option<&mut T> {
         match &split {
             AddressSplit::All => Some(&mut self.all),
+
+            AddressSplit::Liquidity(address_liquidity) => match address_liquidity {
+                AddressLiquidity::Illiquid => Some(&mut self.illiquid),
+                AddressLiquidity::Liquid => Some(&mut self.liquid),
+                AddressLiquidity::HighlyLiquid => Some(&mut self.highly_liquid),
+            },
 
             AddressSplit::Type(address_type) => match address_type {
                 AddressType::P2PK => Some(&mut self.p2pk),
@@ -117,6 +146,10 @@ impl<T> SplitByAddressCohort<T> {
         match id {
             AddressCohortId::All => &mut self.all,
 
+            AddressCohortId::Illiquid => &mut self.illiquid,
+            AddressCohortId::Liquid => &mut self.liquid,
+            AddressCohortId::HighlyLiquid => &mut self.highly_liquid,
+
             AddressCohortId::Plankton => &mut self.plankton,
             AddressCohortId::Shrimp => &mut self.shrimp,
             AddressCohortId::Crab => &mut self.crab,
@@ -138,6 +171,9 @@ impl<T> SplitByAddressCohort<T> {
     pub fn as_vec(&self) -> Vec<(&T, AddressCohortId)> {
         vec![
             (&self.all, AddressCohortId::All),
+            (&self.illiquid, AddressCohortId::Illiquid),
+            (&self.liquid, AddressCohortId::Liquid),
+            (&self.highly_liquid, AddressCohortId::HighlyLiquid),
             (&self.plankton, AddressCohortId::Plankton),
             (&self.shrimp, AddressCohortId::Shrimp),
             (&self.crab, AddressCohortId::Crab),
@@ -158,6 +194,9 @@ impl<T> SplitByAddressCohort<T> {
     pub fn as_mut_vec(&mut self) -> Vec<(&mut T, AddressCohortId)> {
         vec![
             (&mut self.all, AddressCohortId::All),
+            (&mut self.illiquid, AddressCohortId::Illiquid),
+            (&mut self.liquid, AddressCohortId::Liquid),
+            (&mut self.highly_liquid, AddressCohortId::HighlyLiquid),
             (&mut self.plankton, AddressCohortId::Plankton),
             (&mut self.shrimp, AddressCohortId::Shrimp),
             (&mut self.crab, AddressCohortId::Crab),
@@ -173,5 +212,34 @@ impl<T> SplitByAddressCohort<T> {
             (&mut self.p2wsh, AddressCohortId::P2WSH),
             (&mut self.p2tr, AddressCohortId::P2TR),
         ]
+    }
+}
+
+impl<T> AddAssign for SplitByAddressCohort<T>
+where
+    T: AddAssign,
+{
+    fn add_assign(&mut self, rhs: Self) {
+        self.all += rhs.all;
+
+        self.illiquid += rhs.illiquid;
+        self.liquid += rhs.liquid;
+        self.highly_liquid += rhs.highly_liquid;
+
+        self.plankton += rhs.plankton;
+        self.shrimp += rhs.shrimp;
+        self.crab += rhs.crab;
+        self.fish += rhs.fish;
+        self.shark += rhs.shark;
+        self.whale += rhs.whale;
+        self.humpback += rhs.humpback;
+        self.megalodon += rhs.megalodon;
+
+        self.p2pk += rhs.p2pk;
+        self.p2pkh += rhs.p2pkh;
+        self.p2sh += rhs.p2sh;
+        self.p2wpkh += rhs.p2wpkh;
+        self.p2wsh += rhs.p2wsh;
+        self.p2tr += rhs.p2tr;
     }
 }

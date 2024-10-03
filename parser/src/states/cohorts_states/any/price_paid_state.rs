@@ -26,9 +26,9 @@ pub struct PricePaidState {
 }
 
 impl PricePaidState {
-    pub fn iterate(&mut self, price: Price, amount: Amount, total_supply: Amount) {
+    pub fn iterate(&mut self, price: Price, amount: Amount, supply: Amount) {
         let PricePaidState {
-            processed_amount,
+            processed_amount: processed_supply,
             pp_05p,
             pp_10p,
             pp_15p,
@@ -50,14 +50,14 @@ impl PricePaidState {
             pp_95p,
         } = self;
 
-        *processed_amount += amount;
+        *processed_supply += amount;
 
         if pp_95p.is_some() {
             return;
         }
 
-        let processed_sat_amount = processed_amount.to_sat();
-        let total_sat_supply = total_supply.to_sat();
+        let processed_sat_amount = processed_supply.to_sat();
+        let total_sat_supply = supply.to_sat();
 
         if processed_sat_amount >= total_sat_supply * 95 / 100 {
             pp_95p.replace(price);

@@ -25,7 +25,7 @@ impl UTXOCohortsDurableStates {
 
                 date_data.blocks.iter().for_each(|block_data| {
                     let amount = block_data.amount;
-                    let utxo_count = block_data.utxos as usize;
+                    let utxo_count = block_data.utxos as f64;
 
                     // No need to either insert or remove if 0
                     if amount == Amount::ZERO {
@@ -56,7 +56,7 @@ impl UTXOCohortsDurableStates {
         previous_last_block_data: Option<&BlockData>,
     ) {
         let amount = block_data.amount;
-        let utxo_count = block_data.utxos as usize;
+        let utxo_count = block_data.utxos as f64;
         let price = block_data.price;
 
         // No need to either insert or remove if 0
@@ -110,7 +110,7 @@ impl UTXOCohortsDurableStates {
         previous_last_block_data: &BlockData,
     ) {
         let amount = sent_data.volume;
-        let utxo_count = sent_data.count as usize;
+        let utxo_count = sent_data.count as f64;
 
         // No need to either insert or remove if 0
         if amount == Amount::ZERO {

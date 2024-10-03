@@ -1,6 +1,6 @@
 use allocative::Allocative;
 
-use super::{AddressSize, AddressType};
+use super::{AddressLiquidity, AddressSize, AddressType};
 
 #[derive(Default, Allocative)]
 pub enum AddressSplit {
@@ -8,4 +8,5 @@ pub enum AddressSplit {
     All,
     Type(AddressType),
     Size(AddressSize),
+    Liquidity(AddressLiquidity),
 }

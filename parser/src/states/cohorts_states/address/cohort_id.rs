@@ -1,8 +1,12 @@
-use crate::structs::{AddressSize, AddressSplit, AddressType};
+use crate::structs::{AddressLiquidity, AddressSize, AddressSplit, AddressType};
 
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy)]
 pub enum AddressCohortId {
     All,
+
+    Illiquid,
+    Liquid,
+    HighlyLiquid,
 
     Plankton,
     Shrimp,
@@ -26,6 +30,10 @@ impl AddressCohortId {
         match self {
             Self::All => None,
 
+            Self::Illiquid => Some("illiquid"),
+            Self::Liquid => Some("liquid"),
+            Self::HighlyLiquid => Some("highly_liquid"),
+
             Self::Plankton => Some("plankton"),
             Self::Shrimp => Some("shrimp"),
             Self::Crab => Some("crab"),
@@ -47,6 +55,10 @@ impl AddressCohortId {
     pub fn as_split(&self) -> AddressSplit {
         match self {
             Self::All => AddressSplit::All,
+
+            Self::Illiquid => AddressSplit::Liquidity(AddressLiquidity::Illiquid),
+            Self::Liquid => AddressSplit::Liquidity(AddressLiquidity::Liquid),
+            Self::HighlyLiquid => AddressSplit::Liquidity(AddressLiquidity::HighlyLiquid),
 
             Self::Plankton => AddressSplit::Size(AddressSize::Plankton),
             Self::Shrimp => AddressSplit::Size(AddressSize::Shrimp),

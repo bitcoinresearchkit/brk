@@ -1,11 +1,6 @@
-use std::{
-    f64::consts::E,
-    ops::{AddAssign, SubAssign},
-};
+use std::f64::consts::E;
 
-use allocative::Allocative;
-
-use super::Amount;
+use super::{AddressLiquidity, Amount};
 
 #[derive(Debug)]
 pub struct LiquidityClassification {
@@ -97,37 +92,12 @@ pub struct LiquiditySplitResult {
     pub highly_liquid: f64,
 }
 
-#[derive(Debug, Default, PartialEq, PartialOrd, Clone, Copy, Allocative)]
-pub struct SplitByLiquidity<T>
-where
-    T: Default,
-{
-    pub all: T,
-    pub illiquid: T,
-    pub liquid: T,
-    pub highly_liquid: T,
-}
-
-impl<T> AddAssign for SplitByLiquidity<T>
-where
-    T: AddAssign + Default,
-{
-    fn add_assign(&mut self, rhs: Self) {
-        self.all += rhs.all;
-        self.illiquid += rhs.illiquid;
-        self.liquid += rhs.liquid;
-        self.highly_liquid += rhs.highly_liquid;
-    }
-}
-
-impl<T> SubAssign for SplitByLiquidity<T>
-where
-    T: SubAssign + Default,
-{
-    fn sub_assign(&mut self, rhs: Self) {
-        self.all -= rhs.all;
-        self.illiquid -= rhs.illiquid;
-        self.liquid -= rhs.liquid;
-        self.highly_liquid -= rhs.highly_liquid;
+impl LiquiditySplitResult {
+    pub fn from(&self, address_liquidity: AddressLiquidity) -> f64 {
+        match address_liquidity {
+            AddressLiquidity::Illiquid => self.illiquid,
+            AddressLiquidity::Liquid => self.liquid,
+            AddressLiquidity::HighlyLiquid => self.highly_liquid,
+        }
     }
 }

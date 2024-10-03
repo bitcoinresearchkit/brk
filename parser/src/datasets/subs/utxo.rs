@@ -11,7 +11,7 @@ pub struct UTXOSubDataset {
     min_initial_states: MinInitialStates,
 
     // Inserted
-    count: BiMap<usize>,
+    count: BiMap<f64>,
 }
 
 impl UTXOSubDataset {

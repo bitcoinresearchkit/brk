@@ -1,3 +1,5 @@
+use std::ops::AddAssign;
+
 use allocative::Allocative;
 use color_eyre::eyre::eyre;
 
@@ -23,5 +25,11 @@ impl SupplyState {
         self.supply -= amount;
 
         Ok(())
+    }
+}
+
+impl AddAssign for SupplyState {
+    fn add_assign(&mut self, rhs: Self) {
+        self.supply += rhs.supply;
     }
 }

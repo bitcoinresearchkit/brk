@@ -1,5 +1,6 @@
+use std::ops::AddAssign;
+
 use allocative::Allocative;
-use color_eyre::eyre::eyre;
 
 use crate::structs::{Amount, Price};
 
@@ -16,19 +17,12 @@ impl DurableStates {
     pub fn increment(
         &mut self,
         amount: Amount,
-        utxo_count: usize,
+        utxo_count: f64,
         realized_cap: Price,
     ) -> color_eyre::Result<()> {
-        if amount == Amount::ZERO {
-            if utxo_count != 0 {
-                dbg!(amount, utxo_count);
-                return Err(eyre!("Shouldn't be possible"));
-            }
-        } else {
-            self.capitalization_state.increment(realized_cap);
-            self.supply_state.increment(amount);
-            self.utxo_state.increment(utxo_count);
-        }
+        self.utxo_state.increment(utxo_count);
+        self.capitalization_state.increment(realized_cap);
+        self.supply_state.increment(amount);
 
         Ok(())
     }
@@ -36,20 +30,21 @@ impl DurableStates {
     pub fn decrement(
         &mut self,
         amount: Amount,
-        utxo_count: usize,
+        utxo_count: f64,
         realized_cap: Price,
     ) -> color_eyre::Result<()> {
-        if amount == Amount::ZERO {
-            if utxo_count != 0 {
-                dbg!(amount, utxo_count);
-                unreachable!("Shouldn't be possible")
-            }
-        } else {
-            self.capitalization_state.decrement(realized_cap);
-            self.supply_state.decrement(amount)?;
-            self.utxo_state.decrement(utxo_count)?;
-        }
+        self.utxo_state.decrement(utxo_count)?;
+        self.capitalization_state.decrement(realized_cap);
+        self.supply_state.decrement(amount)?;
 
         Ok(())
+    }
+}
+
+impl AddAssign for DurableStates {
+    fn add_assign(&mut self, rhs: Self) {
+        self.capitalization_state += rhs.capitalization_state;
+        self.supply_state += rhs.supply_state;
+        self.utxo_state += rhs.utxo_state;
     }
 }

@@ -2,13 +2,13 @@ use derive_deref::{Deref, DerefMut};
 
 use crate::{
     states::InputState,
-    structs::{AddressRealizedData, Amount, LiquidityClassification, SplitByLiquidity},
+    structs::{AddressRealizedData, Amount, LiquidityClassification},
 };
 
 use super::SplitByAddressCohort;
 
 #[derive(Deref, DerefMut, Default)]
-pub struct AddressCohortsInputStates(SplitByAddressCohort<SplitByLiquidity<InputState>>);
+pub struct AddressCohortsInputStates(SplitByAddressCohort<InputState>);
 
 impl AddressCohortsInputStates {
     pub fn iterate_input(
@@ -19,30 +19,27 @@ impl AddressCohortsInputStates {
         let count = realized_data.utxos_destroyed as f64;
         let sent = realized_data.sent;
 
-        let split_count = liquidity_classification.split(count);
-        let split_volume = liquidity_classification.split(sent.to_sat() as f64);
-
-        let iterate = move |state: &mut SplitByLiquidity<InputState>| -> color_eyre::Result<()> {
-            state.all.iterate(count, sent);
-
-            state.illiquid.iterate(
-                split_count.illiquid,
-                Amount::from_sat(split_volume.illiquid.round() as u64),
-            );
-
-            state.liquid.iterate(
-                split_count.liquid,
-                Amount::from_sat(split_volume.liquid.round() as u64),
-            );
-
-            state.highly_liquid.iterate(
-                split_count.highly_liquid,
-                Amount::from_sat(split_volume.highly_liquid.round() as u64),
-            );
-
+        let normal_iteration = move |state: &mut InputState| -> color_eyre::Result<()> {
+            state.iterate(count, sent);
             Ok(())
         };
 
-        self.iterate(&realized_data.initial_address_data, iterate)
+        let split_count = liquidity_classification.split(count);
+        let split_sent = liquidity_classification.split(sent.to_sat() as f64);
+
+        let liquified_iteration =
+            move |liquidity, state: &mut InputState| -> color_eyre::Result<()> {
+                state.iterate(
+                    split_count.from(liquidity),
+                    Amount::from_sat(split_sent.from(liquidity).round() as u64),
+                );
+                Ok(())
+            };
+
+        self.iterate(
+            &realized_data.initial_address_data,
+            normal_iteration,
+            liquified_iteration,
+        )
     }
 }

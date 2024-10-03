@@ -3,6 +3,8 @@ use std::fs::{self};
 use clap::Parser;
 use serde::{Deserialize, Serialize};
 
+use crate::log;
+
 #[derive(Parser, Debug, Clone, Default, Serialize, Deserialize)]
 #[command(version, about, long_about = None)]
 pub struct Config {
@@ -40,9 +42,9 @@ pub struct Config {
 }
 
 impl Config {
-    const PATH: &'static str = "config.toml";
+    const PATH: &'static str = "./config.toml";
 
-    pub fn import() -> Self {
+    pub fn import() -> color_eyre::Result<Self> {
         let mut config_saved = fs::read_to_string(Self::PATH)
             .map_or(Config::default(), |contents| {
                 toml::from_str(&contents).unwrap_or_default()
@@ -56,14 +58,10 @@ impl Config {
 
         if let Some(rpcconnect) = config_args.rpcconnect {
             config_saved.rpcconnect = Some(rpcconnect);
-        } else {
-            config_saved.rpcconnect = Some("localhost".to_string())
         }
 
         if let Some(rpcport) = config_args.rpcport {
             config_saved.rpcport = Some(rpcport);
-        } else {
-            config_saved.rpcport = Some(8332);
         }
 
         if let Some(rpcuser) = config_args.rpcuser {
@@ -84,9 +82,21 @@ impl Config {
 
         config.check();
 
-        config.write().unwrap();
+        config.write()?;
 
-        config
+        log("---");
+        log("Configuration:");
+        log(&format!("datadir: {:?}", config.datadir));
+        log(&format!("rpcconnect: {:?}", config.rpcconnect));
+        log(&format!("rpcport: {:?}", config.rpcport));
+        log(&format!("rpcuser: {:?}", config.rpcuser));
+        log(&format!("rpcpassword: {:?}", config.rpcpassword));
+        log(&format!("delay: {:?}", config.delay));
+        log(&format!("dry_run: {}", config.dry_run));
+        log(&format!("record_ram_usage: {}", config.record_ram_usage));
+        log("---");
+
+        Ok(config)
     }
 
     fn check(&self) {

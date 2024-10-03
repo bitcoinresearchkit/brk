@@ -58,7 +58,12 @@ fn path_to_response(headers: HeaderMap, path: &Path) -> Response {
 
     let is_localhost = headers.check_if_host_is_localhost();
 
-    if !is_localhost && path.extension().unwrap() == "js" {
+    if !is_localhost
+        && path.extension().unwrap_or_else(|| {
+            dbg!(path);
+            panic!();
+        }) == "js"
+    {
         let content = minify_js(path);
 
         response = Response::new(content.into());

@@ -15,7 +15,7 @@ impl UTXOCohortDurableStates {
     pub fn increment(
         &mut self,
         amount: Amount,
-        utxo_count: usize,
+        utxo_count: f64,
         price: Price,
     ) -> color_eyre::Result<()> {
         self._crement(amount, utxo_count, price, true)
@@ -24,7 +24,7 @@ impl UTXOCohortDurableStates {
     pub fn decrement(
         &mut self,
         amount: Amount,
-        utxo_count: usize,
+        utxo_count: f64,
         price: Price,
     ) -> color_eyre::Result<()> {
         self._crement(amount, utxo_count, price, false)
@@ -33,7 +33,7 @@ impl UTXOCohortDurableStates {
     pub fn _crement(
         &mut self,
         amount: Amount,
-        utxo_count: usize,
+        utxo_count: f64,
         price: Price,
         increment: bool,
     ) -> color_eyre::Result<()> {

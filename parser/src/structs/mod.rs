@@ -1,5 +1,6 @@
 mod address;
 mod address_data;
+mod address_liquidity;
 mod address_realized_data;
 mod address_size;
 mod address_split;
@@ -33,6 +34,7 @@ mod txout_index;
 
 pub use address::*;
 pub use address_data::*;
+pub use address_liquidity::*;
 pub use address_realized_data::*;
 pub use address_size::*;
 pub use address_split::*;

@@ -45,7 +45,6 @@ impl States {
 
         self.utxo_cohorts_durable_states = None;
 
-        // TODO: Check that they are ONLY computed in an `if include_addresses`
         if include_addresses {
             let _ = self.address_counters.reset();
 

@@ -8,6 +8,7 @@ use allocative::Allocative;
 use rayon::prelude::*;
 
 use crate::{
+    states::AddressCohortsDurableStates,
     structs::{AddressData, Date, Height},
     utils::time,
 };
@@ -82,18 +83,20 @@ impl AddressIndexToAddressData {
         })
     }
 
-    pub fn iter<F>(&mut self, callback: &mut F)
-    where
-        F: FnMut((&Key, &Value)),
-    {
+    pub fn compute_addres_cohorts_durable_states(&mut self) -> AddressCohortsDurableStates {
         time("Iter through address_index_to_address_data", || {
             self.open_all();
 
-            // MUST CLEAR MAP, otherwise some weird shit in happening later in the export I think
+            // MUST CLEAR MAP, otherwise some weird things are happening later in the export I think
             mem::take(&mut self.map)
-                .values()
-                .for_each(|database| database.iter(callback));
-        });
+                .par_iter()
+                .map(|(_, database)| {
+                    let mut s = AddressCohortsDurableStates::default();
+                    database.iter(&mut |(_, a)| s.increment(a).unwrap());
+                    s
+                })
+                .sum()
+        })
     }
 
     fn open_all(&mut self) {
