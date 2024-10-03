@@ -174,7 +174,7 @@ where
             .and_then(|last_key| last_key.to_first_unsafe());
 
         if s.initial_first_unsafe_key.is_none() {
-            log(&format!("New {path}/{}", Key::map_name()));
+            log(&format!("Missing dataset: {path}/{}", Key::map_name()));
         }
 
         s

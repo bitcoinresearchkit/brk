@@ -12,6 +12,8 @@
 ## Datasets
 
 - Added `Sell Side Risk Ratio` to all entities
+- Removed datasets split by liquidity for all datasets already split by any address kind, while fun to have it took time to compute and space to store and no one was checking them
+- Fixed a lot of values in split by liquidity datasets
 
 ## Website
 
@@ -27,6 +29,7 @@
 - Added a `/datasets/last` json file with all the latest values
 - Added `--rpcconnect` parameter to the config
 - Added handling of SIGINT and SIGTERM terminal signals which menas you can now safely CTRL+C or kill the parser while it's exporting
+- Added config print at the start of the program
 
 ## Server
 
