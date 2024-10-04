@@ -86,30 +86,30 @@ impl UnrealizedSubDataset {
     ) {
         self.supply_in_profit
             .height
-            .insert(height, block_state.supply_in_profit.to_btc());
+            .insert(height, block_state.supply_in_profit().to_btc());
 
         self.unrealized_profit
             .height
-            .insert(height, block_state.unrealized_profit.to_dollar() as f32);
+            .insert(height, block_state.unrealized_profit().to_dollar() as f32);
 
         self.unrealized_loss
             .height
-            .insert(height, block_state.unrealized_loss.to_dollar() as f32);
+            .insert(height, block_state.unrealized_loss().to_dollar() as f32);
 
         if is_date_last_block {
             let date_state = date_state.as_ref().unwrap();
 
             self.supply_in_profit
                 .date
-                .insert(date, date_state.supply_in_profit.to_btc());
+                .insert(date, date_state.supply_in_profit().to_btc());
 
             self.unrealized_profit
                 .date
-                .insert(date, date_state.unrealized_profit.to_dollar() as f32);
+                .insert(date, date_state.unrealized_profit().to_dollar() as f32);
 
             self.unrealized_loss
                 .date
-                .insert(date, date_state.unrealized_loss.to_dollar() as f32);
+                .insert(date, date_state.unrealized_loss().to_dollar() as f32);
         }
     }
 

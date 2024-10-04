@@ -5,10 +5,14 @@ use color_eyre::eyre::eyre;
 
 #[derive(Debug, Default, Allocative)]
 pub struct UTXOState {
-    pub count: f64,
+    count: f64,
 }
 
 impl UTXOState {
+    pub fn count(&self) -> f64 {
+        self.count
+    }
+
     pub fn increment(&mut self, utxo_count: f64) {
         self.count += utxo_count;
     }

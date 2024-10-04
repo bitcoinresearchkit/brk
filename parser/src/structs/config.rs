@@ -33,20 +33,21 @@ pub struct Config {
     pub delay: Option<u64>,
 
     /// Start a dry run, default: false, not saved
-    #[arg(long, default_value_t = false)]
-    pub dry_run: bool,
+    #[arg(long, value_name = "BOOL")]
+    dry_run: Option<bool>,
 
     /// Record ram usage, default: false, not saved
-    #[arg(long, default_value_t = false)]
-    pub record_ram_usage: bool,
+    #[arg(long, value_name = "BOOL")]
+    record_ram_usage: Option<bool>,
 }
 
 impl Config {
     const PATH: &'static str = "./config.toml";
 
     pub fn import() -> color_eyre::Result<Self> {
-        let mut config_saved = fs::read_to_string(Self::PATH)
-            .map_or(Config::default(), |contents| {
+        let mut config_saved =
+            fs::read_to_string(Self::PATH).map_or(Config::default(), |contents| {
+                dbg!(&contents);
                 toml::from_str(&contents).unwrap_or_default()
             });
 
@@ -92,8 +93,8 @@ impl Config {
         log(&format!("rpcuser: {:?}", config.rpcuser));
         log(&format!("rpcpassword: {:?}", config.rpcpassword));
         log(&format!("delay: {:?}", config.delay));
-        log(&format!("dry_run: {}", config.dry_run));
-        log(&format!("record_ram_usage: {}", config.record_ram_usage));
+        log(&format!("dry_run: {:?}", config.dry_run));
+        log(&format!("record_ram_usage: {:?}", config.record_ram_usage));
         log("---");
 
         Ok(config)
@@ -123,5 +124,13 @@ impl Config {
 
     fn write(&self) -> std::io::Result<()> {
         fs::write(Self::PATH, toml::to_string(self).unwrap())
+    }
+
+    pub fn dry_run(&self) -> bool {
+        self.dry_run.is_some_and(|b| b)
+    }
+
+    pub fn record_ram_usage(&self) -> bool {
+        self.record_ram_usage.is_some_and(|b| b)
     }
 }

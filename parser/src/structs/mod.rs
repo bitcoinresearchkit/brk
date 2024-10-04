@@ -29,6 +29,7 @@ mod price;
 mod sent_data;
 mod serialized_btreemap;
 mod serialized_vec;
+mod timestamp;
 mod tx_data;
 mod txout_index;
 
@@ -63,5 +64,6 @@ pub use price::*;
 pub use sent_data::*;
 pub use serialized_btreemap::*;
 pub use serialized_vec::*;
+pub use timestamp::*;
 pub use tx_data::*;
 pub use txout_index::*;

@@ -5,7 +5,7 @@ use serde_json::Value;
 
 use crate::{
     datasets::OHLC,
-    structs::Date,
+    structs::{Date, Timestamp},
     utils::{log, retry},
 };
 
@@ -91,8 +91,8 @@ impl Kraken {
                     .map(|value| {
                         let array = value.as_array().unwrap();
 
-                        let date =
-                            Date::from_timestamp(array.first().unwrap().as_u64().unwrap() as u32);
+                        let date = Timestamp::wrap(array.first().unwrap().as_u64().unwrap() as u32)
+                            .to_date();
 
                         let get_f32 = |index: usize| {
                             array

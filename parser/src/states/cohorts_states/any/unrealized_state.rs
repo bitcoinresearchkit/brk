@@ -4,12 +4,24 @@ use crate::structs::{Amount, Price};
 
 #[derive(Debug, Default)]
 pub struct UnrealizedState {
-    pub supply_in_profit: Amount,
-    pub unrealized_profit: Price,
-    pub unrealized_loss: Price,
+    supply_in_profit: Amount,
+    unrealized_profit: Price,
+    unrealized_loss: Price,
 }
 
 impl UnrealizedState {
+    pub fn supply_in_profit(&self) -> Amount {
+        self.supply_in_profit
+    }
+
+    pub fn unrealized_profit(&self) -> Price {
+        self.unrealized_profit
+    }
+
+    pub fn unrealized_loss(&self) -> Price {
+        self.unrealized_loss
+    }
+
     #[inline]
     pub fn iterate(&mut self, price_then: Price, price_now: Price, amount: Amount) {
         match price_then.cmp(&price_now) {

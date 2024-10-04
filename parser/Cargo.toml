@@ -10,7 +10,8 @@ allocative = "0.3.3"
 bincode = { git = "https://github.com/bincode-org/bincode.git", features = [
     "serde",
 ] }
-biter = "0.1.0"
+# biter = "0.1.0"
+biter = { path = "../biter" }
 bitcoin_hashes = { version = "0.14.0" }
 chrono = { version = "0.4.38", features = ["serde"] }
 clap = { version = "4.5.19", features = ["derive"] }

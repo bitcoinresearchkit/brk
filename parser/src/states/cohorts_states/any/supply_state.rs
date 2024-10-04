@@ -7,10 +7,14 @@ use crate::structs::Amount;
 
 #[derive(Debug, Default, Allocative)]
 pub struct SupplyState {
-    pub supply: Amount,
+    supply: Amount,
 }
 
 impl SupplyState {
+    pub fn supply(&self) -> Amount {
+        self.supply
+    }
+
     pub fn increment(&mut self, amount: Amount) {
         self.supply += amount;
     }

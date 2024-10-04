@@ -9,7 +9,7 @@ use serde_json::Value;
 use crate::{
     datasets::OHLC,
     io::{Json, INPUTS_FOLDER_PATH},
-    structs::Date,
+    structs::{Date, Timestamp},
     utils::{log, retry},
 };
 
@@ -169,9 +169,10 @@ impl Binance {
                         // [timestamp, open, high, low, close, volume, ...]
                         let array = value.as_array().unwrap();
 
-                        let date = Date::from_timestamp(
+                        let date = Timestamp::wrap(
                             (array.first().unwrap().as_u64().unwrap() / 1_000) as u32,
-                        );
+                        )
+                        .to_date();
 
                         let get_f32 = |index: usize| {
                             array

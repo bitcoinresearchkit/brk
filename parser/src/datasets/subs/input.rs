@@ -51,9 +51,12 @@ impl InputSubDataset {
         }: &InsertData,
         state: &InputState,
     ) {
-        let count = self.count.height.insert(height, state.count.round() as u64);
+        let count = self
+            .count
+            .height
+            .insert(height, state.count().round() as u64);
 
-        self.volume.height.insert(height, state.volume.to_btc());
+        self.volume.height.insert(height, state.volume().to_btc());
 
         if is_date_last_block {
             self.count.date.insert(date, count);

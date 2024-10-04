@@ -302,7 +302,7 @@ impl MiningDataset {
         self.block_weight
             .insert(height, block_weight as f32 / BYTES_IN_MB as f32);
         self.block_vbytes.insert(height, block_vbytes);
-        self.block_interval.insert(height, block_interval);
+        self.block_interval.insert(height, *block_interval);
 
         if is_date_last_block {
             self.coinbase.date_insert_sum_range(date, date_blocks_range);

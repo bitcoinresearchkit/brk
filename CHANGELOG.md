@@ -12,7 +12,11 @@
 ## Datasets
 
 - Added `Sell Side Risk Ratio` to all entities
-- Removed datasets split by liquidity for all datasets already split by any address kind, while fun to have it took time to compute and space to store and no one was checking them
+- Added `Adjusted Value Created`, `Adjusted Value Destroyed` and `Adjusted Spent Output Profit Ratio` to all entities
+- Added `Satoshis Per Dollar`
+- Added `All Time High`
+- Added `Drawdown`
+- Removed datasets split by liquidity for all datasets already split by any address kind, while fun to have, they took time to compute, ram, and space to store and no one was actually checking them
 - Fixed a lot of values in split by liquidity datasets
 
 ## Website
@@ -36,6 +40,10 @@
 - Fixed links in several places missing the `/api` part and thus not working
 - Fixed broken last values routes
 - Add support for the `/datasets/last` file via the `/api/last` route
+
+## Biter
+
+- Moved back to this repo
 
 ## v. 0.4.0 | [861950](https://mempool.space/block/00000000000000000000530d0e30ccf7deeace122dcc99f2668a06c6dad83629) - 2024/09/19
 

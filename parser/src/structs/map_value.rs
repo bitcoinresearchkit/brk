@@ -6,7 +6,7 @@ use serde::{de::DeserializeOwned, Serialize};
 
 use crate::datasets::OHLC;
 
-use super::{Date, Height};
+use super::{Date, Height, Timestamp};
 
 pub trait MapValue:
     Clone
@@ -32,3 +32,4 @@ impl MapValue for f64 {}
 impl MapValue for Date {}
 impl MapValue for OHLC {}
 impl MapValue for Height {}
+impl MapValue for Timestamp {}

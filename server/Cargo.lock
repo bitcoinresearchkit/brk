@@ -450,9 +450,7 @@ dependencies = [
 
 [[package]]
 name = "biter"
-version = "0.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bd2ea6b4c4046feaaf73f3dff1cc648328af021d50be95946e0e7a807c985b47"
+version = "0.1.1"
 dependencies = [
  "bitcoin",
  "bitcoincore-rpc",

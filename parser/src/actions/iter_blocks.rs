@@ -13,7 +13,7 @@ use crate::{
     datasets::{AllDatasets, ComputeData},
     io::OUTPUTS_FOLDER_PATH,
     states::{AddressCohortsDurableStates, States, UTXOCohortsDurableStates},
-    structs::{Date, DateData, MapKey},
+    structs::{DateData, MapKey, Timestamp},
     utils::{generate_allocation_files, log, time},
     Config, Exit, Height,
 };
@@ -81,9 +81,9 @@ pub fn iter_blocks(
                 if let Some((_current_block_height, current_block, _current_block_hash)) =
                     current_block_opt
                 {
-                    let timestamp = current_block.header.time;
+                    let timestamp = Timestamp::wrap(current_block.header.time);
 
-                    let current_block_date = Date::from_timestamp(timestamp);
+                    let current_block_date = timestamp.to_date();
                     let current_block_height: Height = height + blocks_loop_i;
 
                     if current_block_height.to_usize() != _current_block_height {
@@ -91,9 +91,9 @@ pub fn iter_blocks(
                         panic!()
                     }
 
-                    let next_block_date = next_block_opt
-                        .as_ref()
-                        .map(|(_, next_block, _)| Date::from_timestamp(next_block.header.time));
+                    let next_block_date = next_block_opt.as_ref().map(|(_, next_block, _)| {
+                        Timestamp::wrap(next_block.header.time).to_date()
+                    });
 
                     // Always run for the first block of the loop
                     if blocks_loop_date.is_none() {
@@ -168,7 +168,6 @@ pub fn iter_blocks(
                             height: current_block_height,
                             is_date_last_block,
                             states: &mut states,
-                            timestamp,
                         });
                     }
 
@@ -213,7 +212,7 @@ pub fn iter_blocks(
             });
         }
 
-        if !config.dry_run {
+        if !config.dry_run() {
             let is_safe = height.is_safe(approx_block_count);
 
             export(ExportedData {
@@ -225,7 +224,7 @@ pub fn iter_blocks(
                 exit: exit.clone(),
             })?;
 
-            if config.record_ram_usage {
+            if config.record_ram_usage() {
                 time("Exporing allocation files", || {
                     generate_allocation_files(&datasets, &databases, &states, last_height)
                 })?;

@@ -3,17 +3,16 @@ mod ohlc;
 use std::collections::BTreeMap;
 
 use allocative::Allocative;
-use chrono::{Days, NaiveDateTime, NaiveTime, TimeZone, Timelike, Utc};
+use chrono::Days;
 use color_eyre::eyre::Error;
 
 pub use ohlc::*;
 
 use crate::{
-    log,
     price::{Binance, Kibo, Kraken},
     structs::{
-        AnyBiMap, AnyDateMap, BiMap, Date, DateMap, DateMapChunkId, Height, HeightMapChunkId,
-        MapKey,
+        Amount, AnyBiMap, AnyDateMap, BiMap, Date, DateMap, DateMapChunkId, Height,
+        HeightMapChunkId, MapKey, Timestamp,
     },
     utils::{ONE_MONTH_IN_DAYS, ONE_WEEK_IN_DAYS, ONE_YEAR_IN_DAYS},
 };
@@ -76,9 +75,11 @@ pub struct PriceDatasets {
     pub price_10y_total_return: DateMap<f32>,
     pub price_4y_compound_return: DateMap<f32>,
     // projection via lowest 4y compound value
+    pub all_time_high: BiMap<f32>,
+    pub market_price_to_all_time_high_ratio: BiMap<f32>,
+    pub drawdown: BiMap<f32>,
+    pub sats_per_dollar: BiMap<f32>,
     // volatility
-    // drawdown
-    // sats per dollar
 }
 
 impl PriceDatasets {
@@ -138,6 +139,13 @@ impl PriceDatasets {
             price_8y_total_return: DateMap::new_bin(1, &f("price_8y_total_return")),
             price_10y_total_return: DateMap::new_bin(1, &f("price_10y_total_return")),
             price_4y_compound_return: DateMap::new_bin(1, &f("price_4y_compound_return")),
+            all_time_high: BiMap::new_bin(1, &f("all_time_high")),
+            market_price_to_all_time_high_ratio: BiMap::new_bin(
+                1,
+                &f("market_price_to_all_time_high_ratio"),
+            ),
+            drawdown: BiMap::new_bin(1, &f("drawdown")),
+            sats_per_dollar: BiMap::new_bin(1, &f("sats_per_dollar")),
         };
 
         s.min_initial_states
@@ -306,6 +314,26 @@ impl PriceDatasets {
             .compute(compute_data, &mut self.closes, &mut self.price_144d_sma);
         self.price_200w_sma_ratio
             .compute(compute_data, &mut self.closes, &mut self.price_200w_sma);
+
+        self.all_time_high
+            .multi_insert_max(heights, dates, &mut self.closes);
+
+        self.market_price_to_all_time_high_ratio
+            .multi_insert_percentage(heights, dates, &mut self.closes, &mut self.all_time_high);
+
+        self.drawdown.multi_insert_simple_transform(
+            heights,
+            dates,
+            &mut self.market_price_to_all_time_high_ratio,
+            &|v| -(100.0 - v),
+        );
+
+        self.sats_per_dollar.multi_insert_simple_transform(
+            heights,
+            dates,
+            &mut self.closes,
+            &|price| Amount::ONE_BTC_F32 / price,
+        );
     }
 
     pub fn get_date_ohlc(&mut self, date: Date) -> color_eyre::Result<OHLC> {
@@ -396,31 +424,20 @@ impl PriceDatasets {
     pub fn get_height_ohlc(
         &mut self,
         height: Height,
-        timestamp: u32,
-        previous_timestamp: Option<u32>,
+        timestamp: Timestamp,
+        previous_timestamp: Option<Timestamp>,
     ) -> color_eyre::Result<OHLC> {
         if let Some(ohlc) = self.ohlcs.height.get(&height) {
             return Ok(ohlc);
         }
 
-        let clean_timestamp = |timestamp| {
-            let date_time = Utc.timestamp_opt(i64::from(timestamp), 0).unwrap();
-
-            NaiveDateTime::new(
-                date_time.date_naive(),
-                NaiveTime::from_hms_opt(date_time.hour(), date_time.minute(), 0).unwrap(),
-            )
-            .and_utc()
-            .timestamp() as u32
-        };
-
-        let timestamp = clean_timestamp(timestamp);
+        let timestamp = timestamp.to_floored_seconds();
 
         if previous_timestamp.is_none() && !height.is_first() {
             panic!("Shouldn't be possible");
         }
 
-        let previous_timestamp = previous_timestamp.map(clean_timestamp);
+        let previous_timestamp = previous_timestamp.map(|t| t.to_floored_seconds());
 
         let ohlc = self
             .get_from_1mn_kraken(timestamp, previous_timestamp)
@@ -430,7 +447,7 @@ impl PriceDatasets {
                         self.get_from_har_binance(timestamp, previous_timestamp)
                             .unwrap_or_else(|_| {
                                 self.get_from_height_kibo(&height).unwrap_or_else(|_| {
-                                    let date = Date::from_timestamp(timestamp);
+                                    let date = timestamp.to_date();
 
                                     panic!(
                                         "Can't find the price for: height: {height} - date: {date}
@@ -479,8 +496,8 @@ How to fix this:
 
     fn get_from_1mn_kraken(
         &mut self,
-        timestamp: u32,
-        previous_timestamp: Option<u32>,
+        timestamp: Timestamp,
+        previous_timestamp: Option<Timestamp>,
     ) -> color_eyre::Result<OHLC> {
         if self.kraken_1mn.is_none()
             || self
@@ -500,8 +517,8 @@ How to fix this:
 
     fn get_from_1mn_binance(
         &mut self,
-        timestamp: u32,
-        previous_timestamp: Option<u32>,
+        timestamp: Timestamp,
+        previous_timestamp: Option<Timestamp>,
     ) -> color_eyre::Result<OHLC> {
         if self.binance_1mn.is_none()
             || self
@@ -526,8 +543,8 @@ How to fix this:
 
     fn get_from_har_binance(
         &mut self,
-        timestamp: u32,
-        previous_timestamp: Option<u32>,
+        timestamp: Timestamp,
+        previous_timestamp: Option<Timestamp>,
     ) -> color_eyre::Result<OHLC> {
         if self.binance_har.is_none() {
             self.binance_har
@@ -544,8 +561,8 @@ How to fix this:
 
     fn find_height_ohlc(
         tree: &Option<BTreeMap<u32, OHLC>>,
-        timestamp: u32,
-        previous_timestamp: Option<u32>,
+        timestamp: Timestamp,
+        previous_timestamp: Option<Timestamp>,
         name: &str,
     ) -> color_eyre::Result<OHLC> {
         let tree = tree.as_ref().unwrap();
@@ -572,12 +589,12 @@ How to fix this:
             close: previous_ohlc.close,
         };
 
-        let start = previous_timestamp.unwrap_or(0);
+        let start = previous_timestamp.unwrap_or_default();
         let end = timestamp;
 
         // Otherwise it's a re-org
         if start < end {
-            tree.range(&start..=&end).skip(1).for_each(|(_, ohlc)| {
+            tree.range(&*start..=&*end).skip(1).for_each(|(_, ohlc)| {
                 if ohlc.high > final_ohlc.high {
                     final_ohlc.high = ohlc.high
                 }
@@ -624,6 +641,10 @@ impl AnyDataset for PriceDatasets {
             &self.price_89d_sma,
             &self.price_144d_sma,
             &self.price_200w_sma,
+            &self.all_time_high,
+            &self.market_price_to_all_time_high_ratio,
+            &self.drawdown,
+            &self.sats_per_dollar,
         ];
 
         v.append(&mut self.price_1w_sma_ratio.to_computed_bi_map_vec());
@@ -660,6 +681,10 @@ impl AnyDataset for PriceDatasets {
             &mut self.price_89d_sma,
             &mut self.price_144d_sma,
             &mut self.price_200w_sma,
+            &mut self.all_time_high,
+            &mut self.market_price_to_all_time_high_ratio,
+            &mut self.drawdown,
+            &mut self.sats_per_dollar,
         ];
 
         v.append(&mut self.price_1w_sma_ratio.to_computed_mut_bi_map_vec());

@@ -93,7 +93,7 @@ impl AddressCohortDurableStates {
 
         let one_shot_states_ref = &mut one_shot_states;
 
-        let supply = self.durable_states.supply_state.supply;
+        let supply = self.durable_states.supply_state.supply();
 
         self.price_to_amount.iterate(supply, |price_paid, amount| {
             one_shot_states_ref

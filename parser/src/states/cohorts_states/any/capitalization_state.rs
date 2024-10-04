@@ -6,10 +6,14 @@ use crate::structs::Price;
 
 #[derive(Debug, Default, Allocative)]
 pub struct CapitalizationState {
-    pub realized_cap: Price,
+    realized_cap: Price,
 }
 
 impl CapitalizationState {
+    pub fn realized_cap(&self) -> Price {
+        self.realized_cap
+    }
+
     pub fn increment(&mut self, realized_cap: Price) {
         self.realized_cap += realized_cap;
     }

@@ -20,7 +20,7 @@ use crate::{
     },
     structs::{
         Address, AddressData, AddressRealizedData, Amount, BlockData, BlockPath, Counter, Date,
-        EmptyAddressData, Height, PartialTxoutData, Price, SentData, TxData, TxoutIndex,
+        EmptyAddressData, Height, PartialTxoutData, Price, SentData, Timestamp, TxData, TxoutIndex,
     },
 };
 
@@ -37,7 +37,6 @@ pub struct ParseData<'a> {
     pub is_date_last_block: bool,
     pub rpc: &'a biter::bitcoincore_rpc::Client,
     pub states: &'a mut States,
-    pub timestamp: u32,
 }
 
 pub fn parse(
@@ -53,10 +52,11 @@ pub fn parse(
         is_date_last_block,
         rpc,
         states,
-        timestamp,
     }: ParseData,
 ) {
     // log(&format!("{height}"));
+
+    let timestamp = Timestamp::wrap(block.header.time);
 
     // If false, expect that the code is flawless
     // or create a 0 value txid database
@@ -89,9 +89,9 @@ pub fn parse(
     let block_size = block.total_size();
     let block_weight = block.weight().to_wu();
     let block_vbytes = block.weight().to_vbytes_floor();
-    let block_interval = previous_timestamp.map_or(0, |previous_timestamp| {
+    let block_interval = previous_timestamp.map_or(Timestamp::ZERO, |previous_timestamp| {
         if previous_timestamp >= timestamp {
-            0
+            Timestamp::ZERO
         } else {
             timestamp - previous_timestamp
         }
@@ -519,6 +519,8 @@ pub fn parse(
                                 input_amount,
                                 block_price,
                                 previous_price,
+                                timestamp,
+                                input_block_data.timestamp,
                             );
                         };
 
@@ -645,6 +647,7 @@ pub fn parse(
                     &states.date_data_vec,
                     &block_path_to_sent_data,
                     block_price,
+                    timestamp,
                 );
             });
         }

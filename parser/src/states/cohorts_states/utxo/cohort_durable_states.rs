@@ -85,7 +85,7 @@ impl UTXOCohortDurableStates {
                 .replace(UnrealizedState::default());
         }
 
-        let supply = self.durable_states.supply_state.supply;
+        let supply = self.durable_states.supply_state.supply();
 
         let one_shot_states_ref = &mut one_shot_states;
 

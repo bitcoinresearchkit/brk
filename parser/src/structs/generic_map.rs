@@ -818,4 +818,36 @@ where
             ControlFlow::Continue(())
         });
     }
+
+    pub fn multi_insert_max(&mut self, keys: &[Key], source: &mut Self)
+    where
+        Value: Default + PartialOrd,
+    {
+        let mut max = None;
+
+        keys.iter().for_each(|key| {
+            let previous_max = max.unwrap_or_else(|| {
+                key.checked_sub(1)
+                    .and_then(|previous_max_key| self.get(&previous_max_key))
+                    .unwrap_or_default()
+            });
+
+            let last_value = source.get_or_import(key).unwrap_or_else(|| {
+                dbg!(key);
+                panic!()
+            });
+
+            if max.is_none() || last_value > previous_max {
+                max.replace(last_value);
+            }
+
+            self.insert(
+                *key,
+                max.unwrap_or_else(|| {
+                    dbg!(previous_max, last_value, max);
+                    panic!();
+                }),
+            );
+        });
+    }
 }

@@ -66,7 +66,7 @@ impl CapitalizationDataset {
         let realized_cap = self
             .realized_cap
             .height
-            .insert(height, state.realized_cap.to_dollar() as f32);
+            .insert(height, state.realized_cap().to_dollar() as f32);
 
         if is_date_last_block {
             self.realized_cap.date.insert(date, realized_cap);

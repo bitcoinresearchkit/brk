@@ -2,7 +2,7 @@ use allocative::Allocative;
 
 use crate::{
     datasets::AnyDataset,
-    structs::{AnyHeightMap, Date, HeightMap},
+    structs::{AnyHeightMap, Date, HeightMap, Timestamp},
 };
 
 use super::{InsertData, MinInitialStates};
@@ -13,7 +13,7 @@ pub struct BlockMetadataDataset {
 
     // Inserted
     pub date: HeightMap<Date>,
-    pub timestamp: HeightMap<u32>,
+    pub timestamp: HeightMap<Timestamp>,
 }
 
 impl BlockMetadataDataset {
@@ -41,7 +41,7 @@ impl BlockMetadataDataset {
     ) {
         self.timestamp.insert(height, timestamp);
 
-        self.date.insert(height, Date::from_timestamp(timestamp));
+        self.date.insert(height, timestamp.to_date());
     }
 }
 

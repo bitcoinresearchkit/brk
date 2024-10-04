@@ -15,9 +15,12 @@ pub struct RealizedSubDataset {
     // Inserted
     realized_profit: BiMap<f32>,
     realized_loss: BiMap<f32>,
-    value_destroyed: BiMap<f32>,
     value_created: BiMap<f32>,
+    adjusted_value_created: BiMap<f32>,
+    value_destroyed: BiMap<f32>,
+    adjusted_value_destroyed: BiMap<f32>,
     spent_output_profit_ratio: BiMap<f32>,
+    adjusted_spent_output_profit_ratio: BiMap<f32>,
 
     // Computed
     negative_realized_loss: BiMap<f32>,
@@ -47,8 +50,14 @@ impl RealizedSubDataset {
             realized_profit: BiMap::new_bin(1, &f("realized_profit")),
             realized_loss: BiMap::new_bin(1, &f("realized_loss")),
             value_created: BiMap::new_bin(1, &f("value_created")),
+            adjusted_value_created: BiMap::new_bin(1, &f("adjusted_value_created")),
             value_destroyed: BiMap::new_bin(1, &f("value_destroyed")),
+            adjusted_value_destroyed: BiMap::new_bin(1, &f("adjusted_value_destroyed")),
             spent_output_profit_ratio: BiMap::new_bin(2, &f("spent_output_profit_ratio")),
+            adjusted_spent_output_profit_ratio: BiMap::new_bin(
+                2,
+                &f("adjusted_spent_output_profit_ratio"),
+            ),
 
             negative_realized_loss: BiMap::new_bin(2, &f("negative_realized_loss")),
             net_realized_profit_and_loss: BiMap::new_bin(1, &f("net_realized_profit_and_loss")),
@@ -89,28 +98,50 @@ impl RealizedSubDataset {
     ) {
         self.realized_profit
             .height
-            .insert(height, height_state.realized_profit.to_dollar() as f32);
+            .insert(height, height_state.realized_profit().to_dollar() as f32);
 
         self.realized_loss
             .height
-            .insert(height, height_state.realized_loss.to_dollar() as f32);
+            .insert(height, height_state.realized_loss().to_dollar() as f32);
 
         self.value_created
             .height
-            .insert(height, height_state.value_created.to_dollar() as f32);
+            .insert(height, height_state.value_created().to_dollar() as f32);
+
+        self.adjusted_value_created.height.insert(
+            height,
+            height_state.adjusted_value_created().to_dollar() as f32,
+        );
 
         self.value_destroyed
             .height
-            .insert(height, height_state.value_destroyed.to_dollar() as f32);
+            .insert(height, height_state.value_destroyed().to_dollar() as f32);
+
+        self.adjusted_value_destroyed.height.insert(
+            height,
+            height_state.adjusted_value_destroyed().to_dollar() as f32,
+        );
 
         self.spent_output_profit_ratio.height.insert(height, {
-            if height_state.value_destroyed > Price::ZERO {
-                (height_state.value_created.to_cent() as f64
-                    / height_state.value_destroyed.to_cent() as f64) as f32
+            if height_state.value_destroyed() > Price::ZERO {
+                (height_state.value_created().to_cent() as f64
+                    / height_state.value_destroyed().to_cent() as f64) as f32
             } else {
                 1.0
             }
         });
+
+        self.adjusted_spent_output_profit_ratio
+            .height
+            .insert(height, {
+                if height_state.adjusted_value_destroyed() > Price::ZERO {
+                    (height_state.adjusted_value_created().to_cent() as f64
+                        / height_state.adjusted_value_destroyed().to_cent() as f64)
+                        as f32
+                } else {
+                    1.0
+                }
+            });
 
         if is_date_last_block {
             self.realized_profit
@@ -122,13 +153,30 @@ impl RealizedSubDataset {
             self.value_created
                 .date_insert_sum_range(date, date_blocks_range);
 
+            self.adjusted_value_created
+                .date_insert_sum_range(date, date_blocks_range);
+
             self.value_destroyed
+                .date_insert_sum_range(date, date_blocks_range);
+
+            self.adjusted_value_destroyed
                 .date_insert_sum_range(date, date_blocks_range);
 
             self.spent_output_profit_ratio.date.insert(
                 date,
                 self.value_created.height.sum_range(date_blocks_range)
                     / self.value_destroyed.height.sum_range(date_blocks_range),
+            );
+
+            self.adjusted_spent_output_profit_ratio.date.insert(
+                date,
+                self.adjusted_value_created
+                    .height
+                    .sum_range(date_blocks_range)
+                    / self
+                        .adjusted_value_destroyed
+                        .height
+                        .sum_range(date_blocks_range),
             );
         }
     }
@@ -208,8 +256,11 @@ impl AnyDataset for RealizedSubDataset {
             &self.realized_loss,
             &self.realized_profit,
             &self.value_created,
+            &self.adjusted_value_created,
             &self.value_destroyed,
+            &self.adjusted_value_destroyed,
             &self.spent_output_profit_ratio,
+            &self.adjusted_spent_output_profit_ratio,
         ]
     }
 
@@ -218,8 +269,11 @@ impl AnyDataset for RealizedSubDataset {
             &mut self.realized_loss,
             &mut self.realized_profit,
             &mut self.value_created,
+            &mut self.adjusted_value_created,
             &mut self.value_destroyed,
+            &mut self.adjusted_value_destroyed,
             &mut self.spent_output_profit_ratio,
+            &mut self.adjusted_spent_output_profit_ratio,
         ]
     }
 

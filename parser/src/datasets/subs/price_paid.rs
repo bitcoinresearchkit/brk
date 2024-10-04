@@ -83,28 +83,25 @@ impl PricePaidSubDataset {
         }: &InsertData,
         state: &PricePaidState,
     ) {
-        let PricePaidState {
-            pp_05p,
-            pp_10p,
-            pp_15p,
-            pp_20p,
-            pp_25p,
-            pp_30p,
-            pp_35p,
-            pp_40p,
-            pp_45p,
-            pp_median,
-            pp_55p,
-            pp_60p,
-            pp_65p,
-            pp_70p,
-            pp_75p,
-            pp_80p,
-            pp_85p,
-            pp_90p,
-            pp_95p,
-            ..
-        } = state;
+        let pp_05p = state.pp_05p();
+        let pp_10p = state.pp_10p();
+        let pp_15p = state.pp_15p();
+        let pp_20p = state.pp_20p();
+        let pp_25p = state.pp_25p();
+        let pp_30p = state.pp_30p();
+        let pp_35p = state.pp_35p();
+        let pp_40p = state.pp_40p();
+        let pp_45p = state.pp_45p();
+        let pp_median = state.pp_median();
+        let pp_55p = state.pp_55p();
+        let pp_60p = state.pp_60p();
+        let pp_65p = state.pp_65p();
+        let pp_70p = state.pp_70p();
+        let pp_75p = state.pp_75p();
+        let pp_80p = state.pp_80p();
+        let pp_85p = state.pp_85p();
+        let pp_90p = state.pp_90p();
+        let pp_95p = state.pp_95p();
 
         // Check if iter was empty
         if pp_05p.is_none() {

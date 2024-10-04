@@ -7,7 +7,7 @@ use bincode::{
     error::{DecodeError, EncodeError},
     BorrowDecode, Decode, Encode,
 };
-use chrono::{Datelike, Days, NaiveDate, TimeZone, Utc};
+use chrono::{Datelike, Days, NaiveDate};
 use derive_deref::{Deref, DerefMut};
 use serde::{Deserialize, Serialize};
 
@@ -36,14 +36,6 @@ pub struct Date(NaiveDate);
 impl Date {
     pub fn wrap(date: NaiveDate) -> Self {
         Self(date)
-    }
-
-    pub fn from_timestamp(timestamp: u32) -> Self {
-        Self(
-            Utc.timestamp_opt(i64::from(timestamp), 0)
-                .unwrap()
-                .date_naive(),
-        )
     }
 
     pub fn today() -> Self {

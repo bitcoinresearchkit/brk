@@ -46,7 +46,7 @@ impl UTXOSubDataset {
         }: &InsertData,
         state: &UTXOState,
     ) {
-        let count = self.count.height.insert(height, state.count);
+        let count = self.count.height.insert(height, state.count());
 
         if is_date_last_block {
             self.count.date.insert(date, count);

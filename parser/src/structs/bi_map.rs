@@ -299,6 +299,18 @@ where
         self.date
             .multi_insert_percentile(dates, date_map_and_percentiles, days);
     }
+
+    pub fn multi_insert_max(
+        &mut self,
+        heights: &[Height],
+        dates: &[Date],
+        source: &mut BiMap<Value>,
+    ) where
+        Value: PartialOrd,
+    {
+        self.height.multi_insert_max(heights, &mut source.height);
+        self.date.multi_insert_max(dates, &mut source.date);
+    }
 }
 
 pub trait AnyBiMap {

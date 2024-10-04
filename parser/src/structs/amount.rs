@@ -36,6 +36,7 @@ direct_repr!(Amount);
 
 impl Amount {
     pub const ZERO: Self = Self(BitcoinAmount::ZERO);
+    pub const ONE_BTC_F32: f32 = 100_000_000.0;
     pub const ONE_BTC_F64: f64 = 100_000_000.0;
 
     #[inline(always)]

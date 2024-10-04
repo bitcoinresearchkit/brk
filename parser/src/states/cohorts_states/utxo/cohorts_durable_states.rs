@@ -5,9 +5,7 @@ use rayon::prelude::*;
 
 use crate::{
     states::DateDataVec,
-    structs::{Amount, BlockData, Price, SentData},
-    utils::difference_in_days_between_timestamps,
-    Date,
+    structs::{Amount, BlockData, Price, SentData, Timestamp},
 };
 
 use super::{SplitByUTXOCohort, UTXOCohortDurableStates, UTXOCohortsOneShotStates};
@@ -32,7 +30,7 @@ impl UTXOCohortsDurableStates {
                         return;
                     }
 
-                    let increment_days_old = difference_in_days_between_timestamps(
+                    let increment_days_old = Timestamp::difference_in_days_between(
                         block_data.timestamp,
                         last_block_data.timestamp,
                     );
@@ -65,18 +63,18 @@ impl UTXOCohortsDurableStates {
         }
 
         if block_data.height == last_block_data.height {
-            let year = Date::from_timestamp(block_data.timestamp).year() as u32;
+            let year = block_data.timestamp.to_year();
 
             self.initial_filtered_apply(&0, &year, |state| {
                 state.increment(amount, utxo_count, price).unwrap();
             })
         } else {
-            let increment_days_old = difference_in_days_between_timestamps(
+            let increment_days_old = Timestamp::difference_in_days_between(
                 block_data.timestamp,
                 last_block_data.timestamp,
             );
 
-            let decrement_days_old = difference_in_days_between_timestamps(
+            let decrement_days_old = Timestamp::difference_in_days_between(
                 block_data.timestamp,
                 previous_last_block_data
                     .unwrap_or_else(|| {
@@ -117,12 +115,12 @@ impl UTXOCohortsDurableStates {
             return;
         }
 
-        let days_old = difference_in_days_between_timestamps(
+        let days_old = Timestamp::difference_in_days_between(
             block_data.timestamp,
             previous_last_block_data.timestamp,
         );
 
-        let year = Date::from_timestamp(block_data.timestamp).year() as u32;
+        let year = block_data.timestamp.to_year();
 
         self.initial_filtered_apply(&days_old, &year, |state| {
             state

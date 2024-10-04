@@ -45,7 +45,7 @@ use crate::{
         // UTXOCohortsReceivedStates,
         UTXOCohortsSentStates,
     },
-    structs::{Amount, Date, Height, Price},
+    structs::{Amount, Date, Height, Price, Timestamp},
 };
 
 pub struct InsertData<'a> {
@@ -53,7 +53,7 @@ pub struct InsertData<'a> {
     pub address_cohorts_one_shot_states: &'a Option<AddressCohortsOneShotStates>,
     pub address_cohorts_realized_states: &'a Option<AddressCohortsRealizedStates>,
     pub amount_sent: Amount,
-    pub block_interval: u32,
+    pub block_interval: Timestamp,
     pub block_price: Price,
     pub block_size: usize,
     pub block_vbytes: u64,
@@ -71,7 +71,7 @@ pub struct InsertData<'a> {
     pub satblocks_destroyed: Amount,
     pub satdays_destroyed: Amount,
     pub states: &'a States,
-    pub timestamp: u32,
+    pub timestamp: Timestamp,
     pub transaction_count: usize,
     pub utxo_cohorts_one_shot_states: &'a UTXOCohortsOneShotStates,
     // pub utxo_cohorts_received_states: &'a UTXOCohortsReceivedStates,

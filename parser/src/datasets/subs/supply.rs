@@ -60,7 +60,7 @@ impl SupplySubDataset {
         }: &InsertData,
         state: &SupplyState,
     ) {
-        let total_supply = self.supply.height.insert(height, state.supply.to_btc());
+        let total_supply = self.supply.height.insert(height, state.supply().to_btc());
 
         if is_date_last_block {
             self.supply.date.insert(date, total_supply);

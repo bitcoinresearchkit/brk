@@ -2,30 +2,106 @@ use crate::structs::{Amount, Price};
 
 #[derive(Default, Debug)]
 pub struct PricePaidState {
-    pub pp_05p: Option<Price>,
-    pub pp_10p: Option<Price>,
-    pub pp_15p: Option<Price>,
-    pub pp_20p: Option<Price>,
-    pub pp_25p: Option<Price>,
-    pub pp_30p: Option<Price>,
-    pub pp_35p: Option<Price>,
-    pub pp_40p: Option<Price>,
-    pub pp_45p: Option<Price>,
-    pub pp_median: Option<Price>,
-    pub pp_55p: Option<Price>,
-    pub pp_60p: Option<Price>,
-    pub pp_65p: Option<Price>,
-    pub pp_70p: Option<Price>,
-    pub pp_75p: Option<Price>,
-    pub pp_80p: Option<Price>,
-    pub pp_85p: Option<Price>,
-    pub pp_90p: Option<Price>,
-    pub pp_95p: Option<Price>,
+    pp_05p: Option<Price>,
+    pp_10p: Option<Price>,
+    pp_15p: Option<Price>,
+    pp_20p: Option<Price>,
+    pp_25p: Option<Price>,
+    pp_30p: Option<Price>,
+    pp_35p: Option<Price>,
+    pp_40p: Option<Price>,
+    pp_45p: Option<Price>,
+    pp_median: Option<Price>,
+    pp_55p: Option<Price>,
+    pp_60p: Option<Price>,
+    pp_65p: Option<Price>,
+    pp_70p: Option<Price>,
+    pp_75p: Option<Price>,
+    pp_80p: Option<Price>,
+    pp_85p: Option<Price>,
+    pp_90p: Option<Price>,
+    pp_95p: Option<Price>,
 
-    pub processed_amount: Amount,
+    processed_amount: Amount,
 }
 
 impl PricePaidState {
+    pub fn pp_05p(&self) -> Option<Price> {
+        self.pp_05p
+    }
+
+    pub fn pp_10p(&self) -> Option<Price> {
+        self.pp_10p
+    }
+
+    pub fn pp_15p(&self) -> Option<Price> {
+        self.pp_15p
+    }
+
+    pub fn pp_20p(&self) -> Option<Price> {
+        self.pp_20p
+    }
+
+    pub fn pp_25p(&self) -> Option<Price> {
+        self.pp_25p
+    }
+
+    pub fn pp_30p(&self) -> Option<Price> {
+        self.pp_30p
+    }
+
+    pub fn pp_35p(&self) -> Option<Price> {
+        self.pp_35p
+    }
+
+    pub fn pp_40p(&self) -> Option<Price> {
+        self.pp_40p
+    }
+
+    pub fn pp_45p(&self) -> Option<Price> {
+        self.pp_45p
+    }
+
+    pub fn pp_median(&self) -> Option<Price> {
+        self.pp_median
+    }
+
+    pub fn pp_55p(&self) -> Option<Price> {
+        self.pp_55p
+    }
+
+    pub fn pp_60p(&self) -> Option<Price> {
+        self.pp_60p
+    }
+
+    pub fn pp_65p(&self) -> Option<Price> {
+        self.pp_65p
+    }
+
+    pub fn pp_70p(&self) -> Option<Price> {
+        self.pp_70p
+    }
+
+    pub fn pp_75p(&self) -> Option<Price> {
+        self.pp_75p
+    }
+
+    pub fn pp_80p(&self) -> Option<Price> {
+        self.pp_80p
+    }
+
+    pub fn pp_85p(&self) -> Option<Price> {
+        self.pp_85p
+    }
+
+    pub fn pp_90p(&self) -> Option<Price> {
+        self.pp_90p
+    }
+
+    pub fn pp_95p(&self) -> Option<Price> {
+        self.pp_95p
+    }
+
     pub fn iterate(&mut self, price: Price, amount: Amount, supply: Amount) {
         let PricePaidState {
             processed_amount: processed_supply,
