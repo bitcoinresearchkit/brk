@@ -79,11 +79,14 @@ impl AddressData {
     }
 
     pub fn from_empty(empty: &EmptyAddressData) -> Self {
+        let address_type = empty.address_type();
+        let transfered = empty.transfered();
+
         Self {
-            address_type: empty.address_type,
+            address_type,
             amount: Amount::ZERO,
-            sent: empty.transfered,
-            received: empty.transfered,
+            sent: transfered,
+            received: transfered,
             realized_cap: Price::ZERO,
             outputs_len: 0,
         }
