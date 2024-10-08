@@ -40,6 +40,7 @@
 - Added `--rpcconnect` parameter to the config
 - Added handling of SIGINT and SIGTERM terminal signals which menas you can now safely CTRL+C or kill the parser while it's exporting
 - Added config print at the start of the program
+- Compressed `empty_address_data` struct to save space (should shave of between 25 and 50% of the `address_index_to_empty_address_data` database)
 
 ## Server
 
