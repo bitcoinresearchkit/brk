@@ -32,10 +32,13 @@ pub struct PriceDatasets {
     kibo_by_date: BTreeMap<DateMapChunkId, BTreeMap<Date, OHLC>>,
 
     // Inserted
-    pub ohlcs: BiMap<OHLC>,
+    pub ohlc: BiMap<OHLC>,
 
     // Computed
-    pub closes: BiMap<f32>,
+    pub open: BiMap<f32>,
+    pub high: BiMap<f32>,
+    pub low: BiMap<f32>,
+    pub close: BiMap<f32>,
     pub market_cap: BiMap<f32>,
     pub price_1w_sma: BiMap<f32>,
     pub price_1w_sma_ratio: RatioDataset,
@@ -76,6 +79,10 @@ pub struct PriceDatasets {
     pub price_4y_compound_return: DateMap<f32>,
     // projection via lowest 4y compound value
     pub all_time_high: BiMap<f32>,
+    pub all_time_high_date: DateMap<Date>,
+    pub days_since_all_time_high: DateMap<u32>,
+    pub max_days_between_all_time_highs: DateMap<u32>,
+    pub max_years_between_all_time_highs: DateMap<f32>,
     pub market_price_to_all_time_high_ratio: BiMap<f32>,
     pub drawdown: BiMap<f32>,
     pub sats_per_dollar: BiMap<f32>,
@@ -99,8 +106,11 @@ impl PriceDatasets {
             kibo_by_height: BTreeMap::default(),
             kibo_by_date: BTreeMap::default(),
 
-            ohlcs: BiMap::new_json(1, price_path),
-            closes: BiMap::new_bin(1, &f("close")),
+            ohlc: BiMap::new_json(1, price_path),
+            open: BiMap::new_bin(1, &f("open")),
+            high: BiMap::new_bin(1, &f("high")),
+            low: BiMap::new_bin(1, &f("low")),
+            close: BiMap::new_bin(1, &f("close")),
             market_cap: BiMap::new_bin(1, &f("market_cap")),
             price_1w_sma: BiMap::new_bin(1, &f("price_1w_sma")),
             price_1w_sma_ratio: RatioDataset::import(datasets_path, "price_1w_sma")?,
@@ -140,6 +150,16 @@ impl PriceDatasets {
             price_10y_total_return: DateMap::new_bin(1, &f("price_10y_total_return")),
             price_4y_compound_return: DateMap::new_bin(1, &f("price_4y_compound_return")),
             all_time_high: BiMap::new_bin(1, &f("all_time_high")),
+            all_time_high_date: DateMap::new_bin(1, &f("all_time_high_date")),
+            days_since_all_time_high: DateMap::new_bin(1, &f("days_since_all_time_high")),
+            max_days_between_all_time_highs: DateMap::new_bin(
+                1,
+                &f("max_days_between_all_time_highs"),
+            ),
+            max_years_between_all_time_highs: DateMap::new_bin(
+                2,
+                &f("max_years_between_all_time_highs"),
+            ),
             market_price_to_all_time_high_ratio: BiMap::new_bin(
                 1,
                 &f("market_price_to_all_time_high_ratio"),
@@ -157,128 +177,137 @@ impl PriceDatasets {
     pub fn compute(&mut self, compute_data: &ComputeData, circulating_supply: &mut BiMap<f64>) {
         let &ComputeData { dates, heights, .. } = compute_data;
 
-        self.closes
-            .multi_insert_simple_transform(heights, dates, &mut self.ohlcs, &|ohlc| ohlc.close);
+        self.open
+            .multi_insert_simple_transform(heights, dates, &mut self.ohlc, &|ohlc| ohlc.open);
+
+        self.high
+            .multi_insert_simple_transform(heights, dates, &mut self.ohlc, &|ohlc| ohlc.high);
+
+        self.low
+            .multi_insert_simple_transform(heights, dates, &mut self.ohlc, &|ohlc| ohlc.low);
+
+        self.close
+            .multi_insert_simple_transform(heights, dates, &mut self.ohlc, &|ohlc| ohlc.close);
 
         self.market_cap
-            .multi_insert_multiply(heights, dates, &mut self.closes, circulating_supply);
+            .multi_insert_multiply(heights, dates, &mut self.close, circulating_supply);
 
         self.price_1w_sma.multi_insert_simple_average(
             heights,
             dates,
-            &mut self.closes,
+            &mut self.close,
             ONE_WEEK_IN_DAYS,
         );
 
         self.price_1m_sma.multi_insert_simple_average(
             heights,
             dates,
-            &mut self.closes,
+            &mut self.close,
             ONE_MONTH_IN_DAYS,
         );
 
         self.price_1y_sma.multi_insert_simple_average(
             heights,
             dates,
-            &mut self.closes,
+            &mut self.close,
             ONE_YEAR_IN_DAYS,
         );
 
         self.price_2y_sma.multi_insert_simple_average(
             heights,
             dates,
-            &mut self.closes,
+            &mut self.close,
             2 * ONE_YEAR_IN_DAYS,
         );
 
         self.price_4y_sma.multi_insert_simple_average(
             heights,
             dates,
-            &mut self.closes,
+            &mut self.close,
             4 * ONE_YEAR_IN_DAYS,
         );
 
         self.price_8d_sma
-            .multi_insert_simple_average(heights, dates, &mut self.closes, 8);
+            .multi_insert_simple_average(heights, dates, &mut self.close, 8);
 
         self.price_13d_sma
-            .multi_insert_simple_average(heights, dates, &mut self.closes, 13);
+            .multi_insert_simple_average(heights, dates, &mut self.close, 13);
 
         self.price_21d_sma
-            .multi_insert_simple_average(heights, dates, &mut self.closes, 21);
+            .multi_insert_simple_average(heights, dates, &mut self.close, 21);
 
         self.price_34d_sma
-            .multi_insert_simple_average(heights, dates, &mut self.closes, 34);
+            .multi_insert_simple_average(heights, dates, &mut self.close, 34);
 
         self.price_55d_sma
-            .multi_insert_simple_average(heights, dates, &mut self.closes, 55);
+            .multi_insert_simple_average(heights, dates, &mut self.close, 55);
 
         self.price_89d_sma
-            .multi_insert_simple_average(heights, dates, &mut self.closes, 89);
+            .multi_insert_simple_average(heights, dates, &mut self.close, 89);
 
         self.price_144d_sma
-            .multi_insert_simple_average(heights, dates, &mut self.closes, 144);
+            .multi_insert_simple_average(heights, dates, &mut self.close, 144);
 
         self.price_200w_sma.multi_insert_simple_average(
             heights,
             dates,
-            &mut self.closes,
+            &mut self.close,
             200 * ONE_WEEK_IN_DAYS,
         );
 
         self.price_1d_total_return
-            .multi_insert_percentage_change(dates, &mut self.closes.date, 1);
+            .multi_insert_percentage_change(dates, &mut self.close.date, 1);
         self.price_1m_total_return.multi_insert_percentage_change(
             dates,
-            &mut self.closes.date,
+            &mut self.close.date,
             ONE_MONTH_IN_DAYS,
         );
         self.price_6m_total_return.multi_insert_percentage_change(
             dates,
-            &mut self.closes.date,
+            &mut self.close.date,
             6 * ONE_MONTH_IN_DAYS,
         );
         self.price_1y_total_return.multi_insert_percentage_change(
             dates,
-            &mut self.closes.date,
+            &mut self.close.date,
             ONE_YEAR_IN_DAYS,
         );
         self.price_2y_total_return.multi_insert_percentage_change(
             dates,
-            &mut self.closes.date,
+            &mut self.close.date,
             2 * ONE_YEAR_IN_DAYS,
         );
         self.price_3y_total_return.multi_insert_percentage_change(
             dates,
-            &mut self.closes.date,
+            &mut self.close.date,
             3 * ONE_YEAR_IN_DAYS,
         );
         self.price_4y_total_return.multi_insert_percentage_change(
             dates,
-            &mut self.closes.date,
+            &mut self.close.date,
             4 * ONE_YEAR_IN_DAYS,
         );
         self.price_6y_total_return.multi_insert_percentage_change(
             dates,
-            &mut self.closes.date,
+            &mut self.close.date,
             6 * ONE_YEAR_IN_DAYS,
         );
         self.price_8y_total_return.multi_insert_percentage_change(
             dates,
-            &mut self.closes.date,
+            &mut self.close.date,
             8 * ONE_YEAR_IN_DAYS,
         );
         self.price_10y_total_return.multi_insert_percentage_change(
             dates,
-            &mut self.closes.date,
+            &mut self.close.date,
             10 * ONE_YEAR_IN_DAYS,
         );
 
         self.price_4y_compound_return
             .multi_insert_complex_transform(
                 dates,
-                &mut self.closes.date,
-                |(last_value, date, closes)| {
+                &mut self.close.date,
+                |(last_value, date, closes, _)| {
                     let previous_value = date
                         .checked_sub_days(Days::new(4 * ONE_YEAR_IN_DAYS as u64))
                         .and_then(|date| closes.get_or_import(&Date::wrap(date)))
@@ -289,37 +318,69 @@ impl PriceDatasets {
             );
 
         self.price_1w_sma_ratio
-            .compute(compute_data, &mut self.closes, &mut self.price_1w_sma);
+            .compute(compute_data, &mut self.close, &mut self.price_1w_sma);
         self.price_1m_sma_ratio
-            .compute(compute_data, &mut self.closes, &mut self.price_1m_sma);
+            .compute(compute_data, &mut self.close, &mut self.price_1m_sma);
         self.price_1y_sma_ratio
-            .compute(compute_data, &mut self.closes, &mut self.price_1y_sma);
+            .compute(compute_data, &mut self.close, &mut self.price_1y_sma);
         self.price_2y_sma_ratio
-            .compute(compute_data, &mut self.closes, &mut self.price_2y_sma);
+            .compute(compute_data, &mut self.close, &mut self.price_2y_sma);
         self.price_4y_sma_ratio
-            .compute(compute_data, &mut self.closes, &mut self.price_4y_sma);
+            .compute(compute_data, &mut self.close, &mut self.price_4y_sma);
         self.price_8d_sma_ratio
-            .compute(compute_data, &mut self.closes, &mut self.price_8d_sma);
+            .compute(compute_data, &mut self.close, &mut self.price_8d_sma);
         self.price_13d_sma_ratio
-            .compute(compute_data, &mut self.closes, &mut self.price_13d_sma);
+            .compute(compute_data, &mut self.close, &mut self.price_13d_sma);
         self.price_21d_sma_ratio
-            .compute(compute_data, &mut self.closes, &mut self.price_21d_sma);
+            .compute(compute_data, &mut self.close, &mut self.price_21d_sma);
         self.price_34d_sma_ratio
-            .compute(compute_data, &mut self.closes, &mut self.price_34d_sma);
+            .compute(compute_data, &mut self.close, &mut self.price_34d_sma);
         self.price_55d_sma_ratio
-            .compute(compute_data, &mut self.closes, &mut self.price_55d_sma);
+            .compute(compute_data, &mut self.close, &mut self.price_55d_sma);
         self.price_89d_sma_ratio
-            .compute(compute_data, &mut self.closes, &mut self.price_89d_sma);
+            .compute(compute_data, &mut self.close, &mut self.price_89d_sma);
         self.price_144d_sma_ratio
-            .compute(compute_data, &mut self.closes, &mut self.price_144d_sma);
+            .compute(compute_data, &mut self.close, &mut self.price_144d_sma);
         self.price_200w_sma_ratio
-            .compute(compute_data, &mut self.closes, &mut self.price_200w_sma);
+            .compute(compute_data, &mut self.close, &mut self.price_200w_sma);
 
         self.all_time_high
-            .multi_insert_max(heights, dates, &mut self.closes);
+            .multi_insert_max(heights, dates, &mut self.high);
 
         self.market_price_to_all_time_high_ratio
-            .multi_insert_percentage(heights, dates, &mut self.closes, &mut self.all_time_high);
+            .multi_insert_percentage(heights, dates, &mut self.close, &mut self.all_time_high);
+
+        self.all_time_high_date.multi_insert_complex_transform(
+            dates,
+            &mut self.all_time_high.date,
+            |(value, date, _, map)| {
+                let high = self.high.date.get(date).unwrap();
+                let is_ath = high == value;
+
+                if is_ath {
+                    *date
+                } else {
+                    let previous_date = date.checked_sub(1).unwrap();
+                    *map.get(&previous_date).as_ref().unwrap_or(date)
+                }
+            },
+        );
+
+        self.days_since_all_time_high.multi_insert_simple_transform(
+            dates,
+            &mut self.all_time_high_date,
+            |value, key| key.difference_in_days_between(value),
+        );
+
+        self.max_days_between_all_time_highs
+            .multi_insert_max(dates, &mut self.days_since_all_time_high);
+
+        self.max_years_between_all_time_highs
+            .multi_insert_simple_transform(
+                dates,
+                &mut self.max_days_between_all_time_highs,
+                |days, _| (days as f64 / ONE_YEAR_IN_DAYS as f64) as f32,
+            );
 
         self.drawdown.multi_insert_simple_transform(
             heights,
@@ -331,21 +392,21 @@ impl PriceDatasets {
         self.sats_per_dollar.multi_insert_simple_transform(
             heights,
             dates,
-            &mut self.closes,
+            &mut self.close,
             &|price| Amount::ONE_BTC_F32 / price,
         );
     }
 
     pub fn get_date_ohlc(&mut self, date: Date) -> color_eyre::Result<OHLC> {
-        if self.ohlcs.date.is_key_safe(date) {
-            Ok(self.ohlcs.date.get(&date).unwrap().to_owned())
+        if self.ohlc.date.is_key_safe(date) {
+            Ok(self.ohlc.date.get(&date).unwrap().to_owned())
         } else {
             let ohlc = self
                 .get_from_daily_kraken(&date)
                 .or_else(|_| self.get_from_daily_binance(&date))
                 .or_else(|_| self.get_from_date_kibo(&date))?;
 
-            self.ohlcs.date.insert(date, ohlc);
+            self.ohlc.date.insert(date, ohlc);
 
             Ok(ohlc)
         }
@@ -427,7 +488,7 @@ impl PriceDatasets {
         timestamp: Timestamp,
         previous_timestamp: Option<Timestamp>,
     ) -> color_eyre::Result<OHLC> {
-        if let Some(ohlc) = self.ohlcs.height.get(&height) {
+        if let Some(ohlc) = self.ohlc.height.get(&height) {
             return Ok(ohlc);
         }
 
@@ -469,7 +530,7 @@ How to fix this:
                     })
             });
 
-        self.ohlcs.height.insert(height, ohlc);
+        self.ohlc.height.insert(height, ohlc);
 
         Ok(ohlc)
     }
@@ -617,16 +678,19 @@ impl AnyDataset for PriceDatasets {
     }
 
     fn to_inserted_bi_map_vec(&self) -> Vec<&(dyn AnyBiMap + Send + Sync)> {
-        vec![&self.ohlcs]
+        vec![&self.ohlc]
     }
 
     fn to_inserted_mut_bi_map_vec(&mut self) -> Vec<&mut dyn AnyBiMap> {
-        vec![&mut self.ohlcs]
+        vec![&mut self.ohlc]
     }
 
     fn to_computed_bi_map_vec(&self) -> Vec<&(dyn AnyBiMap + Send + Sync)> {
         let mut v = vec![
-            &self.closes as &(dyn AnyBiMap + Send + Sync),
+            &self.open as &(dyn AnyBiMap + Send + Sync),
+            &self.high,
+            &self.low,
+            &self.close,
             &self.market_cap,
             &self.price_1w_sma,
             &self.price_1m_sma,
@@ -666,7 +730,10 @@ impl AnyDataset for PriceDatasets {
 
     fn to_computed_mut_bi_map_vec(&mut self) -> Vec<&mut dyn AnyBiMap> {
         let mut v = vec![
-            &mut self.closes as &mut dyn AnyBiMap,
+            &mut self.open as &mut dyn AnyBiMap,
+            &mut self.high,
+            &mut self.low,
+            &mut self.close,
             &mut self.market_cap,
             &mut self.price_1w_sma,
             &mut self.price_1m_sma,
@@ -717,6 +784,10 @@ impl AnyDataset for PriceDatasets {
             &self.price_8y_total_return,
             &self.price_10y_total_return,
             &self.price_4y_compound_return,
+            &self.all_time_high_date,
+            &self.days_since_all_time_high,
+            &self.max_days_between_all_time_highs,
+            &self.max_years_between_all_time_highs,
         ]
     }
 
@@ -733,6 +804,10 @@ impl AnyDataset for PriceDatasets {
             &mut self.price_8y_total_return,
             &mut self.price_10y_total_return,
             &mut self.price_4y_compound_return,
+            &mut self.all_time_high_date,
+            &mut self.days_since_all_time_high,
+            &mut self.max_days_between_all_time_highs,
+            &mut self.max_years_between_all_time_highs,
         ]
     }
 }

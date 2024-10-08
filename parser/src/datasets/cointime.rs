@@ -186,7 +186,7 @@ impl CointimeDataset {
             .multi_insert_simple_transform(
                 heights,
                 &mut circulating_supply.height,
-                |circulating_supply| circulating_supply as f32,
+                |circulating_supply, _| circulating_supply as f32,
             );
         self.coinblocks_created
             .multi_date_insert_sum_range(dates, first_height, last_height);
@@ -414,7 +414,7 @@ impl CointimeDataset {
             .multi_insert_complex_transform(
                 dates,
                 &mut self.active_cap.date,
-                |(active_cap, date, _)| {
+                |(active_cap, date, _, _)| {
                     let investor_cap = self.investor_cap.date.get(date).unwrap();
                     (active_cap - investor_cap) / active_cap
                 },

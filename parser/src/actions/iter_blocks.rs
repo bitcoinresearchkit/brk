@@ -27,12 +27,10 @@ pub fn iter_blocks(
     log("Starting...");
 
     let mut datasets = AllDatasets::import()?;
-    // RAM: 200MB at this point
 
     log("Imported datasets");
 
     let mut databases = Databases::import();
-    // RAM: 200MB too
 
     log("Imported databases");
 

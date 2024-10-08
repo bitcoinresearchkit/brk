@@ -12,10 +12,16 @@
 ## Datasets
 
 - Added `Sell Side Risk Ratio` to all entities
-- Added `Adjusted Value Created`, `Adjusted Value Destroyed` and `Adjusted Spent Output Profit Ratio` to all entities
+- Added `Open`, `High` and `Low` datasets
 - Added `Satoshis Per Dollar`
 - Added `All Time High`
+- Added `All Time High Date`
+- Added `Days Since All Time High`
+- Added `Max Days Between All Time Highs`
+- Added `Max Years Between All Time Highs`
 - Added `Drawdown`
+- Added `Adjusted Value Created`, `Adjusted Value Destroyed` and `Adjusted Spent Output Profit Ratio` to all entities
+- Added `Realized Profit To Loss Ratio` to all entities
 - Removed datasets split by liquidity for all datasets already split by any address kind, while fun to have, they took time to compute, ram, and space to store and no one was actually checking them
 - Fixed a lot of values in split by liquidity datasets
 

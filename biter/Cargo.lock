@@ -110,7 +110,7 @@ dependencies = [
 
 [[package]]
 name = "biter"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "bitcoin",
  "bitcoincore-rpc",

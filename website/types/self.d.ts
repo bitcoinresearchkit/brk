@@ -77,21 +77,23 @@ type SeriesBlueprint = {
 } & AnySpecificSeriesBlueprint;
 
 type Unit =
-  | "US Dollars"
+  | ""
   | "Bitcoin"
-  | "Percentage"
-  | "Height"
-  | "Count"
-  | "Megabytes"
-  | "Transactions"
-  | "Weight"
-  | "Ratio"
-  | "Virtual Bytes"
-  | "Seconds"
   | "Coinblocks"
-  | "ExaHash / Second"
+  | "Count"
+  | "Date"
   | "Dollars / (PetaHash / Second)"
-  | "";
+  | "ExaHash / Second"
+  | "Height"
+  | "Megabytes"
+  | "Percentage"
+  | "Ratio"
+  | "Satoshis"
+  | "Seconds"
+  | "Transactions"
+  | "US Dollars"
+  | "Virtual Bytes"
+  | "Weight";
 
 interface PartialOption {
   icon: string;
@@ -107,6 +109,7 @@ interface PartialHomeOption extends PartialOption {
 interface PartialDashboardOption extends PartialOption {
   title: string;
   description: string;
+  defaultOpen?: false;
   groups: {
     name: string;
     unit?: Unit;
@@ -114,6 +117,7 @@ interface PartialDashboardOption extends PartialOption {
       name: string;
       path?: LastPath;
       unit?: Unit;
+      long?: true;
     }[];
   }[];
 }
@@ -194,7 +198,7 @@ interface OHLC {
 
 interface ResourceDataset<
   Scale extends TimeScale,
-  Type extends OHLC | number = number
+  Type extends OHLC | number = number,
 > {
   scale: Scale;
   url: string;
@@ -212,7 +216,7 @@ interface FetchedResult<
     SingleValueData | ValuedCandlestickData
   > = DatasetValue<
     Type extends number ? SingleValueData : ValuedCandlestickData
-  >
+  >,
 > {
   at: Date | null;
   json: Signal<FetchedJSON<Scale, Type> | null>;
@@ -242,7 +246,7 @@ interface FetchedChunk {
 
 type FetchedDataset<
   Scale extends TimeScale,
-  Type extends number | OHLC
+  Type extends number | OHLC,
 > = Scale extends "date"
   ? FetchedDateDataset<Type>
   : FetchedHeightDataset<Type>;

@@ -122,7 +122,7 @@ impl RatioDataset {
 
         self.ratio_1y_sma_momentum_oscillator
             .date
-            .multi_insert_complex_transform(dates, &mut self.ratio.date, |(ratio, date, _)| {
+            .multi_insert_complex_transform(dates, &mut self.ratio.date, |(ratio, date, _, _)| {
                 (ratio / self.ratio_1y_sma.date.get_or_import(date).unwrap()) - 1.0
             });
 

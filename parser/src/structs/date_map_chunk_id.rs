@@ -21,8 +21,8 @@ impl MapChunkId for DateMapChunkId {
         self.0.to_string()
     }
 
-    fn from_path(path: &Path) -> Self {
-        Self(
+    fn from_path(path: &Path) -> color_eyre::Result<Self> {
+        Ok(Self(
             path.file_name()
                 .unwrap()
                 .to_str()
@@ -30,9 +30,8 @@ impl MapChunkId for DateMapChunkId {
                 .split(".")
                 .next()
                 .unwrap()
-                .parse::<i32>()
-                .unwrap(),
-        )
+                .parse::<i32>()?,
+        ))
     }
 
     fn to_usize(self) -> usize {

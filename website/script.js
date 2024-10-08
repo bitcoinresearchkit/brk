@@ -1,7 +1,7 @@
 // @ts-check
 
 /**
- * @import { OptionPath, PartialOption, PartialOptionsGroup, PartialOptionsTree, Option, OptionsGroup, Series, PriceSeriesType, ResourceDataset, TimeScale, SerializedHistory, TimeRange, Unit, Marker, Weighted, DatasetPath, OHLC, FetchedJSON, DatasetValue, FetchedResult, AnyDatasetPath, SeriesBlueprint, BaselineSpecificSeriesBlueprint, CandlestickSpecificSeriesBlueprint, LineSpecificSeriesBlueprint, SpecificSeriesBlueprintWithChart, Signal, Color, SettingsTheme, DatasetCandlestickData, FoldersFilter, PartialChartOption, ChartOption, AnyPartialOption, ProcessedOptionAddons } from "./types/self"
+ * @import { OptionPath, PartialOption, PartialOptionsGroup, PartialOptionsTree, Option, OptionsGroup, Series, PriceSeriesType, ResourceDataset, TimeScale, SerializedHistory, TimeRange, Unit, Marker, Weighted, DatasetPath, OHLC, FetchedJSON, DatasetValue, FetchedResult, AnyDatasetPath, SeriesBlueprint, BaselineSpecificSeriesBlueprint, CandlestickSpecificSeriesBlueprint, LineSpecificSeriesBlueprint, SpecificSeriesBlueprintWithChart, Signal, Color, SettingsTheme, DatasetCandlestickData, FoldersFilter, PartialChartOption, ChartOption, AnyPartialOption, ProcessedOptionAddons, DashboardOption } from "./types/self"
  * @import {createChart as CreateClassicChart, createChartEx as CreateCustomChart} from "./packages/lightweight-charts/v4.2.0/types";
  * @import * as _ from "./packages/ufuzzy/v1.0.14/types"
  * @import { DeepPartial, ChartOptions, IChartApi, IHorzScaleBehavior, WhitespaceData, SingleValueData, ISeriesApi, Time, LogicalRange, SeriesMarker, CandlestickData, SeriesType, BaselineStyleOptions, SeriesOptionsCommon } from "./packages/lightweight-charts/v4.2.0/types"
@@ -11,46 +11,585 @@
  * @import { createSignal as CreateSignal, createEffect as CreateEffect, Accessor, Setter, createMemo as CreateMemo, createRoot as CreateRoot, runWithOwner as RunWithOwner } from "./packages/solid-signals/2024-04-17/types/signals";
  */
 
-function importSignals() {
-  return import("./packages/solid-signals/2024-04-17/script.js").then(
-    (_signals) => {
-      const signals = {
-        createSolidSignal: /** @type {CreateSignal} */ (_signals.createSignal),
-        createEffect: /** @type {CreateEffect} */ (_signals.createEffect),
-        createMemo: /** @type {CreateMemo} */ (_signals.createMemo),
-        createRoot: /** @type {CreateRoot} */ (_signals.createRoot),
-        untrack: /** @type {Untrack} */ (_signals.untrack),
-        getOwner: /** @type {GetOwner} */ (_signals.getOwner),
-        runWithOwner: /** @type {RunWithOwner} */ (_signals.runWithOwner),
-        onCleanup: /** @type {OnCleanup} */ (_signals.onCleanup),
-        flushSync: _signals.flushSync,
-        /**
-         * @template T
-         * @param {T} initialValue
-         * @param {SignalOptions<T>} [options]
-         * @returns {Signal<T>}
-         */
-        createSignal(initialValue, options) {
-          const [get, set] = this.createSolidSignal(initialValue, options);
-          // @ts-ignore
-          get.set = set;
-          // @ts-ignore
-          return get;
-        },
-        /**
-         * @param {(dispose: VoidFunction) => void} callback
-         */
-        createUntrackedRoot: (callback) =>
-          signals.untrack(() => {
-            signals.createRoot(callback);
-          }),
-      };
+function initPackages() {
+  async function importSignals() {
+    return import("./packages/solid-signals/2024-04-17/script.js").then(
+      (_signals) => {
+        const signals = {
+          createSolidSignal: /** @type {CreateSignal} */ (
+            _signals.createSignal
+          ),
+          createEffect: /** @type {CreateEffect} */ (_signals.createEffect),
+          createMemo: /** @type {CreateMemo} */ (_signals.createMemo),
+          createRoot: /** @type {CreateRoot} */ (_signals.createRoot),
+          untrack: /** @type {Untrack} */ (_signals.untrack),
+          getOwner: /** @type {GetOwner} */ (_signals.getOwner),
+          runWithOwner: /** @type {RunWithOwner} */ (_signals.runWithOwner),
+          onCleanup: /** @type {OnCleanup} */ (_signals.onCleanup),
+          flushSync: _signals.flushSync,
+          /**
+           * @template T
+           * @param {T} initialValue
+           * @param {SignalOptions<T>} [options]
+           * @returns {Signal<T>}
+           */
+          createSignal(initialValue, options) {
+            const [get, set] = this.createSolidSignal(initialValue, options);
+            // @ts-ignore
+            get.set = set;
+            // @ts-ignore
+            return get;
+          },
+          /**
+           * @param {(dispose: VoidFunction) => void} callback
+           */
+          createUntrackedRoot: (callback) =>
+            signals.untrack(() => {
+              signals.createRoot(callback);
+            }),
+        };
 
-      return signals;
-    }
-  );
+        return signals;
+      },
+    );
+  }
+
+  /** @typedef {Awaited<ReturnType<typeof importSignals>>} Signals */
+
+  const imports = {
+    signals: importSignals,
+    async lightweightCharts() {
+      return window.document.fonts.ready.then(() =>
+        import("./packages/lightweight-charts/v4.2.0/script.js").then(
+          ({
+            createChart: createClassicChart,
+            createChartEx: createCustomChart,
+          }) => {
+            /**
+             * @class
+             * @implements {IHorzScaleBehavior<number>}
+             */
+            class HorzScaleBehaviorHeight {
+              options() {
+                return /** @type {any} */ (undefined);
+              }
+              setOptions() {}
+              preprocessData() {}
+              updateFormatter() {}
+
+              createConverterToInternalObj() {
+                /** @type {(p: any) => any} */
+                return (price) => price;
+              }
+
+              /** @param {any} item  */
+              key(item) {
+                return item;
+              }
+
+              /** @param {any} item  */
+              cacheKey(item) {
+                return item;
+              }
+
+              /** @param {any} item  */
+              convertHorzItemToInternal(item) {
+                return item;
+              }
+
+              /** @param {any} item  */
+              formatHorzItem(item) {
+                return item;
+              }
+
+              /** @param {any} tickMark  */
+              formatTickmark(tickMark) {
+                return tickMark.time.toLocaleString("en-us");
+              }
+
+              /** @param {any} tickMarks  */
+              maxTickMarkWeight(tickMarks) {
+                return tickMarks.reduce(
+                  this.getMarkWithGreaterWeight,
+                  tickMarks[0],
+                ).weight;
+              }
+
+              /**
+               * @param {any} sortedTimePoints
+               * @param {number} startIndex
+               */
+              fillWeightsForPoints(sortedTimePoints, startIndex) {
+                for (
+                  let index = startIndex;
+                  index < sortedTimePoints.length;
+                  ++index
+                ) {
+                  sortedTimePoints[index].timeWeight = this.computeHeightWeight(
+                    sortedTimePoints[index].time,
+                  );
+                }
+              }
+
+              /**
+               * @param {any} a
+               * @param {any} b
+               */
+              getMarkWithGreaterWeight(a, b) {
+                return a.weight > b.weight ? a : b;
+              }
+
+              /** @param {number} value  */
+              computeHeightWeight(value) {
+                // if (value === Math.ceil(value / 1000000) * 1000000) {
+                //   return 12;
+                // }
+                if (value === Math.ceil(value / 100000) * 100000) {
+                  return 11;
+                }
+                if (value === Math.ceil(value / 10000) * 10000) {
+                  return 10;
+                }
+                if (value === Math.ceil(value / 1000) * 1000) {
+                  return 9;
+                }
+                if (value === Math.ceil(value / 100) * 100) {
+                  return 8;
+                }
+                if (value === Math.ceil(value / 50) * 50) {
+                  return 7;
+                }
+                if (value === Math.ceil(value / 25) * 25) {
+                  return 6;
+                }
+                if (value === Math.ceil(value / 10) * 10) {
+                  return 5;
+                }
+                if (value === Math.ceil(value / 5) * 5) {
+                  return 4;
+                }
+                if (value === Math.ceil(value)) {
+                  return 3;
+                }
+                if (value * 2 === Math.ceil(value * 2)) {
+                  return 1;
+                }
+
+                return 0;
+              }
+            }
+
+            /**
+             * @param {Object} args
+             * @param {TimeScale} args.scale
+             * @param {HTMLElement} args.element
+             * @param {Signals} args.signals
+             * @param {Colors} args.colors
+             */
+            function createChart({ scale, element, signals, colors }) {
+              /** @satisfies {DeepPartial<ChartOptions>} */
+              const options = {
+                autoSize: true,
+                layout: {
+                  fontFamily: "Satoshi Chart",
+                  // fontSize: 13,
+                  background: { color: "transparent" },
+                  attributionLogo: false,
+                },
+                grid: {
+                  vertLines: { visible: false },
+                  horzLines: { visible: false },
+                },
+                timeScale: {
+                  minBarSpacing: 0.05,
+                  shiftVisibleRangeOnNewBar: false,
+                  allowShiftVisibleRangeOnWhitespaceReplacement: false,
+                },
+                handleScale: {
+                  axisDoubleClickReset: {
+                    time: false,
+                  },
+                },
+                crosshair: {
+                  mode: 0,
+                },
+                localization: {
+                  priceFormatter: utils.locale.numberToShortUSFormat,
+                  locale: "en-us",
+                  ...(scale === "date"
+                    ? {
+                        // dateFormat: "EEEE, dd MMM 'yy",
+                      }
+                    : {}),
+                },
+              };
+
+              /** @type {IChartApi} */
+              let chart;
+
+              if (scale === "date") {
+                chart = createClassicChart(element, options);
+              } else {
+                const horzScaleBehavior = new HorzScaleBehaviorHeight();
+                // @ts-ignore
+                chart = createCustomChart(element, horzScaleBehavior, options);
+              }
+
+              chart.priceScale("right").applyOptions({
+                scaleMargins: {
+                  top: 0.075,
+                  bottom: 0.05,
+                },
+                minimumWidth: 78,
+              });
+
+              signals.createEffect(() => {
+                const { default: _defaultColor, off: _offColor } = colors;
+
+                const defaultColor = _defaultColor();
+                const offColor = _offColor();
+
+                chart.applyOptions({
+                  layout: {
+                    textColor: offColor,
+                  },
+                  rightPriceScale: {
+                    borderVisible: false,
+                  },
+                  timeScale: {
+                    borderVisible: false,
+                  },
+                  crosshair: {
+                    horzLine: {
+                      color: defaultColor,
+                      labelBackgroundColor: defaultColor,
+                    },
+                    vertLine: {
+                      color: defaultColor,
+                      labelBackgroundColor: defaultColor,
+                    },
+                  },
+                });
+              });
+
+              return chart;
+            }
+
+            /**
+             * @type {DeepPartial<SeriesOptionsCommon>}
+             */
+            const defaultSeriesOptions = {
+              // @ts-ignore
+              lineWidth: 1.5,
+              priceLineVisible: false,
+              baseLineVisible: false,
+              baseLineColor: "",
+            };
+
+            /**
+             * @param {SpecificSeriesBlueprintWithChart<BaselineSpecificSeriesBlueprint> & {colors: Colors, signals: Signals}} args
+             */
+            function createBaseLineSeries({
+              chart,
+              color,
+              options,
+              owner,
+              colors,
+              signals,
+            }) {
+              const topLineColor = color || colors.profit;
+              const bottomLineColor = color || colors.loss;
+
+              function computeColors() {
+                return {
+                  topLineColor: topLineColor(),
+                  bottomLineColor: bottomLineColor(),
+                };
+              }
+
+              const transparent = "transparent";
+
+              /** @type {DeepPartial<BaselineStyleOptions & SeriesOptionsCommon>} */
+              const seriesOptions = {
+                priceScaleId: "right",
+                ...defaultSeriesOptions,
+                ...options,
+                topFillColor1: transparent,
+                topFillColor2: transparent,
+                bottomFillColor1: transparent,
+                bottomFillColor2: transparent,
+                ...computeColors(),
+              };
+
+              const series = chart.addBaselineSeries(seriesOptions);
+
+              signals.runWithOwner(owner, () => {
+                signals.createEffect(() => {
+                  series.applyOptions(computeColors());
+                });
+              });
+
+              return series;
+            }
+
+            /**
+             * @param {SpecificSeriesBlueprintWithChart<CandlestickSpecificSeriesBlueprint> & {colors: Colors, signals: Signals}} args
+             */
+            function createCandlesticksSeries({
+              chart,
+              options,
+              owner,
+              signals,
+              colors,
+            }) {
+              function computeColors() {
+                const upColor = colors.profit();
+                const downColor = colors.loss();
+
+                return {
+                  upColor,
+                  wickUpColor: upColor,
+                  downColor,
+                  wickDownColor: downColor,
+                };
+              }
+
+              const candlestickSeries = chart.addCandlestickSeries({
+                baseLineVisible: false,
+                borderVisible: false,
+                priceLineVisible: false,
+                baseLineColor: "",
+                borderColor: "",
+                borderDownColor: "",
+                borderUpColor: "",
+                ...options,
+                ...computeColors(),
+              });
+
+              signals.runWithOwner(owner, () => {
+                signals.createEffect(() => {
+                  candlestickSeries.applyOptions(computeColors());
+                });
+              });
+
+              return candlestickSeries;
+            }
+
+            /**
+             * @param {SpecificSeriesBlueprintWithChart<LineSpecificSeriesBlueprint> & {colors: Colors, signals: Signals}} args
+             */
+            function createLineSeries({
+              chart,
+              color,
+              options,
+              owner,
+              signals,
+              colors,
+            }) {
+              function computeColors() {
+                return {
+                  color: color(),
+                };
+              }
+
+              const series = chart.addLineSeries({
+                ...defaultSeriesOptions,
+                ...options,
+                ...computeColors(),
+              });
+
+              signals.runWithOwner(owner, () => {
+                signals.createEffect(() => {
+                  series.applyOptions(computeColors());
+                });
+              });
+
+              return series;
+            }
+
+            function initWhitespace() {
+              const whitespaceStartDate = new Date("1970-01-01");
+              const whitespaceStartDateYear =
+                whitespaceStartDate.getUTCFullYear();
+              const whitespaceStartDateMonth =
+                whitespaceStartDate.getUTCMonth();
+              const whitespaceStartDateDate = whitespaceStartDate.getUTCDate();
+              const whitespaceEndDate = new Date("2141-01-01");
+              let whitespaceDateDataset =
+                /** @type {(WhitespaceData | SingleValueData)[]} */ ([]);
+
+              function initDateWhitespace() {
+                whitespaceDateDataset = new Array(
+                  utils.getNumberOfDaysBetweenTwoDates(
+                    whitespaceStartDate,
+                    whitespaceEndDate,
+                  ),
+                );
+                // Hack to be able to scroll freely
+                // Setting them all to NaN is much slower
+                for (let i = 0; i < whitespaceDateDataset.length; i++) {
+                  const date = new Date(
+                    whitespaceStartDateYear,
+                    whitespaceStartDateMonth,
+                    whitespaceStartDateDate + i,
+                  );
+
+                  const time = utils.dateToString(date);
+
+                  if (i === whitespaceDateDataset.length - 1) {
+                    whitespaceDateDataset[i] = {
+                      time,
+                      value: NaN,
+                    };
+                  } else {
+                    whitespaceDateDataset[i] = {
+                      time,
+                    };
+                  }
+                }
+              }
+
+              const heightStart = -50_000;
+              let whitespaceHeightDataset =
+                /** @type {WhitespaceData[]} */ ([]);
+
+              function initHeightWhitespace() {
+                whitespaceHeightDataset = new Array(
+                  (new Date().getUTCFullYear() - 2009 + 1) * 60_000,
+                );
+                for (let i = 0; i < whitespaceHeightDataset.length; i++) {
+                  const height = heightStart + i;
+
+                  whitespaceHeightDataset[i] = {
+                    time: /** @type {Time} */ (height),
+                  };
+                }
+              }
+
+              /**
+               * @param {IChartApi} chart
+               * @param {TimeScale} scale
+               * @returns {ISeriesApi<'Line'>}
+               */
+              function setWhitespace(chart, scale) {
+                const whitespace = chart.addLineSeries();
+
+                if (scale === "date") {
+                  if (!whitespaceDateDataset.length) {
+                    initDateWhitespace();
+                  }
+
+                  whitespace.setData(whitespaceDateDataset);
+                } else {
+                  if (!whitespaceHeightDataset.length) {
+                    initHeightWhitespace();
+                  }
+
+                  whitespace.setData(whitespaceHeightDataset);
+
+                  const time = whitespaceHeightDataset.length;
+                  whitespace.update({
+                    time: /** @type {Time} */ (time),
+                    value: NaN,
+                  });
+                }
+
+                return whitespace;
+              }
+
+              return { setWhitespace };
+            }
+            const { setWhitespace } = initWhitespace();
+
+            /**
+             *
+             * @param {Parameters<typeof createChart>[0]} args
+             */
+            function createChartWithWhitespace({
+              element,
+              scale,
+              colors,
+              signals,
+            }) {
+              const chart =
+                /** @type {IChartApi & {whitespace: ISeriesApi<"Line">}} */ (
+                  createChart({
+                    colors,
+                    element,
+                    scale,
+                    signals,
+                  })
+                );
+              chart.whitespace = setWhitespace(chart, scale);
+              return chart;
+            }
+
+            return {
+              createChart,
+              createChartWithWhitespace,
+              createBaseLineSeries,
+              createCandlesticksSeries,
+              createLineSeries,
+            };
+          },
+        ),
+      );
+    },
+    async flexmasonry() {
+      return import("./packages/flexmasonry/v0.2.3-modified/script.js").then(
+        ({ default: d }) => d,
+      );
+    },
+    async leanQr() {
+      return import("./packages/lean-qr/v2.3.4/script.js").then((d) => d);
+    },
+    async ufuzzy() {
+      return import("./packages/ufuzzy/v1.0.14/script.js").then(
+        ({ default: d }) => d,
+      );
+    },
+  };
+
+  /**
+   * @typedef {ReturnType<typeof imports.signals>} SignalsPromise
+   * @typedef {ReturnType<typeof imports.lightweightCharts>} LightweightChartsPromise
+   * @typedef {ReturnType<typeof imports.flexmasonry>} FlexmasonryPromise
+   * @typedef {ReturnType<typeof imports.leanQr>} LeanQrPromise
+   * @typedef {ReturnType<typeof imports.ufuzzy>} uFuzzyPromise
+   */
+
+  /**
+   * @template {keyof typeof imports} K
+   * @param {K} key
+   */
+  function importPackage(key) {
+    /** @type {ReturnType<typeof imports[K]> | null} */
+    let packagePromise = null;
+
+    return function () {
+      let p = null;
+      if (!packagePromise) {
+        // @ts-ignore
+        packagePromise = imports[key]();
+      }
+      return /** @type {ReturnType<typeof imports[K]>} */ (packagePromise);
+    };
+  }
+
+  return {
+    signals: importPackage("signals"),
+    lightweightCharts: importPackage("lightweightCharts"),
+    flexmasonry: importPackage("flexmasonry"),
+    leanQr: importPackage("leanQr"),
+    ufuzzy: importPackage("ufuzzy"),
+  };
 }
-const signalsPromise = importSignals();
+const packages = initPackages();
+/**
+ * @typedef {Awaited<ReturnType<typeof packages.signals>>} Signals
+ * @typedef {Awaited<ReturnType<typeof packages.lightweightCharts>>} LightweightCharts
+ * @typedef {Awaited<ReturnType<typeof packages.flexmasonry>>} Flexmasonry
+ */
 
 const utils = {
   /**
@@ -268,6 +807,15 @@ const utils = {
   url: {
     chartParamsWhitelist: ["from", "to"],
     /**
+     * @param {string} pathname
+     */
+    pushHistory(pathname) {
+      const urlParams = new URLSearchParams(window.location.search);
+      pathname ||= window.location.pathname;
+
+      window.history.pushState(null, "", `${pathname}?${urlParams.toString()}`);
+    },
+    /**
      * @param {Object} args
      * @param {URLSearchParams} [args.urlParams]
      * @param {string} [args.pathname]
@@ -279,7 +827,7 @@ const utils = {
       window.history.replaceState(
         null,
         "",
-        `${pathname}?${urlParams.toString()}`
+        `${pathname}?${urlParams.toString()}`,
       );
     },
     /**
@@ -384,17 +932,17 @@ const utils = {
       if (modulused === 0) {
         return `${utils.locale.numberToUSFormat(
           value / (1_000_000 * 1_000 ** letterIndex),
-          3
+          3,
         )}${letter}`;
       } else if (modulused === 1) {
         return `${utils.locale.numberToUSFormat(
           value / (1_000_000 * 1_000 ** letterIndex),
-          2
+          2,
         )}${letter}`;
       } else {
         return `${utils.locale.numberToUSFormat(
           value / (1_000_000 * 1_000 ** letterIndex),
-          1
+          1,
         )}${letter}`;
       }
     },
@@ -497,7 +1045,7 @@ const utils = {
    */
   getNumberOfDaysBetweenTwoDates(oldest, youngest) {
     return Math.round(
-      Math.abs((youngest.getTime() - oldest.getTime()) / consts.ONE_DAY_IN_MS)
+      Math.abs((youngest.getTime() - oldest.getTime()) / consts.ONE_DAY_IN_MS),
     );
   },
 };
@@ -606,7 +1154,7 @@ const elements = {
   selectors: utils.dom.getElementById("frame-selectors"),
   foldersFilterAllCount: utils.dom.getElementById("folders-filter-all-count"),
   foldersFilterFavoritesCount: utils.dom.getElementById(
-    "folders-filter-favorites-count"
+    "folders-filter-favorites-count",
   ),
   foldersFilterNewCount: utils.dom.getElementById("folders-filter-new-count"),
   chartList: utils.dom.getElementById("chart-list"),
@@ -730,7 +1278,237 @@ function createKeyDownEventListener() {
 }
 createKeyDownEventListener();
 
-signalsPromise.then((signals) => {
+/**
+ * @param {Accessor<boolean>} dark
+ */
+function createColors(dark) {
+  function lightRed() {
+    const tailwindRed300 = "#fca5a5";
+    const tailwindRed800 = "#991b1b";
+    return dark() ? tailwindRed300 : tailwindRed800;
+  }
+  function red() {
+    return "#e63636"; // 550
+  }
+  function darkRed() {
+    const tailwindRed900 = "#7f1d1d";
+    const tailwindRed100 = "#fee2e2";
+    return dark() ? tailwindRed900 : tailwindRed100;
+  }
+  function orange() {
+    return elements.style.getPropertyValue("--orange"); // 550
+  }
+  function darkOrange() {
+    const tailwindOrange900 = "#7c2d12";
+    const tailwindOrange100 = "#ffedd5";
+    return dark() ? tailwindOrange900 : tailwindOrange100;
+  }
+  function amber() {
+    return "#e78a05"; // 550
+  }
+  function yellow() {
+    return "#db9e03"; // 550
+  }
+  function lime() {
+    return "#74b713"; // 550
+  }
+  function green() {
+    return "#1cb454";
+  }
+  function darkGreen() {
+    const tailwindGreen900 = "#14532d";
+    const tailwindGreen100 = "#dcfce7";
+    return dark() ? tailwindGreen900 : tailwindGreen100;
+  }
+  function emerald() {
+    return "#0ba775";
+  }
+  function darkEmerald() {
+    const tailwindEmerald900 = "#064e3b";
+    const tailwindEmerald100 = "#d1fae5";
+    return dark() ? tailwindEmerald900 : tailwindEmerald100;
+  }
+  function teal() {
+    return "#10a697"; // 550
+  }
+  function cyan() {
+    return "#06a3c3"; // 550
+  }
+  function sky() {
+    return "#0794d8"; // 550
+  }
+  function blue() {
+    return "#2f73f1"; // 550
+  }
+  function indigo() {
+    return "#5957eb";
+  }
+  function violet() {
+    return "#834cf2";
+  }
+  function purple() {
+    return "#9d45f0";
+  }
+  function fuchsia() {
+    return "#cc37e1";
+  }
+  function pink() {
+    return "#e53882";
+  }
+  function rose() {
+    return "#ea3053";
+  }
+  function darkRose() {
+    const tailwindRose900 = "#881337";
+    const tailwindRose100 = "#ffe4e6";
+    return dark() ? tailwindRose900 : tailwindRose100;
+  }
+
+  function off() {
+    const _ = dark();
+    return elements.style.getPropertyValue("--off-color");
+  }
+
+  function textColor() {
+    const _ = dark();
+    return elements.style.getPropertyValue("--color");
+  }
+
+  return {
+    default: textColor,
+    off,
+    lightBitcoin: yellow,
+    bitcoin: orange,
+    darkBitcoin: darkOrange,
+    lightDollars: lime,
+    dollars: emerald,
+    darkDollars: darkEmerald,
+
+    yellow,
+    orange,
+    red,
+
+    _1d: lightRed,
+    _1w: red,
+    _8d: orange,
+    _13d: amber,
+    _21d: yellow,
+    _1m: lime,
+    _34d: green,
+    _55d: emerald,
+    _89d: teal,
+    _144d: cyan,
+    _6m: sky,
+    _1y: blue,
+    _2y: indigo,
+    _200w: violet,
+    _4y: purple,
+    _10y: fuchsia,
+
+    p2pk: lime,
+    p2pkh: violet,
+    p2sh: emerald,
+    p2wpkh: cyan,
+    p2wsh: pink,
+    p2tr: blue,
+    crab: red,
+    fish: lime,
+    humpback: violet,
+    plankton: emerald,
+    shark: cyan,
+    shrimp: pink,
+    whale: blue,
+    megalodon: purple,
+    realizedPrice: orange,
+    oneMonthHolders: cyan,
+    threeMonthsHolders: lime,
+    sth: yellow,
+    sixMonthsHolder: red,
+    oneYearHolders: pink,
+    twoYearsHolders: purple,
+    lth: fuchsia,
+    balancedPrice: yellow,
+    cointimePrice: yellow,
+    trueMarketMeanPrice: blue,
+    vaultedPrice: green,
+    cvdd: lime,
+    terminalPrice: red,
+    loss: red,
+    darkLoss: darkRed,
+    profit: green,
+    darkProfit: darkGreen,
+    thermoCap: green,
+    investorCap: rose,
+    realizedCap: orange,
+    darkLiveliness: darkRose,
+    liveliness: rose,
+    vaultedness: green,
+    activityToVaultednessRatio: violet,
+    up_to_1d: lightRed,
+    up_to_1w: red,
+    up_to_1m: orange,
+    up_to_2m: orange,
+    up_to_3m: orange,
+    up_to_4m: orange,
+    up_to_5m: orange,
+    up_to_6m: orange,
+    up_to_1y: orange,
+    up_to_2y: orange,
+    up_to_3y: orange,
+    up_to_4y: orange,
+    up_to_5y: orange,
+    up_to_7y: orange,
+    up_to_10y: orange,
+    up_to_15y: orange,
+    from_10y_to_15y: purple,
+    from_7y_to_10y: violet,
+    from_5y_to_7y: indigo,
+    from_3y_to_5y: sky,
+    from_2y_to_3y: teal,
+    from_1y_to_2y: green,
+    from_6m_to_1y: lime,
+    from_3m_to_6m: yellow,
+    from_1m_to_3m: amber,
+    from_1w_to_1m: orange,
+    from_1d_to_1w: red,
+    from_1y: green,
+    from_2y: teal,
+    from_4y: indigo,
+    from_10y: violet,
+    from_15y: fuchsia,
+    coinblocksCreated: purple,
+    coinblocksDestroyed: red,
+    coinblocksStored: green,
+    momentum: [green, yellow, red],
+    momentumGreen: green,
+    momentumYellow: yellow,
+    momentumRed: red,
+    probability0_1p: red,
+    probability0_5p: orange,
+    probability1p: yellow,
+    year_2009: yellow,
+    year_2010: yellow,
+    year_2011: yellow,
+    year_2012: yellow,
+    year_2013: yellow,
+    year_2014: yellow,
+    year_2015: yellow,
+    year_2016: yellow,
+    year_2017: yellow,
+    year_2018: yellow,
+    year_2019: yellow,
+    year_2020: yellow,
+    year_2021: yellow,
+    year_2022: yellow,
+    year_2023: yellow,
+    year_2024: yellow,
+  };
+}
+/**
+ * @typedef {ReturnType<typeof createColors>} Colors
+ */
+
+packages.signals().then((signals) => {
   const dark = signals.createSignal(true);
 
   function createLastHeightResource() {
@@ -752,679 +1530,7 @@ signalsPromise.then((signals) => {
   }
   const lastHeight = createLastHeightResource();
 
-  function createColors() {
-    function lightRed() {
-      const tailwindRed300 = "#fca5a5";
-      const tailwindRed800 = "#991b1b";
-      return dark() ? tailwindRed300 : tailwindRed800;
-    }
-    function red() {
-      return "#e63636"; // 550
-    }
-    function darkRed() {
-      const tailwindRed900 = "#7f1d1d";
-      const tailwindRed100 = "#fee2e2";
-      return dark() ? tailwindRed900 : tailwindRed100;
-    }
-    function orange() {
-      return elements.style.getPropertyValue("--orange"); // 550
-    }
-    function darkOrange() {
-      const tailwindOrange900 = "#7c2d12";
-      const tailwindOrange100 = "#ffedd5";
-      return dark() ? tailwindOrange900 : tailwindOrange100;
-    }
-    function amber() {
-      return "#e78a05"; // 550
-    }
-    function yellow() {
-      return "#db9e03"; // 550
-    }
-    function lime() {
-      return "#74b713"; // 550
-    }
-    function green() {
-      return "#1cb454";
-    }
-    function darkGreen() {
-      const tailwindGreen900 = "#14532d";
-      const tailwindGreen100 = "#dcfce7";
-      return dark() ? tailwindGreen900 : tailwindGreen100;
-    }
-    function emerald() {
-      return "#0ba775";
-    }
-    function darkEmerald() {
-      const tailwindEmerald900 = "#064e3b";
-      const tailwindEmerald100 = "#d1fae5";
-      return dark() ? tailwindEmerald900 : tailwindEmerald100;
-    }
-    function teal() {
-      return "#10a697"; // 550
-    }
-    function cyan() {
-      return "#06a3c3"; // 550
-    }
-    function sky() {
-      return "#0794d8"; // 550
-    }
-    function blue() {
-      return "#2f73f1"; // 550
-    }
-    function indigo() {
-      return "#5957eb";
-    }
-    function violet() {
-      return "#834cf2";
-    }
-    function purple() {
-      return "#9d45f0";
-    }
-    function fuchsia() {
-      return "#cc37e1";
-    }
-    function pink() {
-      return "#e53882";
-    }
-    function rose() {
-      return "#ea3053";
-    }
-    function darkRose() {
-      const tailwindRose900 = "#881337";
-      const tailwindRose100 = "#ffe4e6";
-      return dark() ? tailwindRose900 : tailwindRose100;
-    }
-
-    function off() {
-      const _ = dark();
-      return elements.style.getPropertyValue("--off-color");
-    }
-
-    function textColor() {
-      const _ = dark();
-      return elements.style.getPropertyValue("--color");
-    }
-
-    return {
-      default: textColor,
-      off,
-      lightBitcoin: yellow,
-      bitcoin: orange,
-      darkBitcoin: darkOrange,
-      lightDollars: lime,
-      dollars: emerald,
-      darkDollars: darkEmerald,
-
-      yellow,
-      orange,
-      red,
-
-      _1d: lightRed,
-      _1w: red,
-      _8d: orange,
-      _13d: amber,
-      _21d: yellow,
-      _1m: lime,
-      _34d: green,
-      _55d: emerald,
-      _89d: teal,
-      _144d: cyan,
-      _6m: sky,
-      _1y: blue,
-      _2y: indigo,
-      _200w: violet,
-      _4y: purple,
-      _10y: fuchsia,
-
-      p2pk: lime,
-      p2pkh: violet,
-      p2sh: emerald,
-      p2wpkh: cyan,
-      p2wsh: pink,
-      p2tr: blue,
-      crab: red,
-      fish: lime,
-      humpback: violet,
-      plankton: emerald,
-      shark: cyan,
-      shrimp: pink,
-      whale: blue,
-      megalodon: purple,
-      realizedPrice: orange,
-      oneMonthHolders: cyan,
-      threeMonthsHolders: lime,
-      sth: yellow,
-      sixMonthsHolder: red,
-      oneYearHolders: pink,
-      twoYearsHolders: purple,
-      lth: fuchsia,
-      balancedPrice: yellow,
-      cointimePrice: yellow,
-      trueMarketMeanPrice: blue,
-      vaultedPrice: green,
-      cvdd: lime,
-      terminalPrice: red,
-      loss: red,
-      darkLoss: darkRed,
-      profit: green,
-      darkProfit: darkGreen,
-      thermoCap: green,
-      investorCap: rose,
-      realizedCap: orange,
-      darkLiveliness: darkRose,
-      liveliness: rose,
-      vaultedness: green,
-      activityToVaultednessRatio: violet,
-      up_to_1d: lightRed,
-      up_to_1w: red,
-      up_to_1m: orange,
-      up_to_2m: orange,
-      up_to_3m: orange,
-      up_to_4m: orange,
-      up_to_5m: orange,
-      up_to_6m: orange,
-      up_to_1y: orange,
-      up_to_2y: orange,
-      up_to_3y: orange,
-      up_to_4y: orange,
-      up_to_5y: orange,
-      up_to_7y: orange,
-      up_to_10y: orange,
-      up_to_15y: orange,
-      from_10y_to_15y: purple,
-      from_7y_to_10y: violet,
-      from_5y_to_7y: indigo,
-      from_3y_to_5y: sky,
-      from_2y_to_3y: teal,
-      from_1y_to_2y: green,
-      from_6m_to_1y: lime,
-      from_3m_to_6m: yellow,
-      from_1m_to_3m: amber,
-      from_1w_to_1m: orange,
-      from_1d_to_1w: red,
-      from_1y: green,
-      from_2y: teal,
-      from_4y: indigo,
-      from_10y: violet,
-      from_15y: fuchsia,
-      coinblocksCreated: purple,
-      coinblocksDestroyed: red,
-      coinblocksStored: green,
-      momentum: [green, yellow, red],
-      momentumGreen: green,
-      momentumYellow: yellow,
-      momentumRed: red,
-      probability0_1p: red,
-      probability0_5p: orange,
-      probability1p: yellow,
-      year_2009: yellow,
-      year_2010: yellow,
-      year_2011: yellow,
-      year_2012: yellow,
-      year_2013: yellow,
-      year_2014: yellow,
-      year_2015: yellow,
-      year_2016: yellow,
-      year_2017: yellow,
-      year_2018: yellow,
-      year_2019: yellow,
-      year_2020: yellow,
-      year_2021: yellow,
-      year_2022: yellow,
-      year_2023: yellow,
-      year_2024: yellow,
-    };
-  }
-  const colors = createColors();
-
-  function importLightweightCharts() {
-    return window.document.fonts.ready.then(() =>
-      import("./packages/lightweight-charts/v4.2.0/script.js").then(
-        ({
-          createChart: createClassicChart,
-          createChartEx: createCustomChart,
-        }) => {
-          /**
-           * @class
-           * @implements {IHorzScaleBehavior<number>}
-           */
-          class HorzScaleBehaviorHeight {
-            options() {
-              return /** @type {any} */ (undefined);
-            }
-            setOptions() {}
-            preprocessData() {}
-            updateFormatter() {}
-
-            createConverterToInternalObj() {
-              /** @type {(p: any) => any} */
-              return (price) => price;
-            }
-
-            /** @param {any} item  */
-            key(item) {
-              return item;
-            }
-
-            /** @param {any} item  */
-            cacheKey(item) {
-              return item;
-            }
-
-            /** @param {any} item  */
-            convertHorzItemToInternal(item) {
-              return item;
-            }
-
-            /** @param {any} item  */
-            formatHorzItem(item) {
-              return item;
-            }
-
-            /** @param {any} tickMark  */
-            formatTickmark(tickMark) {
-              return tickMark.time.toLocaleString("en-us");
-            }
-
-            /** @param {any} tickMarks  */
-            maxTickMarkWeight(tickMarks) {
-              return tickMarks.reduce(
-                this.getMarkWithGreaterWeight,
-                tickMarks[0]
-              ).weight;
-            }
-
-            /**
-             * @param {any} sortedTimePoints
-             * @param {number} startIndex
-             */
-            fillWeightsForPoints(sortedTimePoints, startIndex) {
-              for (
-                let index = startIndex;
-                index < sortedTimePoints.length;
-                ++index
-              ) {
-                sortedTimePoints[index].timeWeight = this.computeHeightWeight(
-                  sortedTimePoints[index].time
-                );
-              }
-            }
-
-            /**
-             * @param {any} a
-             * @param {any} b
-             */
-            getMarkWithGreaterWeight(a, b) {
-              return a.weight > b.weight ? a : b;
-            }
-
-            /** @param {number} value  */
-            computeHeightWeight(value) {
-              // if (value === Math.ceil(value / 1000000) * 1000000) {
-              //   return 12;
-              // }
-              if (value === Math.ceil(value / 100000) * 100000) {
-                return 11;
-              }
-              if (value === Math.ceil(value / 10000) * 10000) {
-                return 10;
-              }
-              if (value === Math.ceil(value / 1000) * 1000) {
-                return 9;
-              }
-              if (value === Math.ceil(value / 100) * 100) {
-                return 8;
-              }
-              if (value === Math.ceil(value / 50) * 50) {
-                return 7;
-              }
-              if (value === Math.ceil(value / 25) * 25) {
-                return 6;
-              }
-              if (value === Math.ceil(value / 10) * 10) {
-                return 5;
-              }
-              if (value === Math.ceil(value / 5) * 5) {
-                return 4;
-              }
-              if (value === Math.ceil(value)) {
-                return 3;
-              }
-              if (value * 2 === Math.ceil(value * 2)) {
-                return 1;
-              }
-
-              return 0;
-            }
-          }
-
-          /**
-           * @param {Object} args
-           * @param {TimeScale} args.scale
-           * @param {HTMLElement} args.element
-           */
-          function createChart({ scale, element }) {
-            /** @satisfies {DeepPartial<ChartOptions>} */
-            const options = {
-              autoSize: true,
-              layout: {
-                fontFamily: "Satoshi Chart",
-                // fontSize: 13,
-                background: { color: "transparent" },
-                attributionLogo: false,
-              },
-              grid: {
-                vertLines: { visible: false },
-                horzLines: { visible: false },
-              },
-              timeScale: {
-                minBarSpacing: 0.05,
-                shiftVisibleRangeOnNewBar: false,
-                allowShiftVisibleRangeOnWhitespaceReplacement: false,
-              },
-              handleScale: {
-                axisDoubleClickReset: {
-                  time: false,
-                },
-              },
-              crosshair: {
-                mode: 0,
-              },
-              localization: {
-                priceFormatter: utils.locale.numberToShortUSFormat,
-                locale: "en-us",
-                ...(scale === "date"
-                  ? {
-                      // dateFormat: "EEEE, dd MMM 'yy",
-                    }
-                  : {}),
-              },
-            };
-
-            /** @type {IChartApi} */
-            let chart;
-
-            if (scale === "date") {
-              chart = createClassicChart(element, options);
-            } else {
-              const horzScaleBehavior = new HorzScaleBehaviorHeight();
-              // @ts-ignore
-              chart = createCustomChart(element, horzScaleBehavior, options);
-            }
-
-            chart.priceScale("right").applyOptions({
-              scaleMargins: {
-                top: 0.075,
-                bottom: 0.05,
-              },
-              minimumWidth: 78,
-            });
-
-            signals.createEffect(() => {
-              const { default: _defaultColor, off: _offColor } = colors;
-
-              const defaultColor = _defaultColor();
-              const offColor = _offColor();
-
-              chart.applyOptions({
-                layout: {
-                  textColor: offColor,
-                },
-                rightPriceScale: {
-                  borderVisible: false,
-                },
-                timeScale: {
-                  borderVisible: false,
-                },
-                crosshair: {
-                  horzLine: {
-                    color: defaultColor,
-                    labelBackgroundColor: defaultColor,
-                  },
-                  vertLine: {
-                    color: defaultColor,
-                    labelBackgroundColor: defaultColor,
-                  },
-                },
-              });
-            });
-
-            return chart;
-          }
-
-          /**
-           * @type {DeepPartial<SeriesOptionsCommon>}
-           */
-          const defaultSeriesOptions = {
-            // @ts-ignore
-            lineWidth: 1.5,
-            priceLineVisible: false,
-            baseLineVisible: false,
-            baseLineColor: "",
-          };
-
-          /**
-           * @param {SpecificSeriesBlueprintWithChart<BaselineSpecificSeriesBlueprint>} args
-           */
-          function createBaseLineSeries({ chart, color, options, owner }) {
-            const topLineColor = color || colors.profit;
-            const bottomLineColor = color || colors.loss;
-
-            function computeColors() {
-              return {
-                topLineColor: topLineColor(),
-                bottomLineColor: bottomLineColor(),
-              };
-            }
-
-            const transparent = "transparent";
-
-            /** @type {DeepPartial<BaselineStyleOptions & SeriesOptionsCommon>} */
-            const seriesOptions = {
-              priceScaleId: "right",
-              ...defaultSeriesOptions,
-              ...options,
-              topFillColor1: transparent,
-              topFillColor2: transparent,
-              bottomFillColor1: transparent,
-              bottomFillColor2: transparent,
-              ...computeColors(),
-            };
-
-            const series = chart.addBaselineSeries(seriesOptions);
-
-            signals.runWithOwner(owner, () => {
-              signals.createEffect(() => {
-                series.applyOptions(computeColors());
-              });
-            });
-
-            return series;
-          }
-
-          /**
-           * @param {SpecificSeriesBlueprintWithChart<CandlestickSpecificSeriesBlueprint>} args
-           */
-          function createCandlesticksSeries({ chart, options, owner }) {
-            function computeColors() {
-              const upColor = colors.profit();
-              const downColor = colors.loss();
-
-              return {
-                upColor,
-                wickUpColor: upColor,
-                downColor,
-                wickDownColor: downColor,
-              };
-            }
-
-            const candlestickSeries = chart.addCandlestickSeries({
-              baseLineVisible: false,
-              borderVisible: false,
-              priceLineVisible: false,
-              baseLineColor: "",
-              borderColor: "",
-              borderDownColor: "",
-              borderUpColor: "",
-              ...options,
-              ...computeColors(),
-            });
-
-            signals.runWithOwner(owner, () => {
-              signals.createEffect(() => {
-                candlestickSeries.applyOptions(computeColors());
-              });
-            });
-
-            return candlestickSeries;
-          }
-
-          /**
-           * @param {SpecificSeriesBlueprintWithChart<LineSpecificSeriesBlueprint>} args
-           */
-          function createLineSeries({ chart, color, options, owner }) {
-            function computeColors() {
-              return {
-                color: color(),
-              };
-            }
-
-            const series = chart.addLineSeries({
-              ...defaultSeriesOptions,
-              ...options,
-              ...computeColors(),
-            });
-
-            signals.runWithOwner(owner, () => {
-              signals.createEffect(() => {
-                series.applyOptions(computeColors());
-              });
-            });
-
-            return series;
-          }
-
-          function initWhitespace() {
-            const whitespaceStartDate = new Date("1970-01-01");
-            const whitespaceStartDateYear =
-              whitespaceStartDate.getUTCFullYear();
-            const whitespaceStartDateMonth = whitespaceStartDate.getUTCMonth();
-            const whitespaceStartDateDate = whitespaceStartDate.getUTCDate();
-            const whitespaceEndDate = new Date("2141-01-01");
-            let whitespaceDateDataset =
-              /** @type {(WhitespaceData | SingleValueData)[]} */ ([]);
-
-            function initDateWhitespace() {
-              whitespaceDateDataset = new Array(
-                utils.getNumberOfDaysBetweenTwoDates(
-                  whitespaceStartDate,
-                  whitespaceEndDate
-                )
-              );
-              // Hack to be able to scroll freely
-              // Setting them all to NaN is much slower
-              for (let i = 0; i < whitespaceDateDataset.length; i++) {
-                const date = new Date(
-                  whitespaceStartDateYear,
-                  whitespaceStartDateMonth,
-                  whitespaceStartDateDate + i
-                );
-
-                const time = utils.dateToString(date);
-
-                if (i === whitespaceDateDataset.length - 1) {
-                  whitespaceDateDataset[i] = {
-                    time,
-                    value: NaN,
-                  };
-                } else {
-                  whitespaceDateDataset[i] = {
-                    time,
-                  };
-                }
-              }
-            }
-
-            const heightStart = -50_000;
-            let whitespaceHeightDataset = /** @type {WhitespaceData[]} */ ([]);
-
-            function initHeightWhitespace() {
-              whitespaceHeightDataset = new Array(
-                (new Date().getUTCFullYear() - 2009 + 1) * 60_000
-              );
-              for (let i = 0; i < whitespaceHeightDataset.length; i++) {
-                const height = heightStart + i;
-
-                whitespaceHeightDataset[i] = {
-                  time: /** @type {Time} */ (height),
-                };
-              }
-            }
-
-            /**
-             * @param {IChartApi} chart
-             * @param {TimeScale} scale
-             * @returns {ISeriesApi<'Line'>}
-             */
-            function setWhitespace(chart, scale) {
-              const whitespace = chart.addLineSeries();
-
-              if (scale === "date") {
-                if (!whitespaceDateDataset.length) {
-                  initDateWhitespace();
-                }
-
-                whitespace.setData(whitespaceDateDataset);
-              } else {
-                if (!whitespaceHeightDataset.length) {
-                  initHeightWhitespace();
-                }
-
-                whitespace.setData(whitespaceHeightDataset);
-
-                const time = whitespaceHeightDataset.length;
-                whitespace.update({
-                  time: /** @type {Time} */ (time),
-                  value: NaN,
-                });
-              }
-
-              return whitespace;
-            }
-
-            return { setWhitespace };
-          }
-          const { setWhitespace } = initWhitespace();
-
-          /**
-           *
-           * @param {Parameters<typeof createChart>[0]} args
-           */
-          function createChartWithWhitespace({ element, scale }) {
-            const chart =
-              /** @type {IChartApi & {whitespace: ISeriesApi<"Line">}} */ (
-                createChart({
-                  scale,
-                  element,
-                })
-              );
-            chart.whitespace = setWhitespace(chart, scale);
-            return chart;
-          }
-
-          return {
-            createChart,
-            createChartWithWhitespace,
-            createBaseLineSeries,
-            createCandlesticksSeries,
-            createLineSeries,
-          };
-        }
-      )
-    );
-  }
-  /** @type {ReturnType<typeof importLightweightCharts> | undefined} */
-  let lightweightChartsPromise = undefined;
+  const colors = createColors(dark);
 
   function initOptions() {
     /** @type {Signal<Option>} */
@@ -1921,15 +2027,62 @@ signalsPromise.then((signals) => {
        * @typedef {Exclude<AgeCohortId, "">} AgeCohortIdSub
        * @typedef {(typeof groups.address)[number]["key"]} AddressCohortId
        * @typedef {(typeof groups.liquidities[number]["id"])} LiquidityId
-       * @typedef {`${LiquidityId}-${AddressCohortId}`} AddressCohortIdSplitByLiquidity
        * @typedef {AgeCohortId | AddressCohortId} AnyCohortId
-       * @typedef {AnyCohortId | AddressCohortIdSplitByLiquidity | LiquidityId} AnyPossibleCohortId
-       * @typedef {'' | `${AgeCohortIdSub | AddressCohortId | AddressCohortIdSplitByLiquidity | LiquidityId}-`} AnyDatasetPrefix
+       * @typedef {AnyCohortId | LiquidityId} AnyPossibleCohortId
+       * @typedef {'' | `${AgeCohortIdSub | AddressCohortId | LiquidityId}-`} AnyDatasetPrefix
        * @typedef {(typeof groups.averages)[number]["key"]} AverageName
        * @typedef {(typeof groups.totalReturns)[number]["key"]} TotalReturnKey
        * @typedef {(typeof groups.compoundReturns)[number]["key"]} CompoundReturnKey
        * @typedef {(typeof groups.percentiles)[number]["id"]} PercentileId
        */
+
+      const bases = {
+        /**
+         * @param {TimeScale} scale
+         * @param {string} [title]
+         */
+        0(scale, title) {
+          return /** @type {const} */ ({
+            title: title || `Base`,
+            color: colors.off,
+            datasetPath: `${scale}-to-0`,
+            options: {
+              lineStyle: 3,
+              lastValueVisible: false,
+            },
+          });
+        },
+        /**
+         * @param {TimeScale} scale
+         * @param {string} [title]
+         */
+        1(scale, title) {
+          return /** @type {const} */ ({
+            title: title || `Base`,
+            color: colors.off,
+            datasetPath: `${scale}-to-1`,
+            options: {
+              lineStyle: 3,
+              lastValueVisible: false,
+            },
+          });
+        },
+        /**
+         * @param {TimeScale} scale
+         * @param {string} [title]
+         */
+        100(scale, title) {
+          return /** @type {const} */ ({
+            title: title || `Base`,
+            color: colors.off,
+            datasetPath: `${scale}-to-100`,
+            options: {
+              lineStyle: 3,
+              lastValueVisible: false,
+            },
+          });
+        },
+      };
 
       /**
        * @param {AnyPossibleCohortId} datasetId
@@ -2276,15 +2429,7 @@ signalsPromise.then((signals) => {
                     },
                   },
                 },
-                {
-                  title: `Even`,
-                  color: colors.off,
-                  datasetPath: `${scale}-to-1`,
-                  options: {
-                    lineStyle: 3,
-                    lastValueVisible: false,
-                  },
-                },
+                bases[1](scale),
               ],
             },
             {
@@ -2357,15 +2502,7 @@ signalsPromise.then((signals) => {
                     `${ratioDatasetPath}-1y-sma-momentum-oscillator`
                   ),
                 },
-                {
-                  title: `Base`,
-                  color: colors.off,
-                  datasetPath: `${scale}-to-0`,
-                  options: {
-                    lineStyle: 3,
-                    lastValueVisible: false,
-                  },
-                },
+                bases[0](scale),
               ],
             },
             {
@@ -2505,6 +2642,111 @@ signalsPromise.then((signals) => {
          * @param {TimeScale} scale
          * @returns {PartialOptionsGroup}
          */
+        function createAllTimeHighOptions(scale) {
+          return {
+            name: "All Time High",
+            tree: [
+              {
+                scale,
+                icon: "🔝",
+                name: "Value",
+                title: "All Time High",
+                description: "",
+                unit: "US Dollars",
+                top: [
+                  {
+                    title: `ATH`,
+                    color: colors.dollars,
+                    datasetPath: `${scale}-to-all-time-high`,
+                  },
+                ],
+              },
+              {
+                scale,
+                icon: "🏂",
+                name: "Drawdown",
+                title: "All Time High Drawdown",
+                description: "",
+                unit: "Percentage",
+                top: [
+                  {
+                    title: `ATH`,
+                    color: colors.dollars,
+                    datasetPath: `${scale}-to-all-time-high`,
+                  },
+                ],
+                bottom: [
+                  {
+                    title: `Drawdown`,
+                    color: colors.loss,
+                    datasetPath: `${scale}-to-drawdown`,
+                  },
+                ],
+              },
+              ...(scale === "date"
+                ? /** @type {PartialChartOption[]} */ ([
+                    {
+                      scale,
+                      icon: "🗓️",
+                      name: "Days Since",
+                      title: "Days Since All Time High",
+                      description: "",
+                      unit: "Count",
+                      bottom: [
+                        {
+                          title: `Days`,
+                          color: colors.red,
+                          datasetPath: `date-to-days-since-all-time-high`,
+                        },
+                      ],
+                    },
+                    {
+                      name: "Max Between",
+                      tree: [
+                        {
+                          scale,
+                          icon: "📆",
+                          name: "Days",
+                          title: "Max Number Of Days Between All Time Highs",
+                          description: "",
+                          unit: "Count",
+                          bottom: [
+                            {
+                              title: `Max`,
+                              color: colors.red,
+                              datasetPath:
+                                "date-to-max-days-between-all-time-highs",
+                            },
+                          ],
+                        },
+                        {
+                          scale,
+                          icon: "📆",
+                          name: "Years",
+                          title: "Max Number Of Years Between All Time Highs",
+                          description: "",
+                          unit: "Count",
+                          bottom: [
+                            {
+                              title: `Max`,
+                              color: colors.red,
+                              datasetPath:
+                                "date-to-max-years-between-all-time-highs",
+                            },
+                          ],
+                        },
+                      ],
+                    },
+                  ])
+                : []),
+            ],
+          };
+        }
+
+        /**
+         * @param {TimeScale} scale
+         * @returns {PartialOptionsGroup}
+         */
         function createAveragesOptions(scale) {
           return {
             name: "Averages",
@@ -2529,7 +2771,7 @@ signalsPromise.then((signals) => {
                   name,
                   title: `${name} Market Price Moving Average`,
                   key,
-                })
+                }),
               ),
             ],
           };
@@ -2591,7 +2833,7 @@ signalsPromise.then((signals) => {
                       name,
                       title: `${name} Total`,
                       key: `${key}-total`,
-                    })
+                    }),
                   ),
                 ],
               },
@@ -2604,7 +2846,7 @@ signalsPromise.then((signals) => {
                       name,
                       title: `${name} Compound`,
                       key: `${key}-compound`,
-                    })
+                    }),
                   ),
                 ],
               },
@@ -2634,6 +2876,7 @@ signalsPromise.then((signals) => {
                 type: "Baseline",
                 datasetPath: `date-to-price-${key}-return`,
               },
+              bases[0](scale),
             ],
           };
         }
@@ -2652,12 +2895,32 @@ signalsPromise.then((signals) => {
           name: "Market",
           tree: [
             {
-              scale,
-              icon: "💵",
               name: "Price",
-              title: "Market Price",
-              description: "",
-              unit: "US Dollars",
+              tree: [
+                {
+                  scale,
+                  icon: "💵",
+                  name: "Dollars Per Bitcoin",
+                  title: "Dollars Per Bitcoin",
+                  description: "",
+                  unit: "US Dollars",
+                },
+                {
+                  scale,
+                  icon: "🍊",
+                  name: "Sats Per Dollar",
+                  title: "Satoshis Per Dollar",
+                  description: "",
+                  unit: "Satoshis",
+                  bottom: [
+                    {
+                      title: "Sats",
+                      datasetPath: `${scale}-to-sats-per-dollar`,
+                      color: colors.bitcoin,
+                    },
+                  ],
+                },
+              ],
             },
             {
               scale,
@@ -2674,6 +2937,7 @@ signalsPromise.then((signals) => {
                 },
               ],
             },
+            createAllTimeHighOptions(scale),
             createAveragesOptions(scale),
             ...(scale === "date"
               ? [createReturnsOptions(), createIndicatorsOptinos()]
@@ -3586,6 +3850,7 @@ signalsPromise.then((signals) => {
                         type: "Baseline",
                         datasetPath: `${scale}-to-difficulty-adjustment`,
                       },
+                      bases[0](scale),
                     ],
                   },
                 ])
@@ -3908,6 +4173,7 @@ signalsPromise.then((signals) => {
                   type: "Baseline",
                   datasetPath: `${scale}-to-${datasetPrefix}realized-cap-1m-net-change`,
                 },
+                bases[0](scale),
               ],
             },
             {
@@ -3960,6 +4226,7 @@ signalsPromise.then((signals) => {
                   datasetPath: `${scale}-to-${datasetPrefix}negative-realized-loss`,
                   type: "Baseline",
                 },
+                bases[0](scale),
               ],
             },
             {
@@ -3975,6 +4242,7 @@ signalsPromise.then((signals) => {
                   type: "Baseline",
                   datasetPath: `${scale}-to-${datasetPrefix}net-realized-profit-and-loss`,
                 },
+                bases[0](scale),
               ],
             },
             {
@@ -3990,6 +4258,7 @@ signalsPromise.then((signals) => {
                   type: "Baseline",
                   datasetPath: `${scale}-to-${datasetPrefix}net-realized-profit-and-loss-to-market-cap-ratio`,
                 },
+                bases[0](scale),
               ],
             },
             {
@@ -4038,6 +4307,7 @@ signalsPromise.then((signals) => {
                       type: "Baseline",
                       datasetPath: `${scale}-to-${datasetPrefix}cumulative-net-realized-profit-and-loss`,
                     },
+                    bases[0](scale),
                   ],
                 },
                 {
@@ -4053,6 +4323,75 @@ signalsPromise.then((signals) => {
                       datasetPath: `${scale}-to-${datasetPrefix}cumulative-net-realized-profit-and-loss-1m-net-change`,
                       type: "Baseline",
                     },
+                    bases[0](scale),
+                  ],
+                },
+              ],
+            },
+            {
+              scale,
+              name: "Profit To Loss Ratio",
+              title: `${title} Profit To Loss Ratio`,
+              description: "",
+              unit: "Ratio",
+              icon: "∶",
+              bottom: [
+                {
+                  title: "Ratio",
+                  datasetPath: `${scale}-to-${datasetPrefix}realized-profit-to-loss-ratio`,
+                  type: "Baseline",
+                  options: {
+                    baseValue: {
+                      price: 1,
+                    },
+                  },
+                },
+                bases[1](scale, "Even"),
+              ],
+            },
+            {
+              name: `Spent Output Profit Ratio`,
+              tree: [
+                {
+                  scale,
+                  name: `Normal - SOPR`,
+                  title: `${title} Spent Output Profit Ratio`,
+                  description: "",
+                  unit: "Percentage",
+                  icon: "➗",
+                  bottom: [
+                    {
+                      title: "SOPR",
+                      datasetPath: `${scale}-to-${datasetPrefix}spent-output-profit-ratio`,
+                      type: "Baseline",
+                      options: {
+                        baseValue: {
+                          price: 1,
+                        },
+                      },
+                    },
+                    bases[1](scale),
+                  ],
+                },
+                {
+                  scale,
+                  name: `Adjusted - aSOPR`,
+                  title: `${title} Adjusted Spent Output Profit Ratio`,
+                  description: "",
+                  unit: "Percentage",
+                  icon: "➗",
+                  bottom: [
+                    {
+                      title: "aSOPR",
+                      datasetPath: `${scale}-to-${datasetPrefix}adjusted-spent-output-profit-ratio`,
+                      type: "Baseline",
+                      options: {
+                        baseValue: {
+                          price: 1,
+                        },
+                      },
+                    },
+                    bases[1](scale),
                   ],
                 },
               ],
@@ -4061,54 +4400,74 @@ signalsPromise.then((signals) => {
               name: "Value",
               tree: [
                 {
-                  scale,
-                  name: `Created`,
-                  title: `${title} Value Created`,
-                  description: "",
-                  unit: "US Dollars",
-                  icon: "➕",
-                  bottom: [
+                  name: "Created",
+                  tree: [
                     {
-                      title: "Value",
-                      color: colors.profit,
-                      datasetPath: `${scale}-to-${datasetPrefix}value-created`,
+                      scale,
+                      name: `Normal`,
+                      title: `${title} Value Created`,
+                      description: "",
+                      unit: "US Dollars",
+                      icon: "➕",
+                      bottom: [
+                        {
+                          title: "Value",
+                          color: colors.profit,
+                          datasetPath: `${scale}-to-${datasetPrefix}value-created`,
+                        },
+                      ],
+                    },
+                    {
+                      scale,
+                      name: `Adjusted`,
+                      title: `${title} Adjusted Value Created`,
+                      description: "",
+                      unit: "US Dollars",
+                      icon: "➕",
+                      bottom: [
+                        {
+                          title: "Adjusted Value",
+                          color: colors.profit,
+                          datasetPath: `${scale}-to-${datasetPrefix}adjusted-value-created`,
+                        },
+                      ],
                     },
                   ],
                 },
                 {
-                  scale,
-                  name: `Destroyed`,
-                  title: `${title} Value Destroyed`,
-                  description: "",
-                  unit: "US Dollars",
-                  icon: "☄️",
-                  bottom: [
+                  name: "Destroyed",
+                  tree: [
                     {
-                      title: "Value",
-                      color: colors.loss,
-                      datasetPath: `${scale}-to-${datasetPrefix}value-destroyed`,
+                      scale,
+                      name: `Normal`,
+                      title: `${title} Value Destroyed`,
+                      description: "",
+                      unit: "US Dollars",
+                      icon: "☄️",
+                      bottom: [
+                        {
+                          title: "Value",
+                          color: colors.loss,
+                          datasetPath: `${scale}-to-${datasetPrefix}value-destroyed`,
+                        },
+                      ],
+                    },
+                    {
+                      scale,
+                      name: `Adjusted`,
+                      title: `${title} Adjusted Value Destroyed`,
+                      description: "",
+                      unit: "US Dollars",
+                      icon: "☄️",
+                      bottom: [
+                        {
+                          title: "Adjusted Value",
+                          color: colors.loss,
+                          datasetPath: `${scale}-to-${datasetPrefix}adjusted-value-destroyed`,
+                        },
+                      ],
                     },
                   ],
-                },
-              ],
-            },
-            {
-              scale,
-              name: `Spent Output Profit Ratio - SOPR`,
-              title: `${title} Spent Output Profit Ratio`,
-              description: "",
-              unit: "Percentage",
-              icon: "➗",
-              bottom: [
-                {
-                  title: "SOPR",
-                  datasetPath: `${scale}-to-${datasetPrefix}spent-output-profit-ratio`,
-                  type: "Baseline",
-                  options: {
-                    baseValue: {
-                      price: 1,
-                    },
-                  },
                 },
               ],
             },
@@ -4188,7 +4547,7 @@ signalsPromise.then((signals) => {
             },
             {
               scale,
-              name: `PNL`,
+              name: `PNL - Profit And Loss`,
               title: `${title} Unrealized Profit And Loss`,
               description: "",
               unit: "US Dollars",
@@ -4206,11 +4565,12 @@ signalsPromise.then((signals) => {
                   datasetPath: `${scale}-to-${datasetPrefix}negative-unrealized-loss`,
                   type: "Baseline",
                 },
+                bases[0](scale),
               ],
             },
             {
               scale,
-              name: `Net PNL`,
+              name: `Net PNL - Net Profit And Loss`,
               title: `${title} Net Unrealized Profit And Loss`,
               description: "",
               unit: "US Dollars",
@@ -4221,12 +4581,13 @@ signalsPromise.then((signals) => {
                   datasetPath: `${scale}-to-${datasetPrefix}net-unrealized-profit-and-loss`,
                   type: "Baseline",
                 },
+                bases[0](scale),
               ],
             },
             {
               scale,
-              name: `Net PNL Relative To Market Cap`,
-              title: `${title} Net Unrealized Profit And Loss Relative To Total Market Capitalization`,
+              name: `Net PNL Relative To Market Cap - NUPL`,
+              title: `${title} Net Unrealized Profit And Loss Relative To Total Market Capitalization - NUPL`,
               description: "",
               unit: "Percentage",
               icon: "➗",
@@ -4236,6 +4597,7 @@ signalsPromise.then((signals) => {
                   datasetPath: `${scale}-to-${datasetPrefix}net-unrealized-profit-and-loss-to-market-cap-ratio`,
                   type: "Baseline",
                 },
+                bases[0](scale),
               ],
             },
           ],
@@ -4546,7 +4908,7 @@ signalsPromise.then((signals) => {
                   title: "Average",
                   color,
                   datasetPath: `${scale}-to-${datasetIdToPrefix(
-                    datasetId
+                    datasetId,
                   )}realized-price`,
                 },
               ],
@@ -4644,12 +5006,10 @@ signalsPromise.then((signals) => {
       /**
        * @param {Object} args
        * @param {TimeScale} args.scale
-       * @param {string} args.name
-       * @param {AddressCohortId | ""} args.datasetId
        * @param {Color} args.color
        * @returns {PartialOptionsGroup}
        */
-      function createLiquidityOptions({ scale, color, name, datasetId }) {
+      function createLiquidityOptions({ scale, color }) {
         return {
           name: `Split By Liquidity`,
           tree: groups.liquidities.map((liquidity) => {
@@ -4657,13 +5017,11 @@ signalsPromise.then((signals) => {
             const folder = {
               name: liquidity.name,
               tree: createCohortOptions({
-                title: `${liquidity.name} ${name}`,
-                name: `${liquidity.name} ${name}`,
+                title: `${liquidity.name}`,
+                name: `${liquidity.name}`,
                 scale,
                 color,
-                datasetId: !datasetId
-                  ? liquidity.id
-                  : `${liquidity.id}-${datasetId}`,
+                datasetId: liquidity.id,
               }),
             };
             return folder;
@@ -4743,7 +5101,7 @@ signalsPromise.then((signals) => {
                 name: legend,
                 datasetId: id,
                 title: name,
-              })
+              }),
             ),
             {
               name: "Up To X",
@@ -4754,7 +5112,7 @@ signalsPromise.then((signals) => {
                   name,
                   datasetId: id,
                   title: name,
-                })
+                }),
               ),
             },
             {
@@ -4766,7 +5124,7 @@ signalsPromise.then((signals) => {
                   name,
                   datasetId: id,
                   title: name,
-                })
+                }),
               ),
             },
             {
@@ -4778,7 +5136,7 @@ signalsPromise.then((signals) => {
                   name,
                   datasetId: id,
                   title: name,
-                })
+                }),
               ),
             },
             {
@@ -4790,7 +5148,7 @@ signalsPromise.then((signals) => {
                   name,
                   datasetId: id,
                   title: name,
-                })
+                }),
               ),
             },
           ],
@@ -4829,7 +5187,7 @@ signalsPromise.then((signals) => {
        * @param {string} args.name
        * @param {AddressCohortId} args.datasetId
        * @param {Color} args.color
-       * @param { string} [args.filenameAddon]
+       * @param {string} [args.filenameAddon]
        * @returns {PartialOptionsGroup}
        */
       function createAddressOptions({
@@ -4849,12 +5207,6 @@ signalsPromise.then((signals) => {
               name,
               color,
               datasetId,
-            }),
-            createLiquidityOptions({
-              scale,
-              name,
-              datasetId,
-              color,
             }),
           ],
         };
@@ -4937,7 +5289,7 @@ signalsPromise.then((signals) => {
                   name,
                   filenameAddon: size,
                   datasetId: key,
-                })
+                }),
               ),
             },
             {
@@ -4949,7 +5301,7 @@ signalsPromise.then((signals) => {
                   color: colors[key],
                   name,
                   datasetId: key,
-                })
+                }),
               ),
             },
           ],
@@ -5451,6 +5803,7 @@ signalsPromise.then((signals) => {
                       type: "Baseline",
                       datasetPath: `${scale}-to-liveliness-net-change-2w-median`,
                     },
+                    bases[0](scale),
                   ],
                 },
               ],
@@ -5593,6 +5946,7 @@ signalsPromise.then((signals) => {
                       type: "Baseline",
                       datasetPath: `${scale}-to-vaulted-supply-3m-net-change`,
                     },
+                    bases[0](scale),
                   ],
                 },
                 // TODO: Fix, Bad data
@@ -5797,138 +6151,277 @@ signalsPromise.then((signals) => {
           title: "Home",
         },
         {
+          icon: "🌍",
           name: "Dashboards",
-          tree: [
+          title: "Global State Of The Network",
+          description: "",
+          groups: [
             {
-              icon: "🌍",
-              name: "Global",
-              title: "Global State Of The Network",
-              description: "",
-              groups: [
+              name: "Market",
+              values: [
                 {
-                  name: "Market",
-                  values: [
-                    {
-                      name: "Dollars Per Bitcoin",
-                      path: "close",
-                      unit: "US Dollars",
-                    },
-                    {
-                      name: "Satoshis Per Dollar",
-                    },
-                    {
-                      name: "Capitalization",
-                      path: "market-cap",
-                      unit: "US Dollars",
-                    },
-                  ],
-                },
-                {
-                  name: "All Time High",
-                  values: [
-                    {
-                      name: "Price",
-                    },
-                    {
-                      name: "Drawdown",
-                    },
-                    {
-                      name: "Date",
-                    },
-                    {
-                      name: "Days Since",
-                    },
-                  ],
-                },
-                {
-                  name: "Simple Moving Averages",
+                  name: "Dollars Per Bitcoin",
+                  path: "close",
                   unit: "US Dollars",
-                  values: [
-                    {
-                      name: "1 Week",
-                      path: "price-1w-sma",
-                    },
-                    {
-                      name: "1 Month",
-                      path: "price-1m-sma",
-                    },
-                    {
-                      name: "1 Year",
-                      path: "price-1y-sma",
-                    },
-                    {
-                      name: "4 Year",
-                      path: "price-4y-sma",
-                    },
-                  ],
                 },
                 {
-                  name: "Returns",
+                  name: "Satoshis Per Dollar",
+                  path: "sats-per-dollar",
+                  unit: "Satoshis",
+                },
+                {
+                  name: "Capitalization",
+                  path: "market-cap",
+                  unit: "US Dollars",
+                },
+              ],
+            },
+            {
+              name: "All Time High",
+              values: [
+                {
+                  name: "Price",
+                  path: "all-time-high",
+                  unit: "US Dollars",
+                },
+                {
+                  name: "Drawdown",
+                  path: "drawdown",
                   unit: "Percentage",
-                  values: [
-                    {
-                      name: "Today (UTC)",
-                      path: "price-1d-total-return",
-                    },
-                    {
-                      name: "1 Week",
-                      // path: "price-1m-total-return",
-                    },
-                    {
-                      name: "1 Month",
-                      path: "price-1m-total-return",
-                    },
-                    {
-                      name: "6 Month",
-                      path: "price-6m-total-return",
-                    },
-                    {
-                      name: "1 Year",
-                      path: "price-1y-total-return",
-                    },
-                    {
-                      name: "4 Year",
-                      path: "price-4y-total-return",
-                    },
-                    {
-                      name: "10 Year",
-                      path: "price-10y-total-return",
-                    },
-                  ],
                 },
                 {
-                  name: "Blockchain",
-                  values: [
-                    {
-                      name: "Height",
-                      path: "last-height",
-                    },
-                    {
-                      name: "Cumulative size",
-                      path: "cumulative-block-size",
-                    },
-                  ],
+                  name: "Date",
+                  path: "all-time-high-date",
+                  unit: "Date",
                 },
                 {
-                  name: "Blocks Mined",
-                  values: [
-                    {
-                      name: "Since UTC",
-                      path: "blocks-mined",
-                    },
-                    {
-                      name: "Weekly Avg.",
-                      path: "blocks-mined-1w-sma",
-                    },
-                    {
-                      name: "Monthly Avg.",
-                      path: "blocks-mined-1m-sma",
-                    },
-                    {
-                      name: "Target",
-                      path: "blocks-mined-1d-target",
-                    },
-                  ],
+                  name: "Days Since",
+                  path: "days-since-all-time-high",
+                },
+                {
+                  name: "Max Days Between",
+                  path: "max-days-between-all-time-highs",
+                },
+                {
+                  name: "Max Years Between",
+                  path: "max-years-between-all-time-highs",
+                },
+              ],
+            },
+            {
+              name: "Averages",
+              unit: "US Dollars",
+              values: [
+                {
+                  name: "1 Week",
+                  path: "price-1w-sma",
+                },
+                {
+                  name: "1 Month",
+                  path: "price-1m-sma",
+                },
+                {
+                  name: "1 Year",
+                  path: "price-1y-sma",
+                },
+                {
+                  name: "4 Year",
+                  path: "price-4y-sma",
+                },
+              ],
+            },
+            {
+              name: "Returns",
+              unit: "Percentage",
+              values: [
+                {
+                  name: "Today (UTC)",
+                  path: "price-1d-total-return",
+                },
+                {
+                  name: "1 Week",
+                  // path: "price-1m-total-return",
+                },
+                {
+                  name: "1 Month",
+                  path: "price-1m-total-return",
+                },
+                {
+                  name: "6 Month",
+                  path: "price-6m-total-return",
+                },
+                {
+                  name: "1 Year",
+                  path: "price-1y-total-return",
+                },
+                {
+                  name: "4 Year",
+                  path: "price-4y-total-return",
+                },
+                {
+                  name: "10 Year",
+                  path: "price-10y-total-return",
+                },
+              ],
+            },
+            {
+              name: "Blockchain",
+              values: [
+                {
+                  name: "Height",
+                  path: "last-height",
+                  long: true,
+                },
+                {
+                  name: "Average Size",
+                  path: "block-size-1d-average",
+                  unit: "Megabytes",
+                },
+                {
+                  name: "Average Weight",
+                  path: "block-weight-1d-average",
+                  unit: "Weight",
+                },
+                {
+                  name: "Average VBytes",
+                  path: "block-vbytes-1d-average",
+                  unit: "Virtual Bytes",
+                },
+                {
+                  name: "Average Interval",
+                  path: "block-interval-1d-average",
+                  unit: "Seconds",
+                },
+                {
+                  name: "Cumulative size",
+                  path: "cumulative-block-size",
+                  unit: "Megabytes",
+                },
+              ],
+            },
+            {
+              name: "Blocks Mined",
+              values: [
+                {
+                  name: "Since UTC",
+                  path: "blocks-mined",
+                },
+                {
+                  name: "Weekly Avg.",
+                  path: "blocks-mined-1w-sma",
+                },
+                {
+                  name: "Monthly Avg.",
+                  path: "blocks-mined-1m-sma",
+                },
+                {
+                  name: "Target",
+                  path: "blocks-mined-1d-target",
+                },
+              ],
+            },
+            {
+              name: "Coinbases",
+              values: [
+                {
+                  name: "Last Block In Bitcoin",
+                  unit: "Bitcoin",
+                  path: "last-coinbase",
+                },
+                {
+                  name: "Last Block In Dollars",
+                  unit: "US Dollars",
+                  path: "last-coinbase-in-dollars",
+                },
+                {
+                  name: "Daily Sum In Bitcoin",
+                  unit: "Bitcoin",
+                  path: "coinbase",
+                },
+                {
+                  name: "Daily Sum In Dollars",
+                  unit: "US Dollars",
+                  path: "coinbase-in-dollars",
+                },
+                {
+                  name: "Daily Sum In Bitcoin",
+                  unit: "Bitcoin",
+                  path: "coinbase-1y-sum",
+                },
+                {
+                  name: "Daily Sum In Dollars",
+                  unit: "US Dollars",
+                  path: "coinbase-in-dollars-1y-sum",
+                },
+              ],
+            },
+            {
+              name: "Subsidies",
+              values: [
+                {
+                  name: "Last Block In Bitcoin",
+                  unit: "Bitcoin",
+                  path: "last-subsidy",
+                },
+                {
+                  name: "Last Block In Dollars",
+                  unit: "US Dollars",
+                  path: "last-subsidy-in-dollars",
+                },
+                {
+                  name: "Daily Sum In Bitcoin",
+                  unit: "Bitcoin",
+                  path: "subsidy",
+                },
+                {
+                  name: "Daily Sum In Dollars",
+                  unit: "US Dollars",
+                  path: "subsidy-in-dollars",
+                },
+                {
+                  name: "Daily Sum In Bitcoin",
+                  unit: "Bitcoin",
+                  path: "subsidy-1y-sum",
+                },
+                {
+                  name: "Daily Sum In Dollars",
+                  unit: "US Dollars",
+                  path: "subsidy-in-dollars-1y-sum",
+                },
+              ],
+            },
+            {
+              name: "Fees",
+              values: [
+                {
+                  name: "Last Block In Bitcoin",
+                  unit: "Bitcoin",
+                  path: "last-fees",
+                },
+                {
+                  name: "Last Block In Dollars",
+                  unit: "US Dollars",
+                  path: "last-fees-in-dollars",
+                },
+                {
+                  name: "Daily Sum In Bitcoin",
+                  unit: "Bitcoin",
+                  path: "fees",
+                },
+                {
+                  name: "Daily Sum In Dollars",
+                  unit: "US Dollars",
+                  path: "fees-in-dollars",
+                },
+                {
+                  name: "Daily Sum In Bitcoin",
+                  unit: "Bitcoin",
+                  path: "fees-1y-sum",
+                },
+                {
+                  name: "Daily Sum In Dollars",
+                  unit: "US Dollars",
+                  path: "fees-in-dollars-1y-sum",
                 },
               ],
             },
@@ -5951,14 +6444,12 @@ signalsPromise.then((signals) => {
                   name: "",
                   title: "",
                 }),
+                createHodlersOptions("date"),
+                createAddressesOptions("date"),
                 createLiquidityOptions({
                   scale: "date",
                   color: colors.bitcoin,
-                  datasetId: "",
-                  name: "",
                 }),
-                createHodlersOptions("date"),
-                createAddressesOptions("date"),
                 createCointimeOptions("date"),
               ],
             },
@@ -5976,14 +6467,12 @@ signalsPromise.then((signals) => {
                   name: "",
                   title: "",
                 }),
+                createHodlersOptions("height"),
+                createAddressesOptions("height"),
                 createLiquidityOptions({
                   scale: "height",
                   color: colors.bitcoin,
-                  datasetId: "",
-                  name: "",
                 }),
-                createHodlersOptions("height"),
-                createAddressesOptions("height"),
                 createCointimeOptions("height"),
               ],
             },
@@ -6077,7 +6566,7 @@ signalsPromise.then((signals) => {
     const filter = signals.createSignal(
       /** @type {FoldersFilter} */ (
         localStorage.getItem(ids.foldersFilter) || "all"
-      )
+      ),
     );
 
     function initCounters() {
@@ -6118,7 +6607,7 @@ signalsPromise.then((signals) => {
     const counters = initCounters();
 
     const treeElement = signals.createSignal(
-      /** @type {HTMLDivElement | null} */ (null)
+      /** @type {HTMLDivElement | null} */ (null),
     );
 
     /** @type {string[] | undefined} */
@@ -6147,7 +6636,7 @@ signalsPromise.then((signals) => {
     function recursiveProcessPartialTree(
       partialTree,
       parent,
-      path = undefined
+      path = undefined,
     ) {
       /** @type {Accessor<number>[]} */
       const listForSum = [];
@@ -6171,7 +6660,7 @@ signalsPromise.then((signals) => {
             return null;
           }
         },
-        null
+        null,
       );
 
       partialTree.forEach((anyPartial, partialIndex) => {
@@ -6193,14 +6682,14 @@ signalsPromise.then((signals) => {
               return null;
             }
           },
-          undefined
+          undefined,
         );
 
         if ("tree" in anyPartial) {
           const folderId = ids.fromString(
             `${(path || [])?.map(({ name }) => name).join(" ")} ${
               anyPartial.name
-            } folder`
+            } folder`,
           );
 
           /** @type {Omit<OptionsGroup, keyof PartialOptionsGroup>} */
@@ -6218,13 +6707,13 @@ signalsPromise.then((signals) => {
           };
 
           const passedDetails = signals.createSignal(
-            /** @type {HTMLDivElement | HTMLDetailsElement | null} */ (null)
+            /** @type {HTMLDivElement | HTMLDetailsElement | null} */ (null),
           );
 
           const childOptionsCount = recursiveProcessPartialTree(
             anyPartial.tree,
             passedDetails,
-            [...(path || []), thisPath]
+            [...(path || []), thisPath],
           );
 
           listForSum.push(childOptionsCount);
@@ -6317,7 +6806,7 @@ signalsPromise.then((signals) => {
           } else if ("unit" in anyPartial) {
             kind = "chart";
             id = `chart-${anyPartial.scale}-to-${ids.fromString(
-              anyPartial.title
+              anyPartial.title,
             )}`;
             title = anyPartial.title;
           } else {
@@ -6347,10 +6836,10 @@ signalsPromise.then((signals) => {
           }
 
           option.isFavorite.set(
-            !!localStorage.getItem(optionToFavoriteKey(option))
+            !!localStorage.getItem(optionToFavoriteKey(option)),
           );
           option.visited.set(
-            !!localStorage.getItem(optionToVisitedKey(option))
+            !!localStorage.getItem(optionToVisitedKey(option)),
           );
 
           counters.createEffect(option);
@@ -6417,7 +6906,7 @@ signalsPromise.then((signals) => {
       });
 
       return signals.createMemo(() =>
-        listForSum.reduce((acc, s) => acc + s(), 0)
+        listForSum.reduce((acc, s) => acc + s(), 0),
       );
     }
     recursiveProcessPartialTree(partialTree, treeElement);
@@ -6444,7 +6933,7 @@ signalsPromise.then((signals) => {
           console.log(
             [...m.entries()]
               .filter(([_, value]) => value > 1)
-              .map(([key, _]) => key)
+              .map(([key, _]) => key),
           );
 
           throw Error("ID duplicate");
@@ -6532,7 +7021,7 @@ signalsPromise.then((signals) => {
 
             return isFavorite;
           },
-          false
+          false,
         );
       }
 
@@ -6615,6 +7104,8 @@ signalsPromise.then((signals) => {
     function initSelectedFrame() {
       console.log("selected: init");
 
+      const selectedKind = signals.createMemo(() => options.selected().kind);
+
       /**
        * @param {TimeScale} scale
        * @param {number} id
@@ -6631,10 +7122,8 @@ signalsPromise.then((signals) => {
         /** @type {Map<HeightPath, ResourceDataset<"height">>} */
         const height = new Map();
 
-        const USE_LOCAL_URL = true;
-        const LOCAL_URL = "/api";
-        const WEB_URL = "https://kibo.money/api";
-        const BACKUP_WEB_URL = "https://backup.kibo.money/api";
+        const URL = "/api";
+        const BACKUP_URL = "https://backup.kibo.money/api";
 
         const datasetsOwner = signals.getOwner();
 
@@ -6649,24 +7138,22 @@ signalsPromise.then((signals) => {
             signals.runWithOwner(datasetsOwner, () => {
               /** @typedef {DatasetValue<T extends number ? SingleValueData : CandlestickData>} Value */
 
-              const baseURL = `${
-                USE_LOCAL_URL && env.localhost ? LOCAL_URL : WEB_URL
-              }/${path}`;
+              const baseURL = `${URL}/${path}`;
 
-              const backupURL = `${
-                USE_LOCAL_URL && env.localhost ? LOCAL_URL : BACKUP_WEB_URL
-              }/${path}`;
+              console.log({ baseURL });
+
+              const backupURL = `${BACKUP_URL}/${path}`;
 
               const fetchedJSONs = new Array(
                 (new Date().getFullYear() -
                   new Date("2009-01-01").getFullYear() +
                   2) *
-                  (scale === "date" ? 1 : 6)
+                  (scale === "date" ? 1 : 6),
               )
                 .fill(null)
                 .map(() => {
                   const json = signals.createSignal(
-                    /** @type {FetchedJSON<S, T> | null} */ (null)
+                    /** @type {FetchedJSON<S, T> | null} */ (null),
                   );
 
                   /** @type {FetchedResult<S, T>} */
@@ -6726,7 +7213,7 @@ signalsPromise.then((signals) => {
                                         ? NaN
                                         : /** @type {number} */ (value),
                                   }),
-                            })
+                            }),
                         );
                       }
                     }),
@@ -6827,7 +7314,7 @@ signalsPromise.then((signals) => {
                   try {
                     fetchedResponse = await fetch(
                       backupUrlWithQuery,
-                      fetchConfig
+                      fetchConfig,
                     );
                   } catch {
                     fetched.loading = false;
@@ -6865,7 +7352,7 @@ signalsPromise.then((signals) => {
 
                 if (previousLength && previousLength === newLength) {
                   const previousLastValue = Object.values(previousMap || []).at(
-                    -1
+                    -1,
                   );
                   const newLastValue = Object.values(newMap).at(-1);
 
@@ -6972,12 +7459,12 @@ signalsPromise.then((signals) => {
           if (scale === "date") {
             date.set(
               /** @type {DatePath} */ (path),
-              /** @type {any} */ (dataset)
+              /** @type {any} */ (dataset),
             );
           } else {
             height.set(
               /** @type {HeightPath} */ (path),
-              /** @type {any} */ (dataset)
+              /** @type {any} */ (dataset),
             );
           }
 
@@ -6993,7 +7480,7 @@ signalsPromise.then((signals) => {
       /**
        * @param {Object} args
        * @param {Accessor<ChartOption>} args.selected
-       * @param {Awaited<ReturnType<typeof importLightweightCharts>>} args.lightweightCharts
+       * @param {LightweightCharts} args.lightweightCharts
        */
       function initChartsElement({ selected, lightweightCharts }) {
         console.log("init chart state");
@@ -7041,7 +7528,7 @@ signalsPromise.then((signals) => {
           function getSavedTimeRange() {
             return /** @type {TimeRange | null} */ (
               JSON.parse(
-                localStorage.getItem(ids.visibleTimeRange(scale())) || "null"
+                localStorage.getItem(ids.visibleTimeRange(scale())) || "null",
               )
             );
           }
@@ -7100,23 +7587,23 @@ signalsPromise.then((signals) => {
           /** @type {Set<ResourceDataset<any, any>>} */ (new Set()),
           {
             equals: false,
-          }
+          },
         );
         const visibleTimeRange = signals.createSignal(
-          getInitialVisibleTimeRange()
+          getInitialVisibleTimeRange(),
         );
         const visibleDatasetIds = signals.createSignal(
           /** @type {number[]} */ ([]),
           {
             equals: false,
-          }
+          },
         );
         const lastVisibleDatasetIndex = signals.createMemo(() => {
           const last = visibleDatasetIds().at(-1);
           return last !== undefined ? chunkIdToIndex(scale(), last) : undefined;
         });
         const priceSeriesType = signals.createSignal(
-          /** @type {PriceSeriesType} */ ("Candlestick")
+          /** @type {PriceSeriesType} */ ("Candlestick"),
         );
 
         function updateVisibleDatasetIds() {
@@ -7132,7 +7619,7 @@ signalsPromise.then((signals) => {
 
             ids = Array.from(
               { length: to - from + 1 },
-              (_, i) => i + from
+              (_, i) => i + from,
             ).filter((year) => year >= 2009 && year <= today.getUTCFullYear());
           } else {
             const from = Math.floor(Number(rawFrom) / consts.HEIGHT_CHUNK_SIZE);
@@ -7142,7 +7629,7 @@ signalsPromise.then((signals) => {
 
             ids = Array.from(
               { length },
-              (_, i) => (from + i) * consts.HEIGHT_CHUNK_SIZE
+              (_, i) => (from + i) * consts.HEIGHT_CHUNK_SIZE,
             );
           }
 
@@ -7161,7 +7648,7 @@ signalsPromise.then((signals) => {
         updateVisibleDatasetIds();
         const debouncedUpdateVisibleDatasetIds = utils.debounce(
           updateVisibleDatasetIds,
-          100
+          100,
         );
 
         function saveVisibleRange() {
@@ -7170,7 +7657,7 @@ signalsPromise.then((signals) => {
           utils.url.writeParam(ids.to, String(range.to));
           localStorage.setItem(
             ids.visibleTimeRange(scale()),
-            JSON.stringify(range)
+            JSON.stringify(range),
           );
         }
         const debouncedSaveVisibleRange = utils.debounce(saveVisibleRange, 250);
@@ -7198,7 +7685,7 @@ signalsPromise.then((signals) => {
         function resetChartListElement() {
           while (
             elements.chartList.lastElementChild?.classList.contains(
-              "chart-wrapper"
+              "chart-wrapper",
             )
           ) {
             elements.chartList.lastElementChild?.remove();
@@ -7232,7 +7719,7 @@ signalsPromise.then((signals) => {
               /** @type {Lowercase<typeof chartModes[number]>} */ (
                 localStorage.getItem(id) ||
                   chartModes[chartIndex ? 0 : 1].toLowerCase()
-              )
+              ),
             );
 
             const field = reactiveDom.createField({
@@ -7300,7 +7787,7 @@ signalsPromise.then((signals) => {
                 ratio =
                   utils.getNumberOfDaysBetweenTwoDates(
                     utils.dateFromTime(from),
-                    utils.dateFromTime(to)
+                    utils.dateFromTime(to),
                   ) / width;
               } else {
                 const to = /** @type {number} */ (visibleTimeRange.to);
@@ -7321,13 +7808,13 @@ signalsPromise.then((signals) => {
         }
         const debouncedUpdateVisiblePriceSeriesType = utils.debounce(
           updateVisiblePriceSeriesType,
-          50
+          50,
         );
 
         const hoveredLegend = signals.createSignal(
           /** @type {{label: HTMLLabelElement, series: Series} | undefined} */ (
             undefined
-          )
+          ),
         );
         const notHoveredLegendTransparency = "66";
         /**
@@ -7437,9 +7924,8 @@ signalsPromise.then((signals) => {
 
                         v = /** @type {string} */ (v).substring(0, 7);
                         initialColors[i][k] = v;
-                        darkenedColors[i][
-                          k
-                        ] = `${v}${notHoveredLegendTransparency}`;
+                        darkenedColors[i][k] =
+                          `${v}${notHoveredLegendTransparency}`;
                       } else if (k === "lastValueVisible" && v) {
                         initialColors[i][k] = true;
                         darkenedColors[i][k] = false;
@@ -7456,7 +7942,7 @@ signalsPromise.then((signals) => {
 
                 return hovered;
               },
-              undefined
+              undefined,
             );
           }
           createHoverEffect();
@@ -7507,14 +7993,14 @@ signalsPromise.then((signals) => {
           const id = ids.fromString(title);
           const storageId = options.optionAndSeriesToKey(
             option,
-            seriesBlueprint
+            seriesBlueprint,
           );
 
           const active = signals.createSignal(
             utils.url.readBoolParam(id) ??
               utils.storage.readBool(storageId) ??
               defaultActive ??
-              true
+              true,
           );
 
           const disabled = signals.createMemo(_disabled || (() => false));
@@ -7555,7 +8041,7 @@ signalsPromise.then((signals) => {
 
           dataset.fetchedJSONs.forEach((json, index) => {
             const chunk = signals.createSignal(
-              /** @type {ISeriesApi<SeriesType> | undefined} */ (undefined)
+              /** @type {ISeriesApi<SeriesType> | undefined} */ (undefined),
             );
 
             chunks[index] = chunk;
@@ -7585,6 +8071,8 @@ signalsPromise.then((signals) => {
                         color,
                         options: seriesOptions,
                         owner,
+                        signals,
+                        colors,
                       });
                       break;
                     }
@@ -7593,6 +8081,8 @@ signalsPromise.then((signals) => {
                         chart,
                         options: seriesOptions,
                         owner,
+                        signals,
+                        colors,
                       });
                       break;
                     }
@@ -7610,6 +8100,8 @@ signalsPromise.then((signals) => {
                         color,
                         options: seriesOptions,
                         owner,
+                        signals,
+                        colors,
                       });
                       break;
                     }
@@ -7649,11 +8141,11 @@ signalsPromise.then((signals) => {
               if (visibleDatasetIds().length) {
                 const start = chunkIdToIndex(
                   scale(),
-                  /** @type {number} */ (visibleDatasetIds().at(0))
+                  /** @type {number} */ (visibleDatasetIds().at(0)),
                 );
                 const end = chunkIdToIndex(
                   scale(),
-                  /** @type {number} */ (visibleDatasetIds().at(-1))
+                  /** @type {number} */ (visibleDatasetIds().at(-1)),
                 );
 
                 if (index >= start && index <= end) {
@@ -7773,17 +8265,17 @@ signalsPromise.then((signals) => {
           function initScrollButtons() {
             const buttonBackward = utils.dom.getElementById("button-backward");
             const buttonBackwardIcon = utils.dom.getElementById(
-              "button-backward-icon"
+              "button-backward-icon",
             );
             const buttonBackwardPauseIcon = utils.dom.getElementById(
-              "button-backward-pause-icon"
+              "button-backward-pause-icon",
             );
             const buttonForward = utils.dom.getElementById("button-forward");
             const buttonForwardIcon = utils.dom.getElementById(
-              "button-forward-icon"
+              "button-forward-icon",
             );
             const buttonForwardPauseIcon = utils.dom.getElementById(
-              "button-forward-pause-icon"
+              "button-forward-pause-icon",
             );
 
             let interval = /** @type {number | undefined} */ (undefined);
@@ -7881,8 +8373,8 @@ signalsPromise.then((signals) => {
                     Math.ceil(
                       (to.getTime() -
                         new Date(`${to.getUTCFullYear()}-01-01`).getTime()) /
-                        consts.ONE_DAY_IN_MS
-                    )
+                        consts.ONE_DAY_IN_MS,
+                    ),
                   );
                 }
 
@@ -7924,7 +8416,7 @@ signalsPromise.then((signals) => {
                 if (option.kind === "chart") {
                   setTimeScale(
                     /** @type {HTMLButtonElement} */ (button),
-                    option
+                    option,
                   );
                 }
               });
@@ -7960,7 +8452,7 @@ signalsPromise.then((signals) => {
           const blueprintCount =
             1 + (option.top?.length || 0) + (option.bottom?.length || 0);
           const chartsBlueprints = [option.top || [], option.bottom].flatMap(
-            (list) => (list ? [list] : [])
+            (list) => (list ? [list] : []),
           );
 
           resetLegendElement();
@@ -7972,12 +8464,14 @@ signalsPromise.then((signals) => {
           charts = chartsBlueprints.map((seriesBlueprints, chartIndex) => {
             const { chartDiv, unitName, chartMode } = createChartDiv(
               elements.chartList,
-              chartIndex
+              chartIndex,
             );
 
             const chart = lightweightCharts.createChartWithWhitespace({
               scale,
               element: chartDiv,
+              signals,
+              colors,
             });
 
             setInitialVisibleTimeRange(chart);
@@ -8104,7 +8598,7 @@ signalsPromise.then((signals) => {
                   maxMarker
                 ) {
                   min.seriesChunk.setMarkers(
-                    [minMarker, maxMarker].sort((a, b) => a.weight - b.weight)
+                    [minMarker, maxMarker].sort((a, b) => a.weight - b.weight),
                   );
                 } else {
                   if (min && minMarker) {
@@ -8123,7 +8617,7 @@ signalsPromise.then((signals) => {
                 () => {
                   setMinMaxMarkers();
                 },
-                blueprintCount * 10 + scale === "date" ? 50 : 100
+                blueprintCount * 10 + scale === "date" ? 50 : 100,
               );
 
             function createSetMinMaxMarkersWhenIdleEffect() {
@@ -8181,7 +8675,7 @@ signalsPromise.then((signals) => {
               .forEach((seriesBlueprint, index) => {
                 const dataset = datasets.getOrImport(
                   scale,
-                  seriesBlueprint.datasetPath
+                  seriesBlueprint.datasetPath,
                 );
 
                 // Don't trigger reactivity by design
@@ -8213,7 +8707,7 @@ signalsPromise.then((signals) => {
             });
 
             const chartVisible = signals.createMemo(() =>
-              chartSeries.some((series) => series.visible())
+              chartSeries.some((series) => series.visible()),
             );
 
             function createChartVisibilityEffect() {
@@ -8245,7 +8739,7 @@ signalsPromise.then((signals) => {
             signals.createEffect(() =>
               chart.priceScale("right").applyOptions({
                 mode: chartMode() === "linear" ? 0 : 1,
-              })
+              }),
             );
 
             chart
@@ -8290,7 +8784,7 @@ signalsPromise.then((signals) => {
                     otherChart.setCrosshairPosition(
                       NaN,
                       time,
-                      otherChart.whitespace
+                      otherChart.whitespace,
                     );
                   } else {
                     // No time when mouse goes outside the chart
@@ -8315,9 +8809,136 @@ signalsPromise.then((signals) => {
         createApplyChartOptionEffect();
       }
 
+      const lastValues = signals.createSignal(
+        /** @type {Record<LastPath, number> | null} */ (null),
+      );
+      function createFetchLastValuesWhenNeededEffect() {
+        let previousHeight = -1;
+        signals.createEffect(() => {
+          if (selectedKind() === "dashboard") {
+            if (previousHeight !== lastHeight()) {
+              fetch("/api/last").then((response) => {
+                response.json().then((json) => {
+                  if (typeof json === "object") {
+                    lastValues.set(json);
+                    previousHeight = lastHeight();
+                  }
+                });
+              });
+            }
+          }
+        });
+      }
+      createFetchLastValuesWhenNeededEffect();
+
+      /**
+       * @param {Object} args
+       * @param {Accessor<DashboardOption>} args.selected
+       * @param {Flexmasonry} args.flexmasonry
+       */
+      function initDashboardElement({ selected, flexmasonry }) {
+        // console.log("efkopwefkwpo");
+        flexmasonry.destroyAll();
+
+        const element = elements.dashboards;
+
+        element.innerHTML = "";
+
+        selected().groups.forEach(({ name, values, unit: groupUnit }) => {
+          const details = window.document.createElement("details");
+          details.open = true;
+          element.append(details);
+
+          const summary = window.document.createElement("summary");
+          summary.innerHTML = name;
+          details.append(summary);
+
+          const table = window.document.createElement("table");
+          details.append(table);
+
+          const tbody = window.document.createElement("tbody");
+          table.append(tbody);
+
+          values.forEach(({ name, path, unit: valueUnit, long }) => {
+            const unit = groupUnit ?? valueUnit;
+
+            const tr = window.document.createElement("tr");
+            tbody.append(tr);
+
+            const tdName = window.document.createElement("td");
+            tdName.innerHTML = name;
+            tr.append(tdName);
+
+            const tdValue = window.document.createElement("td");
+
+            const preSmall = window.document.createElement("small");
+            tdValue.append(preSmall);
+
+            const valueSpan = window.document.createElement("span");
+            tdValue.append(valueSpan);
+
+            const postSmall = window.document.createElement("small");
+            tdValue.append(postSmall);
+
+            signals.createEffect(() => {
+              if (!path) {
+                tdValue.append(utils.dom.createItalic("Soon"));
+                return;
+              }
+
+              const value = lastValues()?.[path];
+
+              tdValue.title = `${utils.locale.numberToUSFormat(value ?? 0)}`;
+
+              const formattedValue = utils.locale[
+                long ? "numberToUSFormat" : "numberToShortUSFormat"
+              ](value ?? 0);
+
+              if (unit === "Date") {
+                valueSpan.innerHTML = String(value);
+                postSmall.innerHTML = ` UTC`;
+                return;
+              }
+
+              valueSpan.innerHTML = formattedValue;
+
+              switch (unit) {
+                case "US Dollars": {
+                  preSmall.innerHTML = `$`;
+                  break;
+                }
+                case "Bitcoin": {
+                  preSmall.innerHTML = `₿`;
+                  break;
+                }
+                case "Percentage": {
+                  postSmall.innerHTML = `%`;
+                  break;
+                }
+                case "Seconds": {
+                  postSmall.innerHTML = ` sec`;
+                  break;
+                }
+                case "Megabytes": {
+                  postSmall.innerHTML = ` MB`;
+                  break;
+                }
+              }
+            });
+
+            tr.append(tdValue);
+          });
+        });
+
+        flexmasonry.init([element]);
+      }
+
       function createApplyOptionEffect() {
         const lastChartOption = signals.createSignal(
-          /** @type {ChartOption | null} */ (null)
+          /** @type {ChartOption | null} */ (null),
+        );
+        const lastDashboardOption = signals.createSignal(
+          /** @type {DashboardOption | null} */ (null),
         );
 
         const owner = signals.getOwner();
@@ -8326,45 +8947,23 @@ signalsPromise.then((signals) => {
           undefined
         );
         let firstChartOption = true;
-
-        const lastValues = signals.createSignal(
-          /** @type {Record<LastPath, number> | null} */ (null)
-        );
-
-        const kind = signals.createMemo(() => options.selected().kind);
-
-        function createFetchLastValuesWhenNeededEffect() {
-          let previousHeight = -1;
-          signals.createEffect(() => {
-            if (kind() === "dashboard") {
-              if (previousHeight !== lastHeight()) {
-                fetch("/api/last").then((response) => {
-                  response.json().then((json) => {
-                    if (typeof json === "object") {
-                      lastValues.set(json);
-                      previousHeight = lastHeight();
-                    }
-                  });
-                });
-              }
-            }
-          });
-        }
-        createFetchLastValuesWhenNeededEffect();
+        let firstDashboardOption = true;
 
         signals.createEffect(() => {
           const option = options.selected();
+
           signals.untrack(() => {
             if (previousElement) {
               previousElement.hidden = true;
               utils.url.resetParams(option);
+              utils.url.pushHistory(option.id);
+            } else {
+              utils.url.replaceHistory({ pathname: option.id });
             }
-            utils.url.replaceHistory({ pathname: option.id });
 
-            const hideSelectedTop =
-              option.kind === "home" || option.kind === "pdf";
-            elements.selectedHeader.hidden = hideSelectedTop;
-            elements.selectedHr.hidden = hideSelectedTop;
+            const hideTop = option.kind === "home" || option.kind === "pdf";
+            elements.selectedHeader.hidden = hideTop;
+            elements.selectedHr.hidden = hideTop;
 
             elements.selectedTitle.innerHTML = option.title;
             elements.selectedDescription.innerHTML = option.serializedPath;
@@ -8378,56 +8977,24 @@ signalsPromise.then((signals) => {
                 break;
               }
               case "dashboard": {
+                packages.flexmasonry().then(() => {});
+
                 element = elements.dashboards;
 
-                element.innerHTML = "";
+                lastDashboardOption.set(option);
 
-                option.groups.forEach(({ name, values, unit: groupUnit }) => {
-                  const table = window.document.createElement("table");
-                  element.append(table);
-                  const caption = window.document.createElement("caption");
-                  caption.innerHTML = name;
-                  table.append(caption);
-                  const tbody = window.document.createElement("tbody");
-                  table.append(tbody);
-                  values.forEach(({ name, path, unit: valueUnit }) => {
-                    const unit = groupUnit ?? valueUnit;
-                    const tr = window.document.createElement("tr");
-                    tbody.append(tr);
-                    const tdName = window.document.createElement("td");
-                    tdName.innerHTML = name;
-                    tr.append(tdName);
-                    const tdValue = window.document.createElement("td");
-                    signals.createEffect(() => {
-                      if (!path) {
-                        tdValue.append(utils.dom.createItalic("Soon"));
-                        return;
-                      }
+                if (firstDashboardOption) {
+                  packages.flexmasonry().then((flexmasonry) =>
+                    signals.runWithOwner(owner, () =>
+                      initDashboardElement({
+                        selected: /** @type {any} */ (lastDashboardOption),
+                        flexmasonry,
+                      }),
+                    ),
+                  );
+                }
+                firstDashboardOption = false;
 
-                      switch (unit) {
-                        case "US Dollars": {
-                          tdValue.innerHTML = utils.formatters.dollars.format(
-                            lastValues()?.[path] || 0
-                          );
-                          break;
-                        }
-                        case "Percentage": {
-                          tdValue.innerHTML =
-                            utils.formatters.percentage.format(
-                              (lastValues()?.[path] || 0) / 100
-                            );
-                          break;
-                        }
-                        default: {
-                          tdValue.innerHTML = String(
-                            lastValues()?.[path] ?? ""
-                          );
-                        }
-                      }
-                    });
-                    tr.append(tdValue);
-                  });
-                });
                 break;
               }
               case "chart": {
@@ -8436,17 +9003,17 @@ signalsPromise.then((signals) => {
                 lastChartOption.set(option);
 
                 if (firstChartOption) {
-                  lightweightChartsPromise ||= importLightweightCharts();
-                  lightweightChartsPromise.then((lightweightCharts) =>
+                  packages.lightweightCharts().then((lightweightCharts) =>
                     signals.runWithOwner(owner, () =>
                       initChartsElement({
                         selected: /** @type {any} */ (lastChartOption),
                         lightweightCharts,
-                      })
-                    )
+                      }),
+                    ),
                   );
                 }
                 firstChartOption = false;
+
                 break;
               }
               case "pdf": {
@@ -8528,7 +9095,7 @@ signalsPromise.then((signals) => {
           event.preventDefault();
         });
 
-        import("./packages/lean-qr/v2.3.4/script.js").then(({ generate }) => {
+        packages.leanQr().then(({ generate }) => {
           const imgQrcode = /** @type {HTMLImageElement} */ (
             utils.dom.getElementById("share-img")
           );
@@ -8545,7 +9112,7 @@ signalsPromise.then((signals) => {
               anchor.innerHTML = href;
 
               const qrcode = generate(
-                /** @type {any} */ (window.document.location.href)
+                /** @type {any} */ (window.document.location.href),
               )?.toDataURL({
                 // @ts-ignore
                 padX: 0,
@@ -8740,205 +9307,198 @@ signalsPromise.then((signals) => {
       const localStorageSearchKey = "search";
 
       const haystack = options.list.map(
-        (option) => `${option.title}\t${option.serializedPath}`
+        (option) => `${option.title}\t${option.serializedPath}`,
       );
 
       const searchSmallOgInnerHTML = elements.searchSmall.innerHTML;
 
       const RESULTS_PER_PAGE = 100;
 
-      import("./packages/ufuzzy/v1.0.14/script.js").then(
-        ({ default: ufuzzy }) => {
-          /**
-           * @param {uFuzzy.SearchResult} searchResult
-           * @param {number} pageIndex
-           */
-          function computeResultPage(searchResult, pageIndex) {
-            /** @type {{ option: Option, path: string, title: string }[]} */
-            let list = [];
+      packages.ufuzzy().then((ufuzzy) => {
+        /**
+         * @param {uFuzzy.SearchResult} searchResult
+         * @param {number} pageIndex
+         */
+        function computeResultPage(searchResult, pageIndex) {
+          /** @type {{ option: Option, path: string, title: string }[]} */
+          let list = [];
 
-            let [indexes, info, order] = searchResult || [null, null, null];
+          let [indexes, info, order] = searchResult || [null, null, null];
 
-            const minIndex = pageIndex * RESULTS_PER_PAGE;
+          const minIndex = pageIndex * RESULTS_PER_PAGE;
 
-            if (indexes?.length) {
-              const maxIndex = Math.min(
-                (order || indexes).length - 1,
-                minIndex + RESULTS_PER_PAGE - 1
-              );
+          if (indexes?.length) {
+            const maxIndex = Math.min(
+              (order || indexes).length - 1,
+              minIndex + RESULTS_PER_PAGE - 1,
+            );
 
-              list = Array(maxIndex - minIndex + 1);
+            list = Array(maxIndex - minIndex + 1);
 
-              if (info && order) {
-                for (let i = minIndex; i <= maxIndex; i++) {
-                  let infoIdx = order[i];
+            if (info && order) {
+              for (let i = minIndex; i <= maxIndex; i++) {
+                let infoIdx = order[i];
 
-                  const [title, path] = ufuzzy
-                    .highlight(
-                      haystack[info.idx[infoIdx]],
-                      info.ranges[infoIdx]
-                    )
-                    .split("\t");
+                const [title, path] = ufuzzy
+                  .highlight(haystack[info.idx[infoIdx]], info.ranges[infoIdx])
+                  .split("\t");
 
-                  list[i % 100] = {
-                    option: options.list[info.idx[infoIdx]],
-                    path,
-                    title,
-                  };
-                }
-              } else {
-                for (let i = minIndex; i <= maxIndex; i++) {
-                  let index = indexes[i];
+                list[i % 100] = {
+                  option: options.list[info.idx[infoIdx]],
+                  path,
+                  title,
+                };
+              }
+            } else {
+              for (let i = minIndex; i <= maxIndex; i++) {
+                let index = indexes[i];
 
-                  const [title, path] = haystack[index].split("\t");
+                const [title, path] = haystack[index].split("\t");
 
-                  list[i % 100] = {
-                    option: options.list[index],
-                    path,
-                    title,
-                  };
-                }
+                list[i % 100] = {
+                  option: options.list[index],
+                  path,
+                  title,
+                };
               }
             }
-
-            return list;
           }
 
-          /** @type {uFuzzy.Options} */
-          const config = {
-            intraIns: Infinity,
-            intraChars: `[a-z\d' ]`,
-          };
+          return list;
+        }
 
-          const fuzzyMultiInsert = /** @type {uFuzzy} */ (
-            ufuzzy({
-              intraIns: 1,
-            })
-          );
-          const fuzzyMultiInsertFuzzier = /** @type {uFuzzy} */ (
-            ufuzzy(config)
-          );
-          const fuzzySingleError = /** @type {uFuzzy} */ (
-            ufuzzy({
-              intraMode: 1,
-              ...config,
-            })
-          );
-          const fuzzySingleErrorFuzzier = /** @type {uFuzzy} */ (
-            ufuzzy({
-              intraMode: 1,
-              ...config,
-            })
-          );
+        /** @type {uFuzzy.Options} */
+        const config = {
+          intraIns: Infinity,
+          intraChars: `[a-z\d' ]`,
+        };
 
-          /** @type {VoidFunction | undefined} */
-          let dispose;
+        const fuzzyMultiInsert = /** @type {uFuzzy} */ (
+          ufuzzy({
+            intraIns: 1,
+          })
+        );
+        const fuzzyMultiInsertFuzzier = /** @type {uFuzzy} */ (ufuzzy(config));
+        const fuzzySingleError = /** @type {uFuzzy} */ (
+          ufuzzy({
+            intraMode: 1,
+            ...config,
+          })
+        );
+        const fuzzySingleErrorFuzzier = /** @type {uFuzzy} */ (
+          ufuzzy({
+            intraMode: 1,
+            ...config,
+          })
+        );
 
-          function inputEvent() {
-            signals.createRoot((_dispose) => {
-              const needle = /** @type {string} */ (elements.searchInput.value);
+        /** @type {VoidFunction | undefined} */
+        let dispose;
 
-              utils.storage.write(localStorageSearchKey, needle);
+        function inputEvent() {
+          signals.createRoot((_dispose) => {
+            const needle = /** @type {string} */ (elements.searchInput.value);
 
-              dispose?.();
+            utils.storage.write(localStorageSearchKey, needle);
 
-              dispose = _dispose;
+            dispose?.();
 
-              elements.searchResults.scrollTo({
-                top: 0,
-              });
+            dispose = _dispose;
 
-              if (!needle) {
-                elements.searchSmall.innerHTML = searchSmallOgInnerHTML;
-                elements.searchResults.innerHTML = "";
-                return;
-              }
+            elements.searchResults.scrollTo({
+              top: 0,
+            });
 
-              const outOfOrder = 5;
-              const infoThresh = 5_000;
+            if (!needle) {
+              elements.searchSmall.innerHTML = searchSmallOgInnerHTML;
+              elements.searchResults.innerHTML = "";
+              return;
+            }
 
-              let result = fuzzyMultiInsert?.search(
+            const outOfOrder = 5;
+            const infoThresh = 5_000;
+
+            let result = fuzzyMultiInsert?.search(
+              haystack,
+              needle,
+              undefined,
+              infoThresh,
+            );
+
+            if (!result?.[0]?.length || !result?.[1]) {
+              result = fuzzyMultiInsert?.search(
+                haystack,
+                needle,
+                outOfOrder,
+                infoThresh,
+              );
+            }
+
+            if (!result?.[0]?.length || !result?.[1]) {
+              result = fuzzySingleError?.search(
+                haystack,
+                needle,
+                outOfOrder,
+                infoThresh,
+              );
+            }
+
+            if (!result?.[0]?.length || !result?.[1]) {
+              result = fuzzySingleErrorFuzzier?.search(
+                haystack,
+                needle,
+                outOfOrder,
+                infoThresh,
+              );
+            }
+
+            if (!result?.[0]?.length || !result?.[1]) {
+              result = fuzzyMultiInsertFuzzier?.search(
                 haystack,
                 needle,
                 undefined,
-                infoThresh
+                infoThresh,
               );
+            }
 
-              if (!result?.[0]?.length || !result?.[1]) {
-                result = fuzzyMultiInsert?.search(
-                  haystack,
-                  needle,
-                  outOfOrder,
-                  infoThresh
-                );
-              }
+            if (!result?.[0]?.length || !result?.[1]) {
+              result = fuzzyMultiInsertFuzzier?.search(
+                haystack,
+                needle,
+                outOfOrder,
+                infoThresh,
+              );
+            }
 
-              if (!result?.[0]?.length || !result?.[1]) {
-                result = fuzzySingleError?.search(
-                  haystack,
-                  needle,
-                  outOfOrder,
-                  infoThresh
-                );
-              }
+            elements.searchSmall.innerHTML = `Found <strong>${
+              result?.[0]?.length || 0
+            }</strong> result(s)`;
+            elements.searchResults.innerHTML = "";
 
-              if (!result?.[0]?.length || !result?.[1]) {
-                result = fuzzySingleErrorFuzzier?.search(
-                  haystack,
-                  needle,
-                  outOfOrder,
-                  infoThresh
-                );
-              }
+            const list = computeResultPage(result, 0);
 
-              if (!result?.[0]?.length || !result?.[1]) {
-                result = fuzzyMultiInsertFuzzier?.search(
-                  haystack,
-                  needle,
-                  undefined,
-                  infoThresh
-                );
-              }
+            list.forEach(({ option, path, title }) => {
+              const li = window.document.createElement("li");
+              elements.searchResults.appendChild(li);
 
-              if (!result?.[0]?.length || !result?.[1]) {
-                result = fuzzyMultiInsertFuzzier?.search(
-                  haystack,
-                  needle,
-                  outOfOrder,
-                  infoThresh
-                );
-              }
-
-              elements.searchSmall.innerHTML = `Found <strong>${
-                result?.[0]?.length || 0
-              }</strong> result(s)`;
-              elements.searchResults.innerHTML = "";
-
-              const list = computeResultPage(result, 0);
-
-              list.forEach(({ option, path, title }) => {
-                const li = window.document.createElement("li");
-                elements.searchResults.appendChild(li);
-
-                const label = reactiveDom.createOptionLabeledInput({
-                  option,
-                  frame: "search",
-                  name: title,
-                  top: path,
-                });
-
-                li.append(label);
+              const label = reactiveDom.createOptionLabeledInput({
+                option,
+                frame: "search",
+                name: title,
+                top: path,
               });
+
+              li.append(label);
             });
-          }
-
-          if (elements.searchInput.value) {
-            inputEvent();
-          }
-
-          elements.searchInput.addEventListener("input", inputEvent);
+          });
         }
-      );
+
+        if (elements.searchInput.value) {
+          inputEvent();
+        }
+
+        elements.searchInput.addEventListener("input", inputEvent);
+      });
 
       setInputValue(localStorage.getItem(localStorageSearchKey) || "");
     }
@@ -9056,7 +9616,7 @@ signalsPromise.then((signals) => {
                 id: date.valueOf().toString(),
                 top: date.toLocaleTimeString(),
                 owner,
-              })
+              }),
             );
           });
         });
@@ -9094,7 +9654,7 @@ signalsPromise.then((signals) => {
             function updateHeading(id) {
               if (!id) return;
               utils.dom.getElementById(id).innerHTML = dateToDisplayedString(
-                grouped[id][0].date
+                grouped[id][0].date,
               );
             }
 
@@ -9162,7 +9722,7 @@ signalsPromise.then((signals) => {
         const theme = signals.createSignal(savedTheme);
 
         const preferredColorSchemeMatchMedia = window.matchMedia(
-          "(prefers-color-scheme: dark)"
+          "(prefers-color-scheme: dark)",
         );
 
         /**
@@ -9178,7 +9738,7 @@ signalsPromise.then((signals) => {
           }
 
           const backgroundColor = getComputedStyle(
-            window.document.documentElement
+            window.document.documentElement,
           ).getPropertyValue("--background-color");
           const meta = utils.dom.queryOrCreateMetaElement("theme-color");
           meta.content = backgroundColor;
@@ -9189,7 +9749,8 @@ signalsPromise.then((signals) => {
             localStorage.setItem(settingsThemeLocalStorageKey, theme());
             updateTheme(
               theme() === "dark" ||
-                (theme() === "system" && preferredColorSchemeMatchMedia.matches)
+                (theme() === "system" &&
+                  preferredColorSchemeMatchMedia.matches),
             );
           });
         }
@@ -9356,7 +9917,7 @@ signalsPromise.then((signals) => {
         donations.sort((a, b) =>
           b.amount !== a.amount
             ? b.amount - a.amount
-            : a.name.localeCompare(b.name)
+            : a.name.localeCompare(b.name),
         );
 
         donations.slice(0, 21).forEach(({ name, url, amount }) => {
@@ -9387,7 +9948,7 @@ signalsPromise.then((signals) => {
           (env.macOS || env.ipad || env.iphone)
         ) {
           const installInstructionsElement = utils.dom.getElementById(
-            "settings-install-instructions"
+            "settings-install-instructions",
           );
           installInstructionsElement.hidden = false;
 
@@ -9465,7 +10026,7 @@ signalsPromise.then((signals) => {
         localStorage.setItem(barWidthLocalStorageKey, String(width));
       } else {
         elements.main.style.width = elements.style.getPropertyValue(
-          "--default-main-width"
+          "--default-main-width",
         );
         localStorage.removeItem(barWidthLocalStorageKey);
       }
@@ -9542,7 +10103,7 @@ signalsPromise.then((signals) => {
 
           window.document.addEventListener(
             "visibilitychange",
-            reinitWebSocketIfDocumentNotHidden
+            reinitWebSocketIfDocumentNotHidden,
           );
 
           window.document.addEventListener("online", reinitWebSocket);
@@ -9551,7 +10112,7 @@ signalsPromise.then((signals) => {
           ws?.close();
           window.document.removeEventListener(
             "visibilitychange",
-            reinitWebSocketIfDocumentNotHidden
+            reinitWebSocketIfDocumentNotHidden,
           );
           window.document.removeEventListener("online", reinitWebSocket);
           live.set(false);
@@ -9578,7 +10139,7 @@ signalsPromise.then((signals) => {
               name: "ohlc",
               interval: 1440,
             },
-          })
+          }),
         );
       });
 
@@ -9623,7 +10184,7 @@ signalsPromise.then((signals) => {
           console.log("close:", close);
 
           window.document.title = `${latest.close.toLocaleString(
-            "en-us"
+            "en-us",
           )} | kibō`;
         }
       });

@@ -182,7 +182,7 @@ impl TransactionDataset {
 
         self.transactions_per_second
             .date
-            .multi_insert_simple_transform(dates, &mut self.count.date, |count| {
+            .multi_insert_simple_transform(dates, &mut self.count.date, |count, _| {
                 count as f32 / ONE_DAY_IN_S as f32
             });
 

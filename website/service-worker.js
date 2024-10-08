@@ -3,6 +3,8 @@
 const version = "v1";
 
 self.addEventListener("install", (_event) => {
+  console.log("service-worker: install");
+
   const event = /** @type {any} */ (_event);
 
   event.waitUntil(
@@ -17,66 +19,66 @@ self.addEventListener("install", (_event) => {
         "/packages/lightweight-charts/v4.2.0/script.js",
         "/assets/fonts/satoshi/2024-09/font.var.woff2",
       ]);
-    })
+    }),
   );
 
   // @ts-ignore
   self.skipWaiting();
 });
 
-/**
- * @param {Response | undefined} cachedResponse
- * @param {Response | undefined} badResponse
- */
-function pickCorrectResponse(cachedResponse, badResponse) {
-  if (cachedResponse) {
-    return cachedResponse;
-  } else {
-    return caches
-      .match("/")
-      .then((response) => {
-        return response ?? badResponse;
-      })
-      .catch(() => {
-        return badResponse;
-      });
-  }
-}
-
 self.addEventListener("fetch", (_event) => {
   const event = /** @type {any} */ (_event);
 
   /** @type {Request} */
-  const request = event.request;
-  const { url, method } = request;
+  let request = event.request;
+  const method = request.method;
+  let url = request.url;
+
+  const { pathname, origin } = new URL(url);
+
+  const slashMatches = url.match(/\//g);
+  const dotMatches = pathname.split("/").at(-1)?.match(/./g);
+  const endsWithDotHtml = pathname.endsWith(".html");
+  const slashApiSlashMatches = url.match(/\/api\//g);
+
+  if (
+    slashMatches &&
+    slashMatches.length <= 3 &&
+    !slashApiSlashMatches &&
+    (!dotMatches || endsWithDotHtml)
+  ) {
+    url = `${origin}/`;
+  }
+  request = new Request(url, request.mode !== "navigate" ? request : undefined);
 
   console.log(`service-worker: fetching: ${url}`);
 
   event.respondWith(
-    caches.match(request).then((cachedResponse) => {
+    caches.match(request).then(async (cachedResponse) => {
       return fetch(request)
         .then((response) => {
           const { status } = response;
 
-          // @ts-ignore
-          if (method !== "GET" || url.includes("/api/")) {
+          if (method !== "GET" || slashApiSlashMatches) {
+            // API calls are cached in script.js
             return response;
-          }
-
-          return caches.open(version).then((cache) => {
-            if (status === 200 || status === 304) {
-              if (status === 200) {
-                cache.put(request, response.clone());
-              }
-              return response;
-            } else {
-              return pickCorrectResponse(cachedResponse, response);
+          } else if (status === 200 || status === 304) {
+            if (status === 200) {
+              const clonedResponse = response.clone();
+              caches.open(version).then((cache) => {
+                cache.put(request, clonedResponse);
+              });
             }
-          });
+            return response;
+          } else {
+            return cachedResponse || response;
+          }
         })
         .catch(() => {
-          return pickCorrectResponse(cachedResponse, undefined);
+          console.log("service-worker: offline");
+
+          return cachedResponse;
         });
-    })
+    }),
   );
 });

@@ -67,21 +67,21 @@ where
         self.date.multi_insert_const(dates, constant);
     }
 
-    pub fn multi_insert_simple_transform<F, K>(
+    pub fn multi_insert_simple_transform<F, V>(
         &mut self,
         heights: &[Height],
         dates: &[Date],
-        source: &mut BiMap<K>,
+        source: &mut BiMap<V>,
         transform: &F,
     ) where
         Value: Div<Output = Value>,
-        F: Fn(K) -> Value,
-        K: MapValue,
+        F: Fn(V) -> Value,
+        V: MapValue,
     {
         self.height
-            .multi_insert_simple_transform(heights, &mut source.height, transform);
+            .multi_insert_simple_transform(heights, &mut source.height, |v, _| transform(v));
         self.date
-            .multi_insert_simple_transform(dates, &mut source.date, transform);
+            .multi_insert_simple_transform(dates, &mut source.date, |v, _| transform(v));
     }
 
     #[allow(unused)]

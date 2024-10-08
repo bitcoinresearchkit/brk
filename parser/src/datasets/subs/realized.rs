@@ -32,6 +32,7 @@ pub struct RealizedSubDataset {
     cumulative_net_realized_profit_and_loss_1m_net_change: BiMap<f32>,
     realized_value: BiMap<f32>,
     sell_side_risk_ratio: DateMap<f32>,
+    realized_profit_to_loss_ratio: BiMap<f32>,
 }
 
 impl RealizedSubDataset {
@@ -77,6 +78,7 @@ impl RealizedSubDataset {
             ),
             realized_value: BiMap::new_bin(1, &f("realized_value")),
             sell_side_risk_ratio: DateMap::new_bin(1, &f("sell_side_risk_ratio")),
+            realized_profit_to_loss_ratio: BiMap::new_bin(1, &f("realized_profit_to_loss_ratio")),
         };
 
         s.min_initial_states
@@ -243,6 +245,13 @@ impl RealizedSubDataset {
             &mut self.realized_value.date,
             &mut market_cap.date,
         );
+
+        self.realized_profit_to_loss_ratio.multi_insert_divide(
+            heights,
+            dates,
+            &mut self.realized_profit,
+            &mut self.realized_loss,
+        );
     }
 }
 
@@ -287,6 +296,7 @@ impl AnyDataset for RealizedSubDataset {
             &self.cumulative_net_realized_profit_and_loss,
             &self.cumulative_net_realized_profit_and_loss_1m_net_change,
             &self.realized_value,
+            &self.realized_profit_to_loss_ratio,
         ]
     }
 
@@ -304,6 +314,7 @@ impl AnyDataset for RealizedSubDataset {
             &mut self.cumulative_net_realized_profit_and_loss,
             &mut self.cumulative_net_realized_profit_and_loss_1m_net_change,
             &mut self.realized_value,
+            &mut self.realized_profit_to_loss_ratio,
         ]
     }
 

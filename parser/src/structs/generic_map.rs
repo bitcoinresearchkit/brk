@@ -63,7 +63,7 @@ where
     Self: Ord + Debug + Copy + Clone,
 {
     fn to_name(&self) -> String;
-    fn from_path(path: &Path) -> Self;
+    fn from_path(path: &Path) -> color_eyre::Result<Self>;
     fn to_usize(self) -> usize;
     fn from_usize(id: usize) -> Self;
 }
@@ -189,9 +189,12 @@ where
             .unwrap()
             .map(|entry| entry.unwrap().path())
             .filter(|path| serialization.is_serializable(path))
-            .map(|path| {
-                let chunk_id = ChunkId::from_path(&path);
-                (chunk_id, path)
+            .flat_map(|path| {
+                if let Ok(chunk_id) = ChunkId::from_path(&path) {
+                    Some((chunk_id, path))
+                } else {
+                    None
+                }
             })
             .collect()
     }
@@ -414,10 +417,10 @@ where
     ) where
         SourceValue: MapValue,
         SourceSerialized: MapSerialized<Key, SourceValue, ChunkId>,
-        F: Fn(SourceValue) -> Value,
+        F: Fn(SourceValue, &Key) -> Value,
     {
         keys.iter().for_each(|key| {
-            self.insert(*key, transform(source.get_or_import(key).unwrap()));
+            self.insert(*key, transform(source.get_or_import(key).unwrap(), key));
         });
     }
 
@@ -434,13 +437,14 @@ where
                 SourceValue,
                 &Key,
                 &mut GenericMap<Key, SourceValue, ChunkId, SourceSerialized>,
+                &Self,
             ),
         ) -> Value,
     {
         keys.iter().for_each(|key| {
             self.insert(
                 *key,
-                transform((source.get_or_import(key).unwrap(), key, source)),
+                transform((source.get_or_import(key).unwrap(), key, source, self)),
             );
         });
     }
@@ -823,31 +827,27 @@ where
     where
         Value: Default + PartialOrd,
     {
-        let mut max = None;
+        let mut previous_max = None;
 
         keys.iter().for_each(|key| {
-            let previous_max = max.unwrap_or_else(|| {
+            if previous_max.is_none() {
                 key.checked_sub(1)
                     .and_then(|previous_max_key| self.get(&previous_max_key))
-                    .unwrap_or_default()
-            });
+                    .and_then(|v| previous_max.replace(v));
+            }
 
             let last_value = source.get_or_import(key).unwrap_or_else(|| {
                 dbg!(key);
                 panic!()
             });
 
-            if max.is_none() || last_value > previous_max {
-                max.replace(last_value);
+            if previous_max.is_none()
+                || previous_max.is_some_and(|previous_max| previous_max < last_value)
+            {
+                previous_max.replace(last_value);
             }
 
-            self.insert(
-                *key,
-                max.unwrap_or_else(|| {
-                    dbg!(previous_max, last_value, max);
-                    panic!();
-                }),
-            );
+            self.insert(*key, previous_max.unwrap());
         });
     }
 }

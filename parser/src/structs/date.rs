@@ -45,6 +45,10 @@ impl Date {
     pub fn yesterday() -> Self {
         Self(Self::today().checked_sub_days(Days::new(1)).unwrap())
     }
+
+    pub fn difference_in_days_between(&self, older: Self) -> u32 {
+        (**self - *older).num_days() as u32
+    }
 }
 
 impl MapKey<DateMapChunkId> for Date {

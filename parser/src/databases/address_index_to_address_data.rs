@@ -23,7 +23,7 @@ type Database = _Database<Key, Value>;
 pub struct AddressIndexToAddressData {
     pub metadata: Metadata,
 
-    map: BTreeMap<usize, Database>,
+    pub map: BTreeMap<usize, Database>,
 }
 
 impl Deref for AddressIndexToAddressData {
@@ -99,7 +99,7 @@ impl AddressIndexToAddressData {
         })
     }
 
-    fn open_all(&mut self) {
+    pub fn open_all(&mut self) {
         let path = Self::full_path();
 
         fs::create_dir_all(&path).unwrap();

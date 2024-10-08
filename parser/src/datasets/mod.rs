@@ -215,14 +215,14 @@ impl AllDatasets {
 
         self.address.compute(
             &compute_data,
-            &mut self.price.closes,
+            &mut self.price.close,
             &mut self.mining.cumulative_subsidy,
             &mut self.price.market_cap,
         );
 
         self.utxo.compute(
             &compute_data,
-            &mut self.price.closes,
+            &mut self.price.close,
             &mut self.mining.cumulative_subsidy,
             &mut self.price.market_cap,
         );
@@ -255,7 +255,7 @@ impl AllDatasets {
                 &compute_data,
                 &mut self.date_metadata.first_height,
                 &mut self.date_metadata.last_height,
-                &mut self.price.closes,
+                &mut self.price.close,
                 &mut self.mining.cumulative_subsidy,
                 &mut self.address.cohorts.all.subs.capitalization.realized_cap,
                 &mut self.address.cohorts.all.subs.capitalization.realized_price,

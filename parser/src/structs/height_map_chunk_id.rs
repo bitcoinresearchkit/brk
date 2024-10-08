@@ -28,8 +28,8 @@ impl MapChunkId for HeightMapChunkId {
         format!("{start}..{end}")
     }
 
-    fn from_path(path: &Path) -> Self {
-        Self(Height::new(
+    fn from_path(path: &Path) -> color_eyre::Result<Self> {
+        Ok(Self(Height::new(
             path.file_name()
                 .unwrap()
                 .to_str()
@@ -37,12 +37,8 @@ impl MapChunkId for HeightMapChunkId {
                 .split("..")
                 .next()
                 .unwrap()
-                .parse::<u32>()
-                .unwrap_or_else(|_| {
-                    dbg!(path);
-                    panic!()
-                }),
-        ))
+                .parse::<u32>()?,
+        )))
     }
 
     fn to_usize(self) -> usize {

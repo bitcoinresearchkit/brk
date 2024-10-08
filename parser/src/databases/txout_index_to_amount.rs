@@ -19,7 +19,7 @@ type Database = _Database<Key, Value>;
 pub struct TxoutIndexToAmount {
     pub metadata: Metadata,
 
-    pub map: BTreeMap<usize, Database>,
+    map: BTreeMap<usize, Database>,
 }
 
 impl Deref for TxoutIndexToAmount {
