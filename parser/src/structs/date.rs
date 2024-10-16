@@ -1,4 +1,4 @@
-use std::{fmt, str::FromStr};
+use std::{cmp::Ordering, fmt, str::FromStr};
 
 use allocative::{Allocative, Visitor};
 use bincode::{
@@ -7,11 +7,13 @@ use bincode::{
     error::{DecodeError, EncodeError},
     BorrowDecode, Decode, Encode,
 };
-use chrono::{Datelike, Days, NaiveDate};
+use chrono::{Datelike, Days, NaiveDate, NaiveDateTime};
 use derive_deref::{Deref, DerefMut};
 use serde::{Deserialize, Serialize};
 
-use super::{DateMapChunkId, MapKey};
+use crate::utils::ONE_DAY_IN_S;
+
+use super::{DateMapChunkId, MapKey, Timestamp};
 
 const NUMBER_OF_UNSAFE_DATES: usize = 2;
 const MIN_YEAR: i32 = 2009;
@@ -48,6 +50,28 @@ impl Date {
 
     pub fn difference_in_days_between(&self, older: Self) -> u32 {
         (**self - *older).num_days() as u32
+    }
+
+    pub fn to_timestamp(self) -> Timestamp {
+        Timestamp::wrap(NaiveDateTime::from(*self).and_utc().timestamp() as u32)
+    }
+
+    /// Returns value between 0.0 and 1.0 depending on its completion
+    ///
+    /// Any date before today (utc) will return 1.0
+    ///
+    /// Any date after today (utc) will panic even though it should return 0.0, as it shouldn't happen in the code
+    ///
+    /// Any date equal to today will have a completion between 0.0 and 1.0
+    pub fn get_day_completion(self) -> f64 {
+        let now = Timestamp::now();
+        let today = Date::today();
+
+        match self.cmp(&today) {
+            Ordering::Less => 1.0,
+            Ordering::Equal => *(now - self.to_timestamp()) as f64 / ONE_DAY_IN_S as f64,
+            Ordering::Greater => unreachable!("0.0 but shouldn't be called"),
+        }
     }
 }
 

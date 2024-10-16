@@ -1,10 +1,12 @@
-use std::{collections::BTreeMap, fmt::Debug};
+use std::{collections::BTreeMap, fmt::Debug, path::Path};
 
 use allocative::Allocative;
 use bincode::{Decode, Encode};
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 
-use super::{MapChunkId, MapKey, MapSerialized, MapValue};
+use crate::Serialization;
+
+use super::{DateMap, MapChunkId, MapKey, MapSerialized, MapValue};
 
 #[derive(Debug, Default, Serialize, Deserialize, Encode, Decode, Allocative)]
 pub struct SerializedBTreeMap<Key, Value>
@@ -12,7 +14,37 @@ where
     Key: Ord,
 {
     version: u32,
-    map: BTreeMap<Key, Value>,
+    pub map: BTreeMap<Key, Value>,
+}
+
+impl<Key, Value> SerializedBTreeMap<Key, Value>
+where
+    Key: Ord,
+{
+    pub fn import_all<ChunkId>(path: &Path, serialization: &Serialization) -> Self
+    where
+        Self: Debug + Serialize + DeserializeOwned + Encode + Decode,
+        ChunkId: MapChunkId,
+        Key: MapKey<ChunkId>,
+        Value: MapValue,
+    {
+        let mut s = None;
+
+        DateMap::<usize>::_read_dir(path, serialization)
+            .iter()
+            .for_each(|(_, path)| {
+                let map = serialization.import::<Self>(path).unwrap();
+
+                if s.is_none() {
+                    s.replace(map);
+                } else {
+                    #[allow(clippy::unnecessary_unwrap)]
+                    s.as_mut().unwrap().map.extend(map.map);
+                }
+            });
+
+        s.unwrap()
+    }
 }
 
 impl<Key, Value, ChunkId> MapSerialized<Key, Value, ChunkId> for SerializedBTreeMap<Key, Value>

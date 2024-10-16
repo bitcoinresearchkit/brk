@@ -23,6 +23,7 @@ pub trait MapValue:
 {
 }
 
+impl MapValue for u8 {}
 impl MapValue for u16 {}
 impl MapValue for u32 {}
 impl MapValue for u64 {}

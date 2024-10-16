@@ -413,11 +413,11 @@ where
         &mut self,
         keys: &[Key],
         source: &mut GenericMap<Key, SourceValue, ChunkId, SourceSerialized>,
-        transform: F,
+        mut transform: F,
     ) where
         SourceValue: MapValue,
         SourceSerialized: MapSerialized<Key, SourceValue, ChunkId>,
-        F: Fn(SourceValue, &Key) -> Value,
+        F: FnMut(SourceValue, &Key) -> Value,
     {
         keys.iter().for_each(|key| {
             self.insert(*key, transform(source.get_or_import(key).unwrap(), key));

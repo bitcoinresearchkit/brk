@@ -2,7 +2,8 @@ use allocative::Allocative;
 
 use crate::{
     datasets::AnyDataset,
-    structs::{AnyBiMap, BiMap},
+    structs::{AnyDateMap, AnyHeightMap},
+    DateMap, HeightMap,
 };
 
 use super::{InsertData, MinInitialStates};
@@ -12,7 +13,8 @@ pub struct CoindaysDataset {
     min_initial_states: MinInitialStates,
 
     // Inserted
-    pub coindays_destroyed: BiMap<f32>,
+    pub coindays_destroyed: HeightMap<f32>,
+    pub coindays_destroyed_1d_sum: DateMap<f32>,
 }
 
 impl CoindaysDataset {
@@ -22,7 +24,8 @@ impl CoindaysDataset {
         let mut s = Self {
             min_initial_states: MinInitialStates::default(),
 
-            coindays_destroyed: BiMap::new_bin(1, &f("coindays_destroyed")),
+            coindays_destroyed: HeightMap::new_bin(1, &f("coindays_destroyed")),
+            coindays_destroyed_1d_sum: DateMap::new_bin(1, &f("coindays_destroyed_1d_sum")),
         };
 
         s.min_initial_states
@@ -43,23 +46,30 @@ impl CoindaysDataset {
         }: &InsertData,
     ) {
         self.coindays_destroyed
-            .height
             .insert(height, satdays_destroyed.to_btc() as f32);
 
         if is_date_last_block {
-            self.coindays_destroyed
-                .date_insert_sum_range(date, date_blocks_range)
+            self.coindays_destroyed_1d_sum
+                .insert(date, self.coindays_destroyed.sum_range(date_blocks_range));
         }
     }
 }
 
 impl AnyDataset for CoindaysDataset {
-    fn to_inserted_bi_map_vec(&self) -> Vec<&(dyn AnyBiMap + Send + Sync)> {
+    fn to_inserted_height_map_vec(&self) -> Vec<&(dyn AnyHeightMap + Send + Sync)> {
         vec![&self.coindays_destroyed]
     }
 
-    fn to_inserted_mut_bi_map_vec(&mut self) -> Vec<&mut dyn AnyBiMap> {
+    fn to_inserted_date_map_vec(&self) -> Vec<&(dyn AnyDateMap + Send + Sync)> {
+        vec![&self.coindays_destroyed_1d_sum]
+    }
+
+    fn to_inserted_mut_height_map_vec(&mut self) -> Vec<&mut dyn AnyHeightMap> {
         vec![&mut self.coindays_destroyed]
+    }
+
+    fn to_inserted_mut_date_map_vec(&mut self) -> Vec<&mut dyn AnyDateMap> {
+        vec![&mut self.coindays_destroyed_1d_sum]
     }
 
     fn get_min_initial_states(&self) -> &MinInitialStates {

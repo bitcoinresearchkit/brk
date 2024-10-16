@@ -34,6 +34,8 @@ pub trait HeaderMapUtils {
     fn insert_cache_control_revalidate(&mut self, max_age: u64, stale_while_revalidate: u64);
     fn insert_last_modified(&mut self, date: DateTime<Utc>);
 
+    fn insert_content_disposition_attachment(&mut self);
+
     fn insert_content_type(&mut self, path: &Path);
     fn insert_content_type_image_icon(&mut self);
     fn insert_content_type_image_jpeg(&mut self);
@@ -43,6 +45,7 @@ pub trait HeaderMapUtils {
     fn insert_content_type_application_manifest_json(&mut self);
     fn insert_content_type_application_pdf(&mut self);
     fn insert_content_type_text_css(&mut self);
+    fn insert_content_type_text_csv(&mut self);
     fn insert_content_type_text_html(&mut self);
     fn insert_content_type_text_plain(&mut self);
     fn insert_content_type_font_woff2(&mut self);
@@ -181,6 +184,10 @@ impl HeaderMapUtils for HeaderMap {
         );
     }
 
+    fn insert_content_disposition_attachment(&mut self) {
+        self.insert(header::CONTENT_DISPOSITION, "attachment".parse().unwrap());
+    }
+
     fn insert_content_type_application_json(&mut self) {
         self.insert(header::CONTENT_TYPE, "application/json".parse().unwrap());
     }
@@ -198,6 +205,10 @@ impl HeaderMapUtils for HeaderMap {
 
     fn insert_content_type_text_css(&mut self) {
         self.insert(header::CONTENT_TYPE, "text/css".parse().unwrap());
+    }
+
+    fn insert_content_type_text_csv(&mut self) {
+        self.insert(header::CONTENT_TYPE, "text/csv".parse().unwrap());
     }
 
     fn insert_content_type_text_html(&mut self) {

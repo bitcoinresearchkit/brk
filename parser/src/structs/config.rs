@@ -45,9 +45,8 @@ impl Config {
     const PATH: &'static str = "./config.toml";
 
     pub fn import() -> color_eyre::Result<Self> {
-        let mut config_saved =
-            fs::read_to_string(Self::PATH).map_or(Config::default(), |contents| {
-                dbg!(&contents);
+        let mut config_saved = fs::read_to_string(Self::PATH)
+            .map_or(Config::default(), |contents| {
                 toml::from_str(&contents).unwrap_or_default()
             });
 

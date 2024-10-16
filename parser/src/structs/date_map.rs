@@ -1,17 +1,19 @@
+use std::iter::Sum;
+
 use crate::{Date, HeightMap};
 
 use super::{AnyMap, DateMapChunkId, GenericMap, Height, MapValue, SerializedBTreeMap};
 
 pub type DateMap<Value> = GenericMap<Date, Value, DateMapChunkId, SerializedBTreeMap<Date, Value>>;
 
-impl<T> DateMap<T>
+impl<Value> DateMap<Value>
 where
-    T: MapValue,
+    Value: MapValue,
 {
     pub fn multi_insert_last(
         &mut self,
         dates: &[Date],
-        source: &mut HeightMap<T>,
+        source: &mut HeightMap<Value>,
         last_height: &mut DateMap<Height>,
     ) {
         dates.iter().for_each(|date| {
@@ -22,6 +24,24 @@ where
                     .unwrap(),
             );
         });
+    }
+
+    pub fn multi_insert_sum_range(
+        &mut self,
+        dates: &[Date],
+        height_map: &HeightMap<Value>,
+        first_height: &mut DateMap<Height>,
+        last_height: &mut DateMap<Height>,
+    ) where
+        Value: Sum,
+    {
+        dates.iter().for_each(|date| {
+            let first_height = first_height.get_or_import(date).unwrap();
+            let last_height = last_height.get_or_import(date).unwrap();
+            let range = (*first_height)..=(*last_height);
+
+            self.insert(*date, height_map.sum_range(&range));
+        })
     }
 }
 

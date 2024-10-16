@@ -40,6 +40,8 @@ type DatasetPath<Scale extends TimeScale> = Scale extends "date"
 
 type AnyDatasetPath = import("./paths").DatePath | import("./paths").HeightPath;
 
+type AnyPath = AnyDatasetPath | LastPath;
+
 type Color = () => string;
 
 interface BaselineSpecificSeriesBlueprint {
@@ -74,6 +76,8 @@ type SeriesBlueprint = {
   datasetPath: AnyDatasetPath;
   title: string;
   defaultActive?: boolean;
+  main?: boolean;
+  formatNumber?: false;
 } & AnySpecificSeriesBlueprint;
 
 type Unit =
@@ -115,9 +119,9 @@ interface PartialDashboardOption extends PartialOption {
     unit?: Unit;
     values: {
       name: string;
-      path?: LastPath;
+      path: LastPath;
       unit?: Unit;
-      long?: true;
+      formatNumber?: false;
     }[];
   }[];
 }
@@ -125,10 +129,15 @@ interface PartialDashboardOption extends PartialOption {
 interface PartialChartOption extends PartialOption {
   scale: TimeScale;
   title: string;
+  shortTitle?: string;
   unit: Unit;
   description: string;
   top?: SeriesBlueprint[];
   bottom?: SeriesBlueprint[];
+  dashboard?: {
+    ignoreName?: boolean;
+    skip?: boolean;
+  };
 }
 
 interface PartialPdfOption extends PartialOption {
@@ -138,6 +147,13 @@ interface PartialPdfOption extends PartialOption {
 interface PartialOptionsGroup {
   name: string;
   tree: PartialOptionsTree;
+  dashboard?: {
+    skip?: true;
+    flatten?: true;
+    hopOver?: true;
+    separate?: true;
+    defaultOpen?: true;
+  };
 }
 
 type AnyPartialOption =

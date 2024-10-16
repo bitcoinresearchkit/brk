@@ -24,7 +24,7 @@ pub struct Route {
 pub struct Routes(pub Grouped<HashMap<String, Route>>);
 
 const INPUTS_PATH: &str = "./in";
-const WEBSITE_TYPES_PATH: &str = "../website/types";
+const WEBSITE_TYPES_PATH: &str = "../website/scripts/types";
 
 impl Routes {
     pub fn build() -> Self {

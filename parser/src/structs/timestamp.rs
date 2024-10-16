@@ -36,6 +36,10 @@ impl Timestamp {
         Self(timestamp)
     }
 
+    pub fn now() -> Self {
+        Self(chrono::offset::Utc::now().timestamp() as u32)
+    }
+
     pub fn to_date(self) -> Date {
         Date::wrap(
             Utc.timestamp_opt(i64::from(self.0), 0)

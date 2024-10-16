@@ -1,8 +1,9 @@
 use allocative::Allocative;
 
 use crate::{
-    structs::{AnyBiMap, BiMap, DateMap, Height},
+    structs::{AnyBiMap, AnyDateMap, AnyHeightMap, BiMap, DateMap, Height},
     utils::{ONE_DAY_IN_DAYS, ONE_YEAR_IN_DAYS, THREE_MONTHS_IN_DAYS, TWO_WEEK_IN_DAYS},
+    HeightMap,
 };
 
 use super::{AnyDataset, ComputeData, InsertData, MinInitialStates, RatioDataset};
@@ -12,7 +13,8 @@ pub struct CointimeDataset {
     min_initial_states: MinInitialStates,
 
     // Inserted
-    pub coinblocks_destroyed: BiMap<f32>,
+    pub coinblocks_destroyed: HeightMap<f32>,
+    pub coinblocks_destroyed_1d_sum: DateMap<f32>,
 
     // Computed
     pub active_cap: BiMap<f32>,
@@ -22,18 +24,24 @@ pub struct CointimeDataset {
     pub active_supply_3m_net_change: BiMap<f32>,
     pub active_supply_net_change: BiMap<f32>,
     pub activity_to_vaultedness_ratio: BiMap<f32>,
-    pub coinblocks_created: BiMap<f32>,
-    pub coinblocks_stored: BiMap<f32>,
-    pub cointime_adjusted_velocity: BiMap<f32>,
-    pub cointime_adjusted_yearly_inflation_rate: BiMap<f32>,
+    pub coinblocks_created: HeightMap<f32>,
+    pub coinblocks_created_1d_sum: DateMap<f32>,
+    pub coinblocks_stored: HeightMap<f32>,
+    pub coinblocks_stored_1d_sum: DateMap<f32>,
+    pub cointime_adjusted_velocity: DateMap<f32>,
+    pub cointime_adjusted_inflation_rate: DateMap<f32>,
+    pub cointime_adjusted_yearly_inflation_rate: DateMap<f32>,
     pub cointime_cap: BiMap<f32>,
     pub cointime_price: BiMap<f32>,
     pub cointime_price_ratio: RatioDataset,
-    pub cointime_value_created: BiMap<f32>,
-    pub cointime_value_destroyed: BiMap<f32>,
-    pub cointime_value_stored: BiMap<f32>,
-    pub concurrent_liveliness: BiMap<f32>,
-    pub concurrent_liveliness_2w_median: BiMap<f32>,
+    pub cointime_value_created: HeightMap<f32>,
+    pub cointime_value_created_1d_sum: DateMap<f32>,
+    pub cointime_value_destroyed: HeightMap<f32>,
+    pub cointime_value_destroyed_1d_sum: DateMap<f32>,
+    pub cointime_value_stored: HeightMap<f32>,
+    pub cointime_value_stored_1d_sum: DateMap<f32>,
+    pub concurrent_liveliness: DateMap<f32>,
+    pub concurrent_liveliness_2w_median: DateMap<f32>,
     pub cumulative_coinblocks_created: BiMap<f32>,
     pub cumulative_coinblocks_destroyed: BiMap<f32>,
     pub cumulative_coinblocks_stored: BiMap<f32>,
@@ -76,22 +84,35 @@ impl CointimeDataset {
             active_supply_3m_net_change: BiMap::new_bin(1, &f("active_supply_3m_net_change")),
             active_supply_net_change: BiMap::new_bin(1, &f("active_supply_net_change")),
             activity_to_vaultedness_ratio: BiMap::new_bin(2, &f("activity_to_vaultedness_ratio")),
-            coinblocks_created: BiMap::new_bin(1, &f("coinblocks_created")),
-            coinblocks_destroyed: BiMap::new_bin(1, &f("coinblocks_destroyed")),
-            coinblocks_stored: BiMap::new_bin(1, &f("coinblocks_stored")),
-            cointime_adjusted_velocity: BiMap::new_bin(1, &f("cointime_adjusted_velocity")),
-            cointime_adjusted_yearly_inflation_rate: BiMap::new_bin(
+            coinblocks_created: HeightMap::new_bin(1, &f("coinblocks_created")),
+            coinblocks_created_1d_sum: DateMap::new_bin(1, &f("coinblocks_created_1d_sum")),
+            coinblocks_destroyed: HeightMap::new_bin(1, &f("coinblocks_destroyed")),
+            coinblocks_destroyed_1d_sum: DateMap::new_bin(1, &f("coinblocks_destroyed_1d_sum")),
+            coinblocks_stored: HeightMap::new_bin(1, &f("coinblocks_stored")),
+            coinblocks_stored_1d_sum: DateMap::new_bin(1, &f("coinblocks_stored_1d_sum")),
+            cointime_adjusted_velocity: DateMap::new_bin(1, &f("cointime_adjusted_velocity")),
+            cointime_adjusted_inflation_rate: DateMap::new_bin(
+                1,
+                &f("cointime_adjusted_inflation_rate"),
+            ),
+            cointime_adjusted_yearly_inflation_rate: DateMap::new_bin(
                 1,
                 &f("cointime_adjusted_yearly_inflation_rate"),
             ),
             cointime_cap: BiMap::new_bin(1, &f("cointime_cap")),
             cointime_price: BiMap::new_bin(1, &f("cointime_price")),
             cointime_price_ratio: RatioDataset::import(parent_path, "cointime_price")?,
-            cointime_value_created: BiMap::new_bin(1, &f("cointime_value_created")),
-            cointime_value_destroyed: BiMap::new_bin(1, &f("cointime_value_destroyed")),
-            cointime_value_stored: BiMap::new_bin(1, &f("cointime_value_stored")),
-            concurrent_liveliness: BiMap::new_bin(1, &f("concurrent_liveliness")),
-            concurrent_liveliness_2w_median: BiMap::new_bin(
+            cointime_value_created: HeightMap::new_bin(1, &f("cointime_value_created")),
+            cointime_value_created_1d_sum: DateMap::new_bin(1, &f("cointime_value_created_1d_sum")),
+            cointime_value_destroyed: HeightMap::new_bin(1, &f("cointime_value_destroyed")),
+            cointime_value_destroyed_1d_sum: DateMap::new_bin(
+                1,
+                &f("cointime_value_destroyed_1d_sum"),
+            ),
+            cointime_value_stored: HeightMap::new_bin(1, &f("cointime_value_stored")),
+            cointime_value_stored_1d_sum: DateMap::new_bin(1, &f("cointime_value_stored_1d_sum")),
+            concurrent_liveliness: DateMap::new_bin(1, &f("concurrent_liveliness")),
+            concurrent_liveliness_2w_median: DateMap::new_bin(
                 2,
                 &f("concurrent_liveliness_2w_median"),
             ),
@@ -153,12 +174,11 @@ impl CointimeDataset {
         }: &InsertData,
     ) {
         self.coinblocks_destroyed
-            .height
             .insert(height, satblocks_destroyed.to_btc() as f32);
 
         if is_date_last_block {
-            self.coinblocks_destroyed
-                .date_insert_sum_range(date, date_blocks_range);
+            self.coinblocks_destroyed_1d_sum
+                .insert(date, self.coinblocks_destroyed.sum_range(date_blocks_range));
         }
     }
 
@@ -172,44 +192,57 @@ impl CointimeDataset {
         circulating_supply: &mut BiMap<f64>,
         realized_cap: &mut BiMap<f32>,
         realized_price: &mut BiMap<f32>,
-        yearly_inflation_rate: &mut BiMap<f64>,
-        annualized_transaction_volume: &mut BiMap<f32>,
+        inflation_rate: &mut DateMap<f64>,
+        yearly_inflation_rate: &mut DateMap<f64>,
+        annualized_transaction_volume: &mut DateMap<f32>,
         cumulative_subsidy_in_dollars: &mut BiMap<f32>,
     ) {
         let &ComputeData { heights, dates, .. } = compute_data;
 
         self.cumulative_coinblocks_destroyed
-            .multi_insert_cumulative(heights, dates, &mut self.coinblocks_destroyed);
-
-        self.coinblocks_created
             .height
-            .multi_insert_simple_transform(
-                heights,
-                &mut circulating_supply.height,
-                |circulating_supply, _| circulating_supply as f32,
-            );
-        self.coinblocks_created
-            .multi_date_insert_sum_range(dates, first_height, last_height);
+            .multi_insert_cumulative(heights, &mut self.coinblocks_destroyed);
+        self.cumulative_coinblocks_destroyed
+            .date
+            .multi_insert_cumulative(dates, &mut self.coinblocks_destroyed_1d_sum);
 
-        self.cumulative_coinblocks_created.multi_insert_cumulative(
+        self.coinblocks_created.multi_insert_simple_transform(
             heights,
+            &mut circulating_supply.height,
+            |circulating_supply, _| circulating_supply as f32,
+        );
+        self.coinblocks_created_1d_sum.multi_insert_sum_range(
             dates,
+            &self.coinblocks_created,
+            first_height,
+            last_height,
+        );
+
+        self.cumulative_coinblocks_created
+            .height
+            .multi_insert_cumulative(heights, &mut self.coinblocks_created);
+        self.cumulative_coinblocks_created
+            .date
+            .multi_insert_cumulative(dates, &mut self.coinblocks_created_1d_sum);
+
+        self.coinblocks_stored.multi_insert_subtract(
+            heights,
             &mut self.coinblocks_created,
+            &mut self.coinblocks_destroyed,
         );
-
-        self.coinblocks_stored.height.multi_insert_subtract(
-            heights,
-            &mut self.coinblocks_created.height,
-            &mut self.coinblocks_destroyed.height,
-        );
-        self.coinblocks_stored
-            .multi_date_insert_sum_range(dates, first_height, last_height);
-
-        self.cumulative_coinblocks_stored.multi_insert_cumulative(
-            heights,
+        self.coinblocks_stored_1d_sum.multi_insert_sum_range(
             dates,
-            &mut self.coinblocks_stored,
+            &self.coinblocks_stored,
+            first_height,
+            last_height,
         );
+
+        self.cumulative_coinblocks_stored
+            .height
+            .multi_insert_cumulative(heights, &mut self.coinblocks_stored);
+        self.cumulative_coinblocks_stored
+            .date
+            .multi_insert_cumulative(dates, &mut self.coinblocks_stored_1d_sum);
 
         self.liveliness.multi_insert_divide(
             heights,
@@ -233,14 +266,12 @@ impl CointimeDataset {
         );
 
         self.concurrent_liveliness.multi_insert_divide(
-            heights,
             dates,
-            &mut self.coinblocks_destroyed,
-            &mut self.coinblocks_created,
+            &mut self.coinblocks_destroyed_1d_sum,
+            &mut self.coinblocks_created_1d_sum,
         );
 
         self.concurrent_liveliness_2w_median.multi_insert_median(
-            heights,
             dates,
             &mut self.concurrent_liveliness,
             Some(TWO_WEEK_IN_DAYS),
@@ -309,19 +340,23 @@ impl CointimeDataset {
         // let min_vaulted_supply = ;
         // let max_active_supply = ;
 
+        self.cointime_adjusted_inflation_rate.multi_insert_multiply(
+            dates,
+            &mut self.activity_to_vaultedness_ratio.date,
+            inflation_rate,
+        );
+
         self.cointime_adjusted_yearly_inflation_rate
             .multi_insert_multiply(
-                heights,
                 dates,
-                &mut self.activity_to_vaultedness_ratio,
+                &mut self.activity_to_vaultedness_ratio.date,
                 yearly_inflation_rate,
             );
 
         self.cointime_adjusted_velocity.multi_insert_divide(
-            heights,
             dates,
             annualized_transaction_volume,
-            &mut self.active_supply,
+            &mut self.active_supply.date,
         );
 
         // TODO:
@@ -426,56 +461,59 @@ impl CointimeDataset {
         self.producerness
             .multi_insert_divide(heights, dates, &mut self.thermo_cap, realized_cap);
 
-        self.cointime_value_destroyed.height.multi_insert_multiply(
+        self.cointime_value_destroyed.multi_insert_multiply(
             heights,
-            &mut self.coinblocks_destroyed.height,
+            &mut self.coinblocks_destroyed,
             &mut closes.height,
         );
-        self.cointime_value_destroyed.date.multi_insert_multiply(
+        self.cointime_value_destroyed_1d_sum.multi_insert_multiply(
             dates,
-            &mut self.coinblocks_destroyed.date,
+            &mut self.coinblocks_destroyed_1d_sum,
             &mut closes.date,
         );
 
-        self.cointime_value_created.height.multi_insert_multiply(
+        self.cointime_value_created.multi_insert_multiply(
             heights,
-            &mut self.coinblocks_created.height,
+            &mut self.coinblocks_created,
             &mut closes.height,
         );
-        self.cointime_value_created.date.multi_insert_multiply(
+        self.cointime_value_created_1d_sum.multi_insert_multiply(
             dates,
-            &mut self.coinblocks_created.date,
+            &mut self.coinblocks_created_1d_sum,
             &mut closes.date,
         );
 
-        self.cointime_value_stored.height.multi_insert_multiply(
+        self.cointime_value_stored.multi_insert_multiply(
             heights,
-            &mut self.coinblocks_stored.height,
+            &mut self.coinblocks_stored,
             &mut closes.height,
         );
-        self.cointime_value_stored.date.multi_insert_multiply(
+        self.cointime_value_stored_1d_sum.multi_insert_multiply(
             dates,
-            &mut self.coinblocks_stored.date,
+            &mut self.coinblocks_stored_1d_sum,
             &mut closes.date,
         );
 
-        self.total_cointime_value_created.multi_insert_cumulative(
-            heights,
-            dates,
-            &mut self.cointime_value_created,
-        );
+        self.total_cointime_value_created
+            .height
+            .multi_insert_cumulative(heights, &mut self.cointime_value_created);
+        self.total_cointime_value_created
+            .date
+            .multi_insert_cumulative(dates, &mut self.cointime_value_created_1d_sum);
 
-        self.total_cointime_value_destroyed.multi_insert_cumulative(
-            heights,
-            dates,
-            &mut self.cointime_value_destroyed,
-        );
+        self.total_cointime_value_destroyed
+            .height
+            .multi_insert_cumulative(heights, &mut self.cointime_value_destroyed);
+        self.total_cointime_value_destroyed
+            .date
+            .multi_insert_cumulative(dates, &mut self.cointime_value_destroyed_1d_sum);
 
-        self.total_cointime_value_stored.multi_insert_cumulative(
-            heights,
-            dates,
-            &mut self.cointime_value_stored,
-        );
+        self.total_cointime_value_stored
+            .height
+            .multi_insert_cumulative(heights, &mut self.cointime_value_stored);
+        self.total_cointime_value_stored
+            .date
+            .multi_insert_cumulative(dates, &mut self.cointime_value_stored_1d_sum);
 
         self.cointime_price.multi_insert_divide(
             heights,
@@ -506,12 +544,70 @@ impl CointimeDataset {
 }
 
 impl AnyDataset for CointimeDataset {
-    fn to_inserted_bi_map_vec(&self) -> Vec<&(dyn AnyBiMap + Send + Sync)> {
+    fn to_inserted_height_map_vec(&self) -> Vec<&(dyn AnyHeightMap + Send + Sync)> {
         vec![&self.coinblocks_destroyed]
     }
 
-    fn to_inserted_mut_bi_map_vec(&mut self) -> Vec<&mut dyn AnyBiMap> {
+    fn to_inserted_mut_height_map_vec(&mut self) -> Vec<&mut dyn AnyHeightMap> {
         vec![&mut self.coinblocks_destroyed]
+    }
+
+    fn to_inserted_date_map_vec(&self) -> Vec<&(dyn AnyDateMap + Send + Sync)> {
+        vec![&self.coinblocks_destroyed_1d_sum]
+    }
+
+    fn to_inserted_mut_date_map_vec(&mut self) -> Vec<&mut dyn AnyDateMap> {
+        vec![&mut self.coinblocks_destroyed_1d_sum]
+    }
+
+    fn to_computed_height_map_vec(&self) -> Vec<&(dyn AnyHeightMap + Send + Sync)> {
+        vec![
+            &self.coinblocks_created,
+            &self.coinblocks_stored,
+            &self.cointime_value_created,
+            &self.cointime_value_destroyed,
+            &self.cointime_value_stored,
+        ]
+    }
+
+    fn to_computed_mut_height_map_vec(&mut self) -> Vec<&mut dyn AnyHeightMap> {
+        vec![
+            &mut self.coinblocks_created,
+            &mut self.coinblocks_stored,
+            &mut self.cointime_value_created,
+            &mut self.cointime_value_destroyed,
+            &mut self.cointime_value_stored,
+        ]
+    }
+
+    fn to_computed_date_map_vec(&self) -> Vec<&(dyn AnyDateMap + Send + Sync)> {
+        vec![
+            &self.coinblocks_created_1d_sum,
+            &self.coinblocks_stored_1d_sum,
+            &self.concurrent_liveliness,
+            &self.concurrent_liveliness_2w_median,
+            &self.cointime_adjusted_velocity,
+            &self.cointime_value_created_1d_sum,
+            &self.cointime_value_destroyed_1d_sum,
+            &self.cointime_value_stored_1d_sum,
+            &self.cointime_adjusted_inflation_rate,
+            &self.cointime_adjusted_yearly_inflation_rate,
+        ]
+    }
+
+    fn to_computed_mut_date_map_vec(&mut self) -> Vec<&mut dyn AnyDateMap> {
+        vec![
+            &mut self.coinblocks_created_1d_sum,
+            &mut self.coinblocks_stored_1d_sum,
+            &mut self.concurrent_liveliness,
+            &mut self.concurrent_liveliness_2w_median,
+            &mut self.cointime_adjusted_velocity,
+            &mut self.cointime_value_created_1d_sum,
+            &mut self.cointime_value_destroyed_1d_sum,
+            &mut self.cointime_value_stored_1d_sum,
+            &mut self.cointime_adjusted_inflation_rate,
+            &mut self.cointime_adjusted_yearly_inflation_rate,
+        ]
     }
 
     fn to_computed_bi_map_vec(&self) -> Vec<&(dyn AnyBiMap + Send + Sync)> {
@@ -522,17 +618,8 @@ impl AnyDataset for CointimeDataset {
             &self.active_supply_3m_net_change,
             &self.active_supply_net_change,
             &self.activity_to_vaultedness_ratio,
-            &self.coinblocks_created,
-            &self.coinblocks_stored,
-            &self.cointime_adjusted_velocity,
-            &self.cointime_adjusted_yearly_inflation_rate,
             &self.cointime_cap,
             &self.cointime_price,
-            &self.cointime_value_created,
-            &self.cointime_value_destroyed,
-            &self.cointime_value_stored,
-            &self.concurrent_liveliness,
-            &self.concurrent_liveliness_2w_median,
             &self.cumulative_coinblocks_created,
             &self.cumulative_coinblocks_destroyed,
             &self.cumulative_coinblocks_stored,
@@ -575,17 +662,8 @@ impl AnyDataset for CointimeDataset {
             &mut self.active_supply_3m_net_change,
             &mut self.active_supply_net_change,
             &mut self.activity_to_vaultedness_ratio,
-            &mut self.coinblocks_created,
-            &mut self.coinblocks_stored,
-            &mut self.cointime_adjusted_velocity,
-            &mut self.cointime_adjusted_yearly_inflation_rate,
             &mut self.cointime_cap,
             &mut self.cointime_price,
-            &mut self.cointime_value_created,
-            &mut self.cointime_value_destroyed,
-            &mut self.cointime_value_stored,
-            &mut self.concurrent_liveliness,
-            &mut self.concurrent_liveliness_2w_median,
             &mut self.cumulative_coinblocks_created,
             &mut self.cumulative_coinblocks_destroyed,
             &mut self.cumulative_coinblocks_stored,

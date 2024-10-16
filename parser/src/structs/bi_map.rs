@@ -1,6 +1,6 @@
 use std::{
     iter::Sum,
-    ops::{Add, Div, Mul, RangeInclusive, Sub},
+    ops::{Add, Div, Mul, Sub},
 };
 
 use allocative::Allocative;
@@ -36,30 +36,30 @@ where
         }
     }
 
-    pub fn date_insert_sum_range(&mut self, date: Date, date_blocks_range: &RangeInclusive<u32>)
-    where
-        Value: Sum,
-    {
-        self.date
-            .insert(date, self.height.sum_range(date_blocks_range));
-    }
+    // pub fn date_insert_sum_range(&mut self, date: Date, date_blocks_range: &RangeInclusive<u32>)
+    // where
+    //     Value: Sum,
+    // {
+    //     self.date
+    //         .insert(date, self.height.sum_range(date_blocks_range));
+    // }
 
-    pub fn multi_date_insert_sum_range(
-        &mut self,
-        dates: &[Date],
-        first_height: &mut DateMap<Height>,
-        last_height: &mut DateMap<Height>,
-    ) where
-        Value: Sum,
-    {
-        dates.iter().for_each(|date| {
-            let first_height = first_height.get_or_import(date).unwrap();
-            let last_height = last_height.get_or_import(date).unwrap();
-            let range = (*first_height)..=(*last_height);
+    // pub fn multi_date_insert_sum_range(
+    //     &mut self,
+    //     dates: &[Date],
+    //     first_height: &mut DateMap<Height>,
+    //     last_height: &mut DateMap<Height>,
+    // ) where
+    //     Value: Sum,
+    // {
+    //     dates.iter().for_each(|date| {
+    //         let first_height = first_height.get_or_import(date).unwrap();
+    //         let last_height = last_height.get_or_import(date).unwrap();
+    //         let range = (*first_height)..=(*last_height);
 
-            self.date.insert(*date, self.height.sum_range(&range));
-        })
-    }
+    //         self.date.insert(*date, self.height.sum_range(&range));
+    //     })
+    // }
 
     pub fn multi_insert_const(&mut self, heights: &[Height], dates: &[Date], constant: Value) {
         self.height.multi_insert_const(heights, constant);
@@ -176,6 +176,7 @@ where
             .multi_insert_percentage(dates, &mut divided.date, &mut divider.date);
     }
 
+    #[allow(unused)]
     pub fn multi_insert_cumulative<K>(
         &mut self,
         heights: &[Height],
@@ -190,27 +191,6 @@ where
             .multi_insert_cumulative(heights, &mut source.height);
 
         self.date.multi_insert_cumulative(dates, &mut source.date);
-    }
-
-    pub fn multi_insert_last_x_sum<K>(
-        &mut self,
-        heights: &[Height],
-        dates: &[Date],
-        source: &mut BiMap<K>,
-        days: usize,
-    ) where
-        K: MapValue,
-        Value: LossyFrom<K>,
-        Value: Add<Output = Value> + Sub<Output = Value>,
-    {
-        self.height.multi_insert_last_x_sum(
-            heights,
-            &mut source.height,
-            TARGET_BLOCKS_PER_DAY * days,
-        );
-
-        self.date
-            .multi_insert_last_x_sum(dates, &mut source.date, days);
     }
 
     pub fn multi_insert_simple_average<K>(
@@ -251,6 +231,7 @@ where
             .multi_insert_net_change(dates, &mut source.date, days);
     }
 
+    #[allow(unused)]
     pub fn multi_insert_median(
         &mut self,
         heights: &[Height],

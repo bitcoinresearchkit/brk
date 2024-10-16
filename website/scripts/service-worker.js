@@ -12,12 +12,18 @@ self.addEventListener("install", (_event) => {
       return cache.addAll([
         "/",
         "/index.html",
-        "/script.js",
-        "/packages/solid-signals/2024-04-17/script.js",
-        "/packages/ufuzzy/v1.0.14/script.js",
-        "/packages/lean-qr/v2.3.4/script.js",
-        "/packages/lightweight-charts/v4.2.0/script.js",
         "/assets/fonts/satoshi/2024-09/font.var.woff2",
+        "/scripts/main.js",
+        "/scripts/dashboard.js",
+        "/styles/dashboard.css",
+        "/scripts/chart.js",
+        "/styles/chart.css",
+        "/scripts/packages/flexmasonry/v0.2.3-modified/script.js",
+        "/scripts/packages/flexmasonry/v0.2.3-modified/style.css",
+        "/scripts/packages/lean-qr/v2.3.4/script.js",
+        "/scripts/packages/lightweight-charts/v4.2.0/script.js",
+        "/scripts/packages/solid-signals/2024-04-17/script.js",
+        "/scripts/packages/ufuzzy/v1.0.14/script.js",
       ]);
     }),
   );

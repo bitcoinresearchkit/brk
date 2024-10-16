@@ -27,12 +27,12 @@
 
 ## Website
 
-- Added dashboards
-- Added a Home option
-- Added a library of PDFs viewable inside the app
+- Added a dashboard
+- Added a library of PDFs
 - Fixed service worker not passing 304 (not modified) response and instead serving cached responses
 - Fixed history not being properly registered
 - Fixed window being moveable on iOS when in standalone mode when it shouldn't be
+- Split `index.html` and `script.js` into multiple js and css files to load only what's necessary at a given time
 
 ## Parser
 
@@ -40,13 +40,16 @@
 - Added `--rpcconnect` parameter to the config
 - Added handling of SIGINT and SIGTERM terminal signals which menas you can now safely CTRL+C or kill the parser while it's exporting
 - Added config print at the start of the program
-- Compressed `empty_address_data` struct to save space (should shave of between 25 and 50% of the `address_index_to_empty_address_data` database)
+- Compressed `empty_address_data` struct to save space (should shave of between up to 50% of the `address_index_to_empty_address_data` database)
+- Doubled the number of `txid_to_tx_data` databases from 4096 to 8192
 
 ## Server
 
 - Fixed links in several places missing the `/api` part and thus not working
 - Fixed broken last values routes
-- Add support for the `/datasets/last` file via the `/api/last` route
+- Added support for the `/datasets/last` file via the `/api/last` route
+- Added support for `.json` (won't change anything) and `.csv` (will download a csv file) extension at the end of datasets routes
+- Added `all=true` query parameter to dataset routes to get to full history
 
 ## Biter
 

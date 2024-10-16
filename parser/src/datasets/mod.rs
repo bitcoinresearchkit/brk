@@ -259,6 +259,7 @@ impl AllDatasets {
                 &mut self.mining.cumulative_subsidy,
                 &mut self.address.cohorts.all.subs.capitalization.realized_cap,
                 &mut self.address.cohorts.all.subs.capitalization.realized_price,
+                &mut self.mining.inflation_rate,
                 &mut self.mining.yearly_inflation_rate,
                 &mut self.transaction.annualized_volume,
                 &mut self.mining.cumulative_subsidy_in_dollars,

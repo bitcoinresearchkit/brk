@@ -1,8 +1,8 @@
-use std::{fmt::Debug, path::Path};
+use std::fmt::Debug;
 
 use axum::response::{IntoResponse, Json, Response};
 use bincode::Decode;
-use parser::{Date, SerializedBTreeMap, SerializedVec};
+use parser::{Date, MapValue, SerializedBTreeMap, SerializedVec};
 use serde::de::DeserializeOwned;
 use serde::Serialize;
 
@@ -10,6 +10,8 @@ use crate::{
     api::structs::{Chunk, Kind, Route},
     header_map::HeaderMapUtils,
 };
+
+use super::extension::Extension;
 
 #[derive(Serialize)]
 struct WrappedDataset<'a, T>
@@ -25,70 +27,119 @@ pub fn typed_value_to_response<T>(
     kind: Kind,
     route: &Route,
     chunk: Option<Chunk>,
+    id: String,
+    extension: Option<Extension>,
 ) -> color_eyre::Result<Response>
 where
-    T: Serialize + Debug + DeserializeOwned + Decode,
+    T: Serialize + Debug + DeserializeOwned + Decode + MapValue,
 {
     Ok(match kind {
-        Kind::Date => dataset_to_response(
-            route
-                .serialization
-                .import::<SerializedBTreeMap<Date, T>>(Path::new(&route.file_path))?,
-            chunk.unwrap(),
-        ),
-        Kind::Height => dataset_to_response(
-            route
-                .serialization
-                .import::<SerializedVec<T>>(Path::new(&route.file_path))?,
-            chunk.unwrap(),
-        ),
+        Kind::Date => {
+            let dataset = if chunk.is_some() {
+                route
+                    .serialization
+                    .import::<SerializedBTreeMap<Date, T>>(&route.file_path)?
+            } else {
+                SerializedBTreeMap::<Date, T>::import_all(&route.file_path, &route.serialization)
+            };
+
+            if extension == Some(Extension::CSV) {
+                let mut csv = format!("date,{}\n", id);
+
+                dataset.map.iter().for_each(|(k, v)| {
+                    csv += &format!("{},{:?}\n", k, v);
+                });
+
+                string_to_response(csv, extension)
+            } else {
+                dataset_to_response(dataset, chunk, extension)
+            }
+        }
+        Kind::Height => {
+            let dataset = if chunk.is_some() {
+                route
+                    .serialization
+                    .import::<SerializedVec<T>>(&route.file_path)?
+            } else {
+                SerializedVec::<T>::import_all(&route.file_path, &route.serialization)
+            };
+
+            if extension == Some(Extension::CSV) {
+                let mut csv = format!("height,{}\n", id);
+
+                let starting_height = chunk.map_or(0, |chunk| chunk.id);
+
+                dataset.map.iter().enumerate().for_each(|(k, v)| {
+                    csv += &format!("{},{:?}\n", starting_height + k, v);
+                });
+
+                string_to_response(csv, extension)
+            } else {
+                dataset_to_response(dataset, chunk, extension)
+            }
+        }
         Kind::Last => value_to_response(
-            route
-                .serialization
-                .import::<T>(Path::new(&route.file_path))?,
+            route.serialization.import::<T>(&route.file_path)?,
+            extension,
         ),
     })
 }
 
-pub fn value_to_response<T>(value: T) -> Response
-where
-    T: Serialize,
-{
-    generic_to_reponse(value, None, 1)
+pub fn string_to_response(s: String, extension: Option<Extension>) -> Response {
+    update_reponse_headers(s.into_response(), 5, extension)
 }
 
-fn dataset_to_response<T>(dataset: T, chunk: Chunk) -> Response
+pub fn value_to_response<T>(value: T, extension: Option<Extension>) -> Response
 where
     T: Serialize,
 {
-    generic_to_reponse(dataset, Some(chunk), 5)
+    update_reponse_headers(generic_to_reponse(value, None), 1, extension)
 }
 
-pub fn generic_to_reponse<T>(generic: T, chunk: Option<Chunk>, cache_time: u64) -> Response
+fn dataset_to_response<T>(
+    dataset: T,
+    chunk: Option<Chunk>,
+    extension: Option<Extension>,
+) -> Response
 where
     T: Serialize,
 {
-    let mut response = {
-        if let Some(chunk) = chunk {
-            Json(WrappedDataset {
-                source: "https://kibo.money",
-                chunk,
-                dataset: generic,
-            })
-            .into_response()
-        } else {
-            Json(generic).into_response()
-        }
-    };
+    update_reponse_headers(generic_to_reponse(dataset, chunk), 5, extension)
+}
 
+pub fn generic_to_reponse<T>(generic: T, chunk: Option<Chunk>) -> Response
+where
+    T: Serialize,
+{
+    if let Some(chunk) = chunk {
+        Json(WrappedDataset {
+            source: "https://kibo.money",
+            chunk,
+            dataset: generic,
+        })
+        .into_response()
+    } else {
+        Json(generic).into_response()
+    }
+}
+
+pub fn update_reponse_headers(
+    mut response: Response,
+    cache_time: u64,
+    extension: Option<Extension>,
+) -> Response {
     let headers = response.headers_mut();
 
     let max_age = cache_time;
     let stale_while_revalidate = 2 * max_age;
 
     headers.insert_cors();
-    headers.insert_content_type_application_json();
     headers.insert_cache_control_revalidate(max_age, stale_while_revalidate);
+
+    match extension {
+        Some(Extension::CSV) => headers.insert_content_type_text_csv(),
+        _ => headers.insert_content_type_application_json(),
+    }
 
     response
 }
