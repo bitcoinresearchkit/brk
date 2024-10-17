@@ -897,7 +897,7 @@ function createPartialOptions(colors) {
           description: "",
           top: [
             {
-              title: `SMA`,
+              title,
               color,
               datasetPath: valueDatasetPath,
             },
@@ -996,7 +996,7 @@ function createPartialOptions(colors) {
           unit: "Ratio",
           top: [
             {
-              title: `SMA`,
+              title,
               color,
               datasetPath: valueDatasetPath,
             },

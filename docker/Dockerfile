@@ -5,7 +5,7 @@ ENV rpcport=8332
 ENV rpcuser=satoshi
 ENV rpcpassword=nakamoto
 
-WORKDIR /container
+WORKDIR /
 COPY . .
 
-CMD ["sh", "-c", "bash cmd.sh ${rpcconnect} ${rpcport} ${rpcuser} ${rpcpassword}"]
+CMD exec cargo run -r --manifest-path /kibo/parser/Cargo.toml -- --datadir=/bitcoin --rpcconnect=${rpcconnect} --rpcport=${rpcport} --rpcuser=${rpcuser} --rpcpassword=${rpcpassword}

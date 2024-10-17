@@ -2,7 +2,9 @@ use std::path::Path;
 
 #[derive(PartialEq, Eq)]
 pub enum Extension {
+    #[allow(clippy::upper_case_acronyms)]
     CSV,
+    #[allow(clippy::upper_case_acronyms)]
     JSON,
 }
 
