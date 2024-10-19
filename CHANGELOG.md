@@ -27,7 +27,7 @@
 
 ## Website
 
-- ~Added a dashboard~ Added the latest value to the tree instead
+- ~Added a dashboard~ Added the latest values to the tree next to each option (in "Folders") instead, while less values are visible at a time, it's much more readable and organised
 - Added a library of PDFs
 - Fixed service worker not passing 304 (not modified) response and instead serving cached responses
 - Fixed history not being properly registered
