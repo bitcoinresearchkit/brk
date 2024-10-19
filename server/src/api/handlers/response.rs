@@ -23,6 +23,14 @@ where
     dataset: T,
 }
 
+#[derive(Serialize)]
+struct WrappedValue<T>
+where
+    T: Serialize,
+{
+    value: T,
+}
+
 pub fn typed_value_to_response<T>(
     kind: Kind,
     route: &Route,
@@ -78,10 +86,15 @@ where
                 dataset_to_response(dataset, chunk, extension)
             }
         }
-        Kind::Last => value_to_response(
-            route.serialization.import::<T>(&route.file_path)?,
-            extension,
-        ),
+        Kind::Last => {
+            let value = route.serialization.import::<T>(&route.file_path)?;
+
+            if extension == Some(Extension::JSON) {
+                value_to_response(WrappedValue { value }, extension)
+            } else {
+                value_to_response(value, extension)
+            }
+        }
     })
 }
 
