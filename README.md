@@ -42,9 +42,13 @@ This project is still in an early stage. Until more people look at the code and 
 
 ## Instances
 
-- [kibo.money](https://kibo.money) ![Uptime Robot status](https://img.shields.io/uptimerobot/status/m797259009-043f6b92d4cc2deef7d13f50)
-- [backup.kibo.money](https://backup.kibo.money) ![Uptime Robot status](https://img.shields.io/uptimerobot/status/m797259013-bb29a8264fab8786fb80c5ed)
-- [preview.kibo.money](https://preview.kibo.money) ![Uptime Robot status](https://img.shields.io/uptimerobot/status/m797869753-d40fc161bcb34624857a8082)
+|  URL | Type | Version | Status | Last Height | Up Time Ratio |
+| --- | --- | --- | --- | --- | --- |
+| [kibo.money](https://kibo.money) | Main | ![Version](https://img.shields.io/badge/dynamic/toml?url=https%3A%2F%2Fkibo.money%2FCargo.toml&query=%24.package.version&style=for-the-badge&label=%20&color=%23db9e03) | ![Status](https://img.shields.io/uptimerobot/status/m797259009-043f6b92d4cc2deef7d13f50?style=for-the-badge&label=%20&up_color=%231cb454&down_color=%23e63636) | ![Height](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fkibo.money%2Fapi%2Flast-height.json&query=%24.value&style=for-the-badge&label=%20&color=%23f26610) | ![Ratio](https://img.shields.io/uptimerobot/ratio/m797259009-043f6b92d4cc2deef7d13f50?style=for-the-badge&label=%20&color=%232f73f1) |
+| [backup.kibo.money](https://backup.kibo.money) | Backup | ![Version](https://img.shields.io/badge/dynamic/toml?url=https%3A%2F%2Fbackup.kibo.money%2FCargo.toml&query=%24.package.version&style=for-the-badge&label=%20&color=%23db9e03) | ![Status](https://img.shields.io/uptimerobot/status/m797259013-bb29a8264fab8786fb80c5ed?style=for-the-badge&label=%20&up_color=%231cb454&down_color=%23e63636) | ![Height](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fbackup.kibo.money%2Fapi%2Flast-height.json&query=%24.value&style=for-the-badge&label=%20&color=%23f26610) | ![Ratio](https://img.shields.io/uptimerobot/ratio/m797259013-bb29a8264fab8786fb80c5ed?style=for-the-badge&label=%20&color=%232f73f1) |
+| [preview.kibo.money](https://preview.kibo.money) | Dev | ![Version](https://img.shields.io/badge/dynamic/toml?url=https%3A%2F%2Fpreview.kibo.money%2FCargo.toml&query=%24.package.version&style=for-the-badge&label=%20&color=%23db9e03) | ![Status](https://img.shields.io/uptimerobot/status/m797869753-d40fc161bcb34624857a8082?style=for-the-badge&label=%20&up_color=%231cb454&down_color=%23e63636) | ![Height](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fpreview.kibo.money%2Fapi%2Flast-height.json&query=%24.value&style=for-the-badge&label=%20&color=%23f26610) | ![Ratio](https://img.shields.io/uptimerobot/ratio/m797869753-d40fc161bcb34624857a8082?style=for-the-badge&label=%20&color=%232f73f1) |
+
+Please open an issue if you want to add another instance
 
 ## Structure
 
@@ -68,7 +72,7 @@ This project is still in an early stage. Until more people look at the code and 
 
 - At least 16 GB of RAM
 - 1 TB of free space (will use 60-80% of that)
-- A running instance of bitcoin-core (>= 28.0 **NOT** supported) with txindex=1 and rpc credentials,
+- A running instance of bitcoin-core (>= 28.0 **NOT** supported) with txindex=1 and rpc credentials
 - Git
 
 ### Docker
