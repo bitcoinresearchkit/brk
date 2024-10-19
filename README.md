@@ -42,8 +42,9 @@ This project is still in an early stage. Until more people look at the code and 
 
 ## Instances
 
-- [kibo.money](https://kibo.money)
-- [backup.kibo.money](https://backup.kibo.money)
+- [kibo.money](https://kibo.money) ![Uptime Robot status](https://img.shields.io/uptimerobot/status/m797259009-043f6b92d4cc2deef7d13f50)
+- [backup.kibo.money](https://backup.kibo.money) ![Uptime Robot status](https://img.shields.io/uptimerobot/status/m797259013-bb29a8264fab8786fb80c5ed)
+- [preview.kibo.money](https://preview.kibo.money) ![Uptime Robot status](https://img.shields.io/uptimerobot/status/m797869753-d40fc161bcb34624857a8082)
 
 ## Structure
 
@@ -67,12 +68,12 @@ This project is still in an early stage. Until more people look at the code and 
 
 - At least 16 GB of RAM
 - 1 TB of free space (will use 60-80% of that)
-- A running instance of bitcoin-core with txindex=1 and rpc credentials
+- A running instance of bitcoin-core (>= 28.0 **NOT** supported) with txindex=1 and rpc credentials,
 - Git
 
 ### Docker
 
-Coming soon
+Working on it
 
 ### Manual
 

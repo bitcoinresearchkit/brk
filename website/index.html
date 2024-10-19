@@ -232,11 +232,11 @@
         /* current: oklch(90% 0.01 44) */
         --lighter-gray: #e4dcd9;
         /* before: #c0c0ab */
-        /* current: oklch(75% 0.01 44) */
-        --light-gray: #b4aca9;
+        /* current: oklch(65% 0.01 44) */
+        --light-gray: #867e7b;
         /* before: #666660 */
-        /* current: oklch(50% 0.01 44) */
-        --dark-gray: #68625f;
+        /* current: oklch(60% 0.01 44) */
+        --dark-gray: #867e7b;
         /* before: #30302b */
         /* current: oklch(25% 0.01 44) */
         --darker-gray: #26201e;
@@ -265,7 +265,7 @@
 
         --transform-scale-active: scaleX(0.95) scaleY(0.9);
 
-        --default-main-width: 384px;
+        --default-main-width: 400px;
 
         --background-color: var(--white);
         --color: var(--black);
@@ -580,7 +580,7 @@
             }
 
             > span.emoji {
-              filter: grayscale(100%) brightness(60%) contrast(150%);
+              filter: grayscale(100%) brightness(66%) opacity(66%);
             }
 
             > svg.favorite {
@@ -588,6 +588,15 @@
               width: 12px;
               height: 12px;
               color: var(--orange);
+            }
+
+            > span.value {
+              font-size: var(--font-size-xs);
+              line-height: var(--line-height-xs);
+
+              &:has(+ *) {
+                margin-right: 0.375rem;
+              }
             }
 
             > span.new {
@@ -607,21 +616,8 @@
 
             > span.main > .emoji {
               filter: sepia(90%) saturate(420%) hue-rotate(320deg)
-                brightness(80%);
+                brightness(80%) !important;
             }
-          }
-
-          > span.absolute {
-            text-align: center;
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            margin-bottom: -0.375rem;
-            color: var(--off-color);
-            font-size: var(--font-size-2xs);
-            line-height: var(--line-height-2xs);
-            overflow: visible !important;
           }
 
           > *:not(input):not(svg) {
@@ -635,7 +631,6 @@
             margin-top: -0.5rem /* -8px */;
           }
 
-          .tree &,
           .list & {
             color: var(--color);
           }
@@ -644,13 +639,8 @@
         &:has(input:checked) {
           color: var(--color);
 
-          .tree &,
-          .list & {
-            color: var(--orange);
-          }
-
           > span.main > span.emoji {
-            filter: sepia(90%) saturate(420%) hue-rotate(320deg) brightness(80%);
+            filter: grayscale(100%);
           }
         }
       }
@@ -789,6 +779,11 @@
         }
       }
 
+      sup {
+        color: var(--off-color);
+        margin-left: 0.25rem;
+      }
+
       small {
         color: var(--off-color);
         font-size: var(--font-size-xs);
@@ -823,7 +818,10 @@
         }
 
         &:hover {
-          color: var(--orange);
+          &,
+          * {
+            color: var(--orange) !important;
+          }
         }
       }
 
@@ -860,6 +858,7 @@
         -webkit-user-select: none;
         font-size: var(--font-size-sm);
         line-height: var(--line-height-sm);
+        color: var(--off-color);
 
         ul {
           overflow: hidden;
@@ -869,16 +868,6 @@
             position: relative;
             padding-left: 12px;
             border-left: 1px;
-
-            &[data-highlight] {
-              &::before {
-                border-color: var(--orange) !important;
-              }
-
-              > details > summary > span.marker {
-                color: var(--orange) !important;
-              }
-            }
 
             &:not(:has(~ li:not([hidden]))) {
               border-color: transparent !important;
@@ -895,20 +884,77 @@
               border-color: var(--border-color);
               border-width: 0 0 1px 1px;
               border-radius: 0px 0px 0px 4px;
+              z-index: -10;
+            }
+
+            &[data-highlight] {
+              > details > summary {
+                &,
+                * {
+                  color: var(--color) !important;
+                }
+              }
+
+              &::before,
+              > details > summary > span.marker {
+                border-color: var(--color) !important;
+                z-index: 10;
+              }
+
+              > details:not([open]) > summary > span.marker {
+                background-color: var(--color) !important;
+              }
+            }
+
+            &:hover {
+              &::before,
+              > details > summary > span.marker {
+                border-color: var(--orange) !important;
+                z-index: 20;
+              }
+
+              > details:not([open]) > summary > span.marker {
+                background-color: var(--orange) !important;
+              }
             }
 
             &:has(*[data-highlight]) {
               > details > summary::after {
-                border-color: var(--orange) !important;
+                color: var(--color) !important;
+                border-color: var(--color) !important;
+              }
+            }
+
+            &:has(*:hover) {
+              > details > summary {
+                &,
+                * {
+                  color: var(--orange) !important;
+                }
+
+                &:not(:hover)::after {
+                  border-color: var(--orange) !important;
+                }
               }
             }
 
             &:has(~ *[data-highlight]) {
-              border-color: var(--orange) !important;
+              border-color: var(--color) !important;
+            }
 
+            &:has(~ *:hover) {
+              border-color: var(--orange) !important;
+            }
+
+            &:has(~ *[data-highlight]),
+            &:has(~ *:hover) {
               &::before {
-                z-index: -10;
+                z-index: -10 !important;
               }
+            }
+
+            &:has(*:hover)::before {
+              z-index: 10 !important;
             }
 
             > details > summary {
@@ -927,12 +973,17 @@
               }
 
               > span.marker {
-                color: var(--border-color);
-                font-size: var(--font-size-2xs);
-                line-height: var(--line-height-2xs);
+                border: 1px;
+                border-radius: 999px;
+                background-color: var(--border-color);
+                width: 9px;
+                height: 9px;
                 z-index: 10;
                 margin-left: -4px;
-                margin-bottom: 0.0625rem;
+
+                details[open] > summary > & {
+                  background-color: var(--background-color);
+                }
               }
 
               > small {
@@ -1798,45 +1849,41 @@
                 for="folders-filter-all"
                 title="Chart"
               >
-                <span class="absolute" id="folders-filter-all-count"></span>
                 <input
                   type="radio"
                   name="folders-filter"
                   id="folders-filter-all"
                   value="chart"
                 />
-                All
+                <span>All<sup id="folders-filter-all-count"></sup> </span>
               </label>
               <label
                 id="folders-filter-favorites-label"
                 for="folders-filter-favorites"
                 title="Chart"
               >
-                <span
-                  class="absolute"
-                  id="folders-filter-favorites-count"
-                ></span>
                 <input
                   type="radio"
                   name="folders-filter"
                   id="folders-filter-favorites"
                   value="chart"
                 />
-                Favorites
+                <span
+                  >Favorites<sup id="folders-filter-favorites-count"></sup>
+                </span>
               </label>
               <label
                 id="folders-filter-new-label"
                 for="folders-filter-new"
                 title="Chart"
               >
-                <span class="absolute" id="folders-filter-new-count"></span>
                 <input
                   type="radio"
                   name="folders-filter"
                   id="folders-filter-new"
                   value="chart"
                 />
-                New
+                <span>New<sup id="folders-filter-new-count"></sup> </span>
               </label>
             </div>
           </div>

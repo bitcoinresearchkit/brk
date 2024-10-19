@@ -1,3 +1,6 @@
+const DATE_TO_PREFIX = "date-to-";
+const HEIGHT_TO_PREFIX = "height-to-";
+
 /**
  * @param {Colors} colors
  * @returns {PartialOptionsTree}
@@ -703,9 +706,6 @@ function createPartialOptions(colors) {
                     ]
                   : []),
               ],
-              dashboard: {
-                skip: true,
-              },
             },
           ]
         : []),
@@ -725,9 +725,6 @@ function createPartialOptions(colors) {
                   datasetPath: keyMax,
                 },
               ],
-              dashboard: {
-                skip: true,
-              },
             },
           ]
         : []),
@@ -747,9 +744,6 @@ function createPartialOptions(colors) {
                   datasetPath: key90p,
                 },
               ],
-              dashboard: {
-                skip: true,
-              },
             },
           ]
         : []),
@@ -769,9 +763,6 @@ function createPartialOptions(colors) {
                   datasetPath: key75p,
                 },
               ],
-              dashboard: {
-                skip: true,
-              },
             },
           ]
         : []),
@@ -791,9 +782,6 @@ function createPartialOptions(colors) {
                   datasetPath: keyMedian,
                 },
               ],
-              dashboard: {
-                skip: true,
-              },
             },
           ]
         : []),
@@ -813,9 +801,6 @@ function createPartialOptions(colors) {
                   datasetPath: key25p,
                 },
               ],
-              dashboard: {
-                skip: true,
-              },
             },
           ]
         : []),
@@ -835,9 +820,6 @@ function createPartialOptions(colors) {
                   datasetPath: key10p,
                 },
               ],
-              dashboard: {
-                skip: true,
-              },
             },
           ]
         : []),
@@ -857,9 +839,6 @@ function createPartialOptions(colors) {
                   datasetPath: keyMin,
                 },
               ],
-              dashboard: {
-                skip: true,
-              },
             },
           ]
         : []),
@@ -884,9 +863,6 @@ function createPartialOptions(colors) {
   }) {
     return {
       name: "Ratio",
-      dashboard: {
-        skip: true,
-      },
       tree: [
         {
           scale,
@@ -1127,10 +1103,6 @@ function createPartialOptions(colors) {
     function createAllTimeHighOptions(scale) {
       return {
         name: "All Time High",
-        dashboard: {
-          separate: true,
-          defaultOpen: true,
-        },
         tree: [
           {
             scale,
@@ -1172,11 +1144,6 @@ function createPartialOptions(colors) {
           ...(scale === "date"
             ? /** @type {PartialChartOption[]} */ ([
                 {
-                  name: "Date",
-                  path: "all-time-high-date",
-                  unit: "Date",
-                },
-                {
                   scale,
                   icon: "🗓️",
                   name: "Days Since",
@@ -1193,9 +1160,6 @@ function createPartialOptions(colors) {
                 },
                 {
                   name: "Max Between",
-                  dashboard: {
-                    flatten: true,
-                  },
                   tree: [
                     {
                       scale,
@@ -1285,9 +1249,6 @@ function createPartialOptions(colors) {
     function createAverageOptions({ scale, color, name, title, key }) {
       return {
         name,
-        dashboard: {
-          flatten: true,
-        },
         tree: [
           {
             scale,
@@ -1303,9 +1264,6 @@ function createPartialOptions(colors) {
                 datasetPath: `${scale}-to-price-${key}-sma`,
               },
             ],
-            dashboard: {
-              ignoreName: true,
-            },
           },
           createRatioOptions({
             scale,
@@ -1394,16 +1352,9 @@ function createPartialOptions(colors) {
 
     return {
       name: "Market",
-      dashboard: {
-        defaultOpen: true,
-      },
       tree: [
         {
           name: "Price",
-          dashboard: {
-            // defaultOpen: true,
-            flatten: true,
-          },
           tree: [
             {
               scale,
@@ -1482,9 +1433,6 @@ function createPartialOptions(colors) {
               {
                 scale,
                 name: "Mined",
-                dashboard: {
-                  flatten: true,
-                },
                 tree: [
                   {
                     scale,
@@ -1610,9 +1558,6 @@ function createPartialOptions(colors) {
               {
                 scale,
                 name: "Size",
-                dashboard: {
-                  flatten: true,
-                },
                 tree: createRecapOptions({
                   scale,
                   title: "Block Size",
@@ -1632,9 +1577,6 @@ function createPartialOptions(colors) {
               {
                 scale,
                 name: "Weight",
-                dashboard: {
-                  flatten: true,
-                },
                 tree: createRecapOptions({
                   scale,
                   title: "Block Weight",
@@ -1653,9 +1595,6 @@ function createPartialOptions(colors) {
               {
                 scale,
                 name: "VBytes",
-                dashboard: {
-                  flatten: true,
-                },
                 tree: createRecapOptions({
                   scale,
                   title: "Block VBytes",
@@ -1674,9 +1613,6 @@ function createPartialOptions(colors) {
               {
                 scale,
                 name: "Interval",
-                dashboard: {
-                  flatten: true,
-                },
                 tree: createRecapOptions({
                   scale,
                   title: "Block Interval",
@@ -1789,9 +1725,6 @@ function createPartialOptions(colors) {
               ? /** @type {PartialOptionsTree} */ ([
                   {
                     name: "Last",
-                    dashboard: {
-                      flatten: true,
-                    },
                     tree: [
                       {
                         scale,
@@ -1828,9 +1761,6 @@ function createPartialOptions(colors) {
                   {
                     scale,
                     name: "Daily Sum",
-                    dashboard: {
-                      flatten: true,
-                    },
                     tree: [
                       {
                         scale,
@@ -1867,9 +1797,6 @@ function createPartialOptions(colors) {
                   {
                     scale,
                     name: "Yearly Sum",
-                    dashboard: {
-                      flatten: true,
-                    },
                     tree: [
                       {
                         scale,
@@ -1906,9 +1833,6 @@ function createPartialOptions(colors) {
                   {
                     scale,
                     name: "Cumulative",
-                    dashboard: {
-                      skip: true,
-                    },
                     tree: [
                       {
                         scale,
@@ -1954,9 +1878,6 @@ function createPartialOptions(colors) {
               ? /** @type {PartialOptionsTree} */ ([
                   {
                     name: "Last",
-                    dashboard: {
-                      flatten: true,
-                    },
                     tree: [
                       {
                         scale,
@@ -1993,9 +1914,6 @@ function createPartialOptions(colors) {
                   {
                     scale,
                     name: "Daily Sum",
-                    dashboard: {
-                      flatten: true,
-                    },
                     tree: [
                       {
                         scale,
@@ -2032,9 +1950,6 @@ function createPartialOptions(colors) {
                   {
                     scale,
                     name: "Yearly Sum",
-                    dashboard: {
-                      flatten: true,
-                    },
                     tree: [
                       {
                         scale,
@@ -2071,9 +1986,7 @@ function createPartialOptions(colors) {
                   {
                     scale,
                     name: "Cumulative",
-                    dashboard: {
-                      skip: true,
-                    },
+
                     tree: [
                       {
                         scale,
@@ -2119,9 +2032,6 @@ function createPartialOptions(colors) {
               ? /** @type {PartialOptionsTree} */ ([
                   {
                     name: "Last",
-                    dashboard: {
-                      flatten: true,
-                    },
                     tree: [
                       {
                         scale,
@@ -2158,9 +2068,6 @@ function createPartialOptions(colors) {
                   {
                     scale,
                     name: "Daily Sum",
-                    dashboard: {
-                      flatten: true,
-                    },
                     tree: [
                       {
                         scale,
@@ -2197,9 +2104,6 @@ function createPartialOptions(colors) {
                   {
                     scale,
                     name: "Yearly Sum",
-                    dashboard: {
-                      flatten: true,
-                    },
                     tree: [
                       {
                         scale,
@@ -2236,9 +2140,6 @@ function createPartialOptions(colors) {
                   {
                     scale,
                     name: "Cumulative",
-                    dashboard: {
-                      skip: true,
-                    },
                     tree: [
                       {
                         scale,
@@ -3676,9 +3577,7 @@ function createPartialOptions(colors) {
   function createCohortOptionsGroup({ scale, color, name, datasetId, title }) {
     return {
       name,
-      dashboard: {
-        separate: true,
-      },
+
       tree: createCohortOptions({
         title,
         name,
@@ -3696,9 +3595,6 @@ function createPartialOptions(colors) {
   function createHodlersOptions(scale) {
     return {
       name: "Hodlers",
-      dashboard: {
-        hopOver: true,
-      },
       tree: [
         {
           scale,
@@ -3740,9 +3636,6 @@ function createPartialOptions(colors) {
         ),
         {
           name: "Up To X",
-          dashboard: {
-            flatten: true,
-          },
           tree: groups.upTo.map(({ key, id, name }) =>
             createCohortOptionsGroup({
               scale,
@@ -3755,9 +3648,6 @@ function createPartialOptions(colors) {
         },
         {
           name: "From X To Y",
-          dashboard: {
-            flatten: true,
-          },
           tree: groups.fromXToY.map(({ key, id, name }) =>
             createCohortOptionsGroup({
               scale,
@@ -3770,9 +3660,6 @@ function createPartialOptions(colors) {
         },
         {
           name: "From X",
-          dashboard: {
-            flatten: true,
-          },
           tree: groups.fromX.map(({ key, id, name }) =>
             createCohortOptionsGroup({
               scale,
@@ -3785,9 +3672,6 @@ function createPartialOptions(colors) {
         },
         {
           name: "Years",
-          dashboard: {
-            flatten: true,
-          },
           tree: groups.year.map(({ key, id, name }) =>
             createCohortOptionsGroup({
               scale,
@@ -3846,9 +3730,6 @@ function createPartialOptions(colors) {
   }) {
     return {
       name: filenameAddon ? `${name} - ${filenameAddon}` : name,
-      dashboard: {
-        separate: true,
-      },
       tree: [
         createAddressCountOption({ scale, name, datasetId, color }),
         ...createCohortOptions({
@@ -4846,289 +4727,6 @@ function createPartialOptions(colors) {
   }
 
   return [
-    // {
-    //   icon: "🕊️",
-    //   name: "Home",
-    //   kind: "home",
-    //   title: "Home",
-    // },
-    {
-      icon: "🌍",
-      name: "Dashboard",
-      title: "Global State Of The Network",
-      description: "",
-      groups: [
-        // {
-        //   name: "Market",
-        //   values: [
-        //     {
-        //       name: "Dollars Per Bitcoin",
-        //       path: "close",
-        //       unit: "US Dollars",
-        //     },
-        //     {
-        //       name: "Satoshis Per Dollar",
-        //       path: "sats-per-dollar",
-        //       unit: "Satoshis",
-        //     },
-        //     {
-        //       name: "Capitalization",
-        //       path: "market-cap",
-        //       unit: "US Dollars",
-        //     },
-        //   ],
-        // },
-        // {
-        //   name: "All Time High",
-        //   values: [
-        //     {
-        //       name: "Price",
-        //       path: "all-time-high",
-        //       unit: "US Dollars",
-        //     },
-        //     {
-        //       name: "Drawdown",
-        //       path: "drawdown",
-        //       unit: "Percentage",
-        //     },
-        //     {
-        //       name: "Date",
-        //       path: "all-time-high-date",
-        //       unit: "Date",
-        //     },
-        //     {
-        //       name: "Days Since",
-        //       path: "days-since-all-time-high",
-        //     },
-        //     {
-        //       name: "Max Days Between",
-        //       path: "max-days-between-all-time-highs",
-        //     },
-        //     {
-        //       name: "Max Years Between",
-        //       path: "max-years-between-all-time-highs",
-        //     },
-        //   ],
-        // },
-        // {
-        //   name: "Averages",
-        //   unit: "US Dollars",
-        //   values: [
-        //     {
-        //       name: "1 Week",
-        //       path: "price-1w-sma",
-        //     },
-        //     {
-        //       name: "1 Month",
-        //       path: "price-1m-sma",
-        //     },
-        //     {
-        //       name: "1 Year",
-        //       path: "price-1y-sma",
-        //     },
-        //     {
-        //       name: "4 Year",
-        //       path: "price-4y-sma",
-        //     },
-        //   ],
-        // },
-        // {
-        //   name: "Returns",
-        //   unit: "Percentage",
-        //   values: [
-        //     {
-        //       name: "Today (UTC)",
-        //       path: "price-1d-total-return",
-        //     },
-        //     {
-        //       name: "1 Week",
-        //       // path: "price-1m-total-return",
-        //     },
-        //     {
-        //       name: "1 Month",
-        //       path: "price-1m-total-return",
-        //     },
-        //     {
-        //       name: "6 Month",
-        //       path: "price-6m-total-return",
-        //     },
-        //     {
-        //       name: "1 Year",
-        //       path: "price-1y-total-return",
-        //     },
-        //     {
-        //       name: "4 Year",
-        //       path: "price-4y-total-return",
-        //     },
-        //     {
-        //       name: "10 Year",
-        //       path: "price-10y-total-return",
-        //     },
-        //   ],
-        // },
-        // {
-        //   name: "Blockchain",
-        //   values: [
-        //     {
-        //       name: "Height",
-        //       path: "last-height",
-        //       formatNumber: false,
-        //     },
-        //     {
-        //       name: "Average Size",
-        //       path: "block-size-1d-average",
-        //       unit: "Megabytes",
-        //     },
-        //     {
-        //       name: "Average Weight",
-        //       path: "block-weight-1d-average",
-        //       unit: "Weight",
-        //     },
-        //     {
-        //       name: "Average VBytes",
-        //       path: "block-vbytes-1d-average",
-        //       unit: "Virtual Bytes",
-        //     },
-        //     {
-        //       name: "Average Interval",
-        //       path: "block-interval-1d-average",
-        //       unit: "Seconds",
-        //     },
-        //     {
-        //       name: "Cumulative size",
-        //       path: "cumulative-block-size",
-        //       unit: "Megabytes",
-        //     },
-        //   ],
-        // },
-        // {
-        //   name: "Blocks Mined",
-        //   values: [
-        //     {
-        //       name: "Since UTC",
-        //       path: "blocks-mined",
-        //     },
-        //     {
-        //       name: "Weekly Avg.",
-        //       path: "blocks-mined-1w-sma",
-        //     },
-        //     {
-        //       name: "Monthly Avg.",
-        //       path: "blocks-mined-1m-sma",
-        //     },
-        //     {
-        //       name: "Target",
-        //       path: "blocks-mined-1d-target",
-        //     },
-        //   ],
-        // },
-        // {
-        //   name: "Coinbases",
-        //   values: [
-        //     {
-        //       name: "Last Block In Bitcoin",
-        //       unit: "Bitcoin",
-        //       path: "last-coinbase",
-        //     },
-        //     {
-        //       name: "Last Block In Dollars",
-        //       unit: "US Dollars",
-        //       path: "last-coinbase-in-dollars",
-        //     },
-        //     {
-        //       name: "Daily Sum In Bitcoin",
-        //       unit: "Bitcoin",
-        //       path: "coinbase",
-        //     },
-        //     {
-        //       name: "Daily Sum In Dollars",
-        //       unit: "US Dollars",
-        //       path: "coinbase-in-dollars",
-        //     },
-        //     {
-        //       name: "Daily Sum In Bitcoin",
-        //       unit: "Bitcoin",
-        //       path: "coinbase-1y-sum",
-        //     },
-        //     {
-        //       name: "Daily Sum In Dollars",
-        //       unit: "US Dollars",
-        //       path: "coinbase-in-dollars-1y-sum",
-        //     },
-        //   ],
-        // },
-        // {
-        //   name: "Subsidies",
-        //   values: [
-        //     {
-        //       name: "Last Block In Bitcoin",
-        //       unit: "Bitcoin",
-        //       path: "last-subsidy",
-        //     },
-        //     {
-        //       name: "Last Block In Dollars",
-        //       unit: "US Dollars",
-        //       path: "last-subsidy-in-dollars",
-        //     },
-        //     {
-        //       name: "Daily Sum In Bitcoin",
-        //       unit: "Bitcoin",
-        //       path: "subsidy",
-        //     },
-        //     {
-        //       name: "Daily Sum In Dollars",
-        //       unit: "US Dollars",
-        //       path: "subsidy-in-dollars",
-        //     },
-        //     {
-        //       name: "Daily Sum In Bitcoin",
-        //       unit: "Bitcoin",
-        //       path: "subsidy-1y-sum",
-        //     },
-        //     {
-        //       name: "Daily Sum In Dollars",
-        //       unit: "US Dollars",
-        //       path: "subsidy-in-dollars-1y-sum",
-        //     },
-        //   ],
-        // },
-        // {
-        //   name: "Fees",
-        //   values: [
-        //     {
-        //       name: "Last Block In Bitcoin",
-        //       unit: "Bitcoin",
-        //       path: "last-fees",
-        //     },
-        //     {
-        //       name: "Last Block In Dollars",
-        //       unit: "US Dollars",
-        //       path: "last-fees-in-dollars",
-        //     },
-        //     {
-        //       name: "Daily Sum In Bitcoin",
-        //       unit: "Bitcoin",
-        //       path: "fees",
-        //     },
-        //     {
-        //       name: "Daily Sum In Dollars",
-        //       unit: "US Dollars",
-        //       path: "fees-in-dollars",
-        //     },
-        //     {
-        //       name: "Daily Sum In Bitcoin",
-        //       unit: "Bitcoin",
-        //       path: "fees-1y-sum",
-        //     },
-        //     {
-        //       name: "Daily Sum In Dollars",
-        //       unit: "US Dollars",
-        //       path: "fees-in-dollars-1y-sum",
-        //     },
-        //   ],
-        // },
-      ],
-    },
     {
       name: "Charts",
       tree: [
@@ -5265,8 +4863,18 @@ function createPartialOptions(colors) {
  * @param {Ids} args.ids
  * @param {Env} args.env
  * @param {Utilities} args.utils
+ * @param {Signal<Record<LastPath, number> | null>} args.lastValues
+ * @param {WebSockets} args.webSockets
  */
-export function initOptions({ colors, signals, ids, env, utils }) {
+export function initOptions({
+  colors,
+  signals,
+  ids,
+  env,
+  utils,
+  lastValues,
+  webSockets,
+}) {
   const urlSelected = utils.url.pathnameToSelectedId();
   const savedSelectedId = localStorage.getItem(ids.selectedId);
 
@@ -5346,6 +4954,70 @@ export function initOptions({ colors, signals, ids, env, utils }) {
   }
 
   /**
+   * @param {SeriesBlueprint[]} array
+   */
+  function getMainValueFromBlueprints(array) {
+    const searchArray = array.filter(
+      (blueprint) =>
+        blueprint.options?.lastValueVisible !== false &&
+        /** @type {LineStyleOptions | undefined} */ (blueprint.options)
+          ?.lineStyle === undefined,
+    );
+
+    const blueprint =
+      searchArray.length === 1
+        ? searchArray[0]
+        : searchArray.find((blueprint) => blueprint.main);
+
+    if (!blueprint) return undefined;
+
+    const id = blueprint.datasetPath
+      .replace(DATE_TO_PREFIX, "")
+      .replace(HEIGHT_TO_PREFIX, "");
+
+    return /** @type {number | undefined} */ (
+      lastValues()?.[/** @type {LastPath} */ (id)]
+    );
+  }
+
+  /**
+   * @param {Number | undefined} value
+   * @param {Unit} unit
+   */
+  function formatValue(value, unit) {
+    if (!value) return "";
+
+    const s =
+      unit !== "Count"
+        ? utils.locale.numberToShortUSFormat(value)
+        : utils.locale.numberToUSFormat(
+            value,
+            unit === "Count" ? 0 : undefined,
+          );
+
+    switch (unit) {
+      case "US Dollars": {
+        return `$${s}`;
+      }
+      case "Bitcoin": {
+        return `₿${s}`;
+      }
+      case "Percentage": {
+        return `${s}%`;
+      }
+      case "Seconds": {
+        return `${s} sec`;
+      }
+      case "Megabytes": {
+        return `${s} MB`;
+      }
+      default: {
+        return s;
+      }
+    }
+  }
+
+  /**
    * @param {Object} args
    * @param {Option} args.option
    * @param {string} args.frame
@@ -5374,6 +5046,39 @@ export function initOptions({ colors, signals, ids, env, utils }) {
     spanEmoji.classList.add("emoji");
     spanEmoji.innerHTML = option.icon;
     spanMain.prepend(spanEmoji);
+
+    if (option.kind === "chart") {
+      const spanValue = window.document.createElement("span");
+      spanValue.classList.add("value");
+      spanMain.append(spanValue);
+
+      if (!option.top?.length && !option.bottom?.length) {
+        signals.createEffect(() => {
+          const close =
+            webSockets.krakenCandle.latest()?.close ?? lastValues()?.close;
+
+          if (close) {
+            spanValue.innerHTML = formatValue(close, "US Dollars");
+          }
+        });
+      } else if (option.bottom?.length) {
+        const bottom = option.bottom;
+        signals.createEffect(() => {
+          spanValue.innerHTML = formatValue(
+            getMainValueFromBlueprints(bottom),
+            option.unit,
+          );
+        });
+      } else if (option.top?.length) {
+        const top = option.top;
+        signals.createEffect(() => {
+          spanValue.innerHTML = formatValue(
+            getMainValueFromBlueprints(top),
+            option.unit,
+          );
+        });
+      }
+    }
 
     /** @type {HTMLSpanElement | undefined} */
     let spanNew;
@@ -5548,30 +5253,25 @@ export function initOptions({ colors, signals, ids, env, utils }) {
 
           const spanMarker = window.document.createElement("span");
           spanMarker.classList.add("marker");
-          spanMarker.innerHTML = "●";
           summary.append(spanMarker);
 
           const spanName = utils.dom.createSpanName(anyPartial.name);
           summary.append(spanName);
 
-          const smallCount = window.document.createElement("small");
-          smallCount.hidden = details.open;
+          const supCount = window.document.createElement("sup");
+
           signals.createEffect(() => {
-            smallCount.innerHTML = childOptionsCount().toLocaleString();
+            supCount.innerHTML = childOptionsCount().toLocaleString();
           });
-          summary.append(smallCount);
+          spanName.append(supCount);
 
           details.addEventListener("toggle", () => {
             const open = details.open;
 
-            smallCount.hidden = open;
-
             if (open) {
-              spanMarker.innerHTML = "○";
               localStorage.setItem(folderOpenLocalStorageKey, "1");
               passedDetails.set(details);
             } else {
-              spanMarker.innerHTML = "●";
               localStorage.removeItem(folderOpenLocalStorageKey);
               passedDetails.set(null);
             }
@@ -5593,7 +5293,7 @@ export function initOptions({ colors, signals, ids, env, utils }) {
         /** @type {string} */
         let title;
 
-        if ("kind" in anyPartial) {
+        if ("kind" in anyPartial && anyPartial.kind === "home") {
           kind = anyPartial.kind;
           id = anyPartial.kind;
           title = anyPartial.title;
@@ -5601,10 +5301,6 @@ export function initOptions({ colors, signals, ids, env, utils }) {
           kind = "pdf";
           id = `${ids.fromString(anyPartial.name)}-pdf`;
           title = anyPartial.name;
-        } else if ("groups" in anyPartial) {
-          kind = "dashboard";
-          id = `dashboard-${ids.fromString(anyPartial.title)}`;
-          title = anyPartial.title;
         } else if ("scale" in anyPartial) {
           kind = "chart";
           id = `chart-${anyPartial.scale}-to-${ids.fromString(
@@ -5612,7 +5308,8 @@ export function initOptions({ colors, signals, ids, env, utils }) {
           )}`;
           title = anyPartial.title;
         } else {
-          return;
+          console.log(anyPartial);
+          throw "Unreachable";
         }
 
         /** @type {ProcessedOptionAddons} */

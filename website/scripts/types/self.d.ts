@@ -110,22 +110,6 @@ interface PartialHomeOption extends PartialOption {
   name: "Home";
 }
 
-interface PartialDashboardOption extends PartialOption {
-  title: string;
-  description: string;
-  defaultOpen?: false;
-  groups: {
-    name: string;
-    unit?: Unit;
-    values: {
-      name: string;
-      path: LastPath;
-      unit?: Unit;
-      formatNumber?: false;
-    }[];
-  }[];
-}
-
 interface PartialChartOption extends PartialOption {
   scale: TimeScale;
   title: string;
@@ -147,19 +131,11 @@ interface PartialPdfOption extends PartialOption {
 interface PartialOptionsGroup {
   name: string;
   tree: PartialOptionsTree;
-  dashboard?: {
-    skip?: true;
-    flatten?: true;
-    hopOver?: true;
-    separate?: true;
-    defaultOpen?: true;
-  };
 }
 
 type AnyPartialOption =
   | PartialHomeOption
   | PartialPdfOption
-  | PartialDashboardOption
   | PartialChartOption;
 
 type PartialOptionsTree = (AnyPartialOption | PartialOptionsGroup)[];
@@ -184,17 +160,11 @@ interface PdfOption extends PartialPdfOption, ProcessedOptionAddons {
   title: string;
 }
 
-interface DashboardOption
-  extends PartialDashboardOption,
-    ProcessedOptionAddons {
-  kind: "dashboard";
-}
-
 interface ChartOption extends PartialChartOption, ProcessedOptionAddons {
   kind: "chart";
 }
 
-type Option = HomeOption | PdfOption | DashboardOption | ChartOption;
+type Option = HomeOption | PdfOption | ChartOption;
 
 type OptionsTree = (Option | OptionsGroup)[];
 

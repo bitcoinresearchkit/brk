@@ -1,7 +1,7 @@
 // @ts-check
 
 /**
- * @import { OptionPath, PartialOption, PartialOptionsGroup, PartialOptionsTree, Option, OptionsGroup, Series, PriceSeriesType, ResourceDataset, TimeScale, SerializedHistory, TimeRange, Unit, Marker, Weighted, DatasetPath, OHLC, FetchedJSON, DatasetValue, FetchedResult, AnyDatasetPath, SeriesBlueprint, BaselineSpecificSeriesBlueprint, CandlestickSpecificSeriesBlueprint, LineSpecificSeriesBlueprint, SpecificSeriesBlueprintWithChart, Signal, Color, SettingsTheme, DatasetCandlestickData, FoldersFilter, PartialChartOption, ChartOption, AnyPartialOption, ProcessedOptionAddons, DashboardOption, OptionsTree, AnyPath } from "./types/self"
+ * @import { OptionPath, PartialOption, PartialOptionsGroup, PartialOptionsTree, Option, OptionsGroup, Series, PriceSeriesType, ResourceDataset, TimeScale, SerializedHistory, TimeRange, Unit, Marker, Weighted, DatasetPath, OHLC, FetchedJSON, DatasetValue, FetchedResult, AnyDatasetPath, SeriesBlueprint, BaselineSpecificSeriesBlueprint, CandlestickSpecificSeriesBlueprint, LineSpecificSeriesBlueprint, SpecificSeriesBlueprintWithChart, Signal, Color, SettingsTheme, DatasetCandlestickData, FoldersFilter, PartialChartOption, ChartOption, AnyPartialOption, ProcessedOptionAddons, OptionsTree, AnyPath } from "./types/self"
  * @import {createChart as CreateClassicChart, createChartEx as CreateCustomChart, LineStyleOptions} from "./packages/lightweight-charts/v4.2.0/types";
  * @import * as _ from "./packages/ufuzzy/v1.0.14/types"
  * @import { DeepPartial, ChartOptions, IChartApi, IHorzScaleBehavior, WhitespaceData, SingleValueData, ISeriesApi, Time, LogicalRange, SeriesMarker, CandlestickData, SeriesType, BaselineStyleOptions, SeriesOptionsCommon } from "./packages/lightweight-charts/v4.2.0/types"
@@ -535,11 +535,6 @@ function initPackages() {
         ),
       );
     },
-    async flexmasonry() {
-      return import("./packages/flexmasonry/v0.2.3-modified/script.js").then(
-        ({ default: d }) => d,
-      );
-    },
     async leanQr() {
       return import("./packages/lean-qr/v2.3.4/script.js").then((d) => d);
     },
@@ -553,7 +548,6 @@ function initPackages() {
   /**
    * @typedef {ReturnType<typeof imports.signals>} SignalsPromise
    * @typedef {ReturnType<typeof imports.lightweightCharts>} LightweightChartsPromise
-   * @typedef {ReturnType<typeof imports.flexmasonry>} FlexmasonryPromise
    * @typedef {ReturnType<typeof imports.leanQr>} LeanQrPromise
    * @typedef {ReturnType<typeof imports.ufuzzy>} uFuzzyPromise
    */
@@ -579,7 +573,6 @@ function initPackages() {
   return {
     signals: importPackage("signals"),
     lightweightCharts: importPackage("lightweightCharts"),
-    flexmasonry: importPackage("flexmasonry"),
     leanQr: importPackage("leanQr"),
     ufuzzy: importPackage("ufuzzy"),
   };
@@ -588,7 +581,6 @@ const packages = initPackages();
 /**
  * @typedef {Awaited<ReturnType<typeof packages.signals>>} Signals
  * @typedef {Awaited<ReturnType<typeof packages.lightweightCharts>>} LightweightCharts
- * @typedef {Awaited<ReturnType<typeof packages.flexmasonry>>} Flexmasonry
  */
 
 const options = import("./options.js");
@@ -1626,8 +1618,6 @@ function createDatasets(signals) {
 
         const baseURL = `${URL}/${path}`;
 
-        console.log({ baseURL });
-
         const backupURL = `${BACKUP_URL}/${path}`;
 
         const fetchedJSONs = new Array(
@@ -2110,48 +2100,49 @@ packages.signals().then((signals) =>
     }
     const lastHeight = createLastHeightResource();
 
+    const lastValues = signals.createSignal(
+      /** @type {Record<LastPath, number> | null} */ (null),
+    );
+    function createFetchLastValuesWhenNeededEffect() {
+      let previousHeight = -1;
+      signals.createEffect(() => {
+        if (previousHeight !== lastHeight()) {
+          fetch("/api/last").then((response) => {
+            response.json().then((json) => {
+              if (typeof json === "object") {
+                lastValues.set(json);
+                previousHeight = lastHeight();
+              }
+            });
+          });
+        }
+      });
+    }
+    createFetchLastValuesWhenNeededEffect();
+
     const webSockets = initWebSockets(signals);
 
     const colors = createColors(dark);
 
-    const options = initOptions({ signals, colors, ids, env, utils });
+    const options = initOptions({
+      colors,
+      env,
+      ids,
+      lastValues,
+      signals,
+      utils,
+      webSockets,
+    });
 
     function initSelected() {
       function initSelectedFrame() {
         console.log("selected: init");
 
-        const selectedKind = signals.createMemo(() => options.selected().kind);
-
         const datasets = createDatasets(signals);
-
-        const lastValues = signals.createSignal(
-          /** @type {Record<LastPath, number> | null} */ (null),
-        );
-        function createFetchLastValuesWhenNeededEffect() {
-          let previousHeight = -1;
-          signals.createEffect(() => {
-            if (selectedKind() === "dashboard") {
-              if (previousHeight !== lastHeight()) {
-                fetch("/api/last").then((response) => {
-                  response.json().then((json) => {
-                    if (typeof json === "object") {
-                      lastValues.set(json);
-                      previousHeight = lastHeight();
-                    }
-                  });
-                });
-              }
-            }
-          });
-        }
-        createFetchLastValuesWhenNeededEffect();
 
         function createApplyOptionEffect() {
           const lastChartOption = signals.createSignal(
             /** @type {ChartOption | null} */ (null),
-          );
-          const lastDashboardOption = signals.createSignal(
-            /** @type {DashboardOption | null} */ (null),
           );
 
           const owner = signals.getOwner();
@@ -2187,38 +2178,6 @@ packages.signals().then((signals) =>
               switch (option.kind) {
                 case "home": {
                   element = elements.home;
-                  break;
-                }
-                case "dashboard": {
-                  element = elements.dashboard;
-
-                  lastDashboardOption.set(option);
-
-                  if (firstDashboardOption) {
-                    const flexmasonry = packages.flexmasonry();
-                    const dashboardScript = import("./dashboard.js");
-                    utils.dom.importStyleAndThen("/styles/dashboard.css", () =>
-                      dashboardScript.then(({ initDashboardElement }) =>
-                        flexmasonry.then((flexmasonry) =>
-                          signals.runWithOwner(owner, () =>
-                            initDashboardElement({
-                              elements,
-                              flexmasonry,
-                              lastValues,
-                              options,
-                              selected: /** @type {any} */ (
-                                lastDashboardOption
-                              ),
-                              signals,
-                              utils,
-                            }),
-                          ),
-                        ),
-                      ),
-                    );
-                  }
-                  firstDashboardOption = false;
-
                   break;
                 }
                 case "chart": {

@@ -27,7 +27,7 @@
 
 ## Website
 
-- Added a dashboard
+- ~Added a dashboard~ Added the latest value to the tree instead
 - Added a library of PDFs
 - Fixed service worker not passing 304 (not modified) response and instead serving cached responses
 - Fixed history not being properly registered

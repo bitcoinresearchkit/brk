@@ -104,6 +104,8 @@ pub struct MiningDataset {
     pub hash_rate_1m_sma: DateMap<f32>,
     pub hash_rate_2m_sma: DateMap<f32>,
     pub hash_price: DateMap<f64>,
+    // pub hash_price_min: DateMap<f64>,
+    // pub hash_price_rebound: DateMap<f64>,
     pub difficulty_adjustment: DateMap<f64>,
     pub block_size_recap: DateRecapDataset<f32>, // in MB
     pub block_weight_recap: DateRecapDataset<f32>, // in MB
