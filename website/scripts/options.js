@@ -1558,21 +1558,38 @@ function createPartialOptions(colors) {
               {
                 scale,
                 name: "Size",
-                tree: createRecapOptions({
-                  scale,
-                  title: "Block Size",
-                  color: colors.off,
-                  unit: "Megabytes",
-                  keySum: "date-to-block-size-1d-sum",
-                  keyAverage: "date-to-block-size-1d-average",
-                  keyMax: "date-to-block-size-1d-max",
-                  key90p: "date-to-block-size-1d-90p",
-                  key75p: "date-to-block-size-1d-75p",
-                  keyMedian: "date-to-block-size-1d-median",
-                  key25p: "date-to-block-size-1d-25p",
-                  key10p: "date-to-block-size-1d-10p",
-                  keyMin: "date-to-block-size-1d-min",
-                }),
+                tree: [
+                  {
+                    scale,
+                    icon: "📏",
+                    name: "Cumulative",
+                    title: "Cumulative Block Size",
+                    description: "",
+                    unit: "Gigabytes",
+                    bottom: [
+                      {
+                        title: "Size",
+                        color: colors.off,
+                        datasetPath: `${scale}-to-cumulative-block-size-gigabytes`,
+                      },
+                    ],
+                  },
+                  ...createRecapOptions({
+                    scale,
+                    title: "Block Size",
+                    color: colors.off,
+                    unit: "Megabytes",
+                    keySum: "date-to-block-size-1d-sum",
+                    keyAverage: "date-to-block-size-1d-average",
+                    keyMax: "date-to-block-size-1d-max",
+                    key90p: "date-to-block-size-1d-90p",
+                    key75p: "date-to-block-size-1d-75p",
+                    keyMedian: "date-to-block-size-1d-median",
+                    key25p: "date-to-block-size-1d-25p",
+                    key10p: "date-to-block-size-1d-10p",
+                    keyMin: "date-to-block-size-1d-min",
+                  }),
+                ],
               },
               {
                 scale,
@@ -1691,21 +1708,6 @@ function createPartialOptions(colors) {
                 ],
               },
             ])),
-        {
-          scale,
-          icon: "📏",
-          name: "Cumulative Size",
-          title: "Cumulative Block Size",
-          description: "",
-          unit: "Megabytes",
-          bottom: [
-            {
-              title: "Size",
-              color: colors.off,
-              datasetPath: `${scale}-to-cumulative-block-size`,
-            },
-          ],
-        },
       ],
     };
   }
@@ -2224,62 +2226,102 @@ function createPartialOptions(colors) {
               },
 
               {
-                scale,
-                icon: "⛏️",
-                name: "Hash Rate",
-                title: "Hash Rate",
-                description: "",
-                unit: "ExaHash / Second",
-                bottom: [
+                name: "Hash",
+                tree: [
                   {
-                    title: "1M SMA",
-                    color: colors.momentumYellow,
-                    datasetPath: `date-to-hash-rate-1m-sma`,
+                    scale,
+                    icon: "⛏️",
+                    name: "Rate",
+                    title: "Hash Rate",
+                    description: "",
+                    unit: "ExaHash / Second",
+                    bottom: [
+                      {
+                        title: "1M SMA",
+                        color: colors.momentumYellow,
+                        datasetPath: `date-to-hash-rate-1m-sma`,
+                      },
+                      {
+                        title: "1W SMA",
+                        color: colors.bitcoin,
+                        datasetPath: `date-to-hash-rate-1w-sma`,
+                      },
+                      {
+                        title: "Rate",
+                        color: colors.darkBitcoin,
+                        datasetPath: `date-to-hash-rate`,
+                      },
+                    ],
                   },
                   {
-                    title: "1W SMA",
-                    color: colors.bitcoin,
-                    datasetPath: `date-to-hash-rate-1w-sma`,
+                    scale,
+                    icon: "🎗️",
+                    name: "Ribbon",
+                    title: "Hash Ribbon",
+                    description: "",
+                    unit: "ExaHash / Second",
+                    bottom: [
+                      {
+                        title: "1M SMA",
+                        color: colors.profit,
+                        datasetPath: `date-to-hash-rate-1m-sma`,
+                      },
+                      {
+                        title: "2M SMA",
+                        color: colors.loss,
+                        datasetPath: `date-to-hash-rate-2m-sma`,
+                      },
+                    ],
                   },
                   {
-                    title: "Rate",
-                    color: colors.darkBitcoin,
-                    datasetPath: `date-to-hash-rate`,
-                  },
-                ],
-              },
-              {
-                scale,
-                icon: "🎗️",
-                name: "Hash Ribbon",
-                title: "Hash Ribbon",
-                description: "",
-                unit: "ExaHash / Second",
-                bottom: [
-                  {
-                    title: "1M SMA",
-                    color: colors.profit,
-                    datasetPath: `date-to-hash-rate-1m-sma`,
-                  },
-                  {
-                    title: "2M SMA",
-                    color: colors.loss,
-                    datasetPath: `date-to-hash-rate-2m-sma`,
-                  },
-                ],
-              },
-              {
-                scale,
-                icon: "🏷️",
-                name: "Hash Price",
-                title: "Hash Price",
-                description: "",
-                unit: "Dollars / (PetaHash / Second)",
-                bottom: [
-                  {
-                    title: "Price",
-                    color: colors.dollars,
-                    datasetPath: `date-to-hash-price`,
+                    name: "Price",
+                    tree: [
+                      {
+                        scale,
+                        icon: "🏷️",
+                        name: "Price",
+                        title: "Hash Price",
+                        description: "",
+                        unit: "Dollars / (PetaHash / Second)",
+                        bottom: [
+                          {
+                            title: "Hash Price",
+                            color: colors.dollars,
+                            datasetPath: `date-to-hash-price`,
+                          },
+                        ],
+                      },
+                      {
+                        scale,
+                        icon: "😢",
+                        name: "Min",
+                        title: "Min Hash Price",
+                        description: "",
+                        unit: "Dollars / (PetaHash / Second)",
+                        bottom: [
+                          {
+                            title: "Min Hash Price",
+                            color: colors.dollars,
+                            datasetPath: `date-to-hash-price-min`,
+                          },
+                        ],
+                      },
+                      {
+                        scale,
+                        icon: "🤞",
+                        name: "Rebound",
+                        title: "Hash Price Rebound",
+                        description: "",
+                        unit: "Percentage",
+                        bottom: [
+                          {
+                            title: "Rebound",
+                            color: colors.yellow,
+                            datasetPath: `date-to-hash-price-rebound`,
+                          },
+                        ],
+                      },
+                    ],
                   },
                 ],
               },

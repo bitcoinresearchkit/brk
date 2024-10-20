@@ -3,7 +3,7 @@ use allocative::Allocative;
 use crate::{
     datasets::{AnyDataset, InsertData, MinInitialStates},
     states::InputState,
-    structs::{AnyBiMap, AnyDateMap, AnyHeightMap, BiMap},
+    structs::{AnyBiMap, AnyDateMap, AnyHeightMap, BiMap, Config},
     DateMap, HeightMap,
 };
 
@@ -20,7 +20,11 @@ pub struct InputSubDataset {
 }
 
 impl InputSubDataset {
-    pub fn import(parent_path: &str, name: &Option<String>) -> color_eyre::Result<Self> {
+    pub fn import(
+        parent_path: &str,
+        name: &Option<String>,
+        config: &Config,
+    ) -> color_eyre::Result<Self> {
         let f = |s: &str| {
             if let Some(name) = name {
                 format!("{parent_path}/{name}/{s}")
@@ -38,7 +42,7 @@ impl InputSubDataset {
         };
 
         s.min_initial_states
-            .consume(MinInitialStates::compute_from_dataset(&s));
+            .consume(MinInitialStates::compute_from_dataset(&s, config));
 
         Ok(s)
     }

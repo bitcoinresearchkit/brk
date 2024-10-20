@@ -1,4 +1,5 @@
 use allocative::Allocative;
+
 use itertools::Itertools;
 
 use crate::{
@@ -6,7 +7,7 @@ use crate::{
         AnyDataset, AnyDatasetGroup, ComputeData, InsertData, MinInitialStates, SubDataset,
     },
     states::{AddressCohortId, DurableStates},
-    structs::{AddressSplit, AnyBiMap, AnyDateMap, AnyHeightMap, BiMap, Date, Height},
+    structs::{AddressSplit, AnyBiMap, AnyDateMap, AnyHeightMap, BiMap, Config, Date, Height},
 };
 
 use super::cohort_metadata::MetadataDataset;
@@ -23,19 +24,23 @@ pub struct CohortDataset {
 }
 
 impl CohortDataset {
-    pub fn import(parent_path: &str, id: AddressCohortId) -> color_eyre::Result<Self> {
+    pub fn import(
+        parent_path: &str,
+        id: AddressCohortId,
+        config: &Config,
+    ) -> color_eyre::Result<Self> {
         let name = id.as_name().map(|s| s.to_owned());
         let split = id.as_split();
 
         let mut s = Self {
             min_initial_states: MinInitialStates::default(),
             split,
-            metadata: MetadataDataset::import(parent_path, &name)?,
-            subs: SubDataset::import(parent_path, &name)?,
+            metadata: MetadataDataset::import(parent_path, &name, config)?,
+            subs: SubDataset::import(parent_path, &name, config)?,
         };
 
         s.min_initial_states
-            .consume(MinInitialStates::compute_from_dataset(&s));
+            .consume(MinInitialStates::compute_from_dataset(&s, config));
 
         Ok(s)
     }

@@ -19,7 +19,12 @@ use super::minify_js;
 const WEBSITE_PATH: &str = "../website/";
 
 pub async fn file_handler(headers: HeaderMap, path: extract::Path<String>) -> Response {
-    let path = path.0.replace("..", "").replace("\\", "");
+    let mut path = path.0.replace("..", "").replace("\\", "");
+
+    if path.ends_with("Cargo.toml") {
+        path = "../server/Cargo.toml".to_owned();
+    }
+
     let mut path = str_to_path(&path);
 
     if !path.exists() {

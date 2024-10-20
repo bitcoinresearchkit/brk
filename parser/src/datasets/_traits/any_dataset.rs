@@ -283,4 +283,13 @@ pub trait AnyDataset {
                 .for_each(|map| map.post_export())
         });
     }
+
+    fn reset_computed(&self) {
+        self.to_all_computed_date_map_vec()
+            .iter()
+            .for_each(|map| map.delete_files());
+        self.to_all_computed_height_map_vec()
+            .iter()
+            .for_each(|map| map.delete_files());
+    }
 }

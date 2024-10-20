@@ -6,7 +6,7 @@ use crate::{
     datasets::AnyDataset,
     structs::{
         date_map_vec_to_any_date_map_vec, date_map_vec_to_mut_any_date_map_vec, Amount, AnyBiMap,
-        AnyDateMap, AnyHeightMap, BiMap, DateMap, Height, HeightMap, MapKey,
+        AnyDateMap, AnyHeightMap, BiMap, Config, DateMap, Height, HeightMap, MapKey,
     },
     utils::{
         BYTES_IN_MB, ONE_DAY_IN_DAYS, ONE_MONTH_IN_DAYS, ONE_WEEK_IN_DAYS, ONE_YEAR_IN_DAYS,
@@ -80,6 +80,7 @@ pub struct MiningDataset {
     pub blocks_mined_1y_sum: DateMap<usize>,
     pub blocks_mined_1y_target: DateMap<usize>,
     pub cumulative_block_size: BiMap<f32>,
+    pub cumulative_block_size_gigabytes: BiMap<f32>,
     pub subsidy_1y_sum: DateMap<f64>,
     pub subsidy_in_dollars_1y_sum: DateMap<f64>,
     pub cumulative_subsidy: BiMap<f64>,
@@ -104,8 +105,8 @@ pub struct MiningDataset {
     pub hash_rate_1m_sma: DateMap<f32>,
     pub hash_rate_2m_sma: DateMap<f32>,
     pub hash_price: DateMap<f64>,
-    // pub hash_price_min: DateMap<f64>,
-    // pub hash_price_rebound: DateMap<f64>,
+    pub hash_price_min: DateMap<f64>,
+    pub hash_price_rebound: DateMap<f64>,
     pub difficulty_adjustment: DateMap<f64>,
     pub block_size_recap: DateRecapDataset<f32>, // in MB
     pub block_weight_recap: DateRecapDataset<f32>, // in MB
@@ -124,7 +125,7 @@ pub struct MiningDataset {
 }
 
 impl MiningDataset {
-    pub fn import(parent_path: &str) -> color_eyre::Result<Self> {
+    pub fn import(parent_path: &str, config: &Config) -> color_eyre::Result<Self> {
         let f = |s: &str| format!("{parent_path}/{s}");
 
         let mut s = Self {
@@ -206,6 +207,10 @@ impl MiningDataset {
                     .add_min(),
             )?,
             cumulative_block_size: BiMap::new_bin(1, &f("cumulative_block_size")),
+            cumulative_block_size_gigabytes: BiMap::new_bin(
+                1,
+                &f("cumulative_block_size_gigabytes"),
+            ),
             block_weight: HeightMap::new_bin(1, &f("block_weight")),
             block_weight_recap: RecapDataset::import(
                 &f("block_weight_1d"),
@@ -251,11 +256,13 @@ impl MiningDataset {
             hash_rate_1m_sma: DateMap::new_bin(1, &f("hash_rate_1m_sma")),
             hash_rate_2m_sma: DateMap::new_bin(1, &f("hash_rate_2m_sma")),
             hash_price: DateMap::new_bin(1, &f("hash_price")),
+            hash_price_min: DateMap::new_bin(1, &f("hash_price_min")),
+            hash_price_rebound: DateMap::new_bin(1, &f("hash_price_rebound")),
             puell_multiple: DateMap::new_bin(1, &f("puell_multiple")),
         };
 
         s.min_initial_states
-            .consume(MinInitialStates::compute_from_dataset(&s));
+            .consume(MinInitialStates::compute_from_dataset(&s, config));
 
         Ok(s)
     }
@@ -536,13 +543,22 @@ impl MiningDataset {
             last_height,
         );
 
+        self.cumulative_block_size
+            .height
+            .multi_insert_cumulative(heights, &mut self.block_size);
+
+        self.cumulative_block_size_gigabytes
+            .multi_insert_simple_transform(heights, dates, &mut self.cumulative_block_size, &|v| {
+                v / 1000.0
+            });
+
         // https://hashrateindex.com/blog/what-is-bitcoins-hashrate/
         self.hash_rate.multi_insert(dates, |date| {
             let blocks_mined = self.blocks_mined.get_or_import(date).unwrap();
 
             let difficulty = self.difficulty.date.get_or_import(date).unwrap();
 
-            ((blocks_mined as f64 / date.get_day_completion() * TARGET_BLOCKS_PER_DAY as f64)
+            (blocks_mined as f64 / (date.get_day_completion() * TARGET_BLOCKS_PER_DAY as f64)
                 * difficulty
                 * 2.0_f64.powi(32))
                 / 600.0
@@ -570,10 +586,19 @@ impl MiningDataset {
         self.hash_price.multi_insert(dates, |date| {
             let coinbase_in_dollars = self.coinbase_in_dollars_1d_sum.get_or_import(date).unwrap();
 
-            let hashrate = self.hash_rate.get_or_import(date).unwrap();
+            let hash_rate = self.hash_rate.get_or_import(date).unwrap();
 
-            coinbase_in_dollars as f64 / hashrate / 1_000.0
+            coinbase_in_dollars as f64 / hash_rate / 1_000.0
         });
+
+        self.hash_price_min
+            .multi_insert_min(dates, &mut self.hash_price, 0.0);
+
+        self.hash_price_rebound.multi_insert_percentage(
+            dates,
+            &mut self.hash_price,
+            &mut self.hash_price_min,
+        );
 
         self.puell_multiple.multi_insert_divide(
             dates,
@@ -721,6 +746,7 @@ impl AnyDataset for MiningDataset {
             &self.cumulative_subsidy,
             &self.cumulative_subsidy_in_dollars,
             &self.cumulative_block_size,
+            &self.cumulative_block_size_gigabytes,
         ]
     }
 
@@ -733,6 +759,7 @@ impl AnyDataset for MiningDataset {
             &mut self.cumulative_subsidy,
             &mut self.cumulative_subsidy_in_dollars,
             &mut self.cumulative_block_size,
+            &mut self.cumulative_block_size_gigabytes,
         ]
     }
 
@@ -778,6 +805,8 @@ impl AnyDataset for MiningDataset {
             &self.hash_rate_1m_sma,
             &self.hash_rate_2m_sma,
             &self.hash_price,
+            &self.hash_price_min,
+            &self.hash_price_rebound,
             &self.puell_multiple,
             &self.difficulty_adjustment,
         ]
@@ -825,6 +854,8 @@ impl AnyDataset for MiningDataset {
             &mut self.hash_rate_1m_sma,
             &mut self.hash_rate_2m_sma,
             &mut self.hash_price,
+            &mut self.hash_price_min,
+            &mut self.hash_price_rebound,
             &mut self.puell_multiple,
             &mut self.difficulty_adjustment,
         ]

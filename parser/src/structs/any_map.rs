@@ -23,4 +23,6 @@ pub trait AnyMap {
     fn pre_export(&mut self);
     fn export(&self) -> color_eyre::Result<()>;
     fn post_export(&mut self);
+
+    fn delete_files(&self);
 }

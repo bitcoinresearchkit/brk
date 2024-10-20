@@ -2,7 +2,7 @@ use allocative::Allocative;
 
 use crate::{
     datasets::InsertData,
-    structs::{AnyBiMap, AnyDateMap, AnyHeightMap, BiMap, HeightMap},
+    structs::{AnyBiMap, AnyDateMap, AnyHeightMap, BiMap, Config, HeightMap},
     utils::{
         ONE_DAY_IN_S, ONE_MONTH_IN_DAYS, ONE_WEEK_IN_DAYS, ONE_YEAR_IN_DAYS, TARGET_BLOCKS_PER_DAY,
     },
@@ -54,7 +54,7 @@ pub struct TransactionDataset {
 }
 
 impl TransactionDataset {
-    pub fn import(parent_path: &str) -> color_eyre::Result<Self> {
+    pub fn import(parent_path: &str, config: &Config) -> color_eyre::Result<Self> {
         let f = |s: &str| format!("{parent_path}/{s}");
 
         let mut s = Self {
@@ -105,7 +105,7 @@ impl TransactionDataset {
         };
 
         s.min_initial_states
-            .consume(MinInitialStates::compute_from_dataset(&s));
+            .consume(MinInitialStates::compute_from_dataset(&s, config));
 
         Ok(s)
     }

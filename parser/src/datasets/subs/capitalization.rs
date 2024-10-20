@@ -3,7 +3,7 @@ use allocative::Allocative;
 use crate::{
     datasets::{AnyDataset, ComputeData, InsertData, MinInitialStates},
     states::CapitalizationState,
-    structs::{AnyBiMap, BiMap},
+    structs::{AnyBiMap, BiMap, Config},
     utils::ONE_MONTH_IN_DAYS,
 };
 
@@ -23,7 +23,11 @@ pub struct CapitalizationDataset {
 }
 
 impl CapitalizationDataset {
-    pub fn import(parent_path: &str, name: &Option<String>) -> color_eyre::Result<Self> {
+    pub fn import(
+        parent_path: &str,
+        name: &Option<String>,
+        config: &Config,
+    ) -> color_eyre::Result<Self> {
         let f = |s: &str| {
             if let Some(name) = name {
                 format!("{parent_path}/{name}/{s}")
@@ -44,11 +48,12 @@ impl CapitalizationDataset {
                     "{}realized_price",
                     name.as_ref().map_or("".to_owned(), |n| format!("{n}-"))
                 ),
+                config,
             )?,
         };
 
         s.min_initial_states
-            .consume(MinInitialStates::compute_from_dataset(&s));
+            .consume(MinInitialStates::compute_from_dataset(&s, config));
 
         Ok(s)
     }

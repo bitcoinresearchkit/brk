@@ -20,7 +20,7 @@ pub use supply::*;
 pub use unrealized::*;
 pub use utxo::*;
 
-use crate::datasets::AnyDataset;
+use crate::{datasets::AnyDataset, structs::Config};
 
 use super::AnyDatasetGroup;
 
@@ -37,16 +37,20 @@ pub struct SubDataset {
 }
 
 impl SubDataset {
-    pub fn import(parent_path: &str, name: &Option<String>) -> color_eyre::Result<Self> {
+    pub fn import(
+        parent_path: &str,
+        name: &Option<String>,
+        config: &Config,
+    ) -> color_eyre::Result<Self> {
         let s = Self {
-            capitalization: CapitalizationDataset::import(parent_path, name)?,
-            input: InputSubDataset::import(parent_path, name)?,
+            capitalization: CapitalizationDataset::import(parent_path, name, config)?,
+            input: InputSubDataset::import(parent_path, name, config)?,
             // output: OutputSubDataset::import(parent_path)?,
-            price_paid: PricePaidSubDataset::import(parent_path, name)?,
-            realized: RealizedSubDataset::import(parent_path, name)?,
-            supply: SupplySubDataset::import(parent_path, name)?,
-            unrealized: UnrealizedSubDataset::import(parent_path, name)?,
-            utxo: UTXOSubDataset::import(parent_path, name)?,
+            price_paid: PricePaidSubDataset::import(parent_path, name, config)?,
+            realized: RealizedSubDataset::import(parent_path, name, config)?,
+            supply: SupplySubDataset::import(parent_path, name, config)?,
+            unrealized: UnrealizedSubDataset::import(parent_path, name, config)?,
+            utxo: UTXOSubDataset::import(parent_path, name, config)?,
         };
 
         Ok(s)

@@ -11,7 +11,7 @@ pub use ohlc::*;
 use crate::{
     price::{Binance, Kibo, Kraken},
     structs::{
-        Amount, AnyBiMap, AnyDateMap, BiMap, Date, DateMap, DateMapChunkId, Height,
+        Amount, AnyBiMap, AnyDateMap, BiMap, Config, Date, DateMap, DateMapChunkId, Height,
         HeightMapChunkId, MapKey, Timestamp,
     },
     utils::{ONE_MONTH_IN_DAYS, ONE_WEEK_IN_DAYS, ONE_YEAR_IN_DAYS},
@@ -90,7 +90,7 @@ pub struct PriceDatasets {
 }
 
 impl PriceDatasets {
-    pub fn import(datasets_path: &str) -> color_eyre::Result<Self> {
+    pub fn import(datasets_path: &str, config: &Config) -> color_eyre::Result<Self> {
         let price_path = "../price";
 
         let f = |s: &str| format!("{datasets_path}/{s}");
@@ -113,31 +113,31 @@ impl PriceDatasets {
             close: BiMap::new_bin(1, &f("close")),
             market_cap: BiMap::new_bin(1, &f("market_cap")),
             price_1w_sma: BiMap::new_bin(1, &f("price_1w_sma")),
-            price_1w_sma_ratio: RatioDataset::import(datasets_path, "price_1w_sma")?,
+            price_1w_sma_ratio: RatioDataset::import(datasets_path, "price_1w_sma", config)?,
             price_1m_sma: BiMap::new_bin(1, &f("price_1m_sma")),
-            price_1m_sma_ratio: RatioDataset::import(datasets_path, "price_1m_sma")?,
+            price_1m_sma_ratio: RatioDataset::import(datasets_path, "price_1m_sma", config)?,
             price_1y_sma: BiMap::new_bin(1, &f("price_1y_sma")),
-            price_1y_sma_ratio: RatioDataset::import(datasets_path, "price_1y_sma")?,
+            price_1y_sma_ratio: RatioDataset::import(datasets_path, "price_1y_sma", config)?,
             price_2y_sma: BiMap::new_bin(1, &f("price_2y_sma")),
-            price_2y_sma_ratio: RatioDataset::import(datasets_path, "price_2y_sma")?,
+            price_2y_sma_ratio: RatioDataset::import(datasets_path, "price_2y_sma", config)?,
             price_4y_sma: BiMap::new_bin(1, &f("price_4y_sma")),
-            price_4y_sma_ratio: RatioDataset::import(datasets_path, "price_4y_sma")?,
+            price_4y_sma_ratio: RatioDataset::import(datasets_path, "price_4y_sma", config)?,
             price_8d_sma: BiMap::new_bin(1, &f("price_8d_sma")),
-            price_8d_sma_ratio: RatioDataset::import(datasets_path, "price_8d_sma")?,
+            price_8d_sma_ratio: RatioDataset::import(datasets_path, "price_8d_sma", config)?,
             price_13d_sma: BiMap::new_bin(1, &f("price_13d_sma")),
-            price_13d_sma_ratio: RatioDataset::import(datasets_path, "price_13d_sma")?,
+            price_13d_sma_ratio: RatioDataset::import(datasets_path, "price_13d_sma", config)?,
             price_21d_sma: BiMap::new_bin(1, &f("price_21d_sma")),
-            price_21d_sma_ratio: RatioDataset::import(datasets_path, "price_21d_sma")?,
+            price_21d_sma_ratio: RatioDataset::import(datasets_path, "price_21d_sma", config)?,
             price_34d_sma: BiMap::new_bin(1, &f("price_34d_sma")),
-            price_34d_sma_ratio: RatioDataset::import(datasets_path, "price_34d_sma")?,
+            price_34d_sma_ratio: RatioDataset::import(datasets_path, "price_34d_sma", config)?,
             price_55d_sma: BiMap::new_bin(1, &f("price_55d_sma")),
-            price_55d_sma_ratio: RatioDataset::import(datasets_path, "price_55d_sma")?,
+            price_55d_sma_ratio: RatioDataset::import(datasets_path, "price_55d_sma", config)?,
             price_89d_sma: BiMap::new_bin(1, &f("price_89d_sma")),
-            price_89d_sma_ratio: RatioDataset::import(datasets_path, "price_89d_sma")?,
+            price_89d_sma_ratio: RatioDataset::import(datasets_path, "price_89d_sma", config)?,
             price_144d_sma: BiMap::new_bin(1, &f("price_144d_sma")),
-            price_144d_sma_ratio: RatioDataset::import(datasets_path, "price_144d_sma")?,
+            price_144d_sma_ratio: RatioDataset::import(datasets_path, "price_144d_sma", config)?,
             price_200w_sma: BiMap::new_bin(1, &f("price_200w_sma")),
-            price_200w_sma_ratio: RatioDataset::import(datasets_path, "price_200w_sma")?,
+            price_200w_sma_ratio: RatioDataset::import(datasets_path, "price_200w_sma", config)?,
             price_1d_total_return: DateMap::new_bin(1, &f("price_1d_total_return")),
             price_1m_total_return: DateMap::new_bin(1, &f("price_1m_total_return")),
             price_6m_total_return: DateMap::new_bin(1, &f("price_6m_total_return")),
@@ -169,7 +169,7 @@ impl PriceDatasets {
         };
 
         s.min_initial_states
-            .consume(MinInitialStates::compute_from_dataset(&s));
+            .consume(MinInitialStates::compute_from_dataset(&s, config));
 
         Ok(s)
     }

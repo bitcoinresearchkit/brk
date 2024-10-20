@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::log;
 
-#[derive(Parser, Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Parser, Debug, Clone, Default, Serialize, Deserialize, PartialEq)]
 #[command(version, about, long_about = None)]
 pub struct Config {
     /// Bitcoin data directory path, saved
@@ -32,6 +32,10 @@ pub struct Config {
     #[arg(long, value_name = "SECONDS")]
     pub delay: Option<u64>,
 
+    /// Maximum ram you want the program to use in GB, default: 75% of total, not saved
+    #[arg(long, value_name = "GB")]
+    pub max_ram: Option<f64>,
+
     /// Start a dry run, default: false, not saved
     #[arg(long, value_name = "BOOL")]
     dry_run: Option<bool>,
@@ -39,6 +43,10 @@ pub struct Config {
     /// Record ram usage, default: false, not saved
     #[arg(long, value_name = "BOOL")]
     record_ram_usage: Option<bool>,
+
+    /// Recompute all computed datasets, default: false, not saved
+    #[arg(long, value_name = "BOOL")]
+    recompute_computed: Option<bool>,
 }
 
 impl Config {
@@ -50,39 +58,47 @@ impl Config {
                 toml::from_str(&contents).unwrap_or_default()
             });
 
-        let config_args = Config::parse();
+        let mut config_args = Config::parse();
 
-        if let Some(datadir) = config_args.datadir {
+        if let Some(datadir) = config_args.datadir.take() {
             config_saved.datadir = Some(datadir);
         }
 
-        if let Some(rpcconnect) = config_args.rpcconnect {
+        if let Some(rpcconnect) = config_args.rpcconnect.take() {
             config_saved.rpcconnect = Some(rpcconnect);
         }
 
-        if let Some(rpcport) = config_args.rpcport {
+        if let Some(rpcport) = config_args.rpcport.take() {
             config_saved.rpcport = Some(rpcport);
         }
 
-        if let Some(rpcuser) = config_args.rpcuser {
+        if let Some(rpcuser) = config_args.rpcuser.take() {
             config_saved.rpcuser = Some(rpcuser);
         }
 
-        if let Some(rpcpassword) = config_args.rpcpassword {
+        if let Some(rpcpassword) = config_args.rpcpassword.take() {
             config_saved.rpcpassword = Some(rpcpassword);
         }
 
-        if let Some(delay) = config_args.delay {
+        if let Some(delay) = config_args.delay.take() {
             config_saved.delay = Some(delay);
+        }
+
+        if let Some(max_ram) = config_args.max_ram.take() {
+            config_saved.max_ram = Some(max_ram);
         }
 
         // Done importing
 
-        let config = config_saved;
+        let mut config = config_saved;
 
         config.check();
 
         config.write()?;
+
+        config.dry_run = config_args.dry_run.take();
+        config.record_ram_usage = config_args.record_ram_usage.take();
+        config.recompute_computed = config_args.recompute_computed.take();
 
         log("---");
         log("Configuration:");
@@ -92,9 +108,19 @@ impl Config {
         log(&format!("rpcuser: {:?}", config.rpcuser));
         log(&format!("rpcpassword: {:?}", config.rpcpassword));
         log(&format!("delay: {:?}", config.delay));
+        log(&format!("max_ram: {:?}", config.max_ram));
         log(&format!("dry_run: {:?}", config.dry_run));
         log(&format!("record_ram_usage: {:?}", config.record_ram_usage));
+        log(&format!(
+            "recompute_computed: {:?}",
+            config.recompute_computed
+        ));
         log("---");
+
+        if config_args != Config::default() {
+            dbg!(config_args);
+            panic!("Didn't consume the full config")
+        }
 
         Ok(config)
     }
@@ -131,5 +157,9 @@ impl Config {
 
     pub fn record_ram_usage(&self) -> bool {
         self.record_ram_usage.is_some_and(|b| b)
+    }
+
+    pub fn recompute_computed(&self) -> bool {
+        self.recompute_computed.is_some_and(|b| b)
     }
 }

@@ -2,7 +2,7 @@ use allocative::Allocative;
 
 use crate::{
     datasets::{AnyDataset, ComputeData, MinInitialStates},
-    structs::{AnyBiMap, BiMap},
+    structs::{AnyBiMap, BiMap, Config},
     utils::{ONE_MONTH_IN_DAYS, ONE_WEEK_IN_DAYS, ONE_YEAR_IN_DAYS},
 };
 
@@ -31,7 +31,7 @@ pub struct RatioDataset {
 }
 
 impl RatioDataset {
-    pub fn import(parent_path: &str, name: &str) -> color_eyre::Result<Self> {
+    pub fn import(parent_path: &str, name: &str, config: &Config) -> color_eyre::Result<Self> {
         let f_ratio = |s: &str| format!("{parent_path}/market_price_to_{name}_{s}");
         let f_price = |s: &str| format!("{parent_path}/{name}_{s}");
 
@@ -61,7 +61,7 @@ impl RatioDataset {
         };
 
         s.min_initial_states
-            .consume(MinInitialStates::compute_from_dataset(&s));
+            .consume(MinInitialStates::compute_from_dataset(&s, config));
 
         Ok(s)
     }

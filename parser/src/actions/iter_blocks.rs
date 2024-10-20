@@ -1,6 +1,5 @@
 use std::{collections::BTreeSet, time::Instant};
 
-use chrono::Datelike;
 use export::ExportedData;
 use itertools::Itertools;
 
@@ -13,9 +12,9 @@ use crate::{
     datasets::{AllDatasets, ComputeData},
     io::OUTPUTS_FOLDER_PATH,
     states::{AddressCohortsDurableStates, States, UTXOCohortsDurableStates},
-    structs::{DateData, MapKey, Timestamp},
+    structs::{DateData, MapKey, Timestamp, RAM},
     utils::{generate_allocation_files, log, time},
-    Config, Exit, Height,
+    Config, Date, Exit, Height,
 };
 
 pub fn iter_blocks(
@@ -26,7 +25,7 @@ pub fn iter_blocks(
 ) -> color_eyre::Result<()> {
     log("Starting...");
 
-    let mut datasets = AllDatasets::import()?;
+    let mut datasets = AllDatasets::import(config)?;
 
     log("Imported datasets");
 
@@ -57,6 +56,8 @@ pub fn iter_blocks(
     );
 
     let mut block_iter = block_receiver.iter();
+
+    let ram = RAM::new();
 
     'parsing: loop {
         let instant = Instant::now();
@@ -174,10 +175,12 @@ pub fn iter_blocks(
                     if is_date_last_block {
                         height += blocks_loop_i;
 
-                        let is_new_month = next_block_date
-                            .map_or(true, |next_block_date| next_block_date.day() == 1);
+                        let is_new_year = next_block_date.as_ref().map_or(true, Date::is_new_year);
 
-                        if is_new_month || height.is_close_to_end(approx_block_count) {
+                        if is_new_year
+                            || ram.max_exceeded(config)
+                            || height.is_close_to_end(approx_block_count)
+                        {
                             break 'days;
                         }
 
@@ -193,11 +196,12 @@ pub fn iter_blocks(
         let last_height = height - 1_u32;
 
         log(&format!(
-            "Parsing month took {} seconds (last height: {last_height})\n",
+            "Parsing group took {} seconds (last height: {last_height})\n",
             instant.elapsed().as_secs_f32(),
         ));
 
         if first_unsafe_heights.computed <= last_height {
+            log("Computing datasets...");
             time("Computing datasets", || {
                 let dates = processed_dates.into_iter().collect_vec();
 

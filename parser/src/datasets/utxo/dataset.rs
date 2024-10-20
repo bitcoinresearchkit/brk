@@ -6,7 +6,7 @@ use crate::{
         AnyDataset, AnyDatasetGroup, ComputeData, InsertData, MinInitialStates, SubDataset,
     },
     states::UTXOCohortId,
-    structs::{AnyBiMap, AnyDateMap, AnyHeightMap, BiMap, Date, Height},
+    structs::{AnyBiMap, AnyDateMap, AnyHeightMap, BiMap, Config, Date, Height},
 };
 
 #[derive(Default, Allocative)]
@@ -19,17 +19,21 @@ pub struct UTXODataset {
 }
 
 impl UTXODataset {
-    pub fn import(parent_path: &str, id: UTXOCohortId) -> color_eyre::Result<Self> {
+    pub fn import(
+        parent_path: &str,
+        id: UTXOCohortId,
+        config: &Config,
+    ) -> color_eyre::Result<Self> {
         let name = id.name().to_owned();
 
         let mut s = Self {
             min_initial_states: MinInitialStates::default(),
             id,
-            subs: SubDataset::import(parent_path, &Some(name))?,
+            subs: SubDataset::import(parent_path, &Some(name), config)?,
         };
 
         s.min_initial_states
-            .consume(MinInitialStates::compute_from_dataset(&s));
+            .consume(MinInitialStates::compute_from_dataset(&s, config));
 
         Ok(s)
     }

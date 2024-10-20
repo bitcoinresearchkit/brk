@@ -22,6 +22,8 @@
 - Added `Drawdown`
 - Added `Adjusted Value Created`, `Adjusted Value Destroyed` and `Adjusted Spent Output Profit Ratio` to all entities
 - Added `Realized Profit To Loss Ratio` to all entities
+- Added `Hash Price Min`
+- Added `Hash Price Rebound`
 - Removed datasets split by liquidity for all datasets already split by any address kind, while fun to have, they took time to compute, ram, and space to store and no one was actually checking them
 - Fixed a lot of values in split by liquidity datasets
 
@@ -42,6 +44,9 @@
 - Added config print at the start of the program
 - Compressed `empty_address_data` struct to save space (should shave of between up to 50% of the `address_index_to_empty_address_data` database)
 - Doubled the number of `txid_to_tx_data` databases from 4096 to 8192
+- Added `--recompute_computed true` argument, to allow recomputation of computed datasets in case of a bug
+- Fixed not saved arguments, not being processed properly
+- Fixed bug in `generic_map.multi_insert_simple_average`
 
 ## Server
 

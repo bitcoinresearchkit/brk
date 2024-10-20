@@ -14,6 +14,7 @@ self.addEventListener("install", (_event) => {
         "/index.html",
         "/assets/fonts/satoshi/2024-09/font.var.woff2",
         "/scripts/main.js",
+        "/scripts/options.js",
         "/scripts/chart.js",
         "/styles/chart.css",
         "/scripts/packages/lean-qr/v2.3.4/script.js",

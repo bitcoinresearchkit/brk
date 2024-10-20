@@ -73,6 +73,10 @@ impl Date {
             Ordering::Greater => unreachable!("0.0 but shouldn't be called"),
         }
     }
+
+    pub fn is_new_year(&self) -> bool {
+        self.day() == 1 && self.month() == 1
+    }
 }
 
 impl MapKey<DateMapChunkId> for Date {

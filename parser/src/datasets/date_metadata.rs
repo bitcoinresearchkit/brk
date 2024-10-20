@@ -2,7 +2,7 @@ use allocative::Allocative;
 
 use crate::{
     datasets::AnyDataset,
-    structs::{AnyDateMap, DateMap, Height},
+    structs::{AnyDateMap, Config, DateMap, Height},
 };
 
 use super::{InsertData, MinInitialStates};
@@ -17,7 +17,7 @@ pub struct DateMetadataDataset {
 }
 
 impl DateMetadataDataset {
-    pub fn import(parent_path: &str) -> color_eyre::Result<Self> {
+    pub fn import(parent_path: &str, config: &Config) -> color_eyre::Result<Self> {
         let f = |s: &str| format!("{parent_path}/{s}");
 
         let mut s = Self {
@@ -28,7 +28,7 @@ impl DateMetadataDataset {
         };
 
         s.min_initial_states
-            .consume(MinInitialStates::compute_from_dataset(&s));
+            .consume(MinInitialStates::compute_from_dataset(&s, config));
 
         Ok(s)
     }

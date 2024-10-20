@@ -89,6 +89,7 @@ type Unit =
   | "Dollars / (PetaHash / Second)"
   | "ExaHash / Second"
   | "Height"
+  | "Gigabytes"
   | "Megabytes"
   | "Percentage"
   | "Ratio"

@@ -87,7 +87,7 @@ pub fn find_first_inserted_unsafe_height(
                         let computed = datasets_min_initial_states.computed.last_date.and_then(
                             |last_date| datasets.date_metadata
                                 .last_height
-                                .get(&last_date)
+                                .get_or_import(&last_date)
                                 .and_then(|last_date_height| {
                                     if datasets_min_initial_states.computed.last_height.map_or(true, |last_height| {
                                         last_height < last_date_height

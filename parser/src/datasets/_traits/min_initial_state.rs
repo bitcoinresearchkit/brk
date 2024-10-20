@@ -1,6 +1,6 @@
 use allocative::Allocative;
 
-use crate::structs::{AnyDateMap, AnyHeightMap, Date, Height};
+use crate::structs::{AnyDateMap, AnyHeightMap, Config, Date, Height};
 
 use super::{AnyDataset, AnyDatasets};
 
@@ -16,17 +16,17 @@ impl MinInitialStates {
         self.computed = other.computed;
     }
 
-    pub fn compute_from_dataset(dataset: &dyn AnyDataset) -> Self {
+    pub fn compute_from_dataset(dataset: &dyn AnyDataset, config: &Config) -> Self {
         Self {
-            inserted: MinInitialState::compute_from_dataset(dataset, Mode::Inserted),
-            computed: MinInitialState::compute_from_dataset(dataset, Mode::Computed),
+            inserted: MinInitialState::compute_from_dataset(dataset, Mode::Inserted, config),
+            computed: MinInitialState::compute_from_dataset(dataset, Mode::Computed, config),
         }
     }
 
-    pub fn compute_from_datasets(datasets: &dyn AnyDatasets) -> Self {
+    pub fn compute_from_datasets(datasets: &dyn AnyDatasets, config: &Config) -> Self {
         Self {
-            inserted: MinInitialState::compute_from_datasets(datasets, Mode::Inserted),
-            computed: MinInitialState::compute_from_datasets(datasets, Mode::Computed),
+            inserted: MinInitialState::compute_from_datasets(datasets, Mode::Inserted, config),
+            computed: MinInitialState::compute_from_datasets(datasets, Mode::Computed, config),
         }
     }
 }
@@ -52,7 +52,7 @@ impl MinInitialState {
     //     self.last_height = other.last_height;
     // }
 
-    fn compute_from_datasets(datasets: &dyn AnyDatasets, mode: Mode) -> Self {
+    fn compute_from_datasets(datasets: &dyn AnyDatasets, mode: Mode, config: &Config) -> Self {
         match mode {
             Mode::Inserted => {
                 let contains_date_maps = |dataset: &&(dyn AnyDataset + Sync + Send)| {
@@ -111,6 +111,11 @@ impl MinInitialState {
                 }
             }
             Mode::Computed => {
+                if config.recompute_computed() {
+                    // datasets.reset_computed();
+                    return Self::default();
+                }
+
                 let contains_date_maps = |dataset: &&(dyn AnyDataset + Sync + Send)| {
                     !dataset.to_all_computed_date_map_vec().is_empty()
                 };
@@ -197,7 +202,7 @@ impl MinInitialState {
         )
     }
 
-    fn compute_from_dataset(dataset: &dyn AnyDataset, mode: Mode) -> Self {
+    fn compute_from_dataset(dataset: &dyn AnyDataset, mode: Mode, config: &Config) -> Self {
         match mode {
             Mode::Inserted => {
                 let date_vec = dataset.to_all_inserted_date_map_vec();
@@ -215,6 +220,11 @@ impl MinInitialState {
                 }
             }
             Mode::Computed => {
+                if config.recompute_computed() {
+                    dataset.reset_computed();
+                    return Self::default();
+                }
+
                 let date_vec = dataset.to_all_computed_date_map_vec();
                 let height_vec = dataset.to_all_computed_height_map_vec();
 

@@ -3,7 +3,7 @@ use allocative::Allocative;
 use crate::{
     datasets::{AnyDataset, ComputeData, InsertData, MinInitialStates},
     states::UnrealizedState,
-    structs::{AnyBiMap, BiMap},
+    structs::{AnyBiMap, BiMap, Config},
 };
 
 #[derive(Default, Allocative)]
@@ -27,7 +27,11 @@ pub struct UnrealizedSubDataset {
 }
 
 impl UnrealizedSubDataset {
-    pub fn import(parent_path: &str, name: &Option<String>) -> color_eyre::Result<Self> {
+    pub fn import(
+        parent_path: &str,
+        name: &Option<String>,
+        config: &Config,
+    ) -> color_eyre::Result<Self> {
         let f = |s: &str| {
             if let Some(name) = name {
                 format!("{parent_path}/{name}/{s}")
@@ -68,7 +72,7 @@ impl UnrealizedSubDataset {
         };
 
         s.min_initial_states
-            .consume(MinInitialStates::compute_from_dataset(&s));
+            .consume(MinInitialStates::compute_from_dataset(&s, config));
 
         Ok(s)
     }

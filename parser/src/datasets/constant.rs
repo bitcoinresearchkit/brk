@@ -1,6 +1,6 @@
 use allocative::Allocative;
 
-use crate::structs::{AnyBiMap, BiMap};
+use crate::structs::{AnyBiMap, BiMap, Config};
 
 use super::{AnyDataset, ComputeData, MinInitialStates};
 
@@ -16,7 +16,7 @@ pub struct ConstantDataset {
 }
 
 impl ConstantDataset {
-    pub fn import(parent_path: &str) -> color_eyre::Result<Self> {
+    pub fn import(parent_path: &str, config: &Config) -> color_eyre::Result<Self> {
         let f = |s: &str| format!("{parent_path}/{s}");
 
         let mut s = Self {
@@ -29,7 +29,7 @@ impl ConstantDataset {
         };
 
         s.min_initial_states
-            .consume(MinInitialStates::compute_from_dataset(&s));
+            .consume(MinInitialStates::compute_from_dataset(&s, config));
 
         Ok(s)
     }

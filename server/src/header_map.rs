@@ -149,7 +149,7 @@ impl HeaderMapUtils for HeaderMap {
             "json" => self.insert_content_type_application_json(),
             "html" => self.insert_content_type_text_html(),
             "css" => self.insert_content_type_text_css(),
-            "txt" => self.insert_content_type_text_plain(),
+            "toml" | "txt" => self.insert_content_type_text_plain(),
             "pdf" => self.insert_content_type_application_pdf(),
             "woff2" => self.insert_content_type_font_woff2(),
             "ico" => self.insert_content_type_image_icon(),

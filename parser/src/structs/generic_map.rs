@@ -156,9 +156,7 @@ where
                     if serialized.version() == s.version {
                         s.imported.insert(chunk_start, serialized);
                     } else {
-                        s.read_dir()
-                            .iter()
-                            .for_each(|(_, path)| fs::remove_file(path).unwrap())
+                        s.delete_files();
                     }
                 }
             });
@@ -204,12 +202,10 @@ where
     }
 
     pub fn insert(&mut self, key: Key, value: Value) -> Value {
-        if !self.is_key_safe(key) {
-            self.to_insert
-                .entry(key.to_chunk_id())
-                .or_default()
-                .insert(key.to_serialized_key(), value);
-        }
+        self.to_insert
+            .entry(key.to_chunk_id())
+            .or_default()
+            .insert(key.to_serialized_key(), value);
 
         value
     }
@@ -341,8 +337,10 @@ where
                 });
 
                 let path = self.path_all.join(chunk_id.to_name());
+
                 self.serialization.export(Path::new(&path), serialized)?;
 
+                // Export last
                 if index == len - 1 {
                     if let Some(path_last) = self.path_last.as_ref() {
                         self.serialization
@@ -370,6 +368,12 @@ where
 
         self.to_insert.clear();
     }
+
+    fn delete_files(&self) {
+        self.read_dir()
+            .iter()
+            .for_each(|(_, path)| fs::remove_file(path).unwrap())
+    }
 }
 
 impl<Key, Value, ChunkId, Serialized> GenericMap<Key, Value, ChunkId, Serialized>
@@ -379,14 +383,16 @@ where
     Key: MapKey<ChunkId>,
     Serialized: MapSerialized<Key, Value, ChunkId>,
 {
-    pub fn sum_keys(&self, keys: &[Key]) -> Value
+    pub fn sum_keys(&mut self, keys: &[Key]) -> Value
     where
         Value: Sum,
     {
-        keys.iter().flat_map(|key| self.get(key)).sum::<Value>()
+        keys.iter()
+            .map(|key| self.get_or_import(key).unwrap())
+            .sum::<Value>()
     }
 
-    pub fn average_keys(&self, keys: &[Key]) -> f32
+    pub fn average_keys(&mut self, keys: &[Key]) -> f32
     where
         Value: Sum,
         f32: LossyFrom<Value>,
@@ -654,7 +660,7 @@ where
             let previous_average: f32 = average
                 .unwrap_or_else(|| {
                     key.checked_sub(1)
-                        .and_then(|previous_average_key| self.get(&previous_average_key))
+                        .and_then(|previous_average_key| self.get_or_import(&previous_average_key))
                         .unwrap_or_default()
                 })
                 .into();
@@ -832,7 +838,7 @@ where
         keys.iter().for_each(|key| {
             if previous_max.is_none() {
                 key.checked_sub(1)
-                    .and_then(|previous_max_key| self.get(&previous_max_key))
+                    .and_then(|previous_max_key| self.get_or_import(&previous_max_key))
                     .and_then(|v| previous_max.replace(v));
             }
 
@@ -848,6 +854,40 @@ where
             }
 
             self.insert(*key, previous_max.unwrap());
+        });
+    }
+
+    pub fn multi_insert_min(&mut self, keys: &[Key], source: &mut Self, min_excluded: Value)
+    where
+        Value: Default + PartialOrd,
+    {
+        let mut previous_min = None;
+
+        keys.iter().for_each(|key| {
+            if previous_min.is_none() {
+                if let Some(value) = key
+                    .checked_sub(1)
+                    .and_then(|previous_min_key| self.get_or_import(&previous_min_key))
+                {
+                    if value > min_excluded {
+                        previous_min.replace(value);
+                    }
+                }
+            }
+
+            let last_value = source.get_or_import(key).unwrap_or_else(|| {
+                dbg!(key);
+                panic!()
+            });
+
+            if last_value > min_excluded
+                && (previous_min.is_none()
+                    || previous_min.is_some_and(|previous_min| previous_min > last_value))
+            {
+                previous_min.replace(last_value);
+            }
+
+            self.insert(*key, previous_min.unwrap_or_default());
         });
     }
 }

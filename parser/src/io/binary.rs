@@ -69,6 +69,8 @@ impl Binary {
     where
         T: Debug + Encode,
     {
+        // log(&format!("Exporting: {:?}", path));
+
         match Self::type_from_path(path) {
             BinaryType::Compressed => Self::export_compressed(path, value),
             BinaryType::Raw => Self::export_raw(path, value),

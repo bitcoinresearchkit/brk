@@ -1,7 +1,7 @@
 use allocative::Allocative;
 
 use crate::{
-    structs::{AnyBiMap, AnyDateMap, AnyHeightMap, BiMap, DateMap, Height},
+    structs::{AnyBiMap, AnyDateMap, AnyHeightMap, BiMap, Config, DateMap, Height},
     utils::{ONE_DAY_IN_DAYS, ONE_YEAR_IN_DAYS, THREE_MONTHS_IN_DAYS, TWO_WEEK_IN_DAYS},
     HeightMap,
 };
@@ -71,7 +71,7 @@ pub struct CointimeDataset {
 }
 
 impl CointimeDataset {
-    pub fn import(parent_path: &str) -> color_eyre::Result<Self> {
+    pub fn import(parent_path: &str, config: &Config) -> color_eyre::Result<Self> {
         let f = |s: &str| format!("{parent_path}/{s}");
 
         let mut s = Self {
@@ -79,7 +79,7 @@ impl CointimeDataset {
 
             active_cap: BiMap::new_bin(1, &f("active_cap")),
             active_price: BiMap::new_bin(1, &f("active_price")),
-            active_price_ratio: RatioDataset::import(parent_path, "active_price")?,
+            active_price_ratio: RatioDataset::import(parent_path, "active_price", config)?,
             active_supply: BiMap::new_bin(1, &f("active_supply")),
             active_supply_3m_net_change: BiMap::new_bin(1, &f("active_supply_3m_net_change")),
             active_supply_net_change: BiMap::new_bin(1, &f("active_supply_net_change")),
@@ -101,7 +101,7 @@ impl CointimeDataset {
             ),
             cointime_cap: BiMap::new_bin(1, &f("cointime_cap")),
             cointime_price: BiMap::new_bin(1, &f("cointime_price")),
-            cointime_price_ratio: RatioDataset::import(parent_path, "cointime_price")?,
+            cointime_price_ratio: RatioDataset::import(parent_path, "cointime_price", config)?,
             cointime_value_created: HeightMap::new_bin(1, &f("cointime_value_created")),
             cointime_value_created_1d_sum: DateMap::new_bin(1, &f("cointime_value_created_1d_sum")),
             cointime_value_destroyed: HeightMap::new_bin(1, &f("cointime_value_destroyed")),
@@ -141,14 +141,14 @@ impl CointimeDataset {
             total_cointime_value_stored: BiMap::new_bin(1, &f("total_cointime_value_stored")),
             true_market_deviation: BiMap::new_bin(1, &f("true_market_deviation")),
             true_market_mean: BiMap::new_bin(1, &f("true_market_mean")),
-            true_market_mean_ratio: RatioDataset::import(parent_path, "true_market_mean")?,
+            true_market_mean_ratio: RatioDataset::import(parent_path, "true_market_mean", config)?,
             true_market_net_unrealized_profit_and_loss: BiMap::new_bin(
                 1,
                 &f("true_market_net_unrealized_profit_and_loss"),
             ),
             vaulted_cap: BiMap::new_bin(1, &f("vaulted_cap")),
             vaulted_price: BiMap::new_bin(1, &f("vaulted_price")),
-            vaulted_price_ratio: RatioDataset::import(parent_path, "vaulted_price")?,
+            vaulted_price_ratio: RatioDataset::import(parent_path, "vaulted_price", config)?,
             vaulted_supply: BiMap::new_bin(1, &f("vaulted_supply")),
             vaulted_supply_3m_net_change: BiMap::new_bin(1, &f("vaulted_supply_3m_net_change")),
             vaulted_supply_net_change: BiMap::new_bin(1, &f("vaulted_supply_net_change")),
@@ -157,7 +157,7 @@ impl CointimeDataset {
         };
 
         s.min_initial_states
-            .consume(MinInitialStates::compute_from_dataset(&s));
+            .consume(MinInitialStates::compute_from_dataset(&s, config));
 
         Ok(s)
     }

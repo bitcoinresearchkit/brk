@@ -45,7 +45,7 @@ use crate::{
         // UTXOCohortsReceivedStates,
         UTXOCohortsSentStates,
     },
-    structs::{Amount, Date, Height, Price, Timestamp},
+    structs::{Amount, Config, Date, Height, Price, Timestamp},
 };
 
 pub struct InsertData<'a> {
@@ -102,28 +102,28 @@ pub struct AllDatasets {
 const DATASETS_PATH: &str = "../datasets";
 
 impl AllDatasets {
-    pub fn import() -> color_eyre::Result<Self> {
+    pub fn import(config: &Config) -> color_eyre::Result<Self> {
         let path = DATASETS_PATH;
 
-        let price = PriceDatasets::import(path)?;
+        let price = PriceDatasets::import(path, config)?;
 
-        let constant = ConstantDataset::import(path)?;
+        let constant = ConstantDataset::import(path, config)?;
 
-        let date_metadata = DateMetadataDataset::import(path)?;
+        let date_metadata = DateMetadataDataset::import(path, config)?;
 
-        let cointime = CointimeDataset::import(path)?;
+        let cointime = CointimeDataset::import(path, config)?;
 
-        let coindays = CoindaysDataset::import(path)?;
+        let coindays = CoindaysDataset::import(path, config)?;
 
-        let mining = MiningDataset::import(path)?;
+        let mining = MiningDataset::import(path, config)?;
 
-        let block_metadata = BlockMetadataDataset::import(path)?;
+        let block_metadata = BlockMetadataDataset::import(path, config)?;
 
-        let transaction = TransactionDataset::import(path)?;
+        let transaction = TransactionDataset::import(path, config)?;
 
-        let address = AddressDatasets::import(path)?;
+        let address = AddressDatasets::import(path, config)?;
 
-        let utxo = UTXODatasets::import(path)?;
+        let utxo = UTXODatasets::import(path, config)?;
 
         let mut s = Self {
             min_initial_states: MinInitialStates::default(),
@@ -141,7 +141,7 @@ impl AllDatasets {
         };
 
         s.min_initial_states
-            .consume(MinInitialStates::compute_from_datasets(&s));
+            .consume(MinInitialStates::compute_from_datasets(&s, config));
 
         s.export_meta_files()?;
 

@@ -95,7 +95,7 @@ impl Serialization {
                     let path = path.to_str().unwrap();
 
                     let res = Binary::export(
-                        Path::new(&format!("{}.{COMPRESSED_BIN_EXTENSION}", path,)),
+                        Path::new(&format!("{}.{COMPRESSED_BIN_EXTENSION}", path)),
                         value,
                     );
 

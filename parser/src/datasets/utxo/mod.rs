@@ -9,7 +9,7 @@ use itertools::Itertools;
 use crate::{
     datasets::AnyDatasets,
     states::{SplitByUTXOCohort, UTXOCohortId},
-    structs::{BiMap, Date, Height},
+    structs::{BiMap, Config, Date, Height},
 };
 
 use super::{AnyDataset, ComputeData, InsertData, MinInitialStates};
@@ -22,13 +22,13 @@ pub struct UTXODatasets {
 }
 
 impl UTXODatasets {
-    pub fn import(parent_path: &str) -> color_eyre::Result<Self> {
+    pub fn import(parent_path: &str, config: &Config) -> color_eyre::Result<Self> {
         let mut cohorts = SplitByUTXOCohort::<UTXODataset>::default();
 
         cohorts
             .as_vec()
             .into_par_iter()
-            .map(|(_, id)| (id, UTXODataset::import(parent_path, id)))
+            .map(|(_, id)| (id, UTXODataset::import(parent_path, id, config)))
             .collect::<Vec<_>>()
             .into_iter()
             .try_for_each(|(id, dataset)| -> color_eyre::Result<()> {
@@ -43,7 +43,7 @@ impl UTXODatasets {
         };
 
         s.min_initial_states
-            .consume(MinInitialStates::compute_from_datasets(&s));
+            .consume(MinInitialStates::compute_from_datasets(&s, config));
 
         Ok(s)
     }

@@ -740,7 +740,7 @@ export function initChartsElement({
     // Don't trigger reactivity by design
     activeDatasets().add(dataset);
 
-    const title = "Price";
+    const title = "BTC Price";
 
     /** @type {SeriesBlueprint} */
     let seriesBlueprint;
