@@ -1,7 +1,7 @@
 // @ts-check
 
 /**
- * @import { OptionPath, PartialOption, PartialOptionsGroup, PartialOptionsTree, Option, OptionsGroup, Series, PriceSeriesType, ResourceDataset, TimeScale, SerializedHistory, TimeRange, Unit, Marker, Weighted, DatasetPath, OHLC, FetchedJSON, DatasetValue, FetchedResult, AnyDatasetPath, SeriesBlueprint, BaselineSpecificSeriesBlueprint, CandlestickSpecificSeriesBlueprint, LineSpecificSeriesBlueprint, SpecificSeriesBlueprintWithChart, Signal, Color, SettingsTheme, DatasetCandlestickData, FoldersFilter, PartialChartOption, ChartOption, AnyPartialOption, ProcessedOptionAddons, OptionsTree, AnyPath } from "./types/self"
+ * @import { OptionPath, PartialOption, PartialOptionsGroup, PartialOptionsTree, Option, OptionsGroup, Series, PriceSeriesType, ResourceDataset, TimeScale, SerializedHistory, TimeRange, Unit, Marker, Weighted, DatasetPath, OHLC, FetchedJSON, DatasetValue, FetchedResult, AnyDatasetPath, SeriesBlueprint, BaselineSpecificSeriesBlueprint, CandlestickSpecificSeriesBlueprint, LineSpecificSeriesBlueprint, SpecificSeriesBlueprintWithChart, Signal, Color, SettingsTheme, DatasetCandlestickData, FoldersFilter, PartialChartOption, ChartOption, AnyPartialOption, ProcessedOptionAddons, OptionsTree, AnyPath, SimulationOption } from "./types/self"
  * @import {createChart as CreateClassicChart, createChartEx as CreateCustomChart, LineStyleOptions} from "./packages/lightweight-charts/v4.2.0/types";
  * @import * as _ from "./packages/ufuzzy/v1.0.14/types"
  * @import { DeepPartial, ChartOptions, IChartApi, IHorzScaleBehavior, WhitespaceData, SingleValueData, ISeriesApi, Time, LogicalRange, SeriesMarker, CandlestickData, SeriesType, BaselineStyleOptions, SeriesOptionsCommon } from "./packages/lightweight-charts/v4.2.0/types"
@@ -720,7 +720,9 @@ const utils = {
       label.for = inputId;
       label.title = labelTitle;
 
-      label.addEventListener("click", onClick || (() => {}));
+      if (onClick) {
+        label.addEventListener("click", onClick);
+      }
 
       return {
         label,
@@ -734,6 +736,7 @@ const utils = {
      * @param {string} args.inputId
      * @param {string} args.inputValue
      * @param {string} args.labelTitle
+     * @param {string} [args.href]
      * @param {(event: MouseEvent) => void} args.onClick
      */
     createComplexLabeledInput({
@@ -743,6 +746,7 @@ const utils = {
       labelTitle,
       name,
       onClick,
+      href,
     }) {
       const { label, input } = this.createLabeledInput({
         inputId,
@@ -757,7 +761,30 @@ const utils = {
       label.append(spanMain);
 
       const spanName = this.createSpanName(name);
-      spanMain.append(spanName);
+
+      if (href) {
+        const anchor = window.document.createElement("a");
+        anchor.href = href;
+        anchor.append(spanName);
+        spanMain.append(anchor);
+
+        if (href.includes(".")) {
+          anchor.target = "_target";
+          anchor.rel = "noopener noreferrer";
+
+          anchor.addEventListener("click", (event) => {
+            event.stopPropagation();
+            // event.preventDefault();
+          });
+        } else {
+          anchor.addEventListener("click", (event) => {
+            // event.stopPropagation();
+            event.preventDefault();
+          });
+        }
+      } else {
+        spanMain.append(spanName);
+      }
 
       return {
         label,
@@ -1249,7 +1276,7 @@ const elements = {
   selectedHr: utils.dom.getElementById("selected-hr"),
   home: utils.dom.getElementById("home"),
   charts: utils.dom.getElementById("charts"),
-  dashboard: utils.dom.getElementById("dashboard"),
+  simulation: utils.dom.getElementById("simulation"),
 };
 /** @typedef {typeof elements} Elements */
 
@@ -2144,6 +2171,9 @@ packages.signals().then((signals) =>
           const lastChartOption = signals.createSignal(
             /** @type {ChartOption | null} */ (null),
           );
+          const lastSimulationOption = signals.createSignal(
+            /** @type {SimulationOption | null} */ (null),
+          );
 
           const owner = signals.getOwner();
 
@@ -2151,7 +2181,7 @@ packages.signals().then((signals) =>
             undefined
           );
           let firstChartOption = true;
-          let firstDashboardOption = true;
+          let firstSimulationOption = true;
 
           signals.createEffect(() => {
             const option = options.selected();
@@ -2187,9 +2217,9 @@ packages.signals().then((signals) =>
 
                   if (firstChartOption) {
                     const lightweightCharts = packages.lightweightCharts();
-                    const chartsScript = import("./chart.js");
+                    const chartScript = import("./chart.js");
                     utils.dom.importStyleAndThen("/styles/chart.css", () =>
-                      chartsScript.then(({ initChartsElement }) =>
+                      chartScript.then(({ init: initChartsElement }) =>
                         lightweightCharts.then((lightweightCharts) =>
                           signals.runWithOwner(owner, () =>
                             initChartsElement({
@@ -2215,8 +2245,43 @@ packages.signals().then((signals) =>
 
                   break;
                 }
-                case "pdf": {
-                  utils.dom.open(`/assets/pdfs/${option.file}`, true);
+                case "simulation": {
+                  element = elements.simulation;
+
+                  lastSimulationOption.set(option);
+
+                  if (firstSimulationOption) {
+                    const lightweightCharts = packages.lightweightCharts();
+                    const simulationScript = import("./simulation.js");
+
+                    utils.dom.importStyleAndThen("/styles/simulation.css", () =>
+                      simulationScript.then(({ init }) =>
+                        lightweightCharts.then((lightweightCharts) =>
+                          signals.runWithOwner(owner, () =>
+                            init({
+                              colors,
+                              consts,
+                              dark,
+                              datasets,
+                              elements,
+                              ids,
+                              lightweightCharts,
+                              options,
+                              selected: /** @type {any} */ (lastChartOption),
+                              signals,
+                              utils,
+                              webSockets,
+                            }),
+                          ),
+                        ),
+                      ),
+                    );
+                  }
+                  firstSimulationOption = false;
+
+                  break;
+                }
+                default: {
                   return;
                 }
               }

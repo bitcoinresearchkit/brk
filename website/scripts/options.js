@@ -4821,6 +4821,17 @@ function createPartialOptions(colors) {
       ],
     },
     {
+      name: "Simulations",
+      tree: [
+        {
+          icon: "🧪",
+          kind: "simulation",
+          title: "Dollar Cost Average Simulation",
+          name: "Dollar Cost Average",
+        },
+      ],
+    },
+    {
       name: "Library",
       tree: [
         {
@@ -5075,7 +5086,12 @@ export function initOptions({
       inputName: `option-${frame}${id || ""}`,
       labelTitle: option.title,
       name: name || option.name,
-      onClick: () => selected.set(option),
+      onClick: () => {
+        // if (option.kind !== "pdf") {
+        selected.set(option);
+        // }
+      },
+      href: `/${option.kind === "pdf" ? option.file : option.id}`,
     });
 
     if (top) {
@@ -5343,6 +5359,7 @@ export function initOptions({
           kind = "pdf";
           id = `${ids.fromString(anyPartial.name)}-pdf`;
           title = anyPartial.name;
+          anyPartial.file = `assets/pdfs/${anyPartial.file}`;
         } else if ("scale" in anyPartial) {
           kind = "chart";
           id = `chart-${anyPartial.scale}-to-${ids.fromString(
@@ -5350,8 +5367,11 @@ export function initOptions({
           )}`;
           title = anyPartial.title;
         } else {
-          console.log(anyPartial);
-          throw "Unreachable";
+          kind = anyPartial.kind;
+          title = anyPartial.title;
+          console.log("Unprocessed", anyPartial);
+          id = `${kind}-${ids.fromString(anyPartial.title)}`;
+          // return;
         }
 
         /** @type {ProcessedOptionAddons} */

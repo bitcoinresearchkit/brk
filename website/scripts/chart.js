@@ -17,7 +17,7 @@
  * @param {Ids} args.ids
  * @param {Accessor<boolean>} args.dark
  */
-export function initChartsElement({
+export function init({
   colors,
   consts,
   dark,
@@ -796,89 +796,6 @@ export function initChartsElement({
   }
 
   function initTimeScaleElement() {
-    function initScrollButtons() {
-      const buttonBackward = utils.dom.getElementById("button-backward");
-      const buttonBackwardIcon = utils.dom.getElementById(
-        "button-backward-icon",
-      );
-      const buttonBackwardPauseIcon = utils.dom.getElementById(
-        "button-backward-pause-icon",
-      );
-      const buttonForward = utils.dom.getElementById("button-forward");
-      const buttonForwardIcon = utils.dom.getElementById("button-forward-icon");
-      const buttonForwardPauseIcon = utils.dom.getElementById(
-        "button-forward-pause-icon",
-      );
-
-      let interval = /** @type {number | undefined} */ (undefined);
-      let direction = /** @type  {1 | -1 | 0} */ (0);
-
-      const DELAY = 5;
-      const MULTIPLIER = DELAY / 10000;
-
-      function scrollChart() {
-        if (direction <= 0) {
-          buttonForwardIcon.removeAttribute("hidden");
-          buttonForwardPauseIcon.setAttribute("hidden", "");
-        }
-        if (direction >= 0) {
-          buttonBackwardIcon.removeAttribute("hidden");
-          buttonBackwardPauseIcon.setAttribute("hidden", "");
-        }
-        if (direction === -1) {
-          buttonBackwardIcon.setAttribute("hidden", "");
-          buttonBackwardPauseIcon.removeAttribute("hidden");
-        }
-        if (direction === 1) {
-          buttonForwardIcon.setAttribute("hidden", "");
-          buttonForwardPauseIcon.removeAttribute("hidden");
-        }
-
-        if (!direction) {
-          clearInterval(interval);
-          return;
-        }
-
-        interval = setInterval(() => {
-          const time = charts.at(-1)?.timeScale();
-
-          if (!time) return;
-
-          const range = time.getVisibleLogicalRange();
-
-          if (!range) return;
-
-          const speed = (range.to - range.from) * MULTIPLIER * direction;
-
-          // @ts-ignore
-          range.from += speed;
-          // @ts-ignore
-          range.to += speed;
-
-          time.setVisibleLogicalRange(range);
-        }, DELAY);
-      }
-
-      buttonBackward.addEventListener("click", () => {
-        if (direction !== -1) {
-          direction = -1;
-        } else {
-          direction = 0;
-        }
-        scrollChart();
-      });
-
-      buttonForward.addEventListener("click", () => {
-        if (direction !== 1) {
-          direction = 1;
-        } else {
-          direction = 0;
-        }
-        scrollChart();
-      });
-    }
-    initScrollButtons();
-
     const GENESIS_DAY = "2009-01-03";
 
     /**

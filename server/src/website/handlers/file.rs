@@ -102,7 +102,7 @@ fn path_to_response(headers: HeaderMap, path: &Path) -> Response {
         {
             headers.insert_cache_control_immutable();
         } else {
-            headers.insert_cache_control_revalidate(10, 50);
+            headers.insert_cache_control_revalidate(1, 1);
         }
     }
 

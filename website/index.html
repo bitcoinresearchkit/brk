@@ -489,7 +489,7 @@
       header {
         flex-shrink: 0;
         display: flex;
-        padding-top: 0.25rem /* 4px */;
+
         white-space: nowrap;
         overflow-x: auto;
         padding-bottom: 1.5rem;
@@ -498,6 +498,10 @@
         margin-left: -1.5rem;
         padding-right: 1.5rem;
         margin-right: -1.5rem;
+
+        @media (min-width: 768px) {
+          padding-top: 0.25rem /* 4px */;
+        }
 
         & > * {
           flex: 1;
@@ -579,6 +583,13 @@
               }
             }
 
+            > a {
+              flex: 1;
+              overflow: hidden;
+              text-overflow: ellipsis;
+              white-space: nowrap;
+            }
+
             > span.emoji {
               filter: grayscale(100%) brightness(66%) opacity(66%);
             }
@@ -629,10 +640,6 @@
 
           > *:not(input) + * {
             margin-top: -0.5rem /* -8px */;
-          }
-
-          .list & {
-            color: var(--color);
           }
         }
 
@@ -849,6 +856,12 @@
         }
       }
 
+      @media (min-width: 768px) {
+        .md\:hidden {
+          display: none !important;
+        }
+      }
+
       /*
        * ---
        */
@@ -891,7 +904,7 @@
               > details > summary {
                 &,
                 * {
-                  color: var(--color) !important;
+                  color: var(--color);
                 }
               }
 
@@ -906,35 +919,9 @@
               }
             }
 
-            &:hover {
-              &::before,
-              > details > summary > span.marker {
-                border-color: var(--orange) !important;
-                z-index: 20;
-              }
-
-              > details:not([open]) > summary > span.marker {
-                background-color: var(--orange) !important;
-              }
-            }
-
             &:has(*[data-highlight]) {
               > details > summary::after {
-                color: var(--color) !important;
                 border-color: var(--color) !important;
-              }
-            }
-
-            &:has(*:hover) {
-              > details > summary {
-                &,
-                * {
-                  color: var(--orange) !important;
-                }
-
-                &:not(:hover)::after {
-                  border-color: var(--orange) !important;
-                }
               }
             }
 
@@ -942,19 +929,8 @@
               border-color: var(--color) !important;
             }
 
-            &:has(~ *:hover) {
-              border-color: var(--orange) !important;
-            }
-
-            &:has(~ *[data-highlight]),
-            &:has(~ *:hover) {
-              &::before {
-                z-index: -10 !important;
-              }
-            }
-
-            &:has(*:hover)::before {
-              z-index: 10 !important;
+            &:has(~ *[data-highlight])::before {
+              z-index: -10 !important;
             }
 
             > details > summary {
@@ -1208,187 +1184,6 @@
         main > &:not(:has(~ #selected-frame:not([hidden]))) {
           display: none;
         }
-      }
-
-      @media (min-width: 768px) {
-        .md\:hidden {
-          display: none !important;
-        }
-      }
-    </style>
-
-    <!-- Flex Masonry -->
-    <style>
-      .flexmasonry {
-        display: flex;
-        flex-flow: column wrap;
-        align-content: space-between;
-      }
-
-      .flexmasonry-item {
-        width: 100%;
-
-        .flexmasonry-cols-2 & {
-          width: 50%;
-
-          &:nth-child(2n + 1) {
-            order: 1;
-          }
-          &:nth-child(2n) {
-            order: 2;
-          }
-        }
-        .flexmasonry-cols-3 & {
-          width: 33.333%;
-
-          &:nth-child(3n + 1) {
-            order: 1;
-          }
-          &:nth-child(3n + 2) {
-            order: 2;
-          }
-          &:nth-child(3n) {
-            order: 3;
-          }
-        }
-        .flexmasonry-cols-4 & {
-          width: 25%;
-
-          &:nth-child(4n + 1) {
-            order: 1;
-          }
-          &:nth-child(4n + 2) {
-            order: 2;
-          }
-          &:nth-child(4n + 3) {
-            order: 3;
-          }
-          &:nth-child(4n) {
-            order: 4;
-          }
-        }
-        .flexmasonry-cols-5 & {
-          width: 20%;
-
-          &:nth-child(5n + 1) {
-            order: 1;
-          }
-          &:nth-child(5n + 2) {
-            order: 2;
-          }
-          &:nth-child(5n + 3) {
-            order: 3;
-          }
-          &:nth-child(5n + 4) {
-            order: 4;
-          }
-          &:nth-child(5n) {
-            order: 5;
-          }
-        }
-        .flexmasonry-cols-6 & {
-          width: 16.666%;
-
-          &:nth-child(6n + 1) {
-            order: 1;
-          }
-          &:nth-child(6n + 2) {
-            order: 2;
-          }
-          &:nth-child(6n + 3) {
-            order: 3;
-          }
-          &:nth-child(6n + 4) {
-            order: 4;
-          }
-          &:nth-child(6n + 5) {
-            order: 5;
-          }
-          &:nth-child(6n) {
-            order: 6;
-          }
-        }
-        .flexmasonry-cols-7 & {
-          width: 14.285%;
-
-          &:nth-child(7n + 1) {
-            order: 1;
-          }
-          &:nth-child(7n + 2) {
-            order: 2;
-          }
-          &:nth-child(7n + 3) {
-            order: 3;
-          }
-          &:nth-child(7n + 4) {
-            order: 4;
-          }
-          &:nth-child(7n + 5) {
-            order: 5;
-          }
-          &:nth-child(7n + 6) {
-            order: 6;
-          }
-          &:nth-child(7n) {
-            order: 7;
-          }
-        }
-        .flexmasonry-cols-8 & {
-          width: 12.5%;
-
-          &:nth-child(8n + 1) {
-            order: 1;
-          }
-          &:nth-child(8n + 2) {
-            order: 2;
-          }
-          &:nth-child(8n + 3) {
-            order: 3;
-          }
-          &:nth-child(8n + 4) {
-            order: 4;
-          }
-          &:nth-child(8n + 5) {
-            order: 5;
-          }
-          &:nth-child(8n + 6) {
-            order: 6;
-          }
-          &:nth-child(8n + 7) {
-            order: 7;
-          }
-          &:nth-child(8n) {
-            order: 8;
-          }
-        }
-      }
-
-      .flexmasonry-break {
-        content: "";
-        flex-basis: 100%;
-        width: 0 !important;
-        margin: 0;
-      }
-      .flexmasonry-break-1 {
-        order: 1;
-      }
-      .flexmasonry-break-2 {
-        order: 2;
-      }
-      .flexmasonry-break-3 {
-        order: 3;
-      }
-      .flexmasonry-break-4 {
-        order: 4;
-      }
-      .flexmasonry-break-5 {
-        order: 5;
-      }
-      .flexmasonry-break-6 {
-        order: 6;
-      }
-      .flexmasonry-break-7 {
-        order: 7;
       }
     </style>
 
@@ -2188,90 +1983,137 @@
             <div class="shadow-top"></div>
             <div class="shadow-bottom"></div>
           </div>
+          <hr />
           <div id="timescale">
-            <button id="button-backward">
-              <svg viewBox="0 0 20 20">
-                <path
-                  d="M7.712 4.818A1.5 1.5 0 0 1 10 6.095v2.972c.104-.13.234-.248.389-.343l6.323-3.906A1.5 1.5 0 0 1 19 6.095v7.81a1.5 1.5 0 0 1-2.288 1.276l-6.323-3.905a1.505 1.505 0 0 1-.389-.344v2.973a1.5 1.5 0 0 1-2.288 1.276l-6.323-3.905a1.5 1.5 0 0 1 0-2.552l6.323-3.906Z"
-                  id="button-backward-icon"
-                />
-                <path
-                  hidden
-                  d="M5.75 3a.75.75 0 0 0-.75.75v12.5c0 .414.336.75.75.75h1.5a.75.75 0 0 0 .75-.75V3.75A.75.75 0 0 0 7.25 3h-1.5ZM12.75 3a.75.75 0 0 0-.75.75v12.5c0 .414.336.75.75.75h1.5a.75.75 0 0 0 .75-.75V3.75a.75.75 0 0 0-.75-.75h-1.5Z"
-                  id="button-backward-pause-icon"
-                />
-              </svg>
-            </button>
-            <div>
+            <!-- <div>
               <div class="shadow-left"></div>
-              <div class="shadow-right"></div>
-              <div id="timescale-date-buttons" hidden>
-                <button data-all-time>All time</button>
-                <button data-days="7">1 Week</button>
-                <button data-days="30">1 Month</button>
-                <button data-days="90">3 Months</button>
-                <button data-days="180">6 Months</button>
-                <button data-year-to-date>Year To Date</button>
-                <button data-days="365">1 Year</button>
-                <button data-days="730">2 Years</button>
-                <button data-days="1095">3 Years</button>
-                <button data-days="1460">4 Years</button>
-                <button data-days="2190">6 Years</button>
-                <button data-days="2920">8 Years</button>
-                <button data-year="2024">2024</button>
-                <button data-year="2023">2023</button>
-                <button data-year="2022">2022</button>
-                <button data-year="2021">2021</button>
-                <button data-year="2020">2020</button>
-                <button data-year="2019">2019</button>
-                <button data-year="2018">2018</button>
-                <button data-year="2017">2017</button>
-                <button data-year="2016">2016</button>
-                <button data-year="2015">2015</button>
-                <button data-year="2014">2014</button>
-                <button data-year="2013">2013</button>
-                <button data-year="2012">2012</button>
-                <button data-year="2011">2011</button>
-                <button data-year="2010">2010</button>
-                <button data-year="2009">2009</button>
-              </div>
-              <div id="timescale-height-buttons" hidden>
-                <button data-to="900k">≤900k</button>
-                <button data-to="850k">≤850k</button>
-                <button data-to="800k">≤800k</button>
-                <button data-to="750k">≤750k</button>
-                <button data-to="700k">≤700k</button>
-                <button data-to="650k">≤650k</button>
-                <button data-to="600k">≤600k</button>
-                <button data-to="550k">≤550k</button>
-                <button data-to="500k">≤500k</button>
-                <button data-to="450k">≤450k</button>
-                <button data-to="400k">≤400k</button>
-                <button data-to="350k">≤350k</button>
-                <button data-to="300k">≤300k</button>
-                <button data-to="250k">≤250k</button>
-                <button data-to="200k">≤200k</button>
-                <button data-to="150k">≤150k</button>
-                <button data-to="100k">≤100k</button>
-                <button data-to="50k">≤50k</button>
-              </div>
+              <div class="shadow-right"></div> -->
+            <div id="timescale-date-buttons" hidden>
+              <button data-all-time>All time</button>
+              <button data-days="7">1 Week</button>
+              <button data-days="30">1 Month</button>
+              <button data-days="90">3 Months</button>
+              <button data-days="180">6 Months</button>
+              <button data-year-to-date>Year To Date</button>
+              <button data-days="365">1 Year</button>
+              <button data-days="730">2 Years</button>
+              <button data-days="1095">3 Years</button>
+              <button data-days="1460">4 Years</button>
+              <button data-days="2190">6 Years</button>
+              <button data-days="2920">8 Years</button>
+              <button data-year="2024">2024</button>
+              <button data-year="2023">2023</button>
+              <button data-year="2022">2022</button>
+              <button data-year="2021">2021</button>
+              <button data-year="2020">2020</button>
+              <button data-year="2019">2019</button>
+              <button data-year="2018">2018</button>
+              <button data-year="2017">2017</button>
+              <button data-year="2016">2016</button>
+              <button data-year="2015">2015</button>
+              <button data-year="2014">2014</button>
+              <button data-year="2013">2013</button>
+              <button data-year="2012">2012</button>
+              <button data-year="2011">2011</button>
+              <button data-year="2010">2010</button>
+              <button data-year="2009">2009</button>
             </div>
-            <button id="button-forward">
-              <svg viewBox="0 0 20 20">
-                <path
-                  d="M3.288 4.818A1.5 1.5 0 0 0 1 6.095v7.81a1.5 1.5 0 0 0 2.288 1.276l6.323-3.905c.155-.096.285-.213.389-.344v2.973a1.5 1.5 0 0 0 2.288 1.276l6.323-3.905a1.5 1.5 0 0 0 0-2.552l-6.323-3.906A1.5 1.5 0 0 0 10 6.095v2.972a1.506 1.506 0 0 0-.389-.343L3.288 4.818Z"
-                  id="button-forward-icon"
-                />
-                <path
-                  hidden
-                  d="M5.75 3a.75.75 0 0 0-.75.75v12.5c0 .414.336.75.75.75h1.5a.75.75 0 0 0 .75-.75V3.75A.75.75 0 0 0 7.25 3h-1.5ZM12.75 3a.75.75 0 0 0-.75.75v12.5c0 .414.336.75.75.75h1.5a.75.75 0 0 0 .75-.75V3.75a.75.75 0 0 0-.75-.75h-1.5Z"
-                  id="button-forward-pause-icon"
-                />
-              </svg>
-            </button>
+            <div id="timescale-height-buttons" hidden>
+              <button data-to="900k">≤900k</button>
+              <button data-to="850k">≤850k</button>
+              <button data-to="800k">≤800k</button>
+              <button data-to="750k">≤750k</button>
+              <button data-to="700k">≤700k</button>
+              <button data-to="650k">≤650k</button>
+              <button data-to="600k">≤600k</button>
+              <button data-to="550k">≤550k</button>
+              <button data-to="500k">≤500k</button>
+              <button data-to="450k">≤450k</button>
+              <button data-to="400k">≤400k</button>
+              <button data-to="350k">≤350k</button>
+              <button data-to="300k">≤300k</button>
+              <button data-to="250k">≤250k</button>
+              <button data-to="200k">≤200k</button>
+              <button data-to="150k">≤150k</button>
+              <button data-to="100k">≤100k</button>
+              <button data-to="50k">≤50k</button>
+            </div>
+            <!-- </div> -->
           </div>
         </div>
-        <div id="dashboard" hidden></div>
+        <div id="simulation" hidden>
+          <div>
+            <div>
+              <h4>Amount</h4>
+              <div>Initial</div>
+              <input
+                id="simulation-amount-initial"
+                type="number"
+                placeholder="US Dollars"
+                min="0"
+              />
+              <input
+                type="range"
+                id="simulation-amount-initial-range"
+                title="Initially invested"
+                min="0"
+                max="100"
+              />
+              <div>Recurrent</div>
+              <input
+                id="simulation-amount-recurrent"
+                type="number"
+                placeholder="US Dollars"
+                min="0"
+              />
+            </div>
+            <hr />
+            <div>
+              <h4>Frequency</h4>
+              <ul>
+                <li>Daily</li>
+                <li>Weekly</li>
+                <li>Monthly</li>
+              </ul>
+              <ul id="simulation-frequency-choices">
+                <li>Monday</li>
+                <li>Tuesday</li>
+                <li>Wednesday</li>
+                <li>Thursday</li>
+                <li>Friday</li>
+                <li>Saturday</li>
+                <li>Sunday</li>
+              </ul>
+            </div>
+            <hr />
+            <div>
+              <h4>Interval</h4>
+              <div>
+                <input type="date" value="2021-04-15" />
+                <button>Reset</button>
+              </div>
+              <div>
+                <input type="date" value="2024-04-15" />
+                <button>Reset</button>
+              </div>
+            </div>
+            <hr />
+            <div>
+              <h4>Fees</h4>
+              <input type="number" value="0.025" />
+            </div>
+            <hr />
+            <div>
+              <h4>Strategy</h4>
+              <ul id="simulation-strategy">
+                <li>All in</li>
+                <li>Weighted Local</li>
+                <li>Weighted Cycle</li>
+              </ul>
+            </div>
+          </div>
+          <div></div>
+        </div>
       </section>
     </aside>
     <div id="share-div" hidden>

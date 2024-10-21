@@ -125,6 +125,12 @@ interface PartialChartOption extends PartialOption {
   };
 }
 
+interface PartialSimulationOption extends PartialOption {
+  kind: "simulation";
+  title: "Dollar Cost Average Simulation";
+  name: "Dollar Cost Average";
+}
+
 interface PartialPdfOption extends PartialOption {
   file: string;
 }
@@ -136,8 +142,9 @@ interface PartialOptionsGroup {
 
 type AnyPartialOption =
   | PartialHomeOption
-  | PartialPdfOption
-  | PartialChartOption;
+  | PartialChartOption
+  | PartialSimulationOption
+  | PartialPdfOption;
 
 type PartialOptionsTree = (AnyPartialOption | PartialOptionsGroup)[];
 
@@ -155,6 +162,7 @@ type OptionPath = {
 }[];
 
 type HomeOption = PartialHomeOption & ProcessedOptionAddons;
+type SimulationOption = PartialSimulationOption & ProcessedOptionAddons;
 
 interface PdfOption extends PartialPdfOption, ProcessedOptionAddons {
   kind: "pdf";
@@ -165,7 +173,7 @@ interface ChartOption extends PartialChartOption, ProcessedOptionAddons {
   kind: "chart";
 }
 
-type Option = HomeOption | PdfOption | ChartOption;
+type Option = HomeOption | PdfOption | ChartOption | SimulationOption;
 
 type OptionsTree = (Option | OptionsGroup)[];
 

@@ -43,7 +43,7 @@
 - Added handling of SIGINT and SIGTERM terminal signals which menas you can now safely CTRL+C or kill the parser while it's exporting
 - Added config print at the start of the program
 - Compressed `empty_address_data` struct to save space (should shave of between up to 50% of the `address_index_to_empty_address_data` database)
-- Doubled the number of `txid_to_tx_data` databases from 4096 to 8192
+- ~Doubled the number of `txid_to_tx_data` databases from 4096 to 8192~ If you ran with this you need to delete that database
 - Added `--recompute_computed true` argument, to allow recomputation of computed datasets in case of a bug
 - Fixed not saved arguments, not being processed properly
 - Fixed bug in `generic_map.multi_insert_simple_average`

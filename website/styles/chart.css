@@ -109,53 +109,36 @@
         }
     }
 
-    > #timescale {
+    > hr {
         margin-top: 1rem;
-        display: flex;
-        overflow: hidden;
-        z-index: 50;
+    }
 
-        @media (max-width: 767px) {
-            margin-bottom: -1.5rem;
-            border-top: 1px;
+    > #timescale {
+        > #timescale-date-buttons,
+        > #timescale-height-buttons {
+            display: flex;
+            overflow-x: auto;
+            display: flex;
+            overflow-x: auto;
+            margin-bottom: -0.5rem;
+            padding: 0.5rem 0.5rem;
+            padding-top: 0.5rem;
             margin-left: -1.5rem;
             margin-right: -1.5rem;
-        }
 
-        @media (min-width: 768px) {
-            border-radius: 9999px;
-            border: 1px;
-        }
-
-        > button {
-            flex: 0;
-        }
-
-        > div {
-            min-width: 0;
-            flex: 1;
-            display: flex;
-            position: relative;
-
-            > #timescale-date-buttons,
-            > #timescale-height-buttons {
-                display: flex;
-                overflow-x: auto;
-
-                > button {
-                    color: var(--off-color);
-                    flex-shrink: 0;
-                    flex-grow: 1;
-                    padding: 0.5rem;
-                    white-space: nowrap;
-                    min-width: 5rem;
-                }
+            > button {
+                color: var(--off-color);
+                flex-shrink: 0;
+                flex-grow: 1;
+                padding: 0.5rem;
+                white-space: nowrap;
+                min-width: 5rem;
             }
-        }
 
-        > *:not(:first-child):not(:last-child) {
-            border-left: 1px;
-            border-right: 1px;
+            @media (max-width: 767px) {
+                margin-bottom: -1.5rem;
+                padding-top: 0.5rem;
+            }
         }
     }
 }

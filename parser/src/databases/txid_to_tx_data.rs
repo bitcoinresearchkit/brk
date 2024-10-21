@@ -114,7 +114,7 @@ impl TxidToTxData {
     }
 
     fn db_index(txid: &Txid) -> u16 {
-        ((txid[0] as u16) << 5) + ((txid[1] as u16) >> 3)
+        ((txid[0] as u16) << 4) + ((txid[1] as u16) >> 4)
     }
 }
 

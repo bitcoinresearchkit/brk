@@ -144,7 +144,7 @@ pub fn update_reponse_headers(
     let headers = response.headers_mut();
 
     let max_age = cache_time;
-    let stale_while_revalidate = 2 * max_age;
+    let stale_while_revalidate = max_age;
 
     headers.insert_cors();
     headers.insert_cache_control_revalidate(max_age, stale_while_revalidate);
