@@ -1,6 +1,5 @@
 use std::{cmp::Ordering, collections::BTreeMap};
 
-use chrono::Datelike;
 use derive_deref::{Deref, DerefMut};
 
 use crate::{
@@ -33,8 +32,6 @@ impl UTXOCohortsSentStates {
                 .for_each(|(block_path, sent_data)| {
                     let date_data = date_data_vec.get_date_data(block_path).unwrap();
 
-                    let year = date_data.date.year() as u32;
-
                     let block_data = date_data.get_block_data(block_path).unwrap();
 
                     let days_old = Timestamp::difference_in_days_between(
@@ -44,10 +41,11 @@ impl UTXOCohortsSentStates {
 
                     let previous_timestamp = block_data.timestamp;
                     let previous_price = block_data.price;
+                    let height = block_data.height;
 
                     let amount_sent = sent_data.volume;
 
-                    self.initial_filtered_apply(&days_old, &year, |state| {
+                    self.initial_filtered_apply(&days_old, &height, |state| {
                         state.input.iterate(sent_data.count as f64, amount_sent);
 
                         let previous_value = previous_price * amount_sent;

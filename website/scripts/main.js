@@ -30,13 +30,55 @@ function initPackages() {
           /**
            * @template T
            * @param {T} initialValue
-           * @param {SignalOptions<T>} [options]
+           * @param {SignalOptions<T> & {save?: {id?: string; param?: string; serialize: (v: NonNullable<T>) => string; deserialize: (v: string) => NonNullable<T>}}} [options]
            * @returns {Signal<T>}
            */
           createSignal(initialValue, options) {
             const [get, set] = this.createSolidSignal(initialValue, options);
+
             // @ts-ignore
             get.set = set;
+
+            if (options?.save) {
+              const save = options.save;
+
+              let serialized = null;
+              if (save.param) {
+                serialized = utils.url.readParam(save.param);
+              }
+              if (serialized === null && save.id) {
+                serialized = utils.storage.read(save.id);
+              }
+              if (serialized) {
+                set(save.deserialize(serialized));
+              }
+
+              let firstEffect = true;
+              this.createEffect(() => {
+                const value = get();
+
+                if (!save) return;
+
+                if (!firstEffect && save.id) {
+                  if (value !== undefined && value !== null) {
+                    localStorage.setItem(save.id, save.serialize(value));
+                  } else {
+                    localStorage.removeItem(save.id);
+                  }
+                }
+
+                if (save.param) {
+                  if (value !== undefined && value !== null) {
+                    utils.url.writeParam(save.param, save.serialize(value));
+                  } else {
+                    utils.url.removeParam(save.param);
+                  }
+                }
+
+                firstEffect = false;
+              });
+            }
+
             // @ts-ignore
             return get;
           },
@@ -434,7 +476,7 @@ function initPackages() {
                     whitespaceStartDateDate + i,
                   );
 
-                  const time = utils.dateToString(date);
+                  const time = utils.date.toString(date);
 
                   if (i === whitespaceDateDataset.length - 1) {
                     whitespaceDateDataset[i] = {
@@ -859,7 +901,7 @@ const utils = {
      * @param {string} args.selected
      * @param {{createEffect: CreateEffect}} args.signals
      */
-    createField({ title, id, choices, selected, signals }) {
+    createHorizontalChoiceField({ title, id, choices, selected, signals }) {
       const field = window.document.createElement("div");
       field.classList.add("field");
 
@@ -941,12 +983,12 @@ const utils = {
     },
     /**
      * @param {string} key
-     * @param {string | boolean | undefined} value
+     * @param {string | boolean | null | undefined} value
      */
     writeParam(key, value) {
       const urlParams = new URLSearchParams(window.location.search);
 
-      if (value !== undefined) {
+      if (value !== null && value !== undefined) {
         urlParams.set(key, String(value));
       } else {
         urlParams.delete(key);
@@ -966,15 +1008,36 @@ const utils = {
      * @returns {boolean | null}
      */
     readBoolParam(key) {
-      const urlParams = new URLSearchParams(window.location.search);
-
-      const parameter = urlParams.get(key);
+      const parameter = this.readParam(key);
 
       if (parameter) {
         return utils.isSerializedBooleanTrue(parameter);
       }
 
       return null;
+    },
+    /**
+     *
+     * @param {string} key
+     * @returns {number | null}
+     */
+    readNumberParam(key) {
+      const parameter = this.readParam(key);
+
+      if (parameter) {
+        return Number(parameter);
+      }
+
+      return null;
+    },
+    /**
+     *
+     * @param {string} key
+     * @returns {string | null}
+     */
+    readParam(key) {
+      const urlParams = new URLSearchParams(window.location.search);
+      return urlParams.get(key);
     },
     pathnameToSelectedId() {
       return window.document.location.pathname.substring(1);
@@ -1047,8 +1110,18 @@ const utils = {
     /**
      * @param {string} key
      */
+    readNumber(key) {
+      const saved = this.read(key);
+      if (saved) {
+        return Number(saved);
+      }
+      return null;
+    },
+    /**
+     * @param {string} key
+     */
     readBool(key) {
-      const saved = localStorage.getItem(key);
+      const saved = this.read(key);
       if (saved) {
         return utils.isSerializedBooleanTrue(saved);
       }
@@ -1056,7 +1129,13 @@ const utils = {
     },
     /**
      * @param {string} key
-     * @param {string | boolean | undefined} value
+     */
+    read(key) {
+      return localStorage.getItem(key);
+    },
+    /**
+     * @param {string} key
+     * @param {string | boolean | null | undefined} value
      */
     write(key, value) {
       value !== undefined && value !== null
@@ -1068,6 +1147,22 @@ const utils = {
      */
     remove(key) {
       this.write(key, undefined);
+    },
+  },
+  serde: {
+    number: {
+      /**
+       * @param {number} v
+       */
+      serialize(v) {
+        return String(v);
+      },
+      /**
+       * @param {string} v
+       */
+      deserialize(v) {
+        return Number(v);
+      },
     },
   },
   formatters: {
@@ -1082,6 +1177,37 @@ const utils = {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     }),
+  },
+  date: {
+    todayUTC() {
+      const today = new Date();
+      return new Date(
+        Date.UTC(
+          today.getUTCFullYear(),
+          today.getUTCMonth(),
+          today.getUTCDate(),
+          0,
+          0,
+          0,
+        ),
+      );
+    },
+    /**
+     * @param {Date} date
+     * @returns {string}
+     */
+    toString(date) {
+      return date.toJSON().split("T")[0];
+    },
+    /**
+     * @param {Time} time
+     */
+    fromTime(time) {
+      return typeof time === "string"
+        ? new Date(time)
+        : // @ts-ignore
+          new Date(time.year, time.month, time.day);
+    },
   },
   /**
    *
@@ -1117,22 +1243,6 @@ const utils = {
     } else {
       setTimeout(callback, timeout);
     }
-  },
-  /**
-   * @param {Date} date
-   * @returns {string}
-   */
-  dateToString(date) {
-    return date.toJSON().split("T")[0];
-  },
-  /**
-   * @param {Time} time
-   */
-  dateFromTime(time) {
-    return typeof time === "string"
-      ? new Date(time)
-      : // @ts-ignore
-        new Date(time.year, time.month, time.day);
   },
   /**
    * @param {Date} oldest
@@ -1186,9 +1296,9 @@ const env = initEnv();
 
 function createConstants() {
   const ONE_SECOND_IN_MS = 1_000;
-  const FIVE_SECOND_IN_MS = 5 * ONE_SECOND_IN_MS;
-  const TEN_SECOND_IN_MS = 2 * FIVE_SECOND_IN_MS;
-  const ONE_MINUTE_IN_MS = 6 * TEN_SECOND_IN_MS;
+  const FIVE_SECONDS_IN_MS = 5 * ONE_SECOND_IN_MS;
+  const TEN_SECONDS_IN_MS = 2 * FIVE_SECONDS_IN_MS;
+  const ONE_MINUTE_IN_MS = 6 * TEN_SECONDS_IN_MS;
   const FIVE_MINUTES_IN_MS = 5 * ONE_MINUTE_IN_MS;
   const TEN_MINUTES_IN_MS = 2 * FIVE_MINUTES_IN_MS;
   const ONE_HOUR_IN_MS = 6 * TEN_MINUTES_IN_MS;
@@ -1200,8 +1310,8 @@ function createConstants() {
 
   return {
     ONE_SECOND_IN_MS,
-    FIVE_SECOND_IN_MS,
-    TEN_SECOND_IN_MS,
+    FIVE_SECONDS_IN_MS,
+    TEN_SECONDS_IN_MS,
     ONE_MINUTE_IN_MS,
     FIVE_MINUTES_IN_MS,
     TEN_MINUTES_IN_MS,
@@ -1596,22 +1706,11 @@ function createColors(dark) {
     probability0_1p: red,
     probability0_5p: orange,
     probability1p: yellow,
-    year_2009: yellow,
-    year_2010: yellow,
-    year_2011: yellow,
-    year_2012: yellow,
-    year_2013: yellow,
-    year_2014: yellow,
-    year_2015: yellow,
-    year_2016: yellow,
-    year_2017: yellow,
-    year_2018: yellow,
-    year_2019: yellow,
-    year_2020: yellow,
-    year_2021: yellow,
-    year_2022: yellow,
-    year_2023: yellow,
-    year_2024: yellow,
+    epoch_1: red,
+    epoch_2: orange,
+    epoch_3: yellow,
+    epoch_4: green,
+    epoch_5: blue,
   };
 }
 /**
@@ -2059,7 +2158,7 @@ function initWebSockets(signals) {
 
       const date = new Date(Number(timestamp) * 1000);
 
-      const dateStr = utils.dateToString(date);
+      const dateStr = utils.date.toString(date);
 
       /** @type {DatasetCandlestickData} */
       const candle = {
@@ -2121,7 +2220,7 @@ packages.signals().then((signals) =>
         });
       }
       fetchLastHeight();
-      setInterval(fetchLastHeight, consts.TEN_SECOND_IN_MS, {});
+      setInterval(fetchLastHeight, consts.TEN_SECONDS_IN_MS, {});
 
       return lastHeight;
     }

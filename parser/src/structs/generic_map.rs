@@ -202,10 +202,12 @@ where
     }
 
     pub fn insert(&mut self, key: Key, value: Value) -> Value {
-        self.to_insert
-            .entry(key.to_chunk_id())
-            .or_default()
-            .insert(key.to_serialized_key(), value);
+        if !self.is_key_safe(key) {
+            self.to_insert
+                .entry(key.to_chunk_id())
+                .or_default()
+                .insert(key.to_serialized_key(), value);
+        }
 
         value
     }
@@ -443,15 +445,14 @@ where
                 SourceValue,
                 &Key,
                 &mut GenericMap<Key, SourceValue, ChunkId, SourceSerialized>,
-                &Self,
+                &mut Self,
             ),
         ) -> Value,
     {
         keys.iter().for_each(|key| {
-            self.insert(
-                *key,
-                transform((source.get_or_import(key).unwrap(), key, source, self)),
-            );
+            let value = transform((source.get_or_import(key).unwrap(), key, source, self));
+
+            self.insert(*key, value);
         });
     }
 

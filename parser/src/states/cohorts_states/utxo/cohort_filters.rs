@@ -1,3 +1,5 @@
+use crate::structs::Epoch;
+
 use super::{SplitByUTXOCohort, UTXOFilter};
 
 pub const UTXO_FILTERS: SplitByUTXOCohort<UTXOFilter> = SplitByUTXOCohort {
@@ -62,22 +64,11 @@ pub const UTXO_FILTERS: SplitByUTXOCohort<UTXOFilter> = SplitByUTXOCohort {
     from_10y: UTXOFilter::From(10 * 365),
     from_15y: UTXOFilter::From(15 * 365),
 
-    year_2009: UTXOFilter::Year(2009),
-    year_2010: UTXOFilter::Year(2010),
-    year_2011: UTXOFilter::Year(2011),
-    year_2012: UTXOFilter::Year(2012),
-    year_2013: UTXOFilter::Year(2013),
-    year_2014: UTXOFilter::Year(2014),
-    year_2015: UTXOFilter::Year(2015),
-    year_2016: UTXOFilter::Year(2016),
-    year_2017: UTXOFilter::Year(2017),
-    year_2018: UTXOFilter::Year(2018),
-    year_2019: UTXOFilter::Year(2019),
-    year_2020: UTXOFilter::Year(2020),
-    year_2021: UTXOFilter::Year(2021),
-    year_2022: UTXOFilter::Year(2022),
-    year_2023: UTXOFilter::Year(2023),
-    year_2024: UTXOFilter::Year(2024),
+    epoch_1: UTXOFilter::Epoch(Epoch(1)),
+    epoch_2: UTXOFilter::Epoch(Epoch(2)),
+    epoch_3: UTXOFilter::Epoch(Epoch(3)),
+    epoch_4: UTXOFilter::Epoch(Epoch(4)),
+    epoch_5: UTXOFilter::Epoch(Epoch(5)),
 
     sth: UTXOFilter::To(155),
     lth: UTXOFilter::From(155),

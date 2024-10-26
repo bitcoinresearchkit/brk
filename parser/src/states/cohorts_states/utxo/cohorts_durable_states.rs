@@ -1,5 +1,4 @@
 use allocative::Allocative;
-use chrono::Datelike;
 use derive_deref::{Deref, DerefMut};
 use rayon::prelude::*;
 
@@ -19,8 +18,6 @@ impl UTXOCohortsDurableStates {
 
         if let Some(last_block_data) = date_data_vec.last_block() {
             date_data_vec.iter().for_each(|date_data| {
-                let year = date_data.date.year() as u32;
-
                 date_data.blocks.iter().for_each(|block_data| {
                     let amount = block_data.amount;
                     let utxo_count = block_data.utxos as f64;
@@ -35,7 +32,7 @@ impl UTXOCohortsDurableStates {
                         last_block_data.timestamp,
                     );
 
-                    s.initial_filtered_apply(&increment_days_old, &year, |state| {
+                    s.initial_filtered_apply(&increment_days_old, &block_data.height, |state| {
                         state
                             .increment(amount, utxo_count, block_data.price)
                             .unwrap();
@@ -53,6 +50,7 @@ impl UTXOCohortsDurableStates {
         last_block_data: &BlockData,
         previous_last_block_data: Option<&BlockData>,
     ) {
+        let height = block_data.height;
         let amount = block_data.amount;
         let utxo_count = block_data.utxos as f64;
         let price = block_data.price;
@@ -63,9 +61,7 @@ impl UTXOCohortsDurableStates {
         }
 
         if block_data.height == last_block_data.height {
-            let year = block_data.timestamp.to_year();
-
-            self.initial_filtered_apply(&0, &year, |state| {
+            self.initial_filtered_apply(&0, &height, |state| {
                 state.increment(amount, utxo_count, price).unwrap();
             })
         } else {
@@ -120,9 +116,7 @@ impl UTXOCohortsDurableStates {
             previous_last_block_data.timestamp,
         );
 
-        let year = block_data.timestamp.to_year();
-
-        self.initial_filtered_apply(&days_old, &year, |state| {
+        self.initial_filtered_apply(&days_old, &block_data.height, |state| {
             state
                 .decrement(amount, utxo_count, block_data.price)
                 .unwrap_or_else(|report| {

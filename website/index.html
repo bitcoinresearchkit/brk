@@ -795,6 +795,11 @@
         color: var(--off-color);
         font-size: var(--font-size-xs);
         line-height: var(--line-height-xs);
+
+        h4 + & {
+          font-size: var(--font-size-sm);
+          line-height: var(--line-height-sm);
+        }
       }
 
       span {
@@ -959,6 +964,14 @@
 
                 details[open] > summary > & {
                   background-color: var(--background-color);
+                }
+
+                summary:hover > & {
+                  border-color: var(--orange) !important;
+                }
+
+                details:not([open]) > summary:hover > & {
+                  background-color: var(--orange);
                 }
               }
 
@@ -2041,79 +2054,7 @@
             <!-- </div> -->
           </div>
         </div>
-        <div id="simulation" hidden>
-          <div>
-            <div>
-              <h4>Amount</h4>
-              <div>Initial</div>
-              <input
-                id="simulation-amount-initial"
-                type="number"
-                placeholder="US Dollars"
-                min="0"
-              />
-              <input
-                type="range"
-                id="simulation-amount-initial-range"
-                title="Initially invested"
-                min="0"
-                max="100"
-              />
-              <div>Recurrent</div>
-              <input
-                id="simulation-amount-recurrent"
-                type="number"
-                placeholder="US Dollars"
-                min="0"
-              />
-            </div>
-            <hr />
-            <div>
-              <h4>Frequency</h4>
-              <ul>
-                <li>Daily</li>
-                <li>Weekly</li>
-                <li>Monthly</li>
-              </ul>
-              <ul id="simulation-frequency-choices">
-                <li>Monday</li>
-                <li>Tuesday</li>
-                <li>Wednesday</li>
-                <li>Thursday</li>
-                <li>Friday</li>
-                <li>Saturday</li>
-                <li>Sunday</li>
-              </ul>
-            </div>
-            <hr />
-            <div>
-              <h4>Interval</h4>
-              <div>
-                <input type="date" value="2021-04-15" />
-                <button>Reset</button>
-              </div>
-              <div>
-                <input type="date" value="2024-04-15" />
-                <button>Reset</button>
-              </div>
-            </div>
-            <hr />
-            <div>
-              <h4>Fees</h4>
-              <input type="number" value="0.025" />
-            </div>
-            <hr />
-            <div>
-              <h4>Strategy</h4>
-              <ul id="simulation-strategy">
-                <li>All in</li>
-                <li>Weighted Local</li>
-                <li>Weighted Cycle</li>
-              </ul>
-            </div>
-          </div>
-          <div></div>
-        </div>
+        <div id="simulation" hidden></div>
       </section>
     </aside>
     <div id="share-div" hidden>

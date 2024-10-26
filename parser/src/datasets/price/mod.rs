@@ -354,14 +354,14 @@ impl PriceDatasets {
             dates,
             &mut self.all_time_high.date,
             |(value, date, _, map)| {
-                let high = self.high.date.get(date).unwrap();
+                let high = self.high.date.get_or_import(date).unwrap();
                 let is_ath = high == value;
 
                 if is_ath {
                     *date
                 } else {
                     let previous_date = date.checked_sub(1).unwrap();
-                    *map.get(&previous_date).as_ref().unwrap_or(date)
+                    *map.get_or_import(&previous_date).as_ref().unwrap_or(date)
                 }
             },
         );
@@ -399,7 +399,7 @@ impl PriceDatasets {
 
     pub fn get_date_ohlc(&mut self, date: Date) -> color_eyre::Result<OHLC> {
         if self.ohlc.date.is_key_safe(date) {
-            Ok(self.ohlc.date.get(&date).unwrap().to_owned())
+            Ok(self.ohlc.date.get_or_import(&date).unwrap().to_owned())
         } else {
             let ohlc = self
                 .get_from_daily_kraken(&date)
@@ -488,7 +488,7 @@ impl PriceDatasets {
         timestamp: Timestamp,
         previous_timestamp: Option<Timestamp>,
     ) -> color_eyre::Result<OHLC> {
-        if let Some(ohlc) = self.ohlc.height.get(&height) {
+        if let Some(ohlc) = self.ohlc.height.get_or_import(&height) {
             return Ok(ohlc);
         }
 

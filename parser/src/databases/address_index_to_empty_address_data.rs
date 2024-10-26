@@ -90,8 +90,9 @@ impl AddressIndexToEmptyAddressData {
 impl AnyDatabaseGroup for AddressIndexToEmptyAddressData {
     fn import() -> Self {
         Self {
+            metadata: Metadata::import(&Self::full_path(), 1),
+
             map: BTreeMap::default(),
-            metadata: Metadata::import(&Self::full_path()),
         }
     }
 

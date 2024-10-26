@@ -217,23 +217,12 @@ function createPartialOptions(colors) {
       },
     ]);
 
-    const year = /** @type {const} */ ([
-      { id: "year-2009", key: "year_2009", name: "2009" },
-      { id: "year-2010", key: "year_2010", name: "2010" },
-      { id: "year-2011", key: "year_2011", name: "2011" },
-      { id: "year-2012", key: "year_2012", name: "2012" },
-      { id: "year-2013", key: "year_2013", name: "2013" },
-      { id: "year-2014", key: "year_2014", name: "2014" },
-      { id: "year-2015", key: "year_2015", name: "2015" },
-      { id: "year-2016", key: "year_2016", name: "2016" },
-      { id: "year-2017", key: "year_2017", name: "2017" },
-      { id: "year-2018", key: "year_2018", name: "2018" },
-      { id: "year-2019", key: "year_2019", name: "2019" },
-      { id: "year-2020", key: "year_2020", name: "2020" },
-      { id: "year-2021", key: "year_2021", name: "2021" },
-      { id: "year-2022", key: "year_2022", name: "2022" },
-      { id: "year-2023", key: "year_2023", name: "2023" },
-      { id: "year-2024", key: "year_2024", name: "2024" },
+    const epochs = /** @type {const} */ ([
+      { id: "epoch-1", key: "epoch_1", name: "1" },
+      { id: "epoch-2", key: "epoch_2", name: "2" },
+      { id: "epoch-3", key: "epoch_3", name: "3" },
+      { id: "epoch-4", key: "epoch_4", name: "4" },
+      { id: "epoch-5", key: "epoch_5", name: "5" },
     ]);
 
     const age = /** @type {const} */ ([
@@ -246,7 +235,7 @@ function createPartialOptions(colors) {
       ...upTo,
       ...fromXToY,
       ...fromX,
-      ...year,
+      ...epochs,
     ]);
 
     const size = /** @type {const} */ ([
@@ -475,7 +464,7 @@ function createPartialOptions(colors) {
       upTo,
       fromX,
       fromXToY,
-      year,
+      epochs,
       age,
       type,
       size,
@@ -3713,8 +3702,8 @@ function createPartialOptions(colors) {
           ),
         },
         {
-          name: "Years",
-          tree: groups.year.map(({ key, id, name }) =>
+          name: "Epochs",
+          tree: groups.epochs.map(({ key, id, name }) =>
             createCohortOptionsGroup({
               scale,
               color: colors[key],
@@ -4824,10 +4813,10 @@ function createPartialOptions(colors) {
       name: "Simulations",
       tree: [
         {
-          icon: "🧪",
+          icon: "💰",
           kind: "simulation",
-          title: "Dollar Cost Average Simulation",
-          name: "Dollar Cost Average",
+          title: "Simulation: Save In Bitcoin",
+          name: "Save In Bitcoin",
         },
       ],
     },

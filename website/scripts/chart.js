@@ -262,7 +262,7 @@ export function init({
         ),
       );
 
-      const field = utils.dom.createField({
+      const field = utils.dom.createHorizontalChoiceField({
         choices: chartModes,
         selected: chartMode(),
         id,
@@ -326,8 +326,8 @@ export function init({
 
           ratio =
             utils.getNumberOfDaysBetweenTwoDates(
-              utils.dateFromTime(from),
-              utils.dateFromTime(to),
+              utils.date.fromTime(from),
+              utils.date.fromTime(to),
             ) / width;
         } else {
           const to = /** @type {number} */ (visibleTimeRange.to);
@@ -963,7 +963,7 @@ export function init({
                 let number;
 
                 if (scale === "date") {
-                  const date = utils.dateFromTime(data.time);
+                  const date = utils.date.fromTime(data.time);
 
                   number = date.getTime();
 

@@ -1,5 +1,6 @@
 use allocative::Allocative;
 use bincode::{Decode, Encode};
+use color_eyre::eyre::eyre;
 use serde::{Deserialize, Serialize};
 use std::{
     fmt::Debug,
@@ -34,10 +35,10 @@ impl DerefMut for Metadata {
 }
 
 impl Metadata {
-    pub fn import(path: &str) -> Self {
+    pub fn import(path: &str, version: u16) -> Self {
         Self {
             path: path.to_owned(),
-            data: MetadataData::import(path).unwrap_or_default(),
+            data: MetadataData::import(path, version).unwrap_or_default(),
         }
     }
 
@@ -77,6 +78,7 @@ impl Metadata {
 
 #[derive(Default, Debug, Encode, Decode, Serialize, Deserialize, Allocative)]
 pub struct MetadataData {
+    version: u16,
     pub serial: usize,
     pub len: Counter,
     pub last_height: Option<Height>,
@@ -93,10 +95,16 @@ impl MetadataData {
         format!("{folder_path}/{name}")
     }
 
-    pub fn import(path: &str) -> color_eyre::Result<Self> {
+    pub fn import(path: &str, version: u16) -> color_eyre::Result<Self> {
         fs::create_dir_all(path)?;
 
-        Serialization::Binary.import(Path::new(&Self::full_path(path)))
+        let s: MetadataData = Serialization::Binary.import(Path::new(&Self::full_path(path)))?;
+
+        if s.version != version {
+            return Err(eyre!("Bad version"));
+        }
+
+        Ok(s)
     }
 
     pub fn export(&self, path: &str) -> color_eyre::Result<()> {

@@ -67,7 +67,7 @@ pub fn find_first_inserted_unsafe_height(
             let inserted_last_date_is_older_than_saved_state = min_datasets_inserted_last_date.map_or(true, |min_datasets_last_date| min_datasets_last_date < last_safe_date);
 
             if inserted_last_date_is_older_than_saved_state {
-                dbg!(min_datasets_inserted_last_date , *last_safe_date);
+                // dbg!(min_datasets_inserted_last_date , *last_safe_date);
 
                 return None;
             }

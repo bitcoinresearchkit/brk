@@ -235,6 +235,8 @@ impl AddressToAddressIndex {
 impl AnyDatabaseGroup for AddressToAddressIndex {
     fn import() -> Self {
         Self {
+            metadata: Metadata::import(&Self::full_path(), 1),
+
             p2pk: BTreeMap::default(),
             p2pkh: BTreeMap::default(),
             p2sh: BTreeMap::default(),
@@ -246,7 +248,6 @@ impl AnyDatabaseGroup for AddressToAddressIndex {
             unknown: None,
             empty: None,
             multisig: None,
-            metadata: Metadata::import(&Self::full_path()),
         }
     }
 

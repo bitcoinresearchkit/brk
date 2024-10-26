@@ -127,8 +127,8 @@ interface PartialChartOption extends PartialOption {
 
 interface PartialSimulationOption extends PartialOption {
   kind: "simulation";
-  title: "Dollar Cost Average Simulation";
-  name: "Dollar Cost Average";
+  title: string;
+  name: string;
 }
 
 interface PartialPdfOption extends PartialOption {

@@ -53,6 +53,8 @@ Please open an issue if you want to add another instance
 ## Structure
 
 - `parser`: The backbone of the project, it does most of the work by parsing and then computing datasets from the timechain
+  - Takes 2 to 4 days to parse the whole chain and create all datasets
+  - If up to date wil take 1-3mn to compute the last 100 blocks
 - `website`: A web app which displays the generated datasets in various charts
 - `server`: A small server which will serve both the website and the computed datasets via an API
 
@@ -70,9 +72,12 @@ Please open an issue if you want to add another instance
 
 ### Requirements
 
-- At least 16 GB of RAM
+- At least 8 GB of RAM
 - 1 TB of free space (will use 60-80% of that)
-- A running instance of bitcoin-core (>= 28.0 **NOT** supported) with txindex=1 and rpc credentials
+- A running instance of bitcoin-core with:
+  - `-txindex=1`
+  - `-blocksxor=0`
+  - RPC credentials
 - Git
 
 ### Docker

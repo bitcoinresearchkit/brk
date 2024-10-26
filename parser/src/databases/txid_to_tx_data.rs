@@ -114,15 +114,16 @@ impl TxidToTxData {
     }
 
     fn db_index(txid: &Txid) -> u16 {
-        ((txid[0] as u16) << 4) + ((txid[1] as u16) >> 4)
+        ((txid[0] as u16) << 5) + ((txid[1] as u16) >> 3)
     }
 }
 
 impl AnyDatabaseGroup for TxidToTxData {
     fn import() -> Self {
         Self {
+            metadata: Metadata::import(&Self::full_path(), 2),
+
             map: BTreeMap::default(),
-            metadata: Metadata::import(&Self::full_path()),
         }
     }
 

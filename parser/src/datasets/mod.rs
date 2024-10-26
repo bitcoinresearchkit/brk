@@ -149,7 +149,9 @@ impl AllDatasets {
     }
 
     pub fn insert(&mut self, insert_data: InsertData) {
-        self.address.insert(&insert_data);
+        if insert_data.compute_addresses {
+            self.address.insert(&insert_data);
+        }
 
         self.utxo.insert(&insert_data);
 

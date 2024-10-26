@@ -60,7 +60,7 @@ impl Binary {
 
         let config = config::standard();
 
-        let decoded = decode_from_slice::<T, _>(&decompressed, config).unwrap().0;
+        let decoded = decode_from_slice::<T, _>(&decompressed, config)?.0;
 
         Ok(decoded)
     }
