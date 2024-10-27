@@ -14,7 +14,7 @@ use crate::{
     states::{AddressCohortsDurableStates, States, UTXOCohortsDurableStates},
     structs::{DateData, MapKey, Timestamp, RAM},
     utils::{generate_allocation_files, log, time},
-    Config, Date, Exit, Height,
+    Config, Exit, Height,
 };
 
 pub fn iter_blocks(
@@ -175,9 +175,11 @@ pub fn iter_blocks(
                     if is_date_last_block {
                         height += blocks_loop_i;
 
-                        let is_new_year = next_block_date.as_ref().map_or(true, Date::is_new_year);
+                        let is_check_point = next_block_date.as_ref().map_or(true, |date| {
+                            date.is_first_of_january() || date.is_first_of_june()
+                        });
 
-                        if is_new_year
+                        if is_check_point
                             || ram.max_exceeded(config)
                             || height.is_close_to_end(approx_block_count)
                         {

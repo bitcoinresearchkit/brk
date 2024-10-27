@@ -20,7 +20,7 @@ impl RAM {
             (ram_used / 1_000_000_000.0) > max_ram
         } else {
             let ram_total = self.total_memory() as f64;
-            ram_used / ram_total > 0.75
+            ram_used / ram_total > 0.5
         }
     }
 }

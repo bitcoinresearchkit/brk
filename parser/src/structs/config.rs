@@ -32,7 +32,7 @@ pub struct Config {
     #[arg(long, value_name = "SECONDS")]
     pub delay: Option<u64>,
 
-    /// Maximum ram you want the program to use in GB, default: 75% of total, not saved
+    /// Maximum ram you want the program to use in GB, default: 50% of total, not saved
     #[arg(long, value_name = "GB")]
     pub max_ram: Option<f64>,
 

@@ -38,7 +38,7 @@ impl Metadata {
     pub fn import(path: &str, version: u16) -> Self {
         Self {
             path: path.to_owned(),
-            data: MetadataData::import(path, version).unwrap_or_default(),
+            data: MetadataData::import(path, version),
         }
     }
 
@@ -95,7 +95,13 @@ impl MetadataData {
         format!("{folder_path}/{name}")
     }
 
-    pub fn import(path: &str, version: u16) -> color_eyre::Result<Self> {
+    pub fn import(path: &str, version: u16) -> Self {
+        let mut s = Self::_import(path, version).unwrap_or_default();
+        s.version = version;
+        s
+    }
+
+    fn _import(path: &str, version: u16) -> color_eyre::Result<Self> {
         fs::create_dir_all(path)?;
 
         let s: MetadataData = Serialization::Binary.import(Path::new(&Self::full_path(path)))?;
