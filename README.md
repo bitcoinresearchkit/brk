@@ -72,7 +72,7 @@ Please open an issue if you want to add another instance
 
 ### Requirements
 
-- At least 8 GB of RAM
+- At least 16 GB of RAM
 - 1 TB of free space (will use 60-80% of that)
 - A running instance of bitcoin-core with:
   - `-txindex=1`

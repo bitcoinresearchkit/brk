@@ -74,12 +74,16 @@ impl Date {
         }
     }
 
+    pub fn is_first_of_month(&self) -> bool {
+        self.day() == 1
+    }
+
     pub fn is_first_of_january(&self) -> bool {
-        self.day() == 1 && self.month() == 1
+        self.is_first_of_month() && self.month() == 1
     }
 
     pub fn is_first_of_june(&self) -> bool {
-        self.day() == 1 && self.month() == 6
+        self.is_first_of_month() && self.month() == 6
     }
 }
 

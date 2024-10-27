@@ -12,7 +12,7 @@ use crate::{
     datasets::{AllDatasets, ComputeData},
     io::OUTPUTS_FOLDER_PATH,
     states::{AddressCohortsDurableStates, States, UTXOCohortsDurableStates},
-    structs::{DateData, MapKey, Timestamp, RAM},
+    structs::{DateData, MapKey, Timestamp},
     utils::{generate_allocation_files, log, time},
     Config, Exit, Height,
 };
@@ -56,8 +56,6 @@ pub fn iter_blocks(
     );
 
     let mut block_iter = block_receiver.iter();
-
-    let ram = RAM::new();
 
     'parsing: loop {
         let instant = Instant::now();
@@ -175,14 +173,11 @@ pub fn iter_blocks(
                     if is_date_last_block {
                         height += blocks_loop_i;
 
-                        let is_check_point = next_block_date.as_ref().map_or(true, |date| {
-                            date.is_first_of_january() || date.is_first_of_june()
-                        });
+                        let is_check_point = next_block_date
+                            .as_ref()
+                            .map_or(true, |date| date.is_first_of_month());
 
-                        if is_check_point
-                            || ram.max_exceeded(config)
-                            || height.is_close_to_end(approx_block_count)
-                        {
+                        if is_check_point || height.is_close_to_end(approx_block_count) {
                             break 'days;
                         }
 
