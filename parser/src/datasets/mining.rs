@@ -1,13 +1,11 @@
 use allocative::Allocative;
 use itertools::Itertools;
 use ordered_float::OrderedFloat;
+use struct_iterable::Iterable;
 
 use crate::{
     datasets::AnyDataset,
-    structs::{
-        date_map_vec_to_any_date_map_vec, date_map_vec_to_mut_any_date_map_vec, Amount, AnyBiMap,
-        AnyDateMap, AnyHeightMap, BiMap, Config, DateMap, Height, HeightMap, MapKey,
-    },
+    structs::{Amount, BiMap, Config, DateMap, Height, HeightMap, MapKey, MapKind},
     utils::{
         BYTES_IN_MB, ONE_DAY_IN_DAYS, ONE_MONTH_IN_DAYS, ONE_WEEK_IN_DAYS, ONE_YEAR_IN_DAYS,
         TARGET_BLOCKS_PER_DAY,
@@ -18,7 +16,7 @@ use super::{
     ComputeData, DateRecapDataset, InsertData, MinInitialStates, RecapDataset, RecapOptions,
 };
 
-#[derive(Allocative)]
+#[derive(Allocative, Iterable)]
 pub struct MiningDataset {
     min_initial_states: MinInitialStates,
 
@@ -131,68 +129,166 @@ impl MiningDataset {
         let mut s = Self {
             min_initial_states: MinInitialStates::default(),
 
-            total_blocks_mined: DateMap::new_bin(1, &f("total_blocks_mined")),
-            blocks_mined: DateMap::new_bin(1, &f("blocks_mined")),
-            coinbase: HeightMap::new_bin(1, &f("coinbase")),
-            coinbase_1d_sum: DateMap::new_bin(1, &f("coinbase_1d_sum")),
-            coinbase_in_dollars: HeightMap::new_bin(1, &f("coinbase_in_dollars")),
-            coinbase_in_dollars_1d_sum: DateMap::new_bin(1, &f("coinbase_in_dollars_1d_sum")),
-            coinbase_1y_sum: DateMap::new_bin(1, &f("coinbase_1y_sum")),
-            coinbase_in_dollars_1y_sum: DateMap::new_bin(1, &f("coinbase_in_dollars_1y_sum")),
+            // ---
+            // Inserted
+            // ---
+            total_blocks_mined: DateMap::new_bin(1, MapKind::Inserted, &f("total_blocks_mined")),
+            blocks_mined: DateMap::new_bin(1, MapKind::Inserted, &f("blocks_mined")),
+            coinbase: HeightMap::new_bin(1, MapKind::Inserted, &f("coinbase")),
+            coinbase_1d_sum: DateMap::new_bin(1, MapKind::Inserted, &f("coinbase_1d_sum")),
+            coinbase_in_dollars: HeightMap::new_bin(
+                1,
+                MapKind::Inserted,
+                &f("coinbase_in_dollars"),
+            ),
+            coinbase_in_dollars_1d_sum: DateMap::new_bin(
+                1,
+                MapKind::Inserted,
+                &f("coinbase_in_dollars_1d_sum"),
+            ),
+            fees: HeightMap::new_bin(1, MapKind::Inserted, &f("fees")),
+            fees_1d_sum: DateMap::new_bin(1, MapKind::Inserted, &f("fees_1d_sum")),
+            fees_in_dollars: HeightMap::new_bin(1, MapKind::Inserted, &f("fees_in_dollars")),
+            fees_in_dollars_1d_sum: DateMap::new_bin(
+                1,
+                MapKind::Inserted,
+                &f("fees_in_dollars_1d_sum"),
+            ),
+            subsidy: HeightMap::new_bin(1, MapKind::Inserted, &f("subsidy")),
+            subsidy_1d_sum: DateMap::new_bin(1, MapKind::Inserted, &f("subsidy_1d_sum")),
+            subsidy_in_dollars: HeightMap::new_bin(1, MapKind::Inserted, &f("subsidy_in_dollars")),
+            subsidy_in_dollars_1d_sum: DateMap::new_bin(
+                1,
+                MapKind::Inserted,
+                &f("subsidy_in_dollars_1d_sum"),
+            ),
+            last_subsidy: DateMap::new_bin(1, MapKind::Inserted, &f("last_subsidy")),
+            last_subsidy_in_dollars: DateMap::new_bin(
+                1,
+                MapKind::Inserted,
+                &f("last_subsidy_in_dollars"),
+            ),
+            last_coinbase: DateMap::new_bin(1, MapKind::Inserted, &f("last_coinbase")),
+            last_coinbase_in_dollars: DateMap::new_bin(
+                1,
+                MapKind::Inserted,
+                &f("last_coinbase_in_dollars"),
+            ),
+            last_fees: DateMap::new_bin(1, MapKind::Inserted, &f("last_fees")),
+            last_fees_in_dollars: DateMap::new_bin(
+                1,
+                MapKind::Inserted,
+                &f("last_fees_in_dollars"),
+            ),
+            difficulty: BiMap::new_bin(1, MapKind::Inserted, &f("difficulty")),
+            block_size: HeightMap::new_bin(1, MapKind::Inserted, &f("block_size")),
+            block_weight: HeightMap::new_bin(1, MapKind::Inserted, &f("block_weight")),
+            block_vbytes: HeightMap::new_bin(1, MapKind::Inserted, &f("block_vbytes")),
+            block_interval: HeightMap::new_bin(2, MapKind::Inserted, &f("block_interval")),
+
+            // ---
+            // Computed
+            // ---
+            coinbase_1y_sum: DateMap::new_bin(1, MapKind::Computed, &f("coinbase_1y_sum")),
+            coinbase_in_dollars_1y_sum: DateMap::new_bin(
+                1,
+                MapKind::Computed,
+                &f("coinbase_in_dollars_1y_sum"),
+            ),
             coinbase_in_dollars_1d_sum_1y_sma: DateMap::new_bin(
                 1,
+                MapKind::Computed,
                 &f("coinbase_in_dollars_1d_sum_1y_sma"),
             ),
-            cumulative_coinbase: BiMap::new_bin(1, &f("cumulative_coinbase")),
-            cumulative_coinbase_in_dollars: BiMap::new_bin(1, &f("cumulative_coinbase_in_dollars")),
-            fees: HeightMap::new_bin(1, &f("fees")),
-            fees_1d_sum: DateMap::new_bin(1, &f("fees_1d_sum")),
-            fees_in_dollars: HeightMap::new_bin(1, &f("fees_in_dollars")),
-            fees_in_dollars_1d_sum: DateMap::new_bin(1, &f("fees_in_dollars_1d_sum")),
-            fees_1y_sum: DateMap::new_bin(1, &f("fees_1y_sum")),
-            fees_in_dollars_1y_sum: DateMap::new_bin(1, &f("fees_in_dollars_1y_sum")),
-            cumulative_fees: BiMap::new_bin(1, &f("cumulative_fees")),
-            cumulative_fees_in_dollars: BiMap::new_bin(1, &f("cumulative_fees_in_dollars")),
-            subsidy: HeightMap::new_bin(1, &f("subsidy")),
-            subsidy_1d_sum: DateMap::new_bin(1, &f("subsidy_1d_sum")),
-            subsidy_in_dollars: HeightMap::new_bin(1, &f("subsidy_in_dollars")),
-            subsidy_in_dollars_1d_sum: DateMap::new_bin(1, &f("subsidy_in_dollars_1d_sum")),
-            subsidy_1y_sum: DateMap::new_bin(1, &f("subsidy_1y_sum")),
-            subsidy_in_dollars_1y_sum: DateMap::new_bin(1, &f("subsidy_in_dollars_1y_sum")),
-            cumulative_subsidy: BiMap::new_bin(1, &f("cumulative_subsidy")),
-            cumulative_subsidy_in_dollars: BiMap::new_bin(1, &f("cumulative_subsidy_in_dollars")),
+            cumulative_coinbase: BiMap::new_bin(1, MapKind::Computed, &f("cumulative_coinbase")),
+            cumulative_coinbase_in_dollars: BiMap::new_bin(
+                1,
+                MapKind::Computed,
+                &f("cumulative_coinbase_in_dollars"),
+            ),
 
-            subsidy_to_coinbase_ratio: HeightMap::new_bin(1, &f("subsidy_to_coinbase_ratio")),
-            subsidy_to_coinbase_1d_ratio: DateMap::new_bin(1, &f("subsidy_to_coinbase_1d_ratio")),
-            fees_to_coinbase_ratio: HeightMap::new_bin(1, &f("fees_to_coinbase_ratio")),
-            fees_to_coinbase_1d_ratio: DateMap::new_bin(1, &f("fees_to_coinbase_1d_ratio")),
+            fees_1y_sum: DateMap::new_bin(1, MapKind::Computed, &f("fees_1y_sum")),
+            fees_in_dollars_1y_sum: DateMap::new_bin(
+                1,
+                MapKind::Computed,
+                &f("fees_in_dollars_1y_sum"),
+            ),
+            cumulative_fees: BiMap::new_bin(1, MapKind::Computed, &f("cumulative_fees")),
+            cumulative_fees_in_dollars: BiMap::new_bin(
+                1,
+                MapKind::Computed,
+                &f("cumulative_fees_in_dollars"),
+            ),
+            subsidy_1y_sum: DateMap::new_bin(1, MapKind::Computed, &f("subsidy_1y_sum")),
+            subsidy_in_dollars_1y_sum: DateMap::new_bin(
+                1,
+                MapKind::Computed,
+                &f("subsidy_in_dollars_1y_sum"),
+            ),
+            cumulative_subsidy: BiMap::new_bin(1, MapKind::Computed, &f("cumulative_subsidy")),
+            cumulative_subsidy_in_dollars: BiMap::new_bin(
+                1,
+                MapKind::Computed,
+                &f("cumulative_subsidy_in_dollars"),
+            ),
 
-            annualized_issuance: DateMap::new_bin(1, &f("annualized_issuance")),
-            inflation_rate: DateMap::new_bin(2, &f("inflation_rate")),
-            yearly_inflation_rate: DateMap::new_bin(1, &f("yearly_inflation_rate")),
-
-            last_subsidy: DateMap::new_bin(1, &f("last_subsidy")),
-            last_subsidy_in_dollars: DateMap::new_bin(1, &f("last_subsidy_in_dollars")),
-            last_coinbase: DateMap::new_bin(1, &f("last_coinbase")),
-            last_coinbase_in_dollars: DateMap::new_bin(1, &f("last_coinbase_in_dollars")),
-            last_fees: DateMap::new_bin(1, &f("last_fees")),
-            last_fees_in_dollars: DateMap::new_bin(1, &f("last_fees_in_dollars")),
-
-            blocks_mined_1d_target: DateMap::new_bin(1, &f("blocks_mined_1d_target")),
-            blocks_mined_1w_sma: DateMap::new_bin(1, &f("blocks_mined_1w_sma")),
-            blocks_mined_1m_sma: DateMap::new_bin(1, &f("blocks_mined_1m_sma")),
-
-            blocks_mined_1w_sum: DateMap::new_bin(1, &f("blocks_mined_1w_sum")),
-            blocks_mined_1m_sum: DateMap::new_bin(1, &f("blocks_mined_1m_sum")),
-            blocks_mined_1y_sum: DateMap::new_bin(1, &f("blocks_mined_1y_sum")),
-
-            blocks_mined_1w_target: DateMap::new_bin(1, &f("blocks_mined_1w_target")),
-            blocks_mined_1m_target: DateMap::new_bin(1, &f("blocks_mined_1m_target")),
-            blocks_mined_1y_target: DateMap::new_bin(1, &f("blocks_mined_1y_target")),
-
-            difficulty: BiMap::new_bin(1, &f("difficulty")),
-            difficulty_adjustment: DateMap::new_bin(1, &f("difficulty_adjustment")),
-            block_size: HeightMap::new_bin(1, &f("block_size")),
+            subsidy_to_coinbase_ratio: HeightMap::new_bin(
+                1,
+                MapKind::Computed,
+                &f("subsidy_to_coinbase_ratio"),
+            ),
+            subsidy_to_coinbase_1d_ratio: DateMap::new_bin(
+                1,
+                MapKind::Computed,
+                &f("subsidy_to_coinbase_1d_ratio"),
+            ),
+            fees_to_coinbase_ratio: HeightMap::new_bin(
+                1,
+                MapKind::Computed,
+                &f("fees_to_coinbase_ratio"),
+            ),
+            fees_to_coinbase_1d_ratio: DateMap::new_bin(
+                1,
+                MapKind::Computed,
+                &f("fees_to_coinbase_1d_ratio"),
+            ),
+            annualized_issuance: DateMap::new_bin(1, MapKind::Computed, &f("annualized_issuance")),
+            inflation_rate: DateMap::new_bin(2, MapKind::Computed, &f("inflation_rate")),
+            yearly_inflation_rate: DateMap::new_bin(
+                1,
+                MapKind::Computed,
+                &f("yearly_inflation_rate"),
+            ),
+            blocks_mined_1d_target: DateMap::new_bin(
+                1,
+                MapKind::Computed,
+                &f("blocks_mined_1d_target"),
+            ),
+            blocks_mined_1w_sma: DateMap::new_bin(1, MapKind::Computed, &f("blocks_mined_1w_sma")),
+            blocks_mined_1m_sma: DateMap::new_bin(1, MapKind::Computed, &f("blocks_mined_1m_sma")),
+            blocks_mined_1w_sum: DateMap::new_bin(1, MapKind::Computed, &f("blocks_mined_1w_sum")),
+            blocks_mined_1m_sum: DateMap::new_bin(1, MapKind::Computed, &f("blocks_mined_1m_sum")),
+            blocks_mined_1y_sum: DateMap::new_bin(1, MapKind::Computed, &f("blocks_mined_1y_sum")),
+            blocks_mined_1w_target: DateMap::new_bin(
+                1,
+                MapKind::Computed,
+                &f("blocks_mined_1w_target"),
+            ),
+            blocks_mined_1m_target: DateMap::new_bin(
+                1,
+                MapKind::Computed,
+                &f("blocks_mined_1m_target"),
+            ),
+            blocks_mined_1y_target: DateMap::new_bin(
+                1,
+                MapKind::Computed,
+                &f("blocks_mined_1y_target"),
+            ),
+            difficulty_adjustment: DateMap::new_bin(
+                1,
+                MapKind::Computed,
+                &f("difficulty_adjustment"),
+            ),
             block_size_recap: RecapDataset::import(
                 &f("block_size_1d"),
                 RecapOptions::default()
@@ -206,12 +302,16 @@ impl MiningDataset {
                     .add_10p()
                     .add_min(),
             )?,
-            cumulative_block_size: BiMap::new_bin(1, &f("cumulative_block_size")),
+            cumulative_block_size: BiMap::new_bin(
+                1,
+                MapKind::Computed,
+                &f("cumulative_block_size"),
+            ),
             cumulative_block_size_gigabytes: BiMap::new_bin(
                 1,
+                MapKind::Computed,
                 &f("cumulative_block_size_gigabytes"),
             ),
-            block_weight: HeightMap::new_bin(1, &f("block_weight")),
             block_weight_recap: RecapDataset::import(
                 &f("block_weight_1d"),
                 RecapOptions::default()
@@ -224,7 +324,6 @@ impl MiningDataset {
                     .add_10p()
                     .add_min(),
             )?,
-            block_vbytes: HeightMap::new_bin(1, &f("block_vbytes")),
             block_vbytes_recap: RecapDataset::import(
                 &f("block_vbytes_1d"),
                 RecapOptions::default()
@@ -237,8 +336,6 @@ impl MiningDataset {
                     .add_10p()
                     .add_min(),
             )?,
-            // block_vbytes_1d_sma: HeightMap::new_bin(1, &f("block_vbytes")),
-            block_interval: HeightMap::new_bin(2, &f("block_interval")),
             block_interval_recap: RecapDataset::import(
                 &f("block_interval_1d"),
                 RecapOptions::default()
@@ -251,14 +348,14 @@ impl MiningDataset {
                     .add_10p()
                     .add_min(),
             )?,
-            hash_rate: DateMap::new_bin(1, &f("hash_rate")),
-            hash_rate_1w_sma: DateMap::new_bin(1, &f("hash_rate_1w_sma")),
-            hash_rate_1m_sma: DateMap::new_bin(1, &f("hash_rate_1m_sma")),
-            hash_rate_2m_sma: DateMap::new_bin(1, &f("hash_rate_2m_sma")),
-            hash_price: DateMap::new_bin(1, &f("hash_price")),
-            hash_price_min: DateMap::new_bin(1, &f("hash_price_min")),
-            hash_price_rebound: DateMap::new_bin(1, &f("hash_price_rebound")),
-            puell_multiple: DateMap::new_bin(1, &f("puell_multiple")),
+            hash_rate: DateMap::new_bin(1, MapKind::Computed, &f("hash_rate")),
+            hash_rate_1w_sma: DateMap::new_bin(1, MapKind::Computed, &f("hash_rate_1w_sma")),
+            hash_rate_1m_sma: DateMap::new_bin(1, MapKind::Computed, &f("hash_rate_1m_sma")),
+            hash_rate_2m_sma: DateMap::new_bin(1, MapKind::Computed, &f("hash_rate_2m_sma")),
+            hash_price: DateMap::new_bin(1, MapKind::Computed, &f("hash_price")),
+            hash_price_min: DateMap::new_bin(1, MapKind::Computed, &f("hash_price_min")),
+            hash_price_rebound: DateMap::new_bin(1, MapKind::Computed, &f("hash_price_rebound")),
+            puell_multiple: DateMap::new_bin(1, MapKind::Computed, &f("puell_multiple")),
         };
 
         s.min_initial_states
@@ -659,219 +756,5 @@ impl MiningDataset {
 impl AnyDataset for MiningDataset {
     fn get_min_initial_states(&self) -> &MinInitialStates {
         &self.min_initial_states
-    }
-
-    fn to_inserted_bi_map_vec(&self) -> Vec<&(dyn AnyBiMap + Send + Sync)> {
-        vec![&self.difficulty]
-    }
-
-    fn to_inserted_mut_bi_map_vec(&mut self) -> Vec<&mut dyn AnyBiMap> {
-        vec![&mut self.difficulty]
-    }
-
-    fn to_inserted_date_map_vec(&self) -> Vec<&(dyn AnyDateMap + Send + Sync)> {
-        vec![
-            &self.coinbase_1d_sum,
-            &self.coinbase_in_dollars_1d_sum,
-            &self.fees_1d_sum,
-            &self.fees_in_dollars_1d_sum,
-            &self.subsidy_1d_sum,
-            &self.subsidy_in_dollars_1d_sum,
-            &self.total_blocks_mined,
-            &self.blocks_mined,
-            &self.last_subsidy,
-            &self.last_subsidy_in_dollars,
-            &self.last_coinbase,
-            &self.last_coinbase_in_dollars,
-            &self.last_fees,
-            &self.last_fees_in_dollars,
-        ]
-    }
-
-    fn to_inserted_mut_date_map_vec(&mut self) -> Vec<&mut dyn AnyDateMap> {
-        vec![
-            &mut self.coinbase_1d_sum,
-            &mut self.coinbase_in_dollars_1d_sum,
-            &mut self.fees_1d_sum,
-            &mut self.fees_in_dollars_1d_sum,
-            &mut self.subsidy_1d_sum,
-            &mut self.subsidy_in_dollars_1d_sum,
-            &mut self.total_blocks_mined,
-            &mut self.blocks_mined,
-            &mut self.last_subsidy,
-            &mut self.last_subsidy_in_dollars,
-            &mut self.last_coinbase,
-            &mut self.last_coinbase_in_dollars,
-            &mut self.last_fees,
-            &mut self.last_fees_in_dollars,
-        ]
-    }
-
-    fn to_inserted_height_map_vec(&self) -> Vec<&(dyn AnyHeightMap + Send + Sync)> {
-        vec![
-            &self.coinbase,
-            &self.coinbase_in_dollars,
-            &self.fees,
-            &self.fees_in_dollars,
-            &self.subsidy,
-            &self.subsidy_in_dollars,
-            &self.block_size,
-            &self.block_weight,
-            &self.block_vbytes,
-            &self.block_interval,
-        ]
-    }
-
-    fn to_inserted_mut_height_map_vec(&mut self) -> Vec<&mut dyn AnyHeightMap> {
-        vec![
-            &mut self.coinbase,
-            &mut self.coinbase_in_dollars,
-            &mut self.fees,
-            &mut self.fees_in_dollars,
-            &mut self.subsidy,
-            &mut self.subsidy_in_dollars,
-            &mut self.block_size,
-            &mut self.block_weight,
-            &mut self.block_vbytes,
-            &mut self.block_interval,
-        ]
-    }
-
-    fn to_computed_bi_map_vec(&self) -> Vec<&(dyn AnyBiMap + Send + Sync)> {
-        vec![
-            &self.cumulative_coinbase,
-            &self.cumulative_coinbase_in_dollars,
-            &self.cumulative_fees,
-            &self.cumulative_fees_in_dollars,
-            &self.cumulative_subsidy,
-            &self.cumulative_subsidy_in_dollars,
-            &self.cumulative_block_size,
-            &self.cumulative_block_size_gigabytes,
-        ]
-    }
-
-    fn to_computed_mut_bi_map_vec(&mut self) -> Vec<&mut dyn AnyBiMap> {
-        vec![
-            &mut self.cumulative_coinbase,
-            &mut self.cumulative_coinbase_in_dollars,
-            &mut self.cumulative_fees,
-            &mut self.cumulative_fees_in_dollars,
-            &mut self.cumulative_subsidy,
-            &mut self.cumulative_subsidy_in_dollars,
-            &mut self.cumulative_block_size,
-            &mut self.cumulative_block_size_gigabytes,
-        ]
-    }
-
-    fn to_computed_height_map_vec(&self) -> Vec<&(dyn AnyHeightMap + Send + Sync)> {
-        vec![
-            &self.subsidy_to_coinbase_ratio,
-            &self.fees_to_coinbase_ratio,
-        ]
-    }
-
-    fn to_computed_mut_height_map_vec(&mut self) -> Vec<&mut dyn AnyHeightMap> {
-        vec![
-            &mut self.subsidy_to_coinbase_ratio,
-            &mut self.fees_to_coinbase_ratio,
-        ]
-    }
-
-    fn to_computed_date_map_vec(&self) -> Vec<&(dyn AnyDateMap + Send + Sync)> {
-        [
-            &self.blocks_mined_1d_target as &(dyn AnyDateMap + Send + Sync),
-            &self.blocks_mined_1w_sma,
-            &self.blocks_mined_1m_sma,
-            &self.blocks_mined_1w_sum,
-            &self.blocks_mined_1m_sum,
-            &self.blocks_mined_1y_sum,
-            &self.blocks_mined_1w_target,
-            &self.blocks_mined_1m_target,
-            &self.blocks_mined_1y_target,
-            &self.subsidy_1y_sum,
-            &self.subsidy_in_dollars_1y_sum,
-            &self.coinbase_1y_sum,
-            &self.coinbase_in_dollars_1y_sum,
-            &self.coinbase_in_dollars_1d_sum_1y_sma,
-            &self.fees_to_coinbase_1d_ratio,
-            &self.annualized_issuance,
-            &self.fees_1y_sum,
-            &self.fees_in_dollars_1y_sum,
-            &self.inflation_rate,
-            &self.yearly_inflation_rate,
-            &self.subsidy_to_coinbase_1d_ratio,
-            &self.hash_rate,
-            &self.hash_rate_1w_sma,
-            &self.hash_rate_1m_sma,
-            &self.hash_rate_2m_sma,
-            &self.hash_price,
-            &self.hash_price_min,
-            &self.hash_price_rebound,
-            &self.puell_multiple,
-            &self.difficulty_adjustment,
-        ]
-        .into_iter()
-        .chain(date_map_vec_to_any_date_map_vec(
-            self.block_size_recap.as_vec(),
-        ))
-        .chain(date_map_vec_to_any_date_map_vec(
-            self.block_vbytes_recap.as_vec(),
-        ))
-        .chain(date_map_vec_to_any_date_map_vec(
-            self.block_weight_recap.as_vec(),
-        ))
-        .chain(date_map_vec_to_any_date_map_vec(
-            self.block_interval_recap.as_vec(),
-        ))
-        .collect_vec()
-    }
-
-    fn to_computed_mut_date_map_vec(&mut self) -> Vec<&mut dyn AnyDateMap> {
-        [
-            &mut self.blocks_mined_1d_target as &mut dyn AnyDateMap,
-            &mut self.blocks_mined_1w_sma,
-            &mut self.blocks_mined_1m_sma,
-            &mut self.blocks_mined_1w_sum,
-            &mut self.blocks_mined_1m_sum,
-            &mut self.blocks_mined_1y_sum,
-            &mut self.blocks_mined_1w_target,
-            &mut self.blocks_mined_1m_target,
-            &mut self.blocks_mined_1y_target,
-            &mut self.annualized_issuance,
-            &mut self.subsidy_1y_sum,
-            &mut self.subsidy_in_dollars_1y_sum,
-            &mut self.fees_to_coinbase_1d_ratio,
-            &mut self.inflation_rate,
-            &mut self.yearly_inflation_rate,
-            &mut self.subsidy_to_coinbase_1d_ratio,
-            &mut self.coinbase_1y_sum,
-            &mut self.coinbase_in_dollars_1y_sum,
-            &mut self.coinbase_in_dollars_1d_sum_1y_sma,
-            &mut self.fees_1y_sum,
-            &mut self.fees_in_dollars_1y_sum,
-            &mut self.hash_rate,
-            &mut self.hash_rate_1w_sma,
-            &mut self.hash_rate_1m_sma,
-            &mut self.hash_rate_2m_sma,
-            &mut self.hash_price,
-            &mut self.hash_price_min,
-            &mut self.hash_price_rebound,
-            &mut self.puell_multiple,
-            &mut self.difficulty_adjustment,
-        ]
-        .into_iter()
-        .chain(date_map_vec_to_mut_any_date_map_vec(
-            self.block_size_recap.as_mut_vec(),
-        ))
-        .chain(date_map_vec_to_mut_any_date_map_vec(
-            self.block_vbytes_recap.as_mut_vec(),
-        ))
-        .chain(date_map_vec_to_mut_any_date_map_vec(
-            self.block_weight_recap.as_mut_vec(),
-        ))
-        .chain(date_map_vec_to_mut_any_date_map_vec(
-            self.block_interval_recap.as_mut_vec(),
-        ))
-        .collect_vec()
     }
 }

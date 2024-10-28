@@ -1,13 +1,14 @@
 use allocative::Allocative;
+use struct_iterable::Iterable;
 
 use crate::{
     datasets::{AnyDataset, InsertData, MinInitialStates},
     states::InputState,
-    structs::{AnyBiMap, AnyDateMap, AnyHeightMap, BiMap, Config},
+    structs::{BiMap, Config, MapKind},
     DateMap, HeightMap,
 };
 
-#[derive(Default, Allocative)]
+#[derive(Allocative, Iterable)]
 pub struct InputSubDataset {
     min_initial_states: MinInitialStates,
 
@@ -36,9 +37,12 @@ impl InputSubDataset {
         let mut s = Self {
             min_initial_states: MinInitialStates::default(),
 
-            count: BiMap::new_bin(1, &f("input_count")),
-            volume: HeightMap::new_bin(1, &f("input_volume")),
-            volume_1d_sum: DateMap::new_bin(1, &f("input_volume_1d_sum")),
+            // ---
+            // Inserted
+            // ---
+            count: BiMap::new_bin(1, MapKind::Inserted, &f("input_count")),
+            volume: HeightMap::new_bin(1, MapKind::Inserted, &f("input_volume")),
+            volume_1d_sum: DateMap::new_bin(1, MapKind::Inserted, &f("input_volume_1d_sum")),
         };
 
         s.min_initial_states
@@ -77,29 +81,5 @@ impl InputSubDataset {
 impl AnyDataset for InputSubDataset {
     fn get_min_initial_states(&self) -> &MinInitialStates {
         &self.min_initial_states
-    }
-
-    fn to_inserted_bi_map_vec(&self) -> Vec<&(dyn AnyBiMap + Send + Sync)> {
-        vec![&self.count]
-    }
-
-    fn to_inserted_mut_bi_map_vec(&mut self) -> Vec<&mut dyn AnyBiMap> {
-        vec![&mut self.count]
-    }
-
-    fn to_inserted_height_map_vec(&self) -> Vec<&(dyn AnyHeightMap + Send + Sync)> {
-        vec![&self.volume]
-    }
-
-    fn to_inserted_mut_height_map_vec(&mut self) -> Vec<&mut dyn AnyHeightMap> {
-        vec![&mut self.volume]
-    }
-
-    fn to_inserted_date_map_vec(&self) -> Vec<&(dyn AnyDateMap + Send + Sync)> {
-        vec![&self.volume_1d_sum]
-    }
-
-    fn to_inserted_mut_date_map_vec(&mut self) -> Vec<&mut dyn AnyDateMap> {
-        vec![&mut self.volume_1d_sum]
     }
 }

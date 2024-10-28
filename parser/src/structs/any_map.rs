@@ -2,6 +2,8 @@ use std::path::{Path, PathBuf};
 
 use serde_json::Value;
 
+use super::MapKind;
+
 pub trait AnyMap {
     fn path(&self) -> &Path;
     fn path_last(&self) -> &Option<PathBuf>;
@@ -25,4 +27,6 @@ pub trait AnyMap {
     fn post_export(&mut self);
 
     fn delete_files(&self);
+
+    fn kind(&self) -> MapKind;
 }

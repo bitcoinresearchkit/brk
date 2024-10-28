@@ -4,8 +4,7 @@ use color_eyre::eyre::ContextCompat;
 use serde_json::Value;
 
 use crate::{
-    datasets::OHLC,
-    structs::{Date, Timestamp},
+    structs::{Date, Timestamp, OHLC},
     utils::{log, retry},
 };
 

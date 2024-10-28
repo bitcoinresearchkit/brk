@@ -1,17 +1,16 @@
 use allocative::Allocative;
-use itertools::Itertools;
+use struct_iterable::Iterable;
 
 use crate::{
     datasets::{AnyDataset, InsertData, MinInitialStates},
     states::PricePaidState,
-    structs::{AnyBiMap, BiMap, Config, Date, Height},
+    structs::{BiMap, Config, Date, Height, MapKind},
 };
 
-#[derive(Default, Allocative)]
+#[derive(Allocative, Iterable)]
 pub struct PricePaidSubDataset {
     min_initial_states: MinInitialStates,
 
-    // Inserted
     pp_median: BiMap<f32>,
     pp_95p: BiMap<f32>,
     pp_90p: BiMap<f32>,
@@ -50,25 +49,28 @@ impl PricePaidSubDataset {
         let mut s = Self {
             min_initial_states: MinInitialStates::default(),
 
-            pp_median: BiMap::new_bin(1, &f("median_price_paid")),
-            pp_95p: BiMap::new_bin(1, &f("95p_price_paid")),
-            pp_90p: BiMap::new_bin(1, &f("90p_price_paid")),
-            pp_85p: BiMap::new_bin(1, &f("85p_price_paid")),
-            pp_80p: BiMap::new_bin(1, &f("80p_price_paid")),
-            pp_75p: BiMap::new_bin(1, &f("75p_price_paid")),
-            pp_70p: BiMap::new_bin(1, &f("70p_price_paid")),
-            pp_65p: BiMap::new_bin(1, &f("65p_price_paid")),
-            pp_60p: BiMap::new_bin(1, &f("60p_price_paid")),
-            pp_55p: BiMap::new_bin(1, &f("55p_price_paid")),
-            pp_45p: BiMap::new_bin(1, &f("45p_price_paid")),
-            pp_40p: BiMap::new_bin(1, &f("40p_price_paid")),
-            pp_35p: BiMap::new_bin(1, &f("35p_price_paid")),
-            pp_30p: BiMap::new_bin(1, &f("30p_price_paid")),
-            pp_25p: BiMap::new_bin(1, &f("25p_price_paid")),
-            pp_20p: BiMap::new_bin(1, &f("20p_price_paid")),
-            pp_15p: BiMap::new_bin(1, &f("15p_price_paid")),
-            pp_10p: BiMap::new_bin(1, &f("10p_price_paid")),
-            pp_05p: BiMap::new_bin(1, &f("05p_price_paid")),
+            // ---
+            // Inserted
+            // ---
+            pp_median: BiMap::new_bin(1, MapKind::Inserted, &f("median_price_paid")),
+            pp_95p: BiMap::new_bin(1, MapKind::Inserted, &f("95p_price_paid")),
+            pp_90p: BiMap::new_bin(1, MapKind::Inserted, &f("90p_price_paid")),
+            pp_85p: BiMap::new_bin(1, MapKind::Inserted, &f("85p_price_paid")),
+            pp_80p: BiMap::new_bin(1, MapKind::Inserted, &f("80p_price_paid")),
+            pp_75p: BiMap::new_bin(1, MapKind::Inserted, &f("75p_price_paid")),
+            pp_70p: BiMap::new_bin(1, MapKind::Inserted, &f("70p_price_paid")),
+            pp_65p: BiMap::new_bin(1, MapKind::Inserted, &f("65p_price_paid")),
+            pp_60p: BiMap::new_bin(1, MapKind::Inserted, &f("60p_price_paid")),
+            pp_55p: BiMap::new_bin(1, MapKind::Inserted, &f("55p_price_paid")),
+            pp_45p: BiMap::new_bin(1, MapKind::Inserted, &f("45p_price_paid")),
+            pp_40p: BiMap::new_bin(1, MapKind::Inserted, &f("40p_price_paid")),
+            pp_35p: BiMap::new_bin(1, MapKind::Inserted, &f("35p_price_paid")),
+            pp_30p: BiMap::new_bin(1, MapKind::Inserted, &f("30p_price_paid")),
+            pp_25p: BiMap::new_bin(1, MapKind::Inserted, &f("25p_price_paid")),
+            pp_20p: BiMap::new_bin(1, MapKind::Inserted, &f("20p_price_paid")),
+            pp_15p: BiMap::new_bin(1, MapKind::Inserted, &f("15p_price_paid")),
+            pp_10p: BiMap::new_bin(1, MapKind::Inserted, &f("10p_price_paid")),
+            pp_05p: BiMap::new_bin(1, MapKind::Inserted, &f("05p_price_paid")),
         };
 
         s.min_initial_states
@@ -230,30 +232,6 @@ impl PricePaidSubDataset {
         })
     }
 
-    pub fn inserted_as_vec(&self) -> Vec<&BiMap<f32>> {
-        vec![
-            &self.pp_95p,
-            &self.pp_90p,
-            &self.pp_85p,
-            &self.pp_80p,
-            &self.pp_75p,
-            &self.pp_70p,
-            &self.pp_65p,
-            &self.pp_60p,
-            &self.pp_55p,
-            &self.pp_median,
-            &self.pp_45p,
-            &self.pp_40p,
-            &self.pp_35p,
-            &self.pp_30p,
-            &self.pp_25p,
-            &self.pp_20p,
-            &self.pp_15p,
-            &self.pp_10p,
-            &self.pp_05p,
-        ]
-    }
-
     pub fn inserted_as_mut_vec(&mut self) -> Vec<&mut BiMap<f32>> {
         vec![
             &mut self.pp_95p,
@@ -282,19 +260,5 @@ impl PricePaidSubDataset {
 impl AnyDataset for PricePaidSubDataset {
     fn get_min_initial_states(&self) -> &MinInitialStates {
         &self.min_initial_states
-    }
-
-    fn to_inserted_bi_map_vec(&self) -> Vec<&(dyn AnyBiMap + Send + Sync)> {
-        self.inserted_as_vec()
-            .into_iter()
-            .map(|dataset| dataset as &(dyn AnyBiMap + Send + Sync))
-            .collect_vec()
-    }
-
-    fn to_inserted_mut_bi_map_vec(&mut self) -> Vec<&mut dyn AnyBiMap> {
-        self.inserted_as_mut_vec()
-            .into_iter()
-            .map(|dataset| dataset as &mut dyn AnyBiMap)
-            .collect_vec()
     }
 }

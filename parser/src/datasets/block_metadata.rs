@@ -1,17 +1,16 @@
 use allocative::Allocative;
+use struct_iterable::Iterable;
 
 use crate::{
     datasets::AnyDataset,
-    structs::{AnyHeightMap, Config, Date, HeightMap, Timestamp},
+    structs::{Config, Date, HeightMap, MapKind, Timestamp},
 };
 
 use super::{InsertData, MinInitialStates};
 
-#[derive(Allocative)]
+#[derive(Allocative, Iterable)]
 pub struct BlockMetadataDataset {
     min_initial_states: MinInitialStates,
-
-    // Inserted
     pub date: HeightMap<Date>,
     pub timestamp: HeightMap<Timestamp>,
 }
@@ -22,9 +21,9 @@ impl BlockMetadataDataset {
 
         let mut s = Self {
             min_initial_states: MinInitialStates::default(),
-
-            date: HeightMap::new_bin(1, &f("date")),
-            timestamp: HeightMap::new_bin(1, &f("timestamp")),
+            // Inserted
+            date: HeightMap::new_bin(1, MapKind::Inserted, &f("date")),
+            timestamp: HeightMap::new_bin(1, MapKind::Inserted, &f("timestamp")),
         };
 
         s.min_initial_states
@@ -48,13 +47,5 @@ impl BlockMetadataDataset {
 impl AnyDataset for BlockMetadataDataset {
     fn get_min_initial_states(&self) -> &MinInitialStates {
         &self.min_initial_states
-    }
-
-    fn to_inserted_height_map_vec(&self) -> Vec<&(dyn AnyHeightMap + Send + Sync)> {
-        vec![&self.date, &self.timestamp]
-    }
-
-    fn to_inserted_mut_height_map_vec(&mut self) -> Vec<&mut dyn AnyHeightMap> {
-        vec![&mut self.date, &mut self.timestamp]
     }
 }

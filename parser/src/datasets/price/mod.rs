@@ -1,25 +1,23 @@
-mod ohlc;
-
 use std::collections::BTreeMap;
 
 use allocative::Allocative;
 use chrono::Days;
 use color_eyre::eyre::Error;
 
-pub use ohlc::*;
+use struct_iterable::Iterable;
 
 use crate::{
     price::{Binance, Kibo, Kraken},
     structs::{
-        Amount, AnyBiMap, AnyDateMap, BiMap, Config, Date, DateMap, DateMapChunkId, Height,
-        HeightMapChunkId, MapKey, Timestamp,
+        Amount, BiMap, Config, Date, DateMap, DateMapChunkId, Height, HeightMapChunkId, MapKey,
+        MapKind, Timestamp, OHLC,
     },
     utils::{ONE_MONTH_IN_DAYS, ONE_WEEK_IN_DAYS, ONE_YEAR_IN_DAYS},
 };
 
 use super::{AnyDataset, ComputeData, MinInitialStates, RatioDataset};
 
-#[derive(Allocative)]
+#[derive(Allocative, Iterable)]
 pub struct PriceDatasets {
     min_initial_states: MinInitialStates,
 
@@ -31,10 +29,7 @@ pub struct PriceDatasets {
     kibo_by_height: BTreeMap<HeightMapChunkId, Vec<OHLC>>,
     kibo_by_date: BTreeMap<DateMapChunkId, BTreeMap<Date, OHLC>>,
 
-    // Inserted
     pub ohlc: BiMap<OHLC>,
-
-    // Computed
     pub open: BiMap<f32>,
     pub high: BiMap<f32>,
     pub low: BiMap<f32>,
@@ -106,66 +101,124 @@ impl PriceDatasets {
             kibo_by_height: BTreeMap::default(),
             kibo_by_date: BTreeMap::default(),
 
-            ohlc: BiMap::new_json(1, price_path),
-            open: BiMap::new_bin(1, &f("open")),
-            high: BiMap::new_bin(1, &f("high")),
-            low: BiMap::new_bin(1, &f("low")),
-            close: BiMap::new_bin(1, &f("close")),
-            market_cap: BiMap::new_bin(1, &f("market_cap")),
-            price_1w_sma: BiMap::new_bin(1, &f("price_1w_sma")),
+            // ---
+            // Inserted
+            // ---
+            ohlc: BiMap::new_json(1, MapKind::Inserted, price_path),
+
+            // ---
+            // Computed
+            // ---
+            open: BiMap::new_bin(1, MapKind::Computed, &f("open")),
+            high: BiMap::new_bin(1, MapKind::Computed, &f("high")),
+            low: BiMap::new_bin(1, MapKind::Computed, &f("low")),
+            close: BiMap::new_bin(1, MapKind::Computed, &f("close")),
+            market_cap: BiMap::new_bin(1, MapKind::Computed, &f("market_cap")),
+            price_1w_sma: BiMap::new_bin(1, MapKind::Computed, &f("price_1w_sma")),
             price_1w_sma_ratio: RatioDataset::import(datasets_path, "price_1w_sma", config)?,
-            price_1m_sma: BiMap::new_bin(1, &f("price_1m_sma")),
+            price_1m_sma: BiMap::new_bin(1, MapKind::Computed, &f("price_1m_sma")),
             price_1m_sma_ratio: RatioDataset::import(datasets_path, "price_1m_sma", config)?,
-            price_1y_sma: BiMap::new_bin(1, &f("price_1y_sma")),
+            price_1y_sma: BiMap::new_bin(1, MapKind::Computed, &f("price_1y_sma")),
             price_1y_sma_ratio: RatioDataset::import(datasets_path, "price_1y_sma", config)?,
-            price_2y_sma: BiMap::new_bin(1, &f("price_2y_sma")),
+            price_2y_sma: BiMap::new_bin(1, MapKind::Computed, &f("price_2y_sma")),
             price_2y_sma_ratio: RatioDataset::import(datasets_path, "price_2y_sma", config)?,
-            price_4y_sma: BiMap::new_bin(1, &f("price_4y_sma")),
+            price_4y_sma: BiMap::new_bin(1, MapKind::Computed, &f("price_4y_sma")),
             price_4y_sma_ratio: RatioDataset::import(datasets_path, "price_4y_sma", config)?,
-            price_8d_sma: BiMap::new_bin(1, &f("price_8d_sma")),
+            price_8d_sma: BiMap::new_bin(1, MapKind::Computed, &f("price_8d_sma")),
             price_8d_sma_ratio: RatioDataset::import(datasets_path, "price_8d_sma", config)?,
-            price_13d_sma: BiMap::new_bin(1, &f("price_13d_sma")),
+            price_13d_sma: BiMap::new_bin(1, MapKind::Computed, &f("price_13d_sma")),
             price_13d_sma_ratio: RatioDataset::import(datasets_path, "price_13d_sma", config)?,
-            price_21d_sma: BiMap::new_bin(1, &f("price_21d_sma")),
+            price_21d_sma: BiMap::new_bin(1, MapKind::Computed, &f("price_21d_sma")),
             price_21d_sma_ratio: RatioDataset::import(datasets_path, "price_21d_sma", config)?,
-            price_34d_sma: BiMap::new_bin(1, &f("price_34d_sma")),
+            price_34d_sma: BiMap::new_bin(1, MapKind::Computed, &f("price_34d_sma")),
             price_34d_sma_ratio: RatioDataset::import(datasets_path, "price_34d_sma", config)?,
-            price_55d_sma: BiMap::new_bin(1, &f("price_55d_sma")),
+            price_55d_sma: BiMap::new_bin(1, MapKind::Computed, &f("price_55d_sma")),
             price_55d_sma_ratio: RatioDataset::import(datasets_path, "price_55d_sma", config)?,
-            price_89d_sma: BiMap::new_bin(1, &f("price_89d_sma")),
+            price_89d_sma: BiMap::new_bin(1, MapKind::Computed, &f("price_89d_sma")),
             price_89d_sma_ratio: RatioDataset::import(datasets_path, "price_89d_sma", config)?,
-            price_144d_sma: BiMap::new_bin(1, &f("price_144d_sma")),
+            price_144d_sma: BiMap::new_bin(1, MapKind::Computed, &f("price_144d_sma")),
             price_144d_sma_ratio: RatioDataset::import(datasets_path, "price_144d_sma", config)?,
-            price_200w_sma: BiMap::new_bin(1, &f("price_200w_sma")),
+            price_200w_sma: BiMap::new_bin(1, MapKind::Computed, &f("price_200w_sma")),
             price_200w_sma_ratio: RatioDataset::import(datasets_path, "price_200w_sma", config)?,
-            price_1d_total_return: DateMap::new_bin(1, &f("price_1d_total_return")),
-            price_1m_total_return: DateMap::new_bin(1, &f("price_1m_total_return")),
-            price_6m_total_return: DateMap::new_bin(1, &f("price_6m_total_return")),
-            price_1y_total_return: DateMap::new_bin(1, &f("price_1y_total_return")),
-            price_2y_total_return: DateMap::new_bin(1, &f("price_2y_total_return")),
-            price_3y_total_return: DateMap::new_bin(1, &f("price_3y_total_return")),
-            price_4y_total_return: DateMap::new_bin(1, &f("price_4y_total_return")),
-            price_6y_total_return: DateMap::new_bin(1, &f("price_6y_total_return")),
-            price_8y_total_return: DateMap::new_bin(1, &f("price_8y_total_return")),
-            price_10y_total_return: DateMap::new_bin(1, &f("price_10y_total_return")),
-            price_4y_compound_return: DateMap::new_bin(1, &f("price_4y_compound_return")),
-            all_time_high: BiMap::new_bin(1, &f("all_time_high")),
-            all_time_high_date: DateMap::new_bin(1, &f("all_time_high_date")),
-            days_since_all_time_high: DateMap::new_bin(1, &f("days_since_all_time_high")),
+            price_1d_total_return: DateMap::new_bin(
+                1,
+                MapKind::Computed,
+                &f("price_1d_total_return"),
+            ),
+            price_1m_total_return: DateMap::new_bin(
+                1,
+                MapKind::Computed,
+                &f("price_1m_total_return"),
+            ),
+            price_6m_total_return: DateMap::new_bin(
+                1,
+                MapKind::Computed,
+                &f("price_6m_total_return"),
+            ),
+            price_1y_total_return: DateMap::new_bin(
+                1,
+                MapKind::Computed,
+                &f("price_1y_total_return"),
+            ),
+            price_2y_total_return: DateMap::new_bin(
+                1,
+                MapKind::Computed,
+                &f("price_2y_total_return"),
+            ),
+            price_3y_total_return: DateMap::new_bin(
+                1,
+                MapKind::Computed,
+                &f("price_3y_total_return"),
+            ),
+            price_4y_total_return: DateMap::new_bin(
+                1,
+                MapKind::Computed,
+                &f("price_4y_total_return"),
+            ),
+            price_6y_total_return: DateMap::new_bin(
+                1,
+                MapKind::Computed,
+                &f("price_6y_total_return"),
+            ),
+            price_8y_total_return: DateMap::new_bin(
+                1,
+                MapKind::Computed,
+                &f("price_8y_total_return"),
+            ),
+            price_10y_total_return: DateMap::new_bin(
+                1,
+                MapKind::Computed,
+                &f("price_10y_total_return"),
+            ),
+            price_4y_compound_return: DateMap::new_bin(
+                1,
+                MapKind::Computed,
+                &f("price_4y_compound_return"),
+            ),
+            all_time_high: BiMap::new_bin(1, MapKind::Computed, &f("all_time_high")),
+            all_time_high_date: DateMap::new_bin(1, MapKind::Computed, &f("all_time_high_date")),
+            days_since_all_time_high: DateMap::new_bin(
+                1,
+                MapKind::Computed,
+                &f("days_since_all_time_high"),
+            ),
             max_days_between_all_time_highs: DateMap::new_bin(
                 1,
+                MapKind::Computed,
                 &f("max_days_between_all_time_highs"),
             ),
             max_years_between_all_time_highs: DateMap::new_bin(
                 2,
+                MapKind::Computed,
                 &f("max_years_between_all_time_highs"),
             ),
             market_price_to_all_time_high_ratio: BiMap::new_bin(
                 1,
+                MapKind::Computed,
                 &f("market_price_to_all_time_high_ratio"),
             ),
-            drawdown: BiMap::new_bin(1, &f("drawdown")),
-            sats_per_dollar: BiMap::new_bin(1, &f("sats_per_dollar")),
+            drawdown: BiMap::new_bin(1, MapKind::Computed, &f("drawdown")),
+            sats_per_dollar: BiMap::new_bin(1, MapKind::Computed, &f("sats_per_dollar")),
         };
 
         s.min_initial_states
@@ -675,139 +728,5 @@ How to fix this:
 impl AnyDataset for PriceDatasets {
     fn get_min_initial_states(&self) -> &MinInitialStates {
         &self.min_initial_states
-    }
-
-    fn to_inserted_bi_map_vec(&self) -> Vec<&(dyn AnyBiMap + Send + Sync)> {
-        vec![&self.ohlc]
-    }
-
-    fn to_inserted_mut_bi_map_vec(&mut self) -> Vec<&mut dyn AnyBiMap> {
-        vec![&mut self.ohlc]
-    }
-
-    fn to_computed_bi_map_vec(&self) -> Vec<&(dyn AnyBiMap + Send + Sync)> {
-        let mut v = vec![
-            &self.open as &(dyn AnyBiMap + Send + Sync),
-            &self.high,
-            &self.low,
-            &self.close,
-            &self.market_cap,
-            &self.price_1w_sma,
-            &self.price_1m_sma,
-            &self.price_1y_sma,
-            &self.price_2y_sma,
-            &self.price_4y_sma,
-            &self.price_8d_sma,
-            &self.price_13d_sma,
-            &self.price_21d_sma,
-            &self.price_34d_sma,
-            &self.price_55d_sma,
-            &self.price_89d_sma,
-            &self.price_144d_sma,
-            &self.price_200w_sma,
-            &self.all_time_high,
-            &self.market_price_to_all_time_high_ratio,
-            &self.drawdown,
-            &self.sats_per_dollar,
-        ];
-
-        v.append(&mut self.price_1w_sma_ratio.to_computed_bi_map_vec());
-        v.append(&mut self.price_1m_sma_ratio.to_computed_bi_map_vec());
-        v.append(&mut self.price_1y_sma_ratio.to_computed_bi_map_vec());
-        v.append(&mut self.price_2y_sma_ratio.to_computed_bi_map_vec());
-        v.append(&mut self.price_4y_sma_ratio.to_computed_bi_map_vec());
-        v.append(&mut self.price_8d_sma_ratio.to_computed_bi_map_vec());
-        v.append(&mut self.price_13d_sma_ratio.to_computed_bi_map_vec());
-        v.append(&mut self.price_21d_sma_ratio.to_computed_bi_map_vec());
-        v.append(&mut self.price_34d_sma_ratio.to_computed_bi_map_vec());
-        v.append(&mut self.price_55d_sma_ratio.to_computed_bi_map_vec());
-        v.append(&mut self.price_89d_sma_ratio.to_computed_bi_map_vec());
-        v.append(&mut self.price_144d_sma_ratio.to_computed_bi_map_vec());
-        v.append(&mut self.price_200w_sma_ratio.to_computed_bi_map_vec());
-
-        v
-    }
-
-    fn to_computed_mut_bi_map_vec(&mut self) -> Vec<&mut dyn AnyBiMap> {
-        let mut v = vec![
-            &mut self.open as &mut dyn AnyBiMap,
-            &mut self.high,
-            &mut self.low,
-            &mut self.close,
-            &mut self.market_cap,
-            &mut self.price_1w_sma,
-            &mut self.price_1m_sma,
-            &mut self.price_1y_sma,
-            &mut self.price_2y_sma,
-            &mut self.price_4y_sma,
-            &mut self.price_8d_sma,
-            &mut self.price_13d_sma,
-            &mut self.price_21d_sma,
-            &mut self.price_34d_sma,
-            &mut self.price_55d_sma,
-            &mut self.price_89d_sma,
-            &mut self.price_144d_sma,
-            &mut self.price_200w_sma,
-            &mut self.all_time_high,
-            &mut self.market_price_to_all_time_high_ratio,
-            &mut self.drawdown,
-            &mut self.sats_per_dollar,
-        ];
-
-        v.append(&mut self.price_1w_sma_ratio.to_computed_mut_bi_map_vec());
-        v.append(&mut self.price_1m_sma_ratio.to_computed_mut_bi_map_vec());
-        v.append(&mut self.price_1y_sma_ratio.to_computed_mut_bi_map_vec());
-        v.append(&mut self.price_2y_sma_ratio.to_computed_mut_bi_map_vec());
-        v.append(&mut self.price_4y_sma_ratio.to_computed_mut_bi_map_vec());
-        v.append(&mut self.price_8d_sma_ratio.to_computed_mut_bi_map_vec());
-        v.append(&mut self.price_13d_sma_ratio.to_computed_mut_bi_map_vec());
-        v.append(&mut self.price_21d_sma_ratio.to_computed_mut_bi_map_vec());
-        v.append(&mut self.price_34d_sma_ratio.to_computed_mut_bi_map_vec());
-        v.append(&mut self.price_55d_sma_ratio.to_computed_mut_bi_map_vec());
-        v.append(&mut self.price_89d_sma_ratio.to_computed_mut_bi_map_vec());
-        v.append(&mut self.price_144d_sma_ratio.to_computed_mut_bi_map_vec());
-        v.append(&mut self.price_200w_sma_ratio.to_computed_mut_bi_map_vec());
-
-        v
-    }
-
-    fn to_computed_date_map_vec(&self) -> Vec<&(dyn AnyDateMap + Send + Sync)> {
-        vec![
-            &self.price_1d_total_return,
-            &self.price_1m_total_return,
-            &self.price_6m_total_return,
-            &self.price_1y_total_return,
-            &self.price_2y_total_return,
-            &self.price_3y_total_return,
-            &self.price_4y_total_return,
-            &self.price_6y_total_return,
-            &self.price_8y_total_return,
-            &self.price_10y_total_return,
-            &self.price_4y_compound_return,
-            &self.all_time_high_date,
-            &self.days_since_all_time_high,
-            &self.max_days_between_all_time_highs,
-            &self.max_years_between_all_time_highs,
-        ]
-    }
-
-    fn to_computed_mut_date_map_vec(&mut self) -> Vec<&mut dyn AnyDateMap> {
-        vec![
-            &mut self.price_1d_total_return,
-            &mut self.price_1m_total_return,
-            &mut self.price_6m_total_return,
-            &mut self.price_1y_total_return,
-            &mut self.price_2y_total_return,
-            &mut self.price_3y_total_return,
-            &mut self.price_4y_total_return,
-            &mut self.price_6y_total_return,
-            &mut self.price_8y_total_return,
-            &mut self.price_10y_total_return,
-            &mut self.price_4y_compound_return,
-            &mut self.all_time_high_date,
-            &mut self.days_since_all_time_high,
-            &mut self.max_days_between_all_time_highs,
-            &mut self.max_years_between_all_time_highs,
-        ]
     }
 }

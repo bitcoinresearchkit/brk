@@ -668,3 +668,52 @@ impl<T> SplitByUTXOCohort<T> {
         ]
     }
 }
+
+impl<T> SplitByUTXOCohort<Option<T>> {
+    pub fn unwrap(self) -> SplitByUTXOCohort<T> {
+        SplitByUTXOCohort {
+            sth: self.sth.unwrap(),
+            lth: self.lth.unwrap(),
+
+            up_to_1d: self.up_to_1d.unwrap(),
+            up_to_1w: self.up_to_1w.unwrap(),
+            up_to_1m: self.up_to_1m.unwrap(),
+            up_to_2m: self.up_to_2m.unwrap(),
+            up_to_3m: self.up_to_3m.unwrap(),
+            up_to_4m: self.up_to_4m.unwrap(),
+            up_to_5m: self.up_to_5m.unwrap(),
+            up_to_6m: self.up_to_6m.unwrap(),
+            up_to_1y: self.up_to_1y.unwrap(),
+            up_to_2y: self.up_to_2y.unwrap(),
+            up_to_3y: self.up_to_3y.unwrap(),
+            up_to_5y: self.up_to_5y.unwrap(),
+            up_to_7y: self.up_to_7y.unwrap(),
+            up_to_10y: self.up_to_10y.unwrap(),
+            up_to_15y: self.up_to_15y.unwrap(),
+
+            from_1d_to_1w: self.from_1d_to_1w.unwrap(),
+            from_1w_to_1m: self.from_1w_to_1m.unwrap(),
+            from_1m_to_3m: self.from_1m_to_3m.unwrap(),
+            from_3m_to_6m: self.from_3m_to_6m.unwrap(),
+            from_6m_to_1y: self.from_6m_to_1y.unwrap(),
+            from_1y_to_2y: self.from_1y_to_2y.unwrap(),
+            from_2y_to_3y: self.from_2y_to_3y.unwrap(),
+            from_3y_to_5y: self.from_3y_to_5y.unwrap(),
+            from_5y_to_7y: self.from_5y_to_7y.unwrap(),
+            from_7y_to_10y: self.from_7y_to_10y.unwrap(),
+            from_10y_to_15y: self.from_10y_to_15y.unwrap(),
+
+            from_1y: self.from_1y.unwrap(),
+            from_2y: self.from_2y.unwrap(),
+            from_4y: self.from_4y.unwrap(),
+            from_10y: self.from_10y.unwrap(),
+            from_15y: self.from_15y.unwrap(),
+
+            epoch_1: self.epoch_1.unwrap(),
+            epoch_2: self.epoch_2.unwrap(),
+            epoch_3: self.epoch_3.unwrap(),
+            epoch_4: self.epoch_4.unwrap(),
+            epoch_5: self.epoch_5.unwrap(),
+        }
+    }
+}

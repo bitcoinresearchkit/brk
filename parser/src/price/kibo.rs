@@ -6,8 +6,7 @@ use itertools::Itertools;
 use serde_json::Value;
 
 use crate::{
-    datasets::OHLC,
-    structs::{Date, DateMapChunkId, HeightMapChunkId},
+    structs::{Date, DateMapChunkId, HeightMapChunkId, OHLC},
     utils::{log, retry},
     MapChunkId,
 };

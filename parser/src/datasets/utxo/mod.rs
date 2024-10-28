@@ -23,7 +23,7 @@ pub struct UTXODatasets {
 
 impl UTXODatasets {
     pub fn import(parent_path: &str, config: &Config) -> color_eyre::Result<Self> {
-        let mut cohorts = SplitByUTXOCohort::<UTXODataset>::default();
+        let mut cohorts = SplitByUTXOCohort::<Option<UTXODataset>>::default();
 
         cohorts
             .as_vec()
@@ -32,14 +32,14 @@ impl UTXODatasets {
             .collect::<Vec<_>>()
             .into_iter()
             .try_for_each(|(id, dataset)| -> color_eyre::Result<()> {
-                *cohorts.get_mut(&id) = dataset?;
+                cohorts.get_mut(&id).replace(dataset?);
                 Ok(())
             })?;
 
         let mut s = Self {
             min_initial_states: MinInitialStates::default(),
 
-            cohorts,
+            cohorts: cohorts.unwrap(),
         };
 
         s.min_initial_states

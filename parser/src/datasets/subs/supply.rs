@@ -1,19 +1,17 @@
 use allocative::Allocative;
+use struct_iterable::Iterable;
 
 use crate::{
     datasets::{AnyDataset, ComputeData, InsertData, MinInitialStates},
     states::SupplyState,
-    structs::{AnyBiMap, BiMap, Config},
+    structs::{BiMap, Config, MapKind},
 };
 
-#[derive(Default, Allocative)]
+#[derive(Allocative, Iterable)]
 pub struct SupplySubDataset {
     min_initial_states: MinInitialStates,
 
-    // Inserted
     pub supply: BiMap<f64>,
-
-    // Computed
     pub supply_to_circulating_supply_ratio: BiMap<f64>,
     pub halved_supply: BiMap<f64>,
     pub halved_supply_to_circulating_supply_ratio: BiMap<f64>,
@@ -36,14 +34,23 @@ impl SupplySubDataset {
         let mut s = Self {
             min_initial_states: MinInitialStates::default(),
 
-            supply: BiMap::new_bin(1, &f("supply")),
+            // ---
+            // Inserted
+            // ---
+            supply: BiMap::new_bin(1, MapKind::Inserted, &f("supply")),
+
+            // ---
+            // Computed,
+            // ---
             supply_to_circulating_supply_ratio: BiMap::new_bin(
                 1,
+                MapKind::Computed,
                 &f("supply_to_circulating_supply_ratio"),
             ),
-            halved_supply: BiMap::new_bin(1, &f("halved_supply")),
+            halved_supply: BiMap::new_bin(1, MapKind::Computed, &f("halved_supply")),
             halved_supply_to_circulating_supply_ratio: BiMap::new_bin(
                 1,
+                MapKind::Computed,
                 &f("halved_supply_to_circulating_supply_ratio"),
             ),
         };
@@ -96,29 +103,5 @@ impl SupplySubDataset {
 impl AnyDataset for SupplySubDataset {
     fn get_min_initial_states(&self) -> &MinInitialStates {
         &self.min_initial_states
-    }
-
-    fn to_inserted_bi_map_vec(&self) -> Vec<&(dyn AnyBiMap + Send + Sync)> {
-        vec![&self.supply]
-    }
-
-    fn to_inserted_mut_bi_map_vec(&mut self) -> Vec<&mut dyn AnyBiMap> {
-        vec![&mut self.supply]
-    }
-
-    fn to_computed_bi_map_vec(&self) -> Vec<&(dyn AnyBiMap + Send + Sync)> {
-        vec![
-            &self.supply_to_circulating_supply_ratio,
-            &self.halved_supply,
-            &self.halved_supply_to_circulating_supply_ratio,
-        ]
-    }
-
-    fn to_computed_mut_bi_map_vec(&mut self) -> Vec<&mut dyn AnyBiMap> {
-        vec![
-            &mut self.supply_to_circulating_supply_ratio,
-            &mut self.halved_supply,
-            &mut self.halved_supply_to_circulating_supply_ratio,
-        ]
     }
 }

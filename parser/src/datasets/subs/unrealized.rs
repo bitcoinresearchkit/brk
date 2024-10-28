@@ -1,21 +1,19 @@
 use allocative::Allocative;
+use struct_iterable::Iterable;
 
 use crate::{
     datasets::{AnyDataset, ComputeData, InsertData, MinInitialStates},
     states::UnrealizedState,
-    structs::{AnyBiMap, BiMap, Config},
+    structs::{BiMap, Config, MapKind},
 };
 
-#[derive(Default, Allocative)]
+#[derive(Allocative, Iterable)]
 pub struct UnrealizedSubDataset {
     min_initial_states: MinInitialStates,
 
-    // Inserted
     supply_in_profit: BiMap<f64>,
     unrealized_profit: BiMap<f32>,
     unrealized_loss: BiMap<f32>,
-
-    // Computed
     supply_in_loss: BiMap<f64>,
     negative_unrealized_loss: BiMap<f32>,
     net_unrealized_profit_and_loss: BiMap<f32>,
@@ -43,30 +41,50 @@ impl UnrealizedSubDataset {
         let mut s = Self {
             min_initial_states: MinInitialStates::default(),
 
-            supply_in_profit: BiMap::new_bin(1, &f("supply_in_profit")),
-            supply_in_loss: BiMap::new_bin(1, &f("supply_in_loss")),
-            unrealized_profit: BiMap::new_bin(1, &f("unrealized_profit")),
-            unrealized_loss: BiMap::new_bin(1, &f("unrealized_loss")),
-            negative_unrealized_loss: BiMap::new_bin(1, &f("negative_unrealized_loss")),
-            net_unrealized_profit_and_loss: BiMap::new_bin(1, &f("net_unrealized_profit_and_loss")),
+            // ---
+            // Inserted
+            // ---
+            supply_in_profit: BiMap::new_bin(1, MapKind::Inserted, &f("supply_in_profit")),
+            unrealized_profit: BiMap::new_bin(1, MapKind::Inserted, &f("unrealized_profit")),
+            unrealized_loss: BiMap::new_bin(1, MapKind::Inserted, &f("unrealized_loss")),
+
+            // ---
+            // Inserted
+            // ---
+            supply_in_loss: BiMap::new_bin(1, MapKind::Computed, &f("supply_in_loss")),
+            negative_unrealized_loss: BiMap::new_bin(
+                1,
+                MapKind::Computed,
+                &f("negative_unrealized_loss"),
+            ),
+            net_unrealized_profit_and_loss: BiMap::new_bin(
+                1,
+                MapKind::Computed,
+                &f("net_unrealized_profit_and_loss"),
+            ),
             net_unrealized_profit_and_loss_to_market_cap_ratio: BiMap::new_bin(
                 2,
+                MapKind::Computed,
                 &f("net_unrealized_profit_and_loss_to_market_cap_ratio"),
             ),
             supply_in_profit_to_own_supply_ratio: BiMap::new_bin(
                 1,
+                MapKind::Computed,
                 &f("supply_in_profit_to_own_supply_ratio"),
             ),
             supply_in_profit_to_circulating_supply_ratio: BiMap::new_bin(
                 1,
+                MapKind::Computed,
                 &f("supply_in_profit_to_circulating_supply_ratio"),
             ),
             supply_in_loss_to_own_supply_ratio: BiMap::new_bin(
                 1,
+                MapKind::Computed,
                 &f("supply_in_loss_to_own_supply_ratio"),
             ),
             supply_in_loss_to_circulating_supply_ratio: BiMap::new_bin(
                 1,
+                MapKind::Computed,
                 &f("supply_in_loss_to_circulating_supply_ratio"),
             ),
         };
@@ -175,47 +193,5 @@ impl UnrealizedSubDataset {
 impl AnyDataset for UnrealizedSubDataset {
     fn get_min_initial_states(&self) -> &MinInitialStates {
         &self.min_initial_states
-    }
-
-    fn to_inserted_bi_map_vec(&self) -> Vec<&(dyn AnyBiMap + Send + Sync)> {
-        vec![
-            &self.supply_in_profit,
-            &self.unrealized_profit,
-            &self.unrealized_loss,
-        ]
-    }
-
-    fn to_inserted_mut_bi_map_vec(&mut self) -> Vec<&mut dyn AnyBiMap> {
-        vec![
-            &mut self.supply_in_profit,
-            &mut self.unrealized_profit,
-            &mut self.unrealized_loss,
-        ]
-    }
-
-    fn to_computed_bi_map_vec(&self) -> Vec<&(dyn AnyBiMap + Send + Sync)> {
-        vec![
-            &self.supply_in_loss,
-            &self.negative_unrealized_loss,
-            &self.net_unrealized_profit_and_loss,
-            &self.net_unrealized_profit_and_loss_to_market_cap_ratio,
-            &self.supply_in_profit_to_own_supply_ratio,
-            &self.supply_in_profit_to_circulating_supply_ratio,
-            &self.supply_in_loss_to_own_supply_ratio,
-            &self.supply_in_loss_to_circulating_supply_ratio,
-        ]
-    }
-
-    fn to_computed_mut_bi_map_vec(&mut self) -> Vec<&mut dyn AnyBiMap> {
-        vec![
-            &mut self.supply_in_loss,
-            &mut self.negative_unrealized_loss,
-            &mut self.net_unrealized_profit_and_loss,
-            &mut self.net_unrealized_profit_and_loss_to_market_cap_ratio,
-            &mut self.supply_in_profit_to_own_supply_ratio,
-            &mut self.supply_in_profit_to_circulating_supply_ratio,
-            &mut self.supply_in_loss_to_own_supply_ratio,
-            &mut self.supply_in_loss_to_circulating_supply_ratio,
-        ]
     }
 }

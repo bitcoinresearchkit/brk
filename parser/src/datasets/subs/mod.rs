@@ -16,6 +16,7 @@ pub use price_paid::*;
 pub use ratio::*;
 pub use realized::*;
 pub use recap::*;
+use struct_iterable::Iterable;
 pub use supply::*;
 pub use unrealized::*;
 pub use utxo::*;
@@ -24,7 +25,7 @@ use crate::{datasets::AnyDataset, structs::Config};
 
 use super::AnyDatasetGroup;
 
-#[derive(Default, Allocative)]
+#[derive(Allocative, Iterable)]
 pub struct SubDataset {
     pub capitalization: CapitalizationDataset,
     pub input: InputSubDataset,

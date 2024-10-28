@@ -4,9 +4,7 @@ use allocative::Allocative;
 use bincode::{Decode, Encode};
 use serde::{de::DeserializeOwned, Serialize};
 
-use crate::datasets::OHLC;
-
-use super::{Date, Height, Timestamp};
+use super::{Date, Height, Timestamp, OHLC};
 
 pub trait MapValue:
     Clone

@@ -1,6 +1,6 @@
 mod all_metadata;
 mod cohort;
-mod cohort_metadata;
+pub mod cohort_metadata;
 
 use allocative::Allocative;
 use itertools::Itertools;
@@ -27,7 +27,7 @@ pub struct AddressDatasets {
 
 impl AddressDatasets {
     pub fn import(parent_path: &str, config: &Config) -> color_eyre::Result<Self> {
-        let mut cohorts = SplitByAddressCohort::<CohortDataset>::default();
+        let mut cohorts = SplitByAddressCohort::<Option<CohortDataset>>::default();
 
         cohorts
             .as_vec()
@@ -36,7 +36,7 @@ impl AddressDatasets {
             .collect::<Vec<_>>()
             .into_iter()
             .try_for_each(|(id, dataset)| -> color_eyre::Result<()> {
-                *cohorts.get_mut_from_id(&id) = dataset?;
+                cohorts.get_mut_from_id(&id).replace(dataset?);
                 Ok(())
             })?;
 
@@ -45,7 +45,7 @@ impl AddressDatasets {
 
             metadata: AllAddressesMetadataDataset::import(parent_path, config)?,
 
-            cohorts,
+            cohorts: cohorts.unwrap(),
         };
 
         s.min_initial_states

@@ -1,16 +1,16 @@
 use allocative::Allocative;
+use struct_iterable::Iterable;
 
 use crate::{
     datasets::{AnyDataset, ComputeData, MinInitialStates},
-    structs::{AnyBiMap, BiMap, Config},
+    structs::{BiMap, Config, MapKind},
     utils::{ONE_MONTH_IN_DAYS, ONE_WEEK_IN_DAYS, ONE_YEAR_IN_DAYS},
 };
 
-#[derive(Default, Allocative)]
+#[derive(Allocative, Iterable)]
 pub struct RatioDataset {
     min_initial_states: MinInitialStates,
 
-    // Computed
     ratio: BiMap<f32>,
     ratio_1w_sma: BiMap<f32>,
     ratio_1m_sma: BiMap<f32>,
@@ -38,26 +38,30 @@ impl RatioDataset {
         let mut s = Self {
             min_initial_states: MinInitialStates::default(),
 
-            ratio: BiMap::new_bin(1, &f_ratio("ratio")),
-            ratio_1w_sma: BiMap::new_bin(2, &f_ratio("ratio_1w_sma")),
-            ratio_1m_sma: BiMap::new_bin(2, &f_ratio("ratio_1m_sma")),
-            ratio_1y_sma: BiMap::new_bin(2, &f_ratio("ratio_1y_sma")),
+            // ---
+            // Computed
+            // ---
+            ratio: BiMap::new_bin(1, MapKind::Computed, &f_ratio("ratio")),
+            ratio_1w_sma: BiMap::new_bin(2, MapKind::Computed, &f_ratio("ratio_1w_sma")),
+            ratio_1m_sma: BiMap::new_bin(2, MapKind::Computed, &f_ratio("ratio_1m_sma")),
+            ratio_1y_sma: BiMap::new_bin(2, MapKind::Computed, &f_ratio("ratio_1y_sma")),
             ratio_1y_sma_momentum_oscillator: BiMap::new_bin(
                 2,
+                MapKind::Computed,
                 &f_ratio("ratio_1y_sma_momentum_oscillator"),
             ),
-            ratio_99p: BiMap::new_bin(3, &f_ratio("ratio_99p")),
-            ratio_99_5p: BiMap::new_bin(3, &f_ratio("ratio_99_5p")),
-            ratio_99_9p: BiMap::new_bin(3, &f_ratio("ratio_99_9p")),
-            ratio_1p: BiMap::new_bin(3, &f_ratio("ratio_1p")),
-            ratio_0_5p: BiMap::new_bin(3, &f_ratio("ratio_0_5p")),
-            ratio_0_1p: BiMap::new_bin(3, &f_ratio("ratio_0_1p")),
-            price_99p: BiMap::new_bin(4, &f_price("99p")),
-            price_99_5p: BiMap::new_bin(4, &f_price("99_5p")),
-            price_99_9p: BiMap::new_bin(4, &f_price("99_9p")),
-            price_1p: BiMap::new_bin(4, &f_price("1p")),
-            price_0_5p: BiMap::new_bin(4, &f_price("0_5p")),
-            price_0_1p: BiMap::new_bin(4, &f_price("0_1p")),
+            ratio_99p: BiMap::new_bin(3, MapKind::Computed, &f_ratio("ratio_99p")),
+            ratio_99_5p: BiMap::new_bin(3, MapKind::Computed, &f_ratio("ratio_99_5p")),
+            ratio_99_9p: BiMap::new_bin(3, MapKind::Computed, &f_ratio("ratio_99_9p")),
+            ratio_1p: BiMap::new_bin(3, MapKind::Computed, &f_ratio("ratio_1p")),
+            ratio_0_5p: BiMap::new_bin(3, MapKind::Computed, &f_ratio("ratio_0_5p")),
+            ratio_0_1p: BiMap::new_bin(3, MapKind::Computed, &f_ratio("ratio_0_1p")),
+            price_99p: BiMap::new_bin(4, MapKind::Computed, &f_price("99p")),
+            price_99_5p: BiMap::new_bin(4, MapKind::Computed, &f_price("99_5p")),
+            price_99_9p: BiMap::new_bin(4, MapKind::Computed, &f_price("99_9p")),
+            price_1p: BiMap::new_bin(4, MapKind::Computed, &f_price("1p")),
+            price_0_5p: BiMap::new_bin(4, MapKind::Computed, &f_price("0_5p")),
+            price_0_1p: BiMap::new_bin(4, MapKind::Computed, &f_price("0_1p")),
         };
 
         s.min_initial_states
@@ -163,49 +167,5 @@ impl RatioDataset {
 impl AnyDataset for RatioDataset {
     fn get_min_initial_states(&self) -> &MinInitialStates {
         &self.min_initial_states
-    }
-
-    fn to_computed_bi_map_vec(&self) -> Vec<&(dyn AnyBiMap + Send + Sync)> {
-        vec![
-            &self.ratio,
-            &self.ratio_1w_sma,
-            &self.ratio_1m_sma,
-            &self.ratio_1y_sma,
-            &self.ratio_1y_sma_momentum_oscillator,
-            &self.ratio_99p,
-            &self.ratio_99_5p,
-            &self.ratio_99_9p,
-            &self.ratio_1p,
-            &self.ratio_0_5p,
-            &self.ratio_0_1p,
-            &self.price_99p,
-            &self.price_99_5p,
-            &self.price_99_9p,
-            &self.price_1p,
-            &self.price_0_5p,
-            &self.price_0_1p,
-        ]
-    }
-
-    fn to_computed_mut_bi_map_vec(&mut self) -> Vec<&mut dyn AnyBiMap> {
-        vec![
-            &mut self.ratio,
-            &mut self.ratio_1w_sma,
-            &mut self.ratio_1m_sma,
-            &mut self.ratio_1y_sma,
-            &mut self.ratio_1y_sma_momentum_oscillator,
-            &mut self.ratio_99p,
-            &mut self.ratio_99_5p,
-            &mut self.ratio_99_9p,
-            &mut self.ratio_1p,
-            &mut self.ratio_0_5p,
-            &mut self.ratio_0_1p,
-            &mut self.price_99p,
-            &mut self.price_99_5p,
-            &mut self.price_99_9p,
-            &mut self.price_1p,
-            &mut self.price_0_5p,
-            &mut self.price_0_1p,
-        ]
     }
 }

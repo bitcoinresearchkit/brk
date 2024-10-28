@@ -1,14 +1,15 @@
 use allocative::Allocative;
+use struct_iterable::Iterable;
 
 use crate::{
-    structs::{AnyBiMap, AnyDateMap, AnyHeightMap, BiMap, Config, DateMap, Height},
+    structs::{BiMap, Config, DateMap, Height, MapKind},
     utils::{ONE_DAY_IN_DAYS, ONE_YEAR_IN_DAYS, THREE_MONTHS_IN_DAYS, TWO_WEEK_IN_DAYS},
     HeightMap,
 };
 
 use super::{AnyDataset, ComputeData, InsertData, MinInitialStates, RatioDataset};
 
-#[derive(Allocative)]
+#[derive(Allocative, Iterable)]
 pub struct CointimeDataset {
     min_initial_states: MinInitialStates,
 
@@ -77,83 +78,187 @@ impl CointimeDataset {
         let mut s = Self {
             min_initial_states: MinInitialStates::default(),
 
-            active_cap: BiMap::new_bin(1, &f("active_cap")),
-            active_price: BiMap::new_bin(1, &f("active_price")),
+            // Inserted
+            coinblocks_destroyed: HeightMap::new_bin(
+                1,
+                MapKind::Inserted,
+                &f("coinblocks_destroyed"),
+            ),
+            coinblocks_destroyed_1d_sum: DateMap::new_bin(
+                1,
+                MapKind::Inserted,
+                &f("coinblocks_destroyed_1d_sum"),
+            ),
+
+            // Computed
+            active_cap: BiMap::new_bin(1, MapKind::Computed, &f("active_cap")),
+            active_price: BiMap::new_bin(1, MapKind::Computed, &f("active_price")),
             active_price_ratio: RatioDataset::import(parent_path, "active_price", config)?,
-            active_supply: BiMap::new_bin(1, &f("active_supply")),
-            active_supply_3m_net_change: BiMap::new_bin(1, &f("active_supply_3m_net_change")),
-            active_supply_net_change: BiMap::new_bin(1, &f("active_supply_net_change")),
-            activity_to_vaultedness_ratio: BiMap::new_bin(2, &f("activity_to_vaultedness_ratio")),
-            coinblocks_created: HeightMap::new_bin(1, &f("coinblocks_created")),
-            coinblocks_created_1d_sum: DateMap::new_bin(1, &f("coinblocks_created_1d_sum")),
-            coinblocks_destroyed: HeightMap::new_bin(1, &f("coinblocks_destroyed")),
-            coinblocks_destroyed_1d_sum: DateMap::new_bin(1, &f("coinblocks_destroyed_1d_sum")),
-            coinblocks_stored: HeightMap::new_bin(1, &f("coinblocks_stored")),
-            coinblocks_stored_1d_sum: DateMap::new_bin(1, &f("coinblocks_stored_1d_sum")),
-            cointime_adjusted_velocity: DateMap::new_bin(1, &f("cointime_adjusted_velocity")),
+            active_supply: BiMap::new_bin(1, MapKind::Computed, &f("active_supply")),
+            active_supply_3m_net_change: BiMap::new_bin(
+                1,
+                MapKind::Computed,
+                &f("active_supply_3m_net_change"),
+            ),
+            active_supply_net_change: BiMap::new_bin(
+                1,
+                MapKind::Computed,
+                &f("active_supply_net_change"),
+            ),
+            activity_to_vaultedness_ratio: BiMap::new_bin(
+                2,
+                MapKind::Computed,
+                &f("activity_to_vaultedness_ratio"),
+            ),
+            coinblocks_created: HeightMap::new_bin(1, MapKind::Computed, &f("coinblocks_created")),
+            coinblocks_created_1d_sum: DateMap::new_bin(
+                1,
+                MapKind::Computed,
+                &f("coinblocks_created_1d_sum"),
+            ),
+
+            coinblocks_stored: HeightMap::new_bin(1, MapKind::Computed, &f("coinblocks_stored")),
+            coinblocks_stored_1d_sum: DateMap::new_bin(
+                1,
+                MapKind::Computed,
+                &f("coinblocks_stored_1d_sum"),
+            ),
+            cointime_adjusted_velocity: DateMap::new_bin(
+                1,
+                MapKind::Computed,
+                &f("cointime_adjusted_velocity"),
+            ),
             cointime_adjusted_inflation_rate: DateMap::new_bin(
                 1,
+                MapKind::Computed,
                 &f("cointime_adjusted_inflation_rate"),
             ),
             cointime_adjusted_yearly_inflation_rate: DateMap::new_bin(
                 1,
+                MapKind::Computed,
                 &f("cointime_adjusted_yearly_inflation_rate"),
             ),
-            cointime_cap: BiMap::new_bin(1, &f("cointime_cap")),
-            cointime_price: BiMap::new_bin(1, &f("cointime_price")),
+            cointime_cap: BiMap::new_bin(1, MapKind::Computed, &f("cointime_cap")),
+            cointime_price: BiMap::new_bin(1, MapKind::Computed, &f("cointime_price")),
             cointime_price_ratio: RatioDataset::import(parent_path, "cointime_price", config)?,
-            cointime_value_created: HeightMap::new_bin(1, &f("cointime_value_created")),
-            cointime_value_created_1d_sum: DateMap::new_bin(1, &f("cointime_value_created_1d_sum")),
-            cointime_value_destroyed: HeightMap::new_bin(1, &f("cointime_value_destroyed")),
+            cointime_value_created: HeightMap::new_bin(
+                1,
+                MapKind::Computed,
+                &f("cointime_value_created"),
+            ),
+            cointime_value_created_1d_sum: DateMap::new_bin(
+                1,
+                MapKind::Computed,
+                &f("cointime_value_created_1d_sum"),
+            ),
+            cointime_value_destroyed: HeightMap::new_bin(
+                1,
+                MapKind::Computed,
+                &f("cointime_value_destroyed"),
+            ),
             cointime_value_destroyed_1d_sum: DateMap::new_bin(
                 1,
+                MapKind::Computed,
                 &f("cointime_value_destroyed_1d_sum"),
             ),
-            cointime_value_stored: HeightMap::new_bin(1, &f("cointime_value_stored")),
-            cointime_value_stored_1d_sum: DateMap::new_bin(1, &f("cointime_value_stored_1d_sum")),
-            concurrent_liveliness: DateMap::new_bin(1, &f("concurrent_liveliness")),
+            cointime_value_stored: HeightMap::new_bin(
+                1,
+                MapKind::Computed,
+                &f("cointime_value_stored"),
+            ),
+            cointime_value_stored_1d_sum: DateMap::new_bin(
+                1,
+                MapKind::Computed,
+                &f("cointime_value_stored_1d_sum"),
+            ),
+            concurrent_liveliness: DateMap::new_bin(
+                1,
+                MapKind::Computed,
+                &f("concurrent_liveliness"),
+            ),
             concurrent_liveliness_2w_median: DateMap::new_bin(
                 2,
+                MapKind::Computed,
                 &f("concurrent_liveliness_2w_median"),
             ),
-            cumulative_coinblocks_created: BiMap::new_bin(1, &f("cumulative_coinblocks_created")),
+            cumulative_coinblocks_created: BiMap::new_bin(
+                1,
+                MapKind::Computed,
+                &f("cumulative_coinblocks_created"),
+            ),
             cumulative_coinblocks_destroyed: BiMap::new_bin(
                 1,
+                MapKind::Computed,
                 &f("cumulative_coinblocks_destroyed"),
             ),
-            cumulative_coinblocks_stored: BiMap::new_bin(1, &f("cumulative_coinblocks_stored")),
-            investor_cap: BiMap::new_bin(1, &f("investor_cap")),
-            investorness: BiMap::new_bin(1, &f("investorness")),
-            liveliness: BiMap::new_bin(1, &f("liveliness")),
-            liveliness_net_change: BiMap::new_bin(1, &f("liveliness_net_change")),
+            cumulative_coinblocks_stored: BiMap::new_bin(
+                1,
+                MapKind::Computed,
+                &f("cumulative_coinblocks_stored"),
+            ),
+            investor_cap: BiMap::new_bin(1, MapKind::Computed, &f("investor_cap")),
+            investorness: BiMap::new_bin(1, MapKind::Computed, &f("investorness")),
+            liveliness: BiMap::new_bin(1, MapKind::Computed, &f("liveliness")),
+            liveliness_net_change: BiMap::new_bin(
+                1,
+                MapKind::Computed,
+                &f("liveliness_net_change"),
+            ),
             liveliness_net_change_2w_median: BiMap::new_bin(
                 3,
+                MapKind::Computed,
                 &f("liveliness_net_change_2w_median"),
             ),
-            producerness: BiMap::new_bin(1, &f("producerness")),
-            thermo_cap: BiMap::new_bin(1, &f("thermo_cap")),
+            producerness: BiMap::new_bin(1, MapKind::Computed, &f("producerness")),
+            thermo_cap: BiMap::new_bin(1, MapKind::Computed, &f("thermo_cap")),
             thermo_cap_to_investor_cap_ratio: BiMap::new_bin(
                 2,
+                MapKind::Computed,
                 &f("thermo_cap_to_investor_cap_ratio"),
             ),
-            total_cointime_value_created: BiMap::new_bin(1, &f("total_cointime_value_created")),
-            total_cointime_value_destroyed: BiMap::new_bin(1, &f("total_cointime_value_destroyed")),
-            total_cointime_value_stored: BiMap::new_bin(1, &f("total_cointime_value_stored")),
-            true_market_deviation: BiMap::new_bin(1, &f("true_market_deviation")),
-            true_market_mean: BiMap::new_bin(1, &f("true_market_mean")),
+            total_cointime_value_created: BiMap::new_bin(
+                1,
+                MapKind::Computed,
+                &f("total_cointime_value_created"),
+            ),
+            total_cointime_value_destroyed: BiMap::new_bin(
+                1,
+                MapKind::Computed,
+                &f("total_cointime_value_destroyed"),
+            ),
+            total_cointime_value_stored: BiMap::new_bin(
+                1,
+                MapKind::Computed,
+                &f("total_cointime_value_stored"),
+            ),
+            true_market_deviation: BiMap::new_bin(
+                1,
+                MapKind::Computed,
+                &f("true_market_deviation"),
+            ),
+            true_market_mean: BiMap::new_bin(1, MapKind::Computed, &f("true_market_mean")),
             true_market_mean_ratio: RatioDataset::import(parent_path, "true_market_mean", config)?,
             true_market_net_unrealized_profit_and_loss: BiMap::new_bin(
                 1,
+                MapKind::Computed,
                 &f("true_market_net_unrealized_profit_and_loss"),
             ),
-            vaulted_cap: BiMap::new_bin(1, &f("vaulted_cap")),
-            vaulted_price: BiMap::new_bin(1, &f("vaulted_price")),
+            vaulted_cap: BiMap::new_bin(1, MapKind::Computed, &f("vaulted_cap")),
+            vaulted_price: BiMap::new_bin(1, MapKind::Computed, &f("vaulted_price")),
             vaulted_price_ratio: RatioDataset::import(parent_path, "vaulted_price", config)?,
-            vaulted_supply: BiMap::new_bin(1, &f("vaulted_supply")),
-            vaulted_supply_3m_net_change: BiMap::new_bin(1, &f("vaulted_supply_3m_net_change")),
-            vaulted_supply_net_change: BiMap::new_bin(1, &f("vaulted_supply_net_change")),
-            vaultedness: BiMap::new_bin(1, &f("vaultedness")),
-            vaulting_rate: BiMap::new_bin(1, &f("vaulting_rate")),
+            vaulted_supply: BiMap::new_bin(1, MapKind::Computed, &f("vaulted_supply")),
+            vaulted_supply_3m_net_change: BiMap::new_bin(
+                1,
+                MapKind::Computed,
+                &f("vaulted_supply_3m_net_change"),
+            ),
+            vaulted_supply_net_change: BiMap::new_bin(
+                1,
+                MapKind::Computed,
+                &f("vaulted_supply_net_change"),
+            ),
+            vaultedness: BiMap::new_bin(1, MapKind::Computed, &f("vaultedness")),
+            vaulting_rate: BiMap::new_bin(1, MapKind::Computed, &f("vaulting_rate")),
         };
 
         s.min_initial_states
@@ -544,160 +649,6 @@ impl CointimeDataset {
 }
 
 impl AnyDataset for CointimeDataset {
-    fn to_inserted_height_map_vec(&self) -> Vec<&(dyn AnyHeightMap + Send + Sync)> {
-        vec![&self.coinblocks_destroyed]
-    }
-
-    fn to_inserted_mut_height_map_vec(&mut self) -> Vec<&mut dyn AnyHeightMap> {
-        vec![&mut self.coinblocks_destroyed]
-    }
-
-    fn to_inserted_date_map_vec(&self) -> Vec<&(dyn AnyDateMap + Send + Sync)> {
-        vec![&self.coinblocks_destroyed_1d_sum]
-    }
-
-    fn to_inserted_mut_date_map_vec(&mut self) -> Vec<&mut dyn AnyDateMap> {
-        vec![&mut self.coinblocks_destroyed_1d_sum]
-    }
-
-    fn to_computed_height_map_vec(&self) -> Vec<&(dyn AnyHeightMap + Send + Sync)> {
-        vec![
-            &self.coinblocks_created,
-            &self.coinblocks_stored,
-            &self.cointime_value_created,
-            &self.cointime_value_destroyed,
-            &self.cointime_value_stored,
-        ]
-    }
-
-    fn to_computed_mut_height_map_vec(&mut self) -> Vec<&mut dyn AnyHeightMap> {
-        vec![
-            &mut self.coinblocks_created,
-            &mut self.coinblocks_stored,
-            &mut self.cointime_value_created,
-            &mut self.cointime_value_destroyed,
-            &mut self.cointime_value_stored,
-        ]
-    }
-
-    fn to_computed_date_map_vec(&self) -> Vec<&(dyn AnyDateMap + Send + Sync)> {
-        vec![
-            &self.coinblocks_created_1d_sum,
-            &self.coinblocks_stored_1d_sum,
-            &self.concurrent_liveliness,
-            &self.concurrent_liveliness_2w_median,
-            &self.cointime_adjusted_velocity,
-            &self.cointime_value_created_1d_sum,
-            &self.cointime_value_destroyed_1d_sum,
-            &self.cointime_value_stored_1d_sum,
-            &self.cointime_adjusted_inflation_rate,
-            &self.cointime_adjusted_yearly_inflation_rate,
-        ]
-    }
-
-    fn to_computed_mut_date_map_vec(&mut self) -> Vec<&mut dyn AnyDateMap> {
-        vec![
-            &mut self.coinblocks_created_1d_sum,
-            &mut self.coinblocks_stored_1d_sum,
-            &mut self.concurrent_liveliness,
-            &mut self.concurrent_liveliness_2w_median,
-            &mut self.cointime_adjusted_velocity,
-            &mut self.cointime_value_created_1d_sum,
-            &mut self.cointime_value_destroyed_1d_sum,
-            &mut self.cointime_value_stored_1d_sum,
-            &mut self.cointime_adjusted_inflation_rate,
-            &mut self.cointime_adjusted_yearly_inflation_rate,
-        ]
-    }
-
-    fn to_computed_bi_map_vec(&self) -> Vec<&(dyn AnyBiMap + Send + Sync)> {
-        let mut v = vec![
-            &self.active_cap as &(dyn AnyBiMap + Send + Sync),
-            &self.active_price,
-            &self.active_supply,
-            &self.active_supply_3m_net_change,
-            &self.active_supply_net_change,
-            &self.activity_to_vaultedness_ratio,
-            &self.cointime_cap,
-            &self.cointime_price,
-            &self.cumulative_coinblocks_created,
-            &self.cumulative_coinblocks_destroyed,
-            &self.cumulative_coinblocks_stored,
-            &self.investor_cap,
-            &self.investorness,
-            &self.liveliness,
-            &self.liveliness_net_change,
-            &self.liveliness_net_change_2w_median,
-            &self.producerness,
-            &self.thermo_cap,
-            &self.thermo_cap_to_investor_cap_ratio,
-            &self.total_cointime_value_created,
-            &self.total_cointime_value_destroyed,
-            &self.total_cointime_value_stored,
-            &self.true_market_deviation,
-            &self.true_market_mean,
-            &self.true_market_net_unrealized_profit_and_loss,
-            &self.vaulted_cap,
-            &self.vaulted_price,
-            &self.vaulted_supply,
-            &self.vaulted_supply_net_change,
-            &self.vaulted_supply_3m_net_change,
-            &self.vaultedness,
-            &self.vaulting_rate,
-        ];
-
-        v.append(&mut self.active_price_ratio.to_computed_bi_map_vec());
-        v.append(&mut self.cointime_price_ratio.to_computed_bi_map_vec());
-        v.append(&mut self.true_market_mean_ratio.to_computed_bi_map_vec());
-        v.append(&mut self.vaulted_price_ratio.to_computed_bi_map_vec());
-
-        v
-    }
-
-    fn to_computed_mut_bi_map_vec(&mut self) -> Vec<&mut dyn AnyBiMap> {
-        let mut v = vec![
-            &mut self.active_cap as &mut dyn AnyBiMap,
-            &mut self.active_price,
-            &mut self.active_supply,
-            &mut self.active_supply_3m_net_change,
-            &mut self.active_supply_net_change,
-            &mut self.activity_to_vaultedness_ratio,
-            &mut self.cointime_cap,
-            &mut self.cointime_price,
-            &mut self.cumulative_coinblocks_created,
-            &mut self.cumulative_coinblocks_destroyed,
-            &mut self.cumulative_coinblocks_stored,
-            &mut self.investor_cap,
-            &mut self.investorness,
-            &mut self.liveliness,
-            &mut self.liveliness_net_change,
-            &mut self.liveliness_net_change_2w_median,
-            &mut self.producerness,
-            &mut self.thermo_cap,
-            &mut self.thermo_cap_to_investor_cap_ratio,
-            &mut self.total_cointime_value_created,
-            &mut self.total_cointime_value_destroyed,
-            &mut self.total_cointime_value_stored,
-            &mut self.true_market_deviation,
-            &mut self.true_market_mean,
-            &mut self.true_market_net_unrealized_profit_and_loss,
-            &mut self.vaulted_cap,
-            &mut self.vaulted_price,
-            &mut self.vaulted_supply,
-            &mut self.vaulted_supply_net_change,
-            &mut self.vaulted_supply_3m_net_change,
-            &mut self.vaultedness,
-            &mut self.vaulting_rate,
-        ];
-
-        v.append(&mut self.active_price_ratio.to_computed_mut_bi_map_vec());
-        v.append(&mut self.cointime_price_ratio.to_computed_mut_bi_map_vec());
-        v.append(&mut self.true_market_mean_ratio.to_computed_mut_bi_map_vec());
-        v.append(&mut self.vaulted_price_ratio.to_computed_mut_bi_map_vec());
-
-        v
-    }
-
     fn get_min_initial_states(&self) -> &MinInitialStates {
         &self.min_initial_states
     }

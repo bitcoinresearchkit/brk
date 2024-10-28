@@ -7,9 +7,8 @@ use itertools::Itertools;
 use serde_json::Value;
 
 use crate::{
-    datasets::OHLC,
     io::{Json, INPUTS_FOLDER_PATH},
-    structs::{Date, Timestamp},
+    structs::{Date, Timestamp, OHLC},
     utils::{log, retry},
 };
 

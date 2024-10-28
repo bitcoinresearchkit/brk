@@ -1,17 +1,17 @@
 use allocative::Allocative;
+use struct_iterable::Iterable;
 
 use crate::{
     datasets::AnyDataset,
-    structs::{AnyDateMap, Config, DateMap, Height},
+    structs::{Config, DateMap, Height, MapKind},
 };
 
 use super::{InsertData, MinInitialStates};
 
-#[derive(Allocative)]
+#[derive(Allocative, Iterable)]
 pub struct DateMetadataDataset {
     min_initial_states: MinInitialStates,
 
-    // Inserted
     pub first_height: DateMap<Height>,
     pub last_height: DateMap<Height>,
 }
@@ -23,8 +23,9 @@ impl DateMetadataDataset {
         let mut s = Self {
             min_initial_states: MinInitialStates::default(),
 
-            first_height: DateMap::new_bin(1, &f("first_height")),
-            last_height: DateMap::new_bin(1, &f("last_height")),
+            // Inserted
+            first_height: DateMap::new_bin(1, MapKind::Inserted, &f("first_height")),
+            last_height: DateMap::new_bin(1, MapKind::Inserted, &f("last_height")),
         };
 
         s.min_initial_states
@@ -49,14 +50,6 @@ impl DateMetadataDataset {
 }
 
 impl AnyDataset for DateMetadataDataset {
-    fn to_inserted_date_map_vec(&self) -> Vec<&(dyn AnyDateMap + Send + Sync)> {
-        vec![&self.first_height, &self.last_height]
-    }
-
-    fn to_inserted_mut_date_map_vec(&mut self) -> Vec<&mut dyn AnyDateMap> {
-        vec![&mut self.first_height, &mut self.last_height]
-    }
-
     fn get_min_initial_states(&self) -> &MinInitialStates {
         &self.min_initial_states
     }

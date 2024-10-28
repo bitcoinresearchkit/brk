@@ -1,16 +1,16 @@
 use allocative::Allocative;
+use struct_iterable::Iterable;
 
 use crate::{
     datasets::{AnyDataset, InsertData, MinInitialStates},
     states::UTXOState,
-    structs::{AnyBiMap, BiMap, Config},
+    structs::{BiMap, Config, MapKind},
 };
 
-#[derive(Default, Allocative)]
+#[derive(Allocative, Iterable)]
 pub struct UTXOSubDataset {
     min_initial_states: MinInitialStates,
 
-    // Inserted
     count: BiMap<f64>,
 }
 
@@ -31,7 +31,10 @@ impl UTXOSubDataset {
         let mut s = Self {
             min_initial_states: MinInitialStates::default(),
 
-            count: BiMap::new_bin(1, &f("utxo_count")),
+            // ---
+            // Inserted
+            // ---
+            count: BiMap::new_bin(1, MapKind::Inserted, &f("utxo_count")),
         };
 
         s.min_initial_states
@@ -61,13 +64,5 @@ impl UTXOSubDataset {
 impl AnyDataset for UTXOSubDataset {
     fn get_min_initial_states(&self) -> &MinInitialStates {
         &self.min_initial_states
-    }
-
-    fn to_inserted_bi_map_vec(&self) -> Vec<&(dyn AnyBiMap + Send + Sync)> {
-        vec![&self.count]
-    }
-
-    fn to_inserted_mut_bi_map_vec(&mut self) -> Vec<&mut dyn AnyBiMap> {
-        vec![&mut self.count]
     }
 }

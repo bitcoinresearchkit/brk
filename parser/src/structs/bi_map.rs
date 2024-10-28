@@ -7,9 +7,11 @@ use allocative::Allocative;
 
 use crate::utils::{LossyFrom, TARGET_BLOCKS_PER_DAY};
 
-use super::{AnyDateMap, AnyHeightMap, AnyMap, Date, DateMap, Height, HeightMap, MapValue};
+use super::{
+    AnyDateMap, AnyHeightMap, AnyMap, Date, DateMap, Height, HeightMap, MapKind, MapValue,
+};
 
-#[derive(Default, Allocative)]
+#[derive(Allocative)]
 pub struct BiMap<Value>
 where
     Value: MapValue,
@@ -22,17 +24,17 @@ impl<Value> BiMap<Value>
 where
     Value: MapValue,
 {
-    pub fn new_bin(version: u32, path: &str) -> Self {
+    pub fn new_bin(version: u32, kind: MapKind, path: &str) -> Self {
         Self {
-            height: HeightMap::_new_bin(version, path, true),
-            date: DateMap::_new_bin(version, path, false),
+            height: HeightMap::_new_bin(version, kind, path, true),
+            date: DateMap::_new_bin(version, kind, path, false),
         }
     }
 
-    pub fn new_json(version: u32, path: &str) -> Self {
+    pub fn new_json(version: u32, kind: MapKind, path: &str) -> Self {
         Self {
-            height: HeightMap::new_json(version, path, true),
-            date: DateMap::new_json(version, path, false),
+            height: HeightMap::new_json(version, kind, path, true),
+            date: DateMap::new_json(version, kind, path, false),
         }
     }
 
@@ -291,6 +293,10 @@ where
     {
         self.height.multi_insert_max(heights, &mut source.height);
         self.date.multi_insert_max(dates, &mut source.date);
+    }
+
+    pub fn kind(&self) -> MapKind {
+        self.date.kind()
     }
 }
 

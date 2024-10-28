@@ -243,3 +243,31 @@ where
         self.p2tr += rhs.p2tr;
     }
 }
+
+impl<T> SplitByAddressCohort<Option<T>> {
+    pub fn unwrap(self) -> SplitByAddressCohort<T> {
+        SplitByAddressCohort {
+            all: self.all.unwrap(),
+
+            illiquid: self.illiquid.unwrap(),
+            liquid: self.liquid.unwrap(),
+            highly_liquid: self.highly_liquid.unwrap(),
+
+            plankton: self.plankton.unwrap(),
+            shrimp: self.shrimp.unwrap(),
+            crab: self.crab.unwrap(),
+            fish: self.fish.unwrap(),
+            shark: self.shark.unwrap(),
+            whale: self.whale.unwrap(),
+            humpback: self.humpback.unwrap(),
+            megalodon: self.megalodon.unwrap(),
+
+            p2pk: self.p2pk.unwrap(),
+            p2pkh: self.p2pkh.unwrap(),
+            p2sh: self.p2sh.unwrap(),
+            p2wpkh: self.p2wpkh.unwrap(),
+            p2wsh: self.p2wsh.unwrap(),
+            p2tr: self.p2tr.unwrap(),
+        }
+    }
+}

@@ -1,19 +1,16 @@
 use allocative::Allocative;
+use struct_iterable::Iterable;
 
 use crate::{
     datasets::{AnyDataset, ComputeData, InsertData, MinInitialStates},
-    structs::{AnyBiMap, BiMap, Config},
+    structs::{BiMap, Config, MapKind},
 };
 
-#[derive(Allocative)]
+#[derive(Allocative, Iterable)]
 pub struct AllAddressesMetadataDataset {
     min_initial_states: MinInitialStates,
-
-    // Inserted
     created_addreses: BiMap<u32>,
     empty_addresses: BiMap<u32>,
-
-    // Computed
     new_addresses: BiMap<u32>,
 }
 
@@ -24,9 +21,12 @@ impl AllAddressesMetadataDataset {
         let mut s = Self {
             min_initial_states: MinInitialStates::default(),
 
-            created_addreses: BiMap::new_bin(1, &f("created_addresses")),
-            empty_addresses: BiMap::new_bin(1, &f("empty_addresses")),
-            new_addresses: BiMap::new_bin(1, &f("new_addresses")),
+            // Inserted
+            created_addreses: BiMap::new_bin(1, MapKind::Inserted, &f("created_addresses")),
+            empty_addresses: BiMap::new_bin(1, MapKind::Inserted, &f("empty_addresses")),
+
+            // Computed
+            new_addresses: BiMap::new_bin(1, MapKind::Computed, &f("new_addresses")),
         };
 
         s.min_initial_states
@@ -70,21 +70,5 @@ impl AllAddressesMetadataDataset {
 impl AnyDataset for AllAddressesMetadataDataset {
     fn get_min_initial_states(&self) -> &MinInitialStates {
         &self.min_initial_states
-    }
-
-    fn to_inserted_bi_map_vec(&self) -> Vec<&(dyn AnyBiMap + Send + Sync)> {
-        vec![&self.created_addreses, &self.empty_addresses]
-    }
-
-    fn to_inserted_mut_bi_map_vec(&mut self) -> Vec<&mut dyn AnyBiMap> {
-        vec![&mut self.created_addreses, &mut self.empty_addresses]
-    }
-
-    fn to_computed_bi_map_vec(&self) -> Vec<&(dyn AnyBiMap + Send + Sync)> {
-        vec![&self.new_addresses]
-    }
-
-    fn to_computed_mut_bi_map_vec(&mut self) -> Vec<&mut dyn AnyBiMap> {
-        vec![&mut self.new_addresses]
     }
 }

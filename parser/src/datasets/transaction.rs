@@ -1,8 +1,9 @@
 use allocative::Allocative;
+use struct_iterable::Iterable;
 
 use crate::{
     datasets::InsertData,
-    structs::{AnyBiMap, AnyDateMap, AnyHeightMap, BiMap, Config, HeightMap},
+    structs::{BiMap, Config, HeightMap, MapKind},
     utils::{
         ONE_DAY_IN_S, ONE_MONTH_IN_DAYS, ONE_WEEK_IN_DAYS, ONE_YEAR_IN_DAYS, TARGET_BLOCKS_PER_DAY,
     },
@@ -11,11 +12,10 @@ use crate::{
 
 use super::{AnyDataset, ComputeData, MinInitialStates};
 
-#[derive(Allocative)]
+#[derive(Allocative, Iterable)]
 pub struct TransactionDataset {
     min_initial_states: MinInitialStates,
 
-    // Inserted
     pub count: HeightMap<usize>,
     pub count_1d_sum: DateMap<usize>,
     pub volume: HeightMap<f64>,
@@ -31,8 +31,6 @@ pub struct TransactionDataset {
     // 10th 25th 75th 90th percentiles
     // type
     // version
-
-    // Computed
     pub count_1w_sma: HeightMap<f32>,
     pub count_1d_sum_1w_sma: DateMap<f32>,
     pub count_1m_sma: HeightMap<f32>,
@@ -60,48 +58,105 @@ impl TransactionDataset {
         let mut s = Self {
             min_initial_states: MinInitialStates::default(),
 
-            count: HeightMap::new_bin(1, &f("transaction_count")),
-            count_1d_sum: DateMap::new_bin(1, &f("transaction_count_1d_sum")),
-            count_1w_sma: HeightMap::new_bin(1, &f("transaction_count_1w_sma")),
-            count_1d_sum_1w_sma: DateMap::new_bin(1, &f("transaction_count_1d_sum_1w_sma")),
-            count_1m_sma: HeightMap::new_bin(1, &f("transaction_count_1m_sma")),
-            count_1d_sum_1m_sma: DateMap::new_bin(1, &f("transaction_count_1d_sum_1m_sma")),
-            volume: HeightMap::new_bin(1, &f("transaction_volume")),
-            volume_1d_sum: DateMap::new_bin(1, &f("transaction_volume_1d_sum")),
-            volume_1w_sma: HeightMap::new_bin(1, &f("transaction_volume_1w_sma")),
-            volume_1d_sum_1w_sma: DateMap::new_bin(1, &f("transaction_volume_1d_sum_1w_sma")),
-            volume_1m_sma: HeightMap::new_bin(1, &f("transaction_volume_1m_sma")),
-            volume_1d_sum_1m_sma: DateMap::new_bin(1, &f("transaction_volume_1d_sum_1m_sma")),
-            volume_in_dollars: HeightMap::new_bin(1, &f("transaction_volume_in_dollars")),
+            // ---
+            // Inserted
+            // ---
+            count: HeightMap::new_bin(1, MapKind::Inserted, &f("transaction_count")),
+            count_1d_sum: DateMap::new_bin(1, MapKind::Inserted, &f("transaction_count_1d_sum")),
+            volume: HeightMap::new_bin(1, MapKind::Inserted, &f("transaction_volume")),
+            volume_1d_sum: DateMap::new_bin(1, MapKind::Inserted, &f("transaction_volume_1d_sum")),
+            volume_in_dollars: HeightMap::new_bin(
+                1,
+                MapKind::Inserted,
+                &f("transaction_volume_in_dollars"),
+            ),
             volume_in_dollars_1d_sum: DateMap::new_bin(
                 1,
+                MapKind::Inserted,
                 &f("transaction_volume_in_dollars_1d_sum"),
+            ),
+
+            // ---
+            // Inserted
+            // ---
+            count_1w_sma: HeightMap::new_bin(1, MapKind::Computed, &f("transaction_count_1w_sma")),
+            count_1d_sum_1w_sma: DateMap::new_bin(
+                1,
+                MapKind::Computed,
+                &f("transaction_count_1d_sum_1w_sma"),
+            ),
+            count_1m_sma: HeightMap::new_bin(1, MapKind::Computed, &f("transaction_count_1m_sma")),
+            count_1d_sum_1m_sma: DateMap::new_bin(
+                1,
+                MapKind::Computed,
+                &f("transaction_count_1d_sum_1m_sma"),
+            ),
+            volume_1w_sma: HeightMap::new_bin(
+                1,
+                MapKind::Computed,
+                &f("transaction_volume_1w_sma"),
+            ),
+            volume_1d_sum_1w_sma: DateMap::new_bin(
+                1,
+                MapKind::Computed,
+                &f("transaction_volume_1d_sum_1w_sma"),
+            ),
+            volume_1m_sma: HeightMap::new_bin(
+                1,
+                MapKind::Computed,
+                &f("transaction_volume_1m_sma"),
+            ),
+            volume_1d_sum_1m_sma: DateMap::new_bin(
+                1,
+                MapKind::Computed,
+                &f("transaction_volume_1d_sum_1m_sma"),
             ),
             volume_in_dollars_1w_sma: HeightMap::new_bin(
                 1,
+                MapKind::Computed,
                 &f("transaction_volume_in_dollars_1w_sma"),
             ),
             volume_in_dollars_1d_sum_1w_sma: DateMap::new_bin(
                 1,
+                MapKind::Computed,
                 &f("transaction_volume_in_dollars_1d_sum_1w_sma"),
             ),
             volume_in_dollars_1m_sma: HeightMap::new_bin(
                 1,
+                MapKind::Computed,
                 &f("transaction_volume_in_dollars_1m_sma"),
             ),
             volume_in_dollars_1d_sum_1m_sma: DateMap::new_bin(
                 1,
+                MapKind::Computed,
                 &f("transaction_volume_in_dollars_1d_sum_1m_sma"),
             ),
-            annualized_volume: DateMap::new_bin(1, &f("annualized_transaction_volume")),
+            annualized_volume: DateMap::new_bin(
+                1,
+                MapKind::Computed,
+                &f("annualized_transaction_volume"),
+            ),
             annualized_volume_in_dollars: DateMap::new_bin(
                 2,
+                MapKind::Computed,
                 &f("annualized_transaction_volume_in_dollars"),
             ),
-            velocity: DateMap::new_bin(1, &f("transaction_velocity")),
-            transactions_per_second: BiMap::new_bin(1, &f("transactions_per_second")),
-            transactions_per_second_1w_sma: BiMap::new_bin(1, &f("transactions_per_second_1w_sma")),
-            transactions_per_second_1m_sma: BiMap::new_bin(1, &f("transactions_per_second_1m_sma")),
+            velocity: DateMap::new_bin(1, MapKind::Computed, &f("transaction_velocity")),
+            transactions_per_second: BiMap::new_bin(
+                1,
+                MapKind::Computed,
+                &f("transactions_per_second"),
+            ),
+            transactions_per_second_1w_sma: BiMap::new_bin(
+                1,
+                MapKind::Computed,
+                &f("transactions_per_second_1w_sma"),
+            ),
+            transactions_per_second_1m_sma: BiMap::new_bin(
+                1,
+                MapKind::Computed,
+                &f("transactions_per_second_1m_sma"),
+            ),
         };
 
         s.min_initial_states
@@ -267,99 +322,5 @@ impl TransactionDataset {
 impl AnyDataset for TransactionDataset {
     fn get_min_initial_states(&self) -> &MinInitialStates {
         &self.min_initial_states
-    }
-
-    fn to_inserted_height_map_vec(&self) -> Vec<&(dyn AnyHeightMap + Send + Sync)> {
-        vec![&self.count, &self.volume, &self.volume_in_dollars]
-    }
-
-    fn to_inserted_mut_height_map_vec(&mut self) -> Vec<&mut dyn AnyHeightMap> {
-        vec![
-            &mut self.count,
-            &mut self.volume,
-            &mut self.volume_in_dollars,
-        ]
-    }
-
-    fn to_inserted_date_map_vec(&self) -> Vec<&(dyn AnyDateMap + Send + Sync)> {
-        vec![
-            &self.count_1d_sum,
-            &self.volume_1d_sum,
-            &self.volume_in_dollars_1d_sum,
-        ]
-    }
-
-    fn to_inserted_mut_date_map_vec(&mut self) -> Vec<&mut dyn AnyDateMap> {
-        vec![
-            &mut self.count_1d_sum,
-            &mut self.volume_1d_sum,
-            &mut self.volume_in_dollars_1d_sum,
-        ]
-    }
-
-    fn to_computed_bi_map_vec(&self) -> Vec<&(dyn AnyBiMap + Send + Sync)> {
-        vec![
-            &self.transactions_per_second,
-            &self.transactions_per_second_1w_sma,
-            &self.transactions_per_second_1m_sma,
-        ]
-    }
-
-    fn to_computed_mut_bi_map_vec(&mut self) -> Vec<&mut dyn AnyBiMap> {
-        vec![
-            &mut self.transactions_per_second,
-            &mut self.transactions_per_second_1w_sma,
-            &mut self.transactions_per_second_1m_sma,
-        ]
-    }
-
-    fn to_computed_height_map_vec(&self) -> Vec<&(dyn AnyHeightMap + Send + Sync)> {
-        vec![
-            &self.count_1w_sma,
-            &self.count_1m_sma,
-            &self.volume_1w_sma,
-            &self.volume_1m_sma,
-            &self.volume_in_dollars_1w_sma,
-            &self.volume_in_dollars_1m_sma,
-        ]
-    }
-
-    fn to_computed_mut_height_map_vec(&mut self) -> Vec<&mut dyn AnyHeightMap> {
-        vec![
-            &mut self.count_1w_sma,
-            &mut self.count_1m_sma,
-            &mut self.volume_1w_sma,
-            &mut self.volume_1m_sma,
-            &mut self.volume_in_dollars_1w_sma,
-            &mut self.volume_in_dollars_1m_sma,
-        ]
-    }
-
-    fn to_computed_date_map_vec(&self) -> Vec<&(dyn AnyDateMap + Send + Sync)> {
-        vec![
-            &self.count_1d_sum_1w_sma,
-            &self.count_1d_sum_1m_sma,
-            &self.volume_1d_sum_1w_sma,
-            &self.volume_1d_sum_1m_sma,
-            &self.volume_in_dollars_1d_sum_1w_sma,
-            &self.volume_in_dollars_1d_sum_1m_sma,
-            &self.annualized_volume,
-            &self.annualized_volume_in_dollars,
-            &self.velocity,
-        ]
-    }
-
-    fn to_computed_mut_date_map_vec(&mut self) -> Vec<&mut dyn AnyDateMap> {
-        vec![
-            &mut self.count_1d_sum_1w_sma,
-            &mut self.count_1d_sum_1m_sma,
-            &mut self.volume_1d_sum_1w_sma,
-            &mut self.volume_1d_sum_1m_sma,
-            &mut self.volume_in_dollars_1d_sum_1w_sma,
-            &mut self.volume_in_dollars_1d_sum_1m_sma,
-            &mut self.annualized_volume,
-            &mut self.annualized_volume_in_dollars,
-            &mut self.velocity,
-        ]
     }
 }

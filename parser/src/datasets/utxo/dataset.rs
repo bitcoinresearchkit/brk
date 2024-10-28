@@ -1,15 +1,13 @@
 use allocative::Allocative;
-use itertools::Itertools;
+use struct_iterable::Iterable;
 
 use crate::{
-    datasets::{
-        AnyDataset, AnyDatasetGroup, ComputeData, InsertData, MinInitialStates, SubDataset,
-    },
+    datasets::{AnyDataset, ComputeData, InsertData, MinInitialStates, SubDataset},
     states::UTXOCohortId,
-    structs::{AnyBiMap, AnyDateMap, AnyHeightMap, BiMap, Config, Date, Height},
+    structs::{BiMap, Config, Date, Height},
 };
 
-#[derive(Default, Allocative)]
+#[derive(Allocative, Iterable)]
 pub struct UTXODataset {
     id: UTXOCohortId,
 
@@ -195,101 +193,5 @@ impl UTXODataset {
 impl AnyDataset for UTXODataset {
     fn get_min_initial_states(&self) -> &MinInitialStates {
         &self.min_initial_states
-    }
-
-    fn to_inserted_height_map_vec(&self) -> Vec<&(dyn AnyHeightMap + Send + Sync)> {
-        self.subs
-            .as_vec()
-            .into_iter()
-            .flat_map(|d| d.to_inserted_height_map_vec())
-            .collect_vec()
-    }
-
-    fn to_inserted_date_map_vec(&self) -> Vec<&(dyn AnyDateMap + Send + Sync)> {
-        self.subs
-            .as_vec()
-            .into_iter()
-            .flat_map(|d| d.to_inserted_date_map_vec())
-            .collect_vec()
-    }
-
-    fn to_inserted_bi_map_vec(&self) -> Vec<&(dyn AnyBiMap + Send + Sync)> {
-        self.subs
-            .as_vec()
-            .into_iter()
-            .flat_map(|d| d.to_inserted_bi_map_vec())
-            .collect_vec()
-    }
-
-    fn to_inserted_mut_height_map_vec(&mut self) -> Vec<&mut dyn AnyHeightMap> {
-        self.subs
-            .as_mut_vec()
-            .into_iter()
-            .flat_map(|d| d.to_inserted_mut_height_map_vec())
-            .collect_vec()
-    }
-
-    fn to_inserted_mut_date_map_vec(&mut self) -> Vec<&mut dyn AnyDateMap> {
-        self.subs
-            .as_mut_vec()
-            .into_iter()
-            .flat_map(|d| d.to_inserted_mut_date_map_vec())
-            .collect_vec()
-    }
-
-    fn to_inserted_mut_bi_map_vec(&mut self) -> Vec<&mut dyn AnyBiMap> {
-        self.subs
-            .as_mut_vec()
-            .into_iter()
-            .flat_map(|d| d.to_inserted_mut_bi_map_vec())
-            .collect_vec()
-    }
-
-    fn to_computed_height_map_vec(&self) -> Vec<&(dyn AnyHeightMap + Send + Sync)> {
-        self.subs
-            .as_vec()
-            .into_iter()
-            .flat_map(|d| d.to_computed_height_map_vec())
-            .collect_vec()
-    }
-
-    fn to_computed_date_map_vec(&self) -> Vec<&(dyn AnyDateMap + Send + Sync)> {
-        self.subs
-            .as_vec()
-            .into_iter()
-            .flat_map(|d| d.to_computed_date_map_vec())
-            .collect_vec()
-    }
-
-    fn to_computed_bi_map_vec(&self) -> Vec<&(dyn AnyBiMap + Send + Sync)> {
-        self.subs
-            .as_vec()
-            .into_iter()
-            .flat_map(|d| d.to_computed_bi_map_vec())
-            .collect_vec()
-    }
-
-    fn to_computed_mut_height_map_vec(&mut self) -> Vec<&mut dyn AnyHeightMap> {
-        self.subs
-            .as_mut_vec()
-            .into_iter()
-            .flat_map(|d| d.to_computed_mut_height_map_vec())
-            .collect_vec()
-    }
-
-    fn to_computed_mut_date_map_vec(&mut self) -> Vec<&mut dyn AnyDateMap> {
-        self.subs
-            .as_mut_vec()
-            .into_iter()
-            .flat_map(|d| d.to_computed_mut_date_map_vec())
-            .collect_vec()
-    }
-
-    fn to_computed_mut_bi_map_vec(&mut self) -> Vec<&mut dyn AnyBiMap> {
-        self.subs
-            .as_mut_vec()
-            .into_iter()
-            .flat_map(|d| d.to_computed_mut_bi_map_vec())
-            .collect_vec()
     }
 }

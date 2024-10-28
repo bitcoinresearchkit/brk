@@ -84,20 +84,4 @@ impl AnyDataset for OutputSubDataset {
     fn get_min_initial_states(&self) -> &MinInitialStates {
         &self.min_initial_states
     }
-
-    fn to_inserted_bi_map_vec(&self) -> Vec<&(dyn AnyBiMap + Send + Sync)> {
-        vec![&self.count, &self.volume]
-    }
-
-    fn to_inserted_mut_bi_map_vec(&mut self) -> Vec<&mut dyn AnyBiMap> {
-        vec![&mut self.count, &mut self.volume]
-    }
-
-    fn to_computed_bi_map_vec(&self) -> Vec<&(dyn AnyBiMap + Send + Sync)> {
-        vec![&self.annualized_volume, &self.velocity]
-    }
-
-    fn to_computed_mut_bi_map_vec(&mut self) -> Vec<&mut dyn AnyBiMap> {
-        vec![&mut self.annualized_volume, &mut self.velocity]
-    }
 }

@@ -1,18 +1,18 @@
 use allocative::Allocative;
+use struct_iterable::Iterable;
 
 use crate::{
     datasets::{AnyDataset, ComputeData, InsertData, MinInitialStates},
     states::RealizedState,
-    structs::{AnyBiMap, AnyDateMap, AnyHeightMap, BiMap, Config, Price},
+    structs::{BiMap, Config, MapKind, Price},
     utils::ONE_MONTH_IN_DAYS,
     DateMap, HeightMap,
 };
 
-#[derive(Default, Allocative)]
+#[derive(Allocative, Iterable)]
 pub struct RealizedSubDataset {
     min_initial_states: MinInitialStates,
 
-    // Inserted
     realized_profit: HeightMap<f32>,
     realized_loss: HeightMap<f32>,
     value_created: HeightMap<f32>,
@@ -27,8 +27,6 @@ pub struct RealizedSubDataset {
     adjusted_value_destroyed_1d_sum: DateMap<f32>,
     spent_output_profit_ratio: BiMap<f32>,
     adjusted_spent_output_profit_ratio: BiMap<f32>,
-
-    // Computed
     negative_realized_loss: HeightMap<f32>,
     negative_realized_loss_1d_sum: DateMap<f32>,
     net_realized_profit_and_loss: HeightMap<f32>,
@@ -62,57 +60,131 @@ impl RealizedSubDataset {
         let mut s = Self {
             min_initial_states: MinInitialStates::default(),
 
-            realized_profit: HeightMap::new_bin(1, &f("realized_profit")),
-            realized_loss: HeightMap::new_bin(1, &f("realized_loss")),
-            value_created: HeightMap::new_bin(1, &f("value_created")),
-            adjusted_value_created: HeightMap::new_bin(1, &f("adjusted_value_created")),
-            value_destroyed: HeightMap::new_bin(1, &f("value_destroyed")),
-            adjusted_value_destroyed: HeightMap::new_bin(1, &f("adjusted_value_destroyed")),
-            realized_profit_1d_sum: DateMap::new_bin(1, &f("realized_profit_1d_sum")),
-            realized_loss_1d_sum: DateMap::new_bin(1, &f("realized_loss_1d_sum")),
-            value_created_1d_sum: DateMap::new_bin(1, &f("value_created_1d_sum")),
-            adjusted_value_created_1d_sum: DateMap::new_bin(1, &f("adjusted_value_created_1d_sum")),
-            value_destroyed_1d_sum: DateMap::new_bin(1, &f("value_destroyed_1d_sum")),
+            // ---
+            // Inserted
+            // ---
+            realized_profit: HeightMap::new_bin(1, MapKind::Inserted, &f("realized_profit")),
+            realized_loss: HeightMap::new_bin(1, MapKind::Inserted, &f("realized_loss")),
+            value_created: HeightMap::new_bin(1, MapKind::Inserted, &f("value_created")),
+            adjusted_value_created: HeightMap::new_bin(
+                1,
+                MapKind::Inserted,
+                &f("adjusted_value_created"),
+            ),
+            value_destroyed: HeightMap::new_bin(1, MapKind::Inserted, &f("value_destroyed")),
+            adjusted_value_destroyed: HeightMap::new_bin(
+                1,
+                MapKind::Inserted,
+                &f("adjusted_value_destroyed"),
+            ),
+            realized_profit_1d_sum: DateMap::new_bin(
+                1,
+                MapKind::Inserted,
+                &f("realized_profit_1d_sum"),
+            ),
+            realized_loss_1d_sum: DateMap::new_bin(
+                1,
+                MapKind::Inserted,
+                &f("realized_loss_1d_sum"),
+            ),
+            value_created_1d_sum: DateMap::new_bin(
+                1,
+                MapKind::Inserted,
+                &f("value_created_1d_sum"),
+            ),
+            adjusted_value_created_1d_sum: DateMap::new_bin(
+                1,
+                MapKind::Inserted,
+                &f("adjusted_value_created_1d_sum"),
+            ),
+            value_destroyed_1d_sum: DateMap::new_bin(
+                1,
+                MapKind::Inserted,
+                &f("value_destroyed_1d_sum"),
+            ),
             adjusted_value_destroyed_1d_sum: DateMap::new_bin(
                 1,
+                MapKind::Inserted,
                 &f("adjusted_value_destroyed_1d_sum"),
             ),
-            spent_output_profit_ratio: BiMap::new_bin(2, &f("spent_output_profit_ratio")),
+            spent_output_profit_ratio: BiMap::new_bin(
+                2,
+                MapKind::Inserted,
+                &f("spent_output_profit_ratio"),
+            ),
             adjusted_spent_output_profit_ratio: BiMap::new_bin(
                 2,
+                MapKind::Inserted,
                 &f("adjusted_spent_output_profit_ratio"),
             ),
 
-            negative_realized_loss: HeightMap::new_bin(2, &f("negative_realized_loss")),
-            negative_realized_loss_1d_sum: DateMap::new_bin(2, &f("negative_realized_loss_1d_sum")),
-            net_realized_profit_and_loss: HeightMap::new_bin(1, &f("net_realized_profit_and_loss")),
+            // ---
+            // Computed
+            // ---
+            negative_realized_loss: HeightMap::new_bin(
+                2,
+                MapKind::Computed,
+                &f("negative_realized_loss"),
+            ),
+            negative_realized_loss_1d_sum: DateMap::new_bin(
+                2,
+                MapKind::Computed,
+                &f("negative_realized_loss_1d_sum"),
+            ),
+            net_realized_profit_and_loss: HeightMap::new_bin(
+                1,
+                MapKind::Computed,
+                &f("net_realized_profit_and_loss"),
+            ),
             net_realized_profit_and_loss_1d_sum: DateMap::new_bin(
                 1,
+                MapKind::Computed,
                 &f("net_realized_profit_and_loss_1d_sum"),
             ),
             net_realized_profit_and_loss_1d_sum_to_market_cap_ratio: DateMap::new_bin(
                 2,
+                MapKind::Computed,
                 &f("net_realized_profit_and_loss_to_market_cap_ratio"),
             ),
-            cumulative_realized_profit: BiMap::new_bin(1, &f("cumulative_realized_profit")),
-            cumulative_realized_loss: BiMap::new_bin(1, &f("cumulative_realized_loss")),
+            cumulative_realized_profit: BiMap::new_bin(
+                1,
+                MapKind::Computed,
+                &f("cumulative_realized_profit"),
+            ),
+            cumulative_realized_loss: BiMap::new_bin(
+                1,
+                MapKind::Computed,
+                &f("cumulative_realized_loss"),
+            ),
             cumulative_net_realized_profit_and_loss: BiMap::new_bin(
                 1,
+                MapKind::Computed,
                 &f("cumulative_net_realized_profit_and_loss"),
             ),
             cumulative_net_realized_profit_and_loss_1m_net_change: BiMap::new_bin(
                 1,
+                MapKind::Computed,
                 &f("cumulative_net_realized_profit_and_loss_1m_net_change"),
             ),
-            realized_value: HeightMap::new_bin(1, &f("realized_value")),
-            realized_value_1d_sum: DateMap::new_bin(1, &f("realized_value_1d_sum")),
-            sell_side_risk_ratio: DateMap::new_bin(1, &f("sell_side_risk_ratio")),
+            realized_value: HeightMap::new_bin(1, MapKind::Computed, &f("realized_value")),
+            realized_value_1d_sum: DateMap::new_bin(
+                1,
+                MapKind::Computed,
+                &f("realized_value_1d_sum"),
+            ),
+            sell_side_risk_ratio: DateMap::new_bin(
+                1,
+                MapKind::Computed,
+                &f("sell_side_risk_ratio"),
+            ),
             realized_profit_to_loss_ratio: HeightMap::new_bin(
                 1,
+                MapKind::Computed,
                 &f("realized_profit_to_loss_ratio"),
             ),
             realized_profit_to_loss_1d_sum_ratio: DateMap::new_bin(
                 1,
+                MapKind::Computed,
                 &f("realized_profit_to_loss_1d_sum_ratio"),
             ),
         };
@@ -311,121 +383,5 @@ impl RealizedSubDataset {
 impl AnyDataset for RealizedSubDataset {
     fn get_min_initial_states(&self) -> &MinInitialStates {
         &self.min_initial_states
-    }
-
-    fn to_inserted_bi_map_vec(&self) -> Vec<&(dyn AnyBiMap + Send + Sync)> {
-        vec![
-            &self.spent_output_profit_ratio,
-            &self.adjusted_spent_output_profit_ratio,
-        ]
-    }
-
-    fn to_inserted_mut_bi_map_vec(&mut self) -> Vec<&mut dyn AnyBiMap> {
-        vec![
-            &mut self.spent_output_profit_ratio,
-            &mut self.adjusted_spent_output_profit_ratio,
-        ]
-    }
-
-    fn to_inserted_height_map_vec(&self) -> Vec<&(dyn AnyHeightMap + Send + Sync)> {
-        vec![
-            &self.realized_loss,
-            &self.realized_profit,
-            &self.value_created,
-            &self.adjusted_value_created,
-            &self.value_destroyed,
-            &self.adjusted_value_destroyed,
-        ]
-    }
-
-    fn to_inserted_mut_height_map_vec(&mut self) -> Vec<&mut dyn AnyHeightMap> {
-        vec![
-            &mut self.realized_loss,
-            &mut self.realized_profit,
-            &mut self.value_created,
-            &mut self.adjusted_value_created,
-            &mut self.value_destroyed,
-            &mut self.adjusted_value_destroyed,
-        ]
-    }
-
-    fn to_inserted_date_map_vec(&self) -> Vec<&(dyn AnyDateMap + Send + Sync)> {
-        vec![
-            &self.realized_loss_1d_sum,
-            &self.realized_profit_1d_sum,
-            &self.value_created_1d_sum,
-            &self.adjusted_value_created_1d_sum,
-            &self.value_destroyed_1d_sum,
-            &self.adjusted_value_destroyed_1d_sum,
-        ]
-    }
-
-    fn to_inserted_mut_date_map_vec(&mut self) -> Vec<&mut dyn AnyDateMap> {
-        vec![
-            &mut self.realized_loss_1d_sum,
-            &mut self.realized_profit_1d_sum,
-            &mut self.value_created_1d_sum,
-            &mut self.adjusted_value_created_1d_sum,
-            &mut self.value_destroyed_1d_sum,
-            &mut self.adjusted_value_destroyed_1d_sum,
-        ]
-    }
-
-    fn to_computed_bi_map_vec(&self) -> Vec<&(dyn AnyBiMap + Send + Sync)> {
-        vec![
-            &self.cumulative_realized_profit,
-            &self.cumulative_realized_loss,
-            &self.cumulative_net_realized_profit_and_loss,
-            &self.cumulative_net_realized_profit_and_loss_1m_net_change,
-        ]
-    }
-
-    fn to_computed_mut_bi_map_vec(&mut self) -> Vec<&mut dyn AnyBiMap> {
-        vec![
-            &mut self.cumulative_realized_profit,
-            &mut self.cumulative_realized_loss,
-            &mut self.cumulative_net_realized_profit_and_loss,
-            &mut self.cumulative_net_realized_profit_and_loss_1m_net_change,
-        ]
-    }
-
-    fn to_computed_height_map_vec(&self) -> Vec<&(dyn AnyHeightMap + Send + Sync)> {
-        vec![
-            &self.negative_realized_loss,
-            &self.net_realized_profit_and_loss,
-            &self.realized_value,
-            &self.realized_profit_to_loss_ratio,
-        ]
-    }
-
-    fn to_computed_mut_height_map_vec(&mut self) -> Vec<&mut dyn AnyHeightMap> {
-        vec![
-            &mut self.negative_realized_loss,
-            &mut self.net_realized_profit_and_loss,
-            &mut self.realized_value,
-            &mut self.realized_profit_to_loss_ratio,
-        ]
-    }
-
-    fn to_computed_date_map_vec(&self) -> Vec<&(dyn AnyDateMap + Send + Sync)> {
-        vec![
-            &self.sell_side_risk_ratio,
-            &self.negative_realized_loss_1d_sum,
-            &self.net_realized_profit_and_loss_1d_sum,
-            &self.net_realized_profit_and_loss_1d_sum_to_market_cap_ratio,
-            &self.realized_value_1d_sum,
-            &self.realized_profit_to_loss_1d_sum_ratio,
-        ]
-    }
-
-    fn to_computed_mut_date_map_vec(&mut self) -> Vec<&mut dyn AnyDateMap> {
-        vec![
-            &mut self.sell_side_risk_ratio,
-            &mut self.negative_realized_loss_1d_sum,
-            &mut self.net_realized_profit_and_loss_1d_sum,
-            &mut self.net_realized_profit_and_loss_1d_sum_to_market_cap_ratio,
-            &mut self.realized_value_1d_sum,
-            &mut self.realized_profit_to_loss_1d_sum_ratio,
-        ]
     }
 }

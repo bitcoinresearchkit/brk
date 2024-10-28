@@ -1,15 +1,15 @@
 use allocative::Allocative;
+use struct_iterable::Iterable;
 
 use crate::{
     datasets::{AnyDataset, InsertData, MinInitialStates},
-    structs::{AnyBiMap, BiMap, Config},
+    structs::{BiMap, Config, MapKind},
 };
 
-#[derive(Default, Allocative)]
-pub struct MetadataDataset {
+#[derive(Allocative, Iterable)]
+pub struct AddressCohortMetadataDataset {
     min_initial_states: MinInitialStates,
 
-    // Inserted
     address_count: BiMap<f64>,
     // pub output: OutputSubDataset,
     // Sending addresses
@@ -17,7 +17,7 @@ pub struct MetadataDataset {
     // Active addresses (Unique(Sending + Receiving))
 }
 
-impl MetadataDataset {
+impl AddressCohortMetadataDataset {
     pub fn import(
         parent_path: &str,
         name: &Option<String>,
@@ -34,7 +34,8 @@ impl MetadataDataset {
         let mut s = Self {
             min_initial_states: MinInitialStates::default(),
 
-            address_count: BiMap::new_bin(1, &f("address_count")),
+            // Inserted
+            address_count: BiMap::new_bin(1, MapKind::Inserted, &f("address_count")),
             // output: OutputSubDataset::import(parent_path)?,
         };
 
@@ -62,16 +63,8 @@ impl MetadataDataset {
     }
 }
 
-impl AnyDataset for MetadataDataset {
+impl AnyDataset for AddressCohortMetadataDataset {
     fn get_min_initial_states(&self) -> &MinInitialStates {
         &self.min_initial_states
-    }
-
-    fn to_inserted_bi_map_vec(&self) -> Vec<&(dyn AnyBiMap + Send + Sync)> {
-        vec![&self.address_count]
-    }
-
-    fn to_inserted_mut_bi_map_vec(&mut self) -> Vec<&mut dyn AnyBiMap> {
-        vec![&mut self.address_count]
     }
 }

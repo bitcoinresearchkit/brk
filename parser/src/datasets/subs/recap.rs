@@ -3,7 +3,7 @@ use std::{iter::Sum, ops::Add};
 use allocative::Allocative;
 
 use crate::{
-    structs::{DateMapChunkId, GenericMap, MapKey, MapSerialized, MapValue},
+    structs::{DateMapChunkId, GenericMap, MapKey, MapKind, MapSerialized, MapValue},
     utils::{get_percentile, LossyFrom},
     Date, MapChunkId, SerializedBTreeMap,
 };
@@ -95,17 +95,36 @@ where
         let f = |s: &str| format!("{parent_path}/{s}");
 
         let s = Self {
-            min: options.min.then(|| GenericMap::new_bin(1, &f("min"))),
-            max: options.max.then(|| GenericMap::new_bin(1, &f("max"))),
-            median: options.median.then(|| GenericMap::new_bin(1, &f("median"))),
+            // ---
+            // Computed
+            // ---
+            min: options
+                .min
+                .then(|| GenericMap::new_bin(1, MapKind::Computed, &f("min"))),
+            max: options
+                .max
+                .then(|| GenericMap::new_bin(1, MapKind::Computed, &f("max"))),
+            median: options
+                .median
+                .then(|| GenericMap::new_bin(1, MapKind::Computed, &f("median"))),
             average: options
                 .average
-                .then(|| GenericMap::new_bin(1, &f("average"))),
-            sum: options.sum.then(|| GenericMap::new_bin(1, &f("sum"))),
-            _90p: options._90p.then(|| GenericMap::new_bin(1, &f("90p"))),
-            _75p: options._75p.then(|| GenericMap::new_bin(1, &f("75p"))),
-            _25p: options._25p.then(|| GenericMap::new_bin(1, &f("25p"))),
-            _10p: options._10p.then(|| GenericMap::new_bin(1, &f("10p"))),
+                .then(|| GenericMap::new_bin(1, MapKind::Computed, &f("average"))),
+            sum: options
+                .sum
+                .then(|| GenericMap::new_bin(1, MapKind::Computed, &f("sum"))),
+            _90p: options
+                ._90p
+                .then(|| GenericMap::new_bin(1, MapKind::Computed, &f("90p"))),
+            _75p: options
+                ._75p
+                .then(|| GenericMap::new_bin(1, MapKind::Computed, &f("75p"))),
+            _25p: options
+                ._25p
+                .then(|| GenericMap::new_bin(1, MapKind::Computed, &f("25p"))),
+            _10p: options
+                ._10p
+                .then(|| GenericMap::new_bin(1, MapKind::Computed, &f("10p"))),
         };
 
         Ok(s)
@@ -128,31 +147,31 @@ where
             values.sort_unstable();
 
             if let Some(max) = self.max.as_mut() {
-                max.insert(key, Value::lossy_from(*values.last().unwrap()));
+                max.insert_computed(key, Value::lossy_from(*values.last().unwrap()));
             }
 
             if let Some(_90p) = self._90p.as_mut() {
-                _90p.insert(key, Value::lossy_from(get_percentile(values, 0.90)));
+                _90p.insert_computed(key, Value::lossy_from(get_percentile(values, 0.90)));
             }
 
             if let Some(_75p) = self._75p.as_mut() {
-                _75p.insert(key, Value::lossy_from(get_percentile(values, 0.75)));
+                _75p.insert_computed(key, Value::lossy_from(get_percentile(values, 0.75)));
             }
 
             if let Some(median) = self.median.as_mut() {
-                median.insert(key, Value::lossy_from(get_percentile(values, 0.50)));
+                median.insert_computed(key, Value::lossy_from(get_percentile(values, 0.50)));
             }
 
             if let Some(_25p) = self._25p.as_mut() {
-                _25p.insert(key, Value::lossy_from(get_percentile(values, 0.25)));
+                _25p.insert_computed(key, Value::lossy_from(get_percentile(values, 0.25)));
             }
 
             if let Some(_10p) = self._10p.as_mut() {
-                _10p.insert(key, Value::lossy_from(get_percentile(values, 0.10)));
+                _10p.insert_computed(key, Value::lossy_from(get_percentile(values, 0.10)));
             }
 
             if let Some(min) = self.min.as_mut() {
-                min.insert(key, Value::lossy_from(*values.first().unwrap()));
+                min.insert_computed(key, Value::lossy_from(*values.first().unwrap()));
             }
         }
 
@@ -160,12 +179,12 @@ where
             let sum = Value::lossy_from(values.iter().sum::<Value2>());
 
             if let Some(sum_map) = self.sum.as_mut() {
-                sum_map.insert(key, sum);
+                sum_map.insert_computed(key, sum);
             }
 
             if let Some(average) = self.average.as_mut() {
                 let len = values.len() as f32;
-                average.insert(key, Value::lossy_from(f32::lossy_from(sum) / len));
+                average.insert_computed(key, Value::lossy_from(f32::lossy_from(sum) / len));
             }
         }
     }

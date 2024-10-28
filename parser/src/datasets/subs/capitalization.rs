@@ -1,22 +1,20 @@
 use allocative::Allocative;
+use struct_iterable::Iterable;
 
 use crate::{
     datasets::{AnyDataset, ComputeData, InsertData, MinInitialStates},
     states::CapitalizationState,
-    structs::{AnyBiMap, BiMap, Config},
+    structs::{BiMap, Config, MapKind},
     utils::ONE_MONTH_IN_DAYS,
 };
 
 use super::RatioDataset;
 
-#[derive(Default, Allocative)]
+#[derive(Allocative, Iterable)]
 pub struct CapitalizationDataset {
     min_initial_states: MinInitialStates,
 
-    // Inserted
     pub realized_cap: BiMap<f32>,
-
-    // Computed
     pub realized_price: BiMap<f32>,
     realized_cap_1m_net_change: BiMap<f32>,
     realized_price_ratio: RatioDataset,
@@ -39,9 +37,20 @@ impl CapitalizationDataset {
         let mut s = Self {
             min_initial_states: MinInitialStates::default(),
 
-            realized_cap: BiMap::new_bin(1, &f("realized_cap")),
-            realized_cap_1m_net_change: BiMap::new_bin(1, &f("realized_cap_1m_net_change")),
-            realized_price: BiMap::new_bin(1, &f("realized_price")),
+            // ---
+            // Inserted
+            // ---
+            realized_cap: BiMap::new_bin(1, MapKind::Inserted, &f("realized_cap")),
+
+            // ---
+            // Computed
+            // ---
+            realized_cap_1m_net_change: BiMap::new_bin(
+                1,
+                MapKind::Computed,
+                &f("realized_cap_1m_net_change"),
+            ),
+            realized_price: BiMap::new_bin(1, MapKind::Computed, &f("realized_price")),
             realized_price_ratio: RatioDataset::import(
                 parent_path,
                 &format!(
@@ -108,31 +117,5 @@ impl CapitalizationDataset {
 impl AnyDataset for CapitalizationDataset {
     fn get_min_initial_states(&self) -> &MinInitialStates {
         &self.min_initial_states
-    }
-
-    fn to_inserted_bi_map_vec(&self) -> Vec<&(dyn AnyBiMap + Send + Sync)> {
-        vec![&self.realized_cap]
-    }
-
-    fn to_inserted_mut_bi_map_vec(&mut self) -> Vec<&mut dyn AnyBiMap> {
-        vec![&mut self.realized_cap]
-    }
-
-    fn to_computed_bi_map_vec(&self) -> Vec<&(dyn AnyBiMap + Send + Sync)> {
-        let mut v = vec![
-            &self.realized_price as &(dyn AnyBiMap + Send + Sync),
-            &self.realized_cap_1m_net_change,
-        ];
-        v.append(&mut self.realized_price_ratio.to_computed_bi_map_vec());
-        v
-    }
-
-    fn to_computed_mut_bi_map_vec(&mut self) -> Vec<&mut dyn AnyBiMap> {
-        let mut v = vec![
-            &mut self.realized_price as &mut dyn AnyBiMap,
-            &mut self.realized_cap_1m_net_change,
-        ];
-        v.append(&mut self.realized_price_ratio.to_computed_mut_bi_map_vec());
-        v
     }
 }

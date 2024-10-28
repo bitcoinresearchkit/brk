@@ -1,18 +1,17 @@
 use allocative::Allocative;
+use struct_iterable::Iterable;
 
 use crate::{
     datasets::AnyDataset,
-    structs::{AnyDateMap, AnyHeightMap, Config},
+    structs::{Config, MapKind},
     DateMap, HeightMap,
 };
 
 use super::{InsertData, MinInitialStates};
 
-#[derive(Allocative)]
+#[derive(Allocative, Iterable)]
 pub struct CoindaysDataset {
     min_initial_states: MinInitialStates,
-
-    // Inserted
     pub coindays_destroyed: HeightMap<f32>,
     pub coindays_destroyed_1d_sum: DateMap<f32>,
 }
@@ -24,8 +23,13 @@ impl CoindaysDataset {
         let mut s = Self {
             min_initial_states: MinInitialStates::default(),
 
-            coindays_destroyed: HeightMap::new_bin(1, &f("coindays_destroyed")),
-            coindays_destroyed_1d_sum: DateMap::new_bin(1, &f("coindays_destroyed_1d_sum")),
+            // Inserted
+            coindays_destroyed: HeightMap::new_bin(1, MapKind::Inserted, &f("coindays_destroyed")),
+            coindays_destroyed_1d_sum: DateMap::new_bin(
+                1,
+                MapKind::Inserted,
+                &f("coindays_destroyed_1d_sum"),
+            ),
         };
 
         s.min_initial_states
@@ -56,22 +60,6 @@ impl CoindaysDataset {
 }
 
 impl AnyDataset for CoindaysDataset {
-    fn to_inserted_height_map_vec(&self) -> Vec<&(dyn AnyHeightMap + Send + Sync)> {
-        vec![&self.coindays_destroyed]
-    }
-
-    fn to_inserted_date_map_vec(&self) -> Vec<&(dyn AnyDateMap + Send + Sync)> {
-        vec![&self.coindays_destroyed_1d_sum]
-    }
-
-    fn to_inserted_mut_height_map_vec(&mut self) -> Vec<&mut dyn AnyHeightMap> {
-        vec![&mut self.coindays_destroyed]
-    }
-
-    fn to_inserted_mut_date_map_vec(&mut self) -> Vec<&mut dyn AnyDateMap> {
-        vec![&mut self.coindays_destroyed_1d_sum]
-    }
-
     fn get_min_initial_states(&self) -> &MinInitialStates {
         &self.min_initial_states
     }
