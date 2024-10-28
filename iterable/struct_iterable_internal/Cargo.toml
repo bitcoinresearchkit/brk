@@ -1,0 +1,11 @@
+[package]
+name = "struct_iterable_internal"
+version = "0.1.1"
+authors = ["André de Moraes <deco.moraes@icloud.com>"]
+edition = "2021"
+description = "An internal crate for struct_iterable"
+license = "MIT"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]

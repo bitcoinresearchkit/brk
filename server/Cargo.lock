@@ -2708,7 +2708,7 @@ checksum = "7da8b5736845d9f2fcb837ea5d9e2628564b3b043a70948a3f0b778838c5fb4f"
 
 [[package]]
 name = "struct_iterable"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "struct_iterable_derive",
  "struct_iterable_internal",
