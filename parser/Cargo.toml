@@ -13,18 +13,18 @@ bincode = { git = "https://github.com/bincode-org/bincode.git", features = [
 bitcoin_hashes = { version = "0.14.0" }
 biter = { path = "../biter" }
 chrono = { version = "0.4.38", features = ["serde"] }
-clap = { version = "4.5.19", features = ["derive"] }
+clap = { version = "4.5.20", features = ["derive"] }
 color-eyre = "0.6.3"
 ctrlc = { version = "3.4.5", features = ["termination"] }
 derive_deref = "1.1.1"
 inferno = "0.11.21"
 itertools = "0.13.0"
-ordered-float = "4.3.0"
+ordered-float = "4.4.0"
 rayon = "1.10.0"
-reqwest = { version = "0.12.8", features = ["blocking", "json"] }
-sanakirja = "1.4.2"
-serde = { version = "1.0.210", features = ["derive"] }
-serde_json = "1.0.128"
+reqwest = { version = "0.12.9", features = ["blocking", "json"] }
+sanakirja = "1.4.3"
+serde = { version = "1.0.214", features = ["derive"] }
+serde_json = "1.0.132"
 struct_iterable = { path = "../iterable" }
 toml = "0.8.19"
 zstd = "0.13.2"

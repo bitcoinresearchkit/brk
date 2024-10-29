@@ -33,8 +33,8 @@ pub struct Config {
     pub delay: Option<u64>,
 
     /// Maximum ram you want the program to use in GB, default: 50% of total, not saved
-    #[arg(long, value_name = "GB")]
-    pub max_ram: Option<f64>,
+    // #[arg(long, value_name = "GB")]
+    // pub max_ram: Option<f64>,
 
     /// Start a dry run, default: false, not saved
     #[arg(long, value_name = "BOOL")]
@@ -84,9 +84,9 @@ impl Config {
             config_saved.delay = Some(delay);
         }
 
-        if let Some(max_ram) = config_args.max_ram.take() {
-            config_saved.max_ram = Some(max_ram);
-        }
+        // if let Some(max_ram) = config_args.max_ram.take() {
+        //     config_saved.max_ram = Some(max_ram);
+        // }
 
         // Done importing
 
@@ -108,7 +108,7 @@ impl Config {
         log(&format!("rpcuser: {:?}", config.rpcuser));
         log(&format!("rpcpassword: {:?}", config.rpcpassword));
         log(&format!("delay: {:?}", config.delay));
-        log(&format!("max_ram: {:?}", config.max_ram));
+        // log(&format!("max_ram: {:?}", config.max_ram));
         log(&format!("dry_run: {:?}", config.dry_run));
         log(&format!("record_ram_usage: {:?}", config.record_ram_usage));
         log(&format!(
