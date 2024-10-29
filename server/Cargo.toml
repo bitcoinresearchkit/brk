@@ -19,3 +19,4 @@ swc = "0.289.1"
 swc_common = "0.40.1"
 tokio = { version = "1.40.0", features = ["full"] }
 tower-http = { version = "0.6.1", features = ["compression-full"] }
+# oxc = { version = "0.34.0", features = ["codegen", "minifier"] }
