@@ -15,7 +15,7 @@ use derive_deref::{Deref, DerefMut};
 //
 // Possible compression: https://pijul.org/posts/sanakirja-zstd/
 use sanakirja::{
-    btree::{self, page, Db_},
+    btree::{self, page, Db_, Iter},
     direct_repr, Commit, Env, Error, MutTxn, RootDb, Storable, UnsizedStorable,
 };
 
@@ -60,13 +60,8 @@ where
         })
     }
 
-    pub fn iter<F>(&self, callback: &mut F)
-    where
-        F: FnMut((&Key, &Value)),
-    {
-        btree::iter(&self.txn, &self.db, None)
-            .unwrap()
-            .for_each(|entry| callback(entry.unwrap()));
+    pub fn iter(&self) -> Iter<'_, MutTxn<Env, ()>, Key, Value, page::Page<Key, Value>> {
+        btree::iter(&self.txn, &self.db, None).unwrap()
     }
 
     pub fn get(&self, key: &Key) -> Option<&Value> {

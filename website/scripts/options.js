@@ -7,18 +7,18 @@ const HEIGHT_TO_PREFIX = "height-to-";
  */
 function createPartialOptions(colors) {
   function initGroups() {
-    const xth = /** @type {const} */ ([
+    const xTermHolders = /** @type {const} */ ([
       {
         id: "sth",
         key: "sth",
         name: "Short Term Holders",
-        legend: "STH",
+        legend: "Short Term Holders - STH",
       },
       {
         id: "lth",
         key: "lth",
         name: "Long Term Holders",
-        legend: "LTH",
+        legend: "Long Term Holders - LTH",
       },
     ]);
 
@@ -231,7 +231,7 @@ function createPartialOptions(colors) {
         id: "",
         name: "",
       },
-      ...xth,
+      ...xTermHolders,
       ...upTo,
       ...fromXToY,
       ...fromX,
@@ -460,7 +460,7 @@ function createPartialOptions(colors) {
     ]);
 
     return {
-      xth,
+      xTermHolders,
       upTo,
       fromX,
       fromXToY,
@@ -3656,15 +3656,20 @@ function createPartialOptions(colors) {
             },
           ],
         },
-        ...groups.xth.map(({ key, id, name, legend }) =>
-          createCohortOptionsGroup({
-            scale,
-            color: colors[key],
-            name: legend,
-            datasetId: id,
-            title: name,
-          }),
-        ),
+        {
+          name: "X Term Holders",
+          tree: [
+            ...groups.xTermHolders.map(({ key, id, name, legend }) =>
+              createCohortOptionsGroup({
+                scale,
+                color: colors[key],
+                name: legend,
+                datasetId: id,
+                title: name,
+              }),
+            ),
+          ],
+        },
         {
           name: "Up To X",
           tree: groups.upTo.map(({ key, id, name }) =>

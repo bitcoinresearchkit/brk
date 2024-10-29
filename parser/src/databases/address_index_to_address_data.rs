@@ -92,7 +92,11 @@ impl AddressIndexToAddressData {
                 .par_iter()
                 .map(|(_, database)| {
                     let mut s = AddressCohortsDurableStates::default();
-                    database.iter(&mut |(_, a)| s.increment(a).unwrap());
+
+                    database
+                        .iter()
+                        .map(|r| r.unwrap().1)
+                        .for_each(|address_data| s.increment(address_data).unwrap());
                     s
                 })
                 .sum()
