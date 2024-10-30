@@ -31,6 +31,14 @@ pub fn iter_blocks(
 
     let mut databases = Databases::import();
 
+    if config.first_defragment() {
+        databases.defragment();
+
+        if true {
+            panic!("Done");
+        }
+    }
+
     log("Imported databases");
 
     let mut states = States::import().unwrap_or_default();
@@ -177,7 +185,11 @@ pub fn iter_blocks(
                             .as_ref()
                             .map_or(true, |date| date.is_first_of_month());
 
-                        if is_check_point || height.is_close_to_end(approx_block_count) {
+                        let ran_for_at_least_a_minute = instant.elapsed().as_secs() >= 60;
+
+                        if (is_check_point && ran_for_at_least_a_minute)
+                            || height.is_close_to_end(approx_block_count)
+                        {
                             break 'days;
                         }
 

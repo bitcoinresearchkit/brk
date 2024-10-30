@@ -48,6 +48,7 @@
 - Added `--recompute_computed true` argument, to allow recomputation of computed datasets in case of a bug
 - Fixed not saved arguments, not being processed properly
 - Fixed bug in `generic_map.multi_insert_simple_average`
+- Added defragmentation of databases to save space
 
 ## Server
 

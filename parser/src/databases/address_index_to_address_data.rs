@@ -5,6 +5,7 @@ use std::{
 };
 
 use allocative::Allocative;
+use itertools::Itertools;
 use rayon::prelude::*;
 
 use crate::{
@@ -13,7 +14,7 @@ use crate::{
     utils::time,
 };
 
-use super::{AnyDatabaseGroup, Database as _Database, Metadata};
+use super::{AnyDatabase, AnyDatabaseGroup, Database as _Database, Metadata};
 
 type Key = u32;
 type Value = AddressData;
@@ -97,18 +98,45 @@ impl AddressIndexToAddressData {
                         .iter()
                         .map(|r| r.unwrap().1)
                         .for_each(|address_data| s.increment(address_data).unwrap());
+
                     s
                 })
                 .sum()
         })
     }
 
-    pub fn open_all(&mut self) {
+    fn db_index(key: &Key) -> usize {
+        *key as usize / ADDRESS_INDEX_DB_MAX_SIZE
+    }
+}
+
+impl AnyDatabaseGroup for AddressIndexToAddressData {
+    fn import() -> Self {
+        Self {
+            metadata: Metadata::import(&Self::full_path(), 1),
+
+            map: BTreeMap::default(),
+        }
+    }
+
+    fn reset_metadata(&mut self) {
+        self.metadata.reset();
+    }
+
+    fn folder<'a>() -> &'a str {
+        "address_index_to_address_data"
+    }
+
+    fn open_all(&mut self) {
         let path = Self::full_path();
 
-        fs::create_dir_all(&path).unwrap();
+        let folder = fs::read_dir(path);
 
-        fs::read_dir(path)
+        if folder.is_err() {
+            return;
+        }
+
+        folder
             .unwrap()
             .map(|entry| {
                 entry
@@ -126,35 +154,14 @@ impl AddressIndexToAddressData {
             });
     }
 
-    fn db_index(key: &Key) -> usize {
-        *key as usize / ADDRESS_INDEX_DB_MAX_SIZE
-    }
-}
-
-impl AnyDatabaseGroup for AddressIndexToAddressData {
-    fn import() -> Self {
-        Self {
-            metadata: Metadata::import(&Self::full_path(), 1),
-
-            map: BTreeMap::default(),
-        }
-    }
-
-    fn export(&mut self, height: Height, date: Date) -> color_eyre::Result<()> {
+    fn drain_to_vec(&mut self) -> Vec<Box<dyn AnyDatabase + Send>> {
         mem::take(&mut self.map)
-            .into_par_iter()
-            .try_for_each(|(_, db)| db.export())?;
-
-        self.metadata.export(height, date).unwrap();
-
-        Ok(())
+            .into_values()
+            .map(|db| Box::new(db) as Box<dyn AnyDatabase + Send>)
+            .collect_vec()
     }
 
-    fn reset_metadata(&mut self) {
-        self.metadata.reset();
-    }
-
-    fn folder<'a>() -> &'a str {
-        "address_index_to_address_data"
+    fn export_metadata(&mut self, height: Height, date: Date) -> color_eyre::Result<()> {
+        self.metadata.export(height, date)
     }
 }

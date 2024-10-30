@@ -32,10 +32,9 @@ pub struct Config {
     #[arg(long, value_name = "SECONDS")]
     pub delay: Option<u64>,
 
-    /// Maximum ram you want the program to use in GB, default: 50% of total, not saved
+    // Maximum ram you want the program to use in GB, default: 50% of total, not saved
     // #[arg(long, value_name = "GB")]
     // pub max_ram: Option<f64>,
-
     /// Start a dry run, default: false, not saved
     #[arg(long, value_name = "BOOL")]
     dry_run: Option<bool>,
@@ -47,6 +46,10 @@ pub struct Config {
     /// Recompute all computed datasets, default: false, not saved
     #[arg(long, value_name = "BOOL")]
     recompute_computed: Option<bool>,
+
+    /// Start the program by defragmenting all databases to reduce their footprint, default: false, not saved
+    #[arg(long, value_name = "BOOL")]
+    first_defragment: Option<bool>,
 }
 
 impl Config {
@@ -99,6 +102,7 @@ impl Config {
         config.dry_run = config_args.dry_run.take();
         config.record_ram_usage = config_args.record_ram_usage.take();
         config.recompute_computed = config_args.recompute_computed.take();
+        config.first_defragment = config_args.first_defragment.take();
 
         log("---");
         log("Configuration:");
@@ -115,6 +119,7 @@ impl Config {
             "recompute_computed: {:?}",
             config.recompute_computed
         ));
+        log(&format!("first_defragment: {:?}", config.first_defragment));
         log("---");
 
         if config_args != Config::default() {
@@ -161,5 +166,9 @@ impl Config {
 
     pub fn recompute_computed(&self) -> bool {
         self.recompute_computed.is_some_and(|b| b)
+    }
+
+    pub fn first_defragment(&self) -> bool {
+        self.first_defragment.is_some_and(|b| b)
     }
 }

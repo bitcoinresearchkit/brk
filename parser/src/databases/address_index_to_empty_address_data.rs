@@ -1,15 +1,17 @@
 use std::{
     collections::BTreeMap,
-    mem,
+    fs, mem,
     ops::{Deref, DerefMut},
 };
 
 use allocative::Allocative;
-use rayon::prelude::*;
+use itertools::Itertools;
 
 use crate::structs::{Date, EmptyAddressData, Height};
 
-use super::{AnyDatabaseGroup, Database as _Database, Metadata, ADDRESS_INDEX_DB_MAX_SIZE};
+use super::{
+    AnyDatabase, AnyDatabaseGroup, Database as _Database, Metadata, ADDRESS_INDEX_DB_MAX_SIZE,
+};
 
 type Key = u32;
 type Value = EmptyAddressData;
@@ -96,16 +98,6 @@ impl AnyDatabaseGroup for AddressIndexToEmptyAddressData {
         }
     }
 
-    fn export(&mut self, height: Height, date: Date) -> color_eyre::Result<()> {
-        mem::take(&mut self.map)
-            .into_par_iter()
-            .try_for_each(|(_, db)| db.export())?;
-
-        self.metadata.export(height, date)?;
-
-        Ok(())
-    }
-
     fn reset_metadata(&mut self) {
         self.metadata.reset();
     }
@@ -113,4 +105,60 @@ impl AnyDatabaseGroup for AddressIndexToEmptyAddressData {
     fn folder<'a>() -> &'a str {
         "address_index_to_empty_address_data"
     }
+
+    fn open_all(&mut self) {
+        let path = Self::full_path();
+
+        let folder = fs::read_dir(path);
+
+        if folder.is_err() {
+            return;
+        }
+
+        folder
+            .unwrap()
+            .map(|entry| {
+                entry
+                    .unwrap()
+                    .path()
+                    .file_name()
+                    .unwrap()
+                    .to_str()
+                    .unwrap()
+                    .to_owned()
+            })
+            .filter(|file_name| file_name.contains(".."))
+            .for_each(|path| {
+                self.open_db(&path.split("..").next().unwrap().parse::<u32>().unwrap());
+            });
+    }
+
+    fn drain_to_vec(&mut self) -> Vec<Box<dyn AnyDatabase + Send>> {
+        mem::take(&mut self.map)
+            .into_values()
+            .map(|db| Box::new(db) as Box<dyn AnyDatabase + Send>)
+            .collect_vec()
+    }
+
+    fn export_metadata(&mut self, height: Height, date: Date) -> color_eyre::Result<()> {
+        self.metadata.export(height, date)
+    }
+
+    // fn export(&mut self, height: Height, date: Date) -> color_eyre::Result<()> {
+    //     self.drain_to_vec()
+    //         .into_par_iter()
+    //         .try_for_each(AnyDatabase::boxed_export)?;
+
+    //     self.metadata.export(height, date)?;
+
+    //     Ok(())
+    // }
+
+    // fn defragment(&mut self) {
+    //     self.open_all();
+
+    //     self.drain_to_vec()
+    //         .into_par_iter()
+    //         .for_each(AnyDatabase::boxed_defragment);
+    // }
 }

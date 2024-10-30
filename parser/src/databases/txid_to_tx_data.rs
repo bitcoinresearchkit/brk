@@ -1,16 +1,16 @@
 use std::{
     collections::BTreeMap,
-    mem,
+    fs, mem,
     ops::{Deref, DerefMut},
 };
 
 use allocative::Allocative;
 use biter::bitcoin::Txid;
-use rayon::prelude::*;
+use itertools::Itertools;
 
 use crate::structs::{Date, Height, TxData};
 
-use super::{AnyDatabaseGroup, Database as _Database, Metadata, U8x31};
+use super::{AnyDatabase, AnyDatabaseGroup, Database as _Database, Metadata, U8x31};
 
 type Key = U8x31;
 type Value = TxData;
@@ -104,7 +104,11 @@ impl TxidToTxData {
     #[inline(always)]
     pub fn open_db(&mut self, txid: &Txid) -> &mut Database {
         let db_index = Self::db_index(txid);
+        self._open_db(db_index)
+    }
 
+    #[inline(always)]
+    pub fn _open_db(&mut self, db_index: u16) -> &mut Database {
         self.entry(db_index)
             .or_insert_with(|| Database::open(Self::folder(), &db_index.to_string()).unwrap())
     }
@@ -127,21 +131,49 @@ impl AnyDatabaseGroup for TxidToTxData {
         }
     }
 
-    fn export(&mut self, height: Height, date: Date) -> color_eyre::Result<()> {
-        mem::take(&mut self.map)
-            .into_par_iter()
-            .try_for_each(|(_, db)| db.export())?;
-
-        self.metadata.export(height, date)?;
-
-        Ok(())
-    }
-
     fn reset_metadata(&mut self) {
         self.metadata.reset();
     }
 
     fn folder<'a>() -> &'a str {
         "txid_to_tx_data"
+    }
+
+    fn open_all(&mut self) {
+        let path = Self::full_path();
+
+        let folder = fs::read_dir(path);
+
+        if folder.is_err() {
+            return;
+        }
+
+        folder
+            .unwrap()
+            .flat_map(|entry| {
+                entry
+                    .unwrap()
+                    .path()
+                    .file_name()
+                    .unwrap()
+                    .to_str()
+                    .unwrap()
+                    .to_owned()
+                    .parse::<u16>()
+            })
+            .for_each(|db_index| {
+                self._open_db(db_index);
+            });
+    }
+
+    fn drain_to_vec(&mut self) -> Vec<Box<dyn AnyDatabase + Send>> {
+        mem::take(&mut self.map)
+            .into_values()
+            .map(|db| Box::new(db) as Box<dyn AnyDatabase + Send>)
+            .collect_vec()
+    }
+
+    fn export_metadata(&mut self, height: Height, date: Date) -> color_eyre::Result<()> {
+        self.metadata.export(height, date)
     }
 }

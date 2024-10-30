@@ -5,7 +5,7 @@ use crate::{
     utils::log,
 };
 
-use super::databases_folder_path;
+use super::{databases_folder_path, AnyDatabase};
 
 pub trait AnyDatabaseGroup
 where
@@ -13,9 +13,14 @@ where
 {
     fn import() -> Self;
 
-    fn export(&mut self, height: Height, date: Date) -> color_eyre::Result<()>;
-
     fn folder<'a>() -> &'a str;
+
+    fn drain_to_vec(&mut self) -> Vec<Box<dyn AnyDatabase + Send>>;
+    fn open_all(&mut self);
+
+    fn export_metadata(&mut self, height: Height, date: Date) -> color_eyre::Result<()>;
+    // fn export(&mut self, height: Height, date: Date) -> color_eyre::Result<()>;
+    // fn defragment(&mut self);
 
     fn reset(&mut self) -> color_eyre::Result<(), io::Error> {
         log(&format!("Reset {}", Self::folder()));

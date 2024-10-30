@@ -1,11 +1,13 @@
-use std::{collections::BTreeMap, mem, thread};
+use std::{collections::BTreeMap, fs, mem};
 
 use allocative::Allocative;
-use rayon::prelude::*;
+use itertools::Itertools;
 
 use crate::structs::{Address, Date, Height};
 
-use super::{AnyDatabaseGroup, Database, Metadata, U8x19, U8x31};
+use super::{
+    databases_folder_path, AnyDatabase, AnyDatabaseGroup, Database, Metadata, U8x19, U8x31,
+};
 
 type Value = u32;
 type U8x19Database = Database<U8x19, Value>;
@@ -146,64 +148,161 @@ impl AddressToAddressIndex {
         }
     }
 
-    pub fn open_p2pk(&mut self, prefix: u16) -> &mut P2PKDatabase {
-        self.p2pk.entry(prefix).or_insert_with(|| {
-            Database::open(
-                &format!("{}/{}", Self::folder(), "p2pk"),
-                &prefix.to_string(),
-            )
+    fn path_to_group_prefixes(path: &str) -> Vec<u16> {
+        let path = databases_folder_path(path);
+
+        let folder = fs::read_dir(path);
+
+        if folder.is_err() {
+            return vec![];
+        }
+
+        folder
             .unwrap()
-        })
+            .map(|entry| {
+                entry
+                    .unwrap()
+                    .path()
+                    .file_name()
+                    .unwrap()
+                    .to_str()
+                    .unwrap()
+                    .to_owned()
+                    .parse::<u16>()
+                    .unwrap()
+            })
+            .collect_vec()
+    }
+
+    fn path_p2pk() -> String {
+        format!("{}/{}", Self::folder(), "p2pk")
+    }
+
+    pub fn open_p2pk(&mut self, prefix: u16) -> &mut P2PKDatabase {
+        let path = Self::path_p2pk();
+        self.p2pk
+            .entry(prefix)
+            .or_insert_with(|| Database::open(&path, &prefix.to_string()).unwrap())
+    }
+
+    fn open_all_p2pk(&mut self) {
+        let path = Self::path_p2pk();
+        Self::path_to_group_prefixes(&path)
+            .into_iter()
+            .for_each(|prefix| {
+                self.p2pk
+                    .insert(prefix, Database::open(&path, &prefix.to_string()).unwrap());
+            });
+    }
+
+    fn path_p2pkh() -> String {
+        format!("{}/{}", Self::folder(), "p2pkh")
     }
 
     pub fn open_p2pkh(&mut self, prefix: u16) -> &mut P2PKHDatabase {
-        self.p2pkh.entry(prefix).or_insert_with(|| {
-            Database::open(
-                &format!("{}/{}", Self::folder(), "p2pkh"),
-                &prefix.to_string(),
-            )
-            .unwrap()
-        })
+        let path = Self::path_p2pkh();
+
+        self.p2pkh
+            .entry(prefix)
+            .or_insert_with(|| Database::open(&path, &prefix.to_string()).unwrap())
+    }
+
+    fn open_all_p2pkh(&mut self) {
+        let path = Self::path_p2pkh();
+        Self::path_to_group_prefixes(&path)
+            .into_iter()
+            .for_each(|prefix| {
+                self.p2pkh
+                    .insert(prefix, Database::open(&path, &prefix.to_string()).unwrap());
+            });
+    }
+
+    fn path_p2sh() -> String {
+        format!("{}/{}", Self::folder(), "p2sh")
     }
 
     pub fn open_p2sh(&mut self, prefix: u16) -> &mut P2SHDatabase {
-        self.p2sh.entry(prefix).or_insert_with(|| {
-            Database::open(
-                &format!("{}/{}", Self::folder(), "p2sh"),
-                &prefix.to_string(),
-            )
-            .unwrap()
-        })
+        let path = Self::path_p2sh();
+
+        self.p2sh
+            .entry(prefix)
+            .or_insert_with(|| Database::open(&path, &prefix.to_string()).unwrap())
+    }
+
+    fn open_all_p2sh(&mut self) {
+        let path = Self::path_p2sh();
+        Self::path_to_group_prefixes(&path)
+            .into_iter()
+            .for_each(|prefix| {
+                self.p2sh
+                    .insert(prefix, Database::open(&path, &prefix.to_string()).unwrap());
+            });
+    }
+
+    fn path_p2wpkh() -> String {
+        format!("{}/{}", Self::folder(), "p2wpkh")
     }
 
     pub fn open_p2wpkh(&mut self, prefix: u16) -> &mut P2WPKHDatabase {
-        self.p2wpkh.entry(prefix).or_insert_with(|| {
-            Database::open(
-                &format!("{}/{}", Self::folder(), "p2wpkh"),
-                &prefix.to_string(),
-            )
-            .unwrap()
-        })
+        let path = Self::path_p2wpkh();
+
+        self.p2wpkh
+            .entry(prefix)
+            .or_insert_with(|| Database::open(&path, &prefix.to_string()).unwrap())
+    }
+
+    fn open_all_p2wpkh(&mut self) {
+        let path = Self::path_p2wpkh();
+        Self::path_to_group_prefixes(&path)
+            .into_iter()
+            .for_each(|prefix| {
+                self.p2wpkh
+                    .insert(prefix, Database::open(&path, &prefix.to_string()).unwrap());
+            });
+    }
+
+    fn path_p2wsh() -> String {
+        format!("{}/{}", Self::folder(), "p2wsh")
     }
 
     pub fn open_p2wsh(&mut self, prefix: u16) -> &mut P2WSHDatabase {
-        self.p2wsh.entry(prefix).or_insert_with(|| {
-            Database::open(
-                &format!("{}/{}", Self::folder(), "p2wsh"),
-                &prefix.to_string(),
-            )
-            .unwrap()
-        })
+        let path = Self::path_p2wsh();
+
+        self.p2wsh
+            .entry(prefix)
+            .or_insert_with(|| Database::open(&path, &prefix.to_string()).unwrap())
+    }
+
+    fn open_all_p2wsh(&mut self) {
+        let path = Self::path_p2wsh();
+        Self::path_to_group_prefixes(&path)
+            .into_iter()
+            .for_each(|prefix| {
+                self.p2wsh
+                    .insert(prefix, Database::open(&path, &prefix.to_string()).unwrap());
+            });
+    }
+
+    fn path_p2tr() -> String {
+        format!("{}/{}", Self::folder(), "p2tr")
     }
 
     pub fn open_p2tr(&mut self, prefix: u16) -> &mut P2TRDatabase {
-        self.p2tr.entry(prefix).or_insert_with(|| {
-            Database::open(
-                &format!("{}/{}", Self::folder(), "p2tr"),
-                &prefix.to_string(),
-            )
-            .unwrap()
-        })
+        let path = Self::path_p2tr();
+
+        self.p2tr
+            .entry(prefix)
+            .or_insert_with(|| Database::open(&path, &prefix.to_string()).unwrap())
+    }
+
+    fn open_all_p2tr(&mut self) {
+        let path = Self::path_p2tr();
+        Self::path_to_group_prefixes(&path)
+            .into_iter()
+            .for_each(|prefix| {
+                self.p2tr
+                    .insert(prefix, Database::open(&path, &prefix.to_string()).unwrap());
+            });
     }
 
     pub fn open_unknown(&mut self) -> &mut UnknownDatabase {
@@ -251,49 +350,68 @@ impl AnyDatabaseGroup for AddressToAddressIndex {
         }
     }
 
-    fn export(&mut self, height: Height, date: Date) -> color_eyre::Result<()> {
-        thread::scope(|s| {
-            s.spawn(|| {
-                mem::take(&mut self.p2pk)
-                    .into_par_iter()
-                    .chain(mem::take(&mut self.p2pkh).into_par_iter())
-                    .chain(mem::take(&mut self.p2sh).into_par_iter())
-                    .chain(mem::take(&mut self.p2wpkh).into_par_iter())
-                    .try_for_each(|(_, db)| db.export())
-            });
-
-            s.spawn(|| {
-                mem::take(&mut self.p2wsh)
-                    .into_par_iter()
-                    .chain(mem::take(&mut self.p2tr).into_par_iter())
-                    .try_for_each(|(_, db)| db.export())
-            });
-
-            s.spawn(|| {
-                [
-                    self.unknown.take(),
-                    self.op_return.take(),
-                    self.push_only.take(),
-                    self.empty.take(),
-                ]
-                .into_par_iter()
-                .flatten()
-                .try_for_each(|db| db.export())
-            });
-
-            self.multisig.take().map(|db| db.export());
-        });
-
-        self.metadata.export(height, date)?;
-
-        Ok(())
-    }
-
     fn reset_metadata(&mut self) {
         self.metadata.reset()
     }
 
     fn folder<'a>() -> &'a str {
         "address_to_address_index"
+    }
+
+    fn drain_to_vec(&mut self) -> Vec<Box<dyn AnyDatabase + Send>> {
+        mem::take(&mut self.p2pk)
+            .into_values()
+            .map(|db| Box::new(db) as Box<dyn AnyDatabase + Send>)
+            .chain(
+                mem::take(&mut self.p2pkh)
+                    .into_values()
+                    .map(|db| Box::new(db) as Box<dyn AnyDatabase + Send>),
+            )
+            .chain(
+                mem::take(&mut self.p2sh)
+                    .into_values()
+                    .map(|db| Box::new(db) as Box<dyn AnyDatabase + Send>),
+            )
+            .chain(
+                mem::take(&mut self.p2wpkh)
+                    .into_values()
+                    .map(|db| Box::new(db) as Box<dyn AnyDatabase + Send>),
+            )
+            .chain(
+                mem::take(&mut self.p2wsh)
+                    .into_values()
+                    .map(|db| Box::new(db) as Box<dyn AnyDatabase + Send>),
+            )
+            .chain(
+                mem::take(&mut self.p2tr)
+                    .into_values()
+                    .map(|db| Box::new(db) as Box<dyn AnyDatabase + Send>),
+            )
+            .chain(
+                [
+                    self.unknown.take(),
+                    self.op_return.take(),
+                    self.push_only.take(),
+                    self.empty.take(),
+                    self.multisig.take(),
+                ]
+                .into_iter()
+                .flatten()
+                .map(|db| Box::new(db) as Box<dyn AnyDatabase + Send>),
+            )
+            .collect_vec()
+    }
+
+    fn open_all(&mut self) {
+        self.open_all_p2pk();
+        self.open_all_p2pkh();
+        self.open_all_p2wpkh();
+        self.open_all_p2wsh();
+        self.open_all_p2sh();
+        self.open_all_p2tr();
+    }
+
+    fn export_metadata(&mut self, height: Height, date: Date) -> color_eyre::Result<()> {
+        self.metadata.export(height, date)
     }
 }

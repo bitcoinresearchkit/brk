@@ -1,7 +1,7 @@
 import {
   Accessor,
   Setter,
-} from "../packages/solid-signals/2024-04-17/types/signals";
+} from "../packages/solid-signals/2024-10-28/types/signals";
 import {
   DeepPartial,
   BaselineStyleOptions,
@@ -17,7 +17,7 @@ import {
   ISeriesApi,
 } from "../packages/lightweight-charts/v4.2.0/types";
 import { DatePath, HeightPath, LastPath } from "./paths";
-import { Owner } from "../packages/solid-signals/2024-04-17/types/owner";
+import { Owner } from "../packages/solid-signals/2024-10-28/types/owner";
 
 type GrowToSize<T, N extends number, A extends T[]> = A["length"] extends N
   ? A

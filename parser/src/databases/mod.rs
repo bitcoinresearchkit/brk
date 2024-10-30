@@ -17,12 +17,15 @@ use _trait::*;
 pub use address_index_to_address_data::*;
 pub use address_index_to_empty_address_data::*;
 pub use address_to_address_index::*;
+use itertools::Itertools;
 use metadata::*;
+use rayon::iter::{IntoParallelIterator, ParallelIterator};
 pub use txid_to_tx_data::*;
 pub use txout_index_to_address_index::*;
 pub use txout_index_to_amount::*;
 
 use crate::{
+    log,
     structs::{Date, Height},
     utils::time,
 };
@@ -61,49 +64,94 @@ impl Databases {
         }
     }
 
+    pub fn drain_to_vec(&mut self) -> Vec<Box<dyn AnyDatabase + Send>> {
+        self.txid_to_tx_data
+            .drain_to_vec()
+            .into_iter()
+            .chain(self.txout_index_to_amount.drain_to_vec())
+            .chain(self.address_to_address_index.drain_to_vec())
+            .chain(self.address_index_to_address_data.drain_to_vec())
+            .chain(self.address_index_to_empty_address_data.drain_to_vec())
+            .chain(self.txout_index_to_address_index.drain_to_vec())
+            .collect_vec()
+    }
+
+    fn export_metadata(&mut self, height: Height, date: Date) -> color_eyre::Result<()> {
+        self.txid_to_tx_data.export_metadata(height, date)?;
+        self.txout_index_to_amount.export_metadata(height, date)?;
+        self.address_index_to_address_data
+            .export_metadata(height, date)?;
+        self.address_index_to_empty_address_data
+            .export_metadata(height, date)?;
+        self.address_to_address_index
+            .export_metadata(height, date)?;
+        self.txout_index_to_address_index
+            .export_metadata(height, date)?;
+        Ok(())
+    }
+
     pub fn export(&mut self, height: Height, date: Date) -> color_eyre::Result<()> {
-        thread::scope(|s| {
-            s.spawn(|| {
-                time("> Database txid_to_tx_data", || {
-                    self.txid_to_tx_data.export(height, date)
-                })
-            });
+        self.export_metadata(height, date)?;
 
-            s.spawn(|| {
-                time("> Database txout_index_to_amount", || {
-                    self.txout_index_to_amount.export(height, date)
-                })
-            });
-        });
-
-        thread::scope(|s| {
-            s.spawn(|| {
-                time("> Database address_index_to_address_data", || {
-                    self.address_index_to_address_data.export(height, date)
-                })
-            });
-
-            s.spawn(|| {
-                time("> Database address_index_to_empty_address_data", || {
-                    self.address_index_to_empty_address_data
-                        .export(height, date)
-                })
-            });
-
-            s.spawn(|| {
-                time("> Database address_to_address_index", || {
-                    self.address_to_address_index.export(height, date)
-                })
-            });
-
-            s.spawn(|| {
-                time("> Database txout_index_to_address_index", || {
-                    self.txout_index_to_address_index.export(height, date)
-                })
-            });
-        });
+        self.drain_to_vec()
+            .into_par_iter()
+            .try_for_each(AnyDatabase::boxed_export)?;
 
         Ok(())
+    }
+
+    fn open_all(&mut self) {
+        thread::scope(|s| {
+            s.spawn(|| {
+                time("Opening all address_index_to_address_data", || {
+                    self.address_index_to_address_data.open_all()
+                })
+            });
+
+            s.spawn(|| {
+                time("Opening all address_index_to_empty_address_data", || {
+                    self.address_index_to_empty_address_data.open_all()
+                })
+            });
+
+            s.spawn(|| {
+                time("Opening all address_to_address_index", || {
+                    self.address_to_address_index.open_all()
+                })
+            });
+
+            s.spawn(|| {
+                time("Opening all txid_to_tx_data", || {
+                    self.txid_to_tx_data.open_all()
+                })
+            });
+
+            s.spawn(|| {
+                time("Opening all txout_index_to_address_index", || {
+                    self.txout_index_to_address_index.open_all()
+                })
+            });
+
+            s.spawn(|| {
+                time("Opening all txout_index_to_amount", || {
+                    self.txout_index_to_amount.open_all()
+                })
+            });
+        });
+    }
+
+    pub fn defragment(&mut self) {
+        log("Databases defragmentation");
+
+        time("Defragmenting databases", || {
+            time("Opened all databases", || self.open_all());
+
+            log("Defragmenting...");
+
+            self.drain_to_vec()
+                .into_par_iter()
+                .for_each(AnyDatabase::boxed_defragment);
+        })
     }
 
     pub fn reset(&mut self, include_addresses: bool) {

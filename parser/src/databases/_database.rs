@@ -1,12 +1,13 @@
 use std::{
     collections::{BTreeMap, BTreeSet},
     fmt::Debug,
-    fs,
+    fs, mem,
 };
 
 use allocative::Allocative;
 use derive_deref::{Deref, DerefMut};
 
+use itertools::Itertools;
 // https://docs.rs/sanakirja/latest/sanakirja/index.html
 // https://pijul.org/posts/2021-02-06-rethinking-sanakirja/
 //
@@ -31,6 +32,8 @@ where
 {
     pub cached_puts: BTreeMap<Key, Value>,
     pub cached_dels: BTreeSet<Key>,
+    folder: String,
+    file: String,
     #[allocative(skip)]
     db: Db_<Key, Value, page::Page<Key, Value>>,
     #[allocative(skip)]
@@ -53,6 +56,8 @@ where
             .unwrap_or_else(|| unsafe { btree::create_db_(&mut txn).unwrap() });
 
         Ok(Self {
+            folder: folder.to_owned(),
+            file: file.to_owned(),
             cached_puts: BTreeMap::default(),
             cached_dels: BTreeSet::default(),
             db,
@@ -64,12 +69,33 @@ where
         btree::iter(&self.txn, &self.db, None).unwrap()
     }
 
+    fn iter_collect(&self) -> BTreeMap<Key, Value>
+    where
+        Value: Clone,
+    {
+        self.iter()
+            .map(|r| r.unwrap())
+            .map(|(key, value)| (key.clone(), value.clone()))
+            .collect::<_>()
+    }
+
     pub fn get(&self, key: &Key) -> Option<&Value> {
         if let Some(cached_put) = self.get_from_puts(key) {
             return Some(cached_put);
         }
 
         self.db_get(key)
+    }
+
+    fn destroy(self) {
+        let path = self.path();
+
+        drop(self);
+
+        fs::remove_file(&path).unwrap_or_else(|_| {
+            dbg!(path);
+            panic!("Error");
+        });
     }
 
     pub fn db_get(&self, key: &Key) -> Option<&Value> {
@@ -114,6 +140,14 @@ where
         self.cached_puts.insert(key, value)
     }
 
+    fn len(&self) -> usize {
+        self.iter().try_len().unwrap_or_else(|e| e.0)
+    }
+
+    fn is_empty(&self) -> bool {
+        self.len() == 0
+    }
+
     #[inline(always)]
     pub fn remove_from_puts(&mut self, key: &Key) -> Option<Value> {
         self.cached_puts.remove(key)
@@ -131,6 +165,10 @@ where
         self.cached_puts.insert(key, value)
     }
 
+    fn path(&self) -> String {
+        format!("{}/{}", databases_folder_path(&self.folder), self.file)
+    }
+
     fn init_txn(folder: &str, file: &str) -> color_eyre::Result<MutTxn<Env, ()>> {
         let path = databases_folder_path(folder);
 
@@ -143,30 +181,77 @@ where
         Ok(txn)
     }
 
-    pub fn export(mut self) -> color_eyre::Result<(), Error> {
+    fn db_multi_put(&mut self, tree: BTreeMap<Key, Value>) -> Result<(), Error> {
+        tree.into_iter()
+            .try_for_each(|(key, value)| -> Result<(), Error> {
+                btree::put(&mut self.txn, &mut self.db, &key, &value)?;
+                Ok(())
+            })
+    }
+
+    fn db_multi_del(&mut self, tree: BTreeSet<Key>) -> Result<(), Error> {
+        tree.into_iter().try_for_each(|key| -> Result<(), Error> {
+            btree::del(&mut self.txn, &mut self.db, &key, None)?;
+            Ok(())
+        })
+    }
+}
+
+pub trait AnyDatabase {
+    fn export(self) -> color_eyre::Result<(), Error>;
+    fn boxed_export(self: Box<Self>) -> color_eyre::Result<(), Error>;
+    #[allow(unused)]
+    fn defragment(self);
+    fn boxed_defragment(self: Box<Self>);
+}
+
+impl<Key, Value> AnyDatabase for Database<Key, Value>
+where
+    Key: Ord + Clone + Debug + Storable,
+    Value: Storable + PartialEq + Clone,
+{
+    fn export(self) -> color_eyre::Result<(), Error> {
+        Box::new(self).boxed_export()
+    }
+
+    fn boxed_export(mut self: Box<Self>) -> color_eyre::Result<(), Error> {
         if self.cached_dels.is_empty() && self.cached_puts.is_empty() {
             return Ok(());
         }
 
-        self.cached_dels
-            .into_iter()
-            .try_for_each(|key| -> Result<(), Error> {
-                btree::del(&mut self.txn, &mut self.db, &key, None)?;
+        let cached_dels = mem::take(&mut self.cached_dels);
+        self.db_multi_del(cached_dels)?;
 
-                Ok(())
-            })?;
-
-        self.cached_puts
-            .into_iter()
-            .try_for_each(|(key, value)| -> Result<(), Error> {
-                btree::put(&mut self.txn, &mut self.db, &key, &value)?;
-
-                Ok(())
-            })?;
+        let cached_puts = mem::take(&mut self.cached_puts);
+        self.db_multi_put(cached_puts)?;
 
         self.txn.set_root(ROOT_DB, self.db.db.into());
 
         self.txn.commit()
+    }
+
+    fn defragment(self) {
+        Box::new(self).boxed_defragment()
+    }
+
+    fn boxed_defragment(self: Box<Self>) {
+        let btree = self.iter_collect();
+
+        let folder = self.folder.to_owned();
+        let file = self.file.to_owned();
+
+        self.destroy();
+
+        let mut s = Self::open(&folder, &file).unwrap();
+
+        if !s.is_empty() {
+            dbg!(s.len());
+            panic!("Database isn't empty");
+        }
+
+        s.db_multi_put(btree).unwrap();
+
+        s.export().unwrap();
     }
 }
 
