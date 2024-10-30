@@ -169,6 +169,8 @@ impl Config {
     }
 
     pub fn first_defragment(&self) -> bool {
-        self.first_defragment.is_some_and(|b| b)
+        log("Buggy for now, skipped");
+        false
+        // self.first_defragment.is_some_and(|b| b)
     }
 }

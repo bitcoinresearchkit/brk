@@ -6,14 +6,14 @@
  * @import * as _ from "./packages/ufuzzy/v1.0.14/types"
  * @import { DeepPartial, ChartOptions, IChartApi, IHorzScaleBehavior, WhitespaceData, SingleValueData, ISeriesApi, Time, LogicalRange, SeriesMarker, CandlestickData, SeriesType, BaselineStyleOptions, SeriesOptionsCommon } from "./packages/lightweight-charts/v4.2.0/types"
  * @import { DatePath, HeightPath, LastPath } from "./types/paths";
- * @import { SignalOptions, untrack as Untrack } from "./packages/solid-signals/2024-10-28/types/core"
- * @import { getOwner as GetOwner, onCleanup as OnCleanup, Owner } from "./packages/solid-signals/2024-10-28/types/owner"
- * @import { createSignal as CreateSignal, createEffect as CreateEffect, Accessor, Setter, createMemo as CreateMemo, createRoot as CreateRoot, runWithOwner as RunWithOwner } from "./packages/solid-signals/2024-10-28/types/signals";
+ * @import { SignalOptions, untrack as Untrack } from "./packages/solid-signals/2024-04-17/types/core"
+ * @import { getOwner as GetOwner, onCleanup as OnCleanup, Owner } from "./packages/solid-signals/2024-04-17/types/owner"
+ * @import { createSignal as CreateSignal, createEffect as CreateEffect, Accessor, Setter, createMemo as CreateMemo, createRoot as CreateRoot, runWithOwner as RunWithOwner } from "./packages/solid-signals/2024-04-17/types/signals";
  */
 
 function initPackages() {
   async function importSignals() {
-    return import("./packages/solid-signals/2024-10-28/script.js").then(
+    return import("./packages/solid-signals/2024-04-17/script.js").then(
       (_signals) => {
         const signals = {
           createSolidSignal: /** @type {CreateSignal} */ (
