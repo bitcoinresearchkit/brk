@@ -69,7 +69,7 @@ where
         btree::iter(&self.txn, &self.db, None).unwrap()
     }
 
-    fn iter_collect(&self) -> BTreeMap<Key, Value>
+    pub fn iter_collect(&self) -> BTreeMap<Key, Value>
     where
         Value: Clone,
     {
@@ -244,14 +244,10 @@ where
 
         let mut s = Self::open(&folder, &file).unwrap();
 
-        if !s.is_empty() {
-            dbg!(s.len());
-            panic!("Database isn't empty");
+        if s.is_empty() {
+            s.cached_puts = btree;
+            s.export().unwrap();
         }
-
-        s.db_multi_put(btree).unwrap();
-
-        s.export().unwrap();
     }
 }
 

@@ -16,6 +16,9 @@ out
 /datasets
 /datasets2
 /price
+*..*
+/txout_*
+/db
 
 # Sync
 .stfolder
