@@ -36,6 +36,8 @@
 - Fixed history not being properly registered
 - Fixed window being moveable on iOS when in standalone mode when it shouldn't be
 - Split `index.html` and `script.js` into multiple js and css files to load only what's necessary at a given time
+- Added `Compare` section to all groups, to compare all datasets within a group
+- Updated `Solid Signals` library, which had an important breaking change on the `createEffect` function which might bring some bugs
 
 ## Parser
 

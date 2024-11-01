@@ -1,19 +1,19 @@
 // @ts-check
 
 /**
- * @import { OptionPath, PartialOption, PartialOptionsGroup, PartialOptionsTree, Option, OptionsGroup, Series, PriceSeriesType, ResourceDataset, TimeScale, SerializedHistory, TimeRange, Unit, Marker, Weighted, DatasetPath, OHLC, FetchedJSON, DatasetValue, FetchedResult, AnyDatasetPath, SeriesBlueprint, BaselineSpecificSeriesBlueprint, CandlestickSpecificSeriesBlueprint, LineSpecificSeriesBlueprint, SpecificSeriesBlueprintWithChart, Signal, Color, SettingsTheme, DatasetCandlestickData, FoldersFilter, PartialChartOption, ChartOption, AnyPartialOption, ProcessedOptionAddons, OptionsTree, AnyPath, SimulationOption } from "./types/self"
+ * @import { Option, ResourceDataset, TimeScale, SerializedHistory, TimeRange, Unit, Marker, Weighted, DatasetPath, OHLC, FetchedJSON, DatasetValue, FetchedResult, AnyDatasetPath, SeriesBlueprint, BaselineSpecificSeriesBlueprint, CandlestickSpecificSeriesBlueprint, LineSpecificSeriesBlueprint, SpecificSeriesBlueprintWithChart, Signal, Color, SettingsTheme, DatasetCandlestickData, FoldersFilter, PartialChartOption, ChartOption, AnyPartialOption, ProcessedOptionAddons, OptionsTree, AnyPath, SimulationOption } from "./types/self"
  * @import {createChart as CreateClassicChart, createChartEx as CreateCustomChart, LineStyleOptions} from "./packages/lightweight-charts/v4.2.0/types";
  * @import * as _ from "./packages/ufuzzy/v1.0.14/types"
  * @import { DeepPartial, ChartOptions, IChartApi, IHorzScaleBehavior, WhitespaceData, SingleValueData, ISeriesApi, Time, LogicalRange, SeriesMarker, CandlestickData, SeriesType, BaselineStyleOptions, SeriesOptionsCommon } from "./packages/lightweight-charts/v4.2.0/types"
  * @import { DatePath, HeightPath, LastPath } from "./types/paths";
- * @import { SignalOptions, untrack as Untrack } from "./packages/solid-signals/2024-04-17/types/core"
- * @import { getOwner as GetOwner, onCleanup as OnCleanup, Owner } from "./packages/solid-signals/2024-04-17/types/owner"
- * @import { createSignal as CreateSignal, createEffect as CreateEffect, Accessor, Setter, createMemo as CreateMemo, createRoot as CreateRoot, runWithOwner as RunWithOwner } from "./packages/solid-signals/2024-04-17/types/signals";
+ * @import { SignalOptions } from "./packages/solid-signals/2024-10-28/types/core"
+ * @import { getOwner as GetOwner, onCleanup as OnCleanup, Owner } from "./packages/solid-signals/2024-10-28/types/owner"
+ * @import { createSignal as CreateSignal, createEffect as CreateEffect, Accessor, Setter, createMemo as CreateMemo, createRoot as CreateRoot, runWithOwner as RunWithOwner } from "./packages/solid-signals/2024-10-28/types/signals";
  */
 
 function initPackages() {
   async function importSignals() {
-    return import("./packages/solid-signals/2024-04-17/script.js").then(
+    return import("./packages/solid-signals/2024-10-28/script.js").then(
       (_signals) => {
         const signals = {
           createSolidSignal: /** @type {CreateSignal} */ (
@@ -22,7 +22,6 @@ function initPackages() {
           createEffect: /** @type {CreateEffect} */ (_signals.createEffect),
           createMemo: /** @type {CreateMemo} */ (_signals.createMemo),
           createRoot: /** @type {CreateRoot} */ (_signals.createRoot),
-          untrack: /** @type {Untrack} */ (_signals.untrack),
           getOwner: /** @type {GetOwner} */ (_signals.getOwner),
           runWithOwner: /** @type {RunWithOwner} */ (_signals.runWithOwner),
           onCleanup: /** @type {OnCleanup} */ (_signals.onCleanup),
@@ -34,7 +33,10 @@ function initPackages() {
            * @returns {Signal<T>}
            */
           createSignal(initialValue, options) {
-            const [get, set] = this.createSolidSignal(initialValue, options);
+            const [get, set] = this.createSolidSignal(
+              /** @type {any} */ (initialValue),
+              options,
+            );
 
             // @ts-ignore
             get.set = set;
@@ -54,9 +56,7 @@ function initPackages() {
               }
 
               let firstEffect = true;
-              this.createEffect(() => {
-                const value = get();
-
+              this.createEffect(get, (value) => {
                 if (!save) return;
 
                 if (!firstEffect && save.id) {
@@ -82,13 +82,6 @@ function initPackages() {
             // @ts-ignore
             return get;
           },
-          /**
-           * @param {(dispose: VoidFunction) => void} callback
-           */
-          createUntrackedRoot: (callback) =>
-            signals.untrack(() => {
-              signals.createRoot(callback);
-            }),
         };
 
         return signals;
@@ -285,34 +278,35 @@ function initPackages() {
                 minimumWidth: 78,
               });
 
-              signals.createEffect(() => {
-                const { default: _defaultColor, off: _offColor } = colors;
-
-                const defaultColor = _defaultColor();
-                const offColor = _offColor();
-
-                chart.applyOptions({
-                  layout: {
-                    textColor: offColor,
-                  },
-                  rightPriceScale: {
-                    borderVisible: false,
-                  },
-                  timeScale: {
-                    borderVisible: false,
-                  },
-                  crosshair: {
-                    horzLine: {
-                      color: defaultColor,
-                      labelBackgroundColor: defaultColor,
+              signals.createEffect(
+                () => ({
+                  defaultColor: colors.default(),
+                  offColor: colors.off(),
+                }),
+                ({ defaultColor, offColor }) => {
+                  chart.applyOptions({
+                    layout: {
+                      textColor: offColor,
                     },
-                    vertLine: {
-                      color: defaultColor,
-                      labelBackgroundColor: defaultColor,
+                    rightPriceScale: {
+                      borderVisible: false,
                     },
-                  },
-                });
-              });
+                    timeScale: {
+                      borderVisible: false,
+                    },
+                    crosshair: {
+                      horzLine: {
+                        color: defaultColor,
+                        labelBackgroundColor: defaultColor,
+                      },
+                      vertLine: {
+                        color: defaultColor,
+                        labelBackgroundColor: defaultColor,
+                      },
+                    },
+                  });
+                },
+              );
 
               return chart;
             }
@@ -366,8 +360,8 @@ function initPackages() {
               const series = chart.addBaselineSeries(seriesOptions);
 
               signals.runWithOwner(owner, () => {
-                signals.createEffect(() => {
-                  series.applyOptions(computeColors());
+                signals.createEffect(computeColors, (computeColors) => {
+                  series.applyOptions(computeColors);
                 });
               });
 
@@ -409,8 +403,8 @@ function initPackages() {
               });
 
               signals.runWithOwner(owner, () => {
-                signals.createEffect(() => {
-                  candlestickSeries.applyOptions(computeColors());
+                signals.createEffect(computeColors, (computeColors) => {
+                  candlestickSeries.applyOptions(computeColors);
                 });
               });
 
@@ -441,8 +435,8 @@ function initPackages() {
               });
 
               signals.runWithOwner(owner, () => {
-                signals.createEffect(() => {
-                  series.applyOptions(computeColors());
+                signals.createEffect(computeColors, (computeColors) => {
+                  series.applyOptions(computeColors);
                 });
               });
 
@@ -909,8 +903,8 @@ const utils = {
       if (typeof title === "string") {
         legend.innerHTML = title;
       } else {
-        signals.createEffect(() => {
-          legend.innerHTML = title();
+        signals.createEffect(title, (title) => {
+          legend.innerHTML = title;
         });
       }
       field.append(legend);
@@ -2182,9 +2176,7 @@ function initWebSockets(signals) {
   krakenCandle.open();
 
   function createDocumentTitleEffect() {
-    signals.createEffect(() => {
-      const latest = krakenCandle.latest();
-
+    signals.createEffect(krakenCandle.latest, (latest) => {
       if (latest) {
         const close = latest.close;
         console.log("close:", close);
@@ -2231,13 +2223,13 @@ packages.signals().then((signals) =>
     );
     function createFetchLastValuesWhenNeededEffect() {
       let previousHeight = -1;
-      signals.createEffect(() => {
-        if (previousHeight !== lastHeight()) {
+      signals.createEffect(lastHeight, (lastHeight) => {
+        if (previousHeight !== lastHeight) {
           fetch("/api/last").then((response) => {
             response.json().then((json) => {
               if (typeof json === "object") {
                 lastValues.set(json);
-                previousHeight = lastHeight();
+                previousHeight = lastHeight;
               }
             });
           });
@@ -2282,112 +2274,108 @@ packages.signals().then((signals) =>
           let firstChartOption = true;
           let firstSimulationOption = true;
 
-          signals.createEffect(() => {
-            const option = options.selected();
+          signals.createEffect(options.selected, (option) => {
+            if (previousElement) {
+              previousElement.hidden = true;
+              utils.url.resetParams(option);
+              utils.url.pushHistory(option.id);
+            } else {
+              utils.url.replaceHistory({ pathname: option.id });
+            }
 
-            signals.untrack(() => {
-              if (previousElement) {
-                previousElement.hidden = true;
-                utils.url.resetParams(option);
-                utils.url.pushHistory(option.id);
-              } else {
-                utils.url.replaceHistory({ pathname: option.id });
+            const hideTop = option.kind === "home" || option.kind === "pdf";
+            elements.selectedHeader.hidden = hideTop;
+            elements.selectedHr.hidden = hideTop;
+
+            elements.selectedTitle.innerHTML = option.title;
+            elements.selectedDescription.innerHTML = option.serializedPath;
+
+            /** @type {HTMLElement} */
+            let element;
+
+            switch (option.kind) {
+              case "home": {
+                element = elements.home;
+                break;
               }
+              case "chart": {
+                element = elements.charts;
 
-              const hideTop = option.kind === "home" || option.kind === "pdf";
-              elements.selectedHeader.hidden = hideTop;
-              elements.selectedHr.hidden = hideTop;
+                lastChartOption.set(option);
 
-              elements.selectedTitle.innerHTML = option.title;
-              elements.selectedDescription.innerHTML = option.serializedPath;
-
-              /** @type {HTMLElement} */
-              let element;
-
-              switch (option.kind) {
-                case "home": {
-                  element = elements.home;
-                  break;
-                }
-                case "chart": {
-                  element = elements.charts;
-
-                  lastChartOption.set(option);
-
-                  if (firstChartOption) {
-                    const lightweightCharts = packages.lightweightCharts();
-                    const chartScript = import("./chart.js");
-                    utils.dom.importStyleAndThen("/styles/chart.css", () =>
-                      chartScript.then(({ init: initChartsElement }) =>
-                        lightweightCharts.then((lightweightCharts) =>
-                          signals.runWithOwner(owner, () =>
-                            initChartsElement({
-                              colors,
-                              consts,
-                              dark,
-                              datasets,
-                              elements,
-                              ids,
-                              lightweightCharts,
-                              options,
-                              selected: /** @type {any} */ (lastChartOption),
-                              signals,
-                              utils,
-                              webSockets,
-                            }),
-                          ),
+                if (firstChartOption) {
+                  const lightweightCharts = packages.lightweightCharts();
+                  const chartScript = import("./chart.js");
+                  utils.dom.importStyleAndThen("/styles/chart.css", () =>
+                    chartScript.then(({ init: initChartsElement }) =>
+                      lightweightCharts.then((lightweightCharts) =>
+                        signals.runWithOwner(owner, () =>
+                          initChartsElement({
+                            colors,
+                            consts,
+                            dark,
+                            datasets,
+                            elements,
+                            ids,
+                            lightweightCharts,
+                            options,
+                            selected: /** @type {any} */ (lastChartOption),
+                            signals,
+                            utils,
+                            webSockets,
+                          }),
                         ),
                       ),
-                    );
-                  }
-                  firstChartOption = false;
-
-                  break;
+                    ),
+                  );
                 }
-                case "simulation": {
-                  element = elements.simulation;
+                firstChartOption = false;
 
-                  lastSimulationOption.set(option);
+                break;
+              }
+              case "simulation": {
+                element = elements.simulation;
 
-                  if (firstSimulationOption) {
-                    const lightweightCharts = packages.lightweightCharts();
-                    const simulationScript = import("./simulation.js");
+                lastSimulationOption.set(option);
 
-                    utils.dom.importStyleAndThen("/styles/simulation.css", () =>
-                      simulationScript.then(({ init }) =>
-                        lightweightCharts.then((lightweightCharts) =>
-                          signals.runWithOwner(owner, () =>
-                            init({
-                              colors,
-                              consts,
-                              dark,
-                              datasets,
-                              elements,
-                              ids,
-                              lightweightCharts,
-                              options,
-                              selected: /** @type {any} */ (lastChartOption),
-                              signals,
-                              utils,
-                              webSockets,
-                            }),
-                          ),
+                if (firstSimulationOption) {
+                  const lightweightCharts = packages.lightweightCharts();
+                  const simulationScript = import("./simulation.js");
+
+                  utils.dom.importStyleAndThen("/styles/simulation.css", () =>
+                    simulationScript.then(({ init }) =>
+                      lightweightCharts.then((lightweightCharts) =>
+                        signals.runWithOwner(owner, () =>
+                          init({
+                            colors,
+                            consts,
+                            dark,
+                            datasets,
+                            elements,
+                            ids,
+                            lightweightCharts,
+                            options,
+                            selected: /** @type {any} */ (lastChartOption),
+                            signals,
+                            utils,
+                            webSockets,
+                          }),
                         ),
                       ),
-                    );
-                  }
-                  firstSimulationOption = false;
+                    ),
+                  );
+                }
+                firstSimulationOption = false;
 
-                  break;
-                }
-                default: {
-                  return;
-                }
+                break;
               }
+              default: {
+                return;
+              }
+            }
 
-              element.hidden = false;
-              previousElement = element;
-            });
+            element.hidden = false;
+            previousElement = element;
           });
         }
         createApplyOptionEffect();
@@ -2410,13 +2398,16 @@ packages.signals().then((signals) =>
             });
           });
 
-          signals.createEffect(() => {
-            if (options.selected().isFavorite()) {
-              elements.buttonFavorite.dataset.highlight = "";
-            } else {
-              delete elements.buttonFavorite.dataset.highlight;
-            }
-          });
+          signals.createEffect(
+            () => options.selected().isFavorite(),
+            (isFavorite) => {
+              if (isFavorite) {
+                elements.buttonFavorite.dataset.highlight = "";
+              } else {
+                delete elements.buttonFavorite.dataset.highlight;
+              }
+            },
+          );
         }
         initFavoriteButton();
 
@@ -2467,9 +2458,7 @@ packages.signals().then((signals) =>
 
       function createMobileSwitchEffect() {
         let firstRun = true;
-        signals.createEffect(() => {
-          options.selected();
-
+        signals.createEffect(options.selected, () => {
           if (!firstRun && !utils.dom.isHidden(elements.selectedLabel)) {
             elements.selectedLabel.click();
           }
@@ -2496,16 +2485,14 @@ packages.signals().then((signals) =>
         elements.foldersFilterAllCount.innerHTML =
           options.list.length.toLocaleString();
 
-        signals.createEffect(() => {
-          elements.foldersFilterFavoritesCount.innerHTML = options.counters
-            .favorites()
-            .toLocaleString();
+        signals.createEffect(options.counters.favorites, (counterFavorites) => {
+          elements.foldersFilterFavoritesCount.innerHTML =
+            counterFavorites.toLocaleString();
         });
 
-        signals.createEffect(() => {
-          elements.foldersFilterNewCount.innerHTML = options.counters
-            .new()
-            .toLocaleString();
+        signals.createEffect(options.counters.new, (counterNew) => {
+          elements.foldersFilterNewCount.innerHTML =
+            counterNew.toLocaleString();
         });
       }
 
@@ -2530,8 +2517,7 @@ packages.signals().then((signals) =>
           options.filter.set("new");
         });
 
-        signals.createEffect(() => {
-          const f = options.filter();
+        signals.createEffect(options.filter, (f) => {
           localStorage.setItem(ids.foldersFilter, f);
           switch (f) {
             case "all": {
@@ -2866,9 +2852,7 @@ packages.signals().then((signals) =>
       }
 
       function createUnshiftHistoryEffect() {
-        signals.createEffect(() => {
-          const option = options.selected();
-
+        signals.createEffect(options.selected, (option) => {
           const head = history.at(0);
           if (
             head &&
@@ -2967,8 +2951,7 @@ packages.signals().then((signals) =>
         initHistoryListInDom();
 
         function createUpdateHistoryEffect() {
-          signals.createEffect(() => {
-            const option = options.selected();
+          signals.createEffect(options.selected, (option) => {
             const date = new Date();
             const testedString = dateToTestedString(date);
 
@@ -3088,11 +3071,11 @@ packages.signals().then((signals) =>
           }
 
           function createUpdateDataThemeEffect() {
-            signals.createEffect(() => {
-              localStorage.setItem(settingsThemeLocalStorageKey, theme());
+            signals.createEffect(theme, (theme) => {
+              localStorage.setItem(settingsThemeLocalStorageKey, theme);
               updateTheme(
-                theme() === "dark" ||
-                  (theme() === "system" &&
+                theme === "dark" ||
+                  (theme === "system" &&
                     preferredColorSchemeMatchMedia.matches),
               );
             });

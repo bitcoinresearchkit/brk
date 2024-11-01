@@ -1,7 +1,7 @@
 import {
   Accessor,
   Setter,
-} from "../packages/solid-signals/2024-04-17/types/signals";
+} from "../packages/solid-signals/2024-10-28/types/signals";
 import {
   DeepPartial,
   BaselineStyleOptions,
@@ -17,7 +17,8 @@ import {
   ISeriesApi,
 } from "../packages/lightweight-charts/v4.2.0/types";
 import { DatePath, HeightPath, LastPath } from "./paths";
-import { Owner } from "../packages/solid-signals/2024-04-17/types/owner";
+import { Owner } from "../packages/solid-signals/2024-10-28/types/owner";
+import { AnyPossibleCohortId } from "../options";
 
 type GrowToSize<T, N extends number, A extends T[]> = A["length"] extends N
   ? A
@@ -52,7 +53,7 @@ interface BaselineSpecificSeriesBlueprint {
 
 interface CandlestickSpecificSeriesBlueprint {
   type: "Candlestick";
-  color?: undefined;
+  color?: Color;
   options?: DeepPartial<CandlestickStyleOptions & SeriesOptionsCommon>;
 }
 
@@ -79,6 +80,8 @@ type SeriesBlueprint = {
   main?: boolean;
   formatNumber?: false;
 } & AnySpecificSeriesBlueprint;
+
+type SeriesBluePrintType = NonNullable<SeriesBlueprint["type"]>;
 
 type Unit =
   | ""
@@ -288,4 +291,39 @@ declare global {
   interface Window {
     MyNamespace: any;
   }
+}
+
+interface HoveredLegend {
+  label: HTMLLabelElement;
+  series: Series;
+}
+
+type NotFunction<T> = T extends Function ? never : T;
+
+type Groups = import("../options").Groups;
+
+type DefaultCohortOption = CohortOption<AnyPossibleCohortId>;
+
+interface CohortOption<Id extends AnyPossibleCohortId> {
+  scale: TimeScale;
+  name: string;
+  title: string;
+  datasetId: Id;
+  color: Color;
+  filenameAddon?: string;
+}
+
+type DefaultCohortOptions = CohortOptions<AnyPossibleCohortId>;
+
+interface CohortOptions<Id extends AnyPossibleCohortId> {
+  scale: TimeScale;
+  name: string;
+  title: string;
+  list: CohortOption<Id>[];
+}
+
+interface SeriesBlueprintParam<T> {
+  title: string;
+  singleColor?: Color;
+  genPath: (id: T, scale: TimeScale) => AnyDatasetPath;
 }

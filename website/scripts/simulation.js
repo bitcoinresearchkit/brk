@@ -384,8 +384,8 @@ function appendInputDate({ id, title, value, parent, today, signals }) {
 
   input.min = "2011-01-01";
 
-  signals.createEffect(() => {
-    input.max = today().toJSON().split("T")[0];
+  signals.createEffect(today, (today) => {
+    input.max = today.toJSON().split("T")[0];
   });
 
   parent.append(input);

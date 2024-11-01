@@ -1,495 +1,514 @@
+/**
+ * @import { AnySpecificSeriesBlueprint, CohortOption, CohortOptions, Color, DefaultCohortOption, DefaultCohortOptions, OptionPath, OptionsGroup, PartialChartOption, PartialOptionsGroup, PartialOptionsTree, Series, SeriesBlueprint, SeriesBlueprintParam, SeriesBluePrintType, TimeScale } from "./types/self"
+ */
+
 const DATE_TO_PREFIX = "date-to-";
 const HEIGHT_TO_PREFIX = "height-to-";
+
+function initGroups() {
+  const xTermHolders = /** @type {const} */ ([
+    {
+      id: "sth",
+      key: "sth",
+      name: "Short Term Holders",
+      legend: "Short Term Holders - STH",
+    },
+    {
+      id: "lth",
+      key: "lth",
+      name: "Long Term Holders",
+      legend: "Long Term Holders - LTH",
+    },
+  ]);
+
+  const upTo = /** @type {const} */ ([
+    {
+      id: "up-to-1d",
+      key: "up_to_1d",
+      name: "Up To 1 Day",
+      legend: "1D",
+    },
+    {
+      id: "up-to-1w",
+      key: "up_to_1w",
+      name: "Up To 1 Week",
+      legend: "1W",
+    },
+    {
+      id: "up-to-1m",
+      key: "up_to_1m",
+      name: "Up To 1 Month",
+      legend: "1M",
+    },
+    {
+      id: "up-to-2m",
+      key: "up_to_2m",
+      name: "Up To 2 Months",
+      legend: "2M",
+    },
+    {
+      id: "up-to-3m",
+      key: "up_to_3m",
+      name: "Up To 3 Months",
+      legend: "3M",
+    },
+    {
+      id: "up-to-4m",
+      key: "up_to_4m",
+      name: "Up To 4 Months",
+      legend: "4M",
+    },
+    {
+      id: "up-to-5m",
+      key: "up_to_5m",
+      name: "Up To 5 Months",
+      legend: "5M",
+    },
+    {
+      id: "up-to-6m",
+      key: "up_to_6m",
+      name: "Up To 6 Months",
+      legend: "6M",
+    },
+    {
+      id: "up-to-1y",
+      key: "up_to_1y",
+      name: "Up To 1 Year",
+      legend: "1Y",
+    },
+    {
+      id: "up-to-2y",
+      key: "up_to_2y",
+      name: "Up To 2 Years",
+      legend: "2Y",
+    },
+    {
+      id: "up-to-3y",
+      key: "up_to_3y",
+      name: "Up To 3 Years",
+      legend: "3Y",
+    },
+    {
+      id: "up-to-5y",
+      key: "up_to_5y",
+      name: "Up To 5 Years",
+      legend: "5Y",
+    },
+    {
+      id: "up-to-7y",
+      key: "up_to_7y",
+      name: "Up To 7 Years",
+      legend: "7Y",
+    },
+    {
+      id: "up-to-10y",
+      key: "up_to_10y",
+      name: "Up To 10 Years",
+      legend: "10Y",
+    },
+    {
+      id: "up-to-15y",
+      key: "up_to_15y",
+      name: "Up To 15 Years",
+      legend: "15Y",
+    },
+  ]);
+
+  const fromXToY = /** @type {const} */ ([
+    {
+      id: "from-1d-to-1w",
+      key: "from_1d_to_1w",
+      name: "From 1 Day To 1 Week",
+      legend: "1D — 1W",
+    },
+    {
+      id: "from-1w-to-1m",
+      key: "from_1w_to_1m",
+      name: "From 1 Week To 1 Month",
+      legend: "1W — 1M",
+    },
+    {
+      id: "from-1m-to-3m",
+      key: "from_1m_to_3m",
+      name: "From 1 Month To 3 Months",
+      legend: "1M — 3M",
+    },
+    {
+      id: "from-3m-to-6m",
+      key: "from_3m_to_6m",
+      name: "From 3 Months To 6 Months",
+      legend: "3M — 6M",
+    },
+    {
+      id: "from-6m-to-1y",
+      key: "from_6m_to_1y",
+      name: "From 6 Months To 1 Year",
+      legend: "6M — 1Y",
+    },
+    {
+      id: "from-1y-to-2y",
+      key: "from_1y_to_2y",
+      name: "From 1 Year To 2 Years",
+      legend: "1Y — 2Y",
+    },
+    {
+      id: "from-2y-to-3y",
+      key: "from_2y_to_3y",
+      name: "From 2 Years To 3 Years",
+      legend: "2Y — 3Y",
+    },
+    {
+      id: "from-3y-to-5y",
+      key: "from_3y_to_5y",
+      name: "From 3 Years To 5 Years",
+      legend: "3Y — 5Y",
+    },
+    {
+      id: "from-5y-to-7y",
+      key: "from_5y_to_7y",
+      name: "From 5 Years To 7 Years",
+      legend: "5Y — 7Y",
+    },
+    {
+      id: "from-7y-to-10y",
+      key: "from_7y_to_10y",
+      name: "From 7 Years To 10 Years",
+      legend: "7Y — 10Y",
+    },
+    {
+      id: "from-10y-to-15y",
+      key: "from_10y_to_15y",
+      name: "From 10 Years To 15 Years",
+      legend: "10Y — 15Y",
+    },
+  ]);
+
+  const fromX = /** @type {const} */ ([
+    {
+      id: "from-1y",
+      key: "from_1y",
+      name: "From 1 Year",
+      legend: "1Y+",
+    },
+    {
+      id: "from-2y",
+      key: "from_2y",
+      name: "From 2 Years",
+      legend: "2Y+",
+    },
+    {
+      id: "from-4y",
+      key: "from_4y",
+      name: "From 4 Years",
+      legend: "4Y+",
+    },
+    {
+      id: "from-10y",
+      key: "from_10y",
+      name: "From 10 Years",
+      legend: "10Y+",
+    },
+    {
+      id: "from-15y",
+      key: "from_15y",
+      name: "From 15 Years",
+      legend: "15Y+",
+    },
+  ]);
+
+  const epochs = /** @type {const} */ ([
+    { id: "epoch-1", key: "epoch_1", name: "Epoch 1" },
+    { id: "epoch-2", key: "epoch_2", name: "Epoch 2" },
+    { id: "epoch-3", key: "epoch_3", name: "Epoch 3" },
+    { id: "epoch-4", key: "epoch_4", name: "Epoch 4" },
+    { id: "epoch-5", key: "epoch_5", name: "Epoch 5" },
+  ]);
+
+  const age = /** @type {const} */ ([
+    {
+      key: "",
+      id: "",
+      name: "",
+    },
+    ...xTermHolders,
+    ...upTo,
+    ...fromXToY,
+    ...fromX,
+    ...epochs,
+  ]);
+
+  const size = /** @type {const} */ ([
+    {
+      key: "plankton",
+      name: "Plankton",
+      size: "1 sat to 0.1 BTC",
+    },
+    {
+      key: "shrimp",
+      name: "Shrimp",
+      size: "0.1 sat to 1 BTC",
+    },
+    { key: "crab", name: "Crab", size: "1 BTC to 10 BTC" },
+    { key: "fish", name: "Fish", size: "10 BTC to 100 BTC" },
+    { key: "shark", name: "Shark", size: "100 BTC to 1000 BTC" },
+    { key: "whale", name: "Whale", size: "1000 BTC to 10 000 BTC" },
+    {
+      key: "humpback",
+      name: "Humpback",
+      size: "10 000 BTC to 100 000 BTC",
+    },
+    {
+      key: "megalodon",
+      name: "Megalodon",
+      size: "More than 100 000 BTC",
+    },
+  ]);
+
+  const type = /** @type {const} */ ([
+    { key: "p2pk", name: "P2PK" },
+    { key: "p2pkh", name: "P2PKH" },
+    { key: "p2sh", name: "P2SH" },
+    { key: "p2wpkh", name: "P2WPKH" },
+    { key: "p2wsh", name: "P2WSH" },
+    { key: "p2tr", name: "P2TR" },
+  ]);
+
+  const address = /** @type {const} */ ([...size, ...type]);
+
+  const liquidities = /** @type {const} */ ([
+    {
+      key: "illiquid",
+      id: "illiquid",
+      name: "Illiquid",
+    },
+    { key: "liquid", id: "liquid", name: "Liquid" },
+    {
+      key: "highly_liquid",
+      id: "highly-liquid",
+      name: "Highly Liquid",
+    },
+  ]);
+
+  const averages = /** @type {const} */ ([
+    { name: "1 Week", key: "1w", days: 7 },
+    { name: "8 Days", key: "8d", days: 8 },
+    { name: "13 Days", key: "13d", days: 13 },
+    { name: "21 Days", key: "21d", days: 21 },
+    { name: "1 Month", key: "1m", days: 30 },
+    { name: "34 Days", key: "34d", days: 34 },
+    { name: "55 Days", key: "55d", days: 55 },
+    { name: "89 Days", key: "89d", days: 89 },
+    { name: "144 Days", key: "144d", days: 144 },
+    { name: "1 Year", key: "1y", days: 365 },
+    { name: "2 Years", key: "2y", days: 2 * 365 },
+    { name: "200 Weeks", key: "200w", days: 200 * 7 },
+    { name: "4 Years", key: "4y", days: 4 * 365 },
+  ]);
+
+  const totalReturns = /** @type {const} */ ([
+    { name: "1 Day", key: "1d" },
+    { name: "1 Month", key: "1m" },
+    { name: "6 Months", key: "6m" },
+    { name: "1 Year", key: "1y" },
+    { name: "2 Years", key: "2y" },
+    { name: "3 Years", key: "3y" },
+    { name: "4 Years", key: "4y" },
+    { name: "6 Years", key: "6y" },
+    { name: "8 Years", key: "8y" },
+    { name: "10 Years", key: "10y" },
+  ]);
+
+  const compoundReturns = /** @type {const} */ ([
+    { name: "4 Years", key: "4y" },
+  ]);
+
+  const percentiles = /** @type {const} */ ([
+    {
+      key: "median_price_paid",
+      id: "median-price-paid",
+      name: "Median",
+      title: "Median Paid",
+      value: 50,
+    },
+    {
+      key: "95p_price_paid",
+      id: "95p-price-paid",
+      name: `95%`,
+      title: `95th Percentile Paid`,
+      value: 95,
+    },
+    {
+      key: "90p_price_paid",
+      id: "90p-price-paid",
+      name: `90%`,
+      title: `90th Percentile Paid`,
+      value: 90,
+    },
+    {
+      key: "85p_price_paid",
+      id: "85p-price-paid",
+      name: `85%`,
+      title: `85th Percentile Paid`,
+      value: 85,
+    },
+    {
+      key: "80p_price_paid",
+      id: "80p-price-paid",
+      name: `80%`,
+      title: `80th Percentile Paid`,
+      value: 80,
+    },
+    {
+      key: "75p_price_paid",
+      id: "75p-price-paid",
+      name: `75%`,
+      title: `75th Percentile Paid`,
+      value: 75,
+    },
+    {
+      key: "70p_price_paid",
+      id: "70p-price-paid",
+      name: `70%`,
+      title: `70th Percentile Paid`,
+      value: 70,
+    },
+    {
+      key: "65p_price_paid",
+      id: "65p-price-paid",
+      name: `65%`,
+      title: `65th Percentile Paid`,
+      value: 65,
+    },
+    {
+      key: "60p_price_paid",
+      id: "60p-price-paid",
+      name: `60%`,
+      title: `60th Percentile Paid`,
+      value: 60,
+    },
+    {
+      key: "55p_price_paid",
+      id: "55p-price-paid",
+      name: `55%`,
+      title: `55th Percentile Paid`,
+      value: 55,
+    },
+    {
+      key: "45p_price_paid",
+      id: "45p-price-paid",
+      name: `45%`,
+      title: `45th Percentile Paid`,
+      value: 45,
+    },
+    {
+      key: "40p_price_paid",
+      id: "40p-price-paid",
+      name: `40%`,
+      title: `40th Percentile Paid`,
+      value: 40,
+    },
+    {
+      key: "35p_price_paid",
+      id: "35p-price-paid",
+      name: `35%`,
+      title: `35th Percentile Paid`,
+      value: 35,
+    },
+    {
+      key: "30p_price_paid",
+      id: "30p-price-paid",
+      name: `30%`,
+      title: `30th Percentile Paid`,
+      value: 30,
+    },
+    {
+      key: "25p_price_paid",
+      id: "25p-price-paid",
+      name: `25%`,
+      title: `25th Percentile Paid`,
+      value: 25,
+    },
+    {
+      key: "20p_price_paid",
+      id: "20p-price-paid",
+      name: `20%`,
+      title: `20th Percentile Paid`,
+      value: 20,
+    },
+    {
+      key: "15p_price_paid",
+      id: "15p-price-paid",
+      name: `15%`,
+      title: `15th Percentile Paid`,
+      value: 15,
+    },
+    {
+      key: "10p_price_paid",
+      id: "10p-price-paid",
+      name: `10%`,
+      title: `10th Percentile Paid`,
+      value: 10,
+    },
+    {
+      key: "05p_price_paid",
+      id: "05p-price-paid",
+      name: `5%`,
+      title: `5th Percentile Paid`,
+      value: 5,
+    },
+  ]);
+
+  return {
+    xTermHolders,
+    upTo,
+    fromX,
+    fromXToY,
+    epochs,
+    age,
+    type,
+    size,
+    address,
+    liquidities,
+    averages,
+    totalReturns,
+    compoundReturns,
+    percentiles,
+  };
+}
+/**
+ * @typedef {ReturnType<typeof initGroups>} Groups
+ *
+ * @typedef {Groups["age"][number]["id"]} AgeCohortId
+ *
+ * @typedef {Exclude<AgeCohortId, "">} AgeCohortIdSub
+ *
+ * @typedef {Groups["address"][number]["key"]} AddressCohortId
+ *
+ * @typedef {Groups["liquidities"][number]["id"]} LiquidityId
+ *
+ * @typedef {AgeCohortId | AddressCohortId} AnyCohortId
+ *
+ * @typedef {AddressCohortId | LiquidityId} AnyAddressCohortId
+ *
+ * @typedef {AnyCohortId | LiquidityId} AnyPossibleCohortId
+ *
+ * @typedef {'' | `${AgeCohortIdSub | AddressCohortId | LiquidityId}-`} AnyDatasetPrefix
+ *
+ * @typedef {Groups["averages"][number]["key"]} AverageName
+ *
+ * @typedef {Groups["totalReturns"][number]["key"]} TotalReturnKey
+ *
+ * @typedef {Groups["compoundReturns"][number]["key"]} CompoundReturnKey
+ *
+ * @typedef {Groups["percentiles"][number]["id"]} PercentileId
+ */
 
 /**
  * @param {Colors} colors
  * @returns {PartialOptionsTree}
  */
 function createPartialOptions(colors) {
-  function initGroups() {
-    const xTermHolders = /** @type {const} */ ([
-      {
-        id: "sth",
-        key: "sth",
-        name: "Short Term Holders",
-        legend: "Short Term Holders - STH",
-      },
-      {
-        id: "lth",
-        key: "lth",
-        name: "Long Term Holders",
-        legend: "Long Term Holders - LTH",
-      },
-    ]);
-
-    const upTo = /** @type {const} */ ([
-      {
-        id: "up-to-1d",
-        key: "up_to_1d",
-        name: "Up To 1 Day",
-        legend: "1D",
-      },
-      {
-        id: "up-to-1w",
-        key: "up_to_1w",
-        name: "Up To 1 Week",
-        legend: "1W",
-      },
-      {
-        id: "up-to-1m",
-        key: "up_to_1m",
-        name: "Up To 1 Month",
-        legend: "1M",
-      },
-      {
-        id: "up-to-2m",
-        key: "up_to_2m",
-        name: "Up To 2 Months",
-        legend: "2M",
-      },
-      {
-        id: "up-to-3m",
-        key: "up_to_3m",
-        name: "Up To 3 Months",
-        legend: "3M",
-      },
-      {
-        id: "up-to-4m",
-        key: "up_to_4m",
-        name: "Up To 4 Months",
-        legend: "4M",
-      },
-      {
-        id: "up-to-5m",
-        key: "up_to_5m",
-        name: "Up To 5 Months",
-        legend: "5M",
-      },
-      {
-        id: "up-to-6m",
-        key: "up_to_6m",
-        name: "Up To 6 Months",
-        legend: "6M",
-      },
-      {
-        id: "up-to-1y",
-        key: "up_to_1y",
-        name: "Up To 1 Year",
-        legend: "1Y",
-      },
-      {
-        id: "up-to-2y",
-        key: "up_to_2y",
-        name: "Up To 2 Years",
-        legend: "2Y",
-      },
-      {
-        id: "up-to-3y",
-        key: "up_to_3y",
-        name: "Up To 3 Years",
-        legend: "3Y",
-      },
-      {
-        id: "up-to-5y",
-        key: "up_to_5y",
-        name: "Up To 5 Years",
-        legend: "5Y",
-      },
-      {
-        id: "up-to-7y",
-        key: "up_to_7y",
-        name: "Up To 7 Years",
-        legend: "7Y",
-      },
-      {
-        id: "up-to-10y",
-        key: "up_to_10y",
-        name: "Up To 10 Years",
-        legend: "10Y",
-      },
-      {
-        id: "up-to-15y",
-        key: "up_to_15y",
-        name: "Up To 15 Years",
-        legend: "15Y",
-      },
-    ]);
-
-    const fromXToY = /** @type {const} */ ([
-      {
-        id: "from-1d-to-1w",
-        key: "from_1d_to_1w",
-        name: "From 1 Day To 1 Week",
-        legend: "1D — 1W",
-      },
-      {
-        id: "from-1w-to-1m",
-        key: "from_1w_to_1m",
-        name: "From 1 Week To 1 Month",
-        legend: "1W — 1M",
-      },
-      {
-        id: "from-1m-to-3m",
-        key: "from_1m_to_3m",
-        name: "From 1 Month To 3 Months",
-        legend: "1M — 3M",
-      },
-      {
-        id: "from-3m-to-6m",
-        key: "from_3m_to_6m",
-        name: "From 3 Months To 6 Months",
-        legend: "3M — 6M",
-      },
-      {
-        id: "from-6m-to-1y",
-        key: "from_6m_to_1y",
-        name: "From 6 Months To 1 Year",
-        legend: "6M — 1Y",
-      },
-      {
-        id: "from-1y-to-2y",
-        key: "from_1y_to_2y",
-        name: "From 1 Year To 2 Years",
-        legend: "1Y — 2Y",
-      },
-      {
-        id: "from-2y-to-3y",
-        key: "from_2y_to_3y",
-        name: "From 2 Years To 3 Years",
-        legend: "2Y — 3Y",
-      },
-      {
-        id: "from-3y-to-5y",
-        key: "from_3y_to_5y",
-        name: "From 3 Years To 5 Years",
-        legend: "3Y — 5Y",
-      },
-      {
-        id: "from-5y-to-7y",
-        key: "from_5y_to_7y",
-        name: "From 5 Years To 7 Years",
-        legend: "5Y — 7Y",
-      },
-      {
-        id: "from-7y-to-10y",
-        key: "from_7y_to_10y",
-        name: "From 7 Years To 10 Years",
-        legend: "7Y — 10Y",
-      },
-      {
-        id: "from-10y-to-15y",
-        key: "from_10y_to_15y",
-        name: "From 10 Years To 15 Years",
-        legend: "10Y — 15Y",
-      },
-    ]);
-
-    const fromX = /** @type {const} */ ([
-      {
-        id: "from-1y",
-        key: "from_1y",
-        name: "From 1 Year",
-        legend: "1Y+",
-      },
-      {
-        id: "from-2y",
-        key: "from_2y",
-        name: "From 2 Years",
-        legend: "2Y+",
-      },
-      {
-        id: "from-4y",
-        key: "from_4y",
-        name: "From 4 Years",
-        legend: "4Y+",
-      },
-      {
-        id: "from-10y",
-        key: "from_10y",
-        name: "From 10 Years",
-        legend: "10Y+",
-      },
-      {
-        id: "from-15y",
-        key: "from_15y",
-        name: "From 15 Years",
-        legend: "15Y+",
-      },
-    ]);
-
-    const epochs = /** @type {const} */ ([
-      { id: "epoch-1", key: "epoch_1", name: "1" },
-      { id: "epoch-2", key: "epoch_2", name: "2" },
-      { id: "epoch-3", key: "epoch_3", name: "3" },
-      { id: "epoch-4", key: "epoch_4", name: "4" },
-      { id: "epoch-5", key: "epoch_5", name: "5" },
-    ]);
-
-    const age = /** @type {const} */ ([
-      {
-        key: "",
-        id: "",
-        name: "",
-      },
-      ...xTermHolders,
-      ...upTo,
-      ...fromXToY,
-      ...fromX,
-      ...epochs,
-    ]);
-
-    const size = /** @type {const} */ ([
-      {
-        key: "plankton",
-        name: "Plankton",
-        size: "1 sat to 0.1 BTC",
-      },
-      {
-        key: "shrimp",
-        name: "Shrimp",
-        size: "0.1 sat to 1 BTC",
-      },
-      { key: "crab", name: "Crab", size: "1 BTC to 10 BTC" },
-      { key: "fish", name: "Fish", size: "10 BTC to 100 BTC" },
-      { key: "shark", name: "Shark", size: "100 BTC to 1000 BTC" },
-      { key: "whale", name: "Whale", size: "1000 BTC to 10 000 BTC" },
-      {
-        key: "humpback",
-        name: "Humpback",
-        size: "10 000 BTC to 100 000 BTC",
-      },
-      {
-        key: "megalodon",
-        name: "Megalodon",
-        size: "More than 100 000 BTC",
-      },
-    ]);
-
-    const type = /** @type {const} */ ([
-      { key: "p2pk", name: "P2PK" },
-      { key: "p2pkh", name: "P2PKH" },
-      { key: "p2sh", name: "P2SH" },
-      { key: "p2wpkh", name: "P2WPKH" },
-      { key: "p2wsh", name: "P2WSH" },
-      { key: "p2tr", name: "P2TR" },
-    ]);
-
-    const address = /** @type {const} */ ([...size, ...type]);
-
-    const liquidities = /** @type {const} */ ([
-      {
-        key: "illiquid",
-        id: "illiquid",
-        name: "Illiquid",
-      },
-      { key: "liquid", id: "liquid", name: "Liquid" },
-      {
-        key: "highly_liquid",
-        id: "highly-liquid",
-        name: "Highly Liquid",
-      },
-    ]);
-
-    const averages = /** @type {const} */ ([
-      { name: "1 Week", key: "1w", days: 7 },
-      { name: "8 Days", key: "8d", days: 8 },
-      { name: "13 Days", key: "13d", days: 13 },
-      { name: "21 Days", key: "21d", days: 21 },
-      { name: "1 Month", key: "1m", days: 30 },
-      { name: "34 Days", key: "34d", days: 34 },
-      { name: "55 Days", key: "55d", days: 55 },
-      { name: "89 Days", key: "89d", days: 89 },
-      { name: "144 Days", key: "144d", days: 144 },
-      { name: "1 Year", key: "1y", days: 365 },
-      { name: "2 Years", key: "2y", days: 2 * 365 },
-      { name: "200 Weeks", key: "200w", days: 200 * 7 },
-      { name: "4 Years", key: "4y", days: 4 * 365 },
-    ]);
-
-    const totalReturns = /** @type {const} */ ([
-      { name: "1 Day", key: "1d" },
-      { name: "1 Month", key: "1m" },
-      { name: "6 Months", key: "6m" },
-      { name: "1 Year", key: "1y" },
-      { name: "2 Years", key: "2y" },
-      { name: "3 Years", key: "3y" },
-      { name: "4 Years", key: "4y" },
-      { name: "6 Years", key: "6y" },
-      { name: "8 Years", key: "8y" },
-      { name: "10 Years", key: "10y" },
-    ]);
-
-    const compoundReturns = /** @type {const} */ ([
-      { name: "4 Years", key: "4y" },
-    ]);
-
-    const percentiles = /** @type {const} */ ([
-      {
-        key: "median_price_paid",
-        id: "median-price-paid",
-        name: "Median",
-        title: "Median Paid",
-        value: 50,
-      },
-      {
-        key: "95p_price_paid",
-        id: "95p-price-paid",
-        name: `95%`,
-        title: `95th Percentile Paid`,
-        value: 95,
-      },
-      {
-        key: "90p_price_paid",
-        id: "90p-price-paid",
-        name: `90%`,
-        title: `90th Percentile Paid`,
-        value: 90,
-      },
-      {
-        key: "85p_price_paid",
-        id: "85p-price-paid",
-        name: `85%`,
-        title: `85th Percentile Paid`,
-        value: 85,
-      },
-      {
-        key: "80p_price_paid",
-        id: "80p-price-paid",
-        name: `80%`,
-        title: `80th Percentile Paid`,
-        value: 80,
-      },
-      {
-        key: "75p_price_paid",
-        id: "75p-price-paid",
-        name: `75%`,
-        title: `75th Percentile Paid`,
-        value: 75,
-      },
-      {
-        key: "70p_price_paid",
-        id: "70p-price-paid",
-        name: `70%`,
-        title: `70th Percentile Paid`,
-        value: 70,
-      },
-      {
-        key: "65p_price_paid",
-        id: "65p-price-paid",
-        name: `65%`,
-        title: `65th Percentile Paid`,
-        value: 65,
-      },
-      {
-        key: "60p_price_paid",
-        id: "60p-price-paid",
-        name: `60%`,
-        title: `60th Percentile Paid`,
-        value: 60,
-      },
-      {
-        key: "55p_price_paid",
-        id: "55p-price-paid",
-        name: `55%`,
-        title: `55th Percentile Paid`,
-        value: 55,
-      },
-      {
-        key: "45p_price_paid",
-        id: "45p-price-paid",
-        name: `45%`,
-        title: `45th Percentile Paid`,
-        value: 45,
-      },
-      {
-        key: "40p_price_paid",
-        id: "40p-price-paid",
-        name: `40%`,
-        title: `40th Percentile Paid`,
-        value: 40,
-      },
-      {
-        key: "35p_price_paid",
-        id: "35p-price-paid",
-        name: `35%`,
-        title: `35th Percentile Paid`,
-        value: 35,
-      },
-      {
-        key: "30p_price_paid",
-        id: "30p-price-paid",
-        name: `30%`,
-        title: `30th Percentile Paid`,
-        value: 30,
-      },
-      {
-        key: "25p_price_paid",
-        id: "25p-price-paid",
-        name: `25%`,
-        title: `25th Percentile Paid`,
-        value: 25,
-      },
-      {
-        key: "20p_price_paid",
-        id: "20p-price-paid",
-        name: `20%`,
-        title: `20th Percentile Paid`,
-        value: 20,
-      },
-      {
-        key: "15p_price_paid",
-        id: "15p-price-paid",
-        name: `15%`,
-        title: `15th Percentile Paid`,
-        value: 15,
-      },
-      {
-        key: "10p_price_paid",
-        id: "10p-price-paid",
-        name: `10%`,
-        title: `10th Percentile Paid`,
-        value: 10,
-      },
-      {
-        key: "05p_price_paid",
-        id: "05p-price-paid",
-        name: `5%`,
-        title: `5th Percentile Paid`,
-        value: 5,
-      },
-    ]);
-
-    return {
-      xTermHolders,
-      upTo,
-      fromX,
-      fromXToY,
-      epochs,
-      age,
-      type,
-      size,
-      address,
-      liquidities,
-      averages,
-      totalReturns,
-      compoundReturns,
-      percentiles,
-    };
-  }
   const groups = initGroups();
-  /**
-   * @typedef {(typeof groups.age)[number]["id"]} AgeCohortId
-   * @typedef {Exclude<AgeCohortId, "">} AgeCohortIdSub
-   * @typedef {(typeof groups.address)[number]["key"]} AddressCohortId
-   * @typedef {(typeof groups.liquidities[number]["id"])} LiquidityId
-   * @typedef {AgeCohortId | AddressCohortId} AnyCohortId
-   * @typedef {AnyCohortId | LiquidityId} AnyPossibleCohortId
-   * @typedef {'' | `${AgeCohortIdSub | AddressCohortId | LiquidityId}-`} AnyDatasetPrefix
-   * @typedef {(typeof groups.averages)[number]["key"]} AverageName
-   * @typedef {(typeof groups.totalReturns)[number]["key"]} TotalReturnKey
-   * @typedef {(typeof groups.compoundReturns)[number]["key"]} CompoundReturnKey
-   * @typedef {(typeof groups.percentiles)[number]["id"]} PercentileId
-   */
 
   const bases = {
     /**
@@ -1332,7 +1351,7 @@ function createPartialOptions(colors) {
     /**
      * @returns {PartialOptionsGroup}
      */
-    function createIndicatorsOptinos() {
+    function createIndicatorsOptions() {
       return {
         name: "Indicators",
         tree: [],
@@ -1388,7 +1407,7 @@ function createPartialOptions(colors) {
         createAllTimeHighOptions(scale),
         createAveragesOptions(scale),
         ...(scale === "date"
-          ? [createReturnsOptions(), createIndicatorsOptinos()]
+          ? [createReturnsOptions(), createIndicatorsOptions()]
           : []),
       ],
     };
@@ -1713,7 +1732,7 @@ function createPartialOptions(colors) {
           name: "Coinbases",
           tree: [
             ...(scale === "date"
-              ? /** @type {PartialOptionsTree} */ ([
+              ? /** @satisfies {PartialOptionsTree} */ ([
                   {
                     name: "Last",
                     tree: [
@@ -1764,7 +1783,7 @@ function createPartialOptions(colors) {
                           {
                             title: "Sum",
                             color: colors.bitcoin,
-                            datasetPath: `${scale}-to-coinbase`,
+                            datasetPath: `${scale}-to-coinbase-1d-sum`,
                           },
                         ],
                       },
@@ -1779,7 +1798,7 @@ function createPartialOptions(colors) {
                           {
                             title: "Sum",
                             color: colors.dollars,
-                            datasetPath: `${scale}-to-coinbase-in-dollars`,
+                            datasetPath: `${scale}-to-coinbase-in-dollars-1d-sum`,
                           },
                         ],
                       },
@@ -2086,7 +2105,7 @@ function createPartialOptions(colors) {
                           {
                             title: "Sum",
                             color: colors.dollars,
-                            datasetPath: `${scale}-to-fees-in-dollars`,
+                            datasetPath: `${scale}-to-fees-in-dollars-1d-sum`,
                           },
                         ],
                       },
@@ -2609,16 +2628,81 @@ function createPartialOptions(colors) {
     };
   }
 
+  const cohortOptionOrOptions = {
+    /**
+     * @param {DefaultCohortOption | DefaultCohortOptions} arg
+     */
+    toList(arg) {
+      return "list" in arg ? arg.list : [arg];
+    },
+    /**
+     * @param {DefaultCohortOption | DefaultCohortOptions} arg
+     * @param {string} cohortName
+     * @param {string} legendName
+     */
+    toLegendName(arg, cohortName, legendName) {
+      return "list" in arg ? `${cohortName} ${legendName}` : legendName;
+    },
+    /**
+     * @template {AnyPossibleCohortId} T
+     * @param {CohortOption<T> | CohortOptions<T>} arg
+     * @param {SeriesBlueprintParam<T> & Omit<AnySpecificSeriesBlueprint, 'color'>} blueprint
+     */
+    toSeriesBlueprints(arg, blueprint) {
+      return this.toList(arg).map(
+        ({ scale, datasetId, color, name }) =>
+          /** @satisfies {SeriesBlueprint} */ ({
+            title: cohortOptionOrOptions.toLegendName(
+              arg,
+              name,
+              blueprint.title,
+            ),
+            color: "list" in arg ? color : blueprint.singleColor || color,
+            type: blueprint.type || "Line",
+            // Don't get why TS is annoying here
+            // @ts-ignore
+            datasetPath: blueprint.genPath(datasetId, scale),
+            options: blueprint.options,
+          }),
+      );
+    },
+    /**
+     * @param {DefaultCohortOption | DefaultCohortOptions} arg
+     */
+    shouldShowAll(arg) {
+      return "list" in arg || arg.datasetId;
+    },
+    /**
+     * @param {DefaultCohortOption | DefaultCohortOptions} arg
+     * @param {(prefix: AnyDatasetPrefix, arg: DefaultCohortOption) => PartialChartOption[]} genOption
+     */
+    genOptionsIfSingle(arg, genOption) {
+      if (!("list" in arg)) {
+        const prefix = datasetIdToPrefix(arg.datasetId);
+        return genOption(prefix, arg);
+      } else {
+        return [];
+      }
+    },
+    /**
+     * @param {DefaultCohortOption | DefaultCohortOptions} arg
+     * @param {(scale: 'date') => PartialChartOption[]} genOption
+     */
+    genOptionsIfDate(arg, genOption) {
+      if (arg.scale === "date") {
+        return genOption("date");
+      } else {
+        return [];
+      }
+    },
+  };
+
   /**
-   * @param {Object} args
-   * @param {TimeScale} args.scale
-   * @param {AnyPossibleCohortId} args.datasetId
-   * @param {string} args.title
-   * @param {Color} args.color
+   * @param {DefaultCohortOption | DefaultCohortOptions} arg
    * @returns {PartialOptionsGroup}
    */
-  function createCohortUTXOOptions({ scale, color, datasetId, title }) {
-    const datasetPrefix = datasetIdToPrefix(datasetId);
+  function createCohortUTXOOptions(arg) {
+    const { scale, title } = arg;
 
     return {
       name: "UTXOs",
@@ -2630,28 +2714,24 @@ function createPartialOptions(colors) {
           description: "",
           unit: "Count",
           icon: "🎫",
-          bottom: [
-            {
-              title: "Count",
-              color,
-              datasetPath: `${scale}-to-${datasetPrefix}utxo-count`,
-            },
-          ],
+          bottom: cohortOptionOrOptions.toSeriesBlueprints(arg, {
+            title: "Count",
+            genPath: (id, scale) =>
+              /** @type {const} */ (
+                `${scale}-to-${datasetIdToPrefix(id)}utxo-count`
+              ),
+          }),
         },
       ],
     };
   }
 
   /**
-   * @param {Object} args
-   * @param {TimeScale} args.scale
-   * @param {AnyPossibleCohortId} args.datasetId
-   * @param {string} args.title
-   * @param {Color} args.color
+   * @param {DefaultCohortOption | DefaultCohortOptions} arg
    * @returns {PartialOptionsGroup}
    */
-  function createCohortRealizedOptions({ scale, color, datasetId, title }) {
-    const datasetPrefix = datasetIdToPrefix(datasetId);
+  function createCohortRealizedOptions(arg) {
+    const { scale, title } = arg;
 
     return {
       name: "Realized",
@@ -2663,21 +2743,19 @@ function createPartialOptions(colors) {
           description: "",
           unit: "US Dollars",
           icon: "🏷️",
-          top: [
-            {
-              title: "Realized Price",
-              color,
-              datasetPath: `${scale}-to-${datasetPrefix}realized-price`,
-            },
-          ],
+          top: cohortOptionOrOptions.toSeriesBlueprints(arg, {
+            title: "Realized Price",
+            genPath: (id, scale) =>
+              `${scale}-to-${datasetIdToPrefix(id)}realized-price`,
+          }),
         },
-        createRatioOptions({
-          scale,
-          color,
-          ratioDatasetPath: `${scale}-to-market-price-to-${datasetPrefix}realized-price-ratio`,
-          valueDatasetPath: `${scale}-to-${datasetPrefix}realized-price`,
-          title: `${title} Realized Price`,
-        }),
+        // createRatioOptions({
+        //   scale,
+        //   color,
+        //   ratioDatasetPath: `${scale}-to-market-price-to-${datasetPrefix}realized-price-ratio`,
+        //   valueDatasetPath: `${scale}-to-${datasetPrefix}realized-price`,
+        //   title: `${title} Realized Price`,
+        // }),
         {
           scale,
           name: `Capitalization`,
@@ -2686,12 +2764,16 @@ function createPartialOptions(colors) {
           unit: "US Dollars",
           icon: "💰",
           bottom: [
-            {
-              title: `${name} Realized Cap.`,
-              color,
-              datasetPath: `${scale}-to-${datasetPrefix}realized-cap`,
-            },
-            ...(datasetId
+            ...cohortOptionOrOptions.toSeriesBlueprints(
+              arg,
+
+              {
+                title: "Realized Cap.",
+                genPath: (id, scale) =>
+                  `${scale}-to-${datasetIdToPrefix(id)}realized-cap`,
+              },
+            ),
+            ...(cohortOptionOrOptions.shouldShowAll(arg)
               ? /** @type {const} */ ([
                   {
                     title: "Realized Cap.",
@@ -2711,11 +2793,16 @@ function createPartialOptions(colors) {
           unit: "US Dollars",
           icon: "🔀",
           bottom: [
-            {
-              title: `Net Change`,
-              type: "Baseline",
-              datasetPath: `${scale}-to-${datasetPrefix}realized-cap-1m-net-change`,
-            },
+            ...cohortOptionOrOptions.toSeriesBlueprints(
+              arg,
+
+              {
+                title: "Net Change",
+                type: "Baseline",
+                genPath: (id, scale) =>
+                  `${scale}-to-${datasetIdToPrefix(id)}realized-cap-1m-net-change`,
+              },
+            ),
             bases[0](scale),
           ],
         },
@@ -2726,16 +2813,16 @@ function createPartialOptions(colors) {
           description: "",
           unit: "US Dollars",
           icon: "🎉",
-          bottom: [
-            {
-              title: "Realized Profit",
-              datasetPath:
-                scale === "date"
-                  ? `date-to-${datasetPrefix}realized-profit-1d-sum`
-                  : `height-to-${datasetPrefix}realized-profit`,
-              color: colors.profit,
+          bottom: cohortOptionOrOptions.toSeriesBlueprints(arg, {
+            title: "Realized Profit",
+            singleColor: colors.profit,
+            genPath: (id, scale) => {
+              const prefix = datasetIdToPrefix(id);
+              return scale === "date"
+                ? `date-to-${prefix}realized-profit-1d-sum`
+                : `height-to-${prefix}realized-profit`;
             },
-          ],
+          }),
         },
         {
           scale,
@@ -2744,46 +2831,48 @@ function createPartialOptions(colors) {
           description: "",
           unit: "US Dollars",
           icon: "⚰️",
-          bottom: [
-            {
-              title: "Realized Loss",
-              datasetPath:
-                scale === "date"
-                  ? `date-to-${datasetPrefix}realized-loss-1d-sum`
-                  : `height-to-${datasetPrefix}realized-loss`,
-              color: colors.loss,
+          bottom: cohortOptionOrOptions.toSeriesBlueprints(arg, {
+            title: "Realized Loss",
+            singleColor: colors.loss,
+            genPath: (id, scale) => {
+              const prefix = datasetIdToPrefix(id);
+              return scale === "date"
+                ? `date-to-${prefix}realized-loss-1d-sum`
+                : `height-to-${prefix}realized-loss`;
             },
-          ],
+          }),
         },
-        {
-          scale,
-          name: `PNL - Profit And Loss`,
-          title: `${title} Realized Profit And Loss`,
-          description: "",
-          unit: "US Dollars",
-          icon: "⚖️",
-          bottom: [
-            {
-              title: "Profit",
-              color: colors.profit,
-              datasetPath:
-                scale === "date"
-                  ? `date-to-${datasetPrefix}realized-profit-1d-sum`
-                  : `height-to-${datasetPrefix}realized-profit`,
-              type: "Baseline",
-            },
-            {
-              title: "Loss",
-              color: colors.loss,
-              datasetPath:
-                scale === "date"
-                  ? `date-to-${datasetPrefix}negative-realized-loss-1d-sum`
-                  : `height-to-${datasetPrefix}negative-realized-loss`,
-              type: "Baseline",
-            },
-            bases[0](scale),
-          ],
-        },
+        ...cohortOptionOrOptions.genOptionsIfSingle(arg, (prefix) => [
+          {
+            scale,
+            name: `PNL - Profit And Loss`,
+            title: `${title} Realized Profit And Loss`,
+            description: "",
+            unit: "US Dollars",
+            icon: "⚖️",
+            bottom: [
+              {
+                title: "Profit",
+                color: colors.profit,
+                datasetPath:
+                  scale === "date"
+                    ? `date-to-${prefix}realized-profit-1d-sum`
+                    : `height-to-${prefix}realized-profit`,
+                type: "Baseline",
+              },
+              {
+                title: "Loss",
+                color: colors.loss,
+                datasetPath:
+                  scale === "date"
+                    ? `date-to-${prefix}negative-realized-loss-1d-sum`
+                    : `height-to-${prefix}negative-realized-loss`,
+                type: "Baseline",
+              },
+              bases[0](scale),
+            ],
+          },
+        ]),
         {
           scale,
           name: `Net PNL - Net Profit And Loss`,
@@ -2792,37 +2881,38 @@ function createPartialOptions(colors) {
           unit: "US Dollars",
           icon: "⚖️",
           bottom: [
-            {
+            ...cohortOptionOrOptions.toSeriesBlueprints(arg, {
               title: "Net PNL",
               type: "Baseline",
-              datasetPath:
-                scale === "date"
-                  ? `date-to-${datasetPrefix}net-realized-profit-and-loss-1d-sum`
-                  : `height-to-${datasetPrefix}net-realized-profit-and-loss`,
-            },
+              genPath: (id, scale) => {
+                const prefix = datasetIdToPrefix(id);
+                return scale === "date"
+                  ? `date-to-${prefix}net-realized-profit-and-loss-1d-sum`
+                  : `height-to-${prefix}net-realized-profit-and-loss`;
+              },
+            }),
             bases[0](scale),
           ],
         },
-        ...(scale === "date"
-          ? /** @type {PartialOptionsTree} */ ([
-              {
-                scale,
-                name: `Net PNL Relative To Market Cap`,
-                title: `${title} Net Realized Profit And Loss Relative To Market Capitalization`,
-                description: "",
-                unit: "Percentage",
-                icon: "➗",
-                bottom: [
-                  {
-                    title: "Net",
-                    type: "Baseline",
-                    datasetPath: `${scale}-to-${datasetPrefix}net-realized-profit-and-loss-to-market-cap-ratio`,
-                  },
-                  bases[0](scale),
-                ],
-              },
-            ])
-          : []),
+        ...cohortOptionOrOptions.genOptionsIfDate(arg, (scale) => [
+          {
+            scale,
+            name: `Net PNL Relative To Market Cap`,
+            title: `${title} Net Realized Profit And Loss Relative To Market Capitalization`,
+            description: "",
+            unit: "Percentage",
+            icon: "➗",
+            bottom: [
+              ...cohortOptionOrOptions.toSeriesBlueprints(arg, {
+                title: "Net",
+                type: "Baseline",
+                genPath: (id) =>
+                  `${scale}-to-${datasetIdToPrefix(id)}net-realized-profit-and-loss-to-market-cap-ratio`,
+              }),
+              bases[0](scale),
+            ],
+          },
+        ]),
         {
           name: "Cumulative",
           tree: [
@@ -2833,13 +2923,12 @@ function createPartialOptions(colors) {
               description: "",
               unit: "US Dollars",
               icon: "🎊",
-              bottom: [
-                {
-                  title: "Cumulative Realized Profit",
-                  color: colors.profit,
-                  datasetPath: `${scale}-to-${datasetPrefix}cumulative-realized-profit`,
-                },
-              ],
+              bottom: cohortOptionOrOptions.toSeriesBlueprints(arg, {
+                title: "Cumulative Realized Profit",
+                singleColor: colors.profit,
+                genPath: (id, scale) =>
+                  `${scale}-to-${datasetIdToPrefix(id)}cumulative-realized-profit`,
+              }),
             },
             {
               scale,
@@ -2848,13 +2937,12 @@ function createPartialOptions(colors) {
               description: "",
               unit: "US Dollars",
               icon: "☠️",
-              bottom: [
-                {
-                  title: "Cumulative Realized Loss",
-                  color: colors.loss,
-                  datasetPath: `${scale}-to-${datasetPrefix}cumulative-realized-loss`,
-                },
-              ],
+              bottom: cohortOptionOrOptions.toSeriesBlueprints(arg, {
+                title: "Cumulative Realized Loss",
+                singleColor: colors.loss,
+                genPath: (id, scale) =>
+                  `${scale}-to-${datasetIdToPrefix(id)}cumulative-realized-loss`,
+              }),
             },
             {
               scale,
@@ -2864,11 +2952,12 @@ function createPartialOptions(colors) {
               unit: "US Dollars",
               icon: "➕",
               bottom: [
-                {
+                ...cohortOptionOrOptions.toSeriesBlueprints(arg, {
                   title: "Cumulative Net Realized PNL",
                   type: "Baseline",
-                  datasetPath: `${scale}-to-${datasetPrefix}cumulative-net-realized-profit-and-loss`,
-                },
+                  genPath: (id, scale) =>
+                    `${scale}-to-${datasetIdToPrefix(id)}cumulative-net-realized-profit-and-loss`,
+                }),
                 bases[0](scale),
               ],
             },
@@ -2880,11 +2969,12 @@ function createPartialOptions(colors) {
               unit: "US Dollars",
               icon: "🗓️",
               bottom: [
-                {
+                ...cohortOptionOrOptions.toSeriesBlueprints(arg, {
                   title: "Cumulative Net Realized PNL 30d Change",
-                  datasetPath: `${scale}-to-${datasetPrefix}cumulative-net-realized-profit-and-loss-1m-net-change`,
                   type: "Baseline",
-                },
+                  genPath: (id, scale) =>
+                    `${scale}-to-${datasetIdToPrefix(id)}cumulative-net-realized-profit-and-loss-1m-net-change`,
+                }),
                 bases[0](scale),
               ],
             },
@@ -2898,19 +2988,21 @@ function createPartialOptions(colors) {
           unit: "Ratio",
           icon: "∶",
           bottom: [
-            {
+            ...cohortOptionOrOptions.toSeriesBlueprints(arg, {
               title: "Ratio",
-              datasetPath:
-                scale === "date"
-                  ? `date-to-${datasetPrefix}realized-profit-to-loss-1d-sum-ratio`
-                  : `height-to-${datasetPrefix}realized-profit-to-loss-ratio`,
               type: "Baseline",
               options: {
                 baseValue: {
                   price: 1,
                 },
               },
-            },
+              genPath: (id, scale) => {
+                const prefix = datasetIdToPrefix(id);
+                return scale === "date"
+                  ? `date-to-${prefix}realized-profit-to-loss-1d-sum-ratio`
+                  : `height-to-${prefix}realized-profit-to-loss-ratio`;
+              },
+            }),
             bases[1](scale, "Even"),
           ],
         },
@@ -2925,16 +3017,17 @@ function createPartialOptions(colors) {
               unit: "Percentage",
               icon: "➗",
               bottom: [
-                {
+                ...cohortOptionOrOptions.toSeriesBlueprints(arg, {
                   title: "SOPR",
-                  datasetPath: `${scale}-to-${datasetPrefix}spent-output-profit-ratio`,
                   type: "Baseline",
                   options: {
                     baseValue: {
                       price: 1,
                     },
                   },
-                },
+                  genPath: (id, scale) =>
+                    `${scale}-to-${datasetIdToPrefix(id)}spent-output-profit-ratio`,
+                }),
                 bases[1](scale),
               ],
             },
@@ -2946,16 +3039,17 @@ function createPartialOptions(colors) {
               unit: "Percentage",
               icon: "➗",
               bottom: [
-                {
+                ...cohortOptionOrOptions.toSeriesBlueprints(arg, {
                   title: "aSOPR",
-                  datasetPath: `${scale}-to-${datasetPrefix}adjusted-spent-output-profit-ratio`,
                   type: "Baseline",
                   options: {
                     baseValue: {
                       price: 1,
                     },
                   },
-                },
+                  genPath: (id, scale) =>
+                    `${scale}-to-${datasetIdToPrefix(id)}adjusted-spent-output-profit-ratio`,
+                }),
                 bases[1](scale),
               ],
             },
@@ -2974,16 +3068,16 @@ function createPartialOptions(colors) {
                   description: "",
                   unit: "US Dollars",
                   icon: "➕",
-                  bottom: [
-                    {
-                      title: "Value",
-                      color: colors.profit,
-                      datasetPath:
-                        scale === "date"
-                          ? `date-to-${datasetPrefix}value-created-1d-sum`
-                          : `height-to-${datasetPrefix}value-created`,
+                  bottom: cohortOptionOrOptions.toSeriesBlueprints(arg, {
+                    title: "Value",
+                    singleColor: colors.profit,
+                    genPath: (id, scale) => {
+                      const prefix = datasetIdToPrefix(id);
+                      return scale === "date"
+                        ? `date-to-${prefix}value-created-1d-sum`
+                        : `height-to-${prefix}value-created`;
                     },
-                  ],
+                  }),
                 },
                 {
                   scale,
@@ -2992,16 +3086,16 @@ function createPartialOptions(colors) {
                   description: "",
                   unit: "US Dollars",
                   icon: "➕",
-                  bottom: [
-                    {
-                      title: "Adjusted Value",
-                      color: colors.profit,
-                      datasetPath:
-                        scale === "date"
-                          ? `date-to-${datasetPrefix}adjusted-value-created-1d-sum`
-                          : `height-to-${datasetPrefix}adjusted-value-created`,
+                  bottom: cohortOptionOrOptions.toSeriesBlueprints(arg, {
+                    title: "Adjusted Value",
+                    singleColor: colors.profit,
+                    genPath: (id, scale) => {
+                      const prefix = datasetIdToPrefix(id);
+                      return scale === "date"
+                        ? `date-to-${prefix}adjusted-value-created-1d-sum`
+                        : `height-to-${prefix}adjusted-value-created`;
                     },
-                  ],
+                  }),
                 },
               ],
             },
@@ -3015,16 +3109,16 @@ function createPartialOptions(colors) {
                   description: "",
                   unit: "US Dollars",
                   icon: "☄️",
-                  bottom: [
-                    {
-                      title: "Value",
-                      color: colors.loss,
-                      datasetPath:
-                        scale === "date"
-                          ? `date-to-${datasetPrefix}value-destroyed-1d-sum`
-                          : `height-to-${datasetPrefix}value-destroyed`,
+                  bottom: cohortOptionOrOptions.toSeriesBlueprints(arg, {
+                    title: "Value",
+                    singleColor: colors.loss,
+                    genPath: (id, scale) => {
+                      const prefix = datasetIdToPrefix(id);
+                      return scale === "date"
+                        ? `date-to-${prefix}value-destroyed-1d-sum`
+                        : `height-to-${prefix}value-destroyed`;
                     },
-                  ],
+                  }),
                 },
                 {
                   scale,
@@ -3033,56 +3127,48 @@ function createPartialOptions(colors) {
                   description: "",
                   unit: "US Dollars",
                   icon: "☄️",
-                  bottom: [
-                    {
-                      title: "Adjusted Value",
-                      color: colors.loss,
-                      datasetPath:
-                        scale === "date"
-                          ? `date-to-${datasetPrefix}adjusted-value-destroyed-1d-sum`
-                          : `height-to-${datasetPrefix}adjusted-value-destroyed`,
+                  bottom: cohortOptionOrOptions.toSeriesBlueprints(arg, {
+                    title: "Adjusted Value",
+                    singleColor: colors.loss,
+                    genPath: (id, scale) => {
+                      const prefix = datasetIdToPrefix(id);
+                      return scale === "date"
+                        ? `date-to-${prefix}adjusted-value-destroyed-1d-sum`
+                        : `height-to-${prefix}adjusted-value-destroyed`;
                     },
-                  ],
+                  }),
                 },
               ],
             },
           ],
         },
-        .../** @satisfies {PartialOptionsTree} */ (
-          scale === "date"
-            ? [
-                {
-                  scale,
-                  name: `Sell Side Risk Ratio`,
-                  title: `${title} Sell Side Risk Ratio`,
-                  description: "",
-                  unit: "Percentage",
-                  icon: "🥵",
-                  bottom: [
-                    {
-                      title: "Ratio",
-                      datasetPath: `${scale}-to-${datasetPrefix}sell-side-risk-ratio`,
-                      color,
-                    },
-                  ],
-                },
-              ]
-            : []
-        ),
+        ...cohortOptionOrOptions.genOptionsIfDate(arg, (scale) => [
+          {
+            scale,
+            name: `Sell Side Risk Ratio`,
+            title: `${title} Sell Side Risk Ratio`,
+            description: "",
+            unit: "Percentage",
+            icon: "🥵",
+            bottom: cohortOptionOrOptions.toSeriesBlueprints(arg, {
+              title: "Ratio",
+              genPath: (id) =>
+                /** @type {const} */ (
+                  `${scale}-to-${datasetIdToPrefix(id)}sell-side-risk-ratio`
+                ),
+            }),
+          },
+        ]),
       ],
     };
   }
 
   /**
-   * @param {Object} args
-   * @param {TimeScale} args.scale
-   * @param {AnyPossibleCohortId} args.datasetId
-   * @param {string} args.title
-   * @param {Color} args.color
+   * @param {DefaultCohortOption | DefaultCohortOptions} arg
    * @returns {PartialOptionsGroup}
    */
-  function createCohortUnrealizedOptions({ scale, color, datasetId, title }) {
-    const datasetPrefix = datasetIdToPrefix(datasetId);
+  function createCohortUnrealizedOptions(arg) {
+    const { scale, title } = arg;
 
     return {
       name: "Unrealized",
@@ -3094,13 +3180,12 @@ function createPartialOptions(colors) {
           description: "",
           unit: "US Dollars",
           icon: "🤑",
-          bottom: [
-            {
-              title: "Profit",
-              datasetPath: `${scale}-to-${datasetPrefix}unrealized-profit`,
-              color: colors.profit,
-            },
-          ],
+          bottom: cohortOptionOrOptions.toSeriesBlueprints(arg, {
+            title: "Profit",
+            genPath: (id) =>
+              `${scale}-to-${datasetIdToPrefix(id)}unrealized-profit`,
+            singleColor: colors.profit,
+          }),
         },
         {
           scale,
@@ -3109,37 +3194,38 @@ function createPartialOptions(colors) {
           description: "",
           unit: "US Dollars",
           icon: "😭",
-          bottom: [
-            {
-              title: "Loss",
-              datasetPath: `${scale}-to-${datasetPrefix}unrealized-loss`,
-              color: colors.loss,
-            },
-          ],
+          bottom: cohortOptionOrOptions.toSeriesBlueprints(arg, {
+            title: "Loss",
+            genPath: (id) =>
+              `${scale}-to-${datasetIdToPrefix(id)}unrealized-loss`,
+            singleColor: colors.loss,
+          }),
         },
-        {
-          scale,
-          name: `PNL - Profit And Loss`,
-          title: `${title} Unrealized Profit And Loss`,
-          description: "",
-          unit: "US Dollars",
-          icon: "🤔",
-          bottom: [
-            {
-              title: "Profit",
-              color: colors.profit,
-              datasetPath: `${scale}-to-${datasetPrefix}unrealized-profit`,
-              type: "Baseline",
-            },
-            {
-              title: "Loss",
-              color: colors.loss,
-              datasetPath: `${scale}-to-${datasetPrefix}negative-unrealized-loss`,
-              type: "Baseline",
-            },
-            bases[0](scale),
-          ],
-        },
+        ...cohortOptionOrOptions.genOptionsIfSingle(arg, (prefix) => [
+          {
+            scale,
+            name: `PNL - Profit And Loss`,
+            title: `${title} Unrealized Profit And Loss`,
+            description: "",
+            unit: "US Dollars",
+            icon: "🤔",
+            bottom: [
+              {
+                title: "Profit",
+                color: colors.profit,
+                datasetPath: `${scale}-to-${prefix}unrealized-profit`,
+                type: "Baseline",
+              },
+              {
+                title: "Loss",
+                color: colors.loss,
+                datasetPath: `${scale}-to-${prefix}negative-unrealized-loss`,
+                type: "Baseline",
+              },
+              bases[0](scale),
+            ],
+          },
+        ]),
         {
           scale,
           name: `Net PNL - Net Profit And Loss`,
@@ -3148,11 +3234,12 @@ function createPartialOptions(colors) {
           unit: "US Dollars",
           icon: "⚖️",
           bottom: [
-            {
+            ...cohortOptionOrOptions.toSeriesBlueprints(arg, {
               title: "Net Unrealized PNL",
-              datasetPath: `${scale}-to-${datasetPrefix}net-unrealized-profit-and-loss`,
+              genPath: (id) =>
+                `${scale}-to-${datasetIdToPrefix(id)}net-unrealized-profit-and-loss`,
               type: "Baseline",
-            },
+            }),
             bases[0](scale),
           ],
         },
@@ -3164,11 +3251,12 @@ function createPartialOptions(colors) {
           unit: "Percentage",
           icon: "➗",
           bottom: [
-            {
+            ...cohortOptionOrOptions.toSeriesBlueprints(arg, {
               title: "Relative Net Unrealized PNL",
-              datasetPath: `${scale}-to-${datasetPrefix}net-unrealized-profit-and-loss-to-market-cap-ratio`,
+              genPath: (id) =>
+                `${scale}-to-${datasetIdToPrefix(id)}net-unrealized-profit-and-loss-to-market-cap-ratio`,
               type: "Baseline",
-            },
+            }),
             bases[0](scale),
           ],
         },
@@ -3177,15 +3265,11 @@ function createPartialOptions(colors) {
   }
 
   /**
-   * @param {Object} args
-   * @param {TimeScale} args.scale
-   * @param {AnyPossibleCohortId} args.datasetId
-   * @param {string} args.title
-   * @param {Color} args.color
+   * @param {DefaultCohortOption | DefaultCohortOptions} arg
    * @returns {PartialOptionsGroup}
    */
-  function createCohortSupplyOptions({ scale, color, datasetId, title }) {
-    const datasetPrefix = datasetIdToPrefix(datasetId);
+  function createCohortSupplyOptions(arg) {
+    const { scale, title } = arg;
 
     return {
       name: "Supply",
@@ -3193,39 +3277,41 @@ function createPartialOptions(colors) {
         {
           name: "Absolute",
           tree: [
-            {
-              scale,
-              name: "All",
-              title: `${title} Profit And Loss`,
-              icon: "❌",
-              description: "",
-              unit: "US Dollars",
-              bottom: [
-                {
-                  title: "In Profit",
-                  color: colors.profit,
-                  datasetPath: `${scale}-to-${datasetPrefix}supply-in-profit`,
-                },
-                {
-                  title: "In Loss",
-                  color: colors.loss,
-                  datasetPath: `${scale}-to-${datasetPrefix}supply-in-loss`,
-                },
-                {
-                  title: "Total",
-                  color: colors.default,
-                  datasetPath: `${scale}-to-${datasetPrefix}supply`,
-                },
-                {
-                  title: "Halved Total",
-                  color: colors.off,
-                  datasetPath: `${scale}-to-${datasetPrefix}halved-supply`,
-                  options: {
-                    lineStyle: 4,
+            ...cohortOptionOrOptions.genOptionsIfSingle(arg, (prefix) => [
+              {
+                scale,
+                name: "All",
+                title: `${title} Profit And Loss`,
+                icon: "❌",
+                description: "",
+                unit: "US Dollars",
+                bottom: [
+                  {
+                    title: "In Profit",
+                    color: colors.profit,
+                    datasetPath: `${scale}-to-${prefix}supply-in-profit`,
                   },
-                },
-              ],
-            },
+                  {
+                    title: "In Loss",
+                    color: colors.loss,
+                    datasetPath: `${scale}-to-${prefix}supply-in-loss`,
+                  },
+                  {
+                    title: "Total",
+                    color: colors.default,
+                    datasetPath: `${scale}-to-${prefix}supply`,
+                  },
+                  {
+                    title: "Halved Total",
+                    color: colors.off,
+                    datasetPath: `${scale}-to-${prefix}halved-supply`,
+                    options: {
+                      lineStyle: 4,
+                    },
+                  },
+                ],
+              },
+            ]),
             {
               scale,
               name: `Total`,
@@ -3233,13 +3319,10 @@ function createPartialOptions(colors) {
               icon: "∑",
               description: "",
               unit: "Bitcoin",
-              bottom: [
-                {
-                  title: "Supply",
-                  color,
-                  datasetPath: `${scale}-to-${datasetPrefix}supply`,
-                },
-              ],
+              bottom: cohortOptionOrOptions.toSeriesBlueprints(arg, {
+                title: "Supply",
+                genPath: (id) => `${scale}-to-${datasetIdToPrefix(id)}supply`,
+              }),
             },
             {
               scale,
@@ -3248,13 +3331,12 @@ function createPartialOptions(colors) {
               description: "",
               unit: "Bitcoin",
               icon: "📈",
-              bottom: [
-                {
-                  title: "Supply",
-                  color: colors.profit,
-                  datasetPath: `${scale}-to-${datasetPrefix}supply-in-profit`,
-                },
-              ],
+              bottom: cohortOptionOrOptions.toSeriesBlueprints(arg, {
+                title: "Supply",
+                singleColor: colors.profit,
+                genPath: (id) =>
+                  `${scale}-to-${datasetIdToPrefix(id)}supply-in-profit`,
+              }),
             },
             {
               scale,
@@ -3263,52 +3345,53 @@ function createPartialOptions(colors) {
               description: "",
               unit: "Bitcoin",
               icon: "📉",
-              bottom: [
-                {
-                  title: "Supply",
-                  color: colors.loss,
-                  datasetPath: `${scale}-to-${datasetPrefix}supply-in-loss`,
-                },
-              ],
+              bottom: cohortOptionOrOptions.toSeriesBlueprints(arg, {
+                title: "Supply",
+                singleColor: colors.loss,
+                genPath: (id) =>
+                  `${scale}-to-${datasetIdToPrefix(id)}supply-in-loss`,
+              }),
             },
           ],
         },
         {
           name: "Relative To Circulating",
           tree: [
-            {
-              scale,
-              name: "All",
-              title: `${title} Profit And Loss Relative To Circulating Supply`,
-              description: "",
-              unit: "Percentage",
-              icon: "🔀",
-              bottom: [
-                {
-                  title: "In Profit",
-                  color: colors.profit,
-                  datasetPath: `${scale}-to-${datasetPrefix}supply-in-profit-to-circulating-supply-ratio`,
-                },
-                {
-                  title: "In Loss",
-                  color: colors.loss,
-                  datasetPath: `${scale}-to-${datasetPrefix}supply-in-loss-to-circulating-supply-ratio`,
-                },
-                {
-                  title: "100%",
-                  color: colors.default,
-                  datasetPath: `${scale}-to-${datasetPrefix}supply-to-circulating-supply-ratio`,
-                },
-                {
-                  title: "50%",
-                  color: colors.off,
-                  datasetPath: `${scale}-to-${datasetPrefix}halved-supply-to-circulating-supply-ratio`,
-                  options: {
-                    lineStyle: 4,
+            ...cohortOptionOrOptions.genOptionsIfSingle(arg, (prefix) => [
+              {
+                scale,
+                name: "All",
+                title: `${title} Profit And Loss Relative To Circulating Supply`,
+                description: "",
+                unit: "Percentage",
+                icon: "🔀",
+                bottom: [
+                  {
+                    title: "In Profit",
+                    color: colors.profit,
+                    datasetPath: `${scale}-to-${prefix}supply-in-profit-to-circulating-supply-ratio`,
                   },
-                },
-              ],
-            },
+                  {
+                    title: "In Loss",
+                    color: colors.loss,
+                    datasetPath: `${scale}-to-${prefix}supply-in-loss-to-circulating-supply-ratio`,
+                  },
+                  {
+                    title: "100%",
+                    color: colors.default,
+                    datasetPath: `${scale}-to-${prefix}supply-to-circulating-supply-ratio`,
+                  },
+                  {
+                    title: "50%",
+                    color: colors.off,
+                    datasetPath: `${scale}-to-${prefix}halved-supply-to-circulating-supply-ratio`,
+                    options: {
+                      lineStyle: 4,
+                    },
+                  },
+                ],
+              },
+            ]),
             {
               scale,
               name: `Total`,
@@ -3316,13 +3399,11 @@ function createPartialOptions(colors) {
               description: "",
               unit: "Percentage",
               icon: "∑",
-              bottom: [
-                {
-                  title: "Supply",
-                  color,
-                  datasetPath: `${scale}-to-${datasetPrefix}supply-to-circulating-supply-ratio`,
-                },
-              ],
+              bottom: cohortOptionOrOptions.toSeriesBlueprints(arg, {
+                title: "Supply",
+                genPath: (id) =>
+                  `${scale}-to-${datasetIdToPrefix(id)}supply-to-circulating-supply-ratio`,
+              }),
             },
             {
               scale,
@@ -3331,13 +3412,12 @@ function createPartialOptions(colors) {
               description: "",
               unit: "Percentage",
               icon: "📈",
-              bottom: [
-                {
-                  title: "Supply",
-                  color: colors.profit,
-                  datasetPath: `${scale}-to-${datasetPrefix}supply-in-profit-to-circulating-supply-ratio`,
-                },
-              ],
+              bottom: cohortOptionOrOptions.toSeriesBlueprints(arg, {
+                title: "Supply",
+                singleColor: colors.profit,
+                genPath: (id) =>
+                  `${scale}-to-${datasetIdToPrefix(id)}supply-in-profit-to-circulating-supply-ratio`,
+              }),
             },
             {
               scale,
@@ -3346,56 +3426,57 @@ function createPartialOptions(colors) {
               description: "",
               unit: "Percentage",
               icon: "📉",
-              bottom: [
-                {
-                  title: "Supply",
-                  color: colors.loss,
-                  datasetPath: `${scale}-to-${datasetPrefix}supply-in-loss-to-circulating-supply-ratio`,
-                },
-              ],
+              bottom: cohortOptionOrOptions.toSeriesBlueprints(arg, {
+                title: "Supply",
+                singleColor: colors.loss,
+                genPath: (id) =>
+                  `${scale}-to-${datasetIdToPrefix(id)}supply-in-loss-to-circulating-supply-ratio`,
+              }),
             },
           ],
         },
         {
           name: "Relative To Own",
           tree: [
-            {
-              scale,
-              name: "All",
-              title: `${title} Supply In Profit And Loss Relative To Own Supply`,
-              description: "",
-              unit: "Percentage",
-              icon: "🔀",
-              bottom: [
-                {
-                  title: "In Profit",
-                  color: colors.profit,
-                  datasetPath: `${scale}-to-${datasetPrefix}supply-in-profit-to-own-supply-ratio`,
-                },
-                {
-                  title: "In Loss",
-                  color: colors.loss,
-                  datasetPath: `${scale}-to-${datasetPrefix}supply-in-loss-to-own-supply-ratio`,
-                },
-                {
-                  title: "100%",
-                  color: colors.default,
-                  datasetPath: `${scale}-to-100`,
-                  options: {
-                    lastValueVisible: false,
+            ...cohortOptionOrOptions.genOptionsIfSingle(arg, (prefix) => [
+              {
+                scale,
+                name: "All",
+                title: `${title} Supply In Profit And Loss Relative To Own Supply`,
+                description: "",
+                unit: "Percentage",
+                icon: "🔀",
+                bottom: [
+                  {
+                    title: "In Profit",
+                    color: colors.profit,
+                    datasetPath: `${scale}-to-${prefix}supply-in-profit-to-own-supply-ratio`,
                   },
-                },
-                {
-                  title: "50%",
-                  color: colors.off,
-                  datasetPath: `${scale}-to-50`,
-                  options: {
-                    lineStyle: 4,
-                    lastValueVisible: false,
+                  {
+                    title: "In Loss",
+                    color: colors.loss,
+                    datasetPath: `${scale}-to-${prefix}supply-in-loss-to-own-supply-ratio`,
                   },
-                },
-              ],
-            },
+                  {
+                    title: "100%",
+                    color: colors.default,
+                    datasetPath: `${scale}-to-100`,
+                    options: {
+                      lastValueVisible: false,
+                    },
+                  },
+                  {
+                    title: "50%",
+                    color: colors.off,
+                    datasetPath: `${scale}-to-50`,
+                    options: {
+                      lineStyle: 4,
+                      lastValueVisible: false,
+                    },
+                  },
+                ],
+              },
+            ]),
             {
               scale,
               name: "In Profit",
@@ -3403,13 +3484,12 @@ function createPartialOptions(colors) {
               description: "",
               unit: "Percentage",
               icon: "📈",
-              bottom: [
-                {
-                  title: "Supply",
-                  color: colors.profit,
-                  datasetPath: `${scale}-to-${datasetPrefix}supply-in-profit-to-own-supply-ratio`,
-                },
-              ],
+              bottom: cohortOptionOrOptions.toSeriesBlueprints(arg, {
+                title: "Supply",
+                singleColor: colors.profit,
+                genPath: (id) =>
+                  `${scale}-to-${datasetIdToPrefix(id)}supply-in-profit-to-own-supply-ratio`,
+              }),
             },
             {
               scale,
@@ -3418,13 +3498,12 @@ function createPartialOptions(colors) {
               description: "",
               unit: "Percentage",
               icon: "📉",
-              bottom: [
-                {
-                  title: "Supply",
-                  color: colors.loss,
-                  datasetPath: `${scale}-to-${datasetPrefix}supply-in-loss-to-own-supply-ratio`,
-                },
-              ],
+              bottom: cohortOptionOrOptions.toSeriesBlueprints(arg, {
+                title: "Supply",
+                singleColor: colors.loss,
+                genPath: (id) =>
+                  `${scale}-to-${datasetIdToPrefix(id)}supply-in-loss-to-own-supply-ratio`,
+              }),
             },
           ],
         },
@@ -3440,24 +3519,21 @@ function createPartialOptions(colors) {
   }
 
   /**
-   * @param {Object} args
-   * @param {TimeScale} args.scale
-   * @param {AnyPossibleCohortId} args.datasetId
-   * @param {string} args.title
-   * @param {Color} args.color
+   * @param {DefaultCohortOption | DefaultCohortOptions} arg
    * @returns {PartialOptionsGroup}
    */
-  function createCohortPricesPaidOptions({ scale, color, datasetId, title }) {
+  function createCohortPricesPaidOptions(arg) {
+    const { scale, title } = arg;
+
     /**
      * @param {Object} args
      * @param {TimeScale} args.scale
-     * @param {AnyPossibleCohortId} args.cohortId
+     * @param {AnyDatasetPrefix} args.prefix
      * @param {PercentileId} args.id
      * @returns {AnyDatasetPath}
      */
-    function generatePath({ scale, cohortId, id }) {
-      const datasetPrefix = datasetIdToPrefix(cohortId);
-      return /** @type {const} */ (`${scale}-to-${datasetPrefix}${id}`);
+    function generatePath({ scale, prefix, id }) {
+      return /** @type {const} */ (`${scale}-to-${prefix}${id}`);
     }
 
     return {
@@ -3470,39 +3546,37 @@ function createPartialOptions(colors) {
           description: "",
           unit: "US Dollars",
           icon: "~",
-          top: [
-            {
-              title: "Average",
-              color,
-              datasetPath: `${scale}-to-${datasetIdToPrefix(
-                datasetId,
-              )}realized-price`,
-            },
-          ],
+          top: cohortOptionOrOptions.toSeriesBlueprints(arg, {
+            title: "Average",
+            genPath: (id) =>
+              `${scale}-to-${datasetIdToPrefix(id)}realized-price`,
+          }),
         },
-        {
-          scale,
-          name: `Deciles`,
-          title: `${title} deciles`,
-          icon: "🌗",
-          description: "",
-          unit: "US Dollars",
-          top: groups.percentiles
-            .filter(({ value }) => Number(value) % 10 === 0)
-            .map(({ name, id }) => {
-              const datasetPath = generatePath({
-                scale,
-                cohortId: datasetId,
-                id,
-              });
+        ...cohortOptionOrOptions.genOptionsIfSingle(arg, (prefix, arg) => [
+          {
+            scale,
+            name: `Deciles`,
+            title: `${title} deciles`,
+            icon: "🌗",
+            description: "",
+            unit: "US Dollars",
+            top: groups.percentiles
+              .filter(({ value }) => Number(value) % 10 === 0)
+              .map(({ name, id }) => {
+                const datasetPath = generatePath({
+                  scale,
+                  prefix,
+                  id,
+                });
 
-              return {
-                datasetPath,
-                color,
-                title: name,
-              };
-            }),
-        },
+                return {
+                  datasetPath,
+                  color: arg.color,
+                  title: name,
+                };
+              }),
+          },
+        ]),
         ...groups.percentiles.map((percentile) => ({
           scale,
           name: percentile.name,
@@ -3510,63 +3584,31 @@ function createPartialOptions(colors) {
           description: "",
           unit: /** @type {const} */ ("US Dollars"),
           icon: "🌓",
-          top: [
-            {
-              title: percentile.name,
-              color,
-              datasetPath: generatePath({
+          top: cohortOptionOrOptions.toSeriesBlueprints(arg, {
+            title: "Relative Net Unrealized PNL",
+            genPath: (id) =>
+              generatePath({
                 scale,
-                cohortId: datasetId,
+                prefix: datasetIdToPrefix(id),
                 id: percentile.id,
               }),
-            },
-          ],
+          }),
         })),
       ],
     };
   }
 
   /**
-   * @param {Object} args
-   * @param {string} args.name
-   * @param {TimeScale} args.scale
-   * @param {AnyPossibleCohortId} args.datasetId
-   * @param {string} args.title
-   * @param {Color} args.color
+   * @param {DefaultCohortOption | DefaultCohortOptions} arg
    * @returns {PartialOptionsTree}
    */
-  function createCohortOptions({ name, scale, color, datasetId, title }) {
+  function createCohortOptions(arg) {
     return [
-      createCohortUTXOOptions({
-        color,
-        datasetId,
-        scale,
-        title,
-      }),
-      createCohortRealizedOptions({
-        color,
-        datasetId,
-        scale,
-        title,
-      }),
-      createCohortUnrealizedOptions({
-        color,
-        datasetId,
-        scale,
-        title,
-      }),
-      createCohortSupplyOptions({
-        color,
-        datasetId,
-        scale,
-        title,
-      }),
-      createCohortPricesPaidOptions({
-        color,
-        datasetId,
-        scale,
-        title,
-      }),
+      createCohortUTXOOptions(arg),
+      createCohortRealizedOptions(arg),
+      createCohortUnrealizedOptions(arg),
+      createCohortSupplyOptions(arg),
+      createCohortPricesPaidOptions(arg),
     ];
   }
 
@@ -3579,43 +3621,27 @@ function createPartialOptions(colors) {
   function createLiquidityOptions({ scale, color }) {
     return {
       name: `Split By Liquidity`,
-      tree: groups.liquidities.map((liquidity) => {
-        /** @type {PartialOptionsGroup} */
-        const folder = {
-          name: liquidity.name,
-          tree: createCohortOptions({
-            title: `${liquidity.name}`,
-            name: `${liquidity.name}`,
-            scale,
-            color,
-            datasetId: liquidity.id,
-          }),
-        };
-        return folder;
-      }),
+      tree: groups.liquidities.map(({ name, id }) =>
+        createAddressCohortOptionGroup({
+          name,
+          title: name,
+          scale,
+          color,
+          datasetId: id,
+        }),
+      ),
     };
   }
 
   /**
-   * @param {Object} args
-   * @param {TimeScale} args.scale
-   * @param {string} args.name
-   * @param {AnyPossibleCohortId} args.datasetId
-   * @param {string} args.title
-   * @param {Color} args.color
+   *
+   * @param {DefaultCohortOption | DefaultCohortOptions} arg
    * @returns {PartialOptionsGroup}
    */
-  function createCohortOptionsGroup({ scale, color, name, datasetId, title }) {
+  function createCohortOptionsGroup(arg) {
     return {
-      name,
-
-      tree: createCohortOptions({
-        title,
-        name,
-        scale,
-        color,
-        datasetId: datasetId,
-      }),
+      name: "list" in arg ? "Compare" : arg.name,
+      tree: createCohortOptions(arg),
     };
   }
 
@@ -3624,157 +3650,130 @@ function createPartialOptions(colors) {
    * @returns {PartialOptionsGroup}
    */
   function createHodlersOptions(scale) {
+    /**
+     * @param {Object} arg
+     * @param {string} arg.name
+     * @param {string} [arg.title]
+     * @param {DefaultCohortOption[]} arg.list
+     */
+    function createFolder({ name, title, list }) {
+      return {
+        name,
+        tree: [
+          createCohortOptionsGroup({
+            scale,
+            name,
+            title: title || name,
+            list,
+          }),
+          ...list.map((cohort) => createCohortOptionsGroup(cohort)),
+        ],
+      };
+    }
+
     return {
       name: "Hodlers",
       tree: [
-        {
-          scale,
-          name: `Hodl Supply`,
-          title: `Hodl Supply`,
-          description: "",
-          icon: "🌊",
-          unit: "Percentage",
-          bottom: [
-            {
-              title: `24h`,
-              color: colors.up_to_1d,
-              datasetPath: `${scale}-to-up-to-1d-supply-to-circulating-supply-ratio`,
-            },
-
-            ...groups.fromXToY.map(({ key, id, name, legend }) => ({
-              title: legend,
-              color: colors[key],
-              datasetPath: /** @type {const} */ (
-                `${scale}-to-${id}-supply-to-circulating-supply-ratio`
-              ),
-            })),
-
-            {
-              title: `15y+`,
-              color: colors.from_15y,
-              datasetPath: `${scale}-to-from-15y-supply-to-circulating-supply-ratio`,
-            },
-          ],
-        },
-        {
+        createFolder({
           name: "X Term Holders",
-          tree: [
-            ...groups.xTermHolders.map(({ key, id, name, legend }) =>
-              createCohortOptionsGroup({
-                scale,
-                color: colors[key],
-                name: legend,
-                datasetId: id,
-                title: name,
-              }),
-            ),
-          ],
-        },
-        {
+          list: groups.xTermHolders.map(({ key, id, name, legend }) => ({
+            scale,
+            color: colors[key],
+            name: legend,
+            datasetId: id,
+            title: name,
+          })),
+        }),
+        createFolder({
           name: "Up To X",
-          tree: groups.upTo.map(({ key, id, name }) =>
-            createCohortOptionsGroup({
-              scale,
-              color: colors[key],
-              name,
-              datasetId: id,
-              title: name,
-            }),
-          ),
-        },
-        {
+          list: groups.upTo.map(({ key, id, name }) => ({
+            scale,
+            color: colors[key],
+            name,
+            datasetId: id,
+            title: name,
+          })),
+        }),
+        createFolder({
           name: "From X To Y",
-          tree: groups.fromXToY.map(({ key, id, name }) =>
-            createCohortOptionsGroup({
-              scale,
-              color: colors[key],
-              name,
-              datasetId: id,
-              title: name,
-            }),
-          ),
-        },
-        {
+          list: groups.fromXToY.map(({ key, id, name }) => ({
+            scale,
+            color: colors[key],
+            name,
+            datasetId: id,
+            title: name,
+          })),
+        }),
+        createFolder({
           name: "From X",
-          tree: groups.fromX.map(({ key, id, name }) =>
-            createCohortOptionsGroup({
-              scale,
-              color: colors[key],
-              name,
-              datasetId: id,
-              title: name,
-            }),
-          ),
-        },
-        {
-          name: "Epochs",
-          tree: groups.epochs.map(({ key, id, name }) =>
-            createCohortOptionsGroup({
-              scale,
-              color: colors[key],
-              name,
-              datasetId: id,
-              title: name,
-            }),
-          ),
-        },
+          list: groups.fromX.map(({ key, id, name }) => ({
+            scale,
+            color: colors[key],
+            name,
+            datasetId: id,
+            title: name,
+          })),
+        }),
+        createFolder({
+          name: "Epoch X",
+          title: "Epochs",
+          list: groups.epochs.map(({ key, id, name }) => ({
+            scale,
+            color: colors[key],
+            name,
+            datasetId: id,
+            title: name,
+          })),
+        }),
       ],
     };
   }
 
+  // * @param {Object} args
+  // * @param {TimeScale} args.scale
+  // * @param {string} args.name
+  // * @param {string} args.title
+  // * @param {AddressCohortId | LiquidityId} args.datasetId
+  // * @param {Color} args.color
   /**
-   * @param {Object} args
-   * @param {TimeScale} args.scale
-   * @param {string} args.name
-   * @param {AddressCohortId} args.datasetId
-   * @param {Color} args.color
+   * @param {CohortOption<AnyAddressCohortId> | CohortOptions<AnyAddressCohortId>} arg
    * @returns {PartialChartOption}
    */
-  function createAddressCountOption({ scale, color, name, datasetId }) {
+  function createAddressCountOption(arg) {
+    const { scale, title } = arg;
+
     return {
       scale,
       name: `Address Count`,
-      title: `${name} Address Count`,
+      title: `${title} Address Count`,
       description: "",
       unit: "Count",
       icon: "📕",
-      bottom: [
-        {
-          title: "Address Count",
-          color,
-          datasetPath: `${scale}-to-${datasetId}-address-count`,
-        },
-      ],
+      bottom: cohortOptionOrOptions.toSeriesBlueprints(arg, {
+        title: "Address Count",
+        genPath: (id) => `${scale}-to-${id}-address-count`,
+      }),
     };
   }
 
   /**
-   * @param {Object} args
-   * @param {TimeScale} args.scale
-   * @param {string} args.name
-   * @param {AddressCohortId} args.datasetId
-   * @param {Color} args.color
-   * @param {string} [args.filenameAddon]
+   * @param {CohortOption<AnyAddressCohortId> | CohortOptions<AnyAddressCohortId>} arg
    * @returns {PartialOptionsGroup}
    */
-  function createAddressOptions({
-    scale,
-    color,
-    name,
-    filenameAddon,
-    datasetId,
-  }) {
+  function createAddressCohortOptionGroup(arg) {
     return {
-      name: filenameAddon ? `${name} - ${filenameAddon}` : name,
+      name:
+        "list" in arg
+          ? "Compare"
+          : arg.filenameAddon
+            ? `${arg.name} - ${arg.filenameAddon}`
+            : arg.name,
       tree: [
-        createAddressCountOption({ scale, name, datasetId, color }),
-        ...createCohortOptions({
-          title: name,
-          scale,
-          name,
-          color,
-          datasetId,
-        }),
+        {
+          name: "Addresses",
+          tree: [createAddressCountOption(arg)],
+        },
+        ...createCohortOptions(arg),
       ],
     };
   }
@@ -3784,6 +3783,27 @@ function createPartialOptions(colors) {
    * @returns {PartialOptionsGroup}
    */
   function createAddressesOptions(scale) {
+    /**
+     * @param {Object} arg
+     * @param {string} arg.name
+     * @param {string} [arg.title]
+     * @param {CohortOption<AnyAddressCohortId>[]} arg.list
+     */
+    function createFolder({ name, title, list }) {
+      return {
+        name,
+        tree: [
+          createAddressCohortOptionGroup({
+            scale,
+            name,
+            title: title || name,
+            list,
+          }),
+          ...list.map((cohort) => createAddressCohortOptionGroup(cohort)),
+        ],
+      };
+    }
+
     return {
       name: "Addresses",
       tree: [
@@ -3847,30 +3867,29 @@ function createPartialOptions(colors) {
             },
           ],
         },
-        {
+        createFolder({
           name: "By Size",
-          tree: groups.size.map(({ key, name, size }) =>
-            createAddressOptions({
-              scale,
-              color: colors[key],
-              name,
-              filenameAddon: size,
-              datasetId: key,
-            }),
-          ),
-        },
-        {
-          scale,
+          title: "Address Sizes",
+          list: groups.size.map(({ key, name, size }) => ({
+            scale,
+            color: colors[key],
+            name,
+            title: name,
+            filenameAddon: size,
+            datasetId: key,
+          })),
+        }),
+        createFolder({
           name: "By Type",
-          tree: groups.type.map(({ key, name }) =>
-            createAddressOptions({
-              scale,
-              color: colors[key],
-              name,
-              datasetId: key,
-            }),
-          ),
-        },
+          title: "Address Types",
+          list: groups.type.map(({ key, name }) => ({
+            scale,
+            color: colors[key],
+            name,
+            title: name,
+            datasetId: key,
+          })),
+        }),
       ],
     };
   }
@@ -4348,7 +4367,7 @@ function createPartialOptions(colors) {
               ],
             },
             ...(scale === "date"
-              ? /** @type {PartialOptionsTree} */ ([
+              ? /** @satisfies {PartialOptionsTree} */ ([
                   {
                     scale,
                     icon: "❤️",
@@ -4689,7 +4708,7 @@ function createPartialOptions(colors) {
           ],
         },
         ...(scale === "date"
-          ? /** @type {PartialOptionsTree} */ ([
+          ? /** @satisfies {PartialOptionsTree} */ ([
               {
                 name: "Inflation Rate",
                 tree: [
@@ -4950,8 +4969,8 @@ export function initOptions({
     function createCountersEffects(option) {
       let firstFavoritesRun = true;
 
-      signals.createEffect(() => {
-        if (option.isFavorite()) {
+      signals.createEffect(option.isFavorite, (favorite) => {
+        if (favorite) {
           favoritesCount.set((c) => c + 1);
         } else if (!firstFavoritesRun) {
           favoritesCount.set((c) => c - 1);
@@ -4961,8 +4980,8 @@ export function initOptions({
 
       let firstNewRun = true;
 
-      signals.createEffect(() => {
-        if (!option.visited()) {
+      signals.createEffect(option.visited, (visited) => {
+        if (!visited) {
           newCount.set((c) => c + 1);
         } else if (!firstNewRun) {
           newCount.set((c) => c - 1);
@@ -4974,7 +4993,7 @@ export function initOptions({
     return {
       favorites: favoritesCount,
       new: newCount,
-      createEffect: createCountersEffects,
+      createEffects: createCountersEffects,
     };
   }
   const counters = initCounters();
@@ -5003,7 +5022,7 @@ export function initOptions({
   /**
    * @param {SeriesBlueprint[]} array
    */
-  function getMainValueFromBlueprints(array) {
+  function getMainIdFromBlueprints(array) {
     const searchArray = array.filter(
       (blueprint) =>
         blueprint.options?.lastValueVisible !== false &&
@@ -5022,9 +5041,7 @@ export function initOptions({
       .replace(DATE_TO_PREFIX, "")
       .replace(HEIGHT_TO_PREFIX, "");
 
-    return /** @type {number | undefined} */ (
-      lastValues()?.[/** @type {LastPath} */ (id)]
-    );
+    return /** @type {LastPath} */ (id);
   }
 
   /**
@@ -5081,9 +5098,7 @@ export function initOptions({
       labelTitle: option.title,
       name: name || option.name,
       onClick: () => {
-        // if (option.kind !== "pdf") {
         selected.set(option);
-        // }
       },
       href: `/${option.kind === "pdf" ? option.file : option.id}`,
     });
@@ -5105,30 +5120,36 @@ export function initOptions({
       spanMain.append(spanValue);
 
       if (!option.top?.length && !option.bottom?.length) {
-        signals.createEffect(() => {
-          const close =
-            webSockets.krakenCandle.latest()?.close ?? lastValues()?.close;
-
-          if (close) {
-            spanValue.innerHTML = formatValue(close, "US Dollars");
-          }
-        });
+        signals.createEffect(
+          () => webSockets.krakenCandle.latest()?.close ?? lastValues()?.close,
+          (close) => {
+            if (close) {
+              spanValue.innerHTML = formatValue(close, "US Dollars");
+            }
+          },
+        );
       } else if (option.bottom?.length) {
         const bottom = option.bottom;
-        signals.createEffect(() => {
-          spanValue.innerHTML = formatValue(
-            getMainValueFromBlueprints(bottom),
-            option.unit,
-          );
-        });
+        const id = getMainIdFromBlueprints(bottom);
+
+        if (id) {
+          signals.createEffect(lastValues, (lastValues) => {
+            if (lastValues) {
+              spanValue.innerHTML = formatValue(lastValues[id], option.unit);
+            }
+          });
+        }
       } else if (option.top?.length) {
         const top = option.top;
-        signals.createEffect(() => {
-          spanValue.innerHTML = formatValue(
-            getMainValueFromBlueprints(top),
-            option.unit,
-          );
-        });
+        const id = getMainIdFromBlueprints(top);
+
+        if (id) {
+          signals.createEffect(lastValues, (lastValues) => {
+            if (lastValues) {
+              spanValue.innerHTML = formatValue(lastValues[id], option.unit);
+            }
+          });
+        }
       }
     }
 
@@ -5142,30 +5163,31 @@ export function initOptions({
     }
 
     function createFavoriteEffect() {
+      let wasFavorite = false;
+      /** @type {HTMLElement | undefined} */
+      let iconFavorite = undefined;
       signals.createEffect(
-        // @ts-ignore
-        (_wasFavorite) => {
-          const wasFavorite = /** @type {boolean} */ (_wasFavorite);
-          const isFavorite = option.isFavorite();
-
+        option.isFavorite,
+        (isFavorite) => {
           if (!wasFavorite && isFavorite) {
-            const iconFavorite = window.document.createElement("svg");
+            iconFavorite = window.document.createElement("svg");
             spanMain.append(iconFavorite);
             iconFavorite.outerHTML =
               '<svg viewBox="0 0 20 20" class="favorite"><path fill-rule="evenodd" d="M10.868 2.884c-.321-.772-1.415-.772-1.736 0l-1.83 4.401-4.753.381c-.833.067-1.171 1.107-.536 1.651l3.62 3.102-1.106 4.637c-.194.813.691 1.456 1.405 1.02L10 15.591l4.069 2.485c.713.436 1.598-.207 1.404-1.02l-1.106-4.637 3.62-3.102c.635-.544.297-1.584-.536-1.65l-4.752-.382-1.831-4.401Z" clip-rule="evenodd" /></svg>';
           } else if (wasFavorite && !isFavorite) {
-            spanMain.lastElementChild?.remove();
+            iconFavorite?.remove();
+            iconFavorite = undefined;
           }
 
-          return isFavorite;
+          wasFavorite = isFavorite;
         },
         false,
       );
     }
 
     function createCheckEffect() {
-      signals.createEffect(() => {
-        if (selected()?.id === option.id) {
+      signals.createEffect(selected, (selected) => {
+        if (selected?.id === option.id) {
           input.checked = true;
           spanNew?.remove();
           option.visited.set(true);
@@ -5225,24 +5247,20 @@ export function initOptions({
     partialTree.forEach((anyPartial, partialIndex) => {
       const renderLi = signals.createSignal(true);
 
-      const li = signals.createMemo(
-        // @ts-ignored
-        (_previous) => {
-          const previous = /** @type {HTMLLIElement | null} */ (_previous);
-          previous?.remove();
+      const li = signals.createMemo((_previous) => {
+        const previous = _previous;
+        previous?.remove();
 
-          const _ul = ul();
+        const _ul = ul();
 
-          if (renderLi() && _ul) {
-            const li = window.document.createElement("li");
-            utils.dom.insertElementAtIndex(_ul, li, partialIndex);
-            return li;
-          } else {
-            return null;
-          }
-        },
-        undefined,
-      );
+        if (renderLi() && _ul) {
+          const li = window.document.createElement("li");
+          utils.dom.insertElementAtIndex(_ul, li, partialIndex);
+          return li;
+        } else {
+          return null;
+        }
+      }, /** @type {HTMLLIElement | null} */ (null));
 
       if ("tree" in anyPartial) {
         const folderId = ids.fromString(
@@ -5277,19 +5295,17 @@ export function initOptions({
 
         listForSum.push(childOptionsCount);
 
-        signals.createEffect(() => {
-          const _li = li();
-
-          if (!_li) {
+        signals.createEffect(li, (li) => {
+          if (!li) {
             passedDetails.set(null);
             return;
           }
 
-          signals.createEffect(() => {
-            if (selected().path.includes(thisPath)) {
-              _li.dataset.highlight = "";
+          signals.createEffect(selected, (selected) => {
+            if (selected.path.includes(thisPath)) {
+              li.dataset.highlight = "";
             } else {
-              delete _li.dataset.highlight;
+              delete li.dataset.highlight;
             }
           });
 
@@ -5298,7 +5314,7 @@ export function initOptions({
           details.open = !!localStorage.getItem(folderOpenLocalStorageKey);
           details.id = folderId;
           detailsList.push(details);
-          _li.appendChild(details);
+          li.appendChild(details);
 
           const summary = window.document.createElement("summary");
           details.appendChild(summary);
@@ -5312,8 +5328,8 @@ export function initOptions({
 
           const supCount = window.document.createElement("sup");
 
-          signals.createEffect(() => {
-            supCount.innerHTML = childOptionsCount().toLocaleString();
+          signals.createEffect(childOptionsCount, (childOptionsCount) => {
+            supCount.innerHTML = childOptionsCount.toLocaleString();
           });
           spanName.append(supCount);
 
@@ -5331,8 +5347,7 @@ export function initOptions({
         });
 
         function createRenderLiEffect() {
-          signals.createEffect(() => {
-            const count = childOptionsCount();
+          signals.createEffect(childOptionsCount, (count) => {
             renderLi.set(!!count);
           });
         }
@@ -5395,7 +5410,7 @@ export function initOptions({
         );
         option.visited.set(!!localStorage.getItem(optionToVisitedKey(option)));
 
-        counters.createEffect(option);
+        counters.createEffects(option);
 
         list.push(option);
         optionsIds?.push(option.id);
@@ -5403,57 +5418,62 @@ export function initOptions({
         const hidden = signals.createSignal(true);
 
         function createHiddenEffect() {
-          signals.createEffect(() => {
-            switch (filter()) {
-              case "all": {
-                hidden.set(false);
-                break;
+          signals.createEffect(
+            () => ({
+              filter: filter(),
+              favorite: option.isFavorite(),
+              visited: option.visited(),
+            }),
+            ({ filter, favorite, visited }) => {
+              switch (filter) {
+                case "all": {
+                  hidden.set(false);
+                  break;
+                }
+                case "favorites": {
+                  hidden.set(!favorite);
+                  break;
+                }
+                case "new": {
+                  hidden.set(visited);
+                  break;
+                }
               }
-              case "favorites": {
-                hidden.set(!option.isFavorite());
-                break;
-              }
-              case "new": {
-                hidden.set(option.visited());
-                break;
-              }
-            }
-          });
+            },
+          );
         }
         createHiddenEffect();
 
         function createRenderLiEffect() {
-          signals.createEffect(() => {
-            renderLi.set(!hidden());
+          signals.createEffect(hidden, (hidden) => {
+            renderLi.set(!hidden);
           });
         }
         createRenderLiEffect();
 
-        signals.createEffect(() => {
-          const _li = li();
-
-          if (!_li) {
+        signals.createEffect(li, (li) => {
+          if (!li) {
             return;
           }
 
-          signals.createEffect(() => {
-            if (selected() === option) {
-              _li.dataset.highlight = "";
+          signals.createEffect(selected, (selected) => {
+            if (selected === option) {
+              li.dataset.highlight = "";
             } else {
-              delete _li.dataset.highlight;
+              delete li.dataset.highlight;
             }
           });
 
-          signals.untrack(() => {
-            const label = createOptionLabeledInput({
-              option,
-              frame: "folders",
-            });
-            _li.append(label);
+          const label = createOptionLabeledInput({
+            option,
+            frame: "folders",
           });
+
+          li.append(label);
         });
 
         const memo = signals.createMemo(() => (hidden() ? 0 : 1));
+
         listForSum.push(memo);
       }
     });

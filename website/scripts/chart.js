@@ -1,5 +1,6 @@
 /**
- * @import {Options} from './options';
+ * @import { HoveredLegend, PriceSeriesType, Series } from "./types/self"
+ * @import { Options } from './options';
  */
 
 /**
@@ -205,22 +206,21 @@ export function init({
   const debouncedSaveVisibleRange = utils.debounce(saveVisibleRange, 250);
 
   function createFetchChunksOfVisibleDatasetsEffect() {
-    signals.createEffect(() => {
-      const ids = visibleDatasetIds();
-      const datasets = Array.from(activeDatasets());
+    signals.createEffect(
+      () => ({ ids: visibleDatasetIds(), activeDatasets: activeDatasets() }),
+      ({ ids, activeDatasets }) => {
+        const datasets = Array.from(activeDatasets);
 
-      if (ids.length === 0 || datasets.length === 0) return;
+        if (ids.length === 0 || datasets.length === 0) return;
 
-      signals.untrack(() => {
-        console.log(ids, datasets);
         for (let i = 0; i < ids.length; i++) {
           const id = ids[i];
           for (let j = 0; j < datasets.length; j++) {
             datasets[j].fetch(id);
           }
         }
-      });
-    });
+      },
+    );
   }
   createFetchChunksOfVisibleDatasetsEffect();
 
@@ -352,9 +352,7 @@ export function init({
   );
 
   const hoveredLegend = signals.createSignal(
-    /** @type {{label: HTMLLabelElement, series: Series} | undefined} */ (
-      undefined
-    ),
+    /** @type {HoveredLegend | undefined} */ (undefined),
   );
   const notHoveredLegendTransparency = "66";
   /**
@@ -365,9 +363,13 @@ export function init({
    */
   function createLegend({ series, disabled, name }) {
     const div = window.document.createElement("div");
-    signals.createEffect(() => {
-      div.hidden = disabled?.() ? true : false;
-    });
+
+    if (disabled) {
+      signals.createEffect(disabled, (disabled) => {
+        div.hidden = disabled;
+      });
+    }
+
     elements.legend.prepend(div);
 
     const { input, label, spanMain } = utils.dom.createComplexLabeledInput({
@@ -395,8 +397,8 @@ export function init({
       hoveredLegend.set(undefined);
     });
 
-    signals.createEffect(() => {
-      input.checked = series.active();
+    signals.createEffect(series.active, (checked) => {
+      input.checked = checked;
     });
 
     function shouldHighlight() {
@@ -416,69 +418,74 @@ export function init({
       const spanColor = window.document.createElement("span");
       spanColors.append(spanColor);
 
-      signals.createEffect(() => {
-        const c = color();
-        if (shouldHighlight()) {
-          spanColor.style.backgroundColor = c;
-        } else {
-          spanColor.style.backgroundColor = `${c}${notHoveredLegendTransparency}`;
-        }
-      });
+      signals.createEffect(
+        () => ({ color: color(), shouldHighlight: shouldHighlight() }),
+        ({ color, shouldHighlight }) => {
+          if (shouldHighlight) {
+            spanColor.style.backgroundColor = color;
+          } else {
+            spanColor.style.backgroundColor = `${color}${notHoveredLegendTransparency}`;
+          }
+        },
+      );
     });
 
     function createHoverEffect() {
       const initialColors = /** @type {Record<string, any>} */ ({});
       const darkenedColors = /** @type {Record<string, any>} */ ({});
 
+      /** @type {HoveredLegend | undefined} */
+      let previouslyHovered = undefined;
+
       signals.createEffect(
-        // @ts-ignore
-        (previouslyHovered) => {
-          const hovered = hoveredLegend();
-
+        () => ({ hovered: hoveredLegend(), ids: visibleDatasetIds() }),
+        ({ hovered, ids }) => {
           if (!hovered && !previouslyHovered) return hovered;
-
-          const ids = visibleDatasetIds();
 
           for (let i = 0; i < ids.length; i++) {
             const chunkId = ids[i];
             const chunkIndex = utils.chunkIdToIndex(scale(), chunkId);
-            const chunk = series.chunks[chunkIndex]?.();
+            const chunk = series.chunks[chunkIndex];
 
-            if (!chunk) return;
+            signals.createEffect(chunk, (chunk) => {
+              if (!chunk) return;
 
-            if (hovered) {
-              const seriesOptions = chunk.options();
-              if (!seriesOptions) return;
+              if (hovered) {
+                const seriesOptions = chunk.options();
+                if (!seriesOptions) return;
 
-              initialColors[i] = {};
-              darkenedColors[i] = {};
+                initialColors[i] = {};
+                darkenedColors[i] = {};
 
-              Object.entries(seriesOptions).forEach(([k, v]) => {
-                if (k.toLowerCase().includes("color") && v) {
-                  if (typeof v === "string" && !v.startsWith("#")) {
-                    return;
+                Object.entries(seriesOptions).forEach(([k, v]) => {
+                  if (k.toLowerCase().includes("color") && v) {
+                    if (typeof v === "string" && !v.startsWith("#")) {
+                      return;
+                    }
+
+                    v = /** @type {string} */ (v).substring(0, 7);
+                    initialColors[i][k] = v;
+                    darkenedColors[i][k] =
+                      `${v}${notHoveredLegendTransparency}`;
+                  } else if (k === "lastValueVisible" && v) {
+                    initialColors[i][k] = true;
+                    darkenedColors[i][k] = false;
                   }
+                });
+              }
 
-                  v = /** @type {string} */ (v).substring(0, 7);
-                  initialColors[i][k] = v;
-                  darkenedColors[i][k] = `${v}${notHoveredLegendTransparency}`;
-                } else if (k === "lastValueVisible" && v) {
-                  initialColors[i][k] = true;
-                  darkenedColors[i][k] = false;
+              signals.createEffect(shouldHighlight, (shouldHighlight) => {
+                if (shouldHighlight) {
+                  chunk.applyOptions(initialColors[i]);
+                } else {
+                  chunk.applyOptions(darkenedColors[i]);
                 }
               });
-            }
-
-            if (shouldHighlight()) {
-              chunk.applyOptions(initialColors[i]);
-            } else {
-              chunk.applyOptions(darkenedColors[i]);
-            }
+            });
           }
 
-          return hovered;
+          previouslyHovered = hovered;
         },
-        undefined,
       );
     }
     createHoverEffect();
@@ -540,21 +547,22 @@ export function init({
 
     const visible = signals.createMemo(() => active() && !disabled());
 
-    signals.createEffect(() => {
-      if (disabled()) {
-        return;
-      }
+    signals.createEffect(
+      () => ({ disabled: disabled(), active: active() }),
+      ({ disabled, active }) => {
+        if (disabled) {
+          return;
+        }
 
-      const a = active();
-
-      if (a !== (defaultActive || true)) {
-        utils.url.writeParam(id, a);
-        utils.storage.write(storageId, a);
-      } else {
-        utils.url.removeParam(id);
-        utils.storage.remove(storageId);
-      }
-    });
+        if (active !== (defaultActive || true)) {
+          utils.url.writeParam(id, active);
+          utils.storage.write(storageId, active);
+        } else {
+          utils.url.removeParam(id);
+          utils.storage.remove(storageId);
+        }
+      },
+    );
 
     /** @type {Series} */
     const series = {
@@ -579,22 +587,22 @@ export function init({
 
       chunks[index] = chunk;
 
-      signals.createEffect(() => {
-        const values = json.vec();
+      const isMyTurn = signals.createMemo(() => {
+        if (seriesIndex <= 0) return true;
 
-        if (!values) return;
+        const previousSeriesChunk = chartSeries.at(seriesIndex - 1)?.chunks[
+          index
+        ];
+        const isPreviousSeriesOnChart = previousSeriesChunk?.();
 
-        if (seriesIndex > 0) {
-          const previousSeriesChunk = chartSeries.at(seriesIndex - 1)?.chunks[
-            index
-          ];
-          const isPreviousSeriesOnChart = previousSeriesChunk?.();
-          if (!isPreviousSeriesOnChart) {
-            return;
-          }
-        }
+        return !!isPreviousSeriesOnChart;
+      });
 
-        signals.untrack(() => {
+      signals.createEffect(
+        () => ({ values: json.vec(), isMyTurn: isMyTurn() }),
+        ({ values, isMyTurn }) => {
+          if (!values || !isMyTurn) return;
+
           let s = chunk();
 
           if (!s) {
@@ -647,28 +655,39 @@ export function init({
           s.setData(values);
 
           setMinMaxMarkersWhenIdle();
+        },
+      );
+
+      signals.createEffect(
+        () => ({
+          chunk: chunk(),
+          currentVec: dataset.fetchedJSONs.at(index)?.vec(),
+          nextVec: dataset.fetchedJSONs.at(index + 1)?.vec(),
+        }),
+        ({ chunk, currentVec, nextVec }) => {
+          if (chunk && currentVec?.length && nextVec?.length) {
+            chunk.update(nextVec[0]);
+          }
+        },
+      );
+
+      signals.createEffect(chunk, (chunk) => {
+        const isChunkLastVisible = signals.createMemo(() => {
+          const last = lastVisibleDatasetIndex();
+          return last !== undefined && last === index;
         });
-      });
 
-      signals.createEffect(() => {
-        const _chunk = chunk();
-        const currentVec = dataset.fetchedJSONs.at(index)?.vec();
-        const nextVec = dataset.fetchedJSONs.at(index + 1)?.vec();
-
-        if (_chunk && currentVec?.length && nextVec?.length) {
-          _chunk.update(nextVec[0]);
-        }
-      });
-
-      const isChunkLastVisible = signals.createMemo(() => {
-        const last = lastVisibleDatasetIndex();
-        return last !== undefined && last === index;
-      });
-
-      signals.createEffect(() => {
-        chunk()?.applyOptions({
-          lastValueVisible: series.visible() && isChunkLastVisible(),
-        });
+        signals.createEffect(
+          () => ({
+            visible: series.visible(),
+            isChunkLastVisible: isChunkLastVisible(),
+          }),
+          ({ visible, isChunkLastVisible }) => {
+            chunk?.applyOptions({
+              lastValueVisible: visible && isChunkLastVisible,
+            });
+          },
+        );
       });
 
       const shouldChunkBeVisible = signals.createMemo(() => {
@@ -700,10 +719,17 @@ export function init({
         return wasChunkVisible;
       });
 
-      signals.createEffect(() => {
-        const visible = series.visible() && chunkVisible();
-        chunk()?.applyOptions({
-          visible,
+      signals.createEffect(chunk, (chunk) => {
+        if (!chunk) return;
+
+        const visible = signals.createMemo(
+          () => series.visible() && chunkVisible(),
+        );
+
+        signals.createEffect(visible, (visible) => {
+          chunk.applyOptions({
+            visible,
+          });
         });
       });
     });
@@ -774,16 +800,18 @@ export function init({
     });
 
     function createLiveCandleUpdateEffect() {
-      signals.createEffect(() => {
-        const latest = webSockets.krakenCandle.latest();
-
+      signals.createEffect(webSockets.krakenCandle.latest, (latest) => {
         if (!latest) return;
 
         const index = utils.chunkIdToIndex(s, latest.year);
 
-        const series = priceSeries.chunks.at(index)?.();
+        const series = priceSeries.chunks.at(index);
 
-        series?.update(latest);
+        if (series) {
+          signals.createEffect(series, (series) => {
+            series?.update(latest);
+          });
+        }
       });
     }
     createLiveCandleUpdateEffect();
@@ -870,10 +898,10 @@ export function init({
     initGoToButtons(elements.timeScaleHeightButtons);
 
     function createScaleButtonsToggleEffect() {
-      signals.createEffect(() => {
-        const scaleIsDate = scale() === "date";
-        elements.timeScaleDateButtons.hidden = !scaleIsDate;
-        elements.timeScaleHeightButtons.hidden = scaleIsDate;
+      const isDate = signals.createMemo(() => scale() === "date");
+      signals.createEffect(isDate, (isDate) => {
+        elements.timeScaleDateButtons.hidden = !isDate;
+        elements.timeScaleHeightButtons.hidden = isDate;
       });
     }
     createScaleButtonsToggleEffect();
@@ -1065,11 +1093,10 @@ export function init({
         );
 
       function createSetMinMaxMarkersWhenIdleEffect() {
-        signals.createEffect(() => {
-          visibleTimeRange();
-          dark();
-          signals.untrack(setMinMaxMarkersWhenIdle);
-        });
+        signals.createEffect(
+          () => [visibleTimeRange(), dark()],
+          setMinMaxMarkersWhenIdle,
+        );
       }
       createSetMinMaxMarkersWhenIdleEffect();
 
@@ -1097,12 +1124,12 @@ export function init({
         const priceLineSeries = _createPriceSeries("Line");
 
         function createLinkPriceSeriesEffect() {
-          signals.createEffect(() => {
-            priceCandlestickSeries.active.set(priceLineSeries.active());
+          signals.createEffect(priceLineSeries.active, (active) => {
+            priceCandlestickSeries.active.set(active);
           });
 
-          signals.createEffect(() => {
-            priceLineSeries.active.set(priceCandlestickSeries.active());
+          signals.createEffect(priceCandlestickSeries.active, (active) => {
+            priceLineSeries.active.set(active);
           });
         }
         createLinkPriceSeriesEffect();
@@ -1142,9 +1169,8 @@ export function init({
       chartSeries.forEach((series) => {
         allSeries.unshift(series);
 
-        signals.createEffect(() => {
-          series.active();
-          signals.untrack(setMinMaxMarkersWhenIdle);
+        signals.createEffect(series.active, () => {
+          setMinMaxMarkersWhenIdle();
         });
       });
 
@@ -1153,17 +1179,17 @@ export function init({
       );
 
       function createChartVisibilityEffect() {
-        signals.createEffect(() => {
+        signals.createEffect(chartVisible, (chartVisible) => {
           const chartWrapper = chartDiv.parentElement;
           if (!chartWrapper) throw "Should exist";
-          chartWrapper.hidden = !chartVisible();
+          chartWrapper.hidden = !chartVisible;
         });
       }
       createChartVisibilityEffect();
 
       function createTimeScaleVisibilityEffect() {
-        signals.createEffect(() => {
-          const visible = chartIndex === chartCount - 1 && chartVisible();
+        signals.createEffect(chartVisible, (chartVisible) => {
+          const visible = chartIndex === chartCount - 1 && chartVisible;
 
           chart.timeScale().applyOptions({
             visible,
@@ -1178,9 +1204,9 @@ export function init({
       }
       createTimeScaleVisibilityEffect();
 
-      signals.createEffect(() =>
+      signals.createEffect(chartMode, (chartMode) =>
         chart.priceScale("right").applyOptions({
-          mode: chartMode() === "linear" ? 0 : 1,
+          mode: chartMode === "linear" ? 0 : 1,
         }),
       );
 
@@ -1235,9 +1261,8 @@ export function init({
   }
 
   function createApplyChartOptionEffect() {
-    signals.createEffect(() => {
-      const option = selected();
-      signals.createUntrackedRoot(() => {
+    signals.createEffect(selected, (option) => {
+      signals.createRoot(() => {
         applyChartOption(option);
       });
     });
