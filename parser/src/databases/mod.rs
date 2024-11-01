@@ -28,6 +28,7 @@ use crate::{
     log,
     structs::{Date, Height},
     utils::time,
+    Exit,
 };
 
 #[derive(Allocative)]
@@ -128,7 +129,9 @@ impl Databases {
         });
     }
 
-    pub fn defragment(&mut self) {
+    pub fn defragment(&mut self, exit: &Exit) {
+        exit.block();
+
         log("Databases defragmentation");
 
         time("Defragmenting databases", || {
@@ -139,7 +142,9 @@ impl Databases {
             self.drain_to_vec()
                 .into_par_iter()
                 .for_each(AnyDatabase::boxed_defragment);
-        })
+        });
+
+        exit.unblock();
     }
 
     pub fn reset(&mut self, include_addresses: bool) {

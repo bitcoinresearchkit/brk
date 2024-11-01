@@ -32,9 +32,7 @@ pub fn iter_blocks(
     let mut databases = Databases::import();
 
     if config.first_defragment() {
-        exit.block();
-        databases.defragment();
-        exit.unblock();
+        databases.defragment(&exit);
     }
 
     log("Imported databases");
