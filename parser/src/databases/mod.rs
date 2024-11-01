@@ -103,39 +103,27 @@ impl Databases {
     fn open_all(&mut self) {
         thread::scope(|s| {
             s.spawn(|| {
-                time("Opening all address_index_to_address_data", || {
-                    self.address_index_to_address_data.open_all()
-                })
+                self.address_index_to_address_data.open_all();
             });
 
             s.spawn(|| {
-                time("Opening all address_index_to_empty_address_data", || {
-                    self.address_index_to_empty_address_data.open_all()
-                })
+                self.address_index_to_empty_address_data.open_all();
             });
 
             s.spawn(|| {
-                time("Opening all address_to_address_index", || {
-                    self.address_to_address_index.open_all()
-                })
+                self.address_to_address_index.open_all();
             });
 
             s.spawn(|| {
-                time("Opening all txid_to_tx_data", || {
-                    self.txid_to_tx_data.open_all()
-                })
+                self.txid_to_tx_data.open_all();
             });
 
             s.spawn(|| {
-                time("Opening all txout_index_to_address_index", || {
-                    self.txout_index_to_address_index.open_all()
-                })
+                self.txout_index_to_address_index.open_all();
             });
 
             s.spawn(|| {
-                time("Opening all txout_index_to_amount", || {
-                    self.txout_index_to_amount.open_all()
-                })
+                self.txout_index_to_amount.open_all();
             });
         });
     }

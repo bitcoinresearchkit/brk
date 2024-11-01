@@ -49,7 +49,13 @@ where
     Value: Storable + PartialEq,
 {
     pub fn open(folder: &str, file: &str) -> color_eyre::Result<Self> {
-        let mut txn = Self::init_txn(folder, file)?;
+        let path = databases_folder_path(folder);
+        fs::create_dir_all(&path)?;
+
+        let path = format!("{path}/{file}");
+        let env = unsafe { Env::new_nolock(path, PAGE_SIZE, 1).unwrap() };
+
+        let mut txn = Env::mut_txn_begin(env)?;
 
         let db = txn
             .root_db(ROOT_DB)
@@ -169,18 +175,6 @@ where
         format!("{}/{}", databases_folder_path(&self.folder), self.file)
     }
 
-    fn init_txn(folder: &str, file: &str) -> color_eyre::Result<MutTxn<Env, ()>> {
-        let path = databases_folder_path(folder);
-
-        fs::create_dir_all(&path)?;
-
-        let env = unsafe { Env::new_nolock(format!("{path}/{file}"), PAGE_SIZE, 1).unwrap() };
-
-        let txn = Env::mut_txn_begin(env)?;
-
-        Ok(txn)
-    }
-
     fn db_multi_put(&mut self, tree: BTreeMap<Key, Value>) -> Result<(), Error> {
         tree.into_iter()
             .try_for_each(|(key, value)| -> Result<(), Error> {
@@ -244,10 +238,12 @@ where
 
         let mut s = Self::open(&folder, &file).unwrap();
 
-        if s.is_empty() {
-            s.cached_puts = btree;
-            s.export().unwrap();
+        if !s.is_empty() {
+            panic!()
         }
+
+        s.cached_puts = btree;
+        s.export().unwrap();
     }
 }
 
