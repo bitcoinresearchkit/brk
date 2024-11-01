@@ -2749,13 +2749,17 @@ function createPartialOptions(colors) {
               `${scale}-to-${datasetIdToPrefix(id)}realized-price`,
           }),
         },
-        // createRatioOptions({
-        //   scale,
-        //   color,
-        //   ratioDatasetPath: `${scale}-to-market-price-to-${datasetPrefix}realized-price-ratio`,
-        //   valueDatasetPath: `${scale}-to-${datasetPrefix}realized-price`,
-        //   title: `${title} Realized Price`,
-        // }),
+        ...(!("list" in arg)
+          ? [
+              createRatioOptions({
+                scale,
+                color: arg.color,
+                ratioDatasetPath: `${scale}-to-market-price-to-${datasetIdToPrefix(arg.datasetId)}realized-price-ratio`,
+                valueDatasetPath: `${scale}-to-${datasetIdToPrefix(arg.datasetId)}realized-price`,
+                title: `${title} Realized Price`,
+              }),
+            ]
+          : []),
         {
           scale,
           name: `Capitalization`,
@@ -3143,7 +3147,7 @@ function createPartialOptions(colors) {
           ],
         },
         ...cohortOptionOrOptions.genOptionsIfDate(arg, (scale) => [
-          {
+          /** @satisfies {PartialChartOption} */ ({
             scale,
             name: `Sell Side Risk Ratio`,
             title: `${title} Sell Side Risk Ratio`,
@@ -3153,11 +3157,9 @@ function createPartialOptions(colors) {
             bottom: cohortOptionOrOptions.toSeriesBlueprints(arg, {
               title: "Ratio",
               genPath: (id) =>
-                /** @type {const} */ (
-                  `${scale}-to-${datasetIdToPrefix(id)}sell-side-risk-ratio`
-                ),
+                `${scale}-to-${datasetIdToPrefix(id)}sell-side-risk-ratio`,
             }),
-          },
+          }),
         ]),
       ],
     };
