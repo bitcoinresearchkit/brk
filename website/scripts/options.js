@@ -3619,18 +3619,17 @@ function createPartialOptions(colors) {
    * @returns {PartialOptionsGroup}
    */
   function createLiquidityOptions({ scale, color }) {
-    return {
+    return createAddressCohortOptionGroups({
+      scale,
       name: `Split By Liquidity`,
-      tree: groups.liquidities.map(({ name, id }) =>
-        createAddressCohortOptionGroup({
-          name,
-          title: name,
-          scale,
-          color,
-          datasetId: id,
-        }),
-      ),
-    };
+      list: groups.liquidities.map(({ name, id }) => ({
+        name,
+        title: name,
+        scale,
+        color,
+        datasetId: id,
+      })),
+    });
   }
 
   /**
@@ -3779,31 +3778,32 @@ function createPartialOptions(colors) {
   }
 
   /**
+   * @param {Object} arg
+   * @param {TimeScale} arg.scale
+   * @param {string} arg.name
+   * @param {string} [arg.title]
+   * @param {CohortOption<AnyAddressCohortId>[]} arg.list
+   */
+  function createAddressCohortOptionGroups({ scale, name, title, list }) {
+    return {
+      name,
+      tree: [
+        createAddressCohortOptionGroup({
+          scale,
+          name,
+          title: title || name,
+          list,
+        }),
+        ...list.map((cohort) => createAddressCohortOptionGroup(cohort)),
+      ],
+    };
+  }
+
+  /**
    * @param {TimeScale} scale
    * @returns {PartialOptionsGroup}
    */
   function createAddressesOptions(scale) {
-    /**
-     * @param {Object} arg
-     * @param {string} arg.name
-     * @param {string} [arg.title]
-     * @param {CohortOption<AnyAddressCohortId>[]} arg.list
-     */
-    function createFolder({ name, title, list }) {
-      return {
-        name,
-        tree: [
-          createAddressCohortOptionGroup({
-            scale,
-            name,
-            title: title || name,
-            list,
-          }),
-          ...list.map((cohort) => createAddressCohortOptionGroup(cohort)),
-        ],
-      };
-    }
-
     return {
       name: "Addresses",
       tree: [
@@ -3867,7 +3867,8 @@ function createPartialOptions(colors) {
             },
           ],
         },
-        createFolder({
+        createAddressCohortOptionGroups({
+          scale,
           name: "By Size",
           title: "Address Sizes",
           list: groups.size.map(({ key, name, size }) => ({
@@ -3879,7 +3880,8 @@ function createPartialOptions(colors) {
             datasetId: key,
           })),
         }),
-        createFolder({
+        createAddressCohortOptionGroups({
+          scale,
           name: "By Type",
           title: "Address Types",
           list: groups.type.map(({ key, name }) => ({
