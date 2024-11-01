@@ -3615,20 +3615,18 @@ function createPartialOptions(colors) {
   }
 
   /**
-   * @param {Object} args
-   * @param {TimeScale} args.scale
-   * @param {Color} args.color
+   * @param {TimeScale} scale
    * @returns {PartialOptionsGroup}
    */
-  function createLiquidityOptions({ scale, color }) {
+  function createLiquidityOptions(scale) {
     return createAddressCohortOptionGroups({
       scale,
       name: `Split By Liquidity`,
-      list: groups.liquidities.map(({ name, id }) => ({
+      list: groups.liquidities.map(({ name, id, key }) => ({
         name,
         title: name,
         scale,
-        color,
+        color: colors[key],
         datasetId: id,
       })),
     });
@@ -4805,10 +4803,7 @@ function createPartialOptions(colors) {
             }),
             createHodlersOptions("date"),
             createAddressesOptions("date"),
-            createLiquidityOptions({
-              scale: "date",
-              color: colors.bitcoin,
-            }),
+            createLiquidityOptions("date"),
             createCointimeOptions("date"),
           ],
         },
@@ -4828,10 +4823,7 @@ function createPartialOptions(colors) {
             }),
             createHodlersOptions("height"),
             createAddressesOptions("height"),
-            createLiquidityOptions({
-              scale: "height",
-              color: colors.bitcoin,
-            }),
+            createLiquidityOptions("height"),
             createCointimeOptions("height"),
           ],
         },
