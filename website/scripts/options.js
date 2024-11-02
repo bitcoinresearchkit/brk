@@ -1,5 +1,5 @@
 /**
- * @import { AnySpecificSeriesBlueprint, CohortOption, CohortOptions, Color, DefaultCohortOption, DefaultCohortOptions, OptionPath, OptionsGroup, PartialChartOption, PartialOptionsGroup, PartialOptionsTree, Series, SeriesBlueprint, SeriesBlueprintParam, SeriesBluePrintType, TimeScale } from "./types/self"
+ * @import { AnySpecificSeriesBlueprint, CohortOption, CohortOptions, Color, DefaultCohortOption, DefaultCohortOptions, OptionPath, OptionsGroup, PartialChartOption, PartialOptionsGroup, PartialOptionsTree, RatioOption, RatioOptions, Series, SeriesBlueprint, SeriesBlueprintParam, SeriesBluePrintType, TimeScale } from "./types/self"
  */
 
 const DATE_TO_PREFIX = "date-to-";
@@ -116,6 +116,12 @@ function initGroups() {
 
   const fromXToY = /** @type {const} */ ([
     {
+      id: "up-to-1d",
+      key: "up_to_1d",
+      name: "24h",
+      legend: "24h",
+    },
+    {
       id: "from-1d-to-1w",
       key: "from_1d_to_1w",
       name: "From 1 Day To 1 Week",
@@ -180,6 +186,12 @@ function initGroups() {
       key: "from_10y_to_15y",
       name: "From 10 Years To 15 Years",
       legend: "10Y — 15Y",
+    },
+    {
+      id: "from-15y",
+      key: "from_15y",
+      name: "From 15 Years To End",
+      legend: "15Y — End",
     },
   ]);
 
@@ -854,21 +866,30 @@ function createPartialOptions(colors) {
   }
 
   /**
-   * @param {Object} args
-   * @param {TimeScale} args.scale
-   * @param {Color} args.color
-   * @param {AnyDatasetPath} args.valueDatasetPath
-   * @param {AnyDatasetPath} args.ratioDatasetPath
-   * @param {string} args.title
+   * @param {RatioOption | RatioOptions} arg
    * @returns {PartialOptionsGroup}
    */
-  function createRatioOptions({
-    scale,
-    color,
-    valueDatasetPath,
-    ratioDatasetPath,
-    title,
-  }) {
+  function createRatioOptions(arg) {
+    const { scale, title } = arg;
+
+    const isSingle = !("list" in arg);
+
+    /**
+     * @param {RatioOption | RatioOptions} arg
+     */
+    function toList(arg) {
+      return "list" in arg ? arg.list : [arg];
+    }
+
+    /**
+     * @param {RatioOption | RatioOptions} arg
+     * @param {string} cohortName
+     * @param {string} legendName
+     */
+    function toLegendName(arg, cohortName, legendName) {
+      return "list" in arg ? `${cohortName} ${legendName}` : legendName;
+    }
+
     return {
       name: "Ratio",
       tree: [
@@ -879,73 +900,82 @@ function createPartialOptions(colors) {
           title: `Market Price To ${title} Ratio`,
           unit: "Ratio",
           description: "",
-          top: [
-            {
+          top: toList(arg).map(
+            ({ title, color, valueDatasetPath: datasetPath }) => ({
               title,
               color,
-              datasetPath: valueDatasetPath,
-            },
-          ],
+              datasetPath,
+            }),
+          ),
           bottom: [
-            {
-              title: `Ratio`,
-              type: "Baseline",
-              datasetPath: ratioDatasetPath,
-              options: {
-                baseValue: {
-                  price: 1,
+            ...toList(arg).map(
+              ({ title, color, ratioDatasetPath: datasetPath }) => ({
+                title: toLegendName(arg, title, "Ratio"),
+                color: isSingle ? undefined : color,
+                type: /** @type {const} */ ("Baseline"),
+                datasetPath,
+                options: {
+                  baseValue: {
+                    price: 1,
+                  },
                 },
-              },
-            },
+              }),
+            ),
             bases[1](scale),
           ],
         },
-        {
-          scale,
-          name: "Averages",
-          description: "",
-          icon: "〰️",
-          unit: "Ratio",
-          title: `Market Price To ${title} Ratio Averages`,
-          top: [
-            {
-              title,
-              color,
-              datasetPath: valueDatasetPath,
-            },
-          ],
-          bottom: [
-            {
-              title: `1Y SMA`,
-              color: colors.red,
-              datasetPath: /** @type {any} */ (`${ratioDatasetPath}-1y-sma`),
-            },
-            {
-              title: `1M SMA`,
-              color: colors.orange,
-              datasetPath: `${ratioDatasetPath}-1m-sma`,
-            },
-            {
-              title: `1W SMA`,
-              color: colors.yellow,
-              datasetPath: `${ratioDatasetPath}-1w-sma`,
-            },
-            {
-              title: `Raw`,
-              color: colors.default,
-              datasetPath: ratioDatasetPath,
-            },
-            {
-              title: `Even`,
-              color: colors.off,
-              datasetPath: `${scale}-to-1`,
-              options: {
-                lineStyle: 3,
-                lastValueVisible: false,
+        ...(isSingle
+          ? /** @satisfies {PartialChartOption[]} */ ([
+              {
+                scale,
+                name: "Averages",
+                description: "",
+                icon: "〰️",
+                unit: "Ratio",
+                title: `Market Price To ${title} Ratio Averages`,
+                top: [
+                  {
+                    title,
+                    color: arg.color,
+                    datasetPath: arg.valueDatasetPath,
+                  },
+                ],
+                bottom: [
+                  {
+                    title: `1Y SMA`,
+                    color: colors.red,
+                    datasetPath: /** @type {any} */ (
+                      `${arg.ratioDatasetPath}-1y-sma`
+                    ),
+                  },
+                  {
+                    title: `1M SMA`,
+                    color: colors.orange,
+                    datasetPath: `${arg.ratioDatasetPath}-1m-sma`,
+                  },
+                  {
+                    title: `1W SMA`,
+                    color: colors.yellow,
+                    datasetPath: `${arg.ratioDatasetPath}-1w-sma`,
+                  },
+                  {
+                    title: `Raw`,
+                    color: colors.default,
+                    datasetPath: arg.ratioDatasetPath,
+                  },
+                  {
+                    title: `Even`,
+                    color: colors.off,
+                    datasetPath: `${scale}-to-1`,
+                    options: {
+                      lineStyle: 3,
+                      lastValueVisible: false,
+                    },
+                  },
+                ],
               },
-            },
-          ],
-        },
+            ])
+          : []),
         {
           scale,
           name: "Momentum Oscillator",
@@ -953,145 +983,282 @@ function createPartialOptions(colors) {
           description: "",
           unit: "Ratio",
           icon: "🔀",
-          top: [
-            {
-              title: `SMA`,
+          top: toList(arg).map(
+            ({ title, color, valueDatasetPath: datasetPath }) => ({
+              title: toLegendName(arg, title, ""),
               color,
-              datasetPath: valueDatasetPath,
-            },
-          ],
+              datasetPath,
+            }),
+          ),
           bottom: [
-            {
-              title: `Momentum`,
-              type: "Baseline",
-              datasetPath: /** @type {any} */ (
-                `${ratioDatasetPath}-1y-sma-momentum-oscillator`
-              ),
-            },
+            ...toList(arg).map(
+              ({ title, color, ratioDatasetPath: datasetPath }) => ({
+                title: toLegendName(arg, title, "Momentum"),
+                color: isSingle ? undefined : color,
+                type: /** @type {const} */ ("Baseline"),
+                datasetPath: /** @type {any} */ (
+                  `${datasetPath}-1y-sma-momentum-oscillator`
+                ),
+              }),
+            ),
             bases[0](scale),
           ],
         },
         {
-          scale,
-          name: "Top Percentiles",
-          icon: "✈️",
-          title: `Market Price To ${title} Ratio Top Percentiles`,
-          description: "",
-          unit: "Ratio",
-          top: [
+          name: "Top",
+          tree: [
+            ...(isSingle
+              ? /** @satisfies {PartialChartOption[]} */ ([
+                  {
+                    scale,
+                    name: "Percentiles",
+                    icon: "✈️",
+                    title: `Market Price To ${title} Ratio Top Percentiles`,
+                    description: "",
+                    unit: "Ratio",
+                    top: [
+                      {
+                        title,
+                        color: arg.color,
+                        datasetPath: arg.valueDatasetPath,
+                      },
+                    ],
+                    bottom: [
+                      {
+                        title: `99.9%`,
+                        color: colors.probability0_1p,
+                        datasetPath: /** @type {any} */ (
+                          `${arg.ratioDatasetPath}-99-9p`
+                        ),
+                      },
+                      {
+                        title: `99.5%`,
+                        color: colors.probability0_5p,
+                        datasetPath: `${arg.ratioDatasetPath}-99-5p`,
+                      },
+                      {
+                        title: `99%`,
+                        color: colors.probability1p,
+                        datasetPath: `${arg.ratioDatasetPath}-99p`,
+                      },
+                      {
+                        title: `Raw`,
+                        color: colors.default,
+                        datasetPath: arg.ratioDatasetPath,
+                      },
+                    ],
+                  },
+                ])
+              : []),
             {
-              title,
-              color,
-              datasetPath: valueDatasetPath,
-            },
-          ],
-          bottom: [
-            {
-              title: `99.9%`,
-              color: colors.probability0_1p,
-              datasetPath: /** @type {any} */ (`${ratioDatasetPath}-99-9p`),
-            },
-            {
-              title: `99.5%`,
-              color: colors.probability0_5p,
-              datasetPath: `${ratioDatasetPath}-99-5p`,
-            },
-            {
-              title: `99%`,
-              color: colors.probability1p,
-              datasetPath: `${ratioDatasetPath}-99p`,
-            },
-            {
-              title: `Raw`,
-              color: colors.default,
-              datasetPath: ratioDatasetPath,
+              name: "Prices",
+              tree: [
+                ...(isSingle
+                  ? /** @satisfies {PartialChartOption[]} */ ([
+                      {
+                        scale,
+                        name: "All",
+                        icon: "🚀",
+                        title: `${title} Top Prices`,
+                        description: "",
+                        unit: "US Dollars",
+                        top: [
+                          {
+                            title: `99.9%`,
+                            color: colors.probability0_1p,
+                            datasetPath: /** @type {any} */ (
+                              `${arg.valueDatasetPath}-99-9p`
+                            ),
+                          },
+                          {
+                            title: `99.5%`,
+                            color: colors.probability0_5p,
+                            datasetPath: `${arg.valueDatasetPath}-99-5p`,
+                          },
+                          {
+                            title: `99%`,
+                            color: colors.probability1p,
+                            datasetPath: `${arg.valueDatasetPath}-99p`,
+                          },
+                        ],
+                      },
+                    ])
+                  : []),
+                {
+                  scale,
+                  name: "99%",
+                  icon: "🚀",
+                  title: `${title} Top 99% Price`,
+                  description: "",
+                  unit: "US Dollars",
+                  top: toList(arg).map((cohort) => ({
+                    title: toLegendName(arg, cohort.title, `99%`),
+                    color: isSingle ? colors.probability1p : cohort.color,
+                    datasetPath: /** @type {any} */ (
+                      `${cohort.valueDatasetPath}-99p`
+                    ),
+                  })),
+                },
+                {
+                  scale,
+                  name: "99.5%",
+                  icon: "🚀",
+                  title: `${title} Top 99.5% Price`,
+                  description: "",
+                  unit: "US Dollars",
+                  top: toList(arg).map((cohort) => ({
+                    title: toLegendName(arg, cohort.title, `99.5%`),
+                    color: isSingle ? colors.probability0_5p : cohort.color,
+                    datasetPath: /** @type {any} */ (
+                      `${cohort.valueDatasetPath}-99-5p`
+                    ),
+                  })),
+                },
+                {
+                  scale,
+                  name: "99.9%",
+                  icon: "🚀",
+                  title: `${title} Top 99.9% Price`,
+                  description: "",
+                  unit: "US Dollars",
+                  top: toList(arg).map((cohort) => ({
+                    title: toLegendName(arg, cohort.title, `99.9%`),
+                    color: isSingle ? colors.probability0_1p : cohort.color,
+                    datasetPath: /** @type {any} */ (
+                      `${cohort.valueDatasetPath}-99-9p`
+                    ),
+                  })),
+                },
+              ],
             },
           ],
         },
         {
-          scale,
-          name: "Bottom Percentiles",
-          icon: "🤿",
-          title: `Market Price To ${title} Ratio Bottom Percentiles`,
-          description: "",
-          unit: "Ratio",
-          top: [
+          name: "Bottom",
+          tree: [
+            ...(isSingle
+              ? /** @satisfies {PartialChartOption[]} */ ([
+                  {
+                    scale,
+                    name: "Percentiles",
+                    icon: "🤿",
+                    title: `Market Price To ${title} Ratio Bottom Percentiles`,
+                    description: "",
+                    unit: "Ratio",
+                    top: [
+                      {
+                        title,
+                        color: arg.color,
+                        datasetPath: arg.valueDatasetPath,
+                      },
+                    ],
+                    bottom: [
+                      {
+                        title: `0.1%`,
+                        color: colors.probability0_1p,
+                        datasetPath: `${arg.ratioDatasetPath}-0-1p`,
+                      },
+                      {
+                        title: `0.5%`,
+                        color: colors.probability0_5p,
+                        datasetPath: `${arg.ratioDatasetPath}-0-5p`,
+                      },
+                      {
+                        title: `1%`,
+                        color: colors.probability1p,
+                        datasetPath: /** @type {any} */ (
+                          `${arg.ratioDatasetPath}-1p`
+                        ),
+                      },
+                      {
+                        title: `Raw`,
+                        color: colors.default,
+                        datasetPath: arg.ratioDatasetPath,
+                      },
+                    ],
+                  },
+                ])
+              : []),
             {
-              title: `SMA`,
-              color,
-              datasetPath: valueDatasetPath,
-            },
-          ],
-          bottom: [
-            {
-              title: `0.1%`,
-              color: colors.probability0_1p,
-              datasetPath: `${ratioDatasetPath}-0-1p`,
-            },
-            {
-              title: `0.5%`,
-              color: colors.probability0_5p,
-              datasetPath: `${ratioDatasetPath}-0-5p`,
-            },
-            {
-              title: `1%`,
-              color: colors.probability1p,
-              datasetPath: /** @type {any} */ (`${ratioDatasetPath}-1p`),
-            },
-            {
-              title: `Raw`,
-              color: colors.default,
-              datasetPath: ratioDatasetPath,
-            },
-          ],
-        },
-        {
-          scale,
-          name: "Top Probabilities",
-          icon: "🚀",
-          title: `${title} Top Probabilities`,
-          description: "",
-          unit: "US Dollars",
-          top: [
-            {
-              title: `99.9%`,
-              color: colors.probability0_1p,
-              datasetPath: /** @type {any} */ (`${valueDatasetPath}-99-9p`),
-            },
-            {
-              title: `99.5%`,
-              color: colors.probability0_5p,
-              datasetPath: `${valueDatasetPath}-99-5p`,
-            },
-            {
-              title: `99%`,
-              color: colors.probability1p,
-              datasetPath: `${valueDatasetPath}-99p`,
-            },
-          ],
-        },
-        {
-          scale,
-          name: "Bottom Probabilities",
-          icon: "🚇",
-          title: `${title} Bottom Probabilities`,
-          description: "",
-          unit: "US Dollars",
-          top: [
-            {
-              title: `99.9%`,
-              color: colors.probability0_1p,
-              datasetPath: `${valueDatasetPath}-0-1p`,
-            },
-            {
-              title: `99.5%`,
-              color: colors.probability0_5p,
-              datasetPath: `${valueDatasetPath}-0-5p`,
-            },
-            {
-              title: `99%`,
-              color: colors.probability1p,
-              datasetPath: `${valueDatasetPath}-1p`,
+              name: "Prices",
+              tree: [
+                ...(isSingle
+                  ? /** @satisfies {PartialChartOption[]} */ ([
+                      {
+                        scale,
+                        name: "All",
+                        icon: "🚇",
+                        title: `${title} Bottom Prices`,
+                        description: "",
+                        unit: "US Dollars",
+                        top: [
+                          {
+                            title: `0.1%`,
+                            color: colors.probability0_1p,
+                            datasetPath: /** @type {any} */ (
+                              `${arg.valueDatasetPath}-0-1p`
+                            ),
+                          },
+                          {
+                            title: `0.5%`,
+                            color: colors.probability0_5p,
+                            datasetPath: `${arg.valueDatasetPath}-0-5p`,
+                          },
+                          {
+                            title: `1%`,
+                            color: colors.probability1p,
+                            datasetPath: `${arg.valueDatasetPath}-1p`,
+                          },
+                        ],
+                      },
+                    ])
+                  : []),
+                {
+                  scale,
+                  name: "1%",
+                  icon: "🚇",
+                  title: `${title} Bottom 1% Price`,
+                  description: "",
+                  unit: "US Dollars",
+                  top: toList(arg).map((cohort) => ({
+                    title: toLegendName(arg, cohort.title, `1%`),
+                    color: isSingle ? colors.probability1p : cohort.color,
+                    datasetPath: /** @type {any} */ (
+                      `${cohort.valueDatasetPath}-1p`
+                    ),
+                  })),
+                },
+                {
+                  scale,
+                  name: "0.5%",
+                  icon: "🚇",
+                  title: `${title} Bottom 0.5% Price`,
+                  description: "",
+                  unit: "US Dollars",
+                  top: toList(arg).map((cohort) => ({
+                    title: toLegendName(arg, cohort.title, `0.5%`),
+                    color: isSingle ? colors.probability0_5p : cohort.color,
+                    datasetPath: /** @type {any} */ (
+                      `${cohort.valueDatasetPath}-0-5p`
+                    ),
+                  })),
+                },
+                {
+                  scale,
+                  name: "0.1%",
+                  icon: "🚇",
+                  title: `${title} Bottom 0.1% Price`,
+                  description: "",
+                  unit: "US Dollars",
+                  top: toList(arg).map((cohort) => ({
+                    title: toLegendName(arg, cohort.title, `0.1%`),
+                    color: isSingle ? colors.probability0_1p : cohort.color,
+                    datasetPath: /** @type {any} */ (
+                      `${cohort.valueDatasetPath}-0-1p`
+                    ),
+                  })),
+                },
+              ],
             },
           ],
         },
@@ -2733,6 +2900,20 @@ function createPartialOptions(colors) {
   function createCohortRealizedOptions(arg) {
     const { scale, title } = arg;
 
+    /**
+     * @param {DefaultCohortOption} arg
+     * @returns {RatioOption}
+     */
+    function argToRatioArg(arg) {
+      return {
+        scale,
+        color: arg.color,
+        ratioDatasetPath: `${scale}-to-market-price-to-${datasetIdToPrefix(arg.datasetId)}realized-price-ratio`,
+        valueDatasetPath: `${scale}-to-${datasetIdToPrefix(arg.datasetId)}realized-price`,
+        title: `${arg.title} Realized Price`,
+      };
+    }
+
     return {
       name: "Realized",
       tree: [
@@ -2746,20 +2927,19 @@ function createPartialOptions(colors) {
           top: cohortOptionOrOptions.toSeriesBlueprints(arg, {
             title: "Realized Price",
             genPath: (id, scale) =>
-              `${scale}-to-${datasetIdToPrefix(id)}realized-price`,
+              /** @type {const} */ (
+                `${scale}-to-${datasetIdToPrefix(id)}realized-price`
+              ),
           }),
         },
-        ...(!("list" in arg)
-          ? [
-              createRatioOptions({
-                scale,
-                color: arg.color,
-                ratioDatasetPath: `${scale}-to-market-price-to-${datasetIdToPrefix(arg.datasetId)}realized-price-ratio`,
-                valueDatasetPath: `${scale}-to-${datasetIdToPrefix(arg.datasetId)}realized-price`,
-                title: `${title} Realized Price`,
-              }),
-            ]
-          : []),
+        createRatioOptions(
+          "list" in arg
+            ? {
+                ...arg,
+                list: arg.list.map(argToRatioArg),
+              }
+            : argToRatioArg(arg),
+        ),
         {
           scale,
           name: `Capitalization`,
@@ -2774,7 +2954,9 @@ function createPartialOptions(colors) {
               {
                 title: "Realized Cap.",
                 genPath: (id, scale) =>
-                  `${scale}-to-${datasetIdToPrefix(id)}realized-cap`,
+                  /** @type {const} */ (
+                    `${scale}-to-${datasetIdToPrefix(id)}realized-cap`
+                  ),
               },
             ),
             ...(cohortOptionOrOptions.shouldShowAll(arg)

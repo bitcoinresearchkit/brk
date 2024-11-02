@@ -1,7 +1,7 @@
 import {
   Accessor,
   Setter,
-} from "../packages/solid-signals/2024-10-28/types/signals";
+} from "../../packages/solid-signals/2024-11-01/types/signals";
 import {
   DeepPartial,
   BaselineStyleOptions,
@@ -15,9 +15,9 @@ import {
   SeriesType,
   IChartApi,
   ISeriesApi,
-} from "../packages/lightweight-charts/v4.2.0/types";
+} from "../../packages/lightweight-charts/v4.2.0/types";
 import { DatePath, HeightPath, LastPath } from "./paths";
-import { Owner } from "../packages/solid-signals/2024-10-28/types/owner";
+import { Owner } from "../../packages/solid-signals/2024-11-01/types/core/owner";
 import { AnyPossibleCohortId } from "../options";
 
 type GrowToSize<T, N extends number, A extends T[]> = A["length"] extends N
@@ -326,4 +326,18 @@ interface SeriesBlueprintParam<T> {
   title: string;
   singleColor?: Color;
   genPath: (id: T, scale: TimeScale) => AnyDatasetPath;
+}
+
+interface RatioOption {
+  scale: TimeScale;
+  color: Color;
+  valueDatasetPath: AnyDatasetPath;
+  ratioDatasetPath: AnyDatasetPath;
+  title: string;
+}
+
+interface RatioOptions {
+  scale: TimeScale;
+  title: string;
+  list: RatioOption[];
 }

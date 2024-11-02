@@ -2,18 +2,18 @@
 
 /**
  * @import { Option, ResourceDataset, TimeScale, SerializedHistory, TimeRange, Unit, Marker, Weighted, DatasetPath, OHLC, FetchedJSON, DatasetValue, FetchedResult, AnyDatasetPath, SeriesBlueprint, BaselineSpecificSeriesBlueprint, CandlestickSpecificSeriesBlueprint, LineSpecificSeriesBlueprint, SpecificSeriesBlueprintWithChart, Signal, Color, SettingsTheme, DatasetCandlestickData, FoldersFilter, PartialChartOption, ChartOption, AnyPartialOption, ProcessedOptionAddons, OptionsTree, AnyPath, SimulationOption } from "./types/self"
- * @import {createChart as CreateClassicChart, createChartEx as CreateCustomChart, LineStyleOptions} from "./packages/lightweight-charts/v4.2.0/types";
- * @import * as _ from "./packages/ufuzzy/v1.0.14/types"
- * @import { DeepPartial, ChartOptions, IChartApi, IHorzScaleBehavior, WhitespaceData, SingleValueData, ISeriesApi, Time, LogicalRange, SeriesMarker, CandlestickData, SeriesType, BaselineStyleOptions, SeriesOptionsCommon } from "./packages/lightweight-charts/v4.2.0/types"
+ * @import {createChart as CreateClassicChart, createChartEx as CreateCustomChart, LineStyleOptions} from "../packages/lightweight-charts/v4.2.0/types";
+ * @import * as _ from "../packages/ufuzzy/v1.0.14/types"
+ * @import { DeepPartial, ChartOptions, IChartApi, IHorzScaleBehavior, WhitespaceData, SingleValueData, ISeriesApi, Time, LogicalRange, SeriesMarker, CandlestickData, SeriesType, BaselineStyleOptions, SeriesOptionsCommon } from "../packages/lightweight-charts/v4.2.0/types"
  * @import { DatePath, HeightPath, LastPath } from "./types/paths";
- * @import { SignalOptions } from "./packages/solid-signals/2024-10-28/types/core"
- * @import { getOwner as GetOwner, onCleanup as OnCleanup, Owner } from "./packages/solid-signals/2024-10-28/types/owner"
- * @import { createSignal as CreateSignal, createEffect as CreateEffect, Accessor, Setter, createMemo as CreateMemo, createRoot as CreateRoot, runWithOwner as RunWithOwner } from "./packages/solid-signals/2024-10-28/types/signals";
+ * @import { SignalOptions } from "../packages/solid-signals/2024-11-01/types/core/core"
+ * @import { getOwner as GetOwner, onCleanup as OnCleanup, Owner } from "../packages/solid-signals/2024-11-01/types/core/owner"
+ * @import { createSignal as CreateSignal, createEffect as CreateEffect, Accessor, Setter, createMemo as CreateMemo, createRoot as CreateRoot, runWithOwner as RunWithOwner } from "../packages/solid-signals/2024-11-01/types/signals";
  */
 
 function initPackages() {
   async function importSignals() {
-    return import("./packages/solid-signals/2024-10-28/script.js").then(
+    return import("../packages/solid-signals/2024-11-01/script.js").then(
       (_signals) => {
         const signals = {
           createSolidSignal: /** @type {CreateSignal} */ (
@@ -95,7 +95,7 @@ function initPackages() {
     signals: importSignals,
     async lightweightCharts() {
       return window.document.fonts.ready.then(() =>
-        import("./packages/lightweight-charts/v4.2.0/script.js").then(
+        import("../packages/lightweight-charts/v4.2.0/script.js").then(
           ({
             createChart: createClassicChart,
             createChartEx: createCustomChart,
@@ -572,10 +572,10 @@ function initPackages() {
       );
     },
     async leanQr() {
-      return import("./packages/lean-qr/v2.3.4/script.js").then((d) => d);
+      return import("../packages/lean-qr/v2.3.4/script.js").then((d) => d);
     },
     async ufuzzy() {
-      return import("./packages/ufuzzy/v1.0.14/script.js").then(
+      return import("../packages/ufuzzy/v1.0.14/script.js").then(
         ({ default: d }) => d,
       );
     },
