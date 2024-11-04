@@ -14,7 +14,9 @@
 
 ## Description
 
-**kibō** (*hope* in japanese, formerly Satonomics) is a suite of tools that aims to help you understand Bitcoin's various dynamics. To do that, there is a wide number of charts and datasets with a scale by date but also by height free for you to explore. Which allows you to verify an incredible number of things, from the number of UTXOs to the repartition of the supply between different groups over time, with many things in between and it's all made possible thanks to Bitcoin's transparency. Whether you're an enthusiast, a researcher, a miner, an analyst, a trader, a skeptic or just curious, there is something new to learn for everyone !
+*TLDR*: **A better, FOSS, Bitcoin-only, self-hostable Glassnode**
+
+**kibō** (*hope* in japanese) is a suite of tools that aims to help you understand Bitcoin's various dynamics. To do that, there is a wide number of charts and datasets with a scale by date but also by height free for you to explore. Which allows you to verify an incredible number of things, from the number of UTXOs to the repartition of the supply between different groups over time, with many things in between and it's all made possible thanks to Bitcoin's transparency. Whether you're an enthusiast, a researcher, a miner, an analyst, a trader, a skeptic or just curious, there is something new to learn for everyone !
 
 While it's not the first tool trying to solve this problem, it's the first that is completely free, open-source and self-hostable. Which is very important as, just like for Bitcoin itself, I strongly believe that everyone should have access to this kind of data.
 
@@ -33,6 +35,10 @@ But it is a lot of work and has been worked on **full-time since November of 202
 So if you find this project useful, [please send some sats](https://geyser.fund/project/kibo/), it would be really appreciated.
 
 If you're a potential sponsor, feel free to contact me in Nostr !
+
+Bitcoin address: bc1q950q4ukpxxm6wjjkv6cpq8jzpazaxrrwftctkt
+
+Lightning address: lnurl1dp68gurn8ghj7ampd3kx2ar0veekzar0wd5xjtnrdakj7tnhv4kxctttdehhwm30d3h82unvwqhkxmmww3jkuar8d35kgetj8yuq363hv4
 
 [Geyser Fund](https://geyser.fund/project/kibo/)
 
@@ -57,6 +63,21 @@ Please open an issue if you want to add another instance
   - If up to date wil take 1-3mn to compute the last 100 blocks
 - `website`: A web app which displays the generated datasets in various charts
 - `server`: A small server which will serve both the website and the computed datasets via an API
+
+## Endpoints
+
+> If you running locally, you can replace `http://kibo.money` by `https://localhost:3110`
+
+- [/](https://kibo.money/): Website
+- [/api](https://kibo.money/api): A JSON with all available datasets, with their respective id and endpoint, better viewed in a Firefox based browser
+- /api/TIMESCALE-to-ID: `TIMESCALE` can be `date` or `height`, and `ID` is the id with `_` replaced by `-`, let's take `date-to-close` (price at the end of each day) as an example
+  - [/api/date-to-close](https://kibo.money/api/date-to-close): current year's values in a json format
+  - [/api/date-to-close?chunk=2009](https://kibo.money/api/date-to-close?chunk=2009): values from the year 2009 in a json format
+  - [/api/date-to-close?all=true](https://kibo.money/api/date-to-close?all=true): all values in a json format
+  - You can also specify the extension to download a file, either `.json` or `.csv` to get the dataset in a CSV format; like so:
+    - [/api/date-to-close.csv](https://kibo.money/api/date-to-close.csv)
+    - [/api/date-to-close.csv?chunk=2009](https://kibo.money/api/date-to-close.csv?chunk=2009)
+    - [/api/date-to-close.csv?all=true](https://kibo.money/api/date-to-close.csv?all=true)
 
 ## Roadmap
 
@@ -86,6 +107,8 @@ Working on it
 
 ### Manual
 
+*Mac OS and Linux only, Windows is unsupported*
+
 First we need to install Rust (https://www.rust-lang.org/tools/install)
 
 ```bash
@@ -97,6 +120,11 @@ If you already had Rust installed you could update it just in case
 ```bash
 rustup update
 ```
+
+> If you're on Ubuntu you'll probably also need to install `open-ssl` with
+> ```bash
+> sudo apt install libssl-dev pkg-config
+> ```
 
 Optionally, you can also install `cargo-watch` for the server to automatically restart it on file change, which will be triggered by new code and new datasets from the parser (https://github.com/watchexec/cargo-watch?tab=readme-ov-file#install)
 
@@ -125,7 +153,7 @@ cd ???/kibo/parser
 Now we can finally start by running the parser, you need to use the `./run.sh` script instead of `cargo run -r` as we need to set various system variables for the program to run smoothly
 
 For the first launch, the parser will need several information such as:
-- `--datadir`: which is bitcoin data directory path
+- `--datadir`: which is bitcoin data directory path, prefer `$HOME` to `~` as the latter might not work
 - `--rpcuser`: the username of the RPC credentials to talk to the bitcoin server
 - `--rpcpassword`: the password of the RPC credentials
 
@@ -161,6 +189,8 @@ Then the easiest to let others access your server is to use `cloudflared` which 
 
 kibō means _**hope**_ in japanese which is what Bitcoin ultimately is for many, hope for a better future.
 
+Formerly Satonomics
+
 ### Logo
 
 The dove (borrowed from [svgrepo](https://www.svgrepo.com/svg/351969/dove) for now) is known to represent hope in many cultures.
@@ -184,19 +214,3 @@ Though it's recommended to change to default **Browser Cache TTL** configuration
     <img alt="kibō" src="https://raw.githubusercontent.com/kibo-money/kibo/main/assets/infrastructure-light.svg" width="768" height="auto" style="max-width: 100%;">
   </picture>
 </p>
-
-## Iterations
-
-A list of all the previous versions and ideas:
-
-- https://github.com/drgarlic/satonomics
-- https://github.com/drgarlic/satonomics-parser
-- https://github.com/drgarlic/satonomics-explorer
-- https://github.com/drgarlic/satonomics-server
-- https://github.com/drgarlic/satonomics-app
-- https://github.com/drgarlic/bitalisys
-- https://github.com/drgarlic/bitesque-app
-- https://github.com/drgarlic/bitesque-back
-- https://github.com/drgarlic/bitesque-front
-- https://github.com/drgarlic/bitesque-assets
-- https://github.com/drgarlic/syf
