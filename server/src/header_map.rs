@@ -34,6 +34,8 @@ pub trait HeaderMapUtils {
     fn insert_cache_control_revalidate(&mut self, max_age: u64, stale_while_revalidate: u64);
     fn insert_last_modified(&mut self, date: DateTime<Utc>);
 
+    fn insert_content_disposition_attachment(&mut self);
+
     fn insert_content_type(&mut self, path: &Path);
     fn insert_content_type_image_icon(&mut self);
     fn insert_content_type_image_jpeg(&mut self);
@@ -86,6 +88,10 @@ impl HeaderMapUtils for HeaderMap {
                 .parse()
                 .unwrap(),
         );
+    }
+
+    fn insert_content_disposition_attachment(&mut self) {
+        self.insert(header::CONTENT_DISPOSITION, "attachment".parse().unwrap());
     }
 
     fn insert_cache_control_revalidate(&mut self, max_age: u64, stale_while_revalidate: u64) {

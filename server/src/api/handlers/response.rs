@@ -150,7 +150,14 @@ pub fn update_reponse_headers(
     headers.insert_cache_control_revalidate(max_age, stale_while_revalidate);
 
     match extension {
-        Some(Extension::CSV) => headers.insert_content_type_text_csv(),
+        Some(extension) => {
+            headers.insert_content_disposition_attachment();
+
+            match extension {
+                Extension::CSV => headers.insert_content_type_text_csv(),
+                Extension::JSON => headers.insert_content_type_application_json(),
+            }
+        }
         _ => headers.insert_content_type_application_json(),
     }
 
