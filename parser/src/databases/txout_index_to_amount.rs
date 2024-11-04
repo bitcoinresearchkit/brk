@@ -77,7 +77,9 @@ impl TxoutIndexToAmount {
                 (db_index + 1) * DB_MAX_SIZE
             );
 
-            Database::open(Self::folder(), &db_name).unwrap()
+            let path = Self::root().join(db_name);
+
+            Database::open(path).unwrap()
         })
     }
 
@@ -89,10 +91,14 @@ impl TxoutIndexToAmount {
 impl AnyDatabaseGroup for TxoutIndexToAmount {
     fn import() -> Self {
         Self {
-            metadata: Metadata::import(&Self::full_path(), 1),
+            metadata: Metadata::import(Self::root(), 1),
 
             map: BTreeMap::default(),
         }
+    }
+
+    fn create_dir_all(&self) -> color_eyre::Result<(), std::io::Error> {
+        fs::create_dir_all(Self::root())
     }
 
     fn reset_metadata(&mut self) {
@@ -104,7 +110,7 @@ impl AnyDatabaseGroup for TxoutIndexToAmount {
     }
 
     fn open_all(&mut self) {
-        let path = Self::full_path();
+        let path = Self::root();
 
         let folder = fs::read_dir(path);
 

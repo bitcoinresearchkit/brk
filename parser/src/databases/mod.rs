@@ -43,17 +43,17 @@ pub struct Databases {
 
 impl Databases {
     pub fn import() -> Self {
-        let address_index_to_address_data = AddressIndexToAddressData::import();
+        let address_index_to_address_data = AddressIndexToAddressData::init();
 
-        let address_index_to_empty_address_data = AddressIndexToEmptyAddressData::import();
+        let address_index_to_empty_address_data = AddressIndexToEmptyAddressData::init();
 
-        let address_to_address_index = AddressToAddressIndex::import();
+        let address_to_address_index = AddressToAddressIndex::init();
 
-        let txid_to_tx_data = TxidToTxData::import();
+        let txid_to_tx_data = TxidToTxData::init();
 
-        let txout_index_to_address_index = TxoutIndexToAddressIndex::import();
+        let txout_index_to_address_index = TxoutIndexToAddressIndex::init();
 
-        let txout_index_to_amount = TxoutIndexToAmount::import();
+        let txout_index_to_amount = TxoutIndexToAmount::init();
 
         Self {
             address_index_to_address_data,

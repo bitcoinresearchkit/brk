@@ -1,13 +1,15 @@
-use std::{collections::BTreeMap, fs, mem};
+use std::{
+    collections::BTreeMap,
+    fs, mem,
+    path::{Path, PathBuf},
+};
 
 use allocative::Allocative;
 use itertools::Itertools;
 
-use crate::structs::{Address, Date, Height};
+use crate::structs::{Address, Date, Height, U8x19, U8x31};
 
-use super::{
-    databases_folder_path, AnyDatabase, AnyDatabaseGroup, Database, Metadata, U8x19, U8x31,
-};
+use super::{AnyDatabase, AnyDatabaseGroup, Database, Metadata};
 
 type Value = u32;
 type U8x19Database = Database<U8x19, Value>;
@@ -44,20 +46,6 @@ pub struct AddressToAddressIndex {
 }
 
 impl AddressToAddressIndex {
-    // pub fn safe_get(&mut self, address: &Address) -> Option<&Value> {
-    //     match address {
-    //         Address::Empty(key) => self.open_empty().get(key),
-    //         Address::Unknown(key) => self.open_unknown().get(key),
-    //         Address::MultiSig(key) => self.open_multisig().get(key),
-    //         Address::P2PK((prefix, rest)) => self.open_p2pk(*prefix).get(rest),
-    //         Address::P2PKH((prefix, rest)) => self.open_p2pkh(*prefix).get(rest),
-    //         Address::P2SH((prefix, rest)) => self.open_p2sh(*prefix).get(rest),
-    //         Address::P2WPKH((prefix, rest)) => self.open_p2wpkh(*prefix).get(rest),
-    //         Address::P2WSH((prefix, rest)) => self.open_p2wsh(*prefix).get(rest),
-    //         Address::P2TR((prefix, rest)) => self.open_p2tr(*prefix).get(rest),
-    //     }
-    // }
-
     pub fn open_db(&mut self, address: &Address) {
         match address {
             Address::Empty(_) => {
@@ -148,9 +136,7 @@ impl AddressToAddressIndex {
         }
     }
 
-    fn path_to_group_prefixes(path: &str) -> Vec<u16> {
-        let path = databases_folder_path(path);
-
+    fn path_to_group_prefixes(path: &Path) -> Vec<u16> {
         let folder = fs::read_dir(path);
 
         if folder.is_err() {
@@ -174,15 +160,16 @@ impl AddressToAddressIndex {
             .collect_vec()
     }
 
-    fn path_p2pk() -> String {
-        format!("{}/{}", Self::folder(), "p2pk")
+    fn path_p2pk() -> PathBuf {
+        Self::root().join("p2pk")
     }
 
     pub fn open_p2pk(&mut self, prefix: u16) -> &mut P2PKDatabase {
         let path = Self::path_p2pk();
-        self.p2pk
-            .entry(prefix)
-            .or_insert_with(|| Database::open(&path, &prefix.to_string()).unwrap())
+        self.p2pk.entry(prefix).or_insert_with(|| {
+            let path = path.join(prefix.to_string());
+            Database::open(path).unwrap()
+        })
     }
 
     fn open_all_p2pk(&mut self) {
@@ -190,21 +177,24 @@ impl AddressToAddressIndex {
         Self::path_to_group_prefixes(&path)
             .into_iter()
             .for_each(|prefix| {
-                self.p2pk
-                    .insert(prefix, Database::open(&path, &prefix.to_string()).unwrap());
+                self.p2pk.insert(prefix, {
+                    let path = path.join(prefix.to_string());
+                    Database::open(path).unwrap()
+                });
             });
     }
 
-    fn path_p2pkh() -> String {
-        format!("{}/{}", Self::folder(), "p2pkh")
+    fn path_p2pkh() -> PathBuf {
+        Self::root().join("p2pkh")
     }
 
     pub fn open_p2pkh(&mut self, prefix: u16) -> &mut P2PKHDatabase {
         let path = Self::path_p2pkh();
 
-        self.p2pkh
-            .entry(prefix)
-            .or_insert_with(|| Database::open(&path, &prefix.to_string()).unwrap())
+        self.p2pkh.entry(prefix).or_insert_with(|| {
+            let path = path.join(prefix.to_string());
+            Database::open(path).unwrap()
+        })
     }
 
     fn open_all_p2pkh(&mut self) {
@@ -212,21 +202,24 @@ impl AddressToAddressIndex {
         Self::path_to_group_prefixes(&path)
             .into_iter()
             .for_each(|prefix| {
-                self.p2pkh
-                    .insert(prefix, Database::open(&path, &prefix.to_string()).unwrap());
+                self.p2pkh.insert(prefix, {
+                    let path = path.join(prefix.to_string());
+                    Database::open(path).unwrap()
+                });
             });
     }
 
-    fn path_p2sh() -> String {
-        format!("{}/{}", Self::folder(), "p2sh")
+    fn path_p2sh() -> PathBuf {
+        Self::root().join("p2sh")
     }
 
     pub fn open_p2sh(&mut self, prefix: u16) -> &mut P2SHDatabase {
         let path = Self::path_p2sh();
 
-        self.p2sh
-            .entry(prefix)
-            .or_insert_with(|| Database::open(&path, &prefix.to_string()).unwrap())
+        self.p2sh.entry(prefix).or_insert_with(|| {
+            let path = path.join(prefix.to_string());
+            Database::open(path).unwrap()
+        })
     }
 
     fn open_all_p2sh(&mut self) {
@@ -234,21 +227,24 @@ impl AddressToAddressIndex {
         Self::path_to_group_prefixes(&path)
             .into_iter()
             .for_each(|prefix| {
-                self.p2sh
-                    .insert(prefix, Database::open(&path, &prefix.to_string()).unwrap());
+                self.p2sh.insert(prefix, {
+                    let path = path.join(prefix.to_string());
+                    Database::open(path).unwrap()
+                });
             });
     }
 
-    fn path_p2wpkh() -> String {
-        format!("{}/{}", Self::folder(), "p2wpkh")
+    fn path_p2wpkh() -> PathBuf {
+        Self::root().join("p2wpkh")
     }
 
     pub fn open_p2wpkh(&mut self, prefix: u16) -> &mut P2WPKHDatabase {
         let path = Self::path_p2wpkh();
 
-        self.p2wpkh
-            .entry(prefix)
-            .or_insert_with(|| Database::open(&path, &prefix.to_string()).unwrap())
+        self.p2wpkh.entry(prefix).or_insert_with(|| {
+            let path = path.join(prefix.to_string());
+            Database::open(path).unwrap()
+        })
     }
 
     fn open_all_p2wpkh(&mut self) {
@@ -256,21 +252,24 @@ impl AddressToAddressIndex {
         Self::path_to_group_prefixes(&path)
             .into_iter()
             .for_each(|prefix| {
-                self.p2wpkh
-                    .insert(prefix, Database::open(&path, &prefix.to_string()).unwrap());
+                self.p2wpkh.insert(prefix, {
+                    let path = path.join(prefix.to_string());
+                    Database::open(path).unwrap()
+                });
             });
     }
 
-    fn path_p2wsh() -> String {
-        format!("{}/{}", Self::folder(), "p2wsh")
+    fn path_p2wsh() -> PathBuf {
+        Self::root().join("p2wsh")
     }
 
     pub fn open_p2wsh(&mut self, prefix: u16) -> &mut P2WSHDatabase {
         let path = Self::path_p2wsh();
 
-        self.p2wsh
-            .entry(prefix)
-            .or_insert_with(|| Database::open(&path, &prefix.to_string()).unwrap())
+        self.p2wsh.entry(prefix).or_insert_with(|| {
+            let path = path.join(prefix.to_string());
+            Database::open(path).unwrap()
+        })
     }
 
     fn open_all_p2wsh(&mut self) {
@@ -278,21 +277,24 @@ impl AddressToAddressIndex {
         Self::path_to_group_prefixes(&path)
             .into_iter()
             .for_each(|prefix| {
-                self.p2wsh
-                    .insert(prefix, Database::open(&path, &prefix.to_string()).unwrap());
+                self.p2wsh.insert(prefix, {
+                    let path = path.join(prefix.to_string());
+                    Database::open(path).unwrap()
+                });
             });
     }
 
-    fn path_p2tr() -> String {
-        format!("{}/{}", Self::folder(), "p2tr")
+    fn path_p2tr() -> PathBuf {
+        Self::root().join("p2tr")
     }
 
     pub fn open_p2tr(&mut self, prefix: u16) -> &mut P2TRDatabase {
         let path = Self::path_p2tr();
 
-        self.p2tr
-            .entry(prefix)
-            .or_insert_with(|| Database::open(&path, &prefix.to_string()).unwrap())
+        self.p2tr.entry(prefix).or_insert_with(|| {
+            let path = path.join(prefix.to_string());
+            Database::open(path).unwrap()
+        })
     }
 
     fn open_all_p2tr(&mut self) {
@@ -300,41 +302,43 @@ impl AddressToAddressIndex {
         Self::path_to_group_prefixes(&path)
             .into_iter()
             .for_each(|prefix| {
-                self.p2tr
-                    .insert(prefix, Database::open(&path, &prefix.to_string()).unwrap());
+                self.p2tr.insert(prefix, {
+                    let path = path.join(prefix.to_string());
+                    Database::open(path).unwrap()
+                });
             });
     }
 
     pub fn open_unknown(&mut self) -> &mut UnknownDatabase {
         self.unknown
-            .get_or_insert_with(|| Database::open(Self::folder(), "unknown").unwrap())
+            .get_or_insert_with(|| Database::open(Self::root().join("unknown")).unwrap())
     }
 
     pub fn open_op_return(&mut self) -> &mut UnknownDatabase {
         self.op_return
-            .get_or_insert_with(|| Database::open(Self::folder(), "op_return").unwrap())
+            .get_or_insert_with(|| Database::open(Self::root().join("op_return")).unwrap())
     }
 
     pub fn open_push_only(&mut self) -> &mut UnknownDatabase {
         self.push_only
-            .get_or_insert_with(|| Database::open(Self::folder(), "push_only").unwrap())
+            .get_or_insert_with(|| Database::open(Self::root().join("push_only")).unwrap())
     }
 
     pub fn open_empty(&mut self) -> &mut UnknownDatabase {
         self.empty
-            .get_or_insert_with(|| Database::open(Self::folder(), "empty").unwrap())
+            .get_or_insert_with(|| Database::open(Self::root().join("empty")).unwrap())
     }
 
     pub fn open_multisig(&mut self) -> &mut MultisigDatabase {
         self.multisig
-            .get_or_insert_with(|| Database::open(Self::folder(), "multisig").unwrap())
+            .get_or_insert_with(|| Database::open(Self::root().join("multisig")).unwrap())
     }
 }
 
 impl AnyDatabaseGroup for AddressToAddressIndex {
     fn import() -> Self {
         Self {
-            metadata: Metadata::import(&Self::full_path(), 1),
+            metadata: Metadata::import(Self::root(), 1),
 
             p2pk: BTreeMap::default(),
             p2pkh: BTreeMap::default(),
@@ -348,6 +352,15 @@ impl AnyDatabaseGroup for AddressToAddressIndex {
             empty: None,
             multisig: None,
         }
+    }
+
+    fn create_dir_all(&self) -> color_eyre::Result<(), std::io::Error> {
+        fs::create_dir_all(Self::path_p2pk()).unwrap();
+        fs::create_dir_all(Self::path_p2pkh()).unwrap();
+        fs::create_dir_all(Self::path_p2sh()).unwrap();
+        fs::create_dir_all(Self::path_p2wpkh()).unwrap();
+        fs::create_dir_all(Self::path_p2wsh()).unwrap();
+        fs::create_dir_all(Self::path_p2tr())
     }
 
     fn reset_metadata(&mut self) {

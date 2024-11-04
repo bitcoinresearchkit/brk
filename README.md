@@ -141,7 +141,7 @@ Here's an example
 ./run.sh --datadir=$HOME/Developer/bitcoin --rpcuser=satoshi --rpcpassword=nakamoto
 ```
 
-In a new terminal, go to the `server`'s folder of the repository
+In a **new** terminal, go to the `server`'s folder of the repository
 
 ```bash
 cd ???/kibo/server

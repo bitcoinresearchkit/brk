@@ -80,7 +80,9 @@ impl AddressIndexToEmptyAddressData {
                 (db_index + 1) * ADDRESS_INDEX_DB_MAX_SIZE
             );
 
-            Database::open(Self::folder(), &db_name).unwrap()
+            let path = Self::root().join(db_name);
+
+            Database::open(path).unwrap()
         })
     }
 
@@ -92,10 +94,14 @@ impl AddressIndexToEmptyAddressData {
 impl AnyDatabaseGroup for AddressIndexToEmptyAddressData {
     fn import() -> Self {
         Self {
-            metadata: Metadata::import(&Self::full_path(), 1),
+            metadata: Metadata::import(Self::root(), 1),
 
             map: BTreeMap::default(),
         }
+    }
+
+    fn create_dir_all(&self) -> color_eyre::Result<(), std::io::Error> {
+        fs::create_dir_all(Self::root())
     }
 
     fn reset_metadata(&mut self) {
@@ -107,7 +113,7 @@ impl AnyDatabaseGroup for AddressIndexToEmptyAddressData {
     }
 
     fn open_all(&mut self) {
-        let path = Self::full_path();
+        let path = Self::root();
 
         let folder = fs::read_dir(path);
 
@@ -143,22 +149,4 @@ impl AnyDatabaseGroup for AddressIndexToEmptyAddressData {
     fn export_metadata(&mut self, height: Height, date: Date) -> color_eyre::Result<()> {
         self.metadata.export(height, date)
     }
-
-    // fn export(&mut self, height: Height, date: Date) -> color_eyre::Result<()> {
-    //     self.drain_to_vec()
-    //         .into_par_iter()
-    //         .try_for_each(AnyDatabase::boxed_export)?;
-
-    //     self.metadata.export(height, date)?;
-
-    //     Ok(())
-    // }
-
-    // fn defragment(&mut self) {
-    //     self.open_all();
-
-    //     self.drain_to_vec()
-    //         .into_par_iter()
-    //         .for_each(AnyDatabase::boxed_defragment);
-    // }
 }

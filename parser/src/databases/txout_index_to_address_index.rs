@@ -77,7 +77,9 @@ impl TxoutIndexToAddressIndex {
                 (db_index + 1) * DB_MAX_SIZE
             );
 
-            Database::open(Self::folder(), &db_name).unwrap()
+            let path = Self::root().join(db_name);
+
+            Database::open(path).unwrap()
         })
     }
 
@@ -89,21 +91,15 @@ impl TxoutIndexToAddressIndex {
 impl AnyDatabaseGroup for TxoutIndexToAddressIndex {
     fn import() -> Self {
         Self {
-            metadata: Metadata::import(&Self::full_path(), 1),
+            metadata: Metadata::import(Self::root(), 1),
 
             map: BTreeMap::default(),
         }
     }
 
-    // fn export(&mut self, height: Height, date: Date) -> color_eyre::Result<()> {
-    //     mem::take(&mut self.map)
-    //         .into_par_iter()
-    //         .try_for_each(|(_, db)| db.export())?;
-
-    //     self.metadata.export(height, date)?;
-
-    //     Ok(())
-    // }
+    fn create_dir_all(&self) -> color_eyre::Result<(), std::io::Error> {
+        fs::create_dir_all(Self::root())
+    }
 
     fn reset_metadata(&mut self) {
         self.metadata.reset();
@@ -114,7 +110,7 @@ impl AnyDatabaseGroup for TxoutIndexToAddressIndex {
     }
 
     fn open_all(&mut self) {
-        let path = Self::full_path();
+        let path = Self::root();
 
         let folder = fs::read_dir(path);
 

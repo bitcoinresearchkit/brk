@@ -6,7 +6,7 @@ use std::{
     fmt::Debug,
     fs, io,
     ops::{Deref, DerefMut},
-    path::Path,
+    path::{Path, PathBuf},
 };
 
 use crate::{
@@ -16,7 +16,7 @@ use crate::{
 
 #[derive(Default, Debug, Encode, Decode, Allocative)]
 pub struct Metadata {
-    path: String,
+    path: PathBuf,
     data: MetadataData,
 }
 
@@ -35,10 +35,10 @@ impl DerefMut for Metadata {
 }
 
 impl Metadata {
-    pub fn import(path: &str, version: u16) -> Self {
+    pub fn import(path: PathBuf, version: u16) -> Self {
         Self {
-            path: path.to_owned(),
-            data: MetadataData::import(path, version),
+            data: MetadataData::import(&path, version),
+            path,
         }
     }
 
@@ -86,25 +86,20 @@ pub struct MetadataData {
 }
 
 impl MetadataData {
-    fn name<'a>() -> &'a str {
-        "metadata"
+    fn full_path(folder_path: &Path) -> PathBuf {
+        folder_path.join("metadata")
     }
 
-    fn full_path(folder_path: &str) -> String {
-        let name = Self::name();
-        format!("{folder_path}/{name}")
-    }
-
-    pub fn import(path: &str, version: u16) -> Self {
+    pub fn import(path: &Path, version: u16) -> Self {
         let mut s = Self::_import(path, version).unwrap_or_default();
         s.version = version;
         s
     }
 
-    fn _import(path: &str, version: u16) -> color_eyre::Result<Self> {
+    fn _import(path: &Path, version: u16) -> color_eyre::Result<Self> {
         fs::create_dir_all(path)?;
 
-        let s: MetadataData = Serialization::Binary.import(Path::new(&Self::full_path(path)))?;
+        let s: MetadataData = Serialization::Binary.import(path)?;
 
         if s.version != version {
             return Err(eyre!("Bad version"));
@@ -113,11 +108,11 @@ impl MetadataData {
         Ok(s)
     }
 
-    pub fn export(&self, path: &str) -> color_eyre::Result<()> {
+    pub fn export(&self, path: &Path) -> color_eyre::Result<()> {
         Serialization::Binary.export(Path::new(&Self::full_path(path)), self)
     }
 
-    pub fn reset(&mut self, path: &str) -> color_eyre::Result<(), io::Error> {
+    pub fn reset(&mut self, path: &Path) -> color_eyre::Result<(), io::Error> {
         self.clear();
 
         fs::remove_file(Self::full_path(path))

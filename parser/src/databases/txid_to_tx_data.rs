@@ -8,9 +8,9 @@ use allocative::Allocative;
 use biter::bitcoin::Txid;
 use itertools::Itertools;
 
-use crate::structs::{Date, Height, TxData};
+use crate::structs::{Date, Height, TxData, U8x31};
 
-use super::{AnyDatabase, AnyDatabaseGroup, Database as _Database, Metadata, U8x31};
+use super::{AnyDatabase, AnyDatabaseGroup, Database as _Database, Metadata};
 
 type Key = U8x31;
 type Value = TxData;
@@ -109,8 +109,10 @@ impl TxidToTxData {
 
     #[inline(always)]
     pub fn _open_db(&mut self, db_index: u16) -> &mut Database {
-        self.entry(db_index)
-            .or_insert_with(|| Database::open(Self::folder(), &db_index.to_string()).unwrap())
+        self.entry(db_index).or_insert_with(|| {
+            let path = Self::root().join(db_index.to_string());
+            Database::open(path).unwrap()
+        })
     }
 
     fn txid_to_key(txid: &Txid) -> U8x31 {
@@ -125,10 +127,14 @@ impl TxidToTxData {
 impl AnyDatabaseGroup for TxidToTxData {
     fn import() -> Self {
         Self {
-            metadata: Metadata::import(&Self::full_path(), 2),
+            metadata: Metadata::import(Self::root(), 2),
 
             map: BTreeMap::default(),
         }
+    }
+
+    fn create_dir_all(&self) -> color_eyre::Result<(), std::io::Error> {
+        fs::create_dir_all(Self::root())
     }
 
     fn reset_metadata(&mut self) {
@@ -140,7 +146,7 @@ impl AnyDatabaseGroup for TxidToTxData {
     }
 
     fn open_all(&mut self) {
-        let path = Self::full_path();
+        let path = Self::root();
 
         let folder = fs::read_dir(path);
 

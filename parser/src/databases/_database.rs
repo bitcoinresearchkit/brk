@@ -2,12 +2,11 @@ use std::{
     collections::{BTreeMap, BTreeSet},
     fmt::Debug,
     fs, mem,
+    path::PathBuf,
 };
 
 use allocative::Allocative;
-use derive_deref::{Deref, DerefMut};
 
-use itertools::Itertools;
 // https://docs.rs/sanakirja/latest/sanakirja/index.html
 // https://pijul.org/posts/2021-02-06-rethinking-sanakirja/
 //
@@ -17,10 +16,8 @@ use itertools::Itertools;
 // Possible compression: https://pijul.org/posts/sanakirja-zstd/
 use sanakirja::{
     btree::{self, page, Db_, Iter},
-    direct_repr, Commit, Env, Error, MutTxn, RootDb, Storable, UnsizedStorable,
+    Commit, Env, Error, MutTxn, RootDb, Storable,
 };
-
-use crate::io::OUTPUTS_FOLDER_PATH;
 
 #[derive(Allocative)]
 #[allocative(bound = "Key: Allocative, Value: Allocative")]
@@ -32,8 +29,7 @@ where
 {
     pub cached_puts: BTreeMap<Key, Value>,
     pub cached_dels: BTreeSet<Key>,
-    folder: String,
-    file: String,
+    path: PathBuf,
     #[allocative(skip)]
     db: Db_<Key, Value, page::Page<Key, Value>>,
     #[allocative(skip)]
@@ -48,12 +44,8 @@ where
     Key: Ord + Clone + Debug + Storable,
     Value: Storable + PartialEq,
 {
-    pub fn open(folder: &str, file: &str) -> color_eyre::Result<Self> {
-        let path = databases_folder_path(folder);
-        fs::create_dir_all(&path)?;
-
-        let path = format!("{path}/{file}");
-        let env = unsafe { Env::new_nolock(path, PAGE_SIZE, 1).unwrap() };
+    pub fn open(path: PathBuf) -> color_eyre::Result<Self> {
+        let env = unsafe { Env::new_nolock(&path, PAGE_SIZE, 1)? };
 
         let mut txn = Env::mut_txn_begin(env)?;
 
@@ -62,8 +54,7 @@ where
             .unwrap_or_else(|| unsafe { btree::create_db_(&mut txn).unwrap() });
 
         Ok(Self {
-            folder: folder.to_owned(),
-            file: file.to_owned(),
+            path,
             cached_puts: BTreeMap::default(),
             cached_dels: BTreeSet::default(),
             db,
@@ -91,17 +82,6 @@ where
         }
 
         self.db_get(key)
-    }
-
-    fn destroy(self) {
-        let path = self.path();
-
-        drop(self);
-
-        fs::remove_file(&path).unwrap_or_else(|_| {
-            dbg!(path);
-            panic!("Error");
-        });
     }
 
     pub fn db_get(&self, key: &Key) -> Option<&Value> {
@@ -135,44 +115,37 @@ where
         })
     }
 
-    #[inline(always)]
+    #[inline]
     pub fn db_remove(&mut self, key: &Key) {
         self.cached_dels.insert(key.clone());
     }
 
+    #[inline]
     pub fn update(&mut self, key: Key, value: Value) -> Option<Value> {
         self.cached_dels.insert(key.clone());
-
         self.cached_puts.insert(key, value)
     }
 
-    fn len(&self) -> usize {
-        self.iter().try_len().unwrap_or_else(|e| e.0)
+    #[inline]
+    pub fn is_empty(&self) -> bool {
+        self.iter().next().is_none()
     }
 
-    fn is_empty(&self) -> bool {
-        self.len() == 0
-    }
-
-    #[inline(always)]
+    #[inline]
     pub fn remove_from_puts(&mut self, key: &Key) -> Option<Value> {
         self.cached_puts.remove(key)
     }
 
-    #[inline(always)]
+    #[inline]
     pub fn insert(&mut self, key: Key, value: Value) -> Option<Value> {
         self.cached_dels.remove(&key);
 
         self.unsafe_insert(key, value)
     }
 
-    #[inline(always)]
+    #[inline]
     pub fn unsafe_insert(&mut self, key: Key, value: Value) -> Option<Value> {
         self.cached_puts.insert(key, value)
-    }
-
-    fn path(&self) -> String {
-        format!("{}/{}", databases_folder_path(&self.folder), self.file)
     }
 
     fn db_multi_put(&mut self, tree: BTreeMap<Key, Value>) -> Result<(), Error> {
@@ -197,6 +170,7 @@ pub trait AnyDatabase {
     #[allow(unused)]
     fn defragment(self);
     fn boxed_defragment(self: Box<Self>);
+    fn destroy(self);
 }
 
 impl<Key, Value> AnyDatabase for Database<Key, Value>
@@ -231,48 +205,28 @@ where
     fn boxed_defragment(self: Box<Self>) {
         let btree = self.iter_collect();
 
-        let folder = self.folder.to_owned();
-        let file = self.file.to_owned();
+        let path = self.path.to_owned();
 
         self.destroy();
 
-        let mut s = Self::open(&folder, &file).unwrap();
+        let mut db = Self::open(path).unwrap();
 
-        if !s.is_empty() {
+        if !db.is_empty() {
             panic!()
         }
 
-        s.cached_puts = btree;
-        s.export().unwrap();
+        db.cached_puts = btree;
+        db.export().unwrap();
     }
-}
 
-#[derive(
-    Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Deref, DerefMut, Default, Copy, Allocative,
-)]
-pub struct U8x19([u8; 19]);
-direct_repr!(U8x19);
-impl From<&[u8]> for U8x19 {
-    fn from(slice: &[u8]) -> Self {
-        let mut arr = Self::default();
-        arr.copy_from_slice(slice);
-        arr
+    fn destroy(self) {
+        let path = self.path.to_owned();
+
+        drop(self);
+
+        fs::remove_file(&path).unwrap_or_else(|_| {
+            dbg!(path);
+            panic!("Error");
+        });
     }
-}
-
-#[derive(
-    Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Deref, DerefMut, Default, Copy, Allocative,
-)]
-pub struct U8x31([u8; 31]);
-direct_repr!(U8x31);
-impl From<&[u8]> for U8x31 {
-    fn from(slice: &[u8]) -> Self {
-        let mut arr = Self::default();
-        arr.copy_from_slice(slice);
-        arr
-    }
-}
-
-pub fn databases_folder_path(folder: &str) -> String {
-    format!("{OUTPUTS_FOLDER_PATH}/databases/{folder}")
 }

@@ -1,9 +1,7 @@
 use bitcoin_hashes::{hash160, Hash};
 use biter::bitcoin::TxOut;
 
-use crate::databases::{U8x19, U8x31};
-
-use super::{AddressType, Counter};
+use super::{AddressType, Counter, U8x19, U8x31};
 
 #[derive(Debug, Clone, PartialEq, PartialOrd, Ord, Eq)]
 pub enum Address {
