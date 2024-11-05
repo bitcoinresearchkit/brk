@@ -66,7 +66,7 @@ Please open an issue if you want to add another instance
 
 ## Endpoints
 
-> If you running locally, you can replace `http://kibo.money` by `https://localhost:3110`
+> If you running locally, you can replace `https://kibo.money` by `http://localhost:3110`
 
 - [/](https://kibo.money/): Website
 - [/api](https://kibo.money/api): A JSON with all available datasets, with their respective id and endpoint, better viewed in a Firefox based browser

@@ -25,7 +25,8 @@ fn main() -> color_eyre::Result<()> {
             sleep(Duration::from_secs(delay))
         }
 
-        log("Waiting for new block...");
+        log("Waiting for a new block...\n");
+
         while block_count == rpc.get_blockchain_info().unwrap().blocks as usize {
             sleep(Duration::from_secs(1))
         }
