@@ -126,9 +126,10 @@ impl TxidToTxData {
 
 impl AnyDatabaseGroup for TxidToTxData {
     fn import() -> Self {
-        Self {
-            metadata: Metadata::import(Self::root(), 2),
+        let metadata = Metadata::import(Self::root(), 2);
 
+        Self {
+            metadata,
             map: BTreeMap::default(),
         }
     }

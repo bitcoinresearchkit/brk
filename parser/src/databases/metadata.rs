@@ -99,7 +99,7 @@ impl MetadataData {
     fn _import(path: &Path, version: u16) -> color_eyre::Result<Self> {
         fs::create_dir_all(path)?;
 
-        let s: MetadataData = Serialization::Binary.import(path)?;
+        let s: MetadataData = Serialization::Binary.import(&Self::full_path(path))?;
 
         if s.version != version {
             return Err(eyre!("Bad version"));
