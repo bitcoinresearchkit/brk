@@ -5203,10 +5203,7 @@ export function initOptions({
             if (id) {
               anchor.append(valueElement);
 
-              console.log("a", lastValues());
-
               signals.createEffect(lastValues, (lastValues) => {
-                console.log(lastValues);
                 if (lastValues) {
                   valueElement.innerHTML = formatValue(
                     lastValues[id],
