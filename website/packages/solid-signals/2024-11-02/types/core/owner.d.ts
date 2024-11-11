@@ -27,7 +27,7 @@
  *
  * Note that the owner tree is largely orthogonal to the reactivity tree, and is much closer to the component tree.
  */
-import { type ErrorHandler } from './error';
+import { type ErrorHandler } from "./error.js";
 export type ContextRecord = Record<string | symbol, unknown>;
 export interface Disposable {
     (): void;

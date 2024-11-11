@@ -1,5 +1,5 @@
-import type { MemoOptions, SignalOptions } from './core';
-import { Owner } from './owner';
+import type { SignalOptions } from "./core/index.js";
+import { Owner } from "./core/index.js";
 export interface Accessor<T> {
     (): T;
 }
@@ -15,26 +15,27 @@ export type Signal<T> = [read: Accessor<T>, write: Setter<T>];
  * `fn()`, and provide a simple write API via `write()`. The value can now be observed
  * when used inside other computations created with `computed` and `effect`.
  */
-export declare function createSignal<T>(initialValue: T, options?: SignalOptions<T>): Signal<T>;
-export declare function createAsync<T>(fn: () => Promise<T>, initial?: T, options?: SignalOptions<T>): Accessor<T>;
+export declare function createSignal<T>(initialValue: Exclude<T, Function>, options?: SignalOptions<T>): Signal<T>;
+export declare function createSignal<T>(fn: (prev?: T) => T, initialValue?: T, options?: SignalOptions<T>): Signal<T>;
+export declare function createAsync<T>(fn: (prev?: T) => Promise<T> | AsyncIterable<T> | T, initial?: T, options?: SignalOptions<T>): Accessor<T>;
 /**
  * Creates a new computation whose value is computed and returned by the given function. The given
  * compute function is _only_ re-run when one of it's dependencies are updated. Dependencies are
  * are all signals that are read during execution.
  */
-export declare function createMemo<T>(compute: () => T, initialValue?: T, options?: MemoOptions<T>): Accessor<T>;
+export declare function createMemo<T>(compute: (prev?: T) => T, initialValue?: T, options?: SignalOptions<T>): Accessor<T>;
 /**
  * Invokes the given function each time any of the signals that are read inside are updated
  * (i.e., their value changes). The effect is immediately invoked on initialization.
  */
-export declare function createEffect<T>(effect: () => T, initialValue?: T, options?: {
+export declare function createEffect<T>(compute: () => T, effect: (v: T) => (() => void) | void, initialValue?: T, options?: {
     name?: string;
 }): void;
 /**
  * Invokes the given function each time any of the signals that are read inside are updated
  * (i.e., their value changes). The effect is immediately invoked on initialization.
  */
-export declare function createRenderEffect<T>(compute: () => T, effect: (v: T) => T, initialValue?: T, options?: {
+export declare function createRenderEffect<T>(compute: () => T, effect: (v: T) => (() => void) | void, initialValue?: T, options?: {
     name?: string;
 }): void;
 /**

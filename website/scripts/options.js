@@ -1,5 +1,5 @@
 /**
- * @import { AnySpecificSeriesBlueprint, CohortOption, CohortOptions, Color, DefaultCohortOption, DefaultCohortOptions, OptionPath, OptionsGroup, PartialChartOption, PartialOptionsGroup, PartialOptionsTree, RatioOption, RatioOptions, Series, SeriesBlueprint, SeriesBlueprintParam, SeriesBluePrintType, TimeScale } from "./types/self"
+ * @import { AnySpecificSeriesBlueprint, CohortOption, CohortOptions, Color, DefaultCohortOption, DefaultCohortOptions, OptionPath, OptionsGroup, PartialChartOption, PartialOptionsGroup, PartialOptionsTree, RatioOption, RatioOptions, Series, SeriesBlueprint, SeriesBlueprintParam, SeriesBluePrintType, Signal, TimeScale } from "./types/self"
  */
 
 const DATE_TO_PREFIX = "date-to-";
@@ -618,7 +618,6 @@ function createPartialOptions(colors) {
         ? [
             {
               scale,
-              icon: "➕",
               name: "Daily Sum",
               title: `${title} Daily Sum`,
               description: "",
@@ -637,7 +636,6 @@ function createPartialOptions(colors) {
         ? [
             {
               scale,
-              icon: "🌊",
               name: "Daily Average",
               title: `${title} Daily Average`,
               description: "",
@@ -656,7 +654,6 @@ function createPartialOptions(colors) {
         ? [
             {
               scale,
-              icon: "%",
               name: "Daily Percentiles",
               title: `${title} Daily Percentiles`,
               description: "",
@@ -733,7 +730,6 @@ function createPartialOptions(colors) {
         ? [
             {
               scale,
-              icon: "⬆️",
               name: "Daily Max",
               title: `${title} Daily Max`,
               description: "",
@@ -752,7 +748,6 @@ function createPartialOptions(colors) {
         ? [
             {
               scale,
-              icon: "9️⃣",
               name: "Daily 90th Percentile",
               title: `${title} Daily 90th Percentile`,
               description: "",
@@ -771,7 +766,6 @@ function createPartialOptions(colors) {
         ? [
             {
               scale,
-              icon: "7️⃣",
               name: "Daily 75th Percentile",
               title: `${title} Size 75th Percentile`,
               description: "",
@@ -790,7 +784,6 @@ function createPartialOptions(colors) {
         ? [
             {
               scale,
-              icon: "5️⃣",
               name: "Daily Median",
               title: `${title} Daily Median`,
               description: "",
@@ -809,7 +802,6 @@ function createPartialOptions(colors) {
         ? [
             {
               scale,
-              icon: "2️⃣",
               name: "Daily 25th Percentile",
               title: `${title} Daily 25th Percentile`,
               description: "",
@@ -828,7 +820,6 @@ function createPartialOptions(colors) {
         ? [
             {
               scale,
-              icon: "1️⃣",
               name: "Daily 10th Percentile",
               title: `${title} Daily 10th Percentile`,
               description: "",
@@ -847,7 +838,6 @@ function createPartialOptions(colors) {
         ? [
             {
               scale,
-              icon: "⬇️",
               name: "Daily Min",
               title: `${title} Daily Min`,
               description: "",
@@ -896,7 +886,6 @@ function createPartialOptions(colors) {
         {
           scale,
           name: "Basic",
-          icon: "➗",
           title: `Market Price To ${title} Ratio`,
           unit: "Ratio",
           description: "",
@@ -930,7 +919,6 @@ function createPartialOptions(colors) {
                 scale,
                 name: "Averages",
                 description: "",
-                icon: "〰️",
                 unit: "Ratio",
                 title: `Market Price To ${title} Ratio Averages`,
                 top: [
@@ -982,7 +970,6 @@ function createPartialOptions(colors) {
           title: `Market Price To ${title} Ratio 1Y SMA Momentum Oscillator`,
           description: "",
           unit: "Ratio",
-          icon: "🔀",
           top: toList(arg).map(
             ({ title, color, valueDatasetPath: datasetPath }) => ({
               title: toLegendName(arg, title, ""),
@@ -1012,7 +999,6 @@ function createPartialOptions(colors) {
                   {
                     scale,
                     name: "Percentiles",
-                    icon: "✈️",
                     title: `Market Price To ${title} Ratio Top Percentiles`,
                     description: "",
                     unit: "Ratio",
@@ -1058,7 +1044,6 @@ function createPartialOptions(colors) {
                       {
                         scale,
                         name: "All",
-                        icon: "🚀",
                         title: `${title} Top Prices`,
                         description: "",
                         unit: "US Dollars",
@@ -1087,7 +1072,6 @@ function createPartialOptions(colors) {
                 {
                   scale,
                   name: "99%",
-                  icon: "🚀",
                   title: `${title} Top 99% Price`,
                   description: "",
                   unit: "US Dollars",
@@ -1102,7 +1086,6 @@ function createPartialOptions(colors) {
                 {
                   scale,
                   name: "99.5%",
-                  icon: "🚀",
                   title: `${title} Top 99.5% Price`,
                   description: "",
                   unit: "US Dollars",
@@ -1117,7 +1100,6 @@ function createPartialOptions(colors) {
                 {
                   scale,
                   name: "99.9%",
-                  icon: "🚀",
                   title: `${title} Top 99.9% Price`,
                   description: "",
                   unit: "US Dollars",
@@ -1141,7 +1123,6 @@ function createPartialOptions(colors) {
                   {
                     scale,
                     name: "Percentiles",
-                    icon: "🤿",
                     title: `Market Price To ${title} Ratio Bottom Percentiles`,
                     description: "",
                     unit: "Ratio",
@@ -1187,7 +1168,6 @@ function createPartialOptions(colors) {
                       {
                         scale,
                         name: "All",
-                        icon: "🚇",
                         title: `${title} Bottom Prices`,
                         description: "",
                         unit: "US Dollars",
@@ -1216,7 +1196,6 @@ function createPartialOptions(colors) {
                 {
                   scale,
                   name: "1%",
-                  icon: "🚇",
                   title: `${title} Bottom 1% Price`,
                   description: "",
                   unit: "US Dollars",
@@ -1231,7 +1210,6 @@ function createPartialOptions(colors) {
                 {
                   scale,
                   name: "0.5%",
-                  icon: "🚇",
                   title: `${title} Bottom 0.5% Price`,
                   description: "",
                   unit: "US Dollars",
@@ -1246,7 +1224,6 @@ function createPartialOptions(colors) {
                 {
                   scale,
                   name: "0.1%",
-                  icon: "🚇",
                   title: `${title} Bottom 0.1% Price`,
                   description: "",
                   unit: "US Dollars",
@@ -1281,7 +1258,6 @@ function createPartialOptions(colors) {
         tree: [
           {
             scale,
-            icon: "🔝",
             name: "Value",
             title: "All Time High",
             description: "",
@@ -1296,7 +1272,6 @@ function createPartialOptions(colors) {
           },
           {
             scale,
-            icon: "🏂",
             name: "Drawdown",
             title: "All Time High Drawdown",
             description: "",
@@ -1320,7 +1295,6 @@ function createPartialOptions(colors) {
             ? /** @type {PartialChartOption[]} */ ([
                 {
                   scale,
-                  icon: "🗓️",
                   name: "Days Since",
                   title: "Days Since All Time High",
                   description: "",
@@ -1338,7 +1312,6 @@ function createPartialOptions(colors) {
                   tree: [
                     {
                       scale,
-                      icon: "📆",
                       name: "Days",
                       title: "Max Number Of Days Between All Time Highs",
                       shortTitle: "Max Days Between",
@@ -1355,7 +1328,6 @@ function createPartialOptions(colors) {
                     },
                     {
                       scale,
-                      icon: "📆",
                       name: "Years",
                       title: "Max Number Of Years Between All Time Highs",
                       shortTitle: "Max Years Between",
@@ -1387,7 +1359,6 @@ function createPartialOptions(colors) {
         tree: [
           {
             scale,
-            icon: "🌊",
             name: "All",
             title: "All Moving Averages",
             description: "",
@@ -1431,7 +1402,6 @@ function createPartialOptions(colors) {
             title,
             description: "",
             unit: "US Dollars",
-            icon: "~",
             top: [
               {
                 title: `SMA`,
@@ -1501,7 +1471,6 @@ function createPartialOptions(colors) {
         scale,
         name,
         description: "",
-        icon: "🧾",
         title: `${title} Return`,
         unit: "Percentage",
         bottom: [
@@ -1533,7 +1502,6 @@ function createPartialOptions(colors) {
           tree: [
             {
               scale,
-              icon: "💵",
               name: "Dollars Per Bitcoin",
               title: "Dollars Per Bitcoin",
               description: "",
@@ -1541,7 +1509,6 @@ function createPartialOptions(colors) {
             },
             {
               scale,
-              icon: "🍊",
               name: "Sats Per Dollar",
               title: "Satoshis Per Dollar",
               description: "",
@@ -1558,7 +1525,6 @@ function createPartialOptions(colors) {
         },
         {
           scale,
-          icon: "♾️",
           name: "Capitalization",
           title: "Market Capitalization",
           description: "",
@@ -1592,7 +1558,6 @@ function createPartialOptions(colors) {
           ? /** @type {PartialOptionsTree} */ ([
               {
                 scale,
-                icon: "🧱",
                 name: "Height",
                 title: "Block Height",
                 description: "",
@@ -1611,7 +1576,6 @@ function createPartialOptions(colors) {
                 tree: [
                   {
                     scale,
-                    icon: "D",
                     name: "Daily Sum",
                     title: "Daily Sum Of Blocks Mined",
                     description: "",
@@ -1646,7 +1610,6 @@ function createPartialOptions(colors) {
                   },
                   {
                     scale,
-                    icon: "W",
                     name: "Weekly Sum",
                     title: "Weekly Sum Of Blocks Mined",
                     description: "",
@@ -1669,7 +1632,6 @@ function createPartialOptions(colors) {
                   },
                   {
                     scale,
-                    icon: "M",
                     name: "Monthly Sum",
                     title: "Monthly Sum Of Blocks Mined",
                     description: "",
@@ -1692,7 +1654,6 @@ function createPartialOptions(colors) {
                   },
                   {
                     scale,
-                    icon: "Y",
                     name: "Yearly Sum",
                     title: "Yearly Sum Of Blocks Mined",
                     description: "",
@@ -1715,7 +1676,6 @@ function createPartialOptions(colors) {
                   },
                   {
                     scale,
-                    icon: "🧱",
                     name: "Total",
                     title: "Total Blocks Mined",
                     description: "",
@@ -1736,7 +1696,6 @@ function createPartialOptions(colors) {
                 tree: [
                   {
                     scale,
-                    icon: "📏",
                     name: "Cumulative",
                     title: "Cumulative Block Size",
                     description: "",
@@ -1824,7 +1783,6 @@ function createPartialOptions(colors) {
           : /** @type {PartialOptionsTree} */ ([
               {
                 scale,
-                icon: "📏",
                 name: "Size",
                 title: "Block Size",
                 description: "",
@@ -1839,7 +1797,6 @@ function createPartialOptions(colors) {
               },
               {
                 scale,
-                icon: "🏋️",
                 name: "Weight",
                 title: "Block Weight",
                 description: "",
@@ -1854,7 +1811,6 @@ function createPartialOptions(colors) {
               },
               {
                 scale,
-                icon: "👾",
                 name: "VBytes",
                 title: "Block VBytes",
                 description: "",
@@ -1869,7 +1825,6 @@ function createPartialOptions(colors) {
               },
               {
                 scale,
-                icon: "⏰",
                 name: "Interval",
                 title: "Block Interval",
                 description: "",
@@ -1901,47 +1856,11 @@ function createPartialOptions(colors) {
             ...(scale === "date"
               ? /** @satisfies {PartialOptionsTree} */ ([
                   {
-                    name: "Last",
-                    tree: [
-                      {
-                        scale,
-                        icon: "🍊",
-                        name: "In Bitcoin",
-                        title: "Last Coinbase In Bitcoin",
-                        description: "",
-                        unit: "US Dollars",
-                        bottom: [
-                          {
-                            title: "Last",
-                            color: colors.bitcoin,
-                            datasetPath: `${scale}-to-last-coinbase`,
-                          },
-                        ],
-                      },
-                      {
-                        scale,
-                        icon: "💵",
-                        name: "In Dollars",
-                        title: "Last Coinbase In Dollars",
-                        description: "",
-                        unit: "US Dollars",
-                        bottom: [
-                          {
-                            title: "Last",
-                            color: colors.dollars,
-                            datasetPath: `${scale}-to-last-coinbase-in-dollars`,
-                          },
-                        ],
-                      },
-                    ],
-                  },
-                  {
                     scale,
                     name: "Daily Sum",
                     tree: [
                       {
                         scale,
-                        icon: "🍊",
                         name: "In Bitcoin",
                         title: "Daily Sum Of Coinbases In Bitcoin",
                         description: "",
@@ -1956,7 +1875,6 @@ function createPartialOptions(colors) {
                       },
                       {
                         scale,
-                        icon: "💵",
                         name: "In Dollars",
                         title: "Daily Sum Of Coinbases In Dollars",
                         description: "",
@@ -1977,7 +1895,6 @@ function createPartialOptions(colors) {
                     tree: [
                       {
                         scale,
-                        icon: "🍊",
                         name: "In Bitcoin",
                         title: "Yearly Sum Of Coinbases In Bitcoin",
                         description: "",
@@ -1992,7 +1909,6 @@ function createPartialOptions(colors) {
                       },
                       {
                         scale,
-                        icon: "💵",
                         name: "In Dollars",
                         title: "Yearly Sum Of Coinbases In Dollars",
                         description: "",
@@ -2013,7 +1929,6 @@ function createPartialOptions(colors) {
                     tree: [
                       {
                         scale,
-                        icon: "🍊",
                         name: "In Bitcoin",
                         title: "Cumulative Coinbases In Bitcoin",
                         description: "",
@@ -2028,7 +1943,6 @@ function createPartialOptions(colors) {
                       },
                       {
                         scale,
-                        icon: "💵",
                         name: "In Dollars",
                         title: "Cumulative Coinbases In Dollars",
                         description: "",
@@ -2038,6 +1952,39 @@ function createPartialOptions(colors) {
                             title: "Coinbases",
                             color: colors.dollars,
                             datasetPath: `${scale}-to-cumulative-coinbase-in-dollars`,
+                          },
+                        ],
+                      },
+                    ],
+                  },
+                  {
+                    name: "Last Block",
+                    tree: [
+                      {
+                        scale,
+                        name: "In Bitcoin",
+                        title: "Last Coinbase In Bitcoin",
+                        description: "",
+                        unit: "US Dollars",
+                        bottom: [
+                          {
+                            title: "Last",
+                            color: colors.bitcoin,
+                            datasetPath: `${scale}-to-last-coinbase`,
+                          },
+                        ],
+                      },
+                      {
+                        scale,
+                        name: "In Dollars",
+                        title: "Last Coinbase In Dollars",
+                        description: "",
+                        unit: "US Dollars",
+                        bottom: [
+                          {
+                            title: "Last",
+                            color: colors.dollars,
+                            datasetPath: `${scale}-to-last-coinbase-in-dollars`,
                           },
                         ],
                       },
@@ -2054,47 +2001,11 @@ function createPartialOptions(colors) {
             ...(scale === "date"
               ? /** @type {PartialOptionsTree} */ ([
                   {
-                    name: "Last",
-                    tree: [
-                      {
-                        scale,
-                        icon: "🍊",
-                        name: "In Bitcoin",
-                        title: "Last Subsidy In Bitcoin",
-                        description: "",
-                        unit: "Bitcoin",
-                        bottom: [
-                          {
-                            title: "Last",
-                            color: colors.bitcoin,
-                            datasetPath: `${scale}-to-last-subsidy`,
-                          },
-                        ],
-                      },
-                      {
-                        scale,
-                        icon: "💵",
-                        name: "In Dollars",
-                        title: "Last Subsidy In Dollars",
-                        description: "",
-                        unit: "US Dollars",
-                        bottom: [
-                          {
-                            title: "Last",
-                            color: colors.dollars,
-                            datasetPath: `${scale}-to-last-subsidy-in-dollars`,
-                          },
-                        ],
-                      },
-                    ],
-                  },
-                  {
                     scale,
                     name: "Daily Sum",
                     tree: [
                       {
                         scale,
-                        icon: "🍊",
                         name: "In Bitcoin",
                         title: "Daily Sum Of Subsidies In Bitcoin",
                         description: "",
@@ -2109,7 +2020,6 @@ function createPartialOptions(colors) {
                       },
                       {
                         scale,
-                        icon: "💵",
                         name: "In Dollars",
                         title: "Daily Sum Of Subsidies In Dollars",
                         description: "",
@@ -2130,7 +2040,6 @@ function createPartialOptions(colors) {
                     tree: [
                       {
                         scale,
-                        icon: "🍊",
                         name: "In Bitcoin",
                         title: "Yearly Sum Of Subsidies In Bitcoin",
                         description: "",
@@ -2145,7 +2054,6 @@ function createPartialOptions(colors) {
                       },
                       {
                         scale,
-                        icon: "💵",
                         name: "In Dollars",
                         title: "Yearly Sum Of Subsidies In Dollars",
                         description: "",
@@ -2167,7 +2075,6 @@ function createPartialOptions(colors) {
                     tree: [
                       {
                         scale,
-                        icon: "🍊",
                         name: "In Bitcoin",
                         title: "Cumulative Subsidies In Bitcoin",
                         description: "",
@@ -2182,7 +2089,6 @@ function createPartialOptions(colors) {
                       },
                       {
                         scale,
-                        icon: "💵",
                         name: "In Dollars",
                         title: "Cumulative Subsidies In Dollars",
                         description: "",
@@ -2192,6 +2098,39 @@ function createPartialOptions(colors) {
                             title: "Subsidies",
                             color: colors.dollars,
                             datasetPath: `${scale}-to-cumulative-subsidy-in-dollars`,
+                          },
+                        ],
+                      },
+                    ],
+                  },
+                  {
+                    name: "Last Block",
+                    tree: [
+                      {
+                        scale,
+                        name: "In Bitcoin",
+                        title: "Last Subsidy In Bitcoin",
+                        description: "",
+                        unit: "Bitcoin",
+                        bottom: [
+                          {
+                            title: "Last",
+                            color: colors.bitcoin,
+                            datasetPath: `${scale}-to-last-subsidy`,
+                          },
+                        ],
+                      },
+                      {
+                        scale,
+                        name: "In Dollars",
+                        title: "Last Subsidy In Dollars",
+                        description: "",
+                        unit: "US Dollars",
+                        bottom: [
+                          {
+                            title: "Last",
+                            color: colors.dollars,
+                            datasetPath: `${scale}-to-last-subsidy-in-dollars`,
                           },
                         ],
                       },
@@ -2208,47 +2147,11 @@ function createPartialOptions(colors) {
             ...(scale === "date"
               ? /** @type {PartialOptionsTree} */ ([
                   {
-                    name: "Last",
-                    tree: [
-                      {
-                        scale,
-                        icon: "🍊",
-                        name: "In Bitcoin",
-                        title: "Last Fees In Bitcoin",
-                        description: "",
-                        unit: "Bitcoin",
-                        bottom: [
-                          {
-                            title: "Last",
-                            color: colors.bitcoin,
-                            datasetPath: `${scale}-to-last-fees`,
-                          },
-                        ],
-                      },
-                      {
-                        scale,
-                        icon: "💵",
-                        name: "In Dollars",
-                        title: "Last Fees In Dollars",
-                        description: "",
-                        unit: "US Dollars",
-                        bottom: [
-                          {
-                            title: "Last",
-                            color: colors.dollars,
-                            datasetPath: `${scale}-to-last-fees-in-dollars`,
-                          },
-                        ],
-                      },
-                    ],
-                  },
-                  {
                     scale,
                     name: "Daily Sum",
                     tree: [
                       {
                         scale,
-                        icon: "🍊",
                         name: "In Bitcoin",
                         title: "Daily Sum Of Fees In Bitcoin",
                         description: "",
@@ -2263,7 +2166,6 @@ function createPartialOptions(colors) {
                       },
                       {
                         scale,
-                        icon: "💵",
                         name: "In Dollars",
                         title: "Daily Sum Of Fees In Dollars",
                         description: "",
@@ -2284,7 +2186,6 @@ function createPartialOptions(colors) {
                     tree: [
                       {
                         scale,
-                        icon: "🍊",
                         name: "In Bitcoin",
                         title: "Yearly Sum Of Fees In Bitcoin",
                         description: "",
@@ -2299,7 +2200,6 @@ function createPartialOptions(colors) {
                       },
                       {
                         scale,
-                        icon: "💵",
                         name: "In Dollars",
                         title: "Yearly Sum Of Fees In Dollars",
                         description: "",
@@ -2320,7 +2220,6 @@ function createPartialOptions(colors) {
                     tree: [
                       {
                         scale,
-                        icon: "🍊",
                         name: "In Bitcoin",
                         title: "Cumulative Fees In Bitcoin",
                         description: "",
@@ -2335,7 +2234,6 @@ function createPartialOptions(colors) {
                       },
                       {
                         scale,
-                        icon: "💵",
                         name: "In Dollars",
                         title: "Cumulative Fees In Dollars",
                         description: "",
@@ -2350,6 +2248,39 @@ function createPartialOptions(colors) {
                       },
                     ],
                   },
+                  {
+                    name: "Last Block",
+                    tree: [
+                      {
+                        scale,
+                        name: "In Bitcoin",
+                        title: "Last Fees In Bitcoin",
+                        description: "",
+                        unit: "Bitcoin",
+                        bottom: [
+                          {
+                            title: "Last",
+                            color: colors.bitcoin,
+                            datasetPath: `${scale}-to-last-fees`,
+                          },
+                        ],
+                      },
+                      {
+                        scale,
+                        name: "In Dollars",
+                        title: "Last Fees In Dollars",
+                        description: "",
+                        unit: "US Dollars",
+                        bottom: [
+                          {
+                            title: "Last",
+                            color: colors.dollars,
+                            datasetPath: `${scale}-to-last-fees-in-dollars`,
+                          },
+                        ],
+                      },
+                    ],
+                  },
                 ])
               : []),
           ],
@@ -2357,7 +2288,6 @@ function createPartialOptions(colors) {
 
         {
           scale,
-          icon: "⚔️",
           name: "Subsidy V. Fees",
           title: "Subsidy V. Fees",
           description: "",
@@ -2386,7 +2316,6 @@ function createPartialOptions(colors) {
           ? /** @type {PartialOptionsTree} */ ([
               {
                 scale,
-                icon: "🧮",
                 name: "Puell Multiple",
                 title: "Puell Multiple",
                 description: "",
@@ -2405,7 +2334,6 @@ function createPartialOptions(colors) {
                 tree: [
                   {
                     scale,
-                    icon: "⛏️",
                     name: "Rate",
                     title: "Hash Rate",
                     description: "",
@@ -2430,7 +2358,6 @@ function createPartialOptions(colors) {
                   },
                   {
                     scale,
-                    icon: "🎗️",
                     name: "Ribbon",
                     title: "Hash Ribbon",
                     description: "",
@@ -2453,7 +2380,6 @@ function createPartialOptions(colors) {
                     tree: [
                       {
                         scale,
-                        icon: "🏷️",
                         name: "Price",
                         title: "Hash Price",
                         description: "",
@@ -2468,7 +2394,6 @@ function createPartialOptions(colors) {
                       },
                       {
                         scale,
-                        icon: "😢",
                         name: "Min",
                         title: "Min Hash Price",
                         description: "",
@@ -2483,7 +2408,6 @@ function createPartialOptions(colors) {
                       },
                       {
                         scale,
-                        icon: "🤞",
                         name: "Rebound",
                         title: "Hash Price Rebound",
                         description: "",
@@ -2505,7 +2429,6 @@ function createPartialOptions(colors) {
 
         {
           scale,
-          icon: "🏋️",
           name: "Difficulty",
           title: "Difficulty",
           description: "",
@@ -2523,7 +2446,6 @@ function createPartialOptions(colors) {
           ? /** @type {PartialOptionsTree} */ ([
               {
                 scale,
-                icon: "📊",
                 name: "Difficulty Adjustment",
                 title: "Difficulty Adjustment",
                 description: "",
@@ -2539,7 +2461,6 @@ function createPartialOptions(colors) {
               },
               {
                 scale,
-                icon: "🏭",
                 name: "Annualized Issuance",
                 title: "Annualized Issuance",
                 description: "",
@@ -2557,8 +2478,7 @@ function createPartialOptions(colors) {
                 tree: [
                   {
                     scale,
-                    icon: "🏗️",
-                    name: "Normal",
+                    name: "Today",
                     title: "Inflation Rate",
                     description: "",
                     unit: "Percentage",
@@ -2572,7 +2492,6 @@ function createPartialOptions(colors) {
                   },
                   {
                     scale,
-                    icon: "🏗️",
                     name: "Yearly",
                     title: "Yearly Inflation Rate",
                     description: "",
@@ -2603,7 +2522,6 @@ function createPartialOptions(colors) {
       tree: [
         {
           scale,
-          icon: "🖐️",
           name: "Count",
           title: "Transaction Count",
           description: "",
@@ -2642,7 +2560,6 @@ function createPartialOptions(colors) {
           tree: [
             {
               scale,
-              icon: "🍊",
               name: "In Bitcoin",
               title: "Transaction Volume",
               description: "",
@@ -2676,7 +2593,6 @@ function createPartialOptions(colors) {
             },
             {
               scale,
-              icon: "💵",
               name: "In Dollars",
               title: "Transaction Volume In Dollars",
               description: "",
@@ -2718,7 +2634,6 @@ function createPartialOptions(colors) {
                 tree: [
                   {
                     scale,
-                    icon: "🍊",
                     name: "In Bitcoin",
                     title: "Annualized Transaction Volume",
                     description: "",
@@ -2733,7 +2648,6 @@ function createPartialOptions(colors) {
                   },
                   {
                     scale,
-                    icon: "💵",
                     name: "In Dollars",
                     title: "Annualized Transaction Volume In Dollars",
                     description: "",
@@ -2750,7 +2664,6 @@ function createPartialOptions(colors) {
               },
               {
                 scale,
-                icon: "💨",
                 name: "Velocity",
                 title: "Transactions Velocity",
                 description: "",
@@ -2767,7 +2680,6 @@ function createPartialOptions(colors) {
           : []),
         {
           scale,
-          icon: "⏰",
           name: "Per Second",
           title: "Transactions Per Second",
           description: "",
@@ -2877,10 +2789,9 @@ function createPartialOptions(colors) {
         {
           scale,
           name: `Count`,
-          title: `${title} Unspent Transaction Outputs Count`,
+          title: `Number Of ${title} Unspent Transaction Outputs`,
           description: "",
           unit: "Count",
-          icon: "🎫",
           bottom: cohortOptionOrOptions.toSeriesBlueprints(arg, {
             title: "Count",
             genPath: (id, scale) =>
@@ -2908,8 +2819,12 @@ function createPartialOptions(colors) {
       return {
         scale,
         color: arg.color,
-        ratioDatasetPath: `${scale}-to-market-price-to-${datasetIdToPrefix(arg.datasetId)}realized-price-ratio`,
-        valueDatasetPath: `${scale}-to-${datasetIdToPrefix(arg.datasetId)}realized-price`,
+        ratioDatasetPath: `${scale}-to-market-price-to-${datasetIdToPrefix(
+          arg.datasetId,
+        )}realized-price-ratio`,
+        valueDatasetPath: `${scale}-to-${datasetIdToPrefix(
+          arg.datasetId,
+        )}realized-price`,
         title: `${arg.title} Realized Price`,
       };
     }
@@ -2923,7 +2838,6 @@ function createPartialOptions(colors) {
           title: `${title} Realized Price`,
           description: "",
           unit: "US Dollars",
-          icon: "🏷️",
           top: cohortOptionOrOptions.toSeriesBlueprints(arg, {
             title: "Realized Price",
             genPath: (id, scale) =>
@@ -2946,7 +2860,6 @@ function createPartialOptions(colors) {
           title: `${title} Realized Capitalization`,
           description: "",
           unit: "US Dollars",
-          icon: "💰",
           bottom: [
             ...cohortOptionOrOptions.toSeriesBlueprints(
               arg,
@@ -2977,7 +2890,6 @@ function createPartialOptions(colors) {
           title: `${title} Realized Capitalization 1 Month Net Change`,
           description: "",
           unit: "US Dollars",
-          icon: "🔀",
           bottom: [
             ...cohortOptionOrOptions.toSeriesBlueprints(
               arg,
@@ -2986,7 +2898,9 @@ function createPartialOptions(colors) {
                 title: "Net Change",
                 type: "Baseline",
                 genPath: (id, scale) =>
-                  `${scale}-to-${datasetIdToPrefix(id)}realized-cap-1m-net-change`,
+                  `${scale}-to-${datasetIdToPrefix(
+                    id,
+                  )}realized-cap-1m-net-change`,
               },
             ),
             bases[0](scale),
@@ -2998,7 +2912,6 @@ function createPartialOptions(colors) {
           title: `${title} Realized Profit`,
           description: "",
           unit: "US Dollars",
-          icon: "🎉",
           bottom: cohortOptionOrOptions.toSeriesBlueprints(arg, {
             title: "Realized Profit",
             singleColor: colors.profit,
@@ -3016,7 +2929,6 @@ function createPartialOptions(colors) {
           title: `${title} Realized Loss`,
           description: "",
           unit: "US Dollars",
-          icon: "⚰️",
           bottom: cohortOptionOrOptions.toSeriesBlueprints(arg, {
             title: "Realized Loss",
             singleColor: colors.loss,
@@ -3035,7 +2947,6 @@ function createPartialOptions(colors) {
             title: `${title} Realized Profit And Loss`,
             description: "",
             unit: "US Dollars",
-            icon: "⚖️",
             bottom: [
               {
                 title: "Profit",
@@ -3065,7 +2976,6 @@ function createPartialOptions(colors) {
           title: `${title} Net Realized Profit And Loss`,
           description: "",
           unit: "US Dollars",
-          icon: "⚖️",
           bottom: [
             ...cohortOptionOrOptions.toSeriesBlueprints(arg, {
               title: "Net PNL",
@@ -3087,13 +2997,14 @@ function createPartialOptions(colors) {
             title: `${title} Net Realized Profit And Loss Relative To Market Capitalization`,
             description: "",
             unit: "Percentage",
-            icon: "➗",
             bottom: [
               ...cohortOptionOrOptions.toSeriesBlueprints(arg, {
                 title: "Net",
                 type: "Baseline",
                 genPath: (id) =>
-                  `${scale}-to-${datasetIdToPrefix(id)}net-realized-profit-and-loss-to-market-cap-ratio`,
+                  `${scale}-to-${datasetIdToPrefix(
+                    id,
+                  )}net-realized-profit-and-loss-to-market-cap-ratio`,
               }),
               bases[0](scale),
             ],
@@ -3108,12 +3019,13 @@ function createPartialOptions(colors) {
               title: `${title} Cumulative Realized Profit`,
               description: "",
               unit: "US Dollars",
-              icon: "🎊",
               bottom: cohortOptionOrOptions.toSeriesBlueprints(arg, {
                 title: "Cumulative Realized Profit",
                 singleColor: colors.profit,
                 genPath: (id, scale) =>
-                  `${scale}-to-${datasetIdToPrefix(id)}cumulative-realized-profit`,
+                  `${scale}-to-${datasetIdToPrefix(
+                    id,
+                  )}cumulative-realized-profit`,
               }),
             },
             {
@@ -3122,12 +3034,13 @@ function createPartialOptions(colors) {
               title: `${title} Cumulative Realized Loss`,
               description: "",
               unit: "US Dollars",
-              icon: "☠️",
               bottom: cohortOptionOrOptions.toSeriesBlueprints(arg, {
                 title: "Cumulative Realized Loss",
                 singleColor: colors.loss,
                 genPath: (id, scale) =>
-                  `${scale}-to-${datasetIdToPrefix(id)}cumulative-realized-loss`,
+                  `${scale}-to-${datasetIdToPrefix(
+                    id,
+                  )}cumulative-realized-loss`,
               }),
             },
             {
@@ -3136,13 +3049,14 @@ function createPartialOptions(colors) {
               title: `${title} Cumulative Net Realized Profit And Loss`,
               description: "",
               unit: "US Dollars",
-              icon: "➕",
               bottom: [
                 ...cohortOptionOrOptions.toSeriesBlueprints(arg, {
                   title: "Cumulative Net Realized PNL",
                   type: "Baseline",
                   genPath: (id, scale) =>
-                    `${scale}-to-${datasetIdToPrefix(id)}cumulative-net-realized-profit-and-loss`,
+                    `${scale}-to-${datasetIdToPrefix(
+                      id,
+                    )}cumulative-net-realized-profit-and-loss`,
                 }),
                 bases[0](scale),
               ],
@@ -3153,13 +3067,14 @@ function createPartialOptions(colors) {
               title: `${title} Cumulative Net Realized Profit And Loss 30 Day Change`,
               description: "",
               unit: "US Dollars",
-              icon: "🗓️",
               bottom: [
                 ...cohortOptionOrOptions.toSeriesBlueprints(arg, {
                   title: "Cumulative Net Realized PNL 30d Change",
                   type: "Baseline",
                   genPath: (id, scale) =>
-                    `${scale}-to-${datasetIdToPrefix(id)}cumulative-net-realized-profit-and-loss-1m-net-change`,
+                    `${scale}-to-${datasetIdToPrefix(
+                      id,
+                    )}cumulative-net-realized-profit-and-loss-1m-net-change`,
                 }),
                 bases[0](scale),
               ],
@@ -3172,7 +3087,6 @@ function createPartialOptions(colors) {
           title: `${title} Profit To Loss Ratio`,
           description: "",
           unit: "Ratio",
-          icon: "∶",
           bottom: [
             ...cohortOptionOrOptions.toSeriesBlueprints(arg, {
               title: "Ratio",
@@ -3201,7 +3115,6 @@ function createPartialOptions(colors) {
               title: `${title} Spent Output Profit Ratio`,
               description: "",
               unit: "Percentage",
-              icon: "➗",
               bottom: [
                 ...cohortOptionOrOptions.toSeriesBlueprints(arg, {
                   title: "SOPR",
@@ -3212,7 +3125,9 @@ function createPartialOptions(colors) {
                     },
                   },
                   genPath: (id, scale) =>
-                    `${scale}-to-${datasetIdToPrefix(id)}spent-output-profit-ratio`,
+                    `${scale}-to-${datasetIdToPrefix(
+                      id,
+                    )}spent-output-profit-ratio`,
                 }),
                 bases[1](scale),
               ],
@@ -3223,7 +3138,6 @@ function createPartialOptions(colors) {
               title: `${title} Adjusted Spent Output Profit Ratio`,
               description: "",
               unit: "Percentage",
-              icon: "➗",
               bottom: [
                 ...cohortOptionOrOptions.toSeriesBlueprints(arg, {
                   title: "aSOPR",
@@ -3234,7 +3148,9 @@ function createPartialOptions(colors) {
                     },
                   },
                   genPath: (id, scale) =>
-                    `${scale}-to-${datasetIdToPrefix(id)}adjusted-spent-output-profit-ratio`,
+                    `${scale}-to-${datasetIdToPrefix(
+                      id,
+                    )}adjusted-spent-output-profit-ratio`,
                 }),
                 bases[1](scale),
               ],
@@ -3253,7 +3169,6 @@ function createPartialOptions(colors) {
                   title: `${title} Value Created`,
                   description: "",
                   unit: "US Dollars",
-                  icon: "➕",
                   bottom: cohortOptionOrOptions.toSeriesBlueprints(arg, {
                     title: "Value",
                     singleColor: colors.profit,
@@ -3271,7 +3186,6 @@ function createPartialOptions(colors) {
                   title: `${title} Adjusted Value Created`,
                   description: "",
                   unit: "US Dollars",
-                  icon: "➕",
                   bottom: cohortOptionOrOptions.toSeriesBlueprints(arg, {
                     title: "Adjusted Value",
                     singleColor: colors.profit,
@@ -3294,7 +3208,6 @@ function createPartialOptions(colors) {
                   title: `${title} Value Destroyed`,
                   description: "",
                   unit: "US Dollars",
-                  icon: "☄️",
                   bottom: cohortOptionOrOptions.toSeriesBlueprints(arg, {
                     title: "Value",
                     singleColor: colors.loss,
@@ -3312,7 +3225,6 @@ function createPartialOptions(colors) {
                   title: `${title} Adjusted Value Destroyed`,
                   description: "",
                   unit: "US Dollars",
-                  icon: "☄️",
                   bottom: cohortOptionOrOptions.toSeriesBlueprints(arg, {
                     title: "Adjusted Value",
                     singleColor: colors.loss,
@@ -3335,7 +3247,6 @@ function createPartialOptions(colors) {
             title: `${title} Sell Side Risk Ratio`,
             description: "",
             unit: "Percentage",
-            icon: "🥵",
             bottom: cohortOptionOrOptions.toSeriesBlueprints(arg, {
               title: "Ratio",
               genPath: (id) =>
@@ -3363,7 +3274,6 @@ function createPartialOptions(colors) {
           title: `${title} Unrealized Profit`,
           description: "",
           unit: "US Dollars",
-          icon: "🤑",
           bottom: cohortOptionOrOptions.toSeriesBlueprints(arg, {
             title: "Profit",
             genPath: (id) =>
@@ -3377,7 +3287,6 @@ function createPartialOptions(colors) {
           title: `${title} Unrealized Loss`,
           description: "",
           unit: "US Dollars",
-          icon: "😭",
           bottom: cohortOptionOrOptions.toSeriesBlueprints(arg, {
             title: "Loss",
             genPath: (id) =>
@@ -3392,7 +3301,6 @@ function createPartialOptions(colors) {
             title: `${title} Unrealized Profit And Loss`,
             description: "",
             unit: "US Dollars",
-            icon: "🤔",
             bottom: [
               {
                 title: "Profit",
@@ -3416,12 +3324,13 @@ function createPartialOptions(colors) {
           title: `${title} Net Unrealized Profit And Loss`,
           description: "",
           unit: "US Dollars",
-          icon: "⚖️",
           bottom: [
             ...cohortOptionOrOptions.toSeriesBlueprints(arg, {
               title: "Net Unrealized PNL",
               genPath: (id) =>
-                `${scale}-to-${datasetIdToPrefix(id)}net-unrealized-profit-and-loss`,
+                `${scale}-to-${datasetIdToPrefix(
+                  id,
+                )}net-unrealized-profit-and-loss`,
               type: "Baseline",
             }),
             bases[0](scale),
@@ -3433,12 +3342,13 @@ function createPartialOptions(colors) {
           title: `${title} Net Unrealized Profit And Loss Relative To Total Market Capitalization - NUPL`,
           description: "",
           unit: "Percentage",
-          icon: "➗",
           bottom: [
             ...cohortOptionOrOptions.toSeriesBlueprints(arg, {
               title: "Relative Net Unrealized PNL",
               genPath: (id) =>
-                `${scale}-to-${datasetIdToPrefix(id)}net-unrealized-profit-and-loss-to-market-cap-ratio`,
+                `${scale}-to-${datasetIdToPrefix(
+                  id,
+                )}net-unrealized-profit-and-loss-to-market-cap-ratio`,
               type: "Baseline",
             }),
             bases[0](scale),
@@ -3466,7 +3376,6 @@ function createPartialOptions(colors) {
                 scale,
                 name: "All",
                 title: `${title} Profit And Loss`,
-                icon: "❌",
                 description: "",
                 unit: "US Dollars",
                 bottom: [
@@ -3500,7 +3409,6 @@ function createPartialOptions(colors) {
               scale,
               name: `Total`,
               title: `${title} Total supply`,
-              icon: "∑",
               description: "",
               unit: "Bitcoin",
               bottom: cohortOptionOrOptions.toSeriesBlueprints(arg, {
@@ -3514,7 +3422,6 @@ function createPartialOptions(colors) {
               title: `${title} Supply In Profit`,
               description: "",
               unit: "Bitcoin",
-              icon: "📈",
               bottom: cohortOptionOrOptions.toSeriesBlueprints(arg, {
                 title: "Supply",
                 singleColor: colors.profit,
@@ -3528,7 +3435,6 @@ function createPartialOptions(colors) {
               title: `${title} Supply In Loss`,
               description: "",
               unit: "Bitcoin",
-              icon: "📉",
               bottom: cohortOptionOrOptions.toSeriesBlueprints(arg, {
                 title: "Supply",
                 singleColor: colors.loss,
@@ -3548,7 +3454,6 @@ function createPartialOptions(colors) {
                 title: `${title} Profit And Loss Relative To Circulating Supply`,
                 description: "",
                 unit: "Percentage",
-                icon: "🔀",
                 bottom: [
                   {
                     title: "In Profit",
@@ -3582,11 +3487,12 @@ function createPartialOptions(colors) {
               title: `${title} Total supply Relative To Circulating Supply`,
               description: "",
               unit: "Percentage",
-              icon: "∑",
               bottom: cohortOptionOrOptions.toSeriesBlueprints(arg, {
                 title: "Supply",
                 genPath: (id) =>
-                  `${scale}-to-${datasetIdToPrefix(id)}supply-to-circulating-supply-ratio`,
+                  `${scale}-to-${datasetIdToPrefix(
+                    id,
+                  )}supply-to-circulating-supply-ratio`,
               }),
             },
             {
@@ -3595,12 +3501,13 @@ function createPartialOptions(colors) {
               title: `${title} Supply In Profit Relative To Circulating Supply`,
               description: "",
               unit: "Percentage",
-              icon: "📈",
               bottom: cohortOptionOrOptions.toSeriesBlueprints(arg, {
                 title: "Supply",
                 singleColor: colors.profit,
                 genPath: (id) =>
-                  `${scale}-to-${datasetIdToPrefix(id)}supply-in-profit-to-circulating-supply-ratio`,
+                  `${scale}-to-${datasetIdToPrefix(
+                    id,
+                  )}supply-in-profit-to-circulating-supply-ratio`,
               }),
             },
             {
@@ -3609,12 +3516,13 @@ function createPartialOptions(colors) {
               title: `${title} Supply In Loss Relative To Circulating Supply`,
               description: "",
               unit: "Percentage",
-              icon: "📉",
               bottom: cohortOptionOrOptions.toSeriesBlueprints(arg, {
                 title: "Supply",
                 singleColor: colors.loss,
                 genPath: (id) =>
-                  `${scale}-to-${datasetIdToPrefix(id)}supply-in-loss-to-circulating-supply-ratio`,
+                  `${scale}-to-${datasetIdToPrefix(
+                    id,
+                  )}supply-in-loss-to-circulating-supply-ratio`,
               }),
             },
           ],
@@ -3629,7 +3537,6 @@ function createPartialOptions(colors) {
                 title: `${title} Supply In Profit And Loss Relative To Own Supply`,
                 description: "",
                 unit: "Percentage",
-                icon: "🔀",
                 bottom: [
                   {
                     title: "In Profit",
@@ -3667,12 +3574,13 @@ function createPartialOptions(colors) {
               title: `${title} Supply In Profit Relative To Own Supply`,
               description: "",
               unit: "Percentage",
-              icon: "📈",
               bottom: cohortOptionOrOptions.toSeriesBlueprints(arg, {
                 title: "Supply",
                 singleColor: colors.profit,
                 genPath: (id) =>
-                  `${scale}-to-${datasetIdToPrefix(id)}supply-in-profit-to-own-supply-ratio`,
+                  `${scale}-to-${datasetIdToPrefix(
+                    id,
+                  )}supply-in-profit-to-own-supply-ratio`,
               }),
             },
             {
@@ -3681,12 +3589,13 @@ function createPartialOptions(colors) {
               title: `${title} Supply In Loss Relative To Own Supply`,
               description: "",
               unit: "Percentage",
-              icon: "📉",
               bottom: cohortOptionOrOptions.toSeriesBlueprints(arg, {
                 title: "Supply",
                 singleColor: colors.loss,
                 genPath: (id) =>
-                  `${scale}-to-${datasetIdToPrefix(id)}supply-in-loss-to-own-supply-ratio`,
+                  `${scale}-to-${datasetIdToPrefix(
+                    id,
+                  )}supply-in-loss-to-own-supply-ratio`,
               }),
             },
           ],
@@ -3729,7 +3638,6 @@ function createPartialOptions(colors) {
           title: `${title} Average Price Paid - Realized Price`,
           description: "",
           unit: "US Dollars",
-          icon: "~",
           top: cohortOptionOrOptions.toSeriesBlueprints(arg, {
             title: "Average",
             genPath: (id) =>
@@ -3741,7 +3649,6 @@ function createPartialOptions(colors) {
             scale,
             name: `Deciles`,
             title: `${title} deciles`,
-            icon: "🌗",
             description: "",
             unit: "US Dollars",
             top: groups.percentiles
@@ -3767,7 +3674,6 @@ function createPartialOptions(colors) {
           title: `${title} ${percentile.title}`,
           description: "",
           unit: /** @type {const} */ ("US Dollars"),
-          icon: "🌓",
           top: cohortOptionOrOptions.toSeriesBlueprints(arg, {
             title: "Relative Net Unrealized PNL",
             genPath: (id) =>
@@ -3800,10 +3706,10 @@ function createPartialOptions(colors) {
    * @param {TimeScale} scale
    * @returns {PartialOptionsGroup}
    */
-  function createLiquidityOptions(scale) {
+  function createAddressLiquidityOptions(scale) {
     return createAddressCohortOptionGroups({
       scale,
-      name: `Split By Liquidity`,
+      name: `By Liquidity`,
       list: groups.liquidities.map(({ name, id, key }) => ({
         name,
         title: name,
@@ -3910,12 +3816,6 @@ function createPartialOptions(colors) {
     };
   }
 
-  // * @param {Object} args
-  // * @param {TimeScale} args.scale
-  // * @param {string} args.name
-  // * @param {string} args.title
-  // * @param {AddressCohortId | LiquidityId} args.datasetId
-  // * @param {Color} args.color
   /**
    * @param {CohortOption<AnyAddressCohortId> | CohortOptions<AnyAddressCohortId>} arg
    * @returns {PartialChartOption}
@@ -3929,7 +3829,6 @@ function createPartialOptions(colors) {
       title: `${title} Address Count`,
       description: "",
       unit: "Count",
-      icon: "📕",
       bottom: cohortOptionOrOptions.toSeriesBlueprints(arg, {
         title: "Address Count",
         genPath: (id) => `${scale}-to-${id}-address-count`,
@@ -3995,7 +3894,6 @@ function createPartialOptions(colors) {
           title: `Total Non Empty Address`,
           description: "",
           unit: "Count",
-          icon: "💳",
           bottom: [
             {
               title: `Total Non Empty Address`,
@@ -4010,7 +3908,6 @@ function createPartialOptions(colors) {
           title: `New Addresses`,
           description: "",
           unit: "Count",
-          icon: "🏡",
           bottom: [
             {
               title: `New Addresses`,
@@ -4025,7 +3922,6 @@ function createPartialOptions(colors) {
           title: `Total Addresses Created`,
           description: "",
           unit: "Count",
-          icon: "🏠",
           bottom: [
             {
               title: `Total Addresses Created`,
@@ -4040,7 +3936,6 @@ function createPartialOptions(colors) {
           title: `Total Empty Addresses`,
           description: "",
           unit: "Count",
-          icon: "🗑️",
           bottom: [
             {
               title: `Total Empty Addresses`,
@@ -4074,6 +3969,7 @@ function createPartialOptions(colors) {
             datasetId: key,
           })),
         }),
+        createAddressLiquidityOptions(scale),
       ],
     };
   }
@@ -4091,7 +3987,6 @@ function createPartialOptions(colors) {
           tree: [
             {
               scale,
-              icon: "🔀",
               name: "All",
               title: "All Cointime Prices",
               description: "",
@@ -4129,7 +4024,6 @@ function createPartialOptions(colors) {
               tree: [
                 {
                   scale,
-                  icon: "❤️",
                   name: "Price",
                   title: "Active Price",
                   description: "",
@@ -4156,7 +4050,6 @@ function createPartialOptions(colors) {
               tree: [
                 {
                   scale,
-                  icon: "🏦",
                   name: "Price",
                   title: "Vaulted Price",
                   description: "",
@@ -4183,7 +4076,6 @@ function createPartialOptions(colors) {
               tree: [
                 {
                   scale,
-                  icon: "〰️",
                   name: "Price",
                   title: "True Market Mean",
                   description: "",
@@ -4210,7 +4102,6 @@ function createPartialOptions(colors) {
               tree: [
                 {
                   scale,
-                  icon: "⏱️",
                   name: "Price",
                   title: "Cointime Price",
                   description: "",
@@ -4239,7 +4130,6 @@ function createPartialOptions(colors) {
           tree: [
             {
               scale,
-              icon: "🔀",
               name: "All",
               title: "Cointime Capitalizations",
               description: "",
@@ -4269,7 +4159,6 @@ function createPartialOptions(colors) {
             },
             {
               scale,
-              icon: "⛏️",
               name: "Thermo Cap",
               title: "Thermo Cap",
               description: "",
@@ -4284,7 +4173,6 @@ function createPartialOptions(colors) {
             },
             {
               scale,
-              icon: "🧑‍💼",
               name: "Investor Cap",
               title: "Investor Cap",
               description: "",
@@ -4299,7 +4187,6 @@ function createPartialOptions(colors) {
             },
             {
               scale,
-              icon: "➗",
               name: "Thermo Cap To Investor Cap Ratio",
               title: "Thermo Cap To Investor Cap Ratio",
               description: "",
@@ -4319,7 +4206,6 @@ function createPartialOptions(colors) {
           tree: [
             {
               scale,
-              icon: "🧱",
               name: "All",
               title: "All Coinblocks",
               description: "",
@@ -4353,7 +4239,6 @@ function createPartialOptions(colors) {
             },
             {
               scale,
-              icon: "🧊",
               name: "Created",
               title: "Coinblocks Created",
               description: "",
@@ -4371,7 +4256,6 @@ function createPartialOptions(colors) {
             },
             {
               scale,
-              icon: "⛓️‍💥",
               name: "Destroyed",
               title: "Coinblocks Destroyed",
               description: "",
@@ -4389,7 +4273,6 @@ function createPartialOptions(colors) {
             },
             {
               scale,
-              icon: "🗄️",
               name: "Stored",
               title: "Coinblocks Stored",
               description: "",
@@ -4412,7 +4295,6 @@ function createPartialOptions(colors) {
           tree: [
             {
               scale,
-              icon: "🔀",
               name: "All",
               title: "All Cumulative Coinblocks",
               description: "",
@@ -4437,7 +4319,6 @@ function createPartialOptions(colors) {
             },
             {
               scale,
-              icon: "🧊",
               name: "Created",
               title: "Cumulative Coinblocks Created",
               description: "",
@@ -4452,7 +4333,6 @@ function createPartialOptions(colors) {
             },
             {
               scale,
-              icon: "⛓️‍💥",
               name: "Destroyed",
               title: "Cumulative Coinblocks Destroyed",
               description: "",
@@ -4467,7 +4347,6 @@ function createPartialOptions(colors) {
             },
             {
               scale,
-              icon: "🗄️",
               name: "Stored",
               title: "Cumulative Coinblocks Stored",
               description: "",
@@ -4487,7 +4366,6 @@ function createPartialOptions(colors) {
           tree: [
             {
               scale,
-              icon: "❤️",
               name: "Liveliness - Activity",
               title: "Liveliness (Activity)",
               description: "",
@@ -4502,7 +4380,6 @@ function createPartialOptions(colors) {
             },
             {
               scale,
-              icon: "🏦",
               name: "Vaultedness",
               title: "Vaultedness",
               description: "",
@@ -4517,7 +4394,6 @@ function createPartialOptions(colors) {
             },
             {
               scale,
-              icon: "⚔️",
               name: "Versus",
               title: "Liveliness V. Vaultedness",
               description: "",
@@ -4537,7 +4413,6 @@ function createPartialOptions(colors) {
             },
             {
               scale,
-              icon: "➗",
               name: "Activity To Vaultedness Ratio",
               title: "Activity To Vaultedness Ratio",
               description: "",
@@ -4554,7 +4429,6 @@ function createPartialOptions(colors) {
               ? /** @satisfies {PartialOptionsTree} */ ([
                   {
                     scale,
-                    icon: "❤️",
                     name: "Concurrent Liveliness - Supply Adjusted Coindays Destroyed",
                     title:
                       "Concurrent Liveliness - Supply Adjusted Coindays Destroyed",
@@ -4575,7 +4449,6 @@ function createPartialOptions(colors) {
                   },
                   {
                     scale,
-                    icon: "📊",
                     name: "Liveliness Incremental Change",
                     title: "Liveliness Incremental Change",
                     description: "",
@@ -4605,7 +4478,6 @@ function createPartialOptions(colors) {
           tree: [
             {
               scale,
-              icon: "🏦",
               name: "Vaulted",
               title: "Vaulted Supply",
               description: "",
@@ -4620,7 +4492,6 @@ function createPartialOptions(colors) {
             },
             {
               scale,
-              icon: "❤️",
               name: "Active",
               title: "Active Supply",
               description: "",
@@ -4635,7 +4506,6 @@ function createPartialOptions(colors) {
             },
             {
               scale,
-              icon: "⚔️",
               name: "Vaulted V. Active",
               title: "Vaulted V. Active",
               description: "",
@@ -4661,7 +4531,6 @@ function createPartialOptions(colors) {
             // TODO: Fix, Bad data
             // {
             //   id: 'asymptomatic-supply-regions',
-            //   icon: IconTablerDirections,
             //   name: 'Asymptomatic Supply Regions',
             //   title: 'Asymptomatic Supply Regions',
             //   description: '',
@@ -4690,7 +4559,6 @@ function createPartialOptions(colors) {
             // },
             {
               scale,
-              icon: "🏦",
               name: "Vaulted Net Change",
               title: "Vaulted Supply Net Change",
               description: "",
@@ -4705,7 +4573,6 @@ function createPartialOptions(colors) {
             },
             {
               scale,
-              icon: "❤️",
               name: "Active Net Change",
               title: "Active Supply Net Change",
               description: "",
@@ -4720,7 +4587,6 @@ function createPartialOptions(colors) {
             },
             {
               scale,
-              icon: "⚔️",
               name: "Active VS. Vaulted 90D Net Change",
               title: "Active VS. Vaulted 90 Day Supply Net Change",
               description: "",
@@ -4744,7 +4610,6 @@ function createPartialOptions(colors) {
             // TODO: Fix, Bad data
             // {
             //   id: 'vaulted-supply-annualized-net-change',
-            //   icon: IconTablerBuildingBank,
             //   name: 'Vaulted Annualized Net Change',
             //   title: 'Vaulted Supply Annualized Net Change',
             //   description: '',
@@ -4770,7 +4635,6 @@ function createPartialOptions(colors) {
             // TODO: Fix, Bad data
             // {
             //   id: 'vaulting-rate',
-            //   icon: IconTablerBuildingBank,
             //   name: 'Vaulting Rate',
             //   title: 'Vaulting Rate',
             //   description: '',
@@ -4801,7 +4665,6 @@ function createPartialOptions(colors) {
             // TODO: Fix, Bad data
             // {
             //   id: 'active-supply-net-change-decomposition',
-            //   icon: IconTablerArrowsCross,
             //   name: 'Active Supply Net Change Decomposition (90D)',
             //   title: 'Active Supply Net 90 Day Change Decomposition',
             //   description: '',
@@ -4841,7 +4704,6 @@ function createPartialOptions(colors) {
 
             {
               scale,
-              icon: "📈",
               name: "In Profit",
               title: "Cointime Supply In Profit",
               description: "",
@@ -4866,7 +4728,6 @@ function createPartialOptions(colors) {
             },
             {
               scale,
-              icon: "📉",
               name: "In Loss",
               title: "Cointime Supply In Loss",
               description: "",
@@ -4898,7 +4759,6 @@ function createPartialOptions(colors) {
                 tree: [
                   {
                     scale,
-                    icon: "🏭",
                     name: "Normal",
                     title: "Cointime Yearly Inflation Rate",
                     description: "",
@@ -4918,7 +4778,6 @@ function createPartialOptions(colors) {
                   },
                   {
                     scale,
-                    icon: "🏭",
                     name: "Yearly",
                     title: "Cointime-Adjusted Yearly Inflation Rate",
                     description: "",
@@ -4941,7 +4800,6 @@ function createPartialOptions(colors) {
 
               {
                 scale,
-                icon: "💨",
                 name: "Cointime Velocity",
                 title: "Cointime-Adjusted Transactions Velocity",
                 description: "",
@@ -4965,6 +4823,17 @@ function createPartialOptions(colors) {
     };
   }
 
+  /**
+   * @param {TimeScale} scale
+   * @returns {PartialOptionsGroup}
+   */
+  function createResearchOptions(scale) {
+    return {
+      name: "Research",
+      tree: [createCointimeOptions(scale)],
+    };
+  }
+
   return [
     {
       name: "Charts",
@@ -4985,8 +4854,7 @@ function createPartialOptions(colors) {
             }),
             createHodlersOptions("date"),
             createAddressesOptions("date"),
-            createLiquidityOptions("date"),
-            createCointimeOptions("date"),
+            createResearchOptions("date"),
           ],
         },
         {
@@ -5005,8 +4873,7 @@ function createPartialOptions(colors) {
             }),
             createHodlersOptions("height"),
             createAddressesOptions("height"),
-            createLiquidityOptions("height"),
-            createCointimeOptions("height"),
+            createResearchOptions("height"),
           ],
         },
       ],
@@ -5015,7 +4882,6 @@ function createPartialOptions(colors) {
       name: "Simulations",
       tree: [
         {
-          icon: "💰",
           kind: "simulation",
           title: "Simulation: Save In Bitcoin",
           name: "Save In Bitcoin",
@@ -5029,9 +4895,8 @@ function createPartialOptions(colors) {
           name: "Satoshi Nakamoto",
           tree: [
             {
-              icon: "📄",
               name: "Whitepaper",
-              file: "satoshi-nakamoto/whitepaper.pdf",
+              pdf: "satoshi-nakamoto/whitepaper.pdf",
             },
           ],
         },
@@ -5039,9 +4904,8 @@ function createPartialOptions(colors) {
           name: "Nydig",
           tree: [
             {
-              icon: "⚖️",
               name: "Bitcoin's Protection Under The First Amendment",
-              file: "nydig/protection-under-first-amendment.pdf",
+              pdf: "nydig/protection-under-first-amendment.pdf",
             },
           ],
         },
@@ -5049,9 +4913,8 @@ function createPartialOptions(colors) {
           name: "Nakamoto Project",
           tree: [
             {
-              icon: "🇺🇸",
               name: "Understanding Bitcoin Adoption In The United States",
-              file: "nakamoto-project/understanding-bitcoin-adoption-in-the-united-states.pdf",
+              pdf: "nakamoto-project/understanding-bitcoin-adoption-in-the-united-states.pdf",
             },
           ],
         },
@@ -5059,9 +4922,8 @@ function createPartialOptions(colors) {
           name: "Block",
           tree: [
             {
-              icon: "🤔",
               name: "Knowledge And Perceptions - 2022 Report",
-              file: "block/2022-report.pdf",
+              pdf: "block/2022-report.pdf",
             },
           ],
         },
@@ -5069,9 +4931,8 @@ function createPartialOptions(colors) {
           name: "Square",
           tree: [
             {
-              icon: "⚡️",
               name: "Clean Energy Initiative - 2021 Report",
-              file: "square/2021-bitcoin-clean-energy-initiative.pdf",
+              pdf: "square/2021-bitcoin-clean-energy-initiative.pdf",
             },
           ],
         },
@@ -5079,9 +4940,8 @@ function createPartialOptions(colors) {
           name: "Braiins",
           tree: [
             {
-              icon: "🦀",
               name: "Building Bitcoin In Rust",
-              file: "braiins/building-bitcoin-in-rust.pdf",
+              pdf: "braiins/building-bitcoin-in-rust.pdf",
             },
           ],
         },
@@ -5089,13 +4949,58 @@ function createPartialOptions(colors) {
           name: "Glassnode",
           tree: [
             {
-              icon: "🏦",
               name: "Cointime Economics",
-              file: "glassnode/cointime-economics.pdf",
+              pdf: "glassnode/cointime-economics.pdf",
             },
           ],
         },
       ],
+    },
+    {
+      name: "Donations",
+      tree: [
+        {
+          name: "Donate on-chain",
+          qrcode: true,
+          url: () => "bitcoin:bc1q950q4ukpxxm6wjjkv6cpq8jzpazaxrrwftctkt",
+        },
+        {
+          name: "Donate lightning",
+          qrcode: true,
+          url: () =>
+            "lightning:lnurl1dp68gurn8ghj7ampd3kx2ar0veekzar0wd5xjtnrdakj7tnhv4kxctttdehhwm30d3h82unvwqhkxmmww3jkuar8d35kgetj8yuq363hv4",
+        },
+        {
+          name: "Fundraiser",
+          url: () => "https://geyser.fund/project/kibo",
+        },
+        {
+          name: "Goals",
+          url: () => "https://geyser.fund/project/kibo/goals",
+        },
+        {
+          name: "Leaderboard",
+          url: () => "https://geyser.fund/project/kibo/leaderboard",
+        },
+      ],
+    },
+    {
+      name: "Share",
+      qrcode: true,
+      url: () => window.location.href,
+    },
+    {
+      name: "Social",
+      url: () =>
+        "https://primal.net/p/npub1jagmm3x39lmwfnrtvxcs9ac7g300y3dusv9lgzhk2e4x5frpxlrqa73v44",
+    },
+    {
+      name: "Source",
+      url: () => "https://github.com/kibo-money/kibo",
+    },
+    {
+      name: "API",
+      url: () => "/api",
     },
   ];
 }
@@ -5109,6 +5014,7 @@ function createPartialOptions(colors) {
  * @param {Utilities} args.utils
  * @param {Signal<Record<LastPath, number> | null>} args.lastValues
  * @param {WebSockets} args.webSockets
+ * @param {Signal<string | null>} args.qrcode
  */
 export function initOptions({
   colors,
@@ -5118,6 +5024,7 @@ export function initOptions({
   utils,
   lastValues,
   webSockets,
+  qrcode,
 }) {
   const urlSelected = utils.url.pathnameToSelectedId();
   const savedSelectedId = localStorage.getItem(ids.selectedId);
@@ -5133,69 +5040,12 @@ export function initOptions({
   /** @type {HTMLDetailsElement[]} */
   const detailsList = [];
 
-  const filter = signals.createSignal(
-    /** @type {FoldersFilter} */ (
-      localStorage.getItem(ids.foldersFilter) || "all"
-    ),
-  );
-
-  function initCounters() {
-    const favoritesCount = signals.createSignal(0);
-    const newCount = signals.createSignal(0);
-
-    /** @param {Option} option  */
-    function createCountersEffects(option) {
-      let firstFavoritesRun = true;
-
-      signals.createEffect(option.isFavorite, (favorite) => {
-        if (favorite) {
-          favoritesCount.set((c) => c + 1);
-        } else if (!firstFavoritesRun) {
-          favoritesCount.set((c) => c - 1);
-        }
-        firstFavoritesRun = false;
-      });
-
-      let firstNewRun = true;
-
-      signals.createEffect(option.visited, (visited) => {
-        if (!visited) {
-          newCount.set((c) => c + 1);
-        } else if (!firstNewRun) {
-          newCount.set((c) => c - 1);
-        }
-        firstNewRun = false;
-      });
-    }
-
-    return {
-      favorites: favoritesCount,
-      new: newCount,
-      createEffects: createCountersEffects,
-    };
-  }
-  const counters = initCounters();
-
   const treeElement = signals.createSignal(
     /** @type {HTMLDivElement | null} */ (null),
   );
 
   /** @type {string[] | undefined} */
   const optionsIds = env.localhost ? [] : undefined;
-
-  /**
-   * @param {Option} option
-   */
-  function optionToVisitedKey(option) {
-    return `${option.id}-visited`;
-  }
-
-  /**
-   * @param {Option} option
-   */
-  function optionToFavoriteKey(option) {
-    return `${option.id}-favorite`;
-  }
 
   /**
    * @param {SeriesBlueprint[]} array
@@ -5263,131 +5113,151 @@ export function initOptions({
    * @param {Object} args
    * @param {Option} args.option
    * @param {string} args.frame
+   * @param {Signal<string | null>} args.qrcode
    * @param {string} [args.name]
    * @param {string} [args.top]
    * @param {string} [args.id]
    * @param {Owner | null} [args.owner]
    */
-  function createOptionLabeledInput({ option, frame, name, top, id, owner }) {
-    const { input, label, spanMain } = utils.dom.createComplexLabeledInput({
-      inputId: `${option.id}-${frame}${id || ""}-selector`,
-      inputValue: option.id,
-      inputName: `option-${frame}${id || ""}`,
-      labelTitle: option.title,
-      name: name || option.name,
-      onClick: () => {
-        selected.set(option);
-      },
-      href: `/${option.kind === "pdf" ? option.file : option.id}`,
-    });
+  function createOptionElement({
+    option,
+    frame,
+    name,
+    top,
+    id,
+    owner,
+    qrcode,
+  }) {
+    switch (option.kind) {
+      case "pdf": {
+        return utils.dom.createAnchorElement({
+          href: option.pdf,
+          blank: true,
+          text: option.name,
+        });
+      }
+      case "url": {
+        const href = option.url();
 
-    if (top) {
-      const small = window.document.createElement("small");
-      small.innerHTML = top;
-      label.insertBefore(small, spanMain);
-    }
-
-    const spanEmoji = window.document.createElement("span");
-    spanEmoji.classList.add("emoji");
-    spanEmoji.innerHTML = option.icon;
-    spanMain.prepend(spanEmoji);
-
-    if (option.kind === "chart") {
-      const spanValue = window.document.createElement("span");
-      spanValue.classList.add("value");
-      spanMain.append(spanValue);
-
-      if (!option.top?.length && !option.bottom?.length) {
-        signals.createEffect(
-          () => webSockets.krakenCandle.latest()?.close ?? lastValues()?.close,
-          (close) => {
-            if (close) {
-              spanValue.innerHTML = formatValue(close, "US Dollars");
-            }
-          },
-        );
-      } else if (option.bottom?.length) {
-        const bottom = option.bottom;
-        const id = getMainIdFromBlueprints(bottom);
-
-        if (id) {
-          signals.createEffect(lastValues, (lastValues) => {
-            if (lastValues) {
-              spanValue.innerHTML = formatValue(lastValues[id], option.unit);
-            }
+        if (option.qrcode) {
+          return utils.dom.createButtonElement({
+            text: option.name,
+            onClick: () => {
+              qrcode.set(option.url);
+            },
           });
-        }
-      } else if (option.top?.length) {
-        const top = option.top;
-        const id = getMainIdFromBlueprints(top);
-
-        if (id) {
-          signals.createEffect(lastValues, (lastValues) => {
-            if (lastValues) {
-              spanValue.innerHTML = formatValue(lastValues[id], option.unit);
-            }
+        } else {
+          return utils.dom.createAnchorElement({
+            href,
+            blank: true,
+            text: option.name,
           });
         }
       }
-    }
+      default: {
+        const { input, label } = utils.dom.createLabeledInput({
+          inputId: `${option.id}-${frame}${id || ""}-selector`,
+          inputValue: option.id,
+          inputName: `option-${frame}${id || ""}`,
+          labelTitle: option.title,
+          // name: name || option.name,
+          onClick: () => {
+            selected.set(option);
+          },
+        });
 
-    /** @type {HTMLSpanElement | undefined} */
-    let spanNew;
+        const anchor = utils.dom.createAnchorElement({
+          href: `/${option.id}`,
+          text: name || option.name,
+          onClick: () => {},
+        });
 
-    if (!option.visited()) {
-      spanNew = window.document.createElement("span");
-      spanNew.classList.add("new");
-      spanMain.append(spanNew);
-    }
+        label.append(anchor);
 
-    function createFavoriteEffect() {
-      let wasFavorite = false;
-      /** @type {HTMLElement | undefined} */
-      let iconFavorite = undefined;
-      signals.createEffect(
-        option.isFavorite,
-        (isFavorite) => {
-          if (!wasFavorite && isFavorite) {
-            iconFavorite = window.document.createElement("svg");
-            spanMain.append(iconFavorite);
-            iconFavorite.outerHTML =
-              '<svg viewBox="0 0 20 20" class="favorite"><path fill-rule="evenodd" d="M10.868 2.884c-.321-.772-1.415-.772-1.736 0l-1.83 4.401-4.753.381c-.833.067-1.171 1.107-.536 1.651l3.62 3.102-1.106 4.637c-.194.813.691 1.456 1.405 1.02L10 15.591l4.069 2.485c.713.436 1.598-.207 1.404-1.02l-1.106-4.637 3.62-3.102c.635-.544.297-1.584-.536-1.65l-4.752-.382-1.831-4.401Z" clip-rule="evenodd" /></svg>';
-          } else if (wasFavorite && !isFavorite) {
-            iconFavorite?.remove();
-            iconFavorite = undefined;
+        if (top) {
+          const small = window.document.createElement("small");
+          small.innerHTML = top;
+          label.insertBefore(small, anchor);
+        }
+
+        if (option.kind === "chart") {
+          const valueElement = window.document.createElement("small");
+          valueElement.classList.add("value");
+
+          if (!option.top?.length && !option.bottom?.length) {
+            anchor.append(valueElement);
+
+            signals.createEffect(
+              () =>
+                webSockets.krakenCandle.latest()?.close ?? lastValues()?.close,
+              (close) => {
+                if (close) {
+                  valueElement.innerHTML = formatValue(close, "US Dollars");
+                }
+              },
+            );
+          } else if (option.bottom?.length) {
+            const bottom = option.bottom;
+            const id = getMainIdFromBlueprints(bottom);
+
+            if (id) {
+              anchor.append(valueElement);
+
+              console.log("a", lastValues());
+
+              signals.createEffect(lastValues, (lastValues) => {
+                console.log(lastValues);
+                if (lastValues) {
+                  valueElement.innerHTML = formatValue(
+                    lastValues[id],
+                    option.unit,
+                  );
+                }
+              });
+            }
+          } else if (option.top?.length) {
+            const top = option.top;
+            const id = getMainIdFromBlueprints(top);
+
+            if (id) {
+              anchor.append(valueElement);
+
+              signals.createEffect(lastValues, (lastValues) => {
+                if (lastValues) {
+                  valueElement.innerHTML = formatValue(
+                    lastValues[id],
+                    option.unit,
+                  );
+                }
+              });
+            }
           }
 
-          wasFavorite = isFavorite;
-        },
-        false,
-      );
-    }
+          function createCheckEffect() {
+            signals.createEffect(selected, (selected) => {
+              if (selected?.id === option.id) {
+                input.checked = true;
+                localStorage.setItem(ids.selectedId, option.id);
+              } else if (input.checked) {
+                input.checked = false;
+              }
+            });
+          }
 
-    function createCheckEffect() {
-      signals.createEffect(selected, (selected) => {
-        if (selected?.id === option.id) {
-          input.checked = true;
-          spanNew?.remove();
-          option.visited.set(true);
-          localStorage.setItem(optionToVisitedKey(option), "1");
-          localStorage.setItem(ids.selectedId, option.id);
-        } else if (input.checked) {
-          input.checked = false;
+          if (owner !== undefined) {
+            signals.runWithOwner(owner, () => {
+              createCheckEffect();
+            });
+          } else {
+            createCheckEffect();
+          }
+
+          return label;
+        } else {
+          console.log(option);
         }
-      });
+      }
     }
-
-    if (owner !== undefined) {
-      signals.runWithOwner(owner, () => {
-        createCheckEffect();
-        createFavoriteEffect();
-      });
-    } else {
-      createCheckEffect();
-      createFavoriteEffect();
-    }
-
-    return label;
   }
 
   /**
@@ -5488,37 +5358,27 @@ export function initOptions({
           });
 
           const details = window.document.createElement("details");
-          const folderOpenLocalStorageKey = `${folderId}-open`;
-          details.open = !!localStorage.getItem(folderOpenLocalStorageKey);
           details.id = folderId;
           detailsList.push(details);
           li.appendChild(details);
 
           const summary = window.document.createElement("summary");
-          details.appendChild(summary);
-
-          const spanMarker = window.document.createElement("span");
-          spanMarker.classList.add("marker");
-          summary.append(spanMarker);
-
-          const spanName = utils.dom.createSpanName(anyPartial.name);
-          summary.append(spanName);
+          details.append(summary);
+          summary.append(anyPartial.name);
 
           const supCount = window.document.createElement("sup");
+          summary.append(supCount);
 
           signals.createEffect(childOptionsCount, (childOptionsCount) => {
             supCount.innerHTML = childOptionsCount.toLocaleString();
           });
-          spanName.append(supCount);
 
           details.addEventListener("toggle", () => {
             const open = details.open;
 
             if (open) {
-              localStorage.setItem(folderOpenLocalStorageKey, "1");
               passedDetails.set(details);
             } else {
-              localStorage.removeItem(folderOpenLocalStorageKey);
               passedDetails.set(null);
             }
           });
@@ -5542,11 +5402,15 @@ export function initOptions({
           kind = anyPartial.kind;
           id = anyPartial.kind;
           title = anyPartial.title;
-        } else if ("file" in anyPartial) {
+        } else if ("pdf" in anyPartial) {
           kind = "pdf";
           id = `${ids.fromString(anyPartial.name)}-pdf`;
           title = anyPartial.name;
-          anyPartial.file = `assets/pdfs/${anyPartial.file}`;
+          anyPartial.pdf = `/assets/pdfs/${anyPartial.pdf}`;
+        } else if ("url" in anyPartial) {
+          kind = "url";
+          id = `${ids.fromString(anyPartial.name)}-url`;
+          title = anyPartial.name;
         } else if ("scale" in anyPartial) {
           kind = "chart";
           id = `chart-${anyPartial.scale}-to-${ids.fromString(
@@ -5569,11 +5433,10 @@ export function initOptions({
             ...(path || []).map(({ name }) => name),
             anyPartial.name,
           ].join(" / ")}`,
-          isFavorite: signals.createSignal(false),
-          visited: signals.createSignal(false),
+          title,
         };
 
-        Object.assign(anyPartial, optionAddons, { kind, title });
+        Object.assign(anyPartial, optionAddons, { kind });
 
         const option = /** @type {Option} */ (anyPartial);
 
@@ -5583,51 +5446,8 @@ export function initOptions({
           selected.set(option);
         }
 
-        option.isFavorite.set(
-          !!localStorage.getItem(optionToFavoriteKey(option)),
-        );
-        option.visited.set(!!localStorage.getItem(optionToVisitedKey(option)));
-
-        counters.createEffects(option);
-
         list.push(option);
         optionsIds?.push(option.id);
-
-        const hidden = signals.createSignal(true);
-
-        function createHiddenEffect() {
-          signals.createEffect(
-            () => ({
-              filter: filter(),
-              favorite: option.isFavorite(),
-              visited: option.visited(),
-            }),
-            ({ filter, favorite, visited }) => {
-              switch (filter) {
-                case "all": {
-                  hidden.set(false);
-                  break;
-                }
-                case "favorites": {
-                  hidden.set(!favorite);
-                  break;
-                }
-                case "new": {
-                  hidden.set(visited);
-                  break;
-                }
-              }
-            },
-          );
-        }
-        createHiddenEffect();
-
-        function createRenderLiEffect() {
-          signals.createEffect(hidden, (hidden) => {
-            renderLi.set(!hidden);
-          });
-        }
-        createRenderLiEffect();
 
         signals.createEffect(li, (li) => {
           if (!li) {
@@ -5642,17 +5462,18 @@ export function initOptions({
             }
           });
 
-          const label = createOptionLabeledInput({
+          const element = createOptionElement({
             option,
-            frame: "folders",
+            frame: "nav",
+            qrcode,
           });
 
-          li.append(label);
+          if (element) {
+            li.append(element);
+          }
         });
 
-        const memo = signals.createMemo(() => (hidden() ? 0 : 1));
-
-        listForSum.push(memo);
+        listForSum.push(() => 1);
       }
     });
 
@@ -5698,12 +5519,8 @@ export function initOptions({
     list,
     details: detailsList,
     tree: /** @type {OptionsTree} */ (partialOptions),
-    counters,
-    filter,
     treeElement,
-    optionToVisitedKey,
-    createOptionLabeledInput,
-    optionToFavoriteKey,
+    createOptionElement,
     /**
      * @param {Option} option
      * @param {Series | SeriesBlueprint} series

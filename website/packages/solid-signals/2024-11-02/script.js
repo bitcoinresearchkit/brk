@@ -1,28 +1,33 @@
-// src/error.ts
-var NotReadyError = class extends Error {};
+// src/core/error.ts
+var NotReadyError = class extends Error {
+};
 var NoOwnerError = class extends Error {
   constructor() {
-    super("");
+    super(
+      ""
+    );
   }
 };
 var ContextNotFoundError = class extends Error {
   constructor() {
-    super("");
+    super(
+      ""
+    );
   }
 };
-
-// src/constants.ts
-var STATE_CLEAN = 0;
-var STATE_CHECK = 1;
-var STATE_DIRTY = 2;
-var STATE_DISPOSED = 3;
 
 // src/utils.ts
 function isUndefined(value) {
   return typeof value === "undefined";
 }
 
-// src/owner.ts
+// src/core/constants.ts
+var STATE_CLEAN = 0;
+var STATE_CHECK = 1;
+var STATE_DIRTY = 2;
+var STATE_DISPOSED = 3;
+
+// src/core/owner.ts
 var currentOwner = null;
 var defaultContext = {};
 function getOwner() {
@@ -37,7 +42,7 @@ var Owner = class {
   // We flatten the owner tree into a linked list so that we don't need a pointer to .firstChild
   // However, the children are actually added in reverse creation order
   // See comment at the top of the file for an example of the _nextSibling traversal
-  k = null;
+  l = null;
   g = null;
   j = null;
   a = STATE_CLEAN;
@@ -45,12 +50,14 @@ var Owner = class {
   h = defaultContext;
   f = null;
   constructor(signal = false) {
-    if (currentOwner && !signal) currentOwner.append(this);
+    if (currentOwner && !signal)
+      currentOwner.append(this);
   }
   append(child) {
-    child.k = this;
+    child.l = this;
     child.j = this;
-    if (this.g) this.g.j = child;
+    if (this.g)
+      this.g.j = child;
     child.g = this.g;
     this.g = child;
     if (child.h !== this.h) {
@@ -61,24 +68,27 @@ var Owner = class {
     }
   }
   dispose(self = true) {
-    if (this.a === STATE_DISPOSED) return;
-    let head = self ? this.j || this.k : this,
-      current = this.g,
-      next = null;
-    while (current && current.k === this) {
+    if (this.a === STATE_DISPOSED)
+      return;
+    let head = self ? this.j || this.l : this, current = this.g, next = null;
+    while (current && current.l === this) {
       current.dispose(true);
       current.n();
       next = current.g;
       current.g = null;
       current = next;
     }
-    if (self) this.n();
-    if (current) current.j = !self ? this : this.j;
-    if (head) head.g = current;
+    if (self)
+      this.n();
+    if (current)
+      current.j = !self ? this : this.j;
+    if (head)
+      head.g = current;
   }
   n() {
-    if (this.j) this.j.g = null;
-    this.k = null;
+    if (this.j)
+      this.j.g = null;
+    this.l = null;
     this.j = null;
     this.h = defaultContext;
     this.f = null;
@@ -86,7 +96,8 @@ var Owner = class {
     this.emptyDisposal();
   }
   emptyDisposal() {
-    if (!this.e) return;
+    if (!this.e)
+      return;
     if (Array.isArray(this.e)) {
       for (let i = 0; i < this.e.length; i++) {
         const callable = this.e[i];
@@ -98,9 +109,9 @@ var Owner = class {
     this.e = null;
   }
   handleError(error) {
-    if (!this.f) throw error;
-    let i = 0,
-      len = this.f.length;
+    if (!this.f)
+      throw error;
+    let i = 0, len = this.f.length;
     for (i = 0; i < len; i++) {
       try {
         this.f[i](error);
@@ -109,7 +120,8 @@ var Owner = class {
         error = e;
       }
     }
-    if (i === len) throw error;
+    if (i === len)
+      throw error;
   }
 };
 function createContext(defaultValue, description) {
@@ -119,9 +131,7 @@ function getContext(context, owner = currentOwner) {
   if (!owner) {
     throw new NoOwnerError();
   }
-  const value = hasContext(context, owner)
-    ? owner.h[context.id]
-    : context.defaultValue;
+  const value = hasContext(context, owner) ? owner.h[context.id] : context.defaultValue;
   if (isUndefined(value)) {
     throw new ContextNotFoundError();
   }
@@ -133,14 +143,15 @@ function setContext(context, value, owner = currentOwner) {
   }
   owner.h = {
     ...owner.h,
-    [context.id]: isUndefined(value) ? context.defaultValue : value,
+    [context.id]: isUndefined(value) ? context.defaultValue : value
   };
 }
 function hasContext(context, owner = currentOwner) {
   return !isUndefined(owner?.h[context.id]);
 }
 function onCleanup(disposable) {
-  if (!currentOwner) return;
+  if (!currentOwner)
+    return;
   const node = currentOwner;
   if (!node.e) {
     node.e = disposable;
@@ -151,36 +162,39 @@ function onCleanup(disposable) {
   }
 }
 
-// src/flags.ts
+// src/core/flags.ts
 var ERROR_OFFSET = 0;
 var ERROR_BIT = 1 << ERROR_OFFSET;
 var LOADING_OFFSET = 1;
 var LOADING_BIT = 1 << LOADING_OFFSET;
 var DEFAULT_FLAGS = ERROR_BIT;
 
-// src/scheduler.ts
+// src/core/scheduler.ts
 var scheduled = false;
 var runningScheduled = false;
 var Computations = [];
 var RenderEffects = [];
 var Effects = [];
 function flushSync() {
-  if (!runningScheduled) runScheduled();
+  if (!runningScheduled)
+    runScheduled();
 }
 function flushQueue() {
-  if (scheduled) return;
+  if (scheduled)
+    return;
   scheduled = true;
   queueMicrotask(runScheduled);
 }
 function runTop(node) {
   const ancestors = [];
-  for (let current = node; current !== null; current = current.k) {
+  for (let current = node; current !== null; current = current.l) {
     if (current.a !== STATE_CLEAN) {
       ancestors.push(current);
     }
   }
   for (let i = ancestors.length - 1; i >= 0; i--) {
-    if (ancestors[i].a !== STATE_DISPOSED) ancestors[i].l();
+    if (ancestors[i].a !== STATE_DISPOSED)
+      ancestors[i].m();
   }
 }
 function runScheduled() {
@@ -208,7 +222,8 @@ function runScheduled() {
 }
 function runPureQueue(queue) {
   for (let i = 0; i < queue.length; i++) {
-    if (queue[i].a !== STATE_CLEAN) runTop(queue[i]);
+    if (queue[i].a !== STATE_CLEAN)
+      runTop(queue[i]);
   }
 }
 function runEffectQueue(queue) {
@@ -221,13 +236,14 @@ function runEffectQueue(queue) {
   }
 }
 
-// src/core.ts
+// src/core/core.ts
 var currentObserver = null;
 var currentMask = DEFAULT_FLAGS;
 var newSources = null;
 var newSourcesIndex = 0;
 var newFlags = 0;
 var clock = 0;
+var syncResolve = false;
 var updateCheck = null;
 function getObserver() {
   return currentObserver;
@@ -259,12 +275,16 @@ var Computation2 = class extends Owner {
     this.s = compute2;
     this.a = compute2 ? STATE_DIRTY : STATE_CLEAN;
     this.d = initialValue;
-    if (options?.equals !== void 0) this.t = options.equals;
-    if (options?.unobserved) this.x = options?.unobserved;
+    if (options?.equals !== void 0)
+      this.t = options.equals;
+    if (options?.unobserved)
+      this.x = options?.unobserved;
   }
   y() {
-    if (this.s) this.l();
-    if (!this.b || this.b.length) track(this);
+    if (this.s)
+      this.m();
+    if (!this.b || this.b.length)
+      track(this);
     newFlags |= this.i & ~currentMask;
     if (this.i & ERROR_BIT) {
       throw this.d;
@@ -287,7 +307,7 @@ var Computation2 = class extends Owner {
    * before continuing
    */
   wait() {
-    if (this.loading()) {
+    if (!syncResolve && this.loading()) {
       throw new NotReadyError();
     }
     return this.y();
@@ -317,20 +337,17 @@ var Computation2 = class extends Owner {
   }
   /** Update the computation with a new value. */
   write(value, flags = 0, raw = false) {
-    const newValue =
-      !raw && typeof value === "function" ? value(this.d) : value;
-    const valueChanged =
-      newValue !== UNCHANGED &&
-      (!!(flags & ERROR_BIT) || this.t === false || !this.t(this.d, newValue));
-    if (valueChanged) this.d = newValue;
-    const changedFlagsMask = this.i ^ flags,
-      changedFlags = changedFlagsMask & flags;
+    const newValue = !raw && typeof value === "function" ? value(this.d) : value;
+    const valueChanged = newValue !== UNCHANGED && (!!(flags & ERROR_BIT) || this.t === false || !this.t(this.d, newValue));
+    if (valueChanged)
+      this.d = newValue;
+    const changedFlagsMask = this.i ^ flags, changedFlags = changedFlagsMask & flags;
     this.i = flags;
     this.w = clock + 1;
     if (this.c) {
       for (let i = 0; i < this.c.length; i++) {
         if (valueChanged) {
-          this.c[i].m(STATE_DIRTY);
+          this.c[i].k(STATE_DIRTY);
         } else if (changedFlagsMask) {
           this.c[i].z(changedFlagsMask, changedFlags);
         }
@@ -341,12 +358,13 @@ var Computation2 = class extends Owner {
   /**
    * Set the current node's state, and recursively mark all of this node's observers as STATE_CHECK
    */
-  m(state) {
-    if (this.a >= state) return;
+  k(state) {
+    if (this.a >= state)
+      return;
     this.a = state;
     if (this.c) {
       for (let i = 0; i < this.c.length; i++) {
-        this.c[i].m(STATE_CHECK);
+        this.c[i].k(STATE_CHECK);
       }
     }
   }
@@ -357,17 +375,18 @@ var Computation2 = class extends Owner {
    * @param newFlags The source's new flags, masked to just the changed ones.
    */
   z(mask, newFlags2) {
-    if (this.a >= STATE_DIRTY) return;
+    if (this.a >= STATE_DIRTY)
+      return;
     if (mask & this.p) {
-      this.m(STATE_DIRTY);
+      this.k(STATE_DIRTY);
       return;
     }
-    if (this.a >= STATE_CHECK) return;
+    if (this.a >= STATE_CHECK)
+      return;
     const prevFlags = this.i & mask;
     const deltaFlags = prevFlags ^ newFlags2;
-    if (newFlags2 === prevFlags);
-    else if (deltaFlags & prevFlags & mask) {
-      this.m(STATE_CHECK);
+    if (newFlags2 === prevFlags) ; else if (deltaFlags & prevFlags & mask) {
+      this.k(STATE_CHECK);
     } else {
       this.i ^= deltaFlags;
       if (this.c) {
@@ -387,7 +406,7 @@ var Computation2 = class extends Owner {
    *
    * This function will ensure that the value and states we read from the computation are up to date
    */
-  l() {
+  m() {
     if (this.a === STATE_DISPOSED) {
       throw new Error("Tried to read a disposed computation");
     }
@@ -397,7 +416,7 @@ var Computation2 = class extends Owner {
     let observerFlags = 0;
     if (this.a === STATE_CHECK) {
       for (let i = 0; i < this.b.length; i++) {
-        this.b[i].l();
+        this.b[i].m();
         observerFlags |= this.b[i].i;
         if (this.a === STATE_DIRTY) {
           break;
@@ -415,38 +434,40 @@ var Computation2 = class extends Owner {
    * Remove ourselves from the owner graph and the computation graph
    */
   n() {
-    if (this.a === STATE_DISPOSED) return;
-    if (this.b) removeSourceObservers(this, 0);
+    if (this.a === STATE_DISPOSED)
+      return;
+    if (this.b)
+      removeSourceObservers(this, 0);
     super.n();
   }
 };
 function loadingState(node) {
-  const prevOwner = setOwner(node.k);
+  const prevOwner = setOwner(node.l);
   const options = void 0;
   const computation = new Computation2(
     void 0,
     () => {
       track(node);
-      node.l();
+      node.m();
       return !!(node.i & LOADING_BIT);
     },
-    options,
+    options
   );
   computation.p = ERROR_BIT | LOADING_BIT;
   setOwner(prevOwner);
   return computation;
 }
 function errorState(node) {
-  const prevOwner = setOwner(node.k);
+  const prevOwner = setOwner(node.l);
   const options = void 0;
   const computation = new Computation2(
     void 0,
     () => {
       track(node);
-      node.l();
+      node.m();
       return !!(node.i & ERROR_BIT);
     },
-    options,
+    options
   );
   computation.p = ERROR_BIT;
   setOwner(prevOwner);
@@ -454,13 +475,10 @@ function errorState(node) {
 }
 function track(computation) {
   if (currentObserver) {
-    if (
-      !newSources &&
-      currentObserver.b &&
-      currentObserver.b[newSourcesIndex] === computation
-    ) {
+    if (!newSources && currentObserver.b && currentObserver.b[newSourcesIndex] === computation) {
       newSourcesIndex++;
-    } else if (!newSources) newSources = [computation];
+    } else if (!newSources)
+      newSources = [computation];
     else if (computation !== newSources[newSources.length - 1]) {
       newSources.push(computation);
     }
@@ -470,9 +488,7 @@ function track(computation) {
   }
 }
 function update(node) {
-  const prevSources = newSources,
-    prevSourcesIndex = newSourcesIndex,
-    prevFlags = newFlags;
+  const prevSources = newSources, prevSourcesIndex = newSourcesIndex, prevFlags = newFlags;
   newSources = null;
   newSourcesIndex = 0;
   newFlags = 0;
@@ -489,7 +505,8 @@ function update(node) {
     }
   } finally {
     if (newSources) {
-      if (node.b) removeSourceObservers(node, newSourcesIndex);
+      if (node.b)
+        removeSourceObservers(node, newSourcesIndex);
       if (node.b && newSourcesIndex > 0) {
         node.b.length = newSourcesIndex + newSources.length;
         for (let i = 0; i < newSources.length; i++) {
@@ -501,8 +518,10 @@ function update(node) {
       let source;
       for (let i = newSourcesIndex; i < node.b.length; i++) {
         source = node.b[i];
-        if (!source.c) source.c = [node];
-        else source.c.push(node);
+        if (!source.c)
+          source.c = [node];
+        else
+          source.c.push(node);
       }
     } else if (node.b && newSourcesIndex < node.b.length) {
       removeSourceObservers(node, newSourcesIndex);
@@ -523,7 +542,8 @@ function removeSourceObservers(node, index) {
       swap = source.c.indexOf(node);
       source.c[swap] = source.c[source.c.length - 1];
       source.c.pop();
-      if (!source.c.length) source.x?.();
+      if (!source.c.length)
+        source.x?.();
     }
   }
 }
@@ -531,7 +551,8 @@ function isEqual(a, b) {
   return a === b;
 }
 function untrack(fn) {
-  if (currentObserver === null) return fn();
+  if (currentObserver === null)
+    return fn();
   return compute(getOwner(), fn, null);
 }
 function hasUpdated(fn) {
@@ -544,10 +565,27 @@ function hasUpdated(fn) {
     updateCheck = current;
   }
 }
+function isPending(fn) {
+  try {
+    fn();
+    return false;
+  } catch (e) {
+    return e instanceof NotReadyError;
+  }
+}
+function latest(fn) {
+  const prevFlags = newFlags;
+  syncResolve = true;
+  try {
+    return fn();
+  } catch {
+  } finally {
+    newFlags = prevFlags;
+    syncResolve = false;
+  }
+}
 function compute(owner, compute2, observer) {
-  const prevOwner = setOwner(owner),
-    prevObserver = currentObserver,
-    prevMask = currentMask;
+  const prevOwner = setOwner(owner), prevObserver = currentObserver, prevMask = currentMask;
   currentObserver = observer;
   currentMask = observer?.p ?? DEFAULT_FLAGS;
   try {
@@ -561,20 +599,21 @@ function compute(owner, compute2, observer) {
 var EagerComputation = class extends Computation2 {
   constructor(initialValue, compute2, options) {
     super(initialValue, compute2, options);
-    this.l();
+    this.m();
     Computations.push(this);
   }
-  m(state) {
-    if (this.a >= state) return;
+  k(state) {
+    if (this.a >= state)
+      return;
     if (this.a === STATE_CLEAN) {
       Computations.push(this);
       flushQueue();
     }
-    this.a = state;
+    super.k(state);
   }
 };
 
-// src/effect.ts
+// src/core/effect.ts
 var BaseEffect = class extends Computation2 {
   r;
   q = false;
@@ -585,7 +624,8 @@ var BaseEffect = class extends Computation2 {
     this.o = initialValue;
   }
   write(value) {
-    if (value === UNCHANGED) return this.d;
+    if (value === UNCHANGED)
+      return this.d;
     this.d = value;
     this.q = true;
     return value;
@@ -605,8 +645,9 @@ var Effect = class extends BaseEffect {
     Effects.push(this);
     flushQueue();
   }
-  m(state) {
-    if (this.a >= state) return;
+  k(state) {
+    if (this.a >= state)
+      return;
     if (this.a === STATE_CLEAN) {
       Effects.push(this);
       flushQueue();
@@ -617,11 +658,12 @@ var Effect = class extends BaseEffect {
 var RenderEffect = class extends BaseEffect {
   constructor(initialValue, compute2, effect, options) {
     super(initialValue, compute2, effect, options);
-    this.l();
+    this.m();
     RenderEffects.push(this);
   }
-  m(state) {
-    if (this.a >= state) return;
+  k(state) {
+    if (this.a >= state)
+      return;
     if (this.a === STATE_CLEAN) {
       RenderEffects.push(this);
       flushQueue();
@@ -637,7 +679,7 @@ function createSignal(first, second, third) {
       const node2 = new Computation2(
         first(p ? untrack(p[0]) : second),
         null,
-        third,
+        third
       );
       return [node2.read.bind(node2), node2.write.bind(node2)];
     });
@@ -647,44 +689,52 @@ function createSignal(first, second, third) {
   return [node.read.bind(node), node.write.bind(node)];
 }
 function createAsync(fn, initial, options) {
-  const lhs = new EagerComputation(void 0, () => {
-    const source = fn(initial);
-    const isPromise = source instanceof Promise;
-    const iterator = source[Symbol.asyncIterator];
-    if (!isPromise && !iterator) {
-      return {
-        wait() {
-          return source;
-        },
-      };
-    }
-    const signal = new Computation2(initial, null, options);
-    signal.write(UNCHANGED, LOADING_BIT);
-    if (isPromise) {
-      source.then(
-        (value) => {
-          signal.write(value, 0);
-        },
-        (error) => {
-          signal.write(error, ERROR_BIT);
-        },
-      );
-    } else {
-      let abort = false;
-      onCleanup(() => (abort = true));
-      (async () => {
-        try {
-          for await (let value of source) {
-            if (abort) return;
-            signal.write(value, 0);
+  const lhs = new EagerComputation(
+    {
+      d: initial
+    },
+    (p) => {
+      const value = p?.d;
+      const source = fn(value);
+      const isPromise = source instanceof Promise;
+      const iterator = source[Symbol.asyncIterator];
+      if (!isPromise && !iterator) {
+        return {
+          wait() {
+            return source;
+          },
+          d: source
+        };
+      }
+      const signal = new Computation2(value, null, options);
+      signal.write(UNCHANGED, LOADING_BIT);
+      if (isPromise) {
+        source.then(
+          (value2) => {
+            signal.write(value2, 0);
+          },
+          (error) => {
+            signal.write(error, ERROR_BIT);
           }
-        } catch (error) {
-          signal.write(error, ERROR_BIT);
-        }
-      })();
+        );
+      } else {
+        let abort = false;
+        onCleanup(() => abort = true);
+        (async () => {
+          try {
+            for await (let value2 of source) {
+              if (abort)
+                return;
+              signal.write(value2, 0);
+            }
+          } catch (error) {
+            signal.write(error, ERROR_BIT);
+          }
+        })();
+      }
+      return signal;
     }
-    return signal;
-  });
+  );
   return () => lhs.wait().wait();
 }
 function createMemo(compute2, initialValue, options) {
@@ -693,24 +743,31 @@ function createMemo(compute2, initialValue, options) {
   return () => {
     if (node) {
       value = node.wait();
-      if (!node.b?.length) node = void 0;
+      if (!node.b?.length)
+        node = void 0;
     }
     return value;
   };
 }
 function createEffect(compute2, effect, initialValue, options) {
-  void new Effect(initialValue, compute2, effect, void 0);
+  void new Effect(
+    initialValue,
+    compute2,
+    effect,
+    void 0
+  );
 }
 function createRenderEffect(compute2, effect, initialValue, options) {
-  void new RenderEffect(initialValue, compute2, effect, void 0);
+  void new RenderEffect(
+    initialValue,
+    compute2,
+    effect,
+    void 0
+  );
 }
 function createRoot(init) {
   const owner = new Owner();
-  return compute(
-    owner,
-    !init.length ? init : () => init(() => owner.dispose()),
-    null,
-  );
+  return compute(owner, !init.length ? init : () => init(() => owner.dispose()), null);
 }
 function runWithOwner(owner, run) {
   try {
@@ -730,33 +787,4 @@ function catchError(fn, handler) {
   }
 }
 
-export {
-  Computation2 as Computation,
-  ContextNotFoundError,
-  Effect,
-  NoOwnerError,
-  NotReadyError,
-  Owner,
-  RenderEffect,
-  catchError,
-  compute,
-  createAsync,
-  createContext,
-  createEffect,
-  createMemo,
-  createRenderEffect,
-  createRoot,
-  createSignal,
-  flushSync,
-  getContext,
-  getObserver,
-  getOwner,
-  hasContext,
-  hasUpdated,
-  isEqual,
-  onCleanup,
-  runWithOwner,
-  setContext,
-  setOwner,
-  untrack,
-};
+export { Computation2 as Computation, ContextNotFoundError, NoOwnerError, NotReadyError, Owner, catchError, createAsync, createContext, createEffect, createMemo, createRenderEffect, createRoot, createSignal, flushSync, getContext, getObserver, getOwner, hasContext, hasUpdated, isEqual, isPending, latest, onCleanup, runWithOwner, setContext, untrack };

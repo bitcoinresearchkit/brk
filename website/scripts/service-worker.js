@@ -17,9 +17,11 @@ self.addEventListener("install", (_event) => {
         "/scripts/options.js",
         "/scripts/chart.js",
         "/styles/chart.css",
+        "/scripts/simulation.js",
+        "/styles/simulation.css",
         "/packages/lean-qr/v2.3.4/script.js",
         "/packages/lightweight-charts/v4.2.0/script.js",
-        "/packages/solid-signals/2024-11-01/script.js",
+        "/packages/solid-signals/2024-11-02/script.js",
         "/packages/ufuzzy/v1.0.14/script.js",
       ]);
     }),

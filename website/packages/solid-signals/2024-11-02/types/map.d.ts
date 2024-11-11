@@ -1,4 +1,4 @@
-import type { Accessor } from './signals';
+import type { Accessor } from "./signals.js";
 export type Maybe<T> = T | void | null | undefined | false;
 /**
  * Reactive map helper that caches each list item by reference to reduce unnecessary mapping on

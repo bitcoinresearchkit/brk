@@ -8,7 +8,7 @@ fn main() -> color_eyre::Result<()> {
 
     reset_logs();
 
-    let config = Config::import()?;
+    let mut config = Config::import()?;
 
     let rpc = create_rpc(&config).unwrap();
 
@@ -19,7 +19,7 @@ fn main() -> color_eyre::Result<()> {
 
         log(&format!("{block_count} blocks found."));
 
-        iter_blocks(&config, &rpc, block_count, exit.clone())?;
+        iter_blocks(&mut config, &rpc, block_count, exit.clone())?;
 
         if let Some(delay) = config.delay {
             sleep(Duration::from_secs(delay))

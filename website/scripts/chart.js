@@ -372,12 +372,11 @@ export function init({
 
     elements.legend.prepend(div);
 
-    const { input, label, spanMain } = utils.dom.createComplexLabeledInput({
+    const { input, label } = utils.dom.createLabeledInput({
       inputId: `legend-${series.title}`,
       inputName: `selected-${series.title}${name}`,
       inputValue: "value",
       labelTitle: "Click to toggle",
-      name: series.title,
       onClick: (event) => {
         event.preventDefault();
         event.stopPropagation();
@@ -385,6 +384,14 @@ export function init({
         series.active.set(input.checked);
       },
     });
+
+    const spanMain = window.document.createElement("span");
+    spanMain.classList.add("main");
+    label.append(spanMain);
+
+    const spanName = utils.dom.createSpanName(series.title);
+    spanMain.append(spanName);
+
     div.append(label);
     label.addEventListener("mouseover", () => {
       const hovered = hoveredLegend();
@@ -492,8 +499,7 @@ export function init({
 
     const anchor = window.document.createElement("a");
     anchor.href = series.dataset.url;
-    anchor.innerHTML = `<svg viewBox="0 0 16 16"><path d="M8.75 2.75a.75.75 0 0 0-1.5 0v5.69L5.03 6.22a.75.75 0 0 0-1.06 1.06l3.5 3.5a.75.75 0 0 0 1.06 0l3.5-3.5a.75.75 0 0 0-1.06-1.06L8.75 8.44V2.75Z" /><path d="M3.5 9.75a.75.75 0 0 0-1.5 0v1.5A2.75 2.75 0 0 0 4.75 14h6.5A2.75 2.75 0 0 0 14 11.25v-1.5a.75.75 0 0 0-1.5 0v1.5c0 .69-.56 1.25-1.25 1.25h-6.5c-.69 0-1.25-.56-1.25-1.25v-1.5Z" /></svg>`;
-    anchor.target = "_target";
+    anchor.target = "_blank";
     anchor.rel = "noopener noreferrer";
     div.append(anchor);
   }
@@ -894,17 +900,17 @@ export function init({
         });
       });
     }
-    initGoToButtons(elements.timeScaleDateButtons);
-    initGoToButtons(elements.timeScaleHeightButtons);
+    // initGoToButtons(elements.timeScaleDateButtons);
+    // initGoToButtons(elements.timeScaleHeightButtons);
 
-    function createScaleButtonsToggleEffect() {
-      const isDate = signals.createMemo(() => scale() === "date");
-      signals.createEffect(isDate, (isDate) => {
-        elements.timeScaleDateButtons.hidden = !isDate;
-        elements.timeScaleHeightButtons.hidden = isDate;
-      });
-    }
-    createScaleButtonsToggleEffect();
+    // function createScaleButtonsToggleEffect() {
+    //   const isDate = signals.createMemo(() => scale() === "date");
+    //   signals.createEffect(isDate, (isDate) => {
+    //     elements.timeScaleDateButtons.hidden = !isDate;
+    //     elements.timeScaleHeightButtons.hidden = isDate;
+    //   });
+    // }
+    // createScaleButtonsToggleEffect();
   }
   initTimeScaleElement();
 

@@ -1,7 +1,7 @@
 import {
   Accessor,
   Setter,
-} from "../../packages/solid-signals/2024-11-01/types/signals";
+} from "../../packages/solid-signals/2024-11-02/types/signals";
 import {
   DeepPartial,
   BaselineStyleOptions,
@@ -17,7 +17,7 @@ import {
   ISeriesApi,
 } from "../../packages/lightweight-charts/v4.2.0/types";
 import { DatePath, HeightPath, LastPath } from "./paths";
-import { Owner } from "../../packages/solid-signals/2024-11-01/types/core/owner";
+import { Owner } from "../../packages/solid-signals/2024-11-02/types/core/owner";
 import { AnyPossibleCohortId } from "../options";
 
 type GrowToSize<T, N extends number, A extends T[]> = A["length"] extends N
@@ -27,9 +27,6 @@ type GrowToSize<T, N extends number, A extends T[]> = A["length"] extends N
 type FixedArray<T, N extends number> = GrowToSize<T, N, []>;
 
 type Signal<T> = Accessor<T> & { set: Setter<T> };
-
-type SettingsTheme = "system" | "dark" | "light";
-type FoldersFilter = "all" | "favorites" | "new";
 
 type TimeScale = "date" | "height";
 
@@ -104,7 +101,7 @@ type Unit =
   | "Weight";
 
 interface PartialOption {
-  icon: string;
+  // icon: string;
   name: string;
 }
 
@@ -135,7 +132,12 @@ interface PartialSimulationOption extends PartialOption {
 }
 
 interface PartialPdfOption extends PartialOption {
-  file: string;
+  pdf: string;
+}
+
+interface PartialUrlOption extends PartialOption {
+  qrcode?: true;
+  url: () => string;
 }
 
 interface PartialOptionsGroup {
@@ -147,7 +149,8 @@ type AnyPartialOption =
   | PartialHomeOption
   | PartialChartOption
   | PartialSimulationOption
-  | PartialPdfOption;
+  | PartialPdfOption
+  | PartialUrlOption;
 
 type PartialOptionsTree = (AnyPartialOption | PartialOptionsGroup)[];
 
@@ -155,8 +158,7 @@ interface ProcessedOptionAddons {
   id: string;
   path: OptionPath;
   serializedPath: string;
-  isFavorite: Signal<boolean>;
-  visited: Signal<boolean>;
+  title: string;
 }
 
 type OptionPath = {
@@ -169,14 +171,22 @@ type SimulationOption = PartialSimulationOption & ProcessedOptionAddons;
 
 interface PdfOption extends PartialPdfOption, ProcessedOptionAddons {
   kind: "pdf";
-  title: string;
+}
+
+interface UrlOption extends PartialUrlOption, ProcessedOptionAddons {
+  kind: "url";
 }
 
 interface ChartOption extends PartialChartOption, ProcessedOptionAddons {
   kind: "chart";
 }
 
-type Option = HomeOption | PdfOption | ChartOption | SimulationOption;
+type Option =
+  | HomeOption
+  | PdfOption
+  | UrlOption
+  | ChartOption
+  | SimulationOption;
 
 type OptionsTree = (Option | OptionsGroup)[];
 
@@ -184,8 +194,6 @@ interface OptionsGroup extends PartialOptionsGroup {
   id: string;
   tree: OptionsTree;
 }
-
-type SerializedHistory = [string, number][];
 
 interface OHLC {
   open: number;

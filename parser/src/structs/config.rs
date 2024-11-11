@@ -171,4 +171,8 @@ impl Config {
     pub fn first_defragment(&self) -> bool {
         self.first_defragment.is_some_and(|b| b)
     }
+
+    pub fn disable_defragment(&mut self) {
+        self.first_defragment.take();
+    }
 }

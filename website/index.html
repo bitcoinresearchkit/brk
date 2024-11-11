@@ -72,8 +72,6 @@
 
       a {
         color: inherit;
-        -webkit-text-decoration: inherit;
-        text-decoration: inherit;
       }
 
       b,
@@ -221,6 +219,8 @@
     <!-- Custom -->
     <style>
       :root {
+        color-scheme: light dark;
+
         --default-font-family: "Satoshi";
         --default-font-feature-settings: "normal";
         --default-font-variation-settings: "normal";
@@ -247,50 +247,44 @@
         /* current: oklch(67.64% 0.191 44.41) */
         --orange: #f26610;
 
-        --font-size-2xs: 0.625rem; /* 10px */
-        --line-height-2xs: 1rem; /* 16px */
-        --font-size-xs: 0.75rem; /* 12px */
-        --line-height-xs: 1rem; /* 16px */
-        --font-size-sm: 0.875rem; /* 14px */
-        --line-height-sm: 1.25rem; /* 20px */
-        --font-size-base: 1rem /* 16px */;
-        --line-height-base: 1.5rem /* 24px */;
-        --font-size-lg: 1.125rem /* 18px */;
-        --line-height-lg: 1.75rem /* 28px */;
-        --font-size-xl: 1.25rem; /* 20px */
-        --line-height-xl: 1.75rem; /* 28px */
+        --font-size-2xs: 0.625rem;
+        --line-height-2xs: 1rem;
+        --font-size-xs: 0.75rem;
+        --line-height-xs: 1rem;
+        --font-size-sm: 0.875rem;
+        --line-height-sm: 1.25rem;
+        --font-size-base: 1rem;
+        --line-height-base: 1.5rem;
+        --font-size-lg: 1.125rem;
+        --line-height-lg: 1.75rem;
+        --font-size-xl: 1.25rem;
+        --line-height-xl: 1.75rem;
+
+        --main-padding: 2rem;
+
+        @media (min-width: 768px) {
+          --main-padding: 2rem;
+        }
+
+        --negative-main-padding: calc(-1 * var(--main-padding));
 
         --font-weight-base: 450;
         --font-weight-bold: 700;
 
-        --transform-scale-active: scaleX(0.95) scaleY(0.9);
+        --transform-scale-active: scaleY(0.9);
 
         --default-main-width: 400px;
 
-        --background-color: var(--white);
-        --color: var(--black);
-        --off-color: var(--light-gray);
-        --border-color: var(--lighter-gray);
-      }
-
-      [data-theme="dark"] {
-        --background-color: var(--black);
-        --color: var(--white);
-        --off-color: var(--dark-gray);
-        --border-color: var(--darker-gray);
+        --background-color: light-dark(var(--white), var(--black));
+        --color: light-dark(var(--black), var(--white));
+        --off-color: light-dark(var(--light-gray), var(--dark-gray));
+        --border-color: light-dark(var(--lighter-gray), var(--darker-gray));
       }
 
       [data-resize] {
         user-select: none;
       }
 
-      /**
-       * @license
-       * Font Family: Satoshi
-       * Designed by: Deni Anggara
-       * URL: https://www.fontshare.com/fonts/satoshi
-       * © 2024 Indian Type Foundry
-       */
       @font-face {
         font-family: "Satoshi";
         src: url("./assets/fonts/satoshi/2024-09/font.var.woff2")
@@ -325,33 +319,97 @@
 
       a {
         display: inline-flex;
-        color: var(--color);
+        gap: 0.25rem;
+        align-items: baseline;
+        text-decoration-style: dotted;
+        text-decoration-thickness: 1px;
+        text-underline-offset: 2px;
+        text-decoration-color: var(--off-color);
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
 
         &:hover {
-          text-decoration-color: var(--orange);
-          text-decoration-line: underline;
-          text-decoration-style: wavy;
+          text-decoration-style: solid;
+        }
+
+        &:hover {
+          &,
+          &::after,
+          * {
+            color: var(--color) !important;
+          }
         }
 
         &:active {
-          transform: var(--transform-scale-active);
+          &,
+          *,
+          &::after {
+            color: var(--orange) !important;
+          }
+          text-decoration-color: inherit;
+        }
+
+        &[target="_blank"]::after {
+          color: var(--off-color);
+          content: "↗";
+          align-self: baseline;
+          font-size: 75%;
+          margin-left: 0.25rem;
+          line-height: 1;
+
+          &:hover {
+            text-decoration: none;
+          }
+        }
+
+        > small {
+          font-size: var(--font-size-sm);
+          line-height: var(--line-height-sm);
+          opacity: 0.5;
+          color: inherit;
         }
       }
 
       aside {
-        display: none;
         min-width: 0px;
         position: relative;
+        display: flex;
+        width: 100%;
+        flex: 1;
+        margin-bottom: 4rem;
 
         @media (min-width: 768px) {
           border-left: 1px;
-          display: block;
           order: 2;
-          width: 100%;
-          flex: 1;
+          margin-bottom: 0rem;
         }
 
-        > #selected-frame[hidden] {
+        header {
+          flex-shrink: 0;
+          display: flex;
+
+          white-space: nowrap;
+          overflow-x: auto;
+          padding-bottom: 1rem;
+          margin-bottom: -1rem;
+          padding-left: var(--main-padding);
+          margin-left: var(--negative-main-padding);
+          padding-right: var(--main-padding);
+          margin-right: var(--negative-main-padding);
+
+          & > * {
+            flex: 1;
+          }
+
+          & > div > small {
+            font-weight: var(--font-weight-base);
+            font-size: var(--font-size-base);
+            line-height: var(--line-height-base);
+          }
+        }
+
+        body > &[hidden] {
           display: flex !important;
         }
       }
@@ -361,8 +419,6 @@
       }
 
       body {
-        font-size: var(--font-size-sm);
-        line-height: var(--line-height-sm);
         font-weight: var(--font-weight-base);
         height: 100dvh;
         display: flex;
@@ -380,97 +436,30 @@
 
       button {
         cursor: pointer;
-        background-color: var(--background-color);
-
-        &:hover {
-          color: var(--orange) !important;
-        }
 
         &:disabled {
           color: var(--off-color);
         }
 
+        &:hover {
+          &,
+          &::after,
+          * {
+            color: var(--color) !important;
+          }
+        }
+
         &:active {
-          transform: var(--transform-scale-active);
-        }
-      }
-
-      details {
-        /* content-visibility: auto;
-        contain-intrinsic-size: auto none; */
-      }
-
-      fieldset {
-        > div.field {
-          display: flex;
-          align-items: center;
-          font-size: var(--font-size-sm);
-          line-height: var(--line-height-sm);
-
-          fieldset[data-size="sm"] & {
-            font-size: var(--font-size-xs);
-            line-height: var(--line-height-xs);
-          }
-
-          > legend,
-          > div {
-            flex-shrink: 0;
-          }
-
-          > hr {
-            min-width: 1rem;
-          }
-
-          > * + * {
-            margin-left: 1.5rem;
-
-            fieldset[data-size="sm"] & {
-              margin-left: 0.5rem;
-            }
-          }
-
-          label {
-            padding: 0.5rem;
-            margin: -0.5rem;
-          }
-
-          > div {
-            display: flex;
-
-            > * + * {
-              margin-left: 1rem !important;
-
-              fieldset[data-size="sm"] & {
-                margin-left: 0rem !important;
-              }
-            }
+          &,
+          &::after,
+          * {
+            color: var(--orange) !important;
           }
         }
       }
 
-      footer {
-        &.absolute {
-          position: absolute;
-          bottom: 0;
-          right: 0;
-          left: 0;
-          display: flex;
-          padding: 1.5rem /* 24px */;
-          z-index: 20;
-          pointer-events: none;
-          justify-content: end;
-
-          &:has(> * + *) {
-            justify-content: space-between;
-          }
-
-          & > button {
-            box-shadow: 0 0 1rem 0.5rem var(--background-color);
-            border-radius: 9999px;
-            border-width: 1px;
-            pointer-events: auto;
-          }
-        }
+      h1 {
+        text-transform: capitalize;
       }
 
       h1,
@@ -484,34 +473,6 @@
       h4 {
         font-size: var(--font-size-base);
         line-height: var(--line-height-base);
-      }
-
-      header {
-        flex-shrink: 0;
-        display: flex;
-
-        white-space: nowrap;
-        overflow-x: auto;
-        padding-bottom: 1.5rem;
-        margin-bottom: -1.5rem;
-        padding-left: 1.5rem;
-        margin-left: -1.5rem;
-        padding-right: 1.5rem;
-        margin-right: -1.5rem;
-
-        @media (min-width: 768px) {
-          padding-top: 0.25rem /* 4px */;
-        }
-
-        & > * {
-          flex: 1;
-        }
-
-        & > div > small {
-          font-weight: var(--font-weight-base);
-          font-size: var(--font-size-base);
-          line-height: var(--line-height-base);
-        }
       }
 
       hr {
@@ -552,23 +513,20 @@
       }
 
       label {
-        &:active {
-          transform: scaleX(0.99) scaleY(0.9);
-        }
-
         &:has(input) {
           cursor: pointer;
           display: flex;
           flex-direction: column;
           user-select: none;
           -webkit-user-select: none;
-          color: var(--off-color);
+          /* color: var(--off-color); */
           position: relative;
           pointer-events: all;
 
           > span.main {
             display: flex;
             align-items: center;
+            gap: 0.25rem;
 
             > span.colors {
               display: flex;
@@ -584,24 +542,13 @@
             }
 
             > a {
-              flex: 1;
               overflow: hidden;
               text-overflow: ellipsis;
               white-space: nowrap;
             }
 
-            > span.emoji {
-              filter: grayscale(100%) brightness(66%) opacity(66%);
-            }
-
-            > svg.favorite {
-              margin: 0;
-              width: 12px;
-              height: 12px;
-              color: var(--orange);
-            }
-
             > span.value {
+              opacity: 0.5;
               font-size: var(--font-size-xs);
               line-height: var(--line-height-xs);
 
@@ -609,26 +556,14 @@
                 margin-right: 0.375rem;
               }
             }
-
-            > span.new {
-              width: 0.375rem /* 6px */;
-              height: 0.375rem /* 6px */;
-              border-radius: 9999px;
-              background-color: var(--orange);
-              margin-right: 3px;
-            }
           }
 
           &:hover {
-            &,
-            * {
-              color: var(--orange) !important;
-            }
+            color: var(--color);
+          }
 
-            > span.main > .emoji {
-              filter: sepia(90%) saturate(420%) hue-rotate(320deg)
-                brightness(80%) !important;
-            }
+          &:active {
+            color: var(--orange);
           }
 
           > *:not(input):not(svg) {
@@ -645,20 +580,13 @@
 
         &:has(input:checked) {
           color: var(--color);
-
-          > span.main > span.emoji {
-            filter: grayscale(100%);
-          }
         }
-      }
-
-      li {
-        min-height: 1.375rem;
       }
 
       main {
         order: 1;
         position: relative;
+        display: flex;
 
         @media (max-width: 767px) {
           flex: 1;
@@ -670,6 +598,39 @@
           min-width: 300px;
           width: var(--default-main-width);
           max-width: 65dvw;
+        }
+
+        > footer {
+          position: absolute;
+          bottom: 0;
+          right: 0;
+          left: 0;
+          display: flex;
+          margin: var(--main-padding);
+          margin-bottom: calc(var(--main-padding) + 0.5rem);
+          z-index: 20;
+          pointer-events: none;
+          justify-content: center;
+
+          > fieldset {
+            background-color: var(--border-color);
+            display: flex;
+            box-shadow: 0 0 1rem 0.5rem var(--background-color);
+            border-radius: 9999px;
+            pointer-events: auto;
+            padding: 0.5rem 1.5rem;
+            gap: 1rem;
+
+            > label {
+              text-align: center;
+              min-width: 3.5rem;
+              color: var(--off-color);
+
+              &:has(input:checked) {
+                color: var(--color);
+              }
+            }
+          }
         }
 
         > #resize-bar {
@@ -695,106 +656,36 @@
         }
       }
 
-      mark {
-        color: var(--orange);
-        background-color: transparent;
-        padding: 0;
-      }
-
-      nav {
-        padding: 0.5rem;
-        gap: 0.5rem;
-        border-width: 1px 0px 0px 0px;
-        order: 999;
-        overflow-y: auto;
-
-        html[data-display="standalone"] & {
-          padding-bottom: 1.5rem /* 24px */;
-        }
-
-        @media (min-width: 768px) {
-          border-width: 0px 1px 0px 0px;
-          order: 0;
-          padding: 1rem 0.75rem 1.375rem 0.75rem !important;
-        }
-
-        &,
-        > fieldset {
-          display: flex;
-          flex-direction: row;
-          justify-content: space-around;
-
-          > label:active {
-            transform: var(--transform-scale-active);
-          }
-
-          @media (min-width: 768px) {
-            flex-direction: column;
-
-            > label {
-              margin-bottom: 0.5rem;
-            }
-          }
-        }
-
-        > fieldset {
-          flex: 1;
-
-          @media (min-width: 768px) {
-            flex: 0;
-          }
-        }
-
-        a {
-          display: none;
-
-          @media (min-width: 768px) {
-            display: inline-flex;
-          }
-        }
-
-        div {
-          display: none;
-
-          @media (min-width: 768px) {
-            display: block;
-          }
-        }
-      }
-
       object {
         background-color: white;
       }
 
-      p {
-        margin-top: 1rem;
-      }
-
+      nav,
+      search,
       section {
         flex: 1;
         overflow-x: hidden;
         overflow-y: auto;
-        padding: 1.5rem /* 24px */;
+        padding: var(--main-padding);
         height: 100%;
 
         &:not(#selected-frame) {
-          padding-bottom: 21vh;
+          padding-bottom: 69vh;
         }
 
         > * + * {
-          margin-top: 1.5rem; /* 24px */
+          margin-top: 2rem;
         }
       }
 
       sup {
-        color: var(--off-color);
+        opacity: 0.5;
         margin-left: 0.25rem;
       }
 
       small {
         color: var(--off-color);
-        font-size: var(--font-size-xs);
-        line-height: var(--line-height-xs);
+        font-weight: var(--font-weight-base);
 
         h4 + & {
           font-size: var(--font-size-sm);
@@ -804,9 +695,6 @@
 
       span {
         &.name {
-          margin: 0.375rem /* 6px */;
-          flex: 1;
-          width: 100%;
           overflow: hidden;
           text-overflow: ellipsis;
           white-space: nowrap;
@@ -819,7 +707,8 @@
 
       summary {
         list-style: none;
-        display: flex;
+        display: inline-flex;
+        gap: 0.25rem;
         align-items: center;
         cursor: pointer;
         position: relative;
@@ -832,32 +721,15 @@
         &:hover {
           &,
           * {
-            color: var(--orange) !important;
+            color: var(--color) !important;
           }
         }
-      }
 
-      svg {
-        width: 20px;
-        height: 20px;
-        color: var(--off-color);
-        fill: currentColor;
-        margin: 1rem;
-
-        button & {
-          margin: 0.875rem;
-        }
-
-        svg + &,
-        &:has(+ svg) {
-          margin: 0rem;
-        }
-
-        a:hover > &,
-        button:hover > &,
-        label:hover > &,
-        label:has(input:checked) > & {
-          color: currentColor;
+        &:active {
+          &,
+          * {
+            color: var(--orange) !important;
+          }
         }
       }
 
@@ -874,160 +746,75 @@
       .tree {
         user-select: none;
         -webkit-user-select: none;
-        font-size: var(--font-size-sm);
-        line-height: var(--line-height-sm);
-        color: var(--off-color);
+        text-transform: capitalize;
 
-        ul {
-          overflow: hidden;
-
-          li {
-            display: block;
-            position: relative;
-            padding-left: 12px;
-            border-left: 1px;
-
-            &:not(:has(~ li:not([hidden]))) {
-              border-color: transparent !important;
-            }
-
-            &::before {
-              content: "";
-              display: block;
-              position: absolute;
-              top: -12px;
-              left: -1px;
-              width: 10px;
-              height: 1.75rem;
-              border-color: var(--border-color);
-              border-width: 0 0 1px 1px;
-              border-radius: 0px 0px 0px 4px;
-              z-index: -10;
-            }
-
-            &[data-highlight] {
-              > details > summary {
-                &,
-                * {
-                  color: var(--color);
-                }
-              }
-
-              &::before,
-              > details > summary > span.marker {
-                border-color: var(--color) !important;
-                z-index: 10;
-              }
-
-              > details:not([open]) > summary > span.marker {
-                background-color: var(--color) !important;
-              }
-            }
-
-            &:has(*[data-highlight]) {
-              > details > summary::after {
-                border-color: var(--color) !important;
-              }
-            }
-
-            &:has(~ *[data-highlight]) {
-              border-color: var(--color) !important;
-            }
-
-            &:has(~ *[data-highlight])::before {
-              z-index: -10 !important;
-            }
-
-            > details > summary {
-              position: relative;
-
-              details[open] > & {
-                &::after {
-                  content: "";
-                  display: block;
-                  position: absolute;
-                  bottom: 0;
-                  height: 12.5px;
-                  border-color: var(--border-color);
-                  border-width: 0 0 0px 1px;
-                }
-              }
-
-              > span.marker {
-                border: 1px;
-                border-radius: 999px;
-                background-color: var(--border-color);
-                width: 9px;
-                height: 9px;
-                z-index: 10;
-                margin-left: -4px;
-
-                details[open] > summary > & {
-                  background-color: var(--background-color);
-                }
-
-                summary:hover > & {
-                  border-color: var(--orange) !important;
-                }
-
-                details:not([open]) > summary:hover > & {
-                  background-color: var(--orange) !important;
-                }
-              }
-
-              > small {
-                margin-top: 0.125rem;
-                margin-right: 2.5px;
-              }
-            }
-          }
-        }
-      }
-
-      .list {
-        --history-heading-margin: calc(-1.5rem - 1px);
-
-        > * + * {
-          margin-top: 0.25rem;
-        }
-
-        h4 {
-          position: sticky;
-          top: var(--history-heading-margin);
-          z-index: 10;
-          background-color: var(--background-color);
-          padding: 1rem;
-          padding-left: 0;
-          border-top-width: 1px;
-          border-bottom-width: 1px;
-          margin-bottom: 1rem;
-          margin-top: 2rem;
-
-          &:first-child {
-            margin-top: var(--history-heading-margin);
-          }
-        }
-      }
-
-      #leaderboard {
-        margin-top: 1rem;
-        color: var(--off-color);
-        margin-left: 1.375rem;
-        list-style-type: decimal;
-        font-size: var(--font-size-xs);
-        line-height: var(--line-height-xs);
-
-        ::marker {
+        button::after {
           color: var(--off-color);
+          content: "→";
+          align-self: baseline;
+          font-size: 75%;
+          margin-left: 0.25rem;
+          line-height: 1;
         }
 
-        a {
-          font-size: var(--font-size-sm);
-          line-height: var(--line-height-sm);
+        li[data-highlight] {
+          > details:not([open]) {
+            color: var(--color);
+          }
+
+          > label > a::after,
+          > details:not([open]) > summary::after {
+            color: var(--orange) !important;
+            content: "";
+            background-color: var(--orange);
+            width: 0.375rem;
+            height: 0.375rem;
+            border-radius: 9999px;
+            align-self: center;
+          }
         }
 
-        .sats {
-          color: var(--orange);
+        > ul > li {
+          & + * {
+            margin-top: 1.5rem;
+          }
+
+          > details,
+          > label {
+            font-size: var(--font-size-base);
+            line-height: var(--line-height-base);
+
+            ul {
+              margin-left: 0.375rem;
+            }
+          }
+
+          a,
+          button,
+          summary {
+            padding: 0.375rem 0;
+          }
+
+          ul {
+            color: var(--off-color);
+
+            overflow: hidden;
+
+            li {
+              display: block;
+              position: relative;
+              padding-left: 0.75rem;
+              border-left: 1px;
+            }
+          }
+        }
+      }
+
+      search {
+        ul {
+          display: flex;
+          flex-direction: column;
+          gap: 1rem;
         }
       }
 
@@ -1058,21 +845,6 @@
             }
           }
         }
-
-        > #home {
-          flex: 1;
-          margin-top: 0 !important;
-          font-size: var(--font-size-base);
-          line-height: var(--line-height-base);
-          text-wrap: pretty;
-          display: flex;
-          justify-content: center;
-          align-items: center;
-
-          > div {
-            max-width: 32rem;
-          }
-        }
       }
 
       #share-div {
@@ -1098,17 +870,11 @@
           box-shadow: 0 0 2rem 1rem var(--border-color);
           border-radius: 1px;
 
-          html[data-theme="dark"] & {
-            box-shadow: none;
-          }
-
           a {
+            color-scheme: light;
             margin-top: 0.5rem;
             display: block;
             font-style: italic;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
             color: var(--black);
           }
 
@@ -1118,7 +884,7 @@
         }
       }
 
-      #search-frame {
+      search {
         > #search-no-input-text {
           color: var(--off-color);
 
@@ -1139,7 +905,7 @@
           transparent,
           var(--background-color)
         );
-        height: 1.5rem;
+        height: var(--main-padding);
         top: 0;
         left: 0;
         right: 0;
@@ -1153,7 +919,7 @@
           transparent,
           var(--background-color)
         );
-        height: 1.5rem;
+        height: var(--main-padding);
         bottom: 0;
         left: 0;
         right: 0;
@@ -1173,7 +939,7 @@
           transparent,
           var(--background-color)
         );
-        width: 1.5rem;
+        width: var(--main-padding);
         left: 0;
         top: 0;
         bottom: 0;
@@ -1187,16 +953,12 @@
           transparent,
           var(--background-color)
         );
-        width: 1.5rem;
+        width: var(--main-padding);
         right: 0;
         top: 0;
         bottom: 0;
         z-index: 10;
         pointer-events: none;
-
-        main > &:not(:has(~ #selected-frame:not([hidden]))) {
-          display: none;
-        }
       }
     </style>
 
@@ -1207,32 +969,29 @@
     <script>
       // @ts-check
 
-      /**
-       * @import { SettingsTheme } from "./types/self"
-       */
-      const settingsThemeLocalStorageKey = "settings-theme";
-      const theme = /** @type {SettingsTheme} */ (
-        localStorage.getItem(settingsThemeLocalStorageKey)
-      );
       const preferredColorSchemeMatchMedia = window.matchMedia(
         "(prefers-color-scheme: dark)",
       );
-      if (
-        theme === "dark" ||
-        (theme !== "light" && preferredColorSchemeMatchMedia.matches)
-      ) {
-        window.document.documentElement.dataset.theme = "dark";
-      } else {
-        delete window.document.documentElement.dataset.theme;
+
+      const themeColor = window.document.createElement("meta");
+      themeColor.name = "theme-color";
+      window.document.getElementsByTagName("head")[0].appendChild(themeColor);
+
+      /** @param {boolean} dark */
+      function updateThemeColor(dark) {
+        const backgroundColor = getComputedStyle(
+          window.document.documentElement,
+        ).getPropertyValue(dark ? "--black" : "--white");
+        themeColor.content = backgroundColor;
       }
 
-      const backgroundColor = getComputedStyle(
-        window.document.documentElement,
-      ).getPropertyValue("--background-color");
-      const meta = window.document.createElement("meta");
-      meta.name = "theme-color";
-      meta.content = backgroundColor;
-      window.document.getElementsByTagName("head")[0].appendChild(meta);
+      updateThemeColor(preferredColorSchemeMatchMedia.matches);
+      preferredColorSchemeMatchMedia.addEventListener(
+        "change",
+        ({ matches }) => {
+          updateThemeColor(matches);
+        },
+      );
 
       if ("standalone" in window.navigator && !!window.navigator.standalone) {
         window.document.documentElement.dataset.display = "standalone";
@@ -1243,7 +1002,9 @@
       }
     </script>
 
+    <!-- --- -->
     <!-- Icons -->
+    <!-- --- -->
 
     <link
       rel="icon"
@@ -1428,201 +1189,6 @@
     />
   </head>
   <body>
-    <nav>
-      <a href="/" title="Reload">
-        <svg
-          viewBox="0 0 24 24"
-          style="height: 2rem; width: 2rem; margin: 0.625rem"
-        >
-          <ellipse
-            style="fill: var(--orange)"
-            cx="12"
-            cy="12"
-            rx="12"
-            ry="12"
-          ></ellipse>
-          <path
-            d="M 12.874 9.57 L 12.874 8.802 C 12.104 7.809 11.587 6.634 11.397 5.379 C 11.339 5.009 10.877 4.865 10.637 5.152 C 10.059 5.833 9.605 6.632 9.299 7.517 C 10.234 8.565 11.486 9.284 12.874 9.57 Z M 15.937 6.749 C 14.729 6.749 13.751 7.731 13.751 8.939 L 13.751 10.563 C 10.895 10.394 8.474 8.636 7.379 6.142 C 7.229 5.8 6.746 5.78 6.585 6.117 C 6.131 7.077 5.876 8.149 5.876 9.28 C 5.876 11.217 6.808 13.025 8.203 14.364 C 8.562 14.711 8.915 14.998 9.266 15.261 L 5.331 16.245 C 5.038 16.318 4.907 16.658 5.072 16.912 C 5.547 17.648 6.723 18.895 9.261 18.999 C 9.48 19.007 9.698 18.928 9.864 18.783 L 11.648 17.249 L 13.751 17.249 C 16.167 17.249 18.125 15.293 18.125 12.876 L 18.125 8.499 L 19 6.749 L 15.937 6.749 Z M 15.937 9.391 C 15.697 9.391 15.458 9.175 15.458 8.935 C 15.458 8.695 15.697 8.483 15.937 8.483 C 16.177 8.483 16.399 8.703 16.399 8.943 C 16.399 9.183 16.177 9.391 15.937 9.391 Z"
-            style="fill: var(--white)"
-          ></path>
-        </svg>
-      </a>
-
-      <fieldset id="frame-selectors">
-        <label
-          id="selected-frame-selector-label"
-          for="selected-frame-selector"
-          title="Chart"
-          class="md:hidden"
-        >
-          <input
-            type="radio"
-            name="frame"
-            id="selected-frame-selector"
-            value="chart"
-          />
-          <svg viewBox="0 0 20 20">
-            <path
-              d="M4.25 2A2.25 2.25 0 0 0 2 4.25v2a.75.75 0 0 0 1.5 0v-2a.75.75 0 0 1 .75-.75h2a.75.75 0 0 0 0-1.5h-2ZM13.75 2a.75.75 0 0 0 0 1.5h2a.75.75 0 0 1 .75.75v2a.75.75 0 0 0 1.5 0v-2A2.25 2.25 0 0 0 15.75 2h-2ZM3.5 13.75a.75.75 0 0 0-1.5 0v2A2.25 2.25 0 0 0 4.25 18h2a.75.75 0 0 0 0-1.5h-2a.75.75 0 0 1-.75-.75v-2ZM18 13.75a.75.75 0 0 0-1.5 0v2a.75.75 0 0 1-.75.75h-2a.75.75 0 0 0 0 1.5h2A2.25 2.25 0 0 0 18 15.75v-2ZM7 10a3 3 0 1 1 6 0 3 3 0 0 1-6 0Z"
-            />
-          </svg>
-        </label>
-
-        <label
-          id="folders-frame-selector-label"
-          for="folders-frame-selector"
-          title="Folders"
-        >
-          <input
-            type="radio"
-            name="frame"
-            id="folders-frame-selector"
-            value="folders"
-          />
-          <svg viewBox="0 0 20 20">
-            <path
-              d="M3.75 3A1.75 1.75 0 0 0 2 4.75v3.26a3.235 3.235 0 0 1 1.75-.51h12.5c.644 0 1.245.188 1.75.51V6.75A1.75 1.75 0 0 0 16.25 5h-4.836a.25.25 0 0 1-.177-.073L9.823 3.513A1.75 1.75 0 0 0 8.586 3H3.75ZM3.75 9A1.75 1.75 0 0 0 2 10.75v4.5c0 .966.784 1.75 1.75 1.75h12.5A1.75 1.75 0 0 0 18 15.25v-4.5A1.75 1.75 0 0 0 16.25 9H3.75Z"
-            />
-          </svg>
-        </label>
-
-        <label
-          id="search-frame-selector-label"
-          for="search-frame-selector"
-          title="Search"
-        >
-          <input
-            type="radio"
-            name="frame"
-            id="search-frame-selector"
-            value="search"
-          />
-          <svg viewBox="0 0 20 20">
-            <path
-              fill-rule="evenodd"
-              d="M9 3.5a5.5 5.5 0 1 0 0 11 5.5 5.5 0 0 0 0-11ZM2 9a7 7 0 1 1 12.452 4.391l3.328 3.329a.75.75 0 1 1-1.06 1.06l-3.329-3.328A7 7 0 0 1 2 9Z"
-              clip-rule="evenodd"
-            />
-          </svg>
-        </label>
-
-        <label
-          id="history-frame-selector-label"
-          for="history-frame-selector"
-          title="History"
-        >
-          <input
-            type="radio"
-            name="frame"
-            id="history-frame-selector"
-            value="history"
-          />
-          <svg viewBox="0 0 20 20">
-            <path
-              d="M5.25 12a.75.75 0 0 1 .75-.75h.01a.75.75 0 0 1 .75.75v.01a.75.75 0 0 1-.75.75H6a.75.75 0 0 1-.75-.75V12ZM6 13.25a.75.75 0 0 0-.75.75v.01c0 .414.336.75.75.75h.01a.75.75 0 0 0 .75-.75V14a.75.75 0 0 0-.75-.75H6ZM7.25 12a.75.75 0 0 1 .75-.75h.01a.75.75 0 0 1 .75.75v.01a.75.75 0 0 1-.75.75H8a.75.75 0 0 1-.75-.75V12ZM8 13.25a.75.75 0 0 0-.75.75v.01c0 .414.336.75.75.75h.01a.75.75 0 0 0 .75-.75V14a.75.75 0 0 0-.75-.75H8ZM9.25 10a.75.75 0 0 1 .75-.75h.01a.75.75 0 0 1 .75.75v.01a.75.75 0 0 1-.75.75H10a.75.75 0 0 1-.75-.75V10ZM10 11.25a.75.75 0 0 0-.75.75v.01c0 .414.336.75.75.75h.01a.75.75 0 0 0 .75-.75V12a.75.75 0 0 0-.75-.75H10ZM9.25 14a.75.75 0 0 1 .75-.75h.01a.75.75 0 0 1 .75.75v.01a.75.75 0 0 1-.75.75H10a.75.75 0 0 1-.75-.75V14ZM12 9.25a.75.75 0 0 0-.75.75v.01c0 .414.336.75.75.75h.01a.75.75 0 0 0 .75-.75V10a.75.75 0 0 0-.75-.75H12ZM11.25 12a.75.75 0 0 1 .75-.75h.01a.75.75 0 0 1 .75.75v.01a.75.75 0 0 1-.75.75H12a.75.75 0 0 1-.75-.75V12ZM12 13.25a.75.75 0 0 0-.75.75v.01c0 .414.336.75.75.75h.01a.75.75 0 0 0 .75-.75V14a.75.75 0 0 0-.75-.75H12ZM13.25 10a.75.75 0 0 1 .75-.75h.01a.75.75 0 0 1 .75.75v.01a.75.75 0 0 1-.75.75H14a.75.75 0 0 1-.75-.75V10ZM14 11.25a.75.75 0 0 0-.75.75v.01c0 .414.336.75.75.75h.01a.75.75 0 0 0 .75-.75V12a.75.75 0 0 0-.75-.75H14Z"
-            />
-            <path
-              fill-rule="evenodd"
-              d="M5.75 2a.75.75 0 0 1 .75.75V4h7V2.75a.75.75 0 0 1 1.5 0V4h.25A2.75 2.75 0 0 1 18 6.75v8.5A2.75 2.75 0 0 1 15.25 18H4.75A2.75 2.75 0 0 1 2 15.25v-8.5A2.75 2.75 0 0 1 4.75 4H5V2.75A.75.75 0 0 1 5.75 2Zm-1 5.5c-.69 0-1.25.56-1.25 1.25v6.5c0 .69.56 1.25 1.25 1.25h10.5c.69 0 1.25-.56 1.25-1.25v-6.5c0-.69-.56-1.25-1.25-1.25H4.75Z"
-              clip-rule="evenodd"
-            />
-          </svg>
-        </label>
-
-        <label
-          id="settings-frame-selector-label"
-          for="settings-frame-selector"
-          title="Settings"
-        >
-          <input
-            type="radio"
-            name="frame"
-            id="settings-frame-selector"
-            value="settings"
-          />
-          <svg viewBox="0 0 20 20">
-            <path
-              d="M13.024 9.25c.47 0 .827-.433.637-.863a4 4 0 0 0-4.094-2.364c-.468.05-.665.576-.43.984l1.08 1.868a.75.75 0 0 0 .649.375h2.158ZM7.84 7.758c-.236-.408-.79-.5-1.068-.12A3.982 3.982 0 0 0 6 10c0 .884.287 1.7.772 2.363.278.38.832.287 1.068-.12l1.078-1.868a.75.75 0 0 0 0-.75L7.839 7.758ZM9.138 12.993c-.235.408-.039.934.43.984a4 4 0 0 0 4.094-2.364c.19-.43-.168-.863-.638-.863h-2.158a.75.75 0 0 0-.65.375l-1.078 1.868Z"
-            />
-            <path
-              fill-rule="evenodd"
-              d="m14.13 4.347.644-1.117a.75.75 0 0 0-1.299-.75l-.644 1.116a6.954 6.954 0 0 0-2.081-.556V1.75a.75.75 0 0 0-1.5 0v1.29a6.954 6.954 0 0 0-2.081.556L6.525 2.48a.75.75 0 1 0-1.3.75l.645 1.117A7.04 7.04 0 0 0 4.347 5.87L3.23 5.225a.75.75 0 1 0-.75 1.3l1.116.644A6.954 6.954 0 0 0 3.04 9.25H1.75a.75.75 0 0 0 0 1.5h1.29c.078.733.27 1.433.556 2.081l-1.116.645a.75.75 0 1 0 .75 1.298l1.117-.644a7.04 7.04 0 0 0 1.523 1.523l-.645 1.117a.75.75 0 1 0 1.3.75l.644-1.116a6.954 6.954 0 0 0 2.081.556v1.29a.75.75 0 0 0 1.5 0v-1.29a6.954 6.954 0 0 0 2.081-.556l.645 1.116a.75.75 0 0 0 1.299-.75l-.645-1.117a7.042 7.042 0 0 0 1.523-1.523l1.117.644a.75.75 0 0 0 .75-1.298l-1.116-.645a6.954 6.954 0 0 0 .556-2.081h1.29a.75.75 0 0 0 0-1.5h-1.29a6.954 6.954 0 0 0-.556-2.081l1.116-.644a.75.75 0 0 0-.75-1.3l-1.117.645a7.04 7.04 0 0 0-1.524-1.523ZM10 4.5a5.475 5.475 0 0 0-2.781.754A5.527 5.527 0 0 0 5.22 7.277 5.475 5.475 0 0 0 4.5 10a5.475 5.475 0 0 0 .752 2.777 5.527 5.527 0 0 0 2.028 2.004c.802.458 1.73.719 2.72.719a5.474 5.474 0 0 0 2.78-.753 5.527 5.527 0 0 0 2.001-2.027c.458-.802.719-1.73.719-2.72a5.475 5.475 0 0 0-.753-2.78 5.528 5.528 0 0 0-2.028-2.002A5.475 5.475 0 0 0 10 4.5Z"
-              clip-rule="evenodd"
-            />
-          </svg>
-        </label>
-      </fieldset>
-
-      <div style="flex: 1"></div>
-
-      <a
-        id="anchor-api"
-        title="API"
-        href="/api"
-        target="_blank"
-        rel="noopener noreferrer"
-      >
-        <svg viewBox="0 0 20 20" style="padding: 0.0625rem">
-          <path
-            fill-rule="evenodd"
-            clip-rule="evenodd"
-            d="M4.24703 1.18097C2.76813 1.92042 2.16211 2.79195 2.16211 3.51351C2.16211 4.23508 2.76813 5.10661 4.24703 5.84606C5.67744 6.56126 7.71027 7.02703 9.99995 7.02703C12.2896 7.02703 14.3225 6.56126 15.7529 5.84606C17.2318 5.10661 17.8378 4.23508 17.8378 3.51351C17.8378 2.79195 17.2318 1.92042 15.7529 1.18097C14.3225 0.465762 12.2896 0 9.99995 0C7.71027 0 5.67744 0.465762 4.24703 1.18097Z"
-          ></path>
-          <path
-            fill-rule="evenodd"
-            clip-rule="evenodd"
-            d="M2.16211 6.44023V10C2.16211 10.7216 2.76813 11.5931 4.24703 12.3325C5.67744 13.0477 7.71027 13.5135 9.99995 13.5135C12.2896 13.5135 14.3225 13.0477 15.7529 12.3325C17.2318 11.5931 17.8378 10.7216 17.8378 10V6.44023C17.4305 6.7651 16.9684 7.0513 16.4781 7.29648C14.7783 8.14638 12.4868 8.64865 9.99995 8.64865C7.51311 8.64865 5.22161 8.14638 3.52182 7.29648C3.03145 7.0513 2.5694 6.7651 2.16211 6.44023ZM5.67562 10C5.67562 10.5971 5.19161 11.0811 4.59454 11.0811C3.99748 11.0811 3.51346 10.5971 3.51346 10C3.51346 9.40294 3.99748 8.91892 4.59454 8.91892C5.19161 8.91892 5.67562 9.40294 5.67562 10ZM8.91887 12.1622C9.51593 12.1622 9.99995 11.6781 9.99995 11.0811C9.99995 10.484 9.51593 10 8.91887 10C8.3218 10 7.83778 10.484 7.83778 11.0811C7.83778 11.6781 8.3218 12.1622 8.91887 12.1622Z"
-          ></path>
-          <path
-            fill-rule="evenodd"
-            clip-rule="evenodd"
-            d="M2.16211 12.9267V16.4865C2.16211 17.208 2.76813 18.0796 4.24703 18.819C5.67744 19.5342 7.71027 20 9.99995 20C12.2896 20 14.3225 19.5342 15.7529 18.819C17.2318 18.0796 17.8378 17.208 17.8378 16.4865V12.9267C17.4305 13.2516 16.9684 13.5378 16.4781 13.783C14.7783 14.6329 12.4868 15.1351 9.99995 15.1351C7.51311 15.1351 5.22161 14.6329 3.52182 13.783C3.03145 13.5378 2.5694 13.2516 2.16211 12.9267ZM5.67562 16.4865C5.67562 17.0835 5.19161 17.5676 4.59454 17.5676C3.99748 17.5676 3.51346 17.0835 3.51346 16.4865C3.51346 15.8894 3.99748 15.4054 4.59454 15.4054C5.19161 15.4054 5.67562 15.8894 5.67562 16.4865ZM8.91887 18.6486C9.51593 18.6486 9.99995 18.1646 9.99995 17.5676C9.99995 16.9705 9.51593 16.4865 8.91887 16.4865C8.3218 16.4865 7.83778 16.9705 7.83778 17.5676C7.83778 18.1646 8.3218 18.6486 8.91887 18.6486Z"
-          ></path>
-        </svg>
-      </a>
-      <a
-        id="anchor-git"
-        title="Git"
-        href="https://github.com/kibo-money/kibo"
-        target="_blank"
-        rel="noopener noreferrer"
-      >
-        <svg viewBox="0 0 24 24">
-          <path
-            d="M5.315 2.1c.791-.113 1.9.145 3.333.966l.272.161l.16.1l.397-.083a13.3 13.3 0 0 1 4.59-.08l.456.08l.396.083l.161-.1c1.385-.84 2.487-1.17 3.322-1.148l.164.008l.147.017l.076.014l.05.011l.144.047a1 1 0 0 1 .53.514a5.2 5.2 0 0 1 .397 2.91l-.047.267l-.046.196l.123.163c.574.795.93 1.728 1.03 2.707l.023.295L21 9.5c0 3.855-1.659 5.883-4.644 6.68l-.245.061l-.132.029l.014.161l.008.157l.004.365l-.002.213L16 21a1 1 0 0 1-.883.993L15 22H9a1 1 0 0 1-.993-.883L8 21v-.734c-1.818.26-3.03-.424-4.11-1.878l-.535-.766c-.28-.396-.455-.579-.589-.644l-.048-.019a1 1 0 0 1 .564-1.918c.642.188 1.074.568 1.57 1.239l.538.769c.76 1.079 1.36 1.459 2.609 1.191L8 17.562l-.018-.168a5 5 0 0 1-.021-.824l.017-.185l.019-.12l-.108-.024c-2.976-.71-4.703-2.573-4.875-6.139l-.01-.31L3 9.5a5.6 5.6 0 0 1 .908-3.051l.152-.222l.122-.163l-.045-.196a5.2 5.2 0 0 1 .145-2.642l.1-.282l.106-.253a1 1 0 0 1 .529-.514l.144-.047z"
-          ></path>
-        </svg>
-      </a>
-      <a
-        id="anchor-nostr"
-        title="Nostr"
-        href="https://primal.net/p/npub1jagmm3x39lmwfnrtvxcs9ac7g300y3dusv9lgzhk2e4x5frpxlrqa73v44"
-        target="_blank"
-        rel="noopener noreferrer"
-      >
-        <svg viewBox="0 0 20 20">
-          <path
-            fill-rule="evenodd"
-            clip-rule="evenodd"
-            d="M13.7502 1.5C13.3359 1.5 13.0002 1.83579 13.0002 2.25C13.0002 2.44257 13.0717 2.61663 13.191 2.74981C13.2963 2.86751 13.4367 2.95067 13.5937 2.98382C13.6435 2.99433 13.6958 3 13.7502 3C14.1644 3 14.5002 2.66421 14.5002 2.25C14.5002 1.83579 14.1644 1.5 13.7502 1.5ZM11.5002 2.25C11.5002 1.00736 12.5075 0 13.7502 0C14.7298 0 15.5632 0.626106 15.8721 1.5H17.2502C17.6644 1.5 18.0002 1.83579 18.0002 2.25C18.0002 2.66421 17.6644 3 17.2502 3H15.8721C15.7646 3.30433 15.5934 3.5786 15.3746 3.80685C15.8823 4.15684 16.2746 4.56859 16.5559 5.03129C17.0977 5.92273 17.1689 6.90747 16.9843 7.79359C16.803 8.66356 16.4559 9.21659 16.076 9.55603C16.0407 9.58759 16.0055 9.61689 15.9707 9.64408C15.9901 9.86441 15.987 10.0911 15.961 10.3234C15.8963 11.095 15.7248 11.9737 14.9635 12.7682C14.447 13.3072 13.7758 13.6448 13.2782 13.8437C13.0474 13.936 12.8402 14.0039 12.6813 14.0508C12.5887 14.2176 12.4689 14.451 12.3551 14.7243C12.1564 15.2017 11.999 15.7473 12.0002 16.2484C12.0011 16.664 12.1111 17.3476 12.2365 17.9768C12.2743 18.1665 12.3122 18.3447 12.3464 18.5001H13.2502C13.6644 18.5001 14.0002 18.8359 14.0002 19.2501C14.0002 19.6643 13.6644 20.0001 13.2502 20.0001H9.50017C9.15558 20.0001 8.85533 19.7653 8.77228 19.4308L9.50017 19.2501C8.77228 19.4308 8.77228 19.4308 8.77228 19.4308L8.77052 19.4237L8.76601 19.4053L8.74947 19.337C8.73534 19.2781 8.71532 19.1935 8.69136 19.0891C8.64351 18.8806 8.5796 18.5917 8.51548 18.2701C8.39148 17.6482 8.25146 16.8318 8.25017 16.2518C8.24854 15.5227 8.455 14.8065 8.6849 14.2341C8.16639 14.1203 7.6883 13.9364 7.28499 13.7003C6.8511 13.4462 6.41419 13.0729 6.17829 12.5938H2.75029C2.4353 12.5938 2.15363 12.3969 2.04556 12.1011C1.93749 11.8052 2.0258 11.4733 2.26663 11.2703L3.18599 10.4953C2.80831 10.4564 2.51374 10.1372 2.51374 9.74926C2.51374 8.4257 3.50881 7.51335 4.62109 6.95581C5.76228 6.38377 7.24656 6.05918 8.72722 5.97699C10.2102 5.89468 11.7615 6.05149 13.0442 6.50251C13.9451 6.81927 14.793 7.31253 15.3456 8.03745C15.4073 7.89899 15.4675 7.71949 15.5158 7.48766C15.6401 6.89125 15.5786 6.31137 15.2741 5.81039C14.9722 5.31375 14.3741 4.8005 13.2451 4.44292C12.7831 4.33682 12.3768 4.0893 12.0732 3.75019C11.7174 3.35262 11.5002 2.82579 11.5002 2.25ZM10.8948 14.3362C10.6852 14.3506 10.4759 14.3595 10.2686 14.3634C10.0228 14.8666 9.74868 15.5834 9.75016 16.2484C9.75109 16.664 9.86108 17.3476 9.98652 17.9768C10.0243 18.1665 10.0622 18.3447 10.0964 18.5001H10.8124C10.7969 18.4258 10.7812 18.349 10.7655 18.2701C10.6415 17.6482 10.5015 16.8318 10.5002 16.2518C10.4986 15.5522 10.6874 14.8745 10.8948 14.3362Z"
-          ></path>
-        </svg>
-      </a>
-      <a
-        id="anchor-geyser"
-        title="Geyser"
-        href="https://geyser.fund/project/kibo/"
-        target="_blank"
-        rel="noopener noreferrer"
-      >
-        <svg viewBox="0 0 20 20" fill="currentColor">
-          <path
-            d="M11.983 1.907a.75.75 0 0 0-1.292-.657l-8.5 9.5A.75.75 0 0 0 2.75 12h6.572l-1.305 6.093a.75.75 0 0 0 1.292.657l8.5-9.5A.75.75 0 0 0 17.25 8h-6.572l1.305-6.093Z"
-          />
-        </svg>
-      </a>
-    </nav>
-
     <main id="main">
       <script>
         // Prevent width jumping
@@ -1633,425 +1199,110 @@
           main.style.width = `${savedWidth}px`;
         }
       </script>
+
       <div class="shadow-top"></div>
       <div class="shadow-bottom"></div>
-      <div class="shadow-left"></div>
-      <div class="shadow-right"></div>
       <div id="resize-bar"></div>
 
-      <section id="folders-frame" hidden>
-        <header>
-          <div>
-            <h3>Folders</h3>
-            <small>Organized in a hierarchical structure</small>
-          </div>
-        </header>
-        <hr />
-        <fieldset style="flex: 1">
-          <div class="field">
-            <legend>Filter</legend>
-            <hr />
-            <div>
-              <label
-                id="folders-filter-all-label"
-                for="folders-filter-all"
-                title="Chart"
-              >
-                <input
-                  type="radio"
-                  name="folders-filter"
-                  id="folders-filter-all"
-                  value="chart"
-                />
-                <span>All<sup id="folders-filter-all-count"></sup> </span>
-              </label>
-              <label
-                id="folders-filter-favorites-label"
-                for="folders-filter-favorites"
-                title="Chart"
-              >
-                <input
-                  type="radio"
-                  name="folders-filter"
-                  id="folders-filter-favorites"
-                  value="chart"
-                />
-                <span
-                  >Favorites<sup id="folders-filter-favorites-count"></sup>
-                </span>
-              </label>
-              <label
-                id="folders-filter-new-label"
-                for="folders-filter-new"
-                title="Chart"
-              >
-                <input
-                  type="radio"
-                  name="folders-filter"
-                  id="folders-filter-new"
-                  value="chart"
-                />
-                <span>New<sup id="folders-filter-new-count"></sup> </span>
-              </label>
-            </div>
-          </div>
-        </fieldset>
-        <footer class="absolute">
-          <button id="button-close-all-folders" title="Close all folders">
-            <svg viewBox="0 0 20 20">
-              <path
-                fill-rule="evenodd"
-                d="M4.72 9.47a.75.75 0 0 0 0 1.06l4.25 4.25a.75.75 0 1 0 1.06-1.06L6.31 10l3.72-3.72a.75.75 0 1 0-1.06-1.06L4.72 9.47Zm9.25-4.25L9.72 9.47a.75.75 0 0 0 0 1.06l4.25 4.25a.75.75 0 1 0 1.06-1.06L11.31 10l3.72-3.72a.75.75 0 0 0-1.06-1.06Z"
-                clip-rule="evenodd"
-              />
-            </svg>
-          </button>
-          <button id="scroll-go-to-selected" title="Scroll to selected">
-            <svg viewBox="0 0 20 20">
-              <path
-                d="M4.25 2A2.25 2.25 0 0 0 2 4.25v2a.75.75 0 0 0 1.5 0v-2a.75.75 0 0 1 .75-.75h2a.75.75 0 0 0 0-1.5h-2ZM13.75 2a.75.75 0 0 0 0 1.5h2a.75.75 0 0 1 .75.75v2a.75.75 0 0 0 1.5 0v-2A2.25 2.25 0 0 0 15.75 2h-2ZM3.5 13.75a.75.75 0 0 0-1.5 0v2A2.25 2.25 0 0 0 4.25 18h2a.75.75 0 0 0 0-1.5h-2a.75.75 0 0 1-.75-.75v-2ZM18 13.75a.75.75 0 0 0-1.5 0v2a.75.75 0 0 1-.75.75h-2a.75.75 0 0 0 0 1.5h2A2.25 2.25 0 0 0 18 15.75v-2ZM7 10a3 3 0 1 1 6 0 3 3 0 0 1-6 0Z"
-              />
-            </svg>
-          </button>
-        </footer>
-      </section>
-      <section id="search-frame" hidden>
-        <header>
-          <div>
-            <h3>
-              <input placeholder="Search..." id="search-input" />
-            </h3>
-            <small id="search-small">
-              Focus the title or press <strong>/</strong> to search
-            </small>
-          </div>
-        </header>
-        <hr />
-        <p id="search-no-input-text">
-          If you can't think of anything, you might want to try to
-          <button id="search-no-input-text-button">open a random page</button>
-        </p>
-        <ul id="search-results" class="list" style="overflow-y: auto"></ul>
-        <footer class="absolute">
-          <button id="reset-search" title="Reset">
-            <svg viewBox="0 0 20 20">
-              <path
-                fill-rule="evenodd"
-                d="M8.75 1A2.75 2.75 0 0 0 6 3.75v.443c-.795.077-1.584.176-2.365.298a.75.75 0 1 0 .23 1.482l.149-.022.841 10.518A2.75 2.75 0 0 0 7.596 19h4.807a2.75 2.75 0 0 0 2.742-2.53l.841-10.52.149.023a.75.75 0 0 0 .23-1.482A41.03 41.03 0 0 0 14 4.193V3.75A2.75 2.75 0 0 0 11.25 1h-2.5ZM10 4c.84 0 1.673.025 2.5.075V3.75c0-.69-.56-1.25-1.25-1.25h-2.5c-.69 0-1.25.56-1.25 1.25v.325C8.327 4.025 9.16 4 10 4ZM8.58 7.72a.75.75 0 0 0-1.5.06l.3 7.5a.75.75 0 1 0 1.5-.06l-.3-7.5Zm4.34.06a.75.75 0 1 0-1.5-.06l-.3 7.5a.75.75 0 1 0 1.5.06l.3-7.5Z"
-                clip-rule="evenodd"
-              />
-            </svg>
-          </button>
-        </footer>
-      </section>
-      <section id="history-frame" hidden>
-        <header>
-          <div>
-            <h3>History</h3>
-            <small>List of previously visited presets</small>
-          </div>
-        </header>
-        <hr />
-        <ul id="history-list" class="list"></ul>
-      </section>
-      <section id="settings-frame" hidden>
-        <header>
-          <div>
-            <h3>Settings</h3>
-            <small>And other stuff</small>
-          </div>
-        </header>
-        <hr />
-        <h4>General</h4>
-        <fieldset>
-          <div class="field" id="settings-theme-field">
-            <legend>Theme</legend>
-            <hr />
-            <div>
-              <label
-                id="settings-theme-system-input-label"
-                for="settings-theme-system-input"
-              >
-                <input
-                  type="radio"
-                  name="settings-theme"
-                  id="settings-theme-system-input"
-                  value="system"
-                />
-                System
-              </label>
-              <label
-                id="settings-theme-dark-input-label"
-                for="settings-theme-dark-input"
-              >
-                <input
-                  type="radio"
-                  name="settings-theme"
-                  id="settings-theme-dark-input"
-                  value="dark"
-                />
-                Dark
-              </label>
-              <label
-                id="settings-theme-light-input-label"
-                for="settings-theme-light-input"
-              >
-                <input
-                  type="radio"
-                  name="settings-theme"
-                  id="settings-theme-light-input"
-                  value="light"
-                />
-                Light
-              </label>
-            </div>
-          </div>
-          <small>Options for the application's color scheme</small>
-        </fieldset>
-
-        <hr />
-
-        <h4>Donations</h4>
-
-        <p>
-          A massive thank you to everybody who sent their hard earned sats. This
-          project, by being completely free, is very dependent and only founded
-          by the goodwill of fellow ₿itcoiners.
-        </p>
-
-        <ol id="leaderboard"></ol>
-        <small>And everybody else !</small>
-
-        <p id="settings-install-instructions" hidden></p>
-
-        <hr class="md:hidden" />
-
-        <p
-          id="settings-nav"
+      <nav id="nav" hidden>
+        <header
+          id="nav-header"
           style="
-            display: flex;
-            align-items: center;
-            justify-content: space-around;
+            font-size: var(--font-size-xl);
+            line-height: var(--line-height-xl);
           "
-          class="md:hidden"
-        ></p>
-
-        <hr />
-
-        <p style="color: var(--off-color); text-align: center">
-          <span>Charts are displayed via </span>
-          <a
-            href="https://www.tradingview.com"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Trading View
-          </a>
-          <span>'s</span>
-          <a
-            href="https://www.tradingview.com/lightweight-charts/"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Lightweight Charts™
-          </a>
-          <span>library</span>
-        </p>
-
-        <hr />
-
-        <footer style="text-align: center; color: var(--off-color)">
-          <p
-            style="
-              display: flex;
-              justify-content: center;
-              align-items: center;
-              margin: 0.5rem;
-            "
-          >
-            <svg
-              viewBox="0 0 24 24"
-              style="width: auto; height: 1.5rem; margin-right: 0.5rem"
-              class="md:hidden"
+        >
+          <a href="/" style="display: flex; align-items: center; width: 100%">
+            <span style="display: inline-block; font-weight: 900">kibō</span>
+            <small
+              style="
+                display: inline-block;
+                margin-left: 0.125rem;
+                margin-top: 0.3125rem;
+                font-size: var(--font-size-sm);
+                line-height: var(--line-height-sm);
+              "
+              >希望</small
             >
-              <ellipse
-                style="fill: var(--orange)"
-                cx="12"
-                cy="12"
-                rx="12"
-                ry="12"
-              />
-              <path
-                d="M 12.874 9.57 L 12.874 8.802 C 12.104 7.809 11.587 6.634 11.397 5.379 C 11.339 5.009 10.877 4.865 10.637 5.152 C 10.059 5.833 9.605 6.632 9.299 7.517 C 10.234 8.565 11.486 9.284 12.874 9.57 Z M 15.937 6.749 C 14.729 6.749 13.751 7.731 13.751 8.939 L 13.751 10.563 C 10.895 10.394 8.474 8.636 7.379 6.142 C 7.229 5.8 6.746 5.78 6.585 6.117 C 6.131 7.077 5.876 8.149 5.876 9.28 C 5.876 11.217 6.808 13.025 8.203 14.364 C 8.562 14.711 8.915 14.998 9.266 15.261 L 5.331 16.245 C 5.038 16.318 4.907 16.658 5.072 16.912 C 5.547 17.648 6.723 18.895 9.261 18.999 C 9.48 19.007 9.698 18.928 9.864 18.783 L 11.648 17.249 L 13.751 17.249 C 16.167 17.249 18.125 15.293 18.125 12.876 L 18.125 8.499 L 19 6.749 L 15.937 6.749 Z M 15.937 9.391 C 15.697 9.391 15.458 9.175 15.458 8.935 C 15.458 8.695 15.697 8.483 15.937 8.483 C 16.177 8.483 16.399 8.703 16.399 8.943 C 16.399 9.183 16.177 9.391 15.937 9.391 Z"
-                style="fill: var(--white)"
-              />
-            </svg>
-            <svg viewBox="0 0 500 180" style="width: auto; height: 1.375rem">
-              <g transform="matrix(1, 0, 0, 1, -252.158997, 0)">
-                <path
-                  d="M 278.049 146.789 L 278.049 127.527 L 287.141 117.972 L 304.4 146.789 L 331.83 146.789 L 303.784 100.251 L 332.755 69.739 L 303.013 69.739 L 278.049 97.477 L 278.049 30.598 L 254.318 30.598 L 254.318 146.789 L 278.049 146.789 Z M 354.169 57.719 C 361.565 57.719 367.575 51.709 367.575 44.158 C 367.575 36.608 361.565 30.752 354.169 30.752 C 346.618 30.752 340.608 36.608 340.608 44.158 C 340.608 51.709 346.618 57.719 354.169 57.719 Z M 342.457 146.789 L 366.188 146.789 L 366.188 69.739 L 342.457 69.739 L 342.457 146.789 Z M 406.407 146.789 L 407.64 136.927 C 411.801 144.015 421.047 148.792 431.834 148.792 C 453.716 148.792 468.972 132.92 468.972 109.035 C 468.972 83.916 455.257 67.119 433.683 67.119 C 422.588 67.119 412.417 71.742 407.794 78.677 L 407.794 30.598 L 384.063 30.598 L 384.063 146.789 L 406.407 146.789 Z M 407.948 107.802 C 407.948 96.244 415.653 88.539 426.749 88.539 C 437.998 88.539 445.087 96.398 445.087 107.802 C 445.087 119.205 437.998 127.064 426.749 127.064 C 415.653 127.064 407.948 119.359 407.948 107.802 Z M 498.713 56.332 L 543.402 56.332 L 543.402 40.306 L 498.713 40.306 L 498.713 56.332 Z M 478.526 108.11 C 478.526 132.458 496.402 148.638 521.058 148.638 C 545.56 148.638 563.435 132.458 563.435 108.11 C 563.435 83.762 545.56 67.428 521.058 67.428 C 496.402 67.428 478.526 83.762 478.526 108.11 Z M 502.412 107.956 C 502.412 96.398 509.963 88.693 521.058 88.693 C 531.999 88.693 539.55 96.398 539.55 107.956 C 539.55 119.667 531.999 127.372 521.058 127.372 C 509.963 127.372 502.412 119.667 502.412 107.956 Z"
-                  style="fill: var(--color)"
-                />
-                <path
-                  d="M 589.19 97.802 L 589.19 106.23 L 610.948 106.23 C 605.1 112.938 597.446 119.044 587.986 124.376 L 593.404 131.514 C 597.532 128.934 601.488 126.268 605.186 123.43 L 605.186 146.048 L 614.13 146.048 L 614.13 123.43 L 626.944 123.43 L 626.944 149.402 L 635.974 149.402 L 635.974 123.43 L 649.82 123.43 L 649.82 134.008 C 649.82 136.072 649.046 137.104 647.498 137.104 L 640.36 136.674 L 642.768 145.188 L 650.422 145.188 C 655.926 145.188 658.678 142.092 658.678 135.986 L 658.678 115.174 L 635.974 115.174 L 635.974 108.638 L 626.944 108.638 L 626.944 115.174 L 614.388 115.174 C 617.054 112.336 619.548 109.326 621.784 106.23 L 665.128 106.23 L 665.128 97.802 L 626.858 97.802 C 627.89 95.824 628.836 93.76 629.696 91.61 L 620.838 90.492 C 619.806 92.9 618.516 95.394 617.14 97.802 L 589.19 97.802 Z M 648.1 68.734 C 642.338 72.088 636.232 75.098 629.868 77.678 C 621.612 75.012 612.926 72.518 603.896 70.282 L 599.252 77.248 C 605.272 78.624 611.206 80.258 617.226 82.15 C 610.088 84.386 602.606 86.106 594.78 87.482 L 599.596 95.308 C 612.324 92.04 622.472 89.116 630.04 86.364 C 638.124 89.116 646.122 92.298 654.034 95.824 L 658.936 88.428 C 653.26 86.02 647.412 83.698 641.392 81.548 C 646.208 79.226 651.11 76.56 655.926 73.55 L 648.1 68.734 Z M 675.438 77.85 L 675.438 85.848 L 682.404 85.848 L 682.404 98.92 C 682.404 101.5 681.114 103.22 678.62 104.166 L 680.684 110.874 C 692.036 108.896 701.926 106.66 710.182 104.08 L 708.634 96.426 C 703.474 98.146 697.454 99.608 690.574 100.984 L 690.574 85.848 L 712.332 85.848 L 712.332 77.85 L 698.916 77.85 C 698.4 74.668 697.884 71.744 697.368 69.164 L 688.338 70.712 C 688.94 72.862 689.542 75.27 690.144 77.85 L 675.438 77.85 Z M 724.028 89.632 L 739.25 89.632 L 739.25 93.502 L 723.856 93.502 C 723.942 92.47 724.028 91.352 724.028 90.32 L 724.028 89.632 Z M 739.25 83.096 L 724.028 83.096 L 724.028 79.226 L 739.25 79.226 L 739.25 83.096 Z M 722.652 100.038 L 739.25 100.038 L 739.25 100.898 C 739.25 103.048 738.218 104.166 736.24 104.166 C 733.918 104.166 731.424 103.994 728.758 103.822 L 730.822 111.562 L 738.734 111.562 C 744.582 111.562 747.506 108.982 747.506 103.908 L 747.506 72.002 L 715.6 72.002 L 715.6 90.922 C 715.428 97.286 713.192 102.532 708.892 106.746 L 715.342 112.594 C 718.782 109.068 721.276 104.854 722.652 100.038 Z M 708.462 121.452 L 708.462 126.784 L 683.608 126.784 L 683.608 134.352 L 708.462 134.352 L 708.462 139.598 L 675.524 139.598 L 675.524 147.51 L 750 147.51 L 750 139.598 L 717.062 139.598 L 717.062 134.352 L 742.174 134.352 L 742.174 126.784 L 717.062 126.784 L 717.062 121.452 L 746.216 121.452 L 746.216 113.712 L 679.308 113.712 L 679.308 121.452 L 708.462 121.452 Z"
-                  style="fill: var(--off-color)"
-                />
-              </g>
-            </svg>
-          </p>
-
-          <small
-            style="
-              text-transform: uppercase;
-              display: block;
-              font-weight: var(--font-weight-base);
-              font-size: var(--font-size-2xs);
-              line-height: var(--line-height-2xs);
-            "
-          >
-            formerly <b>satonomics</b>
+          </a>
+          <small style="display: block">
+            <strong>Bitcoin</strong> is
+            <b style="color: var(--color)">hope</b>
+            <span style="filter: grayscale(1) contrast(5)">🕊️</span>
           </small>
-          <p>
-            Version:
-            <a
-              href="https://github.com/kibo-money/kibo/blob/main/CHANGELOG.md"
-              rel="noopener noreferrer"
-              target="_blank"
-            >
-              0.5.0
-            </a>
-          </p>
-        </footer>
-      </section>
+        </header>
+      </nav>
+
+      <search id="search" hidden>
+        <header>
+          <div>
+            <h3 style="display: flex; flex-direction: column">
+              <input placeholder="Search..." id="search-input" />
+              <small id="search-small">
+                Focus the title or press <strong>/</strong> to search
+              </small>
+            </h3>
+          </div>
+        </header>
+        <ul id="search-results"></ul>
+      </search>
+
+      <footer>
+        <fieldset id="frame-selectors">
+          <label
+            id="aside-selector-label"
+            for="aside-selector"
+            title="Side"
+            class="md:hidden"
+          >
+            <input
+              type="radio"
+              name="frame"
+              id="aside-selector"
+              value="aside"
+            />
+            Main
+          </label>
+
+          <label id="nav-selector-label" for="nav-selector" title="Nav">
+            <input type="radio" name="frame" id="nav-selector" value="nav" />
+            Browse
+          </label>
+
+          <label
+            id="search-selector-label"
+            for="search-selector"
+            title="Search"
+          >
+            <input
+              type="radio"
+              name="frame"
+              id="search-selector"
+              value="search"
+            />
+            Search
+          </label>
+        </fieldset>
+      </footer>
     </main>
     <aside id="aside">
       <div class="shadow-left"></div>
       <div class="shadow-right"></div>
 
-      <section id="selected-frame" hidden>
+      <section id="selected-frame">
         <header id="selected-header" hidden>
           <div>
-            <div style="display: flex; align-items: center">
-              <button id="button-share">
-                <svg viewBox="0 0 20 20">
-                  <path
-                    fill-rule="evenodd"
-                    d="M3.75 2A1.75 1.75 0 0 0 2 3.75v3.5C2 8.216 2.784 9 3.75 9h3.5A1.75 1.75 0 0 0 9 7.25v-3.5A1.75 1.75 0 0 0 7.25 2h-3.5ZM3.5 3.75a.25.25 0 0 1 .25-.25h3.5a.25.25 0 0 1 .25.25v3.5a.25.25 0 0 1-.25.25h-3.5a.25.25 0 0 1-.25-.25v-3.5ZM3.75 11A1.75 1.75 0 0 0 2 12.75v3.5c0 .966.784 1.75 1.75 1.75h3.5A1.75 1.75 0 0 0 9 16.25v-3.5A1.75 1.75 0 0 0 7.25 11h-3.5Zm-.25 1.75a.25.25 0 0 1 .25-.25h3.5a.25.25 0 0 1 .25.25v3.5a.25.25 0 0 1-.25.25h-3.5a.25.25 0 0 1-.25-.25v-3.5Zm7.5-9c0-.966.784-1.75 1.75-1.75h3.5c.966 0 1.75.784 1.75 1.75v3.5A1.75 1.75 0 0 1 16.25 9h-3.5A1.75 1.75 0 0 1 11 7.25v-3.5Zm1.75-.25a.25.25 0 0 0-.25.25v3.5c0 .138.112.25.25.25h3.5a.25.25 0 0 0 .25-.25v-3.5a.25.25 0 0 0-.25-.25h-3.5Zm-7.26 1a1 1 0 0 0-1 1v.01a1 1 0 0 0 1 1h.01a1 1 0 0 0 1-1V5.5a1 1 0 0 0-1-1h-.01Zm9 0a1 1 0 0 0-1 1v.01a1 1 0 0 0 1 1h.01a1 1 0 0 0 1-1V5.5a1 1 0 0 0-1-1h-.01Zm-9 9a1 1 0 0 0-1 1v.01a1 1 0 0 0 1 1h.01a1 1 0 0 0 1-1v-.01a1 1 0 0 0-1-1h-.01Zm9 0a1 1 0 0 0-1 1v.01a1 1 0 0 0 1 1h.01a1 1 0 0 0 1-1v-.01a1 1 0 0 0-1-1h-.01Zm-3.5-1.5a1 1 0 0 1 1-1H12a1 1 0 0 1 1 1v.01a1 1 0 0 1-1 1h-.01a1 1 0 0 1-1-1V12Zm6-1a1 1 0 0 0-1 1v.01a1 1 0 0 0 1 1H17a1 1 0 0 0 1-1V12a1 1 0 0 0-1-1h-.01Zm-1 6a1 1 0 0 1 1-1H17a1 1 0 0 1 1 1v.01a1 1 0 0 1-1 1h-.01a1 1 0 0 1-1-1V17Zm-4-1a1 1 0 0 0-1 1v.01a1 1 0 0 0 1 1H12a1 1 0 0 0 1-1V17a1 1 0 0 0-1-1h-.01Z"
-                    clip-rule="evenodd"
-                  />
-                </svg>
-              </button>
-              <h1 id="selected-title"></h1>
-              <button id="button-favorite">
-                <svg viewBox="0 0 20 20">
-                  <path
-                    fill-rule="evenodd"
-                    d="M10.868 2.884c-.321-.772-1.415-.772-1.736 0l-1.83 4.401-4.753.381c-.833.067-1.171 1.107-.536 1.651l3.62 3.102-1.106 4.637c-.194.813.691 1.456 1.405 1.02L10 15.591l4.069 2.485c.713.436 1.598-.207 1.404-1.02l-1.106-4.637 3.62-3.102c.635-.544.297-1.584-.536-1.65l-4.752-.382-1.831-4.401Z"
-                    clip-rule="evenodd"
-                  />
-                </svg>
-              </button>
-            </div>
-            <small id="selected-description"></small>
+            <h1 style="display: flex; flex-direction: column">
+              <span id="selected-title" style="display: block"></span>
+              <small id="selected-description"></small>
+            </h1>
           </div>
         </header>
-        <hr id="selected-hr" hidden />
-        <div id="home" hidden>
-          <div>
-            <svg
-              style="height: 2.5rem; width: auto; margin: auto"
-              viewBox="0 0 720 180"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <defs></defs>
-              <g transform="matrix(7.5, 0, 0, 7.5, -2046.71228, -1592.744873)">
-                <ellipse
-                  style="fill: var(--orange)"
-                  cx="284.895"
-                  cy="224.366"
-                  rx="12"
-                  ry="12"
-                ></ellipse>
-                <path
-                  d="M 285.769 221.936 L 285.769 221.168 C 284.999 220.175 284.482 219 284.292 217.745 C 284.234 217.375 283.772 217.231 283.532 217.518 C 282.954 218.199 282.5 218.998 282.194 219.883 C 283.129 220.931 284.381 221.65 285.769 221.936 Z M 288.832 219.115 C 287.624 219.115 286.646 220.097 286.646 221.305 L 286.646 222.929 C 283.79 222.76 281.369 221.002 280.274 218.508 C 280.124 218.166 279.641 218.146 279.48 218.483 C 279.026 219.443 278.771 220.515 278.771 221.646 C 278.771 223.583 279.703 225.391 281.098 226.73 C 281.457 227.077 281.81 227.364 282.161 227.627 L 278.226 228.611 C 277.933 228.684 277.802 229.024 277.967 229.278 C 278.442 230.014 279.618 231.261 282.156 231.365 C 282.375 231.373 282.593 231.294 282.759 231.149 L 284.543 229.615 L 286.646 229.615 C 289.062 229.615 291.02 227.659 291.02 225.242 L 291.02 220.865 L 291.895 219.115 L 288.832 219.115 Z M 288.832 221.757 C 288.592 221.757 288.353 221.541 288.353 221.301 C 288.353 221.061 288.592 220.849 288.832 220.849 C 289.072 220.849 289.294 221.069 289.294 221.309 C 289.294 221.549 289.072 221.757 288.832 221.757 Z"
-                  style="fill: var(--white)"
-                ></path>
-              </g>
-              <g transform="matrix(1, 0, 0, 1, -30, 0)">
-                <path
-                  d="M 278.049 146.789 L 278.049 127.527 L 287.141 117.972 L 304.4 146.789 L 331.83 146.789 L 303.784 100.251 L 332.755 69.739 L 303.013 69.739 L 278.049 97.477 L 278.049 30.598 L 254.318 30.598 L 254.318 146.789 L 278.049 146.789 Z M 354.169 57.719 C 361.565 57.719 367.575 51.709 367.575 44.158 C 367.575 36.608 361.565 30.752 354.169 30.752 C 346.618 30.752 340.608 36.608 340.608 44.158 C 340.608 51.709 346.618 57.719 354.169 57.719 Z M 342.457 146.789 L 366.188 146.789 L 366.188 69.739 L 342.457 69.739 L 342.457 146.789 Z M 406.407 146.789 L 407.64 136.927 C 411.801 144.015 421.047 148.792 431.834 148.792 C 453.716 148.792 468.972 132.92 468.972 109.035 C 468.972 83.916 455.257 67.119 433.683 67.119 C 422.588 67.119 412.417 71.742 407.794 78.677 L 407.794 30.598 L 384.063 30.598 L 384.063 146.789 L 406.407 146.789 Z M 407.948 107.802 C 407.948 96.244 415.653 88.539 426.749 88.539 C 437.998 88.539 445.087 96.398 445.087 107.802 C 445.087 119.205 437.998 127.064 426.749 127.064 C 415.653 127.064 407.948 119.359 407.948 107.802 Z M 498.713 56.332 L 543.402 56.332 L 543.402 40.306 L 498.713 40.306 L 498.713 56.332 Z M 478.526 108.11 C 478.526 132.458 496.402 148.638 521.058 148.638 C 545.56 148.638 563.435 132.458 563.435 108.11 C 563.435 83.762 545.56 67.428 521.058 67.428 C 496.402 67.428 478.526 83.762 478.526 108.11 Z M 502.412 107.956 C 502.412 96.398 509.963 88.693 521.058 88.693 C 531.999 88.693 539.55 96.398 539.55 107.956 C 539.55 119.667 531.999 127.372 521.058 127.372 C 509.963 127.372 502.412 119.667 502.412 107.956 Z"
-                  style="fill: var(--color)"
-                ></path>
-                <path
-                  d="M 589.19 97.802 L 589.19 106.23 L 610.948 106.23 C 605.1 112.938 597.446 119.044 587.986 124.376 L 593.404 131.514 C 597.532 128.934 601.488 126.268 605.186 123.43 L 605.186 146.048 L 614.13 146.048 L 614.13 123.43 L 626.944 123.43 L 626.944 149.402 L 635.974 149.402 L 635.974 123.43 L 649.82 123.43 L 649.82 134.008 C 649.82 136.072 649.046 137.104 647.498 137.104 L 640.36 136.674 L 642.768 145.188 L 650.422 145.188 C 655.926 145.188 658.678 142.092 658.678 135.986 L 658.678 115.174 L 635.974 115.174 L 635.974 108.638 L 626.944 108.638 L 626.944 115.174 L 614.388 115.174 C 617.054 112.336 619.548 109.326 621.784 106.23 L 665.128 106.23 L 665.128 97.802 L 626.858 97.802 C 627.89 95.824 628.836 93.76 629.696 91.61 L 620.838 90.492 C 619.806 92.9 618.516 95.394 617.14 97.802 L 589.19 97.802 Z M 648.1 68.734 C 642.338 72.088 636.232 75.098 629.868 77.678 C 621.612 75.012 612.926 72.518 603.896 70.282 L 599.252 77.248 C 605.272 78.624 611.206 80.258 617.226 82.15 C 610.088 84.386 602.606 86.106 594.78 87.482 L 599.596 95.308 C 612.324 92.04 622.472 89.116 630.04 86.364 C 638.124 89.116 646.122 92.298 654.034 95.824 L 658.936 88.428 C 653.26 86.02 647.412 83.698 641.392 81.548 C 646.208 79.226 651.11 76.56 655.926 73.55 L 648.1 68.734 Z M 675.438 77.85 L 675.438 85.848 L 682.404 85.848 L 682.404 98.92 C 682.404 101.5 681.114 103.22 678.62 104.166 L 680.684 110.874 C 692.036 108.896 701.926 106.66 710.182 104.08 L 708.634 96.426 C 703.474 98.146 697.454 99.608 690.574 100.984 L 690.574 85.848 L 712.332 85.848 L 712.332 77.85 L 698.916 77.85 C 698.4 74.668 697.884 71.744 697.368 69.164 L 688.338 70.712 C 688.94 72.862 689.542 75.27 690.144 77.85 L 675.438 77.85 Z M 724.028 89.632 L 739.25 89.632 L 739.25 93.502 L 723.856 93.502 C 723.942 92.47 724.028 91.352 724.028 90.32 L 724.028 89.632 Z M 739.25 83.096 L 724.028 83.096 L 724.028 79.226 L 739.25 79.226 L 739.25 83.096 Z M 722.652 100.038 L 739.25 100.038 L 739.25 100.898 C 739.25 103.048 738.218 104.166 736.24 104.166 C 733.918 104.166 731.424 103.994 728.758 103.822 L 730.822 111.562 L 738.734 111.562 C 744.582 111.562 747.506 108.982 747.506 103.908 L 747.506 72.002 L 715.6 72.002 L 715.6 90.922 C 715.428 97.286 713.192 102.532 708.892 106.746 L 715.342 112.594 C 718.782 109.068 721.276 104.854 722.652 100.038 Z M 708.462 121.452 L 708.462 126.784 L 683.608 126.784 L 683.608 134.352 L 708.462 134.352 L 708.462 139.598 L 675.524 139.598 L 675.524 147.51 L 750 147.51 L 750 139.598 L 717.062 139.598 L 717.062 134.352 L 742.174 134.352 L 742.174 126.784 L 717.062 126.784 L 717.062 121.452 L 746.216 121.452 L 746.216 113.712 L 679.308 113.712 L 679.308 121.452 L 708.462 121.452 Z"
-                  style="fill: var(--off-color)"
-                ></path>
-              </g>
-            </svg>
-          </div>
-        </div>
         <div id="charts" hidden>
           <fieldset id="legend"></fieldset>
           <div id="chart-list">
             <div class="shadow-top"></div>
             <div class="shadow-bottom"></div>
-          </div>
-          <hr />
-          <div id="timescale">
-            <!-- <div>
-              <div class="shadow-left"></div>
-              <div class="shadow-right"></div> -->
-            <div id="timescale-date-buttons" hidden>
-              <button data-all-time>All time</button>
-              <button data-days="7">1 Week</button>
-              <button data-days="30">1 Month</button>
-              <button data-days="90">3 Months</button>
-              <button data-days="180">6 Months</button>
-              <button data-year-to-date>Year To Date</button>
-              <button data-days="365">1 Year</button>
-              <button data-days="730">2 Years</button>
-              <button data-days="1095">3 Years</button>
-              <button data-days="1460">4 Years</button>
-              <button data-days="2190">6 Years</button>
-              <button data-days="2920">8 Years</button>
-              <button data-year="2024">2024</button>
-              <button data-year="2023">2023</button>
-              <button data-year="2022">2022</button>
-              <button data-year="2021">2021</button>
-              <button data-year="2020">2020</button>
-              <button data-year="2019">2019</button>
-              <button data-year="2018">2018</button>
-              <button data-year="2017">2017</button>
-              <button data-year="2016">2016</button>
-              <button data-year="2015">2015</button>
-              <button data-year="2014">2014</button>
-              <button data-year="2013">2013</button>
-              <button data-year="2012">2012</button>
-              <button data-year="2011">2011</button>
-              <button data-year="2010">2010</button>
-              <button data-year="2009">2009</button>
-            </div>
-            <div id="timescale-height-buttons" hidden>
-              <button data-to="900k">≤900k</button>
-              <button data-to="850k">≤850k</button>
-              <button data-to="800k">≤800k</button>
-              <button data-to="750k">≤750k</button>
-              <button data-to="700k">≤700k</button>
-              <button data-to="650k">≤650k</button>
-              <button data-to="600k">≤600k</button>
-              <button data-to="550k">≤550k</button>
-              <button data-to="500k">≤500k</button>
-              <button data-to="450k">≤450k</button>
-              <button data-to="400k">≤400k</button>
-              <button data-to="350k">≤350k</button>
-              <button data-to="300k">≤300k</button>
-              <button data-to="250k">≤250k</button>
-              <button data-to="200k">≤200k</button>
-              <button data-to="150k">≤150k</button>
-              <button data-to="100k">≤100k</button>
-              <button data-to="50k">≤50k</button>
-            </div>
-            <!-- </div> -->
           </div>
         </div>
         <div id="simulation" hidden></div>

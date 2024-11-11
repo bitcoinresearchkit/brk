@@ -26,46 +26,50 @@
  *  3. updateIfNecessary() evaluates the computation if the node is dirty (the computations are
  *     executed in root to leaf order)
  */
-import { type Flags } from './flags';
-import { Owner } from './owner';
+import { type Flags } from "./flags.js";
+import { Owner } from "./owner.js";
 export interface SignalOptions<T> {
     name?: string;
     equals?: ((prev: T, next: T) => boolean) | false;
-}
-export interface MemoOptions<T> extends SignalOptions<T> {
-    initial?: T;
+    unobserved?: () => void;
 }
 interface SourceType {
     _observers: ObserverType[] | null;
+    _unobserved?: () => void;
     _updateIfNecessary: () => void;
     _stateFlags: Flags;
+    _time: number;
 }
 interface ObserverType {
     _sources: SourceType[] | null;
     _notify: (state: number) => void;
     _handlerMask: Flags;
     _notifyFlags: (mask: Flags, newFlags: Flags) => void;
+    _time: number;
 }
 /**
  * Returns the current observer.
  */
 export declare function getObserver(): ObserverType | null;
+export declare function incrementClock(): void;
 export declare const UNCHANGED: unique symbol;
 export type UNCHANGED = typeof UNCHANGED;
 export declare class Computation<T = any> extends Owner implements SourceType, ObserverType {
     _sources: SourceType[] | null;
     _observers: ObserverType[] | null;
     _value: T | undefined;
-    _compute: null | (() => T);
+    _compute: null | ((p?: T) => T);
     _name: string | undefined;
     _equals: false | ((a: T, b: T) => boolean);
+    _unobserved: (() => void) | undefined;
     /** Whether the computation is an error or has ancestors that are unresolved */
     _stateFlags: number;
     /** Which flags raised by sources are handled, vs. being passed through. */
     _handlerMask: number;
     _error: Computation<boolean> | null;
     _loading: Computation<boolean> | null;
-    constructor(initialValue: T | undefined, compute: null | (() => T), options?: MemoOptions<T>);
+    _time: number;
+    constructor(initialValue: T | undefined, compute: null | ((p?: T) => T), options?: SignalOptions<T>);
     _read(): T;
     /**
      * Return the current value of this computation
@@ -135,9 +139,23 @@ export declare function isEqual<T>(a: T, b: T): boolean;
  */
 export declare function untrack<T>(fn: () => T): T;
 /**
+ * Returns true if the given functinon contains signals that have been updated since the last time
+ * the parent computation was run.
+ */
+export declare function hasUpdated(fn: () => any): boolean;
+/**
+ * Returns true if the given function contains async signals that are not ready yet.
+ */
+export declare function isPending(fn: () => any): boolean;
+export declare function latest<T>(fn: () => T): T | undefined;
+/**
  * A convenient wrapper that calls `compute` with the `owner` and `observer` and is guaranteed
  * to reset the global context after the computation is finished even if an error is thrown.
  */
 export declare function compute<T>(owner: Owner | null, compute: (val: T) => T, observer: Computation<T>): T;
 export declare function compute<T>(owner: Owner | null, compute: (val: undefined) => T, observer: null): T;
+export declare class EagerComputation<T = any> extends Computation<T> {
+    constructor(initialValue: T, compute: () => T, options?: SignalOptions<T>);
+    _notify(state: number): void;
+}
 export {};

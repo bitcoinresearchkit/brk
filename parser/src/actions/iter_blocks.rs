@@ -18,7 +18,7 @@ use crate::{
 };
 
 pub fn iter_blocks(
-    config: &Config,
+    config: &mut Config,
     rpc: &biter::bitcoincore_rpc::Client,
     approx_block_count: usize,
     exit: Exit,
@@ -33,6 +33,7 @@ pub fn iter_blocks(
 
     if config.first_defragment() {
         databases.defragment(&exit);
+        config.disable_defragment();
     }
 
     log("Imported databases");

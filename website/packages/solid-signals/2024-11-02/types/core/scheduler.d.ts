@@ -1,5 +1,5 @@
-import { Computation } from './core';
-import type { Effect, RenderEffect } from './effect';
+import type { Effect, RenderEffect } from "./effect.js";
+import { Computation } from "./core.js";
 export declare let Computations: Computation[], RenderEffects: RenderEffect[], Effects: Effect[];
 /**
  * By default, changes are batched on the microtask queue which is an async process. You can flush

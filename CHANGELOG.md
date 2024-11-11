@@ -25,12 +25,13 @@
 - Added `Hash Price Min`
 - Added `Hash Price Rebound`
 - Removed all year datasets (25) in favor for epoch datasets (5), the former was too granular to be really useful
-- Removed datasets split by liquidity for all datasets already split by any address kind, while fun to have, they took time to compute, ram, and space to store and no one was actually checking them
+- Removed datasets split by liquidity for all datasets **already split by any address kind**, while fun to have, they took time to compute, ram, and space to store and no one was actually checking them
 - Fixed a lot of values in split by liquidity datasets
 
 ## Website
 
-- ~Added a dashboard~ Added the latest values to the tree next to each option (in "Folders") instead, while less values are visible at a time, it's much more readable and organised
+- Updated the design yet again which made the website even easier on the eyes
+- ~Added a dashboard~ Added the latest values to the tree next to each option instead, while less values are visible at a time, it's much more readable and organised
 - Added a library of PDFs
 - Fixed service worker not passing 304 (not modified) response and instead serving cached responses
 - Fixed history not being properly registered
@@ -50,7 +51,7 @@
 - Added `--recompute_computed true` argument, to allow recomputation of computed datasets in case of a bug
 - Fixed not saved arguments, not being processed properly
 - Fixed bug in `generic_map.multi_insert_simple_average`
-- Added defragmentation of databases to save space
+- Added defragmentation option `--first-defragment true` of databases to save space (which can save up to 50%)
 
 ## Server
 

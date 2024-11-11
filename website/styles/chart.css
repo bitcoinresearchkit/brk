@@ -8,8 +8,8 @@
     display: flex;
     align-items: center;
     gap: 1.5rem;
-    margin: -1rem -1.5rem;
-    padding: 1rem 1.5rem;
+    margin: -1rem var(--negative-main-padding);
+    padding: 1rem var(--main-padding);
     overflow-x: auto;
     min-width: 0;
 
@@ -26,7 +26,6 @@
           color: var(--off-color);
 
           > span.main > span.name {
-            text-decoration-style: wavy;
             text-decoration-thickness: 1.5px;
             text-decoration-color: var(--color);
             text-decoration-line: line-through;
@@ -61,8 +60,8 @@
   > #chart-list {
     margin-top: 1rem;
     position: relative;
-    margin-left: -1.5rem /* -24px */;
-    margin-right: -2rem /* -32px */;
+    margin-left: var(--negative-main-padding);
+    margin-right: calc(var(--negative-main-padding) - 0.5rem);
     display: flex;
     flex-direction: column;
     flex: 1;
@@ -88,56 +87,44 @@
         z-index: 10;
         display: flex;
         align-items: center;
-        padding-left: 1.5rem /* 24px */;
-        padding-right: 1.5rem /* 24px */;
+        padding-left: var(--main-padding);
+        padding-right: var(--main-padding);
         font-size: var(--font-size-xs);
         line-height: var(--line-height-xs);
+        gap: 0.5rem;
+        color: var(--off-color);
 
-        > * + * {
-          margin-left: 0.5rem; /* 8px */
-        }
+        > div.field {
+          display: flex;
+          align-items: center;
+          font-size: var(--font-size-xs);
+          line-height: var(--line-height-xs);
+          gap: 1rem;
 
-        > * + span {
-          color: var(--off-color);
+          > legend,
+          > div {
+            flex-shrink: 0;
+          }
+
+          > hr {
+            min-width: 1rem;
+          }
+
+          label {
+            padding: 0.5rem;
+            margin: -0.5rem;
+          }
+
+          > div {
+            display: flex;
+            gap: 0.5rem;
+          }
         }
       }
 
       > .chart-div {
         width: 100%;
         height: 100%;
-      }
-    }
-  }
-
-  > hr {
-    margin-top: 1rem;
-  }
-
-  > #timescale {
-    > #timescale-date-buttons,
-    > #timescale-height-buttons {
-      display: flex;
-      overflow-x: auto;
-      display: flex;
-      overflow-x: auto;
-      margin-bottom: -0.5rem;
-      padding: 0.5rem 0.5rem;
-      padding-top: 0.5rem;
-      margin-left: -1.5rem;
-      margin-right: -1.5rem;
-
-      > button {
-        color: var(--off-color);
-        flex-shrink: 0;
-        flex-grow: 1;
-        padding: 0.5rem;
-        white-space: nowrap;
-        min-width: 5rem;
-      }
-
-      @media (max-width: 767px) {
-        margin-bottom: -1.5rem;
-        padding-top: 0.5rem;
       }
     }
   }

@@ -1,5 +1,5 @@
-import type { SignalOptions } from './core';
-import { Owner } from './owner';
+import type { SignalOptions } from './core/index.js';
+import { Owner } from './core/index.js';
 export interface Accessor<T> {
     (): T;
 }

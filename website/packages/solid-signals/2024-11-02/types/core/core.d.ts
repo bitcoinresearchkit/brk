@@ -26,8 +26,8 @@
  *  3. updateIfNecessary() evaluates the computation if the node is dirty (the computations are
  *     executed in root to leaf order)
  */
-import { type Flags } from './flags';
-import { Owner } from './owner';
+import { type Flags } from "./flags.js";
+import { Owner } from "./owner.js";
 export interface SignalOptions<T> {
     name?: string;
     equals?: ((prev: T, next: T) => boolean) | false;
@@ -58,7 +58,7 @@ export declare class Computation<T = any> extends Owner implements SourceType, O
     _sources: SourceType[] | null;
     _observers: ObserverType[] | null;
     _value: T | undefined;
-    _compute: null | (() => T);
+    _compute: null | ((p?: T) => T);
     _name: string | undefined;
     _equals: false | ((a: T, b: T) => boolean);
     _unobserved: (() => void) | undefined;
@@ -69,7 +69,7 @@ export declare class Computation<T = any> extends Owner implements SourceType, O
     _error: Computation<boolean> | null;
     _loading: Computation<boolean> | null;
     _time: number;
-    constructor(initialValue: T | undefined, compute: null | (() => T), options?: SignalOptions<T>);
+    constructor(initialValue: T | undefined, compute: null | ((p?: T) => T), options?: SignalOptions<T>);
     _read(): T;
     /**
      * Return the current value of this computation
@@ -138,7 +138,16 @@ export declare function isEqual<T>(a: T, b: T): boolean;
  * dependencies. Use `untrack` if you want to also disable owner tracking.
  */
 export declare function untrack<T>(fn: () => T): T;
-export declare function hasUpdated(fn: () => any): Boolean;
+/**
+ * Returns true if the given functinon contains signals that have been updated since the last time
+ * the parent computation was run.
+ */
+export declare function hasUpdated(fn: () => any): boolean;
+/**
+ * Returns true if the given function contains async signals that are not ready yet.
+ */
+export declare function isPending(fn: () => any): boolean;
+export declare function latest<T>(fn: () => T): T | undefined;
 /**
  * A convenient wrapper that calls `compute` with the `owner` and `observer` and is guaranteed
  * to reset the global context after the computation is finished even if an error is thrown.

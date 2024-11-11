@@ -1,4 +1,4 @@
-import { Computation, type SignalOptions } from './core';
+import { Computation, type SignalOptions } from "./core.js";
 /**
  * Effects are the leaf nodes of our reactive graph. When their sources change, they are
  * automatically added to the queue of effects to re-execute, which will cause them to fetch their

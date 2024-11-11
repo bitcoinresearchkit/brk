@@ -1,19 +1,19 @@
 // @ts-check
 
 /**
- * @import { Option, ResourceDataset, TimeScale, SerializedHistory, TimeRange, Unit, Marker, Weighted, DatasetPath, OHLC, FetchedJSON, DatasetValue, FetchedResult, AnyDatasetPath, SeriesBlueprint, BaselineSpecificSeriesBlueprint, CandlestickSpecificSeriesBlueprint, LineSpecificSeriesBlueprint, SpecificSeriesBlueprintWithChart, Signal, Color, SettingsTheme, DatasetCandlestickData, FoldersFilter, PartialChartOption, ChartOption, AnyPartialOption, ProcessedOptionAddons, OptionsTree, AnyPath, SimulationOption } from "./types/self"
+ * @import { Option, ResourceDataset, TimeScale, TimeRange, Unit, Marker, Weighted, DatasetPath, OHLC, FetchedJSON, DatasetValue, FetchedResult, AnyDatasetPath, SeriesBlueprint, BaselineSpecificSeriesBlueprint, CandlestickSpecificSeriesBlueprint, LineSpecificSeriesBlueprint, SpecificSeriesBlueprintWithChart, Signal, Color, DatasetCandlestickData, PartialChartOption, ChartOption, AnyPartialOption, ProcessedOptionAddons, OptionsTree, AnyPath, SimulationOption } from "./types/self"
  * @import {createChart as CreateClassicChart, createChartEx as CreateCustomChart, LineStyleOptions} from "../packages/lightweight-charts/v4.2.0/types";
  * @import * as _ from "../packages/ufuzzy/v1.0.14/types"
  * @import { DeepPartial, ChartOptions, IChartApi, IHorzScaleBehavior, WhitespaceData, SingleValueData, ISeriesApi, Time, LogicalRange, SeriesMarker, CandlestickData, SeriesType, BaselineStyleOptions, SeriesOptionsCommon } from "../packages/lightweight-charts/v4.2.0/types"
  * @import { DatePath, HeightPath, LastPath } from "./types/paths";
- * @import { SignalOptions } from "../packages/solid-signals/2024-11-01/types/core/core"
- * @import { getOwner as GetOwner, onCleanup as OnCleanup, Owner } from "../packages/solid-signals/2024-11-01/types/core/owner"
- * @import { createSignal as CreateSignal, createEffect as CreateEffect, Accessor, Setter, createMemo as CreateMemo, createRoot as CreateRoot, runWithOwner as RunWithOwner } from "../packages/solid-signals/2024-11-01/types/signals";
+ * @import { SignalOptions } from "../packages/solid-signals/2024-11-02/types/core/core"
+ * @import { getOwner as GetOwner, onCleanup as OnCleanup, Owner } from "../packages/solid-signals/2024-11-02/types/core/owner"
+ * @import { createSignal as CreateSignal, createEffect as CreateEffect, Accessor, Setter, createMemo as CreateMemo, createRoot as CreateRoot, runWithOwner as RunWithOwner } from "../packages/solid-signals/2024-11-02/types/signals";
  */
 
 function initPackages() {
   async function importSignals() {
-    return import("../packages/solid-signals/2024-11-01/script.js").then(
+    return import("../packages/solid-signals/2024-11-02/script.js").then(
       (_signals) => {
         const signals = {
           createSolidSignal: /** @type {CreateSignal} */ (
@@ -227,7 +227,7 @@ function initPackages() {
                 autoSize: true,
                 layout: {
                   fontFamily: "Satoshi Chart",
-                  // fontSize: 13,
+                  fontSize: 13,
                   background: { color: "transparent" },
                   attributionLogo: false,
                 },
@@ -640,22 +640,6 @@ const utils = {
   yield() {
     return this.sleep(0);
   },
-  array: {
-    /**
-     * @template T
-     * @param {T[]} array
-     */
-    getRandomIndex(array) {
-      return Math.floor(Math.random() * array.length);
-    },
-    /**
-     * @template T
-     * @param {T[]} array
-     */
-    getRandomElement(array) {
-      return array[this.getRandomIndex(array)];
-    },
-  },
   dom: {
     /**
      * @param {string} id
@@ -725,6 +709,52 @@ const utils = {
       return spanName;
     },
     /**
+     * @param {Object} arg
+     * @param {string} arg.href
+     * @param {string} [arg.text]
+     * @param {boolean} [arg.blank]
+     * @param {VoidFunction} [arg.onClick]
+     * @param {boolean} [arg.preventDefault]
+     */
+    createAnchorElement({ text, href, blank, onClick, preventDefault }) {
+      const anchor = window.document.createElement("a");
+      anchor.href = href;
+
+      if (text) {
+        anchor.innerText = text;
+      }
+
+      if (blank) {
+        anchor.target = "_blank";
+        anchor.rel = "noopener noreferrer";
+      }
+
+      if (onClick || preventDefault) {
+        if (onClick) {
+          anchor.addEventListener("click", (event) => {
+            event.preventDefault();
+            onClick();
+          });
+        }
+      }
+
+      return anchor;
+    },
+    /**
+     * @param {Object} arg
+     * @param {string} arg.text
+     * @param {VoidFunction} arg.onClick
+     */
+    createButtonElement({ text, onClick }) {
+      const button = window.document.createElement("button");
+
+      button.innerHTML = text;
+
+      button.addEventListener("click", onClick);
+
+      return button;
+    },
+    /**
      * @param {Object} args
      * @param {string} args.inputName
      * @param {string} args.inputId
@@ -763,70 +793,6 @@ const utils = {
       return {
         label,
         input,
-      };
-    },
-    /**
-     * @param {Object} args
-     * @param {string} args.name
-     * @param {string} args.inputName
-     * @param {string} args.inputId
-     * @param {string} args.inputValue
-     * @param {string} args.labelTitle
-     * @param {string} [args.href]
-     * @param {(event: MouseEvent) => void} args.onClick
-     */
-    createComplexLabeledInput({
-      inputId,
-      inputName,
-      inputValue,
-      labelTitle,
-      name,
-      onClick,
-      href,
-    }) {
-      const { label, input } = this.createLabeledInput({
-        inputId,
-        inputName,
-        inputValue,
-        labelTitle,
-        onClick,
-      });
-
-      const spanMain = window.document.createElement("span");
-      spanMain.classList.add("main");
-      label.append(spanMain);
-
-      const spanName = this.createSpanName(name);
-
-      if (href) {
-        const anchor = window.document.createElement("a");
-        anchor.href = href;
-        anchor.append(spanName);
-        spanMain.append(anchor);
-
-        if (href.includes(".")) {
-          anchor.target = "_target";
-          anchor.rel = "noopener noreferrer";
-
-          anchor.addEventListener("click", (event) => {
-            event.stopPropagation();
-            // event.preventDefault();
-          });
-        } else {
-          anchor.addEventListener("click", (event) => {
-            // event.stopPropagation();
-            event.preventDefault();
-          });
-        }
-      } else {
-        spanMain.append(spanName);
-      }
-
-      return {
-        label,
-        input,
-        spanMain,
-        spanName,
       };
     },
     /**
@@ -1322,8 +1288,7 @@ const consts = createConstants();
 
 const ids = /** @type {const} */ ({
   selectedId: `selected-id`,
-  selectedFrameSelectorLabel: `selected-frame-selector-label`,
-  foldersFilter: "folders-filter",
+  asideSelectorLabel: `aside-selector-label`,
   chartRange: "chart-range",
   from: "from",
   to: "to",
@@ -1348,15 +1313,13 @@ const elements = {
   body: window.document.body,
   main: utils.dom.getElementById("main"),
   aside: utils.dom.getElementById("aside"),
-  selectedLabel: utils.dom.getElementById(ids.selectedFrameSelectorLabel),
-  foldersLabel: utils.dom.getElementById(`folders-frame-selector-label`),
-  searchLabel: utils.dom.getElementById(`search-frame-selector-label`),
-  searchFrame: utils.dom.getElementById("search-frame"),
-  historyFrame: utils.dom.getElementById("history-frame"),
-  settingsFrame: utils.dom.getElementById("settings-frame"),
-  foldersFrame: utils.dom.getElementById("folders-frame"),
+  asideLabel: utils.dom.getElementById(ids.asideSelectorLabel),
+  navLabel: utils.dom.getElementById(`nav-selector-label`),
+  searchLabel: utils.dom.getElementById(`search-selector-label`),
+  search: utils.dom.getElementById("search"),
+  nav: utils.dom.getElementById("nav"),
+  navHeader: utils.dom.getElementById("nav-header"),
   selectedFrame: utils.dom.getElementById("selected-frame"),
-  historyList: utils.dom.getElementById("history-list"),
   searchInput: /** @type {HTMLInputElement} */ (
     utils.dom.getElementById("search-input")
   ),
@@ -1365,38 +1328,24 @@ const elements = {
   selectedTitle: utils.dom.getElementById("selected-title"),
   selectedDescription: utils.dom.getElementById("selected-description"),
   selectors: utils.dom.getElementById("frame-selectors"),
-  foldersFilterAllCount: utils.dom.getElementById("folders-filter-all-count"),
-  foldersFilterFavoritesCount: utils.dom.getElementById(
-    "folders-filter-favorites-count",
-  ),
-  foldersFilterNewCount: utils.dom.getElementById("folders-filter-new-count"),
   chartList: utils.dom.getElementById("chart-list"),
   legend: utils.dom.getElementById("legend"),
   style: getComputedStyle(window.document.documentElement),
-  buttonFavorite: utils.dom.getElementById("button-favorite"),
-  timeScaleDateButtons: utils.dom.getElementById("timescale-date-buttons"),
-  timeScaleHeightButtons: utils.dom.getElementById("timescale-height-buttons"),
+  // timeScaleDateButtons: utils.dom.getElementById("timescale-date-buttons"),
+  // timeScaleHeightButtons: utils.dom.getElementById("timescale-height-buttons"),
   selectedHeader: utils.dom.getElementById("selected-header"),
-  selectedHr: utils.dom.getElementById("selected-hr"),
-  home: utils.dom.getElementById("home"),
   charts: utils.dom.getElementById("charts"),
   simulation: utils.dom.getElementById("simulation"),
 };
 /** @typedef {typeof elements} Elements */
 
-const savedSelectedId = localStorage.getItem(ids.selectedId);
-const isFirstTime = !savedSelectedId;
 const urlSelected = utils.url.pathnameToSelectedId();
 
 function initFrameSelectors() {
-  let selectedFrameLabel = localStorage.getItem(ids.checkedFrameSelectorLabel);
-
-  const selectors = elements.selectors;
-
-  const children = Array.from(selectors.children);
+  const children = Array.from(elements.selectors.children);
 
   /** @type {HTMLElement | undefined} */
-  let focusedSection = undefined;
+  let focusedFrame = undefined;
 
   for (let i = 0; i < children.length; i++) {
     const element = children[i];
@@ -1404,66 +1353,70 @@ function initFrameSelectors() {
     switch (element.tagName) {
       case "LABEL": {
         element.addEventListener("click", () => {
-          const id = element.id;
+          const inputId = element.getAttribute("for");
 
-          selectedFrameLabel = id;
-          localStorage.setItem(ids.checkedFrameSelectorLabel, id);
-
-          const sectionId = element.id.split("-").splice(0, 2).join("-"); // Remove -selector
-
-          const section = window.document.getElementById(sectionId);
-
-          if (!section) {
-            console.log(sectionId, section);
-            throw "Section should exist";
+          if (!inputId) {
+            console.log(element, element.getAttribute("for"));
+            throw "Input id in label not found";
           }
 
-          if (section === focusedSection) {
+          const input = window.document.getElementById(inputId);
+
+          if (!input || !("value" in input)) {
+            throw "Not input or no value";
+          }
+
+          const frame = window.document.getElementById(
+            /** @type {string} */ (input.value),
+          );
+
+          if (!frame) {
+            console.log(input.value);
+            throw "Frame element doesn't exist";
+          }
+
+          if (frame === focusedFrame) {
             return;
           }
 
-          section.hidden = false;
-          if (focusedSection) {
-            focusedSection.hidden = true;
+          frame.hidden = false;
+          if (focusedFrame) {
+            focusedFrame.hidden = true;
           }
-          focusedSection = section;
+          focusedFrame = frame;
         });
         break;
       }
     }
   }
 
-  if (selectedFrameLabel && (!urlSelected || urlSelected === savedSelectedId)) {
-    const frameLabel = window.document.getElementById(selectedFrameLabel);
-    if (!frameLabel) throw "Frame should exist";
-    frameLabel.click();
-  } else {
-    elements.selectedLabel.click();
-  }
+  elements.asideLabel.click();
 
-  // When going from mobile view to desktop view, if selected frame was open, go to the folders frame
+  // When going from mobile view to desktop view, if selected frame was open, go to the nav frame
   new IntersectionObserver((entries) => {
     for (let i = 0; i < entries.length; i++) {
       if (
         !entries[i].isIntersecting &&
-        entries[i].target === elements.selectedLabel &&
-        selectedFrameLabel === ids.selectedFrameSelectorLabel
+        entries[i].target === elements.asideLabel &&
+        focusedFrame == elements.aside
       ) {
-        elements.foldersLabel.click();
+        elements.navLabel.click();
       }
     }
-  }).observe(elements.selectedLabel);
+  }).observe(elements.asideLabel);
 
-  function setSelectedFrameParent() {
+  function setAsideParent() {
     const { clientWidth } = window.document.documentElement;
     if (clientWidth >= consts.MEDIUM_WIDTH) {
-      elements.aside.append(elements.selectedFrame);
+      elements.body.append(elements.aside);
     } else {
-      elements.main.append(elements.selectedFrame);
+      elements.main.append(elements.aside);
     }
   }
-  setSelectedFrameParent();
-  window.addEventListener("resize", setSelectedFrameParent);
+
+  setAsideParent();
+
+  window.addEventListener("resize", setAsideParent);
 }
 initFrameSelectors();
 
@@ -1473,7 +1426,7 @@ function createKeyDownEventListener() {
       case "Escape": {
         event.stopPropagation();
         event.preventDefault();
-        elements.foldersLabel.click();
+        elements.navLabel.click();
         break;
       }
       case "/": {
@@ -1578,14 +1531,21 @@ function createColors(dark) {
     return dark() ? tailwindRose900 : tailwindRose100;
   }
 
+  /**
+   * @param {string} property
+   */
+  function getLightDarkValue(property) {
+    const value = elements.style.getPropertyValue(property);
+    const [light, _dark] = value.slice(11, -1).split(", ");
+    return dark() ? _dark : light;
+  }
+
   function off() {
-    const _ = dark();
-    return elements.style.getPropertyValue("--off-color");
+    return getLightDarkValue("--off-color");
   }
 
   function textColor() {
-    const _ = dark();
-    return elements.style.getPropertyValue("--color");
+    return getLightDarkValue("--color");
   }
 
   return {
@@ -2200,7 +2160,22 @@ function initWebSockets(signals) {
 
 packages.signals().then((signals) =>
   options.then(({ initOptions }) => {
-    const dark = signals.createSignal(true);
+    function initDark() {
+      const preferredColorSchemeMatchMedia = window.matchMedia(
+        "(prefers-color-scheme: dark)",
+      );
+      const dark = signals.createSignal(preferredColorSchemeMatchMedia.matches);
+      preferredColorSchemeMatchMedia.addEventListener(
+        "change",
+        ({ matches }) => {
+          dark.set(matches);
+        },
+      );
+      return dark;
+    }
+    const dark = initDark();
+
+    const qrcode = signals.createSignal(/** @type {string | null} */ (null));
 
     function createLastHeightResource() {
       const lastHeight = signals.createSignal(0);
@@ -2253,6 +2228,7 @@ packages.signals().then((signals) =>
       signals,
       utils,
       webSockets,
+      qrcode,
     });
 
     function initSelected() {
@@ -2288,7 +2264,6 @@ packages.signals().then((signals) =>
 
             const hideTop = option.kind === "home" || option.kind === "pdf";
             elements.selectedHeader.hidden = hideTop;
-            elements.selectedHr.hidden = hideTop;
 
             elements.selectedTitle.innerHTML = option.title;
             elements.selectedDescription.innerHTML = option.serializedPath;
@@ -2297,10 +2272,10 @@ packages.signals().then((signals) =>
             let element;
 
             switch (option.kind) {
-              case "home": {
-                element = elements.home;
-                break;
-              }
+              // case "home": {
+              //   element = elements.home;
+              //   break;
+              // }
               case "chart": {
                 element = elements.charts;
 
@@ -2382,88 +2357,13 @@ packages.signals().then((signals) =>
           });
         }
         createApplyOptionEffect();
-
-        function initFavoriteButton() {
-          elements.buttonFavorite.addEventListener("click", () => {
-            const option = options.selected();
-
-            option.isFavorite.set((f) => {
-              const newState = !f;
-
-              const localStorageKey = options.optionToFavoriteKey(option);
-              if (newState) {
-                localStorage.setItem(localStorageKey, "1");
-              } else {
-                localStorage.removeItem(localStorageKey);
-              }
-
-              return newState;
-            });
-          });
-
-          signals.createEffect(
-            () => options.selected().isFavorite(),
-            (isFavorite) => {
-              if (isFavorite) {
-                elements.buttonFavorite.dataset.highlight = "";
-              } else {
-                delete elements.buttonFavorite.dataset.highlight;
-              }
-            },
-          );
-        }
-        initFavoriteButton();
-
-        function initShareButton() {
-          const shareDiv = utils.dom.getElementById("share-div");
-          const shareContentDiv = utils.dom.getElementById("share-content-div");
-
-          shareDiv.addEventListener("click", () => {
-            shareDiv.hidden = true;
-          });
-
-          shareContentDiv.addEventListener("click", (event) => {
-            event.stopPropagation();
-            event.preventDefault();
-          });
-
-          packages.leanQr().then(({ generate }) => {
-            const imgQrcode = /** @type {HTMLImageElement} */ (
-              utils.dom.getElementById("share-img")
-            );
-
-            const anchor = /** @type {HTMLAnchorElement} */ (
-              utils.dom.getElementById("share-anchor")
-            );
-
-            utils.dom
-              .getElementById("button-share")
-              .addEventListener("click", () => {
-                const href = window.location.href;
-                anchor.href = href;
-                anchor.innerHTML = href;
-
-                const qrcode = generate(
-                  /** @type {any} */ (window.document.location.href),
-                )?.toDataURL({
-                  // @ts-ignore
-                  padX: 0,
-                  padY: 0,
-                });
-                imgQrcode.src = qrcode || "";
-
-                shareDiv.hidden = false;
-              });
-          });
-        }
-        initShareButton();
       }
 
       function createMobileSwitchEffect() {
         let firstRun = true;
         signals.createEffect(options.selected, () => {
-          if (!firstRun && !utils.dom.isHidden(elements.selectedLabel)) {
-            elements.selectedLabel.click();
+          if (!firstRun && !utils.dom.isHidden(elements.asideLabel)) {
+            elements.asideLabel.click();
           }
           firstRun = false;
         });
@@ -2474,90 +2374,65 @@ packages.signals().then((signals) =>
     }
     initSelected();
 
+    function initShare() {
+      const shareDiv = utils.dom.getElementById("share-div");
+      const shareContentDiv = utils.dom.getElementById("share-content-div");
+
+      shareDiv.addEventListener("click", () => {
+        qrcode.set(null);
+      });
+
+      shareContentDiv.addEventListener("click", (event) => {
+        event.stopPropagation();
+        event.preventDefault();
+      });
+
+      packages.leanQr().then(({ generate }) => {
+        const imgQrcode = /** @type {HTMLImageElement} */ (
+          utils.dom.getElementById("share-img")
+        );
+
+        const anchor = /** @type {HTMLAnchorElement} */ (
+          utils.dom.getElementById("share-anchor")
+        );
+
+        signals.createEffect(qrcode, (qrcode) => {
+          if (!qrcode) {
+            shareDiv.hidden = true;
+            return;
+          }
+
+          const href = qrcode;
+          anchor.href = href;
+          anchor.innerText =
+            (href.startsWith("http")
+              ? href.split("//").at(-1)
+              : href.split(":").at(-1)) || "";
+
+          imgQrcode.src =
+            generate(/** @type {any} */ (href))?.toDataURL({
+              // @ts-ignore
+              padX: 0,
+              padY: 0,
+            }) || "";
+
+          shareDiv.hidden = false;
+        });
+      });
+    }
+    initShare();
+
     function initFolders() {
       function initTreeElement() {
         options.treeElement.set(() => {
           const treeElement = window.document.createElement("div");
           treeElement.classList.add("tree");
-          elements.foldersFrame.append(treeElement);
+          elements.navHeader.after(treeElement);
           return treeElement;
         });
       }
 
-      function createCountersDomUpdateEffect() {
-        elements.foldersFilterAllCount.innerHTML =
-          options.list.length.toLocaleString();
-
-        signals.createEffect(options.counters.favorites, (counterFavorites) => {
-          elements.foldersFilterFavoritesCount.innerHTML =
-            counterFavorites.toLocaleString();
-        });
-
-        signals.createEffect(options.counters.new, (counterNew) => {
-          elements.foldersFilterNewCount.innerHTML =
-            counterNew.toLocaleString();
-        });
-      }
-
-      function initFilters() {
-        const filterAllInput = /** @type {HTMLInputElement} */ (
-          utils.dom.getElementById("folders-filter-all")
-        );
-        const filterFavoritesInput = /** @type {HTMLInputElement} */ (
-          utils.dom.getElementById("folders-filter-favorites")
-        );
-        const filterNewInput = /** @type {HTMLInputElement} */ (
-          utils.dom.getElementById("folders-filter-new")
-        );
-
-        filterAllInput.addEventListener("change", () => {
-          options.filter.set("all");
-        });
-        filterFavoritesInput.addEventListener("change", () => {
-          options.filter.set("favorites");
-        });
-        filterNewInput.addEventListener("change", () => {
-          options.filter.set("new");
-        });
-
-        signals.createEffect(options.filter, (f) => {
-          localStorage.setItem(ids.foldersFilter, f);
-          switch (f) {
-            case "all": {
-              filterAllInput.checked = true;
-              break;
-            }
-            case "favorites": {
-              filterFavoritesInput.checked = true;
-              break;
-            }
-            case "new": {
-              filterNewInput.checked = true;
-              break;
-            }
-          }
-        });
-      }
-
-      function initCloseAllButton() {
-        utils.dom
-          .getElementById("button-close-all-folders")
-          .addEventListener("click", () => {
-            options.details.forEach((details) => (details.open = false));
-          });
-      }
-
-      function initScrollToSelectedButton() {
-        utils.dom
-          .getElementById("scroll-go-to-selected")
-          .addEventListener("click", () => {
-            scrollToSelected();
-          });
-      }
-
       async function scrollToSelected() {
-        options.filter.set("all");
-
         if (!options.selected()) throw "Selected should be set by now";
         const selectedId = options.selected().id;
 
@@ -2579,59 +2454,23 @@ packages.signals().then((signals) =>
 
         await utils.yield();
 
-        utils.dom
-          .getElementById(`${selectedId}-folders-selector`)
-          .scrollIntoView({
-            behavior: "instant",
-            block: "center",
-          });
+        utils.dom.getElementById(`${selectedId}-nav-selector`).scrollIntoView({
+          behavior: "instant",
+          block: "center",
+        });
       }
 
-      utils.dom.onFirstIntersection(elements.foldersFrame, () => {
-        console.log("folders: init");
+      utils.dom.onFirstIntersection(elements.nav, () => {
+        console.log("nav: init");
         initTreeElement();
-        createCountersDomUpdateEffect();
-        initFilters();
-        initCloseAllButton();
-        initScrollToSelectedButton();
-        if (isFirstTime) {
-          scrollToSelected();
-        }
+        scrollToSelected();
       });
     }
     initFolders();
 
     function initSearch() {
-      function initNoInputButton() {
-        utils.dom
-          .getElementById("search-no-input-text-button")
-          .addEventListener("click", () => {
-            options.selected.set(utils.array.getRandomElement(options.list));
-          });
-      }
-
-      /**
-       * @param {string} [value = '']
-       */
-      function setInputValue(value = "") {
-        elements.searchInput.focus();
-        elements.searchInput.value = value;
-        elements.searchInput.dispatchEvent(new Event("input"));
-      }
-
-      function initResetSearchButton() {
-        const resetSearchButton = utils.dom.getElementById("reset-search");
-        resetSearchButton.addEventListener("click", () => {
-          setInputValue();
-        });
-      }
-
       function initSearchFrame() {
         console.log("search: init");
-        initNoInputButton();
-        initResetSearchButton();
-
-        const localStorageSearchKey = "search";
 
         const haystack = options.list.map(
           (option) => `${option.title}\t${option.serializedPath}`,
@@ -2662,35 +2501,16 @@ packages.signals().then((signals) =>
 
               list = Array(maxIndex - minIndex + 1);
 
-              if (info && order) {
-                for (let i = minIndex; i <= maxIndex; i++) {
-                  let infoIdx = order[i];
+              for (let i = minIndex; i <= maxIndex; i++) {
+                let index = indexes[i];
 
-                  const [title, path] = ufuzzy
-                    .highlight(
-                      haystack[info.idx[infoIdx]],
-                      info.ranges[infoIdx],
-                    )
-                    .split("\t");
+                const [title, path] = haystack[index].split("\t");
 
-                  list[i % 100] = {
-                    option: options.list[info.idx[infoIdx]],
-                    path,
-                    title,
-                  };
-                }
-              } else {
-                for (let i = minIndex; i <= maxIndex; i++) {
-                  let index = indexes[i];
-
-                  const [title, path] = haystack[index].split("\t");
-
-                  list[i % 100] = {
-                    option: options.list[index],
-                    path,
-                    title,
-                  };
-                }
+                list[i % 100] = {
+                  option: options.list[index],
+                  path,
+                  title,
+                };
               }
             }
 
@@ -2730,8 +2550,6 @@ packages.signals().then((signals) =>
           function inputEvent() {
             signals.createRoot((_dispose) => {
               const needle = /** @type {string} */ (elements.searchInput.value);
-
-              utils.storage.write(localStorageSearchKey, needle);
 
               dispose?.();
 
@@ -2813,14 +2631,17 @@ packages.signals().then((signals) =>
                 const li = window.document.createElement("li");
                 elements.searchResults.appendChild(li);
 
-                const label = options.createOptionLabeledInput({
+                const element = options.createOptionElement({
                   option,
                   frame: "search",
                   name: title,
                   top: path,
+                  qrcode,
                 });
 
-                li.append(label);
+                if (element) {
+                  li.append(element);
+                }
               });
             });
           }
@@ -2831,512 +2652,10 @@ packages.signals().then((signals) =>
 
           elements.searchInput.addEventListener("input", inputEvent);
         });
-
-        setInputValue(localStorage.getItem(localStorageSearchKey) || "");
       }
-      utils.dom.onFirstIntersection(elements.searchFrame, initSearchFrame);
+      utils.dom.onFirstIntersection(elements.search, initSearchFrame);
     }
     initSearch();
-
-    function initHistory() {
-      const LOCAL_STORAGE_HISTORY_KEY = "history";
-      const MAX_HISTORY_LENGTH = 1_000;
-
-      const history = /** @type {SerializedHistory} */ (
-        JSON.parse(localStorage.getItem(LOCAL_STORAGE_HISTORY_KEY) || "[]")
-      ).flatMap(([optionId, timestamp]) => {
-        const option = options.list.find((option) => option.id === optionId);
-        return option ? [{ option, date: new Date(timestamp) }] : [];
-      });
-
-      /** @param {Date} date  */
-      function dateToTestedString(date) {
-        return date.toLocaleString().split(",")[0];
-      }
-
-      function createUnshiftHistoryEffect() {
-        signals.createEffect(options.selected, (option) => {
-          const head = history.at(0);
-          if (
-            head &&
-            head.option === option &&
-            dateToTestedString(new Date()) === dateToTestedString(head.date)
-          ) {
-            return;
-          }
-
-          history.unshift({
-            date: new Date(),
-            option,
-          });
-
-          utils.runWhenIdle(() => {
-            /** @type {SerializedHistory} */
-            const serializedHistory = history.map(({ option, date }) => [
-              option.id,
-              date.getTime(),
-            ]);
-
-            if (serializedHistory.length > MAX_HISTORY_LENGTH) {
-              serializedHistory.length = MAX_HISTORY_LENGTH;
-            }
-
-            const jsonHistory = JSON.stringify(serializedHistory);
-
-            localStorage.setItem(LOCAL_STORAGE_HISTORY_KEY, jsonHistory);
-          });
-        });
-      }
-      createUnshiftHistoryEffect();
-
-      function initHistoryFrame() {
-        console.log("history: init");
-
-        const owner = signals.getOwner();
-
-        /** @param {Date} date  */
-        function dateToDisplayedString(date) {
-          const formattedDate = dateToTestedString(date);
-
-          const now = new Date();
-          if (dateToTestedString(now) === formattedDate) {
-            return "Today";
-          }
-
-          now.setUTCDate(now.getUTCDate() - 1);
-
-          if (dateToTestedString(now) === formattedDate) {
-            return "Yesterday";
-          }
-
-          return date.toLocaleDateString(undefined, {
-            weekday: "long",
-            year: "numeric",
-            month: "long",
-            day: "numeric",
-          });
-        }
-
-        const grouped = history.reduce((grouped, { option, date }) => {
-          grouped[dateToTestedString(date)] ||= [];
-          grouped[dateToTestedString(date)].push({ option, date });
-          return grouped;
-        }, /** @type {Record<string, {option: Option, date: Date}[]>} */ ({}));
-
-        /** @type {[string|undefined, string|undefined]} */
-        const firstTwo = [undefined, undefined];
-
-        function initHistoryListInDom() {
-          Object.entries(grouped).forEach(([key, tuples], index) => {
-            if (index < 2) {
-              firstTwo[index] = key;
-            }
-
-            const heading = window.document.createElement("h4");
-            heading.id = key;
-            heading.innerHTML = dateToDisplayedString(tuples[0].date);
-            elements.historyList.append(heading);
-
-            tuples.forEach(({ option, date }) => {
-              elements.historyList.append(
-                options.createOptionLabeledInput({
-                  option,
-                  frame: "history",
-                  name: option.title,
-                  id: date.valueOf().toString(),
-                  top: date.toLocaleTimeString(),
-                  owner,
-                }),
-              );
-            });
-          });
-        }
-        initHistoryListInDom();
-
-        function createUpdateHistoryEffect() {
-          signals.createEffect(options.selected, (option) => {
-            const date = new Date();
-            const testedString = dateToTestedString(date);
-
-            const label = options.createOptionLabeledInput({
-              option,
-              frame: "history",
-              name: option.title,
-              id: date.valueOf().toString(),
-              top: date.toLocaleTimeString(),
-              owner,
-            });
-
-            const li = window.document.createElement("li");
-            li.append(label);
-
-            if (testedString === firstTwo[0]) {
-              if (options.selected() === grouped[testedString].at(0)?.option) {
-                return;
-              }
-
-              grouped[testedString].unshift({ option, date });
-              utils.dom.getElementById(testedString).after(li);
-            } else {
-              const [first, second] = firstTwo;
-              /** @param {string | undefined} id  */
-              function updateHeading(id) {
-                if (!id) return;
-                utils.dom.getElementById(id).innerHTML = dateToDisplayedString(
-                  grouped[id][0].date,
-                );
-              }
-
-              updateHeading(first);
-              updateHeading(second);
-
-              const heading = window.document.createElement("h4");
-              heading.innerHTML = dateToDisplayedString(date);
-              heading.id = testedString;
-
-              elements.historyList.prepend(li);
-              elements.historyList.prepend(heading);
-
-              grouped[testedString] = [{ option, date }];
-
-              firstTwo[1] = firstTwo[0];
-              firstTwo[0] = testedString;
-            }
-          });
-        }
-        createUpdateHistoryEffect();
-      }
-      utils.dom.onFirstIntersection(elements.historyFrame, initHistoryFrame);
-    }
-    initHistory();
-
-    function initSettings() {
-      function initSettingsFrame() {
-        console.log("settings: init");
-
-        function initTheme() {
-          const inputLight = /** @type {HTMLInputElement} */ (
-            utils.dom.getElementById("settings-theme-light-input")
-          );
-          const inputDark = /** @type {HTMLInputElement} */ (
-            utils.dom.getElementById("settings-theme-dark-input")
-          );
-          const inputSystem = /** @type {HTMLInputElement} */ (
-            utils.dom.getElementById("settings-theme-system-input")
-          );
-
-          const settingsThemeLocalStorageKey = "settings-theme";
-
-          let savedTheme = /** @type {SettingsTheme} */ (
-            localStorage.getItem(settingsThemeLocalStorageKey)
-          );
-
-          switch (savedTheme) {
-            case "dark": {
-              inputDark.checked = true;
-              break;
-            }
-            case "light": {
-              inputLight.checked = true;
-              break;
-            }
-            default:
-            case "system": {
-              inputSystem.checked = true;
-              savedTheme = "system";
-              break;
-            }
-          }
-
-          const theme = signals.createSignal(savedTheme);
-
-          const preferredColorSchemeMatchMedia = window.matchMedia(
-            "(prefers-color-scheme: dark)",
-          );
-
-          /**
-           * @param {boolean} shouldBeDark
-           */
-          function updateTheme(shouldBeDark) {
-            dark.set(shouldBeDark);
-
-            if (shouldBeDark) {
-              window.document.documentElement.dataset.theme = "dark";
-            } else {
-              delete window.document.documentElement.dataset.theme;
-            }
-
-            const backgroundColor = getComputedStyle(
-              window.document.documentElement,
-            ).getPropertyValue("--background-color");
-            const meta = utils.dom.queryOrCreateMetaElement("theme-color");
-            meta.content = backgroundColor;
-          }
-
-          function createUpdateDataThemeEffect() {
-            signals.createEffect(theme, (theme) => {
-              localStorage.setItem(settingsThemeLocalStorageKey, theme);
-              updateTheme(
-                theme === "dark" ||
-                  (theme === "system" &&
-                    preferredColorSchemeMatchMedia.matches),
-              );
-            });
-          }
-          createUpdateDataThemeEffect();
-
-          preferredColorSchemeMatchMedia.addEventListener("change", (media) => {
-            if (theme() === "system") {
-              updateTheme(media.matches);
-            }
-          });
-
-          utils.dom
-            .getElementById("settings-theme-field")
-            .addEventListener("change", (event) => {
-              const newTheme = /** @type {SettingsTheme | string} */ (
-                // @ts-ignore
-                event.target?.value
-              );
-              switch (newTheme) {
-                case "dark":
-                case "light":
-                case "system": {
-                  theme.set(newTheme);
-                  break;
-                }
-                default: {
-                  throw "Bad theme";
-                }
-              }
-            });
-        }
-        initTheme();
-
-        function initLeaderboard() {
-          const leaderboard = utils.dom.getElementById("leaderboard");
-
-          const donations = [
-            {
-              name: "_Checkɱate",
-              // url: "https://xcancel.com/_Checkmatey_",
-              url: "https://primal.net/p/npub1qh5sal68c8swet6ut0w5evjmj6vnw29x3k967h7atn45unzjyeyq6ceh9r",
-              amount: 500_000,
-            },
-            {
-              name: "avvi |",
-              url: "https://primal.net/p/npub1md2q6fexrtmd5hx9gw2p5640vg662sjlpxyz3tdmu4j4g8hhkm6scn6hx3",
-              amount: 5_000,
-            },
-            {
-              name: "mutatrum",
-              url: "https://primal.net/p/npub1hklphk7fkfdgmzwclkhshcdqmnvr0wkfdy04j7yjjqa9lhvxuflsa23u2k",
-              amount: 5_000,
-            },
-            {
-              name: "Gunnar",
-              url: "https://primal.net/p/npub1rx9wg2d5lhah45xst3580sajcld44m0ll9u5dqhu2t74p6xwufaqwghtd4",
-              amount: 1_000,
-            },
-            {
-              name: "Blokchain Boog",
-              url: "https://xcancel.com/BlokchainB",
-              amount: 1_500 + 1590,
-            },
-            {
-              name: "Josh",
-              url: "https://primal.net/p/npub1pc57ls4rad5kvsp733suhzl2d4u9y7h4upt952a2pucnalc59teq33dmza",
-              amount: 1_000,
-            },
-            {
-              name: "Alp",
-              url: "https://primal.net/p/npub175nul9cvufswwsnpy99lvyhg7ad9nkccxhkhusznxfkr7e0zxthql9g6w0",
-              amount: 1_000,
-            },
-            {
-              name: "Ulysses",
-              url: "https://primal.net/p/npub1n7n3dssm90hfsfjtamwh2grpzwjlvd2yffae9pqgg99583lxdypsnn9gtv",
-              amount: 1_000,
-            },
-            {
-              name: "btcschellingpt",
-              url: "https://primal.net/p/npub1nvfgglea9zlcs58tcqlc6j26rt50ngkgdk7699wfq4txrx37aqcsz4e7zd",
-              amount: 1_000 + 1_000,
-            },
-            {
-              name: "Coinatra",
-              url: "https://primal.net/p/npub1eut9kcejweegwp9waq3a4g03pvprdzkzvjjvl8fvj2a2wlx030eswzfna8",
-              amount: 1_000,
-            },
-            {
-              name: "Printer Go Brrrr",
-              url: "https://primal.net/p/npub1l5pxvjzhw77h86tu0sml2gxg8jpwxch7fsj6d05n7vuqpq75v34syk4q0n",
-              amount: 1_000,
-            },
-            {
-              name: "b81776c32d7b",
-              url: "https://primal.net/p/npub1hqthdsed0wpg57sqsc5mtyqxxgrh3s7493ja5h49v23v2nhhds4qk4w0kz",
-              amount: 17_509,
-            },
-            {
-              name: "DerGigi",
-              url: "https://primal.net/p/npub1dergggklka99wwrs92yz8wdjs952h2ux2ha2ed598ngwu9w7a6fsh9xzpc",
-              amount: 6001,
-            },
-            {
-              name: "Adarnit",
-              url: "https://primal.net/p/npub17armdveqy42uhuuuwjc5m2dgjkz7t7epgvwpuccqw8jusm8m0g4sn86n3s",
-              amount: 17_726,
-            },
-            {
-              name: "Auburn Citadel",
-              url: "https://primal.net/p/npub1730y5k2s9u82w9snx3hl37r8gpsrmqetc2y3xyx9h65yfpf28rtq0y635y",
-              amount: 17_471,
-            },
-            {
-              name: "anon",
-              amount: 210_000,
-            },
-            {
-              name: "Daniel ∞/21M",
-              url: "https://twitter.com/DanielAngelovBG",
-              amount: 21_000,
-            },
-            {
-              name: "Ivo",
-              url: "https://primal.net/p/npub1mnwjn40hr042rsmzu64rsnwsw07uegg4tjkv620c94p6e797wkvq3qeujc",
-              amount: 5_000,
-            },
-            {
-              name: "lassdas",
-              url: "https://primal.net/p/npub1gmhctt2hmjqz8ay2x8h5f8fl3h4fpfcezwqneal3usu3u65qca4s8094ea",
-              amount: 210_000,
-            },
-            {
-              name: "anon",
-              amount: 21_000,
-            },
-            {
-              name: "xplbzx",
-              url: "https://primal.net/p/npub1e0f808a350rxrhppu4zylzljt3arfpvrrpqdg6ft78xy6u49kq5slf0g92",
-              amount: 12_110,
-            },
-            {
-              name: "SoundMoney=Prosperity4ALL",
-              url: "https://xcancel.com/SoundmoneyP",
-              amount: 420_000,
-            },
-            {
-              name: "Johan",
-              url: "https://primal.net/p/npub1a4sd4cprrucfkvkfq9zs99ur4xe7lxw3uhhgvuzx6nqxhnpa2yyqlsa26u",
-              amount: 500_000,
-            },
-            {
-              name: "highperfocused",
-              url: "https://primal.net/p/npub1fq8vrf63vsrqjrwqgtwlvauqauc0yme6se8g8dqhcpf6tfs3equqntmzut",
-              amount: 4620,
-            },
-            {
-              name: "ClearMined",
-              url: "https://primal.net/p/npub1dj8zwktp3eyktfhs5mjlw8v0v2838xlquxr7ddsanayhcw98fcks8ddrq9",
-              amount: 300_000,
-            },
-          ];
-
-          donations.sort((a, b) =>
-            b.amount !== a.amount
-              ? b.amount - a.amount
-              : a.name.localeCompare(b.name),
-          );
-
-          donations.slice(0, 21).forEach(({ name, url, amount }) => {
-            const li = window.document.createElement("li");
-            leaderboard.append(li);
-
-            const a = window.document.createElement("a");
-            a.href = url || "";
-            a.target = "_blank";
-            a.rel = "noopener noreferrer";
-            a.innerHTML = name;
-            li.append(a);
-
-            li.append(" — ");
-
-            const small = window.document.createElement("small");
-            small.classList.add("sats");
-            small.innerHTML = `${amount.toLocaleString("en-us")} sats`;
-            li.append(small);
-          });
-        }
-        initLeaderboard();
-
-        function initInstallInstructions() {
-          if (
-            !env.standalone &&
-            env.safariOnly &&
-            (env.macOS || env.ipad || env.iphone)
-          ) {
-            const installInstructionsElement = utils.dom.getElementById(
-              "settings-install-instructions",
-            );
-            installInstructionsElement.hidden = false;
-
-            const hr = window.document.createElement("hr");
-            installInstructionsElement.before(hr);
-
-            const heading = window.document.createElement("h4");
-            heading.innerHTML = "Install";
-            installInstructionsElement.append(heading);
-
-            const p = window.document.createElement("p");
-            installInstructionsElement.append(p);
-
-            if (env.macOS) {
-              p.innerHTML = `This app can be installed by clicking on the <strong>File</strong> tab on the menu bar and then on <strong>Add to dock</strong>.`;
-            } else {
-              p.innerHTML = `This app can be installed by tapping on the <strong>Share</strong> button tab of Safari and then on <strong>Add to Home Screen</strong>.`;
-            }
-          }
-        }
-        initInstallInstructions();
-
-        function initMobileNav() {
-          const anchorApi = /** @type {HTMLAnchorElement} */ (
-            utils.dom.getElementById("anchor-api").cloneNode(true)
-          );
-
-          const anchorGit = /** @type {HTMLAnchorElement} */ (
-            utils.dom.getElementById("anchor-git").cloneNode(true)
-          );
-
-          const anchorNostr = /** @type {HTMLAnchorElement} */ (
-            utils.dom.getElementById("anchor-nostr").cloneNode(true)
-          );
-
-          const anchorGeyser = /** @type {HTMLAnchorElement} */ (
-            utils.dom.getElementById("anchor-geyser").cloneNode(true)
-          );
-
-          if (!anchorApi || !anchorGit || !anchorNostr || !anchorGeyser)
-            throw "Anchors should exist by now";
-
-          anchorApi.id = "";
-          anchorGit.id = "";
-          anchorNostr.id = "";
-          anchorGeyser.id = "";
-
-          const nav = utils.dom.getElementById("settings-nav");
-
-          nav.append(anchorApi);
-          nav.append(anchorGit);
-          nav.append(anchorNostr);
-          nav.append(anchorGeyser);
-        }
-        initMobileNav();
-      }
-      utils.dom.onFirstIntersection(elements.settingsFrame, initSettingsFrame);
-    }
-    initSettings();
 
     function initDesktopResizeBar() {
       const resizeBar = utils.dom.getElementById("resize-bar");
