@@ -16,7 +16,7 @@ The project is split in 3 parts:
 - First you have the extractor (parser), which parses the block data files from your Bitcoin Core node and computes a very wide range of datasets which are stored in compressed binary files
   > For the curious, it takes at the very least 24 hours to parse all the blocks and compute all datasets. After that it will wait for a new block and take between 1 and 3 minutes to be up to date
 - Then there is the website on which you can view, among other things, all datasets in various charts
-- Finally there is the server which serves the website and the genereted data via an [API](https://github.com/kibo-money/kibo/edit/main/README.md#endpoints)
+- Finally there is the server which serves the website and the generated data via an [API](https://github.com/kibo-money/kibo/tree/main#endpoints)
 
 Whether you're an enthusiast, a researcher, a miner, an analyst, a trader, a skeptic or just curious, there is something for everyone !
 
