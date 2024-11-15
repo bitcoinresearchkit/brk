@@ -1,50 +1,28 @@
-<p align="center">
-  <a href="https://kibo.money" target="_blank">
-    <picture>
-      <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/kibo-money/kibo/main/assets/logo-full-dark.svg">
-      <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/kibo-money/kibo/main/assets/logo-full-light.svg">
-      <img alt="kibō" src="https://raw.githubusercontent.com/kibo-money/kibo/main/assets/logo-full-light.svg" width="300" height="auto" style="max-width: 100%;">
-    </picture>
-  </a>
-</p>
 
-<p align="center">
-  <span>Bitcoin is our only <b><i>hope</i></b> for a better future.</span>
-</p>
+<a href="https://kibo.money" target="_blank">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/kibo-money/kibo/main/assets/logo-full-dark.svg">
+    <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/kibo-money/kibo/main/assets/logo-full-light.svg">
+    <img alt="kibō" src="https://raw.githubusercontent.com/kibo-money/kibo/main/assets/logo-full-light.svg" width="300" height="auto">
+  </picture>
+</a>
 
 ## Description
 
-_TLDR_: **A better, FOSS, Bitcoin-only, self-hostable Glassnode**
+[**kibō**](https://kibo.money) (_hope_ in japanese) is primarily an open source Bitcoin Core data extractor and visualizer (similar to [Glassnode](https://glassnode.com)).
 
-**kibō** (_hope_ in japanese) is a suite of tools that aims to help you understand Bitcoin's various dynamics. To do that, there is a wide number of charts and datasets with a scale by date but also by height free for you to explore. Which allows you to verify an incredible number of things, from the number of UTXOs to the repartition of the supply between different groups over time, with many things in between and it's all made possible thanks to Bitcoin's transparency. Whether you're an enthusiast, a researcher, a miner, an analyst, a trader, a skeptic or just curious, there is something new to learn for everyone !
+The project is split in 3 parts:
 
-While it's not the first tool trying to solve this problem, it's the first that is completely free, open-source and self-hostable. Which is very important as, just like for Bitcoin itself, I strongly believe that everyone should have access to this kind of data.
+- First you have the extractor (parser), which parses the block data files from your Bitcoin Core node and computes a very wide range of datasets which are stored in compressed binary files
+  > For the curious, it takes at the very least 24 hours to parse all the blocks and compute all datasets. After that it will wait for a new block and take between 1 and 3 minutes to be up to date
+- Then there is the website on which you can view, among other things, all datasets in various charts
+- Finally there is the server which serves the website and the genereted data via an [API](https://github.com/kibo-money/kibo/edit/main/README.md#endpoints)
 
-If you are a user of [mempool.space](https://mempool.space), you'll find this to be very complimentary, as it's a global and macro view of the chain over time instead.
+Whether you're an enthusiast, a researcher, a miner, an analyst, a trader, a skeptic or just curious, there is something for everyone !
 
-If we want the world to move towards and, in the end, to be on a Bitcoin standard, we must have tools like this at our disposal.
+While it's not the first tool trying to solve these problems, it's the first that is completely free, open-source and self-hostable.
 
-## Donations
-
-This project was started as an answer to the outrageous pricing from Glassnode (and their third tier starting at $833.33/month !).
-
-But it is a lot of work and has been worked on **full-time since November of 2023** and has also been operational since then without any ads.
-
-**At the time of writing (2024-09-12), this project has made around 2,200,000 sats, which is around $1300 or $120/month. While I'm very grateful for all donations, it's sadly unsustainable.**
-
-So if you find this project useful, [please send some sats](https://geyser.fund/project/kibo/), it would be really appreciated.
-
-If you're a potential sponsor, feel free to contact me in Nostr !
-
-Bitcoin address: [bc1q950q4ukpxxm6wjjkv6cpq8jzpazaxrrwftctkt](bitcoin:bc1q950q4ukpxxm6wjjkv6cpq8jzpazaxrrwftctkt)
-
-Lightning address: lnurl1dp68gurn8ghj7ampd3kx2ar0veekzar0wd5xjtnrdakj7tnhv4kxctttdehhwm30d3h82unvwqhkxmmww3jkuar8d35kgetj8yuq363hv4
-
-[Geyser Fund](https://geyser.fund/project/kibo/)
-
-## Warning
-
-This project is still in an early stage. Until more people look at the code and check the various computations in it, the datasets might be, in the worst case, completely false.
+If you are a user of [mempool.space](https://mempool.space), you'll find this to be very complimentary, as it offers a macro view of the chain over time instead of a detailed one.
 
 ## Instances
 
@@ -55,14 +33,6 @@ This project is still in an early stage. Until more people look at the code and 
 | [preview.kibo.money](https://preview.kibo.money) | Dev    | ![Version](https://img.shields.io/badge/dynamic/toml?url=https%3A%2F%2Fpreview.kibo.money%2FCargo.toml&query=%24.package.version&style=for-the-badge&label=%20&color=%23db9e03) | ![Status](https://img.shields.io/uptimerobot/status/m797869753-d40fc161bcb34624857a8082?style=for-the-badge&label=%20&up_color=%231cb454&down_color=%23e63636) | ![Height](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fpreview.kibo.money%2Fapi%2Flast-height.json&query=%24.value&style=for-the-badge&label=%20&color=%23f26610) | ![Ratio](https://img.shields.io/uptimerobot/ratio/m797869753-d40fc161bcb34624857a8082?style=for-the-badge&label=%20&color=%232f73f1) |
 
 Please open an issue if you want to add another instance
-
-## Structure
-
-- `parser`: The backbone of the project, it does most of the work by parsing and then computing datasets from the timechain
-  - Takes 2 to 4 days to parse the whole chain and create all datasets
-  - If up to date wil take 1-3mn to compute the last 100 blocks
-- `website`: A web app which displays the generated datasets in various charts
-- `server`: A small server which will serve both the website and the computed datasets via an API
 
 ## Endpoints
 
@@ -83,10 +53,10 @@ Please open an issue if you want to add another instance
 
 - **More Datasets/Charts**
 - **Simulations**
-- **Dashboards**
 - **Nostr integration**
 - **API Documentation**
 - **Descriptions**
+- **Docker support**
 - **Start9 support**
 
 ## Setup
@@ -94,16 +64,13 @@ Please open an issue if you want to add another instance
 ### Requirements
 
 - At least 16 GB of RAM
-- 1 TB of free space (will use 60-80% of that)
+- 1 TB of free space (will use 70% of that without defragmentation and 40% after)
 - A running instance of bitcoin-core with:
   - `-txindex=1`
   - `-blocksxor=0`
   - RPC credentials
+  - Example: `bitcoind -datadir="$HOME/.bitcoin" -blocksonly -txindex=1 -blocksxor=0 -rpcuser="satoshi" -rpcpassword="nakamoto"`
 - Git
-
-### Docker
-
-Working on it
 
 ### Manual
 
@@ -186,16 +153,14 @@ And start it also with the `run.sh` script instead of `cargo run -r`
 
 Then the easiest to let others access your server is to use `cloudflared` which will also cache requests. For more information go to: https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/
 
-## Brand
+## Donate
 
-### Name
+<img width="159" alt="image" src="https://github.com/user-attachments/assets/8bbb759f-4874-46cb-b093-b30cb30f5828">
 
-kibō means _**hope**_ in japanese which is what Bitcoin ultimately is for many, hope for a better future.
+[bc1q950q4ukpxxm6wjjkv6cpq8jzpazaxrrwftctkt](bitcoin:bc1q950q4ukpxxm6wjjkv6cpq8jzpazaxrrwftctkt)
 
-Formerly Satonomics
+<img width="159" alt="image" src="https://github.com/user-attachments/assets/745e39c7-be26-4f2a-90f2-54786e62ba35">
 
-### Logo
+[lnurl1dp68gurn8ghj7ampd3kx2ar0veekzar0wd5xjtnrdakj7tnhv4kxctttdehhwm30d3h82unvwqhkxmmww3jkuar8d35kgetj8yuq363hv4](lightning:lnurl1dp68gurn8ghj7ampd3kx2ar0veekzar0wd5xjtnrdakj7tnhv4kxctttdehhwm30d3h82unvwqhkxmmww3jkuar8d35kgetj8yuq363hv4)
 
-The dove (borrowed from [svgrepo](https://www.svgrepo.com/svg/351969/dove) for now) is known to represent hope in many cultures.
-
-The orange background is a wink to Bitcoin and when in a circle, it also represents the sun, which means that while it's our hope for a better future, we still have to be careful with our collective goals and actions, to not end up like Icarus.
+[Geyser Fund](https://geyser.fund/project/kibo/)
