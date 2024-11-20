@@ -57,75 +57,8 @@
     }
   }
 
-  > #chart-list {
-    margin-top: 1rem;
-    position: relative;
+  .chart-list {
     margin-left: var(--negative-main-padding);
     margin-right: calc(var(--negative-main-padding) - 0.5rem);
-    display: flex;
-    flex-direction: column;
-    flex: 1;
-    min-height: 0;
-    z-index: 20;
-
-    > .chart-wrapper {
-      height: 100%;
-      position: relative;
-      min-height: 0px;
-      width: 100%;
-      cursor: crosshair;
-
-      &:has(+ .chart-wrapper:not([hidden])) {
-        height: calc(100% - 62px);
-      }
-
-      > fieldset {
-        pointer-events: none;
-        position: absolute;
-        left: 0px;
-        top: 0px;
-        z-index: 10;
-        display: flex;
-        align-items: center;
-        padding-left: var(--main-padding);
-        padding-right: var(--main-padding);
-        font-size: var(--font-size-xs);
-        line-height: var(--line-height-xs);
-        gap: 0.5rem;
-        color: var(--off-color);
-
-        > div.field {
-          display: flex;
-          align-items: center;
-          font-size: var(--font-size-xs);
-          line-height: var(--line-height-xs);
-          gap: 1rem;
-
-          > legend,
-          > div {
-            flex-shrink: 0;
-          }
-
-          > hr {
-            min-width: 1rem;
-          }
-
-          label {
-            padding: 0.5rem;
-            margin: -0.5rem;
-          }
-
-          > div {
-            display: flex;
-            gap: 0.5rem;
-          }
-        }
-      }
-
-      > .chart-div {
-        width: 100%;
-        height: 100%;
-      }
-    }
   }
 }

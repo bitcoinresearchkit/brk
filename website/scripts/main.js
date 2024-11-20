@@ -4,7 +4,7 @@
  * @import { Option, ResourceDataset, TimeScale, TimeRange, Unit, Marker, Weighted, DatasetPath, OHLC, FetchedJSON, DatasetValue, FetchedResult, AnyDatasetPath, SeriesBlueprint, BaselineSpecificSeriesBlueprint, CandlestickSpecificSeriesBlueprint, LineSpecificSeriesBlueprint, SpecificSeriesBlueprintWithChart, Signal, Color, DatasetCandlestickData, PartialChartOption, ChartOption, AnyPartialOption, ProcessedOptionAddons, OptionsTree, AnyPath, SimulationOption } from "./types/self"
  * @import {createChart as CreateClassicChart, createChartEx as CreateCustomChart, LineStyleOptions} from "../packages/lightweight-charts/v4.2.0/types";
  * @import * as _ from "../packages/ufuzzy/v1.0.14/types"
- * @import { DeepPartial, ChartOptions, IChartApi, IHorzScaleBehavior, WhitespaceData, SingleValueData, ISeriesApi, Time, LogicalRange, SeriesMarker, CandlestickData, SeriesType, BaselineStyleOptions, SeriesOptionsCommon } from "../packages/lightweight-charts/v4.2.0/types"
+ * @import { DeepPartial, ChartOptions, IChartApi, IHorzScaleBehavior, WhitespaceData, SingleValueData, ISeriesApi, Time, LineData, LogicalRange, SeriesMarker, CandlestickData, SeriesType, BaselineStyleOptions, SeriesOptionsCommon } from "../packages/lightweight-charts/v4.2.0/types"
  * @import { DatePath, HeightPath, LastPath } from "./types/paths";
  * @import { SignalOptions } from "../packages/solid-signals/2024-11-02/types/core/core"
  * @import { getOwner as GetOwner, onCleanup as OnCleanup, Owner } from "../packages/solid-signals/2024-11-02/types/core/owner"
@@ -19,7 +19,22 @@ function initPackages() {
           createSolidSignal: /** @type {CreateSignal} */ (
             _signals.createSignal
           ),
-          createEffect: /** @type {CreateEffect} */ (_signals.createEffect),
+          createSolidEffect: /** @type {CreateEffect} */ (
+            _signals.createEffect
+          ),
+          createEffect: /** @type {CreateEffect} */ (compute, effect) => {
+            let dispose = /** @type {VoidFunction | null} */ (null);
+            // @ts-ignore
+            _signals.createEffect(compute, (v) => {
+              dispose?.();
+              signals.createRoot((_dispose) => {
+                dispose = _dispose;
+                effect(v);
+              });
+              signals.onCleanup(() => dispose?.());
+            });
+            signals.onCleanup(() => dispose?.());
+          },
           createMemo: /** @type {CreateMemo} */ (_signals.createMemo),
           createRoot: /** @type {CreateRoot} */ (_signals.createRoot),
           getOwner: /** @type {GetOwner} */ (_signals.getOwner),
@@ -220,8 +235,15 @@ function initPackages() {
              * @param {HTMLElement} args.element
              * @param {Signals} args.signals
              * @param {Colors} args.colors
+             * @param {DeepPartial<ChartOptions>} [args.options]
              */
-            function createChart({ scale, element, signals, colors }) {
+            function createChart({
+              scale,
+              element,
+              signals,
+              colors,
+              options: _options = {},
+            }) {
               /** @satisfies {DeepPartial<ChartOptions>} */
               const options = {
                 autoSize: true,
@@ -257,6 +279,7 @@ function initPackages() {
                       }
                     : {}),
                 },
+                ..._options,
               };
 
               /** @type {IChartApi} */
@@ -597,7 +620,6 @@ function initPackages() {
     let packagePromise = null;
 
     return function () {
-      let p = null;
       if (!packagePromise) {
         // @ts-ignore
         packagePromise = imports[key]();
@@ -639,6 +661,20 @@ const utils = {
   },
   yield() {
     return this.sleep(0);
+  },
+  array: {
+    /**
+     * @param {number} start
+     * @param {number} end
+     */
+    range(start, end) {
+      const range = [];
+      while (start <= end) {
+        range.push(start);
+        start += 1;
+      }
+      return range;
+    },
   },
   dom: {
     /**
@@ -743,12 +779,15 @@ const utils = {
     /**
      * @param {Object} arg
      * @param {string} arg.text
+     * @param {string} arg.title
      * @param {VoidFunction} arg.onClick
      */
-    createButtonElement({ text, onClick }) {
+    createButtonElement({ text, onClick, title }) {
       const button = window.document.createElement("button");
 
       button.innerHTML = text;
+
+      button.title = title;
 
       button.addEventListener("click", onClick);
 
@@ -772,6 +811,8 @@ const utils = {
       onClick,
     }) {
       const label = window.document.createElement("label");
+
+      inputId = inputId.toLowerCase();
 
       const input = window.document.createElement("input");
       input.type = "radio";
@@ -897,6 +938,130 @@ const utils = {
       });
 
       return field;
+    },
+    createUlElement() {
+      return window.document.createElement("ul");
+    },
+    createLiElement() {
+      return window.document.createElement("li");
+    },
+    /**
+     * @param {Object} args
+     * @param {string} args.id
+     * @param {string} args.title
+     * @param {Signal<number | null>} args.signal
+     * @param {number} args.min
+     * @param {number} args.max
+     * @param {number} args.step
+     * @param {{createEffect: typeof CreateEffect}} args.signals
+     */
+    createInputNumberElement({ id, title, signal, min, max, step, signals }) {
+      const input = window.document.createElement("input");
+      input.id = id;
+      input.title = title;
+      input.type = "number";
+      input.min = String(min);
+      input.max = String(max);
+      input.step = String(step);
+
+      let stateValue = /** @type {string | null} */ (null);
+
+      signals.createEffect(
+        () => {
+          const value = signal();
+          return value ? String(value) : "";
+        },
+        (value) => {
+          if (stateValue !== value) {
+            input.value = value;
+            stateValue = value;
+          }
+        },
+      );
+
+      input.addEventListener("input", () => {
+        const valueSer = input.value;
+        const value = Number(valueSer);
+        if (value >= min && value <= max) {
+          stateValue = valueSer;
+          signal.set(value);
+        }
+      });
+
+      return input;
+    },
+    /**
+     * @param {Object} args
+     * @param {string} args.id
+     * @param {string} args.title
+     * @param {Signal<Date | null>} args.signal
+     * @param {{createEffect: typeof CreateEffect}} args.signals
+     */
+    createInputDate({ id, title, signal, signals }) {
+      const input = window.document.createElement("input");
+      input.id = id;
+      input.title = title;
+      input.type = "date";
+      const min = "2011-01-01";
+      const minDate = new Date(min);
+      const maxDate = new Date();
+      const max = utils.date.toString(maxDate);
+      input.min = min;
+      input.max = max;
+
+      let stateValue = /** @type {string | null} */ (null);
+
+      signals.createEffect(
+        () => {
+          const date = signal();
+          return date ? utils.date.toString(date) : "";
+        },
+        (value) => {
+          if (stateValue !== value) {
+            input.value = value;
+            stateValue = value;
+          }
+        },
+      );
+
+      input.addEventListener("change", () => {
+        const value = input.value;
+        const date = new Date(value);
+        if (date >= minDate && date <= maxDate) {
+          stateValue = value;
+          signal.set(value ? date : null);
+        }
+      });
+
+      return input;
+    },
+    /**
+     * @param {Object} param0
+     * @param {string} param0.title
+     * @param {string} param0.description
+     */
+    createHeader({ title, description }) {
+      const headerElement = window.document.createElement("header");
+
+      const div = window.document.createElement("div");
+      headerElement.append(div);
+
+      const h1 = window.document.createElement("h1");
+      div.append(h1);
+
+      const titleElement = window.document.createElement("span");
+      titleElement.append(title);
+      h1.append(titleElement);
+
+      const descriptionElement = window.document.createElement("small");
+      descriptionElement.append(description);
+      h1.append(descriptionElement);
+
+      return {
+        headerElement,
+        titleElement,
+        descriptionElement,
+      };
     },
   },
   url: {
@@ -1124,6 +1289,20 @@ const utils = {
         return Number(v);
       },
     },
+    date: {
+      /**
+       * @param {Date} v
+       */
+      serialize(v) {
+        return utils.date.toString(v);
+      },
+      /**
+       * @param {string} v
+       */
+      deserialize(v) {
+        return new Date(v);
+      },
+    },
   },
   formatters: {
     dollars: new Intl.NumberFormat("en-US", {
@@ -1167,6 +1346,25 @@ const utils = {
         ? new Date(time)
         : // @ts-ignore
           new Date(time.year, time.month, time.day);
+    },
+    /**
+     * @param {Date} start
+     */
+    getRangeUpToToday(start) {
+      return this.getRange(start, new Date());
+    },
+    /**
+     * @param {Date} start
+     * @param {Date} end
+     */
+    getRange(start, end) {
+      const dates = /** @type {Date[]} */ ([]);
+      let currentDate = new Date(start);
+      while (currentDate <= end) {
+        dates.push(new Date(currentDate));
+        currentDate.setUTCDate(currentDate.getUTCDate() + 1);
+      }
+      return dates;
     },
   },
   /**
@@ -1328,14 +1526,14 @@ const elements = {
   selectedTitle: utils.dom.getElementById("selected-title"),
   selectedDescription: utils.dom.getElementById("selected-description"),
   selectors: utils.dom.getElementById("frame-selectors"),
-  chartList: utils.dom.getElementById("chart-list"),
+  chartsChartList: utils.dom.getElementById("charts-chart-list"),
   legend: utils.dom.getElementById("legend"),
   style: getComputedStyle(window.document.documentElement),
-  // timeScaleDateButtons: utils.dom.getElementById("timescale-date-buttons"),
-  // timeScaleHeightButtons: utils.dom.getElementById("timescale-height-buttons"),
   selectedHeader: utils.dom.getElementById("selected-header"),
   charts: utils.dom.getElementById("charts"),
   simulation: utils.dom.getElementById("simulation"),
+  livePrice: utils.dom.getElementById("live-price"),
+  moscowTime: utils.dom.getElementById("moscow-time"),
 };
 /** @typedef {typeof elements} Elements */
 
@@ -1951,6 +2149,21 @@ function createDatasets(signals) {
           scale,
           url: baseURL,
           fetch: _fetch,
+          fetchRange(start, end) {
+            const promises = /** @type {Promise<void>[]} */ ([]);
+            switch (scale) {
+              case "date": {
+                utils.array.range(start, end).forEach((year) => {
+                  promises.push(this.fetch(year));
+                });
+                break;
+              }
+              default: {
+                throw "Unsupported";
+              }
+            }
+            return Promise.all(promises);
+          },
           fetchedJSONs,
           // drop() {
           //   dispose();
@@ -1985,7 +2198,7 @@ function createDatasets(signals) {
    * @param {DatasetPath<S>} path
    * @returns {ResourceDataset<S>}
    */
-  function getOrImport(scale, path) {
+  function getOrCreate(scale, path) {
     if (scale === "date") {
       const found = date.get(/** @type {DatePath} */ (path));
       if (found) return /** @type {ResourceDataset<S>} */ (found);
@@ -2018,7 +2231,7 @@ function createDatasets(signals) {
   }
 
   return {
-    getOrImport,
+    getOrCreate,
   };
 }
 /** @typedef {ReturnType<typeof createDatasets>} Datasets */
@@ -2088,18 +2301,18 @@ function initWebSockets(signals) {
 
   /**
    * @param {(candle: DatasetCandlestickData) => void} callback
-   * @returns
+   * @param {number} interval
    */
-  function krakenCandleWebSocketCreator(callback) {
-    const ws = new WebSocket("wss://ws.kraken.com");
+  function krakenCandleWebSocketCreator(callback, interval) {
+    const ws = new WebSocket("wss://ws.kraken.com/v2");
 
     ws.addEventListener("open", () => {
       ws.send(
         JSON.stringify({
-          event: "subscribe",
-          pair: ["XBT/USD"],
-          subscription: {
-            name: "ohlc",
+          method: "subscribe",
+          params: {
+            channel: "ohlc",
+            symbol: ["BTC/USD"],
             interval: 1440,
           },
         }),
@@ -2109,11 +2322,11 @@ function initWebSockets(signals) {
     ws.addEventListener("message", (message) => {
       const result = JSON.parse(message.data);
 
-      if (!Array.isArray(result)) return;
+      if (result.channel !== "ohlc") return;
 
-      const [timestamp, _, open, high, low, close, __, volume] = result[1];
+      const { timestamp, open, high, low, close } = result.data.at(-1);
 
-      const date = new Date(Number(timestamp) * 1000);
+      const date = new Date(timestamp);
 
       const dateStr = utils.date.toString(date);
 
@@ -2134,12 +2347,18 @@ function initWebSockets(signals) {
     return ws;
   }
 
-  const krakenCandle = createWebsocket(krakenCandleWebSocketCreator);
+  const kraken1dCandle = createWebsocket((callback) =>
+    krakenCandleWebSocketCreator(callback, 1440),
+  );
+  const kraken5mnCandle = createWebsocket((callback) =>
+    krakenCandleWebSocketCreator(callback, 5),
+  );
 
-  krakenCandle.open();
+  kraken1dCandle.open();
+  kraken5mnCandle.open();
 
   function createDocumentTitleEffect() {
-    signals.createEffect(krakenCandle.latest, (latest) => {
+    signals.createEffect(kraken5mnCandle.latest, (latest) => {
       if (latest) {
         const close = latest.close;
         console.log("close:", close);
@@ -2153,7 +2372,8 @@ function initWebSockets(signals) {
   createDocumentTitleEffect();
 
   return {
-    krakenCandle,
+    kraken1dCandle,
+    // kraken5mnCandle,
   };
 }
 /** @typedef {ReturnType<typeof initWebSockets>} WebSockets */
@@ -2252,6 +2472,8 @@ packages.signals().then((signals) =>
           );
           let firstChartOption = true;
           let firstSimulationOption = true;
+          let firstLivePriceOption = true;
+          let firstMoscowTimeOption = true;
 
           signals.createEffect(options.selected, (option) => {
             if (previousElement) {
@@ -2262,7 +2484,13 @@ packages.signals().then((signals) =>
               utils.url.replaceHistory({ pathname: option.id });
             }
 
-            const hideTop = option.kind === "home" || option.kind === "pdf";
+            const hideTop =
+              option.kind === "home" ||
+              option.kind === "pdf" ||
+              option.kind === "live-price" ||
+              option.kind === "converter" ||
+              option.kind === "moscow-time";
+
             elements.selectedHeader.hidden = hideTop;
 
             elements.selectedTitle.innerHTML = option.title;
@@ -2277,6 +2505,8 @@ packages.signals().then((signals) =>
               //   break;
               // }
               case "chart": {
+                console.log("chart", option);
+
                 element = elements.charts;
 
                 lastChartOption.set(option);
@@ -2333,7 +2563,7 @@ packages.signals().then((signals) =>
                             ids,
                             lightweightCharts,
                             options,
-                            selected: /** @type {any} */ (lastChartOption),
+                            selected: option,
                             signals,
                             utils,
                             webSockets,
@@ -2347,7 +2577,77 @@ packages.signals().then((signals) =>
 
                 break;
               }
-              default: {
+              case "live-price": {
+                console.log("live-price");
+
+                element = elements.livePrice;
+
+                if (firstLivePriceOption) {
+                  const lightweightCharts = packages.lightweightCharts();
+                  const script = import("./live-price.js");
+
+                  utils.dom.importStyleAndThen("/styles/live-price.css", () =>
+                    script.then(({ init }) =>
+                      lightweightCharts.then((lightweightCharts) =>
+                        signals.runWithOwner(owner, () =>
+                          init({
+                            colors,
+                            consts,
+                            dark,
+                            datasets,
+                            elements,
+                            ids,
+                            lightweightCharts,
+                            options,
+                            signals,
+                            utils,
+                            webSockets,
+                          }),
+                        ),
+                      ),
+                    ),
+                  );
+                }
+                firstLivePriceOption = false;
+
+                break;
+              }
+              case "moscow-time": {
+                console.log("moscow-time");
+
+                element = elements.moscowTime;
+
+                if (firstLivePriceOption) {
+                  const lightweightCharts = packages.lightweightCharts();
+                  const script = import("./moscow-time.js");
+
+                  utils.dom.importStyleAndThen("/styles/moscow-time.css", () =>
+                    script.then(({ init }) =>
+                      signals.runWithOwner(owner, () =>
+                        init({
+                          colors,
+                          consts,
+                          dark,
+                          datasets,
+                          elements,
+                          ids,
+                          options,
+                          signals,
+                          utils,
+                          webSockets,
+                        }),
+                      ),
+                    ),
+                  );
+                }
+                firstLivePriceOption = false;
+
+                break;
+              }
+              case "converter":
+              case "home":
+              case "pdf":
+              case "url": {
                 return;
               }
             }

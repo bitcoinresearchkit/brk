@@ -1853,436 +1853,528 @@ function createPartialOptions(colors) {
         {
           name: "Coinbases",
           tree: [
-            ...(scale === "date"
-              ? /** @satisfies {PartialOptionsTree} */ ([
-                  {
-                    scale,
-                    name: "Daily Sum",
-                    tree: [
-                      {
-                        scale,
-                        name: "In Bitcoin",
-                        title: "Daily Sum Of Coinbases In Bitcoin",
-                        description: "",
-                        unit: "Bitcoin",
-                        bottom: [
-                          {
-                            title: "Sum",
-                            color: colors.bitcoin,
-                            datasetPath: `${scale}-to-coinbase-1d-sum`,
-                          },
-                        ],
-                      },
-                      {
-                        scale,
-                        name: "In Dollars",
-                        title: "Daily Sum Of Coinbases In Dollars",
-                        description: "",
-                        unit: "US Dollars",
-                        bottom: [
-                          {
-                            title: "Sum",
-                            color: colors.dollars,
-                            datasetPath: `${scale}-to-coinbase-in-dollars-1d-sum`,
-                          },
-                        ],
-                      },
-                    ],
-                  },
-                  {
-                    scale,
-                    name: "Yearly Sum",
-                    tree: [
-                      {
-                        scale,
-                        name: "In Bitcoin",
-                        title: "Yearly Sum Of Coinbases In Bitcoin",
-                        description: "",
-                        unit: "Bitcoin",
-                        bottom: [
-                          {
-                            title: "Sum",
-                            color: colors.bitcoin,
-                            datasetPath: `${scale}-to-coinbase-1y-sum`,
-                          },
-                        ],
-                      },
-                      {
-                        scale,
-                        name: "In Dollars",
-                        title: "Yearly Sum Of Coinbases In Dollars",
-                        description: "",
-                        unit: "US Dollars",
-                        bottom: [
-                          {
-                            title: "Sum",
-                            color: colors.dollars,
-                            datasetPath: `${scale}-to-coinbase-in-dollars-1y-sum`,
-                          },
-                        ],
-                      },
-                    ],
-                  },
-                  {
-                    scale,
-                    name: "Cumulative",
-                    tree: [
-                      {
-                        scale,
-                        name: "In Bitcoin",
-                        title: "Cumulative Coinbases In Bitcoin",
-                        description: "",
-                        unit: "Bitcoin",
-                        bottom: [
-                          {
-                            title: "Coinbases",
-                            color: colors.bitcoin,
-                            datasetPath: `${scale}-to-cumulative-coinbase`,
-                          },
-                        ],
-                      },
-                      {
-                        scale,
-                        name: "In Dollars",
-                        title: "Cumulative Coinbases In Dollars",
-                        description: "",
-                        unit: "US Dollars",
-                        bottom: [
-                          {
-                            title: "Coinbases",
-                            color: colors.dollars,
-                            datasetPath: `${scale}-to-cumulative-coinbase-in-dollars`,
-                          },
-                        ],
-                      },
-                    ],
-                  },
-                  {
-                    name: "Last Block",
-                    tree: [
-                      {
-                        scale,
-                        name: "In Bitcoin",
-                        title: "Last Coinbase In Bitcoin",
-                        description: "",
-                        unit: "US Dollars",
-                        bottom: [
-                          {
-                            title: "Last",
-                            color: colors.bitcoin,
-                            datasetPath: `${scale}-to-last-coinbase`,
-                          },
-                        ],
-                      },
-                      {
-                        scale,
-                        name: "In Dollars",
-                        title: "Last Coinbase In Dollars",
-                        description: "",
-                        unit: "US Dollars",
-                        bottom: [
-                          {
-                            title: "Last",
-                            color: colors.dollars,
-                            datasetPath: `${scale}-to-last-coinbase-in-dollars`,
-                          },
-                        ],
-                      },
-                    ],
-                  },
-                ])
-              : []),
+            .../** @satisfies {PartialOptionsTree} */ (
+              scale === "date"
+                ? [
+                    {
+                      scale,
+                      name: "Daily Sum",
+                      tree: [
+                        {
+                          scale,
+                          name: "In Bitcoin",
+                          title: "Daily Sum Of Coinbases In Bitcoin",
+                          description: "",
+                          unit: "Bitcoin",
+                          bottom: [
+                            {
+                              title: "Sum",
+                              color: colors.bitcoin,
+                              datasetPath: `${scale}-to-coinbase-1d-sum`,
+                            },
+                          ],
+                        },
+                        {
+                          scale,
+                          name: "In Dollars",
+                          title: "Daily Sum Of Coinbases In Dollars",
+                          description: "",
+                          unit: "US Dollars",
+                          bottom: [
+                            {
+                              title: "Sum",
+                              color: colors.dollars,
+                              datasetPath: `${scale}-to-coinbase-in-dollars-1d-sum`,
+                            },
+                          ],
+                        },
+                      ],
+                    },
+                    {
+                      scale,
+                      name: "Yearly Sum",
+                      tree: [
+                        {
+                          scale,
+                          name: "In Bitcoin",
+                          title: "Yearly Sum Of Coinbases In Bitcoin",
+                          description: "",
+                          unit: "Bitcoin",
+                          bottom: [
+                            {
+                              title: "Sum",
+                              color: colors.bitcoin,
+                              datasetPath: `${scale}-to-coinbase-1y-sum`,
+                            },
+                          ],
+                        },
+                        {
+                          scale,
+                          name: "In Dollars",
+                          title: "Yearly Sum Of Coinbases In Dollars",
+                          description: "",
+                          unit: "US Dollars",
+                          bottom: [
+                            {
+                              title: "Sum",
+                              color: colors.dollars,
+                              datasetPath: `${scale}-to-coinbase-in-dollars-1y-sum`,
+                            },
+                          ],
+                        },
+                      ],
+                    },
+                    {
+                      scale,
+                      name: "Cumulative",
+                      tree: [
+                        {
+                          scale,
+                          name: "In Bitcoin",
+                          title: "Cumulative Coinbases In Bitcoin",
+                          description: "",
+                          unit: "Bitcoin",
+                          bottom: [
+                            {
+                              title: "Coinbases",
+                              color: colors.bitcoin,
+                              datasetPath: `${scale}-to-cumulative-coinbase`,
+                            },
+                          ],
+                        },
+                        {
+                          scale,
+                          name: "In Dollars",
+                          title: "Cumulative Coinbases In Dollars",
+                          description: "",
+                          unit: "US Dollars",
+                          bottom: [
+                            {
+                              title: "Coinbases",
+                              color: colors.dollars,
+                              datasetPath: `${scale}-to-cumulative-coinbase-in-dollars`,
+                            },
+                          ],
+                        },
+                      ],
+                    },
+                    {
+                      name: "Last Block",
+                      tree: [
+                        {
+                          scale,
+                          name: "In Bitcoin",
+                          title: "Last Coinbase In Bitcoin",
+                          description: "",
+                          unit: "US Dollars",
+                          bottom: [
+                            {
+                              title: "Last",
+                              color: colors.bitcoin,
+                              datasetPath: `${scale}-to-last-coinbase`,
+                            },
+                          ],
+                        },
+                        {
+                          scale,
+                          name: "In Dollars",
+                          title: "Last Coinbase In Dollars",
+                          description: "",
+                          unit: "US Dollars",
+                          bottom: [
+                            {
+                              title: "Last",
+                              color: colors.dollars,
+                              datasetPath: `${scale}-to-last-coinbase-in-dollars`,
+                            },
+                          ],
+                        },
+                      ],
+                    },
+                  ]
+                : [
+                    {
+                      scale,
+                      name: "In Bitcoin",
+                      title: "Coinbases In Bitcoin",
+                      description: "",
+                      unit: "Bitcoin",
+                      bottom: [
+                        {
+                          title: "Coinbase",
+                          color: colors.bitcoin,
+                          datasetPath: `${scale}-to-coinbase`,
+                        },
+                      ],
+                    },
+                    {
+                      scale,
+                      name: "In Dollars",
+                      title: "Coinbases In Dollars",
+                      description: "",
+                      unit: "US Dollars",
+                      bottom: [
+                        {
+                          title: "Coinbase",
+                          color: colors.dollars,
+                          datasetPath: `${scale}-to-coinbase-in-dollars`,
+                        },
+                      ],
+                    },
+                  ]
+            ),
           ],
         },
 
         {
           name: "Subsidies",
           tree: [
-            ...(scale === "date"
-              ? /** @type {PartialOptionsTree} */ ([
-                  {
-                    scale,
-                    name: "Daily Sum",
-                    tree: [
-                      {
-                        scale,
-                        name: "In Bitcoin",
-                        title: "Daily Sum Of Subsidies In Bitcoin",
-                        description: "",
-                        unit: "Bitcoin",
-                        bottom: [
-                          {
-                            title: "Sum",
-                            color: colors.bitcoin,
-                            datasetPath: `${scale}-to-subsidy`,
-                          },
-                        ],
-                      },
-                      {
-                        scale,
-                        name: "In Dollars",
-                        title: "Daily Sum Of Subsidies In Dollars",
-                        description: "",
-                        unit: "US Dollars",
-                        bottom: [
-                          {
-                            title: "Sum",
-                            color: colors.dollars,
-                            datasetPath: `${scale}-to-subsidy-in-dollars`,
-                          },
-                        ],
-                      },
-                    ],
-                  },
-                  {
-                    scale,
-                    name: "Yearly Sum",
-                    tree: [
-                      {
-                        scale,
-                        name: "In Bitcoin",
-                        title: "Yearly Sum Of Subsidies In Bitcoin",
-                        description: "",
-                        unit: "Bitcoin",
-                        bottom: [
-                          {
-                            title: "Sum",
-                            color: colors.bitcoin,
-                            datasetPath: `${scale}-to-subsidy-1y-sum`,
-                          },
-                        ],
-                      },
-                      {
-                        scale,
-                        name: "In Dollars",
-                        title: "Yearly Sum Of Subsidies In Dollars",
-                        description: "",
-                        unit: "US Dollars",
-                        bottom: [
-                          {
-                            title: "Sum",
-                            color: colors.dollars,
-                            datasetPath: `${scale}-to-subsidy-in-dollars-1y-sum`,
-                          },
-                        ],
-                      },
-                    ],
-                  },
-                  {
-                    scale,
-                    name: "Cumulative",
-
-                    tree: [
-                      {
-                        scale,
-                        name: "In Bitcoin",
-                        title: "Cumulative Subsidies In Bitcoin",
-                        description: "",
-                        unit: "Bitcoin",
-                        bottom: [
-                          {
-                            title: "Subsidies",
-                            color: colors.bitcoin,
-                            datasetPath: `${scale}-to-cumulative-subsidy`,
-                          },
-                        ],
-                      },
-                      {
-                        scale,
-                        name: "In Dollars",
-                        title: "Cumulative Subsidies In Dollars",
-                        description: "",
-                        unit: "US Dollars",
-                        bottom: [
-                          {
-                            title: "Subsidies",
-                            color: colors.dollars,
-                            datasetPath: `${scale}-to-cumulative-subsidy-in-dollars`,
-                          },
-                        ],
-                      },
-                    ],
-                  },
-                  {
-                    name: "Last Block",
-                    tree: [
-                      {
-                        scale,
-                        name: "In Bitcoin",
-                        title: "Last Subsidy In Bitcoin",
-                        description: "",
-                        unit: "Bitcoin",
-                        bottom: [
-                          {
-                            title: "Last",
-                            color: colors.bitcoin,
-                            datasetPath: `${scale}-to-last-subsidy`,
-                          },
-                        ],
-                      },
-                      {
-                        scale,
-                        name: "In Dollars",
-                        title: "Last Subsidy In Dollars",
-                        description: "",
-                        unit: "US Dollars",
-                        bottom: [
-                          {
-                            title: "Last",
-                            color: colors.dollars,
-                            datasetPath: `${scale}-to-last-subsidy-in-dollars`,
-                          },
-                        ],
-                      },
-                    ],
-                  },
-                ])
-              : []),
+            .../** @satisfies {PartialOptionsTree} */ (
+              scale === "date"
+                ? [
+                    {
+                      scale,
+                      name: "Daily Sum",
+                      tree: [
+                        {
+                          scale,
+                          name: "In Bitcoin",
+                          title: "Daily Sum Of Subsidies In Bitcoin",
+                          description: "",
+                          unit: "Bitcoin",
+                          bottom: [
+                            {
+                              title: "Sum",
+                              color: colors.bitcoin,
+                              datasetPath: `${scale}-to-subsidy-1d-sum`,
+                            },
+                          ],
+                        },
+                        {
+                          scale,
+                          name: "In Dollars",
+                          title: "Daily Sum Of Subsidies In Dollars",
+                          description: "",
+                          unit: "US Dollars",
+                          bottom: [
+                            {
+                              title: "Sum",
+                              color: colors.dollars,
+                              datasetPath: `${scale}-to-subsidy-in-dollars-1d-sum`,
+                            },
+                          ],
+                        },
+                      ],
+                    },
+                    {
+                      scale,
+                      name: "Yearly Sum",
+                      tree: [
+                        {
+                          scale,
+                          name: "In Bitcoin",
+                          title: "Yearly Sum Of Subsidies In Bitcoin",
+                          description: "",
+                          unit: "Bitcoin",
+                          bottom: [
+                            {
+                              title: "Sum",
+                              color: colors.bitcoin,
+                              datasetPath: `${scale}-to-subsidy-1y-sum`,
+                            },
+                          ],
+                        },
+                        {
+                          scale,
+                          name: "In Dollars",
+                          title: "Yearly Sum Of Subsidies In Dollars",
+                          description: "",
+                          unit: "US Dollars",
+                          bottom: [
+                            {
+                              title: "Sum",
+                              color: colors.dollars,
+                              datasetPath: `${scale}-to-subsidy-in-dollars-1y-sum`,
+                            },
+                          ],
+                        },
+                      ],
+                    },
+                    {
+                      scale,
+                      name: "Cumulative",
+                      tree: [
+                        {
+                          scale,
+                          name: "In Bitcoin",
+                          title: "Cumulative Subsidies In Bitcoin",
+                          description: "",
+                          unit: "Bitcoin",
+                          bottom: [
+                            {
+                              title: "Subsidies",
+                              color: colors.bitcoin,
+                              datasetPath: `${scale}-to-cumulative-subsidy`,
+                            },
+                          ],
+                        },
+                        {
+                          scale,
+                          name: "In Dollars",
+                          title: "Cumulative Subsidies In Dollars",
+                          description: "",
+                          unit: "US Dollars",
+                          bottom: [
+                            {
+                              title: "Subsidies",
+                              color: colors.dollars,
+                              datasetPath: `${scale}-to-cumulative-subsidy-in-dollars`,
+                            },
+                          ],
+                        },
+                      ],
+                    },
+                    {
+                      name: "Last Block",
+                      tree: [
+                        {
+                          scale,
+                          name: "In Bitcoin",
+                          title: "Last Subsidy In Bitcoin",
+                          description: "",
+                          unit: "Bitcoin",
+                          bottom: [
+                            {
+                              title: "Last",
+                              color: colors.bitcoin,
+                              datasetPath: `${scale}-to-last-subsidy`,
+                            },
+                          ],
+                        },
+                        {
+                          scale,
+                          name: "In Dollars",
+                          title: "Last Subsidy In Dollars",
+                          description: "",
+                          unit: "US Dollars",
+                          bottom: [
+                            {
+                              title: "Last",
+                              color: colors.dollars,
+                              datasetPath: `${scale}-to-last-subsidy-in-dollars`,
+                            },
+                          ],
+                        },
+                      ],
+                    },
+                  ]
+                : [
+                    {
+                      scale,
+                      name: "In Bitcoin",
+                      title: "Subsidies In Bitcoin",
+                      description: "",
+                      unit: "Bitcoin",
+                      bottom: [
+                        {
+                          title: "Sum",
+                          color: colors.bitcoin,
+                          datasetPath: `${scale}-to-subsidy`,
+                        },
+                      ],
+                    },
+                    {
+                      scale,
+                      name: "In Dollars",
+                      title: "Subsidies In Dollars",
+                      description: "",
+                      unit: "US Dollars",
+                      bottom: [
+                        {
+                          title: "Sum",
+                          color: colors.dollars,
+                          datasetPath: `${scale}-to-subsidy-in-dollars`,
+                        },
+                      ],
+                    },
+                  ]
+            ),
           ],
         },
 
         {
           name: "Fees",
           tree: [
-            ...(scale === "date"
-              ? /** @type {PartialOptionsTree} */ ([
-                  {
-                    scale,
-                    name: "Daily Sum",
-                    tree: [
-                      {
-                        scale,
-                        name: "In Bitcoin",
-                        title: "Daily Sum Of Fees In Bitcoin",
-                        description: "",
-                        unit: "Bitcoin",
-                        bottom: [
-                          {
-                            title: "Sum",
-                            color: colors.bitcoin,
-                            datasetPath: `${scale}-to-fees`,
-                          },
-                        ],
-                      },
-                      {
-                        scale,
-                        name: "In Dollars",
-                        title: "Daily Sum Of Fees In Dollars",
-                        description: "",
-                        unit: "US Dollars",
-                        bottom: [
-                          {
-                            title: "Sum",
-                            color: colors.dollars,
-                            datasetPath: `${scale}-to-fees-in-dollars-1d-sum`,
-                          },
-                        ],
-                      },
-                    ],
-                  },
-                  {
-                    scale,
-                    name: "Yearly Sum",
-                    tree: [
-                      {
-                        scale,
-                        name: "In Bitcoin",
-                        title: "Yearly Sum Of Fees In Bitcoin",
-                        description: "",
-                        unit: "Bitcoin",
-                        bottom: [
-                          {
-                            title: "Sum",
-                            color: colors.bitcoin,
-                            datasetPath: `${scale}-to-fees-1y-sum`,
-                          },
-                        ],
-                      },
-                      {
-                        scale,
-                        name: "In Dollars",
-                        title: "Yearly Sum Of Fees In Dollars",
-                        description: "",
-                        unit: "US Dollars",
-                        bottom: [
-                          {
-                            title: "Sum",
-                            color: colors.dollars,
-                            datasetPath: `${scale}-to-fees-in-dollars-1y-sum`,
-                          },
-                        ],
-                      },
-                    ],
-                  },
-                  {
-                    scale,
-                    name: "Cumulative",
-                    tree: [
-                      {
-                        scale,
-                        name: "In Bitcoin",
-                        title: "Cumulative Fees In Bitcoin",
-                        description: "",
-                        unit: "Bitcoin",
-                        bottom: [
-                          {
-                            title: "Fees",
-                            color: colors.bitcoin,
-                            datasetPath: `${scale}-to-cumulative-fees`,
-                          },
-                        ],
-                      },
-                      {
-                        scale,
-                        name: "In Dollars",
-                        title: "Cumulative Fees In Dollars",
-                        description: "",
-                        unit: "US Dollars",
-                        bottom: [
-                          {
-                            title: "Fees",
-                            color: colors.dollars,
-                            datasetPath: `${scale}-to-cumulative-fees-in-dollars`,
-                          },
-                        ],
-                      },
-                    ],
-                  },
-                  {
-                    name: "Last Block",
-                    tree: [
-                      {
-                        scale,
-                        name: "In Bitcoin",
-                        title: "Last Fees In Bitcoin",
-                        description: "",
-                        unit: "Bitcoin",
-                        bottom: [
-                          {
-                            title: "Last",
-                            color: colors.bitcoin,
-                            datasetPath: `${scale}-to-last-fees`,
-                          },
-                        ],
-                      },
-                      {
-                        scale,
-                        name: "In Dollars",
-                        title: "Last Fees In Dollars",
-                        description: "",
-                        unit: "US Dollars",
-                        bottom: [
-                          {
-                            title: "Last",
-                            color: colors.dollars,
-                            datasetPath: `${scale}-to-last-fees-in-dollars`,
-                          },
-                        ],
-                      },
-                    ],
-                  },
-                ])
-              : []),
+            .../** @satisfies {PartialOptionsTree} */ (
+              scale === "date"
+                ? [
+                    {
+                      scale,
+                      name: "Daily Sum",
+                      tree: [
+                        {
+                          scale,
+                          name: "In Bitcoin",
+                          title: "Daily Sum Of Fees In Bitcoin",
+                          description: "",
+                          unit: "Bitcoin",
+                          bottom: [
+                            {
+                              title: "Sum",
+                              color: colors.bitcoin,
+                              datasetPath: `${scale}-to-fees-1d-sum`,
+                            },
+                          ],
+                        },
+                        {
+                          scale,
+                          name: "In Dollars",
+                          title: "Daily Sum Of Fees In Dollars",
+                          description: "",
+                          unit: "US Dollars",
+                          bottom: [
+                            {
+                              title: "Sum",
+                              color: colors.dollars,
+                              datasetPath: `${scale}-to-fees-in-dollars-1d-sum`,
+                            },
+                          ],
+                        },
+                      ],
+                    },
+                    {
+                      scale,
+                      name: "Yearly Sum",
+                      tree: [
+                        {
+                          scale,
+                          name: "In Bitcoin",
+                          title: "Yearly Sum Of Fees In Bitcoin",
+                          description: "",
+                          unit: "Bitcoin",
+                          bottom: [
+                            {
+                              title: "Sum",
+                              color: colors.bitcoin,
+                              datasetPath: `${scale}-to-fees-1y-sum`,
+                            },
+                          ],
+                        },
+                        {
+                          scale,
+                          name: "In Dollars",
+                          title: "Yearly Sum Of Fees In Dollars",
+                          description: "",
+                          unit: "US Dollars",
+                          bottom: [
+                            {
+                              title: "Sum",
+                              color: colors.dollars,
+                              datasetPath: `${scale}-to-fees-in-dollars-1y-sum`,
+                            },
+                          ],
+                        },
+                      ],
+                    },
+                    {
+                      scale,
+                      name: "Cumulative",
+                      tree: [
+                        {
+                          scale,
+                          name: "In Bitcoin",
+                          title: "Cumulative Fees In Bitcoin",
+                          description: "",
+                          unit: "Bitcoin",
+                          bottom: [
+                            {
+                              title: "Fees",
+                              color: colors.bitcoin,
+                              datasetPath: `${scale}-to-cumulative-fees`,
+                            },
+                          ],
+                        },
+                        {
+                          scale,
+                          name: "In Dollars",
+                          title: "Cumulative Fees In Dollars",
+                          description: "",
+                          unit: "US Dollars",
+                          bottom: [
+                            {
+                              title: "Fees",
+                              color: colors.dollars,
+                              datasetPath: `${scale}-to-cumulative-fees-in-dollars`,
+                            },
+                          ],
+                        },
+                      ],
+                    },
+                    {
+                      name: "Last Block",
+                      tree: [
+                        {
+                          scale,
+                          name: "In Bitcoin",
+                          title: "Last Fees In Bitcoin",
+                          description: "",
+                          unit: "Bitcoin",
+                          bottom: [
+                            {
+                              title: "Last",
+                              color: colors.bitcoin,
+                              datasetPath: `${scale}-to-last-fees`,
+                            },
+                          ],
+                        },
+                        {
+                          scale,
+                          name: "In Dollars",
+                          title: "Last Fees In Dollars",
+                          description: "",
+                          unit: "US Dollars",
+                          bottom: [
+                            {
+                              title: "Last",
+                              color: colors.dollars,
+                              datasetPath: `${scale}-to-last-fees-in-dollars`,
+                            },
+                          ],
+                        },
+                      ],
+                    },
+                  ]
+                : [
+                    {
+                      scale,
+                      name: "In Bitcoin",
+                      title: "Fees In Bitcoin",
+                      description: "",
+                      unit: "Bitcoin",
+                      bottom: [
+                        {
+                          title: "Sum",
+                          color: colors.bitcoin,
+                          datasetPath: `${scale}-to-fees`,
+                        },
+                      ],
+                    },
+                    {
+                      scale,
+                      name: "In Dollars",
+                      title: "Fees In Dollars",
+                      description: "",
+                      unit: "US Dollars",
+                      bottom: [
+                        {
+                          title: "Sum",
+                          color: colors.dollars,
+                          datasetPath: `${scale}-to-fees-in-dollars`,
+                        },
+                      ],
+                    },
+                  ]
+            ),
           ],
         },
 
@@ -4835,6 +4927,23 @@ function createPartialOptions(colors) {
   }
 
   return [
+    // {
+    //   name: "Live",
+    //   tree: [
+    //     {
+    //       kind: "live-price",
+    //       name: "Price",
+    //     },
+    //     {
+    //       kind: "moscow-time",
+    //       name: "Moscow Time",
+    //     },
+    //     {
+    //       kind: "converter",
+    //       name: "Converter",
+    //     },
+    //   ],
+    // },
     {
       name: "Charts",
       tree: [
@@ -4965,21 +5074,25 @@ function createPartialOptions(colors) {
           url: () => "bitcoin:bc1q950q4ukpxxm6wjjkv6cpq8jzpazaxrrwftctkt",
         },
         {
-          name: "Donate lightning",
+          name: "Donate via lightning",
           qrcode: true,
           url: () =>
             "lightning:lnurl1dp68gurn8ghj7ampd3kx2ar0veekzar0wd5xjtnrdakj7tnhv4kxctttdehhwm30d3h82unvwqhkxmmww3jkuar8d35kgetj8yuq363hv4",
         },
         {
-          name: "Fundraiser",
+          name: "Donate via Geyser",
+          url: () => "https://geyser.fund/project/kibo/funding",
+        },
+        {
+          name: "Geyser Fundraiser",
           url: () => "https://geyser.fund/project/kibo",
         },
         {
-          name: "Goals",
+          name: "Geyser Goals",
           url: () => "https://geyser.fund/project/kibo/goals",
         },
         {
-          name: "Leaderboard",
+          name: "Geyser Leaderboard",
           url: () => "https://geyser.fund/project/kibo/leaderboard",
         },
       ],
@@ -4995,12 +5108,17 @@ function createPartialOptions(colors) {
         "https://primal.net/p/npub1jagmm3x39lmwfnrtvxcs9ac7g300y3dusv9lgzhk2e4x5frpxlrqa73v44",
     },
     {
-      name: "Source",
-      url: () => "https://github.com/kibo-money/kibo",
-    },
-    {
-      name: "API",
-      url: () => "/api",
+      name: "Developers",
+      tree: [
+        {
+          name: "API",
+          url: () => "/api",
+        },
+        {
+          name: "Source",
+          url: () => "https://github.com/kibo-money/kibo",
+        },
+      ],
     },
   ];
 }
@@ -5142,6 +5260,7 @@ export function initOptions({
         if (option.qrcode) {
           return utils.dom.createButtonElement({
             text: option.name,
+            title: option.title,
             onClick: () => {
               qrcode.set(option.url);
             },
@@ -5189,7 +5308,8 @@ export function initOptions({
 
             signals.createEffect(
               () =>
-                webSockets.krakenCandle.latest()?.close ?? lastValues()?.close,
+                webSockets.kraken1dCandle.latest()?.close ??
+                lastValues()?.close,
               (close) => {
                 if (close) {
                   valueElement.innerHTML = formatValue(close, "US Dollars");
@@ -5248,11 +5368,11 @@ export function initOptions({
           } else {
             createCheckEffect();
           }
-
-          return label;
         } else {
-          console.log(option);
+          console.log("else", option);
         }
+
+        return label;
       }
     }
   }
@@ -5416,10 +5536,9 @@ export function initOptions({
           title = anyPartial.title;
         } else {
           kind = anyPartial.kind;
-          title = anyPartial.title;
+          title = "title" in anyPartial ? anyPartial.title : anyPartial.name;
           console.log("Unprocessed", anyPartial);
-          id = `${kind}-${ids.fromString(anyPartial.title)}`;
-          // return;
+          id = `${kind}-${ids.fromString(title)}`;
         }
 
         /** @type {ProcessedOptionAddons} */
@@ -5465,9 +5584,7 @@ export function initOptions({
             qrcode,
           });
 
-          if (element) {
-            li.append(element);
-          }
+          li.append(element);
         });
 
         listForSum.push(() => 1);

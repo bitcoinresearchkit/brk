@@ -101,7 +101,6 @@ type Unit =
   | "Weight";
 
 interface PartialOption {
-  // icon: string;
   name: string;
 }
 
@@ -109,6 +108,18 @@ interface PartialHomeOption extends PartialOption {
   kind: "home";
   title: "Home";
   name: "Home";
+}
+
+interface PartialLivePriceOption extends PartialOption {
+  kind: "live-price";
+}
+
+interface PartialMoscowTimeOption extends PartialOption {
+  kind: "moscow-time";
+}
+
+interface PartialConverterOption extends PartialOption {
+  kind: "converter";
 }
 
 interface PartialChartOption extends PartialOption {
@@ -147,6 +158,9 @@ interface PartialOptionsGroup {
 
 type AnyPartialOption =
   | PartialHomeOption
+  | PartialLivePriceOption
+  | PartialMoscowTimeOption
+  | PartialConverterOption
   | PartialChartOption
   | PartialSimulationOption
   | PartialPdfOption
@@ -168,6 +182,9 @@ type OptionPath = {
 
 type HomeOption = PartialHomeOption & ProcessedOptionAddons;
 type SimulationOption = PartialSimulationOption & ProcessedOptionAddons;
+type LivePriceOption = PartialLivePriceOption & ProcessedOptionAddons;
+type MoscowTimeOption = PartialMoscowTimeOption & ProcessedOptionAddons;
+type ConverterOption = PartialConverterOption & ProcessedOptionAddons;
 
 interface PdfOption extends PartialPdfOption, ProcessedOptionAddons {
   kind: "pdf";
@@ -183,6 +200,9 @@ interface ChartOption extends PartialChartOption, ProcessedOptionAddons {
 
 type Option =
   | HomeOption
+  | LivePriceOption
+  | MoscowTimeOption
+  | ConverterOption
   | PdfOption
   | UrlOption
   | ChartOption
@@ -208,7 +228,8 @@ interface ResourceDataset<
 > {
   scale: Scale;
   url: string;
-  fetch: (id: number) => void;
+  fetch: (id: number) => Promise<void>;
+  fetchRange: (start: number, end: number) => Promise<void[]>;
   fetchedJSONs: FetchedResult<Scale, Type>[];
   // drop: VoidFunction;
 }

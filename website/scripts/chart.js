@@ -224,14 +224,6 @@ export function init({
   }
   createFetchChunksOfVisibleDatasetsEffect();
 
-  function resetChartListElement() {
-    while (
-      elements.chartList.lastElementChild?.classList.contains("chart-wrapper")
-    ) {
-      elements.chartList.lastElementChild?.remove();
-    }
-  }
-
   /**
    * @param {HTMLElement} parent
    * @param {number} chartIndex
@@ -767,7 +759,7 @@ export function init({
     /** @type {AnyDatasetPath} */
     const datasetPath = `${s}-to-price`;
 
-    const dataset = datasets.getOrImport(s, datasetPath);
+    const dataset = datasets.getOrCreate(s, datasetPath);
 
     // Don't trigger reactivity by design
     activeDatasets().add(dataset);
@@ -806,7 +798,7 @@ export function init({
     });
 
     function createLiveCandleUpdateEffect() {
-      signals.createEffect(webSockets.krakenCandle.latest, (latest) => {
+      signals.createEffect(webSockets.kraken1dCandle.latest, (latest) => {
         if (!latest) return;
 
         const index = utils.chunkIdToIndex(s, latest.year);
@@ -824,95 +816,6 @@ export function init({
 
     return priceSeries;
   }
-
-  function resetLegendElement() {
-    elements.legend.innerHTML = "";
-  }
-
-  function initTimeScaleElement() {
-    const GENESIS_DAY = "2009-01-03";
-
-    /**
-     * @param {HTMLButtonElement} button
-     * @param {ChartOption} option
-     */
-    function setTimeScale(button, option) {
-      const chart = charts.at(-1);
-      if (!chart) return;
-      const timeScale = chart.timeScale();
-
-      const year = button.dataset.year;
-      let days = button.dataset.days;
-      let toHeight = button.dataset.to;
-
-      switch (option.scale) {
-        case "date": {
-          let from = new Date();
-          let to = new Date();
-          to.setUTCHours(0, 0, 0, 0);
-
-          if (!days && typeof button.dataset.yearToDate === "string") {
-            days = String(
-              Math.ceil(
-                (to.getTime() -
-                  new Date(`${to.getUTCFullYear()}-01-01`).getTime()) /
-                  consts.ONE_DAY_IN_MS,
-              ),
-            );
-          }
-
-          if (year) {
-            from = new Date(`${year}-01-01`);
-            to = new Date(`${year}-12-31`);
-          } else if (days) {
-            from.setDate(from.getUTCDate() - Number(days));
-          } else {
-            from = new Date(GENESIS_DAY);
-          }
-
-          timeScale.setVisibleRange({
-            from: /** @type {Time} */ (from.getTime() / 1000),
-            to: /** @type {Time} */ (to.getTime() / 1000),
-          });
-          break;
-        }
-        case "height": {
-          timeScale.setVisibleRange({
-            from: /** @type {Time} */ (0),
-            to: /** @type {Time} */ (Number(toHeight?.slice(0, -1)) * 1_000),
-          });
-          break;
-        }
-      }
-    }
-
-    /**
-     * @param {HTMLElement} timeScaleButtons
-     */
-    function initGoToButtons(timeScaleButtons) {
-      Array.from(timeScaleButtons.children).forEach((button) => {
-        if (button.tagName !== "BUTTON") throw "Expect a button";
-        button.addEventListener("click", () => {
-          const option = options.selected();
-          if (option.kind === "chart") {
-            setTimeScale(/** @type {HTMLButtonElement} */ (button), option);
-          }
-        });
-      });
-    }
-    // initGoToButtons(elements.timeScaleDateButtons);
-    // initGoToButtons(elements.timeScaleHeightButtons);
-
-    // function createScaleButtonsToggleEffect() {
-    //   const isDate = signals.createMemo(() => scale() === "date");
-    //   signals.createEffect(isDate, (isDate) => {
-    //     elements.timeScaleDateButtons.hidden = !isDate;
-    //     elements.timeScaleHeightButtons.hidden = isDate;
-    //   });
-    // }
-    // createScaleButtonsToggleEffect();
-  }
-  initTimeScaleElement();
 
   /**
    * @param {ChartOption} option
@@ -933,15 +836,12 @@ export function init({
       (list) => (list ? [list] : []),
     );
 
-    resetLegendElement();
-    resetChartListElement();
-
     /** @type {Series[]} */
     const allSeries = [];
 
     charts = chartsBlueprints.map((seriesBlueprints, chartIndex) => {
       const { chartDiv, unitName, chartMode } = createChartDiv(
-        elements.chartList,
+        elements.chartsChartList,
         chartIndex,
       );
 
@@ -1148,7 +1048,7 @@ export function init({
       }
 
       [...seriesBlueprints].reverse().forEach((seriesBlueprint, index) => {
-        const dataset = datasets.getOrImport(
+        const dataset = datasets.getOrCreate(
           scale,
           seriesBlueprint.datasetPath,
         );
@@ -1266,11 +1166,31 @@ export function init({
     });
   }
 
+  function resetLegendElement() {
+    elements.legend.innerHTML = "";
+  }
+
+  function resetChartListElement() {
+    while (
+      elements.chartsChartList.lastElementChild?.classList.contains(
+        "chart-wrapper",
+      )
+    ) {
+      elements.chartsChartList.lastElementChild?.remove();
+    }
+  }
+
+  function reset() {
+    charts.forEach((chart) => chart.remove());
+    charts = [];
+    resetLegendElement();
+    resetChartListElement();
+  }
+
   function createApplyChartOptionEffect() {
     signals.createEffect(selected, (option) => {
-      signals.createRoot(() => {
-        applyChartOption(option);
-      });
+      reset();
+      applyChartOption(option);
     });
   }
   createApplyChartOptionEffect();

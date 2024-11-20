@@ -2,7 +2,11 @@
   "name": "kibō",
   "short_name": "kibō",
   "description": "A better, FOSS, Bitcoin-only, self-hostable Glassnode",
-  "categories": ["bitcoin", "on-chain", "data"],
+  "categories": [
+    "bitcoin",
+    "on-chain",
+    "data"
+  ],
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
@@ -12,25 +16,25 @@
   "lang": "en",
   "icons": [
     {
-      "src": "/assets/pwa/2024-09-17_09-06-03/manifest-icon-192.maskable.png",
+      "src": "/assets/pwa/2024-11-20_09-41-25/manifest-icon-192.maskable.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/assets/pwa/2024-09-17_09-06-03/manifest-icon-192.maskable.png",
+      "src": "/assets/pwa/2024-11-20_09-41-25/manifest-icon-192.maskable.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "maskable"
     },
     {
-      "src": "/assets/pwa/2024-09-17_09-06-03/manifest-icon-512.maskable.png",
+      "src": "/assets/pwa/2024-11-20_09-41-25/manifest-icon-512.maskable.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/assets/pwa/2024-09-17_09-06-03/manifest-icon-512.maskable.png",
+      "src": "/assets/pwa/2024-11-20_09-41-25/manifest-icon-512.maskable.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"

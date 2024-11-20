@@ -4,14 +4,17 @@
   height: 100%;
   width: 100%;
 
+  > div:first-child {
+    max-width: 20rem;
+    border-right: 1px;x
+  }
+
   > div {
     flex: 1;
-    /* min-height: 0; */
     overflow-y: auto;
     display: flex;
     flex-direction: column;
-    width: 32rem;
-    gap: 1rem;
+    gap: 3rem;
 
     > div {
       display: flex;
@@ -25,5 +28,30 @@
     display: flex;
     gap: 0.5rem;
     align-items: center;
+  }
+
+  .chart-list {
+    max-height: 500px;
+    /* margin-left: var(--negative-main-padding);*/
+    margin-right: calc(var(--negative-main-padding) - 0.5rem);
+  }
+
+  li {
+    label:has(input:not(:checked)) + ul {
+      display: none;
+    }
+
+    ul {
+      padding-left: 0.75rem;
+      margin-left:0.25rem;
+      border-left: 1px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.25rem;
+
+      li {
+        display: inline;
+      }
+    }
   }
 }
