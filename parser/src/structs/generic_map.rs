@@ -691,13 +691,17 @@ where
         let mut average = None;
 
         keys.iter().for_each(|key| {
-            let previous_average: f32 = average
+            let mut previous_average: f32 = average
                 .unwrap_or_else(|| {
                     key.checked_sub(1)
                         .and_then(|previous_average_key| self.get_or_import(&previous_average_key))
                         .unwrap_or_default()
                 })
                 .into();
+
+            if previous_average.is_nan() {
+                previous_average = 0.0;
+            }
 
             let mut last_value = f32::lossy_from(source.get_or_import(key).unwrap_or_else(|| {
                 dbg!(key);
@@ -708,7 +712,13 @@ where
                 last_value = 0.0;
             }
 
-            average.replace(((previous_average * (len - 1.0) + last_value) / len).into());
+            let _average = (previous_average * (len - 1.0) + last_value) / len;
+
+            if _average.is_nan() || _average.is_infinite() {
+                average.replace(0.0.into());
+            } else {
+                average.replace(_average.into());
+            }
 
             self.insert_computed(*key, average.unwrap());
         });
