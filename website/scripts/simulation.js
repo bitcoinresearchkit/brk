@@ -38,39 +38,71 @@ export function init({
   const resultsElement = window.document.createElement("div");
   simulationElement.append(resultsElement);
 
-  const getDefaultIntervalStart = () => new Date("2021-04-15");
-  const getDefaultIntervalEnd = () => new Date();
+  const frequencies = computeFrequencies();
 
   const storagePrefix = "save-in-bitcoin";
   const settings = {
-    initial: {
-      firstDay: signals.createSignal(/** @type {number | null} */ (1000), {
-        save: {
-          ...utils.serde.number,
-          id: `${storagePrefix}-initial-amount`,
-          param: "initial-amount",
-        },
-      }),
-      overTime: signals.createSignal(/** @type {number | null} */ (0), {
-        save: {
-          ...utils.serde.number,
-          id: `${storagePrefix}-later-amount`,
-          param: "later-amount",
-        },
-      }),
+    dollars: {
+      initial: {
+        amount: signals.createSignal(/** @type {number | null} */ (1000), {
+          save: {
+            ...utils.serde.number,
+            id: `${storagePrefix}-initial-amount`,
+            param: "initial-amount",
+          },
+        }),
+      },
+      topUp: {
+        amount: signals.createSignal(/** @type {number | null} */ (10), {
+          save: {
+            ...utils.serde.number,
+            id: `${storagePrefix}-top-up-amount`,
+            param: "top-up-amount",
+          },
+        }),
+        frenquency: signals.createSignal(
+          /** @type {Frequency} */ (frequencies.list[0]),
+          {
+            save: {
+              ...frequencies.serde,
+              id: `${storagePrefix}-top-up-freq`,
+              param: "top-up-freq",
+            },
+          },
+        ),
+      },
     },
-    recurrent: {
-      amount: signals.createSignal(/** @type {number | null} */ (100), {
-        save: {
-          ...utils.serde.number,
-          id: `${storagePrefix}-recurrent-amount`,
-          param: "recurrent-amount",
+    swap: {
+      amount: {
+        initial: signals.createSignal(/** @type {number | null} */ (1000), {
+          save: {
+            ...utils.serde.number,
+            id: `${storagePrefix}-initial-swap`,
+            param: "initial-swap",
+          },
+        }),
+        recurrent: signals.createSignal(/** @type {number | null} */ (10), {
+          save: {
+            ...utils.serde.number,
+            id: `${storagePrefix}-recurrent-swap`,
+            param: "recurrent-swap",
+          },
+        }),
+      },
+      frequency: signals.createSignal(
+        /** @type {Frequency} */ (frequencies.list[0]),
+        {
+          save: {
+            ...frequencies.serde,
+            id: `${storagePrefix}-swap-freq`,
+            param: "swap-freq",
+          },
         },
-      }),
+      ),
     },
     interval: {
       start: signals.createSignal(
-        /** @type {Date | null} */ (getDefaultIntervalStart()),
+        /** @type {Date | null} */ (new Date("2021-04-15")),
         {
           save: {
             ...utils.serde.date,
@@ -79,16 +111,13 @@ export function init({
           },
         },
       ),
-      end: signals.createSignal(
-        /** @type {Date | null} */ (getDefaultIntervalEnd()),
-        {
-          save: {
-            ...utils.serde.date,
-            id: `${storagePrefix}-interval-end`,
-            param: "interval-end",
-          },
+      end: signals.createSignal(/** @type {Date | null} */ (new Date()), {
+        save: {
+          ...utils.serde.date,
+          id: `${storagePrefix}-interval-end`,
+          param: "interval-end",
         },
-      ),
+      }),
     },
     fees: {
       percentage: signals.createSignal(/** @type {number | null} */ (0.25), {
@@ -101,222 +130,176 @@ export function init({
     },
   };
 
-  const { headerElement } = utils.dom.createHeader({
-    title: selected.title,
-    description: selected.serializedPath,
-  });
-  parametersElement.append(headerElement);
+  parametersElement.append(
+    utils.dom.createHeader({
+      title: "Save in Bitcoin",
+      description: "What if you bought Bitcoin in the past ?",
+    }).headerElement,
+  );
 
-  const initialGroup = createParameterGroup({
-    title: "Initial",
-    description:
-      "The initial amount of dollars you're willing to eventually save in Bitcoin.",
-  });
-  parametersElement.append(initialGroup);
-
-  initialGroup.append(
-    createInputField({
-      name: "Directly converted",
+  parametersElement.append(
+    createFieldElement({
+      title: createColoredTypeHTML({
+        color: "green",
+        type: "Dollars",
+        text: "Initial Amount",
+      }),
+      description: "The amount of dollars you have ready to swap on day one.",
       input: createInputDollar({
         id: "simulation-dollars-initial",
-        title: "Initial amount of dollars converted",
-        signal: settings.initial.firstDay,
+        title: "Initial Dollar Amount",
+        signal: settings.dollars.initial.amount,
       }),
     }),
   );
 
-  initialGroup.append(
-    createInputField({
-      name: "Converted over time",
+  parametersElement.append(
+    createFieldElement({
+      title: createColoredTypeHTML({
+        color: "green",
+        type: "Dollars",
+        text: "Top Up Amount",
+      }),
+      description:
+        "The recurrent amount of dollars you'll be putting aside to swap.",
       input: createInputDollar({
         id: "simulation-dollars-later",
-        title: "Dollars to spread over time",
-        signal: settings.initial.overTime,
+        title: "Top Up Dollar Amount",
+        signal: settings.dollars.topUp.amount,
       }),
     }),
   );
 
-  const topUpGroup = createParameterGroup({
-    title: "Top Up",
-    description:
-      "The topUp amount of dollars you're willing to eventually save in Bitcoin.",
-  });
-  parametersElement.append(topUpGroup);
+  parametersElement.append(
+    createFieldElement({
+      title: createColoredTypeHTML({
+        color: "green",
+        type: "Dollars",
+        text: "Top Up Frequency",
+      }),
+      description:
+        "The frequency at which you'll be putting aside the preceding amount of dollars.",
+      input: utils.dom.createSelect({
+        id: "top-up-frequency",
+        list: frequencies.list,
+        signal: settings.dollars.topUp.frenquency,
+      }),
+    }),
+  );
 
-  const recurrentGroup = createParameterGroup({
-    title: "Recurrent",
-    description:
-      "The recurrent amount of dollars you're willing to eventually save in Bitcoin.",
-  });
-  parametersElement.append(recurrentGroup);
-
-  recurrentGroup.append(
-    createInputField({
-      name: "Maximum Amount",
+  parametersElement.append(
+    createFieldElement({
+      title: createColoredTypeHTML({
+        color: "orange",
+        type: "Swap",
+        text: "Initial Amount",
+      }),
+      description:
+        "The maximum initial amount of dollars you'll exchange on day one.",
       input: createInputDollar({
-        id: "simulation-dollars-recurrent",
-        title: "Recurrent dollar amount",
-        signal: settings.recurrent.amount,
+        id: "simulation-dollars-later",
+        title: "Initial Swap Amount",
+        signal: settings.swap.amount.initial,
       }),
     }),
   );
 
-  const frequencyUL = utils.dom.createUlElement();
-  recurrentGroup.append(frequencyUL);
+  parametersElement.append(
+    createFieldElement({
+      title: createColoredTypeHTML({
+        color: "orange",
+        type: "Swap",
+        text: "Recurrent Amount",
+      }),
+      description:
+        "The maximum recurrent amount of dollars you'll be exchanging.",
+      input: createInputDollar({
+        id: "simulation-dollars-later",
+        title: "Recurrent Swap Amount",
+        signal: settings.swap.amount.recurrent,
+      }),
+    }),
+  );
 
-  [
-    { name: "Daily" },
-    {
-      name: "Weekly",
-      sub: [
-        "Monday",
-        "Tuesday",
-        "Wednesday",
-        "Thursday",
-        "Friday",
-        "Saturday",
-        "Sunday",
-      ],
-    },
-    {
-      name: "Monthly",
-      sub: [
-        "The 1st",
-        "The 2nd",
-        "The 3rd",
-        "The 4th",
-        "The 5th",
-        "The 6th",
-        "The 7th",
-        "The 8th",
-        "The 9th",
-        "The 10th",
-        "The 11th",
-        "The 12th",
-        "The 13th",
-        "The 14th",
-        "The 15th",
-        "The 16th",
-        "The 17th",
-        "The 18th",
-        "The 19th",
-        "The 20th",
-        "The 21st",
-        "The 22nd",
-        "The 23rd",
-        "The 24th",
-        "The 25th",
-        "The 26th",
-        "The 27th",
-        "The 28th",
-      ],
-    },
-  ].forEach(({ name, sub }, index) => {
-    const li = utils.dom.createLiElement();
-    const { label, input } = utils.dom.createLabeledInput({
-      inputId: `frequency-${name}`,
-      inputName: "frequency",
-      inputValue: name.toLowerCase(),
-      labelTitle: name,
-      inputChecked: !index,
-      onClick: () => {},
-    });
-    label.append(name);
-    li.append(label);
-    if (sub) {
-      const parentName = name;
-      const ul = utils.dom.createUlElement();
-      li.append(ul);
-      sub.forEach((name) => {
-        const li = utils.dom.createLiElement();
-        const { label, input } = utils.dom.createLabeledInput({
-          inputId: `frequency-${parentName}-${name}`,
-          inputName: `frequency-${parentName}`,
-          inputValue: name.toLowerCase(),
-          labelTitle: name,
-          inputChecked: !index,
-          onClick: () => {},
-        });
-        label.append(name);
-        li.append(label);
-        ul.append(li);
-      });
-    }
-    frequencyUL.append(li);
-  });
+  parametersElement.append(
+    createFieldElement({
+      title: createColoredTypeHTML({
+        color: "orange",
+        type: "Swap",
+        text: "Frequency",
+      }),
+      description:
+        "The frequency at which you'll be exchanging the preceding amount.",
+      input: utils.dom.createSelect({
+        id: "top-up-frequency",
+        list: frequencies.list,
+        signal: settings.swap.frequency,
+      }),
+    }),
+  );
 
-  const frequencyChoiceUL = utils.dom.createUlElement();
-  recurrentGroup.append(frequencyChoiceUL);
+  parametersElement.append(
+    createFieldElement({
+      title: createColoredTypeHTML({
+        color: "sky",
+        type: "Interval",
+        text: "Start",
+      }),
+      description: "The first day of the simulation.",
+      input: createInputDateField({
+        signal: settings.interval.start,
+        signals,
+        utils,
+      }),
+    }),
+  );
 
-  const intervalGroup = createParameterGroup({
-    title: "Interval",
-    description: "wkfpweokf",
-  });
-  parametersElement.append(intervalGroup);
+  parametersElement.append(
+    createFieldElement({
+      title: createColoredTypeHTML({
+        color: "sky",
+        type: "Interval",
+        text: "End",
+      }),
+      description: "The last day of the simulation.",
+      input: createInputDateField({
+        signal: settings.interval.end,
+        signals,
+        utils,
+      }),
+    }),
+  );
 
-  console.log("weofpwklfpwkofwepokf");
+  parametersElement.append(
+    createFieldElement({
+      title: createColoredTypeHTML({
+        color: "red",
+        type: "Fees",
+        text: "Percentage",
+      }),
+      description:
+        "The amount of fees (in %) from where you'll be exchanging your dollars.",
+      input: utils.dom.createInputNumberElement({
+        id: "",
+        title: "",
+        signal: settings.fees.percentage,
+        min: 0,
+        max: 50,
+        step: 0.01,
+        signals,
+      }),
+    }),
+  );
 
-  createInputDateField({
-    signal: settings.interval.start,
-    getDefault: getDefaultIntervalStart,
-    parent: intervalGroup,
-    signals,
-    utils,
-  });
-  createInputDateField({
-    signal: settings.interval.end,
-    getDefault: getDefaultIntervalEnd,
-    parent: intervalGroup,
-    signals,
-    utils,
-  });
+  const firstParagraph = window.document.createElement("p");
+  resultsElement.append(firstParagraph);
 
-  const feesGroup = createParameterGroup({
-    title: "Fees",
-    description:
-      "The amount of fees (in %) from where you'll be exchanging your currency",
-  });
-  parametersElement.append(feesGroup);
-
-  const input = utils.dom.createInputNumberElement({
-    id: "",
-    title: "",
-    signal: settings.fees.percentage,
-    min: 0,
-    max: 50,
-    step: 0.01,
-    signals,
-  });
-  feesGroup.append(input);
-
-  // parametersElement.append(utils.dom.createHrElement());
-
-  // const strategyGroup = createParameterGroup({
-  //   title: "Strategy",
-  //   description: "The strategy used to convert your fiat into Bitcoin",
-  // });
-  // parametersElement.append(strategyGroup);
-
-  // const ulStrategies = utils.dom.createUlElement();
-  // strategyGroup.append(ulStrategies);
-
-  // ["All in", "Weighted Local", "Weighted Cycle"].forEach((strategy) => {
-  //   const li = utils.dom.createLiElement();
-  //   li.append(strategy);
-  //   ulStrategies.append(li);
-  // });
+  const secondParagraph = window.document.createElement("p");
+  resultsElement.append(secondParagraph);
 
   const parent = window.document.createElement("div");
   parent.classList.add("chart-list");
   resultsElement.append(parent);
-
-  signals.createEffect(settings.interval.start, (start) => {
-    console.log("start", start);
-  });
-
-  signals.createEffect(settings.interval.end, (end) => {
-    console.log("end", end);
-  });
 
   const owner = signals.getOwner();
 
@@ -325,28 +308,33 @@ export function init({
     signals.runWithOwner(owner, () => {
       signals.createEffect(
         () => ({
-          initialAmount: settings.initial.firstDay() || 0,
-          recurrentAmount: settings.recurrent.amount() || 0,
-          dollarsLeft: settings.initial.overTime() || 0,
+          initialDollarAmount: settings.dollars.initial.amount() || 0,
+          topUpAmount: settings.dollars.topUp.amount() || 0,
+          topUpFrequency: settings.dollars.topUp.frenquency(),
+          initialSwap: settings.swap.amount.initial() || 0,
+          recurrentSwap: settings.swap.amount.recurrent() || 0,
+          swapFrequency: settings.swap.frequency(),
           start: settings.interval.start(),
           end: settings.interval.end(),
           fees: settings.fees.percentage(),
         }),
-        // ({ initialAmount, recurrentAmount, dollarsLeft, start, end }) => {
-        //   console.log({
-        //     start,
-        //     end,
-        //   });
-        // },
-        ({ initialAmount, recurrentAmount, dollarsLeft, start, end, fees }) => {
+        ({
+          initialDollarAmount,
+          topUpAmount,
+          topUpFrequency,
+          initialSwap,
+          recurrentSwap,
+          swapFrequency,
+          start,
+          end,
+          fees,
+        }) => {
           console.log({ start, end });
           parent.innerHTML = "";
 
           if (!start || !end || start > end) return;
 
           const range = utils.date.getRange(start, end);
-
-          let investedAmount = 0;
 
           /** @type {LineData<Time>[]} */
           const investedData = [];
@@ -364,8 +352,20 @@ export function init({
           const investmentData = [];
           /** @type {LineData<Time>[]} */
           const bitcoinAddedData = [];
+          /** @type {LineData<Time>[]} */
+          const averagePricePaidData = [];
+          /** @type {LineData<Time>[]} */
+          const bitcoinPriceData = [];
+          /** @type {LineData<Time>[]} */
+          const investmentsData = [];
 
           let bitcoin = 0;
+          let dollars = initialDollarAmount;
+          let investedAmount = 0;
+          let investmentsCount = 0;
+          let averagePricePaid = 0;
+          let _return = 0;
+          let roi = 0;
 
           let feesPaid = 0;
 
@@ -373,23 +373,29 @@ export function init({
             const year = date.getUTCFullYear();
             const time = utils.date.toString(date);
 
+            if (topUpFrequency.isTriggerDay(date)) {
+              dollars += topUpAmount;
+            }
+
             const close = closes.fetchedJSONs
               .at(utils.chunkIdToIndex("date", year))
               ?.json()?.dataset.map[utils.date.toString(date)];
 
             if (!close) return;
 
-            let investmentPreFees =
-              (!index ? initialAmount : 0) + recurrentAmount;
-
-            if (dollarsLeft > 0) {
-              if (dollarsLeft >= recurrentAmount) {
-                investmentPreFees += recurrentAmount;
-                dollarsLeft -= recurrentAmount;
-              } else {
-                investmentPreFees += dollarsLeft;
-                dollarsLeft = 0;
-              }
+            let investmentPreFees = 0;
+            /** @param {number} value  */
+            function invest(value) {
+              value = Math.min(dollars, value);
+              investmentPreFees += value;
+              dollars -= value;
+              investmentsCount += 1;
+            }
+            if (!index) {
+              invest(initialSwap);
+            }
+            if (swapFrequency.isTriggerDay(date) && dollars > 0) {
+              invest(recurrentSwap);
             }
 
             let investment = investmentPreFees * (1 - (fees || 0) / 100);
@@ -400,7 +406,16 @@ export function init({
 
             investedAmount += investment;
 
-            const _return = close * bitcoin;
+            _return = close * bitcoin;
+
+            averagePricePaid = investedAmount / bitcoin;
+
+            roi = (_return / investedAmount - 1) * 100;
+
+            bitcoinPriceData.push({
+              time,
+              value: close,
+            });
 
             bitcoinData.push({
               time,
@@ -419,17 +434,17 @@ export function init({
 
             resultData.push({
               time,
-              value: (_return / investedAmount - 1) * 100,
+              value: roi,
             });
 
             dollarsData.push({
               time,
-              value: dollarsLeft,
+              value: dollars,
             });
 
             totalData.push({
               time,
-              value: dollarsLeft + _return,
+              value: dollars + _return,
             });
 
             investmentData.push({
@@ -441,7 +456,35 @@ export function init({
               time,
               value: bitcoinAdded,
             });
+
+            averagePricePaidData.push({
+              time,
+              value: averagePricePaid,
+            });
+
+            investmentsData.push({
+              time,
+              value: investmentsCount,
+            });
           });
+
+          // const { headerElement } = utils.dom.createHeader({
+          //   title: "TItle",
+          //   description: "Description",
+          // });
+
+          // parent.append(headerElement);
+
+          const f = utils.locale.numberToUSFormat;
+          /**
+           * @param {string} c
+           * @param {string} t
+           */
+          const c = (c, t) => createColoredSpan({ color: c, text: t });
+
+          firstParagraph.innerHTML = `After exchanging ${c("dollar", `$${f(investedAmount)}`)} in the span of ${c("sky", f(range.length))} days, you would've accumulated ${c("orange", f(bitcoin))} Bitcoin worth ${c("dollar", `$${f(_return)}`)} at an average price of ${c("dollar", `$${f(averagePricePaid)}`)} per Bitcoin with a return of investment of ${c("yellow", `${f(roi)}%`)}.`;
+
+          secondParagraph.innerHTML = `After exchanging ${c("dollar", `$${f(investedAmount)}`)} in the span of ${c("sky", f(range.length))} days, you would've accumulated ${c("orange", f(bitcoin))} Bitcoin worth ${c("dollar", `$${f(_return)}`)} at an average price of ${c("dollar", `$${f(averagePricePaid)}`)} per Bitcoin with a return of investment of ${c("yellow", `${f(roi)}%`)}.`;
 
           (() => {
             const chartWrapper = window.document.createElement("div");
@@ -543,6 +586,64 @@ export function init({
 
             chart.timeScale().fitContent();
           })();
+
+          (() => {
+            const chartWrapper = window.document.createElement("div");
+            chartWrapper.classList.add("chart-wrapper");
+            parent.append(chartWrapper);
+
+            const chartDiv = window.document.createElement("div");
+            chartDiv.classList.add("chart-div");
+            chartWrapper.append(chartDiv);
+
+            const chart = lightweightCharts.createChart({
+              scale: "date",
+              element: chartDiv,
+              signals,
+              colors,
+              options: {
+                handleScale: false,
+                handleScroll: false,
+              },
+            });
+
+            const line = chart.addLineSeries();
+
+            line.setData(bitcoinPriceData);
+
+            const line2 = chart.addLineSeries();
+
+            line2.setData(averagePricePaidData);
+
+            chart.timeScale().fitContent();
+          })();
+
+          (() => {
+            const chartWrapper = window.document.createElement("div");
+            chartWrapper.classList.add("chart-wrapper");
+            parent.append(chartWrapper);
+
+            const chartDiv = window.document.createElement("div");
+            chartDiv.classList.add("chart-div");
+            chartWrapper.append(chartDiv);
+
+            const chart = lightweightCharts.createChart({
+              scale: "date",
+              element: chartDiv,
+              signals,
+              colors,
+              options: {
+                handleScale: false,
+                handleScroll: false,
+              },
+            });
+
+            const line = chart.addLineSeries();
+
+            line.setData(investmentsData);
+
+            chart.timeScale().fitContent();
+          })();
         },
       );
     });
@@ -572,20 +673,23 @@ function createInputField({ name, input }) {
  * @param {Object} args
  * @param {string} args.title
  * @param {string} args.description
+ * @param {HTMLElement} args.input
  */
-function createParameterGroup({ title, description }) {
+function createFieldElement({ title, description, input }) {
   const div = window.document.createElement("div");
 
-  const wrapper = window.document.createElement("div");
-  div.append(wrapper);
+  const label = window.document.createElement("label");
+  div.append(label);
 
-  const titleElement = window.document.createElement("h4");
+  const titleElement = window.document.createElement("span");
   titleElement.innerHTML = title;
-  wrapper.append(titleElement);
+  label.append(titleElement);
 
   const descriptionElement = window.document.createElement("small");
   descriptionElement.innerHTML = description;
-  wrapper.append(descriptionElement);
+  label.append(descriptionElement);
+
+  div.append(input);
 
   return div;
 }
@@ -619,14 +723,11 @@ function createInputDollar({ id, title, signal }) {
  *
  * @param {Object} arg
  * @param {Signal<Date | null>} arg.signal
- * @param {() => Date | null} arg.getDefault
- * @param {HTMLElement} arg.parent
  * @param {Utilities} arg.utils
  * @param {Signals} arg.signals
  */
-function createInputDateField({ signal, getDefault, parent, signals, utils }) {
+function createInputDateField({ signal, signals, utils }) {
   const div = window.document.createElement("div");
-  parent.append(div);
 
   div.append(
     utils.dom.createInputDate({
@@ -638,9 +739,7 @@ function createInputDateField({ signal, getDefault, parent, signals, utils }) {
   );
 
   const button = utils.dom.createButtonElement({
-    onClick: () => {
-      signal.set(getDefault());
-    },
+    onClick: signal.reset,
     text: "Reset",
     title: "Reset field",
   });
@@ -648,4 +747,137 @@ function createInputDateField({ signal, getDefault, parent, signals, utils }) {
   div.append(button);
 
   return div;
+}
+
+/** @param {number} day  */
+function getOrdinalDay(day) {
+  const rest = (day % 30) % 20;
+
+  return `${day}${
+    rest === 1 ? "st" : rest === 2 ? "nd" : rest === 3 ? "rd" : "th"
+  }`;
+}
+
+/**
+ * @param {Object} param0
+ * @param {string} param0.color
+ * @param {string} param0.type
+ * @param {string} param0.text
+ */
+function createColoredTypeHTML({ color, type, text }) {
+  return `${createColoredSpan({ color, text: `${type}:` })} ${text}`;
+}
+
+/**
+ * @param {Object} param0
+ * @param {string} param0.color
+ * @param {string} param0.text
+ */
+function createColoredSpan({ color, text }) {
+  return `<span style="color: var(--${color}); font-weight: var(--font-weight-bold)">${text}</span>`;
+}
+
+function computeFrequencies() {
+  const weekDays = [
+    "Monday",
+    "Tuesday",
+    "Wednesday",
+    "Thursday",
+    "Friday",
+    "Saturday",
+    "Sunday",
+  ];
+  const maxDays = 28;
+
+  /** @satisfies {((Frequency | {name: string; list: Frequency[]})[])} */
+  const list = [
+    {
+      name: "Every day",
+      value: "every-day",
+      /** @param {Date} _  */
+      isTriggerDay(_) {
+        return true;
+      },
+    },
+    {
+      name: "Once a week",
+      list: weekDays.map((day, index) => ({
+        name: day,
+        value: day.toLowerCase(),
+        /** @param {Date} date  */
+        isTriggerDay(date) {
+          let day = date.getUTCDay() - 1;
+          if (day === -1) {
+            day = 6;
+          }
+          return day === index;
+        },
+      })),
+    },
+    {
+      name: "Every two weeks",
+      list: [...Array(Math.round(maxDays / 2)).keys()].map((day) => {
+        const day1 = day + 1;
+        const day2 = day + 15;
+
+        return {
+          value: `${day1}+${day2}`,
+          name: `The ${getOrdinalDay(day1)} and the ${getOrdinalDay(day2)}`,
+          /** @param {Date} date  */
+          isTriggerDay(date) {
+            const d = date.getUTCDate();
+            return d === day1 || d === day2;
+          },
+        };
+      }),
+    },
+    {
+      name: "Once a month",
+      list: [...Array(maxDays).keys()].map((day) => {
+        day++;
+
+        return {
+          name: `The ${getOrdinalDay(day)}`,
+          value: String(day),
+          /** @param {Date} date  */
+          isTriggerDay(date) {
+            const d = date.getUTCDate();
+            return d === day;
+          },
+        };
+      }),
+    },
+  ];
+
+  /** @type {Record<string, Frequency>} */
+  const idToFrequency = {};
+
+  list.forEach((anyFreq, index) => {
+    if ("list" in anyFreq) {
+      anyFreq.list?.forEach((freq) => {
+        idToFrequency[freq.value] = freq;
+      });
+    } else {
+      idToFrequency[anyFreq.value] = anyFreq;
+    }
+  });
+
+  const serde = {
+    /**
+     * @param {Frequency} v
+     */
+    serialize(v) {
+      return v.value;
+    },
+    /**
+     * @param {string} v
+     */
+    deserialize(v) {
+      const freq = idToFrequency[v];
+      if (!freq) throw "Freq not found";
+      return freq;
+    },
+  };
+
+  return { list, serde };
 }

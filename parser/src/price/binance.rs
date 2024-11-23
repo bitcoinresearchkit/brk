@@ -145,8 +145,8 @@ impl Binance {
                     })
                     .collect::<BTreeMap<_, _>>())
             },
+            30,
             10,
-            5,
         )
     }
 
@@ -195,7 +195,7 @@ impl Binance {
                     })
                     .collect::<BTreeMap<_, _>>())
             },
-            10,
+            30,
             10,
         )
     }

@@ -1,6 +1,11 @@
-use std::fs::{self};
+use std::{
+    fs::{self},
+    path::{Path, PathBuf},
+};
 
+use biter::bitcoincore_rpc::Auth;
 use clap::Parser;
+use color_eyre::eyre::eyre;
 use serde::{Deserialize, Serialize};
 
 use crate::log;
@@ -19,6 +24,10 @@ pub struct Config {
     /// Bitcoin RPC port, default: 8332, saved
     #[arg(long, value_name = "PORT")]
     pub rpcport: Option<u16>,
+
+    /// Bitcoin RPC cookie file, saved
+    #[arg(long, value_name = "PATH")]
+    pub rpccookiefile: Option<String>,
 
     /// Bitcoin RPC username, saved
     #[arg(long, value_name = "USERNAME")]
@@ -75,6 +84,10 @@ impl Config {
             config_saved.rpcport = Some(rpcport);
         }
 
+        if let Some(rpccookiefile) = config_args.rpccookiefile.take() {
+            config_saved.rpccookiefile = Some(rpccookiefile);
+        }
+
         if let Some(rpcuser) = config_args.rpcuser.take() {
             config_saved.rpcuser = Some(rpcuser);
         }
@@ -109,6 +122,7 @@ impl Config {
         log(&format!("datadir: {:?}", config.datadir));
         log(&format!("rpcconnect: {:?}", config.rpcconnect));
         log(&format!("rpcport: {:?}", config.rpcport));
+        log(&format!("rpccookiefile: {:?}", config.rpccookiefile));
         log(&format!("rpcuser: {:?}", config.rpcuser));
         log(&format!("rpcpassword: {:?}", config.rpcpassword));
         log(&format!("delay: {:?}", config.delay));
@@ -132,28 +146,51 @@ impl Config {
 
     fn check(&self) {
         if self.datadir.is_none() {
-            Self::exit("datadir");
+            println!(
+                "You need to set the --datadir parameter at least once to run the parser.\nRun the program with '-h' for help."
+            );
+            std::process::exit(1);
         }
 
-        if self.rpcuser.is_none() {
-            Self::exit("rpcuser");
+        let path = Path::new(self.datadir.as_ref().unwrap());
+        if !path.is_dir() {
+            println!("Expect path '{:#?}' to be a directory.", path);
+            std::process::exit(1);
         }
 
-        if self.rpcpassword.is_none() {
-            Self::exit("rpcpassword");
+        if self.to_rpc_auth().is_err() {
+            println!(
+                "No way found to authenticate the RPC client, please either set --rpccookiefile or --rpcuser and --rpcpassword.\nRun the program with '-h' for help."
+            );
+            std::process::exit(1);
         }
-    }
-
-    fn exit(attribute: &str) {
-        println!(
-            "You need to set the --{} parameter at least once to run the parser.\nRun the program with '-h' for help.", attribute
-        );
-
-        std::process::exit(1);
     }
 
     fn write(&self) -> std::io::Result<()> {
         fs::write(Self::PATH, toml::to_string(self).unwrap())
+    }
+
+    pub fn to_rpc_auth(&self) -> color_eyre::Result<Auth> {
+        let cookie = Path::new(self.datadir.as_ref().unwrap()).join(".cookie");
+
+        if cookie.is_file() {
+            Ok(Auth::CookieFile(cookie))
+        } else if self
+            .rpccookiefile
+            .as_ref()
+            .is_some_and(|cookie| Path::new(cookie).is_file())
+        {
+            Ok(Auth::CookieFile(PathBuf::from(
+                self.rpccookiefile.as_ref().unwrap(),
+            )))
+        } else if self.rpcuser.is_some() && self.rpcpassword.is_some() {
+            Ok(Auth::UserPass(
+                self.rpcuser.clone().unwrap(),
+                self.rpcpassword.clone().unwrap(),
+            ))
+        } else {
+            Err(eyre!("Failed to find correct auth"))
+        }
     }
 
     pub fn dry_run(&self) -> bool {

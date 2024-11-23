@@ -3,12 +3,31 @@
   flex-direction: column;
   flex: 1;
   min-height: 0;
+  padding: var(--main-padding);
+
+  header {
+    flex-shrink: 0;
+    display: flex;
+
+    white-space: nowrap;
+    overflow-x: auto;
+    padding-bottom: 1rem;
+    margin-bottom: -1rem;
+    padding-left: var(--main-padding);
+    margin-left: var(--negative-main-padding);
+    padding-right: var(--main-padding);
+    margin-right: var(--negative-main-padding);
+
+    & > * {
+      flex: 1;
+    }
+  }
 
   > #legend {
     display: flex;
     align-items: center;
     gap: 1.5rem;
-    margin: -1rem var(--negative-main-padding);
+    margin: 1rem var(--negative-main-padding);
     padding: 1rem var(--main-padding);
     overflow-x: auto;
     min-width: 0;

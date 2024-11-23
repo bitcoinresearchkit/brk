@@ -1,4 +1,4 @@
-use biter::bitcoincore_rpc::{Auth, Client};
+use biter::bitcoincore_rpc::Client;
 
 use crate::Config;
 
@@ -12,9 +12,6 @@ pub fn create_rpc(config: &Config) -> color_eyre::Result<Client> {
                 .unwrap_or(&"localhost".to_owned()),
             config.rpcport.unwrap_or(8332)
         ),
-        Auth::UserPass(
-            config.rpcuser.clone().unwrap(),
-            config.rpcpassword.clone().unwrap(),
-        ),
+        config.to_rpc_auth().unwrap(),
     )?)
 }

@@ -1,7 +1,7 @@
 // @ts-check
 
 /**
- * @import { Option, ResourceDataset, TimeScale, TimeRange, Unit, Marker, Weighted, DatasetPath, OHLC, FetchedJSON, DatasetValue, FetchedResult, AnyDatasetPath, SeriesBlueprint, BaselineSpecificSeriesBlueprint, CandlestickSpecificSeriesBlueprint, LineSpecificSeriesBlueprint, SpecificSeriesBlueprintWithChart, Signal, Color, DatasetCandlestickData, PartialChartOption, ChartOption, AnyPartialOption, ProcessedOptionAddons, OptionsTree, AnyPath, SimulationOption } from "./types/self"
+ * @import { Option, ResourceDataset, TimeScale, TimeRange, Unit, Marker, Weighted, DatasetPath, OHLC, FetchedJSON, DatasetValue, FetchedResult, AnyDatasetPath, SeriesBlueprint, BaselineSpecificSeriesBlueprint, CandlestickSpecificSeriesBlueprint, LineSpecificSeriesBlueprint, SpecificSeriesBlueprintWithChart, Signal, Color, DatasetCandlestickData, PartialChartOption, ChartOption, AnyPartialOption, ProcessedOptionAddons, OptionsTree, AnyPath, SimulationOption, Frequency } from "./types/self"
  * @import {createChart as CreateClassicChart, createChartEx as CreateCustomChart, LineStyleOptions} from "../packages/lightweight-charts/v4.2.0/types";
  * @import * as _ from "../packages/ufuzzy/v1.0.14/types"
  * @import { DeepPartial, ChartOptions, IChartApi, IHorzScaleBehavior, WhitespaceData, SingleValueData, ISeriesApi, Time, LineData, LogicalRange, SeriesMarker, CandlestickData, SeriesType, BaselineStyleOptions, SeriesOptionsCommon } from "../packages/lightweight-charts/v4.2.0/types"
@@ -56,6 +56,9 @@ function initPackages() {
             // @ts-ignore
             get.set = set;
 
+            // @ts-ignore
+            get.reset = () => set(initialValue);
+
             if (options?.save) {
               const save = options.save;
 
@@ -75,7 +78,13 @@ function initPackages() {
                 if (!save) return;
 
                 if (!firstEffect && save.id) {
-                  if (value !== undefined && value !== null) {
+                  if (
+                    value !== undefined &&
+                    value !== null &&
+                    (initialValue === undefined ||
+                      initialValue === null ||
+                      save.serialize(value) !== save.serialize(initialValue))
+                  ) {
                     localStorage.setItem(save.id, save.serialize(value));
                   } else {
                     localStorage.removeItem(save.id);
@@ -83,7 +92,13 @@ function initPackages() {
                 }
 
                 if (save.param) {
-                  if (value !== undefined && value !== null) {
+                  if (
+                    value !== undefined &&
+                    value !== null &&
+                    (initialValue === undefined ||
+                      initialValue === null ||
+                      save.serialize(value) !== save.serialize(initialValue))
+                  ) {
                     utils.url.writeParam(save.param, save.serialize(value));
                   } else {
                     utils.url.removeParam(save.param);
@@ -1048,10 +1063,13 @@ const utils = {
 
       const h1 = window.document.createElement("h1");
       div.append(h1);
+      h1.style.display = "flex";
+      h1.style.flexDirection = "column";
 
       const titleElement = window.document.createElement("span");
       titleElement.append(title);
       h1.append(titleElement);
+      titleElement.style.display = "block";
 
       const descriptionElement = window.document.createElement("small");
       descriptionElement.append(description);
@@ -1062,6 +1080,61 @@ const utils = {
         titleElement,
         descriptionElement,
       };
+    },
+    /**
+     * @param {Object} param0
+     * @param {string} param0.name
+     * @param {string} param0.value
+     */
+    createOption({ name, value }) {
+      const option = window.document.createElement("option");
+      option.value = value;
+      option.innerText = name;
+      return option;
+    },
+    /**
+     * @template {{name: string; value: string}} T
+     * @param {Object} param0
+     * @param {string} param0.id
+     * @param {(({name: string; value: string} & T) | {name: string; list: ({name: string; value: string} & T)[]})[]} param0.list
+     * @param {Signal<T>} param0.signal
+     */
+    createSelect({ id, list, signal }) {
+      const select = window.document.createElement("select");
+      select.name = id;
+      select.value = signal().value;
+
+      /** @type {Record<string, VoidFunction>} */
+      const setters = {};
+
+      list.forEach((anyOption, index) => {
+        if ("list" in anyOption) {
+          const { name, list } = anyOption;
+          const optGroup = window.document.createElement("optgroup");
+          optGroup.label = name;
+          select.append(optGroup);
+          list.forEach((option) => {
+            optGroup.append(this.createOption(option));
+            setters[option.value] = () => signal.set(option);
+          });
+        } else {
+          select.append(this.createOption(anyOption));
+          setters[anyOption.value] = () => signal.set(anyOption);
+        }
+        if (index !== list.length - 1) {
+          select.append(window.document.createElement("hr"));
+        }
+      });
+
+      select.addEventListener("change", () => {
+        const callback = setters[select.value];
+        // @ts-ignore
+        if (callback) {
+          callback();
+        }
+      });
+
+      return select;
     },
   },
   url: {
@@ -1367,6 +1440,101 @@ const utils = {
       return dates;
     },
   },
+  color: {
+    /**
+     *
+     * @param {readonly [number, number, number, number, number, number, number, number, number]} A
+     * @param {readonly [number, number, number]} B
+     * @returns
+     */
+    multiplyMatrices(A, B) {
+      return /** @type {const} */ ([
+        A[0] * B[0] + A[1] * B[1] + A[2] * B[2],
+        A[3] * B[0] + A[4] * B[1] + A[5] * B[2],
+        A[6] * B[0] + A[7] * B[1] + A[8] * B[2],
+      ]);
+    },
+    /**
+     * @param {readonly [number, number, number]} param0
+     */
+    oklch2oklab([l, c, h]) {
+      return /** @type {const} */ ([
+        l,
+        isNaN(h) ? 0 : c * Math.cos((h * Math.PI) / 180),
+        isNaN(h) ? 0 : c * Math.sin((h * Math.PI) / 180),
+      ]);
+    },
+    /**
+     * @param {readonly [number, number, number]} rgb
+     */
+    srgbLinear2rgb(rgb) {
+      return rgb.map((c) =>
+        Math.abs(c) > 0.0031308
+          ? (c < 0 ? -1 : 1) * (1.055 * Math.abs(c) ** (1 / 2.4) - 0.055)
+          : 12.92 * c,
+      );
+    },
+    /**
+     * @param {readonly [number, number, number]} lab
+     */
+    oklab2xyz(lab) {
+      const LMSg = this.multiplyMatrices(
+        /** @type {const} */ ([
+          1, 0.3963377773761749, 0.2158037573099136, 1, -0.1055613458156586,
+          -0.0638541728258133, 1, -0.0894841775298119, -1.2914855480194092,
+        ]),
+        lab,
+      );
+      const LMS = /** @type {[number, number, number]} */ (
+        LMSg.map((val) => val ** 3)
+      );
+      return this.multiplyMatrices(
+        /** @type {const} */ ([
+          1.2268798758459243, -0.5578149944602171, 0.2813910456659647,
+          -0.0405757452148008, 1.112286803280317, -0.0717110580655164,
+          -0.0763729366746601, -0.4214933324022432, 1.5869240198367816,
+        ]),
+        LMS,
+      );
+    },
+    /**
+     * @param {readonly [number, number, number]} xyz
+     */
+    xyz2rgbLinear(xyz) {
+      return this.multiplyMatrices(
+        [
+          3.2409699419045226, -1.537383177570094, -0.4986107602930034,
+          -0.9692436362808796, 1.8759675015077202, 0.04155505740717559,
+          0.05563007969699366, -0.20397695888897652, 1.0569715142428786,
+        ],
+        xyz,
+      );
+    },
+    /** @param {string} oklch */
+    oklch2hex(oklch) {
+      oklch = oklch.replace("oklch(", "");
+      oklch = oklch.replace(")", "");
+      const lch = oklch.split(" ").map((v, i) => {
+        if (!i && v.includes("%")) {
+          return Number(v.replace("%", "")) / 100;
+        } else {
+          return Number(v);
+        }
+      });
+      const [r, g, b] = this.srgbLinear2rgb(
+        this.xyz2rgbLinear(
+          this.oklab2xyz(
+            this.oklch2oklab(/** @type {[number, number, number]} */ (lch)),
+          ),
+        ),
+      ).map((v) => {
+        v = Math.max(Math.min(Math.round(v * 255), 255), 0);
+        const s = v.toString(16);
+        return s.length === 1 ? `0${s}` : s;
+      });
+      return `#${r}${g}${b}`;
+    },
+  },
   /**
    *
    * @template {(...args: any[]) => any} F
@@ -1420,6 +1588,12 @@ const utils = {
     return scale === "date"
       ? id - 2009
       : Math.floor(id / consts.HEIGHT_CHUNK_SIZE);
+  },
+  /**
+   * @param {string} str
+   */
+  stringToId(str) {
+    return str.toLowerCase().replace(" ", "-");
   },
 };
 /** @typedef {typeof utils} Utilities */
@@ -1647,86 +1821,65 @@ createKeyDownEventListener();
  * @param {Accessor<boolean>} dark
  */
 function createColors(dark) {
-  function lightRed() {
-    const tailwindRed300 = "#fca5a5";
-    const tailwindRed800 = "#991b1b";
-    return dark() ? tailwindRed300 : tailwindRed800;
+  /**
+   * @param {string} color
+   */
+  function getColor(color) {
+    return utils.color.oklch2hex(elements.style.getPropertyValue(`--${color}`));
   }
   function red() {
-    return "#e63636"; // 550
-  }
-  function darkRed() {
-    const tailwindRed900 = "#7f1d1d";
-    const tailwindRed100 = "#fee2e2";
-    return dark() ? tailwindRed900 : tailwindRed100;
+    return getColor("red");
   }
   function orange() {
-    return elements.style.getPropertyValue("--orange"); // 550
-  }
-  function darkOrange() {
-    const tailwindOrange900 = "#7c2d12";
-    const tailwindOrange100 = "#ffedd5";
-    return dark() ? tailwindOrange900 : tailwindOrange100;
+    return getColor("orange");
   }
   function amber() {
-    return "#e78a05"; // 550
+    return getColor("amber");
   }
   function yellow() {
-    return "#db9e03"; // 550
+    return getColor("yellow");
+  }
+  function avocado() {
+    return getColor("avocado");
   }
   function lime() {
-    return "#74b713"; // 550
+    return getColor("line");
   }
   function green() {
-    return "#1cb454";
-  }
-  function darkGreen() {
-    const tailwindGreen900 = "#14532d";
-    const tailwindGreen100 = "#dcfce7";
-    return dark() ? tailwindGreen900 : tailwindGreen100;
+    return getColor("green");
   }
   function emerald() {
-    return "#0ba775";
-  }
-  function darkEmerald() {
-    const tailwindEmerald900 = "#064e3b";
-    const tailwindEmerald100 = "#d1fae5";
-    return dark() ? tailwindEmerald900 : tailwindEmerald100;
+    return getColor("emerald");
   }
   function teal() {
-    return "#10a697"; // 550
+    return getColor("teal");
   }
   function cyan() {
-    return "#06a3c3"; // 550
+    return getColor("cyan");
   }
   function sky() {
-    return "#0794d8"; // 550
+    return getColor("sky");
   }
   function blue() {
-    return "#2f73f1"; // 550
+    return getColor("blue");
   }
   function indigo() {
-    return "#5957eb";
+    return getColor("indigo");
   }
   function violet() {
-    return "#834cf2";
+    return getColor("violet");
   }
   function purple() {
-    return "#9d45f0";
+    return getColor("purple");
   }
   function fuchsia() {
-    return "#cc37e1";
+    return getColor("fuchsia");
   }
   function pink() {
-    return "#e53882";
+    return getColor("pink");
   }
   function rose() {
-    return "#ea3053";
-  }
-  function darkRose() {
-    const tailwindRose900 = "#881337";
-    const tailwindRose100 = "#ffe4e6";
-    return dark() ? tailwindRose900 : tailwindRose100;
+    return getColor("rose");
   }
 
   /**
@@ -1751,16 +1904,16 @@ function createColors(dark) {
     off,
     lightBitcoin: yellow,
     bitcoin: orange,
-    darkBitcoin: darkOrange,
+    offBitcoin: red,
     lightDollars: lime,
-    dollars: emerald,
-    darkDollars: darkEmerald,
+    dollars: green,
+    offDollars: emerald,
 
     yellow,
     orange,
     red,
 
-    _1d: lightRed,
+    _1d: pink,
     _1w: red,
     _8d: orange,
     _13d: amber,
@@ -1806,17 +1959,15 @@ function createColors(dark) {
     cvdd: lime,
     terminalPrice: red,
     loss: red,
-    darkLoss: darkRed,
     profit: green,
-    darkProfit: darkGreen,
     thermoCap: green,
     investorCap: rose,
     realizedCap: orange,
-    darkLiveliness: darkRose,
+    offLiveliness: red,
     liveliness: rose,
     vaultedness: green,
     activityToVaultednessRatio: violet,
-    up_to_1d: lightRed,
+    up_to_1d: pink,
     up_to_1w: red,
     up_to_1m: orange,
     up_to_2m: amber,
@@ -2324,9 +2475,9 @@ function initWebSockets(signals) {
 
       if (result.channel !== "ohlc") return;
 
-      const { timestamp, open, high, low, close } = result.data.at(-1);
+      const { interval_begin, open, high, low, close } = result.data.at(-1);
 
-      const date = new Date(timestamp);
+      const date = new Date(interval_begin);
 
       const dateStr = utils.date.toString(date);
 

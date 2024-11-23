@@ -60,7 +60,7 @@ impl Kraken {
                     })
                     .collect::<BTreeMap<_, _>>())
             },
-            10,
+            30,
             10,
         )
     }
@@ -115,7 +115,7 @@ impl Kraken {
                     })
                     .collect::<BTreeMap<_, _>>())
             },
-            10,
+            30,
             10,
         )
     }

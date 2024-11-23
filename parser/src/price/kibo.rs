@@ -55,7 +55,7 @@ impl Kibo {
                     .map(Self::value_to_ohlc)
                     .collect_vec())
             },
-            10,
+            30,
             RETRIES,
         )
     }
@@ -92,7 +92,7 @@ impl Kibo {
                     })
                     .collect::<BTreeMap<_, _>>())
             },
-            10,
+            30,
             RETRIES,
         )
     }

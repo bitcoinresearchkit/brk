@@ -26,7 +26,7 @@ type GrowToSize<T, N extends number, A extends T[]> = A["length"] extends N
 
 type FixedArray<T, N extends number> = GrowToSize<T, N, []>;
 
-type Signal<T> = Accessor<T> & { set: Setter<T> };
+type Signal<T> = Accessor<T> & { set: Setter<T>; reset: VoidFunction };
 
 type TimeScale = "date" | "height";
 
@@ -224,7 +224,7 @@ interface OHLC {
 
 interface ResourceDataset<
   Scale extends TimeScale,
-  Type extends OHLC | number = number,
+  Type extends OHLC | number = number
 > {
   scale: Scale;
   url: string;
@@ -243,7 +243,7 @@ interface FetchedResult<
     SingleValueData | ValuedCandlestickData
   > = DatasetValue<
     Type extends number ? SingleValueData : ValuedCandlestickData
-  >,
+  >
 > {
   at: Date | null;
   json: Signal<FetchedJSON<Scale, Type> | null>;
@@ -273,7 +273,7 @@ interface FetchedChunk {
 
 type FetchedDataset<
   Scale extends TimeScale,
-  Type extends number | OHLC,
+  Type extends number | OHLC
 > = Scale extends "date"
   ? FetchedDateDataset<Type>
   : FetchedHeightDataset<Type>;
@@ -369,4 +369,10 @@ interface RatioOptions {
   scale: TimeScale;
   title: string;
   list: RatioOption[];
+}
+
+interface Frequency {
+  name: string;
+  value: string;
+  isTriggerDay: (date: Date) => boolean;
 }

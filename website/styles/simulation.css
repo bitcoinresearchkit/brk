@@ -5,8 +5,29 @@
   width: 100%;
 
   > div:first-child {
-    max-width: 20rem;
-    border-right: 1px;x
+    max-width: var(--default-main-width);
+    border-right: 1px;
+    padding-bottom: var(--bottom-area);
+  }
+
+  > div:last-child {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+
+    p {
+      font-size: var(--font-size-lg);
+      text-wrap: pretty;
+    }
+  }
+
+  label {
+    > span {
+      display: block;
+    }
+    small {
+      font-size: var(--font-size-base);
+    }
   }
 
   > div {
@@ -14,44 +35,29 @@
     overflow-y: auto;
     display: flex;
     flex-direction: column;
-    gap: 3rem;
+    gap: 2rem;
+    padding: var(--main-padding);
 
     > div {
       display: flex;
       flex-direction: column;
-
-      gap: 0.5rem;
     }
   }
 
-  div:has(> input[type="date"] + button) {
+  div:has(> input + button) {
     display: flex;
     gap: 0.5rem;
-    align-items: center;
+    align-items: baseline;
+
+    button {
+      color: var(--off-color);
+      font-size: var(--font-size-sm);
+      line-height: var(--line-height-sm);
+    }
   }
 
   .chart-list {
-    max-height: 500px;
-    /* margin-left: var(--negative-main-padding);*/
+    max-height: 2000px;
     margin-right: calc(var(--negative-main-padding) - 0.5rem);
-  }
-
-  li {
-    label:has(input:not(:checked)) + ul {
-      display: none;
-    }
-
-    ul {
-      padding-left: 0.75rem;
-      margin-left:0.25rem;
-      border-left: 1px;
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.25rem;
-
-      li {
-        display: inline;
-      }
-    }
   }
 }

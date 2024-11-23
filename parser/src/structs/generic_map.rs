@@ -699,7 +699,7 @@ where
                 })
                 .into();
 
-            if previous_average.is_nan() {
+            if previous_average.is_nan() || previous_average.is_infinite() {
                 previous_average = 0.0;
             }
 
@@ -708,17 +708,11 @@ where
                 panic!()
             }));
 
-            if last_value.is_nan() {
+            if last_value.is_nan() || last_value.is_infinite() {
                 last_value = 0.0;
             }
 
-            let _average = (previous_average * (len - 1.0) + last_value) / len;
-
-            if _average.is_nan() || _average.is_infinite() {
-                average.replace(0.0.into());
-            } else {
-                average.replace(_average.into());
-            }
+            average.replace(((previous_average * (len - 1.0) + last_value) / len).into());
 
             self.insert_computed(*key, average.unwrap());
         });

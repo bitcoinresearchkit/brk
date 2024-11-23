@@ -1602,7 +1602,7 @@ function createPartialOptions(colors) {
                       },
                       {
                         title: "Mined",
-                        color: colors.darkBitcoin,
+                        color: colors.offBitcoin,
                         datasetPath: `date-to-blocks-mined`,
                         main: true,
                       },
@@ -2395,7 +2395,7 @@ function createPartialOptions(colors) {
             },
             {
               title: "Fees",
-              color: colors.darkBitcoin,
+              color: colors.offBitcoin,
               datasetPath:
                 scale === "date"
                   ? `${scale}-to-fees-to-coinbase-1d-ratio`
@@ -2443,7 +2443,7 @@ function createPartialOptions(colors) {
                       },
                       {
                         title: "Rate",
-                        color: colors.darkBitcoin,
+                        color: colors.offBitcoin,
                         datasetPath: `date-to-hash-rate`,
                       },
                     ],
@@ -2637,7 +2637,7 @@ function createPartialOptions(colors) {
             },
             {
               title: "Raw",
-              color: colors.darkBitcoin,
+              color: colors.offBitcoin,
               datasetPath:
                 scale === "date"
                   ? `${scale}-to-transaction-count-1d-sum`
@@ -2675,7 +2675,7 @@ function createPartialOptions(colors) {
                 },
                 {
                   title: "Raw",
-                  color: colors.darkBitcoin,
+                  color: colors.offBitcoin,
                   datasetPath:
                     scale === "date"
                       ? `${scale}-to-transaction-volume-1d-sum`
@@ -2708,7 +2708,7 @@ function createPartialOptions(colors) {
                 },
                 {
                   title: "Raw",
-                  color: colors.darkDollars,
+                  color: colors.offDollars,
                   datasetPath:
                     scale === "date"
                       ? `${scale}-to-transaction-volume-in-dollars-1d-sum`
@@ -2789,7 +2789,7 @@ function createPartialOptions(colors) {
             },
             {
               title: "Raw",
-              color: colors.darkBitcoin,
+              color: colors.offBitcoin,
               datasetPath: `${scale}-to-transactions-per-second`,
               main: true,
             },
@@ -4534,7 +4534,7 @@ function createPartialOptions(colors) {
                       },
                       {
                         title: "Concurrent Liveliness",
-                        color: colors.darkLiveliness,
+                        color: colors.offLiveliness,
                         datasetPath: `${scale}-to-concurrent-liveliness`,
                       },
                     ],
@@ -4548,7 +4548,7 @@ function createPartialOptions(colors) {
                     bottom: [
                       {
                         title: "Liveliness Incremental Change",
-                        color: colors.darkLiveliness,
+                        color: colors.offLiveliness,
                         type: "Baseline",
                         datasetPath: `date-to-liveliness-net-change`,
                       },

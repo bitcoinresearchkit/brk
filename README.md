@@ -68,7 +68,7 @@ Please open an issue if you want to add another instance
   - `-txindex=1`
   - `-blocksxor=0`
   - RPC credentials
-  - Example: `bitcoind -datadir="$HOME/.bitcoin" -blocksonly -txindex=1 -blocksxor=0 -rpcuser="satoshi" -rpcpassword="nakamoto"`
+  - Example: `bitcoind -datadir="$HOME/.bitcoin" -blocksonly -txindex=1 -blocksxor=0`
 - Git
 
 ### Manual
@@ -122,11 +122,12 @@ Now we can finally start by running the parser, you need to use the `./run.sh` s
 For the first launch, the parser will need several information such as:
 
 - `--datadir`: which is bitcoin data directory path, prefer `$HOME` to `~` as the latter might not work
-- `--rpcuser`: the username of the RPC credentials to talk to the bitcoin server
-- `--rpcpassword`: the password of the RPC credentials
 
 Optionally you can also specify:
 
+- `--rpccookiefile`: the path to the cookie file if not default
+- `--rpcuser`: the username of the RPC credentials to talk to the bitcoin server if set
+- `--rpcpassword`: the password of the RPC credentials if set
 - `--rpcconnect`: if the bitcoin core server's IP is different than `localhost`
 - `--rpcport`: if the port is different than `8332`
 
@@ -135,7 +136,7 @@ Everything will be saved in a `config.toml` file, which will allow you to simply
 Here's an example
 
 ```bash
-./run.sh --datadir=$HOME/Developer/bitcoin --rpcuser=satoshi --rpcpassword=nakamoto
+./run.sh --datadir=$HOME/Developer/bitcoin
 ```
 
 In a **new** terminal, go to the `server`'s folder of the repository
