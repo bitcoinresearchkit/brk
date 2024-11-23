@@ -54,6 +54,7 @@
 - Fixed bug in `generic_map.multi_insert_simple_average`
 - Added defragmentation option `--first-defragment true` of databases to save space (which can save up to 50%)
 - Fixed bug in the computation of averages in `GenericMap`
+- Added support and paramer for cookie files with `--rpccookiefile`, and auto find if the path is `--datadir/.cookie`
 
 ## Server
 
