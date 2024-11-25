@@ -4992,7 +4992,7 @@ function createPartialOptions(colors) {
       tree: [
         {
           kind: "simulation",
-          title: "Simulation: Save In Bitcoin",
+          title: "Save In Bitcoin",
           name: "Save In Bitcoin",
         },
       ],
@@ -5060,6 +5060,24 @@ function createPartialOptions(colors) {
             {
               name: "Cointime Economics",
               pdf: "glassnode/cointime-economics.pdf",
+            },
+          ],
+        },
+        {
+          name: "Lyn Alden",
+          tree: [
+            {
+              name: "Analyzing Bitcoin Consensus: Risks in Protocol Upgrades",
+              pdf: "multi-author/bcap_v1.0.pdf",
+            },
+          ],
+        },
+        {
+          name: "Steve Lee",
+          tree: [
+            {
+              name: "Analyzing Bitcoin Consensus: Risks in Protocol Upgrades",
+              pdf: "multi-author/bcap_v1.0.pdf",
             },
           ],
         },
@@ -5521,7 +5539,7 @@ export function initOptions({
           title = anyPartial.title;
         } else if ("pdf" in anyPartial) {
           kind = "pdf";
-          id = `${ids.fromString(anyPartial.name)}-pdf`;
+          id = `${path?.at(-1)?.name || ""}-${ids.fromString(anyPartial.name)}-pdf`;
           title = anyPartial.name;
           anyPartial.pdf = `/assets/pdfs/${anyPartial.pdf}`;
         } else if ("url" in anyPartial) {

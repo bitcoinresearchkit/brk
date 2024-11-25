@@ -39,6 +39,30 @@ export function init({
 
   const scale = signals.createMemo(() => selected().scale);
 
+  elements.charts.append(utils.dom.createShadow("left"));
+  elements.charts.append(utils.dom.createShadow("right"));
+
+  const { headerElement, titleElement, descriptionElement } =
+    utils.dom.createHeader({
+      title: selected().title,
+      description: selected().serializedPath,
+    });
+  elements.charts.append(headerElement);
+  signals.createEffect(selected, (option) => {
+    titleElement.innerHTML = option.title;
+    descriptionElement.innerHTML = option.serializedPath;
+  });
+
+  const div = window.document.createElement("div");
+  elements.charts.append(div);
+
+  const legendElement = window.document.createElement("legend");
+  div.append(legendElement);
+
+  const chartListElement = window.document.createElement("div");
+  chartListElement.classList.add("chart-list");
+  div.append(chartListElement);
+
   /**
    * @returns {TimeRange}
    */
@@ -362,7 +386,7 @@ export function init({
       });
     }
 
-    elements.legend.prepend(div);
+    legendElement.prepend(div);
 
     const { input, label } = utils.dom.createLabeledInput({
       inputId: `legend-${series.title}`,
@@ -841,7 +865,7 @@ export function init({
 
     charts = chartsBlueprints.map((seriesBlueprints, chartIndex) => {
       const { chartDiv, unitName, chartMode } = createChartDiv(
-        elements.chartsChartList,
+        chartListElement,
         chartIndex,
       );
 
@@ -1167,16 +1191,14 @@ export function init({
   }
 
   function resetLegendElement() {
-    elements.legend.innerHTML = "";
+    legendElement.innerHTML = "";
   }
 
   function resetChartListElement() {
     while (
-      elements.chartsChartList.lastElementChild?.classList.contains(
-        "chart-wrapper",
-      )
+      chartListElement.lastElementChild?.classList.contains("chart-wrapper")
     ) {
-      elements.chartsChartList.lastElementChild?.remove();
+      chartListElement.lastElementChild?.remove();
     }
   }
 

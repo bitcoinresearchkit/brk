@@ -1102,7 +1102,6 @@ const utils = {
     createSelect({ id, list, signal }) {
       const select = window.document.createElement("select");
       select.name = id;
-      select.value = signal().value;
 
       /** @type {Record<string, VoidFunction>} */
       const setters = {};
@@ -1134,7 +1133,17 @@ const utils = {
         }
       });
 
+      select.value = signal().value;
+
       return select;
+    },
+    /**
+     * @param {'left' | 'bottom' | 'top' | 'right'} position
+     */
+    createShadow(position) {
+      const div = window.document.createElement("div");
+      div.classList.add(`shadow-${position}`);
+      return div;
     },
   },
   url: {
@@ -1697,13 +1706,8 @@ const elements = {
   ),
   searchSmall: utils.dom.getElementById("search-small"),
   searchResults: utils.dom.getElementById("search-results"),
-  selectedTitle: utils.dom.getElementById("selected-title"),
-  selectedDescription: utils.dom.getElementById("selected-description"),
   selectors: utils.dom.getElementById("frame-selectors"),
-  chartsChartList: utils.dom.getElementById("charts-chart-list"),
-  legend: utils.dom.getElementById("legend"),
   style: getComputedStyle(window.document.documentElement),
-  selectedHeader: utils.dom.getElementById("selected-header"),
   charts: utils.dom.getElementById("charts"),
   simulation: utils.dom.getElementById("simulation"),
   livePrice: utils.dom.getElementById("live-price"),
@@ -1843,7 +1847,7 @@ function createColors(dark) {
     return getColor("avocado");
   }
   function lime() {
-    return getColor("line");
+    return getColor("lime");
   }
   function green() {
     return getColor("green");
@@ -2634,18 +2638,6 @@ packages.signals().then((signals) =>
             } else {
               utils.url.replaceHistory({ pathname: option.id });
             }
-
-            const hideTop =
-              option.kind === "home" ||
-              option.kind === "pdf" ||
-              option.kind === "live-price" ||
-              option.kind === "converter" ||
-              option.kind === "moscow-time";
-
-            elements.selectedHeader.hidden = hideTop;
-
-            elements.selectedTitle.innerHTML = option.title;
-            elements.selectedDescription.innerHTML = option.serializedPath;
 
             /** @type {HTMLElement} */
             let element;

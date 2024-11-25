@@ -23,61 +23,66 @@
     }
   }
 
-  > #legend {
+  > div {
+    flex: 1;
     display: flex;
-    align-items: center;
-    gap: 1.5rem;
-    margin: 1rem var(--negative-main-padding);
-    padding: 1rem var(--main-padding);
-    overflow-x: auto;
-    min-width: 0;
+    flex-direction: column;
+    margin-top: 2rem;
+    min-height: 0;
 
-    > div {
-      flex: 0;
+    > legend {
       display: flex;
       align-items: center;
+      gap: 1.5rem;
+      margin-left: var(--negative-main-padding);
+      margin-right: var(--negative-main-padding);
+      margin-bottom: 0.5rem;
+      padding-left: var(--main-padding);
+      padding-right: var(--main-padding);
+      padding-bottom: 0.75rem;
+      overflow-x: auto;
+      min-width: 0;
 
-      > label {
-        margin: -0.375rem 0;
-        color: var(--color);
+      > div {
+        flex: 0;
+        display: flex;
+        align-items: center;
 
-        &:has(input:not(:checked)) {
-          color: var(--off-color);
+        > label {
+          margin: -0.375rem 0;
+          color: var(--color);
 
-          > span.main > span.name {
-            text-decoration-thickness: 1.5px;
-            text-decoration-color: var(--color);
-            text-decoration-line: line-through;
-          }
-
-          &:hover {
-            * {
-              color: var(--off-color) !important;
-            }
+          &:has(input:not(:checked)) {
+            color: var(--off-color);
 
             > span.main > span.name {
-              text-decoration-color: var(--orange) !important;
+              text-decoration-thickness: 1.5px;
+              text-decoration-color: var(--color);
+              text-decoration-line: line-through;
+            }
+
+            &:hover {
+              * {
+                color: var(--off-color) !important;
+              }
+
+              > span.main > span.name {
+                text-decoration-color: var(--orange) !important;
+              }
             }
           }
         }
-      }
 
-      > a {
-        padding: 0.375rem;
-        margin: -0.375rem;
-
-        > svg {
-          /* padding: 0.375rem; */
-          margin: 0rem;
-          width: 1rem;
-          height: 1rem;
+        > a {
+          padding: 0.375rem;
+          margin: -0.375rem;
         }
       }
     }
-  }
 
-  .chart-list {
-    margin-left: var(--negative-main-padding);
-    margin-right: calc(var(--negative-main-padding) - 0.5rem);
+    .chart-list {
+      margin-left: var(--negative-main-padding);
+      margin-right: calc(var(--negative-main-padding) - 0.5rem);
+    }
   }
 }

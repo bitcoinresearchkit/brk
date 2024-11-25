@@ -4,6 +4,10 @@
   height: 100%;
   width: 100%;
 
+  header {
+    margin-bottom: 0.5rem;
+  }
+
   > div:first-child {
     max-width: var(--default-main-width);
     border-right: 1px;
@@ -35,7 +39,7 @@
     overflow-y: auto;
     display: flex;
     flex-direction: column;
-    gap: 2rem;
+    gap: 1.5rem;
     padding: var(--main-padding);
 
     > div {
