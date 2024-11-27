@@ -1,35 +1,26 @@
 /**
- * @import {Options} from './options';
+ * @import { Options } from './options';
+ * @import { ColorName } from './types/self';
  */
 
 /**
  * @param {Object} args
  * @param {Colors} args.colors
- * @param {Consts} args.consts
  * @param {LightweightCharts} args.lightweightCharts
- * @param {SimulationOption} args.selected
  * @param {Signals} args.signals
  * @param {Utilities} args.utils
- * @param {Options} args.options
  * @param {Datasets} args.datasets
- * @param {WebSockets} args.webSockets
  * @param {Elements} args.elements
- * @param {Ids} args.ids
- * @param {Accessor<boolean>} args.dark
+ * @param {Signal<LastValues>} args.lastValues
  */
 export function init({
   colors,
-  consts,
-  dark,
   datasets,
   elements,
-  ids,
   lightweightCharts,
-  options,
-  selected,
   signals,
   utils,
-  webSockets,
+  lastValues,
 }) {
   const simulationElement = elements.simulation;
 
@@ -136,6 +127,25 @@ export function init({
       description: "What if you bought Bitcoin in the past ?",
     }).headerElement,
   );
+
+  /**
+   * @param {Object} param0
+   * @param {ColorName} param0.color
+   * @param {string} param0.type
+   * @param {string} param0.text
+   */
+  function createColoredTypeHTML({ color, type, text }) {
+    return `${createColoredSpan({ color, text: `${type}:` })} ${text}`;
+  }
+
+  /**
+   * @param {Object} param0
+   * @param {ColorName} param0.color
+   * @param {string} param0.text
+   */
+  function createColoredSpan({ color, text }) {
+    return `<span style="color: ${colors[color]()}; font-weight: var(--font-weight-bold)">${text}</span>`;
+  }
 
   parametersElement.append(
     createFieldElement({
@@ -291,9 +301,10 @@ export function init({
     }),
   );
 
-  const firstParagraph = window.document.createElement("p");
-
-  const secondParagraph = window.document.createElement("p");
+  const p1 = window.document.createElement("p");
+  const p2 = window.document.createElement("p");
+  const p3 = window.document.createElement("p");
+  const p4 = window.document.createElement("p");
 
   const owner = signals.getOwner();
 
@@ -326,8 +337,9 @@ export function init({
           console.log({ start, end });
 
           resultsElement.innerHTML = "";
-          resultsElement.append(firstParagraph);
-          resultsElement.append(secondParagraph);
+          resultsElement.append(p1);
+          resultsElement.append(p2);
+          resultsElement.append(p3);
 
           if (!start || !end || start > end) return;
 
@@ -361,6 +373,8 @@ export function init({
           const daysCountData = [];
           /** @type {LineData<Time>[]} */
           const profitableDaysRatioData = [];
+          /** @type {LineData<Time>[]} */
+          const unprofitableDaysRatioData = [];
 
           let bitcoin = 0;
           let dollars = initialDollarAmount;
@@ -374,6 +388,8 @@ export function init({
           let daysCount = range.length;
           let profitableDays = 0;
           let unprofitableDays = 0;
+          let profitableDaysRatio = 0;
+          let unprofitableDaysRatio = 0;
 
           range.forEach((date, index) => {
             const year = date.getUTCFullYear();
@@ -423,6 +439,8 @@ export function init({
             roi = (bitcoinValue / investedAmount - 1) * 100;
 
             const daysCount = index + 1;
+            profitableDaysRatio = (profitableDays / daysCount) * 100;
+            unprofitableDaysRatio = (unprofitableDays / daysCount) * 100;
 
             if (roi >= 0) {
               profitableDays += 1;
@@ -497,20 +515,78 @@ export function init({
 
             profitableDaysRatioData.push({
               time,
-              value: profitableDays / daysCount,
+              value: profitableDaysRatio,
+            });
+
+            unprofitableDaysRatioData.push({
+              time,
+              value: unprofitableDaysRatio,
             });
           });
 
           const f = utils.locale.numberToUSFormat;
           /**
-           * @param {string} c
+           * @param {ColorName} c
            * @param {string} t
            */
           const c = (c, t) => createColoredSpan({ color: c, text: t });
 
-          firstParagraph.innerHTML = `After exchanging ${c("dollar", `$${f(investedAmount)}`)} in the span of ${c("sky", f(daysCount))} days, you would've accumulated ${c("orange", f(bitcoin))} Bitcoin worth ${c("dollar", `$${f(bitcoinValue)}`)} at an average price of ${c("dollar", `$${f(averagePricePaid)}`)} per Bitcoin with a return of investment of ${c("yellow", `${f(roi)}%`)}.`;
+          const serInvestedAmount = c("dollars", `$${f(investedAmount)}`);
+          const serDaysCount = c("sky", f(daysCount));
+          const serBitcoin = c("orange", f(bitcoin));
+          const serBitcoinValue = c("dollars", `$${f(bitcoinValue)}`);
+          const serAveragePricePaid = c("dollars", `$${f(averagePricePaid)}`);
+          const serRoi = c("yellow", `${f(roi)}%`);
 
-          secondParagraph.innerHTML = `Work in progress`;
+          p1.innerHTML = `After exchanging ${serInvestedAmount} in the span of ${serDaysCount} days, you would've accumulated ${serBitcoin} Bitcoin worth ${serBitcoinValue} at an average price of ${serAveragePricePaid} per Bitcoin with a return of investment of ${serRoi}.`;
+
+          const serProfitableDaysRatio = c(
+            "green",
+            `${f(profitableDaysRatio)}%`,
+          );
+          const serUnprofitableDaysRatio = c(
+            "red",
+            `${f(unprofitableDaysRatio)}%`,
+          );
+
+          p2.innerHTML = `You would've been ${serProfitableDaysRatio} of the time profitable and ${serUnprofitableDaysRatio} of the time unprofitable.`;
+
+          signals.createEffect(lastValues, (lastValues) => {
+            const lowestAnnual4YReturn = 23.68;
+            // const lowestAnnual4YReturn = lastValues?.["price-4y-compound-return"] || 0
+            const serLowestAnnual4YReturn = c(
+              "yellow",
+              `${f(lowestAnnual4YReturn)}%`,
+            );
+
+            const lowestAnnual4YReturnPercentage =
+              1 + lowestAnnual4YReturn / 100;
+            /**
+             * @param {number} power
+             */
+            function bitcoinValueReturn(power) {
+              return (
+                bitcoinValue * Math.pow(lowestAnnual4YReturnPercentage, power)
+              );
+            }
+            const bitcoinValueAfter4y = bitcoinValueReturn(4);
+            const serBitcoinValueAfter4y = c(
+              "rose",
+              `$${f(bitcoinValueAfter4y)}`,
+            );
+            const bitcoinValueAfter10y = bitcoinValueReturn(10);
+            const serBitcoinValueAfter10y = c(
+              "pink",
+              `$${f(bitcoinValueAfter10y)}`,
+            );
+            const bitcoinValueAfter20y = bitcoinValueReturn(20);
+            const serBitcoinValueAfter20y = c(
+              "purple",
+              `$${f(bitcoinValueAfter20y)}`,
+            );
+
+            p3.innerHTML = `Historically, the lowest annual return after 4 years has been ${serLowestAnnual4YReturn}.<br/>Using this as our baseline and assuming you don't swap any more US Dollars, your Bitcoin would be worth ${serBitcoinValueAfter4y} after 4 years, ${serBitcoinValueAfter10y} after 10 years and ${serBitcoinValueAfter20y} after 20 years.`;
+          });
 
           lightweightCharts.createChart({
             parent: resultsElement,
@@ -523,12 +599,6 @@ export function init({
                 unit: "US Dollars",
                 scale: "date",
                 config: [
-                  {
-                    kind: "line",
-                    color: colors.dollars,
-                    owner,
-                    data: totalInvestedAmountData,
-                  },
                   {
                     kind: "line",
                     color: colors.bitcoin,
@@ -549,9 +619,9 @@ export function init({
                   },
                   {
                     kind: "line",
-                    color: colors.yellow,
+                    color: colors.dollars,
                     owner,
-                    data: investmentData,
+                    data: totalInvestedAmountData,
                   },
                   {
                     kind: "line",
@@ -563,6 +633,28 @@ export function init({
               },
             ],
           });
+
+          // lightweightCharts.createChart({
+          //   parent: resultsElement,
+          //   signals,
+          //   colors,
+          //   id: `simulation-0`,
+          //   kind: "static",
+          //   config: [
+          //     {
+          //       unit: "US Dollars",
+          //       scale: "date",
+          //       config: [
+          //         {
+          //           kind: "line",
+          //           color: colors.yellow,
+          //           owner,
+          //           data: investmentData,
+          //         },
+          //       ],
+          //     },
+          //   ],
+          // });
 
           lightweightCharts.createChart({
             parent: resultsElement,
@@ -581,43 +673,38 @@ export function init({
                     owner,
                     data: bitcoinData,
                   },
-                  {
-                    kind: "line",
-                    color: colors.lightBitcoin,
-                    owner,
-                    data: bitcoinAddedData,
-                  },
                 ],
               },
             ],
           });
 
-          lightweightCharts.createChart({
-            parent: resultsElement,
-            signals,
-            colors,
-            id: `simulation-2`,
-            kind: "static",
-            config: [
-              {
-                unit: "US Dollars",
-                scale: "date",
-                config: [
-                  {
-                    kind: "baseline",
-                    owner,
-                    data: resultData,
-                  },
-                ],
-              },
-            ],
-          });
+          // lightweightCharts.createChart({
+          //   parent: resultsElement,
+          //   signals,
+          //   colors,
+          //   id: `simulation-1`,
+          //   kind: "static",
+          //   config: [
+          //     {
+          //       unit: "US Dollars",
+          //       scale: "date",
+          //       config: [
+          //         {
+          //           kind: "line",
+          //           color: colors.lightBitcoin,
+          //           owner,
+          //           data: bitcoinAddedData,
+          //         },
+          //       ],
+          //     },
+          //   ],
+          // });
 
           lightweightCharts.createChart({
             parent: resultsElement,
             signals,
             colors,
-            id: `simulation-3`,
+            id: `simulation-average-price`,
             kind: "static",
             config: [
               {
@@ -645,7 +732,66 @@ export function init({
             parent: resultsElement,
             signals,
             colors,
-            id: `simulation-4`,
+            id: `simulation-return-ratio`,
+            kind: "static",
+            config: [
+              {
+                unit: "US Dollars",
+                scale: "date",
+                config: [
+                  {
+                    kind: "baseline",
+                    owner,
+                    data: resultData,
+                    // TODO: Doesn't work for some reason
+                    // options: {
+                    //   baseLineColor: "#888",
+                    //   baseLineVisible: true,
+                    //   baseLineWidth: 1,
+                    //   baseValue: {
+                    //     price: 0,
+                    //     type: "price",
+                    //   },
+                    // },
+                  },
+                ],
+              },
+            ],
+          });
+
+          lightweightCharts.createChart({
+            parent: resultsElement,
+            signals,
+            colors,
+            id: `simulation-profitability-ratios`,
+            kind: "static",
+            config: [
+              {
+                unit: "Percentage",
+                scale: "date",
+                config: [
+                  {
+                    kind: "line",
+                    owner,
+                    color: colors.pink,
+                    data: unprofitableDaysRatioData,
+                  },
+                  {
+                    kind: "line",
+                    owner,
+                    color: colors.lime,
+                    data: profitableDaysRatioData,
+                  },
+                ],
+              },
+            ],
+          });
+
+          lightweightCharts.createChart({
+            parent: resultsElement,
+            signals,
+            colors,
+            id: `simulation-counts`,
             kind: "static",
             config: [
               {
@@ -663,28 +809,6 @@ export function init({
                     owner,
                     color: colors.sky,
                     data: daysCountData,
-                  },
-                ],
-              },
-            ],
-          });
-
-          lightweightCharts.createChart({
-            parent: resultsElement,
-            signals,
-            colors,
-            id: `simulation-5`,
-            kind: "static",
-            config: [
-              {
-                unit: "Percentage",
-                scale: "date",
-                config: [
-                  {
-                    kind: "line",
-                    owner,
-                    color: colors.pink,
-                    data: profitableDaysRatioData,
                   },
                 ],
               },
@@ -802,25 +926,6 @@ function getOrdinalDay(day) {
   return `${day}${
     rest === 1 ? "st" : rest === 2 ? "nd" : rest === 3 ? "rd" : "th"
   }`;
-}
-
-/**
- * @param {Object} param0
- * @param {string} param0.color
- * @param {string} param0.type
- * @param {string} param0.text
- */
-function createColoredTypeHTML({ color, type, text }) {
-  return `${createColoredSpan({ color, text: `${type}:` })} ${text}`;
-}
-
-/**
- * @param {Object} param0
- * @param {string} param0.color
- * @param {string} param0.text
- */
-function createColoredSpan({ color, text }) {
-  return `<span style="color: var(--${color}); font-weight: var(--font-weight-bold)">${text}</span>`;
 }
 
 function computeFrequencies() {

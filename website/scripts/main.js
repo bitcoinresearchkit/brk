@@ -1,7 +1,7 @@
 // @ts-check
 
 /**
- * @import { Option, ResourceDataset, TimeScale, TimeRange, Unit, Marker, Weighted, DatasetPath, OHLC, FetchedJSON, DatasetValue, FetchedResult, AnyDatasetPath, SeriesBlueprint, BaselineSpecificSeriesBlueprint, CandlestickSpecificSeriesBlueprint, LineSpecificSeriesBlueprint, SpecificSeriesBlueprintWithChart, Signal, Color, DatasetCandlestickData, PartialChartOption, ChartOption, AnyPartialOption, ProcessedOptionAddons, OptionsTree, AnyPath, SimulationOption, Frequency, CreatePaneParameters, CreateBaselineSeriesParams, CreateCandlestickSeriesParams, CreateLineSeriesParams } from "./types/self"
+ * @import { Option, ResourceDataset, TimeScale, TimeRange, Unit, Marker, Weighted, DatasetPath, OHLC, FetchedJSON, DatasetValue, FetchedResult, AnyDatasetPath, SeriesBlueprint, BaselineSpecificSeriesBlueprint, CandlestickSpecificSeriesBlueprint, LineSpecificSeriesBlueprint, SpecificSeriesBlueprintWithChart, Signal, Color, DatasetCandlestickData, PartialChartOption, ChartOption, AnyPartialOption, ProcessedOptionAddons, OptionsTree, AnyPath, SimulationOption, Frequency, CreatePaneParameters, CreateBaselineSeriesParams, CreateCandlestickSeriesParams, CreateLineSeriesParams, LastValues } from "./types/self"
  * @import {createChart as CreateClassicChart, createChartEx as CreateCustomChart, LineStyleOptions} from "../packages/lightweight-charts/v4.2.0/types";
  * @import * as _ from "../packages/ufuzzy/v1.0.14/types"
  * @import { DeepPartial, ChartOptions, IChartApi, IHorzScaleBehavior, WhitespaceData, SingleValueData, ISeriesApi, Time, LineData, LogicalRange, SeriesMarker, CandlestickData, SeriesType, BaselineStyleOptions, SeriesOptionsCommon } from "../packages/lightweight-charts/v4.2.0/types"
@@ -665,8 +665,7 @@ function initPackages() {
                   const chartModes = /** @type {const} */ (["Linear", "Log"]);
                   const chartMode = signals.createSignal(
                     /** @type {Lowercase<typeof chartModes[number]>} */ (
-                      localStorage.getItem(id) ||
-                        chartModes[chartIndex ? 0 : 1].toLowerCase()
+                      localStorage.getItem(id) || "linear"
                     ),
                   );
 
@@ -2048,6 +2047,8 @@ function createColors(dark) {
     blue,
     rose,
     pink,
+    green,
+    purple,
 
     _1d: pink,
     _1w: red,
@@ -2138,7 +2139,6 @@ function createColors(dark) {
     coinblocksCreated: purple,
     coinblocksDestroyed: red,
     coinblocksStored: green,
-    momentum: [green, yellow, red],
     momentumGreen: green,
     momentumYellow: yellow,
     momentumRed: red,
@@ -2703,9 +2703,8 @@ packages.signals().then((signals) =>
     }
     const lastHeight = createLastHeightResource();
 
-    const lastValues = signals.createSignal(
-      /** @type {Record<LastPath, number> | null} */ (null),
-    );
+    const lastValues = signals.createSignal(/** @type {LastValues} */ (null));
+
     function createFetchLastValuesWhenNeededEffect() {
       let previousHeight = -1;
       signals.createEffect(lastHeight, (lastHeight) => {
@@ -2831,17 +2830,12 @@ packages.signals().then((signals) =>
                         signals.runWithOwner(owner, () =>
                           init({
                             colors,
-                            consts,
-                            dark,
                             datasets,
                             elements,
-                            ids,
                             lightweightCharts,
-                            options,
-                            selected: option,
                             signals,
                             utils,
-                            webSockets,
+                            lastValues,
                           }),
                         ),
                       ),

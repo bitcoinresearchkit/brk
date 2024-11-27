@@ -252,7 +252,6 @@
         --fuchsia: oklch(0.629 0.294 322.523);
         --pink: oklch(0.624 0.245 357.444);
         --rose: oklch(0.6155 0.2495 17.012);
-        --dollar: var(--green);
         --background-color: light-dark(var(--white), var(--black));
         --color: light-dark(var(--black), var(--white));
         --off-color: light-dark(var(--light-gray), var(--dark-gray));
@@ -654,11 +653,11 @@
         -webkit-appearance: none;
         -moz-appearance: none;
         appearance: none;
-        background: url('data:image/svg+xml;utf-8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"><path d="M7 10l5 5 5-5z" fill="gray"/><path d="M0 0h24v24H0z" fill="none"/></svg>')
+        background: url('data:image/svg+xml;utf-8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="gray"><path fill-rule="evenodd" d="M4.22 6.22a.75.75 0 0 1 1.06 0L8 8.94l2.72-2.72a.75.75 0 1 1 1.06 1.06l-3.25 3.25a.75.75 0 0 1-1.06 0L4.22 7.28a.75.75 0 0 1 0-1.06Z" clip-rule="evenodd" /></svg>')
           100% 50% no-repeat transparent;
 
         &:focus-visible {
-          border: none;
+          border: 0;
         }
       }
 

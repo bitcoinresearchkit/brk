@@ -42,6 +42,7 @@ type AnyDatasetPath = import("./paths").DatePath | import("./paths").HeightPath;
 type AnyPath = AnyDatasetPath | LastPath;
 
 type Color = () => string;
+type ColorName = keyof Colors;
 
 interface BaselineSpecificSeriesBlueprint {
   type: "Baseline";
@@ -399,3 +400,5 @@ interface CreatePaneParameters {
     | ({ kind: "baseline" } & CreateBaselineSeriesParams)
   )[];
 }
+
+type LastValues = Record<LastPath, number> | null;
