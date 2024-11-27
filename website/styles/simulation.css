@@ -1,42 +1,8 @@
 #simulation {
   min-height: 0;
-  display: flex;
-  height: 100%;
   width: 100%;
 
-  header {
-    margin-bottom: 0.5rem;
-  }
-
-  > div:first-child {
-    max-width: var(--default-main-width);
-    border-right: 1px;
-    padding-bottom: var(--bottom-area);
-  }
-
-  > div:last-child {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-
-    p {
-      font-size: var(--font-size-lg);
-      text-wrap: pretty;
-    }
-  }
-
-  label {
-    > span {
-      display: block;
-    }
-    small {
-      font-size: var(--font-size-base);
-    }
-  }
-
   > div {
-    flex: 1;
-    overflow-y: auto;
     display: flex;
     flex-direction: column;
     gap: 1.5rem;
@@ -60,8 +26,62 @@
     }
   }
 
-  .chart-list {
-    max-height: 2000px;
-    margin-right: calc(var(--negative-main-padding) - 0.5rem);
+  @media (max-width: 767px) {
+    overflow-y: auto;
+
+    > div:first-child {
+      border-bottom: 1px;
+    }
+  }
+
+  @media (min-width: 768px) {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    flex-direction: row;
+
+    > div {
+      flex: 1;
+      overflow-y: auto;
+      padding-bottom: var(--bottom-area);
+    }
+
+    > div:first-child {
+      max-width: var(--default-main-width);
+      border-right: 1px;
+    }
+  }
+
+  header {
+    margin-bottom: 0.5rem;
+  }
+
+  > div:last-child {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    overflow-x: hidden;
+
+    p {
+      text-wrap: pretty;
+    }
+  }
+
+  label {
+    > span {
+      display: block;
+    }
+    small {
+      font-size: var(--font-size-base);
+    }
+  }
+
+  .charts {
+    flex-shrink: 0;
+    height: 400px;
+
+    .chart-div {
+      margin-left: calc(var(--negative-main-padding) / 2);
+    }
   }
 }

@@ -8,7 +8,7 @@
 
 ## Description
 
-[**kibō**](https://kibo.money) (_hope_ in japanese) is primarily an open source Bitcoin Core data extractor and visualizer (similar to [Glassnode](https://glassnode.com)). The goal is to empower people with information that is often hard to come by and/or very pricey.
+[**kibō**](https://kibo.money) (_hope_ in japanese) is primarily an open source Bitcoin Core data extractor and visualizer (similar to [Glassnode](https://glassnode.com)) which goal is to empower anybody with data about Bitcoin for free.
 
 The project is split in 3 parts:
 

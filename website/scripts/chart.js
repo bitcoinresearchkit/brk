@@ -34,7 +34,7 @@ export function init({
 }) {
   console.log("init chart state");
 
-  /** @type {Array<(IChartApi & {whitespace: ISeriesApi<"Line">})>} */
+  /** @type {ChartPane[]} */
   let charts = [];
 
   const scale = signals.createMemo(() => selected().scale);
@@ -53,15 +53,26 @@ export function init({
     descriptionElement.innerHTML = option.serializedPath;
   });
 
-  const div = window.document.createElement("div");
-  elements.charts.append(div);
+  // const div = window.document.createElement("div");
+  // elements.charts.append(div);
 
-  const legendElement = window.document.createElement("legend");
-  div.append(legendElement);
+  // const legendElement = window.document.createElement("legend");
+  // div.append(legendElement);
 
-  const chartListElement = window.document.createElement("div");
-  chartListElement.classList.add("chart-list");
-  div.append(chartListElement);
+  // const chartListElement = window.document.createElement("div");
+  // chartListElement.classList.add("chart-list");
+  // div.append(chartListElement);
+  //
+  const {
+    chartListElement,
+    legendElement,
+    createPane: addChart,
+  } = lightweightCharts.createChart({
+    parent: elements.charts,
+    signals,
+    colors,
+    id: "chart",
+  });
 
   /**
    * @returns {TimeRange}
@@ -247,59 +258,6 @@ export function init({
     );
   }
   createFetchChunksOfVisibleDatasetsEffect();
-
-  /**
-   * @param {HTMLElement} parent
-   * @param {number} chartIndex
-   */
-  function createChartDiv(parent, chartIndex) {
-    const chartWrapper = window.document.createElement("div");
-    chartWrapper.classList.add("chart-wrapper");
-    parent.append(chartWrapper);
-
-    const chartDiv = window.document.createElement("div");
-    chartDiv.classList.add("chart-div");
-    chartWrapper.append(chartDiv);
-
-    function createUnitAndModeElements() {
-      const fieldset = window.document.createElement("fieldset");
-      fieldset.dataset.size = "sm";
-      chartWrapper.append(fieldset);
-
-      const unitName = signals.createSignal("");
-
-      const id = `chart-${chartIndex}-mode`;
-
-      const chartModes = /** @type {const} */ (["Linear", "Log"]);
-      const chartMode = signals.createSignal(
-        /** @type {Lowercase<typeof chartModes[number]>} */ (
-          localStorage.getItem(id) ||
-            chartModes[chartIndex ? 0 : 1].toLowerCase()
-        ),
-      );
-
-      const field = utils.dom.createHorizontalChoiceField({
-        choices: chartModes,
-        selected: chartMode(),
-        id,
-        title: unitName,
-        signals,
-      });
-      fieldset.append(field);
-
-      field.addEventListener("change", (event) => {
-        // @ts-ignore
-        const value = event.target.value;
-        localStorage.setItem(id, value);
-        chartMode.set(value);
-      });
-
-      return { unitName, chartMode };
-    }
-    const { unitName, chartMode } = createUnitAndModeElements();
-
-    return { chartDiv, unitName, chartMode };
-  }
 
   /**
    * @param {IChartApi} chart
@@ -526,7 +484,7 @@ export function init({
    * @param {ResourceDataset<S>} args.dataset
    * @param {SeriesBlueprint} args.seriesBlueprint
    * @param {Option} args.option
-   * @param {IChartApi} args.chart
+   * @param {ChartPane} args.chart
    * @param {number} args.index
    * @param {Series[]} args.chartSeries
    * @param {Accessor<number | undefined>} args.lastVisibleDatasetIndex
@@ -630,42 +588,26 @@ export function init({
           if (!s) {
             switch (type) {
               case "Baseline": {
-                s = lightweightCharts.createBaseLineSeries({
-                  chart,
+                s = chart.createBaseLineSeries({
                   color,
                   options: seriesOptions,
                   owner,
-                  signals,
-                  colors,
                 });
                 break;
               }
               case "Candlestick": {
-                s = lightweightCharts.createCandlesticksSeries({
-                  chart,
+                s = chart.createCandlesticksSeries({
                   options: seriesOptions,
                   owner,
-                  signals,
-                  colors,
                 });
                 break;
               }
-              // case "Histogram": {
-              //   s = createHistogramSeries({
-              //     chart,
-              //     options,
-              //   });
-              //   break;
-              // }
               default:
               case "Line": {
-                s = lightweightCharts.createLineSeries({
-                  chart,
+                s = chart.createLineSeries({
                   color,
                   options: seriesOptions,
                   owner,
-                  signals,
-                  colors,
                 });
                 break;
               }
@@ -766,7 +708,7 @@ export function init({
    * @param {PriceSeriesType} args.type
    * @param {VoidFunction} args.setMinMaxMarkersWhenIdle
    * @param {Option} args.option
-   * @param {IChartApi} args.chart
+   * @param {ChartPane} args.chart
    * @param {Series[]} args.chartSeries
    * @param {Accessor<number | undefined>} args.lastVisibleDatasetIndex
    */
@@ -864,16 +806,11 @@ export function init({
     const allSeries = [];
 
     charts = chartsBlueprints.map((seriesBlueprints, chartIndex) => {
-      const { chartDiv, unitName, chartMode } = createChartDiv(
-        chartListElement,
+      const chart = addChart({
         chartIndex,
-      );
-
-      const chart = lightweightCharts.createChartWithWhitespace({
         scale,
-        element: chartDiv,
-        signals,
-        colors,
+        unit: option.unit || "US Dollars",
+        whitespace: true,
       });
 
       setInitialVisibleTimeRange(chart);
@@ -1063,12 +1000,6 @@ export function init({
           });
         }
         createLinkPriceSeriesEffect();
-
-        /** @type {Unit} */
-        const unit = "US Dollars";
-        unitName.set(unit);
-      } else {
-        unitName.set(option.unit);
       }
 
       [...seriesBlueprints].reverse().forEach((seriesBlueprint, index) => {
@@ -1110,9 +1041,7 @@ export function init({
 
       function createChartVisibilityEffect() {
         signals.createEffect(chartVisible, (chartVisible) => {
-          const chartWrapper = chartDiv.parentElement;
-          if (!chartWrapper) throw "Should exist";
-          chartWrapper.hidden = !chartVisible;
+          chart.setHidden(!chartVisible);
         });
       }
       createChartVisibilityEffect();
@@ -1133,12 +1062,6 @@ export function init({
         });
       }
       createTimeScaleVisibilityEffect();
-
-      signals.createEffect(chartMode, (chartMode) =>
-        chart.priceScale("right").applyOptions({
-          mode: chartMode === "linear" ? 0 : 1,
-        }),
-      );
 
       chart.timeScale().subscribeVisibleLogicalRangeChange((logicalRange) => {
         if (!logicalRange) return;

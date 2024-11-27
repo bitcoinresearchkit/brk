@@ -1,7 +1,8 @@
 #charts {
   display: flex;
   flex-direction: column;
-  flex: 1;
+  height: 100%;
+  width: 100%;
   min-height: 0;
   padding: var(--main-padding);
 
@@ -23,11 +24,12 @@
     }
   }
 
-  > div {
+  .charts {
     flex: 1;
+    margin-top: 2rem;
+
     display: flex;
     flex-direction: column;
-    margin-top: 2rem;
     min-height: 0;
 
     > legend {
@@ -80,9 +82,8 @@
       }
     }
 
-    .chart-list {
+    .chart-div {
       margin-left: var(--negative-main-padding);
-      margin-right: calc(var(--negative-main-padding) - 0.5rem);
     }
   }
 }

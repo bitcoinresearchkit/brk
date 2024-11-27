@@ -292,14 +292,8 @@ export function init({
   );
 
   const firstParagraph = window.document.createElement("p");
-  resultsElement.append(firstParagraph);
 
   const secondParagraph = window.document.createElement("p");
-  resultsElement.append(secondParagraph);
-
-  const parent = window.document.createElement("div");
-  parent.classList.add("chart-list");
-  resultsElement.append(parent);
 
   const owner = signals.getOwner();
 
@@ -330,24 +324,27 @@ export function init({
           fees,
         }) => {
           console.log({ start, end });
-          parent.innerHTML = "";
+
+          resultsElement.innerHTML = "";
+          resultsElement.append(firstParagraph);
+          resultsElement.append(secondParagraph);
 
           if (!start || !end || start > end) return;
 
           const range = utils.date.getRange(start, end);
 
           /** @type {LineData<Time>[]} */
-          const investedData = [];
+          const totalInvestedAmountData = [];
           /** @type {LineData<Time>[]} */
-          const returnData = [];
+          const bitcoinValueData = [];
           /** @type {LineData<Time>[]} */
           const bitcoinData = [];
           /** @type {LineData<Time>[]} */
           const resultData = [];
           /** @type {LineData<Time>[]} */
-          const dollarsData = [];
+          const dollarsLeftData = [];
           /** @type {LineData<Time>[]} */
-          const totalData = [];
+          const totalValueData = [];
           /** @type {LineData<Time>[]} */
           const investmentData = [];
           /** @type {LineData<Time>[]} */
@@ -357,17 +354,26 @@ export function init({
           /** @type {LineData<Time>[]} */
           const bitcoinPriceData = [];
           /** @type {LineData<Time>[]} */
-          const investmentsData = [];
+          const buyCountData = [];
+          /** @type {LineData<Time>[]} */
+          const totalFeesPaidData = [];
+          /** @type {LineData<Time>[]} */
+          const daysCountData = [];
+          /** @type {LineData<Time>[]} */
+          const profitableDaysRatioData = [];
 
           let bitcoin = 0;
           let dollars = initialDollarAmount;
           let investedAmount = 0;
-          let investmentsCount = 0;
+          let buyCount = 0;
           let averagePricePaid = 0;
-          let _return = 0;
+          let bitcoinValue = 0;
           let roi = 0;
-
-          let feesPaid = 0;
+          let totalValue = 0;
+          let totalFeesPaid = 0;
+          let daysCount = range.length;
+          let profitableDays = 0;
+          let unprofitableDays = 0;
 
           range.forEach((date, index) => {
             const year = date.getUTCFullYear();
@@ -383,13 +389,13 @@ export function init({
 
             if (!close) return;
 
-            let investmentPreFees = 0;
+            let dailyInvestment = 0;
             /** @param {number} value  */
             function invest(value) {
               value = Math.min(dollars, value);
-              investmentPreFees += value;
+              dailyInvestment += value;
               dollars -= value;
-              investmentsCount += 1;
+              buyCount += 1;
             }
             if (!index) {
               invest(initialSwap);
@@ -398,19 +404,31 @@ export function init({
               invest(recurrentSwap);
             }
 
-            let investment = investmentPreFees * (1 - (fees || 0) / 100);
-            feesPaid += investmentPreFees - investment;
+            let dailyInvestmentPostFees =
+              dailyInvestment * (1 - (fees || 0) / 100);
 
-            const bitcoinAdded = investment / close;
+            totalFeesPaid += dailyInvestment - dailyInvestmentPostFees;
+
+            const bitcoinAdded = dailyInvestmentPostFees / close;
             bitcoin += bitcoinAdded;
 
-            investedAmount += investment;
+            investedAmount += dailyInvestmentPostFees;
 
-            _return = close * bitcoin;
+            bitcoinValue = close * bitcoin;
+
+            totalValue = dollars + bitcoinValue;
 
             averagePricePaid = investedAmount / bitcoin;
 
-            roi = (_return / investedAmount - 1) * 100;
+            roi = (bitcoinValue / investedAmount - 1) * 100;
+
+            const daysCount = index + 1;
+
+            if (roi >= 0) {
+              profitableDays += 1;
+            } else {
+              unprofitableDays += 1;
+            }
 
             bitcoinPriceData.push({
               time,
@@ -422,14 +440,14 @@ export function init({
               value: bitcoin,
             });
 
-            investedData.push({
+            totalInvestedAmountData.push({
               time,
               value: investedAmount,
             });
 
-            returnData.push({
+            bitcoinValueData.push({
               time,
-              value: _return,
+              value: bitcoinValue,
             });
 
             resultData.push({
@@ -437,19 +455,19 @@ export function init({
               value: roi,
             });
 
-            dollarsData.push({
+            dollarsLeftData.push({
               time,
               value: dollars,
             });
 
-            totalData.push({
+            totalValueData.push({
               time,
-              value: dollars + _return,
+              value: totalValue,
             });
 
             investmentData.push({
               time,
-              value: investment,
+              value: dailyInvestment,
             });
 
             bitcoinAddedData.push({
@@ -462,18 +480,26 @@ export function init({
               value: averagePricePaid,
             });
 
-            investmentsData.push({
+            buyCountData.push({
               time,
-              value: investmentsCount,
+              value: buyCount,
+            });
+
+            totalFeesPaidData.push({
+              time,
+              value: totalFeesPaid,
+            });
+
+            daysCountData.push({
+              time,
+              value: daysCount,
+            });
+
+            profitableDaysRatioData.push({
+              time,
+              value: profitableDays / daysCount,
             });
           });
-
-          // const { headerElement } = utils.dom.createHeader({
-          //   title: "TItle",
-          //   description: "Description",
-          // });
-
-          // parent.append(headerElement);
 
           const f = utils.locale.numberToUSFormat;
           /**
@@ -482,168 +508,188 @@ export function init({
            */
           const c = (c, t) => createColoredSpan({ color: c, text: t });
 
-          firstParagraph.innerHTML = `After exchanging ${c("dollar", `$${f(investedAmount)}`)} in the span of ${c("sky", f(range.length))} days, you would've accumulated ${c("orange", f(bitcoin))} Bitcoin worth ${c("dollar", `$${f(_return)}`)} at an average price of ${c("dollar", `$${f(averagePricePaid)}`)} per Bitcoin with a return of investment of ${c("yellow", `${f(roi)}%`)}.`;
+          firstParagraph.innerHTML = `After exchanging ${c("dollar", `$${f(investedAmount)}`)} in the span of ${c("sky", f(daysCount))} days, you would've accumulated ${c("orange", f(bitcoin))} Bitcoin worth ${c("dollar", `$${f(bitcoinValue)}`)} at an average price of ${c("dollar", `$${f(averagePricePaid)}`)} per Bitcoin with a return of investment of ${c("yellow", `${f(roi)}%`)}.`;
 
-          secondParagraph.innerHTML = `After exchanging ${c("dollar", `$${f(investedAmount)}`)} in the span of ${c("sky", f(range.length))} days, you would've accumulated ${c("orange", f(bitcoin))} Bitcoin worth ${c("dollar", `$${f(_return)}`)} at an average price of ${c("dollar", `$${f(averagePricePaid)}`)} per Bitcoin with a return of investment of ${c("yellow", `${f(roi)}%`)}.`;
+          secondParagraph.innerHTML = `Work in progress`;
 
-          (() => {
-            const chartWrapper = window.document.createElement("div");
-            chartWrapper.classList.add("chart-wrapper");
-            parent.append(chartWrapper);
-
-            const chartDiv = window.document.createElement("div");
-            chartDiv.classList.add("chart-div");
-            chartWrapper.append(chartDiv);
-
-            const chart = lightweightCharts.createChart({
-              scale: "date",
-              element: chartDiv,
-              signals,
-              colors,
-              options: {
-                handleScale: false,
-                handleScroll: false,
+          lightweightCharts.createChart({
+            parent: resultsElement,
+            signals,
+            colors,
+            id: `simulation-0`,
+            kind: "static",
+            config: [
+              {
+                unit: "US Dollars",
+                scale: "date",
+                config: [
+                  {
+                    kind: "line",
+                    color: colors.dollars,
+                    owner,
+                    data: totalInvestedAmountData,
+                  },
+                  {
+                    kind: "line",
+                    color: colors.bitcoin,
+                    owner,
+                    data: bitcoinValueData,
+                  },
+                  {
+                    kind: "line",
+                    color: colors.lime,
+                    owner,
+                    data: dollarsLeftData,
+                  },
+                  {
+                    kind: "line",
+                    color: colors.default,
+                    owner,
+                    data: totalValueData,
+                  },
+                  {
+                    kind: "line",
+                    color: colors.yellow,
+                    owner,
+                    data: investmentData,
+                  },
+                  {
+                    kind: "line",
+                    color: colors.red,
+                    owner,
+                    data: totalFeesPaidData,
+                  },
+                ],
               },
-            });
+            ],
+          });
 
-            const line = chart.addLineSeries();
-
-            line.setData(investedData);
-
-            const line2 = chart.addLineSeries();
-
-            line2.setData(returnData);
-
-            const line3 = chart.addLineSeries();
-
-            line3.setData(dollarsData);
-
-            const line4 = chart.addLineSeries();
-
-            line4.setData(totalData);
-
-            const line5 = chart.addLineSeries();
-
-            line5.setData(investmentData);
-
-            chart.timeScale().fitContent();
-          })();
-
-          (() => {
-            const chartWrapper = window.document.createElement("div");
-            chartWrapper.classList.add("chart-wrapper");
-            parent.append(chartWrapper);
-
-            const chartDiv = window.document.createElement("div");
-            chartDiv.classList.add("chart-div");
-            chartWrapper.append(chartDiv);
-
-            const chart = lightweightCharts.createChart({
-              scale: "date",
-              element: chartDiv,
-              signals,
-              colors,
-              options: {
-                handleScale: false,
-                handleScroll: false,
+          lightweightCharts.createChart({
+            parent: resultsElement,
+            signals,
+            colors,
+            id: `simulation-1`,
+            kind: "static",
+            config: [
+              {
+                unit: "US Dollars",
+                scale: "date",
+                config: [
+                  {
+                    kind: "line",
+                    color: colors.bitcoin,
+                    owner,
+                    data: bitcoinData,
+                  },
+                  {
+                    kind: "line",
+                    color: colors.lightBitcoin,
+                    owner,
+                    data: bitcoinAddedData,
+                  },
+                ],
               },
-            });
+            ],
+          });
 
-            const line = chart.addLineSeries();
-
-            line.setData(bitcoinData);
-
-            const line2 = chart.addLineSeries();
-
-            line2.setData(bitcoinAddedData);
-
-            chart.timeScale().fitContent();
-          })();
-
-          (() => {
-            const chartWrapper = window.document.createElement("div");
-            chartWrapper.classList.add("chart-wrapper");
-            parent.append(chartWrapper);
-
-            const chartDiv = window.document.createElement("div");
-            chartDiv.classList.add("chart-div");
-            chartWrapper.append(chartDiv);
-
-            const chart = lightweightCharts.createChart({
-              scale: "date",
-              element: chartDiv,
-              signals,
-              colors,
-              options: {
-                handleScale: false,
-                handleScroll: false,
+          lightweightCharts.createChart({
+            parent: resultsElement,
+            signals,
+            colors,
+            id: `simulation-2`,
+            kind: "static",
+            config: [
+              {
+                unit: "US Dollars",
+                scale: "date",
+                config: [
+                  {
+                    kind: "baseline",
+                    owner,
+                    data: resultData,
+                  },
+                ],
               },
-            });
+            ],
+          });
 
-            const line = chart.addLineSeries();
-
-            line.setData(resultData);
-
-            chart.timeScale().fitContent();
-          })();
-
-          (() => {
-            const chartWrapper = window.document.createElement("div");
-            chartWrapper.classList.add("chart-wrapper");
-            parent.append(chartWrapper);
-
-            const chartDiv = window.document.createElement("div");
-            chartDiv.classList.add("chart-div");
-            chartWrapper.append(chartDiv);
-
-            const chart = lightweightCharts.createChart({
-              scale: "date",
-              element: chartDiv,
-              signals,
-              colors,
-              options: {
-                handleScale: false,
-                handleScroll: false,
+          lightweightCharts.createChart({
+            parent: resultsElement,
+            signals,
+            colors,
+            id: `simulation-3`,
+            kind: "static",
+            config: [
+              {
+                unit: "US Dollars",
+                scale: "date",
+                config: [
+                  {
+                    kind: "line",
+                    owner,
+                    color: colors.bitcoin,
+                    data: bitcoinPriceData,
+                  },
+                  {
+                    kind: "line",
+                    owner,
+                    color: colors.default,
+                    data: averagePricePaidData,
+                  },
+                ],
               },
-            });
+            ],
+          });
 
-            const line = chart.addLineSeries();
-
-            line.setData(bitcoinPriceData);
-
-            const line2 = chart.addLineSeries();
-
-            line2.setData(averagePricePaidData);
-
-            chart.timeScale().fitContent();
-          })();
-
-          (() => {
-            const chartWrapper = window.document.createElement("div");
-            chartWrapper.classList.add("chart-wrapper");
-            parent.append(chartWrapper);
-
-            const chartDiv = window.document.createElement("div");
-            chartDiv.classList.add("chart-div");
-            chartWrapper.append(chartDiv);
-
-            const chart = lightweightCharts.createChart({
-              scale: "date",
-              element: chartDiv,
-              signals,
-              colors,
-              options: {
-                handleScale: false,
-                handleScroll: false,
+          lightweightCharts.createChart({
+            parent: resultsElement,
+            signals,
+            colors,
+            id: `simulation-4`,
+            kind: "static",
+            config: [
+              {
+                unit: "US Dollars",
+                scale: "date",
+                config: [
+                  {
+                    kind: "line",
+                    owner,
+                    color: colors.blue,
+                    data: buyCountData,
+                  },
+                  {
+                    kind: "line",
+                    owner,
+                    color: colors.sky,
+                    data: daysCountData,
+                  },
+                ],
               },
-            });
+            ],
+          });
 
-            const line = chart.addLineSeries();
-
-            line.setData(investmentsData);
-
-            chart.timeScale().fitContent();
-          })();
+          lightweightCharts.createChart({
+            parent: resultsElement,
+            signals,
+            colors,
+            id: `simulation-5`,
+            kind: "static",
+            config: [
+              {
+                unit: "Percentage",
+                scale: "date",
+                config: [
+                  {
+                    kind: "line",
+                    owner,
+                    color: colors.pink,
+                    data: profitableDaysRatioData,
+                  },
+                ],
+              },
+            ],
+          });
         },
       );
     });

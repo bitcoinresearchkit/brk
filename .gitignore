@@ -54,3 +54,6 @@ docker/kibo
 
 # Types
 website/scripts/types/paths.d.ts
+
+# Misc
+OPENSATS.md

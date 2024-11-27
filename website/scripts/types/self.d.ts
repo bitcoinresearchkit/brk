@@ -15,6 +15,7 @@ import {
   SeriesType,
   IChartApi,
   ISeriesApi,
+  BaselineData,
 } from "../../packages/lightweight-charts/v4.2.0/types";
 import { DatePath, HeightPath, LastPath } from "./paths";
 import { Owner } from "../../packages/solid-signals/2024-11-02/types/core/owner";
@@ -46,18 +47,21 @@ interface BaselineSpecificSeriesBlueprint {
   type: "Baseline";
   color?: Color;
   options?: DeepPartial<BaselineStyleOptions & SeriesOptionsCommon>;
+  data?: BaselineData<Time>[];
 }
 
 interface CandlestickSpecificSeriesBlueprint {
   type: "Candlestick";
   color?: Color;
   options?: DeepPartial<CandlestickStyleOptions & SeriesOptionsCommon>;
+  data?: CandlestickData<Time>[];
 }
 
 interface LineSpecificSeriesBlueprint {
   type?: "Line";
   color: Color;
   options?: DeepPartial<LineStyleOptions & SeriesOptionsCommon>;
+  data?: LineData<Time>[];
 }
 
 type AnySpecificSeriesBlueprint =
@@ -66,9 +70,15 @@ type AnySpecificSeriesBlueprint =
   | LineSpecificSeriesBlueprint;
 
 type SpecificSeriesBlueprintWithChart<A extends AnySpecificSeriesBlueprint> = {
-  chart: IChartApi;
   owner: Owner | null;
 } & Omit<A, "type">;
+
+type CreateBaselineSeriesParams =
+  SpecificSeriesBlueprintWithChart<BaselineSpecificSeriesBlueprint>;
+type CreateLineSeriesParams =
+  SpecificSeriesBlueprintWithChart<LineSpecificSeriesBlueprint>;
+type CreateCandlestickSeriesParams =
+  SpecificSeriesBlueprintWithChart<CandlestickSpecificSeriesBlueprint>;
 
 type SeriesBlueprint = {
   datasetPath: AnyDatasetPath;
@@ -224,7 +234,7 @@ interface OHLC {
 
 interface ResourceDataset<
   Scale extends TimeScale,
-  Type extends OHLC | number = number
+  Type extends OHLC | number = number,
 > {
   scale: Scale;
   url: string;
@@ -243,7 +253,7 @@ interface FetchedResult<
     SingleValueData | ValuedCandlestickData
   > = DatasetValue<
     Type extends number ? SingleValueData : ValuedCandlestickData
-  >
+  >,
 > {
   at: Date | null;
   json: Signal<FetchedJSON<Scale, Type> | null>;
@@ -273,7 +283,7 @@ interface FetchedChunk {
 
 type FetchedDataset<
   Scale extends TimeScale,
-  Type extends number | OHLC
+  Type extends number | OHLC,
 > = Scale extends "date"
   ? FetchedDateDataset<Type>
   : FetchedHeightDataset<Type>;
@@ -375,4 +385,17 @@ interface Frequency {
   name: string;
   value: string;
   isTriggerDay: (date: Date) => boolean;
+}
+
+interface CreatePaneParameters {
+  unit: Unit;
+  scale: TimeScale;
+  chartIndex?: number;
+  whitespace?: true;
+  options?: DeepPartial<ChartOptions>;
+  config?: (
+    | ({ kind: "line" } & CreateLineSeriesParams)
+    | ({ kind: "candle" } & CreateCandlestickSeriesParams)
+    | ({ kind: "baseline" } & CreateBaselineSeriesParams)
+  )[];
 }

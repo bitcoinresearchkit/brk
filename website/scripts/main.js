@@ -1,7 +1,7 @@
 // @ts-check
 
 /**
- * @import { Option, ResourceDataset, TimeScale, TimeRange, Unit, Marker, Weighted, DatasetPath, OHLC, FetchedJSON, DatasetValue, FetchedResult, AnyDatasetPath, SeriesBlueprint, BaselineSpecificSeriesBlueprint, CandlestickSpecificSeriesBlueprint, LineSpecificSeriesBlueprint, SpecificSeriesBlueprintWithChart, Signal, Color, DatasetCandlestickData, PartialChartOption, ChartOption, AnyPartialOption, ProcessedOptionAddons, OptionsTree, AnyPath, SimulationOption, Frequency } from "./types/self"
+ * @import { Option, ResourceDataset, TimeScale, TimeRange, Unit, Marker, Weighted, DatasetPath, OHLC, FetchedJSON, DatasetValue, FetchedResult, AnyDatasetPath, SeriesBlueprint, BaselineSpecificSeriesBlueprint, CandlestickSpecificSeriesBlueprint, LineSpecificSeriesBlueprint, SpecificSeriesBlueprintWithChart, Signal, Color, DatasetCandlestickData, PartialChartOption, ChartOption, AnyPartialOption, ProcessedOptionAddons, OptionsTree, AnyPath, SimulationOption, Frequency, CreatePaneParameters, CreateBaselineSeriesParams, CreateCandlestickSeriesParams, CreateLineSeriesParams } from "./types/self"
  * @import {createChart as CreateClassicChart, createChartEx as CreateCustomChart, LineStyleOptions} from "../packages/lightweight-charts/v4.2.0/types";
  * @import * as _ from "../packages/ufuzzy/v1.0.14/types"
  * @import { DeepPartial, ChartOptions, IChartApi, IHorzScaleBehavior, WhitespaceData, SingleValueData, ISeriesApi, Time, LineData, LogicalRange, SeriesMarker, CandlestickData, SeriesType, BaselineStyleOptions, SeriesOptionsCommon } from "../packages/lightweight-charts/v4.2.0/types"
@@ -252,7 +252,7 @@ function initPackages() {
              * @param {Colors} args.colors
              * @param {DeepPartial<ChartOptions>} [args.options]
              */
-            function createChart({
+            function createLightweightChart({
               scale,
               element,
               signals,
@@ -281,9 +281,6 @@ function initPackages() {
                   axisDoubleClickReset: {
                     time: false,
                   },
-                },
-                crosshair: {
-                  mode: 0,
                 },
                 localization: {
                   priceFormatter: utils.locale.numberToShortUSFormat,
@@ -359,127 +356,6 @@ function initPackages() {
               baseLineVisible: false,
               baseLineColor: "",
             };
-
-            /**
-             * @param {SpecificSeriesBlueprintWithChart<BaselineSpecificSeriesBlueprint> & {colors: Colors, signals: Signals}} args
-             */
-            function createBaseLineSeries({
-              chart,
-              color,
-              options,
-              owner,
-              colors,
-              signals,
-            }) {
-              const topLineColor = color || colors.profit;
-              const bottomLineColor = color || colors.loss;
-
-              function computeColors() {
-                return {
-                  topLineColor: topLineColor(),
-                  bottomLineColor: bottomLineColor(),
-                };
-              }
-
-              const transparent = "transparent";
-
-              /** @type {DeepPartial<BaselineStyleOptions & SeriesOptionsCommon>} */
-              const seriesOptions = {
-                priceScaleId: "right",
-                ...defaultSeriesOptions,
-                ...options,
-                topFillColor1: transparent,
-                topFillColor2: transparent,
-                bottomFillColor1: transparent,
-                bottomFillColor2: transparent,
-                ...computeColors(),
-              };
-
-              const series = chart.addBaselineSeries(seriesOptions);
-
-              signals.runWithOwner(owner, () => {
-                signals.createEffect(computeColors, (computeColors) => {
-                  series.applyOptions(computeColors);
-                });
-              });
-
-              return series;
-            }
-
-            /**
-             * @param {SpecificSeriesBlueprintWithChart<CandlestickSpecificSeriesBlueprint> & {colors: Colors, signals: Signals}} args
-             */
-            function createCandlesticksSeries({
-              chart,
-              options,
-              owner,
-              signals,
-              colors,
-            }) {
-              function computeColors() {
-                const upColor = colors.profit();
-                const downColor = colors.loss();
-
-                return {
-                  upColor,
-                  wickUpColor: upColor,
-                  downColor,
-                  wickDownColor: downColor,
-                };
-              }
-
-              const candlestickSeries = chart.addCandlestickSeries({
-                baseLineVisible: false,
-                borderVisible: false,
-                priceLineVisible: false,
-                baseLineColor: "",
-                borderColor: "",
-                borderDownColor: "",
-                borderUpColor: "",
-                ...options,
-                ...computeColors(),
-              });
-
-              signals.runWithOwner(owner, () => {
-                signals.createEffect(computeColors, (computeColors) => {
-                  candlestickSeries.applyOptions(computeColors);
-                });
-              });
-
-              return candlestickSeries;
-            }
-
-            /**
-             * @param {SpecificSeriesBlueprintWithChart<LineSpecificSeriesBlueprint> & {colors: Colors, signals: Signals}} args
-             */
-            function createLineSeries({
-              chart,
-              color,
-              options,
-              owner,
-              signals,
-              colors,
-            }) {
-              function computeColors() {
-                return {
-                  color: color(),
-                };
-              }
-
-              const series = chart.addLineSeries({
-                ...defaultSeriesOptions,
-                ...options,
-                ...computeColors(),
-              });
-
-              signals.runWithOwner(owner, () => {
-                signals.createEffect(computeColors, (computeColors) => {
-                  series.applyOptions(computeColors);
-                });
-              });
-
-              return series;
-            }
 
             function initWhitespace() {
               const whitespaceStartDate = new Date("1970-01-01");
@@ -576,34 +452,285 @@ function initPackages() {
             const { setWhitespace } = initWhitespace();
 
             /**
-             *
-             * @param {Parameters<typeof createChart>[0]} args
+             * @typeof {Object} PaneParameters
+             * @property {Unit} param.unit
+             * @param {TimeScale} param.scale
+             * @param {number} [param.chartIndex]
+             * @param {true} [param.whitespace]
+             * @param {DeepPartial<ChartOptions>} [param.options]
              */
-            function createChartWithWhitespace({
-              element,
-              scale,
-              colors,
+
+            /**
+             * @param {Object} param0
+             * @param {string} param0.id
+             * @param {HTMLElement} param0.parent
+             * @param {Signals} param0.signals
+             * @param {Colors} param0.colors
+             * @param {"static" | "dynamic"} [param0.kind]
+             * @param {CreatePaneParameters[]} [param0.config]
+             */
+            function createChart({
+              parent,
               signals,
+              colors,
+              id: chartId,
+              kind,
+              config,
             }) {
-              const chart =
-                /** @type {IChartApi & {whitespace: ISeriesApi<"Line">}} */ (
-                  createChart({
-                    colors,
-                    element,
-                    scale,
+              const div = window.document.createElement("div");
+              div.classList.add("charts");
+              parent.append(div);
+
+              const legendElement = window.document.createElement("legend");
+              div.append(legendElement);
+
+              const chartListElement = window.document.createElement("div");
+              chartListElement.classList.add("chart-list");
+              div.append(chartListElement);
+
+              /**
+               * @param {CreatePaneParameters} param
+               */
+              function createPane({
+                chartIndex,
+                whitespace,
+                scale,
+                unit,
+                options,
+                config,
+              }) {
+                const chartWrapper = window.document.createElement("div");
+                chartWrapper.classList.add("chart-wrapper");
+                chartListElement.append(chartWrapper);
+
+                const chartDiv = window.document.createElement("div");
+                chartDiv.classList.add("chart-div");
+                chartWrapper.append(chartDiv);
+
+                options = { ...options };
+                if (kind === "static") {
+                  options.handleScale = false;
+                  options.handleScroll = false;
+                } else {
+                  options.crosshair = {
+                    ...options.crosshair,
+                    mode: 0,
+                  };
+                }
+
+                const _chart = createLightweightChart({
+                  scale,
+                  element: chartDiv,
+                  signals,
+                  colors,
+                  options,
+                });
+
+                /**
+                 * @param {CreateBaselineSeriesParams} args
+                 */
+                function createBaseLineSeries({ color, options, owner, data }) {
+                  const topLineColor = color || colors.profit;
+                  const bottomLineColor = color || colors.loss;
+
+                  function computeColors() {
+                    return {
+                      topLineColor: topLineColor(),
+                      bottomLineColor: bottomLineColor(),
+                    };
+                  }
+
+                  const transparent = "transparent";
+
+                  /** @type {DeepPartial<BaselineStyleOptions & SeriesOptionsCommon>} */
+                  const seriesOptions = {
+                    priceScaleId: "right",
+                    ...defaultSeriesOptions,
+                    ...options,
+                    topFillColor1: transparent,
+                    topFillColor2: transparent,
+                    bottomFillColor1: transparent,
+                    bottomFillColor2: transparent,
+                    ...computeColors(),
+                  };
+
+                  const series = _chart.addBaselineSeries(seriesOptions);
+
+                  signals.runWithOwner(owner, () => {
+                    signals.createEffect(computeColors, (computeColors) => {
+                      series.applyOptions(computeColors);
+                    });
+                  });
+
+                  if (data) {
+                    series.setData(data);
+                  }
+
+                  return series;
+                }
+
+                /**
+                 * @param {CreateCandlestickSeriesParams} args
+                 */
+                function createCandlestickSeries({ options, owner, data }) {
+                  function computeColors() {
+                    const upColor = colors.profit();
+                    const downColor = colors.loss();
+
+                    return {
+                      upColor,
+                      wickUpColor: upColor,
+                      downColor,
+                      wickDownColor: downColor,
+                    };
+                  }
+
+                  const series = _chart.addCandlestickSeries({
+                    baseLineVisible: false,
+                    borderVisible: false,
+                    priceLineVisible: false,
+                    baseLineColor: "",
+                    borderColor: "",
+                    borderDownColor: "",
+                    borderUpColor: "",
+                    ...options,
+                    ...computeColors(),
+                  });
+
+                  signals.runWithOwner(owner, () => {
+                    signals.createEffect(computeColors, (computeColors) => {
+                      series.applyOptions(computeColors);
+                    });
+                  });
+
+                  if (data) {
+                    series.setData(data);
+                  }
+
+                  return series;
+                }
+
+                /**
+                 * @param {CreateLineSeriesParams} args
+                 */
+                function createLineSeries({ color, options, owner, data }) {
+                  function computeColors() {
+                    return {
+                      color: color(),
+                    };
+                  }
+
+                  const series = _chart.addLineSeries({
+                    ...defaultSeriesOptions,
+                    ...options,
+                    ...computeColors(),
+                  });
+
+                  if (data) {
+                    series.setData(data);
+                  }
+
+                  signals.runWithOwner(owner, () => {
+                    signals.createEffect(computeColors, (computeColors) => {
+                      series.applyOptions(computeColors);
+                    });
+                  });
+
+                  return series;
+                }
+
+                const chart =
+                  /** @type {IChartApi & { whitespace: ISeriesApi<"Line">, createBaseLineSeries: typeof createBaseLineSeries, createCandlesticksSeries: typeof createCandlestickSeries, createLineSeries: typeof createLineSeries; setHidden: (b: boolean) => void }} */ (
+                    _chart
+                  );
+
+                if (whitespace) {
+                  chart.whitespace = setWhitespace(_chart, scale);
+                }
+
+                chart.createBaseLineSeries = createBaseLineSeries;
+                chart.createCandlesticksSeries = createCandlestickSeries;
+                chart.createLineSeries = createLineSeries;
+                chart.setHidden = (b) => {
+                  chartWrapper.hidden = b;
+                };
+
+                function createUnitAndModeElements() {
+                  const fieldset = window.document.createElement("fieldset");
+                  fieldset.dataset.size = "sm";
+                  chartWrapper.append(fieldset);
+
+                  const id = `chart-${chartId}-${chartIndex}-mode`;
+
+                  const chartModes = /** @type {const} */ (["Linear", "Log"]);
+                  const chartMode = signals.createSignal(
+                    /** @type {Lowercase<typeof chartModes[number]>} */ (
+                      localStorage.getItem(id) ||
+                        chartModes[chartIndex ? 0 : 1].toLowerCase()
+                    ),
+                  );
+
+                  const field = utils.dom.createHorizontalChoiceField({
+                    choices: chartModes,
+                    selected: chartMode(),
+                    id,
+                    title: unit,
                     signals,
-                  })
-                );
-              chart.whitespace = setWhitespace(chart, scale);
-              return chart;
+                  });
+                  fieldset.append(field);
+
+                  field.addEventListener("change", (event) => {
+                    // @ts-ignore
+                    const value = event.target.value;
+                    localStorage.setItem(id, value);
+                    chartMode.set(value);
+                  });
+
+                  signals.createEffect(chartMode, (chartMode) =>
+                    _chart.priceScale("right").applyOptions({
+                      mode: chartMode === "linear" ? 0 : 1,
+                    }),
+                  );
+                }
+                createUnitAndModeElements();
+
+                config?.forEach((params) => {
+                  switch (params.kind) {
+                    case "line": {
+                      chart.createLineSeries(params);
+                      break;
+                    }
+                    case "candle": {
+                      chart.createCandlesticksSeries(params);
+                      break;
+                    }
+                    case "baseline": {
+                      chart.createBaseLineSeries(params);
+                      break;
+                    }
+                  }
+                });
+
+                if (kind === "static") {
+                  chart.timeScale().fitContent();
+                }
+
+                return chart;
+              }
+
+              config?.forEach((params) => {
+                createPane(params);
+              });
+
+              return {
+                legendElement,
+                chartListElement,
+                createPane,
+              };
             }
 
             return {
               createChart,
-              createChartWithWhitespace,
-              createBaseLineSeries,
-              createCandlesticksSeries,
-              createLineSeries,
             };
           },
         ),
@@ -654,6 +781,7 @@ const packages = initPackages();
 /**
  * @typedef {Awaited<ReturnType<typeof packages.signals>>} Signals
  * @typedef {Awaited<ReturnType<typeof packages.lightweightCharts>>} LightweightCharts
+ * @typedef {ReturnType<ReturnType<Awaited<ReturnType<typeof packages.lightweightCharts>>['createChart']>['createPane']>} ChartPane
  */
 
 const options = import("./options.js");
@@ -1700,7 +1828,6 @@ const elements = {
   search: utils.dom.getElementById("search"),
   nav: utils.dom.getElementById("nav"),
   navHeader: utils.dom.getElementById("nav-header"),
-  selectedFrame: utils.dom.getElementById("selected-frame"),
   searchInput: /** @type {HTMLInputElement} */ (
     utils.dom.getElementById("search-input")
   ),
@@ -1914,8 +2041,13 @@ function createColors(dark) {
     offDollars: emerald,
 
     yellow,
+    lime,
     orange,
     red,
+    sky,
+    blue,
+    rose,
+    pink,
 
     _1d: pink,
     _1w: red,
@@ -2813,7 +2945,7 @@ packages.signals().then((signals) =>
       }
       createMobileSwitchEffect();
 
-      utils.dom.onFirstIntersection(elements.selectedFrame, initSelectedFrame);
+      utils.dom.onFirstIntersection(elements.aside, initSelectedFrame);
     }
     initSelected();
 
