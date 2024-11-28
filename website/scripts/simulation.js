@@ -560,14 +560,14 @@ export function init({
           const serDollars = c("offDollars", fd(dollars));
           const serTotalFeesPaid = c("rose", fd(totalFeesPaid));
 
-          p1.innerHTML = `After exchanging ${serInvestedAmount} in the span of ${serDaysCount} days, you would have accumulated ${serSats} Satoshis (${serBitcoin} Bitcoin) worth ${serBitcoinValue} at an average price of ${serAveragePricePaid} per Bitcoin with a return of investment of ${serRoi}, have ${serDollars} left and paid a total of ${serTotalFeesPaid} in fees.`;
+          p1.innerHTML = `After exchanging ${serInvestedAmount} in the span of ${serDaysCount} days, you would have accumulated ${serSats} Satoshis (${serBitcoin} Bitcoin) worth today ${serBitcoinValue} at an average price of ${serAveragePricePaid} per Bitcoin with a return of investment of ${serRoi}, have ${serDollars} left and paid a total of ${serTotalFeesPaid} in fees.`;
 
           const dayDiff = Math.floor(
             utils.date.differenceBetween(new Date(), lastInvestDay),
           );
           const serDailyInvestment = c("offDollars", fd(dailyInvestment));
           const setLastSatsAdded = c("bitcoin", f(lastSatsAdded));
-          p2.innerHTML = `Your last buy would've happened ${c("blue", dayDiff ? `${f(dayDiff)} ${dayDiff > 1 ? "days" : "day"} ago` : "today")} where you would have exchanged ${serDailyInvestment} for ${setLastSatsAdded} Satoshis`;
+          p2.innerHTML = `You would've last bought ${c("blue", dayDiff ? `${f(dayDiff)} ${dayDiff > 1 ? "days" : "day"} ago` : "today")} and exchanged ${serDailyInvestment} for approximately ${setLastSatsAdded} Satoshis`;
 
           const serProfitableDaysRatio = c("green", fp(profitableDaysRatio));
           const serUnprofitableDaysRatio = c("red", fp(unprofitableDaysRatio));
