@@ -563,7 +563,7 @@ export function init({
           );
           const serDailyInvestment = c("offDollars", fd(dailyInvestment));
           const setSatsAdded = c("bitcoin", f(satsAdded));
-          p2.innerHTML = `Your last buy would've happened ${c("blue", dayDiff ? f(dayDiff) : "today")} where you would have exchanged ${serDailyInvestment} for ${setSatsAdded} Satoshis`;
+          p2.innerHTML = `Your last buy would've happened ${c("blue", dayDiff ? `${f(dayDiff)} ${dayDiff > 1 ? "days" : "day"} ago` : "today")} where you would have exchanged ${serDailyInvestment} for ${setSatsAdded} Satoshis`;
 
           const serProfitableDaysRatio = c("green", fp(profitableDaysRatio));
           const serUnprofitableDaysRatio = c("red", fp(unprofitableDaysRatio));
