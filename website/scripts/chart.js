@@ -809,7 +809,7 @@ export function init({
       const chart = addChart({
         chartIndex,
         scale,
-        unit: option.unit || "US Dollars",
+        unit: chartIndex ? option.unit : "US Dollars",
         whitespace: true,
       });
 

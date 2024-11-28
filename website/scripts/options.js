@@ -5367,27 +5367,25 @@ export function initOptions({
               });
             }
           }
+        }
 
-          function createCheckEffect() {
-            signals.createEffect(selected, (selected) => {
-              if (selected?.id === option.id) {
-                input.checked = true;
-                localStorage.setItem(ids.selectedId, option.id);
-              } else if (input.checked) {
-                input.checked = false;
-              }
-            });
-          }
+        function createCheckEffect() {
+          signals.createEffect(selected, (selected) => {
+            if (selected?.id === option.id) {
+              input.checked = true;
+              localStorage.setItem(ids.selectedId, option.id);
+            } else if (input.checked) {
+              input.checked = false;
+            }
+          });
+        }
 
-          if (owner !== undefined) {
-            signals.runWithOwner(owner, () => {
-              createCheckEffect();
-            });
-          } else {
+        if (owner !== undefined) {
+          signals.runWithOwner(owner, () => {
             createCheckEffect();
-          }
+          });
         } else {
-          console.log("else", option);
+          createCheckEffect();
         }
 
         return label;

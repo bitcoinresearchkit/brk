@@ -13,7 +13,6 @@ import {
   SingleValueData,
   CandlestickData,
   SeriesType,
-  IChartApi,
   ISeriesApi,
   BaselineData,
 } from "../../packages/lightweight-charts/v4.2.0/types";
@@ -387,6 +386,7 @@ interface Frequency {
   value: string;
   isTriggerDay: (date: Date) => boolean;
 }
+type Frequencies = { name: string; list: Frequency[] };
 
 interface CreatePaneParameters {
   unit: Unit;

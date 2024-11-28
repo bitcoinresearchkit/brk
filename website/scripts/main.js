@@ -662,10 +662,10 @@ function initPackages() {
 
                   const id = `chart-${chartId}-${chartIndex}-mode`;
 
-                  const chartModes = /** @type {const} */ (["Linear", "Log"]);
+                  const chartModes = /** @type {const} */ (["Lin", "Log"]);
                   const chartMode = signals.createSignal(
                     /** @type {Lowercase<typeof chartModes[number]>} */ (
-                      localStorage.getItem(id) || "linear"
+                      localStorage.getItem(id) || "lin"
                     ),
                   );
 
@@ -687,7 +687,7 @@ function initPackages() {
 
                   signals.createEffect(chartMode, (chartMode) =>
                     _chart.priceScale("right").applyOptions({
-                      mode: chartMode === "linear" ? 0 : 1,
+                      mode: chartMode === "lin" ? 0 : 1,
                     }),
                   );
                 }

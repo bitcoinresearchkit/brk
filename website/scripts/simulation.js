@@ -1,6 +1,6 @@
 /**
  * @import { Options } from './options';
- * @import { ColorName } from './types/self';
+ * @import { ColorName, Frequencies, Frequency } from './types/self';
  */
 
 /**
@@ -44,7 +44,7 @@ export function init({
         }),
       },
       topUp: {
-        amount: signals.createSignal(/** @type {number | null} */ (10), {
+        amount: signals.createSignal(/** @type {number | null} */ (150), {
           save: {
             ...utils.serde.number,
             id: `${storagePrefix}-top-up-amount`,
@@ -52,7 +52,7 @@ export function init({
           },
         }),
         frenquency: signals.createSignal(
-          /** @type {Frequency} */ (frequencies.list[0]),
+          /** @type {Frequency} */ (frequencies.list[3].list[0]),
           {
             save: {
               ...frequencies.serde,
@@ -72,7 +72,7 @@ export function init({
             param: "initial-swap",
           },
         }),
-        recurrent: signals.createSignal(/** @type {number | null} */ (10), {
+        recurrent: signals.createSignal(/** @type {number | null} */ (5), {
           save: {
             ...utils.serde.number,
             id: `${storagePrefix}-recurrent-swap`,
@@ -154,7 +154,8 @@ export function init({
         type: "Dollars",
         text: "Initial Amount",
       }),
-      description: "The amount of dollars you have ready to swap on day one.",
+      description:
+        "The amount of dollars you have ready on the exchange on day one.",
       input: createInputDollar({
         id: "simulation-dollars-initial",
         title: "Initial Dollar Amount",
@@ -168,14 +169,14 @@ export function init({
       title: createColoredTypeHTML({
         color: "green",
         type: "Dollars",
-        text: "Top Up Amount",
+        text: "Top Up Frequency",
       }),
       description:
-        "The recurrent amount of dollars you'll be putting aside to swap.",
-      input: createInputDollar({
-        id: "simulation-dollars-later",
-        title: "Top Up Dollar Amount",
-        signal: settings.dollars.topUp.amount,
+        "The frequency at which you'll top up your account at the exchange.",
+      input: utils.dom.createSelect({
+        id: "top-up-frequency",
+        list: frequencies.list,
+        signal: settings.dollars.topUp.frenquency,
       }),
     }),
   );
@@ -185,14 +186,14 @@ export function init({
       title: createColoredTypeHTML({
         color: "green",
         type: "Dollars",
-        text: "Top Up Frequency",
+        text: "Top Up Amount",
       }),
       description:
-        "The frequency at which you'll be putting aside the preceding amount of dollars.",
-      input: utils.dom.createSelect({
-        id: "top-up-frequency",
-        list: frequencies.list,
-        signal: settings.dollars.topUp.frenquency,
+        "The recurrent amount of dollars you'll be transfering to said exchange.",
+      input: createInputDollar({
+        id: "simulation-dollars-later",
+        title: "Top Up Dollar Amount",
+        signal: settings.dollars.topUp.amount,
       }),
     }),
   );
@@ -205,7 +206,7 @@ export function init({
         text: "Initial Amount",
       }),
       description:
-        "The maximum initial amount of dollars you'll exchange on day one.",
+        "The amount, if available, of dollars that will be used to buy Bitcoin on day one.",
       input: createInputDollar({
         id: "simulation-dollars-later",
         title: "Initial Swap Amount",
@@ -219,14 +220,13 @@ export function init({
       title: createColoredTypeHTML({
         color: "orange",
         type: "Swap",
-        text: "Recurrent Amount",
+        text: "Frequency",
       }),
-      description:
-        "The maximum recurrent amount of dollars you'll be exchanging.",
-      input: createInputDollar({
-        id: "simulation-dollars-later",
-        title: "Recurrent Swap Amount",
-        signal: settings.swap.amount.recurrent,
+      description: "The frequency at which you'll be buying Bitcoin.",
+      input: utils.dom.createSelect({
+        id: "top-up-frequency",
+        list: frequencies.list,
+        signal: settings.swap.frequency,
       }),
     }),
   );
@@ -236,14 +236,14 @@ export function init({
       title: createColoredTypeHTML({
         color: "orange",
         type: "Swap",
-        text: "Frequency",
+        text: "Recurrent Amount",
       }),
       description:
-        "The frequency at which you'll be exchanging the preceding amount.",
-      input: utils.dom.createSelect({
-        id: "top-up-frequency",
-        list: frequencies.list,
-        signal: settings.swap.frequency,
+        "The recurrent amount, if available, of dollars that will be used to buy Bitcoin.",
+      input: createInputDollar({
+        id: "simulation-dollars-later",
+        title: "Recurrent Swap Amount",
+        signal: settings.swap.amount.recurrent,
       }),
     }),
   );
@@ -634,28 +634,6 @@ export function init({
             ],
           });
 
-          // lightweightCharts.createChart({
-          //   parent: resultsElement,
-          //   signals,
-          //   colors,
-          //   id: `simulation-0`,
-          //   kind: "static",
-          //   config: [
-          //     {
-          //       unit: "US Dollars",
-          //       scale: "date",
-          //       config: [
-          //         {
-          //           kind: "line",
-          //           color: colors.yellow,
-          //           owner,
-          //           data: investmentData,
-          //         },
-          //       ],
-          //     },
-          //   ],
-          // });
-
           lightweightCharts.createChart({
             parent: resultsElement,
             signals,
@@ -677,28 +655,6 @@ export function init({
               },
             ],
           });
-
-          // lightweightCharts.createChart({
-          //   parent: resultsElement,
-          //   signals,
-          //   colors,
-          //   id: `simulation-1`,
-          //   kind: "static",
-          //   config: [
-          //     {
-          //       unit: "US Dollars",
-          //       scale: "date",
-          //       config: [
-          //         {
-          //           kind: "line",
-          //           color: colors.lightBitcoin,
-          //           owner,
-          //           data: bitcoinAddedData,
-          //         },
-          //       ],
-          //     },
-          //   ],
-          // });
 
           lightweightCharts.createChart({
             parent: resultsElement,
@@ -940,7 +896,7 @@ function computeFrequencies() {
   ];
   const maxDays = 28;
 
-  /** @satisfies {((Frequency | {name: string; list: Frequency[]})[])} */
+  /** @satisfies {([Frequency, Frequencies, Frequencies, Frequencies])} */
   const list = [
     {
       name: "Every day",
