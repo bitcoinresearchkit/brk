@@ -285,10 +285,9 @@ export function init({
       title: createColoredTypeHTML({
         color: "red",
         type: "Fees",
-        text: "Percentage",
+        text: "Exchange",
       }),
-      description:
-        "The amount of fees (in %) from where you'll be exchanging your dollars.",
+      description: "The amount of trading fees (in %) at the exchange.",
       input: utils.dom.createInputNumberElement({
         id: "",
         title: "",
@@ -340,6 +339,7 @@ export function init({
           resultsElement.append(p1);
           resultsElement.append(p2);
           resultsElement.append(p3);
+          resultsElement.append(p4);
 
           if (!start || !end || start > end) return;
 
@@ -377,8 +377,10 @@ export function init({
           const unprofitableDaysRatioData = [];
 
           let bitcoin = 0;
+          let sats = 0;
           let dollars = initialDollarAmount;
           let investedAmount = 0;
+          let postFeesInvestedAmount = 0;
           let buyCount = 0;
           let averagePricePaid = 0;
           let bitcoinValue = 0;
@@ -390,6 +392,10 @@ export function init({
           let unprofitableDays = 0;
           let profitableDaysRatio = 0;
           let unprofitableDaysRatio = 0;
+          let lastInvestDay = range[0];
+          let dailyInvestment = 0;
+          let bitcoinAdded = 0;
+          let satsAdded = 0;
 
           range.forEach((date, index) => {
             const year = date.getUTCFullYear();
@@ -405,13 +411,14 @@ export function init({
 
             if (!close) return;
 
-            let dailyInvestment = 0;
+            dailyInvestment = 0;
             /** @param {number} value  */
             function invest(value) {
               value = Math.min(dollars, value);
               dailyInvestment += value;
               dollars -= value;
               buyCount += 1;
+              lastInvestDay = date;
             }
             if (!index) {
               invest(initialSwap);
@@ -420,27 +427,31 @@ export function init({
               invest(recurrentSwap);
             }
 
+            investedAmount += dailyInvestment;
+
             let dailyInvestmentPostFees =
               dailyInvestment * (1 - (fees || 0) / 100);
 
             totalFeesPaid += dailyInvestment - dailyInvestmentPostFees;
 
-            const bitcoinAdded = dailyInvestmentPostFees / close;
+            bitcoinAdded = dailyInvestmentPostFees / close;
             bitcoin += bitcoinAdded;
+            satsAdded = Math.floor(bitcoinAdded * 100_000_000);
+            sats += satsAdded;
 
-            investedAmount += dailyInvestmentPostFees;
+            postFeesInvestedAmount += dailyInvestmentPostFees;
 
             bitcoinValue = close * bitcoin;
 
             totalValue = dollars + bitcoinValue;
 
-            averagePricePaid = investedAmount / bitcoin;
+            averagePricePaid = postFeesInvestedAmount / bitcoin;
 
-            roi = (bitcoinValue / investedAmount - 1) * 100;
+            roi = (bitcoinValue / postFeesInvestedAmount - 1) * 100;
 
             const daysCount = index + 1;
-            profitableDaysRatio = (profitableDays / daysCount) * 100;
-            unprofitableDaysRatio = (unprofitableDays / daysCount) * 100;
+            profitableDaysRatio = profitableDays / daysCount;
+            unprofitableDaysRatio = unprofitableDays / daysCount;
 
             if (roi >= 0) {
               profitableDays += 1;
@@ -515,52 +526,59 @@ export function init({
 
             profitableDaysRatioData.push({
               time,
-              value: profitableDaysRatio,
+              value: profitableDaysRatio * 100,
             });
 
             unprofitableDaysRatioData.push({
               time,
-              value: unprofitableDaysRatio,
+              value: unprofitableDaysRatio * 100,
             });
           });
 
           const f = utils.locale.numberToUSFormat;
+          /** @param {number} v */
+          const fd = (v) => utils.formatters.dollars.format(v);
+          /** @param {number} v */
+          const fp = (v) => utils.formatters.percentage.format(v);
           /**
            * @param {ColorName} c
            * @param {string} t
            */
           const c = (c, t) => createColoredSpan({ color: c, text: t });
 
-          const serInvestedAmount = c("dollars", `$${f(investedAmount)}`);
+          const serInvestedAmount = c("dollars", fd(investedAmount));
           const serDaysCount = c("sky", f(daysCount));
-          const serBitcoin = c("orange", f(bitcoin));
-          const serBitcoinValue = c("dollars", `$${f(bitcoinValue)}`);
-          const serAveragePricePaid = c("dollars", `$${f(averagePricePaid)}`);
-          const serRoi = c("yellow", `${f(roi)}%`);
+          const serSats = c("orange", f(sats));
+          const serBitcoin = c("orange", `~${f(bitcoin)}`);
+          const serBitcoinValue = c("amber", fd(bitcoinValue));
+          const serAveragePricePaid = c("lightDollars", fd(averagePricePaid));
+          const serRoi = c("yellow", fp(roi / 100));
+          const serDollars = c("offDollars", fd(dollars));
+          const serTotalFeesPaid = c("rose", fd(totalFeesPaid));
 
-          p1.innerHTML = `After exchanging ${serInvestedAmount} in the span of ${serDaysCount} days, you would've accumulated ${serBitcoin} Bitcoin worth ${serBitcoinValue} at an average price of ${serAveragePricePaid} per Bitcoin with a return of investment of ${serRoi}.`;
+          p1.innerHTML = `After exchanging ${serInvestedAmount} in the span of ${serDaysCount} days, you would have accumulated ${serSats} Satoshis (${serBitcoin} Bitcoin) worth ${serBitcoinValue} at an average price of ${serAveragePricePaid} per Bitcoin with a return of investment of ${serRoi}, have ${serDollars} left and paid a total of ${serTotalFeesPaid} in fees.`;
 
-          const serProfitableDaysRatio = c(
-            "green",
-            `${f(profitableDaysRatio)}%`,
+          const dayDiff = Math.floor(
+            utils.date.differenceBetween(new Date(), lastInvestDay),
           );
-          const serUnprofitableDaysRatio = c(
-            "red",
-            `${f(unprofitableDaysRatio)}%`,
-          );
+          const serDailyInvestment = c("offDollars", fd(dailyInvestment));
+          const setSatsAdded = c("bitcoin", f(satsAdded));
+          p2.innerHTML = `Your last buy would've happened ${c("blue", dayDiff ? f(dayDiff) : "today")} where you would have exchanged ${serDailyInvestment} for ${setSatsAdded} Satoshis`;
 
-          p2.innerHTML = `You would've been ${serProfitableDaysRatio} of the time profitable and ${serUnprofitableDaysRatio} of the time unprofitable.`;
+          const serProfitableDaysRatio = c("green", fp(profitableDaysRatio));
+          const serUnprofitableDaysRatio = c("red", fp(unprofitableDaysRatio));
+
+          p3.innerHTML = `You would've been ${serProfitableDaysRatio} of the time profitable and ${serUnprofitableDaysRatio} of the time unprofitable.`;
 
           signals.createEffect(lastValues, (lastValues) => {
-            const lowestAnnual4YReturn = 23.68;
+            const lowestAnnual4YReturn = 0.2368;
             // const lowestAnnual4YReturn = lastValues?.["price-4y-compound-return"] || 0
             const serLowestAnnual4YReturn = c(
-              "yellow",
-              `${f(lowestAnnual4YReturn)}%`,
+              "cyan",
+              `${fp(lowestAnnual4YReturn)}`,
             );
 
-            const lowestAnnual4YReturnPercentage =
-              1 + lowestAnnual4YReturn / 100;
+            const lowestAnnual4YReturnPercentage = 1 + lowestAnnual4YReturn;
             /**
              * @param {number} power
              */
@@ -570,22 +588,17 @@ export function init({
               );
             }
             const bitcoinValueAfter4y = bitcoinValueReturn(4);
-            const serBitcoinValueAfter4y = c(
-              "rose",
-              `$${f(bitcoinValueAfter4y)}`,
-            );
+            const serBitcoinValueAfter4y = c("purple", fd(bitcoinValueAfter4y));
             const bitcoinValueAfter10y = bitcoinValueReturn(10);
             const serBitcoinValueAfter10y = c(
-              "pink",
-              `$${f(bitcoinValueAfter10y)}`,
+              "fuchsia",
+              fd(bitcoinValueAfter10y),
             );
-            const bitcoinValueAfter20y = bitcoinValueReturn(20);
-            const serBitcoinValueAfter20y = c(
-              "purple",
-              `$${f(bitcoinValueAfter20y)}`,
-            );
+            const bitcoinValueAfter21y = bitcoinValueReturn(21);
+            const serBitcoinValueAfter21y = c("pink", fd(bitcoinValueAfter21y));
 
-            p3.innerHTML = `Historically, the lowest annual return after 4 years has been ${serLowestAnnual4YReturn}.<br/>Using this as our baseline and assuming you don't swap any more US Dollars, your Bitcoin would be worth ${serBitcoinValueAfter4y} after 4 years, ${serBitcoinValueAfter10y} after 10 years and ${serBitcoinValueAfter20y} after 20 years.`;
+            /** @param {number} v */
+            p4.innerHTML = `The lowest annual return after 4 years has historically been ${serLowestAnnual4YReturn}.<br/>Using it as the baseline, your Bitcoin would be worth ${serBitcoinValueAfter4y} after 4 years, ${serBitcoinValueAfter10y} after 10 years and ${serBitcoinValueAfter21y} after 21 years.`;
           });
 
           lightweightCharts.createChart({
@@ -601,21 +614,15 @@ export function init({
                 config: [
                   {
                     kind: "line",
-                    color: colors.bitcoin,
+                    color: colors.amber,
                     owner,
                     data: bitcoinValueData,
                   },
                   {
                     kind: "line",
-                    color: colors.lime,
+                    color: colors.offDollars,
                     owner,
                     data: dollarsLeftData,
-                  },
-                  {
-                    kind: "line",
-                    color: colors.default,
-                    owner,
-                    data: totalValueData,
                   },
                   {
                     kind: "line",
@@ -625,7 +632,7 @@ export function init({
                   },
                   {
                     kind: "line",
-                    color: colors.red,
+                    color: colors.rose,
                     owner,
                     data: totalFeesPaidData,
                   },
@@ -670,13 +677,13 @@ export function init({
                   {
                     kind: "line",
                     owner,
-                    color: colors.bitcoin,
+                    color: colors.default,
                     data: bitcoinPriceData,
                   },
                   {
                     kind: "line",
                     owner,
-                    color: colors.default,
+                    color: colors.lightDollars,
                     data: averagePricePaidData,
                   },
                 ],
@@ -729,42 +736,14 @@ export function init({
                   {
                     kind: "line",
                     owner,
-                    color: colors.pink,
+                    color: colors.red,
                     data: unprofitableDaysRatioData,
                   },
                   {
                     kind: "line",
                     owner,
-                    color: colors.lime,
+                    color: colors.green,
                     data: profitableDaysRatioData,
-                  },
-                ],
-              },
-            ],
-          });
-
-          lightweightCharts.createChart({
-            parent: resultsElement,
-            signals,
-            colors,
-            id: `simulation-counts`,
-            kind: "static",
-            config: [
-              {
-                unit: "US Dollars",
-                scale: "date",
-                config: [
-                  {
-                    kind: "line",
-                    owner,
-                    color: colors.blue,
-                    data: buyCountData,
-                  },
-                  {
-                    kind: "line",
-                    owner,
-                    color: colors.sky,
-                    data: daysCountData,
                   },
                 ],
               },

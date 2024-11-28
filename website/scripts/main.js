@@ -1527,6 +1527,7 @@ const utils = {
     }),
   },
   date: {
+    ONE_DAY_IN_MS: 1000 * 60 * 60 * 24,
     todayUTC() {
       const today = new Date();
       return new Date(
@@ -1574,6 +1575,14 @@ const utils = {
         currentDate.setUTCDate(currentDate.getUTCDate() + 1);
       }
       return dates;
+    },
+    /**
+     * @param {Date} date1
+     * @param {Date} date2
+     * @returns
+     */
+    differenceBetween(date1, date2) {
+      return Math.abs(date1.valueOf() - date2.valueOf()) / this.ONE_DAY_IN_MS;
     },
   },
   color: {
@@ -2046,9 +2055,14 @@ function createColors(dark) {
     sky,
     blue,
     rose,
-    pink,
     green,
+    amber,
+    avocado,
+    cyan,
+    violet,
     purple,
+    fuchsia,
+    pink,
 
     _1d: pink,
     _1w: red,
