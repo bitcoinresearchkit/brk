@@ -396,6 +396,7 @@ export function init({
           let dailyInvestment = 0;
           let bitcoinAdded = 0;
           let satsAdded = 0;
+          let lastSatsAdded = 0;
 
           range.forEach((date, index) => {
             const year = date.getUTCFullYear();
@@ -437,6 +438,9 @@ export function init({
             bitcoinAdded = dailyInvestmentPostFees / close;
             bitcoin += bitcoinAdded;
             satsAdded = Math.floor(bitcoinAdded * 100_000_000);
+            if (satsAdded > 0) {
+              lastSatsAdded = satsAdded;
+            }
             sats += satsAdded;
 
             postFeesInvestedAmount += dailyInvestmentPostFees;
@@ -562,8 +566,8 @@ export function init({
             utils.date.differenceBetween(new Date(), lastInvestDay),
           );
           const serDailyInvestment = c("offDollars", fd(dailyInvestment));
-          const setSatsAdded = c("bitcoin", f(satsAdded));
-          p2.innerHTML = `Your last buy would've happened ${c("blue", dayDiff ? `${f(dayDiff)} ${dayDiff > 1 ? "days" : "day"} ago` : "today")} where you would have exchanged ${serDailyInvestment} for ${setSatsAdded} Satoshis`;
+          const setLastSatsAdded = c("bitcoin", f(lastSatsAdded));
+          p2.innerHTML = `Your last buy would've happened ${c("blue", dayDiff ? `${f(dayDiff)} ${dayDiff > 1 ? "days" : "day"} ago` : "today")} where you would have exchanged ${serDailyInvestment} for ${setLastSatsAdded} Satoshis`;
 
           const serProfitableDaysRatio = c("green", fp(profitableDaysRatio));
           const serUnprofitableDaysRatio = c("red", fp(unprofitableDaysRatio));
