@@ -24,7 +24,7 @@
     }
   }
 
-  .charts {
+  .chart {
     flex: 1;
     margin-top: 2rem;
 
@@ -82,7 +82,7 @@
       }
     }
 
-    .chart-div {
+    .lightweight-chart {
       margin-left: var(--negative-main-padding);
     }
   }

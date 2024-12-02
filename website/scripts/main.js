@@ -1,7 +1,7 @@
 // @ts-check
 
 /**
- * @import { Option, ResourceDataset, TimeScale, TimeRange, Unit, Marker, Weighted, DatasetPath, OHLC, FetchedJSON, DatasetValue, FetchedResult, AnyDatasetPath, SeriesBlueprint, BaselineSpecificSeriesBlueprint, CandlestickSpecificSeriesBlueprint, LineSpecificSeriesBlueprint, SpecificSeriesBlueprintWithChart, Signal, Color, DatasetCandlestickData, PartialChartOption, ChartOption, AnyPartialOption, ProcessedOptionAddons, OptionsTree, AnyPath, SimulationOption, Frequency, CreatePaneParameters, CreateBaselineSeriesParams, CreateCandlestickSeriesParams, CreateLineSeriesParams, LastValues } from "./types/self"
+ * @import { Option, ResourceDataset, TimeScale, TimeRange, Unit, Marker, Weighted, DatasetPath, OHLC, FetchedJSON, DatasetValue, FetchedResult, AnyDatasetPath, SeriesBlueprint, BaselineSpecificSeriesBlueprint, CandlestickSpecificSeriesBlueprint, LineSpecificSeriesBlueprint, SpecificSeriesBlueprintWithChart, Color, DatasetCandlestickData, PartialChartOption, ChartOption, AnyPartialOption, ProcessedOptionAddons, OptionsTree, AnyPath, SimulationOption, Frequency, CreatePaneParameters, CreateBaselineSeriesParams, CreateCandlestickSeriesParams, CreateLineSeriesParams, LastValues, HoveredLegend, ChartPane, SplitSeries, SingleSeries, CreateSplitSeriesParameters } from "./types/self"
  * @import {createChart as CreateClassicChart, createChartEx as CreateCustomChart, LineStyleOptions} from "../packages/lightweight-charts/v4.2.0/types";
  * @import * as _ from "../packages/ufuzzy/v1.0.14/types"
  * @import { DeepPartial, ChartOptions, IChartApi, IHorzScaleBehavior, WhitespaceData, SingleValueData, ISeriesApi, Time, LineData, LogicalRange, SeriesMarker, CandlestickData, SeriesType, BaselineStyleOptions, SeriesOptionsCommon } from "../packages/lightweight-charts/v4.2.0/types"
@@ -9,729 +9,20 @@
  * @import { SignalOptions } from "../packages/solid-signals/2024-11-02/types/core/core"
  * @import { getOwner as GetOwner, onCleanup as OnCleanup, Owner } from "../packages/solid-signals/2024-11-02/types/core/owner"
  * @import { createSignal as CreateSignal, createEffect as CreateEffect, Accessor, Setter, createMemo as CreateMemo, createRoot as CreateRoot, runWithOwner as RunWithOwner } from "../packages/solid-signals/2024-11-02/types/signals";
+ * @import {Signal, Signals} from "../packages/solid-signals/types";
  */
 
 function initPackages() {
-  async function importSignals() {
-    return import("../packages/solid-signals/2024-11-02/script.js").then(
-      (_signals) => {
-        const signals = {
-          createSolidSignal: /** @type {CreateSignal} */ (
-            _signals.createSignal
-          ),
-          createSolidEffect: /** @type {CreateEffect} */ (
-            _signals.createEffect
-          ),
-          createEffect: /** @type {CreateEffect} */ (compute, effect) => {
-            let dispose = /** @type {VoidFunction | null} */ (null);
-            // @ts-ignore
-            _signals.createEffect(compute, (v) => {
-              dispose?.();
-              signals.createRoot((_dispose) => {
-                dispose = _dispose;
-                effect(v);
-              });
-              signals.onCleanup(() => dispose?.());
-            });
-            signals.onCleanup(() => dispose?.());
-          },
-          createMemo: /** @type {CreateMemo} */ (_signals.createMemo),
-          createRoot: /** @type {CreateRoot} */ (_signals.createRoot),
-          getOwner: /** @type {GetOwner} */ (_signals.getOwner),
-          runWithOwner: /** @type {RunWithOwner} */ (_signals.runWithOwner),
-          onCleanup: /** @type {OnCleanup} */ (_signals.onCleanup),
-          flushSync: _signals.flushSync,
-          /**
-           * @template T
-           * @param {T} initialValue
-           * @param {SignalOptions<T> & {save?: {id?: string; param?: string; serialize: (v: NonNullable<T>) => string; deserialize: (v: string) => NonNullable<T>}}} [options]
-           * @returns {Signal<T>}
-           */
-          createSignal(initialValue, options) {
-            const [get, set] = this.createSolidSignal(
-              /** @type {any} */ (initialValue),
-              options,
-            );
-
-            // @ts-ignore
-            get.set = set;
-
-            // @ts-ignore
-            get.reset = () => set(initialValue);
-
-            if (options?.save) {
-              const save = options.save;
-
-              let serialized = null;
-              if (save.param) {
-                serialized = utils.url.readParam(save.param);
-              }
-              if (serialized === null && save.id) {
-                serialized = utils.storage.read(save.id);
-              }
-              if (serialized) {
-                set(save.deserialize(serialized));
-              }
-
-              let firstEffect = true;
-              this.createEffect(get, (value) => {
-                if (!save) return;
-
-                if (!firstEffect && save.id) {
-                  if (
-                    value !== undefined &&
-                    value !== null &&
-                    (initialValue === undefined ||
-                      initialValue === null ||
-                      save.serialize(value) !== save.serialize(initialValue))
-                  ) {
-                    localStorage.setItem(save.id, save.serialize(value));
-                  } else {
-                    localStorage.removeItem(save.id);
-                  }
-                }
-
-                if (save.param) {
-                  if (
-                    value !== undefined &&
-                    value !== null &&
-                    (initialValue === undefined ||
-                      initialValue === null ||
-                      save.serialize(value) !== save.serialize(initialValue))
-                  ) {
-                    utils.url.writeParam(save.param, save.serialize(value));
-                  } else {
-                    utils.url.removeParam(save.param);
-                  }
-                }
-
-                firstEffect = false;
-              });
-            }
-
-            // @ts-ignore
-            return get;
-          },
-        };
-
-        return signals;
-      },
-    );
-  }
-
-  /** @typedef {Awaited<ReturnType<typeof importSignals>>} Signals */
-
   const imports = {
-    signals: importSignals,
+    async signals() {
+      return import("../packages/solid-signals/wrapper.js").then((d) =>
+        d.default.then((d) => d),
+      );
+    },
     async lightweightCharts() {
       return window.document.fonts.ready.then(() =>
-        import("../packages/lightweight-charts/v4.2.0/script.js").then(
-          ({
-            createChart: createClassicChart,
-            createChartEx: createCustomChart,
-          }) => {
-            /**
-             * @class
-             * @implements {IHorzScaleBehavior<number>}
-             */
-            class HorzScaleBehaviorHeight {
-              options() {
-                return /** @type {any} */ (undefined);
-              }
-              setOptions() {}
-              preprocessData() {}
-              updateFormatter() {}
-
-              createConverterToInternalObj() {
-                /** @type {(p: any) => any} */
-                return (price) => price;
-              }
-
-              /** @param {any} item  */
-              key(item) {
-                return item;
-              }
-
-              /** @param {any} item  */
-              cacheKey(item) {
-                return item;
-              }
-
-              /** @param {any} item  */
-              convertHorzItemToInternal(item) {
-                return item;
-              }
-
-              /** @param {any} item  */
-              formatHorzItem(item) {
-                return item;
-              }
-
-              /** @param {any} tickMark  */
-              formatTickmark(tickMark) {
-                return tickMark.time.toLocaleString("en-us");
-              }
-
-              /** @param {any} tickMarks  */
-              maxTickMarkWeight(tickMarks) {
-                return tickMarks.reduce(
-                  this.getMarkWithGreaterWeight,
-                  tickMarks[0],
-                ).weight;
-              }
-
-              /**
-               * @param {any} sortedTimePoints
-               * @param {number} startIndex
-               */
-              fillWeightsForPoints(sortedTimePoints, startIndex) {
-                for (
-                  let index = startIndex;
-                  index < sortedTimePoints.length;
-                  ++index
-                ) {
-                  sortedTimePoints[index].timeWeight = this.computeHeightWeight(
-                    sortedTimePoints[index].time,
-                  );
-                }
-              }
-
-              /**
-               * @param {any} a
-               * @param {any} b
-               */
-              getMarkWithGreaterWeight(a, b) {
-                return a.weight > b.weight ? a : b;
-              }
-
-              /** @param {number} value  */
-              computeHeightWeight(value) {
-                // if (value === Math.ceil(value / 1000000) * 1000000) {
-                //   return 12;
-                // }
-                if (value === Math.ceil(value / 100000) * 100000) {
-                  return 11;
-                }
-                if (value === Math.ceil(value / 10000) * 10000) {
-                  return 10;
-                }
-                if (value === Math.ceil(value / 1000) * 1000) {
-                  return 9;
-                }
-                if (value === Math.ceil(value / 100) * 100) {
-                  return 8;
-                }
-                if (value === Math.ceil(value / 50) * 50) {
-                  return 7;
-                }
-                if (value === Math.ceil(value / 25) * 25) {
-                  return 6;
-                }
-                if (value === Math.ceil(value / 10) * 10) {
-                  return 5;
-                }
-                if (value === Math.ceil(value / 5) * 5) {
-                  return 4;
-                }
-                if (value === Math.ceil(value)) {
-                  return 3;
-                }
-                if (value * 2 === Math.ceil(value * 2)) {
-                  return 1;
-                }
-
-                return 0;
-              }
-            }
-
-            /**
-             * @param {Object} args
-             * @param {TimeScale} args.scale
-             * @param {HTMLElement} args.element
-             * @param {Signals} args.signals
-             * @param {Colors} args.colors
-             * @param {DeepPartial<ChartOptions>} [args.options]
-             */
-            function createLightweightChart({
-              scale,
-              element,
-              signals,
-              colors,
-              options: _options = {},
-            }) {
-              /** @satisfies {DeepPartial<ChartOptions>} */
-              const options = {
-                autoSize: true,
-                layout: {
-                  fontFamily: "Satoshi Chart",
-                  fontSize: 13,
-                  background: { color: "transparent" },
-                  attributionLogo: false,
-                },
-                grid: {
-                  vertLines: { visible: false },
-                  horzLines: { visible: false },
-                },
-                timeScale: {
-                  minBarSpacing: 0.05,
-                  shiftVisibleRangeOnNewBar: false,
-                  allowShiftVisibleRangeOnWhitespaceReplacement: false,
-                },
-                handleScale: {
-                  axisDoubleClickReset: {
-                    time: false,
-                  },
-                },
-                localization: {
-                  priceFormatter: utils.locale.numberToShortUSFormat,
-                  locale: "en-us",
-                  ...(scale === "date"
-                    ? {
-                        // dateFormat: "EEEE, dd MMM 'yy",
-                      }
-                    : {}),
-                },
-                ..._options,
-              };
-
-              /** @type {IChartApi} */
-              let chart;
-
-              if (scale === "date") {
-                chart = createClassicChart(element, options);
-              } else {
-                const horzScaleBehavior = new HorzScaleBehaviorHeight();
-                // @ts-ignore
-                chart = createCustomChart(element, horzScaleBehavior, options);
-              }
-
-              chart.priceScale("right").applyOptions({
-                scaleMargins: {
-                  top: 0.075,
-                  bottom: 0.05,
-                },
-                minimumWidth: 78,
-              });
-
-              signals.createEffect(
-                () => ({
-                  defaultColor: colors.default(),
-                  offColor: colors.off(),
-                }),
-                ({ defaultColor, offColor }) => {
-                  chart.applyOptions({
-                    layout: {
-                      textColor: offColor,
-                    },
-                    rightPriceScale: {
-                      borderVisible: false,
-                    },
-                    timeScale: {
-                      borderVisible: false,
-                    },
-                    crosshair: {
-                      horzLine: {
-                        color: defaultColor,
-                        labelBackgroundColor: defaultColor,
-                      },
-                      vertLine: {
-                        color: defaultColor,
-                        labelBackgroundColor: defaultColor,
-                      },
-                    },
-                  });
-                },
-              );
-
-              return chart;
-            }
-
-            /**
-             * @type {DeepPartial<SeriesOptionsCommon>}
-             */
-            const defaultSeriesOptions = {
-              // @ts-ignore
-              lineWidth: 1.5,
-              priceLineVisible: false,
-              baseLineVisible: false,
-              baseLineColor: "",
-            };
-
-            function initWhitespace() {
-              const whitespaceStartDate = new Date("1970-01-01");
-              const whitespaceStartDateYear =
-                whitespaceStartDate.getUTCFullYear();
-              const whitespaceStartDateMonth =
-                whitespaceStartDate.getUTCMonth();
-              const whitespaceStartDateDate = whitespaceStartDate.getUTCDate();
-              const whitespaceEndDate = new Date("2141-01-01");
-              let whitespaceDateDataset =
-                /** @type {(WhitespaceData | SingleValueData)[]} */ ([]);
-
-              function initDateWhitespace() {
-                whitespaceDateDataset = new Array(
-                  utils.getNumberOfDaysBetweenTwoDates(
-                    whitespaceStartDate,
-                    whitespaceEndDate,
-                  ),
-                );
-                // Hack to be able to scroll freely
-                // Setting them all to NaN is much slower
-                for (let i = 0; i < whitespaceDateDataset.length; i++) {
-                  const date = new Date(
-                    whitespaceStartDateYear,
-                    whitespaceStartDateMonth,
-                    whitespaceStartDateDate + i,
-                  );
-
-                  const time = utils.date.toString(date);
-
-                  if (i === whitespaceDateDataset.length - 1) {
-                    whitespaceDateDataset[i] = {
-                      time,
-                      value: NaN,
-                    };
-                  } else {
-                    whitespaceDateDataset[i] = {
-                      time,
-                    };
-                  }
-                }
-              }
-
-              const heightStart = -50_000;
-              let whitespaceHeightDataset =
-                /** @type {WhitespaceData[]} */ ([]);
-
-              function initHeightWhitespace() {
-                whitespaceHeightDataset = new Array(
-                  (new Date().getUTCFullYear() - 2009 + 1) * 60_000,
-                );
-                for (let i = 0; i < whitespaceHeightDataset.length; i++) {
-                  const height = heightStart + i;
-
-                  whitespaceHeightDataset[i] = {
-                    time: /** @type {Time} */ (height),
-                  };
-                }
-              }
-
-              /**
-               * @param {IChartApi} chart
-               * @param {TimeScale} scale
-               * @returns {ISeriesApi<'Line'>}
-               */
-              function setWhitespace(chart, scale) {
-                const whitespace = chart.addLineSeries();
-
-                if (scale === "date") {
-                  if (!whitespaceDateDataset.length) {
-                    initDateWhitespace();
-                  }
-
-                  whitespace.setData(whitespaceDateDataset);
-                } else {
-                  if (!whitespaceHeightDataset.length) {
-                    initHeightWhitespace();
-                  }
-
-                  whitespace.setData(whitespaceHeightDataset);
-
-                  const time = whitespaceHeightDataset.length;
-                  whitespace.update({
-                    time: /** @type {Time} */ (time),
-                    value: NaN,
-                  });
-                }
-
-                return whitespace;
-              }
-
-              return { setWhitespace };
-            }
-            const { setWhitespace } = initWhitespace();
-
-            /**
-             * @typeof {Object} PaneParameters
-             * @property {Unit} param.unit
-             * @param {TimeScale} param.scale
-             * @param {number} [param.chartIndex]
-             * @param {true} [param.whitespace]
-             * @param {DeepPartial<ChartOptions>} [param.options]
-             */
-
-            /**
-             * @param {Object} param0
-             * @param {string} param0.id
-             * @param {HTMLElement} param0.parent
-             * @param {Signals} param0.signals
-             * @param {Colors} param0.colors
-             * @param {"static" | "dynamic"} [param0.kind]
-             * @param {CreatePaneParameters[]} [param0.config]
-             */
-            function createChart({
-              parent,
-              signals,
-              colors,
-              id: chartId,
-              kind,
-              config,
-            }) {
-              const div = window.document.createElement("div");
-              div.classList.add("charts");
-              parent.append(div);
-
-              const legendElement = window.document.createElement("legend");
-              div.append(legendElement);
-
-              const chartListElement = window.document.createElement("div");
-              chartListElement.classList.add("chart-list");
-              div.append(chartListElement);
-
-              /**
-               * @param {CreatePaneParameters} param
-               */
-              function createPane({
-                chartIndex,
-                whitespace,
-                scale,
-                unit,
-                options,
-                config,
-              }) {
-                const chartWrapper = window.document.createElement("div");
-                chartWrapper.classList.add("chart-wrapper");
-                chartListElement.append(chartWrapper);
-
-                const chartDiv = window.document.createElement("div");
-                chartDiv.classList.add("chart-div");
-                chartWrapper.append(chartDiv);
-
-                options = { ...options };
-                if (kind === "static") {
-                  options.handleScale = false;
-                  options.handleScroll = false;
-                } else {
-                  options.crosshair = {
-                    ...options.crosshair,
-                    mode: 0,
-                  };
-                }
-
-                const _chart = createLightweightChart({
-                  scale,
-                  element: chartDiv,
-                  signals,
-                  colors,
-                  options,
-                });
-
-                /**
-                 * @param {CreateBaselineSeriesParams} args
-                 */
-                function createBaseLineSeries({ color, options, owner, data }) {
-                  const topLineColor = color || colors.profit;
-                  const bottomLineColor = color || colors.loss;
-
-                  function computeColors() {
-                    return {
-                      topLineColor: topLineColor(),
-                      bottomLineColor: bottomLineColor(),
-                    };
-                  }
-
-                  const transparent = "transparent";
-
-                  /** @type {DeepPartial<BaselineStyleOptions & SeriesOptionsCommon>} */
-                  const seriesOptions = {
-                    priceScaleId: "right",
-                    ...defaultSeriesOptions,
-                    ...options,
-                    topFillColor1: transparent,
-                    topFillColor2: transparent,
-                    bottomFillColor1: transparent,
-                    bottomFillColor2: transparent,
-                    ...computeColors(),
-                  };
-
-                  const series = _chart.addBaselineSeries(seriesOptions);
-
-                  signals.runWithOwner(owner, () => {
-                    signals.createEffect(computeColors, (computeColors) => {
-                      series.applyOptions(computeColors);
-                    });
-                  });
-
-                  if (data) {
-                    series.setData(data);
-                  }
-
-                  return series;
-                }
-
-                /**
-                 * @param {CreateCandlestickSeriesParams} args
-                 */
-                function createCandlestickSeries({ options, owner, data }) {
-                  function computeColors() {
-                    const upColor = colors.profit();
-                    const downColor = colors.loss();
-
-                    return {
-                      upColor,
-                      wickUpColor: upColor,
-                      downColor,
-                      wickDownColor: downColor,
-                    };
-                  }
-
-                  const series = _chart.addCandlestickSeries({
-                    baseLineVisible: false,
-                    borderVisible: false,
-                    priceLineVisible: false,
-                    baseLineColor: "",
-                    borderColor: "",
-                    borderDownColor: "",
-                    borderUpColor: "",
-                    ...options,
-                    ...computeColors(),
-                  });
-
-                  signals.runWithOwner(owner, () => {
-                    signals.createEffect(computeColors, (computeColors) => {
-                      series.applyOptions(computeColors);
-                    });
-                  });
-
-                  if (data) {
-                    series.setData(data);
-                  }
-
-                  return series;
-                }
-
-                /**
-                 * @param {CreateLineSeriesParams} args
-                 */
-                function createLineSeries({ color, options, owner, data }) {
-                  function computeColors() {
-                    return {
-                      color: color(),
-                    };
-                  }
-
-                  const series = _chart.addLineSeries({
-                    ...defaultSeriesOptions,
-                    ...options,
-                    ...computeColors(),
-                  });
-
-                  if (data) {
-                    series.setData(data);
-                  }
-
-                  signals.runWithOwner(owner, () => {
-                    signals.createEffect(computeColors, (computeColors) => {
-                      series.applyOptions(computeColors);
-                    });
-                  });
-
-                  return series;
-                }
-
-                const chart =
-                  /** @type {IChartApi & { whitespace: ISeriesApi<"Line">, createBaseLineSeries: typeof createBaseLineSeries, createCandlesticksSeries: typeof createCandlestickSeries, createLineSeries: typeof createLineSeries; setHidden: (b: boolean) => void }} */ (
-                    _chart
-                  );
-
-                if (whitespace) {
-                  chart.whitespace = setWhitespace(_chart, scale);
-                }
-
-                chart.createBaseLineSeries = createBaseLineSeries;
-                chart.createCandlesticksSeries = createCandlestickSeries;
-                chart.createLineSeries = createLineSeries;
-                chart.setHidden = (b) => {
-                  chartWrapper.hidden = b;
-                };
-
-                function createUnitAndModeElements() {
-                  const fieldset = window.document.createElement("fieldset");
-                  fieldset.dataset.size = "sm";
-                  chartWrapper.append(fieldset);
-
-                  const id = `chart-${chartId}-${chartIndex}-mode`;
-
-                  const chartModes = /** @type {const} */ (["Lin", "Log"]);
-                  const chartMode = signals.createSignal(
-                    /** @type {Lowercase<typeof chartModes[number]>} */ (
-                      localStorage.getItem(id) || "lin"
-                    ),
-                  );
-
-                  const field = utils.dom.createHorizontalChoiceField({
-                    choices: chartModes,
-                    selected: chartMode(),
-                    id,
-                    title: unit,
-                    signals,
-                  });
-                  fieldset.append(field);
-
-                  field.addEventListener("change", (event) => {
-                    // @ts-ignore
-                    const value = event.target.value;
-                    localStorage.setItem(id, value);
-                    chartMode.set(value);
-                  });
-
-                  signals.createEffect(chartMode, (chartMode) =>
-                    _chart.priceScale("right").applyOptions({
-                      mode: chartMode === "lin" ? 0 : 1,
-                    }),
-                  );
-                }
-                createUnitAndModeElements();
-
-                config?.forEach((params) => {
-                  switch (params.kind) {
-                    case "line": {
-                      chart.createLineSeries(params);
-                      break;
-                    }
-                    case "candle": {
-                      chart.createCandlesticksSeries(params);
-                      break;
-                    }
-                    case "baseline": {
-                      chart.createBaseLineSeries(params);
-                      break;
-                    }
-                  }
-                });
-
-                if (kind === "static") {
-                  chart.timeScale().fitContent();
-                }
-
-                return chart;
-              }
-
-              config?.forEach((params) => {
-                createPane(params);
-              });
-
-              return {
-                legendElement,
-                chartListElement,
-                createPane,
-              };
-            }
-
-            return {
-              createChart,
-            };
-          },
+        import("../packages/lightweight-charts/wrapper.js").then((d) =>
+          d.default.then((d) => d),
         ),
       );
     },
@@ -778,9 +69,8 @@ function initPackages() {
 }
 const packages = initPackages();
 /**
- * @typedef {Awaited<ReturnType<typeof packages.signals>>} Signals
  * @typedef {Awaited<ReturnType<typeof packages.lightweightCharts>>} LightweightCharts
- * @typedef {ReturnType<ReturnType<Awaited<ReturnType<typeof packages.lightweightCharts>>['createChart']>['createPane']>} ChartPane
+ * @typedef {ReturnType<LightweightCharts['createChart']>} Chart
  */
 
 const options = import("./options.js");
@@ -1091,19 +381,33 @@ const utils = {
      * @param {Object} args
      * @param {string} args.id
      * @param {string} args.title
+     * @param {string} args.placeholder
      * @param {Signal<number | null>} args.signal
      * @param {number} args.min
-     * @param {number} args.max
      * @param {number} args.step
+     * @param {number} [args.max]
      * @param {{createEffect: typeof CreateEffect}} args.signals
      */
-    createInputNumberElement({ id, title, signal, min, max, step, signals }) {
+    createInputNumberElement({
+      id,
+      title,
+      signal,
+      min,
+      max,
+      step,
+      placeholder,
+      signals,
+    }) {
       const input = window.document.createElement("input");
+      if (!id || !title || !placeholder) throw Error("input attribute missing");
       input.id = id;
       input.title = title;
+      input.placeholder = placeholder;
       input.type = "number";
       input.min = String(min);
-      input.max = String(max);
+      if (max) {
+        input.max = String(max);
+      }
       input.step = String(step);
 
       let stateValue = /** @type {string | null} */ (null);
@@ -1123,14 +427,32 @@ const utils = {
 
       input.addEventListener("input", () => {
         const valueSer = input.value;
+        stateValue = valueSer;
         const value = Number(valueSer);
-        if (value >= min && value <= max) {
-          stateValue = valueSer;
+        if (value >= min && (max ? value <= max : true)) {
           signal.set(value);
         }
       });
 
-      return input;
+      return { input, signal };
+    },
+    /**
+     * @param {Object} args
+     * @param {string} args.id
+     * @param {string} args.title
+     * @param {Signal<number | null>} args.signal
+     * @param {{createEffect: typeof CreateEffect}} args.signals
+     */
+    createInputDollar({ id, title, signal, signals }) {
+      return this.createInputNumberElement({
+        id,
+        placeholder: "US Dollars",
+        min: 0,
+        title,
+        signal,
+        signals,
+        step: 1,
+      });
     },
     /**
      * @param {Object} args
@@ -1175,12 +497,12 @@ const utils = {
         }
       });
 
-      return input;
+      return { input, signal };
     },
     /**
      * @param {Object} param0
-     * @param {string} param0.title
-     * @param {string} param0.description
+     * @param {string} [param0.title]
+     * @param {string} [param0.description]
      */
     createHeader({ title, description }) {
       const headerElement = window.document.createElement("header");
@@ -1194,12 +516,16 @@ const utils = {
       h1.style.flexDirection = "column";
 
       const titleElement = window.document.createElement("span");
-      titleElement.append(title);
+      if (title) {
+        titleElement.append(title);
+      }
       h1.append(titleElement);
       titleElement.style.display = "block";
 
       const descriptionElement = window.document.createElement("small");
-      descriptionElement.append(description);
+      if (description) {
+        descriptionElement.append(description);
+      }
       h1.append(descriptionElement);
 
       return {
@@ -1229,6 +555,7 @@ const utils = {
     createSelect({ id, list, signal }) {
       const select = window.document.createElement("select");
       select.name = id;
+      select.id = id;
 
       /** @type {Record<string, VoidFunction>} */
       const setters = {};
@@ -1262,7 +589,7 @@ const utils = {
 
       select.value = signal().value;
 
-      return select;
+      return { select, signal };
     },
     /**
      * @param {'left' | 'bottom' | 'top' | 'right'} position
@@ -1394,12 +721,8 @@ const utils = {
     numberToShortUSFormat(value) {
       const absoluteValue = Math.abs(value);
 
-      // value = absoluteValue;
-
       if (isNaN(value)) {
         return "";
-        // } else if (value === 0) {
-        //   return "0";
       } else if (absoluteValue < 10) {
         return utils.locale.numberToUSFormat(value, 3);
       } else if (absoluteValue < 100) {
@@ -1410,7 +733,7 @@ const utils = {
         return utils.locale.numberToUSFormat(value, 0);
       } else if (absoluteValue < 1_000_000) {
         return `${utils.locale.numberToUSFormat(value / 1_000, 1)}K`;
-      } else if (absoluteValue >= 1_000_000_000_000_000_000) {
+      } else if (absoluteValue >= 9_000_000_000_000_000) {
         return "Inf.";
       }
 
@@ -1735,10 +1058,10 @@ const utils = {
       : Math.floor(id / consts.HEIGHT_CHUNK_SIZE);
   },
   /**
-   * @param {string} str
+   * @param {string} s
    */
-  stringToId(str) {
-    return str.toLowerCase().replace(" ", "-");
+  stringToId(s) {
+    return s.replace(/\W/g, " ").trim().replace(/ +/g, "-").toLowerCase();
   },
 };
 /** @typedef {typeof utils} Utilities */
@@ -1806,22 +1129,7 @@ const consts = createConstants();
 const ids = /** @type {const} */ ({
   selectedId: `selected-id`,
   asideSelectorLabel: `aside-selector-label`,
-  chartRange: "chart-range",
-  from: "from",
-  to: "to",
   checkedFrameSelectorLabel: "checked-frame-selector-label",
-  /**
-   * @param {TimeScale} scale
-   */
-  visibleTimeRange(scale) {
-    return `${ids.chartRange}-${scale}`;
-  },
-  /**
-   * @param {string} s
-   */
-  fromString(s) {
-    return s.replace(/\W/g, " ").trim().replace(/ +/g, "-").toLowerCase();
-  },
 });
 /** @typedef {typeof ids} Ids */
 
@@ -2751,6 +2059,17 @@ packages.signals().then((signals) =>
       qrcode,
     });
 
+    function createWindowPopStateEvent() {
+      window.addEventListener("popstate", (event) => {
+        const urlSelected = utils.url.pathnameToSelectedId();
+        const option = options.list.find((option) => urlSelected === option.id);
+        if (option) {
+          options.selected.set(option);
+        }
+      });
+    }
+    // createWindowPopStateEvent();
+
     function initSelected() {
       function initSelectedFrame() {
         console.log("selected: init");
@@ -2808,13 +2127,10 @@ packages.signals().then((signals) =>
                         signals.runWithOwner(owner, () =>
                           initChartsElement({
                             colors,
-                            consts,
                             dark,
                             datasets,
                             elements,
-                            ids,
                             lightweightCharts,
-                            options,
                             selected: /** @type {any} */ (lastChartOption),
                             signals,
                             utils,

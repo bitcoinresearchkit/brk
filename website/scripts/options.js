@@ -1,5 +1,7 @@
+// @ts-check
+
 /**
- * @import { AnySpecificSeriesBlueprint, CohortOption, CohortOptions, Color, DefaultCohortOption, DefaultCohortOptions, OptionPath, OptionsGroup, PartialChartOption, PartialOptionsGroup, PartialOptionsTree, RatioOption, RatioOptions, Series, SeriesBlueprint, SeriesBlueprintParam, SeriesBluePrintType, Signal, TimeScale } from "./types/self"
+ * @import { AnySpecificSeriesBlueprint, CohortOption, CohortOptions, Color, DefaultCohortOption, DefaultCohortOptions, OptionPath, OptionsGroup, PartialChartOption, PartialOptionsGroup, PartialOptionsTree, RatioOption, RatioOptions, SplitSeries, SeriesBlueprint, SeriesBlueprintParam, SeriesBluePrintType, TimeScale } from "./types/self"
  */
 
 const DATE_TO_PREFIX = "date-to-";
@@ -5113,6 +5115,10 @@ function createPartialOptions(colors) {
           name: "Geyser Leaderboard",
           url: () => "https://geyser.fund/project/kibo/leaderboard",
         },
+        {
+          name: "Donate to OpenSats",
+          url: () => "https://opensats.org/",
+        },
       ],
     },
     {
@@ -5121,9 +5127,18 @@ function createPartialOptions(colors) {
       url: () => window.location.href,
     },
     {
-      name: "Social",
-      url: () =>
-        "https://primal.net/p/npub1jagmm3x39lmwfnrtvxcs9ac7g300y3dusv9lgzhk2e4x5frpxlrqa73v44",
+      name: "Socials",
+      tree: [
+        {
+          name: "Bluesky",
+          url: () => "https://bsky.app/profile/kibo.money",
+        },
+        {
+          name: "Nostr",
+          url: () =>
+            "https://primal.net/p/npub1jagmm3x39lmwfnrtvxcs9ac7g300y3dusv9lgzhk2e4x5frpxlrqa73v44",
+        },
+      ],
     },
     {
       name: "Developers",
@@ -5444,7 +5459,7 @@ export function initOptions({
       }, /** @type {HTMLLIElement | null} */ (null));
 
       if ("tree" in anyPartial) {
-        const folderId = ids.fromString(
+        const folderId = utils.stringToId(
           `${(path || [])?.map(({ name }) => name).join(" ")} ${
             anyPartial.name
           } folder`,
@@ -5537,16 +5552,16 @@ export function initOptions({
           title = anyPartial.title;
         } else if ("pdf" in anyPartial) {
           kind = "pdf";
-          id = `${path?.at(-1)?.name || ""}-${ids.fromString(anyPartial.name)}-pdf`;
+          id = `${path?.at(-1)?.name || ""}-${utils.stringToId(anyPartial.name)}-pdf`;
           title = anyPartial.name;
           anyPartial.pdf = `/assets/pdfs/${anyPartial.pdf}`;
         } else if ("url" in anyPartial) {
           kind = "url";
-          id = `${ids.fromString(anyPartial.name)}-url`;
+          id = `${utils.stringToId(anyPartial.name)}-url`;
           title = anyPartial.name;
         } else if ("scale" in anyPartial) {
           kind = "chart";
-          id = `chart-${anyPartial.scale}-to-${ids.fromString(
+          id = `chart-${anyPartial.scale}-to-${utils.stringToId(
             anyPartial.title,
           )}`;
           title = anyPartial.title;
@@ -5554,7 +5569,7 @@ export function initOptions({
           kind = anyPartial.kind;
           title = "title" in anyPartial ? anyPartial.title : anyPartial.name;
           console.log("Unprocessed", anyPartial);
-          id = `${kind}-${ids.fromString(title)}`;
+          id = `${kind}-${utils.stringToId(title)}`;
         }
 
         /** @type {ProcessedOptionAddons} */
@@ -5651,13 +5666,6 @@ export function initOptions({
     tree: /** @type {OptionsTree} */ (partialOptions),
     treeElement,
     createOptionElement,
-    /**
-     * @param {Option} option
-     * @param {Series | SeriesBlueprint} series
-     */
-    optionAndSeriesToKey(option, series) {
-      return `${option.id}-${ids.fromString(series.title)}`;
-    },
   };
 }
 /** @typedef {ReturnType<typeof initOptions>} Options */

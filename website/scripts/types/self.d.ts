@@ -19,14 +19,13 @@ import {
 import { DatePath, HeightPath, LastPath } from "./paths";
 import { Owner } from "../../packages/solid-signals/2024-11-02/types/core/owner";
 import { AnyPossibleCohortId } from "../options";
+import { Signal } from "../../packages/solid-signals/types";
 
 type GrowToSize<T, N extends number, A extends T[]> = A["length"] extends N
   ? A
   : GrowToSize<T, N, [...A, T]>;
 
 type FixedArray<T, N extends number> = GrowToSize<T, N, []>;
-
-type Signal<T> = Accessor<T> & { set: Setter<T>; reset: VoidFunction };
 
 type TimeScale = "date" | "height";
 
@@ -302,14 +301,21 @@ interface FetchedHeightDataset<Type> extends Versioned {
 
 type PriceSeriesType = "Candlestick" | "Line";
 
-interface Series {
+interface _Series {
   id: string;
   title: string;
-  chunks: Array<Accessor<ISeriesApi<SeriesType> | undefined>>;
   color: Color | Color[];
-  disabled: Accessor<boolean>;
   active: Signal<boolean>;
   visible: Accessor<boolean>;
+}
+
+interface SingleSeries extends _Series {
+  series: ISeriesApi<SeriesType>;
+}
+
+interface SplitSeries extends _Series {
+  disabled: Accessor<boolean>;
+  chunks: Array<Accessor<ISeriesApi<SeriesType> | undefined>>;
   dataset: ResourceDataset<TimeScale, number>;
 }
 
@@ -334,7 +340,7 @@ declare global {
 
 interface HoveredLegend {
   label: HTMLLabelElement;
-  series: Series;
+  series: SingleSeries | SplitSeries;
 }
 
 type NotFunction<T> = T extends Function ? never : T;
@@ -390,15 +396,41 @@ type Frequencies = { name: string; list: Frequency[] };
 
 interface CreatePaneParameters {
   unit: Unit;
-  scale: TimeScale;
-  chartIndex?: number;
+  paneIndex?: number;
   whitespace?: true;
   options?: DeepPartial<ChartOptions>;
   config?: (
-    | ({ kind: "line" } & CreateLineSeriesParams)
-    | ({ kind: "candle" } & CreateCandlestickSeriesParams)
-    | ({ kind: "baseline" } & CreateBaselineSeriesParams)
+    | ({ kind: "line"; title: string } & CreateLineSeriesParams)
+    | ({ kind: "candle"; title: string } & CreateCandlestickSeriesParams)
+    | ({ kind: "baseline"; title: string } & CreateBaselineSeriesParams)
   )[];
 }
+
+interface CreateSplitSeriesParameters<S extends TimeScale> {
+  dataset: ResourceDataset<S>;
+  seriesBlueprint: SeriesBlueprint;
+  option: Option;
+  index: number;
+  splitSeries: SplitSeries[];
+  setMinMaxMarkersWhenIdle: VoidFunction;
+  disabled?: Accessor<boolean>;
+}
+
+type ChartPane = IChartApi & {
+  whitespace: ISeriesApi<"Line">;
+  createBaseLineSeries: (
+    a: CreateBaselineSeriesParams,
+  ) => ISeriesApi<"Baseline">;
+  createCandlesticksSeries: (
+    a: CreateCandlestickSeriesParams,
+  ) => ISeriesApi<"Candlestick">;
+  createLineSeries: (a: CreateLineSeriesParams) => ISeriesApi<"Line">;
+  hidden: () => boolean;
+  setHidden: (b: boolean) => void;
+  setInitialVisibleTimeRange: VoidFunction;
+  createSplitSeries: <S extends TimeScale>(
+    a: CreateSplitSeriesParameters<S>,
+  ) => SplitSeries;
+};
 
 type LastValues = Record<LastPath, number> | null;

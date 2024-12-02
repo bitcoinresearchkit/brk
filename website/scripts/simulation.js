@@ -1,3 +1,5 @@
+// @ts-check
+
 /**
  * @import { Options } from './options';
  * @import { ColorName, Frequencies, Frequency } from './types/self';
@@ -63,8 +65,8 @@ export function init({
         ),
       },
     },
-    swap: {
-      amount: {
+    bitcoin: {
+      investment: {
         initial: signals.createSignal(/** @type {number | null} */ (1000), {
           save: {
             ...utils.serde.number,
@@ -79,17 +81,17 @@ export function init({
             param: "recurrent-swap",
           },
         }),
-      },
-      frequency: signals.createSignal(
-        /** @type {Frequency} */ (frequencies.list[0]),
-        {
-          save: {
-            ...frequencies.serde,
-            id: `${storagePrefix}-swap-freq`,
-            param: "swap-freq",
+        frequency: signals.createSignal(
+          /** @type {Frequency} */ (frequencies.list[0]),
+          {
+            save: {
+              ...frequencies.serde,
+              id: `${storagePrefix}-swap-freq`,
+              param: "swap-freq",
+            },
           },
-        },
-      ),
+        ),
+      },
     },
     interval: {
       start: signals.createSignal(
@@ -156,10 +158,14 @@ export function init({
       }),
       description:
         "The amount of dollars you have ready on the exchange on day one.",
-      input: createInputDollar({
-        id: "simulation-dollars-initial",
-        title: "Initial Dollar Amount",
-        signal: settings.dollars.initial.amount,
+      input: createResetableInput({
+        ...utils.dom.createInputDollar({
+          id: "simulation-dollars-initial",
+          title: "Initial Dollar Amount",
+          signal: settings.dollars.initial.amount,
+          signals,
+        }),
+        utils,
       }),
     }),
   );
@@ -173,10 +179,13 @@ export function init({
       }),
       description:
         "The frequency at which you'll top up your account at the exchange.",
-      input: utils.dom.createSelect({
-        id: "top-up-frequency",
-        list: frequencies.list,
-        signal: settings.dollars.topUp.frenquency,
+      input: createResetableInput({
+        ...utils.dom.createSelect({
+          id: "top-up-frequency",
+          list: frequencies.list,
+          signal: settings.dollars.topUp.frenquency,
+        }),
+        utils,
       }),
     }),
   );
@@ -190,10 +199,14 @@ export function init({
       }),
       description:
         "The recurrent amount of dollars you'll be transfering to said exchange.",
-      input: createInputDollar({
-        id: "simulation-dollars-later",
-        title: "Top Up Dollar Amount",
-        signal: settings.dollars.topUp.amount,
+      input: createResetableInput({
+        ...utils.dom.createInputDollar({
+          id: "simulation-dollars-top-up-amount",
+          title: "Top Up Dollar Amount",
+          signal: settings.dollars.topUp.amount,
+          signals,
+        }),
+        utils,
       }),
     }),
   );
@@ -202,15 +215,19 @@ export function init({
     createFieldElement({
       title: createColoredTypeHTML({
         color: "orange",
-        type: "Swap",
-        text: "Initial Amount",
+        type: "Bitcoin",
+        text: "Initial Investment",
       }),
       description:
         "The amount, if available, of dollars that will be used to buy Bitcoin on day one.",
-      input: createInputDollar({
-        id: "simulation-dollars-later",
-        title: "Initial Swap Amount",
-        signal: settings.swap.amount.initial,
+      input: createResetableInput({
+        ...utils.dom.createInputDollar({
+          id: "simulation-bitcoin-initial-investment",
+          title: "Initial Swap Amount",
+          signal: settings.bitcoin.investment.initial,
+          signals,
+        }),
+        utils,
       }),
     }),
   );
@@ -219,14 +236,17 @@ export function init({
     createFieldElement({
       title: createColoredTypeHTML({
         color: "orange",
-        type: "Swap",
-        text: "Frequency",
+        type: "Bitcoin",
+        text: "Investment Frequency",
       }),
       description: "The frequency at which you'll be buying Bitcoin.",
-      input: utils.dom.createSelect({
-        id: "top-up-frequency",
-        list: frequencies.list,
-        signal: settings.swap.frequency,
+      input: createResetableInput({
+        ...utils.dom.createSelect({
+          id: "investment-frequency",
+          list: frequencies.list,
+          signal: settings.bitcoin.investment.frequency,
+        }),
+        utils,
       }),
     }),
   );
@@ -235,15 +255,19 @@ export function init({
     createFieldElement({
       title: createColoredTypeHTML({
         color: "orange",
-        type: "Swap",
-        text: "Recurrent Amount",
+        type: "Bitcoin",
+        text: "Recurrent Investment",
       }),
       description:
         "The recurrent amount, if available, of dollars that will be used to buy Bitcoin.",
-      input: createInputDollar({
-        id: "simulation-dollars-later",
-        title: "Recurrent Swap Amount",
-        signal: settings.swap.amount.recurrent,
+      input: createResetableInput({
+        ...utils.dom.createInputDollar({
+          id: "simulation-bitcoin-recurrent-investment",
+          title: "Bitcoin Recurrent Investment",
+          signal: settings.bitcoin.investment.recurrent,
+          signals,
+        }),
+        utils,
       }),
     }),
   );
@@ -256,9 +280,13 @@ export function init({
         text: "Start",
       }),
       description: "The first day of the simulation.",
-      input: createInputDateField({
-        signal: settings.interval.start,
-        signals,
+      input: createResetableInput({
+        ...utils.dom.createInputDate({
+          id: "simulation-inverval-start",
+          title: "First Simulation Date",
+          signal: settings.interval.start,
+          signals,
+        }),
         utils,
       }),
     }),
@@ -272,9 +300,13 @@ export function init({
         text: "End",
       }),
       description: "The last day of the simulation.",
-      input: createInputDateField({
-        signal: settings.interval.end,
-        signals,
+      input: createResetableInput({
+        ...utils.dom.createInputDate({
+          id: "simulation-inverval-end",
+          title: "Last Simulation Day",
+          signal: settings.interval.end,
+          signals,
+        }),
         utils,
       }),
     }),
@@ -288,14 +320,18 @@ export function init({
         text: "Exchange",
       }),
       description: "The amount of trading fees (in %) at the exchange.",
-      input: utils.dom.createInputNumberElement({
-        id: "",
-        title: "",
-        signal: settings.fees.percentage,
-        min: 0,
-        max: 50,
-        step: 0.01,
-        signals,
+      input: createResetableInput({
+        ...utils.dom.createInputNumberElement({
+          id: "simulation-fees",
+          title: "Exchange Fees",
+          signal: settings.fees.percentage,
+          min: 0,
+          max: 50,
+          step: 0.01,
+          signals,
+          placeholder: "Fees",
+        }),
+        utils,
       }),
     }),
   );
@@ -315,9 +351,9 @@ export function init({
           initialDollarAmount: settings.dollars.initial.amount() || 0,
           topUpAmount: settings.dollars.topUp.amount() || 0,
           topUpFrequency: settings.dollars.topUp.frenquency(),
-          initialSwap: settings.swap.amount.initial() || 0,
-          recurrentSwap: settings.swap.amount.recurrent() || 0,
-          swapFrequency: settings.swap.frequency(),
+          initialSwap: settings.bitcoin.investment.initial() || 0,
+          recurrentSwap: settings.bitcoin.investment.recurrent() || 0,
+          swapFrequency: settings.bitcoin.investment.frequency(),
           start: settings.interval.start(),
           end: settings.interval.end(),
           fees: settings.fees.percentage(),
@@ -333,8 +369,6 @@ export function init({
           end,
           fees,
         }) => {
-          console.log({ start, end });
-
           resultsElement.innerHTML = "";
           resultsElement.append(p1);
           resultsElement.append(p2);
@@ -611,30 +645,35 @@ export function init({
             colors,
             id: `simulation-0`,
             kind: "static",
+            scale: "date",
+            utils,
             config: [
               {
                 unit: "US Dollars",
-                scale: "date",
                 config: [
                   {
+                    title: "Bitcoin Value",
                     kind: "line",
                     color: colors.amber,
                     owner,
                     data: bitcoinValueData,
                   },
                   {
+                    title: "Dollars Left",
                     kind: "line",
                     color: colors.offDollars,
                     owner,
                     data: dollarsLeftData,
                   },
                   {
+                    title: "Dollars Converted",
                     kind: "line",
                     color: colors.dollars,
                     owner,
                     data: totalInvestedAmountData,
                   },
                   {
+                    title: "Fees Paid",
                     kind: "line",
                     color: colors.rose,
                     owner,
@@ -650,13 +689,15 @@ export function init({
             signals,
             colors,
             id: `simulation-1`,
+            scale: "date",
             kind: "static",
+            utils,
             config: [
               {
                 unit: "US Dollars",
-                scale: "date",
                 config: [
                   {
+                    title: "Bitcoin Stack",
                     kind: "line",
                     color: colors.bitcoin,
                     owner,
@@ -672,19 +713,22 @@ export function init({
             signals,
             colors,
             id: `simulation-average-price`,
+            scale: "date",
             kind: "static",
+            utils,
             config: [
               {
                 unit: "US Dollars",
-                scale: "date",
                 config: [
                   {
+                    title: "Bitcoin Price",
                     kind: "line",
                     owner,
                     color: colors.default,
                     data: bitcoinPriceData,
                   },
                   {
+                    title: "Average Price Paid",
                     kind: "line",
                     owner,
                     color: colors.lightDollars,
@@ -700,13 +744,15 @@ export function init({
             signals,
             colors,
             id: `simulation-return-ratio`,
+            scale: "date",
             kind: "static",
+            utils,
             config: [
               {
                 unit: "US Dollars",
-                scale: "date",
                 config: [
                   {
+                    title: "Return Of Investment",
                     kind: "baseline",
                     owner,
                     data: resultData,
@@ -732,18 +778,21 @@ export function init({
             colors,
             id: `simulation-profitability-ratios`,
             kind: "static",
+            scale: "date",
+            utils,
             config: [
               {
                 unit: "Percentage",
-                scale: "date",
                 config: [
                   {
+                    title: "Unprofitable Days Ratio",
                     kind: "line",
                     owner,
                     color: colors.red,
                     data: unprofitableDaysRatioData,
                   },
                   {
+                    title: "Profitable Days Ratio",
                     kind: "line",
                     owner,
                     color: colors.green,
@@ -800,58 +849,39 @@ function createFieldElement({ title, description, input }) {
 
   div.append(input);
 
+  const forId = input.id || input.firstElementChild?.id;
+
+  if (!forId) {
+    console.log(input);
+    throw `Input should've an ID`;
+  }
+
+  // @ts-ignore
+  label.for = forId;
+
   return div;
 }
 
 /**
- * @param {Object} args
- * @param {string} args.id
- * @param {string} args.title
- * @param {Signal<number | null>} args.signal
+ * @param {Object} param0
+ * @param {Signal<any>} param0.signal
+ * @param {HTMLInputElement} [param0.input]
+ * @param {HTMLSelectElement} [param0.select]
+ * @param {Utilities} param0.utils
  */
-function createInputDollar({ id, title, signal }) {
-  const input = window.document.createElement("input");
-  input.id = id;
-  input.type = "number";
-  input.placeholder = "US Dollars";
-  input.min = "0";
-  input.title = title;
-
-  const value = signal();
-  input.value = value !== null ? String(value) : "";
-
-  input.addEventListener("input", () => {
-    const value = input.value;
-    signal.set(value ? Number(value) : null);
-  });
-
-  return input;
-}
-
-/**
- *
- * @param {Object} arg
- * @param {Signal<Date | null>} arg.signal
- * @param {Utilities} arg.utils
- * @param {Signals} arg.signals
- */
-function createInputDateField({ signal, signals, utils }) {
+function createResetableInput({ input, select, signal, utils }) {
   const div = window.document.createElement("div");
 
-  div.append(
-    utils.dom.createInputDate({
-      id: "",
-      title: "",
-      signal,
-      signals,
-    }),
-  );
+  const element = input || select;
+  if (!element) throw "createResetableField element missing";
+  div.append(element);
 
   const button = utils.dom.createButtonElement({
     onClick: signal.reset,
     text: "Reset",
     title: "Reset field",
   });
+  button.type = "reset";
 
   div.append(button);
 

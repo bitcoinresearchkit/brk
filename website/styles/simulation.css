@@ -14,18 +14,6 @@
     }
   }
 
-  div:has(> input + button) {
-    display: flex;
-    gap: 0.5rem;
-    align-items: baseline;
-
-    button {
-      color: var(--off-color);
-      font-size: var(--font-size-sm);
-      line-height: var(--line-height-sm);
-    }
-  }
-
   @media (max-width: 767px) {
     overflow-y: auto;
 
@@ -76,11 +64,11 @@
     }
   }
 
-  .charts {
+  .chart {
     flex-shrink: 0;
     height: 400px;
 
-    .chart-div {
+    .lightweight-chart {
       margin-left: calc(var(--negative-main-padding) / 2);
     }
   }

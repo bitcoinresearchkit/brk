@@ -1,3 +1,5 @@
+// @ts-check
+
 /**
  * @import {Options} from './options';
  */
