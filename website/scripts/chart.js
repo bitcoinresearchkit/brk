@@ -1,8 +1,7 @@
 // @ts-check
 
 /**
- * @import { ChartPane, HoveredLegend, PriceSeriesType, SplitSeries } from "./types/self"
- * @import { Options } from './options';
+ * @import { PriceSeriesType } from '../packages/lightweight-charts/types';
  */
 
 /**
@@ -110,14 +109,12 @@ export function init({
    * @param {VoidFunction} args.setMinMaxMarkersWhenIdle
    * @param {Option} args.option
    * @param {ChartPane} args.chartPane
-   * @param {SplitSeries[]} args.chartSeries
    */
   function createPriceSeries({
     type,
     setMinMaxMarkersWhenIdle,
     option,
     chartPane,
-    chartSeries: splitSeries,
   }) {
     const s = scale();
 
@@ -131,17 +128,17 @@ export function init({
 
     const title = "BTC Price";
 
-    /** @type {SeriesBlueprint} */
-    let seriesBlueprint;
+    /** @type {SplitSeriesBlueprint} */
+    let blueprint;
 
     if (type === "Candlestick") {
-      seriesBlueprint = {
+      blueprint = {
         datasetPath,
         title,
         type: "Candlestick",
       };
     } else {
-      seriesBlueprint = {
+      blueprint = {
         datasetPath,
         title,
         color: colors.default,
@@ -151,11 +148,10 @@ export function init({
     const disabled = signals.createMemo(() => priceSeriesType() !== type);
 
     const priceSeries = chartPane.createSplitSeries({
-      seriesBlueprint,
+      blueprint,
       dataset,
-      option,
+      id: option.id,
       index: -1,
-      splitSeries,
       disabled,
       setMinMaxMarkersWhenIdle,
     });
@@ -199,18 +195,12 @@ export function init({
       (list) => (list ? [list] : []),
     );
 
-    /** @type {SplitSeries[]} */
-    const allSeries = [];
-
     chartsBlueprints.map((seriesBlueprints, paneIndex) => {
       const chartPane = chart.createPane({
         paneIndex,
         unit: paneIndex ? option.unit : "US Dollars",
         whitespace: true,
       });
-
-      /** @type {SplitSeries[]} */
-      const splitSeries = [];
 
       function setMinMaxMarkers() {
         try {
@@ -226,8 +216,8 @@ export function init({
 
           const ids = chart.visibleDatasetIds();
 
-          for (let i = 0; i < splitSeries.length; i++) {
-            const { chunks, dataset } = splitSeries[i];
+          for (let i = 0; i < chartPane.splitSeries.length; i++) {
+            const { chunks, dataset } = chartPane.splitSeries[i];
 
             for (let j = 0; j < ids.length; j++) {
               const id = ids[j];
@@ -370,7 +360,6 @@ export function init({
         function _createPriceSeries(type) {
           return createPriceSeries({
             chartPane,
-            chartSeries: splitSeries,
             option,
             setMinMaxMarkersWhenIdle,
             type,
@@ -392,21 +381,17 @@ export function init({
         createLinkPriceSeriesEffect();
       }
 
-      [...seriesBlueprints].reverse().forEach((seriesBlueprint, index) => {
-        const dataset = datasets.getOrCreate(
-          scale,
-          seriesBlueprint.datasetPath,
-        );
+      [...seriesBlueprints].reverse().forEach((blueprint, index) => {
+        const dataset = datasets.getOrCreate(scale, blueprint.datasetPath);
 
         // Don't trigger reactivity by design
         activeDatasets().add(dataset);
 
         chartPane.createSplitSeries({
           index,
-          seriesBlueprint,
-          option,
+          blueprint,
+          id: option.id,
           setMinMaxMarkersWhenIdle,
-          splitSeries,
           dataset,
         });
       });
@@ -415,16 +400,14 @@ export function init({
 
       activeDatasets.set((s) => s);
 
-      splitSeries.forEach((series) => {
-        allSeries.unshift(series);
-
+      chartPane.splitSeries.forEach((series) => {
         signals.createEffect(series.active, () => {
           setMinMaxMarkersWhenIdle();
         });
       });
 
       const chartVisible = signals.createMemo(() =>
-        splitSeries.some((series) => series.visible()),
+        chartPane.splitSeries.some((series) => series.visible()),
       );
 
       function createChartVisibilityEffect() {
@@ -504,7 +487,7 @@ export function init({
 
   function createApplyChartOptionEffect() {
     signals.createEffect(selected, (option) => {
-      chart.reset({ scale: option.scale });
+      chart.reset({ scale: option.scale, owner: signals.getOwner() });
       applyChartOption(option);
     });
   }

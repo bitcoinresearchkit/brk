@@ -17,7 +17,6 @@ import {
   BaselineData,
 } from "../../packages/lightweight-charts/v4.2.0/types";
 import { DatePath, HeightPath, LastPath } from "./paths";
-import { Owner } from "../../packages/solid-signals/2024-11-02/types/core/owner";
 import { AnyPossibleCohortId } from "../options";
 import { Signal } from "../../packages/solid-signals/types";
 
@@ -41,53 +40,6 @@ type AnyPath = AnyDatasetPath | LastPath;
 
 type Color = () => string;
 type ColorName = keyof Colors;
-
-interface BaselineSpecificSeriesBlueprint {
-  type: "Baseline";
-  color?: Color;
-  options?: DeepPartial<BaselineStyleOptions & SeriesOptionsCommon>;
-  data?: BaselineData<Time>[];
-}
-
-interface CandlestickSpecificSeriesBlueprint {
-  type: "Candlestick";
-  color?: Color;
-  options?: DeepPartial<CandlestickStyleOptions & SeriesOptionsCommon>;
-  data?: CandlestickData<Time>[];
-}
-
-interface LineSpecificSeriesBlueprint {
-  type?: "Line";
-  color: Color;
-  options?: DeepPartial<LineStyleOptions & SeriesOptionsCommon>;
-  data?: LineData<Time>[];
-}
-
-type AnySpecificSeriesBlueprint =
-  | BaselineSpecificSeriesBlueprint
-  | CandlestickSpecificSeriesBlueprint
-  | LineSpecificSeriesBlueprint;
-
-type SpecificSeriesBlueprintWithChart<A extends AnySpecificSeriesBlueprint> = {
-  owner: Owner | null;
-} & Omit<A, "type">;
-
-type CreateBaselineSeriesParams =
-  SpecificSeriesBlueprintWithChart<BaselineSpecificSeriesBlueprint>;
-type CreateLineSeriesParams =
-  SpecificSeriesBlueprintWithChart<LineSpecificSeriesBlueprint>;
-type CreateCandlestickSeriesParams =
-  SpecificSeriesBlueprintWithChart<CandlestickSpecificSeriesBlueprint>;
-
-type SeriesBlueprint = {
-  datasetPath: AnyDatasetPath;
-  title: string;
-  defaultActive?: boolean;
-  main?: boolean;
-  formatNumber?: false;
-} & AnySpecificSeriesBlueprint;
-
-type SeriesBluePrintType = NonNullable<SeriesBlueprint["type"]>;
 
 type Unit =
   | ""
@@ -137,8 +89,8 @@ interface PartialChartOption extends PartialOption {
   shortTitle?: string;
   unit: Unit;
   description: string;
-  top?: SeriesBlueprint[];
-  bottom?: SeriesBlueprint[];
+  top?: SplitSeriesBlueprint[];
+  bottom?: SplitSeriesBlueprint[];
   dashboard?: {
     ignoreName?: boolean;
     skip?: boolean;
@@ -240,7 +192,6 @@ interface ResourceDataset<
   fetch: (id: number) => Promise<void>;
   fetchRange: (start: number, end: number) => Promise<void[]>;
   fetchedJSONs: FetchedResult<Scale, Type>[];
-  // drop: VoidFunction;
 }
 
 type ValuedCandlestickData = CandlestickData & Valued;
@@ -299,49 +250,11 @@ interface FetchedHeightDataset<Type> extends Versioned {
   map: Type[];
 }
 
-type PriceSeriesType = "Candlestick" | "Line";
-
-interface _Series {
-  id: string;
-  title: string;
-  color: Color | Color[];
-  active: Signal<boolean>;
-  visible: Accessor<boolean>;
-}
-
-interface SingleSeries extends _Series {
-  series: ISeriesApi<SeriesType>;
-}
-
-interface SplitSeries extends _Series {
-  disabled: Accessor<boolean>;
-  chunks: Array<Accessor<ISeriesApi<SeriesType> | undefined>>;
-  dataset: ResourceDataset<TimeScale, number>;
-}
-
-interface Marker {
-  weight: number;
-  time: Time;
-  value: number;
-  seriesChunk: ISeriesApi<any>;
-}
-
 interface Weighted {
   weight: number;
 }
 
 type DatasetCandlestickData = DatasetValue<CandlestickData> & { year: number };
-
-declare global {
-  interface Window {
-    MyNamespace: any;
-  }
-}
-
-interface HoveredLegend {
-  label: HTMLLabelElement;
-  series: SingleSeries | SplitSeries;
-}
 
 type NotFunction<T> = T extends Function ? never : T;
 
@@ -367,12 +280,6 @@ interface CohortOptions<Id extends AnyPossibleCohortId> {
   list: CohortOption<Id>[];
 }
 
-interface SeriesBlueprintParam<T> {
-  title: string;
-  singleColor?: Color;
-  genPath: (id: T, scale: TimeScale) => AnyDatasetPath;
-}
-
 interface RatioOption {
   scale: TimeScale;
   color: Color;
@@ -393,44 +300,5 @@ interface Frequency {
   isTriggerDay: (date: Date) => boolean;
 }
 type Frequencies = { name: string; list: Frequency[] };
-
-interface CreatePaneParameters {
-  unit: Unit;
-  paneIndex?: number;
-  whitespace?: true;
-  options?: DeepPartial<ChartOptions>;
-  config?: (
-    | ({ kind: "line"; title: string } & CreateLineSeriesParams)
-    | ({ kind: "candle"; title: string } & CreateCandlestickSeriesParams)
-    | ({ kind: "baseline"; title: string } & CreateBaselineSeriesParams)
-  )[];
-}
-
-interface CreateSplitSeriesParameters<S extends TimeScale> {
-  dataset: ResourceDataset<S>;
-  seriesBlueprint: SeriesBlueprint;
-  option: Option;
-  index: number;
-  splitSeries: SplitSeries[];
-  setMinMaxMarkersWhenIdle: VoidFunction;
-  disabled?: Accessor<boolean>;
-}
-
-type ChartPane = IChartApi & {
-  whitespace: ISeriesApi<"Line">;
-  createBaseLineSeries: (
-    a: CreateBaselineSeriesParams,
-  ) => ISeriesApi<"Baseline">;
-  createCandlesticksSeries: (
-    a: CreateCandlestickSeriesParams,
-  ) => ISeriesApi<"Candlestick">;
-  createLineSeries: (a: CreateLineSeriesParams) => ISeriesApi<"Line">;
-  hidden: () => boolean;
-  setHidden: (b: boolean) => void;
-  setInitialVisibleTimeRange: VoidFunction;
-  createSplitSeries: <S extends TimeScale>(
-    a: CreateSplitSeriesParameters<S>,
-  ) => SplitSeries;
-};
 
 type LastValues = Record<LastPath, number> | null;

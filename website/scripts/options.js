@@ -1,7 +1,8 @@
 // @ts-check
 
 /**
- * @import { AnySpecificSeriesBlueprint, CohortOption, CohortOptions, Color, DefaultCohortOption, DefaultCohortOptions, OptionPath, OptionsGroup, PartialChartOption, PartialOptionsGroup, PartialOptionsTree, RatioOption, RatioOptions, SplitSeries, SeriesBlueprint, SeriesBlueprintParam, SeriesBluePrintType, TimeScale } from "./types/self"
+ * @import { CohortOption, CohortOptions, Color, DefaultCohortOption, DefaultCohortOptions, OptionPath, OptionsGroup, PartialChartOption, PartialOptionsGroup, PartialOptionsTree, RatioOption, RatioOptions, TimeScale } from "./types/self"
+ * @import {AnySpecificSeriesBlueprint, SplitSeriesBlueprint} from '../packages/lightweight-charts/types';
  */
 
 const DATE_TO_PREFIX = "date-to-";
@@ -2819,12 +2820,12 @@ function createPartialOptions(colors) {
     /**
      * @template {AnyPossibleCohortId} T
      * @param {CohortOption<T> | CohortOptions<T>} arg
-     * @param {SeriesBlueprintParam<T> & Omit<AnySpecificSeriesBlueprint, 'color'>} blueprint
+     * @param {{ title: string; singleColor?: Color; genPath: (id: T, scale: TimeScale) => AnyDatasetPath} & Omit<AnySpecificSeriesBlueprint, 'color'>} blueprint
      */
-    toSeriesBlueprints(arg, blueprint) {
+    generateSeriesBlueprints(arg, blueprint) {
       return this.toList(arg).map(
         ({ scale, datasetId, color, name }) =>
-          /** @satisfies {SeriesBlueprint} */ ({
+          /** @satisfies {SplitSeriesBlueprint} */ ({
             title: cohortOptionOrOptions.toLegendName(
               arg,
               name,
@@ -2886,7 +2887,7 @@ function createPartialOptions(colors) {
           title: `Number Of ${title} Unspent Transaction Outputs`,
           description: "",
           unit: "Count",
-          bottom: cohortOptionOrOptions.toSeriesBlueprints(arg, {
+          bottom: cohortOptionOrOptions.generateSeriesBlueprints(arg, {
             title: "Count",
             genPath: (id, scale) =>
               /** @type {const} */ (
@@ -2932,7 +2933,7 @@ function createPartialOptions(colors) {
           title: `${title} Realized Price`,
           description: "",
           unit: "US Dollars",
-          top: cohortOptionOrOptions.toSeriesBlueprints(arg, {
+          top: cohortOptionOrOptions.generateSeriesBlueprints(arg, {
             title: "Realized Price",
             genPath: (id, scale) =>
               /** @type {const} */ (
@@ -2955,7 +2956,7 @@ function createPartialOptions(colors) {
           description: "",
           unit: "US Dollars",
           bottom: [
-            ...cohortOptionOrOptions.toSeriesBlueprints(
+            ...cohortOptionOrOptions.generateSeriesBlueprints(
               arg,
 
               {
@@ -2985,7 +2986,7 @@ function createPartialOptions(colors) {
           description: "",
           unit: "US Dollars",
           bottom: [
-            ...cohortOptionOrOptions.toSeriesBlueprints(
+            ...cohortOptionOrOptions.generateSeriesBlueprints(
               arg,
 
               {
@@ -3006,7 +3007,7 @@ function createPartialOptions(colors) {
           title: `${title} Realized Profit`,
           description: "",
           unit: "US Dollars",
-          bottom: cohortOptionOrOptions.toSeriesBlueprints(arg, {
+          bottom: cohortOptionOrOptions.generateSeriesBlueprints(arg, {
             title: "Realized Profit",
             singleColor: colors.profit,
             genPath: (id, scale) => {
@@ -3023,7 +3024,7 @@ function createPartialOptions(colors) {
           title: `${title} Realized Loss`,
           description: "",
           unit: "US Dollars",
-          bottom: cohortOptionOrOptions.toSeriesBlueprints(arg, {
+          bottom: cohortOptionOrOptions.generateSeriesBlueprints(arg, {
             title: "Realized Loss",
             singleColor: colors.loss,
             genPath: (id, scale) => {
@@ -3071,7 +3072,7 @@ function createPartialOptions(colors) {
           description: "",
           unit: "US Dollars",
           bottom: [
-            ...cohortOptionOrOptions.toSeriesBlueprints(arg, {
+            ...cohortOptionOrOptions.generateSeriesBlueprints(arg, {
               title: "Net PNL",
               type: "Baseline",
               genPath: (id, scale) => {
@@ -3092,7 +3093,7 @@ function createPartialOptions(colors) {
             description: "",
             unit: "Percentage",
             bottom: [
-              ...cohortOptionOrOptions.toSeriesBlueprints(arg, {
+              ...cohortOptionOrOptions.generateSeriesBlueprints(arg, {
                 title: "Net",
                 type: "Baseline",
                 genPath: (id) =>
@@ -3113,7 +3114,7 @@ function createPartialOptions(colors) {
               title: `${title} Cumulative Realized Profit`,
               description: "",
               unit: "US Dollars",
-              bottom: cohortOptionOrOptions.toSeriesBlueprints(arg, {
+              bottom: cohortOptionOrOptions.generateSeriesBlueprints(arg, {
                 title: "Cumulative Realized Profit",
                 singleColor: colors.profit,
                 genPath: (id, scale) =>
@@ -3128,7 +3129,7 @@ function createPartialOptions(colors) {
               title: `${title} Cumulative Realized Loss`,
               description: "",
               unit: "US Dollars",
-              bottom: cohortOptionOrOptions.toSeriesBlueprints(arg, {
+              bottom: cohortOptionOrOptions.generateSeriesBlueprints(arg, {
                 title: "Cumulative Realized Loss",
                 singleColor: colors.loss,
                 genPath: (id, scale) =>
@@ -3144,7 +3145,7 @@ function createPartialOptions(colors) {
               description: "",
               unit: "US Dollars",
               bottom: [
-                ...cohortOptionOrOptions.toSeriesBlueprints(arg, {
+                ...cohortOptionOrOptions.generateSeriesBlueprints(arg, {
                   title: "Cumulative Net Realized PNL",
                   type: "Baseline",
                   genPath: (id, scale) =>
@@ -3162,7 +3163,7 @@ function createPartialOptions(colors) {
               description: "",
               unit: "US Dollars",
               bottom: [
-                ...cohortOptionOrOptions.toSeriesBlueprints(arg, {
+                ...cohortOptionOrOptions.generateSeriesBlueprints(arg, {
                   title: "Cumulative Net Realized PNL 30d Change",
                   type: "Baseline",
                   genPath: (id, scale) =>
@@ -3182,7 +3183,7 @@ function createPartialOptions(colors) {
           description: "",
           unit: "Ratio",
           bottom: [
-            ...cohortOptionOrOptions.toSeriesBlueprints(arg, {
+            ...cohortOptionOrOptions.generateSeriesBlueprints(arg, {
               title: "Ratio",
               type: "Baseline",
               options: {
@@ -3210,7 +3211,7 @@ function createPartialOptions(colors) {
               description: "",
               unit: "Percentage",
               bottom: [
-                ...cohortOptionOrOptions.toSeriesBlueprints(arg, {
+                ...cohortOptionOrOptions.generateSeriesBlueprints(arg, {
                   title: "SOPR",
                   type: "Baseline",
                   options: {
@@ -3233,7 +3234,7 @@ function createPartialOptions(colors) {
               description: "",
               unit: "Percentage",
               bottom: [
-                ...cohortOptionOrOptions.toSeriesBlueprints(arg, {
+                ...cohortOptionOrOptions.generateSeriesBlueprints(arg, {
                   title: "aSOPR",
                   type: "Baseline",
                   options: {
@@ -3263,7 +3264,7 @@ function createPartialOptions(colors) {
                   title: `${title} Value Created`,
                   description: "",
                   unit: "US Dollars",
-                  bottom: cohortOptionOrOptions.toSeriesBlueprints(arg, {
+                  bottom: cohortOptionOrOptions.generateSeriesBlueprints(arg, {
                     title: "Value",
                     singleColor: colors.profit,
                     genPath: (id, scale) => {
@@ -3280,7 +3281,7 @@ function createPartialOptions(colors) {
                   title: `${title} Adjusted Value Created`,
                   description: "",
                   unit: "US Dollars",
-                  bottom: cohortOptionOrOptions.toSeriesBlueprints(arg, {
+                  bottom: cohortOptionOrOptions.generateSeriesBlueprints(arg, {
                     title: "Adjusted Value",
                     singleColor: colors.profit,
                     genPath: (id, scale) => {
@@ -3302,7 +3303,7 @@ function createPartialOptions(colors) {
                   title: `${title} Value Destroyed`,
                   description: "",
                   unit: "US Dollars",
-                  bottom: cohortOptionOrOptions.toSeriesBlueprints(arg, {
+                  bottom: cohortOptionOrOptions.generateSeriesBlueprints(arg, {
                     title: "Value",
                     singleColor: colors.loss,
                     genPath: (id, scale) => {
@@ -3319,7 +3320,7 @@ function createPartialOptions(colors) {
                   title: `${title} Adjusted Value Destroyed`,
                   description: "",
                   unit: "US Dollars",
-                  bottom: cohortOptionOrOptions.toSeriesBlueprints(arg, {
+                  bottom: cohortOptionOrOptions.generateSeriesBlueprints(arg, {
                     title: "Adjusted Value",
                     singleColor: colors.loss,
                     genPath: (id, scale) => {
@@ -3341,7 +3342,7 @@ function createPartialOptions(colors) {
             title: `${title} Sell Side Risk Ratio`,
             description: "",
             unit: "Percentage",
-            bottom: cohortOptionOrOptions.toSeriesBlueprints(arg, {
+            bottom: cohortOptionOrOptions.generateSeriesBlueprints(arg, {
               title: "Ratio",
               genPath: (id) =>
                 `${scale}-to-${datasetIdToPrefix(id)}sell-side-risk-ratio`,
@@ -3368,7 +3369,7 @@ function createPartialOptions(colors) {
           title: `${title} Unrealized Profit`,
           description: "",
           unit: "US Dollars",
-          bottom: cohortOptionOrOptions.toSeriesBlueprints(arg, {
+          bottom: cohortOptionOrOptions.generateSeriesBlueprints(arg, {
             title: "Profit",
             genPath: (id) =>
               `${scale}-to-${datasetIdToPrefix(id)}unrealized-profit`,
@@ -3381,7 +3382,7 @@ function createPartialOptions(colors) {
           title: `${title} Unrealized Loss`,
           description: "",
           unit: "US Dollars",
-          bottom: cohortOptionOrOptions.toSeriesBlueprints(arg, {
+          bottom: cohortOptionOrOptions.generateSeriesBlueprints(arg, {
             title: "Loss",
             genPath: (id) =>
               `${scale}-to-${datasetIdToPrefix(id)}unrealized-loss`,
@@ -3419,7 +3420,7 @@ function createPartialOptions(colors) {
           description: "",
           unit: "US Dollars",
           bottom: [
-            ...cohortOptionOrOptions.toSeriesBlueprints(arg, {
+            ...cohortOptionOrOptions.generateSeriesBlueprints(arg, {
               title: "Net Unrealized PNL",
               genPath: (id) =>
                 `${scale}-to-${datasetIdToPrefix(
@@ -3437,7 +3438,7 @@ function createPartialOptions(colors) {
           description: "",
           unit: "Percentage",
           bottom: [
-            ...cohortOptionOrOptions.toSeriesBlueprints(arg, {
+            ...cohortOptionOrOptions.generateSeriesBlueprints(arg, {
               title: "Relative Net Unrealized PNL",
               genPath: (id) =>
                 `${scale}-to-${datasetIdToPrefix(
@@ -3505,7 +3506,7 @@ function createPartialOptions(colors) {
               title: `${title} Total supply`,
               description: "",
               unit: "Bitcoin",
-              bottom: cohortOptionOrOptions.toSeriesBlueprints(arg, {
+              bottom: cohortOptionOrOptions.generateSeriesBlueprints(arg, {
                 title: "Supply",
                 genPath: (id) => `${scale}-to-${datasetIdToPrefix(id)}supply`,
               }),
@@ -3516,7 +3517,7 @@ function createPartialOptions(colors) {
               title: `${title} Supply In Profit`,
               description: "",
               unit: "Bitcoin",
-              bottom: cohortOptionOrOptions.toSeriesBlueprints(arg, {
+              bottom: cohortOptionOrOptions.generateSeriesBlueprints(arg, {
                 title: "Supply",
                 singleColor: colors.profit,
                 genPath: (id) =>
@@ -3529,7 +3530,7 @@ function createPartialOptions(colors) {
               title: `${title} Supply In Loss`,
               description: "",
               unit: "Bitcoin",
-              bottom: cohortOptionOrOptions.toSeriesBlueprints(arg, {
+              bottom: cohortOptionOrOptions.generateSeriesBlueprints(arg, {
                 title: "Supply",
                 singleColor: colors.loss,
                 genPath: (id) =>
@@ -3581,7 +3582,7 @@ function createPartialOptions(colors) {
               title: `${title} Total supply Relative To Circulating Supply`,
               description: "",
               unit: "Percentage",
-              bottom: cohortOptionOrOptions.toSeriesBlueprints(arg, {
+              bottom: cohortOptionOrOptions.generateSeriesBlueprints(arg, {
                 title: "Supply",
                 genPath: (id) =>
                   `${scale}-to-${datasetIdToPrefix(
@@ -3595,7 +3596,7 @@ function createPartialOptions(colors) {
               title: `${title} Supply In Profit Relative To Circulating Supply`,
               description: "",
               unit: "Percentage",
-              bottom: cohortOptionOrOptions.toSeriesBlueprints(arg, {
+              bottom: cohortOptionOrOptions.generateSeriesBlueprints(arg, {
                 title: "Supply",
                 singleColor: colors.profit,
                 genPath: (id) =>
@@ -3610,7 +3611,7 @@ function createPartialOptions(colors) {
               title: `${title} Supply In Loss Relative To Circulating Supply`,
               description: "",
               unit: "Percentage",
-              bottom: cohortOptionOrOptions.toSeriesBlueprints(arg, {
+              bottom: cohortOptionOrOptions.generateSeriesBlueprints(arg, {
                 title: "Supply",
                 singleColor: colors.loss,
                 genPath: (id) =>
@@ -3668,7 +3669,7 @@ function createPartialOptions(colors) {
               title: `${title} Supply In Profit Relative To Own Supply`,
               description: "",
               unit: "Percentage",
-              bottom: cohortOptionOrOptions.toSeriesBlueprints(arg, {
+              bottom: cohortOptionOrOptions.generateSeriesBlueprints(arg, {
                 title: "Supply",
                 singleColor: colors.profit,
                 genPath: (id) =>
@@ -3683,7 +3684,7 @@ function createPartialOptions(colors) {
               title: `${title} Supply In Loss Relative To Own Supply`,
               description: "",
               unit: "Percentage",
-              bottom: cohortOptionOrOptions.toSeriesBlueprints(arg, {
+              bottom: cohortOptionOrOptions.generateSeriesBlueprints(arg, {
                 title: "Supply",
                 singleColor: colors.loss,
                 genPath: (id) =>
@@ -3732,7 +3733,7 @@ function createPartialOptions(colors) {
           title: `${title} Average Price Paid - Realized Price`,
           description: "",
           unit: "US Dollars",
-          top: cohortOptionOrOptions.toSeriesBlueprints(arg, {
+          top: cohortOptionOrOptions.generateSeriesBlueprints(arg, {
             title: "Average",
             genPath: (id) =>
               `${scale}-to-${datasetIdToPrefix(id)}realized-price`,
@@ -3768,7 +3769,7 @@ function createPartialOptions(colors) {
           title: `${title} ${percentile.title}`,
           description: "",
           unit: /** @type {const} */ ("US Dollars"),
-          top: cohortOptionOrOptions.toSeriesBlueprints(arg, {
+          top: cohortOptionOrOptions.generateSeriesBlueprints(arg, {
             title: "Relative Net Unrealized PNL",
             genPath: (id) =>
               generatePath({
@@ -3923,7 +3924,7 @@ function createPartialOptions(colors) {
       title: `${title} Address Count`,
       description: "",
       unit: "Count",
-      bottom: cohortOptionOrOptions.toSeriesBlueprints(arg, {
+      bottom: cohortOptionOrOptions.generateSeriesBlueprints(arg, {
         title: "Address Count",
         genPath: (id) => `${scale}-to-${id}-address-count`,
       }),
@@ -5199,7 +5200,7 @@ export function initOptions({
   const optionsIds = env.localhost ? [] : undefined;
 
   /**
-   * @param {SeriesBlueprint[]} array
+   * @param {SplitSeriesBlueprint[]} array
    */
   function getMainIdFromBlueprints(array) {
     const searchArray = array.filter(
@@ -5316,6 +5317,7 @@ export function initOptions({
           onClick: () => {
             selected.set(option);
           },
+          type: "multi",
         });
 
         const anchor = utils.dom.createAnchorElement({

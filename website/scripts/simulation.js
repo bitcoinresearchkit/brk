@@ -33,15 +33,15 @@ export function init({
 
   const frequencies = computeFrequencies();
 
-  const storagePrefix = "save-in-bitcoin";
+  const keyPrefix = "save-in-bitcoin";
   const settings = {
     dollars: {
       initial: {
         amount: signals.createSignal(/** @type {number | null} */ (1000), {
           save: {
             ...utils.serde.number,
-            id: `${storagePrefix}-initial-amount`,
-            param: "initial-amount",
+            keyPrefix,
+            key: "initial-amount",
           },
         }),
       },
@@ -49,8 +49,8 @@ export function init({
         amount: signals.createSignal(/** @type {number | null} */ (150), {
           save: {
             ...utils.serde.number,
-            id: `${storagePrefix}-top-up-amount`,
-            param: "top-up-amount",
+            keyPrefix,
+            key: "top-up-amount",
           },
         }),
         frenquency: signals.createSignal(
@@ -58,8 +58,8 @@ export function init({
           {
             save: {
               ...frequencies.serde,
-              id: `${storagePrefix}-top-up-freq`,
-              param: "top-up-freq",
+              keyPrefix,
+              key: "top-up-freq",
             },
           },
         ),
@@ -70,15 +70,15 @@ export function init({
         initial: signals.createSignal(/** @type {number | null} */ (1000), {
           save: {
             ...utils.serde.number,
-            id: `${storagePrefix}-initial-swap`,
-            param: "initial-swap",
+            keyPrefix,
+            key: "initial-swap",
           },
         }),
         recurrent: signals.createSignal(/** @type {number | null} */ (5), {
           save: {
             ...utils.serde.number,
-            id: `${storagePrefix}-recurrent-swap`,
-            param: "recurrent-swap",
+            keyPrefix,
+            key: "recurrent-swap",
           },
         }),
         frequency: signals.createSignal(
@@ -86,8 +86,8 @@ export function init({
           {
             save: {
               ...frequencies.serde,
-              id: `${storagePrefix}-swap-freq`,
-              param: "swap-freq",
+              keyPrefix,
+              key: "swap-freq",
             },
           },
         ),
@@ -99,16 +99,16 @@ export function init({
         {
           save: {
             ...utils.serde.date,
-            id: `${storagePrefix}-interval-start`,
-            param: "interval-start",
+            keyPrefix,
+            key: "interval-start",
           },
         },
       ),
       end: signals.createSignal(/** @type {Date | null} */ (new Date()), {
         save: {
           ...utils.serde.date,
-          id: `${storagePrefix}-interval-end`,
-          param: "interval-end",
+          keyPrefix,
+          key: "interval-end",
         },
       }),
     },
@@ -116,8 +116,8 @@ export function init({
       percentage: signals.createSignal(/** @type {number | null} */ (0.25), {
         save: {
           ...utils.serde.number,
-          id: `${storagePrefix}-percentage`,
-          param: "percentage",
+          keyPrefix,
+          key: "percentage",
         },
       }),
     },
@@ -652,32 +652,28 @@ export function init({
                 unit: "US Dollars",
                 config: [
                   {
-                    title: "Bitcoin Value",
-                    kind: "line",
-                    color: colors.amber,
-                    owner,
-                    data: bitcoinValueData,
+                    title: "Fees Paid",
+                    type: "Line",
+                    color: colors.rose,
+                    data: () => totalFeesPaidData,
                   },
                   {
                     title: "Dollars Left",
-                    kind: "line",
+                    type: "Line",
                     color: colors.offDollars,
-                    owner,
-                    data: dollarsLeftData,
+                    data: () => dollarsLeftData,
                   },
                   {
                     title: "Dollars Converted",
-                    kind: "line",
+                    type: "Line",
                     color: colors.dollars,
-                    owner,
-                    data: totalInvestedAmountData,
+                    data: () => totalInvestedAmountData,
                   },
                   {
-                    title: "Fees Paid",
-                    kind: "line",
-                    color: colors.rose,
-                    owner,
-                    data: totalFeesPaidData,
+                    title: "Bitcoin Value",
+                    type: "Line",
+                    color: colors.amber,
+                    data: () => bitcoinValueData,
                   },
                 ],
               },
@@ -698,10 +694,9 @@ export function init({
                 config: [
                   {
                     title: "Bitcoin Stack",
-                    kind: "line",
+                    type: "Line",
                     color: colors.bitcoin,
-                    owner,
-                    data: bitcoinData,
+                    data: () => bitcoinData,
                   },
                 ],
               },
@@ -722,17 +717,15 @@ export function init({
                 config: [
                   {
                     title: "Bitcoin Price",
-                    kind: "line",
-                    owner,
+                    type: "Line",
                     color: colors.default,
-                    data: bitcoinPriceData,
+                    data: () => bitcoinPriceData,
                   },
                   {
                     title: "Average Price Paid",
-                    kind: "line",
-                    owner,
+                    type: "Line",
                     color: colors.lightDollars,
-                    data: averagePricePaidData,
+                    data: () => averagePricePaidData,
                   },
                 ],
               },
@@ -753,9 +746,8 @@ export function init({
                 config: [
                   {
                     title: "Return Of Investment",
-                    kind: "baseline",
-                    owner,
-                    data: resultData,
+                    type: "Baseline",
+                    data: () => resultData,
                     // TODO: Doesn't work for some reason
                     // options: {
                     //   baseLineColor: "#888",
@@ -780,23 +772,22 @@ export function init({
             kind: "static",
             scale: "date",
             utils,
+            owner,
             config: [
               {
                 unit: "Percentage",
                 config: [
                   {
                     title: "Unprofitable Days Ratio",
-                    kind: "line",
-                    owner,
+                    type: "Line",
                     color: colors.red,
-                    data: unprofitableDaysRatioData,
+                    data: () => unprofitableDaysRatioData,
                   },
                   {
                     title: "Profitable Days Ratio",
-                    kind: "line",
-                    owner,
+                    type: "Line",
                     color: colors.green,
-                    data: profitableDaysRatioData,
+                    data: () => profitableDaysRatioData,
                   },
                 ],
               },
@@ -818,8 +809,7 @@ function createInputField({ name, input }) {
 
   const label = window.document.createElement("label");
   div.append(label);
-  // @ts-ignore
-  label.for = input.id;
+  label.htmlFor = input.id;
   label.innerHTML = name;
 
   div.append(input);
@@ -856,8 +846,7 @@ function createFieldElement({ title, description, input }) {
     throw `Input should've an ID`;
   }
 
-  // @ts-ignore
-  label.for = forId;
+  label.htmlFor = forId;
 
   return div;
 }

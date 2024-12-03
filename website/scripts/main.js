@@ -1,8 +1,9 @@
 // @ts-check
 
 /**
- * @import { Option, ResourceDataset, TimeScale, TimeRange, Unit, Marker, Weighted, DatasetPath, OHLC, FetchedJSON, DatasetValue, FetchedResult, AnyDatasetPath, SeriesBlueprint, BaselineSpecificSeriesBlueprint, CandlestickSpecificSeriesBlueprint, LineSpecificSeriesBlueprint, SpecificSeriesBlueprintWithChart, Color, DatasetCandlestickData, PartialChartOption, ChartOption, AnyPartialOption, ProcessedOptionAddons, OptionsTree, AnyPath, SimulationOption, Frequency, CreatePaneParameters, CreateBaselineSeriesParams, CreateCandlestickSeriesParams, CreateLineSeriesParams, LastValues, HoveredLegend, ChartPane, SplitSeries, SingleSeries, CreateSplitSeriesParameters } from "./types/self"
- * @import {createChart as CreateClassicChart, createChartEx as CreateCustomChart, LineStyleOptions} from "../packages/lightweight-charts/v4.2.0/types";
+ * @import { Option, ResourceDataset, TimeScale, TimeRange, Unit, Weighted, DatasetPath, OHLC, FetchedJSON, DatasetValue, FetchedResult, AnyDatasetPath, Color, DatasetCandlestickData, PartialChartOption, ChartOption, AnyPartialOption, ProcessedOptionAddons, OptionsTree, AnyPath, SimulationOption, Frequency, LastValues } from "./types/self"
+ * @import {createChart as CreateClassicChart, createChartEx as CreateCustomChart, LineStyleOptions } from "../packages/lightweight-charts/v4.2.0/types";
+ * @import { Marker,  CreatePaneParameters,  HoveredLegend, ChartPane, SplitSeries, SingleSeries, CreateSplitSeriesParameters, LineSeriesBlueprint, CandlestickSeriesBlueprint, BaselineSeriesBlueprint, CreateBaseSeriesParameters, BaseSeries, RemoveSeriesBlueprintFluff, SplitSeriesBlueprint } from "../packages/lightweight-charts/types";
  * @import * as _ from "../packages/ufuzzy/v1.0.14/types"
  * @import { DeepPartial, ChartOptions, IChartApi, IHorzScaleBehavior, WhitespaceData, SingleValueData, ISeriesApi, Time, LineData, LogicalRange, SeriesMarker, CandlestickData, SeriesType, BaselineStyleOptions, SeriesOptionsCommon } from "../packages/lightweight-charts/v4.2.0/types"
  * @import { DatePath, HeightPath, LastPath } from "./types/paths";
@@ -232,6 +233,7 @@ const utils = {
      * @param {string} args.inputValue
      * @param {boolean} [args.inputChecked=false]
      * @param {string} args.labelTitle
+     * @param {'solo' | 'multi'} args.type
      * @param {(event: MouseEvent) => void} [args.onClick]
      */
     createLabeledInput({
@@ -241,23 +243,27 @@ const utils = {
       inputChecked = false,
       labelTitle,
       onClick,
+      type,
     }) {
       const label = window.document.createElement("label");
 
       inputId = inputId.toLowerCase();
 
       const input = window.document.createElement("input");
-      input.type = "radio";
-      input.name = inputName;
+      if (type === "multi") {
+        input.type = "radio";
+        input.name = inputName;
+      } else {
+        input.type = "checkbox";
+      }
       input.id = inputId;
       input.value = inputValue;
       input.checked = inputChecked;
       label.append(input);
 
       label.id = `${inputId}-label`;
-      // @ts-ignore
-      label.for = inputId;
       label.title = labelTitle;
+      label.htmlFor = inputId;
 
       if (onClick) {
         label.addEventListener("click", onClick);
@@ -362,6 +368,7 @@ const utils = {
           inputValue,
           inputChecked: inputValue === selected,
           labelTitle: choice,
+          type: "multi",
         });
 
         const text = window.document.createTextNode(choice);
@@ -833,6 +840,26 @@ const utils = {
        */
       deserialize(v) {
         return new Date(v);
+      },
+    },
+    boolean: {
+      /**
+       * @param {boolean} v
+       */
+      serialize(v) {
+        return String(v);
+      },
+      /**
+       * @param {string} v
+       */
+      deserialize(v) {
+        if (v === "true") {
+          return true;
+        } else if (v === "false") {
+          return false;
+        } else {
+          throw "deser bool err";
+        }
       },
     },
   },

@@ -357,6 +357,7 @@ export default import("./v4.2.0/script.js").then((lightweightCharts) => {
    * @param {TimeScale} param0.scale
    * @param {"static" | "moveable"} param0.kind
    * @param {Utilities} param0.utils
+   * @param {Owner | null} [param0.owner]
    * @param {CreatePaneParameters[]} [param0.config]
    */
   function createChart({
@@ -368,7 +369,13 @@ export default import("./v4.2.0/script.js").then((lightweightCharts) => {
     scale,
     config,
     utils,
+    owner: _owner,
   }) {
+    /** @type {SplitSeries[]} */
+    const chartSplitSeries = [];
+
+    let owner = _owner || signals.getOwner();
+
     const div = window.document.createElement("div");
     div.classList.add("chart");
     parent.append(div);
@@ -541,13 +548,13 @@ export default import("./v4.2.0/script.js").then((lightweightCharts) => {
         inputName: utils.stringToId(`selected-${series.title}-${extraName}`),
         inputValue: "value",
         labelTitle: "Click to toggle",
-        onClick: (event) => {
-          event.preventDefault();
-          event.stopPropagation();
-          input.checked = !input.checked;
+        onClick: () => {
           series.active.set(input.checked);
         },
+        type: "solo",
       });
+
+      input.checked = series.active();
 
       const spanMain = window.document.createElement("span");
       spanMain.classList.add("main");
@@ -566,10 +573,6 @@ export default import("./v4.2.0/script.js").then((lightweightCharts) => {
       });
       label.addEventListener("mouseleave", () => {
         hoveredLegend.set(undefined);
-      });
-
-      signals.createEffect(series.active, (checked) => {
-        input.checked = checked;
       });
 
       function shouldHighlight() {
@@ -680,7 +683,7 @@ export default import("./v4.2.0/script.js").then((lightweightCharts) => {
               }
             } else {
               applySeriesOption({
-                series: series.series,
+                series: series.iseries,
                 hovered,
               });
             }
@@ -727,6 +730,9 @@ export default import("./v4.2.0/script.js").then((lightweightCharts) => {
       chartDiv.classList.add("lightweight-chart");
       chartWrapper.append(chartDiv);
 
+      /** @type {SplitSeries[]} */
+      const paneSplitSeries = [];
+
       options = { ...options };
       if (kind === "static") {
         options.handleScale = false;
@@ -748,9 +754,9 @@ export default import("./v4.2.0/script.js").then((lightweightCharts) => {
       });
 
       /**
-       * @param {CreateBaselineSeriesParams} args
+       * @param {RemoveSeriesBlueprintFluff<BaselineSeriesBlueprint>} args
        */
-      function createBaseLineSeries({ color, options, owner, data }) {
+      function createBaseLineSeries({ color, options, data }) {
         const topLineColor = color || colors.profit;
         const bottomLineColor = color || colors.loss;
 
@@ -784,16 +790,20 @@ export default import("./v4.2.0/script.js").then((lightweightCharts) => {
         });
 
         if (data) {
-          series.setData(data);
+          signals.runWithOwner(owner, () => {
+            signals.createEffect(data, (data) => {
+              series.setData(data);
+            });
+          });
         }
 
         return series;
       }
 
       /**
-       * @param {CreateCandlestickSeriesParams} args
+       * @param {RemoveSeriesBlueprintFluff<CandlestickSeriesBlueprint>} args
        */
-      function createCandlestickSeries({ options, owner, data }) {
+      function createCandlestickSeries({ options, data }) {
         function computeColors() {
           const upColor = colors.profit();
           const downColor = colors.loss();
@@ -825,16 +835,20 @@ export default import("./v4.2.0/script.js").then((lightweightCharts) => {
         });
 
         if (data) {
-          series.setData(data);
+          signals.runWithOwner(owner, () => {
+            signals.createEffect(data, (data) => {
+              series.setData(data);
+            });
+          });
         }
 
         return series;
       }
 
       /**
-       * @param {CreateLineSeriesParams} args
+       * @param {RemoveSeriesBlueprintFluff<LineSeriesBlueprint>} args
        */
-      function createLineSeries({ color, options, owner, data }) {
+      function createLineSeries({ color, options, data }) {
         function computeColors() {
           return {
             color: color(),
@@ -847,49 +861,41 @@ export default import("./v4.2.0/script.js").then((lightweightCharts) => {
           ...computeColors(),
         });
 
-        if (data) {
-          series.setData(data);
-        }
-
         signals.runWithOwner(owner, () => {
           signals.createEffect(computeColors, (computeColors) => {
             series.applyOptions(computeColors);
           });
         });
 
+        if (data) {
+          signals.runWithOwner(owner, () => {
+            signals.createEffect(data, (data) => {
+              series.setData(data);
+            });
+          });
+        }
+
         return series;
       }
 
       /**
        * @template {TimeScale} S
-       * @param {CreateSplitSeriesParameters<S>} args
+       * @param {CreateBaseSeriesParameters} args
        */
-      function createSplitSeries({
-        option,
-        index: seriesIndex,
+      function createBaseSeries({
+        id,
         disabled: _disabled,
-        setMinMaxMarkersWhenIdle,
-        dataset,
-        seriesBlueprint,
-        splitSeries,
+        title,
+        color,
+        defaultActive,
       }) {
-        const {
-          title,
-          color,
-          defaultActive,
-          type,
-          options: seriesOptions,
-        } = seriesBlueprint;
-
-        /** @type {Signal<ISeriesApi<SeriesType> | undefined>[]} */
-        const chunks = new Array(dataset.fetchedJSONs.length);
-
-        const id = utils.stringToId(title);
-        const storageId = utils.stringToId(`${option.id}-${title}`);
+        const keyPrefix = id;
+        const paramKey = utils.stringToId(title);
+        const storageKey = `${keyPrefix}-${paramKey}`;
 
         const active = signals.createSignal(
-          utils.url.readBoolParam(id) ??
-            utils.storage.readBool(storageId) ??
+          utils.url.readBoolParam(paramKey) ??
+            utils.storage.readBool(storageKey) ??
             defaultActive ??
             true,
         );
@@ -898,12 +904,10 @@ export default import("./v4.2.0/script.js").then((lightweightCharts) => {
 
         const visible = signals.createMemo(() => active() && !disabled());
 
-        /** @satisfies {SplitSeries} */
+        /** @satisfies {BaseSeries} */
         const series = {
           active,
-          chunks,
           color: color || [colors.profit, colors.loss],
-          dataset,
           disabled,
           id,
           title,
@@ -918,32 +922,97 @@ export default import("./v4.2.0/script.js").then((lightweightCharts) => {
             }
 
             if (active !== (defaultActive || true)) {
-              utils.url.writeParam(id, active);
-              utils.storage.write(storageId, active);
+              utils.url.writeParam(paramKey, active);
+              utils.storage.write(storageKey, active);
             } else {
-              utils.url.removeParam(id);
-              utils.storage.remove(storageId);
+              utils.url.removeParam(paramKey);
+              utils.storage.remove(storageKey);
             }
           },
         );
 
-        splitSeries.push(series);
+        return series;
+      }
 
-        const owner = signals.getOwner();
+      const chartPane = /** @type {ChartPane} */ (_chart);
+
+      chartPane.createSingleSeries = function ({ blueprint, id }) {
+        /** @type {ISeriesApi<SeriesType>} */
+        let s;
+
+        switch (blueprint.type) {
+          case "Baseline": {
+            s = createBaseLineSeries(blueprint);
+            break;
+          }
+          case "Candlestick": {
+            s = createCandlestickSeries(blueprint);
+            break;
+          }
+          default:
+          case "Line": {
+            s = createLineSeries(blueprint);
+            break;
+          }
+        }
+
+        /** @satisfies {SingleSeries} */
+        const series = {
+          ...createBaseSeries({
+            id,
+            title: blueprint.title,
+            color: blueprint.color,
+            defaultActive: blueprint.defaultActive,
+          }),
+          iseries: s,
+        };
+
+        signals.createEffect(series.visible, (visible) => {
+          series.iseries.applyOptions({
+            visible,
+          });
+        });
+
+        createLegend({ series });
+
+        return series;
+      };
+      chartPane.createSplitSeries = function ({
+        id,
+        index: seriesIndex,
+        disabled,
+        setMinMaxMarkersWhenIdle,
+        dataset,
+        blueprint,
+      }) {
+        /** @satisfies {SplitSeries} */
+        const series = {
+          ...createBaseSeries({
+            id,
+            title: blueprint.title,
+            color: blueprint.color,
+            defaultActive: blueprint.defaultActive,
+            disabled,
+          }),
+          dataset,
+          chunks: new Array(dataset.fetchedJSONs.length),
+        };
+
+        paneSplitSeries.push(series);
+        chartSplitSeries.unshift(series);
 
         dataset.fetchedJSONs.forEach((json, index) => {
           const chunk = signals.createSignal(
             /** @type {ISeriesApi<SeriesType> | undefined} */ (undefined),
           );
 
-          chunks[index] = chunk;
+          series.chunks[index] = chunk;
 
           const isMyTurn = signals.createMemo(() => {
             if (seriesIndex <= 0) return true;
 
-            const previousSeriesChunk = splitSeries.at(seriesIndex - 1)?.chunks[
-              index
-            ];
+            const previousSeriesChunk = paneSplitSeries.at(seriesIndex - 1)
+              ?.chunks[index];
             const isPreviousSeriesOnChart = previousSeriesChunk?.();
 
             return !!isPreviousSeriesOnChart;
@@ -957,28 +1026,25 @@ export default import("./v4.2.0/script.js").then((lightweightCharts) => {
               let s = chunk();
 
               if (!s) {
-                switch (type) {
+                switch (blueprint.type) {
                   case "Baseline": {
                     s = createBaseLineSeries({
-                      color,
-                      options: seriesOptions,
-                      owner,
+                      color: blueprint.color,
+                      options: blueprint.options,
                     });
                     break;
                   }
                   case "Candlestick": {
                     s = createCandlestickSeries({
-                      options: seriesOptions,
-                      owner,
+                      options: blueprint.options,
                     });
                     break;
                   }
                   default:
                   case "Line": {
                     s = createLineSeries({
-                      color,
-                      options: seriesOptions,
-                      owner,
+                      color: blueprint.color,
+                      options: blueprint.options,
                     });
                     break;
                   }
@@ -1069,23 +1135,17 @@ export default import("./v4.2.0/script.js").then((lightweightCharts) => {
           });
         });
 
-        createLegend({ series, extraName: type });
+        createLegend({ series, extraName: blueprint.type });
 
         return series;
-      }
-
-      const chartPane = /** @type {ChartPane} */ (_chart);
-
-      chartPane.createSplitSeries = createSplitSeries;
-      chartPane.createBaseLineSeries = createBaseLineSeries;
-      chartPane.createCandlesticksSeries = createCandlestickSeries;
-      chartPane.createLineSeries = createLineSeries;
+      };
       chartPane.hidden = () => {
         return chartWrapper.hidden;
       };
       chartPane.setHidden = (b) => {
         chartWrapper.hidden = b;
       };
+      chartPane.splitSeries = paneSplitSeries;
       chartPane.setInitialVisibleTimeRange = () => {
         const range = visibleTimeRange();
 
@@ -1143,26 +1203,15 @@ export default import("./v4.2.0/script.js").then((lightweightCharts) => {
       }
       createUnitAndModeElements();
 
-      config?.forEach((params) => {
-        // createLegend(params);
-        switch (params.kind) {
-          case "line": {
-            chartPane.createLineSeries(params);
-            break;
-          }
-          case "candle": {
-            chartPane.createCandlesticksSeries(params);
-            break;
-          }
-          case "baseline": {
-            chartPane.createBaseLineSeries(params);
-            break;
-          }
-        }
-      });
-
       switch (kind) {
         case "static": {
+          config?.forEach((params) => {
+            chartPane.createSingleSeries({
+              id: utils.stringToId(params.title),
+              blueprint: params,
+            });
+          });
+
           chartPane.timeScale().fitContent();
 
           break;
@@ -1199,9 +1248,11 @@ export default import("./v4.2.0/script.js").then((lightweightCharts) => {
      *
      * @param {Object} param0
      * @param {TimeScale} param0.scale
+     * @param {Owner | null} param0.owner
      */
-    function reset({ scale: _scale }) {
+    function reset({ scale: _scale, owner: _owner }) {
       scale = _scale;
+      owner = _owner;
       panes.forEach((pane) => pane.remove());
       panes.length = 0;
       legendElement.innerHTML = "";
@@ -1265,6 +1316,7 @@ export default import("./v4.2.0/script.js").then((lightweightCharts) => {
       saveVisibleRange,
       getTicksToWidthRatio,
       debouncedSaveVisibleRange,
+      splitSeries: chartSplitSeries,
     };
   }
 

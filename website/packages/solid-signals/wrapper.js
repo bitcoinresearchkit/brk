@@ -33,7 +33,7 @@ const importSignals = import("./2024-11-02/script.js").then((_signals) => {
     /**
      * @template T
      * @param {T} initialValue
-     * @param {SignalOptions<T> & {save?: {id?: string; param?: string; serialize: (v: NonNullable<T>) => string; deserialize: (v: string) => NonNullable<T>}}} [options]
+     * @param {SignalOptions<T> & {save?: {keyPrefix: string; key: string; serialize: (v: NonNullable<T>) => string; deserialize: (v: string) => NonNullable<T>}}} [options]
      * @returns {Signal<T>}
      */
     createSignal(initialValue, options) {
@@ -51,14 +51,14 @@ const importSignals = import("./2024-11-02/script.js").then((_signals) => {
       if (options?.save) {
         const save = options.save;
 
+        const paramKey = save.key;
+        const storageKey = `${save.keyPrefix}-${paramKey}`;
+
         let serialized = /** @type {string | null} */ (null);
-        if (save.param) {
-          serialized = new URLSearchParams(window.location.search).get(
-            save.param,
-          );
-        }
-        if (serialized === null && save.id) {
-          serialized = localStorage.getItem(save.id);
+        serialized = new URLSearchParams(window.location.search).get(paramKey);
+
+        if (serialized === null) {
+          serialized = localStorage.getItem(storageKey);
         }
         if (serialized) {
           set(save.deserialize(serialized));
@@ -68,7 +68,7 @@ const importSignals = import("./2024-11-02/script.js").then((_signals) => {
         this.createEffect(get, (value) => {
           if (!save) return;
 
-          if (!firstEffect && save.id) {
+          if (!firstEffect) {
             if (
               value !== undefined &&
               value !== null &&
@@ -76,24 +76,22 @@ const importSignals = import("./2024-11-02/script.js").then((_signals) => {
                 initialValue === null ||
                 save.serialize(value) !== save.serialize(initialValue))
             ) {
-              localStorage.setItem(save.id, save.serialize(value));
+              localStorage.setItem(storageKey, save.serialize(value));
             } else {
-              localStorage.removeItem(save.id);
+              localStorage.removeItem(storageKey);
             }
           }
 
-          if (save.param) {
-            if (
-              value !== undefined &&
-              value !== null &&
-              (initialValue === undefined ||
-                initialValue === null ||
-                save.serialize(value) !== save.serialize(initialValue))
-            ) {
-              writeParam(save.param, save.serialize(value));
-            } else {
-              removeParam(save.param);
-            }
+          if (
+            value !== undefined &&
+            value !== null &&
+            (initialValue === undefined ||
+              initialValue === null ||
+              save.serialize(value) !== save.serialize(initialValue))
+          ) {
+            writeParam(paramKey, save.serialize(value));
+          } else {
+            removeParam(paramKey);
           }
 
           firstEffect = false;

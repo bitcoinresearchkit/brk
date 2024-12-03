@@ -28,60 +28,6 @@
     flex: 1;
     margin-top: 2rem;
 
-    display: flex;
-    flex-direction: column;
-    min-height: 0;
-
-    > legend {
-      display: flex;
-      align-items: center;
-      gap: 1.5rem;
-      margin-left: var(--negative-main-padding);
-      margin-right: var(--negative-main-padding);
-      margin-bottom: 0.5rem;
-      padding-left: var(--main-padding);
-      padding-right: var(--main-padding);
-      padding-bottom: 0.75rem;
-      overflow-x: auto;
-      min-width: 0;
-
-      > div {
-        flex: 0;
-        display: flex;
-        align-items: center;
-
-        > label {
-          margin: -0.375rem 0;
-          color: var(--color);
-
-          &:has(input:not(:checked)) {
-            color: var(--off-color);
-
-            > span.main > span.name {
-              text-decoration-thickness: 1.5px;
-              text-decoration-color: var(--color);
-              text-decoration-line: line-through;
-            }
-
-            &:hover {
-              * {
-                color: var(--off-color) !important;
-              }
-
-              > span.main > span.name {
-                text-decoration-color: var(--orange) !important;
-              }
-            }
-          }
-        }
-
-        > a {
-          padding: 0.375rem;
-          margin: -0.375rem;
-        }
-      }
-    }
-
     .lightweight-chart {
       margin-left: var(--negative-main-padding);
     }
