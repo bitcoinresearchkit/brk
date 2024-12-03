@@ -12,7 +12,7 @@ import {
   ISeriesApi,
   BaselineData,
 } from "./v4.2.0/types";
-import { Color } from "../../scripts/types/self";
+import { Color, ValuedCandlestickData } from "../../scripts/types/self";
 
 interface BaseSeriesBlueprint {
   title: string;
@@ -69,11 +69,13 @@ interface BaseSeries {
 }
 interface SingleSeries extends BaseSeries {
   iseries: ISeriesApi<any>;
+  dataset: Accessor<(SingleValueData | ValuedCandlestickData)[] | null>;
 }
 interface SplitSeries extends BaseSeries {
   chunks: Array<Accessor<ISeriesApi<SeriesType> | undefined>>;
   dataset: ResourceDataset<TimeScale, number>;
 }
+type AnySeries = SingleSeries | SplitSeries;
 
 interface CreateSingleSeriesParameters {
   blueprint: SingleSeriesBlueprint;
@@ -85,7 +87,6 @@ interface CreateSplitSeriesParameters<S extends TimeScale> {
   blueprint: SplitSeriesBlueprint;
   id: string;
   index: number;
-  setMinMaxMarkersWhenIdle: VoidFunction;
   disabled?: Accessor<boolean>;
 }
 
@@ -98,6 +99,8 @@ type ChartPane = IChartApi & {
   createSplitSeries: <S extends TimeScale>(
     a: CreateSplitSeriesParameters<S>,
   ) => SplitSeries;
+  anySeries: AnySeries[];
+  singleSeries: SingleSeries[];
   splitSeries: SplitSeries[];
 };
 
@@ -118,5 +121,5 @@ interface Marker {
 
 interface HoveredLegend {
   label: HTMLLabelElement;
-  series: SingleSeries | SplitSeries;
+  series: AnySeries;
 }

@@ -199,11 +199,9 @@ type ValuedCandlestickData = CandlestickData & Valued;
 interface FetchedResult<
   Scale extends TimeScale,
   Type extends number | OHLC,
-  Value extends DatasetValue<
-    SingleValueData | ValuedCandlestickData
-  > = DatasetValue<
-    Type extends number ? SingleValueData : ValuedCandlestickData
-  >,
+  Value extends SingleValueData | ValuedCandlestickData = Type extends number
+    ? SingleValueData
+    : ValuedCandlestickData,
 > {
   at: Date | null;
   json: Signal<FetchedJSON<Scale, Type> | null>;

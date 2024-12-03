@@ -106,16 +106,10 @@ export function init({
   /**
    * @param {Object} args
    * @param {PriceSeriesType} args.type
-   * @param {VoidFunction} args.setMinMaxMarkersWhenIdle
    * @param {Option} args.option
    * @param {ChartPane} args.chartPane
    */
-  function createPriceSeries({
-    type,
-    setMinMaxMarkersWhenIdle,
-    option,
-    chartPane,
-  }) {
+  function createPriceSeries({ type, option, chartPane }) {
     const s = scale();
 
     /** @type {AnyDatasetPath} */
@@ -153,7 +147,6 @@ export function init({
       id: option.id,
       index: -1,
       disabled,
-      setMinMaxMarkersWhenIdle,
     });
 
     function createLiveCandleUpdateEffect() {
@@ -188,9 +181,6 @@ export function init({
       return s;
     });
 
-    const chartCount = 1 + (option.bottom?.length ? 1 : 0);
-    const blueprintCount =
-      1 + (option.top?.length || 0) + (option.bottom?.length || 0);
     const chartsBlueprints = [option.top || [], option.bottom].flatMap(
       (list) => (list ? [list] : []),
     );
@@ -202,166 +192,27 @@ export function init({
         whitespace: true,
       });
 
-      function setMinMaxMarkers() {
-        try {
-          const { from, to } = chart.visibleTimeRange();
-
-          const dateFrom = new Date(String(from));
-          const dateTo = new Date(String(to));
-
-          /** @type {Marker | undefined} */
-          let max = undefined;
-          /** @type {Marker | undefined} */
-          let min = undefined;
-
-          const ids = chart.visibleDatasetIds();
-
-          for (let i = 0; i < chartPane.splitSeries.length; i++) {
-            const { chunks, dataset } = chartPane.splitSeries[i];
-
-            for (let j = 0; j < ids.length; j++) {
-              const id = ids[j];
-
-              const chunkIndex = utils.chunkIdToIndex(scale, id);
-
-              const chunk = chunks.at(chunkIndex)?.();
-
-              if (!chunk || !chunk?.options().visible) continue;
-
-              chunk.setMarkers([]);
-
-              const isCandlestick = chunk.seriesType() === "Candlestick";
-
-              const vec = dataset.fetchedJSONs.at(chunkIndex)?.vec();
-
-              if (!vec) return;
-
-              for (let k = 0; k < vec.length; k++) {
-                const data = vec[k];
-
-                let number;
-
-                if (scale === "date") {
-                  const date = utils.date.fromTime(data.time);
-
-                  number = date.getTime();
-
-                  if (date <= dateFrom || date >= dateTo) {
-                    continue;
-                  }
-                } else {
-                  const height = data.time;
-
-                  number = /** @type {number} */ (height);
-
-                  if (height <= from || height >= to) {
-                    continue;
-                  }
-                }
-
-                // @ts-ignore
-                const high = isCandlestick ? data["high"] : data.value;
-                // @ts-ignore
-                const low = isCandlestick ? data["low"] : data.value;
-
-                if (!max || high > max.value) {
-                  max = {
-                    weight: number,
-                    time: data.time,
-                    value: high,
-                    seriesChunk: chunk,
-                  };
-                }
-                if (!min || low < min.value) {
-                  min = {
-                    weight: number,
-                    time: data.time,
-                    value: low,
-                    seriesChunk: chunk,
-                  };
-                }
-              }
-            }
-          }
-
-          /** @type {(SeriesMarker<Time> & Weighted) | undefined} */
-          let minMarker;
-          /** @type {(SeriesMarker<Time> & Weighted) | undefined} */
-          let maxMarker;
-
-          if (min) {
-            minMarker = {
-              weight: min.weight,
-              time: min.time,
-              color: colors.default(),
-              position: "belowBar",
-              shape: "arrowUp",
-              size: 0,
-              text: utils.locale.numberToShortUSFormat(min.value),
-            };
-          }
-
-          if (max) {
-            maxMarker = {
-              weight: max.weight,
-              time: max.time,
-              color: colors.default(),
-              position: "aboveBar",
-              shape: "arrowDown",
-              size: 0,
-              text: utils.locale.numberToShortUSFormat(max.value),
-            };
-          }
-
-          if (
-            min &&
-            max &&
-            min.seriesChunk === max.seriesChunk &&
-            minMarker &&
-            maxMarker
-          ) {
-            min.seriesChunk.setMarkers(
-              [minMarker, maxMarker].sort((a, b) => a.weight - b.weight),
-            );
-          } else {
-            if (min && minMarker) {
-              min.seriesChunk.setMarkers([minMarker]);
-            }
-
-            if (max && maxMarker) {
-              max.seriesChunk.setMarkers([maxMarker]);
-            }
-          }
-        } catch (e) {}
-      }
-
-      const setMinMaxMarkersWhenIdle = () =>
-        utils.runWhenIdle(
-          () => {
-            setMinMaxMarkers();
-          },
-          blueprintCount * 10 + scale === "date" ? 50 : 100,
-        );
-
-      function createSetMinMaxMarkersWhenIdleEffect() {
-        signals.createEffect(
-          () => [chart.visibleTimeRange(), dark()],
-          setMinMaxMarkersWhenIdle,
-        );
-      }
-      createSetMinMaxMarkersWhenIdleEffect();
-
       if (!paneIndex) {
         updateVisiblePriceSeriesType({
           visibleTimeRange: chart.visibleTimeRange(),
         });
+
+        chartPane
+          .timeScale()
+          .subscribeVisibleLogicalRangeChange((logicalRange) => {
+            if (!logicalRange) return;
+
+            // Must be the chart with the visible timeScale
+            debouncedUpdateVisiblePriceSeriesType({
+              visibleLogicalRange: logicalRange,
+            });
+          });
 
         /** @param {PriceSeriesType} type */
         function _createPriceSeries(type) {
           return createPriceSeries({
             chartPane,
             option,
-            setMinMaxMarkersWhenIdle,
             type,
           });
         }
@@ -391,95 +242,11 @@ export function init({
           index,
           blueprint,
           id: option.id,
-          setMinMaxMarkersWhenIdle,
           dataset,
         });
       });
 
-      setMinMaxMarkers();
-
       activeDatasets.set((s) => s);
-
-      chartPane.splitSeries.forEach((series) => {
-        signals.createEffect(series.active, () => {
-          setMinMaxMarkersWhenIdle();
-        });
-      });
-
-      const chartVisible = signals.createMemo(() =>
-        chartPane.splitSeries.some((series) => series.visible()),
-      );
-
-      function createChartVisibilityEffect() {
-        signals.createEffect(chartVisible, (chartVisible) => {
-          chartPane.setHidden(!chartVisible);
-        });
-      }
-      createChartVisibilityEffect();
-
-      function createTimeScaleVisibilityEffect() {
-        signals.createEffect(chartVisible, (chartVisible) => {
-          const visible = paneIndex === chartCount - 1 && chartVisible;
-
-          chartPane.timeScale().applyOptions({
-            visible,
-          });
-
-          if (paneIndex === 1) {
-            chart.panes[0].timeScale().applyOptions({
-              visible: !visible,
-            });
-          }
-        });
-      }
-      createTimeScaleVisibilityEffect();
-
-      chartPane
-        .timeScale()
-        .subscribeVisibleLogicalRangeChange((logicalRange) => {
-          if (!logicalRange) return;
-
-          // Must be the chart with the visible timeScale
-          if (paneIndex === chartCount - 1) {
-            debouncedUpdateVisiblePriceSeriesType({
-              visibleLogicalRange: logicalRange,
-            });
-          }
-
-          for (
-            let otherChartIndex = 0;
-            otherChartIndex <= chartCount - 1;
-            otherChartIndex++
-          ) {
-            if (paneIndex !== otherChartIndex) {
-              chart.panes[otherChartIndex]
-                .timeScale()
-                .setVisibleLogicalRange(logicalRange);
-            }
-          }
-        });
-
-      chartPane.subscribeCrosshairMove(({ time, sourceEvent }) => {
-        // Don't override crosshair position from scroll event
-        if (time && !sourceEvent) return;
-
-        for (
-          let otherChartIndex = 0;
-          otherChartIndex <= chartCount - 1;
-          otherChartIndex++
-        ) {
-          const otherChart = chart.panes[otherChartIndex];
-
-          if (otherChart && paneIndex !== otherChartIndex) {
-            if (time) {
-              otherChart.setCrosshairPosition(NaN, time, otherChart.whitespace);
-            } else {
-              // No time when mouse goes outside the chart
-              otherChart.clearCrosshairPosition();
-            }
-          }
-        }
-      });
 
       return chart;
     });

@@ -3,7 +3,7 @@
 /**
  * @import { Option, ResourceDataset, TimeScale, TimeRange, Unit, Weighted, DatasetPath, OHLC, FetchedJSON, DatasetValue, FetchedResult, AnyDatasetPath, Color, DatasetCandlestickData, PartialChartOption, ChartOption, AnyPartialOption, ProcessedOptionAddons, OptionsTree, AnyPath, SimulationOption, Frequency, LastValues } from "./types/self"
  * @import {createChart as CreateClassicChart, createChartEx as CreateCustomChart, LineStyleOptions } from "../packages/lightweight-charts/v4.2.0/types";
- * @import { Marker,  CreatePaneParameters,  HoveredLegend, ChartPane, SplitSeries, SingleSeries, CreateSplitSeriesParameters, LineSeriesBlueprint, CandlestickSeriesBlueprint, BaselineSeriesBlueprint, CreateBaseSeriesParameters, BaseSeries, RemoveSeriesBlueprintFluff, SplitSeriesBlueprint } from "../packages/lightweight-charts/types";
+ * @import { Marker,  CreatePaneParameters,  HoveredLegend, ChartPane, SplitSeries, SingleSeries, CreateSplitSeriesParameters, LineSeriesBlueprint, CandlestickSeriesBlueprint, BaselineSeriesBlueprint, CreateBaseSeriesParameters, BaseSeries, RemoveSeriesBlueprintFluff, SplitSeriesBlueprint, AnySeries } from "../packages/lightweight-charts/types";
  * @import * as _ from "../packages/ufuzzy/v1.0.14/types"
  * @import { DeepPartial, ChartOptions, IChartApi, IHorzScaleBehavior, WhitespaceData, SingleValueData, ISeriesApi, Time, LineData, LogicalRange, SeriesMarker, CandlestickData, SeriesType, BaselineStyleOptions, SeriesOptionsCommon } from "../packages/lightweight-charts/v4.2.0/types"
  * @import { DatePath, HeightPath, LastPath } from "./types/paths";

@@ -393,10 +393,10 @@ export default import("./v4.2.0/script.js").then((lightweightCharts) => {
 
       if (urlFrom && urlTo) {
         if (scale === "date" && urlFrom.includes("-") && urlTo.includes("-")) {
-          console.log({
-            from: new Date(urlFrom).toJSON().split("T")[0],
-            to: new Date(urlTo).toJSON().split("T")[0],
-          });
+          // console.log({
+          //   from: new Date(urlFrom).toJSON().split("T")[0],
+          //   to: new Date(urlTo).toJSON().split("T")[0],
+          // });
           return {
             from: new Date(urlFrom).toJSON().split("T")[0],
             to: new Date(urlTo).toJSON().split("T")[0],
@@ -405,10 +405,10 @@ export default import("./v4.2.0/script.js").then((lightweightCharts) => {
           scale === "height" &&
           (!urlFrom.includes("-") || !urlTo.includes("-"))
         ) {
-          console.log({
-            from: Number(urlFrom),
-            to: Number(urlTo),
-          });
+          // console.log({
+          //   from: Number(urlFrom),
+          //   to: Number(urlTo),
+          // });
           return {
             from: Number(urlFrom),
             to: Number(urlTo),
@@ -426,7 +426,7 @@ export default import("./v4.2.0/script.js").then((lightweightCharts) => {
 
       const savedTimeRange = getSavedTimeRange();
 
-      console.log(savedTimeRange);
+      // console.log(savedTimeRange);
 
       if (savedTimeRange) {
         return savedTimeRange;
@@ -527,7 +527,7 @@ export default import("./v4.2.0/script.js").then((lightweightCharts) => {
     const notHoveredLegendTransparency = "66";
     /**
      * @param {Object} args
-     * @param {SingleSeries | SplitSeries} args.series
+     * @param {AnySeries} args.series
      * @param {string} [args.extraName]
      */
     function createLegend({ series, extraName }) {
@@ -694,7 +694,7 @@ export default import("./v4.2.0/script.js").then((lightweightCharts) => {
       }
       createHoverEffect();
 
-      if ("dataset" in series) {
+      if ("dataset" in series && "url" in series.dataset) {
         const anchor = window.document.createElement("a");
         anchor.href = series.dataset.url;
         anchor.target = "_blank";
@@ -729,9 +729,6 @@ export default import("./v4.2.0/script.js").then((lightweightCharts) => {
       const chartDiv = window.document.createElement("div");
       chartDiv.classList.add("lightweight-chart");
       chartWrapper.append(chartDiv);
-
-      /** @type {SplitSeries[]} */
-      const paneSplitSeries = [];
 
       options = { ...options };
       if (kind === "static") {
@@ -928,15 +925,17 @@ export default import("./v4.2.0/script.js").then((lightweightCharts) => {
               utils.url.removeParam(paramKey);
               utils.storage.remove(storageKey);
             }
+
+            setMinMaxMarkersWhenIdle();
           },
         );
 
         return series;
       }
 
-      const chartPane = /** @type {ChartPane} */ (_chart);
+      const pane = /** @type {ChartPane} */ (_chart);
 
-      chartPane.createSingleSeries = function ({ blueprint, id }) {
+      pane.createSingleSeries = function ({ blueprint, id }) {
         /** @type {ISeriesApi<SeriesType>} */
         let s;
 
@@ -965,6 +964,7 @@ export default import("./v4.2.0/script.js").then((lightweightCharts) => {
             defaultActive: blueprint.defaultActive,
           }),
           iseries: s,
+          dataset: blueprint.data || (() => /** @type {any} */ ([])),
         };
 
         signals.createEffect(series.visible, (visible) => {
@@ -975,13 +975,15 @@ export default import("./v4.2.0/script.js").then((lightweightCharts) => {
 
         createLegend({ series });
 
+        pane.singleSeries.push(series);
+        pane.anySeries.push(series);
+
         return series;
       };
-      chartPane.createSplitSeries = function ({
+      pane.createSplitSeries = function ({
         id,
         index: seriesIndex,
         disabled,
-        setMinMaxMarkersWhenIdle,
         dataset,
         blueprint,
       }) {
@@ -998,7 +1000,8 @@ export default import("./v4.2.0/script.js").then((lightweightCharts) => {
           chunks: new Array(dataset.fetchedJSONs.length),
         };
 
-        paneSplitSeries.push(series);
+        pane.splitSeries.push(series);
+        pane.anySeries.push(series);
         chartSplitSeries.unshift(series);
 
         dataset.fetchedJSONs.forEach((json, index) => {
@@ -1011,7 +1014,7 @@ export default import("./v4.2.0/script.js").then((lightweightCharts) => {
           const isMyTurn = signals.createMemo(() => {
             if (seriesIndex <= 0) return true;
 
-            const previousSeriesChunk = paneSplitSeries.at(seriesIndex - 1)
+            const previousSeriesChunk = pane.splitSeries.at(seriesIndex - 1)
               ?.chunks[index];
             const isPreviousSeriesOnChart = previousSeriesChunk?.();
 
@@ -1139,30 +1142,38 @@ export default import("./v4.2.0/script.js").then((lightweightCharts) => {
 
         return series;
       };
-      chartPane.hidden = () => {
+      pane.hidden = () => {
         return chartWrapper.hidden;
       };
-      chartPane.setHidden = (b) => {
+      pane.setHidden = (b) => {
         chartWrapper.hidden = b;
       };
-      chartPane.splitSeries = paneSplitSeries;
-      chartPane.setInitialVisibleTimeRange = () => {
+      pane.splitSeries = [];
+      pane.singleSeries = [];
+      pane.anySeries = [];
+      pane.setInitialVisibleTimeRange = function () {
         const range = visibleTimeRange();
 
         if (range) {
-          chartPane.timeScale().setVisibleRange(/** @type {any} */ (range));
+          pane.timeScale().setVisibleRange(/** @type {any} */ (range));
 
           // On small screen it doesn't it might not set it  in time
           setTimeout(() => {
             try {
-              chartPane.timeScale().setVisibleRange(/** @type {any} */ (range));
+              pane.timeScale().setVisibleRange(/** @type {any} */ (range));
             } catch {}
           }, 50);
         }
       };
+      pane.remove = function () {
+        _chart.remove();
+        pane.splitSeries.length = 0;
+        pane.singleSeries.length = 0;
+        pane.anySeries.length = 0;
+      };
 
       if (whitespace) {
-        chartPane.whitespace = setWhitespace({ chart: _chart, scale, utils });
+        pane.whitespace = setWhitespace({ chart: _chart, scale, utils });
       }
 
       function createUnitAndModeElements() {
@@ -1206,23 +1217,32 @@ export default import("./v4.2.0/script.js").then((lightweightCharts) => {
       switch (kind) {
         case "static": {
           config?.forEach((params) => {
-            chartPane.createSingleSeries({
+            pane.createSingleSeries({
               id: utils.stringToId(params.title),
               blueprint: params,
             });
           });
 
-          chartPane.timeScale().fitContent();
+          pane.timeScale().fitContent();
+
+          if (!paneIndex) {
+            setTimeout(() => {
+              pane.timeScale().subscribeVisibleTimeRangeChange((range) => {
+                if (!range) return;
+                visibleTimeRange.set(range);
+              });
+            });
+          }
 
           break;
         }
         case "moveable": {
-          chartPane.setInitialVisibleTimeRange();
+          pane.setInitialVisibleTimeRange();
           updateVisibleDatasetIds();
 
           if (!paneIndex) {
             setTimeout(() => {
-              chartPane.timeScale().subscribeVisibleTimeRangeChange((range) => {
+              pane.timeScale().subscribeVisibleTimeRangeChange((range) => {
                 if (!range) return;
                 visibleTimeRange.set(range);
                 debouncedUpdateVisibleDatasetIds();
@@ -1235,9 +1255,231 @@ export default import("./v4.2.0/script.js").then((lightweightCharts) => {
         }
       }
 
-      panes.push(chartPane);
+      panes.push(pane);
 
-      return chartPane;
+      pane.subscribeCrosshairMove(({ time, sourceEvent }) => {
+        // Don't override crosshair position from scroll event
+        if (time && !sourceEvent) return;
+
+        for (
+          let otherChartIndex = 0;
+          otherChartIndex < panes.length;
+          otherChartIndex++
+        ) {
+          const otherPane = panes[otherChartIndex];
+
+          if (otherPane && paneIndex !== otherChartIndex) {
+            if (time) {
+              otherPane.setCrosshairPosition(NaN, time, otherPane.whitespace);
+            } else {
+              // No time when mouse goes outside the chart
+              otherPane.clearCrosshairPosition();
+            }
+          }
+        }
+      });
+
+      const chartVisible = signals.createMemo(() =>
+        pane.anySeries.some((series) => series.visible()),
+      );
+
+      function createChartVisibilityEffect() {
+        signals.createEffect(chartVisible, (chartVisible) => {
+          pane.setHidden(!chartVisible);
+        });
+      }
+      createChartVisibilityEffect();
+
+      function createTimeScaleVisibilityEffect() {
+        signals.createEffect(chartVisible, (chartVisible) => {
+          let i = paneIndex || 0;
+          const last = i === panes.length - 1;
+          const visible = last && chartVisible;
+
+          pane.timeScale().applyOptions({
+            visible,
+          });
+
+          if (i > 0 && last) {
+            panes.slice(0, -1).forEach((pane) =>
+              pane.timeScale().applyOptions({
+                visible: !visible,
+              }),
+            );
+          }
+        });
+      }
+      createTimeScaleVisibilityEffect();
+
+      pane.timeScale().subscribeVisibleLogicalRangeChange((logicalRange) => {
+        if (!logicalRange) return;
+        for (let i = 0; i < panes.length; i++) {
+          if (paneIndex !== i) {
+            panes[i].timeScale().setVisibleLogicalRange(logicalRange);
+          }
+        }
+      });
+
+      function setMinMaxMarkers() {
+        try {
+          const { from, to } = visibleTimeRange();
+
+          const dateFrom = new Date(String(from));
+          const dateTo = new Date(String(to));
+
+          let max = /** @type {Marker | undefined} */ (undefined);
+          let min = /** @type {Marker | undefined} */ (undefined);
+
+          /** @type {(SeriesMarker<Time> & Weighted) | undefined} */
+          let minMarker;
+          /** @type {(SeriesMarker<Time> & Weighted) | undefined} */
+          let maxMarker;
+
+          const ids = visibleDatasetIds();
+
+          /**
+           *
+           * @param {ISeriesApi<SeriesType> | undefined} series
+           * @param {SingleValueData<Time>[] | null | undefined} vec
+           * @returns
+           */
+          function parseSeriesValues(series, vec) {
+            if (!series || !series?.options().visible) return;
+
+            series.setMarkers([]);
+
+            const isCandlestick = series.seriesType() === "Candlestick";
+
+            if (!vec) return;
+
+            for (let k = 0; k < vec.length; k++) {
+              const data = vec[k];
+
+              let number;
+
+              if (scale === "date") {
+                const date = utils.date.fromTime(data.time);
+
+                number = date.getTime();
+
+                if (date <= dateFrom || date >= dateTo) {
+                  continue;
+                }
+              } else {
+                const height = data.time;
+
+                number = /** @type {number} */ (height);
+
+                if (height <= from || height >= to) {
+                  continue;
+                }
+              }
+
+              // @ts-ignore
+              const high = isCandlestick ? data["high"] : data.value;
+              // @ts-ignore
+              const low = isCandlestick ? data["low"] : data.value;
+
+              if (!max || high > max.value) {
+                max = {
+                  weight: number,
+                  time: data.time,
+                  value: high,
+                  seriesChunk: series,
+                };
+              }
+              if (!min || low < min.value) {
+                min = {
+                  weight: number,
+                  time: data.time,
+                  value: low,
+                  seriesChunk: series,
+                };
+              }
+            }
+          }
+
+          for (let i = 0; i < pane.singleSeries.length; i++) {
+            const series = pane.singleSeries[i];
+            parseSeriesValues(series.iseries, series.dataset());
+          }
+
+          for (let i = 0; i < pane.splitSeries.length; i++) {
+            const { chunks, dataset } = pane.splitSeries[i];
+
+            for (let j = 0; j < ids.length; j++) {
+              const id = ids[j];
+
+              const chunkIndex = utils.chunkIdToIndex(scale, id);
+
+              const chunk = chunks.at(chunkIndex)?.();
+
+              const vec = dataset.fetchedJSONs.at(chunkIndex)?.vec();
+
+              parseSeriesValues(chunk, vec);
+            }
+          }
+
+          if (min) {
+            minMarker = {
+              weight: min.weight,
+              time: min.time,
+              color: colors.default(),
+              position: "belowBar",
+              shape: "arrowUp",
+              size: 0,
+              text: utils.locale.numberToShortUSFormat(min.value),
+            };
+          }
+
+          if (max) {
+            maxMarker = {
+              weight: max.weight,
+              time: max.time,
+              color: colors.default(),
+              position: "aboveBar",
+              shape: "arrowDown",
+              size: 0,
+              text: utils.locale.numberToShortUSFormat(max.value),
+            };
+          }
+
+          if (
+            min &&
+            max &&
+            min.seriesChunk === max.seriesChunk &&
+            minMarker &&
+            maxMarker
+          ) {
+            min.seriesChunk.setMarkers(
+              [minMarker, maxMarker].sort((a, b) => a.weight - b.weight),
+            );
+          } else {
+            if (min && minMarker) {
+              min.seriesChunk.setMarkers([minMarker]);
+            }
+
+            if (max && maxMarker) {
+              max.seriesChunk.setMarkers([maxMarker]);
+            }
+          }
+        } catch (e) {}
+      }
+
+      const setMinMaxMarkersWhenIdle = () =>
+        utils.runWhenIdle(
+          () => {
+            setMinMaxMarkers();
+          },
+          pane.anySeries.length * 5 + scale === "date" ? 50 : 100,
+        );
+
+      signals.createEffect(
+        () => [visibleTimeRange(), colors.default()],
+        setMinMaxMarkersWhenIdle,
+      );
+
+      return pane;
     }
 
     config?.forEach((params) => {
@@ -1255,6 +1497,7 @@ export default import("./v4.2.0/script.js").then((lightweightCharts) => {
       owner = _owner;
       panes.forEach((pane) => pane.remove());
       panes.length = 0;
+      chartSplitSeries.length = 0;
       legendElement.innerHTML = "";
       panesElement.innerHTML = "";
     }
@@ -1300,23 +1543,12 @@ export default import("./v4.2.0/script.js").then((lightweightCharts) => {
     }
 
     return {
-      legendElement,
-      panesElement,
       createPane,
-      hoveredLegend,
-      createLegend,
-      panes,
       reset,
       visibleTimeRange,
       visibleDatasetIds,
-      lastVisibleDatasetIndex,
       getInitialVisibleTimeRange,
-      updateVisibleDatasetIds,
-      debouncedUpdateVisibleDatasetIds,
-      saveVisibleRange,
       getTicksToWidthRatio,
-      debouncedSaveVisibleRange,
-      splitSeries: chartSplitSeries,
     };
   }
 
