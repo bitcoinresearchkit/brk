@@ -12,7 +12,7 @@ import {
   ISeriesApi,
   BaselineData,
 } from "./v4.2.0/types";
-import { Color, ValuedCandlestickData } from "../../scripts/types/self";
+import { Color, Valued, ValuedCandlestickData } from "../../scripts/types/self";
 
 interface BaseSeriesBlueprint {
   title: string;
@@ -28,7 +28,7 @@ interface CandlestickSeriesBlueprint extends BaseSeriesBlueprint {
   type: "Candlestick";
   color?: Color;
   options?: DeepPartial<CandlestickStyleOptions & SeriesOptionsCommon>;
-  data?: Accessor<CandlestickData<Time>[]>;
+  data?: Accessor<(CandlestickData<Time> & Valued)[]>;
 }
 interface LineSeriesBlueprint extends BaseSeriesBlueprint {
   type?: "Line";
@@ -98,16 +98,16 @@ type ChartPane = IChartApi & {
   createSingleSeries: (a: CreateSingleSeriesParameters) => SingleSeries;
   createSplitSeries: <S extends TimeScale>(
     a: CreateSplitSeriesParameters<S>,
-  ) => SplitSeries;
+  ) => SplitSeries[];
   anySeries: AnySeries[];
   singleSeries: SingleSeries[];
   splitSeries: SplitSeries[];
+  remove: VoidFunction;
 };
 
 interface CreatePaneParameters {
   unit: Unit;
   paneIndex?: number;
-  whitespace?: true;
   options?: DeepPartial<ChartOptions>;
   config?: SingleSeriesBlueprint[];
 }

@@ -158,15 +158,14 @@ export function init({
       }),
       description:
         "The amount of dollars you have ready on the exchange on day one.",
-      input: createResetableInput({
-        ...utils.dom.createInputDollar({
+      input: utils.dom.createResetableInput(
+        utils.dom.createInputDollar({
           id: "simulation-dollars-initial",
           title: "Initial Dollar Amount",
           signal: settings.dollars.initial.amount,
           signals,
         }),
-        utils,
-      }),
+      ),
     }),
   );
 
@@ -179,14 +178,13 @@ export function init({
       }),
       description:
         "The frequency at which you'll top up your account at the exchange.",
-      input: createResetableInput({
-        ...utils.dom.createSelect({
+      input: utils.dom.createResetableInput(
+        utils.dom.createSelect({
           id: "top-up-frequency",
           list: frequencies.list,
           signal: settings.dollars.topUp.frenquency,
         }),
-        utils,
-      }),
+      ),
     }),
   );
 
@@ -199,15 +197,14 @@ export function init({
       }),
       description:
         "The recurrent amount of dollars you'll be transfering to said exchange.",
-      input: createResetableInput({
-        ...utils.dom.createInputDollar({
+      input: utils.dom.createResetableInput(
+        utils.dom.createInputDollar({
           id: "simulation-dollars-top-up-amount",
           title: "Top Up Dollar Amount",
           signal: settings.dollars.topUp.amount,
           signals,
         }),
-        utils,
-      }),
+      ),
     }),
   );
 
@@ -220,15 +217,14 @@ export function init({
       }),
       description:
         "The amount, if available, of dollars that will be used to buy Bitcoin on day one.",
-      input: createResetableInput({
-        ...utils.dom.createInputDollar({
+      input: utils.dom.createResetableInput(
+        utils.dom.createInputDollar({
           id: "simulation-bitcoin-initial-investment",
           title: "Initial Swap Amount",
           signal: settings.bitcoin.investment.initial,
           signals,
         }),
-        utils,
-      }),
+      ),
     }),
   );
 
@@ -240,14 +236,13 @@ export function init({
         text: "Investment Frequency",
       }),
       description: "The frequency at which you'll be buying Bitcoin.",
-      input: createResetableInput({
-        ...utils.dom.createSelect({
+      input: utils.dom.createResetableInput(
+        utils.dom.createSelect({
           id: "investment-frequency",
           list: frequencies.list,
           signal: settings.bitcoin.investment.frequency,
         }),
-        utils,
-      }),
+      ),
     }),
   );
 
@@ -260,15 +255,14 @@ export function init({
       }),
       description:
         "The recurrent amount, if available, of dollars that will be used to buy Bitcoin.",
-      input: createResetableInput({
-        ...utils.dom.createInputDollar({
+      input: utils.dom.createResetableInput(
+        utils.dom.createInputDollar({
           id: "simulation-bitcoin-recurrent-investment",
           title: "Bitcoin Recurrent Investment",
           signal: settings.bitcoin.investment.recurrent,
           signals,
         }),
-        utils,
-      }),
+      ),
     }),
   );
 
@@ -280,15 +274,14 @@ export function init({
         text: "Start",
       }),
       description: "The first day of the simulation.",
-      input: createResetableInput({
-        ...utils.dom.createInputDate({
+      input: utils.dom.createResetableInput(
+        utils.dom.createInputDate({
           id: "simulation-inverval-start",
           title: "First Simulation Date",
           signal: settings.interval.start,
           signals,
         }),
-        utils,
-      }),
+      ),
     }),
   );
 
@@ -300,15 +293,14 @@ export function init({
         text: "End",
       }),
       description: "The last day of the simulation.",
-      input: createResetableInput({
-        ...utils.dom.createInputDate({
+      input: utils.dom.createResetableInput(
+        utils.dom.createInputDate({
           id: "simulation-inverval-end",
           title: "Last Simulation Day",
           signal: settings.interval.end,
           signals,
         }),
-        utils,
-      }),
+      ),
     }),
   );
 
@@ -320,8 +312,8 @@ export function init({
         text: "Exchange",
       }),
       description: "The amount of trading fees (in %) at the exchange.",
-      input: createResetableInput({
-        ...utils.dom.createInputNumberElement({
+      input: utils.dom.createResetableInput(
+        utils.dom.createInputNumberElement({
           id: "simulation-fees",
           title: "Exchange Fees",
           signal: settings.fees.percentage,
@@ -331,8 +323,7 @@ export function init({
           signals,
           placeholder: "Fees",
         }),
-        utils,
-      }),
+      ),
     }),
   );
 
@@ -847,32 +838,6 @@ function createFieldElement({ title, description, input }) {
   }
 
   label.htmlFor = forId;
-
-  return div;
-}
-
-/**
- * @param {Object} param0
- * @param {Signal<any>} param0.signal
- * @param {HTMLInputElement} [param0.input]
- * @param {HTMLSelectElement} [param0.select]
- * @param {Utilities} param0.utils
- */
-function createResetableInput({ input, select, signal, utils }) {
-  const div = window.document.createElement("div");
-
-  const element = input || select;
-  if (!element) throw "createResetableField element missing";
-  div.append(element);
-
-  const button = utils.dom.createButtonElement({
-    onClick: signal.reset,
-    text: "Reset",
-    title: "Reset field",
-  });
-  button.type = "reset";
-
-  div.append(button);
 
   return div;
 }

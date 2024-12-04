@@ -721,7 +721,7 @@ export default import("./v4.2.0/script.js").then((lightweightCharts) => {
     /**
      * @param {CreatePaneParameters} param
      */
-    function createPane({ paneIndex, whitespace, unit, options, config }) {
+    function createPane({ paneIndex, unit, options, config }) {
       const chartWrapper = window.document.createElement("div");
       chartWrapper.classList.add("pane");
       panesElement.append(chartWrapper);
@@ -797,10 +797,11 @@ export default import("./v4.2.0/script.js").then((lightweightCharts) => {
         return series;
       }
 
+      let hasCandleSeries = false;
       /**
        * @param {RemoveSeriesBlueprintFluff<CandlestickSeriesBlueprint>} args
        */
-      function createCandlestickSeries({ options, data }) {
+      function createCandlestickSeries({ color, options, data }) {
         function computeColors() {
           const upColor = colors.profit();
           const downColor = colors.loss();
@@ -825,6 +826,8 @@ export default import("./v4.2.0/script.js").then((lightweightCharts) => {
           ...computeColors(),
         });
 
+        hasCandleSeries = true;
+
         signals.runWithOwner(owner, () => {
           signals.createEffect(computeColors, (computeColors) => {
             series.applyOptions(computeColors);
@@ -838,6 +841,8 @@ export default import("./v4.2.0/script.js").then((lightweightCharts) => {
             });
           });
         }
+
+        updateVisiblePriceSeriesType();
 
         return series;
       }
@@ -980,7 +985,12 @@ export default import("./v4.2.0/script.js").then((lightweightCharts) => {
 
         return series;
       };
-      pane.createSplitSeries = function ({
+      /**
+       * @template {TimeScale} T
+       * @param {CreateSplitSeriesParameters<T>} param0
+       * @returns
+       */
+      function createSplitSeries({
         id,
         index: seriesIndex,
         disabled,
@@ -1141,11 +1151,42 @@ export default import("./v4.2.0/script.js").then((lightweightCharts) => {
         createLegend({ series, extraName: blueprint.type });
 
         return series;
+      }
+      pane.createSplitSeries = function (a) {
+        if (a.blueprint.type === "Candlestick") {
+          const candleSeries = createSplitSeries({
+            disabled: signals.createMemo(
+              () => priceSeriesType() !== "Candlestick",
+            ),
+            ...a,
+          });
+          const lineSeries = createSplitSeries({
+            disabled: signals.createMemo(() => priceSeriesType() !== "Line"),
+            ...a,
+            blueprint: {
+              color: colors.default,
+              ...a.blueprint,
+              type: "Line",
+            },
+          });
+
+          signals.createEffect(candleSeries.active, (active) => {
+            lineSeries.active.set(active);
+          });
+
+          signals.createEffect(lineSeries.active, (active) => {
+            candleSeries.active.set(active);
+          });
+
+          return [candleSeries, lineSeries];
+        } else {
+          return [createSplitSeries(a)];
+        }
       };
-      pane.hidden = () => {
+      pane.hidden = function () {
         return chartWrapper.hidden;
       };
-      pane.setHidden = (b) => {
+      pane.setHidden = function (b) {
         chartWrapper.hidden = b;
       };
       pane.splitSeries = [];
@@ -1165,14 +1206,15 @@ export default import("./v4.2.0/script.js").then((lightweightCharts) => {
           }, 50);
         }
       };
+      const remove = _chart.remove;
       pane.remove = function () {
-        _chart.remove();
+        remove.call(this);
         pane.splitSeries.length = 0;
         pane.singleSeries.length = 0;
         pane.anySeries.length = 0;
       };
 
-      if (whitespace) {
+      if (kind === "moveable") {
         pane.whitespace = setWhitespace({ chart: _chart, scale, utils });
       }
 
@@ -1479,6 +1521,12 @@ export default import("./v4.2.0/script.js").then((lightweightCharts) => {
         setMinMaxMarkersWhenIdle,
       );
 
+      pane.timeScale().subscribeVisibleLogicalRangeChange((logicalRange) => {
+        if (!logicalRange || !hasCandleSeries) return;
+        // Must be the chart with the visible timeScale
+        debouncedUpdateVisiblePriceSeriesType(logicalRange);
+      });
+
       return pane;
     }
 
@@ -1503,11 +1551,9 @@ export default import("./v4.2.0/script.js").then((lightweightCharts) => {
     }
 
     /**
-     * @param {Object} args
-     * @param {LogicalRange} [args.visibleLogicalRange]
-     * @param {TimeRange} [args.visibleTimeRange]
+     * @param {LogicalRange} [visibleLogicalRange]
      */
-    function getTicksToWidthRatio({ visibleLogicalRange, visibleTimeRange }) {
+    function getTicksToWidthRatio(visibleLogicalRange) {
       try {
         const chartPane = panes.find((pane) => !pane.hidden());
         if (!chartPane) return;
@@ -1518,10 +1564,12 @@ export default import("./v4.2.0/script.js").then((lightweightCharts) => {
 
         if (visibleLogicalRange) {
           ratio = (visibleLogicalRange.to - visibleLogicalRange.from) / width;
-        } else if (visibleTimeRange) {
+        } else {
+          let range = visibleTimeRange();
+
           if (scale === "date") {
-            const to = /** @type {Time} */ (visibleTimeRange.to);
-            const from = /** @type {Time} */ (visibleTimeRange.from);
+            const to = /** @type {Time} */ (range.to);
+            const from = /** @type {Time} */ (range.from);
 
             ratio =
               utils.getNumberOfDaysBetweenTwoDates(
@@ -1529,18 +1577,38 @@ export default import("./v4.2.0/script.js").then((lightweightCharts) => {
                 utils.date.fromTime(to),
               ) / width;
           } else {
-            const to = /** @type {number} */ (visibleTimeRange.to);
-            const from = /** @type {number} */ (visibleTimeRange.from);
+            const to = /** @type {number} */ (range.to);
+            const from = /** @type {number} */ (range.from);
 
             ratio = (to - from) / width;
           }
-        } else {
-          throw Error();
         }
 
         return ratio;
       } catch {}
     }
+
+    const priceSeriesType = signals.createSignal(
+      /** @type {PriceSeriesType} */ ("Candlestick"),
+    );
+
+    /**
+     * @param {Parameters<typeof getTicksToWidthRatio>[0]} [args]
+     */
+    function updateVisiblePriceSeriesType(args) {
+      const ratio = getTicksToWidthRatio(args);
+      if (ratio) {
+        if (ratio <= 0.5) {
+          priceSeriesType.set("Candlestick");
+        } else {
+          priceSeriesType.set("Line");
+        }
+      }
+    }
+    const debouncedUpdateVisiblePriceSeriesType = utils.debounce(
+      updateVisiblePriceSeriesType,
+      50,
+    );
 
     return {
       createPane,
@@ -1549,6 +1617,7 @@ export default import("./v4.2.0/script.js").then((lightweightCharts) => {
       visibleDatasetIds,
       getInitialVisibleTimeRange,
       getTicksToWidthRatio,
+      priceSeriesType,
     };
   }
 

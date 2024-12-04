@@ -1547,7 +1547,12 @@
           <small style="display: block">
             <strong>Bitcoin</strong> is
             <b style="color: var(--color)">hope</b>
-            <span style="filter: var(--emoji-filter)">🕊️</span>
+            <button
+              style="filter: var(--emoji-filter)"
+              onclick="window.document.documentElement.style.colorScheme = window.document.documentElement.style.colorScheme === 'light' ? 'dark' : 'light'"
+            >
+              🕊️
+            </button>
           </small>
         </header>
       </nav>

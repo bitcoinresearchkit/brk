@@ -1,10 +1,6 @@
 // @ts-check
 
 /**
- * @import { PriceSeriesType } from '../packages/lightweight-charts/types';
- */
-
-/**
  * @param {Object} args
  * @param {Colors} args.colors
  * @param {LightweightCharts} args.lightweightCharts
@@ -14,11 +10,9 @@
  * @param {Datasets} args.datasets
  * @param {WebSockets} args.webSockets
  * @param {Elements} args.elements
- * @param {Accessor<boolean>} args.dark
  */
 export function init({
   colors,
-  dark,
   datasets,
   elements,
   lightweightCharts,
@@ -59,10 +53,6 @@ export function init({
     },
   );
 
-  const priceSeriesType = signals.createSignal(
-    /** @type {PriceSeriesType} */ ("Candlestick"),
-  );
-
   function createFetchChunksOfVisibleDatasetsEffect() {
     signals.createEffect(
       () => ({
@@ -86,90 +76,6 @@ export function init({
   createFetchChunksOfVisibleDatasetsEffect();
 
   /**
-   * @param {Parameters<Chart['getTicksToWidthRatio']>[0]} args
-   */
-  function updateVisiblePriceSeriesType(args) {
-    const ratio = chart.getTicksToWidthRatio(args);
-    if (ratio) {
-      if (ratio <= 0.5) {
-        priceSeriesType.set("Candlestick");
-      } else {
-        priceSeriesType.set("Line");
-      }
-    }
-  }
-  const debouncedUpdateVisiblePriceSeriesType = utils.debounce(
-    updateVisiblePriceSeriesType,
-    50,
-  );
-
-  /**
-   * @param {Object} args
-   * @param {PriceSeriesType} args.type
-   * @param {Option} args.option
-   * @param {ChartPane} args.chartPane
-   */
-  function createPriceSeries({ type, option, chartPane }) {
-    const s = scale();
-
-    /** @type {AnyDatasetPath} */
-    const datasetPath = `${s}-to-price`;
-
-    const dataset = datasets.getOrCreate(s, datasetPath);
-
-    // Don't trigger reactivity by design
-    activeDatasets().add(dataset);
-
-    const title = "BTC Price";
-
-    /** @type {SplitSeriesBlueprint} */
-    let blueprint;
-
-    if (type === "Candlestick") {
-      blueprint = {
-        datasetPath,
-        title,
-        type: "Candlestick",
-      };
-    } else {
-      blueprint = {
-        datasetPath,
-        title,
-        color: colors.default,
-      };
-    }
-
-    const disabled = signals.createMemo(() => priceSeriesType() !== type);
-
-    const priceSeries = chartPane.createSplitSeries({
-      blueprint,
-      dataset,
-      id: option.id,
-      index: -1,
-      disabled,
-    });
-
-    function createLiveCandleUpdateEffect() {
-      signals.createEffect(webSockets.kraken1dCandle.latest, (latest) => {
-        if (!latest) return;
-
-        const index = utils.chunkIdToIndex(s, latest.year);
-
-        const series = priceSeries.chunks.at(index);
-
-        if (series) {
-          signals.createEffect(series, (series) => {
-            series?.update(latest);
-          });
-        }
-      });
-    }
-    createLiveCandleUpdateEffect();
-
-    return priceSeries;
-  }
-
-  /**
    * @param {ChartOption} option
    */
   function applyChartOption(option) {
@@ -189,47 +95,42 @@ export function init({
       const chartPane = chart.createPane({
         paneIndex,
         unit: paneIndex ? option.unit : "US Dollars",
-        whitespace: true,
       });
 
       if (!paneIndex) {
-        updateVisiblePriceSeriesType({
-          visibleTimeRange: chart.visibleTimeRange(),
+        /** @type {AnyDatasetPath} */
+        const datasetPath = `${scale}-to-price`;
+
+        const dataset = datasets.getOrCreate(scale, datasetPath);
+
+        // Don't trigger reactivity by design
+        activeDatasets().add(dataset);
+
+        const priceSeries = chartPane.createSplitSeries({
+          blueprint: {
+            datasetPath,
+            title: "BTC Price",
+            type: "Candlestick",
+          },
+          dataset,
+          id: option.id,
+          index: -1,
         });
 
-        chartPane
-          .timeScale()
-          .subscribeVisibleLogicalRangeChange((logicalRange) => {
-            if (!logicalRange) return;
+        signals.createEffect(webSockets.kraken1dCandle.latest, (latest) => {
+          if (!latest) return;
 
-            // Must be the chart with the visible timeScale
-            debouncedUpdateVisiblePriceSeriesType({
-              visibleLogicalRange: logicalRange,
-            });
+          const index = utils.chunkIdToIndex(scale, latest.year);
+
+          priceSeries.forEach((splitSeries) => {
+            const series = splitSeries.chunks.at(index);
+            if (series) {
+              signals.createEffect(series, (series) => {
+                series?.update(latest);
+              });
+            }
           });
-
-        /** @param {PriceSeriesType} type */
-        function _createPriceSeries(type) {
-          return createPriceSeries({
-            chartPane,
-            option,
-            type,
-          });
-        }
-
-        const priceCandlestickSeries = _createPriceSeries("Candlestick");
-        const priceLineSeries = _createPriceSeries("Line");
-
-        function createLinkPriceSeriesEffect() {
-          signals.createEffect(priceLineSeries.active, (active) => {
-            priceCandlestickSeries.active.set(active);
-          });
-
-          signals.createEffect(priceCandlestickSeries.active, (active) => {
-            priceLineSeries.active.set(active);
-          });
-        }
-        createLinkPriceSeriesEffect();
+        });
       }
 
       [...seriesBlueprints].reverse().forEach((blueprint, index) => {
