@@ -623,6 +623,39 @@ const utils = {
       return div;
     },
     /**
+     * @param {Object} args
+     * @param {string} args.title
+     * @param {string} args.description
+     * @param {HTMLElement} args.input
+     */
+    createFieldElement({ title, description, input }) {
+      const div = window.document.createElement("div");
+
+      const label = window.document.createElement("label");
+      div.append(label);
+
+      const titleElement = window.document.createElement("span");
+      titleElement.innerHTML = title;
+      label.append(titleElement);
+
+      const descriptionElement = window.document.createElement("small");
+      descriptionElement.innerHTML = description;
+      label.append(descriptionElement);
+
+      div.append(input);
+
+      const forId = input.id || input.firstElementChild?.id;
+
+      if (!forId) {
+        console.log(input);
+        throw `Input should've an ID`;
+      }
+
+      label.htmlFor = forId;
+
+      return div;
+    },
+    /**
      * @param {'left' | 'bottom' | 'top' | 'right'} position
      */
     createShadow(position) {

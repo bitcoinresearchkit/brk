@@ -150,7 +150,7 @@ export function init({
   }
 
   parametersElement.append(
-    createFieldElement({
+    utils.dom.createFieldElement({
       title: createColoredTypeHTML({
         color: "green",
         type: "Dollars",
@@ -170,7 +170,7 @@ export function init({
   );
 
   parametersElement.append(
-    createFieldElement({
+    utils.dom.createFieldElement({
       title: createColoredTypeHTML({
         color: "green",
         type: "Dollars",
@@ -189,7 +189,7 @@ export function init({
   );
 
   parametersElement.append(
-    createFieldElement({
+    utils.dom.createFieldElement({
       title: createColoredTypeHTML({
         color: "green",
         type: "Dollars",
@@ -209,7 +209,7 @@ export function init({
   );
 
   parametersElement.append(
-    createFieldElement({
+    utils.dom.createFieldElement({
       title: createColoredTypeHTML({
         color: "orange",
         type: "Bitcoin",
@@ -229,7 +229,7 @@ export function init({
   );
 
   parametersElement.append(
-    createFieldElement({
+    utils.dom.createFieldElement({
       title: createColoredTypeHTML({
         color: "orange",
         type: "Bitcoin",
@@ -247,7 +247,7 @@ export function init({
   );
 
   parametersElement.append(
-    createFieldElement({
+    utils.dom.createFieldElement({
       title: createColoredTypeHTML({
         color: "orange",
         type: "Bitcoin",
@@ -267,7 +267,7 @@ export function init({
   );
 
   parametersElement.append(
-    createFieldElement({
+    utils.dom.createFieldElement({
       title: createColoredTypeHTML({
         color: "sky",
         type: "Interval",
@@ -286,7 +286,7 @@ export function init({
   );
 
   parametersElement.append(
-    createFieldElement({
+    utils.dom.createFieldElement({
       title: createColoredTypeHTML({
         color: "sky",
         type: "Interval",
@@ -305,7 +305,7 @@ export function init({
   );
 
   parametersElement.append(
-    createFieldElement({
+    utils.dom.createFieldElement({
       title: createColoredTypeHTML({
         color: "red",
         type: "Fees",
@@ -328,11 +328,261 @@ export function init({
   );
 
   const p1 = window.document.createElement("p");
+  resultsElement.append(p1);
   const p2 = window.document.createElement("p");
+  resultsElement.append(p2);
   const p3 = window.document.createElement("p");
+  resultsElement.append(p3);
   const p4 = window.document.createElement("p");
+  resultsElement.append(p4);
 
   const owner = signals.getOwner();
+
+  const totalInvestedAmountData = signals.createSignal(
+    /** @type {LineData<Time>[]} */ ([]),
+    {
+      equals: false,
+    },
+  );
+  const bitcoinValueData = signals.createSignal(
+    /** @type {LineData<Time>[]} */ ([]),
+    {
+      equals: false,
+    },
+  );
+  const bitcoinData = signals.createSignal(
+    /** @type {LineData<Time>[]} */ ([]),
+    {
+      equals: false,
+    },
+  );
+  const resultData = signals.createSignal(
+    /** @type {LineData<Time>[]} */ ([]),
+    {
+      equals: false,
+    },
+  );
+  const dollarsLeftData = signals.createSignal(
+    /** @type {LineData<Time>[]} */ ([]),
+    {
+      equals: false,
+    },
+  );
+  const totalValueData = signals.createSignal(
+    /** @type {LineData<Time>[]} */ ([]),
+    {
+      equals: false,
+    },
+  );
+  const investmentData = signals.createSignal(
+    /** @type {LineData<Time>[]} */ ([]),
+    {
+      equals: false,
+    },
+  );
+  const bitcoinAddedData = signals.createSignal(
+    /** @type {LineData<Time>[]} */ ([]),
+    {
+      equals: false,
+    },
+  );
+  const averagePricePaidData = signals.createSignal(
+    /** @type {LineData<Time>[]} */ ([]),
+    {
+      equals: false,
+    },
+  );
+  const bitcoinPriceData = signals.createSignal(
+    /** @type {LineData<Time>[]} */ ([]),
+    {
+      equals: false,
+    },
+  );
+  const buyCountData = signals.createSignal(
+    /** @type {LineData<Time>[]} */ ([]),
+    {
+      equals: false,
+    },
+  );
+  const totalFeesPaidData = signals.createSignal(
+    /** @type {LineData<Time>[]} */ ([]),
+    {
+      equals: false,
+    },
+  );
+  const daysCountData = signals.createSignal(
+    /** @type {LineData<Time>[]} */ ([]),
+    {
+      equals: false,
+    },
+  );
+  const profitableDaysRatioData = signals.createSignal(
+    /** @type {LineData<Time>[]} */ ([]),
+    {
+      equals: false,
+    },
+  );
+  const unprofitableDaysRatioData = signals.createSignal(
+    /** @type {LineData<Time>[]} */ ([]),
+    {
+      equals: false,
+    },
+  );
+
+  lightweightCharts.createChart({
+    parent: resultsElement,
+    signals,
+    colors,
+    id: `simulation-0`,
+    kind: "static",
+    scale: "date",
+    utils,
+    config: [
+      {
+        unit: "US Dollars",
+        config: [
+          {
+            title: "Fees Paid",
+            type: "Line",
+            color: colors.rose,
+            data: totalFeesPaidData,
+          },
+          {
+            title: "Dollars Left",
+            type: "Line",
+            color: colors.offDollars,
+            data: dollarsLeftData,
+          },
+          {
+            title: "Dollars Converted",
+            type: "Line",
+            color: colors.dollars,
+            data: totalInvestedAmountData,
+          },
+          {
+            title: "Bitcoin Value",
+            type: "Line",
+            color: colors.amber,
+            data: bitcoinValueData,
+          },
+        ],
+      },
+    ],
+  });
+
+  lightweightCharts.createChart({
+    parent: resultsElement,
+    signals,
+    colors,
+    id: `simulation-1`,
+    scale: "date",
+    kind: "static",
+    utils,
+    config: [
+      {
+        unit: "US Dollars",
+        config: [
+          {
+            title: "Bitcoin Stack",
+            type: "Line",
+            color: colors.bitcoin,
+            data: bitcoinData,
+          },
+        ],
+      },
+    ],
+  });
+
+  lightweightCharts.createChart({
+    parent: resultsElement,
+    signals,
+    colors,
+    id: `simulation-average-price`,
+    scale: "date",
+    kind: "static",
+    utils,
+    config: [
+      {
+        unit: "US Dollars",
+        config: [
+          {
+            title: "Bitcoin Price",
+            type: "Line",
+            color: colors.default,
+            data: bitcoinPriceData,
+          },
+          {
+            title: "Average Price Paid",
+            type: "Line",
+            color: colors.lightDollars,
+            data: averagePricePaidData,
+          },
+        ],
+      },
+    ],
+  });
+
+  lightweightCharts.createChart({
+    parent: resultsElement,
+    signals,
+    colors,
+    id: `simulation-return-ratio`,
+    scale: "date",
+    kind: "static",
+    utils,
+    config: [
+      {
+        unit: "US Dollars",
+        config: [
+          {
+            title: "Return Of Investment",
+            type: "Baseline",
+            data: resultData,
+            // TODO: Doesn't work for some reason
+            // options: {
+            //   baseLineColor: "#888",
+            //   baseLineVisible: true,
+            //   baseLineWidth: 1,
+            //   baseValue: {
+            //     price: 0,
+            //     type: "price",
+            //   },
+            // },
+          },
+        ],
+      },
+    ],
+  });
+
+  lightweightCharts.createChart({
+    parent: resultsElement,
+    signals,
+    colors,
+    id: `simulation-profitability-ratios`,
+    kind: "static",
+    scale: "date",
+    utils,
+    owner,
+    config: [
+      {
+        unit: "Percentage",
+        config: [
+          {
+            title: "Unprofitable Days Ratio",
+            type: "Line",
+            color: colors.red,
+            data: unprofitableDaysRatioData,
+          },
+          {
+            title: "Profitable Days Ratio",
+            type: "Line",
+            color: colors.green,
+            data: profitableDaysRatioData,
+          },
+        ],
+      },
+    ],
+  });
 
   const closes = datasets.getOrCreate("date", "date-to-close");
   closes.fetchRange(2009, new Date().getUTCFullYear()).then(() => {
@@ -360,46 +610,25 @@ export function init({
           end,
           fees,
         }) => {
-          resultsElement.innerHTML = "";
-          resultsElement.append(p1);
-          resultsElement.append(p2);
-          resultsElement.append(p3);
-          resultsElement.append(p4);
-
           if (!start || !end || start > end) return;
 
           const range = utils.date.getRange(start, end);
 
-          /** @type {LineData<Time>[]} */
-          const totalInvestedAmountData = [];
-          /** @type {LineData<Time>[]} */
-          const bitcoinValueData = [];
-          /** @type {LineData<Time>[]} */
-          const bitcoinData = [];
-          /** @type {LineData<Time>[]} */
-          const resultData = [];
-          /** @type {LineData<Time>[]} */
-          const dollarsLeftData = [];
-          /** @type {LineData<Time>[]} */
-          const totalValueData = [];
-          /** @type {LineData<Time>[]} */
-          const investmentData = [];
-          /** @type {LineData<Time>[]} */
-          const bitcoinAddedData = [];
-          /** @type {LineData<Time>[]} */
-          const averagePricePaidData = [];
-          /** @type {LineData<Time>[]} */
-          const bitcoinPriceData = [];
-          /** @type {LineData<Time>[]} */
-          const buyCountData = [];
-          /** @type {LineData<Time>[]} */
-          const totalFeesPaidData = [];
-          /** @type {LineData<Time>[]} */
-          const daysCountData = [];
-          /** @type {LineData<Time>[]} */
-          const profitableDaysRatioData = [];
-          /** @type {LineData<Time>[]} */
-          const unprofitableDaysRatioData = [];
+          totalInvestedAmountData().length = 0;
+          bitcoinValueData().length = 0;
+          bitcoinData().length = 0;
+          resultData().length = 0;
+          dollarsLeftData().length = 0;
+          totalValueData().length = 0;
+          investmentData().length = 0;
+          bitcoinAddedData().length = 0;
+          averagePricePaidData().length = 0;
+          bitcoinPriceData().length = 0;
+          buyCountData().length = 0;
+          totalFeesPaidData().length = 0;
+          daysCountData().length = 0;
+          profitableDaysRatioData().length = 0;
+          unprofitableDaysRatioData().length = 0;
 
           let bitcoin = 0;
           let sats = 0;
@@ -488,77 +717,77 @@ export function init({
               unprofitableDays += 1;
             }
 
-            bitcoinPriceData.push({
+            bitcoinPriceData().push({
               time,
               value: close,
             });
 
-            bitcoinData.push({
+            bitcoinData().push({
               time,
               value: bitcoin,
             });
 
-            totalInvestedAmountData.push({
+            totalInvestedAmountData().push({
               time,
               value: investedAmount,
             });
 
-            bitcoinValueData.push({
+            bitcoinValueData().push({
               time,
               value: bitcoinValue,
             });
 
-            resultData.push({
+            resultData().push({
               time,
               value: roi,
             });
 
-            dollarsLeftData.push({
+            dollarsLeftData().push({
               time,
               value: dollars,
             });
 
-            totalValueData.push({
+            totalValueData().push({
               time,
               value: totalValue,
             });
 
-            investmentData.push({
+            investmentData().push({
               time,
               value: dailyInvestment,
             });
 
-            bitcoinAddedData.push({
+            bitcoinAddedData().push({
               time,
               value: bitcoinAdded,
             });
 
-            averagePricePaidData.push({
+            averagePricePaidData().push({
               time,
               value: averagePricePaid,
             });
 
-            buyCountData.push({
+            buyCountData().push({
               time,
               value: buyCount,
             });
 
-            totalFeesPaidData.push({
+            totalFeesPaidData().push({
               time,
               value: totalFeesPaid,
             });
 
-            daysCountData.push({
+            daysCountData().push({
               time,
               value: daysCount,
             });
 
-            profitableDaysRatioData.push({
+            profitableDaysRatioData().push({
               time,
               value: profitableDaysRatio * 100,
             });
 
-            unprofitableDaysRatioData.push({
+            unprofitableDaysRatioData().push({
               time,
               value: unprofitableDaysRatio * 100,
             });
@@ -630,216 +859,25 @@ export function init({
             p4.innerHTML = `The lowest annual return after 4 years has historically been ${serLowestAnnual4YReturn}.<br/>Using it as the baseline, your Bitcoin would be worth ${serBitcoinValueAfter4y} after 4 years, ${serBitcoinValueAfter10y} after 10 years and ${serBitcoinValueAfter21y} after 21 years.`;
           });
 
-          lightweightCharts.createChart({
-            parent: resultsElement,
-            signals,
-            colors,
-            id: `simulation-0`,
-            kind: "static",
-            scale: "date",
-            utils,
-            config: [
-              {
-                unit: "US Dollars",
-                config: [
-                  {
-                    title: "Fees Paid",
-                    type: "Line",
-                    color: colors.rose,
-                    data: () => totalFeesPaidData,
-                  },
-                  {
-                    title: "Dollars Left",
-                    type: "Line",
-                    color: colors.offDollars,
-                    data: () => dollarsLeftData,
-                  },
-                  {
-                    title: "Dollars Converted",
-                    type: "Line",
-                    color: colors.dollars,
-                    data: () => totalInvestedAmountData,
-                  },
-                  {
-                    title: "Bitcoin Value",
-                    type: "Line",
-                    color: colors.amber,
-                    data: () => bitcoinValueData,
-                  },
-                ],
-              },
-            ],
-          });
-
-          lightweightCharts.createChart({
-            parent: resultsElement,
-            signals,
-            colors,
-            id: `simulation-1`,
-            scale: "date",
-            kind: "static",
-            utils,
-            config: [
-              {
-                unit: "US Dollars",
-                config: [
-                  {
-                    title: "Bitcoin Stack",
-                    type: "Line",
-                    color: colors.bitcoin,
-                    data: () => bitcoinData,
-                  },
-                ],
-              },
-            ],
-          });
-
-          lightweightCharts.createChart({
-            parent: resultsElement,
-            signals,
-            colors,
-            id: `simulation-average-price`,
-            scale: "date",
-            kind: "static",
-            utils,
-            config: [
-              {
-                unit: "US Dollars",
-                config: [
-                  {
-                    title: "Bitcoin Price",
-                    type: "Line",
-                    color: colors.default,
-                    data: () => bitcoinPriceData,
-                  },
-                  {
-                    title: "Average Price Paid",
-                    type: "Line",
-                    color: colors.lightDollars,
-                    data: () => averagePricePaidData,
-                  },
-                ],
-              },
-            ],
-          });
-
-          lightweightCharts.createChart({
-            parent: resultsElement,
-            signals,
-            colors,
-            id: `simulation-return-ratio`,
-            scale: "date",
-            kind: "static",
-            utils,
-            config: [
-              {
-                unit: "US Dollars",
-                config: [
-                  {
-                    title: "Return Of Investment",
-                    type: "Baseline",
-                    data: () => resultData,
-                    // TODO: Doesn't work for some reason
-                    // options: {
-                    //   baseLineColor: "#888",
-                    //   baseLineVisible: true,
-                    //   baseLineWidth: 1,
-                    //   baseValue: {
-                    //     price: 0,
-                    //     type: "price",
-                    //   },
-                    // },
-                  },
-                ],
-              },
-            ],
-          });
-
-          lightweightCharts.createChart({
-            parent: resultsElement,
-            signals,
-            colors,
-            id: `simulation-profitability-ratios`,
-            kind: "static",
-            scale: "date",
-            utils,
-            owner,
-            config: [
-              {
-                unit: "Percentage",
-                config: [
-                  {
-                    title: "Unprofitable Days Ratio",
-                    type: "Line",
-                    color: colors.red,
-                    data: () => unprofitableDaysRatioData,
-                  },
-                  {
-                    title: "Profitable Days Ratio",
-                    type: "Line",
-                    color: colors.green,
-                    data: () => profitableDaysRatioData,
-                  },
-                ],
-              },
-            ],
-          });
+          totalInvestedAmountData.set((a) => a);
+          bitcoinValueData.set((a) => a);
+          bitcoinData.set((a) => a);
+          resultData.set((a) => a);
+          dollarsLeftData.set((a) => a);
+          totalValueData.set((a) => a);
+          investmentData.set((a) => a);
+          bitcoinAddedData.set((a) => a);
+          averagePricePaidData.set((a) => a);
+          bitcoinPriceData.set((a) => a);
+          buyCountData.set((a) => a);
+          totalFeesPaidData.set((a) => a);
+          daysCountData.set((a) => a);
+          profitableDaysRatioData.set((a) => a);
+          unprofitableDaysRatioData.set((a) => a);
         },
       );
     });
   });
-}
-
-/**
- * @param {Object} args
- * @param {HTMLInputElement} args.input
- * @param {string} args.name
- */
-function createInputField({ name, input }) {
-  const div = window.document.createElement("div");
-
-  const label = window.document.createElement("label");
-  div.append(label);
-  label.htmlFor = input.id;
-  label.innerHTML = name;
-
-  div.append(input);
-
-  return div;
-}
-
-/**
- * @param {Object} args
- * @param {string} args.title
- * @param {string} args.description
- * @param {HTMLElement} args.input
- */
-function createFieldElement({ title, description, input }) {
-  const div = window.document.createElement("div");
-
-  const label = window.document.createElement("label");
-  div.append(label);
-
-  const titleElement = window.document.createElement("span");
-  titleElement.innerHTML = title;
-  label.append(titleElement);
-
-  const descriptionElement = window.document.createElement("small");
-  descriptionElement.innerHTML = description;
-  label.append(descriptionElement);
-
-  div.append(input);
-
-  const forId = input.id || input.firstElementChild?.id;
-
-  if (!forId) {
-    console.log(input);
-    throw `Input should've an ID`;
-  }
-
-  label.htmlFor = forId;
-
-  return div;
 }
 
 /** @param {number} day  */

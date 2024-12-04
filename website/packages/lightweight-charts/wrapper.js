@@ -790,6 +790,9 @@ export default import("./v4.2.0/script.js").then((lightweightCharts) => {
           signals.runWithOwner(owner, () => {
             signals.createEffect(data, (data) => {
               series.setData(data);
+              if (kind === "static") {
+                pane.timeScale().fitContent();
+              }
             });
           });
         }
@@ -838,6 +841,9 @@ export default import("./v4.2.0/script.js").then((lightweightCharts) => {
           signals.runWithOwner(owner, () => {
             signals.createEffect(data, (data) => {
               series.setData(data);
+              if (kind === "static") {
+                pane.timeScale().fitContent();
+              }
             });
           });
         }
@@ -873,6 +879,9 @@ export default import("./v4.2.0/script.js").then((lightweightCharts) => {
           signals.runWithOwner(owner, () => {
             signals.createEffect(data, (data) => {
               series.setData(data);
+              if (kind === "static") {
+                pane.timeScale().fitContent();
+              }
             });
           });
         }
