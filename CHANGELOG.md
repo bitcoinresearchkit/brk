@@ -5,9 +5,9 @@
 ![Image of the kibō Web App version 0.X.Y](./assets/v0.X.Y.jpg)
 -->
 
-## v. 0.5.0 | WIP
+## v. 0.5.0 | [873199](https://mempool.space/block/0000000000000000000270925aa6a565be92e13164565a3f7994ca1966e48050) - 2024/12/04
 
-<!-- ![Image of the kibō Web App version 0.5.0](./assets/v0.5.0.jpg) -->
+![Image of the kibō Web App version 0.5.0](./assets/v0.5.0.jpg)
 
 ## Datasets
 
@@ -30,16 +30,19 @@
 
 ## Website
 
-- Updated the design yet again which made the website even easier on the eyes
+- Updated the design yet again which made the website for something more minimal and easier on the eyes
+- Added a *Save In Bitcoin* (DCA) simulation page
 - ~Added a dashboard~ Added the latest values to the tree next to each option instead, while less values are visible at a time, it's much more readable and organised
 - Added a library of PDFs
 - Fixed service worker not passing 304 (not modified) response and instead serving cached responses
 - Fixed history not being properly registered
 - Fixed window being moveable on iOS when in standalone mode when it shouldn't be
-- Split `index.html` and `script.js` into multiple js and css files to load only what's necessary at a given time
 - Added `Compare` section to all groups, to compare all datasets within a group
 - Updated `Solid Signals` library, which had an important breaking change on the `createEffect` function which might bring some bugs
 - Fixed some datasets paths
+- A lot of code reorg and file splits
+- Adopted a framework like approach to load pages while still being pure JS without a build step
+- Probably more that was forgotten
 
 ## Parser
 
@@ -55,6 +58,7 @@
 - Added defragmentation option `--first-defragment true` of databases to save space (which can save up to 50%)
 - Fixed bug in the computation of averages in `GenericMap`
 - Added support and paramer for cookie files with `--rpccookiefile`, and auto find if the path is `--datadir/.cookie`
+- Increased number of retries and time between them when fetching price from exchanges APIs
 
 ## Server
 
