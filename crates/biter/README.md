@@ -1,4 +1,4 @@
-# Biter
+# biter
 
 Biter (Bitcoin Block Iterator) is a very fast and simple Rust library which reads raw block files (*blkXXXXX.dat*) from Bitcoin Core Node and creates an iterator over all the requested blocks in sequential order (0, 1, 2, ...).
 
@@ -55,7 +55,7 @@ Peak memory should be around 500MB.
 
 ## Comparaison
 
-|  | [biter](https://crates.io/crates/biter) | [bitcoin-explorer (depreciated)](https://crates.io/crates/bitcoin-explorer) | [blocks_iterator](https://crates.io/crates/blocks_iterator) |
+|  | [biter](https://crates.io/crates/biter) | [bitcoin-explorer (deprecated)](https://crates.io/crates/bitcoin-explorer) | [blocks_iterator](https://crates.io/crates/blocks_iterator) |
 | --- | --- | --- | --- |
 | Runs **with** `bitcoind` | Yes ✅ | No ❌ | Yes ✅ |
 | Runs **without** `bitcoind` | No ❌ | Yes ✅ | Yes ✅ |
