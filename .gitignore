@@ -1,24 +1,8 @@
 # Mac OS
 .DS_Store
 
-# To do
-/charts
-TODO.md
-
 # Builds
-dist
 target
-
-# I/O
-in
-out
-.log
-/datasets
-/datasets2
-/price
-*..*
-/txout_*
-/db
 
 # Sync
 .stfolder
@@ -29,15 +13,9 @@ out
 # Ignored
 ignore
 
-# Scripts
-/start-node.sh
-
 # Editors
 .vscode
 .zed
-
-# Configs
-config.toml
 
 # Flamegraph
 flamegraph/
@@ -53,7 +31,7 @@ snapshots*/
 docker/kibo
 
 # Types
-website/scripts/types/paths.d.ts
+paths.d.ts
 
-# Misc
-OPENSATS.md
+# Git
+.git*

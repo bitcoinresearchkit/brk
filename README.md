@@ -122,6 +122,7 @@ Now we can finally start by running the parser, you need to use the `./run.sh` s
 For the first launch, the parser will need several information such as:
 
 - `--datadir`: which is bitcoin data directory path, prefer `$HOME` to `~` as the latter might not work
+- `--outdir`: where all outputs will be saved, prefer `$HOME` to `~` as the latter might not work
 
 Optionally you can also specify:
 
@@ -136,7 +137,7 @@ Everything will be saved in a `config.toml` file, which will allow you to simply
 Here's an example
 
 ```bash
-./run.sh --datadir=$HOME/Developer/bitcoin
+./run.sh --datadir=$HOME/Developer/bitcoin --outdir=$HOME/.kibo/out
 ```
 
 In a **new** terminal, go to the `server`'s folder of the repository

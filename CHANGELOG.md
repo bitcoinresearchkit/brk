@@ -1,13 +1,20 @@
-# Changelog
-
 <!--
-## v. 0.X.Y | WIP
-![Image of the kibō Web App version 0.X.Y](./assets/v0.X.Y.jpg)
+# v0.X.Y | WIP
+![Image of the kibō Web App version 0.X.Y](https://github.com/kibo-money/kibo/blob/main/assets/v0.X.Y.jpg)
 -->
 
-## v. 0.5.0 | [873199](https://mempool.space/block/0000000000000000000270925aa6a565be92e13164565a3f7994ca1966e48050) - 2024/12/04
+# v0.6.0 | WIP
 
-![Image of the kibō Web App version 0.5.0](./assets/v0.5.0.jpg)
+- Merged parser and server crates into a single project (and thus executable)
+- Started using `log` and `env_logger` crates
+- Improved logs
+- Added `--server BOOL` and `--parser BOOL` parameters (both are true by default)
+- Automated databases defragmention (and removed parameter)
+- Fixed input being unfocused right after being focused in Brave browser
+
+# [v0.5.0](https://github.com/kibo-money/kibo/tree/eea56d394bf92c62c81da8b78b8c47ea730683f5) | [873199](https://mempool.space/block/0000000000000000000270925aa6a565be92e13164565a3f7994ca1966e48050) - 2024/12/04
+
+![Image of the kibō Web App version 0.5.0](https://github.com/kibo-money/kibo/blob/main/assets/v0.5.0.jpg)
 
 ## Datasets
 
@@ -72,15 +79,15 @@
 
 - Moved back to this repo
 
-## v. 0.4.0 | [861950](https://mempool.space/block/00000000000000000000530d0e30ccf7deeace122dcc99f2668a06c6dad83629) - 2024/09/19
+# [v0.4.0](https://github.com/kibo-money/kibo/tree/a64c544815d9ef785e2fc1323582f774f16b9200) | [861950](https://mempool.space/block/00000000000000000000530d0e30ccf7deeace122dcc99f2668a06c6dad83629) - 2024/09/19
 
-![Image of the kibō Web App version 0.4.0](./assets/v0.4.0.jpg)
+![Image of the kibō Web App version 0.4.0](https://github.com/kibo-money/kibo/blob/main/assets/v0.4.0.jpg)
 
-### Brand
+## Brand
 
 - **Satonomics** is now **kibō** 🎉
 
-### Website
+## Website
 
 - Complete redesign of the website
 - Rewrote the whole application and removed `node`/`npm`/`pnpm` dependencies in favor for pure `HTML`/`CSS`/`Javascript`
@@ -88,7 +95,7 @@
 - Added Trading View attribution link to the settings frame and file in the lightweight charts folder
 - Many other changes
 
-### Parser
+## Parser
 
 - Changed the block iterator from a custom version of [bitcoin-explorer](https://crates.io/crates/bitcoin-explorer) to the homemade [biter](https://crates.io/crates/biter) which allows the parser to run alongside `bitcoind`
 - Added datasets compression thanks to [zstd](https://crates.io/crates/zstd) to reduce disk usage
@@ -103,17 +110,17 @@
 - Various first run fixes
 - Added to `-h` which arguments are saved, which is all of them at the time of writing
 
-### Server
+## Server
 
 - Updated the code to support compressed binaries
 - Added serving of the website
 - Improved `Cache-Control` behavior
 
-## v. 0.3.0 | [853930](https://mempool.space/block/00000000000000000002eb5e9a7950ca2d5d98bd1ed28fc9098aa630d417985d) - 2024/07/26
+# [v0.3.0](https://github.com/kibo-money/kibo/tree/b68b016091c45b071218fba01bac5b76e8eaf18c) | [853930](https://mempool.space/block/00000000000000000002eb5e9a7950ca2d5d98bd1ed28fc9098aa630d417985d) - 2024/07/26
 
-![Image of the Satonomics Web App version 0.3.0](./assets/v0.3.0.jpg)
+![Image of the Satonomics Web App version 0.3.0](https://github.com/kibo-money/kibo/blob/main/assets/v0.3.0.jpg)
 
-### Parser
+## Parser
 
 - Global
   - Improved self-hosting by:
@@ -156,7 +163,7 @@
 - Price
   - Improved error message when price cannot be found
 
-### App
+## App
 
 - General
   - Added chart scroll button for nice animations à la Wicked
@@ -182,17 +189,17 @@
 - Settings
   - Removed the horizontal scroll bar which was unintended
 
-### Server
+## Server
 
 - Run file
   - Only run with a watcher if `cargo watch` is available
   - Removed id_to_path file in favor for only `paths.d.ts` in `app/src/types`
 
-## v. 0.2.0 | [851286](https://mempool.space/block/0000000000000000000281ca7f1bf8c50702bfca168c7af1bdc67c977c1ac8ed) - 2024/07/08
+# [v0.2.0](https://github.com/kibo-money/kibo/tree/248187889283597c5dbb806292297453c25e97b8) | [851286](https://mempool.space/block/0000000000000000000281ca7f1bf8c50702bfca168c7af1bdc67c977c1ac8ed) - 2024/07/08
 
-![Image of the Satonomics Web App version 0.2.0](./assets/v0.2.0.jpg)
+![Image of the Satonomics Web App version 0.2.0](https://github.com/kibo-money/kibo/blob/main/assets/v0.2.0.jpg)
 
-### App
+## App
 
 - General
   - Added the height version of all datasets and many optimizations to make them usable but only available on desktop and tablets for now
@@ -220,24 +227,24 @@
   - Hopefully made scrollbars a little more subtle on WIndows and Linux, can't test
   - Generale style updates
 
-### Parser
+## Parser
 
 - Fixed ulimit only being run in Mac OS instead of whenever the program is detected
 
-## v. 0.1.1 | [849240](https://mempool.space/block/000000000000000000002b8653988655071c07bb5f7181c038f9326bc86db741) - 2024/06/24
+# [v0.1.1](https://github.com/kibo-money/kibo/tree/e55b5195a9de9aea306903c94ed63cb1720fda5f) | [849240](https://mempool.space/block/000000000000000000002b8653988655071c07bb5f7181c038f9326bc86db741) - 2024/06/24
 
-![Image of the Satonomics Web App version 0.1.1](./assets/v0.1.1.jpg)
+![Image of the Satonomics Web App version 0.1.1](https://github.com/kibo-money/kibo/blob/main/assets/v0.1.1.jpg)
 
-### Parser
+## Parser
 
 - Fixed overflow in `Price` struct which caused many Realized Caps and Realized Prices to have completely bogus data
 - Fixed Realized Cap computation which was using rounded prices instead normal ones
 
-### Server
+## Server
 
 - Added the chunk, date and time of the request to the terminal logs
 
-### App
+## App
 
 - Chart
   - Added double click option on a legend to toggle the visibility of all other series
@@ -270,14 +277,14 @@
 - Misc
   - Removed tracker even though it was a very privacy friendly as it appeared to not be working properly
 
-### Price
+## Price
 
 - Deleted old price datasets and their backups
 
-## v. 0.1.0 | [848642](https://mempool.space/block/000000000000000000020be5761d70751252219a9557f55e91ecdfb86c4e026a) - 2024/06/19
+# [v0.1.0](https://github.com/kibo-money/kibo/tree/a1a576d088c8f83ed32d48753a7611f70a964574) | [848642](https://mempool.space/block/000000000000000000020be5761d70751252219a9557f55e91ecdfb86c4e026a) - 2024/06/19
 
-![Image of the Satonomics Web App version 0.1.0](./assets/v0.1.0.jpg)
+![Image of the Satonomics Web App version 0.1.0](https://github.com/kibo-money/kibo/blob/main/assets/v0.1.0.jpg)
 
-## v. 0.0.X | [835444](https://mempool.space/block/000000000000000000009f93907a0dd83c080d5585cc7ec82c076d45f6d7c872) - 2024/03/20
+# v0.0.1 | [835444](https://mempool.space/block/000000000000000000009f93907a0dd83c080d5585cc7ec82c076d45f6d7c872) - 2024/03/20
 
-![Image of the Satonomics Web App version 0.0.X](./assets/v0.0.X.jpg)
+![Image of the Satonomics Web App version 0.0.X](https://github.com/kibo-money/kibo/blob/main/assets/v0.0.X.jpg)
