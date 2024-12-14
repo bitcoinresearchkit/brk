@@ -11,8 +11,8 @@ fn main() {
     let auth = Auth::CookieFile(cookie);
     let rpc = Client::new(url, auth).unwrap();
 
-    let start = Some(800_000);
-    let end = Some(855_000);
+    let start = Some(810078);
+    let end = None;
 
     biter::new(data_dir, start, end, rpc)
         .iter()

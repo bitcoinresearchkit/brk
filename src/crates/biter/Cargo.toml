@@ -1,9 +1,9 @@
 [package]
 name = "biter"
 description = "A very fast Bitcoin block iterator"
-version = "0.2.1"
+version = "0.2.2"
 license = "MIT"
-repository = "https://github.com/kibo-money/kibo/tree/main/crates/biter"
+repository = "https://github.com/kibo-money/kibo/tree/main/src/crates/biter"
 keywords = ["bitcoin", "block", "iterator"]
 categories = ["cryptography::cryptocurrencies", "encoding"]
 edition = "2021"

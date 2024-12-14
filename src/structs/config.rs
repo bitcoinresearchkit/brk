@@ -15,36 +15,36 @@ use super::MapPath;
 #[command(version, about, long_about = None)]
 pub struct Config {
     /// Bitcoin data directory path, saved
-    #[arg(long, value_name = "DIR")]
+    #[arg(long, value_name = "PATH")]
     bitcoindir: Option<String>,
 
-    /// Kibo data directory path, saved
-    #[arg(long, value_name = "DIR")]
+    /// Kibo output directory path, saved
+    #[arg(long, value_name = "PATH")]
     kibodir: Option<String>,
 
     /// Bitcoin RPC ip, default: localhost, saved
     #[arg(long, value_name = "IP")]
-    pub rpcconnect: Option<String>,
+    rpcconnect: Option<String>,
 
     /// Bitcoin RPC port, default: 8332, saved
     #[arg(long, value_name = "PORT")]
-    pub rpcport: Option<u16>,
+    rpcport: Option<u16>,
 
     /// Bitcoin RPC cookie file, default: --bitcoindir/.cookie, saved
     #[arg(long, value_name = "PATH")]
-    pub rpccookiefile: Option<String>,
+    rpccookiefile: Option<String>,
 
     /// Bitcoin RPC username, saved
     #[arg(long, value_name = "USERNAME")]
-    pub rpcuser: Option<String>,
+    rpcuser: Option<String>,
 
     /// Bitcoin RPC password, saved
     #[arg(long, value_name = "PASSWORD")]
-    pub rpcpassword: Option<String>,
+    rpcpassword: Option<String>,
 
     /// Delay between runs, default: 0, saved
     #[arg(long, value_name = "SECONDS")]
-    pub delay: Option<u64>,
+    delay: Option<u64>,
 
     // Maximum ram you want the program to use in GB, default: 50% of total, not saved
     // #[arg(long, value_name = "GB")]
@@ -181,7 +181,7 @@ impl Config {
             std::process::exit(1);
         }
 
-        let path = Path::new(self.bitcoindir.as_ref().unwrap());
+        let path = self.path_bitcoindir();
         if !path.is_dir() {
             println!("Expect path '{:#?}' to be a directory.", path);
             std::process::exit(1);
@@ -206,18 +206,10 @@ impl Config {
     }
 
     pub fn to_rpc_auth(&self) -> color_eyre::Result<Auth> {
-        let cookie = Path::new(self.bitcoindir.as_ref().unwrap()).join(".cookie");
+        let cookie = self.path_cookiefile();
 
         if cookie.is_file() {
             Ok(Auth::CookieFile(cookie))
-        } else if self
-            .rpccookiefile
-            .as_ref()
-            .is_some_and(|cookie| Path::new(cookie).is_file())
-        {
-            Ok(Auth::CookieFile(PathBuf::from(
-                self.rpccookiefile.as_ref().unwrap(),
-            )))
         } else if self.rpcuser.is_some() && self.rpcpassword.is_some() {
             Ok(Auth::UserPass(
                 self.rpcuser.clone().unwrap(),
@@ -226,6 +218,18 @@ impl Config {
         } else {
             Err(eyre!("Failed to find correct auth"))
         }
+    }
+
+    pub fn rpcconnect(&self) -> Option<&String> {
+        self.rpcconnect.as_ref()
+    }
+
+    pub fn rpcport(&self) -> Option<u16> {
+        self.rpcport
+    }
+
+    pub fn delay(&self) -> Option<u64> {
+        self.delay
     }
 
     pub fn dry_run(&self) -> bool {
@@ -241,11 +245,36 @@ impl Config {
     }
 
     pub fn path_bitcoindir(&self) -> PathBuf {
-        PathBuf::from(self.bitcoindir.as_ref().unwrap())
+        Self::fix_user_path(self.bitcoindir.as_ref().unwrap().as_ref())
     }
 
     fn path_kibodir(&self) -> PathBuf {
-        PathBuf::from(self.kibodir.as_ref().unwrap())
+        Self::fix_user_path(self.kibodir.as_ref().unwrap().as_ref())
+    }
+
+    fn path_cookiefile(&self) -> PathBuf {
+        self.rpccookiefile.as_ref().map_or_else(
+            || self.path_bitcoindir().join(".cookie"),
+            |p| Self::fix_user_path(p.as_str()),
+        )
+    }
+
+    fn fix_user_path(path: &str) -> PathBuf {
+        let fix = move |pattern: &str| {
+            if path.starts_with(pattern) {
+                let path = &path
+                    .replace(&format!("{pattern}/"), "")
+                    .replace(pattern, "");
+
+                let home = std::env::var("HOME").unwrap();
+
+                Some(Path::new(&home).join(path))
+            } else {
+                None
+            }
+        };
+
+        fix("~").unwrap_or_else(|| fix("$HOME").unwrap_or_else(|| PathBuf::from(&path)))
     }
 
     pub fn path_datasets(&self) -> MapPath {

@@ -17,7 +17,7 @@ pub struct BlkIndexToBlkRecap {
     path: PathBuf,
     #[target]
     tree: BTreeMap<usize, BlkRecap>,
-    last_safe_recap: Option<BlkRecap>,
+    last_safe_height: Option<usize>,
 }
 
 impl BlkIndexToBlkRecap {
@@ -38,7 +38,7 @@ impl BlkIndexToBlkRecap {
         let mut this = Self {
             path,
             tree,
-            last_safe_recap: None,
+            last_safe_height: None,
         };
 
         this.clean_outdated(blocks_dir);
@@ -58,11 +58,11 @@ impl BlkIndexToBlkRecap {
             }
         });
 
-        unprocessed_keys.iter().for_each(|blk_index| {
-            self.remove(blk_index);
+        unprocessed_keys.into_iter().for_each(|blk_index| {
+            self.remove(&blk_index);
         });
 
-        self.last_safe_recap = self.last_entry().map(|e| e.get().clone());
+        self.last_safe_height = self.iter().map(|(_, recap)| recap.height()).max();
     }
 
     pub fn get_start_recap(&self, start: Option<usize>) -> Option<(usize, BlkRecap)> {
@@ -108,8 +108,8 @@ impl BlkIndexToBlkRecap {
         }
 
         if self
-            .last_safe_recap
-            .map_or(true, |recap| recap.height() >= height)
+            .last_safe_height
+            .map_or(true, |safe_height| height >= safe_height)
             && (height % TARGET_BLOCKS_PER_MONTH) == 0
         {
             self.export();

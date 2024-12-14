@@ -37,7 +37,7 @@ pub fn main(
             &mut datasets,
         )?;
 
-        if let Some(delay) = config.delay {
+        if let Some(delay) = config.delay() {
             sleep(Duration::from_secs(delay))
         }
 

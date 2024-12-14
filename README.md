@@ -63,17 +63,19 @@ Please open an issue if you want to add another instance
 ### Requirements
 
 - At least 16 GB of RAM
-- 1 TB of free space (will use 70% of that without defragmentation and 40% after)
+  - Recommended: 32 GB
+- A disk with 1 TB of free space (will use between 40% to 80% depending on several things)
+  - Recommended: Rated at 3 GB/s (Thunderbolt 4 speed)
 - A running instance of bitcoin-core with:
   - `-txindex=1`
   - `-blocksxor=0`
   - RPC credentials
   - Example: `bitcoind -datadir="$HOME/.bitcoin" -blocksonly -txindex=1 -blocksxor=0`
 - Git
+- Unix based operating system (Mac OS or Linux)
+  - Ubuntu users need to install `open-ssl` via `sudo apt install libssl-dev pkg-config`
 
-### Manual
-
-_Mac OS and Linux only, Windows is unsupported_
+### Build
 
 First we need to install Rust (https://www.rust-lang.org/tools/install)
 
@@ -81,75 +83,33 @@ First we need to install Rust (https://www.rust-lang.org/tools/install)
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 ```
 
-If you already had Rust installed you could update it just in case
+If you already had Rust installed you could update it
 
 ```bash
 rustup update
 ```
 
-> If you're on Ubuntu you'll probably also need to install `open-ssl` with
->
-> ```bash
-> sudo apt install libssl-dev pkg-config
-> ```
-
-Optionally, you can also install `cargo-watch` for the server to automatically restart it on file change, which will be triggered by new code and new datasets from the parser (https://github.com/watchexec/cargo-watch?tab=readme-ov-file#install)
-
-```bash
-cargo install cargo-watch --locked
-```
-
-Then you need to choose a path where all files related to **kibō** will live
+Then you need to choose a path where the project will reside and then clone it
 
 ```bash
 cd ???
-```
-
-We can now clone the repository
-
-```bash
 git clone https://github.com/kibo-money/kibo.git
+cd kibo
 ```
 
-In a new terminal, go to the `parser`'s folder of the repository
+If it's your first time running kibo, it will need several information such as:
 
-```bash
-cd ???/kibo/parser
-```
+- `--bitcoindir PATH`: path to bitcoin core data directory, `???/bitcoin`
+- `--kibodir PATH`: path to kibo outputs, if you have enough space on your main disk `~/.kibo` is fine
 
-Now we can finally start by running the parser, you need to use the `./run.sh` script instead of `cargo run -r` as we need to set various system variables for the program to run smoothly
+Everything will be saved at `~/.kibo/config.toml`, which will allow you to simply run `cargo run -r` next time
 
-For the first launch, the parser will need several information such as:
-
-- `--datadir`: which is bitcoin data directory path, prefer `$HOME` to `~` as the latter might not work
-- `--outdir`: where all outputs will be saved, prefer `$HOME` to `~` as the latter might not work
-
-Optionally you can also specify:
-
-- `--rpccookiefile`: the path to the cookie file if not default
-- `--rpcuser`: the username of the RPC credentials to talk to the bitcoin server if set
-- `--rpcpassword`: the password of the RPC credentials if set
-- `--rpcconnect`: if the bitcoin core server's IP is different than `localhost`
-- `--rpcport`: if the port is different than `8332`
-
-Everything will be saved in a `config.toml` file, which will allow you to simply run `./run.sh` next time
+If you need more options please run `cargo run -r --help` to see what parameters are available.
 
 Here's an example
 
 ```bash
-./run.sh --datadir=$HOME/Developer/bitcoin --outdir=$HOME/.kibo/out
-```
-
-In a **new** terminal, go to the `server`'s folder of the repository
-
-```bash
-cd ???/kibo/server
-```
-
-And start it also with the `run.sh` script instead of `cargo run -r`
-
-```bash
-./run.sh
+cargo run -r -- --bitcoindir=~/Developer/bitcoin --kibodir=~/.kibo
 ```
 
 Then the easiest to let others access your server is to use `cloudflared` which will also cache requests. For more information go to: https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/

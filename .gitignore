@@ -4,9 +4,6 @@
 # Builds
 target
 
-# Sync
-.stfolder
-
 # Copies
 *\ copy*
 
@@ -32,6 +29,3 @@ docker/kibo
 
 # Types
 paths.d.ts
-
-# Git
-.git-*
