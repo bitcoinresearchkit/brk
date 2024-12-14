@@ -6,10 +6,11 @@ use std::{
 
 use allocative::Allocative;
 use itertools::Itertools;
+use snkrj::{AnyDatabase, Database};
 
 use crate::structs::{Address, Config, U8x19, U8x31};
 
-use super::{AnyDatabase, AnyDatabaseGroup, Database, Metadata};
+use super::{AnyDatabaseGroup, Metadata};
 
 type Value = u32;
 type U8x19Database = Database<U8x19, Value>;
@@ -33,16 +34,27 @@ pub struct AddressToAddressIndex {
     path: PathBuf,
     pub metadata: Metadata,
 
+    #[allocative(skip)]
     p2pk: BTreeMap<u16, P2PKDatabase>,
+    #[allocative(skip)]
     p2pkh: BTreeMap<u16, P2PKHDatabase>,
+    #[allocative(skip)]
     p2sh: BTreeMap<u16, P2SHDatabase>,
+    #[allocative(skip)]
     p2wpkh: BTreeMap<u16, P2WPKHDatabase>,
+    #[allocative(skip)]
     p2wsh: BTreeMap<u16, P2WSHDatabase>,
+    #[allocative(skip)]
     p2tr: BTreeMap<u16, P2TRDatabase>,
+    #[allocative(skip)]
     op_return: Option<OpReturnDatabase>,
+    #[allocative(skip)]
     push_only: Option<PushOnlyDatabase>,
+    #[allocative(skip)]
     unknown: Option<UnknownDatabase>,
+    #[allocative(skip)]
     empty: Option<EmptyDatabase>,
+    #[allocative(skip)]
     multisig: Option<MultisigDatabase>,
 }
 
@@ -103,19 +115,19 @@ impl AddressToAddressIndex {
         }
     }
 
-    pub fn unsafe_get_from_puts(&self, address: &Address) -> Option<&Value> {
+    pub fn get_from_ram(&self, address: &Address) -> Option<&Value> {
         match address {
-            Address::Empty(key) => self.empty.as_ref().unwrap().get_from_puts(key),
-            Address::Unknown(key) => self.unknown.as_ref().unwrap().get_from_puts(key),
-            Address::OpReturn(key) => self.op_return.as_ref().unwrap().get_from_puts(key),
-            Address::PushOnly(key) => self.push_only.as_ref().unwrap().get_from_puts(key),
-            Address::MultiSig(key) => self.multisig.as_ref().unwrap().get_from_puts(key),
-            Address::P2PK((prefix, key)) => self.p2pk.get(prefix).unwrap().get_from_puts(key),
-            Address::P2PKH((prefix, key)) => self.p2pkh.get(prefix).unwrap().get_from_puts(key),
-            Address::P2SH((prefix, key)) => self.p2sh.get(prefix).unwrap().get_from_puts(key),
-            Address::P2WPKH((prefix, key)) => self.p2wpkh.get(prefix).unwrap().get_from_puts(key),
-            Address::P2WSH((prefix, key)) => self.p2wsh.get(prefix).unwrap().get_from_puts(key),
-            Address::P2TR((prefix, key)) => self.p2tr.get(prefix).unwrap().get_from_puts(key),
+            Address::Empty(key) => self.empty.as_ref().unwrap().get_from_ram(key),
+            Address::Unknown(key) => self.unknown.as_ref().unwrap().get_from_ram(key),
+            Address::OpReturn(key) => self.op_return.as_ref().unwrap().get_from_ram(key),
+            Address::PushOnly(key) => self.push_only.as_ref().unwrap().get_from_ram(key),
+            Address::MultiSig(key) => self.multisig.as_ref().unwrap().get_from_ram(key),
+            Address::P2PK((prefix, key)) => self.p2pk.get(prefix).unwrap().get_from_ram(key),
+            Address::P2PKH((prefix, key)) => self.p2pkh.get(prefix).unwrap().get_from_ram(key),
+            Address::P2SH((prefix, key)) => self.p2sh.get(prefix).unwrap().get_from_ram(key),
+            Address::P2WPKH((prefix, key)) => self.p2wpkh.get(prefix).unwrap().get_from_ram(key),
+            Address::P2WSH((prefix, key)) => self.p2wsh.get(prefix).unwrap().get_from_ram(key),
+            Address::P2TR((prefix, key)) => self.p2tr.get(prefix).unwrap().get_from_ram(key),
         }
     }
 

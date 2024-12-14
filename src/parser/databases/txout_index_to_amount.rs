@@ -7,10 +7,11 @@ use std::{
 
 use allocative::Allocative;
 use itertools::Itertools;
+use snkrj::{AnyDatabase, Database as _Database};
 
 use crate::structs::{Amount, Config, TxoutIndex};
 
-use super::{AnyDatabase, AnyDatabaseGroup, Database as _Database, Metadata};
+use super::{AnyDatabaseGroup, Metadata};
 
 type Key = TxoutIndex;
 type Value = Amount;
@@ -20,6 +21,7 @@ type Database = _Database<Key, Value>;
 pub struct TxoutIndexToAmount {
     path: PathBuf,
     pub metadata: Metadata,
+    #[allocative(skip)]
     map: BTreeMap<usize, Database>,
 }
 
@@ -40,19 +42,11 @@ impl DerefMut for TxoutIndexToAmount {
 const DB_MAX_SIZE: usize = 10_000_000_000;
 
 impl TxoutIndexToAmount {
-    pub fn unsafe_insert(&mut self, key: Key, value: Value) -> Option<Value> {
+    pub fn insert_to_ram(&mut self, key: Key, value: Value) -> Option<Value> {
         self.metadata.called_insert();
 
-        self.open_db(&key).unsafe_insert(key, value)
+        self.open_db(&key).insert_to_ram(key, value)
     }
-
-    // pub fn undo_insert(&mut self, key: &Key) -> Option<Value> {
-    //     self.open_db(key).remove_from_puts(key).map(|v| {
-    //         self.metadata.called_remove();
-
-    //         v
-    //     })
-    // }
 
     pub fn remove(&mut self, key: &Key) -> Option<Value> {
         self.metadata.called_remove();

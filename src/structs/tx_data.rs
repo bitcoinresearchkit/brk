@@ -1,5 +1,5 @@
 use allocative::Allocative;
-use sanakirja::{direct_repr, Storable, UnsizedStorable};
+use snkrj::{direct_repr, Storable, UnsizedStorable};
 
 use super::BlockPath;
 

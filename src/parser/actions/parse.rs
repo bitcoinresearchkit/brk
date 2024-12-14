@@ -241,7 +241,7 @@ pub fn parse(
 
                     databases
                         .txout_index_to_amount
-                        .unsafe_insert(txout_index, amount);
+                        .insert_to_ram(txout_index, amount);
 
                     if compute_addresses {
                         let address = address.unwrap();
@@ -253,7 +253,7 @@ pub fn parse(
                             if let Some(address_index) = address_index_opt.or_else(|| {
                                 databases
                                     .address_to_address_index
-                                    .unsafe_get_from_puts(&address)
+                                    .get_from_ram(&address)
                                     .cloned()
                             }) {
                                 let address_data = address_index_to_address_data
@@ -301,7 +301,7 @@ pub fn parse(
 
                         databases
                             .txout_index_to_address_index
-                            .unsafe_insert(txout_index, address_index);
+                            .insert_to_ram(txout_index, address_index);
                     }
                 });
 
@@ -336,9 +336,7 @@ pub fn parse(
                             .or_else(|| {
                                 is_tx_data_from_cached_puts = true;
 
-                                databases
-                                    .txid_to_tx_data
-                                    .unsafe_get_mut_from_puts(&input_txid)
+                                databases.txid_to_tx_data.get_mut_from_ram(&input_txid)
                             });
 
                         // Can be none because 0 sats inputs happen
@@ -534,7 +532,7 @@ pub fn parse(
 
                     if remove_tx_data_from_cached_puts {
                         // Pre remove tx_datas that are empty and weren't yet added to the database to avoid having it was in there or not (and thus avoid useless operations)
-                        databases.txid_to_tx_data.remove_from_puts(&input_txid)
+                        databases.txid_to_tx_data.remove_from_ram(&input_txid)
                     }
 
                     ControlFlow::Continue(())
@@ -558,7 +556,7 @@ pub fn parse(
     txid_to_tx_data.into_iter().for_each(|(txid, tx_data)| {
         if let Some(tx_data) = tx_data {
             if tx_data.is_empty() {
-                databases.txid_to_tx_data.remove_from_db(txid);
+                databases.txid_to_tx_data.remove_later_from_disk(txid);
             } else {
                 databases.txid_to_tx_data.update(txid, tx_data);
             }
@@ -738,14 +736,14 @@ pub fn parse(
         address_index_to_address_data.unwrap().into_iter().for_each(
             |(address_index, address_data)| {
                 if address_data.is_empty() {
-                    databases.address_index_to_empty_address_data.unsafe_insert(
+                    databases.address_index_to_empty_address_data.insert_to_ram(
                         address_index,
                         EmptyAddressData::from_non_empty(&address_data),
                     );
                 } else {
                     databases
                         .address_index_to_address_data
-                        .unsafe_insert(address_index, address_data);
+                        .insert_to_ram(address_index, address_data);
                 }
             },
         )
@@ -901,7 +899,7 @@ fn prepare_inputs<'a>(
 
     let mut tx_datas = txid_to_tx_data
         .par_iter()
-        .map(|(txid, _)| txid_to_tx_data_db.unsafe_get(txid))
+        .map(|(txid, _)| txid_to_tx_data_db.get(txid))
         .collect::<Vec<_>>();
 
     txid_to_tx_data.values_mut().rev().for_each(|tx_data_opt| {
@@ -992,20 +990,20 @@ fn compute_address_index_to_address_data(
         .par_iter_mut()
         .for_each(|(address_index, address_data)| {
             if let Some(_address_data) =
-                address_index_to_address_data_db.unsafe_get_from_cache(address_index)
+                address_index_to_address_data_db.get_from_ram(address_index)
             {
                 _address_data.clone_into(address_data);
             } else if let Some(empty_address_data) =
-                address_index_to_empty_address_data_db.unsafe_get_from_cache(address_index)
+                address_index_to_empty_address_data_db.get_from_ram(address_index)
             {
                 *address_data = AddressData::from_empty(empty_address_data);
             } else if let Some(_address_data) =
-                address_index_to_address_data_db.unsafe_get_from_db(address_index)
+                address_index_to_address_data_db.get_from_disk(address_index)
             {
                 _address_data.clone_into(address_data);
             } else {
                 let empty_address_data = address_index_to_empty_address_data_db
-                    .unsafe_get_from_db(address_index)
+                    .get_from_disk(address_index)
                     .unwrap();
 
                 *address_data = AddressData::from_empty(empty_address_data);

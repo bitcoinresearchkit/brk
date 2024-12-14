@@ -8,6 +8,7 @@ use std::{
 use allocative::Allocative;
 use itertools::Itertools;
 use rayon::prelude::*;
+use snkrj::{AnyDatabase, Database as _Database};
 
 use crate::{
     parser::states::AddressCohortsDurableStates,
@@ -15,7 +16,7 @@ use crate::{
     utils::time,
 };
 
-use super::{AnyDatabase, AnyDatabaseGroup, Database as _Database, Metadata};
+use super::{AnyDatabaseGroup, Metadata};
 
 type Key = u32;
 type Value = AddressData;
@@ -25,6 +26,7 @@ type Database = _Database<Key, Value>;
 pub struct AddressIndexToAddressData {
     path: PathBuf,
     pub metadata: Metadata,
+    #[allocative(skip)]
     pub map: BTreeMap<usize, Database>,
 }
 
@@ -45,10 +47,10 @@ impl DerefMut for AddressIndexToAddressData {
 pub const ADDRESS_INDEX_DB_MAX_SIZE: usize = 250_000;
 
 impl AddressIndexToAddressData {
-    pub fn unsafe_insert(&mut self, key: Key, value: Value) -> Option<Value> {
+    pub fn insert_to_ram(&mut self, key: Key, value: Value) -> Option<Value> {
         self.metadata.called_insert();
 
-        self.open_db(&key).unsafe_insert(key, value)
+        self.open_db(&key).insert_to_ram(key, value)
     }
 
     pub fn remove(&mut self, key: &Key) -> Option<Value> {
@@ -59,16 +61,16 @@ impl AddressIndexToAddressData {
 
     /// Doesn't check if the database is open contrary to `safe_get` which does and opens if needed
     /// Though it makes it easy to use with rayon.
-    pub fn unsafe_get_from_cache(&self, key: &Key) -> Option<&Value> {
+    pub fn get_from_ram(&self, key: &Key) -> Option<&Value> {
         let db_index = Self::db_index(key);
 
-        self.get(&db_index).unwrap().get_from_puts(key)
+        self.get(&db_index).unwrap().get_from_ram(key)
     }
 
-    pub fn unsafe_get_from_db(&self, key: &Key) -> Option<&Value> {
+    pub fn get_from_disk(&self, key: &Key) -> Option<&Value> {
         let db_index = Self::db_index(key);
 
-        self.get(&db_index).unwrap().db_get(key)
+        self.get(&db_index).unwrap().get_from_disk(key)
     }
 
     pub fn open_db(&mut self, key: &Key) -> &mut Database {
@@ -99,7 +101,7 @@ impl AddressIndexToAddressData {
                     let mut s = AddressCohortsDurableStates::default();
 
                     database
-                        .iter()
+                        .iter_disk()
                         .map(|r| r.unwrap().1)
                         .for_each(|address_data| s.increment(address_data).unwrap());
 

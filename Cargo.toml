@@ -27,7 +27,7 @@ rayon = "1.10.0"
 regex = "1.11.1"
 reqwest = { version = "0.12.9", features = ["blocking", "json"] }
 rlimit = "0.10.2"
-sanakirja = "1.4.3"
+snkrj = { path = "./crates/snkrj" }
 serde = { version = "1.0.216", features = ["derive"] }
 serde_json = "1.0.133"
 struct_iterable = { path = "./crates/iterable" }

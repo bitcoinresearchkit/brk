@@ -1,6 +1,6 @@
 use allocative::Allocative;
 use color_eyre::eyre::eyre;
-use sanakirja::{direct_repr, Storable, UnsizedStorable};
+use snkrj::{direct_repr, Storable, UnsizedStorable};
 
 use super::{AddressType, Amount, EmptyAddressData, LiquidityClassification, Price};
 

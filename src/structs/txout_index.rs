@@ -1,6 +1,6 @@
 use allocative::Allocative;
 use bincode::{Decode, Encode};
-use sanakirja::{direct_repr, Storable, UnsizedStorable};
+use snkrj::{direct_repr, Storable, UnsizedStorable};
 
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Encode, Decode, Allocative)]
 pub struct TxoutIndex {

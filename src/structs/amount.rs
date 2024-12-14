@@ -12,8 +12,8 @@ use bincode::{
 };
 use biter::bitcoin::Amount as BitcoinAmount;
 use derive_deref::{Deref, DerefMut};
-use sanakirja::{direct_repr, Storable, UnsizedStorable};
 use serde::{Deserialize, Serialize};
+use snkrj::{direct_repr, Storable, UnsizedStorable};
 
 use super::Height;
 

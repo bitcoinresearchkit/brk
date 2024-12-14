@@ -2,7 +2,7 @@ use std::fmt::Debug;
 
 use allocative::Allocative;
 use derive_deref::{Deref, DerefMut};
-use sanakirja::{direct_repr, Storable, UnsizedStorable};
+use snkrj::{direct_repr, Storable, UnsizedStorable};
 
 #[derive(
     Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Deref, DerefMut, Default, Copy, Allocative,

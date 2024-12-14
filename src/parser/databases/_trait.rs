@@ -1,10 +1,11 @@
 use std::{fs, io, path::Path};
 
 use log::info;
+use snkrj::AnyDatabase;
 
 use crate::structs::{Config, Date, Height};
 
-use super::{AnyDatabase, Metadata};
+use super::Metadata;
 
 pub trait AnyDatabaseGroup
 where

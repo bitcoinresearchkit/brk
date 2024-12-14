@@ -213,7 +213,9 @@ pub fn iter_blocks(
 
             let defragment = is_safe
                 && next_date_opt.is_some_and(|date| {
-                    date.year() >= 2020 && date.is_january() && date.is_first_of_month()
+                    (date.year() >= 2020 && date.is_january()
+                        || date.year() >= 2022 && date.is_june())
+                        && date.is_first_of_month()
                 });
 
             export(ExportedData {

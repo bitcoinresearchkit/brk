@@ -1,6 +1,5 @@
 use allocative::Allocative;
 
-mod _database;
 mod _trait;
 mod address_index_to_address_data;
 mod address_index_to_empty_address_data;
@@ -10,7 +9,6 @@ mod txid_to_tx_data;
 mod txout_index_to_address_index;
 mod txout_index_to_amount;
 
-pub use _database::*;
 use _trait::*;
 pub use address_index_to_address_data::*;
 pub use address_index_to_empty_address_data::*;
@@ -19,6 +17,7 @@ use itertools::Itertools;
 use log::info;
 use metadata::*;
 use rayon::iter::{IntoParallelIterator, ParallelIterator};
+use snkrj::AnyDatabase;
 pub use txid_to_tx_data::*;
 pub use txout_index_to_address_index::*;
 pub use txout_index_to_amount::*;

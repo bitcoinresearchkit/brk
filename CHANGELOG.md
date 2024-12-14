@@ -6,11 +6,12 @@
 # v0.6.0 | WIP
 
 - Merged parser and server crates into a single project (and thus executable)
-- Started using `log` and `env_logger` crates
+- Started using `log` and `env_logger` crates instead of custom code
 - Improved logs
 - Added `--server BOOL` and `--parser BOOL` parameters (both are true by default)
 - Automated databases defragmention (and removed parameter)
 - Fixed input being unfocused right after being focused in Brave browser
+- Moved Sanakirja database wrapper to its own crate: `snkrj`
 
 # [v0.5.0](https://github.com/kibo-money/kibo/tree/eea56d394bf92c62c81da8b78b8c47ea730683f5) | [873199](https://mempool.space/block/0000000000000000000270925aa6a565be92e13164565a3f7994ca1966e48050) - 2024/12/04
 

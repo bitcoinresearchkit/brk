@@ -1,17 +1,17 @@
 use std::{
     collections::BTreeMap,
     fs, mem,
-    ops::{Deref, DerefMut},
     path::{Path, PathBuf},
 };
 
 use allocative::Allocative;
 use biter::bitcoin::Txid;
 use itertools::Itertools;
+use snkrj::{AnyDatabase, Database as _Database};
 
 use crate::structs::{Config, TxData, U8x31};
 
-use super::{AnyDatabase, AnyDatabaseGroup, Database as _Database, Metadata};
+use super::{AnyDatabaseGroup, Metadata};
 
 type Key = U8x31;
 type Value = TxData;
@@ -21,21 +21,8 @@ type Database = _Database<Key, Value>;
 pub struct TxidToTxData {
     path: PathBuf,
     pub metadata: Metadata,
+    #[allocative(skip)]
     map: BTreeMap<u16, Database>,
-}
-
-impl Deref for TxidToTxData {
-    type Target = BTreeMap<u16, Database>;
-
-    fn deref(&self) -> &Self::Target {
-        &self.map
-    }
-}
-
-impl DerefMut for TxidToTxData {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.map
-    }
 }
 
 impl TxidToTxData {
@@ -47,53 +34,41 @@ impl TxidToTxData {
         self.open_db(txid).insert(txid_key, tx_index)
     }
 
-    // pub fn safe_get(&mut self, txid: &Txid) -> Option<&Value> {
-    //     let txid_key = Self::txid_to_key(txid);
-    //     self.open_db(txid).get(&txid_key)
-    // }
-
     /// Doesn't check if the database is open contrary to `safe_get` which does and opens if needed.
     /// Though it makes it easy to use with rayon
-    pub fn unsafe_get(&self, txid: &Txid) -> Option<&Value> {
+    pub fn get(&self, txid: &Txid) -> Option<&Value> {
         let txid_key = Self::txid_to_key(txid);
 
         let db_index = Self::db_index(txid);
 
-        self.get(&db_index).unwrap().get(&txid_key)
+        self.map.get(&db_index).unwrap().get(&txid_key)
     }
 
-    // pub fn unsafe_get_from_puts(&self, txid: &Txid) -> Option<&Value> {
-    //     let txid_key = Self::txid_to_key(txid);
-
-    //     let db_index = Self::db_index(txid);
-
-    //     self.get(&db_index).unwrap().get_from_puts(&txid_key)
-    // }
-
-    pub fn unsafe_get_mut_from_puts(&mut self, txid: &Txid) -> Option<&mut Value> {
+    pub fn get_mut_from_ram(&mut self, txid: &Txid) -> Option<&mut Value> {
         let txid_key = Self::txid_to_key(txid);
 
         let db_index = Self::db_index(txid);
 
-        self.get_mut(&db_index)
+        self.map
+            .get_mut(&db_index)
             .unwrap()
-            .get_mut_from_puts(&txid_key)
+            .get_mut_from_ram(&txid_key)
     }
 
-    pub fn remove_from_db(&mut self, txid: &Txid) {
+    pub fn remove_later_from_disk(&mut self, txid: &Txid) {
         self.metadata.called_remove();
 
         let txid_key = Self::txid_to_key(txid);
 
-        self.open_db(txid).db_remove(&txid_key);
+        self.open_db(txid).remove_later_from_disk(&txid_key);
     }
 
-    pub fn remove_from_puts(&mut self, txid: &Txid) {
+    pub fn remove_from_ram(&mut self, txid: &Txid) {
         self.metadata.called_remove();
 
         let txid_key = Self::txid_to_key(txid);
 
-        self.open_db(txid).remove_from_puts(&txid_key);
+        self.open_db(txid).remove_from_ram(&txid_key);
     }
 
     pub fn update(&mut self, txid: &Txid, tx_data: TxData) {
@@ -111,7 +86,7 @@ impl TxidToTxData {
     #[inline(always)]
     pub fn _open_db(&mut self, db_index: u16) -> &mut Database {
         let path = self.path.to_owned();
-        self.entry(db_index).or_insert_with(|| {
+        self.map.entry(db_index).or_insert_with(|| {
             let path = path.join(db_index.to_string());
             Database::open(path).unwrap()
         })

@@ -1524,9 +1524,9 @@ dependencies = [
  "regex",
  "reqwest",
  "rlimit",
- "sanakirja",
  "serde",
  "serde_json",
+ "snkrj",
  "struct_iterable",
  "swc",
  "swc_common",
@@ -2619,6 +2619,13 @@ dependencies = [
  "autocfg",
  "static_assertions",
  "version_check",
+]
+
+[[package]]
+name = "snkrj"
+version = "0.1.0"
+dependencies = [
+ "sanakirja",
 ]
 
 [[package]]
