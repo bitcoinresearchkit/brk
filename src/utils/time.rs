@@ -2,7 +2,9 @@ use std::time::Instant;
 
 use log::info;
 
-pub fn time<F, T>(name: &str, function: F) -> T
+use crate::structs::DisplayInstant;
+
+pub fn time<F, T>(text: &str, function: F) -> T
 where
     F: FnOnce() -> T,
 {
@@ -10,7 +12,7 @@ where
 
     let returned = function();
 
-    info!("{name}: {} seconds", time.elapsed().as_secs_f32());
+    info!("{text} {}", time.display());
 
     returned
 }

@@ -1,4 +1,4 @@
-use std::thread;
+use std::{fs, thread};
 
 mod _trait;
 mod cohorts_states;
@@ -25,6 +25,8 @@ pub struct States {
 
 impl States {
     pub fn import(config: &Config) -> color_eyre::Result<Self> {
+        fs::create_dir_all(config.path_states())?;
+
         let date_data_vec = DateDataVec::import(config)?;
 
         let address_counters = Counters::import(config)?;

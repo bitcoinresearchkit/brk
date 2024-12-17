@@ -1311,10 +1311,10 @@ function initFrameSelectors() {
   function setAsideParent() {
     const { clientWidth } = window.document.documentElement;
     const { aside, body, main } = elements;
-    if (clientWidth >= consts.MEDIUM_WIDTH && aside.parentElement !== body) {
-      body.append(aside);
-    } else if (aside.parentElement !== main) {
-      main.append(aside);
+    if (clientWidth >= consts.MEDIUM_WIDTH) {
+      aside.parentElement !== body && body.append(aside);
+    } else {
+      aside.parentElement !== main && main.append(aside);
     }
   }
 

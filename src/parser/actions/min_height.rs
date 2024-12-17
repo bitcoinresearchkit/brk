@@ -123,6 +123,8 @@ pub fn find_first_inserted_unsafe_height(
             //     panic!("");
             // }
 
+            if true {panic!()}
+
             states.reset(config, include_addresses);
 
             databases.reset(include_addresses);

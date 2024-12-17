@@ -1,5 +1,6 @@
 use std::{
     fs::{self},
+    mem,
     path::{Path, PathBuf},
 };
 
@@ -46,28 +47,30 @@ pub struct Config {
     #[arg(long, value_name = "SECONDS")]
     delay: Option<u64>,
 
-    // Maximum ram you want the program to use in GB, default: 50% of total, not saved
-    // #[arg(long, value_name = "GB")]
-    // pub max_ram: Option<f64>,
-    /// Enable or disable the parser, default: true, not saved
-    #[arg(long, value_name = "BOOL")]
-    parser: Option<bool>,
+    /// Disable the parser, not saved
+    #[serde(default)]
+    #[arg(long, default_value_t = false)]
+    no_parser: bool,
 
-    /// Enable or disable the server, default: true, not saved
-    #[arg(long, value_name = "BOOL")]
-    server: Option<bool>,
+    /// Disable the server, not saved
+    #[serde(default)]
+    #[arg(long, default_value_t = false)]
+    no_server: bool,
 
-    /// Start a dry run, default: true, not saved
-    #[arg(long, value_name = "BOOL")]
-    dry_run: Option<bool>,
+    /// Run without saving, not saved
+    #[serde(default)]
+    #[arg(long, default_value_t = false)]
+    dry_run: bool,
 
-    /// Record ram usage, default: false, not saved
-    #[arg(long, value_name = "BOOL")]
-    record_ram_usage: Option<bool>,
+    /// Record ram usage, not saved
+    #[serde(default)]
+    #[arg(long, default_value_t = false)]
+    record_ram_usage: bool,
 
-    /// Recompute all computed datasets, default: false, not saved
-    #[arg(long, value_name = "BOOL")]
-    recompute_computed: Option<bool>,
+    /// Recompute all computed datasets, not saved
+    #[serde(default)]
+    #[arg(long, default_value_t = false)]
+    recompute_computed: bool,
 }
 
 impl Config {
@@ -125,11 +128,11 @@ impl Config {
 
         config.write(&path)?;
 
-        config.parser = config_args.parser.take();
-        config.server = config_args.server.take();
-        config.dry_run = config_args.dry_run.take();
-        config.record_ram_usage = config_args.record_ram_usage.take();
-        config.recompute_computed = config_args.recompute_computed.take();
+        config.no_parser = mem::take(&mut config_args.no_parser);
+        config.no_server = mem::take(&mut config_args.no_server);
+        config.dry_run = mem::take(&mut config_args.dry_run);
+        config.record_ram_usage = mem::take(&mut config_args.record_ram_usage);
+        config.recompute_computed = mem::take(&mut config_args.recompute_computed);
 
         info!("Configuration {{");
         info!("  bitcoindir: {:?}", config.bitcoindir);
@@ -233,22 +236,22 @@ impl Config {
     }
 
     pub fn dry_run(&self) -> bool {
-        self.dry_run.is_some_and(|b| b)
+        self.dry_run
     }
 
     pub fn record_ram_usage(&self) -> bool {
-        self.record_ram_usage.is_some_and(|b| b)
+        self.record_ram_usage
     }
 
     pub fn recompute_computed(&self) -> bool {
-        self.recompute_computed.is_some_and(|b| b)
+        self.recompute_computed
     }
 
     pub fn path_bitcoindir(&self) -> PathBuf {
         Self::fix_user_path(self.bitcoindir.as_ref().unwrap().as_ref())
     }
 
-    fn path_kibodir(&self) -> PathBuf {
+    pub fn path_kibodir(&self) -> PathBuf {
         Self::fix_user_path(self.kibodir.as_ref().unwrap().as_ref())
     }
 
@@ -311,10 +314,10 @@ impl Config {
     }
 
     pub fn parser(&self) -> bool {
-        self.parser.is_none_or(|b| b)
+        !self.no_parser
     }
 
     pub fn server(&self) -> bool {
-        self.server.is_none_or(|b| b)
+        !self.no_server
     }
 }

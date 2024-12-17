@@ -9,7 +9,6 @@ use serde::{de::DeserializeOwned, Serialize};
 
 use crate::{io::Serialization, structs::Config};
 
-// https://github.com/djkoloski/rust_serialization_benchmark
 pub trait AnyState
 where
     Self: Debug + Encode + Decode + Serialize + DeserializeOwned,
@@ -26,9 +25,7 @@ where
     }
 
     fn import(config: &Config) -> color_eyre::Result<Self> {
-        let path = Self::path(config);
-        fs::create_dir_all(&path)?;
-        Serialization::Binary.import(&path)
+        Serialization::Binary.import(&Self::path(config))
     }
 
     fn export(&self, config: &Config) -> color_eyre::Result<()> {

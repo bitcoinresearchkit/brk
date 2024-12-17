@@ -1,5 +1,3 @@
-use std::thread::{self};
-
 use log::info;
 
 use crate::{
@@ -38,27 +36,23 @@ pub fn export(
 
     exit.block();
 
-    info!("Exporting...");
-    if defragment {
-        info!("Will also defragment databases, please be patient it might take a while")
-    }
+    let text = if defragment {
+        "export and defragmentation"
+    } else {
+        "export"
+    };
+    info!("Starting {text}");
 
-    time("Total save time", || -> color_eyre::Result<()> {
-        time("Datasets saved", || datasets.export(config))?;
+    time(&format!("Finished {text}"), || -> color_eyre::Result<()> {
+        datasets.export(config)?;
 
-        thread::scope(|s| {
-            if let Some(databases) = databases {
-                s.spawn(|| {
-                    time("Databases saved", || {
-                        databases.export(height, date, defragment)
-                    })
-                });
-            }
+        if let Some(databases) = databases {
+            databases.export(height, date, defragment)?;
+        }
 
-            if let Some(states) = states {
-                s.spawn(|| time("States saved", || states.export(config)));
-            }
-        });
+        if let Some(states) = states {
+            states.export(config)?;
+        }
 
         Ok(())
     })?;

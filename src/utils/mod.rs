@@ -4,7 +4,6 @@ mod log;
 mod lossy;
 mod percentile;
 mod retry;
-mod rpc;
 mod time;
 
 pub use consts::*;

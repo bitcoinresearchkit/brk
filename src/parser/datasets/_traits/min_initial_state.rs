@@ -45,13 +45,6 @@ enum Mode {
 }
 
 impl MinInitialState {
-    // pub fn consume(&mut self, other: Self) {
-    //     self.first_unsafe_date = other.first_unsafe_date;
-    //     self.first_unsafe_height = other.first_unsafe_height;
-    //     self.last_date = other.last_date;
-    //     self.last_height = other.last_height;
-    // }
-
     fn compute_from_datasets(datasets: &dyn AnyDatasets, mode: Mode, config: &Config) -> Self {
         match mode {
             Mode::Inserted => {

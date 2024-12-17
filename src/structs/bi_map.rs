@@ -11,7 +11,7 @@ use super::{
     AnyDateMap, AnyHeightMap, AnyMap, Date, DateMap, Height, HeightMap, MapKind, MapPath, MapValue,
 };
 
-#[derive(Allocative)]
+#[derive(Allocative, Debug)]
 pub struct BiMap<Value>
 where
     Value: MapValue,

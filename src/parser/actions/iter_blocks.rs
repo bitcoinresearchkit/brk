@@ -15,7 +15,7 @@ use crate::{
         datasets::{ComputeData, Datasets},
         states::{AddressCohortsDurableStates, States, UTXOCohortsDurableStates},
     },
-    structs::{Config, DateData, Exit, Height, MapKey, Timestamp},
+    structs::{Config, DateData, DisplayInstant, Exit, Height, MapKey, Timestamp},
     utils::{generate_allocation_files, time},
 };
 
@@ -52,8 +52,6 @@ pub fn iter_blocks(
     let mut block_iter = block_receiver.iter();
 
     'parsing: loop {
-        let instant = Instant::now();
-
         let mut processed_heights = BTreeSet::new();
         let mut processed_dates = BTreeSet::new();
 
@@ -63,6 +61,8 @@ pub fn iter_blocks(
             if next_block_opt.is_some() {
                 blocks_loop_date.take();
             }
+
+            let instant = Instant::now();
 
             'blocks: loop {
                 let current_block_opt = next_block_opt.take().or_else(|| block_iter.next());
@@ -88,8 +88,6 @@ pub fn iter_blocks(
 
                     // Always run for the first block of the loop
                     if blocks_loop_date.is_none() {
-                        info!("Processing {current_block_date} (height: {height})...");
-
                         blocks_loop_date.replace(current_block_date);
 
                         if states
@@ -164,15 +162,18 @@ pub fn iter_blocks(
                     blocks_loop_i += 1;
 
                     if is_date_last_block {
+                        info!(
+                            "Processed {current_block_date} ({height} - {current_block_height}) {}",
+                            instant.display()
+                        );
+
                         height += blocks_loop_i;
 
                         let is_check_point = next_date_opt
                             .as_ref()
                             .map_or(true, |date| date.is_first_of_month());
 
-                        let ran_for_at_least_a_minute = instant.elapsed().as_secs() >= 60;
-
-                        if (is_check_point && ran_for_at_least_a_minute)
+                        if (is_check_point && instant.elapsed().as_secs() >= 2)
                             || height.is_close_to_end(approx_block_count)
                         {
                             break 'days;
@@ -188,11 +189,6 @@ pub fn iter_blocks(
 
         // Don't remember why -1
         let last_height = height - 1_u32;
-
-        info!(
-            "Parsing group took {} seconds (last height: {last_height})",
-            instant.elapsed().as_secs_f32(),
-        );
 
         if first_unsafe_heights.computed <= last_height {
             info!("Computing datasets...");
@@ -214,7 +210,7 @@ pub fn iter_blocks(
             let defragment = is_safe
                 && next_date_opt.is_some_and(|date| {
                     (date.year() >= 2020 && date.is_january()
-                        || date.year() >= 2022 && date.is_june())
+                        || date.year() >= 2022 && date.is_july())
                         && date.is_first_of_month()
                 });
 
@@ -237,8 +233,6 @@ pub fn iter_blocks(
         } else {
             info!("Skipping export");
         }
-
-        println!();
     }
 
     Ok(())

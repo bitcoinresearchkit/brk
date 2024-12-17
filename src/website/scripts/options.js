@@ -1501,28 +1501,23 @@ function createPartialOptions(colors) {
       name: "Market",
       tree: [
         {
-          name: "Price",
-          tree: [
+          scale,
+          name: "Dollars Per Bitcoin",
+          title: "Dollars Per Bitcoin",
+          description: "",
+          unit: "US Dollars",
+        },
+        {
+          scale,
+          name: "Satoshis Per Dollar",
+          title: "Satoshis Per Dollar",
+          description: "",
+          unit: "Satoshis",
+          bottom: [
             {
-              scale,
-              name: "Dollars Per Bitcoin",
-              title: "Dollars Per Bitcoin",
-              description: "",
-              unit: "US Dollars",
-            },
-            {
-              scale,
-              name: "Sats Per Dollar",
-              title: "Satoshis Per Dollar",
-              description: "",
-              unit: "Satoshis",
-              bottom: [
-                {
-                  title: "Sats",
-                  datasetPath: `${scale}-to-sats-per-dollar`,
-                  color: colors.bitcoin,
-                },
-              ],
+              title: "Satoshis",
+              datasetPath: `${scale}-to-sats-per-dollar`,
+              color: colors.bitcoin,
             },
           ],
         },
@@ -5128,18 +5123,9 @@ function createPartialOptions(colors) {
       url: () => window.location.href,
     },
     {
-      name: "Socials",
-      tree: [
-        {
-          name: "Bluesky",
-          url: () => "https://bsky.app/profile/kibo.money",
-        },
-        {
-          name: "Nostr",
-          url: () =>
-            "https://primal.net/p/npub1jagmm3x39lmwfnrtvxcs9ac7g300y3dusv9lgzhk2e4x5frpxlrqa73v44",
-        },
-      ],
+      name: "Social",
+      url: () =>
+        "https://primal.net/p/npub1jagmm3x39lmwfnrtvxcs9ac7g300y3dusv9lgzhk2e4x5frpxlrqa73v44",
     },
     {
       name: "Developers",

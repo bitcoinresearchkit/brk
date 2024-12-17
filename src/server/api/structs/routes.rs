@@ -1,5 +1,6 @@
 use std::{
     collections::{BTreeMap, HashMap},
+    fs,
     path::PathBuf,
 };
 
@@ -31,17 +32,30 @@ impl Routes {
     pub fn build(paths_to_type: BTreeMap<PathBuf, String>, config: &Config) -> Self {
         let mut routes = Routes::default();
 
-        paths_to_type.into_iter().for_each(|(file_path, value)| {
-            let serialization =
-                Serialization::try_from(&file_path).unwrap_or(Serialization::Binary);
+        paths_to_type.into_iter().for_each(|(path, value)| {
+            let try_from_path = if path.is_file() {
+                path.clone()
+            } else {
+                fs::read_dir(&path)
+                    .unwrap_or_else(|_| {
+                        dbg!(&path);
+                        panic!();
+                    })
+                    .map(|e| e.unwrap().path())
+                    .find(|e| e.is_file())
+                    .unwrap()
+            };
 
-            let file_path_ser = file_path.to_str().unwrap().to_owned();
+            let serialization =
+                Serialization::try_from(&try_from_path).unwrap_or(Serialization::Binary);
+
+            let file_path_ser = path.to_str().unwrap().to_owned();
             let split_key = file_path_ser.replace(
                 &format!("{}/", config.path_datasets().to_str().unwrap()),
                 "",
             );
             let split_key =
-                split_key.replace(&format!("{}/", config.path_price().to_str().unwrap()), "");
+                split_key.replace(&format!("{}/", config.path_kibodir().to_str().unwrap()), "");
             let mut split_key = split_key.split('/').collect_vec();
             let last = split_key.pop().unwrap().to_owned();
             let last = last.split('.').next().unwrap();
@@ -63,7 +77,7 @@ impl Routes {
                         map_key,
                         Route {
                             url_path: format!("date-to-{url_path}"),
-                            file_path,
+                            file_path: path,
                             values_type,
                             serialization,
                         },
@@ -74,7 +88,7 @@ impl Routes {
                         map_key,
                         Route {
                             url_path: format!("height-to-{url_path}"),
-                            file_path,
+                            file_path: path,
                             values_type,
                             serialization,
                         },
@@ -85,14 +99,14 @@ impl Routes {
                         map_key,
                         Route {
                             url_path,
-                            file_path,
+                            file_path: path,
                             values_type,
                             serialization,
                         },
                     );
                 }
                 _ => {
-                    dbg!(&file_path, value, &last, &split_key);
+                    dbg!(&path, value, &last, &split_key);
                     panic!("")
                 }
             }

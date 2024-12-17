@@ -13,7 +13,6 @@ use snkrj::{AnyDatabase, Database as _Database};
 use crate::{
     parser::states::AddressCohortsDurableStates,
     structs::{AddressData, Config},
-    utils::time,
 };
 
 use super::{AnyDatabaseGroup, Metadata};
@@ -91,24 +90,24 @@ impl AddressIndexToAddressData {
     }
 
     pub fn compute_addres_cohorts_durable_states(&mut self) -> AddressCohortsDurableStates {
-        time("Iter through address_index_to_address_data", || {
-            self.open_all();
+        // time("Iter through address_index_to_address_data", || {
+        self.open_all();
 
-            // MUST CLEAR MAP, otherwise some weird things are happening later in the export I think
-            mem::take(&mut self.map)
-                .par_iter()
-                .map(|(_, database)| {
-                    let mut s = AddressCohortsDurableStates::default();
+        // MUST CLEAR MAP, otherwise some weird things are happening later in the export I think
+        mem::take(&mut self.map)
+            .par_iter()
+            .map(|(_, database)| {
+                let mut s = AddressCohortsDurableStates::default();
 
-                    database
-                        .iter_disk()
-                        .map(|r| r.unwrap().1)
-                        .for_each(|address_data| s.increment(address_data).unwrap());
+                database
+                    .iter_disk()
+                    .map(|r| r.unwrap().1)
+                    .for_each(|address_data| s.increment(address_data).unwrap());
 
-                    s
-                })
-                .sum()
-        })
+                s
+            })
+            .sum()
+        // })
     }
 
     fn db_index(key: &Key) -> usize {
