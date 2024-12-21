@@ -16,17 +16,14 @@ pub use states::*;
 
 use crate::structs::{Config, Exit};
 
-pub fn main(
-    config: &Config,
-    rpc: &Client,
-    exit: &Exit,
-    mut databases: Databases,
-    mut datasets: Datasets,
-) -> color_eyre::Result<()> {
+pub fn main(config: &Config, rpc: &Client, exit: &Exit) -> color_eyre::Result<()> {
     loop {
         let block_count = rpc.get_blockchain_info().unwrap().blocks as usize;
 
         info!("{block_count} blocks found.");
+
+        let mut databases = Databases::import(config);
+        let mut datasets = Datasets::import(config)?;
 
         iter_blocks(
             config,

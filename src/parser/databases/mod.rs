@@ -131,8 +131,8 @@ impl Databases {
 
     pub fn check_if_usable(
         &self,
-        min_initial_last_address_height: Option<Height>,
-        min_initial_last_address_date: Option<Date>,
+        last_address_height: Option<Height>,
+        last_address_date: Option<Date>,
     ) -> bool {
         let are_tx_databases_in_sync = self
             .txout_index_to_amount
@@ -169,8 +169,7 @@ impl Databases {
             return false;
         }
 
-        // let are_address_datasets_farer_or_in_sync_with_address_databases =
-        min_initial_last_address_height >= self.address_to_address_index.metadata.last_height
-            && min_initial_last_address_date >= self.address_to_address_index.metadata.last_date
+        last_address_height >= self.address_to_address_index.metadata.last_height
+            && last_address_date >= self.address_to_address_index.metadata.last_date
     }
 }

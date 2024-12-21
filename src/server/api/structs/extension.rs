@@ -31,13 +31,4 @@ impl Extension {
             Extension::JSON => "json",
         }
     }
-
-    pub fn to_dot_str(&self) -> String {
-        format!(".{}", self.to_str())
-    }
-
-    pub fn remove_extension(s: &str) -> String {
-        s.replace(&Self::CSV.to_dot_str(), "")
-            .replace(&Self::JSON.to_dot_str(), "")
-    }
 }

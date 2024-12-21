@@ -1,10 +1,10 @@
 use std::iter::Sum;
 
 use super::{
-    AnyMap, Date, DateMapChunkId, GenericMap, Height, HeightMap, MapValue, SerializedBTreeMap,
+    AnyMap, Date, DateMapChunkId, GenericMap, Height, HeightMap, MapValue, SerializedDateMap,
 };
 
-pub type DateMap<Value> = GenericMap<Date, Value, DateMapChunkId, SerializedBTreeMap<Date, Value>>;
+pub type DateMap<Value> = GenericMap<Date, Value, DateMapChunkId, SerializedDateMap<Value>>;
 
 impl<Value> DateMap<Value>
 where

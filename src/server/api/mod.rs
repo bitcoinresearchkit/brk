@@ -1,5 +1,5 @@
 use axum::{routing::get, Router};
-use handlers::{dataset_handler, fallback};
+use handlers::{dataset_handler, last_values_handler};
 
 use super::AppState;
 
@@ -14,8 +14,7 @@ pub trait ApiRoutes {
 
 impl ApiRoutes for Router<AppState> {
     fn add_api_routes(self) -> Self {
-        self.route(&format!("{API_URL_PREFIX}/*path"), get(dataset_handler))
-            .route(&format!("{API_URL_PREFIX}/"), get(fallback))
-            .route(API_URL_PREFIX, get(fallback))
+        self.route(&format!("{API_URL_PREFIX}/last"), get(last_values_handler))
+            .route(&format!("{API_URL_PREFIX}/*path"), get(dataset_handler))
     }
 }

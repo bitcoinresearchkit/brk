@@ -6,7 +6,9 @@ use serde::{de::DeserializeOwned, Deserialize, Serialize};
 
 use crate::io::Serialization;
 
-use super::{DateMap, MapChunkId, MapKey, MapSerialized, MapValue};
+use super::{Date, DateMap, MapChunkId, MapKey, MapSerialized, MapValue};
+
+pub type SerializedDateMap<T> = SerializedBTreeMap<Date, T>;
 
 #[derive(Debug, Default, Serialize, Deserialize, Encode, Decode, Allocative)]
 pub struct SerializedBTreeMap<Key, Value>
@@ -17,41 +19,11 @@ where
     pub map: BTreeMap<Key, Value>,
 }
 
-impl<Key, Value> SerializedBTreeMap<Key, Value>
-where
-    Key: Ord,
-{
-    pub fn import_all<ChunkId>(path: &Path, serialization: &Serialization) -> Self
-    where
-        Self: Debug + Serialize + DeserializeOwned + Encode + Decode,
-        ChunkId: MapChunkId,
-        Key: MapKey<ChunkId>,
-        Value: MapValue,
-    {
-        let mut s = None;
-
-        DateMap::<usize>::_read_dir(path, serialization)
-            .iter()
-            .for_each(|(_, path)| {
-                let map = serialization.import::<Self>(path).unwrap();
-
-                if s.is_none() {
-                    s.replace(map);
-                } else {
-                    #[allow(clippy::unnecessary_unwrap)]
-                    s.as_mut().unwrap().map.extend(map.map);
-                }
-            });
-
-        s.unwrap()
-    }
-}
-
 impl<Key, Value, ChunkId> MapSerialized<Key, Value, ChunkId> for SerializedBTreeMap<Key, Value>
 where
     Self: Debug + Serialize + DeserializeOwned + Encode + Decode,
     ChunkId: MapChunkId,
-    Key: MapKey<ChunkId>,
+    Key: MapKey<ChunkId> + Serialize,
     Value: MapValue,
 {
     fn new(version: u32) -> Self {
@@ -79,5 +51,36 @@ where
 
     fn extend(&mut self, map: BTreeMap<Key, Value>) {
         self.map.extend(map)
+    }
+
+    fn import_all(path: &Path, serialization: &Serialization) -> Self {
+        let mut s = None;
+
+        DateMap::<usize>::_read_dir(path, serialization)
+            .iter()
+            .for_each(|(_, path)| {
+                let map = serialization.import::<Self>(path).unwrap();
+
+                if s.is_none() {
+                    s.replace(map);
+                } else {
+                    #[allow(clippy::unnecessary_unwrap)]
+                    s.as_mut().unwrap().map.extend(map.map);
+                }
+            });
+
+        s.unwrap()
+    }
+
+    fn to_csv(self, id: &str) -> String {
+        let mut csv = format!("{},{}\n", Key::map_name(), id);
+        self.map.iter().for_each(|(k, v)| {
+            csv += &format!("{},{}\n", k, v);
+        });
+        csv
+    }
+
+    fn map(&self) -> &impl Serialize {
+        &self.map
     }
 }

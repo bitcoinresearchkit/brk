@@ -5,12 +5,12 @@ use allocative::Allocative;
 use crate::{
     structs::{
         Date, DateMapChunkId, GenericMap, MapChunkId, MapKey, MapKind, MapPath, MapSerialized,
-        MapValue, SerializedBTreeMap,
+        MapValue, SerializedDateMap,
     },
     utils::{get_percentile, LossyFrom},
 };
 
-pub type DateRecapDataset<T> = RecapDataset<Date, T, DateMapChunkId, SerializedBTreeMap<Date, T>>;
+pub type DateRecapDataset<T> = RecapDataset<Date, T, DateMapChunkId, SerializedDateMap<T>>;
 
 #[derive(Allocative)]
 pub struct RecapDataset<Key, Value, ChunkId, Serialized> {

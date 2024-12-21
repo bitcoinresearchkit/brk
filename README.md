@@ -74,6 +74,9 @@ Please open an issue if you want to add another instance
 - Git
 - Unix based operating system (Mac OS or Linux)
   - Ubuntu users need to install `open-ssl` via `sudo apt install libssl-dev pkg-config`
+  - Mac OS:
+    - Disable Spotlight or exclude the `--kibodir` folder from it
+    - Don't use Time Machine or exclude the `--kibodir` folder (especially needed for local snapshots)
 
 ### Build
 

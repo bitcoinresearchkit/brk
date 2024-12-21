@@ -37,14 +37,14 @@ pub fn export(
     exit.block();
 
     let text = if defragment {
-        "export and defragmentation"
+        "Exporting and defragmenting..."
     } else {
-        "export"
+        "Exporting..."
     };
-    info!("Starting {text}");
+    info!("{text}");
 
-    time(&format!("Finished {text}"), || -> color_eyre::Result<()> {
-        datasets.export(config)?;
+    time("Finished export", || -> color_eyre::Result<()> {
+        datasets.export(config, height)?;
 
         if let Some(databases) = databases {
             databases.export(height, date, defragment)?;

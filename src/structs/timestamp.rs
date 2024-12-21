@@ -1,4 +1,4 @@
-use std::ops::Sub;
+use std::{fmt, ops::Sub};
 
 use allocative::Allocative;
 use bincode::{Decode, Encode};
@@ -79,5 +79,11 @@ impl Sub for Timestamp {
 
     fn sub(self, rhs: Self) -> Self::Output {
         Self::wrap(self.0 - rhs.0)
+    }
+}
+
+impl fmt::Display for Timestamp {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", **self)
     }
 }

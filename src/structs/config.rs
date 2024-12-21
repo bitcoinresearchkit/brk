@@ -10,6 +10,8 @@ use color_eyre::eyre::eyre;
 use log::info;
 use serde::{Deserialize, Serialize};
 
+use crate::io::JSON_EXTENSION;
+
 use super::MapPath;
 
 #[derive(Parser, Debug, Clone, Default, Serialize, Deserialize, PartialEq)]
@@ -74,6 +76,8 @@ pub struct Config {
 }
 
 impl Config {
+    pub const DATASET_DIR_NAME: &str = "datasets";
+
     pub fn import() -> color_eyre::Result<Self> {
         let path = Self::path_dot_kibo();
         let _ = fs::create_dir_all(&path);
@@ -285,7 +289,7 @@ impl Config {
     }
 
     pub fn path_datasets_last_values(&self) -> MapPath {
-        self.path_datasets().join("last.json")
+        self.path_datasets().join(&format!("last.{JSON_EXTENSION}"))
     }
 
     pub fn path_price(&self) -> MapPath {
@@ -293,7 +297,7 @@ impl Config {
     }
 
     pub fn path_databases(&self) -> PathBuf {
-        self.path_kibodir().join("databases")
+        self.path_kibodir().join(Self::DATASET_DIR_NAME)
     }
 
     pub fn path_states(&self) -> PathBuf {
