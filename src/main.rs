@@ -8,7 +8,8 @@ mod server;
 mod structs;
 mod utils;
 
-use parser::{Databases, Datasets};
+use parser::Datasets;
+use server::api::structs::Routes;
 use structs::{Config, Exit};
 use utils::init_log;
 
@@ -31,31 +32,27 @@ fn main() -> color_eyre::Result<()> {
 
             let rpc = Client::from(&config);
 
-            let databases = Databases::import(&config);
-
-            let datasets = Datasets::import(&config)?;
-
-            let paths_to_type = datasets.get_paths_to_type(&config);
+            let routes = Routes::build(&Datasets::import(&config)?, &config);
 
             tokio::runtime::Builder::new_multi_thread()
                 .enable_all()
                 .build()
                 .unwrap()
                 .block_on(async {
-                    let config_clone = config.clone();
                     let run_parser = config.parser();
                     let run_server = config.server();
 
+                    let config_clone = config.clone();
                     let handle = tokio::spawn(async move {
                         if run_server {
-                            server::main(paths_to_type, &config_clone).await.unwrap();
+                            server::main(routes, config_clone).await.unwrap();
                         } else {
                             info!("Skipping server");
                         }
                     });
 
                     if run_parser {
-                        parser::main(&config, &rpc, &exit, databases, datasets)?;
+                        parser::main(&config, &rpc, &exit)?;
                     } else {
                         info!("Skipping parser");
                     }

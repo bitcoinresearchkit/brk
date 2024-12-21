@@ -1,9 +1,13 @@
-mod chunk;
+mod chunk_metadata;
+mod extension;
 mod kind;
-mod paths;
+mod range;
+mod route;
 mod routes;
 
-pub use chunk::*;
+pub use chunk_metadata::*;
+pub use extension::*;
 pub use kind::*;
-pub use paths::*;
+pub use range::*;
+pub use route::*;
 pub use routes::*;

@@ -84,7 +84,7 @@ impl TxidToTxData {
     }
 
     #[inline(always)]
-    pub fn _open_db(&mut self, db_index: u16) -> &mut Database {
+    fn _open_db(&mut self, db_index: u16) -> &mut Database {
         let path = self.path.to_owned();
         self.map.entry(db_index).or_insert_with(|| {
             let path = path.join(db_index.to_string());

@@ -72,7 +72,6 @@ pub use map_value::*;
 pub use ohlc::*;
 pub use partial_txout_data::*;
 pub use price::*;
-pub use rpc::*;
 pub use sent_data::*;
 pub use serialized_btreemap::*;
 pub use serialized_vec::*;

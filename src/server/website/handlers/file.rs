@@ -1,6 +1,7 @@
 use std::{
     fs::{self},
     path::{Path, PathBuf},
+    time::Instant,
 };
 
 use axum::{
@@ -27,6 +28,8 @@ pub async fn index_handler(headers: HeaderMap) -> Response {
 }
 
 fn any_handler(headers: HeaderMap, path: Option<extract::Path<String>>) -> Response {
+    let instant = Instant::now();
+
     let response = if let Some(path) = path.as_ref() {
         let path = path.0.replace("..", "").replace("\\", "");
 
@@ -56,6 +59,7 @@ fn any_handler(headers: HeaderMap, path: Option<extract::Path<String>>) -> Respo
     log_result(
         response.status(),
         &format!("/{}", path.map_or("".to_owned(), |p| p.0)),
+        instant,
     );
 
     response
@@ -124,8 +128,6 @@ fn _path_to_response(headers: &HeaderMap, path: &Path) -> color_eyre::Result<Res
             })
         {
             headers.insert_cache_control_immutable();
-        } else {
-            headers.insert_cache_control_revalidate(1, 1);
         }
     }
 

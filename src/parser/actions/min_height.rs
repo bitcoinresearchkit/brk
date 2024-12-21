@@ -118,13 +118,6 @@ pub fn find_first_inserted_unsafe_height(
                 || min_initial_inserted_last_address_date.is_none()
                 || min_initial_inserted_last_address_height.is_none();
 
-            // if include_addresses {
-            //     dbg!(include_addresses);
-            //     panic!("");
-            // }
-
-            if true {panic!()}
-
             states.reset(config, include_addresses);
 
             databases.reset(include_addresses);

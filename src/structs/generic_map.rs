@@ -1,6 +1,6 @@
 use std::{
     collections::{BTreeMap, VecDeque},
-    fmt::Debug,
+    fmt::{Debug, Display},
     fs,
     iter::Sum,
     mem,
@@ -19,7 +19,7 @@ use crate::{
     utils::{get_percentile, LossyFrom},
 };
 
-use super::{AnyMap, MapPath, MapValue};
+use super::{AnyMap, Config, MapPath, MapValue};
 
 #[derive(Debug, Clone, Copy, Allocative, PartialEq, Eq)]
 pub enum MapKind {
@@ -29,7 +29,7 @@ pub enum MapKind {
 
 pub trait MapKey<ChunkId>
 where
-    Self: Sized + PartialOrd + Ord + Clone + Copy + Debug,
+    Self: Sized + PartialOrd + Ord + Clone + Copy + Debug + Display,
     ChunkId: MapChunkId,
 {
     fn to_chunk_id(&self) -> ChunkId;
@@ -61,16 +61,21 @@ where
     fn get(&self, serialized_key: &Key) -> Option<&Value>;
     fn last(&self) -> Option<&Value>;
     fn extend(&mut self, map: BTreeMap<Key, Value>);
+    fn import_all(path: &Path, serialization: &Serialization) -> Self;
+    fn to_csv(self, id: &str) -> String;
+    fn map(&self) -> &impl Serialize;
 }
 
 pub trait MapChunkId
 where
     Self: Ord + Debug + Copy + Clone,
 {
-    fn to_name(&self) -> String;
+    fn to_string(&self) -> String;
     fn from_path(path: &Path) -> color_eyre::Result<Self>;
     fn to_usize(self) -> usize;
     fn from_usize(id: usize) -> Self;
+    fn previous(&self) -> Option<Self>;
+    fn next(&self) -> Option<Self>;
 }
 
 #[derive(Debug, Allocative)]
@@ -79,6 +84,7 @@ pub struct GenericMap<Key, Value, ChunkId, Serialized> {
     kind: MapKind,
 
     path_all: MapPath,
+    path_parent: MapPath,
     path_last: Option<MapPath>,
 
     chunks_in_memory: usize,
@@ -150,6 +156,7 @@ where
             kind,
 
             path_all,
+            path_parent: path.to_owned(),
             path_last,
 
             chunks_in_memory,
@@ -177,21 +184,25 @@ where
                 }
             });
 
-        s.initial_last_key = s
-            .imported
-            .iter()
-            .last()
-            .and_then(|(last_chunk_id, serialized)| serialized.get_last_key(last_chunk_id));
-
-        s.initial_first_unsafe_key = s
-            .initial_last_key
-            .and_then(|last_key| last_key.to_first_unsafe());
+        s.set_initial_keys();
 
         // if s.initial_first_unsafe_key.is_none() {
         //     log(&format!("Missing dataset: {path:?}/{}", Key::map_name()));
         // }
 
         s
+    }
+
+    fn set_initial_keys(&mut self) {
+        self.initial_last_key = self
+            .imported
+            .iter()
+            .last()
+            .and_then(|(last_chunk_id, serialized)| serialized.get_last_key(last_chunk_id));
+
+        self.initial_first_unsafe_key = self
+            .initial_last_key
+            .and_then(|last_key| last_key.to_first_unsafe());
     }
 
     fn read_dir(&self) -> BTreeMap<ChunkId, PathBuf> {
@@ -308,8 +319,24 @@ where
     Key: MapKey<ChunkId>,
     Serialized: MapSerialized<Key, Value, ChunkId>,
 {
+    fn id(&self, config: &Config) -> String {
+        let path_to_string = |p: &Path| p.to_str().unwrap().to_owned();
+        path_to_string(self.path_parent())
+            .replace(&path_to_string(&config.path_kibodir()), "")
+            .replace(&format!("/{}/", Config::DATASET_DIR_NAME), "")
+            .replace("/", "-")
+    }
+
+    fn serialization(&self) -> Serialization {
+        self.serialization
+    }
+
     fn path(&self) -> &Path {
         &self.path_all
+    }
+
+    fn path_parent(&self) -> &Path {
+        &self.path_parent
     }
 
     fn path_last(&self) -> &Option<MapPath> {
@@ -323,8 +350,12 @@ where
             .and_then(|v| serde_json::to_value(v).ok())
     }
 
-    fn t_name(&self) -> &str {
+    fn type_name(&self) -> &str {
         std::any::type_name::<Value>()
+    }
+
+    fn key_name(&self) -> &str {
+        Key::map_name()
     }
 
     fn pre_export(&mut self) {
@@ -351,6 +382,8 @@ where
                 .or_insert(Serialized::new(self.version))
                 .extend(mem::take(map));
         });
+
+        self.set_initial_keys();
     }
 
     fn export(&self) -> color_eyre::Result<()> {
@@ -367,7 +400,7 @@ where
                     panic!();
                 });
 
-                let path = self.path_all.join(&chunk_id.to_name());
+                let path = self.path_all.join(&chunk_id.to_string());
 
                 self.serialization.export(&path, serialized)?;
 

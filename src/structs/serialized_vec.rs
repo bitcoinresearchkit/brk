@@ -14,31 +14,6 @@ pub struct SerializedVec<Value> {
     pub map: Vec<Value>,
 }
 
-impl<Value> SerializedVec<Value> {
-    pub fn import_all(path: &Path, serialization: &Serialization) -> Self
-    where
-        Self: Debug + Serialize + DeserializeOwned + Encode + Decode,
-        Value: MapValue,
-    {
-        let mut s = None;
-
-        HeightMap::<usize>::_read_dir(path, serialization)
-            .iter()
-            .for_each(|(_, path)| {
-                let mut map = serialization.import::<Self>(path).unwrap();
-
-                if s.is_none() {
-                    s.replace(map);
-                } else {
-                    #[allow(clippy::unnecessary_unwrap)]
-                    s.as_mut().unwrap().map.append(&mut map.map);
-                }
-            });
-
-        s.unwrap()
-    }
-}
-
 impl<Key, Value, ChunkId> MapSerialized<Key, Value, ChunkId> for SerializedVec<Value>
 where
     Self: Debug + Serialize + DeserializeOwned + Encode + Decode,
@@ -86,5 +61,40 @@ where
                 }
             }
         });
+    }
+
+    fn import_all(path: &Path, serialization: &Serialization) -> Self
+    where
+        Self: Debug + Serialize + DeserializeOwned + Encode + Decode,
+        Value: MapValue,
+    {
+        let mut s = None;
+
+        HeightMap::<usize>::_read_dir(path, serialization)
+            .iter()
+            .for_each(|(_, path)| {
+                let mut map = serialization.import::<Self>(path).unwrap();
+
+                if s.is_none() {
+                    s.replace(map);
+                } else {
+                    #[allow(clippy::unnecessary_unwrap)]
+                    s.as_mut().unwrap().map.append(&mut map.map);
+                }
+            });
+
+        s.unwrap()
+    }
+
+    fn to_csv(self, id: &str) -> String {
+        let mut csv = format!("{},{}\n", Key::map_name(), id);
+        self.map.iter().enumerate().for_each(|(k, v)| {
+            csv += &format!("{:?},{:?}\n", k, v);
+        });
+        csv
+    }
+
+    fn map(&self) -> &impl Serialize {
+        &self.map
     }
 }

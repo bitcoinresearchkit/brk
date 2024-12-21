@@ -15,7 +15,7 @@ impl DateMapChunkId {
 }
 
 impl MapChunkId for DateMapChunkId {
-    fn to_name(&self) -> String {
+    fn to_string(&self) -> String {
         self.0.to_string()
     }
 
@@ -38,5 +38,13 @@ impl MapChunkId for DateMapChunkId {
 
     fn from_usize(id: usize) -> Self {
         Self(id as i32)
+    }
+
+    fn next(&self) -> Option<Self> {
+        self.0.checked_add(1).map(Self)
+    }
+
+    fn previous(&self) -> Option<Self> {
+        self.0.checked_sub(1).map(Self)
     }
 }

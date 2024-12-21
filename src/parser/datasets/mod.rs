@@ -1,4 +1,4 @@
-use std::{collections::BTreeMap, ops::RangeInclusive, path::PathBuf};
+use std::{collections::BTreeMap, ops::RangeInclusive};
 
 use allocative::Allocative;
 
@@ -139,12 +139,16 @@ impl Datasets {
             utxo,
         };
 
-        s.min_initial_states
-            .consume(MinInitialStates::compute_from_datasets(&s, config));
+        s.set_initial_states(config);
 
         info!("Imported datasets");
 
         Ok(s)
+    }
+
+    fn set_initial_states(&mut self, config: &Config) {
+        self.min_initial_states
+            .consume(MinInitialStates::compute_from_datasets(self, config));
     }
 
     pub fn insert(&mut self, insert_data: InsertData) {
@@ -228,21 +232,6 @@ impl Datasets {
             &mut self.price.market_cap,
         );
 
-        // No compute needed for now
-        // if self.block_metadata.should_compute(height, date) {
-        //     self.block_metadata.compute(&compute_data);
-        // }
-
-        // No compute needed for now
-        // if self.date_metadata.should_compute(height, date) {
-        //     self.date_metadata.compute(&compute_data);
-        // }
-
-        // No compute needed for now
-        // if self.coindays.should_compute(height, date) {
-        //     self.coindays.compute(&compute_data);
-        // }
-
         if self.transaction.should_compute(&compute_data) {
             self.transaction.compute(
                 &compute_data,
@@ -268,23 +257,12 @@ impl Datasets {
         }
     }
 
-    pub fn get_paths_to_type(&self, config: &Config) -> BTreeMap<PathBuf, String> {
-        let mut path_to_type: BTreeMap<PathBuf, String> = self
-            .to_any_dataset_vec()
-            .into_iter()
-            .flat_map(|dataset| dataset.to_all_map_vec())
-            .flat_map(|map| map.get_paths_to_type())
-            .collect();
+    pub fn export(&mut self, config: &Config, height: Height) -> color_eyre::Result<()> {
+        let is_new = self
+            .min_initial_states
+            .min_last_height()
+            .map_or(true, |last| last <= height);
 
-        path_to_type.insert(
-            config.path_datasets_last_values().unwrap().to_owned(),
-            "Value".to_string(),
-        );
-
-        path_to_type
-    }
-
-    pub fn export(&mut self, config: &Config) -> color_eyre::Result<()> {
         self.to_mut_any_dataset_vec()
             .into_iter()
             .for_each(|dataset| dataset.pre_export());
@@ -295,37 +273,27 @@ impl Datasets {
 
         let mut path_to_last: BTreeMap<String, Value> = BTreeMap::default();
 
-        let path_dataset = config.path_datasets();
-        let path_dataset_ser = path_dataset.to_str().unwrap();
-        let path_price = config.path_price();
-        let path_price_ser = path_price.to_str().unwrap();
-
         self.to_mut_any_dataset_vec()
             .into_iter()
             .for_each(|dataset| {
                 dataset.post_export();
 
-                dataset.to_all_map_vec().iter().for_each(|map| {
-                    if let Some(last_path) = map.path_last() {
-                        if let Some(last_value) = map.last_value() {
-                            let mut last_path = last_path.clone();
-                            last_path.pop();
-                            let key = last_path
-                                .to_str()
-                                .unwrap()
-                                .replace(path_dataset_ser, "")
-                                .replace(path_price_ser, "")
-                                .split("/")
-                                .join("-")
-                                .to_string();
-
-                            path_to_last.insert(key, last_value);
+                if is_new {
+                    dataset.to_all_map_vec().iter().for_each(|map| {
+                        if map.path_last().is_some() {
+                            if let Some(last_value) = map.last_value() {
+                                path_to_last.insert(map.id(config), last_value);
+                            }
                         }
-                    }
-                });
+                    });
+                }
             });
 
-        Json::export(&config.path_datasets_last_values(), &path_to_last)?;
+        if is_new {
+            Json::export(&config.path_datasets_last_values(), &path_to_last)?;
+        }
+
+        self.set_initial_states(config);
 
         Ok(())
     }

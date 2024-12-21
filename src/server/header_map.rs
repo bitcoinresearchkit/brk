@@ -31,6 +31,7 @@ pub trait HeaderMapUtils {
     ) -> color_eyre::Result<(DateTime<Utc>, Option<Response<Body>>)>;
 
     fn insert_cache_control_immutable(&mut self);
+    #[allow(unused)]
     fn insert_cache_control_revalidate(&mut self, max_age: u64, stale_while_revalidate: u64);
     fn insert_last_modified(&mut self, date: DateTime<Utc>);
 

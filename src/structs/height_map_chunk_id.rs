@@ -19,7 +19,7 @@ impl HeightMapChunkId {
 }
 
 impl MapChunkId for HeightMapChunkId {
-    fn to_name(&self) -> String {
+    fn to_string(&self) -> String {
         let start = ***self;
         let end = start + HEIGHT_MAP_CHUNK_SIZE;
 
@@ -45,5 +45,15 @@ impl MapChunkId for HeightMapChunkId {
 
     fn from_usize(id: usize) -> Self {
         Self(Height::new(id as u32))
+    }
+
+    fn next(&self) -> Option<Self> {
+        self.checked_add(HEIGHT_MAP_CHUNK_SIZE)
+            .map(|h| Self(Height::new(h)))
+    }
+
+    fn previous(&self) -> Option<Self> {
+        self.checked_sub(HEIGHT_MAP_CHUNK_SIZE)
+            .map(|h| Self(Height::new(h)))
     }
 }

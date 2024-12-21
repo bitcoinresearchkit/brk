@@ -173,7 +173,7 @@ pub fn iter_blocks(
                             .as_ref()
                             .map_or(true, |date| date.is_first_of_month());
 
-                        if (is_check_point && instant.elapsed().as_secs() >= 2)
+                        if (is_check_point && instant.elapsed().as_secs() >= 1)
                             || height.is_close_to_end(approx_block_count)
                         {
                             break 'days;
@@ -192,7 +192,7 @@ pub fn iter_blocks(
 
         if first_unsafe_heights.computed <= last_height {
             info!("Computing datasets...");
-            time("Computing datasets", || {
+            time("Computed datasets", || {
                 let dates = processed_dates.into_iter().collect_vec();
 
                 let heights = processed_heights.into_iter().collect_vec();
@@ -226,7 +226,7 @@ pub fn iter_blocks(
             })?;
 
             if config.record_ram_usage() {
-                time("Exporing allocation files", || {
+                time("Exporting allocation files", || {
                     generate_allocation_files(datasets, databases, &states, last_height)
                 })?;
             }

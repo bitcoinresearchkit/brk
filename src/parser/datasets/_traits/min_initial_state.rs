@@ -29,6 +29,10 @@ impl MinInitialStates {
             computed: MinInitialState::compute_from_datasets(datasets, Mode::Computed, config),
         }
     }
+
+    pub fn min_last_height(&self) -> Option<Height> {
+        self.computed.last_height.min(self.inserted.last_height)
+    }
 }
 
 #[derive(Default, Debug, Clone, Copy, Allocative)]

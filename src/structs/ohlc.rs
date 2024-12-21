@@ -1,3 +1,5 @@
+use std::fmt::{self};
+
 use allocative::Allocative;
 use bincode::{Decode, Encode};
 use serde::{Deserialize, Serialize};
@@ -9,4 +11,14 @@ pub struct OHLC {
     pub high: f32,
     pub low: f32,
     pub close: f32,
+}
+
+impl fmt::Display for OHLC {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "{{ open: {}, high: {}, low: {}, close: {} }}",
+            self.open, self.high, self.low, self.close
+        )
+    }
 }

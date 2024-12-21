@@ -1,43 +1,32 @@
-use std::{collections::BTreeMap, path::PathBuf, sync::Arc};
+use std::{sync::Arc, time::Instant};
 
 use api::{structs::Routes, ApiRoutes};
 use axum::{routing::get, serve, Router};
 use color_eyre::owo_colors::OwoColorize;
 use log::{error, info};
 use reqwest::StatusCode;
-use serde::Serialize;
 use tokio::net::TcpListener;
 use tower_http::compression::CompressionLayer;
 use website::WebsiteRoutes;
 
 use crate::structs::Config;
 
-mod api;
+pub mod api;
 mod header_map;
 mod website;
-
-#[derive(Clone, Debug, Default, Serialize)]
-pub struct Grouped<T> {
-    pub date: T,
-    pub height: T,
-    pub last: T,
-}
 
 #[derive(Clone)]
 pub struct AppState {
     routes: Arc<Routes>,
+    config: Config,
 }
 
-pub async fn main(
-    paths_to_type: BTreeMap<PathBuf, String>,
-    config: &Config,
-) -> color_eyre::Result<()> {
-    let routes = Routes::build(paths_to_type, config);
-
+pub async fn main(routes: Routes, config: Config) -> color_eyre::Result<()> {
     routes.generate_dts_file();
 
     let state = AppState {
         routes: Arc::new(routes),
+        config,
     };
 
     let compression_layer = CompressionLayer::new()
@@ -72,11 +61,13 @@ pub async fn main(
     Ok(())
 }
 
-pub fn log_result(code: StatusCode, path: &str) {
+pub fn log_result(code: StatusCode, path: &str, instant: Instant) {
+    let time = format!("{}µs", instant.elapsed().as_micros());
+    let time = time.bright_black();
     match code {
-        StatusCode::INTERNAL_SERVER_ERROR => error!("{} {}", code.as_u16().red(), path),
-        StatusCode::NOT_MODIFIED => info!("{} {}", code.as_u16().bright_black(), path),
-        StatusCode::OK => info!("{} {}", code.as_u16().green(), path),
-        _ => error!("{} {}", code.as_u16().red(), path),
+        StatusCode::INTERNAL_SERVER_ERROR => error!("{} {} {}", code.as_u16().red(), path, time),
+        StatusCode::NOT_MODIFIED => info!("{} {} {}", code.as_u16().bright_black(), path, time),
+        StatusCode::OK => info!("{} {} {}", code.as_u16().green(), path, time),
+        _ => error!("{} {} {}", code.as_u16().red(), path, time),
     }
 }

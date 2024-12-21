@@ -1,4 +1,4 @@
-use std::fmt::Debug;
+use std::fmt::{Debug, Display};
 
 use allocative::Allocative;
 use bincode::{Decode, Encode};
@@ -18,6 +18,7 @@ pub trait MapValue:
     + Sync
     + Send
     + Allocative
+    + Display
 {
 }
 
