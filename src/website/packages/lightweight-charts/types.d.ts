@@ -1,6 +1,5 @@
 import { Signal } from "../solid-signals/types";
 import { Accessor } from "../solid-signals/2024-11-02/types/signals";
-import { Owner } from "../solid-signals/2024-11-02/types/core/owner";
 import {
   DeepPartial,
   BaselineStyleOptions,
@@ -11,7 +10,7 @@ import {
   CandlestickData,
   ISeriesApi,
   BaselineData,
-} from "./v4.2.0/types";
+} from "./v4.2.2/types";
 import { Color, Valued, ValuedCandlestickData } from "../../scripts/types/self";
 
 interface BaseSeriesBlueprint {
