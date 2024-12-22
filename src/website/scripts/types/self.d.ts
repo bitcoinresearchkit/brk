@@ -15,7 +15,7 @@ import {
   SeriesType,
   ISeriesApi,
   BaselineData,
-} from "../../packages/lightweight-charts/v4.2.0/types";
+} from "../../packages/lightweight-charts/v4.2.2/types";
 import { DatePath, HeightPath, LastPath } from "./paths";
 import { AnyPossibleCohortId } from "../options";
 import { Signal } from "../../packages/solid-signals/types";

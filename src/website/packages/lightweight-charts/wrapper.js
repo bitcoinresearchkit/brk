@@ -1,7 +1,7 @@
 // @ts-check
 
 /**
- * @import { DeepPartial, ChartOptions, IChartApi, IHorzScaleBehavior, WhitespaceData, SingleValueData, ISeriesApi, Time, LogicalRange, SeriesType, BaselineStyleOptions, SeriesOptionsCommon, createChart as CreateClassicChart, createChartEx as CreateCustomChart } from "./v4.2.0/types"
+ * @import { DeepPartial, ChartOptions, IChartApi, IHorzScaleBehavior, WhitespaceData, SingleValueData, ISeriesApi, Time, LogicalRange, SeriesType, BaselineStyleOptions, SeriesOptionsCommon, createChart as CreateClassicChart, createChartEx as CreateCustomChart } from "./v4.2.2/types"
  */
 
 const ids = {
@@ -16,7 +16,7 @@ const ids = {
   },
 };
 
-export default import("./v4.2.0/script.js").then((lightweightCharts) => {
+export default import("./v4.2.2/script.js").then((lightweightCharts) => {
   const createClassicChart = /** @type {CreateClassicChart} */ (
     lightweightCharts.createChart
   );
