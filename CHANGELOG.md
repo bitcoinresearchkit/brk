@@ -7,14 +7,17 @@
 
 ## Global
 
-- Merged parser and server crates into a single project (and thus executable), so now both will run at the same time with a single `cargo run -r`
+- Merged parser and server crates into a single project (and thus executable), so now both will run at the same time with a single `cargo run -r` [#7392982](https://github.com/kibo-money/kibo/commit/7392982824c2db94bcd57251fd41986117c29a23)
 - Added `--no-server` and `--no-parser` to disable each if needed
 - Improved executable parameters
-- Started using `log` and `env_logger` crates instead of custom code
+- Started using `log` and `env_logger` crates instead of custom code [#7392982](https://github.com/kibo-money/kibo/commit/7392982824c2db94bcd57251fd41986117c29a23)
 - Improved logs
-- Automated databases defragmention (and removed parameter) to improve disk usage and parse speed
-- Fixed input being unfocused right after being focused in Brave browser
-- Moved Sanakirja database wrapper to its own crate: `snkrj`
+- Automated databases defragmention (and removed parameter) to improve disk usage and parse speed [#7392982](https://github.com/kibo-money/kibo/commit/7392982824c2db94bcd57251fd41986117c29a23)
+- Fixed input being unfocused right after being focused in Brave browser [#9a9ae61](https://github.com/kibo-money/kibo/commit/9a9ae614d07b54c08b7e9c0e2aefe3b52fdb93c5)
+- Moved Sanakirja database wrapper to its own crate: `snkrj` [0f936dc](https://github.com/kibo-money/kibo/commit/0f936dcdfbecac0a228f023bd500d6e98f56446a)
+- Reworked server's API code [#6ab0f46]( https://github.com/kibo-money/kibo/commit/6ab0f463119a902a1b7ca9691b54f61543bb8f2f)
+  - New route format: `/api/date-to-realized-price` is now `/api/realized-price?kind=date`
+  - Added status and timing to logs
 
 ## Git
 
