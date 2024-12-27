@@ -322,8 +322,8 @@ where
     fn id(&self, config: &Config) -> String {
         let path_to_string = |p: &Path| p.to_str().unwrap().to_owned();
         path_to_string(self.path_parent())
-            .replace(&path_to_string(&config.path_kibodir()), "")
-            .replace(&format!("/{}/", Config::DATASET_DIR_NAME), "")
+            .replace(&format!("{}/", path_to_string(&config.path_kibodir())), "")
+            .replace(&format!("{}/", Config::DATASET_DIR_NAME), "")
             .replace("/", "-")
     }
 

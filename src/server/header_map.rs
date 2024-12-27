@@ -1,21 +1,20 @@
 use std::path::Path;
 
-use axum::{
-    body::Body,
-    http::{header, HeaderMap, Response},
-    response::IntoResponse,
-};
+use axum::http::{header, HeaderMap};
 use chrono::{DateTime, Timelike, Utc};
 use log::info;
-use reqwest::{
-    header::{HOST, IF_MODIFIED_SINCE},
-    StatusCode,
-};
+use reqwest::header::{HOST, IF_MODIFIED_SINCE};
 
 const STALE_IF_ERROR: u64 = 30_000_000; // 1 Year ish
 const MODIFIED_SINCE_FORMAT: &str = "%a, %d %b %Y %H:%M:%S GMT";
 
-pub trait HeaderMapUtils {
+#[derive(PartialEq, Eq)]
+pub enum Modified {
+    ModifiedSince,
+    NotModifiedSince,
+}
+
+pub trait HeaderMapExtended {
     fn get_scheme(&self) -> &str;
     fn get_host(&self) -> &str;
     fn check_if_host_is_any_local(&self) -> bool;
@@ -25,10 +24,8 @@ pub trait HeaderMapUtils {
     fn insert_cors(&mut self);
 
     fn get_if_modified_since(&self) -> Option<DateTime<Utc>>;
-    fn check_if_modified_since(
-        &self,
-        path: &Path,
-    ) -> color_eyre::Result<(DateTime<Utc>, Option<Response<Body>>)>;
+    fn check_if_modified_since(&self, path: &Path)
+        -> color_eyre::Result<(Modified, DateTime<Utc>)>;
 
     fn insert_cache_control_immutable(&mut self);
     #[allow(unused)]
@@ -52,7 +49,7 @@ pub trait HeaderMapUtils {
     fn insert_content_type_font_woff2(&mut self);
 }
 
-impl HeaderMapUtils for HeaderMap {
+impl HeaderMapExtended for HeaderMap {
     fn get_scheme(&self) -> &str {
         if self.check_if_host_is_any_local() {
             "http"
@@ -114,22 +111,18 @@ impl HeaderMapUtils for HeaderMap {
     fn check_if_modified_since(
         &self,
         path: &Path,
-    ) -> color_eyre::Result<(DateTime<Utc>, Option<Response<Body>>)> {
+    ) -> color_eyre::Result<(Modified, DateTime<Utc>)> {
         let time = path.metadata()?.modified()?;
         let date: DateTime<Utc> = time.into();
         let date = date.with_nanosecond(0).unwrap();
-        let mut response_opt = None;
 
         if let Some(if_modified_since) = self.get_if_modified_since() {
             if if_modified_since == date {
-                let mut response = (StatusCode::NOT_MODIFIED, "").into_response();
-                let headers = response.headers_mut();
-                headers.insert_cors();
-                response_opt.replace(response);
+                return Ok((Modified::NotModifiedSince, date));
             }
         }
 
-        Ok((date, response_opt))
+        Ok((Modified::ModifiedSince, date))
     }
 
     fn get_if_modified_since(&self) -> Option<DateTime<Utc>> {

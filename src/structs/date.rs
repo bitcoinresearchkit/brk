@@ -49,7 +49,7 @@ impl Date {
     }
 
     pub fn to_timestamp(self) -> Timestamp {
-        Timestamp::wrap(NaiveDateTime::from(*self).and_utc().timestamp() as u32)
+        Timestamp::from(NaiveDateTime::from(*self).and_utc().timestamp() as u32)
     }
 
     /// Returns value between 0.0 and 1.0 depending on its completion

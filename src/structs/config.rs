@@ -77,6 +77,7 @@ pub struct Config {
 
 impl Config {
     pub const DATASET_DIR_NAME: &str = "datasets";
+    pub const DATABASES_DIR_NAME: &str = "databases";
 
     pub fn import() -> color_eyre::Result<Self> {
         let path = Self::path_dot_kibo();
@@ -285,7 +286,7 @@ impl Config {
     }
 
     pub fn path_datasets(&self) -> MapPath {
-        MapPath::from(self.path_kibodir().join("datasets"))
+        MapPath::from(self.path_kibodir().join(Self::DATASET_DIR_NAME))
     }
 
     pub fn path_datasets_last_values(&self) -> MapPath {
@@ -297,7 +298,7 @@ impl Config {
     }
 
     pub fn path_databases(&self) -> PathBuf {
-        self.path_kibodir().join(Self::DATASET_DIR_NAME)
+        self.path_kibodir().join(Self::DATABASES_DIR_NAME)
     }
 
     pub fn path_states(&self) -> PathBuf {

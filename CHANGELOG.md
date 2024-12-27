@@ -18,6 +18,7 @@
 - Reworked server's API code [#6ab0f46]( https://github.com/kibo-money/kibo/commit/6ab0f463119a902a1b7ca9691b54f61543bb8f2f)
   - New route format: `/api/date-to-realized-price` is now `/api/realized-price?kind=date`
   - Added status and timing to logs
+- Updated website packages
 
 ## Git
 

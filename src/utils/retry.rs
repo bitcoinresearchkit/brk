@@ -5,10 +5,6 @@ pub fn retry<T>(
     sleep_in_s: u64,
     retries: usize,
 ) -> color_eyre::Result<T> {
-    if retries < 1 {
-        unreachable!()
-    }
-
     let mut i = 0;
 
     loop {

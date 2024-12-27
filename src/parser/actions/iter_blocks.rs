@@ -72,7 +72,7 @@ pub fn iter_blocks(
                 if let Some((_current_block_height, current_block, _current_block_hash)) =
                     current_block_opt
                 {
-                    let timestamp = Timestamp::wrap(current_block.header.time);
+                    let timestamp = Timestamp::from(current_block.header.time);
 
                     let current_block_date = timestamp.to_date();
                     let current_block_height: Height = height + blocks_loop_i;
@@ -83,7 +83,7 @@ pub fn iter_blocks(
                     }
 
                     next_date_opt = next_block_opt.as_ref().map(|(_, next_block, _)| {
-                        Timestamp::wrap(next_block.header.time).to_date()
+                        Timestamp::from(next_block.header.time).to_date()
                     });
 
                     // Always run for the first block of the loop

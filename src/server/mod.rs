@@ -13,6 +13,7 @@ use crate::structs::Config;
 
 pub mod api;
 mod header_map;
+mod response;
 mod website;
 
 #[derive(Clone)]

@@ -1,6 +1,6 @@
 use std::path::Path;
 
-#[derive(PartialEq, Eq)]
+#[derive(PartialEq, Eq, Clone, Copy)]
 pub enum Extension {
     #[allow(clippy::upper_case_acronyms)]
     CSV,

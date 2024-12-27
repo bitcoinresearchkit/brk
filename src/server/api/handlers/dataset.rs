@@ -1,6 +1,7 @@
 use std::{fmt::Debug, path::PathBuf, time::Instant};
 
 use axum::{
+    body::Body,
     extract::{Path, Query, State},
     http::HeaderMap,
     response::{IntoResponse, Response},
@@ -14,15 +15,19 @@ use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use crate::{
     server::{
         api::{
-            structs::{ChunkMetadata, DatasetRange, DatasetRangeChunk, Extension, Kind, Route},
+            structs::{
+                ChunkMetadata, DatasetRange, DatasetRangeChunk, Extension, Kind, Route, Routes,
+            },
             API_URL_PREFIX,
         },
-        header_map::HeaderMapUtils,
-        log_result, AppState,
+        header_map::{HeaderMapExtended, Modified},
+        log_result,
+        response::ResponseExtended,
+        AppState,
     },
     structs::{
-        Date, GenericMap, Height, MapChunkId, MapKey, MapSerialized, MapValue, SerializedDateMap,
-        SerializedVec, OHLC,
+        Date, GenericMap, Height, HeightMapChunkId, MapChunkId, MapKey, MapSerialized, MapValue,
+        SerializedBTreeMap, SerializedDateMap, SerializedTimeMap, SerializedVec, Timestamp, OHLC,
     },
 };
 
@@ -86,19 +91,17 @@ fn result_handler(
 
     let type_name = route.type_name.as_str();
     Ok(match type_name {
-        "u8" => typed_handler::<u8>(headers, id, ext, query, route)?,
-        "u16" => typed_handler::<u16>(headers, id, ext, query, route)?,
-        "u32" => typed_handler::<u32>(headers, id, ext, query, route)?,
-        "u64" => typed_handler::<u64>(headers, id, ext, query, route)?,
-        "usize" => typed_handler::<usize>(headers, id, ext, query, route)?,
-        "f32" => typed_handler::<f32>(headers, id, ext, query, route)?,
-        "f64" => typed_handler::<f64>(headers, id, ext, query, route)?,
-        "OHLC" => typed_handler::<OHLC>(headers, id, ext, query, route)?,
-        "Date" => typed_handler::<Date>(headers, id, ext, query, route)?,
-        "Height" => typed_handler::<Height>(headers, id, ext, query, route)?,
-        // "Value" => {
-        //     value_to_response::<serde_json::Value>(Json::import(&route.file_path)?, extension)
-        // }
+        "u8" => typed_handler::<u8>(headers, id, ext, query, route, &routes)?,
+        "u16" => typed_handler::<u16>(headers, id, ext, query, route, &routes)?,
+        "u32" => typed_handler::<u32>(headers, id, ext, query, route, &routes)?,
+        "u64" => typed_handler::<u64>(headers, id, ext, query, route, &routes)?,
+        "usize" => typed_handler::<usize>(headers, id, ext, query, route, &routes)?,
+        "f32" => typed_handler::<f32>(headers, id, ext, query, route, &routes)?,
+        "f64" => typed_handler::<f64>(headers, id, ext, query, route, &routes)?,
+        "OHLC" => typed_handler::<OHLC>(headers, id, ext, query, route, &routes)?,
+        "Date" => typed_handler::<Date>(headers, id, ext, query, route, &routes)?,
+        "Height" => typed_handler::<Height>(headers, id, ext, query, route, &routes)?,
+        "Timestamp" => typed_handler::<Timestamp>(headers, id, ext, query, route, &routes)?,
         _ => panic!("Incompatible type: {type_name}"),
     })
 }
@@ -109,6 +112,7 @@ fn typed_handler<T>(
     ext: Option<Extension>,
     query: &Query<DatasetParams>,
     route: &Route,
+    routes: &Routes,
 ) -> color_eyre::Result<Response>
 where
     T: Serialize + Debug + DeserializeOwned + Decode + MapValue,
@@ -121,26 +125,97 @@ where
     let range = DatasetRange::try_from(query)?;
 
     let (mut response, date_modified) = match kind {
-        Kind::Date => map_to_response::<Date, T, _, SerializedDateMap<T>>(
-            id, headers, route, &ext, range, query,
-        ),
-        Kind::Height => map_to_response::<Height, T, _, SerializedVec<T>>(
-            id, headers, route, &ext, range, query,
-        ),
         Kind::Last => {
             let last_value: T = route.serialization.import(&route.path.join("last"))?;
             return Ok(axum::response::Json(last_value).into_response());
         }
-    }?;
+        Kind::Date => match read_serialized::<Date, T, _, SerializedDateMap<T>>(
+            id, &headers, route, &range, query,
+        )? {
+            ReadSerialized::DatasetAndDate((dataset, date, chunk_meta)) => {
+                (serialized_to_response(dataset, id, chunk_meta, ext), date)
+            }
+            ReadSerialized::NotModified => return Ok(Response::new_not_modified()),
+            ReadSerialized::_Phantom(_) => unreachable!(),
+        },
+        Kind::Height => match read_serialized::<Height, T, _, SerializedVec<T>>(
+            id, &headers, route, &range, query,
+        )? {
+            ReadSerialized::DatasetAndDate((dataset, date, chunk_meta)) => (
+                serialized_to_response::<Height, T, _, SerializedVec<T>>(
+                    dataset, id, chunk_meta, ext,
+                ),
+                date,
+            ),
+            ReadSerialized::NotModified => return Ok(Response::new_not_modified()),
+            ReadSerialized::_Phantom(_) => unreachable!(),
+        },
+        Kind::Timestamp => {
+            let (dataset, date, chunk_meta) = match read_serialized::<Height, T, _, SerializedVec<T>>(
+                id, &headers, route, &range, query,
+            )? {
+                ReadSerialized::DatasetAndDate(tuple) => tuple,
+                ReadSerialized::NotModified => return Ok(Response::new_not_modified()),
+                ReadSerialized::_Phantom(_) => unreachable!(),
+            };
 
-    let status_ok = response.status() == StatusCode::OK;
+            let (timestamp_dataset, _, _) =
+                match read_serialized::<Height, Timestamp, _, SerializedVec<Timestamp>>(
+                    "timestamp",
+                    &headers,
+                    routes.get("timestamp").unwrap(),
+                    &range,
+                    query,
+                )? {
+                    ReadSerialized::DatasetAndDate(tuple) => tuple,
+                    ReadSerialized::NotModified => return Ok(Response::new_not_modified()),
+                    ReadSerialized::_Phantom(_) => unreachable!(),
+                };
+
+            let mut serialized_timemap: SerializedTimeMap<T> = SerializedBTreeMap::default();
+
+            dataset
+                .map
+                .into_iter()
+                .enumerate()
+                .for_each(|(index, value)| {
+                    serialized_timemap.map.insert(
+                        timestamp_dataset
+                            .get_index(index)
+                            .cloned()
+                            .unwrap_or(Timestamp::now()),
+                        value,
+                    );
+                });
+
+            (
+                serialized_to_response::<Timestamp, T, HeightMapChunkId, SerializedTimeMap<T>>(
+                    serialized_timemap,
+                    id,
+                    chunk_meta,
+                    ext,
+                ),
+                date,
+            )
+
+            // let m = read_serialized::<Height, T, _, SerializedVec<T>>(
+            //     id, &headers, route, &range, query,
+            // )?;
+            // let t = read_serialized::<Height, Timestamp, _, SerializedVec<Timestamp>>(
+            //     "timestamp",
+            //     &headers,
+            //     routes.get("timestamp").unwrap(),
+            //     &range,
+            //     query,
+            // );
+            // t
+        }
+    };
+
     let headers = response.headers_mut();
 
     headers.insert_cors();
-
-    if status_ok {
-        headers.insert_last_modified(date_modified);
-    }
+    headers.insert_last_modified(date_modified);
 
     match ext {
         Some(extension) => {
@@ -156,14 +231,51 @@ where
     Ok(response)
 }
 
-fn map_to_response<Key, Value, ChunkId, Serialized>(
+fn serialized_to_response<Key, Value, ChunkId, Serialized>(
+    dataset: Serialized,
     id: &str,
-    headers: HeaderMap,
+    chunk_meta: Option<ChunkMetadata>,
+    ext: Option<Extension>,
+) -> Response<Body>
+where
+    Key: MapKey<ChunkId>,
+    Value: MapValue,
+    ChunkId: MapChunkId,
+    Serialized: MapSerialized<Key, Value, ChunkId>,
+{
+    if ext == Some(Extension::CSV) {
+        dataset.to_csv(id).into_response()
+    } else if let Some(chunk) = chunk_meta {
+        axum::response::Json(SerializedMapChunk {
+            chunk,
+            map: dataset.map(),
+            version: dataset.version(),
+        })
+        .into_response()
+    } else {
+        axum::response::Json(dataset).into_response()
+    }
+}
+
+enum ReadSerialized<Key, Value, ChunkId, Serialized>
+where
+    Key: MapKey<ChunkId>,
+    Value: MapValue,
+    ChunkId: MapChunkId,
+    Serialized: MapSerialized<Key, Value, ChunkId>,
+{
+    DatasetAndDate((Serialized, DateTime<Utc>, Option<ChunkMetadata>)),
+    NotModified,
+    _Phantom((Key, Value, ChunkId)),
+}
+
+fn read_serialized<Key, Value, ChunkId, Serialized>(
+    id: &str,
+    headers: &HeaderMap,
     route: &Route,
-    ext: &Option<Extension>,
-    range: DatasetRange,
+    range: &DatasetRange,
     query: &Query<DatasetParams>,
-) -> color_eyre::Result<(Response, DateTime<Utc>)>
+) -> color_eyre::Result<ReadSerialized<Key, Value, ChunkId, Serialized>>
 where
     Key: MapKey<ChunkId>,
     Value: MapValue,
@@ -188,7 +300,7 @@ where
                     .context("Last tuple of dataset directory")?
                     .0
             }
-            DatasetRangeChunk::Chunk(chunk) => ChunkId::from_usize(chunk),
+            DatasetRangeChunk::Chunk(chunk) => ChunkId::from_usize(*chunk),
         };
 
         let chunk_path = datasets.get(&chunk_id);
@@ -197,12 +309,11 @@ where
         }
         let chunk_path = chunk_path.unwrap();
 
-        let (date, response) = headers.check_if_modified_since(chunk_path)?;
-        date_modified = date;
-
-        if let Some(response) = response {
-            return Ok((response, date_modified));
+        let (modified, date) = headers.check_if_modified_since(chunk_path)?;
+        if modified == Modified::NotModifiedSince {
+            return Ok(ReadSerialized::NotModified);
         }
+        date_modified = date;
 
         let to_url = |chunk: Option<ChunkId>| {
             chunk.and_then(|chunk| {
@@ -237,30 +348,21 @@ where
             })
             .context("Expect to find newest file")?;
 
-        let (date, response) = headers.check_if_modified_since(newest_file)?;
-        date_modified = date;
-
-        if let Some(response) = response {
-            return Ok((response, date_modified));
+        let (modified, date) = headers.check_if_modified_since(newest_file)?;
+        if modified == Modified::NotModifiedSince {
+            return Ok(ReadSerialized::NotModified);
         }
+
+        date_modified = date;
 
         Serialized::import_all(&folder_path, serialization)
     };
 
-    let response = if *ext == Some(Extension::CSV) {
-        dataset.to_csv(id).into_response()
-    } else if let Some(chunk) = chunk_meta {
-        axum::response::Json(SerializedMapChunk {
-            chunk,
-            map: dataset.map(),
-            version: dataset.version(),
-        })
-        .into_response()
-    } else {
-        axum::response::Json(dataset).into_response()
-    };
-
-    Ok((response, date_modified))
+    Ok(ReadSerialized::DatasetAndDate((
+        dataset,
+        date_modified,
+        chunk_meta,
+    )))
 }
 
 #[derive(Serialize)]
