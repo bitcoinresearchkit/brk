@@ -19,6 +19,9 @@
   - New route format: `/api/date-to-realized-price` is now `/api/realized-price?kind=date`
   - Added status and timing to logs
 - Updated website packages
+- Added API support for datasets by timestamp (by merging any dataset by height with the height to timestamp dataset and so it still uses heights as chunk ids) [#ca00f3f](https://github.com/kibo-money/kibo/commit/ca00f3f71526f0c5c16021024fec7e5c6e47221c)
+  - `/api/realized-price?kind=t`
+  - `/api/realized-price?kind=timestamp&chunk=860000`
 
 ## Git
 
