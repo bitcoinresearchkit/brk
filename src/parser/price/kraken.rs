@@ -91,7 +91,7 @@ impl Kraken {
                     .map(|value| {
                         let array = value.as_array().unwrap();
 
-                        let date = Timestamp::wrap(array.first().unwrap().as_u64().unwrap() as u32)
+                        let date = Timestamp::from(array.first().unwrap().as_u64().unwrap() as u32)
                             .to_date();
 
                         let get_f32 = |index: usize| {

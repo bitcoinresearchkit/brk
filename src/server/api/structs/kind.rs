@@ -9,6 +9,7 @@ use crate::structs::{AnyMap, Date, Height, MapKey};
 pub enum Kind {
     Date,
     Height,
+    Timestamp,
     Last,
 }
 
@@ -25,6 +26,7 @@ impl TryFrom<&String> for Kind {
             {
                 'd' => Self::Date,
                 'h' => Self::Height,
+                't' => Self::Timestamp,
                 'l' => Self::Last,
                 _ => return Err(eyre!("Bad kind")),
             },
@@ -40,6 +42,7 @@ impl From<&(dyn AnyMap + Send + Sync)> for BTreeSet<Kind> {
         }
         if map.key_name() == Height::map_name() {
             s.insert(Kind::Height);
+            s.insert(Kind::Timestamp);
         }
         if map.last_value().is_some() {
             s.insert(Kind::Last);
@@ -47,13 +50,3 @@ impl From<&(dyn AnyMap + Send + Sync)> for BTreeSet<Kind> {
         s
     }
 }
-
-// impl std::fmt::Display for Kind {
-//     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-//         match *self {
-//             Self::Date => write!(f, "date"),
-//             Self::Height => write!(f, "height"),
-//             Self::Last => write!(f, "last"),
-//         }
-//     }
-// }

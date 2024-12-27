@@ -171,7 +171,7 @@ impl Binance {
                         // [timestamp, open, high, low, close, volume, ...]
                         let array = value.as_array().unwrap();
 
-                        let date = Timestamp::wrap(
+                        let date = Timestamp::from(
                             (array.first().unwrap().as_u64().unwrap() / 1_000) as u32,
                         )
                         .to_date();

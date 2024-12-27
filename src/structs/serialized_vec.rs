@@ -14,6 +14,12 @@ pub struct SerializedVec<Value> {
     pub map: Vec<Value>,
 }
 
+impl<Value> SerializedVec<Value> {
+    pub fn get_index(&self, index: usize) -> Option<&Value> {
+        self.map.get(index)
+    }
+}
+
 impl<Key, Value, ChunkId> MapSerialized<Key, Value, ChunkId> for SerializedVec<Value>
 where
     Self: Debug + Serialize + DeserializeOwned + Encode + Decode,

@@ -61,7 +61,7 @@ pub fn parse(
 ) {
     // log(&format!("{height}"));
 
-    let timestamp = Timestamp::wrap(block.header.time);
+    let timestamp = Timestamp::from(block.header.time);
 
     // If false, expect that the code is flawless
     // or create a 0 value txid database

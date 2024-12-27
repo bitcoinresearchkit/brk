@@ -13,7 +13,11 @@ use axum::{
 use log::{error, info};
 use reqwest::StatusCode;
 
-use crate::server::{header_map::HeaderMapUtils, log_result};
+use crate::server::{
+    header_map::{HeaderMapExtended, Modified},
+    log_result,
+    response::ResponseExtended,
+};
 
 use super::minify_js;
 
@@ -80,10 +84,9 @@ fn path_to_response(headers: &HeaderMap, path: &Path) -> Response {
 }
 
 fn _path_to_response(headers: &HeaderMap, path: &Path) -> color_eyre::Result<Response> {
-    let (date, response) = headers.check_if_modified_since(path)?;
-
-    if let Some(response) = response {
-        return Ok(response);
+    let (modified, date) = headers.check_if_modified_since(path)?;
+    if modified == Modified::NotModifiedSince {
+        return Ok(Response::new_not_modified());
     }
 
     let mut response;

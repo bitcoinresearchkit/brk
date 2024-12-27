@@ -6,9 +6,10 @@ use serde::{de::DeserializeOwned, Deserialize, Serialize};
 
 use crate::io::Serialization;
 
-use super::{Date, DateMap, MapChunkId, MapKey, MapSerialized, MapValue};
+use super::{Date, DateMap, MapChunkId, MapKey, MapSerialized, MapValue, Timestamp};
 
 pub type SerializedDateMap<T> = SerializedBTreeMap<Date, T>;
+pub type SerializedTimeMap<T> = SerializedBTreeMap<Timestamp, T>;
 
 #[derive(Debug, Default, Serialize, Deserialize, Encode, Decode, Allocative)]
 pub struct SerializedBTreeMap<Key, Value>
