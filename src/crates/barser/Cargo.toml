@@ -1,0 +1,12 @@
+[package]
+name = "barser"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+biter = "0.2.2"
+color-eyre = "0.6.3"
+ctrlc = "3.4.5"
+derive_deref = "1.1.1"
+fjall = "2.4.4"
+rayon = "1.10.0"
