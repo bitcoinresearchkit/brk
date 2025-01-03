@@ -1,5 +1,4 @@
 use derive_deref::{Deref, DerefMut};
-use fjall::Slice;
 
 use crate::structs::{Amount, Database, DatabaseTrait, Height, Txoutindex, Version};
 
@@ -19,7 +18,7 @@ impl TxoutindexToAmount {
     }
 
     pub fn remove(&mut self, txoutindex: Txoutindex) {
-        self.0.remove(Slice::from(txoutindex))
+        self.0.remove(txoutindex.into())
     }
 }
 

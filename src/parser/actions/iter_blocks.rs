@@ -21,7 +21,7 @@ use crate::{
 
 pub fn iter_blocks(
     config: &Config,
-    rpc: &biter::bitcoincore_rpc::Client,
+    rpc: &Client,
     approx_block_count: usize,
     exit: Exit,
     databases: &mut Databases,

@@ -1,9 +1,10 @@
 [package]
-name = "barser"
+name = "bitbase"
 version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+bitcoin_hashes = "0.16.0"
 biter = "0.2.2"
 color-eyre = "0.6.3"
 ctrlc = "3.4.5"

@@ -1,10 +1,8 @@
 use std::{mem, ops::RangeBounds};
 
-use fjall::{
-    Batch, Keyspace, KvPair, PartitionCreateOptions, PartitionHandle, PersistMode, Result, Slice,
-};
+pub use fjall::*;
 
-use super::{Height, Version};
+use crate::structs::{Height, Version};
 
 pub struct Database {
     keyspace: Keyspace,
@@ -19,7 +17,7 @@ const HEIGHT: &str = "height";
 
 impl Database {
     pub fn import(name: &str, version: Version) -> Result<Self> {
-        let keyspace = fjall::Config::new(format!("./databases/{name}")).open()?;
+        let keyspace = fjall::Config::new(format!("./database/{name}")).open()?;
 
         let data = Self::open_data(&keyspace)?;
         let meta = Self::open_meta(&keyspace)?;
@@ -67,6 +65,13 @@ impl Database {
         range: R,
     ) -> impl DoubleEndedIterator<Item = Result<KvPair>> + 'static {
         self.data.range(range)
+    }
+
+    pub fn prefix<'a, K: AsRef<[u8]> + 'a>(
+        &'a self,
+        prefix: K,
+    ) -> impl DoubleEndedIterator<Item = Result<KvPair>> + 'static {
+        self.data.prefix(prefix)
     }
 
     pub fn insert(&mut self, key: Slice, value: Slice, height: Height) {
