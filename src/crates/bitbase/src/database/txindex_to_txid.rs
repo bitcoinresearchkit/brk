@@ -1,6 +1,5 @@
 use biter::bitcoin::Txid;
 use derive_deref::{Deref, DerefMut};
-use fjall::Slice;
 
 use crate::structs::{Database, DatabaseTrait, Height, Txindex, Version};
 
@@ -17,7 +16,7 @@ impl TxindexToTxid {
     }
 
     pub fn remove(&mut self, txindex: Txindex) {
-        self.0.remove(Slice::from(txindex))
+        self.0.remove(txindex.into())
     }
 }
 

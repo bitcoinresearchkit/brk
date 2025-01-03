@@ -5,6 +5,7 @@ use std::{
 
 use biter::bitcoin;
 use derive_deref::{Deref, DerefMut};
+use fjall::Slice;
 
 use super::Height;
 
@@ -29,7 +30,7 @@ impl From<bitcoin::Amount> for Amount {
     }
 }
 
-impl From<Amount> for fjall::Slice {
+impl From<Amount> for Slice {
     fn from(value: Amount) -> Self {
         value.to_sat().to_be_bytes().into()
     }

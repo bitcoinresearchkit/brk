@@ -8,7 +8,7 @@ use std::{
 
 use derived_deref::{Deref, DerefMut};
 
-use crate::{blk_recap::BlkRecap, BlkMetadataAndBlock};
+use crate::{blk_recap::BlkRecap, BlkIndexToBlkPath, BlkMetadataAndBlock};
 
 const TARGET_BLOCKS_PER_MONTH: usize = 144 * 30;
 
@@ -21,7 +21,7 @@ pub struct BlkIndexToBlkRecap {
 }
 
 impl BlkIndexToBlkRecap {
-    pub fn import(blocks_dir: &BTreeMap<usize, PathBuf>, data_dir: &Path) -> Self {
+    pub fn import(blocks_dir: &BlkIndexToBlkPath, data_dir: &Path) -> Self {
         let path = data_dir.join("blk_index_to_blk_recap.json");
 
         let tree = {
@@ -46,7 +46,7 @@ impl BlkIndexToBlkRecap {
         this
     }
 
-    pub fn clean_outdated(&mut self, blocks_dir: &BTreeMap<usize, PathBuf>) {
+    pub fn clean_outdated(&mut self, blocks_dir: &BlkIndexToBlkPath) {
         let mut unprocessed_keys = self.keys().copied().collect::<BTreeSet<_>>();
 
         blocks_dir.iter().for_each(|(blk_index, blk_path)| {

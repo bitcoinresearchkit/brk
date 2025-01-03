@@ -13,12 +13,14 @@ use bitcoin::{
     Block, BlockHash,
 };
 use bitcoincore_rpc::RpcApi;
+use blk_index_to_blk_path::*;
 use crossbeam::channel::{bounded, Receiver};
 use rayon::prelude::*;
 
 pub use bitcoin;
 pub use bitcoincore_rpc;
 
+mod blk_index_to_blk_path;
 mod blk_index_to_blk_recap;
 mod blk_metadata;
 mod blk_metadata_and_block;
@@ -88,7 +90,7 @@ pub fn new(
     let (send_block, recv_block) = bounded(BOUND_CAP);
     let (send_height_block_hash, recv_height_block_hash) = bounded(BOUND_CAP);
 
-    let blk_index_to_blk_path = scan_blocks_dir(data_dir);
+    let blk_index_to_blk_path = BlkIndexToBlkPath::scan(data_dir);
 
     let mut blk_index_to_blk_recap = BlkIndexToBlkRecap::import(&blk_index_to_blk_path, data_dir);
 
@@ -97,12 +99,12 @@ pub fn new(
 
     thread::spawn(move || {
         blk_index_to_blk_path
-            .into_iter()
-            .filter(|(blk_index, _)| blk_index >= &starting_blk_index)
+            .iter()
+            .filter(|(blk_index, _)| blk_index >= &&starting_blk_index)
             .try_for_each(move |(blk_index, blk_path)| {
-                let blk_metadata = BlkMetadata::new(blk_index, &blk_path);
+                let blk_metadata = BlkMetadata::new(*blk_index, blk_path);
 
-                let blk_bytes = fs::read(&blk_path).unwrap();
+                let blk_bytes = fs::read(blk_path).unwrap();
                 let blk_bytes_len = blk_bytes.len() as u64;
 
                 let mut cursor = Cursor::new(blk_bytes.as_slice());

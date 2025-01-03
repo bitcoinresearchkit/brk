@@ -1,15 +1,23 @@
+mod addressbytes;
+mod addressindex;
+mod addresstxoutindex;
+mod addresstype;
 mod amount;
-mod database;
 mod exit;
+mod fjall;
 mod height;
 mod slice;
 mod txindex;
 mod txoutindex;
 mod version;
 
+pub use addressbytes::*;
+pub use addressindex::*;
+pub use addresstxoutindex::*;
+pub use addresstype::*;
 pub use amount::*;
-pub use database::*;
 pub use exit::*;
+pub use fjall::*;
 pub use height::*;
 pub use slice::*;
 pub use txindex::*;

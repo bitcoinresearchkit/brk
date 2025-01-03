@@ -1,4 +1,5 @@
 use derive_deref::{Deref, DerefMut};
+use fjall::Slice;
 
 use super::SliceExtended;
 
@@ -11,8 +12,8 @@ impl From<u8> for Version {
     }
 }
 
-impl From<fjall::Slice> for Version {
-    fn from(slice: fjall::Slice) -> Self {
+impl From<Slice> for Version {
+    fn from(slice: Slice) -> Self {
         Self(slice.read_u8())
     }
 }

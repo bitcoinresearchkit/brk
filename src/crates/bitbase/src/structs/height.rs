@@ -5,18 +5,19 @@ use std::{
 
 use biter::bitcoincore_rpc::{self, RpcApi};
 use derive_deref::{Deref, DerefMut};
+use fjall::Slice;
 
 use super::SliceExtended;
 
 #[derive(Debug, Clone, Copy, Deref, DerefMut, PartialEq, Eq, PartialOrd, Ord, Default)]
 pub struct Height(u32);
 
-impl From<fjall::Slice> for Height {
-    fn from(slice: fjall::Slice) -> Self {
+impl From<Slice> for Height {
+    fn from(slice: Slice) -> Self {
         Self(slice.read_u32())
     }
 }
-impl From<Height> for fjall::Slice {
+impl From<Height> for Slice {
     fn from(value: Height) -> Self {
         value.to_be_bytes().into()
     }

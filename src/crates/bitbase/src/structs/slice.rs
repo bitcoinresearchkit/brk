@@ -1,17 +1,32 @@
 use std::io::Read;
 
+use fjall::Slice;
+
+#[allow(unused)]
 pub trait SliceExtended {
+    fn default() -> Self;
     fn read_u8(&self) -> u8;
+    fn read_u16(&self) -> u16;
     fn read_u32(&self) -> u32;
     fn read_u64(&self) -> u64;
     fn read_exact(&self, buf: &mut [u8]);
 }
 
-impl SliceExtended for fjall::Slice {
+impl SliceExtended for Slice {
+    fn default() -> Self {
+        Self::new(&[])
+    }
+
     fn read_u8(&self) -> u8 {
         let mut buf: [u8; 1] = [0; 1];
         self.read_exact(&mut buf);
         u8::from_be_bytes(buf)
+    }
+
+    fn read_u16(&self) -> u16 {
+        let mut buf: [u8; 2] = [0; 2];
+        self.read_exact(&mut buf);
+        u16::from_be_bytes(buf)
     }
 
     fn read_u32(&self) -> u32 {

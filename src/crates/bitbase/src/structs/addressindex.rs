@@ -1,11 +1,14 @@
 use derive_deref::{Deref, DerefMut};
+use fjall::Slice;
 
 use super::SliceExtended;
 
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Deref, DerefMut, Default)]
-pub struct Txindex(u32);
+pub struct Addressindex(u32);
 
-impl Txindex {
+impl Addressindex {
+    pub const BYTES: usize = size_of::<Self>();
+
     pub fn increment(&mut self) {
         self.0 += 1;
     }
@@ -15,30 +18,30 @@ impl Txindex {
     }
 }
 
-impl From<u32> for Txindex {
+impl From<u32> for Addressindex {
     fn from(value: u32) -> Self {
         Self(value)
     }
 }
 
-impl From<u64> for Txindex {
+impl From<u64> for Addressindex {
     fn from(value: u64) -> Self {
         Self(value as u32)
     }
 }
-impl From<Txindex> for u64 {
-    fn from(value: Txindex) -> Self {
+impl From<Addressindex> for u64 {
+    fn from(value: Addressindex) -> Self {
         value.0 as u64
     }
 }
 
-impl From<fjall::Slice> for Txindex {
-    fn from(slice: fjall::Slice) -> Self {
+impl From<Slice> for Addressindex {
+    fn from(slice: Slice) -> Self {
         Self(slice.read_u32())
     }
 }
-impl From<Txindex> for fjall::Slice {
-    fn from(value: Txindex) -> Self {
+impl From<Addressindex> for Slice {
+    fn from(value: Addressindex) -> Self {
         value.to_be_bytes().into()
     }
 }
