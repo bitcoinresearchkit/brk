@@ -77,7 +77,7 @@ enum BlockState {
 ///         });
 ///
 ///     dbg!(i.elapsed());
-///}
+/// }
 /// ```
 ///
 pub fn new(

@@ -9,6 +9,10 @@ pub struct Addressindex(u32);
 impl Addressindex {
     pub const BYTES: usize = size_of::<Self>();
 
+    pub fn decremented(self) -> Self {
+        Self(*self - 1)
+    }
+
     pub fn increment(&mut self) {
         self.0 += 1;
     }

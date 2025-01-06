@@ -1,42 +1,62 @@
 use biter::bitcoin::ScriptBuf;
 use color_eyre::eyre::eyre;
+use derive_deref::{Deref, DerefMut};
 use fjall::Slice;
 
-#[derive(Debug)]
+use super::{Addressindex, Addresstype};
+
+#[derive(Debug, Deref, DerefMut)]
 pub struct Addressbytes(Slice);
 
-impl Addressbytes {
-    pub fn to_prefix_slice(&self) -> Slice {
-        self.0[..8].into()
-    }
-}
-
-impl TryFrom<&ScriptBuf> for Addressbytes {
+impl TryFrom<(&ScriptBuf, Addresstype, Addressindex)> for Addressbytes {
     type Error = color_eyre::Report;
-    fn try_from(script: &ScriptBuf) -> Result<Self, Self::Error> {
-        if script.is_p2pk() {
-            let bytes = script.as_bytes();
-            let bytes = match bytes.len() {
-                67 => &script.as_bytes()[1..66],
-                35 => &script.as_bytes()[1..34],
-                _ => {
+    fn try_from(tuple: (&ScriptBuf, Addresstype, Addressindex)) -> Result<Self, Self::Error> {
+        let (script, addresstype, addressindex) = tuple;
+
+        match addresstype {
+            Addresstype::P2PK => {
+                let bytes = script.as_bytes();
+                let bytes = match bytes.len() {
+                    67 => &script.as_bytes()[1..66],
+                    35 => &script.as_bytes()[1..34],
+                    _ => {
+                        dbg!(bytes);
+                        return Err(eyre!("Wrong len"));
+                    }
+                };
+
+                if bytes[0] != 4 {
                     dbg!(bytes);
-                    return Err(eyre!("Wrong len"));
+                    return Err(eyre!("Doesn't start with a 4"));
                 }
-            };
 
-            if bytes[0] != 4 {
-                dbg!(bytes);
-                return Err(eyre!("Doesn't start with a 4"));
+                Ok(Self(bytes.into()))
             }
-
-            Ok(Self(bytes.into()))
-        } else if script.is_p2pkh() {
-            let bytes = &script.as_bytes()[3..23];
-
-            Ok(Self(bytes.into()))
-        } else {
-            Err(eyre!("Unsupported address type"))
+            Addresstype::P2PKH => {
+                let bytes = &script.as_bytes()[3..23];
+                Ok(Self(bytes.into()))
+            }
+            _ => {
+                if script.is_p2sh() {
+                    Err(eyre!("p2sh address type"))
+                } else if script.is_p2wpkh() {
+                    Err(eyre!("p2wpkh address type"))
+                } else if script.is_p2wsh() {
+                    Err(eyre!("p2wsh address type"))
+                } else if script.is_p2tr() {
+                    Err(eyre!("p2tr address type"))
+                } else if script.is_empty() {
+                    Err(eyre!("empty address type"))
+                } else if script.is_op_return() {
+                    Err(eyre!("op_return address type"))
+                } else if script.is_multisig() {
+                    Err(eyre!("multisig address type"))
+                } else if script.is_push_only() {
+                    Err(eyre!("push only address type"))
+                } else {
+                    Ok(Self(addressindex.into()))
+                }
+            }
         }
     }
 }

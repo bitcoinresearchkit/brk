@@ -17,3 +17,9 @@ impl From<Slice> for Version {
         Self(slice.read_u8())
     }
 }
+
+impl From<Version> for Slice {
+    fn from(value: Version) -> Self {
+        value.to_be_bytes().into()
+    }
+}
