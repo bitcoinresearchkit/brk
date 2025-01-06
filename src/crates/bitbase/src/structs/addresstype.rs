@@ -4,21 +4,45 @@ use fjall::Slice;
 
 use super::SliceExtended;
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub enum Addresstype {
     P2PK,
     P2PKH,
+    P2SH,
+    P2WPKH,
+    P2WSH,
+    P2TR,
+    Multisig = 251,
+    PushOnly = 252,
+    OpReturn = 253,
+    Empty = 254,
+    Unknown = 255,
 }
 
-impl TryFrom<&ScriptBuf> for Addresstype {
-    type Error = color_eyre::Report;
-    fn try_from(value: &ScriptBuf) -> Result<Self, Self::Error> {
-        if value.is_p2pk() {
-            Ok(Self::P2PK)
-        } else if value.is_p2pkh() {
-            Ok(Self::P2PKH)
+impl From<&ScriptBuf> for Addresstype {
+    fn from(script: &ScriptBuf) -> Self {
+        if script.is_p2pk() {
+            Self::P2PK
+        } else if script.is_p2pkh() {
+            Self::P2PKH
+        } else if script.is_p2sh() {
+            Self::P2SH
+        } else if script.is_p2wpkh() {
+            Self::P2WPKH
+        } else if script.is_p2wsh() {
+            Self::P2WSH
+        } else if script.is_p2tr() {
+            Self::P2TR
+        } else if script.is_empty() {
+            Self::Empty
+        } else if script.is_op_return() {
+            Self::OpReturn
+        } else if script.is_push_only() {
+            Self::PushOnly
+        } else if script.is_multisig() {
+            Self::Multisig
         } else {
-            Err(eyre!("Not compatible script"))
+            Self::Unknown
         }
     }
 }
