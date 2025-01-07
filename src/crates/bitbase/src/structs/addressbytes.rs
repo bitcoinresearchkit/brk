@@ -3,60 +3,54 @@ use color_eyre::eyre::eyre;
 use derive_deref::{Deref, DerefMut};
 use fjall::Slice;
 
-use super::{Addressindex, Addresstype};
+use super::Addresstype;
 
 #[derive(Debug, Deref, DerefMut)]
 pub struct Addressbytes(Slice);
 
-impl TryFrom<(&ScriptBuf, Addresstype, Addressindex)> for Addressbytes {
+impl TryFrom<(&ScriptBuf, Addresstype)> for Addressbytes {
     type Error = color_eyre::Report;
-    fn try_from(tuple: (&ScriptBuf, Addresstype, Addressindex)) -> Result<Self, Self::Error> {
-        let (script, addresstype, addressindex) = tuple;
+    fn try_from(tuple: (&ScriptBuf, Addresstype)) -> Result<Self, Self::Error> {
+        let (script, addresstype) = tuple;
 
         match addresstype {
             Addresstype::P2PK => {
                 let bytes = script.as_bytes();
                 let bytes = match bytes.len() {
-                    67 => &script.as_bytes()[1..66],
-                    35 => &script.as_bytes()[1..34],
+                    67 => &bytes[1..66],
+                    35 => &bytes[1..34],
                     _ => {
                         dbg!(bytes);
                         return Err(eyre!("Wrong len"));
                     }
                 };
-
-                if bytes[0] != 4 {
-                    dbg!(bytes);
-                    return Err(eyre!("Doesn't start with a 4"));
-                }
-
                 Ok(Self(bytes.into()))
             }
             Addresstype::P2PKH => {
                 let bytes = &script.as_bytes()[3..23];
                 Ok(Self(bytes.into()))
             }
-            _ => {
-                if script.is_p2sh() {
-                    Err(eyre!("p2sh address type"))
-                } else if script.is_p2wpkh() {
-                    Err(eyre!("p2wpkh address type"))
-                } else if script.is_p2wsh() {
-                    Err(eyre!("p2wsh address type"))
-                } else if script.is_p2tr() {
-                    Err(eyre!("p2tr address type"))
-                } else if script.is_empty() {
-                    Err(eyre!("empty address type"))
-                } else if script.is_op_return() {
-                    Err(eyre!("op_return address type"))
-                } else if script.is_multisig() {
-                    Err(eyre!("multisig address type"))
-                } else if script.is_push_only() {
-                    Err(eyre!("push only address type"))
-                } else {
-                    Ok(Self(addressindex.into()))
-                }
+            Addresstype::P2SH => {
+                let bytes = &script.as_bytes()[2..22];
+                Ok(Self(bytes.into()))
             }
+            Addresstype::P2WPKH => {
+                let bytes = &script.as_bytes()[2..];
+                Ok(Self(bytes.into()))
+            }
+            Addresstype::P2WSH => {
+                let bytes = &script.as_bytes()[2..];
+                Ok(Self(bytes.into()))
+            }
+            Addresstype::P2TR => {
+                let bytes = &script.as_bytes()[2..];
+                Ok(Self(bytes.into()))
+            }
+            Addresstype::Multisig => Err(eyre!("multisig address type")),
+            Addresstype::PushOnly => Err(eyre!("push_only address type")),
+            Addresstype::Unknown => Err(eyre!("unknown address type")),
+            Addresstype::Empty => Err(eyre!("empty address type")),
+            Addresstype::OpReturn => Err(eyre!("op_return address type")),
         }
     }
 }
