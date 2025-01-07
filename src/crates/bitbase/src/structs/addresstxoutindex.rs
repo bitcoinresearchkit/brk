@@ -18,9 +18,9 @@ impl From<(Addressindex, Txoutindex)> for Addresstxoutindex {
 
 impl From<Addresstxoutindex> for Slice {
     fn from(value: Addresstxoutindex) -> Self {
-        let txindex_slice = Self::from(value.addressindex);
-        let vout_slice = Self::from(value.txoutindex);
-        Self::from([txindex_slice, vout_slice].concat())
+        let addressindex_slice = Self::from(value.addressindex);
+        let txoutindex_slice = Self::from(value.txoutindex);
+        Self::from([addressindex_slice, txoutindex_slice].concat())
     }
 }
 impl From<Slice> for Addresstxoutindex {

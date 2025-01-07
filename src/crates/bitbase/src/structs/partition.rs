@@ -1,7 +1,4 @@
-pub use fjall::{
-    PartitionCreateOptions, PersistMode, Result, TransactionalKeyspace,
-    TransactionalPartitionHandle,
-};
+pub use fjall::{PartitionCreateOptions, PersistMode, Result, TransactionalKeyspace, TransactionalPartitionHandle};
 
 use crate::structs::{Height, Version};
 
@@ -18,12 +15,7 @@ impl Partition {
     pub const VERSION: &str = "version";
     pub const HEIGHT: &str = "height";
 
-    pub fn import(
-        keyspace: &TransactionalKeyspace,
-        name: &str,
-        version: Version,
-        exit: &Exit,
-    ) -> Result<Self> {
+    pub fn import(keyspace: &TransactionalKeyspace, name: &str, version: Version, exit: &Exit) -> Result<Self> {
         let data = Self::open_data(keyspace, name)?;
         let meta = Self::open_meta(keyspace, name)?;
 
@@ -43,17 +35,11 @@ impl Partition {
         Ok(this)
     }
 
-    fn open_data(
-        keyspace: &TransactionalKeyspace,
-        name: &str,
-    ) -> Result<TransactionalPartitionHandle> {
+    fn open_data(keyspace: &TransactionalKeyspace, name: &str) -> Result<TransactionalPartitionHandle> {
         keyspace.open_partition(&format!("{name}-data"), Self::create_options())
     }
 
-    fn open_meta(
-        keyspace: &TransactionalKeyspace,
-        name: &str,
-    ) -> Result<TransactionalPartitionHandle> {
+    fn open_meta(keyspace: &TransactionalKeyspace, name: &str) -> Result<TransactionalPartitionHandle> {
         keyspace.open_partition(&format!("{name}-meta"), Self::create_options())
     }
 

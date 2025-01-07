@@ -8,7 +8,8 @@ pub struct Partitions {
     pub addressbytes_prefix_to_addressindex: Partition,
     pub addressindex_to_addressbytes: Partition,
     pub addressindex_to_addresstype: Partition,
-    pub addresstxoutindexes: Partition,
+    pub addresstxoutindexes_in: Partition,
+    pub addresstxoutindexes_out: Partition,
     pub blockhash_prefix_to_height: Partition,
     pub height_to_blockhash: Partition,
     pub height_to_first_addressindex: Partition,
@@ -20,6 +21,7 @@ pub struct Partitions {
     pub txindex_to_txid: Partition,
     pub txoutindex_to_addressindex: Partition,
     pub txoutindex_to_amount: Partition,
+    pub zero_txoutindexes: Partition,
 }
 
 const UNSAFE_BLOCKS: usize = 100;
@@ -45,78 +47,40 @@ impl Partitions {
                 Version::from(1),
                 exit,
             )?,
-            addresstxoutindexes: Partition::import(
-                keyspace,
-                "addresstxoutindexes",
-                Version::from(1),
-                exit,
-            )?,
+            addresstxoutindexes_in: Partition::import(keyspace, "addresstxoutindexes_in", Version::from(1), exit)?,
+            addresstxoutindexes_out: Partition::import(keyspace, "addresstxoutindexes_out", Version::from(1), exit)?,
             blockhash_prefix_to_height: Partition::import(
                 keyspace,
                 "blockhash_prefix_to_height",
                 Version::from(1),
                 exit,
             )?,
-            height_to_blockhash: Partition::import(
-                keyspace,
-                "height_to_blockhash",
-                Version::from(1),
-                exit,
-            )?,
+            height_to_blockhash: Partition::import(keyspace, "height_to_blockhash", Version::from(1), exit)?,
             height_to_first_addressindex: Partition::import(
                 keyspace,
                 "height_to_first_addressindex",
                 Version::from(1),
                 exit,
             )?,
-            height_to_first_txindex: Partition::import(
-                keyspace,
-                "height_to_first_txindex",
-                Version::from(1),
-                exit,
-            )?,
+            height_to_first_txindex: Partition::import(keyspace, "height_to_first_txindex", Version::from(1), exit)?,
             height_to_last_addressindex: Partition::import(
                 keyspace,
                 "height_to_last_addressindex",
                 Version::from(1),
                 exit,
             )?,
-            height_to_last_txindex: Partition::import(
-                keyspace,
-                "height_to_last_txindex",
-                Version::from(1),
-                exit,
-            )?,
-            txid_prefix_to_txindex: Partition::import(
-                keyspace,
-                "txid_prefix_to_txindex",
-                Version::from(1),
-                exit,
-            )?,
-            txindex_to_height: Partition::import(
-                keyspace,
-                "txindex_to_height",
-                Version::from(1),
-                exit,
-            )?,
-            txindex_to_txid: Partition::import(
-                keyspace,
-                "txindex_to_txid",
-                Version::from(1),
-                exit,
-            )?,
+            height_to_last_txindex: Partition::import(keyspace, "height_to_last_txindex", Version::from(1), exit)?,
+            txid_prefix_to_txindex: Partition::import(keyspace, "txid_prefix_to_txindex", Version::from(1), exit)?,
+            txindex_to_height: Partition::import(keyspace, "txindex_to_height", Version::from(1), exit)?,
+            txindex_to_txid: Partition::import(keyspace, "txindex_to_txid", Version::from(1), exit)?,
             txoutindex_to_addressindex: Partition::import(
                 keyspace,
                 "txoutindex_to_addressindex",
                 Version::from(1),
                 exit,
             )?,
-            txoutindex_to_amount: Partition::import(
-                keyspace,
-                "txoutindex_to_amount",
-                Version::from(1),
-                exit,
-            )?,
+            txoutindex_to_amount: Partition::import(keyspace, "txoutindex_to_amount", Version::from(1), exit)?,
+            zero_txoutindexes: Partition::import(keyspace, "zero_txoutindexes", Version::from(1), exit)?,
         })
     }
 
@@ -252,6 +216,11 @@ impl Partitions {
 
         //     Ok(())
         // })?;
+        //
+
+        // todo!("clear addresstxoutindexes_out")
+        // todo!("clear addresstxoutindexes_in")
+        // todo!("clear zero_txoutindexes")
 
         // Ok(())
     }
@@ -261,7 +230,8 @@ impl Partitions {
             &self.addressbytes_prefix_to_addressindex,
             &self.addressindex_to_addressbytes,
             &self.addressindex_to_addresstype,
-            &self.addresstxoutindexes,
+            &self.addresstxoutindexes_in,
+            &self.addresstxoutindexes_out,
             &self.blockhash_prefix_to_height,
             &self.height_to_blockhash,
             &self.height_to_first_addressindex,
@@ -273,6 +243,7 @@ impl Partitions {
             &self.txindex_to_txid,
             &self.txoutindex_to_addressindex,
             &self.txoutindex_to_amount,
+            &self.zero_txoutindexes,
         ]
     }
 }
