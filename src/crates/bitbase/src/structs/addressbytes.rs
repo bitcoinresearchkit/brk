@@ -5,7 +5,7 @@ use fjall::Slice;
 
 use super::Addresstype;
 
-#[derive(Debug, Deref, DerefMut)]
+#[derive(Debug, Deref, DerefMut, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Addressbytes(Slice);
 
 impl TryFrom<(&ScriptBuf, Addresstype)> for Addressbytes {

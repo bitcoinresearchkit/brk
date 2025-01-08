@@ -1,3 +1,5 @@
+use std::ops::{Add, AddAssign};
+
 use derive_deref::{Deref, DerefMut};
 use fjall::Slice;
 
@@ -8,10 +10,6 @@ pub struct Txindex(u32);
 
 impl Txindex {
     pub const BYTES: usize = size_of::<Self>();
-
-    pub fn increment(&mut self) {
-        self.0 += 1;
-    }
 
     pub fn incremented(self) -> Self {
         Self(*self + 1)
@@ -43,5 +41,18 @@ impl From<Slice> for Txindex {
 impl From<Txindex> for Slice {
     fn from(value: Txindex) -> Self {
         value.to_be_bytes().into()
+    }
+}
+
+impl Add<usize> for Txindex {
+    type Output = Self;
+    fn add(self, rhs: usize) -> Self::Output {
+        Self(self.0 + rhs as u32)
+    }
+}
+
+impl AddAssign<usize> for Txindex {
+    fn add_assign(&mut self, rhs: usize) {
+        self.0 += rhs as u32
     }
 }
