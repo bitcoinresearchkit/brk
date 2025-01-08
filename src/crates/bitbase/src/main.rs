@@ -34,7 +34,7 @@ fn main() -> color_eyre::Result<()> {
 
     let data_dir = Path::new("../../../../bitcoin");
     let cookie = Path::new(data_dir).join(".cookie");
-    let rpc = Client::new("http://localhost:8332", Auth::CookieFile(cookie)).unwrap();
+    let rpc = Client::new("http://localhost:8332", Auth::CookieFile(cookie))?;
 
     let exit = Exit::new();
 
@@ -120,8 +120,8 @@ fn main() -> color_eyre::Result<()> {
             let txlen = block.txdata.len();
             let last_txi = txlen - 1;
 
-            let (txid_to_index_join_handle, txin_or_addresstxoutindex_vec_handle, txoutindex_to_txout_addresstype_addressbytes_res_addressindex_opt_handle) = thread::scope(|scope| {
-                let txid_to_index_handle = scope.spawn(|| -> color_eyre::Result<_> {
+            let (txid_prefix_slice_to_txid_and_index_join_handle, txin_or_addresstxoutindex_vec_handle, txoutindex_to_txout_addresstype_addressbytes_res_addressindex_opt_handle) = thread::scope(|scope| {
+                let txid_prefix_slice_to_txid_and_index_handle = scope.spawn(|| -> color_eyre::Result<_> {
                     block
                     .txdata
                     .par_iter()
@@ -132,7 +132,7 @@ fn main() -> color_eyre::Result<()> {
                         // Could be removed as should only trigger for two txid (duplicates)
                         let prev_txindex_slice_opt = wtx.get(parts.txid_prefix_to_txindex.data(), txid.prefix())?;
 
-                        Ok((txid, (index, prev_txindex_slice_opt)))
+                        Ok((Slice::from(txid.prefix()), (txid, index, prev_txindex_slice_opt)))
                     })
                     .try_fold(
                         BTreeMap::new,
@@ -293,10 +293,10 @@ fn main() -> color_eyre::Result<()> {
                         })
                 });
 
-                (txid_to_index_handle.join(), txin_or_addresstxoutindex_vec_handle.join(), txoutindex_to_txout_addresstype_addressbytes_res_addressindex_opt_handle.join())
+                (txid_prefix_slice_to_txid_and_index_handle.join(), txin_or_addresstxoutindex_vec_handle.join(), txoutindex_to_txout_addresstype_addressbytes_res_addressindex_opt_handle.join())
             });
 
-            let txid_to_index = txid_to_index_join_handle.ok().context("Expect txid_to_index_join_handle to join")??;
+            let txid_prefix_slice_to_txid_and_index = txid_prefix_slice_to_txid_and_index_join_handle.ok().context("Expect txid_prefix_slice_to_txid_and_index_join_handle to join")??;
 
             let txin_or_addresstxoutindex_vec = txin_or_addresstxoutindex_vec_handle.ok().context("Export txin_or_addresstxoutindex_vec_handle to join")??;
 
@@ -370,9 +370,9 @@ fn main() -> color_eyre::Result<()> {
                         );
                     }
 
-                    let addresstxoutindex = Addresstxoutindex::from((addressindex_local, txoutindex));
 
                     if parts.addresstxoutindexes_in.needs(height) {
+                        let addresstxoutindex = Addresstxoutindex::from((addressindex_local, txoutindex));
                         wtx.insert(
                             parts.addresstxoutindexes_in.data(),
                             Slice::from(addresstxoutindex),
@@ -393,9 +393,9 @@ fn main() -> color_eyre::Result<()> {
                             let outpoint = txin.previous_output;
                             let txid = outpoint.txid;
                             let vout = outpoint.vout as u16;
-                            let index = txid_to_index
-                                .get(&txid)
-                                .context("txid should be in same block")?.0;
+                            let index = txid_prefix_slice_to_txid_and_index
+                                .get(txid.prefix())
+                                .context("txid should be in same block")?.1;
                             let txindex = txindex + index;
                             let txoutindex = Txoutindex::from((txindex, vout));
                             let addressindex = new_txoutindex_to_addressindex
@@ -418,8 +418,8 @@ fn main() -> color_eyre::Result<()> {
                 })?;
             }
 
-            txid_to_index.into_iter().try_for_each(
-                |(txid, (index, prev_txindex_slice_opt))| -> color_eyre::Result<()> {
+            txid_prefix_slice_to_txid_and_index.into_iter().try_for_each(
+                |(txid_prefix, (txid, index, prev_txindex_slice_opt))| -> color_eyre::Result<()> {
                     let txindex = txindex + index;
 
                     if index == 0 && parts.height_to_first_txindex.needs(height) {
@@ -444,7 +444,7 @@ fn main() -> color_eyre::Result<()> {
                     match prev_txindex_slice_opt {
                         None => {
                             if parts.txid_prefix_to_txindex.needs(height) {
-                                wtx.insert(parts.txid_prefix_to_txindex.data(), txid.prefix(), Slice::from(txindex));
+                                wtx.insert(parts.txid_prefix_to_txindex.data(), txid_prefix, Slice::from(txindex));
                             }
                         }
                         Some(prev_txindex_slice) => {
@@ -507,6 +507,10 @@ fn main() -> color_eyre::Result<()> {
 
             Ok(())
         })?;
+
+    // dbg!(i.elapsed());
+
+    // loop {}
 
     let wtx = wtx_opt.take().context("option should have wtx")?;
     export(&keyspace, wtx, &parts, height)?;
