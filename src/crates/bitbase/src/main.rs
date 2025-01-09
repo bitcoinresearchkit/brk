@@ -1,4 +1,9 @@
-use std::{collections::BTreeMap, path::Path, str::FromStr, thread};
+use std::{
+    collections::BTreeMap,
+    path::Path,
+    str::FromStr,
+    thread::{self},
+};
 
 use biter::{
     bitcoin::{hashes::Hash, TxIn, TxOut, Txid},
@@ -18,8 +23,6 @@ use structs::{
 // https://github.com/fjall-rs/fjall/discussions/72
 // https://github.com/romanz/electrs/blob/master/doc/schema.md
 
-const DAILY_BLOCK_TARGET: usize = 144;
-const MONTHLY_BLOCK_TARGET: usize = DAILY_BLOCK_TARGET * 30;
 const U16MAX: usize = u16::MAX as usize;
 
 enum TxInOrAddresstxoutindex<'a> {
@@ -106,14 +109,14 @@ fn main() -> color_eyre::Result<()> {
             }
 
             if parts.height_to_blockhash.needs(height) {
-                wtx.insert(parts.height_to_blockhash.data(), Slice::from(height), blockhash);
+                wtx.insert(parts.height_to_blockhash.data(), Slice::from(height), &blockhash[..]);
             }
 
             if parts.height_to_first_addressindex.needs(height) {
                 wtx.insert(
                     parts.height_to_first_addressindex.data(),
+                    Slice::from(height),
                     Slice::from(addressindex),
-                    blockhash,
                 );
             }
 
@@ -438,7 +441,7 @@ fn main() -> color_eyre::Result<()> {
                     }
 
                     if parts.txindex_to_txid.needs(height) {
-                        wtx.insert(parts.txindex_to_txid.data(), Slice::from(txindex), txid);
+                        wtx.insert(parts.txindex_to_txid.data(), Slice::from(txindex), &txid[..]);
                     }
 
                     match prev_txindex_slice_opt {
@@ -490,12 +493,12 @@ fn main() -> color_eyre::Result<()> {
             if parts.height_to_last_addressindex.needs(height) {
                 wtx.insert(
                     parts.height_to_last_addressindex.data(),
+                    Slice::from(height),
                     Slice::from(addressindex.decremented()),
-                    blockhash,
                 );
             }
 
-            let should_snapshot = _height % MONTHLY_BLOCK_TARGET == 0 && !exit.active();
+            let should_snapshot = _height % 100 == 0 && !exit.active();
             if should_snapshot {
                 export(&keyspace, wtx, &parts, height)?;
                 wtx_opt.replace(keyspace.write_tx());
@@ -508,9 +511,7 @@ fn main() -> color_eyre::Result<()> {
             Ok(())
         })?;
 
-    // dbg!(i.elapsed());
-
-    // loop {}
+    dbg!(i.elapsed());
 
     let wtx = wtx_opt.take().context("option should have wtx")?;
     export(&keyspace, wtx, &parts, height)?;
