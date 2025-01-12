@@ -9,10 +9,25 @@ use super::SliceExtended;
 pub struct Txindex(u32);
 
 impl Txindex {
-    pub const BYTES: usize = size_of::<Self>();
-
     pub fn incremented(self) -> Self {
         Self(*self + 1)
+    }
+
+    pub fn decremented(self) -> Self {
+        Self(*self - 1)
+    }
+}
+
+impl Add<Txindex> for Txindex {
+    type Output = Self;
+    fn add(self, rhs: Txindex) -> Self::Output {
+        Self(self.0 + rhs.0)
+    }
+}
+
+impl AddAssign<Txindex> for Txindex {
+    fn add_assign(&mut self, rhs: Txindex) {
+        self.0 += rhs.0
     }
 }
 
@@ -33,26 +48,31 @@ impl From<Txindex> for u64 {
     }
 }
 
-impl From<Slice> for Txindex {
-    fn from(slice: Slice) -> Self {
-        Self(slice.read_u32())
+impl From<usize> for Txindex {
+    fn from(value: usize) -> Self {
+        Self(value as u32)
+    }
+}
+impl From<Txindex> for usize {
+    fn from(value: Txindex) -> Self {
+        value.0 as usize
+    }
+}
+
+impl TryFrom<Slice> for Txindex {
+    type Error = color_eyre::Report;
+    fn try_from(value: Slice) -> Result<Self, Self::Error> {
+        Ok(Self::try_from(&value[..])?)
+    }
+}
+impl TryFrom<&[u8]> for Txindex {
+    type Error = color_eyre::Report;
+    fn try_from(value: &[u8]) -> Result<Self, Self::Error> {
+        Ok(Self::from(value.read_be_u32()?))
     }
 }
 impl From<Txindex> for Slice {
     fn from(value: Txindex) -> Self {
         value.to_be_bytes().into()
-    }
-}
-
-impl Add<usize> for Txindex {
-    type Output = Self;
-    fn add(self, rhs: usize) -> Self::Output {
-        Self(self.0 + rhs as u32)
-    }
-}
-
-impl AddAssign<usize> for Txindex {
-    fn add_assign(&mut self, rhs: usize) {
-        self.0 += rhs as u32
     }
 }

@@ -1,46 +1,72 @@
+use std::ops::{Add, AddAssign};
+
+use derive_deref::{Deref, DerefMut};
 use fjall::Slice;
 
-use super::{SliceExtended, Txindex};
+use super::SliceExtended;
 
-#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Default)]
-pub struct Txoutindex {
-    pub txindex: Txindex,
-    pub vout: u16,
-}
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Deref, DerefMut, Default)]
+pub struct Txoutindex(u64);
 
 impl Txoutindex {
-    pub const BYTES: usize = size_of::<Self>();
-}
+    pub fn incremented(self) -> Self {
+        Self(*self + 1)
+    }
 
-impl From<Txindex> for Txoutindex {
-    fn from(value: Txindex) -> Self {
-        Self {
-            txindex: value,
-            vout: 0,
-        }
+    pub fn decremented(self) -> Self {
+        Self(*self - 1)
     }
 }
 
-impl From<(Txindex, u16)> for Txoutindex {
-    fn from(value: (Txindex, u16)) -> Self {
-        Self {
-            txindex: value.0,
-            vout: value.1,
-        }
+impl Add<Txoutindex> for Txoutindex {
+    type Output = Self;
+    fn add(self, rhs: Txoutindex) -> Self::Output {
+        Self(self.0 + rhs.0)
     }
 }
 
+impl AddAssign<Txoutindex> for Txoutindex {
+    fn add_assign(&mut self, rhs: Txoutindex) {
+        self.0 += rhs.0
+    }
+}
+
+impl From<u64> for Txoutindex {
+    fn from(value: u64) -> Self {
+        Self(value)
+    }
+}
+impl From<Txoutindex> for u64 {
+    fn from(value: Txoutindex) -> Self {
+        value.0
+    }
+}
+
+impl From<usize> for Txoutindex {
+    fn from(value: usize) -> Self {
+        Self(value as u64)
+    }
+}
+impl From<Txoutindex> for usize {
+    fn from(value: Txoutindex) -> Self {
+        value.0 as usize
+    }
+}
+
+impl TryFrom<Slice> for Txoutindex {
+    type Error = color_eyre::Report;
+    fn try_from(value: Slice) -> Result<Self, Self::Error> {
+        Ok(Self::try_from(&value[..])?)
+    }
+}
+impl TryFrom<&[u8]> for Txoutindex {
+    type Error = color_eyre::Report;
+    fn try_from(value: &[u8]) -> Result<Self, Self::Error> {
+        Ok(Self::from(value.read_be_u64()?))
+    }
+}
 impl From<Txoutindex> for Slice {
     fn from(value: Txoutindex) -> Self {
-        let txindex_slice = Self::from(value.txindex);
-        let vout_slice = Self::from(value.vout.to_be_bytes());
-        Self::from([txindex_slice, vout_slice].concat())
-    }
-}
-impl From<Slice> for Txoutindex {
-    fn from(value: Slice) -> Self {
-        let txindex = Txindex::from(Slice::from(&value[..Txindex::BYTES]));
-        let vout = Slice::from(&value[Txindex::BYTES..]).read_u16();
-        Self { txindex, vout }
+        value.to_be_bytes().into()
     }
 }

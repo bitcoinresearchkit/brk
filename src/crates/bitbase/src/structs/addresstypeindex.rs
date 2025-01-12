@@ -4,11 +4,9 @@ use fjall::Slice;
 use super::SliceExtended;
 
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Deref, DerefMut, Default)]
-pub struct Addressindex(u32);
+pub struct Addresstypeindex(u32);
 
-impl Addressindex {
-    pub const BYTES: usize = size_of::<Self>();
-
+impl Addresstypeindex {
     pub fn decremented(self) -> Self {
         Self(*self - 1)
     }
@@ -22,48 +20,62 @@ impl Addressindex {
     }
 }
 
-impl From<u32> for Addressindex {
+impl From<u32> for Addresstypeindex {
     fn from(value: u32) -> Self {
         Self(value)
     }
 }
 
-impl From<u64> for Addressindex {
+impl From<u64> for Addresstypeindex {
     fn from(value: u64) -> Self {
         Self(value as u32)
     }
 }
-impl From<Addressindex> for u64 {
-    fn from(value: Addressindex) -> Self {
+impl From<Addresstypeindex> for u64 {
+    fn from(value: Addresstypeindex) -> Self {
         value.0 as u64
     }
 }
 
-impl From<usize> for Addressindex {
+impl From<usize> for Addresstypeindex {
     fn from(value: usize) -> Self {
         Self(value as u32)
     }
 }
-impl From<Addressindex> for usize {
-    fn from(value: Addressindex) -> Self {
+impl From<Addresstypeindex> for usize {
+    fn from(value: Addresstypeindex) -> Self {
         value.0 as usize
     }
 }
 
-impl TryFrom<Slice> for Addressindex {
+impl TryFrom<Slice> for Addresstypeindex {
     type Error = color_eyre::Report;
     fn try_from(value: Slice) -> Result<Self, Self::Error> {
         Ok(Self::try_from(&value[..])?)
     }
 }
-impl TryFrom<&[u8]> for Addressindex {
+impl TryFrom<&[u8]> for Addresstypeindex {
     type Error = color_eyre::Report;
     fn try_from(value: &[u8]) -> Result<Self, Self::Error> {
         Ok(Self::from(value.read_be_u32()?))
     }
 }
-impl From<Addressindex> for Slice {
-    fn from(value: Addressindex) -> Self {
+impl From<Addresstypeindex> for Slice {
+    fn from(value: Addresstypeindex) -> Self {
         value.to_be_bytes().into()
     }
 }
+
+// impl Bytes for Addresstypeindex {
+//     const SIZE: usize = size_of::<Self>();
+
+//     type ByteArray = [u8; Self::SIZE];
+
+//     // fn try_from_bytes(bytes: &[u8]) -> color_eyre::Result<Self> {
+//     //     Ok(Self(Self::read_u32(bytes)))
+//     // }
+
+//     fn to_bytes(&self) -> Self::ByteArray {
+//         self.to_ne_bytes()
+//     }
+// }
