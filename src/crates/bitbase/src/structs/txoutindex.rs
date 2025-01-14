@@ -56,7 +56,7 @@ impl From<Txoutindex> for usize {
 impl TryFrom<Slice> for Txoutindex {
     type Error = color_eyre::Report;
     fn try_from(value: Slice) -> Result<Self, Self::Error> {
-        Ok(Self::try_from(&value[..])?)
+        Self::try_from(&value[..])
     }
 }
 impl TryFrom<&[u8]> for Txoutindex {

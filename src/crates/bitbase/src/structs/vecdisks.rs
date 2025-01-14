@@ -1,4 +1,4 @@
-use std::path::Path;
+use std::{fs, path::Path};
 
 use biter::bitcoin::{BlockHash, Txid};
 use color_eyre::eyre::eyre;
@@ -48,6 +48,8 @@ pub struct Vecdisks {
 
 impl Vecdisks {
     pub fn import(path: &Path) -> color_eyre::Result<Self> {
+        fs::create_dir_all(path)?;
+
         Ok(Self {
             addressindex_to_addresstype: Vecdisk::import(&path.join("addressindex_to_addresstype"))?,
             addressindex_to_addresstypeindex: Vecdisk::import(&path.join("addressindex_to_addresstypeindex"))?,

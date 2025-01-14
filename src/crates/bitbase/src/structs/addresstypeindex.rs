@@ -51,7 +51,7 @@ impl From<Addresstypeindex> for usize {
 impl TryFrom<Slice> for Addresstypeindex {
     type Error = color_eyre::Report;
     fn try_from(value: Slice) -> Result<Self, Self::Error> {
-        Ok(Self::try_from(&value[..])?)
+        Self::try_from(&value[..])
     }
 }
 impl TryFrom<&[u8]> for Addresstypeindex {

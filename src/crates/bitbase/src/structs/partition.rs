@@ -25,7 +25,7 @@ impl Partition {
         let meta = Self::open_meta(keyspace, name)?;
 
         let mut height = None;
-        if let Some(height_res) = meta.get(Self::HEIGHT)?.map(|slice| Height::try_from(slice)) {
+        if let Some(height_res) = meta.get(Self::HEIGHT)?.map(Height::try_from) {
             height = Some(height_res?);
         }
 
@@ -49,11 +49,11 @@ impl Partition {
     }
 
     fn open_data(keyspace: &TransactionalKeyspace, name: &str) -> Result<TransactionalPartitionHandle> {
-        keyspace.open_partition(&format!("{name}-data"), Self::create_options())
+        keyspace.open_partition(&format!("{name}_data"), Self::create_options())
     }
 
     fn open_meta(keyspace: &TransactionalKeyspace, name: &str) -> Result<TransactionalPartitionHandle> {
-        keyspace.open_partition(&format!("{name}-meta"), Self::create_options())
+        keyspace.open_partition(&format!("{name}_meta"), Self::create_options())
     }
 
     fn create_options() -> PartitionCreateOptions {

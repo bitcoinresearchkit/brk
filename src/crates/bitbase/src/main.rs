@@ -1,5 +1,6 @@
 use std::{
     collections::BTreeMap,
+    io::{Read, Write},
     path::Path,
     str::FromStr,
     thread::{self},
@@ -54,19 +55,19 @@ fn main() -> color_eyre::Result<()> {
 
     let mut txindex = vecdisks
         .height_to_first_txindex
-        .open_then_get(height)?
+        .get(height)?
         .cloned()
         .unwrap_or(Txindex::default());
 
     let mut txoutindex = vecdisks
         .height_to_first_txoutindex
-        .open_then_get(height)?
+        .get(height)?
         .cloned()
         .unwrap_or(Txoutindex::default());
 
     let mut addressindex = vecdisks
         .height_to_first_addressindex
-        .open_then_get(height)?
+        .get(height)?
         .cloned()
         .unwrap_or(Addressindex::default());
 
@@ -98,7 +99,7 @@ fn main() -> color_eyre::Result<()> {
 
             let mut wtx = wtx_opt.take().context("option should have wtx")?;
 
-            // if let Some(saved_blockhash) = vecdisks.height_to_blockhash.open_then_get(height)? {
+            // if let Some(saved_blockhash) = vecdisks.height_to_blockhash.get(height)? {
             //     if &blockhash != saved_blockhash {
             //         parts.rollback_from(&mut wtx, height, &exit)?;
             //     } else {
@@ -204,16 +205,16 @@ fn main() -> color_eyre::Result<()> {
                                 wtx.get(parts.txindexvout_to_txoutindex.data(), Slice::from(txindexvout))?
                                     .context("Expect txoutindex to not be none")
                                     .inspect_err(|_| {
-                                        // let height = vecdisks.txindex_to_height.open_then_get(txindex.into()).expect("txindex_to_height get not fail")
+                                        // let height = vecdisks.txindex_to_height.get(txindex.into()).expect("txindex_to_height get not fail")
                                         // .expect("Expect height for txindex");
                                         dbg!(outpoint.txid, txindex_local, vout, txindexvout);
                                     })?,
                             )?;
 
-                            let addressindex = *vecdisks.txoutindex_to_addressindex.open_then_get(txoutindex)?
+                            let addressindex = *vecdisks.txoutindex_to_addressindex.get(txoutindex)?
                                 .context("Expect addressindex to not be none")
                                 .inspect_err(|_| {
-                                    // let height = vecdisks.txindex_to_height.open_then_get(txindex.into()).expect("txindex_to_height get not fail")
+                                    // let height = vecdisks.txindex_to_height.get(txindex.into()).expect("txindex_to_height get not fail")
                                     // .expect("Expect height for txindex");
                                     dbg!(outpoint.txid, txindex_local, vout, txindexvout);
                                 })?;
@@ -329,6 +330,14 @@ fn main() -> color_eyre::Result<()> {
                 .try_for_each(|(txoutindex, (txout, txindexvout, addresstype, addressbytes_res, addressindex_slice_opt))| -> color_eyre::Result<()> {
                     let amount = Amount::from(txout.value);
 
+                    if parts.txindexvout_to_txoutindex.needs(height) {
+                        wtx.insert(
+                            parts.txindexvout_to_txoutindex.data(),
+                            Slice::from(txindexvout),
+                            Slice::from(txoutindex),
+                        );
+                    }
+
                     vecdisks.txoutindex_to_amount.push_if_needed(
                         txoutindex,
                         amount,
@@ -442,7 +451,7 @@ fn main() -> color_eyre::Result<()> {
                             let len = vecdisks.txindex_to_txid.len();
                             // Ok if `get` is not par as should happen only twice
                             let prev_txid =
-                                vecdisks.txindex_to_txid.open_then_get(prev_txindex)?
+                                vecdisks.txindex_to_txid.get(prev_txindex)?
                                     .context("To have txid for txindex").inspect_err(|_| {
                                         dbg!(txindex_local, txid, len);
                                     })?;
@@ -457,7 +466,7 @@ fn main() -> color_eyre::Result<()> {
                             let is_dup = only_known_dup_txids.contains(prev_txid);
 
                             if !is_dup {
-                                let prev_height = vecdisks.txindex_to_height.open_then_get(prev_txindex)?.expect("To have height");
+                                let prev_height = vecdisks.txindex_to_height.get(prev_txindex)?.expect("To have height");
                                 dbg!(height, txid, txindex_local, prev_height, prev_txid, prev_txindex);
                                 return Err(eyre!("Expect none"));
                             }
@@ -494,10 +503,26 @@ fn main() -> color_eyre::Result<()> {
 
     dbg!(i.elapsed());
 
+    pause();
+
     let wtx = wtx_opt.take().context("option should have wtx")?;
     export(&keyspace, wtx, &parts, &mut vecdisks, height)?;
+
+    pause();
 
     dbg!(i.elapsed());
 
     Ok(())
+}
+
+fn pause() {
+    let mut stdin = std::io::stdin();
+    let mut stdout = std::io::stdout();
+
+    // We want the cursor to stay at the end of the line, so we print without a newline and flush manually.
+    write!(stdout, "Press any key to continue...").unwrap();
+    stdout.flush().unwrap();
+
+    // Read a single byte and discard
+    let _ = stdin.read(&mut [0u8]).unwrap();
 }

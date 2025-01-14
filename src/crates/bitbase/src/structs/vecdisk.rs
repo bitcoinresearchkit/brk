@@ -1,6 +1,5 @@
 use std::{
     cmp::Ordering,
-    collections::{btree_map::Entry, BTreeMap},
     fmt::Debug,
     fs::{File, OpenOptions},
     io::{self, Write},
@@ -8,19 +7,27 @@ use std::{
     mem,
     ops::Range,
     path::Path,
+    sync::OnceLock,
 };
 
 use color_eyre::eyre::{eyre, ContextCompat};
+
+use derive_deref::{Deref, DerefMut};
 use memmap2::{Mmap, MmapOptions};
 
+///
+/// A Push only vec stored on disk using Mmap
+///
+/// Reads (imports of Mmap) are lazy
+///
+/// Stores only raw data without any overhead, and doesn't even have a header (TODO: which it should, at least to Err if wrong endian)
+///
+/// The file isn't portable for speed reasons (TODO: but could be ?)
+///
 #[derive(Debug)]
 pub struct Vecdisk<I, T> {
     file: File,
-    mmaps: BTreeMap<usize, Mmap>,
-    // or ?
-    // mmaps: [Arc<parking_lot::Rwlock<Option<Mmap>>>],
-    // arr len: (file.metadata()?.len() as f64 / PAGE_SIZE as f64).ceil()
-    // start read lock, if none, upgrade to write lock, set mmap, downgrade, read
+    mmaps: VecLazyMmap,
     disk_len: usize,
     cache: Vec<T>,
     phantom: PhantomData<I>,
@@ -43,13 +50,22 @@ where
     pub fn import(path: &Path) -> color_eyre::Result<Self> {
         let file = Self::open_file(path)?;
 
-        Ok(Self {
+        let mut this = Self {
             disk_len: Self::byte_index_to_index(file.metadata()?.len() as usize),
             file,
-            mmaps: BTreeMap::new(),
+            mmaps: VecLazyMmap::default(),
             cache: vec![],
             phantom: PhantomData,
-        })
+        };
+
+        this.reset_mmaps();
+
+        Ok(this)
+    }
+
+    fn reset_mmaps(&mut self) {
+        self.mmaps
+            .reset((self.disk_len as f64 / Self::PER_PAGE as f64).ceil() as usize);
     }
 
     fn open_file(path: &Path) -> Result<File, io::Error> {
@@ -59,40 +75,6 @@ where
             .truncate(false)
             .append(true)
             .open(path)
-    }
-
-    #[allow(unused)]
-    #[inline]
-    pub fn open_for(&mut self, index: I) -> color_eyre::Result<()> {
-        self._open_for(index.into())
-    }
-    fn _open_for(&mut self, index: usize) -> color_eyre::Result<()> {
-        if index >= self.disk_len {
-            return Ok(());
-        }
-
-        let mmap_index = Self::index_to_mmap_index(index);
-
-        if let Entry::Vacant(v) = self.mmaps.entry(mmap_index) {
-            v.insert(unsafe {
-                MmapOptions::new()
-                    .len(MAX_PAGE_SIZE)
-                    .offset((mmap_index * Self::PAGE_SIZE) as u64)
-                    .map(&self.file)?
-            });
-        }
-
-        Ok(())
-    }
-
-    #[allow(unused)]
-    pub fn open_first(&mut self) -> color_eyre::Result<()> {
-        self._open_for(0)
-    }
-
-    #[allow(unused)]
-    pub fn open_last(&mut self) -> color_eyre::Result<()> {
-        self._open_for(self.len().checked_sub(1).unwrap_or_default())
     }
 
     #[inline]
@@ -128,7 +110,12 @@ where
             Ok(self.cache.get(index - self.disk_len))
         } else {
             let mmap_index = Self::index_to_mmap_index(index);
-            let mmap = self.mmaps.get(&mmap_index).context("Expect mmap to be open")?;
+
+            let mmap = self
+                .mmaps
+                .get(mmap_index)
+                .context("Expect mmap to be open")?
+                .get_or_load(MAX_PAGE_SIZE, (mmap_index * Self::PAGE_SIZE) as u64, &self.file);
 
             let range = Self::index_to_range(index);
             let src = &mmap[range];
@@ -142,14 +129,6 @@ where
 
             Ok(Some(&shorts[0]))
         }
-    }
-
-    pub fn open_then_get(&mut self, index: I) -> color_eyre::Result<Option<&T>> {
-        self._open_then_get(index.into())
-    }
-    pub fn _open_then_get(&mut self, index: usize) -> color_eyre::Result<Option<&T>> {
-        self._open_for(index)?;
-        self._get(index)
     }
 
     #[allow(unused)]
@@ -186,18 +165,6 @@ where
             }
         }
     }
-
-    #[allow(unused)]
-    #[inline]
-    pub fn mmaps_opened(&self) -> usize {
-        self.mmaps.len()
-    }
-
-    #[allow(unused)]
-    #[inline]
-    pub fn get_mmap(&self, mmap_index: usize) -> Option<&Mmap> {
-        self.mmaps.get(&mmap_index)
-    }
 }
 
 pub trait AnyVecdisk {
@@ -215,9 +182,8 @@ where
     }
 
     fn flush(&mut self) -> color_eyre::Result<()> {
-        self.mmaps.clear();
-
         self.disk_len += self.cache.len();
+        self.reset_mmaps();
 
         let mut bytes: Vec<u8> = vec![];
 
@@ -231,5 +197,23 @@ where
         self.file.write_all(&bytes)?;
 
         Ok(())
+    }
+}
+
+#[derive(Debug, Default, Deref, DerefMut)]
+struct VecLazyMmap(Vec<LazyMmap>);
+impl VecLazyMmap {
+    pub fn reset(&mut self, len: usize) {
+        self.clear();
+        self.resize_with(len, Default::default);
+    }
+}
+
+/// Box to reduce the size, would be 24 instead
+#[derive(Debug, Default, Deref)]
+struct LazyMmap(OnceLock<Box<Mmap>>);
+impl LazyMmap {
+    pub fn get_or_load(&self, len: usize, offset: u64, file: &File) -> &Mmap {
+        self.get_or_init(|| Box::new(unsafe { MmapOptions::new().len(len).offset(offset).map(file).unwrap() }))
     }
 }
