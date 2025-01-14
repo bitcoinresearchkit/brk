@@ -1,12 +1,9 @@
 use biter::bitcoin::ScriptBuf;
-use color_eyre::eyre::eyre;
-use fjall::Slice;
-
-use super::SliceExtended;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub enum Addresstype {
-    P2PK,
+    P2PK65,
+    P2PK33,
     P2PKH,
     P2SH,
     P2WPKH,
@@ -22,7 +19,16 @@ pub enum Addresstype {
 impl From<&ScriptBuf> for Addresstype {
     fn from(script: &ScriptBuf) -> Self {
         if script.is_p2pk() {
-            Self::P2PK
+            let bytes = script.as_bytes();
+
+            match bytes.len() {
+                67 => Self::P2PK65,
+                35 => Self::P2PK33,
+                _ => {
+                    dbg!(bytes);
+                    unreachable!()
+                }
+            }
         } else if script.is_p2pkh() {
             Self::P2PKH
         } else if script.is_p2sh() {
@@ -44,21 +50,5 @@ impl From<&ScriptBuf> for Addresstype {
         } else {
             Self::Unknown
         }
-    }
-}
-
-impl TryFrom<Slice> for Addresstype {
-    type Error = color_eyre::Report;
-    fn try_from(value: Slice) -> Result<Self, Self::Error> {
-        match value.read_u8() {
-            x if x == Addresstype::P2PK as u8 => Ok(Addresstype::P2PK),
-            x if x == Addresstype::P2PKH as u8 => Ok(Addresstype::P2PKH),
-            _ => Err(eyre!("Unknown type")),
-        }
-    }
-}
-impl From<Addresstype> for Slice {
-    fn from(addresstype: Addresstype) -> Self {
-        (addresstype as u8).to_be_bytes().into()
     }
 }
