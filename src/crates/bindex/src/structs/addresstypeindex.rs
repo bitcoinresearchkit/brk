@@ -1,10 +1,9 @@
 use derive_deref::{Deref, DerefMut};
-use fjall::Slice;
-
-use super::SliceExtended;
+use snkrj::{direct_repr, Storable, UnsizedStorable};
 
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Deref, DerefMut, Default)]
 pub struct Addresstypeindex(u32);
+direct_repr!(Addresstypeindex);
 
 impl Addresstypeindex {
     pub fn decremented(self) -> Self {
@@ -47,35 +46,3 @@ impl From<Addresstypeindex> for usize {
         value.0 as usize
     }
 }
-
-impl TryFrom<Slice> for Addresstypeindex {
-    type Error = color_eyre::Report;
-    fn try_from(value: Slice) -> Result<Self, Self::Error> {
-        Self::try_from(&value[..])
-    }
-}
-impl TryFrom<&[u8]> for Addresstypeindex {
-    type Error = color_eyre::Report;
-    fn try_from(value: &[u8]) -> Result<Self, Self::Error> {
-        Ok(Self::from(value.read_be_u32()?))
-    }
-}
-impl From<Addresstypeindex> for Slice {
-    fn from(value: Addresstypeindex) -> Self {
-        value.to_be_bytes().into()
-    }
-}
-
-// impl Bytes for Addresstypeindex {
-//     const SIZE: usize = size_of::<Self>();
-
-//     type ByteArray = [u8; Self::SIZE];
-
-//     // fn try_from_bytes(bytes: &[u8]) -> color_eyre::Result<Self> {
-//     //     Ok(Self(Self::read_u32(bytes)))
-//     // }
-
-//     fn to_bytes(&self) -> Self::ByteArray {
-//         self.to_ne_bytes()
-//     }
-// }

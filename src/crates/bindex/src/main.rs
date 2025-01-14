@@ -14,11 +14,10 @@ use biter::{
 mod structs;
 
 use color_eyre::eyre::{eyre, ContextCompat};
-use fjall::{PersistMode, Slice, TransactionalKeyspace, WriteTransaction};
 use rayon::prelude::*;
 use structs::{
     Addressbytes, AddressbytesPrefix, Addressindex, Addressindextxoutindex, Addresstype, Addresstypeindex, Amount,
-    AnyVecdisk, BlockHashPrefix, Exit, Height, Partitions, TxidPrefix, Txindex, Txindexvout, Txoutindex, Vecdisks,
+    AnyVecdisk, BlockHashPrefix, Databases, Exit, Height, TxidPrefix, Txindex, Txindexvout, Txoutindex, Vecdisks,
 };
 
 // https://github.com/fjall-rs/fjall/discussions/72
@@ -29,6 +28,8 @@ enum TxInOrAddressindextoutindex<'a> {
     TxIn(&'a TxIn),
     Addressindextoutindex(Addressindextxoutindex),
 }
+
+const MONTHLY_BLOCK_TARGET: usize = 144 * 30;
 
 fn main() -> color_eyre::Result<()> {
     let i = std::time::Instant::now();
@@ -45,13 +46,9 @@ fn main() -> color_eyre::Result<()> {
 
     let mut vecdisks = Vecdisks::import(path_database)?;
 
-    let keyspace = fjall::Config::new(path_database).open_transactional()?;
+    let databases = Databases::open(path_database)?;
 
-    let parts = Partitions::import(&keyspace, &exit)?;
-
-    let wtx = keyspace.write_tx();
-
-    let mut height = parts.start_height();
+    let mut height = Height::from(0_u32);
 
     let mut txindex = vecdisks
         .height_to_first_txindex
@@ -71,24 +68,17 @@ fn main() -> color_eyre::Result<()> {
         .cloned()
         .unwrap_or(Addressindex::default());
 
-    let export = |keyspace: &TransactionalKeyspace,
-                  mut wtx: WriteTransaction,
-                  parts: &Partitions,
-                  vecdisks: &mut Vecdisks,
-                  height: Height|
-     -> color_eyre::Result<()> {
-        parts.udpate_meta(&mut wtx, height);
+    let export = |databases: Databases, vecdisks: &mut Vecdisks, height: Height| -> color_eyre::Result<()> {
         exit.block();
         println!("Exporting...");
-        wtx.commit()?;
-        keyspace.persist(PersistMode::SyncAll)?;
+        databases.export();
         vecdisks.flush()?;
         println!("Export done");
         exit.unblock();
         Ok(())
     };
 
-    let mut wtx_opt = Some(wtx);
+    let mut databases_opt = Some(databases);
 
     biter::new(data_dir, Some(height.into()), Some(400_000), rpc)
         .iter()
@@ -97,7 +87,7 @@ fn main() -> color_eyre::Result<()> {
 
             height = Height::from(_height);
 
-            let mut wtx = wtx_opt.take().context("option should have wtx")?;
+            let mut databases = databases_opt.take().context("option should have wtx")?;
 
             // if let Some(saved_blockhash) = vecdisks.height_to_blockhash.get(height)? {
             //     if &blockhash != saved_blockhash {
@@ -108,21 +98,20 @@ fn main() -> color_eyre::Result<()> {
             //     }
             // }
 
-            if parts.blockhash_prefix_to_height.needs(height) {
-                let blockhash_prefix = BlockHashPrefix::from(&blockhash);
+            // if parts.blockhash_prefix_to_height.needs(height) {
+            let blockhash_prefix = BlockHashPrefix::try_from(&blockhash)?;
 
-                if check_collisions {
-
-                    if let Some(prev_height_slice) =
-                        wtx.get(parts.blockhash_prefix_to_height.data(), blockhash_prefix.clone())?
-                    {
-                        dbg!(blockhash, Height::try_from(prev_height_slice)?);
-                        return Err(eyre!("Collision, expect prefix to need be set yet"));
-                    }
+            if check_collisions {
+                if let Some(prev_height) =
+                    databases.blockhash_prefix_to_height.get(&blockhash_prefix)
+                {
+                    dbg!(blockhash, prev_height);
+                    return Err(eyre!("Collision, expect prefix to need be set yet"));
                 }
-
-                wtx.insert(parts.blockhash_prefix_to_height.data(), blockhash_prefix.clone(),Slice::from(height));
             }
+
+            databases.blockhash_prefix_to_height.insert(blockhash_prefix,height);
+            // }
 
             vecdisks.height_to_blockhash.push_if_needed(height, blockhash)?;
             vecdisks.height_to_first_txindex.push_if_needed(height, txindex)?;
@@ -152,14 +141,16 @@ fn main() -> color_eyre::Result<()> {
                     .map(|(index, tx)| -> color_eyre::Result<_> {
                         let txid = tx.compute_txid();
 
+                        let txid_prefix = TxidPrefix::try_from(&txid)?;
+
                         let prev_txindex_slice_opt = if check_collisions {
                             // Should only find collisions for two txids (duplicates), see below
-                            wtx.get(parts.txid_prefix_to_txindex.data(), TxidPrefix::from(&txid).clone())?.map(Txindex::try_from)
+                            databases.txid_prefix_to_txindex.get(&txid_prefix).cloned()
                         } else {
                             None
                         };
 
-                        Ok((TxidPrefix::from(&txid), (txid, Txindex::from(index), prev_txindex_slice_opt)))
+                        Ok((txid_prefix, (txid, Txindex::from(index), prev_txindex_slice_opt)))
                     })
                     .try_fold(
                         BTreeMap::new,
@@ -190,26 +181,24 @@ fn main() -> color_eyre::Result<()> {
                             let txid = outpoint.txid;
                             let vout = outpoint.vout;
 
-                            let txindex_local = if let Some(txindex_local) = wtx
-                                .get(parts.txid_prefix_to_txindex.data(), TxidPrefix::from(&txid).clone())?
-                                .map(Txindex::try_from)
+                            let txindex_local = if let Some(txindex_local) = databases.txid_prefix_to_txindex
+                                .get(&TxidPrefix::try_from(&txid)?)
                             {
-                                txindex_local
+                                *txindex_local
                             } else {
                                 return Ok(TxInOrAddressindextoutindex::TxIn(txin));
-                            }?;
+                            };
 
                             let txindexvout = Txindexvout::from((txindex_local, vout));
 
-                            let txoutindex = Txoutindex::try_from(
-                                wtx.get(parts.txindexvout_to_txoutindex.data(), Slice::from(txindexvout))?
+                            let txoutindex =
+                                *databases.txindexvout_to_txoutindex.get(&txindexvout)
                                     .context("Expect txoutindex to not be none")
                                     .inspect_err(|_| {
                                         // let height = vecdisks.txindex_to_height.get(txindex.into()).expect("txindex_to_height get not fail")
                                         // .expect("Expect height for txindex");
                                         dbg!(outpoint.txid, txindex_local, vout, txindexvout);
-                                    })?,
-                            )?;
+                                    })?;
 
                             let addressindex = *vecdisks.txoutindex_to_addressindex.get(txoutindex)?
                                 .context("Expect addressindex to not be none")
@@ -229,9 +218,10 @@ fn main() -> color_eyre::Result<()> {
                             |mut vec, addressindextxoutindex| {
                                 // There is no need to check for bad_tx as there are only 2 instances known
                                 // Which you can find below and which are coinbase tx and thus which are already filtered
-                                if parts.addressindextxoutindex_out.needs(height) {
+
+                                // if parts.addressindextxoutindex_out.needs(height) {
                                     vec.push(addressindextxoutindex?);
-                                }
+                                // }
 
                                 Ok(vec)
                             },
@@ -248,7 +238,7 @@ fn main() -> color_eyre::Result<()> {
                 });
 
                 let txoutindex_to_txout_addresstype_addressbytes_res_addressindex_opt_handle = scope.spawn(|| -> color_eyre::Result<BTreeMap<Txoutindex,
-                (&TxOut, Txindexvout, Addresstype, color_eyre::Result<Addressbytes>, Option<Slice>)>> {
+                (&TxOut, Txindexvout, Addresstype, color_eyre::Result<Addressbytes>, Option<Addressindex>)>> {
                     outputs.into_par_iter().enumerate()
                         .map(
                             |(block_txoutindex, (block_txindex, vout, txout))| {
@@ -265,24 +255,18 @@ fn main() -> color_eyre::Result<()> {
                                 });
 
                                 let addressindex_slice_opt = addressbytes_res.as_ref().ok().and_then(|addressbytes| {
-                                    let prefix = AddressbytesPrefix::from(addressbytes);
-                                    wtx.get(
-                                        parts.addressbytes_prefix_to_addressindex.data(),
-                                        prefix.clone(),
-                                    )
-                                    .ok()
-                                    .and_then(|s| s)
+                                    databases.addressbytes_prefix_to_addressindex.get(
+                                        &AddressbytesPrefix::try_from(addressbytes).unwrap(),
+                                    ).cloned()
                                 });
 
                                 let is_new_address = addressindex_slice_opt.is_none();
 
                                 if check_collisions && is_new_address {
                                     if let Ok(addressbytes) = &addressbytes_res {
-                                        let prefix = AddressbytesPrefix::from(addressbytes);
-                                        if let Some(prev) = wtx.get(
-                                            parts.addressbytes_prefix_to_addressindex.data(),
-                                            prefix.clone(),
-                                        )? {
+                                        if let Some(prev) = databases.addressbytes_prefix_to_addressindex.get(
+                                            &AddressbytesPrefix::try_from(addressbytes)?,
+                                        ) {
                                             dbg!(prev);
                                             return Err(eyre!("addressbytes_prefix_to_addressindex collision, expect none"));
                                         }
@@ -327,16 +311,15 @@ fn main() -> color_eyre::Result<()> {
 
             txoutindex_to_txout_addresstype_addressbytes_res_addressindex_opt
                 .into_iter()
-                .try_for_each(|(txoutindex, (txout, txindexvout, addresstype, addressbytes_res, addressindex_slice_opt))| -> color_eyre::Result<()> {
+                .try_for_each(|(txoutindex, (txout, txindexvout, addresstype, addressbytes_res, addressindex_opt))| -> color_eyre::Result<()> {
                     let amount = Amount::from(txout.value);
 
-                    if parts.txindexvout_to_txoutindex.needs(height) {
-                        wtx.insert(
-                            parts.txindexvout_to_txoutindex.data(),
-                            Slice::from(txindexvout),
-                            Slice::from(txoutindex),
+                    // if parts.txindexvout_to_txoutindex.needs(height) {
+                        databases.txindexvout_to_txoutindex.insert(
+                            txindexvout,
+                            txoutindex,
                         );
-                    }
+                    // }
 
                     vecdisks.txoutindex_to_amount.push_if_needed(
                         txoutindex,
@@ -345,8 +328,8 @@ fn main() -> color_eyre::Result<()> {
 
                     let mut addressindex_local = addressindex;
 
-                    if let Some(addressindex_slice) = addressindex_slice_opt {
-                        addressindex_local = Addressindex::try_from(addressindex_slice)?;
+                    if let Some(addressindex) = addressindex_opt {
+                        addressindex_local = addressindex;
                     } else {
                         vecdisks.addressindex_to_addresstype.push_if_needed(addressindex_local, addresstype)?;
 
@@ -356,13 +339,12 @@ fn main() -> color_eyre::Result<()> {
                         vecdisks.addressindex_to_addresstypeindex.push_if_needed(addressindex_local, addresstypeindex)?;
 
                         if let Ok(addressbytes) = addressbytes_res {
-                            if parts.addressbytes_prefix_to_addressindex.needs(height) {
-                                wtx.insert(
-                                    parts.addressbytes_prefix_to_addressindex.data(),
-                                    AddressbytesPrefix::from(&addressbytes).clone(),
-                                    Slice::from(addressindex_local),
+                            // if parts.addressbytes_prefix_to_addressindex.needs(height) {
+                                databases.addressbytes_prefix_to_addressindex.insert(
+                                    AddressbytesPrefix::try_from(&addressbytes)?,
+                                    addressindex_local,
                                 );
-                            }
+                            // }
 
                             vecdisks.push_addressbytes_if_needed(addresstypeindex, addressbytes)?;
                         }
@@ -377,19 +359,18 @@ fn main() -> color_eyre::Result<()> {
                         addressindex_local,
                     )?;
 
-                    if parts.addressindextxoutindex_in.needs(height) {
+                    // if parts.addressindextxoutindex_in.needs(height) {
                         let addressindextxoutindex = Addressindextxoutindex::from((addressindex_local, txoutindex));
-                        wtx.insert(
-                            parts.addressindextxoutindex_in.data(),
-                            Slice::from(addressindextxoutindex),
-                            Slice::from(&[]),
+                        databases.addressindextxoutindex_in.insert(
+                            addressindextxoutindex,
+                           (),
                         );
-                    }
+                    // }
 
                     Ok(())
                 })?;
 
-            if parts.addressindextxoutindex_out.needs(height) {
+            // if parts.addressindextxoutindex_out.needs(height) {
                 txin_or_addressindextxoutindex_vec
                 .into_iter()
                 .map(|txin_or_addressindextxoutindex| -> color_eyre::Result<Addressindextxoutindex> {
@@ -400,7 +381,7 @@ fn main() -> color_eyre::Result<()> {
                             let txid = outpoint.txid;
                             let vout = outpoint.vout;
                             let index = txid_prefix_to_txid_and_block_txindex_and_prev_txindex
-                                .get(&TxidPrefix::from(&txid))
+                                .get(&TxidPrefix::try_from(&txid)?)
                                 .context("txid should be in same block")?.1;
                             let txindex_local = txindex + index;
 
@@ -415,14 +396,13 @@ fn main() -> color_eyre::Result<()> {
                     }
                 })
                 .try_for_each(|addressindextxoutindex| -> color_eyre::Result<()> {
-                    wtx.insert(
-                        parts.addressindextxoutindex_out.data(),
-                        Slice::from(addressindextxoutindex?),
-                        Slice::from(&[]),
+                    databases.addressindextxoutindex_out.insert(
+                        addressindextxoutindex?,
+                        (),
                     );
                     Ok(())
                 })?;
-            }
+            // }
 
             drop(new_txindexvout_to_addressindextxoutindex);
 
@@ -436,13 +416,11 @@ fn main() -> color_eyre::Result<()> {
 
                     match prev_txindex_opt {
                         None => {
-                            if parts.txid_prefix_to_txindex.needs(height) {
-                                wtx.insert(parts.txid_prefix_to_txindex.data(), txid_prefix.clone(), Slice::from(txindex_local));
-                            }
+                            // if parts.txid_prefix_to_txindex.needs(height) {
+                            databases.txid_prefix_to_txindex.insert(txid_prefix, txindex_local);
+                            // }
                         }
-                        Some(prev_txindex_res) => {
-                            let prev_txindex = prev_txindex_res?;
-
+                        Some(prev_txindex) => {
                             // In case if we start at an already parsed height
                             if txindex_local == prev_txindex {
                                 return Ok(())
@@ -487,12 +465,12 @@ fn main() -> color_eyre::Result<()> {
             vecdisks.height_to_last_txoutindex.push_if_needed(height, txoutindex.decremented())?;
             vecdisks.height_to_last_addressindex.push_if_needed(height, addressindex.decremented())?;
 
-            let should_snapshot = _height % 100 == 0 && !exit.active();
+            let should_snapshot = _height % MONTHLY_BLOCK_TARGET == 0 && !exit.active();
             if should_snapshot {
-                export(&keyspace, wtx, &parts, &mut vecdisks, height)?;
-                wtx_opt.replace(keyspace.write_tx());
+                export(databases, &mut vecdisks, height)?;
+                databases_opt.replace(Databases::open(path_database)?);
             } else {
-                wtx_opt.replace(wtx);
+                databases_opt.replace(databases);
             }
 
             txindex += Txindex::from(tx_len);
@@ -505,8 +483,8 @@ fn main() -> color_eyre::Result<()> {
 
     pause();
 
-    let wtx = wtx_opt.take().context("option should have wtx")?;
-    export(&keyspace, wtx, &parts, &mut vecdisks, height)?;
+    let databases = databases_opt.take().context("option should have wtx")?;
+    export(databases, &mut vecdisks, height)?;
 
     pause();
 

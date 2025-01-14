@@ -1,12 +1,11 @@
 use std::ops::{Add, AddAssign};
 
 use derive_deref::{Deref, DerefMut};
-use fjall::Slice;
-
-use super::SliceExtended;
+use snkrj::{direct_repr, Storable, UnsizedStorable};
 
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Deref, DerefMut, Default)]
 pub struct Txoutindex(u64);
+direct_repr!(Txoutindex);
 
 impl Txoutindex {
     pub fn incremented(self) -> Self {
@@ -50,23 +49,5 @@ impl From<usize> for Txoutindex {
 impl From<Txoutindex> for usize {
     fn from(value: Txoutindex) -> Self {
         value.0 as usize
-    }
-}
-
-impl TryFrom<Slice> for Txoutindex {
-    type Error = color_eyre::Report;
-    fn try_from(value: Slice) -> Result<Self, Self::Error> {
-        Self::try_from(&value[..])
-    }
-}
-impl TryFrom<&[u8]> for Txoutindex {
-    type Error = color_eyre::Report;
-    fn try_from(value: &[u8]) -> Result<Self, Self::Error> {
-        Ok(Self::from(value.read_be_u64()?))
-    }
-}
-impl From<Txoutindex> for Slice {
-    fn from(value: Txoutindex) -> Self {
-        value.to_be_bytes().into()
     }
 }

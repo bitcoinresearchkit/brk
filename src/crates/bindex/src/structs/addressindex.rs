@@ -1,10 +1,9 @@
 use derive_deref::{Deref, DerefMut};
-use fjall::Slice;
-
-use super::SliceExtended;
+use snkrj::{direct_repr, Storable, UnsizedStorable};
 
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Deref, DerefMut, Default)]
 pub struct Addressindex(u32);
+direct_repr!(Addressindex);
 
 impl Addressindex {
     pub const BYTES: usize = size_of::<Self>();
@@ -47,23 +46,5 @@ impl From<usize> for Addressindex {
 impl From<Addressindex> for usize {
     fn from(value: Addressindex) -> Self {
         value.0 as usize
-    }
-}
-
-impl TryFrom<Slice> for Addressindex {
-    type Error = color_eyre::Report;
-    fn try_from(value: Slice) -> Result<Self, Self::Error> {
-        Self::try_from(&value[..])
-    }
-}
-impl TryFrom<&[u8]> for Addressindex {
-    type Error = color_eyre::Report;
-    fn try_from(value: &[u8]) -> Result<Self, Self::Error> {
-        Ok(Self::from(value.read_be_u32()?))
-    }
-}
-impl From<Addressindex> for Slice {
-    fn from(value: Addressindex) -> Self {
-        value.to_be_bytes().into()
     }
 }

@@ -5,12 +5,13 @@ use std::{
 
 use biter::bitcoin;
 use derive_deref::{Deref, DerefMut};
-use fjall::Slice;
+use snkrj::{direct_repr, Storable, UnsizedStorable};
 
 use super::Height;
 
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Deref, DerefMut, Default)]
 pub struct Amount(bitcoin::Amount);
+direct_repr!(Amount);
 
 impl Amount {
     pub const ZERO: Self = Self(bitcoin::Amount::ZERO);
@@ -19,24 +20,6 @@ impl Amount {
 
     pub fn is_zero(&self) -> bool {
         *self == Self::ZERO
-    }
-}
-
-impl From<u64> for Amount {
-    fn from(value: u64) -> Self {
-        Self(bitcoin::Amount::from_sat(value))
-    }
-}
-
-impl From<bitcoin::Amount> for Amount {
-    fn from(value: bitcoin::Amount) -> Self {
-        Self(value)
-    }
-}
-
-impl From<Amount> for Slice {
-    fn from(value: Amount) -> Self {
-        value.to_sat().to_be_bytes().into()
     }
 }
 
@@ -91,5 +74,17 @@ impl Sum for Amount {
     fn sum<I: Iterator<Item = Self>>(iter: I) -> Self {
         let sats: u64 = iter.map(|amt| amt.to_sat()).sum();
         Amount::from(sats)
+    }
+}
+
+impl From<u64> for Amount {
+    fn from(value: u64) -> Self {
+        Self(bitcoin::Amount::from_sat(value))
+    }
+}
+
+impl From<bitcoin::Amount> for Amount {
+    fn from(value: bitcoin::Amount) -> Self {
+        Self(value)
     }
 }

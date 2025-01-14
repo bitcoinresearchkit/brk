@@ -1,32 +1,26 @@
 use biter::bitcoin::{BlockHash, Txid};
 use derive_deref::Deref;
-use fjall::Slice;
+use snkrj::{direct_repr, Storable, UnsizedStorable};
 
-use super::Addressbytes;
+use super::{Addressbytes, SliceExtended};
 
-#[derive(Debug, Deref, PartialEq, Eq, PartialOrd, Ord)]
-pub struct Prefix(Slice);
-impl From<&[u8]> for Prefix {
-    fn from(value: &[u8]) -> Self {
-        Self(Slice::from(&value[..8]))
+#[derive(Debug, Deref, Clone, PartialEq, Eq, PartialOrd, Ord)]
+pub struct Prefix([u8; 8]);
+direct_repr!(Prefix);
+impl TryFrom<&[u8]> for Prefix {
+    type Error = color_eyre::Report;
+    fn try_from(value: &[u8]) -> Result<Self, Self::Error> {
+        Ok(Self(value.read_8xU8()?))
     }
 }
-// pub struct Prefix([u8; 8]);
-// impl From<&[u8]> for Prefix {
-//     fn from(value: &[u8]) -> Self {
-//         let mut buf: [u8; 8] = [0; 8];
-//         value.iter().take(8).enumerate().for_each(|(i, v)| {
-//             buf[i] = *v;
-//         });
-//         Self(buf)
-//     }
-// }
 
-#[derive(Debug, Deref)]
+#[derive(Debug, Deref, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub struct AddressbytesPrefix(Prefix);
-impl From<&Addressbytes> for AddressbytesPrefix {
-    fn from(value: &Addressbytes) -> Self {
-        Self(Prefix::from(match value {
+direct_repr!(AddressbytesPrefix);
+impl TryFrom<&Addressbytes> for AddressbytesPrefix {
+    type Error = color_eyre::Report;
+    fn try_from(value: &Addressbytes) -> Result<Self, Self::Error> {
+        Ok(Self(Prefix::try_from(match value {
             Addressbytes::P2PK65(bytes) => &bytes[..],
             Addressbytes::P2PK33(bytes) => &bytes[..],
             Addressbytes::P2PKH(bytes) => &bytes[..],
@@ -34,22 +28,26 @@ impl From<&Addressbytes> for AddressbytesPrefix {
             Addressbytes::P2WPKH(bytes) => &bytes[..],
             Addressbytes::P2WSH(bytes) => &bytes[..],
             Addressbytes::P2TR(bytes) => &bytes[..],
-        }))
+        })?))
     }
 }
 
-#[derive(Debug, Deref)]
+#[derive(Debug, Deref, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub struct BlockHashPrefix(Prefix);
-impl From<&BlockHash> for BlockHashPrefix {
-    fn from(value: &BlockHash) -> Self {
-        Self(Prefix::from(&value[..]))
+direct_repr!(BlockHashPrefix);
+impl TryFrom<&BlockHash> for BlockHashPrefix {
+    type Error = color_eyre::Report;
+    fn try_from(value: &BlockHash) -> Result<Self, Self::Error> {
+        Ok(Self(Prefix::try_from(&value[..])?))
     }
 }
 
-#[derive(Debug, Deref, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Debug, Deref, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub struct TxidPrefix(Prefix);
-impl From<&Txid> for TxidPrefix {
-    fn from(value: &Txid) -> Self {
-        Self(Prefix::from(&value[..]))
+direct_repr!(TxidPrefix);
+impl TryFrom<&Txid> for TxidPrefix {
+    type Error = color_eyre::Report;
+    fn try_from(value: &Txid) -> Result<Self, Self::Error> {
+        Ok(Self(Prefix::try_from(&value[..])?))
     }
 }

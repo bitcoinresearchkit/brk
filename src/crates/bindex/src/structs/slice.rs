@@ -2,6 +2,7 @@ use color_eyre::eyre::eyre;
 
 #[allow(unused)]
 pub trait SliceExtended {
+    fn read_8xU8(&self) -> color_eyre::Result<[u8; 8]>;
     fn read_be_u8(&self) -> color_eyre::Result<u8>;
     fn read_be_u16(&self) -> color_eyre::Result<u16>;
     fn read_be_u32(&self) -> color_eyre::Result<u32>;
@@ -10,6 +11,12 @@ pub trait SliceExtended {
 }
 
 impl SliceExtended for &[u8] {
+    fn read_8xU8(&self) -> color_eyre::Result<[u8; 8]> {
+        let mut buf: [u8; 8] = [0; 8];
+        (&self[..8]).read_exact(&mut buf)?;
+        Ok(buf)
+    }
+
     fn read_be_u8(&self) -> color_eyre::Result<u8> {
         let mut buf: [u8; 1] = [0; 1];
         self.read_exact(&mut buf)?;
