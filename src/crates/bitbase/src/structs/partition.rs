@@ -15,38 +15,52 @@ impl Partition {
     pub const VERSION: &str = "version";
     pub const HEIGHT: &str = "height";
 
-    pub fn import(keyspace: &TransactionalKeyspace, name: &str, version: Version, exit: &Exit) -> Result<Self> {
+    pub fn import(
+        keyspace: &TransactionalKeyspace,
+        name: &str,
+        version: Version,
+        exit: &Exit,
+    ) -> color_eyre::Result<Self> {
         let data = Self::open_data(keyspace, name)?;
         let meta = Self::open_meta(keyspace, name)?;
 
+        let mut height = None;
+        if let Some(height_res) = meta.get(Self::HEIGHT)?.map(Height::try_from) {
+            height = Some(height_res?);
+        }
+
         let mut this = Self {
             version,
-            height: meta.get(Self::HEIGHT)?.map(Height::from),
+            height,
             data,
             meta,
         };
 
+        let mut different_version = false;
         if let Some(slice) = this.meta.get(Self::VERSION)? {
-            if version != Version::from(slice) {
-                this = this.reset(keyspace, name, exit)?;
-            }
+            different_version = Version::try_from(slice).map_or(true, |version2| version != version2);
+        }
+
+        if different_version {
+            this = this.reset(keyspace, name, exit)?;
         }
 
         Ok(this)
     }
 
     fn open_data(keyspace: &TransactionalKeyspace, name: &str) -> Result<TransactionalPartitionHandle> {
-        keyspace.open_partition(&format!("{name}-data"), Self::create_options())
+        keyspace.open_partition(&format!("{name}_data"), Self::create_options())
     }
 
     fn open_meta(keyspace: &TransactionalKeyspace, name: &str) -> Result<TransactionalPartitionHandle> {
-        keyspace.open_partition(&format!("{name}-meta"), Self::create_options())
+        keyspace.open_partition(&format!("{name}_meta"), Self::create_options())
     }
 
     fn create_options() -> PartitionCreateOptions {
         PartitionCreateOptions::default().manual_journal_persist(true)
     }
 
+    // TODO: Still needed ?
     pub fn is_safe(&self, height: Height) -> bool {
         self.height.is_some_and(|self_height| self_height >= height)
     }
