@@ -9,6 +9,7 @@ biter = "0.2.2"
 color-eyre = "0.6.3"
 ctrlc = "3.4.5"
 derive_deref = "1.1.1"
-fjall = "2.5.0"
 memmap2 = "0.9.5"
 rayon = "1.10.0"
+snkrj = { path = "../snkrj" }
+canopydb = { git = "https://github.com/arthurprs/canopydb" }

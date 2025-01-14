@@ -5,12 +5,11 @@ use std::{
 
 use biter::bitcoincore_rpc::{self, RpcApi};
 use derive_deref::{Deref, DerefMut};
-use fjall::Slice;
-
-use super::SliceExtended;
+use snkrj::{direct_repr, Storable, UnsizedStorable};
 
 #[derive(Debug, Clone, Copy, Deref, DerefMut, PartialEq, Eq, PartialOrd, Ord, Default)]
 pub struct Height(u32);
+direct_repr!(Height);
 
 impl PartialEq<u64> for Height {
     fn eq(&self, other: &u64) -> bool {
@@ -75,18 +74,6 @@ impl fmt::Display for Height {
     }
 }
 
-impl TryFrom<Slice> for Height {
-    type Error = color_eyre::Report;
-    fn try_from(value: Slice) -> Result<Self, Self::Error> {
-        Ok(Self::from((&value[..]).read_be_u32()?))
-    }
-}
-impl From<Height> for Slice {
-    fn from(value: Height) -> Self {
-        value.to_be_bytes().into()
-    }
-}
-
 impl From<u32> for Height {
     fn from(value: u32) -> Self {
         Self(value)
@@ -110,17 +97,3 @@ impl TryFrom<&bitcoincore_rpc::Client> for Height {
         Ok((value.get_blockchain_info()?.blocks as usize - 1).into())
     }
 }
-
-// impl Bytes for Height {
-//     const SIZE: usize = size_of::<Self>();
-
-//     type ByteArray = [u8; Self::SIZE];
-
-//     // fn try_from_bytes(bytes: &[u8]) -> color_eyre::Result<Self> {
-//     //     Ok(Self(Self::read_u32(bytes)))
-//     // }
-
-//     fn to_bytes(&self) -> Self::ByteArray {
-//         self.to_ne_bytes()
-//     }
-// }

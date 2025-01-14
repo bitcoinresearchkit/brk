@@ -1,5 +1,4 @@
 use derive_deref::{Deref, DerefMut};
-use fjall::Slice;
 
 use super::SliceExtended;
 
