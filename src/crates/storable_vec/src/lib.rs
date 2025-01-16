@@ -5,14 +5,13 @@ use std::{
     io::{self, Write},
     marker::PhantomData,
     mem,
-    ops::Range,
+    ops::{Deref, DerefMut, Range},
     path::Path,
     sync::OnceLock,
 };
 
 use color_eyre::eyre::{eyre, ContextCompat};
 
-use derive_deref::{Deref, DerefMut};
 use memmap2::{Mmap, MmapOptions};
 
 ///
@@ -25,7 +24,7 @@ use memmap2::{Mmap, MmapOptions};
 /// The file isn't portable for speed reasons (TODO: but could be ?)
 ///
 #[derive(Debug)]
-pub struct Vecdisk<I, T> {
+pub struct StorableVec<I, T> {
     file: File,
     mmaps: VecLazyMmap,
     disk_len: usize,
@@ -36,7 +35,7 @@ pub struct Vecdisk<I, T> {
 /// In bytes
 const MAX_PAGE_SIZE: usize = 4096;
 
-impl<I, T> Vecdisk<I, T>
+impl<I, T> StorableVec<I, T>
 where
     I: Into<usize>,
     T: Sized + Debug,
@@ -103,10 +102,8 @@ where
     pub fn get(&self, index: I) -> color_eyre::Result<Option<&T>> {
         self._get(index.into())
     }
-    fn _get(&self, index: usize) -> color_eyre::Result<Option<&T>> {
-        if self.disk_len == 0 {
-            Ok(None)
-        } else if index > self.disk_len - 1 {
+    pub fn _get(&self, index: usize) -> color_eyre::Result<Option<&T>> {
+        if self.disk_len == 0 || index > self.disk_len - 1 {
             Ok(self.cache.get(index - self.disk_len))
         } else {
             let mmap_index = Self::index_to_mmap_index(index);
@@ -115,7 +112,11 @@ where
                 .mmaps
                 .get(mmap_index)
                 .context("Expect mmap to be open")?
-                .get_or_load(MAX_PAGE_SIZE, (mmap_index * Self::PAGE_SIZE) as u64, &self.file);
+                .get_or_load(
+                    MAX_PAGE_SIZE,
+                    (mmap_index * Self::PAGE_SIZE) as u64,
+                    &self.file,
+                );
 
             let range = Self::index_to_range(index);
             let src = &mmap[range];
@@ -150,8 +151,10 @@ where
     }
 
     pub fn push_if_needed(&mut self, index: I, value: T) -> color_eyre::Result<()> {
+        self._push_if_needed(index.into(), value)
+    }
+    pub fn _push_if_needed(&mut self, index: usize, value: T) -> color_eyre::Result<()> {
         let len = self.len();
-        let index = index.into();
         match len.cmp(&index) {
             Ordering::Greater => Ok(()),
             Ordering::Equal => {
@@ -165,23 +168,16 @@ where
             }
         }
     }
-}
 
-pub trait AnyVecdisk {
-    fn len(&self) -> usize;
-    fn flush(&mut self) -> color_eyre::Result<()>;
-}
-
-impl<I, T> AnyVecdisk for Vecdisk<I, T>
-where
-    I: Into<usize>,
-    T: Sized + Debug,
-{
-    fn len(&self) -> usize {
+    pub fn len(&self) -> usize {
         self.disk_len + self.cache.len()
     }
 
-    fn flush(&mut self) -> color_eyre::Result<()> {
+    pub fn is_empty(&self) -> bool {
+        self.len() == 0
+    }
+
+    pub fn flush(&mut self) -> io::Result<()> {
         self.disk_len += self.cache.len();
         self.reset_mmaps();
 
@@ -194,26 +190,67 @@ where
             bytes.extend_from_slice(slice)
         });
 
-        self.file.write_all(&bytes)?;
-
-        Ok(())
+        self.file.write_all(&bytes)
     }
 }
 
-#[derive(Debug, Default, Deref, DerefMut)]
+pub trait AnyStorableVec {
+    fn len(&self) -> usize;
+    fn is_empty(&self) -> bool;
+    fn flush(&mut self) -> io::Result<()>;
+}
+
+impl<I, T> AnyStorableVec for StorableVec<I, T>
+where
+    I: Into<usize>,
+    T: Sized + Debug,
+{
+    fn len(&self) -> usize {
+        self.len()
+    }
+
+    fn is_empty(&self) -> bool {
+        self.is_empty()
+    }
+
+    fn flush(&mut self) -> io::Result<()> {
+        self.flush()
+    }
+}
+
+#[derive(Debug, Default)]
 struct VecLazyMmap(Vec<LazyMmap>);
 impl VecLazyMmap {
     pub fn reset(&mut self, len: usize) {
-        self.clear();
-        self.resize_with(len, Default::default);
+        self.0.clear();
+        self.0.resize_with(len, Default::default);
+    }
+}
+impl Deref for VecLazyMmap {
+    type Target = Vec<LazyMmap>;
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+impl DerefMut for VecLazyMmap {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.0
     }
 }
 
 /// Box to reduce the size, would be 24 instead
-#[derive(Debug, Default, Deref)]
+#[derive(Debug, Default)]
 struct LazyMmap(OnceLock<Box<Mmap>>);
 impl LazyMmap {
     pub fn get_or_load(&self, len: usize, offset: u64, file: &File) -> &Mmap {
-        self.get_or_init(|| Box::new(unsafe { MmapOptions::new().len(len).offset(offset).map(file).unwrap() }))
+        self.0.get_or_init(|| {
+            Box::new(unsafe {
+                MmapOptions::new()
+                    .len(len)
+                    .offset(offset)
+                    .map(file)
+                    .unwrap()
+            })
+        })
     }
 }

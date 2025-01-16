@@ -10,6 +10,7 @@ use biter::{
     bitcoin::{TxIn, TxOut, Txid},
     bitcoincore_rpc::{Auth, Client},
 };
+// use heed3::{Database, EnvOpenOptions};
 
 mod structs;
 
@@ -17,7 +18,7 @@ use color_eyre::eyre::{eyre, ContextCompat};
 use rayon::prelude::*;
 use structs::{
     Addressbytes, AddressbytesPrefix, Addressindex, Addressindextxoutindex, Addresstype, Addresstypeindex, Amount,
-    AnyVecdisk, BlockHashPrefix, Databases, Exit, Height, TxidPrefix, Txindex, Txindexvout, Txoutindex, Vecdisks,
+    BlockHashPrefix, Databases, Exit, Height, StorableVecs, TxidPrefix, Txindex, Txindexvout, Txoutindex,
 };
 
 // https://github.com/fjall-rs/fjall/discussions/72
@@ -32,6 +33,8 @@ enum TxInOrAddressindextoutindex<'a> {
 const MONTHLY_BLOCK_TARGET: usize = 144 * 30;
 
 fn main() -> color_eyre::Result<()> {
+    color_eyre::install()?;
+
     let i = std::time::Instant::now();
 
     let check_collisions = true;
@@ -44,31 +47,47 @@ fn main() -> color_eyre::Result<()> {
 
     let path_database = Path::new("./database");
 
-    let mut vecdisks = Vecdisks::import(path_database)?;
+    let mut vecs = StorableVecs::import(path_database)?;
+
+    // let env = unsafe { EnvOpenOptions::new().open(Path::new("./heed"))? };
+    // let mut wtxn = env.write_txn()?;
+
+    // let addressbytes_prefix_to_addressindex: Database<AddressbytesPrefix, Addressindex> =
+    //     env.create_database(&mut wtxn, Some("addressbytes_prefix_to_addressindex"))?;
+    // let addressindextxoutindex_in: Database<Addressindextxoutindex, ()> =
+    //     env.create_database(&mut wtxn, Some("addressindextxoutindex_in"))?;
+    // let addressindextxoutindex_out: Database<Addressindextxoutindex, ()> =
+    //     env.create_database(&mut wtxn, Some("addressindextxoutindex_out"))?;
+    // let blockhash_prefix_to_height: Database<BlockHashPrefix, Height> =
+    //     env.create_database(&mut wtxn, Some("blockhash_prefix_to_height"))?;
+    // let txid_prefix_to_txindex: Database<TxidPrefix, Txindex> =
+    //     env.create_database(&mut wtxn, Some("txid_prefix_to_txindex"))?;
+    // let txindexvout_to_txoutindex: Database<Txindexvout, Txoutindex> =
+    //     env.create_database(&mut wtxn, Some("txindexvout_to_txoutindex"))?;
 
     let databases = Databases::open(path_database)?;
 
     let mut height = Height::from(0_u32);
 
-    let mut txindex = vecdisks
+    let mut txindex = vecs
         .height_to_first_txindex
         .get(height)?
         .cloned()
         .unwrap_or(Txindex::default());
 
-    let mut txoutindex = vecdisks
+    let mut txoutindex = vecs
         .height_to_first_txoutindex
         .get(height)?
         .cloned()
         .unwrap_or(Txoutindex::default());
 
-    let mut addressindex = vecdisks
+    let mut addressindex = vecs
         .height_to_first_addressindex
         .get(height)?
         .cloned()
         .unwrap_or(Addressindex::default());
 
-    let export = |databases: Databases, vecdisks: &mut Vecdisks, height: Height| -> color_eyre::Result<()> {
+    let export = |databases: Databases, vecdisks: &mut StorableVecs, height: Height| -> color_eyre::Result<()> {
         exit.block();
         println!("Exporting...");
         databases.export();
@@ -101,22 +120,23 @@ fn main() -> color_eyre::Result<()> {
             // if parts.blockhash_prefix_to_height.needs(height) {
             let blockhash_prefix = BlockHashPrefix::try_from(&blockhash)?;
 
-            if check_collisions {
-                if let Some(prev_height) =
-                    databases.blockhash_prefix_to_height.get(&blockhash_prefix)
-                {
-                    dbg!(blockhash, prev_height);
-                    return Err(eyre!("Collision, expect prefix to need be set yet"));
-                }
-            }
-
-            databases.blockhash_prefix_to_height.insert(blockhash_prefix,height);
+            // if check_collisions {
+            //     if let Some(prev_height) =
+            //         databases.blockhash_prefix_to_height.get(&blockhash_prefix)
+            //     {
+            //         dbg!(blockhash, prev_height);
+            //         return Err(eyre!("Collision, expect prefix to need be set yet"));
+            //     }
             // }
 
-            vecdisks.height_to_blockhash.push_if_needed(height, blockhash)?;
-            vecdisks.height_to_first_txindex.push_if_needed(height, txindex)?;
-            vecdisks.height_to_first_txoutindex.push_if_needed(height, txoutindex)?;
-            vecdisks.height_to_first_addressindex.push_if_needed(height, addressindex)?;
+            databases.blockhash_prefix_to_height.insert(blockhash_prefix,height);
+            // blockhash_prefix_to_height.put(&mut wtxn, &blockhash_prefix,&height);
+            // }
+
+            vecs.height_to_blockhash.push_if_needed(height, blockhash)?;
+            vecs.height_to_first_txindex.push_if_needed(height, txindex)?;
+            vecs.height_to_first_txoutindex.push_if_needed(height, txoutindex)?;
+            vecs.height_to_first_addressindex.push_if_needed(height, addressindex)?;
 
             let outputs = block
                 .txdata
@@ -200,7 +220,7 @@ fn main() -> color_eyre::Result<()> {
                                         dbg!(outpoint.txid, txindex_local, vout, txindexvout);
                                     })?;
 
-                            let addressindex = *vecdisks.txoutindex_to_addressindex.get(txoutindex)?
+                            let addressindex = *vecs.txoutindex_to_addressindex.get(txoutindex)?
                                 .context("Expect addressindex to not be none")
                                 .inspect_err(|_| {
                                     // let height = vecdisks.txindex_to_height.get(txindex.into()).expect("txindex_to_height get not fail")
@@ -321,7 +341,7 @@ fn main() -> color_eyre::Result<()> {
                         );
                     // }
 
-                    vecdisks.txoutindex_to_amount.push_if_needed(
+                    vecs.txoutindex_to_amount.push_if_needed(
                         txoutindex,
                         amount,
                     )?;
@@ -331,12 +351,12 @@ fn main() -> color_eyre::Result<()> {
                     if let Some(addressindex) = addressindex_opt {
                         addressindex_local = addressindex;
                     } else {
-                        vecdisks.addressindex_to_addresstype.push_if_needed(addressindex_local, addresstype)?;
+                        vecs.addressindex_to_addresstype.push_if_needed(addressindex_local, addresstype)?;
 
                         // TODO: Create counter of other addresstypes instead
-                        let addresstypeindex = Addresstypeindex::from(vecdisks.addresstype_to_addressvecdisk(addresstype).map_or(0, |vecdisk| vecdisk.len()));
+                        let addresstypeindex = Addresstypeindex::from(vecs.addresstype_to_addressbytes(addresstype).map_or(0, |vecdisk| vecdisk.len()));
 
-                        vecdisks.addressindex_to_addresstypeindex.push_if_needed(addressindex_local, addresstypeindex)?;
+                        vecs.addressindex_to_addresstypeindex.push_if_needed(addressindex_local, addresstypeindex)?;
 
                         if let Ok(addressbytes) = addressbytes_res {
                             // if parts.addressbytes_prefix_to_addressindex.needs(height) {
@@ -346,7 +366,7 @@ fn main() -> color_eyre::Result<()> {
                                 );
                             // }
 
-                            vecdisks.push_addressbytes_if_needed(addresstypeindex, addressbytes)?;
+                            vecs.push_addressbytes_if_needed(addresstypeindex, addressbytes)?;
                         }
 
                         addressindex.increment();
@@ -354,7 +374,7 @@ fn main() -> color_eyre::Result<()> {
 
                     new_txindexvout_to_addressindextxoutindex.insert(txindexvout, Addressindextxoutindex::from((addressindex_local, txoutindex)));
 
-                    vecdisks.txoutindex_to_addressindex.push_if_needed(
+                    vecs.txoutindex_to_addressindex.push_if_needed(
                         txoutindex,
                         addressindex_local,
                     )?;
@@ -426,10 +446,10 @@ fn main() -> color_eyre::Result<()> {
                                 return Ok(())
                             }
 
-                            let len = vecdisks.txindex_to_txid.len();
+                            let len = vecs.txindex_to_txid.len();
                             // Ok if `get` is not par as should happen only twice
                             let prev_txid =
-                                vecdisks.txindex_to_txid.get(prev_txindex)?
+                                vecs.txindex_to_txid.get(prev_txindex)?
                                     .context("To have txid for txindex").inspect_err(|_| {
                                         dbg!(txindex_local, txid, len);
                                     })?;
@@ -444,7 +464,7 @@ fn main() -> color_eyre::Result<()> {
                             let is_dup = only_known_dup_txids.contains(prev_txid);
 
                             if !is_dup {
-                                let prev_height = vecdisks.txindex_to_height.get(prev_txindex)?.expect("To have height");
+                                let prev_height = vecs.txindex_to_height.get(prev_txindex)?.expect("To have height");
                                 dbg!(height, txid, txindex_local, prev_height, prev_txid, prev_txindex);
                                 return Err(eyre!("Expect none"));
                             }
@@ -456,18 +476,18 @@ fn main() -> color_eyre::Result<()> {
             )?;
 
             txindex_to_txid.into_iter().try_for_each(|(txindex, txid)| -> color_eyre::Result<()> {
-                vecdisks.txindex_to_txid.push_if_needed(txindex, txid)?;
-                vecdisks.txindex_to_height.push_if_needed(txindex, height)?;
+                vecs.txindex_to_txid.push_if_needed(txindex, txid)?;
+                vecs.txindex_to_height.push_if_needed(txindex, height)?;
                 Ok(())
             })?;
 
-            vecdisks.height_to_last_txindex.push_if_needed(height, txindex.decremented())?;
-            vecdisks.height_to_last_txoutindex.push_if_needed(height, txoutindex.decremented())?;
-            vecdisks.height_to_last_addressindex.push_if_needed(height, addressindex.decremented())?;
+            vecs.height_to_last_txindex.push_if_needed(height, txindex.decremented())?;
+            vecs.height_to_last_txoutindex.push_if_needed(height, txoutindex.decremented())?;
+            vecs.height_to_last_addressindex.push_if_needed(height, addressindex.decremented())?;
 
             let should_snapshot = _height % MONTHLY_BLOCK_TARGET == 0 && !exit.active();
             if should_snapshot {
-                export(databases, &mut vecdisks, height)?;
+                export(databases, &mut vecs, height)?;
                 databases_opt.replace(Databases::open(path_database)?);
             } else {
                 databases_opt.replace(databases);
@@ -484,9 +504,7 @@ fn main() -> color_eyre::Result<()> {
     pause();
 
     let databases = databases_opt.take().context("option should have wtx")?;
-    export(databases, &mut vecdisks, height)?;
-
-    pause();
+    export(databases, &mut vecs, height)?;
 
     dbg!(i.elapsed());
 
