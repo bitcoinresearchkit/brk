@@ -1,0 +1,12 @@
+[package]
+name = "storable_vec"
+description = "A very small, fast, efficient and simple storable Vec"
+version = "0.1.2"
+license = "MIT"
+keywords = ["vec", "disk", "data"]
+categories = ["database"]
+edition = "2021"
+
+[dependencies]
+color-eyre = "0.6.3"
+memmap2 = "0.9.5"

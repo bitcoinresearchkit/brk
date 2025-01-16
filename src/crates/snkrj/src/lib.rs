@@ -173,6 +173,11 @@ where
             .map(|(key, value)| (key.clone(), value.clone()))
             .collect::<_>()
     }
+
+    #[inline]
+    pub fn len(&self) -> usize {
+        self.iter_ram_then_disk().count()
+    }
 }
 
 pub trait AnyDatabase {

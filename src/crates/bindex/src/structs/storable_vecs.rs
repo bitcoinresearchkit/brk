@@ -1,15 +1,16 @@
-use std::{fs, path::Path};
+use std::{fs, io, path::Path};
 
 use biter::bitcoin::{BlockHash, Txid};
 use color_eyre::eyre::eyre;
+use storable_vec::{AnyStorableVec, StorableVec};
 
 use super::{
-    Addressbytes, Addressindex, Addresstype, Addresstypeindex, Amount, AnyVecdisk, Exit, Height, P2PK33AddressBytes,
+    Addressbytes, Addressindex, Addresstype, Addresstypeindex, Amount, Exit, Height, P2PK33AddressBytes,
     P2PK65AddressBytes, P2PKHAddressBytes, P2SHAddressBytes, P2TRAddressBytes, P2WPKHAddressBytes, P2WSHAddressBytes,
-    Txindex, Txoutindex, Vecdisk,
+    Txindex, Txoutindex,
 };
 
-pub struct Vecdisks {
+pub struct StorableVecs {
     // TODO:
     //
     // Add
@@ -22,59 +23,59 @@ pub struct Vecdisks {
     // date_to_fees
     // date_to_first_height
     // date_to_last_height
-    pub addressindex_to_addresstype: Vecdisk<Addressindex, Addresstype>,
-    pub addressindex_to_addresstypeindex: Vecdisk<Addressindex, Addresstypeindex>,
-    pub height_to_blockhash: Vecdisk<Height, BlockHash>,
-    pub height_to_first_addressindex: Vecdisk<Height, Addressindex>,
-    pub height_to_first_txindex: Vecdisk<Height, Txindex>,
-    pub height_to_first_txoutindex: Vecdisk<Height, Txoutindex>,
-    pub height_to_last_addressindex: Vecdisk<Height, Addressindex>,
-    pub height_to_last_txindex: Vecdisk<Height, Txindex>,
-    pub height_to_last_txoutindex: Vecdisk<Height, Txoutindex>,
-    pub p2pk65index_to_p2pk65addressbytes: Vecdisk<Addresstypeindex, P2PK65AddressBytes>,
-    pub p2pk33index_to_p2pk33addressbytes: Vecdisk<Addresstypeindex, P2PK33AddressBytes>,
-    pub p2pkhindex_to_p2pkhaddressbytes: Vecdisk<Addresstypeindex, P2PKHAddressBytes>,
-    pub p2shindex_to_p2shaddressbytes: Vecdisk<Addresstypeindex, P2SHAddressBytes>,
-    pub p2wpkhindex_to_p2wpkhaddressbytes: Vecdisk<Addresstypeindex, P2WPKHAddressBytes>,
-    pub p2wshindex_to_p2wshaddressbytes: Vecdisk<Addresstypeindex, P2WSHAddressBytes>,
-    pub p2trindex_to_p2traddressbytes: Vecdisk<Addresstypeindex, P2TRAddressBytes>,
-    pub txindex_to_height: Vecdisk<Txindex, Height>,
-    pub txindex_to_txid: Vecdisk<Txindex, Txid>,
-    pub txoutindex_to_addressindex: Vecdisk<Txoutindex, Addressindex>,
-    pub txoutindex_to_amount: Vecdisk<Txoutindex, Amount>,
+    pub addressindex_to_addresstype: StorableVec<Addressindex, Addresstype>,
+    pub addressindex_to_addresstypeindex: StorableVec<Addressindex, Addresstypeindex>,
+    pub height_to_blockhash: StorableVec<Height, BlockHash>,
+    pub height_to_first_addressindex: StorableVec<Height, Addressindex>,
+    pub height_to_first_txindex: StorableVec<Height, Txindex>,
+    pub height_to_first_txoutindex: StorableVec<Height, Txoutindex>,
+    pub height_to_last_addressindex: StorableVec<Height, Addressindex>,
+    pub height_to_last_txindex: StorableVec<Height, Txindex>,
+    pub height_to_last_txoutindex: StorableVec<Height, Txoutindex>,
+    pub p2pk65index_to_p2pk65addressbytes: StorableVec<Addresstypeindex, P2PK65AddressBytes>,
+    pub p2pk33index_to_p2pk33addressbytes: StorableVec<Addresstypeindex, P2PK33AddressBytes>,
+    pub p2pkhindex_to_p2pkhaddressbytes: StorableVec<Addresstypeindex, P2PKHAddressBytes>,
+    pub p2shindex_to_p2shaddressbytes: StorableVec<Addresstypeindex, P2SHAddressBytes>,
+    pub p2wpkhindex_to_p2wpkhaddressbytes: StorableVec<Addresstypeindex, P2WPKHAddressBytes>,
+    pub p2wshindex_to_p2wshaddressbytes: StorableVec<Addresstypeindex, P2WSHAddressBytes>,
+    pub p2trindex_to_p2traddressbytes: StorableVec<Addresstypeindex, P2TRAddressBytes>,
+    pub txindex_to_height: StorableVec<Txindex, Height>,
+    pub txindex_to_txid: StorableVec<Txindex, Txid>,
+    pub txoutindex_to_addressindex: StorableVec<Txoutindex, Addressindex>,
+    pub txoutindex_to_amount: StorableVec<Txoutindex, Amount>,
 }
 
 // const UNSAFE_BLOCKS: usize = 100;
 
-impl Vecdisks {
+impl StorableVecs {
     pub fn import(path: &Path) -> color_eyre::Result<Self> {
         fs::create_dir_all(path)?;
 
         Ok(Self {
-            addressindex_to_addresstype: Vecdisk::import(&path.join("addressindex_to_addresstype"))?,
-            addressindex_to_addresstypeindex: Vecdisk::import(&path.join("addressindex_to_addresstypeindex"))?,
-            height_to_blockhash: Vecdisk::import(&path.join("height_to_blockhash"))?,
-            height_to_first_addressindex: Vecdisk::import(&path.join("height_to_first_addressindex"))?,
-            height_to_first_txindex: Vecdisk::import(&path.join("height_to_first_txindex"))?,
-            height_to_first_txoutindex: Vecdisk::import(&path.join("height_to_first_txoutindex"))?,
-            height_to_last_addressindex: Vecdisk::import(&path.join("height_to_last_addressindex"))?,
-            height_to_last_txindex: Vecdisk::import(&path.join("height_to_last_txindex"))?,
-            height_to_last_txoutindex: Vecdisk::import(&path.join("height_to_last_txoutindex"))?,
-            p2pk65index_to_p2pk65addressbytes: Vecdisk::import(&path.join("p2pk65index_to_p2pk65addressbytes"))?,
-            p2pk33index_to_p2pk33addressbytes: Vecdisk::import(&path.join("p2pk33index_to_p2pk33addressbytes"))?,
-            p2pkhindex_to_p2pkhaddressbytes: Vecdisk::import(&path.join("p2pkhindex_to_p2pkhaddressbytes"))?,
-            p2shindex_to_p2shaddressbytes: Vecdisk::import(&path.join("p2shindex_to_p2shaddressbytes"))?,
-            p2wpkhindex_to_p2wpkhaddressbytes: Vecdisk::import(&path.join("p2wpkhindex_to_p2wpkhaddressbytes"))?,
-            p2wshindex_to_p2wshaddressbytes: Vecdisk::import(&path.join("p2wshindex_to_p2wshaddressbytes"))?,
-            p2trindex_to_p2traddressbytes: Vecdisk::import(&path.join("p2trindex_to_p2traddressbytes"))?,
-            txindex_to_height: Vecdisk::import(&path.join("txindex_to_height"))?,
-            txindex_to_txid: Vecdisk::import(&path.join("txindex_to_txid"))?,
-            txoutindex_to_addressindex: Vecdisk::import(&path.join("txoutindex_to_addressindex"))?,
-            txoutindex_to_amount: Vecdisk::import(&path.join("txoutindex_to_amount"))?,
+            addressindex_to_addresstype: StorableVec::import(&path.join("addressindex_to_addresstype"))?,
+            addressindex_to_addresstypeindex: StorableVec::import(&path.join("addressindex_to_addresstypeindex"))?,
+            height_to_blockhash: StorableVec::import(&path.join("height_to_blockhash"))?,
+            height_to_first_addressindex: StorableVec::import(&path.join("height_to_first_addressindex"))?,
+            height_to_first_txindex: StorableVec::import(&path.join("height_to_first_txindex"))?,
+            height_to_first_txoutindex: StorableVec::import(&path.join("height_to_first_txoutindex"))?,
+            height_to_last_addressindex: StorableVec::import(&path.join("height_to_last_addressindex"))?,
+            height_to_last_txindex: StorableVec::import(&path.join("height_to_last_txindex"))?,
+            height_to_last_txoutindex: StorableVec::import(&path.join("height_to_last_txoutindex"))?,
+            p2pk65index_to_p2pk65addressbytes: StorableVec::import(&path.join("p2pk65index_to_p2pk65addressbytes"))?,
+            p2pk33index_to_p2pk33addressbytes: StorableVec::import(&path.join("p2pk33index_to_p2pk33addressbytes"))?,
+            p2pkhindex_to_p2pkhaddressbytes: StorableVec::import(&path.join("p2pkhindex_to_p2pkhaddressbytes"))?,
+            p2shindex_to_p2shaddressbytes: StorableVec::import(&path.join("p2shindex_to_p2shaddressbytes"))?,
+            p2wpkhindex_to_p2wpkhaddressbytes: StorableVec::import(&path.join("p2wpkhindex_to_p2wpkhaddressbytes"))?,
+            p2wshindex_to_p2wshaddressbytes: StorableVec::import(&path.join("p2wshindex_to_p2wshaddressbytes"))?,
+            p2trindex_to_p2traddressbytes: StorableVec::import(&path.join("p2trindex_to_p2traddressbytes"))?,
+            txindex_to_height: StorableVec::import(&path.join("txindex_to_height"))?,
+            txindex_to_txid: StorableVec::import(&path.join("txindex_to_txid"))?,
+            txoutindex_to_addressindex: StorableVec::import(&path.join("txoutindex_to_addressindex"))?,
+            txoutindex_to_amount: StorableVec::import(&path.join("txoutindex_to_amount"))?,
         })
     }
 
-    pub fn addresstype_to_addressvecdisk(&self, addresstype: Addresstype) -> color_eyre::Result<&dyn AnyVecdisk> {
+    pub fn addresstype_to_addressbytes(&self, addresstype: Addresstype) -> color_eyre::Result<&dyn AnyStorableVec> {
         match addresstype {
             Addresstype::P2PK65 => Ok(&self.p2pk65index_to_p2pk65addressbytes),
             Addresstype::P2PK33 => Ok(&self.p2pk33index_to_p2pk33addressbytes),
@@ -217,11 +218,11 @@ impl Vecdisks {
         // Ok(())
     }
 
-    pub fn flush(&mut self) -> color_eyre::Result<()> {
-        self.as_mut_vec().into_iter().try_for_each(AnyVecdisk::flush)
+    pub fn flush(&mut self) -> io::Result<()> {
+        self.as_mut_vec().into_iter().try_for_each(AnyStorableVec::flush)
     }
 
-    fn as_mut_vec(&mut self) -> Vec<&mut dyn AnyVecdisk> {
+    fn as_mut_vec(&mut self) -> Vec<&mut dyn AnyStorableVec> {
         vec![
             &mut self.addressindex_to_addresstype,
             &mut self.addressindex_to_addresstypeindex,
