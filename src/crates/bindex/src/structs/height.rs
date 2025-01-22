@@ -1,15 +1,23 @@
 use std::{
-    fmt,
-    ops::{Add, AddAssign, Sub},
+    fmt, fs, io,
+    ops::{Add, AddAssign, Rem, Sub},
+    path::Path,
 };
 
 use biter::bitcoincore_rpc::{self, RpcApi};
 use derive_deref::{Deref, DerefMut};
 use snkrj::{direct_repr, Storable, UnsizedStorable};
+use storable_vec::UnsafeSizedSerDe;
 
 #[derive(Debug, Clone, Copy, Deref, DerefMut, PartialEq, Eq, PartialOrd, Ord, Default)]
 pub struct Height(u32);
 direct_repr!(Height);
+
+impl Height {
+    pub fn write(&self, path: &Path) -> Result<(), io::Error> {
+        fs::write(path, self.unsafe_as_slice())
+    }
+}
 
 impl PartialEq<u64> for Height {
     fn eq(&self, other: &u64) -> bool {
@@ -68,6 +76,13 @@ impl AddAssign<usize> for Height {
     }
 }
 
+impl Rem<usize> for Height {
+    type Output = Height;
+    fn rem(self, rhs: usize) -> Self::Output {
+        Self(self.abs_diff(Height::from(rhs).0))
+    }
+}
+
 impl fmt::Display for Height {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", **self)
@@ -88,6 +103,13 @@ impl From<usize> for Height {
 impl From<Height> for usize {
     fn from(value: Height) -> Self {
         value.0 as usize
+    }
+}
+
+impl TryFrom<&Path> for Height {
+    type Error = color_eyre::Report;
+    fn try_from(value: &Path) -> Result<Self, Self::Error> {
+        Ok(Self::unsafe_try_from_slice(fs::read(value)?.as_slice())?.to_owned())
     }
 }
 

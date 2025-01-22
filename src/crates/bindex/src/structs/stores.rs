@@ -1,34 +1,33 @@
 use std::{path::Path, thread};
 
-use snkrj::{AnyDatabase, Database};
-
 use crate::structs::Height;
 
 use super::{
-    AddressbytesPrefix, Addressindex, Addressindextxoutindex, BlockHashPrefix, TxidPrefix, Txindex, Txindexvout,
-    Txoutindex,
+    AddressbytesPrefix, Addressindex, Addressindextxoutindex, BlockHashPrefix, Store, TxidPrefix, Txindex, Txindexvout,
+    Txoutindex, Version,
 };
 
-pub struct Databases {
-    pub addressbytes_prefix_to_addressindex: Database<AddressbytesPrefix, Addressindex>,
-    pub addressindextxoutindex_in: Database<Addressindextxoutindex, ()>,
-    pub addressindextxoutindex_out: Database<Addressindextxoutindex, ()>,
-    pub blockhash_prefix_to_height: Database<BlockHashPrefix, Height>,
-    pub txid_prefix_to_txindex: Database<TxidPrefix, Txindex>,
-    pub txindexvout_to_txoutindex: Database<Txindexvout, Txoutindex>,
+pub struct Stores {
+    pub addressbytes_prefix_to_addressindex: Store<AddressbytesPrefix, Addressindex>,
+    pub addressindextxoutindex_in: Store<Addressindextxoutindex, ()>,
+    pub addressindextxoutindex_out: Store<Addressindextxoutindex, ()>,
+    pub blockhash_prefix_to_height: Store<BlockHashPrefix, Height>,
+    pub txid_prefix_to_txindex: Store<TxidPrefix, Txindex>,
+    pub txindexvout_to_txoutindex: Store<Txindexvout, Txoutindex>,
 }
 
-const UNSAFE_BLOCKS: usize = 100;
-
-impl Databases {
+impl Stores {
     pub fn open(path: &Path) -> color_eyre::Result<Self> {
         Ok(Self {
-            addressbytes_prefix_to_addressindex: Database::open(path.join("addressbytes_prefix_to_addressindex"))?,
-            addressindextxoutindex_in: Database::open(path.join("addresstxoutindexes_in"))?,
-            addressindextxoutindex_out: Database::open(path.join("addresstxoutindexes_out"))?,
-            blockhash_prefix_to_height: Database::open(path.join("blockhash_prefix_to_height"))?,
-            txid_prefix_to_txindex: Database::open(path.join("txid_prefix_to_txindex"))?,
-            txindexvout_to_txoutindex: Database::open(path.join("txindexvout_to_txoutindex"))?,
+            addressbytes_prefix_to_addressindex: Store::open(
+                &path.join("addressbytes_prefix_to_addressindex"),
+                Version::from(1),
+            )?,
+            addressindextxoutindex_in: Store::open(&path.join("addresstxoutindexes_in"), Version::from(1))?,
+            addressindextxoutindex_out: Store::open(&path.join("addresstxoutindexes_out"), Version::from(1))?,
+            blockhash_prefix_to_height: Store::open(&path.join("blockhash_prefix_to_height"), Version::from(1))?,
+            txid_prefix_to_txindex: Store::open(&path.join("txid_prefix_to_txindex"), Version::from(1))?,
+            txindexvout_to_txoutindex: Store::open(&path.join("txindexvout_to_txoutindex"), Version::from(1))?,
         })
     }
 
@@ -151,36 +150,29 @@ impl Databases {
     // Ok(())
     // }
 
-    fn to_ref_vec(&self) -> Vec<&dyn AnyDatabase> {
-        vec![
-            &self.addressbytes_prefix_to_addressindex as &dyn AnyDatabase,
-            &self.addressindextxoutindex_in,
-            &self.addressindextxoutindex_out,
-            &self.blockhash_prefix_to_height,
-            &self.txid_prefix_to_txindex,
-            &self.txindexvout_to_txoutindex,
+    pub fn min_height(&self) -> Option<Height> {
+        [
+            self.addressbytes_prefix_to_addressindex.height(),
+            self.addressindextxoutindex_in.height(),
+            self.addressindextxoutindex_out.height(),
+            self.blockhash_prefix_to_height.height(),
+            self.txid_prefix_to_txindex.height(),
+            self.txindexvout_to_txoutindex.height(),
         ]
+        .into_iter()
+        .min()
+        .flatten()
+        .cloned()
     }
 
-    fn to_ref_mut_vec(&mut self) -> Vec<&mut dyn AnyDatabase> {
-        vec![
-            &mut self.addressbytes_prefix_to_addressindex as &mut dyn AnyDatabase,
-            &mut self.addressindextxoutindex_in,
-            &mut self.addressindextxoutindex_out,
-            &mut self.blockhash_prefix_to_height,
-            &mut self.txid_prefix_to_txindex,
-            &mut self.txindexvout_to_txoutindex,
-        ]
-    }
-
-    pub fn export(self) {
+    pub fn export(self, height: Height) {
         thread::scope(|scope| {
-            scope.spawn(|| self.addressbytes_prefix_to_addressindex.export(false));
-            scope.spawn(|| self.addressindextxoutindex_in.export(false));
-            scope.spawn(|| self.addressindextxoutindex_out.export(false));
-            scope.spawn(|| self.blockhash_prefix_to_height.export(false));
-            scope.spawn(|| self.txid_prefix_to_txindex.export(false));
-            scope.spawn(|| self.txindexvout_to_txoutindex.export(false));
+            scope.spawn(|| self.addressbytes_prefix_to_addressindex.export(height));
+            scope.spawn(|| self.addressindextxoutindex_in.export(height));
+            scope.spawn(|| self.addressindextxoutindex_out.export(height));
+            scope.spawn(|| self.blockhash_prefix_to_height.export(height));
+            scope.spawn(|| self.txid_prefix_to_txindex.export(height));
+            scope.spawn(|| self.txindexvout_to_txoutindex.export(height));
         });
     }
 }

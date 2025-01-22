@@ -34,32 +34,36 @@ impl Kraken {
                     .as_array()
                     .context("Expect to be an array")?
                     .iter()
-                    .map(|value| {
-                        let array = value.as_array().unwrap();
+                    .map(|value| -> color_eyre::Result<_> {
+                        let array = value.as_array().context("Expect as_array to work")?;
 
-                        let timestamp = array.first().unwrap().as_u64().unwrap() as u32;
+                        let timestamp = array
+                            .first()
+                            .context("Expect first to work")?
+                            .as_u64()
+                            .expect("Expect as_u64 to work")
+                            as u32;
 
-                        let get_f32 = |index: usize| {
-                            array
+                        let get_f32 = |index: usize| -> color_eyre::Result<f32> {
+                            Ok(array
                                 .get(index)
-                                .unwrap()
+                                .context("Expect get index to work")?
                                 .as_str()
-                                .unwrap()
-                                .parse::<f32>()
-                                .unwrap()
+                                .context("Expect as_str to work")?
+                                .parse::<f32>()?)
                         };
 
-                        (
+                        Ok((
                             timestamp,
                             OHLC {
-                                open: get_f32(1),
-                                high: get_f32(2),
-                                low: get_f32(3),
-                                close: get_f32(4),
+                                open: get_f32(1)?,
+                                high: get_f32(2)?,
+                                low: get_f32(3)?,
+                                close: get_f32(4)?,
                             },
-                        )
+                        ))
                     })
-                    .collect::<BTreeMap<_, _>>())
+                    .collect::<Result<BTreeMap<_, _>, _>>()?)
             },
             30,
             10,
@@ -88,33 +92,39 @@ impl Kraken {
                     .as_array()
                     .context("Expect to be an array")?
                     .iter()
-                    .map(|value| {
-                        let array = value.as_array().unwrap();
+                    .map(|value| -> color_eyre::Result<_> {
+                        let array = value.as_array().context("Expect as_array to work")?;
 
-                        let date = Timestamp::from(array.first().unwrap().as_u64().unwrap() as u32)
-                            .to_date();
-
-                        let get_f32 = |index: usize| {
+                        let date = Timestamp::from(
                             array
+                                .first()
+                                .context("Expect first to work")?
+                                .as_u64()
+                                .context("Expect as_u64 to work")?
+                                as u32,
+                        )
+                        .to_date();
+
+                        let get_f32 = |index: usize| -> color_eyre::Result<f32> {
+                            Ok(array
                                 .get(index)
-                                .unwrap()
+                                .context("Expect get index to work")?
                                 .as_str()
-                                .unwrap()
-                                .parse::<f32>()
-                                .unwrap()
+                                .context("Expect as_str to work")?
+                                .parse::<f32>()?)
                         };
 
-                        (
+                        Ok((
                             date,
                             OHLC {
-                                open: get_f32(1),
-                                high: get_f32(2),
-                                low: get_f32(3),
-                                close: get_f32(4),
+                                open: get_f32(1)?,
+                                high: get_f32(2)?,
+                                low: get_f32(3)?,
+                                close: get_f32(4)?,
                             },
-                        )
+                        ))
                     })
-                    .collect::<BTreeMap<_, _>>())
+                    .collect::<Result<BTreeMap<_, _>, _>>()?)
             },
             30,
             10,
