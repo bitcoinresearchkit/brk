@@ -1,11 +1,13 @@
 // https://docs.rs/sanakirja/latest/sanakirja/index.html
 // https://pijul.org/posts/2021-02-06-rethinking-sanakirja/
 
+use core::panic;
 use std::{
     collections::{BTreeMap, BTreeSet},
     fmt::Debug,
-    fs, io, mem,
-    path::PathBuf,
+    fs::{self, File},
+    io, mem,
+    path::{Path, PathBuf},
     result::Result,
 };
 
@@ -19,12 +21,13 @@ pub use sanakirja::*;
 ///
 pub struct Database<Key, Value>
 where
-    Key: Ord + Clone + Debug + Storable,
-    Value: Storable + PartialEq,
+    Key: DatabaseKey,
+    Value: DatabaseValue,
 {
-    path: PathBuf,
+    pathbuf: PathBuf,
     puts: BTreeMap<Key, Value>,
     dels: BTreeSet<Key>,
+    len: usize,
     db: Db_<Key, Value, page::Page<Key, Value>>,
     txn: MutTxn<Env, ()>,
 }
@@ -32,14 +35,24 @@ where
 const ROOT_DB: usize = 0;
 const PAGE_SIZE: u64 = 4096;
 
+pub type UnitDatabase = Database<(), ()>;
+
+const DEFRAGMENT_RATIO_THRESHOLD: f64 = 0.5;
+
 impl<Key, Value> Database<Key, Value>
 where
-    Key: Ord + Clone + Debug + Storable,
-    Value: Storable + PartialEq,
+    Key: DatabaseKey,
+    Value: DatabaseValue,
 {
+    const KEY_SIZE: usize = size_of::<Key>();
+    const VALUE_SIZE: usize = size_of::<Value>();
+    const KEY_AND_VALUE_SIZE: usize = Self::KEY_SIZE + Self::VALUE_SIZE;
+
     /// Open a database without a lock file where only one instance is safe to open.
-    pub fn open(path: PathBuf) -> Result<Self, Error> {
-        let env = unsafe { Env::new_nolock(&path, PAGE_SIZE, 1)? };
+    pub fn open(pathbuf: PathBuf) -> Result<Self, Error> {
+        fs::create_dir_all(&pathbuf)?;
+
+        let env = unsafe { Env::new_nolock(Self::path_sanakirja_(&pathbuf), PAGE_SIZE, 1)? };
 
         let mut txn = Env::mut_txn_begin(env)?;
 
@@ -48,12 +61,44 @@ where
             .unwrap_or_else(|| unsafe { btree::create_db_(&mut txn).unwrap() });
 
         Ok(Self {
-            path,
+            len: Self::read_length_(&pathbuf),
+            pathbuf,
             puts: BTreeMap::default(),
             dels: BTreeSet::default(),
             db,
             txn,
         })
+    }
+
+    pub fn path_sanakirja(&self) -> PathBuf {
+        Self::path_sanakirja_(&self.pathbuf)
+    }
+    fn path_sanakirja_(path: &Path) -> PathBuf {
+        path.join("sanakirja")
+    }
+
+    pub fn read_length(&self) -> usize {
+        Self::read_length_(&self.pathbuf)
+    }
+    pub fn read_length_(path: &Path) -> usize {
+        fs::read(Self::path_length(path))
+            .map(|v| {
+                let mut buf = [0_u8; 8];
+                v.iter().enumerate().take(8).for_each(|(i, b)| {
+                    buf[i] = *b;
+                });
+                usize::from_le_bytes(buf)
+            })
+            .unwrap_or_default()
+    }
+    pub fn write_length(&self) -> Result<(), io::Error> {
+        Self::write_length_(&self.pathbuf, self.len)
+    }
+    pub fn write_length_(path: &Path, len: usize) -> Result<(), io::Error> {
+        fs::write(Self::path_length(path), len.to_le_bytes())
+    }
+    fn path_length(path: &Path) -> PathBuf {
+        path.join("length")
     }
 
     #[inline]
@@ -100,6 +145,7 @@ where
     /// Insert without removing the key to the dels tree, so be sure that it hasn't added to the delete set
     #[inline]
     pub fn insert_to_ram(&mut self, key: Key, value: Value) -> Option<Value> {
+        self.len += 1;
         self.puts.insert(key, value)
     }
 
@@ -111,9 +157,9 @@ where
 
     #[inline]
     pub fn remove(&mut self, key: &Key) -> Option<Value> {
-        self.remove_from_ram(key).or_else(|| {
-            self.remove_later_from_disk(key);
-
+        self.len -= 1;
+        self.puts.remove(key).or_else(|| {
+            self.dels.insert(key.clone());
             None
         })
     }
@@ -121,18 +167,15 @@ where
     /// Get only from the uncommited tree (ram) without checking the database (disk)
     #[inline]
     pub fn remove_from_ram(&mut self, key: &Key) -> Option<Value> {
+        self.len -= 1;
         self.puts.remove(key)
     }
 
     /// Add the key only to the dels tree without checking if it's present in the puts tree, only use if you are positive that you neither added nor updated an entry with this key
     #[inline]
     pub fn remove_later_from_disk(&mut self, key: &Key) {
+        self.len -= 1;
         self.dels.insert(key.clone());
-    }
-
-    #[inline]
-    pub fn is_empty(&self) -> bool {
-        self.iter_disk().next().is_none()
     }
 
     /// Iterate over key/value pairs from the uncommited tree (ram)
@@ -156,18 +199,12 @@ where
     }
 
     /// Collect a **clone** of all uncommited key/value pairs (ram)
-    pub fn collect_ram(&self) -> BTreeMap<Key, Value>
-    where
-        Value: Clone,
-    {
+    pub fn collect_ram(&self) -> BTreeMap<Key, Value> {
         self.puts.clone()
     }
 
     /// Collect a **clone** of all key/value pairs from the database (disk)
-    pub fn collect_disk(&self) -> BTreeMap<Key, Value>
-    where
-        Value: Clone,
-    {
+    pub fn collect_disk(&self) -> BTreeMap<Key, Value> {
         self.iter_disk()
             .map(|r| r.unwrap())
             .map(|(key, value)| (key.clone(), value.clone()))
@@ -176,53 +213,67 @@ where
 
     #[inline]
     pub fn len(&self) -> usize {
-        self.iter_ram_then_disk().count()
+        self.len
     }
-}
 
-pub trait AnyDatabase {
-    #[allow(unused)]
-    fn export(self, defragment: bool) -> Result<(), Error>;
-    fn boxed_export(self: Box<Self>, defragment: bool) -> Result<(), Error>;
-    #[allow(unused)]
-    fn destroy(self) -> io::Result<()>;
-}
+    #[inline]
+    pub fn is_empty(&self) -> bool {
+        self.len == 0
+    }
 
-impl<Key, Value> AnyDatabase for Database<Key, Value>
-where
-    Key: Ord + Clone + Debug + Storable,
-    Value: Storable + PartialEq + Clone,
-{
-    /// Flush all puts and dels from the ram to disk with an option to defragment the database to save some disk space
-    ///
-    /// /!\ Do not kill the program while this function is runnning  /!\
-    fn export(self, defragment: bool) -> Result<(), Error> {
-        Box::new(self).boxed_export(defragment)
+    // pub fn export(self) -> Result<(), Error> {
+    //     self.boxed().boxed_export()
+    // }
+
+    // pub fn boxed(self) -> Box<Self> {
+    //     Box::new(self)
+    // }
+
+    pub fn get_file_size_to_data_ratio(&self) -> Result<f64, Error> {
+        let data_bytes = (self.len() * Self::KEY_AND_VALUE_SIZE) as f64;
+        let file_bytes = File::open(&self.pathbuf)?.metadata()?.len() as f64;
+        Ok(file_bytes / data_bytes)
     }
 
     /// Flush all puts and dels from the ram to disk with an option to defragment the database to save some disk space
     ///
     /// /!\ Do not kill the program while this function is runnning  /!\
-    fn boxed_export(mut self: Box<Self>, defragment: bool) -> Result<(), Error> {
+    pub fn export(mut self) -> Result<(), Error> {
+        let defragment = self.get_file_size_to_data_ratio()? >= DEFRAGMENT_RATIO_THRESHOLD;
+
         if defragment {
-            let mut btree = self.as_ref().collect_disk();
+            let mut btree = self.collect_disk();
 
-            let path = self.path.to_owned();
+            let disk_len = btree.len();
+            let dels_len = self.dels.len();
+            let puts_len = self.puts.len();
+
+            let path = self.pathbuf.to_owned();
             self.dels.iter().for_each(|key| {
                 btree.remove(key);
             });
             btree.append(&mut self.puts);
 
+            let len = btree.len();
+
+            if len != self.len {
+                dbg!(len, self.len, path, disk_len, dels_len, puts_len);
+                panic!("Len should be the same");
+            }
+
             self.destroy()?;
 
-            *self = Self::open(path).unwrap();
+            self = Self::open(path).unwrap();
 
             if !self.is_empty() {
                 panic!()
             }
 
+            self.len = len;
             self.puts = btree;
         }
+
+        self.write_length()?;
 
         if self.dels.is_empty() && self.puts.is_empty() {
             return Ok(());
@@ -247,11 +298,49 @@ where
         self.txn.commit()
     }
 
-    fn destroy(self) -> io::Result<()> {
-        let path = self.path.to_owned();
+    pub fn destroy(self) -> io::Result<()> {
+        let path = self.pathbuf.to_owned();
 
         drop(self);
 
-        fs::remove_file(&path)
+        fs::remove_dir_all(&path)
     }
 }
+
+pub trait AnyDatabase {
+    fn export(self) -> Result<(), Error>;
+    // fn boxed_export(self: Box<Self>) -> Result<(), Error>;
+    fn destroy(self) -> io::Result<()>;
+}
+
+impl<Key, Value> AnyDatabase for Database<Key, Value>
+where
+    Key: DatabaseKey,
+    Value: DatabaseValue,
+{
+    fn export(self) -> Result<(), Error> {
+        self.export()
+    }
+
+    // fn boxed_export(self: Box<Self>) -> Result<(), Error> {
+    //     self.boxed_export()
+    // }
+
+    fn destroy(self) -> io::Result<()> {
+        self.destroy()
+    }
+}
+
+pub trait DatabaseKey
+where
+    Self: Ord + Clone + Debug + Storable + Send + Sync,
+{
+}
+impl<T> DatabaseKey for T where T: Ord + Clone + Debug + Storable + Send + Sync {}
+
+pub trait DatabaseValue
+where
+    Self: Clone + Storable + PartialEq + Send + Sync,
+{
+}
+impl<T> DatabaseValue for T where T: Clone + Storable + PartialEq + Send + Sync {}

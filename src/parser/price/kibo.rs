@@ -2,7 +2,6 @@ use std::{collections::BTreeMap, str::FromStr};
 
 use chrono::NaiveDate;
 use color_eyre::eyre::ContextCompat;
-use itertools::Itertools;
 use log::info;
 use serde_json::Value;
 
@@ -40,7 +39,7 @@ impl Kibo {
                 ))?
                 .json()?;
 
-                Ok(body
+                let vec = body
                     .as_object()
                     .context("Expect to be an object")?
                     .get("dataset")
@@ -53,7 +52,9 @@ impl Kibo {
                     .context("Expect to be an array")?
                     .iter()
                     .map(Self::value_to_ohlc)
-                    .collect_vec())
+                    .collect::<Result<Vec<_>, _>>()?;
+
+                Ok(vec)
             },
             30,
             RETRIES,
@@ -85,28 +86,33 @@ impl Kibo {
                     .as_object()
                     .context("Expect to be an object")?
                     .iter()
-                    .map(|(serialized_date, value)| {
-                        let date = Date::wrap(NaiveDate::from_str(serialized_date).unwrap());
-
-                        (date, Self::value_to_ohlc(value))
+                    .map(|(serialized_date, value)| -> color_eyre::Result<_> {
+                        let date = Date::wrap(NaiveDate::from_str(serialized_date)?);
+                        Ok((date, Self::value_to_ohlc(value)?))
                     })
-                    .collect::<BTreeMap<_, _>>())
+                    .collect::<Result<BTreeMap<_, _>, _>>()?)
             },
             30,
             RETRIES,
         )
     }
 
-    fn value_to_ohlc(value: &Value) -> OHLC {
-        let ohlc = value.as_object().unwrap();
+    fn value_to_ohlc(value: &Value) -> color_eyre::Result<OHLC> {
+        let ohlc = value.as_object().context("Expect as_object to work")?;
 
-        let get_value = |key: &str| ohlc.get(key).unwrap().as_f64().unwrap() as f32;
+        let get_value = |key: &str| -> color_eyre::Result<f32> {
+            Ok(ohlc
+                .get(key)
+                .context("Expect get key to work")?
+                .as_f64()
+                .context("Expect as_f64 to work")? as f32)
+        };
 
-        OHLC {
-            open: get_value("open"),
-            high: get_value("high"),
-            low: get_value("low"),
-            close: get_value("close"),
-        }
+        Ok(OHLC {
+            open: get_value("open")?,
+            high: get_value("high")?,
+            low: get_value("low")?,
+            close: get_value("close")?,
+        })
     }
 }

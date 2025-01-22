@@ -1,6 +1,6 @@
 [package]
 name = "snkrj"
-description = "A simple wrapper around Sanakirja's database that acts as a very fast on disk BTreeMap"
+description = "A very simple wrapper around Sanakirja"
 version = "0.1.1"
 license = "MIT"
 repository = "https://github.com/kibo-money/kibo/tree/main/src/crates/snkrj"

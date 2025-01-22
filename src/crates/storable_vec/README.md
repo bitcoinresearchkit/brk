@@ -7,6 +7,7 @@ A very small, fast, efficient and simple storable `vec` which uses `mmap2` for s
 - [x] Get (Rayon compatible)
 - [x] Push
 - [ ] Update
+- [ ] Insert
 - [ ] Remove
 
 ## Example

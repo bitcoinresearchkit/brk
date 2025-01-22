@@ -8,5 +8,4 @@ categories = ["database"]
 edition = "2021"
 
 [dependencies]
-color-eyre = "0.6.3"
 memmap2 = "0.9.5"

@@ -120,33 +120,37 @@ impl Binance {
                     .as_array()
                     .context("Expect to be an array")?
                     .iter()
-                    .map(|value| {
+                    .map(|value| -> color_eyre::Result<_> {
                         // [timestamp, open, high, low, close, volume, ...]
-                        let array = value.as_array().unwrap();
+                        let array = value.as_array().context("Expect to be array")?;
 
-                        let timestamp = (array.first().unwrap().as_u64().unwrap() / 1_000) as u32;
+                        let timestamp = (array
+                            .first()
+                            .context("Expect to have first")?
+                            .as_u64()
+                            .context("Expect to be convertible to u64")?
+                            / 1_000) as u32;
 
-                        let get_f32 = |index: usize| {
-                            array
+                        let get_f32 = |index: usize| -> color_eyre::Result<f32> {
+                            Ok(array
                                 .get(index)
-                                .unwrap()
+                                .context("Expect to have index")?
                                 .as_str()
-                                .unwrap()
-                                .parse::<f32>()
-                                .unwrap()
+                                .context("Expect to have &str")?
+                                .parse::<f32>()?)
                         };
 
-                        (
+                        Ok((
                             timestamp,
                             OHLC {
-                                open: get_f32(1),
-                                high: get_f32(2),
-                                low: get_f32(3),
-                                close: get_f32(4),
+                                open: get_f32(1)?,
+                                high: get_f32(2)?,
+                                low: get_f32(3)?,
+                                close: get_f32(4)?,
                             },
-                        )
+                        ))
                     })
-                    .collect::<BTreeMap<_, _>>())
+                    .collect::<Result<BTreeMap<_, _>, _>>()?)
             },
             30,
             10,
@@ -167,36 +171,40 @@ impl Binance {
                     .as_array()
                     .context("Expect to be an array")?
                     .iter()
-                    .map(|value| {
+                    .map(|value| -> color_eyre::Result<_> {
                         // [timestamp, open, high, low, close, volume, ...]
-                        let array = value.as_array().unwrap();
+                        let array = value.as_array().context("Expect to be array")?;
 
                         let date = Timestamp::from(
-                            (array.first().unwrap().as_u64().unwrap() / 1_000) as u32,
+                            (array
+                                .first()
+                                .context("Expect to have first")?
+                                .as_u64()
+                                .context("Expect to be convertible to u64")?
+                                / 1_000) as u32,
                         )
                         .to_date();
 
-                        let get_f32 = |index: usize| {
-                            array
+                        let get_f32 = |index: usize| -> color_eyre::Result<f32> {
+                            Ok(array
                                 .get(index)
-                                .unwrap()
+                                .context("Expect to have index")?
                                 .as_str()
-                                .unwrap()
-                                .parse::<f32>()
-                                .unwrap()
+                                .context("Expect to have &str")?
+                                .parse::<f32>()?)
                         };
 
-                        (
+                        Ok((
                             date,
                             OHLC {
-                                open: get_f32(1),
-                                high: get_f32(2),
-                                low: get_f32(3),
-                                close: get_f32(4),
+                                open: get_f32(1)?,
+                                high: get_f32(2)?,
+                                low: get_f32(3)?,
+                                close: get_f32(4)?,
                             },
-                        )
+                        ))
                     })
-                    .collect::<BTreeMap<_, _>>())
+                    .collect::<Result<BTreeMap<_, _>, _>>()?)
             },
             30,
             10,

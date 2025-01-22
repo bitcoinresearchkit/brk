@@ -22,10 +22,15 @@
 - Added API support for datasets by timestamp (by merging any dataset by height with the height to timestamp dataset and so it still uses heights as chunk ids) [#ca00f3f](https://github.com/kibo-money/kibo/commit/ca00f3f71526f0c5c16021024fec7e5c6e47221c)
   - `/api/realized-price?kind=t`
   - `/api/realized-price?kind=timestamp&chunk=860000`
+- Created separate crate for indexing called `bindex`
+- Created a crate a storage engine specialized in storing datasets that have indexes as keys and thus can be represented by an array/vec called `storable-vec`
+- Removed the need for the `-txindex=1` parameter when starting your Bitcoin Core node as kibō has its own indexes now
+- Tried different storage engines such as `fjall`, `canopydb` and `heed`, the first ended up being 3 times slower than `sanakirja` and the rest wouldn't play nice with `rayon` which is a dealbreaker
+- `snkrj` added a robust auto defragmentation to improve disk usage without the need for user's intervention
 
 ## Git
 
-Added git tags for each version tough Markdown won't display formatted on Github so left the default text
+Added git tags for each version though Markdown won't display formatted on Github so left the default text
 
 # [v0.5.0](https://github.com/kibo-money/kibo/tree/eea56d394bf92c62c81da8b78b8c47ea730683f5) | [873199](https://mempool.space/block/0000000000000000000270925aa6a565be92e13164565a3f7994ca1966e48050) - 2024/12/04
 

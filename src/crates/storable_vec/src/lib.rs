@@ -1,21 +1,19 @@
 use std::{
     cmp::Ordering,
-    fmt::Debug,
+    fmt::{self, Debug},
     fs::{File, OpenOptions},
     io::{self, Write},
     marker::PhantomData,
     mem,
-    ops::{Deref, DerefMut, Range},
+    ops::Range,
     path::Path,
     sync::OnceLock,
 };
 
-use color_eyre::eyre::{eyre, ContextCompat};
-
 use memmap2::{Mmap, MmapOptions};
 
 ///
-/// A Push only vec stored on disk using Mmap
+/// A very small, fast, efficient and simple storable Vec
 ///
 /// Reads (imports of Mmap) are lazy
 ///
@@ -23,17 +21,24 @@ use memmap2::{Mmap, MmapOptions};
 ///
 /// The file isn't portable for speed reasons (TODO: but could be ?)
 ///
+/// If you don't call `.flush()` it just acts as a normal Vec
+///
 #[derive(Debug)]
 pub struct StorableVec<I, T> {
     file: File,
-    mmaps: VecLazyMmap,
+    cache: Vec<OnceLock<Box<Mmap>>>, // Boxed to reduce the size of the lock (24 > 16)
     disk_len: usize,
-    cache: Vec<T>,
+    pushed: Vec<T>,
+    // updated: BTreeMap<usize, T>,
+    // inserted: BTreeMap<usize, T>,
+    // removed: BTreeSet<usize>,
     phantom: PhantomData<I>,
 }
 
 /// In bytes
 const MAX_PAGE_SIZE: usize = 4096;
+const ONE_MB: usize = 1024 * 1024;
+const MAX_CACHE_SIZE: usize = 50 * ONE_MB;
 
 impl<I, T> StorableVec<I, T>
 where
@@ -45,26 +50,31 @@ where
     pub const PER_PAGE: usize = MAX_PAGE_SIZE / Self::SIZE;
     /// In bytes
     pub const PAGE_SIZE: usize = Self::PER_PAGE * Self::SIZE;
+    pub const CACHE_LENGTH: usize = MAX_CACHE_SIZE / Self::PAGE_SIZE;
 
-    pub fn import(path: &Path) -> color_eyre::Result<Self> {
+    pub fn import(path: &Path) -> Result<Self, io::Error> {
         let file = Self::open_file(path)?;
 
         let mut this = Self {
             disk_len: Self::byte_index_to_index(file.metadata()?.len() as usize),
             file,
-            mmaps: VecLazyMmap::default(),
             cache: vec![],
+            pushed: vec![],
+            // updated: BTreeMap::new(),
+            // inserted: BTreeMap::new(),
+            // removed: BTreeSet::new(),
             phantom: PhantomData,
         };
 
-        this.reset_mmaps();
+        this.reset_cache();
 
         Ok(this)
     }
 
-    fn reset_mmaps(&mut self) {
-        self.mmaps
-            .reset((self.disk_len as f64 / Self::PER_PAGE as f64).ceil() as usize);
+    pub fn reset_cache(&mut self) {
+        let len = (self.disk_len as f64 / Self::PER_PAGE as f64).ceil() as usize;
+        self.cache.clear();
+        self.cache.resize_with(len, Default::default);
     }
 
     fn open_file(path: &Path) -> Result<File, io::Error> {
@@ -97,63 +107,85 @@ where
         byte_index / Self::SIZE
     }
 
-    #[allow(unused)]
-    #[inline]
-    pub fn get(&self, index: I) -> color_eyre::Result<Option<&T>> {
-        self._get(index.into())
-    }
-    pub fn _get(&self, index: usize) -> color_eyre::Result<Option<&T>> {
-        if self.disk_len == 0 || index > self.disk_len - 1 {
-            Ok(self.cache.get(index - self.disk_len))
-        } else {
-            let mmap_index = Self::index_to_mmap_index(index);
-
-            let mmap = self
-                .mmaps
-                .get(mmap_index)
-                .context("Expect mmap to be open")?
-                .get_or_load(
-                    MAX_PAGE_SIZE,
-                    (mmap_index * Self::PAGE_SIZE) as u64,
-                    &self.file,
-                );
-
-            let range = Self::index_to_range(index);
-            let src = &mmap[range];
-
-            let (prefix, shorts, suffix) = unsafe { src.align_to::<T>() };
-
-            if !prefix.is_empty() || shorts.len() != 1 || !suffix.is_empty() {
-                dbg!(&src, &prefix, &shorts, &suffix);
-                return Err(eyre!("align_to issue"));
+    fn index_to_pushed_index(&self, index: usize) -> Result<Option<usize>> {
+        if index >= self.disk_len {
+            let index = index - self.disk_len;
+            if index >= self.pushed.len() {
+                Err(Error::IndexTooHigh)
+            } else {
+                Ok(Some(index))
             }
-
-            Ok(Some(&shorts[0]))
+        } else {
+            Ok(None)
         }
     }
 
     #[allow(unused)]
-    pub fn first(&self) -> color_eyre::Result<Option<&T>> {
-        self._get(0)
+    #[inline]
+    pub fn get(&self, index: I) -> Result<Option<&T>> {
+        self.get_(index.into())
+    }
+    pub fn get_(&self, index: usize) -> Result<Option<&T>> {
+        match self.index_to_pushed_index(index) {
+            Ok(index) => {
+                if let Some(index) = index {
+                    return Ok(self.pushed.get(index));
+                }
+            }
+            Err(Error::IndexTooHigh) => return Ok(None),
+            Err(error) => return Err(error),
+        }
+
+        // if !self.updated.is_empty() {
+        //     if let Some(v) = self.updated.get(&index) {
+        //         return Ok(Some(v));
+        //     }
+        // }
+
+        let mmap_index = Self::index_to_mmap_index(index);
+
+        let mmap = &**self
+            .cache
+            .get(mmap_index)
+            .ok_or(Error::MmapsVecIsTooSmall)?
+            .get_or_init(|| {
+                Box::new(unsafe {
+                    MmapOptions::new()
+                        .len(MAX_PAGE_SIZE)
+                        .offset((mmap_index * Self::PAGE_SIZE) as u64)
+                        .map(&self.file)
+                        .unwrap()
+                })
+            });
+
+        let range = Self::index_to_range(index);
+        let src = &mmap[range];
+
+        Ok(Some(T::unsafe_try_from_slice(src)?))
     }
 
     #[allow(unused)]
-    pub fn last(&self) -> color_eyre::Result<Option<&T>> {
+    pub fn first(&self) -> Result<Option<&T>> {
+        self.get_(0)
+    }
+
+    #[allow(unused)]
+    pub fn last(&self) -> Result<Option<&T>> {
         let len = self.len();
         if len == 0 {
             return Ok(None);
         }
-        self._get(len - 1)
+        self.get_(len - 1)
     }
 
     pub fn push(&mut self, value: T) {
-        self.cache.push(value)
+        self.pushed.push(value)
     }
 
-    pub fn push_if_needed(&mut self, index: I, value: T) -> color_eyre::Result<()> {
-        self._push_if_needed(index.into(), value)
+    pub fn push_if_needed(&mut self, index: I, value: T) -> Result<()> {
+        self.push_if_needed_(index.into(), value)
     }
-    pub fn _push_if_needed(&mut self, index: usize, value: T) -> color_eyre::Result<()> {
+    pub fn push_if_needed_(&mut self, index: usize, value: T) -> Result<()> {
         let len = self.len();
         match len.cmp(&index) {
             Ordering::Greater => Ok(()),
@@ -161,34 +193,81 @@ where
                 self.push(value);
                 Ok(())
             }
-            Ordering::Less => {
-                dbg!(std::any::type_name::<I>(), std::any::type_name::<T>());
-                dbg!(len, index, value);
-                Err(eyre!("Index is too high"))
-            }
+            Ordering::Less => Err(Error::IndexTooHigh),
         }
     }
 
+    // pub fn update(&mut self, index: I, value: T) -> Result<()> {
+    //     self._update(index.into(), value)
+    // }
+    // pub fn update_(&mut self, index: usize, value: T) -> Result<()> {
+    //     if let Some(index) = self.index_to_pushed_index(index) {
+    //         self.pushed[index] = value;
+    //     } else {
+    //         self.updated.insert(index, value);
+    //     }
+    //     Ok(())
+    // }
+
+    // pub fn fetch_update(&mut self, index: I, value: T) -> Result<T>
+    // where
+    //     T: Clone,
+    // {
+    //     self._fetch_update(index.into(), value)
+    // }
+    // pub fn fetch_update_(&mut self, index: usize, value: T) -> Result<T>
+    // where
+    //     T: Clone,
+    // {
+    //     let prev_opt = self.updated.insert(index, value);
+    //     if let Some(prev) = prev_opt {
+    //         Ok(prev)
+    //     } else {
+    //         Ok(self
+    //             ._get(index)?
+    //             .ok_or(Error::ExpectFileToHaveIndex)?
+    //             .clone())
+    //     }
+    // }
+
+    // pub fn remove(&mut self, index: I) {
+    //     self._remove(index.into())
+    // }
+    // pub fn remove_(&mut self, index: usize) {
+    //     self.removed.insert(index);
+    // }
+
     pub fn len(&self) -> usize {
-        self.disk_len + self.cache.len()
+        self.disk_len + self.pushed.len()
     }
 
     pub fn is_empty(&self) -> bool {
         self.len() == 0
     }
 
+    pub fn has(&self, index: I) -> bool {
+        self.has_(index.into())
+    }
+    pub fn has_(&self, index: usize) -> bool {
+        index < self.len()
+    }
+
+    pub fn hasnt(&self, index: I) -> bool {
+        self.hasnt_(index.into())
+    }
+    pub fn hasnt_(&self, index: usize) -> bool {
+        !self.has_(index)
+    }
+
     pub fn flush(&mut self) -> io::Result<()> {
-        self.disk_len += self.cache.len();
-        self.reset_mmaps();
+        self.disk_len += self.pushed.len();
+        self.reset_cache();
 
         let mut bytes: Vec<u8> = vec![];
 
-        mem::take(&mut self.cache).into_iter().for_each(|v| {
-            let data: *const T = &v;
-            let data: *const u8 = data as *const u8;
-            let slice = unsafe { std::slice::from_raw_parts(data, Self::SIZE) };
-            bytes.extend_from_slice(slice)
-        });
+        mem::take(&mut self.pushed)
+            .into_iter()
+            .for_each(|v| bytes.extend_from_slice(v.unsafe_as_slice()));
 
         self.file.write_all(&bytes)
     }
@@ -197,6 +276,7 @@ where
 pub trait AnyStorableVec {
     fn len(&self) -> usize;
     fn is_empty(&self) -> bool;
+    fn reset_cache(&mut self);
     fn flush(&mut self) -> io::Result<()>;
 }
 
@@ -213,44 +293,60 @@ where
         self.is_empty()
     }
 
+    fn reset_cache(&mut self) {
+        self.reset_cache();
+    }
+
     fn flush(&mut self) -> io::Result<()> {
         self.flush()
     }
 }
 
-#[derive(Debug, Default)]
-struct VecLazyMmap(Vec<LazyMmap>);
-impl VecLazyMmap {
-    pub fn reset(&mut self, len: usize) {
-        self.0.clear();
-        self.0.resize_with(len, Default::default);
-    }
-}
-impl Deref for VecLazyMmap {
-    type Target = Vec<LazyMmap>;
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
-impl DerefMut for VecLazyMmap {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.0
-    }
-}
+pub trait UnsafeSizedSerDe
+where
+    Self: Sized,
+{
+    const SIZE: usize = size_of::<Self>();
 
-/// Box to reduce the size, would be 24 instead
-#[derive(Debug, Default)]
-struct LazyMmap(OnceLock<Box<Mmap>>);
-impl LazyMmap {
-    pub fn get_or_load(&self, len: usize, offset: u64, file: &File) -> &Mmap {
-        self.0.get_or_init(|| {
-            Box::new(unsafe {
-                MmapOptions::new()
-                    .len(len)
-                    .offset(offset)
-                    .map(file)
-                    .unwrap()
-            })
-        })
+    fn unsafe_try_from_slice(slice: &[u8]) -> Result<&Self> {
+        let (prefix, shorts, suffix) = unsafe { slice.align_to::<Self>() };
+
+        if !prefix.is_empty() || shorts.len() != 1 || !suffix.is_empty() {
+            // dbg!(&slice, &prefix, &shorts, &suffix);
+            return Err(Error::FailedToAlignToSelf);
+        }
+
+        Ok(&shorts[0])
+    }
+
+    fn unsafe_as_slice(&self) -> &[u8] {
+        let data: *const Self = self;
+        let data: *const u8 = data as *const u8;
+        unsafe { std::slice::from_raw_parts(data, Self::SIZE) }
     }
 }
+impl<T> UnsafeSizedSerDe for T {}
+
+pub type Result<T, E = Error> = std::result::Result<T, E>;
+
+#[derive(Debug)]
+pub enum Error {
+    MmapsVecIsTooSmall,
+    FailedToAlignToSelf,
+    IndexTooHigh,
+    ExpectFileToHaveIndex,
+    ExpectVecToHaveIndex,
+}
+impl fmt::Display for Error {
+    // This trait requires `fmt` with this exact signature.
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            Error::MmapsVecIsTooSmall => write!(f, "Mmaps vec is too small"),
+            Error::FailedToAlignToSelf => write!(f, "Failed to align_to for T"),
+            Error::IndexTooHigh => write!(f, "Index too high"),
+            Error::ExpectFileToHaveIndex => write!(f, "Expect file to have index"),
+            Error::ExpectVecToHaveIndex => write!(f, "Expect vec to have index"),
+        }
+    }
+}
+impl std::error::Error for Error {}
