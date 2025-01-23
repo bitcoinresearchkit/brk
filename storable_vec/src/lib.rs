@@ -2,11 +2,11 @@ use std::{
     cmp::Ordering,
     fmt::{self, Debug},
     fs::{File, OpenOptions},
-    io::{self, Write},
+    io::{self, Read, Seek, SeekFrom, Write},
     marker::PhantomData,
     mem,
-    ops::Range,
-    path::Path,
+    ops::{Deref, Range},
+    path::{Path, PathBuf},
     sync::OnceLock,
 };
 
@@ -25,6 +25,8 @@ use memmap2::{Mmap, MmapOptions};
 ///
 #[derive(Debug)]
 pub struct StorableVec<I, T> {
+    pathbuf: PathBuf,
+    // file_for_reads: File,
     file: File,
     cache: Vec<OnceLock<Box<Mmap>>>, // Boxed to reduce the size of the lock (24 > 16)
     disk_len: usize,
@@ -36,28 +38,69 @@ pub struct StorableVec<I, T> {
 }
 
 /// In bytes
-const MAX_PAGE_SIZE: usize = 4096;
-const ONE_MB: usize = 1024 * 1024;
-const MAX_CACHE_SIZE: usize = 50 * ONE_MB;
+const MAX_PAGE_SIZE: usize = 4 * 4096;
+const ONE_MB: usize = 1000 * 1024;
+const MAX_CACHE_SIZE: usize = 100 * ONE_MB;
+
+#[derive(Debug, Clone)]
+pub enum Value<'a, T> {
+    Ref(&'a T),
+    Owned(T),
+}
+
+impl<T> Value<'_, T>
+where
+    T: Sized + Debug + Clone,
+{
+    pub fn into_inner(self) -> T {
+        match self {
+            Self::Ref(t) => t.to_owned(),
+            Self::Owned(t) => t,
+        }
+    }
+}
+
+impl<T> Deref for Value<'_, T> {
+    type Target = T;
+    fn deref(&self) -> &Self::Target {
+        match self {
+            Self::Ref(t) => t,
+            Self::Owned(t) => t,
+        }
+    }
+}
+
+impl<T> AsRef<T> for Value<'_, T>
+where
+    T: Sized + Debug + Clone,
+{
+    fn as_ref(&self) -> &T {
+        match self {
+            Self::Ref(t) => t,
+            Self::Owned(t) => t,
+        }
+    }
+}
 
 impl<I, T> StorableVec<I, T>
 where
     I: Into<usize>,
-    T: Sized + Debug,
+    T: Sized + Debug + Clone,
 {
-    pub const SIZE: usize = size_of::<T>();
-
-    pub const PER_PAGE: usize = MAX_PAGE_SIZE / Self::SIZE;
+    pub const SIZE_OF_T: usize = size_of::<T>();
+    pub const PER_PAGE: usize = MAX_PAGE_SIZE / Self::SIZE_OF_T;
     /// In bytes
-    pub const PAGE_SIZE: usize = Self::PER_PAGE * Self::SIZE;
+    pub const PAGE_SIZE: usize = Self::PER_PAGE * Self::SIZE_OF_T;
     pub const CACHE_LENGTH: usize = MAX_CACHE_SIZE / Self::PAGE_SIZE;
 
     pub fn import(path: &Path) -> Result<Self, io::Error> {
         let file = Self::open_file(path)?;
 
         let mut this = Self {
+            pathbuf: path.to_owned(),
             disk_len: Self::byte_index_to_index(file.metadata()?.len() as usize),
             file,
+            // file_for_reads: Self::open_file(path)?,
             cache: vec![],
             pushed: vec![],
             // updated: BTreeMap::new(),
@@ -66,15 +109,21 @@ where
             phantom: PhantomData,
         };
 
+        this.cache.resize_with(Self::CACHE_LENGTH, Default::default);
+        this.cache.shrink_to_fit();
+
         this.reset_cache();
 
         Ok(this)
     }
 
-    pub fn reset_cache(&mut self) {
-        let len = (self.disk_len as f64 / Self::PER_PAGE as f64).ceil() as usize;
-        self.cache.clear();
-        self.cache.resize_with(len, Default::default);
+    fn reset_cache(&mut self) {
+        // let len = (self.disk_len as f64 / Self::PER_PAGE as f64).ceil() as usize;
+        // self.cache.clear();
+        // self.cache.resize_with(len, Default::default);
+        self.cache.iter_mut().for_each(|lock| {
+            lock.take();
+        });
     }
 
     fn open_file(path: &Path) -> Result<File, io::Error> {
@@ -87,24 +136,19 @@ where
     }
 
     #[inline]
-    fn index_to_mmap_index(index: usize) -> usize {
-        Self::index_to_byte_index(index) / Self::PAGE_SIZE
-    }
-
-    #[inline]
-    fn index_to_range(index: usize) -> Range<usize> {
+    fn index_to_byte_range(index: usize) -> Range<usize> {
         let index = Self::index_to_byte_index(index) % Self::PAGE_SIZE;
-        index..(index + Self::SIZE)
+        index..(index + Self::SIZE_OF_T)
     }
 
     #[inline]
     fn index_to_byte_index(index: usize) -> usize {
-        index * Self::SIZE
+        index * Self::SIZE_OF_T
     }
 
     #[inline]
     fn byte_index_to_index(byte_index: usize) -> usize {
-        byte_index / Self::SIZE
+        byte_index / Self::SIZE_OF_T
     }
 
     fn index_to_pushed_index(&self, index: usize) -> Result<Option<usize>> {
@@ -122,14 +166,14 @@ where
 
     #[allow(unused)]
     #[inline]
-    pub fn get(&self, index: I) -> Result<Option<&T>> {
+    pub fn get(&self, index: I) -> Result<Option<Value<'_, T>>> {
         self.get_(index.into())
     }
-    pub fn get_(&self, index: usize) -> Result<Option<&T>> {
+    pub fn get_(&self, index: usize) -> Result<Option<Value<'_, T>>> {
         match self.index_to_pushed_index(index) {
             Ok(index) => {
                 if let Some(index) = index {
-                    return Ok(self.pushed.get(index));
+                    return Ok(self.pushed.get(index).map(|v| Value::Ref(v)));
                 }
             }
             Err(Error::IndexTooHigh) => return Ok(None),
@@ -142,35 +186,56 @@ where
         //     }
         // }
 
-        let mmap_index = Self::index_to_mmap_index(index);
+        let byte_index = Self::index_to_byte_index(index);
+        let page_index = index / Self::PER_PAGE;
+        let last_index = self.disk_len - 1;
+        let max_page_index = last_index / Self::PER_PAGE;
+        let min_page_index = (max_page_index + 1)
+            .checked_sub(Self::CACHE_LENGTH)
+            .unwrap_or_default();
 
-        let mmap = &**self
-            .cache
-            .get(mmap_index)
-            .ok_or(Error::MmapsVecIsTooSmall)?
-            .get_or_init(|| {
-                Box::new(unsafe {
-                    MmapOptions::new()
-                        .len(MAX_PAGE_SIZE)
-                        .offset((mmap_index * Self::PAGE_SIZE) as u64)
-                        .map(&self.file)
-                        .unwrap()
-                })
-            });
+        if page_index >= min_page_index {
+            let mmap = &**self
+                .cache
+                .get(page_index - min_page_index)
+                .ok_or(Error::MmapsVecIsTooSmall)?
+                .get_or_init(|| {
+                    Box::new(unsafe {
+                        MmapOptions::new()
+                            .len(Self::PAGE_SIZE)
+                            .offset((page_index * Self::PAGE_SIZE) as u64)
+                            .map(&self.file)
+                            .unwrap()
+                    })
+                });
 
-        let range = Self::index_to_range(index);
-        let src = &mmap[range];
+            let range = Self::index_to_byte_range(index);
 
-        Ok(Some(T::unsafe_try_from_slice(src)?))
+            let slice = &mmap[range];
+
+            Ok(Some(Value::Ref(T::unsafe_try_from_slice(slice)?)))
+        } else {
+            // let mut file = &self.file_for_reads;
+            let mut file = Self::open_file(&self.pathbuf).unwrap();
+
+            file.seek(SeekFrom::Start(byte_index as u64)).unwrap();
+
+            let mut buf = vec![0; Self::SIZE_OF_T];
+            file.read_exact(&mut buf).unwrap();
+
+            let value = T::unsafe_try_from_slice(&buf[..])?;
+
+            Ok(Some(Value::Owned(value.to_owned())))
+        }
     }
 
     #[allow(unused)]
-    pub fn first(&self) -> Result<Option<&T>> {
+    pub fn first(&self) -> Result<Option<Value<'_, T>>> {
         self.get_(0)
     }
 
     #[allow(unused)]
-    pub fn last(&self) -> Result<Option<&T>> {
+    pub fn last(&self) -> Result<Option<Value<'_, T>>> {
         let len = self.len();
         if len == 0 {
             return Ok(None);
@@ -261,6 +326,7 @@ where
 
     pub fn flush(&mut self) -> io::Result<()> {
         self.disk_len += self.pushed.len();
+
         self.reset_cache();
 
         let mut bytes: Vec<u8> = vec![];
@@ -269,21 +335,28 @@ where
             .into_iter()
             .for_each(|v| bytes.extend_from_slice(v.unsafe_as_slice()));
 
-        self.file.write_all(&bytes)
+        // self.file.seek(SeekFrom::End(0))?;
+        self.file.write_all(&bytes)?;
+        // self.file_for_mmaps.write_all(&bytes)?;
+
+        // self.file_for_mmaps.sync_all()?;
+        // self.file_for_reads.sync_all()?;
+        // self.file_for_reads = Self::open_file(&self.pathbuf)?;
+
+        Ok(())
     }
 }
 
 pub trait AnyStorableVec {
     fn len(&self) -> usize;
     fn is_empty(&self) -> bool;
-    fn reset_cache(&mut self);
     fn flush(&mut self) -> io::Result<()>;
 }
 
 impl<I, T> AnyStorableVec for StorableVec<I, T>
 where
     I: Into<usize>,
-    T: Sized + Debug,
+    T: Sized + Debug + Clone,
 {
     fn len(&self) -> usize {
         self.len()
@@ -291,10 +364,6 @@ where
 
     fn is_empty(&self) -> bool {
         self.is_empty()
-    }
-
-    fn reset_cache(&mut self) {
-        self.reset_cache();
     }
 
     fn flush(&mut self) -> io::Result<()> {

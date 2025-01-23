@@ -168,38 +168,38 @@ impl Vecs {
             Addresstype::P2PK65 => self
                 .p2pk65index_to_p2pk65addressbytes
                 .get(addresstypeindex)?
-                .cloned()
-                .map(Addressbytes::from),
+                // .map(|v| Addressbytes::from(v.clone())),
+                .map(|v| Addressbytes::from(v.into_inner())),
             Addresstype::P2PK33 => self
                 .p2pk33index_to_p2pk33addressbytes
                 .get(addresstypeindex)?
-                .cloned()
-                .map(Addressbytes::from),
+                // .map(|v| Addressbytes::from(v.clone())),
+                .map(|v| Addressbytes::from(v.into_inner())),
             Addresstype::P2PKH => self
                 .p2pkhindex_to_p2pkhaddressbytes
                 .get(addresstypeindex)?
-                .cloned()
-                .map(Addressbytes::from),
+                // .map(|v| Addressbytes::from(v.clone())),
+                .map(|v| Addressbytes::from(v.into_inner())),
             Addresstype::P2SH => self
                 .p2shindex_to_p2shaddressbytes
                 .get(addresstypeindex)?
-                .cloned()
-                .map(Addressbytes::from),
+                // .map(|v| Addressbytes::from(v.clone())),
+                .map(|v| Addressbytes::from(v.into_inner())),
             Addresstype::P2WPKH => self
                 .p2wpkhindex_to_p2wpkhaddressbytes
                 .get(addresstypeindex)?
-                .cloned()
-                .map(Addressbytes::from),
+                // .map(|v| Addressbytes::from(v.clone())),
+                .map(|v| Addressbytes::from(v.into_inner())),
             Addresstype::P2WSH => self
                 .p2wshindex_to_p2wshaddressbytes
                 .get(addresstypeindex)?
-                .cloned()
-                .map(Addressbytes::from),
+                // .map(|v| Addressbytes::from(v.clone())),
+                .map(|v| Addressbytes::from(v.into_inner())),
             Addresstype::P2TR => self
                 .p2trindex_to_p2traddressbytes
                 .get(addresstypeindex)?
-                .cloned()
-                .map(Addressbytes::from),
+                // .map(|v| Addressbytes::from(v.clone())),
+                .map(|v| Addressbytes::from(v.into_inner())),
             _ => unreachable!(),
         })
     }
@@ -322,12 +322,6 @@ impl Vecs {
         self.as_mut_slice()
             .into_par_iter()
             .try_for_each(|vec| vec.flush(height))
-    }
-
-    pub fn reset_cache(&mut self) {
-        self.as_mut_slice().par_iter_mut().for_each(|vec| {
-            vec.reset_cache();
-        })
     }
 
     pub fn min_height(&self) -> color_eyre::Result<Option<Height>> {

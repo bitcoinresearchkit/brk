@@ -16,7 +16,7 @@ pub struct StorableVec<I, T> {
 impl<I, T> StorableVec<I, T>
 where
     I: Into<usize>,
-    T: Sized + Debug,
+    T: Sized + Debug + Clone,
 {
     pub fn import(path: &Path, version: Version) -> io::Result<Self> {
         fs::create_dir_all(path)?;
@@ -70,10 +70,6 @@ where
         path.join("height")
     }
 
-    fn reset_cache(&mut self) {
-        self.vec.reset_cache();
-    }
-
     // pub fn needs(&self, height: Height) -> bool {
     //     self.height() // store height in struct
     // }
@@ -93,21 +89,16 @@ impl<I, T> DerefMut for StorableVec<I, T> {
 
 pub trait AnyBindexVec {
     fn height(&self) -> color_eyre::Result<Height>;
-    fn reset_cache(&mut self);
     fn flush(&mut self, height: Height) -> io::Result<()>;
 }
 
 impl<I, T> AnyBindexVec for StorableVec<I, T>
 where
     I: Into<usize>,
-    T: Sized + Debug,
+    T: Sized + Debug + Clone,
 {
     fn height(&self) -> color_eyre::Result<Height> {
         self.height()
-    }
-
-    fn reset_cache(&mut self) {
-        self.reset_cache();
     }
 
     fn flush(&mut self, height: Height) -> io::Result<()> {

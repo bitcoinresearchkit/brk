@@ -29,7 +29,8 @@ enum TxInOrAddressindextoutindex<'a> {
 }
 
 const UNSAFE_BLOCKS: u32 = 100;
-const SNAPSHOT_BLOCK_RANGE: usize = 4_200; // MUST 210_000 % THIS == 0
+const DAILY_BLOCK_TARGET: usize = 144;
+const SNAPSHOT_BLOCK_RANGE: usize = DAILY_BLOCK_TARGET * 10;
 
 fn main() -> color_eyre::Result<()> {
     color_eyre::install()?;
@@ -38,7 +39,7 @@ fn main() -> color_eyre::Result<()> {
 
     let check_collisions = true;
 
-    let data_dir = Path::new("../../../../bitcoin");
+    let data_dir = Path::new("../../bitcoin");
     let cookie = Path::new(data_dir).join(".cookie");
     let rpc = Client::new("http://localhost:8332", Auth::CookieFile(cookie))?;
 
@@ -62,59 +63,63 @@ fn main() -> color_eyre::Result<()> {
     let mut txindex = vecs
         .height_to_first_txindex
         .get(height)?
-        .cloned()
+        .map(|v| *v)
         .unwrap_or(Txindex::default());
 
     let mut txoutindex = vecs
         .height_to_first_txoutindex
         .get(height)?
-        .cloned()
+        .map(|v| *v)
         .unwrap_or(Txoutindex::default());
 
     let mut addressindex = vecs
         .height_to_first_addressindex
         .get(height)?
-        .cloned()
+        .map(|v| *v)
         .unwrap_or(Addressindex::default());
 
     let export = |stores: Stores, vecs: &mut Vecs, height: Height| -> color_eyre::Result<()> {
         exit.block();
         println!("Exporting...");
-        // Memory: 2.87
-        // Real Memory: 16.23
-        // Private Memory: 10.8
-        if height > Height::from(400_000_u32) {
-            pause();
-        }
-        vecs.reset_cache();
-        println!("Resetted cache");
-        // Memory: 2.87
-        // Real Memory: 13.24
-        // Private Memory: 10.8
-        if height > Height::from(400_000_u32) {
-            pause();
-        }
+        // Memory: 3.76 GB
+        // Real Memory: 22.47 GB
+        // Private Memory: 12.44 GB
+        // if height > Height::from(400_000_u32) {
+        //     pause();
+        // }
+        // vecs.reset_cache();
+        // At: 403200
+        // Memory: 3.78 GB
+        // Real Memory: 12.65 GB
+        // Private Memory: 11.39 GB
+        // if height > Height::from(400_000_u32) {
+        //     pause();
+        // }
         vecs.flush(height)?;
-        println!("Vecs flushed");
-        // Memory: 3.36
-        // Real Memory: 13.55
-        // Private Memory: 10.66
+        // At: 403200
+        // Memory: 3.79 GB
+        // Real Memory: 12.37 GB
+        // Private Memory: 10.95 GB
         // Gone up wtf
-        if height > Height::from(400_000_u32) {
-            pause();
-        }
+        // if height > Height::from(400_000_u32) {
+        //     pause();
+        // }
         stores.export(height);
         println!("Export done");
-        if height > Height::from(400_000_u32) {
-            pause();
-        }
+        // At: 403200
+        // Memory: 2.23 GB
+        // Real Memory: 1.05 GB
+        // Private Memory: 0.109 GB
+        // if height > Height::from(400_000_u32) {
+        //     pause();
+        // }
         exit.unblock();
         Ok(())
     };
 
     let mut stores_opt = Some(stores);
 
-    biter::new(data_dir, Some(height.into()), None, rpc)
+    biter::new(data_dir, Some(height.into()), Some(400_000), rpc)
         .iter()
         .try_for_each(|(_height, block, blockhash)| -> color_eyre::Result<()> {
             println!("Processing block {_height}...");
@@ -126,7 +131,8 @@ fn main() -> color_eyre::Result<()> {
             let mut stores = stores_opt.take().context("option should have wtx")?;
 
             if let Some(saved_blockhash) = vecs.height_to_blockhash.get(height)? {
-                if &blockhash != saved_blockhash {
+                // if &blockhash != saved_blockhash {
+                if &blockhash != saved_blockhash.as_ref() {
                     todo!("Rollback not implemented");
                     // parts.rollback_from(&mut wtx, height, &exit)?;
                 }
@@ -162,7 +168,7 @@ fn main() -> color_eyre::Result<()> {
                     tx.output
                         .iter()
                         .enumerate()
-                        .map(move |(vout, txout)| (Txindex::from(index), vout as u32, txout))
+                        .map(move |(vout, txout)| (Txindex::from(index), vout as u32, txout, tx))
                 }).collect::<Vec<_>>();
 
             let tx_len = block.txdata.len();
@@ -272,7 +278,7 @@ fn main() -> color_eyre::Result<()> {
                     outputs.into_par_iter().enumerate()
                         .map(
                             #[allow(clippy::type_complexity)]
-                            |(block_txoutindex, (block_txindex, vout, txout))| -> color_eyre::Result<(Txoutindex,
+                            |(block_txoutindex, (block_txindex, vout, txout, tx))| -> color_eyre::Result<(Txoutindex,
                             (&TxOut, Txindexvout, Addresstype, color_eyre::Result<Addressbytes>, Option<Addressindex>))> {
                                 let txindex_local = txindex + block_txindex;
                                 let txindexvout = Txindexvout::from((txindex_local, vout));
@@ -294,25 +300,28 @@ fn main() -> color_eyre::Result<()> {
                                         // Checking if not in the future
                                         .and_then(|addressindex_local| (addressindex_local < addressindex)
                                         .then_some(addressindex_local))
-                                });
+                                }); // OK
 
-                                if let Some(Some(addressindex)) = check_collisions.then_some(addressindex_opt) {
+                                if let Some(Some(addressindex_local)) = check_collisions.then_some(addressindex_opt) {
                                     let addressbytes = addressbytes_res.as_ref().unwrap();
 
                                     let prev_addresstype = *vecs.addressindex_to_addresstype.get(
-                                        addressindex,
+                                        addressindex_local,
                                     )?.context("Expect to have address type")?;
 
                                     let addresstypeindex = *vecs.addressindex_to_addresstypeindex.get(
-                                        addressindex,
+                                        addressindex_local,
                                     )?.context("Expect to have address type index")?;
+                                    // Good first time
+                                    // Wrong after rerun
 
                                     let prev_addressbytes_opt= vecs.get_addressbytes(prev_addresstype, addresstypeindex)?;
 
                                     let prev_addressbytes = prev_addressbytes_opt.as_ref().context("Expect to have addressbytes")?;
 
-                                    if (vecs.addressindex_to_addresstype.hasnt(addressindex) && addresstype != prev_addresstype) || (stores.addressbytes_prefix_to_addressindex.needs(height) && prev_addressbytes != addressbytes) {
-                                        dbg!(addresstype, prev_addresstype, prev_addressbytes, addressbytes, addressindex, addresstypeindex, txout, AddressbytesPrefix::from((addressbytes, addresstype)), AddressbytesPrefix::from((prev_addressbytes, prev_addresstype)));
+                                    if (vecs.addressindex_to_addresstype.hasnt(addressindex_local) && addresstype != prev_addresstype) || (stores.addressbytes_prefix_to_addressindex.needs(height) && prev_addressbytes != addressbytes) {
+                                        let txid = tx.compute_txid();
+                                        dbg!(_height, txid, vout, block_txindex, addresstype, prev_addresstype, prev_addressbytes, addressbytes, addressindex, addressindex_local, addresstypeindex, txout, AddressbytesPrefix::from((addressbytes, addresstype)), AddressbytesPrefix::from((prev_addressbytes, prev_addresstype)));
                                         panic!()
                                     }
                                 }
@@ -373,7 +382,7 @@ fn main() -> color_eyre::Result<()> {
 
                     let mut addressindex_local = addressindex;
 
-                    let mut addressbytes_prefix= None;
+                    let mut addressbytes_prefix = None;
 
                     if let Some(addressindex) = addressindex_opt.or_else(|| addressbytes_res.as_ref().ok().and_then(|addressbytes| {
                         // Check if address was first seen before in this iterator
@@ -396,6 +405,22 @@ fn main() -> color_eyre::Result<()> {
 
                         if let Ok(addressbytes) = addressbytes_res {
                             let addressbytes_prefix = addressbytes_prefix.unwrap();
+
+                            // if addressindex_local == Addressindex::from(257905_u32) || addressbytes_prefix == AddressbytesPrefix::from(
+                            //     [
+                            //         116_u8,
+                            //         86,
+                            //         96,
+                            //         52,
+                            //         2,
+                            //         87,
+                            //         151,
+                            //         177,
+                            //     ],
+                            // ) {
+                            //     dbg!(addressindex_local, addressbytes, addressbytes_prefix, addresstypeindex);
+                            //     panic!();
+                            // }
 
                             already_added_addressbytes_prefix.insert(addressbytes_prefix.clone(), addressindex_local);
 
@@ -491,6 +516,10 @@ fn main() -> color_eyre::Result<()> {
                                         dbg!(txindex_local, txid, len);
                                     })?;
 
+                            // #[allow(clippy::redundant_locals)]
+                            // let prev_txid = prev_txid;
+                            let prev_txid = prev_txid.as_ref();
+
                             // If another Txid needs to be added to the list
                             // We need to check that it's also a coinbase tx otherwise par_iter inputs needs to be updated
                             let only_known_dup_txids = [
@@ -539,16 +568,12 @@ fn main() -> color_eyre::Result<()> {
             Ok(())
         })?;
 
-    dbg!(i.elapsed());
-
-    pause();
-
     let stores = stores_opt.take().context("option should have wtx")?;
     export(stores, &mut vecs, height)?;
 
-    pause();
-
     dbg!(i.elapsed());
+
+    pause();
 
     Ok(())
 }
