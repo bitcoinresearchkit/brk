@@ -2,7 +2,7 @@ use jiff::tz::TimeZone;
 
 use super::Timestamp;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Date(jiff::civil::Date);
 
 impl From<&Timestamp> for Date {

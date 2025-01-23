@@ -58,26 +58,24 @@ enum BlockState {
 ///
 /// use bitcoincore_rpc::{Auth, Client};
 ///
-/// fn main() {
-///     let i = std::time::Instant::now();
+/// let i = std::time::Instant::now();
 ///
-///     let data_dir = Path::new("../../bitcoin");
-///     let url = "http://localhost:8332";
-///     let cookie = Path::new(data_dir).join(".cookie");
-///     let auth = Auth::CookieFile(cookie);
-///     let rpc = Client::new(url, auth).unwrap();
+/// let data_dir = Path::new("../../bitcoin");
+/// let url = "http://localhost:8332";
+/// let cookie = Path::new(data_dir).join(".cookie");
+/// let auth = Auth::CookieFile(cookie);
+/// let rpc = Client::new(url, auth).unwrap();
 ///
-///     let start = Some(850_000);
-///     let end = None;
+/// let start = Some(850_000);
+/// let end = None;
 ///
-///     biter::new(data_dir, start, end, rpc)
-///         .iter()
-///         .for_each(|(height, _block, hash)| {
-///             println!("{height}: {hash}");
-///         });
+/// biter::new(data_dir, start, end, rpc)
+///     .iter()
+///     .for_each(|(height, _block, hash)| {
+///         println!("{height}: {hash}");
+///     });
 ///
-///     dbg!(i.elapsed());
-/// }
+/// dbg!(i.elapsed());
 /// ```
 ///
 pub fn new(
@@ -285,7 +283,7 @@ pub fn new(
                     .unwrap();
             }
 
-            if end.map_or(false, |end| height == end) {
+            if end == Some(height) {
                 return ControlFlow::Break(());
             }
 

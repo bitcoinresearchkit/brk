@@ -28,6 +28,11 @@ impl From<(&Addressbytes, Addresstype)> for AddressbytesPrefix {
         ))
     }
 }
+impl From<[u8; 8]> for AddressbytesPrefix {
+    fn from(value: [u8; 8]) -> Self {
+        Self(value)
+    }
+}
 
 #[derive(Debug, Deref, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub struct BlockHashPrefix([u8; 8]);
