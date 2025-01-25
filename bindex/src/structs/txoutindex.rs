@@ -3,6 +3,8 @@ use std::ops::{Add, AddAssign};
 use derive_deref::{Deref, DerefMut};
 use snkrj::{direct_repr, Storable, UnsizedStorable};
 
+use super::Vout;
+
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Deref, DerefMut, Default)]
 pub struct Txoutindex(u64);
 direct_repr!(Txoutindex);
@@ -21,6 +23,13 @@ impl Add<Txoutindex> for Txoutindex {
     type Output = Self;
     fn add(self, rhs: Txoutindex) -> Self::Output {
         Self(self.0 + rhs.0)
+    }
+}
+
+impl Add<Vout> for Txoutindex {
+    type Output = Self;
+    fn add(self, rhs: Vout) -> Self::Output {
+        Self(self.0 + u64::from(rhs))
     }
 }
 

@@ -71,10 +71,10 @@ name = "bindex"
 version = "0.1.0"
 dependencies = [
  "bitcoin_hashes 0.16.0",
- "biter 0.2.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "biter",
  "color-eyre",
- "ctrlc",
  "derive_deref",
+ "exit",
  "jiff",
  "rayon",
  "snkrj",
@@ -198,21 +198,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "biter"
-version = "0.2.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "02527a2b7944d9edc90db0a73339c57cd521f9623f99416574d1943312c9d290"
-dependencies = [
- "bitcoin",
- "bitcoincore-rpc",
- "crossbeam",
- "derived-deref",
- "rayon",
- "serde",
- "serde_json",
-]
-
-[[package]]
 name = "bitflags"
 version = "1.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -220,9 +205,13 @@ checksum = "bef38d45163c2f1dde094a7dfd33ccf595c92905c8f8f4fdc18d06fb1037718a"
 
 [[package]]
 name = "bitflags"
-version = "2.7.0"
+version = "2.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1be3f42a67d6d345ecd59f675f3f012d6974981560836e938c22b424b85ce1be"
+checksum = "8f68f53c83ab957f72c32642f3868eec03eb974d1fb82e453128456482613d36"
+
+[[package]]
+name = "bomputer"
+version = "0.1.0"
 
 [[package]]
 name = "byteorder"
@@ -371,6 +360,13 @@ name = "either"
 version = "1.13.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "60b1af1c220855b6ceac025d3f6ecdd2b7c4894bfe9cd9bda4fbb4bc7c0d4cf0"
+
+[[package]]
+name = "exit"
+version = "0.1.0"
+dependencies = [
+ "ctrlc",
+]
 
 [[package]]
 name = "eyre"
@@ -564,7 +560,7 @@ version = "0.29.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "71e2746dc3a24dd78b3cfcb7be93368c6de9963d30f43a6a73998a9cf4b17b46"
 dependencies = [
- "bitflags 2.7.0",
+ "bitflags 2.8.0",
  "cfg-if",
  "cfg_aliases",
  "libc",

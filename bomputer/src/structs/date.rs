@@ -10,3 +10,10 @@ impl From<&Timestamp> for Date {
         Self(jiff::civil::Date::from(value.to_zoned(TimeZone::UTC)))
     }
 }
+
+impl From<Date> for usize {
+    // 2009-01-03 => 0
+    // 2009-01-09 => 1
+    // 2009-01-10 => 2
+    // ...
+}

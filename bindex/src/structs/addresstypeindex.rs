@@ -17,6 +17,12 @@ impl Addresstypeindex {
     pub fn incremented(self) -> Self {
         Self(*self + 1)
     }
+
+    pub fn clone_then_increment(&mut self) -> Self {
+        let i = *self;
+        self.increment();
+        i
+    }
 }
 
 impl From<u32> for Addresstypeindex {
