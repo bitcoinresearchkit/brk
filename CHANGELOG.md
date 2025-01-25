@@ -25,7 +25,7 @@
 - Created separate crate for indexing called `bindex`
 - Created a crate a storage engine specialized in storing datasets that have indexes as keys and thus can be represented by an array/vec called `storable-vec`
 - Removed the need for the `-txindex=1` parameter when starting your Bitcoin Core node as kibō has its own indexes now
-- Tried different storage engines such as `fjall`, `canopydb` and `heed`, the first ended up being 3 times slower than `sanakirja` and the rest wouldn't play nice with `rayon` which is a dealbreaker
+- Tried different storage engines such as `fjall`, `canopydb` and `heed`, the first ended up being 3 times slower than `sanakirja` and had very fragile files (just looking at them would corrupt them), and the rest wouldn't play nice with `rayon` which is a dealbreaker
 - `snkrj` added a robust auto defragmentation to improve disk usage without the need for user's intervention
 
 ## Git

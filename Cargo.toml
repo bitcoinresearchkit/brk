@@ -4,7 +4,7 @@
 # edition = "2021"
 
 [workspace]
-members = ["bindex", "biter", "iterable", "snkrj", "storable_vec"]
+members = ["bindex", "biter", "bomputer", "exit", "iterable", "snkrj", "storable_vec"]
 resolver = "2"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html

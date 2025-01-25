@@ -8,6 +8,7 @@ use std::{
 use super::{Height, Version};
 
 pub struct StorableVec<I, T> {
+    height: Option<Height>,
     pathbuf: PathBuf,
     version: Version,
     vec: storable_vec::StorableVec<I, T>,
@@ -22,41 +23,48 @@ where
         fs::create_dir_all(path)?;
 
         let pathbuf = path.to_owned();
-        let path_vec = Self::_path_vec(path);
-        let path_version = Self::_path_version(path);
+        let path_vec = Self::path_vec_(path);
+        let path_version = Self::path_version_(path);
 
         let is_same_version =
             Version::try_from(path_version.as_path()).is_ok_and(|prev_version| version == prev_version);
         if !is_same_version {
             let _ = fs::remove_file(&path_vec);
             let _ = fs::remove_file(&path_version);
-            let _ = fs::remove_file(Self::_path_height(path));
+            let _ = fs::remove_file(Self::path_height_(path));
         }
 
-        Ok(Self {
+        let this = Self {
+            height: Height::try_from(Self::path_height_(path).as_path()).ok(),
             pathbuf,
             version,
             vec: storable_vec::StorableVec::import(&path_vec)?,
-        })
+        };
+
+        this.version.write(&this.path_version())?;
+
+        Ok(this)
     }
 
     pub fn flush(&mut self, height: Height) -> io::Result<()> {
-        height.write(&self.path_height())?;
-        self.version.write(&self.path_version())?;
+        if self.needs(height) {
+            height.write(&self.path_height())?;
+        }
+
         self.vec.flush()
     }
 
     // fn path_vec(&self) -> PathBuf {
     //     Self::_path_vec(&self.path)
     // }
-    fn _path_vec(path: &Path) -> PathBuf {
+    fn path_vec_(path: &Path) -> PathBuf {
         path.join("vec")
     }
 
     fn path_version(&self) -> PathBuf {
-        Self::_path_version(&self.pathbuf)
+        Self::path_version_(&self.pathbuf)
     }
-    fn _path_version(path: &Path) -> PathBuf {
+    fn path_version_(path: &Path) -> PathBuf {
         path.join("version")
     }
 
@@ -64,15 +72,18 @@ where
         Height::try_from(self.path_height().as_path())
     }
     fn path_height(&self) -> PathBuf {
-        Self::_path_height(&self.pathbuf)
+        Self::path_height_(&self.pathbuf)
     }
-    fn _path_height(path: &Path) -> PathBuf {
+    fn path_height_(path: &Path) -> PathBuf {
         path.join("height")
     }
 
-    // pub fn needs(&self, height: Height) -> bool {
-    //     self.height() // store height in struct
-    // }
+    pub fn needs(&self, height: Height) -> bool {
+        self.height.is_none_or(|self_height| height > self_height)
+    }
+    pub fn has(&self, height: Height) -> bool {
+        !self.needs(height)
+    }
 }
 
 impl<I, T> Deref for StorableVec<I, T> {

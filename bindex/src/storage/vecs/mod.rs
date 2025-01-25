@@ -1,38 +1,44 @@
 use std::{fs, io, path::Path};
 
-use biter::bitcoin::{transaction, BlockHash, Txid};
+use biter::bitcoin::{self, transaction, BlockHash, Txid, Weight};
 use color_eyre::eyre::eyre;
+use exit::Exit;
 use rayon::prelude::*;
 use storable_vec::AnyStorableVec;
 
-use super::{
-    Addressbytes, Addressindex, Addresstype, Addresstypeindex, Amount, AnyBindexVec, Date, Exit, Height,
-    P2PK33AddressBytes, P2PK65AddressBytes, P2PKHAddressBytes, P2SHAddressBytes, P2TRAddressBytes, P2WPKHAddressBytes,
-    P2WSHAddressBytes, StorableVec, Timestamp, Txindex, Txoutindex, Version,
+use crate::structs::{
+    Addressbytes, Addressindex, Addresstype, Addresstypeindex, Amount, Height, P2PK33AddressBytes, P2PK65AddressBytes,
+    P2PKHAddressBytes, P2SHAddressBytes, P2TRAddressBytes, P2WPKHAddressBytes, P2WSHAddressBytes, Timestamp, Txindex,
+    Txoutindex, Version,
 };
+
+mod base;
+
+use base::*;
 
 pub struct Vecs {
     pub addressindex_to_addresstype: StorableVec<Addressindex, Addresstype>,
     pub addressindex_to_addresstypeindex: StorableVec<Addressindex, Addresstypeindex>,
+    pub addressindex_to_height: StorableVec<Addressindex, Height>,
     pub height_to_blockhash: StorableVec<Height, BlockHash>,
-    pub height_to_date: StorableVec<Height, Date>,
-    pub height_to_totalfees: StorableVec<Height, Amount>,
     pub height_to_first_addressindex: StorableVec<Height, Addressindex>,
+    pub height_to_first_emptyindex: StorableVec<Height, Addresstypeindex>,
+    pub height_to_first_multisigindex: StorableVec<Height, Addresstypeindex>,
+    pub height_to_first_opreturnindex: StorableVec<Height, Addresstypeindex>,
+    pub height_to_first_pushonlyindex: StorableVec<Height, Addresstypeindex>,
     pub height_to_first_txindex: StorableVec<Height, Txindex>,
     pub height_to_first_txoutindex: StorableVec<Height, Txoutindex>,
-    pub height_to_inputcount: StorableVec<Txindex, u32>,
-    pub height_to_last_addressindex: StorableVec<Height, Addressindex>,
-    pub height_to_last_txindex: StorableVec<Height, Txindex>,
-    pub height_to_last_txoutindex: StorableVec<Height, Txoutindex>,
-    pub height_to_outputcount: StorableVec<Txindex, u32>,
+    pub height_to_first_unknownindex: StorableVec<Height, Addresstypeindex>,
+    pub height_to_p2pk33index: StorableVec<Height, Addresstypeindex>,
+    pub height_to_p2pk65index: StorableVec<Height, Addresstypeindex>,
+    pub height_to_p2pkhindex: StorableVec<Height, Addresstypeindex>,
+    pub height_to_p2shindex: StorableVec<Height, Addresstypeindex>,
+    pub height_to_p2trindex: StorableVec<Height, Addresstypeindex>,
+    pub height_to_p2wpkhindex: StorableVec<Height, Addresstypeindex>,
+    pub height_to_p2wshindex: StorableVec<Height, Addresstypeindex>,
+    pub height_to_size: StorableVec<Height, usize>,
     pub height_to_timestamp: StorableVec<Height, Timestamp>,
-    pub height_to_txcount: StorableVec<Txindex, u32>,
-    // pub height_to_size: StorableVec<Txindex, u32>,
-    // pub height_to_weight: StorableVec<Txindex, u32>,
-    // pub height_to_subsidy: StorableVec<Txindex, u32>,
-    // pub height_to_minfeerate: StorableVec<Txindex, u32>,
-    // pub height_to_maxfeerate: StorableVec<Txindex, u32>,
-    // pub height_to_medianfeerate: StorableVec<Txindex, u32>,
+    pub height_to_weight: StorableVec<Height, Weight>,
     pub p2pk33index_to_p2pk33addressbytes: StorableVec<Addresstypeindex, P2PK33AddressBytes>,
     pub p2pk65index_to_p2pk65addressbytes: StorableVec<Addresstypeindex, P2PK65AddressBytes>,
     pub p2pkhindex_to_p2pkhaddressbytes: StorableVec<Addresstypeindex, P2PKHAddressBytes>,
@@ -40,15 +46,30 @@ pub struct Vecs {
     pub p2trindex_to_p2traddressbytes: StorableVec<Addresstypeindex, P2TRAddressBytes>,
     pub p2wpkhindex_to_p2wpkhaddressbytes: StorableVec<Addresstypeindex, P2WPKHAddressBytes>,
     pub p2wshindex_to_p2wshaddressbytes: StorableVec<Addresstypeindex, P2WSHAddressBytes>,
-    pub txindex_to_fee: StorableVec<Txindex, Amount>,
-    // pub txindex_to_feerate: StorableVec<Txindex, Feerate>,
+    pub txindex_to_first_txoutindex: StorableVec<Txindex, Txoutindex>,
     pub txindex_to_height: StorableVec<Txindex, Height>,
-    pub txindex_to_inputcount: StorableVec<Txindex, u32>,
-    pub txindex_to_outputcount: StorableVec<Txindex, u32>,
+    pub txindex_to_locktime: StorableVec<Txindex, bitcoin::absolute::LockTime>,
     pub txindex_to_txid: StorableVec<Txindex, Txid>,
     pub txindex_to_txversion: StorableVec<Txindex, transaction::Version>,
     pub txoutindex_to_addressindex: StorableVec<Txoutindex, Addressindex>,
     pub txoutindex_to_amount: StorableVec<Txoutindex, Amount>,
+    // Can be computed later:
+    // pub height_to_date: StorableVec<Height, Date>,
+    // pub height_to_totalfees: StorableVec<Height, Amount>,
+    // pub height_to_inputcount: StorableVec<Txindex, u32>,
+    // pub height_to_last_addressindex: StorableVec<Height, Addressindex>,
+    // pub height_to_last_txindex: StorableVec<Height, Txindex>,
+    // pub height_to_last_txoutindex: StorableVec<Height, Txoutindex>,
+    // pub height_to_outputcount: StorableVec<Txindex, u32>,
+    // pub height_to_txcount: StorableVec<Txindex, u32>,
+    // pub height_to_subsidy: StorableVec<Txindex, u32>,
+    // pub height_to_minfeerate: StorableVec<Txindex, Feerate>,
+    // pub height_to_maxfeerate: StorableVec<Txindex, Feerate>,
+    // pub height_to_medianfeerate: StorableVec<Txindex, Feerate>,
+    // pub txindex_to_feerate: StorableVec<Txindex, Feerate>,
+    // pub txindex_to_inputcount: StorableVec<Txindex, u32>,
+    // pub txindex_to_outputcount: StorableVec<Txindex, u32>,
+    // pub txindex_to_last_txoutindex: StorableVec<Txindex, Txoutindex>,
 }
 
 // const UNSAFE_BLOCKS: usize = 100;
@@ -66,10 +87,26 @@ impl Vecs {
                 &path.join("addressindex_to_addresstypeindex"),
                 Version::from(1),
             )?,
+            addressindex_to_height: StorableVec::import(&path.join("addressindex_to_height"), Version::from(1))?,
             height_to_blockhash: StorableVec::import(&path.join("height_to_blockhash"), Version::from(1))?,
-            height_to_date: StorableVec::import(&path.join("height_to_date"), Version::from(1))?,
             height_to_first_addressindex: StorableVec::import(
                 &path.join("height_to_first_addressindex"),
+                Version::from(1),
+            )?,
+            height_to_first_emptyindex: StorableVec::import(
+                &path.join("height_to_first_emptyindex"),
+                Version::from(1),
+            )?,
+            height_to_first_multisigindex: StorableVec::import(
+                &path.join("height_to_first_multisigindex"),
+                Version::from(1),
+            )?,
+            height_to_first_opreturnindex: StorableVec::import(
+                &path.join("height_to_first_opreturnindex"),
+                Version::from(1),
+            )?,
+            height_to_first_pushonlyindex: StorableVec::import(
+                &path.join("height_to_first_pushonlyindex"),
                 Version::from(1),
             )?,
             height_to_first_txindex: StorableVec::import(&path.join("height_to_first_txindex"), Version::from(1))?,
@@ -77,17 +114,20 @@ impl Vecs {
                 &path.join("height_to_first_txoutindex"),
                 Version::from(1),
             )?,
-            height_to_inputcount: StorableVec::import(&path.join("height_to_inputcount"), Version::from(1))?,
-            height_to_last_addressindex: StorableVec::import(
-                &path.join("height_to_last_addressindex"),
+            height_to_first_unknownindex: StorableVec::import(
+                &path.join("height_to_first_unkownindex"),
                 Version::from(1),
             )?,
-            height_to_last_txindex: StorableVec::import(&path.join("height_to_last_txindex"), Version::from(1))?,
-            height_to_last_txoutindex: StorableVec::import(&path.join("height_to_last_txoutindex"), Version::from(1))?,
-            height_to_outputcount: StorableVec::import(&path.join("height_to_outputcount"), Version::from(1))?,
+            height_to_p2pk33index: StorableVec::import(&path.join("height_to_p2pk33index"), Version::from(1))?,
+            height_to_p2pk65index: StorableVec::import(&path.join("height_to_p2pk65index"), Version::from(1))?,
+            height_to_p2pkhindex: StorableVec::import(&path.join("height_to_p2pkhindex"), Version::from(1))?,
+            height_to_p2shindex: StorableVec::import(&path.join("height_to_p2shindex"), Version::from(1))?,
+            height_to_p2trindex: StorableVec::import(&path.join("height_to_p2trindex"), Version::from(1))?,
+            height_to_p2wpkhindex: StorableVec::import(&path.join("height_to_p2wpkhindex"), Version::from(1))?,
+            height_to_p2wshindex: StorableVec::import(&path.join("height_to_p2wshindex"), Version::from(1))?,
+            height_to_size: StorableVec::import(&path.join("height_to_size"), Version::from(1))?,
             height_to_timestamp: StorableVec::import(&path.join("height_to_timestamp"), Version::from(1))?,
-            height_to_totalfees: StorableVec::import(&path.join("height_to_totalfees"), Version::from(1))?,
-            height_to_txcount: StorableVec::import(&path.join("height_to_txcount"), Version::from(1))?,
+            height_to_weight: StorableVec::import(&path.join("height_to_weight"), Version::from(1))?,
             p2pk33index_to_p2pk33addressbytes: StorableVec::import(
                 &path.join("p2pk33index_to_p2pk33addressbytes"),
                 Version::from(1),
@@ -116,10 +156,12 @@ impl Vecs {
                 &path.join("p2wshindex_to_p2wshaddressbytes"),
                 Version::from(1),
             )?,
-            txindex_to_fee: StorableVec::import(&path.join("txindex_to_fee"), Version::from(1))?,
+            txindex_to_first_txoutindex: StorableVec::import(
+                &path.join("txindex_to_first_txoutindex"),
+                Version::from(1),
+            )?,
             txindex_to_height: StorableVec::import(&path.join("txindex_to_height"), Version::from(1))?,
-            txindex_to_inputcount: StorableVec::import(&path.join("txindex_to_inputcount"), Version::from(1))?,
-            txindex_to_outputcount: StorableVec::import(&path.join("txindex_to_outputcount"), Version::from(1))?,
+            txindex_to_locktime: StorableVec::import(&path.join("txindex_to_locktime"), Version::from(1))?,
             txindex_to_txid: StorableVec::import(&path.join("txindex_to_txid"), Version::from(1))?,
             txindex_to_txversion: StorableVec::import(&path.join("txindex_to_txversion"), Version::from(1))?,
             txoutindex_to_addressindex: StorableVec::import(
@@ -128,19 +170,6 @@ impl Vecs {
             )?,
             txoutindex_to_amount: StorableVec::import(&path.join("txoutindex_to_amount"), Version::from(1))?,
         })
-    }
-
-    pub fn addresstype_to_addressbytes(&self, addresstype: Addresstype) -> color_eyre::Result<&dyn AnyStorableVec> {
-        match addresstype {
-            Addresstype::P2PK65 => Ok(&*self.p2pk65index_to_p2pk65addressbytes),
-            Addresstype::P2PK33 => Ok(&*self.p2pk33index_to_p2pk33addressbytes),
-            Addresstype::P2PKH => Ok(&*self.p2pkhindex_to_p2pkhaddressbytes),
-            Addresstype::P2SH => Ok(&*self.p2shindex_to_p2shaddressbytes),
-            Addresstype::P2WPKH => Ok(&*self.p2wpkhindex_to_p2wpkhaddressbytes),
-            Addresstype::P2WSH => Ok(&*self.p2wshindex_to_p2wshaddressbytes),
-            Addresstype::P2TR => Ok(&*self.p2trindex_to_p2traddressbytes),
-            _ => Err(eyre!("wrong address type")),
-        }
     }
 
     pub fn push_addressbytes_if_needed(
@@ -332,23 +361,30 @@ impl Vecs {
             .min())
     }
 
-    pub fn as_slice(&self) -> [&dyn AnyBindexVec; 30] {
+    pub fn as_slice(&self) -> [&dyn AnyBindexVec; 36] {
         [
             &self.addressindex_to_addresstype as &dyn AnyBindexVec,
             &self.addressindex_to_addresstypeindex,
+            &self.addressindex_to_height,
             &self.height_to_blockhash,
-            &self.height_to_date,
-            &self.height_to_totalfees,
             &self.height_to_first_addressindex,
+            &self.height_to_first_emptyindex,
+            &self.height_to_first_multisigindex,
+            &self.height_to_first_opreturnindex,
+            &self.height_to_first_pushonlyindex,
             &self.height_to_first_txindex,
             &self.height_to_first_txoutindex,
-            &self.height_to_inputcount,
-            &self.height_to_last_addressindex,
-            &self.height_to_last_txindex,
-            &self.height_to_last_txoutindex,
-            &self.height_to_outputcount,
+            &self.height_to_first_unknownindex,
+            &self.height_to_p2pk33index,
+            &self.height_to_p2pk65index,
+            &self.height_to_p2pkhindex,
+            &self.height_to_p2shindex,
+            &self.height_to_p2trindex,
+            &self.height_to_p2wpkhindex,
+            &self.height_to_p2wshindex,
+            &self.height_to_size,
             &self.height_to_timestamp,
-            &self.height_to_txcount,
+            &self.height_to_weight,
             &self.p2pk33index_to_p2pk33addressbytes,
             &self.p2pk65index_to_p2pk65addressbytes,
             &self.p2pkhindex_to_p2pkhaddressbytes,
@@ -356,10 +392,9 @@ impl Vecs {
             &self.p2trindex_to_p2traddressbytes,
             &self.p2wpkhindex_to_p2wpkhaddressbytes,
             &self.p2wshindex_to_p2wshaddressbytes,
-            &self.txindex_to_fee,
+            &self.txindex_to_first_txoutindex,
             &self.txindex_to_height,
-            &self.txindex_to_inputcount,
-            &self.txindex_to_outputcount,
+            &self.txindex_to_locktime,
             &self.txindex_to_txid,
             &self.txindex_to_txversion,
             &self.txoutindex_to_addressindex,
@@ -367,23 +402,30 @@ impl Vecs {
         ]
     }
 
-    pub fn as_mut_slice(&mut self) -> [&mut (dyn AnyBindexVec + Send + Sync); 30] {
+    pub fn as_mut_slice(&mut self) -> [&mut (dyn AnyBindexVec + Send + Sync); 36] {
         [
             &mut self.addressindex_to_addresstype as &mut (dyn AnyBindexVec + Send + Sync),
             &mut self.addressindex_to_addresstypeindex,
+            &mut self.addressindex_to_height,
             &mut self.height_to_blockhash,
-            &mut self.height_to_date,
-            &mut self.height_to_totalfees, // <-
             &mut self.height_to_first_addressindex,
+            &mut self.height_to_first_emptyindex,
+            &mut self.height_to_first_multisigindex,
+            &mut self.height_to_first_opreturnindex,
+            &mut self.height_to_first_pushonlyindex,
             &mut self.height_to_first_txindex,
             &mut self.height_to_first_txoutindex,
-            &mut self.height_to_inputcount, // <-
-            &mut self.height_to_last_addressindex,
-            &mut self.height_to_last_txindex,
-            &mut self.height_to_last_txoutindex,
-            &mut self.height_to_outputcount, // <-
+            &mut self.height_to_first_unknownindex,
+            &mut self.height_to_p2pk33index,
+            &mut self.height_to_p2pk65index,
+            &mut self.height_to_p2pkhindex,
+            &mut self.height_to_p2shindex,
+            &mut self.height_to_p2trindex,
+            &mut self.height_to_p2wpkhindex,
+            &mut self.height_to_p2wshindex,
+            &mut self.height_to_size,
             &mut self.height_to_timestamp,
-            &mut self.height_to_txcount, // <-
+            &mut self.height_to_weight,
             &mut self.p2pk33index_to_p2pk33addressbytes,
             &mut self.p2pk65index_to_p2pk65addressbytes,
             &mut self.p2pkhindex_to_p2pkhaddressbytes,
@@ -391,10 +433,9 @@ impl Vecs {
             &mut self.p2trindex_to_p2traddressbytes,
             &mut self.p2wpkhindex_to_p2wpkhaddressbytes,
             &mut self.p2wshindex_to_p2wshaddressbytes,
-            &mut self.txindex_to_fee, // <-
+            &mut self.txindex_to_first_txoutindex,
             &mut self.txindex_to_height,
-            &mut self.txindex_to_inputcount,  // <-
-            &mut self.txindex_to_outputcount, // <-
+            &mut self.txindex_to_locktime,
             &mut self.txindex_to_txid,
             &mut self.txindex_to_txversion,
             &mut self.txoutindex_to_addressindex,

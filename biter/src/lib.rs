@@ -18,7 +18,7 @@ use crossbeam::channel::{bounded, Receiver};
 use rayon::prelude::*;
 
 pub use bitcoin;
-pub use bitcoincore_rpc;
+pub use bitcoincore_rpc as rpc;
 
 mod blk_index_to_blk_path;
 mod blk_index_to_blk_recap;

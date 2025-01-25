@@ -4,7 +4,7 @@ use std::{
     path::Path,
 };
 
-use biter::bitcoincore_rpc::{self, RpcApi};
+use biter::rpc::{self, RpcApi};
 use derive_deref::{Deref, DerefMut};
 use snkrj::{direct_repr, Storable, UnsizedStorable};
 use storable_vec::UnsafeSizedSerDe;
@@ -113,9 +113,9 @@ impl TryFrom<&Path> for Height {
     }
 }
 
-impl TryFrom<&bitcoincore_rpc::Client> for Height {
-    type Error = bitcoincore_rpc::Error;
-    fn try_from(value: &bitcoincore_rpc::Client) -> Result<Self, Self::Error> {
+impl TryFrom<&rpc::Client> for Height {
+    type Error = rpc::Error;
+    fn try_from(value: &rpc::Client) -> Result<Self, Self::Error> {
         Ok((value.get_blockchain_info()?.blocks as usize - 1).into())
     }
 }
