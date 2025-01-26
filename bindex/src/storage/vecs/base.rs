@@ -81,6 +81,7 @@ where
     pub fn needs(&self, height: Height) -> bool {
         self.height.is_none_or(|self_height| height > self_height)
     }
+    #[allow(unused)]
     pub fn has(&self, height: Height) -> bool {
         !self.needs(height)
     }

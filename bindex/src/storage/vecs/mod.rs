@@ -1,15 +1,13 @@
 use std::{fs, io, path::Path};
 
 use biter::bitcoin::{self, transaction, BlockHash, Txid, Weight};
-use color_eyre::eyre::eyre;
 use exit::Exit;
 use rayon::prelude::*;
-use storable_vec::AnyStorableVec;
 
 use crate::structs::{
     Addressbytes, Addressindex, Addresstype, Addresstypeindex, Amount, Height, P2PK33AddressBytes, P2PK65AddressBytes,
     P2PKHAddressBytes, P2SHAddressBytes, P2TRAddressBytes, P2WPKHAddressBytes, P2WSHAddressBytes, Timestamp, Txindex,
-    Txoutindex, Version,
+    Txinindex, Txoutindex, Version,
 };
 
 mod base;
@@ -27,6 +25,7 @@ pub struct Vecs {
     pub height_to_first_opreturnindex: StorableVec<Height, Addresstypeindex>,
     pub height_to_first_pushonlyindex: StorableVec<Height, Addresstypeindex>,
     pub height_to_first_txindex: StorableVec<Height, Txindex>,
+    pub height_to_first_txinindex: StorableVec<Height, Txinindex>,
     pub height_to_first_txoutindex: StorableVec<Height, Txoutindex>,
     pub height_to_first_unknownindex: StorableVec<Height, Addresstypeindex>,
     pub height_to_p2pk33index: StorableVec<Height, Addresstypeindex>,
@@ -46,11 +45,13 @@ pub struct Vecs {
     pub p2trindex_to_p2traddressbytes: StorableVec<Addresstypeindex, P2TRAddressBytes>,
     pub p2wpkhindex_to_p2wpkhaddressbytes: StorableVec<Addresstypeindex, P2WPKHAddressBytes>,
     pub p2wshindex_to_p2wshaddressbytes: StorableVec<Addresstypeindex, P2WSHAddressBytes>,
+    pub txindex_to_first_txinindex: StorableVec<Txindex, Txinindex>,
     pub txindex_to_first_txoutindex: StorableVec<Txindex, Txoutindex>,
     pub txindex_to_height: StorableVec<Txindex, Height>,
     pub txindex_to_locktime: StorableVec<Txindex, bitcoin::absolute::LockTime>,
     pub txindex_to_txid: StorableVec<Txindex, Txid>,
     pub txindex_to_txversion: StorableVec<Txindex, transaction::Version>,
+    pub txinindex_to_txoutindex: StorableVec<Txinindex, Txoutindex>,
     pub txoutindex_to_addressindex: StorableVec<Txoutindex, Addressindex>,
     pub txoutindex_to_amount: StorableVec<Txoutindex, Amount>,
     // Can be computed later:
@@ -110,6 +111,7 @@ impl Vecs {
                 Version::from(1),
             )?,
             height_to_first_txindex: StorableVec::import(&path.join("height_to_first_txindex"), Version::from(1))?,
+            height_to_first_txinindex: StorableVec::import(&path.join("height_to_first_txinindex"), Version::from(1))?,
             height_to_first_txoutindex: StorableVec::import(
                 &path.join("height_to_first_txoutindex"),
                 Version::from(1),
@@ -156,6 +158,10 @@ impl Vecs {
                 &path.join("p2wshindex_to_p2wshaddressbytes"),
                 Version::from(1),
             )?,
+            txindex_to_first_txinindex: StorableVec::import(
+                &path.join("txindex_to_first_txinindex"),
+                Version::from(1),
+            )?,
             txindex_to_first_txoutindex: StorableVec::import(
                 &path.join("txindex_to_first_txoutindex"),
                 Version::from(1),
@@ -164,6 +170,7 @@ impl Vecs {
             txindex_to_locktime: StorableVec::import(&path.join("txindex_to_locktime"), Version::from(1))?,
             txindex_to_txid: StorableVec::import(&path.join("txindex_to_txid"), Version::from(1))?,
             txindex_to_txversion: StorableVec::import(&path.join("txindex_to_txversion"), Version::from(1))?,
+            txinindex_to_txoutindex: StorableVec::import(&path.join("txinindex_to_txoutindex"), Version::from(1))?,
             txoutindex_to_addressindex: StorableVec::import(
                 &path.join("txoutindex_to_addressindex"),
                 Version::from(1),
@@ -361,7 +368,7 @@ impl Vecs {
             .min())
     }
 
-    pub fn as_slice(&self) -> [&dyn AnyBindexVec; 36] {
+    pub fn as_slice(&self) -> [&dyn AnyBindexVec; 39] {
         [
             &self.addressindex_to_addresstype as &dyn AnyBindexVec,
             &self.addressindex_to_addresstypeindex,
@@ -373,6 +380,7 @@ impl Vecs {
             &self.height_to_first_opreturnindex,
             &self.height_to_first_pushonlyindex,
             &self.height_to_first_txindex,
+            &self.height_to_first_txinindex,
             &self.height_to_first_txoutindex,
             &self.height_to_first_unknownindex,
             &self.height_to_p2pk33index,
@@ -392,17 +400,19 @@ impl Vecs {
             &self.p2trindex_to_p2traddressbytes,
             &self.p2wpkhindex_to_p2wpkhaddressbytes,
             &self.p2wshindex_to_p2wshaddressbytes,
+            &self.txindex_to_first_txinindex,
             &self.txindex_to_first_txoutindex,
             &self.txindex_to_height,
             &self.txindex_to_locktime,
             &self.txindex_to_txid,
             &self.txindex_to_txversion,
+            &self.txinindex_to_txoutindex,
             &self.txoutindex_to_addressindex,
             &self.txoutindex_to_amount,
         ]
     }
 
-    pub fn as_mut_slice(&mut self) -> [&mut (dyn AnyBindexVec + Send + Sync); 36] {
+    pub fn as_mut_slice(&mut self) -> [&mut (dyn AnyBindexVec + Send + Sync); 39] {
         [
             &mut self.addressindex_to_addresstype as &mut (dyn AnyBindexVec + Send + Sync),
             &mut self.addressindex_to_addresstypeindex,
@@ -414,6 +424,7 @@ impl Vecs {
             &mut self.height_to_first_opreturnindex,
             &mut self.height_to_first_pushonlyindex,
             &mut self.height_to_first_txindex,
+            &mut self.height_to_first_txinindex,
             &mut self.height_to_first_txoutindex,
             &mut self.height_to_first_unknownindex,
             &mut self.height_to_p2pk33index,
@@ -433,11 +444,13 @@ impl Vecs {
             &mut self.p2trindex_to_p2traddressbytes,
             &mut self.p2wpkhindex_to_p2wpkhaddressbytes,
             &mut self.p2wshindex_to_p2wshaddressbytes,
+            &mut self.txindex_to_first_txinindex,
             &mut self.txindex_to_first_txoutindex,
             &mut self.txindex_to_height,
             &mut self.txindex_to_locktime,
             &mut self.txindex_to_txid,
             &mut self.txindex_to_txversion,
+            &mut self.txinindex_to_txoutindex,
             &mut self.txoutindex_to_addressindex,
             &mut self.txoutindex_to_amount,
         ]
