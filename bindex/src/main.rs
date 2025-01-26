@@ -1,14 +1,8 @@
 use std::path::Path;
 
+use bindex::Indexer;
 use biter::rpc;
-
-mod indexer;
-mod storage;
-mod structs;
-
 use exit::Exit;
-use indexer::Indexer;
-use structs::{AddressbytesPrefix, Addressindex, BlockHashPrefix, Height, TxidPrefix, Txindex, Txoutindex};
 
 // https://github.com/romanz/electrs/blob/master/doc/schema.md
 

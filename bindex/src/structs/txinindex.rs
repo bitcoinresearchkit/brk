@@ -1,7 +1,4 @@
-use std::{
-    ops::{Add, AddAssign},
-    u64,
-};
+use std::ops::{Add, AddAssign};
 
 use derive_deref::{Deref, DerefMut};
 use snkrj::{direct_repr, Storable, UnsizedStorable};
@@ -9,12 +6,10 @@ use snkrj::{direct_repr, Storable, UnsizedStorable};
 use super::Vout;
 
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Deref, DerefMut, Default)]
-pub struct Txoutindex(u64);
-direct_repr!(Txoutindex);
+pub struct Txinindex(u64);
+direct_repr!(Txinindex);
 
-impl Txoutindex {
-    pub const MAX: Self = Self(u64::MAX);
-
+impl Txinindex {
     pub fn incremented(self) -> Self {
         Self(*self + 1)
     }
@@ -22,50 +17,46 @@ impl Txoutindex {
     pub fn decremented(self) -> Self {
         Self(*self - 1)
     }
-
-    pub fn is_coinbase(self) -> bool {
-        self == Self::MAX
-    }
 }
 
-impl Add<Txoutindex> for Txoutindex {
+impl Add<Txinindex> for Txinindex {
     type Output = Self;
-    fn add(self, rhs: Txoutindex) -> Self::Output {
+    fn add(self, rhs: Txinindex) -> Self::Output {
         Self(self.0 + rhs.0)
     }
 }
 
-impl Add<Vout> for Txoutindex {
+impl Add<Vout> for Txinindex {
     type Output = Self;
     fn add(self, rhs: Vout) -> Self::Output {
         Self(self.0 + u64::from(rhs))
     }
 }
 
-impl AddAssign<Txoutindex> for Txoutindex {
-    fn add_assign(&mut self, rhs: Txoutindex) {
+impl AddAssign<Txinindex> for Txinindex {
+    fn add_assign(&mut self, rhs: Txinindex) {
         self.0 += rhs.0
     }
 }
 
-impl From<u64> for Txoutindex {
+impl From<u64> for Txinindex {
     fn from(value: u64) -> Self {
         Self(value)
     }
 }
-impl From<Txoutindex> for u64 {
-    fn from(value: Txoutindex) -> Self {
+impl From<Txinindex> for u64 {
+    fn from(value: Txinindex) -> Self {
         value.0
     }
 }
 
-impl From<usize> for Txoutindex {
+impl From<usize> for Txinindex {
     fn from(value: usize) -> Self {
         Self(value as u64)
     }
 }
-impl From<Txoutindex> for usize {
-    fn from(value: Txoutindex) -> Self {
+impl From<Txinindex> for usize {
+    fn from(value: Txinindex) -> Self {
         value.0 as usize
     }
 }

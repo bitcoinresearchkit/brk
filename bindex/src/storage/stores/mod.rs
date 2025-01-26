@@ -14,11 +14,10 @@ use unique::*;
 
 pub struct Stores {
     pub addressbytes_prefix_to_addressindex: StoreUnique<AddressbytesPrefix, Addressindex>,
-    pub addressindex_to_txoutindex_in: StoreMulti<Addressindex, Txoutindex>, // Received
-    pub addressindex_to_txoutindex_out: StoreMulti<Addressindex, Txoutindex>, // Spent
+    // pub addressindex_to_txoutindex_in: StoreMulti<Addressindex, Txoutindex>, // Received
+    // pub addressindex_to_txoutindex_out: StoreMulti<Addressindex, Txoutindex>, // Spent
     pub blockhash_prefix_to_height: StoreUnique<BlockHashPrefix, Height>,
     pub txid_prefix_to_txindex: StoreUnique<TxidPrefix, Txindex>,
-    pub txindex_to_txoutindex_in: StoreMulti<Txindex, Txoutindex>, // Inputs
 }
 
 impl Stores {
@@ -28,17 +27,16 @@ impl Stores {
                 &path.join("addressbytes_prefix_to_addressindex"),
                 Version::from(1),
             )?,
-            addressindex_to_txoutindex_in: StoreMulti::open(
-                &path.join("addressindex_to_txoutindex_in"),
-                Version::from(1),
-            )?,
-            addressindex_to_txoutindex_out: StoreMulti::open(
-                &path.join("addressindex_to_txoutindex_out"),
-                Version::from(1),
-            )?,
+            // addressindex_to_txoutindex_in: StoreMulti::open(
+            //     &path.join("addressindex_to_txoutindex_in"),
+            //     Version::from(1),
+            // )?,
+            // addressindex_to_txoutindex_out: StoreMulti::open(
+            //     &path.join("addressindex_to_txoutindex_out"),
+            //     Version::from(1),
+            // )?,
             blockhash_prefix_to_height: StoreUnique::open(&path.join("blockhash_prefix_to_height"), Version::from(1))?,
             txid_prefix_to_txindex: StoreUnique::open(&path.join("txid_prefix_to_txindex"), Version::from(1))?,
-            txindex_to_txoutindex_in: StoreMulti::open(&path.join("txindex_to_txoutindex_in"), Version::from(1))?,
         })
     }
 
@@ -164,11 +162,10 @@ impl Stores {
     pub fn min_height(&self) -> Option<Height> {
         [
             self.addressbytes_prefix_to_addressindex.height(),
-            self.addressindex_to_txoutindex_in.height(),
-            self.addressindex_to_txoutindex_out.height(),
+            // self.addressindex_to_txoutindex_in.height(),
+            // self.addressindex_to_txoutindex_out.height(),
             self.blockhash_prefix_to_height.height(),
             self.txid_prefix_to_txindex.height(),
-            self.txindex_to_txoutindex_in.height(),
         ]
         .into_iter()
         .min()
@@ -180,11 +177,10 @@ impl Stores {
         thread::scope(|scope| {
             vec![
                 scope.spawn(|| self.addressbytes_prefix_to_addressindex.export(height)),
-                scope.spawn(|| self.addressindex_to_txoutindex_in.export(height)),
-                scope.spawn(|| self.addressindex_to_txoutindex_out.export(height)),
+                // scope.spawn(|| self.addressindex_to_txoutindex_in.export(height)),
+                // scope.spawn(|| self.addressindex_to_txoutindex_out.export(height)),
                 scope.spawn(|| self.blockhash_prefix_to_height.export(height)),
                 scope.spawn(|| self.txid_prefix_to_txindex.export(height)),
-                scope.spawn(|| self.txindex_to_txoutindex_in.export(height)),
             ]
             .into_iter()
             .try_for_each(|handle| -> Result<(), snkrj::Error> { handle.join().unwrap() })

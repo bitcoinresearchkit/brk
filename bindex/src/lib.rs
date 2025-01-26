@@ -10,30 +10,25 @@ use biter::{
     bitcoin::{Transaction, TxIn, TxOut, Txid},
     rpc,
 };
-use exit::Exit;
-
-use crate::storage::{Stores, Vecs};
-use crate::structs::{
-    Addressbytes, AddressbytesPrefix, Addressindex, Addresstype, Amount, BlockHashPrefix, Height, Timestamp,
-    TxidPrefix, Txindex, Txoutindex, Vout,
-};
 use color_eyre::eyre::{eyre, ContextCompat};
+use exit::Exit;
 use rayon::prelude::*;
 
-#[derive(Debug)]
-enum TxInOrAddressindextoutindex<'a> {
-    TxIn(&'a TxIn),
-    AddressTxTxoutIndexes((Addressindex, Txindex, Txoutindex)),
-}
+mod storage;
+mod structs;
+
+use storage::{Stores, Vecs};
+use structs::{
+    Addressbytes, AddressbytesPrefix, Addressindex, Addresstype, Amount, BlockHashPrefix, Height, Timestamp,
+    TxidPrefix, Txindex, Txinindex, Txoutindex, Vin, Vout,
+};
 
 const UNSAFE_BLOCKS: u32 = 100;
 const DAILY_BLOCK_TARGET: usize = 144;
 const SNAPSHOT_BLOCK_RANGE: usize = DAILY_BLOCK_TARGET * 10;
 
-#[derive(Debug, Default)]
-pub struct Indexer {
-    //
-}
+#[derive(Debug)]
+pub struct Indexer;
 
 impl Indexer {
     pub fn index(indexes_dir: &Path, bitcoin_dir: &Path, rpc: rpc::Client, exit: Exit) -> color_eyre::Result<()> {
@@ -54,6 +49,7 @@ impl Indexer {
         // let mut height = Height::default();
 
         let mut txindex_global = vecs.height_to_first_txindex.get_or_default(height)?;
+        let mut txinindex_global = vecs.height_to_first_txinindex.get_or_default(height)?;
         let mut txoutindex_global = vecs.height_to_first_txoutindex.get_or_default(height)?;
         let mut addressindex_global = vecs.height_to_first_addressindex.get_or_default(height)?;
         let mut emptyindex_global = vecs.height_to_first_emptyindex.get_or_default(height)?;
@@ -146,6 +142,8 @@ impl Indexer {
                 vecs.height_to_size.push_if_needed(height, block.total_size())?;
                 vecs.height_to_weight.push_if_needed(height, block.weight())?;
                 vecs.height_to_first_txindex.push_if_needed(height, txindex_global)?;
+                vecs.height_to_first_txinindex
+                    .push_if_needed(height, txinindex_global)?;
                 vecs.height_to_first_txoutindex
                     .push_if_needed(height, txoutindex_global)?;
                 vecs.height_to_first_addressindex
@@ -168,6 +166,18 @@ impl Indexer {
                 vecs.height_to_p2wpkhindex.push_if_needed(height, p2wpkhindex_global)?;
                 vecs.height_to_p2wshindex.push_if_needed(height, p2wshindex_global)?;
 
+                let inputs = block
+                    .txdata
+                    .iter()
+                    .enumerate()
+                    .flat_map(|(index, tx)| {
+                        tx.input
+                            .iter()
+                            .enumerate()
+                            .map(move |(vin, txin)| (Txindex::from(index), Vin::from(vin), txin, tx))
+                    })
+                    .collect::<Vec<_>>();
+
                 let outputs = block
                     .txdata
                     .iter()
@@ -182,10 +192,11 @@ impl Indexer {
 
                 let tx_len = block.txdata.len();
                 let outputs_len = outputs.len();
+                let inputs_len = inputs.len();
 
                 let (
                     txid_prefix_to_txid_and_block_txindex_and_prev_txindex_join_handle,
-                    txin_or_addressindextxoutindex_vec_handle,
+                    input_source_vec_handle,
                     txoutindex_to_txout_addresstype_addressbytes_res_addressindex_opt_handle,
                 ) = thread::scope(|scope| {
                     let txid_prefix_to_txid_and_block_txindex_and_prev_txindex_handle =
@@ -225,69 +236,78 @@ impl Indexer {
                                 })
                         });
 
-                    let txin_or_addressindextxoutindex_vec_handle =
-                        scope.spawn(|| -> color_eyre::Result<Vec<TxInOrAddressindextoutindex>> {
-                            block
-                                .txdata
-                                .par_iter()
-                                .filter(|tx| !tx.is_coinbase())
-                                .flat_map(|tx| &tx.input)
-                                .map(|txin| -> color_eyre::Result<_> {
-                                    let outpoint = txin.previous_output;
-                                    let txid = outpoint.txid;
-                                    let vout = Vout::from(outpoint.vout);
+                    let input_source_vec_handle = scope.spawn(|| {
+                        inputs
+                            .into_par_iter()
+                            .enumerate()
+                            .map(|(block_txinindex, (block_txindex, vin, txin, tx))| -> color_eyre::Result<(Txinindex, InputSource)> {
+                                let txindex = txindex_global + block_txindex;
+                                let txinindex = txinindex_global + Txinindex::from(block_txinindex);
 
-                                    let txindex = if let Some(txindex) = stores
-                                        .txid_prefix_to_txindex
-                                        .get(&TxidPrefix::try_from(&txid)?)?
-                                        .and_then(|txindex| {
-                                            // Checking if not finding txindex from the future
-                                            (txindex < &txindex_global).then_some(txindex)
-                                        }) {
-                                        *txindex
-                                    } else {
-                                        return Ok(TxInOrAddressindextoutindex::TxIn(txin));
-                                    };
+                                // dbg!((txindex, txinindex, vin));
 
-                                    let txoutindex = *vecs
-                                        .txindex_to_first_txoutindex
-                                        .get(txindex)?
-                                        .context("Expect txoutindex to not be none")
-                                        .inspect_err(|_| {
-                                            dbg!(outpoint.txid, txindex, vout);
-                                        })?
-                                        + vout;
+                                let outpoint = txin.previous_output;
 
-                                    let addressindex = *vecs
-                                        .txoutindex_to_addressindex
-                                        .get(txoutindex)?
-                                        .context("Expect addressindex to not be none")
-                                        .inspect_err(|_| {
-                                            // let height = vecdisks.txindex_to_height.get(txindex.into()).expect("txindex_to_height get not fail")
-                                            // .expect("Expect height for txindex");
-                                            dbg!(outpoint.txid, txindex, vout, txoutindex);
-                                        })?;
+                                if tx.is_coinbase() {
+                                    return Ok((txinindex, InputSource::SameBlock((tx, txindex, txin, vin))));
+                                }
 
-                                    Ok(TxInOrAddressindextoutindex::AddressTxTxoutIndexes((
-                                        addressindex,
-                                        txindex,
-                                        txoutindex,
-                                    )))
-                                })
-                                .try_fold(Vec::new, |mut vec, res| {
-                                    vec.push(res?);
-                                    Ok(vec)
-                                })
-                                .try_reduce(Vec::new, |mut v, mut v2| {
-                                    if v.len() > v2.len() {
-                                        v.append(&mut v2);
-                                        Ok(v)
-                                    } else {
-                                        v2.append(&mut v);
-                                        Ok(v2)
-                                    }
-                                })
-                        });
+                                let prev_txindex = if let Some(txindex) = stores
+                                    .txid_prefix_to_txindex
+                                    .get(&TxidPrefix::try_from(&outpoint.txid)?)?
+                                    .and_then(|txindex| {
+                                        // Checking if not finding txindex from the future
+                                        (txindex < &txindex_global).then_some(txindex)
+                                    }) {
+                                    *txindex
+                                } else {
+                                    // dbg!(txindex_global + block_txindex, txindex, txin, vin);
+                                    return Ok((txinindex, InputSource::SameBlock((tx, txindex, txin, vin))));
+                                };
+
+                                let vout = Vout::from(outpoint.vout);
+
+                                let txoutindex = *vecs
+                                    .txindex_to_first_txoutindex
+                                    .get(prev_txindex)?
+                                    .context("Expect txoutindex to not be none")
+                                    .inspect_err(|_| {
+                                        dbg!(outpoint.txid, prev_txindex, vout);
+                                    })?
+                                    + vout;
+
+                                let addressindex = *vecs
+                                    .txoutindex_to_addressindex
+                                    .get(txoutindex)?
+                                    .context("Expect addressindex to not be none")
+                                    .inspect_err(|_| {
+                                        // let height = vecdisks.txindex_to_height.get(txindex.into()).expect("txindex_to_height get not fail")
+                                        // .expect("Expect height for txindex");
+                                        dbg!(outpoint.txid, prev_txindex, vout, txoutindex);
+                                    })?;
+
+                                Ok((txinindex, InputSource::PreviousBlock((
+                                    vin,
+                                    txindex,
+                                    txoutindex,
+                                    addressindex,
+                                ))))
+                            })
+                            .try_fold(BTreeMap::new, |mut map, tuple| -> color_eyre::Result<_> {
+                                let (key, value) = tuple?;
+                                map.insert(key, value);
+                                Ok(map)
+                            })
+                            .try_reduce(BTreeMap::new, |mut map, mut map2| {
+                                if map.len() > map2.len() {
+                                    map.append(&mut map2);
+                                    Ok(map)
+                                } else {
+                                    map2.append(&mut map);
+                                    Ok(map2)
+                                }
+                            })
+                    });
 
                     let txoutindex_to_txout_addresstype_addressbytes_res_addressindex_opt_handle = scope.spawn(|| {
                         outputs
@@ -410,7 +430,7 @@ impl Indexer {
 
                     (
                         txid_prefix_to_txid_and_block_txindex_and_prev_txindex_handle.join(),
-                        txin_or_addressindextxoutindex_vec_handle.join(),
+                        input_source_vec_handle.join(),
                         txoutindex_to_txout_addresstype_addressbytes_res_addressindex_opt_handle.join(),
                     )
                 });
@@ -422,9 +442,9 @@ impl Indexer {
                             "Expect txid_prefix_to_txid_and_block_txindex_and_prev_txindex_join_handle to join",
                         )??;
 
-                let txin_or_addressindextxoutindex_vec = txin_or_addressindextxoutindex_vec_handle
+                let input_source_vec = input_source_vec_handle
                     .ok()
-                    .context("Export txin_or_addressindextxoutindex_vec_handle to join")??;
+                    .context("Export input_source_vec_handle to join")??;
 
                 let txoutindex_to_txout_addresstype_addressbytes_res_addressindex_opt =
                     txoutindex_to_txout_addresstype_addressbytes_res_addressindex_opt_handle
@@ -433,9 +453,9 @@ impl Indexer {
                             "Expect txoutindex_to_txout_addresstype_addressbytes_res_addressindex_opt_handle to join",
                         )??;
 
-                let mut new_txindexvout_to_addressindextxoutindex: BTreeMap<
+                let mut new_txindexvout_to_txoutindex: BTreeMap<
                     (Txindex, Vout),
-                    (Addressindex, Txoutindex),
+                    Txoutindex,
                 > = BTreeMap::new();
 
                 let mut already_added_addressbytes_prefix: BTreeMap<AddressbytesPrefix, Addressindex> = BTreeMap::new();
@@ -514,15 +534,15 @@ impl Indexer {
                             }
                         }
 
-                        new_txindexvout_to_addressindextxoutindex
-                            .insert((txindex, vout), (addressindex, txoutindex));
+                        new_txindexvout_to_txoutindex
+                            .insert((txindex, vout), txoutindex);
 
                         vecs.txoutindex_to_addressindex
                             .push_if_needed(txoutindex, addressindex)?;
 
-                        stores
-                            .addressindex_to_txoutindex_in
-                            .insert_if_needed(addressindex, txoutindex, height);
+                        // stores
+                        //     .addressindex_to_txoutindex_in
+                        //     .insert_if_needed(addressindex, txoutindex, height);
 
                         Ok(())
                     },
@@ -530,46 +550,63 @@ impl Indexer {
 
                 drop(already_added_addressbytes_prefix);
 
-                txin_or_addressindextxoutindex_vec
+                input_source_vec
                     .into_iter()
                     .map(
-                        |txin_or_addressindextxoutindex| -> color_eyre::Result<(Addressindex, Txindex, Txoutindex)> {
-                            match txin_or_addressindextxoutindex {
-                                TxInOrAddressindextoutindex::AddressTxTxoutIndexes(triplet) => Ok(triplet),
-                                TxInOrAddressindextoutindex::TxIn(txin) => {
+                        #[allow(clippy::type_complexity)]
+                        |(txinindex, input_source)| -> color_eyre::Result<(
+                            Txinindex, Vin, Txindex, Option<(Addressindex, Txoutindex)>
+                        )> {
+                            match input_source {
+                                InputSource::PreviousBlock((vin, txindex, txoutindex, addressindex)) => Ok((txinindex, vin, txindex, Some((addressindex, txoutindex)))),
+                                InputSource::SameBlock((tx, txindex, txin, vin)) => {
+                                    if tx.is_coinbase() {
+                                        return Ok((txinindex, vin, txindex, None));
+                                    }
+
                                     let outpoint = txin.previous_output;
                                     let txid = outpoint.txid;
                                     let vout = Vout::from(outpoint.vout);
-                                    let index = txid_prefix_to_txid_and_block_txindex_and_prev_txindex
+
+                                    let block_txindex = txid_prefix_to_txid_and_block_txindex_and_prev_txindex
                                         .get(&TxidPrefix::try_from(&txid)?)
                                         .context("txid should be in same block")?
                                         .2;
-                                    let txindex = txindex_global + index;
+                                    let prev_txindex = txindex_global + block_txindex;
 
-                                    let (addressindex, txoutindex) = new_txindexvout_to_addressindextxoutindex
-                                        .remove(&(txindex, vout))
+                                    let prev_txoutindex = new_txindexvout_to_txoutindex
+                                        .remove(&(prev_txindex, vout))
                                         .context("should have found addressindex from same block")
                                         .inspect_err(|_| {
-                                            dbg!(&new_txindexvout_to_addressindextxoutindex, txin, txindex, vout, txid);
+                                            dbg!(&new_txindexvout_to_txoutindex, txin, prev_txindex, vout, txid);
                                         })?;
 
-                                    Ok((addressindex, txindex, txoutindex))
+                                    Ok((txinindex, vin, txindex, Some((Addressindex::from(0_u32), prev_txoutindex))))
                                 }
                             }
                         },
                     )
                     .try_for_each(|res| -> color_eyre::Result<()> {
-                        let (addressindex, txindex, txoutindex) = res?;
-                        stores
-                            .addressindex_to_txoutindex_out
-                            .insert_if_needed(addressindex, txoutindex, height);
-                        stores
-                            .txindex_to_txoutindex_in
-                            .insert_if_needed(txindex, txoutindex, height);
+                        let (txinindex, vin, txindex, addressindex_and_txoutindex_opt) = res?;
+
+                        if vin.is_zero() {
+                            vecs.txindex_to_first_txinindex.push_if_needed(txindex, txinindex)?;
+                        }
+
+                        let txoutindex = addressindex_and_txoutindex_opt.map_or(Txoutindex::MAX, |(_, txoutindex)| txoutindex);
+
+                        vecs.txinindex_to_txoutindex.push_if_needed(txinindex, txoutindex)?;
+
+                        // if let Some(addressindex) = addressindex_and_txoutindex_opt.map(|(addressindex, _)| addressindex) {
+                        //     stores
+                        //         .addressindex_to_txoutindex_out
+                        //         .insert_if_needed(addressindex, txoutindex, height);
+                        // }
+
                         Ok(())
                     })?;
 
-                drop(new_txindexvout_to_addressindextxoutindex);
+                drop(new_txindexvout_to_txoutindex);
 
                 let mut txindex_to_tx_and_txid: BTreeMap<Txindex, (&Transaction, Txid)> = BTreeMap::default();
 
@@ -644,6 +681,7 @@ impl Indexer {
                     })?;
 
                 txindex_global += Txindex::from(tx_len);
+                txinindex_global += Txinindex::from(inputs_len);
                 txoutindex_global += Txoutindex::from(outputs_len);
 
                 let should_snapshot = _height != 0 && _height % SNAPSHOT_BLOCK_RANGE == 0 && !exit.active();
@@ -663,6 +701,13 @@ impl Indexer {
     }
 }
 
+#[derive(Debug)]
+enum InputSource<'a> {
+    PreviousBlock((Vin, Txindex, Txoutindex, Addressindex)),
+    SameBlock((&'a Transaction, Txindex, &'a TxIn, Vin)),
+}
+
+#[allow(unused)]
 fn pause() {
     let mut stdin = std::io::stdin();
     let mut stdout = std::io::stdout();

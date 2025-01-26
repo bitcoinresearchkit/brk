@@ -58,6 +58,7 @@ where
         });
     }
 
+    #[allow(unused)]
     pub fn get(&self, key: &K) -> Result<Option<&V>, snkrj::Error> {
         self.get_or_init_store(key).get(key)
     }
@@ -92,6 +93,7 @@ where
     pub fn height(&self) -> Option<&Height> {
         self.meta.height()
     }
+    #[allow(unused)]
     pub fn needs(&self, height: Height) -> bool {
         self.meta.needs(height)
     }
