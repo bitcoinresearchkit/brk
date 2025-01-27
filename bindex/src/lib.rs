@@ -7,10 +7,9 @@ use std::{
     time::Duration,
 };
 
-use biter::{
-    bitcoin::{Transaction, TxIn, TxOut, Txid},
-    rpc,
-};
+pub use biter::*;
+
+use biter::bitcoin::{Transaction, TxIn, TxOut, Txid};
 use color_eyre::eyre::{eyre, ContextCompat};
 use exit::Exit;
 use fjall::{PersistMode, ReadTransaction, TransactionalKeyspace};
@@ -19,8 +18,10 @@ use rayon::prelude::*;
 mod storage;
 mod structs;
 
-use storage::{Partitions, Vecs};
-use structs::{
+pub use biter;
+
+use storage::{Fjalls, StorableVecs};
+pub use structs::{
     Addressbytes, AddressbytesPrefix, Addressindex, Addresstype, Amount, BlockHashPrefix, Height, Timestamp,
     TxidPrefix, Txindex, Txinindex, Txoutindex, Vin, Vout,
 };
@@ -28,18 +29,24 @@ use structs::{
 const UNSAFE_BLOCKS: u32 = 100;
 const SNAPSHOT_BLOCK_RANGE: usize = 1000;
 
-#[derive(Debug)]
-pub struct Indexer;
+pub struct Indexer {
+    vecs: StorableVecs,
+    parts: Fjalls,
+}
 
 impl Indexer {
-    pub fn index(indexes_dir: &Path, bitcoin_dir: &Path, rpc: rpc::Client, exit: Exit) -> color_eyre::Result<()> {
+    pub fn import(indexes_dir: &Path) -> color_eyre::Result<Self> {
+        let vecs = StorableVecs::import(&indexes_dir.join("vecs"))?;
+        let parts = Fjalls::import(&indexes_dir.join("fjall"))?;
+
+        Ok(Self { vecs, parts })
+    }
+
+    pub fn index(&mut self, bitcoin_dir: &Path, rpc: rpc::Client, exit: &Exit) -> color_eyre::Result<()> {
         let check_collisions = true;
 
-        let mut vecs = Vecs::import(&indexes_dir.join("vecs"))?;
-
-        let keyspace = fjall::Config::new(indexes_dir.join("fjall")).open_transactional()?;
-        let mut parts = Partitions::import(&keyspace, &exit)?;
-        let rtx = keyspace.read_tx();
+        let vecs = &mut self.vecs;
+        let parts = &mut self.parts;
 
         let mut height = vecs
             .min_height()
@@ -66,24 +73,14 @@ impl Indexer {
         let mut p2wpkhindex_global = vecs.height_to_first_p2wpkhindex.get_or_default(height)?;
         let mut p2wshindex_global = vecs.height_to_first_p2wshindex.get_or_default(height)?;
 
-        let export = |keyspace: &TransactionalKeyspace,
-                      rtx: ReadTransaction,
-                      parts: &mut Partitions,
-                      vecs: &mut Vecs,
-                      height: Height|
-         -> color_eyre::Result<()> {
+        let export = |parts: &mut Fjalls, vecs: &mut StorableVecs, height: Height| -> color_eyre::Result<()> {
             println!("Exporting...");
-
-            drop(rtx);
 
             exit.block();
 
             thread::scope(|scope| -> color_eyre::Result<()> {
                 let vecs_handle = scope.spawn(|| vecs.flush(height));
-
-                parts.write(keyspace, height)?;
-                keyspace.persist(PersistMode::SyncAll)?;
-
+                parts.commit(height)?;
                 vecs_handle.join().unwrap()?;
                 Ok(())
             })?;
@@ -93,8 +90,8 @@ impl Indexer {
             Ok(())
         };
 
-        // let mut stores_opt = Some(stores);
-        let mut rtx_opt = Some(rtx);
+        // // let mut stores_opt = Some(stores);
+        // let mut rtx_opt = Some(rtx);
 
         biter::new(bitcoin_dir, Some(height.into()), None, rpc)
             .iter()
@@ -105,7 +102,7 @@ impl Indexer {
                 let timestamp = Timestamp::try_from(block.header.time)?;
 
                 // let mut stores = stores_opt.take().context("option should have store")?;
-                let rtx = rtx_opt.take().context("option should have rtx")?;
+                // let rtx = rtx_opt.take().context("option should have rtx")?;
 
                 if let Some(saved_blockhash) = vecs.height_to_blockhash.get(height)? {
                     if &blockhash != saved_blockhash.as_ref() {
@@ -118,7 +115,7 @@ impl Indexer {
 
                 if parts
                     .blockhash_prefix_to_height
-                    .get(&rtx, &blockhash_prefix)?
+                    .get(&blockhash_prefix)?
                     .is_some_and(|prev_height| prev_height != height)
                 {
                     dbg!(blockhash);
@@ -205,7 +202,7 @@ impl Indexer {
                                     let prev_txindex_slice_opt =
                                         if check_collisions && parts.txid_prefix_to_txindex.needs(height) {
                                             // Should only find collisions for two txids (duplicates), see below
-                                            parts.txid_prefix_to_txindex.get(&rtx, &txid_prefix)?
+                                            parts.txid_prefix_to_txindex.get(&txid_prefix)?
                                         } else {
                                             None
                                         };
@@ -246,7 +243,7 @@ impl Indexer {
 
                                 let prev_txindex = if let Some(txindex) = parts
                                     .txid_prefix_to_txindex
-                                    .get(&rtx, &TxidPrefix::try_from(&outpoint.txid)?)?
+                                    .get(&TxidPrefix::try_from(&outpoint.txid)?)?
                                     .and_then(|txindex| {
                                         // Checking if not finding txindex from the future
                                         (txindex < txindex_global).then_some(txindex)
@@ -323,7 +320,7 @@ impl Indexer {
                                     let addressindex_opt = addressbytes_res.as_ref().ok().and_then(|addressbytes| {
                                         parts
                                             .addressbytes_prefix_to_addressindex
-                                            .get(&rtx, &AddressbytesPrefix::from((addressbytes, addresstype)))
+                                            .get(&AddressbytesPrefix::from((addressbytes, addresstype)))
                                             .unwrap()
                                             // Checking if not in the future
                                             .and_then(|addressindex_local| {
@@ -546,7 +543,10 @@ impl Indexer {
 
                                     let block_txindex = txid_prefix_to_txid_and_block_txindex_and_prev_txindex
                                         .get(&TxidPrefix::try_from(&txid)?)
-                                        .context("txid should be in same block")?
+                                        .context("txid should be in same block").inspect_err(|_| {
+                                            dbg!(&txid_prefix_to_txid_and_block_txindex_and_prev_txindex);
+                                            // panic!();
+                                        })?
                                         .2;
                                     let prev_txindex = txindex_global + block_txindex;
 
@@ -654,22 +654,13 @@ impl Indexer {
 
                 let should_snapshot = _height != 0 && _height % SNAPSHOT_BLOCK_RANGE == 0 && !exit.active();
                 if should_snapshot {
-                    export(&keyspace, rtx, &mut parts, &mut vecs, height)?;
-                    rtx_opt.replace(keyspace.read_tx());
-                } else {
-                    rtx_opt.replace(rtx);
+                    export(parts, vecs, height)?;
                 }
 
                 Ok(())
             })?;
 
-        export(
-            &keyspace,
-            rtx_opt.take().context("option should have wtx")?,
-            &mut parts,
-            &mut vecs,
-            height,
-        )?;
+        export(parts, vecs, height)?;
 
         sleep(Duration::from_millis(100));
 
@@ -683,7 +674,6 @@ enum InputSource<'a> {
     SameBlock((&'a Transaction, Txindex, &'a TxIn, Vin)),
 }
 
-#[allow(unused)]
 fn pause() {
     let mut stdin = std::io::stdin();
     let mut stdout = std::io::stdout();

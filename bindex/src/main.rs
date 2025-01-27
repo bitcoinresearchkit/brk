@@ -4,8 +4,6 @@ use bindex::Indexer;
 use biter::rpc;
 use exit::Exit;
 
-// https://github.com/romanz/electrs/blob/master/doc/schema.md
-
 fn main() -> color_eyre::Result<()> {
     color_eyre::install()?;
 
@@ -18,7 +16,9 @@ fn main() -> color_eyre::Result<()> {
 
     let i = std::time::Instant::now();
 
-    Indexer::index(Path::new("indexes"), data_dir, rpc, exit)?;
+    let mut indexer = Indexer::import(Path::new("indexes"))?;
+
+    indexer.index(data_dir, rpc, &exit)?;
 
     dbg!(i.elapsed());
 

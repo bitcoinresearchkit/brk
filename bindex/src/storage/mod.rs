@@ -1,9 +1,9 @@
 // mod canopy;
-mod fjall;
+mod fjalls;
 // mod sanakirja;
-mod storable_vec;
+mod storable_vecs;
 
 // pub use canopy::*;
-pub use fjall::*;
+pub use fjalls::*;
 // pub use sanakirja::*;
-pub use storable_vec::*;
+pub use storable_vecs::*;
