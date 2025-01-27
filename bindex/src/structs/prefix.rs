@@ -3,10 +3,11 @@ use std::hash::Hasher;
 use biter::bitcoin::{BlockHash, Txid};
 use derive_deref::Deref;
 use snkrj::{direct_repr, Storable, UnsizedStorable};
+use storable_vec::UnsafeSizedSerDe;
 
 use super::{Addressbytes, Addresstype, SliceExtended};
 
-#[derive(Debug, Deref, Clone, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Debug, Deref, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub struct AddressbytesPrefix([u8; 8]);
 direct_repr!(AddressbytesPrefix);
 impl From<(&Addressbytes, Addresstype)> for AddressbytesPrefix {
@@ -23,8 +24,24 @@ impl From<[u8; 8]> for AddressbytesPrefix {
         Self(value)
     }
 }
+impl TryFrom<fjall::Slice> for AddressbytesPrefix {
+    type Error = color_eyre::Report;
+    fn try_from(value: fjall::Slice) -> Result<Self, Self::Error> {
+        Ok(*Self::unsafe_try_from_slice(&value)?)
+    }
+}
+impl From<&AddressbytesPrefix> for fjall::Slice {
+    fn from(value: &AddressbytesPrefix) -> Self {
+        Self::new(value.unsafe_as_slice())
+    }
+}
+impl From<AddressbytesPrefix> for fjall::Slice {
+    fn from(value: AddressbytesPrefix) -> Self {
+        Self::from(&value)
+    }
+}
 
-#[derive(Debug, Deref, Clone, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Debug, Deref, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub struct BlockHashPrefix([u8; 8]);
 direct_repr!(BlockHashPrefix);
 impl TryFrom<&BlockHash> for BlockHashPrefix {
@@ -33,13 +50,45 @@ impl TryFrom<&BlockHash> for BlockHashPrefix {
         Ok(Self((&value[..]).read_8x_u8()?))
     }
 }
+impl TryFrom<fjall::Slice> for BlockHashPrefix {
+    type Error = color_eyre::Report;
+    fn try_from(value: fjall::Slice) -> Result<Self, Self::Error> {
+        Ok(*Self::unsafe_try_from_slice(&value)?)
+    }
+}
+impl From<&BlockHashPrefix> for fjall::Slice {
+    fn from(value: &BlockHashPrefix) -> Self {
+        Self::new(value.unsafe_as_slice())
+    }
+}
+impl From<BlockHashPrefix> for fjall::Slice {
+    fn from(value: BlockHashPrefix) -> Self {
+        Self::from(&value)
+    }
+}
 
-#[derive(Debug, Deref, Clone, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Debug, Deref, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub struct TxidPrefix([u8; 8]);
 direct_repr!(TxidPrefix);
 impl TryFrom<&Txid> for TxidPrefix {
     type Error = color_eyre::Report;
     fn try_from(value: &Txid) -> Result<Self, Self::Error> {
         Ok(Self((&value[..]).read_8x_u8()?))
+    }
+}
+impl TryFrom<fjall::Slice> for TxidPrefix {
+    type Error = color_eyre::Report;
+    fn try_from(value: fjall::Slice) -> Result<Self, Self::Error> {
+        Ok(*Self::unsafe_try_from_slice(&value)?)
+    }
+}
+impl From<&TxidPrefix> for fjall::Slice {
+    fn from(value: &TxidPrefix) -> Self {
+        Self::new(value.unsafe_as_slice())
+    }
+}
+impl From<TxidPrefix> for fjall::Slice {
+    fn from(value: TxidPrefix) -> Self {
+        Self::from(&value)
     }
 }

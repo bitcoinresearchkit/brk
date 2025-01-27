@@ -1,5 +1,6 @@
 use derive_deref::{Deref, DerefMut};
 use snkrj::{direct_repr, Storable, UnsizedStorable};
+use storable_vec::UnsafeSizedSerDe;
 
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Deref, DerefMut, Default)]
 pub struct Addressindex(u32);
@@ -46,5 +47,17 @@ impl From<usize> for Addressindex {
 impl From<Addressindex> for usize {
     fn from(value: Addressindex) -> Self {
         value.0 as usize
+    }
+}
+
+impl TryFrom<fjall::Slice> for Addressindex {
+    type Error = storable_vec::Error;
+    fn try_from(value: fjall::Slice) -> Result<Self, Self::Error> {
+        Ok(*Self::unsafe_try_from_slice(&value)?)
+    }
+}
+impl From<Addressindex> for fjall::Slice {
+    fn from(value: Addressindex) -> Self {
+        Self::new(value.unsafe_as_slice())
     }
 }

@@ -119,3 +119,15 @@ impl TryFrom<&rpc::Client> for Height {
         Ok((value.get_blockchain_info()?.blocks as usize - 1).into())
     }
 }
+
+impl TryFrom<fjall::Slice> for Height {
+    type Error = storable_vec::Error;
+    fn try_from(value: fjall::Slice) -> Result<Self, Self::Error> {
+        Ok(*Self::unsafe_try_from_slice(&value)?)
+    }
+}
+impl From<Height> for fjall::Slice {
+    fn from(value: Height) -> Self {
+        Self::new(value.unsafe_as_slice())
+    }
+}
