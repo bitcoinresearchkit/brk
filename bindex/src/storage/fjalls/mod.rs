@@ -1,34 +1,28 @@
-use std::thread;
+use std::{path::Path, thread};
 
 use crate::{structs::Version, AddressbytesPrefix, Addressindex, BlockHashPrefix, Height, TxidPrefix, Txindex};
 
 mod base;
-use base::*;
-use exit::Exit;
-use fjall::{TransactionalKeyspace, TxKeyspace};
+mod meta;
 
-pub struct Partitions {
+use base::*;
+use meta::*;
+
+pub struct Fjalls {
     pub addressbytes_prefix_to_addressindex: Partition<AddressbytesPrefix, Addressindex>,
     pub blockhash_prefix_to_height: Partition<BlockHashPrefix, Height>,
     pub txid_prefix_to_txindex: Partition<TxidPrefix, Txindex>,
 }
 
-impl Partitions {
-    pub fn import(keyspace: &TransactionalKeyspace, exit: &Exit) -> color_eyre::Result<Self> {
+impl Fjalls {
+    pub fn import(path: &Path) -> color_eyre::Result<Self> {
         Ok(Self {
             addressbytes_prefix_to_addressindex: Partition::import(
-                keyspace,
-                "addressbytes_prefix_to_addressindex",
+                &path.join("addressbytes_prefix_to_addressindex"),
                 Version::from(1),
-                exit,
             )?,
-            blockhash_prefix_to_height: Partition::import(
-                keyspace,
-                "blockhash_prefix_to_height",
-                Version::from(1),
-                exit,
-            )?,
-            txid_prefix_to_txindex: Partition::import(keyspace, "txid_prefix_to_txindex", Version::from(1), exit)?,
+            blockhash_prefix_to_height: Partition::import(&path.join("blockhash_prefix_to_height"), Version::from(1))?,
+            txid_prefix_to_txindex: Partition::import(&path.join("txid_prefix_to_txindex"), Version::from(1))?,
         })
     }
 
@@ -163,18 +157,17 @@ impl Partitions {
         .cloned()
     }
 
-    pub fn write(&mut self, keyspace: &TxKeyspace, height: Height) -> fjall::Result<()> {
+    pub fn commit(&mut self, height: Height) -> fjall::Result<()> {
         thread::scope(|scope| {
-            let addressbytes_prefix_to_addressindex_write_handle =
-                scope.spawn(|| self.addressbytes_prefix_to_addressindex.write(keyspace, height));
-            let blockhash_prefix_to_height_write_handle =
-                scope.spawn(|| self.blockhash_prefix_to_height.write(keyspace, height));
-            let txid_prefix_to_txindex_write_handle =
-                scope.spawn(|| self.txid_prefix_to_txindex.write(keyspace, height));
+            let addressbytes_prefix_to_addressindex_commit_handle =
+                scope.spawn(|| self.addressbytes_prefix_to_addressindex.commit(height));
+            let blockhash_prefix_to_height_commit_handle =
+                scope.spawn(|| self.blockhash_prefix_to_height.commit(height));
+            let txid_prefix_to_txindex_commit_handle = scope.spawn(|| self.txid_prefix_to_txindex.commit(height));
 
-            addressbytes_prefix_to_addressindex_write_handle.join().unwrap()?;
-            blockhash_prefix_to_height_write_handle.join().unwrap()?;
-            txid_prefix_to_txindex_write_handle.join().unwrap()?;
+            addressbytes_prefix_to_addressindex_commit_handle.join().unwrap()?;
+            blockhash_prefix_to_height_commit_handle.join().unwrap()?;
+            txid_prefix_to_txindex_commit_handle.join().unwrap()?;
 
             Ok(())
         })

@@ -1,18 +1,35 @@
+use std::path::Path;
+
+use bindex::{biter::rpc, Indexer};
+use exit::Exit;
+
 mod structs;
 
 use structs::*;
 
-pub fn add(left: u64, right: u64) -> u64 {
-    left + right
+pub struct Bomputer;
+
+impl Bomputer {
+    pub fn compute() {}
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
+pub fn main() -> color_eyre::Result<()> {
+    color_eyre::install()?;
 
-    #[test]
-    fn it_works() {
-        let result = add(2, 2);
-        assert_eq!(result, 4);
-    }
+    let data_dir = Path::new("../../bitcoin");
+    let rpc = rpc::Client::new(
+        "http://localhost:8332",
+        rpc::Auth::CookieFile(Path::new(data_dir).join(".cookie")),
+    )?;
+    let exit = Exit::new();
+
+    let i = std::time::Instant::now();
+
+    let mut indexer = Indexer::import(Path::new("indexes"))?;
+
+    indexer.index(data_dir, rpc, &exit)?;
+
+    dbg!(i.elapsed());
+
+    Ok(())
 }

@@ -214,6 +214,14 @@ checksum = "8f68f53c83ab957f72c32642f3868eec03eb974d1fb82e453128456482613d36"
 [[package]]
 name = "bomputer"
 version = "0.1.0"
+dependencies = [
+ "bindex",
+ "color-eyre",
+ "derive_deref",
+ "exit",
+ "jiff",
+ "rayon",
+]
 
 [[package]]
 name = "byteorder"
@@ -546,9 +554,9 @@ checksum = "d75a2a4b1b190afb6f5425f10f6a8f959d2ea0b9c2b1d79553551850539e4674"
 
 [[package]]
 name = "jiff"
-version = "0.1.25"
+version = "0.1.27"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fb73dbeee753ae9411475ddd8861765fa7f25fe1eebf180c24e1bbabef3fbdcd"
+checksum = "a85348106ab244d90fe2d70faad939b71c5dad1258e5da9116e176064fc6c078"
 dependencies = [
  "jiff-tzdb-platform",
  "log",

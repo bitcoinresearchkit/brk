@@ -14,7 +14,7 @@ mod base;
 
 use base::*;
 
-pub struct Vecs {
+pub struct StorableVecs {
     pub addressindex_to_addresstype: StorableVec<Addressindex, Addresstype>,
     pub addressindex_to_addresstypeindex: StorableVec<Addressindex, Addresstypeindex>,
     pub addressindex_to_height: StorableVec<Addressindex, Height>,
@@ -75,7 +75,7 @@ pub struct Vecs {
 
 // const UNSAFE_BLOCKS: usize = 100;
 
-impl Vecs {
+impl StorableVecs {
     pub fn import(path: &Path) -> color_eyre::Result<Self> {
         fs::create_dir_all(path)?;
 

@@ -1,26 +1,11 @@
-# [package]
-# name = "kibo_money"
-# version = "0.6.0"
-# edition = "2021"
+[package]
+name = "kibo_server"
+version = "0.6.0"
+edition = "2021"
 
-[workspace]
-members = [
-    "bindex",
-    "biter",
-    "bomputer",
-    "exit",
-    # "server",
-    "snkrj",
-    "struct_iterable",
-    "storable_vec",
-]
-resolver = "2"
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
-# [dependencies]
+[dependencies]
 # allocative = "0.3.4"
-# axum = "0.7.9"
+axum = "0.7.9"
 # bincode = { git = "https://github.com/bincode-org/bincode.git", features = [
 #     "serde",
 # ] }
