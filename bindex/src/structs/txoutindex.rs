@@ -1,7 +1,4 @@
-use std::{
-    ops::{Add, AddAssign},
-    u64,
-};
+use std::ops::{Add, AddAssign};
 
 use derive_deref::{Deref, DerefMut};
 use snkrj::{direct_repr, Storable, UnsizedStorable};
@@ -13,7 +10,7 @@ pub struct Txoutindex(u64);
 direct_repr!(Txoutindex);
 
 impl Txoutindex {
-    pub const MAX: Self = Self(u64::MAX);
+    pub const COINBASE: Self = Self(u64::MAX);
 
     pub fn incremented(self) -> Self {
         Self(*self + 1)
@@ -24,7 +21,7 @@ impl Txoutindex {
     }
 
     pub fn is_coinbase(self) -> bool {
-        self == Self::MAX
+        self == Self::COINBASE
     }
 }
 

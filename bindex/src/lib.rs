@@ -24,8 +24,7 @@ use structs::{
 };
 
 const UNSAFE_BLOCKS: u32 = 100;
-const DAILY_BLOCK_TARGET: usize = 144;
-const SNAPSHOT_BLOCK_RANGE: usize = DAILY_BLOCK_TARGET * 10;
+const SNAPSHOT_BLOCK_RANGE: usize = 1000;
 
 #[derive(Debug)]
 pub struct Indexer;
@@ -53,29 +52,27 @@ impl Indexer {
         let mut txoutindex_global = vecs.height_to_first_txoutindex.get_or_default(height)?;
         let mut addressindex_global = vecs.height_to_first_addressindex.get_or_default(height)?;
         let mut emptyindex_global = vecs.height_to_first_emptyindex.get_or_default(height)?;
-        let mut multisigindex_global = vecs.height_to_first_emptyindex.get_or_default(height)?;
-        let mut opreturnindex_global = vecs.height_to_first_emptyindex.get_or_default(height)?;
-        let mut pushonlyindex_global = vecs.height_to_first_emptyindex.get_or_default(height)?;
-        let mut unknownindex_global = vecs.height_to_first_emptyindex.get_or_default(height)?;
-        let mut p2pk33index_global = vecs.height_to_p2pk33index.get_or_default(height)?;
-        let mut p2pk65index_global = vecs.height_to_p2pk65index.get_or_default(height)?;
-        let mut p2pkhindex_global = vecs.height_to_p2pkhindex.get_or_default(height)?;
-        let mut p2shindex_global = vecs.height_to_p2shindex.get_or_default(height)?;
-        let mut p2trindex_global = vecs.height_to_p2trindex.get_or_default(height)?;
-        let mut p2wpkhindex_global = vecs.height_to_p2wpkhindex.get_or_default(height)?;
-        let mut p2wshindex_global = vecs.height_to_p2wshindex.get_or_default(height)?;
+        let mut multisigindex_global = vecs.height_to_first_multisigindex.get_or_default(height)?;
+        let mut opreturnindex_global = vecs.height_to_first_opreturnindex.get_or_default(height)?;
+        let mut pushonlyindex_global = vecs.height_to_first_pushonlyindex.get_or_default(height)?;
+        let mut unknownindex_global = vecs.height_to_first_unknownindex.get_or_default(height)?;
+        let mut p2pk33index_global = vecs.height_to_first_p2pk33index.get_or_default(height)?;
+        let mut p2pk65index_global = vecs.height_to_first_p2pk65index.get_or_default(height)?;
+        let mut p2pkhindex_global = vecs.height_to_first_p2pkhindex.get_or_default(height)?;
+        let mut p2shindex_global = vecs.height_to_first_p2shindex.get_or_default(height)?;
+        let mut p2trindex_global = vecs.height_to_first_p2trindex.get_or_default(height)?;
+        let mut p2wpkhindex_global = vecs.height_to_first_p2wpkhindex.get_or_default(height)?;
+        let mut p2wshindex_global = vecs.height_to_first_p2wshindex.get_or_default(height)?;
 
         let export = |stores: Stores, vecs: &mut Vecs, height: Height| -> color_eyre::Result<()> {
             println!("Exporting...");
 
+            if height >= Height::from(400_000_u32) {
+                pause();
+                //     println!("Flushing vecs...");
+            }
+
             exit.block();
-            // At 401760
-            // Memory: 1.87 GB
-            // Real Memory: 13.46 GB
-            // if height >= Height::from(400_000_u32) {
-            //     pause();
-            // }
-            println!("Flushing vecs...");
 
             thread::scope(|scope| -> color_eyre::Result<()> {
                 let vecs_handle = scope.spawn(|| vecs.flush(height));
@@ -85,27 +82,13 @@ impl Indexer {
                 Ok(())
             })?;
 
-            // At 401760
-            // Memory: 1.83 GB
-            // Real Memory: 9.45 GB
-            // if height >= Height::from(400_000_u32) {
-            //     pause();
-            // }
-
-            // At: 401760
-            // Memory: 1.34 GB
-            // Real Memory: 1.52 GB
-            println!("All done...");
-            // if height >= Height::from(400_000_u32) {
-            //     pause();
-            // }
             exit.unblock();
             Ok(())
         };
 
         let mut stores_opt = Some(stores);
 
-        biter::new(bitcoin_dir, Some(height.into()), None, rpc)
+        biter::new(bitcoin_dir, Some(height.into()), Some(500_000), rpc)
             .iter()
             .try_for_each(|(_height, block, blockhash)| -> color_eyre::Result<()> {
                 println!("Processing block {_height}...");
@@ -158,13 +141,13 @@ impl Indexer {
                     .push_if_needed(height, pushonlyindex_global)?;
                 vecs.height_to_first_unknownindex
                     .push_if_needed(height, unknownindex_global)?;
-                vecs.height_to_p2pk33index.push_if_needed(height, p2pk33index_global)?;
-                vecs.height_to_p2pk65index.push_if_needed(height, p2pk65index_global)?;
-                vecs.height_to_p2pkhindex.push_if_needed(height, p2pkhindex_global)?;
-                vecs.height_to_p2shindex.push_if_needed(height, p2shindex_global)?;
-                vecs.height_to_p2trindex.push_if_needed(height, p2trindex_global)?;
-                vecs.height_to_p2wpkhindex.push_if_needed(height, p2wpkhindex_global)?;
-                vecs.height_to_p2wshindex.push_if_needed(height, p2wshindex_global)?;
+                vecs.height_to_first_p2pk33index.push_if_needed(height, p2pk33index_global)?;
+                vecs.height_to_first_p2pk65index.push_if_needed(height, p2pk65index_global)?;
+                vecs.height_to_first_p2pkhindex.push_if_needed(height, p2pkhindex_global)?;
+                vecs.height_to_first_p2shindex.push_if_needed(height, p2shindex_global)?;
+                vecs.height_to_first_p2trindex.push_if_needed(height, p2trindex_global)?;
+                vecs.height_to_first_p2wpkhindex.push_if_needed(height, p2wpkhindex_global)?;
+                vecs.height_to_first_p2wshindex.push_if_needed(height, p2wshindex_global)?;
 
                 let inputs = block
                     .txdata
@@ -276,21 +259,10 @@ impl Indexer {
                                     })?
                                     + vout;
 
-                                let addressindex = *vecs
-                                    .txoutindex_to_addressindex
-                                    .get(txoutindex)?
-                                    .context("Expect addressindex to not be none")
-                                    .inspect_err(|_| {
-                                        // let height = vecdisks.txindex_to_height.get(txindex.into()).expect("txindex_to_height get not fail")
-                                        // .expect("Expect height for txindex");
-                                        dbg!(outpoint.txid, prev_txindex, vout, txoutindex);
-                                    })?;
-
                                 Ok((txinindex, InputSource::PreviousBlock((
                                     vin,
                                     txindex,
                                     txoutindex,
-                                    addressindex,
                                 ))))
                             })
                             .try_fold(BTreeMap::new, |mut map, tuple| -> color_eyre::Result<_> {
@@ -540,10 +512,6 @@ impl Indexer {
                         vecs.txoutindex_to_addressindex
                             .push_if_needed(txoutindex, addressindex)?;
 
-                        // stores
-                        //     .addressindex_to_txoutindex_in
-                        //     .insert_if_needed(addressindex, txoutindex, height);
-
                         Ok(())
                     },
                 )?;
@@ -555,13 +523,13 @@ impl Indexer {
                     .map(
                         #[allow(clippy::type_complexity)]
                         |(txinindex, input_source)| -> color_eyre::Result<(
-                            Txinindex, Vin, Txindex, Option<(Addressindex, Txoutindex)>
+                            Txinindex, Vin, Txindex, Txoutindex
                         )> {
                             match input_source {
-                                InputSource::PreviousBlock((vin, txindex, txoutindex, addressindex)) => Ok((txinindex, vin, txindex, Some((addressindex, txoutindex)))),
+                                InputSource::PreviousBlock((vin, txindex, txoutindex)) => Ok((txinindex, vin, txindex, txoutindex)),
                                 InputSource::SameBlock((tx, txindex, txin, vin)) => {
                                     if tx.is_coinbase() {
-                                        return Ok((txinindex, vin, txindex, None));
+                                        return Ok((txinindex, vin, txindex, Txoutindex::COINBASE));
                                     }
 
                                     let outpoint = txin.previous_output;
@@ -581,27 +549,19 @@ impl Indexer {
                                             dbg!(&new_txindexvout_to_txoutindex, txin, prev_txindex, vout, txid);
                                         })?;
 
-                                    Ok((txinindex, vin, txindex, Some((Addressindex::from(0_u32), prev_txoutindex))))
+                                    Ok((txinindex, vin, txindex, prev_txoutindex))
                                 }
                             }
                         },
                     )
                     .try_for_each(|res| -> color_eyre::Result<()> {
-                        let (txinindex, vin, txindex, addressindex_and_txoutindex_opt) = res?;
+                        let (txinindex, vin, txindex, txoutindex) = res?;
 
                         if vin.is_zero() {
                             vecs.txindex_to_first_txinindex.push_if_needed(txindex, txinindex)?;
                         }
 
-                        let txoutindex = addressindex_and_txoutindex_opt.map_or(Txoutindex::MAX, |(_, txoutindex)| txoutindex);
-
                         vecs.txinindex_to_txoutindex.push_if_needed(txinindex, txoutindex)?;
-
-                        // if let Some(addressindex) = addressindex_and_txoutindex_opt.map(|(addressindex, _)| addressindex) {
-                        //     stores
-                        //         .addressindex_to_txoutindex_out
-                        //         .insert_if_needed(addressindex, txoutindex, height);
-                        // }
 
                         Ok(())
                     })?;
@@ -703,7 +663,7 @@ impl Indexer {
 
 #[derive(Debug)]
 enum InputSource<'a> {
-    PreviousBlock((Vin, Txindex, Txoutindex, Addressindex)),
+    PreviousBlock((Vin, Txindex, Txoutindex)),
     SameBlock((&'a Transaction, Txindex, &'a TxIn, Vin)),
 }
 

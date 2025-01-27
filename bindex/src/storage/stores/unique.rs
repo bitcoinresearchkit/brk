@@ -11,7 +11,7 @@ where
     V: DatabaseValue,
 {
     meta: StoreMeta,
-    pub parts: [OnceLock<Box<DatabaseUnique<K, V>>>; 64],
+    pub parts: [OnceLock<Box<DatabaseUnique<K, V>>>; 256],
 }
 
 impl<K, V> StoreUnique<K, V>
@@ -33,7 +33,7 @@ where
     // }
 
     fn get_or_init_store(&self, key: &K) -> &DatabaseUnique<K, V> {
-        self.get_or_init_store_(key.as_ne_six_bits() as usize)
+        self.get_or_init_store_(key.as_ne_byte() as usize)
     }
 
     fn get_or_init_store_(&self, storeindex: usize) -> &DatabaseUnique<K, V> {
@@ -46,7 +46,7 @@ where
         self.get_or_init_store(key);
 
         self.parts
-            .get_mut(key.as_ne_six_bits() as usize)
+            .get_mut(key.as_ne_byte() as usize)
             .unwrap()
             .get_mut()
             .unwrap()
