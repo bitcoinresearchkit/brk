@@ -9,6 +9,7 @@ biter = { path = "../biter" }
 color-eyre = "0.6.3"
 derive_deref = "1.1.1"
 exit = { path = "../exit" }
+fjall = "2.5.0"
 jiff = "0.1.24"
 rapidhash = "1.3.0"
 rayon = "1.10.0"

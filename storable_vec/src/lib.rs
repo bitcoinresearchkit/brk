@@ -27,7 +27,7 @@ use memmap2::{Mmap, MmapOptions};
 pub struct StorableVec<I, T> {
     pathbuf: PathBuf,
     file: File,
-    cache: Vec<OnceLock<Box<Mmap>>>, // Boxed to reduce the size of the lock (24 > 16)
+    cache: Vec<OnceLock<Box<Mmap>>>, // Boxed Mmap to reduce the size of the Lock (from 24 to 16)
     disk_len: usize,
     pushed: Vec<T>,
     // updated: BTreeMap<usize, T>,
@@ -40,6 +40,7 @@ pub struct StorableVec<I, T> {
 const MAX_PAGE_SIZE: usize = 4 * 4096;
 const ONE_MB: usize = 1000 * 1024;
 const MAX_CACHE_SIZE: usize = 100 * ONE_MB;
+// const MAX_CACHE_SIZE: usize = 100 * ONE_MB;
 
 impl<I, T> StorableVec<I, T>
 where
@@ -50,8 +51,7 @@ where
     pub const PER_PAGE: usize = MAX_PAGE_SIZE / Self::SIZE_OF_T;
     /// In bytes
     pub const PAGE_SIZE: usize = Self::PER_PAGE * Self::SIZE_OF_T;
-    pub const CACHE_LENGTH: usize = usize::MAX;
-    // pub const CACHE_LENGTH: usize = MAX_CACHE_SIZE / Self::PAGE_SIZE;
+    pub const CACHE_LENGTH: usize = MAX_CACHE_SIZE / Self::PAGE_SIZE;
 
     pub fn import(path: &Path) -> Result<Self, io::Error> {
         let file = Self::open_file(path)?;
@@ -78,13 +78,18 @@ where
         // self.cache.clear();
         // self.cache.resize_with(len, Default::default);
 
+        // par_iter_mut ?
         self.cache.iter_mut().for_each(|lock| {
             lock.take();
         });
+
         let len = (self.disk_len as f64 / Self::PER_PAGE as f64).ceil() as usize;
-        self.cache
-            .resize_with(Self::CACHE_LENGTH.min(len), Default::default);
-        self.cache.shrink_to_fit();
+        let len = Self::CACHE_LENGTH.min(len);
+
+        if self.cache.len() != len {
+            self.cache.resize_with(len, Default::default);
+            self.cache.shrink_to_fit();
+        }
     }
 
     fn open_file(path: &Path) -> Result<File, io::Error> {
@@ -222,7 +227,7 @@ where
         let len = self.len();
         match len.cmp(&index) {
             Ordering::Greater => {
-                // dbg!(len, index);
+                // dbg!(len, index, &self.pathbuf);
                 // panic!();
                 Ok(())
             }
@@ -230,7 +235,10 @@ where
                 self.push(value);
                 Ok(())
             }
-            Ordering::Less => Err(Error::IndexTooHigh),
+            Ordering::Less => {
+                dbg!(index, value);
+                Err(Error::IndexTooHigh)
+            }
         }
     }
 
