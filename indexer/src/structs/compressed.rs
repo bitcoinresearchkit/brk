@@ -2,15 +2,15 @@ use std::hash::Hasher;
 
 use biter::bitcoin::{BlockHash, Txid};
 use derive_deref::Deref;
-use snkrj::{direct_repr, Storable, UnsizedStorable};
-use storable_vec::UnsafeSizedSerDe;
+// use snkrj::{direct_repr, Storable, UnsizedStorable};
+use unsafe_slice_serde::UnsafeSliceSerde;
 
 use super::{Addressbytes, Addresstype, SliceExtended};
 
 #[derive(Debug, Deref, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
-pub struct AddressbytesPrefix([u8; 8]);
-direct_repr!(AddressbytesPrefix);
-impl From<(&Addressbytes, Addresstype)> for AddressbytesPrefix {
+pub struct AddressHash([u8; 8]);
+// direct_repr!(AddressHash);
+impl From<(&Addressbytes, Addresstype)> for AddressHash {
     fn from((addressbytes, addresstype): (&Addressbytes, Addresstype)) -> Self {
         let mut hasher = rapidhash::RapidHasher::default();
         hasher.write(addressbytes.as_slice());
@@ -19,31 +19,31 @@ impl From<(&Addressbytes, Addresstype)> for AddressbytesPrefix {
         Self(slice)
     }
 }
-impl From<[u8; 8]> for AddressbytesPrefix {
+impl From<[u8; 8]> for AddressHash {
     fn from(value: [u8; 8]) -> Self {
         Self(value)
     }
 }
-impl TryFrom<fjall::Slice> for AddressbytesPrefix {
+impl TryFrom<fjall::Slice> for AddressHash {
     type Error = color_eyre::Report;
     fn try_from(value: fjall::Slice) -> Result<Self, Self::Error> {
         Ok(*Self::unsafe_try_from_slice(&value)?)
     }
 }
-impl From<&AddressbytesPrefix> for fjall::Slice {
-    fn from(value: &AddressbytesPrefix) -> Self {
+impl From<&AddressHash> for fjall::Slice {
+    fn from(value: &AddressHash) -> Self {
         Self::new(value.unsafe_as_slice())
     }
 }
-impl From<AddressbytesPrefix> for fjall::Slice {
-    fn from(value: AddressbytesPrefix) -> Self {
+impl From<AddressHash> for fjall::Slice {
+    fn from(value: AddressHash) -> Self {
         Self::from(&value)
     }
 }
 
 #[derive(Debug, Deref, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub struct BlockHashPrefix([u8; 8]);
-direct_repr!(BlockHashPrefix);
+// direct_repr!(BlockHashPrefix);
 impl TryFrom<&BlockHash> for BlockHashPrefix {
     type Error = color_eyre::Report;
     fn try_from(value: &BlockHash) -> Result<Self, Self::Error> {
@@ -69,7 +69,7 @@ impl From<BlockHashPrefix> for fjall::Slice {
 
 #[derive(Debug, Deref, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub struct TxidPrefix([u8; 8]);
-direct_repr!(TxidPrefix);
+// direct_repr!(TxidPrefix);
 impl TryFrom<&Txid> for TxidPrefix {
     type Error = color_eyre::Report;
     fn try_from(value: &Txid) -> Result<Self, Self::Error> {

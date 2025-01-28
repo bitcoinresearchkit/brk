@@ -1,0 +1,13 @@
+[package]
+name = "bomputer"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+biter = { workspace = true }
+bindex = { workspace = true }
+color-eyre = { workspace = true }
+derive_deref = { workspace = true }
+exit = { workspace = true }
+jiff = { workspace = true }
+rayon = { workspace = true }

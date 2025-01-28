@@ -1,12 +1,12 @@
 use std::ops::{Add, AddAssign};
 
 use derive_deref::{Deref, DerefMut};
-use snkrj::{direct_repr, Storable, UnsizedStorable};
-use storable_vec::UnsafeSizedSerDe;
+// use snkrj::{direct_repr, Storable, UnsizedStorable};
+use unsafe_slice_serde::UnsafeSliceSerde;
 
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Deref, DerefMut, Default)]
 pub struct Txindex(u32);
-direct_repr!(Txindex);
+// direct_repr!(Txindex);
 
 impl Txindex {
     pub fn incremented(self) -> Self {
@@ -60,7 +60,7 @@ impl From<Txindex> for usize {
 }
 
 impl TryFrom<fjall::Slice> for Txindex {
-    type Error = storable_vec::Error;
+    type Error = unsafe_slice_serde::Error;
     fn try_from(value: fjall::Slice) -> Result<Self, Self::Error> {
         Ok(*Self::unsafe_try_from_slice(&value)?)
     }

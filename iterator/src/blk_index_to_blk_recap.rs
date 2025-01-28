@@ -6,16 +6,13 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use derived_deref::{Deref, DerefMut};
-
 use crate::{blk_recap::BlkRecap, BlkIndexToBlkPath, BlkMetadataAndBlock};
 
 const TARGET_BLOCKS_PER_MONTH: usize = 144 * 30;
 
-#[derive(Deref, DerefMut, Debug)]
+#[derive(Debug)]
 pub struct BlkIndexToBlkRecap {
     path: PathBuf,
-    #[target]
     tree: BTreeMap<usize, BlkRecap>,
     last_safe_height: Option<usize>,
 }
@@ -47,37 +44,38 @@ impl BlkIndexToBlkRecap {
     }
 
     pub fn clean_outdated(&mut self, blocks_dir: &BlkIndexToBlkPath) {
-        let mut unprocessed_keys = self.keys().copied().collect::<BTreeSet<_>>();
+        let mut unprocessed_keys = self.tree.keys().copied().collect::<BTreeSet<_>>();
 
         blocks_dir.iter().for_each(|(blk_index, blk_path)| {
             unprocessed_keys.remove(blk_index);
-            if let Some(blk_recap) = self.get(blk_index) {
+            if let Some(blk_recap) = self.tree.get(blk_index) {
                 if blk_recap.has_different_modified_time(blk_path) {
-                    self.remove(blk_index);
+                    self.tree.remove(blk_index);
                 }
             }
         });
 
         unprocessed_keys.into_iter().for_each(|blk_index| {
-            self.remove(&blk_index);
+            self.tree.remove(&blk_index);
         });
 
-        self.last_safe_height = self.iter().map(|(_, recap)| recap.height()).max();
+        self.last_safe_height = self.tree.values().map(|recap| recap.height()).max();
     }
 
     pub fn get_start_recap(&self, start: Option<usize>) -> Option<(usize, BlkRecap)> {
         if let Some(start) = start {
-            let (last_key, last_value) = self.last_key_value()?;
+            let (last_key, last_value) = self.tree.last_key_value()?;
 
             if last_value.height() < start {
                 return Some((*last_key, *last_value));
             } else if let Some((blk_index, _)) = self
+                .tree
                 .iter()
                 .find(|(_, blk_recap)| blk_recap.is_younger_than(start))
             {
                 if *blk_index != 0 {
                     let blk_index = *blk_index - 1;
-                    return Some((blk_index, *self.get(&blk_index).unwrap()));
+                    return Some((blk_index, *self.tree.get(&blk_index).unwrap()));
                 }
             }
         }
@@ -88,13 +86,14 @@ impl BlkIndexToBlkRecap {
     pub fn update(&mut self, blk_metadata_and_block: &BlkMetadataAndBlock, height: usize) {
         let blk_index = blk_metadata_and_block.blk_metadata.index;
 
-        if let Some(last_entry) = self.last_entry() {
+        if let Some(last_entry) = self.tree.last_entry() {
             match last_entry.key().cmp(&blk_index) {
                 Ordering::Greater => {
                     last_entry.remove_entry();
                 }
                 Ordering::Less => {
-                    self.insert(blk_index, BlkRecap::from(height, blk_metadata_and_block));
+                    self.tree
+                        .insert(blk_index, BlkRecap::from(height, blk_metadata_and_block));
                 }
                 Ordering::Equal => {}
             };
@@ -104,7 +103,8 @@ impl BlkIndexToBlkRecap {
                 unreachable!();
             }
 
-            self.insert(blk_index, BlkRecap::first(blk_metadata_and_block));
+            self.tree
+                .insert(blk_index, BlkRecap::first(blk_metadata_and_block));
         }
 
         if self

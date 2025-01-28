@@ -1,6 +1,7 @@
 use std::path::Path;
 
-use bindex::{biter::rpc, Indexer};
+use bindex::Indexer;
+use biter::rpc;
 use exit::Exit;
 
 mod structs;

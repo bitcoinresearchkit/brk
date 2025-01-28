@@ -3,7 +3,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use storable_vec::UnsafeSizedSerDe;
+use unsafe_slice_serde::UnsafeSliceSerde;
 
 use super::{Height, Version};
 

@@ -1,6 +1,6 @@
 use std::{fs, io, path::Path};
 
-use storable_vec::UnsafeSizedSerDe;
+use unsafe_slice_serde::UnsafeSliceSerde;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Version(u32);

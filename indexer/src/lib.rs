@@ -9,7 +9,7 @@ use std::{
 
 pub use biter::*;
 
-use biter::bitcoin::{Transaction, TxIn, TxOut, Txid};
+use bitcoin::{Transaction, TxIn, TxOut, Txid};
 use color_eyre::eyre::{eyre, ContextCompat};
 use exit::Exit;
 use rayon::prelude::*;
@@ -21,8 +21,8 @@ pub use biter;
 
 use storage::{Fjalls, StorableVecs};
 pub use structs::{
-    Addressbytes, AddressbytesPrefix, Addressindex, Addresstype, Amount, BlockHashPrefix, Height, Timestamp,
-    TxidPrefix, Txindex, Txinindex, Txoutindex, Vin, Vout,
+    AddressHash, Addressbytes, Addressindex, Addresstype, Amount, BlockHashPrefix, Height, Timestamp, TxidPrefix,
+    Txindex, Txinindex, Txoutindex, Vin, Vout,
 };
 
 const UNSAFE_BLOCKS: u32 = 100;
@@ -89,19 +89,13 @@ impl Indexer {
             Ok(())
         };
 
-        // // let mut stores_opt = Some(stores);
-        // let mut rtx_opt = Some(rtx);
-
-        biter::new(bitcoin_dir, Some(height.into()), Some(400_000), rpc)
+        biter::new(bitcoin_dir, Some(height.into()), None, rpc)
             .iter()
             .try_for_each(|(_height, block, blockhash)| -> color_eyre::Result<()> {
                 println!("Processing block {_height}...");
 
                 height = Height::from(_height);
                 let timestamp = Timestamp::try_from(block.header.time)?;
-
-                // let mut stores = stores_opt.take().context("option should have store")?;
-                // let rtx = rtx_opt.take().context("option should have rtx")?;
 
                 if let Some(saved_blockhash) = vecs.height_to_blockhash.get(height)? {
                     if &blockhash != saved_blockhash.as_ref() {
@@ -115,7 +109,7 @@ impl Indexer {
                 if parts
                     .blockhash_prefix_to_height
                     .get(&blockhash_prefix)?
-                    .is_some_and(|prev_height| prev_height != height)
+                    .is_some_and(|prev_height| *prev_height != height)
                 {
                     dbg!(blockhash);
                     return Err(eyre!("Collision, expect prefix to need be set yet"));
@@ -198,15 +192,15 @@ impl Indexer {
 
                                     let txid_prefix = TxidPrefix::try_from(&txid)?;
 
-                                    let prev_txindex_slice_opt =
+                                    let prev_txindex_opt =
                                         if check_collisions && parts.txid_prefix_to_txindex.needs(height) {
                                             // Should only find collisions for two txids (duplicates), see below
-                                            parts.txid_prefix_to_txindex.get(&txid_prefix)?
+                                            parts.txid_prefix_to_txindex.get(&txid_prefix)?.map(|v| *v)
                                         } else {
                                             None
                                         };
 
-                                    Ok((txid_prefix, (tx, txid, Txindex::from(index), prev_txindex_slice_opt)))
+                                    Ok((txid_prefix, (tx, txid, Txindex::from(index), prev_txindex_opt)))
                                 })
                                 .try_fold(BTreeMap::new, |mut map, tuple| {
                                     let (key, value) = tuple?;
@@ -243,6 +237,7 @@ impl Indexer {
                                 let prev_txindex = if let Some(txindex) = parts
                                     .txid_prefix_to_txindex
                                     .get(&TxidPrefix::try_from(&outpoint.txid)?)?
+                                    .map(|v| *v)
                                     .and_then(|txindex| {
                                         // Checking if not finding txindex from the future
                                         (txindex < txindex_global).then_some(txindex)
@@ -318,9 +313,10 @@ impl Indexer {
 
                                     let addressindex_opt = addressbytes_res.as_ref().ok().and_then(|addressbytes| {
                                         parts
-                                            .addressbytes_prefix_to_addressindex
-                                            .get(&AddressbytesPrefix::from((addressbytes, addresstype)))
+                                            .addresshash_to_addressindex
+                                            .get(&AddressHash::from((addressbytes, addresstype)))
                                             .unwrap()
+                                            .map(|v| *v)
                                             // Checking if not in the future
                                             .and_then(|addressindex_local| {
                                                 (addressindex_local < addressindex_global).then_some(addressindex_local)
@@ -350,7 +346,7 @@ impl Indexer {
 
                                         if (vecs.addressindex_to_addresstype.hasnt(addressindex)
                                             && addresstype != prev_addresstype)
-                                            || (parts.addressbytes_prefix_to_addressindex.needs(height)
+                                            || (parts.addresshash_to_addressindex.needs(height)
                                                 && prev_addressbytes != addressbytes)
                                         {
                                             let txid = tx.compute_txid();
@@ -367,8 +363,8 @@ impl Indexer {
                                                 addressindex,
                                                 addresstypeindex,
                                                 txout,
-                                                AddressbytesPrefix::from((addressbytes, addresstype)),
-                                                AddressbytesPrefix::from((prev_addressbytes, prev_addresstype))
+                                                AddressHash::from((addressbytes, addresstype)),
+                                                AddressHash::from((prev_addressbytes, prev_addresstype))
                                             );
                                             panic!()
                                         }
@@ -434,7 +430,7 @@ impl Indexer {
                     Txoutindex,
                 > = BTreeMap::new();
 
-                let mut already_added_addressbytes_prefix: BTreeMap<AddressbytesPrefix, Addressindex> = BTreeMap::new();
+                let mut already_added_addresshash: BTreeMap<AddressHash, Addressindex> = BTreeMap::new();
 
                 txoutindex_to_txout_addresstype_addressbytes_res_addressindex_opt
                 .into_iter()
@@ -454,15 +450,15 @@ impl Indexer {
 
                         let mut addressindex = addressindex_global;
 
-                        let mut addressbytes_prefix = None;
+                        let mut addresshash = None;
 
                         if let Some(addressindex_local) = addressindex_opt.or_else(|| {
                             addressbytes_res.as_ref().ok().and_then(|addressbytes| {
                                 // Check if address was first seen before in this iterator
                                 // Example: https://mempool.space/address/046a0765b5865641ce08dd39690aade26dfbf5511430ca428a3089261361cef170e3929a68aee3d8d4848b0c5111b0a37b82b86ad559fd2a745b44d8e8d9dfdc0c
-                                addressbytes_prefix.replace(AddressbytesPrefix::from((addressbytes, addresstype)));
-                                already_added_addressbytes_prefix
-                                    .get(addressbytes_prefix.as_ref().unwrap())
+                                addresshash.replace(AddressHash::from((addressbytes, addresstype)));
+                                already_added_addresshash
+                                    .get(addresshash.as_ref().unwrap())
                                     .cloned()
                             })
                         }) {
@@ -495,13 +491,13 @@ impl Indexer {
                                 .push_if_needed(addressindex, height)?;
 
                             if let Ok(addressbytes) = addressbytes_res {
-                                let addressbytes_prefix = addressbytes_prefix.unwrap();
+                                let addresshash = addresshash.unwrap();
 
-                                already_added_addressbytes_prefix
-                                    .insert(addressbytes_prefix, addressindex);
+                                already_added_addresshash
+                                    .insert(addresshash, addressindex);
 
-                                parts.addressbytes_prefix_to_addressindex.insert_if_needed(
-                                    addressbytes_prefix,
+                                parts.addresshash_to_addressindex.insert_if_needed(
+                                    addresshash,
                                     addressindex,
                                     height,
                                 );
@@ -520,7 +516,7 @@ impl Indexer {
                     },
                 )?;
 
-                drop(already_added_addressbytes_prefix);
+                drop(already_added_addresshash);
 
                 input_source_vec
                     .into_iter()
