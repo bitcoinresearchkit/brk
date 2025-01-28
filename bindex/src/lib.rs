@@ -12,7 +12,6 @@ pub use biter::*;
 use biter::bitcoin::{Transaction, TxIn, TxOut, Txid};
 use color_eyre::eyre::{eyre, ContextCompat};
 use exit::Exit;
-use fjall::{PersistMode, ReadTransaction, TransactionalKeyspace};
 use rayon::prelude::*;
 
 mod storage;
@@ -36,10 +35,10 @@ pub struct Indexer {
 
 impl Indexer {
     pub fn import(indexes_dir: &Path) -> color_eyre::Result<Self> {
-        let vecs = StorableVecs::import(&indexes_dir.join("vecs"))?;
-        let parts = Fjalls::import(&indexes_dir.join("fjall"))?;
-
-        Ok(Self { vecs, parts })
+        Ok(Self {
+            vecs: StorableVecs::import(&indexes_dir.join("vecs"))?,
+            parts: Fjalls::import(&indexes_dir.join("fjall"))?,
+        })
     }
 
     pub fn index(&mut self, bitcoin_dir: &Path, rpc: rpc::Client, exit: &Exit) -> color_eyre::Result<()> {
@@ -93,7 +92,7 @@ impl Indexer {
         // // let mut stores_opt = Some(stores);
         // let mut rtx_opt = Some(rtx);
 
-        biter::new(bitcoin_dir, Some(height.into()), None, rpc)
+        biter::new(bitcoin_dir, Some(height.into()), Some(400_000), rpc)
             .iter()
             .try_for_each(|(_height, block, blockhash)| -> color_eyre::Result<()> {
                 println!("Processing block {_height}...");
@@ -674,6 +673,7 @@ enum InputSource<'a> {
     SameBlock((&'a Transaction, Txindex, &'a TxIn, Vin)),
 }
 
+#[allow(unused)]
 fn pause() {
     let mut stdin = std::io::stdin();
     let mut stdout = std::io::stdout();

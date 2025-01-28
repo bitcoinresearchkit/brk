@@ -4,6 +4,7 @@ use fjall::{
     PartitionCreateOptions, PersistMode, ReadTransaction, Result, Slice, TransactionalKeyspace,
     TransactionalPartitionHandle,
 };
+use storable_vec::UnsafeSizedSerDe;
 
 use crate::structs::{Height, Version};
 
@@ -24,48 +25,38 @@ where
 {
     pub fn import(path: &Path, version: Version) -> color_eyre::Result<Self> {
         let meta = Meta::checked_open(path, version)?;
-
-        let keyspace = fjall::Config::new(path.join("fjall")).open_transactional()?;
-        let handle = keyspace.open_partition(
-            "partition",
-            PartitionCreateOptions::default().manual_journal_persist(true),
-        )?;
+        let keyspace = if let Ok(keyspace) = Self::open_keyspace(path) {
+            keyspace
+        } else {
+            meta.reset()?;
+            return Self::import(path, version);
+        };
+        let part = if let Ok(part) = Self::open_partition_handle(&keyspace) {
+            part
+        } else {
+            drop(keyspace);
+            meta.reset()?;
+            return Self::import(path, version);
+        };
         let rtx = keyspace.read_tx();
 
         Ok(Self {
             meta,
             keyspace,
-            part: handle,
+            part,
             rtx,
             puts: BTreeMap::new(),
         })
     }
 
-    pub fn len(&self) -> usize {
-        self.meta.len() + self.puts.len()
-    }
-
-    pub fn has(&self, height: Height) -> bool {
-        self.height().is_some_and(|self_height| self_height >= &height)
-    }
-    pub fn needs(&self, height: Height) -> bool {
-        !self.has(height)
-    }
-
-    pub fn get<'a>(&self, key: &'a Key) -> color_eyre::Result<Option<Value>>
+    pub fn get(&self, key: &Key) -> color_eyre::Result<Option<Value>>
     where
-        fjall::Slice: std::convert::From<&'a Key>,
-        <Value as std::convert::TryFrom<fjall::Slice>>::Error: std::error::Error + Send + Sync,
-        <Value as std::convert::TryFrom<fjall::Slice>>::Error: 'static,
+        <Value as TryFrom<Slice>>::Error: std::error::Error + Send + Sync + 'static,
     {
         if let Some(v) = self.puts.get(key) {
-            return Ok(Some(v.clone()));
-        }
-
-        if let Some(slice) = self.rtx.get(&self.part, Slice::from(key))? {
-            let v_res = Value::try_from(slice);
-            let v = v_res?;
-            Ok(Some(v))
+            Ok(Some(v.clone()))
+        } else if let Some(slice) = self.rtx.get(&self.part, key.unsafe_as_slice())? {
+            Ok(Some(Value::try_from(slice)?))
         } else {
             Ok(None)
         }
@@ -82,11 +73,13 @@ where
             return Ok(());
         }
 
+        self.meta.export(self.len(), height)?;
+
         let mut wtx = self.keyspace.write_tx();
         mem::take(&mut self.puts)
             .into_iter()
             .for_each(|(key, value)| wtx.insert(&self.part, key, value));
-        self.meta.export(self.len(), height)?;
+
         wtx.commit()?;
 
         self.keyspace.persist(PersistMode::SyncAll)?;
@@ -98,5 +91,27 @@ where
 
     pub fn height(&self) -> Option<&Height> {
         self.meta.height()
+    }
+
+    pub fn len(&self) -> usize {
+        self.meta.len() + self.puts.len()
+    }
+
+    pub fn has(&self, height: Height) -> bool {
+        self.meta.has(height)
+    }
+    pub fn needs(&self, height: Height) -> bool {
+        self.meta.needs(height)
+    }
+
+    fn open_keyspace(path: &Path) -> Result<TransactionalKeyspace> {
+        fjall::Config::new(path.join("fjall")).open_transactional()
+    }
+
+    fn open_partition_handle(keyspace: &TransactionalKeyspace) -> Result<TransactionalPartitionHandle> {
+        keyspace.open_partition(
+            "partition",
+            PartitionCreateOptions::default().manual_journal_persist(true),
+        )
     }
 }
