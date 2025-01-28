@@ -22,8 +22,7 @@ impl Meta {
             Version::try_from(Self::path_version_(path).as_path()).is_ok_and(|prev_version| version == prev_version);
 
         if !is_same_version {
-            fs::remove_dir_all(path)?;
-            fs::create_dir(path)?;
+            Self::reset_(path)?;
         }
 
         let this = Self {
@@ -49,6 +48,14 @@ impl Meta {
         height.write(&self.path_height())
     }
 
+    pub fn reset(&self) -> io::Result<()> {
+        Self::reset_(self.pathbuf.as_path())
+    }
+    fn reset_(path: &Path) -> io::Result<()> {
+        fs::remove_dir_all(path)?;
+        fs::create_dir(path)
+    }
+
     fn path_version(&self) -> PathBuf {
         Self::path_version_(&self.pathbuf)
     }
@@ -72,9 +79,9 @@ impl Meta {
         path.join("height")
     }
 
-    fn read_length(&self) -> color_eyre::Result<usize> {
-        Self::read_length_(&self.pathbuf)
-    }
+    // fn read_length(&self) -> color_eyre::Result<usize> {
+    //     Self::read_length_(&self.pathbuf)
+    // }
     fn read_length_(path: &Path) -> color_eyre::Result<usize> {
         Ok(fs::read(Self::path_length(path))
             .map(|v| usize::unsafe_try_from_slice(v.as_slice()).cloned().unwrap_or_default())
