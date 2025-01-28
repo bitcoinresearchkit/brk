@@ -7,10 +7,14 @@ use std::{
     mem,
     ops::{Deref, Range},
     path::{Path, PathBuf},
-    sync::OnceLock,
+    sync::{
+        // atomic::{AtomicUsize, Ordering as AtomicOrdering},
+        OnceLock,
+    },
 };
 
 use memmap2::{Mmap, MmapOptions};
+use unsafe_slice_serde::UnsafeSliceSerde;
 
 ///
 /// A very small, fast, efficient and simple storable Vec
@@ -33,6 +37,8 @@ pub struct StorableVec<I, T> {
     // updated: BTreeMap<usize, T>,
     // inserted: BTreeMap<usize, T>,
     // removed: BTreeSet<usize>,
+    // min: AtomicUsize,
+    // opened_mmaps: AtomicUsize,
     phantom: PhantomData<I>,
 }
 
@@ -66,6 +72,8 @@ where
             // inserted: BTreeMap::new(),
             // removed: BTreeSet::new(),
             phantom: PhantomData,
+            // min: AtomicUsize::new(usize::MAX),
+            // opened_mmaps: AtomicUsize::new(0),
         };
 
         this.reset_cache();
@@ -159,6 +167,12 @@ where
             .checked_sub(self.cache.len())
             .unwrap_or_default();
 
+        // let min_open_page = self.min.load(AtomicOrdering::SeqCst);
+
+        // if self.min.load(AtomicOrdering::SeqCst) {
+        //     self.min.set(value)
+        // }
+
         if page_index >= min_page_index {
             let mmap = &**self
                 .cache
@@ -178,16 +192,19 @@ where
 
             let slice = &mmap[range];
 
-            Ok(Some(Value::Ref(T::unsafe_try_from_slice(slice)?)))
+            Ok(Some(Value::Ref(
+                T::unsafe_try_from_slice(slice).map_err(Error::UnsafeSliceSerde)?,
+            )))
         } else {
-            let mut file = Self::open_file(&self.pathbuf).unwrap();
+            let mut file = Self::open_file(&self.pathbuf).map_err(Error::IO)?;
 
-            file.seek(SeekFrom::Start(byte_index as u64)).unwrap();
+            file.seek(SeekFrom::Start(byte_index as u64))
+                .map_err(Error::IO)?;
 
             let mut buf = vec![0; Self::SIZE_OF_T];
-            file.read_exact(&mut buf).unwrap();
+            file.read_exact(&mut buf).map_err(Error::IO)?;
 
-            let value = T::unsafe_try_from_slice(&buf[..])?;
+            let value = T::unsafe_try_from_slice(&buf[..]).map_err(Error::UnsafeSliceSerde)?;
 
             Ok(Some(Value::Owned(value.to_owned())))
         }
@@ -387,37 +404,13 @@ where
     }
 }
 
-pub trait UnsafeSizedSerDe
-where
-    Self: Sized,
-{
-    const SIZE: usize = size_of::<Self>();
-
-    fn unsafe_try_from_slice(slice: &[u8]) -> Result<&Self> {
-        let (prefix, shorts, suffix) = unsafe { slice.align_to::<Self>() };
-
-        if !prefix.is_empty() || shorts.len() != 1 || !suffix.is_empty() {
-            // dbg!(&slice, &prefix, &shorts, &suffix);
-            return Err(Error::FailedToAlignToSelf);
-        }
-
-        Ok(&shorts[0])
-    }
-
-    fn unsafe_as_slice(&self) -> &[u8] {
-        let data: *const Self = self;
-        let data: *const u8 = data as *const u8;
-        unsafe { std::slice::from_raw_parts(data, Self::SIZE) }
-    }
-}
-impl<T> UnsafeSizedSerDe for T {}
-
 pub type Result<T, E = Error> = std::result::Result<T, E>;
 
 #[derive(Debug)]
 pub enum Error {
     MmapsVecIsTooSmall,
-    FailedToAlignToSelf,
+    IO(io::Error),
+    UnsafeSliceSerde(unsafe_slice_serde::Error),
     IndexTooHigh,
     ExpectFileToHaveIndex,
     ExpectVecToHaveIndex,
@@ -427,7 +420,8 @@ impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
             Error::MmapsVecIsTooSmall => write!(f, "Mmaps vec is too small"),
-            Error::FailedToAlignToSelf => write!(f, "Failed to align_to for T"),
+            Error::IO(error) => Debug::fmt(&error, f),
+            Error::UnsafeSliceSerde(error) => Debug::fmt(&error, f),
             Error::IndexTooHigh => write!(f, "Index too high"),
             Error::ExpectFileToHaveIndex => write!(f, "Expect file to have index"),
             Error::ExpectVecToHaveIndex => write!(f, "Expect vec to have index"),

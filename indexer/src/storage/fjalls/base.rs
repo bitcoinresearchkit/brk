@@ -1,10 +1,11 @@
-use std::{collections::BTreeMap, mem, path::Path};
+use std::{collections::BTreeMap, error, mem, path::Path};
 
 use fjall::{
     PartitionCreateOptions, PersistMode, ReadTransaction, Result, Slice, TransactionalKeyspace,
     TransactionalPartitionHandle,
 };
-use storable_vec::UnsafeSizedSerDe;
+use storable_vec::Value;
+use unsafe_slice_serde::UnsafeSliceSerde;
 
 use crate::structs::{Height, Version};
 
@@ -18,10 +19,11 @@ pub struct Partition<Key, Value> {
     puts: BTreeMap<Key, Value>,
 }
 
-impl<Key, Value> Partition<Key, Value>
+impl<K, V> Partition<K, V>
 where
-    Key: Into<Slice> + Ord,
-    Value: Into<Slice> + TryFrom<Slice> + Clone,
+    K: Into<Slice> + Ord,
+    V: Into<Slice> + TryFrom<Slice>,
+    <V as TryFrom<Slice>>::Error: error::Error + Send + Sync + 'static,
 {
     pub fn import(path: &Path, version: Version) -> color_eyre::Result<Self> {
         let meta = Meta::checked_open(path, version)?;
@@ -49,20 +51,17 @@ where
         })
     }
 
-    pub fn get(&self, key: &Key) -> color_eyre::Result<Option<Value>>
-    where
-        <Value as TryFrom<Slice>>::Error: std::error::Error + Send + Sync + 'static,
-    {
+    pub fn get(&self, key: &K) -> color_eyre::Result<Option<Value<V>>> {
         if let Some(v) = self.puts.get(key) {
-            Ok(Some(v.clone()))
+            Ok(Some(Value::Ref(v)))
         } else if let Some(slice) = self.rtx.get(&self.part, key.unsafe_as_slice())? {
-            Ok(Some(Value::try_from(slice)?))
+            Ok(Some(Value::Owned(V::try_from(slice)?)))
         } else {
             Ok(None)
         }
     }
 
-    pub fn insert_if_needed(&mut self, key: Key, value: Value, height: Height) {
+    pub fn insert_if_needed(&mut self, key: K, value: V, height: Height) {
         if self.needs(height) {
             self.puts.insert(key, value);
         }

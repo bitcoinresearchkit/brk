@@ -1,13 +1,13 @@
 use std::ops::{Add, AddAssign};
 
 use derive_deref::{Deref, DerefMut};
-use snkrj::{direct_repr, Storable, UnsizedStorable};
+// use snkrj::{direct_repr, Storable, UnsizedStorable};
 
 use super::Vout;
 
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Deref, DerefMut, Default)]
 pub struct Txinindex(u64);
-direct_repr!(Txinindex);
+// direct_repr!(Txinindex);
 
 impl Txinindex {
     pub fn incremented(self) -> Self {

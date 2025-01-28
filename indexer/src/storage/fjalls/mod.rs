@@ -1,6 +1,6 @@
 use std::{path::Path, thread};
 
-use crate::{structs::Version, AddressbytesPrefix, Addressindex, BlockHashPrefix, Height, TxidPrefix, Txindex};
+use crate::{structs::Version, AddressHash, Addressindex, BlockHashPrefix, Height, TxidPrefix, Txindex};
 
 mod base;
 mod meta;
@@ -9,7 +9,7 @@ use base::*;
 use meta::*;
 
 pub struct Fjalls {
-    pub addressbytes_prefix_to_addressindex: Partition<AddressbytesPrefix, Addressindex>,
+    pub addresshash_to_addressindex: Partition<AddressHash, Addressindex>,
     pub blockhash_prefix_to_height: Partition<BlockHashPrefix, Height>,
     pub txid_prefix_to_txindex: Partition<TxidPrefix, Txindex>,
 }
@@ -17,8 +17,8 @@ pub struct Fjalls {
 impl Fjalls {
     pub fn import(path: &Path) -> color_eyre::Result<Self> {
         Ok(Self {
-            addressbytes_prefix_to_addressindex: Partition::import(
-                &path.join("addressbytes_prefix_to_addressindex"),
+            addresshash_to_addressindex: Partition::import(
+                &path.join("addresshash_to_addressindex"),
                 Version::from(1),
             )?,
             blockhash_prefix_to_height: Partition::import(&path.join("blockhash_prefix_to_height"), Version::from(1))?,
@@ -147,7 +147,7 @@ impl Fjalls {
 
     pub fn min_height(&self) -> Option<Height> {
         [
-            self.addressbytes_prefix_to_addressindex.height(),
+            self.addresshash_to_addressindex.height(),
             self.blockhash_prefix_to_height.height(),
             self.txid_prefix_to_txindex.height(),
         ]
@@ -159,13 +159,13 @@ impl Fjalls {
 
     pub fn commit(&mut self, height: Height) -> fjall::Result<()> {
         thread::scope(|scope| {
-            let addressbytes_prefix_to_addressindex_commit_handle =
-                scope.spawn(|| self.addressbytes_prefix_to_addressindex.commit(height));
+            let addresshash_to_addressindex_commit_handle =
+                scope.spawn(|| self.addresshash_to_addressindex.commit(height));
             let blockhash_prefix_to_height_commit_handle =
                 scope.spawn(|| self.blockhash_prefix_to_height.commit(height));
             let txid_prefix_to_txindex_commit_handle = scope.spawn(|| self.txid_prefix_to_txindex.commit(height));
 
-            addressbytes_prefix_to_addressindex_commit_handle.join().unwrap()?;
+            addresshash_to_addressindex_commit_handle.join().unwrap()?;
             blockhash_prefix_to_height_commit_handle.join().unwrap()?;
             txid_prefix_to_txindex_commit_handle.join().unwrap()?;
 

@@ -4,7 +4,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use derived_deref::{Deref, DerefMut};
+use derive_deref::{Deref, DerefMut};
 
 const BLK: &str = "blk";
 const DAT: &str = ".dat";
