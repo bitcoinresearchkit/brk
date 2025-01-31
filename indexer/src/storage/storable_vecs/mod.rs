@@ -12,13 +12,14 @@ use crate::structs::{
 
 mod base;
 
-use base::*;
+pub use base::*;
 
 pub struct StorableVecs {
     pub addressindex_to_addresstype: StorableVec<Addressindex, Addresstype>,
     pub addressindex_to_addresstypeindex: StorableVec<Addressindex, Addresstypeindex>,
     pub addressindex_to_height: StorableVec<Addressindex, Height>,
     pub height_to_blockhash: StorableVec<Height, BlockHash>,
+    pub height_to_difficulty: StorableVec<Height, f64>,
     pub height_to_first_addressindex: StorableVec<Height, Addressindex>,
     pub height_to_first_emptyindex: StorableVec<Height, Addresstypeindex>,
     pub height_to_first_multisigindex: StorableVec<Height, Addresstypeindex>,
@@ -54,23 +55,6 @@ pub struct StorableVecs {
     pub txinindex_to_txoutindex: StorableVec<Txinindex, Txoutindex>,
     pub txoutindex_to_addressindex: StorableVec<Txoutindex, Addressindex>,
     pub txoutindex_to_amount: StorableVec<Txoutindex, Amount>,
-    // Can be computed later:
-    // pub height_to_date: StorableVec<Height, Date>,
-    // pub height_to_totalfees: StorableVec<Height, Amount>,
-    // pub height_to_inputcount: StorableVec<Txindex, u32>,
-    // pub height_to_last_addressindex: StorableVec<Height, Addressindex>,
-    // pub height_to_last_txindex: StorableVec<Height, Txindex>,
-    // pub height_to_last_txoutindex: StorableVec<Height, Txoutindex>,
-    // pub height_to_outputcount: StorableVec<Txindex, u32>,
-    // pub height_to_txcount: StorableVec<Txindex, u32>,
-    // pub height_to_subsidy: StorableVec<Txindex, u32>,
-    // pub height_to_minfeerate: StorableVec<Txindex, Feerate>,
-    // pub height_to_maxfeerate: StorableVec<Txindex, Feerate>,
-    // pub height_to_medianfeerate: StorableVec<Txindex, Feerate>,
-    // pub txindex_to_feerate: StorableVec<Txindex, Feerate>,
-    // pub txindex_to_inputcount: StorableVec<Txindex, u32>,
-    // pub txindex_to_outputcount: StorableVec<Txindex, u32>,
-    // pub txindex_to_last_txoutindex: StorableVec<Txindex, Txoutindex>,
 }
 
 // const UNSAFE_BLOCKS: usize = 100;
@@ -90,6 +74,7 @@ impl StorableVecs {
             )?,
             addressindex_to_height: StorableVec::import(&path.join("addressindex_to_height"), Version::from(1))?,
             height_to_blockhash: StorableVec::import(&path.join("height_to_blockhash"), Version::from(1))?,
+            height_to_difficulty: StorableVec::import(&path.join("height_to_difficulty"), Version::from(1))?,
             height_to_first_addressindex: StorableVec::import(
                 &path.join("height_to_first_addressindex"),
                 Version::from(1),
@@ -383,12 +368,13 @@ impl StorableVecs {
             .min())
     }
 
-    pub fn as_slice(&self) -> [&dyn AnyBindexVec; 39] {
+    pub fn as_slice(&self) -> [&dyn AnyStorableVec; 40] {
         [
-            &self.addressindex_to_addresstype as &dyn AnyBindexVec,
+            &self.addressindex_to_addresstype as &dyn AnyStorableVec,
             &self.addressindex_to_addresstypeindex,
             &self.addressindex_to_height,
             &self.height_to_blockhash,
+            &self.height_to_difficulty,
             &self.height_to_first_addressindex,
             &self.height_to_first_emptyindex,
             &self.height_to_first_multisigindex,
@@ -427,12 +413,13 @@ impl StorableVecs {
         ]
     }
 
-    pub fn as_mut_slice(&mut self) -> [&mut (dyn AnyBindexVec + Send + Sync); 39] {
+    pub fn as_mut_slice(&mut self) -> [&mut (dyn AnyStorableVec + Send + Sync); 40] {
         [
-            &mut self.addressindex_to_addresstype as &mut (dyn AnyBindexVec + Send + Sync),
+            &mut self.addressindex_to_addresstype as &mut (dyn AnyStorableVec + Send + Sync),
             &mut self.addressindex_to_addresstypeindex,
             &mut self.addressindex_to_height,
             &mut self.height_to_blockhash,
+            &mut self.height_to_difficulty,
             &mut self.height_to_first_addressindex,
             &mut self.height_to_first_emptyindex,
             &mut self.height_to_first_multisigindex,

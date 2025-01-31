@@ -1,9 +1,7 @@
 use derive_deref::{Deref, DerefMut};
-// use snkrj::{direct_repr, Storable, UnsizedStorable};
 
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Deref, DerefMut, Default)]
 pub struct Addresstypeindex(u32);
-// direct_repr!(Addresstypeindex);
 
 impl Addresstypeindex {
     pub fn decremented(self) -> Self {

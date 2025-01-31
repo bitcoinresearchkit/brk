@@ -7,6 +7,7 @@ use std::{
 
 use super::{Height, Version};
 
+#[derive(Debug)]
 pub struct StorableVec<I, T> {
     height: Option<Height>,
     pathbuf: PathBuf,
@@ -16,7 +17,7 @@ pub struct StorableVec<I, T> {
 
 impl<I, T> StorableVec<I, T>
 where
-    I: Into<usize>,
+    I: TryInto<usize>,
     T: Sized + Debug + Clone,
 {
     pub fn import(path: &Path, version: Version) -> io::Result<Self> {
@@ -99,12 +100,12 @@ impl<I, T> DerefMut for StorableVec<I, T> {
     }
 }
 
-pub trait AnyBindexVec {
+pub trait AnyStorableVec {
     fn height(&self) -> color_eyre::Result<Height>;
     fn flush(&mut self, height: Height) -> io::Result<()>;
 }
 
-impl<I, T> AnyBindexVec for StorableVec<I, T>
+impl<I, T> AnyStorableVec for StorableVec<I, T>
 where
     I: Into<usize>,
     T: Sized + Debug + Clone,

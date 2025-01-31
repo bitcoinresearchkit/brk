@@ -1,36 +1,71 @@
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
-use bindex::Indexer;
+use bindex::{Height, Indexer};
 use biter::rpc;
 use exit::Exit;
 
+mod storage;
 mod structs;
 
+use storage::{Fjalls, StorableVecs};
 use structs::*;
 
-pub struct Bomputer;
-
-impl Bomputer {
-    pub fn compute() {}
+pub struct Computer {
+    outputs_dir: PathBuf,
+    vecs: StorableVecs,
+    trees: Fjalls,
 }
 
-pub fn main() -> color_eyre::Result<()> {
-    color_eyre::install()?;
+impl Computer {
+    pub fn import(outputs_dir: &Path) -> color_eyre::Result<Self> {
+        let outputs_dir = outputs_dir.to_owned();
+        let computed_dir = outputs_dir.join("computed");
+        let vecs = StorableVecs::import(&computed_dir.join("vecs"))?;
+        let trees = Fjalls::import(&computed_dir.join("fjall"))?;
+        Ok(Self {
+            outputs_dir,
+            vecs,
+            trees,
+        })
+    }
 
-    let data_dir = Path::new("../../bitcoin");
-    let rpc = rpc::Client::new(
-        "http://localhost:8332",
-        rpc::Auth::CookieFile(Path::new(data_dir).join(".cookie")),
-    )?;
-    let exit = Exit::new();
+    pub fn compute(&mut self, bitcoin_dir: &Path, rpc: rpc::Client, exit: &Exit) -> color_eyre::Result<()> {
+        let mut indexer = Indexer::import(&self.outputs_dir.join("indexes"))?;
 
-    let i = std::time::Instant::now();
+        if false {
+            indexer.index(bitcoin_dir, rpc, exit)?;
+        }
 
-    let mut indexer = Indexer::import(Path::new("indexes"))?;
+        // TODO: Remove all outdated
 
-    indexer.index(data_dir, rpc, &exit)?;
+        // Compute txindex to X
 
-    dbg!(i.elapsed());
+        // Compute height to X
+        indexer
+            .vecs()
+            .height_to_timestamp
+            .read_from_(self.vecs.height_to_date.len(), |(_height, timestamp)| {
+                self.vecs
+                    .height_to_date
+                    .push_if_needed(Height::from(_height), Date::from(timestamp))
+            })?;
+        self.vecs
+            .height_to_date
+            .read_from_(self.vecs.date_to_first_height.len(), |(_height, date)| {
+                self.vecs
+                    .date_to_first_height
+                    .push_if_needed(*date, Height::from(_height))
+            })?;
 
-    Ok(())
+        // Compute date to X
+        // ...
+
+        // Compute month to X
+        // ...
+
+        // Compute year to X
+        // ...
+
+        Ok(())
+    }
 }

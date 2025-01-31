@@ -215,8 +215,11 @@ dependencies = [
  "color-eyre",
  "derive_deref",
  "exit",
+ "fjall",
  "jiff",
  "rayon",
+ "storable_vec",
+ "unsafe_slice_serde",
 ]
 
 [[package]]

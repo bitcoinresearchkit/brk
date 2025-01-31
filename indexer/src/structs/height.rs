@@ -6,12 +6,11 @@ use std::{
 
 use biter::rpc::{self, RpcApi};
 use derive_deref::{Deref, DerefMut};
-// use snkrj::{direct_repr, Storable, UnsizedStorable};
+use fjall::Slice;
 use unsafe_slice_serde::UnsafeSliceSerde;
 
 #[derive(Debug, Clone, Copy, Deref, DerefMut, PartialEq, Eq, PartialOrd, Ord, Default)]
 pub struct Height(u32);
-// direct_repr!(Height);
 
 impl Height {
     pub fn write(&self, path: &Path) -> Result<(), io::Error> {
@@ -120,13 +119,13 @@ impl TryFrom<&rpc::Client> for Height {
     }
 }
 
-impl TryFrom<fjall::Slice> for Height {
+impl TryFrom<Slice> for Height {
     type Error = unsafe_slice_serde::Error;
-    fn try_from(value: fjall::Slice) -> Result<Self, Self::Error> {
+    fn try_from(value: Slice) -> Result<Self, Self::Error> {
         Ok(*Self::unsafe_try_from_slice(&value)?)
     }
 }
-impl From<Height> for fjall::Slice {
+impl From<Height> for Slice {
     fn from(value: Height) -> Self {
         Self::new(value.unsafe_as_slice())
     }

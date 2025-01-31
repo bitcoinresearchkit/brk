@@ -17,7 +17,8 @@ use rayon::prelude::*;
 mod storage;
 mod structs;
 
-pub use biter;
+pub use storage::{AnyStorableVec, StorableVec, Store, StoreMeta};
+pub use structs::Version;
 
 use storage::{Fjalls, StorableVecs};
 pub use structs::{
@@ -30,27 +31,34 @@ const SNAPSHOT_BLOCK_RANGE: usize = 1000;
 
 pub struct Indexer {
     vecs: StorableVecs,
-    parts: Fjalls,
+    trees: Fjalls,
 }
 
 impl Indexer {
     pub fn import(indexes_dir: &Path) -> color_eyre::Result<Self> {
-        Ok(Self {
-            vecs: StorableVecs::import(&indexes_dir.join("vecs"))?,
-            parts: Fjalls::import(&indexes_dir.join("fjall"))?,
-        })
+        let vecs = StorableVecs::import(&indexes_dir.join("vecs"))?;
+        let trees = Fjalls::import(&indexes_dir.join("fjall"))?;
+        Ok(Self { vecs, trees })
+    }
+
+    pub fn vecs(&self) -> &StorableVecs {
+        &self.vecs
+    }
+
+    pub fn trees(&self) -> &Fjalls {
+        &self.trees
     }
 
     pub fn index(&mut self, bitcoin_dir: &Path, rpc: rpc::Client, exit: &Exit) -> color_eyre::Result<()> {
         let check_collisions = true;
 
         let vecs = &mut self.vecs;
-        let parts = &mut self.parts;
+        let trees = &mut self.trees;
 
         let mut height = vecs
             .min_height()
             .unwrap_or_default()
-            .min(parts.min_height())
+            .min(trees.min_height())
             .and_then(|h| h.checked_sub(UNSAFE_BLOCKS))
             .map(Height::from)
             .unwrap_or_default();
@@ -72,14 +80,14 @@ impl Indexer {
         let mut p2wpkhindex_global = vecs.height_to_first_p2wpkhindex.get_or_default(height)?;
         let mut p2wshindex_global = vecs.height_to_first_p2wshindex.get_or_default(height)?;
 
-        let export = |parts: &mut Fjalls, vecs: &mut StorableVecs, height: Height| -> color_eyre::Result<()> {
+        let export = |trees: &mut Fjalls, vecs: &mut StorableVecs, height: Height| -> color_eyre::Result<()> {
             println!("Exporting...");
 
             exit.block();
 
             thread::scope(|scope| -> color_eyre::Result<()> {
                 let vecs_handle = scope.spawn(|| vecs.flush(height));
-                parts.commit(height)?;
+                trees.commit(height)?;
                 vecs_handle.join().unwrap()?;
                 Ok(())
             })?;
@@ -95,18 +103,17 @@ impl Indexer {
                 println!("Processing block {_height}...");
 
                 height = Height::from(_height);
-                let timestamp = Timestamp::try_from(block.header.time)?;
 
                 if let Some(saved_blockhash) = vecs.height_to_blockhash.get(height)? {
                     if &blockhash != saved_blockhash.as_ref() {
                         todo!("Rollback not implemented");
-                        // parts.rollback_from(&mut rtx, height, &exit)?;
+                        // trees.rollback_from(&mut rtx, height, &exit)?;
                     }
                 }
 
                 let blockhash_prefix = BlockHashPrefix::try_from(&blockhash)?;
 
-                if parts
+                if trees
                     .blockhash_prefix_to_height
                     .get(&blockhash_prefix)?
                     .is_some_and(|prev_height| *prev_height != height)
@@ -115,12 +122,13 @@ impl Indexer {
                     return Err(eyre!("Collision, expect prefix to need be set yet"));
                 }
 
-                parts
+                trees
                     .blockhash_prefix_to_height
                     .insert_if_needed(blockhash_prefix, height, height);
 
                 vecs.height_to_blockhash.push_if_needed(height, blockhash)?;
-                vecs.height_to_timestamp.push_if_needed(height, timestamp)?;
+                vecs.height_to_difficulty.push_if_needed(height, block.header.difficulty_float())?;
+                vecs.height_to_timestamp.push_if_needed(height, Timestamp::try_from(block.header.time)?)?;
                 vecs.height_to_size.push_if_needed(height, block.total_size())?;
                 vecs.height_to_weight.push_if_needed(height, block.weight())?;
                 vecs.height_to_first_txindex.push_if_needed(height, txindex_global)?;
@@ -193,9 +201,9 @@ impl Indexer {
                                     let txid_prefix = TxidPrefix::try_from(&txid)?;
 
                                     let prev_txindex_opt =
-                                        if check_collisions && parts.txid_prefix_to_txindex.needs(height) {
+                                        if check_collisions && trees.txid_prefix_to_txindex.needs(height) {
                                             // Should only find collisions for two txids (duplicates), see below
-                                            parts.txid_prefix_to_txindex.get(&txid_prefix)?.map(|v| *v)
+                                            trees.txid_prefix_to_txindex.get(&txid_prefix)?.map(|v| *v)
                                         } else {
                                             None
                                         };
@@ -234,7 +242,7 @@ impl Indexer {
                                     return Ok((txinindex, InputSource::SameBlock((tx, txindex, txin, vin))));
                                 }
 
-                                let prev_txindex = if let Some(txindex) = parts
+                                let prev_txindex = if let Some(txindex) = trees
                                     .txid_prefix_to_txindex
                                     .get(&TxidPrefix::try_from(&outpoint.txid)?)?
                                     .map(|v| *v)
@@ -312,7 +320,7 @@ impl Indexer {
                                         });
 
                                     let addressindex_opt = addressbytes_res.as_ref().ok().and_then(|addressbytes| {
-                                        parts
+                                        trees
                                             .addresshash_to_addressindex
                                             .get(&AddressHash::from((addressbytes, addresstype)))
                                             .unwrap()
@@ -344,9 +352,9 @@ impl Indexer {
                                         let prev_addressbytes =
                                             prev_addressbytes_opt.as_ref().context("Expect to have addressbytes")?;
 
-                                        if (vecs.addressindex_to_addresstype.hasnt(addressindex)
+                                        if (vecs.addressindex_to_addresstype.hasnt(addressindex)?
                                             && addresstype != prev_addresstype)
-                                            || (parts.addresshash_to_addressindex.needs(height)
+                                            || (trees.addresshash_to_addressindex.needs(height)
                                                 && prev_addressbytes != addressbytes)
                                         {
                                             let txid = tx.compute_txid();
@@ -496,7 +504,7 @@ impl Indexer {
                                 already_added_addresshash
                                     .insert(addresshash, addressindex);
 
-                                parts.addresshash_to_addressindex.insert_if_needed(
+                                trees.addresshash_to_addressindex.insert_if_needed(
                                     addresshash,
                                     addressindex,
                                     height,
@@ -583,7 +591,7 @@ impl Indexer {
 
                             match prev_txindex_opt {
                                 None => {
-                                    parts
+                                    trees
                                         .txid_prefix_to_txindex
                                         .insert_if_needed(txid_prefix, txindex, height);
                                 }
@@ -649,13 +657,13 @@ impl Indexer {
 
                 let should_snapshot = _height != 0 && _height % SNAPSHOT_BLOCK_RANGE == 0 && !exit.active();
                 if should_snapshot {
-                    export(parts, vecs, height)?;
+                    export(trees, vecs, height)?;
                 }
 
                 Ok(())
             })?;
 
-        export(parts, vecs, height)?;
+        export(trees, vecs, height)?;
 
         sleep(Duration::from_millis(100));
 

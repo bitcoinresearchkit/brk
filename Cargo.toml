@@ -18,6 +18,7 @@ bomputer = { path = "computer" }
 color-eyre = "0.6.3"
 derive_deref = "1.1.1"
 exit = { path = "exit" }
+fjall = "2.5.0"
 jiff = "0.1.28"
 rayon = "1.10.0"
 storable_vec = { path = "storable_vec" }

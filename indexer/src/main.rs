@@ -16,7 +16,7 @@ fn main() -> color_eyre::Result<()> {
 
     let i = std::time::Instant::now();
 
-    let mut indexer = Indexer::import(Path::new("indexes"))?;
+    let mut indexer = Indexer::import(Path::new("../_outputs/indexes"))?;
 
     indexer.index(data_dir, rpc, &exit)?;
 

@@ -5,13 +5,11 @@ use std::{
 
 use biter::bitcoin;
 use derive_deref::{Deref, DerefMut};
-// use snkrj::{direct_repr, Storable, UnsizedStorable};
 
 use super::Height;
 
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Deref, DerefMut, Default)]
 pub struct Amount(bitcoin::Amount);
-// direct_repr!(Amount);
 
 impl Amount {
     pub const ZERO: Self = Self(bitcoin::Amount::ZERO);

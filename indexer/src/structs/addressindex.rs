@@ -1,10 +1,9 @@
 use derive_deref::{Deref, DerefMut};
-// use snkrj::{direct_repr, Storable, UnsizedStorable};
+use fjall::Slice;
 use unsafe_slice_serde::UnsafeSliceSerde;
 
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Deref, DerefMut, Default)]
 pub struct Addressindex(u32);
-// direct_repr!(Addressindex);
 
 impl Addressindex {
     pub const BYTES: usize = size_of::<Self>();
@@ -50,13 +49,13 @@ impl From<Addressindex> for usize {
     }
 }
 
-impl TryFrom<fjall::Slice> for Addressindex {
+impl TryFrom<Slice> for Addressindex {
     type Error = unsafe_slice_serde::Error;
-    fn try_from(value: fjall::Slice) -> Result<Self, Self::Error> {
+    fn try_from(value: Slice) -> Result<Self, Self::Error> {
         Ok(*Self::unsafe_try_from_slice(&value)?)
     }
 }
-impl From<Addressindex> for fjall::Slice {
+impl From<Addressindex> for Slice {
     fn from(value: Addressindex) -> Self {
         Self::new(value.unsafe_as_slice())
     }

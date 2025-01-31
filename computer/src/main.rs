@@ -1,13 +1,28 @@
-use structs::Date;
+use std::path::Path;
+
+use biter::rpc;
+use bomputer::Computer;
+use exit::Exit;
 
 mod structs;
 
 pub fn main() -> color_eyre::Result<()> {
-    let date1 = Date::from(jiff::civil::Date::constant(2009, 1, 9));
-    let date2 = Date::from(jiff::civil::Date::constant(2009, 1, 31));
-    let date3 = Date::from(jiff::civil::Date::constant(2019, 1, 9));
-    dbg!(usize::try_from(date1))?;
-    dbg!(usize::try_from(date2))?;
-    dbg!(usize::try_from(date3))?;
+    color_eyre::install()?;
+
+    let data_dir = Path::new("../../bitcoin");
+    let rpc = rpc::Client::new(
+        "http://localhost:8332",
+        rpc::Auth::CookieFile(Path::new(data_dir).join(".cookie")),
+    )?;
+    let exit = Exit::new();
+
+    let i = std::time::Instant::now();
+
+    let mut computer = Computer::import(Path::new("../_outputs"))?;
+
+    computer.compute(data_dir, rpc, &exit)?;
+
+    dbg!(i.elapsed());
+
     Ok(())
 }

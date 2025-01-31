@@ -5,24 +5,25 @@ use crate::{structs::Version, AddressHash, Addressindex, BlockHashPrefix, Height
 mod base;
 mod meta;
 
-use base::*;
-use meta::*;
+pub use base::*;
+pub use meta::*;
 
 pub struct Fjalls {
-    pub addresshash_to_addressindex: Partition<AddressHash, Addressindex>,
-    pub blockhash_prefix_to_height: Partition<BlockHashPrefix, Height>,
-    pub txid_prefix_to_txindex: Partition<TxidPrefix, Txindex>,
+    pub addresshash_to_addressindex: Store<AddressHash, Addressindex>,
+    pub blockhash_prefix_to_height: Store<BlockHashPrefix, Height>,
+    pub txid_prefix_to_txindex: Store<TxidPrefix, Txindex>,
 }
 
 impl Fjalls {
     pub fn import(path: &Path) -> color_eyre::Result<Self> {
+        let addresshash_to_addressindex = Store::import(&path.join("addresshash_to_addressindex"), Version::from(1))?;
+        let blockhash_prefix_to_height = Store::import(&path.join("blockhash_prefix_to_height"), Version::from(1))?;
+        let txid_prefix_to_txindex = Store::import(&path.join("txid_prefix_to_txindex"), Version::from(1))?;
+
         Ok(Self {
-            addresshash_to_addressindex: Partition::import(
-                &path.join("addresshash_to_addressindex"),
-                Version::from(1),
-            )?,
-            blockhash_prefix_to_height: Partition::import(&path.join("blockhash_prefix_to_height"), Version::from(1))?,
-            txid_prefix_to_txindex: Partition::import(&path.join("txid_prefix_to_txindex"), Version::from(1))?,
+            addresshash_to_addressindex,
+            blockhash_prefix_to_height,
+            txid_prefix_to_txindex,
         })
     }
 

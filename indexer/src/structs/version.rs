@@ -1,5 +1,6 @@
 use std::{fs, io, path::Path};
 
+use fjall::Slice;
 use unsafe_slice_serde::UnsafeSliceSerde;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
@@ -24,13 +25,13 @@ impl TryFrom<&Path> for Version {
     }
 }
 
-impl TryFrom<fjall::Slice> for Version {
+impl TryFrom<Slice> for Version {
     type Error = color_eyre::Report;
-    fn try_from(value: fjall::Slice) -> Result<Self, Self::Error> {
+    fn try_from(value: Slice) -> Result<Self, Self::Error> {
         Ok(*Self::unsafe_try_from_slice(&value)?)
     }
 }
-impl From<Version> for fjall::Slice {
+impl From<Version> for Slice {
     fn from(value: Version) -> Self {
         Self::new(value.unsafe_as_slice())
     }

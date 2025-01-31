@@ -7,14 +7,14 @@ use unsafe_slice_serde::UnsafeSliceSerde;
 
 use super::{Height, Version};
 
-pub struct Meta {
+pub struct StoreMeta {
     pathbuf: PathBuf,
     version: Version,
     height: Option<Height>,
     len: usize,
 }
 
-impl Meta {
+impl StoreMeta {
     pub fn checked_open(path: &Path, version: Version) -> color_eyre::Result<Self> {
         fs::create_dir_all(path)?;
 
@@ -39,6 +39,9 @@ impl Meta {
 
     pub fn len(&self) -> usize {
         self.len
+    }
+    pub fn is_empty(&self) -> bool {
+        self.len() == 0
     }
 
     pub fn export(&mut self, len: usize, height: Height) -> io::Result<()> {

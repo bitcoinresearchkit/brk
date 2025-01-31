@@ -59,6 +59,15 @@ impl BlkIndexToBlkRecap {
             self.tree.remove(&blk_index);
         });
 
+        while self.tree.last_entry().map(|last| *last.key()).is_some_and(|key| {
+            if key >= self.tree.len() {
+                self.tree.pop_last();
+                true
+            } else {
+                false
+            }
+        }) {}
+
         self.last_safe_height = self.tree.values().map(|recap| recap.height()).max();
     }
 
@@ -68,13 +77,12 @@ impl BlkIndexToBlkRecap {
 
             if last_value.height() < start {
                 return Some((*last_key, *last_value));
-            } else if let Some((blk_index, _)) = self
-                .tree
-                .iter()
-                .find(|(_, blk_recap)| blk_recap.is_younger_than(start))
+            } else if let Some((blk_index, _)) =
+                self.tree.iter().find(|(_, blk_recap)| blk_recap.is_younger_than(start))
             {
                 if *blk_index != 0 {
-                    let blk_index = *blk_index - 1;
+                    // Temporary fix, need to rethink the whole thing
+                    let blk_index = (*blk_index).checked_sub(3).unwrap_or_default();
                     return Some((blk_index, *self.tree.get(&blk_index).unwrap()));
                 }
             }
@@ -103,13 +111,10 @@ impl BlkIndexToBlkRecap {
                 unreachable!();
             }
 
-            self.tree
-                .insert(blk_index, BlkRecap::first(blk_metadata_and_block));
+            self.tree.insert(blk_index, BlkRecap::first(blk_metadata_and_block));
         }
 
-        if self
-            .last_safe_height
-            .map_or(true, |safe_height| height >= safe_height)
+        if self.last_safe_height.map_or(true, |safe_height| height >= safe_height)
             && (height % TARGET_BLOCKS_PER_MONTH) == 0
         {
             self.export();
