@@ -5,13 +5,13 @@ use bitcoincore_rpc::{Auth, Client};
 fn main() {
     let i = std::time::Instant::now();
 
-    let data_dir = Path::new("../../../bitcoin");
+    let data_dir = Path::new("../../bitcoin");
     let url = "http://localhost:8332";
     let cookie = Path::new(data_dir).join(".cookie");
     let auth = Auth::CookieFile(cookie);
     let rpc = Client::new(url, auth).unwrap();
 
-    let start = Some(810078);
+    let start = Some(749900);
     let end = None;
 
     biter::new(data_dir, start, end, rpc)

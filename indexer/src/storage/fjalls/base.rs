@@ -9,24 +9,24 @@ use unsafe_slice_serde::UnsafeSliceSerde;
 
 use crate::structs::{Height, Version};
 
-use super::Meta;
+use super::StoreMeta;
 
-pub struct Partition<Key, Value> {
-    meta: Meta,
+pub struct Store<Key, Value> {
+    meta: StoreMeta,
     keyspace: TransactionalKeyspace,
     part: TransactionalPartitionHandle,
     rtx: ReadTransaction,
     puts: BTreeMap<Key, Value>,
 }
 
-impl<K, V> Partition<K, V>
+impl<K, V> Store<K, V>
 where
     K: Into<Slice> + Ord,
     V: Into<Slice> + TryFrom<Slice>,
     <V as TryFrom<Slice>>::Error: error::Error + Send + Sync + 'static,
 {
     pub fn import(path: &Path, version: Version) -> color_eyre::Result<Self> {
-        let meta = Meta::checked_open(path, version)?;
+        let meta = StoreMeta::checked_open(path, version)?;
         let keyspace = if let Ok(keyspace) = Self::open_keyspace(path) {
             keyspace
         } else {
@@ -94,6 +94,9 @@ where
 
     pub fn len(&self) -> usize {
         self.meta.len() + self.puts.len()
+    }
+    pub fn is_empty(&self) -> bool {
+        self.len() == 0
     }
 
     pub fn has(&self, height: Height) -> bool {

@@ -98,7 +98,7 @@ pub fn new(
     thread::spawn(move || {
         blk_index_to_blk_path
             .iter()
-            .filter(|(blk_index, _)| blk_index >= &&starting_blk_index)
+            .filter(|(blk_index, _)| **blk_index >= starting_blk_index)
             .try_for_each(move |(blk_index, blk_path)| {
                 let blk_metadata = BlkMetadata::new(*blk_index, blk_path);
 
@@ -147,38 +147,6 @@ pub fn new(
             })
     });
 
-    // thread::spawn(move || {
-    //     recv_block_reader.iter().par_bridge().try_for_each(
-    //         move |(blk_metadata, mut block_state)| {
-    //             let raw_block = match block_state {
-    //                 BlockState::Raw(vec) => vec,
-    //                 _ => unreachable!(),
-    //             };
-
-    //             let mut cursor = Cursor::new(raw_block);
-
-    //             block_state = BlockState::Decoded(Block::consensus_decode(&mut cursor).unwrap());
-
-    //             if send_block
-    //                 .send(BlkMetadataAndBlock::new(
-    //                     blk_metadata,
-    //                     match block_state {
-    //                         BlockState::Decoded(block) => block,
-    //                         _ => unreachable!(),
-    //                     },
-    //                 ))
-    //                 .is_err()
-    //             {
-    //                 return ControlFlow::Break(());
-    //             }
-
-    //             ControlFlow::Continue(())
-    //         },
-    //     );
-    // });
-
-    // Can't use the previous code because .send() blocks all the threads if full
-    // And other .par_iter() are also stuck because of that
     thread::spawn(move || {
         let mut bulk = vec![];
 
@@ -192,7 +160,9 @@ pub fn new(
 
                 let mut cursor = Cursor::new(raw_block);
 
-                *block_state = BlockState::Decoded(Block::consensus_decode(&mut cursor).unwrap());
+                let block = Block::consensus_decode(&mut cursor).unwrap();
+
+                *block_state = BlockState::Decoded(block);
             });
 
             bulk.drain(..).try_for_each(|(blk_metadata, block_state)| {
@@ -219,6 +189,7 @@ pub fn new(
                 return ControlFlow::Continue(());
             }
 
+            // Sending in bulk to not lock threads in standby
             drain_and_send(&mut bulk)
         });
 

@@ -50,7 +50,7 @@ const MAX_CACHE_SIZE: usize = 100 * ONE_MB;
 
 impl<I, T> StorableVec<I, T>
 where
-    I: Into<usize>,
+    I: TryInto<usize>,
     T: Sized + Debug + Clone,
 {
     pub const SIZE_OF_T: usize = size_of::<T>();
@@ -60,11 +60,11 @@ where
     pub const CACHE_LENGTH: usize = MAX_CACHE_SIZE / Self::PAGE_SIZE;
 
     pub fn import(path: &Path) -> Result<Self, io::Error> {
-        let file = Self::open_file(path)?;
+        let file = Self::open_file_(path)?;
 
         let mut this = Self {
             pathbuf: path.to_owned(),
-            disk_len: Self::byte_index_to_index(file.metadata()?.len() as usize),
+            disk_len: Self::byte_index_to_index(Self::file_len(&file)?),
             file,
             cache: vec![],
             pushed: vec![],
@@ -79,6 +79,10 @@ where
         this.reset_cache();
 
         Ok(this)
+    }
+
+    fn file_len(file: &File) -> io::Result<usize> {
+        Ok(file.metadata()?.len() as usize)
     }
 
     fn reset_cache(&mut self) {
@@ -100,7 +104,10 @@ where
         }
     }
 
-    fn open_file(path: &Path) -> Result<File, io::Error> {
+    fn open_file(&self) -> Result<File, Error> {
+        Self::open_file_(&self.pathbuf).map_err(Error::IO)
+    }
+    fn open_file_(path: &Path) -> Result<File, io::Error> {
         OpenOptions::new()
             .read(true)
             .create(true)
@@ -140,7 +147,7 @@ where
 
     #[inline]
     pub fn get(&self, index: I) -> Result<Option<Value<'_, T>>> {
-        self.get_(index.into())
+        self.get_(index.try_into().map_err(|_| Error::FailedKeyTryIntoUsize)?)
     }
     pub fn get_(&self, index: usize) -> Result<Option<Value<'_, T>>> {
         match self.index_to_pushed_index(index) {
@@ -163,9 +170,7 @@ where
         let page_index = index / Self::PER_PAGE;
         let last_index = self.disk_len - 1;
         let max_page_index = last_index / Self::PER_PAGE;
-        let min_page_index = (max_page_index + 1)
-            .checked_sub(self.cache.len())
-            .unwrap_or_default();
+        let min_page_index = (max_page_index + 1).checked_sub(self.cache.len()).unwrap_or_default();
 
         // let min_open_page = self.min.load(AtomicOrdering::SeqCst);
 
@@ -196,14 +201,11 @@ where
                 T::unsafe_try_from_slice(slice).map_err(Error::UnsafeSliceSerde)?,
             )))
         } else {
-            let mut file = Self::open_file(&self.pathbuf).map_err(Error::IO)?;
-
-            file.seek(SeekFrom::Start(byte_index as u64))
-                .map_err(Error::IO)?;
-
+            let mut file = self.open_file()?;
             let mut buf = vec![0; Self::SIZE_OF_T];
-            file.read_exact(&mut buf).map_err(Error::IO)?;
 
+            file.seek(SeekFrom::Start(byte_index as u64)).map_err(Error::IO)?;
+            file.read_exact(&mut buf).map_err(Error::IO)?;
             let value = T::unsafe_try_from_slice(&buf[..]).map_err(Error::UnsafeSliceSerde)?;
 
             Ok(Some(Value::Owned(value.to_owned())))
@@ -213,10 +215,39 @@ where
     where
         T: Default + Clone,
     {
-        Ok(self
-            .get(index)?
-            .map(|v| (*v).clone())
-            .unwrap_or(Default::default()))
+        Ok(self.get(index)?.map(|v| (*v).clone()).unwrap_or(Default::default()))
+    }
+
+    pub fn read_iter<F>(&self, f: F) -> Result<()>
+    where
+        F: FnMut((usize, &T)) -> Result<()>,
+    {
+        self.read_from_(0, f)
+    }
+
+    pub fn read_from_<F>(&self, index: usize, mut f: F) -> Result<()>
+    where
+        F: FnMut((usize, &T)) -> Result<()>,
+    {
+        let mut file = self.open_file()?;
+        let mut buf = vec![0; Self::SIZE_OF_T];
+
+        let byte_index = Self::index_to_byte_index(index);
+
+        file.seek(SeekFrom::Start(byte_index as u64)).map_err(Error::IO)?;
+
+        let mut i = 0;
+
+        loop {
+            if file.read_exact(&mut buf).map_err(Error::IO).is_err() {
+                break;
+            }
+            let v = T::unsafe_try_from_slice(&buf[..]).map_err(Error::UnsafeSliceSerde)?;
+            f((i, v))?;
+            i += 1;
+        }
+
+        Ok(())
     }
 
     #[allow(unused)]
@@ -238,7 +269,7 @@ where
     }
 
     pub fn push_if_needed(&mut self, index: I, value: T) -> Result<()> {
-        self.push_if_needed_(index.into(), value)
+        self.push_if_needed_(index.try_into().map_err(|_| Error::FailedKeyTryIntoUsize)?, value)
     }
     pub fn push_if_needed_(&mut self, index: usize, value: T) -> Result<()> {
         let len = self.len();
@@ -307,15 +338,15 @@ where
         self.len() == 0
     }
 
-    pub fn has(&self, index: I) -> bool {
-        self.has_(index.into())
+    pub fn has(&self, index: I) -> Result<bool> {
+        Ok(self.has_(index.try_into().map_err(|_| Error::FailedKeyTryIntoUsize)?))
     }
     pub fn has_(&self, index: usize) -> bool {
         index < self.len()
     }
 
-    pub fn hasnt(&self, index: I) -> bool {
-        self.hasnt_(index.into())
+    pub fn hasnt(&self, index: I) -> Result<bool> {
+        Ok(self.hasnt_(index.try_into().map_err(|_| Error::FailedKeyTryIntoUsize)?))
     }
     pub fn hasnt_(&self, index: usize) -> bool {
         !self.has_(index)
@@ -414,6 +445,7 @@ pub enum Error {
     IndexTooHigh,
     ExpectFileToHaveIndex,
     ExpectVecToHaveIndex,
+    FailedKeyTryIntoUsize,
 }
 impl fmt::Display for Error {
     // This trait requires `fmt` with this exact signature.
@@ -425,6 +457,7 @@ impl fmt::Display for Error {
             Error::IndexTooHigh => write!(f, "Index too high"),
             Error::ExpectFileToHaveIndex => write!(f, "Expect file to have index"),
             Error::ExpectVecToHaveIndex => write!(f, "Expect vec to have index"),
+            Error::FailedKeyTryIntoUsize => write!(f, "Failed to convert key to usize"),
         }
     }
 }

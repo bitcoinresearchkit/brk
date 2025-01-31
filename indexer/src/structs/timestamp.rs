@@ -1,6 +1,6 @@
 use derive_deref::Deref;
 
-#[derive(Debug, Deref, Clone)]
+#[derive(Debug, Deref, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Timestamp(jiff::Timestamp);
 
 impl TryFrom<u32> for Timestamp {

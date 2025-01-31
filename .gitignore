@@ -8,7 +8,7 @@ target
 *\ copy*
 
 # Ignored
-ignore
+_ignore
 
 # Editors
 .vscode
@@ -29,3 +29,6 @@ docker/kibo
 
 # Types
 paths.d.ts
+
+# Outputs
+_outputs

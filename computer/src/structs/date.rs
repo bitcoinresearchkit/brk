@@ -3,7 +3,7 @@ use color_eyre::eyre::eyre;
 use derive_deref::Deref;
 use jiff::{civil::Date as _Date, tz::TimeZone};
 
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Deref)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Deref)]
 pub struct Date(_Date);
 
 impl Date {

@@ -1,13 +1,11 @@
 use std::ops::{Add, AddAssign};
 
 use derive_deref::{Deref, DerefMut};
-// use snkrj::{direct_repr, Storable, UnsizedStorable};
 
 use super::Vout;
 
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Deref, DerefMut, Default)]
 pub struct Txoutindex(u64);
-// direct_repr!(Txoutindex);
 
 impl Txoutindex {
     pub const COINBASE: Self = Self(u64::MAX);
