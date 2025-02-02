@@ -1,9 +1,11 @@
+use std::ops::Add;
+
 use bindex::Timestamp;
 use color_eyre::eyre::eyre;
 use derive_deref::Deref;
-use jiff::{civil::Date as _Date, tz::TimeZone};
+use jiff::{civil::Date as _Date, tz::TimeZone, Span};
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Deref)]
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Deref)]
 pub struct Date(_Date);
 
 impl Date {
@@ -37,5 +39,18 @@ impl TryFrom<Date> for usize {
         } else {
             Ok(Date::INDEX_ONE.until(*value)?.get_days() as usize + 1)
         }
+    }
+}
+
+impl From<usize> for Date {
+    fn from(value: usize) -> Self {
+        Self(Self::INDEX_ZERO.checked_add(Span::new().days(value as i64)).unwrap())
+    }
+}
+
+impl Add<usize> for Date {
+    type Output = Self;
+    fn add(self, rhs: usize) -> Self::Output {
+        Self(self.0.checked_add(Span::new().days(rhs as i64)).unwrap())
     }
 }

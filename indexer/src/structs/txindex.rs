@@ -1,4 +1,4 @@
-use std::ops::{Add, AddAssign};
+use std::ops::{Add, AddAssign, Sub};
 
 use derive_deref::{Deref, DerefMut};
 use fjall::Slice;
@@ -24,9 +24,23 @@ impl Add<Txindex> for Txindex {
     }
 }
 
+impl Add<usize> for Txindex {
+    type Output = Self;
+    fn add(self, rhs: usize) -> Self::Output {
+        Self(self.0 + rhs as u32)
+    }
+}
+
 impl AddAssign<Txindex> for Txindex {
     fn add_assign(&mut self, rhs: Txindex) {
         self.0 += rhs.0
+    }
+}
+
+impl Sub<Txindex> for Txindex {
+    type Output = Txindex;
+    fn sub(self, rhs: Txindex) -> Self::Output {
+        Self::from(*self - *rhs)
     }
 }
 

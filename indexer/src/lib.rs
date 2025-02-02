@@ -104,7 +104,7 @@ impl Indexer {
 
                 height = Height::from(_height);
 
-                if let Some(saved_blockhash) = vecs.height_to_blockhash.get(height)? {
+                if let Some(saved_blockhash) = vecs.height_to_blockhash.cached_get(height)? {
                     if &blockhash != saved_blockhash.as_ref() {
                         todo!("Rollback not implemented");
                         // trees.rollback_from(&mut rtx, height, &exit)?;
@@ -260,7 +260,7 @@ impl Indexer {
 
                                 let txoutindex = *vecs
                                     .txindex_to_first_txoutindex
-                                    .get(prev_txindex)?
+                                    .cached_get(prev_txindex)?
                                     .context("Expect txoutindex to not be none")
                                     .inspect_err(|_| {
                                         dbg!(outpoint.txid, prev_txindex, vout);
@@ -336,12 +336,12 @@ impl Indexer {
 
                                         let prev_addresstype = *vecs
                                             .addressindex_to_addresstype
-                                            .get(addressindex)?
+                                            .cached_get(addressindex)?
                                             .context("Expect to have address type")?;
 
                                         let addresstypeindex = *vecs
                                             .addressindex_to_addresstypeindex
-                                            .get(addressindex)?
+                                            .cached_get(addressindex)?
                                             .context("Expect to have address type index")?;
                                         // Good first time
                                         // Wrong after rerun
@@ -605,7 +605,7 @@ impl Indexer {
                                     // Ok if `get` is not par as should happen only twice
                                     let prev_txid = vecs
                                         .txindex_to_txid
-                                        .get(prev_txindex)?
+                                        .cached_get(prev_txindex)?
                                         .context("To have txid for txindex")
                                         .inspect_err(|_| {
                                             dbg!(txindex, txid, len);
@@ -630,7 +630,7 @@ impl Indexer {
 
                                     if !is_dup {
                                         let prev_height =
-                                            vecs.txindex_to_height.get(prev_txindex)?.expect("To have height");
+                                            vecs.txindex_to_height.cached_get(prev_txindex)?.expect("To have height");
                                         dbg!(height, txid, txindex, prev_height, prev_txid, prev_txindex);
                                         return Err(eyre!("Expect none"));
                                     }

@@ -1,4 +1,4 @@
-use std::ops::{Add, AddAssign};
+use std::ops::{Add, AddAssign, Sub};
 
 use derive_deref::{Deref, DerefMut};
 
@@ -37,9 +37,32 @@ impl Add<Vout> for Txoutindex {
     }
 }
 
+impl Add<usize> for Txoutindex {
+    type Output = Self;
+    fn add(self, rhs: usize) -> Self::Output {
+        Self(self.0 + rhs as u64)
+    }
+}
+
 impl AddAssign<Txoutindex> for Txoutindex {
     fn add_assign(&mut self, rhs: Txoutindex) {
         self.0 += rhs.0
+    }
+}
+
+impl Sub<Txoutindex> for Txoutindex {
+    type Output = Self;
+    fn sub(self, rhs: Txoutindex) -> Self::Output {
+        Self(self.0 - rhs.0)
+    }
+}
+
+impl From<Txoutindex> for u32 {
+    fn from(value: Txoutindex) -> Self {
+        if value.0 > u32::MAX as u64 {
+            panic!()
+        }
+        value.0 as u32
     }
 }
 

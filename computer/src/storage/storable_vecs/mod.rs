@@ -1,12 +1,13 @@
 use std::{fs, path::Path};
 
-use bindex::{Addressindex, Amount, Height, StorableVec, Timestamp, Txindex, Txinindex, Txoutindex, Version};
+use bindex::{Addressindex, Amount, Height, Timestamp, Txindex, Txinindex, Txoutindex};
+use storable_vec::Version;
 
 use crate::structs::{Date, Feerate};
 
-// mod base;
+mod base;
 
-// use base::*;
+use base::*;
 
 pub struct StorableVecs {
     pub date_to_first_height: StorableVec<Date, Height>,
@@ -15,7 +16,7 @@ pub struct StorableVecs {
     // pub height_to_fee: StorableVec<Txindex, Amount>,
     // pub height_to_inputcount: StorableVec<Txindex, u32>,
     // pub height_to_last_addressindex: StorableVec<Height, Addressindex>,
-    // pub height_to_last_txindex: StorableVec<Height, Txindex>,
+    pub height_to_last_txindex: StorableVec<Height, Txindex>,
     // pub height_to_last_txoutindex: StorableVec<Height, Txoutindex>,
     // pub height_to_maxfeerate: StorableVec<Txindex, Feerate>,
     // pub height_to_medianfeerate: StorableVec<Txindex, Feerate>,
@@ -25,6 +26,8 @@ pub struct StorableVecs {
     // pub height_to_totalfees: StorableVec<Height, Amount>,
     // pub height_to_txcount: StorableVec<Txindex, u32>,
     pub txindex_to_fee: StorableVec<Txindex, Amount>,
+    pub txindex_to_height: StorableVec<Txindex, Height>,
+    pub txindex_to_is_coinbase: StorableVec<Txindex, bool>,
     // pub txindex_to_feerate: StorableVec<Txindex, Feerate>,
     pub txindex_to_inputcount: StorableVec<Txindex, u32>,
     pub txindex_to_last_txinindex: StorableVec<Txindex, Txinindex>,
@@ -46,7 +49,7 @@ impl StorableVecs {
             //     &path.join("height_to_last_addressindex"),
             //     Version::from(1),
             // )?,
-            // height_to_last_txindex: StorableVec::import(&path.join("height_to_last_txindex"), Version::from(1))?,
+            height_to_last_txindex: StorableVec::import(&path.join("height_to_last_txindex"), Version::from(1))?,
             // height_to_last_txoutindex: StorableVec::import(&path.join("height_to_last_txoutindex"), Version::from(1))?,
             // height_to_maxfeerate: StorableVec::import(&path.join("height_to_maxfeerate"), Version::from(1))?,
             // height_to_medianfeerate: StorableVec::import(&path.join("height_to_medianfeerate"), Version::from(1))?,
@@ -56,6 +59,8 @@ impl StorableVecs {
             // height_to_totalfees: StorableVec::import(&path.join("height_to_totalfees"), Version::from(1))?,
             // height_to_txcount: StorableVec::import(&path.join("height_to_txcount"), Version::from(1))?,
             txindex_to_fee: StorableVec::import(&path.join("txindex_to_fee"), Version::from(1))?,
+            txindex_to_height: StorableVec::import(&path.join("txindex_to_height"), Version::from(1))?,
+            txindex_to_is_coinbase: StorableVec::import(&path.join("txindex_to_is_coinbase"), Version::from(1))?,
             // txindex_to_feerate: StorableVec::import(&path.join("txindex_to_feerate"), Version::from(1))?,
             txindex_to_inputcount: StorableVec::import(&path.join("txindex_to_inputcount"), Version::from(1))?,
             txindex_to_last_txinindex: StorableVec::import(&path.join("txindex_to_last_txinindex"), Version::from(1))?,

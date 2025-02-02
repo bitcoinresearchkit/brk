@@ -13,5 +13,3 @@ proc-macro = true
 [dependencies]
 syn = "2.0.96"
 quote = "1.0.38"
-proc-macro2 = "1.0.93"
-struct_iterable_internal = { path = "../struct_iterable_internal" }
