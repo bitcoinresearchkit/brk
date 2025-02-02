@@ -1,3 +1,5 @@
+use std::ops::Add;
+
 use derive_deref::{Deref, DerefMut};
 use fjall::Slice;
 use unsafe_slice_serde::UnsafeSliceSerde;
@@ -58,5 +60,19 @@ impl TryFrom<Slice> for Addressindex {
 impl From<Addressindex> for Slice {
     fn from(value: Addressindex) -> Self {
         Self::new(value.unsafe_as_slice())
+    }
+}
+
+impl Add<usize> for Addressindex {
+    type Output = Self;
+    fn add(self, rhs: usize) -> Self::Output {
+        Self(self.0 + rhs as u32)
+    }
+}
+
+impl Add<Addressindex> for Addressindex {
+    type Output = Self;
+    fn add(self, rhs: Addressindex) -> Self::Output {
+        Self(self.0 + rhs.0)
     }
 }

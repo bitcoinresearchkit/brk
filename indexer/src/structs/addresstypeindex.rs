@@ -1,3 +1,5 @@
+use std::ops::Add;
+
 use derive_deref::{Deref, DerefMut};
 
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Deref, DerefMut, Default)]
@@ -48,5 +50,19 @@ impl From<usize> for Addresstypeindex {
 impl From<Addresstypeindex> for usize {
     fn from(value: Addresstypeindex) -> Self {
         value.0 as usize
+    }
+}
+
+impl Add<usize> for Addresstypeindex {
+    type Output = Self;
+    fn add(self, rhs: usize) -> Self::Output {
+        Self(self.0 + rhs as u32)
+    }
+}
+
+impl Add<Addresstypeindex> for Addresstypeindex {
+    type Output = Self;
+    fn add(self, rhs: Addresstypeindex) -> Self::Output {
+        Self(self.0 + rhs.0)
     }
 }

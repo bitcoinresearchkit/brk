@@ -1,20 +1,33 @@
 use std::{
     cmp::Ordering,
-    fmt::{self, Debug},
-    fs::{File, OpenOptions},
+    fmt::Debug,
+    fs::{self, File, OpenOptions},
     io::{self, Read, Seek, SeekFrom, Write},
     marker::PhantomData,
     mem,
-    ops::{Deref, Range},
+    ops::Range,
     path::{Path, PathBuf},
-    sync::{
-        // atomic::{AtomicUsize, Ordering as AtomicOrdering},
-        OnceLock,
-    },
+    sync::OnceLock,
 };
 
 use memmap2::{Mmap, MmapOptions};
 use unsafe_slice_serde::UnsafeSliceSerde;
+
+mod any;
+// mod bytes;
+mod error;
+mod index;
+mod type_;
+mod value;
+mod version;
+
+pub use any::*;
+// pub use bytes::*;
+pub use error::*;
+pub use index::*;
+pub use type_::*;
+pub use value::*;
+pub use version::*;
 
 ///
 /// A very small, fast, efficient and simple storable Vec
@@ -30,7 +43,7 @@ use unsafe_slice_serde::UnsafeSliceSerde;
 #[derive(Debug)]
 pub struct StorableVec<I, T> {
     pathbuf: PathBuf,
-    file: File,
+    unsafe_file: File,
     cache: Vec<OnceLock<Box<Mmap>>>, // Boxed Mmap to reduce the size of the Lock (from 24 to 16)
     disk_len: usize,
     pushed: Vec<T>,
@@ -50,8 +63,8 @@ const MAX_CACHE_SIZE: usize = 100 * ONE_MB;
 
 impl<I, T> StorableVec<I, T>
 where
-    I: TryInto<usize>,
-    T: Sized + Debug + Clone,
+    I: StorableVecIndex,
+    T: StorableVecType,
 {
     pub const SIZE_OF_T: usize = size_of::<T>();
     pub const PER_PAGE: usize = MAX_PAGE_SIZE / Self::SIZE_OF_T;
@@ -59,13 +72,23 @@ where
     pub const PAGE_SIZE: usize = Self::PER_PAGE * Self::SIZE_OF_T;
     pub const CACHE_LENGTH: usize = MAX_CACHE_SIZE / Self::PAGE_SIZE;
 
-    pub fn import(path: &Path) -> Result<Self, io::Error> {
-        let file = Self::open_file_(path)?;
+    pub fn import(path: &Path, version: Version) -> Result<Self, io::Error> {
+        fs::create_dir_all(path)?;
+
+        let path_version = Self::path_version_(path);
+        let is_same_version =
+            Version::try_from(path_version.as_path()).is_ok_and(|prev_version| version == prev_version);
+        if !is_same_version {
+            fs::remove_dir_all(path)?;
+        }
+        version.write(&path_version)?;
+
+        let unsafe_file = Self::open_file_(&Self::path_vec_(path))?;
 
         let mut this = Self {
             pathbuf: path.to_owned(),
-            disk_len: Self::byte_index_to_index(Self::file_len(&file)?),
-            file,
+            disk_len: Self::disk_len(&unsafe_file)?,
+            unsafe_file,
             cache: vec![],
             pushed: vec![],
             // updated: BTreeMap::new(),
@@ -76,20 +99,17 @@ where
             // opened_mmaps: AtomicUsize::new(0),
         };
 
+        // TODO: Only if write mode
         this.reset_cache();
 
         Ok(this)
     }
 
-    fn file_len(file: &File) -> io::Result<usize> {
-        Ok(file.metadata()?.len() as usize)
+    pub fn disk_len(file: &File) -> io::Result<usize> {
+        Ok(Self::byte_index_to_index(file.metadata()?.len() as usize))
     }
 
-    fn reset_cache(&mut self) {
-        // let len = (self.disk_len as f64 / Self::PER_PAGE as f64).ceil() as usize;
-        // self.cache.clear();
-        // self.cache.resize_with(len, Default::default);
-
+    pub fn reset_cache(&mut self) {
         // par_iter_mut ?
         self.cache.iter_mut().for_each(|lock| {
             lock.take();
@@ -105,7 +125,7 @@ where
     }
 
     fn open_file(&self) -> Result<File, Error> {
-        Self::open_file_(&self.pathbuf).map_err(Error::IO)
+        Self::open_file_(&self.path_vec()).map_err(Error::IO)
     }
     fn open_file_(path: &Path) -> Result<File, io::Error> {
         OpenOptions::new()
@@ -146,10 +166,10 @@ where
     }
 
     #[inline]
-    pub fn get(&self, index: I) -> Result<Option<Value<'_, T>>> {
-        self.get_(index.try_into().map_err(|_| Error::FailedKeyTryIntoUsize)?)
+    pub fn cached_get(&self, index: I) -> Result<Option<Value<'_, T>>> {
+        self.cached_get_(index.try_into().map_err(|_| Error::FailedKeyTryIntoUsize)?)
     }
-    pub fn get_(&self, index: usize) -> Result<Option<Value<'_, T>>> {
+    fn cached_get_(&self, index: usize) -> Result<Option<Value<'_, T>>> {
         match self.index_to_pushed_index(index) {
             Ok(index) => {
                 if let Some(index) = index {
@@ -166,7 +186,6 @@ where
         //     }
         // }
 
-        let byte_index = Self::index_to_byte_index(index);
         let page_index = index / Self::PER_PAGE;
         let last_index = self.disk_len - 1;
         let max_page_index = last_index / Self::PER_PAGE;
@@ -188,7 +207,7 @@ where
                         MmapOptions::new()
                             .len(Self::PAGE_SIZE)
                             .offset((page_index * Self::PAGE_SIZE) as u64)
-                            .map(&self.file)
+                            .map(&self.unsafe_file)
                             .unwrap()
                     })
                 });
@@ -201,49 +220,78 @@ where
                 T::unsafe_try_from_slice(slice).map_err(Error::UnsafeSliceSerde)?,
             )))
         } else {
-            let mut file = self.open_file()?;
-            let mut buf = vec![0; Self::SIZE_OF_T];
-
-            file.seek(SeekFrom::Start(byte_index as u64)).map_err(Error::IO)?;
-            file.read_exact(&mut buf).map_err(Error::IO)?;
-            let value = T::unsafe_try_from_slice(&buf[..]).map_err(Error::UnsafeSliceSerde)?;
-
+            let (mut file, mut buf) = self.prepare_to_read()?;
+            Self::seek_(&mut file, index)?;
+            let value = self.read_exact(&mut file, &mut buf)?;
             Ok(Some(Value::Owned(value.to_owned())))
         }
     }
+
     pub fn get_or_default(&self, index: I) -> Result<T>
     where
         T: Default + Clone,
     {
-        Ok(self.get(index)?.map(|v| (*v).clone()).unwrap_or(Default::default()))
+        Ok(self
+            .cached_get(index)?
+            .map(|v| (*v).clone())
+            .unwrap_or(Default::default()))
     }
 
-    pub fn read_iter<F>(&self, f: F) -> Result<()>
-    where
-        F: FnMut((usize, &T)) -> Result<()>,
-    {
-        self.read_from_(0, f)
+    pub fn seek(file: &mut File, index: I) -> Result<()> {
+        Self::seek_(file, index.try_into().map_err(|_| Error::FailedKeyTryIntoUsize)?)
     }
 
-    pub fn read_from_<F>(&self, index: usize, mut f: F) -> Result<()>
-    where
-        F: FnMut((usize, &T)) -> Result<()>,
-    {
-        let mut file = self.open_file()?;
-        let mut buf = vec![0; Self::SIZE_OF_T];
-
+    pub fn seek_(file: &mut File, index: usize) -> Result<()> {
         let byte_index = Self::index_to_byte_index(index);
-
         file.seek(SeekFrom::Start(byte_index as u64)).map_err(Error::IO)?;
+        Ok(())
+    }
 
-        let mut i = 0;
+    pub fn iter<F>(&self, f: F) -> Result<()>
+    where
+        F: FnMut((I, &T)) -> Result<()>,
+    {
+        self.iter_from(I::from(0_usize), f)
+    }
 
-        loop {
-            if file.read_exact(&mut buf).map_err(Error::IO).is_err() {
-                break;
-            }
-            let v = T::unsafe_try_from_slice(&buf[..]).map_err(Error::UnsafeSliceSerde)?;
-            f((i, v))?;
+    pub fn prepare_to_read(&self) -> Result<(File, Vec<u8>)> {
+        let file = self.open_file()?;
+        let buf = vec![0; Self::SIZE_OF_T];
+        Ok((file, buf))
+    }
+
+    pub fn prepare_to_read_at(&self, index: I) -> Result<(File, Vec<u8>)> {
+        self.prepare_to_read_at_(index.try_into().map_err(|_| Error::FailedKeyTryIntoUsize)?)
+    }
+    pub fn prepare_to_read_at_(&self, index: usize) -> Result<(File, Vec<u8>)> {
+        let (mut file, buf) = self.prepare_to_read()?;
+        Self::seek_(&mut file, index)?;
+        Ok((file, buf))
+    }
+
+    pub fn read_exact<'a>(&self, file: &'a mut File, buf: &'a mut [u8]) -> Result<&'a T> {
+        file.read_exact(buf).map_err(Error::IO)?;
+        let v = T::unsafe_try_from_slice(&buf[..]).map_err(Error::UnsafeSliceSerde)?;
+        Ok(v)
+    }
+
+    pub fn iter_from<F>(&self, index: I, mut f: F) -> Result<()>
+    where
+        F: FnMut((I, &T)) -> Result<()>,
+    {
+        let (mut file, mut buf) = self.prepare_to_read()?;
+        let disk_len = Self::disk_len(&file).map_err(Error::IO)?;
+        Self::seek(&mut file, index)?;
+
+        let mut i: usize = index.try_into().map_err(|_| Error::FailedKeyTryIntoUsize)?;
+        while i < disk_len {
+            let v = self.read_exact(&mut file, &mut buf)?;
+            f((I::from(i), v))?;
+            i += 1;
+        }
+        i = 0;
+        while i < self.pushed_len() {
+            f((I::from(i + disk_len), self.pushed.get(i).as_ref().unwrap()))?;
             i += 1;
         }
 
@@ -252,7 +300,7 @@ where
 
     #[allow(unused)]
     pub fn first(&self) -> Result<Option<Value<'_, T>>> {
-        self.get_(0)
+        self.cached_get_(0)
     }
 
     #[allow(unused)]
@@ -261,7 +309,7 @@ where
         if len == 0 {
             return Ok(None);
         }
-        self.get_(len - 1)
+        self.cached_get_(len - 1)
     }
 
     pub fn push(&mut self, value: T) {
@@ -271,7 +319,7 @@ where
     pub fn push_if_needed(&mut self, index: I, value: T) -> Result<()> {
         self.push_if_needed_(index.try_into().map_err(|_| Error::FailedKeyTryIntoUsize)?, value)
     }
-    pub fn push_if_needed_(&mut self, index: usize, value: T) -> Result<()> {
+    fn push_if_needed_(&mut self, index: usize, value: T) -> Result<()> {
         let len = self.len();
         match len.cmp(&index) {
             Ordering::Greater => {
@@ -331,7 +379,11 @@ where
     // }
 
     pub fn len(&self) -> usize {
-        self.disk_len + self.pushed.len()
+        self.disk_len + self.pushed_len()
+    }
+
+    pub fn pushed_len(&self) -> usize {
+        self.pushed.len()
     }
 
     pub fn is_empty(&self) -> bool {
@@ -341,18 +393,30 @@ where
     pub fn has(&self, index: I) -> Result<bool> {
         Ok(self.has_(index.try_into().map_err(|_| Error::FailedKeyTryIntoUsize)?))
     }
-    pub fn has_(&self, index: usize) -> bool {
+    fn has_(&self, index: usize) -> bool {
         index < self.len()
     }
 
     pub fn hasnt(&self, index: I) -> Result<bool> {
         Ok(self.hasnt_(index.try_into().map_err(|_| Error::FailedKeyTryIntoUsize)?))
     }
-    pub fn hasnt_(&self, index: usize) -> bool {
+    fn hasnt_(&self, index: usize) -> bool {
         !self.has_(index)
     }
 
+    // pub fn flush(&mut self) -> io::Result<()>
+    // where
+    //     T: Bytes,
+    // {
+    //     self.flush_(|bytes, v| bytes.extend_from_slice(&v.to_bytes()))
+    // }
     pub fn flush(&mut self) -> io::Result<()> {
+        //     self.flush_(|bytes, v| bytes.extend_from_slice(v.unsafe_as_slice()))
+        // }
+        // fn flush_<F>(&mut self, mut extend: F) -> io::Result<()>
+        // where
+        //     F: FnMut(&mut Vec<u8>, T),
+        // {
         self.reset_cache();
 
         if self.pushed.is_empty() {
@@ -366,99 +430,25 @@ where
         mem::take(&mut self.pushed)
             .into_iter()
             .for_each(|v| bytes.extend_from_slice(v.unsafe_as_slice()));
+        // .for_each(|v| extend(&mut bytes, v));
 
-        self.file.write_all(&bytes)?;
+        self.unsafe_file.write_all(&bytes)?;
 
         Ok(())
     }
-}
 
-pub trait AnyStorableVec {
-    fn len(&self) -> usize;
-    fn is_empty(&self) -> bool;
-    fn flush(&mut self) -> io::Result<()>;
-}
-
-impl<I, T> AnyStorableVec for StorableVec<I, T>
-where
-    I: Into<usize>,
-    T: Sized + Debug + Clone,
-{
-    fn len(&self) -> usize {
-        self.len()
+    pub fn path(&self) -> &Path {
+        &self.pathbuf
     }
 
-    fn is_empty(&self) -> bool {
-        self.is_empty()
+    fn path_vec(&self) -> PathBuf {
+        Self::path_vec_(&self.pathbuf)
+    }
+    fn path_vec_(path: &Path) -> PathBuf {
+        path.join("vec")
     }
 
-    fn flush(&mut self) -> io::Result<()> {
-        self.flush()
+    fn path_version_(path: &Path) -> PathBuf {
+        path.join("version")
     }
 }
-
-#[derive(Debug, Clone)]
-pub enum Value<'a, T> {
-    Ref(&'a T),
-    Owned(T),
-}
-
-impl<T> Value<'_, T>
-where
-    T: Sized + Debug + Clone,
-{
-    pub fn into_inner(self) -> T {
-        match self {
-            Self::Ref(t) => t.to_owned(),
-            Self::Owned(t) => t,
-        }
-    }
-}
-impl<T> Deref for Value<'_, T> {
-    type Target = T;
-    fn deref(&self) -> &Self::Target {
-        match self {
-            Self::Ref(t) => t,
-            Self::Owned(t) => t,
-        }
-    }
-}
-impl<T> AsRef<T> for Value<'_, T>
-where
-    T: Sized + Debug + Clone,
-{
-    fn as_ref(&self) -> &T {
-        match self {
-            Self::Ref(t) => t,
-            Self::Owned(t) => t,
-        }
-    }
-}
-
-pub type Result<T, E = Error> = std::result::Result<T, E>;
-
-#[derive(Debug)]
-pub enum Error {
-    MmapsVecIsTooSmall,
-    IO(io::Error),
-    UnsafeSliceSerde(unsafe_slice_serde::Error),
-    IndexTooHigh,
-    ExpectFileToHaveIndex,
-    ExpectVecToHaveIndex,
-    FailedKeyTryIntoUsize,
-}
-impl fmt::Display for Error {
-    // This trait requires `fmt` with this exact signature.
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            Error::MmapsVecIsTooSmall => write!(f, "Mmaps vec is too small"),
-            Error::IO(error) => Debug::fmt(&error, f),
-            Error::UnsafeSliceSerde(error) => Debug::fmt(&error, f),
-            Error::IndexTooHigh => write!(f, "Index too high"),
-            Error::ExpectFileToHaveIndex => write!(f, "Expect file to have index"),
-            Error::ExpectVecToHaveIndex => write!(f, "Expect vec to have index"),
-            Error::FailedKeyTryIntoUsize => write!(f, "Failed to convert key to usize"),
-        }
-    }
-}
-impl std::error::Error for Error {}

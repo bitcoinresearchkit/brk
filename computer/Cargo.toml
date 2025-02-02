@@ -11,6 +11,5 @@ derive_deref = { workspace = true }
 exit = { workspace = true }
 fjall = { workspace = true }
 jiff = { workspace = true }
-rayon = { workspace = true }
 storable_vec = { workspace = true }
 unsafe_slice_serde = { workspace = true }

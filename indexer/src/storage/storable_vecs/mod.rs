@@ -3,11 +3,12 @@ use std::{fs, io, path::Path};
 use biter::bitcoin::{self, transaction, BlockHash, Txid, Weight};
 use exit::Exit;
 use rayon::prelude::*;
+use storable_vec::Version;
 
 use crate::structs::{
     Addressbytes, Addressindex, Addresstype, Addresstypeindex, Amount, Height, P2PK33AddressBytes, P2PK65AddressBytes,
     P2PKHAddressBytes, P2SHAddressBytes, P2TRAddressBytes, P2WPKHAddressBytes, P2WSHAddressBytes, Timestamp, Txindex,
-    Txinindex, Txoutindex, Version,
+    Txinindex, Txoutindex,
 };
 
 mod base;
@@ -203,37 +204,37 @@ impl StorableVecs {
         Ok(match addresstype {
             Addresstype::P2PK65 => self
                 .p2pk65index_to_p2pk65addressbytes
-                .get(addresstypeindex)?
+                .cached_get(addresstypeindex)?
                 // .map(|v| Addressbytes::from(v.clone())),
                 .map(|v| Addressbytes::from(v.into_inner())),
             Addresstype::P2PK33 => self
                 .p2pk33index_to_p2pk33addressbytes
-                .get(addresstypeindex)?
+                .cached_get(addresstypeindex)?
                 // .map(|v| Addressbytes::from(v.clone())),
                 .map(|v| Addressbytes::from(v.into_inner())),
             Addresstype::P2PKH => self
                 .p2pkhindex_to_p2pkhaddressbytes
-                .get(addresstypeindex)?
+                .cached_get(addresstypeindex)?
                 // .map(|v| Addressbytes::from(v.clone())),
                 .map(|v| Addressbytes::from(v.into_inner())),
             Addresstype::P2SH => self
                 .p2shindex_to_p2shaddressbytes
-                .get(addresstypeindex)?
+                .cached_get(addresstypeindex)?
                 // .map(|v| Addressbytes::from(v.clone())),
                 .map(|v| Addressbytes::from(v.into_inner())),
             Addresstype::P2WPKH => self
                 .p2wpkhindex_to_p2wpkhaddressbytes
-                .get(addresstypeindex)?
+                .cached_get(addresstypeindex)?
                 // .map(|v| Addressbytes::from(v.clone())),
                 .map(|v| Addressbytes::from(v.into_inner())),
             Addresstype::P2WSH => self
                 .p2wshindex_to_p2wshaddressbytes
-                .get(addresstypeindex)?
+                .cached_get(addresstypeindex)?
                 // .map(|v| Addressbytes::from(v.clone())),
                 .map(|v| Addressbytes::from(v.into_inner())),
             Addresstype::P2TR => self
                 .p2trindex_to_p2traddressbytes
-                .get(addresstypeindex)?
+                .cached_get(addresstypeindex)?
                 // .map(|v| Addressbytes::from(v.clone())),
                 .map(|v| Addressbytes::from(v.into_inner())),
             _ => unreachable!(),
@@ -352,6 +353,10 @@ impl StorableVecs {
         // todo!("clear zero_txoutindexes")
 
         // Ok(())
+    }
+
+    pub fn reset_cache(&mut self) {
+        self.as_mut_slice().into_par_iter().for_each(|vec| vec.reset_cache())
     }
 
     pub fn flush(&mut self, height: Height) -> io::Result<()> {

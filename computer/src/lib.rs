@@ -1,6 +1,6 @@
 use std::path::{Path, PathBuf};
 
-use bindex::{Height, Indexer};
+use bindex::Indexer;
 use biter::rpc;
 use exit::Exit;
 
@@ -36,34 +36,63 @@ impl Computer {
             indexer.index(bitcoin_dir, rpc, exit)?;
         }
 
+        let height_count = indexer.vecs().height_to_size.len();
+        let txindexes_count = indexer.vecs().txindex_to_txid.len();
+        let txinindexes_count = indexer.vecs().txinindex_to_txoutindex.len();
+        let txoutindexes_count = indexer.vecs().txoutindex_to_addressindex.len();
+
         // TODO: Remove all outdated
 
-        // Compute txindex to X
+        self.vecs
+            .txindex_to_last_txinindex
+            .compute_last_index_from_first(&indexer.vecs().txindex_to_first_txinindex, txinindexes_count)?;
 
-        // Compute height to X
-        indexer
-            .vecs()
-            .height_to_timestamp
-            .read_from_(self.vecs.height_to_date.len(), |(_height, timestamp)| {
-                self.vecs
-                    .height_to_date
-                    .push_if_needed(Height::from(_height), Date::from(timestamp))
-            })?;
+        self.vecs.txindex_to_inputcount.compute_count_from_indexes(
+            &indexer.vecs().txindex_to_first_txinindex,
+            &self.vecs.txindex_to_last_txinindex,
+        )?;
+
+        self.vecs
+            .txindex_to_last_txoutindex
+            .compute_last_index_from_first(&indexer.vecs().txindex_to_first_txoutindex, txoutindexes_count)?;
+
+        self.vecs.txindex_to_outputcount.compute_count_from_indexes(
+            &indexer.vecs().txindex_to_first_txoutindex,
+            &self.vecs.txindex_to_last_txoutindex,
+        )?;
+
         self.vecs
             .height_to_date
-            .read_from_(self.vecs.date_to_first_height.len(), |(_height, date)| {
-                self.vecs
-                    .date_to_first_height
-                    .push_if_needed(*date, Height::from(_height))
-            })?;
+            .compute_transform(&indexer.vecs().height_to_timestamp, |timestamp| Date::from(timestamp))?;
 
-        // Compute date to X
+        self.vecs
+            .height_to_last_txindex
+            .compute_last_index_from_first(&indexer.vecs().height_to_first_txindex, height_count)?;
+
+        self.vecs.txindex_to_height.compute_inverse_less_to_more(
+            &indexer.vecs().height_to_first_txindex,
+            &self.vecs.height_to_last_txindex,
+        )?;
+
+        let date_count = self.vecs.height_to_date.len();
+
+        self.vecs
+            .date_to_first_height
+            .compute_inverse_more_to_less(&self.vecs.height_to_date)?;
+
+        // ---
+        // Date to X
+        // ---
         // ...
 
-        // Compute month to X
+        // ---
+        // Month to X
+        // ---
         // ...
 
-        // Compute year to X
+        // ---
+        // Year to X
+        // ---
         // ...
 
         Ok(())

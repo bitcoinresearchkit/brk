@@ -4,7 +4,8 @@ use derive_deref::Deref;
 pub struct Vin(u32);
 
 impl Vin {
-    const ZERO: Self = Vin(0_u32);
+    pub const ZERO: Self = Vin(0);
+    pub const ONE: Self = Vin(1);
 
     pub fn is_zero(&self) -> bool {
         *self == Self::ZERO

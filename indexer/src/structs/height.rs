@@ -24,11 +24,19 @@ impl PartialEq<u64> for Height {
     }
 }
 
+impl Add<Height> for Height {
+    type Output = Height;
+
+    fn add(self, rhs: Height) -> Self::Output {
+        Self::from(self.0 + rhs.0)
+    }
+}
+
 impl Add<u32> for Height {
     type Output = Height;
 
     fn add(self, rhs: u32) -> Self::Output {
-        Self::from(*self + rhs)
+        Self::from(self.0 + rhs)
     }
 }
 
@@ -42,7 +50,6 @@ impl Add<usize> for Height {
 
 impl Sub<Height> for Height {
     type Output = Height;
-
     fn sub(self, rhs: Height) -> Self::Output {
         Self::from(*self - *rhs)
     }
