@@ -13,21 +13,28 @@ use std::{
 use memmap2::{Mmap, MmapOptions};
 use unsafe_slice_serde::UnsafeSliceSerde;
 
-mod any;
-// mod bytes;
-mod error;
-mod index;
-mod type_;
-mod value;
-mod version;
+mod enums;
+mod structs;
+mod traits;
 
-pub use any::*;
-// pub use bytes::*;
-pub use error::*;
-pub use index::*;
-pub use type_::*;
-pub use value::*;
-pub use version::*;
+pub use enums::*;
+pub use structs::*;
+pub use traits::*;
+
+/// Uses `Mmap` instead of `File`
+///
+/// Used in `/indexer`
+const CACHED: u8 = 0;
+
+/// Will use the same `File` for every read, so not thread safe
+///
+/// Used in `/computer`
+const RAW_SYNC: u8 = 1;
+
+/// Will spin up a new `File` for every read
+///
+/// Used in `/server`
+const RAW_ASYNC: u8 = 2;
 
 ///
 /// A very small, fast, efficient and simple storable Vec
@@ -45,6 +52,7 @@ pub struct StorableVec<I, T> {
     pathbuf: PathBuf,
     unsafe_file: File,
     cache: Vec<OnceLock<Box<Mmap>>>, // Boxed Mmap to reduce the size of the Lock (from 24 to 16)
+    buf: Vec<u8>,
     disk_len: usize,
     pushed: Vec<T>,
     // updated: BTreeMap<usize, T>,
@@ -89,6 +97,7 @@ where
             pathbuf: path.to_owned(),
             disk_len: Self::disk_len(&unsafe_file)?,
             unsafe_file,
+            buf: vec![0; Self::SIZE_OF_T],
             cache: vec![],
             pushed: vec![],
             // updated: BTreeMap::new(),

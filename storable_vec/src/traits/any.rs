@@ -1,6 +1,8 @@
 use std::io;
 
-use crate::{StorableVec, StorableVecIndex, StorableVecType};
+use crate::StorableVec;
+
+use super::{StorableVecIndex, StorableVecType};
 
 pub trait AnyStorableVec {
     fn len(&self) -> usize;
