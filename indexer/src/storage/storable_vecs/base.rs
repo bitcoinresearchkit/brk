@@ -5,25 +5,25 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use storable_vec::{StorableVecIndex, StorableVecType, Version};
+use storable_vec::{StorableVecIndex, StorableVecType, Version, CACHED_GETS};
 
 use super::Height;
 
 #[derive(Debug)]
-pub struct StorableVec<I, T> {
+pub struct StorableVec<I, T, const MODE: u8> {
     height: Option<Height>,
-    vec: storable_vec::StorableVec<I, T>,
+    vec: storable_vec::StorableVec<I, T, MODE>,
 }
 
-impl<I, T> StorableVec<I, T>
+impl<I, T, const MODE: u8> StorableVec<I, T, MODE>
 where
     I: StorableVecIndex,
     T: StorableVecType,
 {
-    pub fn import(path: &Path, version: Version) -> io::Result<Self> {
+    pub fn import(path: &Path, version: Version) -> storable_vec::Result<Self> {
         Ok(Self {
             height: Height::try_from(Self::path_height_(path).as_path()).ok(),
-            vec: storable_vec::StorableVec::import(path, version)?,
+            vec: storable_vec::StorableVec::forced_import(path, version)?,
         })
     }
 
@@ -53,13 +53,13 @@ where
     }
 }
 
-impl<I, T> Deref for StorableVec<I, T> {
-    type Target = storable_vec::StorableVec<I, T>;
+impl<I, T, const MODE: u8> Deref for StorableVec<I, T, MODE> {
+    type Target = storable_vec::StorableVec<I, T, MODE>;
     fn deref(&self) -> &Self::Target {
         &self.vec
     }
 }
-impl<I, T> DerefMut for StorableVec<I, T> {
+impl<I, T, const MODE: u8> DerefMut for StorableVec<I, T, MODE> {
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.vec
     }
@@ -68,20 +68,15 @@ impl<I, T> DerefMut for StorableVec<I, T> {
 pub trait AnyStorableVec {
     fn height(&self) -> color_eyre::Result<Height>;
     fn flush(&mut self, height: Height) -> io::Result<()>;
-    fn reset_cache(&mut self);
 }
 
-impl<I, T> AnyStorableVec for StorableVec<I, T>
+impl<I, T, const MODE: u8> AnyStorableVec for StorableVec<I, T, MODE>
 where
     I: StorableVecIndex,
     T: StorableVecType,
 {
     fn height(&self) -> color_eyre::Result<Height> {
         self.height()
-    }
-
-    fn reset_cache(&mut self) {
-        self.vec.reset_cache()
     }
 
     fn flush(&mut self, height: Height) -> io::Result<()> {

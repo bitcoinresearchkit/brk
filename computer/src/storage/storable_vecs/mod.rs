@@ -9,33 +9,33 @@ mod base;
 
 use base::*;
 
-pub struct StorableVecs {
-    pub date_to_first_height: StorableVec<Date, Height>,
-    // pub height_to_block_interval: StorableVec<Height, Timestamp>,
-    pub height_to_date: StorableVec<Height, Date>,
-    // pub height_to_fee: StorableVec<Txindex, Amount>,
-    // pub height_to_inputcount: StorableVec<Txindex, u32>,
-    // pub height_to_last_addressindex: StorableVec<Height, Addressindex>,
-    pub height_to_last_txindex: StorableVec<Height, Txindex>,
-    // pub height_to_last_txoutindex: StorableVec<Height, Txoutindex>,
-    // pub height_to_maxfeerate: StorableVec<Txindex, Feerate>,
-    // pub height_to_medianfeerate: StorableVec<Txindex, Feerate>,
-    // pub height_to_minfeerate: StorableVec<Txindex, Feerate>,
-    // pub height_to_outputcount: StorableVec<Txindex, u32>,
-    // pub height_to_subsidy: StorableVec<Txindex, u32>,
-    // pub height_to_totalfees: StorableVec<Height, Amount>,
-    // pub height_to_txcount: StorableVec<Txindex, u32>,
-    pub txindex_to_fee: StorableVec<Txindex, Amount>,
-    pub txindex_to_height: StorableVec<Txindex, Height>,
-    pub txindex_to_is_coinbase: StorableVec<Txindex, bool>,
-    // pub txindex_to_feerate: StorableVec<Txindex, Feerate>,
-    pub txindex_to_inputcount: StorableVec<Txindex, u32>,
-    pub txindex_to_last_txinindex: StorableVec<Txindex, Txinindex>,
-    pub txindex_to_last_txoutindex: StorableVec<Txindex, Txoutindex>,
-    pub txindex_to_outputcount: StorableVec<Txindex, u32>,
+pub struct StorableVecs<const MODE: u8> {
+    pub date_to_first_height: StorableVec<Date, Height, MODE>,
+    // pub height_to_block_interval: StorableVec<Height, Timestamp, MODE>,
+    pub height_to_date: StorableVec<Height, Date, MODE>,
+    // pub height_to_fee: StorableVec<Txindex, Amount, MODE>,
+    // pub height_to_inputcount: StorableVec<Txindex, u32, MODE>,
+    // pub height_to_last_addressindex: StorableVec<Height, Addressindex, MODE>,
+    pub height_to_last_txindex: StorableVec<Height, Txindex, MODE>,
+    // pub height_to_last_txoutindex: StorableVec<Height, Txoutindex, MODE>,
+    // pub height_to_maxfeerate: StorableVec<Txindex, Feerate, MODE>,
+    // pub height_to_medianfeerate: StorableVec<Txindex, Feerate, MODE>,
+    // pub height_to_minfeerate: StorableVec<Txindex, Feerate, MODE>,
+    // pub height_to_outputcount: StorableVec<Txindex, u32, MODE>,
+    // pub height_to_subsidy: StorableVec<Txindex, u32, MODE>,
+    // pub height_to_totalfees: StorableVec<Height, Amount, MODE>,
+    // pub height_to_txcount: StorableVec<Txindex, u32, MODE>,
+    pub txindex_to_fee: StorableVec<Txindex, Amount, MODE>,
+    pub txindex_to_height: StorableVec<Txindex, Height, MODE>,
+    pub txindex_to_is_coinbase: StorableVec<Txindex, bool, MODE>,
+    // pub txindex_to_feerate: StorableVec<Txindex, Feerate, MODE>,
+    pub txindex_to_inputcount: StorableVec<Txindex, u32, MODE>,
+    pub txindex_to_last_txinindex: StorableVec<Txindex, Txinindex, MODE>,
+    pub txindex_to_last_txoutindex: StorableVec<Txindex, Txoutindex, MODE>,
+    pub txindex_to_outputcount: StorableVec<Txindex, u32, MODE>,
 }
 
-impl StorableVecs {
+impl<const MODE: u8> StorableVecs<MODE> {
     pub fn import(path: &Path) -> color_eyre::Result<Self> {
         fs::create_dir_all(path)?;
 

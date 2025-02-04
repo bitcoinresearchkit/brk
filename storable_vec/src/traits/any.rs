@@ -7,10 +7,10 @@ use super::{StorableVecIndex, StorableVecType};
 pub trait AnyStorableVec {
     fn len(&self) -> usize;
     fn is_empty(&self) -> bool;
-    fn unsafe_flush(&mut self) -> io::Result<()>;
+    fn flush(&mut self) -> io::Result<()>;
 }
 
-impl<I, T> AnyStorableVec for StorableVec<I, T>
+impl<I, T, const MODE: u8> AnyStorableVec for StorableVec<I, T, MODE>
 where
     I: StorableVecIndex,
     T: StorableVecType,
@@ -23,7 +23,7 @@ where
         self.is_empty()
     }
 
-    fn unsafe_flush(&mut self) -> io::Result<()> {
+    fn flush(&mut self) -> io::Result<()> {
         self.flush()
     }
 }
