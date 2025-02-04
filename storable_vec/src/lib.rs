@@ -1,11 +1,12 @@
 use std::{
     cmp::Ordering,
+    error,
     fmt::Debug,
     fs::{self, File, OpenOptions},
     io::{self, Read, Seek, SeekFrom, Write},
     marker::PhantomData,
     mem,
-    ops::Range,
+    ops::{Add, Range, Sub},
     path::{Path, PathBuf},
     sync::OnceLock,
 };
@@ -192,47 +193,18 @@ where
         }
     }
 
-    // #[inline]
-    // fn open_file_at_then_read(&self, index: I) -> Result<T> {
-    //     self.open_file_at_then_read_(Self::i_to_usize(index)?)
-    // }
     fn open_file_at_then_read(&self, index: usize) -> Result<T> {
-        // let (mut file, mut buf) = self.open_file_at(index)?;
         let mut file = self.open_file()?;
         let mut buf = Self::create_buffer();
-
-        let byte_index = Self::index_to_byte_index(index);
-        Self::seek(&mut file, byte_index)?;
-
-        Ok(Self::read_exact(&mut file, &mut buf)?.to_owned())
+        Self::seek(&mut file, Self::index_to_byte_index(index))?;
+        Self::read_exact(&mut file, &mut buf).map(|v| v.to_owned())
     }
-    // #[inline]
-    // fn open_file_at(&self, index: I) -> Result<(File, Buffer)> {
-    //     self.open_file_at_(Self::i_to_usize(index)?)
-    // }
-    // fn open_file_at(&self, index: usize) -> Result<(File, Buffer)> {
-    //     let mut file = self.open_file()?;
-    //     let buf = Self::create_buffer();
-    //     let byte_index = Self::index_to_byte_index(index);
-    //     Self::seek(&mut file, byte_index)?;
-    //     Ok((file, buf))
-    // }
-    // #[inline]
-    // fn seek_if_needed_(file: &mut File, index: I) -> Result<u64> {
-    //     Self::seek_if_needed__(file, Self::i_to_usize(index)?).map_err(Error::IO)
-    // }
-    // #[inline]
-    // fn seek_if_needed(file: &mut File, index: usize) -> io::Result<u64> {
-    //     let byte_index = Self::index_to_byte_index(index);
-    //     if file.stream_position()? != byte_index {
-    //         Self::seek(file, byte_index)?;
-    //     }
-    //     Ok(byte_index)
-    // }
+
     #[inline]
     fn seek(file: &mut File, byte_index: u64) -> io::Result<u64> {
         file.seek(SeekFrom::Start(byte_index))
     }
+
     fn read_exact<'a>(file: &'a mut File, buf: &'a mut [u8]) -> Result<&'a T> {
         file.read_exact(buf)?;
         let v = T::unsafe_try_from_slice(&buf[..])?;
@@ -261,74 +233,7 @@ where
                 Err(Error::IndexTooHigh)
             }
         }
-        // Self::push_to_vec_if_needed(&mut self.pushed, index, value)
     }
-    // #[inline]
-    // fn push_if_needed__(&mut self, index: usize, value: T) -> Result<()> {
-    //     Self::push_to_vec_if_needed_(&mut self.pushed, index, value)
-    // }
-    // #[inline]
-    // fn push_to_vec_if_needed(vec: &mut Vec<T>, index: I, value: T) -> Result<()> {
-    //     Self::push_to_vec_if_needed_(vec, Self::i_to_usize(index)?, value)
-    // }
-    // fn push_to_vec_if_needed_(vec: &mut Vec<T>, index: usize, value: T) -> Result<()> {
-    //     let len = vec.len();
-    //     match len.cmp(&index) {
-    //         Ordering::Greater => {
-    //             // dbg!(len, index, &self.pathbuf);
-    //             // panic!();
-    //             Ok(())
-    //         }
-    //         Ordering::Equal => {
-    //             vec.push(value);
-    //             Ok(())
-    //         }
-    //         Ordering::Less => {
-    //             dbg!(index, value);
-    //             Err(Error::IndexTooHigh)
-    //         }
-    //     }
-    // }
-
-    // pub fn update(&mut self, index: I, value: T) -> Result<()> {
-    //     self._update(index.into(), value)
-    // }
-    // pub fn update_(&mut self, index: usize, value: T) -> Result<()> {
-    //     if let Some(index) = self.index_to_pushed_index(index) {
-    //         self.pushed[index] = value;
-    //     } else {
-    //         self.updated.insert(index, value);
-    //     }
-    //     Ok(())
-    // }
-
-    // pub fn fetch_update(&mut self, index: I, value: T) -> Result<T>
-    // where
-    //     T: Clone,
-    // {
-    //     self._fetch_update(index.into(), value)
-    // }
-    // pub fn fetch_update_(&mut self, index: usize, value: T) -> Result<T>
-    // where
-    //     T: Clone,
-    // {
-    //     let prev_opt = self.updated.insert(index, value);
-    //     if let Some(prev) = prev_opt {
-    //         Ok(prev)
-    //     } else {
-    //         Ok(self
-    //             ._get(index)?
-    //             .ok_or(Error::ExpectFileToHaveIndex)?
-    //             .clone())
-    //     }
-    // }
-
-    // pub fn remove(&mut self, index: I) {
-    //     self._remove(index.into())
-    // }
-    // pub fn remove_(&mut self, index: usize) {
-    //     self.removed.insert(index);
-    // }
 
     #[inline]
     pub fn len(&self) -> usize {
@@ -357,10 +262,6 @@ where
     #[inline]
     pub fn hasnt(&self, index: I) -> Result<bool> {
         self.has(index).map(|b| !b)
-    }
-    #[inline]
-    fn hasnt_(&self, index: usize) -> bool {
-        !self.has_(index)
     }
 
     pub fn flush(&mut self) -> io::Result<()> {
@@ -528,6 +429,7 @@ where
     fn get_(&mut self, index: usize) -> Result<&T> {
         let byte_index = Self::index_to_byte_index(index);
         if self.file_position != byte_index {
+            println!("seek");
             self.file_position = Self::seek(&mut self.file, byte_index)?;
         }
         let res = Self::read_exact(&mut self.file, &mut self.buf);
@@ -560,15 +462,6 @@ where
             Ok(())
         }
     }
-
-    // #[inline]
-    // fn seek_if_needed(&mut self, index: I) -> Result<()> {
-    //     if self.file_position == Self::index_to_byte_index(Self::i_to_usize(index)?) {
-    //         return Ok(());
-    //     }
-    //     self.file_position = Self::seek_if_needed_(&mut self.file, index)?;
-    //     Ok(())
-    // }
 
     pub fn iter<F>(&mut self, f: F) -> Result<()>
     where
@@ -605,6 +498,15 @@ where
         Ok(())
     }
 
+    pub fn compute_transform<A, F>(&mut self, other: &mut StorableVec<I, A, SINGLE_THREAD>, t: F) -> Result<()>
+    where
+        A: StorableVecType,
+        F: Fn(&A) -> T,
+    {
+        other.iter_from(I::from(self.len()), |(i, a)| self.push_if_needed(i, t(a)))?;
+        Ok(self.flush()?)
+    }
+
     pub fn compute_inverse_more_to_less(&mut self, other: &mut StorableVec<T, I, SINGLE_THREAD>) -> Result<()>
     where
         I: StorableVecType,
@@ -632,12 +534,59 @@ where
         Ok(self.flush()?)
     }
 
-    pub fn compute_transform<A, F>(&mut self, other: &mut StorableVec<I, A, SINGLE_THREAD>, t: F) -> Result<()>
+    pub fn compute_last_index_from_first(
+        &mut self,
+        first_index_vec: &mut StorableVec<I, T, SINGLE_THREAD>,
+        final_len: usize,
+    ) -> Result<()>
     where
-        A: StorableVecType,
-        F: Fn(&A) -> T,
+        T: Copy + From<usize> + Sub<T, Output = T> + StorableVecIndex,
     {
-        other.iter_from(I::from(self.len()), |(i, a)| self.push_if_needed(i, t(a)))?;
+        let one = T::from(1);
+        let mut prev_index: Option<I> = None;
+        first_index_vec.iter_from(I::from(self.len()), |(i, v)| {
+            if let Some(prev_index) = prev_index {
+                self.push_if_needed(prev_index, *v - one)?;
+            }
+            prev_index.replace(i);
+            Ok(())
+        })?;
+        if let Some(prev_index) = prev_index {
+            self.push_if_needed(prev_index, T::from(final_len) - one)?;
+        }
+        Ok(self.flush()?)
+    }
+
+    pub fn compute_count_from_indexes<T2>(
+        &mut self,
+        first_indexes: &mut StorableVec<I, T2, SINGLE_THREAD>,
+        last_indexes: &mut StorableVec<I, T2, SINGLE_THREAD>,
+    ) -> Result<()>
+    where
+        T: From<T2>,
+        T2: StorableVecType + Copy + Add<usize, Output = T2> + Sub<T2, Output = T2> + TryInto<T>,
+        <T2 as TryInto<T>>::Error: error::Error + Send + Sync + 'static,
+    {
+        first_indexes.iter_from(I::from(self.len()), |(i, first_index)| {
+            let last_index = last_indexes.get(i)?;
+            let count = *last_index + 1_usize - *first_index;
+            self.push_if_needed(i, count.into())
+        })?;
+        Ok(self.flush()?)
+    }
+
+    pub fn compute_is_first_ordered<A>(
+        &mut self,
+        self_to_other: &mut StorableVec<I, A, SINGLE_THREAD>,
+        other_to_self: &mut StorableVec<A, I, SINGLE_THREAD>,
+    ) -> Result<()>
+    where
+        A: StorableVecIndex + StorableVecType,
+        T: From<bool>,
+    {
+        self_to_other.iter_from(I::from(self.len()), |(i, other)| {
+            self.push_if_needed(i, T::from(other_to_self.get(*other)? == &i))
+        })?;
         Ok(self.flush()?)
     }
 }
@@ -648,12 +597,12 @@ where
     T: StorableVecType,
 {
     #[inline]
-    pub fn get(&self, index: I) -> Result<Option<Value<'_, T>>> {
+    pub fn get(&self, index: I) -> Result<Option<T>> {
         self.get_(Self::i_to_usize(index)?)
     }
     #[inline]
-    fn get_(&self, index: usize) -> Result<Option<Value<'_, T>>> {
-        Ok(Some(Value::Owned(self.open_file_at_then_read(index)?.to_owned())))
+    fn get_(&self, index: usize) -> Result<Option<T>> {
+        Ok(Some(self.open_file_at_then_read(index)?.to_owned()))
     }
 
     // Add iter iter_from iter_range collect..

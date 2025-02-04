@@ -5,7 +5,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use storable_vec::{StorableVecIndex, StorableVecType, Version, CACHED_GETS};
+use storable_vec::{StorableVecIndex, StorableVecType, Version};
 
 use super::Height;
 

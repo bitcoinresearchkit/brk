@@ -1,6 +1,6 @@
 use std::path::Path;
 
-use storable_vec::{StorableVec, Version, CACHED_GETS};
+use storable_vec::{StorableVec, Version, ASYNC_READ_ONLY, CACHED_GETS, SINGLE_THREAD};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     {
@@ -17,8 +17,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     {
-        let vec: StorableVec<usize, u32, CACHED_GETS> = StorableVec::forced_import(Path::new("./v"), Version::from(1))?;
+        let mut vec: StorableVec<usize, u32, SINGLE_THREAD> =
+            StorableVec::forced_import(Path::new("./v"), Version::from(1))?;
 
+        dbg!(vec.get(0)?); // 0
+        dbg!(vec.get(1)?); // 0
+        dbg!(vec.get(2)?); // 0
         dbg!(vec.get(0)?); // 0
     }
 
