@@ -3,6 +3,7 @@ use std::path::Path;
 use bindex::Indexer;
 use biter::rpc;
 use exit::Exit;
+use storable_vec::CACHED_GETS;
 
 fn main() -> color_eyre::Result<()> {
     color_eyre::install()?;
@@ -16,7 +17,7 @@ fn main() -> color_eyre::Result<()> {
 
     let i = std::time::Instant::now();
 
-    let mut indexer = Indexer::import(Path::new("../_outputs/indexes"))?;
+    let mut indexer: Indexer<CACHED_GETS> = Indexer::import(Path::new("../_outputs/indexes"))?;
 
     indexer.index(data_dir, rpc, &exit)?;
 

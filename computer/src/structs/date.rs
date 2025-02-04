@@ -5,8 +5,14 @@ use color_eyre::eyre::eyre;
 use derive_deref::Deref;
 use jiff::{civil::Date as _Date, tz::TimeZone, Span};
 
-#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Deref)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Deref)]
 pub struct Date(_Date);
+
+impl Default for Date {
+    fn default() -> Self {
+        Self::INDEX_ZERO
+    }
+}
 
 impl Date {
     const INDEX_ZERO: Self = Self(_Date::constant(2009, 1, 3));

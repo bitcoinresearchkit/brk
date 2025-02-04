@@ -3,6 +3,7 @@ use std::path::Path;
 use biter::rpc;
 use bomputer::Computer;
 use exit::Exit;
+use storable_vec::SINGLE_THREAD;
 
 mod structs;
 
@@ -18,7 +19,7 @@ pub fn main() -> color_eyre::Result<()> {
 
     let i = std::time::Instant::now();
 
-    let mut computer = Computer::import(Path::new("../_outputs"))?;
+    let mut computer: Computer<SINGLE_THREAD> = Computer::import(Path::new("../_outputs"))?;
 
     computer.compute(data_dir, rpc, &exit)?;
 

@@ -13,6 +13,7 @@ use bitcoin::{Transaction, TxIn, TxOut, Txid};
 use color_eyre::eyre::{eyre, ContextCompat};
 use exit::Exit;
 use rayon::prelude::*;
+use storable_vec::CACHED_GETS;
 
 mod storage;
 mod structs;
@@ -29,26 +30,20 @@ pub use structs::{
 const UNSAFE_BLOCKS: u32 = 100;
 const SNAPSHOT_BLOCK_RANGE: usize = 1000;
 
-pub struct Indexer {
-    vecs: StorableVecs,
-    trees: Fjalls,
+pub struct Indexer<const MODE: u8> {
+    pub vecs: StorableVecs<MODE>,
+    pub trees: Fjalls,
 }
 
-impl Indexer {
+impl<const MODE: u8> Indexer<MODE> {
     pub fn import(indexes_dir: &Path) -> color_eyre::Result<Self> {
         let vecs = StorableVecs::import(&indexes_dir.join("vecs"))?;
         let trees = Fjalls::import(&indexes_dir.join("fjall"))?;
         Ok(Self { vecs, trees })
     }
+}
 
-    pub fn vecs(&self) -> &StorableVecs {
-        &self.vecs
-    }
-
-    pub fn trees(&self) -> &Fjalls {
-        &self.trees
-    }
-
+impl Indexer<CACHED_GETS> {
     pub fn index(&mut self, bitcoin_dir: &Path, rpc: rpc::Client, exit: &Exit) -> color_eyre::Result<()> {
         let check_collisions = true;
 
@@ -80,22 +75,23 @@ impl Indexer {
         let mut p2wpkhindex_global = vecs.height_to_first_p2wpkhindex.get_or_default(height)?;
         let mut p2wshindex_global = vecs.height_to_first_p2wshindex.get_or_default(height)?;
 
-        let export = |trees: &mut Fjalls, vecs: &mut StorableVecs, height: Height| -> color_eyre::Result<()> {
-            println!("Exporting...");
+        let export =
+            |trees: &mut Fjalls, vecs: &mut StorableVecs<CACHED_GETS>, height: Height| -> color_eyre::Result<()> {
+                println!("Exporting...");
 
-            exit.block();
+                exit.block();
 
-            thread::scope(|scope| -> color_eyre::Result<()> {
-                let vecs_handle = scope.spawn(|| vecs.flush(height));
-                trees.commit(height)?;
-                vecs_handle.join().unwrap()?;
+                thread::scope(|scope| -> color_eyre::Result<()> {
+                    let vecs_handle = scope.spawn(|| vecs.flush(height));
+                    trees.commit(height)?;
+                    vecs_handle.join().unwrap()?;
+                    Ok(())
+                })?;
+
+                exit.unblock();
+
                 Ok(())
-            })?;
-
-            exit.unblock();
-
-            Ok(())
-        };
+            };
 
         biter::new(bitcoin_dir, Some(height.into()), None, rpc)
             .iter()
@@ -104,7 +100,7 @@ impl Indexer {
 
                 height = Height::from(_height);
 
-                if let Some(saved_blockhash) = vecs.height_to_blockhash.cached_get(height)? {
+                if let Some(saved_blockhash) = vecs.height_to_blockhash.get(height)? {
                     if &blockhash != saved_blockhash.as_ref() {
                         todo!("Rollback not implemented");
                         // trees.rollback_from(&mut rtx, height, &exit)?;
@@ -260,7 +256,7 @@ impl Indexer {
 
                                 let txoutindex = *vecs
                                     .txindex_to_first_txoutindex
-                                    .cached_get(prev_txindex)?
+                                    .get(prev_txindex)?
                                     .context("Expect txoutindex to not be none")
                                     .inspect_err(|_| {
                                         dbg!(outpoint.txid, prev_txindex, vout);
@@ -336,12 +332,12 @@ impl Indexer {
 
                                         let prev_addresstype = *vecs
                                             .addressindex_to_addresstype
-                                            .cached_get(addressindex)?
+                                            .get(addressindex)?
                                             .context("Expect to have address type")?;
 
                                         let addresstypeindex = *vecs
                                             .addressindex_to_addresstypeindex
-                                            .cached_get(addressindex)?
+                                            .get(addressindex)?
                                             .context("Expect to have address type index")?;
                                         // Good first time
                                         // Wrong after rerun
@@ -605,7 +601,7 @@ impl Indexer {
                                     // Ok if `get` is not par as should happen only twice
                                     let prev_txid = vecs
                                         .txindex_to_txid
-                                        .cached_get(prev_txindex)?
+                                        .get(prev_txindex)?
                                         .context("To have txid for txindex")
                                         .inspect_err(|_| {
                                             dbg!(txindex, txid, len);
@@ -630,7 +626,7 @@ impl Indexer {
 
                                     if !is_dup {
                                         let prev_height =
-                                            vecs.txindex_to_height.cached_get(prev_txindex)?.expect("To have height");
+                                            vecs.txindex_to_height.get(prev_txindex)?.expect("To have height");
                                         dbg!(height, txid, txindex, prev_height, prev_txid, prev_txindex);
                                         return Err(eyre!("Expect none"));
                                     }
