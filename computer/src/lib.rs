@@ -13,8 +13,8 @@ use structs::*;
 
 pub struct Computer<const MODE: u8> {
     outputs_dir: PathBuf,
-    vecs: StorableVecs<MODE>,
-    trees: Fjalls,
+    pub vecs: StorableVecs<MODE>,
+    pub trees: Fjalls,
 }
 
 impl<const MODE: u8> Computer<MODE> {
@@ -53,20 +53,20 @@ impl Computer<SINGLE_THREAD> {
 
         self.vecs
             .txindex_to_last_txinindex
-            .compute_last_index_from_first(&indexer.vecs.txindex_to_first_txinindex, txinindexes_count)?;
+            .compute_last_index_from_first(&mut indexer.vecs.txindex_to_first_txinindex, txinindexes_count)?;
 
         self.vecs.txindex_to_inputcount.compute_count_from_indexes(
-            &indexer.vecs.txindex_to_first_txinindex,
-            &self.vecs.txindex_to_last_txinindex,
+            &mut indexer.vecs.txindex_to_first_txinindex,
+            &mut self.vecs.txindex_to_last_txinindex,
         )?;
 
         self.vecs
             .txindex_to_last_txoutindex
-            .compute_last_index_from_first(&indexer.vecs.txindex_to_first_txoutindex, txoutindexes_count)?;
+            .compute_last_index_from_first(&mut indexer.vecs.txindex_to_first_txoutindex, txoutindexes_count)?;
 
         self.vecs.txindex_to_outputcount.compute_count_from_indexes(
-            &indexer.vecs.txindex_to_first_txoutindex,
-            &self.vecs.txindex_to_last_txoutindex,
+            &mut indexer.vecs.txindex_to_first_txoutindex,
+            &mut self.vecs.txindex_to_last_txoutindex,
         )?;
 
         self.vecs
@@ -75,7 +75,7 @@ impl Computer<SINGLE_THREAD> {
 
         self.vecs
             .height_to_last_txindex
-            .compute_last_index_from_first(&indexer.vecs.height_to_first_txindex, height_count)?;
+            .compute_last_index_from_first(&mut indexer.vecs.height_to_first_txindex, height_count)?;
 
         self.vecs.txindex_to_height.compute_inverse_less_to_more(
             &mut indexer.vecs.height_to_first_txindex,
