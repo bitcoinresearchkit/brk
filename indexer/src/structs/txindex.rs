@@ -2,9 +2,24 @@ use std::ops::{Add, AddAssign, Sub};
 
 use derive_deref::{Deref, DerefMut};
 use fjall::Slice;
-use unsafe_slice_serde::UnsafeSliceSerde;
+use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
-#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Deref, DerefMut, Default)]
+#[derive(
+    Debug,
+    PartialEq,
+    Eq,
+    PartialOrd,
+    Ord,
+    Clone,
+    Copy,
+    Deref,
+    DerefMut,
+    Default,
+    FromBytes,
+    Immutable,
+    IntoBytes,
+    KnownLayout,
+)]
 pub struct Txindex(u32);
 
 impl Txindex {
@@ -73,13 +88,13 @@ impl From<Txindex> for usize {
 }
 
 impl TryFrom<Slice> for Txindex {
-    type Error = unsafe_slice_serde::Error;
+    type Error = storable_vec::Error;
     fn try_from(value: Slice) -> Result<Self, Self::Error> {
-        Ok(*Self::unsafe_try_from_slice(&value)?)
+        Ok(Self::read_from_bytes(&value)?)
     }
 }
 impl From<Txindex> for Slice {
     fn from(value: Txindex) -> Self {
-        Self::new(value.unsafe_as_slice())
+        Self::new(value.as_bytes())
     }
 }

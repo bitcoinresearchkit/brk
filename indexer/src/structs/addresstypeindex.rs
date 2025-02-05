@@ -1,8 +1,24 @@
 use std::ops::Add;
 
 use derive_deref::{Deref, DerefMut};
+use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
-#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Deref, DerefMut, Default)]
+#[derive(
+    Debug,
+    PartialEq,
+    Eq,
+    PartialOrd,
+    Ord,
+    Clone,
+    Copy,
+    Deref,
+    DerefMut,
+    Default,
+    FromBytes,
+    Immutable,
+    IntoBytes,
+    KnownLayout,
+)]
 pub struct Addresstypeindex(u32);
 
 impl Addresstypeindex {

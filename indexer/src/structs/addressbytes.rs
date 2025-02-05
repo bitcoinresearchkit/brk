@@ -1,6 +1,7 @@
 use biter::bitcoin::ScriptBuf;
 use color_eyre::eyre::eyre;
 use derive_deref::{Deref, DerefMut};
+use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 use super::Addresstype;
 
@@ -122,28 +123,28 @@ impl From<P2TRAddressBytes> for Addressbytes {
     }
 }
 
-#[derive(Debug, Clone, Deref, PartialEq, Eq)]
+#[derive(Debug, Clone, Deref, PartialEq, Eq, Immutable, IntoBytes, KnownLayout, FromBytes)]
 pub struct P2PK65AddressBytes(U8x65);
 
-#[derive(Debug, Clone, Deref, PartialEq, Eq)]
+#[derive(Debug, Clone, Deref, PartialEq, Eq, Immutable, IntoBytes, KnownLayout, FromBytes)]
 pub struct P2PK33AddressBytes(U8x33);
 
-#[derive(Debug, Clone, Deref, PartialEq, Eq)]
+#[derive(Debug, Clone, Deref, PartialEq, Eq, Immutable, IntoBytes, KnownLayout, FromBytes)]
 pub struct P2PKHAddressBytes(U8x20);
 
-#[derive(Debug, Clone, Deref, PartialEq, Eq)]
+#[derive(Debug, Clone, Deref, PartialEq, Eq, Immutable, IntoBytes, KnownLayout, FromBytes)]
 pub struct P2SHAddressBytes(U8x20);
 
-#[derive(Debug, Clone, Deref, PartialEq, Eq)]
+#[derive(Debug, Clone, Deref, PartialEq, Eq, Immutable, IntoBytes, KnownLayout, FromBytes)]
 pub struct P2WPKHAddressBytes(U8x20);
 
-#[derive(Debug, Clone, Deref, PartialEq, Eq)]
+#[derive(Debug, Clone, Deref, PartialEq, Eq, Immutable, IntoBytes, KnownLayout, FromBytes)]
 pub struct P2WSHAddressBytes(U8x32);
 
-#[derive(Debug, Clone, Deref, PartialEq, Eq)]
+#[derive(Debug, Clone, Deref, PartialEq, Eq, Immutable, IntoBytes, KnownLayout, FromBytes)]
 pub struct P2TRAddressBytes(U8x32);
 
-#[derive(Debug, Clone, Deref, DerefMut, PartialEq, Eq)]
+#[derive(Debug, Clone, Deref, DerefMut, PartialEq, Eq, Immutable, IntoBytes, KnownLayout, FromBytes)]
 pub struct U8x20([u8; 20]);
 impl From<&[u8]> for U8x20 {
     fn from(slice: &[u8]) -> Self {
@@ -153,7 +154,7 @@ impl From<&[u8]> for U8x20 {
     }
 }
 
-#[derive(Debug, Clone, Deref, DerefMut, PartialEq, Eq)]
+#[derive(Debug, Clone, Deref, DerefMut, PartialEq, Eq, Immutable, IntoBytes, KnownLayout, FromBytes)]
 pub struct U8x32([u8; 32]);
 impl From<&[u8]> for U8x32 {
     fn from(slice: &[u8]) -> Self {
@@ -163,7 +164,7 @@ impl From<&[u8]> for U8x32 {
     }
 }
 
-#[derive(Debug, Clone, Deref, DerefMut, PartialEq, Eq)]
+#[derive(Debug, Clone, Deref, DerefMut, PartialEq, Eq, Immutable, IntoBytes, KnownLayout, FromBytes)]
 pub struct U8x33([u8; 33]);
 impl From<&[u8]> for U8x33 {
     fn from(slice: &[u8]) -> Self {
@@ -173,7 +174,7 @@ impl From<&[u8]> for U8x33 {
     }
 }
 
-#[derive(Debug, Clone, Deref, DerefMut, PartialEq, Eq)]
+#[derive(Debug, Clone, Deref, DerefMut, PartialEq, Eq, Immutable, IntoBytes, KnownLayout, FromBytes)]
 pub struct U8x64([u8; 64]);
 impl From<&[u8]> for U8x64 {
     fn from(slice: &[u8]) -> Self {
@@ -183,7 +184,7 @@ impl From<&[u8]> for U8x64 {
     }
 }
 
-#[derive(Debug, Clone, Deref, DerefMut, PartialEq, Eq)]
+#[derive(Debug, Clone, Deref, DerefMut, PartialEq, Eq, Immutable, IntoBytes, KnownLayout, FromBytes)]
 pub struct U8x65([u8; 65]);
 impl From<&[u8]> for U8x65 {
     fn from(slice: &[u8]) -> Self {

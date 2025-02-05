@@ -1,9 +1,12 @@
 use std::{path::Path, thread};
 
-use crate::{structs::Version, AddressHash, Addressindex, BlockHashPrefix, Height, TxidPrefix, Txindex};
+use storable_vec::Version;
+
+use crate::{AddressHash, Addressindex, BlockHashPrefix, Height, TxidPrefix, Txindex};
 
 mod base;
 mod meta;
+// mod version;
 
 pub use base::*;
 pub use meta::*;

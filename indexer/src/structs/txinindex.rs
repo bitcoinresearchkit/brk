@@ -1,10 +1,26 @@
 use std::ops::{Add, AddAssign, Sub};
 
 use derive_deref::{Deref, DerefMut};
+use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 use super::Vin;
 
-#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Deref, DerefMut, Default)]
+#[derive(
+    Debug,
+    PartialEq,
+    Eq,
+    PartialOrd,
+    Ord,
+    Clone,
+    Copy,
+    Deref,
+    DerefMut,
+    Default,
+    FromBytes,
+    Immutable,
+    IntoBytes,
+    KnownLayout,
+)]
 pub struct Txinindex(u64);
 
 impl Txinindex {
