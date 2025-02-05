@@ -1,14 +1,13 @@
 use std::{fs, io, path::Path};
 
-use biter::bitcoin::{self, transaction, BlockHash, Txid, Weight};
 use exit::Exit;
 use rayon::prelude::*;
 use storable_vec::{Version, CACHED_GETS};
 
 use crate::structs::{
-    Addressbytes, Addressindex, Addresstype, Addresstypeindex, Amount, Height, P2PK33AddressBytes, P2PK65AddressBytes,
-    P2PKHAddressBytes, P2SHAddressBytes, P2TRAddressBytes, P2WPKHAddressBytes, P2WSHAddressBytes, Timestamp, Txindex,
-    Txinindex, Txoutindex,
+    Addressbytes, Addressindex, Addresstype, Addresstypeindex, Amount, BlockHash, Height, LockTime, P2PK33AddressBytes,
+    P2PK65AddressBytes, P2PKHAddressBytes, P2SHAddressBytes, P2TRAddressBytes, P2WPKHAddressBytes, P2WSHAddressBytes,
+    Timestamp, TxVersion, Txid, Txindex, Txinindex, Txoutindex, Weight,
 };
 
 mod base;
@@ -50,9 +49,9 @@ pub struct StorableVecs<const MODE: u8> {
     pub txindex_to_first_txinindex: StorableVec<Txindex, Txinindex, MODE>,
     pub txindex_to_first_txoutindex: StorableVec<Txindex, Txoutindex, MODE>,
     pub txindex_to_height: StorableVec<Txindex, Height, MODE>,
-    pub txindex_to_locktime: StorableVec<Txindex, bitcoin::absolute::LockTime, MODE>,
+    pub txindex_to_locktime: StorableVec<Txindex, LockTime, MODE>,
     pub txindex_to_txid: StorableVec<Txindex, Txid, MODE>,
-    pub txindex_to_txversion: StorableVec<Txindex, transaction::Version, MODE>,
+    pub txindex_to_txversion: StorableVec<Txindex, TxVersion, MODE>,
     pub txinindex_to_txoutindex: StorableVec<Txinindex, Txoutindex, MODE>,
     pub txoutindex_to_addressindex: StorableVec<Txoutindex, Addressindex, MODE>,
     pub txoutindex_to_amount: StorableVec<Txoutindex, Amount, MODE>,

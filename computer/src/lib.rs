@@ -55,7 +55,7 @@ impl Computer<SINGLE_THREAD> {
             .txindex_to_last_txinindex
             .compute_last_index_from_first(&mut indexer.vecs.txindex_to_first_txinindex, txinindexes_count)?;
 
-        self.vecs.txindex_to_inputcount.compute_count_from_indexes(
+        self.vecs.txindex_to_inputs_count.compute_count_from_indexes(
             &mut indexer.vecs.txindex_to_first_txinindex,
             &mut self.vecs.txindex_to_last_txinindex,
         )?;
@@ -64,14 +64,16 @@ impl Computer<SINGLE_THREAD> {
             .txindex_to_last_txoutindex
             .compute_last_index_from_first(&mut indexer.vecs.txindex_to_first_txoutindex, txoutindexes_count)?;
 
-        self.vecs.txindex_to_outputcount.compute_count_from_indexes(
+        self.vecs.txindex_to_outputs_count.compute_count_from_indexes(
             &mut indexer.vecs.txindex_to_first_txoutindex,
             &mut self.vecs.txindex_to_last_txoutindex,
         )?;
 
         self.vecs
             .height_to_date
-            .compute_transform(&mut indexer.vecs.height_to_timestamp, |timestamp| Date::from(timestamp))?;
+            .compute_transform(&mut indexer.vecs.height_to_timestamp, |timestamp| {
+                Date::from(*timestamp)
+            })?;
 
         self.vecs
             .height_to_last_txindex
@@ -80,6 +82,16 @@ impl Computer<SINGLE_THREAD> {
         self.vecs.txindex_to_height.compute_inverse_less_to_more(
             &mut indexer.vecs.height_to_first_txindex,
             &mut self.vecs.height_to_last_txindex,
+        )?;
+
+        self.vecs.txindex_to_is_coinbase.compute_is_first_ordered(
+            &mut self.vecs.txindex_to_height,
+            &mut indexer.vecs.height_to_first_txindex,
+        )?;
+
+        self.vecs.txindex_to_fee.compute_transform(
+            &mut self.vecs.txindex_to_height,
+            &mut indexer.vecs.height_to_first_txindex,
         )?;
 
         let date_count = self.vecs.height_to_date.len();

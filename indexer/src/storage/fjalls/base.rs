@@ -4,10 +4,10 @@ use fjall::{
     PartitionCreateOptions, PersistMode, ReadTransaction, Result, Slice, TransactionalKeyspace,
     TransactionalPartitionHandle,
 };
-use storable_vec::Value;
-use unsafe_slice_serde::UnsafeSliceSerde;
+use storable_vec::{Value, Version};
+use zerocopy::{Immutable, IntoBytes};
 
-use crate::structs::{Height, Version};
+use crate::structs::Height;
 
 use super::StoreMeta;
 
@@ -21,7 +21,7 @@ pub struct Store<Key, Value> {
 
 impl<K, V> Store<K, V>
 where
-    K: Into<Slice> + Ord,
+    K: Into<Slice> + Ord + Immutable + IntoBytes,
     V: Into<Slice> + TryFrom<Slice>,
     <V as TryFrom<Slice>>::Error: error::Error + Send + Sync + 'static,
 {
@@ -54,7 +54,7 @@ where
     pub fn get(&self, key: &K) -> color_eyre::Result<Option<Value<V>>> {
         if let Some(v) = self.puts.get(key) {
             Ok(Some(Value::Ref(v)))
-        } else if let Some(slice) = self.rtx.get(&self.part, key.unsafe_as_slice())? {
+        } else if let Some(slice) = self.rtx.get(&self.part, key.as_bytes())? {
             Ok(Some(Value::Owned(V::try_from(slice)?)))
         } else {
             Ok(None)

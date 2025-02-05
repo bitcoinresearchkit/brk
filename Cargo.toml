@@ -6,7 +6,6 @@ members = [
     "iterator",
     "storable_vec",
     "struct_iterable",
-    "unsafe_slice_serde",
 ]
 resolver = "2"
 
@@ -23,5 +22,4 @@ jiff = "0.1.29"
 rayon = "1.10.0"
 storable_vec = { path = "storable_vec" }
 struct_iterable = { path = "struct_iterable" }
-unsafe_slice_serde = { path = "unsafe_slice_serde" }
-zerocopy = "0.8.15"
+zerocopy = { version = "0.8.15", features = ["derive"] }

@@ -13,7 +13,8 @@ pub enum Error {
     DifferentVersion { found: Version, expected: Version },
     MmapsVecIsTooSmall,
     IO(io::Error),
-    UnsafeSliceSerde(unsafe_slice_serde::Error),
+    // UnsafeSliceSerde(zerocopy::error::),
+    ZeroCopyError,
     IndexTooHigh,
     IndexTooLow,
     ExpectFileToHaveIndex,
@@ -28,9 +29,15 @@ impl From<io::Error> for Error {
     }
 }
 
-impl From<unsafe_slice_serde::Error> for Error {
-    fn from(value: unsafe_slice_serde::Error) -> Self {
-        Self::UnsafeSliceSerde(value)
+impl<A, B, C> From<zerocopy::error::ConvertError<A, B, C>> for Error {
+    fn from(_: zerocopy::error::ConvertError<A, B, C>) -> Self {
+        Self::ZeroCopyError
+    }
+}
+
+impl<A, B> From<zerocopy::error::SizeError<A, B>> for Error {
+    fn from(_: zerocopy::error::SizeError<A, B>) -> Self {
+        Self::ZeroCopyError
     }
 }
 
@@ -43,7 +50,7 @@ impl fmt::Display for Error {
             }
             Error::MmapsVecIsTooSmall => write!(f, "Mmaps vec is too small"),
             Error::IO(error) => Debug::fmt(&error, f),
-            Error::UnsafeSliceSerde(error) => Debug::fmt(&error, f),
+            // Error::UnsafeSliceSerde(error) => Debug::fmt(&error, f),
             Error::IndexTooHigh => write!(f, "Index too high"),
             Error::IndexTooLow => write!(f, "Index too low"),
             Error::ExpectFileToHaveIndex => write!(f, "Expect file to have index"),
@@ -52,6 +59,7 @@ impl fmt::Display for Error {
             Error::UnsupportedUnflushedState => {
                 write!(f, "Unsupported unflush state, please flush before using this function")
             }
+            Error::ZeroCopyError => write!(f, "Zero copy convert error"),
         }
     }
 }

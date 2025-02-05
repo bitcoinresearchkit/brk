@@ -1,6 +1,8 @@
 use biter::bitcoin::ScriptBuf;
+use zerocopy::{Immutable, IntoBytes, KnownLayout, TryFromBytes};
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, TryFromBytes, Immutable, IntoBytes, KnownLayout)]
+#[repr(u8)]
 pub enum Addresstype {
     P2PK65,
     P2PK33,

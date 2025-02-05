@@ -1,13 +1,12 @@
 use std::hash::Hasher;
 
-use biter::bitcoin::{BlockHash, Txid};
 use derive_deref::Deref;
 use fjall::Slice;
-use unsafe_slice_serde::UnsafeSliceSerde;
+use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
-use super::{Addressbytes, Addresstype, SliceExtended};
+use super::{Addressbytes, Addresstype, BlockHash, Txid};
 
-#[derive(Debug, Deref, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Debug, Deref, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, FromBytes, Immutable, IntoBytes, KnownLayout)]
 pub struct AddressHash([u8; 8]);
 impl From<(&Addressbytes, Addresstype)> for AddressHash {
     fn from((addressbytes, addresstype): (&Addressbytes, Addresstype)) -> Self {
@@ -24,14 +23,14 @@ impl From<[u8; 8]> for AddressHash {
     }
 }
 impl TryFrom<Slice> for AddressHash {
-    type Error = color_eyre::Report;
+    type Error = storable_vec::Error;
     fn try_from(value: Slice) -> Result<Self, Self::Error> {
-        Ok(*Self::unsafe_try_from_slice(&value)?)
+        Ok(Self::read_from_bytes(&value)?)
     }
 }
 impl From<&AddressHash> for Slice {
     fn from(value: &AddressHash) -> Self {
-        Self::new(value.unsafe_as_slice())
+        Self::new(value.as_bytes())
     }
 }
 impl From<AddressHash> for Slice {
@@ -40,23 +39,23 @@ impl From<AddressHash> for Slice {
     }
 }
 
-#[derive(Debug, Deref, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Debug, Deref, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, FromBytes, Immutable, IntoBytes, KnownLayout)]
 pub struct BlockHashPrefix([u8; 8]);
 impl TryFrom<&BlockHash> for BlockHashPrefix {
     type Error = color_eyre::Report;
     fn try_from(value: &BlockHash) -> Result<Self, Self::Error> {
-        Ok(Self((&value[..]).read_8x_u8()?))
+        Ok(Self(copy_first_8bytes(&value[..])))
     }
 }
 impl TryFrom<Slice> for BlockHashPrefix {
-    type Error = color_eyre::Report;
+    type Error = storable_vec::Error;
     fn try_from(value: Slice) -> Result<Self, Self::Error> {
-        Ok(*Self::unsafe_try_from_slice(&value)?)
+        Ok(Self::read_from_bytes(&value)?)
     }
 }
 impl From<&BlockHashPrefix> for Slice {
     fn from(value: &BlockHashPrefix) -> Self {
-        Self::new(value.unsafe_as_slice())
+        Self::new(value.as_bytes())
     }
 }
 impl From<BlockHashPrefix> for Slice {
@@ -65,27 +64,39 @@ impl From<BlockHashPrefix> for Slice {
     }
 }
 
-#[derive(Debug, Deref, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Debug, Deref, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, FromBytes, Immutable, IntoBytes, KnownLayout)]
 pub struct TxidPrefix([u8; 8]);
 impl TryFrom<&Txid> for TxidPrefix {
     type Error = color_eyre::Report;
     fn try_from(value: &Txid) -> Result<Self, Self::Error> {
-        Ok(Self((&value[..]).read_8x_u8()?))
+        Ok(Self(copy_first_8bytes(&value[..])))
     }
 }
 impl TryFrom<Slice> for TxidPrefix {
-    type Error = color_eyre::Report;
+    type Error = storable_vec::Error;
     fn try_from(value: Slice) -> Result<Self, Self::Error> {
-        Ok(*Self::unsafe_try_from_slice(&value)?)
+        Ok(Self::read_from_bytes(&value)?)
     }
 }
 impl From<&TxidPrefix> for Slice {
     fn from(value: &TxidPrefix) -> Self {
-        Self::new(value.unsafe_as_slice())
+        Self::new(value.as_bytes())
     }
 }
 impl From<TxidPrefix> for Slice {
     fn from(value: TxidPrefix) -> Self {
         Self::from(&value)
     }
+}
+
+fn copy_first_8bytes(slice: &[u8]) -> [u8; 8] {
+    let mut buf: [u8; 8] = [0; 8];
+    let buf_len = buf.len();
+    if slice.len() < buf_len {
+        panic!("bad len");
+    }
+    slice.iter().take(buf_len).enumerate().for_each(|(i, r)| {
+        buf[i] = *r;
+    });
+    buf
 }

@@ -13,6 +13,5 @@ fjall = { workspace = true }
 jiff = { workspace = true }
 rapidhash = "1.3.0"
 rayon = { workspace = true }
-# snkrj = { workspace = true }
 storable_vec = { workspace = true }
-unsafe_slice_serde = { workspace = true }
+zerocopy = { workspace = true }

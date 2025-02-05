@@ -9,7 +9,7 @@ use std::{
 
 pub use biter::*;
 
-use bitcoin::{Transaction, TxIn, TxOut, Txid};
+use bitcoin::{Transaction, TxIn, TxOut};
 use color_eyre::eyre::{eyre, ContextCompat};
 use exit::Exit;
 use rayon::prelude::*;
@@ -19,7 +19,7 @@ mod storage;
 mod structs;
 
 pub use storage::{AnyStorableVec, StorableVec, Store, StoreMeta};
-pub use structs::Version;
+use structs::{BlockHash, Txid};
 
 use storage::{Fjalls, StorableVecs};
 pub use structs::{
@@ -98,6 +98,7 @@ impl Indexer<CACHED_GETS> {
             .try_for_each(|(_height, block, blockhash)| -> color_eyre::Result<()> {
                 println!("Processing block {_height}...");
 
+                let blockhash = BlockHash::from(blockhash);
                 height = Height::from(_height);
 
                 if let Some(saved_blockhash) = vecs.height_to_blockhash.get(height)? {
@@ -124,9 +125,9 @@ impl Indexer<CACHED_GETS> {
 
                 vecs.height_to_blockhash.push_if_needed(height, blockhash)?;
                 vecs.height_to_difficulty.push_if_needed(height, block.header.difficulty_float())?;
-                vecs.height_to_timestamp.push_if_needed(height, Timestamp::try_from(block.header.time)?)?;
+                vecs.height_to_timestamp.push_if_needed(height, Timestamp::from(block.header.time))?;
                 vecs.height_to_size.push_if_needed(height, block.total_size())?;
-                vecs.height_to_weight.push_if_needed(height, block.weight())?;
+                vecs.height_to_weight.push_if_needed(height, block.weight().into())?;
                 vecs.height_to_first_txindex.push_if_needed(height, txindex_global)?;
                 vecs.height_to_first_txinindex
                     .push_if_needed(height, txinindex_global)?;
@@ -192,7 +193,7 @@ impl Indexer<CACHED_GETS> {
                                 .par_iter()
                                 .enumerate()
                                 .map(|(index, tx)| -> color_eyre::Result<_> {
-                                    let txid = tx.compute_txid();
+                                    let txid = Txid::from(tx.compute_txid());
 
                                     let txid_prefix = TxidPrefix::try_from(&txid)?;
 
@@ -233,6 +234,7 @@ impl Indexer<CACHED_GETS> {
                                 // dbg!((txindex, txinindex, vin));
 
                                 let outpoint = txin.previous_output;
+                                let txid = Txid::from(outpoint.txid);
 
                                 if tx.is_coinbase() {
                                     return Ok((txinindex, InputSource::SameBlock((tx, txindex, txin, vin))));
@@ -240,7 +242,7 @@ impl Indexer<CACHED_GETS> {
 
                                 let prev_txindex = if let Some(txindex) = trees
                                     .txid_prefix_to_txindex
-                                    .get(&TxidPrefix::try_from(&outpoint.txid)?)?
+                                    .get(&TxidPrefix::try_from(&txid)?)?
                                     .map(|v| *v)
                                     .and_then(|txindex| {
                                         // Checking if not finding txindex from the future
@@ -537,7 +539,7 @@ impl Indexer<CACHED_GETS> {
                                     }
 
                                     let outpoint = txin.previous_output;
-                                    let txid = outpoint.txid;
+                                    let txid = Txid::from(outpoint.txid);
                                     let vout = Vout::from(outpoint.vout);
 
                                     let block_txindex = txid_prefix_to_txid_and_block_txindex_and_prev_txindex
@@ -604,7 +606,7 @@ impl Indexer<CACHED_GETS> {
                                         .get(prev_txindex)?
                                         .context("To have txid for txindex")
                                         .inspect_err(|_| {
-                                            dbg!(txindex, txid, len);
+                                            dbg!(txindex, len);
                                         })?;
 
                                     // #[allow(clippy::redundant_locals)]
@@ -614,12 +616,12 @@ impl Indexer<CACHED_GETS> {
                                     // If another Txid needs to be added to the list
                                     // We need to check that it's also a coinbase tx otherwise par_iter inputs needs to be updated
                                     let only_known_dup_txids = [
-                                        Txid::from_str(
+                                        bitcoin::Txid::from_str(
                                             "d5d27987d2a3dfc724e359870c6644b40e497bdc0589a033220fe15429d88599",
-                                        )?,
-                                        Txid::from_str(
+                                        )?.into(),
+                                        bitcoin::Txid::from_str(
                                             "e3bf3d07d4b0375638d5f1db5255fe07ba2c4cb067cd81b84ee974b6585fb468",
-                                        )?,
+                                        )?.into(),
                                     ];
 
                                     let is_dup = only_known_dup_txids.contains(prev_txid);
@@ -627,7 +629,7 @@ impl Indexer<CACHED_GETS> {
                                     if !is_dup {
                                         let prev_height =
                                             vecs.txindex_to_height.get(prev_txindex)?.expect("To have height");
-                                        dbg!(height, txid, txindex, prev_height, prev_txid, prev_txindex);
+                                        dbg!(height, txindex, prev_height, prev_txid, prev_txindex);
                                         return Err(eyre!("Expect none"));
                                     }
                                 }
@@ -640,10 +642,10 @@ impl Indexer<CACHED_GETS> {
                 txindex_to_tx_and_txid
                     .into_iter()
                     .try_for_each(|(txindex, (tx, txid))| -> color_eyre::Result<()> {
-                        vecs.txindex_to_txversion.push_if_needed(txindex, tx.version)?;
+                        vecs.txindex_to_txversion.push_if_needed(txindex, tx.version.into())?;
                         vecs.txindex_to_txid.push_if_needed(txindex, txid)?;
                         vecs.txindex_to_height.push_if_needed(txindex, height)?;
-                        vecs.txindex_to_locktime.push_if_needed(txindex, tx.lock_time)?;
+                        vecs.txindex_to_locktime.push_if_needed(txindex, tx.lock_time.into())?;
                         Ok(())
                     })?;
 

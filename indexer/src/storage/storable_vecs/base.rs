@@ -34,7 +34,7 @@ where
         self.vec.flush()
     }
 
-    pub fn height(&self) -> color_eyre::Result<Height> {
+    pub fn height(&self) -> storable_vec::Result<Height> {
         Height::try_from(self.path_height().as_path())
     }
     fn path_height(&self) -> PathBuf {
@@ -66,7 +66,7 @@ impl<I, T, const MODE: u8> DerefMut for StorableVec<I, T, MODE> {
 }
 
 pub trait AnyStorableVec {
-    fn height(&self) -> color_eyre::Result<Height>;
+    fn height(&self) -> storable_vec::Result<Height>;
     fn flush(&mut self, height: Height) -> io::Result<()>;
 }
 
@@ -75,7 +75,7 @@ where
     I: StorableVecIndex,
     T: StorableVecType,
 {
-    fn height(&self) -> color_eyre::Result<Height> {
+    fn height(&self) -> storable_vec::Result<Height> {
         self.height()
     }
 

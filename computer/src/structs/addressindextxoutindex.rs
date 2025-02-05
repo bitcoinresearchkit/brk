@@ -1,21 +1,22 @@
 use bindex::{Addressindex, Txoutindex};
 use fjall::Slice;
-use unsafe_slice_serde::UnsafeSliceSerde;
+use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Immutable, IntoBytes, KnownLayout, FromBytes)]
 pub struct AddressindexTxoutindex {
     addressindex: Addressindex,
+    _padding: u32,
     txoutindex: Txoutindex,
 }
 
 impl TryFrom<Slice> for AddressindexTxoutindex {
-    type Error = unsafe_slice_serde::Error;
+    type Error = storable_vec::Error;
     fn try_from(value: Slice) -> Result<Self, Self::Error> {
-        Ok(*Self::unsafe_try_from_slice(&value)?)
+        Ok(Self::read_from_bytes(&value)?)
     }
 }
 impl From<AddressindexTxoutindex> for Slice {
     fn from(value: AddressindexTxoutindex) -> Self {
-        Self::new(value.unsafe_as_slice())
+        Self::new(value.as_bytes())
     }
 }

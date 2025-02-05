@@ -11,8 +11,8 @@ use std::{
     sync::OnceLock,
 };
 
-use memmap2::{Mmap, MmapOptions};
-use unsafe_slice_serde::UnsafeSliceSerde;
+pub use memmap2;
+pub use zerocopy;
 
 mod enums;
 mod structs;
@@ -60,7 +60,7 @@ pub struct StorableVec<I, T, const MODE: u8> {
     file_position: u64,
     buf: Buffer,
     /// Only for CACHED_GETS
-    cache: Vec<OnceLock<Box<Mmap>>>, // Boxed Mmap to reduce the size of the Lock (from 24 to 16)
+    cache: Vec<OnceLock<Box<memmap2::Mmap>>>, // Boxed Mmap to reduce the size of the Lock (from 24 to 16)
     pushed: Vec<T>,
     // updated: BTreeMap<usize, T>,
     // inserted: BTreeMap<usize, T>,
@@ -207,7 +207,7 @@ where
 
     fn read_exact<'a>(file: &'a mut File, buf: &'a mut [u8]) -> Result<&'a T> {
         file.read_exact(buf)?;
-        let v = T::unsafe_try_from_slice(&buf[..])?;
+        let v = T::try_ref_from_bytes(&buf[..])?;
         Ok(v)
     }
 
@@ -277,7 +277,7 @@ where
 
         mem::take(&mut self.pushed)
             .into_iter()
-            .for_each(|v| bytes.extend_from_slice(v.unsafe_as_slice()));
+            .for_each(|v| bytes.extend_from_slice(v.as_bytes()));
 
         self.file.write_all(&bytes)?;
 
@@ -383,7 +383,7 @@ where
                 .ok_or(Error::MmapsVecIsTooSmall)?
                 .get_or_init(|| {
                     Box::new(unsafe {
-                        MmapOptions::new()
+                        memmap2::MmapOptions::new()
                             .len(Self::PAGE_SIZE)
                             .offset((page_index * Self::PAGE_SIZE) as u64)
                             .map(&self.file)
@@ -393,7 +393,7 @@ where
 
             let range = Self::index_to_byte_range(index);
             let slice = &mmap[range];
-            return Ok(Some(Value::Ref(T::unsafe_try_from_slice(slice)?)));
+            return Ok(Some(Value::Ref(T::try_ref_from_bytes(slice)?)));
         }
 
         Ok(Some(Value::Owned(self.open_file_at_then_read(index)?.to_owned())))
@@ -581,8 +581,9 @@ where
         other_to_self: &mut StorableVec<A, I, SINGLE_THREAD>,
     ) -> Result<()>
     where
-        A: StorableVecIndex + StorableVecType,
+        I: StorableVecType,
         T: From<bool>,
+        A: StorableVecIndex + StorableVecType,
     {
         self_to_other.iter_from(I::from(self.len()), |(i, other)| {
             self.push_if_needed(i, T::from(other_to_self.get(*other)? == &i))

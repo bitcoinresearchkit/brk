@@ -7,14 +7,29 @@ use std::{
 use biter::rpc::{self, RpcApi};
 use derive_deref::{Deref, DerefMut};
 use fjall::Slice;
-use unsafe_slice_serde::UnsafeSliceSerde;
+use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
-#[derive(Debug, Clone, Copy, Deref, DerefMut, PartialEq, Eq, PartialOrd, Ord, Default)]
+#[derive(
+    Debug,
+    Clone,
+    Copy,
+    Deref,
+    DerefMut,
+    PartialEq,
+    Eq,
+    PartialOrd,
+    Ord,
+    Default,
+    FromBytes,
+    Immutable,
+    IntoBytes,
+    KnownLayout,
+)]
 pub struct Height(u32);
 
 impl Height {
     pub fn write(&self, path: &Path) -> Result<(), io::Error> {
-        fs::write(path, self.unsafe_as_slice())
+        fs::write(path, self.as_bytes())
     }
 }
 
@@ -113,9 +128,9 @@ impl From<Height> for usize {
 }
 
 impl TryFrom<&Path> for Height {
-    type Error = color_eyre::Report;
+    type Error = storable_vec::Error;
     fn try_from(value: &Path) -> Result<Self, Self::Error> {
-        Ok(Self::unsafe_try_from_slice(fs::read(value)?.as_slice())?.to_owned())
+        Ok(Self::read_from_bytes(fs::read(value)?.as_slice())?.to_owned())
     }
 }
 
@@ -127,13 +142,25 @@ impl TryFrom<&rpc::Client> for Height {
 }
 
 impl TryFrom<Slice> for Height {
-    type Error = unsafe_slice_serde::Error;
+    type Error = storable_vec::Error;
     fn try_from(value: Slice) -> Result<Self, Self::Error> {
-        Ok(*Self::unsafe_try_from_slice(&value)?)
+        Ok(Self::read_from_bytes(&value)?)
     }
 }
 impl From<Height> for Slice {
     fn from(value: Height) -> Self {
-        Self::new(value.unsafe_as_slice())
+        Self::new(value.as_bytes())
+    }
+}
+
+impl From<bitcoin::locktime::absolute::Height> for Height {
+    fn from(value: bitcoin::locktime::absolute::Height) -> Self {
+        Self(value.to_consensus_u32())
+    }
+}
+
+impl From<Height> for bitcoin::locktime::absolute::Height {
+    fn from(value: Height) -> Self {
+        bitcoin::locktime::absolute::Height::from_consensus(*value).unwrap()
     }
 }

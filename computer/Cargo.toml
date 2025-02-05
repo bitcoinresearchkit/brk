@@ -12,4 +12,4 @@ exit = { workspace = true }
 fjall = { workspace = true }
 jiff = { workspace = true }
 storable_vec = { workspace = true }
-unsafe_slice_serde = { workspace = true }
+zerocopy = { workspace = true }

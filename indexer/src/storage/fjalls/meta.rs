@@ -3,9 +3,10 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use unsafe_slice_serde::UnsafeSliceSerde;
+use storable_vec::Version;
+use zerocopy::{FromBytes, IntoBytes};
 
-use super::{Height, Version};
+use super::Height;
 
 pub struct StoreMeta {
     pathbuf: PathBuf,
@@ -87,14 +88,14 @@ impl StoreMeta {
     // }
     fn read_length_(path: &Path) -> color_eyre::Result<usize> {
         Ok(fs::read(Self::path_length(path))
-            .map(|v| usize::unsafe_try_from_slice(v.as_slice()).cloned().unwrap_or_default())
+            .map(|v| usize::read_from_bytes(v.as_slice()).unwrap_or_default())
             .unwrap_or_default())
     }
     fn write_length(&self) -> io::Result<()> {
         Self::write_length_(&self.pathbuf, self.len)
     }
     fn write_length_(path: &Path, len: usize) -> Result<(), io::Error> {
-        fs::write(Self::path_length(path), len.to_le_bytes())
+        fs::write(Self::path_length(path), len.as_bytes())
     }
     fn path_length(path: &Path) -> PathBuf {
         path.join("length")
