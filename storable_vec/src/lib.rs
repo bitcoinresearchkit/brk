@@ -590,6 +590,26 @@ where
         })?;
         Ok(self.flush()?)
     }
+
+    pub fn compute_sum_from_indexes<T2, F>(
+        &mut self,
+        first_indexes: &mut StorableVec<I, T2, SINGLE_THREAD>,
+        last_indexes: &mut StorableVec<I, T2, SINGLE_THREAD>,
+        callback: F,
+    ) -> Result<()>
+    where
+        T: From<T2>,
+        T2: StorableVecType + Copy + Add<usize, Output = T2> + Sub<T2, Output = T2> + TryInto<T>,
+        <T2 as TryInto<T>>::Error: error::Error + Send + Sync + 'static,
+        F: Fn(&T2) -> T,
+    {
+        first_indexes.iter_from(I::from(self.len()), |(i, first_index)| {
+            let last_index = last_indexes.get(i)?;
+            let count = *last_index + 1_usize - *first_index;
+            self.push_if_needed(i, count.into())
+        })?;
+        Ok(self.flush()?)
+    }
 }
 
 impl<I, T> StorableVec<I, T, ASYNC_READ_ONLY>

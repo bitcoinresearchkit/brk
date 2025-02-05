@@ -1,6 +1,6 @@
 use std::{fs, path::Path};
 
-use bindex::{Addressindex, Amount, Height, Timestamp, Txindex, Txinindex, Txoutindex};
+use indexer::{Addressindex, Amount, Height, Timestamp, Txindex, Txinindex, Txoutindex};
 use storable_vec::{StorableVec, Version};
 
 use crate::structs::{Date, Feerate};

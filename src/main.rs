@@ -1,4 +1,4 @@
-use biter::bitcoincore_rpc::Client;
+use iterator::bitcoincore_rpc::Client;
 use log::info;
 use rlimit::{getrlimit, setrlimit, Resource};
 

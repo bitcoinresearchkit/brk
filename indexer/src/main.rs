@@ -1,8 +1,8 @@
 use std::path::Path;
 
 use bindex::Indexer;
-use biter::rpc;
 use exit::Exit;
+use iterator::rpc;
 use storable_vec::CACHED_GETS;
 
 fn main() -> color_eyre::Result<()> {

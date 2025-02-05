@@ -1,8 +1,8 @@
 use std::{collections::BTreeSet, time::Instant};
 
-use biter::bitcoincore_rpc::Client;
 use chrono::Datelike;
 use export::ExportedData;
+use iterator::bitcoincore_rpc::Client;
 use itertools::Itertools;
 
 use log::info;
@@ -31,8 +31,7 @@ pub fn iter_blocks(
 
     info!("Imported states");
 
-    let first_unsafe_heights =
-        find_first_inserted_unsafe_height(&mut states, databases, datasets, config);
+    let first_unsafe_heights = find_first_inserted_unsafe_height(&mut states, databases, datasets, config);
 
     let mut height = first_unsafe_heights.min();
 
@@ -69,9 +68,7 @@ pub fn iter_blocks(
 
                 next_block_opt = block_iter.next();
 
-                if let Some((_current_block_height, current_block, _current_block_hash)) =
-                    current_block_opt
-                {
+                if let Some((_current_block_height, current_block, _current_block_hash)) = current_block_opt {
                     let timestamp = Timestamp::from(current_block.header.time);
 
                     let current_block_date = timestamp.to_date();
@@ -82,9 +79,9 @@ pub fn iter_blocks(
                         panic!()
                     }
 
-                    next_date_opt = next_block_opt.as_ref().map(|(_, next_block, _)| {
-                        Timestamp::from(next_block.header.time).to_date()
-                    });
+                    next_date_opt = next_block_opt
+                        .as_ref()
+                        .map(|(_, next_block, _)| Timestamp::from(next_block.header.time).to_date());
 
                     // Always run for the first block of the loop
                     if blocks_loop_date.is_none() {
@@ -96,9 +93,7 @@ pub fn iter_blocks(
                             .map(|date_data| *date_data.date < *current_block_date)
                             .unwrap_or(true)
                         {
-                            states
-                                .date_data_vec
-                                .push(DateData::new(current_block_date, vec![]));
+                            states.date_data_vec.push(DateData::new(current_block_date, vec![]));
                         }
 
                         processed_dates.insert(current_block_date);
@@ -117,10 +112,8 @@ pub fn iter_blocks(
                     processed_heights.insert(current_block_height);
 
                     if first_unsafe_heights.inserted <= current_block_height {
-                        let compute_addresses = databases.check_if_needs_to_compute_addresses(
-                            current_block_height,
-                            blocks_loop_date,
-                        );
+                        let compute_addresses =
+                            databases.check_if_needs_to_compute_addresses(current_block_height, blocks_loop_date);
 
                         if states.address_cohorts_durable_states.is_none()
                             && (compute_addresses
@@ -128,10 +121,9 @@ pub fn iter_blocks(
                                     .address
                                     .needs_durable_states(current_block_height, current_block_date))
                         {
-                            states.address_cohorts_durable_states =
-                                Some(AddressCohortsDurableStates::init(
-                                    &mut databases.address_index_to_address_data,
-                                ));
+                            states.address_cohorts_durable_states = Some(AddressCohortsDurableStates::init(
+                                &mut databases.address_index_to_address_data,
+                            ));
                         }
 
                         if states.utxo_cohorts_durable_states.is_none()
@@ -169,9 +161,7 @@ pub fn iter_blocks(
 
                         height += blocks_loop_i;
 
-                        let is_check_point = next_date_opt
-                            .as_ref()
-                            .map_or(true, |date| date.is_first_of_month());
+                        let is_check_point = next_date_opt.as_ref().map_or(true, |date| date.is_first_of_month());
 
                         if (is_check_point && instant.elapsed().as_secs() >= 1)
                             || height.is_close_to_end(approx_block_count)
@@ -209,8 +199,7 @@ pub fn iter_blocks(
 
             let defragment = is_safe
                 && next_date_opt.is_some_and(|date| {
-                    (date.year() >= 2020 && date.is_january()
-                        || date.year() >= 2022 && date.is_july())
+                    (date.year() >= 2020 && date.is_january() || date.year() >= 2022 && date.is_july())
                         && date.is_first_of_month()
                 });
 

@@ -4,9 +4,9 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use biter::bitcoincore_rpc::Auth;
 use clap::Parser;
 use color_eyre::eyre::eyre;
+use iterator::bitcoincore_rpc::Auth;
 use log::info;
 use serde::{Deserialize, Serialize};
 
@@ -270,9 +270,7 @@ impl Config {
     fn fix_user_path(path: &str) -> PathBuf {
         let fix = move |pattern: &str| {
             if path.starts_with(pattern) {
-                let path = &path
-                    .replace(&format!("{pattern}/"), "")
-                    .replace(pattern, "");
+                let path = &path.replace(&format!("{pattern}/"), "").replace(pattern, "");
 
                 let home = std::env::var("HOME").unwrap();
 

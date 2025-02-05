@@ -1,6 +1,6 @@
 use std::{thread::sleep, time::Duration};
 
-use biter::bitcoincore_rpc::{Client, RpcApi};
+use iterator::bitcoincore_rpc::{Client, RpcApi};
 
 mod actions;
 mod databases;
@@ -25,14 +25,7 @@ pub fn main(config: &Config, rpc: &Client, exit: &Exit) -> color_eyre::Result<()
         let mut databases = Databases::import(config);
         let mut datasets = Datasets::import(config)?;
 
-        iter_blocks(
-            config,
-            rpc,
-            block_count,
-            exit.clone(),
-            &mut databases,
-            &mut datasets,
-        )?;
+        iter_blocks(config, rpc, block_count, exit.clone(), &mut databases, &mut datasets)?;
 
         if let Some(delay) = config.delay() {
             sleep(Duration::from_secs(delay))

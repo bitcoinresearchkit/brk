@@ -10,27 +10,14 @@ use bincode::{
     error::{DecodeError, EncodeError},
     BorrowDecode, Decode, Encode,
 };
-use biter::bitcoin::Amount as BitcoinAmount;
 use derive_deref::{Deref, DerefMut};
+use iterator::bitcoin::Amount as BitcoinAmount;
 use serde::{Deserialize, Serialize};
 use snkrj::{direct_repr, Storable, UnsizedStorable};
 
 use super::Height;
 
-#[derive(
-    Debug,
-    PartialEq,
-    Eq,
-    PartialOrd,
-    Ord,
-    Clone,
-    Copy,
-    Deref,
-    DerefMut,
-    Default,
-    Serialize,
-    Deserialize,
-)]
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Deref, DerefMut, Default, Serialize, Deserialize)]
 pub struct Amount(BitcoinAmount);
 direct_repr!(Amount);
 

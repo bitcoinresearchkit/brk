@@ -7,7 +7,7 @@ use std::{
     time::Duration,
 };
 
-pub use biter::*;
+pub use iterator::*;
 
 use bitcoin::{Transaction, TxIn, TxOut};
 use color_eyre::eyre::{eyre, ContextCompat};
@@ -93,7 +93,7 @@ impl Indexer<CACHED_GETS> {
                 Ok(())
             };
 
-        biter::new(bitcoin_dir, Some(height.into()), None, rpc)
+        iterator::new(bitcoin_dir, Some(height.into()), None, rpc)
             .iter()
             .try_for_each(|(_height, block, blockhash)| -> color_eyre::Result<()> {
                 println!("Processing block {_height}...");

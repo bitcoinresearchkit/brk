@@ -1,5 +1,5 @@
 use bitcoin_hashes::hash160;
-use biter::bitcoin::TxOut;
+use iterator::bitcoin::TxOut;
 
 use super::{AddressType, Counter, U8x19, U8x31};
 

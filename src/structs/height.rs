@@ -5,8 +5,8 @@ use std::{
 
 use allocative::Allocative;
 use bincode::{Decode, Encode};
-use biter::NUMBER_OF_UNSAFE_BLOCKS;
 use derive_deref::{Deref, DerefMut};
+use iterator::NUMBER_OF_UNSAFE_BLOCKS;
 use serde::{Deserialize, Serialize};
 
 use super::{HeightMapChunkId, MapKey, HEIGHT_MAP_CHUNK_SIZE};

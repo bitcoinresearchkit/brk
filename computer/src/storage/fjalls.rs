@@ -1,6 +1,6 @@
 use std::path::Path;
 
-use bindex::Store;
+use indexer::Store;
 use storable_vec::Version;
 
 use crate::structs::{AddressindexTxoutindex, Unit};
