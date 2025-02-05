@@ -1,8 +1,8 @@
 use std::path::{Path, PathBuf};
 
-use bindex::Indexer;
-use biter::rpc;
 use exit::Exit;
+use indexer::Indexer;
+use iterator::rpc;
 
 mod storage;
 mod structs;
@@ -89,10 +89,10 @@ impl Computer<SINGLE_THREAD> {
             &mut indexer.vecs.height_to_first_txindex,
         )?;
 
-        self.vecs.txindex_to_fee.compute_transform(
-            &mut self.vecs.txindex_to_height,
-            &mut indexer.vecs.height_to_first_txindex,
-        )?;
+        // self.vecs.txindex_to_fee.compute_transform(
+        //     &mut self.vecs.txindex_to_height,
+        //     &mut indexer.vecs.height_to_first_txindex,
+        // )?;
 
         let date_count = self.vecs.height_to_date.len();
 

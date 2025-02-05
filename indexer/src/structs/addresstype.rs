@@ -1,4 +1,4 @@
-use biter::bitcoin::ScriptBuf;
+use iterator::bitcoin::ScriptBuf;
 use zerocopy::{Immutable, IntoBytes, KnownLayout, TryFromBytes};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, TryFromBytes, Immutable, IntoBytes, KnownLayout)]

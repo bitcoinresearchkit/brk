@@ -1,6 +1,6 @@
-use biter::bitcoin::ScriptBuf;
 use color_eyre::eyre::eyre;
 use derive_deref::{Deref, DerefMut};
+use iterator::bitcoin::ScriptBuf;
 use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 use super::Addresstype;

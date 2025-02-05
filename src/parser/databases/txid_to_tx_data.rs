@@ -5,7 +5,7 @@ use std::{
 };
 
 use allocative::Allocative;
-use biter::bitcoin::Txid;
+use iterator::bitcoin::Txid;
 use itertools::Itertools;
 use snkrj::{AnyDatabase, Database as _Database};
 
@@ -49,10 +49,7 @@ impl TxidToTxData {
 
         let db_index = Self::db_index(txid);
 
-        self.map
-            .get_mut(&db_index)
-            .unwrap()
-            .get_mut_from_ram(&txid_key)
+        self.map.get_mut(&db_index).unwrap().get_mut_from_ram(&txid_key)
     }
 
     pub fn remove_later_from_disk(&mut self, txid: &Txid) {

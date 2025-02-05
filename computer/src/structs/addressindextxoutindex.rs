@@ -1,5 +1,5 @@
-use bindex::{Addressindex, Txoutindex};
 use fjall::Slice;
+use indexer::{Addressindex, Txoutindex};
 use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Immutable, IntoBytes, KnownLayout, FromBytes)]

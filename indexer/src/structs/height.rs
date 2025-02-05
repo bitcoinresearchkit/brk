@@ -4,9 +4,9 @@ use std::{
     path::Path,
 };
 
-use biter::rpc::{self, RpcApi};
 use derive_deref::{Deref, DerefMut};
 use fjall::Slice;
+use iterator::rpc::{self, RpcApi};
 use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 #[derive(

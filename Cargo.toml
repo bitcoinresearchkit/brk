@@ -4,22 +4,24 @@ members = [
     "exit",
     "indexer",
     "iterator",
+    "server",
     "storable_vec",
     "struct_iterable",
 ]
 resolver = "2"
 
 [workspace.dependencies]
-bindex = { path = "indexer" }
 bitcoin = { version = "0.32.5", features = ["serde"] }
-biter = { path = "iterator" }
-bomputer = { path = "computer" }
 color-eyre = "0.6.3"
+computer = { path = "computer", package = "bomputer" }
 derive_deref = "1.1.1"
 exit = { path = "exit" }
 fjall = "2.5.0"
+indexer = { path = "indexer", package = "bindex" }
+iterator = { path = "iterator", package = "biter" }
 jiff = "0.1.29"
 rayon = "1.10.0"
+server = { path = "server" }
 storable_vec = { path = "storable_vec" }
 struct_iterable = { path = "struct_iterable" }
-zerocopy = { version = "0.8.15", features = ["derive"] }
+zerocopy = { version = "0.8.16", features = ["derive"] }

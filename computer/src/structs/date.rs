@@ -1,7 +1,7 @@
 use std::ops::Add;
 
-use bindex::Timestamp;
 use color_eyre::eyre::eyre;
+use indexer::Timestamp;
 use jiff::{civil::Date as Date_, tz::TimeZone, Span};
 use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 

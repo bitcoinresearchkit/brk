@@ -6,24 +6,17 @@ use swc::{config::JsMinifyOptions, try_with_handler, JsMinifyExtras};
 use swc_common::{SourceMap, GLOBALS};
 
 pub fn minify_js(path: &Path) -> String {
-    let cm = Arc::<SourceMap>::default();
+    let source_map = Arc::<SourceMap>::default();
+    let compiler = swc::Compiler::new(source_map.clone());
 
-    let c = swc::Compiler::new(cm.clone());
-
-    let output = GLOBALS
+    GLOBALS
         .set(&Default::default(), || {
-            try_with_handler(cm.clone(), Default::default(), |handler| {
-                let fm = cm.load_file(path).expect("failed to load file");
+            try_with_handler(source_map.clone(), Default::default(), |handler| {
+                let fm = source_map.load_file(path).expect("failed to load file");
 
-                c.minify(
-                    fm,
-                    handler,
-                    &JsMinifyOptions::default(),
-                    JsMinifyExtras::default(),
-                )
+                compiler.minify(fm, handler, &JsMinifyOptions::default(), JsMinifyExtras::default())
             })
         })
-        .unwrap();
-
-    output.code
+        .unwrap()
+        .code
 }

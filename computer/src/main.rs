@@ -1,8 +1,8 @@
 use std::path::Path;
 
-use biter::rpc;
 use bomputer::Computer;
 use exit::Exit;
+use iterator::rpc;
 use storable_vec::SINGLE_THREAD;
 
 mod structs;

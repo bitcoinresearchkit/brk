@@ -3,8 +3,8 @@ use std::{
     ops::{Add, AddAssign, Mul, Sub, SubAssign},
 };
 
-use biter::bitcoin;
 use derive_deref::{Deref, DerefMut};
+use iterator::bitcoin;
 use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 use super::Height;
