@@ -2,6 +2,7 @@ use std::ops::Add;
 
 use derive_deref::{Deref, DerefMut};
 use fjall::Slice;
+use serde::Serialize;
 use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 #[derive(
@@ -19,6 +20,7 @@ use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
     Immutable,
     IntoBytes,
     KnownLayout,
+    Serialize,
 )]
 pub struct Addressindex(u32);
 

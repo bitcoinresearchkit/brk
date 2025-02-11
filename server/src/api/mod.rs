@@ -71,6 +71,7 @@ fn req_to_response_res(
     AppState { vecs, .. }: AppState,
 ) -> color_eyre::Result<Response> {
     let format = Format::try_from(format).ok();
+
     let indexes = i
         .to_lowercase()
         .split(",")
@@ -78,12 +79,10 @@ fn req_to_response_res(
         .collect::<Vec<_>>();
 
     if indexes.len() > 1 {
-        return Err(eyre!("Multiple indexes aren't supported yet !"));
+        return Err(eyre!("Multiple indexes aren't supported"));
     } else if indexes.is_empty() {
-        return Err(eyre!("Bad index(es)"));
+        return Err(eyre!("Unknown index"));
     }
-
-    dbg!(format, &indexes, &v, from, to);
 
     let values = v
         .to_lowercase()

@@ -5,9 +5,11 @@ use rayon::prelude::*;
 use storable_vec::{Version, CACHED_GETS};
 
 use crate::structs::{
-    Addressbytes, Addressindex, Addresstype, Addresstypeindex, Amount, BlockHash, Height, LockTime, P2PK33AddressBytes,
-    P2PK65AddressBytes, P2PKHAddressBytes, P2SHAddressBytes, P2TRAddressBytes, P2WPKHAddressBytes, P2WSHAddressBytes,
-    Timestamp, TxVersion, Txid, Txindex, Txinindex, Txoutindex, Weight,
+    Addressbytes, Addressindex, Addresstype, Addresstypeindex, Amount, BlockHash, Emptyindex, Height, LockTime,
+    Multisigindex, Opreturnindex, P2PK33AddressBytes, P2PK33index, P2PK65AddressBytes, P2PK65index, P2PKHAddressBytes,
+    P2PKHindex, P2SHAddressBytes, P2SHindex, P2TRAddressBytes, P2TRindex, P2WPKHAddressBytes, P2WPKHindex,
+    P2WSHAddressBytes, P2WSHindex, Pushonlyindex, Timestamp, TxVersion, Txid, Txindex, Txinindex, Txoutindex,
+    Unknownindex, Weight,
 };
 
 mod base;
@@ -21,31 +23,31 @@ pub struct StorableVecs<const MODE: u8> {
     pub height_to_blockhash: StorableVec<Height, BlockHash, MODE>,
     pub height_to_difficulty: StorableVec<Height, f64, MODE>,
     pub height_to_first_addressindex: StorableVec<Height, Addressindex, MODE>,
-    pub height_to_first_emptyindex: StorableVec<Height, Addresstypeindex, MODE>,
-    pub height_to_first_multisigindex: StorableVec<Height, Addresstypeindex, MODE>,
-    pub height_to_first_opreturnindex: StorableVec<Height, Addresstypeindex, MODE>,
-    pub height_to_first_pushonlyindex: StorableVec<Height, Addresstypeindex, MODE>,
+    pub height_to_first_emptyindex: StorableVec<Height, Emptyindex, MODE>,
+    pub height_to_first_multisigindex: StorableVec<Height, Multisigindex, MODE>,
+    pub height_to_first_opreturnindex: StorableVec<Height, Opreturnindex, MODE>,
+    pub height_to_first_pushonlyindex: StorableVec<Height, Pushonlyindex, MODE>,
     pub height_to_first_txindex: StorableVec<Height, Txindex, MODE>,
     pub height_to_first_txinindex: StorableVec<Height, Txinindex, MODE>,
     pub height_to_first_txoutindex: StorableVec<Height, Txoutindex, MODE>,
-    pub height_to_first_unknownindex: StorableVec<Height, Addresstypeindex, MODE>,
-    pub height_to_first_p2pk33index: StorableVec<Height, Addresstypeindex, MODE>,
-    pub height_to_first_p2pk65index: StorableVec<Height, Addresstypeindex, MODE>,
-    pub height_to_first_p2pkhindex: StorableVec<Height, Addresstypeindex, MODE>,
-    pub height_to_first_p2shindex: StorableVec<Height, Addresstypeindex, MODE>,
-    pub height_to_first_p2trindex: StorableVec<Height, Addresstypeindex, MODE>,
-    pub height_to_first_p2wpkhindex: StorableVec<Height, Addresstypeindex, MODE>,
-    pub height_to_first_p2wshindex: StorableVec<Height, Addresstypeindex, MODE>,
+    pub height_to_first_unknownindex: StorableVec<Height, Unknownindex, MODE>,
+    pub height_to_first_p2pk33index: StorableVec<Height, P2PK33index, MODE>,
+    pub height_to_first_p2pk65index: StorableVec<Height, P2PK65index, MODE>,
+    pub height_to_first_p2pkhindex: StorableVec<Height, P2PKHindex, MODE>,
+    pub height_to_first_p2shindex: StorableVec<Height, P2SHindex, MODE>,
+    pub height_to_first_p2trindex: StorableVec<Height, P2TRindex, MODE>,
+    pub height_to_first_p2wpkhindex: StorableVec<Height, P2WPKHindex, MODE>,
+    pub height_to_first_p2wshindex: StorableVec<Height, P2WSHindex, MODE>,
     pub height_to_size: StorableVec<Height, usize, MODE>,
     pub height_to_timestamp: StorableVec<Height, Timestamp, MODE>,
     pub height_to_weight: StorableVec<Height, Weight, MODE>,
-    pub p2pk33index_to_p2pk33addressbytes: StorableVec<Addresstypeindex, P2PK33AddressBytes, MODE>,
-    pub p2pk65index_to_p2pk65addressbytes: StorableVec<Addresstypeindex, P2PK65AddressBytes, MODE>,
-    pub p2pkhindex_to_p2pkhaddressbytes: StorableVec<Addresstypeindex, P2PKHAddressBytes, MODE>,
-    pub p2shindex_to_p2shaddressbytes: StorableVec<Addresstypeindex, P2SHAddressBytes, MODE>,
-    pub p2trindex_to_p2traddressbytes: StorableVec<Addresstypeindex, P2TRAddressBytes, MODE>,
-    pub p2wpkhindex_to_p2wpkhaddressbytes: StorableVec<Addresstypeindex, P2WPKHAddressBytes, MODE>,
-    pub p2wshindex_to_p2wshaddressbytes: StorableVec<Addresstypeindex, P2WSHAddressBytes, MODE>,
+    pub p2pk33index_to_p2pk33addressbytes: StorableVec<P2PK33index, P2PK33AddressBytes, MODE>,
+    pub p2pk65index_to_p2pk65addressbytes: StorableVec<P2PK65index, P2PK65AddressBytes, MODE>,
+    pub p2pkhindex_to_p2pkhaddressbytes: StorableVec<P2PKHindex, P2PKHAddressBytes, MODE>,
+    pub p2shindex_to_p2shaddressbytes: StorableVec<P2SHindex, P2SHAddressBytes, MODE>,
+    pub p2trindex_to_p2traddressbytes: StorableVec<P2TRindex, P2TRAddressBytes, MODE>,
+    pub p2wpkhindex_to_p2wpkhaddressbytes: StorableVec<P2WPKHindex, P2WPKHAddressBytes, MODE>,
+    pub p2wshindex_to_p2wshaddressbytes: StorableVec<P2WSHindex, P2WSHAddressBytes, MODE>,
     pub txindex_to_first_txinindex: StorableVec<Txindex, Txinindex, MODE>,
     pub txindex_to_first_txoutindex: StorableVec<Txindex, Txoutindex, MODE>,
     pub txindex_to_height: StorableVec<Txindex, Height, MODE>,
@@ -57,7 +59,7 @@ pub struct StorableVecs<const MODE: u8> {
     pub txoutindex_to_amount: StorableVec<Txoutindex, Amount, MODE>,
 }
 
-// const UNSAFE_BLOCKS: usize = 100;
+// const UNSAFE_BLOCKS: usize = 1000;
 
 impl<const MODE: u8> StorableVecs<MODE> {
     pub fn import(path: &Path) -> color_eyre::Result<Self> {
@@ -407,37 +409,37 @@ impl StorableVecs<CACHED_GETS> {
         Ok(match addresstype {
             Addresstype::P2PK65 => self
                 .p2pk65index_to_p2pk65addressbytes
-                .get(addresstypeindex)?
+                .get(addresstypeindex.into())?
                 // .map(|v| Addressbytes::from(v.clone())),
                 .map(|v| Addressbytes::from(v.into_inner())),
             Addresstype::P2PK33 => self
                 .p2pk33index_to_p2pk33addressbytes
-                .get(addresstypeindex)?
+                .get(addresstypeindex.into())?
                 // .map(|v| Addressbytes::from(v.clone())),
                 .map(|v| Addressbytes::from(v.into_inner())),
             Addresstype::P2PKH => self
                 .p2pkhindex_to_p2pkhaddressbytes
-                .get(addresstypeindex)?
+                .get(addresstypeindex.into())?
                 // .map(|v| Addressbytes::from(v.clone())),
                 .map(|v| Addressbytes::from(v.into_inner())),
             Addresstype::P2SH => self
                 .p2shindex_to_p2shaddressbytes
-                .get(addresstypeindex)?
+                .get(addresstypeindex.into())?
                 // .map(|v| Addressbytes::from(v.clone())),
                 .map(|v| Addressbytes::from(v.into_inner())),
             Addresstype::P2WPKH => self
                 .p2wpkhindex_to_p2wpkhaddressbytes
-                .get(addresstypeindex)?
+                .get(addresstypeindex.into())?
                 // .map(|v| Addressbytes::from(v.clone())),
                 .map(|v| Addressbytes::from(v.into_inner())),
             Addresstype::P2WSH => self
                 .p2wshindex_to_p2wshaddressbytes
-                .get(addresstypeindex)?
+                .get(addresstypeindex.into())?
                 // .map(|v| Addressbytes::from(v.clone())),
                 .map(|v| Addressbytes::from(v.into_inner())),
             Addresstype::P2TR => self
                 .p2trindex_to_p2traddressbytes
-                .get(addresstypeindex)?
+                .get(addresstypeindex.into())?
                 // .map(|v| Addressbytes::from(v.clone())),
                 .map(|v| Addressbytes::from(v.into_inner())),
             _ => unreachable!(),
@@ -450,13 +452,19 @@ impl StorableVecs<CACHED_GETS> {
         addressbytes: Addressbytes,
     ) -> storable_vec::Result<()> {
         match addressbytes {
-            Addressbytes::P2PK65(bytes) => self.p2pk65index_to_p2pk65addressbytes.push_if_needed(index, bytes),
-            Addressbytes::P2PK33(bytes) => self.p2pk33index_to_p2pk33addressbytes.push_if_needed(index, bytes),
-            Addressbytes::P2PKH(bytes) => self.p2pkhindex_to_p2pkhaddressbytes.push_if_needed(index, bytes),
-            Addressbytes::P2SH(bytes) => self.p2shindex_to_p2shaddressbytes.push_if_needed(index, bytes),
-            Addressbytes::P2WPKH(bytes) => self.p2wpkhindex_to_p2wpkhaddressbytes.push_if_needed(index, bytes),
-            Addressbytes::P2WSH(bytes) => self.p2wshindex_to_p2wshaddressbytes.push_if_needed(index, bytes),
-            Addressbytes::P2TR(bytes) => self.p2trindex_to_p2traddressbytes.push_if_needed(index, bytes),
+            Addressbytes::P2PK65(bytes) => self
+                .p2pk65index_to_p2pk65addressbytes
+                .push_if_needed(index.into(), bytes),
+            Addressbytes::P2PK33(bytes) => self
+                .p2pk33index_to_p2pk33addressbytes
+                .push_if_needed(index.into(), bytes),
+            Addressbytes::P2PKH(bytes) => self.p2pkhindex_to_p2pkhaddressbytes.push_if_needed(index.into(), bytes),
+            Addressbytes::P2SH(bytes) => self.p2shindex_to_p2shaddressbytes.push_if_needed(index.into(), bytes),
+            Addressbytes::P2WPKH(bytes) => self
+                .p2wpkhindex_to_p2wpkhaddressbytes
+                .push_if_needed(index.into(), bytes),
+            Addressbytes::P2WSH(bytes) => self.p2wshindex_to_p2wshaddressbytes.push_if_needed(index.into(), bytes),
+            Addressbytes::P2TR(bytes) => self.p2trindex_to_p2traddressbytes.push_if_needed(index.into(), bytes),
         }
     }
 }

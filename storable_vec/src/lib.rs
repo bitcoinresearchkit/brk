@@ -37,7 +37,7 @@ pub const SINGLE_THREAD: u8 = 1;
 /// Will spin up a new `File` for every read
 ///
 /// Used in `/server`
-pub const ASYNC_READ_ONLY: u8 = 2;
+pub const STATELESS: u8 = 2;
 
 ///
 /// A very small, fast, efficient and simple storable Vec
@@ -73,7 +73,7 @@ pub struct StorableVec<I, T, const MODE: u8> {
 /// In bytes
 const MAX_PAGE_SIZE: usize = 4 * 4096;
 const ONE_MB: usize = 1000 * 1024;
-const MAX_CACHE_SIZE: usize = 100 * ONE_MB;
+const MAX_CACHE_SIZE: usize = usize::MAX;
 // const MAX_CACHE_SIZE: usize = 100 * ONE_MB;
 
 impl<I, T, const MODE: u8> StorableVec<I, T, MODE>
@@ -157,6 +157,13 @@ where
             .open(path)
     }
 
+    fn open_file_at_then_read(&self, index: usize) -> Result<T> {
+        let mut file = self.open_file()?;
+        Self::seek(&mut file, Self::index_to_byte_index(index))?;
+        let mut buf = Self::create_buffer();
+        Self::read_exact(&mut file, &mut buf).map(|v| v.to_owned())
+    }
+
     fn read_disk_len(&self) -> io::Result<usize> {
         Self::read_disk_len_(&self.file)
     }
@@ -165,7 +172,6 @@ where
     }
 
     fn reset_disk_related_state(&mut self) -> io::Result<()> {
-        self.file = self.open_file()?;
         self.file_len = self.read_disk_len()?;
         self.file_position = 0;
         self.reset_cache()
@@ -193,13 +199,6 @@ where
         }
     }
 
-    fn open_file_at_then_read(&self, index: usize) -> Result<T> {
-        let mut file = self.open_file()?;
-        let mut buf = Self::create_buffer();
-        Self::seek(&mut file, Self::index_to_byte_index(index))?;
-        Self::read_exact(&mut file, &mut buf).map(|v| v.to_owned())
-    }
-
     #[inline]
     fn seek(file: &mut File, byte_index: u64) -> io::Result<u64> {
         file.seek(SeekFrom::Start(byte_index))
@@ -218,7 +217,7 @@ where
 
     #[inline]
     fn push_if_needed_(&mut self, index: I, value: T) -> Result<()> {
-        match self.pushed_len().cmp(&Self::i_to_usize(index)?) {
+        match self.len().cmp(&Self::i_to_usize(index)?) {
             Ordering::Greater => {
                 // dbg!(len, index, &self.pathbuf);
                 // panic!();
@@ -265,21 +264,18 @@ where
     }
 
     pub fn flush(&mut self) -> io::Result<()> {
-        self.reset_disk_related_state()?;
-
         if self.pushed.is_empty() {
             return Ok(());
         }
 
-        self.file_len += self.pushed.len();
-
-        let mut bytes: Vec<u8> = vec![];
-
+        let mut bytes: Vec<u8> = Vec::with_capacity(self.pushed_len() * Self::SIZE_OF_T);
         mem::take(&mut self.pushed)
             .into_iter()
             .for_each(|v| bytes.extend_from_slice(v.as_bytes()));
 
         self.file.write_all(&bytes)?;
+
+        self.reset_disk_related_state()?;
 
         Ok(())
     }
@@ -316,6 +312,10 @@ where
         } else {
             Err(Error::IndexTooLow)
         }
+    }
+
+    pub fn file_name(&self) -> String {
+        self.path().file_name().unwrap().to_str().unwrap().to_owned()
     }
 
     #[inline]
@@ -368,7 +368,7 @@ where
         let page_index = index / Self::PER_PAGE;
         let last_index = self.file_len - 1;
         let max_page_index = last_index / Self::PER_PAGE;
-        let min_page_index = (max_page_index + 1).checked_sub(self.cache.len()).unwrap_or_default();
+        let min_page_index = (max_page_index + 1) - self.cache.len();
 
         // let min_open_page = self.min.load(AtomicOrdering::SeqCst);
 
@@ -429,7 +429,6 @@ where
     fn get_(&mut self, index: usize) -> Result<&T> {
         let byte_index = Self::index_to_byte_index(index);
         if self.file_position != byte_index {
-            println!("seek");
             self.file_position = Self::seek(&mut self.file, byte_index)?;
         }
         let res = Self::read_exact(&mut self.file, &mut self.buf);
@@ -595,7 +594,6 @@ where
         &mut self,
         first_indexes: &mut StorableVec<I, T2, SINGLE_THREAD>,
         last_indexes: &mut StorableVec<I, T2, SINGLE_THREAD>,
-        callback: F,
     ) -> Result<()>
     where
         T: From<T2>,
@@ -612,20 +610,67 @@ where
     }
 }
 
-impl<I, T> StorableVec<I, T, ASYNC_READ_ONLY>
+impl<I, T> StorableVec<I, T, STATELESS>
 where
     I: StorableVecIndex,
     T: StorableVecType,
 {
     #[inline]
     pub fn get(&self, index: I) -> Result<Option<T>> {
-        self.get_(Self::i_to_usize(index)?)
+        Ok(Some(self.open_file_at_then_read(Self::i_to_usize(index)?)?))
     }
-    #[inline]
-    fn get_(&self, index: usize) -> Result<Option<T>> {
-        Ok(Some(self.open_file_at_then_read(index)?.to_owned()))
+
+    pub fn collect_range(&self, from: Option<i64>, to: Option<i64>) -> Result<Vec<T>> {
+        if !self.pushed.is_empty() {
+            return Err(Error::UnsupportedUnflushedState);
+        }
+
+        let mut file = self.open_file()?;
+
+        let len = Self::read_disk_len_(&file)?;
+
+        let from = from.map_or(0, |from| {
+            if from >= 0 {
+                from as usize
+            } else {
+                (len as i64 + from) as usize
+            }
+        });
+
+        let to = to.map_or(len, |to| {
+            if to >= 0 {
+                to as usize
+            } else {
+                (len as i64 + to) as usize
+            }
+        });
+
+        if from >= to {
+            return Err(Error::RangeFromAfterTo);
+        }
+
+        Self::seek(&mut file, Self::index_to_byte_index(from))?;
+
+        let mut buf = Self::create_buffer();
+
+        Ok((from..to)
+            .map(|_| Self::read_exact(&mut file, &mut buf).map(|v| v.to_owned()).unwrap())
+            .collect::<Vec<_>>())
     }
 
     // Add iter iter_from iter_range collect..
     // + add memory cap
+}
+
+impl<I, T> Clone for StorableVec<I, T, STATELESS>
+where
+    I: StorableVecIndex,
+    T: StorableVecType,
+{
+    fn clone(&self) -> Self {
+        let path = &self.pathbuf;
+        let path_version = Self::path_version_(path);
+        let version = Version::try_from(path_version.as_path()).unwrap();
+        Self::import(path, version).unwrap()
+    }
 }

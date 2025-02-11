@@ -4,6 +4,7 @@ members = [
     "exit",
     "indexer",
     "iterator",
+    "logger",
     "server",
     "storable_vec",
     "struct_iterable",
@@ -16,12 +17,15 @@ color-eyre = "0.6.3"
 computer = { path = "computer", package = "bomputer" }
 derive_deref = "1.1.1"
 exit = { path = "exit" }
-fjall = "2.5.0"
+fjall = "2.6.2"
 indexer = { path = "indexer", package = "bindex" }
 iterator = { path = "iterator", package = "biter" }
-jiff = "0.1.29"
+jiff = "0.2.0"
+logger = { path = "logger" }
 rayon = "1.10.0"
-server = { path = "server" }
+rlimit = { version = "0.10.2" }
+serde = { version = "1.0.217", features = ["derive"] }
+server = { path = "server", package = "berver" }
 storable_vec = { path = "storable_vec" }
 struct_iterable = { path = "struct_iterable" }
-zerocopy = { version = "0.8.16", features = ["derive"] }
+zerocopy = { version = "0.8.17", features = ["derive"] }

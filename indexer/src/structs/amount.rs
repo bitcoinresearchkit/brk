@@ -5,6 +5,7 @@ use std::{
 
 use derive_deref::{Deref, DerefMut};
 use iterator::bitcoin;
+use serde::Serialize;
 use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 use super::Height;
@@ -24,6 +25,7 @@ use super::Height;
     Immutable,
     IntoBytes,
     KnownLayout,
+    Serialize,
 )]
 pub struct Amount(u64);
 

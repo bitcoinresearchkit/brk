@@ -1,9 +1,10 @@
 use std::mem;
 
 use derive_deref::Deref;
+use serde::Serialize;
 use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
-#[derive(Debug, Deref, Clone, PartialEq, Eq, Immutable, IntoBytes, KnownLayout, FromBytes)]
+#[derive(Debug, Deref, Clone, PartialEq, Eq, Immutable, IntoBytes, KnownLayout, FromBytes, Serialize)]
 pub struct BlockHash([u8; 32]);
 
 impl From<bitcoin::BlockHash> for BlockHash {

@@ -9,7 +9,7 @@ impl Epoch {
 
 impl From<Height> for Epoch {
     fn from(height: Height) -> Self {
-        Self(((height.to_usize() / Self::BLOCKS_PER_EPOCH) + 1) as u16)
+        Self::from(&height)
     }
 }
 

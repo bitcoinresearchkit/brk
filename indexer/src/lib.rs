@@ -1,6 +1,5 @@
 use std::{
     collections::BTreeMap,
-    io::{Read, Write},
     path::Path,
     str::FromStr,
     thread::{self, sleep},
@@ -12,6 +11,7 @@ pub use iterator::*;
 use bitcoin::{Transaction, TxIn, TxOut};
 use color_eyre::eyre::{eyre, ContextCompat};
 use exit::Exit;
+use logger::info;
 use rayon::prelude::*;
 use storable_vec::CACHED_GETS;
 
@@ -19,15 +19,10 @@ mod storage;
 mod structs;
 
 pub use storage::{AnyStorableVec, StorableVec, Store, StoreMeta};
-use structs::{BlockHash, Txid};
-
 use storage::{Fjalls, StorableVecs};
-pub use structs::{
-    AddressHash, Addressbytes, Addressindex, Addresstype, Amount, BlockHashPrefix, Height, Timestamp, TxidPrefix,
-    Txindex, Txinindex, Txoutindex, Vin, Vout,
-};
+pub use structs::*;
 
-const UNSAFE_BLOCKS: u32 = 100;
+const UNSAFE_BLOCKS: u32 = 1000;
 const SNAPSHOT_BLOCK_RANGE: usize = 1000;
 
 pub struct Indexer<const MODE: u8> {
@@ -39,6 +34,7 @@ impl<const MODE: u8> Indexer<MODE> {
     pub fn import(indexes_dir: &Path) -> color_eyre::Result<Self> {
         let vecs = StorableVecs::import(&indexes_dir.join("vecs"))?;
         let trees = Fjalls::import(&indexes_dir.join("fjall"))?;
+
         Ok(Self { vecs, trees })
     }
 }
@@ -77,7 +73,7 @@ impl Indexer<CACHED_GETS> {
 
         let export =
             |trees: &mut Fjalls, vecs: &mut StorableVecs<CACHED_GETS>, height: Height| -> color_eyre::Result<()> {
-                println!("Exporting...");
+                info!("Exporting...");
 
                 exit.block();
 
@@ -93,10 +89,10 @@ impl Indexer<CACHED_GETS> {
                 Ok(())
             };
 
-        iterator::new(bitcoin_dir, Some(height.into()), None, rpc)
+        iterator::new(bitcoin_dir, Some(height.into()), Some(400_000), rpc)
             .iter()
             .try_for_each(|(_height, block, blockhash)| -> color_eyre::Result<()> {
-                println!("Processing block {_height}...");
+                info!("Processing block {_height}...");
 
                 let blockhash = BlockHash::from(blockhash);
                 height = Height::from(_height);
@@ -327,7 +323,7 @@ impl Indexer<CACHED_GETS> {
                                             .and_then(|addressindex_local| {
                                                 (addressindex_local < addressindex_global).then_some(addressindex_local)
                                             })
-                                    }); // OK
+                                    });
 
                                     if let Some(Some(addressindex)) = check_collisions.then_some(addressindex_opt) {
                                         let addressbytes = addressbytes_res.as_ref().unwrap();
@@ -341,8 +337,6 @@ impl Indexer<CACHED_GETS> {
                                             .addressindex_to_addresstypeindex
                                             .get(addressindex)?
                                             .context("Expect to have address type index")?;
-                                        // Good first time
-                                        // Wrong after rerun
 
                                         let prev_addressbytes_opt =
                                             vecs.get_addressbytes(prev_addresstype, addresstypeindex)?;
@@ -473,18 +467,18 @@ impl Indexer<CACHED_GETS> {
                             addressindex_global.increment();
 
                             let addresstypeindex = match addresstype {
-                                Addresstype::Empty => emptyindex_global.clone_then_increment(),
-                                Addresstype::Multisig => multisigindex_global.clone_then_increment(),
-                                Addresstype::OpReturn => opreturnindex_global.clone_then_increment(),
-                                Addresstype::PushOnly => pushonlyindex_global.clone_then_increment(),
-                                Addresstype::Unknown => unknownindex_global.clone_then_increment(),
-                                Addresstype::P2PK65 => p2pk65index_global.clone_then_increment(),
-                                Addresstype::P2PK33 => p2pk33index_global.clone_then_increment(),
-                                Addresstype::P2PKH => p2pkhindex_global.clone_then_increment(),
-                                Addresstype::P2SH => p2shindex_global.clone_then_increment(),
-                                Addresstype::P2WPKH => p2wpkhindex_global.clone_then_increment(),
-                                Addresstype::P2WSH => p2wshindex_global.clone_then_increment(),
-                                Addresstype::P2TR => p2trindex_global.clone_then_increment(),
+                                Addresstype::Empty => emptyindex_global.copy_then_increment(),
+                                Addresstype::Multisig => multisigindex_global.copy_then_increment(),
+                                Addresstype::OpReturn => opreturnindex_global.copy_then_increment(),
+                                Addresstype::PushOnly => pushonlyindex_global.copy_then_increment(),
+                                Addresstype::Unknown => unknownindex_global.copy_then_increment(),
+                                Addresstype::P2PK65 => p2pk65index_global.copy_then_increment(),
+                                Addresstype::P2PK33 => p2pk33index_global.copy_then_increment(),
+                                Addresstype::P2PKH => p2pkhindex_global.copy_then_increment(),
+                                Addresstype::P2SH => p2shindex_global.copy_then_increment(),
+                                Addresstype::P2WPKH => p2wpkhindex_global.copy_then_increment(),
+                                Addresstype::P2WSH => p2wshindex_global.copy_then_increment(),
+                                Addresstype::P2TR => p2trindex_global.copy_then_increment(),
                             };
 
                             vecs.addressindex_to_addresstype
@@ -673,13 +667,4 @@ impl Indexer<CACHED_GETS> {
 enum InputSource<'a> {
     PreviousBlock((Vin, Txindex, Txoutindex)),
     SameBlock((&'a Transaction, Txindex, &'a TxIn, Vin)),
-}
-
-#[allow(unused)]
-fn pause() {
-    let mut stdin = std::io::stdin();
-    let mut stdout = std::io::stdout();
-    write!(stdout, "Press any key to continue...").unwrap();
-    stdout.flush().unwrap();
-    let _ = stdin.read(&mut [0u8]).unwrap();
 }

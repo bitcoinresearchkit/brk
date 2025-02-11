@@ -32,7 +32,7 @@ use blk_metadata::*;
 use blk_metadata_and_block::*;
 use utils::*;
 
-pub const NUMBER_OF_UNSAFE_BLOCKS: usize = 100;
+pub const NUMBER_OF_UNSAFE_BLOCKS: usize = 1000;
 const MAGIC_BYTES: [u8; 4] = [249, 190, 180, 217];
 const BOUND_CAP: usize = 210;
 
@@ -171,10 +171,7 @@ pub fn new(
                     _ => unreachable!(),
                 };
 
-                if send_block
-                    .send(BlkMetadataAndBlock::new(blk_metadata, block))
-                    .is_err()
-                {
+                if send_block.send(BlkMetadataAndBlock::new(blk_metadata, block)).is_err() {
                     return ControlFlow::Break(());
                 }
 
@@ -242,16 +239,13 @@ pub fn new(
         let mut recent_chain: VecDeque<(BlockHash, BlkMetadataAndBlock)> = VecDeque::default();
         let mut recent_hashes: BTreeSet<BlockHash> = BTreeSet::default();
 
-        let mut prev_hash =
-            start_recap.map_or_else(BlockHash::all_zeros, |(_, recap)| *recap.prev_hash());
+        let mut prev_hash = start_recap.map_or_else(BlockHash::all_zeros, |(_, recap)| *recap.prev_hash());
 
         let mut prepare_and_send = |(hash, tuple): (BlockHash, BlkMetadataAndBlock)| {
             blk_index_to_blk_recap.update(&tuple, height);
 
             if start.map_or(true, |start| start <= height) {
-                send_height_block_hash
-                    .send((height, tuple.block, hash))
-                    .unwrap();
+                send_height_block_hash.send((height, tuple.block, hash)).unwrap();
             }
 
             if end == Some(height) {
@@ -294,8 +288,7 @@ pub fn new(
         let flow = recv_block.iter().try_for_each(|tuple| {
             // block isn't next after current tip
             if prev_hash != tuple.block.header.prev_blockhash {
-                let is_block_active =
-                    |hash| rpc.get_block_header_info(hash).unwrap().confirmations > 0;
+                let is_block_active = |hash| rpc.get_block_header_info(hash).unwrap().confirmations > 0;
 
                 // block prev has already been processed
                 if recent_hashes.contains(&tuple.block.header.prev_blockhash) {
@@ -322,9 +315,7 @@ pub fn new(
                         );
                     }
                 // Check if there was already a future block with the same prev hash
-                } else if let Some(prev_tuple) =
-                    future_blocks.insert(tuple.block.header.prev_blockhash, tuple)
-                {
+                } else if let Some(prev_tuple) = future_blocks.insert(tuple.block.header.prev_blockhash, tuple) {
                     // If the previous was the active one
                     if is_block_active(&prev_tuple.block.block_hash()) {
                         // Rollback the insert
