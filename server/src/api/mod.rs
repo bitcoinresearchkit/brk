@@ -10,6 +10,7 @@ use axum::{
 use color_eyre::eyre::eyre;
 use reqwest::StatusCode;
 use serde::Deserialize;
+use serde_json::Value;
 use structs::{Format, Index};
 
 use crate::{log_result, traits::HeaderMapExtended};
@@ -84,23 +85,82 @@ fn req_to_response_res(
         return Err(eyre!("Unknown index"));
     }
 
-    let values = v
+    let ids = v
         .to_lowercase()
         .split(",")
-        .flat_map(|s| vecs.get(&s.replace("_", "-")))
-        .flat_map(|i_to_v| i_to_v.get(indexes.first().unwrap()))
-        .map(|vec| vec.collect_range(from, to).unwrap())
+        .map(|s| (s.to_owned(), vecs.get(&s.replace("_", "-"))))
+        .filter(|(_, opt)| opt.is_some())
+        .map(|(id, vec)| (id, vec.unwrap()))
         .collect::<Vec<_>>();
 
-    if values.len() == 1 {
-        let values = values.first().unwrap();
-        if values.len() == 1 {
-            let value = values.first().unwrap();
-            Ok(Json(value).into_response())
-        } else {
-            Ok(Json(values).into_response())
-        }
-    } else {
-        Ok(Json(values).into_response())
+    if ids.is_empty() {
+        return Ok(Json(()).into_response());
     }
+
+    let values = ids
+        .iter()
+        .flat_map(|(_, i_to_v)| i_to_v.get(indexes.first().unwrap()))
+        .map(|vec| -> storable_vec::Result<Vec<Value>> { vec.collect_range(from, to) })
+        .collect::<storable_vec::Result<Vec<_>>>()?;
+
+    if ids.is_empty() {
+        return Ok(Json(()).into_response());
+    }
+
+    let ids_last_i = ids.len() - 1;
+
+    let mut response = match format {
+        Some(Format::CSV) => {
+            let mut csv = ids.into_iter().map(|(id, _)| id).collect::<Vec<_>>().join(",");
+            csv.push('\n');
+
+            let values_len = values.first().unwrap().len();
+
+            (0..values_len).for_each(|i| {
+                let mut line = "".to_string();
+                values.iter().enumerate().for_each(|(id_i, v)| {
+                    line += &v.get(i).unwrap().to_string();
+                    if id_i == ids_last_i {
+                        line.push('\n');
+                    } else {
+                        line.push(',');
+                    }
+                });
+                csv += &line;
+            });
+
+            csv.into_response()
+        }
+        _ => {
+            if values.len() == 1 {
+                let values = values.first().unwrap();
+                if values.len() == 1 {
+                    let value = values.first().unwrap();
+                    Json(value).into_response()
+                } else {
+                    Json(values).into_response()
+                }
+            } else {
+                Json(values).into_response()
+            }
+        }
+    };
+
+    let headers = response.headers_mut();
+
+    headers.insert_cors();
+    // headers.insert_last_modified(date_modified);
+
+    match format {
+        Some(format) => {
+            headers.insert_content_disposition_attachment();
+            match format {
+                Format::CSV => headers.insert_content_type_text_csv(),
+                Format::JSON => headers.insert_content_type_application_json(),
+            }
+        }
+        _ => headers.insert_content_type_application_json(),
+    };
+
+    Ok(response)
 }
