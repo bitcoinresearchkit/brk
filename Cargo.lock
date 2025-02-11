@@ -267,7 +267,6 @@ dependencies = [
  "serde",
  "serde_json",
  "storable_vec",
- "struct_iterable",
  "tokio",
  "tower-http",
  "zstd",
@@ -751,7 +750,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "33d852cb9b869c2a9b3df2f71a3074817f01e1844f839a144f5fcef059a4eb5d"
 dependencies = [
  "libc",
- "windows-sys 0.52.0",
+ "windows-sys 0.59.0",
 ]
 
 [[package]]
@@ -786,9 +785,9 @@ checksum = "1d674e81391d1e1ab681a28d99df07927c6d4aa5b027d7da16ba32d1d21ecd99"
 
 [[package]]
 name = "fjall"
-version = "2.6.2"
+version = "2.6.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0ddab3925ea1ed59863d246305c7bc113dc2e12b691405d2d02e429cfa0c87a5"
+checksum = "c240d783ba894f1ce20a7337c4eabb7814920b4bfd1ae74da1b17af3c7dfc19a"
 dependencies = [
  "byteorder",
  "byteview",
@@ -808,7 +807,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c936bfdafb507ebbf50b8074c54fa31c5be9a1e7e5f467dd659697041407d07c"
 dependencies = [
  "crc32fast",
- "miniz_oxide 0.8.3",
+ "miniz_oxide 0.8.4",
 ]
 
 [[package]]
@@ -1302,7 +1301,7 @@ dependencies = [
  "portable-atomic",
  "portable-atomic-util",
  "serde",
- "windows-sys 0.52.0",
+ "windows-sys 0.59.0",
 ]
 
 [[package]]
@@ -1403,9 +1402,9 @@ dependencies = [
 
 [[package]]
 name = "lsm-tree"
-version = "2.6.2"
+version = "2.6.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2880324e429cd3285e56d0382c025b3d9336d672bbf344e3fde9783a5623f0f6"
+checksum = "43b7d9dc8488e02ab7be88626cdbd3a6ee4690d7ffa6a2ad460da9e52105e393"
 dependencies = [
  "byteorder",
  "crossbeam-skiplist",
@@ -1469,9 +1468,9 @@ dependencies = [
 
 [[package]]
 name = "miniz_oxide"
-version = "0.8.3"
+version = "0.8.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b8402cab7aefae129c6977bb0ff1b8fd9a04eb5b51efc50a70bea51cda0c7924"
+checksum = "b3b1c9bd4fe1f0f8b387f6eb9eb3b4a1aa26185e5750efb9140301703f62cd1b"
 dependencies = [
  "adler2",
 ]
@@ -1906,9 +1905,9 @@ dependencies = [
 
 [[package]]
 name = "oxc_sourcemap"
-version = "1.0.6"
+version = "1.0.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "48557f779d04c8bfa8a930db5a3c35c0a86ff4e6bf1552ce446b9596a6e77c42"
+checksum = "989c3fa8bdd55ced0ad4a0b2d587dfd11613364c9db417889bdb09c217463766"
 dependencies = [
  "base64-simd",
  "cfg-if",
@@ -2110,6 +2109,10 @@ checksum = "77957b295656769bb8ad2b6a6b09d897d94f05c41b069aede1fcdaa675eaea04"
 dependencies = [
  "zerocopy 0.7.35",
 ]
+
+[[package]]
+name = "pricer"
+version = "0.1.0"
 
 [[package]]
 name = "proc-macro2"
@@ -2334,14 +2337,14 @@ dependencies = [
  "errno",
  "libc",
  "linux-raw-sys",
- "windows-sys 0.52.0",
+ "windows-sys 0.59.0",
 ]
 
 [[package]]
 name = "rustls"
-version = "0.23.22"
+version = "0.23.23"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9fb9263ab4eb695e42321db096e3b8fbd715a59b154d5c88d82db2175b681ba7"
+checksum = "47796c98c480fce5406ef69d1c76378375492c3b0a0de587be0c1d9feb12f395"
 dependencies = [
  "once_cell",
  "rustls-pki-types",
@@ -2634,26 +2637,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d08889ec5408683408db66ad89e0e1f93dff55c73a4ccc71c427d5b277ee47e6"
 
 [[package]]
-name = "struct_iterable"
-version = "0.1.2"
-dependencies = [
- "struct_iterable_derive",
- "struct_iterable_internal",
-]
-
-[[package]]
-name = "struct_iterable_derive"
-version = "0.1.0"
-dependencies = [
- "quote",
- "syn 2.0.98",
-]
-
-[[package]]
-name = "struct_iterable_internal"
-version = "0.1.1"
-
-[[package]]
 name = "subtle"
 version = "2.6.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2733,7 +2716,7 @@ dependencies = [
  "getrandom 0.3.1",
  "once_cell",
  "rustix",
- "windows-sys 0.52.0",
+ "windows-sys 0.59.0",
 ]
 
 [[package]]
@@ -3017,9 +3000,9 @@ checksum = "ba73ea9cf16a25df0c8caa16c51acb937d5712a8429db78a3ee29d5dcacd3a65"
 
 [[package]]
 name = "value-log"
-version = "1.5.2"
+version = "1.5.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5589fb4f51f528b0cca7fdd03ec63a67f447bdcd313b09cdf9d2fc519149c02a"
+checksum = "cdbb3c254a6def3cbc8afcb523b88c4a3b424297db8207aa66cde5fa84edddf6"
 dependencies = [
  "byteorder",
  "byteview",

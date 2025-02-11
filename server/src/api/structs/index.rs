@@ -1,6 +1,6 @@
 use std::fmt::{self, Debug};
 
-use computer::Date;
+use computer::Dateindex;
 use indexer::{
     Addressindex, Height, P2PK33index, P2PK65index, P2PKHindex, P2SHindex, P2TRindex, P2WPKHindex, P2WSHindex, Txindex,
     Txinindex, Txoutindex,
@@ -9,7 +9,7 @@ use indexer::{
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub enum Index {
     Addressindex,
-    Date,
+    DateIndex,
     Height,
     P2PK33index,
     P2PK65index,
@@ -27,19 +27,19 @@ impl TryFrom<&str> for Index {
     type Error = ();
     fn try_from(value: &str) -> Result<Self, Self::Error> {
         Ok(match value {
-            "addri" | "addressindex" => Self::Addressindex,
             "d" | "date" => Self::Date,
             "h" | "height" => Self::Height,
-            "p2pk33index" => Self::P2PK33index,
-            "p2pk65index" => Self::P2PK65index,
-            "p2pkhindex" => Self::P2PKHindex,
-            "p2shindex" => Self::P2SHindex,
-            "p2trindex" => Self::P2TRindex,
-            "p2wpkhindex" => Self::P2WPKHindex,
-            "p2wshindex" => Self::P2WSHindex,
             "txi" | "txindex" => Self::Txindex,
             "txini" | "txinindex" => Self::Txinindex,
             "txouti" | "txoutindex" => Self::Txoutindex,
+            "addri" | "addressindex" => Self::Addressindex,
+            "p2pk33i" | "p2pk33index" => Self::P2PK33index,
+            "p2pk65i" | "p2pk65index" => Self::P2PK65index,
+            "p2pkhi" | "p2pkhindex" => Self::P2PKHindex,
+            "p2shi" | "p2shindex" => Self::P2SHindex,
+            "p2tri" | "p2trindex" => Self::P2TRindex,
+            "p2wpkhi" | "p2wpkhindex" => Self::P2WPKHindex,
+            "p2wshi" | "p2wshindex" => Self::P2WSHindex,
             _ => return Err(()),
         })
     }
@@ -60,9 +60,9 @@ impl IndexTypeToIndexEnum for Addressindex {
         Index::Addressindex
     }
 }
-impl IndexTypeToIndexEnum for Date {
+impl IndexTypeToIndexEnum for Dateindex {
     fn to_enum() -> Index {
-        Index::Date
+        Index::DateIndex
     }
 }
 impl IndexTypeToIndexEnum for Height {
