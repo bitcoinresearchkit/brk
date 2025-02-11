@@ -12,7 +12,6 @@ pub trait WebsiteRoutes {
 
 impl WebsiteRoutes for Router<AppState> {
     fn add_website_routes(self) -> Self {
-        self.route("/*path", get(file_handler))
-            .route("/", get(index_handler))
+        self.route("/{*path}", get(file_handler)).route("/", get(index_handler))
     }
 }

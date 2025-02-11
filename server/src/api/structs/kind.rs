@@ -9,8 +9,8 @@ use crate::structs::{AnyMap, Date, Height, MapKey};
 pub enum Kind {
     Date,
     Height,
-    Timestamp,
-    Last,
+    // Timestamp,
+    // Last,
 }
 
 impl TryFrom<&String> for Kind {
@@ -26,8 +26,8 @@ impl TryFrom<&String> for Kind {
             {
                 'd' => Self::Date,
                 'h' => Self::Height,
-                't' => Self::Timestamp,
-                'l' => Self::Last,
+                // 't' => Self::Timestamp,
+                // 'l' => Self::Last,
                 _ => return Err(eyre!("Bad kind")),
             },
         )
