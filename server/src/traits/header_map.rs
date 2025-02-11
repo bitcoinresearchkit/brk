@@ -1,15 +1,15 @@
-use std::path::Path;
+use std::{path::Path, time};
 
 use axum::http::{header, HeaderMap};
-use chrono::{DateTime, Timelike, Utc};
-use log::info;
+use jiff::{civil::DateTime, fmt::strtime, tz::TimeZone, Timestamp};
+use logger::info;
 use reqwest::header::{HOST, IF_MODIFIED_SINCE};
 
 const STALE_IF_ERROR: u64 = 30_000_000; // 1 Year ish
 const MODIFIED_SINCE_FORMAT: &str = "%a, %d %b %Y %H:%M:%S GMT";
 
 #[derive(PartialEq, Eq)]
-pub enum Modified {
+pub enum ModifiedState {
     ModifiedSince,
     NotModifiedSince,
 }
@@ -23,14 +23,13 @@ pub trait HeaderMapExtended {
 
     fn insert_cors(&mut self);
 
-    fn get_if_modified_since(&self) -> Option<DateTime<Utc>>;
-    fn check_if_modified_since(&self, path: &Path)
-        -> color_eyre::Result<(Modified, DateTime<Utc>)>;
+    fn get_if_modified_since(&self) -> Option<DateTime>;
+    fn check_if_modified_since(&self, path: &Path) -> color_eyre::Result<(ModifiedState, DateTime)>;
 
     fn insert_cache_control_immutable(&mut self);
     #[allow(unused)]
     fn insert_cache_control_revalidate(&mut self, max_age: u64, stale_while_revalidate: u64);
-    fn insert_last_modified(&mut self, date: DateTime<Utc>);
+    fn insert_last_modified(&mut self, date: DateTime);
 
     fn insert_content_disposition_attachment(&mut self);
 
@@ -102,40 +101,39 @@ impl HeaderMapExtended for HeaderMap {
     );
     }
 
-    fn insert_last_modified(&mut self, date: DateTime<Utc>) {
-        let formatted = date.format(MODIFIED_SINCE_FORMAT).to_string();
+    fn insert_last_modified(&mut self, date: DateTime) {
+        let formatted = date
+            .to_zoned(TimeZone::system())
+            .unwrap()
+            .strftime(MODIFIED_SINCE_FORMAT)
+            .to_string();
 
         self.insert(header::LAST_MODIFIED, formatted.parse().unwrap());
     }
 
-    fn check_if_modified_since(
-        &self,
-        path: &Path,
-    ) -> color_eyre::Result<(Modified, DateTime<Utc>)> {
-        let time = path.metadata()?.modified()?;
-        let date: DateTime<Utc> = time.into();
-        let date = date.with_nanosecond(0).unwrap();
+    fn check_if_modified_since(&self, path: &Path) -> color_eyre::Result<(ModifiedState, DateTime)> {
+        let duration = path.metadata()?.modified()?.duration_since(time::UNIX_EPOCH).unwrap();
+        let date = Timestamp::new(duration.as_secs() as i64, 0)
+            .unwrap()
+            .to_zoned(TimeZone::UTC)
+            .datetime();
 
         if let Some(if_modified_since) = self.get_if_modified_since() {
             if if_modified_since == date {
-                return Ok((Modified::NotModifiedSince, date));
+                return Ok((ModifiedState::NotModifiedSince, date));
             }
         }
 
-        Ok((Modified::ModifiedSince, date))
+        Ok((ModifiedState::ModifiedSince, date))
     }
 
-    fn get_if_modified_since(&self) -> Option<DateTime<Utc>> {
+    fn get_if_modified_since(&self) -> Option<DateTime> {
         if let Some(modified_since) = self.get(IF_MODIFIED_SINCE) {
             if let Ok(modified_since) = modified_since.to_str() {
-                let date = DateTime::parse_from_str(
-                    &format!("{modified_since} +00:00"),
-                    &format!("{MODIFIED_SINCE_FORMAT} %z"),
-                );
-
-                if let Ok(x) = date {
-                    return Some(x.to_utc());
-                }
+                return strtime::parse(MODIFIED_SINCE_FORMAT, modified_since)
+                    .unwrap()
+                    .to_datetime()
+                    .ok();
             }
         }
 
@@ -176,10 +174,7 @@ impl HeaderMapExtended for HeaderMap {
     }
 
     fn insert_content_type_application_javascript(&mut self) {
-        self.insert(
-            header::CONTENT_TYPE,
-            "application/javascript".parse().unwrap(),
-        );
+        self.insert(header::CONTENT_TYPE, "application/javascript".parse().unwrap());
     }
 
     fn insert_content_type_application_json(&mut self) {
@@ -187,10 +182,7 @@ impl HeaderMapExtended for HeaderMap {
     }
 
     fn insert_content_type_application_manifest_json(&mut self) {
-        self.insert(
-            header::CONTENT_TYPE,
-            "application/manifest+json".parse().unwrap(),
-        );
+        self.insert(header::CONTENT_TYPE, "application/manifest+json".parse().unwrap());
     }
 
     fn insert_content_type_application_pdf(&mut self) {

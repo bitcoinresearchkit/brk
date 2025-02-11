@@ -1,22 +1,43 @@
-// Simplified version of: https://github.com/swc-project/swc/blob/main/crates/swc/examples/minify.rs
+// Source: https://github.com/oxc-project/oxc/blob/main/crates/oxc_minifier/examples/minifier.rs
 
-use std::{path::Path, sync::Arc};
+use std::{fs, path::Path};
 
-use swc::{config::JsMinifyOptions, try_with_handler, JsMinifyExtras};
-use swc_common::{SourceMap, GLOBALS};
+use oxc::{
+    allocator::Allocator,
+    codegen::{CodeGenerator, CodegenOptions, LegalComment},
+    minifier::{CompressOptions, MangleOptions, Minifier, MinifierOptions},
+    parser::Parser,
+    span::SourceType,
+};
 
+//
 pub fn minify_js(path: &Path) -> String {
-    let source_map = Arc::<SourceMap>::default();
-    let compiler = swc::Compiler::new(source_map.clone());
+    let allocator = Allocator::default();
 
-    GLOBALS
-        .set(&Default::default(), || {
-            try_with_handler(source_map.clone(), Default::default(), |handler| {
-                let fm = source_map.load_file(path).expect("failed to load file");
+    let source_type = SourceType::from_path(path).unwrap();
 
-                compiler.minify(fm, handler, &JsMinifyOptions::default(), JsMinifyExtras::default())
-            })
+    let source_text = fs::read_to_string(path).unwrap();
+
+    let parser_return = Parser::new(&allocator, &source_text, source_type).parse();
+
+    let mut program = parser_return.program;
+
+    let minifier_return = Minifier::new(MinifierOptions {
+        mangle: Some(MangleOptions::default()),
+        compress: Some(CompressOptions::default()),
+    })
+    .build(&allocator, &mut program);
+
+    CodeGenerator::new()
+        .with_options(CodegenOptions {
+            minify: true,
+            single_quote: false,
+            comments: false,
+            annotation_comments: false,
+            source_map_path: None,
+            legal_comments: LegalComment::None,
         })
-        .unwrap()
+        .with_symbol_table(minifier_return.symbol_table)
+        .build(&program)
         .code
 }
