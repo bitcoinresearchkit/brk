@@ -8,6 +8,8 @@ use std::{
     time::Duration,
 };
 
+use logger::info;
+
 #[derive(Default, Clone)]
 pub struct Exit {
     blocked: Arc<AtomicBool>,
@@ -27,12 +29,12 @@ impl Exit {
         let blocked = move || _blocked.load(Ordering::SeqCst);
 
         ctrlc::set_handler(move || {
-            println!("Exitting...");
+            info!("Exitting...");
 
             active.store(true, Ordering::SeqCst);
 
             if blocked() {
-                println!("Waiting to exit safely");
+                info!("Waiting to exit safely");
 
                 while blocked() {
                     sleep(Duration::from_millis(50));

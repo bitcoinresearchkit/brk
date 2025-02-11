@@ -2,48 +2,35 @@ use std::path::{Path, PathBuf};
 
 use exit::Exit;
 use indexer::Indexer;
-use iterator::rpc;
+pub use iterator::rpc;
 
 mod storage;
 mod structs;
 
-use storable_vec::{CACHED_GETS, SINGLE_THREAD};
+use storable_vec::SINGLE_THREAD;
 use storage::{Fjalls, StorableVecs};
-use structs::*;
+pub use structs::*;
 
 pub struct Computer<const MODE: u8> {
-    outputs_dir: PathBuf,
+    path: PathBuf,
     pub vecs: StorableVecs<MODE>,
     pub trees: Fjalls,
 }
 
 impl<const MODE: u8> Computer<MODE> {
-    pub fn import(outputs_dir: &Path) -> color_eyre::Result<Self> {
-        let outputs_dir = outputs_dir.to_owned();
-        let computed_dir = outputs_dir.join("computed");
+    pub fn import(computed_dir: &Path) -> color_eyre::Result<Self> {
         let vecs = StorableVecs::import(&computed_dir.join("vecs"))?;
         let trees = Fjalls::import(&computed_dir.join("fjall"))?;
         Ok(Self {
-            outputs_dir,
+            path: computed_dir.to_owned(),
             vecs,
             trees,
         })
     }
-
-    fn open_indexer<const MODE_IDX: u8>(&self) -> color_eyre::Result<Indexer<MODE_IDX>> {
-        Indexer::import(&self.outputs_dir.join("indexes"))
-    }
 }
 
 impl Computer<SINGLE_THREAD> {
-    pub fn compute(&mut self, bitcoin_dir: &Path, rpc: rpc::Client, exit: &Exit) -> color_eyre::Result<()> {
-        if false {
-            let mut indexer: Indexer<CACHED_GETS> = self.open_indexer()?;
-            indexer.index(bitcoin_dir, rpc, exit)?;
-        }
-
-        let mut indexer: Indexer<SINGLE_THREAD> = self.open_indexer()?;
-
+    pub fn compute(&mut self, mut indexer: Indexer<SINGLE_THREAD>, exit: &Exit) -> color_eyre::Result<()> {
         let height_count = indexer.vecs.height_to_size.len();
         let txindexes_count = indexer.vecs.txindex_to_txid.len();
         let txinindexes_count = indexer.vecs.txinindex_to_txoutindex.len();
@@ -116,5 +103,9 @@ impl Computer<SINGLE_THREAD> {
         // ...
 
         Ok(())
+    }
+
+    pub fn path(&self) -> &Path {
+        &self.path
     }
 }

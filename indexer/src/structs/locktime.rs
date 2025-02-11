@@ -1,8 +1,9 @@
+use serde::Serialize;
 use zerocopy::{Immutable, IntoBytes, KnownLayout, TryFromBytes};
 
 use super::{Height, Timestamp};
 
-#[derive(Debug, Immutable, Clone, Copy, IntoBytes, KnownLayout, TryFromBytes)]
+#[derive(Debug, Immutable, Clone, Copy, IntoBytes, KnownLayout, TryFromBytes, Serialize)]
 #[repr(C)]
 pub enum LockTime {
     Height(Height),

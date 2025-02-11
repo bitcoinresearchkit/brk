@@ -11,7 +11,11 @@ exit = { workspace = true }
 fjall = { workspace = true }
 iterator = { workspace = true }
 jiff = { workspace = true }
+logger = { workspace = true }
 rapidhash = "1.3.0"
 rayon = { workspace = true }
+rlimit = { workspace = true }
+serde = { workspace = true }
+serde_bytes = "0.11.15"
 storable_vec = { workspace = true }
 zerocopy = { workspace = true }

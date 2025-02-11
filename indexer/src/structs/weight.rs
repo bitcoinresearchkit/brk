@@ -1,7 +1,8 @@
 use derive_deref::Deref;
+use serde::Serialize;
 use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
-#[derive(Debug, Deref, Clone, Copy, Immutable, IntoBytes, KnownLayout, FromBytes)]
+#[derive(Debug, Deref, Clone, Copy, Immutable, IntoBytes, KnownLayout, FromBytes, Serialize)]
 pub struct Weight(u64);
 
 impl From<bitcoin::Weight> for Weight {

@@ -1,6 +1,7 @@
 use std::ops::{Add, AddAssign, Sub};
 
 use derive_deref::{Deref, DerefMut};
+use serde::Serialize;
 use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 use super::Vout;
@@ -20,6 +21,7 @@ use super::Vout;
     Immutable,
     IntoBytes,
     KnownLayout,
+    Serialize,
 )]
 pub struct Txoutindex(u64);
 

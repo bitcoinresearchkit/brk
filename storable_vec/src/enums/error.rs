@@ -21,6 +21,7 @@ pub enum Error {
     ExpectVecToHaveIndex,
     FailedKeyTryIntoUsize,
     UnsupportedUnflushedState,
+    RangeFromAfterTo,
 }
 
 impl From<io::Error> for Error {
@@ -60,6 +61,7 @@ impl fmt::Display for Error {
                 write!(f, "Unsupported unflush state, please flush before using this function")
             }
             Error::ZeroCopyError => write!(f, "Zero copy convert error"),
+            Error::RangeFromAfterTo => write!(f, "Range, from is after to"),
         }
     }
 }

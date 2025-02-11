@@ -7,6 +7,7 @@ use std::{
 use derive_deref::{Deref, DerefMut};
 use fjall::Slice;
 use iterator::rpc::{self, RpcApi};
+use serde::Serialize;
 use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 #[derive(
@@ -24,6 +25,7 @@ use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
     Immutable,
     IntoBytes,
     KnownLayout,
+    Serialize,
 )]
 pub struct Height(u32);
 

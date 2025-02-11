@@ -1,7 +1,10 @@
 use iterator::bitcoin::ScriptBuf;
+use serde::Serialize;
 use zerocopy::{Immutable, IntoBytes, KnownLayout, TryFromBytes};
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, TryFromBytes, Immutable, IntoBytes, KnownLayout)]
+#[derive(
+    Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, TryFromBytes, Immutable, IntoBytes, KnownLayout, Serialize,
+)]
 #[repr(u8)]
 pub enum Addresstype {
     P2PK65,
