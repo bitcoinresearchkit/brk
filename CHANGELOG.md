@@ -3,18 +3,19 @@
 ![Image of the kibō Web App version 0.X.Y](https://github.com/kibo-money/kibo/blob/main/_assets/v0.X.Y.jpg)
 -->
 
-# v0.6.0 | WIP
+# v0.6.0 | WIP | A new beginning
 
 ## Global
+
+- Completely redesign the back-end
 
 - Merged parser and server crates into a single project (and thus executable), so now both will run at the same time with a single `cargo run -r` [#7392982](https://github.com/kibo-money/kibo/commit/7392982824c2db94bcd57251fd41986117c29a23)
 - Added `--no-server` and `--no-parser` to disable each if needed
 - Improved executable parameters
 - Started using `log` and `env_logger` crates instead of custom code [#7392982](https://github.com/kibo-money/kibo/commit/7392982824c2db94bcd57251fd41986117c29a23)
 - Improved logs
-- Automated databases defragmention (and removed parameter) to improve disk usage and parse speed [#7392982](https://github.com/kibo-money/kibo/commit/7392982824c2db94bcd57251fd41986117c29a23)
 - Fixed input being unfocused right after being focused in Brave browser [#9a9ae61](https://github.com/kibo-money/kibo/commit/9a9ae614d07b54c08b7e9c0e2aefe3b52fdb93c5)
-- Moved Sanakirja database wrapper to its own crate: `snkrj` [0f936dc](https://github.com/kibo-money/kibo/commit/0f936dcdfbecac0a228f023bd500d6e98f56446a)
+
 - Reworked server's API code [#6ab0f46]( https://github.com/kibo-money/kibo/commit/6ab0f463119a902a1b7ca9691b54f61543bb8f2f)
   - New route format: `/api/date-to-realized-price` is now `/api/realized-price?kind=date`
   - Added status and timing to logs
@@ -25,11 +26,15 @@
 - Created separate crate for indexing called `bindex`
 - Created a crate a storage engine specialized in storing datasets that have indexes as keys and thus can be represented by an array/vec called `storable-vec`
 - Removed the need for the `-txindex=1` parameter when starting your Bitcoin Core node as kibō has its own indexes now
-- `snkrj` added a robust auto defragmentation to improve disk usage without the need for user's intervention
 
 ## Git
 
 Added git tags for each version though Markdown won't display formatted on Github so left the default text
+
+## Deprecated
+
+Moved Sanakirja database wrapper to its own crate (`snkrj`) and added a robust auto defragmentation to improve disk usage without the need for user's intervention.
+Since it's not used anymore it will moved out of the repository relatively soon.
 
 # [v0.5.0](https://github.com/kibo-money/kibo/tree/eea56d394bf92c62c81da8b78b8c47ea730683f5) | [873199](https://mempool.space/block/0000000000000000000270925aa6a565be92e13164565a3f7994ca1966e48050) - 2024/12/04
 
