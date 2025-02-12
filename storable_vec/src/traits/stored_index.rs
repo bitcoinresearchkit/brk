@@ -1,6 +1,6 @@
 use std::{fmt::Debug, ops::Add};
 
-pub trait StorableVecIndex
+pub trait StoredIndex
 where
     Self: Debug
         + Default
@@ -12,10 +12,12 @@ where
         + Ord
         + TryInto<usize>
         + From<usize>
-        + Add<usize, Output = Self>,
+        + Add<usize, Output = Self>
+        + Send
+        + Sync,
 {
 }
-impl<I> StorableVecIndex for I where
+impl<I> StoredIndex for I where
     I: Debug
         + Default
         + Copy
@@ -27,5 +29,7 @@ impl<I> StorableVecIndex for I where
         + TryInto<usize>
         + From<usize>
         + Add<usize, Output = Self>
+        + Send
+        + Sync
 {
 }

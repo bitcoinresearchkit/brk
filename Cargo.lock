@@ -2627,6 +2627,8 @@ name = "storable_vec"
 version = "0.1.2"
 dependencies = [
  "memmap2",
+ "serde",
+ "serde_json",
  "zerocopy 0.8.17",
 ]
 

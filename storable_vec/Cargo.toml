@@ -7,6 +7,11 @@ keywords = ["vec", "disk", "data"]
 categories = ["database"]
 edition = "2021"
 
+[features]
+json = ["dep:serde", "dep:serde_json"]
+
 [dependencies]
 memmap2 = "0.9.5"
 zerocopy = { workspace = true }
+serde = { workspace = true, optional = true }
+serde_json = { workspace = true, optional = true }

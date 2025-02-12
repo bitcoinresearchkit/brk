@@ -56,7 +56,6 @@ pub struct StorableVec<I, T, const MODE: u8> {
     file: File,
     /// **Number of values NOT number of bytes**
     file_len: usize,
-    /// Only for SINGLE_THREAD
     file_position: u64,
     buf: Buffer,
     /// Only for CACHED_GETS
@@ -78,8 +77,8 @@ const MAX_CACHE_SIZE: usize = usize::MAX;
 
 impl<I, T, const MODE: u8> StorableVec<I, T, MODE>
 where
-    I: StorableVecIndex,
-    T: StorableVecType,
+    I: StoredIndex,
+    T: StoredType,
 {
     pub const SIZE_OF_T: usize = size_of::<T>();
     pub const PER_PAGE: usize = MAX_PAGE_SIZE / Self::SIZE_OF_T;
@@ -102,20 +101,23 @@ where
     pub fn import(path: &Path, version: Version) -> Result<Self> {
         fs::create_dir_all(path)?;
 
-        let path_version = Self::path_version_(path);
+        if MODE != STATELESS {
+            let path_version = Self::path_version_(path);
 
-        if let Ok(prev_version) = Version::try_from(path_version.as_path()) {
-            if prev_version != version {
-                if prev_version.swap_bytes() == version {
-                    return Err(Error::WrongEndian);
+            if let Ok(prev_version) = Version::try_from(path_version.as_path()) {
+                if prev_version != version {
+                    if prev_version.swap_bytes() == version {
+                        return Err(Error::WrongEndian);
+                    }
+                    return Err(Error::DifferentVersion {
+                        found: prev_version,
+                        expected: version,
+                    });
                 }
-                return Err(Error::DifferentVersion {
-                    found: prev_version,
-                    expected: version,
-                });
             }
+
+            version.write(&path_version)?;
         }
-        version.write(&path_version)?;
 
         let file = Self::open_file_(&Self::path_vec_(path))?;
 
@@ -336,12 +338,16 @@ where
     fn path_version_(path: &Path) -> PathBuf {
         path.join("version")
     }
+
+    pub fn index_type_to_string(&self) -> &str {
+        std::any::type_name::<I>()
+    }
 }
 
 impl<I, T> StorableVec<I, T, CACHED_GETS>
 where
-    I: StorableVecIndex,
-    T: StorableVecType,
+    I: StoredIndex,
+    T: StoredType,
 {
     #[inline]
     pub fn get(&self, index: I) -> Result<Option<Value<'_, T>>> {
@@ -420,8 +426,8 @@ where
 const FLUSH_EVERY: usize = 10_000;
 impl<I, T> StorableVec<I, T, SINGLE_THREAD>
 where
-    I: StorableVecIndex,
-    T: StorableVecType,
+    I: StoredIndex,
+    T: StoredType,
 {
     pub fn get(&mut self, index: I) -> Result<&T> {
         self.get_(Self::i_to_usize(index)?)
@@ -499,7 +505,7 @@ where
 
     pub fn compute_transform<A, F>(&mut self, other: &mut StorableVec<I, A, SINGLE_THREAD>, t: F) -> Result<()>
     where
-        A: StorableVecType,
+        A: StoredType,
         F: Fn(&A) -> T,
     {
         other.iter_from(I::from(self.len()), |(i, a)| self.push_if_needed(i, t(a)))?;
@@ -508,8 +514,8 @@ where
 
     pub fn compute_inverse_more_to_less(&mut self, other: &mut StorableVec<T, I, SINGLE_THREAD>) -> Result<()>
     where
-        I: StorableVecType,
-        T: StorableVecIndex,
+        I: StoredType,
+        T: StoredIndex,
     {
         let index = self.last()?.cloned().unwrap_or_default();
         other.iter_from(index, |(v, i)| self.push_if_needed(*i, v))?;
@@ -522,8 +528,8 @@ where
         last_indexes: &mut StorableVec<T, I, SINGLE_THREAD>,
     ) -> Result<()>
     where
-        I: StorableVecType,
-        T: StorableVecIndex,
+        I: StoredType,
+        T: StoredIndex,
     {
         first_indexes.iter_from(T::from(self.len()), |(value, first_index)| {
             let first_index = Self::i_to_usize(*first_index)?;
@@ -539,7 +545,7 @@ where
         final_len: usize,
     ) -> Result<()>
     where
-        T: Copy + From<usize> + Sub<T, Output = T> + StorableVecIndex,
+        T: Copy + From<usize> + Sub<T, Output = T> + StoredIndex,
     {
         let one = T::from(1);
         let mut prev_index: Option<I> = None;
@@ -563,8 +569,8 @@ where
     ) -> Result<()>
     where
         T: From<T2>,
-        T2: StorableVecType + Copy + Add<usize, Output = T2> + Sub<T2, Output = T2> + TryInto<T>,
-        <T2 as TryInto<T>>::Error: error::Error + Send + Sync + 'static,
+        T2: StoredType + Copy + Add<usize, Output = T2> + Sub<T2, Output = T2> + TryInto<T>,
+        <T2 as TryInto<T>>::Error: error::Error + 'static,
     {
         first_indexes.iter_from(I::from(self.len()), |(i, first_index)| {
             let last_index = last_indexes.get(i)?;
@@ -580,9 +586,9 @@ where
         other_to_self: &mut StorableVec<A, I, SINGLE_THREAD>,
     ) -> Result<()>
     where
-        I: StorableVecType,
+        I: StoredType,
         T: From<bool>,
-        A: StorableVecIndex + StorableVecType,
+        A: StoredIndex + StoredType,
     {
         self_to_other.iter_from(I::from(self.len()), |(i, other)| {
             self.push_if_needed(i, T::from(other_to_self.get(*other)? == &i))
@@ -597,8 +603,8 @@ where
     ) -> Result<()>
     where
         T: From<T2>,
-        T2: StorableVecType + Copy + Add<usize, Output = T2> + Sub<T2, Output = T2> + TryInto<T>,
-        <T2 as TryInto<T>>::Error: error::Error + Send + Sync + 'static,
+        T2: StoredType + Copy + Add<usize, Output = T2> + Sub<T2, Output = T2> + TryInto<T>,
+        <T2 as TryInto<T>>::Error: error::Error + 'static,
         F: Fn(&T2) -> T,
     {
         first_indexes.iter_from(I::from(self.len()), |(i, first_index)| {
@@ -612,8 +618,8 @@ where
 
 impl<I, T> StorableVec<I, T, STATELESS>
 where
-    I: StorableVecIndex,
-    T: StorableVecType,
+    I: StoredIndex,
+    T: StoredType,
 {
     #[inline]
     pub fn get(&self, index: I) -> Result<Option<T>> {
@@ -664,8 +670,8 @@ where
 
 impl<I, T> Clone for StorableVec<I, T, STATELESS>
 where
-    I: StorableVecIndex,
-    T: StorableVecType,
+    I: StoredIndex,
+    T: StoredType,
 {
     fn clone(&self) -> Self {
         let path = &self.pathbuf;

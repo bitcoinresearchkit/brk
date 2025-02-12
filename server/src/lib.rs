@@ -1,19 +1,15 @@
 use std::{collections::BTreeMap, time::Instant};
 
-use api::{
-    structs::{Index, IndexTypeToIndexEnum},
-    ApiRoutes,
-};
-use axum::{body::Body, response::IntoResponse, routing::get, serve, Router};
+use api::{structs::Index, ApiRoutes};
+use axum::{routing::get, serve, Router};
 use color_eyre::owo_colors::OwoColorize;
 use computer::Computer;
 use derive_deref::{Deref, DerefMut};
 use indexer::Indexer;
 use logger::{error, info};
+use oxc::syntax::identifier::LF;
 use reqwest::StatusCode;
-use serde::Serialize;
-use serde_json::Value;
-use storable_vec::{StorableVecIndex, StorableVecType, STATELESS};
+use storable_vec::{AnyJsonStorableVec, STATELESS};
 use tokio::net::TcpListener;
 use tower_http::compression::CompressionLayer;
 use website::WebsiteRoutes;
@@ -33,17 +29,18 @@ pub struct AppState {
 pub struct VecIdToIndexToVec(BTreeMap<String, IndexToVec>);
 
 impl VecIdToIndexToVec {
-    pub fn insert<I, T>(&mut self, vec: &'static storable_vec::StorableVec<I, T, STATELESS>)
-    where
-        I: StorableVecIndex + IndexTypeToIndexEnum + Send + Sync,
-        T: StorableVecType + Send + Sync + Serialize,
-    {
+    pub fn insert(&mut self, vec: &'static dyn AnyJsonStorableVec) {
         let file_name = vec.file_name();
         let split = file_name.split("_to_").collect::<Vec<_>>();
         if split.len() != 2 {
             panic!();
         }
-        let index = vec.key_to_enum();
+        let str = vec.index_type_to_string().split("::").last().unwrap().to_lowercase();
+        let index = Index::try_from(str.as_str())
+            .inspect_err(|_| {
+                dbg!(str);
+            })
+            .unwrap();
         if split[0] != index.to_string().to_lowercase() {
             dbg!(split[0], index.to_string());
             panic!();
@@ -58,80 +55,7 @@ impl VecIdToIndexToVec {
 
 #[derive(Default, Deref, DerefMut)]
 pub struct IndexToVec {
-    pub index_to_vec: BTreeMap<Index, &'static (dyn AnyStatelessStorableVec + Send + Sync)>,
-}
-
-pub trait AnyStatelessStorableVec {
-    fn key_to_enum(&self) -> Index;
-    fn collect_range(&self, from: Option<i64>, to: Option<i64>) -> storable_vec::Result<Vec<Value>>;
-    // fn collect_range(&self, from: Option<i64>, to: Option<i64>) -> storable_vec::Result<Vec<T>>;
-}
-
-impl<I, T> AnyStatelessStorableVec for storable_vec::StorableVec<I, T, STATELESS>
-where
-    I: StorableVecIndex + IndexTypeToIndexEnum + Send + Sync,
-    T: StorableVecType + Send + Sync + Serialize,
-{
-    fn key_to_enum(&self) -> Index {
-        I::to_enum()
-    }
-
-    fn collect_range(&self, from: Option<i64>, to: Option<i64>) -> storable_vec::Result<Vec<Value>> {
-        Ok(self
-            .collect_range(from, to)?
-            .into_iter()
-            .map(|v| serde_json::to_value(v).unwrap())
-            .collect::<Vec<_>>())
-    }
-}
-
-trait StatelessVecs {
-    fn parse(&'static self, vecs: &mut VecIdToIndexToVec);
-}
-
-impl StatelessVecs for Indexer<STATELESS> {
-    fn parse(&'static self, vecs: &mut VecIdToIndexToVec) {
-        vecs.insert(&self.vecs.addressindex_to_addresstype);
-        vecs.insert(&self.vecs.addressindex_to_addresstypeindex);
-        vecs.insert(&self.vecs.addressindex_to_height);
-        vecs.insert(&self.vecs.height_to_blockhash);
-        vecs.insert(&self.vecs.height_to_difficulty);
-        vecs.insert(&self.vecs.height_to_first_addressindex);
-        vecs.insert(&self.vecs.height_to_first_emptyindex);
-        vecs.insert(&self.vecs.height_to_first_multisigindex);
-        vecs.insert(&self.vecs.height_to_first_opreturnindex);
-        vecs.insert(&self.vecs.height_to_first_pushonlyindex);
-        vecs.insert(&self.vecs.height_to_first_txindex);
-        vecs.insert(&self.vecs.height_to_first_txinindex);
-        vecs.insert(&self.vecs.height_to_first_txoutindex);
-        vecs.insert(&self.vecs.height_to_first_unknownindex);
-        vecs.insert(&self.vecs.height_to_first_p2pk33index);
-        vecs.insert(&self.vecs.height_to_first_p2pk65index);
-        vecs.insert(&self.vecs.height_to_first_p2pkhindex);
-        vecs.insert(&self.vecs.height_to_first_p2shindex);
-        vecs.insert(&self.vecs.height_to_first_p2trindex);
-        vecs.insert(&self.vecs.height_to_first_p2wpkhindex);
-        vecs.insert(&self.vecs.height_to_first_p2wshindex);
-        vecs.insert(&self.vecs.height_to_size);
-        vecs.insert(&self.vecs.height_to_timestamp);
-        vecs.insert(&self.vecs.height_to_weight);
-        vecs.insert(&self.vecs.p2pk33index_to_p2pk33addressbytes);
-        vecs.insert(&self.vecs.p2pk65index_to_p2pk65addressbytes);
-        vecs.insert(&self.vecs.p2pkhindex_to_p2pkhaddressbytes);
-        vecs.insert(&self.vecs.p2shindex_to_p2shaddressbytes);
-        vecs.insert(&self.vecs.p2trindex_to_p2traddressbytes);
-        vecs.insert(&self.vecs.p2wpkhindex_to_p2wpkhaddressbytes);
-        vecs.insert(&self.vecs.p2wshindex_to_p2wshaddressbytes);
-        vecs.insert(&self.vecs.txindex_to_first_txinindex);
-        vecs.insert(&self.vecs.txindex_to_first_txoutindex);
-        vecs.insert(&self.vecs.txindex_to_height);
-        vecs.insert(&self.vecs.txindex_to_locktime);
-        vecs.insert(&self.vecs.txindex_to_txid);
-        vecs.insert(&self.vecs.txindex_to_txversion);
-        vecs.insert(&self.vecs.txinindex_to_txoutindex);
-        vecs.insert(&self.vecs.txoutindex_to_addressindex);
-        vecs.insert(&self.vecs.txoutindex_to_amount);
-    }
+    pub index_to_vec: BTreeMap<Index, &'static dyn AnyJsonStorableVec>,
 }
 
 pub async fn main(indexer: Indexer<STATELESS>, computer: Computer<STATELESS>) -> color_eyre::Result<()> {
@@ -141,7 +65,12 @@ pub async fn main(indexer: Indexer<STATELESS>, computer: Computer<STATELESS>) ->
     let indexer = Box::leak(Box::new(indexer));
     let computer = Box::leak(Box::new(computer));
     let vecs = Box::leak(Box::new(VecIdToIndexToVec::default()));
-    indexer.parse(vecs);
+
+    indexer
+        .vecs
+        .as_any_json_vec_slice()
+        .into_iter()
+        .for_each(|vec| vecs.insert(vec));
 
     let state = AppState {
         vecs,

@@ -2,7 +2,7 @@ use std::{fs, io, path::Path};
 
 use exit::Exit;
 use rayon::prelude::*;
-use storable_vec::{Version, CACHED_GETS};
+use storable_vec::{AnyJsonStorableVec, Version, CACHED_GETS};
 
 use crate::structs::{
     Addressbytes, Addressindex, Addresstype, Addresstypeindex, Amount, BlockHash, Emptyindex, Height, LockTime,
@@ -296,67 +296,67 @@ impl<const MODE: u8> StorableVecs<MODE> {
     }
 
     pub fn flush(&mut self, height: Height) -> io::Result<()> {
-        self.as_mut_slice()
+        self.as_mut_any_vec_slice()
             .into_par_iter()
             .try_for_each(|vec| vec.flush(height))
     }
 
-    pub fn min_height(&self) -> color_eyre::Result<Option<Height>> {
+    pub fn min_height(&mut self) -> color_eyre::Result<Option<Height>> {
         Ok(self
-            .as_slice()
+            .as_mut_any_vec_slice()
             .into_iter()
             .map(|vec| vec.height().unwrap_or_default())
             .min())
     }
 
-    pub fn as_slice(&self) -> [&dyn AnyStorableVec; 40] {
+    pub fn as_any_json_vec_slice(&self) -> [&dyn AnyJsonStorableVec; 40] {
         [
-            &self.addressindex_to_addresstype as &dyn AnyStorableVec,
-            &self.addressindex_to_addresstypeindex,
-            &self.addressindex_to_height,
-            &self.height_to_blockhash,
-            &self.height_to_difficulty,
-            &self.height_to_first_addressindex,
-            &self.height_to_first_emptyindex,
-            &self.height_to_first_multisigindex,
-            &self.height_to_first_opreturnindex,
-            &self.height_to_first_pushonlyindex,
-            &self.height_to_first_txindex,
-            &self.height_to_first_txinindex,
-            &self.height_to_first_txoutindex,
-            &self.height_to_first_unknownindex,
-            &self.height_to_first_p2pk33index,
-            &self.height_to_first_p2pk65index,
-            &self.height_to_first_p2pkhindex,
-            &self.height_to_first_p2shindex,
-            &self.height_to_first_p2trindex,
-            &self.height_to_first_p2wpkhindex,
-            &self.height_to_first_p2wshindex,
-            &self.height_to_size,
-            &self.height_to_timestamp,
-            &self.height_to_weight,
-            &self.p2pk33index_to_p2pk33addressbytes,
-            &self.p2pk65index_to_p2pk65addressbytes,
-            &self.p2pkhindex_to_p2pkhaddressbytes,
-            &self.p2shindex_to_p2shaddressbytes,
-            &self.p2trindex_to_p2traddressbytes,
-            &self.p2wpkhindex_to_p2wpkhaddressbytes,
-            &self.p2wshindex_to_p2wshaddressbytes,
-            &self.txindex_to_first_txinindex,
-            &self.txindex_to_first_txoutindex,
-            &self.txindex_to_height,
-            &self.txindex_to_locktime,
-            &self.txindex_to_txid,
-            &self.txindex_to_txversion,
-            &self.txinindex_to_txoutindex,
-            &self.txoutindex_to_addressindex,
-            &self.txoutindex_to_amount,
+            &*self.addressindex_to_addresstype as &dyn AnyJsonStorableVec,
+            &*self.addressindex_to_addresstypeindex,
+            &*self.addressindex_to_height,
+            &*self.height_to_blockhash,
+            &*self.height_to_difficulty,
+            &*self.height_to_first_addressindex,
+            &*self.height_to_first_emptyindex,
+            &*self.height_to_first_multisigindex,
+            &*self.height_to_first_opreturnindex,
+            &*self.height_to_first_pushonlyindex,
+            &*self.height_to_first_txindex,
+            &*self.height_to_first_txinindex,
+            &*self.height_to_first_txoutindex,
+            &*self.height_to_first_unknownindex,
+            &*self.height_to_first_p2pk33index,
+            &*self.height_to_first_p2pk65index,
+            &*self.height_to_first_p2pkhindex,
+            &*self.height_to_first_p2shindex,
+            &*self.height_to_first_p2trindex,
+            &*self.height_to_first_p2wpkhindex,
+            &*self.height_to_first_p2wshindex,
+            &*self.height_to_size,
+            &*self.height_to_timestamp,
+            &*self.height_to_weight,
+            &*self.p2pk33index_to_p2pk33addressbytes,
+            &*self.p2pk65index_to_p2pk65addressbytes,
+            &*self.p2pkhindex_to_p2pkhaddressbytes,
+            &*self.p2shindex_to_p2shaddressbytes,
+            &*self.p2trindex_to_p2traddressbytes,
+            &*self.p2wpkhindex_to_p2wpkhaddressbytes,
+            &*self.p2wshindex_to_p2wshaddressbytes,
+            &*self.txindex_to_first_txinindex,
+            &*self.txindex_to_first_txoutindex,
+            &*self.txindex_to_height,
+            &*self.txindex_to_locktime,
+            &*self.txindex_to_txid,
+            &*self.txindex_to_txversion,
+            &*self.txinindex_to_txoutindex,
+            &*self.txoutindex_to_addressindex,
+            &*self.txoutindex_to_amount,
         ]
     }
 
-    pub fn as_mut_slice(&mut self) -> [&mut (dyn AnyStorableVec + Send + Sync); 40] {
+    pub fn as_mut_any_vec_slice(&mut self) -> [&mut dyn AnyStorableVec; 40] {
         [
-            &mut self.addressindex_to_addresstype as &mut (dyn AnyStorableVec + Send + Sync),
+            &mut self.addressindex_to_addresstype as &mut dyn AnyStorableVec,
             &mut self.addressindex_to_addresstypeindex,
             &mut self.addressindex_to_height,
             &mut self.height_to_blockhash,
