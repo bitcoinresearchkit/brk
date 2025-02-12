@@ -647,7 +647,7 @@ impl Indexer<CACHED_GETS> {
                 txinindex_global += Txinindex::from(inputs_len);
                 txoutindex_global += Txoutindex::from(outputs_len);
 
-                let should_snapshot = _height != 0 && _height % SNAPSHOT_BLOCK_RANGE == 0 && !exit.active();
+                let should_snapshot = _height != 0 && _height % SNAPSHOT_BLOCK_RANGE == 0 && !exit.blocked();
                 if should_snapshot {
                     export(trees, vecs, height)?;
                 }

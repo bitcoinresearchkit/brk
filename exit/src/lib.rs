@@ -56,7 +56,7 @@ impl Exit {
         self.blocked.store(false, Ordering::SeqCst);
     }
 
-    pub fn active(&self) -> bool {
+    pub fn blocked(&self) -> bool {
         self.active.load(Ordering::SeqCst)
     }
 }
