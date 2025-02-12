@@ -1,13 +1,12 @@
 use std::{collections::BTreeMap, time::Instant};
 
 use api::{structs::Index, ApiRoutes};
-use axum::{routing::get, serve, Router};
+use axum::{routing::get, serve, Json, Router};
 use color_eyre::owo_colors::OwoColorize;
 use computer::Computer;
 use derive_deref::{Deref, DerefMut};
 use indexer::Indexer;
 use logger::{error, info};
-use oxc::syntax::identifier::LF;
 use reqwest::StatusCode;
 use storable_vec::{AnyJsonStorableVec, STATELESS};
 use tokio::net::TcpListener;
@@ -29,6 +28,7 @@ pub struct AppState {
 pub struct VecIdToIndexToVec(BTreeMap<String, IndexToVec>);
 
 impl VecIdToIndexToVec {
+    // Not the most performant or type safe but only built once so that's okay
     pub fn insert(&mut self, vec: &'static dyn AnyJsonStorableVec) {
         let file_name = vec.file_name();
         let split = file_name.split("_to_").collect::<Vec<_>>();
@@ -83,7 +83,7 @@ pub async fn main(indexer: Indexer<STATELESS>, computer: Computer<STATELESS>) ->
     let router = Router::new()
         .add_api_routes()
         .add_website_routes()
-        .route("/version", get(env!("CARGO_PKG_VERSION")))
+        .route("/version", get(Json(env!("CARGO_PKG_VERSION"))))
         .with_state(state)
         .layer(compression_layer);
 

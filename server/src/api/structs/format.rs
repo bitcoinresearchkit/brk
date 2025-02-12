@@ -4,6 +4,7 @@ use color_eyre::eyre::eyre;
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Format {
     CSV,
+    TSV,
     JSON,
 }
 
@@ -15,6 +16,8 @@ impl TryFrom<Option<String>> for Format {
             let value = value.as_str();
             if value == "csv" {
                 Ok(Self::CSV)
+            } else if value == "tsv" {
+                Ok(Self::TSV)
             } else if value == "json" {
                 Ok(Self::JSON)
             } else {
