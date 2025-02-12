@@ -32,3 +32,6 @@ paths.d.ts
 
 # Outputs
 _outputs
+
+# Python
+.ropeproject
