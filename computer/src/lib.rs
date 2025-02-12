@@ -83,9 +83,11 @@ impl Computer<SINGLE_THREAD> {
 
         let date_count = self.vecs.height_to_date.len();
 
+        // self.vecs.height_to_dateindex.compute(...)
+
         self.vecs
-            .date_to_first_height
-            .compute_inverse_more_to_less(&mut self.vecs.height_to_date)?;
+            .dateindex_to_first_height
+            .compute_inverse_more_to_less(&mut self.vecs.height_to_dateindex)?;
 
         // ---
         // Date to X

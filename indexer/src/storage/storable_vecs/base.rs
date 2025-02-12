@@ -5,7 +5,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use storable_vec::{StorableVecIndex, StorableVecType, Version};
+use storable_vec::{StoredIndex, StoredType, Version};
 
 use super::Height;
 
@@ -17,8 +17,8 @@ pub struct StorableVec<I, T, const MODE: u8> {
 
 impl<I, T, const MODE: u8> StorableVec<I, T, MODE>
 where
-    I: StorableVecIndex,
-    T: StorableVecType,
+    I: StoredIndex,
+    T: StoredType,
 {
     pub fn import(path: &Path, version: Version) -> storable_vec::Result<Self> {
         Ok(Self {
@@ -65,15 +65,15 @@ impl<I, T, const MODE: u8> DerefMut for StorableVec<I, T, MODE> {
     }
 }
 
-pub trait AnyStorableVec {
+pub trait AnyStorableVec: Send + Sync {
     fn height(&self) -> storable_vec::Result<Height>;
     fn flush(&mut self, height: Height) -> io::Result<()>;
 }
 
 impl<I, T, const MODE: u8> AnyStorableVec for StorableVec<I, T, MODE>
 where
-    I: StorableVecIndex,
-    T: StorableVecType,
+    I: StoredIndex,
+    T: StoredType,
 {
     fn height(&self) -> storable_vec::Result<Height> {
         self.height()

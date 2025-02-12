@@ -100,7 +100,7 @@ fn req_to_response_res(
     let values = ids
         .iter()
         .flat_map(|(_, i_to_v)| i_to_v.get(indexes.first().unwrap()))
-        .map(|vec| -> storable_vec::Result<Vec<Value>> { vec.collect_range(from, to) })
+        .map(|vec| -> storable_vec::Result<Vec<Value>> { vec.collect_range_values(from, to) })
         .collect::<storable_vec::Result<Vec<_>>>()?;
 
     if ids.is_empty() {
