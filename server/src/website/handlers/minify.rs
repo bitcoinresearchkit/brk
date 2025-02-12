@@ -10,17 +10,13 @@ use oxc::{
     span::SourceType,
 };
 
-//
 pub fn minify_js(path: &Path) -> String {
-    let allocator = Allocator::default();
-
+    let source_text = fs::read_to_string(path).unwrap();
     let source_type = SourceType::from_path(path).unwrap();
 
-    let source_text = fs::read_to_string(path).unwrap();
+    let allocator = Allocator::default();
 
-    let parser_return = Parser::new(&allocator, &source_text, source_type).parse();
-
-    let mut program = parser_return.program;
+    let mut program = Parser::new(&allocator, &source_text, source_type).parse().program;
 
     let minifier_return = Minifier::new(MinifierOptions {
         mangle: Some(MangleOptions::default()),

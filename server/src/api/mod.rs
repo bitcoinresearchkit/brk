@@ -110,8 +110,15 @@ fn req_to_response_res(
     let ids_last_i = ids.len() - 1;
 
     let mut response = match format {
-        Some(Format::CSV) => {
-            let mut csv = ids.into_iter().map(|(id, _)| id).collect::<Vec<_>>().join(",");
+        Some(Format::CSV) | Some(Format::TSV) => {
+            let delimiter = if format == Some(Format::CSV) { ',' } else { '\t' };
+
+            let mut csv = ids
+                .into_iter()
+                .map(|(id, _)| id)
+                .collect::<Vec<_>>()
+                .join(&delimiter.to_string());
+
             csv.push('\n');
 
             let values_len = values.first().unwrap().len();
@@ -123,7 +130,7 @@ fn req_to_response_res(
                     if id_i == ids_last_i {
                         line.push('\n');
                     } else {
-                        line.push(',');
+                        line.push(delimiter);
                     }
                 });
                 csv += &line;
@@ -131,7 +138,7 @@ fn req_to_response_res(
 
             csv.into_response()
         }
-        _ => {
+        Some(Format::JSON) | None => {
             if values.len() == 1 {
                 let values = values.first().unwrap();
                 if values.len() == 1 {
@@ -156,6 +163,7 @@ fn req_to_response_res(
             headers.insert_content_disposition_attachment();
             match format {
                 Format::CSV => headers.insert_content_type_text_csv(),
+                Format::TSV => headers.insert_content_type_text_tsv(),
                 Format::JSON => headers.insert_content_type_application_json(),
             }
         }
