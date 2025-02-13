@@ -4,7 +4,7 @@ use derive_deref::Deref;
 pub struct Vout(u32);
 
 impl Vout {
-    const ZERO: Self = Vout(0_u32);
+    const ZERO: Self = Vout(0);
 
     pub fn is_zero(&self) -> bool {
         *self == Self::ZERO

@@ -1,5 +1,7 @@
 use std::{thread::sleep, time::Duration};
 
+use logger::info;
+
 pub fn retry<T>(
     function: impl Fn(usize) -> color_eyre::Result<T>,
     sleep_in_s: u64,
@@ -13,6 +15,7 @@ pub fn retry<T>(
         if i == retries || res.is_ok() {
             return res;
         } else {
+            info!("Failed, waiting {sleep_in_s} seconds...");
             sleep(Duration::from_secs(sleep_in_s));
         }
 

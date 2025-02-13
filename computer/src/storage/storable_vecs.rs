@@ -1,12 +1,10 @@
 use std::{fs, path::Path};
 
-use indexer::{Addressindex, Amount, Height, Timestamp, Txindex, Txinindex, Txoutindex};
+use indexer::{Addressindex, Height, Sats, Timestamp, Txindex, Txinindex, Txoutindex};
+use pricer::{Date, Dateindex};
 use storable_vec::{StorableVec, Version};
 
-use crate::{
-    structs::{Date, Feerate},
-    Dateindex,
-};
+use crate::structs::Feerate;
 
 // mod base;
 
@@ -30,16 +28,16 @@ pub struct StorableVecs<const MODE: u8> {
     // pub height_to_subsidy: StorableVec<Height, u32, MODE>,
     // pub height_to_totalfees: StorableVec<Height, Amount, MODE>,
     // pub height_to_txcount: StorableVec<Height, u32, MODE>,
-    pub txindex_to_fee: StorableVec<Txindex, Amount, MODE>,
+    pub txindex_to_fee: StorableVec<Txindex, Sats, MODE>,
     pub txindex_to_height: StorableVec<Txindex, Height, MODE>,
     pub txindex_to_is_coinbase: StorableVec<Txindex, bool, MODE>,
     // pub txindex_to_feerate: StorableVec<Txindex, Feerate, MODE>,
     pub txindex_to_inputs_count: StorableVec<Txindex, u32, MODE>,
-    pub txindex_to_inputs_sum: StorableVec<Txindex, Amount, MODE>,
+    pub txindex_to_inputs_sum: StorableVec<Txindex, Sats, MODE>,
     pub txindex_to_last_txinindex: StorableVec<Txindex, Txinindex, MODE>,
     pub txindex_to_last_txoutindex: StorableVec<Txindex, Txoutindex, MODE>,
     pub txindex_to_outputs_count: StorableVec<Txindex, u32, MODE>,
-    pub txindex_to_outputs_sum: StorableVec<Txindex, Amount, MODE>,
+    pub txindex_to_outputs_sum: StorableVec<Txindex, Sats, MODE>,
 }
 
 impl<const MODE: u8> StorableVecs<MODE> {

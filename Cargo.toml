@@ -23,6 +23,7 @@ iterator = { path = "iterator", package = "biter" }
 jiff = "0.2.0"
 logger = { path = "logger" }
 rayon = "1.10.0"
+pricer = { path = "pricer" }
 rlimit = { version = "0.10.2" }
 serde = { version = "1.0.217", features = ["derive"] }
 serde_json = { version = "1.0.138", features = ["float_roundtrip"] }
