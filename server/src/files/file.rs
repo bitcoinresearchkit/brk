@@ -18,7 +18,7 @@ use crate::{
     traits::{HeaderMapExtended, ModifiedState, ResponseExtended},
 };
 
-use super::minify_js;
+use super::minify::minify_js;
 
 const WEBSITE_DEV_PATH: &str = "../website/";
 

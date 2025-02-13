@@ -71,7 +71,7 @@ pub struct StorableVec<I, T, const MODE: u8> {
 
 /// In bytes
 const MAX_PAGE_SIZE: usize = 4 * 4096;
-const ONE_MB: usize = 1000 * 1024;
+// const ONE_MB: usize = 1000 * 1024;
 const MAX_CACHE_SIZE: usize = usize::MAX;
 // const MAX_CACHE_SIZE: usize = 100 * ONE_MB;
 
