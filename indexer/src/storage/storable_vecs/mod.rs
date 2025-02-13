@@ -5,11 +5,10 @@ use rayon::prelude::*;
 use storable_vec::{AnyJsonStorableVec, Version, CACHED_GETS};
 
 use crate::structs::{
-    Addressbytes, Addressindex, Addresstype, Addresstypeindex, Amount, BlockHash, Emptyindex, Height, LockTime,
-    Multisigindex, Opreturnindex, P2PK33AddressBytes, P2PK33index, P2PK65AddressBytes, P2PK65index, P2PKHAddressBytes,
-    P2PKHindex, P2SHAddressBytes, P2SHindex, P2TRAddressBytes, P2TRindex, P2WPKHAddressBytes, P2WPKHindex,
-    P2WSHAddressBytes, P2WSHindex, Pushonlyindex, Timestamp, TxVersion, Txid, Txindex, Txinindex, Txoutindex,
-    Unknownindex, Weight,
+    Addressbytes, Addressindex, Addresstype, Addresstypeindex, BlockHash, Emptyindex, Height, LockTime, Multisigindex,
+    Opreturnindex, P2PK33AddressBytes, P2PK33index, P2PK65AddressBytes, P2PK65index, P2PKHAddressBytes, P2PKHindex,
+    P2SHAddressBytes, P2SHindex, P2TRAddressBytes, P2TRindex, P2WPKHAddressBytes, P2WPKHindex, P2WSHAddressBytes,
+    P2WSHindex, Pushonlyindex, Sats, Timestamp, TxVersion, Txid, Txindex, Txinindex, Txoutindex, Unknownindex, Weight,
 };
 
 mod base;
@@ -56,7 +55,7 @@ pub struct StorableVecs<const MODE: u8> {
     pub txindex_to_txversion: StorableVec<Txindex, TxVersion, MODE>,
     pub txinindex_to_txoutindex: StorableVec<Txinindex, Txoutindex, MODE>,
     pub txoutindex_to_addressindex: StorableVec<Txoutindex, Addressindex, MODE>,
-    pub txoutindex_to_amount: StorableVec<Txoutindex, Amount, MODE>,
+    pub txoutindex_to_value: StorableVec<Txoutindex, Sats, MODE>,
 }
 
 // const UNSAFE_BLOCKS: usize = 1000;
@@ -177,7 +176,7 @@ impl<const MODE: u8> StorableVecs<MODE> {
                 &path.join("txoutindex_to_addressindex"),
                 Version::from(1),
             )?,
-            txoutindex_to_amount: StorableVec::import(&path.join("txoutindex_to_amount"), Version::from(1))?,
+            txoutindex_to_value: StorableVec::import(&path.join("txoutindex_to_value"), Version::from(1))?,
         })
     }
 
@@ -350,7 +349,7 @@ impl<const MODE: u8> StorableVecs<MODE> {
             &*self.txindex_to_txversion,
             &*self.txinindex_to_txoutindex,
             &*self.txoutindex_to_addressindex,
-            &*self.txoutindex_to_amount,
+            &*self.txoutindex_to_value,
         ]
     }
 
@@ -395,7 +394,7 @@ impl<const MODE: u8> StorableVecs<MODE> {
             &mut self.txindex_to_txversion,
             &mut self.txinindex_to_txoutindex,
             &mut self.txoutindex_to_addressindex,
-            &mut self.txoutindex_to_amount,
+            &mut self.txoutindex_to_value,
         ]
     }
 }

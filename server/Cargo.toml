@@ -12,11 +12,9 @@ indexer = { workspace = true }
 jiff = { workspace = true }
 logger = { workspace = true }
 oxc = { version = "0.50.0", features = ["codegen", "minifier"] }
-regex = "1.11.1"
 reqwest = { version = "0.12.12", features = ["blocking", "json"] }
 serde = { workspace = true }
 serde_json = { workspace = true }
 storable_vec = { workspace = true }
 tokio = { version = "1.43.0", features = ["full"] }
 tower-http = { version = "0.6.2", features = ["compression-full"] }
-zstd = "0.13.2"

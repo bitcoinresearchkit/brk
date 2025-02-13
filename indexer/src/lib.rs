@@ -92,7 +92,7 @@ impl Indexer<CACHED_GETS> {
         iterator::new(bitcoin_dir, Some(height.into()), Some(400_000), rpc)
             .iter()
             .try_for_each(|(_height, block, blockhash)| -> color_eyre::Result<()> {
-                info!("Processing block {_height}...");
+                info!("Indexing block {_height}...");
 
                 let blockhash = BlockHash::from(blockhash);
                 height = Height::from(_height);
@@ -440,13 +440,13 @@ impl Indexer<CACHED_GETS> {
                         (txout, txindex, vout, addresstype, addressbytes_res, addressindex_opt, _tx),
                     )|
                      -> color_eyre::Result<()> {
-                        let amount = Amount::from(txout.value);
+                        let sats = Sats::from(txout.value);
 
                         if vout.is_zero() {
                             vecs.txindex_to_first_txoutindex.push_if_needed(txindex, txoutindex)?;
                         }
 
-                        vecs.txoutindex_to_amount.push_if_needed(txoutindex, amount)?;
+                        vecs.txoutindex_to_value.push_if_needed(txoutindex, sats)?;
 
                         let mut addressindex = addressindex_global;
 

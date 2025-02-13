@@ -1,14 +1,10 @@
 use std::{collections::BTreeMap, str::FromStr};
 
-use chrono::NaiveDate;
 use color_eyre::eyre::ContextCompat;
-use log::info;
+use logger::info;
 use serde_json::Value;
 
-use crate::{
-    structs::{Date, DateMapChunkId, HeightMapChunkId, MapChunkId, OHLC},
-    utils::retry,
-};
+use crate::structs::{Date, OHLC};
 
 pub struct Kibo;
 
@@ -33,11 +29,9 @@ impl Kibo {
             |try_index| {
                 let base_url = Self::get_base_url(try_index);
 
-                let body: Value = reqwest::blocking::get(format!(
-                    "{base_url}/height-to-price?chunk={}",
-                    chunk_id.to_usize()
-                ))?
-                .json()?;
+                let body: Value =
+                    reqwest::blocking::get(format!("{base_url}/height-to-price?chunk={}", chunk_id.to_usize()))?
+                        .json()?;
 
                 let vec = body
                     .as_object()
@@ -68,11 +62,9 @@ impl Kibo {
             |try_index| {
                 let base_url = Self::get_base_url(try_index);
 
-                let body: Value = reqwest::blocking::get(format!(
-                    "{base_url}/date-to-price?chunk={}",
-                    chunk_id.to_usize()
-                ))?
-                .json()?;
+                let body: Value =
+                    reqwest::blocking::get(format!("{base_url}/date-to-price?chunk={}", chunk_id.to_usize()))?
+                        .json()?;
 
                 Ok(body
                     .as_object()

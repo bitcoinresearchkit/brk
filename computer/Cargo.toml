@@ -10,6 +10,6 @@ derive_deref = { workspace = true }
 exit = { workspace = true }
 fjall = { workspace = true }
 indexer = { workspace = true }
-jiff = { workspace = true }
+pricer = { workspace = true }
 storable_vec = { workspace = true }
 zerocopy = { workspace = true }

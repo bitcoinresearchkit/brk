@@ -5,7 +5,7 @@ use indexer::Timestamp;
 use jiff::{civil::Date as Date_, tz::TimeZone, Span};
 use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, FromBytes, Immutable, IntoBytes, KnownLayout)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, FromBytes, Immutable, IntoBytes, KnownLayout)]
 pub struct Date(u32);
 
 impl Date {

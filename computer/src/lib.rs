@@ -7,6 +7,7 @@ pub use iterator::rpc;
 mod storage;
 mod structs;
 
+use pricer::Date;
 use storable_vec::SINGLE_THREAD;
 use storage::{Fjalls, StorableVecs};
 pub use structs::*;
