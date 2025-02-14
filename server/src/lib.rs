@@ -23,10 +23,9 @@ pub struct AppState {
     computer: &'static Computer<STATELESS>,
 }
 
-pub async fn main(indexer: Indexer<STATELESS>, computer: Computer<STATELESS>) -> color_eyre::Result<()> {
-    // pub async fn main(routes: Routes, config: Config) -> color_eyre::Result<()> {
-    // routes.generate_dts_file();
+pub const WEBSITE_DEV_PATH: &str = "../website/";
 
+pub async fn main(indexer: Indexer<STATELESS>, computer: Computer<STATELESS>) -> color_eyre::Result<()> {
     let indexer = Box::leak(Box::new(indexer));
     let computer = Box::leak(Box::new(computer));
     let vecs = Box::leak(Box::new(VecIdToIndexToVec::default()));
@@ -36,6 +35,8 @@ pub async fn main(indexer: Indexer<STATELESS>, computer: Computer<STATELESS>) ->
         .as_any_json_vec_slice()
         .into_iter()
         .for_each(|vec| vecs.insert(vec));
+
+    vecs.generate_dts_file()?;
 
     let state = AppState {
         vecs,

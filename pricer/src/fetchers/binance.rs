@@ -2,7 +2,7 @@ use std::{
     collections::BTreeMap,
     fs::{self, File},
     io::BufReader,
-    path::Path,
+    path::{Path, PathBuf},
     str::FromStr,
 };
 
@@ -10,17 +10,48 @@ use color_eyre::eyre::{eyre, ContextCompat};
 use indexer::Timestamp;
 use logger::info;
 use serde_json::Value;
+use storable_vec::STATELESS;
 
 use crate::{
     fetchers::retry,
     structs::{Cents, OHLC},
-    Close, Date, Dollars, High, Low, Open,
+    Close, Date, Dollars, High, Low, Open, Pricer,
 };
 
-pub struct Binance;
+pub struct Binance {
+    path: PathBuf,
+    _1mn: Option<BTreeMap<Timestamp, OHLC>>,
+    _1d: Option<BTreeMap<Date, OHLC>>,
+    har: Option<BTreeMap<Timestamp, OHLC>>,
+}
 
 impl Binance {
-    pub fn fetch_1mn_prices() -> color_eyre::Result<BTreeMap<Timestamp, OHLC>> {
+    pub fn init(path: &Path) -> Self {
+        Self {
+            path: path.to_owned(),
+            _1mn: None,
+            _1d: None,
+            har: None,
+        }
+    }
+
+    fn get_from_1mn(
+        &mut self,
+        timestamp: Timestamp,
+        previous_timestamp: Option<Timestamp>,
+    ) -> color_eyre::Result<OHLC> {
+        if self._1mn.is_none() || self._1mn.as_ref().unwrap().last_key_value().unwrap().0 <= &timestamp {
+            self._1mn.replace(Self::fetch_1mn()?);
+        }
+        Pricer::<STATELESS>::find_height_ohlc(
+            &self._1mn.as_ref().unwrap(),
+            timestamp,
+            previous_timestamp,
+            "binance 1mn",
+        )
+    }
+
+    pub fn fetch_1mn() -> color_eyre::Result<BTreeMap<Timestamp, OHLC>> {
         info!("Fetching 1mn prices from Binance...");
 
         retry(
@@ -30,7 +61,20 @@ impl Binance {
         )
     }
 
-    pub fn fetch_daily_prices() -> color_eyre::Result<BTreeMap<Date, OHLC>> {
+    pub fn get_from_1d(&mut self, date: &Date) -> color_eyre::Result<OHLC> {
+        if self._1d.is_none() || self._1d.as_ref().unwrap().last_key_value().unwrap().0 < date {
+            self._1d.replace(Self::fetch_1d()?);
+        }
+
+        self._1d
+            .as_ref()
+            .unwrap()
+            .get(date)
+            .cloned()
+            .ok_or(color_eyre::eyre::Error::msg("Couldn't find date"))
+    }
+
+    fn fetch_1d() -> color_eyre::Result<BTreeMap<Date, OHLC>> {
         info!("Fetching daily prices from Kraken...");
 
         retry(
@@ -40,10 +84,28 @@ impl Binance {
         )
     }
 
-    pub fn read_har_file(path: &Path) -> color_eyre::Result<BTreeMap<Timestamp, OHLC>> {
+    pub fn get_from_har_binance(
+        &mut self,
+        timestamp: Timestamp,
+        previous_timestamp: Option<Timestamp>,
+    ) -> color_eyre::Result<OHLC> {
+        if self.har.is_none() {
+            self.har.replace(self.read_har().unwrap_or_default());
+        }
+        Pricer::<STATELESS>::find_height_ohlc(
+            &self.har.as_ref().unwrap(),
+            timestamp,
+            previous_timestamp,
+            "binance har",
+        )
+    }
+
+    fn read_har(&self) -> color_eyre::Result<BTreeMap<Timestamp, OHLC>> {
         info!("Reading Binance har file...");
 
-        fs::create_dir_all(&path)?;
+        let path = &self.path;
+
+        fs::create_dir_all(path)?;
 
         let path_binance_har = path.join("binance.har");
 

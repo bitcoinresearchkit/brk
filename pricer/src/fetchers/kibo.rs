@@ -1,12 +1,21 @@
 use std::{collections::BTreeMap, str::FromStr};
 
 use color_eyre::eyre::ContextCompat;
+use indexer::Height;
 use logger::info;
 use serde_json::Value;
 
-use crate::structs::{Date, OHLC};
+use crate::{
+    fetchers::retry,
+    structs::{Date, OHLC},
+    Cents, Close, Dollars, High, Low, Open,
+};
 
-pub struct Kibo;
+#[derive(Default)]
+pub struct Kibo {
+    height_to_ohlc_vec: BTreeMap<Height, Vec<OHLC>>,
+    year_to_date_to_ohlc: BTreeMap<u16, BTreeMap<Date, OHLC>>,
+}
 
 const KIBO_OFFICIAL_URL: &str = "https://kibo.money/api";
 const KIBO_OFFICIAL_BACKUP_URL: &str = "https://backup.kibo.money/api";
@@ -22,16 +31,32 @@ impl Kibo {
         }
     }
 
-    pub fn fetch_height_prices(chunk_id: HeightMapChunkId) -> color_eyre::Result<Vec<OHLC>> {
-        info!("kibo: fetch height prices");
+    pub fn get_from_height_kibo(&mut self, height: Height) -> color_eyre::Result<OHLC> {
+        #[allow(clippy::map_entry)]
+        if !self.height_to_ohlc_vec.contains_key(&height)
+            || ((usize::from(height) + self.height_to_ohlc_vec.get(&height).unwrap().len()) <= usize::from(height))
+        {
+            self.height_to_ohlc_vec
+                .insert(height, Self::fetch_height_prices(height)?);
+        }
+
+        self.height_to_ohlc_vec
+            .get(&height)
+            .unwrap()
+            .get(usize::from(height))
+            .cloned()
+            .ok_or(color_eyre::eyre::Error::msg("Couldn't find height in kibo"))
+    }
+
+    fn fetch_height_prices(height: Height) -> color_eyre::Result<Vec<OHLC>> {
+        info!("Fetching Kibo height prices...");
 
         retry(
             |try_index| {
                 let base_url = Self::get_base_url(try_index);
 
                 let body: Value =
-                    reqwest::blocking::get(format!("{base_url}/height-to-price?chunk={}", chunk_id.to_usize()))?
-                        .json()?;
+                    reqwest::blocking::get(format!("{base_url}/height-to-price?chunk={}", height))?.json()?;
 
                 let vec = body
                     .as_object()
@@ -55,19 +80,41 @@ impl Kibo {
         )
     }
 
-    pub fn fetch_date_prices(chunk_id: DateMapChunkId) -> color_eyre::Result<BTreeMap<Date, OHLC>> {
-        info!("kibo: fetch date prices");
+    pub fn get_from_date_kibo(&mut self, date: &Date) -> color_eyre::Result<OHLC> {
+        let year = date.year();
+
+        #[allow(clippy::map_entry)]
+        if !self.year_to_date_to_ohlc.contains_key(&year)
+            || self
+                .year_to_date_to_ohlc
+                .get(&year)
+                .unwrap()
+                .last_key_value()
+                .unwrap()
+                .0
+                < date
+        {
+            self.year_to_date_to_ohlc.insert(year, Self::fetch_date_prices(year)?);
+        }
+
+        self.year_to_date_to_ohlc
+            .get(&year)
+            .unwrap()
+            .get(date)
+            .cloned()
+            .ok_or(color_eyre::eyre::Error::msg("Couldn't find date in kibo"))
+    }
+
+    fn fetch_date_prices(year: u16) -> color_eyre::Result<BTreeMap<Date, OHLC>> {
+        info!("Fetching Kibo date prices...");
 
         retry(
             |try_index| {
                 let base_url = Self::get_base_url(try_index);
 
-                let body: Value =
-                    reqwest::blocking::get(format!("{base_url}/date-to-price?chunk={}", chunk_id.to_usize()))?
-                        .json()?;
+                let body: Value = reqwest::blocking::get(format!("{base_url}/date-to-price?chunk={}", year))?.json()?;
 
-                Ok(body
-                    .as_object()
+                body.as_object()
                     .context("Expect to be an object")?
                     .get("dataset")
                     .context("Expect object to have dataset")?
@@ -79,10 +126,10 @@ impl Kibo {
                     .context("Expect to be an object")?
                     .iter()
                     .map(|(serialized_date, value)| -> color_eyre::Result<_> {
-                        let date = Date::wrap(NaiveDate::from_str(serialized_date)?);
+                        let date = Date::from(jiff::civil::Date::from_str(serialized_date).unwrap());
                         Ok((date, Self::value_to_ohlc(value)?))
                     })
-                    .collect::<Result<BTreeMap<_, _>, _>>()?)
+                    .collect::<Result<BTreeMap<_, _>, _>>()
             },
             30,
             RETRIES,
@@ -92,19 +139,20 @@ impl Kibo {
     fn value_to_ohlc(value: &Value) -> color_eyre::Result<OHLC> {
         let ohlc = value.as_object().context("Expect as_object to work")?;
 
-        let get_value = |key: &str| -> color_eyre::Result<f32> {
-            Ok(ohlc
-                .get(key)
-                .context("Expect get key to work")?
-                .as_f64()
-                .context("Expect as_f64 to work")? as f32)
+        let get_value = |key: &str| -> color_eyre::Result<_> {
+            Ok(Cents::from(Dollars::from(
+                ohlc.get(key)
+                    .context("Expect get key to work")?
+                    .as_f64()
+                    .context("Expect as_f64 to work")?,
+            )))
         };
 
-        Ok(OHLC {
-            open: get_value("open")?,
-            high: get_value("high")?,
-            low: get_value("low")?,
-            close: get_value("close")?,
-        })
+        Ok((
+            Open::from(get_value("open")?),
+            High::from(get_value("high")?),
+            Low::from(get_value("low")?),
+            Close::from(get_value("close")?),
+        ))
     }
 }

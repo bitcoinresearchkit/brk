@@ -4,13 +4,29 @@ use color_eyre::eyre::ContextCompat;
 use indexer::Timestamp;
 use logger::info;
 use serde_json::Value;
+use storable_vec::STATELESS;
 
-use crate::{fetchers::retry, structs::Date, Cents, Close, Dollars, High, Low, Open, OHLC};
+use crate::{fetchers::retry, structs::Date, Cents, Close, Dollars, High, Low, Open, Pricer, OHLC};
 
-pub struct Kraken;
+#[derive(Default)]
+pub struct Kraken {
+    _1mn: Option<BTreeMap<Timestamp, OHLC>>,
+    _1d: Option<BTreeMap<Date, OHLC>>,
+}
 
 impl Kraken {
-    pub fn fetch_1mn_prices() -> color_eyre::Result<BTreeMap<Timestamp, OHLC>> {
+    pub fn get_from_1mn(
+        &mut self,
+        timestamp: Timestamp,
+        previous_timestamp: Option<Timestamp>,
+    ) -> color_eyre::Result<OHLC> {
+        if self._1mn.is_none() || self._1mn.as_ref().unwrap().last_key_value().unwrap().0 <= &timestamp {
+            self._1mn.replace(Self::fetch_1mn()?);
+        }
+        Pricer::<STATELESS>::find_height_ohlc(&self._1mn.as_ref().unwrap(), timestamp, previous_timestamp, "kraken 1m")
+    }
+
+    fn fetch_1mn() -> color_eyre::Result<BTreeMap<Timestamp, OHLC>> {
         info!("Fetching 1mn prices from Kraken...");
 
         retry(
@@ -20,7 +36,19 @@ impl Kraken {
         )
     }
 
-    pub fn fetch_daily_prices() -> color_eyre::Result<BTreeMap<Date, OHLC>> {
+    pub fn get_from_1d(&mut self, date: &Date) -> color_eyre::Result<OHLC> {
+        if self._1d.is_none() || self._1d.as_ref().unwrap().last_key_value().unwrap().0 < date {
+            self._1d.replace(Kraken::fetch_1d()?);
+        }
+        self._1d
+            .as_ref()
+            .unwrap()
+            .get(date)
+            .cloned()
+            .ok_or(color_eyre::eyre::Error::msg("Couldn't find date"))
+    }
+
+    fn fetch_1d() -> color_eyre::Result<BTreeMap<Date, OHLC>> {
         info!("Fetching daily prices from Kraken...");
 
         retry(

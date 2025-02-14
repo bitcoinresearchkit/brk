@@ -16,11 +16,10 @@ use reqwest::StatusCode;
 use crate::{
     log_result,
     traits::{HeaderMapExtended, ModifiedState, ResponseExtended},
+    WEBSITE_DEV_PATH,
 };
 
 use super::minify::minify_js;
-
-const WEBSITE_DEV_PATH: &str = "../website/";
 
 pub async fn file_handler(headers: HeaderMap, path: extract::Path<String>) -> Response {
     any_handler(headers, Some(path))

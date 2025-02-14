@@ -2118,6 +2118,7 @@ dependencies = [
  "reqwest",
  "serde",
  "serde_json",
+ "storable_vec",
  "zerocopy 0.8.17",
 ]
 
