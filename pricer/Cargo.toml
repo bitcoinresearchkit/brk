@@ -8,8 +8,16 @@ color-eyre = { workspace = true }
 derive_deref = { workspace = true }
 indexer = { workspace = true }
 logger = { workspace = true }
-reqwest = { version = "0.12.12", features = ["blocking", "brotli", "deflate", "gzip", "json", "zstd"] }
+reqwest = { version = "0.12.12", features = [
+    "blocking",
+    "brotli",
+    "deflate",
+    "gzip",
+    "json",
+    "zstd",
+] }
 jiff = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
+storable_vec = { workspace = true }
 zerocopy = { workspace = true }

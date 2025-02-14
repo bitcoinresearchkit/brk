@@ -1,7 +1,9 @@
-use std::collections::BTreeMap;
+use std::{collections::BTreeMap, fs, io};
 
 use derive_deref::{Deref, DerefMut};
 use storable_vec::AnyJsonStorableVec;
+
+use crate::WEBSITE_DEV_PATH;
 
 use super::index::Index;
 
@@ -31,6 +33,44 @@ impl VecIdToIndexToVec {
         if prev.is_some() {
             panic!()
         }
+    }
+
+    pub fn generate_dts_file(&self) -> io::Result<()> {
+        if !fs::exists(WEBSITE_DEV_PATH)? {
+            return Ok(());
+        }
+
+        let path = format!("{WEBSITE_DEV_PATH}/scripts/types/vecid-to-indexes.d.ts");
+
+        let mut contents = Index::all()
+            .into_iter()
+            .enumerate()
+            .map(|(i_of_i, i)| format!("type {} = {};", i, i_of_i))
+            .collect::<Vec<_>>()
+            .join("\n");
+
+        contents += "\n\ninterface VecIdToIndexes {\n";
+
+        self.iter().for_each(|(id, index_to_vec)| {
+            let indexes = index_to_vec
+                .keys()
+                .map(|i| i.to_string())
+                .collect::<Vec<_>>()
+                .join(", ");
+
+            contents += &format!(
+                "  {}: [{indexes}]\n",
+                if id.contains("-") {
+                    format!("\"{id}\"")
+                } else {
+                    id.to_owned()
+                }
+            );
+        });
+
+        contents.push('}');
+
+        fs::write(path, contents)
     }
 }
 

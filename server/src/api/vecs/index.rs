@@ -17,6 +17,26 @@ pub enum Index {
     Txoutindex,
 }
 
+impl Index {
+    pub fn all() -> [Self; 13] {
+        [
+            Self::Addressindex,
+            Self::Dateindex,
+            Self::Height,
+            Self::P2PK33index,
+            Self::P2PK65index,
+            Self::P2PKHindex,
+            Self::P2SHindex,
+            Self::P2TRindex,
+            Self::P2WPKHindex,
+            Self::P2WSHindex,
+            Self::Txindex,
+            Self::Txinindex,
+            Self::Txoutindex,
+        ]
+    }
+}
+
 impl TryFrom<&str> for Index {
     type Error = ();
     fn try_from(value: &str) -> Result<Self, Self::Error> {
