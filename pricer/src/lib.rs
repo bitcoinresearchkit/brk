@@ -120,18 +120,19 @@ impl<const MODE: u8> Pricer<MODE> {
     }
 
     fn get_date_ohlc(&mut self, date: Date) -> color_eyre::Result<OHLC> {
-        if self.ohlc.date.is_key_safe(date) {
-            Ok(self.ohlc.date.get_or_import(&date).unwrap().to_owned())
-        } else {
-            let ohlc = self
-                .get_from_daily_kraken(&date)
-                .or_else(|_| self.get_from_daily_binance(&date))
-                .or_else(|_| self.get_from_date_kibo(&date))?;
+        todo!();
+        // if self.ohlc.date.is_key_safe(date) {
+        //     Ok(self.ohlc.date.get_or_import(&date).unwrap().to_owned())
+        // } else {
+        //     let ohlc = self
+        //         .get_from_daily_kraken(&date)
+        //         .or_else(|_| self.get_from_daily_binance(&date))
+        //         .or_else(|_| self.get_from_date_kibo(&date))?;
 
-            self.ohlc.date.insert(date, ohlc);
+        //     self.ohlc.date.insert(date, ohlc);
 
-            Ok(ohlc)
-        }
+        //     Ok(ohlc)
+        // }
     }
 
     fn get_height_ohlc(
@@ -140,51 +141,53 @@ impl<const MODE: u8> Pricer<MODE> {
         timestamp: Timestamp,
         previous_timestamp: Option<Timestamp>,
     ) -> color_eyre::Result<OHLC> {
-        if let Some(ohlc) = self.ohlc.height.get_or_import(&height) {
-            return Ok(ohlc);
-        }
+        todo!();
 
-        let timestamp = timestamp.to_floored_seconds();
+        //         if let Some(ohlc) = self.ohlc.height.get_or_import(&height) {
+        //             return Ok(ohlc);
+        //         }
 
-        if previous_timestamp.is_none() && !height.is_first() {
-            panic!("Shouldn't be possible");
-        }
+        //         let timestamp = timestamp.to_floored_seconds();
 
-        let previous_timestamp = previous_timestamp.map(|t| t.to_floored_seconds());
+        //         if previous_timestamp.is_none() && !height.is_first() {
+        //             panic!("Shouldn't be possible");
+        //         }
 
-        let ohlc = self
-            .get_from_1mn_kraken(timestamp, previous_timestamp)
-            .unwrap_or_else(|_| {
-                self.get_from_1mn_binance(timestamp, previous_timestamp)
-                    .unwrap_or_else(|_| {
-                        self.get_from_har_binance(timestamp, previous_timestamp, config)
-                            .unwrap_or_else(|_| {
-                                self.get_from_height_kibo(&height).unwrap_or_else(|_| {
-                                    let date = timestamp.to_date();
+        //         let previous_timestamp = previous_timestamp.map(|t| t.to_floored_seconds());
 
-                                    panic!(
-                                        "Can't find the price for: height: {height} - date: {date}
-1mn APIs are limited to the last 16 hours for Binance's and the last 10 hours for Kraken's
-How to fix this:
-1. Go to https://www.binance.com/en/trade/BTC_USDT?type=spot
-2. Select 1mn interval
-3. Open the inspector/dev tools
-4. Go to the Network Tab
-5. Filter URLs by 'uiKlines'
-6. Go back to the chart and scroll until you pass the date mentioned few lines ago
-7. Go back to the dev tools
-8. Export to a har file (if there is no explicit button, click on the cog button)
-9. Move the file to 'parser/imports/binance.har'
-"
-                                    )
-                                })
-                            })
-                    })
-            });
+        //         let ohlc = self
+        //             .get_from_1mn_kraken(timestamp, previous_timestamp)
+        //             .unwrap_or_else(|_| {
+        //                 self.get_from_1mn_binance(timestamp, previous_timestamp)
+        //                     .unwrap_or_else(|_| {
+        //                         self.get_from_har_binance(timestamp, previous_timestamp, config)
+        //                             .unwrap_or_else(|_| {
+        //                                 self.get_from_height_kibo(&height).unwrap_or_else(|_| {
+        //                                     let date = timestamp.to_date();
 
-        // self.ohlc.height.insert(height, ohlc);
+        //                                     panic!(
+        //                                         "Can't find the price for: height: {height} - date: {date}
+        // 1mn APIs are limited to the last 16 hours for Binance's and the last 10 hours for Kraken's
+        // How to fix this:
+        // 1. Go to https://www.binance.com/en/trade/BTC_USDT?type=spot
+        // 2. Select 1mn interval
+        // 3. Open the inspector/dev tools
+        // 4. Go to the Network Tab
+        // 5. Filter URLs by 'uiKlines'
+        // 6. Go back to the chart and scroll until you pass the date mentioned few lines ago
+        // 7. Go back to the dev tools
+        // 8. Export to a har file (if there is no explicit button, click on the cog button)
+        // 9. Move the file to 'parser/imports/binance.har'
+        // "
+        //                                     )
+        //                                 })
+        //                             })
+        //                     })
+        //             });
 
-        Ok(ohlc)
+        //         // self.ohlc.height.insert(height, ohlc);
+
+        //         Ok(ohlc)
     }
 
     fn find_height_ohlc(

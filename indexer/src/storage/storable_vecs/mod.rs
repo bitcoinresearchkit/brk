@@ -1,4 +1,4 @@
-use std::{fs, io, path::Path};
+use std::{collections::BTreeMap, fs, io, path::Path};
 
 use exit::Exit;
 use rayon::prelude::*;
@@ -181,117 +181,114 @@ impl<const MODE: u8> StorableVecs<MODE> {
     }
 
     #[allow(unused)]
-    pub fn rollback_from(&mut self, _height: Height, _exit: &Exit) -> color_eyre::Result<()> {
-        panic!();
-        // let mut txindex = None;
+    pub fn rollback_from(&mut self, height: Height, exit: &Exit) -> storable_vec::Result<()> {
+        let prev_height = height.decremented();
 
-        // wtx.range(self.height_to_blockhash.data(), Slice::from(height)..)
-        //     .try_for_each(|slice| -> color_eyre::Result<()> {
-        //         let (height_slice, slice_blockhash) = slice?;
-        //         let blockhash = BlockHash::from_slice(&slice_blockhash)?;
+        let mut truncated_indexes: BTreeMap<String, Option<usize>> = BTreeMap::new();
 
-        //         wtx.remove(self.height_to_blockhash.data(), height_slice);
+        let addressindex = self
+            .height_to_first_addressindex
+            .truncate_if_needed(height, prev_height)?;
+        let txindex = self.height_to_first_txindex.truncate_if_needed(height, prev_height)?;
+        let txinindex = self.height_to_first_txinindex.truncate_if_needed(height, prev_height)?;
+        let txoutindex = self
+            .height_to_first_txoutindex
+            .truncate_if_needed(height, prev_height)?;
+        let p2pk33index = self
+            .height_to_first_p2pk33index
+            .truncate_if_needed(height, prev_height)?;
+        let p2pk65index = self
+            .height_to_first_p2pk65index
+            .truncate_if_needed(height, prev_height)?;
+        let p2pkhindex = self
+            .height_to_first_p2pkhindex
+            .truncate_if_needed(height, prev_height)?;
+        let p2shindex = self.height_to_first_p2shindex.truncate_if_needed(height, prev_height)?;
+        let p2trindex = self.height_to_first_p2trindex.truncate_if_needed(height, prev_height)?;
+        let p2wpkhindex = self
+            .height_to_first_p2wpkhindex
+            .truncate_if_needed(height, prev_height)?;
+        let p2wshindex = self
+            .height_to_first_p2wshindex
+            .truncate_if_needed(height, prev_height)?;
 
-        //         wtx.remove(self.blockhash_prefix_to_height.data(), blockhash.prefix());
+        self.height_to_blockhash.truncate_if_needed(height, prev_height)?;
+        self.height_to_difficulty.truncate_if_needed(height, prev_height)?;
+        self.height_to_first_emptyindex
+            .truncate_if_needed(height, prev_height)?;
+        self.height_to_first_multisigindex
+            .truncate_if_needed(height, prev_height)?;
+        self.height_to_first_opreturnindex
+            .truncate_if_needed(height, prev_height)?;
+        self.height_to_first_pushonlyindex
+            .truncate_if_needed(height, prev_height)?;
+        self.height_to_first_unknownindex
+            .truncate_if_needed(height, prev_height)?;
+        self.height_to_size.truncate_if_needed(height, prev_height)?;
+        self.height_to_timestamp.truncate_if_needed(height, prev_height)?;
+        self.height_to_weight.truncate_if_needed(height, prev_height)?;
 
-        //         if txindex.is_none() {
-        //             txindex.replace(
-        //                 wtx.get(self.height_to_first_txindex.data(), height_slice)?
-        //                     .context("for height to have first txindex")?,
-        //             );
-        //         }
-        //         wtx.remove(self.height_to_first_txindex.data(), height_slice);
-        //         wtx.remove(self.height_to_last_txindex.data(), height_slice);
+        if let Some(addressindex) = addressindex {
+            self.addressindex_to_addresstype
+                .truncate_if_needed(addressindex, prev_height)?;
+            self.addressindex_to_addresstypeindex
+                .truncate_if_needed(addressindex, prev_height)?;
+            self.addressindex_to_height
+                .truncate_if_needed(addressindex, prev_height)?;
+        }
 
-        //         Ok(())
-        //     })?;
+        if let Some(p2pk33index) = p2pk33index {
+            self.p2pk33index_to_p2pk33addressbytes
+                .truncate_if_needed(p2pk33index, prev_height)?;
+        }
+        if let Some(p2pk65index) = p2pk65index {
+            self.p2pk65index_to_p2pk65addressbytes
+                .truncate_if_needed(p2pk65index, prev_height)?;
+        }
+        if let Some(p2pkhindex) = p2pkhindex {
+            self.p2pkhindex_to_p2pkhaddressbytes
+                .truncate_if_needed(p2pkhindex, prev_height)?;
+        }
+        if let Some(p2shindex) = p2shindex {
+            self.p2shindex_to_p2shaddressbytes
+                .truncate_if_needed(p2shindex, prev_height)?;
+        }
+        if let Some(p2trindex) = p2trindex {
+            self.p2trindex_to_p2traddressbytes
+                .truncate_if_needed(p2trindex, prev_height)?;
+        }
+        if let Some(p2wpkhindex) = p2wpkhindex {
+            self.p2wpkhindex_to_p2wpkhaddressbytes
+                .truncate_if_needed(p2wpkhindex, prev_height)?;
+        }
+        if let Some(p2wshindex) = p2wshindex {
+            self.p2wshindex_to_p2wshaddressbytes
+                .truncate_if_needed(p2wshindex, prev_height);
+        }
 
-        // let txindex = txindex.context("txindex to not be none by now")?;
+        if let Some(txindex) = txindex {
+            self.txindex_to_first_txinindex
+                .truncate_if_needed(txindex, prev_height)?;
+            self.txindex_to_first_txoutindex
+                .truncate_if_needed(txindex, prev_height)?;
+            self.txindex_to_height.truncate_if_needed(txindex, prev_height)?;
+            self.txindex_to_locktime.truncate_if_needed(txindex, prev_height)?;
+            self.txindex_to_txid.truncate_if_needed(txindex, prev_height)?;
+            self.txindex_to_txversion.truncate_if_needed(txindex, prev_height)?;
+        }
 
-        // wtx.range(self.txindex_to_txid.data(), Slice::from(txindex)..)
-        //     .try_for_each(|slice| -> color_eyre::Result<()> {
-        //         let (slice_txindex, slice_txid) = slice?;
-        //         let txindex = Txindex::from(slice_txindex);
-        //         let txid = Txid::from_slice(&slice_txid)?;
+        if let Some(txinindex) = txinindex {
+            self.txinindex_to_txoutindex
+                .truncate_if_needed(txinindex, prev_height)?;
+        }
 
-        //         wtx.remove(self.txindex_to_txid.data(), Slice::from(txindex));
-        //         wtx.remove(self.txindex_to_height.data(), Slice::from(txindex));
-        //         wtx.remove(self.txid_prefix_to_txindex.data(), txid.prefix());
+        if let Some(txoutindex) = txoutindex {
+            self.txoutindex_to_addressindex
+                .truncate_if_needed(txoutindex, prev_height)?;
+            self.txoutindex_to_value.truncate_if_needed(txoutindex, prev_height)?;
+        }
 
-        //         Ok(())
-        //     })?;
-
-        // let txoutindex = Txoutindex::from(txindex);
-
-        // let mut addressindexes = BTreeSet::new();
-
-        // wtx.range(self.txoutindex_to_amount.data(), Slice::from(txoutindex)..)
-        //     .try_for_each(|slice| -> color_eyre::Result<()> {
-        //         let (txoutindex_slice, _) = slice?;
-
-        //         wtx.remove(self.txoutindex_to_amount.data(), txoutindex_slice);
-
-        //         if let Some(addressindex_slice) =
-        //             wtx.get(self.txoutindex_to_addressindex.data(), txoutindex_slice)?
-        //         {
-        //             wtx.remove(self.txoutindex_to_addressindex.data(), txoutindex_slice);
-
-        //             let addressindex = Addressindex::from(addressindex_slice);
-        //             addressindexes.insert(addressindex);
-
-        //             let txoutindex = Txoutindex::from(txoutindex_slice);
-        //             let addresstxoutindex = Addresstxoutindex::from((addressindex, txoutindex));
-
-        //             wtx.remove(
-        //                 self.addressindex_to_txoutindexes.data(),
-        //                 Slice::from(addresstxoutindex),
-        //             );
-        //         }
-
-        //         Ok(())
-        //     })?;
-
-        // addressindexes
-        // .into_iter()
-        // .filter(|addressindex| {
-        //     let is_empty = wtx
-        //         .prefix(
-        //             self.addressindex_to_txoutindexes.data(),
-        //             Slice::from(*addressindex),
-        //         )
-        //         .next()
-        //         .is_none();
-        //     is_empty
-        // })
-        // .try_for_each(|addressindex| -> color_eyre::Result<()> {
-        //     let addressindex_slice = Slice::from(addressindex);
-
-        //     let addressbytes = Addressbytes::from(
-        //         wtx.get(
-        //             self.addressindex_to_addressbytes.data(),
-        //             &addressindex_slice,
-        //         )?
-        //         .context("addressindex_to_address to have value")?,
-        //     );
-        //     wtx.remove(
-        //         self.addressbytes_prefix_to_addressindex.data(),
-        //         addressbytes.prefix(),
-        //     );
-        //     wtx.remove(
-        //         self.addressindex_to_addressbytes.data(),
-        //         &addressindex_slice,
-        //     );
-        //     wtx.remove(self.addressindex_to_addresstype.data(), &addressindex_slice);
-
-        //     Ok(())
-        // })?;
-        //
-
-        // todo!("clear addresstxoutindexes_out")
-        // todo!("clear addresstxoutindexes_in")
-        // todo!("clear zero_txoutindexes")
-
-        // Ok(())
+        Ok(())
     }
 
     pub fn flush(&mut self, height: Height) -> io::Result<()> {
