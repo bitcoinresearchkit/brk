@@ -33,6 +33,10 @@ impl Height {
     pub fn write(&self, path: &Path) -> Result<(), io::Error> {
         fs::write(path, self.as_bytes())
     }
+
+    pub fn decremented(&self) -> Self {
+        Self(self.0.checked_sub(1).unwrap_or_default())
+    }
 }
 
 impl PartialEq<u64> for Height {

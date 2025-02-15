@@ -282,6 +282,23 @@ where
         Ok(())
     }
 
+    pub fn truncate_if_needed(&mut self, index: I) -> Result<Option<T>> {
+        let index = Self::i_to_usize(index)?;
+
+        if index >= self.file_len {
+            return Ok(None);
+        }
+
+        let value_at_index = self.open_file_at_then_read(index).ok();
+
+        self.file
+            .set_len(Self::index_to_byte_index(index.checked_sub(1).unwrap_or_default()))?;
+
+        self.reset_disk_related_state()?;
+
+        Ok(value_at_index)
+    }
+
     #[inline]
     fn i_to_usize(index: I) -> Result<usize> {
         index.try_into().map_err(|_| Error::FailedKeyTryIntoUsize)

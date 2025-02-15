@@ -34,6 +34,11 @@ where
         self.vec.flush()
     }
 
+    pub fn truncate_if_needed(&mut self, index: I, height: Height) -> storable_vec::Result<Option<T>> {
+        height.write(&self.path_height())?;
+        self.vec.truncate_if_needed(index)
+    }
+
     pub fn height(&self) -> storable_vec::Result<Height> {
         Height::try_from(self.path_height().as_path())
     }
