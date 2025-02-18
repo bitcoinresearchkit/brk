@@ -67,8 +67,8 @@ impl StoreMeta {
         path.join("version")
     }
 
-    pub fn height(&self) -> Option<&Height> {
-        self.height.as_ref()
+    pub fn height(&self) -> Option<Height> {
+        self.height
     }
     pub fn needs(&self, height: Height) -> bool {
         self.height.is_none_or(|self_height| height > self_height)

@@ -1,4 +1,8 @@
-use std::{collections::BTreeMap, error, mem, path::Path};
+use std::{
+    collections::{BTreeMap, BTreeSet},
+    error, mem,
+    path::Path,
+};
 
 use fjall::{
     PartitionCreateOptions, PersistMode, ReadTransaction, Result, Slice, TransactionalKeyspace,
@@ -17,7 +21,10 @@ pub struct Store<Key, Value> {
     part: TransactionalPartitionHandle,
     rtx: ReadTransaction,
     puts: BTreeMap<Key, Value>,
+    dels: BTreeSet<Key>,
 }
+
+const CHECK_COLLISISONS: bool = true;
 
 impl<K, V> Store<K, V>
 where
@@ -48,6 +55,7 @@ where
             part,
             rtx,
             puts: BTreeMap::new(),
+            dels: BTreeSet::new(),
         })
     }
 
@@ -63,21 +71,44 @@ where
 
     pub fn insert_if_needed(&mut self, key: K, value: V, height: Height) {
         if self.needs(height) {
+            if !self.dels.is_empty() {
+                unreachable!("Shouldn't reach this");
+                // self.dels.remove(&key);
+            }
             self.puts.insert(key, value);
         }
     }
 
+    pub fn remove(&mut self, key: K) {
+        if !self.puts.is_empty() {
+            unreachable!("Shouldn't reach this");
+            // self.puts.remove(&key);
+        }
+        self.dels.insert(key);
+    }
+
     pub fn commit(&mut self, height: Height) -> Result<()> {
-        if self.has(height) && self.puts.is_empty() {
+        if self.has(height) && self.puts.is_empty() && self.dels.is_empty() {
             return Ok(());
         }
 
         self.meta.export(self.len(), height)?;
 
         let mut wtx = self.keyspace.write_tx();
-        mem::take(&mut self.puts)
+
+        mem::take(&mut self.dels)
             .into_iter()
-            .for_each(|(key, value)| wtx.insert(&self.part, key, value));
+            .for_each(|key| wtx.remove(&self.part, key));
+
+        mem::take(&mut self.puts).into_iter().for_each(|(key, value)| {
+            if CHECK_COLLISISONS {
+                if let Ok(Some(value)) = wtx.get(&self.part, key.as_bytes()) {
+                    dbg!(value);
+                    unreachable!();
+                }
+            }
+            wtx.insert(&self.part, key, value)
+        });
 
         wtx.commit()?;
 
@@ -88,12 +119,12 @@ where
         Ok(())
     }
 
-    pub fn height(&self) -> Option<&Height> {
+    pub fn height(&self) -> Option<Height> {
         self.meta.height()
     }
 
     pub fn len(&self) -> usize {
-        self.meta.len() + self.puts.len()
+        self.meta.len() + self.puts.len() - self.dels.len()
     }
     pub fn is_empty(&self) -> bool {
         self.len() == 0

@@ -1,15 +1,18 @@
 use std::{path::Path, thread};
 
-use storable_vec::Version;
+use storable_vec::{Value, Version, CACHED_GETS};
 
-use crate::{AddressHash, Addressindex, BlockHashPrefix, Height, TxidPrefix, Txindex};
+use crate::{
+    AddressHash, Addressbytes, Addressindex, Addresstype, BlockHashPrefix, Height, Indexes, TxidPrefix, Txindex,
+};
 
 mod base;
 mod meta;
-// mod version;
 
 pub use base::*;
 pub use meta::*;
+
+use super::StorableVecs;
 
 pub struct Fjalls {
     pub addresshash_to_addressindex: Store<AddressHash, Addressindex>,
@@ -30,135 +33,135 @@ impl Fjalls {
         })
     }
 
-    // pub fn rollback_from(
-    //     &mut self,
-    //     _wtx: &mut WriteTransaction,
-    //     _height: Height,
-    //     _exit: &Exit,
-    // ) -> color_eyre::Result<()> {
-    //     panic!();
-    // let mut txindex = None;
+    pub fn rollback(&mut self, vecs: &StorableVecs<CACHED_GETS>, starting_indexes: &Indexes) -> color_eyre::Result<()> {
+        vecs.height_to_blockhash
+            .iter_from(starting_indexes.height, |(_, blockhash)| {
+                let blockhash = blockhash.as_ref();
+                let blockhash_prefix = BlockHashPrefix::from(blockhash);
+                self.blockhash_prefix_to_height.remove(blockhash_prefix);
+                Ok(())
+            })?;
 
-    // wtx.range(self.height_to_blockhash.data(), Slice::from(height)..)
-    //     .try_for_each(|slice| -> color_eyre::Result<()> {
-    //         let (height_slice, slice_blockhash) = slice?;
-    //         let blockhash = BlockHash::from_slice(&slice_blockhash)?;
+        vecs.txindex_to_txid.iter_from(starting_indexes.txindex, |(_, txid)| {
+            let txid = txid.as_ref();
+            let txid_prefix = TxidPrefix::from(txid);
+            self.txid_prefix_to_txindex.remove(txid_prefix);
+            Ok(())
+        })?;
 
-    //         wtx.remove(self.height_to_blockhash.data(), height_slice);
+        vecs.height_to_first_p2pk65index
+            .iter_from(starting_indexes.height, |(_, index)| {
+                if let Some(typedbytes) = vecs
+                    .p2pk65index_to_p2pk65addressbytes
+                    .get(index.into_inner())?
+                    .map(Value::into_inner)
+                {
+                    let bytes = Addressbytes::from(typedbytes);
+                    let hash = AddressHash::from((&bytes, Addresstype::P2PK65));
+                    self.addresshash_to_addressindex.remove(hash);
+                }
+                Ok(())
+            })?;
 
-    //         wtx.remove(self.blockhash_prefix_to_height.data(), blockhash.prefix());
+        vecs.height_to_first_p2pk33index
+            .iter_from(starting_indexes.height, |(_, index)| {
+                if let Some(typedbytes) = vecs
+                    .p2pk33index_to_p2pk33addressbytes
+                    .get(index.into_inner())?
+                    .map(Value::into_inner)
+                {
+                    let bytes = Addressbytes::from(typedbytes);
+                    let hash = AddressHash::from((&bytes, Addresstype::P2PK33));
+                    self.addresshash_to_addressindex.remove(hash);
+                }
+                Ok(())
+            })?;
 
-    //         if txindex.is_none() {
-    //             txindex.replace(
-    //                 wtx.get(self.height_to_first_txindex.data(), height_slice)?
-    //                     .context("for height to have first txindex")?,
-    //             );
-    //         }
-    //         wtx.remove(self.height_to_first_txindex.data(), height_slice);
-    //         wtx.remove(self.height_to_last_txindex.data(), height_slice);
+        vecs.height_to_first_p2pkhindex
+            .iter_from(starting_indexes.height, |(_, index)| {
+                if let Some(typedbytes) = vecs
+                    .p2pkhindex_to_p2pkhaddressbytes
+                    .get(index.into_inner())?
+                    .map(Value::into_inner)
+                {
+                    let bytes = Addressbytes::from(typedbytes);
+                    let hash = AddressHash::from((&bytes, Addresstype::P2PKH));
+                    self.addresshash_to_addressindex.remove(hash);
+                }
+                Ok(())
+            })?;
 
-    //         Ok(())
-    //     })?;
+        vecs.height_to_first_p2shindex
+            .iter_from(starting_indexes.height, |(_, index)| {
+                if let Some(typedbytes) = vecs
+                    .p2shindex_to_p2shaddressbytes
+                    .get(index.into_inner())?
+                    .map(Value::into_inner)
+                {
+                    let bytes = Addressbytes::from(typedbytes);
+                    let hash = AddressHash::from((&bytes, Addresstype::P2SH));
+                    self.addresshash_to_addressindex.remove(hash);
+                }
+                Ok(())
+            })?;
 
-    // let txindex = txindex.context("txindex to not be none by now")?;
+        vecs.height_to_first_p2trindex
+            .iter_from(starting_indexes.height, |(_, index)| {
+                if let Some(typedbytes) = vecs
+                    .p2trindex_to_p2traddressbytes
+                    .get(index.into_inner())?
+                    .map(Value::into_inner)
+                {
+                    let bytes = Addressbytes::from(typedbytes);
+                    let hash = AddressHash::from((&bytes, Addresstype::P2TR));
+                    self.addresshash_to_addressindex.remove(hash);
+                }
+                Ok(())
+            })?;
 
-    // wtx.range(self.txindex_to_txid.data(), Slice::from(txindex)..)
-    //     .try_for_each(|slice| -> color_eyre::Result<()> {
-    //         let (slice_txindex, slice_txid) = slice?;
-    //         let txindex = Txindex::from(slice_txindex);
-    //         let txid = Txid::from_slice(&slice_txid)?;
+        vecs.height_to_first_p2wpkhindex
+            .iter_from(starting_indexes.height, |(_, index)| {
+                if let Some(typedbytes) = vecs
+                    .p2wpkhindex_to_p2wpkhaddressbytes
+                    .get(index.into_inner())?
+                    .map(Value::into_inner)
+                {
+                    let bytes = Addressbytes::from(typedbytes);
+                    let hash = AddressHash::from((&bytes, Addresstype::P2WPKH));
+                    self.addresshash_to_addressindex.remove(hash);
+                }
+                Ok(())
+            })?;
 
-    //         wtx.remove(self.txindex_to_txid.data(), Slice::from(txindex));
-    //         wtx.remove(self.txindex_to_height.data(), Slice::from(txindex));
-    //         wtx.remove(self.txid_prefix_to_txindex.data(), txid.prefix());
+        vecs.height_to_first_p2wshindex
+            .iter_from(starting_indexes.height, |(_, index)| {
+                if let Some(typedbytes) = vecs
+                    .p2wshindex_to_p2wshaddressbytes
+                    .get(index.into_inner())?
+                    .map(Value::into_inner)
+                {
+                    let bytes = Addressbytes::from(typedbytes);
+                    let hash = AddressHash::from((&bytes, Addresstype::P2WSH));
+                    self.addresshash_to_addressindex.remove(hash);
+                }
+                Ok(())
+            })?;
 
-    //         Ok(())
-    //     })?;
+        self.commit(starting_indexes.height.decremented())?;
 
-    // let txoutindex = Txoutindex::from(txindex);
+        Ok(())
+    }
 
-    // let mut addressindexes = BTreeSet::new();
-
-    // wtx.range(self.txoutindex_to_amount.data(), Slice::from(txoutindex)..)
-    //     .try_for_each(|slice| -> color_eyre::Result<()> {
-    //         let (txoutindex_slice, _) = slice?;
-
-    //         wtx.remove(self.txoutindex_to_amount.data(), txoutindex_slice);
-
-    //         if let Some(addressindex_slice) =
-    //             wtx.get(self.txoutindex_to_addressindex.data(), txoutindex_slice)?
-    //         {
-    //             wtx.remove(self.txoutindex_to_addressindex.data(), txoutindex_slice);
-
-    //             let addressindex = Addressindex::from(addressindex_slice);
-    //             addressindexes.insert(addressindex);
-
-    //             let txoutindex = Txoutindex::from(txoutindex_slice);
-    //             let addresstxoutindex = Addresstxoutindex::from((addressindex, txoutindex));
-
-    //             wtx.remove(
-    //                 self.addressindex_to_txoutindexes.data(),
-    //                 Slice::from(addresstxoutindex),
-    //             );
-    //         }
-
-    //         Ok(())
-    //     })?;
-
-    // addressindexes
-    // .into_iter()
-    // .filter(|addressindex| {
-    //     let is_empty = wtx
-    //         .prefix(
-    //             self.addressindex_to_txoutindexes.data(),
-    //             Slice::from(*addressindex),
-    //         )
-    //         .next()
-    //         .is_none();
-    //     is_empty
-    // })
-    // .try_for_each(|addressindex| -> color_eyre::Result<()> {
-    //     let addressindex_slice = Slice::from(addressindex);
-
-    //     let addressbytes = Addressbytes::from(
-    //         wtx.get(
-    //             self.addressindex_to_addressbytes.data(),
-    //             &addressindex_slice,
-    //         )?
-    //         .context("addressindex_to_address to have value")?,
-    //     );
-    //     wtx.remove(
-    //         self.addressbytes_prefix_to_addressindex.data(),
-    //         addressbytes.prefix(),
-    //     );
-    //     wtx.remove(
-    //         self.addressindex_to_addressbytes.data(),
-    //         &addressindex_slice,
-    //     );
-    //     wtx.remove(self.addressindex_to_addresstype.data(), &addressindex_slice);
-
-    //     Ok(())
-    // })?;
-    //
-
-    // todo!("clear addresstxoutindexes_out")
-    // todo!("clear addresstxoutindexes_in")
-    // todo!("clear zero_txoutindexes")
-    // todo!("clear txindexvout_to_txoutindex")
-
-    // Ok(())
-    // }
-
-    pub fn min_height(&self) -> Option<Height> {
+    pub fn starting_height(&self) -> Height {
         [
             self.addresshash_to_addressindex.height(),
             self.blockhash_prefix_to_height.height(),
             self.txid_prefix_to_txindex.height(),
         ]
         .into_iter()
+        .map(|height| height.map(Height::incremented).unwrap_or_default())
         .min()
-        .flatten()
-        .cloned()
+        .unwrap()
     }
 
     pub fn commit(&mut self, height: Height) -> fjall::Result<()> {
@@ -176,22 +179,4 @@ impl Fjalls {
             Ok(())
         })
     }
-
-    // pub fn udpate_meta(&self, wtx: &mut WriteTransaction, height: Height) {
-    //     self.addressbytes_prefix_to_addressindex.update_meta(wtx, height);
-    //     self.blockhash_prefix_to_height.update_meta(wtx, height);
-    //     self.txid_prefix_to_txindex.update_meta(wtx, height);
-    // }
-
-    // pub fn export(self, height: Height) -> Result<(), snkrj::Error> {
-    //     thread::scope(|scope| {
-    //         vec![
-    //             scope.spawn(|| self.addressbytes_prefix_to_addressindex.export(height)),
-    //             scope.spawn(|| self.blockhash_prefix_to_height.export(height)),
-    //             scope.spawn(|| self.txid_prefix_to_txindex.export(height)),
-    //         ]
-    //         .into_iter()
-    //         .try_for_each(|handle| -> Result<(), snkrj::Error> { handle.join().unwrap() })
-    //     })
-    // }
 }

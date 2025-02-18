@@ -22,7 +22,6 @@ pub use storage::{AnyStorableVec, StorableVec, Store, StoreMeta};
 use storage::{Fjalls, StorableVecs};
 pub use structs::*;
 
-const UNSAFE_BLOCKS: u32 = 1000;
 const SNAPSHOT_BLOCK_RANGE: usize = 1000;
 
 pub struct Indexer<const MODE: u8> {
@@ -43,68 +42,42 @@ impl Indexer<CACHED_GETS> {
     pub fn index(&mut self, bitcoin_dir: &Path, rpc: rpc::Client, exit: &Exit) -> color_eyre::Result<()> {
         let check_collisions = true;
 
-        let vecs = &mut self.vecs;
-        let trees = &mut self.trees;
+        let starting_indexes = Indexes::try_from((&mut self.vecs, &self.trees, &rpc)).unwrap_or_else(|_| {
+            let indexes = Indexes::default();
+            indexes.push_if_needed(&mut self.vecs).unwrap();
+            indexes
+        });
 
-        let mut height = vecs
-            .min_height()
-            .unwrap_or_default()
-            .min(trees.min_height())
-            .and_then(|h| h.checked_sub(UNSAFE_BLOCKS))
-            .map(Height::from)
-            .unwrap_or_default();
-
-        let mut txindex_global = vecs.height_to_first_txindex.get_or_default(height)?;
-        let mut txinindex_global = vecs.height_to_first_txinindex.get_or_default(height)?;
-        let mut txoutindex_global = vecs.height_to_first_txoutindex.get_or_default(height)?;
-        let mut addressindex_global = vecs.height_to_first_addressindex.get_or_default(height)?;
-        let mut emptyindex_global = vecs.height_to_first_emptyindex.get_or_default(height)?;
-        let mut multisigindex_global = vecs.height_to_first_multisigindex.get_or_default(height)?;
-        let mut opreturnindex_global = vecs.height_to_first_opreturnindex.get_or_default(height)?;
-        let mut pushonlyindex_global = vecs.height_to_first_pushonlyindex.get_or_default(height)?;
-        let mut unknownindex_global = vecs.height_to_first_unknownindex.get_or_default(height)?;
-        let mut p2pk33index_global = vecs.height_to_first_p2pk33index.get_or_default(height)?;
-        let mut p2pk65index_global = vecs.height_to_first_p2pk65index.get_or_default(height)?;
-        let mut p2pkhindex_global = vecs.height_to_first_p2pkhindex.get_or_default(height)?;
-        let mut p2shindex_global = vecs.height_to_first_p2shindex.get_or_default(height)?;
-        let mut p2trindex_global = vecs.height_to_first_p2trindex.get_or_default(height)?;
-        let mut p2wpkhindex_global = vecs.height_to_first_p2wpkhindex.get_or_default(height)?;
-        let mut p2wshindex_global = vecs.height_to_first_p2wshindex.get_or_default(height)?;
+        exit.block();
+        self.trees.rollback(&self.vecs, &starting_indexes)?;
+        self.vecs.rollback(&starting_indexes)?;
+        exit.unblock();
 
         let export =
             |trees: &mut Fjalls, vecs: &mut StorableVecs<CACHED_GETS>, height: Height| -> color_eyre::Result<()> {
                 info!("Exporting...");
-
                 exit.block();
-
-                thread::scope(|scope| -> color_eyre::Result<()> {
-                    let vecs_handle = scope.spawn(|| vecs.flush(height));
-                    trees.commit(height)?;
-                    vecs_handle.join().unwrap()?;
-                    Ok(())
-                })?;
-
+                trees.commit(height)?;
+                vecs.flush(height)?;
                 exit.unblock();
-
                 Ok(())
             };
 
-        iterator::new(bitcoin_dir, Some(height.into()), Some(400_000), rpc)
+        let vecs = &mut self.vecs;
+        let trees = &mut self.trees;
+
+        let mut idxs = starting_indexes;
+
+        iterator::new(bitcoin_dir, Some(idxs.height.into()), None, rpc)
             .iter()
             .try_for_each(|(_height, block, blockhash)| -> color_eyre::Result<()> {
                 info!("Indexing block {_height}...");
 
+                let height = Height::from(_height);
+                idxs.height = height;
+
                 let blockhash = BlockHash::from(blockhash);
-                height = Height::from(_height);
-
-                if let Some(saved_blockhash) = vecs.height_to_blockhash.get(height)? {
-                    if &blockhash != saved_blockhash.as_ref() {
-                        todo!("Rollback not implemented");
-                        // trees.rollback_from(&mut rtx, height, &exit)?;
-                    }
-                }
-
-                let blockhash_prefix = BlockHashPrefix::try_from(&blockhash)?;
+                let blockhash_prefix = BlockHashPrefix::from(&blockhash);
 
                 if trees
                     .blockhash_prefix_to_height
@@ -124,30 +97,6 @@ impl Indexer<CACHED_GETS> {
                 vecs.height_to_timestamp.push_if_needed(height, Timestamp::from(block.header.time))?;
                 vecs.height_to_size.push_if_needed(height, block.total_size())?;
                 vecs.height_to_weight.push_if_needed(height, block.weight().into())?;
-                vecs.height_to_first_txindex.push_if_needed(height, txindex_global)?;
-                vecs.height_to_first_txinindex
-                    .push_if_needed(height, txinindex_global)?;
-                vecs.height_to_first_txoutindex
-                    .push_if_needed(height, txoutindex_global)?;
-                vecs.height_to_first_addressindex
-                    .push_if_needed(height, addressindex_global)?;
-                vecs.height_to_first_emptyindex
-                    .push_if_needed(height, emptyindex_global)?;
-                vecs.height_to_first_multisigindex
-                    .push_if_needed(height, multisigindex_global)?;
-                vecs.height_to_first_opreturnindex
-                    .push_if_needed(height, opreturnindex_global)?;
-                vecs.height_to_first_pushonlyindex
-                    .push_if_needed(height, pushonlyindex_global)?;
-                vecs.height_to_first_unknownindex
-                    .push_if_needed(height, unknownindex_global)?;
-                vecs.height_to_first_p2pk33index.push_if_needed(height, p2pk33index_global)?;
-                vecs.height_to_first_p2pk65index.push_if_needed(height, p2pk65index_global)?;
-                vecs.height_to_first_p2pkhindex.push_if_needed(height, p2pkhindex_global)?;
-                vecs.height_to_first_p2shindex.push_if_needed(height, p2shindex_global)?;
-                vecs.height_to_first_p2trindex.push_if_needed(height, p2trindex_global)?;
-                vecs.height_to_first_p2wpkhindex.push_if_needed(height, p2wpkhindex_global)?;
-                vecs.height_to_first_p2wshindex.push_if_needed(height, p2wshindex_global)?;
 
                 let inputs = block
                     .txdata
@@ -191,7 +140,7 @@ impl Indexer<CACHED_GETS> {
                                 .map(|(index, tx)| -> color_eyre::Result<_> {
                                     let txid = Txid::from(tx.compute_txid());
 
-                                    let txid_prefix = TxidPrefix::try_from(&txid)?;
+                                    let txid_prefix = TxidPrefix::from(&txid);
 
                                     let prev_txindex_opt =
                                         if check_collisions && trees.txid_prefix_to_txindex.needs(height) {
@@ -224,8 +173,8 @@ impl Indexer<CACHED_GETS> {
                             .into_par_iter()
                             .enumerate()
                             .map(|(block_txinindex, (block_txindex, vin, txin, tx))| -> color_eyre::Result<(Txinindex, InputSource)> {
-                                let txindex = txindex_global + block_txindex;
-                                let txinindex = txinindex_global + Txinindex::from(block_txinindex);
+                                let txindex = idxs.txindex + block_txindex;
+                                let txinindex = idxs.txinindex + Txinindex::from(block_txinindex);
 
                                 // dbg!((txindex, txinindex, vin));
 
@@ -238,15 +187,15 @@ impl Indexer<CACHED_GETS> {
 
                                 let prev_txindex = if let Some(txindex) = trees
                                     .txid_prefix_to_txindex
-                                    .get(&TxidPrefix::try_from(&txid)?)?
+                                    .get(&TxidPrefix::from(&txid))?
                                     .map(|v| *v)
                                     .and_then(|txindex| {
                                         // Checking if not finding txindex from the future
-                                        (txindex < txindex_global).then_some(txindex)
+                                        (txindex < idxs.txindex).then_some(txindex)
                                     }) {
                                     txindex
                                 } else {
-                                    // dbg!(txindex_global + block_txindex, txindex, txin, vin);
+                                    // dbg!(indexes.txindex + block_txindex, txindex, txin, vin);
                                     return Ok((txinindex, InputSource::SameBlock((tx, txindex, txin, vin))));
                                 };
 
@@ -301,8 +250,8 @@ impl Indexer<CACHED_GETS> {
                                         &Transaction,
                                     ),
                                 )> {
-                                    let txindex = txindex_global + block_txindex;
-                                    let txoutindex = txoutindex_global + Txoutindex::from(block_txoutindex);
+                                    let txindex = idxs.txindex + block_txindex;
+                                    let txoutindex = idxs.txoutindex + Txoutindex::from(block_txoutindex);
 
                                     let script = &txout.script_pubkey;
 
@@ -321,7 +270,7 @@ impl Indexer<CACHED_GETS> {
                                             .map(|v| *v)
                                             // Checking if not in the future
                                             .and_then(|addressindex_local| {
-                                                (addressindex_local < addressindex_global).then_some(addressindex_local)
+                                                (addressindex_local < idxs.addressindex).then_some(addressindex_local)
                                             })
                                     });
 
@@ -359,7 +308,7 @@ impl Indexer<CACHED_GETS> {
                                                 prev_addresstype,
                                                 prev_addressbytes,
                                                 addressbytes,
-                                                addressindex_global,
+                                                idxs.addressindex,
                                                 addressindex,
                                                 addresstypeindex,
                                                 txout,
@@ -448,7 +397,7 @@ impl Indexer<CACHED_GETS> {
 
                         vecs.txoutindex_to_value.push_if_needed(txoutindex, sats)?;
 
-                        let mut addressindex = addressindex_global;
+                        let mut addressindex = idxs.addressindex;
 
                         let mut addresshash = None;
 
@@ -464,21 +413,21 @@ impl Indexer<CACHED_GETS> {
                         }) {
                             addressindex = addressindex_local;
                         } else {
-                            addressindex_global.increment();
+                            idxs.addressindex.increment();
 
                             let addresstypeindex = match addresstype {
-                                Addresstype::Empty => emptyindex_global.copy_then_increment(),
-                                Addresstype::Multisig => multisigindex_global.copy_then_increment(),
-                                Addresstype::OpReturn => opreturnindex_global.copy_then_increment(),
-                                Addresstype::PushOnly => pushonlyindex_global.copy_then_increment(),
-                                Addresstype::Unknown => unknownindex_global.copy_then_increment(),
-                                Addresstype::P2PK65 => p2pk65index_global.copy_then_increment(),
-                                Addresstype::P2PK33 => p2pk33index_global.copy_then_increment(),
-                                Addresstype::P2PKH => p2pkhindex_global.copy_then_increment(),
-                                Addresstype::P2SH => p2shindex_global.copy_then_increment(),
-                                Addresstype::P2WPKH => p2wpkhindex_global.copy_then_increment(),
-                                Addresstype::P2WSH => p2wshindex_global.copy_then_increment(),
-                                Addresstype::P2TR => p2trindex_global.copy_then_increment(),
+                                Addresstype::Empty => idxs.emptyindex.copy_then_increment(),
+                                Addresstype::Multisig => idxs.multisigindex.copy_then_increment(),
+                                Addresstype::OpReturn => idxs.opreturnindex.copy_then_increment(),
+                                Addresstype::PushOnly => idxs.pushonlyindex.copy_then_increment(),
+                                Addresstype::Unknown => idxs.unknownindex.copy_then_increment(),
+                                Addresstype::P2PK65 => idxs.p2pk65index.copy_then_increment(),
+                                Addresstype::P2PK33 => idxs.p2pk33index.copy_then_increment(),
+                                Addresstype::P2PKH => idxs.p2pkhindex.copy_then_increment(),
+                                Addresstype::P2SH => idxs.p2shindex.copy_then_increment(),
+                                Addresstype::P2WPKH => idxs.p2wpkhindex.copy_then_increment(),
+                                Addresstype::P2WSH => idxs.p2wshindex.copy_then_increment(),
+                                Addresstype::P2TR => idxs.p2trindex.copy_then_increment(),
                             };
 
                             vecs.addressindex_to_addresstype
@@ -537,13 +486,13 @@ impl Indexer<CACHED_GETS> {
                                     let vout = Vout::from(outpoint.vout);
 
                                     let block_txindex = txid_prefix_to_txid_and_block_txindex_and_prev_txindex
-                                        .get(&TxidPrefix::try_from(&txid)?)
+                                        .get(&TxidPrefix::from(&txid))
                                         .context("txid should be in same block").inspect_err(|_| {
                                             dbg!(&txid_prefix_to_txid_and_block_txindex_and_prev_txindex);
                                             // panic!();
                                         })?
                                         .2;
-                                    let prev_txindex = txindex_global + block_txindex;
+                                    let prev_txindex = idxs.txindex + block_txindex;
 
                                     let prev_txoutindex = new_txindexvout_to_txoutindex
                                         .remove(&(prev_txindex, vout))
@@ -577,7 +526,7 @@ impl Indexer<CACHED_GETS> {
                     .into_iter()
                     .try_for_each(
                         |(txid_prefix, (tx, txid, index, prev_txindex_opt))| -> color_eyre::Result<()> {
-                            let txindex = txindex_global + index;
+                            let txindex = idxs.txindex + index;
 
                             txindex_to_tx_and_txid.insert(txindex, (tx, txid));
 
@@ -640,12 +589,19 @@ impl Indexer<CACHED_GETS> {
                         vecs.txindex_to_txid.push_if_needed(txindex, txid)?;
                         vecs.txindex_to_height.push_if_needed(txindex, height)?;
                         vecs.txindex_to_locktime.push_if_needed(txindex, tx.lock_time.into())?;
+                        // tx.base_size()
+                        // tx.total_size()
+                        // tx.is_explicitly_rbf()
+                        // tx.weight()
+                        // tx.vsize() in computer as it can be computed from the weight
                         Ok(())
                     })?;
 
-                txindex_global += Txindex::from(tx_len);
-                txinindex_global += Txinindex::from(inputs_len);
-                txoutindex_global += Txoutindex::from(outputs_len);
+                idxs.txindex += Txindex::from(tx_len);
+                idxs.txinindex += Txinindex::from(inputs_len);
+                idxs.txoutindex += Txoutindex::from(outputs_len);
+
+                idxs.push_future_if_needed(vecs)?;
 
                 let should_snapshot = _height != 0 && _height % SNAPSHOT_BLOCK_RANGE == 0 && !exit.blocked();
                 if should_snapshot {
@@ -655,7 +611,7 @@ impl Indexer<CACHED_GETS> {
                 Ok(())
             })?;
 
-        export(trees, vecs, height)?;
+        export(trees, vecs, idxs.height)?;
 
         sleep(Duration::from_millis(100));
 

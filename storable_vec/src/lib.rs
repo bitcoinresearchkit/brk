@@ -12,6 +12,7 @@ use std::{
 };
 
 pub use memmap2;
+use rayon::prelude::*;
 pub use zerocopy;
 
 mod enums;
@@ -71,9 +72,9 @@ pub struct StorableVec<I, T, const MODE: u8> {
 
 /// In bytes
 const MAX_PAGE_SIZE: usize = 4 * 4096;
-// const ONE_MB: usize = 1000 * 1024;
-const MAX_CACHE_SIZE: usize = usize::MAX;
-// const MAX_CACHE_SIZE: usize = 100 * ONE_MB;
+const ONE_MB: usize = 1000 * 1024;
+// const MAX_CACHE_SIZE: usize = usize::MAX;
+const MAX_CACHE_SIZE: usize = 100 * ONE_MB;
 
 impl<I, T, const MODE: u8> StorableVec<I, T, MODE>
 where
@@ -182,8 +183,7 @@ where
     fn reset_cache(&mut self) -> io::Result<()> {
         match MODE {
             CACHED_GETS => {
-                // par_iter_mut ?
-                self.cache.iter_mut().for_each(|lock| {
+                self.cache.par_iter_mut().for_each(|lock| {
                     lock.take();
                 });
 
@@ -192,7 +192,7 @@ where
 
                 if self.cache.len() != len {
                     self.cache.resize_with(len, Default::default);
-                    self.cache.shrink_to_fit();
+                    // self.cache.shrink_to_fit();
                 }
 
                 Ok(())
@@ -270,10 +270,14 @@ where
             return Ok(());
         }
 
-        let mut bytes: Vec<u8> = Vec::with_capacity(self.pushed_len() * Self::SIZE_OF_T);
+        let mut bytes: Vec<u8> = vec![0; self.pushed_len() * Self::SIZE_OF_T];
+
+        let unsafe_bytes = UnsafeSlice::new(&mut bytes);
+
         mem::take(&mut self.pushed)
-            .into_iter()
-            .for_each(|v| bytes.extend_from_slice(v.as_bytes()));
+            .into_par_iter()
+            .enumerate()
+            .for_each(|(i, v)| unsafe_bytes.copy_slice(i * Self::SIZE_OF_T, v.as_bytes()));
 
         self.file.write_all(&bytes)?;
 
@@ -291,8 +295,7 @@ where
 
         let value_at_index = self.open_file_at_then_read(index).ok();
 
-        self.file
-            .set_len(Self::index_to_byte_index(index.checked_sub(1).unwrap_or_default()))?;
+        self.file.set_len(Self::index_to_byte_index(index))?;
 
         self.reset_disk_related_state()?;
 
@@ -427,6 +430,28 @@ where
         T: Default + Clone,
     {
         Ok(self.get(index)?.map(|v| (*v).clone()).unwrap_or(Default::default()))
+    }
+
+    pub fn iter_from<F>(&self, mut index: I, mut f: F) -> Result<()>
+    where
+        F: FnMut((I, Value<T>)) -> Result<()>,
+    {
+        let disk_len = I::from(Self::read_disk_len_(&self.file)?);
+
+        while index < disk_len {
+            f((index, self.get(index)?.unwrap()))?;
+            index = index + 1;
+        }
+
+        let mut index = I::from(0);
+        let pushed_len = I::from(self.pushed_len());
+        let disk_len = Self::i_to_usize(disk_len)?;
+        while index < pushed_len {
+            f(((index + disk_len), self.get(index)?.map(Value::from).unwrap()))?;
+            index = index + 1;
+        }
+
+        Ok(())
     }
 
     #[inline]

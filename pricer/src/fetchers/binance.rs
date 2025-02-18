@@ -35,7 +35,7 @@ impl Binance {
         }
     }
 
-    fn get_from_1mn(
+    pub fn get_from_1mn(
         &mut self,
         timestamp: Timestamp,
         previous_timestamp: Option<Timestamp>,
@@ -44,7 +44,7 @@ impl Binance {
             self._1mn.replace(Self::fetch_1mn()?);
         }
         Pricer::<STATELESS>::find_height_ohlc(
-            &self._1mn.as_ref().unwrap(),
+            self._1mn.as_ref().unwrap(),
             timestamp,
             previous_timestamp,
             "binance 1mn",
@@ -55,7 +55,7 @@ impl Binance {
         info!("Fetching 1mn prices from Binance...");
 
         retry(
-            |_| Self::json_to_timestamp_to_ohlc(&reqwest::blocking::get(Self::url("interval=1m&limit=1000"))?.json()?),
+            |_| Self::json_to_timestamp_to_ohlc(&minreq::get(Self::url("interval=1m&limit=1000")).send()?.json()?),
             30,
             10,
         )
@@ -74,11 +74,13 @@ impl Binance {
             .ok_or(color_eyre::eyre::Error::msg("Couldn't find date"))
     }
 
-    fn fetch_1d() -> color_eyre::Result<BTreeMap<Date, OHLC>> {
+    pub fn fetch_1d() -> color_eyre::Result<BTreeMap<Date, OHLC>> {
         info!("Fetching daily prices from Kraken...");
 
+        dbg!(&Self::url("interval=1d"));
+
         retry(
-            |_| Self::json_to_date_to_ohlc(&reqwest::blocking::get(Self::url("interval=1d"))?.json()?),
+            |_| Self::json_to_date_to_ohlc(&minreq::get(Self::url("interval=1d")).send()?.json()?),
             30,
             10,
         )
@@ -92,12 +94,7 @@ impl Binance {
         if self.har.is_none() {
             self.har.replace(self.read_har().unwrap_or_default());
         }
-        Pricer::<STATELESS>::find_height_ohlc(
-            &self.har.as_ref().unwrap(),
-            timestamp,
-            previous_timestamp,
-            "binance har",
-        )
+        Pricer::<STATELESS>::find_height_ohlc(self.har.as_ref().unwrap(), timestamp, previous_timestamp, "binance har")
     }
 
     fn read_har(&self) -> color_eyre::Result<BTreeMap<Timestamp, OHLC>> {

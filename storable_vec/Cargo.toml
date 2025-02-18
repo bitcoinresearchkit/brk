@@ -12,6 +12,7 @@ json = ["dep:serde", "dep:serde_json"]
 
 [dependencies]
 memmap2 = "0.9.5"
-zerocopy = { workspace = true }
+rayon = { workspace = true }
 serde = { workspace = true, optional = true }
 serde_json = { workspace = true, optional = true }
+zerocopy = { workspace = true }

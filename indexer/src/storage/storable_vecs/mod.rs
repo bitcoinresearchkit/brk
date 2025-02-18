@@ -1,14 +1,17 @@
-use std::{collections::BTreeMap, fs, io, path::Path};
+use std::{fs, io, path::Path};
 
-use exit::Exit;
 use rayon::prelude::*;
 use storable_vec::{AnyJsonStorableVec, Version, CACHED_GETS};
 
-use crate::structs::{
-    Addressbytes, Addressindex, Addresstype, Addresstypeindex, BlockHash, Emptyindex, Height, LockTime, Multisigindex,
-    Opreturnindex, P2PK33AddressBytes, P2PK33index, P2PK65AddressBytes, P2PK65index, P2PKHAddressBytes, P2PKHindex,
-    P2SHAddressBytes, P2SHindex, P2TRAddressBytes, P2TRindex, P2WPKHAddressBytes, P2WPKHindex, P2WSHAddressBytes,
-    P2WSHindex, Pushonlyindex, Sats, Timestamp, TxVersion, Txid, Txindex, Txinindex, Txoutindex, Unknownindex, Weight,
+use crate::{
+    structs::{
+        Addressbytes, Addressindex, Addresstype, Addresstypeindex, BlockHash, Emptyindex, Height, LockTime,
+        Multisigindex, Opreturnindex, P2PK33AddressBytes, P2PK33index, P2PK65AddressBytes, P2PK65index,
+        P2PKHAddressBytes, P2PKHindex, P2SHAddressBytes, P2SHindex, P2TRAddressBytes, P2TRindex, P2WPKHAddressBytes,
+        P2WPKHindex, P2WSHAddressBytes, P2WSHindex, Pushonlyindex, Sats, Timestamp, TxVersion, Txid, Txindex,
+        Txinindex, Txoutindex, Unknownindex, Weight,
+    },
+    Indexes,
 };
 
 mod base;
@@ -57,8 +60,6 @@ pub struct StorableVecs<const MODE: u8> {
     pub txoutindex_to_addressindex: StorableVec<Txoutindex, Addressindex, MODE>,
     pub txoutindex_to_value: StorableVec<Txoutindex, Sats, MODE>,
 }
-
-// const UNSAFE_BLOCKS: usize = 1000;
 
 impl<const MODE: u8> StorableVecs<MODE> {
     pub fn import(path: &Path) -> color_eyre::Result<Self> {
@@ -180,113 +181,104 @@ impl<const MODE: u8> StorableVecs<MODE> {
         })
     }
 
-    #[allow(unused)]
-    pub fn rollback_from(&mut self, height: Height, exit: &Exit) -> storable_vec::Result<()> {
-        let prev_height = height.decremented();
+    pub fn rollback(&mut self, starting_indexes: &Indexes) -> storable_vec::Result<()> {
+        let saved_height = starting_indexes.height.decremented();
 
-        let mut truncated_indexes: BTreeMap<String, Option<usize>> = BTreeMap::new();
+        // We don't want to override the starting indexes so we cut from n + 1
+        let height = starting_indexes.height.incremented();
 
-        let addressindex = self
-            .height_to_first_addressindex
-            .truncate_if_needed(height, prev_height)?;
-        let txindex = self.height_to_first_txindex.truncate_if_needed(height, prev_height)?;
-        let txinindex = self.height_to_first_txinindex.truncate_if_needed(height, prev_height)?;
-        let txoutindex = self
-            .height_to_first_txoutindex
-            .truncate_if_needed(height, prev_height)?;
-        let p2pk33index = self
-            .height_to_first_p2pk33index
-            .truncate_if_needed(height, prev_height)?;
-        let p2pk65index = self
-            .height_to_first_p2pk65index
-            .truncate_if_needed(height, prev_height)?;
-        let p2pkhindex = self
-            .height_to_first_p2pkhindex
-            .truncate_if_needed(height, prev_height)?;
-        let p2shindex = self.height_to_first_p2shindex.truncate_if_needed(height, prev_height)?;
-        let p2trindex = self.height_to_first_p2trindex.truncate_if_needed(height, prev_height)?;
-        let p2wpkhindex = self
-            .height_to_first_p2wpkhindex
-            .truncate_if_needed(height, prev_height)?;
-        let p2wshindex = self
-            .height_to_first_p2wshindex
-            .truncate_if_needed(height, prev_height)?;
-
-        self.height_to_blockhash.truncate_if_needed(height, prev_height)?;
-        self.height_to_difficulty.truncate_if_needed(height, prev_height)?;
+        self.height_to_first_addressindex
+            .truncate_if_needed(height, saved_height)?;
         self.height_to_first_emptyindex
-            .truncate_if_needed(height, prev_height)?;
+            .truncate_if_needed(height, saved_height)?;
         self.height_to_first_multisigindex
-            .truncate_if_needed(height, prev_height)?;
+            .truncate_if_needed(height, saved_height)?;
         self.height_to_first_opreturnindex
-            .truncate_if_needed(height, prev_height)?;
+            .truncate_if_needed(height, saved_height)?;
+        self.height_to_first_p2pk33index
+            .truncate_if_needed(height, saved_height)?;
+        self.height_to_first_p2pk65index
+            .truncate_if_needed(height, saved_height)?;
+        self.height_to_first_p2pkhindex
+            .truncate_if_needed(height, saved_height)?;
+        self.height_to_first_p2shindex
+            .truncate_if_needed(height, saved_height)?;
+        self.height_to_first_p2trindex
+            .truncate_if_needed(height, saved_height)?;
+        self.height_to_first_p2wpkhindex
+            .truncate_if_needed(height, saved_height)?;
+        self.height_to_first_p2wshindex
+            .truncate_if_needed(height, saved_height)?;
         self.height_to_first_pushonlyindex
-            .truncate_if_needed(height, prev_height)?;
+            .truncate_if_needed(height, saved_height)?;
+        self.height_to_first_txindex.truncate_if_needed(height, saved_height)?;
+        self.height_to_first_txinindex
+            .truncate_if_needed(height, saved_height)?;
+        self.height_to_first_txoutindex
+            .truncate_if_needed(height, saved_height)?;
         self.height_to_first_unknownindex
-            .truncate_if_needed(height, prev_height)?;
-        self.height_to_size.truncate_if_needed(height, prev_height)?;
-        self.height_to_timestamp.truncate_if_needed(height, prev_height)?;
-        self.height_to_weight.truncate_if_needed(height, prev_height)?;
+            .truncate_if_needed(height, saved_height)?;
 
-        if let Some(addressindex) = addressindex {
-            self.addressindex_to_addresstype
-                .truncate_if_needed(addressindex, prev_height)?;
-            self.addressindex_to_addresstypeindex
-                .truncate_if_needed(addressindex, prev_height)?;
-            self.addressindex_to_height
-                .truncate_if_needed(addressindex, prev_height)?;
-        }
+        // Now we can cut everything that's out of date
+        let &Indexes {
+            addressindex,
+            height,
+            p2pk33index,
+            p2pk65index,
+            p2pkhindex,
+            p2shindex,
+            p2trindex,
+            p2wpkhindex,
+            p2wshindex,
+            txindex,
+            txinindex,
+            txoutindex,
+            ..
+        } = starting_indexes;
 
-        if let Some(p2pk33index) = p2pk33index {
-            self.p2pk33index_to_p2pk33addressbytes
-                .truncate_if_needed(p2pk33index, prev_height)?;
-        }
-        if let Some(p2pk65index) = p2pk65index {
-            self.p2pk65index_to_p2pk65addressbytes
-                .truncate_if_needed(p2pk65index, prev_height)?;
-        }
-        if let Some(p2pkhindex) = p2pkhindex {
-            self.p2pkhindex_to_p2pkhaddressbytes
-                .truncate_if_needed(p2pkhindex, prev_height)?;
-        }
-        if let Some(p2shindex) = p2shindex {
-            self.p2shindex_to_p2shaddressbytes
-                .truncate_if_needed(p2shindex, prev_height)?;
-        }
-        if let Some(p2trindex) = p2trindex {
-            self.p2trindex_to_p2traddressbytes
-                .truncate_if_needed(p2trindex, prev_height)?;
-        }
-        if let Some(p2wpkhindex) = p2wpkhindex {
-            self.p2wpkhindex_to_p2wpkhaddressbytes
-                .truncate_if_needed(p2wpkhindex, prev_height)?;
-        }
-        if let Some(p2wshindex) = p2wshindex {
-            self.p2wshindex_to_p2wshaddressbytes
-                .truncate_if_needed(p2wshindex, prev_height);
-        }
+        self.height_to_blockhash.truncate_if_needed(height, saved_height)?;
+        self.height_to_difficulty.truncate_if_needed(height, saved_height)?;
+        self.height_to_size.truncate_if_needed(height, saved_height)?;
+        self.height_to_timestamp.truncate_if_needed(height, saved_height)?;
+        self.height_to_weight.truncate_if_needed(height, saved_height)?;
 
-        if let Some(txindex) = txindex {
-            self.txindex_to_first_txinindex
-                .truncate_if_needed(txindex, prev_height)?;
-            self.txindex_to_first_txoutindex
-                .truncate_if_needed(txindex, prev_height)?;
-            self.txindex_to_height.truncate_if_needed(txindex, prev_height)?;
-            self.txindex_to_locktime.truncate_if_needed(txindex, prev_height)?;
-            self.txindex_to_txid.truncate_if_needed(txindex, prev_height)?;
-            self.txindex_to_txversion.truncate_if_needed(txindex, prev_height)?;
-        }
+        self.addressindex_to_addresstype
+            .truncate_if_needed(addressindex, saved_height)?;
+        self.addressindex_to_addresstypeindex
+            .truncate_if_needed(addressindex, saved_height)?;
+        self.addressindex_to_height
+            .truncate_if_needed(addressindex, saved_height)?;
 
-        if let Some(txinindex) = txinindex {
-            self.txinindex_to_txoutindex
-                .truncate_if_needed(txinindex, prev_height)?;
-        }
+        self.p2pk33index_to_p2pk33addressbytes
+            .truncate_if_needed(p2pk33index, saved_height)?;
+        self.p2pk65index_to_p2pk65addressbytes
+            .truncate_if_needed(p2pk65index, saved_height)?;
+        self.p2pkhindex_to_p2pkhaddressbytes
+            .truncate_if_needed(p2pkhindex, saved_height)?;
+        self.p2shindex_to_p2shaddressbytes
+            .truncate_if_needed(p2shindex, saved_height)?;
+        self.p2trindex_to_p2traddressbytes
+            .truncate_if_needed(p2trindex, saved_height)?;
+        self.p2wpkhindex_to_p2wpkhaddressbytes
+            .truncate_if_needed(p2wpkhindex, saved_height)?;
+        self.p2wshindex_to_p2wshaddressbytes
+            .truncate_if_needed(p2wshindex, saved_height)?;
 
-        if let Some(txoutindex) = txoutindex {
-            self.txoutindex_to_addressindex
-                .truncate_if_needed(txoutindex, prev_height)?;
-            self.txoutindex_to_value.truncate_if_needed(txoutindex, prev_height)?;
-        }
+        self.txindex_to_first_txinindex
+            .truncate_if_needed(txindex, saved_height)?;
+        self.txindex_to_first_txoutindex
+            .truncate_if_needed(txindex, saved_height)?;
+        self.txindex_to_height.truncate_if_needed(txindex, saved_height)?;
+        self.txindex_to_locktime.truncate_if_needed(txindex, saved_height)?;
+        self.txindex_to_txid.truncate_if_needed(txindex, saved_height)?;
+        self.txindex_to_txversion.truncate_if_needed(txindex, saved_height)?;
+
+        self.txinindex_to_txoutindex
+            .truncate_if_needed(txinindex, saved_height)?;
+
+        self.txoutindex_to_addressindex
+            .truncate_if_needed(txoutindex, saved_height)?;
+        self.txoutindex_to_value.truncate_if_needed(txoutindex, saved_height)?;
 
         Ok(())
     }
@@ -297,12 +289,12 @@ impl<const MODE: u8> StorableVecs<MODE> {
             .try_for_each(|vec| vec.flush(height))
     }
 
-    pub fn min_height(&mut self) -> color_eyre::Result<Option<Height>> {
-        Ok(self
-            .as_mut_any_vec_slice()
+    pub fn starting_height(&mut self) -> Height {
+        self.as_mut_any_vec_slice()
             .into_iter()
-            .map(|vec| vec.height().unwrap_or_default())
-            .min())
+            .map(|vec| vec.height().map(Height::incremented).unwrap_or_default())
+            .min()
+            .unwrap()
     }
 
     pub fn as_any_json_vec_slice(&self) -> [&dyn AnyJsonStorableVec; 40] {

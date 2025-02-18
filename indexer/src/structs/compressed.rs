@@ -41,10 +41,9 @@ impl From<AddressHash> for Slice {
 
 #[derive(Debug, Deref, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, FromBytes, Immutable, IntoBytes, KnownLayout)]
 pub struct BlockHashPrefix([u8; 8]);
-impl TryFrom<&BlockHash> for BlockHashPrefix {
-    type Error = color_eyre::Report;
-    fn try_from(value: &BlockHash) -> Result<Self, Self::Error> {
-        Ok(Self(copy_first_8bytes(&value[..])))
+impl From<&BlockHash> for BlockHashPrefix {
+    fn from(value: &BlockHash) -> Self {
+        Self(copy_first_8bytes(&value[..]).unwrap())
     }
 }
 impl TryFrom<Slice> for BlockHashPrefix {
@@ -66,10 +65,9 @@ impl From<BlockHashPrefix> for Slice {
 
 #[derive(Debug, Deref, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, FromBytes, Immutable, IntoBytes, KnownLayout)]
 pub struct TxidPrefix([u8; 8]);
-impl TryFrom<&Txid> for TxidPrefix {
-    type Error = color_eyre::Report;
-    fn try_from(value: &Txid) -> Result<Self, Self::Error> {
-        Ok(Self(copy_first_8bytes(&value[..])))
+impl From<&Txid> for TxidPrefix {
+    fn from(value: &Txid) -> Self {
+        Self(copy_first_8bytes(&value[..]).unwrap())
     }
 }
 impl TryFrom<Slice> for TxidPrefix {
@@ -89,14 +87,14 @@ impl From<TxidPrefix> for Slice {
     }
 }
 
-fn copy_first_8bytes(slice: &[u8]) -> [u8; 8] {
+fn copy_first_8bytes(slice: &[u8]) -> Result<[u8; 8], ()> {
     let mut buf: [u8; 8] = [0; 8];
     let buf_len = buf.len();
     if slice.len() < buf_len {
-        panic!("bad len");
+        return Err(());
     }
     slice.iter().take(buf_len).enumerate().for_each(|(i, r)| {
         buf[i] = *r;
     });
-    buf
+    Ok(buf)
 }

@@ -23,14 +23,14 @@ impl Kraken {
         if self._1mn.is_none() || self._1mn.as_ref().unwrap().last_key_value().unwrap().0 <= &timestamp {
             self._1mn.replace(Self::fetch_1mn()?);
         }
-        Pricer::<STATELESS>::find_height_ohlc(&self._1mn.as_ref().unwrap(), timestamp, previous_timestamp, "kraken 1m")
+        Pricer::<STATELESS>::find_height_ohlc(self._1mn.as_ref().unwrap(), timestamp, previous_timestamp, "kraken 1m")
     }
 
     fn fetch_1mn() -> color_eyre::Result<BTreeMap<Timestamp, OHLC>> {
         info!("Fetching 1mn prices from Kraken...");
 
         retry(
-            |_| Self::json_to_timestamp_to_ohlc(&reqwest::blocking::get(Self::url(1))?.json()?),
+            |_| Self::json_to_timestamp_to_ohlc(&minreq::get(Self::url(1)).send()?.json()?),
             30,
             10,
         )
@@ -52,7 +52,7 @@ impl Kraken {
         info!("Fetching daily prices from Kraken...");
 
         retry(
-            |_| Self::json_to_date_to_ohlc(&reqwest::blocking::get(Self::url(1440))?.json()?),
+            |_| Self::json_to_date_to_ohlc(&minreq::get(Self::url(1440)).send()?.json()?),
             30,
             10,
         )

@@ -30,12 +30,30 @@ use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 pub struct Height(u32);
 
 impl Height {
+    const ZERO: Self = Height(0);
+
     pub fn write(&self, path: &Path) -> Result<(), io::Error> {
         fs::write(path, self.as_bytes())
     }
 
-    pub fn decremented(&self) -> Self {
+    pub fn increment(&mut self) {
+        self.0 += 1;
+    }
+
+    pub fn incremented(self) -> Self {
+        Self(self.0 + 1)
+    }
+
+    pub fn decrement(&mut self) {
+        self.0 -= 1;
+    }
+
+    pub fn decremented(self) -> Self {
         Self(self.0.checked_sub(1).unwrap_or_default())
+    }
+
+    pub fn is_zero(self) -> bool {
+        self == Self::ZERO
     }
 }
 
@@ -130,6 +148,12 @@ impl From<usize> for Height {
 impl From<Height> for usize {
     fn from(value: Height) -> Self {
         value.0 as usize
+    }
+}
+
+impl From<Height> for u64 {
+    fn from(value: Height) -> Self {
+        value.0 as u64
     }
 }
 
