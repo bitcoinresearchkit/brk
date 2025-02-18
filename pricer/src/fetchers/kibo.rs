@@ -55,8 +55,9 @@ impl Kibo {
             |try_index| {
                 let base_url = Self::get_base_url(try_index);
 
-                let body: Value =
-                    reqwest::blocking::get(format!("{base_url}/height-to-price?chunk={}", height))?.json()?;
+                let body: Value = minreq::get(format!("{base_url}/height-to-price?chunk={}", height))
+                    .send()?
+                    .json()?;
 
                 let vec = body
                     .as_object()
@@ -112,7 +113,9 @@ impl Kibo {
             |try_index| {
                 let base_url = Self::get_base_url(try_index);
 
-                let body: Value = reqwest::blocking::get(format!("{base_url}/date-to-price?chunk={}", year))?.json()?;
+                let body: Value = minreq::get(format!("{base_url}/date-to-price?chunk={}", year))
+                    .send()?
+                    .json()?;
 
                 body.as_object()
                     .context("Expect to be an object")?

@@ -28,14 +28,14 @@ where
     }
 
     pub fn flush(&mut self, height: Height) -> io::Result<()> {
-        if self.needs(height) {
-            height.write(&self.path_height())?;
-        }
+        height.write(&self.path_height())?;
         self.vec.flush()
     }
 
     pub fn truncate_if_needed(&mut self, index: I, height: Height) -> storable_vec::Result<Option<T>> {
-        height.write(&self.path_height())?;
+        if self.height.is_none_or(|self_height| self_height != height) {
+            height.write(&self.path_height())?;
+        }
         self.vec.truncate_if_needed(index)
     }
 

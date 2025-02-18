@@ -193,45 +193,6 @@ pub fn new(
         drain_and_send(&mut bulk)
     });
 
-    // Tokio version: 1022s
-    // Slighlty slower than rayon version
-    // thread::spawn(move || {
-    //     let rt = tokio::runtime::Runtime::new().unwrap();
-    //     let _guard = rt.enter();
-
-    //     let mut tasks = VecDeque::with_capacity(BOUND);
-
-    //     recv_block_reader
-    //         .iter()
-    //         .try_for_each(move |(blk_metadata, block_state)| {
-    //             let raw_block = match block_state {
-    //                 BlockState::Raw(vec) => vec,
-    //                 _ => unreachable!(),
-    //             };
-
-    //             tasks.push_back(tokio::task::spawn(async move {
-    //                 let block = Block::consensus_decode(&mut Cursor::new(raw_block)).unwrap();
-
-    //                 (blk_metadata, block)
-    //             }));
-
-    //             while tasks.len() > BOUND {
-    //                 let (blk_metadata, block) = rt.block_on(tasks.pop_front().unwrap()).unwrap();
-
-    //                 if send_block
-    //                     .send(BlkMetadataAndBlock::new(blk_metadata, block))
-    //                     .is_err()
-    //                 {
-    //                     return ControlFlow::Break(());
-    //                 }
-    //             }
-
-    //             ControlFlow::Continue(())
-    //         });
-    //
-    // todo!("Send the rest")
-    // });
-
     thread::spawn(move || {
         let mut height = start_recap.map_or(0, |(_, recap)| recap.height());
 
