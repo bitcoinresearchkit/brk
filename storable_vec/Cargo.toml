@@ -1,11 +1,11 @@
 [package]
 name = "storable_vec"
 description = "A very small, fast, efficient and simple storable Vec"
-version = "0.1.2"
-license = "MIT"
+version = "0.1.3"
 keywords = ["vec", "disk", "data"]
 categories = ["database"]
-edition = "2021"
+edition = { workspace = true }
+license = { workspace = true }
 
 [features]
 json = ["dep:serde", "dep:serde_json"]

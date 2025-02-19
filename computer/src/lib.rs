@@ -1,6 +1,6 @@
 use std::path::{Path, PathBuf};
 
-use exit::Exit;
+use hodor::Exit;
 use indexer::Indexer;
 pub use iterator::rpc;
 

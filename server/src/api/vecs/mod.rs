@@ -2,12 +2,11 @@ use std::time::Instant;
 
 use axum::{
     extract::{Query, State},
-    http::{HeaderMap, Uri},
+    http::{HeaderMap, StatusCode, Uri},
     response::{IntoResponse, Response},
     Json,
 };
 use color_eyre::eyre::eyre;
-use reqwest::StatusCode;
 use serde_json::Value;
 
 use crate::{log_result, traits::HeaderMapExtended};

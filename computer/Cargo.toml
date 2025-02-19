@@ -1,16 +1,17 @@
 [package]
 name = "bomputer"
-description = "A Bitcoin dataset computer built on top of brice"
+description = "A Bitcoin dataset computer built on top of bindexer and bricer"
 version = "0.1.0"
-edition = "2021"
+edition = { workspace = true }
+license = { workspace = true }
 
 [dependencies]
-iterator = { workspace = true }
 color-eyre = { workspace = true }
 derive_deref = { workspace = true }
-exit = { workspace = true }
 fjall = { workspace = true }
+hodor = { workspace = true }
 indexer = { workspace = true }
+iterator = { workspace = true }
 pricer = { workspace = true }
 storable_vec = { workspace = true }
 zerocopy = { workspace = true }

@@ -1,9 +1,11 @@
 use std::{path::Path, time};
 
-use axum::http::{header, HeaderMap};
+use axum::http::{
+    header::{self, HOST, IF_MODIFIED_SINCE},
+    HeaderMap,
+};
 use jiff::{civil::DateTime, fmt::strtime, tz::TimeZone, Timestamp};
 use logger::info;
-use reqwest::header::{HOST, IF_MODIFIED_SINCE};
 
 const STALE_IF_ERROR: u64 = 30_000_000; // 1 Year ish
 const MODIFIED_SINCE_FORMAT: &str = "%a, %d %b %Y %H:%M:%S GMT";

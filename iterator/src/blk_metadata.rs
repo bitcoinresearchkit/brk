@@ -2,7 +2,7 @@ use std::path::PathBuf;
 
 use crate::path_to_modified_time;
 
-#[derive(Clone, Copy)]
+#[derive(Debug, Clone, Copy)]
 pub struct BlkMetadata {
     pub index: usize,
     pub modified_time: u64,

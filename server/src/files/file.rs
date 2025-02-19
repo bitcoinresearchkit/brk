@@ -7,11 +7,10 @@ use std::{
 use axum::{
     body::Body,
     extract,
-    http::HeaderMap,
+    http::{HeaderMap, StatusCode},
     response::{IntoResponse, Response},
 };
 use logger::{error, info};
-use reqwest::StatusCode;
 
 use crate::{
     log_result,

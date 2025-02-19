@@ -1,5 +1,8 @@
-use axum::{body::Body, http::Response, response::IntoResponse};
-use reqwest::StatusCode;
+use axum::{
+    body::Body,
+    http::{Response, StatusCode},
+    response::IntoResponse,
+};
 
 use super::header_map::HeaderMapExtended;
 

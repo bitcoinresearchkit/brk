@@ -10,7 +10,7 @@ pub use iterator::*;
 
 use bitcoin::{Transaction, TxIn, TxOut};
 use color_eyre::eyre::{eyre, ContextCompat};
-use exit::Exit;
+use hodor::Exit;
 use logger::info;
 use rayon::prelude::*;
 use storable_vec::CACHED_GETS;
@@ -31,14 +31,14 @@ pub struct Indexer<const MODE: u8> {
 
 impl<const MODE: u8> Indexer<MODE> {
     pub fn import(indexes_dir: &Path) -> color_eyre::Result<Self> {
-        info!("Importing indexes...");
-
+        // info!("Increasing limit of opened files to 210_000...");
         rlimit::setrlimit(
             rlimit::Resource::NOFILE,
             210_000,
             rlimit::getrlimit(rlimit::Resource::NOFILE).unwrap().1,
         )?;
 
+        info!("Importing indexes...");
         let vecs = StorableVecs::import(&indexes_dir.join("vecs"))?;
         let trees = Fjalls::import(&indexes_dir.join("fjall"))?;
 
@@ -47,12 +47,12 @@ impl<const MODE: u8> Indexer<MODE> {
 }
 
 impl Indexer<CACHED_GETS> {
-    pub fn index(&mut self, bitcoin_dir: &Path, rpc: rpc::Client, exit: &Exit) -> color_eyre::Result<()> {
+    pub fn index(&mut self, bitcoin_dir: &Path, rpc: &'static rpc::Client, exit: &Exit) -> color_eyre::Result<()> {
         info!("Started indexing...");
 
         let check_collisions = true;
 
-        let starting_indexes = Indexes::try_from((&mut self.vecs, &self.trees, &rpc)).unwrap_or_else(|_| {
+        let starting_indexes = Indexes::try_from((&mut self.vecs, &self.trees, rpc)).unwrap_or_else(|_| {
             let indexes = Indexes::default();
             indexes.push_if_needed(&mut self.vecs).unwrap();
             indexes

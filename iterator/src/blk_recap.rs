@@ -30,6 +30,9 @@ impl BlkRecap {
     }
 
     pub fn has_different_modified_time(&self, blk_path: &PathBuf) -> bool {
+        if self.modified_time != path_to_modified_time(blk_path) {
+            dbg!(self.modified_time, path_to_modified_time(blk_path));
+        }
         self.modified_time != path_to_modified_time(blk_path)
     }
 

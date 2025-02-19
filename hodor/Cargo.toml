@@ -1,12 +1,10 @@
 [package]
-name = "cl0g"
-description = "A clean logger"
+name = "hodor"
+description = "An exit blocker, can hold the door until a task is completed"
 version = "0.1.0"
 edition = { workspace = true }
 license = { workspace = true }
 
 [dependencies]
-color-eyre = { workspace = true }
-env_logger = "0.11.6"
-jiff = { workspace = true }
+ctrlc = "3.4.5"
 log = { workspace = true }

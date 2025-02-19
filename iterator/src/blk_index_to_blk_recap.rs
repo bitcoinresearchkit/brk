@@ -32,6 +32,8 @@ impl BlkIndexToBlkRecap {
             }
         };
 
+        // dbg!(&tree);
+
         let mut this = Self {
             path,
             tree,
@@ -43,7 +45,9 @@ impl BlkIndexToBlkRecap {
         this
     }
 
-    pub fn clean_outdated(&mut self, blocks_dir: &BlkIndexToBlkPath) {
+    fn clean_outdated(&mut self, blocks_dir: &BlkIndexToBlkPath) {
+        self.tree.pop_last();
+
         let mut unprocessed_keys = self.tree.keys().copied().collect::<BTreeSet<_>>();
 
         blocks_dir.iter().for_each(|(blk_index, blk_path)| {
@@ -59,21 +63,14 @@ impl BlkIndexToBlkRecap {
             self.tree.remove(&blk_index);
         });
 
-        while self.tree.last_entry().map(|last| *last.key()).is_some_and(|key| {
-            if key >= self.tree.len() {
-                self.tree.pop_last();
-                true
-            } else {
-                false
-            }
-        }) {}
-
         self.last_safe_height = self.tree.values().map(|recap| recap.height()).max();
     }
 
-    pub fn get_start_recap(&self, start: Option<usize>) -> Option<(usize, BlkRecap)> {
+    pub fn get_start_recap(&mut self, start: Option<usize>) -> Option<(usize, BlkRecap)> {
         if let Some(start) = start {
             let (last_key, last_value) = self.tree.last_key_value()?;
+
+            dbg!((last_key, last_value));
 
             if last_value.height() < start {
                 return Some((*last_key, *last_value));
@@ -82,7 +79,7 @@ impl BlkIndexToBlkRecap {
             {
                 if *blk_index != 0 {
                     // Temporary fix, need to rethink the whole thing
-                    let blk_index = (*blk_index).checked_sub(3).unwrap_or_default();
+                    let blk_index = (*blk_index).checked_sub(1).unwrap_or_default();
                     return Some((blk_index, *self.tree.get(&blk_index).unwrap()));
                 }
             }

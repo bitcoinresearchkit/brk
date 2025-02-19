@@ -1,8 +1,9 @@
 [package]
-name = "brice"
-description = "A bitcoin price fetcher built on top of bindex"
+name = "bricer"
+description = "A bitcoin price fetcher built on top of bindexer"
 version = "0.1.0"
-edition = "2021"
+edition = { workspace = true }
+license = { workspace = true }
 
 [dependencies]
 color-eyre = { workspace = true }
@@ -10,7 +11,7 @@ derive_deref = { workspace = true }
 indexer = { workspace = true }
 jiff = { workspace = true }
 logger = { workspace = true }
-minreq = { version = "2.13.2", features = ["https", "serde_json"] }
+minreq = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
 storable_vec = { workspace = true }
