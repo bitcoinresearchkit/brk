@@ -1,5 +1,6 @@
 [package]
 name = "bomputer"
+description = "A Bitcoin dataset computer built on top of brice"
 version = "0.1.0"
 edition = "2021"
 

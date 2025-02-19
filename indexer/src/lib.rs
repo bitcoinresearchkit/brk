@@ -31,6 +31,14 @@ pub struct Indexer<const MODE: u8> {
 
 impl<const MODE: u8> Indexer<MODE> {
     pub fn import(indexes_dir: &Path) -> color_eyre::Result<Self> {
+        info!("Importing indexes...");
+
+        rlimit::setrlimit(
+            rlimit::Resource::NOFILE,
+            210_000,
+            rlimit::getrlimit(rlimit::Resource::NOFILE).unwrap().1,
+        )?;
+
         let vecs = StorableVecs::import(&indexes_dir.join("vecs"))?;
         let trees = Fjalls::import(&indexes_dir.join("fjall"))?;
 
@@ -40,6 +48,8 @@ impl<const MODE: u8> Indexer<MODE> {
 
 impl Indexer<CACHED_GETS> {
     pub fn index(&mut self, bitcoin_dir: &Path, rpc: rpc::Client, exit: &Exit) -> color_eyre::Result<()> {
+        info!("Started indexing...");
+
         let check_collisions = true;
 
         let starting_indexes = Indexes::try_from((&mut self.vecs, &self.trees, &rpc)).unwrap_or_else(|_| {
@@ -70,10 +80,10 @@ impl Indexer<CACHED_GETS> {
 
         iterator::new(bitcoin_dir, Some(idxs.height.into()), None, rpc)
             .iter()
-            .try_for_each(|(_height, block, blockhash)| -> color_eyre::Result<()> {
-                info!("Indexing block {_height}...");
+            .try_for_each(|(height, block, blockhash)| -> color_eyre::Result<()> {
+                info!("Indexing block {height}...");
 
-                let height = Height::from(_height);
+                let height = Height::from(height);
                 idxs.height = height;
 
                 let blockhash = BlockHash::from(blockhash);
@@ -300,7 +310,7 @@ impl Indexer<CACHED_GETS> {
                                         {
                                             let txid = tx.compute_txid();
                                             dbg!(
-                                                _height,
+                                                height,
                                                 txid,
                                                 vout,
                                                 block_txindex,
@@ -603,7 +613,7 @@ impl Indexer<CACHED_GETS> {
 
                 idxs.push_future_if_needed(vecs)?;
 
-                let should_snapshot = _height != 0 && _height % SNAPSHOT_BLOCK_RANGE == 0 && !exit.blocked();
+                let should_snapshot = height != 0 && height % SNAPSHOT_BLOCK_RANGE == 0 && !exit.blocked();
                 if should_snapshot {
                     export(trees, vecs, height)?;
                 }
