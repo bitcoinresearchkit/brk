@@ -10,12 +10,6 @@ fn main() -> color_eyre::Result<()> {
 
     logger::init_log(None);
 
-    rlimit::setrlimit(
-        rlimit::Resource::NOFILE,
-        21_000,
-        rlimit::getrlimit(rlimit::Resource::NOFILE).unwrap().1,
-    )?;
-
     let data_dir = Path::new("../../bitcoin");
     let rpc = rpc::Client::new(
         "http://localhost:8332",

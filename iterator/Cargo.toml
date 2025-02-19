@@ -1,6 +1,6 @@
 [package]
 name = "biter"
-description = "A very fast Bitcoin block iterator"
+description = "A very fast Bitcoin block iterator built on top of bitcoin-rust"
 version = "0.2.2"
 license = "MIT"
 repository = "https://github.com/kibo-money/kibo/tree/main/src/crates/biter"

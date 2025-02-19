@@ -1,6 +1,6 @@
 [package]
 name = "brice"
-description = "A bitcoin price fetcher"
+description = "A bitcoin price fetcher built on top of bindex"
 version = "0.1.0"
 edition = "2021"
 
