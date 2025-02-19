@@ -1,13 +1,12 @@
 use std::time::Instant;
 
 use api::{ApiRoutes, VecIdToIndexToVec};
-use axum::{routing::get, serve, Json, Router};
+use axum::{http::StatusCode, routing::get, serve, Json, Router};
 use color_eyre::owo_colors::OwoColorize;
 use computer::Computer;
 use files::FilesRoutes;
 use indexer::Indexer;
 use logger::{error, info};
-use reqwest::StatusCode;
 use storable_vec::STATELESS;
 use tokio::net::TcpListener;
 use tower_http::compression::CompressionLayer;
@@ -23,7 +22,7 @@ pub struct AppState {
     computer: &'static Computer<STATELESS>,
 }
 
-pub const WEBSITE_DEV_PATH: &str = "../website/";
+pub const WEBSITE_DEV_PATH: &str = "../websites/kibo.money/";
 
 pub async fn main(indexer: Indexer<STATELESS>, computer: Computer<STATELESS>) -> color_eyre::Result<()> {
     let indexer = Box::leak(Box::new(indexer));

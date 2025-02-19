@@ -36,11 +36,6 @@ pub const NUMBER_OF_UNSAFE_BLOCKS: usize = 1000;
 const MAGIC_BYTES: [u8; 4] = [249, 190, 180, 217];
 const BOUND_CAP: usize = 210;
 
-enum BlockState {
-    Raw(Vec<u8>),
-    Decoded(Block),
-}
-
 ///
 /// Returns a crossbeam channel receiver that receives `(usize, Block, BlockHash)` tuples (with `usize` being the height) in sequential order.
 ///
@@ -82,7 +77,7 @@ pub fn new(
     data_dir: &Path,
     start: Option<usize>,
     end: Option<usize>,
-    rpc: bitcoincore_rpc::Client,
+    rpc: &'static bitcoincore_rpc::Client,
 ) -> Receiver<(usize, Block, BlockHash)> {
     let (send_block_reader, recv_block_reader) = bounded(BOUND_CAP);
     let (send_block, recv_block) = bounded(BOUND_CAP);
@@ -225,6 +220,8 @@ pub fn new(
                               tuple: BlkMetadataAndBlock| {
             let mut tuple = Some(tuple);
 
+            println!("{} {} {}", recent_hashes.len(), recent_chain.len(), future_blocks.len(),);
+
             while let Some(tuple) = tuple.take().or_else(|| future_blocks.remove(prev_hash)) {
                 let hash = tuple.block.block_hash();
 
@@ -305,4 +302,9 @@ pub fn new(
     });
 
     recv_height_block_hash
+}
+
+enum BlockState {
+    Raw(Vec<u8>),
+    Decoded(Block),
 }

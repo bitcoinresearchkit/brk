@@ -6,12 +6,15 @@ fn main() {
     let i = std::time::Instant::now();
 
     let data_dir = Path::new("../../bitcoin");
-    let url = "http://localhost:8332";
-    let cookie = Path::new(data_dir).join(".cookie");
-    let auth = Auth::CookieFile(cookie);
-    let rpc = Client::new(url, auth).unwrap();
+    let rpc = Box::leak(Box::new(
+        Client::new(
+            "http://localhost:8332",
+            Auth::CookieFile(Path::new(data_dir).join(".cookie")),
+        )
+        .unwrap(),
+    ));
 
-    let start = None;
+    let start = Some(460_001);
     let end = None;
 
     biter::new(data_dir, start, end, rpc)

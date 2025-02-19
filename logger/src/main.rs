@@ -1,5 +1,5 @@
+use cl0g::init_log;
 use log::info;
-use logger::init_log;
 
 fn main() {
     init_log(None);

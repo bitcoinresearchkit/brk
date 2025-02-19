@@ -43,6 +43,7 @@ pub trait AnyJsonStorableVec: AnyStorableVec {
     fn collect_range_values(&self, from: Option<i64>, to: Option<i64>) -> Result<Vec<serde_json::Value>>;
 }
 
+#[cfg(feature = "json")]
 impl<I, T, const MODE: u8> AnyJsonStorableVec for StorableVec<I, T, MODE>
 where
     I: StoredIndex,

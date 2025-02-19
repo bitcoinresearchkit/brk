@@ -1,7 +1,9 @@
 [package]
 name = "berver"
-version = "0.6.0"
-edition = "2021"
+description = "A Bitcoin data server built on top of bindexer, bricer and bomputer"
+version = "0.1.0"
+edition = { workspace = true }
+license = { workspace = true }
 
 [dependencies]
 axum = "0.8.1"
@@ -12,7 +14,6 @@ indexer = { workspace = true }
 jiff = { workspace = true }
 logger = { workspace = true }
 oxc = { version = "0.51.0", features = ["codegen", "minifier"] }
-reqwest = { version = "0.12.12", features = ["blocking", "json"] }
 serde = { workspace = true }
 serde_json = { workspace = true }
 storable_vec = { workspace = true }

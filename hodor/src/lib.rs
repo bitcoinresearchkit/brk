@@ -8,7 +8,7 @@ use std::{
     time::Duration,
 };
 
-use logger::info;
+use log::info;
 
 #[derive(Default, Clone)]
 pub struct Exit {

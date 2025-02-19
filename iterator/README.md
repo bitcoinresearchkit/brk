@@ -9,43 +9,7 @@ The element returned by the iterator is a tuple which includes the:
 
 ## Example
 
-```rust
-use std::path::Path;
-
-use bitcoincore_rpc::{Auth, Client};
-
-fn main() {
-    let i = std::time::Instant::now();
-
-    // Path to the Bitcoin data directory
-    let data_dir = "../../bitcoin";
-
-    // Inclusive starting height of the blocks received, `None` for 0
-    let start = Some(850_000);
-
-    // Inclusive ending height of the blocks received, `None` for the last one
-    let end = None;
-
-    // RPC client to filter out forks
-    let url = "http://localhost:8332";
-    let cookie = Path::new(data_dir).join(".cookie");
-    let auth = Auth::CookieFile(cookie);
-    let rpc = Client::new(url, auth).unwrap();
-
-    if cookie.is_file() {
-        Ok()
-
-    // Create channel receiver then iterate over the blocks
-    biter::new(data_dir, start, end, rpc)
-        .iter()
-        .for_each(|(height, _block, hash)| {
-            println!("{height}: {hash}");
-        });
-
-    dbg!(i.elapsed());
-}
-
-```
+`src/main.rs`
 
 ## Requirements
 

@@ -12,7 +12,9 @@ Vecs are used sparingly instead of stores for multiple reasons:
 
 ## Usage
 
-Peaks at 11-12 GB of RAM
+Storage wise, the expected overhead should be around 30% of the chain itself.
+
+Peaks at 11-13 GB of RAM
 
 ## Outputs
 

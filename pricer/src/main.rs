@@ -1,4 +1,4 @@
-use brice::{Binance, Kibo, Kraken};
+use bricer::{Binance, Kibo, Kraken};
 use indexer::Height;
 use serde_json::Value;
 

@@ -1,7 +1,7 @@
 use std::path::Path;
 
 use bomputer::Computer;
-use exit::Exit;
+use hodor::Exit;
 use indexer::Indexer;
 
 mod structs;

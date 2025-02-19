@@ -1,8 +1,0 @@
-[package]
-name = "exit"
-version = "0.1.0"
-edition = "2021"
-
-[dependencies]
-ctrlc = "3.4.5"
-logger = { workspace = true }
