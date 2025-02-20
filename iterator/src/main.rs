@@ -14,7 +14,7 @@ fn main() {
         .unwrap(),
     ));
 
-    let start = Some(460_001_u32.into());
+    let start = None;
     let end = None;
 
     biterator::new(data_dir, start, end, rpc)

@@ -1,4 +1,4 @@
-use std::path::PathBuf;
+use std::path::Path;
 
 use crate::path_to_modified_time;
 
@@ -9,7 +9,7 @@ pub struct BlkMetadata {
 }
 
 impl BlkMetadata {
-    pub fn new(index: usize, path: &PathBuf) -> Self {
+    pub fn new(index: usize, path: &Path) -> Self {
         Self {
             index,
             modified_time: path_to_modified_time(path),
