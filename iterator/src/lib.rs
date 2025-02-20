@@ -38,7 +38,7 @@ use utils::*;
 
 pub const NUMBER_OF_UNSAFE_BLOCKS: usize = 1000;
 const MAGIC_BYTES: [u8; 4] = [249, 190, 180, 217];
-const BOUND_CAP: usize = 210;
+const BOUND_CAP: usize = 100;
 
 ///
 /// Returns a crossbeam channel receiver that receives `(usize, Block, BlockHash)` tuples (with `usize` being the height) in sequential order.
@@ -99,7 +99,7 @@ pub fn new(
             .iter()
             .filter(|(blk_index, _)| **blk_index >= starting_blk_index)
             .try_for_each(move |(blk_index, blk_path)| {
-                let blk_metadata = BlkMetadata::new(*blk_index, blk_path);
+                let blk_metadata = BlkMetadata::new(*blk_index, blk_path.as_path());
 
                 let blk_bytes = fs::read(blk_path).unwrap();
                 let blk_bytes_len = blk_bytes.len() as u64;
@@ -223,8 +223,6 @@ pub fn new(
                               future_blocks: &mut BTreeMap<BlockHash, BlkMetadataAndBlock>,
                               tuple: BlkMetadataAndBlock| {
             let mut tuple = Some(tuple);
-
-            println!("{} {} {}", recent_hashes.len(), recent_chain.len(), future_blocks.len(),);
 
             while let Some(tuple) = tuple.take().or_else(|| future_blocks.remove(prev_hash)) {
                 let hash = tuple.block.block_hash();

@@ -1,4 +1,4 @@
-use std::path::PathBuf;
+use std::path::Path;
 
 use bitcoin::{hashes::Hash, BlockHash};
 use serde::{Deserialize, Serialize};
@@ -29,7 +29,7 @@ impl BlkRecap {
         }
     }
 
-    pub fn has_different_modified_time(&self, blk_path: &PathBuf) -> bool {
+    pub fn has_different_modified_time(&self, blk_path: &Path) -> bool {
         if self.modified_time != path_to_modified_time(blk_path) {
             dbg!(self.modified_time, path_to_modified_time(blk_path));
         }

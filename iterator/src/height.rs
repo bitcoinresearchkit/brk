@@ -1,18 +1,15 @@
 use std::{
     fmt::{self, Debug},
-    fs, io,
     ops::{Add, AddAssign, Rem, Sub},
-    path::Path,
 };
 
 use derive_deref::{Deref, DerefMut};
 use serde::{Deserialize, Serialize};
+
+#[cfg(feature = "zerocopy")]
 use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
-use crate::{
-    rpc::{self, RpcApi},
-    Error,
-};
+use crate::rpc::{self, RpcApi};
 
 #[derive(Debug, Clone, Copy, Deref, DerefMut, PartialEq, Eq, PartialOrd, Ord, Default, Serialize, Deserialize)]
 #[cfg_attr(feature = "zerocopy", derive(FromBytes, Immutable, IntoBytes, KnownLayout))]
@@ -21,8 +18,9 @@ pub struct Height(u32);
 impl Height {
     const ZERO: Self = Height(0);
 
-    pub fn write(&self, path: &Path) -> Result<(), io::Error> {
-        fs::write(path, self.as_bytes())
+    #[cfg(feature = "zerocopy")]
+    pub fn write(&self, path: &std::path::Path) -> Result<(), std::io::Error> {
+        std::fs::write(path, self.as_bytes())
     }
 
     pub fn increment(&mut self) {
@@ -166,16 +164,16 @@ impl From<Height> for bitcoin::locktime::absolute::Height {
 }
 
 #[cfg(feature = "zerocopy")]
-impl TryFrom<&Path> for Height {
-    type Error = Error;
-    fn try_from(value: &Path) -> Result<Self, Self::Error> {
-        Ok(Self::read_from_bytes(fs::read(value)?.as_slice())?.to_owned())
+impl TryFrom<&std::path::Path> for Height {
+    type Error = crate::Error;
+    fn try_from(value: &std::path::Path) -> Result<Self, Self::Error> {
+        Ok(Self::read_from_bytes(std::fs::read(value)?.as_slice())?.to_owned())
     }
 }
 
 #[cfg(feature = "fjall")]
 impl TryFrom<fjall::Slice> for Height {
-    type Error = Error;
+    type Error = crate::Error;
     fn try_from(value: fjall::Slice) -> Result<Self, Self::Error> {
         Ok(Self::read_from_bytes(&value)?)
     }
