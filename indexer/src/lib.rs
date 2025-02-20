@@ -78,12 +78,11 @@ impl Indexer<CACHED_GETS> {
 
         let mut idxs = starting_indexes;
 
-        iterator::new(bitcoin_dir, Some(idxs.height.into()), None, rpc)
+        iterator::new(bitcoin_dir, Some(idxs.height), None, rpc)
             .iter()
             .try_for_each(|(height, block, blockhash)| -> color_eyre::Result<()> {
                 info!("Indexing block {height}...");
 
-                let height = Height::from(height);
                 idxs.height = height;
 
                 let blockhash = BlockHash::from(blockhash);

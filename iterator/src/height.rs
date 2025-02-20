@@ -1,32 +1,21 @@
 use std::{
-    fmt, fs, io,
+    fmt::{self, Debug},
+    fs, io,
     ops::{Add, AddAssign, Rem, Sub},
     path::Path,
 };
 
 use derive_deref::{Deref, DerefMut};
-use fjall::Slice;
-use iterator::rpc::{self, RpcApi};
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
-#[derive(
-    Debug,
-    Clone,
-    Copy,
-    Deref,
-    DerefMut,
-    PartialEq,
-    Eq,
-    PartialOrd,
-    Ord,
-    Default,
-    FromBytes,
-    Immutable,
-    IntoBytes,
-    KnownLayout,
-    Serialize,
-)]
+use crate::{
+    rpc::{self, RpcApi},
+    Error,
+};
+
+#[derive(Debug, Clone, Copy, Deref, DerefMut, PartialEq, Eq, PartialOrd, Ord, Default, Serialize, Deserialize)]
+#[cfg_attr(feature = "zerocopy", derive(FromBytes, Immutable, IntoBytes, KnownLayout))]
 pub struct Height(u32);
 
 impl Height {
@@ -157,29 +146,10 @@ impl From<Height> for u64 {
     }
 }
 
-impl TryFrom<&Path> for Height {
-    type Error = storable_vec::Error;
-    fn try_from(value: &Path) -> Result<Self, Self::Error> {
-        Ok(Self::read_from_bytes(fs::read(value)?.as_slice())?.to_owned())
-    }
-}
-
 impl TryFrom<&rpc::Client> for Height {
     type Error = rpc::Error;
     fn try_from(value: &rpc::Client) -> Result<Self, Self::Error> {
         Ok((value.get_blockchain_info()?.blocks as usize - 1).into())
-    }
-}
-
-impl TryFrom<Slice> for Height {
-    type Error = storable_vec::Error;
-    fn try_from(value: Slice) -> Result<Self, Self::Error> {
-        Ok(Self::read_from_bytes(&value)?)
-    }
-}
-impl From<Height> for Slice {
-    fn from(value: Height) -> Self {
-        Self::new(value.as_bytes())
     }
 }
 
@@ -192,5 +162,27 @@ impl From<bitcoin::locktime::absolute::Height> for Height {
 impl From<Height> for bitcoin::locktime::absolute::Height {
     fn from(value: Height) -> Self {
         bitcoin::locktime::absolute::Height::from_consensus(*value).unwrap()
+    }
+}
+
+#[cfg(feature = "zerocopy")]
+impl TryFrom<&Path> for Height {
+    type Error = Error;
+    fn try_from(value: &Path) -> Result<Self, Self::Error> {
+        Ok(Self::read_from_bytes(fs::read(value)?.as_slice())?.to_owned())
+    }
+}
+
+#[cfg(feature = "fjall")]
+impl TryFrom<fjall::Slice> for Height {
+    type Error = Error;
+    fn try_from(value: fjall::Slice) -> Result<Self, Self::Error> {
+        Ok(Self::read_from_bytes(&value)?)
+    }
+}
+#[cfg(feature = "fjall")]
+impl From<Height> for fjall::Slice {
+    fn from(value: Height) -> Self {
+        Self::new(value.as_bytes())
     }
 }

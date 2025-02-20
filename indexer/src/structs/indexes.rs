@@ -1,13 +1,13 @@
 use color_eyre::eyre::ContextCompat;
-use iterator::rpc::Client;
 use iterator::NUMBER_OF_UNSAFE_BLOCKS;
+use iterator::{rpc::Client, Height};
 use storable_vec::CACHED_GETS;
 
 use crate::storage::{Fjalls, StorableVecs};
 
 use super::{
-    Addressindex, BlockHash, Emptyindex, Height, Multisigindex, Opreturnindex, P2PK33index, P2PK65index, P2PKHindex,
-    P2SHindex, P2TRindex, P2WPKHindex, P2WSHindex, Pushonlyindex, Txindex, Txinindex, Txoutindex, Unknownindex,
+    Addressindex, BlockHash, Emptyindex, Multisigindex, Opreturnindex, P2PK33index, P2PK65index, P2PKHindex, P2SHindex,
+    P2TRindex, P2WPKHindex, P2WSHindex, Pushonlyindex, Txindex, Txinindex, Txoutindex, Unknownindex,
 };
 
 #[derive(Debug, Default)]

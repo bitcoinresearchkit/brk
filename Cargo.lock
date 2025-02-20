@@ -262,7 +262,7 @@ name = "bindexer"
 version = "0.1.0"
 dependencies = [
  "bitcoin",
- "biter",
+ "biterator",
  "cl0g",
  "color-eyre",
  "derive_deref",
@@ -357,16 +357,18 @@ dependencies = [
 ]
 
 [[package]]
-name = "biter"
+name = "biterator"
 version = "0.2.3"
 dependencies = [
  "bitcoin",
  "bitcoincore-rpc",
  "crossbeam",
  "derive_deref",
+ "fjall",
  "rayon",
  "serde",
  "serde_json",
+ "zerocopy 0.8.18",
 ]
 
 [[package]]
@@ -384,7 +386,7 @@ name = "bomputer"
 version = "0.1.0"
 dependencies = [
  "bindexer",
- "biter",
+ "biterator",
  "bricer",
  "color-eyre",
  "derive_deref",

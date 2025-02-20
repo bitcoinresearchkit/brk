@@ -25,11 +25,15 @@ mod blk_index_to_blk_recap;
 mod blk_metadata;
 mod blk_metadata_and_block;
 mod blk_recap;
+mod error;
+mod height;
 mod utils;
 
 use blk_index_to_blk_recap::*;
 use blk_metadata::*;
 use blk_metadata_and_block::*;
+pub use error::*;
+pub use height::*;
 use utils::*;
 
 pub const NUMBER_OF_UNSAFE_BLOCKS: usize = 1000;
@@ -75,10 +79,10 @@ const BOUND_CAP: usize = 210;
 ///
 pub fn new(
     data_dir: &Path,
-    start: Option<usize>,
-    end: Option<usize>,
+    start: Option<Height>,
+    end: Option<Height>,
     rpc: &'static bitcoincore_rpc::Client,
-) -> Receiver<(usize, Block, BlockHash)> {
+) -> Receiver<(Height, Block, BlockHash)> {
     let (send_block_reader, recv_block_reader) = bounded(BOUND_CAP);
     let (send_block, recv_block) = bounded(BOUND_CAP);
     let (send_height_block_hash, recv_height_block_hash) = bounded(BOUND_CAP);
@@ -189,7 +193,7 @@ pub fn new(
     });
 
     thread::spawn(move || {
-        let mut height = start_recap.map_or(0, |(_, recap)| recap.height());
+        let mut height = start_recap.map_or(Height::default(), |(_, recap)| recap.height());
 
         let mut future_blocks = BTreeMap::default();
         let mut recent_chain: VecDeque<(BlockHash, BlkMetadataAndBlock)> = VecDeque::default();

@@ -1,5 +1,5 @@
 [package]
-name = "biter"
+name = "biterator"
 description = "A very fast Bitcoin block iterator built on top of bitcoin-rust"
 version = "0.2.3"
 repository = "https://github.com/kibo-money/kibo/tree/main/src/crates/biter"
@@ -8,11 +8,17 @@ categories = ["cryptography::cryptocurrencies", "encoding"]
 edition = { workspace = true }
 license = { workspace = true }
 
+[features]
+fjall = ["dep:fjall"]
+zerocopy = ["dep:zerocopy"]
+
 [dependencies]
 bitcoin = { workspace = true }
 rayon = { workspace = true }
 crossbeam = { version = "0.8.4", features = ["crossbeam-channel"] }
+fjall = { workspace = true, optional = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
 derive_deref = { workspace = true }
 bitcoincore-rpc = "0.19.0"
+zerocopy = { workspace = true, optional = true }

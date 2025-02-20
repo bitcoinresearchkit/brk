@@ -22,7 +22,10 @@ derive_deref = "1.1.1"
 fjall = "2.6.3"
 hodor = { version = "0", path = "hodor" }
 indexer = { version = "0", path = "indexer", package = "bindexer" }
-iterator = { version = "0", path = "iterator", package = "biter" }
+iterator = { version = "0", path = "iterator", package = "biterator", features = [
+    "fjall",
+    "zerocopy",
+] }
 jiff = "0.2.1"
 log = { version = "0.4.25" }
 logger = { version = "0", path = "logger", package = "cl0g" }
