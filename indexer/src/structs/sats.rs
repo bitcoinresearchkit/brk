@@ -4,11 +4,9 @@ use std::{
 };
 
 use derive_deref::{Deref, DerefMut};
-use iterator::bitcoin::Amount;
+use iterator::{bitcoin::Amount, Height};
 use serde::Serialize;
 use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
-
-use super::Height;
 
 #[derive(
     Debug,

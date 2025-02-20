@@ -14,10 +14,10 @@ fn main() {
         .unwrap(),
     ));
 
-    let start = Some(460_001);
+    let start = Some(460_001_u32.into());
     let end = None;
 
-    biter::new(data_dir, start, end, rpc)
+    biterator::new(data_dir, start, end, rpc)
         .iter()
         .for_each(|(height, _block, hash)| {
             println!("{height}: {hash}");

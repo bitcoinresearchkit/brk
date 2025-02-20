@@ -1,15 +1,16 @@
 use std::{fs, io, path::Path};
 
+use iterator::Height;
 use rayon::prelude::*;
 use storable_vec::{AnyJsonStorableVec, Version, CACHED_GETS};
 
 use crate::{
     structs::{
-        Addressbytes, Addressindex, Addresstype, Addresstypeindex, BlockHash, Emptyindex, Height, LockTime,
-        Multisigindex, Opreturnindex, P2PK33AddressBytes, P2PK33index, P2PK65AddressBytes, P2PK65index,
-        P2PKHAddressBytes, P2PKHindex, P2SHAddressBytes, P2SHindex, P2TRAddressBytes, P2TRindex, P2WPKHAddressBytes,
-        P2WPKHindex, P2WSHAddressBytes, P2WSHindex, Pushonlyindex, Sats, Timestamp, TxVersion, Txid, Txindex,
-        Txinindex, Txoutindex, Unknownindex, Weight,
+        Addressbytes, Addressindex, Addresstype, Addresstypeindex, BlockHash, Emptyindex, LockTime, Multisigindex,
+        Opreturnindex, P2PK33AddressBytes, P2PK33index, P2PK65AddressBytes, P2PK65index, P2PKHAddressBytes, P2PKHindex,
+        P2SHAddressBytes, P2SHindex, P2TRAddressBytes, P2TRindex, P2WPKHAddressBytes, P2WPKHindex, P2WSHAddressBytes,
+        P2WSHindex, Pushonlyindex, Sats, Timestamp, TxVersion, Txid, Txindex, Txinindex, Txoutindex, Unknownindex,
+        Weight,
     },
     Indexes,
 };

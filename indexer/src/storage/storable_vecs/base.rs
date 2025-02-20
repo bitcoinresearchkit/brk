@@ -39,7 +39,7 @@ where
         self.vec.truncate_if_needed(index)
     }
 
-    pub fn height(&self) -> storable_vec::Result<Height> {
+    pub fn height(&self) -> iterator::Result<Height> {
         Height::try_from(self.path_height().as_path())
     }
     fn path_height(&self) -> PathBuf {
@@ -71,7 +71,7 @@ impl<I, T, const MODE: u8> DerefMut for StorableVec<I, T, MODE> {
 }
 
 pub trait AnyStorableVec: Send + Sync {
-    fn height(&self) -> storable_vec::Result<Height>;
+    fn height(&self) -> iterator::Result<Height>;
     fn flush(&mut self, height: Height) -> io::Result<()>;
 }
 
@@ -80,7 +80,7 @@ where
     I: StoredIndex,
     T: StoredType,
 {
-    fn height(&self) -> storable_vec::Result<Height> {
+    fn height(&self) -> iterator::Result<Height> {
         self.height()
     }
 

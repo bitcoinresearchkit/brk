@@ -8,10 +8,9 @@ use fjall::{
     PartitionCreateOptions, PersistMode, ReadTransaction, Result, Slice, TransactionalKeyspace,
     TransactionalPartitionHandle,
 };
+use iterator::Height;
 use storable_vec::{Value, Version};
 use zerocopy::{Immutable, IntoBytes};
-
-use crate::structs::Height;
 
 use super::StoreMeta;
 

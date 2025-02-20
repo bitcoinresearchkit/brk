@@ -1,7 +1,8 @@
+use iterator::Height;
 use serde::Serialize;
 use zerocopy::{Immutable, IntoBytes, KnownLayout, TryFromBytes};
 
-use super::{Height, Timestamp};
+use super::Timestamp;
 
 #[derive(Debug, Immutable, Clone, Copy, IntoBytes, KnownLayout, TryFromBytes, Serialize)]
 #[repr(C)]

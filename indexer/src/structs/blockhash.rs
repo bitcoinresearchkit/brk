@@ -1,11 +1,12 @@
 use std::mem;
 
 use derive_deref::Deref;
-use iterator::rpc::{Client, RpcApi};
+use iterator::{
+    rpc::{Client, RpcApi},
+    Height,
+};
 use serde::Serialize;
 use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
-
-use super::Height;
 
 #[derive(Debug, Deref, Clone, PartialEq, Eq, Immutable, IntoBytes, KnownLayout, FromBytes, Serialize)]
 pub struct BlockHash([u8; 32]);

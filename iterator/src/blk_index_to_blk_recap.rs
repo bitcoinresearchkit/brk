@@ -6,7 +6,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use crate::{blk_recap::BlkRecap, BlkIndexToBlkPath, BlkMetadataAndBlock};
+use crate::{blk_recap::BlkRecap, BlkIndexToBlkPath, BlkMetadataAndBlock, Height};
 
 const TARGET_BLOCKS_PER_MONTH: usize = 144 * 30;
 
@@ -14,7 +14,7 @@ const TARGET_BLOCKS_PER_MONTH: usize = 144 * 30;
 pub struct BlkIndexToBlkRecap {
     path: PathBuf,
     tree: BTreeMap<usize, BlkRecap>,
-    last_safe_height: Option<usize>,
+    last_safe_height: Option<Height>,
 }
 
 impl BlkIndexToBlkRecap {
@@ -66,7 +66,7 @@ impl BlkIndexToBlkRecap {
         self.last_safe_height = self.tree.values().map(|recap| recap.height()).max();
     }
 
-    pub fn get_start_recap(&mut self, start: Option<usize>) -> Option<(usize, BlkRecap)> {
+    pub fn get_start_recap(&mut self, start: Option<Height>) -> Option<(usize, BlkRecap)> {
         if let Some(start) = start {
             let (last_key, last_value) = self.tree.last_key_value()?;
 
@@ -88,7 +88,7 @@ impl BlkIndexToBlkRecap {
         None
     }
 
-    pub fn update(&mut self, blk_metadata_and_block: &BlkMetadataAndBlock, height: usize) {
+    pub fn update(&mut self, blk_metadata_and_block: &BlkMetadataAndBlock, height: Height) {
         let blk_index = blk_metadata_and_block.blk_metadata.index;
 
         if let Some(last_entry) = self.tree.last_entry() {

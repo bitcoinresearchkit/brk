@@ -13,7 +13,6 @@ pub enum Error {
     DifferentVersion { found: Version, expected: Version },
     MmapsVecIsTooSmall,
     IO(io::Error),
-    // UnsafeSliceSerde(zerocopy::error::),
     ZeroCopyError,
     IndexTooHigh,
     IndexTooLow,
@@ -51,7 +50,6 @@ impl fmt::Display for Error {
             }
             Error::MmapsVecIsTooSmall => write!(f, "Mmaps vec is too small"),
             Error::IO(error) => Debug::fmt(&error, f),
-            // Error::UnsafeSliceSerde(error) => Debug::fmt(&error, f),
             Error::IndexTooHigh => write!(f, "Index too high"),
             Error::IndexTooLow => write!(f, "Index too low"),
             Error::ExpectFileToHaveIndex => write!(f, "Expect file to have index"),
