@@ -13,7 +13,7 @@ derive_deref = { workspace = true }
 indexer = { workspace = true }
 jiff = { workspace = true }
 logger = { workspace = true }
-oxc = { version = "0.51.0", features = ["codegen", "minifier"] }
+oxc = { version = "0.52.0", features = ["codegen", "minifier"] }
 serde = { workspace = true }
 serde_json = { workspace = true }
 storable_vec = { workspace = true }

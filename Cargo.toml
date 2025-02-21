@@ -19,22 +19,21 @@ bitcoin = { version = "0.32.5", features = ["serde"] }
 color-eyre = "0.6.3"
 computer = { version = "0", path = "computer", package = "bomputer" }
 derive_deref = "1.1.1"
-fjall = "2.6.3"
+fjall = "2.6.4"
 hodor = { version = "0", path = "hodor" }
 indexer = { version = "0", path = "indexer", package = "bindexer" }
 iterator = { version = "0", path = "iterator", package = "biterator", features = [
-    "fjall",
-    "zerocopy",
+    "bytes",
 ] }
 jiff = "0.2.1"
-log = { version = "0.4.25" }
+log = { version = "0.4.26" }
 logger = { version = "0", path = "logger", package = "cl0g" }
 minreq = { version = "2.13.2", features = ["https", "serde_json"] }
 pricer = { version = "0", path = "pricer", package = "bricer" }
 rayon = "1.10.0"
-serde = { version = "1.0.217", features = ["derive"] }
+serde = { version = "1.0.218", features = ["derive"] }
 serde_bytes = "0.11.15"
-serde_json = { version = "1.0.138", features = ["float_roundtrip"] }
+serde_json = { version = "1.0.139", features = ["float_roundtrip"] }
 server = { version = "0", path = "server", package = "berver" }
 storable_vec = { version = "0", path = "storable_vec", features = ["json"] }
-zerocopy = { version = "0.8.18", features = ["derive"] }
+zerocopy = { version = "0.8.20", features = ["derive"] }

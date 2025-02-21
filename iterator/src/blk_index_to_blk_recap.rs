@@ -1,29 +1,23 @@
 use std::{
-    cmp::Ordering,
     collections::{BTreeMap, BTreeSet},
-    fs::{self, File},
+    fs::File,
     io::{BufReader, BufWriter},
     path::{Path, PathBuf},
 };
 
-use crate::{blk_recap::BlkRecap, BlkIndexToBlkPath, BlkMetadataAndBlock, Height};
-
-const TARGET_BLOCKS_PER_MONTH: usize = 144 * 30;
+use crate::{blk_recap::BlkRecap, BlkIndexToBlkPath, Height};
 
 #[derive(Debug)]
 pub struct BlkIndexToBlkRecap {
-    path: PathBuf,
-    tree: BTreeMap<usize, BlkRecap>,
-    last_safe_height: Option<Height>,
+    pub path: PathBuf,
+    pub tree: BTreeMap<u16, BlkRecap>,
 }
 
 impl BlkIndexToBlkRecap {
-    pub fn import(blocks_dir: &BlkIndexToBlkPath, data_dir: &Path) -> Self {
+    pub fn import(data_dir: &Path, blk_index_to_blk_path: &BlkIndexToBlkPath, start: Option<Height>) -> (Self, u16) {
         let path = data_dir.join("blk_index_to_blk_recap.json");
 
         let tree = {
-            fs::create_dir_all(data_dir).unwrap();
-
             if let Ok(file) = File::open(&path) {
                 let reader = BufReader::new(file);
                 serde_json::from_reader(reader).unwrap_or_default()
@@ -32,90 +26,62 @@ impl BlkIndexToBlkRecap {
             }
         };
 
-        // dbg!(&tree);
+        let mut slf = Self { path, tree };
 
-        let mut this = Self {
-            path,
-            tree,
-            last_safe_height: None,
-        };
+        let min_removed = slf.clean_outdated(blk_index_to_blk_path);
 
-        this.clean_outdated(blocks_dir);
+        let blk_index = slf.get_start_recap(min_removed, start);
 
-        this
+        (slf, blk_index)
     }
 
-    fn clean_outdated(&mut self, blocks_dir: &BlkIndexToBlkPath) {
-        self.tree.pop_last();
+    fn clean_outdated(&mut self, blk_index_to_blk_path: &BlkIndexToBlkPath) -> Option<u16> {
+        let mut min_removed_blk_index: Option<u16> = None;
 
         let mut unprocessed_keys = self.tree.keys().copied().collect::<BTreeSet<_>>();
 
-        blocks_dir.iter().for_each(|(blk_index, blk_path)| {
+        blk_index_to_blk_path.iter().for_each(|(blk_index, blk_path)| {
             unprocessed_keys.remove(blk_index);
             if let Some(blk_recap) = self.tree.get(blk_index) {
                 if blk_recap.has_different_modified_time(blk_path) {
-                    self.tree.remove(blk_index);
+                    self.tree.remove(blk_index).unwrap();
+                    if min_removed_blk_index.map_or(true, |_blk_index| *blk_index < _blk_index) {
+                        min_removed_blk_index.replace(*blk_index);
+                    }
                 }
             }
         });
 
         unprocessed_keys.into_iter().for_each(|blk_index| {
-            self.tree.remove(&blk_index);
+            self.tree.remove(&blk_index).unwrap();
+            if min_removed_blk_index.map_or(true, |_blk_index| blk_index < _blk_index) {
+                min_removed_blk_index.replace(blk_index);
+            }
         });
 
-        self.last_safe_height = self.tree.values().map(|recap| recap.height()).max();
+        min_removed_blk_index
     }
 
-    pub fn get_start_recap(&mut self, start: Option<Height>) -> Option<(usize, BlkRecap)> {
-        if let Some(start) = start {
-            let (last_key, last_value) = self.tree.last_key_value()?;
+    pub fn get_start_recap(&mut self, min_removed: Option<u16>, start: Option<Height>) -> u16 {
+        if start.is_none() {
+            return 0;
+        }
 
-            dbg!((last_key, last_value));
+        let height = start.unwrap();
 
-            if last_value.height() < start {
-                return Some((*last_key, *last_value));
-            } else if let Some((blk_index, _)) =
-                self.tree.iter().find(|(_, blk_recap)| blk_recap.is_younger_than(start))
-            {
-                if *blk_index != 0 {
-                    // Temporary fix, need to rethink the whole thing
-                    let blk_index = (*blk_index).checked_sub(1).unwrap_or_default();
-                    return Some((blk_index, *self.tree.get(&blk_index).unwrap()));
-                }
+        let mut start = 0;
+
+        if let Some(found) = self.tree.iter().find(|(_, recap)| recap.max_height >= height) {
+            start = *found.0;
+        }
+
+        if let Some(min_removed) = min_removed {
+            if start > min_removed {
+                start = min_removed;
             }
         }
 
-        None
-    }
-
-    pub fn update(&mut self, blk_metadata_and_block: &BlkMetadataAndBlock, height: Height) {
-        let blk_index = blk_metadata_and_block.blk_metadata.index;
-
-        if let Some(last_entry) = self.tree.last_entry() {
-            match last_entry.key().cmp(&blk_index) {
-                Ordering::Greater => {
-                    last_entry.remove_entry();
-                }
-                Ordering::Less => {
-                    self.tree
-                        .insert(blk_index, BlkRecap::from(height, blk_metadata_and_block));
-                }
-                Ordering::Equal => {}
-            };
-        } else {
-            if blk_index != 0 || height != 0 {
-                // dbg!(blk_index, height);
-                unreachable!();
-            }
-
-            self.tree.insert(blk_index, BlkRecap::first(blk_metadata_and_block));
-        }
-
-        if self.last_safe_height.map_or(true, |safe_height| height >= safe_height)
-            && (height % TARGET_BLOCKS_PER_MONTH) == 0
-        {
-            self.export();
-        }
+        start
     }
 
     pub fn export(&self) {
@@ -124,6 +90,6 @@ impl BlkIndexToBlkRecap {
             panic!("No such file or directory")
         });
 
-        serde_json::to_writer_pretty(&mut BufWriter::new(file), &self.tree).unwrap();
+        serde_json::to_writer(&mut BufWriter::new(file), &self.tree).unwrap();
     }
 }
