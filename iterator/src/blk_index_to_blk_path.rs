@@ -10,7 +10,7 @@ const BLK: &str = "blk";
 const DAT: &str = ".dat";
 
 #[derive(Debug, Deref, DerefMut)]
-pub struct BlkIndexToBlkPath(BTreeMap<usize, PathBuf>);
+pub struct BlkIndexToBlkPath(BTreeMap<u16, PathBuf>);
 
 impl BlkIndexToBlkPath {
     pub fn scan(data_dir: &Path) -> Self {
@@ -35,7 +35,7 @@ impl BlkIndexToBlkPath {
                     let file_name = path.file_name().unwrap().to_str().unwrap();
 
                     let blk_index = file_name[BLK.len()..(file_name.len() - DAT.len())]
-                        .parse::<usize>()
+                        .parse::<u16>()
                         .unwrap();
 
                     (blk_index, path)

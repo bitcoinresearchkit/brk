@@ -14,7 +14,7 @@ hodor = { workspace = true }
 iterator = { workspace = true }
 jiff = { workspace = true }
 logger = { workspace = true }
-rapidhash = "1.3.0"
+rapidhash = "1.4.0"
 rayon = { workspace = true }
 rlimit = { version = "0.10.2" }
 serde = { workspace = true }

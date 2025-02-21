@@ -1,5 +1,6 @@
 use std::{
-    collections::{BTreeMap, BTreeSet, VecDeque},
+    cmp::Ordering,
+    collections::BTreeMap,
     fs::{self},
     ops::ControlFlow,
     path::Path,
@@ -8,12 +9,12 @@ use std::{
 
 use bitcoin::{
     consensus::{Decodable, ReadExt},
-    hashes::Hash,
     io::{Cursor, Read},
     Block, BlockHash,
 };
 use bitcoincore_rpc::RpcApi;
 use blk_index_to_blk_path::*;
+use blk_recap::BlkRecap;
 use crossbeam::channel::{bounded, Receiver};
 use rayon::prelude::*;
 
@@ -41,41 +42,9 @@ const MAGIC_BYTES: [u8; 4] = [249, 190, 180, 217];
 const BOUND_CAP: usize = 100;
 
 ///
-/// Returns a crossbeam channel receiver that receives `(usize, Block, BlockHash)` tuples (with `usize` being the height) in sequential order.
+/// Returns a crossbeam channel receiver that receives `(Height, Block, BlockHash)` tuples from an **inclusive** range (`start` and `end`)
 ///
-/// # Arguments
-///
-/// * `data_dir` - Path to the Bitcoin data directory
-/// * `start` - Inclusive starting height of the blocks received, `None` for 0
-/// * `end` - Inclusive ending height of the blocks received, `None` for the last one
-/// * `rpc` - RPC client to filter out forks
-///
-/// # Example
-///
-/// ```rust
-/// use std::path::Path;
-///
-/// use bitcoincore_rpc::{Auth, Client};
-///
-/// let i = std::time::Instant::now();
-///
-/// let data_dir = Path::new("../../bitcoin");
-/// let url = "http://localhost:8332";
-/// let cookie = Path::new(data_dir).join(".cookie");
-/// let auth = Auth::CookieFile(cookie);
-/// let rpc = Client::new(url, auth).unwrap();
-///
-/// let start = Some(850_000);
-/// let end = None;
-///
-/// biter::new(data_dir, start, end, rpc)
-///     .iter()
-///     .for_each(|(height, _block, hash)| {
-///         println!("{height}: {hash}");
-///     });
-///
-/// dbg!(i.elapsed());
-/// ```
+/// For an example checkout `iterator/main.rs`
 ///
 pub fn new(
     data_dir: &Path,
@@ -89,17 +58,15 @@ pub fn new(
 
     let blk_index_to_blk_path = BlkIndexToBlkPath::scan(data_dir);
 
-    let mut blk_index_to_blk_recap = BlkIndexToBlkRecap::import(&blk_index_to_blk_path, data_dir);
-
-    let start_recap = blk_index_to_blk_recap.get_start_recap(start);
-    let starting_blk_index = start_recap.as_ref().map_or(0, |(index, _)| *index);
+    let (mut blk_index_to_blk_recap, blk_index) = BlkIndexToBlkRecap::import(data_dir, &blk_index_to_blk_path, start);
 
     thread::spawn(move || {
         blk_index_to_blk_path
-            .iter()
-            .filter(|(blk_index, _)| **blk_index >= starting_blk_index)
+            .range(blk_index..)
             .try_for_each(move |(blk_index, blk_path)| {
-                let blk_metadata = BlkMetadata::new(*blk_index, blk_path.as_path());
+                let blk_index = *blk_index;
+
+                let blk_metadata = BlkMetadata::new(blk_index, blk_path.as_path());
 
                 let blk_bytes = fs::read(blk_path).unwrap();
                 let blk_bytes_len = blk_bytes.len() as u64;
@@ -128,22 +95,19 @@ pub fn new(
                         }
                     }
 
-                    let block_size = cursor.read_u32().unwrap();
+                    let len = cursor.read_u32().unwrap();
 
-                    let mut raw_block = vec![0u8; block_size as usize];
+                    let mut bytes = vec![0u8; len as usize];
 
-                    cursor.read_exact(&mut raw_block).unwrap();
+                    cursor.read_exact(&mut bytes).unwrap();
 
-                    if send_block_reader
-                        .send((blk_metadata, BlockState::Raw(raw_block)))
-                        .is_err()
-                    {
+                    if send_block_reader.send((blk_metadata, BlockState::Raw(bytes))).is_err() {
                         return ControlFlow::Break(());
                     }
                 }
 
                 ControlFlow::Continue(())
-            })
+            });
     });
 
     thread::spawn(move || {
@@ -152,16 +116,7 @@ pub fn new(
         let drain_and_send = |bulk: &mut Vec<_>| {
             // Using a vec and sending after to not end up with stuck threads in par iter
             bulk.par_iter_mut().for_each(|(_, block_state)| {
-                let raw_block = match block_state {
-                    BlockState::Raw(vec) => vec,
-                    _ => unreachable!(),
-                };
-
-                let mut cursor = Cursor::new(raw_block);
-
-                let block = Block::consensus_decode(&mut cursor).unwrap();
-
-                *block_state = BlockState::Decoded(block);
+                BlockState::decode(block_state);
             });
 
             bulk.drain(..).try_for_each(|(blk_metadata, block_state)| {
@@ -170,7 +125,7 @@ pub fn new(
                     _ => unreachable!(),
                 };
 
-                if send_block.send(BlkMetadataAndBlock::new(blk_metadata, block)).is_err() {
+                if send_block.send(BlkIndexAndBlock::new(blk_metadata, block)).is_err() {
                     return ControlFlow::Break(());
                 }
 
@@ -193,112 +148,82 @@ pub fn new(
     });
 
     thread::spawn(move || {
-        let mut height = start_recap.map_or(Height::default(), |(_, recap)| recap.height());
+        let mut current_height = start.unwrap_or_default();
 
         let mut future_blocks = BTreeMap::default();
-        let mut recent_chain: VecDeque<(BlockHash, BlkMetadataAndBlock)> = VecDeque::default();
-        let mut recent_hashes: BTreeSet<BlockHash> = BTreeSet::default();
 
-        let mut prev_hash = start_recap.map_or_else(BlockHash::all_zeros, |(_, recap)| *recap.prev_hash());
+        recv_block.iter().try_for_each(|tuple| -> ControlFlow<(), _> {
+            let blk_metadata = tuple.blk_metadata;
+            let block = tuple.block;
+            let hash = block.block_hash();
+            let header = rpc.get_block_header_info(&hash);
 
-        let mut prepare_and_send = |(hash, tuple): (BlockHash, BlkMetadataAndBlock)| {
-            blk_index_to_blk_recap.update(&tuple, height);
-
-            if start.map_or(true, |start| start <= height) {
-                send_height_block_hash.send((height, tuple.block, hash)).unwrap();
+            if header.is_err() {
+                return ControlFlow::Continue(());
+            }
+            let header = header.unwrap();
+            if header.confirmations <= 0 {
+                return ControlFlow::Continue(());
             }
 
-            if end == Some(height) {
-                return ControlFlow::Break(());
+            let height = Height::from(header.height);
+
+            let len = blk_index_to_blk_recap.tree.len();
+            if blk_metadata.index == len as u16 || blk_metadata.index + 1 == len as u16 {
+                match (len as u16).cmp(&blk_metadata.index) {
+                    Ordering::Equal => {
+                        if len % 21 == 0 {
+                            blk_index_to_blk_recap.export();
+                        }
+                    }
+                    Ordering::Less => panic!(),
+                    Ordering::Greater => {}
+                }
+
+                blk_index_to_blk_recap
+                    .tree
+                    .entry(blk_metadata.index)
+                    .and_modify(|recap| {
+                        if recap.max_height < height {
+                            recap.max_height = height;
+                        }
+                    })
+                    .or_insert(BlkRecap {
+                        max_height: height,
+                        modified_time: blk_metadata.modified_time,
+                    });
+            } else {
+                dbg!(blk_metadata.index, len);
+                panic!()
             }
 
-            height += 1;
+            let mut opt = if current_height == height {
+                Some((block, hash))
+            } else {
+                if start.map_or(true, |start| start <= height) && end.map_or(true, |end| end >= height) {
+                    future_blocks.insert(height, (block, hash));
+                }
+                None
+            };
 
-            ControlFlow::Continue(())
-        };
+            while let Some((block, hash)) = opt.take().or_else(|| {
+                if !future_blocks.is_empty() {
+                    future_blocks.remove(&current_height)
+                } else {
+                    None
+                }
+            }) {
+                send_height_block_hash.send((current_height, block, hash)).unwrap();
 
-        let mut update_tip = |prev_hash: &mut BlockHash,
-                              recent_hashes: &mut BTreeSet<BlockHash>,
-                              recent_chain: &mut VecDeque<(BlockHash, BlkMetadataAndBlock)>,
-                              future_blocks: &mut BTreeMap<BlockHash, BlkMetadataAndBlock>,
-                              tuple: BlkMetadataAndBlock| {
-            let mut tuple = Some(tuple);
-
-            while let Some(tuple) = tuple.take().or_else(|| future_blocks.remove(prev_hash)) {
-                let hash = tuple.block.block_hash();
-
-                *prev_hash = hash;
-                recent_hashes.insert(hash);
-                recent_chain.push_back((hash, tuple));
-            }
-
-            while recent_chain.len() > NUMBER_OF_UNSAFE_BLOCKS {
-                let (hash, tuple) = recent_chain.pop_front().unwrap();
-
-                recent_hashes.remove(&hash);
-
-                if prepare_and_send((hash, tuple)).is_break() {
+                if end == Some(current_height) {
                     return ControlFlow::Break(());
                 }
-            }
 
-            ControlFlow::Continue(())
-        };
-
-        let flow = recv_block.iter().try_for_each(|tuple| {
-            // block isn't next after current tip
-            if prev_hash != tuple.block.header.prev_blockhash {
-                let is_block_active = |hash| rpc.get_block_header_info(hash).unwrap().confirmations > 0;
-
-                // block prev has already been processed
-                if recent_hashes.contains(&tuple.block.header.prev_blockhash) {
-                    let hash = tuple.block.block_hash();
-
-                    if is_block_active(&hash) {
-                        let prev_index = recent_chain
-                            .iter()
-                            .position(|(hash, ..)| hash == &tuple.block.header.prev_blockhash)
-                            .unwrap();
-
-                        let bad_index_start = prev_index + 1;
-
-                        recent_chain.drain(bad_index_start..).for_each(|(hash, _)| {
-                            recent_hashes.remove(&hash);
-                        });
-
-                        return update_tip(
-                            &mut prev_hash,
-                            &mut recent_hashes,
-                            &mut recent_chain,
-                            &mut future_blocks,
-                            tuple,
-                        );
-                    }
-                // Check if there was already a future block with the same prev hash
-                } else if let Some(prev_tuple) = future_blocks.insert(tuple.block.header.prev_blockhash, tuple) {
-                    // If the previous was the active one
-                    if is_block_active(&prev_tuple.block.block_hash()) {
-                        // Rollback the insert
-                        future_blocks.insert(prev_tuple.block.header.prev_blockhash, prev_tuple);
-                    }
-                }
-            } else {
-                return update_tip(
-                    &mut prev_hash,
-                    &mut recent_hashes,
-                    &mut recent_chain,
-                    &mut future_blocks,
-                    tuple,
-                );
+                current_height.increment();
             }
 
             ControlFlow::Continue(())
         });
-
-        if flow.is_continue() {
-            // Send the last (up to 100) blocks
-            recent_chain.into_iter().try_for_each(prepare_and_send);
-        }
 
         blk_index_to_blk_recap.export();
     });
@@ -309,4 +234,19 @@ pub fn new(
 enum BlockState {
     Raw(Vec<u8>),
     Decoded(Block),
+}
+
+impl BlockState {
+    pub fn decode(&mut self) {
+        let bytes = match self {
+            BlockState::Raw(bytes) => bytes,
+            _ => unreachable!(),
+        };
+
+        let mut cursor = Cursor::new(bytes);
+
+        let block = Block::consensus_decode(&mut cursor).unwrap();
+
+        *self = BlockState::Decoded(block);
+    }
 }
