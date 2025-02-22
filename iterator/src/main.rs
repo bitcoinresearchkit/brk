@@ -15,7 +15,7 @@ fn main() {
     ));
 
     let start = None;
-    let end = None; //Some(200_000_u32.into());
+    let end = None;
 
     biterator::new(data_dir, start, end, rpc)
         .iter()

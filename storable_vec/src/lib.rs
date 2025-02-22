@@ -447,7 +447,7 @@ where
         let pushed_len = I::from(self.pushed_len());
         let disk_len = Self::i_to_usize(disk_len)?;
         while index < pushed_len {
-            f(((index + disk_len), self.get(index)?.map(Value::from).unwrap()))?;
+            f(((index + disk_len), self.get(index)?.unwrap()))?;
             index = index + 1;
         }
 

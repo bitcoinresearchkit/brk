@@ -12,14 +12,14 @@ members = [
 ]
 resolver = "2"
 package.license = "MIT"
-package.edition = "2021"
+package.edition = "2024"
 
 [workspace.dependencies]
 bitcoin = { version = "0.32.5", features = ["serde"] }
 color-eyre = "0.6.3"
 computer = { version = "0", path = "computer", package = "bomputer" }
 derive_deref = "1.1.1"
-fjall = "2.6.4"
+fjall = "2.6.5"
 hodor = { version = "0", path = "hodor" }
 indexer = { version = "0", path = "indexer", package = "bindexer" }
 iterator = { version = "0", path = "iterator", package = "biterator", features = [
