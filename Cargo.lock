@@ -758,9 +758,9 @@ checksum = "1d674e81391d1e1ab681a28d99df07927c6d4aa5b027d7da16ba32d1d21ecd99"
 
 [[package]]
 name = "fjall"
-version = "2.6.4"
+version = "2.6.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9a7107ac1ad7c38b8a32c8bfe579bdb24bb1373b80c8e0b168f36b092647f917"
+checksum = "33e0fd3f3a8cbaa2b179ccc690ea0d37282d24787c06eab0dfd9137e1c4d4699"
 dependencies = [
  "byteorder",
  "byteview",
@@ -780,7 +780,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c936bfdafb507ebbf50b8074c54fa31c5be9a1e7e5f467dd659697041407d07c"
 dependencies = [
  "crc32fast",
- "miniz_oxide 0.8.4",
+ "miniz_oxide 0.8.5",
 ]
 
 [[package]]
@@ -1195,9 +1195,9 @@ dependencies = [
 
 [[package]]
 name = "miniz_oxide"
-version = "0.8.4"
+version = "0.8.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b3b1c9bd4fe1f0f8b387f6eb9eb3b4a1aa26185e5750efb9140301703f62cd1b"
+checksum = "8e3e04debbb59698c15bacbb6d93584a8c0ca9cc3213cb423d31f760d8843ce5"
 dependencies = [
  "adler2",
 ]

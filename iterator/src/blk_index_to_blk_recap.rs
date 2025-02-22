@@ -5,7 +5,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use crate::{blk_recap::BlkRecap, BlkIndexToBlkPath, Height};
+use crate::{BlkIndexToBlkPath, Height, blk_recap::BlkRecap};
 
 #[derive(Debug)]
 pub struct BlkIndexToBlkRecap {
@@ -45,7 +45,7 @@ impl BlkIndexToBlkRecap {
             if let Some(blk_recap) = self.tree.get(blk_index) {
                 if blk_recap.has_different_modified_time(blk_path) {
                     self.tree.remove(blk_index).unwrap();
-                    if min_removed_blk_index.map_or(true, |_blk_index| *blk_index < _blk_index) {
+                    if min_removed_blk_index.is_none_or(|_blk_index| *blk_index < _blk_index) {
                         min_removed_blk_index.replace(*blk_index);
                     }
                 }
@@ -54,7 +54,7 @@ impl BlkIndexToBlkRecap {
 
         unprocessed_keys.into_iter().for_each(|blk_index| {
             self.tree.remove(&blk_index).unwrap();
-            if min_removed_blk_index.map_or(true, |_blk_index| blk_index < _blk_index) {
+            if min_removed_blk_index.is_none_or(|_blk_index| blk_index < _blk_index) {
                 min_removed_blk_index.replace(blk_index);
             }
         });

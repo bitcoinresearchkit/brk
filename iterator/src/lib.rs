@@ -1,21 +1,14 @@
-use std::{
-    cmp::Ordering,
-    collections::BTreeMap,
-    fs::{self},
-    ops::ControlFlow,
-    path::Path,
-    thread,
-};
+use std::{cmp::Ordering, collections::BTreeMap, fs, ops::ControlFlow, path::Path, thread};
 
 use bitcoin::{
+    Block, BlockHash,
     consensus::{Decodable, ReadExt},
     io::{Cursor, Read},
-    Block, BlockHash,
 };
 use bitcoincore_rpc::RpcApi;
 use blk_index_to_blk_path::*;
 use blk_recap::BlkRecap;
-use crossbeam::channel::{bounded, Receiver};
+use crossbeam::channel::{Receiver, bounded};
 use rayon::prelude::*;
 
 pub use bitcoin;
@@ -29,6 +22,7 @@ mod blk_recap;
 mod error;
 mod height;
 mod utils;
+mod xor;
 
 use blk_index_to_blk_recap::*;
 use blk_metadata::*;
@@ -36,6 +30,7 @@ use blk_metadata_and_block::*;
 pub use error::*;
 pub use height::*;
 use utils::*;
+use xor::*;
 
 pub const NUMBER_OF_UNSAFE_BLOCKS: usize = 1000;
 const MAGIC_BYTES: [u8; 4] = [249, 190, 180, 217];
@@ -52,13 +47,16 @@ pub fn new(
     end: Option<Height>,
     rpc: &'static bitcoincore_rpc::Client,
 ) -> Receiver<(Height, Block, BlockHash)> {
-    let (send_block_reader, recv_block_reader) = bounded(BOUND_CAP);
+    let (send_block_reader, recv_block_reader) = bounded(5);
+    let (send_block_xor, recv_block_xor) = bounded(BOUND_CAP);
     let (send_block, recv_block) = bounded(BOUND_CAP);
     let (send_height_block_hash, recv_height_block_hash) = bounded(BOUND_CAP);
 
     let blk_index_to_blk_path = BlkIndexToBlkPath::scan(data_dir);
 
     let (mut blk_index_to_blk_recap, blk_index) = BlkIndexToBlkRecap::import(data_dir, &blk_index_to_blk_path, start);
+
+    let xor = XOR::from(data_dir);
 
     thread::spawn(move || {
         blk_index_to_blk_path
@@ -69,9 +67,26 @@ pub fn new(
                 let blk_metadata = BlkMetadata::new(blk_index, blk_path.as_path());
 
                 let blk_bytes = fs::read(blk_path).unwrap();
+
+                let res = send_block_reader.send((blk_metadata, blk_bytes));
+                if let Err(e) = res {
+                    dbg!(e);
+                    return ControlFlow::Break(());
+                }
+
+                ControlFlow::Continue(())
+            });
+    });
+
+    thread::spawn(move || {
+        recv_block_reader
+            .iter()
+            .try_for_each(|(blk_metadata, blk_bytes)| -> ControlFlow<(), _> {
+                let blk_bytes = xor.process(blk_bytes);
+
                 let blk_bytes_len = blk_bytes.len() as u64;
 
-                let mut cursor = Cursor::new(blk_bytes.as_slice());
+                let mut cursor = Cursor::new(blk_bytes);
 
                 let mut current_4bytes = [0; 4];
 
@@ -101,7 +116,7 @@ pub fn new(
 
                     cursor.read_exact(&mut bytes).unwrap();
 
-                    if send_block_reader.send((blk_metadata, BlockState::Raw(bytes))).is_err() {
+                    if send_block_xor.send((blk_metadata, BlockState::Raw(bytes))).is_err() {
                         return ControlFlow::Break(());
                     }
                 }
@@ -133,7 +148,7 @@ pub fn new(
             })
         };
 
-        recv_block_reader.iter().try_for_each(|tuple| {
+        recv_block_xor.iter().try_for_each(|tuple| {
             bulk.push(tuple);
 
             if bulk.len() < BOUND_CAP / 2 {
@@ -192,15 +207,12 @@ pub fn new(
                         max_height: height,
                         modified_time: blk_metadata.modified_time,
                     });
-            } else {
-                dbg!(blk_metadata.index, len);
-                panic!()
             }
 
             let mut opt = if current_height == height {
                 Some((block, hash))
             } else {
-                if start.map_or(true, |start| start <= height) && end.map_or(true, |end| end >= height) {
+                if start.is_none_or(|start| start <= height) && end.is_none_or(|end| end >= height) {
                     future_blocks.insert(height, (block, hash));
                 }
                 None
