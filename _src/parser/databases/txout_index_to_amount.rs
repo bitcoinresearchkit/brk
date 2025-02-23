@@ -1,0 +1,148 @@
+use std::{
+    collections::BTreeMap,
+    fs, mem,
+    ops::{Deref, DerefMut},
+    path::{Path, PathBuf},
+};
+
+use allocative::Allocative;
+use itertools::Itertools;
+use snkrj::{AnyDatabase, Database as _Database};
+
+use crate::structs::{Amount, Config, TxoutIndex};
+
+use super::{AnyDatabaseGroup, Metadata};
+
+type Key = TxoutIndex;
+type Value = Amount;
+type Database = _Database<Key, Value>;
+
+#[derive(Allocative)]
+pub struct TxoutIndexToAmount {
+    path: PathBuf,
+    pub metadata: Metadata,
+    #[allocative(skip)]
+    map: BTreeMap<usize, Database>,
+}
+
+impl Deref for TxoutIndexToAmount {
+    type Target = BTreeMap<usize, Database>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.map
+    }
+}
+
+impl DerefMut for TxoutIndexToAmount {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.map
+    }
+}
+
+const DB_MAX_SIZE: usize = 10_000_000_000;
+
+impl TxoutIndexToAmount {
+    pub fn insert_to_ram(&mut self, key: Key, value: Value) -> Option<Value> {
+        self.metadata.called_insert();
+
+        self.open_db(&key).insert_to_ram(key, value)
+    }
+
+    pub fn remove(&mut self, key: &Key) -> Option<Value> {
+        self.metadata.called_remove();
+
+        self.open_db(key).remove(key)
+    }
+
+    /// Doesn't check if the database is open contrary to `safe_get` which does and opens if needed
+    /// Though it makes it easy to use with rayon.
+    pub fn unsafe_get(&self, key: &Key) -> Option<&Value> {
+        let db_index = Self::db_index(key);
+
+        self.get(&db_index).unwrap().get(key)
+    }
+
+    pub fn open_db(&mut self, key: &Key) -> &mut Database {
+        let db_index = Self::db_index(key);
+        let path = self.path.to_owned();
+
+        self.entry(db_index).or_insert_with(|| {
+            let db_name = format!(
+                "{}..{}",
+                db_index * DB_MAX_SIZE,
+                (db_index + 1) * DB_MAX_SIZE
+            );
+
+            let path = path.join(db_name);
+
+            Database::open(path).unwrap()
+        })
+    }
+
+    fn db_index(key: &Key) -> usize {
+        key.as_u64() as usize / DB_MAX_SIZE
+    }
+}
+
+impl AnyDatabaseGroup for TxoutIndexToAmount {
+    fn import(config: &Config) -> Self {
+        let path = config.path_databases().join("txout_index_to_amount");
+        Self {
+            metadata: Metadata::import(&path, 1),
+            path,
+            map: BTreeMap::default(),
+        }
+    }
+
+    fn reset_metadata(&mut self) {
+        self.metadata.reset();
+    }
+
+    fn open_all(&mut self) {
+        let folder = fs::read_dir(&self.path);
+
+        if folder.is_err() {
+            return;
+        }
+
+        folder
+            .unwrap()
+            .map(|entry| {
+                entry
+                    .unwrap()
+                    .path()
+                    .file_name()
+                    .unwrap()
+                    .to_str()
+                    .unwrap()
+                    .to_owned()
+            })
+            .filter(|file_name| file_name.contains(".."))
+            .for_each(|path| {
+                self.open_db(
+                    &path
+                        .split("..")
+                        .next()
+                        .unwrap()
+                        .parse::<u64>()
+                        .unwrap()
+                        .into(),
+                );
+            });
+    }
+
+    fn drain_to_vec(&mut self) -> Vec<Box<dyn AnyDatabase + Send>> {
+        mem::take(&mut self.map)
+            .into_values()
+            .map(|db| Box::new(db) as Box<dyn AnyDatabase + Send>)
+            .collect_vec()
+    }
+
+    fn metadata(&mut self) -> &mut Metadata {
+        &mut self.metadata
+    }
+
+    fn path(&self) -> &Path {
+        &self.path
+    }
+}
