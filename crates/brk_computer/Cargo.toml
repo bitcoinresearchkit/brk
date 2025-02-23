@@ -1,0 +1,17 @@
+[package]
+name = "brk_computer"
+description = "A Bitcoin dataset computer built on top of brk_indexer and brk_fetcher"
+version = "0.1.0"
+edition = { workspace = true }
+license = { workspace = true }
+
+[dependencies]
+brk_fetcher = { workspace = true }
+brk_indexer = { workspace = true }
+brk_parser = { workspace = true }
+color-eyre = { workspace = true }
+derive_deref = { workspace = true }
+fjall = { workspace = true }
+hodor = { workspace = true }
+storable_vec = { workspace = true }
+zerocopy = { workspace = true }
