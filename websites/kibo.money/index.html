@@ -1,0 +1,1601 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>kibō</title>
+    <meta
+      name="description"
+      content="An open source Bitcoin Core data extractor and visualizer"
+    />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <script type="module" crossorigin src="/scripts/main.js"></script>
+
+    <!-- ------ -->
+    <!-- Styles -->
+    <!-- ------ -->
+
+    <!-- Tailwind Base -->
+    <style>
+      *,
+      ::after,
+      ::before,
+      ::backdrop,
+      ::file-selector-button {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+        border: 0 solid;
+      }
+
+      html,
+      :host {
+        line-height: 1.5;
+        -webkit-text-size-adjust: 100%;
+        tab-size: 4;
+        font-family: "Satoshi", ui-sans-serif, system-ui, sans-serif,
+          "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol",
+          "Noto Color Emoji";
+        font-feature-settings: "ss03";
+        -webkit-tap-highlight-color: transparent;
+      }
+
+      body {
+        line-height: inherit;
+      }
+
+      hr {
+        height: 0;
+        color: inherit;
+        border-top-width: 1px;
+      }
+
+      abbr:where([title]) {
+        -webkit-text-decoration: underline dotted;
+        text-decoration: underline dotted;
+      }
+
+      h1,
+      h2,
+      h3,
+      h4,
+      h5,
+      h6 {
+        font-size: inherit;
+        font-weight: inherit;
+      }
+
+      a {
+        color: inherit;
+      }
+
+      b,
+      strong {
+        font-weight: bolder;
+      }
+
+      code,
+      kbd,
+      samp,
+      pre {
+        font-family: var(--default-mono-font-family), ui-monospace,
+          SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
+          "Courier New", monospace;
+        font-feature-settings: var(
+          --default-mono-font-feature-settings,
+          normal
+        );
+        font-variation-settings: var(
+          --default-mono-font-variation-settings,
+          normal
+        );
+        font-size: 1em;
+      }
+
+      small {
+        font-size: 80%;
+      }
+
+      sub,
+      sup {
+        font-size: 75%;
+        line-height: 0;
+        position: relative;
+        vertical-align: baseline;
+      }
+
+      sub {
+        bottom: -0.25em;
+      }
+
+      sup {
+        top: -0.5em;
+      }
+
+      table {
+        text-indent: 0;
+        border-color: inherit;
+        border-collapse: collapse;
+      }
+
+      button,
+      input,
+      optgroup,
+      select,
+      textarea,
+      ::file-selector-button {
+        font: inherit;
+        font-feature-settings: inherit;
+        font-variation-settings: inherit;
+        letter-spacing: inherit;
+        color: inherit;
+        background: transparent;
+      }
+
+      button,
+      input:where([type="button"], [type="reset"], [type="submit"]),
+      ::file-selector-button {
+        appearance: button;
+      }
+
+      :-moz-focusring {
+        outline: auto;
+      }
+
+      :-moz-ui-invalid {
+        box-shadow: none;
+      }
+
+      progress {
+        vertical-align: baseline;
+      }
+
+      ::-webkit-inner-spin-button,
+      ::-webkit-outer-spin-button {
+        height: auto;
+      }
+
+      ::-webkit-search-decoration {
+        -webkit-appearance: none;
+      }
+
+      summary {
+        display: list-item;
+      }
+
+      ol,
+      ul,
+      menu {
+        list-style: none;
+      }
+
+      textarea {
+        resize: vertical;
+      }
+
+      ::placeholder {
+        opacity: 1;
+        color: color-mix(in srgb, currentColor 50%, transparent);
+      }
+
+      :disabled {
+        cursor: default;
+      }
+
+      img,
+      svg,
+      video,
+      canvas,
+      audio,
+      iframe,
+      embed,
+      object {
+        display: block;
+        vertical-align: middle;
+      }
+
+      img,
+      video {
+        max-width: 100%;
+        height: auto;
+      }
+
+      [hidden] {
+        display: none !important;
+      }
+    </style>
+
+    <!-- Custom -->
+    <style>
+      :root {
+        color-scheme: light dark;
+
+        /* before: #ffffe3 */
+        /* current: oklch(99% 0.01 44) */
+        --white: #fffaf6;
+        /* before: #e8e8e8 */
+        /* current: oklch(90% 0.01 44) */
+        --lighter-gray: #e4dcd9;
+        /* before: #c0c0ab */
+        /* current: oklch(65% 0.01 44) */
+        --light-gray: #867e7b;
+        /* before: #666660 */
+        /* current: oklch(60% 0.01 44) */
+        --dark-gray: #867e7b;
+        /* before: #30302b */
+        /* current: oklch(25% 0.01 44) */
+        --darker-gray: #26201e;
+        /* before: #10100e */
+        /* current: oklch(17.5% 0.005 44) */
+        --black: #12100f;
+        --red: oklch(0.607 0.241 26.328);
+        /* before: #f26610 */
+        /* current: oklch(67.64% 0.191 44.41) */
+        --orange: oklch(67.64% 0.191 44.41); /*oklch(0.6755 0.2175 44.36); */
+        --amber: oklch(0.7175 0.1835 64.199);
+        --yellow: oklch(0.738 0.173 80.9405);
+        --avocado: oklch(0.72 0.19 110);
+        --lime: oklch(0.708 0.2165 131.267);
+        --green: oklch(0.675 0.2065 149.3965);
+        --emerald: oklch(0.646 0.1575 162.8525);
+        --teal: oklch(0.652 0.129 183.6035);
+        --cyan: oklch(0.662 0.1345 218.472);
+        --sky: oklch(0.6365 0.1635 239.6445);
+        --blue: oklch(0.5845 0.2295 261.348);
+        --indigo: oklch(0.548 0.2475 277.0415);
+        --violet: oklch(0.5735 0.2655 292.863);
+        --purple: oklch(0.5925 0.2765 303.1105);
+        --fuchsia: oklch(0.629 0.294 322.523);
+        --pink: oklch(0.624 0.245 357.444);
+        --rose: oklch(0.6155 0.2495 17.012);
+        --background-color: light-dark(var(--white), var(--black));
+        --color: light-dark(var(--black), var(--white));
+        --off-color: light-dark(var(--light-gray), var(--dark-gray));
+        --border-color: light-dark(var(--lighter-gray), var(--darker-gray));
+
+        --font-size-2xs: 0.625rem;
+        --line-height-2xs: 1rem;
+        --font-size-xs: 0.75rem;
+        --line-height-xs: 1rem;
+        --font-size-sm: 0.875rem;
+        --line-height-sm: 1.25rem;
+        --font-size-base: 1rem;
+        --line-height-base: 1.5rem;
+        --font-size-lg: 1.125rem;
+        --line-height-lg: 1.75rem;
+        --font-size-xl: 1.25rem;
+        --line-height-xl: 1.75rem;
+
+        --main-padding: 2rem;
+
+        @media (min-width: 768px) {
+          --main-padding: 2rem;
+        }
+
+        --negative-main-padding: calc(-1 * var(--main-padding));
+
+        --font-weight-base: 450;
+        --font-weight-bold: 700;
+
+        --transform-scale-active: scaleY(0.9);
+
+        --default-main-width: 25rem;
+
+        --emoji-filter: grayscale(1) contrast(5) invert(1);
+        @media (prefers-color-scheme: dark) {
+          --emoji-filter: grayscale(1) contrast(5);
+        }
+
+        --bottom-area: 69vh;
+      }
+
+      [data-resize] {
+        user-select: none;
+      }
+
+      @font-face {
+        font-family: "Satoshi";
+        src: url("./assets/fonts/satoshi/2024-09/font.var.woff2")
+          format("woff2");
+        font-weight: 100 900;
+        font-display: block;
+        font-style: normal;
+      }
+
+      @font-face {
+        font-family: "Satoshi Chart";
+        src: url("./assets/fonts/satoshi/2024-09/font.var.woff2")
+          format("woff2");
+        font-weight: 500 900;
+        font-display: block;
+        font-style: normal;
+      }
+
+      /*
+       * ---
+       */
+
+      * {
+        border-color: var(--border-color) !important;
+        border-style: solid !important;
+
+        &::selection {
+          color: var(--white);
+          background-color: var(--orange);
+        }
+      }
+
+      a {
+        display: flow-root;
+        align-items: baseline;
+        text-decoration-style: dotted;
+        text-decoration-thickness: 1px;
+        text-underline-offset: 2px;
+        text-decoration-color: var(--off-color);
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+
+        &:hover {
+          text-decoration-style: solid;
+        }
+
+        &:hover {
+          &,
+          &::after,
+          * {
+            color: var(--color) !important;
+          }
+        }
+
+        &:active {
+          &,
+          *,
+          &::after {
+            color: var(--orange) !important;
+          }
+          text-decoration-color: inherit;
+        }
+
+        &[target="_blank"]::after {
+          color: var(--off-color);
+          content: "↗";
+          align-self: baseline;
+          font-size: 75%;
+          margin-left: 0.25rem;
+          line-height: 1;
+
+          &:hover {
+            text-decoration: none;
+          }
+        }
+
+        > small {
+          font-size: var(--font-size-sm);
+          line-height: var(--line-height-sm);
+          opacity: 0.5;
+          color: inherit;
+          margin-left: 0.25rem;
+        }
+      }
+
+      aside {
+        min-width: 0px;
+        position: relative;
+        height: 100%;
+        width: 100%;
+        overflow-y: auto;
+        flex: 1;
+
+        @media (max-width: 767px) {
+          padding-bottom: calc(var(--main-padding) + 1.5rem);
+
+          html[data-display="standalone"] & {
+            padding-bottom: calc(var(--main-padding) + 2rem);
+          }
+        }
+
+        @media (min-width: 768px) {
+          border-left: 1px;
+          order: 2;
+          margin-bottom: 0rem;
+        }
+
+        header {
+          small {
+            font-weight: var(--font-weight-base);
+            font-size: var(--font-size-base);
+            line-height: var(--line-height-base);
+          }
+        }
+
+        body > &[hidden] {
+          display: flex !important;
+        }
+      }
+
+      b {
+        font-weight: var(--font-weight-bold);
+      }
+
+      body {
+        font-weight: var(--font-weight-base);
+        height: 100dvh;
+        display: flex;
+        flex-direction: column;
+        position: relative;
+
+        @media (min-width: 768px) {
+          flex-direction: row;
+
+          html[data-display="standalone"] & {
+            border-top: 1px;
+          }
+        }
+      }
+
+      button {
+        cursor: pointer;
+
+        &:disabled {
+          color: var(--off-color);
+        }
+
+        &:hover {
+          &,
+          &::after,
+          * {
+            color: var(--color) !important;
+          }
+        }
+
+        &:active {
+          &,
+          &::after,
+          * {
+            color: var(--orange) !important;
+          }
+        }
+      }
+
+      details {
+        display: block;
+      }
+
+      div {
+        &:has(> * + button[type="reset"]) {
+          display: flex;
+          gap: 0.5rem;
+          align-items: baseline;
+
+          button {
+            color: var(--off-color);
+            font-size: var(--font-size-sm);
+            line-height: var(--line-height-sm);
+          }
+        }
+      }
+
+      field,
+      h1 {
+        text-transform: capitalize;
+      }
+
+      h1,
+      h2,
+      h3 {
+        font-weight: var(--font-weight-bold);
+        font-size: var(--font-size-xl);
+        line-height: var(--line-height-xl);
+      }
+
+      h4 {
+        font-size: var(--font-size-base);
+        line-height: var(--line-height-base);
+      }
+
+      hr {
+        width: 100%;
+      }
+
+      html {
+        background-color: var(--background-color);
+        color: var(--color);
+        scrollbar-color: var(--off-color) var(--background-color); /* Foreground, Background */
+        scrollbar-width: thin;
+        overflow: hidden;
+      }
+
+      input {
+        border: 0;
+        width: 100%;
+        text-align: left;
+
+        &:focus-visible {
+          outline: none;
+        }
+
+        &::placeholder {
+          color: var(--off-color);
+        }
+
+        label > & {
+          position: absolute;
+          width: 1px;
+          height: 1px;
+          padding: 0;
+          margin: -1px;
+          overflow: hidden;
+          clip: rect(0, 0, 0, 0);
+          white-space: nowrap;
+          border-width: 0;
+        }
+      }
+
+      label {
+        &:has(input) {
+          cursor: pointer;
+          display: flex;
+          flex-direction: column;
+          user-select: none;
+          -webkit-user-select: none;
+          color: var(--off-color);
+          position: relative;
+          pointer-events: all;
+
+          > span.main {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+
+            > span.colors {
+              display: flex;
+              width: 0.75rem;
+              height: 0.75rem;
+              flex-direction: column;
+              overflow: hidden;
+              border-radius: 9999px;
+
+              > span {
+                flex: 1;
+              }
+            }
+          }
+
+          &:hover {
+            color: var(--color);
+          }
+
+          &:active {
+            color: var(--orange);
+          }
+
+          > *:not(input):not(svg) {
+            width: 100%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+          }
+
+          > *:not(input) + * {
+            margin-top: -0.5rem /* -8px */;
+          }
+        }
+
+        &:has(input:checked) {
+          color: var(--color);
+        }
+      }
+
+      main {
+        order: 1;
+        position: relative;
+        display: flex;
+
+        @media (max-width: 767px) {
+          flex: 1;
+          min-height: 0;
+          width: 100% !important;
+        }
+
+        @media (min-width: 768px) {
+          min-width: 300px;
+          width: var(--default-main-width);
+          max-width: 65dvw;
+        }
+
+        > footer {
+          position: absolute;
+          bottom: 0;
+          right: 0;
+          left: 0;
+          display: flex;
+          margin: var(--main-padding);
+          margin-bottom: var(--main-padding);
+          z-index: 100;
+          pointer-events: none;
+          justify-content: center;
+
+          @media (max-width: 767px) {
+            html[data-display="standalone"] & {
+              margin-bottom: calc(var(--main-padding) + 0.5rem);
+            }
+          }
+
+          > fieldset {
+            background-color: var(--border-color);
+            display: flex;
+            box-shadow: 0 0 1rem 0.5rem var(--background-color);
+            border-radius: 9999px;
+            pointer-events: auto;
+            padding: 0.5rem 1.5rem;
+            gap: 1rem;
+          }
+        }
+
+        > #resize-bar {
+          display: none;
+          position: absolute;
+          right: 0;
+          top: 0;
+          bottom: 0;
+          width: 4px;
+          margin: 0 -2px;
+          z-index: 50;
+
+          html[data-resize] &,
+          &:hover {
+            border-right: 4px;
+            cursor: col-resize;
+            border-color: var(--off-color) !important;
+          }
+
+          @media (min-width: 768px) {
+            display: block;
+          }
+        }
+      }
+
+      object {
+        background-color: white;
+      }
+
+      select {
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        appearance: none;
+        background: url('data:image/svg+xml;utf-8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="gray"><path fill-rule="evenodd" d="M4.22 6.22a.75.75 0 0 1 1.06 0L8 8.94l2.72-2.72a.75.75 0 1 1 1.06 1.06l-3.25 3.25a.75.75 0 0 1-1.06 0L4.22 7.28a.75.75 0 0 1 0-1.06Z" clip-rule="evenodd" /></svg>')
+          100% 50% no-repeat transparent;
+        flex: 1;
+
+        &:focus-visible {
+          border: 0;
+          outline: none;
+        }
+      }
+
+      nav,
+      search {
+        flex: 1;
+        overflow-x: hidden;
+        overflow-y: auto;
+        padding: var(--main-padding);
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        gap: 2rem;
+        padding-bottom: var(--bottom-area);
+      }
+
+      sup {
+        opacity: 0.5;
+        margin-left: 0.25rem;
+      }
+
+      small {
+        color: var(--off-color);
+        font-weight: var(--font-weight-base);
+
+        h4 + & {
+          font-size: var(--font-size-base);
+          line-height: var(--line-height-base);
+        }
+      }
+
+      span {
+        &.name {
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+      }
+
+      strong {
+        color: var(--orange);
+      }
+
+      summary {
+        list-style: none;
+        display: block;
+        cursor: pointer;
+        position: relative;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+
+        &::marker,
+        &::-webkit-details-marker {
+          display: none;
+        }
+
+        &:hover {
+          &,
+          * {
+            color: var(--color) !important;
+          }
+        }
+
+        &:active {
+          &,
+          * {
+            color: var(--orange) !important;
+          }
+        }
+      }
+
+      @media (min-width: 768px) {
+        .md\:hidden {
+          display: none !important;
+        }
+      }
+
+      /*
+       * ---
+       */
+
+      .tree {
+        user-select: none;
+        -webkit-user-select: none;
+        text-transform: capitalize;
+        margin-top: -0.375rem;
+
+        button::after {
+          color: var(--off-color);
+          content: "→";
+          align-self: baseline;
+          font-size: 75%;
+          margin-left: 0.25rem;
+          line-height: 1;
+        }
+
+        li[data-highlight] {
+          > details:not([open]) {
+            color: var(--color);
+          }
+
+          > label > a::after,
+          > details:not([open]) > summary::after {
+            color: var(--orange) !important;
+            content: "";
+            background-color: var(--orange);
+            width: 0.375rem;
+            height: 0.375rem;
+            border-radius: 9999px;
+            display: inline-block;
+            margin-bottom: 0.125rem;
+            margin-left: 0.25rem;
+          }
+        }
+
+        > ul > li {
+          & + * {
+            margin-top: 1.5rem;
+          }
+
+          > details,
+          > label {
+            font-size: var(--font-size-base);
+            line-height: var(--line-height-base);
+
+            ul {
+              margin-left: 0.375rem;
+            }
+          }
+
+          a,
+          button,
+          summary {
+            padding: 0.375rem 0;
+          }
+
+          ul {
+            color: var(--off-color);
+
+            overflow: hidden;
+
+            li {
+              display: block;
+              position: relative;
+              padding-left: 0.75rem;
+              border-left: 1px;
+            }
+          }
+        }
+      }
+
+      search {
+        ul {
+          display: flex;
+          flex-direction: column;
+          gap: 1rem;
+        }
+      }
+
+      #share-div {
+        padding: 1.5rem;
+        backdrop-filter: blur(12px);
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        display: flex;
+        z-index: 999;
+        justify-content: center;
+        align-items: center;
+
+        > #share-content-div {
+          display: flex;
+          flex-direction: column;
+          width: 100%;
+          max-width: 10rem; /* 576px */
+          background-color: var(--white);
+          padding: 1rem;
+          box-shadow: 0 0 2rem 1rem var(--border-color);
+          border-radius: 1px;
+
+          a {
+            color-scheme: light;
+            margin-top: 0.5rem;
+            display: block;
+            font-style: italic;
+            color: var(--black);
+          }
+
+          img {
+            image-rendering: pixelated;
+          }
+        }
+      }
+
+      search {
+        > #search-no-input-text {
+          color: var(--off-color);
+
+          &:has(+ ul li) {
+            display: none;
+          }
+
+          > button {
+            color: var(--color);
+          }
+        }
+      }
+
+      .shadow-top {
+        position: absolute;
+        background-image: linear-gradient(
+          to top,
+          transparent,
+          var(--background-color)
+        );
+        height: var(--main-padding);
+        top: 0;
+        left: 0;
+        right: 0;
+        z-index: 10;
+        pointer-events: none;
+      }
+      .shadow-bottom {
+        position: absolute;
+        background-image: linear-gradient(
+          to bottom,
+          transparent,
+          var(--background-color)
+        );
+        height: var(--main-padding);
+        bottom: 0;
+        left: 0;
+        right: 0;
+        z-index: 10;
+        pointer-events: none;
+      }
+      .shadow-left {
+        position: absolute;
+        background-image: linear-gradient(
+          to left,
+          transparent,
+          var(--background-color)
+        );
+        width: var(--main-padding);
+        left: 0;
+        top: 0;
+        bottom: 0;
+        z-index: 30;
+        pointer-events: none;
+      }
+      .shadow-right {
+        position: absolute;
+        background-image: linear-gradient(
+          to right,
+          transparent,
+          var(--background-color)
+        );
+        width: var(--main-padding);
+        right: 0;
+        top: 0;
+        bottom: 0;
+        z-index: 10;
+        pointer-events: none;
+      }
+
+      .chart {
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+
+        > legend {
+          display: flex;
+          align-items: center;
+          gap: 1.5rem;
+          margin-left: var(--negative-main-padding);
+          margin-right: var(--negative-main-padding);
+          padding-left: var(--main-padding);
+          padding-right: var(--main-padding);
+          padding-bottom: 1.25rem;
+          overflow-x: auto;
+          min-width: 0;
+
+          > div {
+            flex: 0;
+            display: flex;
+            align-items: center;
+
+            > label {
+              margin: -0.375rem 0;
+              color: var(--color);
+
+              > span {
+                display: flex !important;
+              }
+
+              &:has(input:not(:checked)) {
+                color: var(--off-color);
+
+                > span.main > span.name {
+                  text-decoration-thickness: 1.5px;
+                  text-decoration-color: var(--color);
+                  text-decoration-line: line-through;
+                }
+
+                &:hover {
+                  * {
+                    color: var(--off-color) !important;
+                  }
+
+                  > span.main > span.name {
+                    text-decoration-color: var(--orange) !important;
+                  }
+                }
+              }
+            }
+
+            > a {
+              padding: 0.375rem;
+              margin: -0.375rem;
+            }
+          }
+        }
+
+        > .panes {
+          position: relative;
+          display: flex;
+          flex-direction: column;
+          flex: 1;
+          min-height: 0;
+
+          > .pane {
+            z-index: 20;
+            position: relative;
+            min-height: 0px;
+            width: 100%;
+            cursor: crosshair;
+            height: 100%;
+
+            &:has(+ .chart-wrapper:not([hidden])) {
+              height: calc(100% - 62px);
+            }
+
+            > fieldset {
+              pointer-events: none;
+              position: absolute;
+              left: 0px;
+              top: 0px;
+              z-index: 10;
+              display: flex;
+              align-items: center;
+              font-size: var(--font-size-xs);
+              line-height: var(--line-height-xs);
+              gap: 0.5rem;
+
+              > div.field {
+                display: flex;
+                align-items: center;
+                font-size: var(--font-size-xs);
+                line-height: var(--line-height-xs);
+                gap: 0.5rem;
+
+                > legend,
+                > div {
+                  flex-shrink: 0;
+                }
+
+                > hr {
+                  min-width: 1rem;
+                }
+
+                label {
+                  padding: 0.5rem;
+                  margin: -0.5rem;
+                }
+
+                > div {
+                  display: flex;
+                  gap: 0.5rem;
+                }
+              }
+            }
+
+            > .lightweight-chart {
+              height: 100%;
+              margin-right: var(--negative-main-padding);
+            }
+          }
+
+          > .shadow-bottom {
+            bottom: 1.75rem;
+            width: 80px;
+            left: auto;
+          }
+        }
+      }
+    </style>
+
+    <!-- ------- -->
+    <!-- Scripts -->
+    <!-- ------- -->
+
+    <script>
+      // @ts-check
+
+      const preferredColorSchemeMatchMedia = window.matchMedia(
+        "(prefers-color-scheme: dark)",
+      );
+
+      const themeColor = window.document.createElement("meta");
+      themeColor.name = "theme-color";
+      window.document.getElementsByTagName("head")[0].appendChild(themeColor);
+
+      /** @param {boolean} dark */
+      function updateThemeColor(dark) {
+        const backgroundColor = getComputedStyle(
+          window.document.documentElement,
+        ).getPropertyValue(dark ? "--black" : "--white");
+        themeColor.content = backgroundColor;
+      }
+
+      updateThemeColor(preferredColorSchemeMatchMedia.matches);
+      preferredColorSchemeMatchMedia.addEventListener(
+        "change",
+        ({ matches }) => {
+          updateThemeColor(matches);
+        },
+      );
+
+      if ("standalone" in window.navigator && !!window.navigator.standalone) {
+        window.document.documentElement.dataset.display = "standalone";
+      }
+
+      if ("serviceWorker" in navigator) {
+        navigator.serviceWorker.register("/scripts/service-worker.js");
+      }
+    </script>
+
+    <!-- --- -->
+    <!-- Icons -->
+    <!-- --- -->
+
+    <link
+      rel="icon"
+      type="image/png"
+      sizes="196x196"
+      href="/assets/pwa/2024-11-20_09-41-25/favicon-196.png"
+    />
+    <link
+      rel="apple-touch-icon"
+      href="/assets/pwa/2024-11-20_09-41-25/apple-icon-180.png"
+    />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <link
+      rel="apple-touch-startup-image"
+      href="/assets/pwa/2024-11-20_09-41-25/apple-splash-2048-2732.jpg"
+      media="(device-width: 1024px) and (device-height: 1366px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)"
+    />
+    <link
+      rel="apple-touch-startup-image"
+      href="/assets/pwa/2024-11-20_09-41-25/apple-splash-2732-2048.jpg"
+      media="(device-width: 1024px) and (device-height: 1366px) and (-webkit-device-pixel-ratio: 2) and (orientation: landscape)"
+    />
+    <link
+      rel="apple-touch-startup-image"
+      href="/assets/pwa/2024-11-20_09-41-25/apple-splash-1668-2388.jpg"
+      media="(device-width: 834px) and (device-height: 1194px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)"
+    />
+    <link
+      rel="apple-touch-startup-image"
+      href="/assets/pwa/2024-11-20_09-41-25/apple-splash-2388-1668.jpg"
+      media="(device-width: 834px) and (device-height: 1194px) and (-webkit-device-pixel-ratio: 2) and (orientation: landscape)"
+    />
+    <link
+      rel="apple-touch-startup-image"
+      href="/assets/pwa/2024-11-20_09-41-25/apple-splash-1536-2048.jpg"
+      media="(device-width: 768px) and (device-height: 1024px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)"
+    />
+    <link
+      rel="apple-touch-startup-image"
+      href="/assets/pwa/2024-11-20_09-41-25/apple-splash-2048-1536.jpg"
+      media="(device-width: 768px) and (device-height: 1024px) and (-webkit-device-pixel-ratio: 2) and (orientation: landscape)"
+    />
+    <link
+      rel="apple-touch-startup-image"
+      href="/assets/pwa/2024-11-20_09-41-25/apple-splash-1488-2266.jpg"
+      media="(device-width: 744px) and (device-height: 1133px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)"
+    />
+    <link
+      rel="apple-touch-startup-image"
+      href="/assets/pwa/2024-11-20_09-41-25/apple-splash-2266-1488.jpg"
+      media="(device-width: 744px) and (device-height: 1133px) and (-webkit-device-pixel-ratio: 2) and (orientation: landscape)"
+    />
+    <link
+      rel="apple-touch-startup-image"
+      href="/assets/pwa/2024-11-20_09-41-25/apple-splash-1640-2360.jpg"
+      media="(device-width: 820px) and (device-height: 1180px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)"
+    />
+    <link
+      rel="apple-touch-startup-image"
+      href="/assets/pwa/2024-11-20_09-41-25/apple-splash-2360-1640.jpg"
+      media="(device-width: 820px) and (device-height: 1180px) and (-webkit-device-pixel-ratio: 2) and (orientation: landscape)"
+    />
+    <link
+      rel="apple-touch-startup-image"
+      href="/assets/pwa/2024-11-20_09-41-25/apple-splash-1668-2224.jpg"
+      media="(device-width: 834px) and (device-height: 1112px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)"
+    />
+    <link
+      rel="apple-touch-startup-image"
+      href="/assets/pwa/2024-11-20_09-41-25/apple-splash-2224-1668.jpg"
+      media="(device-width: 834px) and (device-height: 1112px) and (-webkit-device-pixel-ratio: 2) and (orientation: landscape)"
+    />
+    <link
+      rel="apple-touch-startup-image"
+      href="/assets/pwa/2024-11-20_09-41-25/apple-splash-1620-2160.jpg"
+      media="(device-width: 810px) and (device-height: 1080px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)"
+    />
+    <link
+      rel="apple-touch-startup-image"
+      href="/assets/pwa/2024-11-20_09-41-25/apple-splash-2160-1620.jpg"
+      media="(device-width: 810px) and (device-height: 1080px) and (-webkit-device-pixel-ratio: 2) and (orientation: landscape)"
+    />
+    <link
+      rel="apple-touch-startup-image"
+      href="/assets/pwa/2024-11-20_09-41-25/apple-splash-1290-2796.jpg"
+      media="(device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)"
+    />
+    <link
+      rel="apple-touch-startup-image"
+      href="/assets/pwa/2024-11-20_09-41-25/apple-splash-2796-1290.jpg"
+      media="(device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3) and (orientation: landscape)"
+    />
+    <link
+      rel="apple-touch-startup-image"
+      href="/assets/pwa/2024-11-20_09-41-25/apple-splash-1179-2556.jpg"
+      media="(device-width: 393px) and (device-height: 852px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)"
+    />
+    <link
+      rel="apple-touch-startup-image"
+      href="/assets/pwa/2024-11-20_09-41-25/apple-splash-2556-1179.jpg"
+      media="(device-width: 393px) and (device-height: 852px) and (-webkit-device-pixel-ratio: 3) and (orientation: landscape)"
+    />
+    <link
+      rel="apple-touch-startup-image"
+      href="/assets/pwa/2024-11-20_09-41-25/apple-splash-1284-2778.jpg"
+      media="(device-width: 428px) and (device-height: 926px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)"
+    />
+    <link
+      rel="apple-touch-startup-image"
+      href="/assets/pwa/2024-11-20_09-41-25/apple-splash-2778-1284.jpg"
+      media="(device-width: 428px) and (device-height: 926px) and (-webkit-device-pixel-ratio: 3) and (orientation: landscape)"
+    />
+    <link
+      rel="apple-touch-startup-image"
+      href="/assets/pwa/2024-11-20_09-41-25/apple-splash-1170-2532.jpg"
+      media="(device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)"
+    />
+    <link
+      rel="apple-touch-startup-image"
+      href="/assets/pwa/2024-11-20_09-41-25/apple-splash-2532-1170.jpg"
+      media="(device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3) and (orientation: landscape)"
+    />
+    <link
+      rel="apple-touch-startup-image"
+      href="/assets/pwa/2024-11-20_09-41-25/apple-splash-1125-2436.jpg"
+      media="(device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)"
+    />
+    <link
+      rel="apple-touch-startup-image"
+      href="/assets/pwa/2024-11-20_09-41-25/apple-splash-2436-1125.jpg"
+      media="(device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3) and (orientation: landscape)"
+    />
+    <link
+      rel="apple-touch-startup-image"
+      href="/assets/pwa/2024-11-20_09-41-25/apple-splash-1242-2688.jpg"
+      media="(device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)"
+    />
+    <link
+      rel="apple-touch-startup-image"
+      href="/assets/pwa/2024-11-20_09-41-25/apple-splash-2688-1242.jpg"
+      media="(device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 3) and (orientation: landscape)"
+    />
+    <link
+      rel="apple-touch-startup-image"
+      href="/assets/pwa/2024-11-20_09-41-25/apple-splash-828-1792.jpg"
+      media="(device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)"
+    />
+    <link
+      rel="apple-touch-startup-image"
+      href="/assets/pwa/2024-11-20_09-41-25/apple-splash-1792-828.jpg"
+      media="(device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2) and (orientation: landscape)"
+    />
+    <link
+      rel="apple-touch-startup-image"
+      href="/assets/pwa/2024-11-20_09-41-25/apple-splash-1242-2208.jpg"
+      media="(device-width: 414px) and (device-height: 736px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)"
+    />
+    <link
+      rel="apple-touch-startup-image"
+      href="/assets/pwa/2024-11-20_09-41-25/apple-splash-2208-1242.jpg"
+      media="(device-width: 414px) and (device-height: 736px) and (-webkit-device-pixel-ratio: 3) and (orientation: landscape)"
+    />
+    <link
+      rel="apple-touch-startup-image"
+      href="/assets/pwa/2024-11-20_09-41-25/apple-splash-750-1334.jpg"
+      media="(device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)"
+    />
+    <link
+      rel="apple-touch-startup-image"
+      href="/assets/pwa/2024-11-20_09-41-25/apple-splash-1334-750.jpg"
+      media="(device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2) and (orientation: landscape)"
+    />
+    <link
+      rel="apple-touch-startup-image"
+      href="/assets/pwa/2024-11-20_09-41-25/apple-splash-640-1136.jpg"
+      media="(device-width: 320px) and (device-height: 568px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)"
+    />
+    <link
+      rel="apple-touch-startup-image"
+      href="/assets/pwa/2024-11-20_09-41-25/apple-splash-1136-640.jpg"
+      media="(device-width: 320px) and (device-height: 568px) and (-webkit-device-pixel-ratio: 2) and (orientation: landscape)"
+    />
+    <link
+      rel="icon"
+      type="image/png"
+      sizes="196x196"
+      href="/assets/pwa/2024-11-20_09-41-25/favicon-196.png"
+    />
+    <link
+      rel="apple-touch-icon"
+      href="/assets/pwa/2024-11-20_09-41-25/apple-icon-180.png"
+    />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <link
+      rel="apple-touch-startup-image"
+      href="/assets/pwa/2024-11-20_09-41-25/apple-splash-2048-2732.jpg"
+      media="(device-width: 1024px) and (device-height: 1366px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)"
+    />
+    <link
+      rel="apple-touch-startup-image"
+      href="/assets/pwa/2024-11-20_09-41-25/apple-splash-2732-2048.jpg"
+      media="(device-width: 1024px) and (device-height: 1366px) and (-webkit-device-pixel-ratio: 2) and (orientation: landscape)"
+    />
+    <link
+      rel="apple-touch-startup-image"
+      href="/assets/pwa/2024-11-20_09-41-25/apple-splash-1668-2388.jpg"
+      media="(device-width: 834px) and (device-height: 1194px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)"
+    />
+    <link
+      rel="apple-touch-startup-image"
+      href="/assets/pwa/2024-11-20_09-41-25/apple-splash-2388-1668.jpg"
+      media="(device-width: 834px) and (device-height: 1194px) and (-webkit-device-pixel-ratio: 2) and (orientation: landscape)"
+    />
+    <link
+      rel="apple-touch-startup-image"
+      href="/assets/pwa/2024-11-20_09-41-25/apple-splash-1536-2048.jpg"
+      media="(device-width: 768px) and (device-height: 1024px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)"
+    />
+    <link
+      rel="apple-touch-startup-image"
+      href="/assets/pwa/2024-11-20_09-41-25/apple-splash-2048-1536.jpg"
+      media="(device-width: 768px) and (device-height: 1024px) and (-webkit-device-pixel-ratio: 2) and (orientation: landscape)"
+    />
+    <link
+      rel="apple-touch-startup-image"
+      href="/assets/pwa/2024-11-20_09-41-25/apple-splash-1488-2266.jpg"
+      media="(device-width: 744px) and (device-height: 1133px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)"
+    />
+    <link
+      rel="apple-touch-startup-image"
+      href="/assets/pwa/2024-11-20_09-41-25/apple-splash-2266-1488.jpg"
+      media="(device-width: 744px) and (device-height: 1133px) and (-webkit-device-pixel-ratio: 2) and (orientation: landscape)"
+    />
+    <link
+      rel="apple-touch-startup-image"
+      href="/assets/pwa/2024-11-20_09-41-25/apple-splash-1640-2360.jpg"
+      media="(device-width: 820px) and (device-height: 1180px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)"
+    />
+    <link
+      rel="apple-touch-startup-image"
+      href="/assets/pwa/2024-11-20_09-41-25/apple-splash-2360-1640.jpg"
+      media="(device-width: 820px) and (device-height: 1180px) and (-webkit-device-pixel-ratio: 2) and (orientation: landscape)"
+    />
+    <link
+      rel="apple-touch-startup-image"
+      href="/assets/pwa/2024-11-20_09-41-25/apple-splash-1668-2224.jpg"
+      media="(device-width: 834px) and (device-height: 1112px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)"
+    />
+    <link
+      rel="apple-touch-startup-image"
+      href="/assets/pwa/2024-11-20_09-41-25/apple-splash-2224-1668.jpg"
+      media="(device-width: 834px) and (device-height: 1112px) and (-webkit-device-pixel-ratio: 2) and (orientation: landscape)"
+    />
+    <link
+      rel="apple-touch-startup-image"
+      href="/assets/pwa/2024-11-20_09-41-25/apple-splash-1620-2160.jpg"
+      media="(device-width: 810px) and (device-height: 1080px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)"
+    />
+    <link
+      rel="apple-touch-startup-image"
+      href="/assets/pwa/2024-11-20_09-41-25/apple-splash-2160-1620.jpg"
+      media="(device-width: 810px) and (device-height: 1080px) and (-webkit-device-pixel-ratio: 2) and (orientation: landscape)"
+    />
+    <link
+      rel="apple-touch-startup-image"
+      href="/assets/pwa/2024-11-20_09-41-25/apple-splash-1290-2796.jpg"
+      media="(device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)"
+    />
+    <link
+      rel="apple-touch-startup-image"
+      href="/assets/pwa/2024-11-20_09-41-25/apple-splash-2796-1290.jpg"
+      media="(device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3) and (orientation: landscape)"
+    />
+    <link
+      rel="apple-touch-startup-image"
+      href="/assets/pwa/2024-11-20_09-41-25/apple-splash-1179-2556.jpg"
+      media="(device-width: 393px) and (device-height: 852px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)"
+    />
+    <link
+      rel="apple-touch-startup-image"
+      href="/assets/pwa/2024-11-20_09-41-25/apple-splash-2556-1179.jpg"
+      media="(device-width: 393px) and (device-height: 852px) and (-webkit-device-pixel-ratio: 3) and (orientation: landscape)"
+    />
+    <link
+      rel="apple-touch-startup-image"
+      href="/assets/pwa/2024-11-20_09-41-25/apple-splash-1284-2778.jpg"
+      media="(device-width: 428px) and (device-height: 926px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)"
+    />
+    <link
+      rel="apple-touch-startup-image"
+      href="/assets/pwa/2024-11-20_09-41-25/apple-splash-2778-1284.jpg"
+      media="(device-width: 428px) and (device-height: 926px) and (-webkit-device-pixel-ratio: 3) and (orientation: landscape)"
+    />
+    <link
+      rel="apple-touch-startup-image"
+      href="/assets/pwa/2024-11-20_09-41-25/apple-splash-1170-2532.jpg"
+      media="(device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)"
+    />
+    <link
+      rel="apple-touch-startup-image"
+      href="/assets/pwa/2024-11-20_09-41-25/apple-splash-2532-1170.jpg"
+      media="(device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3) and (orientation: landscape)"
+    />
+    <link
+      rel="apple-touch-startup-image"
+      href="/assets/pwa/2024-11-20_09-41-25/apple-splash-1125-2436.jpg"
+      media="(device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)"
+    />
+    <link
+      rel="apple-touch-startup-image"
+      href="/assets/pwa/2024-11-20_09-41-25/apple-splash-2436-1125.jpg"
+      media="(device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3) and (orientation: landscape)"
+    />
+    <link
+      rel="apple-touch-startup-image"
+      href="/assets/pwa/2024-11-20_09-41-25/apple-splash-1242-2688.jpg"
+      media="(device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)"
+    />
+    <link
+      rel="apple-touch-startup-image"
+      href="/assets/pwa/2024-11-20_09-41-25/apple-splash-2688-1242.jpg"
+      media="(device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 3) and (orientation: landscape)"
+    />
+    <link
+      rel="apple-touch-startup-image"
+      href="/assets/pwa/2024-11-20_09-41-25/apple-splash-828-1792.jpg"
+      media="(device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)"
+    />
+    <link
+      rel="apple-touch-startup-image"
+      href="/assets/pwa/2024-11-20_09-41-25/apple-splash-1792-828.jpg"
+      media="(device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2) and (orientation: landscape)"
+    />
+    <link
+      rel="apple-touch-startup-image"
+      href="/assets/pwa/2024-11-20_09-41-25/apple-splash-1242-2208.jpg"
+      media="(device-width: 414px) and (device-height: 736px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)"
+    />
+    <link
+      rel="apple-touch-startup-image"
+      href="/assets/pwa/2024-11-20_09-41-25/apple-splash-2208-1242.jpg"
+      media="(device-width: 414px) and (device-height: 736px) and (-webkit-device-pixel-ratio: 3) and (orientation: landscape)"
+    />
+    <link
+      rel="apple-touch-startup-image"
+      href="/assets/pwa/2024-11-20_09-41-25/apple-splash-750-1334.jpg"
+      media="(device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)"
+    />
+    <link
+      rel="apple-touch-startup-image"
+      href="/assets/pwa/2024-11-20_09-41-25/apple-splash-1334-750.jpg"
+      media="(device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2) and (orientation: landscape)"
+    />
+    <link
+      rel="apple-touch-startup-image"
+      href="/assets/pwa/2024-11-20_09-41-25/apple-splash-640-1136.jpg"
+      media="(device-width: 320px) and (device-height: 568px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)"
+    />
+    <link
+      rel="apple-touch-startup-image"
+      href="/assets/pwa/2024-11-20_09-41-25/apple-splash-1136-640.jpg"
+      media="(device-width: 320px) and (device-height: 568px) and (-webkit-device-pixel-ratio: 2) and (orientation: landscape)"
+    />
+  </head>
+  <body>
+    <main id="main">
+      <script>
+        // Prevent width jumping
+        const savedWidth = localStorage.getItem("bar-width");
+        if (savedWidth) {
+          const main = window.document.getElementById("main");
+          if (!main) throw "Should exist";
+          main.style.width = `${savedWidth}px`;
+        }
+      </script>
+
+      <div class="shadow-top"></div>
+      <div class="shadow-bottom"></div>
+      <div id="resize-bar"></div>
+
+      <nav id="nav" hidden>
+        <header
+          id="nav-header"
+          style="
+            font-size: var(--font-size-xl);
+            line-height: var(--line-height-xl);
+          "
+        >
+          <a href="/" style="display: flex; align-items: center; width: 100%">
+            <span style="display: inline-block; font-weight: 900">kibō</span>
+            <small
+              style="
+                display: inline-block;
+                margin-left: 0.125rem;
+                margin-top: 0.3125rem;
+                font-size: var(--font-size-sm);
+                line-height: var(--line-height-sm);
+              "
+              >希望</small
+            >
+            希望.お金
+          </a>
+          <small style="display: block">
+            <strong>Bitcoin</strong> is
+            <b style="color: var(--color)">hope</b>
+            <button
+              style="filter: var(--emoji-filter)"
+              onclick="window.document.documentElement.style.colorScheme = window.document.documentElement.style.colorScheme === 'light' ? 'dark' : 'light'"
+            >
+              🕊️
+            </button>
+          </small>
+        </header>
+      </nav>
+
+      <search id="search" hidden>
+        <header>
+          <div>
+            <h3 style="display: flex; flex-direction: column">
+              <input placeholder="Search..." id="search-input" />
+              <small id="search-small">
+                Focus the title or press <strong>/</strong> to search
+              </small>
+            </h3>
+          </div>
+        </header>
+        <ul id="search-results"></ul>
+      </search>
+
+      <footer>
+        <fieldset id="frame-selectors">
+          <label
+            id="aside-selector-label"
+            for="aside-selector"
+            title="Side"
+            class="md:hidden"
+          >
+            <input
+              type="radio"
+              name="frame"
+              id="aside-selector"
+              value="aside"
+            />
+            Main
+          </label>
+
+          <label id="nav-selector-label" for="nav-selector" title="Nav">
+            <input type="radio" name="frame" id="nav-selector" value="nav" />
+            Browse
+          </label>
+
+          <label
+            id="search-selector-label"
+            for="search-selector"
+            title="Search"
+          >
+            <input
+              type="radio"
+              name="frame"
+              id="search-selector"
+              value="search"
+            />
+            Search
+          </label>
+        </fieldset>
+      </footer>
+    </main>
+    <aside id="aside">
+      <div id="charts" hidden></div>
+      <div id="simulation" hidden></div>
+      <div id="live-price" hidden></div>
+      <div id="moscow-time" hidden></div>
+    </aside>
+    <div id="share-div" hidden>
+      <div id="share-content-div">
+        <img id="share-img" src="" />
+        <a id="share-anchor" href="/"></a>
+      </div>
+    </div>
+  </body>
+</html>

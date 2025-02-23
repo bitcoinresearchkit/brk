@@ -1,0 +1,20 @@
+[package]
+name = "brk_parser"
+description = "A very fast Bitcoin Core block parser and iterator built on top of bitcoin-rust"
+repository = "https://github.com/kibo-money/kibo/tree/main/src/crates/biter"
+keywords = ["bitcoin", "block", "iterator"]
+categories = ["cryptography::cryptocurrencies", "encoding"]
+version = { workspace = true }
+edition = { workspace = true }
+license = { workspace = true }
+
+[dependencies]
+bitcoin = { workspace = true }
+bitcoincore-rpc = "0.19.0"
+byteview = { workspace = true }
+crossbeam = { version = "0.8.4", features = ["crossbeam-channel"] }
+derive_deref = { workspace = true }
+rayon = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+zerocopy = { workspace = true }

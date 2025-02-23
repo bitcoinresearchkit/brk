@@ -1,0 +1,26 @@
+[package]
+name = "brk"
+description = "The Bitcoin Research Kit is a suite of tools designed to help you extract, explore and analyze the data stored from your node"
+license.workspace = true
+edition.workspace = true
+version.workspace = true
+
+[features]
+full = ["computer", "fetcher", "indexer", "logger", "parser", "server"]
+computer = ["brk_computer"]
+fetcher = ["brk_fetcher"]
+indexer = ["brk_indexer"]
+logger = ["brk_logger"]
+parser = ["brk_parser"]
+server = ["brk_server"]
+
+[dependencies]
+brk_computer = { workspace = true, optional = true }
+brk_fetcher = { workspace = true, optional = true }
+brk_indexer = { workspace = true, optional = true }
+brk_logger = { workspace = true, optional = true }
+brk_parser = { workspace = true, optional = true }
+brk_server = { workspace = true, optional = true }
+
+[package.metadata.docs.rs]
+all-features = true

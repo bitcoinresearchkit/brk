@@ -1,0 +1,22 @@
+[package]
+name = "brk_server"
+description = "A server that serves Bitcoin data and swappable front-ends, built on top of brk_indexer, brk_fetcher and brk_computer"
+version = { workspace = true }
+edition = { workspace = true }
+license = { workspace = true }
+
+[dependencies]
+axum = "0.8.1"
+brk_computer = { workspace = true }
+brk_indexer = { workspace = true }
+brk_logger = { workspace = true }
+color-eyre = { workspace = true }
+derive_deref = { workspace = true }
+jiff = { workspace = true }
+log = { workspace = true }
+oxc = { version = "0.52.0", features = ["codegen", "minifier"] }
+serde = { workspace = true }
+serde_json = { workspace = true }
+storable_vec = { workspace = true }
+tokio = { version = "1.43.0", features = ["full"] }
+tower-http = { version = "0.6.2", features = ["compression-full"] }
