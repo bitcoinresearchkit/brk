@@ -5,9 +5,9 @@ use std::{
 };
 
 use brk_parser::Height;
+use byteview::ByteView;
 use fjall::{
-    PartitionCreateOptions, PersistMode, ReadTransaction, Result, Slice, TransactionalKeyspace,
-    TransactionalPartitionHandle,
+    PartitionCreateOptions, PersistMode, ReadTransaction, Result, TransactionalKeyspace, TransactionalPartitionHandle,
 };
 use storable_vec::{Value, Version};
 use zerocopy::{Immutable, IntoBytes};
@@ -27,9 +27,9 @@ const CHECK_COLLISISONS: bool = true;
 
 impl<K, V> Store<K, V>
 where
-    K: Into<Slice> + Ord + Immutable + IntoBytes,
-    V: Into<Slice> + TryFrom<Slice>,
-    <V as TryFrom<Slice>>::Error: error::Error + Send + Sync + 'static,
+    K: Into<ByteView> + Ord + Immutable + IntoBytes,
+    V: Into<ByteView> + TryFrom<ByteView>,
+    <V as TryFrom<ByteView>>::Error: error::Error + Send + Sync + 'static,
 {
     pub fn import(path: &Path, version: Version) -> color_eyre::Result<Self> {
         let meta = StoreMeta::checked_open(path, version)?;
@@ -62,7 +62,7 @@ where
         if let Some(v) = self.puts.get(key) {
             Ok(Some(Value::Ref(v)))
         } else if let Some(slice) = self.rtx.get(&self.part, key.as_bytes())? {
-            Ok(Some(Value::Owned(V::try_from(slice)?)))
+            Ok(Some(Value::Owned(V::try_from(slice.into())?)))
         } else {
             Ok(None)
         }
@@ -97,7 +97,7 @@ where
 
         mem::take(&mut self.dels)
             .into_iter()
-            .for_each(|key| wtx.remove(&self.part, key));
+            .for_each(|key| wtx.remove(&self.part, key.into()));
 
         mem::take(&mut self.puts).into_iter().for_each(|(key, value)| {
             if CHECK_COLLISISONS {
@@ -106,7 +106,7 @@ where
                     unreachable!();
                 }
             }
-            wtx.insert(&self.part, key, value)
+            wtx.insert(&self.part, key.into(), value.into())
         });
 
         wtx.commit()?;

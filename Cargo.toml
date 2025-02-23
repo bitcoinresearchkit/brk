@@ -10,9 +10,10 @@ bitcoin = { version = "0.32.5", features = ["serde"] }
 brk_computer = { version = "0", path = "crates/brk_computer" }
 brk_fetcher = { version = "0", path = "crates/brk_fetcher" }
 brk_indexer = { version = "0", path = "crates/brk_indexer" }
-brk_parser = { version = "0", path = "crates/brk_parser", features = ["bytes"] }
+brk_parser = { version = "0", path = "crates/brk_parser" }
 brk_logger = { version = "0", path = "crates/brk_logger" }
 brk_server = { version = "0", path = "crates/brk_server" }
+byteview = "0.5.4"
 color-eyre = "0.6.3"
 derive_deref = "1.1.1"
 fjall = "2.6.5"

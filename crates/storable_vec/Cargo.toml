@@ -8,7 +8,7 @@ edition = { workspace = true }
 license = { workspace = true }
 
 [features]
-json = ["dep:serde", "dep:serde_json"]
+json = ["serde", "serde_json"]
 
 [dependencies]
 memmap2 = "0.9.5"

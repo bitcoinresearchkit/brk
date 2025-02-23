@@ -17,7 +17,6 @@ impl From<io::Error> for Error {
     }
 }
 
-#[cfg(feature = "bytes")]
 impl<A, B> From<zerocopy::error::SizeError<A, B>> for Error {
     fn from(_: zerocopy::error::SizeError<A, B>) -> Self {
         Self::ZeroCopyError

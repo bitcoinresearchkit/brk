@@ -8,7 +8,6 @@ use std::{
 use color_eyre::owo_colors::OwoColorize;
 use env_logger::{Builder, Env};
 use jiff::{Timestamp, tz};
-pub use log::{debug, error, info, trace, warn};
 
 #[inline(always)]
 pub fn init(path: Option<&Path>) {
