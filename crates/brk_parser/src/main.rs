@@ -1,11 +1,12 @@
 use std::path::Path;
 
 use bitcoincore_rpc::{Auth, Client};
+use brk_parser::Parser;
 
 fn main() {
     let i = std::time::Instant::now();
 
-    let data_dir = Path::new("../../bitcoin");
+    let data_dir = Path::new("../../../bitcoin");
     let rpc = Box::leak(Box::new(
         Client::new(
             "http://localhost:8332",
@@ -17,11 +18,11 @@ fn main() {
     let start = None;
     let end = None;
 
-    brk_parser::new(data_dir, start, end, rpc)
-        .iter()
-        .for_each(|(height, _block, hash)| {
-            println!("{height}: {hash}");
-        });
+    let parser = Parser::new(data_dir, rpc);
+
+    parser.parse(start, end).iter().for_each(|(height, _block, hash)| {
+        println!("{height}: {hash}");
+    });
 
     dbg!(i.elapsed());
 }

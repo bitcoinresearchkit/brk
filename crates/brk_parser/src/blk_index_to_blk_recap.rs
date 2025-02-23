@@ -69,19 +69,19 @@ impl BlkIndexToBlkRecap {
 
         let height = start.unwrap();
 
-        let mut start = 0;
+        let mut start = None;
 
         if let Some(found) = self.tree.iter().find(|(_, recap)| recap.max_height >= height) {
-            start = *found.0;
+            start = Some(*found.0);
         }
 
         if let Some(min_removed) = min_removed {
-            if start > min_removed {
-                start = min_removed;
+            if start.is_none_or(|start| start > min_removed) {
+                start = Some(min_removed);
             }
         }
 
-        start
+        start.unwrap()
     }
 
     pub fn export(&self) {

@@ -26,7 +26,7 @@ const SNAPSHOT_BLOCK_RANGE: usize = 1000;
 
 pub struct Indexer<const MODE: u8> {
     pub vecs: StorableVecs<MODE>,
-    pub trees: Fjalls,
+    pub stores: Fjalls,
 }
 
 impl<const MODE: u8> Indexer<MODE> {
@@ -40,9 +40,9 @@ impl<const MODE: u8> Indexer<MODE> {
 
         info!("Importing indexes...");
         let vecs = StorableVecs::import(&indexes_dir.join("vecs"))?;
-        let trees = Fjalls::import(&indexes_dir.join("fjall"))?;
+        let stores = Fjalls::import(&indexes_dir.join("fjall"))?;
 
-        Ok(Self { vecs, trees })
+        Ok(Self { vecs, stores })
     }
 }
 
@@ -52,33 +52,37 @@ impl Indexer<CACHED_GETS> {
 
         let check_collisions = true;
 
-        let starting_indexes = Indexes::try_from((&mut self.vecs, &self.trees, rpc)).unwrap_or_else(|_| {
+        let starting_indexes = Indexes::try_from((&mut self.vecs, &self.stores, rpc)).unwrap_or_else(|_| {
             let indexes = Indexes::default();
             indexes.push_if_needed(&mut self.vecs).unwrap();
             indexes
         });
 
         exit.block();
-        self.trees.rollback(&self.vecs, &starting_indexes)?;
+        self.stores.rollback(&self.vecs, &starting_indexes)?;
         self.vecs.rollback(&starting_indexes)?;
         exit.unblock();
 
         let export =
-            |trees: &mut Fjalls, vecs: &mut StorableVecs<CACHED_GETS>, height: Height| -> color_eyre::Result<()> {
+            |stores: &mut Fjalls, vecs: &mut StorableVecs<CACHED_GETS>, height: Height| -> color_eyre::Result<()> {
                 info!("Exporting...");
                 exit.block();
-                trees.commit(height)?;
+                stores.commit(height)?;
+                info!("Exported stores");
                 vecs.flush(height)?;
+                info!("Exported vecs");
                 exit.unblock();
                 Ok(())
             };
 
         let vecs = &mut self.vecs;
-        let trees = &mut self.trees;
+        let stores = &mut self.stores;
 
         let mut idxs = starting_indexes;
 
-        brk_parser::new(bitcoin_dir, Some(idxs.height), None, rpc)
+        let parser = Parser::new(bitcoin_dir, rpc);
+
+        parser.parse(Some(idxs.height), None)
             .iter()
             .try_for_each(|(height, block, blockhash)| -> color_eyre::Result<()> {
                 info!("Indexing block {height}...");
@@ -88,7 +92,7 @@ impl Indexer<CACHED_GETS> {
                 let blockhash = BlockHash::from(blockhash);
                 let blockhash_prefix = BlockHashPrefix::from(&blockhash);
 
-                if trees
+                if stores
                     .blockhash_prefix_to_height
                     .get(&blockhash_prefix)?
                     .is_some_and(|prev_height| *prev_height != height)
@@ -97,7 +101,7 @@ impl Indexer<CACHED_GETS> {
                     return Err(eyre!("Collision, expect prefix to need be set yet"));
                 }
 
-                trees
+                stores
                     .blockhash_prefix_to_height
                     .insert_if_needed(blockhash_prefix, height, height);
 
@@ -152,9 +156,9 @@ impl Indexer<CACHED_GETS> {
                                     let txid_prefix = TxidPrefix::from(&txid);
 
                                     let prev_txindex_opt =
-                                        if check_collisions && trees.txid_prefix_to_txindex.needs(height) {
+                                        if check_collisions && stores.txid_prefix_to_txindex.needs(height) {
                                             // Should only find collisions for two txids (duplicates), see below
-                                            trees.txid_prefix_to_txindex.get(&txid_prefix)?.map(|v| *v)
+                                            stores.txid_prefix_to_txindex.get(&txid_prefix)?.map(|v| *v)
                                         } else {
                                             None
                                         };
@@ -194,7 +198,7 @@ impl Indexer<CACHED_GETS> {
                                     return Ok((txinindex, InputSource::SameBlock((tx, txindex, txin, vin))));
                                 }
 
-                                let prev_txindex = if let Some(txindex) = trees
+                                let prev_txindex = if let Some(txindex) = stores
                                     .txid_prefix_to_txindex
                                     .get(&TxidPrefix::from(&txid))?
                                     .map(|v| *v)
@@ -272,7 +276,7 @@ impl Indexer<CACHED_GETS> {
                                         });
 
                                     let addressindex_opt = addressbytes_res.as_ref().ok().and_then(|addressbytes| {
-                                        trees
+                                        stores
                                             .addresshash_to_addressindex
                                             .get(&AddressHash::from((addressbytes, addresstype)))
                                             .unwrap()
@@ -304,7 +308,7 @@ impl Indexer<CACHED_GETS> {
 
                                         if (vecs.addressindex_to_addresstype.hasnt(addressindex)?
                                             && addresstype != prev_addresstype)
-                                            || (trees.addresshash_to_addressindex.needs(height)
+                                            || (stores.addresshash_to_addressindex.needs(height)
                                                 && prev_addressbytes != addressbytes)
                                         {
                                             let txid = tx.compute_txid();
@@ -454,7 +458,7 @@ impl Indexer<CACHED_GETS> {
                                 already_added_addresshash
                                     .insert(addresshash, addressindex);
 
-                                trees.addresshash_to_addressindex.insert_if_needed(
+                                stores.addresshash_to_addressindex.insert_if_needed(
                                     addresshash,
                                     addressindex,
                                     height,
@@ -541,7 +545,7 @@ impl Indexer<CACHED_GETS> {
 
                             match prev_txindex_opt {
                                 None => {
-                                    trees
+                                    stores
                                         .txid_prefix_to_txindex
                                         .insert_if_needed(txid_prefix, txindex, height);
                                 }
@@ -612,13 +616,13 @@ impl Indexer<CACHED_GETS> {
 
                 let should_snapshot = height != 0 && height % SNAPSHOT_BLOCK_RANGE == 0 && !exit.blocked();
                 if should_snapshot {
-                    export(trees, vecs, height)?;
+                    export(stores, vecs, height)?;
                 }
 
                 Ok(())
             })?;
 
-        export(trees, vecs, idxs.height)?;
+        export(stores, vecs, idxs.height)?;
 
         sleep(Duration::from_millis(100));
 

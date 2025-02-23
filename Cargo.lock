@@ -323,12 +323,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8f68f53c83ab957f72c32642f3868eec03eb974d1fb82e453128456482613d36"
 
 [[package]]
+name = "brk"
+version = "0.0.0"
+
+[[package]]
 name = "brk_cli"
-version = "0.1.0"
+version = "0.0.0"
 
 [[package]]
 name = "brk_computer"
-version = "0.1.0"
+version = "0.0.0"
 dependencies = [
  "brk_fetcher",
  "brk_indexer",
@@ -343,10 +347,10 @@ dependencies = [
 
 [[package]]
 name = "brk_fetcher"
-version = "0.1.0"
+version = "0.0.0"
 dependencies = [
  "brk_indexer",
- "brk_printer",
+ "brk_logger",
  "color-eyre",
  "derive_deref",
  "jiff",
@@ -360,11 +364,11 @@ dependencies = [
 
 [[package]]
 name = "brk_indexer"
-version = "0.1.0"
+version = "0.0.0"
 dependencies = [
  "bitcoin",
+ "brk_logger",
  "brk_parser",
- "brk_printer",
  "color-eyre",
  "derive_deref",
  "fjall",
@@ -381,8 +385,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "brk_logger"
+version = "0.0.0"
+dependencies = [
+ "color-eyre",
+ "env_logger",
+ "jiff",
+ "log",
+]
+
+[[package]]
 name = "brk_parser"
-version = "0.2.3"
+version = "0.0.0"
 dependencies = [
  "bitcoin",
  "bitcoincore-rpc",
@@ -396,23 +410,13 @@ dependencies = [
 ]
 
 [[package]]
-name = "brk_printer"
-version = "0.1.0"
-dependencies = [
- "color-eyre",
- "env_logger",
- "jiff",
- "log",
-]
-
-[[package]]
 name = "brk_server"
-version = "0.1.0"
+version = "0.0.0"
 dependencies = [
  "axum",
  "brk_computer",
  "brk_indexer",
- "brk_printer",
+ "brk_logger",
  "color-eyre",
  "derive_deref",
  "jiff",
@@ -1104,9 +1108,9 @@ checksum = "bbd2bcb4c963f2ddae06a2efc7e9f3591312473c50c6685e1f298068316e66fe"
 
 [[package]]
 name = "libc"
-version = "0.2.169"
+version = "0.2.170"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b5aba8db14291edd000dfcc4d620c7ebfb122c613afb886ca8803fa4e128a20a"
+checksum = "875b3680cb2f8f71bdcf9a30f38d48282f5d3c95cbf9b3fa57269bb5d5c06828"
 
 [[package]]
 name = "linux-raw-sys"
@@ -1306,9 +1310,9 @@ checksum = "c1b04fb49957986fdce4d6ee7a65027d55d4b6d2265e5848bbb507b58ccfdb6f"
 
 [[package]]
 name = "owo-colors"
-version = "4.1.0"
+version = "4.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fb37767f6569cd834a413442455e0f066d0d522de8630436e2a1761d9726ba56"
+checksum = "1036865bb9422d3300cf723f657c2851d0e9ab12567854b1f4eba3d77decf564"
 
 [[package]]
 name = "oxc"
@@ -1335,7 +1339,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e03e63fd113c068b82d07c9c614b0b146c08a3ac0a4dface3ea1d1a9d14d549e"
 dependencies = [
  "cfg-if",
- "owo-colors 4.1.0",
+ "owo-colors 4.2.0",
  "oxc-miette-derive",
  "textwrap",
  "thiserror",
@@ -1909,9 +1913,9 @@ checksum = "2b15c43186be67a4fd63bee50d0303afffcef381492ebe2c5d87f324e1b8815c"
 
 [[package]]
 name = "ring"
-version = "0.17.10"
+version = "0.17.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d34b5020fcdea098ef7d95e9f89ec15952123a4a039badd09fabebe9e963e839"
+checksum = "da5349ae27d3887ca812fb375b45a4fbb36d8d12d2df394968cd86e35683fe73"
 dependencies = [
  "cc",
  "cfg-if",

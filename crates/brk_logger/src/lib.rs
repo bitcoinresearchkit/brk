@@ -7,11 +7,11 @@ use std::{
 
 use color_eyre::owo_colors::OwoColorize;
 use env_logger::{Builder, Env};
-use jiff::{tz, Timestamp};
+use jiff::{Timestamp, tz};
 pub use log::{debug, error, info, trace, warn};
 
 #[inline(always)]
-pub fn init_log(path: Option<&Path>) {
+pub fn init(path: Option<&Path>) {
     let file = path.map(|path| {
         let _ = fs::remove_file(path);
         OpenOptions::new().create(true).append(true).open(path).unwrap()

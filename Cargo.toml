@@ -3,6 +3,7 @@ members = ["crates/*"]
 resolver = "2"
 package.license = "MIT"
 package.edition = "2024"
+package.version = "0.0.0"
 
 [workspace.dependencies]
 bitcoin = { version = "0.32.5", features = ["serde"] }
@@ -10,7 +11,7 @@ brk_computer = { version = "0", path = "crates/brk_computer" }
 brk_fetcher = { version = "0", path = "crates/brk_fetcher" }
 brk_indexer = { version = "0", path = "crates/brk_indexer" }
 brk_parser = { version = "0", path = "crates/brk_parser", features = ["bytes"] }
-brk_printer = { version = "0", path = "crates/brk_printer" }
+brk_logger = { version = "0", path = "crates/brk_logger" }
 brk_server = { version = "0", path = "crates/brk_server" }
 color-eyre = "0.6.3"
 derive_deref = "1.1.1"
