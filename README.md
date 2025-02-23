@@ -63,14 +63,10 @@ Please open an issue if you want to add another instance
 ### Requirements
 
 - At least 16 GB of RAM
-  - Recommended: 32 GB
 - A disk with 1 TB of free space (will use between 40% to 80% depending on several things)
   - Recommended: Rated at 3 GB/s (Thunderbolt 4 speed)
-- A running instance of bitcoin-core with:
-  - `-txindex=1`
-  - `-blocksxor=0`
-  - RPC credentials
-  - Example: `bitcoind -datadir="$HOME/.bitcoin" -blocksonly -txindex=1 -blocksxor=0`
+- A running instance of bitcoin-core
+  - Example: `bitcoind -datadir="$HOME/.bitcoin" -blocksonly`
 - Git
 - Unix based operating system (Mac OS or Linux)
   - Ubuntu users need to install `open-ssl` via `sudo apt install libssl-dev pkg-config`

@@ -1,0 +1,19 @@
+[package]
+name = "brk_fetcher"
+description = "A bitcoin price fetcher built on top of brk_indexer"
+version = "0.1.0"
+edition = { workspace = true }
+license = { workspace = true }
+
+[dependencies]
+brk_indexer = { workspace = true }
+brk_printer = { workspace = true }
+color-eyre = { workspace = true }
+derive_deref = { workspace = true }
+jiff = { workspace = true }
+log = { workspace = true }
+minreq = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+storable_vec = { workspace = true }
+zerocopy = { workspace = true }

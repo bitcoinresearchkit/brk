@@ -1,0 +1,10 @@
+[package]
+name = "hodor"
+description = "Hold the door, an exit blocker that can wait until a task is completed"
+version = "0.1.0"
+edition = { workspace = true }
+license = { workspace = true }
+
+[dependencies]
+ctrlc = "3.4.5"
+log = { workspace = true }

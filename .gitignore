@@ -8,7 +8,7 @@ target
 *\ copy*
 
 # Ignored
-_ignore
+/_*
 
 # Editors
 .vscode

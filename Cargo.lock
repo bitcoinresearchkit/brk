@@ -239,46 +239,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d965446196e3b7decd44aa7ee49e31d630118f90ef12f97900f262eb915c951d"
 
 [[package]]
-name = "berver"
-version = "0.1.0"
-dependencies = [
- "axum",
- "bindexer",
- "bomputer",
- "cl0g",
- "color-eyre",
- "derive_deref",
- "jiff",
- "oxc",
- "serde",
- "serde_json",
- "storable_vec",
- "tokio",
- "tower-http",
-]
-
-[[package]]
-name = "bindexer"
-version = "0.1.0"
-dependencies = [
- "bitcoin",
- "biterator",
- "cl0g",
- "color-eyre",
- "derive_deref",
- "fjall",
- "hodor",
- "jiff",
- "rapidhash",
- "rayon",
- "rlimit",
- "serde",
- "serde_bytes",
- "storable_vec",
- "zerocopy 0.8.20",
-]
-
-[[package]]
 name = "bitcoin"
 version = "0.32.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -357,7 +317,71 @@ dependencies = [
 ]
 
 [[package]]
-name = "biterator"
+name = "bitflags"
+version = "2.8.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8f68f53c83ab957f72c32642f3868eec03eb974d1fb82e453128456482613d36"
+
+[[package]]
+name = "brk_cli"
+version = "0.1.0"
+
+[[package]]
+name = "brk_computer"
+version = "0.1.0"
+dependencies = [
+ "brk_fetcher",
+ "brk_indexer",
+ "brk_parser",
+ "color-eyre",
+ "derive_deref",
+ "fjall",
+ "hodor",
+ "storable_vec",
+ "zerocopy 0.8.20",
+]
+
+[[package]]
+name = "brk_fetcher"
+version = "0.1.0"
+dependencies = [
+ "brk_indexer",
+ "brk_printer",
+ "color-eyre",
+ "derive_deref",
+ "jiff",
+ "log",
+ "minreq",
+ "serde",
+ "serde_json",
+ "storable_vec",
+ "zerocopy 0.8.20",
+]
+
+[[package]]
+name = "brk_indexer"
+version = "0.1.0"
+dependencies = [
+ "bitcoin",
+ "brk_parser",
+ "brk_printer",
+ "color-eyre",
+ "derive_deref",
+ "fjall",
+ "hodor",
+ "jiff",
+ "log",
+ "rapidhash",
+ "rayon",
+ "rlimit",
+ "serde",
+ "serde_bytes",
+ "storable_vec",
+ "zerocopy 0.8.20",
+]
+
+[[package]]
+name = "brk_parser"
 version = "0.2.3"
 dependencies = [
  "bitcoin",
@@ -372,44 +396,33 @@ dependencies = [
 ]
 
 [[package]]
-name = "bitflags"
-version = "2.8.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8f68f53c83ab957f72c32642f3868eec03eb974d1fb82e453128456482613d36"
-
-[[package]]
-name = "bli"
-version = "0.1.0"
-
-[[package]]
-name = "bomputer"
+name = "brk_printer"
 version = "0.1.0"
 dependencies = [
- "bindexer",
- "biterator",
- "bricer",
  "color-eyre",
- "derive_deref",
- "fjall",
- "hodor",
- "storable_vec",
- "zerocopy 0.8.20",
+ "env_logger",
+ "jiff",
+ "log",
 ]
 
 [[package]]
-name = "bricer"
+name = "brk_server"
 version = "0.1.0"
 dependencies = [
- "bindexer",
- "cl0g",
+ "axum",
+ "brk_computer",
+ "brk_indexer",
+ "brk_printer",
  "color-eyre",
  "derive_deref",
  "jiff",
- "minreq",
+ "log",
+ "oxc",
  "serde",
  "serde_json",
  "storable_vec",
- "zerocopy 0.8.20",
+ "tokio",
+ "tower-http",
 ]
 
 [[package]]
@@ -491,16 +504,6 @@ name = "cfg_aliases"
 version = "0.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "613afe47fcd5fac7ccf1db93babcb082c5994d996f20b8b159f2ad1658eb5724"
-
-[[package]]
-name = "cl0g"
-version = "0.1.0"
-dependencies = [
- "color-eyre",
- "env_logger",
- "jiff",
- "log",
-]
 
 [[package]]
 name = "color-eyre"
