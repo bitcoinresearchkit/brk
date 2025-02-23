@@ -1,6 +1,6 @@
 use log::info;
 
 fn main() {
-    brk_printer::init_log(None);
+    brk_logger::init(None);
     info!("test");
 }

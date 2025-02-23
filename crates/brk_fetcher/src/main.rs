@@ -5,7 +5,7 @@ use serde_json::Value;
 fn main() -> color_eyre::Result<()> {
     color_eyre::install()?;
 
-    brk_printer::init_log(None);
+    brk_logger::init(None);
 
     dbg!(Binance::fetch_1d()?);
     // dbg!(Binance::fetch_1mn_prices());

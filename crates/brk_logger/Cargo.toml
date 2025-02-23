@@ -1,7 +1,7 @@
 [package]
-name = "brk_printer"
+name = "brk_logger"
 description = "A clean logger"
-version = "0.1.0"
+version = { workspace = true }
 edition = { workspace = true }
 license = { workspace = true }
 

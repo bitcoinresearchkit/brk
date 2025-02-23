@@ -108,10 +108,17 @@ impl AddAssign<usize> for Height {
     }
 }
 
+impl Rem<Height> for Height {
+    type Output = Height;
+    fn rem(self, rhs: Height) -> Self::Output {
+        Self(self.0.rem(rhs.0))
+    }
+}
+
 impl Rem<usize> for Height {
     type Output = Height;
     fn rem(self, rhs: usize) -> Self::Output {
-        Self(self.abs_diff(Height::from(rhs).0))
+        Self(self.0.rem(Height::from(rhs).0))
     }
 }
 

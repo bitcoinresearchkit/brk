@@ -22,7 +22,7 @@ pub struct AppState {
     computer: &'static Computer<STATELESS>,
 }
 
-pub const WEBSITE_DEV_PATH: &str = "../websites/kibo.money/";
+pub const WEBSITE_DEV_PATH: &str = "../../websites/kibo.money/";
 
 pub async fn main(indexer: Indexer<STATELESS>, computer: Computer<STATELESS>) -> color_eyre::Result<()> {
     let indexer = Box::leak(Box::new(indexer));

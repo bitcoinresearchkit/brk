@@ -9,9 +9,9 @@ use storable_vec::CACHED_GETS;
 fn main() -> color_eyre::Result<()> {
     color_eyre::install()?;
 
-    brk_printer::init_log(None);
+    brk_logger::init(None);
 
-    let data_dir = Path::new("../../bitcoin");
+    let data_dir = Path::new("../../../bitcoin");
     let rpc = Box::leak(Box::new(rpc::Client::new(
         "http://localhost:8332",
         rpc::Auth::CookieFile(Path::new(data_dir).join(".cookie")),
@@ -25,7 +25,7 @@ fn main() -> color_eyre::Result<()> {
 
         let i = std::time::Instant::now();
 
-        let mut indexer: Indexer<CACHED_GETS> = Indexer::import(Path::new("../_outputs/indexes"))?;
+        let mut indexer: Indexer<CACHED_GETS> = Indexer::import(Path::new("../../_outputs/indexes"))?;
 
         indexer.index(data_dir, rpc, &exit)?;
 

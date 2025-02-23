@@ -8,9 +8,9 @@ use storable_vec::STATELESS;
 pub async fn main() -> color_eyre::Result<()> {
     color_eyre::install()?;
 
-    brk_printer::init_log(None);
+    brk_logger::init(None);
 
-    let path = Path::new("../_outputs");
+    let path = Path::new("../../_outputs");
     let indexer: Indexer<STATELESS> = Indexer::import(&path.join("indexes"))?;
     let computer: Computer<STATELESS> = Computer::import(&path.join("computed"))?;
 
