@@ -47,7 +47,7 @@ impl<const MODE: u8> Indexer<MODE> {
 }
 
 impl Indexer<CACHED_GETS> {
-    pub fn index(&mut self, bitcoin_dir: &Path, rpc: &'static rpc::Client, exit: &Exit) -> color_eyre::Result<()> {
+    pub fn index(&mut self, parser: &Parser, rpc: &'static rpc::Client, exit: &Exit) -> color_eyre::Result<()> {
         info!("Started indexing...");
 
         let check_collisions = true;
@@ -79,8 +79,6 @@ impl Indexer<CACHED_GETS> {
         let stores = &mut self.stores;
 
         let mut idxs = starting_indexes;
-
-        let parser = Parser::new(bitcoin_dir, rpc);
 
         parser.parse(Some(idxs.height), None)
             .iter()

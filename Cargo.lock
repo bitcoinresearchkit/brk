@@ -325,6 +325,14 @@ checksum = "8f68f53c83ab957f72c32642f3868eec03eb974d1fb82e453128456482613d36"
 [[package]]
 name = "brk"
 version = "0.0.0"
+dependencies = [
+ "brk_computer",
+ "brk_fetcher",
+ "brk_indexer",
+ "brk_logger",
+ "brk_parser",
+ "brk_server",
+]
 
 [[package]]
 name = "brk_cli"
@@ -337,6 +345,7 @@ dependencies = [
  "brk_fetcher",
  "brk_indexer",
  "brk_parser",
+ "byteview",
  "color-eyre",
  "derive_deref",
  "fjall",
@@ -369,6 +378,7 @@ dependencies = [
  "bitcoin",
  "brk_logger",
  "brk_parser",
+ "byteview",
  "color-eyre",
  "derive_deref",
  "fjall",
@@ -391,7 +401,6 @@ dependencies = [
  "color-eyre",
  "env_logger",
  "jiff",
- "log",
 ]
 
 [[package]]
@@ -400,9 +409,9 @@ version = "0.0.0"
 dependencies = [
  "bitcoin",
  "bitcoincore-rpc",
+ "byteview",
  "crossbeam",
  "derive_deref",
- "fjall",
  "rayon",
  "serde",
  "serde_json",

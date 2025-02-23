@@ -1,7 +1,7 @@
 use std::ops::{Add, AddAssign, Sub};
 
+use byteview::ByteView;
 use derive_deref::{Deref, DerefMut};
-use fjall::Slice;
 use serde::Serialize;
 use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
@@ -89,13 +89,13 @@ impl From<Txindex> for usize {
     }
 }
 
-impl TryFrom<Slice> for Txindex {
+impl TryFrom<ByteView> for Txindex {
     type Error = storable_vec::Error;
-    fn try_from(value: Slice) -> Result<Self, Self::Error> {
+    fn try_from(value: ByteView) -> Result<Self, Self::Error> {
         Ok(Self::read_from_bytes(&value)?)
     }
 }
-impl From<Txindex> for Slice {
+impl From<Txindex> for ByteView {
     fn from(value: Txindex) -> Self {
         Self::new(value.as_bytes())
     }

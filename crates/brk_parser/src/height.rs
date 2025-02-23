@@ -5,20 +5,34 @@ use std::{
 
 use derive_deref::{Deref, DerefMut};
 use serde::{Deserialize, Serialize};
-#[cfg(feature = "bytes")]
 use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 use crate::rpc::{self, RpcApi};
 
-#[derive(Debug, Clone, Copy, Deref, DerefMut, PartialEq, Eq, PartialOrd, Ord, Default, Serialize, Deserialize)]
-#[cfg_attr(feature = "bytes", derive(FromBytes, Immutable, IntoBytes, KnownLayout,))]
+#[derive(
+    Debug,
+    Clone,
+    Copy,
+    Deref,
+    DerefMut,
+    PartialEq,
+    Eq,
+    PartialOrd,
+    Ord,
+    Default,
+    Serialize,
+    Deserialize,
+    FromBytes,
+    Immutable,
+    IntoBytes,
+    KnownLayout,
+)]
 pub struct Height(u32);
 
 impl Height {
     pub const ZERO: Self = Height(0);
     pub const MAX: Self = Height(u32::MAX);
 
-    #[cfg(feature = "bytes")]
     pub fn write(&self, path: &std::path::Path) -> Result<(), std::io::Error> {
         std::fs::write(path, self.as_bytes())
     }
@@ -170,7 +184,6 @@ impl From<Height> for bitcoin::locktime::absolute::Height {
     }
 }
 
-#[cfg(feature = "bytes")]
 impl TryFrom<&std::path::Path> for Height {
     type Error = crate::Error;
     fn try_from(value: &std::path::Path) -> Result<Self, Self::Error> {
@@ -178,15 +191,14 @@ impl TryFrom<&std::path::Path> for Height {
     }
 }
 
-#[cfg(feature = "bytes")]
-impl TryFrom<fjall::Slice> for Height {
+impl TryFrom<byteview::ByteView> for Height {
     type Error = crate::Error;
-    fn try_from(value: fjall::Slice) -> Result<Self, Self::Error> {
+    fn try_from(value: byteview::ByteView) -> Result<Self, Self::Error> {
         Ok(Self::read_from_bytes(&value)?)
     }
 }
-#[cfg(feature = "bytes")]
-impl From<Height> for fjall::Slice {
+
+impl From<Height> for byteview::ByteView {
     fn from(value: Height) -> Self {
         Self::new(value.as_bytes())
     }

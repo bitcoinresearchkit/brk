@@ -1,7 +1,10 @@
 use std::{path::Path, thread::sleep, time::Duration};
 
 use brk_indexer::{Indexer, rpc::RpcApi};
-use brk_parser::rpc::{self};
+use brk_parser::{
+    Parser,
+    rpc::{self},
+};
 use hodor::Exit;
 use log::info;
 use storable_vec::CACHED_GETS;
@@ -18,6 +21,8 @@ fn main() -> color_eyre::Result<()> {
     )?));
     let exit = Exit::new();
 
+    let parser = Parser::new(data_dir, rpc);
+
     loop {
         let block_count = rpc.get_blockchain_info().unwrap().blocks as usize;
 
@@ -27,7 +32,7 @@ fn main() -> color_eyre::Result<()> {
 
         let mut indexer: Indexer<CACHED_GETS> = Indexer::import(Path::new("../../_outputs/indexes"))?;
 
-        indexer.index(data_dir, rpc, &exit)?;
+        indexer.index(&parser, rpc, &exit)?;
 
         dbg!(i.elapsed());
 

@@ -1,7 +1,7 @@
 use std::hash::Hasher;
 
+use byteview::ByteView;
 use derive_deref::Deref;
-use fjall::Slice;
 use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 use super::{Addressbytes, Addresstype, BlockHash, Txid};
@@ -22,18 +22,18 @@ impl From<[u8; 8]> for AddressHash {
         Self(value)
     }
 }
-impl TryFrom<Slice> for AddressHash {
+impl TryFrom<ByteView> for AddressHash {
     type Error = storable_vec::Error;
-    fn try_from(value: Slice) -> Result<Self, Self::Error> {
+    fn try_from(value: ByteView) -> Result<Self, Self::Error> {
         Ok(Self::read_from_bytes(&value)?)
     }
 }
-impl From<&AddressHash> for Slice {
+impl From<&AddressHash> for ByteView {
     fn from(value: &AddressHash) -> Self {
         Self::new(value.as_bytes())
     }
 }
-impl From<AddressHash> for Slice {
+impl From<AddressHash> for ByteView {
     fn from(value: AddressHash) -> Self {
         Self::from(&value)
     }
@@ -46,18 +46,18 @@ impl From<&BlockHash> for BlockHashPrefix {
         Self(copy_first_8bytes(&value[..]).unwrap())
     }
 }
-impl TryFrom<Slice> for BlockHashPrefix {
+impl TryFrom<ByteView> for BlockHashPrefix {
     type Error = storable_vec::Error;
-    fn try_from(value: Slice) -> Result<Self, Self::Error> {
+    fn try_from(value: ByteView) -> Result<Self, Self::Error> {
         Ok(Self::read_from_bytes(&value)?)
     }
 }
-impl From<&BlockHashPrefix> for Slice {
+impl From<&BlockHashPrefix> for ByteView {
     fn from(value: &BlockHashPrefix) -> Self {
         Self::new(value.as_bytes())
     }
 }
-impl From<BlockHashPrefix> for Slice {
+impl From<BlockHashPrefix> for ByteView {
     fn from(value: BlockHashPrefix) -> Self {
         Self::from(&value)
     }
@@ -70,18 +70,18 @@ impl From<&Txid> for TxidPrefix {
         Self(copy_first_8bytes(&value[..]).unwrap())
     }
 }
-impl TryFrom<Slice> for TxidPrefix {
+impl TryFrom<ByteView> for TxidPrefix {
     type Error = storable_vec::Error;
-    fn try_from(value: Slice) -> Result<Self, Self::Error> {
+    fn try_from(value: ByteView) -> Result<Self, Self::Error> {
         Ok(Self::read_from_bytes(&value)?)
     }
 }
-impl From<&TxidPrefix> for Slice {
+impl From<&TxidPrefix> for ByteView {
     fn from(value: &TxidPrefix) -> Self {
         Self::new(value.as_bytes())
     }
 }
-impl From<TxidPrefix> for Slice {
+impl From<TxidPrefix> for ByteView {
     fn from(value: TxidPrefix) -> Self {
         Self::from(&value)
     }
