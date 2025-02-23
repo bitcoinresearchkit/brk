@@ -1,6 +1,6 @@
 [package]
 name = "brk_logger"
-description = "A clean logger"
+description = "A clean logger used in the Bitcoin Research Kit"
 version = { workspace = true }
 edition = { workspace = true }
 license = { workspace = true }
