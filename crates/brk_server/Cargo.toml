@@ -1,6 +1,6 @@
 [package]
 name = "brk_server"
-description = "A Bitcoin data server built on top of bindexer, bricer and bomputer"
+description = "A server that serves Bitcoin data and swappable front-ends, built on top of brk_indexer, brk_fetcher and brk_computer"
 version = { workspace = true }
 edition = { workspace = true }
 license = { workspace = true }

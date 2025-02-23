@@ -1,5 +1,6 @@
 [package]
 name = "brk"
+description = "The Bitcoin Research Kit is a suite of tools designed to help you extract, explore and analyze the data stored from your node"
 license.workspace = true
 edition.workspace = true
 version.workspace = true

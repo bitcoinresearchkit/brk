@@ -1,6 +1,6 @@
 [package]
 name = "brk_fetcher"
-description = "A bitcoin price fetcher built on top of brk_indexer"
+description = "A Bitcoin price fetcher built on top of brk_indexer"
 version = { workspace = true }
 edition = { workspace = true }
 license = { workspace = true }

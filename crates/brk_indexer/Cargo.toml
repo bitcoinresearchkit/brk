@@ -1,6 +1,6 @@
 [package]
 name = "brk_indexer"
-description = "A bitcoin-core indexer built on top of brk_parser"
+description = "A Bitcoin Core indexer built on top of brk_parser"
 version = { workspace = true }
 edition = { workspace = true }
 license = { workspace = true }
