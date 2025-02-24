@@ -5,6 +5,8 @@ use derive_deref::{Deref, DerefMut};
 use serde::Serialize;
 use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
+use crate::Error;
+
 #[derive(
     Debug,
     PartialEq,
@@ -69,7 +71,7 @@ impl From<Addressindex> for usize {
 }
 
 impl TryFrom<ByteView> for Addressindex {
-    type Error = storable_vec::Error;
+    type Error = Error;
     fn try_from(value: ByteView) -> Result<Self, Self::Error> {
         Ok(Self::read_from_bytes(&value)?)
     }

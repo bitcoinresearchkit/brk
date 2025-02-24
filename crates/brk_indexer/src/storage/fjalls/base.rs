@@ -4,7 +4,7 @@ use std::{
     path::Path,
 };
 
-use brk_parser::Height;
+use brk_core::Height;
 use byteview::ByteView;
 use fjall::{
     PartitionCreateOptions, PersistMode, ReadTransaction, Result, TransactionalKeyspace, TransactionalPartitionHandle,

@@ -1,8 +1,7 @@
-use brk_parser::Height;
 use serde::Serialize;
 use zerocopy::{Immutable, IntoBytes, KnownLayout, TryFromBytes};
 
-use super::Timestamp;
+use super::{Height, Timestamp};
 
 #[derive(Debug, Immutable, Clone, Copy, IntoBytes, KnownLayout, TryFromBytes, Serialize)]
 #[repr(C)]

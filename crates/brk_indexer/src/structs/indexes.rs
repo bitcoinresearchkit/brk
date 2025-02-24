@@ -1,14 +1,13 @@
+use bitcoincore_rpc::Client;
+use brk_core::{
+    Addressindex, BlockHash, Emptyindex, Height, Multisigindex, Opreturnindex, P2PK33index, P2PK65index, P2PKHindex,
+    P2SHindex, P2TRindex, P2WPKHindex, P2WSHindex, Pushonlyindex, Txindex, Txinindex, Txoutindex, Unknownindex,
+};
 use brk_parser::NUMBER_OF_UNSAFE_BLOCKS;
-use brk_parser::{Height, rpc::Client};
 use color_eyre::eyre::ContextCompat;
 use storable_vec::CACHED_GETS;
 
 use crate::storage::{Fjalls, StorableVecs};
-
-use super::{
-    Addressindex, BlockHash, Emptyindex, Multisigindex, Opreturnindex, P2PK33index, P2PK65index, P2PKHindex, P2SHindex,
-    P2TRindex, P2WPKHindex, P2WSHindex, Pushonlyindex, Txindex, Txinindex, Txoutindex, Unknownindex,
-};
 
 #[derive(Debug, Default)]
 pub struct Indexes {
@@ -79,17 +78,27 @@ impl TryFrom<(&mut StorableVecs<CACHED_GETS>, &Fjalls, &Client)> for Indexes {
         // Height at which we wanna start: min last saved + 1 or 0
         let starting_height = vecs.starting_height().min(trees.starting_height());
 
-        // But we also need to check the chain and start earlier in case of a reorg
-        let height = (starting_height
+        let range = starting_height
             .checked_sub(NUMBER_OF_UNSAFE_BLOCKS as u32)
-            .unwrap_or_default()..*starting_height) // ..= because of last saved + 1
+            .unwrap_or_default()..*starting_height;
+
+        // But we also need to check the chain and start earlier in case of a reorg
+        let height = range // ..= because of last saved + 1
             .map(Height::from)
             .find(|height| {
-                let rpc_blockhash = BlockHash::try_from((rpc, *height)).unwrap();
-                let saved_blockhash = vecs.height_to_blockhash.get(*height).unwrap().unwrap();
-                &rpc_blockhash != saved_blockhash.as_ref()
+                let rpc_blockhash = BlockHash::try_from((rpc, *height))
+                    .inspect_err(|e| {
+                        dbg!(e, height);
+                    })
+                    .unwrap();
+
+                vecs.height_to_blockhash.get(*height).map_or(true, |opt| {
+                    opt.is_none_or(|saved_blockhash| &rpc_blockhash != saved_blockhash.as_ref())
+                })
             })
             .unwrap_or(starting_height);
+
+        // let height = 885000_u32.into();
 
         Ok(Self {
             addressindex: *vecs.height_to_first_addressindex.get(height)?.context("")?,

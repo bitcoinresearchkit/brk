@@ -4,15 +4,14 @@ use std::{
     path::{Path, PathBuf},
 };
 
+use brk_core::{Cents, Close, Date, Dateindex, Dollars, Height, High, Low, OHLCCents, Open, Timestamp};
 use color_eyre::eyre::Error;
 
 mod fetchers;
-mod structs;
 
-use brk_indexer::{Height, Indexer, Timestamp};
+use brk_indexer::Indexer;
 pub use fetchers::*;
 use storable_vec::{AnyJsonStorableVec, AnyStorableVec, SINGLE_THREAD, StorableVec, Version};
-pub use structs::*;
 
 pub struct Pricer<const MODE: u8> {
     path: PathBuf,
@@ -48,13 +47,6 @@ impl<const MODE: u8> Pricer<MODE> {
             kraken: Kraken::default(),
             kibo: Kibo::default(),
 
-            // binance_1mn: None,
-            // binance_daily: None,
-            // binance_har: None,
-            // kraken_1mn: None,
-            // kraken_daily: None,
-            // kibo_by_height: BTreeMap::default(),
-            // kibo_by_date: BTreeMap::default(),
             dateindex_to_close_in_cents: StorableVec::import(
                 &path.join("dateindex_to_close_in_cents"),
                 Version::from(1),
@@ -119,7 +111,7 @@ impl<const MODE: u8> Pricer<MODE> {
         //     .multi_insert_simple_transform(heights, dates, &mut self.ohlc, &|ohlc| ohlc.close);
     }
 
-    fn get_date_ohlc(&mut self, date: Date) -> color_eyre::Result<OHLC> {
+    fn get_date_ohlc(&mut self, date: Date) -> color_eyre::Result<OHLCCents> {
         todo!();
         // if self.ohlc.date.is_key_safe(date) {
         //     Ok(self.ohlc.date.get_or_import(&date).unwrap().to_owned())
@@ -140,7 +132,7 @@ impl<const MODE: u8> Pricer<MODE> {
         height: Height,
         timestamp: Timestamp,
         previous_timestamp: Option<Timestamp>,
-    ) -> color_eyre::Result<OHLC> {
+    ) -> color_eyre::Result<OHLCCents> {
         todo!();
 
         //         if let Some(ohlc) = self.ohlc.height.get_or_import(&height) {
@@ -191,12 +183,12 @@ impl<const MODE: u8> Pricer<MODE> {
     }
 
     fn find_height_ohlc(
-        tree: &BTreeMap<Timestamp, OHLC>,
+        tree: &BTreeMap<Timestamp, OHLCCents>,
         timestamp: Timestamp,
         previous_timestamp: Option<Timestamp>,
         name: &str,
-    ) -> color_eyre::Result<OHLC> {
-        let previous_ohlc = previous_timestamp.map_or(Some(OHLC::default()), |previous_timestamp| {
+    ) -> color_eyre::Result<OHLCCents> {
+        let previous_ohlc = previous_timestamp.map_or(Some(OHLCCents::default()), |previous_timestamp| {
             tree.get(&previous_timestamp).cloned()
         });
 

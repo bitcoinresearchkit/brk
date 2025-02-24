@@ -7,19 +7,16 @@ license = { workspace = true }
 
 [dependencies]
 bitcoin = { workspace = true }
+bitcoincore-rpc = { workspace = true }
+brk_core = { workspace = true }
 brk_parser = { workspace = true }
 brk_logger = { workspace = true }
 byteview = { workspace = true }
 color-eyre = { workspace = true }
-derive_deref = { workspace = true }
 fjall = { workspace = true }
 hodor = { workspace = true }
-jiff = { workspace = true }
 log = { workspace = true }
-rapidhash = "1.4.0"
 rayon = { workspace = true }
 rlimit = { version = "0.10.2" }
-serde = { workspace = true }
-serde_bytes = { workspace = true }
 storable_vec = { workspace = true }
 zerocopy = { workspace = true }

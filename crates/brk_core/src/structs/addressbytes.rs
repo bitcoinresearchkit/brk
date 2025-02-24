@@ -1,8 +1,9 @@
-use brk_parser::bitcoin::ScriptBuf;
-use color_eyre::eyre::eyre;
+use bitcoin::ScriptBuf;
 use derive_deref::{Deref, DerefMut};
 use serde::Serialize;
 use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
+
+use crate::Error;
 
 use super::Addresstype;
 
@@ -32,7 +33,7 @@ impl Addressbytes {
 }
 
 impl TryFrom<(&ScriptBuf, Addresstype)> for Addressbytes {
-    type Error = color_eyre::Report;
+    type Error = Error;
     fn try_from(tuple: (&ScriptBuf, Addresstype)) -> Result<Self, Self::Error> {
         let (script, addresstype) = tuple;
 
@@ -43,7 +44,7 @@ impl TryFrom<(&ScriptBuf, Addresstype)> for Addressbytes {
                     67 => &bytes[1..66],
                     _ => {
                         dbg!(bytes);
-                        return Err(eyre!("Wrong len"));
+                        return Err(Error::WrongLength);
                     }
                 };
                 Ok(Self::P2PK65(P2PK65AddressBytes(U8x65::from(bytes))))
@@ -54,7 +55,7 @@ impl TryFrom<(&ScriptBuf, Addresstype)> for Addressbytes {
                     35 => &bytes[1..34],
                     _ => {
                         dbg!(bytes);
-                        return Err(eyre!("Wrong len"));
+                        return Err(Error::WrongLength);
                     }
                 };
                 Ok(Self::P2PK33(P2PK33AddressBytes(U8x33::from(bytes))))
@@ -79,11 +80,11 @@ impl TryFrom<(&ScriptBuf, Addresstype)> for Addressbytes {
                 let bytes = &script.as_bytes()[2..];
                 Ok(Self::P2TR(P2TRAddressBytes(U8x32::from(bytes))))
             }
-            Addresstype::Multisig => Err(eyre!("multisig address type")),
-            Addresstype::PushOnly => Err(eyre!("push_only address type")),
-            Addresstype::Unknown => Err(eyre!("unknown address type")),
-            Addresstype::Empty => Err(eyre!("empty address type")),
-            Addresstype::OpReturn => Err(eyre!("op_return address type")),
+            Addresstype::Multisig => Err(Error::WrongAddressType),
+            Addresstype::PushOnly => Err(Error::WrongAddressType),
+            Addresstype::Unknown => Err(Error::WrongAddressType),
+            Addresstype::Empty => Err(Error::WrongAddressType),
+            Addresstype::OpReturn => Err(Error::WrongAddressType),
         }
     }
 }

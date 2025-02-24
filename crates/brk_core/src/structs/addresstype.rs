@@ -1,4 +1,4 @@
-use brk_parser::bitcoin::ScriptBuf;
+use bitcoin::ScriptBuf;
 use serde::Serialize;
 use zerocopy::{Immutable, IntoBytes, KnownLayout, TryFromBytes};
 

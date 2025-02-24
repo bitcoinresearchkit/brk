@@ -34,7 +34,7 @@ fn main() -> color_eyre::Result<()> {
 
         indexer.index(&parser, rpc, &exit)?;
 
-        dbg!(i.elapsed());
+        info!("Took: {:?}", i.elapsed());
 
         info!("Waiting for a new block...");
 

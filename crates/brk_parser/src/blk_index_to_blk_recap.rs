@@ -81,7 +81,8 @@ impl BlkIndexToBlkRecap {
             }
         }
 
-        start.unwrap()
+        // Should only be none if asking for a too high start
+        start.unwrap_or_else(|| self.tree.last_key_value().map_or(0, |(i, _)| *i))
     }
 
     pub fn export(&self) {
