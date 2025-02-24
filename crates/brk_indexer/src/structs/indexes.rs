@@ -98,8 +98,6 @@ impl TryFrom<(&mut StorableVecs<CACHED_GETS>, &Fjalls, &Client)> for Indexes {
             })
             .unwrap_or(starting_height);
 
-        // let height = 885000_u32.into();
-
         Ok(Self {
             addressindex: *vecs.height_to_first_addressindex.get(height)?.context("")?,
             emptyindex: *vecs.height_to_first_emptyindex.get(height)?.context("")?,

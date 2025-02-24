@@ -1,3 +1,9 @@
+#[cfg(feature = "core")]
+pub mod core {
+    #[doc(inline)]
+    pub use brk_core::*;
+}
+
 #[cfg(feature = "computer")]
 pub mod computer {
     #[doc(inline)]

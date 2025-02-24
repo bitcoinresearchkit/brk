@@ -60,6 +60,9 @@ impl Indexer<CACHED_GETS> {
             indexes
         });
 
+        // dbg!(starting_indexes);
+        // panic!();
+
         exit.block();
         self.stores.rollback(&self.vecs, &starting_indexes)?;
         self.vecs.rollback(&starting_indexes)?;
@@ -88,7 +91,7 @@ impl Indexer<CACHED_GETS> {
 
         info!("Started indexing...");
 
-        parser.parse(Some(idxs.height), Some(400_000_u32.into()))
+        parser.parse(Some(idxs.height), None)
             .iter()
             .try_for_each(|(height, block, blockhash)| -> color_eyre::Result<()> {
                 info!("Indexing block {height}...");
@@ -628,7 +631,10 @@ impl Indexer<CACHED_GETS> {
                 Ok(())
             })?;
 
-        export(stores, vecs, idxs.height)?;
+        if idxs.height % SNAPSHOT_BLOCK_RANGE != 0 {
+            export(stores, vecs, idxs.height)?;
+        }
+
         sleep(Duration::from_millis(100));
 
         Ok(())
