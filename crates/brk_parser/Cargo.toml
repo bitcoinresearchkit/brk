@@ -10,8 +10,8 @@ license = { workspace = true }
 
 [dependencies]
 bitcoin = { workspace = true }
-bitcoincore-rpc = "0.19.0"
-byteview = { workspace = true }
+bitcoincore-rpc = { workspace = true }
+brk_core = { workspace = true }
 crossbeam = { version = "0.8.4", features = ["crossbeam-channel"] }
 derive_deref = { workspace = true }
 rayon = { workspace = true }

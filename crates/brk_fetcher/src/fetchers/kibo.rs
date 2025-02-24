@@ -1,20 +1,16 @@
 use std::{collections::BTreeMap, str::FromStr};
 
-use brk_indexer::Height;
+use brk_core::{Date, Height, OHLCCents};
 use color_eyre::eyre::ContextCompat;
 use log::info;
 use serde_json::Value;
 
-use crate::{
-    Cents, Close, Dollars, High, Low, Open,
-    fetchers::retry,
-    structs::{Date, OHLC},
-};
+use crate::{Cents, Close, Dollars, High, Low, Open, fetchers::retry};
 
 #[derive(Default)]
 pub struct Kibo {
-    height_to_ohlc_vec: BTreeMap<Height, Vec<OHLC>>,
-    year_to_date_to_ohlc: BTreeMap<u16, BTreeMap<Date, OHLC>>,
+    height_to_ohlc_vec: BTreeMap<Height, Vec<OHLCCents>>,
+    year_to_date_to_ohlc: BTreeMap<u16, BTreeMap<Date, OHLCCents>>,
 }
 
 const KIBO_OFFICIAL_URL: &str = "https://kibo.money/api";
@@ -31,7 +27,7 @@ impl Kibo {
         }
     }
 
-    pub fn get_from_height_kibo(&mut self, height: Height) -> color_eyre::Result<OHLC> {
+    pub fn get_from_height_kibo(&mut self, height: Height) -> color_eyre::Result<OHLCCents> {
         #[allow(clippy::map_entry)]
         if !self.height_to_ohlc_vec.contains_key(&height)
             || ((usize::from(height) + self.height_to_ohlc_vec.get(&height).unwrap().len()) <= usize::from(height))
@@ -48,7 +44,7 @@ impl Kibo {
             .ok_or(color_eyre::eyre::Error::msg("Couldn't find height in kibo"))
     }
 
-    fn fetch_height_prices(height: Height) -> color_eyre::Result<Vec<OHLC>> {
+    fn fetch_height_prices(height: Height) -> color_eyre::Result<Vec<OHLCCents>> {
         info!("Fetching Kibo height prices...");
 
         retry(
@@ -81,7 +77,7 @@ impl Kibo {
         )
     }
 
-    pub fn get_from_date_kibo(&mut self, date: &Date) -> color_eyre::Result<OHLC> {
+    pub fn get_from_date_kibo(&mut self, date: &Date) -> color_eyre::Result<OHLCCents> {
         let year = date.year();
 
         #[allow(clippy::map_entry)]
@@ -106,7 +102,7 @@ impl Kibo {
             .ok_or(color_eyre::eyre::Error::msg("Couldn't find date in kibo"))
     }
 
-    fn fetch_date_prices(year: u16) -> color_eyre::Result<BTreeMap<Date, OHLC>> {
+    fn fetch_date_prices(year: u16) -> color_eyre::Result<BTreeMap<Date, OHLCCents>> {
         info!("Fetching Kibo date prices...");
 
         retry(
@@ -139,7 +135,7 @@ impl Kibo {
         )
     }
 
-    fn value_to_ohlc(value: &Value) -> color_eyre::Result<OHLC> {
+    fn value_to_ohlc(value: &Value) -> color_eyre::Result<OHLCCents> {
         let ohlc = value.as_object().context("Expect as_object to work")?;
 
         let get_value = |key: &str| -> color_eyre::Result<_> {

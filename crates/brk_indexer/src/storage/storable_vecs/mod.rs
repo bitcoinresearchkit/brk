@@ -1,19 +1,15 @@
 use std::{fs, io, path::Path};
 
-use brk_parser::Height;
+use brk_core::{
+    Addressbytes, Addressindex, Addresstype, Addresstypeindex, BlockHash, Emptyindex, Height, LockTime, Multisigindex,
+    Opreturnindex, P2PK33AddressBytes, P2PK33index, P2PK65AddressBytes, P2PK65index, P2PKHAddressBytes, P2PKHindex,
+    P2SHAddressBytes, P2SHindex, P2TRAddressBytes, P2TRindex, P2WPKHAddressBytes, P2WPKHindex, P2WSHAddressBytes,
+    P2WSHindex, Pushonlyindex, Sats, Timestamp, TxVersion, Txid, Txindex, Txinindex, Txoutindex, Unknownindex, Weight,
+};
 use rayon::prelude::*;
 use storable_vec::{AnyJsonStorableVec, CACHED_GETS, Version};
 
-use crate::{
-    Indexes,
-    structs::{
-        Addressbytes, Addressindex, Addresstype, Addresstypeindex, BlockHash, Emptyindex, LockTime, Multisigindex,
-        Opreturnindex, P2PK33AddressBytes, P2PK33index, P2PK65AddressBytes, P2PK65index, P2PKHAddressBytes, P2PKHindex,
-        P2SHAddressBytes, P2SHindex, P2TRAddressBytes, P2TRindex, P2WPKHAddressBytes, P2WPKHindex, P2WSHAddressBytes,
-        P2WSHindex, Pushonlyindex, Sats, Timestamp, TxVersion, Txid, Txindex, Txinindex, Txoutindex, Unknownindex,
-        Weight,
-    },
-};
+use crate::Indexes;
 
 mod base;
 

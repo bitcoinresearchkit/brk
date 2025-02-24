@@ -1,10 +1,7 @@
 use std::{fs, path::Path};
 
-use brk_fetcher::{Date, Dateindex};
-use brk_indexer::{Addressindex, Height, Sats, Timestamp, Txindex, Txinindex, Txoutindex};
+use brk_core::{Addressindex, Date, Dateindex, Feerate, Height, Sats, Timestamp, Txindex, Txinindex, Txoutindex};
 use storable_vec::{StorableVec, Version};
-
-use crate::structs::Feerate;
 
 // mod base;
 

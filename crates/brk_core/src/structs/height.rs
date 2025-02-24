@@ -3,11 +3,10 @@ use std::{
     ops::{Add, AddAssign, Rem, Sub},
 };
 
+use bitcoincore_rpc::{Client, RpcApi};
 use derive_deref::{Deref, DerefMut};
 use serde::{Deserialize, Serialize};
 use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
-
-use crate::rpc::{self, RpcApi};
 
 #[derive(
     Debug,
@@ -148,6 +147,12 @@ impl From<u32> for Height {
     }
 }
 
+impl From<u64> for Height {
+    fn from(value: u64) -> Self {
+        Self(value as u32)
+    }
+}
+
 impl From<usize> for Height {
     fn from(value: usize) -> Self {
         Self(value as u32)
@@ -165,9 +170,9 @@ impl From<Height> for u64 {
     }
 }
 
-impl TryFrom<&rpc::Client> for Height {
-    type Error = rpc::Error;
-    fn try_from(value: &rpc::Client) -> Result<Self, Self::Error> {
+impl TryFrom<&Client> for Height {
+    type Error = bitcoincore_rpc::Error;
+    fn try_from(value: &Client) -> Result<Self, Self::Error> {
         Ok((value.get_blockchain_info()?.blocks as usize - 1).into())
     }
 }

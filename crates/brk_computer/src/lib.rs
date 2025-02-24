@@ -5,12 +5,10 @@ pub use brk_parser::rpc;
 use hodor::Exit;
 
 mod storage;
-mod structs;
 
-use brk_fetcher::Date;
+use brk_core::Date;
 use storable_vec::SINGLE_THREAD;
 use storage::{Fjalls, StorableVecs};
-pub use structs::*;
 
 pub struct Computer<const MODE: u8> {
     path: PathBuf,

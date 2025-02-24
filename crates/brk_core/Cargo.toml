@@ -1,0 +1,20 @@
+[package]
+name = "brk_core"
+description = "The Core (Structs and Errors) of the Bitcoin Research Kit"
+license.workspace = true
+edition.workspace = true
+version.workspace = true
+
+[dependencies]
+bitcoin = { workspace = true }
+bitcoincore-rpc = { workspace = true }
+byteview = { workspace = true }
+derive_deref = { workspace = true }
+jiff = { workspace = true }
+rapidhash = "1.4.0"
+serde = { workspace = true }
+serde_bytes = "0.11.15"
+zerocopy = { workspace = true }
+
+[package.metadata.cargo-machete]
+ignored = ["serde_bytes"]

@@ -342,15 +342,26 @@ version = "0.0.0"
 name = "brk_computer"
 version = "0.0.0"
 dependencies = [
- "brk_fetcher",
+ "brk_core",
  "brk_indexer",
  "brk_parser",
- "byteview",
  "color-eyre",
- "derive_deref",
- "fjall",
  "hodor",
  "storable_vec",
+]
+
+[[package]]
+name = "brk_core"
+version = "0.0.0"
+dependencies = [
+ "bitcoin",
+ "bitcoincore-rpc",
+ "byteview",
+ "derive_deref",
+ "jiff",
+ "rapidhash",
+ "serde",
+ "serde_bytes",
  "zerocopy 0.8.20",
 ]
 
@@ -358,17 +369,15 @@ dependencies = [
 name = "brk_fetcher"
 version = "0.0.0"
 dependencies = [
+ "brk_core",
  "brk_indexer",
  "brk_logger",
  "color-eyre",
- "derive_deref",
  "jiff",
  "log",
  "minreq",
- "serde",
  "serde_json",
  "storable_vec",
- "zerocopy 0.8.20",
 ]
 
 [[package]]
@@ -376,20 +385,17 @@ name = "brk_indexer"
 version = "0.0.0"
 dependencies = [
  "bitcoin",
+ "bitcoincore-rpc",
+ "brk_core",
  "brk_logger",
  "brk_parser",
  "byteview",
  "color-eyre",
- "derive_deref",
  "fjall",
  "hodor",
- "jiff",
  "log",
- "rapidhash",
  "rayon",
  "rlimit",
- "serde",
- "serde_bytes",
  "storable_vec",
  "zerocopy 0.8.20",
 ]
@@ -409,7 +415,7 @@ version = "0.0.0"
 dependencies = [
  "bitcoin",
  "bitcoincore-rpc",
- "byteview",
+ "brk_core",
  "crossbeam",
  "derive_deref",
  "rayon",

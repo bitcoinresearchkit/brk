@@ -1,5 +1,4 @@
 use brk_fetcher::{Binance, Kibo, Kraken};
-use brk_indexer::Height;
 use serde_json::Value;
 
 fn main() -> color_eyre::Result<()> {

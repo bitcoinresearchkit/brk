@@ -4,6 +4,8 @@ use byteview::ByteView;
 use derive_deref::Deref;
 use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
+use crate::Error;
+
 use super::{Addressbytes, Addresstype, BlockHash, Txid};
 
 #[derive(Debug, Deref, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, FromBytes, Immutable, IntoBytes, KnownLayout)]
@@ -23,7 +25,7 @@ impl From<[u8; 8]> for AddressHash {
     }
 }
 impl TryFrom<ByteView> for AddressHash {
-    type Error = storable_vec::Error;
+    type Error = Error;
     fn try_from(value: ByteView) -> Result<Self, Self::Error> {
         Ok(Self::read_from_bytes(&value)?)
     }
@@ -47,7 +49,7 @@ impl From<&BlockHash> for BlockHashPrefix {
     }
 }
 impl TryFrom<ByteView> for BlockHashPrefix {
-    type Error = storable_vec::Error;
+    type Error = Error;
     fn try_from(value: ByteView) -> Result<Self, Self::Error> {
         Ok(Self::read_from_bytes(&value)?)
     }
@@ -71,7 +73,7 @@ impl From<&Txid> for TxidPrefix {
     }
 }
 impl TryFrom<ByteView> for TxidPrefix {
-    type Error = storable_vec::Error;
+    type Error = Error;
     fn try_from(value: ByteView) -> Result<Self, Self::Error> {
         Ok(Self::read_from_bytes(&value)?)
     }

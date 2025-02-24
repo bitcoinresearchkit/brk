@@ -1,7 +1,9 @@
 use std::ops::Add;
 
-use color_eyre::eyre::eyre;
+// use color_eyre::eyre::eyre;
 use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
+
+use crate::Error;
 
 use super::Date;
 
@@ -34,15 +36,15 @@ impl Add<usize> for Dateindex {
 }
 
 impl TryFrom<Date> for Dateindex {
-    type Error = color_eyre::Report;
+    type Error = Error;
     fn try_from(value: Date) -> Result<Self, Self::Error> {
         let value_ = jiff::civil::Date::from(value);
         if value_ < Date::INDEX_ZERO_ {
-            Err(eyre!("Date is too early"))
+            Err(Error::UnindexableDate)
         } else if value == Date::INDEX_ZERO {
             Ok(Self(0))
         } else if value_ < Date::INDEX_ONE_ {
-            Err(eyre!("Date is between first and second"))
+            Err(Error::UnindexableDate)
         } else if value == Date::INDEX_ONE {
             Ok(Self(1))
         } else {

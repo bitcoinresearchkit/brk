@@ -1,12 +1,11 @@
 use std::mem;
 
-use brk_parser::{
-    Height,
-    rpc::{Client, RpcApi},
-};
+use bitcoincore_rpc::{Client, RpcApi};
 use derive_deref::Deref;
 use serde::Serialize;
 use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
+
+use super::Height;
 
 #[derive(Debug, Deref, Clone, PartialEq, Eq, Immutable, IntoBytes, KnownLayout, FromBytes, Serialize)]
 pub struct BlockHash([u8; 32]);
@@ -24,7 +23,7 @@ impl From<BlockHash> for bitcoin::BlockHash {
 }
 
 impl TryFrom<(&Client, Height)> for BlockHash {
-    type Error = brk_parser::rpc::Error;
+    type Error = bitcoincore_rpc::Error;
     fn try_from((rpc, height): (&Client, Height)) -> Result<Self, Self::Error> {
         Ok(Self::from(rpc.get_block_hash(u64::from(height))?))
     }

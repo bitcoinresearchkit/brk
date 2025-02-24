@@ -6,23 +6,19 @@ use std::{
     str::FromStr,
 };
 
-use brk_indexer::Timestamp;
+use brk_core::{Cents, OHLCCents, Timestamp};
 use color_eyre::eyre::{ContextCompat, eyre};
 use log::info;
 use serde_json::Value;
 use storable_vec::STATELESS;
 
-use crate::{
-    Close, Date, Dollars, High, Low, Open, Pricer,
-    fetchers::retry,
-    structs::{Cents, OHLC},
-};
+use crate::{Close, Date, Dollars, High, Low, Open, Pricer, fetchers::retry};
 
 pub struct Binance {
     path: PathBuf,
-    _1mn: Option<BTreeMap<Timestamp, OHLC>>,
-    _1d: Option<BTreeMap<Date, OHLC>>,
-    har: Option<BTreeMap<Timestamp, OHLC>>,
+    _1mn: Option<BTreeMap<Timestamp, OHLCCents>>,
+    _1d: Option<BTreeMap<Date, OHLCCents>>,
+    har: Option<BTreeMap<Timestamp, OHLCCents>>,
 }
 
 impl Binance {
@@ -39,7 +35,7 @@ impl Binance {
         &mut self,
         timestamp: Timestamp,
         previous_timestamp: Option<Timestamp>,
-    ) -> color_eyre::Result<OHLC> {
+    ) -> color_eyre::Result<OHLCCents> {
         if self._1mn.is_none() || self._1mn.as_ref().unwrap().last_key_value().unwrap().0 <= &timestamp {
             self._1mn.replace(Self::fetch_1mn()?);
         }
@@ -51,7 +47,7 @@ impl Binance {
         )
     }
 
-    pub fn fetch_1mn() -> color_eyre::Result<BTreeMap<Timestamp, OHLC>> {
+    pub fn fetch_1mn() -> color_eyre::Result<BTreeMap<Timestamp, OHLCCents>> {
         info!("Fetching 1mn prices from Binance...");
 
         retry(
@@ -61,7 +57,7 @@ impl Binance {
         )
     }
 
-    pub fn get_from_1d(&mut self, date: &Date) -> color_eyre::Result<OHLC> {
+    pub fn get_from_1d(&mut self, date: &Date) -> color_eyre::Result<OHLCCents> {
         if self._1d.is_none() || self._1d.as_ref().unwrap().last_key_value().unwrap().0 < date {
             self._1d.replace(Self::fetch_1d()?);
         }
@@ -74,7 +70,7 @@ impl Binance {
             .ok_or(color_eyre::eyre::Error::msg("Couldn't find date"))
     }
 
-    pub fn fetch_1d() -> color_eyre::Result<BTreeMap<Date, OHLC>> {
+    pub fn fetch_1d() -> color_eyre::Result<BTreeMap<Date, OHLCCents>> {
         info!("Fetching daily prices from Kraken...");
 
         dbg!(&Self::url("interval=1d"));
@@ -90,14 +86,14 @@ impl Binance {
         &mut self,
         timestamp: Timestamp,
         previous_timestamp: Option<Timestamp>,
-    ) -> color_eyre::Result<OHLC> {
+    ) -> color_eyre::Result<OHLCCents> {
         if self.har.is_none() {
             self.har.replace(self.read_har().unwrap_or_default());
         }
         Pricer::<STATELESS>::find_height_ohlc(self.har.as_ref().unwrap(), timestamp, previous_timestamp, "binance har")
     }
 
-    fn read_har(&self) -> color_eyre::Result<BTreeMap<Timestamp, OHLC>> {
+    fn read_har(&self) -> color_eyre::Result<BTreeMap<Timestamp, OHLCCents>> {
         info!("Reading Binance har file...");
 
         let path = &self.path;
@@ -164,11 +160,11 @@ impl Binance {
             })
     }
 
-    fn json_to_timestamp_to_ohlc(json: &Value) -> color_eyre::Result<BTreeMap<Timestamp, OHLC>> {
+    fn json_to_timestamp_to_ohlc(json: &Value) -> color_eyre::Result<BTreeMap<Timestamp, OHLCCents>> {
         Self::json_to_btree(json, Self::array_to_timestamp_and_ohlc)
     }
 
-    fn json_to_date_to_ohlc(json: &Value) -> color_eyre::Result<BTreeMap<Date, OHLC>> {
+    fn json_to_date_to_ohlc(json: &Value) -> color_eyre::Result<BTreeMap<Date, OHLCCents>> {
         Self::json_to_btree(json, Self::array_to_date_and_ohlc)
     }
 
@@ -184,7 +180,7 @@ impl Binance {
             .collect::<Result<BTreeMap<_, _>, _>>()
     }
 
-    fn array_to_timestamp_and_ohlc(array: &Value) -> color_eyre::Result<(Timestamp, OHLC)> {
+    fn array_to_timestamp_and_ohlc(array: &Value) -> color_eyre::Result<(Timestamp, OHLCCents)> {
         let array = array.as_array().context("Expect to be array")?;
 
         let timestamp = Timestamp::from((array.first().unwrap().as_u64().unwrap() / 1_000) as u32);
@@ -197,7 +193,7 @@ impl Binance {
 
         Ok((
             timestamp,
-            OHLC::from((
+            OHLCCents::from((
                 Open::from(get_cents(1)),
                 High::from(get_cents(2)),
                 Low::from(get_cents(3)),
@@ -206,7 +202,7 @@ impl Binance {
         ))
     }
 
-    fn array_to_date_and_ohlc(array: &Value) -> color_eyre::Result<(Date, OHLC)> {
+    fn array_to_date_and_ohlc(array: &Value) -> color_eyre::Result<(Date, OHLCCents)> {
         Self::array_to_timestamp_and_ohlc(array).map(|(t, ohlc)| (Date::from(t), ohlc))
     }
 

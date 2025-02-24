@@ -4,8 +4,6 @@ use brk_computer::Computer;
 use brk_indexer::Indexer;
 use hodor::Exit;
 
-mod structs;
-
 pub fn main() -> color_eyre::Result<()> {
     color_eyre::install()?;
 

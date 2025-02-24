@@ -1,4 +1,4 @@
-use brk_indexer::Sats;
+use super::Sats;
 
 #[derive(Debug, Default, Clone, Copy)]
 pub struct Bitcoin(f64);

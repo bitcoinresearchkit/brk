@@ -6,6 +6,10 @@ use std::{
     time::Duration,
 };
 
+use brk_core::{
+    AddressHash, Addressbytes, Addressindex, Addresstype, BlockHash, BlockHashPrefix, Height, Sats, Timestamp, Txid,
+    TxidPrefix, Txindex, Txinindex, Txoutindex, Vin, Vout,
+};
 pub use brk_parser::*;
 
 use bitcoin::{Transaction, TxIn, TxOut};
@@ -48,8 +52,6 @@ impl<const MODE: u8> Indexer<MODE> {
 
 impl Indexer<CACHED_GETS> {
     pub fn index(&mut self, parser: &Parser, rpc: &'static rpc::Client, exit: &Exit) -> color_eyre::Result<()> {
-        info!("Started indexing...");
-
         let check_collisions = true;
 
         let starting_indexes = Indexes::try_from((&mut self.vecs, &self.stores, rpc)).unwrap_or_else(|_| {
@@ -80,7 +82,13 @@ impl Indexer<CACHED_GETS> {
 
         let mut idxs = starting_indexes;
 
-        parser.parse(Some(idxs.height), None)
+        if idxs.height >= Height::try_from(rpc)? {
+            return Ok(());
+        }
+
+        info!("Started indexing...");
+
+        parser.parse(Some(idxs.height), Some(400_000_u32.into()))
             .iter()
             .try_for_each(|(height, block, blockhash)| -> color_eyre::Result<()> {
                 info!("Indexing block {height}...");
@@ -256,7 +264,7 @@ impl Indexer<CACHED_GETS> {
                                         Txindex,
                                         Vout,
                                         Addresstype,
-                                        color_eyre::Result<Addressbytes>,
+                                        brk_core::Result<Addressbytes>,
                                         Option<Addressindex>,
                                         &Transaction,
                                     ),
@@ -621,7 +629,6 @@ impl Indexer<CACHED_GETS> {
             })?;
 
         export(stores, vecs, idxs.height)?;
-
         sleep(Duration::from_millis(100));
 
         Ok(())

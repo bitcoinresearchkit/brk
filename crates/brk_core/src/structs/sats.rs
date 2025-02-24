@@ -3,10 +3,12 @@ use std::{
     ops::{Add, AddAssign, Mul, Sub, SubAssign},
 };
 
-use brk_parser::{Height, bitcoin::Amount};
+use bitcoin::Amount;
 use derive_deref::{Deref, DerefMut};
 use serde::Serialize;
 use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
+
+use super::Height;
 
 #[derive(
     Debug,

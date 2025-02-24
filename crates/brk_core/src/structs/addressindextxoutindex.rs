@@ -1,8 +1,12 @@
-use brk_indexer::{Addressindex, Txoutindex};
 use byteview::ByteView;
 use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
+use crate::Error;
+
+use super::{Addressindex, Txoutindex};
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Immutable, IntoBytes, KnownLayout, FromBytes)]
+#[repr(C)]
 pub struct AddressindexTxoutindex {
     addressindex: Addressindex,
     _padding: u32,
@@ -10,7 +14,7 @@ pub struct AddressindexTxoutindex {
 }
 
 impl TryFrom<ByteView> for AddressindexTxoutindex {
-    type Error = storable_vec::Error;
+    type Error = Error;
     fn try_from(value: ByteView) -> Result<Self, Self::Error> {
         Ok(Self::read_from_bytes(&value)?)
     }

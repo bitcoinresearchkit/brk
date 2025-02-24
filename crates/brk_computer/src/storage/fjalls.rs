@@ -1,9 +1,8 @@
 use std::path::Path;
 
+use brk_core::{AddressindexTxoutindex, Unit};
 use brk_indexer::Store;
 use storable_vec::Version;
-
-use crate::structs::{AddressindexTxoutindex, Unit};
 
 pub struct Fjalls {
     pub address_to_utxos_received: Store<AddressindexTxoutindex, Unit>,

@@ -1,10 +1,9 @@
 use std::{path::Path, thread};
 
-use storable_vec::{Value, Version, CACHED_GETS};
+use brk_core::{AddressHash, Addressbytes, Addressindex, Addresstype, BlockHashPrefix, Height, TxidPrefix, Txindex};
+use storable_vec::{CACHED_GETS, Value, Version};
 
-use crate::{
-    AddressHash, Addressbytes, Addressindex, Addresstype, BlockHashPrefix, Height, Indexes, TxidPrefix, Txindex,
-};
+use crate::Indexes;
 
 mod base;
 mod meta;
