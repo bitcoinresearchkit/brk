@@ -48,103 +48,87 @@ impl Fjalls {
             Ok(())
         })?;
 
-        vecs.height_to_first_p2pk65index
-            .iter_from(starting_indexes.height, |(_, index)| {
-                if let Some(typedbytes) = vecs
-                    .p2pk65index_to_p2pk65addressbytes
-                    .get(index.into_inner())?
-                    .map(Value::into_inner)
-                {
-                    let bytes = Addressbytes::from(typedbytes);
-                    let hash = AddressHash::from((&bytes, Addresstype::P2PK65));
-                    self.addresshash_to_addressindex.remove(hash);
-                }
-                Ok(())
-            })?;
+        if let Some(index) = vecs.height_to_first_p2pk65index.get(starting_indexes.height)? {
+            let mut index = index.into_inner();
+            while let Some(typedbytes) = vecs
+                .p2pk65index_to_p2pk65addressbytes
+                .get(index)?
+                .map(Value::into_inner)
+            {
+                let bytes = Addressbytes::from(typedbytes);
+                let hash = AddressHash::from((&bytes, Addresstype::P2PK65));
+                self.addresshash_to_addressindex.remove(hash);
+                index.increment();
+            }
+        }
 
-        vecs.height_to_first_p2pk33index
-            .iter_from(starting_indexes.height, |(_, index)| {
-                if let Some(typedbytes) = vecs
-                    .p2pk33index_to_p2pk33addressbytes
-                    .get(index.into_inner())?
-                    .map(Value::into_inner)
-                {
-                    let bytes = Addressbytes::from(typedbytes);
-                    let hash = AddressHash::from((&bytes, Addresstype::P2PK33));
-                    self.addresshash_to_addressindex.remove(hash);
-                }
-                Ok(())
-            })?;
+        if let Some(index) = vecs.height_to_first_p2pk33index.get(starting_indexes.height)? {
+            let mut index = index.into_inner();
+            while let Some(typedbytes) = vecs
+                .p2pk33index_to_p2pk33addressbytes
+                .get(index)?
+                .map(Value::into_inner)
+            {
+                let bytes = Addressbytes::from(typedbytes);
+                let hash = AddressHash::from((&bytes, Addresstype::P2PK33));
+                self.addresshash_to_addressindex.remove(hash);
+                index.increment();
+            }
+        }
 
-        vecs.height_to_first_p2pkhindex
-            .iter_from(starting_indexes.height, |(_, index)| {
-                if let Some(typedbytes) = vecs
-                    .p2pkhindex_to_p2pkhaddressbytes
-                    .get(index.into_inner())?
-                    .map(Value::into_inner)
-                {
-                    let bytes = Addressbytes::from(typedbytes);
-                    let hash = AddressHash::from((&bytes, Addresstype::P2PKH));
-                    self.addresshash_to_addressindex.remove(hash);
-                }
-                Ok(())
-            })?;
+        if let Some(index) = vecs.height_to_first_p2pkhindex.get(starting_indexes.height)? {
+            let mut index = index.into_inner();
+            while let Some(typedbytes) = vecs.p2pkhindex_to_p2pkhaddressbytes.get(index)?.map(Value::into_inner) {
+                let bytes = Addressbytes::from(typedbytes);
+                let hash = AddressHash::from((&bytes, Addresstype::P2PKH));
+                self.addresshash_to_addressindex.remove(hash);
+                index.increment();
+            }
+        }
 
-        vecs.height_to_first_p2shindex
-            .iter_from(starting_indexes.height, |(_, index)| {
-                if let Some(typedbytes) = vecs
-                    .p2shindex_to_p2shaddressbytes
-                    .get(index.into_inner())?
-                    .map(Value::into_inner)
-                {
-                    let bytes = Addressbytes::from(typedbytes);
-                    let hash = AddressHash::from((&bytes, Addresstype::P2SH));
-                    self.addresshash_to_addressindex.remove(hash);
-                }
-                Ok(())
-            })?;
+        if let Some(index) = vecs.height_to_first_p2shindex.get(starting_indexes.height)? {
+            let mut index = index.into_inner();
+            while let Some(typedbytes) = vecs.p2shindex_to_p2shaddressbytes.get(index)?.map(Value::into_inner) {
+                let bytes = Addressbytes::from(typedbytes);
+                let hash = AddressHash::from((&bytes, Addresstype::P2SH));
+                self.addresshash_to_addressindex.remove(hash);
+                index.increment();
+            }
+        }
 
-        vecs.height_to_first_p2trindex
-            .iter_from(starting_indexes.height, |(_, index)| {
-                if let Some(typedbytes) = vecs
-                    .p2trindex_to_p2traddressbytes
-                    .get(index.into_inner())?
-                    .map(Value::into_inner)
-                {
-                    let bytes = Addressbytes::from(typedbytes);
-                    let hash = AddressHash::from((&bytes, Addresstype::P2TR));
-                    self.addresshash_to_addressindex.remove(hash);
-                }
-                Ok(())
-            })?;
+        if let Some(index) = vecs.height_to_first_p2trindex.get(starting_indexes.height)? {
+            let mut index = index.into_inner();
+            while let Some(typedbytes) = vecs.p2trindex_to_p2traddressbytes.get(index)?.map(Value::into_inner) {
+                let bytes = Addressbytes::from(typedbytes);
+                let hash = AddressHash::from((&bytes, Addresstype::P2TR));
+                self.addresshash_to_addressindex.remove(hash);
+                index.increment();
+            }
+        }
 
-        vecs.height_to_first_p2wpkhindex
-            .iter_from(starting_indexes.height, |(_, index)| {
-                if let Some(typedbytes) = vecs
-                    .p2wpkhindex_to_p2wpkhaddressbytes
-                    .get(index.into_inner())?
-                    .map(Value::into_inner)
-                {
-                    let bytes = Addressbytes::from(typedbytes);
-                    let hash = AddressHash::from((&bytes, Addresstype::P2WPKH));
-                    self.addresshash_to_addressindex.remove(hash);
-                }
-                Ok(())
-            })?;
+        if let Some(index) = vecs.height_to_first_p2wpkhindex.get(starting_indexes.height)? {
+            let mut index = index.into_inner();
+            while let Some(typedbytes) = vecs
+                .p2wpkhindex_to_p2wpkhaddressbytes
+                .get(index)?
+                .map(Value::into_inner)
+            {
+                let bytes = Addressbytes::from(typedbytes);
+                let hash = AddressHash::from((&bytes, Addresstype::P2WPKH));
+                self.addresshash_to_addressindex.remove(hash);
+                index.increment();
+            }
+        }
 
-        vecs.height_to_first_p2wshindex
-            .iter_from(starting_indexes.height, |(_, index)| {
-                if let Some(typedbytes) = vecs
-                    .p2wshindex_to_p2wshaddressbytes
-                    .get(index.into_inner())?
-                    .map(Value::into_inner)
-                {
-                    let bytes = Addressbytes::from(typedbytes);
-                    let hash = AddressHash::from((&bytes, Addresstype::P2WSH));
-                    self.addresshash_to_addressindex.remove(hash);
-                }
-                Ok(())
-            })?;
+        if let Some(index) = vecs.height_to_first_p2wshindex.get(starting_indexes.height)? {
+            let mut index = index.into_inner();
+            while let Some(typedbytes) = vecs.p2wshindex_to_p2wshaddressbytes.get(index)?.map(Value::into_inner) {
+                let bytes = Addressbytes::from(typedbytes);
+                let hash = AddressHash::from((&bytes, Addresstype::P2WSH));
+                self.addresshash_to_addressindex.remove(hash);
+                index.increment();
+            }
+        }
 
         self.commit(starting_indexes.height.decremented())?;
 

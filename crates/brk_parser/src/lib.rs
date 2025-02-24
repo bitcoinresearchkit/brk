@@ -191,7 +191,6 @@ impl Parser {
                     }
 
                     let height = Height::from(header.height);
-                    // println!("{height}");
 
                     let len = blk_index_to_blk_recap.tree.len();
                     if blk_metadata.index == len as u16 || blk_metadata.index + 1 == len as u16 {
@@ -235,9 +234,13 @@ impl Parser {
                             None
                         }
                     }) {
+                        if end.is_some_and(|end| end < current_height) {
+                            return ControlFlow::Break(());
+                        }
+
                         send_height_block_hash.send((current_height, block, hash)).unwrap();
 
-                        if end == Some(current_height) {
+                        if end.is_some_and(|end| end == current_height) {
                             return ControlFlow::Break(());
                         }
 

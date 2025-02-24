@@ -32,6 +32,10 @@ impl Height {
     pub const ZERO: Self = Height(0);
     pub const MAX: Self = Height(u32::MAX);
 
+    pub fn new(height: u32) -> Self {
+        Self(height)
+    }
+
     pub fn write(&self, path: &std::path::Path) -> Result<(), std::io::Error> {
         std::fs::write(path, self.as_bytes())
     }

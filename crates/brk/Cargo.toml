@@ -6,7 +6,8 @@ edition.workspace = true
 version.workspace = true
 
 [features]
-full = ["computer", "fetcher", "indexer", "logger", "parser", "server"]
+full = ["core", "computer", "fetcher", "indexer", "logger", "parser", "server"]
+core = ["brk_core"]
 computer = ["brk_computer"]
 fetcher = ["brk_fetcher"]
 indexer = ["brk_indexer"]
@@ -15,6 +16,7 @@ parser = ["brk_parser"]
 server = ["brk_server"]
 
 [dependencies]
+brk_core = { workspace = true, optional = true }
 brk_computer = { workspace = true, optional = true }
 brk_fetcher = { workspace = true, optional = true }
 brk_indexer = { workspace = true, optional = true }
