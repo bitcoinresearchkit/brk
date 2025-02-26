@@ -1,9 +1,10 @@
 [package]
 name = "brk_core"
 description = "The Core (Structs and Errors) of the Bitcoin Research Kit"
-license.workspace = true
-edition.workspace = true
 version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
 
 [dependencies]
 bitcoin = { workspace = true }

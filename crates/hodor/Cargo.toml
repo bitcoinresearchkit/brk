@@ -2,8 +2,9 @@
 name = "hodor"
 description = "Hold the door, an exit blocker that can wait until a task is completed"
 version = "0.1.1"
-edition = { workspace = true }
-license = { workspace = true }
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
 
 [dependencies]
 ctrlc = "3.4.5"

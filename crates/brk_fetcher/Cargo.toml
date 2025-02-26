@@ -1,9 +1,10 @@
 [package]
 name = "brk_fetcher"
 description = "A Bitcoin price fetcher built on top of brk_indexer"
-version = { workspace = true }
-edition = { workspace = true }
-license = { workspace = true }
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
 
 [dependencies]
 brk_core = { workspace = true }

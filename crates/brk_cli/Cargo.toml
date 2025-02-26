@@ -1,8 +1,9 @@
 [package]
 name = "brk_cli"
 description = "A command line interface to interact with the Bitcoin Research Kit"
-version = { workspace = true }
-edition = { workspace = true }
-license = { workspace = true }
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
 
 [dependencies]
