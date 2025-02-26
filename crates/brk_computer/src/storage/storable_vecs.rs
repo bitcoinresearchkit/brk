@@ -1,6 +1,9 @@
 use std::{fs, path::Path};
 
-use brk_core::{Addressindex, Date, Dateindex, Feerate, Height, Sats, Timestamp, Txindex, Txinindex, Txoutindex};
+use brk_core::{
+    Addressindex, Cents, Close, Date, Dateindex, Dollars, Feerate, Height, High, Low, Open, Sats, Timestamp, Txindex,
+    Txinindex, Txoutindex,
+};
 use storable_vec::{StorableVec, Version};
 
 // mod base;
@@ -11,6 +14,22 @@ pub struct StorableVecs<const MODE: u8> {
     pub dateindex_to_first_height: StorableVec<Dateindex, Height, MODE>,
     // pub dateindex_to_last_height: StorableVec<Dateindex, Height, MODE>,
     // pub height_to_block_interval: StorableVec<Height, Timestamp, MODE>,
+    pub dateindex_to_close_in_cents: StorableVec<Dateindex, Close<Cents>, MODE>,
+    pub dateindex_to_close_in_dollars: StorableVec<Dateindex, Close<Dollars>, MODE>,
+    pub dateindex_to_high_in_cents: StorableVec<Dateindex, High<Cents>, MODE>,
+    pub dateindex_to_high_in_dollars: StorableVec<Dateindex, High<Dollars>, MODE>,
+    pub dateindex_to_low_in_cents: StorableVec<Dateindex, Low<Cents>, MODE>,
+    pub dateindex_to_low_in_dollars: StorableVec<Dateindex, Low<Dollars>, MODE>,
+    pub dateindex_to_open_in_cents: StorableVec<Dateindex, Open<Cents>, MODE>,
+    pub dateindex_to_open_in_dollars: StorableVec<Dateindex, Open<Dollars>, MODE>,
+    pub height_to_close_in_cents: StorableVec<Height, Close<Cents>, MODE>,
+    pub height_to_close_in_dollars: StorableVec<Height, Close<Dollars>, MODE>,
+    pub height_to_high_in_cents: StorableVec<Height, High<Cents>, MODE>,
+    pub height_to_high_in_dollars: StorableVec<Height, High<Dollars>, MODE>,
+    pub height_to_low_in_cents: StorableVec<Height, Low<Cents>, MODE>,
+    pub height_to_low_in_dollars: StorableVec<Height, Low<Dollars>, MODE>,
+    pub height_to_open_in_cents: StorableVec<Height, Open<Cents>, MODE>,
+    pub height_to_open_in_dollars: StorableVec<Height, Open<Dollars>, MODE>,
     pub height_to_date: StorableVec<Height, Date, MODE>,
     pub height_to_dateindex: StorableVec<Height, Dateindex, MODE>,
     // pub height_to_fee: StorableVec<Txindex, Amount, MODE>,
@@ -47,6 +66,46 @@ impl<const MODE: u8> StorableVecs<MODE> {
                 Version::from(1),
             )?,
             // height_to_block_interval: StorableVec::forced_import(&path.join("height_to_block_interval"), Version::from(1))?,
+            dateindex_to_close_in_cents: StorableVec::import(
+                &path.join("dateindex_to_close_in_cents"),
+                Version::from(1),
+            )?,
+            dateindex_to_close_in_dollars: StorableVec::import(
+                &path.join("dateindex_to_close_in_dollars"),
+                Version::from(1),
+            )?,
+            dateindex_to_high_in_cents: StorableVec::import(
+                &path.join("dateindex_to_high_in_cents"),
+                Version::from(1),
+            )?,
+            dateindex_to_high_in_dollars: StorableVec::import(
+                &path.join("dateindex_to_high_in_dollars"),
+                Version::from(1),
+            )?,
+            dateindex_to_low_in_cents: StorableVec::import(&path.join("dateindex_to_low_in_cents"), Version::from(1))?,
+            dateindex_to_low_in_dollars: StorableVec::import(
+                &path.join("dateindex_to_low_in_dollars"),
+                Version::from(1),
+            )?,
+            dateindex_to_open_in_cents: StorableVec::import(
+                &path.join("dateindex_to_open_in_cents"),
+                Version::from(1),
+            )?,
+            dateindex_to_open_in_dollars: StorableVec::import(
+                &path.join("dateindex_to_open_in_dollars"),
+                Version::from(1),
+            )?,
+            height_to_close_in_cents: StorableVec::import(&path.join("height_to_close_in_cents"), Version::from(1))?,
+            height_to_close_in_dollars: StorableVec::import(
+                &path.join("height_to_close_in_dollars"),
+                Version::from(1),
+            )?,
+            height_to_high_in_cents: StorableVec::import(&path.join("height_to_high_in_cents"), Version::from(1))?,
+            height_to_high_in_dollars: StorableVec::import(&path.join("height_to_high_in_dollars"), Version::from(1))?,
+            height_to_low_in_cents: StorableVec::import(&path.join("height_to_low_in_cents"), Version::from(1))?,
+            height_to_low_in_dollars: StorableVec::import(&path.join("height_to_low_in_dollars"), Version::from(1))?,
+            height_to_open_in_cents: StorableVec::import(&path.join("height_to_open_in_cents"), Version::from(1))?,
+            height_to_open_in_dollars: StorableVec::import(&path.join("height_to_open_in_dollars"), Version::from(1))?,
             height_to_date: StorableVec::forced_import(&path.join("height_to_date"), Version::from(1))?,
             height_to_dateindex: StorableVec::forced_import(&path.join("height_to_dateindex"), Version::from(1))?,
             // height_to_fee: StorableVec::forced_import(&path.join("height_to_fee"), Version::from(1))?,
@@ -90,10 +149,44 @@ impl<const MODE: u8> StorableVecs<MODE> {
     }
 
     // pub fn as_slice(&self) -> [&dyn AnyComputedStorableVec; 1] {
-    //     [&self.dateindex_to_first_height]
+    //     [
+    //         &self.dateindex_to_close_in_cents as &dyn AnyJsonStorableVec,
+    //         &self.dateindex_to_close_in_dollars,
+    //         &self.dateindex_to_high_in_cents,
+    //         &self.dateindex_to_high_in_dollars,
+    //         &self.dateindex_to_low_in_cents,
+    //         &self.dateindex_to_low_in_dollars,
+    //         &self.dateindex_to_open_in_cents,
+    //         &self.dateindex_to_open_in_dollars,
+    //         &self.height_to_close_in_cents,
+    //         &self.height_to_close_in_dollars,
+    //         &self.height_to_high_in_cents,
+    //         &self.height_to_high_in_dollars,
+    //         &self.height_to_low_in_cents,
+    //         &self.height_to_low_in_dollars,
+    //         &self.height_to_open_in_cents,
+    //         &self.height_to_open_in_dollars,
+    //     ]
     // }
 
     // pub fn as_mut_slice(&mut self) -> [&mut dyn AnyComputedStorableVec; 1] {
-    //     [&mut self.dateindex_to_first_height]
+    //     [
+    //         &mut self.dateindex_to_close_in_cents as &mut dyn AnyStorableVec,
+    //         &mut self.dateindex_to_close_in_dollars,
+    //         &mut self.dateindex_to_high_in_cents,
+    //         &mut self.dateindex_to_high_in_dollars,
+    //         &mut self.dateindex_to_low_in_cents,
+    //         &mut self.dateindex_to_low_in_dollars,
+    //         &mut self.dateindex_to_open_in_cents,
+    //         &mut self.dateindex_to_open_in_dollars,
+    //         &mut self.height_to_close_in_cents,
+    //         &mut self.height_to_close_in_dollars,
+    //         &mut self.height_to_high_in_cents,
+    //         &mut self.height_to_high_in_dollars,
+    //         &mut self.height_to_low_in_cents,
+    //         &mut self.height_to_low_in_dollars,
+    //         &mut self.height_to_open_in_cents,
+    //         &mut self.height_to_open_in_dollars,
+    //     ]
     // }
 }
