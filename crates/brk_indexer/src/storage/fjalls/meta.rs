@@ -84,9 +84,6 @@ impl StoreMeta {
         path.join("height")
     }
 
-    // fn read_length(&self) -> color_eyre::Result<usize> {
-    //     Self::read_length_(&self.pathbuf)
-    // }
     fn read_length_(path: &Path) -> color_eyre::Result<usize> {
         Ok(fs::read(Self::path_length(path))
             .map(|v| usize::read_from_bytes(v.as_slice()).unwrap_or_default())

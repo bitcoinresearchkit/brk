@@ -14,7 +14,7 @@ pub use brk_parser::*;
 
 use bitcoin::{Transaction, TxIn, TxOut};
 use color_eyre::eyre::{ContextCompat, eyre};
-use hodor::Exit;
+use hodor::Hodor;
 use log::info;
 use rayon::prelude::*;
 use storable_vec::CACHED_GETS;
@@ -35,10 +35,9 @@ pub struct Indexer<const MODE: u8> {
 
 impl<const MODE: u8> Indexer<MODE> {
     pub fn import(indexes_dir: &Path) -> color_eyre::Result<Self> {
-        // info!("Increasing limit of opened files to 210_000...");
         rlimit::setrlimit(
             rlimit::Resource::NOFILE,
-            210_000,
+            rlimit::getrlimit(rlimit::Resource::NOFILE).unwrap().0.max(210_000),
             rlimit::getrlimit(rlimit::Resource::NOFILE).unwrap().1,
         )?;
 
@@ -51,7 +50,7 @@ impl<const MODE: u8> Indexer<MODE> {
 }
 
 impl Indexer<CACHED_GETS> {
-    pub fn index(&mut self, parser: &Parser, rpc: &'static rpc::Client, exit: &Exit) -> color_eyre::Result<()> {
+    pub fn index(&mut self, parser: &Parser, rpc: &'static rpc::Client, hodor: &Hodor) -> color_eyre::Result<()> {
         let check_collisions = true;
 
         let starting_indexes = Indexes::try_from((&mut self.vecs, &self.stores, rpc)).unwrap_or_else(|_| {
@@ -60,25 +59,29 @@ impl Indexer<CACHED_GETS> {
             indexes
         });
 
-        // dbg!(starting_indexes);
-        // panic!();
+        hodor.hold();
+        self.stores.rollback_if_needed(&self.vecs, &starting_indexes)?;
+        self.vecs.rollback_if_needed(&starting_indexes)?;
+        hodor.release();
 
-        exit.block();
-        self.stores.rollback(&self.vecs, &starting_indexes)?;
-        self.vecs.rollback(&starting_indexes)?;
-        exit.unblock();
+        let export_if_needed = |stores: &mut Fjalls,
+                                vecs: &mut StorableVecs<CACHED_GETS>,
+                                height: Height,
+                                hodor: &Hodor|
+         -> color_eyre::Result<()> {
+            if height == 0 || height % SNAPSHOT_BLOCK_RANGE != 0 || hodor.triggered() {
+                return Ok(());
+            }
 
-        let export =
-            |stores: &mut Fjalls, vecs: &mut StorableVecs<CACHED_GETS>, height: Height| -> color_eyre::Result<()> {
-                info!("Exporting...");
-                exit.block();
-                stores.commit(height)?;
-                info!("Exported stores");
-                vecs.flush(height)?;
-                info!("Exported vecs");
-                exit.unblock();
-                Ok(())
-            };
+            info!("Exporting...");
+            hodor.hold();
+            stores.commit(height)?;
+            info!("Exported stores");
+            vecs.flush(height)?;
+            info!("Exported vecs");
+            hodor.release();
+            Ok(())
+        };
 
         let vecs = &mut self.vecs;
         let stores = &mut self.stores;
@@ -91,9 +94,8 @@ impl Indexer<CACHED_GETS> {
 
         info!("Started indexing...");
 
-        parser.parse(Some(idxs.height), None)
-            .iter()
-            .try_for_each(|(height, block, blockhash)| -> color_eyre::Result<()> {
+        parser.parse(Some(idxs.height), None).iter().try_for_each(
+            |(height, block, blockhash)| -> color_eyre::Result<()> {
                 info!("Indexing block {height}...");
 
                 idxs.height = height;
@@ -115,8 +117,10 @@ impl Indexer<CACHED_GETS> {
                     .insert_if_needed(blockhash_prefix, height, height);
 
                 vecs.height_to_blockhash.push_if_needed(height, blockhash)?;
-                vecs.height_to_difficulty.push_if_needed(height, block.header.difficulty_float())?;
-                vecs.height_to_timestamp.push_if_needed(height, Timestamp::from(block.header.time))?;
+                vecs.height_to_difficulty
+                    .push_if_needed(height, block.header.difficulty_float())?;
+                vecs.height_to_timestamp
+                    .push_if_needed(height, Timestamp::from(block.header.time))?;
                 vecs.height_to_size.push_if_needed(height, block.total_size())?;
                 vecs.height_to_weight.push_if_needed(height, block.weight().into())?;
 
@@ -583,10 +587,12 @@ impl Indexer<CACHED_GETS> {
                                     let only_known_dup_txids = [
                                         bitcoin::Txid::from_str(
                                             "d5d27987d2a3dfc724e359870c6644b40e497bdc0589a033220fe15429d88599",
-                                        )?.into(),
+                                        )?
+                                        .into(),
                                         bitcoin::Txid::from_str(
                                             "e3bf3d07d4b0375638d5f1db5255fe07ba2c4cb067cd81b84ee974b6585fb468",
-                                        )?.into(),
+                                        )?
+                                        .into(),
                                     ];
 
                                     let is_dup = only_known_dup_txids.contains(prev_txid);
@@ -623,18 +629,15 @@ impl Indexer<CACHED_GETS> {
 
                 idxs.push_future_if_needed(vecs)?;
 
-                let should_snapshot = height != 0 && height % SNAPSHOT_BLOCK_RANGE == 0 && !exit.blocked();
-                if should_snapshot {
-                    export(stores, vecs, height)?;
-                }
+                export_if_needed(stores, vecs, height, hodor)?;
 
                 Ok(())
-            })?;
+            },
+        )?;
 
-        if idxs.height % SNAPSHOT_BLOCK_RANGE != 0 {
-            export(stores, vecs, idxs.height)?;
-        }
+        export_if_needed(stores, vecs, idxs.height, hodor)?;
 
+        // To make sure that Fjall had the time to flush everything properly
         sleep(Duration::from_millis(100));
 
         Ok(())

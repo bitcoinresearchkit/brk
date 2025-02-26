@@ -1,7 +1,7 @@
 [workspace]
 resolver = "2"
 members = ["crates/*"]
-package.description = "The Bitcoin Research Kit is a suite of tools designed to help you extract, explore and analyze the data stored from your Bitcoin Core node"
+package.description = "The Bitcoin Research Kit is a suite of tools designed to extract, compute and display data stored on a Bitcoin Core node"
 package.license = "MIT"
 package.edition = "2024"
 package.version = "0.0.1"
@@ -20,7 +20,7 @@ brk_server = { version = "0", path = "crates/brk_server" }
 byteview = "0.5.4"
 color-eyre = "0.6.3"
 derive_deref = "1.1.1"
-fjall = "2.6.5"
+fjall = "2.6.7"
 hodor = { version = "0", path = "crates/hodor" }
 jiff = "0.2.1"
 log = { version = "0.4.26" }

@@ -10,7 +10,6 @@ use brk_core::{Cents, OHLCCents, Timestamp};
 use color_eyre::eyre::{ContextCompat, eyre};
 use log::info;
 use serde_json::Value;
-use storable_vec::STATELESS;
 
 use crate::{Close, Date, Dollars, High, Low, Open, Pricer, fetchers::retry};
 
@@ -39,7 +38,7 @@ impl Binance {
         if self._1mn.is_none() || self._1mn.as_ref().unwrap().last_key_value().unwrap().0 <= &timestamp {
             self._1mn.replace(Self::fetch_1mn()?);
         }
-        Pricer::<STATELESS>::find_height_ohlc(
+        Pricer::find_height_ohlc(
             self._1mn.as_ref().unwrap(),
             timestamp,
             previous_timestamp,
@@ -90,7 +89,7 @@ impl Binance {
         if self.har.is_none() {
             self.har.replace(self.read_har().unwrap_or_default());
         }
-        Pricer::<STATELESS>::find_height_ohlc(self.har.as_ref().unwrap(), timestamp, previous_timestamp, "binance har")
+        Pricer::find_height_ohlc(self.har.as_ref().unwrap(), timestamp, previous_timestamp, "binance har")
     }
 
     fn read_har(&self) -> color_eyre::Result<BTreeMap<Timestamp, OHLCCents>> {

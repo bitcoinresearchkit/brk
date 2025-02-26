@@ -14,4 +14,3 @@ jiff = { workspace = true }
 log = { workspace = true }
 minreq = { workspace = true }
 serde_json = { workspace = true }
-storable_vec = { workspace = true }

@@ -5,71 +5,71 @@
 
 ## Description
 
-The Bitcoin Research Kit is a suite of tools designed to help you extract, explore and analyze the data stored from your Bitcoin Core node.
+The Bitcoin Research Kit is a suite of tools designed to extract, compute and display data stored on a Bitcoin Core node.
 
 ## Crates
 
-`brk`
+### `brk`
 
 Wrapper around all other `brk-*` crates.
 
 > Status: ⚠️
 
-`brk_cli`
+### `brk_cli`
 
 A command line interface to interact with the Bitcoin Research Kit.
 
 > Status: ❌
 
-`brk_computer`
+### `brk_computer`
 
 A Bitcoin dataset computer, built on top of brk_indexer.
 
 > Status: ⚠️
 
-`brk_core`
+### `brk_core`
 
 The Core (Structs and Errors) of the Bitcoin Research Kit.
 
 > Status: ✅
 
-`brk_fetcher`
+### `brk_fetcher`
 
 A Bitcoin price fetcher.
 
-> Status: ⚠️
+> Status: ✅
 
-`brk_indexer`
+### `brk_indexer`
 
 A Bitcoin Core indexer built on top of brk_parser.
 
-> Status: ⚠️
+> Status: ✅
 
-`brk_logger`
+### `brk_logger`
 
 A clean logger used in the Bitcoin Research Kit.
 
 > Status: ✅
 
-`brk_parser`
+### `brk_parser`
 
 A very fast Bitcoin Core block parser and iterator built on top of bitcoin-rust.
 
 > Status: ✅
 
-`brk_server`
+### `brk_server`
 
 A server that serves Bitcoin data and swappable front-ends, built on top of brk_indexer, brk_fetcher and brk_computer.
 
 > Status: ⚠️
 
-`hodor`
+### `hodor`
 
 Hold the door, an exit blocker built on top of ctrlc.
 
 > Status: ✅
 
-`storable_vec`
+### `storable_vec`
 
 A very small, fast, efficient and simple storable Vec.
 

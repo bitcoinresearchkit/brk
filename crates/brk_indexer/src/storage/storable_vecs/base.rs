@@ -48,14 +48,6 @@ where
     fn path_height_(path: &Path) -> PathBuf {
         path.join("height")
     }
-
-    pub fn needs(&self, height: Height) -> bool {
-        self.height.is_none_or(|self_height| height > self_height)
-    }
-    #[allow(unused)]
-    pub fn has(&self, height: Height) -> bool {
-        !self.needs(height)
-    }
 }
 
 impl<I, T, const MODE: u8> Deref for StorableVec<I, T, MODE> {

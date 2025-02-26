@@ -1,5 +1,4 @@
-use brk_fetcher::{Binance, Kibo, Kraken};
-use serde_json::Value;
+use brk_fetcher::Binance;
 
 fn main() -> color_eyre::Result<()> {
     color_eyre::install()?;
