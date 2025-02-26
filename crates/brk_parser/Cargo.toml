@@ -1,12 +1,12 @@
 [package]
 name = "brk_parser"
 description = "A very fast Bitcoin Core block parser and iterator built on top of bitcoin-rust"
-repository = "https://github.com/kibo-money/kibo/tree/main/src/crates/biter"
 keywords = ["bitcoin", "block", "iterator"]
 categories = ["cryptography::cryptocurrencies", "encoding"]
-version = { workspace = true }
-edition = { workspace = true }
-license = { workspace = true }
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
 
 [dependencies]
 bitcoin = { workspace = true }
