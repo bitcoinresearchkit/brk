@@ -1,6 +1,6 @@
 [package]
 name = "hodor"
-description = "Hold the door, an exit blocker that can wait until a task is completed"
+description = "Hold the door, an exit blocker built on top of ctrlc"
 version = "0.1.1"
 edition.workspace = true
 license.workspace = true

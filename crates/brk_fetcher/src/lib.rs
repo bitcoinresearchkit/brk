@@ -9,32 +9,14 @@ use color_eyre::eyre::Error;
 
 mod fetchers;
 
-use brk_indexer::Indexer;
+// use brk_indexer::Indexer;
 pub use fetchers::*;
 use storable_vec::{AnyJsonStorableVec, AnyStorableVec, SINGLE_THREAD, StorableVec, Version};
 
 pub struct Pricer<const MODE: u8> {
-    path: PathBuf,
     binance: Binance,
     kraken: Kraken,
     kibo: Kibo,
-
-    pub dateindex_to_close_in_cents: StorableVec<Dateindex, Close<Cents>, MODE>,
-    pub dateindex_to_close_in_dollars: StorableVec<Dateindex, Close<Dollars>, MODE>,
-    pub dateindex_to_high_in_cents: StorableVec<Dateindex, High<Cents>, MODE>,
-    pub dateindex_to_high_in_dollars: StorableVec<Dateindex, High<Dollars>, MODE>,
-    pub dateindex_to_low_in_cents: StorableVec<Dateindex, Low<Cents>, MODE>,
-    pub dateindex_to_low_in_dollars: StorableVec<Dateindex, Low<Dollars>, MODE>,
-    pub dateindex_to_open_in_cents: StorableVec<Dateindex, Open<Cents>, MODE>,
-    pub dateindex_to_open_in_dollars: StorableVec<Dateindex, Open<Dollars>, MODE>,
-    pub height_to_close_in_cents: StorableVec<Height, Close<Cents>, MODE>,
-    pub height_to_close_in_dollars: StorableVec<Height, Close<Dollars>, MODE>,
-    pub height_to_high_in_cents: StorableVec<Height, High<Cents>, MODE>,
-    pub height_to_high_in_dollars: StorableVec<Height, High<Dollars>, MODE>,
-    pub height_to_low_in_cents: StorableVec<Height, Low<Cents>, MODE>,
-    pub height_to_low_in_dollars: StorableVec<Height, Low<Dollars>, MODE>,
-    pub height_to_open_in_cents: StorableVec<Height, Open<Cents>, MODE>,
-    pub height_to_open_in_dollars: StorableVec<Height, Open<Dollars>, MODE>,
 }
 
 impl<const MODE: u8> Pricer<MODE> {
@@ -42,61 +24,19 @@ impl<const MODE: u8> Pricer<MODE> {
         fs::create_dir_all(path)?;
 
         Ok(Self {
-            path: path.to_owned(),
             binance: Binance::init(path),
             kraken: Kraken::default(),
             kibo: Kibo::default(),
-
-            dateindex_to_close_in_cents: StorableVec::import(
-                &path.join("dateindex_to_close_in_cents"),
-                Version::from(1),
-            )?,
-            dateindex_to_close_in_dollars: StorableVec::import(
-                &path.join("dateindex_to_close_in_dollars"),
-                Version::from(1),
-            )?,
-            dateindex_to_high_in_cents: StorableVec::import(
-                &path.join("dateindex_to_high_in_cents"),
-                Version::from(1),
-            )?,
-            dateindex_to_high_in_dollars: StorableVec::import(
-                &path.join("dateindex_to_high_in_dollars"),
-                Version::from(1),
-            )?,
-            dateindex_to_low_in_cents: StorableVec::import(&path.join("dateindex_to_low_in_cents"), Version::from(1))?,
-            dateindex_to_low_in_dollars: StorableVec::import(
-                &path.join("dateindex_to_low_in_dollars"),
-                Version::from(1),
-            )?,
-            dateindex_to_open_in_cents: StorableVec::import(
-                &path.join("dateindex_to_open_in_cents"),
-                Version::from(1),
-            )?,
-            dateindex_to_open_in_dollars: StorableVec::import(
-                &path.join("dateindex_to_open_in_dollars"),
-                Version::from(1),
-            )?,
-            height_to_close_in_cents: StorableVec::import(&path.join("height_to_close_in_cents"), Version::from(1))?,
-            height_to_close_in_dollars: StorableVec::import(
-                &path.join("height_to_close_in_dollars"),
-                Version::from(1),
-            )?,
-            height_to_high_in_cents: StorableVec::import(&path.join("height_to_high_in_cents"), Version::from(1))?,
-            height_to_high_in_dollars: StorableVec::import(&path.join("height_to_high_in_dollars"), Version::from(1))?,
-            height_to_low_in_cents: StorableVec::import(&path.join("height_to_low_in_cents"), Version::from(1))?,
-            height_to_low_in_dollars: StorableVec::import(&path.join("height_to_low_in_dollars"), Version::from(1))?,
-            height_to_open_in_cents: StorableVec::import(&path.join("height_to_open_in_cents"), Version::from(1))?,
-            height_to_open_in_dollars: StorableVec::import(&path.join("height_to_open_in_dollars"), Version::from(1))?,
         })
     }
 
-    pub fn compute_if_needed(&mut self, indexer: &mut Indexer<SINGLE_THREAD>) {
+    pub fn compute_if_needed(&mut self) {
         // TODO: Remove all outdated
 
-        indexer
-            .vecs
-            .height_to_timestamp
-            .iter_from(Height::default(), |v| Ok(()));
+        // indexer
+        //     .vecs
+        //     .height_to_timestamp
+        //     .iter_from(Height::default(), |v| Ok(()));
 
         // self.open
         //     .multi_insert_simple_transform(heights, dates, &mut self.ohlc, &|ohlc| ohlc.open);
@@ -226,47 +166,5 @@ impl<const MODE: u8> Pricer<MODE> {
         }
 
         Ok(final_ohlc)
-    }
-
-    pub fn as_any_json_vec_slice(&self) -> [&dyn AnyJsonStorableVec; 16] {
-        [
-            &self.dateindex_to_close_in_cents as &dyn AnyJsonStorableVec,
-            &self.dateindex_to_close_in_dollars,
-            &self.dateindex_to_high_in_cents,
-            &self.dateindex_to_high_in_dollars,
-            &self.dateindex_to_low_in_cents,
-            &self.dateindex_to_low_in_dollars,
-            &self.dateindex_to_open_in_cents,
-            &self.dateindex_to_open_in_dollars,
-            &self.height_to_close_in_cents,
-            &self.height_to_close_in_dollars,
-            &self.height_to_high_in_cents,
-            &self.height_to_high_in_dollars,
-            &self.height_to_low_in_cents,
-            &self.height_to_low_in_dollars,
-            &self.height_to_open_in_cents,
-            &self.height_to_open_in_dollars,
-        ]
-    }
-
-    pub fn as_mut_any_vec_slice(&mut self) -> [&mut dyn AnyStorableVec; 16] {
-        [
-            &mut self.dateindex_to_close_in_cents as &mut dyn AnyStorableVec,
-            &mut self.dateindex_to_close_in_dollars,
-            &mut self.dateindex_to_high_in_cents,
-            &mut self.dateindex_to_high_in_dollars,
-            &mut self.dateindex_to_low_in_cents,
-            &mut self.dateindex_to_low_in_dollars,
-            &mut self.dateindex_to_open_in_cents,
-            &mut self.dateindex_to_open_in_dollars,
-            &mut self.height_to_close_in_cents,
-            &mut self.height_to_close_in_dollars,
-            &mut self.height_to_high_in_cents,
-            &mut self.height_to_high_in_dollars,
-            &mut self.height_to_low_in_cents,
-            &mut self.height_to_low_in_dollars,
-            &mut self.height_to_open_in_cents,
-            &mut self.height_to_open_in_dollars,
-        ]
     }
 }

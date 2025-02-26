@@ -1,12 +1,81 @@
-<a href="https://kibo.money" target="_blank">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/kibo-money/kibo/main/_assets/logo-long-text-dark.svg">
-    <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/kibo-money/kibo/main/_assets/logo-long-text-light.svg">
-    <img alt="kibō" src="https://raw.githubusercontent.com/kibo-money/kibo/main/_assets/logo-long-text-light.svg" width="210" height="auto">
-  </picture>
-</a>
+# Bitcoin Research Kit
+
+> ⚠️ In the middle of a massive rewrite, use very carefully ⚠️
+> Everything is still a work in progress
 
 ## Description
+
+The Bitcoin Research Kit is a suite of tools designed to help you extract, explore and analyze the data stored from your Bitcoin Core node.
+
+## Crates
+
+`brk`
+
+Wrapper around all other `brk-*` crates.
+
+> Status: ⚠️
+
+`brk_cli`
+
+A command line interface to interact with the Bitcoin Research Kit.
+
+> Status: ❌
+
+`brk_computer`
+
+A Bitcoin dataset computer, built on top of brk_indexer.
+
+> Status: ⚠️
+
+`brk_core`
+
+The Core (Structs and Errors) of the Bitcoin Research Kit.
+
+> Status: ✅
+
+`brk_fetcher`
+
+A Bitcoin price fetcher.
+
+> Status: ⚠️
+
+`brk_indexer`
+
+A Bitcoin Core indexer built on top of brk_parser.
+
+> Status: ⚠️
+
+`brk_logger`
+
+A clean logger used in the Bitcoin Research Kit.
+
+> Status: ✅
+
+`brk_parser`
+
+A very fast Bitcoin Core block parser and iterator built on top of bitcoin-rust.
+
+> Status: ✅
+
+`brk_server`
+
+A server that serves Bitcoin data and swappable front-ends, built on top of brk_indexer, brk_fetcher and brk_computer.
+
+> Status: ⚠️
+
+`hodor`
+
+Hold the door, an exit blocker built on top of ctrlc.
+
+> Status: ✅
+
+`storable_vec`
+
+A very small, fast, efficient and simple storable Vec.
+
+> Status: ✅
+
+## Old README
 
 [**kibō**](https://kibo.money) (_hope_ in japanese) is primarily an open source Bitcoin Core data extractor and visualizer (similar to [Glassnode](https://glassnode.com)) which goal is to empower anybody with data about Bitcoin for free.
 
@@ -25,13 +94,11 @@ If you are a user of [mempool.space](https://mempool.space), you'll find this to
 
 ## Instances
 
-| URL                                              | Type   | Version                                                                                                                                                                         | Status                                                                                                                                                         | Last Height                                                                                                                                                                      | Up Time Ratio                                                                                                                        |
+| URL                                              | Front-end   | Version                                                                                                                                                                         | Status                                                                                                                                                         | Last Height                                                                                                                                                                      | Up Time Ratio                                                                                                                        |
 | ------------------------------------------------ | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
-| [kibo.money](https://kibo.money)                 | Main   | ![Version](https://img.shields.io/badge/dynamic/toml?url=https%3A%2F%2Fkibo.money%2FCargo.toml&query=%24.package.version&style=for-the-badge&label=%20&color=%23db9e03)         | ![Status](https://img.shields.io/uptimerobot/status/m797259009-043f6b92d4cc2deef7d13f50?style=for-the-badge&label=%20&up_color=%231cb454&down_color=%23e63636) | ![Height](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fkibo.money%2Fapi%2Flast-height.json&query=%24.value&style=for-the-badge&label=%20&color=%23f26610)         | ![Ratio](https://img.shields.io/uptimerobot/ratio/m797259009-043f6b92d4cc2deef7d13f50?style=for-the-badge&label=%20&color=%232f73f1) |
-| [backup.kibo.money](https://backup.kibo.money)   | Backup | ![Version](https://img.shields.io/badge/dynamic/toml?url=https%3A%2F%2Fbackup.kibo.money%2FCargo.toml&query=%24.package.version&style=for-the-badge&label=%20&color=%23db9e03)  | ![Status](https://img.shields.io/uptimerobot/status/m797259013-bb29a8264fab8786fb80c5ed?style=for-the-badge&label=%20&up_color=%231cb454&down_color=%23e63636) | ![Height](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fbackup.kibo.money%2Fapi%2Flast-height.json&query=%24.value&style=for-the-badge&label=%20&color=%23f26610)  | ![Ratio](https://img.shields.io/uptimerobot/ratio/m797259013-bb29a8264fab8786fb80c5ed?style=for-the-badge&label=%20&color=%232f73f1) |
-| [preview.kibo.money](https://preview.kibo.money) | Dev    | ![Version](https://img.shields.io/badge/dynamic/toml?url=https%3A%2F%2Fpreview.kibo.money%2FCargo.toml&query=%24.package.version&style=for-the-badge&label=%20&color=%23db9e03) | ![Status](https://img.shields.io/uptimerobot/status/m797869753-d40fc161bcb34624857a8082?style=for-the-badge&label=%20&up_color=%231cb454&down_color=%23e63636) | ![Height](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fpreview.kibo.money%2Fapi%2Flast-height.json&query=%24.value&style=for-the-badge&label=%20&color=%23f26610) | ![Ratio](https://img.shields.io/uptimerobot/ratio/m797869753-d40fc161bcb34624857a8082?style=for-the-badge&label=%20&color=%232f73f1) |
+| [kibo.money](https://kibo.money)                 | kibo.money   | ![Version](https://img.shields.io/badge/dynamic/toml?url=https%3A%2F%2Fkibo.money%2FCargo.toml&query=%24.package.version&style=for-the-badge&label=%20&color=%23db9e03)         | ![Status](https://img.shields.io/uptimerobot/status/m797259009-043f6b92d4cc2deef7d13f50?style=for-the-badge&label=%20&up_color=%231cb454&down_color=%23e63636) | ![Height](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fkibo.money%2Fapi%2Flast-height.json&query=%24.value&style=for-the-badge&label=%20&color=%23f26610)         | ![Ratio](https://img.shields.io/uptimerobot/ratio/m797259009-043f6b92d4cc2deef7d13f50?style=for-the-badge&label=%20&color=%232f73f1) |
 
-Please open an issue if you want to add another instance
+Feel free to open an issue if you want to add another instance
 
 ## Endpoints
 
@@ -47,16 +114,6 @@ Please open an issue if you want to add another instance
     - [/api/date-to-close.csv](https://kibo.money/api/date-to-close.csv)
     - [/api/date-to-close.csv?chunk=2009](https://kibo.money/api/date-to-close.csv?chunk=2009)
     - [/api/date-to-close.csv?all=true](https://kibo.money/api/date-to-close.csv?all=true)
-
-## Roadmap
-
-- **More Datasets/Charts**
-- **Simulations**
-- **Nostr integration**
-- **API Documentation**
-- **Descriptions**
-- **Docker support**
-- **Start9 support**
 
 ## Setup
 

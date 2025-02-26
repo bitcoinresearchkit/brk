@@ -1,11 +1,11 @@
 use byteview::ByteView;
 
 #[derive(Debug)]
-pub struct Unit();
+pub struct Unit;
 
 impl From<ByteView> for Unit {
     fn from(_: ByteView) -> Self {
-        Self()
+        Self
     }
 }
 impl From<Unit> for ByteView {
