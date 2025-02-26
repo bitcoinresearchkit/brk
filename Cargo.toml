@@ -1,9 +1,11 @@
 [workspace]
-members = ["crates/*"]
 resolver = "2"
+members = ["crates/*"]
+package.description = "The Bitcoin Research Kit is a suite of tools designed to help you extract, explore and analyze the data stored from your Bitcoin Core node"
 package.license = "MIT"
 package.edition = "2024"
-package.version = "0.0.0"
+package.version = "0.0.1"
+package.repository = "https://github.com/bitcoinresearchkit/brk"
 
 [workspace.dependencies]
 bitcoin = { version = "0.32.5", features = ["serde"] }

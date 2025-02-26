@@ -1,8 +1,8 @@
 use std::{
     process::exit,
     sync::{
-        atomic::{AtomicBool, Ordering},
         Arc,
+        atomic::{AtomicBool, Ordering},
     },
     thread::sleep,
     time::Duration,
@@ -11,32 +11,32 @@ use std::{
 use log::info;
 
 #[derive(Default, Clone)]
-pub struct Exit {
-    blocked: Arc<AtomicBool>,
-    active: Arc<AtomicBool>,
+pub struct Hodor {
+    holding: Arc<AtomicBool>,
+    triggered: Arc<AtomicBool>,
 }
 
-impl Exit {
+impl Hodor {
     pub fn new() -> Self {
         let s = Self {
-            active: Arc::new(AtomicBool::new(false)),
-            blocked: Arc::new(AtomicBool::new(false)),
+            triggered: Arc::new(AtomicBool::new(false)),
+            holding: Arc::new(AtomicBool::new(false)),
         };
 
-        let active = s.active.clone();
+        let triggered = s.triggered.clone();
 
-        let _blocked = s.blocked.clone();
-        let blocked = move || _blocked.load(Ordering::SeqCst);
+        let holding = s.holding.clone();
+        let is_holding = move || holding.load(Ordering::SeqCst);
 
         ctrlc::set_handler(move || {
             info!("Exitting...");
 
-            active.store(true, Ordering::SeqCst);
+            triggered.store(true, Ordering::SeqCst);
 
-            if blocked() {
-                info!("Waiting to exit safely");
+            if is_holding() {
+                info!("Waiting to exit safely...");
 
-                while blocked() {
+                while is_holding() {
                     sleep(Duration::from_millis(50));
                 }
             }
@@ -48,15 +48,15 @@ impl Exit {
         s
     }
 
-    pub fn block(&self) {
-        self.blocked.store(true, Ordering::SeqCst);
+    pub fn hold(&self) {
+        self.holding.store(true, Ordering::SeqCst);
     }
 
-    pub fn unblock(&self) {
-        self.blocked.store(false, Ordering::SeqCst);
+    pub fn release(&self) {
+        self.holding.store(false, Ordering::SeqCst);
     }
 
-    pub fn blocked(&self) -> bool {
-        self.active.load(Ordering::SeqCst)
+    pub fn triggered(&self) -> bool {
+        self.triggered.load(Ordering::SeqCst)
     }
 }

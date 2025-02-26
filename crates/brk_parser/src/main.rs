@@ -1,6 +1,7 @@
 use std::path::Path;
 
 use bitcoincore_rpc::{Auth, Client};
+use brk_core::Height;
 use brk_parser::Parser;
 
 fn main() {
@@ -23,6 +24,9 @@ fn main() {
     parser.parse(start, end).iter().for_each(|(height, _block, hash)| {
         println!("{height}: {hash}");
     });
+
+    parser.get(Height::new(0));
+    parser.get(Height::new(840_000));
 
     dbg!(i.elapsed());
 }

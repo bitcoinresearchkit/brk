@@ -1,4 +1,4 @@
-# Indexer
+# BRK Indexer
 
 A [Bitcoin Core](https://bitcoincore.org/en/about/) node indexer which iterates over the chain (via `../iterator`) and creates a database of the vecs (`../storable_vec`) and key/value stores ([`fjall`](https://crates.io/crates/fjall)) that can be used in your Rust code.
 

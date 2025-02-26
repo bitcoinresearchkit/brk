@@ -36,3 +36,6 @@ _outputs
 
 # Python
 .ropeproject
+
+# Logs
+.log
