@@ -88,6 +88,11 @@ impl From<TxidPrefix> for ByteView {
         Self::from(&value)
     }
 }
+impl From<[u8; 8]> for TxidPrefix {
+    fn from(value: [u8; 8]) -> Self {
+        Self(value)
+    }
+}
 
 fn copy_first_8bytes(slice: &[u8]) -> Result<[u8; 8], ()> {
     let mut buf: [u8; 8] = [0; 8];

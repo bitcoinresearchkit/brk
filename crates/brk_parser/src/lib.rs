@@ -54,6 +54,10 @@ impl Parser {
         }
     }
 
+    pub fn get(&self, height: Height) -> Block {
+        self.parse(Some(height), Some(height)).iter().next().unwrap().1
+    }
+
     ///
     /// Returns a crossbeam channel receiver that receives `(Height, Block, BlockHash)` tuples from an **inclusive** range (`start` and `end`)
     ///

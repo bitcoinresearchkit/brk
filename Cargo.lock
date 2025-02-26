@@ -324,7 +324,7 @@ checksum = "8f68f53c83ab957f72c32642f3868eec03eb974d1fb82e453128456482613d36"
 
 [[package]]
 name = "brk"
-version = "0.0.0"
+version = "0.0.1"
 dependencies = [
  "brk_computer",
  "brk_core",
@@ -337,11 +337,11 @@ dependencies = [
 
 [[package]]
 name = "brk_cli"
-version = "0.0.0"
+version = "0.0.1"
 
 [[package]]
 name = "brk_computer"
-version = "0.0.0"
+version = "0.0.1"
 dependencies = [
  "brk_core",
  "brk_indexer",
@@ -353,7 +353,7 @@ dependencies = [
 
 [[package]]
 name = "brk_core"
-version = "0.0.0"
+version = "0.0.1"
 dependencies = [
  "bitcoin",
  "bitcoincore-rpc",
@@ -368,7 +368,7 @@ dependencies = [
 
 [[package]]
 name = "brk_fetcher"
-version = "0.0.0"
+version = "0.0.1"
 dependencies = [
  "brk_core",
  "brk_indexer",
@@ -383,7 +383,7 @@ dependencies = [
 
 [[package]]
 name = "brk_indexer"
-version = "0.0.0"
+version = "0.0.1"
 dependencies = [
  "bitcoin",
  "bitcoincore-rpc",
@@ -403,7 +403,7 @@ dependencies = [
 
 [[package]]
 name = "brk_logger"
-version = "0.0.0"
+version = "0.0.1"
 dependencies = [
  "color-eyre",
  "env_logger",
@@ -412,7 +412,7 @@ dependencies = [
 
 [[package]]
 name = "brk_parser"
-version = "0.0.0"
+version = "0.0.1"
 dependencies = [
  "bitcoin",
  "bitcoincore-rpc",
@@ -427,7 +427,7 @@ dependencies = [
 
 [[package]]
 name = "brk_server"
-version = "0.0.0"
+version = "0.0.1"
 dependencies = [
  "axum",
  "brk_computer",
@@ -927,7 +927,7 @@ checksum = "3011d1213f159867b13cfd6ac92d2cd5f1345762c63be3554e84092d85a50bbd"
 
 [[package]]
 name = "hodor"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "ctrlc",
  "log",

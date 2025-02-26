@@ -1,6 +1,8 @@
 use byteview::ByteView;
 
+#[derive(Debug)]
 pub struct Unit();
+
 impl From<ByteView> for Unit {
     fn from(_: ByteView) -> Self {
         Self()

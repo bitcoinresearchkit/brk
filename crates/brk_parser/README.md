@@ -1,9 +1,9 @@
-# biter
+# BRK Parser
 
-Biter (Bitcoin Block Iterator) is a very fast and simple Rust library which reads raw block files (*blkXXXXX.dat*) from Bitcoin Core Node and creates an iterator over all the requested blocks in sequential order (0, 1, 2, ...).
+A very fast and simple Rust library which reads raw block files (*blkXXXXX.dat*) from Bitcoin Core node and creates an iterator over all the requested blocks in sequential order (0, 1, 2, ...).
 
 The element returned by the iterator is a tuple which includes the:
-- Height: `usize`
+- Height: `Height`
 - Block: `Block` (from `bitcoin-rust`)
 - Block's Hash: `BlockHash` (also from `bitcoin-rust`)
 
