@@ -187,7 +187,7 @@ impl<const MODE: u8> StorableVecs<MODE> {
         })
     }
 
-    pub fn rollback(&mut self, starting_indexes: &Indexes) -> storable_vec::Result<()> {
+    pub fn rollback_if_needed(&mut self, starting_indexes: &Indexes) -> storable_vec::Result<()> {
         let saved_height = starting_indexes.height.decremented();
 
         // We don't want to override the starting indexes so we cut from n + 1

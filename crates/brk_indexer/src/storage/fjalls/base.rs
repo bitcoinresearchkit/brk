@@ -1,6 +1,8 @@
 use std::{
     collections::{BTreeMap, BTreeSet},
-    error, mem,
+    error,
+    fmt::Debug,
+    mem,
     path::Path,
 };
 
@@ -27,25 +29,32 @@ const CHECK_COLLISISONS: bool = true;
 
 impl<K, V> Store<K, V>
 where
-    K: Into<ByteView> + Ord + Immutable + IntoBytes,
-    V: Into<ByteView> + TryFrom<ByteView>,
+    K: Debug + Into<ByteView> + Ord + Immutable + IntoBytes,
+    V: Debug + Into<ByteView> + TryFrom<ByteView>,
     <V as TryFrom<ByteView>>::Error: error::Error + Send + Sync + 'static,
 {
     pub fn import(path: &Path, version: Version) -> color_eyre::Result<Self> {
         let meta = StoreMeta::checked_open(path, version)?;
-        let keyspace = if let Ok(keyspace) = Self::open_keyspace(path) {
-            keyspace
-        } else {
-            meta.reset()?;
-            return Self::import(path, version);
+
+        let keyspace = match Self::open_keyspace(path) {
+            Ok(keyspace) => keyspace,
+            Err(e) => {
+                dbg!(e);
+                meta.reset()?;
+                return Self::import(path, version);
+            }
         };
-        let part = if let Ok(part) = Self::open_partition_handle(&keyspace) {
-            part
-        } else {
-            drop(keyspace);
-            meta.reset()?;
-            return Self::import(path, version);
+
+        let part = match Self::open_partition_handle(&keyspace) {
+            Ok(part) => part,
+            Err(e) => {
+                dbg!(e);
+                drop(keyspace);
+                meta.reset()?;
+                return Self::import(path, version);
+            }
         };
+
         let rtx = keyspace.read_tx();
 
         Ok(Self {
@@ -71,8 +80,8 @@ where
     pub fn insert_if_needed(&mut self, key: K, value: V, height: Height) {
         if self.needs(height) {
             if !self.dels.is_empty() {
-                unreachable!("Shouldn't reach this");
                 // self.dels.remove(&key);
+                unreachable!("Shouldn't reach this");
             }
             self.puts.insert(key, value);
         }
@@ -83,7 +92,10 @@ where
             unreachable!("Shouldn't reach this");
             // self.puts.remove(&key);
         }
-        self.dels.insert(key);
+        // dbg!(&key);
+        if !self.dels.insert(key) {
+            unreachable!();
+        }
     }
 
     pub fn commit(&mut self, height: Height) -> Result<()> {
@@ -101,8 +113,14 @@ where
 
         mem::take(&mut self.puts).into_iter().for_each(|(key, value)| {
             if CHECK_COLLISISONS {
+                #[allow(unused_must_use)]
                 if let Ok(Some(value)) = wtx.get(&self.part, key.as_bytes()) {
-                    dbg!(value, &self.meta);
+                    dbg!(
+                        &key,
+                        V::try_from(value.into()).unwrap(),
+                        &self.meta,
+                        self.rtx.get(&self.part, key.as_bytes())
+                    );
                     unreachable!();
                 }
             }

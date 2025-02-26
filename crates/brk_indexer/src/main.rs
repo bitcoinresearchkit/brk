@@ -5,21 +5,21 @@ use brk_parser::{
     Parser,
     rpc::{self},
 };
-use hodor::Exit;
+use hodor::Hodor;
 use log::info;
 use storable_vec::CACHED_GETS;
 
 fn main() -> color_eyre::Result<()> {
     color_eyre::install()?;
 
-    brk_logger::init(None);
+    brk_logger::init(Some(Path::new(".log")));
 
     let data_dir = Path::new("../../../bitcoin");
     let rpc = Box::leak(Box::new(rpc::Client::new(
         "http://localhost:8332",
         rpc::Auth::CookieFile(Path::new(data_dir).join(".cookie")),
     )?));
-    let exit = Exit::new();
+    let hodor = Hodor::new();
 
     let parser = Parser::new(data_dir, rpc);
 
@@ -32,7 +32,7 @@ fn main() -> color_eyre::Result<()> {
 
         let mut indexer: Indexer<CACHED_GETS> = Indexer::import(Path::new("../../_outputs/indexes"))?;
 
-        indexer.index(&parser, rpc, &exit)?;
+        indexer.index(&parser, rpc, &hodor)?;
 
         info!("Took: {:?}", i.elapsed());
 

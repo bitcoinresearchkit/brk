@@ -1,25 +1,20 @@
-use std::{
-    collections::BTreeMap,
-    fs,
-    path::{Path, PathBuf},
-};
+use std::{collections::BTreeMap, fs, path::Path};
 
-use brk_core::{Cents, Close, Date, Dateindex, Dollars, Height, High, Low, OHLCCents, Open, Timestamp};
+use brk_core::{Cents, Close, Date, Dollars, Height, High, Low, OHLCCents, Open, Timestamp};
 use color_eyre::eyre::Error;
 
 mod fetchers;
 
 // use brk_indexer::Indexer;
 pub use fetchers::*;
-use storable_vec::{AnyJsonStorableVec, AnyStorableVec, SINGLE_THREAD, StorableVec, Version};
 
-pub struct Pricer<const MODE: u8> {
+pub struct Pricer {
     binance: Binance,
     kraken: Kraken,
     kibo: Kibo,
 }
 
-impl<const MODE: u8> Pricer<MODE> {
+impl Pricer {
     pub fn import(path: &Path) -> color_eyre::Result<Self> {
         fs::create_dir_all(path)?;
 
@@ -28,27 +23,6 @@ impl<const MODE: u8> Pricer<MODE> {
             kraken: Kraken::default(),
             kibo: Kibo::default(),
         })
-    }
-
-    pub fn compute_if_needed(&mut self) {
-        // TODO: Remove all outdated
-
-        // indexer
-        //     .vecs
-        //     .height_to_timestamp
-        //     .iter_from(Height::default(), |v| Ok(()));
-
-        // self.open
-        //     .multi_insert_simple_transform(heights, dates, &mut self.ohlc, &|ohlc| ohlc.open);
-
-        // self.high
-        //     .multi_insert_simple_transform(heights, dates, &mut self.ohlc, &|ohlc| ohlc.high);
-
-        // self.low
-        //     .multi_insert_simple_transform(heights, dates, &mut self.ohlc, &|ohlc| ohlc.low);
-
-        // self.close
-        //     .multi_insert_simple_transform(heights, dates, &mut self.ohlc, &|ohlc| ohlc.close);
     }
 
     fn get_date_ohlc(&mut self, date: Date) -> color_eyre::Result<OHLCCents> {

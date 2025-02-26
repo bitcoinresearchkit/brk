@@ -21,18 +21,27 @@ pub struct Fjalls {
 
 impl Fjalls {
     pub fn import(path: &Path) -> color_eyre::Result<Self> {
-        let addresshash_to_addressindex = Store::import(&path.join("addresshash_to_addressindex"), Version::from(1))?;
-        let blockhash_prefix_to_height = Store::import(&path.join("blockhash_prefix_to_height"), Version::from(1))?;
-        let txid_prefix_to_txindex = Store::import(&path.join("txid_prefix_to_txindex"), Version::from(1))?;
+        thread::scope(|scope| {
+            let addresshash_to_addressindex =
+                scope.spawn(|| Store::import(&path.join("addresshash_to_addressindex"), Version::from(1)));
+            let blockhash_prefix_to_height =
+                scope.spawn(|| Store::import(&path.join("blockhash_prefix_to_height"), Version::from(1)));
+            let txid_prefix_to_txindex =
+                scope.spawn(|| Store::import(&path.join("txid_prefix_to_txindex"), Version::from(1)));
 
-        Ok(Self {
-            addresshash_to_addressindex,
-            blockhash_prefix_to_height,
-            txid_prefix_to_txindex,
+            Ok(Self {
+                addresshash_to_addressindex: addresshash_to_addressindex.join().unwrap()?,
+                blockhash_prefix_to_height: blockhash_prefix_to_height.join().unwrap()?,
+                txid_prefix_to_txindex: txid_prefix_to_txindex.join().unwrap()?,
+            })
         })
     }
 
-    pub fn rollback(&mut self, vecs: &StorableVecs<CACHED_GETS>, starting_indexes: &Indexes) -> color_eyre::Result<()> {
+    pub fn rollback_if_needed(
+        &mut self,
+        vecs: &StorableVecs<CACHED_GETS>,
+        starting_indexes: &Indexes,
+    ) -> color_eyre::Result<()> {
         vecs.height_to_blockhash
             .iter_from(starting_indexes.height, |(_, blockhash)| {
                 let blockhash = blockhash.as_ref();
@@ -41,12 +50,13 @@ impl Fjalls {
                 Ok(())
             })?;
 
-        vecs.txindex_to_txid.iter_from(starting_indexes.txindex, |(_, txid)| {
-            let txid = txid.as_ref();
-            let txid_prefix = TxidPrefix::from(txid);
-            self.txid_prefix_to_txindex.remove(txid_prefix);
-            Ok(())
-        })?;
+        vecs.txindex_to_txid
+            .iter_from(starting_indexes.txindex, |(_txindex, txid)| {
+                let txid = txid.as_ref();
+                let txid_prefix = TxidPrefix::from(txid);
+                self.txid_prefix_to_txindex.remove(txid_prefix);
+                Ok(())
+            })?;
 
         if let Some(index) = vecs.height_to_first_p2pk65index.get(starting_indexes.height)? {
             let mut index = index.into_inner();

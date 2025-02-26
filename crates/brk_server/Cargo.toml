@@ -15,7 +15,7 @@ color-eyre = { workspace = true }
 derive_deref = { workspace = true }
 jiff = { workspace = true }
 log = { workspace = true }
-oxc = { version = "0.52.0", features = ["codegen", "minifier"] }
+oxc = { version = "0.53.0", features = ["codegen", "minifier"] }
 serde = { workspace = true }
 serde_json = { workspace = true }
 storable_vec = { workspace = true }
