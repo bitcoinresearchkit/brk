@@ -11,32 +11,32 @@ use std::{
 use log::info;
 
 #[derive(Default, Clone)]
-pub struct Hodor {
-    holding: Arc<AtomicBool>,
+pub struct Exit {
+    blocking: Arc<AtomicBool>,
     triggered: Arc<AtomicBool>,
 }
 
-impl Hodor {
+impl Exit {
     pub fn new() -> Self {
         let s = Self {
             triggered: Arc::new(AtomicBool::new(false)),
-            holding: Arc::new(AtomicBool::new(false)),
+            blocking: Arc::new(AtomicBool::new(false)),
         };
 
         let triggered = s.triggered.clone();
 
-        let holding = s.holding.clone();
-        let is_holding = move || holding.load(Ordering::SeqCst);
+        let blocking = s.blocking.clone();
+        let is_blocking = move || blocking.load(Ordering::SeqCst);
 
         ctrlc::set_handler(move || {
             info!("Exitting...");
 
             triggered.store(true, Ordering::SeqCst);
 
-            if is_holding() {
+            if is_blocking() {
                 info!("Waiting to exit safely...");
 
-                while is_holding() {
+                while is_blocking() {
                     sleep(Duration::from_millis(50));
                 }
             }
@@ -48,12 +48,12 @@ impl Hodor {
         s
     }
 
-    pub fn hold(&self) {
-        self.holding.store(true, Ordering::SeqCst);
+    pub fn block(&self) {
+        self.blocking.store(true, Ordering::SeqCst);
     }
 
     pub fn release(&self) {
-        self.holding.store(false, Ordering::SeqCst);
+        self.blocking.store(false, Ordering::SeqCst);
     }
 
     pub fn triggered(&self) -> bool {

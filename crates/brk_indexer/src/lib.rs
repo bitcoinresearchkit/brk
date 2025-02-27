@@ -2,55 +2,52 @@ use std::{
     collections::BTreeMap,
     path::Path,
     str::FromStr,
-    thread::{self, sleep},
-    time::Duration,
+    thread::{self},
 };
 
 use brk_core::{
     AddressHash, Addressbytes, Addressindex, Addresstype, BlockHash, BlockHashPrefix, Height, Sats, Timestamp, Txid,
-    TxidPrefix, Txindex, Txinindex, Txoutindex, Vin, Vout,
+    TxidPrefix, Txindex, Txinindex, Txoutindex, Vin, Vout, setrlimit,
 };
 pub use brk_parser::*;
 
 use bitcoin::{Transaction, TxIn, TxOut};
+use brk_exit::Exit;
+use brk_vec::CACHED_GETS;
 use color_eyre::eyre::{ContextCompat, eyre};
-use hodor::Hodor;
 use log::info;
 use rayon::prelude::*;
-use storable_vec::CACHED_GETS;
 
 mod storage;
 mod structs;
 
 pub use storage::{AnyStorableVec, StorableVec, Store, StoreMeta};
-use storage::{Fjalls, StorableVecs};
+use storage::{Stores, Vecs};
 pub use structs::*;
 
 const SNAPSHOT_BLOCK_RANGE: usize = 1000;
 
 pub struct Indexer<const MODE: u8> {
-    pub vecs: StorableVecs<MODE>,
-    pub stores: Fjalls,
+    pub vecs: Vecs<MODE>,
+    pub stores: Stores,
 }
 
 impl<const MODE: u8> Indexer<MODE> {
     pub fn import(indexes_dir: &Path) -> color_eyre::Result<Self> {
-        rlimit::setrlimit(
-            rlimit::Resource::NOFILE,
-            rlimit::getrlimit(rlimit::Resource::NOFILE).unwrap().0.max(210_000),
-            rlimit::getrlimit(rlimit::Resource::NOFILE).unwrap().1,
-        )?;
+        setrlimit()?;
 
         info!("Importing indexes...");
-        let vecs = StorableVecs::import(&indexes_dir.join("vecs"))?;
-        let stores = Fjalls::import(&indexes_dir.join("fjall"))?;
+
+        let vecs = Vecs::import(&indexes_dir.join("vecs"))?;
+
+        let stores = Stores::import(&indexes_dir.join("fjall"))?;
 
         Ok(Self { vecs, stores })
     }
 }
 
 impl Indexer<CACHED_GETS> {
-    pub fn index(&mut self, parser: &Parser, rpc: &'static rpc::Client, hodor: &Hodor) -> color_eyre::Result<()> {
+    pub fn index(&mut self, parser: &Parser, rpc: &'static rpc::Client, exit: &Exit) -> color_eyre::Result<()> {
         let check_collisions = true;
 
         let starting_indexes = Indexes::try_from((&mut self.vecs, &self.stores, rpc)).unwrap_or_else(|_| {
@@ -59,27 +56,26 @@ impl Indexer<CACHED_GETS> {
             indexes
         });
 
-        hodor.hold();
+        exit.block();
         self.stores.rollback_if_needed(&self.vecs, &starting_indexes)?;
         self.vecs.rollback_if_needed(&starting_indexes)?;
-        hodor.release();
+        exit.release();
 
-        let export_if_needed = |stores: &mut Fjalls,
-                                vecs: &mut StorableVecs<CACHED_GETS>,
+        let export_if_needed = |stores: &mut Stores,
+                                vecs: &mut Vecs<CACHED_GETS>,
                                 height: Height,
-                                hodor: &Hodor|
+                                rem: bool,
+                                exit: &Exit|
          -> color_eyre::Result<()> {
-            if height == 0 || height % SNAPSHOT_BLOCK_RANGE != 0 || hodor.triggered() {
+            if height == 0 || (height % SNAPSHOT_BLOCK_RANGE != 0) != rem || exit.triggered() {
                 return Ok(());
             }
 
             info!("Exporting...");
-            hodor.hold();
+            exit.block();
             stores.commit(height)?;
-            info!("Exported stores");
             vecs.flush(height)?;
-            info!("Exported vecs");
-            hodor.release();
+            exit.release();
             Ok(())
         };
 
@@ -88,7 +84,7 @@ impl Indexer<CACHED_GETS> {
 
         let mut idxs = starting_indexes;
 
-        if idxs.height >= Height::try_from(rpc)? {
+        if idxs.height > Height::try_from(rpc)? {
             return Ok(());
         }
 
@@ -629,16 +625,13 @@ impl Indexer<CACHED_GETS> {
 
                 idxs.push_future_if_needed(vecs)?;
 
-                export_if_needed(stores, vecs, height, hodor)?;
+                export_if_needed(stores, vecs, height, false, exit)?;
 
                 Ok(())
             },
         )?;
 
-        export_if_needed(stores, vecs, idxs.height, hodor)?;
-
-        // To make sure that Fjall had the time to flush everything properly
-        sleep(Duration::from_millis(100));
+        export_if_needed(stores, vecs, idxs.height, true, exit)?;
 
         Ok(())
     }

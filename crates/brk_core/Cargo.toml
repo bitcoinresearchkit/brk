@@ -12,7 +12,9 @@ bitcoincore-rpc = { workspace = true }
 byteview = { workspace = true }
 derive_deref = { workspace = true }
 jiff = { workspace = true }
+log = { workspace = true }
 rapidhash = "1.4.0"
+rlimit = "0.10.2"
 serde = { workspace = true }
 serde_bytes = "0.11.15"
 zerocopy = { workspace = true }

@@ -1,5 +1,5 @@
-mod fjalls;
-mod storable_vecs;
+mod stores;
+mod vecs;
 
-pub use fjalls::*;
-pub use storable_vecs::*;
+pub use stores::*;
+pub use vecs::*;

@@ -6,8 +6,8 @@ use brk_core::{
     P2SHAddressBytes, P2SHindex, P2TRAddressBytes, P2TRindex, P2WPKHAddressBytes, P2WPKHindex, P2WSHAddressBytes,
     P2WSHindex, Pushonlyindex, Sats, Timestamp, TxVersion, Txid, Txindex, Txinindex, Txoutindex, Unknownindex, Weight,
 };
+use brk_vec::{AnyJsonStorableVec, CACHED_GETS, Version};
 use rayon::prelude::*;
-use storable_vec::{AnyJsonStorableVec, CACHED_GETS, Version};
 
 use crate::Indexes;
 
@@ -15,7 +15,7 @@ mod base;
 
 pub use base::*;
 
-pub struct StorableVecs<const MODE: u8> {
+pub struct Vecs<const MODE: u8> {
     pub addressindex_to_addresstype: StorableVec<Addressindex, Addresstype, MODE>,
     pub addressindex_to_addresstypeindex: StorableVec<Addressindex, Addresstypeindex, MODE>,
     pub addressindex_to_height: StorableVec<Addressindex, Height, MODE>,
@@ -61,7 +61,7 @@ pub struct StorableVecs<const MODE: u8> {
     pub txoutindex_to_value: StorableVec<Txoutindex, Sats, MODE>,
 }
 
-impl<const MODE: u8> StorableVecs<MODE> {
+impl<const MODE: u8> Vecs<MODE> {
     pub fn import(path: &Path) -> color_eyre::Result<Self> {
         fs::create_dir_all(path)?;
 
@@ -187,7 +187,7 @@ impl<const MODE: u8> StorableVecs<MODE> {
         })
     }
 
-    pub fn rollback_if_needed(&mut self, starting_indexes: &Indexes) -> storable_vec::Result<()> {
+    pub fn rollback_if_needed(&mut self, starting_indexes: &Indexes) -> brk_vec::Result<()> {
         let saved_height = starting_indexes.height.decremented();
 
         // We don't want to override the starting indexes so we cut from n + 1
@@ -404,12 +404,12 @@ impl<const MODE: u8> StorableVecs<MODE> {
     }
 }
 
-impl StorableVecs<CACHED_GETS> {
+impl Vecs<CACHED_GETS> {
     pub fn get_addressbytes(
         &self,
         addresstype: Addresstype,
         addresstypeindex: Addresstypeindex,
-    ) -> storable_vec::Result<Option<Addressbytes>> {
+    ) -> brk_vec::Result<Option<Addressbytes>> {
         Ok(match addresstype {
             Addresstype::P2PK65 => self
                 .p2pk65index_to_p2pk65addressbytes
@@ -454,7 +454,7 @@ impl StorableVecs<CACHED_GETS> {
         &mut self,
         index: Addresstypeindex,
         addressbytes: Addressbytes,
-    ) -> storable_vec::Result<()> {
+    ) -> brk_vec::Result<()> {
         match addressbytes {
             Addressbytes::P2PK65(bytes) => self
                 .p2pk65index_to_p2pk65addressbytes
