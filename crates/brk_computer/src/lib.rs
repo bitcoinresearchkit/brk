@@ -1,35 +1,35 @@
 use std::path::{Path, PathBuf};
 
+use brk_exit::Exit;
 use brk_indexer::Indexer;
 pub use brk_parser::rpc;
-use hodor::Hodor;
 
 mod storage;
 
 use brk_core::Date;
-use storable_vec::SINGLE_THREAD;
-use storage::{Fjalls, StorableVecs};
+use brk_vec::SINGLE_THREAD;
+use storage::{Stores, Vecs};
 
 pub struct Computer<const MODE: u8> {
     path: PathBuf,
-    pub vecs: StorableVecs<MODE>,
-    pub trees: Fjalls,
+    pub vecs: Vecs<MODE>,
+    pub stores: Stores,
 }
 
 impl<const MODE: u8> Computer<MODE> {
     pub fn import(computed_dir: &Path) -> color_eyre::Result<Self> {
-        let vecs = StorableVecs::import(&computed_dir.join("vecs"))?;
-        let trees = Fjalls::import(&computed_dir.join("fjall"))?;
+        let vecs = Vecs::import(&computed_dir.join("vecs"))?;
+        let stores = Stores::import(&computed_dir.join("fjall"))?;
         Ok(Self {
             path: computed_dir.to_owned(),
             vecs,
-            trees,
+            stores,
         })
     }
 }
 
 impl Computer<SINGLE_THREAD> {
-    pub fn compute(&mut self, mut indexer: Indexer<SINGLE_THREAD>, hodor: &Hodor) -> color_eyre::Result<()> {
+    pub fn compute(&mut self, mut indexer: Indexer<SINGLE_THREAD>, exit: &Exit) -> color_eyre::Result<()> {
         let height_count = indexer.vecs.height_to_size.len();
         let txindexes_count = indexer.vecs.txindex_to_txid.len();
         let txinindexes_count = indexer.vecs.txinindex_to_txoutindex.len();

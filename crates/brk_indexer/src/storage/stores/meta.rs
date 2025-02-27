@@ -3,7 +3,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use storable_vec::Version;
+use brk_vec::Version;
 use zerocopy::{FromBytes, IntoBytes};
 
 use super::Height;

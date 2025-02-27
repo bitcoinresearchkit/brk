@@ -5,14 +5,14 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use storable_vec::{StoredIndex, StoredType, Version};
+use brk_vec::{StoredIndex, StoredType, Version};
 
 use super::Height;
 
 #[derive(Debug)]
 pub struct StorableVec<I, T, const MODE: u8> {
     height: Option<Height>,
-    vec: storable_vec::StorableVec<I, T, MODE>,
+    vec: brk_vec::StorableVec<I, T, MODE>,
 }
 
 impl<I, T, const MODE: u8> StorableVec<I, T, MODE>
@@ -20,10 +20,10 @@ where
     I: StoredIndex,
     T: StoredType,
 {
-    pub fn import(path: &Path, version: Version) -> storable_vec::Result<Self> {
+    pub fn import(path: &Path, version: Version) -> brk_vec::Result<Self> {
         Ok(Self {
             height: Height::try_from(Self::path_height_(path).as_path()).ok(),
-            vec: storable_vec::StorableVec::forced_import(path, version)?,
+            vec: brk_vec::StorableVec::forced_import(path, version)?,
         })
     }
 
@@ -32,7 +32,7 @@ where
         self.vec.flush()
     }
 
-    pub fn truncate_if_needed(&mut self, index: I, height: Height) -> storable_vec::Result<Option<T>> {
+    pub fn truncate_if_needed(&mut self, index: I, height: Height) -> brk_vec::Result<Option<T>> {
         if self.height.is_none_or(|self_height| self_height != height) {
             height.write(&self.path_height())?;
         }
@@ -51,7 +51,7 @@ where
 }
 
 impl<I, T, const MODE: u8> Deref for StorableVec<I, T, MODE> {
-    type Target = storable_vec::StorableVec<I, T, MODE>;
+    type Target = brk_vec::StorableVec<I, T, MODE>;
     fn deref(&self) -> &Self::Target {
         &self.vec
     }

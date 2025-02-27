@@ -1,4 +1,4 @@
-# storable_vec
+# BRK Vec
 
 A very small, fast, efficient and simple storable `vec` which uses `mmap2` for speed.
 
@@ -15,7 +15,7 @@ A very small, fast, efficient and simple storable `vec` which uses `mmap2` for s
 ```rust
 use std::path::Path;
 
-use storable_vec::{AnyStorableVec, StorableVec};
+use brk_vec::{AnyStorableVec, StorableVec};
 
 fn main() -> color_eyre::Result<()> {
     color_eyre::install()?;

@@ -2,7 +2,7 @@ use std::path::Path;
 
 use brk_computer::Computer;
 use brk_indexer::Indexer;
-use storable_vec::STATELESS;
+use brk_vec::STATELESS;
 
 #[tokio::main]
 pub async fn main() -> color_eyre::Result<()> {

@@ -7,11 +7,11 @@ use std::{
 };
 
 use brk_core::Height;
+use brk_vec::{Value, Version};
 use byteview::ByteView;
 use fjall::{
     PartitionCreateOptions, PersistMode, ReadTransaction, Result, TransactionalKeyspace, TransactionalPartitionHandle,
 };
-use storable_vec::{Value, Version};
 use zerocopy::{Immutable, IntoBytes};
 
 use super::StoreMeta;

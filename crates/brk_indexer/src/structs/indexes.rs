@@ -4,10 +4,10 @@ use brk_core::{
     P2SHindex, P2TRindex, P2WPKHindex, P2WSHindex, Pushonlyindex, Txindex, Txinindex, Txoutindex, Unknownindex,
 };
 use brk_parser::NUMBER_OF_UNSAFE_BLOCKS;
+use brk_vec::CACHED_GETS;
 use color_eyre::eyre::ContextCompat;
-use storable_vec::CACHED_GETS;
 
-use crate::storage::{Fjalls, StorableVecs};
+use crate::storage::{Stores, Vecs};
 
 #[derive(Debug, Default)]
 pub struct Indexes {
@@ -31,7 +31,7 @@ pub struct Indexes {
 }
 
 impl Indexes {
-    pub fn push_if_needed(&self, vecs: &mut StorableVecs<CACHED_GETS>) -> storable_vec::Result<()> {
+    pub fn push_if_needed(&self, vecs: &mut Vecs<CACHED_GETS>) -> brk_vec::Result<()> {
         let height = self.height;
         vecs.height_to_first_txindex.push_if_needed(height, self.txindex)?;
         vecs.height_to_first_txinindex.push_if_needed(height, self.txinindex)?;
@@ -64,7 +64,7 @@ impl Indexes {
         Ok(())
     }
 
-    pub fn push_future_if_needed(&mut self, vecs: &mut StorableVecs<CACHED_GETS>) -> storable_vec::Result<()> {
+    pub fn push_future_if_needed(&mut self, vecs: &mut Vecs<CACHED_GETS>) -> brk_vec::Result<()> {
         self.height.increment();
         self.push_if_needed(vecs)?;
         self.height.decrement();
@@ -72,11 +72,11 @@ impl Indexes {
     }
 }
 
-impl TryFrom<(&mut StorableVecs<CACHED_GETS>, &Fjalls, &Client)> for Indexes {
+impl TryFrom<(&mut Vecs<CACHED_GETS>, &Stores, &Client)> for Indexes {
     type Error = color_eyre::Report;
-    fn try_from((vecs, trees, rpc): (&mut StorableVecs<CACHED_GETS>, &Fjalls, &Client)) -> color_eyre::Result<Self> {
+    fn try_from((vecs, stores, rpc): (&mut Vecs<CACHED_GETS>, &Stores, &Client)) -> color_eyre::Result<Self> {
         // Height at which we wanna start: min last saved + 1 or 0
-        let starting_height = vecs.starting_height().min(trees.starting_height());
+        let starting_height = vecs.starting_height().min(stores.starting_height());
 
         let range = starting_height
             .checked_sub(NUMBER_OF_UNSAFE_BLOCKS as u32)
@@ -93,7 +93,13 @@ impl TryFrom<(&mut StorableVecs<CACHED_GETS>, &Fjalls, &Client)> for Indexes {
                     .unwrap();
 
                 vecs.height_to_blockhash.get(*height).map_or(true, |opt| {
-                    opt.is_none_or(|saved_blockhash| &rpc_blockhash != saved_blockhash.as_ref())
+                    opt.is_none_or(|saved_blockhash| {
+                        let b = &rpc_blockhash != saved_blockhash.as_ref();
+                        if b {
+                            dbg!(rpc_blockhash, saved_blockhash.as_ref());
+                        }
+                        b
+                    })
                 })
             })
             .unwrap_or(starting_height);

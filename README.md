@@ -33,6 +33,12 @@ The Core (Structs and Errors) of the Bitcoin Research Kit.
 
 > Status: ✅
 
+### `brk_exit`
+
+An exit blocker built on top of ctrlc.
+
+> Status: ✅
+
 ### `brk_fetcher`
 
 A Bitcoin price fetcher.
@@ -63,13 +69,7 @@ A server that serves Bitcoin data and swappable front-ends, built on top of brk_
 
 > Status: ⚠️
 
-### `hodor`
-
-Hold the door, an exit blocker built on top of ctrlc.
-
-> Status: ✅
-
-### `storable_vec`
+### `brk_vec`
 
 A very small, fast, efficient and simple storable Vec.
 

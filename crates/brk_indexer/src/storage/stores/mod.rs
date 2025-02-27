@@ -1,7 +1,7 @@
 use std::{path::Path, thread};
 
 use brk_core::{AddressHash, Addressbytes, Addressindex, Addresstype, BlockHashPrefix, Height, TxidPrefix, Txindex};
-use storable_vec::{CACHED_GETS, Value, Version};
+use brk_vec::{CACHED_GETS, Value, Version};
 
 use crate::Indexes;
 
@@ -11,15 +11,15 @@ mod meta;
 pub use base::*;
 pub use meta::*;
 
-use super::StorableVecs;
+use super::Vecs;
 
-pub struct Fjalls {
+pub struct Stores {
     pub addresshash_to_addressindex: Store<AddressHash, Addressindex>,
     pub blockhash_prefix_to_height: Store<BlockHashPrefix, Height>,
     pub txid_prefix_to_txindex: Store<TxidPrefix, Txindex>,
 }
 
-impl Fjalls {
+impl Stores {
     pub fn import(path: &Path) -> color_eyre::Result<Self> {
         thread::scope(|scope| {
             let addresshash_to_addressindex =
@@ -39,7 +39,7 @@ impl Fjalls {
 
     pub fn rollback_if_needed(
         &mut self,
-        vecs: &StorableVecs<CACHED_GETS>,
+        vecs: &Vecs<CACHED_GETS>,
         starting_indexes: &Indexes,
     ) -> color_eyre::Result<()> {
         vecs.height_to_blockhash

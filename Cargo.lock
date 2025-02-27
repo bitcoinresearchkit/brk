@@ -324,51 +324,63 @@ checksum = "8f68f53c83ab957f72c32642f3868eec03eb974d1fb82e453128456482613d36"
 
 [[package]]
 name = "brk"
-version = "0.0.1"
+version = "0.0.2"
 dependencies = [
  "brk_computer",
  "brk_core",
+ "brk_exit",
  "brk_fetcher",
  "brk_indexer",
  "brk_logger",
  "brk_parser",
  "brk_server",
+ "brk_vec",
 ]
 
 [[package]]
 name = "brk_cli"
-version = "0.0.1"
+version = "0.0.2"
 
 [[package]]
 name = "brk_computer"
-version = "0.0.1"
+version = "0.0.2"
 dependencies = [
  "brk_core",
+ "brk_exit",
  "brk_indexer",
  "brk_parser",
+ "brk_vec",
  "color-eyre",
- "hodor",
- "storable_vec",
 ]
 
 [[package]]
 name = "brk_core"
-version = "0.0.1"
+version = "0.0.2"
 dependencies = [
  "bitcoin",
  "bitcoincore-rpc",
  "byteview",
  "derive_deref",
  "jiff",
+ "log",
  "rapidhash",
+ "rlimit",
  "serde",
  "serde_bytes",
  "zerocopy 0.8.20",
 ]
 
 [[package]]
+name = "brk_exit"
+version = "0.0.2"
+dependencies = [
+ "ctrlc",
+ "log",
+]
+
+[[package]]
 name = "brk_fetcher"
-version = "0.0.1"
+version = "0.0.2"
 dependencies = [
  "brk_core",
  "brk_logger",
@@ -381,27 +393,26 @@ dependencies = [
 
 [[package]]
 name = "brk_indexer"
-version = "0.0.1"
+version = "0.0.2"
 dependencies = [
  "bitcoin",
  "bitcoincore-rpc",
  "brk_core",
+ "brk_exit",
  "brk_logger",
  "brk_parser",
+ "brk_vec",
  "byteview",
  "color-eyre",
  "fjall",
- "hodor",
  "log",
  "rayon",
- "rlimit",
- "storable_vec",
  "zerocopy 0.8.20",
 ]
 
 [[package]]
 name = "brk_logger"
-version = "0.0.1"
+version = "0.0.2"
 dependencies = [
  "color-eyre",
  "env_logger",
@@ -410,7 +421,7 @@ dependencies = [
 
 [[package]]
 name = "brk_parser"
-version = "0.0.1"
+version = "0.0.2"
 dependencies = [
  "bitcoin",
  "bitcoincore-rpc",
@@ -425,12 +436,13 @@ dependencies = [
 
 [[package]]
 name = "brk_server"
-version = "0.0.1"
+version = "0.0.2"
 dependencies = [
  "axum",
  "brk_computer",
  "brk_indexer",
  "brk_logger",
+ "brk_vec",
  "color-eyre",
  "derive_deref",
  "jiff",
@@ -438,9 +450,19 @@ dependencies = [
  "oxc",
  "serde",
  "serde_json",
- "storable_vec",
  "tokio",
  "tower-http",
+]
+
+[[package]]
+name = "brk_vec"
+version = "0.0.2"
+dependencies = [
+ "memmap2",
+ "rayon",
+ "serde",
+ "serde_json",
+ "zerocopy 0.8.20",
 ]
 
 [[package]]
@@ -922,14 +944,6 @@ name = "hex_lit"
 version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3011d1213f159867b13cfd6ac92d2cd5f1345762c63be3554e84092d85a50bbd"
-
-[[package]]
-name = "hodor"
-version = "0.1.1"
-dependencies = [
- "ctrlc",
- "log",
-]
 
 [[package]]
 name = "http"
@@ -2200,17 +2214,6 @@ name = "std-semaphore"
 version = "0.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "33ae9eec00137a8eed469fb4148acd9fc6ac8c3f9b110f52cd34698c8b5bfa0e"
-
-[[package]]
-name = "storable_vec"
-version = "0.1.3"
-dependencies = [
- "memmap2",
- "rayon",
- "serde",
- "serde_json",
- "zerocopy 0.8.20",
-]
 
 [[package]]
 name = "str_indices"

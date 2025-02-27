@@ -8,23 +8,37 @@ edition.workspace = true
 version.workspace = true
 
 [features]
-full = ["core", "computer", "fetcher", "indexer", "logger", "parser", "server"]
+full = [
+    "core",
+    "computer",
+    "exit",
+    "fetcher",
+    "indexer",
+    "logger",
+    "parser",
+    "server",
+    "vec",
+]
 core = ["brk_core"]
 computer = ["brk_computer"]
+exit = ["brk_exit"]
 fetcher = ["brk_fetcher"]
 indexer = ["brk_indexer"]
 logger = ["brk_logger"]
 parser = ["brk_parser"]
 server = ["brk_server"]
+vec = ["brk_vec"]
 
 [dependencies]
 brk_core = { workspace = true, optional = true }
 brk_computer = { workspace = true, optional = true }
+brk_exit = { workspace = true, optional = true }
 brk_fetcher = { workspace = true, optional = true }
 brk_indexer = { workspace = true, optional = true }
 brk_logger = { workspace = true, optional = true }
 brk_parser = { workspace = true, optional = true }
 brk_server = { workspace = true, optional = true }
+brk_vec = { workspace = true, optional = true }
 
 [package.metadata.docs.rs]
 all-features = true

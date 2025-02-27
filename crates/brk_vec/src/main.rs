@@ -1,6 +1,6 @@
 use std::path::Path;
 
-use storable_vec::{StorableVec, Version, CACHED_GETS, SINGLE_THREAD};
+use brk_vec::{CACHED_GETS, SINGLE_THREAD, StorableVec, Version};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     {

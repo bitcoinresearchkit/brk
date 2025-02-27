@@ -2,14 +2,14 @@ use std::path::Path;
 
 use brk_core::{AddressindexTxoutindex, Unit};
 use brk_indexer::Store;
-use storable_vec::Version;
+use brk_vec::Version;
 
-pub struct Fjalls {
+pub struct Stores {
     pub address_to_utxos_received: Store<AddressindexTxoutindex, Unit>,
     pub address_to_utxos_spent: Store<AddressindexTxoutindex, Unit>,
 }
 
-impl Fjalls {
+impl Stores {
     pub fn import(path: &Path) -> color_eyre::Result<Self> {
         let address_to_utxos_received = Store::import(&path.join("address_to_utxos_received"), Version::from(1))?;
         let address_to_utxos_spent = Store::import(&path.join("address_to_utxos_spent"), Version::from(1))?;

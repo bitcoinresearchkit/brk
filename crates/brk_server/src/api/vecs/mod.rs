@@ -1,10 +1,10 @@
 use std::time::Instant;
 
 use axum::{
+    Json,
     extract::{Query, State},
     http::{HeaderMap, StatusCode, Uri},
     response::{IntoResponse, Response},
-    Json,
 };
 use color_eyre::eyre::eyre;
 use serde_json::Value;
@@ -81,8 +81,8 @@ fn req_to_response_res(
     let values = ids
         .iter()
         .flat_map(|(_, i_to_v)| i_to_v.get(indexes.first().unwrap()))
-        .map(|vec| -> storable_vec::Result<Vec<Value>> { vec.collect_range_values(from, to) })
-        .collect::<storable_vec::Result<Vec<_>>>()?;
+        .map(|vec| -> brk_vec::Result<Vec<Value>> { vec.collect_range_values(from, to) })
+        .collect::<brk_vec::Result<Vec<_>>>()?;
 
     if ids.is_empty() {
         return Ok(Json(()).into_response());

@@ -4,13 +4,13 @@ use brk_core::{
     Addressindex, Cents, Close, Date, Dateindex, Dollars, Feerate, Height, High, Low, Open, Sats, Timestamp, Txindex,
     Txinindex, Txoutindex,
 };
-use storable_vec::{StorableVec, Version};
+use brk_vec::{StorableVec, Version};
 
 // mod base;
 
 // use base::*;
 
-pub struct StorableVecs<const MODE: u8> {
+pub struct Vecs<const MODE: u8> {
     pub dateindex_to_first_height: StorableVec<Dateindex, Height, MODE>,
     // pub dateindex_to_last_height: StorableVec<Dateindex, Height, MODE>,
     // pub height_to_block_interval: StorableVec<Height, Timestamp, MODE>,
@@ -56,7 +56,7 @@ pub struct StorableVecs<const MODE: u8> {
     pub txindex_to_outputs_sum: StorableVec<Txindex, Sats, MODE>,
 }
 
-impl<const MODE: u8> StorableVecs<MODE> {
+impl<const MODE: u8> Vecs<MODE> {
     pub fn import(path: &Path) -> color_eyre::Result<Self> {
         fs::create_dir_all(path)?;
 

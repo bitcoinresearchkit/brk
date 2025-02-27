@@ -1,6 +1,6 @@
 # BRK Indexer
 
-A [Bitcoin Core](https://bitcoincore.org/en/about/) node indexer which iterates over the chain (via `../iterator`) and creates a database of the vecs (`../storable_vec`) and key/value stores ([`fjall`](https://crates.io/crates/fjall)) that can be used in your Rust code.
+A [Bitcoin Core](https://bitcoincore.org/en/about/) node indexer which iterates over the chain (via `../brk_parser`) and creates a database of the vecs (`../brk_vec`) and key/value stores ([`fjall`](https://crates.io/crates/fjall)) that can be used in your Rust code.
 
 The crate only stores the bare minimum to be self sufficient and not have to use an RPC client (except for scripts which are not stored). If you need more data, checkout `../computer` which uses the outputs from the indexer to compute a whole range of datasets.
 
@@ -18,9 +18,9 @@ Peaks at 11-13 GB of RAM
 
 ## Outputs
 
-Vecs: `src/storage/storable_vecs/mod.rs`
+Vecs: `src/storage/vecs/mod.rs`
 
-Stores: `src/storage/fjalls/mod.rs`
+Stores: `src/storage/stores/mod.rs`
 
 ## Examples
 

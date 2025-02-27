@@ -8,8 +8,8 @@ repository.workspace = true
 
 [dependencies]
 brk_core = { workspace = true }
+brk_exit = { workspace = true }
 brk_indexer = { workspace = true }
 brk_parser = { workspace = true }
+brk_vec = { workspace = true }
 color-eyre = { workspace = true }
-hodor = { workspace = true }
-storable_vec = { workspace = true }
