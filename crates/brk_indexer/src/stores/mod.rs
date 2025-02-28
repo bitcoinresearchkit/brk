@@ -13,6 +13,7 @@ pub use meta::*;
 
 use super::Vecs;
 
+#[derive(Clone)]
 pub struct Stores {
     pub addresshash_to_addressindex: Store<AddressHash, Addressindex>,
     pub blockhash_prefix_to_height: Store<BlockHashPrefix, Height>,

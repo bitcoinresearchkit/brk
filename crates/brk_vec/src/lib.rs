@@ -1,3 +1,5 @@
+#![doc = include_str!("../README.md")]
+
 use std::{
     cmp::Ordering,
     error,
@@ -11,6 +13,7 @@ use std::{
     sync::OnceLock,
 };
 
+use brk_exit::Exit;
 pub use memmap2;
 use rayon::prelude::*;
 pub use zerocopy;
@@ -53,6 +56,7 @@ pub const STATELESS: u8 = 2;
 ///
 #[derive(Debug)]
 pub struct StorableVec<I, T, const MODE: u8> {
+    version: Version,
     pathbuf: PathBuf,
     file: File,
     /// **Number of values NOT number of bytes**
@@ -103,26 +107,15 @@ where
         fs::create_dir_all(path)?;
 
         if MODE != STATELESS {
-            let path_version = Self::path_version_(path);
-
-            if let Ok(prev_version) = Version::try_from(path_version.as_path()) {
-                if prev_version != version {
-                    if prev_version.swap_bytes() == version {
-                        return Err(Error::WrongEndian);
-                    }
-                    return Err(Error::DifferentVersion {
-                        found: prev_version,
-                        expected: version,
-                    });
-                }
-            }
-
-            version.write(&path_version)?;
+            let path = Self::path_version_(path);
+            version.validate(path.as_ref())?;
+            version.write(path.as_ref())?;
         }
 
         let file = Self::open_file_(&Self::path_vec_(path))?;
 
         let mut slf = Self {
+            version,
             pathbuf: path.to_owned(),
             file_position: 0,
             file_len: Self::read_disk_len_(&file)?,
@@ -265,7 +258,7 @@ where
         self.has(index).map(|b| !b)
     }
 
-    pub fn flush(&mut self) -> io::Result<()> {
+    fn _flush(&mut self) -> io::Result<()> {
         if self.pushed.is_empty() {
             return Ok(());
         }
@@ -283,6 +276,11 @@ where
 
         self.reset_disk_related_state()?;
 
+        Ok(())
+    }
+
+    fn reset(&mut self) -> Result<()> {
+        self.truncate_if_needed(I::from(0))?;
         Ok(())
     }
 
@@ -463,6 +461,11 @@ where
     pub fn push_if_needed(&mut self, index: I, value: T) -> Result<()> {
         self.push_if_needed_(index, value)
     }
+
+    #[inline]
+    pub fn flush(&mut self) -> io::Result<()> {
+        self._flush()
+    }
 }
 
 const FLUSH_EVERY: usize = 10_000;
@@ -486,7 +489,7 @@ where
         res
     }
 
-    pub fn last(&mut self) -> Result<Option<&T>> {
+    fn last(&mut self) -> Result<Option<&T>> {
         let len = self.len();
         if len == 0 {
             return Ok(None);
@@ -494,28 +497,28 @@ where
         Ok(self.get_(len - 1).ok())
     }
 
-    #[inline]
-    pub fn push(&mut self, value: T) {
-        self.push_(value)
-    }
+    // #[inline]
+    // fn push(&mut self, value: T) {
+    //     self.push_(value)
+    // }
 
     #[inline]
-    pub fn push_if_needed(&mut self, index: I, value: T) -> Result<()> {
+    fn blocked_push_if_needed(&mut self, index: I, value: T, exit: &Exit) -> Result<()> {
         self.push_if_needed_(index, value)?;
 
         if self.pushed_len() >= FLUSH_EVERY {
-            Ok(self.flush()?)
+            Ok(self.blocked_flush(exit)?)
         } else {
             Ok(())
         }
     }
 
-    pub fn iter<F>(&mut self, f: F) -> Result<()>
-    where
-        F: FnMut((I, &T)) -> Result<()>,
-    {
-        self.iter_from(I::default(), f)
-    }
+    // pub fn iter<F>(&mut self, f: F) -> Result<()>
+    // where
+    //     F: FnMut((I, &T)) -> Result<()>,
+    // {
+    //     self.iter_from(I::default(), f)
+    // }
 
     pub fn iter_from<F>(&mut self, mut index: I, mut f: F) -> Result<()>
     where
@@ -545,103 +548,157 @@ where
         Ok(())
     }
 
-    pub fn compute_transform<A, F>(&mut self, other: &mut StorableVec<I, A, SINGLE_THREAD>, t: F) -> Result<()>
+    #[inline]
+    fn path_computed_version(&self) -> PathBuf {
+        self.path().join("computed_version")
+    }
+    // #[inline]
+    // fn path_computed_version_(path: &Path) -> PathBuf {
+    //     path.join("computed_version")
+    // }
+
+    fn validate_or_reset(&mut self, version: Version) -> Result<()> {
+        let path = self.path_computed_version();
+        if version.validate(path.as_ref()).is_err() {
+            self.reset()?;
+        }
+        version.write(path.as_ref())?;
+        Ok(())
+    }
+
+    fn blocked_flush(&mut self, exit: &Exit) -> io::Result<()> {
+        if exit.triggered() {
+            return Ok(());
+        }
+        exit.block();
+        self._flush()?;
+        exit.release();
+        Ok(())
+    }
+
+    pub fn compute_transform<A, F>(
+        &mut self,
+        other: &mut StorableVec<I, A, SINGLE_THREAD>,
+        t: F,
+        exit: &Exit,
+    ) -> Result<()>
     where
         A: StoredType,
         F: Fn(&A) -> T,
     {
-        other.iter_from(I::from(self.len()), |(i, a)| self.push_if_needed(i, t(a)))?;
-        Ok(self.flush()?)
+        self.validate_or_reset(Version::from(0) + self.version + other.version)?;
+
+        other.iter_from(I::from(self.len()), |(i, a)| self.blocked_push_if_needed(i, t(a), exit))?;
+        Ok(self.blocked_flush(exit)?)
     }
 
-    pub fn compute_inverse_more_to_less(&mut self, other: &mut StorableVec<T, I, SINGLE_THREAD>) -> Result<()>
+    pub fn compute_inverse_more_to_less(
+        &mut self,
+        other: &mut StorableVec<T, I, SINGLE_THREAD>,
+        exit: &Exit,
+    ) -> Result<()>
     where
         I: StoredType,
         T: StoredIndex,
     {
+        self.validate_or_reset(Version::from(0) + self.version + other.version)?;
+
         let index = self.last()?.cloned().unwrap_or_default();
-        other.iter_from(index, |(v, i)| self.push_if_needed(*i, v))?;
-        Ok(self.flush()?)
+        other.iter_from(index, |(v, i)| self.blocked_push_if_needed(*i, v, exit))?;
+        Ok(self.blocked_flush(exit)?)
     }
 
     pub fn compute_inverse_less_to_more(
         &mut self,
         first_indexes: &mut StorableVec<T, I, SINGLE_THREAD>,
         last_indexes: &mut StorableVec<T, I, SINGLE_THREAD>,
+        exit: &Exit,
     ) -> Result<()>
     where
         I: StoredType,
         T: StoredIndex,
     {
+        self.validate_or_reset(Version::from(0) + self.version + first_indexes.version + last_indexes.version)?;
+
         first_indexes.iter_from(T::from(self.len()), |(value, first_index)| {
             let first_index = Self::i_to_usize(*first_index)?;
             let last_index = Self::i_to_usize(*last_indexes.get(value)?)?;
-            (first_index..last_index).try_for_each(|index| self.push_if_needed(I::from(index), value))
+            (first_index..last_index).try_for_each(|index| self.blocked_push_if_needed(I::from(index), value, exit))
         })?;
-        Ok(self.flush()?)
+        Ok(self.blocked_flush(exit)?)
     }
 
     pub fn compute_last_index_from_first(
         &mut self,
-        first_index_vec: &mut StorableVec<I, T, SINGLE_THREAD>,
+        first_indexes: &mut StorableVec<I, T, SINGLE_THREAD>,
         final_len: usize,
+        exit: &Exit,
     ) -> Result<()>
     where
         T: Copy + From<usize> + Sub<T, Output = T> + StoredIndex,
     {
+        self.validate_or_reset(Version::from(0) + self.version + first_indexes.version)?;
+
         let one = T::from(1);
         let mut prev_index: Option<I> = None;
-        first_index_vec.iter_from(I::from(self.len()), |(i, v)| {
+        first_indexes.iter_from(I::from(self.len()), |(i, v)| {
             if let Some(prev_index) = prev_index {
-                self.push_if_needed(prev_index, *v - one)?;
+                self.blocked_push_if_needed(prev_index, *v - one, exit)?;
             }
             prev_index.replace(i);
             Ok(())
         })?;
         if let Some(prev_index) = prev_index {
-            self.push_if_needed(prev_index, T::from(final_len) - one)?;
+            self.blocked_push_if_needed(prev_index, T::from(final_len) - one, exit)?;
         }
-        Ok(self.flush()?)
+        Ok(self.blocked_flush(exit)?)
     }
 
     pub fn compute_count_from_indexes<T2>(
         &mut self,
         first_indexes: &mut StorableVec<I, T2, SINGLE_THREAD>,
         last_indexes: &mut StorableVec<I, T2, SINGLE_THREAD>,
+        exit: &Exit,
     ) -> Result<()>
     where
         T: From<T2>,
         T2: StoredType + Copy + Add<usize, Output = T2> + Sub<T2, Output = T2> + TryInto<T>,
         <T2 as TryInto<T>>::Error: error::Error + 'static,
     {
+        self.validate_or_reset(Version::from(0) + self.version + first_indexes.version + last_indexes.version)?;
+
         first_indexes.iter_from(I::from(self.len()), |(i, first_index)| {
             let last_index = last_indexes.get(i)?;
             let count = *last_index + 1_usize - *first_index;
-            self.push_if_needed(i, count.into())
+            self.blocked_push_if_needed(i, count.into(), exit)
         })?;
-        Ok(self.flush()?)
+        Ok(self.blocked_flush(exit)?)
     }
 
     pub fn compute_is_first_ordered<A>(
         &mut self,
         self_to_other: &mut StorableVec<I, A, SINGLE_THREAD>,
         other_to_self: &mut StorableVec<A, I, SINGLE_THREAD>,
+        exit: &Exit,
     ) -> Result<()>
     where
         I: StoredType,
         T: From<bool>,
         A: StoredIndex + StoredType,
     {
+        self.validate_or_reset(Version::from(0) + self.version + self_to_other.version + other_to_self.version)?;
+
         self_to_other.iter_from(I::from(self.len()), |(i, other)| {
-            self.push_if_needed(i, T::from(other_to_self.get(*other)? == &i))
+            self.blocked_push_if_needed(i, T::from(other_to_self.get(*other)? == &i), exit)
         })?;
-        Ok(self.flush()?)
+        Ok(self.blocked_flush(exit)?)
     }
 
     pub fn compute_sum_from_indexes<T2, F>(
         &mut self,
         first_indexes: &mut StorableVec<I, T2, SINGLE_THREAD>,
         last_indexes: &mut StorableVec<I, T2, SINGLE_THREAD>,
+        exit: &Exit,
     ) -> Result<()>
     where
         T: From<T2>,
@@ -649,12 +706,14 @@ where
         <T2 as TryInto<T>>::Error: error::Error + 'static,
         F: Fn(&T2) -> T,
     {
+        self.validate_or_reset(Version::from(0) + self.version + first_indexes.version + last_indexes.version)?;
+
         first_indexes.iter_from(I::from(self.len()), |(i, first_index)| {
             let last_index = last_indexes.get(i)?;
             let count = *last_index + 1_usize - *first_index;
-            self.push_if_needed(i, count.into())
+            self.blocked_push_if_needed(i, count.into(), exit)
         })?;
-        Ok(self.flush()?)
+        Ok(self.blocked_flush(exit)?)
     }
 }
 

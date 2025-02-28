@@ -7,9 +7,9 @@ use brk_parser::NUMBER_OF_UNSAFE_BLOCKS;
 use brk_vec::CACHED_GETS;
 use color_eyre::eyre::ContextCompat;
 
-use crate::storage::{Stores, Vecs};
+use crate::{Stores, Vecs};
 
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Clone)]
 pub struct Indexes {
     pub addressindex: Addressindex,
     pub emptyindex: Emptyindex,

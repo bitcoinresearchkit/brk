@@ -5,7 +5,7 @@ use color_eyre::eyre::ContextCompat;
 use log::info;
 use serde_json::Value;
 
-use crate::{Pricer, fetchers::retry};
+use crate::{Fetcher, fetchers::retry};
 
 #[derive(Default)]
 pub struct Kraken {
@@ -22,7 +22,7 @@ impl Kraken {
         if self._1mn.is_none() || self._1mn.as_ref().unwrap().last_key_value().unwrap().0 <= &timestamp {
             self._1mn.replace(Self::fetch_1mn()?);
         }
-        Pricer::find_height_ohlc(self._1mn.as_ref().unwrap(), timestamp, previous_timestamp, "kraken 1m")
+        Fetcher::find_height_ohlc(self._1mn.as_ref().unwrap(), timestamp, previous_timestamp, "kraken 1m")
     }
 
     fn fetch_1mn() -> color_eyre::Result<BTreeMap<Timestamp, OHLCCents>> {

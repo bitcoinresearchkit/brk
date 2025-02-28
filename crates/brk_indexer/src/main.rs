@@ -40,6 +40,5 @@ fn main() -> color_eyre::Result<()> {
     }
 
     #[allow(unreachable_code)]
-    // To make sure that Fjall had the time to flush everything properly
-    sleep(Duration::from_millis(100));
+    Ok(())
 }

@@ -1,3 +1,5 @@
+#![doc = include_str!("../../../README.md")]
+
 #[cfg(feature = "core")]
 pub mod core {
     #[doc(inline)]
@@ -8,6 +10,12 @@ pub mod core {
 pub mod computer {
     #[doc(inline)]
     pub use brk_computer::*;
+}
+
+#[cfg(feature = "exit")]
+pub mod exit {
+    #[doc(inline)]
+    pub use brk_exit::*;
 }
 
 #[cfg(feature = "fetcher")]
@@ -38,4 +46,10 @@ pub mod parser {
 pub mod server {
     #[doc(inline)]
     pub use brk_server::*;
+}
+
+#[cfg(feature = "vec")]
+pub mod vec {
+    #[doc(inline)]
+    pub use brk_vec::*;
 }

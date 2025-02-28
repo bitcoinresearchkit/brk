@@ -27,7 +27,7 @@ impl Kibo {
         }
     }
 
-    pub fn get_from_height_kibo(&mut self, height: Height) -> color_eyre::Result<OHLCCents> {
+    pub fn get_from_height(&mut self, height: Height) -> color_eyre::Result<OHLCCents> {
         #[allow(clippy::map_entry)]
         if !self.height_to_ohlc_vec.contains_key(&height)
             || ((usize::from(height) + self.height_to_ohlc_vec.get(&height).unwrap().len()) <= usize::from(height))
@@ -77,7 +77,7 @@ impl Kibo {
         )
     }
 
-    pub fn get_from_date_kibo(&mut self, date: &Date) -> color_eyre::Result<OHLCCents> {
+    pub fn get_from_date(&mut self, date: &Date) -> color_eyre::Result<OHLCCents> {
         let year = date.year();
 
         #[allow(clippy::map_entry)]

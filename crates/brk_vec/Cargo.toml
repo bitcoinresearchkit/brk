@@ -12,6 +12,7 @@ repository.workspace = true
 json = ["serde", "serde_json"]
 
 [dependencies]
+brk_exit = { workspace = true }
 memmap2 = "0.9.5"
 rayon = { workspace = true }
 serde = { workspace = true, optional = true }

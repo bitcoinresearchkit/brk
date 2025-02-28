@@ -1,3 +1,5 @@
+#![doc = include_str!("../README.md")]
+
 use std::path::{Path, PathBuf};
 
 use brk_exit::Exit;
@@ -37,42 +39,52 @@ impl Computer<SINGLE_THREAD> {
 
         // TODO: Remove all outdated
 
-        self.vecs
-            .txindex_to_last_txinindex
-            .compute_last_index_from_first(&mut indexer.vecs.txindex_to_first_txinindex, txinindexes_count)?;
+        self.vecs.txindex_to_last_txinindex.compute_last_index_from_first(
+            &mut indexer.vecs.txindex_to_first_txinindex,
+            txinindexes_count,
+            exit,
+        )?;
 
         self.vecs.txindex_to_inputs_count.compute_count_from_indexes(
             &mut indexer.vecs.txindex_to_first_txinindex,
             &mut self.vecs.txindex_to_last_txinindex,
+            exit,
         )?;
 
-        self.vecs
-            .txindex_to_last_txoutindex
-            .compute_last_index_from_first(&mut indexer.vecs.txindex_to_first_txoutindex, txoutindexes_count)?;
+        self.vecs.txindex_to_last_txoutindex.compute_last_index_from_first(
+            &mut indexer.vecs.txindex_to_first_txoutindex,
+            txoutindexes_count,
+            exit,
+        )?;
 
         self.vecs.txindex_to_outputs_count.compute_count_from_indexes(
             &mut indexer.vecs.txindex_to_first_txoutindex,
             &mut self.vecs.txindex_to_last_txoutindex,
+            exit,
         )?;
 
-        self.vecs
-            .height_to_date
-            .compute_transform(&mut indexer.vecs.height_to_timestamp, |timestamp| {
-                Date::from(*timestamp)
-            })?;
+        self.vecs.height_to_date.compute_transform(
+            &mut indexer.vecs.height_to_timestamp,
+            |timestamp| Date::from(*timestamp),
+            exit,
+        )?;
 
-        self.vecs
-            .height_to_last_txindex
-            .compute_last_index_from_first(&mut indexer.vecs.height_to_first_txindex, height_count)?;
+        self.vecs.height_to_last_txindex.compute_last_index_from_first(
+            &mut indexer.vecs.height_to_first_txindex,
+            height_count,
+            exit,
+        )?;
 
         self.vecs.txindex_to_height.compute_inverse_less_to_more(
             &mut indexer.vecs.height_to_first_txindex,
             &mut self.vecs.height_to_last_txindex,
+            exit,
         )?;
 
         self.vecs.txindex_to_is_coinbase.compute_is_first_ordered(
             &mut self.vecs.txindex_to_height,
             &mut indexer.vecs.height_to_first_txindex,
+            exit,
         )?;
 
         // self.vecs.txindex_to_fee.compute_transform(
@@ -86,7 +98,7 @@ impl Computer<SINGLE_THREAD> {
 
         self.vecs
             .dateindex_to_first_height
-            .compute_inverse_more_to_less(&mut self.vecs.height_to_dateindex)?;
+            .compute_inverse_more_to_less(&mut self.vecs.height_to_dateindex, exit)?;
 
         // ---
         // Date to X

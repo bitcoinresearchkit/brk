@@ -8,7 +8,7 @@ use zerocopy::{FromBytes, IntoBytes};
 
 use super::Height;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct StoreMeta {
     pathbuf: PathBuf,
     version: Version,
