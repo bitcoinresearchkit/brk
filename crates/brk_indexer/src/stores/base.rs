@@ -29,8 +29,8 @@ const CHECK_COLLISISONS: bool = true;
 
 impl<K, V> Store<K, V>
 where
-    K: Debug + Into<ByteView> + Ord + Immutable + IntoBytes,
-    V: Debug + Into<ByteView> + TryFrom<ByteView>,
+    K: Debug + Clone + Into<ByteView> + Ord + Immutable + IntoBytes,
+    V: Debug + Clone + Into<ByteView> + TryFrom<ByteView>,
     <V as TryFrom<ByteView>>::Error: error::Error + Send + Sync + 'static,
 {
     pub fn import(path: &Path, version: Version) -> color_eyre::Result<Self> {
@@ -161,7 +161,26 @@ where
     fn open_partition_handle(keyspace: &TransactionalKeyspace) -> Result<TransactionalPartitionHandle> {
         keyspace.open_partition(
             "partition",
-            PartitionCreateOptions::default().manual_journal_persist(true),
+            PartitionCreateOptions::default()
+                .bloom_filter_bits(Some(5))
+                .manual_journal_persist(true),
         )
+    }
+}
+
+impl<Key, Value> Clone for Store<Key, Value>
+where
+    Key: Clone,
+    Value: Clone,
+{
+    fn clone(&self) -> Self {
+        Self {
+            meta: self.meta.clone(),
+            keyspace: self.keyspace.clone(),
+            part: self.part.clone(),
+            rtx: self.keyspace.read_tx(),
+            puts: self.puts.clone(),
+            dels: self.dels.clone(),
+        }
     }
 }

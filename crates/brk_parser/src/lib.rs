@@ -1,3 +1,5 @@
+#![doc = include_str!("../README.md")]
+
 use std::{
     cmp::Ordering,
     collections::BTreeMap,

@@ -1,3 +1,5 @@
+#![doc = include_str!("../README.md")]
+
 use std::time::Instant;
 
 use api::{ApiRoutes, VecIdToIndexToVec};
@@ -31,7 +33,7 @@ pub async fn main(indexer: Indexer<STATELESS>, computer: Computer<STATELESS>) ->
 
     indexer
         .vecs
-        .as_any_json_vec_slice()
+        .as_any_json_vecs()
         .into_iter()
         .for_each(|vec| vecs.insert(vec));
 

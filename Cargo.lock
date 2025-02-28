@@ -347,10 +347,13 @@ version = "0.0.2"
 dependencies = [
  "brk_core",
  "brk_exit",
+ "brk_fetcher",
  "brk_indexer",
+ "brk_logger",
  "brk_parser",
  "brk_vec",
  "color-eyre",
+ "log",
 ]
 
 [[package]]
@@ -458,6 +461,7 @@ dependencies = [
 name = "brk_vec"
 version = "0.0.2"
 dependencies = [
+ "brk_exit",
  "memmap2",
  "rayon",
  "serde",

@@ -5,7 +5,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use brk_vec::{StoredIndex, StoredType, Version};
+use brk_vec::{CACHED_GETS, StoredIndex, StoredType, Version};
 
 use super::Height;
 
@@ -27,11 +27,6 @@ where
         })
     }
 
-    pub fn flush(&mut self, height: Height) -> io::Result<()> {
-        height.write(&self.path_height())?;
-        self.vec.flush()
-    }
-
     pub fn truncate_if_needed(&mut self, index: I, height: Height) -> brk_vec::Result<Option<T>> {
         if self.height.is_none_or(|self_height| self_height != height) {
             height.write(&self.path_height())?;
@@ -47,6 +42,17 @@ where
     }
     fn path_height_(path: &Path) -> PathBuf {
         path.join("height")
+    }
+}
+
+impl<I, T> StorableVec<I, T, CACHED_GETS>
+where
+    I: StoredIndex,
+    T: StoredType,
+{
+    pub fn flush(&mut self, height: Height) -> io::Result<()> {
+        height.write(&self.path_height())?;
+        self.vec.flush()
     }
 }
 
@@ -67,7 +73,7 @@ pub trait AnyStorableVec: Send + Sync {
     fn flush(&mut self, height: Height) -> io::Result<()>;
 }
 
-impl<I, T, const MODE: u8> AnyStorableVec for StorableVec<I, T, MODE>
+impl<I, T> AnyStorableVec for StorableVec<I, T, CACHED_GETS>
 where
     I: StoredIndex,
     T: StoredType,

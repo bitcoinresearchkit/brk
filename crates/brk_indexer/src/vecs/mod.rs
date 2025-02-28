@@ -293,22 +293,8 @@ impl<const MODE: u8> Vecs<MODE> {
         Ok(())
     }
 
-    pub fn flush(&mut self, height: Height) -> io::Result<()> {
-        self.as_mut_any_vec_slice()
-            .into_par_iter()
-            .try_for_each(|vec| vec.flush(height))
-    }
-
-    pub fn starting_height(&mut self) -> Height {
-        self.as_mut_any_vec_slice()
-            .into_iter()
-            .map(|vec| vec.height().map(Height::incremented).unwrap_or_default())
-            .min()
-            .unwrap()
-    }
-
-    pub fn as_any_json_vec_slice(&self) -> [&dyn AnyJsonStorableVec; 43] {
-        [
+    pub fn as_any_json_vecs(&self) -> Vec<&dyn AnyJsonStorableVec> {
+        vec![
             &*self.addressindex_to_addresstype as &dyn AnyJsonStorableVec,
             &*self.addressindex_to_addresstypeindex,
             &*self.addressindex_to_height,
@@ -352,54 +338,6 @@ impl<const MODE: u8> Vecs<MODE> {
             &*self.txinindex_to_txoutindex,
             &*self.txoutindex_to_addressindex,
             &*self.txoutindex_to_value,
-        ]
-    }
-
-    pub fn as_mut_any_vec_slice(&mut self) -> [&mut dyn AnyStorableVec; 43] {
-        [
-            &mut self.addressindex_to_addresstype as &mut dyn AnyStorableVec,
-            &mut self.addressindex_to_addresstypeindex,
-            &mut self.addressindex_to_height,
-            &mut self.height_to_blockhash,
-            &mut self.height_to_difficulty,
-            &mut self.height_to_first_addressindex,
-            &mut self.height_to_first_emptyindex,
-            &mut self.height_to_first_multisigindex,
-            &mut self.height_to_first_opreturnindex,
-            &mut self.height_to_first_pushonlyindex,
-            &mut self.height_to_first_txindex,
-            &mut self.height_to_first_txinindex,
-            &mut self.height_to_first_txoutindex,
-            &mut self.height_to_first_unknownindex,
-            &mut self.height_to_first_p2pk33index,
-            &mut self.height_to_first_p2pk65index,
-            &mut self.height_to_first_p2pkhindex,
-            &mut self.height_to_first_p2shindex,
-            &mut self.height_to_first_p2trindex,
-            &mut self.height_to_first_p2wpkhindex,
-            &mut self.height_to_first_p2wshindex,
-            &mut self.height_to_size,
-            &mut self.height_to_timestamp,
-            &mut self.height_to_weight,
-            &mut self.p2pk33index_to_p2pk33addressbytes,
-            &mut self.p2pk65index_to_p2pk65addressbytes,
-            &mut self.p2pkhindex_to_p2pkhaddressbytes,
-            &mut self.p2shindex_to_p2shaddressbytes,
-            &mut self.p2trindex_to_p2traddressbytes,
-            &mut self.p2wpkhindex_to_p2wpkhaddressbytes,
-            &mut self.p2wshindex_to_p2wshaddressbytes,
-            &mut self.txindex_to_first_txinindex,
-            &mut self.txindex_to_first_txoutindex,
-            &mut self.txindex_to_height,
-            &mut self.txindex_to_locktime,
-            &mut self.txindex_to_txid,
-            &mut self.txindex_to_base_size,
-            &mut self.txindex_to_total_size,
-            &mut self.txindex_to_is_explicitly_rbf,
-            &mut self.txindex_to_txversion,
-            &mut self.txinindex_to_txoutindex,
-            &mut self.txoutindex_to_addressindex,
-            &mut self.txoutindex_to_value,
         ]
     }
 }
@@ -470,5 +408,67 @@ impl Vecs<CACHED_GETS> {
             Addressbytes::P2WSH(bytes) => self.p2wshindex_to_p2wshaddressbytes.push_if_needed(index.into(), bytes),
             Addressbytes::P2TR(bytes) => self.p2trindex_to_p2traddressbytes.push_if_needed(index.into(), bytes),
         }
+    }
+
+    pub fn flush(&mut self, height: Height) -> io::Result<()> {
+        self.as_mut_any_vecs()
+            .into_par_iter()
+            .try_for_each(|vec| vec.flush(height))
+    }
+
+    pub fn starting_height(&mut self) -> Height {
+        self.as_mut_any_vecs()
+            .into_iter()
+            .map(|vec| vec.height().map(Height::incremented).unwrap_or_default())
+            .min()
+            .unwrap()
+    }
+
+    fn as_mut_any_vecs(&mut self) -> Vec<&mut dyn AnyStorableVec> {
+        vec![
+            &mut self.addressindex_to_addresstype as &mut dyn AnyStorableVec,
+            &mut self.addressindex_to_addresstypeindex,
+            &mut self.addressindex_to_height,
+            &mut self.height_to_blockhash,
+            &mut self.height_to_difficulty,
+            &mut self.height_to_first_addressindex,
+            &mut self.height_to_first_emptyindex,
+            &mut self.height_to_first_multisigindex,
+            &mut self.height_to_first_opreturnindex,
+            &mut self.height_to_first_pushonlyindex,
+            &mut self.height_to_first_txindex,
+            &mut self.height_to_first_txinindex,
+            &mut self.height_to_first_txoutindex,
+            &mut self.height_to_first_unknownindex,
+            &mut self.height_to_first_p2pk33index,
+            &mut self.height_to_first_p2pk65index,
+            &mut self.height_to_first_p2pkhindex,
+            &mut self.height_to_first_p2shindex,
+            &mut self.height_to_first_p2trindex,
+            &mut self.height_to_first_p2wpkhindex,
+            &mut self.height_to_first_p2wshindex,
+            &mut self.height_to_size,
+            &mut self.height_to_timestamp,
+            &mut self.height_to_weight,
+            &mut self.p2pk33index_to_p2pk33addressbytes,
+            &mut self.p2pk65index_to_p2pk65addressbytes,
+            &mut self.p2pkhindex_to_p2pkhaddressbytes,
+            &mut self.p2shindex_to_p2shaddressbytes,
+            &mut self.p2trindex_to_p2traddressbytes,
+            &mut self.p2wpkhindex_to_p2wpkhaddressbytes,
+            &mut self.p2wshindex_to_p2wshaddressbytes,
+            &mut self.txindex_to_first_txinindex,
+            &mut self.txindex_to_first_txoutindex,
+            &mut self.txindex_to_height,
+            &mut self.txindex_to_locktime,
+            &mut self.txindex_to_txid,
+            &mut self.txindex_to_base_size,
+            &mut self.txindex_to_total_size,
+            &mut self.txindex_to_is_explicitly_rbf,
+            &mut self.txindex_to_txversion,
+            &mut self.txinindex_to_txoutindex,
+            &mut self.txoutindex_to_addressindex,
+            &mut self.txoutindex_to_value,
+        ]
     }
 }

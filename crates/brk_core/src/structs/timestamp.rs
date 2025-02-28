@@ -1,4 +1,5 @@
 use derive_deref::Deref;
+use jiff::{civil::date, tz::TimeZone};
 use serde::Serialize;
 use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
@@ -7,9 +8,24 @@ use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 )]
 pub struct Timestamp(u32);
 
+impl Timestamp {
+    pub fn floor_seconds(self) -> Self {
+        let t = jiff::Timestamp::from(self).to_zoned(TimeZone::UTC);
+        let d = jiff::civil::DateTime::from(t);
+        let d = date(d.year(), d.month(), d.day()).at(d.hour(), d.minute(), 0, 0);
+        Self::from(d.to_zoned(TimeZone::UTC).unwrap().timestamp())
+    }
+}
+
 impl From<u32> for Timestamp {
     fn from(value: u32) -> Self {
         Self(value)
+    }
+}
+
+impl From<jiff::Timestamp> for Timestamp {
+    fn from(value: jiff::Timestamp) -> Self {
+        Self(value.as_second() as u32)
     }
 }
 

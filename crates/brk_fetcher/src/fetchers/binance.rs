@@ -11,19 +11,19 @@ use color_eyre::eyre::{ContextCompat, eyre};
 use log::info;
 use serde_json::Value;
 
-use crate::{Close, Date, Dollars, High, Low, Open, Pricer, fetchers::retry};
+use crate::{Close, Date, Dollars, Fetcher, High, Low, Open, fetchers::retry};
 
 pub struct Binance {
-    path: PathBuf,
+    path: Option<PathBuf>,
     _1mn: Option<BTreeMap<Timestamp, OHLCCents>>,
     _1d: Option<BTreeMap<Date, OHLCCents>>,
     har: Option<BTreeMap<Timestamp, OHLCCents>>,
 }
 
 impl Binance {
-    pub fn init(path: &Path) -> Self {
+    pub fn init(path: Option<&Path>) -> Self {
         Self {
-            path: path.to_owned(),
+            path: path.map(|p| p.to_owned()),
             _1mn: None,
             _1d: None,
             har: None,
@@ -38,12 +38,23 @@ impl Binance {
         if self._1mn.is_none() || self._1mn.as_ref().unwrap().last_key_value().unwrap().0 <= &timestamp {
             self._1mn.replace(Self::fetch_1mn()?);
         }
-        Pricer::find_height_ohlc(
+
+        let res = Fetcher::find_height_ohlc(
             self._1mn.as_ref().unwrap(),
             timestamp,
             previous_timestamp,
             "binance 1mn",
-        )
+        );
+
+        if res.is_ok() {
+            return res;
+        }
+
+        if self.har.is_none() {
+            self.har.replace(self.read_har().unwrap_or_default());
+        }
+
+        Fetcher::find_height_ohlc(self.har.as_ref().unwrap(), timestamp, previous_timestamp, "binance har")
     }
 
     pub fn fetch_1mn() -> color_eyre::Result<BTreeMap<Timestamp, OHLCCents>> {
@@ -72,8 +83,6 @@ impl Binance {
     pub fn fetch_1d() -> color_eyre::Result<BTreeMap<Date, OHLCCents>> {
         info!("Fetching daily prices from Kraken...");
 
-        dbg!(&Self::url("interval=1d"));
-
         retry(
             |_| Self::json_to_date_to_ohlc(&minreq::get(Self::url("interval=1d")).send()?.json()?),
             30,
@@ -81,21 +90,14 @@ impl Binance {
         )
     }
 
-    pub fn get_from_har_binance(
-        &mut self,
-        timestamp: Timestamp,
-        previous_timestamp: Option<Timestamp>,
-    ) -> color_eyre::Result<OHLCCents> {
-        if self.har.is_none() {
-            self.har.replace(self.read_har().unwrap_or_default());
-        }
-        Pricer::find_height_ohlc(self.har.as_ref().unwrap(), timestamp, previous_timestamp, "binance har")
-    }
-
     fn read_har(&self) -> color_eyre::Result<BTreeMap<Timestamp, OHLCCents>> {
+        if self.path.is_none() {
+            return Err(eyre!("Path missing"));
+        }
+
         info!("Reading Binance har file...");
 
-        let path = &self.path;
+        let path = self.path.as_ref().unwrap();
 
         fs::create_dir_all(path)?;
 

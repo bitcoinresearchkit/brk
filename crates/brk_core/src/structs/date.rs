@@ -12,6 +12,10 @@ impl Date {
     pub const INDEX_ONE: Self = Self(20090109);
     pub const INDEX_ONE_: Date_ = Date_::constant(2009, 1, 9);
 
+    pub fn new(year: u16, month: u8, day: u8) -> Self {
+        Self(year as u32 * 1_00_00 + month as u32 * 1_00 + day as u32)
+    }
+
     pub fn year(&self) -> u16 {
         (self.0 / 1_00_00) as u16
     }
@@ -33,7 +37,7 @@ impl Default for Date {
 
 impl From<Date_> for Date {
     fn from(value: Date_) -> Self {
-        Self(value.year() as u32 * 1_00_00 + value.month() as u32 * 1_00 + value.day() as u32)
+        Self::new(value.year() as u16, value.month() as u8, value.day() as u8)
     }
 }
 
@@ -56,5 +60,11 @@ impl From<Dateindex> for Date {
                 .checked_add(Span::new().days(i64::from(value)))
                 .unwrap(),
         )
+    }
+}
+
+impl std::fmt::Display for Date {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(&format!("{}-{}-{}", self.year(), self.month(), self.day()))
     }
 }

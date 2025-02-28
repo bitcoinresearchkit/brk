@@ -1,6 +1,6 @@
 use byteview::ByteView;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Unit;
 
 impl From<ByteView> for Unit {

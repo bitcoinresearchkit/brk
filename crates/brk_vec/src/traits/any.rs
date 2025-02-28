@@ -1,6 +1,6 @@
-use std::{io, mem};
+use std::mem;
 
-use crate::{Result, StorableVec, STATELESS};
+use crate::{Result, STATELESS, StorableVec};
 
 use super::{StoredIndex, StoredType};
 
@@ -9,7 +9,7 @@ pub trait AnyStorableVec: Send + Sync {
     fn index_type_to_string(&self) -> &str;
     fn len(&self) -> usize;
     fn is_empty(&self) -> bool;
-    fn flush(&mut self) -> io::Result<()>;
+    // fn flush(&mut self) -> io::Result<()>;
 }
 
 impl<I, T, const MODE: u8> AnyStorableVec for StorableVec<I, T, MODE>
@@ -33,9 +33,9 @@ where
         self.is_empty()
     }
 
-    fn flush(&mut self) -> io::Result<()> {
-        self.flush()
-    }
+    // fn flush(&mut self) -> io::Result<()> {
+    //     self.flush()
+    // }
 }
 
 #[cfg(feature = "json")]

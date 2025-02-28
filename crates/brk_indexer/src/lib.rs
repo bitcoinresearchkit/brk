@@ -1,3 +1,5 @@
+#![doc = include_str!("../README.md")]
+
 use std::{
     collections::BTreeMap,
     path::Path,
@@ -17,13 +19,13 @@ use brk_vec::CACHED_GETS;
 use color_eyre::eyre::{ContextCompat, eyre};
 use log::info;
 use rayon::prelude::*;
+mod indexes;
+mod stores;
+mod vecs;
 
-mod storage;
-mod structs;
-
-pub use storage::{AnyStorableVec, StorableVec, Store, StoreMeta};
-use storage::{Stores, Vecs};
-pub use structs::*;
+pub use indexes::*;
+pub use stores::*;
+pub use vecs::*;
 
 const SNAPSHOT_BLOCK_RANGE: usize = 1000;
 
@@ -47,7 +49,7 @@ impl<const MODE: u8> Indexer<MODE> {
 }
 
 impl Indexer<CACHED_GETS> {
-    pub fn index(&mut self, parser: &Parser, rpc: &'static rpc::Client, exit: &Exit) -> color_eyre::Result<()> {
+    pub fn index(&mut self, parser: &Parser, rpc: &'static rpc::Client, exit: &Exit) -> color_eyre::Result<Indexes> {
         let check_collisions = true;
 
         let starting_indexes = Indexes::try_from((&mut self.vecs, &self.stores, rpc)).unwrap_or_else(|_| {
@@ -82,14 +84,13 @@ impl Indexer<CACHED_GETS> {
         let vecs = &mut self.vecs;
         let stores = &mut self.stores;
 
-        let mut idxs = starting_indexes;
-
-        if idxs.height > Height::try_from(rpc)? {
-            return Ok(());
+        if starting_indexes.height > Height::try_from(rpc)? {
+            return Ok(starting_indexes);
         }
 
         info!("Started indexing...");
 
+        let mut idxs = starting_indexes.clone();
         parser.parse(Some(idxs.height), None).iter().try_for_each(
             |(height, block, blockhash)| -> color_eyre::Result<()> {
                 info!("Indexing block {height}...");
@@ -633,7 +634,7 @@ impl Indexer<CACHED_GETS> {
 
         export_if_needed(stores, vecs, idxs.height, true, exit)?;
 
-        Ok(())
+        Ok(starting_indexes)
     }
 }
 
