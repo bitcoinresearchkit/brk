@@ -6,7 +6,7 @@ use brk_core::{
     P2SHAddressBytes, P2SHindex, P2TRAddressBytes, P2TRindex, P2WPKHAddressBytes, P2WPKHindex, P2WSHAddressBytes,
     P2WSHindex, Pushonlyindex, Sats, Timestamp, TxVersion, Txid, Txindex, Txinindex, Txoutindex, Unknownindex, Weight,
 };
-use brk_vec::{AnyJsonStorableVec, CACHED_GETS, Version};
+use brk_vec::{AnyStorableVec, Version};
 use rayon::prelude::*;
 
 use crate::Indexes;
@@ -15,53 +15,54 @@ mod base;
 
 pub use base::*;
 
-pub struct Vecs<const MODE: u8> {
-    pub addressindex_to_addresstype: StorableVec<Addressindex, Addresstype, MODE>,
-    pub addressindex_to_addresstypeindex: StorableVec<Addressindex, Addresstypeindex, MODE>,
-    pub addressindex_to_height: StorableVec<Addressindex, Height, MODE>,
-    pub height_to_blockhash: StorableVec<Height, BlockHash, MODE>,
-    pub height_to_difficulty: StorableVec<Height, f64, MODE>,
-    pub height_to_first_addressindex: StorableVec<Height, Addressindex, MODE>,
-    pub height_to_first_emptyindex: StorableVec<Height, Emptyindex, MODE>,
-    pub height_to_first_multisigindex: StorableVec<Height, Multisigindex, MODE>,
-    pub height_to_first_opreturnindex: StorableVec<Height, Opreturnindex, MODE>,
-    pub height_to_first_pushonlyindex: StorableVec<Height, Pushonlyindex, MODE>,
-    pub height_to_first_txindex: StorableVec<Height, Txindex, MODE>,
-    pub height_to_first_txinindex: StorableVec<Height, Txinindex, MODE>,
-    pub height_to_first_txoutindex: StorableVec<Height, Txoutindex, MODE>,
-    pub height_to_first_unknownindex: StorableVec<Height, Unknownindex, MODE>,
-    pub height_to_first_p2pk33index: StorableVec<Height, P2PK33index, MODE>,
-    pub height_to_first_p2pk65index: StorableVec<Height, P2PK65index, MODE>,
-    pub height_to_first_p2pkhindex: StorableVec<Height, P2PKHindex, MODE>,
-    pub height_to_first_p2shindex: StorableVec<Height, P2SHindex, MODE>,
-    pub height_to_first_p2trindex: StorableVec<Height, P2TRindex, MODE>,
-    pub height_to_first_p2wpkhindex: StorableVec<Height, P2WPKHindex, MODE>,
-    pub height_to_first_p2wshindex: StorableVec<Height, P2WSHindex, MODE>,
-    pub height_to_size: StorableVec<Height, usize, MODE>,
-    pub height_to_timestamp: StorableVec<Height, Timestamp, MODE>,
-    pub height_to_weight: StorableVec<Height, Weight, MODE>,
-    pub p2pk33index_to_p2pk33addressbytes: StorableVec<P2PK33index, P2PK33AddressBytes, MODE>,
-    pub p2pk65index_to_p2pk65addressbytes: StorableVec<P2PK65index, P2PK65AddressBytes, MODE>,
-    pub p2pkhindex_to_p2pkhaddressbytes: StorableVec<P2PKHindex, P2PKHAddressBytes, MODE>,
-    pub p2shindex_to_p2shaddressbytes: StorableVec<P2SHindex, P2SHAddressBytes, MODE>,
-    pub p2trindex_to_p2traddressbytes: StorableVec<P2TRindex, P2TRAddressBytes, MODE>,
-    pub p2wpkhindex_to_p2wpkhaddressbytes: StorableVec<P2WPKHindex, P2WPKHAddressBytes, MODE>,
-    pub p2wshindex_to_p2wshaddressbytes: StorableVec<P2WSHindex, P2WSHAddressBytes, MODE>,
-    pub txindex_to_first_txinindex: StorableVec<Txindex, Txinindex, MODE>,
-    pub txindex_to_first_txoutindex: StorableVec<Txindex, Txoutindex, MODE>,
-    pub txindex_to_height: StorableVec<Txindex, Height, MODE>,
-    pub txindex_to_locktime: StorableVec<Txindex, LockTime, MODE>,
-    pub txindex_to_txid: StorableVec<Txindex, Txid, MODE>,
-    pub txindex_to_base_size: StorableVec<Txindex, usize, MODE>,
-    pub txindex_to_total_size: StorableVec<Txindex, usize, MODE>,
-    pub txindex_to_is_explicitly_rbf: StorableVec<Txindex, bool, MODE>,
-    pub txindex_to_txversion: StorableVec<Txindex, TxVersion, MODE>,
-    pub txinindex_to_txoutindex: StorableVec<Txinindex, Txoutindex, MODE>,
-    pub txoutindex_to_addressindex: StorableVec<Txoutindex, Addressindex, MODE>,
-    pub txoutindex_to_value: StorableVec<Txoutindex, Sats, MODE>,
+#[derive(Clone)]
+pub struct Vecs {
+    pub addressindex_to_addresstype: StorableVec<Addressindex, Addresstype>,
+    pub addressindex_to_addresstypeindex: StorableVec<Addressindex, Addresstypeindex>,
+    pub addressindex_to_height: StorableVec<Addressindex, Height>,
+    pub height_to_blockhash: StorableVec<Height, BlockHash>,
+    pub height_to_difficulty: StorableVec<Height, f64>,
+    pub height_to_first_addressindex: StorableVec<Height, Addressindex>,
+    pub height_to_first_emptyindex: StorableVec<Height, Emptyindex>,
+    pub height_to_first_multisigindex: StorableVec<Height, Multisigindex>,
+    pub height_to_first_opreturnindex: StorableVec<Height, Opreturnindex>,
+    pub height_to_first_pushonlyindex: StorableVec<Height, Pushonlyindex>,
+    pub height_to_first_txindex: StorableVec<Height, Txindex>,
+    pub height_to_first_txinindex: StorableVec<Height, Txinindex>,
+    pub height_to_first_txoutindex: StorableVec<Height, Txoutindex>,
+    pub height_to_first_unknownindex: StorableVec<Height, Unknownindex>,
+    pub height_to_first_p2pk33index: StorableVec<Height, P2PK33index>,
+    pub height_to_first_p2pk65index: StorableVec<Height, P2PK65index>,
+    pub height_to_first_p2pkhindex: StorableVec<Height, P2PKHindex>,
+    pub height_to_first_p2shindex: StorableVec<Height, P2SHindex>,
+    pub height_to_first_p2trindex: StorableVec<Height, P2TRindex>,
+    pub height_to_first_p2wpkhindex: StorableVec<Height, P2WPKHindex>,
+    pub height_to_first_p2wshindex: StorableVec<Height, P2WSHindex>,
+    pub height_to_size: StorableVec<Height, usize>,
+    pub height_to_timestamp: StorableVec<Height, Timestamp>,
+    pub height_to_weight: StorableVec<Height, Weight>,
+    pub p2pk33index_to_p2pk33addressbytes: StorableVec<P2PK33index, P2PK33AddressBytes>,
+    pub p2pk65index_to_p2pk65addressbytes: StorableVec<P2PK65index, P2PK65AddressBytes>,
+    pub p2pkhindex_to_p2pkhaddressbytes: StorableVec<P2PKHindex, P2PKHAddressBytes>,
+    pub p2shindex_to_p2shaddressbytes: StorableVec<P2SHindex, P2SHAddressBytes>,
+    pub p2trindex_to_p2traddressbytes: StorableVec<P2TRindex, P2TRAddressBytes>,
+    pub p2wpkhindex_to_p2wpkhaddressbytes: StorableVec<P2WPKHindex, P2WPKHAddressBytes>,
+    pub p2wshindex_to_p2wshaddressbytes: StorableVec<P2WSHindex, P2WSHAddressBytes>,
+    pub txindex_to_first_txinindex: StorableVec<Txindex, Txinindex>,
+    pub txindex_to_first_txoutindex: StorableVec<Txindex, Txoutindex>,
+    pub txindex_to_height: StorableVec<Txindex, Height>,
+    pub txindex_to_locktime: StorableVec<Txindex, LockTime>,
+    pub txindex_to_txid: StorableVec<Txindex, Txid>,
+    pub txindex_to_base_size: StorableVec<Txindex, usize>,
+    pub txindex_to_total_size: StorableVec<Txindex, usize>,
+    pub txindex_to_is_explicitly_rbf: StorableVec<Txindex, bool>,
+    pub txindex_to_txversion: StorableVec<Txindex, TxVersion>,
+    pub txinindex_to_txoutindex: StorableVec<Txinindex, Txoutindex>,
+    pub txoutindex_to_addressindex: StorableVec<Txoutindex, Addressindex>,
+    pub txoutindex_to_value: StorableVec<Txoutindex, Sats>,
 }
 
-impl<const MODE: u8> Vecs<MODE> {
+impl Vecs {
     pub fn import(path: &Path) -> color_eyre::Result<Self> {
         fs::create_dir_all(path)?;
 
@@ -293,56 +294,6 @@ impl<const MODE: u8> Vecs<MODE> {
         Ok(())
     }
 
-    pub fn as_any_json_vecs(&self) -> Vec<&dyn AnyJsonStorableVec> {
-        vec![
-            &*self.addressindex_to_addresstype as &dyn AnyJsonStorableVec,
-            &*self.addressindex_to_addresstypeindex,
-            &*self.addressindex_to_height,
-            &*self.height_to_blockhash,
-            &*self.height_to_difficulty,
-            &*self.height_to_first_addressindex,
-            &*self.height_to_first_emptyindex,
-            &*self.height_to_first_multisigindex,
-            &*self.height_to_first_opreturnindex,
-            &*self.height_to_first_pushonlyindex,
-            &*self.height_to_first_txindex,
-            &*self.height_to_first_txinindex,
-            &*self.height_to_first_txoutindex,
-            &*self.height_to_first_unknownindex,
-            &*self.height_to_first_p2pk33index,
-            &*self.height_to_first_p2pk65index,
-            &*self.height_to_first_p2pkhindex,
-            &*self.height_to_first_p2shindex,
-            &*self.height_to_first_p2trindex,
-            &*self.height_to_first_p2wpkhindex,
-            &*self.height_to_first_p2wshindex,
-            &*self.height_to_size,
-            &*self.height_to_timestamp,
-            &*self.height_to_weight,
-            &*self.p2pk33index_to_p2pk33addressbytes,
-            &*self.p2pk65index_to_p2pk65addressbytes,
-            &*self.p2pkhindex_to_p2pkhaddressbytes,
-            &*self.p2shindex_to_p2shaddressbytes,
-            &*self.p2trindex_to_p2traddressbytes,
-            &*self.p2wpkhindex_to_p2wpkhaddressbytes,
-            &*self.p2wshindex_to_p2wshaddressbytes,
-            &*self.txindex_to_first_txinindex,
-            &*self.txindex_to_first_txoutindex,
-            &*self.txindex_to_height,
-            &*self.txindex_to_locktime,
-            &*self.txindex_to_txid,
-            &*self.txindex_to_base_size,
-            &*self.txindex_to_total_size,
-            &*self.txindex_to_is_explicitly_rbf,
-            &*self.txindex_to_txversion,
-            &*self.txinindex_to_txoutindex,
-            &*self.txoutindex_to_addressindex,
-            &*self.txoutindex_to_value,
-        ]
-    }
-}
-
-impl Vecs<CACHED_GETS> {
     pub fn get_addressbytes(
         &self,
         addresstype: Addresstype,
@@ -424,9 +375,57 @@ impl Vecs<CACHED_GETS> {
             .unwrap()
     }
 
-    fn as_mut_any_vecs(&mut self) -> Vec<&mut dyn AnyStorableVec> {
+    pub fn as_any_vecs(&self) -> Vec<&dyn AnyStorableVec> {
         vec![
-            &mut self.addressindex_to_addresstype as &mut dyn AnyStorableVec,
+            &*self.addressindex_to_addresstype as &dyn AnyStorableVec,
+            &*self.addressindex_to_addresstypeindex,
+            &*self.addressindex_to_height,
+            &*self.height_to_blockhash,
+            &*self.height_to_difficulty,
+            &*self.height_to_first_addressindex,
+            &*self.height_to_first_emptyindex,
+            &*self.height_to_first_multisigindex,
+            &*self.height_to_first_opreturnindex,
+            &*self.height_to_first_pushonlyindex,
+            &*self.height_to_first_txindex,
+            &*self.height_to_first_txinindex,
+            &*self.height_to_first_txoutindex,
+            &*self.height_to_first_unknownindex,
+            &*self.height_to_first_p2pk33index,
+            &*self.height_to_first_p2pk65index,
+            &*self.height_to_first_p2pkhindex,
+            &*self.height_to_first_p2shindex,
+            &*self.height_to_first_p2trindex,
+            &*self.height_to_first_p2wpkhindex,
+            &*self.height_to_first_p2wshindex,
+            &*self.height_to_size,
+            &*self.height_to_timestamp,
+            &*self.height_to_weight,
+            &*self.p2pk33index_to_p2pk33addressbytes,
+            &*self.p2pk65index_to_p2pk65addressbytes,
+            &*self.p2pkhindex_to_p2pkhaddressbytes,
+            &*self.p2shindex_to_p2shaddressbytes,
+            &*self.p2trindex_to_p2traddressbytes,
+            &*self.p2wpkhindex_to_p2wpkhaddressbytes,
+            &*self.p2wshindex_to_p2wshaddressbytes,
+            &*self.txindex_to_first_txinindex,
+            &*self.txindex_to_first_txoutindex,
+            &*self.txindex_to_height,
+            &*self.txindex_to_locktime,
+            &*self.txindex_to_txid,
+            &*self.txindex_to_base_size,
+            &*self.txindex_to_total_size,
+            &*self.txindex_to_is_explicitly_rbf,
+            &*self.txindex_to_txversion,
+            &*self.txinindex_to_txoutindex,
+            &*self.txoutindex_to_addressindex,
+            &*self.txoutindex_to_value,
+        ]
+    }
+
+    fn as_mut_any_vecs(&mut self) -> Vec<&mut dyn AnyIndexedVec> {
+        vec![
+            &mut self.addressindex_to_addresstype as &mut dyn AnyIndexedVec,
             &mut self.addressindex_to_addresstypeindex,
             &mut self.addressindex_to_height,
             &mut self.height_to_blockhash,

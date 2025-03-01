@@ -4,6 +4,7 @@ use brk_core::{AddressindexTxoutindex, Unit};
 use brk_indexer::Store;
 use brk_vec::Version;
 
+#[derive(Clone)]
 pub struct Stores {
     pub address_to_utxos_received: Store<AddressindexTxoutindex, Unit>,
     pub address_to_utxos_spent: Store<AddressindexTxoutindex, Unit>,

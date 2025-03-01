@@ -4,7 +4,6 @@ use brk_core::{
     P2SHindex, P2TRindex, P2WPKHindex, P2WSHindex, Pushonlyindex, Txindex, Txinindex, Txoutindex, Unknownindex,
 };
 use brk_parser::NUMBER_OF_UNSAFE_BLOCKS;
-use brk_vec::CACHED_GETS;
 use color_eyre::eyre::ContextCompat;
 
 use crate::{Stores, Vecs};
@@ -31,7 +30,7 @@ pub struct Indexes {
 }
 
 impl Indexes {
-    pub fn push_if_needed(&self, vecs: &mut Vecs<CACHED_GETS>) -> brk_vec::Result<()> {
+    pub fn push_if_needed(&self, vecs: &mut Vecs) -> brk_vec::Result<()> {
         let height = self.height;
         vecs.height_to_first_txindex.push_if_needed(height, self.txindex)?;
         vecs.height_to_first_txinindex.push_if_needed(height, self.txinindex)?;
@@ -64,7 +63,7 @@ impl Indexes {
         Ok(())
     }
 
-    pub fn push_future_if_needed(&mut self, vecs: &mut Vecs<CACHED_GETS>) -> brk_vec::Result<()> {
+    pub fn push_future_if_needed(&mut self, vecs: &mut Vecs) -> brk_vec::Result<()> {
         self.height.increment();
         self.push_if_needed(vecs)?;
         self.height.decrement();
@@ -72,9 +71,9 @@ impl Indexes {
     }
 }
 
-impl TryFrom<(&mut Vecs<CACHED_GETS>, &Stores, &Client)> for Indexes {
+impl TryFrom<(&mut Vecs, &Stores, &Client)> for Indexes {
     type Error = color_eyre::Report;
-    fn try_from((vecs, stores, rpc): (&mut Vecs<CACHED_GETS>, &Stores, &Client)) -> color_eyre::Result<Self> {
+    fn try_from((vecs, stores, rpc): (&mut Vecs, &Stores, &Client)) -> color_eyre::Result<Self> {
         // Height at which we wanna start: min last saved + 1 or 0
         let starting_height = vecs.starting_height().min(stores.starting_height());
 

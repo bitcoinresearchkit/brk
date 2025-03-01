@@ -63,6 +63,12 @@ A very fast Bitcoin Core block parser and iterator built on top of bitcoin-rust.
 
 > Status: ✅
 
+### `brk_query`
+
+A library that finds requested datasets.
+
+> Status: ⚠️
+
 ### `brk_server`
 
 A server that serves Bitcoin data and swappable front-ends, built on top of brk_indexer, brk_fetcher and brk_computer.
@@ -117,6 +123,11 @@ Feel free to open an issue if you want to add another instance
 
 ## Setup
 
+### Hardware
+
+- Last base model Mac mini
+- External SSD
+
 ### Requirements
 
 - At least 16 GB of RAM
@@ -124,12 +135,8 @@ Feel free to open an issue if you want to add another instance
   - Recommended: Rated at 3 GB/s (Thunderbolt 4 speed)
 - A running instance of bitcoin-core
   - Example: `bitcoind -datadir="$HOME/.bitcoin" -blocksonly`
-- Git
 - Unix based operating system (Mac OS or Linux)
   - Ubuntu users need to install `open-ssl` via `sudo apt install libssl-dev pkg-config`
-  - Mac OS:
-    - Disable Spotlight or exclude the `--kibodir` folder from it
-    - Don't use Time Machine or exclude the `--kibodir` folder (especially needed for local snapshots)
 
 ### Build
 

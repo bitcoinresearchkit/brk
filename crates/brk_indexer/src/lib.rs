@@ -1,4 +1,7 @@
 #![doc = include_str!("../README.md")]
+#![doc = "\n## Example\n\n```rust"]
+#![doc = include_str!("main.rs")]
+#![doc = "```"]
 
 use std::{
     collections::BTreeMap,
@@ -15,7 +18,6 @@ pub use brk_parser::*;
 
 use bitcoin::{Transaction, TxIn, TxOut};
 use brk_exit::Exit;
-use brk_vec::CACHED_GETS;
 use color_eyre::eyre::{ContextCompat, eyre};
 use log::info;
 use rayon::prelude::*;
@@ -29,12 +31,13 @@ pub use vecs::*;
 
 const SNAPSHOT_BLOCK_RANGE: usize = 1000;
 
-pub struct Indexer<const MODE: u8> {
-    pub vecs: Vecs<MODE>,
+#[derive(Clone)]
+pub struct Indexer {
+    pub vecs: Vecs,
     pub stores: Stores,
 }
 
-impl<const MODE: u8> Indexer<MODE> {
+impl Indexer {
     pub fn import(indexes_dir: &Path) -> color_eyre::Result<Self> {
         setrlimit()?;
 
@@ -42,13 +45,11 @@ impl<const MODE: u8> Indexer<MODE> {
 
         let vecs = Vecs::import(&indexes_dir.join("vecs"))?;
 
-        let stores = Stores::import(&indexes_dir.join("fjall"))?;
+        let stores = Stores::import(&indexes_dir.join("stores"))?;
 
         Ok(Self { vecs, stores })
     }
-}
 
-impl Indexer<CACHED_GETS> {
     pub fn index(&mut self, parser: &Parser, rpc: &'static rpc::Client, exit: &Exit) -> color_eyre::Result<Indexes> {
         let check_collisions = true;
 
@@ -63,35 +64,35 @@ impl Indexer<CACHED_GETS> {
         self.vecs.rollback_if_needed(&starting_indexes)?;
         exit.release();
 
-        let export_if_needed = |stores: &mut Stores,
-                                vecs: &mut Vecs<CACHED_GETS>,
-                                height: Height,
-                                rem: bool,
-                                exit: &Exit|
-         -> color_eyre::Result<()> {
-            if height == 0 || (height % SNAPSHOT_BLOCK_RANGE != 0) != rem || exit.triggered() {
-                return Ok(());
-            }
+        let export_if_needed =
+            |stores: &mut Stores, vecs: &mut Vecs, height: Height, rem: bool, exit: &Exit| -> color_eyre::Result<()> {
+                if height == 0 || (height % SNAPSHOT_BLOCK_RANGE != 0) != rem || exit.triggered() {
+                    return Ok(());
+                }
 
-            info!("Exporting...");
-            exit.block();
-            stores.commit(height)?;
-            vecs.flush(height)?;
-            exit.release();
-            Ok(())
-        };
+                info!("Exporting...");
+                exit.block();
+                stores.commit(height)?;
+                vecs.flush(height)?;
+                exit.release();
+                Ok(())
+            };
 
         let vecs = &mut self.vecs;
         let stores = &mut self.stores;
 
-        if starting_indexes.height > Height::try_from(rpc)? {
+        let mut idxs = starting_indexes.clone();
+
+        let start = Some(idxs.height);
+        let end = None; //Some(Height::new(400_000));
+
+        if starting_indexes.height > Height::try_from(rpc)? || end.is_some_and(|end| starting_indexes.height > end) {
             return Ok(starting_indexes);
         }
 
         info!("Started indexing...");
 
-        let mut idxs = starting_indexes.clone();
-        parser.parse(Some(idxs.height), None).iter().try_for_each(
+        parser.parse(start, None).iter().try_for_each(
             |(height, block, blockhash)| -> color_eyre::Result<()> {
                 info!("Indexing block {height}...");
 
@@ -633,6 +634,8 @@ impl Indexer<CACHED_GETS> {
         )?;
 
         export_if_needed(stores, vecs, idxs.height, true, exit)?;
+
+        stores.rotate_memtables();
 
         Ok(starting_indexes)
     }

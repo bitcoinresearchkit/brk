@@ -6,7 +6,6 @@ use brk_parser::{
     Parser,
     rpc::{self},
 };
-use brk_vec::CACHED_GETS;
 use log::info;
 
 fn main() -> color_eyre::Result<()> {
@@ -23,12 +22,12 @@ fn main() -> color_eyre::Result<()> {
 
     let parser = Parser::new(data_dir, rpc);
 
-    let mut indexer: Indexer<CACHED_GETS> = Indexer::import(Path::new("../../_outputs/indexes"))?;
-
     loop {
         let block_count = rpc.get_block_count()?;
 
         info!("{block_count} blocks found.");
+
+        let mut indexer = Indexer::import(Path::new("../../_outputs/indexed"))?;
 
         indexer.index(&parser, rpc, &exit)?;
 

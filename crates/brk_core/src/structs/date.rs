@@ -1,9 +1,12 @@
 use jiff::{Span, civil::Date as Date_, tz::TimeZone};
+use serde::Serialize;
 use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 use super::{Dateindex, Timestamp};
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, FromBytes, Immutable, IntoBytes, KnownLayout)]
+#[derive(
+    Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, FromBytes, Immutable, IntoBytes, KnownLayout, Serialize,
+)]
 pub struct Date(u32);
 
 impl Date {
