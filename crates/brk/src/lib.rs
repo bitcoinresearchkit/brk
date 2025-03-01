@@ -42,6 +42,12 @@ pub mod parser {
     pub use brk_parser::*;
 }
 
+#[cfg(feature = "query")]
+pub mod query {
+    #[doc(inline)]
+    pub use brk_query::*;
+}
+
 #[cfg(feature = "server")]
 pub mod server {
     #[doc(inline)]

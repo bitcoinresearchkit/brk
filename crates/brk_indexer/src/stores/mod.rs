@@ -1,7 +1,7 @@
 use std::{path::Path, thread};
 
 use brk_core::{AddressHash, Addressbytes, Addressindex, Addresstype, BlockHashPrefix, Height, TxidPrefix, Txindex};
-use brk_vec::{CACHED_GETS, Value, Version};
+use brk_vec::{Value, Version};
 
 use crate::Indexes;
 
@@ -38,14 +38,9 @@ impl Stores {
         })
     }
 
-    pub fn rollback_if_needed(
-        &mut self,
-        vecs: &Vecs<CACHED_GETS>,
-        starting_indexes: &Indexes,
-    ) -> color_eyre::Result<()> {
+    pub fn rollback_if_needed(&mut self, vecs: &Vecs, starting_indexes: &Indexes) -> color_eyre::Result<()> {
         vecs.height_to_blockhash
             .iter_from(starting_indexes.height, |(_, blockhash)| {
-                let blockhash = blockhash.as_ref();
                 let blockhash_prefix = BlockHashPrefix::from(blockhash);
                 self.blockhash_prefix_to_height.remove(blockhash_prefix);
                 Ok(())
@@ -53,7 +48,6 @@ impl Stores {
 
         vecs.txindex_to_txid
             .iter_from(starting_indexes.txindex, |(_txindex, txid)| {
-                let txid = txid.as_ref();
                 let txid_prefix = TxidPrefix::from(txid);
                 self.txid_prefix_to_txindex.remove(txid_prefix);
                 Ok(())
@@ -172,5 +166,11 @@ impl Stores {
 
             Ok(())
         })
+    }
+
+    pub fn rotate_memtables(&self) {
+        self.addresshash_to_addressindex.rotate_memtable();
+        self.blockhash_prefix_to_height.rotate_memtable();
+        self.txid_prefix_to_txindex.rotate_memtable();
     }
 }

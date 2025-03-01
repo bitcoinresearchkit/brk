@@ -136,6 +136,10 @@ where
         Ok(())
     }
 
+    pub fn rotate_memtable(&self) {
+        let _ = self.part.inner().rotate_memtable();
+    }
+
     pub fn height(&self) -> Option<Height> {
         self.meta.height()
     }
@@ -155,7 +159,9 @@ where
     }
 
     fn open_keyspace(path: &Path) -> Result<TransactionalKeyspace> {
-        fjall::Config::new(path.join("fjall")).open_transactional()
+        fjall::Config::new(path.join("fjall"))
+            .max_write_buffer_size(32 * 1024 * 1024)
+            .open_transactional()
     }
 
     fn open_partition_handle(keyspace: &TransactionalKeyspace) -> Result<TransactionalPartitionHandle> {
@@ -163,6 +169,7 @@ where
             "partition",
             PartitionCreateOptions::default()
                 .bloom_filter_bits(Some(5))
+                .max_memtable_size(8 * 1024 * 1024)
                 .manual_journal_persist(true),
         )
     }

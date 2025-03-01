@@ -1,4 +1,7 @@
 #![doc = include_str!("../README.md")]
+#![doc = "\n## Example\n\n```rust"]
+#![doc = include_str!("main.rs")]
+#![doc = "```"]
 
 use std::time::Instant;
 
@@ -6,7 +9,6 @@ use api::{ApiRoutes, VecIdToIndexToVec};
 use axum::{Json, Router, http::StatusCode, routing::get, serve};
 use brk_computer::Computer;
 use brk_indexer::Indexer;
-use brk_vec::STATELESS;
 use color_eyre::owo_colors::OwoColorize;
 use files::FilesRoutes;
 use log::{error, info};
@@ -20,22 +22,19 @@ mod traits;
 #[derive(Clone)]
 pub struct AppState {
     vecs: &'static VecIdToIndexToVec,
-    indexer: &'static Indexer<STATELESS>,
-    computer: &'static Computer<STATELESS>,
+    indexer: &'static Indexer,
+    computer: &'static Computer,
 }
 
 pub const WEBSITE_DEV_PATH: &str = "../../websites/kibo.money/";
 
-pub async fn main(indexer: Indexer<STATELESS>, computer: Computer<STATELESS>) -> color_eyre::Result<()> {
+pub async fn main(indexer: Indexer, computer: Computer) -> color_eyre::Result<()> {
     let indexer = Box::leak(Box::new(indexer));
     let computer = Box::leak(Box::new(computer));
     let vecs = Box::leak(Box::new(VecIdToIndexToVec::default()));
 
-    indexer
-        .vecs
-        .as_any_json_vecs()
-        .into_iter()
-        .for_each(|vec| vecs.insert(vec));
+    indexer.vecs.as_any_vecs().into_iter().for_each(|vec| vecs.insert(vec));
+    computer.vecs.as_any_vecs().into_iter().for_each(|vec| vecs.insert(vec));
 
     vecs.generate_dts_file()?;
 

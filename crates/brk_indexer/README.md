@@ -14,7 +14,7 @@ Vecs are used sparingly instead of stores for multiple reasons:
 
 Storage wise, the expected overhead should be around 30% of the chain itself.
 
-Peaks at 11-13 GB of RAM
+Peaks at 5 GB of RAM
 
 ## Outputs
 
@@ -27,3 +27,12 @@ Stores: `src/storage/stores/mod.rs`
 Rust: `src/main.rs`
 
 Python: `../python/parse.py`
+
+## Benchmark
+
+Indexing `0..885_835` took `11 hours 6 min 50 s` on a Macbook Pro M3 Pro with 36 GB of RAM
+
+`footprint` report:
+- Peak memory: `5115 MB`
+- Memory while waiting for a new block: `890 MB`
+- Reclaimable memory: `6478 MB`

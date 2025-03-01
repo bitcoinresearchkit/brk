@@ -7,3 +7,12 @@ license.workspace = true
 repository.workspace = true
 
 [dependencies]
+brk_core = { workspace = true }
+brk_computer = { workspace = true }
+brk_exit = { workspace = true }
+brk_indexer = { workspace = true }
+brk_logger = { workspace = true }
+brk_parser = { workspace = true }
+brk_query = { workspace = true }
+brk_server = { workspace = true }
+clap = { workspace = true }

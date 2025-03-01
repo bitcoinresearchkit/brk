@@ -7,7 +7,6 @@ use brk_parser::{
     Parser,
     rpc::{self, RpcApi},
 };
-use brk_vec::CACHED_GETS;
 use log::info;
 
 pub fn main() -> color_eyre::Result<()> {
@@ -26,25 +25,26 @@ pub fn main() -> color_eyre::Result<()> {
 
     let outputs_dir = Path::new("../../_outputs");
 
-    let indexer: Indexer<CACHED_GETS> = Indexer::import(&outputs_dir.join("indexes"))?;
+    let mut indexer = Indexer::import(&outputs_dir.join("indexed"))?;
 
-    // let mut computer = Computer::import(&outputs_dir.join("computed"))?;
+    let mut computer = Computer::import(&outputs_dir.join("computed"))?;
 
-    // loop {
-    //     let block_count = rpc.get_block_count()?;
+    loop {
+        let block_count = rpc.get_block_count()?;
 
-    //     info!("{block_count} blocks found.");
+        info!("{block_count} blocks found.");
 
-    //     indexer.index(&parser, rpc, &exit)?;
+        let starting_indexes = indexer.index(&parser, rpc, &exit)?;
 
-    //     computer.compute(indexer, &exit)?;
+        computer.compute(&mut indexer, starting_indexes, &exit)?;
 
-    //     info!("Waiting for new blocks...");
+        info!("Waiting for new blocks...");
 
-    //     while block_count == rpc.get_block_count()? {
-    //         sleep(Duration::from_secs(1))
-    //     }
-    // }
+        while block_count == rpc.get_block_count()? {
+            sleep(Duration::from_secs(1))
+        }
+    }
 
+    #[allow(unreachable_code)]
     Ok(())
 }

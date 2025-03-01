@@ -5,25 +5,29 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use brk_vec::{CACHED_GETS, StoredIndex, StoredType, Version};
+use brk_vec::{StoredIndex, StoredType, Version};
 
 use super::Height;
 
 #[derive(Debug)]
-pub struct StorableVec<I, T, const MODE: u8> {
+pub struct StorableVec<I, T> {
     height: Option<Height>,
-    vec: brk_vec::StorableVec<I, T, MODE>,
+    vec: brk_vec::StorableVec<I, T>,
 }
 
-impl<I, T, const MODE: u8> StorableVec<I, T, MODE>
+impl<I, T> StorableVec<I, T>
 where
     I: StoredIndex,
     T: StoredType,
 {
     pub fn import(path: &Path, version: Version) -> brk_vec::Result<Self> {
+        let mut vec = brk_vec::StorableVec::forced_import(path, version)?;
+
+        vec.reset_mmaps()?;
+
         Ok(Self {
             height: Height::try_from(Self::path_height_(path).as_path()).ok(),
-            vec: brk_vec::StorableVec::forced_import(path, version)?,
+            vec,
         })
     }
 
@@ -43,37 +47,44 @@ where
     fn path_height_(path: &Path) -> PathBuf {
         path.join("height")
     }
-}
 
-impl<I, T> StorableVec<I, T, CACHED_GETS>
-where
-    I: StoredIndex,
-    T: StoredType,
-{
     pub fn flush(&mut self, height: Height) -> io::Result<()> {
         height.write(&self.path_height())?;
-        self.vec.flush()
+        self.vec.flush()?;
+        self.vec.reset_mmaps()
     }
 }
 
-impl<I, T, const MODE: u8> Deref for StorableVec<I, T, MODE> {
-    type Target = brk_vec::StorableVec<I, T, MODE>;
+impl<I, T> Deref for StorableVec<I, T> {
+    type Target = brk_vec::StorableVec<I, T>;
     fn deref(&self) -> &Self::Target {
         &self.vec
     }
 }
-impl<I, T, const MODE: u8> DerefMut for StorableVec<I, T, MODE> {
+impl<I, T> DerefMut for StorableVec<I, T> {
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.vec
     }
 }
+impl<I, T> Clone for StorableVec<I, T>
+where
+    I: StoredIndex,
+    T: StoredType,
+{
+    fn clone(&self) -> Self {
+        Self {
+            height: self.height,
+            vec: self.vec.clone(),
+        }
+    }
+}
 
-pub trait AnyStorableVec: Send + Sync {
+pub trait AnyIndexedVec: Send + Sync {
     fn height(&self) -> brk_core::Result<Height>;
     fn flush(&mut self, height: Height) -> io::Result<()>;
 }
 
-impl<I, T> AnyStorableVec for StorableVec<I, T, CACHED_GETS>
+impl<I, T> AnyIndexedVec for StorableVec<I, T>
 where
     I: StoredIndex,
     T: StoredType,

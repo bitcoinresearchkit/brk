@@ -1,5 +1,6 @@
 use std::ops::Add;
 
+use serde::Serialize;
 // use color_eyre::eyre::eyre;
 use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
@@ -7,7 +8,9 @@ use crate::Error;
 
 use super::Date;
 
-#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, FromBytes, Immutable, IntoBytes, KnownLayout)]
+#[derive(
+    Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, FromBytes, Immutable, IntoBytes, KnownLayout, Serialize,
+)]
 pub struct Dateindex(u16);
 
 impl From<Dateindex> for usize {

@@ -1,6 +1,6 @@
 use std::{collections::BTreeMap, fs, io};
 
-use brk_vec::AnyJsonStorableVec;
+use brk_vec::AnyStorableVec;
 use derive_deref::{Deref, DerefMut};
 
 use crate::WEBSITE_DEV_PATH;
@@ -12,7 +12,7 @@ pub struct VecIdToIndexToVec(BTreeMap<String, IndexToVec>);
 
 impl VecIdToIndexToVec {
     // Not the most performant or type safe but only built once so that's okay
-    pub fn insert(&mut self, vec: &'static dyn AnyJsonStorableVec) {
+    pub fn insert(&mut self, vec: &'static dyn AnyStorableVec) {
         let file_name = vec.file_name();
         let split = file_name.split("_to_").collect::<Vec<_>>();
         if split.len() != 2 {
@@ -75,4 +75,4 @@ impl VecIdToIndexToVec {
 }
 
 #[derive(Default, Deref, DerefMut)]
-pub struct IndexToVec(BTreeMap<Index, &'static dyn AnyJsonStorableVec>);
+pub struct IndexToVec(BTreeMap<Index, &'static dyn AnyStorableVec>);

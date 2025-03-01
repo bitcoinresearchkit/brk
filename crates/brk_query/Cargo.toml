@@ -1,0 +1,12 @@
+[package]
+name = "brk_query"
+description = "A library that finds requested datasets"
+license.workspace = true
+edition.workspace = true
+version.workspace = true
+repository.workspace = true
+
+[dependencies]
+brk_computer = { workspace = true }
+brk_indexer = { workspace = true }
+clap = { workspace = true }

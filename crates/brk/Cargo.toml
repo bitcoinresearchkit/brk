@@ -16,6 +16,7 @@ full = [
     "indexer",
     "logger",
     "parser",
+    "query",
     "server",
     "vec",
 ]
@@ -26,6 +27,7 @@ fetcher = ["brk_fetcher"]
 indexer = ["brk_indexer"]
 logger = ["brk_logger"]
 parser = ["brk_parser"]
+query = ["brk_query"]
 server = ["brk_server"]
 vec = ["brk_vec"]
 
@@ -37,6 +39,7 @@ brk_fetcher = { workspace = true, optional = true }
 brk_indexer = { workspace = true, optional = true }
 brk_logger = { workspace = true, optional = true }
 brk_parser = { workspace = true, optional = true }
+brk_query = { workspace = true, optional = true }
 brk_server = { workspace = true, optional = true }
 brk_vec = { workspace = true, optional = true }
 
