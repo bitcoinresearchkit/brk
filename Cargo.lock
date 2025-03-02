@@ -343,7 +343,6 @@ name = "brk_cli"
 version = "0.0.3"
 dependencies = [
  "brk_computer",
- "brk_core",
  "brk_exit",
  "brk_indexer",
  "brk_logger",
@@ -361,7 +360,6 @@ version = "0.0.3"
 dependencies = [
  "brk_core",
  "brk_exit",
- "brk_fetcher",
  "brk_indexer",
  "brk_logger",
  "brk_parser",
@@ -478,11 +476,9 @@ dependencies = [
  "brk_query",
  "brk_vec",
  "color-eyre",
- "derive_deref",
  "jiff",
  "log",
  "oxc",
- "serde",
  "serde_json",
  "tokio",
  "tower-http",

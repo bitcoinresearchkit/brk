@@ -565,12 +565,12 @@ where
     ) -> Result<()>
     where
         A: StoredType,
-        F: Fn(&A) -> T,
+        F: Fn(&A, I) -> T,
     {
         self.validate_computed_version_or_reset_file(Version::from(0) + self.version + other.version)?;
 
         let index = max_from.min(I::from(self.len()));
-        other.iter_from(index, |(i, a)| self.push_and_flush_if_needed(i, t(a), exit))?;
+        other.iter_from(index, |(i, a)| self.push_and_flush_if_needed(i, t(a, i), exit))?;
 
         Ok(self.safe_flush(exit)?)
     }

@@ -1,4 +1,4 @@
-#![doc = include_str!("../../../README.md")]
+#![doc = include_str!(concat!("../", env!("CARGO_PKG_README")))]
 
 #[cfg(feature = "core")]
 pub mod core {

@@ -42,7 +42,7 @@ fn main() -> color_eyre::Result<()> {
     let mut computer = Computer::import(&outputs_dir.join("computed"))?;
 
     match &cli.command {
-        Commands::Run(args) => {
+        Commands::Run(_) => {
             let data_dir = Path::new("../../../bitcoin");
             let rpc = Box::leak(Box::new(rpc::Client::new(
                 "http://localhost:8332",

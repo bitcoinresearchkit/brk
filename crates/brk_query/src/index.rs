@@ -38,7 +38,7 @@ impl Index {
         ]
     }
 
-    pub fn ids(&self) -> &[&str] {
+    pub fn self_to_ids(&self) -> &[&str] {
         match self {
             Self::Dateindex => &["d", "date", "dateindex"],
             Self::Height => &["h", "height"],
@@ -55,25 +55,32 @@ impl Index {
             Self::P2WSHindex => &["p2wshi", "p2wshindex"],
         }
     }
+
+    pub fn ids() -> Vec<String> {
+        Self::all()
+            .iter()
+            .flat_map(|i| i.self_to_ids().iter().map(|s| s.to_string()))
+            .collect::<Vec<_>>()
+    }
 }
 
 impl TryFrom<&str> for Index {
     type Error = color_eyre::Report;
     fn try_from(value: &str) -> Result<Self, Self::Error> {
         Ok(match value {
-            v if (Self::Dateindex).ids().contains(&v) => Self::Dateindex,
-            v if (Self::Height).ids().contains(&v) => Self::Height,
-            v if (Self::Txindex).ids().contains(&v) => Self::Txindex,
-            v if (Self::Txinindex).ids().contains(&v) => Self::Txinindex,
-            v if (Self::Txoutindex).ids().contains(&v) => Self::Txoutindex,
-            v if (Self::Addressindex).ids().contains(&v) => Self::Addressindex,
-            v if (Self::P2PK33index).ids().contains(&v) => Self::P2PK33index,
-            v if (Self::P2PK65index).ids().contains(&v) => Self::P2PK65index,
-            v if (Self::P2PKHindex).ids().contains(&v) => Self::P2PKHindex,
-            v if (Self::P2SHindex).ids().contains(&v) => Self::P2SHindex,
-            v if (Self::P2TRindex).ids().contains(&v) => Self::P2TRindex,
-            v if (Self::P2WPKHindex).ids().contains(&v) => Self::P2WPKHindex,
-            v if (Self::P2WSHindex).ids().contains(&v) => Self::P2WSHindex,
+            v if (Self::Dateindex).self_to_ids().contains(&v) => Self::Dateindex,
+            v if (Self::Height).self_to_ids().contains(&v) => Self::Height,
+            v if (Self::Txindex).self_to_ids().contains(&v) => Self::Txindex,
+            v if (Self::Txinindex).self_to_ids().contains(&v) => Self::Txinindex,
+            v if (Self::Txoutindex).self_to_ids().contains(&v) => Self::Txoutindex,
+            v if (Self::Addressindex).self_to_ids().contains(&v) => Self::Addressindex,
+            v if (Self::P2PK33index).self_to_ids().contains(&v) => Self::P2PK33index,
+            v if (Self::P2PK65index).self_to_ids().contains(&v) => Self::P2PK65index,
+            v if (Self::P2PKHindex).self_to_ids().contains(&v) => Self::P2PKHindex,
+            v if (Self::P2SHindex).self_to_ids().contains(&v) => Self::P2SHindex,
+            v if (Self::P2TRindex).self_to_ids().contains(&v) => Self::P2TRindex,
+            v if (Self::P2WPKHindex).self_to_ids().contains(&v) => Self::P2WPKHindex,
+            v if (Self::P2WSHindex).self_to_ids().contains(&v) => Self::P2WSHindex,
             _ => return Err(eyre!("Bad index")),
         })
     }
