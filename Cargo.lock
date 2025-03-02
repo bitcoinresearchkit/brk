@@ -324,7 +324,7 @@ checksum = "5c8214115b7bf84099f1309324e63141d4c5d7cc26862f97a0a857dbefe165bd"
 
 [[package]]
 name = "brk"
-version = "0.0.2"
+version = "0.0.3"
 dependencies = [
  "brk_computer",
  "brk_core",
@@ -340,7 +340,7 @@ dependencies = [
 
 [[package]]
 name = "brk_cli"
-version = "0.0.2"
+version = "0.0.3"
 dependencies = [
  "brk_computer",
  "brk_core",
@@ -351,11 +351,13 @@ dependencies = [
  "brk_query",
  "brk_server",
  "clap",
+ "color-eyre",
+ "log",
 ]
 
 [[package]]
 name = "brk_computer"
-version = "0.0.2"
+version = "0.0.3"
 dependencies = [
  "brk_core",
  "brk_exit",
@@ -370,7 +372,7 @@ dependencies = [
 
 [[package]]
 name = "brk_core"
-version = "0.0.2"
+version = "0.0.3"
 dependencies = [
  "bitcoin",
  "bitcoincore-rpc",
@@ -387,7 +389,7 @@ dependencies = [
 
 [[package]]
 name = "brk_exit"
-version = "0.0.2"
+version = "0.0.3"
 dependencies = [
  "ctrlc",
  "log",
@@ -395,7 +397,7 @@ dependencies = [
 
 [[package]]
 name = "brk_fetcher"
-version = "0.0.2"
+version = "0.0.3"
 dependencies = [
  "brk_core",
  "brk_logger",
@@ -408,7 +410,7 @@ dependencies = [
 
 [[package]]
 name = "brk_indexer"
-version = "0.0.2"
+version = "0.0.3"
 dependencies = [
  "bitcoin",
  "bitcoincore-rpc",
@@ -427,7 +429,7 @@ dependencies = [
 
 [[package]]
 name = "brk_logger"
-version = "0.0.2"
+version = "0.0.3"
 dependencies = [
  "color-eyre",
  "env_logger",
@@ -436,7 +438,7 @@ dependencies = [
 
 [[package]]
 name = "brk_parser"
-version = "0.0.2"
+version = "0.0.3"
 dependencies = [
  "bitcoin",
  "bitcoincore-rpc",
@@ -451,16 +453,21 @@ dependencies = [
 
 [[package]]
 name = "brk_query"
-version = "0.0.2"
+version = "0.0.3"
 dependencies = [
  "brk_computer",
  "brk_indexer",
+ "brk_vec",
  "clap",
+ "color-eyre",
+ "derive_deref",
+ "serde",
+ "serde_json",
 ]
 
 [[package]]
 name = "brk_server"
-version = "0.0.2"
+version = "0.0.3"
 dependencies = [
  "axum",
  "brk_computer",
@@ -468,6 +475,7 @@ dependencies = [
  "brk_indexer",
  "brk_logger",
  "brk_parser",
+ "brk_query",
  "brk_vec",
  "color-eyre",
  "derive_deref",
@@ -482,7 +490,7 @@ dependencies = [
 
 [[package]]
 name = "brk_vec"
-version = "0.0.2"
+version = "0.0.3"
 dependencies = [
  "brk_exit",
  "memmap2",
@@ -1897,12 +1905,12 @@ dependencies = [
 
 [[package]]
 name = "quick_cache"
-version = "0.6.10"
+version = "0.6.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3f67cfc9c723c39f3615eb0840b00c4cb9e2b068d2fa761a30d845ec91730a59"
+checksum = "0af25b4e960ffdf0dead61cf0cec0c2e44c76927bf933ab4f02e2858fb449397"
 dependencies = [
  "equivalent",
- "hashbrown 0.14.5",
+ "hashbrown 0.15.2",
 ]
 
 [[package]]

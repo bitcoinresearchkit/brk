@@ -7,98 +7,20 @@
 
 The Bitcoin Research Kit is a suite of tools designed to extract, compute and display data stored on a Bitcoin Core node.
 
-## Crates
+- [`brk`](https://crates.io/crates/brk): Wrapper around all other `brk-*` crates
+- [`brk_cli`](https://crates.io/crates/brk_cli): A command line interface to interact with the Bitcoin Research Kit
+- [`brk_computer`](https://crates.io/crates/brk_computer): A Bitcoin dataset computer, built on top of brk_indexer
+- [`brk_core`](https://crates.io/crates/brk_core): The Core (Structs and Errors) of the Bitcoin Research Kit
+- [`brk_exit`](https://crates.io/crates/brk_exit): An exit blocker built on top of ctrlc
+- [`brk_fetcher`](https://crates.io/crates/brk_fetcher): A Bitcoin price fetcher
+- [`brk_indexer`](https://crates.io/crates/brk_indexer): A Bitcoin Core indexer built on top of brk_parser
+- [`brk_logger`](https://crates.io/crates/brk_logger): A clean logger used in the Bitcoin Research Kit.
+- [`brk_parser`](https://crates.io/crates/brk_parser): A very fast Bitcoin Core block parser and iterator built on top of bitcoin-rust
+- [`brk_query`](https://crates.io/crates/brk_query): A library that finds requested datasets.
+- [`brk_server`](https://crates.io/crates/brk_server): A server that serves Bitcoin data and swappable front-ends, built on top of brk_indexer, brk_fetcher and brk_computer
+- [`brk_vec`](https://crates.io/crates/brk_vec): A very small, fast, efficient and simple storable Vec.
 
-### `brk`
-
-Wrapper around all other `brk-*` crates.
-
-> Status: ⚠️
-
-### `brk_cli`
-
-A command line interface to interact with the Bitcoin Research Kit.
-
-> Status: ❌
-
-### `brk_computer`
-
-A Bitcoin dataset computer, built on top of brk_indexer.
-
-> Status: ⚠️
-
-### `brk_core`
-
-The Core (Structs and Errors) of the Bitcoin Research Kit.
-
-> Status: ✅
-
-### `brk_exit`
-
-An exit blocker built on top of ctrlc.
-
-> Status: ✅
-
-### `brk_fetcher`
-
-A Bitcoin price fetcher.
-
-> Status: ✅
-
-### `brk_indexer`
-
-A Bitcoin Core indexer built on top of brk_parser.
-
-> Status: ✅
-
-### `brk_logger`
-
-A clean logger used in the Bitcoin Research Kit.
-
-> Status: ✅
-
-### `brk_parser`
-
-A very fast Bitcoin Core block parser and iterator built on top of bitcoin-rust.
-
-> Status: ✅
-
-### `brk_query`
-
-A library that finds requested datasets.
-
-> Status: ⚠️
-
-### `brk_server`
-
-A server that serves Bitcoin data and swappable front-ends, built on top of brk_indexer, brk_fetcher and brk_computer.
-
-> Status: ⚠️
-
-### `brk_vec`
-
-A very small, fast, efficient and simple storable Vec.
-
-> Status: ✅
-
-## Old README
-
-[**kibō**](https://kibo.money) (_hope_ in japanese) is primarily an open source Bitcoin Core data extractor and visualizer (similar to [Glassnode](https://glassnode.com)) which goal is to empower anybody with data about Bitcoin for free.
-
-The project is split in 3 parts:
-
-- First you have the extractor (parser), which parses the block data files from your Bitcoin Core node and computes a very wide range of datasets which are stored in compressed binary files
-  > For the curious, it takes at the very least 24 hours to parse all the blocks and compute all datasets. After that it will wait for a new block and take between 1 and 3 minutes to be up to date
-- Then there is the website on which you can view, among other things, all datasets in various charts
-- Finally there is the server which serves the website and the generated data via an [API](https://github.com/kibo-money/kibo/tree/main#endpoints)
-
-Whether you're an enthusiast, a researcher, a miner, an analyst, a trader, a skeptic or just curious, there is something for everyone !
-
-This project was created out of frustration by all the alternatives that were either very expensive and thus discriminatory and against bitcoin values or just very limited and none were open-source and verifiable. So while it's not the first tool trying to solve these problems, it's the first that is completely free, open-source and self-hostable.
-
-If you are a user of [mempool.space](https://mempool.space), you'll find this to be very complimentary, as it offers a macro view of the chain over time instead of a detailed one.
-
-## Instances
+## Servers
 
 | URL                                              | Front-end   | Version                                                                                                                                                                         | Status                                                                                                                                                         | Last Height                                                                                                                                                                      | Up Time Ratio                                                                                                                        |
 | ------------------------------------------------ | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
@@ -106,51 +28,31 @@ If you are a user of [mempool.space](https://mempool.space), you'll find this to
 
 Feel free to open an issue if you want to add another instance
 
-## Endpoints
-
-> If you running locally, you can replace `https://kibo.money` by `http://localhost:3110`
-
-- [/](https://kibo.money/): Website
-- [/api](https://kibo.money/api): A JSON with all available datasets, with their respective id and endpoint, better viewed in a Firefox based browser
-- /api/TIMESCALE-to-ID: `TIMESCALE` can be `date` or `height`, and `ID` is the id with `_` replaced by `-`, let's take `date-to-close` (price at the end of each day) as an example
-  - [/api/date-to-close](https://kibo.money/api/date-to-close): current year's values in a json format
-  - [/api/date-to-close?chunk=2009](https://kibo.money/api/date-to-close?chunk=2009): values from the year 2009 in a json format
-  - [/api/date-to-close?all=true](https://kibo.money/api/date-to-close?all=true): all values in a json format
-  - You can also specify the extension to download a file, either `.json` or `.csv` to get the dataset in a CSV format; like so:
-    - [/api/date-to-close.csv](https://kibo.money/api/date-to-close.csv)
-    - [/api/date-to-close.csv?chunk=2009](https://kibo.money/api/date-to-close.csv?chunk=2009)
-    - [/api/date-to-close.csv?all=true](https://kibo.money/api/date-to-close.csv?all=true)
-
 ## Setup
 
 ### Hardware
 
-- Last base model Mac mini
-- External SSD
+#### Recommended
+
+- [Latest base model Mac mini](https://www.apple.com/mac-mini/)
+- [Thunderbolt 4 SSD enclosure](https://satechi.net/products/usb4-nvme-ssd-pro-enclosure/Z2lkOi8vc2hvcGlmeS9Qcm9kdWN0VmFyaWFudC80MDE4ODQ3MDA2NzI4OA==?queryID=7961465089021ee203a60db7e62e90d2)
+- [2 TB NVMe SSD](https://shop.sandisk.com/products/ssd/internal-ssd/wd-black-sn850x-nvme-ssd?sku=WDS200T2X0E-00BCA0)
+
+#### Minimum
+
+To be determined
 
 ### Requirements
 
-- At least 16 GB of RAM
-- A disk with 1 TB of free space (will use between 40% to 80% depending on several things)
-  - Recommended: Rated at 3 GB/s (Thunderbolt 4 speed)
-- A running instance of bitcoin-core
-  - Example: `bitcoind -datadir="$HOME/.bitcoin" -blocksonly`
 - Unix based operating system (Mac OS or Linux)
   - Ubuntu users need to install `open-ssl` via `sudo apt install libssl-dev pkg-config`
+- [Bitcoin](https://bitcoin.org/en/full-node)
+  - Example: `bitcoind -datadir="$HOME/.bitcoin" -blocksonly`
+- [Rust](https://www.rust-lang.org/tools/install)
+  - Install: `curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh`
+  - Update: `rustup update`
 
 ### Build
-
-First we need to install Rust (https://www.rust-lang.org/tools/install)
-
-```bash
-curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
-```
-
-If you already had Rust installed you could update it
-
-```bash
-rustup update
-```
 
 Then you need to choose a path where the project will reside and then clone it
 
@@ -188,3 +90,35 @@ Then the easiest to let others access your server is to use `cloudflared` which 
 [lnurl1dp68gurn8ghj7ampd3kx2ar0veekzar0wd5xjtnrdakj7tnhv4kxctttdehhwm30d3h82unvwqhkxmmww3jkuar8d35kgetj8yuq363hv4](lightning:lnurl1dp68gurn8ghj7ampd3kx2ar0veekzar0wd5xjtnrdakj7tnhv4kxctttdehhwm30d3h82unvwqhkxmmww3jkuar8d35kgetj8yuq363hv4)
 
 [Geyser Fund](https://geyser.fund/project/kibo/)
+
+## Old README
+
+[**kibō**](https://kibo.money) (_hope_ in japanese) is primarily an open source Bitcoin Core data extractor and visualizer (similar to [Glassnode](https://glassnode.com)) which goal is to empower anybody with data about Bitcoin for free.
+
+The project is split in 3 parts:
+
+- First you have the extractor (parser), which parses the block data files from your Bitcoin Core node and computes a very wide range of datasets which are stored in compressed binary files
+  > For the curious, it takes at the very least 24 hours to parse all the blocks and compute all datasets. After that it will wait for a new block and take between 1 and 3 minutes to be up to date
+- Then there is the website on which you can view, among other things, all datasets in various charts
+- Finally there is the server which serves the website and the generated data via an [API](https://github.com/kibo-money/kibo/tree/main#endpoints)
+
+Whether you're an enthusiast, a researcher, a miner, an analyst, a trader, a skeptic or just curious, there is something for everyone !
+
+This project was created out of frustration by all the alternatives that were either very expensive and thus discriminatory and against bitcoin values or just very limited and none were open-source and verifiable. So while it's not the first tool trying to solve these problems, it's the first that is completely free, open-source and self-hostable.
+
+If you are a user of [mempool.space](https://mempool.space), you'll find this to be very complimentary, as it offers a macro view of the chain over time instead of a detailed one.
+
+## Endpoints
+
+> If you running locally, you can replace `https://kibo.money` by `http://localhost:3110`
+
+- [/](https://kibo.money/): Website
+- [/api](https://kibo.money/api): A JSON with all available datasets, with their respective id and endpoint, better viewed in a Firefox based browser
+- /api/TIMESCALE-to-ID: `TIMESCALE` can be `date` or `height`, and `ID` is the id with `_` replaced by `-`, let's take `date-to-close` (price at the end of each day) as an example
+  - [/api/date-to-close](https://kibo.money/api/date-to-close): current year's values in a json format
+  - [/api/date-to-close?chunk=2009](https://kibo.money/api/date-to-close?chunk=2009): values from the year 2009 in a json format
+  - [/api/date-to-close?all=true](https://kibo.money/api/date-to-close?all=true): all values in a json format
+  - You can also specify the extension to download a file, either `.json` or `.csv` to get the dataset in a CSV format; like so:
+    - [/api/date-to-close.csv](https://kibo.money/api/date-to-close.csv)
+    - [/api/date-to-close.csv?chunk=2009](https://kibo.money/api/date-to-close.csv?chunk=2009)
+    - [/api/date-to-close.csv?all=true](https://kibo.money/api/date-to-close.csv?all=true)

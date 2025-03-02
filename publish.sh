@@ -3,36 +3,39 @@
 cd crates/brk
 
 cd ../brk_core
-cargo publish --allow-dirty
+cargo publish
 
 cd ../brk_exit
-cargo publish --allow-dirty
+cargo publish
 
 cd ../brk_vec
-cargo publish --allow-dirty
+cargo publish
 
 cd ../brk_logger
-cargo publish --allow-dirty
+cargo publish
 
 cd ../brk_indexer
-cargo publish --allow-dirty
+cargo publish
 
 cd ../brk_parser
-cargo publish --allow-dirty
+cargo publish
 
 cd ../brk_fetcher
-cargo publish --allow-dirty
+cargo publish
 
 cd ../brk_computer
-cargo publish --allow-dirty
+cargo publish
+
+cd ../brk_query
+cargo publish
 
 cd ../brk_server
-cargo publish --allow-dirty
+cargo publish
 
 cd ../brk_cli
-cargo publish --allow-dirty
+cargo publish
 
 cd ../brk
-cargo publish --allow-dirty
+cargo publish
 
 cd ../..
