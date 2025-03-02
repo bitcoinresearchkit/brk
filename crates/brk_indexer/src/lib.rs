@@ -19,7 +19,7 @@ pub use brk_parser::*;
 use bitcoin::{Transaction, TxIn, TxOut};
 use brk_exit::Exit;
 use color_eyre::eyre::{ContextCompat, eyre};
-use log::info;
+use log::{debug, info};
 use rayon::prelude::*;
 mod indexes;
 mod stores;
@@ -41,7 +41,7 @@ impl Indexer {
     pub fn import(indexes_dir: &Path) -> color_eyre::Result<Self> {
         setrlimit()?;
 
-        info!("Importing indexes...");
+        debug!("Importing indexes...");
 
         let vecs = Vecs::import(&indexes_dir.join("vecs"))?;
 

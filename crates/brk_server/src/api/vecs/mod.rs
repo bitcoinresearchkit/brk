@@ -2,10 +2,11 @@ use std::time::Instant;
 
 use axum::{
     Json,
-    extract::{Query, State},
+    extract::{Query as AxumQuery, State},
     http::{HeaderMap, StatusCode, Uri},
     response::{IntoResponse, Response},
 };
+use brk_query::{Format, Index, Params};
 use color_eyre::eyre::eyre;
 use serde_json::Value;
 
@@ -13,20 +14,14 @@ use crate::{log_result, traits::HeaderMapExtended};
 
 use super::AppState;
 
-mod format;
-mod index;
-mod query;
-mod tree;
+mod dts;
 
-use format::Format;
-use index::Index;
-use query::QueryS;
-pub use tree::*;
+pub use dts::*;
 
 pub async fn handler(
     headers: HeaderMap,
     uri: Uri,
-    query: Query<QueryS>,
+    query: AxumQuery<Params>,
     State(app_state): State<AppState>,
 ) -> Response {
     let instant = Instant::now();
@@ -49,12 +44,16 @@ pub async fn handler(
 
 fn req_to_response_res(
     headers: HeaderMap,
-    Query(QueryS { format, from, i, to, v }): Query<QueryS>,
-    AppState { vecs, .. }: AppState,
+    AxumQuery(Params {
+        format,
+        from,
+        index,
+        to,
+        values,
+    }): AxumQuery<Params>,
+    AppState { query, .. }: AppState,
 ) -> color_eyre::Result<Response> {
-    let format = Format::try_from(format).ok();
-
-    let indexes = i
+    let indexes = index
         .to_lowercase()
         .split(",")
         .flat_map(|s| Index::try_from(s).ok())
@@ -66,10 +65,14 @@ fn req_to_response_res(
         return Err(eyre!("Unknown index"));
     }
 
-    let ids = v
-        .to_lowercase()
-        .split(",")
-        .map(|s| (s.to_owned(), vecs.get(&s.replace("_", "-"))))
+    let ids = values
+        .into_iter()
+        .map(|v| v.to_lowercase())
+        .flat_map(|v| v.split(",").map(|v| v.to_owned()).collect::<Vec<_>>())
+        .map(|s| {
+            let opt = query.vecid_to_index_to_vec.get(&s.replace("_", "-"));
+            (s, opt)
+        })
         .filter(|(_, opt)| opt.is_some())
         .map(|(id, vec)| (id, vec.unwrap()))
         .collect::<Vec<_>>();

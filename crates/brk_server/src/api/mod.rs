@@ -1,11 +1,11 @@
-use axum::{routing::get, Router};
+use axum::{Router, routing::get};
 
 use super::AppState;
 
 mod explorer;
 mod vecs;
 
-pub use vecs::VecIdToIndexToVec;
+pub use vecs::DTS;
 
 pub trait ApiRoutes {
     fn add_api_routes(self) -> Self;

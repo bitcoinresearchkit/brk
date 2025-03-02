@@ -1,11 +1,13 @@
+use clap::ValueEnum;
 use color_eyre::eyre::eyre;
+use serde::Deserialize;
 
 #[allow(clippy::upper_case_acronyms)]
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, ValueEnum, Deserialize)]
 pub enum Format {
+    JSON,
     CSV,
     TSV,
-    JSON,
 }
 
 impl TryFrom<Option<String>> for Format {
