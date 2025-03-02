@@ -1,8 +1,5 @@
 # Bitcoin Research Kit
 
-> ⚠️ In the middle of a massive rewrite, use very carefully ⚠️
-> Everything is still a work in progress
-
 ## Description
 
 The Bitcoin Research Kit is a suite of tools designed to extract, compute and display data stored on a Bitcoin Core node.
@@ -30,54 +27,7 @@ Feel free to open an issue if you want to add another instance
 
 ## Setup
 
-### Hardware
-
-#### Recommended
-
-- [Latest base model Mac mini](https://www.apple.com/mac-mini/)
-- [Thunderbolt 4 SSD enclosure](https://satechi.net/products/usb4-nvme-ssd-pro-enclosure/Z2lkOi8vc2hvcGlmeS9Qcm9kdWN0VmFyaWFudC80MDE4ODQ3MDA2NzI4OA==?queryID=7961465089021ee203a60db7e62e90d2)
-- [2 TB NVMe SSD](https://shop.sandisk.com/products/ssd/internal-ssd/wd-black-sn850x-nvme-ssd?sku=WDS200T2X0E-00BCA0)
-
-#### Minimum
-
-To be determined
-
-### Requirements
-
-- Unix based operating system (Mac OS or Linux)
-  - Ubuntu users need to install `open-ssl` via `sudo apt install libssl-dev pkg-config`
-- [Bitcoin](https://bitcoin.org/en/full-node)
-  - Example: `bitcoind -datadir="$HOME/.bitcoin" -blocksonly`
-- [Rust](https://www.rust-lang.org/tools/install)
-  - Install: `curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh`
-  - Update: `rustup update`
-
-### Build
-
-Then you need to choose a path where the project will reside and then clone it
-
-```bash
-cd ???
-git clone https://github.com/kibo-money/kibo.git
-cd kibo
-```
-
-If it's your first time running kibo, it will need several information such as:
-
-- `--bitcoindir PATH`: path to bitcoin core data directory, `???/bitcoin`
-- `--kibodir PATH`: path to kibo outputs, if you have enough space on your main disk `~/.kibo` is fine
-
-Everything will be saved at `~/.kibo/config.toml`, which will allow you to simply run `cargo run -r` next time
-
-If you need more options please run `cargo run -r --help` to see what parameters are available.
-
-Here's an example
-
-```bash
-cargo run -r -- --bitcoindir=~/Developer/bitcoin --kibodir=~/.kibo
-```
-
-Then the easiest to let others access your server is to use `cloudflared` which will also cache requests. For more information go to: https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/
+[Guide](https://crates.io/crates/brk_cli)
 
 ## Donate
 

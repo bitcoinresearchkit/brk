@@ -25,6 +25,7 @@ pub struct Vecs {
     pub dateindex_to_open_in_dollars: StorableVec<Dateindex, Open<Dollars>>,
     pub height_to_close_in_cents: StorableVec<Height, Close<Cents>>,
     pub height_to_close_in_dollars: StorableVec<Height, Close<Dollars>>,
+    pub height_to_height: StorableVec<Height, Height>,
     pub height_to_high_in_cents: StorableVec<Height, High<Cents>>,
     pub height_to_high_in_dollars: StorableVec<Height, High<Dollars>>,
     pub height_to_low_in_cents: StorableVec<Height, Low<Cents>>,
@@ -101,6 +102,7 @@ impl Vecs {
                 &path.join("height_to_close_in_dollars"),
                 Version::from(1),
             )?,
+            height_to_height: StorableVec::import(&path.join("height_to_height"), Version::from(1))?,
             height_to_high_in_cents: StorableVec::import(&path.join("height_to_high_in_cents"), Version::from(1))?,
             height_to_high_in_dollars: StorableVec::import(&path.join("height_to_high_in_dollars"), Version::from(1))?,
             height_to_low_in_cents: StorableVec::import(&path.join("height_to_low_in_cents"), Version::from(1))?,
@@ -152,6 +154,7 @@ impl Vecs {
     pub fn as_any_vecs(&self) -> Vec<&dyn AnyStorableVec> {
         vec![
             &self.height_to_date as &dyn AnyStorableVec,
+            &self.height_to_height,
             // &self.dateindex_to_close_in_dollars,
             // &self.dateindex_to_high_in_cents,
             // &self.dateindex_to_high_in_dollars,

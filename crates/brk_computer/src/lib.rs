@@ -72,10 +72,17 @@ impl Computer {
         //     exit,
         // )?;
 
+        self.vecs.height_to_height.compute_transform(
+            starting_indexes.height,
+            &mut indexer.vecs.height_to_timestamp,
+            |_, height| height,
+            exit,
+        )?;
+
         self.vecs.height_to_date.compute_transform(
             starting_indexes.height,
             &mut indexer.vecs.height_to_timestamp,
-            |timestamp| Date::from(*timestamp),
+            |timestamp, _| Date::from(*timestamp),
             exit,
         )?;
 
