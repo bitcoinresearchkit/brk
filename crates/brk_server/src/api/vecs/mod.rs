@@ -122,6 +122,7 @@ fn req_to_response_res(
 
             csv.into_response()
         }
+        Some(Format::MD) => "".into_response(),
         Some(Format::JSON) | None => {
             if values.len() == 1 {
                 let values = values.first().unwrap();
@@ -147,6 +148,7 @@ fn req_to_response_res(
             headers.insert_content_disposition_attachment();
             match format {
                 Format::CSV => headers.insert_content_type_text_csv(),
+                Format::MD => headers.insert_content_type_text_plain(),
                 Format::TSV => headers.insert_content_type_text_tsv(),
                 Format::JSON => headers.insert_content_type_application_json(),
             }

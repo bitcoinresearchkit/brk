@@ -8,6 +8,7 @@ pub enum Format {
     JSON,
     CSV,
     TSV,
+    MD,
 }
 
 impl TryFrom<Option<String>> for Format {
@@ -16,7 +17,9 @@ impl TryFrom<Option<String>> for Format {
         if let Some(value) = value {
             let value = value.to_lowercase();
             let value = value.as_str();
-            if value == "csv" {
+            if value == "md" || value == "markdown" {
+                Ok(Self::MD)
+            } else if value == "csv" {
                 Ok(Self::CSV)
             } else if value == "tsv" {
                 Ok(Self::TSV)

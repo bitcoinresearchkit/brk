@@ -14,9 +14,11 @@ brk_logger = { workspace = true }
 brk_parser = { workspace = true }
 brk_query = { workspace = true }
 brk_server = { workspace = true }
-clap = { workspace = true , features = ["string"] }
+clap = { workspace = true, features = ["string"] }
 color-eyre = { workspace = true }
 log = { workspace = true }
+tabled = { workspace = true }
+terminal_size = "0.4.1"
 
 [[bin]]
 name = "brk"
