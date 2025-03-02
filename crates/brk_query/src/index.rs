@@ -56,7 +56,7 @@ impl Index {
         }
     }
 
-    pub fn ids() -> Vec<String> {
+    pub fn possible_values() -> Vec<String> {
         Self::all()
             .iter()
             .flat_map(|i| i.self_to_ids().iter().map(|s| s.to_string()))

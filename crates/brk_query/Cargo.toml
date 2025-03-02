@@ -15,3 +15,4 @@ color-eyre = { workspace = true }
 derive_deref = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
+tabled = { workspace = true }

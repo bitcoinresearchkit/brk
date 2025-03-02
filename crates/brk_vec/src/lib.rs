@@ -325,15 +325,15 @@ where
             }
         });
 
-        let to = to.map_or(len, |to| {
+        let to = to.map_or(len - 1, |to| {
             if to >= 0 {
                 to as usize
             } else {
-                (len as i64 + to) as usize
+                ((len - 1) as i64 + to) as usize
             }
         });
 
-        if from >= to {
+        if from > to {
             return Err(Error::RangeFromAfterTo);
         }
 
@@ -341,8 +341,8 @@ where
 
         let mut buf = Self::create_buffer();
 
-        Ok((from..to)
-            .map(|_| Self::read_exact(&mut file, &mut buf).map(|v| v.to_owned()).unwrap())
+        Ok((from..=to)
+            .flat_map(|_| Self::read_exact(&mut file, &mut buf).map(|v| v.to_owned()))
             .collect::<Vec<_>>())
     }
 

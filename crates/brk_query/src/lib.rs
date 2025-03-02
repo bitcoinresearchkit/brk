@@ -3,19 +3,22 @@
 #![doc = include_str!("main.rs")]
 #![doc = "```"]
 
-mod format;
-mod index;
-mod params;
-mod tree;
-
-use std::fmt;
-
 use brk_computer::Computer;
 use brk_indexer::Indexer;
+use tabled::settings::Style;
+
+mod format;
+mod index;
+mod output;
+mod params;
+mod table;
+mod tree;
+
 pub use format::Format;
 pub use index::Index;
+pub use output::{Output, Value};
 pub use params::Params;
-use serde::Serialize;
+pub use table::Tabled;
 use tree::VecIdToIndexToVec;
 
 pub struct Query<'a> {
@@ -41,12 +44,12 @@ impl<'a> Query<'a> {
     pub fn search(
         &self,
         index: Index,
-        values: &[&str],
+        ids: &[&str],
         from: Option<i64>,
         to: Option<i64>,
         format: Option<Format>,
-    ) -> color_eyre::Result<QueryResponse> {
-        let ids = values
+    ) -> color_eyre::Result<Output> {
+        let tuples = ids
             .iter()
             .map(|s| {
                 (
@@ -58,27 +61,27 @@ impl<'a> Query<'a> {
             .map(|(id, vec)| (id, vec.unwrap()))
             .collect::<Vec<_>>();
 
-        if ids.is_empty() {
-            return Ok(QueryResponse::default(format));
+        if tuples.is_empty() {
+            return Ok(Output::default(format));
         }
 
-        let mut values = ids
+        let mut values = tuples
             .iter()
             .flat_map(|(_, i_to_v)| i_to_v.get(&index))
             .map(|vec| -> brk_vec::Result<Vec<serde_json::Value>> { vec.collect_range_values(from, to) })
             .collect::<brk_vec::Result<Vec<_>>>()?;
 
         if values.is_empty() {
-            return Ok(QueryResponse::default(format));
+            return Ok(Output::default(format));
         }
 
-        let ids_last_i = ids.len() - 1;
+        let ids_last_i = tuples.len() - 1;
 
         Ok(match format {
             Some(Format::CSV) | Some(Format::TSV) => {
                 let delimiter = if format == Some(Format::CSV) { ',' } else { '\t' };
 
-                let mut text = ids
+                let mut text = tuples
                     .into_iter()
                     .map(|(id, _)| id)
                     .collect::<Vec<_>>()
@@ -102,59 +105,31 @@ impl<'a> Query<'a> {
                 });
 
                 if format == Some(Format::CSV) {
-                    QueryResponse::CSV(text)
+                    Output::CSV(text)
                 } else {
-                    QueryResponse::TSV(text)
+                    Output::TSV(text)
                 }
+            }
+            Some(Format::MD) => {
+                let mut table = values.to_table(ids.iter().map(|s| s.to_string()).collect::<Vec<_>>());
+
+                table.with(Style::markdown());
+
+                Output::MD(table.to_string())
             }
             Some(Format::JSON) | None => {
                 if values.len() == 1 {
                     let mut values = values.pop().unwrap();
                     if values.len() == 1 {
                         let value = values.pop().unwrap();
-                        QueryResponse::Json(Value::Single(value))
+                        Output::Json(Value::Single(value))
                     } else {
-                        QueryResponse::Json(Value::List(values))
+                        Output::Json(Value::List(values))
                     }
                 } else {
-                    QueryResponse::Json(Value::Matrix(values))
+                    Output::Json(Value::Matrix(values))
                 }
             }
         })
-    }
-}
-
-#[derive(Debug)]
-pub enum QueryResponse {
-    Json(Value),
-    CSV(String),
-    TSV(String),
-}
-
-#[derive(Debug, Serialize)]
-#[serde(untagged)]
-pub enum Value {
-    Matrix(Vec<Vec<serde_json::Value>>),
-    List(Vec<serde_json::Value>),
-    Single(serde_json::Value),
-}
-
-impl QueryResponse {
-    fn default(format: Option<Format>) -> Self {
-        match format {
-            Some(Format::CSV) => QueryResponse::CSV("".to_string()),
-            Some(Format::TSV) => QueryResponse::TSV("".to_string()),
-            _ => QueryResponse::Json(Value::Single(serde_json::Value::Null)),
-        }
-    }
-}
-
-impl fmt::Display for QueryResponse {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Self::Json(value) => write!(f, "{}", serde_json::to_string_pretty(value).unwrap()),
-            Self::CSV(string) => write!(f, "{}", string),
-            Self::TSV(string) => write!(f, "{}", string),
-        }
     }
 }
