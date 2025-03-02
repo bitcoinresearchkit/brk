@@ -5,13 +5,15 @@
 
 use std::time::Instant;
 
-use api::{ApiRoutes, VecIdToIndexToVec};
+use api::{ApiRoutes, DTS};
 use axum::{Json, Router, http::StatusCode, routing::get, serve};
 use brk_computer::Computer;
 use brk_indexer::Indexer;
+use brk_query::Query;
 use color_eyre::owo_colors::OwoColorize;
 use files::FilesRoutes;
 use log::{error, info};
+pub use tokio;
 use tokio::net::TcpListener;
 use tower_http::compression::CompressionLayer;
 
@@ -21,9 +23,7 @@ mod traits;
 
 #[derive(Clone)]
 pub struct AppState {
-    vecs: &'static VecIdToIndexToVec,
-    indexer: &'static Indexer,
-    computer: &'static Computer,
+    query: &'static Query<'static>,
 }
 
 pub const WEBSITE_DEV_PATH: &str = "../../websites/kibo.money/";
@@ -31,18 +31,11 @@ pub const WEBSITE_DEV_PATH: &str = "../../websites/kibo.money/";
 pub async fn main(indexer: Indexer, computer: Computer) -> color_eyre::Result<()> {
     let indexer = Box::leak(Box::new(indexer));
     let computer = Box::leak(Box::new(computer));
-    let vecs = Box::leak(Box::new(VecIdToIndexToVec::default()));
+    let query = Box::leak(Box::new(Query::build(indexer, computer)));
 
-    indexer.vecs.as_any_vecs().into_iter().for_each(|vec| vecs.insert(vec));
-    computer.vecs.as_any_vecs().into_iter().for_each(|vec| vecs.insert(vec));
+    query.generate_dts_file()?;
 
-    vecs.generate_dts_file()?;
-
-    let state = AppState {
-        vecs,
-        indexer,
-        computer,
-    };
+    let state = AppState { query };
 
     let compression_layer = CompressionLayer::new().br(true).deflate(true).gzip(true).zstd(true);
 
