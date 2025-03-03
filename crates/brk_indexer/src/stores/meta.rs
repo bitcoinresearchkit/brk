@@ -27,16 +27,16 @@ impl StoreMeta {
             Self::reset_(path)?;
         }
 
-        let this = Self {
+        let slf = Self {
             pathbuf: path.to_owned(),
             version,
             height: Height::try_from(Self::path_height_(path).as_path()).ok(),
             len: Self::read_length_(path)?,
         };
 
-        this.version.write(&this.path_version())?;
+        slf.version.write(&slf.path_version())?;
 
-        Ok(this)
+        Ok(slf)
     }
 
     pub fn len(&self) -> usize {

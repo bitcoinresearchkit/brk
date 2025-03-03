@@ -47,14 +47,14 @@ const MAGIC_BYTES: [u8; 4] = [249, 190, 180, 217];
 const BOUND_CAP: usize = 50;
 
 pub struct Parser {
-    data_dir: PathBuf,
+    bitcoin_dir: PathBuf,
     rpc: &'static bitcoincore_rpc::Client,
 }
 
 impl Parser {
-    pub fn new(data_dir: &Path, rpc: &'static bitcoincore_rpc::Client) -> Self {
+    pub fn new(bitcoin_dir: &Path, rpc: &'static bitcoincore_rpc::Client) -> Self {
         Self {
-            data_dir: data_dir.to_owned(),
+            bitcoin_dir: bitcoin_dir.to_owned(),
             rpc,
         }
     }
@@ -69,19 +69,19 @@ impl Parser {
     /// For an example checkout `./main.rs`
     ///
     pub fn parse(&self, start: Option<Height>, end: Option<Height>) -> Receiver<(Height, Block, BlockHash)> {
-        let data_dir = self.data_dir.as_path();
+        let bitcoin_dir = self.bitcoin_dir.as_path();
         let rpc = self.rpc;
 
         let (send_bytes, recv_bytes) = bounded(BOUND_CAP);
         let (send_block, recv_block) = bounded(BOUND_CAP);
         let (send_height_block_hash, recv_height_block_hash) = bounded(BOUND_CAP);
 
-        let blk_index_to_blk_path = BlkIndexToBlkPath::scan(data_dir);
+        let blk_index_to_blk_path = BlkIndexToBlkPath::scan(bitcoin_dir);
 
         let (mut blk_index_to_blk_recap, blk_index) =
-            BlkIndexToBlkRecap::import(data_dir, &blk_index_to_blk_path, start);
+            BlkIndexToBlkRecap::import(bitcoin_dir, &blk_index_to_blk_path, start);
 
-        let xor_bytes = XORBytes::from(data_dir);
+        let xor_bytes = XORBytes::from(bitcoin_dir);
 
         thread::spawn(move || {
             let xor_bytes = xor_bytes;

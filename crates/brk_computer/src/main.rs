@@ -14,20 +14,24 @@ pub fn main() -> color_eyre::Result<()> {
 
     brk_logger::init(Some(Path::new(".log")));
 
-    let data_dir = Path::new("../../../bitcoin");
+    let bitcoin_dir = Path::new("../../../bitcoin");
     let rpc = Box::leak(Box::new(rpc::Client::new(
         "http://localhost:8332",
-        rpc::Auth::CookieFile(Path::new(data_dir).join(".cookie")),
+        rpc::Auth::CookieFile(Path::new(bitcoin_dir).join(".cookie")),
     )?));
     let exit = Exit::new();
 
-    let parser = Parser::new(data_dir, rpc);
+    let parser = Parser::new(bitcoin_dir, rpc);
 
     let outputs_dir = Path::new("../../_outputs");
 
-    let mut indexer = Indexer::import(&outputs_dir.join("indexed"))?;
+    let mut indexer = Indexer::new(&outputs_dir.join("indexed"))?;
+    indexer.import_stores()?;
+    indexer.import_vecs()?;
 
-    let mut computer = Computer::import(&outputs_dir.join("computed"))?;
+    let mut computer = Computer::new(&outputs_dir.join("computed"));
+    computer.import_stores()?;
+    computer.import_vecs()?;
 
     loop {
         let block_count = rpc.get_block_count()?;

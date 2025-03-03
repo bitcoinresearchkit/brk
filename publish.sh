@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+cargo check
+
 cd crates/brk
 
 cd ../brk_core

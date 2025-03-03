@@ -31,8 +31,17 @@ impl<'a> Query<'a> {
     pub fn build(indexer: &'a Indexer, computer: &'a Computer) -> Self {
         let mut vecs = VecIdToIndexToVec::default();
 
-        indexer.vecs.as_any_vecs().into_iter().for_each(|vec| vecs.insert(vec));
-        computer.vecs.as_any_vecs().into_iter().for_each(|vec| vecs.insert(vec));
+        indexer
+            .vecs()
+            .as_any_vecs()
+            .into_iter()
+            .for_each(|vec| vecs.insert(vec));
+
+        computer
+            .vecs()
+            .as_any_vecs()
+            .into_iter()
+            .for_each(|vec| vecs.insert(vec));
 
         Self {
             vecid_to_index_to_vec: vecs,

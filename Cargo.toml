@@ -21,7 +21,7 @@ brk_query = { version = "0", path = "crates/brk_query" }
 brk_server = { version = "0", path = "crates/brk_server" }
 brk_vec = { version = "0", path = "crates/brk_vec" }
 byteview = "0.5.4"
-clap = { version = "4.5.31", features = ["derive"] }
+clap = { version = "4.5.31", features = ["derive", "string"] }
 color-eyre = "0.6.3"
 derive_deref = "1.1.1"
 fjall = "2.6.7"
