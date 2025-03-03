@@ -3,7 +3,17 @@ use brk_indexer::Indexer;
 use brk_query::{Index, Output, Params as QueryParams, Query, Tabled, Value};
 use tabled::settings::Style;
 
-pub fn query(indexer: Indexer, computer: Computer, params: &QueryParams) -> color_eyre::Result<()> {
+use crate::run::RunConfig;
+
+pub fn query(params: QueryParams) -> color_eyre::Result<()> {
+    let config = RunConfig::import(None)?;
+
+    let mut indexer = Indexer::new(&config.indexeddir())?;
+    indexer.import_vecs()?;
+
+    let mut computer = Computer::new(&config.computeddir());
+    computer.import_vecs()?;
+
     let query = Query::build(&indexer, &computer);
 
     let ids = params.values.iter().flat_map(|v| v.split(",")).collect::<Vec<_>>();
