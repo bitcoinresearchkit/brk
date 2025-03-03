@@ -1,11 +1,26 @@
 # Bitcoin Research Kit
 
-## Description
+The Bitcoin Research Kit is a suite of tools designed to extract, compute, serve and display data stored on a Bitcoin Core node.
 
-The Bitcoin Research Kit is a suite of tools designed to extract, compute and display data stored on a Bitcoin Core node.
+In other words it's an alternative to [Glassnode](https://glassnode.com), [mempool.space](https://mempool.space/) and [electrs](https://github.com/romanz/electrs) all in one package with a particular focus on the self-hosting experience.
+
+The toolkit can be used in various ways to accommodate as many needs as possible.
+
+- **Website** \
+  Anyone can go to [kibo.money](https://kibo.money) website which is good showcase if what the suite is capable of \
+  Completely free including the API which is also auth-less \
+  Powered by BRK using the `kibo.money` front-end and all features enabled
+- **CLI** \
+  Node runners can self-host their own instance using [`brk_cli`](https://crates.io/crates/brk_cli)
+- **Crates** \
+  Rust developers have a wide range crates available (which can be found below) for maximum flexibility
+
+So whether you're an enthusiast, a researcher, a miner, an analyst, or just curious, there should be something for everyone !
+
+## Crates
 
 - [`brk`](https://crates.io/crates/brk): Wrapper around all other `brk-*` crates
-- [`brk_cli`](https://crates.io/crates/brk_cli): A command line interface to interact with the Bitcoin Research Kit
+- [`brk_cli`](https://crates.io/crates/brk_cli): A standalone command line interface to interact with the Bitcoin Research Kit
 - [`brk_computer`](https://crates.io/crates/brk_computer): A Bitcoin dataset computer, built on top of brk_indexer
 - [`brk_core`](https://crates.io/crates/brk_core): The Core (Structs and Errors) of the Bitcoin Research Kit
 - [`brk_exit`](https://crates.io/crates/brk_exit): An exit blocker built on top of ctrlc
@@ -14,26 +29,27 @@ The Bitcoin Research Kit is a suite of tools designed to extract, compute and di
 - [`brk_logger`](https://crates.io/crates/brk_logger): A clean logger used in the Bitcoin Research Kit.
 - [`brk_parser`](https://crates.io/crates/brk_parser): A very fast Bitcoin Core block parser and iterator built on top of bitcoin-rust
 - [`brk_query`](https://crates.io/crates/brk_query): A library that finds requested datasets.
-- [`brk_server`](https://crates.io/crates/brk_server): A server that serves Bitcoin data and swappable front-ends, built on top of brk_indexer, brk_fetcher and brk_computer
+- [`brk_server`](https://crates.io/crates/brk_server): A server that serves Bitcoin data and swappable front-ends, built on top of `brk_indexer`, `brk_fetcher` and `brk_computer`
 - [`brk_vec`](https://crates.io/crates/brk_vec): A very small, fast, efficient and simple storable Vec.
-
-## Servers
-
-| URL                                              | Front-end   | Version                                                                                                                                                                         | Status                                                                                                                                                         | Last Height                                                                                                                                                                      | Up Time Ratio                                                                                                                        |
-| ------------------------------------------------ | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
-| [kibo.money](https://kibo.money)                 | kibo.money   | ![Version](https://img.shields.io/badge/dynamic/toml?url=https%3A%2F%2Fkibo.money%2FCargo.toml&query=%24.package.version&style=for-the-badge&label=%20&color=%23db9e03)         | ![Status](https://img.shields.io/uptimerobot/status/m797259009-043f6b92d4cc2deef7d13f50?style=for-the-badge&label=%20&up_color=%231cb454&down_color=%23e63636) | ![Height](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fkibo.money%2Fapi%2Flast-height.json&query=%24.value&style=for-the-badge&label=%20&color=%23f26610)         | ![Ratio](https://img.shields.io/uptimerobot/ratio/m797259009-043f6b92d4cc2deef7d13f50?style=for-the-badge&label=%20&color=%232f73f1) |
-
-Feel free to open an issue if you want to add another instance
-
-## Setup
-
-[Guide](https://crates.io/crates/brk_cli)
 
 ## Acknowledgments
 
-Immense thank you to the [Open Sats](https://opensats.org/) public charity. Their grant — from December 2024 to the present — has been critical in sustaining this project.
+Deepest gratitude to the [Open Sats](https://opensats.org/) public charity. Their grant — from December 2024 to the present — has been critical in sustaining this project.
 
 Heartfelt thanks go out to every donor on [Nostr](https://primal.net/p/npub1jagmm3x39lmwfnrtvxcs9ac7g300y3dusv9lgzhk2e4x5frpxlrqa73v44) and [Geyser.fund](https://geyser.fund/project/brk) whose support has ensured the availability of the [kibō.money](https://kibo.money) public instance.
+
+## Hosting as a service
+
+*Soon™*
+
+If you'd like to have your own instance hosted for you please contact [tranche.dent-9o@icloud.com](mailto:tranche.dent-9o@icloud.com).
+
+- Separate dedicated servers using different ISPs and Cloudflare for maximum availability 
+- Optional `*.bitcoinresearchkit.org`, `*.kibo.money` and `*.satonomics.xyz` subdomains
+- A very generous `2 * 1 GB/s` API limit
+- Direct contact and feature requests
+
+Pricing: `0.01 BTC / month` *or* `0.1 BTC / year`
 
 ## Donate
 
@@ -48,21 +64,6 @@ Heartfelt thanks go out to every donor on [Nostr](https://primal.net/p/npub1jagm
 [Geyser Fund](https://geyser.fund/project/brk)
 
 ## Old README
-
-[**kibō**](https://kibo.money) (_hope_ in japanese) is primarily an open source Bitcoin Core data extractor and visualizer (similar to [Glassnode](https://glassnode.com)) which goal is to empower anybody with data about Bitcoin for free.
-
-The project is split in 3 parts:
-
-- First you have the extractor (parser), which parses the block data files from your Bitcoin Core node and computes a very wide range of datasets which are stored in compressed binary files
-  > For the curious, it takes at the very least 24 hours to parse all the blocks and compute all datasets. After that it will wait for a new block and take between 1 and 3 minutes to be up to date
-- Then there is the website on which you can view, among other things, all datasets in various charts
-- Finally there is the server which serves the website and the generated data via an [API](https://github.com/kibo-money/kibo/tree/main#endpoints)
-
-Whether you're an enthusiast, a researcher, a miner, an analyst, a trader, a skeptic or just curious, there is something for everyone !
-
-This project was created out of frustration by all the alternatives that were either very expensive and thus discriminatory and against bitcoin values or just very limited and none were open-source and verifiable. So while it's not the first tool trying to solve these problems, it's the first that is completely free, open-source and self-hostable.
-
-If you are a user of [mempool.space](https://mempool.space), you'll find this to be very complimentary, as it offers a macro view of the chain over time instead of a detailed one.
 
 ## Endpoints
 
