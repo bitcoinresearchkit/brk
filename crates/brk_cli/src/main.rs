@@ -1,7 +1,8 @@
-use std::path::Path;
+use std::{
+    fs,
+    path::{Path, PathBuf},
+};
 
-use brk_computer::Computer;
-use brk_indexer::Indexer;
 use brk_query::Params as QueryArgs;
 use clap::{Parser, Subcommand};
 use query::query;
@@ -29,18 +30,23 @@ enum Commands {
 fn main() -> color_eyre::Result<()> {
     color_eyre::install()?;
 
-    brk_logger::init(Some(Path::new(".log")));
+    fs::create_dir_all(path_dot_brk())?;
+
+    brk_logger::init(Some(&path_log()));
 
     let cli = Cli::parse();
 
-    let outputs_dir = Path::new("../../_outputs");
-
-    let indexer = Indexer::import(&outputs_dir.join("indexed"))?;
-
-    let computer = Computer::import(&outputs_dir.join("computed"))?;
-
-    match &cli.command {
-        Commands::Run(args) => run(indexer, computer, args),
-        Commands::Query(args) => query(indexer, computer, args),
+    match cli.command {
+        Commands::Run(args) => run(args),
+        Commands::Query(args) => query(args),
     }
+}
+
+pub fn path_dot_brk() -> PathBuf {
+    let home = std::env::var("HOME").unwrap();
+    Path::new(&home).join(".brk")
+}
+
+pub fn path_log() -> PathBuf {
+    path_dot_brk().join("log")
 }

@@ -17,7 +17,9 @@ brk_server = { workspace = true }
 clap = { workspace = true, features = ["string"] }
 color-eyre = { workspace = true }
 log = { workspace = true }
+serde = { workspace = true }
 tabled = { workspace = true }
+toml = "0.8.20"
 
 [[bin]]
 name = "brk"
