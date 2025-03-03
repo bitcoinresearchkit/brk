@@ -9,11 +9,11 @@ use clap::Parser;
 use log::info;
 
 #[derive(Parser, Debug)]
-pub struct RunArgs {
+pub struct RunConfig {
     name: Option<String>,
 }
 
-pub fn run(mut indexer: Indexer, mut computer: Computer) -> color_eyre::Result<()> {
+pub fn run(mut indexer: Indexer, mut computer: Computer, config: &RunConfig) -> color_eyre::Result<()> {
     let data_dir = Path::new("../../../bitcoin");
 
     let rpc = Box::leak(Box::new(rpc::Client::new(

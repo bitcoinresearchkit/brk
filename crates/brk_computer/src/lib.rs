@@ -12,6 +12,7 @@ pub use brk_parser::rpc;
 mod storage;
 
 use brk_core::Date;
+use log::info;
 use storage::{Stores, Vecs};
 
 #[derive(Clone)]
@@ -37,6 +38,8 @@ impl Computer {
 
 impl Computer {
     pub fn compute(&mut self, indexer: &mut Indexer, starting_indexes: Indexes, exit: &Exit) -> color_eyre::Result<()> {
+        info!("Computing...");
+
         let height_count = indexer.vecs.height_to_size.len();
         let txindexes_count = indexer.vecs.txindex_to_txid.len();
         let txinindexes_count = indexer.vecs.txinindex_to_txoutindex.len();
