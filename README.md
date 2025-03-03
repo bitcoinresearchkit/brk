@@ -7,7 +7,7 @@ In other words it's an alternative to [Glassnode](https://glassnode.com), [mempo
 The toolkit can be used in various ways to accommodate as many needs as possible.
 
 - **Website** \
-  Anyone can go to [kibo.money](https://kibo.money) website which is good showcase if what the suite is capable of \
+  Anyone can go to [kibo.money](https://kibo.money) website which is the official instance and showcases very well what the suite is capable of \
   Completely free including the API which is also auth-less \
   Powered by BRK using the `kibo.money` front-end and all features enabled
 - **CLI** \
@@ -44,7 +44,7 @@ Heartfelt thanks go out to every donor on [Nostr](https://primal.net/p/npub1jagm
 
 If you'd like to have your own instance hosted for you please contact [tranche.dent-9o@icloud.com](mailto:tranche.dent-9o@icloud.com).
 
-- Separate dedicated servers using different ISPs and Cloudflare for maximum availability 
+- Separate dedicated servers using different ISPs and Cloudflare for maximum availability
 - Optional `*.bitcoinresearchkit.org`, `*.kibo.money` and `*.satonomics.xyz` subdomains
 - A very generous `2 * 1 GB/s` API limit
 - Direct contact and feature requests
