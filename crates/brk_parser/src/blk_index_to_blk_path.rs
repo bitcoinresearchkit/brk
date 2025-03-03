@@ -13,8 +13,8 @@ const DAT: &str = ".dat";
 pub struct BlkIndexToBlkPath(BTreeMap<u16, PathBuf>);
 
 impl BlkIndexToBlkPath {
-    pub fn scan(data_dir: &Path) -> Self {
-        let blocks_dir = data_dir.join("blocks");
+    pub fn scan(bitcoin_dir: &Path) -> Self {
+        let blocks_dir = bitcoin_dir.join("blocks");
 
         Self(
             fs::read_dir(blocks_dir)

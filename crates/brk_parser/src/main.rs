@@ -7,11 +7,11 @@ use brk_parser::Parser;
 fn main() {
     let i = std::time::Instant::now();
 
-    let data_dir = Path::new("../../../bitcoin");
+    let bitcoin_dir = Path::new("../../../bitcoin");
     let rpc = Box::leak(Box::new(
         Client::new(
             "http://localhost:8332",
-            Auth::CookieFile(Path::new(data_dir).join(".cookie")),
+            Auth::CookieFile(Path::new(bitcoin_dir).join(".cookie")),
         )
         .unwrap(),
     ));
@@ -19,7 +19,7 @@ fn main() {
     let start = None;
     let end = None;
 
-    let parser = Parser::new(data_dir, rpc);
+    let parser = Parser::new(bitcoin_dir, rpc);
 
     parser.parse(start, end).iter().for_each(|(height, _block, hash)| {
         println!("{height}: {hash}");

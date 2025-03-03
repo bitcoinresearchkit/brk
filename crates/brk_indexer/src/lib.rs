@@ -5,7 +5,7 @@
 
 use std::{
     collections::BTreeMap,
-    path::Path,
+    path::{Path, PathBuf},
     str::FromStr,
     thread::{self},
 };
@@ -19,7 +19,7 @@ pub use brk_parser::*;
 use bitcoin::{Transaction, TxIn, TxOut};
 use brk_exit::Exit;
 use color_eyre::eyre::{ContextCompat, eyre};
-use log::{debug, info};
+use log::info;
 use rayon::prelude::*;
 mod indexes;
 mod stores;
@@ -33,36 +33,62 @@ const SNAPSHOT_BLOCK_RANGE: usize = 1000;
 
 #[derive(Clone)]
 pub struct Indexer {
-    pub vecs: Vecs,
-    pub stores: Stores,
+    path: PathBuf,
+    vecs: Option<Vecs>,
+    stores: Option<Stores>,
 }
 
 impl Indexer {
-    pub fn import(indexes_dir: &Path) -> color_eyre::Result<Self> {
+    pub fn new(indexes_dir: &Path) -> color_eyre::Result<Self> {
         setrlimit()?;
+        Ok(Self {
+            path: indexes_dir.to_owned(),
+            vecs: None,
+            stores: None,
+        })
+    }
 
-        debug!("Importing indexes...");
+    pub fn import_vecs(&mut self) -> color_eyre::Result<()> {
+        self.vecs = Some(Vecs::import(&self.path.join("vecs"))?);
+        Ok(())
+    }
 
-        let vecs = Vecs::import(&indexes_dir.join("vecs"))?;
-
-        let stores = Stores::import(&indexes_dir.join("stores"))?;
-
-        Ok(Self { vecs, stores })
+    pub fn import_stores(&mut self) -> color_eyre::Result<()> {
+        self.stores = Some(Stores::import(&self.path.join("stores"))?);
+        Ok(())
     }
 
     pub fn index(&mut self, parser: &Parser, rpc: &'static rpc::Client, exit: &Exit) -> color_eyre::Result<Indexes> {
         let check_collisions = true;
 
-        let starting_indexes = Indexes::try_from((&mut self.vecs, &self.stores, rpc)).unwrap_or_else(|_| {
-            let indexes = Indexes::default();
-            indexes.push_if_needed(&mut self.vecs).unwrap();
-            indexes
-        });
+        let starting_indexes = Indexes::try_from((self.vecs.as_mut().unwrap(), self.stores.as_ref().unwrap(), rpc))
+            .unwrap_or_else(|_| {
+                let indexes = Indexes::default();
+                indexes.push_if_needed(self.vecs.as_mut().unwrap()).unwrap();
+                indexes
+            });
 
         exit.block();
-        self.stores.rollback_if_needed(&self.vecs, &starting_indexes)?;
-        self.vecs.rollback_if_needed(&starting_indexes)?;
+        self.stores
+            .as_mut()
+            .unwrap()
+            .rollback_if_needed(self.vecs.as_ref().unwrap(), &starting_indexes)?;
+        self.vecs.as_mut().unwrap().rollback_if_needed(&starting_indexes)?;
         exit.release();
+
+        let vecs = self.vecs.as_mut().unwrap();
+        let stores = self.stores.as_mut().unwrap();
+
+        let mut idxs = starting_indexes.clone();
+
+        let start = Some(idxs.height);
+        let end = None; //Some(Height::new(400_000));
+
+        if starting_indexes.height > Height::try_from(rpc)? || end.is_some_and(|end| starting_indexes.height > end) {
+            return Ok(starting_indexes);
+        }
+
+        info!("Started indexing...");
 
         let export_if_needed =
             |stores: &mut Stores, vecs: &mut Vecs, height: Height, rem: bool, exit: &Exit| -> color_eyre::Result<()> {
@@ -77,20 +103,6 @@ impl Indexer {
                 exit.release();
                 Ok(())
             };
-
-        let vecs = &mut self.vecs;
-        let stores = &mut self.stores;
-
-        let mut idxs = starting_indexes.clone();
-
-        let start = Some(idxs.height);
-        let end = None; //Some(Height::new(400_000));
-
-        if starting_indexes.height > Height::try_from(rpc)? || end.is_some_and(|end| starting_indexes.height > end) {
-            return Ok(starting_indexes);
-        }
-
-        info!("Started indexing...");
 
         parser.parse(start, None).iter().try_for_each(
             |(height, block, blockhash)| -> color_eyre::Result<()> {
@@ -638,6 +650,26 @@ impl Indexer {
         stores.rotate_memtables();
 
         Ok(starting_indexes)
+    }
+
+    pub fn path(&self) -> &Path {
+        &self.path
+    }
+
+    pub fn vecs(&self) -> &Vecs {
+        self.vecs.as_ref().unwrap()
+    }
+
+    pub fn mut_vecs(&mut self) -> &mut Vecs {
+        self.vecs.as_mut().unwrap()
+    }
+
+    pub fn stores(&self) -> &Stores {
+        self.stores.as_ref().unwrap()
+    }
+
+    pub fn mut_stores(&mut self) -> &mut Stores {
+        self.stores.as_mut().unwrap()
     }
 }
 
