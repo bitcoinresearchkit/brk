@@ -29,6 +29,12 @@ Feel free to open an issue if you want to add another instance
 
 [Guide](https://crates.io/crates/brk_cli)
 
+## Acknowledgments
+
+Immense thank you to the [Open Sats](https://opensats.org/) public charity. Their grant — from December 2024 to the present — has been critical in sustaining this project.
+
+Heartfelt thanks go out to every donor on [Nostr](https://primal.net/p/npub1jagmm3x39lmwfnrtvxcs9ac7g300y3dusv9lgzhk2e4x5frpxlrqa73v44) and [Geyser.fund](https://geyser.fund/project/brk) whose support has ensured the availability of the [kibō.money](https://kibo.money) public instance.
+
 ## Donate
 
 <img width="159" alt="image" src="https://github.com/user-attachments/assets/8bbb759f-4874-46cb-b093-b30cb30f5828">
@@ -39,7 +45,7 @@ Feel free to open an issue if you want to add another instance
 
 [lnurl1dp68gurn8ghj7ampd3kx2ar0veekzar0wd5xjtnrdakj7tnhv4kxctttdehhwm30d3h82unvwqhkxmmww3jkuar8d35kgetj8yuq363hv4](lightning:lnurl1dp68gurn8ghj7ampd3kx2ar0veekzar0wd5xjtnrdakj7tnhv4kxctttdehhwm30d3h82unvwqhkxmmww3jkuar8d35kgetj8yuq363hv4)
 
-[Geyser Fund](https://geyser.fund/project/kibo/)
+[Geyser Fund](https://geyser.fund/project/brk)
 
 ## Old README
 

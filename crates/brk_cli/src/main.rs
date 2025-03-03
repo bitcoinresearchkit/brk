@@ -5,7 +5,7 @@ use brk_indexer::Indexer;
 use brk_query::Params as QueryArgs;
 use clap::{Parser, Subcommand};
 use query::query;
-use run::{RunArgs, run};
+use run::{RunConfig, run};
 
 mod query;
 mod run;
@@ -21,7 +21,7 @@ struct Cli {
 #[derive(Subcommand, Debug)]
 enum Commands {
     /// Run the indexer, computer and server
-    Run(RunArgs),
+    Run(RunConfig),
     /// Query generated datasets via the `run` command in a similar fashion as the server's API
     Query(QueryArgs),
 }
@@ -40,7 +40,7 @@ fn main() -> color_eyre::Result<()> {
     let computer = Computer::import(&outputs_dir.join("computed"))?;
 
     match &cli.command {
-        Commands::Run(_) => run(indexer, computer),
+        Commands::Run(args) => run(indexer, computer, args),
         Commands::Query(args) => query(indexer, computer, args),
     }
 }
