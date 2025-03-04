@@ -1,6 +1,7 @@
+#![cfg_attr(docsrs, feature(doc_cfg))]
 #![doc = include_str!("../README.md")]
 #![doc = "\n## Example\n\n```rust"]
-#![doc = include_str!("main.rs")]
+#![doc = include_str!("../examples/main.rs")]
 #![doc = "```"]
 
 use std::{collections::BTreeMap, fs, path::Path};
@@ -93,9 +94,10 @@ impl Fetcher {
         previous_timestamp: Option<Timestamp>,
         name: &str,
     ) -> color_eyre::Result<OHLCCents> {
-        let previous_ohlc = previous_timestamp.map_or(Some(OHLCCents::default()), |previous_timestamp| {
-            tree.get(&previous_timestamp).cloned()
-        });
+        let previous_ohlc = previous_timestamp
+            .map_or(Some(OHLCCents::default()), |previous_timestamp| {
+                tree.get(&previous_timestamp).cloned()
+            });
 
         let last_ohlc = tree.get(&timestamp);
 

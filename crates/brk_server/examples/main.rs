@@ -17,19 +17,19 @@ pub fn main() -> color_eyre::Result<()> {
     let bitcoin_dir = Path::new("../../../bitcoin");
     let rpc = Box::leak(Box::new(rpc::Client::new(
         "http://localhost:8332",
-        rpc::Auth::CookieFile(Path::new(bitcoin_dir).join(".cookie")),
+        rpc::Auth::CookieFile(bitcoin_dir.join(".cookie")),
     )?));
     let exit = Exit::new();
 
-    let parser = Parser::new(bitcoin_dir, rpc);
+    let parser = Parser::new(bitcoin_dir.to_owned(), rpc);
 
     let outputs_dir = Path::new("../../_outputs");
 
-    let mut indexer = Indexer::new(&outputs_dir.join("indexed"))?;
+    let mut indexer = Indexer::new(outputs_dir.join("indexed"))?;
     indexer.import_stores()?;
     indexer.import_vecs()?;
 
-    let mut computer = Computer::new(&outputs_dir.join("computed"));
+    let mut computer = Computer::new(outputs_dir.join("computed"));
     computer.import_stores()?;
     computer.import_vecs()?;
 
@@ -41,7 +41,9 @@ pub fn main() -> color_eyre::Result<()> {
             let served_computer = computer.clone();
 
             tokio::spawn(async move {
-                brk_server::main(served_indexer, served_computer).await.unwrap();
+                brk_server::main(served_indexer, served_computer)
+                    .await
+                    .unwrap();
             });
 
             loop {

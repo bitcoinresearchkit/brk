@@ -5,7 +5,7 @@ use crate::{Format, Index};
 
 #[derive(Debug, Deserialize, Parser)]
 pub struct Params {
-    #[clap(short, long, value_parser = PossibleValuesParser::new(Index::possible_values()))]
+    #[clap(short, long, value_parser = PossibleValuesParser::new(Index::all_possible_values()))]
     /// Index of the values requested
     pub index: String,
     #[clap(short, long, value_delimiter = ' ', num_args = 1..)]

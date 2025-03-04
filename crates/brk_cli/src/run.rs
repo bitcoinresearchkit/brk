@@ -8,7 +8,7 @@ use std::{
 use brk_computer::Computer;
 use brk_exit::Exit;
 use brk_indexer::Indexer;
-use brk_parser::rpc::{self, Auth, RpcApi};
+use brk_parser::rpc::{self, Auth, Client, RpcApi};
 use brk_server::tokio;
 use clap::{Parser, ValueEnum};
 use color_eyre::eyre::eyre;
@@ -20,26 +20,17 @@ use crate::path_dot_brk;
 pub fn run(config: RunConfig) -> color_eyre::Result<()> {
     let config = RunConfig::import(Some(config))?;
 
-    let bitcoin_dir = config.bitcoindir();
-
-    let rpc = Box::leak(Box::new(rpc::Client::new(
-        &format!(
-            "http://{}:{}",
-            config.rpcconnect().unwrap_or(&"localhost".to_string()),
-            config.rpcport().unwrap_or(8332)
-        ),
-        config.to_rpc_auth().unwrap(),
-    )?));
+    let rpc = config.rpc()?;
 
     let exit = Exit::new();
 
-    let parser = brk_parser::Parser::new(bitcoin_dir.as_path(), rpc);
+    let parser = brk_parser::Parser::new(config.bitcoindir(), rpc);
 
-    let mut indexer = Indexer::new(&config.indexeddir())?;
+    let mut indexer = Indexer::new(config.indexeddir())?;
     indexer.import_stores()?;
     indexer.import_vecs()?;
 
-    let mut computer = Computer::new(&config.computeddir());
+    let mut computer = Computer::new(config.computeddir());
     computer.import_stores()?;
     computer.import_vecs()?;
 
@@ -52,7 +43,9 @@ pub fn run(config: RunConfig) -> color_eyre::Result<()> {
 
             let handle = if config.serve() {
                 Some(tokio::spawn(async move {
-                    brk_server::main(served_indexer, served_computer).await.unwrap();
+                    brk_server::main(served_indexer, served_computer)
+                        .await
+                        .unwrap();
                 }))
             } else {
                 None
@@ -231,7 +224,7 @@ impl RunConfig {
             std::process::exit(1);
         }
 
-        if self.to_rpc_auth().is_err() {
+        if self.rpc_auth().is_err() {
             println!(
                 "No way found to authenticate the RPC client, please either set --rpccookiefile or --rpcuser and --rpcpassword.\nRun the program with '-h' for help."
             );
@@ -249,7 +242,18 @@ impl RunConfig {
         fs::write(path, toml::to_string(self).unwrap())
     }
 
-    pub fn to_rpc_auth(&self) -> color_eyre::Result<Auth> {
+    pub fn rpc(&self) -> color_eyre::Result<&'static Client> {
+        Ok(Box::leak(Box::new(rpc::Client::new(
+            &format!(
+                "http://{}:{}",
+                self.rpcconnect().unwrap_or(&"localhost".to_string()),
+                self.rpcport().unwrap_or(8332)
+            ),
+            self.rpc_auth().unwrap(),
+        )?)))
+    }
+
+    fn rpc_auth(&self) -> color_eyre::Result<Auth> {
         let cookie = self.path_cookiefile();
 
         if cookie.is_file() {
@@ -264,11 +268,11 @@ impl RunConfig {
         }
     }
 
-    pub fn rpcconnect(&self) -> Option<&String> {
+    fn rpcconnect(&self) -> Option<&String> {
         self.rpcconnect.as_ref()
     }
 
-    pub fn rpcport(&self) -> Option<u16> {
+    fn rpcport(&self) -> Option<u16> {
         self.rpcport
     }
 
@@ -297,11 +301,13 @@ impl RunConfig {
     }
 
     pub fn process(&self) -> bool {
-        self.mode.is_none_or(|m| m == Mode::All || m == Mode::Processor)
+        self.mode
+            .is_none_or(|m| m == Mode::All || m == Mode::Processor)
     }
 
     pub fn serve(&self) -> bool {
-        self.mode.is_none_or(|m| m == Mode::All || m == Mode::Server)
+        self.mode
+            .is_none_or(|m| m == Mode::All || m == Mode::Server)
     }
 
     fn path_cookiefile(&self) -> PathBuf {
@@ -314,7 +320,9 @@ impl RunConfig {
     fn fix_user_path(path: &str) -> PathBuf {
         let fix = move |pattern: &str| {
             if path.starts_with(pattern) {
-                let path = &path.replace(&format!("{pattern}/"), "").replace(pattern, "");
+                let path = &path
+                    .replace(&format!("{pattern}/"), "")
+                    .replace(pattern, "");
 
                 let home = std::env::var("HOME").unwrap();
 
@@ -328,7 +336,20 @@ impl RunConfig {
     }
 }
 
-#[derive(Default, Debug, Clone, Copy, Parser, ValueEnum, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(
+    Default,
+    Debug,
+    Clone,
+    Copy,
+    Parser,
+    ValueEnum,
+    Serialize,
+    Deserialize,
+    PartialEq,
+    Eq,
+    PartialOrd,
+    Ord,
+)]
 pub enum Mode {
     #[default]
     All,

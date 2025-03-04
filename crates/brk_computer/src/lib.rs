@@ -1,6 +1,7 @@
+#![cfg_attr(docsrs, feature(doc_cfg))]
 #![doc = include_str!("../README.md")]
 #![doc = "\n## Example\n\n```rust"]
-#![doc = include_str!("main.rs")]
+#![doc = include_str!("../examples/main.rs")]
 #![doc = "```"]
 
 use std::path::{Path, PathBuf};
@@ -23,9 +24,9 @@ pub struct Computer {
 }
 
 impl Computer {
-    pub fn new(computed_dir: &Path) -> Self {
+    pub fn new(computed_dir: PathBuf) -> Self {
         Self {
-            path: computed_dir.to_owned(),
+            path: computed_dir,
             vecs: None,
             stores: None,
         }
@@ -36,6 +37,8 @@ impl Computer {
         Ok(())
     }
 
+    /// Do NOT import multiple times are things will break !!!
+    /// Clone struct instead
     pub fn import_stores(&mut self) -> color_eyre::Result<()> {
         self.stores = Some(Stores::import(&self.path.join("stores"))?);
         Ok(())
@@ -43,7 +46,12 @@ impl Computer {
 }
 
 impl Computer {
-    pub fn compute(&mut self, indexer: &mut Indexer, starting_indexes: Indexes, exit: &Exit) -> color_eyre::Result<()> {
+    pub fn compute(
+        &mut self,
+        indexer: &mut Indexer,
+        starting_indexes: Indexes,
+        exit: &Exit,
+    ) -> color_eyre::Result<()> {
         info!("Computing...");
 
         let height_count = indexer.vecs().height_to_size.len();

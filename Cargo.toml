@@ -4,7 +4,7 @@ members = ["crates/*"]
 package.description = "The Bitcoin Research Kit is a suite of tools designed to extract, compute and display data stored on a Bitcoin Core node"
 package.license = "MIT"
 package.edition = "2024"
-package.version = "0.0.4"
+package.version = "0.0.6"
 package.repository = "https://github.com/bitcoinresearchkit/brk"
 
 [workspace.dependencies]
@@ -30,6 +30,6 @@ log = { version = "0.4.26" }
 minreq = { version = "2.13.2", features = ["https", "serde_json"] }
 rayon = "1.10.0"
 serde = { version = "1.0.218", features = ["derive"] }
-serde_json = { version = "1.0.139", features = ["float_roundtrip"] }
+serde_json = { version = "1.0.140", features = ["float_roundtrip"] }
 tabled = "0.18.0"
 zerocopy = { version = "0.8.21", features = ["derive"] }

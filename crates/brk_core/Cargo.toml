@@ -16,7 +16,7 @@ log = { workspace = true }
 rapidhash = "1.4.0"
 rlimit = "0.10.2"
 serde = { workspace = true }
-serde_bytes = "0.11.15"
+serde_bytes = "0.11.16"
 zerocopy = { workspace = true }
 
 [package.metadata.cargo-machete]

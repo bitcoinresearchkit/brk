@@ -1,6 +1,7 @@
+#![cfg_attr(docsrs, feature(doc_cfg))]
 #![doc = include_str!("../README.md")]
 #![doc = "\n## Example\n\n```rust"]
-#![doc = include_str!("main.rs")]
+#![doc = include_str!("../examples/main.rs")]
 #![doc = "```"]
 
 use std::{
@@ -18,7 +19,11 @@ use jiff::{Timestamp, tz};
 pub fn init(path: Option<&Path>) {
     let file = path.map(|path| {
         let _ = fs::remove_file(path);
-        OpenOptions::new().create(true).append(true).open(path).unwrap()
+        OpenOptions::new()
+            .create(true)
+            .append(true)
+            .open(path)
+            .unwrap()
     });
 
     Builder::from_env(Env::default().default_filter_or("info,fjall=off,lsm_tree=off"))
@@ -34,7 +39,14 @@ pub fn init(path: Option<&Path>) {
             let args = record.args();
 
             if let Some(file) = file.as_ref() {
-                let _ = write(file.try_clone().unwrap(), &date_time, target, &level, dash, args);
+                let _ = write(
+                    file.try_clone().unwrap(),
+                    &date_time,
+                    target,
+                    &level,
+                    dash,
+                    args,
+                );
             }
 
             let colored_date_time = date_time.bright_black();
@@ -48,7 +60,14 @@ pub fn init(path: Option<&Path>) {
             };
             let colored_dash = dash.bright_black();
 
-            write(buf, colored_date_time, target, colored_level, colored_dash, args)
+            write(
+                buf,
+                colored_date_time,
+                target,
+                colored_level,
+                colored_dash,
+                args,
+            )
         })
         .init();
 }

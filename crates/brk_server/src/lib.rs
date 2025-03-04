@@ -1,6 +1,7 @@
+#![cfg_attr(docsrs, feature(doc_cfg))]
 #![doc = include_str!("../README.md")]
 #![doc = "\n## Example\n\n```rust"]
-#![doc = include_str!("main.rs")]
+#![doc = include_str!("../examples/main.rs")]
 #![doc = "```"]
 
 use std::time::Instant;
@@ -37,7 +38,11 @@ pub async fn main(indexer: Indexer, computer: Computer) -> color_eyre::Result<()
 
     let state = AppState { query };
 
-    let compression_layer = CompressionLayer::new().br(true).deflate(true).gzip(true).zstd(true);
+    let compression_layer = CompressionLayer::new()
+        .br(true)
+        .deflate(true)
+        .gzip(true)
+        .zstd(true);
 
     let router = Router::new()
         .add_api_routes()

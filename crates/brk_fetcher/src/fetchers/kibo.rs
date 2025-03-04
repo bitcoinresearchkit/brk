@@ -30,11 +30,18 @@ impl Kibo {
     pub fn get_from_height(&mut self, height: Height) -> color_eyre::Result<OHLCCents> {
         #[allow(clippy::map_entry)]
         if !self.height_to_ohlc_vec.contains_key(&height)
-            || ((usize::from(height) + self.height_to_ohlc_vec.get(&height).unwrap().len()) <= usize::from(height))
+            || ((usize::from(height) + self.height_to_ohlc_vec.get(&height).unwrap().len())
+                <= usize::from(height))
         {
-            self.height_to_ohlc_vec
-                .insert(height, Self::fetch_height_prices(height)?);
+            self.height_to_ohlc_vec.insert(
+                height,
+                Self::fetch_height_prices(height).inspect_err(|e| {
+                    dbg!(e);
+                })?,
+            );
         }
+
+        dbg!(&self.height_to_ohlc_vec.keys());
 
         self.height_to_ohlc_vec
             .get(&height)
@@ -51,9 +58,9 @@ impl Kibo {
             |try_index| {
                 let base_url = Self::get_base_url(try_index);
 
-                let body: Value = minreq::get(format!("{base_url}/height-to-price?chunk={}", height))
-                    .send()?
-                    .json()?;
+                let url = format!("{base_url}/height-to-price?chunk={}", height);
+
+                let body: Value = minreq::get(url).send()?.json()?;
 
                 let vec = body
                     .as_object()
@@ -91,7 +98,8 @@ impl Kibo {
                 .0
                 < date
         {
-            self.year_to_date_to_ohlc.insert(year, Self::fetch_date_prices(year)?);
+            self.year_to_date_to_ohlc
+                .insert(year, Self::fetch_date_prices(year)?);
         }
 
         self.year_to_date_to_ohlc
@@ -125,7 +133,8 @@ impl Kibo {
                     .context("Expect to be an object")?
                     .iter()
                     .map(|(serialized_date, value)| -> color_eyre::Result<_> {
-                        let date = Date::from(jiff::civil::Date::from_str(serialized_date).unwrap());
+                        let date =
+                            Date::from(jiff::civil::Date::from_str(serialized_date).unwrap());
                         Ok((date, Self::value_to_ohlc(value)?))
                     })
                     .collect::<Result<BTreeMap<_, _>, _>>()
