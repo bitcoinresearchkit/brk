@@ -1,11 +1,11 @@
 use jiff::{Span, civil::Date as Date_, tz::TimeZone};
-use serde::Serialize;
+use serde::{Serialize, Serializer};
 use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 use super::{Dateindex, Timestamp};
 
 #[derive(
-    Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, FromBytes, Immutable, IntoBytes, KnownLayout, Serialize,
+    Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, FromBytes, Immutable, IntoBytes, KnownLayout,
 )]
 pub struct Date(u32);
 
@@ -52,7 +52,9 @@ impl From<Date> for Date_ {
 
 impl From<Timestamp> for Date {
     fn from(value: Timestamp) -> Self {
-        Self::from(Date_::from(jiff::Timestamp::from(value).to_zoned(TimeZone::UTC)))
+        Self::from(Date_::from(
+            jiff::Timestamp::from(value).to_zoned(TimeZone::UTC),
+        ))
     }
 }
 
@@ -68,6 +70,20 @@ impl From<Dateindex> for Date {
 
 impl std::fmt::Display for Date {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.write_str(&format!("{}-{}-{}", self.year(), self.month(), self.day()))
+        f.write_str(&format!(
+            "{}-{:0>2}-{:0>2}",
+            self.year(),
+            self.month(),
+            self.day()
+        ))
+    }
+}
+
+impl Serialize for Date {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_str(&self.to_string())
     }
 }

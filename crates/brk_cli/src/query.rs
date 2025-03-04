@@ -8,15 +8,19 @@ use crate::run::RunConfig;
 pub fn query(params: QueryParams) -> color_eyre::Result<()> {
     let config = RunConfig::import(None)?;
 
-    let mut indexer = Indexer::new(&config.indexeddir())?;
+    let mut indexer = Indexer::new(config.indexeddir())?;
     indexer.import_vecs()?;
 
-    let mut computer = Computer::new(&config.computeddir());
+    let mut computer = Computer::new(config.computeddir());
     computer.import_vecs()?;
 
     let query = Query::build(&indexer, &computer);
 
-    let ids = params.values.iter().flat_map(|v| v.split(",")).collect::<Vec<_>>();
+    let ids = params
+        .values
+        .iter()
+        .flat_map(|v| v.split(","))
+        .collect::<Vec<_>>();
 
     let index = Index::try_from(params.index.as_str())?;
 
@@ -36,7 +40,8 @@ pub fn query(params: QueryParams) -> color_eyre::Result<()> {
                             Value::List(v) => vec![v],
                             Value::Matrix(v) => v,
                         };
-                        let mut table = v.to_table(ids.iter().map(|id| id.to_string()).collect::<Vec<_>>());
+                        let mut table =
+                            v.to_table(ids.iter().map(|id| id.to_string()).collect::<Vec<_>>());
                         table.with(Style::psql());
                         table.to_string()
                     }

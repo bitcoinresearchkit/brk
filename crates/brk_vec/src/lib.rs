@@ -1,6 +1,7 @@
+#![cfg_attr(docsrs, feature(doc_cfg))]
 #![doc = include_str!("../README.md")]
 #![doc = "\n## Example\n\n```rust"]
-#![doc = include_str!("main.rs")]
+#![doc = include_str!("../examples/main.rs")]
 #![doc = "```"]
 
 use std::{
@@ -81,7 +82,11 @@ where
     pub fn forced_import(path: &Path, version: Version) -> Result<Self> {
         let res = Self::import(path, version);
         match res {
-            Err(Error::WrongEndian) | Err(Error::DifferentVersion { found: _, expected: _ }) => {
+            Err(Error::WrongEndian)
+            | Err(Error::DifferentVersion {
+                found: _,
+                expected: _,
+            }) => {
                 fs::remove_dir_all(path)?;
                 Self::import(path, version)
             }
@@ -243,7 +248,9 @@ where
             return Ok(Some(Value::Ref(T::try_ref_from_bytes(slice)?)));
         }
 
-        Ok(self.open_then_read_(index).map_or(None, |v| Some(Value::Owned(v))))
+        Ok(self
+            .open_then_read_(index)
+            .map_or(None, |v| Some(Value::Owned(v))))
     }
 
     #[inline]
@@ -289,7 +296,10 @@ where
         let disk_len = I::from(Self::read_disk_len_(&file)?);
         let pushed_len = I::from(self.pushed_len());
 
-        Self::seek_(&mut file, Self::index_to_byte_index(Self::i_to_usize(index)?))?;
+        Self::seek_(
+            &mut file,
+            Self::index_to_byte_index(Self::i_to_usize(index)?),
+        )?;
 
         let mut buf = Self::create_buffer();
 
@@ -301,7 +311,10 @@ where
         let disk_len = Self::i_to_usize(disk_len)?;
         let mut i = I::default();
         while i < pushed_len {
-            f((i + disk_len, self.pushed.get(Self::i_to_usize(i)?).as_ref().unwrap()))?;
+            f((
+                i + disk_len,
+                self.pushed.get(Self::i_to_usize(i)?).as_ref().unwrap(),
+            ))?;
             i = i + 1;
         }
 
@@ -525,7 +538,12 @@ where
     }
 
     pub fn file_name(&self) -> String {
-        self.path().file_name().unwrap().to_str().unwrap().to_owned()
+        self.path()
+            .file_name()
+            .unwrap()
+            .to_str()
+            .unwrap()
+            .to_owned()
     }
 
     #[inline]
@@ -567,10 +585,14 @@ where
         A: StoredType,
         F: Fn(&A, I) -> T,
     {
-        self.validate_computed_version_or_reset_file(Version::from(0) + self.version + other.version)?;
+        self.validate_computed_version_or_reset_file(
+            Version::from(0) + self.version + other.version,
+        )?;
 
         let index = max_from.min(I::from(self.len()));
-        other.iter_from(index, |(i, a)| self.push_and_flush_if_needed(i, t(a, i), exit))?;
+        other.iter_from(index, |(i, a)| {
+            self.push_and_flush_if_needed(i, t(a, i), exit)
+        })?;
 
         Ok(self.safe_flush(exit)?)
     }
@@ -585,7 +607,9 @@ where
         I: StoredType + StoredIndex,
         T: StoredIndex,
     {
-        self.validate_computed_version_or_reset_file(Version::from(0) + self.version + other.version)?;
+        self.validate_computed_version_or_reset_file(
+            Version::from(0) + self.version + other.version,
+        )?;
 
         let index = max_from.min(self.read_last()?.cloned().unwrap_or_default());
         other.iter_from(index, |(v, i)| self.push_and_flush_if_needed(*i, v, exit))?;
@@ -612,7 +636,8 @@ where
         first_indexes.iter_from(index, |(value, first_index)| {
             let first_index = Self::i_to_usize(*first_index)?;
             let last_index = Self::i_to_usize(*last_indexes.read(value)?.unwrap())?;
-            (first_index..last_index).try_for_each(|index| self.push_and_flush_if_needed(I::from(index), value, exit))
+            (first_index..last_index)
+                .try_for_each(|index| self.push_and_flush_if_needed(I::from(index), value, exit))
         })?;
 
         Ok(self.safe_flush(exit)?)
@@ -628,7 +653,9 @@ where
     where
         T: Copy + From<usize> + Sub<T, Output = T> + StoredIndex,
     {
-        self.validate_computed_version_or_reset_file(Version::from(0) + self.version + first_indexes.version)?;
+        self.validate_computed_version_or_reset_file(
+            Version::from(0) + self.version + first_indexes.version,
+        )?;
 
         let index = max_from.min(I::from(self.len()));
         let one = T::from(1);
@@ -691,7 +718,11 @@ where
 
         let index = max_from.min(I::from(self.len()));
         self_to_other.iter_from(index, |(i, other)| {
-            self.push_and_flush_if_needed(i, T::from(other_to_self.read(*other)?.unwrap() == &i), exit)
+            self.push_and_flush_if_needed(
+                i,
+                T::from(other_to_self.read(*other)?.unwrap() == &i),
+                exit,
+            )
         })?;
 
         Ok(self.safe_flush(exit)?)

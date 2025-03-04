@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-cargo check
+cargo build --all-targets
 
 cd crates/brk
 

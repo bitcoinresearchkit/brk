@@ -1,6 +1,7 @@
+#![cfg_attr(docsrs, feature(doc_cfg))]
 #![doc = include_str!("../README.md")]
 #![doc = "\n## Example\n\n```rust"]
-#![doc = include_str!("main.rs")]
+#![doc = include_str!("../examples/main.rs")]
 #![doc = "```"]
 
 use std::{
@@ -11,8 +12,8 @@ use std::{
 };
 
 use brk_core::{
-    AddressHash, Addressbytes, Addressindex, Addresstype, BlockHash, BlockHashPrefix, Height, Sats, Timestamp, Txid,
-    TxidPrefix, Txindex, Txinindex, Txoutindex, Vin, Vout, setrlimit,
+    AddressHash, Addressbytes, Addressindex, Addresstype, BlockHash, BlockHashPrefix, Height, Sats,
+    Timestamp, Txid, TxidPrefix, Txindex, Txinindex, Txoutindex, Vin, Vout, setrlimit,
 };
 pub use brk_parser::*;
 
@@ -39,10 +40,10 @@ pub struct Indexer {
 }
 
 impl Indexer {
-    pub fn new(indexes_dir: &Path) -> color_eyre::Result<Self> {
+    pub fn new(indexes_dir: PathBuf) -> color_eyre::Result<Self> {
         setrlimit()?;
         Ok(Self {
-            path: indexes_dir.to_owned(),
+            path: indexes_dir,
             vecs: None,
             stores: None,
         })
@@ -53,27 +54,40 @@ impl Indexer {
         Ok(())
     }
 
+    /// Do NOT import multiple times are things will break !!!
     pub fn import_stores(&mut self) -> color_eyre::Result<()> {
         self.stores = Some(Stores::import(&self.path.join("stores"))?);
         Ok(())
     }
 
-    pub fn index(&mut self, parser: &Parser, rpc: &'static rpc::Client, exit: &Exit) -> color_eyre::Result<Indexes> {
+    pub fn index(
+        &mut self,
+        parser: &Parser,
+        rpc: &'static rpc::Client,
+        exit: &Exit,
+    ) -> color_eyre::Result<Indexes> {
         let check_collisions = true;
 
-        let starting_indexes = Indexes::try_from((self.vecs.as_mut().unwrap(), self.stores.as_ref().unwrap(), rpc))
-            .unwrap_or_else(|_| {
-                let indexes = Indexes::default();
-                indexes.push_if_needed(self.vecs.as_mut().unwrap()).unwrap();
-                indexes
-            });
+        let starting_indexes = Indexes::try_from((
+            self.vecs.as_mut().unwrap(),
+            self.stores.as_ref().unwrap(),
+            rpc,
+        ))
+        .unwrap_or_else(|_| {
+            let indexes = Indexes::default();
+            indexes.push_if_needed(self.vecs.as_mut().unwrap()).unwrap();
+            indexes
+        });
 
         exit.block();
         self.stores
             .as_mut()
             .unwrap()
             .rollback_if_needed(self.vecs.as_ref().unwrap(), &starting_indexes)?;
-        self.vecs.as_mut().unwrap().rollback_if_needed(&starting_indexes)?;
+        self.vecs
+            .as_mut()
+            .unwrap()
+            .rollback_if_needed(&starting_indexes)?;
         exit.release();
 
         let vecs = self.vecs.as_mut().unwrap();
@@ -84,25 +98,31 @@ impl Indexer {
         let start = Some(idxs.height);
         let end = None; //Some(Height::new(400_000));
 
-        if starting_indexes.height > Height::try_from(rpc)? || end.is_some_and(|end| starting_indexes.height > end) {
+        if starting_indexes.height > Height::try_from(rpc)?
+            || end.is_some_and(|end| starting_indexes.height > end)
+        {
             return Ok(starting_indexes);
         }
 
         info!("Started indexing...");
 
-        let export_if_needed =
-            |stores: &mut Stores, vecs: &mut Vecs, height: Height, rem: bool, exit: &Exit| -> color_eyre::Result<()> {
-                if height == 0 || (height % SNAPSHOT_BLOCK_RANGE != 0) != rem || exit.triggered() {
-                    return Ok(());
-                }
+        let export_if_needed = |stores: &mut Stores,
+                                vecs: &mut Vecs,
+                                height: Height,
+                                rem: bool,
+                                exit: &Exit|
+         -> color_eyre::Result<()> {
+            if height == 0 || (height % SNAPSHOT_BLOCK_RANGE != 0) != rem || exit.triggered() {
+                return Ok(());
+            }
 
-                info!("Exporting...");
-                exit.block();
-                stores.commit(height)?;
-                vecs.flush(height)?;
-                exit.release();
-                Ok(())
-            };
+            info!("Exporting...");
+            exit.block();
+            stores.commit(height)?;
+            vecs.flush(height)?;
+            exit.release();
+            Ok(())
+        };
 
         parser.parse(start, None).iter().try_for_each(
             |(height, block, blockhash)| -> color_eyre::Result<()> {

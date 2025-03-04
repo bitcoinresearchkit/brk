@@ -9,10 +9,10 @@ pub fn main() -> color_eyre::Result<()> {
 
     let outputs_dir = Path::new("../../_outputs");
 
-    let mut indexer = Indexer::new(&outputs_dir.join("indexed"))?;
+    let mut indexer = Indexer::new(outputs_dir.join("indexed"))?;
     indexer.import_vecs()?;
 
-    let mut computer = Computer::new(&outputs_dir.join("computed"));
+    let mut computer = Computer::new(outputs_dir.join("computed"));
     computer.import_vecs()?;
 
     let query = Query::build(&indexer, &computer);

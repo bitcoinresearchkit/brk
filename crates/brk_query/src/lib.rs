@@ -1,6 +1,7 @@
+#![cfg_attr(docsrs, feature(doc_cfg))]
 #![doc = include_str!("../README.md")]
 #![doc = "\n## Example\n\n```rust"]
-#![doc = include_str!("main.rs")]
+#![doc = include_str!("../examples/main.rs")]
 #![doc = "```"]
 
 use brk_computer::Computer;
@@ -61,10 +62,15 @@ impl<'a> Query<'a> {
         let tuples = ids
             .iter()
             .map(|s| {
-                (
-                    s.to_owned(),
-                    self.vecid_to_index_to_vec.get(&s.to_lowercase().replace("_", "-")),
-                )
+                let mut id = s.to_lowercase().replace("_", "-");
+                let mut res = self.vecid_to_index_to_vec.get(&id);
+                if res.is_none() {
+                    if let Ok(index) = Index::try_from(id.as_str()) {
+                        id = index.possible_values().last().unwrap().to_string();
+                        res = self.vecid_to_index_to_vec.get(&id)
+                    }
+                }
+                (id, res)
             })
             .filter(|(_, opt)| opt.is_some())
             .map(|(id, vec)| (id, vec.unwrap()))
@@ -77,7 +83,9 @@ impl<'a> Query<'a> {
         let mut values = tuples
             .iter()
             .flat_map(|(_, i_to_v)| i_to_v.get(&index))
-            .map(|vec| -> brk_vec::Result<Vec<serde_json::Value>> { vec.collect_range_values(from, to) })
+            .map(|vec| -> brk_vec::Result<Vec<serde_json::Value>> {
+                vec.collect_range_values(from, to)
+            })
             .collect::<brk_vec::Result<Vec<_>>>()?;
 
         if values.is_empty() {
@@ -88,7 +96,11 @@ impl<'a> Query<'a> {
 
         Ok(match format {
             Some(Format::CSV) | Some(Format::TSV) => {
-                let delimiter = if format == Some(Format::CSV) { ',' } else { '\t' };
+                let delimiter = if format == Some(Format::CSV) {
+                    ','
+                } else {
+                    '\t'
+                };
 
                 let mut text = tuples
                     .into_iter()
@@ -120,7 +132,8 @@ impl<'a> Query<'a> {
                 }
             }
             Some(Format::MD) => {
-                let mut table = values.to_table(ids.iter().map(|s| s.to_string()).collect::<Vec<_>>());
+                let mut table =
+                    values.to_table(tuples.iter().map(|(s, _)| s.to_owned()).collect::<Vec<_>>());
 
                 table.with(Style::markdown());
 

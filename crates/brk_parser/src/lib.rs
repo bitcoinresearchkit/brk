@@ -1,6 +1,7 @@
+#![cfg_attr(docsrs, feature(doc_cfg))]
 #![doc = include_str!("../README.md")]
 #![doc = "\n## Example\n\n```rust"]
-#![doc = include_str!("main.rs")]
+#![doc = include_str!("../examples/main.rs")]
 #![doc = "```"]
 
 use std::{
@@ -8,7 +9,7 @@ use std::{
     collections::BTreeMap,
     fs::{self},
     ops::ControlFlow,
-    path::{Path, PathBuf},
+    path::PathBuf,
     thread,
 };
 
@@ -52,15 +53,16 @@ pub struct Parser {
 }
 
 impl Parser {
-    pub fn new(bitcoin_dir: &Path, rpc: &'static bitcoincore_rpc::Client) -> Self {
-        Self {
-            bitcoin_dir: bitcoin_dir.to_owned(),
-            rpc,
-        }
+    pub fn new(bitcoin_dir: PathBuf, rpc: &'static bitcoincore_rpc::Client) -> Self {
+        Self { bitcoin_dir, rpc }
     }
 
     pub fn get(&self, height: Height) -> Block {
-        self.parse(Some(height), Some(height)).iter().next().unwrap().1
+        self.parse(Some(height), Some(height))
+            .iter()
+            .next()
+            .unwrap()
+            .1
     }
 
     ///
@@ -68,7 +70,11 @@ impl Parser {
     ///
     /// For an example checkout `./main.rs`
     ///
-    pub fn parse(&self, start: Option<Height>, end: Option<Height>) -> Receiver<(Height, Block, BlockHash)> {
+    pub fn parse(
+        &self,
+        start: Option<Height>,
+        end: Option<Height>,
+    ) -> Receiver<(Height, Block, BlockHash)> {
         let bitcoin_dir = self.bitcoin_dir.as_path();
         let rpc = self.rpc;
 
@@ -119,9 +125,12 @@ impl Parser {
                             }
                         }
 
-                        let len =
-                            u32::from_le_bytes(xor_i.bytes(&mut blk_bytes[i..(i + 4)], &xor_bytes).try_into().unwrap())
-                                as usize;
+                        let len = u32::from_le_bytes(
+                            xor_i
+                                .bytes(&mut blk_bytes[i..(i + 4)], &xor_bytes)
+                                .try_into()
+                                .unwrap(),
+                        ) as usize;
                         i += 4;
 
                         let block_bytes = (blk_bytes[i..(i + len)]).to_vec();
@@ -152,18 +161,19 @@ impl Parser {
                     BlockState::decode(block_state, xor_i, &xor_bytes);
                 });
 
-                bulk.drain(..).try_for_each(|(blk_metadata, block_state, _)| {
-                    let block = match block_state {
-                        BlockState::Decoded(block) => block,
-                        _ => unreachable!(),
-                    };
+                bulk.drain(..)
+                    .try_for_each(|(blk_metadata, block_state, _)| {
+                        let block = match block_state {
+                            BlockState::Decoded(block) => block,
+                            _ => unreachable!(),
+                        };
 
-                    if send_block.send((blk_metadata, block)).is_err() {
-                        return ControlFlow::Break(());
-                    }
+                        if send_block.send((blk_metadata, block)).is_err() {
+                            return ControlFlow::Break(());
+                        }
 
-                    ControlFlow::Continue(())
-                })
+                        ControlFlow::Continue(())
+                    })
             };
 
             recv_bytes.iter().try_for_each(|tuple| {
@@ -230,7 +240,9 @@ impl Parser {
                     let mut opt = if current_height == height {
                         Some((block, hash))
                     } else {
-                        if start.is_none_or(|start| start <= height) && end.is_none_or(|end| end >= height) {
+                        if start.is_none_or(|start| start <= height)
+                            && end.is_none_or(|end| end >= height)
+                        {
                             future_blocks.insert(height, (block, hash));
                         }
                         None
@@ -247,7 +259,9 @@ impl Parser {
                             return ControlFlow::Break(());
                         }
 
-                        send_height_block_hash.send((current_height, block, hash)).unwrap();
+                        send_height_block_hash
+                            .send((current_height, block, hash))
+                            .unwrap();
 
                         if end.is_some_and(|end| end == current_height) {
                             return ControlFlow::Break(());

@@ -16,13 +16,13 @@ fn main() -> color_eyre::Result<()> {
     let bitcoin_dir = Path::new("../../../bitcoin");
     let rpc = Box::leak(Box::new(rpc::Client::new(
         "http://localhost:8332",
-        rpc::Auth::CookieFile(Path::new(bitcoin_dir).join(".cookie")),
+        rpc::Auth::CookieFile(bitcoin_dir.join(".cookie")),
     )?));
     let exit = Exit::new();
 
-    let parser = Parser::new(bitcoin_dir, rpc);
+    let parser = Parser::new(bitcoin_dir.to_owned(), rpc);
 
-    let mut indexer = Indexer::new(Path::new("../../_outputs/indexed"))?;
+    let mut indexer = Indexer::new(Path::new("../../_outputs/indexed").to_owned())?;
     indexer.import_stores()?;
     indexer.import_vecs()?;
 
