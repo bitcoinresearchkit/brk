@@ -1,4 +1,3 @@
-#![cfg_attr(docsrs, feature(doc_cfg))]
 #![doc = include_str!("../README.md")]
 #![doc = "\n## Example\n\n```rust"]
 #![doc = include_str!("../examples/main.rs")]
@@ -55,6 +54,7 @@ impl Indexer {
     }
 
     /// Do NOT import multiple times are things will break !!!
+    /// Clone struct instead
     pub fn import_stores(&mut self) -> color_eyre::Result<()> {
         self.stores = Some(Stores::import(&self.path.join("stores"))?);
         Ok(())

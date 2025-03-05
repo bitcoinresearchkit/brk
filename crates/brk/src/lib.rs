@@ -1,4 +1,3 @@
-#![cfg_attr(docsrs, feature(doc_cfg))]
 #![doc = include_str!(concat!("../", env!("CARGO_PKG_README")))]
 
 #[cfg(feature = "core")]

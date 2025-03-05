@@ -6,16 +6,15 @@ use std::{
 };
 
 use brk_computer::Computer;
+use brk_core::path_dot_brk;
 use brk_exit::Exit;
 use brk_indexer::Indexer;
 use brk_parser::rpc::{self, Auth, Client, RpcApi};
-use brk_server::tokio;
+use brk_server::{Frontend, tokio};
 use clap::{Parser, ValueEnum};
 use color_eyre::eyre::eyre;
 use log::info;
 use serde::{Deserialize, Serialize};
-
-use crate::path_dot_brk;
 
 pub fn run(config: RunConfig) -> color_eyre::Result<()> {
     let config = RunConfig::import(Some(config))?;
@@ -40,10 +39,11 @@ pub fn run(config: RunConfig) -> color_eyre::Result<()> {
         .block_on(async {
             let served_indexer = indexer.clone();
             let served_computer = computer.clone();
+            let frontend = config.frontend();
 
-            let handle = if config.serve() {
+            let server = if config.serve() {
                 Some(tokio::spawn(async move {
-                    brk_server::main(served_indexer, served_computer)
+                    brk_server::main(served_indexer, served_computer, frontend)
                         .await
                         .unwrap();
                 }))
@@ -73,9 +73,10 @@ pub fn run(config: RunConfig) -> color_eyre::Result<()> {
                 }
             }
 
-            if let Some(handle) = handle {
+            if let Some(handle) = server {
                 handle.await.unwrap();
             }
+
             Ok(())
         })
 }
@@ -93,6 +94,10 @@ pub struct RunConfig {
     /// Executed by the runner, default: all, saved
     #[arg(short, long)]
     mode: Option<Mode>,
+
+    /// Frontend served by the server (if active), default: kibo.money, saved
+    #[arg(short, long)]
+    frontend: Option<Frontend>,
 
     /// Bitcoin RPC ip, default: localhost, saved
     #[arg(long, value_name = "IP")]
@@ -142,6 +147,10 @@ impl RunConfig {
                 config_saved.mode = Some(mode);
             }
 
+            if let Some(frontend) = config_args.frontend.take() {
+                config_saved.frontend = Some(frontend);
+            }
+
             if let Some(rpcconnect) = config_args.rpcconnect.take() {
                 config_saved.rpcconnect = Some(rpcconnect);
             }
@@ -182,6 +191,7 @@ impl RunConfig {
         // info!("  bitcoindir: {:?}", config.bitcoindir);
         // info!("  brkdir: {:?}", config.brkdir);
         // info!("  mode: {:?}", config.mode);
+        // info!("  frontend: {:?}", config.frontend);
         // info!("  rpcconnect: {:?}", config.rpcconnect);
         // info!("  rpcport: {:?}", config.rpcport);
         // info!("  rpccookiefile: {:?}", config.rpccookiefile);
@@ -333,6 +343,10 @@ impl RunConfig {
         };
 
         fix("~").unwrap_or_else(|| fix("$HOME").unwrap_or_else(|| PathBuf::from(&path)))
+    }
+
+    pub fn frontend(&self) -> Frontend {
+        self.frontend.unwrap_or_default()
     }
 }
 

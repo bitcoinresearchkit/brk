@@ -1,8 +1,6 @@
-use std::{
-    fs,
-    path::{Path, PathBuf},
-};
+use std::fs;
 
+use brk_core::{path_dot_brk, path_dot_brk_log};
 use brk_query::Params as QueryArgs;
 use clap::{Parser, Subcommand};
 use query::query;
@@ -32,7 +30,7 @@ fn main() -> color_eyre::Result<()> {
 
     fs::create_dir_all(path_dot_brk())?;
 
-    brk_logger::init(Some(&path_log()));
+    brk_logger::init(Some(&path_dot_brk_log()));
 
     let cli = Cli::parse();
 
@@ -40,13 +38,4 @@ fn main() -> color_eyre::Result<()> {
         Commands::Run(args) => run(args),
         Commands::Query(args) => query(args),
     }
-}
-
-pub fn path_dot_brk() -> PathBuf {
-    let home = std::env::var("HOME").unwrap();
-    Path::new(&home).join(".brk")
-}
-
-pub fn path_log() -> PathBuf {
-    path_dot_brk().join("log")
 }

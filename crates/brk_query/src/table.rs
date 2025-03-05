@@ -14,7 +14,10 @@ impl Tabled for Vec<Vec<serde_json::Value>> {
             let len = first.len();
 
             (0..len).for_each(|index| {
-                builder.push_record(self.iter().map(|vec| vec.get(index).unwrap().to_string()));
+                builder.push_record(
+                    self.iter()
+                        .map(|vec| vec.get(index).unwrap().to_string().replace("\"", "")),
+                );
             });
         }
 
