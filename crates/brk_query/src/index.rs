@@ -68,7 +68,7 @@ impl Index {
 impl TryFrom<&str> for Index {
     type Error = color_eyre::Report;
     fn try_from(value: &str) -> Result<Self, Self::Error> {
-        Ok(match value {
+        Ok(match value.to_lowercase().as_str() {
             v if (Self::Dateindex).possible_values().contains(&v) => Self::Dateindex,
             v if (Self::Height).possible_values().contains(&v) => Self::Height,
             v if (Self::Txindex).possible_values().contains(&v) => Self::Txindex,

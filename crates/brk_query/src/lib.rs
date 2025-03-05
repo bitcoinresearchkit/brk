@@ -60,8 +60,17 @@ impl<'a> Query<'a> {
     ) -> color_eyre::Result<Output> {
         let tuples = ids
             .iter()
-            .map(|s| {
-                let mut id = s.to_lowercase().replace("_", "-");
+            .flat_map(|s| {
+                s.to_lowercase()
+                    .replace("_", "-")
+                    .split_whitespace()
+                    .flat_map(|s| {
+                        s.split(',')
+                            .flat_map(|s| s.split('+').map(|s| s.to_string()))
+                    })
+                    .collect::<Vec<_>>()
+            })
+            .map(|mut id| {
                 let mut res = self.vecid_to_index_to_vec.get(&id);
                 if res.is_none() {
                     if let Ok(index) = Index::try_from(id.as_str()) {
