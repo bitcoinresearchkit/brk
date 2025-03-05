@@ -33,7 +33,7 @@ pub fn query(params: QueryParams) -> color_eyre::Result<()> {
             "{}",
             match res {
                 Output::Json(v) => match v {
-                    Value::Single(v) => v.to_string(),
+                    Value::Single(v) => v.to_string().replace("\"", ""),
                     v => {
                         let v = match v {
                             Value::Single(_) => unreachable!("Already processed"),

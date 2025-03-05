@@ -42,7 +42,7 @@ Heartfelt thanks go out to every donor on [Nostr](https://primal.net/p/npub1jagm
 
 *Soon™*
 
-If you'd like to have your own instance hosted for you please contact [tranche.dent-9o@icloud.com](mailto:tranche.dent-9o@icloud.com).
+If you'd like to have your own instance hosted for you please contact [hosting@bitcoinresearchkit.org](mailto:hosting@bitcoinresearchkit.org).
 
 - Separate dedicated servers using different ISPs and Cloudflare for maximum availability
 - Optional `*.bitcoinresearchkit.org`, `*.kibo.money` and `*.satonomics.xyz` subdomains

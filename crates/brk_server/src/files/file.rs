@@ -1,56 +1,73 @@
 use std::{
     fs::{self},
-    path::{Path, PathBuf},
+    path::Path,
     time::Instant,
 };
 
 use axum::{
     body::Body,
-    extract,
+    extract::{self, State},
     http::{HeaderMap, StatusCode},
     response::{IntoResponse, Response},
 };
 use log::{error, info};
 
 use crate::{
-    WEBSITE_DEV_PATH, log_result,
+    AppState, log_result,
     traits::{HeaderMapExtended, ModifiedState, ResponseExtended},
 };
 
 use super::minify::minify_js;
 
-pub async fn file_handler(headers: HeaderMap, path: extract::Path<String>) -> Response {
-    any_handler(headers, Some(path))
+pub async fn file_handler(
+    headers: HeaderMap,
+    State(app_state): State<AppState>,
+    path: extract::Path<String>,
+) -> Response {
+    any_handler(headers, app_state, Some(path))
 }
 
-pub async fn index_handler(headers: HeaderMap) -> Response {
-    any_handler(headers, None)
+pub async fn index_handler(headers: HeaderMap, State(app_state): State<AppState>) -> Response {
+    any_handler(headers, app_state, None)
 }
 
-fn any_handler(headers: HeaderMap, path: Option<extract::Path<String>>) -> Response {
+fn any_handler(
+    headers: HeaderMap,
+    app_state: AppState,
+    path: Option<extract::Path<String>>,
+) -> Response {
+    let website_path = app_state
+        .websites_path
+        .as_ref()
+        .expect("Should never reach here is websites_path is None")
+        .join(app_state.frontend.to_folder_name());
+
     let instant = Instant::now();
 
     let response = if let Some(path) = path.as_ref() {
         let path = path.0.replace("..", "").replace("\\", "");
 
-        let mut path = str_to_path(&path);
+        let mut path = website_path.join(&path);
 
         if !path.exists() {
             if path.extension().is_some() {
-                let mut response: Response<Body> =
-                    (StatusCode::INTERNAL_SERVER_ERROR, "File doesn't exist".to_string()).into_response();
+                let mut response: Response<Body> = (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    "File doesn't exist".to_string(),
+                )
+                    .into_response();
 
                 response.headers_mut().insert_cors();
 
                 return response;
             } else {
-                path = str_to_path("index.html");
+                path = website_path.join("index.html");
             }
         }
 
         path_to_response(&headers, &path)
     } else {
-        path_to_response(&headers, &str_to_path("index.html"))
+        path_to_response(&headers, &website_path.join("index.html"))
     };
 
     log_result(
@@ -66,7 +83,8 @@ fn path_to_response(headers: &HeaderMap, path: &Path) -> Response {
     match path_to_response_(headers, path) {
         Ok(response) => response,
         Err(error) => {
-            let mut response = (StatusCode::INTERNAL_SERVER_ERROR, error.to_string()).into_response();
+            let mut response =
+                (StatusCode::INTERNAL_SERVER_ERROR, error.to_string()).into_response();
 
             response.headers_mut().insert_cors();
 
@@ -116,7 +134,10 @@ fn path_to_response_(headers: &HeaderMap, path: &Path) -> color_eyre::Result<Res
             || serialized_path.contains("assets/")
             || serialized_path.contains("packages/")
             || path.extension().is_some_and(|extension| {
-                extension == "pdf" || extension == "jpg" || extension == "png" || extension == "woff2"
+                extension == "pdf"
+                    || extension == "jpg"
+                    || extension == "png"
+                    || extension == "woff2"
             })
         {
             headers.insert_cache_control_immutable();
@@ -126,8 +147,4 @@ fn path_to_response_(headers: &HeaderMap, path: &Path) -> color_eyre::Result<Res
     headers.insert_last_modified(date);
 
     Ok(response)
-}
-
-fn str_to_path(path: &str) -> PathBuf {
-    PathBuf::from(&format!("{WEBSITE_DEV_PATH}{path}"))
 }

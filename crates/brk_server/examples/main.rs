@@ -7,12 +7,15 @@ use brk_parser::{
     Parser,
     rpc::{self, RpcApi},
 };
+use brk_server::Frontend;
 use log::info;
 
 pub fn main() -> color_eyre::Result<()> {
     color_eyre::install()?;
 
     brk_logger::init(Some(Path::new(".log")));
+
+    let process = false;
 
     let bitcoin_dir = Path::new("../../../bitcoin");
     let rpc = Box::leak(Box::new(rpc::Client::new(
@@ -40,29 +43,33 @@ pub fn main() -> color_eyre::Result<()> {
             let served_indexer = indexer.clone();
             let served_computer = computer.clone();
 
-            tokio::spawn(async move {
-                brk_server::main(served_indexer, served_computer)
+            let server = tokio::spawn(async move {
+                brk_server::main(served_indexer, served_computer, Frontend::KiboMoney)
                     .await
                     .unwrap();
             });
 
-            loop {
-                let block_count = rpc.get_block_count()?;
+            if process {
+                loop {
+                    let block_count = rpc.get_block_count()?;
 
-                info!("{block_count} blocks found.");
+                    info!("{block_count} blocks found.");
 
-                let starting_indexes = indexer.index(&parser, rpc, &exit)?;
+                    let starting_indexes = indexer.index(&parser, rpc, &exit)?;
 
-                computer.compute(&mut indexer, starting_indexes, &exit)?;
+                    computer.compute(&mut indexer, starting_indexes, &exit)?;
 
-                info!("Waiting for new blocks...");
+                    info!("Waiting for new blocks...");
 
-                while block_count == rpc.get_block_count()? {
-                    sleep(Duration::from_secs(1))
+                    while block_count == rpc.get_block_count()? {
+                        sleep(Duration::from_secs(1))
+                    }
                 }
             }
 
             #[allow(unreachable_code)]
+            server.await.unwrap();
+
             Ok(())
         }) as color_eyre::Result<()>
 }

@@ -1,4 +1,3 @@
-#![cfg_attr(docsrs, feature(doc_cfg))]
 #![doc = include_str!("../README.md")]
 #![doc = "\n## Example\n\n```rust"]
 #![doc = include_str!("../examples/main.rs")]
