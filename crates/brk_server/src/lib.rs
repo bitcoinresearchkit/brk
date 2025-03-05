@@ -40,6 +40,9 @@ const DEV_PATH: &str = "../..";
 const DOWNLOADS: &str = "downloads";
 const WEBSITES: &str = "websites";
 
+// TODO
+pub struct Server;
+
 pub async fn main(
     indexer: Indexer,
     computer: Computer,

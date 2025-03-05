@@ -5,9 +5,14 @@ use serde::Deserialize;
 #[allow(clippy::upper_case_acronyms)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, ValueEnum, Deserialize)]
 pub enum Format {
+    #[serde(alias = "json")]
     JSON,
+    #[serde(alias = "csv")]
     CSV,
+    #[serde(alias = "tsv")]
     TSV,
+    #[serde(alias = "md", alias = "markdown")]
+    #[value(alias("markdown"))]
     MD,
 }
 

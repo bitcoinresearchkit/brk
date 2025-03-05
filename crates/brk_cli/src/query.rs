@@ -16,13 +16,9 @@ pub fn query(params: QueryParams) -> color_eyre::Result<()> {
 
     let query = Query::build(&indexer, &computer);
 
-    let ids = params
-        .values
-        .iter()
-        .flat_map(|v| v.split(","))
-        .collect::<Vec<_>>();
-
     let index = Index::try_from(params.index.as_str())?;
+
+    let ids = params.values.iter().map(|s| s.as_str()).collect::<Vec<_>>();
 
     let res = query.search(index, &ids, params.from, params.to, params.format)?;
 
