@@ -32,6 +32,7 @@ server = ["brk_server"]
 vec = ["brk_vec"]
 
 [dependencies]
+brk_cli = { workspace = true }
 brk_core = { workspace = true, optional = true }
 brk_computer = { workspace = true, optional = true }
 brk_exit = { workspace = true, optional = true }

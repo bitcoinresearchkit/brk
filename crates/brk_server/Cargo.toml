@@ -21,7 +21,7 @@ color-eyre = { workspace = true }
 jiff = { workspace = true }
 log = { workspace = true }
 minreq = { workspace = true }
-oxc = { version = "0.55.0", features = ["codegen", "minifier"] }
+oxc = { version = "0.56.0", features = ["codegen", "minifier"] }
 serde = { workspace = true }
 serde_json = { workspace = true }
 tokio = { version = "1.43.0", features = ["full"] }
