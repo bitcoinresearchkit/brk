@@ -24,7 +24,7 @@ pub struct Params {
     #[serde(default, alias = "t")]
     /// Inclusive ending index, if negative will be from the end
     pub to: Option<i64>,
-    #[clap(long)]
+    #[clap(short = 'F', long)]
     /// Format of the output
     pub format: Option<Format>,
 }

@@ -58,6 +58,7 @@ impl Computer {
         let txinindexes_count = indexer.vecs().txinindex_to_txoutindex.len();
         let txoutindexes_count = indexer.vecs().txoutindex_to_addressindex.len();
 
+        // self.vecs.txindex_to_last_txinindex.compute_last_index_from_first(
         //     starting_indexes.txindex,
         //     &mut indexer.vecs().txindex_to_first_txinindex,
         //     txinindexes_count,

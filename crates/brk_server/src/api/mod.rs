@@ -3,9 +3,9 @@ use axum::{Router, routing::get};
 use super::AppState;
 
 mod explorer;
-mod vecs;
+mod query;
 
-pub use vecs::DTS;
+pub use query::DTS;
 
 pub trait ApiRoutes {
     fn add_api_routes(self) -> Self;
@@ -13,6 +13,6 @@ pub trait ApiRoutes {
 
 impl ApiRoutes for Router<AppState> {
     fn add_api_routes(self) -> Self {
-        self.route("/api/vecs", get(vecs::handler))
+        self.route("/api/query", get(query::handler))
     }
 }
