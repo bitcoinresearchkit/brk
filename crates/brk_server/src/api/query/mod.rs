@@ -7,8 +7,6 @@ use axum::{
     response::{IntoResponse, Response},
 };
 use brk_query::{Format, Index, Output, Params};
-use color_eyre::eyre::eyre;
-use serde_json::Value;
 
 use crate::{log_result, traits::HeaderMapExtended};
 
@@ -26,17 +24,15 @@ pub async fn handler(
 ) -> Response {
     let instant = Instant::now();
 
-    let path = uri.path();
-
     match req_to_response_res(headers, query, app_state) {
         Ok(response) => {
-            log_result(response.status(), path, instant);
+            log_result(response.status(), &uri, instant);
             response
         }
         Err(error) => {
             let mut response =
                 (StatusCode::INTERNAL_SERVER_ERROR, error.to_string()).into_response();
-            log_result(response.status(), path, instant);
+            log_result(response.status(), &uri, instant);
             response.headers_mut().insert_cors();
             response
         }

@@ -7,7 +7,7 @@ use brk_parser::{
     Parser,
     rpc::{self, RpcApi},
 };
-use brk_server::Frontend;
+use brk_server::{Frontend, Server};
 use log::info;
 
 pub fn main() -> color_eyre::Result<()> {
@@ -43,10 +43,10 @@ pub fn main() -> color_eyre::Result<()> {
             let served_indexer = indexer.clone();
             let served_computer = computer.clone();
 
+            let server = Server::new(served_indexer, served_computer, Frontend::KiboMoney)?;
+
             let server = tokio::spawn(async move {
-                brk_server::main(served_indexer, served_computer, Frontend::KiboMoney)
-                    .await
-                    .unwrap();
+                server.serve().await.unwrap();
             });
 
             if process {

@@ -7,7 +7,7 @@ use std::{
 use axum::{
     body::Body,
     extract::{self, State},
-    http::{HeaderMap, StatusCode},
+    http::{HeaderMap, StatusCode, Uri},
     response::{IntoResponse, Response},
 };
 use log::{error, info};
@@ -22,18 +22,24 @@ use super::minify::minify_js;
 pub async fn file_handler(
     headers: HeaderMap,
     State(app_state): State<AppState>,
+    uri: Uri,
     path: extract::Path<String>,
 ) -> Response {
-    any_handler(headers, app_state, Some(path))
+    any_handler(headers, app_state, uri, Some(path))
 }
 
-pub async fn index_handler(headers: HeaderMap, State(app_state): State<AppState>) -> Response {
-    any_handler(headers, app_state, None)
+pub async fn index_handler(
+    headers: HeaderMap,
+    State(app_state): State<AppState>,
+    uri: Uri,
+) -> Response {
+    any_handler(headers, app_state, uri, None)
 }
 
 fn any_handler(
     headers: HeaderMap,
     app_state: AppState,
+    uri: Uri,
     path: Option<extract::Path<String>>,
 ) -> Response {
     let website_path = app_state
@@ -70,11 +76,7 @@ fn any_handler(
         path_to_response(&headers, &website_path.join("index.html"))
     };
 
-    log_result(
-        response.status(),
-        &format!("/{}", path.map_or("".to_owned(), |p| p.0)),
-        instant,
-    );
+    log_result(response.status(), &uri, instant);
 
     response
 }

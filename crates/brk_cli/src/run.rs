@@ -10,7 +10,7 @@ use brk_core::path_dot_brk;
 use brk_exit::Exit;
 use brk_indexer::Indexer;
 use brk_parser::rpc::{self, Auth, Client, RpcApi};
-use brk_server::{Frontend, tokio};
+use brk_server::{Frontend, Server, tokio};
 use clap::{Parser, ValueEnum};
 use color_eyre::eyre::eyre;
 use log::info;
@@ -37,15 +37,14 @@ pub fn run(config: RunConfig) -> color_eyre::Result<()> {
         .enable_all()
         .build()?
         .block_on(async {
-            let served_indexer = indexer.clone();
-            let served_computer = computer.clone();
-            let frontend = config.frontend();
-
             let server = if config.serve() {
+                let served_indexer = indexer.clone();
+                let served_computer = computer.clone();
+
+                let server = Server::new(served_indexer, served_computer, config.frontend())?;
+
                 Some(tokio::spawn(async move {
-                    brk_server::main(served_indexer, served_computer, frontend)
-                        .await
-                        .unwrap();
+                    server.serve().await.unwrap();
                 }))
             } else {
                 None
@@ -84,11 +83,11 @@ pub fn run(config: RunConfig) -> color_eyre::Result<()> {
 #[derive(Parser, Debug, Default, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize)]
 pub struct RunConfig {
     /// Bitcoin data directory path, saved
-    #[arg(short, long, value_name = "PATH")]
+    #[arg(long, value_name = "PATH")]
     bitcoindir: Option<String>,
 
     /// Bitcoin Research Kit outputs directory path, saved
-    #[arg(short, long, value_name = "PATH")]
+    #[arg(long, value_name = "PATH")]
     brkdir: Option<String>,
 
     /// Executed by the runner, default: all, saved
