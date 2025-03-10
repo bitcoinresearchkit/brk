@@ -6,8 +6,9 @@ use std::{
 };
 
 use brk_computer::Computer;
-use brk_core::path_dot_brk;
+use brk_core::{default_bitcoin_path, default_brk_path, dot_brk_path};
 use brk_exit::Exit;
+use brk_fetcher::Fetcher;
 use brk_indexer::Indexer;
 use brk_parser::rpc::{self, Auth, Client, RpcApi};
 use brk_server::{Frontend, Server, tokio};
@@ -23,13 +24,17 @@ pub fn run(config: RunConfig) -> color_eyre::Result<()> {
 
     let exit = Exit::new();
 
-    let parser = brk_parser::Parser::new(config.bitcoindir(), rpc);
+    let parser = brk_parser::Parser::new(config.blocksdir(), rpc);
 
     let mut indexer = Indexer::new(config.indexeddir())?;
     indexer.import_stores()?;
     indexer.import_vecs()?;
 
-    let mut computer = Computer::new(config.computeddir());
+    let fetcher = config
+        .fetch()
+        .then(|| Fetcher::import(Some(config.harsdir().as_path())).unwrap());
+
+    let mut computer = Computer::new(config.computeddir(), fetcher);
     computer.import_stores()?;
     computer.import_vecs()?;
 
@@ -82,11 +87,15 @@ pub fn run(config: RunConfig) -> color_eyre::Result<()> {
 
 #[derive(Parser, Debug, Default, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize)]
 pub struct RunConfig {
-    /// Bitcoin data directory path, saved
+    /// Bitcoin main directory path, defaults: ~/.bitcoin, ~/Library/Application\ Support/Bitcoin, saved
     #[arg(long, value_name = "PATH")]
     bitcoindir: Option<String>,
 
-    /// Bitcoin Research Kit outputs directory path, saved
+    /// Bitcoin blocks directory path, default: --bitcoindir/blocks, saved
+    #[arg(long, value_name = "PATH")]
+    blocksdir: Option<String>,
+
+    /// Bitcoin Research Kit outputs directory path, default: ~/.brk, saved
     #[arg(long, value_name = "PATH")]
     brkdir: Option<String>,
 
@@ -94,8 +103,12 @@ pub struct RunConfig {
     #[arg(short, long)]
     mode: Option<Mode>,
 
-    /// Frontend served by the server (if active), default: kibo.money, saved
-    #[arg(short, long)]
+    /// Activate fetching prices from exchanges APIs and the computation of all related datasets, default: false, saved
+    #[arg(short, long, value_name = "BOOL")]
+    fetch: Option<bool>,
+
+    /// Frontend served by the server (if active), default: none, saved
+    #[arg(short = 'F', long)]
     frontend: Option<Frontend>,
 
     /// Bitcoin RPC ip, default: localhost, saved
@@ -125,7 +138,7 @@ pub struct RunConfig {
 
 impl RunConfig {
     pub fn import(config_args: Option<RunConfig>) -> color_eyre::Result<Self> {
-        let path = path_dot_brk();
+        let path = dot_brk_path();
 
         let _ = fs::create_dir_all(&path);
 
@@ -138,12 +151,20 @@ impl RunConfig {
                 config_saved.bitcoindir = Some(bitcoindir);
             }
 
+            if let Some(blocksdir) = config_args.blocksdir.take() {
+                config_saved.blocksdir = Some(blocksdir);
+            }
+
             if let Some(brkdir) = config_args.brkdir.take() {
                 config_saved.brkdir = Some(brkdir);
             }
 
             if let Some(mode) = config_args.mode.take() {
                 config_saved.mode = Some(mode);
+            }
+
+            if let Some(fetch) = config_args.fetch.take() {
+                config_saved.fetch = Some(fetch);
             }
 
             if let Some(frontend) = config_args.frontend.take() {
@@ -203,33 +224,24 @@ impl RunConfig {
     }
 
     fn check(&self) {
-        if self.bitcoindir.is_none() {
-            println!(
-                "You need to set the --bitcoindir parameter at least once to run the parser.\nRun the program with '-h' for help."
-            );
-            std::process::exit(1);
-        } else if !self.bitcoindir().is_dir() {
-            println!(
-                "Given --bitcoindir parameter doesn't seem to be a valid directory path.\nRun the program with '-h' for help."
-            );
+        if !self.bitcoindir().is_dir() {
+            println!("{:?} isn't a valid directory", self.bitcoindir());
+            println!("Please use the --bitcoindir parameter to set a valid path.");
+            println!("Run the program with '-h' for help.");
             std::process::exit(1);
         }
 
-        if self.brkdir.is_none() {
-            println!(
-                "You need to set the --brkdir parameter at least once to run the parser.\nRun the program with '-h' for help."
-            );
-            std::process::exit(1);
-        } else if !self.brkdir().is_dir() {
-            println!(
-                "Given --brkdir parameter doesn't seem to be a valid directory path.\nRun the program with '-h' for help."
-            );
+        if !self.blocksdir().is_dir() {
+            println!("{:?} isn't a valid directory", self.blocksdir());
+            println!("Please use the --blocksdir parameter to set a valid path.");
+            println!("Run the program with '-h' for help.");
             std::process::exit(1);
         }
 
-        let path = self.bitcoindir();
-        if !path.is_dir() {
-            println!("Expect path '{:#?}' to be a directory.", path);
+        if !self.brkdir().is_dir() {
+            println!("{:?} isn't a valid directory", self.brkdir());
+            println!("Please use the --brkdir parameter to set a valid path.");
+            println!("Run the program with '-h' for help.");
             std::process::exit(1);
         }
 
@@ -290,11 +302,22 @@ impl RunConfig {
     }
 
     pub fn bitcoindir(&self) -> PathBuf {
-        Self::fix_user_path(self.bitcoindir.as_ref().unwrap().as_ref())
+        self.bitcoindir
+            .as_ref()
+            .map_or_else(default_bitcoin_path, |s| Self::fix_user_path(s.as_ref()))
+    }
+
+    pub fn blocksdir(&self) -> PathBuf {
+        self.blocksdir.as_ref().map_or_else(
+            || self.bitcoindir().join("blocks"),
+            |blocksdir| Self::fix_user_path(blocksdir.as_str()),
+        )
     }
 
     pub fn brkdir(&self) -> PathBuf {
-        Self::fix_user_path(self.brkdir.as_ref().unwrap().as_ref())
+        self.brkdir
+            .as_ref()
+            .map_or_else(default_brk_path, |s| Self::fix_user_path(s.as_ref()))
     }
 
     fn outputsdir(&self) -> PathBuf {
@@ -307,6 +330,10 @@ impl RunConfig {
 
     pub fn computeddir(&self) -> PathBuf {
         self.outputsdir().join("computed")
+    }
+
+    pub fn harsdir(&self) -> PathBuf {
+        self.outputsdir().join("hars")
     }
 
     pub fn process(&self) -> bool {
@@ -346,6 +373,10 @@ impl RunConfig {
 
     pub fn frontend(&self) -> Frontend {
         self.frontend.unwrap_or_default()
+    }
+
+    pub fn fetch(&self) -> bool {
+        self.fetch.is_some_and(|b| b)
     }
 }
 

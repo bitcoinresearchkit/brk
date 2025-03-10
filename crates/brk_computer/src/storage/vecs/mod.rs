@@ -2,6 +2,7 @@ use std::{fs, path::Path};
 
 use brk_core::{Height, Sats, Txindex, Txinindex, Txoutindex};
 use brk_exit::Exit;
+use brk_fetcher::Fetcher;
 use brk_indexer::Indexer;
 use brk_vec::{AnyStorableVec, StorableVec, Version};
 
@@ -11,7 +12,7 @@ mod marketprice;
 #[derive(Clone)]
 pub struct Vecs {
     pub indexes: indexes::Vecs,
-    pub marketprice: marketprice::Vecs,
+    pub marketprice: Option<marketprice::Vecs>,
     // pub height_to_block_interval: StorableVec<Height, Timestamp>,
     // pub height_to_fee: StorableVec<Txindex, Amount>,
     // pub height_to_inputcount: StorableVec<Height, u32>,
@@ -38,13 +39,13 @@ pub struct Vecs {
 }
 
 impl Vecs {
-    pub fn import(path: &Path) -> color_eyre::Result<Self> {
+    pub fn import(path: &Path, fetch: bool) -> color_eyre::Result<Self> {
         fs::create_dir_all(path)?;
 
         Ok(Self {
             // height_to_block_interval: StorableVec::forced_import(&path.join("height_to_block_interval"), Version::from(1))?,
             indexes: indexes::Vecs::import(path)?,
-            marketprice: marketprice::Vecs::import(path)?,
+            marketprice: fetch.then(|| marketprice::Vecs::import(path).unwrap()),
             // height_to_fee: StorableVec::forced_import(&path.join("height_to_fee"), Version::from(1))?,
             // height_to_inputcount: StorableVec::forced_import(&path.join("height_to_inputcount"), Version::from(1))?,
             // height_to_last_addressindex: StorableVec::forced_import(
@@ -107,12 +108,20 @@ impl Vecs {
         &mut self,
         indexer: &mut Indexer,
         starting_indexes: brk_indexer::Indexes,
+        fetcher: Option<&mut Fetcher>,
         exit: &Exit,
     ) -> color_eyre::Result<()> {
         let starting_indexes = self.indexes.compute(indexer, starting_indexes, exit)?;
 
-        self.marketprice
-            .compute(indexer, &mut self.indexes, starting_indexes, exit)?;
+        if let Some(marketprice) = self.marketprice.as_mut() {
+            marketprice.compute(
+                indexer,
+                &mut self.indexes,
+                starting_indexes,
+                fetcher.unwrap(),
+                exit,
+            )?;
+        }
 
         // self.mut_vecs().height_to_ohlc
 
@@ -197,6 +206,12 @@ impl Vecs {
     }
 
     pub fn as_any_vecs(&self) -> Vec<&dyn AnyStorableVec> {
-        [self.indexes.as_any_vecs(), self.marketprice.as_any_vecs()].concat()
+        [
+            self.indexes.as_any_vecs(),
+            self.marketprice
+                .as_ref()
+                .map_or(vec![], |v| v.as_any_vecs()),
+        ]
+        .concat()
     }
 }

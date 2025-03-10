@@ -3,6 +3,7 @@ use std::{path::Path, thread::sleep, time::Duration};
 use brk_computer::Computer;
 use brk_core::default_bitcoin_path;
 use brk_exit::Exit;
+use brk_fetcher::Fetcher;
 use brk_indexer::Indexer;
 use brk_parser::{
     Parser,
@@ -23,7 +24,7 @@ pub fn main() -> color_eyre::Result<()> {
     )?));
     let exit = Exit::new();
 
-    let parser = Parser::new(bitcoin_dir.to_owned(), rpc);
+    let parser = Parser::new(bitcoin_dir.join("blocks"), rpc);
 
     let outputs_dir = Path::new("../../_outputs");
 
@@ -31,7 +32,9 @@ pub fn main() -> color_eyre::Result<()> {
     indexer.import_stores()?;
     indexer.import_vecs()?;
 
-    let mut computer = Computer::new(outputs_dir.join("computed"));
+    let fetcher = Fetcher::import(None)?;
+
+    let mut computer = Computer::new(outputs_dir.join("computed"), Some(fetcher));
     computer.import_stores()?;
     computer.import_vecs()?;
 

@@ -1,6 +1,6 @@
 use std::fs;
 
-use brk_core::{path_dot_brk, path_dot_brk_log};
+use brk_core::{dot_brk_log_path, dot_brk_path};
 use brk_query::Params as QueryArgs;
 use clap::{Parser, Subcommand};
 use query::query;
@@ -28,9 +28,9 @@ enum Commands {
 pub fn main() -> color_eyre::Result<()> {
     color_eyre::install()?;
 
-    fs::create_dir_all(path_dot_brk())?;
+    fs::create_dir_all(dot_brk_path())?;
 
-    brk_logger::init(Some(&path_dot_brk_log()));
+    brk_logger::init(Some(&dot_brk_log_path()));
 
     let cli = Cli::parse();
 

@@ -10,6 +10,7 @@ repository.workspace = true
 brk_computer = { workspace = true }
 brk_core = { workspace = true }
 brk_exit = { workspace = true }
+brk_fetcher = { workspace = true }
 brk_indexer = { workspace = true }
 brk_logger = { workspace = true }
 brk_parser = { workspace = true }

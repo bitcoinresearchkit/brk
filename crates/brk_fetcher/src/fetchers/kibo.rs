@@ -7,7 +7,7 @@ use serde_json::Value;
 
 use crate::{Cents, Close, Dollars, High, Low, Open, fetchers::retry};
 
-#[derive(Default)]
+#[derive(Default, Clone)]
 pub struct Kibo {
     height_to_ohlc_vec: BTreeMap<Height, Vec<OHLCCents>>,
     year_to_date_to_ohlc: BTreeMap<u16, BTreeMap<Date, OHLCCents>>,
@@ -92,10 +92,7 @@ impl Kibo {
             .unwrap()
             .get(date)
             .cloned()
-            .ok_or({
-                dbg!(date);
-                eyre!("Couldn't find date in kibo")
-            })
+            .ok_or(eyre!("Couldn't find date in kibo"))
     }
 
     fn fetch_date_prices(year: u16) -> color_eyre::Result<BTreeMap<Date, OHLCCents>> {

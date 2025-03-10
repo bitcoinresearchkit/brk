@@ -18,7 +18,7 @@ use axum::{
     serve,
 };
 use brk_computer::Computer;
-use brk_core::path_dot_brk;
+use brk_core::dot_brk_path;
 use brk_indexer::Indexer;
 use brk_query::Query;
 use color_eyre::owo_colors::OwoColorize;
@@ -66,7 +66,7 @@ impl Server {
             let websites_path = if fs::exists(&websites_dev_path)? {
                 websites_dev_path
             } else {
-                let downloads_path = path_dot_brk().join(DOWNLOADS);
+                let downloads_path = dot_brk_path().join(DOWNLOADS);
 
                 let downloaded_websites_path = downloads_path.join("brk-main").join(WEBSITES);
 

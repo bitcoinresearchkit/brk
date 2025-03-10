@@ -7,7 +7,7 @@ use serde_json::Value;
 
 use crate::{Fetcher, fetchers::retry};
 
-#[derive(Default)]
+#[derive(Default, Clone)]
 pub struct Kraken {
     _1mn: Option<BTreeMap<Timestamp, OHLCCents>>,
     _1d: Option<BTreeMap<Date, OHLCCents>>,
@@ -19,10 +19,17 @@ impl Kraken {
         timestamp: Timestamp,
         previous_timestamp: Option<Timestamp>,
     ) -> color_eyre::Result<OHLCCents> {
-        if self._1mn.is_none() || self._1mn.as_ref().unwrap().last_key_value().unwrap().0 <= &timestamp {
+        if self._1mn.is_none()
+            || self._1mn.as_ref().unwrap().last_key_value().unwrap().0 <= &timestamp
+        {
             self._1mn.replace(Self::fetch_1mn()?);
         }
-        Fetcher::find_height_ohlc(self._1mn.as_ref().unwrap(), timestamp, previous_timestamp, "kraken 1m")
+        Fetcher::find_height_ohlc(
+            self._1mn.as_ref().unwrap(),
+            timestamp,
+            previous_timestamp,
+            "kraken 1m",
+        )
     }
 
     fn fetch_1mn() -> color_eyre::Result<BTreeMap<Timestamp, OHLCCents>> {
@@ -57,7 +64,9 @@ impl Kraken {
         )
     }
 
-    fn json_to_timestamp_to_ohlc(json: &Value) -> color_eyre::Result<BTreeMap<Timestamp, OHLCCents>> {
+    fn json_to_timestamp_to_ohlc(
+        json: &Value,
+    ) -> color_eyre::Result<BTreeMap<Timestamp, OHLCCents>> {
         Self::json_to_btree(json, Self::array_to_timestamp_and_ohlc)
     }
 
@@ -92,7 +101,13 @@ impl Kraken {
 
         let get_cents = |index: usize| {
             Cents::from(Dollars::from(
-                array.get(index).unwrap().as_str().unwrap().parse::<f64>().unwrap(),
+                array
+                    .get(index)
+                    .unwrap()
+                    .as_str()
+                    .unwrap()
+                    .parse::<f64>()
+                    .unwrap(),
             ))
         };
 

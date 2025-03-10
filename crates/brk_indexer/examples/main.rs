@@ -22,7 +22,7 @@ fn main() -> color_eyre::Result<()> {
     )?));
     let exit = Exit::new();
 
-    let parser = Parser::new(bitcoin_dir.to_owned(), rpc);
+    let parser = Parser::new(bitcoin_dir.join("blocks"), rpc);
 
     let mut indexer = Indexer::new(Path::new("../../_outputs/indexed").to_owned())?;
     indexer.import_stores()?;

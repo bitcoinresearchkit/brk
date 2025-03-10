@@ -181,7 +181,7 @@ impl Stores {
             }
         }
 
-        self.commit(starting_indexes.height.decremented().unwrap())?;
+        self.commit(starting_indexes.height.decremented().unwrap_or_default())?;
 
         Ok(())
     }
