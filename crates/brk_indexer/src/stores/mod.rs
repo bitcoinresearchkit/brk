@@ -1,6 +1,9 @@
 use std::{path::Path, thread};
 
-use brk_core::{AddressHash, Addressbytes, Addressindex, Addresstype, BlockHashPrefix, Height, TxidPrefix, Txindex};
+use brk_core::{
+    AddressHash, Addressbytes, Addressindex, Addresstype, BlockHashPrefix, Height, TxidPrefix,
+    Txindex,
+};
 use brk_vec::{Value, Version};
 
 use crate::Indexes;
@@ -23,12 +26,14 @@ pub struct Stores {
 impl Stores {
     pub fn import(path: &Path) -> color_eyre::Result<Self> {
         thread::scope(|scope| {
-            let addresshash_to_addressindex =
-                scope.spawn(|| Store::import(&path.join("addresshash_to_addressindex"), Version::from(1)));
-            let blockhash_prefix_to_height =
-                scope.spawn(|| Store::import(&path.join("blockhash_prefix_to_height"), Version::from(1)));
-            let txid_prefix_to_txindex =
-                scope.spawn(|| Store::import(&path.join("txid_prefix_to_txindex"), Version::from(1)));
+            let addresshash_to_addressindex = scope.spawn(|| {
+                Store::import(&path.join("addresshash_to_addressindex"), Version::from(1))
+            });
+            let blockhash_prefix_to_height = scope.spawn(|| {
+                Store::import(&path.join("blockhash_prefix_to_height"), Version::from(1))
+            });
+            let txid_prefix_to_txindex = scope
+                .spawn(|| Store::import(&path.join("txid_prefix_to_txindex"), Version::from(1)));
 
             Ok(Self {
                 addresshash_to_addressindex: addresshash_to_addressindex.join().unwrap()?,
@@ -38,22 +43,29 @@ impl Stores {
         })
     }
 
-    pub fn rollback_if_needed(&mut self, vecs: &Vecs, starting_indexes: &Indexes) -> color_eyre::Result<()> {
+    pub fn rollback_if_needed(
+        &mut self,
+        vecs: &mut Vecs,
+        starting_indexes: &Indexes,
+    ) -> color_eyre::Result<()> {
         vecs.height_to_blockhash
-            .iter_from(starting_indexes.height, |(_, blockhash)| {
+            .iter_from(starting_indexes.height, |(_, blockhash, ..)| {
                 let blockhash_prefix = BlockHashPrefix::from(blockhash);
                 self.blockhash_prefix_to_height.remove(blockhash_prefix);
                 Ok(())
             })?;
 
         vecs.txindex_to_txid
-            .iter_from(starting_indexes.txindex, |(_txindex, txid)| {
+            .iter_from(starting_indexes.txindex, |(_txindex, txid, ..)| {
                 let txid_prefix = TxidPrefix::from(txid);
                 self.txid_prefix_to_txindex.remove(txid_prefix);
                 Ok(())
             })?;
 
-        if let Some(index) = vecs.height_to_first_p2pk65index.get(starting_indexes.height)? {
+        if let Some(index) = vecs
+            .height_to_first_p2pk65index
+            .get(starting_indexes.height)?
+        {
             let mut index = index.into_inner();
             while let Some(typedbytes) = vecs
                 .p2pk65index_to_p2pk65addressbytes
@@ -67,7 +79,10 @@ impl Stores {
             }
         }
 
-        if let Some(index) = vecs.height_to_first_p2pk33index.get(starting_indexes.height)? {
+        if let Some(index) = vecs
+            .height_to_first_p2pk33index
+            .get(starting_indexes.height)?
+        {
             let mut index = index.into_inner();
             while let Some(typedbytes) = vecs
                 .p2pk33index_to_p2pk33addressbytes
@@ -81,9 +96,16 @@ impl Stores {
             }
         }
 
-        if let Some(index) = vecs.height_to_first_p2pkhindex.get(starting_indexes.height)? {
+        if let Some(index) = vecs
+            .height_to_first_p2pkhindex
+            .get(starting_indexes.height)?
+        {
             let mut index = index.into_inner();
-            while let Some(typedbytes) = vecs.p2pkhindex_to_p2pkhaddressbytes.get(index)?.map(Value::into_inner) {
+            while let Some(typedbytes) = vecs
+                .p2pkhindex_to_p2pkhaddressbytes
+                .get(index)?
+                .map(Value::into_inner)
+            {
                 let bytes = Addressbytes::from(typedbytes);
                 let hash = AddressHash::from((&bytes, Addresstype::P2PKH));
                 self.addresshash_to_addressindex.remove(hash);
@@ -91,9 +113,16 @@ impl Stores {
             }
         }
 
-        if let Some(index) = vecs.height_to_first_p2shindex.get(starting_indexes.height)? {
+        if let Some(index) = vecs
+            .height_to_first_p2shindex
+            .get(starting_indexes.height)?
+        {
             let mut index = index.into_inner();
-            while let Some(typedbytes) = vecs.p2shindex_to_p2shaddressbytes.get(index)?.map(Value::into_inner) {
+            while let Some(typedbytes) = vecs
+                .p2shindex_to_p2shaddressbytes
+                .get(index)?
+                .map(Value::into_inner)
+            {
                 let bytes = Addressbytes::from(typedbytes);
                 let hash = AddressHash::from((&bytes, Addresstype::P2SH));
                 self.addresshash_to_addressindex.remove(hash);
@@ -101,9 +130,16 @@ impl Stores {
             }
         }
 
-        if let Some(index) = vecs.height_to_first_p2trindex.get(starting_indexes.height)? {
+        if let Some(index) = vecs
+            .height_to_first_p2trindex
+            .get(starting_indexes.height)?
+        {
             let mut index = index.into_inner();
-            while let Some(typedbytes) = vecs.p2trindex_to_p2traddressbytes.get(index)?.map(Value::into_inner) {
+            while let Some(typedbytes) = vecs
+                .p2trindex_to_p2traddressbytes
+                .get(index)?
+                .map(Value::into_inner)
+            {
                 let bytes = Addressbytes::from(typedbytes);
                 let hash = AddressHash::from((&bytes, Addresstype::P2TR));
                 self.addresshash_to_addressindex.remove(hash);
@@ -111,7 +147,10 @@ impl Stores {
             }
         }
 
-        if let Some(index) = vecs.height_to_first_p2wpkhindex.get(starting_indexes.height)? {
+        if let Some(index) = vecs
+            .height_to_first_p2wpkhindex
+            .get(starting_indexes.height)?
+        {
             let mut index = index.into_inner();
             while let Some(typedbytes) = vecs
                 .p2wpkhindex_to_p2wpkhaddressbytes
@@ -125,9 +164,16 @@ impl Stores {
             }
         }
 
-        if let Some(index) = vecs.height_to_first_p2wshindex.get(starting_indexes.height)? {
+        if let Some(index) = vecs
+            .height_to_first_p2wshindex
+            .get(starting_indexes.height)?
+        {
             let mut index = index.into_inner();
-            while let Some(typedbytes) = vecs.p2wshindex_to_p2wshaddressbytes.get(index)?.map(Value::into_inner) {
+            while let Some(typedbytes) = vecs
+                .p2wshindex_to_p2wshaddressbytes
+                .get(index)?
+                .map(Value::into_inner)
+            {
                 let bytes = Addressbytes::from(typedbytes);
                 let hash = AddressHash::from((&bytes, Addresstype::P2WSH));
                 self.addresshash_to_addressindex.remove(hash);
@@ -135,7 +181,7 @@ impl Stores {
             }
         }
 
-        self.commit(starting_indexes.height.decremented())?;
+        self.commit(starting_indexes.height.decremented().unwrap())?;
 
         Ok(())
     }
@@ -158,7 +204,8 @@ impl Stores {
                 scope.spawn(|| self.addresshash_to_addressindex.commit(height));
             let blockhash_prefix_to_height_commit_handle =
                 scope.spawn(|| self.blockhash_prefix_to_height.commit(height));
-            let txid_prefix_to_txindex_commit_handle = scope.spawn(|| self.txid_prefix_to_txindex.commit(height));
+            let txid_prefix_to_txindex_commit_handle =
+                scope.spawn(|| self.txid_prefix_to_txindex.commit(height));
 
             addresshash_to_addressindex_commit_handle.join().unwrap()?;
             blockhash_prefix_to_height_commit_handle.join().unwrap()?;

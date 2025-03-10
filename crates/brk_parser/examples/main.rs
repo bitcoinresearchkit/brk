@@ -1,13 +1,12 @@
-use std::path::Path;
-
 use bitcoincore_rpc::{Auth, Client};
-use brk_core::Height;
+use brk_core::{Height, default_bitcoin_path};
 use brk_parser::Parser;
 
 fn main() {
     let i = std::time::Instant::now();
 
-    let bitcoin_dir = Path::new("../../../bitcoin");
+    let bitcoin_dir = default_bitcoin_path();
+
     let rpc = Box::leak(Box::new(
         Client::new(
             "http://localhost:8332",

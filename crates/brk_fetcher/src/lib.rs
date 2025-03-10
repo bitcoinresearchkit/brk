@@ -106,12 +106,7 @@ impl Fetcher {
 
         let previous_ohlc = previous_ohlc.unwrap();
 
-        let mut final_ohlc = (
-            Open::from(previous_ohlc.3),
-            High::from(previous_ohlc.3),
-            Low::from(previous_ohlc.3),
-            previous_ohlc.3,
-        );
+        let mut final_ohlc = OHLCCents::from(previous_ohlc.close);
 
         let start = previous_timestamp.unwrap_or(Timestamp::from(0));
         let end = timestamp;
@@ -119,15 +114,15 @@ impl Fetcher {
         // Otherwise it's a re-org
         if start < end {
             tree.range(start..=end).skip(1).for_each(|(_, ohlc)| {
-                if ohlc.1 > final_ohlc.1 {
-                    final_ohlc.1 = ohlc.1
+                if ohlc.high > final_ohlc.high {
+                    final_ohlc.high = ohlc.high
                 }
 
-                if ohlc.2 < final_ohlc.2 {
-                    final_ohlc.2 = ohlc.2
+                if ohlc.low < final_ohlc.low {
+                    final_ohlc.low = ohlc.low
                 }
 
-                final_ohlc.3 = ohlc.3;
+                final_ohlc.close = ohlc.close;
             });
         }
 

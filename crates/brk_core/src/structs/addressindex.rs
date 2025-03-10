@@ -1,7 +1,6 @@
 use std::ops::Add;
 
 use byteview::ByteView;
-use derive_deref::{Deref, DerefMut};
 use serde::Serialize;
 use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
@@ -15,8 +14,6 @@ use crate::Error;
     Ord,
     Clone,
     Copy,
-    Deref,
-    DerefMut,
     Default,
     FromBytes,
     Immutable,
@@ -29,16 +26,12 @@ pub struct Addressindex(u32);
 impl Addressindex {
     pub const BYTES: usize = size_of::<Self>();
 
-    pub fn decremented(self) -> Self {
-        Self(*self - 1)
-    }
-
     pub fn increment(&mut self) {
         self.0 += 1;
     }
 
     pub fn incremented(self) -> Self {
-        Self(*self + 1)
+        Self(self.0 + 1)
     }
 }
 

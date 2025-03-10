@@ -32,10 +32,6 @@ impl Txoutindex {
         Self(*self + 1)
     }
 
-    pub fn decremented(self) -> Self {
-        Self(*self - 1)
-    }
-
     pub fn is_coinbase(self) -> bool {
         self == Self::COINBASE
     }

@@ -30,10 +30,6 @@ impl Txindex {
     pub fn incremented(self) -> Self {
         Self(*self + 1)
     }
-
-    pub fn decremented(self) -> Self {
-        Self(*self - 1)
-    }
 }
 
 impl Add<Txindex> for Txindex {

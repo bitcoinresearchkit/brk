@@ -1,5 +1,6 @@
 use std::{path::Path, thread::sleep, time::Duration};
 
+use brk_core::default_bitcoin_path;
 use brk_exit::Exit;
 use brk_indexer::{Indexer, rpc::RpcApi};
 use brk_parser::{
@@ -13,7 +14,8 @@ fn main() -> color_eyre::Result<()> {
 
     brk_logger::init(Some(Path::new(".log")));
 
-    let bitcoin_dir = Path::new("../../../bitcoin");
+    let bitcoin_dir = default_bitcoin_path();
+
     let rpc = Box::leak(Box::new(rpc::Client::new(
         "http://localhost:8332",
         rpc::Auth::CookieFile(bitcoin_dir.join(".cookie")),

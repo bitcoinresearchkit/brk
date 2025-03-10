@@ -1,7 +1,8 @@
 use bitcoincore_rpc::Client;
 use brk_core::{
-    Addressindex, BlockHash, Emptyindex, Height, Multisigindex, Opreturnindex, P2PK33index, P2PK65index, P2PKHindex,
-    P2SHindex, P2TRindex, P2WPKHindex, P2WSHindex, Pushonlyindex, Txindex, Txinindex, Txoutindex, Unknownindex,
+    Addressindex, BlockHash, CheckedSub, Emptyindex, Height, Multisigindex, Opreturnindex,
+    P2PK33index, P2PK65index, P2PKHindex, P2SHindex, P2TRindex, P2WPKHindex, P2WSHindex,
+    Pushonlyindex, Txindex, Txinindex, Txoutindex, Unknownindex,
 };
 use brk_parser::NUMBER_OF_UNSAFE_BLOCKS;
 use color_eyre::eyre::ContextCompat;
@@ -32,8 +33,10 @@ pub struct Indexes {
 impl Indexes {
     pub fn push_if_needed(&self, vecs: &mut Vecs) -> brk_vec::Result<()> {
         let height = self.height;
-        vecs.height_to_first_txindex.push_if_needed(height, self.txindex)?;
-        vecs.height_to_first_txinindex.push_if_needed(height, self.txinindex)?;
+        vecs.height_to_first_txindex
+            .push_if_needed(height, self.txindex)?;
+        vecs.height_to_first_txinindex
+            .push_if_needed(height, self.txinindex)?;
         vecs.height_to_first_txoutindex
             .push_if_needed(height, self.txoutindex)?;
         vecs.height_to_first_addressindex
@@ -54,8 +57,10 @@ impl Indexes {
             .push_if_needed(height, self.p2pk65index)?;
         vecs.height_to_first_p2pkhindex
             .push_if_needed(height, self.p2pkhindex)?;
-        vecs.height_to_first_p2shindex.push_if_needed(height, self.p2shindex)?;
-        vecs.height_to_first_p2trindex.push_if_needed(height, self.p2trindex)?;
+        vecs.height_to_first_p2shindex
+            .push_if_needed(height, self.p2shindex)?;
+        vecs.height_to_first_p2trindex
+            .push_if_needed(height, self.p2trindex)?;
         vecs.height_to_first_p2wpkhindex
             .push_if_needed(height, self.p2wpkhindex)?;
         vecs.height_to_first_p2wshindex
@@ -77,9 +82,11 @@ impl TryFrom<(&mut Vecs, &Stores, &Client)> for Indexes {
         // Height at which we wanna start: min last saved + 1 or 0
         let starting_height = vecs.starting_height().min(stores.starting_height());
 
-        let range = starting_height
-            .checked_sub(NUMBER_OF_UNSAFE_BLOCKS as u32)
-            .unwrap_or_default()..*starting_height;
+        let range = u32::from(
+            starting_height
+                .checked_sub(NUMBER_OF_UNSAFE_BLOCKS as u32)
+                .unwrap_or_default(),
+        )..u32::from(starting_height);
 
         // But we also need to check the chain and start earlier in case of a reorg
         let height = range // ..= because of last saved + 1
@@ -107,8 +114,14 @@ impl TryFrom<(&mut Vecs, &Stores, &Client)> for Indexes {
             addressindex: *vecs.height_to_first_addressindex.get(height)?.context("")?,
             emptyindex: *vecs.height_to_first_emptyindex.get(height)?.context("")?,
             height,
-            multisigindex: *vecs.height_to_first_multisigindex.get(height)?.context("")?,
-            opreturnindex: *vecs.height_to_first_opreturnindex.get(height)?.context("")?,
+            multisigindex: *vecs
+                .height_to_first_multisigindex
+                .get(height)?
+                .context("")?,
+            opreturnindex: *vecs
+                .height_to_first_opreturnindex
+                .get(height)?
+                .context("")?,
             p2pk33index: *vecs.height_to_first_p2pk33index.get(height)?.context("")?,
             p2pk65index: *vecs.height_to_first_p2pk65index.get(height)?.context("")?,
             p2pkhindex: *vecs.height_to_first_p2pkhindex.get(height)?.context("")?,
@@ -116,7 +129,10 @@ impl TryFrom<(&mut Vecs, &Stores, &Client)> for Indexes {
             p2trindex: *vecs.height_to_first_p2trindex.get(height)?.context("")?,
             p2wpkhindex: *vecs.height_to_first_p2wpkhindex.get(height)?.context("")?,
             p2wshindex: *vecs.height_to_first_p2wshindex.get(height)?.context("")?,
-            pushonlyindex: *vecs.height_to_first_pushonlyindex.get(height)?.context("")?,
+            pushonlyindex: *vecs
+                .height_to_first_pushonlyindex
+                .get(height)?
+                .context("")?,
             txindex: *vecs.height_to_first_txindex.get(height)?.context("")?,
             txinindex: *vecs.height_to_first_txinindex.get(height)?.context("")?,
             txoutindex: *vecs.height_to_first_txoutindex.get(height)?.context("")?,

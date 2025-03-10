@@ -5,6 +5,7 @@ use super::{Height, Timestamp};
 
 #[derive(Debug, Immutable, Clone, Copy, IntoBytes, KnownLayout, TryFromBytes, Serialize)]
 #[repr(C)]
+#[allow(warnings)]
 pub enum LockTime {
     Height(Height),
     Timestamp(Timestamp),

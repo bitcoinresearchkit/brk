@@ -4,7 +4,6 @@ use std::{
 };
 
 use bitcoin::Amount;
-use derive_deref::{Deref, DerefMut};
 use serde::Serialize;
 use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
@@ -18,8 +17,6 @@ use super::Height;
     Ord,
     Clone,
     Copy,
-    Deref,
-    DerefMut,
     Default,
     FromBytes,
     Immutable,
@@ -40,7 +37,7 @@ impl Sats {
 impl Add for Sats {
     type Output = Sats;
     fn add(self, rhs: Sats) -> Self::Output {
-        Sats::from(*self + *rhs)
+        Sats::from(self.0 + rhs.0)
     }
 }
 
@@ -53,7 +50,7 @@ impl AddAssign for Sats {
 impl Sub for Sats {
     type Output = Sats;
     fn sub(self, rhs: Sats) -> Self::Output {
-        Sats::from(*self - *rhs)
+        Sats::from(self.0 - rhs.0)
     }
 }
 
@@ -66,27 +63,27 @@ impl SubAssign for Sats {
 impl Mul<Sats> for Sats {
     type Output = Sats;
     fn mul(self, rhs: Sats) -> Self::Output {
-        Sats::from(*self * *rhs)
+        Sats::from(self.0 * rhs.0)
     }
 }
 
 impl Mul<u64> for Sats {
     type Output = Sats;
     fn mul(self, rhs: u64) -> Self::Output {
-        Sats::from(*self * rhs)
+        Sats::from(self.0 * rhs)
     }
 }
 
 impl Mul<Height> for Sats {
     type Output = Sats;
     fn mul(self, rhs: Height) -> Self::Output {
-        Sats::from(*self * *rhs as u64)
+        Sats::from(self.0 * u64::from(rhs))
     }
 }
 
 impl Sum for Sats {
     fn sum<I: Iterator<Item = Self>>(iter: I) -> Self {
-        let sats: u64 = iter.map(|sats| *sats).sum();
+        let sats: u64 = iter.map(|sats| sats.0).sum();
         Sats::from(sats)
     }
 }
@@ -105,5 +102,11 @@ impl From<Amount> for Sats {
 impl From<Sats> for Amount {
     fn from(value: Sats) -> Self {
         Self::from_sat(value.0)
+    }
+}
+
+impl From<Sats> for f64 {
+    fn from(value: Sats) -> Self {
+        value.0 as f64
     }
 }

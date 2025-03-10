@@ -1,19 +1,18 @@
 use std::{
     fmt::{self, Debug},
-    ops::{Add, AddAssign, Rem, Sub},
+    ops::{Add, AddAssign, Rem},
 };
 
 use bitcoincore_rpc::{Client, RpcApi};
-use derive_deref::{Deref, DerefMut};
 use serde::{Deserialize, Serialize};
 use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
+
+use crate::CheckedSub;
 
 #[derive(
     Debug,
     Clone,
     Copy,
-    Deref,
-    DerefMut,
     PartialEq,
     Eq,
     PartialOrd,
@@ -49,11 +48,11 @@ impl Height {
     }
 
     pub fn decrement(&mut self) {
-        self.0 -= 1;
+        *self = self.decremented().unwrap();
     }
 
-    pub fn decremented(self) -> Self {
-        Self(self.0.checked_sub(1).unwrap_or_default())
+    pub fn decremented(self) -> Option<Self> {
+        self.checked_sub(1_u32)
     }
 
     pub fn is_zero(self) -> bool {
@@ -63,7 +62,7 @@ impl Height {
 
 impl PartialEq<u64> for Height {
     fn eq(&self, other: &u64) -> bool {
-        **self == *other as u32
+        self.0 == *other as u32
     }
 }
 
@@ -87,35 +86,25 @@ impl Add<usize> for Height {
     type Output = Height;
 
     fn add(self, rhs: usize) -> Self::Output {
-        Self::from(*self + rhs as u32)
+        Self::from(self.0 + rhs as u32)
     }
 }
 
-impl Sub<Height> for Height {
-    type Output = Height;
-    fn sub(self, rhs: Height) -> Self::Output {
-        Self::from(*self - *rhs)
+impl CheckedSub<Height> for Height {
+    fn checked_sub(self, rhs: Height) -> Option<Self> {
+        self.0.checked_sub(rhs.0).map(Height::from)
     }
 }
 
-impl Sub<i32> for Height {
-    type Output = Height;
-    fn sub(self, rhs: i32) -> Self::Output {
-        Self::from(*self - rhs as u32)
+impl CheckedSub<u32> for Height {
+    fn checked_sub(self, rhs: u32) -> Option<Self> {
+        self.0.checked_sub(rhs).map(Height::from)
     }
 }
 
-impl Sub<u32> for Height {
-    type Output = Height;
-    fn sub(self, rhs: u32) -> Self::Output {
-        Self::from(*self - rhs)
-    }
-}
-
-impl Sub<usize> for Height {
-    type Output = Height;
-    fn sub(self, rhs: usize) -> Self::Output {
-        Self::from(*self - rhs as u32)
+impl CheckedSub<usize> for Height {
+    fn checked_sub(self, rhs: usize) -> Option<Self> {
+        self.0.checked_sub(rhs as u32).map(Height::from)
     }
 }
 
@@ -141,7 +130,7 @@ impl Rem<usize> for Height {
 
 impl fmt::Display for Height {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", **self)
+        write!(f, "{}", self.0)
     }
 }
 
@@ -168,6 +157,11 @@ impl From<Height> for usize {
     }
 }
 
+impl From<Height> for u32 {
+    fn from(value: Height) -> Self {
+        value.0
+    }
+}
 impl From<Height> for u64 {
     fn from(value: Height) -> Self {
         value.0 as u64
@@ -189,7 +183,7 @@ impl From<bitcoin::locktime::absolute::Height> for Height {
 
 impl From<Height> for bitcoin::locktime::absolute::Height {
     fn from(value: Height) -> Self {
-        bitcoin::locktime::absolute::Height::from_consensus(*value).unwrap()
+        bitcoin::locktime::absolute::Height::from_consensus(value.0).unwrap()
     }
 }
 
