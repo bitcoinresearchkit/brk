@@ -9,9 +9,25 @@ use crate::Error;
 use super::Date;
 
 #[derive(
-    Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, FromBytes, Immutable, IntoBytes, KnownLayout, Serialize,
+    Debug,
+    Default,
+    Clone,
+    Copy,
+    PartialEq,
+    Eq,
+    PartialOrd,
+    Ord,
+    FromBytes,
+    Immutable,
+    IntoBytes,
+    KnownLayout,
+    Serialize,
 )]
 pub struct Dateindex(u16);
+
+impl Dateindex {
+    pub const BYTES: usize = size_of::<Self>();
+}
 
 impl From<Dateindex> for usize {
     fn from(value: Dateindex) -> Self {

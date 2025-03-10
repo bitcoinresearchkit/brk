@@ -1,4 +1,2 @@
-use derive_deref::Deref;
-
-#[derive(Debug, Deref, Clone, Copy)]
+#[derive(Debug, Clone, Copy)]
 pub struct Feerate(f32);

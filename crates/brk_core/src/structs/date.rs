@@ -60,11 +60,15 @@ impl From<Timestamp> for Date {
 
 impl From<Dateindex> for Date {
     fn from(value: Dateindex) -> Self {
-        Self::from(
-            Self::INDEX_ZERO_
-                .checked_add(Span::new().days(i64::from(value)))
-                .unwrap(),
-        )
+        if value == Dateindex::default() {
+            Date::INDEX_ZERO
+        } else {
+            Self::from(
+                Self::INDEX_ONE_
+                    .checked_add(Span::new().days(i64::from(value) - 1))
+                    .unwrap(),
+            )
+        }
     }
 }
 

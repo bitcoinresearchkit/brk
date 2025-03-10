@@ -23,8 +23,8 @@ use tree::VecIdToIndexToVec;
 
 pub struct Query<'a> {
     pub vecid_to_index_to_vec: VecIdToIndexToVec<'a>,
-    indexer: &'a Indexer,
-    computer: &'a Computer,
+    _indexer: &'a Indexer,
+    _computer: &'a Computer,
 }
 
 impl<'a> Query<'a> {
@@ -45,8 +45,8 @@ impl<'a> Query<'a> {
 
         Self {
             vecid_to_index_to_vec: vecs,
-            indexer,
-            computer,
+            _indexer: indexer,
+            _computer: computer,
         }
     }
 

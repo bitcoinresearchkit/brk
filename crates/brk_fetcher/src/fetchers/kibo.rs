@@ -1,7 +1,7 @@
 use std::{collections::BTreeMap, str::FromStr};
 
-use brk_core::{Date, Height, OHLCCents};
-use color_eyre::eyre::ContextCompat;
+use brk_core::{CheckedSub, Date, Height, OHLCCents};
+use color_eyre::eyre::{ContextCompat, eyre};
 use log::info;
 use serde_json::Value;
 
@@ -14,56 +14,43 @@ pub struct Kibo {
 }
 
 const KIBO_OFFICIAL_URL: &str = "https://kibo.money/api";
-const KIBO_OFFICIAL_BACKUP_URL: &str = "https://backup.kibo.money/api";
 
 const RETRIES: usize = 10;
 
 impl Kibo {
-    fn get_base_url(try_index: usize) -> &'static str {
-        if try_index < RETRIES / 2 {
-            KIBO_OFFICIAL_URL
-        } else {
-            KIBO_OFFICIAL_BACKUP_URL
-        }
-    }
-
     pub fn get_from_height(&mut self, height: Height) -> color_eyre::Result<OHLCCents> {
+        let key = height.checked_sub(height % 10_000).unwrap_or_default();
+
         #[allow(clippy::map_entry)]
-        if !self.height_to_ohlc_vec.contains_key(&height)
-            || ((usize::from(height) + self.height_to_ohlc_vec.get(&height).unwrap().len())
-                <= usize::from(height))
+        if !self.height_to_ohlc_vec.contains_key(&key)
+            || ((key + self.height_to_ohlc_vec.get(&key).unwrap().len()) <= height)
         {
             self.height_to_ohlc_vec.insert(
-                height,
-                Self::fetch_height_prices(height).inspect_err(|e| {
+                key,
+                Self::fetch_height_prices(key).inspect_err(|e| {
                     dbg!(e);
                 })?,
             );
         }
 
-        dbg!(&self.height_to_ohlc_vec.keys());
-
         self.height_to_ohlc_vec
-            .get(&height)
+            .get(&key)
             .unwrap()
-            .get(usize::from(height))
+            .get(usize::from(height.checked_sub(key).unwrap()))
             .cloned()
             .ok_or(color_eyre::eyre::Error::msg("Couldn't find height in kibo"))
     }
 
     fn fetch_height_prices(height: Height) -> color_eyre::Result<Vec<OHLCCents>> {
-        info!("Fetching Kibo height prices...");
+        info!("Fetching Kibo height {height} prices...");
 
         retry(
-            |try_index| {
-                let base_url = Self::get_base_url(try_index);
-
-                let url = format!("{base_url}/height-to-price?chunk={}", height);
+            |_| {
+                let url = format!("{KIBO_OFFICIAL_URL}/height-to-price?chunk={}", height);
 
                 let body: Value = minreq::get(url).send()?.json()?;
 
-                let vec = body
-                    .as_object()
+                body.as_object()
                     .context("Expect to be an object")?
                     .get("dataset")
                     .context("Expect object to have dataset")?
@@ -75,9 +62,7 @@ impl Kibo {
                     .context("Expect to be an array")?
                     .iter()
                     .map(Self::value_to_ohlc)
-                    .collect::<Result<Vec<_>, _>>()?;
-
-                Ok(vec)
+                    .collect::<Result<Vec<_>, _>>()
             },
             30,
             RETRIES,
@@ -107,19 +92,21 @@ impl Kibo {
             .unwrap()
             .get(date)
             .cloned()
-            .ok_or(color_eyre::eyre::Error::msg("Couldn't find date in kibo"))
+            .ok_or({
+                dbg!(date);
+                eyre!("Couldn't find date in kibo")
+            })
     }
 
     fn fetch_date_prices(year: u16) -> color_eyre::Result<BTreeMap<Date, OHLCCents>> {
-        info!("Fetching Kibo date prices...");
+        info!("Fetching Kibo date {year} prices...");
 
         retry(
-            |try_index| {
-                let base_url = Self::get_base_url(try_index);
-
-                let body: Value = minreq::get(format!("{base_url}/date-to-price?chunk={}", year))
-                    .send()?
-                    .json()?;
+            |_| {
+                let body: Value =
+                    minreq::get(format!("{KIBO_OFFICIAL_URL}/date-to-price?chunk={}", year))
+                        .send()?
+                        .json()?;
 
                 body.as_object()
                     .context("Expect to be an object")?
@@ -156,11 +143,11 @@ impl Kibo {
             )))
         };
 
-        Ok((
+        Ok(OHLCCents::from((
             Open::from(get_value("open")?),
             High::from(get_value("high")?),
             Low::from(get_value("low")?),
             Close::from(get_value("close")?),
-        ))
+        )))
     }
 }

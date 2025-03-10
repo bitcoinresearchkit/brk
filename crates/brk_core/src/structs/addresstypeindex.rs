@@ -12,8 +12,6 @@ use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
     Ord,
     Clone,
     Copy,
-    Deref,
-    DerefMut,
     Default,
     FromBytes,
     Immutable,
@@ -24,16 +22,12 @@ use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 pub struct Addresstypeindex(u32);
 
 impl Addresstypeindex {
-    pub fn decremented(self) -> Self {
-        Self(*self - 1)
-    }
-
     pub fn increment(&mut self) {
         self.0 += 1;
     }
 
     pub fn incremented(self) -> Self {
-        Self(*self + 1)
+        Self(self.0 + 1)
     }
 
     pub fn copy_then_increment(&mut self) -> Self {

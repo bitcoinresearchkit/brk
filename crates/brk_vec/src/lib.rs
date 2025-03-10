@@ -16,6 +16,7 @@ use std::{
     sync::OnceLock,
 };
 
+use brk_core::CheckedSub;
 use brk_exit::Exit;
 pub use memmap2;
 use rayon::prelude::*;
@@ -258,6 +259,17 @@ where
     }
     #[inline]
     pub fn read_(&mut self, index: usize) -> Result<Option<&T>> {
+        match self.index_to_pushed_index(index) {
+            Ok(index) => {
+                if let Some(index) = index {
+                    return Ok(self.pushed.get(index));
+                }
+            }
+            Err(Error::IndexTooHigh) => return Ok(None),
+            Err(Error::IndexTooLow) => {}
+            Err(error) => return Err(error),
+        }
+
         let byte_index = Self::index_to_byte_index(index);
         if self.file_position != byte_index {
             self.file_position = self.seek(Self::index_to_byte_index(index))?;
@@ -279,21 +291,20 @@ where
         self.read_(len - 1)
     }
 
-    pub fn iter<F>(&self, f: F) -> Result<()>
+    pub fn iter<F>(&mut self, f: F) -> Result<()>
     where
-        F: FnMut((I, &T)) -> Result<()>,
+        F: FnMut((I, &T, &mut Self)) -> Result<()>,
     {
         self.iter_from(I::default(), f)
     }
 
-    pub fn iter_from<F>(&self, mut index: I, mut f: F) -> Result<()>
+    pub fn iter_from<F>(&mut self, mut index: I, mut f: F) -> Result<()>
     where
-        F: FnMut((I, &T)) -> Result<()>,
+        F: FnMut((I, &T, &mut Self)) -> Result<()>,
     {
         let mut file = self.open_file()?;
 
         let disk_len = I::from(Self::read_disk_len_(&file)?);
-        let pushed_len = I::from(self.pushed_len());
 
         Self::seek_(
             &mut file,
@@ -303,18 +314,12 @@ where
         let mut buf = Self::create_buffer();
 
         while index < disk_len {
-            f((index, Self::read_exact(&mut file, &mut buf)?))?;
+            f((index, Self::read_exact(&mut file, &mut buf)?, self))?;
             index = index + 1;
         }
 
-        let disk_len = Self::i_to_usize(disk_len)?;
-        let mut i = I::default();
-        while i < pushed_len {
-            f((
-                i + disk_len,
-                self.pushed.get(Self::i_to_usize(i)?).as_ref().unwrap(),
-            ))?;
-            i = i + 1;
+        if self.pushed_len() != 0 {
+            unreachable!();
         }
 
         Ok(())
@@ -573,24 +578,26 @@ where
         std::any::type_name::<I>()
     }
 
-    pub fn compute_transform<A, F>(
+    pub fn compute_transform<A, B, F>(
         &mut self,
-        max_from: I,
-        other: &mut StorableVec<I, A>,
-        t: F,
+        max_from: A,
+        other: &mut StorableVec<A, B>,
+        mut t: F,
         exit: &Exit,
     ) -> Result<()>
     where
-        A: StoredType,
-        F: Fn(&A, I) -> T,
+        A: StoredIndex,
+        B: StoredType,
+        F: FnMut((A, &B, &mut Self, &mut StorableVec<A, B>)) -> (I, T),
     {
         self.validate_computed_version_or_reset_file(
             Version::from(0) + self.version + other.version,
         )?;
 
-        let index = max_from.min(I::from(self.len()));
-        other.iter_from(index, |(i, a)| {
-            self.push_and_flush_if_needed(i, t(a, i), exit)
+        let index = max_from.min(A::from(self.len()));
+        other.iter_from(index, |(a, b, other)| {
+            let (i, v) = t((a, b, self, other));
+            self.push_and_flush_if_needed(i, v, exit)
         })?;
 
         Ok(self.safe_flush(exit)?)
@@ -611,7 +618,14 @@ where
         )?;
 
         let index = max_from.min(self.read_last()?.cloned().unwrap_or_default());
-        other.iter_from(index, |(v, i)| self.push_and_flush_if_needed(*i, v, exit))?;
+        other.iter_from(index, |(v, i, ..)| {
+            let i = *i;
+            if self.read(i).unwrap().is_none_or(|old_v| *old_v > v) {
+                self.push_and_flush_if_needed(i, v, exit)
+            } else {
+                Ok(())
+            }
+        })?;
 
         Ok(self.safe_flush(exit)?)
     }
@@ -632,7 +646,7 @@ where
         )?;
 
         let index = max_from.min(T::from(self.len()));
-        first_indexes.iter_from(index, |(value, first_index)| {
+        first_indexes.iter_from(index, |(value, first_index, ..)| {
             let first_index = Self::i_to_usize(*first_index)?;
             let last_index = Self::i_to_usize(*last_indexes.read(value)?.unwrap())?;
             (first_index..last_index)
@@ -650,7 +664,7 @@ where
         exit: &Exit,
     ) -> Result<()>
     where
-        T: Copy + From<usize> + Sub<T, Output = T> + StoredIndex,
+        T: Copy + From<usize> + CheckedSub<T> + StoredIndex,
     {
         self.validate_computed_version_or_reset_file(
             Version::from(0) + self.version + first_indexes.version,
@@ -659,15 +673,19 @@ where
         let index = max_from.min(I::from(self.len()));
         let one = T::from(1);
         let mut prev_index: Option<I> = None;
-        first_indexes.iter_from(index, |(i, v)| {
+        first_indexes.iter_from(index, |(i, v, ..)| {
             if let Some(prev_index) = prev_index {
-                self.push_and_flush_if_needed(prev_index, *v - one, exit)?;
+                self.push_and_flush_if_needed(prev_index, v.checked_sub(one).unwrap(), exit)?;
             }
             prev_index.replace(i);
             Ok(())
         })?;
         if let Some(prev_index) = prev_index {
-            self.push_and_flush_if_needed(prev_index, T::from(final_len) - one, exit)?;
+            self.push_and_flush_if_needed(
+                prev_index,
+                T::from(final_len).checked_sub(one).unwrap(),
+                exit,
+            )?;
         }
 
         Ok(self.safe_flush(exit)?)
@@ -690,7 +708,7 @@ where
         )?;
 
         let index = max_from.min(I::from(self.len()));
-        first_indexes.iter_from(index, |(i, first_index)| {
+        first_indexes.iter_from(index, |(i, first_index, ..)| {
             let last_index = last_indexes.read(i)?.unwrap();
             let count = *last_index + 1_usize - *first_index;
             self.push_and_flush_if_needed(i, count.into(), exit)
@@ -716,7 +734,7 @@ where
         )?;
 
         let index = max_from.min(I::from(self.len()));
-        self_to_other.iter_from(index, |(i, other)| {
+        self_to_other.iter_from(index, |(i, other, ..)| {
             self.push_and_flush_if_needed(
                 i,
                 T::from(other_to_self.read(*other)?.unwrap() == &i),
@@ -745,7 +763,7 @@ where
         )?;
 
         let index = max_from.min(I::from(self.len()));
-        first_indexes.iter_from(index, |(index, first_index)| {
+        first_indexes.iter_from(index, |(index, first_index, ..)| {
             let last_index = last_indexes.read(index)?.unwrap();
             let count = *last_index + 1_usize - *first_index;
             self.push_and_flush_if_needed(index, count.into(), exit)

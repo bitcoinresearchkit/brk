@@ -83,7 +83,7 @@ impl Indexer {
         self.stores
             .as_mut()
             .unwrap()
-            .rollback_if_needed(self.vecs.as_ref().unwrap(), &starting_indexes)?;
+            .rollback_if_needed(self.vecs.as_mut().unwrap(), &starting_indexes)?;
         self.vecs
             .as_mut()
             .unwrap()

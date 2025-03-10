@@ -1,10 +1,11 @@
 use std::{fs, io, path::Path};
 
 use brk_core::{
-    Addressbytes, Addressindex, Addresstype, Addresstypeindex, BlockHash, Emptyindex, Height, LockTime, Multisigindex,
-    Opreturnindex, P2PK33AddressBytes, P2PK33index, P2PK65AddressBytes, P2PK65index, P2PKHAddressBytes, P2PKHindex,
-    P2SHAddressBytes, P2SHindex, P2TRAddressBytes, P2TRindex, P2WPKHAddressBytes, P2WPKHindex, P2WSHAddressBytes,
-    P2WSHindex, Pushonlyindex, Sats, Timestamp, TxVersion, Txid, Txindex, Txinindex, Txoutindex, Unknownindex, Weight,
+    Addressbytes, Addressindex, Addresstype, Addresstypeindex, BlockHash, Emptyindex, Height,
+    LockTime, Multisigindex, Opreturnindex, P2PK33AddressBytes, P2PK33index, P2PK65AddressBytes,
+    P2PK65index, P2PKHAddressBytes, P2PKHindex, P2SHAddressBytes, P2SHindex, P2TRAddressBytes,
+    P2TRindex, P2WPKHAddressBytes, P2WPKHindex, P2WSHAddressBytes, P2WSHindex, Pushonlyindex, Sats,
+    Timestamp, TxVersion, Txid, Txindex, Txinindex, Txoutindex, Unknownindex, Weight,
 };
 use brk_vec::{AnyStorableVec, Version};
 use rayon::prelude::*;
@@ -75,9 +76,18 @@ impl Vecs {
                 &path.join("addressindex_to_addresstypeindex"),
                 Version::from(1),
             )?,
-            addressindex_to_height: StorableVec::import(&path.join("addressindex_to_height"), Version::from(1))?,
-            height_to_blockhash: StorableVec::import(&path.join("height_to_blockhash"), Version::from(1))?,
-            height_to_difficulty: StorableVec::import(&path.join("height_to_difficulty"), Version::from(1))?,
+            addressindex_to_height: StorableVec::import(
+                &path.join("addressindex_to_height"),
+                Version::from(1),
+            )?,
+            height_to_blockhash: StorableVec::import(
+                &path.join("height_to_blockhash"),
+                Version::from(1),
+            )?,
+            height_to_difficulty: StorableVec::import(
+                &path.join("height_to_difficulty"),
+                Version::from(1),
+            )?,
             height_to_first_addressindex: StorableVec::import(
                 &path.join("height_to_first_addressindex"),
                 Version::from(1),
@@ -98,8 +108,14 @@ impl Vecs {
                 &path.join("height_to_first_pushonlyindex"),
                 Version::from(1),
             )?,
-            height_to_first_txindex: StorableVec::import(&path.join("height_to_first_txindex"), Version::from(1))?,
-            height_to_first_txinindex: StorableVec::import(&path.join("height_to_first_txinindex"), Version::from(1))?,
+            height_to_first_txindex: StorableVec::import(
+                &path.join("height_to_first_txindex"),
+                Version::from(1),
+            )?,
+            height_to_first_txinindex: StorableVec::import(
+                &path.join("height_to_first_txinindex"),
+                Version::from(1),
+            )?,
             height_to_first_txoutindex: StorableVec::import(
                 &path.join("height_to_first_txoutindex"),
                 Version::from(1),
@@ -120,8 +136,14 @@ impl Vecs {
                 &path.join("height_to_first_p2pkhindex"),
                 Version::from(1),
             )?,
-            height_to_first_p2shindex: StorableVec::import(&path.join("height_to_first_p2shindex"), Version::from(1))?,
-            height_to_first_p2trindex: StorableVec::import(&path.join("height_to_first_p2trindex"), Version::from(1))?,
+            height_to_first_p2shindex: StorableVec::import(
+                &path.join("height_to_first_p2shindex"),
+                Version::from(1),
+            )?,
+            height_to_first_p2trindex: StorableVec::import(
+                &path.join("height_to_first_p2trindex"),
+                Version::from(1),
+            )?,
             height_to_first_p2wpkhindex: StorableVec::import(
                 &path.join("height_to_first_p2wpkhindex"),
                 Version::from(1),
@@ -131,8 +153,14 @@ impl Vecs {
                 Version::from(1),
             )?,
             height_to_size: StorableVec::import(&path.join("height_to_size"), Version::from(1))?,
-            height_to_timestamp: StorableVec::import(&path.join("height_to_timestamp"), Version::from(1))?,
-            height_to_weight: StorableVec::import(&path.join("height_to_weight"), Version::from(1))?,
+            height_to_timestamp: StorableVec::import(
+                &path.join("height_to_timestamp"),
+                Version::from(1),
+            )?,
+            height_to_weight: StorableVec::import(
+                &path.join("height_to_weight"),
+                Version::from(1),
+            )?,
             p2pk33index_to_p2pk33addressbytes: StorableVec::import(
                 &path.join("p2pk33index_to_p2pk33addressbytes"),
                 Version::from(1),
@@ -169,27 +197,48 @@ impl Vecs {
                 &path.join("txindex_to_first_txoutindex"),
                 Version::from(1),
             )?,
-            txindex_to_height: StorableVec::import(&path.join("txindex_to_height"), Version::from(1))?,
-            txindex_to_locktime: StorableVec::import(&path.join("txindex_to_locktime"), Version::from(1))?,
+            txindex_to_height: StorableVec::import(
+                &path.join("txindex_to_height"),
+                Version::from(1),
+            )?,
+            txindex_to_locktime: StorableVec::import(
+                &path.join("txindex_to_locktime"),
+                Version::from(1),
+            )?,
             txindex_to_txid: StorableVec::import(&path.join("txindex_to_txid"), Version::from(1))?,
-            txindex_to_base_size: StorableVec::import(&path.join("txindex_to_base_size"), Version::from(1))?,
-            txindex_to_total_size: StorableVec::import(&path.join("txindex_to_total_size"), Version::from(1))?,
+            txindex_to_base_size: StorableVec::import(
+                &path.join("txindex_to_base_size"),
+                Version::from(1),
+            )?,
+            txindex_to_total_size: StorableVec::import(
+                &path.join("txindex_to_total_size"),
+                Version::from(1),
+            )?,
             txindex_to_is_explicitly_rbf: StorableVec::import(
                 &path.join("txindex_to_is_explicitly_rbf"),
                 Version::from(1),
             )?,
-            txindex_to_txversion: StorableVec::import(&path.join("txindex_to_txversion"), Version::from(1))?,
-            txinindex_to_txoutindex: StorableVec::import(&path.join("txinindex_to_txoutindex"), Version::from(1))?,
+            txindex_to_txversion: StorableVec::import(
+                &path.join("txindex_to_txversion"),
+                Version::from(1),
+            )?,
+            txinindex_to_txoutindex: StorableVec::import(
+                &path.join("txinindex_to_txoutindex"),
+                Version::from(1),
+            )?,
             txoutindex_to_addressindex: StorableVec::import(
                 &path.join("txoutindex_to_addressindex"),
                 Version::from(1),
             )?,
-            txoutindex_to_value: StorableVec::import(&path.join("txoutindex_to_value"), Version::from(1))?,
+            txoutindex_to_value: StorableVec::import(
+                &path.join("txoutindex_to_value"),
+                Version::from(1),
+            )?,
         })
     }
 
     pub fn rollback_if_needed(&mut self, starting_indexes: &Indexes) -> brk_vec::Result<()> {
-        let saved_height = starting_indexes.height.decremented();
+        let saved_height = starting_indexes.height.decremented().unwrap_or_default();
 
         // We don't want to override the starting indexes so we cut from n + 1
         let height = starting_indexes.height.incremented();
@@ -218,7 +267,8 @@ impl Vecs {
             .truncate_if_needed(height, saved_height)?;
         self.height_to_first_pushonlyindex
             .truncate_if_needed(height, saved_height)?;
-        self.height_to_first_txindex.truncate_if_needed(height, saved_height)?;
+        self.height_to_first_txindex
+            .truncate_if_needed(height, saved_height)?;
         self.height_to_first_txinindex
             .truncate_if_needed(height, saved_height)?;
         self.height_to_first_txoutindex
@@ -243,11 +293,16 @@ impl Vecs {
             ..
         } = starting_indexes;
 
-        self.height_to_blockhash.truncate_if_needed(height, saved_height)?;
-        self.height_to_difficulty.truncate_if_needed(height, saved_height)?;
-        self.height_to_size.truncate_if_needed(height, saved_height)?;
-        self.height_to_timestamp.truncate_if_needed(height, saved_height)?;
-        self.height_to_weight.truncate_if_needed(height, saved_height)?;
+        self.height_to_blockhash
+            .truncate_if_needed(height, saved_height)?;
+        self.height_to_difficulty
+            .truncate_if_needed(height, saved_height)?;
+        self.height_to_size
+            .truncate_if_needed(height, saved_height)?;
+        self.height_to_timestamp
+            .truncate_if_needed(height, saved_height)?;
+        self.height_to_weight
+            .truncate_if_needed(height, saved_height)?;
 
         self.addressindex_to_addresstype
             .truncate_if_needed(addressindex, saved_height)?;
@@ -275,12 +330,18 @@ impl Vecs {
             .truncate_if_needed(txindex, saved_height)?;
         self.txindex_to_first_txoutindex
             .truncate_if_needed(txindex, saved_height)?;
-        self.txindex_to_height.truncate_if_needed(txindex, saved_height)?;
-        self.txindex_to_locktime.truncate_if_needed(txindex, saved_height)?;
-        self.txindex_to_txid.truncate_if_needed(txindex, saved_height)?;
-        self.txindex_to_txversion.truncate_if_needed(txindex, saved_height)?;
-        self.txindex_to_base_size.truncate_if_needed(txindex, saved_height)?;
-        self.txindex_to_total_size.truncate_if_needed(txindex, saved_height)?;
+        self.txindex_to_height
+            .truncate_if_needed(txindex, saved_height)?;
+        self.txindex_to_locktime
+            .truncate_if_needed(txindex, saved_height)?;
+        self.txindex_to_txid
+            .truncate_if_needed(txindex, saved_height)?;
+        self.txindex_to_txversion
+            .truncate_if_needed(txindex, saved_height)?;
+        self.txindex_to_base_size
+            .truncate_if_needed(txindex, saved_height)?;
+        self.txindex_to_total_size
+            .truncate_if_needed(txindex, saved_height)?;
         self.txindex_to_is_explicitly_rbf
             .truncate_if_needed(txindex, saved_height)?;
 
@@ -289,7 +350,8 @@ impl Vecs {
 
         self.txoutindex_to_addressindex
             .truncate_if_needed(txoutindex, saved_height)?;
-        self.txoutindex_to_value.truncate_if_needed(txoutindex, saved_height)?;
+        self.txoutindex_to_value
+            .truncate_if_needed(txoutindex, saved_height)?;
 
         Ok(())
     }
@@ -351,13 +413,21 @@ impl Vecs {
             Addressbytes::P2PK33(bytes) => self
                 .p2pk33index_to_p2pk33addressbytes
                 .push_if_needed(index.into(), bytes),
-            Addressbytes::P2PKH(bytes) => self.p2pkhindex_to_p2pkhaddressbytes.push_if_needed(index.into(), bytes),
-            Addressbytes::P2SH(bytes) => self.p2shindex_to_p2shaddressbytes.push_if_needed(index.into(), bytes),
+            Addressbytes::P2PKH(bytes) => self
+                .p2pkhindex_to_p2pkhaddressbytes
+                .push_if_needed(index.into(), bytes),
+            Addressbytes::P2SH(bytes) => self
+                .p2shindex_to_p2shaddressbytes
+                .push_if_needed(index.into(), bytes),
             Addressbytes::P2WPKH(bytes) => self
                 .p2wpkhindex_to_p2wpkhaddressbytes
                 .push_if_needed(index.into(), bytes),
-            Addressbytes::P2WSH(bytes) => self.p2wshindex_to_p2wshaddressbytes.push_if_needed(index.into(), bytes),
-            Addressbytes::P2TR(bytes) => self.p2trindex_to_p2traddressbytes.push_if_needed(index.into(), bytes),
+            Addressbytes::P2WSH(bytes) => self
+                .p2wshindex_to_p2wshaddressbytes
+                .push_if_needed(index.into(), bytes),
+            Addressbytes::P2TR(bytes) => self
+                .p2trindex_to_p2traddressbytes
+                .push_if_needed(index.into(), bytes),
         }
     }
 

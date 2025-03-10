@@ -10,7 +10,7 @@ fn main() -> color_eyre::Result<()> {
 
     dbg!(fetcher.get_date(Date::new(2025, 1, 1))?);
     dbg!(fetcher.get_height(
-        880_000_u32.into(),
+        881_000_u32.into(),
         1740683986.into(),
         Some(1740683000.into())
     )?);
