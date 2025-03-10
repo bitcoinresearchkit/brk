@@ -12,7 +12,7 @@ pub fn main() -> color_eyre::Result<()> {
     let mut indexer = Indexer::new(outputs_dir.join("indexed"))?;
     indexer.import_vecs()?;
 
-    let mut computer = Computer::new(outputs_dir.join("computed"));
+    let mut computer = Computer::new(outputs_dir.join("computed"), None);
     computer.import_vecs()?;
 
     let query = Query::build(&indexer, &computer);

@@ -6,6 +6,7 @@
 use std::path::{Path, PathBuf};
 
 use brk_exit::Exit;
+use brk_fetcher::Fetcher;
 use brk_indexer::{Indexer, Indexes};
 pub use brk_parser::rpc;
 
@@ -17,25 +18,30 @@ use storage::{Stores, Vecs};
 #[derive(Clone)]
 pub struct Computer {
     path: PathBuf,
+    fetcher: Option<Fetcher>,
     vecs: Option<Vecs>,
     stores: Option<Stores>,
 }
 
 impl Computer {
-    pub fn new(computed_dir: PathBuf) -> Self {
+    pub fn new(computed_dir: PathBuf, fetcher: Option<Fetcher>) -> Self {
         Self {
             path: computed_dir,
+            fetcher,
             vecs: None,
             stores: None,
         }
     }
 
     pub fn import_vecs(&mut self) -> color_eyre::Result<()> {
-        self.vecs = Some(Vecs::import(&self.path.join("vecs"))?);
+        self.vecs = Some(Vecs::import(
+            &self.path.join("vecs"),
+            self.fetcher.is_some(),
+        )?);
         Ok(())
     }
 
-    /// Do NOT import multiple times are things will break !!!
+    /// Do NOT import multiple times or things will break !!!
     /// Clone struct instead
     pub fn import_stores(&mut self) -> color_eyre::Result<()> {
         self.stores = Some(Stores::import(&self.path.join("stores"))?);
@@ -52,7 +58,12 @@ impl Computer {
     ) -> color_eyre::Result<()> {
         info!("Computing...");
 
-        self.mut_vecs().compute(indexer, starting_indexes, exit)?;
+        self.vecs.as_mut().unwrap().compute(
+            indexer,
+            starting_indexes,
+            self.fetcher.as_mut(),
+            exit,
+        )?;
 
         Ok(())
     }

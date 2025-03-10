@@ -5,8 +5,9 @@ use serde::{Deserialize, Serialize};
     Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize, ValueEnum,
 )]
 pub enum Frontend {
-    None,
     #[default]
+    None,
+    #[value(name = "kibo.money")]
     KiboMoney,
     Custom,
 }

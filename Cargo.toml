@@ -22,7 +22,7 @@ brk_query = { version = "0", path = "crates/brk_query" }
 brk_server = { version = "0", path = "crates/brk_server" }
 brk_vec = { version = "0", path = "crates/brk_vec" }
 byteview = "0.5.4"
-clap = { version = "4.5.31", features = ["derive", "string"] }
+clap = { version = "4.5.32", features = ["derive", "string"] }
 color-eyre = "0.6.3"
 derive_deref = "1.1.1"
 fjall = "2.6.7"
@@ -30,7 +30,7 @@ jiff = "0.2.3"
 log = { version = "0.4.26" }
 minreq = { version = "2.13.2", features = ["https", "serde_json"] }
 rayon = "1.10.0"
-serde = { version = "1.0.218", features = ["derive"] }
+serde = { version = "1.0.219", features = ["derive"] }
 serde_json = { version = "1.0.140", features = ["float_roundtrip"] }
 tabled = "0.18.0"
 zerocopy = { version = "0.8.23", features = ["derive"] }

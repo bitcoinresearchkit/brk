@@ -3,17 +3,17 @@ use std::{
     path::{Path, PathBuf},
 };
 
-pub fn path_dot_brk() -> PathBuf {
+pub fn dot_brk_path() -> PathBuf {
     let home = std::env::var("HOME").unwrap();
     Path::new(&home).join(".brk")
 }
 
-pub fn path_dot_brk_log() -> PathBuf {
-    path_dot_brk().join("log")
+pub fn dot_brk_log_path() -> PathBuf {
+    dot_brk_path().join("log")
 }
 
-pub fn default_brk() -> PathBuf {
-    path_dot_brk()
+pub fn default_brk_path() -> PathBuf {
+    dot_brk_path()
 }
 
 pub fn default_bitcoin_path() -> PathBuf {
@@ -24,11 +24,11 @@ pub fn default_bitcoin_path() -> PathBuf {
     }
 }
 
-fn default_linux_bitcoin_path() -> PathBuf {
+pub fn default_linux_bitcoin_path() -> PathBuf {
     Path::new(&std::env::var("HOME").unwrap()).join(".bitcoin")
 }
 
-fn default_mac_bitcoin_path() -> PathBuf {
+pub fn default_mac_bitcoin_path() -> PathBuf {
     Path::new(&std::env::var("HOME").unwrap())
         .join("Library")
         .join("Application Support")

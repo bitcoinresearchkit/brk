@@ -10,9 +10,9 @@ use color_eyre::eyre::Error;
 
 mod fetchers;
 
-// use brk_indexer::Indexer;
 use fetchers::*;
 
+#[derive(Clone)]
 pub struct Fetcher {
     binance: Binance,
     kraken: Kraken,

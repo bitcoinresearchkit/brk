@@ -13,6 +13,7 @@ use serde_json::Value;
 
 use crate::{Close, Date, Dollars, Fetcher, High, Low, Open, fetchers::retry};
 
+#[derive(Clone)]
 pub struct Binance {
     path: Option<PathBuf>,
     _1mn: Option<BTreeMap<Timestamp, OHLCCents>>,
@@ -35,7 +36,9 @@ impl Binance {
         timestamp: Timestamp,
         previous_timestamp: Option<Timestamp>,
     ) -> color_eyre::Result<OHLCCents> {
-        if self._1mn.is_none() || self._1mn.as_ref().unwrap().last_key_value().unwrap().0 <= &timestamp {
+        if self._1mn.is_none()
+            || self._1mn.as_ref().unwrap().last_key_value().unwrap().0 <= &timestamp
+        {
             self._1mn.replace(Self::fetch_1mn()?);
         }
 
@@ -54,14 +57,25 @@ impl Binance {
             self.har.replace(self.read_har().unwrap_or_default());
         }
 
-        Fetcher::find_height_ohlc(self.har.as_ref().unwrap(), timestamp, previous_timestamp, "binance har")
+        Fetcher::find_height_ohlc(
+            self.har.as_ref().unwrap(),
+            timestamp,
+            previous_timestamp,
+            "binance har",
+        )
     }
 
     pub fn fetch_1mn() -> color_eyre::Result<BTreeMap<Timestamp, OHLCCents>> {
         info!("Fetching 1mn prices from Binance...");
 
         retry(
-            |_| Self::json_to_timestamp_to_ohlc(&minreq::get(Self::url("interval=1m&limit=1000")).send()?.json()?),
+            |_| {
+                Self::json_to_timestamp_to_ohlc(
+                    &minreq::get(Self::url("interval=1m&limit=1000"))
+                        .send()?
+                        .json()?,
+                )
+            },
             30,
             10,
         )
@@ -141,7 +155,13 @@ impl Binance {
                     .contains("/uiKlines")
             })
             .map(|entry| {
-                let response = entry.as_object().unwrap().get("response").unwrap().as_object().unwrap();
+                let response = entry
+                    .as_object()
+                    .unwrap()
+                    .get("response")
+                    .unwrap()
+                    .as_object()
+                    .unwrap();
 
                 let content = response.get("content").unwrap().as_object().unwrap();
 
@@ -161,7 +181,9 @@ impl Binance {
             })
     }
 
-    fn json_to_timestamp_to_ohlc(json: &Value) -> color_eyre::Result<BTreeMap<Timestamp, OHLCCents>> {
+    fn json_to_timestamp_to_ohlc(
+        json: &Value,
+    ) -> color_eyre::Result<BTreeMap<Timestamp, OHLCCents>> {
         Self::json_to_btree(json, Self::array_to_timestamp_and_ohlc)
     }
 
@@ -188,7 +210,13 @@ impl Binance {
 
         let get_cents = |index: usize| {
             Cents::from(Dollars::from(
-                array.get(index).unwrap().as_str().unwrap().parse::<f64>().unwrap(),
+                array
+                    .get(index)
+                    .unwrap()
+                    .as_str()
+                    .unwrap()
+                    .parse::<f64>()
+                    .unwrap(),
             ))
         };
 

@@ -1,13 +1,13 @@
 use std::{
     iter::Sum,
-    ops::{Add, AddAssign, Mul, Sub, SubAssign},
+    ops::{Add, AddAssign, Div, Mul, Sub, SubAssign},
 };
 
 use bitcoin::Amount;
 use serde::Serialize;
 use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
-use super::Height;
+use super::{Bitcoin, Dollars, Height};
 
 #[derive(
     Debug,
@@ -28,6 +28,7 @@ pub struct Sats(u64);
 
 impl Sats {
     pub const ZERO: Self = Self(0);
+    pub const ONE_BTC: Self = Self(100_000_000);
 
     pub fn is_zero(&self) -> bool {
         *self == Self::ZERO
@@ -88,6 +89,13 @@ impl Sum for Sats {
     }
 }
 
+impl Div<Dollars> for Sats {
+    type Output = Self;
+    fn div(self, rhs: Dollars) -> Self::Output {
+        Self((self.0 as f64 / f64::from(rhs)) as u64)
+    }
+}
+
 impl From<u64> for Sats {
     fn from(value: u64) -> Self {
         Self(value)
@@ -105,8 +113,14 @@ impl From<Sats> for Amount {
     }
 }
 
-impl From<Sats> for f64 {
+impl From<Bitcoin> for Sats {
+    fn from(value: Bitcoin) -> Self {
+        Self((f64::from(value) * (u64::from(Sats::ONE_BTC) as f64)) as u64)
+    }
+}
+
+impl From<Sats> for u64 {
     fn from(value: Sats) -> Self {
-        value.0 as f64
+        value.0
     }
 }
