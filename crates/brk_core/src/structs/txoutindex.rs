@@ -1,8 +1,10 @@
-use std::ops::{Add, AddAssign, Sub};
+use std::ops::{Add, AddAssign};
 
 use derive_deref::{Deref, DerefMut};
 use serde::Serialize;
 use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
+
+use crate::CheckedSub;
 
 use super::Vout;
 
@@ -64,10 +66,9 @@ impl AddAssign<Txoutindex> for Txoutindex {
     }
 }
 
-impl Sub<Txoutindex> for Txoutindex {
-    type Output = Self;
-    fn sub(self, rhs: Txoutindex) -> Self::Output {
-        Self(self.0 - rhs.0)
+impl CheckedSub<Txoutindex> for Txoutindex {
+    fn checked_sub(self, rhs: Txoutindex) -> Option<Self> {
+        self.0.checked_sub(rhs.0).map(Txoutindex::from)
     }
 }
 

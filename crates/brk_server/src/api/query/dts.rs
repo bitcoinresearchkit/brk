@@ -2,23 +2,23 @@ use std::{fs, io, path::Path};
 
 use brk_query::{Index, Query};
 
-use crate::Frontend;
+use crate::Website;
 
 const SCRIPTS: &str = "scripts";
 const TPYES: &str = "types";
 
 #[allow(clippy::upper_case_acronyms)]
 pub trait DTS {
-    fn generate_dts_file(&self, frontend: Frontend, websites_path: &Path) -> io::Result<()>;
+    fn generate_dts_file(&self, website: Website, websites_path: &Path) -> io::Result<()>;
 }
 
 impl DTS for Query<'static> {
-    fn generate_dts_file(&self, frontend: Frontend, websites_path: &Path) -> io::Result<()> {
-        if frontend.is_none() {
+    fn generate_dts_file(&self, website: Website, websites_path: &Path) -> io::Result<()> {
+        if website.is_none() {
             return Ok(());
         }
 
-        let path = websites_path.join(frontend.to_folder_name());
+        let path = websites_path.join(website.to_folder_name());
 
         if !fs::exists(&path)? {
             return Ok(());

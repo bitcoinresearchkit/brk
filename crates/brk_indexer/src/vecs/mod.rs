@@ -447,7 +447,7 @@ impl Vecs {
 
     pub fn as_any_vecs(&self) -> Vec<&dyn AnyStorableVec> {
         vec![
-            &*self.addressindex_to_addresstype as &dyn AnyStorableVec,
+            &*self.addressindex_to_addresstype,
             &*self.addressindex_to_addresstypeindex,
             &*self.addressindex_to_height,
             &*self.height_to_blockhash,
@@ -495,7 +495,7 @@ impl Vecs {
 
     fn as_mut_any_vecs(&mut self) -> Vec<&mut dyn AnyIndexedVec> {
         vec![
-            &mut self.addressindex_to_addresstype as &mut dyn AnyIndexedVec,
+            &mut self.addressindex_to_addresstype,
             &mut self.addressindex_to_addresstypeindex,
             &mut self.addressindex_to_height,
             &mut self.height_to_blockhash,

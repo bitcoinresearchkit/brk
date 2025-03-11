@@ -32,14 +32,14 @@ mod api;
 mod files;
 mod traits;
 
-pub use files::Frontend;
+pub use files::Website;
 
 #[derive(Clone)]
 pub struct AppState {
     // indexer: &'static Indexer,
     // computer: &'static Computer,
     query: &'static Query<'static>,
-    frontend: Frontend,
+    website: Website,
     websites_path: Option<PathBuf>,
 }
 
@@ -51,16 +51,12 @@ const WEBSITES: &str = "websites";
 pub struct Server(AppState);
 
 impl Server {
-    pub fn new(
-        indexer: Indexer,
-        computer: Computer,
-        frontend: Frontend,
-    ) -> color_eyre::Result<Self> {
+    pub fn new(indexer: Indexer, computer: Computer, website: Website) -> color_eyre::Result<Self> {
         let indexer = Box::leak(Box::new(indexer));
         let computer = Box::leak(Box::new(computer));
         let query = Box::leak(Box::new(Query::build(indexer, computer)));
 
-        let websites_path = if frontend.is_some() {
+        let websites_path = if website.is_some() {
             let websites_dev_path = Path::new(DEV_PATH).join(WEBSITES);
 
             let websites_path = if fs::exists(&websites_dev_path)? {
@@ -90,7 +86,7 @@ impl Server {
                 downloaded_websites_path
             };
 
-            query.generate_dts_file(frontend, websites_path.as_path())?;
+            query.generate_dts_file(website, websites_path.as_path())?;
 
             Some(websites_path)
         } else {
@@ -99,7 +95,7 @@ impl Server {
 
         Ok(Self(AppState {
             query,
-            frontend,
+            website,
             websites_path,
         }))
     }
@@ -115,7 +111,7 @@ impl Server {
 
         let router = Router::new()
             .add_api_routes()
-            .add_website_routes(state.frontend)
+            .add_website_routes(state.website)
             .route("/version", get(Json(env!("CARGO_PKG_VERSION"))))
             .with_state(state)
             .layer(compression_layer);

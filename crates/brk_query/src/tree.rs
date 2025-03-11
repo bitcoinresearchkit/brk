@@ -16,10 +16,15 @@ impl<'a> VecIdToIndexToVec<'a> {
         if split.len() != 2 {
             panic!();
         }
-        let str = vec.index_type_to_string().split("::").last().unwrap().to_lowercase();
+        let str = vec
+            .index_type_to_string()
+            .split("::")
+            .last()
+            .unwrap()
+            .to_lowercase();
         let index = Index::try_from(str.as_str())
             .inspect_err(|_| {
-                dbg!(str);
+                dbg!(&str);
             })
             .unwrap();
         if split[0] != index.to_string().to_lowercase() {
@@ -27,8 +32,9 @@ impl<'a> VecIdToIndexToVec<'a> {
             panic!();
         }
         let key = split[1].to_string().replace("_", "-");
-        let prev = self.entry(key).or_default().insert(index, vec);
+        let prev = self.entry(key.clone()).or_default().insert(index, vec);
         if prev.is_some() {
+            dbg!(&key, str, file_name);
             panic!()
         }
     }

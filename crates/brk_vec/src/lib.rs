@@ -52,18 +52,12 @@ pub struct StorableVec<I, T> {
     buf: Vec<u8>,
     mmaps: Vec<OnceLock<Box<memmap2::Mmap>>>, // Boxed Mmap to reduce the size of the Lock (from 24 to 16)
     pushed: Vec<T>,
-    // updated: BTreeMap<usize, T>,
-    // inserted: BTreeMap<usize, T>,
-    // removed: BTreeSet<usize>,
-    // min: AtomicUsize,
-    // opened_mmaps: AtomicUsize,
     phantom: PhantomData<I>,
 }
 
 /// In bytes
 const MAX_PAGE_SIZE: usize = 4 * 4096;
 const ONE_MB: usize = 1024 * 1024;
-// const MAX_CACHE_SIZE: usize = usize::MAX;
 const MAX_CACHE_SIZE: usize = 100 * ONE_MB;
 const FLUSH_EVERY: usize = 10_000;
 
@@ -112,12 +106,7 @@ where
             buf: Self::create_buffer(),
             mmaps: vec![],
             pushed: vec![],
-            // updated: BTreeMap::new(),
-            // inserted: BTreeMap::new(),
-            // removed: BTreeSet::new(),
             phantom: PhantomData,
-            // min: AtomicUsize::new(usize::MAX),
-            // opened_mmaps: AtomicUsize::new(0),
         };
 
         slf.reset_file_metadata()?;
@@ -674,7 +663,7 @@ where
         let one = T::from(1);
         let mut prev_index: Option<I> = None;
         first_indexes.iter_from(index, |(i, v, ..)| {
-            if let Some(prev_index) = prev_index {
+            if let Some(prev_index) = prev_index.take() {
                 self.push_and_flush_if_needed(prev_index, v.checked_sub(one).unwrap(), exit)?;
             }
             prev_index.replace(i);

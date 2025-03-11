@@ -1,11 +1,13 @@
 use std::{
     iter::Sum,
-    ops::{Add, AddAssign, Div, Mul, Sub, SubAssign},
+    ops::{Add, AddAssign, Div, Mul, SubAssign},
 };
 
 use bitcoin::Amount;
 use serde::Serialize;
 use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
+
+use crate::CheckedSub;
 
 use super::{Bitcoin, Dollars, Height};
 
@@ -48,16 +50,15 @@ impl AddAssign for Sats {
     }
 }
 
-impl Sub for Sats {
-    type Output = Sats;
-    fn sub(self, rhs: Sats) -> Self::Output {
-        Sats::from(self.0 - rhs.0)
+impl CheckedSub<Sats> for Sats {
+    fn checked_sub(self, rhs: Sats) -> Option<Self> {
+        self.0.checked_sub(rhs.0).map(Sats::from)
     }
 }
 
 impl SubAssign for Sats {
     fn sub_assign(&mut self, rhs: Self) {
-        *self = *self - rhs;
+        *self = self.checked_sub(rhs).unwrap();
     }
 }
 
