@@ -1,11 +1,11 @@
-use std::ops::{Add, AddAssign, Sub};
+use std::ops::{Add, AddAssign};
 
 use byteview::ByteView;
 use derive_deref::{Deref, DerefMut};
 use serde::Serialize;
 use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
-use crate::Error;
+use crate::{CheckedSub, Error};
 
 #[derive(
     Debug,
@@ -52,10 +52,9 @@ impl AddAssign<Txindex> for Txindex {
     }
 }
 
-impl Sub<Txindex> for Txindex {
-    type Output = Txindex;
-    fn sub(self, rhs: Txindex) -> Self::Output {
-        Self::from(*self - *rhs)
+impl CheckedSub<Txindex> for Txindex {
+    fn checked_sub(self, rhs: Txindex) -> Option<Self> {
+        self.0.checked_sub(rhs.0).map(Txindex::from)
     }
 }
 

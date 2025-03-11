@@ -46,7 +46,7 @@ fn any_handler(
         .websites_path
         .as_ref()
         .expect("Should never reach here is websites_path is None")
-        .join(app_state.frontend.to_folder_name());
+        .join(app_state.website.to_folder_name());
 
     let instant = Instant::now();
 

@@ -121,13 +121,15 @@ impl Vecs {
         &mut self,
         indexer: &mut Indexer,
         indexes: &mut indexes::Vecs,
-        starting_indexes: Indexes,
+        starting_indexes: &Indexes,
         fetcher: &mut Fetcher,
         exit: &Exit,
     ) -> color_eyre::Result<()> {
+        let indexer_vecs = indexer.mut_vecs();
+
         self.height_to_ohlc_in_cents.compute_transform(
             starting_indexes.height,
-            &mut indexer.mut_vecs().height_to_timestamp,
+            &mut indexer_vecs.height_to_timestamp,
             |(h, t, _, height_to_timestamp)| {
                 let ohlc = fetcher
                     .get_height(
@@ -302,7 +304,7 @@ impl Vecs {
 
     pub fn as_any_vecs(&self) -> Vec<&dyn AnyStorableVec> {
         vec![
-            &self.dateindex_to_close as &dyn AnyStorableVec,
+            &self.dateindex_to_close,
             &self.dateindex_to_close_in_cents,
             &self.dateindex_to_high,
             &self.dateindex_to_high_in_cents,

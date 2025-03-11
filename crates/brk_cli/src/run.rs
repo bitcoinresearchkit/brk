@@ -11,7 +11,7 @@ use brk_exit::Exit;
 use brk_fetcher::Fetcher;
 use brk_indexer::Indexer;
 use brk_parser::rpc::{self, Auth, Client, RpcApi};
-use brk_server::{Frontend, Server, tokio};
+use brk_server::{Server, Website, tokio};
 use clap::{Parser, ValueEnum};
 use color_eyre::eyre::eyre;
 use log::info;
@@ -46,7 +46,7 @@ pub fn run(config: RunConfig) -> color_eyre::Result<()> {
                 let served_indexer = indexer.clone();
                 let served_computer = computer.clone();
 
-                let server = Server::new(served_indexer, served_computer, config.frontend())?;
+                let server = Server::new(served_indexer, served_computer, config.website())?;
 
                 Some(tokio::spawn(async move {
                     server.serve().await.unwrap();
@@ -107,9 +107,9 @@ pub struct RunConfig {
     #[arg(short, long, value_name = "BOOL")]
     fetch: Option<bool>,
 
-    /// Frontend served by the server (if active), default: none, saved
-    #[arg(short = 'F', long)]
-    frontend: Option<Frontend>,
+    /// Website served by the server (if active), default: none, saved
+    #[arg(short, long)]
+    website: Option<Website>,
 
     /// Bitcoin RPC ip, default: localhost, saved
     #[arg(long, value_name = "IP")]
@@ -167,8 +167,8 @@ impl RunConfig {
                 config_saved.fetch = Some(fetch);
             }
 
-            if let Some(frontend) = config_args.frontend.take() {
-                config_saved.frontend = Some(frontend);
+            if let Some(website) = config_args.website.take() {
+                config_saved.website = Some(website);
             }
 
             if let Some(rpcconnect) = config_args.rpcconnect.take() {
@@ -211,7 +211,7 @@ impl RunConfig {
         // info!("  bitcoindir: {:?}", config.bitcoindir);
         // info!("  brkdir: {:?}", config.brkdir);
         // info!("  mode: {:?}", config.mode);
-        // info!("  frontend: {:?}", config.frontend);
+        // info!("  website: {:?}", config.website);
         // info!("  rpcconnect: {:?}", config.rpcconnect);
         // info!("  rpcport: {:?}", config.rpcport);
         // info!("  rpccookiefile: {:?}", config.rpccookiefile);
@@ -371,8 +371,8 @@ impl RunConfig {
         fix("~").unwrap_or_else(|| fix("$HOME").unwrap_or_else(|| PathBuf::from(&path)))
     }
 
-    pub fn frontend(&self) -> Frontend {
-        self.frontend.unwrap_or_default()
+    pub fn website(&self) -> Website {
+        self.website.unwrap_or_default()
     }
 
     pub fn fetch(&self) -> bool {

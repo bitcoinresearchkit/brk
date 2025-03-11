@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 #[derive(
     Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize, ValueEnum,
 )]
-pub enum Frontend {
+pub enum Website {
     #[default]
     None,
     #[value(name = "kibo.money")]
@@ -12,7 +12,7 @@ pub enum Frontend {
     Custom,
 }
 
-impl Frontend {
+impl Website {
     pub fn is_none(&self) -> bool {
         self == &Self::None
     }
