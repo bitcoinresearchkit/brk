@@ -2,6 +2,7 @@ use core::error;
 use std::{
     cmp::Ordering,
     fmt::Debug,
+    io,
     ops::{Add, Deref, DerefMut, Sub},
     path::{Path, PathBuf},
 };
@@ -37,6 +38,16 @@ where
         index.try_into().map_err(|_| Error::FailedKeyTryIntoUsize)
     }
 
+    fn safe_truncate_if_needed(&mut self, index: I, exit: &Exit) -> Result<()> {
+        if exit.triggered() {
+            return Ok(());
+        }
+        exit.block();
+        self.truncate_if_needed(index)?;
+        exit.release();
+        Ok(())
+    }
+
     #[inline]
     fn push_and_flush_if_needed(&mut self, index: I, value: T, exit: &Exit) -> Result<()> {
         match self.len().cmp(&Self::i_to_usize(index)?) {
@@ -56,6 +67,16 @@ where
         } else {
             Ok(())
         }
+    }
+
+    pub fn safe_flush(&mut self, exit: &Exit) -> io::Result<()> {
+        if exit.triggered() {
+            return Ok(());
+        }
+        exit.block();
+        self.flush()?;
+        exit.release();
+        Ok(())
     }
 
     #[inline]
