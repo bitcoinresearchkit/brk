@@ -3,9 +3,9 @@ use std::{fs, path::Path};
 use brk_core::Txindex;
 use brk_exit::Exit;
 use brk_indexer::Indexer;
-use brk_vec::{AnyStorableVec, StorableVec, Version};
+use brk_vec::{AnyStorableVec, Version};
 
-use super::indexes::{self, Indexes};
+use super::{Indexes, StorableVec, indexes};
 
 #[derive(Clone)]
 pub struct Vecs {
@@ -47,7 +47,7 @@ impl Vecs {
             //     &path.join("txindex_to_fee"),
             //     Version::from(1),
             // )?,
-            txindex_to_is_coinbase: StorableVec::forced_import(
+            txindex_to_is_coinbase: StorableVec::import(
                 &path.join("txindex_to_is_coinbase"),
                 Version::from(1),
             )?,
@@ -127,6 +127,6 @@ impl Vecs {
     }
 
     pub fn as_any_vecs(&self) -> Vec<&dyn AnyStorableVec> {
-        vec![&self.txindex_to_is_coinbase]
+        vec![&*self.txindex_to_is_coinbase]
     }
 }

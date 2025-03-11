@@ -6,9 +6,9 @@ use brk_core::{
 use brk_exit::Exit;
 use brk_fetcher::Fetcher;
 use brk_indexer::Indexer;
-use brk_vec::{AnyStorableVec, StorableVec, Value, Version};
+use brk_vec::{AnyStorableVec, Value, Version};
 
-use super::indexes::{self, Indexes};
+use super::{Indexes, StorableVec, indexes};
 
 #[derive(Clone)]
 pub struct Vecs {
@@ -304,28 +304,28 @@ impl Vecs {
 
     pub fn as_any_vecs(&self) -> Vec<&dyn AnyStorableVec> {
         vec![
-            &self.dateindex_to_close,
-            &self.dateindex_to_close_in_cents,
-            &self.dateindex_to_high,
-            &self.dateindex_to_high_in_cents,
-            &self.dateindex_to_low,
-            &self.dateindex_to_low_in_cents,
-            &self.dateindex_to_ohlc,
-            &self.dateindex_to_ohlc_in_cents,
-            &self.dateindex_to_open,
-            &self.dateindex_to_open_in_cents,
-            &self.dateindex_to_sats_per_dollar,
-            &self.height_to_close,
-            &self.height_to_close_in_cents,
-            &self.height_to_high,
-            &self.height_to_high_in_cents,
-            &self.height_to_low,
-            &self.height_to_low_in_cents,
-            &self.height_to_ohlc,
-            &self.height_to_ohlc_in_cents,
-            &self.height_to_open,
-            &self.height_to_open_in_cents,
-            &self.height_to_sats_per_dollar,
+            &*self.dateindex_to_close,
+            &*self.dateindex_to_close_in_cents,
+            &*self.dateindex_to_high,
+            &*self.dateindex_to_high_in_cents,
+            &*self.dateindex_to_low,
+            &*self.dateindex_to_low_in_cents,
+            &*self.dateindex_to_ohlc,
+            &*self.dateindex_to_ohlc_in_cents,
+            &*self.dateindex_to_open,
+            &*self.dateindex_to_open_in_cents,
+            &*self.dateindex_to_sats_per_dollar,
+            &*self.height_to_close,
+            &*self.height_to_close_in_cents,
+            &*self.height_to_high,
+            &*self.height_to_high_in_cents,
+            &*self.height_to_low,
+            &*self.height_to_low_in_cents,
+            &*self.height_to_ohlc,
+            &*self.height_to_ohlc_in_cents,
+            &*self.height_to_open,
+            &*self.height_to_open_in_cents,
+            &*self.height_to_sats_per_dollar,
         ]
     }
 }

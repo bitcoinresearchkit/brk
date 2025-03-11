@@ -16,7 +16,9 @@ pub fn minify_js(path: &Path) -> String {
 
     let allocator = Allocator::default();
 
-    let mut program = Parser::new(&allocator, &source_text, source_type).parse().program;
+    let parser_return = Parser::new(&allocator, &source_text, source_type).parse();
+
+    let mut program = parser_return.program;
 
     let minifier_return = Minifier::new(MinifierOptions {
         mangle: Some(MangleOptions::default()),
@@ -33,7 +35,7 @@ pub fn minify_js(path: &Path) -> String {
             source_map_path: None,
             legal_comments: LegalComment::None,
         })
-        .with_symbol_table(minifier_return.symbol_table)
+        .with_scoping(minifier_return.scoping)
         .build(&program)
         .code
 }

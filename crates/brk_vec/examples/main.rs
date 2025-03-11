@@ -4,7 +4,8 @@ use brk_vec::{StorableVec, Version};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     {
-        let mut vec: StorableVec<usize, u32> = StorableVec::forced_import(Path::new("./v"), Version::from(1))?;
+        let mut vec: StorableVec<usize, u32> =
+            StorableVec::forced_import(Path::new("./vec"), Version::from(1))?;
 
         vec.push(0);
         vec.push(1);
@@ -16,7 +17,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     {
-        let mut vec: StorableVec<usize, u32> = StorableVec::forced_import(Path::new("./v"), Version::from(1))?;
+        let mut vec: StorableVec<usize, u32> =
+            StorableVec::forced_import(Path::new("./vec"), Version::from(1))?;
 
         dbg!(vec.read(0)?); // 0
         dbg!(vec.read(1)?); // 0
