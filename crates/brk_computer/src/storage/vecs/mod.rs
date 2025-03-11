@@ -5,9 +5,13 @@ use brk_fetcher::Fetcher;
 use brk_indexer::Indexer;
 use brk_vec::AnyStorableVec;
 
+mod base;
 mod indexes;
 mod marketprice;
 mod transactions;
+
+use base::*;
+use indexes::*;
 
 #[derive(Clone)]
 pub struct Vecs {

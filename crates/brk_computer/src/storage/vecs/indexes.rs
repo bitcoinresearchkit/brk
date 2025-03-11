@@ -3,7 +3,9 @@ use std::{fs, ops::Deref, path::Path};
 use brk_core::{Date, Dateindex, Height, Txindex, Txinindex, Txoutindex};
 use brk_exit::Exit;
 use brk_indexer::Indexer;
-use brk_vec::{AnyStorableVec, StorableVec, Value, Version};
+use brk_vec::{AnyStorableVec, Value, Version};
+
+use super::StorableVec;
 
 #[derive(Clone)]
 pub struct Vecs {
@@ -27,48 +29,48 @@ impl Vecs {
         fs::create_dir_all(path)?;
 
         Ok(Self {
-            dateindex_to_date: StorableVec::forced_import(
+            dateindex_to_date: StorableVec::import(
                 &path.join("dateindex_to_date"),
                 Version::from(1),
             )?,
-            dateindex_to_dateindex: StorableVec::forced_import(
+            dateindex_to_dateindex: StorableVec::import(
                 &path.join("dateindex_to_dateindex"),
                 Version::from(1),
             )?,
-            dateindex_to_first_height: StorableVec::forced_import(
+            dateindex_to_first_height: StorableVec::import(
                 &path.join("dateindex_to_first_height"),
                 Version::from(1),
             )?,
-            dateindex_to_last_height: StorableVec::forced_import(
+            dateindex_to_last_height: StorableVec::import(
                 &path.join("dateindex_to_last_height"),
                 Version::from(1),
             )?,
-            height_to_real_date: StorableVec::forced_import(
+            height_to_real_date: StorableVec::import(
                 &path.join("height_to_real_date"),
                 Version::from(1),
             )?,
-            height_to_fixed_date: StorableVec::forced_import(
+            height_to_fixed_date: StorableVec::import(
                 &path.join("height_to_fixed_date"),
                 Version::from(1),
             )?,
-            height_to_dateindex: StorableVec::forced_import(
+            height_to_dateindex: StorableVec::import(
                 &path.join("height_to_dateindex"),
                 Version::from(1),
             )?,
-            height_to_height: StorableVec::forced_import(
+            height_to_height: StorableVec::import(
                 &path.join("height_to_height"),
                 Version::from(1),
             )?,
-            height_to_last_txindex: StorableVec::forced_import(
+            height_to_last_txindex: StorableVec::import(
                 &path.join("height_to_last_txindex"),
                 Version::from(1),
             )?,
 
-            txindex_to_last_txinindex: StorableVec::forced_import(
+            txindex_to_last_txinindex: StorableVec::import(
                 &path.join("txindex_to_last_txinindex"),
                 Version::from(1),
             )?,
-            txindex_to_last_txoutindex: StorableVec::forced_import(
+            txindex_to_last_txoutindex: StorableVec::import(
                 &path.join("txindex_to_last_txoutindex"),
                 Version::from(1),
             )?,
@@ -186,17 +188,17 @@ impl Vecs {
 
     pub fn as_any_vecs(&self) -> Vec<&dyn AnyStorableVec> {
         vec![
-            &self.dateindex_to_date,
-            &self.dateindex_to_dateindex,
-            &self.dateindex_to_first_height,
-            &self.dateindex_to_last_height,
-            &self.height_to_dateindex,
-            &self.height_to_fixed_date,
-            &self.height_to_height,
-            &self.height_to_last_txindex,
-            &self.height_to_real_date,
-            &self.txindex_to_last_txinindex,
-            &self.txindex_to_last_txoutindex,
+            &*self.dateindex_to_date,
+            &*self.dateindex_to_dateindex,
+            &*self.dateindex_to_first_height,
+            &*self.dateindex_to_last_height,
+            &*self.height_to_dateindex,
+            &*self.height_to_fixed_date,
+            &*self.height_to_height,
+            &*self.height_to_last_txindex,
+            &*self.height_to_real_date,
+            &*self.txindex_to_last_txinindex,
+            &*self.txindex_to_last_txoutindex,
         ]
     }
 }

@@ -26,9 +26,9 @@ clap = { version = "4.5.32", features = ["derive", "string"] }
 color-eyre = "0.6.3"
 derive_deref = "1.1.1"
 fjall = "2.6.7"
-jiff = "0.2.3"
+jiff = "0.2.4"
 log = { version = "0.4.26" }
-minreq = { version = "2.13.2", features = ["https", "serde_json"] }
+minreq = { version = "2.13.3", features = ["https", "serde_json"] }
 rayon = "1.10.0"
 serde = { version = "1.0.219", features = ["derive"] }
 serde_json = { version = "1.0.140", features = ["float_roundtrip"] }
