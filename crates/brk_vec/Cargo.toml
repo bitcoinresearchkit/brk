@@ -9,11 +9,8 @@ license.workspace = true
 repository.workspace = true
 
 [dependencies]
-brk_core = { workspace = true }
-brk_exit = { workspace = true }
 memmap2 = "0.9.5"
 rayon = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
 zerocopy = { workspace = true }
-zstd = "0.13.3"

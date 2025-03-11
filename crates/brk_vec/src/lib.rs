@@ -15,7 +15,6 @@ use std::{
     sync::OnceLock,
 };
 
-use brk_exit::Exit;
 pub use memmap2;
 use rayon::prelude::*;
 pub use zerocopy;
@@ -27,6 +26,11 @@ mod traits;
 pub use enums::*;
 pub use structs::*;
 pub use traits::*;
+
+/// In bytes
+const MAX_PAGE_SIZE: usize = 4 * 4096;
+const ONE_MIB: usize = 1024 * 1024;
+const MAX_CACHE_SIZE: usize = 100 * ONE_MIB;
 
 ///
 /// A very small, fast, efficient and simple storable Vec
@@ -52,11 +56,6 @@ pub struct StorableVec<I, T> {
     pushed: Vec<T>,
     phantom: PhantomData<I>,
 }
-
-/// In bytes
-const MAX_PAGE_SIZE: usize = 4 * 4096;
-const ONE_MB: usize = 1024 * 1024;
-const MAX_CACHE_SIZE: usize = 100 * ONE_MB;
 
 impl<I, T> StorableVec<I, T>
 where
@@ -423,16 +422,6 @@ where
         Ok(())
     }
 
-    pub fn safe_flush(&mut self, exit: &Exit) -> io::Result<()> {
-        if exit.triggered() {
-            return Ok(());
-        }
-        exit.block();
-        self.flush()?;
-        exit.release();
-        Ok(())
-    }
-
     pub fn reset_file(&mut self) -> Result<()> {
         self.truncate_if_needed(I::from(0))?;
         Ok(())
@@ -452,15 +441,6 @@ where
         self.reset_file_metadata()?;
 
         Ok(value_at_index)
-    }
-    pub fn safe_truncate_if_needed(&mut self, index: I, exit: &Exit) -> Result<()> {
-        if exit.triggered() {
-            return Ok(());
-        }
-        exit.block();
-        self.truncate_if_needed(index)?;
-        exit.release();
-        Ok(())
     }
 
     #[inline]
