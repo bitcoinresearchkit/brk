@@ -100,7 +100,7 @@ impl Vecs {
         self.height_to_real_date.compute_transform(
             starting_indexes.height,
             &mut indexer_vecs.height_to_timestamp,
-            |(h, t, ..)| (h, Date::from(*t)),
+            |(h, t, ..)| (h, Date::from(t)),
             exit,
         )?;
 
@@ -112,7 +112,10 @@ impl Vecs {
                     .decremented()
                     .and_then(|h| s.read(h).ok())
                     .flatten()
-                    .map_or(*d, |prev_d| if prev_d > d { *prev_d } else { *d });
+                    .map_or(d, |prev_d| {
+                        let prev_d = *prev_d;
+                        if prev_d > d { prev_d } else { d }
+                    });
                 (h, d)
             },
             exit,
@@ -121,7 +124,7 @@ impl Vecs {
         self.height_to_dateindex.compute_transform(
             starting_indexes.height,
             &mut self.height_to_fixed_date,
-            |(h, d, ..)| (h, Dateindex::try_from(*d).unwrap()),
+            |(h, d, ..)| (h, Dateindex::try_from(d).unwrap()),
             exit,
         )?;
 

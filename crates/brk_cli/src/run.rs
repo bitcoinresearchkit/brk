@@ -26,7 +26,7 @@ pub fn run(config: RunConfig) -> color_eyre::Result<()> {
 
     let parser = brk_parser::Parser::new(config.blocksdir(), rpc);
 
-    let mut indexer = Indexer::new(config.indexeddir())?;
+    let mut indexer = Indexer::new(config.indexeddir(), config.check_collisions())?;
     indexer.import_stores()?;
     indexer.import_vecs()?;
 
@@ -134,6 +134,10 @@ pub struct RunConfig {
     /// Delay between runs, default: 0, saved
     #[arg(long, value_name = "SECONDS")]
     delay: Option<u64>,
+
+    /// DEV: Activate checking address hashes for collisions when indexing, default: false, saved
+    #[arg(long, value_name = "BOOL")]
+    check_collisions: Option<bool>,
 }
 
 impl RunConfig {
@@ -193,6 +197,10 @@ impl RunConfig {
 
             if let Some(delay) = config_args.delay.take() {
                 config_saved.delay = Some(delay);
+            }
+
+            if let Some(check_collisions) = config_args.check_collisions.take() {
+                config_saved.check_collisions = Some(check_collisions);
             }
 
             if config_args != RunConfig::default() {
@@ -377,6 +385,10 @@ impl RunConfig {
 
     pub fn fetch(&self) -> bool {
         self.fetch.is_some_and(|b| b)
+    }
+
+    pub fn check_collisions(&self) -> bool {
+        self.check_collisions.is_some_and(|b| b)
     }
 }
 

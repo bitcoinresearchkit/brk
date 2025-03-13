@@ -8,7 +8,20 @@ use crate::Error;
 
 use super::{Addressbytes, Addresstype, BlockHash, Txid};
 
-#[derive(Debug, Deref, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, FromBytes, Immutable, IntoBytes, KnownLayout)]
+#[derive(
+    Debug,
+    Deref,
+    Clone,
+    Copy,
+    PartialEq,
+    Eq,
+    PartialOrd,
+    Ord,
+    FromBytes,
+    Immutable,
+    IntoBytes,
+    KnownLayout,
+)]
 pub struct AddressHash([u8; 8]);
 impl From<(&Addressbytes, Addresstype)> for AddressHash {
     fn from((addressbytes, addresstype): (&Addressbytes, Addresstype)) -> Self {
@@ -41,8 +54,26 @@ impl From<AddressHash> for ByteView {
     }
 }
 
-#[derive(Debug, Deref, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, FromBytes, Immutable, IntoBytes, KnownLayout)]
+#[derive(
+    Debug,
+    Deref,
+    Clone,
+    Copy,
+    PartialEq,
+    Eq,
+    PartialOrd,
+    Ord,
+    FromBytes,
+    Immutable,
+    IntoBytes,
+    KnownLayout,
+)]
 pub struct BlockHashPrefix([u8; 8]);
+impl From<BlockHash> for BlockHashPrefix {
+    fn from(value: BlockHash) -> Self {
+        Self::from(&value)
+    }
+}
 impl From<&BlockHash> for BlockHashPrefix {
     fn from(value: &BlockHash) -> Self {
         Self(copy_first_8bytes(&value[..]).unwrap())
@@ -65,8 +96,26 @@ impl From<BlockHashPrefix> for ByteView {
     }
 }
 
-#[derive(Debug, Deref, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, FromBytes, Immutable, IntoBytes, KnownLayout)]
+#[derive(
+    Debug,
+    Deref,
+    Clone,
+    Copy,
+    PartialEq,
+    Eq,
+    PartialOrd,
+    Ord,
+    FromBytes,
+    Immutable,
+    IntoBytes,
+    KnownLayout,
+)]
 pub struct TxidPrefix([u8; 8]);
+impl From<Txid> for TxidPrefix {
+    fn from(value: Txid) -> Self {
+        Self::from(&value)
+    }
+}
 impl From<&Txid> for TxidPrefix {
     fn from(value: &Txid) -> Self {
         Self(copy_first_8bytes(&value[..]).unwrap())

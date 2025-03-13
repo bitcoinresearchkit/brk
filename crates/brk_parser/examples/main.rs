@@ -15,17 +15,17 @@ fn main() {
         .unwrap(),
     ));
 
-    // let start = None;
-    // let end = None;
+    let start = None;
+    let end = None;
 
     let parser = Parser::new(bitcoin_dir.join("blocks"), rpc);
 
-    // parser
-    //     .parse(start, end)
-    //     .iter()
-    //     .for_each(|(height, _block, hash)| {
-    //         println!("{height}: {hash}");
-    //     });
+    parser
+        .parse(start, end)
+        .iter()
+        .for_each(|(height, _block, hash)| {
+            println!("{height}: {hash}");
+        });
 
     println!(
         "{}",

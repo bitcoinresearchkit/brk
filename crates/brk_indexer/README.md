@@ -22,12 +22,6 @@ Vecs: `src/storage/vecs/mod.rs`
 
 Stores: `src/storage/stores/mod.rs`
 
-## Examples
-
-Rust: `src/main.rs`
-
-Python: `../python/parse.py`
-
 ## Benchmark
 
 Indexing `0..885_835` took `11 hours 6 min 50 s` on a Macbook Pro M3 Pro with 36 GB of RAM

@@ -21,6 +21,7 @@ pub enum Error {
     FailedKeyTryIntoUsize,
     UnsupportedUnflushedState,
     RangeFromAfterTo,
+    DifferentCompressionMode,
 }
 
 impl From<io::Error> for Error {
@@ -46,7 +47,10 @@ impl fmt::Display for Error {
         match self {
             Error::WrongEndian => write!(f, "Wrong endian"),
             Error::DifferentVersion { found, expected } => {
-                write!(f, "Different version; found: {found:?}, expected: {expected:?}")
+                write!(
+                    f,
+                    "Different version; found: {found:?}, expected: {expected:?}"
+                )
             }
             Error::MmapsVecIsTooSmall => write!(f, "Mmaps vec is too small"),
             Error::IO(error) => Debug::fmt(&error, f),
@@ -56,10 +60,14 @@ impl fmt::Display for Error {
             Error::ExpectVecToHaveIndex => write!(f, "Expect vec to have index"),
             Error::FailedKeyTryIntoUsize => write!(f, "Failed to convert key to usize"),
             Error::UnsupportedUnflushedState => {
-                write!(f, "Unsupported unflush state, please flush before using this function")
+                write!(
+                    f,
+                    "Unsupported unflush state, please flush before using this function"
+                )
             }
             Error::ZeroCopyError => write!(f, "Zero copy convert error"),
             Error::RangeFromAfterTo => write!(f, "Range, from is after to"),
+            Error::DifferentCompressionMode => write!(f, "Different compression mode chosen"),
         }
     }
 }
