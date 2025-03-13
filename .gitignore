@@ -34,8 +34,6 @@ vecid-to-indexes.d.ts
 # Outputs
 _outputs
 
-# Python
-.ropeproject
 
 # Logs
 .log

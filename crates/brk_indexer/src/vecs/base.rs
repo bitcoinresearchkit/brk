@@ -5,7 +5,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use brk_vec::{StoredIndex, StoredType, Version};
+use brk_vec::{Compressed, StoredIndex, StoredType, Version};
 
 use super::Height;
 
@@ -20,10 +20,10 @@ where
     I: StoredIndex,
     T: StoredType,
 {
-    pub fn import(path: &Path, version: Version) -> brk_vec::Result<Self> {
-        let mut vec = brk_vec::StorableVec::forced_import(path, version)?;
+    pub fn import(path: &Path, version: Version, compressed: Compressed) -> brk_vec::Result<Self> {
+        let mut vec = brk_vec::StorableVec::forced_import(path, version, compressed)?;
 
-        vec.reset_mmaps()?;
+        vec.init_big_cache()?;
 
         Ok(Self {
             height: Height::try_from(Self::path_height_(path).as_path()).ok(),
@@ -31,11 +31,12 @@ where
         })
     }
 
-    pub fn truncate_if_needed(&mut self, index: I, height: Height) -> brk_vec::Result<Option<T>> {
+    pub fn truncate_if_needed(&mut self, index: I, height: Height) -> brk_vec::Result<()> {
         if self.height.is_none_or(|self_height| self_height != height) {
             height.write(&self.path_height())?;
         }
-        self.vec.truncate_if_needed(index)
+        self.vec.truncate_if_needed(index)?;
+        Ok(())
     }
 
     pub fn height(&self) -> brk_core::Result<Height> {
@@ -51,7 +52,7 @@ where
     pub fn flush(&mut self, height: Height) -> io::Result<()> {
         height.write(&self.path_height())?;
         self.vec.flush()?;
-        self.vec.reset_mmaps()
+        self.vec.init_big_cache()
     }
 }
 

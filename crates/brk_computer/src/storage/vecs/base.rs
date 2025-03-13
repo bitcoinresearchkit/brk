@@ -9,7 +9,7 @@ use std::{
 
 use brk_core::CheckedSub;
 use brk_exit::Exit;
-use brk_vec::{Error, Result, StoredIndex, StoredType, Version};
+use brk_vec::{Compressed, Error, Result, StoredIndex, StoredType, Version};
 
 const FLUSH_EVERY: usize = 10_000;
 
@@ -25,7 +25,7 @@ where
     T: StoredType,
 {
     pub fn import(path: &Path, version: Version) -> brk_vec::Result<Self> {
-        let vec = brk_vec::StorableVec::forced_import(path, version)?;
+        let vec = brk_vec::StorableVec::forced_import(path, version, Compressed::YES)?;
 
         Ok(Self {
             computed_version: None,
@@ -103,14 +103,14 @@ where
     where
         A: StoredIndex,
         B: StoredType,
-        F: FnMut((A, &B, &mut Self, &mut brk_vec::StorableVec<A, B>)) -> (I, T),
+        F: FnMut((A, B, &mut Self, &mut brk_vec::StorableVec<A, B>)) -> (I, T),
     {
         self.validate_computed_version_or_reset_file(
             Version::from(0) + self.version() + other.version(),
         )?;
 
         let index = max_from.min(A::from(self.len()));
-        other.iter_from(index, |(a, b, other)| {
+        other.iter_from_cloned(index, |(a, b, other)| {
             let (i, v) = t((a, b, self, other));
             self.push_and_flush_if_needed(i, v, exit)
         })?;

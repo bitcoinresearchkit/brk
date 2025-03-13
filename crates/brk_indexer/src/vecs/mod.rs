@@ -7,7 +7,7 @@ use brk_core::{
     P2TRindex, P2WPKHAddressBytes, P2WPKHindex, P2WSHAddressBytes, P2WSHindex, Pushonlyindex, Sats,
     Timestamp, TxVersion, Txid, Txindex, Txinindex, Txoutindex, Unknownindex, Weight,
 };
-use brk_vec::{AnyStorableVec, Version};
+use brk_vec::{AnyStorableVec, Compressed, Version};
 use rayon::prelude::*;
 
 use crate::Indexes;
@@ -71,168 +71,217 @@ impl Vecs {
             addressindex_to_addresstype: StorableVec::import(
                 &path.join("addressindex_to_addresstype"),
                 Version::from(1),
+                Compressed::YES,
             )?,
             addressindex_to_addresstypeindex: StorableVec::import(
                 &path.join("addressindex_to_addresstypeindex"),
                 Version::from(1),
+                Compressed::YES,
             )?,
             addressindex_to_height: StorableVec::import(
                 &path.join("addressindex_to_height"),
                 Version::from(1),
+                Compressed::YES,
             )?,
             height_to_blockhash: StorableVec::import(
                 &path.join("height_to_blockhash"),
                 Version::from(1),
+                Compressed::NO,
             )?,
             height_to_difficulty: StorableVec::import(
                 &path.join("height_to_difficulty"),
                 Version::from(1),
+                Compressed::YES,
             )?,
             height_to_first_addressindex: StorableVec::import(
                 &path.join("height_to_first_addressindex"),
                 Version::from(1),
+                Compressed::YES,
             )?,
             height_to_first_emptyindex: StorableVec::import(
                 &path.join("height_to_first_emptyindex"),
                 Version::from(1),
+                Compressed::YES,
             )?,
             height_to_first_multisigindex: StorableVec::import(
                 &path.join("height_to_first_multisigindex"),
                 Version::from(1),
+                Compressed::YES,
             )?,
             height_to_first_opreturnindex: StorableVec::import(
                 &path.join("height_to_first_opreturnindex"),
                 Version::from(1),
+                Compressed::YES,
             )?,
             height_to_first_pushonlyindex: StorableVec::import(
                 &path.join("height_to_first_pushonlyindex"),
                 Version::from(1),
+                Compressed::YES,
             )?,
             height_to_first_txindex: StorableVec::import(
                 &path.join("height_to_first_txindex"),
                 Version::from(1),
+                Compressed::YES,
             )?,
             height_to_first_txinindex: StorableVec::import(
                 &path.join("height_to_first_txinindex"),
                 Version::from(1),
+                Compressed::YES,
             )?,
             height_to_first_txoutindex: StorableVec::import(
                 &path.join("height_to_first_txoutindex"),
                 Version::from(1),
+                Compressed::YES,
             )?,
             height_to_first_unknownindex: StorableVec::import(
                 &path.join("height_to_first_unkownindex"),
                 Version::from(1),
+                Compressed::YES,
             )?,
             height_to_first_p2pk33index: StorableVec::import(
                 &path.join("height_to_first_p2pk33index"),
                 Version::from(1),
+                Compressed::YES,
             )?,
             height_to_first_p2pk65index: StorableVec::import(
                 &path.join("height_to_first_p2pk65index"),
                 Version::from(1),
+                Compressed::YES,
             )?,
             height_to_first_p2pkhindex: StorableVec::import(
                 &path.join("height_to_first_p2pkhindex"),
                 Version::from(1),
+                Compressed::YES,
             )?,
             height_to_first_p2shindex: StorableVec::import(
                 &path.join("height_to_first_p2shindex"),
                 Version::from(1),
+                Compressed::YES,
             )?,
             height_to_first_p2trindex: StorableVec::import(
                 &path.join("height_to_first_p2trindex"),
                 Version::from(1),
+                Compressed::YES,
             )?,
             height_to_first_p2wpkhindex: StorableVec::import(
                 &path.join("height_to_first_p2wpkhindex"),
                 Version::from(1),
+                Compressed::YES,
             )?,
             height_to_first_p2wshindex: StorableVec::import(
                 &path.join("height_to_first_p2wshindex"),
                 Version::from(1),
+                Compressed::YES,
             )?,
-            height_to_size: StorableVec::import(&path.join("height_to_size"), Version::from(1))?,
+            height_to_size: StorableVec::import(
+                &path.join("height_to_size"),
+                Version::from(1),
+                Compressed::YES,
+            )?,
             height_to_timestamp: StorableVec::import(
                 &path.join("height_to_timestamp"),
                 Version::from(1),
+                Compressed::YES,
             )?,
             height_to_weight: StorableVec::import(
                 &path.join("height_to_weight"),
                 Version::from(1),
+                Compressed::YES,
             )?,
             p2pk33index_to_p2pk33addressbytes: StorableVec::import(
                 &path.join("p2pk33index_to_p2pk33addressbytes"),
                 Version::from(1),
+                Compressed::NO,
             )?,
             p2pk65index_to_p2pk65addressbytes: StorableVec::import(
                 &path.join("p2pk65index_to_p2pk65addressbytes"),
                 Version::from(1),
+                Compressed::NO,
             )?,
             p2pkhindex_to_p2pkhaddressbytes: StorableVec::import(
                 &path.join("p2pkhindex_to_p2pkhaddressbytes"),
                 Version::from(1),
+                Compressed::NO,
             )?,
             p2shindex_to_p2shaddressbytes: StorableVec::import(
                 &path.join("p2shindex_to_p2shaddressbytes"),
                 Version::from(1),
+                Compressed::NO,
             )?,
             p2trindex_to_p2traddressbytes: StorableVec::import(
                 &path.join("p2trindex_to_p2traddressbytes"),
                 Version::from(1),
+                Compressed::NO,
             )?,
             p2wpkhindex_to_p2wpkhaddressbytes: StorableVec::import(
                 &path.join("p2wpkhindex_to_p2wpkhaddressbytes"),
                 Version::from(1),
+                Compressed::NO,
             )?,
             p2wshindex_to_p2wshaddressbytes: StorableVec::import(
                 &path.join("p2wshindex_to_p2wshaddressbytes"),
                 Version::from(1),
+                Compressed::NO,
             )?,
             txindex_to_first_txinindex: StorableVec::import(
                 &path.join("txindex_to_first_txinindex"),
                 Version::from(1),
+                Compressed::YES,
             )?,
             txindex_to_first_txoutindex: StorableVec::import(
                 &path.join("txindex_to_first_txoutindex"),
                 Version::from(1),
+                Compressed::NO,
             )?,
             txindex_to_height: StorableVec::import(
                 &path.join("txindex_to_height"),
                 Version::from(1),
+                Compressed::YES,
             )?,
             txindex_to_locktime: StorableVec::import(
                 &path.join("txindex_to_locktime"),
                 Version::from(1),
+                Compressed::YES,
             )?,
-            txindex_to_txid: StorableVec::import(&path.join("txindex_to_txid"), Version::from(1))?,
+            txindex_to_txid: StorableVec::import(
+                &path.join("txindex_to_txid"),
+                Version::from(1),
+                Compressed::NO,
+            )?,
             txindex_to_base_size: StorableVec::import(
                 &path.join("txindex_to_base_size"),
                 Version::from(1),
+                Compressed::YES,
             )?,
             txindex_to_total_size: StorableVec::import(
                 &path.join("txindex_to_total_size"),
                 Version::from(1),
+                Compressed::YES,
             )?,
             txindex_to_is_explicitly_rbf: StorableVec::import(
                 &path.join("txindex_to_is_explicitly_rbf"),
                 Version::from(1),
+                Compressed::YES,
             )?,
             txindex_to_txversion: StorableVec::import(
                 &path.join("txindex_to_txversion"),
                 Version::from(1),
+                Compressed::YES,
             )?,
             txinindex_to_txoutindex: StorableVec::import(
                 &path.join("txinindex_to_txoutindex"),
                 Version::from(1),
+                Compressed::YES,
             )?,
             txoutindex_to_addressindex: StorableVec::import(
                 &path.join("txoutindex_to_addressindex"),
                 Version::from(1),
+                Compressed::YES,
             )?,
             txoutindex_to_value: StorableVec::import(
                 &path.join("txoutindex_to_value"),
                 Version::from(1),
+                Compressed::YES,
             )?,
         })
     }

@@ -18,6 +18,7 @@ pub use brk_parser::*;
 
 use bitcoin::{Transaction, TxIn, TxOut};
 use brk_exit::Exit;
+use brk_vec::Compressed;
 use color_eyre::eyre::{ContextCompat, eyre};
 use log::info;
 use rayon::prelude::*;
@@ -36,15 +37,17 @@ pub struct Indexer {
     path: PathBuf,
     vecs: Option<Vecs>,
     stores: Option<Stores>,
+    check_collisions: bool,
 }
 
 impl Indexer {
-    pub fn new(indexes_dir: PathBuf) -> color_eyre::Result<Self> {
+    pub fn new(indexes_dir: PathBuf, check_collisions: bool) -> color_eyre::Result<Self> {
         setrlimit()?;
         Ok(Self {
             path: indexes_dir,
             vecs: None,
             stores: None,
+            check_collisions,
         })
     }
 
@@ -66,8 +69,6 @@ impl Indexer {
         rpc: &'static rpc::Client,
         exit: &Exit,
     ) -> color_eyre::Result<Indexes> {
-        let check_collisions = true;
-
         let starting_indexes = Indexes::try_from((
             self.vecs.as_mut().unwrap(),
             self.stores.as_ref().unwrap(),
@@ -96,7 +97,7 @@ impl Indexer {
         let mut idxs = starting_indexes.clone();
 
         let start = Some(idxs.height);
-        let end = None; //Some(Height::new(400_000));
+        let end = None;
 
         if starting_indexes.height > Height::try_from(rpc)?
             || end.is_some_and(|end| starting_indexes.height > end)
@@ -124,11 +125,13 @@ impl Indexer {
             Ok(())
         };
 
-        parser.parse(start, None).iter().try_for_each(
+        parser.parse(start, end).iter().try_for_each(
             |(height, block, blockhash)| -> color_eyre::Result<()> {
                 info!("Indexing block {height}...");
 
                 idxs.height = height;
+
+                let check_collisions = self.check_collisions && height > Height::new(886_000);
 
                 let blockhash = BlockHash::from(blockhash);
                 let blockhash_prefix = BlockHashPrefix::from(&blockhash);
@@ -231,8 +234,6 @@ impl Indexer {
                             .map(|(block_txinindex, (block_txindex, vin, txin, tx))| -> color_eyre::Result<(Txinindex, InputSource)> {
                                 let txindex = idxs.txindex + block_txindex;
                                 let txinindex = idxs.txinindex + Txinindex::from(block_txinindex);
-
-                                // dbg!((txindex, txinindex, vin));
 
                                 let outpoint = txin.previous_output;
                                 let txid = Txid::from(outpoint.txid);
@@ -598,6 +599,10 @@ impl Indexer {
                                         return Ok(());
                                     }
 
+                                    if !check_collisions {
+                                        return Ok(())
+                                    }
+
                                     let len = vecs.txindex_to_txid.len();
                                     // Ok if `get` is not par as should happen only twice
                                     let prev_txid = vecs
@@ -608,8 +613,6 @@ impl Indexer {
                                             dbg!(txindex, len);
                                         })?;
 
-                                    // #[allow(clippy::redundant_locals)]
-                                    // let prev_txid = prev_txid;
                                     let prev_txid = prev_txid.as_ref();
 
                                     // If another Txid needs to be added to the list

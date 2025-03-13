@@ -134,7 +134,7 @@ impl Vecs {
                 let ohlc = fetcher
                     .get_height(
                         h,
-                        *t,
+                        t,
                         h.decremented().map(|prev_h| {
                             height_to_timestamp
                                 .get(prev_h)
@@ -215,7 +215,7 @@ impl Vecs {
         self.height_to_sats_per_dollar.compute_transform(
             starting_indexes.height,
             &mut self.height_to_close,
-            |(di, close, ..)| (di, Close::from(Sats::ONE_BTC / **close)),
+            |(di, close, ..)| (di, Close::from(Sats::ONE_BTC / *close)),
             exit,
         )?;
 
@@ -223,7 +223,7 @@ impl Vecs {
             starting_indexes.dateindex,
             &mut indexes.dateindex_to_date,
             |(di, d, ..)| {
-                let ohlc = fetcher.get_date(*d).unwrap();
+                let ohlc = fetcher.get_date(d).unwrap();
                 (di, ohlc)
             },
             exit,
@@ -295,7 +295,7 @@ impl Vecs {
         self.dateindex_to_sats_per_dollar.compute_transform(
             starting_indexes.dateindex,
             &mut self.dateindex_to_close,
-            |(di, close, ..)| (di, Close::from(Sats::ONE_BTC / **close)),
+            |(di, close, ..)| (di, Close::from(Sats::ONE_BTC / *close)),
             exit,
         )?;
 
