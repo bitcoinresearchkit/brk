@@ -28,13 +28,15 @@ pub fn main() -> color_eyre::Result<()> {
 
     let outputs_dir = Path::new("../../_outputs");
 
-    let mut indexer = Indexer::new(outputs_dir.join("indexed"), true, true)?;
+    let compressed = true;
+
+    let mut indexer = Indexer::new(outputs_dir.join("indexed"), compressed, true)?;
     indexer.import_stores()?;
     indexer.import_vecs()?;
 
     let fetcher = Fetcher::import(None)?;
 
-    let mut computer = Computer::new(outputs_dir.join("computed"), Some(fetcher));
+    let mut computer = Computer::new(outputs_dir.join("computed"), Some(fetcher), compressed);
     computer.import_stores()?;
     computer.import_vecs()?;
 

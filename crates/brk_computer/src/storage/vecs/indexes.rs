@@ -3,7 +3,7 @@ use std::{fs, ops::Deref, path::Path};
 use brk_core::{Date, Dateindex, Height, Txindex, Txinindex, Txoutindex};
 use brk_exit::Exit;
 use brk_indexer::Indexer;
-use brk_vec::{AnyStorableVec, Value, Version};
+use brk_vec::{AnyStorableVec, Compressed, Value, Version};
 
 use super::StorableVec;
 
@@ -25,54 +25,65 @@ pub struct Vecs {
 }
 
 impl Vecs {
-    pub fn import(path: &Path) -> color_eyre::Result<Self> {
+    pub fn import(path: &Path, compressed: Compressed) -> color_eyre::Result<Self> {
         fs::create_dir_all(path)?;
 
         Ok(Self {
             dateindex_to_date: StorableVec::import(
                 &path.join("dateindex_to_date"),
                 Version::from(1),
+                compressed,
             )?,
             dateindex_to_dateindex: StorableVec::import(
                 &path.join("dateindex_to_dateindex"),
                 Version::from(1),
+                compressed,
             )?,
             dateindex_to_first_height: StorableVec::import(
                 &path.join("dateindex_to_first_height"),
                 Version::from(1),
+                compressed,
             )?,
             dateindex_to_last_height: StorableVec::import(
                 &path.join("dateindex_to_last_height"),
                 Version::from(1),
+                compressed,
             )?,
             height_to_real_date: StorableVec::import(
                 &path.join("height_to_real_date"),
                 Version::from(1),
+                compressed,
             )?,
             height_to_fixed_date: StorableVec::import(
                 &path.join("height_to_fixed_date"),
                 Version::from(1),
+                compressed,
             )?,
             height_to_dateindex: StorableVec::import(
                 &path.join("height_to_dateindex"),
                 Version::from(1),
+                compressed,
             )?,
             height_to_height: StorableVec::import(
                 &path.join("height_to_height"),
                 Version::from(1),
+                compressed,
             )?,
             height_to_last_txindex: StorableVec::import(
                 &path.join("height_to_last_txindex"),
                 Version::from(1),
+                compressed,
             )?,
 
             txindex_to_last_txinindex: StorableVec::import(
                 &path.join("txindex_to_last_txinindex"),
                 Version::from(1),
+                compressed,
             )?,
             txindex_to_last_txoutindex: StorableVec::import(
                 &path.join("txindex_to_last_txoutindex"),
                 Version::from(1),
+                compressed,
             )?,
         })
     }

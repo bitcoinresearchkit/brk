@@ -6,7 +6,7 @@ use brk_core::{
 use brk_exit::Exit;
 use brk_fetcher::Fetcher;
 use brk_indexer::Indexer;
-use brk_vec::{AnyStorableVec, Value, Version};
+use brk_vec::{AnyStorableVec, Compressed, Value, Version};
 
 use super::{Indexes, StorableVec, indexes};
 
@@ -37,82 +37,119 @@ pub struct Vecs {
 }
 
 impl Vecs {
-    pub fn import(path: &Path) -> color_eyre::Result<Self> {
+    pub fn import(path: &Path, compressed: Compressed) -> color_eyre::Result<Self> {
         fs::create_dir_all(path)?;
 
         Ok(Self {
             dateindex_to_ohlc_in_cents: StorableVec::import(
                 &path.join("dateindex_to_ohlc_in_cents"),
                 Version::from(1),
+                compressed,
             )?,
             dateindex_to_ohlc: StorableVec::import(
                 &path.join("dateindex_to_ohlc"),
                 Version::from(1),
+                compressed,
             )?,
             dateindex_to_close_in_cents: StorableVec::import(
                 &path.join("dateindex_to_close_in_cents"),
                 Version::from(1),
+                compressed,
             )?,
             dateindex_to_close: StorableVec::import(
                 &path.join("dateindex_to_close"),
                 Version::from(1),
+                compressed,
             )?,
             dateindex_to_high_in_cents: StorableVec::import(
                 &path.join("dateindex_to_high_in_cents"),
                 Version::from(1),
+                compressed,
             )?,
             dateindex_to_high: StorableVec::import(
                 &path.join("dateindex_to_high"),
                 Version::from(1),
+                compressed,
             )?,
             dateindex_to_low_in_cents: StorableVec::import(
                 &path.join("dateindex_to_low_in_cents"),
                 Version::from(1),
+                compressed,
             )?,
             dateindex_to_low: StorableVec::import(
                 &path.join("dateindex_to_low"),
                 Version::from(1),
+                compressed,
             )?,
             dateindex_to_open_in_cents: StorableVec::import(
                 &path.join("dateindex_to_open_in_cents"),
                 Version::from(1),
+                compressed,
             )?,
             dateindex_to_open: StorableVec::import(
                 &path.join("dateindex_to_open"),
                 Version::from(1),
+                compressed,
             )?,
             dateindex_to_sats_per_dollar: StorableVec::import(
                 &path.join("dateindex_to_sats_per_dollar"),
                 Version::from(1),
+                compressed,
             )?,
             height_to_ohlc_in_cents: StorableVec::import(
                 &path.join("height_to_ohlc_in_cents"),
                 Version::from(1),
+                compressed,
             )?,
-            height_to_ohlc: StorableVec::import(&path.join("height_to_ohlc"), Version::from(1))?,
+            height_to_ohlc: StorableVec::import(
+                &path.join("height_to_ohlc"),
+                Version::from(1),
+                compressed,
+            )?,
             height_to_close_in_cents: StorableVec::import(
                 &path.join("height_to_close_in_cents"),
                 Version::from(1),
+                compressed,
             )?,
-            height_to_close: StorableVec::import(&path.join("height_to_close"), Version::from(1))?,
+            height_to_close: StorableVec::import(
+                &path.join("height_to_close"),
+                Version::from(1),
+                compressed,
+            )?,
             height_to_high_in_cents: StorableVec::import(
                 &path.join("height_to_high_in_cents"),
                 Version::from(1),
+                compressed,
             )?,
-            height_to_high: StorableVec::import(&path.join("height_to_high"), Version::from(1))?,
+            height_to_high: StorableVec::import(
+                &path.join("height_to_high"),
+                Version::from(1),
+                compressed,
+            )?,
             height_to_low_in_cents: StorableVec::import(
                 &path.join("height_to_low_in_cents"),
                 Version::from(1),
+                compressed,
             )?,
-            height_to_low: StorableVec::import(&path.join("height_to_low"), Version::from(1))?,
+            height_to_low: StorableVec::import(
+                &path.join("height_to_low"),
+                Version::from(1),
+                compressed,
+            )?,
             height_to_open_in_cents: StorableVec::import(
                 &path.join("height_to_open_in_cents"),
                 Version::from(1),
+                compressed,
             )?,
-            height_to_open: StorableVec::import(&path.join("height_to_open"), Version::from(1))?,
+            height_to_open: StorableVec::import(
+                &path.join("height_to_open"),
+                Version::from(1),
+                compressed,
+            )?,
             height_to_sats_per_dollar: StorableVec::import(
                 &path.join("height_to_sats_per_dollar"),
                 Version::from(1),
+                compressed,
             )?,
         })
     }

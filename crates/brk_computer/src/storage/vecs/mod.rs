@@ -3,7 +3,7 @@ use std::{fs, path::Path};
 use brk_exit::Exit;
 use brk_fetcher::Fetcher;
 use brk_indexer::Indexer;
-use brk_vec::AnyStorableVec;
+use brk_vec::{AnyStorableVec, Compressed};
 
 mod base;
 mod indexes;
@@ -21,13 +21,13 @@ pub struct Vecs {
 }
 
 impl Vecs {
-    pub fn import(path: &Path, fetch: bool) -> color_eyre::Result<Self> {
+    pub fn import(path: &Path, fetch: bool, compressed: Compressed) -> color_eyre::Result<Self> {
         fs::create_dir_all(path)?;
 
         Ok(Self {
-            indexes: indexes::Vecs::import(path)?,
-            transactions: transactions::Vecs::import(path)?,
-            marketprice: fetch.then(|| marketprice::Vecs::import(path).unwrap()),
+            indexes: indexes::Vecs::import(path, compressed)?,
+            transactions: transactions::Vecs::import(path, compressed)?,
+            marketprice: fetch.then(|| marketprice::Vecs::import(path, compressed).unwrap()),
         })
     }
 
