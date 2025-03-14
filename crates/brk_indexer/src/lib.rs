@@ -138,7 +138,7 @@ impl Indexer {
                 idxs.height = height;
 
                 // Used to check rapidhash collisions
-                let check_collisions = self.check_collisions && height > Height::new(500_000);
+                let check_collisions = self.check_collisions && height > Height::new(640_000);
 
                 let blockhash = BlockHash::from(blockhash);
                 let blockhash_prefix = BlockHashPrefix::from(&blockhash);
