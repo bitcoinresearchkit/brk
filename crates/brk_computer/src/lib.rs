@@ -12,6 +12,7 @@ pub use brk_parser::rpc;
 
 mod storage;
 
+use brk_vec::Compressed;
 use log::info;
 use storage::{Stores, Vecs};
 
@@ -21,15 +22,17 @@ pub struct Computer {
     fetcher: Option<Fetcher>,
     vecs: Option<Vecs>,
     stores: Option<Stores>,
+    compressed: Compressed,
 }
 
 impl Computer {
-    pub fn new(computed_dir: PathBuf, fetcher: Option<Fetcher>) -> Self {
+    pub fn new(computed_dir: PathBuf, fetcher: Option<Fetcher>, compressed: bool) -> Self {
         Self {
             path: computed_dir,
             fetcher,
             vecs: None,
             stores: None,
+            compressed: Compressed::from(compressed),
         }
     }
 
@@ -37,6 +40,7 @@ impl Computer {
         self.vecs = Some(Vecs::import(
             &self.path.join("vecs"),
             self.fetcher.is_some(),
+            self.compressed,
         )?);
         Ok(())
     }

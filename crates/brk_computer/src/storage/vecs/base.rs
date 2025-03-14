@@ -24,8 +24,8 @@ where
     I: StoredIndex,
     T: StoredType,
 {
-    pub fn import(path: &Path, version: Version) -> brk_vec::Result<Self> {
-        let vec = brk_vec::StorableVec::forced_import(path, version, Compressed::YES)?;
+    pub fn import(path: &Path, version: Version, compressed: Compressed) -> brk_vec::Result<Self> {
+        let vec = brk_vec::StorableVec::forced_import(path, version, compressed)?;
 
         Ok(Self {
             computed_version: None,

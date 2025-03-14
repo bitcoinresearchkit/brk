@@ -26,11 +26,9 @@ pub fn run(config: RunConfig) -> color_eyre::Result<()> {
 
     let parser = brk_parser::Parser::new(config.blocksdir(), rpc);
 
-    let mut indexer = Indexer::new(
-        config.indexeddir(),
-        config.compressed(),
-        config.check_collisions(),
-    )?;
+    let compressed = config.compressed();
+
+    let mut indexer = Indexer::new(config.indexeddir(), compressed, config.check_collisions())?;
     indexer.import_stores()?;
     indexer.import_vecs()?;
 
@@ -38,7 +36,7 @@ pub fn run(config: RunConfig) -> color_eyre::Result<()> {
         .fetch()
         .then(|| Fetcher::import(Some(config.harsdir().as_path())).unwrap());
 
-    let mut computer = Computer::new(config.computeddir(), fetcher);
+    let mut computer = Computer::new(config.computeddir(), fetcher, compressed);
     computer.import_stores()?;
     computer.import_vecs()?;
 

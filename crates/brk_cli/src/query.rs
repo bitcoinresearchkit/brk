@@ -8,14 +8,12 @@ use crate::run::RunConfig;
 pub fn query(params: QueryParams) -> color_eyre::Result<()> {
     let config = RunConfig::import(None)?;
 
-    let mut indexer = Indexer::new(
-        config.indexeddir(),
-        config.compressed(),
-        config.check_collisions(),
-    )?;
+    let compressed = config.compressed();
+
+    let mut indexer = Indexer::new(config.indexeddir(), compressed, config.check_collisions())?;
     indexer.import_vecs()?;
 
-    let mut computer = Computer::new(config.computeddir(), None);
+    let mut computer = Computer::new(config.computeddir(), None, compressed);
     computer.import_vecs()?;
 
     let query = Query::build(&indexer, &computer);

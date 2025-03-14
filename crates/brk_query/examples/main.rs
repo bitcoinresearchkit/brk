@@ -9,10 +9,12 @@ pub fn main() -> color_eyre::Result<()> {
 
     let outputs_dir = Path::new("../../_outputs");
 
-    let mut indexer = Indexer::new(outputs_dir.join("indexed"), true, true)?;
+    let compressed = true;
+
+    let mut indexer = Indexer::new(outputs_dir.join("indexed"), compressed, true)?;
     indexer.import_vecs()?;
 
-    let mut computer = Computer::new(outputs_dir.join("computed"), None);
+    let mut computer = Computer::new(outputs_dir.join("computed"), None, compressed);
     computer.import_vecs()?;
 
     let query = Query::build(&indexer, &computer);

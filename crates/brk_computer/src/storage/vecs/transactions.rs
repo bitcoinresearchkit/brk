@@ -3,7 +3,7 @@ use std::{fs, path::Path};
 use brk_core::Txindex;
 use brk_exit::Exit;
 use brk_indexer::Indexer;
-use brk_vec::{AnyStorableVec, Version};
+use brk_vec::{AnyStorableVec, Compressed, Version};
 
 use super::{Indexes, StorableVec, indexes};
 
@@ -29,7 +29,7 @@ pub struct Vecs {
 }
 
 impl Vecs {
-    pub fn import(path: &Path) -> color_eyre::Result<Self> {
+    pub fn import(path: &Path, compressed: Compressed) -> color_eyre::Result<Self> {
         fs::create_dir_all(path)?;
 
         Ok(Self {
@@ -50,6 +50,7 @@ impl Vecs {
             txindex_to_is_coinbase: StorableVec::import(
                 &path.join("txindex_to_is_coinbase"),
                 Version::from(1),
+                compressed,
             )?,
             // txindex_to_feerate: StorableVec::forced_import(&path.join("txindex_to_feerate"), Version::from(1))?,
             // txindex_to_inputs_count: StorableVec::forced_import(
