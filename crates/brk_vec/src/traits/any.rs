@@ -9,7 +9,11 @@ pub trait AnyStorableVec: Send + Sync {
     fn index_type_to_string(&self) -> &str;
     fn len(&self) -> usize;
     fn is_empty(&self) -> bool;
-    fn collect_range_values(&self, from: Option<i64>, to: Option<i64>) -> Result<Vec<serde_json::Value>>;
+    fn collect_range_values(
+        &self,
+        from: Option<i64>,
+        to: Option<i64>,
+    ) -> Result<Vec<serde_json::Value>>;
     fn flush(&mut self) -> io::Result<()>;
 }
 
@@ -38,7 +42,11 @@ where
         self.flush()
     }
 
-    fn collect_range_values(&self, from: Option<i64>, to: Option<i64>) -> Result<Vec<serde_json::Value>> {
+    fn collect_range_values(
+        &self,
+        from: Option<i64>,
+        to: Option<i64>,
+    ) -> Result<Vec<serde_json::Value>> {
         Ok(self
             .collect_range(from, to)?
             .into_iter()

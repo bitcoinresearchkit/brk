@@ -2,12 +2,11 @@ use std::path::Path;
 
 use brk_core::{default_bitcoin_path, dot_brk_path};
 use brk_exit::Exit;
-use brk_indexer::{Indexer, rpc::RpcApi};
+use brk_indexer::Indexer;
 use brk_parser::{
     Parser,
     rpc::{self},
 };
-use log::info;
 
 fn main() -> color_eyre::Result<()> {
     color_eyre::install()?;
@@ -26,24 +25,12 @@ fn main() -> color_eyre::Result<()> {
 
     let outputs = dot_brk_path().join("outputs");
 
-    let mut indexer = Indexer::new(outputs.join("indexed").to_owned(), true)?;
+    let mut indexer = Indexer::new(outputs.join("indexed").to_owned(), true, true)?;
+
     indexer.import_stores()?;
     indexer.import_vecs()?;
 
-    // loop {
-    let block_count = rpc.get_block_count()?;
-
-    info!("{block_count} blocks found.");
-
     indexer.index(&parser, rpc, &exit)?;
 
-    info!("Waiting for new blocks...");
-
-    //     while block_count == rpc.get_block_count()? {
-    //         sleep(Duration::from_secs(1))
-    //     }
-    // }
-
-    #[allow(unreachable_code)]
     Ok(())
 }
