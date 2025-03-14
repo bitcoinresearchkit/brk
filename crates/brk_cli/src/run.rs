@@ -26,7 +26,11 @@ pub fn run(config: RunConfig) -> color_eyre::Result<()> {
 
     let parser = brk_parser::Parser::new(config.blocksdir(), rpc);
 
-    let mut indexer = Indexer::new(config.indexeddir(), config.check_collisions())?;
+    let mut indexer = Indexer::new(
+        config.indexeddir(),
+        config.compressed(),
+        config.check_collisions(),
+    )?;
     indexer.import_stores()?;
     indexer.import_vecs()?;
 
@@ -103,6 +107,10 @@ pub struct RunConfig {
     #[arg(short, long)]
     mode: Option<Mode>,
 
+    /// Activate compression of datasets, set to true to save disk space or false if prioritize speed, default: true, saved
+    #[arg(short, long, value_name = "BOOL")]
+    compressed: Option<bool>,
+
     /// Activate fetching prices from exchanges APIs and the computation of all related datasets, default: false, saved
     #[arg(short, long, value_name = "BOOL")]
     fetch: Option<bool>,
@@ -169,6 +177,10 @@ impl RunConfig {
 
             if let Some(fetch) = config_args.fetch.take() {
                 config_saved.fetch = Some(fetch);
+            }
+
+            if let Some(compressed) = config_args.compressed.take() {
+                config_saved.compressed = Some(compressed);
             }
 
             if let Some(website) = config_args.website.take() {
@@ -385,6 +397,10 @@ impl RunConfig {
 
     pub fn fetch(&self) -> bool {
         self.fetch.is_some_and(|b| b)
+    }
+
+    pub fn compressed(&self) -> bool {
+        self.compressed.is_none_or(|b| b)
     }
 
     pub fn check_collisions(&self) -> bool {

@@ -5,9 +5,8 @@
 
 use std::{
     cmp::Ordering,
-    fmt::Debug,
     fs::{self, File, OpenOptions},
-    io::{self, Seek, SeekFrom, Write},
+    io::{self, Read, Seek, SeekFrom, Write},
     marker::PhantomData,
     mem,
     path::{Path, PathBuf},
@@ -15,9 +14,9 @@ use std::{
 };
 
 pub use memmap2;
-use memmap2::Mmap;
 use rayon::prelude::*;
 pub use zerocopy;
+use zstd::DEFAULT_COMPRESSION_LEVEL;
 
 mod enums;
 mod structs;
@@ -26,46 +25,22 @@ mod traits;
 pub use enums::*;
 pub use structs::*;
 pub use traits::*;
-use zstd::DEFAULT_COMPRESSION_LEVEL;
 
 const ONE_KIB: usize = 1024;
-const MAX_PAGE_SIZE: usize = 16 * ONE_KIB;
+pub const MAX_PAGE_SIZE: usize = 16 * ONE_KIB;
 const ONE_MIB: usize = ONE_KIB * ONE_KIB;
 const MAX_CACHE_SIZE: usize = 100 * ONE_MIB;
 
-type SmallCache<T> = Option<(usize, Box<[T]>)>;
-
-///
-/// A very small, fast, efficient and simple storable Vec
-///
-/// Reads (imports of Mmap) are lazy
-///
-/// Stores only raw data without any overhead, and doesn't even have a header
-///
-/// The file isn't portable for speed reasons (TODO: but could be ?)
-///
-/// If you don't call `.flush()` it just acts as a normal Vec
-///
+#[allow(private_interfaces)]
 #[derive(Debug)]
-pub struct StorableVec<I, T> {
-    version: Version,
-    pathbuf: PathBuf,
-    stored_len: Length,
-    compressed: Compressed,
-
-    // Compressed
-    decoded_pages: Option<Vec<OnceLock<Box<[T]>>>>,
-    decoded_page: SmallCache<T>,
-    pages: CompressedPagesMetadata,
-
-    // Raw
-    // raw_pages: Vec<OnceLock<Box<memmap2::Mmap>>>,
-    // raw_page: memmap2::Mmap,
-    // file: File,
-    // file_position: u64,
-    // buf: Vec<u8>,
-    pushed: Vec<T>,
-    phantom: PhantomData<I>,
+pub enum StorableVec<I, T> {
+    Raw {
+        base: Base<I, T>,
+    },
+    Compressed {
+        base: Base<I, T>,
+        pages_meta: CompressedPagesMetadata,
+    },
 }
 
 impl<I, T> StorableVec<I, T>
@@ -75,7 +50,6 @@ where
 {
     pub const SIZE_OF_T: usize = size_of::<T>();
     pub const PER_PAGE: usize = MAX_PAGE_SIZE / Self::SIZE_OF_T;
-    /// In bytes
     pub const PAGE_SIZE: usize = Self::PER_PAGE * Self::SIZE_OF_T;
     pub const CACHE_LENGTH: usize = MAX_CACHE_SIZE / Self::PAGE_SIZE;
 
@@ -97,130 +71,15 @@ where
     }
 
     pub fn import(path: &Path, version: Version, compressed: Compressed) -> Result<Self> {
-        fs::create_dir_all(path)?;
+        let base = Base::import(path, version, compressed)?;
 
-        let version_path = Self::path_version_(path);
-        version.validate(version_path.as_ref())?;
-        version.write(version_path.as_ref())?;
+        if *compressed {
+            let pages_meta = CompressedPagesMetadata::read(Self::path_pages_meta_(path).as_path())?;
 
-        let compressed_path = Self::path_compressed_(path);
-        compressed.validate(compressed_path.as_ref())?;
-        compressed.write(compressed_path.as_ref())?;
-
-        let stored_len = Length::try_from(Self::path_length_(path).as_path())?;
-
-        let pages = CompressedPagesMetadata::read(Self::path_pages_(path).as_path())?;
-
-        Ok(Self {
-            version,
-            compressed,
-            pathbuf: path.to_owned(),
-            stored_len,
-            decoded_pages: None,
-            pushed: vec![],
-            pages,
-            decoded_page: None,
-            phantom: PhantomData,
-        })
-    }
-
-    fn open_file(&self) -> io::Result<File> {
-        Self::open_file_(&self.path_vec())
-    }
-    fn open_file_(path: &Path) -> io::Result<File> {
-        OpenOptions::new()
-            .read(true)
-            .create(true)
-            .truncate(false)
-            .append(true)
-            .open(path)
-    }
-
-    #[inline(always)]
-    fn mmap(&self, page: &CompressedPageMetadata) -> io::Result<Mmap> {
-        let len = page.bytes_len as usize;
-        let offset = page.start;
-        let file = self.open_file()?;
-
-        Ok(unsafe {
-            memmap2::MmapOptions::new()
-                .len(len)
-                .offset(offset)
-                .map(&file)?
-        })
-    }
-
-    fn decode(&self, page_index: usize) -> Result<Box<[T]>> {
-        if self.pages.len() <= page_index {
-            return Err(Error::ExpectVecToHaveIndex);
+            Ok(Self::Compressed { base, pages_meta })
+        } else {
+            Ok(Self::Raw { base })
         }
-
-        let page = self.pages.get(page_index).unwrap();
-
-        let mmap = self.mmap(page)?;
-
-        let decoded = zstd::decode_all(&mmap[..]);
-
-        if decoded.is_err() {
-            dbg!((page, page_index, &mmap[..], &mmap.len(), &decoded));
-        }
-
-        Ok(decoded?
-            .chunks(Self::SIZE_OF_T)
-            .map(|slice| T::try_read_from_bytes(slice).unwrap())
-            .collect::<Vec<_>>()
-            .into_boxed_slice())
-    }
-
-    pub fn open_then_read(&self, index: I) -> Result<Option<T>> {
-        self.open_then_read_(Self::i_to_usize(index)?)
-    }
-    fn open_then_read_(&self, index: usize) -> Result<Option<T>> {
-        Ok(self
-            .decode(Self::index_to_page_index(index))?
-            .get(Self::index_to_decoded_index(index))
-            .cloned())
-    }
-
-    pub fn init_big_cache(&mut self) -> io::Result<()> {
-        self.decoded_pages.replace(vec![]);
-        self.reset_big_cache()
-    }
-
-    fn reset_big_cache(&mut self) -> io::Result<()> {
-        if self.decoded_pages.is_none() {
-            return Ok(());
-        }
-
-        let big_cache = self.decoded_pages.as_mut().unwrap();
-
-        big_cache.par_iter_mut().for_each(|lock| {
-            lock.take();
-        });
-
-        let len = (*self.stored_len as f64 / Self::PER_PAGE as f64).ceil() as usize;
-        let len = Self::CACHE_LENGTH.min(len);
-
-        if big_cache.len() != len {
-            big_cache.resize_with(len, Default::default);
-        }
-
-        Ok(())
-    }
-
-    fn reset_caches(&mut self) -> io::Result<()> {
-        self.decoded_page.take();
-        self.reset_big_cache()
-    }
-
-    #[inline(always)]
-    fn index_to_page_index(index: usize) -> usize {
-        index / Self::PER_PAGE
-    }
-
-    #[inline(always)]
-    fn index_to_decoded_index(index: usize) -> usize {
-        index % Self::PER_PAGE
     }
 
     #[inline]
@@ -231,7 +90,7 @@ where
         match self.index_to_pushed_index(index) {
             Ok(index) => {
                 if let Some(index) = index {
-                    return Ok(self.pushed.get(index).map(|v| Value::Ref(v)));
+                    return Ok(self.pushed().get(index).map(|v| Value::Ref(v)));
                 }
             }
             Err(Error::IndexTooHigh) => return Ok(None),
@@ -239,24 +98,22 @@ where
             Err(error) => return Err(error),
         }
 
-        if let Some(big_cache) = self
-            .decoded_pages
-            .as_ref()
-            .and_then(|v| if v.is_empty() { None } else { Some(v) })
-        {
+        let large_cache_len = self.large_cache_len();
+        if large_cache_len != 0 {
             let page_index = Self::index_to_page_index(index);
-            let last_index = *self.stored_len - 1;
-            let max_page_index = last_index / Self::PER_PAGE;
-
-            let min_page_index = (max_page_index + 1) - big_cache.len();
+            let last_index = self.stored_len() - 1;
+            let max_page_index = Self::index_to_page_index(last_index);
+            let min_page_index = (max_page_index + 1) - large_cache_len;
 
             if page_index >= min_page_index {
-                return Ok(big_cache
+                let values = self
+                    .pages()
+                    .unwrap()
                     .get(page_index - min_page_index)
                     .ok_or(Error::MmapsVecIsTooSmall)?
-                    .get_or_init(|| self.decode(page_index).unwrap())
-                    .get(Self::index_to_decoded_index(index))
-                    .map(|v| Value::Ref(v)));
+                    .get_or_init(|| self.decode_page(page_index).unwrap());
+
+                return Ok(values.get(index)?.map(|v| Value::Ref(v)));
             }
         }
 
@@ -272,7 +129,7 @@ where
         match self.index_to_pushed_index(index) {
             Ok(index) => {
                 if let Some(index) = index {
-                    return Ok(self.pushed.get(index));
+                    return Ok(self.pushed().get(index));
                 }
             }
             Err(Error::IndexTooHigh) => return Ok(None),
@@ -282,17 +139,12 @@ where
 
         let page_index = Self::index_to_page_index(index);
 
-        if self.decoded_page.as_ref().is_none_or(|b| b.0 != page_index) {
-            self.decoded_page
-                .replace((page_index, self.decode(page_index)?));
+        if self.page().is_none_or(|b| b.0 != page_index) {
+            let values = self.decode_page(page_index)?;
+            self.mut_page().replace((page_index, values));
         }
 
-        Ok(self
-            .decoded_page
-            .as_ref()
-            .unwrap()
-            .1
-            .get(Self::index_to_decoded_index(index)))
+        self.page().unwrap().1.get(index)
     }
 
     pub fn read_last(&mut self) -> Result<Option<&T>> {
@@ -301,6 +153,26 @@ where
             return Ok(None);
         }
         self.read_(len - 1)
+    }
+
+    pub fn open_then_read(&self, index: I) -> Result<Option<T>> {
+        self.open_then_read_(Self::i_to_usize(index)?)
+    }
+    fn open_then_read_(&self, index: usize) -> Result<Option<T>> {
+        Ok(match self {
+            Self::Raw { .. } => {
+                let mut file = self.open_file()?;
+                let byte_index = Self::index_to_byte_index(index);
+                file.seek(SeekFrom::Start(byte_index))?;
+                let mut buf = vec![0; Self::SIZE_OF_T];
+                file.read_exact(&mut buf)?;
+                T::try_ref_from_bytes(&buf[..]).ok().map(|v| v.to_owned())
+            }
+            Self::Compressed { .. } => self
+                .decode_page(Self::index_to_page_index(index))?
+                .get(index)?
+                .cloned(),
+        })
     }
 
     pub fn iter<F>(&mut self, f: F) -> Result<()>
@@ -314,11 +186,11 @@ where
     where
         F: FnMut((I, &T)) -> Result<()>,
     {
-        if !self.pushed.is_empty() {
+        if !self.is_pushed_empty() {
             return Err(Error::UnsupportedUnflushedState);
         }
 
-        let stored_len = I::from(*self.stored_len);
+        let stored_len = I::from(self.stored_len());
 
         while index < stored_len {
             let v = self.read(index)?.unwrap();
@@ -333,11 +205,11 @@ where
     where
         F: FnMut((I, T, &mut Self)) -> Result<()>,
     {
-        if !self.pushed.is_empty() {
+        if !self.is_pushed_empty() {
             return Err(Error::UnsupportedUnflushedState);
         }
 
-        let stored_len = I::from(*self.stored_len);
+        let stored_len = I::from(self.stored_len());
 
         while index < stored_len {
             let v = self.read(index)?.unwrap().clone();
@@ -349,11 +221,11 @@ where
     }
 
     pub fn collect_range(&self, from: Option<i64>, to: Option<i64>) -> Result<Vec<T>> {
-        if !self.pushed.is_empty() {
+        if !self.is_pushed_empty() {
             return Err(Error::UnsupportedUnflushedState);
         }
 
-        let len = *self.stored_len;
+        let len = self.stored_len();
 
         let from = from.map_or(0, |from| {
             if from >= 0 {
@@ -375,31 +247,87 @@ where
             return Err(Error::RangeFromAfterTo);
         }
 
-        let mut small_cache: SmallCache<T> = None;
+        let mut page: Option<(usize, Values<T>)> = None;
 
         let values = (from..=to)
             .flat_map(|index| {
                 let page_index = Self::index_to_page_index(index);
 
-                if small_cache.as_ref().is_none_or(|b| b.0 != page_index) {
-                    small_cache.replace((page_index, self.decode(page_index).unwrap()));
+                if page.as_ref().is_none_or(|b| b.0 != page_index) {
+                    let values = self.decode_page(page_index).unwrap();
+                    page.replace((page_index, values));
                 }
 
-                small_cache
-                    .as_ref()
-                    .unwrap()
-                    .1
-                    .get(Self::index_to_decoded_index(index))
-                    .cloned()
+                page.as_ref().unwrap().1.get(index).ok().flatten().cloned()
             })
             .collect::<Vec<_>>();
 
         Ok(values)
     }
 
+    fn decode_page(&self, page_index: usize) -> Result<Values<T>> {
+        Self::decode_page_(
+            self.stored_len(),
+            page_index,
+            self.file(),
+            match self {
+                Self::Raw { .. } => None,
+                Self::Compressed { pages_meta, .. } => Some(pages_meta),
+            },
+        )
+    }
+
+    fn decode_page_(
+        stored_len: usize,
+        page_index: usize,
+        file: &File,
+        compressed_pages_meta: Option<&CompressedPagesMetadata>,
+    ) -> Result<Values<T>> {
+        if Self::page_index_to_index(page_index) >= stored_len {
+            return Err(Error::IndexTooHigh);
+        }
+
+        let (len, offset) = if let Some(pages_meta) = compressed_pages_meta {
+            if pages_meta.len() <= page_index {
+                return Err(Error::ExpectVecToHaveIndex);
+            }
+            let page = pages_meta.get(page_index).unwrap();
+            (page.bytes_len as usize, page.start)
+        } else {
+            (Self::PAGE_SIZE, Self::page_index_to_byte_index(page_index))
+        };
+
+        let mmap = unsafe {
+            memmap2::MmapOptions::new()
+                .len(len)
+                .offset(offset)
+                .map(file)?
+        };
+
+        let compressed = compressed_pages_meta.is_some();
+
+        if compressed {
+            let decoded = zstd::decode_all(&mmap[..]);
+
+            if decoded.is_err() {
+                dbg!((len, offset, page_index, &mmap[..], &mmap.len(), &decoded));
+            }
+
+            Ok(Values::from(
+                decoded?
+                    .chunks(Self::SIZE_OF_T)
+                    .map(|slice| T::try_read_from_bytes(slice).unwrap())
+                    .collect::<Vec<_>>()
+                    .into_boxed_slice(),
+            ))
+        } else {
+            Ok(Values::from(mmap))
+        }
+    }
+
     #[inline]
     pub fn push(&mut self, value: T) {
-        self.pushed.push(value)
+        self.mut_pushed().push(value)
     }
 
     #[inline]
@@ -411,7 +339,7 @@ where
                 Ok(())
             }
             Ordering::Equal => {
-                self.pushed.push(value);
+                self.mut_pushed().push(value);
                 Ok(())
             }
             Ordering::Less => {
@@ -421,120 +349,188 @@ where
         }
     }
 
-    #[inline]
-    pub fn len(&self) -> usize {
-        *self.stored_len + self.pushed_len()
-    }
-
-    #[inline]
-    pub fn pushed_len(&self) -> usize {
-        self.pushed.len()
-    }
-
-    #[inline]
-    pub fn is_empty(&self) -> bool {
-        self.len() == 0
-    }
-
-    #[inline]
-    pub fn has(&self, index: I) -> Result<bool> {
-        Ok(self.has_(Self::i_to_usize(index)?))
-    }
-    #[inline]
-    fn has_(&self, index: usize) -> bool {
-        index < self.len()
-    }
-
-    #[inline]
-    pub fn hasnt(&self, index: I) -> Result<bool> {
-        self.has(index).map(|b| !b)
-    }
-
     pub fn flush(&mut self) -> io::Result<()> {
-        if self.pushed.is_empty() {
+        let pushed_len = self.pushed_len();
+
+        if pushed_len == 0 {
             return Ok(());
         }
 
-        let mut file = self.open_file()?;
+        let stored_len = self.stored_len();
 
-        let (starting_page_index, values) = if *self.stored_len % Self::PER_PAGE != 0 {
-            if self.pages.is_empty() {
-                unreachable!()
-            }
+        let bytes = match self {
+            Self::Compressed { base, pages_meta } => {
+                let (starting_page_index, values) = if *base.stored_len % Self::PER_PAGE != 0 {
+                    if pages_meta.is_empty() {
+                        unreachable!()
+                    }
 
-            let last_page_index = self.pages.len() - 1;
+                    let last_page_index = pages_meta.len() - 1;
 
-            let values = if let Some(values) = self.decoded_pages.as_mut().and_then(|big_cache| {
-                big_cache
-                    .last_mut()
-                    .and_then(|lock| lock.take())
-                    .map(|b| b.into_vec())
-            }) {
-                values
-            } else if self
-                .decoded_page
-                .as_ref()
-                .is_some_and(|(page_index, _)| *page_index == last_page_index)
-            {
-                self.decoded_page.take().unwrap().1.into_vec()
-            } else {
-                self.decode(last_page_index)
-                    .inspect_err(|_| {
-                        dbg!(last_page_index, &self.pages);
-                    })
-                    .unwrap()
-                    .into_vec()
-            };
+                    let values = if let Some(values) = base
+                        .pages
+                        .as_mut()
+                        .and_then(|big_cache| big_cache.last_mut().and_then(|lock| lock.take()))
+                    {
+                        values
+                    } else if base
+                        .page
+                        .as_ref()
+                        .is_some_and(|(page_index, _)| *page_index == last_page_index)
+                    {
+                        base.page.take().unwrap().1
+                    } else {
+                        Self::decode_page_(
+                            stored_len,
+                            last_page_index,
+                            &base.file,
+                            Some(pages_meta),
+                        )
+                        .inspect_err(|_| {
+                            dbg!(last_page_index, &pages_meta);
+                        })
+                        .unwrap()
+                    };
 
-            let file_len = self.pages.pop().unwrap().start;
+                    let file_len = pages_meta.pop().unwrap().start;
 
-            Self::file_set_len(&mut file, file_len)?;
+                    file_set_len(&mut base.file, file_len)?;
 
-            (last_page_index, values)
-        } else {
-            (self.pages.len(), vec![])
-        };
-
-        self.stored_len += self.pushed_len();
-
-        let compressed = values
-            .into_par_iter()
-            .chain(mem::take(&mut self.pushed).into_par_iter())
-            .chunks(Self::PER_PAGE)
-            .map(|chunk| (Self::compress_chunk(&chunk), chunk.len()))
-            .collect::<Vec<_>>();
-
-        compressed
-            .iter()
-            .enumerate()
-            .for_each(|(i, (compressed_bytes, values_len))| {
-                let page_index = starting_page_index + i;
-
-                let start = if page_index != 0 {
-                    let prev = self.pages.get(page_index - 1).unwrap();
-                    prev.start + prev.bytes_len as u64
+                    (last_page_index, values)
                 } else {
-                    0
+                    (pages_meta.len(), Values::default())
                 };
 
-                let bytes_len = compressed_bytes.len() as u32;
-                let values_len = *values_len as u32;
+                let compressed = Vec::from(values.as_arr())
+                    .into_par_iter()
+                    .chain(mem::take(&mut base.pushed).into_par_iter())
+                    .chunks(Self::PER_PAGE)
+                    .map(|chunk| (Self::compress_chunk(chunk.as_ref()), chunk.len()))
+                    .collect::<Vec<_>>();
 
-                let page = CompressedPageMetadata::new(start, bytes_len, values_len);
+                compressed
+                    .iter()
+                    .enumerate()
+                    .for_each(|(i, (compressed_bytes, values_len))| {
+                        let page_index = starting_page_index + i;
 
-                self.pages.push(page_index, page);
-            });
+                        let start = if page_index != 0 {
+                            let prev = pages_meta.get(page_index - 1).unwrap();
+                            prev.start + prev.bytes_len as u64
+                        } else {
+                            0
+                        };
 
-        let compressed = compressed
-            .into_iter()
-            .flat_map(|(v, _)| v)
-            .collect::<Box<_>>();
+                        let bytes_len = compressed_bytes.len() as u32;
+                        let values_len = *values_len as u32;
 
-        self.pages.write()?;
-        file.write_all(&compressed)?;
-        self.reset_caches()?;
+                        let page = CompressedPageMetadata::new(start, bytes_len, values_len);
 
-        self.write_length()?;
+                        pages_meta.push(page_index, page);
+                    });
+
+                pages_meta.write()?;
+
+                compressed
+                    .into_iter()
+                    .flat_map(|(v, _)| v)
+                    .collect::<Vec<_>>()
+            }
+            Self::Raw { base } => {
+                let pushed = &mut base.pushed;
+
+                let mut bytes: Vec<u8> = vec![0; pushed.len() * Self::SIZE_OF_T];
+
+                let unsafe_bytes = UnsafeSlice::new(&mut bytes);
+
+                mem::take(pushed)
+                    .into_par_iter()
+                    .enumerate()
+                    .for_each(|(i, v)| unsafe_bytes.copy_slice(i * Self::SIZE_OF_T, v.as_bytes()));
+
+                bytes
+            }
+        };
+
+        self.mut_file().write_all(&bytes)?;
+
+        self.reset_caches();
+
+        self.increase_stored_len(pushed_len);
+
+        self.write_stored_length()?;
+
+        Ok(())
+    }
+
+    pub fn truncate_if_needed(&mut self, index: I) -> Result<()> {
+        let index = Self::i_to_usize(index)?;
+
+        if index >= self.stored_len() {
+            return Ok(());
+        }
+
+        if index == 0 {
+            self.reset()?;
+            return Ok(());
+        }
+
+        let page_index = Self::index_to_page_index(index);
+
+        let values = match self {
+            Self::Compressed { .. } => self.decode_page(page_index)?,
+            Self::Raw { .. } => Values::default(),
+        };
+
+        let (len, bytes) = match self {
+            Self::Compressed { pages_meta, .. } => {
+                let mut page = pages_meta.truncate(page_index).unwrap();
+
+                let len = page.start;
+
+                let decoded_index = Self::index_to_decoded_index(index);
+
+                let compressed = if decoded_index != 0 {
+                    let chunk = &values.as_arr()[..decoded_index];
+
+                    let compressed = Self::compress_chunk(chunk);
+
+                    page.values_len = chunk.len() as u32;
+                    page.bytes_len = compressed.len() as u32;
+
+                    pages_meta.push(page_index, page);
+
+                    compressed
+                } else {
+                    vec![].into_boxed_slice()
+                };
+
+                pages_meta.write()?;
+
+                (len, compressed)
+            }
+            Self::Raw { .. } => {
+                // let value_at_index = self.open_then_read_(index).ok();
+
+                let len = Self::index_to_byte_index(index);
+
+                (len, vec![].into_boxed_slice())
+            }
+        };
+
+        let file = self.mut_file();
+
+        file_set_len(file, len)?;
+
+        if !bytes.is_empty() {
+            file.write_all(&bytes)?;
+        }
+
+        self.set_stored_len(index);
+
+        self.write_stored_length()?;
+
+        self.reset_caches();
 
         Ok(())
     }
@@ -558,62 +554,49 @@ where
             .into_boxed_slice()
     }
 
-    pub fn truncate_if_needed(&mut self, index: I) -> Result<()> {
-        let index = Self::i_to_usize(index)?;
-
-        if index >= *self.stored_len {
-            return Ok(());
-        }
-
-        if index == 0 {
-            self.reset_file()?;
-            return Ok(());
-        }
-
-        let page_index = Self::index_to_page_index(index);
-
-        let values = self.decode(page_index)?;
-        let mut page = self.pages.truncate(page_index).unwrap();
-
-        let mut file = self.open_file()?;
-        Self::file_set_len(&mut file, page.start)?;
-
-        let decoded_index = Self::index_to_decoded_index(index);
-
-        if decoded_index != 0 {
-            let chunk = &values[..decoded_index];
-
-            let compressed = Self::compress_chunk(chunk);
-
-            page.values_len = chunk.len() as u32;
-            page.bytes_len = compressed.len() as u32;
-
-            file.write_all(&compressed)?;
-
-            self.pages.push(page_index, page);
-        }
-
-        self.pages.write()?;
-
-        *self.stored_len = index;
-        self.write_length()?;
-
-        self.reset_caches()?;
-
-        Ok(())
+    pub fn enable_large_cache(&mut self) {
+        self.mut_pages().replace(vec![]);
+        self.reset_large_cache();
     }
 
-    pub fn reset_file(&mut self) -> Result<()> {
-        let mut file = self.open_file()?;
-        Self::file_set_len(&mut file, 0)?;
-        *self.stored_len = 0;
-        self.reset_caches()?;
-        Ok(())
+    pub fn disable_large_cache(&mut self) {
+        self.mut_base().pages.take();
     }
 
-    fn file_set_len(file: &mut File, len: u64) -> io::Result<()> {
-        file.set_len(len)?;
-        file.seek(SeekFrom::End(0))?;
+    fn reset_large_cache(&mut self) {
+        let stored_len = self.stored_len();
+
+        if let Some(pages) = self.mut_pages().as_mut() {
+            pages.par_iter_mut().for_each(|lock| {
+                lock.take();
+            });
+
+            let len = (stored_len as f64 / Self::PER_PAGE as f64).ceil() as usize;
+            let len = Self::CACHE_LENGTH.min(len);
+
+            if pages.len() != len {
+                pages.resize_with(len, Default::default);
+            }
+        }
+    }
+
+    fn large_cache_len(&self) -> usize {
+        self.pages().map_or(0, |v| v.len())
+    }
+
+    fn reset_small_cache(&mut self) {
+        self.mut_base().page.take();
+    }
+
+    fn reset_caches(&mut self) {
+        self.reset_small_cache();
+        self.reset_large_cache();
+    }
+
+    pub fn reset(&mut self) -> Result<()> {
+        self.mut_base().reset_file()?;
+        self.reset_stored_len();
+        self.reset_caches();
         Ok(())
     }
 
@@ -624,11 +607,11 @@ where
 
     #[inline]
     fn index_to_pushed_index(&self, index: usize) -> Result<Option<usize>> {
-        let file_len = *self.stored_len;
+        let stored_len = self.stored_len();
 
-        if index >= file_len {
-            let index = index - file_len;
-            if index >= self.pushed.len() {
+        if index >= stored_len {
+            let index = index - stored_len;
+            if index >= self.pushed_len() {
                 Err(Error::IndexTooHigh)
             } else {
                 Ok(Some(index))
@@ -636,6 +619,139 @@ where
         } else {
             Err(Error::IndexTooLow)
         }
+    }
+
+    #[inline]
+    fn index_to_byte_index(index: usize) -> u64 {
+        (index * Self::SIZE_OF_T) as u64
+    }
+
+    #[inline(always)]
+    fn index_to_page_index(index: usize) -> usize {
+        index / Self::PER_PAGE
+    }
+
+    #[inline(always)]
+    fn page_index_to_index(page_index: usize) -> usize {
+        page_index * Self::PER_PAGE
+    }
+
+    #[inline(always)]
+    fn page_index_to_byte_index(page_index: usize) -> u64 {
+        (page_index * Self::PAGE_SIZE) as u64
+    }
+
+    #[inline(always)]
+    fn index_to_decoded_index(index: usize) -> usize {
+        index % Self::PER_PAGE
+    }
+
+    #[inline]
+    fn path_pages_meta_(path: &Path) -> PathBuf {
+        path.join("pages_meta")
+    }
+
+    #[inline]
+    fn page(&self) -> Option<&(usize, Values<T>)> {
+        self.base().page.as_ref()
+    }
+
+    #[inline]
+    fn mut_page(&mut self) -> &mut Option<(usize, Values<T>)> {
+        &mut self.mut_base().page
+    }
+
+    #[inline]
+    fn pages(&self) -> Option<&Vec<OnceLock<Values<T>>>> {
+        self.base().pages.as_ref()
+    }
+
+    #[inline]
+    fn mut_pages(&mut self) -> &mut Option<Vec<OnceLock<Values<T>>>> {
+        &mut self.mut_base().pages
+    }
+
+    #[inline]
+    pub fn len(&self) -> usize {
+        self.stored_len() + self.pushed_len()
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.len() == 0
+    }
+
+    #[inline]
+    pub fn has(&self, index: I) -> Result<bool> {
+        Ok(self.has_(Self::i_to_usize(index)?))
+    }
+    #[inline]
+    fn has_(&self, index: usize) -> bool {
+        index < self.len()
+    }
+
+    #[inline]
+    pub fn hasnt(&self, index: I) -> Result<bool> {
+        self.has(index).map(|b| !b)
+    }
+
+    #[inline]
+    fn pushed(&self) -> &Vec<T> {
+        &self.base().pushed
+    }
+
+    #[inline]
+    fn mut_pushed(&mut self) -> &mut Vec<T> {
+        &mut self.mut_base().pushed
+    }
+
+    #[inline]
+    pub fn pushed_len(&self) -> usize {
+        self.pushed().len()
+    }
+
+    #[inline]
+    fn is_pushed_empty(&self) -> bool {
+        self.pushed_len() == 0
+    }
+
+    #[inline]
+    fn stored_len(&self) -> usize {
+        *self.base().stored_len
+    }
+
+    #[inline]
+    fn set_stored_len(&mut self, len: usize) {
+        *self.mut_base().stored_len = len;
+    }
+
+    fn increase_stored_len(&mut self, len: usize) {
+        *self.mut_base().stored_len += len;
+    }
+
+    #[inline]
+    fn reset_stored_len(&mut self) {
+        self.set_stored_len(0);
+    }
+
+    fn write_stored_length(&self) -> io::Result<()> {
+        self.base().write_stored_length()
+    }
+
+    #[inline]
+    pub fn path(&self) -> &Path {
+        &self.base().pathbuf
+    }
+
+    fn file(&self) -> &File {
+        &self.base().file
+    }
+
+    fn mut_file(&mut self) -> &mut File {
+        &mut self.mut_base().file
+    }
+
+    fn open_file(&self) -> io::Result<File> {
+        self.base().open_file()
     }
 
     pub fn file_name(&self) -> String {
@@ -648,8 +764,91 @@ where
     }
 
     #[inline]
-    pub fn path(&self) -> &Path {
-        &self.pathbuf
+    pub fn version(&self) -> Version {
+        self.base().version
+    }
+
+    #[inline]
+    fn compressed(&self) -> Compressed {
+        self.base().compressed
+    }
+
+    #[inline]
+    fn base(&self) -> &Base<I, T> {
+        match self {
+            Self::Raw { base, .. } => base,
+            Self::Compressed { base, .. } => base,
+        }
+    }
+
+    #[inline]
+    fn mut_base(&mut self) -> &mut Base<I, T> {
+        match self {
+            Self::Raw { base, .. } => base,
+            Self::Compressed { base, .. } => base,
+        }
+    }
+
+    pub fn index_type_to_string(&self) -> &str {
+        std::any::type_name::<I>()
+    }
+}
+
+#[derive(Debug)]
+struct Base<I, T> {
+    pub version: Version,
+    pub pathbuf: PathBuf,
+    pub stored_len: Length,
+    pub compressed: Compressed,
+    pub page: Option<(usize, Values<T>)>,
+    pub pages: Option<Vec<OnceLock<Values<T>>>>,
+    pub pushed: Vec<T>,
+    pub file: File,
+    pub phantom: PhantomData<I>,
+}
+
+impl<I, T> Base<I, T> {
+    pub fn import(path: &Path, version: Version, compressed: Compressed) -> Result<Self> {
+        fs::create_dir_all(path)?;
+
+        let version_path = Self::path_version_(path);
+        version.validate(version_path.as_ref())?;
+        version.write(version_path.as_ref())?;
+
+        let compressed_path = Self::path_compressed_(path);
+        compressed.validate(compressed_path.as_ref())?;
+        compressed.write(compressed_path.as_ref())?;
+
+        let stored_len = Length::try_from(Self::path_length_(path).as_path())?;
+
+        Ok(Self {
+            version,
+            compressed,
+            pathbuf: path.to_owned(),
+            file: Self::open_file_(Self::path_vec_(path).as_path())?,
+            stored_len,
+            page: None,
+            pages: None,
+            pushed: vec![],
+            phantom: PhantomData,
+        })
+    }
+
+    fn open_file(&self) -> io::Result<File> {
+        Self::open_file_(&self.path_vec())
+    }
+    fn open_file_(path: &Path) -> io::Result<File> {
+        OpenOptions::new()
+            .read(true)
+            .create(true)
+            .truncate(false)
+            .append(true)
+            .open(path)
+    }
+
+    fn reset_file(&mut self) -> Result<()> {
+        file_set_len(&mut self.file, 0)?;
+        Ok(())
     }
 
     #[inline]
@@ -658,10 +857,10 @@ where
     }
     #[inline]
     fn path_vec_(path: &Path) -> PathBuf {
-        path.join("vec.zstd")
+        path.join("vec")
     }
 
-    fn write_length(&self) -> io::Result<()> {
+    fn write_stored_length(&self) -> io::Result<()> {
         self.stored_len.write(&self.path_length())
     }
     #[inline]
@@ -674,11 +873,6 @@ where
     }
 
     #[inline]
-    fn path_pages_(path: &Path) -> PathBuf {
-        path.join("pages")
-    }
-
-    #[inline]
     fn path_version_(path: &Path) -> PathBuf {
         path.join("version")
     }
@@ -686,14 +880,6 @@ where
     #[inline]
     fn path_compressed_(path: &Path) -> PathBuf {
         path.join("compressed")
-    }
-
-    pub fn index_type_to_string(&self) -> &str {
-        std::any::type_name::<I>()
-    }
-
-    pub fn version(&self) -> Version {
-        self.version
     }
 }
 
@@ -703,6 +889,12 @@ where
     T: StoredType,
 {
     fn clone(&self) -> Self {
-        Self::import(&self.pathbuf, self.version, self.compressed).unwrap()
+        Self::import(self.path(), self.version(), self.compressed()).unwrap()
     }
+}
+
+fn file_set_len(file: &mut File, len: u64) -> io::Result<()> {
+    file.set_len(len)?;
+    file.seek(SeekFrom::End(0))?;
+    Ok(())
 }

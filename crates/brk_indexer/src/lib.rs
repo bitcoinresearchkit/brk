@@ -38,21 +38,27 @@ pub struct Indexer {
     vecs: Option<Vecs>,
     stores: Option<Stores>,
     check_collisions: bool,
+    compressed: Compressed,
 }
 
 impl Indexer {
-    pub fn new(indexes_dir: PathBuf, check_collisions: bool) -> color_eyre::Result<Self> {
+    pub fn new(
+        indexes_dir: PathBuf,
+        compressed: bool,
+        check_collisions: bool,
+    ) -> color_eyre::Result<Self> {
         setrlimit()?;
         Ok(Self {
             path: indexes_dir,
             vecs: None,
             stores: None,
+            compressed: Compressed::from(compressed),
             check_collisions,
         })
     }
 
     pub fn import_vecs(&mut self) -> color_eyre::Result<()> {
-        self.vecs = Some(Vecs::import(&self.path.join("vecs"))?);
+        self.vecs = Some(Vecs::import(&self.path.join("vecs"), self.compressed)?);
         Ok(())
     }
 
@@ -131,7 +137,7 @@ impl Indexer {
 
                 idxs.height = height;
 
-                let check_collisions = self.check_collisions && height > Height::new(886_000);
+                let check_collisions = self.check_collisions && height > Height::new(200_000);
 
                 let blockhash = BlockHash::from(blockhash);
                 let blockhash_prefix = BlockHashPrefix::from(&blockhash);

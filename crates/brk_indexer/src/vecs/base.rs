@@ -23,7 +23,7 @@ where
     pub fn import(path: &Path, version: Version, compressed: Compressed) -> brk_vec::Result<Self> {
         let mut vec = brk_vec::StorableVec::forced_import(path, version, compressed)?;
 
-        vec.init_big_cache()?;
+        vec.enable_large_cache();
 
         Ok(Self {
             height: Height::try_from(Self::path_height_(path).as_path()).ok(),
@@ -51,8 +51,7 @@ where
 
     pub fn flush(&mut self, height: Height) -> io::Result<()> {
         height.write(&self.path_height())?;
-        self.vec.flush()?;
-        self.vec.init_big_cache()
+        self.vec.flush()
     }
 }
 

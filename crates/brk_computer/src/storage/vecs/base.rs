@@ -87,7 +87,7 @@ where
     fn validate_computed_version_or_reset_file(&mut self, version: Version) -> Result<()> {
         let path = self.path_computed_version();
         if version.validate(path.as_ref()).is_err() {
-            self.reset_file()?;
+            self.reset()?;
         }
         version.write(path.as_ref())?;
         Ok(())

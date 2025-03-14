@@ -31,7 +31,7 @@ pub fn main() -> color_eyre::Result<()> {
 
     let outputs_dir = Path::new("../../_outputs");
 
-    let mut indexer = Indexer::new(outputs_dir.join("indexed"), true)?;
+    let mut indexer = Indexer::new(outputs_dir.join("indexed"), true, true)?;
     indexer.import_stores()?;
     indexer.import_vecs()?;
 
