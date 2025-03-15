@@ -1,5 +1,21 @@
 # Bitcoin Research Kit
 
+<p align="left">
+  <a href="https://crates.io/crates/brk">
+    <img src="https://img.shields.io/crates/v/brk" alt="Version" />
+  </a>
+  <a href="https://docs.rs/brk">
+    <img src="https://img.shields.io/docsrs/brk" alt="Documentation" />
+  </a>
+  <a href="https://github.com/bitcoinresearchkit/brk/blob/main/LICENSE.md">
+    <img src="https://img.shields.io/crates/l/brk" alt="License" />
+  </a>
+  <img src="https://img.shields.io/crates/size/brk" alt="Size" />
+  <a href="https://discord.gg/EScZAYX4">
+    <img src="https://img.shields.io/discord/1350431684562124850" alt="Chat" />
+  </a>
+</p>
+
 The Bitcoin Research Kit is a suite of tools designed to parse, index, compute, serve and display data stored on a Bitcoin Core node.
 
 In other words it's an alternative to [Glassnode](https://glassnode.com), [mempool.space](https://mempool.space/) and [electrs](https://github.com/romanz/electrs) all in one package with a particular focus on the self-hosting experience.
@@ -54,8 +70,6 @@ Pricing: `0.01 BTC / month` *or* `0.1 BTC / year`
 ## Donate
 
 [`bc1q09 8zsm89 m7kgyz e338vf ejhpdt 92ua9p 3peuve`](bitcoin:bc1q098zsm89m7kgyze338vfejhpdt92ua9p3peuve)
-
-<img width="159" alt="image" src="https://github.com/user-attachments/assets/745e39c7-be26-4f2a-90f2-54786e62ba35">
 
 [`lnurl1dp68gurn8ghj7ampd3kx2ar0veekzar0wd5xjtnrdakj7tnhv4kxctttdehhwm30d3h82unvwqhkxmmww3jkuar8d35kgetj8yuq363hv4`](lightning:lnurl1dp68gurn8ghj7ampd3kx2ar0veekzar0wd5xjtnrdakj7tnhv4kxctttdehhwm30d3h82unvwqhkxmmww3jkuar8d35kgetj8yuq363hv4)
 
