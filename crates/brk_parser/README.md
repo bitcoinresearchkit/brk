@@ -19,7 +19,7 @@ Peak memory should be around 500MB.
 
 ## Comparaison
 
-|  | [biter](https://crates.io/crates/biter) | [bitcoin-explorer (deprecated)](https://crates.io/crates/bitcoin-explorer) | [blocks_iterator](https://crates.io/crates/blocks_iterator) |
+|  | [brk_parser](https://crates.io/crates/brk_parser) | [bitcoin-explorer (deprecated)](https://crates.io/crates/bitcoin-explorer) | [blocks_iterator](https://crates.io/crates/blocks_iterator) |
 | --- | --- | --- | --- |
 | Runs **with** `bitcoind` | Yes ✅ | No ❌ | Yes ✅ |
 | Runs **without** `bitcoind` | No ❌ | Yes ✅ | Yes ✅ |
