@@ -1,4 +1,4 @@
-use std::{path::Path, thread::sleep, time::Duration};
+use std::path::Path;
 
 use brk_computer::Computer;
 use brk_core::default_bitcoin_path;
@@ -7,9 +7,8 @@ use brk_fetcher::Fetcher;
 use brk_indexer::Indexer;
 use brk_parser::{
     Parser,
-    rpc::{self, RpcApi},
+    rpc::{self},
 };
-use log::info;
 
 pub fn main() -> color_eyre::Result<()> {
     color_eyre::install()?;
@@ -40,22 +39,9 @@ pub fn main() -> color_eyre::Result<()> {
     computer.import_stores()?;
     computer.import_vecs()?;
 
-    loop {
-        let block_count = rpc.get_block_count()?;
+    let starting_indexes = indexer.index(&parser, rpc, &exit)?;
 
-        info!("{block_count} blocks found.");
+    computer.compute(&mut indexer, starting_indexes, &exit)?;
 
-        let starting_indexes = indexer.index(&parser, rpc, &exit)?;
-
-        computer.compute(&mut indexer, starting_indexes, &exit)?;
-
-        info!("Waiting for new blocks...");
-
-        while block_count == rpc.get_block_count()? {
-            sleep(Duration::from_secs(1))
-        }
-    }
-
-    #[allow(unreachable_code)]
     Ok(())
 }

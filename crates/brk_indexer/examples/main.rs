@@ -23,7 +23,7 @@ fn main() -> color_eyre::Result<()> {
 
     let parser = Parser::new(bitcoin_dir.join("blocks"), rpc);
 
-    let outputs = dot_brk_path().join("outputs");
+    let outputs = Path::new("../../_outputs");
 
     let mut indexer = Indexer::new(outputs.join("indexed").to_owned(), true, true)?;
 
