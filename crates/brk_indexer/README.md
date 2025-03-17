@@ -1,6 +1,28 @@
 # BRK Indexer
 
-A [Bitcoin Core](https://bitcoincore.org/en/about/) node indexer which iterates over the chain (via `../brk_parser`) and creates a database of the vecs (`../brk_vec`) and key/value stores ([`fjall`](https://crates.io/crates/fjall)) that can be used in your Rust code.
+<p align="left">
+  <a href="https://github.com/bitcoinresearchkit/brk">
+    <img alt="GitHub Repo stars" src="https://img.shields.io/github/stars/bitcoinresearchkit/brk?style=social">
+  </a>
+  <a href="https://github.com/bitcoinresearchkit/brk/blob/main/LICENSE.md">
+    <img src="https://img.shields.io/crates/l/brk" alt="License" />
+  </a>
+  <a href="https://crates.io/crates/brk_indexer">
+    <img src="https://img.shields.io/crates/v/brk_indexer" alt="Version" />
+  </a>
+  <a href="https://docs.rs/brk_indexer">
+    <img src="https://img.shields.io/docsrs/brk_indexer" alt="Documentation" />
+  </a>
+  <img src="https://img.shields.io/crates/size/brk_indexer" alt="Size" />
+  <a href="https://deps.rs/crate/brk_indexer">
+    <img src="https://deps.rs/crate/brk_indexer/latest/status.svg" alt="Dependency status">
+  </a>
+  <a href="https://discord.gg/EScZAYX4">
+    <img src="https://img.shields.io/discord/1350431684562124850" alt="Chat" />
+  </a>
+</p>
+
+A [Bitcoin Core](https://bitcoincore.org/en/about/) node indexer which iterates over the chain (via `../brk_parser`) and creates a database of the vecs (`brk_vec`) and key/value stores ([`fjall`](https://crates.io/crates/fjall)) that can be used in your Rust code.
 
 The crate only stores the bare minimum to be self sufficient and not have to use an RPC client (except for scripts which are not stored). If you need more data, checkout `../computer` which uses the outputs from the indexer to compute a whole range of datasets.
 

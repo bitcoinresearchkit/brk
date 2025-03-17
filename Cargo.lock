@@ -446,6 +446,7 @@ dependencies = [
 name = "brk_exit"
 version = "0.0.9"
 dependencies = [
+ "brk_logger",
  "ctrlc",
  "log",
 ]
@@ -489,6 +490,7 @@ dependencies = [
  "color-eyre",
  "env_logger",
  "jiff",
+ "log",
 ]
 
 [[package]]

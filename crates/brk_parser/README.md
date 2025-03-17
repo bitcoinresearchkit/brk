@@ -1,5 +1,27 @@
 # BRK Parser
 
+<p align="left">
+  <a href="https://github.com/bitcoinresearchkit/brk">
+    <img alt="GitHub Repo stars" src="https://img.shields.io/github/stars/bitcoinresearchkit/brk?style=social">
+  </a>
+  <a href="https://github.com/bitcoinresearchkit/brk/blob/main/LICENSE.md">
+    <img src="https://img.shields.io/crates/l/brk" alt="License" />
+  </a>
+  <a href="https://crates.io/crates/brk_parser">
+    <img src="https://img.shields.io/crates/v/brk_parser" alt="Version" />
+  </a>
+  <a href="https://docs.rs/brk_parser">
+    <img src="https://img.shields.io/docsrs/brk_parser" alt="Documentation" />
+  </a>
+  <img src="https://img.shields.io/crates/size/brk_parser" alt="Size" />
+  <a href="https://deps.rs/crate/brk_parser">
+    <img src="https://deps.rs/crate/brk_parser/latest/status.svg" alt="Dependency status">
+  </a>
+  <a href="https://discord.gg/EScZAYX4">
+    <img src="https://img.shields.io/discord/1350431684562124850" alt="Chat" />
+  </a>
+</p>
+
 A very fast and simple Rust library which reads raw block files (*blkXXXXX.dat*) from Bitcoin Core node and creates an iterator over all the requested blocks in sequential order (0, 1, 2, ...).
 
 The element returned by the iterator is a tuple which includes the:
