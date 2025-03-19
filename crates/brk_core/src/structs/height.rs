@@ -67,7 +67,7 @@ impl PartialEq<u64> for Height {
 }
 
 impl Add<Height> for Height {
-    type Output = Height;
+    type Output = Self;
 
     fn add(self, rhs: Height) -> Self::Output {
         Self::from(self.0 + rhs.0)
@@ -75,7 +75,7 @@ impl Add<Height> for Height {
 }
 
 impl Add<u32> for Height {
-    type Output = Height;
+    type Output = Self;
 
     fn add(self, rhs: u32) -> Self::Output {
         Self::from(self.0 + rhs)
@@ -83,7 +83,7 @@ impl Add<u32> for Height {
 }
 
 impl Add<usize> for Height {
-    type Output = Height;
+    type Output = Self;
 
     fn add(self, rhs: usize) -> Self::Output {
         Self::from(self.0 + rhs as u32)
@@ -91,8 +91,8 @@ impl Add<usize> for Height {
 }
 
 impl CheckedSub<Height> for Height {
-    fn checked_sub(self, rhs: Height) -> Option<Self> {
-        self.0.checked_sub(rhs.0).map(Height::from)
+    fn checked_sub(self, rhs: Self) -> Option<Self> {
+        self.0.checked_sub(rhs.0).map(Self::from)
     }
 }
 
@@ -115,14 +115,14 @@ impl AddAssign<usize> for Height {
 }
 
 impl Rem<Height> for Height {
-    type Output = Height;
+    type Output = Self;
     fn rem(self, rhs: Height) -> Self::Output {
         Self(self.0.rem(rhs.0))
     }
 }
 
 impl Rem<usize> for Height {
-    type Output = Height;
+    type Output = Self;
     fn rem(self, rhs: usize) -> Self::Output {
         Self(self.0.rem(Height::from(rhs).0))
     }

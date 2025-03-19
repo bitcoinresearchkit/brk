@@ -3,7 +3,7 @@ use std::{fs, ops::Deref, path::Path};
 use brk_core::{Date, Dateindex, Height, Txindex, Txinindex, Txoutindex};
 use brk_exit::Exit;
 use brk_indexer::Indexer;
-use brk_vec::{AnyStorableVec, Compressed, Value, Version};
+use brk_vec::{AnyStorableVec, Compressed, Version};
 
 use super::StorableVec;
 
@@ -25,62 +25,62 @@ pub struct Vecs {
 }
 
 impl Vecs {
-    pub fn import(path: &Path, compressed: Compressed) -> color_eyre::Result<Self> {
+    pub fn forced_import(path: &Path, compressed: Compressed) -> color_eyre::Result<Self> {
         fs::create_dir_all(path)?;
 
         Ok(Self {
-            dateindex_to_date: StorableVec::import(
+            dateindex_to_date: StorableVec::forced_import(
                 &path.join("dateindex_to_date"),
                 Version::from(1),
                 compressed,
             )?,
-            dateindex_to_dateindex: StorableVec::import(
+            dateindex_to_dateindex: StorableVec::forced_import(
                 &path.join("dateindex_to_dateindex"),
                 Version::from(1),
                 compressed,
             )?,
-            dateindex_to_first_height: StorableVec::import(
+            dateindex_to_first_height: StorableVec::forced_import(
                 &path.join("dateindex_to_first_height"),
                 Version::from(1),
                 compressed,
             )?,
-            dateindex_to_last_height: StorableVec::import(
+            dateindex_to_last_height: StorableVec::forced_import(
                 &path.join("dateindex_to_last_height"),
                 Version::from(1),
                 compressed,
             )?,
-            height_to_real_date: StorableVec::import(
+            height_to_real_date: StorableVec::forced_import(
                 &path.join("height_to_real_date"),
                 Version::from(1),
                 compressed,
             )?,
-            height_to_fixed_date: StorableVec::import(
+            height_to_fixed_date: StorableVec::forced_import(
                 &path.join("height_to_fixed_date"),
                 Version::from(1),
                 compressed,
             )?,
-            height_to_dateindex: StorableVec::import(
+            height_to_dateindex: StorableVec::forced_import(
                 &path.join("height_to_dateindex"),
                 Version::from(1),
                 compressed,
             )?,
-            height_to_height: StorableVec::import(
+            height_to_height: StorableVec::forced_import(
                 &path.join("height_to_height"),
                 Version::from(1),
                 compressed,
             )?,
-            height_to_last_txindex: StorableVec::import(
+            height_to_last_txindex: StorableVec::forced_import(
                 &path.join("height_to_last_txindex"),
                 Version::from(1),
                 compressed,
             )?,
 
-            txindex_to_last_txinindex: StorableVec::import(
+            txindex_to_last_txinindex: StorableVec::forced_import(
                 &path.join("txindex_to_last_txinindex"),
                 Version::from(1),
                 compressed,
             )?,
-            txindex_to_last_txoutindex: StorableVec::import(
+            txindex_to_last_txoutindex: StorableVec::forced_import(
                 &path.join("txindex_to_last_txoutindex"),
                 Version::from(1),
                 compressed,
@@ -103,25 +103,25 @@ impl Vecs {
 
         self.height_to_height.compute_transform(
             starting_indexes.height,
-            &mut indexer_vecs.height_to_timestamp,
+            indexer_vecs.height_to_timestamp.mut_vec(),
             |(h, ..)| (h, h),
             exit,
         )?;
 
         self.height_to_real_date.compute_transform(
             starting_indexes.height,
-            &mut indexer_vecs.height_to_timestamp,
+            indexer_vecs.height_to_timestamp.mut_vec(),
             |(h, t, ..)| (h, Date::from(t)),
             exit,
         )?;
 
         self.height_to_fixed_date.compute_transform(
             starting_indexes.height,
-            &mut self.height_to_real_date,
+            self.height_to_real_date.mut_vec(),
             |(h, d, s, ..)| {
                 let d = h
                     .decremented()
-                    .and_then(|h| s.read(h).ok())
+                    .and_then(|h| s.get(h).ok())
                     .flatten()
                     .map_or(d, |prev_d| {
                         let prev_d = *prev_d;
@@ -134,7 +134,7 @@ impl Vecs {
 
         self.height_to_dateindex.compute_transform(
             starting_indexes.height,
-            &mut self.height_to_fixed_date,
+            self.height_to_fixed_date.mut_vec(),
             |(h, d, ..)| (h, Dateindex::try_from(d).unwrap()),
             exit,
         )?;
@@ -142,34 +142,34 @@ impl Vecs {
         let starting_dateindex = self
             .height_to_dateindex
             .get(starting_indexes.height.decremented().unwrap_or_default())?
-            .map(Value::into_inner)
+            .copied()
             .unwrap_or_default();
 
         self.dateindex_to_first_height
             .compute_inverse_more_to_less(
                 starting_indexes.height,
-                &mut self.height_to_dateindex,
+                self.height_to_dateindex.mut_vec(),
                 exit,
             )?;
 
         self.dateindex_to_last_height
             .compute_last_index_from_first(
                 starting_dateindex,
-                &mut self.dateindex_to_first_height,
+                self.dateindex_to_first_height.mut_vec(),
                 height_count,
                 exit,
             )?;
 
         self.dateindex_to_dateindex.compute_transform(
             starting_dateindex,
-            &mut self.dateindex_to_first_height,
+            self.dateindex_to_first_height.mut_vec(),
             |(di, ..)| (di, di),
             exit,
         )?;
 
         self.dateindex_to_date.compute_transform(
             starting_dateindex,
-            &mut self.dateindex_to_dateindex,
+            self.dateindex_to_dateindex.mut_vec(),
             |(di, ..)| (di, Date::from(di)),
             exit,
         )?;
@@ -177,7 +177,7 @@ impl Vecs {
         self.txindex_to_last_txinindex
             .compute_last_index_from_first(
                 starting_indexes.txindex,
-                &mut indexer_vecs.txindex_to_first_txinindex,
+                indexer_vecs.txindex_to_first_txinindex.mut_vec(),
                 txinindexes_count,
                 exit,
             )?;
@@ -185,14 +185,14 @@ impl Vecs {
         self.txindex_to_last_txoutindex
             .compute_last_index_from_first(
                 starting_indexes.txindex,
-                &mut indexer_vecs.txindex_to_first_txoutindex,
+                indexer_vecs.txindex_to_first_txoutindex.mut_vec(),
                 txoutindexes_count,
                 exit,
             )?;
 
         self.height_to_last_txindex.compute_last_index_from_first(
             starting_indexes.height,
-            &mut indexer_vecs.height_to_first_txindex,
+            indexer_vecs.height_to_first_txindex.mut_vec(),
             txindexes_count,
             exit,
         )?;
@@ -202,17 +202,17 @@ impl Vecs {
 
     pub fn as_any_vecs(&self) -> Vec<&dyn AnyStorableVec> {
         vec![
-            &*self.dateindex_to_date,
-            &*self.dateindex_to_dateindex,
-            &*self.dateindex_to_first_height,
-            &*self.dateindex_to_last_height,
-            &*self.height_to_dateindex,
-            &*self.height_to_fixed_date,
-            &*self.height_to_height,
-            &*self.height_to_last_txindex,
-            &*self.height_to_real_date,
-            &*self.txindex_to_last_txinindex,
-            &*self.txindex_to_last_txoutindex,
+            self.dateindex_to_date.any_vec(),
+            self.dateindex_to_dateindex.any_vec(),
+            self.dateindex_to_first_height.any_vec(),
+            self.dateindex_to_last_height.any_vec(),
+            self.height_to_dateindex.any_vec(),
+            self.height_to_fixed_date.any_vec(),
+            self.height_to_height.any_vec(),
+            self.height_to_last_txindex.any_vec(),
+            self.height_to_real_date.any_vec(),
+            self.txindex_to_last_txinindex.any_vec(),
+            self.txindex_to_last_txoutindex.any_vec(),
         ]
     }
 }

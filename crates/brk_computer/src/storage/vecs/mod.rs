@@ -6,8 +6,10 @@ use brk_indexer::Indexer;
 use brk_vec::{AnyStorableVec, Compressed};
 
 mod base;
+mod blocks;
 mod indexes;
 mod marketprice;
+mod stats;
 mod transactions;
 
 use base::*;
@@ -15,6 +17,7 @@ use indexes::*;
 
 #[derive(Clone)]
 pub struct Vecs {
+    pub blocks: blocks::Vecs,
     pub indexes: indexes::Vecs,
     pub transactions: transactions::Vecs,
     pub marketprice: Option<marketprice::Vecs>,
@@ -25,9 +28,10 @@ impl Vecs {
         fs::create_dir_all(path)?;
 
         Ok(Self {
-            indexes: indexes::Vecs::import(path, compressed)?,
-            transactions: transactions::Vecs::import(path, compressed)?,
-            marketprice: fetch.then(|| marketprice::Vecs::import(path, compressed).unwrap()),
+            blocks: blocks::Vecs::forced_import(path, compressed)?,
+            indexes: indexes::Vecs::forced_import(path, compressed)?,
+            transactions: transactions::Vecs::forced_import(path, compressed)?,
+            marketprice: fetch.then(|| marketprice::Vecs::forced_import(path, compressed).unwrap()),
         })
     }
 
@@ -39,6 +43,9 @@ impl Vecs {
         exit: &Exit,
     ) -> color_eyre::Result<()> {
         let starting_indexes = self.indexes.compute(indexer, starting_indexes, exit)?;
+
+        self.blocks
+            .compute(indexer, &mut self.indexes, &starting_indexes, exit)?;
 
         self.transactions
             .compute(indexer, &mut self.indexes, &starting_indexes, exit)?;

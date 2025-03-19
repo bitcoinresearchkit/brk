@@ -1,0 +1,396 @@
+use std::path::Path;
+
+use brk_exit::Exit;
+use brk_vec::{AnyStorableVec, Compressed, Result, StoredIndex, Version};
+
+use crate::storage::vecs::base::StorableVec;
+
+use super::StoredType;
+
+#[derive(Clone, Debug)]
+pub struct StorableVecGeneator<I, T>
+where
+    I: StoredIndex,
+    T: StoredType,
+{
+    // first: Option<StorableVec<I, T>>,
+    average: Option<StorableVec<I, T>>,
+    sum: Option<StorableVec<I, T>>,
+    max: Option<StorableVec<I, T>>,
+    _90p: Option<StorableVec<I, T>>,
+    _75p: Option<StorableVec<I, T>>,
+    median: Option<StorableVec<I, T>>,
+    _25p: Option<StorableVec<I, T>>,
+    _10p: Option<StorableVec<I, T>>,
+    min: Option<StorableVec<I, T>>,
+    last: Option<StorableVec<I, T>>,
+}
+
+impl<I, T> StorableVecGeneator<I, T>
+where
+    I: StoredIndex,
+    T: StoredType,
+{
+    pub fn forced_import(
+        path: &Path,
+        compressed: Compressed,
+        options: StorableVecGeneatorOptions,
+    ) -> color_eyre::Result<Self> {
+        let name = path.file_name().unwrap().to_str().unwrap().to_string();
+
+        // let prefix = |s: &str| path.with_file_name(format!("{s}_{name}"));
+        let suffix = |s: &str| path.with_file_name(format!("{name}_{s}"));
+
+        let s = Self {
+            // first: options.first.then(|| {
+            //     StorableVec::forced_import(&prefix("first"), Version::from(1), compressed).unwrap()
+            // }),
+            last: options
+                .last
+                .then(|| StorableVec::forced_import(path, Version::from(1), compressed).unwrap()),
+            min: options.min.then(|| {
+                StorableVec::forced_import(&suffix("min"), Version::from(1), compressed).unwrap()
+            }),
+            max: options.max.then(|| {
+                StorableVec::forced_import(&suffix("max"), Version::from(1), compressed).unwrap()
+            }),
+            median: options.median.then(|| {
+                StorableVec::forced_import(&suffix("median"), Version::from(1), compressed).unwrap()
+            }),
+            average: options.average.then(|| {
+                StorableVec::forced_import(&suffix("average"), Version::from(1), compressed)
+                    .unwrap()
+            }),
+            sum: options.sum.then(|| {
+                StorableVec::forced_import(&suffix("sum"), Version::from(1), compressed).unwrap()
+            }),
+            _90p: options._90p.then(|| {
+                StorableVec::forced_import(&suffix("90p"), Version::from(1), compressed).unwrap()
+            }),
+            _75p: options._75p.then(|| {
+                StorableVec::forced_import(&suffix("75p"), Version::from(1), compressed).unwrap()
+            }),
+            _25p: options._25p.then(|| {
+                StorableVec::forced_import(&suffix("25p"), Version::from(1), compressed).unwrap()
+            }),
+            _10p: options._10p.then(|| {
+                StorableVec::forced_import(&suffix("10p"), Version::from(1), compressed).unwrap()
+            }),
+        };
+
+        Ok(s)
+    }
+
+    pub fn compute<I2>(
+        &mut self,
+        max_from: I,
+        source: &mut StorableVec<I2, T>,
+        first_indexes: &mut brk_vec::StorableVec<I, I2>,
+        last_indexes: &mut brk_vec::StorableVec<I, I2>,
+        exit: &Exit,
+    ) -> Result<()>
+    where
+        I2: StoredIndex + StoredType,
+        T: Ord,
+    {
+        let index = self.starting_index(max_from);
+
+        first_indexes.iter_from(index, |(i, first_index)| {
+            let first_index = *first_index;
+            let last_index = *last_indexes.get(i).unwrap().unwrap();
+
+            // if let Some(first) = self.first.as_mut() {
+            //     let v = source.read(first_index).unwrap().unwrap();
+            //     first.forced_push_at(index, v.clone(), exit);
+            // }
+
+            if let Some(last) = self.last.as_mut() {
+                let v = source.get(last_index).unwrap().unwrap();
+                last.forced_push_at(index, v.clone(), exit)?;
+            }
+
+            let first_index = first_index.to_usize()?;
+            let last_index = last_index.to_usize()?;
+
+            let needs_sum_or_average = self.sum.is_some() || self.average.is_some();
+            let needs_sorted = self.max.is_some()
+                || self._90p.is_some()
+                || self._75p.is_some()
+                || self.median.is_some()
+                || self._25p.is_some()
+                || self._10p.is_some()
+                || self.min.is_some();
+            let needs_values = needs_sorted || needs_sum_or_average;
+
+            if needs_values {
+                let mut values =
+                    source.collect_range(Some(first_index as i64), Some(last_index as i64))?;
+
+                if needs_sorted {
+                    values.sort_unstable();
+
+                    if let Some(max) = self.max.as_mut() {
+                        max.forced_push_at(i, values.last().unwrap().clone(), exit)?;
+                    }
+
+                    if let Some(_90p) = self._90p.as_mut() {
+                        _90p.forced_push_at(i, Self::get_percentile(&values, 0.90), exit)?;
+                    }
+
+                    if let Some(_75p) = self._75p.as_mut() {
+                        _75p.forced_push_at(i, Self::get_percentile(&values, 0.75), exit)?;
+                    }
+
+                    if let Some(median) = self.median.as_mut() {
+                        median.forced_push_at(i, Self::get_percentile(&values, 0.50), exit)?;
+                    }
+
+                    if let Some(_25p) = self._25p.as_mut() {
+                        _25p.forced_push_at(i, Self::get_percentile(&values, 0.25), exit)?;
+                    }
+
+                    if let Some(_10p) = self._10p.as_mut() {
+                        _10p.forced_push_at(i, Self::get_percentile(&values, 0.10), exit)?;
+                    }
+
+                    if let Some(min) = self.min.as_mut() {
+                        min.forced_push_at(i, values.first().unwrap().clone(), exit)?;
+                    }
+                }
+
+                if needs_sum_or_average {
+                    let len = values.len();
+
+                    if let Some(average) = self.average.as_mut() {
+                        let a = values
+                            .iter()
+                            .map(|v| v.clone() / len)
+                            .fold(T::from(0), |a, b| a + b);
+                        average.forced_push_at(i, a, exit)?;
+                    }
+
+                    if let Some(sum_vec) = self.sum.as_mut() {
+                        let sum = values.into_iter().fold(T::from(0), |a, b| a + b);
+                        sum_vec.forced_push_at(i, sum, exit)?;
+                    }
+                }
+            }
+
+            Ok(())
+        })?;
+        Ok(())
+    }
+
+    fn get_percentile(sorted: &[T], percentile: f64) -> T {
+        let len = sorted.len();
+
+        if len == 0 {
+            panic!();
+        } else if len == 1 {
+            sorted[0].clone()
+        } else {
+            let index = (len - 1) as f64 * percentile;
+
+            let fract = index.fract();
+
+            if fract != 0.0 {
+                let left = sorted.get(index as usize).unwrap().clone();
+                let right = sorted.get(index.ceil() as usize).unwrap().clone();
+                left / 2 + right / 2
+            } else {
+                sorted.get(index as usize).unwrap().clone()
+            }
+        }
+    }
+
+    fn starting_index(&self, max_from: I) -> I {
+        max_from.min(I::from(
+            self.as_any_vecs()
+                .into_iter()
+                .map(|v| v.len())
+                .min()
+                .unwrap(),
+        ))
+    }
+
+    pub fn as_any_vecs(&self) -> Vec<&dyn AnyStorableVec> {
+        let mut v: Vec<&dyn AnyStorableVec> = vec![];
+
+        // if let Some(first) = self.first.as_ref() {
+        //     v.push(first.any_vec());
+        // }
+        if let Some(last) = self.last.as_ref() {
+            v.push(last.any_vec());
+        }
+        if let Some(min) = self.min.as_ref() {
+            v.push(min.any_vec());
+        }
+        if let Some(max) = self.max.as_ref() {
+            v.push(max.any_vec());
+        }
+        if let Some(median) = self.median.as_ref() {
+            v.push(median.any_vec());
+        }
+        if let Some(average) = self.average.as_ref() {
+            v.push(average.any_vec());
+        }
+        if let Some(sum) = self.sum.as_ref() {
+            v.push(sum.any_vec());
+        }
+        if let Some(_90p) = self._90p.as_ref() {
+            v.push(_90p.any_vec());
+        }
+        if let Some(_75p) = self._75p.as_ref() {
+            v.push(_75p.any_vec());
+        }
+        if let Some(_25p) = self._25p.as_ref() {
+            v.push(_25p.any_vec());
+        }
+        if let Some(_10p) = self._10p.as_ref() {
+            v.push(_10p.any_vec());
+        }
+
+        v
+    }
+}
+
+#[derive(Default, Clone, Copy)]
+pub struct StorableVecGeneatorOptions {
+    average: bool,
+    sum: bool,
+    max: bool,
+    _90p: bool,
+    _75p: bool,
+    median: bool,
+    _25p: bool,
+    _10p: bool,
+    min: bool,
+    // first: bool,
+    last: bool,
+}
+
+impl StorableVecGeneatorOptions {
+    // pub fn add_first(mut self) -> Self {
+    //     self.first = true;
+    //     self
+    // }
+
+    pub fn add_last(mut self) -> Self {
+        self.last = true;
+        self
+    }
+
+    pub fn add_min(mut self) -> Self {
+        self.min = true;
+        self
+    }
+
+    pub fn add_max(mut self) -> Self {
+        self.max = true;
+        self
+    }
+
+    pub fn add_median(mut self) -> Self {
+        self.median = true;
+        self
+    }
+
+    pub fn add_average(mut self) -> Self {
+        self.average = true;
+        self
+    }
+
+    pub fn add_sum(mut self) -> Self {
+        self.sum = true;
+        self
+    }
+
+    pub fn add_90p(mut self) -> Self {
+        self._90p = true;
+        self
+    }
+
+    pub fn add_75p(mut self) -> Self {
+        self._75p = true;
+        self
+    }
+
+    pub fn add_25p(mut self) -> Self {
+        self._25p = true;
+        self
+    }
+
+    pub fn add_10p(mut self) -> Self {
+        self._10p = true;
+        self
+    }
+
+    pub fn rm_min(mut self) -> Self {
+        self.min = false;
+        self
+    }
+
+    pub fn rm_max(mut self) -> Self {
+        self.max = false;
+        self
+    }
+
+    pub fn rm_median(mut self) -> Self {
+        self.median = false;
+        self
+    }
+
+    pub fn rm_average(mut self) -> Self {
+        self.average = false;
+        self
+    }
+
+    pub fn rm_sum(mut self) -> Self {
+        self.sum = false;
+        self
+    }
+
+    pub fn rm_90p(mut self) -> Self {
+        self._90p = false;
+        self
+    }
+
+    pub fn rm_75p(mut self) -> Self {
+        self._75p = false;
+        self
+    }
+
+    pub fn rm_25p(mut self) -> Self {
+        self._25p = false;
+        self
+    }
+
+    pub fn rm_10p(mut self) -> Self {
+        self._10p = false;
+        self
+    }
+
+    pub fn add_minmax(mut self) -> Self {
+        self.min = true;
+        self.max = true;
+        self
+    }
+
+    pub fn add_percentiles(mut self) -> Self {
+        self._90p = true;
+        self._75p = true;
+        self.median = true;
+        self._25p = true;
+        self._10p = true;
+        self
+    }
+
+    pub fn remove_percentiles(mut self) -> Self {
+        self._90p = false;
+        self._75p = false;
+        self.median = false;
+        self._25p = false;
+        self._10p = false;
+        self
+    }
+}

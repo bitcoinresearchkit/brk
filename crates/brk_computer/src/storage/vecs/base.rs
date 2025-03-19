@@ -3,13 +3,13 @@ use std::{
     cmp::Ordering,
     fmt::Debug,
     io,
-    ops::{Add, Deref, DerefMut, Sub},
+    ops::{Add, Sub},
     path::{Path, PathBuf},
 };
 
 use brk_core::CheckedSub;
 use brk_exit::Exit;
-use brk_vec::{Compressed, Error, Result, StoredIndex, StoredType, Version};
+use brk_vec::{AnyStorableVec, Compressed, Error, Result, StoredIndex, StoredType, Version};
 
 const FLUSH_EVERY: usize = 10_000;
 
@@ -24,7 +24,11 @@ where
     I: StoredIndex,
     T: StoredType,
 {
-    pub fn import(path: &Path, version: Version, compressed: Compressed) -> brk_vec::Result<Self> {
+    pub fn forced_import(
+        path: &Path,
+        version: Version,
+        compressed: Compressed,
+    ) -> brk_vec::Result<Self> {
         let vec = brk_vec::StorableVec::forced_import(path, version, compressed)?;
 
         Ok(Self {
@@ -33,24 +37,19 @@ where
         })
     }
 
-    #[inline]
-    pub fn i_to_usize(index: I) -> Result<usize> {
-        index.try_into().map_err(|_| Error::FailedKeyTryIntoUsize)
-    }
-
     fn safe_truncate_if_needed(&mut self, index: I, exit: &Exit) -> Result<()> {
         if exit.triggered() {
             return Ok(());
         }
         exit.block();
-        self.truncate_if_needed(index)?;
+        self.vec.truncate_if_needed(index)?;
         exit.release();
         Ok(())
     }
 
     #[inline]
-    fn push_and_flush_if_needed(&mut self, index: I, value: T, exit: &Exit) -> Result<()> {
-        match self.len().cmp(&Self::i_to_usize(index)?) {
+    pub fn forced_push_at(&mut self, index: I, value: T, exit: &Exit) -> Result<()> {
+        match self.len().cmp(&index.to_usize()?) {
             Ordering::Less => {
                 return Err(Error::IndexTooHigh);
             }
@@ -58,11 +57,11 @@ where
                 if ord == Ordering::Greater {
                     self.safe_truncate_if_needed(index, exit)?;
                 }
-                self.push(value);
+                self.vec.push(value);
             }
         }
 
-        if self.pushed_len() >= FLUSH_EVERY {
+        if self.vec.pushed_len() >= FLUSH_EVERY {
             Ok(self.safe_flush(exit)?)
         } else {
             Ok(())
@@ -74,20 +73,48 @@ where
             return Ok(());
         }
         exit.block();
-        self.flush()?;
+        self.vec.flush()?;
         exit.release();
         Ok(())
     }
 
+    fn version(&self) -> Version {
+        self.vec.version()
+    }
+
+    fn len(&self) -> usize {
+        self.vec.len()
+    }
+
+    pub fn vec(&self) -> &brk_vec::StorableVec<I, T> {
+        &self.vec
+    }
+
+    pub fn mut_vec(&mut self) -> &mut brk_vec::StorableVec<I, T> {
+        &mut self.vec
+    }
+
+    pub fn any_vec(&self) -> &dyn AnyStorableVec {
+        &self.vec
+    }
+
+    pub fn get(&mut self, index: I) -> Result<Option<&T>> {
+        self.vec.get(index)
+    }
+
+    pub fn collect_range(&self, from: Option<i64>, to: Option<i64>) -> Result<Vec<T>> {
+        self.vec.collect_range(from, to)
+    }
+
     #[inline]
     fn path_computed_version(&self) -> PathBuf {
-        self.path().join("computed_version")
+        self.vec.path().join("computed_version")
     }
 
     fn validate_computed_version_or_reset_file(&mut self, version: Version) -> Result<()> {
         let path = self.path_computed_version();
         if version.validate(path.as_ref()).is_err() {
-            self.reset()?;
+            self.vec.reset()?;
         }
         version.write(path.as_ref())?;
         Ok(())
@@ -112,7 +139,7 @@ where
         let index = max_from.min(A::from(self.len()));
         other.iter_from_cloned(index, |(a, b, other)| {
             let (i, v) = t((a, b, self, other));
-            self.push_and_flush_if_needed(i, v, exit)
+            self.forced_push_at(i, v, exit)
         })?;
 
         Ok(self.safe_flush(exit)?)
@@ -132,11 +159,11 @@ where
             Version::from(0) + self.version() + other.version(),
         )?;
 
-        let index = max_from.min(self.read_last()?.cloned().unwrap_or_default());
+        let index = max_from.min(self.vec.get_last()?.cloned().unwrap_or_default());
         other.iter_from(index, |(v, i, ..)| {
             let i = *i;
-            if self.read(i).unwrap().is_none_or(|old_v| *old_v > v) {
-                self.push_and_flush_if_needed(i, v, exit)
+            if self.get(i).unwrap().is_none_or(|old_v| *old_v > v) {
+                self.forced_push_at(i, v, exit)
             } else {
                 Ok(())
             }
@@ -162,10 +189,10 @@ where
 
         let index = max_from.min(T::from(self.len()));
         first_indexes.iter_from(index, |(value, first_index, ..)| {
-            let first_index = Self::i_to_usize(*first_index)?;
-            let last_index = Self::i_to_usize(*last_indexes.read(value)?.unwrap())?;
+            let first_index = (first_index).to_usize()?;
+            let last_index = (last_indexes.get(value)?.unwrap()).to_usize()?;
             (first_index..last_index)
-                .try_for_each(|index| self.push_and_flush_if_needed(I::from(index), value, exit))
+                .try_for_each(|index| self.forced_push_at(I::from(index), value, exit))
         })?;
 
         Ok(self.safe_flush(exit)?)
@@ -190,13 +217,13 @@ where
         let mut prev_index: Option<I> = None;
         first_indexes.iter_from(index, |(i, v, ..)| {
             if let Some(prev_index) = prev_index.take() {
-                self.push_and_flush_if_needed(prev_index, v.checked_sub(one).unwrap(), exit)?;
+                self.forced_push_at(prev_index, v.checked_sub(one).unwrap(), exit)?;
             }
             prev_index.replace(i);
             Ok(())
         })?;
         if let Some(prev_index) = prev_index {
-            self.push_and_flush_if_needed(
+            self.forced_push_at(
                 prev_index,
                 T::from(final_len).checked_sub(one).unwrap(),
                 exit,
@@ -215,7 +242,7 @@ where
     ) -> Result<()>
     where
         T: From<T2>,
-        T2: StoredType + Copy + Add<usize, Output = T2> + Sub<T2, Output = T2> + TryInto<T>,
+        T2: StoredType + Copy + Add<usize, Output = T2> + CheckedSub<T2> + TryInto<T> + Default,
         <T2 as TryInto<T>>::Error: error::Error + 'static,
     {
         self.validate_computed_version_or_reset_file(
@@ -224,9 +251,11 @@ where
 
         let index = max_from.min(I::from(self.len()));
         first_indexes.iter_from(index, |(i, first_index, ..)| {
-            let last_index = last_indexes.read(i)?.unwrap();
-            let count = *last_index + 1_usize - *first_index;
-            self.push_and_flush_if_needed(i, count.into(), exit)
+            let last_index = last_indexes.get(i)?.unwrap();
+            let count = (*last_index + 1_usize)
+                .checked_sub(*first_index)
+                .unwrap_or_default();
+            self.forced_push_at(i, count.into(), exit)
         })?;
 
         Ok(self.safe_flush(exit)?)
@@ -250,11 +279,7 @@ where
 
         let index = max_from.min(I::from(self.len()));
         self_to_other.iter_from(index, |(i, other, ..)| {
-            self.push_and_flush_if_needed(
-                i,
-                T::from(other_to_self.read(*other)?.unwrap() == &i),
-                exit,
-            )
+            self.forced_push_at(i, T::from(other_to_self.get(*other)?.unwrap() == &i), exit)
         })?;
 
         Ok(self.safe_flush(exit)?)
@@ -278,26 +303,15 @@ where
 
         let index = max_from.min(I::from(self.len()));
         first_indexes.iter_from(index, |(index, first_index, ..)| {
-            let last_index = last_indexes.read(index)?.unwrap();
+            let last_index = last_indexes.get(index)?.unwrap();
             let count = *last_index + 1_usize - *first_index;
-            self.push_and_flush_if_needed(index, count.into(), exit)
+            self.forced_push_at(index, count.into(), exit)
         })?;
 
         Ok(self.safe_flush(exit)?)
     }
 }
 
-impl<I, T> Deref for StorableVec<I, T> {
-    type Target = brk_vec::StorableVec<I, T>;
-    fn deref(&self) -> &Self::Target {
-        &self.vec
-    }
-}
-impl<I, T> DerefMut for StorableVec<I, T> {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.vec
-    }
-}
 impl<I, T> Clone for StorableVec<I, T>
 where
     I: StoredIndex,
