@@ -108,7 +108,7 @@ impl Fetcher {
 
         let mut final_ohlc = OHLCCents::from(previous_ohlc.close);
 
-        let start = previous_timestamp.unwrap_or(Timestamp::from(0));
+        let start = previous_timestamp.unwrap_or(Timestamp::new(0));
         let end = timestamp;
 
         // Otherwise it's a re-org

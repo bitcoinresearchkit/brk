@@ -67,8 +67,8 @@ impl AddAssign<Txoutindex> for Txoutindex {
 }
 
 impl CheckedSub<Txoutindex> for Txoutindex {
-    fn checked_sub(self, rhs: Txoutindex) -> Option<Self> {
-        self.0.checked_sub(rhs.0).map(Txoutindex::from)
+    fn checked_sub(self, rhs: Self) -> Option<Self> {
+        self.0.checked_sub(rhs.0).map(Self::from)
     }
 }
 

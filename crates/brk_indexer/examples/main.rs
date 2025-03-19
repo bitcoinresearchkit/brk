@@ -1,12 +1,9 @@
 use std::path::Path;
 
-use brk_core::{default_bitcoin_path, dot_brk_path};
+use brk_core::default_bitcoin_path;
 use brk_exit::Exit;
 use brk_indexer::Indexer;
-use brk_parser::{
-    Parser,
-    rpc::{self},
-};
+use brk_parser::{Parser, rpc};
 
 fn main() -> color_eyre::Result<()> {
     color_eyre::install()?;

@@ -9,7 +9,9 @@ use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 use crate::{Error, Result};
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, FromBytes, IntoBytes, Immutable, KnownLayout)]
+#[derive(
+    Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, FromBytes, IntoBytes, Immutable, KnownLayout,
+)]
 pub struct Version(u32);
 
 impl Version {
@@ -54,7 +56,7 @@ impl TryFrom<&Path> for Version {
 }
 
 impl Add<Version> for Version {
-    type Output = Version;
+    type Output = Self;
     fn add(self, rhs: Version) -> Self::Output {
         Self(self.0 + rhs.0)
     }

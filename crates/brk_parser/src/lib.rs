@@ -3,14 +3,7 @@
 #![doc = include_str!("../examples/main.rs")]
 #![doc = "```"]
 
-use std::{
-    cmp::Ordering,
-    collections::BTreeMap,
-    fs::{self},
-    ops::ControlFlow,
-    path::PathBuf,
-    thread,
-};
+use std::{cmp::Ordering, collections::BTreeMap, fs, ops::ControlFlow, path::PathBuf, thread};
 
 use bitcoin::{Block, BlockHash};
 use bitcoincore_rpc::RpcApi;

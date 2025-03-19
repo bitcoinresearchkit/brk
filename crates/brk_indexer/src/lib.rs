@@ -7,7 +7,7 @@ use std::{
     collections::BTreeMap,
     path::{Path, PathBuf},
     str::FromStr,
-    thread::{self},
+    thread,
 };
 
 use brk_core::{
@@ -31,6 +31,7 @@ pub use stores::*;
 pub use vecs::*;
 
 const SNAPSHOT_BLOCK_RANGE: usize = 1000;
+const COLLISIONS_CHECKED_UP_TO: u32 = 870_000;
 
 #[derive(Clone)]
 pub struct Indexer {
@@ -138,7 +139,7 @@ impl Indexer {
                 idxs.height = height;
 
                 // Used to check rapidhash collisions
-                let check_collisions = self.check_collisions && height > Height::new(640_000);
+                let check_collisions = self.check_collisions && height > Height::new(COLLISIONS_CHECKED_UP_TO);
 
                 let blockhash = BlockHash::from(blockhash);
                 let blockhash_prefix = BlockHashPrefix::from(&blockhash);

@@ -1,5 +1,7 @@
 use std::{fmt::Debug, ops::Add};
 
+use crate::{Error, Result};
+
 pub trait StoredIndex
 where
     Self: Debug
@@ -16,8 +18,10 @@ where
         + Send
         + Sync,
 {
+    fn to_usize(self) -> Result<usize>;
 }
-impl<I> StoredIndex for I where
+impl<I> StoredIndex for I
+where
     I: Debug
         + Default
         + Copy
@@ -30,6 +34,10 @@ impl<I> StoredIndex for I where
         + From<usize>
         + Add<usize, Output = Self>
         + Send
-        + Sync
+        + Sync,
 {
+    #[inline(always)]
+    fn to_usize(self) -> Result<usize> {
+        self.try_into().map_err(|_| Error::FailedKeyTryIntoUsize)
+    }
 }

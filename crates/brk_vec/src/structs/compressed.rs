@@ -1,9 +1,4 @@
-use std::{
-    fs,
-    io::{self},
-    ops::Deref,
-    path::Path,
-};
+use std::{fs, io, ops::Deref, path::Path};
 
 use crate::{Error, Result};
 

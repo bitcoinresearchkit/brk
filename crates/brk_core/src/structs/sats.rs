@@ -38,7 +38,7 @@ impl Sats {
 }
 
 impl Add for Sats {
-    type Output = Sats;
+    type Output = Self;
     fn add(self, rhs: Sats) -> Self::Output {
         Sats::from(self.0 + rhs.0)
     }
@@ -51,8 +51,8 @@ impl AddAssign for Sats {
 }
 
 impl CheckedSub<Sats> for Sats {
-    fn checked_sub(self, rhs: Sats) -> Option<Self> {
-        self.0.checked_sub(rhs.0).map(Sats::from)
+    fn checked_sub(self, rhs: Self) -> Option<Self> {
+        self.0.checked_sub(rhs.0).map(Self::from)
     }
 }
 
@@ -63,21 +63,21 @@ impl SubAssign for Sats {
 }
 
 impl Mul<Sats> for Sats {
-    type Output = Sats;
+    type Output = Self;
     fn mul(self, rhs: Sats) -> Self::Output {
         Sats::from(self.0 * rhs.0)
     }
 }
 
 impl Mul<u64> for Sats {
-    type Output = Sats;
+    type Output = Self;
     fn mul(self, rhs: u64) -> Self::Output {
         Sats::from(self.0 * rhs)
     }
 }
 
 impl Mul<Height> for Sats {
-    type Output = Sats;
+    type Output = Self;
     fn mul(self, rhs: Height) -> Self::Output {
         Sats::from(self.0 * u64::from(rhs))
     }

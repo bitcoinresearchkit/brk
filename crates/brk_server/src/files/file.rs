@@ -1,8 +1,4 @@
-use std::{
-    fs::{self},
-    path::Path,
-    time::Instant,
-};
+use std::{fs, path::Path, time::Instant};
 
 use axum::{
     body::Body,

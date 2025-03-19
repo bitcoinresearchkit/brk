@@ -24,12 +24,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             StorableVec::forced_import(Path::new("./vec"), Version::from(1), Compressed::YES)?;
 
         dbg!(vec.get(0)?);
-        dbg!(vec.read(0)?);
-        dbg!(vec.read(1)?);
-        dbg!(vec.read(2)?);
-        dbg!(vec.read(20)?);
+        dbg!(vec.get(0)?);
+        dbg!(vec.get(1)?);
+        dbg!(vec.get(2)?);
         dbg!(vec.get(20)?);
-        dbg!(vec.read(0)?);
+        dbg!(vec.get(20)?);
+        dbg!(vec.get(0)?);
 
         vec.push(21);
         vec.push(22);

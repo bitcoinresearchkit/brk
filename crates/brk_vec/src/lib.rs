@@ -4,7 +4,6 @@
 #![doc = "```"]
 
 use std::{
-    cmp::Ordering,
     fs::{self, File, OpenOptions},
     io::{self, Read, Seek, SeekFrom, Write},
     marker::PhantomData,
@@ -29,7 +28,7 @@ pub use traits::*;
 const ONE_KIB: usize = 1024;
 pub const MAX_PAGE_SIZE: usize = 16 * ONE_KIB;
 const ONE_MIB: usize = ONE_KIB * ONE_KIB;
-const MAX_CACHE_SIZE: usize = 100 * ONE_MIB;
+pub const MAX_CACHE_SIZE: usize = 100 * ONE_MIB;
 
 #[allow(private_interfaces)]
 #[derive(Debug)]
@@ -83,49 +82,11 @@ where
     }
 
     #[inline]
-    pub fn get(&self, index: I) -> Result<Option<Value<'_, T>>> {
-        self.get_(Self::i_to_usize(index)?)
-    }
-    fn get_(&self, index: usize) -> Result<Option<Value<'_, T>>> {
-        match self.index_to_pushed_index(index) {
-            Ok(index) => {
-                if let Some(index) = index {
-                    return Ok(self.pushed().get(index).map(|v| Value::Ref(v)));
-                }
-            }
-            Err(Error::IndexTooHigh) => return Ok(None),
-            Err(Error::IndexTooLow) => {}
-            Err(error) => return Err(error),
-        }
-
-        let large_cache_len = self.large_cache_len();
-        if large_cache_len != 0 {
-            let page_index = Self::index_to_page_index(index);
-            let last_index = self.stored_len() - 1;
-            let max_page_index = Self::index_to_page_index(last_index);
-            let min_page_index = (max_page_index + 1) - large_cache_len;
-
-            if page_index >= min_page_index {
-                let values = self
-                    .pages()
-                    .unwrap()
-                    .get(page_index - min_page_index)
-                    .ok_or(Error::MmapsVecIsTooSmall)?
-                    .get_or_init(|| self.decode_page(page_index).unwrap());
-
-                return Ok(values.get(index)?.map(|v| Value::Ref(v)));
-            }
-        }
-
-        Ok(self.open_then_read_(index)?.map(|v| Value::Owned(v)))
-    }
-
-    #[inline]
-    pub fn read(&mut self, index: I) -> Result<Option<&T>> {
-        self.read_(Self::i_to_usize(index)?)
+    pub fn get(&mut self, index: I) -> Result<Option<&T>> {
+        self.get_(index.to_usize()?)
     }
     #[inline]
-    pub fn read_(&mut self, index: usize) -> Result<Option<&T>> {
+    pub fn get_(&mut self, index: usize) -> Result<Option<&T>> {
         match self.index_to_pushed_index(index) {
             Ok(index) => {
                 if let Some(index) = index {
@@ -147,18 +108,18 @@ where
         self.page().unwrap().1.get(index)
     }
 
-    pub fn read_last(&mut self) -> Result<Option<&T>> {
+    pub fn get_last(&mut self) -> Result<Option<&T>> {
         let len = self.len();
         if len == 0 {
             return Ok(None);
         }
-        self.read_(len - 1)
+        self.get_(len - 1)
     }
 
-    pub fn open_then_read(&self, index: I) -> Result<Option<T>> {
-        self.open_then_read_(Self::i_to_usize(index)?)
+    pub fn read(&self, index: I) -> Result<Option<T>> {
+        self.read_(index.to_usize()?)
     }
-    fn open_then_read_(&self, index: usize) -> Result<Option<T>> {
+    pub fn read_(&self, index: usize) -> Result<Option<T>> {
         Ok(match self {
             Self::Raw { .. } => {
                 let mut file = self.open_file()?;
@@ -193,7 +154,7 @@ where
         let stored_len = I::from(self.stored_len());
 
         while index < stored_len {
-            let v = self.read(index)?.unwrap();
+            let v = self.get(index)?.unwrap();
             f((index, v))?;
             index = index + 1;
         }
@@ -212,7 +173,7 @@ where
         let stored_len = I::from(self.stored_len());
 
         while index < stored_len {
-            let v = self.read(index)?.unwrap().clone();
+            let v = self.get(index)?.unwrap().clone();
             f((index, v, self))?;
             index = index + 1;
         }
@@ -265,7 +226,7 @@ where
         Ok(values)
     }
 
-    fn decode_page(&self, page_index: usize) -> Result<Values<T>> {
+    pub fn decode_page(&self, page_index: usize) -> Result<Values<T>> {
         Self::decode_page_(
             self.stored_len(),
             page_index,
@@ -327,26 +288,7 @@ where
 
     #[inline]
     pub fn push(&mut self, value: T) {
-        self.mut_pushed().push(value)
-    }
-
-    #[inline]
-    pub fn push_if_needed(&mut self, index: I, value: T) -> Result<()> {
-        match self.len().cmp(&Self::i_to_usize(index)?) {
-            Ordering::Greater => {
-                // dbg!(len, index, &self.pathbuf);
-                // panic!();
-                Ok(())
-            }
-            Ordering::Equal => {
-                self.mut_pushed().push(value);
-                Ok(())
-            }
-            Ordering::Less => {
-                dbg!(index, value);
-                Err(Error::IndexTooHigh)
-            }
-        }
+        self.mut_base().pushed.push(value)
     }
 
     pub fn flush(&mut self) -> io::Result<()> {
@@ -464,7 +406,7 @@ where
     }
 
     pub fn truncate_if_needed(&mut self, index: I) -> Result<()> {
-        let index = Self::i_to_usize(index)?;
+        let index = index.to_usize()?;
 
         if index >= self.stored_len() {
             return Ok(());
@@ -580,7 +522,7 @@ where
         }
     }
 
-    fn large_cache_len(&self) -> usize {
+    pub fn large_cache_len(&self) -> usize {
         self.pages().map_or(0, |v| v.len())
     }
 
@@ -601,12 +543,7 @@ where
     }
 
     #[inline]
-    pub fn i_to_usize(index: I) -> Result<usize> {
-        index.try_into().map_err(|_| Error::FailedKeyTryIntoUsize)
-    }
-
-    #[inline]
-    fn index_to_pushed_index(&self, index: usize) -> Result<Option<usize>> {
+    pub fn index_to_pushed_index(&self, index: usize) -> Result<Option<usize>> {
         let stored_len = self.stored_len();
 
         if index >= stored_len {
@@ -662,7 +599,7 @@ where
     }
 
     #[inline]
-    fn pages(&self) -> Option<&Vec<OnceLock<Values<T>>>> {
+    pub fn pages(&self) -> Option<&Vec<OnceLock<Values<T>>>> {
         self.base().pages.as_ref()
     }
 
@@ -682,7 +619,7 @@ where
 
     #[inline]
     pub fn has(&self, index: I) -> Result<bool> {
-        Ok(self.has_(Self::i_to_usize(index)?))
+        Ok(self.has_(index.to_usize()?))
     }
     #[inline]
     fn has_(&self, index: usize) -> bool {
@@ -690,18 +627,8 @@ where
     }
 
     #[inline]
-    pub fn hasnt(&self, index: I) -> Result<bool> {
-        self.has(index).map(|b| !b)
-    }
-
-    #[inline]
-    fn pushed(&self) -> &Vec<T> {
+    pub fn pushed(&self) -> &Vec<T> {
         &self.base().pushed
-    }
-
-    #[inline]
-    fn mut_pushed(&mut self) -> &mut Vec<T> {
-        &mut self.mut_base().pushed
     }
 
     #[inline]
@@ -715,7 +642,7 @@ where
     }
 
     #[inline]
-    fn stored_len(&self) -> usize {
+    pub fn stored_len(&self) -> usize {
         *self.base().stored_len
     }
 

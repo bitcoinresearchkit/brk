@@ -5,10 +5,7 @@ use brk_core::default_bitcoin_path;
 use brk_exit::Exit;
 use brk_fetcher::Fetcher;
 use brk_indexer::Indexer;
-use brk_parser::{
-    Parser,
-    rpc::{self},
-};
+use brk_parser::{Parser, rpc};
 
 pub fn main() -> color_eyre::Result<()> {
     color_eyre::install()?;

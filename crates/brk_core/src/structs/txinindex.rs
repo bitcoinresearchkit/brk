@@ -61,8 +61,8 @@ impl AddAssign<Txinindex> for Txinindex {
 }
 
 impl CheckedSub<Txinindex> for Txinindex {
-    fn checked_sub(self, rhs: Txinindex) -> Option<Self> {
-        self.0.checked_sub(rhs.0).map(Txinindex::from)
+    fn checked_sub(self, rhs: Self) -> Option<Self> {
+        self.0.checked_sub(rhs.0).map(Self::from)
     }
 }
 
