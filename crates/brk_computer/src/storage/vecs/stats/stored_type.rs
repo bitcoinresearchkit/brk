@@ -1,11 +1,13 @@
 use std::ops::{Add, Div};
 
-pub trait StoredType
+use brk_vec::StoredType;
+
+pub trait ComputedType
 where
-    Self: brk_vec::StoredType + From<usize> + Div<usize, Output = Self> + Add<Output = Self>,
+    Self: StoredType + From<usize> + Div<usize, Output = Self> + Add<Output = Self>,
 {
 }
-impl<T> StoredType for T where
-    T: brk_vec::StoredType + From<usize> + Div<usize, Output = Self> + Add<Output = Self>
+impl<T> ComputedType for T where
+    T: StoredType + From<usize> + Div<usize, Output = Self> + Add<Output = Self>
 {
 }

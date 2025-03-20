@@ -28,7 +28,7 @@ impl<'a> VecIdToIndexToVec<'a> {
             })
             .unwrap();
         if split[0] != index.to_string().to_lowercase() {
-            dbg!(split[0], index.to_string());
+            dbg!(&file_name, split[0], index.to_string());
             panic!();
         }
         let key = split[1].to_string().replace("_", "-");

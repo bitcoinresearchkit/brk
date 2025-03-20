@@ -17,10 +17,16 @@ pub enum Index {
     Txindex,
     Txinindex,
     Txoutindex,
+    Weekindex,
+    Monthindex,
+    Yearindex,
+    Decadeindex,
+    Difficultyepoch,
+    Halvingepoch,
 }
 
 impl Index {
-    pub fn all() -> [Self; 13] {
+    pub fn all() -> [Self; 19] {
         [
             Self::Addressindex,
             Self::Dateindex,
@@ -35,13 +41,19 @@ impl Index {
             Self::Txindex,
             Self::Txinindex,
             Self::Txoutindex,
+            Self::Weekindex,
+            Self::Monthindex,
+            Self::Yearindex,
+            Self::Decadeindex,
+            Self::Difficultyepoch,
+            Self::Halvingepoch,
         ]
     }
 
     pub fn possible_values(&self) -> &[&str] {
         // Always have the "correct" id at the end
         match self {
-            Self::Dateindex => &["d", "date", "dateindex"],
+            Self::Dateindex => &["d", "date", "di", "dateindex"],
             Self::Height => &["h", "height"],
             Self::Txindex => &["txi", "txindex"],
             Self::Txinindex => &["txini", "txinindex"],
@@ -54,6 +66,12 @@ impl Index {
             Self::P2TRindex => &["p2tri", "p2trindex"],
             Self::P2WPKHindex => &["p2wpkhi", "p2wpkhindex"],
             Self::P2WSHindex => &["p2wshi", "p2wshindex"],
+            Self::Weekindex => &["w", "wi", "week", "weekindex"],
+            Self::Monthindex => &["m", "mi", "month", "monthindex"],
+            Self::Yearindex => &["y", "yi", "year", "yearindex"],
+            Self::Decadeindex => &["decade", "decadeindex"],
+            Self::Difficultyepoch => &["difficulty", "difficultyepoch"],
+            Self::Halvingepoch => &["halving", "halvingepoch"],
         }
     }
 
@@ -82,6 +100,12 @@ impl TryFrom<&str> for Index {
             v if (Self::P2TRindex).possible_values().contains(&v) => Self::P2TRindex,
             v if (Self::P2WPKHindex).possible_values().contains(&v) => Self::P2WPKHindex,
             v if (Self::P2WSHindex).possible_values().contains(&v) => Self::P2WSHindex,
+            v if (Self::Weekindex).possible_values().contains(&v) => Self::Weekindex,
+            v if (Self::Monthindex).possible_values().contains(&v) => Self::Monthindex,
+            v if (Self::Yearindex).possible_values().contains(&v) => Self::Yearindex,
+            v if (Self::Decadeindex).possible_values().contains(&v) => Self::Decadeindex,
+            v if (Self::Difficultyepoch).possible_values().contains(&v) => Self::Difficultyepoch,
+            v if (Self::Halvingepoch).possible_values().contains(&v) => Self::Halvingepoch,
             _ => return Err(eyre!("Bad index")),
         })
     }

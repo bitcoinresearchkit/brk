@@ -73,12 +73,19 @@ where
         let base = Base::import(path, version, compressed)?;
 
         if *compressed {
-            let pages_meta = CompressedPagesMetadata::read(Self::path_pages_meta_(path).as_path())?;
+            let pages_meta = Self::read_pages_meta_(path)?;
 
             Ok(Self::Compressed { base, pages_meta })
         } else {
             Ok(Self::Raw { base })
         }
+    }
+
+    fn read_pages_meta(&self) -> Result<CompressedPagesMetadata> {
+        Self::read_pages_meta_(self.path())
+    }
+    fn read_pages_meta_(path: &Path) -> Result<CompressedPagesMetadata> {
+        CompressedPagesMetadata::read(Self::path_pages_meta_(path).as_path())
     }
 
     #[inline]
@@ -215,7 +222,25 @@ where
                 let page_index = Self::index_to_page_index(index);
 
                 if page.as_ref().is_none_or(|b| b.0 != page_index) {
-                    let values = self.decode_page(page_index).unwrap();
+                    let pages_meta = match self {
+                        Self::Raw { .. } => None,
+                        Self::Compressed { .. } => Some(self.read_pages_meta().unwrap()),
+                    };
+
+                    let values = Self::decode_page_(
+                        self.base()
+                            .read_stored_length()
+                            .unwrap()
+                            .to_usize()
+                            .unwrap(),
+                        page_index,
+                        &self.base().open_file().unwrap(),
+                        pages_meta.as_ref(),
+                    )
+                    .inspect_err(|_| {
+                        dbg!(from, to);
+                    })
+                    .unwrap();
                     page.replace((page_index, values));
                 }
 
@@ -717,7 +742,7 @@ where
     }
 
     pub fn index_type_to_string(&self) -> &str {
-        std::any::type_name::<I>()
+        I::to_string()
     }
 }
 
@@ -787,6 +812,9 @@ impl<I, T> Base<I, T> {
         path.join("vec")
     }
 
+    pub fn read_stored_length(&self) -> Result<Length> {
+        Length::try_from(self.path_length().as_path())
+    }
     fn write_stored_length(&self) -> io::Result<()> {
         self.stored_len.write(&self.path_length())
     }

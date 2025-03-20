@@ -1,6 +1,9 @@
 use std::{fs, ops::Deref, path::Path};
 
-use brk_core::{Date, Dateindex, Height, Txindex, Txinindex, Txoutindex};
+use brk_core::{
+    Date, Dateindex, Decadeindex, Difficultyepoch, Halvingepoch, Height, Monthindex, Txindex,
+    Txinindex, Txoutindex, Weekindex, Yearindex,
+};
 use brk_exit::Exit;
 use brk_indexer::Indexer;
 use brk_vec::{AnyStorableVec, Compressed, Version};
@@ -15,13 +18,37 @@ pub struct Vecs {
     pub dateindex_to_dateindex: StorableVec<Dateindex, Dateindex>,
     pub dateindex_to_first_height: StorableVec<Dateindex, Height>,
     pub dateindex_to_last_height: StorableVec<Dateindex, Height>,
+    pub dateindex_to_monthindex: StorableVec<Dateindex, Monthindex>,
+    pub dateindex_to_weekindex: StorableVec<Dateindex, Weekindex>,
+    pub decadeindex_to_decadeindex: StorableVec<Decadeindex, Decadeindex>,
+    pub decadeindex_to_first_yearindex: StorableVec<Decadeindex, Yearindex>,
+    pub decadeindex_to_last_yearindex: StorableVec<Decadeindex, Yearindex>,
+    pub difficultyepoch_to_difficultyepoch: StorableVec<Difficultyepoch, Difficultyepoch>,
+    pub difficultyepoch_to_first_height: StorableVec<Difficultyepoch, Height>,
+    pub difficultyepoch_to_last_height: StorableVec<Difficultyepoch, Height>,
+    pub halvingepoch_to_first_height: StorableVec<Halvingepoch, Height>,
+    pub halvingepoch_to_halvingepoch: StorableVec<Halvingepoch, Halvingepoch>,
+    pub halvingepoch_to_last_height: StorableVec<Halvingepoch, Height>,
     pub height_to_dateindex: StorableVec<Height, Dateindex>,
+    pub height_to_difficultyepoch: StorableVec<Height, Difficultyepoch>,
     pub height_to_fixed_date: StorableVec<Height, Date>,
+    pub height_to_halvingepoch: StorableVec<Height, Halvingepoch>,
     pub height_to_height: StorableVec<Height, Height>,
     pub height_to_last_txindex: StorableVec<Height, Txindex>,
     pub height_to_real_date: StorableVec<Height, Date>,
+    pub monthindex_to_first_dateindex: StorableVec<Monthindex, Dateindex>,
+    pub monthindex_to_last_dateindex: StorableVec<Monthindex, Dateindex>,
+    pub monthindex_to_monthindex: StorableVec<Monthindex, Monthindex>,
+    pub monthindex_to_yearindex: StorableVec<Monthindex, Yearindex>,
     pub txindex_to_last_txinindex: StorableVec<Txindex, Txinindex>,
     pub txindex_to_last_txoutindex: StorableVec<Txindex, Txoutindex>,
+    pub weekindex_to_first_dateindex: StorableVec<Weekindex, Dateindex>,
+    pub weekindex_to_last_dateindex: StorableVec<Weekindex, Dateindex>,
+    pub weekindex_to_weekindex: StorableVec<Weekindex, Weekindex>,
+    pub yearindex_to_decadeindex: StorableVec<Yearindex, Decadeindex>,
+    pub yearindex_to_first_monthindex: StorableVec<Yearindex, Monthindex>,
+    pub yearindex_to_last_monthindex: StorableVec<Yearindex, Monthindex>,
+    pub yearindex_to_yearindex: StorableVec<Yearindex, Yearindex>,
 }
 
 impl Vecs {
@@ -74,7 +101,6 @@ impl Vecs {
                 Version::from(1),
                 compressed,
             )?,
-
             txindex_to_last_txinindex: StorableVec::forced_import(
                 &path.join("txindex_to_last_txinindex"),
                 Version::from(1),
@@ -82,6 +108,126 @@ impl Vecs {
             )?,
             txindex_to_last_txoutindex: StorableVec::forced_import(
                 &path.join("txindex_to_last_txoutindex"),
+                Version::from(1),
+                compressed,
+            )?,
+            difficultyepoch_to_first_height: StorableVec::forced_import(
+                &path.join("difficultyepoch_to_first_height"),
+                Version::from(1),
+                compressed,
+            )?,
+            difficultyepoch_to_last_height: StorableVec::forced_import(
+                &path.join("difficultyepoch_to_last_height"),
+                Version::from(1),
+                compressed,
+            )?,
+            halvingepoch_to_first_height: StorableVec::forced_import(
+                &path.join("halvingepoch_to_first_height"),
+                Version::from(1),
+                compressed,
+            )?,
+            halvingepoch_to_last_height: StorableVec::forced_import(
+                &path.join("halvingepoch_to_last_height"),
+                Version::from(1),
+                compressed,
+            )?,
+            weekindex_to_first_dateindex: StorableVec::forced_import(
+                &path.join("weekindex_to_first_dateindex"),
+                Version::from(1),
+                compressed,
+            )?,
+            weekindex_to_last_dateindex: StorableVec::forced_import(
+                &path.join("weekindex_to_last_dateindex"),
+                Version::from(1),
+                compressed,
+            )?,
+            monthindex_to_first_dateindex: StorableVec::forced_import(
+                &path.join("monthindex_to_first_dateindex"),
+                Version::from(1),
+                compressed,
+            )?,
+            monthindex_to_last_dateindex: StorableVec::forced_import(
+                &path.join("monthindex_to_last_dateindex"),
+                Version::from(1),
+                compressed,
+            )?,
+            yearindex_to_first_monthindex: StorableVec::forced_import(
+                &path.join("yearindex_to_first_monthindex"),
+                Version::from(1),
+                compressed,
+            )?,
+            yearindex_to_last_monthindex: StorableVec::forced_import(
+                &path.join("yearindex_to_last_monthindex"),
+                Version::from(1),
+                compressed,
+            )?,
+            decadeindex_to_first_yearindex: StorableVec::forced_import(
+                &path.join("decadeindex_to_first_yearindex"),
+                Version::from(1),
+                compressed,
+            )?,
+            decadeindex_to_last_yearindex: StorableVec::forced_import(
+                &path.join("decadeindex_to_last_yearindex"),
+                Version::from(1),
+                compressed,
+            )?,
+            dateindex_to_weekindex: StorableVec::forced_import(
+                &path.join("dateindex_to_weekindex"),
+                Version::from(1),
+                compressed,
+            )?,
+            dateindex_to_monthindex: StorableVec::forced_import(
+                &path.join("dateindex_to_monthindex"),
+                Version::from(1),
+                compressed,
+            )?,
+            monthindex_to_yearindex: StorableVec::forced_import(
+                &path.join("monthindex_to_yearindex"),
+                Version::from(1),
+                compressed,
+            )?,
+            yearindex_to_decadeindex: StorableVec::forced_import(
+                &path.join("yearindex_to_decadeindex"),
+                Version::from(1),
+                compressed,
+            )?,
+            height_to_difficultyepoch: StorableVec::forced_import(
+                &path.join("height_to_difficultyepoch"),
+                Version::from(1),
+                compressed,
+            )?,
+            height_to_halvingepoch: StorableVec::forced_import(
+                &path.join("height_to_halvingepoch"),
+                Version::from(1),
+                compressed,
+            )?,
+            weekindex_to_weekindex: StorableVec::forced_import(
+                &path.join("weekindex_to_weekindex"),
+                Version::from(1),
+                compressed,
+            )?,
+            monthindex_to_monthindex: StorableVec::forced_import(
+                &path.join("monthindex_to_monthindex"),
+                Version::from(1),
+                compressed,
+            )?,
+            yearindex_to_yearindex: StorableVec::forced_import(
+                &path.join("yearindex_to_yearindex"),
+                Version::from(1),
+                compressed,
+            )?,
+            decadeindex_to_decadeindex: StorableVec::forced_import(
+                &path.join("decadeindex_to_decadeindex"),
+                Version::from(1),
+                compressed,
+            )?,
+            difficultyepoch_to_difficultyepoch: StorableVec::forced_import(
+                &path.join("difficultyepoch_to_difficultyepoch"),
+                Version::from(1),
+                compressed,
+            )?,
+            halvingepoch_to_halvingepoch: StorableVec::forced_import(
+                &path.join("halvingepoch_to_halvingepoch"),
                 Version::from(1),
                 compressed,
             )?,
@@ -132,6 +278,12 @@ impl Vecs {
             exit,
         )?;
 
+        let starting_dateindex = self
+            .height_to_dateindex
+            .get(starting_indexes.height.decremented().unwrap_or_default())?
+            .copied()
+            .unwrap_or_default();
+
         self.height_to_dateindex.compute_transform(
             starting_indexes.height,
             self.height_to_fixed_date.mut_vec(),
@@ -139,11 +291,15 @@ impl Vecs {
             exit,
         )?;
 
-        let starting_dateindex = self
+        let starting_dateindex = if let Some(dateindex) = self
             .height_to_dateindex
             .get(starting_indexes.height.decremented().unwrap_or_default())?
             .copied()
-            .unwrap_or_default();
+        {
+            starting_dateindex.min(dateindex)
+        } else {
+            starting_dateindex
+        };
 
         self.dateindex_to_first_height
             .compute_inverse_more_to_less(
@@ -151,6 +307,8 @@ impl Vecs {
                 self.height_to_dateindex.mut_vec(),
                 exit,
             )?;
+
+        let date_count = self.dateindex_to_first_height.len();
 
         self.dateindex_to_last_height
             .compute_last_index_from_first(
@@ -197,7 +355,242 @@ impl Vecs {
             exit,
         )?;
 
-        Ok(Indexes::from((starting_indexes, starting_dateindex)))
+        // ---
+
+        let starting_weekindex = self
+            .dateindex_to_weekindex
+            .get(starting_dateindex)?
+            .copied()
+            .unwrap_or_default();
+
+        self.dateindex_to_weekindex.compute_transform(
+            starting_dateindex,
+            self.dateindex_to_dateindex.mut_vec(),
+            |(di, ..)| (di, Weekindex::from(di)),
+            exit,
+        )?;
+
+        self.weekindex_to_first_dateindex
+            .compute_inverse_more_to_less(
+                starting_dateindex,
+                self.dateindex_to_weekindex.mut_vec(),
+                exit,
+            )?;
+
+        self.weekindex_to_last_dateindex
+            .compute_last_index_from_first(
+                starting_weekindex,
+                self.weekindex_to_first_dateindex.mut_vec(),
+                date_count,
+                exit,
+            )?;
+
+        self.weekindex_to_weekindex.compute_transform(
+            starting_weekindex,
+            self.weekindex_to_first_dateindex.mut_vec(),
+            |(wi, ..)| (wi, wi),
+            exit,
+        )?;
+
+        // ---
+
+        let starting_monthindex = self
+            .dateindex_to_monthindex
+            .get(starting_dateindex)?
+            .copied()
+            .unwrap_or_default();
+
+        self.dateindex_to_monthindex.compute_transform(
+            starting_dateindex,
+            self.dateindex_to_dateindex.mut_vec(),
+            |(di, ..)| (di, Monthindex::from(di)),
+            exit,
+        )?;
+
+        self.monthindex_to_first_dateindex
+            .compute_inverse_more_to_less(
+                starting_dateindex,
+                self.dateindex_to_monthindex.mut_vec(),
+                exit,
+            )?;
+
+        let month_count = self.monthindex_to_first_dateindex.len();
+
+        self.monthindex_to_last_dateindex
+            .compute_last_index_from_first(
+                starting_monthindex,
+                self.monthindex_to_first_dateindex.mut_vec(),
+                date_count,
+                exit,
+            )?;
+
+        self.monthindex_to_monthindex.compute_transform(
+            starting_monthindex,
+            self.monthindex_to_first_dateindex.mut_vec(),
+            |(mi, ..)| (mi, mi),
+            exit,
+        )?;
+
+        // ---
+
+        let starting_yearindex = self
+            .monthindex_to_yearindex
+            .get(starting_monthindex)?
+            .copied()
+            .unwrap_or_default();
+
+        self.monthindex_to_yearindex.compute_transform(
+            starting_monthindex,
+            self.monthindex_to_monthindex.mut_vec(),
+            |(mi, ..)| (mi, Yearindex::from(mi)),
+            exit,
+        )?;
+
+        self.yearindex_to_first_monthindex
+            .compute_inverse_more_to_less(
+                starting_monthindex,
+                self.monthindex_to_yearindex.mut_vec(),
+                exit,
+            )?;
+
+        let year_count = self.yearindex_to_first_monthindex.len();
+
+        self.yearindex_to_last_monthindex
+            .compute_last_index_from_first(
+                starting_yearindex,
+                self.yearindex_to_first_monthindex.mut_vec(),
+                month_count,
+                exit,
+            )?;
+
+        self.yearindex_to_yearindex.compute_transform(
+            starting_yearindex,
+            self.yearindex_to_first_monthindex.mut_vec(),
+            |(yi, ..)| (yi, yi),
+            exit,
+        )?;
+
+        // ---
+
+        let starting_decadeindex = self
+            .yearindex_to_decadeindex
+            .get(starting_yearindex)?
+            .copied()
+            .unwrap_or_default();
+
+        self.yearindex_to_decadeindex.compute_transform(
+            starting_yearindex,
+            self.yearindex_to_yearindex.mut_vec(),
+            |(yi, ..)| (yi, Decadeindex::from(yi)),
+            exit,
+        )?;
+
+        self.decadeindex_to_first_yearindex
+            .compute_inverse_more_to_less(
+                starting_yearindex,
+                self.yearindex_to_decadeindex.mut_vec(),
+                exit,
+            )?;
+
+        self.decadeindex_to_last_yearindex
+            .compute_last_index_from_first(
+                starting_decadeindex,
+                self.decadeindex_to_first_yearindex.mut_vec(),
+                year_count,
+                exit,
+            )?;
+
+        self.decadeindex_to_decadeindex.compute_transform(
+            starting_decadeindex,
+            self.decadeindex_to_first_yearindex.mut_vec(),
+            |(di, ..)| (di, di),
+            exit,
+        )?;
+
+        // ---
+
+        let starting_difficultyepoch = self
+            .height_to_difficultyepoch
+            .get(starting_indexes.height)?
+            .copied()
+            .unwrap_or_default();
+
+        self.height_to_difficultyepoch.compute_transform(
+            starting_indexes.height,
+            self.height_to_height.mut_vec(),
+            |(h, ..)| (h, Difficultyepoch::from(h)),
+            exit,
+        )?;
+
+        self.difficultyepoch_to_first_height
+            .compute_inverse_more_to_less(
+                starting_indexes.height,
+                self.height_to_difficultyepoch.mut_vec(),
+                exit,
+            )?;
+
+        self.difficultyepoch_to_last_height
+            .compute_last_index_from_first(
+                starting_difficultyepoch,
+                self.difficultyepoch_to_first_height.mut_vec(),
+                height_count,
+                exit,
+            )?;
+
+        self.difficultyepoch_to_difficultyepoch.compute_transform(
+            starting_difficultyepoch,
+            self.difficultyepoch_to_first_height.mut_vec(),
+            |(de, ..)| (de, de),
+            exit,
+        )?;
+
+        // ---
+
+        let starting_halvingepoch = self
+            .height_to_halvingepoch
+            .get(starting_indexes.height)?
+            .copied()
+            .unwrap_or_default();
+
+        self.height_to_halvingepoch.compute_transform(
+            starting_indexes.height,
+            self.height_to_height.mut_vec(),
+            |(h, ..)| (h, Halvingepoch::from(h)),
+            exit,
+        )?;
+
+        self.halvingepoch_to_first_height
+            .compute_inverse_more_to_less(
+                starting_indexes.height,
+                self.height_to_halvingepoch.mut_vec(),
+                exit,
+            )?;
+
+        self.halvingepoch_to_last_height
+            .compute_last_index_from_first(
+                starting_halvingepoch,
+                self.halvingepoch_to_first_height.mut_vec(),
+                height_count,
+                exit,
+            )?;
+
+        self.halvingepoch_to_halvingepoch.compute_transform(
+            starting_halvingepoch,
+            self.halvingepoch_to_first_height.mut_vec(),
+            |(he, ..)| (he, he),
+            exit,
+        )?;
+
+        Ok(Indexes {
+            indexes: starting_indexes,
+            dateindex: starting_dateindex,
+            weekindex: starting_weekindex,
+            monthindex: starting_monthindex,
+            yearindex: starting_yearindex,
+            decadeindex: starting_decadeindex,
+            difficultyepoch: starting_difficultyepoch,
+            halvingepoch: starting_halvingepoch,
+        })
     }
 
     pub fn as_any_vecs(&self) -> Vec<&dyn AnyStorableVec> {
@@ -213,6 +606,30 @@ impl Vecs {
             self.height_to_real_date.any_vec(),
             self.txindex_to_last_txinindex.any_vec(),
             self.txindex_to_last_txoutindex.any_vec(),
+            self.difficultyepoch_to_first_height.any_vec(),
+            self.difficultyepoch_to_last_height.any_vec(),
+            self.halvingepoch_to_first_height.any_vec(),
+            self.halvingepoch_to_last_height.any_vec(),
+            self.weekindex_to_first_dateindex.any_vec(),
+            self.weekindex_to_last_dateindex.any_vec(),
+            self.monthindex_to_first_dateindex.any_vec(),
+            self.monthindex_to_last_dateindex.any_vec(),
+            self.yearindex_to_first_monthindex.any_vec(),
+            self.yearindex_to_last_monthindex.any_vec(),
+            self.decadeindex_to_first_yearindex.any_vec(),
+            self.decadeindex_to_last_yearindex.any_vec(),
+            self.dateindex_to_weekindex.any_vec(),
+            self.dateindex_to_monthindex.any_vec(),
+            self.monthindex_to_yearindex.any_vec(),
+            self.yearindex_to_decadeindex.any_vec(),
+            self.height_to_difficultyepoch.any_vec(),
+            self.height_to_halvingepoch.any_vec(),
+            self.weekindex_to_weekindex.any_vec(),
+            self.monthindex_to_monthindex.any_vec(),
+            self.yearindex_to_yearindex.any_vec(),
+            self.decadeindex_to_decadeindex.any_vec(),
+            self.difficultyepoch_to_difficultyepoch.any_vec(),
+            self.halvingepoch_to_halvingepoch.any_vec(),
         ]
     }
 }
@@ -220,16 +637,17 @@ impl Vecs {
 pub struct Indexes {
     indexes: brk_indexer::Indexes,
     pub dateindex: Dateindex,
+    pub weekindex: Weekindex,
+    pub monthindex: Monthindex,
+    pub yearindex: Yearindex,
+    pub decadeindex: Decadeindex,
+    pub difficultyepoch: Difficultyepoch,
+    pub halvingepoch: Halvingepoch,
 }
 
 impl Deref for Indexes {
     type Target = brk_indexer::Indexes;
     fn deref(&self) -> &Self::Target {
         &self.indexes
-    }
-}
-impl From<(brk_indexer::Indexes, Dateindex)> for Indexes {
-    fn from((indexes, dateindex): (brk_indexer::Indexes, Dateindex)) -> Self {
-        Self { indexes, dateindex }
     }
 }

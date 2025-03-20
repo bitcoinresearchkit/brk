@@ -3,6 +3,10 @@ use std::{fmt::Debug, ops::Add};
 use serde::{Deserialize, Serialize};
 use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
+use crate::CheckedSub;
+
+use super::Height;
+
 #[derive(
     Debug,
     Clone,
@@ -44,5 +48,17 @@ impl Add<usize> for Halvingepoch {
 
     fn add(self, rhs: usize) -> Self::Output {
         Self::from(self.0 + rhs as u8)
+    }
+}
+
+impl From<Height> for Halvingepoch {
+    fn from(value: Height) -> Self {
+        Self((u32::from(value) / 210_000) as u8)
+    }
+}
+
+impl CheckedSub for Halvingepoch {
+    fn checked_sub(self, rhs: Self) -> Option<Self> {
+        self.0.checked_sub(rhs.0).map(Self)
     }
 }

@@ -19,6 +19,7 @@ where
         + Sync,
 {
     fn to_usize(self) -> Result<usize>;
+    fn to_string<'a>() -> &'a str;
 }
 impl<I> StoredIndex for I
 where
@@ -39,5 +40,10 @@ where
     #[inline(always)]
     fn to_usize(self) -> Result<usize> {
         self.try_into().map_err(|_| Error::FailedKeyTryIntoUsize)
+    }
+
+    #[inline]
+    fn to_string<'a>() -> &'a str {
+        std::any::type_name::<I>()
     }
 }

@@ -92,7 +92,7 @@ impl Add<usize> for Height {
 
 impl CheckedSub<Height> for Height {
     fn checked_sub(self, rhs: Self) -> Option<Self> {
-        self.0.checked_sub(rhs.0).map(Self::from)
+        self.0.checked_sub(rhs.0).map(Self)
     }
 }
 
