@@ -4,7 +4,7 @@ use serde::Serialize;
 // use color_eyre::eyre::eyre;
 use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
-use crate::Error;
+use crate::{CheckedSub, Error};
 
 use super::Date;
 
@@ -69,5 +69,11 @@ impl TryFrom<Date> for Dateindex {
         } else {
             Ok(Self(Date::INDEX_ONE_.until(value_)?.get_days() as u16 + 1))
         }
+    }
+}
+
+impl CheckedSub for Dateindex {
+    fn checked_sub(self, rhs: Self) -> Option<Self> {
+        self.0.checked_sub(rhs.0).map(Self)
     }
 }

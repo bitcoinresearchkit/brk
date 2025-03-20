@@ -3,6 +3,10 @@ use std::{fmt::Debug, ops::Add};
 use serde::{Deserialize, Serialize};
 use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
+use crate::CheckedSub;
+
+use super::{Date, Dateindex, Yearindex};
+
 #[derive(
     Debug,
     Clone,
@@ -44,5 +48,23 @@ impl Add<usize> for Monthindex {
 
     fn add(self, rhs: usize) -> Self::Output {
         Self::from(self.0 + rhs as u16)
+    }
+}
+
+impl From<Dateindex> for Monthindex {
+    fn from(value: Dateindex) -> Self {
+        Self::from(Date::from(value))
+    }
+}
+
+impl From<Date> for Monthindex {
+    fn from(value: Date) -> Self {
+        Self(u16::from(Yearindex::from(value)) * 12 + value.month() as u16 - 1)
+    }
+}
+
+impl CheckedSub for Monthindex {
+    fn checked_sub(self, rhs: Self) -> Option<Self> {
+        self.0.checked_sub(rhs.0).map(Self)
     }
 }

@@ -77,7 +77,7 @@ impl From<usize> for Timestamp {
 
 impl CheckedSub<Timestamp> for Timestamp {
     fn checked_sub(self, rhs: Self) -> Option<Self> {
-        self.0.checked_sub(rhs.0).map(Self::from)
+        self.0.checked_sub(rhs.0).map(Self)
     }
 }
 
@@ -92,5 +92,20 @@ impl Add for Timestamp {
     type Output = Self;
     fn add(self, rhs: Self) -> Self::Output {
         Self(self.0 + rhs.0)
+    }
+}
+
+impl From<f64> for Timestamp {
+    fn from(value: f64) -> Self {
+        if value < 0.0 || value > u32::MAX as f64 {
+            panic!()
+        }
+        Self(value as u32)
+    }
+}
+
+impl From<Timestamp> for f64 {
+    fn from(value: Timestamp) -> Self {
+        value.0 as f64
     }
 }

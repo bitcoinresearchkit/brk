@@ -3,6 +3,10 @@ use std::{fmt::Debug, ops::Add};
 use serde::{Deserialize, Serialize};
 use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
+use crate::CheckedSub;
+
+use super::Height;
+
 #[derive(
     Debug,
     Clone,
@@ -44,5 +48,17 @@ impl Add<usize> for Difficultyepoch {
 
     fn add(self, rhs: usize) -> Self::Output {
         Self::from(self.0 + rhs as u16)
+    }
+}
+
+impl From<Height> for Difficultyepoch {
+    fn from(value: Height) -> Self {
+        Self((u32::from(value) / 2016) as u16)
+    }
+}
+
+impl CheckedSub for Difficultyepoch {
+    fn checked_sub(self, rhs: Self) -> Option<Self> {
+        self.0.checked_sub(rhs.0).map(Self)
     }
 }

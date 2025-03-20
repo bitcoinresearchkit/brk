@@ -1,6 +1,6 @@
 use std::{fs, path::Path};
 
-use brk_core::{CheckedSub, Height, Timestamp};
+use brk_core::{CheckedSub, Dateindex, Height, Timestamp};
 use brk_exit::Exit;
 use brk_indexer::Indexer;
 use brk_vec::{AnyStorableVec, Compressed, Version};
@@ -14,8 +14,8 @@ use super::{
 pub struct Vecs {
     pub height_to_block_interval: StorableVec<Height, Timestamp>,
     pub indexes_to_block_interval_stats: StorableVecGeneatorByIndex<Timestamp>,
-    pub dateindex_to_block_count: StorableVec<Height, u16>,
-    pub dateindex_to_total_block_count: StorableVec<Height, u32>,
+    pub dateindex_to_block_count: StorableVec<Dateindex, u16>,
+    pub dateindex_to_total_block_count: StorableVec<Dateindex, u32>,
 }
 
 impl Vecs {
@@ -61,15 +61,15 @@ impl Vecs {
         self.height_to_block_interval.compute_transform(
             starting_indexes.height,
             indexer_vecs.height_to_timestamp.mut_vec(),
-            |(height, timestamp, height_to_timestamp, ..)| {
+            |(height, timestamp, _, height_to_timestamp)| {
                 let interval = height.decremented().map_or(Timestamp::ZERO, |prev_h| {
                     let prev_timestamp = *height_to_timestamp.get(prev_h).unwrap().unwrap();
-                    if prev_timestamp >= timestamp {
-                        Timestamp::ZERO
-                    } else {
-                        timestamp.checked_sub(prev_timestamp).unwrap()
-                    }
+                    dbg!((timestamp, prev_timestamp));
+                    timestamp
+                        .checked_sub(prev_timestamp)
+                        .unwrap_or(Timestamp::ZERO)
                 });
+                dbg!((height, interval));
                 (height, interval)
             },
             exit,
@@ -77,10 +77,10 @@ impl Vecs {
 
         self.indexes_to_block_interval_stats.compute(
             &mut self.height_to_block_interval,
-            indexer,
             indexes,
             starting_indexes,
-        );
+            exit,
+        )?;
 
         Ok(())
     }

@@ -109,11 +109,11 @@ pub struct RunConfig {
     #[arg(short, long, value_name = "BOOL")]
     compressed: Option<bool>,
 
-    /// Activate fetching prices from exchanges APIs and the computation of all related datasets, default: false, saved
+    /// Activate fetching prices from exchanges APIs and the computation of all related datasets, default: true, saved
     #[arg(short, long, value_name = "BOOL")]
     fetch: Option<bool>,
 
-    /// Website served by the server (if active), default: none, saved
+    /// Website served by the server (if active), default: kibo.money, saved
     #[arg(short, long)]
     website: Option<Website>,
 
@@ -390,11 +390,11 @@ impl RunConfig {
     }
 
     pub fn website(&self) -> Website {
-        self.website.unwrap_or_default()
+        self.website.unwrap_or(Website::KiboMoney)
     }
 
     pub fn fetch(&self) -> bool {
-        self.fetch.is_some_and(|b| b)
+        self.fetch.is_none_or(|b| b)
     }
 
     pub fn compressed(&self) -> bool {

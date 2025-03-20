@@ -66,6 +66,7 @@ impl Vecs {
     pub fn as_any_vecs(&self) -> Vec<&dyn AnyStorableVec> {
         [
             self.indexes.as_any_vecs(),
+            self.blocks.as_any_vecs(),
             self.transactions.as_any_vecs(),
             self.marketprice
                 .as_ref()

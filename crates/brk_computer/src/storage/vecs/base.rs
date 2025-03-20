@@ -82,7 +82,7 @@ where
         self.vec.version()
     }
 
-    fn len(&self) -> usize {
+    pub fn len(&self) -> usize {
         self.vec.len()
     }
 
@@ -96,6 +96,10 @@ where
 
     pub fn any_vec(&self) -> &dyn AnyStorableVec {
         &self.vec
+    }
+
+    pub fn mut_any_vec(&mut self) -> &mut dyn AnyStorableVec {
+        &mut self.vec
     }
 
     pub fn get(&mut self, index: I) -> Result<Option<&T>> {

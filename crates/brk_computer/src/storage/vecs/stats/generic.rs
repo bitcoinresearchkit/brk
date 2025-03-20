@@ -1,19 +1,19 @@
 use std::path::Path;
 
 use brk_exit::Exit;
-use brk_vec::{AnyStorableVec, Compressed, Result, StoredIndex, Version};
+use brk_vec::{AnyStorableVec, Compressed, Result, StoredIndex, StoredType, Version};
 
 use crate::storage::vecs::base::StorableVec;
 
-use super::StoredType;
+use super::ComputedType;
 
 #[derive(Clone, Debug)]
-pub struct StorableVecGeneator<I, T>
+pub struct StorableVecBuilder<I, T>
 where
     I: StoredIndex,
-    T: StoredType,
+    T: ComputedType,
 {
-    // first: Option<StorableVec<I, T>>,
+    first: Option<StorableVec<I, T>>,
     average: Option<StorableVec<I, T>>,
     sum: Option<StorableVec<I, T>>,
     max: Option<StorableVec<I, T>>,
@@ -26,10 +26,10 @@ where
     last: Option<StorableVec<I, T>>,
 }
 
-impl<I, T> StorableVecGeneator<I, T>
+impl<I, T> StorableVecBuilder<I, T>
 where
     I: StoredIndex,
-    T: StoredType,
+    T: ComputedType,
 {
     pub fn forced_import(
         path: &Path,
@@ -37,17 +37,23 @@ where
         options: StorableVecGeneatorOptions,
     ) -> color_eyre::Result<Self> {
         let name = path.file_name().unwrap().to_str().unwrap().to_string();
+        let key = I::to_string().split("::").last().unwrap().to_lowercase();
 
-        // let prefix = |s: &str| path.with_file_name(format!("{s}_{name}"));
-        let suffix = |s: &str| path.with_file_name(format!("{name}_{s}"));
+        let prefix = |s: &str| path.with_file_name(format!("{key}_to_{s}_{name}"));
+        let suffix = |s: &str| path.with_file_name(format!("{key}_to_{name}_{s}"));
 
         let s = Self {
-            // first: options.first.then(|| {
-            //     StorableVec::forced_import(&prefix("first"), Version::from(1), compressed).unwrap()
-            // }),
-            last: options
-                .last
-                .then(|| StorableVec::forced_import(path, Version::from(1), compressed).unwrap()),
+            first: options.first.then(|| {
+                StorableVec::forced_import(&prefix("first"), Version::from(1), compressed).unwrap()
+            }),
+            last: options.last.then(|| {
+                StorableVec::forced_import(
+                    &path.with_file_name(format!("{key}_to_{name}")),
+                    Version::from(1),
+                    compressed,
+                )
+                .unwrap()
+            }),
             min: options.min.then(|| {
                 StorableVec::forced_import(&suffix("min"), Version::from(1), compressed).unwrap()
             }),
@@ -91,7 +97,8 @@ where
     ) -> Result<()>
     where
         I2: StoredIndex + StoredType,
-        T: Ord,
+        T: Ord + From<f64>,
+        f64: From<T>,
     {
         let index = self.starting_index(max_from);
 
@@ -99,10 +106,10 @@ where
             let first_index = *first_index;
             let last_index = *last_indexes.get(i).unwrap().unwrap();
 
-            // if let Some(first) = self.first.as_mut() {
-            //     let v = source.read(first_index).unwrap().unwrap();
-            //     first.forced_push_at(index, v.clone(), exit);
-            // }
+            if let Some(first) = self.first.as_mut() {
+                let v = source.get(first_index).unwrap().unwrap();
+                first.forced_push_at(index, v.clone(), exit)?;
+            }
 
             if let Some(last) = self.last.as_mut() {
                 let v = source.get(last_index).unwrap().unwrap();
@@ -162,11 +169,13 @@ where
                     let len = values.len();
 
                     if let Some(average) = self.average.as_mut() {
-                        let a = values
+                        let len = len as f64;
+                        let total = values
                             .iter()
-                            .map(|v| v.clone() / len)
-                            .fold(T::from(0), |a, b| a + b);
-                        average.forced_push_at(i, a, exit)?;
+                            .map(|v| f64::from(v.clone()))
+                            .fold(0.0, |a, b| a + b);
+                        let avg = T::from(total / len);
+                        average.forced_push_at(i, avg, exit)?;
                     }
 
                     if let Some(sum_vec) = self.sum.as_mut() {
@@ -178,6 +187,127 @@ where
 
             Ok(())
         })?;
+
+        self.safe_flush(exit)?;
+
+        Ok(())
+    }
+
+    pub fn from_aligned<I2>(
+        &mut self,
+        max_from: I,
+        source: &mut StorableVecBuilder<I2, T>,
+        first_indexes: &mut brk_vec::StorableVec<I, I2>,
+        last_indexes: &mut brk_vec::StorableVec<I, I2>,
+        exit: &Exit,
+    ) -> Result<()>
+    where
+        I2: StoredIndex + StoredType,
+        T: Ord + From<f64>,
+        f64: From<T>,
+    {
+        if self._90p.is_some()
+            || self._75p.is_some()
+            || self.median.is_some()
+            || self._25p.is_some()
+            || self._10p.is_some()
+        {
+            panic!("unsupported");
+        }
+
+        let index = self.starting_index(max_from);
+
+        first_indexes.iter_from(index, |(i, first_index)| {
+            let first_index = *first_index;
+            let last_index = *last_indexes.get(i).unwrap().unwrap();
+
+            if let Some(first) = self.first.as_mut() {
+                let v = source
+                    .first
+                    .as_mut()
+                    .unwrap()
+                    .get(last_index)
+                    .unwrap()
+                    .cloned()
+                    .unwrap();
+                first.forced_push_at(index, v, exit)?;
+            }
+
+            if let Some(last) = self.last.as_mut() {
+                let v = source
+                    .last
+                    .as_mut()
+                    .unwrap()
+                    .get(last_index)
+                    .unwrap()
+                    .cloned()
+                    .unwrap();
+                last.forced_push_at(index, v, exit)?;
+            }
+
+            let first_index = Some(first_index.to_usize()? as i64);
+            let last_index = Some(last_index.to_usize()? as i64);
+
+            let needs_sum_or_average = self.sum.is_some() || self.average.is_some();
+            let needs_sorted = self.max.is_some() || self.min.is_some();
+            let needs_values = needs_sorted || needs_sum_or_average;
+
+            if needs_values {
+                if needs_sorted {
+                    if let Some(max) = self.max.as_mut() {
+                        let mut values = source
+                            .max
+                            .as_ref()
+                            .unwrap()
+                            .collect_range(first_index, last_index)?;
+                        values.sort_unstable();
+                        max.forced_push_at(i, values.last().unwrap().clone(), exit)?;
+                    }
+
+                    if let Some(min) = self.min.as_mut() {
+                        let mut values = source
+                            .min
+                            .as_ref()
+                            .unwrap()
+                            .collect_range(first_index, last_index)?;
+                        values.sort_unstable();
+                        min.forced_push_at(i, values.first().unwrap().clone(), exit)?;
+                    }
+                }
+
+                if needs_sum_or_average {
+                    if let Some(average) = self.average.as_mut() {
+                        let values = source
+                            .average
+                            .as_ref()
+                            .unwrap()
+                            .collect_range(first_index, last_index)?;
+                        let len = values.len() as f64;
+                        let total = values
+                            .into_iter()
+                            .map(|v| f64::from(v))
+                            .fold(0.0, |a, b| a + b);
+                        let avg = T::from(total / len);
+                        average.forced_push_at(i, avg, exit)?;
+                    }
+
+                    if let Some(sum_vec) = self.sum.as_mut() {
+                        let values = source
+                            .sum
+                            .as_ref()
+                            .unwrap()
+                            .collect_range(first_index, last_index)?;
+                        let sum = values.into_iter().fold(T::from(0), |a, b| a + b);
+                        sum_vec.forced_push_at(i, sum, exit)?;
+                    }
+                }
+            }
+
+            Ok(())
+        })?;
+
+        self.safe_flush(exit)?;
+
         Ok(())
     }
 
@@ -216,9 +346,9 @@ where
     pub fn as_any_vecs(&self) -> Vec<&dyn AnyStorableVec> {
         let mut v: Vec<&dyn AnyStorableVec> = vec![];
 
-        // if let Some(first) = self.first.as_ref() {
-        //     v.push(first.any_vec());
-        // }
+        if let Some(first) = self.first.as_ref() {
+            v.push(first.any_vec());
+        }
         if let Some(last) = self.last.as_ref() {
             v.push(last.any_vec());
         }
@@ -252,6 +382,44 @@ where
 
         v
     }
+
+    pub fn safe_flush(&mut self, exit: &Exit) -> Result<()> {
+        if let Some(first) = self.first.as_mut() {
+            first.safe_flush(exit)?;
+        }
+        if let Some(last) = self.last.as_mut() {
+            last.safe_flush(exit)?;
+        }
+        if let Some(min) = self.min.as_mut() {
+            min.safe_flush(exit)?;
+        }
+        if let Some(max) = self.max.as_mut() {
+            max.safe_flush(exit)?;
+        }
+        if let Some(median) = self.median.as_mut() {
+            median.safe_flush(exit)?;
+        }
+        if let Some(average) = self.average.as_mut() {
+            average.safe_flush(exit)?;
+        }
+        if let Some(sum) = self.sum.as_mut() {
+            sum.safe_flush(exit)?;
+        }
+        if let Some(_90p) = self._90p.as_mut() {
+            _90p.safe_flush(exit)?;
+        }
+        if let Some(_75p) = self._75p.as_mut() {
+            _75p.safe_flush(exit)?;
+        }
+        if let Some(_25p) = self._25p.as_mut() {
+            _25p.safe_flush(exit)?;
+        }
+        if let Some(_10p) = self._10p.as_mut() {
+            _10p.safe_flush(exit)?;
+        }
+
+        Ok(())
+    }
 }
 
 #[derive(Default, Clone, Copy)]
@@ -265,15 +433,15 @@ pub struct StorableVecGeneatorOptions {
     _25p: bool,
     _10p: bool,
     min: bool,
-    // first: bool,
+    first: bool,
     last: bool,
 }
 
 impl StorableVecGeneatorOptions {
-    // pub fn add_first(mut self) -> Self {
-    //     self.first = true;
-    //     self
-    // }
+    pub fn add_first(mut self) -> Self {
+        self.first = true;
+        self
+    }
 
     pub fn add_last(mut self) -> Self {
         self.last = true;
