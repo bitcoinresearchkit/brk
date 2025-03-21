@@ -31,7 +31,7 @@ pub use stores::*;
 pub use vecs::*;
 
 const SNAPSHOT_BLOCK_RANGE: usize = 1000;
-const COLLISIONS_CHECKED_UP_TO: u32 = 870_000;
+const COLLISIONS_CHECKED_UP_TO: u32 = 888_000;
 
 #[derive(Clone)]
 pub struct Indexer {

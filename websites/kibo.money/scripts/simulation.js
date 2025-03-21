@@ -13,6 +13,7 @@
  * @param {Utilities} args.utils
  * @param {Datasets} args.datasets
  * @param {Elements} args.elements
+ * @param {Constants} args.consts
  * @param {Signal<LastValues>} args.lastValues
  */
 export function init({
@@ -22,6 +23,7 @@ export function init({
   lightweightCharts,
   signals,
   utils,
+  consts,
   lastValues,
 }) {
   const simulationElement = elements.simulation;
@@ -30,6 +32,120 @@ export function init({
   simulationElement.append(parametersElement);
   const resultsElement = window.document.createElement("div");
   simulationElement.append(resultsElement);
+
+  function computeFrequencies() {
+    const weekDays = [
+      "Monday",
+      "Tuesday",
+      "Wednesday",
+      "Thursday",
+      "Friday",
+      "Saturday",
+      "Sunday",
+    ];
+    const maxDays = 28;
+
+    /** @param {number} day  */
+    function getOrdinalDay(day) {
+      const rest = (day % 30) % 20;
+
+      return `${day}${
+        rest === 1 ? "st" : rest === 2 ? "nd" : rest === 3 ? "rd" : "th"
+      }`;
+    }
+
+    /** @satisfies {([Frequency, Frequencies, Frequencies, Frequencies])} */
+    const list = [
+      {
+        name: "Every day",
+        value: "every-day",
+        /** @param {Date} _  */
+        isTriggerDay(_) {
+          return true;
+        },
+      },
+      {
+        name: "Once a week",
+        list: weekDays.map((day, index) => ({
+          name: day,
+          value: day.toLowerCase(),
+          /** @param {Date} date  */
+          isTriggerDay(date) {
+            let day = date.getUTCDay() - 1;
+            if (day === -1) {
+              day = 6;
+            }
+            return day === index;
+          },
+        })),
+      },
+      {
+        name: "Every two weeks",
+        list: [...Array(Math.round(maxDays / 2)).keys()].map((day) => {
+          const day1 = day + 1;
+          const day2 = day + 15;
+
+          return {
+            value: `${day1}+${day2}`,
+            name: `The ${getOrdinalDay(day1)} and the ${getOrdinalDay(day2)}`,
+            /** @param {Date} date  */
+            isTriggerDay(date) {
+              const d = date.getUTCDate();
+              return d === day1 || d === day2;
+            },
+          };
+        }),
+      },
+      {
+        name: "Once a month",
+        list: [...Array(maxDays).keys()].map((day) => {
+          day++;
+
+          return {
+            name: `The ${getOrdinalDay(day)}`,
+            value: String(day),
+            /** @param {Date} date  */
+            isTriggerDay(date) {
+              const d = date.getUTCDate();
+              return d === day;
+            },
+          };
+        }),
+      },
+    ];
+
+    /** @type {Record<string, Frequency>} */
+    const idToFrequency = {};
+
+    list.forEach((anyFreq, index) => {
+      if ("list" in anyFreq) {
+        anyFreq.list?.forEach((freq) => {
+          idToFrequency[freq.value] = freq;
+        });
+      } else {
+        idToFrequency[anyFreq.value] = anyFreq;
+      }
+    });
+
+    const serde = {
+      /**
+       * @param {Frequency} v
+       */
+      serialize(v) {
+        return v.value;
+      },
+      /**
+       * @param {string} v
+       */
+      deserialize(v) {
+        const freq = idToFrequency[v];
+        if (!freq) throw "Freq not found";
+        return freq;
+      },
+    };
+
+    return { list, serde };
+  }
 
   const frequencies = computeFrequencies();
 
@@ -437,6 +553,7 @@ export function init({
     kind: "static",
     scale: "date",
     utils,
+    consts,
     config: [
       {
         unit: "US Dollars",
@@ -478,6 +595,7 @@ export function init({
     scale: "date",
     kind: "static",
     utils,
+    consts,
     config: [
       {
         unit: "US Dollars",
@@ -501,6 +619,7 @@ export function init({
     scale: "date",
     kind: "static",
     utils,
+    consts,
     config: [
       {
         unit: "US Dollars",
@@ -530,6 +649,7 @@ export function init({
     scale: "date",
     kind: "static",
     utils,
+    consts,
     config: [
       {
         unit: "US Dollars",
@@ -563,6 +683,7 @@ export function init({
     scale: "date",
     utils,
     owner,
+    consts,
     config: [
       {
         unit: "Percentage",
@@ -878,118 +999,4 @@ export function init({
       );
     });
   });
-}
-
-/** @param {number} day  */
-function getOrdinalDay(day) {
-  const rest = (day % 30) % 20;
-
-  return `${day}${
-    rest === 1 ? "st" : rest === 2 ? "nd" : rest === 3 ? "rd" : "th"
-  }`;
-}
-
-function computeFrequencies() {
-  const weekDays = [
-    "Monday",
-    "Tuesday",
-    "Wednesday",
-    "Thursday",
-    "Friday",
-    "Saturday",
-    "Sunday",
-  ];
-  const maxDays = 28;
-
-  /** @satisfies {([Frequency, Frequencies, Frequencies, Frequencies])} */
-  const list = [
-    {
-      name: "Every day",
-      value: "every-day",
-      /** @param {Date} _  */
-      isTriggerDay(_) {
-        return true;
-      },
-    },
-    {
-      name: "Once a week",
-      list: weekDays.map((day, index) => ({
-        name: day,
-        value: day.toLowerCase(),
-        /** @param {Date} date  */
-        isTriggerDay(date) {
-          let day = date.getUTCDay() - 1;
-          if (day === -1) {
-            day = 6;
-          }
-          return day === index;
-        },
-      })),
-    },
-    {
-      name: "Every two weeks",
-      list: [...Array(Math.round(maxDays / 2)).keys()].map((day) => {
-        const day1 = day + 1;
-        const day2 = day + 15;
-
-        return {
-          value: `${day1}+${day2}`,
-          name: `The ${getOrdinalDay(day1)} and the ${getOrdinalDay(day2)}`,
-          /** @param {Date} date  */
-          isTriggerDay(date) {
-            const d = date.getUTCDate();
-            return d === day1 || d === day2;
-          },
-        };
-      }),
-    },
-    {
-      name: "Once a month",
-      list: [...Array(maxDays).keys()].map((day) => {
-        day++;
-
-        return {
-          name: `The ${getOrdinalDay(day)}`,
-          value: String(day),
-          /** @param {Date} date  */
-          isTriggerDay(date) {
-            const d = date.getUTCDate();
-            return d === day;
-          },
-        };
-      }),
-    },
-  ];
-
-  /** @type {Record<string, Frequency>} */
-  const idToFrequency = {};
-
-  list.forEach((anyFreq, index) => {
-    if ("list" in anyFreq) {
-      anyFreq.list?.forEach((freq) => {
-        idToFrequency[freq.value] = freq;
-      });
-    } else {
-      idToFrequency[anyFreq.value] = anyFreq;
-    }
-  });
-
-  const serde = {
-    /**
-     * @param {Frequency} v
-     */
-    serialize(v) {
-      return v.value;
-    },
-    /**
-     * @param {string} v
-     */
-    deserialize(v) {
-      const freq = idToFrequency[v];
-      if (!freq) throw "Freq not found";
-      return freq;
-    },
-  };
-
-  return { list, serde };
 }

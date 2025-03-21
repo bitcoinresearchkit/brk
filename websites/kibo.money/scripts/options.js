@@ -5,9 +5,6 @@
  * @import {AnySpecificSeriesBlueprint, SplitSeriesBlueprint} from '../packages/lightweight-charts/types';
  */
 
-const DATE_TO_PREFIX = "date-to-";
-const HEIGHT_TO_PREFIX = "height-to-";
-
 function initGroups() {
   const xTermHolders = /** @type {const} */ ([
     {
@@ -5204,8 +5201,8 @@ export function initOptions({
     if (!blueprint) return undefined;
 
     const id = blueprint.datasetPath
-      .replace(DATE_TO_PREFIX, "")
-      .replace(HEIGHT_TO_PREFIX, "");
+      .replace("date-to-", "")
+      .replace("height-to-", "");
 
     return /** @type {LastPath} */ (id);
   }
