@@ -7,13 +7,13 @@ use brk_vec::{AnyStorableVec, Compressed, Version};
 
 use super::{
     Indexes, StorableVec, indexes,
-    stats::{StorableVecGeneatorByIndex, StorableVecGeneatorOptions},
+    stats::{StorableVecGeneatorOptions, StorableVecsStatsFromHeight},
 };
 
 #[derive(Clone)]
 pub struct Vecs {
     pub height_to_block_interval: StorableVec<Height, Timestamp>,
-    pub indexes_to_block_interval_stats: StorableVecGeneatorByIndex<Timestamp>,
+    pub indexes_to_block_interval_stats: StorableVecsStatsFromHeight<Timestamp>,
     pub dateindex_to_block_count: StorableVec<Dateindex, u16>,
     pub dateindex_to_total_block_count: StorableVec<Dateindex, u32>,
 }
@@ -28,7 +28,7 @@ impl Vecs {
                 Version::from(1),
                 compressed,
             )?,
-            indexes_to_block_interval_stats: StorableVecGeneatorByIndex::forced_import(
+            indexes_to_block_interval_stats: StorableVecsStatsFromHeight::forced_import(
                 &path.join("block_interval"),
                 compressed,
                 StorableVecGeneatorOptions::default()
@@ -64,12 +64,10 @@ impl Vecs {
             |(height, timestamp, _, height_to_timestamp)| {
                 let interval = height.decremented().map_or(Timestamp::ZERO, |prev_h| {
                     let prev_timestamp = *height_to_timestamp.get(prev_h).unwrap().unwrap();
-                    dbg!((timestamp, prev_timestamp));
                     timestamp
                         .checked_sub(prev_timestamp)
                         .unwrap_or(Timestamp::ZERO)
                 });
-                dbg!((height, interval));
                 (height, interval)
             },
             exit,

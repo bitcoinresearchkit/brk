@@ -13,17 +13,17 @@ where
     I: StoredIndex,
     T: ComputedType,
 {
-    first: Option<StorableVec<I, T>>,
-    average: Option<StorableVec<I, T>>,
-    sum: Option<StorableVec<I, T>>,
-    max: Option<StorableVec<I, T>>,
-    _90p: Option<StorableVec<I, T>>,
-    _75p: Option<StorableVec<I, T>>,
-    median: Option<StorableVec<I, T>>,
-    _25p: Option<StorableVec<I, T>>,
-    _10p: Option<StorableVec<I, T>>,
-    min: Option<StorableVec<I, T>>,
-    last: Option<StorableVec<I, T>>,
+    pub first: Option<StorableVec<I, T>>,
+    pub average: Option<StorableVec<I, T>>,
+    pub sum: Option<StorableVec<I, T>>,
+    pub max: Option<StorableVec<I, T>>,
+    pub _90p: Option<StorableVec<I, T>>,
+    pub _75p: Option<StorableVec<I, T>>,
+    pub median: Option<StorableVec<I, T>>,
+    pub _25p: Option<StorableVec<I, T>>,
+    pub _10p: Option<StorableVec<I, T>>,
+    pub min: Option<StorableVec<I, T>>,
+    pub last: Option<StorableVec<I, T>>,
 }
 
 impl<I, T> StorableVecBuilder<I, T>
@@ -226,7 +226,7 @@ where
                     .first
                     .as_mut()
                     .unwrap()
-                    .get(last_index)
+                    .get(first_index)
                     .unwrap()
                     .cloned()
                     .unwrap();
@@ -287,6 +287,8 @@ where
                             .into_iter()
                             .map(|v| f64::from(v))
                             .fold(0.0, |a, b| a + b);
+                        // TODO: Multiply by count then divide by total
+                        // Right now it's not 100% accurate as there could be more or less elements in the lower timeframe (28 days vs 31 days in a month for example)
                         let avg = T::from(total / len);
                         average.forced_push_at(i, avg, exit)?;
                     }
