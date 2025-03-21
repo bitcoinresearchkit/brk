@@ -193,13 +193,19 @@ where
             return Err(Error::UnsupportedUnflushedState);
         }
 
-        let len = self.stored_len();
+        let len = self
+            .base()
+            .read_stored_length()
+            .unwrap()
+            .to_usize()
+            .unwrap();
 
         let from = from.map_or(0, |from| {
             if from >= 0 {
                 from as usize
             } else {
-                (len as i64 + from) as usize
+                let from = len as i64 + from;
+                if from < 0 { 0 } else { from as usize }
             }
         });
 
@@ -207,7 +213,9 @@ where
             if to >= 0 {
                 to as usize
             } else {
-                ((len - 1) as i64 + to) as usize
+                let max = len - 1;
+                let to = max as i64 + to;
+                if to > max as i64 { max } else { to as usize }
             }
         });
 
@@ -228,11 +236,7 @@ where
                     };
 
                     let values = Self::decode_page_(
-                        self.base()
-                            .read_stored_length()
-                            .unwrap()
-                            .to_usize()
-                            .unwrap(),
+                        len,
                         page_index,
                         &self.base().open_file().unwrap(),
                         pages_meta.as_ref(),

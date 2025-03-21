@@ -97,9 +97,34 @@ impl Div<Dollars> for Sats {
     }
 }
 
+impl Div<usize> for Sats {
+    type Output = Self;
+    fn div(self, rhs: usize) -> Self::Output {
+        Self(self.0 / rhs as u64)
+    }
+}
+
 impl From<u64> for Sats {
     fn from(value: u64) -> Self {
         Self(value)
+    }
+}
+
+impl From<usize> for Sats {
+    fn from(value: usize) -> Self {
+        Self(value as u64)
+    }
+}
+
+impl From<f64> for Sats {
+    fn from(value: f64) -> Self {
+        Self(value as u64)
+    }
+}
+
+impl From<Sats> for f64 {
+    fn from(value: Sats) -> Self {
+        value.0 as f64
     }
 }
 
