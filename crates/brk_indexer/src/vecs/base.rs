@@ -162,17 +162,6 @@ where
     }
 }
 
-// impl<I, T> Deref for StorableVec<I, T> {
-//     type Target = brk_vec::StorableVec<I, T>;
-//     fn deref(&self) -> &Self::Target {
-//         &self.vec
-//     }
-// }
-// impl<I, T> DerefMut for StorableVec<I, T> {
-//     fn deref_mut(&mut self) -> &mut Self::Target {
-//         &mut self.vec
-//     }
-// }
 impl<I, T> Clone for StorableVec<I, T>
 where
     I: StoredIndex,

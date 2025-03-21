@@ -8,6 +8,7 @@
  * @param {Signals} args.signals
  * @param {Utilities} args.utils
  * @param {Datasets} args.datasets
+ * @param {Constants} args.consts
  * @param {WebSockets} args.webSockets
  * @param {Elements} args.elements
  */
@@ -19,6 +20,7 @@ export function init({
   selected,
   signals,
   utils,
+  consts,
   webSockets,
 }) {
   console.log("init chart state");
@@ -43,6 +45,7 @@ export function init({
     id: "chart",
     scale: scale(),
     kind: "moveable",
+    consts,
     utils,
   });
 

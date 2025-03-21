@@ -4,19 +4,19 @@
  * @import { DeepPartial, ChartOptions, IChartApi, IHorzScaleBehavior, WhitespaceData, SingleValueData, ISeriesApi, Time, LogicalRange, SeriesType, BaselineStyleOptions, SeriesOptionsCommon, createChart as CreateClassicChart, createChartEx as CreateCustomChart } from "./v4.2.2/types"
  */
 
-const ids = {
-  from: "from",
-  to: "to",
-  chartRange: "chart-range",
-  /**
-   * @param {TimeScale} scale
-   */
-  visibleTimeRange(scale) {
-    return `${ids.chartRange}-${scale}`;
-  },
-};
-
 export default import("./v4.2.2/script.js").then((lightweightCharts) => {
+  const ids = {
+    from: "from",
+    to: "to",
+    chartRange: "chart-range",
+    /**
+     * @param {TimeScale} scale
+     */
+    visibleTimeRange(scale) {
+      return `${ids.chartRange}-${scale}`;
+    },
+  };
+
   const createClassicChart = /** @type {CreateClassicChart} */ (
     lightweightCharts.createChart
   );
@@ -357,6 +357,7 @@ export default import("./v4.2.2/script.js").then((lightweightCharts) => {
    * @param {TimeScale} param0.scale
    * @param {"static" | "moveable"} param0.kind
    * @param {Utilities} param0.utils
+   * @param {Constants} param0.consts
    * @param {Owner | null} [param0.owner]
    * @param {CreatePaneParameters[]} [param0.config]
    */
@@ -368,6 +369,7 @@ export default import("./v4.2.2/script.js").then((lightweightCharts) => {
     kind,
     scale,
     config,
+    consts,
     utils,
     owner: _owner,
   }) {

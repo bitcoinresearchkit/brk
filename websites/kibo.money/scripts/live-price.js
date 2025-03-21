@@ -7,7 +7,7 @@
 /**
  * @param {Object} args
  * @param {Colors} args.colors
- * @param {Consts} args.consts
+ * @param {Constants} args.consts
  * @param {LightweightCharts} args.lightweightCharts
  * @param {Signals} args.signals
  * @param {Utilities} args.utils
