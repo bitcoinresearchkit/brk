@@ -10,7 +10,8 @@ use brk_core::Height;
 use brk_vec::{Value, Version};
 use byteview::ByteView;
 use fjall::{
-    PartitionCreateOptions, PersistMode, ReadTransaction, Result, TransactionalKeyspace, TransactionalPartitionHandle,
+    PartitionCreateOptions, PersistMode, ReadTransaction, Result, TransactionalKeyspace,
+    TransactionalPartitionHandle,
 };
 use zerocopy::{Immutable, IntoBytes};
 
@@ -71,7 +72,7 @@ where
         if let Some(v) = self.puts.get(key) {
             Ok(Some(Value::Ref(v)))
         } else if let Some(slice) = self.rtx.get(&self.part, key.as_bytes())? {
-            Ok(Some(Value::Owned(V::try_from(slice.into())?)))
+            Ok(Some(Value::Owned(V::try_from(slice.as_bytes().into())?)))
         } else {
             Ok(None)
         }
@@ -109,23 +110,29 @@ where
 
         mem::take(&mut self.dels)
             .into_iter()
-            .for_each(|key| wtx.remove(&self.part, key.into()));
+            .for_each(|key| wtx.remove(&self.part, key.as_bytes()));
 
-        mem::take(&mut self.puts).into_iter().for_each(|(key, value)| {
-            if CHECK_COLLISISONS {
-                #[allow(unused_must_use)]
-                if let Ok(Some(value)) = wtx.get(&self.part, key.as_bytes()) {
-                    dbg!(
-                        &key,
-                        V::try_from(value.into()).unwrap(),
-                        &self.meta,
-                        self.rtx.get(&self.part, key.as_bytes())
-                    );
-                    unreachable!();
+        mem::take(&mut self.puts)
+            .into_iter()
+            .for_each(|(key, value)| {
+                if CHECK_COLLISISONS {
+                    #[allow(unused_must_use)]
+                    if let Ok(Some(value)) = wtx.get(&self.part, key.as_bytes()) {
+                        dbg!(
+                            &key,
+                            V::try_from(value.as_bytes().into()).unwrap(),
+                            &self.meta,
+                            self.rtx.get(&self.part, key.as_bytes())
+                        );
+                        unreachable!();
+                    }
                 }
-            }
-            wtx.insert(&self.part, key.into(), value.into())
-        });
+                wtx.insert(
+                    &self.part,
+                    key.as_bytes(),
+                    &*ByteView::try_from(value).unwrap(),
+                )
+            });
 
         wtx.commit()?;
 
@@ -164,7 +171,9 @@ where
             .open_transactional()
     }
 
-    fn open_partition_handle(keyspace: &TransactionalKeyspace) -> Result<TransactionalPartitionHandle> {
+    fn open_partition_handle(
+        keyspace: &TransactionalKeyspace,
+    ) -> Result<TransactionalPartitionHandle> {
         keyspace.open_partition(
             "partition",
             PartitionCreateOptions::default()

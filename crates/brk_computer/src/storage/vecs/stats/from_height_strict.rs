@@ -14,7 +14,7 @@ where
     T: ComputedType + PartialOrd,
 {
     pub difficultyepoch: StorableVecBuilder<Difficultyepoch, T>,
-    // pub halvingepoch: StorableVecGeneator<Halvingepoch, T>, // TODO
+    // TODO: pub halvingepoch: StorableVecGeneator<Halvingepoch, T>,
 }
 
 impl<T> StorableVecsStatsFromHeightStrict<T>

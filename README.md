@@ -17,8 +17,14 @@
   <a href="https://deps.rs/crate/brk">
     <img src="https://deps.rs/crate/brk/latest/status.svg" alt="Dependency status">
   </a>
-  <a href="https://discord.gg/EScZAYX4">
+  <a href="https://discord.gg/Cvrwpv3zEG">
     <img src="https://img.shields.io/discord/1350431684562124850" alt="Chat" />
+  </a>
+  <a href="https://primal.net/p/nprofile1qqsfw5dacngjlahye34krvgz7u0yghhjgk7gxzl5ptm9v6n2y3sn03sqxu2e6">
+    <img src="https://img.shields.io/badge/nostr-purple?link=https%3A%2F%2Fprimal.net%2Fp%2Fnprofile1qqsfw5dacngjlahye34krvgz7u0yghhjgk7gxzl5ptm9v6n2y3sn03sqxu2e6" alt="Nostr" />
+  </a>
+  <a href="https://bsky.app/profile/bitcoinresearchkit.org">
+    <img src="https://img.shields.io/badge/bluesky-blue?link=https%3A%2F%2Fbsky.app%2Fprofile%2Fbitcoinresearchkit.org" alt="Bluesky" />
   </a>
 </p>
 
@@ -33,7 +39,8 @@ The toolkit can be used in various ways to accommodate as many needs as possible
   Completely free including the API which is also auth-less \
   Powered by BRK using the `kibo.money` front-end and all features enabled
 - **CLI** \
-  Node runners can self-host their own instance using [`brk_cli`](https://crates.io/crates/brk_cli)
+  Node runners can self-host their own instance using one simple command: `cargo install brk` \
+  For more information check out: [`brk_cli`](https://crates.io/crates/brk_cli)
 - **Crates** \
   Rust developers have a wide range crates available (which can be found below) for maximum flexibility
 

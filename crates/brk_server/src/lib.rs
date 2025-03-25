@@ -47,7 +47,6 @@ const DEV_PATH: &str = "../..";
 const DOWNLOADS: &str = "downloads";
 const WEBSITES: &str = "websites";
 
-// TODO
 pub struct Server(AppState);
 
 impl Server {
@@ -69,8 +68,7 @@ impl Server {
                 if !fs::exists(&downloaded_websites_path)? {
                     info!("Downloading websites from Github...");
 
-                    // TODO
-                    // Need to download versioned, this is only for testing !
+                    // TODO: Need to download versioned, main is only for testing
                     let url =
                         "https://github.com/bitcoinresearchkit/brk/archive/refs/heads/main.zip";
 

@@ -18,7 +18,7 @@ where
     pub difficultyepoch: StorableVecBuilder<Difficultyepoch, T>,
     pub monthindex: StorableVecBuilder<Monthindex, T>,
     pub yearindex: StorableVecBuilder<Yearindex, T>,
-    // pub halvingepoch: StorableVecGeneator<Halvingepoch, T>, // TODO
+    // TODO: pub halvingepoch: StorableVecGeneator<Halvingepoch, T>,
     pub decadeindex: StorableVecBuilder<Decadeindex, T>,
 }
 

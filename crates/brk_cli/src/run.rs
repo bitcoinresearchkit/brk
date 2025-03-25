@@ -50,9 +50,13 @@ pub fn run(config: RunConfig) -> color_eyre::Result<()> {
 
                 let server = Server::new(served_indexer, served_computer, config.website())?;
 
-                Some(tokio::spawn(async move {
+                let opt = Some(tokio::spawn(async move {
                     server.serve().await.unwrap();
-                }))
+                }));
+
+                sleep(Duration::from_secs(1));
+
+                opt
             } else {
                 None
             };

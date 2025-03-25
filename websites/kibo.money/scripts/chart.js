@@ -7,160 +7,172 @@
  * @param {Accessor<ChartOption>} args.selected
  * @param {Signals} args.signals
  * @param {Utilities} args.utils
- * @param {Datasets} args.datasets
- * @param {Constants} args.consts
  * @param {WebSockets} args.webSockets
  * @param {Elements} args.elements
  */
 export function init({
   colors,
-  datasets,
   elements,
   lightweightCharts,
   selected,
   signals,
   utils,
-  consts,
   webSockets,
 }) {
   console.log("init chart state");
 
-  const scale = signals.createMemo(() => selected().scale);
-
   elements.charts.append(utils.dom.createShadow("left"));
   elements.charts.append(utils.dom.createShadow("right"));
 
-  const { headerElement, titleElement, descriptionElement } =
-    utils.dom.createHeader({});
+  const { headerElement, titleElement } = utils.dom.createHeader({});
   elements.charts.append(headerElement);
   signals.createEffect(selected, (option) => {
     titleElement.innerHTML = option.title;
-    descriptionElement.innerHTML = option.serializedPath;
   });
 
-  const chart = lightweightCharts.createChart({
+  const chart = lightweightCharts.createChartElement({
     parent: elements.charts,
     signals,
     colors,
     id: "chart",
-    scale: scale(),
-    kind: "moveable",
-    consts,
+    kind: "scrollable",
     utils,
   });
 
-  const activeDatasets = signals.createSignal(
-    /** @type {Set<ResourceDataset<any, any>>} */ (new Set()),
-    {
-      equals: false,
-    },
-  );
+  const indexes = utils.dom.createHorizontalChoiceField({
+    title: "Index",
+    selected: "date",
+    choices: [
+      "Height",
+      "Timestamp",
+      "Date",
+      "Week",
+      "Difficulty Epoch",
+      "Month",
+      "Year",
+      "Halving Epoch",
+      "Decade",
+    ],
+    id: "index",
+    signals,
+  });
 
-  function createFetchChunksOfVisibleDatasetsEffect() {
-    signals.createEffect(
-      () => ({
-        ids: chart.visibleDatasetIds(),
-        activeDatasets: activeDatasets(),
-      }),
-      ({ ids, activeDatasets }) => {
-        const datasets = Array.from(activeDatasets);
+  const fieldset = window.document.createElement("fieldset");
+  fieldset.append(indexes);
 
-        if (ids.length === 0 || datasets.length === 0) return;
+  elements.charts.append(fieldset);
 
-        for (let i = 0; i < ids.length; i++) {
-          const id = ids[i];
-          for (let j = 0; j < datasets.length; j++) {
-            datasets[j].fetch(id);
-          }
-        }
-      },
-    );
-  }
-  createFetchChunksOfVisibleDatasetsEffect();
+  // const activeDatasets = signals.createSignal(
+  //   /** @type {Set<ResourceDataset<any, any>>} */ (new Set()),
+  //   {
+  //     equals: false,
+  //   },
+  // );
 
-  /**
-   * @param {ChartOption} option
-   */
-  function applyChartOption(option) {
-    const scale = option.scale;
-    chart.visibleTimeRange.set(chart.getInitialVisibleTimeRange());
+  // function createFetchChunksOfVisibleDatasetsEffect() {
+  //   signals.createEffect(
+  //     () => ({
+  //       ids: chart.visibleDatasetIds(),
+  //       activeDatasets: activeDatasets(),
+  //     }),
+  //     ({ ids, activeDatasets }) => {
+  //       const datasets = Array.from(activeDatasets);
 
-    activeDatasets.set((s) => {
-      s.clear();
-      return s;
-    });
+  //       if (ids.length === 0 || datasets.length === 0) return;
 
-    const chartsBlueprints = [option.top || [], option.bottom].flatMap(
-      (list) => (list ? [list] : []),
-    );
+  //       for (let i = 0; i < ids.length; i++) {
+  //         const id = ids[i];
+  //         for (let j = 0; j < datasets.length; j++) {
+  //           datasets[j].fetch(id);
+  //         }
+  //       }
+  //     },
+  //   );
+  // }
+  // createFetchChunksOfVisibleDatasetsEffect();
 
-    chartsBlueprints.map((seriesBlueprints, paneIndex) => {
-      const chartPane = chart.createPane({
-        paneIndex,
-        unit: paneIndex ? option.unit : "US Dollars",
-      });
+  // /**
+  //  * @param {ChartOption} option
+  //  */
+  // function applyChartOption(option) {
+  //   chart.visibleTimeRange.set(chart.getInitialVisibleTimeRange());
 
-      if (!paneIndex) {
-        /** @type {AnyDatasetPath} */
-        const datasetPath = `${scale}-to-price`;
+  //   activeDatasets.set((s) => {
+  //     s.clear();
+  //     return s;
+  //   });
 
-        const dataset = datasets.getOrCreate(scale, datasetPath);
+  //   const chartsBlueprints = [option.top || [], option.bottom].flatMap(
+  //     (list) => (list ? [list] : []),
+  //   );
 
-        // Don't trigger reactivity by design
-        activeDatasets().add(dataset);
+  //   chartsBlueprints.map((seriesBlueprints, paneIndex) => {
+  //     const chartPane = chart.createPane({
+  //       paneIndex,
+  //       unit: paneIndex ? option.unit : "US Dollars",
+  //     });
 
-        const priceSeries = chartPane.createSplitSeries({
-          blueprint: {
-            datasetPath,
-            title: "BTC Price",
-            type: "Candlestick",
-          },
-          dataset,
-          id: option.id,
-          index: -1,
-        });
+  //     if (!paneIndex) {
+  //       /** @type {AnyDatasetPath} */
+  //       const datasetPath = `${scale}-to-price`;
 
-        signals.createEffect(webSockets.kraken1dCandle.latest, (latest) => {
-          if (!latest) return;
+  //       const dataset = datasets.getOrCreate(scale, datasetPath);
 
-          const index = utils.chunkIdToIndex(scale, latest.year);
+  //       // Don't trigger reactivity by design
+  //       activeDatasets().add(dataset);
 
-          priceSeries.forEach((splitSeries) => {
-            const series = splitSeries.chunks.at(index);
-            if (series) {
-              signals.createEffect(series, (series) => {
-                series?.update(latest);
-              });
-            }
-          });
-        });
-      }
+  //       const priceSeries = chartPane.createSplitSeries({
+  //         blueprint: {
+  //           datasetPath,
+  //           title: "BTC Price",
+  //           type: "Candlestick",
+  //         },
+  //         dataset,
+  //         id: option.id,
+  //         index: -1,
+  //       });
 
-      [...seriesBlueprints].reverse().forEach((blueprint, index) => {
-        const dataset = datasets.getOrCreate(scale, blueprint.datasetPath);
+  //       signals.createEffect(webSockets.kraken1dCandle.latest, (latest) => {
+  //         if (!latest) return;
 
-        // Don't trigger reactivity by design
-        activeDatasets().add(dataset);
+  //         const index = utils.chunkIdToIndex(scale, latest.year);
 
-        chartPane.createSplitSeries({
-          index,
-          blueprint,
-          id: option.id,
-          dataset,
-        });
-      });
+  //         priceSeries.forEach((splitSeries) => {
+  //           const series = splitSeries.chunks.at(index);
+  //           if (series) {
+  //             signals.createEffect(series, (series) => {
+  //               series?.update(latest);
+  //             });
+  //           }
+  //         });
+  //       });
+  //     }
 
-      activeDatasets.set((s) => s);
+  //     [...seriesBlueprints].reverse().forEach((blueprint, index) => {
+  //       const dataset = datasets.getOrCreate(scale, blueprint.datasetPath);
 
-      return chart;
-    });
-  }
+  //       // Don't trigger reactivity by design
+  //       activeDatasets().add(dataset);
 
-  function createApplyChartOptionEffect() {
-    signals.createEffect(selected, (option) => {
-      chart.reset({ scale: option.scale, owner: signals.getOwner() });
-      applyChartOption(option);
-    });
-  }
-  createApplyChartOptionEffect();
+  //       chartPane.createSplitSeries({
+  //         index,
+  //         blueprint,
+  //         id: option.id,
+  //         dataset,
+  //       });
+  //     });
+
+  //     activeDatasets.set((s) => s);
+
+  //     return chart;
+  //   });
+  // }
+
+  // function createApplyChartOptionEffect() {
+  //   signals.createEffect(selected, (option) => {
+  //     chart.reset({ scale: option.scale, owner: signals.getOwner() });
+  //     applyChartOption(option);
+  //   });
+  // }
+  // createApplyChartOptionEffect();
 }

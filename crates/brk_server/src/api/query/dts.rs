@@ -30,14 +30,25 @@ impl DTS for Query<'static> {
 
         let path = path.join(Path::new("vecid-to-indexes.d.ts"));
 
-        let mut contents = Index::all()
-            .into_iter()
+        let indexes = Index::all();
+
+        let mut contents = indexes
+            .iter()
             .enumerate()
             .map(|(i_of_i, i)| format!("type {} = {};", i, i_of_i))
             .collect::<Vec<_>>()
             .join("\n");
 
-        contents += "\n\ninterface VecIdToIndexes {\n";
+        contents += &format!(
+            "\n\nexport type Index = {};",
+            indexes
+                .iter()
+                .map(|i| i.to_string())
+                .collect::<Vec<_>>()
+                .join(" | ")
+        );
+
+        contents += "\n\nexport interface VecIdToIndexes {\n";
 
         self.vecid_to_index_to_vec
             .iter()
@@ -59,6 +70,8 @@ impl DTS for Query<'static> {
             });
 
         contents.push('}');
+
+        contents += "\n\nexport type VecId = keyof VecIdToIndexes;";
 
         fs::write(path, contents)
     }
