@@ -1,31 +1,35 @@
 // @ts-check
 
 /**
- * @import { Options } from './options';
- * @import { ColorName, Frequencies, Frequency } from './types/self';
- */
-
-/**
  * @param {Object} args
  * @param {Colors} args.colors
  * @param {LightweightCharts} args.lightweightCharts
  * @param {Signals} args.signals
  * @param {Utilities} args.utils
- * @param {Datasets} args.datasets
  * @param {Elements} args.elements
  * @param {Constants} args.consts
- * @param {Signal<LastValues>} args.lastValues
  */
 export function init({
   colors,
-  datasets,
   elements,
   lightweightCharts,
   signals,
   utils,
   consts,
-  lastValues,
 }) {
+  /**
+   * @import { ColorName } from './types/self';
+   *
+   * @typedef {Object} Frequency
+   * @property {string} name
+   * @property {string} value
+   * @property {(date: Date) => boolean} isTriggerDay
+   *
+   * @typedef {Object} Frequencies
+   * @property {string} name
+   * @property {Frequency[]} list
+   */
+
   const simulationElement = elements.simulation;
 
   const parametersElement = window.document.createElement("div");
@@ -545,7 +549,7 @@ export function init({
     },
   );
 
-  lightweightCharts.createChart({
+  lightweightCharts.createChartElement({
     parent: resultsElement,
     signals,
     colors,
@@ -587,7 +591,7 @@ export function init({
     ],
   });
 
-  lightweightCharts.createChart({
+  lightweightCharts.createChartElement({
     parent: resultsElement,
     signals,
     colors,
@@ -611,7 +615,7 @@ export function init({
     ],
   });
 
-  lightweightCharts.createChart({
+  lightweightCharts.createChartElement({
     parent: resultsElement,
     signals,
     colors,
@@ -641,7 +645,7 @@ export function init({
     ],
   });
 
-  lightweightCharts.createChart({
+  lightweightCharts.createChartElement({
     parent: resultsElement,
     signals,
     colors,
@@ -674,7 +678,7 @@ export function init({
     ],
   });
 
-  lightweightCharts.createChart({
+  lightweightCharts.createChartElement({
     parent: resultsElement,
     signals,
     colors,
@@ -781,7 +785,7 @@ export function init({
               dollars += topUpAmount;
             }
 
-            const close = closes.fetchedJSONs
+            const close = closes.ranges
               .at(utils.chunkIdToIndex("date", year))
               ?.json()?.dataset.map[utils.date.toString(date)];
 

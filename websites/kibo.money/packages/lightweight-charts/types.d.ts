@@ -10,8 +10,9 @@ import {
   CandlestickData,
   ISeriesApi,
   BaselineData,
-} from "./v4.2.2/types";
+} from "./v5.0.4/types";
 import { Color, Valued, ValuedCandlestickData } from "../../scripts/types/self";
+import { VecId, VecIdToIndexes } from "../../scripts/types/vecid-to-indexes";
 
 interface BaseSeriesBlueprint {
   title: string;
@@ -47,7 +48,7 @@ type RemoveSeriesBlueprintFluff<Blueprint extends AnySpecificSeriesBlueprint> =
   Omit<Blueprint, "type" | "title">;
 
 type SplitSeriesBlueprint = {
-  datasetPath: AnyDatasetPath;
+  key: VecId;
   main?: boolean;
 } & AnySpecificSeriesBlueprint;
 
@@ -64,7 +65,6 @@ interface BaseSeries {
   color: Color | Color[];
   active: Signal<boolean>;
   visible: Accessor<boolean>;
-  disabled: Accessor<boolean>;
 }
 interface SingleSeries extends BaseSeries {
   iseries: ISeriesApi<any>;
@@ -72,7 +72,7 @@ interface SingleSeries extends BaseSeries {
 }
 interface SplitSeries extends BaseSeries {
   chunks: Array<Accessor<ISeriesApi<SeriesType> | undefined>>;
-  dataset: ResourceDataset<TimeScale, number>;
+  // dataset: ResourceDataset<number>;
 }
 type AnySeries = SingleSeries | SplitSeries;
 
@@ -81,8 +81,8 @@ interface CreateSingleSeriesParameters {
   id: string;
 }
 
-interface CreateSplitSeriesParameters<S extends TimeScale> {
-  dataset: ResourceDataset<S>;
+interface CreateSplitSeriesParameters {
+  // dataset: ResourceDataset;
   blueprint: SplitSeriesBlueprint;
   id: string;
   index: number;
@@ -95,9 +95,7 @@ type ChartPane = IChartApi & {
   setHidden: (b: boolean) => void;
   setInitialVisibleTimeRange: VoidFunction;
   createSingleSeries: (a: CreateSingleSeriesParameters) => SingleSeries;
-  createSplitSeries: <S extends TimeScale>(
-    a: CreateSplitSeriesParameters<S>,
-  ) => SplitSeries[];
+  createSplitSeries: (a: CreateSplitSeriesParameters) => SplitSeries[];
   anySeries: AnySeries[];
   singleSeries: SingleSeries[];
   splitSeries: SplitSeries[];
@@ -105,7 +103,7 @@ type ChartPane = IChartApi & {
 };
 
 interface CreatePaneParameters {
-  unit: Unit;
+  // unit: Unit;
   paneIndex?: number;
   options?: DeepPartial<ChartOptions>;
   config?: SingleSeriesBlueprint[];

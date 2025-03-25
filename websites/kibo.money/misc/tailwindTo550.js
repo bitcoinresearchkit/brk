@@ -1,7 +1,7 @@
 (async () => {
   const theme = await (
     await fetch(
-      "https://raw.githubusercontent.com/tailwindlabs/tailwindcss/refs/heads/next/packages/tailwindcss/theme.css",
+      "https://github.com/tailwindlabs/tailwindcss/blob/main/packages/tailwindcss/theme.css",
     )
   ).text();
 

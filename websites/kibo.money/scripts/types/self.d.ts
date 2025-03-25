@@ -8,39 +8,35 @@ import {
   CandlestickStyleOptions,
   LineStyleOptions,
   SeriesOptionsCommon,
-  Range,
+  IRange,
   Time,
   SingleValueData,
   CandlestickData,
   SeriesType,
   ISeriesApi,
   BaselineData,
-} from "../../packages/lightweight-charts/v4.2.2/types";
-import { DatePath, HeightPath, LastPath } from "./paths";
-import { AnyPossibleCohortId } from "../options";
+} from "../../packages/lightweight-charts/v5.0.4/types";
+import { AnyPossibleCohortId, Groups } from "../options";
+import { Index as _Index, VecIdToIndexes } from "./vecid-to-indexes";
 import { Signal } from "../../packages/solid-signals/types";
 
-type GrowToSize<T, N extends number, A extends T[]> = A["length"] extends N
-  ? A
-  : GrowToSize<T, N, [...A, T]>;
+// type TimeScale = "date" | "height";
 
-type FixedArray<T, N extends number> = GrowToSize<T, N, []>;
+type TimeRange = IRange<Time | number>;
 
-type TimeScale = "date" | "height";
+// type DatasetPath<Scale extends TimeScale> = Scale extends "date"
+//   ? DatePath
+//   : HeightPath;
 
-type TimeRange = Range<Time | number>;
+// type AnyDatasetPath = import("./paths").DatePath | import("./paths").HeightPath;
 
-type DatasetPath<Scale extends TimeScale> = Scale extends "date"
-  ? DatePath
-  : HeightPath;
-
-type AnyDatasetPath = import("./paths").DatePath | import("./paths").HeightPath;
-
-type AnyPath = AnyDatasetPath | LastPath;
+// type AnyPath = AnyDatasetPath | LastPath;
 
 type Color = () => string;
 type ColorName = keyof Colors;
 
+// TODO: Compute from VecId when displaying the Unit
+// And write a checker when localhost, similar to the dup one
 type Unit =
   | ""
   | "Bitcoin"
@@ -65,46 +61,18 @@ interface PartialOption {
   name: string;
 }
 
-interface PartialHomeOption extends PartialOption {
-  kind: "home";
-  title: "Home";
-  name: "Home";
-}
-
-interface PartialLivePriceOption extends PartialOption {
-  kind: "live-price";
-}
-
-interface PartialMoscowTimeOption extends PartialOption {
-  kind: "moscow-time";
-}
-
-interface PartialConverterOption extends PartialOption {
-  kind: "converter";
-}
+type DatasetId = keyof VecIdToIndexes;
 
 interface PartialChartOption extends PartialOption {
-  scale: TimeScale;
-  title: string;
-  shortTitle?: string;
-  unit: Unit;
-  description: string;
+  title?: string;
   top?: SplitSeriesBlueprint[];
   bottom?: SplitSeriesBlueprint[];
-  dashboard?: {
-    ignoreName?: boolean;
-    skip?: boolean;
-  };
 }
 
 interface PartialSimulationOption extends PartialOption {
   kind: "simulation";
   title: string;
   name: string;
-}
-
-interface PartialPdfOption extends PartialOption {
-  pdf: string;
 }
 
 interface PartialUrlOption extends PartialOption {
@@ -118,56 +86,31 @@ interface PartialOptionsGroup {
 }
 
 type AnyPartialOption =
-  | PartialHomeOption
-  | PartialLivePriceOption
-  | PartialMoscowTimeOption
-  | PartialConverterOption
   | PartialChartOption
   | PartialSimulationOption
-  | PartialPdfOption
   | PartialUrlOption;
 
 type PartialOptionsTree = (AnyPartialOption | PartialOptionsGroup)[];
 
 interface ProcessedOptionAddons {
   id: string;
-  path: OptionPath;
-  serializedPath: string;
+  path: string[];
   title: string;
 }
 
-type OptionPath = {
-  id: string;
-  name: string;
-}[];
-
-type HomeOption = PartialHomeOption & ProcessedOptionAddons;
 type SimulationOption = PartialSimulationOption & ProcessedOptionAddons;
-type LivePriceOption = PartialLivePriceOption & ProcessedOptionAddons;
-type MoscowTimeOption = PartialMoscowTimeOption & ProcessedOptionAddons;
-type ConverterOption = PartialConverterOption & ProcessedOptionAddons;
-
-interface PdfOption extends PartialPdfOption, ProcessedOptionAddons {
-  kind: "pdf";
-}
 
 interface UrlOption extends PartialUrlOption, ProcessedOptionAddons {
   kind: "url";
 }
 
-interface ChartOption extends PartialChartOption, ProcessedOptionAddons {
+interface ChartOption
+  extends Omit<PartialChartOption, "title">,
+    ProcessedOptionAddons {
   kind: "chart";
 }
 
-type Option =
-  | HomeOption
-  | LivePriceOption
-  | MoscowTimeOption
-  | ConverterOption
-  | PdfOption
-  | UrlOption
-  | ChartOption
-  | SimulationOption;
+type Option = UrlOption | ChartOption | SimulationOption;
 
 type OptionsTree = (Option | OptionsGroup)[];
 
@@ -183,29 +126,23 @@ interface OHLC {
   close: number;
 }
 
-interface ResourceDataset<
-  Scale extends TimeScale,
-  Type extends OHLC | number = number,
-> {
-  scale: Scale;
+interface VecResource<Type extends OHLC | number = number> {
   url: string;
-  fetch: (id: number) => Promise<void>;
-  fetchRange: (start: number, end: number) => Promise<void[]>;
-  fetchedJSONs: FetchedResult<Scale, Type>[];
+  fetch: (from: number, to: number) => Promise<void>;
+  ranges: FetchedVecRange<Type>[];
 }
 
 type ValuedCandlestickData = CandlestickData & Valued;
 
-interface FetchedResult<
-  Scale extends TimeScale,
-  Type extends number | OHLC,
-  Value extends SingleValueData | ValuedCandlestickData = Type extends number
+interface FetchedVecRange<
+  Value extends number | OHLC,
+  Data extends SingleValueData | ValuedCandlestickData = Value extends number
     ? SingleValueData
     : ValuedCandlestickData,
 > {
   at: Date | null;
-  json: Signal<FetchedJSON<Scale, Type> | null>;
-  vec: Accessor<Value[] | null>;
+  fetched: Signal<Value[] | null>;
+  transformed: Accessor<Data[] | null>;
   loading: boolean;
 }
 
@@ -215,37 +152,12 @@ interface Valued {
 
 type DatasetValue<T> = T & Valued;
 
-interface FetchedJSON<Scale extends TimeScale, Type extends number | OHLC> {
-  source: FetchedSource;
-  chunk: FetchedChunk;
-  dataset: FetchedDataset<Scale, Type>;
-}
-
 type FetchedSource = string;
 
 interface FetchedChunk {
   id: number;
   previous: string | null;
   next: string | null;
-}
-
-type FetchedDataset<
-  Scale extends TimeScale,
-  Type extends number | OHLC,
-> = Scale extends "date"
-  ? FetchedDateDataset<Type>
-  : FetchedHeightDataset<Type>;
-
-interface Versioned {
-  version: number;
-}
-
-interface FetchedDateDataset<Type> extends Versioned {
-  map: Record<string, Type>;
-}
-
-interface FetchedHeightDataset<Type> extends Versioned {
-  map: Type[];
 }
 
 interface Weighted {
@@ -256,12 +168,9 @@ type DatasetCandlestickData = DatasetValue<CandlestickData> & { year: number };
 
 type NotFunction<T> = T extends Function ? never : T;
 
-type Groups = import("../options").Groups;
-
 type DefaultCohortOption = CohortOption<AnyPossibleCohortId>;
 
 interface CohortOption<Id extends AnyPossibleCohortId> {
-  scale: TimeScale;
   name: string;
   title: string;
   datasetId: Id;
@@ -272,31 +181,26 @@ interface CohortOption<Id extends AnyPossibleCohortId> {
 type DefaultCohortOptions = CohortOptions<AnyPossibleCohortId>;
 
 interface CohortOptions<Id extends AnyPossibleCohortId> {
-  scale: TimeScale;
   name: string;
   title: string;
   list: CohortOption<Id>[];
 }
 
 interface RatioOption {
-  scale: TimeScale;
   color: Color;
-  valueDatasetPath: AnyDatasetPath;
-  ratioDatasetPath: AnyDatasetPath;
+  // valueDatasetPath: AnyDatasetPath;
+  // ratioDatasetPath: AnyDatasetPath;
   title: string;
 }
 
 interface RatioOptions {
-  scale: TimeScale;
   title: string;
   list: RatioOption[];
 }
 
-interface Frequency {
-  name: string;
-  value: string;
-  isTriggerDay: (date: Date) => boolean;
-}
-type Frequencies = { name: string; list: Frequency[] };
+// TODO: Remove
+// Fetch last of each individually when in viewport
+// type LastValues = Record<LastPath, number> | null;
 
-type LastValues = Record<LastPath, number> | null;
+type Timestamp = -1;
+type Index = _Index | Timestamp;

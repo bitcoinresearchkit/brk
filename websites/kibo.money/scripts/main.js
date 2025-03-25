@@ -1,16 +1,15 @@
 // @ts-check
 
 /**
- * @import { Option, ResourceDataset, TimeScale, TimeRange, Unit, Weighted, DatasetPath, OHLC, FetchedJSON, DatasetValue, FetchedResult, AnyDatasetPath, Color, DatasetCandlestickData, PartialChartOption, ChartOption, AnyPartialOption, ProcessedOptionAddons, OptionsTree, AnyPath, SimulationOption, Frequency, LastValues } from "./types/self"
- * @import {createChart as CreateClassicChart, createChartEx as CreateCustomChart, LineStyleOptions } from "../packages/lightweight-charts/v4.2.2/types";
+ * @import { Option, TimeRange, Weighted, OHLC, DatasetValue, Color, DatasetCandlestickData, PartialChartOption, ChartOption, AnyPartialOption, ProcessedOptionAddons, OptionsTree, SimulationOption, VecResource, Valued, FetchedVecRange, Index } from "./types/self"
  * @import { Marker,  CreatePaneParameters,  HoveredLegend, ChartPane, SplitSeries, SingleSeries, CreateSplitSeriesParameters, LineSeriesBlueprint, CandlestickSeriesBlueprint, BaselineSeriesBlueprint, CreateBaseSeriesParameters, BaseSeries, RemoveSeriesBlueprintFluff, SplitSeriesBlueprint, AnySeries, PriceSeriesType } from "../packages/lightweight-charts/types";
  * @import * as _ from "../packages/ufuzzy/v1.0.14/types"
- * @import { DeepPartial, ChartOptions, IChartApi, IHorzScaleBehavior, WhitespaceData, SingleValueData, ISeriesApi, Time, LineData, LogicalRange, SeriesMarker, CandlestickData, SeriesType, BaselineStyleOptions, SeriesOptionsCommon } from "../packages/lightweight-charts/v4.2.2/types"
- * @import { DatePath, HeightPath, LastPath } from "./types/paths";
+ * @import { createChart as CreateClassicChart, createChartEx as CreateCustomChart, LineStyleOptions, DeepPartial, ChartOptions, IChartApi, IHorzScaleBehavior, WhitespaceData, SingleValueData, ISeriesApi, Time, LineData, LogicalRange, SeriesMarker, CandlestickData, SeriesType, BaselineStyleOptions, SeriesOptionsCommon } from "../packages/lightweight-charts/v5.0.4/types"
  * @import { SignalOptions } from "../packages/solid-signals/2024-11-02/types/core/core"
  * @import { getOwner as GetOwner, onCleanup as OnCleanup, Owner } from "../packages/solid-signals/2024-11-02/types/core/owner"
  * @import { createSignal as CreateSignal, createEffect as CreateEffect, Accessor, Setter, createMemo as CreateMemo, createRoot as CreateRoot, runWithOwner as RunWithOwner } from "../packages/solid-signals/2024-11-02/types/signals";
  * @import {Signal, Signals} from "../packages/solid-signals/types";
+ * @import {Addressindex, Dateindex, Decadeindex, Difficultyepoch, Halvingepoch, Height, Monthindex, P2PK33index, P2PK65index, P2PKHindex, P2SHindex, P2TRindex, P2WPKHindex, P2WSHindex, Txindex, Txinindex, Txoutindex, VecId, Weekindex, Yearindex} from "./types/vecid-to-indexes"
  */
 
 function initPackages() {
@@ -71,7 +70,7 @@ function initPackages() {
 /**
  * @typedef {ReturnType<typeof initPackages>} Packages
  * @typedef {Awaited<ReturnType<Packages["lightweightCharts"]>>} LightweightCharts
- * @typedef {ReturnType<LightweightCharts['createChart']>} Chart
+ * @typedef {ReturnType<LightweightCharts['createChartElement']>} Chart
  */
 
 function createUtils() {
@@ -236,7 +235,7 @@ function createUtils() {
      * @param {string} args.inputValue
      * @param {boolean} [args.inputChecked=false]
      * @param {string} args.labelTitle
-     * @param {'solo' | 'multi'} args.type
+     * @param {'radio' | 'checkbox'} args.type
      * @param {(event: MouseEvent) => void} [args.onClick]
      */
     createLabeledInput({
@@ -253,7 +252,7 @@ function createUtils() {
       inputId = inputId.toLowerCase();
 
       const input = window.document.createElement("input");
-      if (type === "multi") {
+      if (type === "radio") {
         input.type = "radio";
         input.name = inputName;
       } else {
@@ -373,7 +372,7 @@ function createUtils() {
           inputValue,
           inputChecked: inputValue === selected,
           labelTitle: choice,
-          type: "multi",
+          type: "radio",
         });
 
         const text = window.document.createTextNode(choice);
@@ -514,9 +513,8 @@ function createUtils() {
     /**
      * @param {Object} param0
      * @param {string} [param0.title]
-     * @param {string} [param0.description]
      */
-    createHeader({ title, description }) {
+    createHeader({ title }) {
       const headerElement = window.document.createElement("header");
 
       const div = window.document.createElement("div");
@@ -534,16 +532,9 @@ function createUtils() {
       h1.append(titleElement);
       titleElement.style.display = "block";
 
-      const descriptionElement = window.document.createElement("small");
-      if (description) {
-        descriptionElement.append(description);
-      }
-      h1.append(descriptionElement);
-
       return {
         headerElement,
         titleElement,
-        descriptionElement,
       };
     },
     /**
@@ -1158,16 +1149,181 @@ function createUtils() {
     return s.replace(/\W/g, " ").trim().replace(/ +/g, "-").toLowerCase();
   }
 
-  /**
-   * @param {TimeScale} scale
-   * @param {number} id
-   */
-  function chunkIdToIndex(scale, id) {
-    const HEIGHT_CHUNK_SIZE = 10_000;
-    return scale === "date" ? id - 2009 : Math.floor(id / HEIGHT_CHUNK_SIZE);
-  }
+  const api = (() => {
+    /**
+     * @template T
+     * @param {(value: T) => void} callback
+     * @param {string} path
+     */
+    async function fetchApi(callback, path) {
+      const url = `/api${path}`;
+
+      /** @type {T | null} */
+      let cachedJson = null;
+
+      /** @type {Cache | undefined} */
+      let cache;
+      try {
+        cache = await caches.open("api");
+        const cachedResponse = await cache.match(url);
+        if (cachedResponse) {
+          console.log(`cache: ${url}`);
+          const json = /** @type {T} */ await cachedResponse.json();
+          cachedJson = json;
+          callback(json);
+        }
+      } catch {}
+
+      if (navigator.onLine) {
+        runWhenIdle(async function () {
+          // TODO: rerun of 10s instead of returning (due to some kind of error)
+
+          /** @type {Response | undefined} */
+          let fetchedResponse;
+          try {
+            fetchedResponse = await fetch(url, {
+              signal: AbortSignal.timeout(5000),
+            });
+            if (!fetchedResponse.ok) {
+              throw Error;
+            }
+          } catch {
+            return;
+          }
+
+          const clonedResponse = fetchedResponse.clone();
+
+          let fetchedJson = /** @type {T | null} */ (null);
+          try {
+            fetchedJson = /** @type {T} */ (await fetchedResponse.json());
+          } catch (_) {
+            return;
+          }
+
+          if (!fetchedJson) return;
+
+          console.log(`fetch: ${url}`);
+
+          if (Array.isArray(cachedJson) && Array.isArray(fetchedJson)) {
+            const previousLength = cachedJson?.length || 0;
+            const newLength = fetchedJson.length;
+
+            if (!newLength) {
+              return;
+            }
+
+            if (previousLength && previousLength === newLength) {
+              const previousLastValue = Object.values(cachedJson || []).at(-1);
+              const newLastValue = Object.values(fetchedJson).at(-1);
+              if (
+                JSON.stringify(previousLastValue) ===
+                JSON.stringify(newLastValue)
+              ) {
+                return;
+              }
+            }
+          }
+
+          callback(fetchedJson);
+
+          runWhenIdle(async function () {
+            try {
+              await cache?.put(url, clonedResponse);
+            } catch (_) {}
+          });
+        });
+      }
+    }
+
+    /**
+     * @param {Index} index
+     */
+    function indexToString(index) {
+      switch (index) {
+        case /** @satisfies {Addressindex} */ (0):
+          return "Addressindex";
+        case /** @satisfies {Dateindex} */ (1):
+          return "Dateindex";
+        case /** @satisfies {Height} */ (2):
+          return "Height";
+        case /** @satisfies {P2PK33index} */ (3):
+          return "P2PK33index";
+        case /** @satisfies {P2PK65index} */ (4):
+          return "P2PK65index";
+        case /** @satisfies {P2PKHindex} */ (5):
+          return "P2PKHindex";
+        case /** @satisfies {P2SHindex} */ (6):
+          return "P2SHindex";
+        case /** @satisfies {P2TRindex} */ (7):
+          return "P2TRindex";
+        case /** @satisfies {P2WPKHindex} */ (8):
+          return "P2WPKHindex";
+        case /** @satisfies {P2WSHindex} */ (9):
+          return "P2WSHindex";
+        case /** @satisfies {Txindex} */ (10):
+          return "Txindex";
+        case /** @satisfies {Txinindex} */ (11):
+          return "Txinindex";
+        case /** @satisfies {Txoutindex} */ (12):
+          return "Txoutindex";
+        case /** @satisfies {Weekindex} */ (13):
+          return "Weekindex";
+        case /** @satisfies {Monthindex} */ (14):
+          return "Monthindex";
+        case /** @satisfies {Yearindex} */ (15):
+          return "Yearindex";
+        case /** @satisfies {Decadeindex} */ (16):
+          return "Decadeindex";
+        case /** @satisfies {Difficultyepoch} */ (17):
+          return "Difficultyepoch";
+        case /** @satisfies {Halvingepoch} */ (18):
+          return "Halvingepoch";
+      }
+    }
+
+    /**
+     * @param {Index} index
+     * @param {VecId} vecId
+     * @param {number} [from]
+     * @param {number} [to]
+     */
+    function genPath(index, vecId, from, to) {
+      let path = `/query?index=${indexToString(index)}&values=${vecId}`;
+      if (from !== undefined) {
+        path += `&from=${from}`;
+      }
+      if (to !== undefined) {
+        path += `&to=${to}`;
+      }
+      return path;
+    }
+
+    return {
+      /**
+       * @template {number | OHLC} [T=number]
+       * @param {(v: T) => void} callback
+       * @param {Index} index
+       * @param {VecId} vecId
+       * @param {number} [from]
+       * @param {number} [to]
+       */
+      fetchVec(callback, index, vecId, from, to) {
+        fetchApi(callback, genPath(index, vecId, from, to));
+      },
+      /**
+       * @template {number | OHLC} [T=number]
+       * @param {(v: T) => void} callback
+       * @param {Index} index
+       * @param {VecId} vecId
+       */
+      fetchLast(callback, index, vecId) {
+        fetchApi(callback, genPath(index, vecId, -1));
+      },
+    };
+  })();
 
   return {
+    api,
     isSerializedBooleanTrue,
     sleep,
     next,
@@ -1183,7 +1339,6 @@ function createUtils() {
     debounce,
     runWhenIdle,
     getNumberOfDaysBetweenTwoDates,
-    chunkIdToIndex,
     stringToId,
   };
 }
@@ -1249,7 +1404,6 @@ function createConstants() {
 
 function createIds() {
   return /** @type {const} */ ({
-    selectedId: `selected-id`,
     asideSelectorLabel: `aside-selector-label`,
     checkedFrameSelectorLabel: "checked-frame-selector-label",
   });
@@ -1279,7 +1433,6 @@ function getElements(ids) {
     searchLabel: getElementById(`search-selector-label`),
     search: getElementById("search"),
     nav: getElementById("nav"),
-    navHeader: getElementById("nav-header"),
     searchInput: /** @type {HTMLInputElement} */ (
       getElementById("search-input")
     ),
@@ -1305,7 +1458,8 @@ function createColors(dark, elements, utils) {
    * @param {string} color
    */
   function getColor(color) {
-    return utils.color.oklch2hex(elements.style.getPropertyValue(`--${color}`));
+    return elements.style.getPropertyValue(`--${color}`);
+    // return utils.color.oklch2hex(elements.style.getPropertyValue(`--${color}`));
   }
   function red() {
     return getColor("red");
@@ -1361,6 +1515,9 @@ function createColors(dark, elements, utils) {
   function rose() {
     return getColor("rose");
   }
+  function off() {
+    return getColor("gray");
+  }
 
   /**
    * @param {string} property
@@ -1369,10 +1526,6 @@ function createColors(dark, elements, utils) {
     const value = elements.style.getPropertyValue(property);
     const [light, _dark] = value.slice(11, -1).split(", ");
     return dark() ? _dark : light;
-  }
-
-  function off() {
-    return getLightDarkValue("--off-color");
   }
 
   function textColor() {
@@ -1513,372 +1666,6 @@ function createColors(dark, elements, utils) {
 /**
  * @typedef {ReturnType<typeof createColors>} Colors
  */
-
-/**
- * @param {Signals} signals
- * @param {Constants} consts
- * @param {Utilities} utils
- */
-function createDatasets(signals, consts, utils) {
-  /** @type {Map<DatePath, ResourceDataset<"date">>} */
-  const date = new Map();
-  /** @type {Map<HeightPath, ResourceDataset<"height">>} */
-  const height = new Map();
-
-  const URL = "/api";
-  const BACKUP_URL = "https://backup.kibo.money/api";
-
-  const datasetsOwner = signals.getOwner();
-
-  /**
-   * @template {TimeScale} S
-   * @template {number | OHLC} [T=number]
-   * @param {S} scale
-   * @param {string} path
-   */
-  function createResourceDataset(scale, path) {
-    return /** @type {ResourceDataset<S, T>} */ (
-      signals.runWithOwner(datasetsOwner, () => {
-        /** @typedef {DatasetValue<T extends number ? SingleValueData : CandlestickData>} Value */
-
-        const baseURL = `${URL}/${path}`;
-
-        const backupURL = `${BACKUP_URL}/${path}`;
-
-        const fetchedJSONs = new Array(
-          (new Date().getFullYear() -
-            new Date("2009-01-01").getFullYear() +
-            2) *
-            (scale === "date" ? 1 : 6),
-        )
-          .fill(null)
-          .map(() => {
-            const json = signals.createSignal(
-              /** @type {FetchedJSON<S, T> | null} */ (null),
-            );
-
-            /** @type {FetchedResult<S, T>} */
-            const fetchedResult = {
-              at: null,
-              json,
-              loading: false,
-              vec: signals.createMemo(() => {
-                const map = json()?.dataset.map;
-
-                if (!map) {
-                  return null;
-                }
-
-                const chunkId = json()?.chunk.id;
-
-                if (chunkId === undefined) {
-                  throw `ChunkId ${chunkId} is undefined`;
-                }
-
-                if (Array.isArray(map)) {
-                  const values = new Array(map.length);
-
-                  for (let i = 0; i < map.length; i++) {
-                    const value = map[i];
-
-                    values[i] = /** @type {Value} */ ({
-                      time: /** @type {Time} */ (chunkId + i),
-                      ...(typeof value !== "number" && value !== null
-                        ? {
-                            .../** @type {OHLC} */ (value),
-                            value: value.close,
-                          }
-                        : {
-                            value:
-                              value === null
-                                ? NaN
-                                : /** @type {number} */ (value),
-                          }),
-                    });
-                  }
-
-                  return values;
-                } else {
-                  return Object.entries(map).map(
-                    ([date, value]) =>
-                      /** @type {Value} */ ({
-                        time: date,
-                        ...(typeof value !== "number" && value !== null
-                          ? {
-                              .../** @type {OHLC} */ (value),
-                              value: value.close,
-                            }
-                          : {
-                              value:
-                                value === null
-                                  ? NaN
-                                  : /** @type {number} */ (value),
-                            }),
-                      }),
-                  );
-                }
-              }),
-            };
-
-            return fetchedResult;
-          });
-
-        /**
-         * @param {number} id
-         */
-        async function _fetch(id) {
-          const index = utils.chunkIdToIndex(scale, id);
-
-          if (
-            index < 0 ||
-            (scale === "date" && id > new Date().getUTCFullYear()) ||
-            (scale === "height" &&
-              id > 165 * 365 * (new Date().getUTCFullYear() - 2009))
-          ) {
-            return;
-          }
-
-          const fetched = fetchedJSONs.at(index);
-
-          if (scale === "height" && index > 0) {
-            const length = fetchedJSONs.at(index - 1)?.vec()?.length;
-
-            if (length !== undefined && length < consts.HEIGHT_CHUNK_SIZE) {
-              return;
-            }
-          }
-
-          if (!fetched || fetched.loading) {
-            return;
-          } else if (fetched.at) {
-            const diff = new Date().getTime() - fetched.at.getTime();
-
-            if (
-              diff < consts.ONE_MINUTE_IN_MS ||
-              (index < fetchedJSONs.findLastIndex((json) => json.at) &&
-                diff < consts.ONE_HOUR_IN_MS)
-            ) {
-              return;
-            }
-          }
-
-          fetched.loading = true;
-
-          /** @type {Cache | undefined} */
-          let cache;
-
-          const urlWithQuery = `${baseURL}?chunk=${id}`;
-          const backupUrlWithQuery = `${backupURL}?chunk=${id}`;
-
-          if (!fetched.json()) {
-            try {
-              cache = await caches.open("resources");
-
-              const cachedResponse = await cache.match(urlWithQuery);
-
-              if (cachedResponse) {
-                /** @type {FetchedJSON<S, T> | null} */
-                const json = await convertResponseToJSON(cachedResponse);
-
-                if (json) {
-                  console.log(`cache: ${path}?chunk=${id}`);
-
-                  fetched.json.set(() => json);
-                }
-              }
-            } catch {}
-          }
-
-          if (!navigator.onLine) {
-            fetched.loading = false;
-            return;
-          }
-
-          /** @type {Response | undefined} */
-          let fetchedResponse;
-
-          /** @type {RequestInit} */
-          const fetchConfig = {
-            signal: AbortSignal.timeout(5000),
-          };
-
-          try {
-            fetchedResponse = await fetch(urlWithQuery, fetchConfig);
-
-            if (!fetchedResponse.ok) {
-              throw Error;
-            }
-          } catch {
-            try {
-              fetchedResponse = await fetch(backupUrlWithQuery, fetchConfig);
-            } catch {
-              fetched.loading = false;
-              return;
-            }
-
-            if (!fetchedResponse || !fetchedResponse.ok) {
-              fetched.loading = false;
-              return;
-            }
-          }
-
-          const clonedResponse = fetchedResponse.clone();
-
-          /** @type {FetchedJSON<S, T> | null} */
-          const json = await convertResponseToJSON(fetchedResponse);
-
-          if (!json) {
-            fetched.loading = false;
-            return;
-          }
-
-          console.log(`fetch: ${path}?chunk=${id}`);
-
-          const previousMap = fetched.json()?.dataset;
-          const newMap = json.dataset.map;
-
-          const previousLength = Object.keys(previousMap || []).length;
-          const newLength = Object.keys(newMap).length;
-
-          if (!newLength) {
-            fetched.loading = false;
-            return;
-          }
-
-          if (previousLength && previousLength === newLength) {
-            const previousLastValue = Object.values(previousMap || []).at(-1);
-            const newLastValue = Object.values(newMap).at(-1);
-
-            if (newLastValue === null && previousLastValue === null) {
-              fetched.at = new Date();
-              fetched.loading = false;
-              return;
-            } else if (typeof newLastValue === "number") {
-              if (previousLastValue === newLastValue) {
-                fetched.at = new Date();
-                fetched.loading = false;
-                return;
-              }
-            } else {
-              const previousLastOHLC = /** @type {OHLC} */ (previousLastValue);
-              const newLastOHLC = /** @type {OHLC} */ (newLastValue);
-
-              if (
-                previousLastOHLC.open === newLastOHLC.open &&
-                previousLastOHLC.high === newLastOHLC.high &&
-                previousLastOHLC.low === newLastOHLC.low &&
-                previousLastOHLC.close === newLastOHLC.close
-              ) {
-                fetched.loading = false;
-                fetched.at = new Date();
-                return;
-              }
-            }
-          }
-
-          fetched.json.set(() => json);
-
-          utils.runWhenIdle(async function () {
-            try {
-              await cache?.put(urlWithQuery, clonedResponse);
-            } catch (_) {}
-          });
-
-          fetched.at = new Date();
-          fetched.loading = false;
-        }
-
-        /** @type {ResourceDataset<S, T>} */
-        const resource = {
-          scale,
-          url: baseURL,
-          fetch: _fetch,
-          fetchRange(start, end) {
-            const promises = /** @type {Promise<void>[]} */ ([]);
-            switch (scale) {
-              case "date": {
-                utils.array.range(start, end).forEach((year) => {
-                  promises.push(this.fetch(year));
-                });
-                break;
-              }
-              default: {
-                throw "Unsupported";
-              }
-            }
-            return Promise.all(promises);
-          },
-          fetchedJSONs,
-          // drop() {
-          //   dispose();
-          //   fetchedJSONs.forEach((fetched) => {
-          //     fetched.at = null;
-          //     fetched.json.set(null);
-          //   });
-          // },
-        };
-
-        return resource;
-      })
-    );
-  }
-
-  /**
-   * @template {TimeScale} S
-   * @template {number | OHLC} T
-   * @param {Response} response
-   */
-  async function convertResponseToJSON(response) {
-    try {
-      return /** @type {FetchedJSON<S, T>} */ (await response.json());
-    } catch (_) {
-      return null;
-    }
-  }
-
-  /**
-   * @template {TimeScale} S
-   * @param {S} scale
-   * @param {DatasetPath<S>} path
-   * @returns {ResourceDataset<S>}
-   */
-  function getOrCreate(scale, path) {
-    if (scale === "date") {
-      const found = date.get(/** @type {DatePath} */ (path));
-      if (found) return /** @type {ResourceDataset<S>} */ (found);
-    } else {
-      const found = height.get(/** @type {HeightPath} */ (path));
-      if (found) return /** @type {ResourceDataset<S>} */ (found);
-    }
-
-    /** @type {ResourceDataset<S, any>} */
-    let dataset;
-
-    if (path === `/${scale}-to-price`) {
-      /** @type {ResourceDataset<S, OHLC>} */
-      dataset = createResourceDataset(scale, path);
-    } else {
-      /** @type {ResourceDataset<S, number>} */
-      dataset = createResourceDataset(scale, path);
-    }
-
-    if (scale === "date") {
-      date.set(/** @type {DatePath} */ (path), /** @type {any} */ (dataset));
-    } else {
-      height.set(
-        /** @type {HeightPath} */ (path),
-        /** @type {any} */ (dataset),
-      );
-    }
-
-    return dataset;
-  }
-
-  return {
-    getOrCreate,
-  };
-}
-/** @typedef {ReturnType<typeof createDatasets>} Datasets */
 
 /**
  * @param {Signals} signals
@@ -2025,12 +1812,12 @@ function initWebSockets(signals, utils) {
 
 function main() {
   const packages = initPackages();
-  const options = import("./options.js");
   const env = initEnv();
   const consts = createConstants();
   const utils = createUtils();
   const ids = createIds();
   const elements = getElements(ids);
+  const options = import("./options.js");
 
   function initFrameSelectors() {
     const children = Array.from(elements.selectors.children);
@@ -2160,41 +1947,20 @@ function main() {
 
       function createLastHeightResource() {
         const lastHeight = signals.createSignal(0);
-
         function fetchLastHeight() {
-          fetch("/api/last-height").then((response) => {
-            response.json().then((json) => {
-              if (typeof json === "number") {
-                lastHeight.set(json);
-              }
-            });
-          });
+          utils.api.fetchLast(
+            (h) => {
+              lastHeight.set(h);
+            },
+            /** @satisfies {Height} */ (2),
+            "height",
+          );
         }
         fetchLastHeight();
-        setInterval(fetchLastHeight, consts.TEN_SECONDS_IN_MS, {});
-
+        setInterval(fetchLastHeight, consts.TEN_SECONDS_IN_MS);
         return lastHeight;
       }
       const lastHeight = createLastHeightResource();
-
-      const lastValues = signals.createSignal(/** @type {LastValues} */ (null));
-
-      function createFetchLastValuesWhenNeededEffect() {
-        let previousHeight = -1;
-        signals.createEffect(lastHeight, (lastHeight) => {
-          if (previousHeight !== lastHeight) {
-            fetch("/api/last").then((response) => {
-              response.json().then((json) => {
-                if (typeof json === "object") {
-                  lastValues.set(json);
-                  previousHeight = lastHeight;
-                }
-              });
-            });
-          }
-        });
-      }
-      createFetchLastValuesWhenNeededEffect();
 
       const webSockets = initWebSockets(signals, utils);
 
@@ -2204,7 +1970,6 @@ function main() {
         colors,
         env,
         ids,
-        lastValues,
         signals,
         utils,
         webSockets,
@@ -2227,8 +1992,6 @@ function main() {
         function initSelectedFrame() {
           console.log("selected: init");
 
-          const datasets = createDatasets(signals, consts, utils);
-
           function createApplyOptionEffect() {
             const lastChartOption = signals.createSignal(
               /** @type {ChartOption | null} */ (null),
@@ -2244,8 +2007,6 @@ function main() {
             );
             let firstChartOption = true;
             let firstSimulationOption = true;
-            let firstLivePriceOption = true;
-            let firstMoscowTimeOption = true;
 
             signals.createEffect(options.selected, (option) => {
               if (previousElement) {
@@ -2260,10 +2021,6 @@ function main() {
               let element;
 
               switch (option.kind) {
-                // case "home": {
-                //   element = elements.home;
-                //   break;
-                // }
                 case "chart": {
                   console.log("chart", option);
 
@@ -2280,9 +2037,7 @@ function main() {
                           signals.runWithOwner(owner, () =>
                             initChartsElement({
                               colors,
-                              datasets,
                               elements,
-                              consts,
                               lightweightCharts,
                               selected: /** @type {any} */ (lastChartOption),
                               signals,
@@ -2313,13 +2068,11 @@ function main() {
                           signals.runWithOwner(owner, () =>
                             init({
                               colors,
-                              datasets,
                               elements,
                               lightweightCharts,
                               signals,
                               utils,
                               consts,
-                              lastValues,
                             }),
                           ),
                         ),
@@ -2330,78 +2083,6 @@ function main() {
 
                   break;
                 }
-                case "live-price": {
-                  console.log("live-price");
-
-                  element = elements.livePrice;
-
-                  if (firstLivePriceOption) {
-                    const lightweightCharts = packages.lightweightCharts();
-                    const script = import("./live-price.js");
-
-                    utils.dom.importStyleAndThen("/styles/live-price.css", () =>
-                      script.then(({ init }) =>
-                        lightweightCharts.then((lightweightCharts) =>
-                          signals.runWithOwner(owner, () =>
-                            init({
-                              colors,
-                              consts,
-                              dark,
-                              datasets,
-                              elements,
-                              ids,
-                              lightweightCharts,
-                              options,
-                              signals,
-                              utils,
-                              webSockets,
-                            }),
-                          ),
-                        ),
-                      ),
-                    );
-                  }
-                  firstLivePriceOption = false;
-
-                  break;
-                }
-                case "moscow-time": {
-                  console.log("moscow-time");
-
-                  element = elements.moscowTime;
-
-                  if (firstLivePriceOption) {
-                    const lightweightCharts = packages.lightweightCharts();
-                    const script = import("./moscow-time.js");
-
-                    utils.dom.importStyleAndThen(
-                      "/styles/moscow-time.css",
-                      () =>
-                        script.then(({ init }) =>
-                          signals.runWithOwner(owner, () =>
-                            init({
-                              colors,
-                              consts,
-                              dark,
-                              datasets,
-                              elements,
-                              ids,
-                              options,
-                              signals,
-                              utils,
-                              webSockets,
-                            }),
-                          ),
-                        ),
-                    );
-                  }
-                  firstLivePriceOption = false;
-
-                  break;
-                }
-                case "converter":
-                case "home":
-                case "pdf":
                 case "url": {
                   return;
                 }
@@ -2429,60 +2110,12 @@ function main() {
       }
       initSelected();
 
-      function initShare() {
-        const shareDiv = utils.dom.getElementById("share-div");
-        const shareContentDiv = utils.dom.getElementById("share-content-div");
-
-        shareDiv.addEventListener("click", () => {
-          qrcode.set(null);
-        });
-
-        shareContentDiv.addEventListener("click", (event) => {
-          event.stopPropagation();
-          event.preventDefault();
-        });
-
-        packages.leanQr().then(({ generate }) => {
-          const imgQrcode = /** @type {HTMLImageElement} */ (
-            utils.dom.getElementById("share-img")
-          );
-
-          const anchor = /** @type {HTMLAnchorElement} */ (
-            utils.dom.getElementById("share-anchor")
-          );
-
-          signals.createEffect(qrcode, (qrcode) => {
-            if (!qrcode) {
-              shareDiv.hidden = true;
-              return;
-            }
-
-            const href = qrcode;
-            anchor.href = href;
-            anchor.innerText =
-              (href.startsWith("http")
-                ? href.split("//").at(-1)
-                : href.split(":").at(-1)) || "";
-
-            imgQrcode.src =
-              generate(/** @type {any} */ (href))?.toDataURL({
-                // @ts-ignore
-                padX: 0,
-                padY: 0,
-              }) || "";
-
-            shareDiv.hidden = false;
-          });
-        });
-      }
-      initShare();
-
       function initFolders() {
         function initTreeElement() {
           options.treeElement.set(() => {
             const treeElement = window.document.createElement("div");
             treeElement.classList.add("tree");
-            elements.navHeader.after(treeElement);
+            elements.nav.append(treeElement);
             return treeElement;
           });
         }
@@ -2496,7 +2129,7 @@ function main() {
           let i = 0;
           while (i !== path.length) {
             try {
-              const id = path[i].id;
+              const id = path[i];
               const details = /** @type {HTMLDetailsElement} */ (
                 utils.dom.getElementById(id)
               );
@@ -2529,9 +2162,7 @@ function main() {
         function initSearchFrame() {
           console.log("search: init");
 
-          const haystack = options.list.map(
-            (option) => `${option.title}\t${option.serializedPath}`,
-          );
+          const haystack = options.list.map((option) => option.title);
 
           const searchSmallOgInnerHTML = elements.searchSmall.innerHTML;
 
@@ -2543,7 +2174,7 @@ function main() {
              * @param {number} pageIndex
              */
             function computeResultPage(searchResult, pageIndex) {
-              /** @type {{ option: Option, path: string, title: string }[]} */
+              /** @type {{ option: Option, title: string }[]} */
               let list = [];
 
               let [indexes, info, order] = searchResult || [null, null, null];
@@ -2561,11 +2192,10 @@ function main() {
                 for (let i = minIndex; i <= maxIndex; i++) {
                   let index = indexes[i];
 
-                  const [title, path] = haystack[index].split("\t");
+                  const title = haystack[index];
 
                   list[i % 100] = {
                     option: options.list[index],
-                    path,
                     title,
                   };
                 }
@@ -2686,7 +2316,7 @@ function main() {
 
                 const list = computeResultPage(result, 0);
 
-                list.forEach(({ option, path, title }) => {
+                list.forEach(({ option, title }) => {
                   const li = window.document.createElement("li");
                   elements.searchResults.appendChild(li);
 
@@ -2694,7 +2324,6 @@ function main() {
                     option,
                     frame: "search",
                     name: title,
-                    top: path,
                     qrcode,
                   });
 
@@ -2715,6 +2344,54 @@ function main() {
         utils.dom.onFirstIntersection(elements.search, initSearchFrame);
       }
       initSearch();
+
+      function initShare() {
+        const shareDiv = utils.dom.getElementById("share-div");
+        const shareContentDiv = utils.dom.getElementById("share-content-div");
+
+        shareDiv.addEventListener("click", () => {
+          qrcode.set(null);
+        });
+
+        shareContentDiv.addEventListener("click", (event) => {
+          event.stopPropagation();
+          event.preventDefault();
+        });
+
+        packages.leanQr().then(({ generate }) => {
+          const imgQrcode = /** @type {HTMLImageElement} */ (
+            utils.dom.getElementById("share-img")
+          );
+
+          const anchor = /** @type {HTMLAnchorElement} */ (
+            utils.dom.getElementById("share-anchor")
+          );
+
+          signals.createEffect(qrcode, (qrcode) => {
+            if (!qrcode) {
+              shareDiv.hidden = true;
+              return;
+            }
+
+            const href = qrcode;
+            anchor.href = href;
+            anchor.innerText =
+              (href.startsWith("http")
+                ? href.split("//").at(-1)
+                : href.split(":").at(-1)) || "";
+
+            imgQrcode.src =
+              generate(/** @type {any} */ (href))?.toDataURL({
+                // @ts-ignore
+                padX: 0,
+                padY: 0,
+              }) || "";
+
+            shareDiv.hidden = false;
+          });
+        });
+      }
+      initShare();
 
       function initDesktopResizeBar() {
         const resizeBar = utils.dom.getElementById("resize-bar");

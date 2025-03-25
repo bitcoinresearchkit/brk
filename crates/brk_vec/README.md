@@ -17,7 +17,7 @@
   <a href="https://deps.rs/crate/brk_vec">
     <img src="https://deps.rs/crate/brk_vec/latest/status.svg" alt="Dependency status">
   </a>
-  <a href="https://discord.gg/EScZAYX4">
+  <a href="https://discord.gg/Cvrwpv3zEG">
     <img src="https://img.shields.io/discord/1350431684562124850" alt="Chat" />
   </a>
 </p>

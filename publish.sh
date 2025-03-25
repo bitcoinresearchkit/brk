@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+cargo clean
+
 cargo build --all-targets
 
 cd crates/brk

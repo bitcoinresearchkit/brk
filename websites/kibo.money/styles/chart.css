@@ -26,7 +26,6 @@
 
   .chart {
     flex: 1;
-    margin-top: 2rem;
 
     .lightweight-chart {
       margin-left: var(--negative-main-padding);
