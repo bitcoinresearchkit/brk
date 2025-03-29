@@ -7,16 +7,8 @@
  * @param {Signals} args.signals
  * @param {Utilities} args.utils
  * @param {Elements} args.elements
- * @param {Constants} args.consts
  */
-export function init({
-  colors,
-  elements,
-  lightweightCharts,
-  signals,
-  utils,
-  consts,
-}) {
+export function init({ colors, elements, lightweightCharts, signals, utils }) {
   /**
    * @import { ColorName } from './types/self';
    *
@@ -246,7 +238,6 @@ export function init({
   parametersElement.append(
     utils.dom.createHeader({
       title: "Save in Bitcoin",
-      description: "What if you bought Bitcoin in the past ?",
     }).headerElement,
   );
 
@@ -557,7 +548,6 @@ export function init({
     kind: "static",
     scale: "date",
     utils,
-    consts,
     config: [
       {
         unit: "US Dollars",
@@ -599,7 +589,6 @@ export function init({
     scale: "date",
     kind: "static",
     utils,
-    consts,
     config: [
       {
         unit: "US Dollars",
@@ -623,7 +612,6 @@ export function init({
     scale: "date",
     kind: "static",
     utils,
-    consts,
     config: [
       {
         unit: "US Dollars",
@@ -653,7 +641,6 @@ export function init({
     scale: "date",
     kind: "static",
     utils,
-    consts,
     config: [
       {
         unit: "US Dollars",
@@ -687,7 +674,6 @@ export function init({
     scale: "date",
     utils,
     owner,
-    consts,
     config: [
       {
         unit: "Percentage",

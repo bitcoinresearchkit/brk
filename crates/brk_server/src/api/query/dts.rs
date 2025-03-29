@@ -5,7 +5,6 @@ use brk_query::{Index, Query};
 use crate::Website;
 
 const SCRIPTS: &str = "scripts";
-const TPYES: &str = "types";
 
 #[allow(clippy::upper_case_acronyms)]
 pub trait DTS {
@@ -24,23 +23,26 @@ impl DTS for Query<'static> {
             return Ok(());
         }
 
-        let path = path.join(SCRIPTS).join(TPYES);
+        let path = path.join(SCRIPTS);
 
         fs::create_dir_all(&path)?;
 
-        let path = path.join(Path::new("vecid-to-indexes.d.ts"));
+        let path = path.join(Path::new("vecid-to-indexes.js"));
 
         let indexes = Index::all();
 
         let mut contents = indexes
             .iter()
             .enumerate()
-            .map(|(i_of_i, i)| format!("type {} = {};", i, i_of_i))
+            .map(|(i_of_i, i)| {
+                // let lowered = i.to_string().to_lowercase();
+                format!("const {i} = {i_of_i};\n/** @typedef {{typeof {i}}} {i} */",)
+            })
             .collect::<Vec<_>>()
             .join("\n");
 
         contents += &format!(
-            "\n\nexport type Index = {};",
+            "\n\n/** @typedef {{{}}} Index */",
             indexes
                 .iter()
                 .map(|i| i.to_string())
@@ -48,7 +50,7 @@ impl DTS for Query<'static> {
                 .join(" | ")
         );
 
-        contents += "\n\nexport interface VecIdToIndexes {\n";
+        contents += "\n\nexport const VecIdToIndexes = {\n";
 
         self.vecid_to_index_to_vec
             .iter()
@@ -60,7 +62,7 @@ impl DTS for Query<'static> {
                     .join(", ");
 
                 contents += &format!(
-                    "  {}: [{indexes}]\n",
+                    "  {}: [{indexes}],\n",
                     if id.contains("-") {
                         format!("\"{id}\"")
                     } else {
@@ -71,7 +73,8 @@ impl DTS for Query<'static> {
 
         contents.push('}');
 
-        contents += "\n\nexport type VecId = keyof VecIdToIndexes;";
+        contents += "\n/** @typedef {typeof VecIdToIndexes} VecIdToIndexes */";
+        contents += "\n/** @typedef {keyof VecIdToIndexes} VecId */\n";
 
         fs::write(path, contents)
     }

@@ -10,14 +10,13 @@ import {
   SeriesOptionsCommon,
   IRange,
   Time,
-  SingleValueData,
-  CandlestickData,
+  SingleValueData as _SingleValueData,
+  CandlestickData as _CandlestickData,
   SeriesType,
   ISeriesApi,
   BaselineData,
-} from "../../packages/lightweight-charts/v5.0.4/types";
+} from "../../packages/lightweight-charts/v5.0.5/types";
 import { AnyPossibleCohortId, Groups } from "../options";
-import { Index as _Index, VecIdToIndexes } from "./vecid-to-indexes";
 import { Signal } from "../../packages/solid-signals/types";
 
 // type TimeScale = "date" | "height";
@@ -61,10 +60,9 @@ interface PartialOption {
   name: string;
 }
 
-type DatasetId = keyof VecIdToIndexes;
-
 interface PartialChartOption extends PartialOption {
   title?: string;
+  unit?: string;
   top?: SplitSeriesBlueprint[];
   bottom?: SplitSeriesBlueprint[];
 }
@@ -108,6 +106,7 @@ interface ChartOption
   extends Omit<PartialChartOption, "title">,
     ProcessedOptionAddons {
   kind: "chart";
+  unit: string;
 }
 
 type Option = UrlOption | ChartOption | SimulationOption;
@@ -126,19 +125,11 @@ interface OHLC {
   close: number;
 }
 
-interface VecResource<Type extends OHLC | number = number> {
-  url: string;
-  fetch: (from: number, to: number) => Promise<void>;
-  ranges: FetchedVecRange<Type>[];
-}
-
-type ValuedCandlestickData = CandlestickData & Valued;
-
 interface FetchedVecRange<
   Value extends number | OHLC,
-  Data extends SingleValueData | ValuedCandlestickData = Value extends number
+  Data extends SingleValueData | CandlestickData = Value extends number
     ? SingleValueData
-    : ValuedCandlestickData,
+    : CandlestickData,
 > {
   at: Date | null;
   fetched: Signal<Value[] | null>;
@@ -149,8 +140,12 @@ interface FetchedVecRange<
 interface Valued {
   value: number;
 }
-
-type DatasetValue<T> = T & Valued;
+interface Indexed {
+  index: number;
+}
+type ChartData<T> = T & Valued & Indexed;
+type SingleValueData = ChartData<_SingleValueData>;
+type CandlestickData = ChartData<_CandlestickData>;
 
 type FetchedSource = string;
 
@@ -164,9 +159,9 @@ interface Weighted {
   weight: number;
 }
 
-type DatasetCandlestickData = DatasetValue<CandlestickData> & { year: number };
+type DatasetCandlestickData = ChartData<CandlestickData>;
 
-type NotFunction<T> = T extends Function ? never : T;
+// type NotFunction<T> = T extends Function ? never : T;
 
 type DefaultCohortOption = CohortOption<AnyPossibleCohortId>;
 
@@ -201,6 +196,3 @@ interface RatioOptions {
 // TODO: Remove
 // Fetch last of each individually when in viewport
 // type LastValues = Record<LastPath, number> | null;
-
-type Timestamp = -1;
-type Index = _Index | Timestamp;

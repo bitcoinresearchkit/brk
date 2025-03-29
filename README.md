@@ -30,7 +30,7 @@
 
 The Bitcoin Research Kit is a suite of tools designed to parse, index, compute, serve and display data stored on a Bitcoin Core node.
 
-In other words it's an alternative to [Glassnode](https://glassnode.com), [mempool.space](https://mempool.space/) and [electrs](https://github.com/romanz/electrs) all in one package with a particular focus on the self-hosting experience.
+In other words it's an alternative to [Glassnode](https://glassnode.com), [mempool.space](https://mempool.space/) and [esplora](https://github.com/Blockstream/electrs)/[electrs](https://github.com/romanz/esplora) all in one package with a particular focus on the self-hosting experience.
 
 The toolkit can be used in various ways to accommodate as many needs as possible.
 

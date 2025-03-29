@@ -1,15 +1,15 @@
 // @ts-check
 
 /**
- * @import { Option, TimeRange, Weighted, OHLC, DatasetValue, Color, DatasetCandlestickData, PartialChartOption, ChartOption, AnyPartialOption, ProcessedOptionAddons, OptionsTree, SimulationOption, VecResource, Valued, FetchedVecRange, Index } from "./types/self"
+ * @import { Option, TimeRange, Weighted, OHLC, Color, DatasetCandlestickData, PartialChartOption, ChartOption, AnyPartialOption, ProcessedOptionAddons, OptionsTree, SimulationOption, VecResource, Valued, FetchedVecRange,  SingleValueData, CandlestickData, ChartData } from "./types/self"
  * @import { Marker,  CreatePaneParameters,  HoveredLegend, ChartPane, SplitSeries, SingleSeries, CreateSplitSeriesParameters, LineSeriesBlueprint, CandlestickSeriesBlueprint, BaselineSeriesBlueprint, CreateBaseSeriesParameters, BaseSeries, RemoveSeriesBlueprintFluff, SplitSeriesBlueprint, AnySeries, PriceSeriesType } from "../packages/lightweight-charts/types";
  * @import * as _ from "../packages/ufuzzy/v1.0.14/types"
- * @import { createChart as CreateClassicChart, createChartEx as CreateCustomChart, LineStyleOptions, DeepPartial, ChartOptions, IChartApi, IHorzScaleBehavior, WhitespaceData, SingleValueData, ISeriesApi, Time, LineData, LogicalRange, SeriesMarker, CandlestickData, SeriesType, BaselineStyleOptions, SeriesOptionsCommon } from "../packages/lightweight-charts/v5.0.4/types"
+ * @import { createChart as CreateClassicChart, createChartEx as CreateCustomChart, LineStyleOptions, DeepPartial, ChartOptions, IChartApi, IHorzScaleBehavior, WhitespaceData, ISeriesApi, Time, LineData, LogicalRange, SeriesMarker, SeriesType, BaselineStyleOptions, SeriesOptionsCommon } from "../packages/lightweight-charts/v5.0.5/types"
  * @import { SignalOptions } from "../packages/solid-signals/2024-11-02/types/core/core"
  * @import { getOwner as GetOwner, onCleanup as OnCleanup, Owner } from "../packages/solid-signals/2024-11-02/types/core/owner"
  * @import { createSignal as CreateSignal, createEffect as CreateEffect, Accessor, Setter, createMemo as CreateMemo, createRoot as CreateRoot, runWithOwner as RunWithOwner } from "../packages/solid-signals/2024-11-02/types/signals";
  * @import {Signal, Signals} from "../packages/solid-signals/types";
- * @import {Addressindex, Dateindex, Decadeindex, Difficultyepoch, Halvingepoch, Height, Monthindex, P2PK33index, P2PK65index, P2PKHindex, P2SHindex, P2TRindex, P2WPKHindex, P2WSHindex, Txindex, Txinindex, Txoutindex, VecId, Weekindex, Yearindex} from "./types/vecid-to-indexes"
+ * @import {Addressindex, Dateindex, Decadeindex, Difficultyepoch, Index, Halvingepoch, Height, Monthindex, P2PK33index, P2PK65index, P2PKHindex, P2SHindex, P2TRindex, P2WPKHindex, P2WSHindex, Txindex, Txinindex, Txoutindex, VecId, Weekindex, Yearindex} from "./vecid-to-indexes"
  */
 
 function initPackages() {
@@ -35,13 +35,6 @@ function initPackages() {
       );
     },
   };
-
-  /**
-   * @typedef {ReturnType<typeof imports.signals>} SignalsPromise
-   * @typedef {ReturnType<typeof imports.lightweightCharts>} LightweightChartsPromise
-   * @typedef {ReturnType<typeof imports.leanQr>} LeanQrPromise
-   * @typedef {ReturnType<typeof imports.ufuzzy>} uFuzzyPromise
-   */
 
   /**
    * @template {keyof typeof imports} K
@@ -997,102 +990,6 @@ function createUtils() {
     },
   };
 
-  const color = {
-    /**
-     *
-     * @param {readonly [number, number, number, number, number, number, number, number, number]} A
-     * @param {readonly [number, number, number]} B
-     * @returns
-     */
-    multiplyMatrices(A, B) {
-      return /** @type {const} */ ([
-        A[0] * B[0] + A[1] * B[1] + A[2] * B[2],
-        A[3] * B[0] + A[4] * B[1] + A[5] * B[2],
-        A[6] * B[0] + A[7] * B[1] + A[8] * B[2],
-      ]);
-    },
-    /**
-     * @param {readonly [number, number, number]} param0
-     */
-    oklch2oklab([l, c, h]) {
-      return /** @type {const} */ ([
-        l,
-        isNaN(h) ? 0 : c * Math.cos((h * Math.PI) / 180),
-        isNaN(h) ? 0 : c * Math.sin((h * Math.PI) / 180),
-      ]);
-    },
-    /**
-     * @param {readonly [number, number, number]} rgb
-     */
-    srgbLinear2rgb(rgb) {
-      return rgb.map((c) =>
-        Math.abs(c) > 0.0031308
-          ? (c < 0 ? -1 : 1) * (1.055 * Math.abs(c) ** (1 / 2.4) - 0.055)
-          : 12.92 * c,
-      );
-    },
-    /**
-     * @param {readonly [number, number, number]} lab
-     */
-    oklab2xyz(lab) {
-      const LMSg = this.multiplyMatrices(
-        /** @type {const} */ ([
-          1, 0.3963377773761749, 0.2158037573099136, 1, -0.1055613458156586,
-          -0.0638541728258133, 1, -0.0894841775298119, -1.2914855480194092,
-        ]),
-        lab,
-      );
-      const LMS = /** @type {[number, number, number]} */ (
-        LMSg.map((val) => val ** 3)
-      );
-      return this.multiplyMatrices(
-        /** @type {const} */ ([
-          1.2268798758459243, -0.5578149944602171, 0.2813910456659647,
-          -0.0405757452148008, 1.112286803280317, -0.0717110580655164,
-          -0.0763729366746601, -0.4214933324022432, 1.5869240198367816,
-        ]),
-        LMS,
-      );
-    },
-    /**
-     * @param {readonly [number, number, number]} xyz
-     */
-    xyz2rgbLinear(xyz) {
-      return this.multiplyMatrices(
-        [
-          3.2409699419045226, -1.537383177570094, -0.4986107602930034,
-          -0.9692436362808796, 1.8759675015077202, 0.04155505740717559,
-          0.05563007969699366, -0.20397695888897652, 1.0569715142428786,
-        ],
-        xyz,
-      );
-    },
-    /** @param {string} oklch */
-    oklch2hex(oklch) {
-      oklch = oklch.replace("oklch(", "");
-      oklch = oklch.replace(")", "");
-      const lch = oklch.split(" ").map((v, i) => {
-        if (!i && v.includes("%")) {
-          return Number(v.replace("%", "")) / 100;
-        } else {
-          return Number(v);
-        }
-      });
-      const [r, g, b] = this.srgbLinear2rgb(
-        this.xyz2rgbLinear(
-          this.oklab2xyz(
-            this.oklch2oklab(/** @type {[number, number, number]} */ (lch)),
-          ),
-        ),
-      ).map((v) => {
-        v = Math.max(Math.min(Math.round(v * 255), 255), 0);
-        const s = v.toString(16);
-        return s.length === 1 ? `0${s}` : s;
-      });
-      return `#${r}${g}${b}`;
-    },
-  };
-
   /**
    *
    * @template {(...args: any[]) => any} F
@@ -1136,9 +1033,8 @@ function createUtils() {
    * @returns {number}
    */
   function getNumberOfDaysBetweenTwoDates(oldest, youngest) {
-    const ONE_DAY_IN_MS = 1000 * 60 * 60 * 24;
     return Math.round(
-      Math.abs((youngest.getTime() - oldest.getTime()) / ONE_DAY_IN_MS),
+      Math.abs((youngest.getTime() - oldest.getTime()) / date.ONE_DAY_IN_MS),
     );
   }
 
@@ -1175,63 +1071,64 @@ function createUtils() {
       } catch {}
 
       if (navigator.onLine) {
-        runWhenIdle(async function () {
-          // TODO: rerun of 10s instead of returning (due to some kind of error)
+        // TODO: rerun after 10s instead of returning (due to some kind of error)
 
-          /** @type {Response | undefined} */
-          let fetchedResponse;
-          try {
-            fetchedResponse = await fetch(url, {
-              signal: AbortSignal.timeout(5000),
-            });
-            if (!fetchedResponse.ok) {
-              throw Error;
-            }
-          } catch {
-            return;
-          }
-
-          const clonedResponse = fetchedResponse.clone();
-
-          let fetchedJson = /** @type {T | null} */ (null);
-          try {
-            fetchedJson = /** @type {T} */ (await fetchedResponse.json());
-          } catch (_) {
-            return;
-          }
-
-          if (!fetchedJson) return;
-
-          console.log(`fetch: ${url}`);
-
-          if (Array.isArray(cachedJson) && Array.isArray(fetchedJson)) {
-            const previousLength = cachedJson?.length || 0;
-            const newLength = fetchedJson.length;
-
-            if (!newLength) {
-              return;
-            }
-
-            if (previousLength && previousLength === newLength) {
-              const previousLastValue = Object.values(cachedJson || []).at(-1);
-              const newLastValue = Object.values(fetchedJson).at(-1);
-              if (
-                JSON.stringify(previousLastValue) ===
-                JSON.stringify(newLastValue)
-              ) {
-                return;
-              }
-            }
-          }
-
-          callback(fetchedJson);
-
-          runWhenIdle(async function () {
-            try {
-              await cache?.put(url, clonedResponse);
-            } catch (_) {}
+        /** @type {Response | undefined} */
+        let fetchedResponse;
+        try {
+          fetchedResponse = await fetch(url, {
+            signal: AbortSignal.timeout(5000),
           });
+          if (!fetchedResponse.ok) {
+            throw Error;
+          }
+        } catch {
+          return cachedJson;
+        }
+
+        const clonedResponse = fetchedResponse.clone();
+
+        let fetchedJson = /** @type {T | null} */ (null);
+        try {
+          fetchedJson = /** @type {T} */ (await fetchedResponse.json());
+        } catch (_) {
+          return cachedJson;
+        }
+
+        if (!fetchedJson) return cachedJson;
+
+        console.log(`fetch: ${url}`);
+
+        if (Array.isArray(cachedJson) && Array.isArray(fetchedJson)) {
+          const previousLength = cachedJson?.length || 0;
+          const newLength = fetchedJson.length;
+
+          if (!newLength) {
+            return cachedJson;
+          }
+
+          if (previousLength && previousLength === newLength) {
+            const previousLastValue = Object.values(cachedJson || []).at(-1);
+            const newLastValue = Object.values(fetchedJson).at(-1);
+            if (
+              JSON.stringify(previousLastValue) === JSON.stringify(newLastValue)
+            ) {
+              return cachedJson;
+            }
+          }
+        }
+
+        callback(fetchedJson);
+
+        runWhenIdle(async function () {
+          try {
+            await cache?.put(url, clonedResponse);
+          } catch (_) {}
         });
+
+        return fetchedJson;
+      } else {
+        return cachedJson;
       }
     }
 
@@ -1300,15 +1197,22 @@ function createUtils() {
 
     return {
       /**
+       * @param {Index} index
+       * @param {VecId} vecId
+       */
+      genUrl(index, vecId) {
+        return `/api${genPath(index, vecId)}`;
+      },
+      /**
        * @template {number | OHLC} [T=number]
-       * @param {(v: T) => void} callback
+       * @param {(v: T[]) => void} callback
        * @param {Index} index
        * @param {VecId} vecId
        * @param {number} [from]
        * @param {number} [to]
        */
       fetchVec(callback, index, vecId, from, to) {
-        fetchApi(callback, genPath(index, vecId, from, to));
+        return fetchApi(callback, genPath(index, vecId, from, to));
       },
       /**
        * @template {number | OHLC} [T=number]
@@ -1317,7 +1221,7 @@ function createUtils() {
        * @param {VecId} vecId
        */
       fetchLast(callback, index, vecId) {
-        fetchApi(callback, genPath(index, vecId, -1));
+        return fetchApi(callback, genPath(index, vecId, -1));
       },
     };
   })();
@@ -1335,7 +1239,6 @@ function createUtils() {
     serde,
     formatters,
     date,
-    color,
     debounce,
     runWhenIdle,
     getNumberOfDaysBetweenTwoDates,
@@ -1343,6 +1246,176 @@ function createUtils() {
   };
 }
 /** @typedef {ReturnType<typeof createUtils>} Utilities */
+
+/**
+ * @param {Signals} signals
+ * @param {Utilities} utils
+ */
+function createVecsResources(signals, utils) {
+  /** @type {Map<string, VecResource>} */
+  const map = new Map();
+  const owner = signals.getOwner();
+
+  const STEP = 1000;
+
+  /**
+   * @template {number | OHLC} [T=number]
+   * @param {Index} index
+   * @param {VecId} id
+   */
+  function createVecResource(index, id) {
+    return signals.runWithOwner(owner, () => {
+      /** @typedef {T extends number ? SingleValueData : CandlestickData} Value */
+
+      // interface VecResource<Type extends OHLC | number = number> {
+      //   url: string;
+      //   fetch: (from: number, to: number) => Promise<Type[] | null>;
+      //   ranges: Map<number, FetchedVecRange<Type>>;
+      // }
+      const vec = {
+        url: utils.api.genUrl(index, id),
+        /**
+         *
+         * @param {number} [from]
+         * @param {number} [to]
+         * @returns
+         */
+        async fetch(from, to) {
+          const range = getOrCreate(from);
+          if (range.loading) return range.fetched();
+          if (range.at) {
+            const ONE_MINUTE_IN_MS = 60_000;
+            const ONE_HOUR_IN_MS = 3_600_000;
+            const diff = new Date().getTime() - range.at.getTime();
+            if (diff < ONE_MINUTE_IN_MS) return range.fetched();
+            /** @type {number | null} */
+            let lastFrom = null;
+            for (const key of vec.ranges.keys()) {
+              lastFrom = key;
+            }
+            if (lastFrom && from < lastFrom && diff < ONE_HOUR_IN_MS) {
+              return range.fetched();
+            }
+          }
+          range.loading = true;
+          const res = /** @type {T[] | null} */ (
+            await utils.api.fetchVec(
+              (values) => {
+                range.fetched.set(/** @type {T[]} */ (values));
+              },
+              index,
+              id,
+              from,
+              to,
+            )
+          );
+          range.at = new Date();
+          range.loading = false;
+          return res;
+        },
+        ranges: new Map(),
+      };
+
+      /**
+       * @param {number} from
+       */
+      function getOrCreate(from) {
+        const found = vec.ranges.get(from);
+        if (found) return found;
+
+        const fetched = signals.createSignal(/** @type {T[] | null} */ (null));
+
+        /**
+         * @param {number} i
+         */
+        function computeTime(i) {
+          switch (index) {
+            case /** @satisfies {Dateindex} */ (1): {
+              const index = from + i;
+              if (index === 0) {
+                return new Date(Date.UTC(2009, 1, 3));
+              } else {
+                let d = new Date(Date.UTC(2009, 1, 9));
+                d.setUTCDate(d.getUTCDate() + index - 1);
+                return d;
+              }
+            }
+            case /** @satisfies {Height} */ (2): {
+              // vecs.getOrCreate(/** @satisfies {Height} */ (2), "timestamp");
+            }
+            default: {
+              throw Error("todo!");
+            }
+          }
+        }
+
+        /** @type {FetchedVecRange<T>} */
+        const range = {
+          at: null,
+          fetched,
+          transformed: signals.createMemo(() => {
+            const vec = fetched();
+            if (!vec) return null;
+            const values = /** @type {Value[]} */ (new Array(vec.length));
+            for (let i = 0; i < vec.length; i++) {
+              const v = vec[i];
+              const time = /** @type {Time} */ (computeTime(i).valueOf());
+              /** @satisfies {SingleValueData} */
+              const value = {
+                time,
+                index: from + i,
+                ...(Array.isArray(v) && v !== null
+                  ? {
+                      open: v[0],
+                      high: v[1],
+                      low: v[2],
+                      close: v[3],
+                      value: v[3],
+                    }
+                  : {
+                      value: v === null ? NaN : /** @type {number} */ (v),
+                    }),
+              };
+              values[i] = /** @type {Value} */ (value);
+            }
+            return values;
+          }),
+          loading: false,
+        };
+
+        vec.ranges.set(from, range);
+
+        return range;
+      }
+
+      return vec;
+    });
+  }
+
+  const vecs = {
+    STEP,
+    /**
+     * @param {Index} index
+     * @param {VecId} id
+     */
+    getOrCreate(index, id) {
+      const key = `${index},${id}`;
+      const found = map.get(key);
+      if (found) {
+        console.log("found");
+        return found;
+      }
+      console.log("not found");
+      const vec = createVecResource(index, id);
+      if (!vec) throw Error("vec is undefined");
+      map.set(key, vec);
+      return vec;
+    },
+  };
+
+  return vecs;
+}
+/** @typedef {ReturnType<typeof createVecsResources>} VecsResources */
 
 function initEnv() {
   const standalone =
@@ -1371,49 +1444,7 @@ function initEnv() {
 }
 /** @typedef {ReturnType<typeof initEnv>} Env */
 
-function createConstants() {
-  const ONE_SECOND_IN_MS = 1_000;
-  const FIVE_SECONDS_IN_MS = 5 * ONE_SECOND_IN_MS;
-  const TEN_SECONDS_IN_MS = 2 * FIVE_SECONDS_IN_MS;
-  const ONE_MINUTE_IN_MS = 6 * TEN_SECONDS_IN_MS;
-  const FIVE_MINUTES_IN_MS = 5 * ONE_MINUTE_IN_MS;
-  const TEN_MINUTES_IN_MS = 2 * FIVE_MINUTES_IN_MS;
-  const ONE_HOUR_IN_MS = 6 * TEN_MINUTES_IN_MS;
-  const ONE_DAY_IN_MS = 24 * ONE_HOUR_IN_MS;
-
-  const HEIGHT_CHUNK_SIZE = 10_000;
-
-  const MEDIUM_WIDTH = 768;
-
-  return {
-    ONE_SECOND_IN_MS,
-    FIVE_SECONDS_IN_MS,
-    TEN_SECONDS_IN_MS,
-    ONE_MINUTE_IN_MS,
-    FIVE_MINUTES_IN_MS,
-    TEN_MINUTES_IN_MS,
-    ONE_HOUR_IN_MS,
-    ONE_DAY_IN_MS,
-
-    HEIGHT_CHUNK_SIZE,
-
-    MEDIUM_WIDTH,
-  };
-}
-/** @typedef {ReturnType<typeof createConstants>} Constants */
-
-function createIds() {
-  return /** @type {const} */ ({
-    asideSelectorLabel: `aside-selector-label`,
-    checkedFrameSelectorLabel: "checked-frame-selector-label",
-  });
-}
-/** @typedef {ReturnType<typeof createIds>} Ids */
-
-/**
- * @param {Ids} ids
- */
-function getElements(ids) {
+function getElements() {
   /**
    * @param {string} id
    */
@@ -1428,7 +1459,7 @@ function getElements(ids) {
     body: window.document.body,
     main: getElementById("main"),
     aside: getElementById("aside"),
-    asideLabel: getElementById(ids.asideSelectorLabel),
+    asideLabel: getElementById("aside-selector-label"),
     navLabel: getElementById(`nav-selector-label`),
     searchLabel: getElementById(`search-selector-label`),
     search: getElementById("search"),
@@ -1442,8 +1473,6 @@ function getElements(ids) {
     style: getComputedStyle(window.document.documentElement),
     charts: getElementById("charts"),
     simulation: getElementById("simulation"),
-    livePrice: getElementById("live-price"),
-    moscowTime: getElementById("moscow-time"),
   };
 }
 /** @typedef {ReturnType<typeof getElements>} Elements */
@@ -1451,9 +1480,8 @@ function getElements(ids) {
 /**
  * @param {Accessor<boolean>} dark
  * @param {Elements} elements
- * @param {Utilities} utils
  */
-function createColors(dark, elements, utils) {
+function createColors(dark, elements) {
   /**
    * @param {string} color
    */
@@ -1764,8 +1792,8 @@ function initWebSockets(signals, utils) {
 
       /** @type {DatasetCandlestickData} */
       const candle = {
+        index: -1,
         time: dateStr,
-        year: date.getUTCFullYear(),
         open: Number(open),
         high: Number(high),
         low: Number(low),
@@ -1782,15 +1810,11 @@ function initWebSockets(signals, utils) {
   const kraken1dCandle = createWebsocket((callback) =>
     krakenCandleWebSocketCreator(callback, 1440),
   );
-  const kraken5mnCandle = createWebsocket((callback) =>
-    krakenCandleWebSocketCreator(callback, 5),
-  );
 
   kraken1dCandle.open();
-  kraken5mnCandle.open();
 
   function createDocumentTitleEffect() {
-    signals.createEffect(kraken5mnCandle.latest, (latest) => {
+    signals.createEffect(kraken1dCandle.latest, (latest) => {
       if (latest) {
         const close = latest.close;
         console.log("close:", close);
@@ -1805,19 +1829,17 @@ function initWebSockets(signals, utils) {
 
   return {
     kraken1dCandle,
-    // kraken5mnCandle,
   };
 }
 /** @typedef {ReturnType<typeof initWebSockets>} WebSockets */
 
 function main() {
+  const options = import("./options.js");
+  const vecidToIndexes = import("./vecid-to-indexes.js");
   const packages = initPackages();
   const env = initEnv();
-  const consts = createConstants();
   const utils = createUtils();
-  const ids = createIds();
-  const elements = getElements(ids);
-  const options = import("./options.js");
+  const elements = getElements();
 
   function initFrameSelectors() {
     const children = Array.from(elements.selectors.children);
@@ -1886,7 +1908,8 @@ function main() {
     function setAsideParent() {
       const { clientWidth } = window.document.documentElement;
       const { aside, body, main } = elements;
-      if (clientWidth >= consts.MEDIUM_WIDTH) {
+      const MEDIUM_WIDTH = 768;
+      if (clientWidth >= MEDIUM_WIDTH) {
         aside.parentElement !== body && body.append(aside);
       } else {
         aside.parentElement !== main && main.append(aside);
@@ -1925,528 +1948,535 @@ function main() {
   createKeyDownEventListener();
 
   packages.signals().then((signals) =>
-    options.then(({ initOptions }) => {
-      function initDark() {
-        const preferredColorSchemeMatchMedia = window.matchMedia(
-          "(prefers-color-scheme: dark)",
-        );
-        const dark = signals.createSignal(
-          preferredColorSchemeMatchMedia.matches,
-        );
-        preferredColorSchemeMatchMedia.addEventListener(
-          "change",
-          ({ matches }) => {
-            dark.set(matches);
-          },
-        );
-        return dark;
-      }
-      const dark = initDark();
-
-      const qrcode = signals.createSignal(/** @type {string | null} */ (null));
-
-      function createLastHeightResource() {
-        const lastHeight = signals.createSignal(0);
-        function fetchLastHeight() {
-          utils.api.fetchLast(
-            (h) => {
-              lastHeight.set(h);
-            },
-            /** @satisfies {Height} */ (2),
-            "height",
+    vecidToIndexes.then(({ VecIdToIndexes }) =>
+      options.then(async ({ initOptions }) => {
+        function initDark() {
+          const preferredColorSchemeMatchMedia = window.matchMedia(
+            "(prefers-color-scheme: dark)",
           );
+          const dark = signals.createSignal(
+            preferredColorSchemeMatchMedia.matches,
+          );
+          preferredColorSchemeMatchMedia.addEventListener(
+            "change",
+            ({ matches }) => {
+              dark.set(matches);
+            },
+          );
+          return dark;
         }
-        fetchLastHeight();
-        setInterval(fetchLastHeight, consts.TEN_SECONDS_IN_MS);
-        return lastHeight;
-      }
-      const lastHeight = createLastHeightResource();
+        const dark = initDark();
 
-      const webSockets = initWebSockets(signals, utils);
+        const qrcode = signals.createSignal(
+          /** @type {string | null} */ (null),
+        );
 
-      const colors = createColors(dark, elements, utils);
-
-      const options = initOptions({
-        colors,
-        env,
-        ids,
-        signals,
-        utils,
-        webSockets,
-        qrcode,
-      });
-
-      // const urlSelected = utils.url.pathnameToSelectedId();
-      // function createWindowPopStateEvent() {
-      //   window.addEventListener("popstate", (event) => {
-      //     const urlSelected = utils.url.pathnameToSelectedId();
-      //     const option = options.list.find((option) => urlSelected === option.id);
-      //     if (option) {
-      //       options.selected.set(option);
-      //     }
-      //   });
-      // }
-      // createWindowPopStateEvent();
-
-      function initSelected() {
-        function initSelectedFrame() {
-          console.log("selected: init");
-
-          function createApplyOptionEffect() {
-            const lastChartOption = signals.createSignal(
-              /** @type {ChartOption | null} */ (null),
+        function createLastHeightResource() {
+          const lastHeight = signals.createSignal(0);
+          function fetchLastHeight() {
+            utils.api.fetchLast(
+              (h) => {
+                lastHeight.set(h);
+              },
+              /** @satisfies {Height} */ (2),
+              "height",
             );
-            const lastSimulationOption = signals.createSignal(
-              /** @type {SimulationOption | null} */ (null),
-            );
-
-            const owner = signals.getOwner();
-
-            let previousElement = /** @type {HTMLElement | undefined} */ (
-              undefined
-            );
-            let firstChartOption = true;
-            let firstSimulationOption = true;
-
-            signals.createEffect(options.selected, (option) => {
-              if (previousElement) {
-                previousElement.hidden = true;
-                utils.url.resetParams(option);
-                utils.url.pushHistory(option.id);
-              } else {
-                utils.url.replaceHistory({ pathname: option.id });
-              }
-
-              /** @type {HTMLElement} */
-              let element;
-
-              switch (option.kind) {
-                case "chart": {
-                  console.log("chart", option);
-
-                  element = elements.charts;
-
-                  lastChartOption.set(option);
-
-                  if (firstChartOption) {
-                    const lightweightCharts = packages.lightweightCharts();
-                    const chartScript = import("./chart.js");
-                    utils.dom.importStyleAndThen("/styles/chart.css", () =>
-                      chartScript.then(({ init: initChartsElement }) =>
-                        lightweightCharts.then((lightweightCharts) =>
-                          signals.runWithOwner(owner, () =>
-                            initChartsElement({
-                              colors,
-                              elements,
-                              lightweightCharts,
-                              selected: /** @type {any} */ (lastChartOption),
-                              signals,
-                              utils,
-                              webSockets,
-                            }),
-                          ),
-                        ),
-                      ),
-                    );
-                  }
-                  firstChartOption = false;
-
-                  break;
-                }
-                case "simulation": {
-                  element = elements.simulation;
-
-                  lastSimulationOption.set(option);
-
-                  if (firstSimulationOption) {
-                    const lightweightCharts = packages.lightweightCharts();
-                    const simulationScript = import("./simulation.js");
-
-                    utils.dom.importStyleAndThen("/styles/simulation.css", () =>
-                      simulationScript.then(({ init }) =>
-                        lightweightCharts.then((lightweightCharts) =>
-                          signals.runWithOwner(owner, () =>
-                            init({
-                              colors,
-                              elements,
-                              lightweightCharts,
-                              signals,
-                              utils,
-                              consts,
-                            }),
-                          ),
-                        ),
-                      ),
-                    );
-                  }
-                  firstSimulationOption = false;
-
-                  break;
-                }
-                case "url": {
-                  return;
-                }
-              }
-
-              element.hidden = false;
-              previousElement = element;
-            });
           }
-          createApplyOptionEffect();
+          fetchLastHeight();
+          setInterval(fetchLastHeight, 10_000);
+          return lastHeight;
         }
+        const lastHeight = createLastHeightResource();
 
-        function createMobileSwitchEffect() {
-          let firstRun = true;
-          signals.createEffect(options.selected, () => {
-            if (!firstRun && !utils.dom.isHidden(elements.asideLabel)) {
-              elements.asideLabel.click();
-            }
-            firstRun = false;
-          });
-        }
-        createMobileSwitchEffect();
+        const webSockets = initWebSockets(signals, utils);
 
-        utils.dom.onFirstIntersection(elements.aside, initSelectedFrame);
-      }
-      initSelected();
+        const vecsResources = createVecsResources(signals, utils);
 
-      function initFolders() {
-        function initTreeElement() {
-          options.treeElement.set(() => {
-            const treeElement = window.document.createElement("div");
-            treeElement.classList.add("tree");
-            elements.nav.append(treeElement);
-            return treeElement;
-          });
-        }
+        const colors = createColors(dark, elements);
 
-        async function scrollToSelected() {
-          if (!options.selected()) throw "Selected should be set by now";
-          const selectedId = options.selected().id;
-
-          const path = options.selected().path;
-
-          let i = 0;
-          while (i !== path.length) {
-            try {
-              const id = path[i];
-              const details = /** @type {HTMLDetailsElement} */ (
-                utils.dom.getElementById(id)
-              );
-              details.open = true;
-              i++;
-            } catch {
-              await utils.next();
-            }
-          }
-
-          await utils.next();
-
-          utils.dom
-            .getElementById(`${selectedId}-nav-selector`)
-            .scrollIntoView({
-              behavior: "instant",
-              block: "center",
-            });
-        }
-
-        utils.dom.onFirstIntersection(elements.nav, () => {
-          console.log("nav: init");
-          initTreeElement();
-          scrollToSelected();
+        const options = initOptions({
+          colors,
+          env,
+          signals,
+          utils,
+          webSockets,
+          qrcode,
         });
-      }
-      initFolders();
 
-      function initSearch() {
-        function initSearchFrame() {
-          console.log("search: init");
+        // const urlSelected = utils.url.pathnameToSelectedId();
+        // function createWindowPopStateEvent() {
+        //   window.addEventListener("popstate", (event) => {
+        //     const urlSelected = utils.url.pathnameToSelectedId();
+        //     const option = options.list.find((option) => urlSelected === option.id);
+        //     if (option) {
+        //       options.selected.set(option);
+        //     }
+        //   });
+        // }
+        // createWindowPopStateEvent();
 
-          const haystack = options.list.map((option) => option.title);
+        function initSelected() {
+          function initSelectedFrame() {
+            console.log("selected: init");
 
-          const searchSmallOgInnerHTML = elements.searchSmall.innerHTML;
+            function createApplyOptionEffect() {
+              const lastChartOption = signals.createSignal(
+                /** @type {ChartOption | null} */ (null),
+              );
+              const lastSimulationOption = signals.createSignal(
+                /** @type {SimulationOption | null} */ (null),
+              );
 
-          const RESULTS_PER_PAGE = 100;
+              const owner = signals.getOwner();
 
-          packages.ufuzzy().then((ufuzzy) => {
-            /**
-             * @param {uFuzzy.SearchResult} searchResult
-             * @param {number} pageIndex
-             */
-            function computeResultPage(searchResult, pageIndex) {
-              /** @type {{ option: Option, title: string }[]} */
-              let list = [];
+              let previousElement = /** @type {HTMLElement | undefined} */ (
+                undefined
+              );
+              let firstTimeLoadingChart = true;
+              let firstTimeLoadingSim = true;
 
-              let [indexes, info, order] = searchResult || [null, null, null];
-
-              const minIndex = pageIndex * RESULTS_PER_PAGE;
-
-              if (indexes?.length) {
-                const maxIndex = Math.min(
-                  (order || indexes).length - 1,
-                  minIndex + RESULTS_PER_PAGE - 1,
-                );
-
-                list = Array(maxIndex - minIndex + 1);
-
-                for (let i = minIndex; i <= maxIndex; i++) {
-                  let index = indexes[i];
-
-                  const title = haystack[index];
-
-                  list[i % 100] = {
-                    option: options.list[index],
-                    title,
-                  };
+              signals.createEffect(options.selected, (option) => {
+                if (previousElement) {
+                  previousElement.hidden = true;
+                  utils.url.resetParams(option);
+                  utils.url.pushHistory(option.id);
+                } else {
+                  utils.url.replaceHistory({ pathname: option.id });
                 }
-              }
 
-              return list;
+                /** @type {HTMLElement} */
+                let element;
+
+                switch (option.kind) {
+                  case "chart": {
+                    console.log("chart", option);
+
+                    element = elements.charts;
+
+                    lastChartOption.set(option);
+
+                    if (firstTimeLoadingChart) {
+                      const lightweightCharts = packages.lightweightCharts();
+                      const chartScript = import("./chart.js");
+                      utils.dom.importStyleAndThen("/styles/chart.css", () =>
+                        chartScript.then(({ init: initChartsElement }) =>
+                          lightweightCharts.then((lightweightCharts) =>
+                            signals.runWithOwner(owner, () =>
+                              initChartsElement({
+                                colors,
+                                elements,
+                                lightweightCharts,
+                                selected: /** @type {any} */ (lastChartOption),
+                                signals,
+                                utils,
+                                webSockets,
+                                vecsResources,
+                              }),
+                            ),
+                          ),
+                        ),
+                      );
+                    }
+                    firstTimeLoadingChart = false;
+
+                    break;
+                  }
+                  case "simulation": {
+                    element = elements.simulation;
+
+                    lastSimulationOption.set(option);
+
+                    if (firstTimeLoadingSim) {
+                      const lightweightCharts = packages.lightweightCharts();
+                      const simulationScript = import("./simulation.js");
+
+                      utils.dom.importStyleAndThen(
+                        "/styles/simulation.css",
+                        () =>
+                          simulationScript.then(({ init }) =>
+                            lightweightCharts.then((lightweightCharts) =>
+                              signals.runWithOwner(owner, () =>
+                                init({
+                                  colors,
+                                  elements,
+                                  lightweightCharts,
+                                  signals,
+                                  utils,
+                                }),
+                              ),
+                            ),
+                          ),
+                      );
+                    }
+                    firstTimeLoadingSim = false;
+
+                    break;
+                  }
+                  case "url": {
+                    return;
+                  }
+                }
+
+                element.hidden = false;
+                previousElement = element;
+              });
+            }
+            createApplyOptionEffect();
+          }
+
+          function createMobileSwitchEffect() {
+            let firstRun = true;
+            signals.createEffect(options.selected, () => {
+              if (!firstRun && !utils.dom.isHidden(elements.asideLabel)) {
+                elements.asideLabel.click();
+              }
+              firstRun = false;
+            });
+          }
+          createMobileSwitchEffect();
+
+          utils.dom.onFirstIntersection(elements.aside, initSelectedFrame);
+        }
+        initSelected();
+
+        function initFolders() {
+          function initTreeElement() {
+            options.treeElement.set(() => {
+              const treeElement = window.document.createElement("div");
+              treeElement.classList.add("tree");
+              elements.nav.append(treeElement);
+              return treeElement;
+            });
+          }
+
+          async function scrollToSelected() {
+            if (!options.selected()) throw "Selected should be set by now";
+            const selectedId = options.selected().id;
+
+            const path = options.selected().path;
+
+            let i = 0;
+            while (i !== path.length) {
+              try {
+                const id = path[i];
+                const details = /** @type {HTMLDetailsElement} */ (
+                  utils.dom.getElementById(id)
+                );
+                details.open = true;
+                i++;
+              } catch {
+                await utils.next();
+              }
             }
 
-            /** @type {uFuzzy.Options} */
-            const config = {
-              intraIns: Infinity,
-              intraChars: `[a-z\d' ]`,
-            };
+            await utils.next();
 
-            const fuzzyMultiInsert = /** @type {uFuzzy} */ (
-              ufuzzy({
-                intraIns: 1,
-              })
-            );
-            const fuzzyMultiInsertFuzzier = /** @type {uFuzzy} */ (
-              ufuzzy(config)
-            );
-            const fuzzySingleError = /** @type {uFuzzy} */ (
-              ufuzzy({
-                intraMode: 1,
-                ...config,
-              })
-            );
-            const fuzzySingleErrorFuzzier = /** @type {uFuzzy} */ (
-              ufuzzy({
-                intraMode: 1,
-                ...config,
-              })
-            );
+            utils.dom
+              .getElementById(`${selectedId}-nav-selector`)
+              .scrollIntoView({
+                behavior: "instant",
+                block: "center",
+              });
+          }
 
-            /** @type {VoidFunction | undefined} */
-            let dispose;
+          utils.dom.onFirstIntersection(elements.nav, () => {
+            console.log("nav: init");
+            initTreeElement();
+            scrollToSelected();
+          });
+        }
+        initFolders();
 
-            function inputEvent() {
-              signals.createRoot((_dispose) => {
-                const needle = /** @type {string} */ (
-                  elements.searchInput.value
-                );
+        function initSearch() {
+          function initSearchFrame() {
+            console.log("search: init");
 
-                dispose?.();
+            const haystack = options.list.map((option) => option.title);
 
-                dispose = _dispose;
+            const searchSmallOgInnerHTML = elements.searchSmall.innerHTML;
 
-                elements.searchResults.scrollTo({
-                  top: 0,
-                });
+            const RESULTS_PER_PAGE = 100;
 
-                if (!needle) {
-                  elements.searchSmall.innerHTML = searchSmallOgInnerHTML;
-                  elements.searchResults.innerHTML = "";
-                  return;
-                }
+            packages.ufuzzy().then((ufuzzy) => {
+              /**
+               * @param {uFuzzy.SearchResult} searchResult
+               * @param {number} pageIndex
+               */
+              function computeResultPage(searchResult, pageIndex) {
+                /** @type {{ option: Option, title: string }[]} */
+                let list = [];
 
-                const outOfOrder = 5;
-                const infoThresh = 5_000;
+                let [indexes, info, order] = searchResult || [null, null, null];
 
-                let result = fuzzyMultiInsert?.search(
-                  haystack,
-                  needle,
-                  undefined,
-                  infoThresh,
-                );
+                const minIndex = pageIndex * RESULTS_PER_PAGE;
 
-                if (!result?.[0]?.length || !result?.[1]) {
-                  result = fuzzyMultiInsert?.search(
-                    haystack,
-                    needle,
-                    outOfOrder,
-                    infoThresh,
+                if (indexes?.length) {
+                  const maxIndex = Math.min(
+                    (order || indexes).length - 1,
+                    minIndex + RESULTS_PER_PAGE - 1,
                   );
+
+                  list = Array(maxIndex - minIndex + 1);
+
+                  for (let i = minIndex; i <= maxIndex; i++) {
+                    let index = indexes[i];
+
+                    const title = haystack[index];
+
+                    list[i % 100] = {
+                      option: options.list[index],
+                      title,
+                    };
+                  }
                 }
 
-                if (!result?.[0]?.length || !result?.[1]) {
-                  result = fuzzySingleError?.search(
-                    haystack,
-                    needle,
-                    outOfOrder,
-                    infoThresh,
+                return list;
+              }
+
+              /** @type {uFuzzy.Options} */
+              const config = {
+                intraIns: Infinity,
+                intraChars: `[a-z\d' ]`,
+              };
+
+              const fuzzyMultiInsert = /** @type {uFuzzy} */ (
+                ufuzzy({
+                  intraIns: 1,
+                })
+              );
+              const fuzzyMultiInsertFuzzier = /** @type {uFuzzy} */ (
+                ufuzzy(config)
+              );
+              const fuzzySingleError = /** @type {uFuzzy} */ (
+                ufuzzy({
+                  intraMode: 1,
+                  ...config,
+                })
+              );
+              const fuzzySingleErrorFuzzier = /** @type {uFuzzy} */ (
+                ufuzzy({
+                  intraMode: 1,
+                  ...config,
+                })
+              );
+
+              /** @type {VoidFunction | undefined} */
+              let dispose;
+
+              function inputEvent() {
+                signals.createRoot((_dispose) => {
+                  const needle = /** @type {string} */ (
+                    elements.searchInput.value
                   );
-                }
 
-                if (!result?.[0]?.length || !result?.[1]) {
-                  result = fuzzySingleErrorFuzzier?.search(
-                    haystack,
-                    needle,
-                    outOfOrder,
-                    infoThresh,
-                  );
-                }
+                  dispose?.();
 
-                if (!result?.[0]?.length || !result?.[1]) {
-                  result = fuzzyMultiInsertFuzzier?.search(
+                  dispose = _dispose;
+
+                  elements.searchResults.scrollTo({
+                    top: 0,
+                  });
+
+                  if (!needle) {
+                    elements.searchSmall.innerHTML = searchSmallOgInnerHTML;
+                    elements.searchResults.innerHTML = "";
+                    return;
+                  }
+
+                  const outOfOrder = 5;
+                  const infoThresh = 5_000;
+
+                  let result = fuzzyMultiInsert?.search(
                     haystack,
                     needle,
                     undefined,
                     infoThresh,
                   );
-                }
 
-                if (!result?.[0]?.length || !result?.[1]) {
-                  result = fuzzyMultiInsertFuzzier?.search(
-                    haystack,
-                    needle,
-                    outOfOrder,
-                    infoThresh,
-                  );
-                }
-
-                elements.searchSmall.innerHTML = `Found <strong>${
-                  result?.[0]?.length || 0
-                }</strong> result(s)`;
-                elements.searchResults.innerHTML = "";
-
-                const list = computeResultPage(result, 0);
-
-                list.forEach(({ option, title }) => {
-                  const li = window.document.createElement("li");
-                  elements.searchResults.appendChild(li);
-
-                  const element = options.createOptionElement({
-                    option,
-                    frame: "search",
-                    name: title,
-                    qrcode,
-                  });
-
-                  if (element) {
-                    li.append(element);
+                  if (!result?.[0]?.length || !result?.[1]) {
+                    result = fuzzyMultiInsert?.search(
+                      haystack,
+                      needle,
+                      outOfOrder,
+                      infoThresh,
+                    );
                   }
+
+                  if (!result?.[0]?.length || !result?.[1]) {
+                    result = fuzzySingleError?.search(
+                      haystack,
+                      needle,
+                      outOfOrder,
+                      infoThresh,
+                    );
+                  }
+
+                  if (!result?.[0]?.length || !result?.[1]) {
+                    result = fuzzySingleErrorFuzzier?.search(
+                      haystack,
+                      needle,
+                      outOfOrder,
+                      infoThresh,
+                    );
+                  }
+
+                  if (!result?.[0]?.length || !result?.[1]) {
+                    result = fuzzyMultiInsertFuzzier?.search(
+                      haystack,
+                      needle,
+                      undefined,
+                      infoThresh,
+                    );
+                  }
+
+                  if (!result?.[0]?.length || !result?.[1]) {
+                    result = fuzzyMultiInsertFuzzier?.search(
+                      haystack,
+                      needle,
+                      outOfOrder,
+                      infoThresh,
+                    );
+                  }
+
+                  elements.searchSmall.innerHTML = `Found <strong>${
+                    result?.[0]?.length || 0
+                  }</strong> result(s)`;
+                  elements.searchResults.innerHTML = "";
+
+                  const list = computeResultPage(result, 0);
+
+                  list.forEach(({ option, title }) => {
+                    const li = window.document.createElement("li");
+                    elements.searchResults.appendChild(li);
+
+                    const element = options.createOptionElement({
+                      option,
+                      frame: "search",
+                      name: title,
+                      qrcode,
+                    });
+
+                    if (element) {
+                      li.append(element);
+                    }
+                  });
                 });
-              });
-            }
+              }
 
-            if (elements.searchInput.value) {
-              inputEvent();
-            }
+              if (elements.searchInput.value) {
+                inputEvent();
+              }
 
-            elements.searchInput.addEventListener("input", inputEvent);
-          });
+              elements.searchInput.addEventListener("input", inputEvent);
+            });
+          }
+          utils.dom.onFirstIntersection(elements.search, initSearchFrame);
         }
-        utils.dom.onFirstIntersection(elements.search, initSearchFrame);
-      }
-      initSearch();
+        initSearch();
 
-      function initShare() {
-        const shareDiv = utils.dom.getElementById("share-div");
-        const shareContentDiv = utils.dom.getElementById("share-content-div");
+        function initShare() {
+          const shareDiv = utils.dom.getElementById("share-div");
+          const shareContentDiv = utils.dom.getElementById("share-content-div");
 
-        shareDiv.addEventListener("click", () => {
-          qrcode.set(null);
-        });
-
-        shareContentDiv.addEventListener("click", (event) => {
-          event.stopPropagation();
-          event.preventDefault();
-        });
-
-        packages.leanQr().then(({ generate }) => {
-          const imgQrcode = /** @type {HTMLImageElement} */ (
-            utils.dom.getElementById("share-img")
-          );
-
-          const anchor = /** @type {HTMLAnchorElement} */ (
-            utils.dom.getElementById("share-anchor")
-          );
-
-          signals.createEffect(qrcode, (qrcode) => {
-            if (!qrcode) {
-              shareDiv.hidden = true;
-              return;
-            }
-
-            const href = qrcode;
-            anchor.href = href;
-            anchor.innerText =
-              (href.startsWith("http")
-                ? href.split("//").at(-1)
-                : href.split(":").at(-1)) || "";
-
-            imgQrcode.src =
-              generate(/** @type {any} */ (href))?.toDataURL({
-                // @ts-ignore
-                padX: 0,
-                padY: 0,
-              }) || "";
-
-            shareDiv.hidden = false;
+          shareDiv.addEventListener("click", () => {
+            qrcode.set(null);
           });
-        });
-      }
-      initShare();
 
-      function initDesktopResizeBar() {
-        const resizeBar = utils.dom.getElementById("resize-bar");
-        let resize = false;
-        let startingWidth = 0;
-        let startingClientX = 0;
+          shareContentDiv.addEventListener("click", (event) => {
+            event.stopPropagation();
+            event.preventDefault();
+          });
 
-        const barWidthLocalStorageKey = "bar-width";
-
-        /**
-         * @param {number | null} width
-         */
-        function setBarWidth(width) {
-          if (typeof width === "number") {
-            elements.main.style.width = `${width}px`;
-            localStorage.setItem(barWidthLocalStorageKey, String(width));
-          } else {
-            elements.main.style.width = elements.style.getPropertyValue(
-              "--default-main-width",
+          packages.leanQr().then(({ generate }) => {
+            const imgQrcode = /** @type {HTMLImageElement} */ (
+              utils.dom.getElementById("share-img")
             );
-            localStorage.removeItem(barWidthLocalStorageKey);
-          }
+
+            const anchor = /** @type {HTMLAnchorElement} */ (
+              utils.dom.getElementById("share-anchor")
+            );
+
+            signals.createEffect(qrcode, (qrcode) => {
+              if (!qrcode) {
+                shareDiv.hidden = true;
+                return;
+              }
+
+              const href = qrcode;
+              anchor.href = href;
+              anchor.innerText =
+                (href.startsWith("http")
+                  ? href.split("//").at(-1)
+                  : href.split(":").at(-1)) || "";
+
+              imgQrcode.src =
+                generate(/** @type {any} */ (href))?.toDataURL({
+                  // @ts-ignore
+                  padX: 0,
+                  padY: 0,
+                }) || "";
+
+              shareDiv.hidden = false;
+            });
+          });
         }
+        initShare();
 
-        /**
-         * @param {MouseEvent} event
-         */
-        function mouseMoveEvent(event) {
-          if (resize) {
-            setBarWidth(startingWidth + (event.clientX - startingClientX));
+        function initDesktopResizeBar() {
+          const resizeBar = utils.dom.getElementById("resize-bar");
+          let resize = false;
+          let startingWidth = 0;
+          let startingClientX = 0;
+
+          const barWidthLocalStorageKey = "bar-width";
+
+          /**
+           * @param {number | null} width
+           */
+          function setBarWidth(width) {
+            if (typeof width === "number") {
+              elements.main.style.width = `${width}px`;
+              localStorage.setItem(barWidthLocalStorageKey, String(width));
+            } else {
+              elements.main.style.width = elements.style.getPropertyValue(
+                "--default-main-width",
+              );
+              localStorage.removeItem(barWidthLocalStorageKey);
+            }
           }
+
+          /**
+           * @param {MouseEvent} event
+           */
+          function mouseMoveEvent(event) {
+            if (resize) {
+              setBarWidth(startingWidth + (event.clientX - startingClientX));
+            }
+          }
+
+          resizeBar.addEventListener("mousedown", (event) => {
+            startingClientX = event.clientX;
+            startingWidth = elements.main.clientWidth;
+            resize = true;
+            window.document.documentElement.dataset.resize = "";
+            window.addEventListener("mousemove", mouseMoveEvent);
+          });
+
+          resizeBar.addEventListener("dblclick", () => {
+            setBarWidth(null);
+          });
+
+          const setResizeFalse = () => {
+            resize = false;
+            delete window.document.documentElement.dataset.resize;
+            window.removeEventListener("mousemove", mouseMoveEvent);
+          };
+          window.addEventListener("mouseup", setResizeFalse);
+          window.addEventListener("mouseleave", setResizeFalse);
         }
-
-        resizeBar.addEventListener("mousedown", (event) => {
-          startingClientX = event.clientX;
-          startingWidth = elements.main.clientWidth;
-          resize = true;
-          window.document.documentElement.dataset.resize = "";
-          window.addEventListener("mousemove", mouseMoveEvent);
-        });
-
-        resizeBar.addEventListener("dblclick", () => {
-          setBarWidth(null);
-        });
-
-        const setResizeFalse = () => {
-          resize = false;
-          delete window.document.documentElement.dataset.resize;
-          window.removeEventListener("mousemove", mouseMoveEvent);
-        };
-        window.addEventListener("mouseup", setResizeFalse);
-        window.addEventListener("mouseleave", setResizeFalse);
-      }
-      initDesktopResizeBar();
-    }),
+        initDesktopResizeBar();
+      }),
+    ),
   );
 }
 main();

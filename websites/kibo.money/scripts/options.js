@@ -5119,7 +5119,6 @@ function createPartialOptions(colors) {
  * @param {Object} args
  * @param {Colors} args.colors
  * @param {Signals} args.signals
- * @param {Ids} args.ids
  * @param {Env} args.env
  * @param {Utilities} args.utils
  * @param {WebSockets} args.webSockets
@@ -5128,7 +5127,6 @@ function createPartialOptions(colors) {
 export function initOptions({
   colors,
   signals,
-  ids,
   env,
   utils,
   webSockets,
@@ -5424,17 +5422,29 @@ export function initOptions({
         let title;
 
         if ("kind" in anyPartial) {
+          // Simulation
           kind = anyPartial.kind;
           id = anyPartial.kind;
           title = anyPartial.title;
         } else if ("url" in anyPartial) {
+          // Url
           kind = "url";
           id = `${utils.stringToId(anyPartial.name)}-url`;
           title = anyPartial.name;
         } else {
+          // Chart
           kind = "chart";
           title = anyPartial.title || anyPartial.name;
           id = `${kind}-${utils.stringToId(title)}`;
+          const key = anyPartial.bottom?.at(0)?.key;
+          if (key) {
+            if (key.includes("-interval")) {
+              anyPartial.unit = "Seconds";
+            } else {
+              console.log(anyPartial);
+              throw Error("Unit not set");
+            }
+          }
         }
 
         /** @type {ProcessedOptionAddons} */
