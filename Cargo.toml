@@ -8,7 +8,7 @@ package.version = "0.0.10"
 package.repository = "https://github.com/bitcoinresearchkit/brk"
 
 [profile.release]
-lto = "thin"
+lto = "fat"
 codegen-units = 1
 panic = "abort"
 

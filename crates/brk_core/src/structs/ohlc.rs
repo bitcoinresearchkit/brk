@@ -1,7 +1,7 @@
 use std::ops::{Add, Div};
 
 use derive_deref::Deref;
-use serde::Serialize;
+use serde::{Serialize, Serializer, ser::SerializeTuple};
 use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 use super::{Cents, Dollars, Sats};
@@ -37,13 +37,27 @@ impl From<Close<Cents>> for OHLCCents {
     }
 }
 
-#[derive(Debug, Default, Clone, FromBytes, Immutable, IntoBytes, KnownLayout, Serialize)]
+#[derive(Debug, Default, Clone, FromBytes, Immutable, IntoBytes, KnownLayout)]
 #[repr(C)]
 pub struct OHLCDollars {
     pub open: Open<Dollars>,
     pub high: High<Dollars>,
     pub low: Low<Dollars>,
     pub close: Close<Dollars>,
+}
+
+impl Serialize for OHLCDollars {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut tup = serializer.serialize_tuple(4)?;
+        tup.serialize_element(&self.open)?;
+        tup.serialize_element(&self.high)?;
+        tup.serialize_element(&self.low)?;
+        tup.serialize_element(&self.close)?;
+        tup.end()
+    }
 }
 
 impl From<(Open<Dollars>, High<Dollars>, Low<Dollars>, Close<Dollars>)> for OHLCDollars {

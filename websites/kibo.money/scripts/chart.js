@@ -9,6 +9,7 @@
  * @param {Utilities} args.utils
  * @param {WebSockets} args.webSockets
  * @param {Elements} args.elements
+ * @param {VecsResources} args.vecsResources
  */
 export function init({
   colors,
@@ -18,6 +19,7 @@ export function init({
   signals,
   utils,
   webSockets,
+  vecsResources,
 }) {
   console.log("init chart state");
 
@@ -30,7 +32,7 @@ export function init({
     titleElement.innerHTML = option.title;
   });
 
-  const chart = lightweightCharts.createChartElement({
+  const chartElement = lightweightCharts.createChartElement({
     parent: elements.charts,
     signals,
     colors,
@@ -43,7 +45,6 @@ export function init({
     title: "Index",
     selected: "date",
     choices: [
-      "Height",
       "Timestamp",
       "Date",
       "Week",
@@ -62,12 +63,20 @@ export function init({
 
   elements.charts.append(fieldset);
 
-  // const activeDatasets = signals.createSignal(
-  //   /** @type {Set<ResourceDataset<any, any>>} */ (new Set()),
-  //   {
-  //     equals: false,
-  //   },
-  // );
+  const vecs = signals.createSignal(
+    /** @type {Set<VecResource<any>>} */ (new Set()),
+    {
+      equals: false,
+    },
+  );
+
+  const index = /** @satisfies {Dateindex} */ (1);
+
+  chartElement.createChart(index);
+
+  const ohlc = vecsResources.getOrCreate(index, "ohlc");
+  const date = vecsResources.getOrCreate(index, "date");
+  date.fetch(-10_000);
 
   // function createFetchChunksOfVisibleDatasetsEffect() {
   //   signals.createEffect(

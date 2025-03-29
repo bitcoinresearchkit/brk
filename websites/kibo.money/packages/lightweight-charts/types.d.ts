@@ -7,12 +7,10 @@ import {
   LineStyleOptions,
   SeriesOptionsCommon,
   Time,
-  CandlestickData,
   ISeriesApi,
   BaselineData,
-} from "./v5.0.4/types";
-import { Color, Valued, ValuedCandlestickData } from "../../scripts/types/self";
-import { VecId, VecIdToIndexes } from "../../scripts/types/vecid-to-indexes";
+} from "./v5.0.5/types";
+import { VecId } from "../../scripts/vecid-to-indexes";
 
 interface BaseSeriesBlueprint {
   title: string;
@@ -28,7 +26,7 @@ interface CandlestickSeriesBlueprint extends BaseSeriesBlueprint {
   type: "Candlestick";
   color?: Color;
   options?: DeepPartial<CandlestickStyleOptions & SeriesOptionsCommon>;
-  data?: Accessor<(CandlestickData<Time> & Valued)[]>;
+  data?: Accessor<CandlestickData[]>;
 }
 interface LineSeriesBlueprint extends BaseSeriesBlueprint {
   type?: "Line";
@@ -47,9 +45,8 @@ type PriceSeriesType = "Candlestick" | "Line";
 type RemoveSeriesBlueprintFluff<Blueprint extends AnySpecificSeriesBlueprint> =
   Omit<Blueprint, "type" | "title">;
 
-type SplitSeriesBlueprint = {
+type SplitSeriesBlueprint<> = {
   key: VecId;
-  main?: boolean;
 } & AnySpecificSeriesBlueprint;
 
 type SingleSeriesBlueprint = AnySpecificSeriesBlueprint;
@@ -68,7 +65,7 @@ interface BaseSeries {
 }
 interface SingleSeries extends BaseSeries {
   iseries: ISeriesApi<any>;
-  dataset: Accessor<(SingleValueData | ValuedCandlestickData)[] | null>;
+  dataset: Accessor<(SingleValueData | CandlestickData)[] | null>;
 }
 interface SplitSeries extends BaseSeries {
   chunks: Array<Accessor<ISeriesApi<SeriesType> | undefined>>;
@@ -103,8 +100,6 @@ type ChartPane = IChartApi & {
 };
 
 interface CreatePaneParameters {
-  // unit: Unit;
-  paneIndex?: number;
   options?: DeepPartial<ChartOptions>;
   config?: SingleSeriesBlueprint[];
 }
