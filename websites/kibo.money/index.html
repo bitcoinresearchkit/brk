@@ -521,9 +521,10 @@
             gap: 0.25rem;
 
             > span.colors {
+              margin-top: 0.25rem;
               display: flex;
-              width: 0.75rem;
-              height: 0.75rem;
+              width: 0.625rem;
+              height: 0.625rem;
               flex-direction: column;
               overflow: hidden;
               border-radius: 9999px;
@@ -966,9 +967,13 @@
         flex-direction: column;
         min-height: 0;
         z-index: 20;
-        margin-bottom: 2rem;
+        flex: 1;
+        margin-top: 2rem;
+        margin-bottom: 1.5rem;
 
         > legend {
+          text-transform: lowercase;
+          flex-shrink: 0;
           display: flex;
           align-items: center;
           gap: 1.5rem;
@@ -976,7 +981,7 @@
           margin-right: var(--negative-main-padding);
           padding-left: var(--main-padding);
           padding-right: var(--main-padding);
-          padding-bottom: 1.25rem;
+          padding-bottom: 1.5rem;
           overflow-x: auto;
           min-width: 0;
 
@@ -1015,13 +1020,16 @@
             }
 
             > a {
-              padding: 0.375rem;
-              margin: -0.375rem;
+              padding-left: 0.375rem;
+              padding-right: 0.375rem;
+              margin-left: -0.375rem;
+              margin-right: -0.375rem;
             }
           }
         }
 
         .lightweight-chart {
+          min-height: 0;
           height: 100%;
           margin-right: var(--negative-main-padding);
         }

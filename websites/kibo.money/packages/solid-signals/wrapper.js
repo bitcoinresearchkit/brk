@@ -33,7 +33,7 @@ const importSignals = import("./2024-11-02/script.js").then((_signals) => {
     /**
      * @template T
      * @param {T} initialValue
-     * @param {SignalOptions<T> & {save?: {keyPrefix: string; key: string; serialize: (v: NonNullable<T>) => string; deserialize: (v: string) => NonNullable<T>}}} [options]
+     * @param {SignalOptions<T> & {save?: {keyPrefix: string; key: string; serialize: (v: T) => string; deserialize: (v: string) => T; serializeParam?: boolean}}} [options]
      * @returns {Signal<T>}
      */
     createSignal(initialValue, options) {
@@ -55,7 +55,11 @@ const importSignals = import("./2024-11-02/script.js").then((_signals) => {
         const storageKey = `${save.keyPrefix}-${paramKey}`;
 
         let serialized = /** @type {string | null} */ (null);
-        serialized = new URLSearchParams(window.location.search).get(paramKey);
+        if (options.save.serializeParam !== false) {
+          serialized = new URLSearchParams(window.location.search).get(
+            paramKey,
+          );
+        }
 
         if (serialized === null) {
           serialized = localStorage.getItem(storageKey);
