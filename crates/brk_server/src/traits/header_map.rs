@@ -26,7 +26,8 @@ pub trait HeaderMapExtended {
     fn insert_cors(&mut self);
 
     fn get_if_modified_since(&self) -> Option<DateTime>;
-    fn check_if_modified_since(&self, path: &Path) -> color_eyre::Result<(ModifiedState, DateTime)>;
+    fn check_if_modified_since(&self, path: &Path)
+    -> color_eyre::Result<(ModifiedState, DateTime)>;
 
     fn insert_cache_control_immutable(&mut self);
     #[allow(unused)]
@@ -114,8 +115,15 @@ impl HeaderMapExtended for HeaderMap {
         self.insert(header::LAST_MODIFIED, formatted.parse().unwrap());
     }
 
-    fn check_if_modified_since(&self, path: &Path) -> color_eyre::Result<(ModifiedState, DateTime)> {
-        let duration = path.metadata()?.modified()?.duration_since(time::UNIX_EPOCH).unwrap();
+    fn check_if_modified_since(
+        &self,
+        path: &Path,
+    ) -> color_eyre::Result<(ModifiedState, DateTime)> {
+        let duration = path
+            .metadata()?
+            .modified()?
+            .duration_since(time::UNIX_EPOCH)
+            .unwrap();
         let date = Timestamp::new(duration.as_secs() as i64, 0)
             .unwrap()
             .to_zoned(TimeZone::UTC)
@@ -177,7 +185,10 @@ impl HeaderMapExtended for HeaderMap {
     }
 
     fn insert_content_type_application_javascript(&mut self) {
-        self.insert(header::CONTENT_TYPE, "application/javascript".parse().unwrap());
+        self.insert(
+            header::CONTENT_TYPE,
+            "application/javascript".parse().unwrap(),
+        );
     }
 
     fn insert_content_type_application_json(&mut self) {
@@ -185,7 +196,10 @@ impl HeaderMapExtended for HeaderMap {
     }
 
     fn insert_content_type_application_manifest_json(&mut self) {
-        self.insert(header::CONTENT_TYPE, "application/manifest+json".parse().unwrap());
+        self.insert(
+            header::CONTENT_TYPE,
+            "application/manifest+json".parse().unwrap(),
+        );
     }
 
     fn insert_content_type_application_pdf(&mut self) {
@@ -201,7 +215,10 @@ impl HeaderMapExtended for HeaderMap {
     }
 
     fn insert_content_type_text_tsv(&mut self) {
-        self.insert(header::CONTENT_TYPE, "text/tab-separated-values".parse().unwrap());
+        self.insert(
+            header::CONTENT_TYPE,
+            "text/tab-separated-values".parse().unwrap(),
+        );
     }
 
     fn insert_content_type_text_html(&mut self) {

@@ -20,8 +20,8 @@ impl StoreMeta {
     pub fn checked_open(path: &Path, version: Version) -> color_eyre::Result<Self> {
         fs::create_dir_all(path)?;
 
-        let is_same_version =
-            Version::try_from(Self::path_version_(path).as_path()).is_ok_and(|prev_version| version == prev_version);
+        let is_same_version = Version::try_from(Self::path_version_(path).as_path())
+            .is_ok_and(|prev_version| version == prev_version);
 
         if !is_same_version {
             Self::reset_(path)?;
@@ -92,7 +92,7 @@ impl StoreMeta {
     fn write_length(&self) -> io::Result<()> {
         Self::write_length_(&self.pathbuf, self.len)
     }
-    fn write_length_(path: &Path, len: usize) -> Result<(), io::Error> {
+    fn write_length_(path: &Path, len: usize) -> io::Result<()> {
         fs::write(Self::path_length(path), len.as_bytes())
     }
     fn path_length(path: &Path) -> PathBuf {

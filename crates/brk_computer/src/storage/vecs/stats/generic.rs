@@ -193,6 +193,7 @@ where
         Ok(())
     }
 
+    #[allow(clippy::wrong_self_convention)]
     pub fn from_aligned<I2>(
         &mut self,
         max_from: I,

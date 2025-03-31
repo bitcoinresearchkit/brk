@@ -22,7 +22,7 @@ pub fn query(params: QueryParams) -> color_eyre::Result<()> {
 
     let ids = params.values.iter().map(|s| s.as_str()).collect::<Vec<_>>();
 
-    let res = query.search(index, &ids, params.from, params.to, params.format)?;
+    let res = query.search_and_format(index, &ids, params.from, params.to, params.format)?;
 
     if params.format.is_some() {
         println!("{}", res);
