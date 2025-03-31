@@ -1,11 +1,16 @@
 use std::ops::{Add, Div};
 
 use derive_deref::Deref;
-use jiff::{civil::date, tz::TimeZone};
+use jiff::{
+    civil::{Time, date},
+    tz::TimeZone,
+};
 use serde::Serialize;
 use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 use crate::CheckedSub;
+
+use super::Date;
 
 #[derive(
     Debug,
@@ -72,6 +77,17 @@ impl From<Timestamp> for bitcoin::locktime::absolute::Time {
 impl From<usize> for Timestamp {
     fn from(value: usize) -> Self {
         Self(value as u32)
+    }
+}
+
+impl From<Date> for Timestamp {
+    fn from(value: Date) -> Self {
+        Self::from(
+            jiff::civil::Date::from(value)
+                .to_zoned(TimeZone::UTC)
+                .unwrap()
+                .timestamp(),
+        )
     }
 }
 

@@ -1,8 +1,8 @@
 use std::{fs, ops::Deref, path::Path};
 
 use brk_core::{
-    Date, Dateindex, Decadeindex, Difficultyepoch, Halvingepoch, Height, Monthindex, Txindex,
-    Txinindex, Txoutindex, Weekindex, Yearindex,
+    Date, Dateindex, Decadeindex, Difficultyepoch, Halvingepoch, Height, Monthindex, Timestamp,
+    Txindex, Txinindex, Txoutindex, Weekindex, Yearindex,
 };
 use brk_exit::Exit;
 use brk_indexer::Indexer;
@@ -19,18 +19,23 @@ pub struct Vecs {
     pub dateindex_to_first_height: StorableVec<Dateindex, Height>,
     pub dateindex_to_last_height: StorableVec<Dateindex, Height>,
     pub dateindex_to_monthindex: StorableVec<Dateindex, Monthindex>,
+    pub dateindex_to_timestamp: StorableVec<Dateindex, Timestamp>,
     pub dateindex_to_weekindex: StorableVec<Dateindex, Weekindex>,
     pub decadeindex_to_decadeindex: StorableVec<Decadeindex, Decadeindex>,
     pub decadeindex_to_first_yearindex: StorableVec<Decadeindex, Yearindex>,
     pub decadeindex_to_last_yearindex: StorableVec<Decadeindex, Yearindex>,
+    pub decadeindex_to_timestamp: StorableVec<Decadeindex, Timestamp>,
     pub difficultyepoch_to_difficultyepoch: StorableVec<Difficultyepoch, Difficultyepoch>,
     pub difficultyepoch_to_first_height: StorableVec<Difficultyepoch, Height>,
     pub difficultyepoch_to_last_height: StorableVec<Difficultyepoch, Height>,
+    pub difficultyepoch_to_timestamp: StorableVec<Difficultyepoch, Timestamp>,
     pub halvingepoch_to_first_height: StorableVec<Halvingepoch, Height>,
     pub halvingepoch_to_halvingepoch: StorableVec<Halvingepoch, Halvingepoch>,
     pub halvingepoch_to_last_height: StorableVec<Halvingepoch, Height>,
+    pub halvingepoch_to_timestamp: StorableVec<Halvingepoch, Timestamp>,
     pub height_to_dateindex: StorableVec<Height, Dateindex>,
     pub height_to_difficultyepoch: StorableVec<Height, Difficultyepoch>,
+    pub height_to_fixed_timestamp: StorableVec<Height, Timestamp>,
     pub height_to_fixed_date: StorableVec<Height, Date>,
     pub height_to_halvingepoch: StorableVec<Height, Halvingepoch>,
     pub height_to_height: StorableVec<Height, Height>,
@@ -39,15 +44,18 @@ pub struct Vecs {
     pub monthindex_to_first_dateindex: StorableVec<Monthindex, Dateindex>,
     pub monthindex_to_last_dateindex: StorableVec<Monthindex, Dateindex>,
     pub monthindex_to_monthindex: StorableVec<Monthindex, Monthindex>,
+    pub monthindex_to_timestamp: StorableVec<Monthindex, Timestamp>,
     pub monthindex_to_yearindex: StorableVec<Monthindex, Yearindex>,
     pub txindex_to_last_txinindex: StorableVec<Txindex, Txinindex>,
     pub txindex_to_last_txoutindex: StorableVec<Txindex, Txoutindex>,
     pub weekindex_to_first_dateindex: StorableVec<Weekindex, Dateindex>,
     pub weekindex_to_last_dateindex: StorableVec<Weekindex, Dateindex>,
+    pub weekindex_to_timestamp: StorableVec<Weekindex, Timestamp>,
     pub weekindex_to_weekindex: StorableVec<Weekindex, Weekindex>,
     pub yearindex_to_decadeindex: StorableVec<Yearindex, Decadeindex>,
     pub yearindex_to_first_monthindex: StorableVec<Yearindex, Monthindex>,
     pub yearindex_to_last_monthindex: StorableVec<Yearindex, Monthindex>,
+    pub yearindex_to_timestamp: StorableVec<Yearindex, Timestamp>,
     pub yearindex_to_yearindex: StorableVec<Yearindex, Yearindex>,
 }
 
@@ -231,6 +239,46 @@ impl Vecs {
                 Version::from(1),
                 compressed,
             )?,
+            dateindex_to_timestamp: StorableVec::forced_import(
+                &path.join("dateindex_to_timestamp"),
+                Version::from(1),
+                compressed,
+            )?,
+            decadeindex_to_timestamp: StorableVec::forced_import(
+                &path.join("decadeindex_to_timestamp"),
+                Version::from(1),
+                compressed,
+            )?,
+            difficultyepoch_to_timestamp: StorableVec::forced_import(
+                &path.join("difficultyepoch_to_timestamp"),
+                Version::from(1),
+                compressed,
+            )?,
+            halvingepoch_to_timestamp: StorableVec::forced_import(
+                &path.join("halvingepoch_to_timestamp"),
+                Version::from(1),
+                compressed,
+            )?,
+            monthindex_to_timestamp: StorableVec::forced_import(
+                &path.join("monthindex_to_timestamp"),
+                Version::from(1),
+                compressed,
+            )?,
+            weekindex_to_timestamp: StorableVec::forced_import(
+                &path.join("weekindex_to_timestamp"),
+                Version::from(1),
+                compressed,
+            )?,
+            yearindex_to_timestamp: StorableVec::forced_import(
+                &path.join("yearindex_to_timestamp"),
+                Version::from(1),
+                compressed,
+            )?,
+            height_to_fixed_timestamp: StorableVec::forced_import(
+                &path.join("height_to_fixed_timestamp"),
+                Version::from(1),
+                compressed,
+            )?,
         })
     }
 
@@ -261,9 +309,9 @@ impl Vecs {
             exit,
         )?;
 
-        self.height_to_fixed_date.compute_transform(
+        self.height_to_fixed_timestamp.compute_transform(
             starting_indexes.height,
-            self.height_to_real_date.mut_vec(),
+            indexer_vecs.height_to_timestamp.mut_vec(),
             |(h, d, s, ..)| {
                 let d = h
                     .decremented()
@@ -275,6 +323,13 @@ impl Vecs {
                     });
                 (h, d)
             },
+            exit,
+        )?;
+
+        self.height_to_fixed_date.compute_transform(
+            starting_indexes.height,
+            self.height_to_fixed_timestamp.mut_vec(),
+            |(h, t, ..)| (h, Date::from(t)),
             exit,
         )?;
 
@@ -329,6 +384,13 @@ impl Vecs {
             starting_dateindex,
             self.dateindex_to_dateindex.mut_vec(),
             |(di, ..)| (di, Date::from(di)),
+            exit,
+        )?;
+
+        self.dateindex_to_timestamp.compute_transform(
+            starting_dateindex,
+            self.dateindex_to_date.mut_vec(),
+            |(di, d, ..)| (di, Timestamp::from(d)),
             exit,
         )?;
 
@@ -392,6 +454,13 @@ impl Vecs {
             exit,
         )?;
 
+        self.weekindex_to_timestamp.compute_transform(
+            starting_weekindex,
+            self.weekindex_to_first_dateindex.mut_vec(),
+            |(i, d, ..)| (i, *self.dateindex_to_timestamp.get(d).unwrap().unwrap()),
+            exit,
+        )?;
+
         // ---
 
         let starting_monthindex = self
@@ -428,6 +497,13 @@ impl Vecs {
             starting_monthindex,
             self.monthindex_to_first_dateindex.mut_vec(),
             |(mi, ..)| (mi, mi),
+            exit,
+        )?;
+
+        self.monthindex_to_timestamp.compute_transform(
+            starting_monthindex,
+            self.monthindex_to_first_dateindex.mut_vec(),
+            |(i, d, ..)| (i, *self.dateindex_to_timestamp.get(d).unwrap().unwrap()),
             exit,
         )?;
 
@@ -470,6 +546,13 @@ impl Vecs {
             exit,
         )?;
 
+        self.yearindex_to_timestamp.compute_transform(
+            starting_yearindex,
+            self.yearindex_to_first_monthindex.mut_vec(),
+            |(i, m, ..)| (i, *self.monthindex_to_timestamp.get(m).unwrap().unwrap()),
+            exit,
+        )?;
+
         // ---
 
         let starting_decadeindex = self
@@ -504,6 +587,13 @@ impl Vecs {
             starting_decadeindex,
             self.decadeindex_to_first_yearindex.mut_vec(),
             |(di, ..)| (di, di),
+            exit,
+        )?;
+
+        self.decadeindex_to_timestamp.compute_transform(
+            starting_decadeindex,
+            self.decadeindex_to_first_yearindex.mut_vec(),
+            |(i, y, ..)| (i, *self.yearindex_to_timestamp.get(y).unwrap().unwrap()),
             exit,
         )?;
 
@@ -544,6 +634,18 @@ impl Vecs {
             exit,
         )?;
 
+        self.difficultyepoch_to_timestamp.compute_transform(
+            starting_difficultyepoch,
+            self.difficultyepoch_to_first_height.mut_vec(),
+            |(i, h, ..)| {
+                (
+                    i,
+                    *indexer_vecs.height_to_timestamp.get(h).unwrap().unwrap(),
+                )
+            },
+            exit,
+        )?;
+
         // ---
 
         let starting_halvingepoch = self
@@ -580,6 +682,18 @@ impl Vecs {
             |(he, ..)| (he, he),
             exit,
         )?;
+
+        // self.difficultyepoch_to_timestamp.compute_transform(
+        //     starting_difficultyepoch,
+        //     self.difficultyepoch_to_first_height.mut_vec(),
+        //     |(i, h, ..)| {
+        //         (
+        //             i,
+        //             *indexer_vecs.height_to_timestamp.get(h).unwrap().unwrap(),
+        //         )
+        //     },
+        //     exit,
+        // )?;
 
         Ok(Indexes {
             indexes: starting_indexes,
@@ -630,6 +744,14 @@ impl Vecs {
             self.decadeindex_to_decadeindex.any_vec(),
             self.difficultyepoch_to_difficultyepoch.any_vec(),
             self.halvingepoch_to_halvingepoch.any_vec(),
+            self.dateindex_to_timestamp.any_vec(),
+            self.decadeindex_to_timestamp.any_vec(),
+            self.difficultyepoch_to_timestamp.any_vec(),
+            self.halvingepoch_to_timestamp.any_vec(),
+            self.monthindex_to_timestamp.any_vec(),
+            self.weekindex_to_timestamp.any_vec(),
+            self.yearindex_to_timestamp.any_vec(),
+            self.height_to_fixed_timestamp.any_vec(),
         ]
     }
 }

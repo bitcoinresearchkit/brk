@@ -1,5 +1,7 @@
 // @ts-check
 
+/** @import {SeriesDefinition} from './v5.0.5/types' */
+
 export default import("./v5.0.5/script.js").then((lc) => {
   /**
    * @param {Object} args
@@ -23,26 +25,18 @@ export default import("./v5.0.5/script.js").then((lc) => {
       autoSize: true,
       layout: {
         fontFamily: "Satoshi",
-        fontSize: 13.5,
+        fontSize: 14,
         background: { color: "transparent" },
         attributionLogo: false,
         colorSpace: "display-p3",
         colorParsers: [oklchToRGBA],
-        panes: {},
       },
       grid: {
         vertLines: { visible: false },
         horzLines: { visible: false },
       },
       timeScale: {
-        minBarSpacing: 0.1,
-        shiftVisibleRangeOnNewBar: false,
-        allowShiftVisibleRangeOnWhitespaceReplacement: false,
-      },
-      handleScale: {
-        axisDoubleClickReset: {
-          time: false,
-        },
+        minBarSpacing: 2.1,
       },
       localization: {
         priceFormatter: utils.locale.numberToShortUSFormat,
@@ -51,6 +45,7 @@ export default import("./v5.0.5/script.js").then((lc) => {
       ..._options,
     };
 
+    /** @type {IChartApi} */
     const chart = lc.createChart(element, options);
 
     chart.priceScale("right").applyOptions({
@@ -65,13 +60,22 @@ export default import("./v5.0.5/script.js").then((lc) => {
       () => ({
         defaultColor: colors.default(),
         offColor: colors.off(),
+        borderColor: colors.border(),
       }),
-      ({ defaultColor, offColor }) => {
-        console.log(defaultColor, offColor);
+      ({ defaultColor, offColor, borderColor }) => {
+        console.log(
+          defaultColor,
+          offColor,
+          borderColor,
+          `rgba(${oklchToRGBA(borderColor).join(", ")})`,
+        );
 
         chart.applyOptions({
           layout: {
             textColor: offColor,
+            panes: {
+              separatorColor: borderColor,
+            },
           },
           rightPriceScale: {
             borderVisible: false,
@@ -82,13 +86,14 @@ export default import("./v5.0.5/script.js").then((lc) => {
           },
           crosshair: {
             horzLine: {
-              color: defaultColor,
+              color: offColor,
               labelBackgroundColor: defaultColor,
             },
             vertLine: {
-              color: defaultColor,
+              color: offColor,
               labelBackgroundColor: defaultColor,
             },
+            mode: 3,
           },
         });
       },
@@ -103,9 +108,9 @@ export default import("./v5.0.5/script.js").then((lc) => {
   const defaultSeriesOptions = {
     // @ts-ignore
     lineWidth: 1.5,
-    priceLineVisible: false,
-    baseLineVisible: false,
-    baseLineColor: "",
+    // priceLineVisible: false,
+    // baseLineVisible: false,
+    // baseLineColor: "",
   };
 
   /**
@@ -116,15 +121,16 @@ export default import("./v5.0.5/script.js").then((lc) => {
    * @param {Colors} args.colors
    * @param {"static" | "scrollable"} args.kind
    * @param {Utilities} args.utils
+   * @param {VecsResources} args.vecsResources
    * @param {Owner | null} [args.owner]
    */
   function createChartElement({
     parent,
     signals,
     colors,
-    id: chartId,
     kind,
     utils,
+    vecsResources,
     owner: _owner,
   }) {
     let owner = _owner || signals.getOwner();
@@ -133,14 +139,16 @@ export default import("./v5.0.5/script.js").then((lc) => {
     div.classList.add("chart");
     parent.append(div);
 
-    const legendElement = window.document.createElement("legend");
-    div.append(legendElement);
+    const legend = createLegend({
+      parent: div,
+    });
 
     const chartDiv = window.document.createElement("div");
     chartDiv.classList.add("lightweight-chart");
     div.append(chartDiv);
 
     let ichart = /** @type {IChartApi | null} */ (null);
+    let timeScaleSet = false;
 
     if (kind === "static") {
       new ResizeObserver(() => ichart?.timeScale().fitContent()).observe(
@@ -148,17 +156,82 @@ export default import("./v5.0.5/script.js").then((lc) => {
       );
     }
 
+    /** @type {Index} */
+    let index = 0;
+
+    let timeResource = /** @type {VecResource| null} */ (null);
+
+    /**
+     * @param {ISeriesApi<any>} series
+     * @param {VecResource} valuesResource
+     */
+    function createSetDataEffect(series, valuesResource) {
+      signals.createEffect(
+        () => [timeResource?.fetched(), valuesResource.fetched()],
+        ([indexes, _ohlcs]) => {
+          if (!ichart) throw Error("IChart should be initialized");
+
+          if (!indexes || !_ohlcs) return;
+          const ohlcs = /** @type {OHLCTuple[]} */ (_ohlcs);
+          let length = Math.min(indexes.length, ohlcs.length);
+          const data = new Array(length);
+          let prevTime = null;
+          let offset = 0;
+          for (let i = 0; i < length; i++) {
+            const time = indexes[i];
+            if (prevTime && prevTime === time) {
+              offset += 1;
+            }
+            const v = ohlcs[i];
+            if (typeof v === "number") {
+              data[i - offset] = {
+                time,
+                value: v,
+              };
+            } else {
+              data[i - offset] = {
+                time,
+                open: v[0],
+                high: v[1],
+                low: v[2],
+                close: v[3],
+              };
+            }
+            prevTime = time;
+          }
+          data.length -= offset;
+          series.setData(data);
+          if (
+            !timeScaleSet &&
+            (index === /** @satisfies {Yearindex} */ (15) ||
+              index === /** @satisfies {Decadeindex} */ (16))
+          ) {
+            ichart
+              .timeScale()
+              .setVisibleLogicalRange({ from: -1, to: data.length });
+          }
+          timeScaleSet = true;
+        },
+      );
+    }
+
     return {
-      chart() {
-        return ichart;
-      },
       /**
-       * @param {Index} index
+       * @param {Index} _index
        */
-      createChart(index) {
+      create(_index) {
+        index = _index;
         if (ichart) throw Error("IChart shouldn't be initialized");
 
-        createLightweightChart({
+        timeResource = vecsResources.getOrCreate(
+          index,
+          index === /** @satisfies {Height} */ (2)
+            ? "fixed-timestamp"
+            : "timestamp",
+        );
+        timeResource.fetch();
+
+        ichart = createLightweightChart({
           index,
           element: chartDiv,
           signals,
@@ -167,26 +240,90 @@ export default import("./v5.0.5/script.js").then((lc) => {
         });
       },
       /**
+       * @param {VecId} id
+       * @param {number} [paneNumber]
+       */
+      addCandlestickSeries(id, paneNumber) {
+        if (!ichart || !timeResource) throw Error("Chart not fully set");
+
+        const valuesResource = vecsResources.getOrCreate(index, id);
+        valuesResource.fetch();
+
+        const green = colors.green();
+        const red = colors.red();
+        const series = ichart.addSeries(
+          /** @type {SeriesDefinition<'Candlestick'>} */ (lc.CandlestickSeries),
+          {
+            upColor: green,
+            downColor: red,
+            wickUpColor: green,
+            wickDownColor: red,
+            borderVisible: false,
+          },
+          paneNumber,
+        );
+
+        createSetDataEffect(series, valuesResource);
+
+        return series;
+      },
+      /**
+       * @param {VecId} id
+       * @param {number} [paneNumber]
+       */
+      addLineSeries(id, paneNumber) {
+        if (!ichart || !timeResource) throw Error("Chart not fully set");
+
+        const valuesResource = vecsResources.getOrCreate(index, id);
+        valuesResource.fetch();
+
+        const series = ichart.addSeries(
+          /** @type {SeriesDefinition<'Line'>} */ (lc.LineSeries),
+          {
+            lineWidth: /** @type {any} */ (1.5),
+          },
+          paneNumber,
+        );
+
+        createSetDataEffect(series, valuesResource);
+
+        return series;
+      },
+      /**
        *
        * @param {Object} args
        * @param {Owner | null} args.owner
        */
       reset({ owner: _owner }) {
         owner = _owner;
-        if (ichart !== null) {
-          ichart.remove();
-        } else {
-          throw Error("IChart should be initialized");
-        }
-        legendElement.innerHTML = "";
+        ichart?.remove();
+        ichart = null;
+        timeScaleSet = false;
+        legend.reset();
       },
     };
   }
 
   return {
+    inner: lc,
     createChartElement,
   };
 });
+
+/**
+ * @param {Object} args
+ * @param {Element} args.parent
+ */
+function createLegend({ parent }) {
+  const legendElement = window.document.createElement("legend");
+  parent.append(legendElement);
+
+  return {
+    reset() {
+      legendElement.innerHTML = "";
+    },
+  };
+}
 
 const oklchToRGBA = (() => {
   {

@@ -36,7 +36,7 @@ impl DTS for Query<'static> {
             .enumerate()
             .map(|(i_of_i, i)| {
                 // let lowered = i.to_string().to_lowercase();
-                format!("const {i} = {i_of_i};\n/** @typedef {{typeof {i}}} {i} */",)
+                format!("/** @typedef {{{i_of_i}}} {i} */",)
             })
             .collect::<Vec<_>>()
             .join("\n");
@@ -50,7 +50,19 @@ impl DTS for Query<'static> {
                 .join(" | ")
         );
 
-        contents += "\n\nexport const VecIdToIndexes = {\n";
+        contents += "\n\nexport function createVecIdToIndexes() {\n";
+
+        contents += &indexes
+            .iter()
+            .enumerate()
+            .map(|(i_of_i, i)| {
+                // let lowered = i.to_string().to_lowercase();
+                format!("  const {i} = /** @satisfies {{{i}}} */ ({i_of_i});",)
+            })
+            .collect::<Vec<_>>()
+            .join("\n");
+
+        contents += "\n\n  return {\n";
 
         self.vecid_to_index_to_vec
             .iter()
@@ -62,7 +74,7 @@ impl DTS for Query<'static> {
                     .join(", ");
 
                 contents += &format!(
-                    "  {}: [{indexes}],\n",
+                    "    {}: [{indexes}],\n",
                     if id.contains("-") {
                         format!("\"{id}\"")
                     } else {
@@ -71,9 +83,10 @@ impl DTS for Query<'static> {
                 );
             });
 
+        contents += "  }\n";
         contents.push('}');
 
-        contents += "\n/** @typedef {typeof VecIdToIndexes} VecIdToIndexes */";
+        contents += "\n/** @typedef {ReturnType<typeof createVecIdToIndexes>} VecIdToIndexes */";
         contents += "\n/** @typedef {keyof VecIdToIndexes} VecId */\n";
 
         fs::write(path, contents)

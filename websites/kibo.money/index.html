@@ -217,7 +217,7 @@
         --white: oklch(99% 0.01 44);
         --light-gray: oklch(90% 0.01 44);
         --gray: oklch(60% 0.01 44);
-        --dark-gray: oklch(25% 0.01 44);
+        --dark-gray: oklch(30% 0.01 44);
         --black: oklch(17.5% 0.005 44);
         --red: oklch(0.607 0.241 26.328);
         --orange: oklch(67.64% 0.191 44.41);
@@ -236,8 +236,8 @@
         --purple: oklch(0.5925 0.2765 303.1105);
         --fuchsia: oklch(0.629 0.294 322.523);
         --pink: oklch(0.624 0.245 357.444);
-        --rose: oklch(0.6155 0.2495 17.012)
-          --background-color: light-dark(var(--white), var(--black));
+        --rose: oklch(0.6155 0.2495 17.012);
+        --background-color: light-dark(var(--white), var(--black));
         --color: light-dark(var(--black), var(--white));
         --off-color: var(--gray);
         --border-color: light-dark(var(--light-gray), var(--dark-gray));
@@ -256,6 +256,8 @@
         --line-height-xl: calc(1.75 / 1.25);
         --font-size-2xl: 1.5rem;
         --line-height-2xl: calc(2 / 1.5);
+        --font-size-3xl: 1.75rem;
+        --line-height-3xl: calc(2.25 / 1.75);
 
         --main-padding: 2rem;
 
@@ -265,7 +267,7 @@
 
         --negative-main-padding: calc(-1 * var(--main-padding));
 
-        --font-weight-base: 450;
+        --font-weight-base: 400;
         --font-weight-bold: 700;
 
         --transform-scale-active: scaleY(0.9);
@@ -446,16 +448,11 @@
         }
       }
 
-      field,
       h1 {
         text-transform: capitalize;
-      }
-
-      h1,
-      h2 {
-        font-size: var(--font-size-2xl);
-        line-height: var(--line-height-2xl);
-        font-weight: 400;
+        font-size: var(--font-size-3xl);
+        line-height: var(--line-height-3xl);
+        font-weight: 300;
       }
 
       h3 {
@@ -889,7 +886,7 @@
           transparent,
           var(--background-color)
         );
-        height: var(--main-padding);
+        height: calc(var(--main-padding) * 10);
         bottom: 0;
         left: 0;
         right: 0;
@@ -936,6 +933,7 @@
         }
 
         > div.field {
+          text-transform: lowercase;
           display: flex;
           align-items: center;
           /* font-size: var(--font-size-xs);
@@ -948,17 +946,17 @@
           }
 
           > hr {
-            min-width: 1rem;
+            min-width: 2rem;
           }
 
           label {
             padding: 0.5rem;
-            /* margin: -0.5rem; */
+            margin: -0.5rem;
           }
 
           > div {
             display: flex;
-            gap: 0.5rem;
+            gap: 1.5rem;
           }
         }
       }
@@ -968,6 +966,7 @@
         flex-direction: column;
         min-height: 0;
         z-index: 20;
+        margin-bottom: 2rem;
 
         > legend {
           display: flex;
