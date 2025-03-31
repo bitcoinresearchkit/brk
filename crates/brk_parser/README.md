@@ -4,6 +4,9 @@
   <a href="https://github.com/bitcoinresearchkit/brk">
     <img alt="GitHub Repo stars" src="https://img.shields.io/github/stars/bitcoinresearchkit/brk?style=social">
   </a>
+  <a href="https://kibo.money">
+    <img alt="kibo.money" src="https://img.shields.io/badge/showcase-kib%C5%8D.money-orange">
+  </a>
   <a href="https://github.com/bitcoinresearchkit/brk/blob/main/LICENSE.md">
     <img src="https://img.shields.io/crates/l/brk" alt="License" />
   </a>
