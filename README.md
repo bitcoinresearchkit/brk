@@ -21,7 +21,7 @@
     <img src="https://deps.rs/crate/brk/latest/status.svg" alt="Dependency status">
   </a>
   <a href="https://discord.gg/Cvrwpv3zEG">
-    <img src="https://img.shields.io/discord/1350431684562124850" alt="Chat" />
+    <img src="https://img.shields.io/discord/1350431684562124850?label=discord" alt="Discord" />
   </a>
   <a href="https://primal.net/p/nprofile1qqsfw5dacngjlahye34krvgz7u0yghhjgk7gxzl5ptm9v6n2y3sn03sqxu2e6">
     <img src="https://img.shields.io/badge/nostr-purple?link=https%3A%2F%2Fprimal.net%2Fp%2Fnprofile1qqsfw5dacngjlahye34krvgz7u0yghhjgk7gxzl5ptm9v6n2y3sn03sqxu2e6" alt="Nostr" />
@@ -34,23 +34,25 @@
   </a>
 </p>
 
-The Bitcoin Research Kit is a suite of tools designed to parse, index, compute, serve and display data stored on a Bitcoin Core node.
+The Bitcoin Research Kit is a high-performance toolchain designed to parse, index, compute, serve and visualize data from a Bitcoin Core node, enabling users to gain deeper insights into the Bitcoin network.
 
-In other words it's an alternative to [Glassnode](https://glassnode.com), [mempool.space](https://mempool.space/) and [esplora](https://github.com/Blockstream/electrs)/[electrs](https://github.com/romanz/esplora) all in one package with a particular focus on the self-hosting experience.
+In other words it's an alternative to [Glassnode](https://glassnode.com), [mempool.space](https://mempool.space/) and [esplora](https://github.com/Blockstream/electrs)/[electrs](https://github.com/romanz/esplora) all in one package with a particular focus on simplicity and the self-hosting experience.
 
-The toolkit can be used in various ways to accommodate as many needs as possible.
+The toolkit can be used in various ways to accommodate as many needs as possible:
 
-- **Website** \
-  Anyone can go to [kibo.money](https://kibo.money) website which is the official instance and showcases very well what the suite is capable of \
-  Completely free including the API which is also auth-less \
-  Powered by BRK using the `kibo.money` front-end and all features enabled
-- **CLI** \
-  Node runners can self-host their own instance using one simple command: `cargo install brk` \
-  For more information check out: [`brk_cli`](https://crates.io/crates/brk_cli)
-- **Crates** \
-  Rust developers have a wide range crates available (which can be found below) for maximum flexibility
+- **[Website](https://kibo.money)** \
+  Everyone is welcome to visit [kibo.money](https://kibo.money) which is the official showcase of the suite's capabilities and served by default when running BRK. \
+  As a token of gratitude to the community and to stimulate curiosity, both the website and the API are entirely free, allowing anyone to use them.
+- **[CLI](https://crates.io/crates/brk_cli)** \
+  Node runners are strongly encouraged to try out and self-host their own instance. \
+  A lot of effort has gone into making this as easy as possible. \
+  For more information visit: [`brk_cli`](https://crates.io/crates/brk_cli)
+- **[Crates](https://crates.io/crates/brk)** \
+  Rust developers have access to a wide range crates, each built upon one another with its own specific purpose, enabling independent use and offering great flexibility.
 
-So whether you're an enthusiast, a researcher, a miner, an analyst, or just curious, there should be something for everyone !
+The primary goal of this project is to be fully-featured and accessible for everyone, regardless of their background or financial situation - whether that person is an enthusiast, researcher, miner, analyst, or simply curious.
+
+In contrast, existing alternatives tend to be either [very costly](https://studio.glassnode.com/pricing) or missing essential features, with the vast majority being closed-source and unverifiable, which fundamentally undermines the principles of Bitcoin.
 
 ## Crates
 
@@ -71,7 +73,7 @@ So whether you're an enthusiast, a researcher, a miner, an analyst, or just curi
 
 Deepest gratitude to the [Open Sats](https://opensats.org/) public charity. Their grant — from December 2024 to the present — has been critical in sustaining this project.
 
-Heartfelt thanks go out to every donor on [Nostr](https://primal.net/p/npub1jagmm3x39lmwfnrtvxcs9ac7g300y3dusv9lgzhk2e4x5frpxlrqa73v44) and [Geyser.fund](https://geyser.fund/project/brk) whose support has ensured the availability of the [kibō.money](https://kibo.money) public instance.
+Heartfelt thanks go out to every donor on [Nostr](https://primal.net/p/npub1jagmm3x39lmwfnrtvxcs9ac7g300y3dusv9lgzhk2e4x5frpxlrqa73v44) and [Geyser.fund](https://geyser.fund/project/brk) whose support has ensured the availability of the [kibo.money](https://kibo.money) public instance.
 
 ## Hosting as a service
 
@@ -79,10 +81,10 @@ Heartfelt thanks go out to every donor on [Nostr](https://primal.net/p/npub1jagm
 
 If you'd like to have your own instance hosted for you please contact [hosting@bitcoinresearchkit.org](mailto:hosting@bitcoinresearchkit.org).
 
-- Separate dedicated servers using different ISPs and Cloudflare for maximum availability
-- Optional `*.bitcoinresearchkit.org`, `*.kibo.money` and `*.satonomics.xyz` subdomains
-- A very generous `2 * 1 GB/s` API limit
-- Direct contact and feature requests
+- 2 separate servers (1 GB/s each) with different ISPs and Cloudflare integration for enhanced performance and optimal availability
+- Direct communication for feature requests and support
+- Updates delivered at your convenience
+- Optional subdomains: `*.bitcoinresearchkit.org`, `*.kibo.money` and `*.satonomics.xyz`
 
 Pricing: `0.01 BTC / month` *or* `0.1 BTC / year`
 

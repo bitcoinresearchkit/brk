@@ -489,6 +489,7 @@ function createLegend({ parent, signals, utils }) {
         anchor.href = url;
         anchor.target = "_blank";
         anchor.rel = "noopener noreferrer";
+        anchor.title = "Click to view data";
         div.append(anchor);
       }
     },
