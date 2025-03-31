@@ -8,7 +8,10 @@ use axum::{
 };
 use brk_query::{Format, Index, Output, Params};
 
-use crate::{log_result, traits::HeaderMapExtended};
+use crate::{
+    log_result,
+    traits::{HeaderMapExtended, ModifiedState, ResponseExtended},
+};
 
 use super::AppState;
 
@@ -52,13 +55,32 @@ fn req_to_response_res(
 ) -> color_eyre::Result<Response> {
     let index = Index::try_from(index.as_str())?;
 
-    let output = query.search(
+    let vecs = query.search(
         index,
         &values.iter().map(|v| v.as_str()).collect::<Vec<_>>(),
-        from,
-        to,
-        format,
-    )?;
+    );
+
+    let mut date_modified_opt = None;
+
+    if to.is_none() {
+        let not_modified = vecs
+            .iter()
+            .map(|(_, vec)| headers.check_if_modified_since(&vec.path_vec()))
+            .all(|res| {
+                res.is_ok_and(|(modified, date_modified)| {
+                    if date_modified_opt.is_none_or(|dm| dm > date_modified) {
+                        date_modified_opt.replace(date_modified);
+                    }
+                    modified == ModifiedState::NotModifiedSince
+                })
+            });
+
+        if not_modified {
+            return Ok(Response::new_not_modified());
+        }
+    }
+
+    let output = query.format(vecs, from, to, format)?;
 
     let mut response = match output {
         Output::CSV(s) => s.into_response(),
@@ -74,7 +96,10 @@ fn req_to_response_res(
     let headers = response.headers_mut();
 
     headers.insert_cors();
-    // headers.insert_last_modified(date_modified);
+
+    if let Some(date_modified) = date_modified_opt {
+        headers.insert_last_modified(date_modified);
+    }
 
     match format {
         Some(format) => {

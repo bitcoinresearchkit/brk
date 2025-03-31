@@ -1,4 +1,4 @@
-use std::io;
+use std::{io, path::PathBuf};
 
 use crate::{Result, StorableVec};
 
@@ -15,6 +15,7 @@ pub trait AnyStorableVec: Send + Sync {
         to: Option<i64>,
     ) -> Result<Vec<serde_json::Value>>;
     fn flush(&mut self) -> io::Result<()>;
+    fn path_vec(&self) -> PathBuf;
 }
 
 impl<I, T> AnyStorableVec for StorableVec<I, T>
@@ -52,5 +53,9 @@ where
             .into_iter()
             .map(|v| serde_json::to_value(v).unwrap())
             .collect::<Vec<_>>())
+    }
+
+    fn path_vec(&self) -> PathBuf {
+        self.base().path_vec()
     }
 }

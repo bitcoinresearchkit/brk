@@ -5,6 +5,7 @@
 
 use brk_computer::Computer;
 use brk_indexer::Indexer;
+use brk_vec::AnyStorableVec;
 use tabled::settings::Style;
 
 mod format;
@@ -50,14 +51,7 @@ impl<'a> Query<'a> {
         }
     }
 
-    pub fn search(
-        &self,
-        index: Index,
-        ids: &[&str],
-        from: Option<i64>,
-        to: Option<i64>,
-        format: Option<Format>,
-    ) -> color_eyre::Result<Output> {
+    pub fn search(&self, index: Index, ids: &[&str]) -> Vec<(String, &&dyn AnyStorableVec)> {
         let tuples = ids
             .iter()
             .flat_map(|s| {
@@ -84,14 +78,22 @@ impl<'a> Query<'a> {
             .map(|(id, vec)| (id, vec.unwrap()))
             .collect::<Vec<_>>();
 
-        if tuples.is_empty() {
-            return Ok(Output::default(format));
-        }
-
-        let mut values = tuples
+        tuples
             .iter()
-            .flat_map(|(_, i_to_v)| i_to_v.get(&index))
-            .map(|vec| -> brk_vec::Result<Vec<serde_json::Value>> {
+            .flat_map(|(str, i_to_v)| i_to_v.get(&index).map(|vec| (str.to_owned(), vec)))
+            .collect::<Vec<_>>()
+    }
+
+    pub fn format(
+        &self,
+        vecs: Vec<(String, &&dyn AnyStorableVec)>,
+        from: Option<i64>,
+        to: Option<i64>,
+        format: Option<Format>,
+    ) -> color_eyre::Result<Output> {
+        let mut values = vecs
+            .iter()
+            .map(|(_, vec)| -> brk_vec::Result<Vec<serde_json::Value>> {
                 vec.collect_range_values(from, to)
             })
             .collect::<brk_vec::Result<Vec<_>>>()?;
@@ -100,7 +102,7 @@ impl<'a> Query<'a> {
             return Ok(Output::default(format));
         }
 
-        let ids_last_i = tuples.len() - 1;
+        let ids_last_i = vecs.len() - 1;
 
         Ok(match format {
             Some(Format::CSV) | Some(Format::TSV) => {
@@ -110,9 +112,9 @@ impl<'a> Query<'a> {
                     '\t'
                 };
 
-                let mut text = tuples
-                    .into_iter()
-                    .map(|(id, _)| id)
+                let mut text = vecs
+                    .iter()
+                    .map(|(id, _)| id.to_owned())
                     .collect::<Vec<_>>()
                     .join(&delimiter.to_string());
 
@@ -141,7 +143,7 @@ impl<'a> Query<'a> {
             }
             Some(Format::MD) => {
                 let mut table =
-                    values.to_table(tuples.iter().map(|(s, _)| s.to_owned()).collect::<Vec<_>>());
+                    values.to_table(vecs.iter().map(|(s, _)| s.to_owned()).collect::<Vec<_>>());
 
                 table.with(Style::markdown());
 
@@ -161,5 +163,16 @@ impl<'a> Query<'a> {
                 }
             }
         })
+    }
+
+    pub fn search_and_format(
+        &self,
+        index: Index,
+        ids: &[&str],
+        from: Option<i64>,
+        to: Option<i64>,
+        format: Option<Format>,
+    ) -> color_eyre::Result<Output> {
+        self.format(self.search(index, ids), from, to, format)
     }
 }

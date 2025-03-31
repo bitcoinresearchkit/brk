@@ -19,9 +19,9 @@ pub fn main() -> color_eyre::Result<()> {
 
     let query = Query::build(&indexer, &computer);
 
-    dbg!(query.search(Index::Height, &["date"], Some(-1), None, None)?);
-    dbg!(query.search(Index::Height, &["date"], Some(-10), None, None)?);
-    dbg!(query.search(Index::Height, &["date", "timestamp"], Some(-10), None, None)?);
+    dbg!(query.search_and_format(Index::Height, &["date"], Some(-1), None, None)?);
+    dbg!(query.search_and_format(Index::Height, &["date"], Some(-10), None, None)?);
+    dbg!(query.search_and_format(Index::Height, &["date", "timestamp"], Some(-10), None, None)?);
 
     Ok(())
 }
