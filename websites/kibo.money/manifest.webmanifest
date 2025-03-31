@@ -1,6 +1,6 @@
 {
-  "name": "kibō.money",
-  "short_name": "kibō",
+  "name": "kibo.money",
+  "short_name": "kibo",
   "description": "A better, FOSS, Bitcoin-only, self-hostable Glassnode",
   "categories": [
     "bitcoin",

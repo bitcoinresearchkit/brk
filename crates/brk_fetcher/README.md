@@ -21,7 +21,7 @@
     <img src="https://deps.rs/crate/brk_fetcher/latest/status.svg" alt="Dependency status">
   </a>
   <a href="https://discord.gg/Cvrwpv3zEG">
-    <img src="https://img.shields.io/discord/1350431684562124850" alt="Chat" />
+    <img src="https://img.shields.io/discord/1350431684562124850?label=discord" alt="Discord" />
   </a>
   <a href="https://primal.net/p/nprofile1qqsfw5dacngjlahye34krvgz7u0yghhjgk7gxzl5ptm9v6n2y3sn03sqxu2e6">
     <img src="https://img.shields.io/badge/nostr-purple?link=https%3A%2F%2Fprimal.net%2Fp%2Fnprofile1qqsfw5dacngjlahye34krvgz7u0yghhjgk7gxzl5ptm9v6n2y3sn03sqxu2e6" alt="Nostr" />

@@ -1733,7 +1733,7 @@ function initWebSockets(signals, utils) {
 
         window.document.title = `${latest.close.toLocaleString(
           "en-us",
-        )} | kibō`;
+        )} | kibo.money`;
       }
     });
   }

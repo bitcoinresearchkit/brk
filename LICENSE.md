@@ -1,6 +1,6 @@
 MIT License
 
-Copyright (c) 2025 bitcoinresearchkit, kibō.money
+Copyright (c) 2025 bitcoinresearchkit, kibo.money
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
