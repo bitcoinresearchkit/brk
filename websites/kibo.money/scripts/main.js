@@ -866,6 +866,20 @@ function createUtils() {
         return Number(v);
       },
     },
+    optNumber: {
+      /**
+       * @param {number | null} v
+       */
+      serialize(v) {
+        return v !== null ? String(v) : "";
+      },
+      /**
+       * @param {string} v
+       */
+      deserialize(v) {
+        return v ? Number(v) : null;
+      },
+    },
     date: {
       /**
        * @param {Date} v

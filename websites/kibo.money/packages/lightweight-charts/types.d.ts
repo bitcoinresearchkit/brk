@@ -64,7 +64,7 @@ interface BaseSeries {
   visible: Accessor<boolean>;
 }
 interface SingleSeries extends BaseSeries {
-  iseries: ISeriesApi<any>;
+  iseries: ISeriesApi<SeriesType>;
   dataset: Accessor<(SingleValueData | CandlestickData)[] | null>;
 }
 interface SplitSeries extends BaseSeries {
@@ -108,7 +108,7 @@ interface Marker {
   weight: number;
   time: Time;
   value: number;
-  seriesChunk: ISeriesApi<any>;
+  seriesChunk: ISeriesApi<SeriesType>;
 }
 
 interface HoveredLegend {
