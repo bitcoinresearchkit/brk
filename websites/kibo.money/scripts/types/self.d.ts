@@ -17,19 +17,6 @@ import {
   BaselineData,
 } from "../../packages/lightweight-charts/v5.0.5/types";
 import { AnyPossibleCohortId, Groups } from "../options";
-import { Signal } from "../../packages/solid-signals/types";
-
-// type TimeScale = "date" | "height";
-
-type TimeRange = IRange<Time | number>;
-
-// type DatasetPath<Scale extends TimeScale> = Scale extends "date"
-//   ? DatePath
-//   : HeightPath;
-
-// type AnyDatasetPath = import("./paths").DatePath | import("./paths").HeightPath;
-
-// type AnyPath = AnyDatasetPath | LastPath;
 
 type Color = () => string;
 type ColorName = keyof Colors;
@@ -118,24 +105,7 @@ interface OptionsGroup extends PartialOptionsGroup {
   tree: OptionsTree;
 }
 
-interface OHLC {
-  open: number;
-  high: number;
-  low: number;
-  close: number;
-}
-
-interface FetchedVecRange<
-  Value extends number | OHLC,
-  Data extends SingleValueData | CandlestickData = Value extends number
-    ? SingleValueData
-    : CandlestickData,
-> {
-  at: Date | null;
-  fetched: Signal<Value[] | null>;
-  transformed: Accessor<Data[] | null>;
-  loading: boolean;
-}
+type OHLCTuple = [number, number, number, number];
 
 interface Valued {
   value: number;

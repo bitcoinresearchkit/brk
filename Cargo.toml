@@ -26,11 +26,11 @@ brk_parser = { version = "0", path = "crates/brk_parser" }
 brk_query = { version = "0", path = "crates/brk_query" }
 brk_server = { version = "0", path = "crates/brk_server" }
 brk_vec = { version = "0", path = "crates/brk_vec" }
-byteview = "0.6.0"
-clap = { version = "4.5.32", features = ["derive", "string"] }
+byteview = "0.6.1"
+clap = { version = "4.5.34", features = ["derive", "string"] }
 color-eyre = "0.6.3"
 derive_deref = "1.1.1"
-fjall = "2.7.0"
+fjall = "2.8.0"
 jiff = "0.2.5"
 log = { version = "0.4.27" }
 minreq = { version = "2.13.3", features = ["https", "serde_json"] }

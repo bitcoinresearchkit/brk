@@ -1,7 +1,7 @@
 // @ts-check
 
 /**
- * @import { Option, TimeRange, Weighted, OHLC, Color, DatasetCandlestickData, PartialChartOption, ChartOption, AnyPartialOption, ProcessedOptionAddons, OptionsTree, SimulationOption, VecResource, Valued, FetchedVecRange,  SingleValueData, CandlestickData, ChartData } from "./types/self"
+ * @import { Option, Weighted, Color, DatasetCandlestickData, PartialChartOption, ChartOption, AnyPartialOption, ProcessedOptionAddons, OptionsTree, SimulationOption, Valued,  SingleValueData, CandlestickData, ChartData, OHLCTuple } from "./types/self"
  * @import { Marker,  CreatePaneParameters,  HoveredLegend, ChartPane, SplitSeries, SingleSeries, CreateSplitSeriesParameters, LineSeriesBlueprint, CandlestickSeriesBlueprint, BaselineSeriesBlueprint, CreateBaseSeriesParameters, BaseSeries, RemoveSeriesBlueprintFluff, SplitSeriesBlueprint, AnySeries, PriceSeriesType } from "../packages/lightweight-charts/types";
  * @import * as _ from "../packages/ufuzzy/v1.0.14/types"
  * @import { createChart as CreateClassicChart, createChartEx as CreateCustomChart, LineStyleOptions, DeepPartial, ChartOptions, IChartApi, IHorzScaleBehavior, WhitespaceData, ISeriesApi, Time, LineData, LogicalRange, SeriesMarker, SeriesType, BaselineStyleOptions, SeriesOptionsCommon } from "../packages/lightweight-charts/v5.0.5/types"
@@ -9,7 +9,7 @@
  * @import { getOwner as GetOwner, onCleanup as OnCleanup, Owner } from "../packages/solid-signals/2024-11-02/types/core/owner"
  * @import { createSignal as CreateSignal, createEffect as CreateEffect, Accessor, Setter, createMemo as CreateMemo, createRoot as CreateRoot, runWithOwner as RunWithOwner } from "../packages/solid-signals/2024-11-02/types/signals";
  * @import {Signal, Signals} from "../packages/solid-signals/types";
- * @import {Addressindex, Dateindex, Decadeindex, Difficultyepoch, Index, Halvingepoch, Height, Monthindex, P2PK33index, P2PK65index, P2PKHindex, P2SHindex, P2TRindex, P2WPKHindex, P2WSHindex, Txindex, Txinindex, Txoutindex, VecId, Weekindex, Yearindex} from "./vecid-to-indexes"
+ * @import {Addressindex, Dateindex, Decadeindex, Difficultyepoch, Index, Halvingepoch, Height, Monthindex, P2PK33index, P2PK65index, P2PKHindex, P2SHindex, P2TRindex, P2WPKHindex, P2WSHindex, Txindex, Txinindex, Txoutindex, VecId, Weekindex, Yearindex, VecIdToIndexes} from "./vecid-to-indexes"
  */
 
 function initPackages() {
@@ -302,14 +302,6 @@ function createUtils() {
       a.remove();
     },
     /**
-     * @param {string} text
-     */
-    createItalic(text) {
-      const italic = window.document.createElement("i");
-      italic.innerHTML = text;
-      return italic;
-    },
-    /**
      * @param {string} href
      */
     importStyle(href) {
@@ -374,12 +366,6 @@ function createUtils() {
       });
 
       return field;
-    },
-    createUlElement() {
-      return window.document.createElement("ul");
-    },
-    createLiElement() {
-      return window.document.createElement("li");
     },
     /**
      * @param {Object} args
@@ -1204,7 +1190,7 @@ function createUtils() {
         return `/api${genPath(index, vecId)}`;
       },
       /**
-       * @template {number | OHLC} [T=number]
+       * @template {number | OHLCTuple} [T=number]
        * @param {(v: T[]) => void} callback
        * @param {Index} index
        * @param {VecId} vecId
@@ -1215,7 +1201,7 @@ function createUtils() {
         return fetchApi(callback, genPath(index, vecId, from, to));
       },
       /**
-       * @template {number | OHLC} [T=number]
+       * @template {number | OHLCTuple} [T=number]
        * @param {(v: T) => void} callback
        * @param {Index} index
        * @param {VecId} vecId
@@ -1252,14 +1238,10 @@ function createUtils() {
  * @param {Utilities} utils
  */
 function createVecsResources(signals, utils) {
-  /** @type {Map<string, VecResource>} */
-  const map = new Map();
   const owner = signals.getOwner();
 
-  const STEP = 1000;
-
   /**
-   * @template {number | OHLC} [T=number]
+   * @template {number | OHLCTuple} [T=number]
    * @param {Index} index
    * @param {VecId} id
    */
@@ -1267,134 +1249,45 @@ function createVecsResources(signals, utils) {
     return signals.runWithOwner(owner, () => {
       /** @typedef {T extends number ? SingleValueData : CandlestickData} Value */
 
-      // interface VecResource<Type extends OHLC | number = number> {
-      //   url: string;
-      //   fetch: (from: number, to: number) => Promise<Type[] | null>;
-      //   ranges: Map<number, FetchedVecRange<Type>>;
-      // }
-      const vec = {
+      const fetched = signals.createSignal(/** @type {T[] | null} */ (null));
+      let loading = false;
+      let at = /** @type {Date | null} */ (null);
+
+      return {
         url: utils.api.genUrl(index, id),
-        /**
-         *
-         * @param {number} [from]
-         * @param {number} [to]
-         * @returns
-         */
-        async fetch(from, to) {
-          const range = getOrCreate(from);
-          if (range.loading) return range.fetched();
-          if (range.at) {
+        fetched,
+        async fetch() {
+          if (loading) return fetched();
+          if (at) {
+            const diff = new Date().getTime() - at.getTime();
             const ONE_MINUTE_IN_MS = 60_000;
-            const ONE_HOUR_IN_MS = 3_600_000;
-            const diff = new Date().getTime() - range.at.getTime();
-            if (diff < ONE_MINUTE_IN_MS) return range.fetched();
-            /** @type {number | null} */
-            let lastFrom = null;
-            for (const key of vec.ranges.keys()) {
-              lastFrom = key;
-            }
-            if (lastFrom && from < lastFrom && diff < ONE_HOUR_IN_MS) {
-              return range.fetched();
-            }
+            if (diff < ONE_MINUTE_IN_MS) return fetched();
           }
-          range.loading = true;
+          loading = true;
           const res = /** @type {T[] | null} */ (
             await utils.api.fetchVec(
               (values) => {
-                range.fetched.set(/** @type {T[]} */ (values));
+                fetched.set(/** @type {T[]} */ (values));
               },
               index,
               id,
-              from,
-              to,
+              -10_000,
             )
           );
-          range.at = new Date();
-          range.loading = false;
+          at = new Date();
+          loading = false;
           return res;
         },
-        ranges: new Map(),
       };
-
-      /**
-       * @param {number} from
-       */
-      function getOrCreate(from) {
-        const found = vec.ranges.get(from);
-        if (found) return found;
-
-        const fetched = signals.createSignal(/** @type {T[] | null} */ (null));
-
-        /**
-         * @param {number} i
-         */
-        function computeTime(i) {
-          switch (index) {
-            case /** @satisfies {Dateindex} */ (1): {
-              const index = from + i;
-              if (index === 0) {
-                return new Date(Date.UTC(2009, 1, 3));
-              } else {
-                let d = new Date(Date.UTC(2009, 1, 9));
-                d.setUTCDate(d.getUTCDate() + index - 1);
-                return d;
-              }
-            }
-            case /** @satisfies {Height} */ (2): {
-              // vecs.getOrCreate(/** @satisfies {Height} */ (2), "timestamp");
-            }
-            default: {
-              throw Error("todo!");
-            }
-          }
-        }
-
-        /** @type {FetchedVecRange<T>} */
-        const range = {
-          at: null,
-          fetched,
-          transformed: signals.createMemo(() => {
-            const vec = fetched();
-            if (!vec) return null;
-            const values = /** @type {Value[]} */ (new Array(vec.length));
-            for (let i = 0; i < vec.length; i++) {
-              const v = vec[i];
-              const time = /** @type {Time} */ (computeTime(i).valueOf());
-              /** @satisfies {SingleValueData} */
-              const value = {
-                time,
-                index: from + i,
-                ...(Array.isArray(v) && v !== null
-                  ? {
-                      open: v[0],
-                      high: v[1],
-                      low: v[2],
-                      close: v[3],
-                      value: v[3],
-                    }
-                  : {
-                      value: v === null ? NaN : /** @type {number} */ (v),
-                    }),
-              };
-              values[i] = /** @type {Value} */ (value);
-            }
-            return values;
-          }),
-          loading: false,
-        };
-
-        vec.ranges.set(from, range);
-
-        return range;
-      }
-
-      return vec;
     });
   }
 
+  /** @type {Map<string, NonNullable<ReturnType<typeof createVecResource>>>} */
+  const map = new Map();
+
   const vecs = {
-    STEP,
     /**
+     * @template {number | OHLCTuple} [T=number]
      * @param {Index} index
      * @param {VecId} id
      */
@@ -1406,9 +1299,10 @@ function createVecsResources(signals, utils) {
         return found;
       }
       console.log("not found");
+
       const vec = createVecResource(index, id);
       if (!vec) throw Error("vec is undefined");
-      map.set(key, vec);
+      map.set(key, /** @type {any} */ (vec));
       return vec;
     },
   };
@@ -1416,6 +1310,7 @@ function createVecsResources(signals, utils) {
   return vecs;
 }
 /** @typedef {ReturnType<typeof createVecsResources>} VecsResources */
+/** @typedef {ReturnType<VecsResources["getOrCreate"]>} VecResource */
 
 function initEnv() {
   const standalone =
@@ -1487,7 +1382,6 @@ function createColors(dark, elements) {
    */
   function getColor(color) {
     return elements.style.getPropertyValue(`--${color}`);
-    // return utils.color.oklch2hex(elements.style.getPropertyValue(`--${color}`));
   }
   function red() {
     return getColor("red");
@@ -1559,10 +1453,14 @@ function createColors(dark, elements) {
   function textColor() {
     return getLightDarkValue("--color");
   }
+  function borderColor() {
+    return getLightDarkValue("--border-color");
+  }
 
   return {
     default: textColor,
     off,
+    border: borderColor,
     lightBitcoin: yellow,
     bitcoin: orange,
     offBitcoin: red,
@@ -1834,8 +1732,8 @@ function initWebSockets(signals, utils) {
 /** @typedef {ReturnType<typeof initWebSockets>} WebSockets */
 
 function main() {
-  const options = import("./options.js");
-  const vecidToIndexes = import("./vecid-to-indexes.js");
+  const optionsPromise = import("./options.js");
+  const vecidToIndexesPromise = import("./vecid-to-indexes.js");
   const packages = initPackages();
   const env = initEnv();
   const utils = createUtils();
@@ -1948,8 +1846,10 @@ function main() {
   createKeyDownEventListener();
 
   packages.signals().then((signals) =>
-    vecidToIndexes.then(({ VecIdToIndexes }) =>
-      options.then(async ({ initOptions }) => {
+    vecidToIndexesPromise.then(({ createVecIdToIndexes }) =>
+      optionsPromise.then(async ({ initOptions }) => {
+        const vecIdToIndexes = createVecIdToIndexes();
+
         function initDark() {
           const preferredColorSchemeMatchMedia = window.matchMedia(
             "(prefers-color-scheme: dark)",
@@ -2071,6 +1971,7 @@ function main() {
                                 utils,
                                 webSockets,
                                 vecsResources,
+                                vecIdToIndexes: vecIdToIndexes,
                               }),
                             ),
                           ),

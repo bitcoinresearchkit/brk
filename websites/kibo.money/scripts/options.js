@@ -4926,7 +4926,8 @@ function createPartialOptions(colors) {
         // name: "Market",
         // tree: [
         {
-          name: "Dollars Per Bitcoin",
+          name: "Price",
+          title: "Bitcoin Price in US Dollars",
         },
         {
           name: "Blocks",
@@ -4948,11 +4949,13 @@ function createPartialOptions(colors) {
                   key: "block-interval-max",
                   title: "Max",
                   color: colors.pink,
+                  defaultActive: false,
                 },
                 {
                   key: "block-interval-min",
                   title: "Min",
                   color: colors.green,
+                  defaultActive: false,
                 },
                 {
                   key: "block-interval-90p",
