@@ -4,6 +4,9 @@
   <a href="https://github.com/bitcoinresearchkit/brk">
     <img alt="GitHub Repo stars" src="https://img.shields.io/github/stars/bitcoinresearchkit/brk?style=social">
   </a>
+  <a href="https://kibo.money">
+    <img alt="kibo.money" src="https://img.shields.io/badge/showcase-kib%C5%8D.money-orange">
+  </a>
   <a href="https://github.com/bitcoinresearchkit/brk/blob/main/LICENSE.md">
     <img src="https://img.shields.io/crates/l/brk" alt="License" />
   </a>
@@ -25,6 +28,9 @@
   </a>
   <a href="https://bsky.app/profile/bitcoinresearchkit.org">
     <img src="https://img.shields.io/badge/bluesky-blue?link=https%3A%2F%2Fbsky.app%2Fprofile%2Fbitcoinresearchkit.org" alt="Bluesky" />
+  </a>
+  <a href="https://x.com/0xbrk">
+    <img src="https://img.shields.io/badge/x.com-black" alt="X" />
   </a>
 </p>
 
