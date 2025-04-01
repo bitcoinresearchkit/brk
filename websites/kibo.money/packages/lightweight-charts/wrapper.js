@@ -26,7 +26,7 @@ export default import("./v5.0.5/script.js").then((lc) => {
     const options = {
       autoSize: true,
       layout: {
-        fontFamily: "Satoshi",
+        fontFamily: "Geist mono",
         fontSize: 14,
         background: { color: "transparent" },
         attributionLogo: false,

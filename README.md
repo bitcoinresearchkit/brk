@@ -36,7 +36,7 @@
 
 The Bitcoin Research Kit is a high-performance toolchain designed to parse, index, compute, serve and visualize data from a Bitcoin Core node, enabling users to gain deeper insights into the Bitcoin network.
 
-In other words it's an alternative to [Glassnode](https://glassnode.com), [mempool.space](https://mempool.space/) and [esplora](https://github.com/Blockstream/electrs)/[electrs](https://github.com/romanz/esplora) all in one package with a particular focus on simplicity and the self-hosting experience.
+In other words it's an alternative to [Glassnode](https://glassnode.com), [mempool.space](https://mempool.space/) and [electrs](https://github.com/romanz/electrs) all in one package with a particular focus on simplicity and the self-hosting experience.
 
 The toolkit can be used in various ways to accommodate as many needs as possible:
 
@@ -85,6 +85,7 @@ If you'd like to have your own instance hosted for you please contact [hosting@b
 - Direct communication for feature requests and support
 - Updates delivered at your convenience
 - Optional subdomains: `*.bitcoinresearchkit.org`, `*.kibo.money` and `*.satonomics.xyz`
+- Logo featured in the Readme if desired
 
 Pricing: `0.01 BTC / month` *or* `0.1 BTC / year`
 
