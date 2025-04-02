@@ -3,7 +3,7 @@ use std::collections::BTreeMap;
 use axum::{
     Router,
     extract::State,
-    response::{IntoResponse, Response},
+    response::{IntoResponse, Redirect, Response},
     routing::get,
 };
 
@@ -20,11 +20,19 @@ pub trait ApiRoutes {
 
 impl ApiRoutes for Router<AppState> {
     fn add_api_routes(self) -> Self {
-        self.route("/api/query", get(query::handler))
-            .route("/api/vecs/ids", get(vecids_handler))
-            .route("/api/vecs/indexes", get(vecindexes_handler))
-            .route("/api/vecs/id-to-indexes", get(vecid_to_vecindexes_handler))
-            .route("/api/vecs/index-to-ids", get(vecindex_to_vecids_handler))
+        self.route(
+            "/api",
+            get(|| async {
+                Redirect::permanent(
+                    "https://github.com/bitcoinresearchkit/brk/tree/main/crates/brk_server#api",
+                )
+            }),
+        )
+        .route("/api/query", get(query::handler))
+        .route("/api/vecs/ids", get(vecids_handler))
+        .route("/api/vecs/indexes", get(vecindexes_handler))
+        .route("/api/vecs/id-to-indexes", get(vecid_to_vecindexes_handler))
+        .route("/api/vecs/index-to-ids", get(vecindex_to_vecids_handler))
     }
 }
 
