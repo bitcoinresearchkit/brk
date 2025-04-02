@@ -4,11 +4,9 @@
 #![doc = "```"]
 
 use std::{
-    collections::BTreeMap,
     fs,
     io::Cursor,
     path::{Path, PathBuf},
-    sync::Arc,
     time::Instant,
 };
 
@@ -70,9 +68,10 @@ impl Server {
                 if !fs::exists(&downloaded_websites_path)? {
                     info!("Downloading websites from Github...");
 
-                    // TODO: Need to download versioned, main is only for testing
-                    let url =
-                        "https://github.com/bitcoinresearchkit/brk/archive/refs/heads/main.zip";
+                    let url = format!(
+                        "https://github.com/bitcoinresearchkit/brk/archive/refs/tags/v{}.zip",
+                        env!("CARGO_PKG_VERSION")
+                    );
 
                     let response = minreq::get(url).send()?;
                     let bytes = response.as_bytes();
