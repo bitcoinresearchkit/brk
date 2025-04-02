@@ -1,4 +1,5 @@
 use brk_computer::Computer;
+use brk_fetcher::Fetcher;
 use brk_indexer::Indexer;
 use brk_query::{Index, Output, Params as QueryParams, Query, Tabled, Value};
 use tabled::settings::Style;
@@ -13,7 +14,7 @@ pub fn query(params: QueryParams) -> color_eyre::Result<()> {
     let mut indexer = Indexer::new(config.indexeddir(), compressed, config.check_collisions())?;
     indexer.import_vecs()?;
 
-    let mut computer = Computer::new(config.computeddir(), None, compressed);
+    let mut computer = Computer::new(config.computeddir(), config.fetcher(), compressed);
     computer.import_vecs()?;
 
     let query = Query::build(&indexer, &computer);

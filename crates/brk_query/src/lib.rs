@@ -13,39 +13,39 @@ mod index;
 mod output;
 mod params;
 mod table;
-mod tree;
+mod vec_trees;
 
 pub use format::Format;
 pub use index::Index;
 pub use output::{Output, Value};
 pub use params::Params;
 pub use table::Tabled;
-use tree::VecIdToIndexToVec;
+use vec_trees::VecTrees;
 
 pub struct Query<'a> {
-    pub vecid_to_index_to_vec: VecIdToIndexToVec<'a>,
+    pub vec_trees: VecTrees<'a>,
     _indexer: &'a Indexer,
     _computer: &'a Computer,
 }
 
 impl<'a> Query<'a> {
     pub fn build(indexer: &'a Indexer, computer: &'a Computer) -> Self {
-        let mut vecs = VecIdToIndexToVec::default();
+        let mut vec_trees = VecTrees::default();
 
         indexer
             .vecs()
             .as_any_vecs()
             .into_iter()
-            .for_each(|vec| vecs.insert(vec));
+            .for_each(|vec| vec_trees.insert(vec));
 
         computer
             .vecs()
             .as_any_vecs()
             .into_iter()
-            .for_each(|vec| vecs.insert(vec));
+            .for_each(|vec| vec_trees.insert(vec));
 
         Self {
-            vecid_to_index_to_vec: vecs,
+            vec_trees,
             _indexer: indexer,
             _computer: computer,
         }
@@ -65,11 +65,11 @@ impl<'a> Query<'a> {
                     .collect::<Vec<_>>()
             })
             .map(|mut id| {
-                let mut res = self.vecid_to_index_to_vec.get(&id);
+                let mut res = self.vec_trees.id_to_index_to_vec.get(&id);
                 if res.is_none() {
                     if let Ok(index) = Index::try_from(id.as_str()) {
                         id = index.possible_values().last().unwrap().to_string();
-                        res = self.vecid_to_index_to_vec.get(&id)
+                        res = self.vec_trees.id_to_index_to_vec.get(&id)
                     }
                 }
                 (id, res)

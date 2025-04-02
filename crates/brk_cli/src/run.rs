@@ -32,11 +32,7 @@ pub fn run(config: RunConfig) -> color_eyre::Result<()> {
     indexer.import_stores()?;
     indexer.import_vecs()?;
 
-    let fetcher = config
-        .fetch()
-        .then(|| Fetcher::import(Some(config.harsdir().as_path())).unwrap());
-
-    let mut computer = Computer::new(config.computeddir(), fetcher, compressed);
+    let mut computer = Computer::new(config.computeddir(), config.fetcher(), compressed);
     computer.import_stores()?;
     computer.import_vecs()?;
 
@@ -399,6 +395,11 @@ impl RunConfig {
 
     pub fn fetch(&self) -> bool {
         self.fetch.is_none_or(|b| b)
+    }
+
+    pub fn fetcher(&self) -> Option<Fetcher> {
+        self.fetch()
+            .then(|| Fetcher::import(Some(self.harsdir().as_path())).unwrap())
     }
 
     pub fn compressed(&self) -> bool {

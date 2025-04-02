@@ -1,6 +1,8 @@
 use std::path::Path;
 
-use brk_core::{Dateindex, Decadeindex, Difficultyepoch, Height, Monthindex, Weekindex, Yearindex};
+use brk_core::{
+    Dateindex, Decadeindex, Difficultyepoch, Height, Monthindex, Quarterindex, Weekindex, Yearindex,
+};
 use brk_exit::Exit;
 use brk_vec::{AnyStorableVec, Compressed};
 
@@ -17,6 +19,7 @@ where
     pub weekindex: StorableVecBuilder<Weekindex, T>,
     pub difficultyepoch: StorableVecBuilder<Difficultyepoch, T>,
     pub monthindex: StorableVecBuilder<Monthindex, T>,
+    pub quarterindex: StorableVecBuilder<Quarterindex, T>,
     pub yearindex: StorableVecBuilder<Yearindex, T>,
     // TODO: pub halvingepoch: StorableVecGeneator<Halvingepoch, T>,
     pub decadeindex: StorableVecBuilder<Decadeindex, T>,
@@ -41,6 +44,7 @@ where
             weekindex: StorableVecBuilder::forced_import(path, compressed, options)?,
             difficultyepoch: StorableVecBuilder::forced_import(path, compressed, options)?,
             monthindex: StorableVecBuilder::forced_import(path, compressed, options)?,
+            quarterindex: StorableVecBuilder::forced_import(path, compressed, options)?,
             yearindex: StorableVecBuilder::forced_import(path, compressed, options)?,
             // halvingepoch: StorableVecGeneator::forced_import(path, compressed, options)?,
             decadeindex: StorableVecBuilder::forced_import(path, compressed, options)?,
@@ -78,6 +82,14 @@ where
             exit,
         )?;
 
+        self.quarterindex.from_aligned(
+            starting_indexes.quarterindex,
+            &mut self.monthindex,
+            indexes.quarterindex_to_first_monthindex.mut_vec(),
+            indexes.quarterindex_to_last_monthindex.mut_vec(),
+            exit,
+        )?;
+
         self.yearindex.from_aligned(
             starting_indexes.yearindex,
             &mut self.monthindex,
@@ -111,6 +123,7 @@ where
             self.weekindex.as_any_vecs(),
             self.difficultyepoch.as_any_vecs(),
             self.monthindex.as_any_vecs(),
+            self.quarterindex.as_any_vecs(),
             self.yearindex.as_any_vecs(),
             // self.halvingepoch.as_any_vecs(),
             self.decadeindex.as_any_vecs(),

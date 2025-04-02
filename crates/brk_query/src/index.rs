@@ -19,6 +19,7 @@ pub enum Index {
     Txoutindex,
     Weekindex,
     Monthindex,
+    Quarterindex,
     Yearindex,
     Decadeindex,
     Difficultyepoch,
@@ -26,11 +27,18 @@ pub enum Index {
 }
 
 impl Index {
-    pub fn all() -> [Self; 19] {
+    pub fn all() -> [Self; 20] {
         [
-            Self::Addressindex,
-            Self::Dateindex,
             Self::Height,
+            Self::Dateindex,
+            Self::Weekindex,
+            Self::Difficultyepoch,
+            Self::Monthindex,
+            Self::Quarterindex,
+            Self::Yearindex,
+            Self::Decadeindex,
+            Self::Halvingepoch,
+            Self::Addressindex,
             Self::P2PK33index,
             Self::P2PK65index,
             Self::P2PKHindex,
@@ -41,37 +49,32 @@ impl Index {
             Self::Txindex,
             Self::Txinindex,
             Self::Txoutindex,
-            Self::Weekindex,
-            Self::Monthindex,
-            Self::Yearindex,
-            Self::Decadeindex,
-            Self::Difficultyepoch,
-            Self::Halvingepoch,
         ]
     }
 
     pub fn possible_values(&self) -> &[&str] {
         // Always have the "correct" id at the end
         match self {
-            Self::Dateindex => &["d", "date", "di", "dateindex"],
             Self::Height => &["h", "height"],
-            Self::Txindex => &["txi", "txindex"],
-            Self::Txinindex => &["txini", "txinindex"],
-            Self::Txoutindex => &["txouti", "txoutindex"],
-            Self::Addressindex => &["addri", "addressindex"],
-            Self::P2PK33index => &["p2pk33i", "p2pk33index"],
-            Self::P2PK65index => &["p2pk65i", "p2pk65index"],
-            Self::P2PKHindex => &["p2pkhi", "p2pkhindex"],
-            Self::P2SHindex => &["p2shi", "p2shindex"],
-            Self::P2TRindex => &["p2tri", "p2trindex"],
-            Self::P2WPKHindex => &["p2wpkhi", "p2wpkhindex"],
-            Self::P2WSHindex => &["p2wshi", "p2wshindex"],
-            Self::Weekindex => &["w", "wi", "week", "weekindex"],
-            Self::Monthindex => &["m", "mi", "month", "monthindex"],
-            Self::Yearindex => &["y", "yi", "year", "yearindex"],
-            Self::Decadeindex => &["decade", "decadeindex"],
+            Self::Dateindex => &["d", "date", "dateindex"],
+            Self::Weekindex => &["w", "week", "weekindex"],
             Self::Difficultyepoch => &["difficulty", "difficultyepoch"],
-            Self::Halvingepoch => &["halving", "halvingepoch"],
+            Self::Monthindex => &["m", "month", "monthindex"],
+            Self::Quarterindex => &["q", "quarter", "quarterindex"],
+            Self::Yearindex => &["y", "year", "yearindex"],
+            Self::Decadeindex => &["decade", "decadeindex"],
+            Self::Halvingepoch => &["h", "halving", "halvingepoch"],
+            Self::Txindex => &["tx", "txindex"],
+            Self::Txinindex => &["txin", "txinindex"],
+            Self::Txoutindex => &["txout", "txoutindex"],
+            Self::Addressindex => &["a", "address", "addressindex"],
+            Self::P2PK33index => &["p2pk33", "p2pk33index"],
+            Self::P2PK65index => &["p2pk65", "p2pk65index"],
+            Self::P2PKHindex => &["p2pkh", "p2pkhindex"],
+            Self::P2SHindex => &["p2sh", "p2shindex"],
+            Self::P2TRindex => &["p2tr", "p2trindex"],
+            Self::P2WPKHindex => &["p2wpkh", "p2wpkhindex"],
+            Self::P2WSHindex => &["p2wsh", "p2wshindex"],
         }
     }
 
@@ -80,6 +83,18 @@ impl Index {
             .iter()
             .flat_map(|i| i.possible_values().iter().map(|s| s.to_string()))
             .collect::<Vec<_>>()
+    }
+
+    pub fn serialize_short(&self) -> String {
+        self.possible_values()
+            .iter()
+            .find(|str| str.len() > 1)
+            .unwrap()
+            .to_string()
+    }
+
+    pub fn serialize_long(&self) -> String {
+        self.possible_values().last().unwrap().to_string()
     }
 }
 
@@ -106,6 +121,7 @@ impl TryFrom<&str> for Index {
             v if (Self::Decadeindex).possible_values().contains(&v) => Self::Decadeindex,
             v if (Self::Difficultyepoch).possible_values().contains(&v) => Self::Difficultyepoch,
             v if (Self::Halvingepoch).possible_values().contains(&v) => Self::Halvingepoch,
+            v if (Self::Quarterindex).possible_values().contains(&v) => Self::Quarterindex,
             _ => return Err(eyre!("Bad index")),
         })
     }

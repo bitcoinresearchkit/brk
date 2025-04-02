@@ -1,8 +1,8 @@
 use std::{fs, ops::Deref, path::Path};
 
 use brk_core::{
-    Date, Dateindex, Decadeindex, Difficultyepoch, Halvingepoch, Height, Monthindex, Timestamp,
-    Txindex, Txinindex, Txoutindex, Weekindex, Yearindex,
+    Date, Dateindex, Decadeindex, Difficultyepoch, Halvingepoch, Height, Monthindex, Quarterindex,
+    Timestamp, Txindex, Txinindex, Txoutindex, Weekindex, Yearindex,
 };
 use brk_exit::Exit;
 use brk_indexer::Indexer;
@@ -35,8 +35,8 @@ pub struct Vecs {
     pub halvingepoch_to_timestamp: StorableVec<Halvingepoch, Timestamp>,
     pub height_to_dateindex: StorableVec<Height, Dateindex>,
     pub height_to_difficultyepoch: StorableVec<Height, Difficultyepoch>,
-    pub height_to_fixed_timestamp: StorableVec<Height, Timestamp>,
     pub height_to_fixed_date: StorableVec<Height, Date>,
+    pub height_to_fixed_timestamp: StorableVec<Height, Timestamp>,
     pub height_to_halvingepoch: StorableVec<Height, Halvingepoch>,
     pub height_to_height: StorableVec<Height, Height>,
     pub height_to_last_txindex: StorableVec<Height, Txindex>,
@@ -44,8 +44,13 @@ pub struct Vecs {
     pub monthindex_to_first_dateindex: StorableVec<Monthindex, Dateindex>,
     pub monthindex_to_last_dateindex: StorableVec<Monthindex, Dateindex>,
     pub monthindex_to_monthindex: StorableVec<Monthindex, Monthindex>,
+    pub monthindex_to_quarterindex: StorableVec<Monthindex, Quarterindex>,
     pub monthindex_to_timestamp: StorableVec<Monthindex, Timestamp>,
     pub monthindex_to_yearindex: StorableVec<Monthindex, Yearindex>,
+    pub quarterindex_to_first_monthindex: StorableVec<Quarterindex, Monthindex>,
+    pub quarterindex_to_last_monthindex: StorableVec<Quarterindex, Monthindex>,
+    pub quarterindex_to_quarterindex: StorableVec<Quarterindex, Quarterindex>,
+    pub quarterindex_to_timestamp: StorableVec<Quarterindex, Timestamp>,
     pub txindex_to_last_txinindex: StorableVec<Txindex, Txinindex>,
     pub txindex_to_last_txoutindex: StorableVec<Txindex, Txoutindex>,
     pub weekindex_to_first_dateindex: StorableVec<Weekindex, Dateindex>,
@@ -279,6 +284,31 @@ impl Vecs {
                 Version::from(1),
                 compressed,
             )?,
+            monthindex_to_quarterindex: StorableVec::forced_import(
+                &path.join("monthindex_to_quarterindex"),
+                Version::from(1),
+                compressed,
+            )?,
+            quarterindex_to_first_monthindex: StorableVec::forced_import(
+                &path.join("quarterindex_to_first_monthindex"),
+                Version::from(1),
+                compressed,
+            )?,
+            quarterindex_to_last_monthindex: StorableVec::forced_import(
+                &path.join("quarterindex_to_last_monthindex"),
+                Version::from(1),
+                compressed,
+            )?,
+            quarterindex_to_quarterindex: StorableVec::forced_import(
+                &path.join("quarterindex_to_quarterindex"),
+                Version::from(1),
+                compressed,
+            )?,
+            quarterindex_to_timestamp: StorableVec::forced_import(
+                &path.join("quarterindex_to_timestamp"),
+                Version::from(1),
+                compressed,
+            )?,
         })
     }
 
@@ -509,6 +539,52 @@ impl Vecs {
 
         // ---
 
+        let starting_quarterindex = self
+            .monthindex_to_quarterindex
+            .get(starting_monthindex)?
+            .copied()
+            .unwrap_or_default();
+
+        self.monthindex_to_quarterindex.compute_transform(
+            starting_monthindex,
+            self.monthindex_to_monthindex.mut_vec(),
+            |(mi, ..)| (mi, Quarterindex::from(mi)),
+            exit,
+        )?;
+
+        self.quarterindex_to_first_monthindex
+            .compute_inverse_more_to_less(
+                starting_monthindex,
+                self.monthindex_to_quarterindex.mut_vec(),
+                exit,
+            )?;
+
+        // let quarter_count = self.quarterindex_to_first_monthindex.len();
+
+        self.quarterindex_to_last_monthindex
+            .compute_last_index_from_first(
+                starting_quarterindex,
+                self.quarterindex_to_first_monthindex.mut_vec(),
+                month_count,
+                exit,
+            )?;
+
+        self.quarterindex_to_quarterindex.compute_transform(
+            starting_quarterindex,
+            self.quarterindex_to_first_monthindex.mut_vec(),
+            |(yi, ..)| (yi, yi),
+            exit,
+        )?;
+
+        self.quarterindex_to_timestamp.compute_transform(
+            starting_quarterindex,
+            self.quarterindex_to_first_monthindex.mut_vec(),
+            |(i, m, ..)| (i, *self.monthindex_to_timestamp.get(m).unwrap().unwrap()),
+            exit,
+        )?;
+
+        // ---
+
         let starting_yearindex = self
             .monthindex_to_yearindex
             .get(starting_monthindex)?
@@ -700,6 +776,7 @@ impl Vecs {
             dateindex: starting_dateindex,
             weekindex: starting_weekindex,
             monthindex: starting_monthindex,
+            quarterindex: starting_quarterindex,
             yearindex: starting_yearindex,
             decadeindex: starting_decadeindex,
             difficultyepoch: starting_difficultyepoch,
@@ -752,6 +829,11 @@ impl Vecs {
             self.weekindex_to_timestamp.any_vec(),
             self.yearindex_to_timestamp.any_vec(),
             self.height_to_fixed_timestamp.any_vec(),
+            self.monthindex_to_quarterindex.any_vec(),
+            self.quarterindex_to_first_monthindex.any_vec(),
+            self.quarterindex_to_last_monthindex.any_vec(),
+            self.quarterindex_to_quarterindex.any_vec(),
+            self.quarterindex_to_timestamp.any_vec(),
         ]
     }
 }
@@ -761,6 +843,7 @@ pub struct Indexes {
     pub dateindex: Dateindex,
     pub weekindex: Weekindex,
     pub monthindex: Monthindex,
+    pub quarterindex: Quarterindex,
     pub yearindex: Yearindex,
     pub decadeindex: Decadeindex,
     pub difficultyepoch: Difficultyepoch,

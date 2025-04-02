@@ -77,7 +77,10 @@ export default import("./v5.0.5/script.js").then((lc) => {
           },
           timeScale: {
             borderVisible: false,
-            timeVisible: index === /** @satisfies {Height} */ (2),
+            timeVisible:
+              index === /** @satisfies {Height} */ (0) ||
+              index === /** @satisfies {Difficultyepoch} */ (3) ||
+              index === /** @satisfies {Halvingepoch} */ (8),
           },
           crosshair: {
             horzLine: {
@@ -193,8 +196,9 @@ export default import("./v5.0.5/script.js").then((lc) => {
             timeScaleSetCallback?.();
             if (
               !timeScaleSet &&
-              (vecIndex === /** @satisfies {Yearindex} */ (15) ||
-                vecIndex === /** @satisfies {Decadeindex} */ (16))
+              (vecIndex === /** @satisfies {Quarterindex} */ (5) ||
+                vecIndex === /** @satisfies {Yearindex} */ (6) ||
+                vecIndex === /** @satisfies {Decadeindex} */ (7))
             ) {
               ichart
                 .timeScale()
@@ -231,7 +235,7 @@ export default import("./v5.0.5/script.js").then((lc) => {
 
         timeResource = vecsResources.getOrCreate(
           vecIndex,
-          vecIndex === /** @satisfies {Height} */ (2)
+          vecIndex === /** @satisfies {Height} */ (0)
             ? "fixed-timestamp"
             : "timestamp",
         );
@@ -277,7 +281,6 @@ export default import("./v5.0.5/script.js").then((lc) => {
         legend.add({
           series,
           name,
-          id: vecId,
           defaultActive,
           colors: [colors.green, colors.red],
           url: valuesResource.url,
@@ -318,7 +321,6 @@ export default import("./v5.0.5/script.js").then((lc) => {
         legend.add({
           series,
           colors: [color],
-          id: vecId,
           name,
           defaultActive,
           url: valuesResource.url,
@@ -368,13 +370,12 @@ function createLegend({ parent, signals, utils }) {
     /**
      * @param {Object} args
      * @param {ISeriesApi<SeriesType>} args.series
-     * @param {string} args.id
      * @param {string} args.name
      * @param {Color[]} args.colors
      * @param {boolean} [args.defaultActive]
      * @param {string} [args.url]
      */
-    add({ series, id, name, colors, defaultActive, url }) {
+    add({ series, name, colors, defaultActive, url }) {
       const div = window.document.createElement("div");
 
       legendElement.append(div);
@@ -383,7 +384,7 @@ function createLegend({ parent, signals, utils }) {
 
       const active = signals.createSignal(defaultActive ?? true, {
         save: {
-          keyPrefix: id,
+          keyPrefix: "",
           key: nameId,
           ...utils.serde.boolean,
         },
@@ -396,8 +397,8 @@ function createLegend({ parent, signals, utils }) {
       });
 
       const { input, label } = utils.dom.createLabeledInput({
-        inputId: utils.stringToId(`legend-${id}-${nameId}`),
-        inputName: utils.stringToId(`selected-${id}-${nameId}`),
+        inputId: utils.stringToId(`legend-${nameId}`),
+        inputName: utils.stringToId(`selected-${nameId}`),
         inputValue: "value",
         labelTitle: "Click to toggle",
         inputChecked: active(),
