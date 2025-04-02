@@ -4,7 +4,7 @@ members = ["crates/*"]
 package.description = "The Bitcoin Research Kit is a suite of tools designed to extract, compute and display data stored on a Bitcoin Core node"
 package.license = "MIT"
 package.edition = "2024"
-package.version = "0.0.11"
+package.version = "0.0.12"
 package.repository = "https://github.com/bitcoinresearchkit/brk"
 
 [profile.release]
@@ -27,7 +27,7 @@ brk_query = { version = "0", path = "crates/brk_query" }
 brk_server = { version = "0", path = "crates/brk_server" }
 brk_vec = { version = "0", path = "crates/brk_vec" }
 byteview = "0.6.1"
-clap = { version = "4.5.34", features = ["derive", "string"] }
+clap = { version = "4.5.35", features = ["derive", "string"] }
 color-eyre = "0.6.3"
 derive_deref = "1.1.1"
 fjall = "2.8.0"
