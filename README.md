@@ -42,6 +42,7 @@ The toolkit can be used in various ways to accommodate as many needs as possible
 
 - **[Website](https://kibo.money)** \
   Everyone is welcome to visit [kibo.money](https://kibo.money) which is the official showcase of the suite's capabilities and served by default when running BRK. \
+  Researchers and developers are free to use the API which endpoints documentation can be found [here](https://github.com/bitcoinresearchkit/brk/tree/main/crates/brk_server#endpoints). \
   As a token of gratitude to the community and to stimulate curiosity, both the website and the API are entirely free, allowing anyone to use them.
 - **[CLI](https://crates.io/crates/brk_cli)** \
   Node runners are strongly encouraged to try out and self-host their own instance. \
@@ -96,20 +97,3 @@ Pricing: `0.01 BTC / month` *or* `0.1 BTC / year`
 [`lnurl1dp68gurn8ghj7ampd3kx2ar0veekzar0wd5xjtnrdakj7tnhv4kxctttdehhwm30d3h82unvwqhkxmmww3jkuar8d35kgetj8yuq363hv4`](lightning:lnurl1dp68gurn8ghj7ampd3kx2ar0veekzar0wd5xjtnrdakj7tnhv4kxctttdehhwm30d3h82unvwqhkxmmww3jkuar8d35kgetj8yuq363hv4)
 
 [Geyser Fund](https://geyser.fund/project/brk)
-
-## Old README
-
-## Endpoints
-
-> If you running locally, you can replace `https://kibo.money` by `http://localhost:3110`
-
-- [/](https://kibo.money/): Website
-- [/api](https://kibo.money/api): A JSON with all available datasets, with their respective id and endpoint, better viewed in a Firefox based browser
-- /api/TIMESCALE-to-ID: `TIMESCALE` can be `date` or `height`, and `ID` is the id with `_` replaced by `-`, let's take `date-to-close` (price at the end of each day) as an example
-  - [/api/date-to-close](https://kibo.money/api/date-to-close): current year's values in a json format
-  - [/api/date-to-close?chunk=2009](https://kibo.money/api/date-to-close?chunk=2009): values from the year 2009 in a json format
-  - [/api/date-to-close?all=true](https://kibo.money/api/date-to-close?all=true): all values in a json format
-  - You can also specify the extension to download a file, either `.json` or `.csv` to get the dataset in a CSV format; like so:
-    - [/api/date-to-close.csv](https://kibo.money/api/date-to-close.csv)
-    - [/api/date-to-close.csv?chunk=2009](https://kibo.money/api/date-to-close.csv?chunk=2009)
-    - [/api/date-to-close.csv?all=true](https://kibo.money/api/date-to-close.csv?all=true)

@@ -42,23 +42,25 @@ The API uses `brk_query` and so inherites all of its features including formats.
 
 ## Endpoints
 
-### `GET /api/vecs/indexes`
+### API
 
-A list of all possible vec indexes and their accepted format
+#### `GET /api/vecs/indexes`
 
-### `GET /api/vecs/ids`
+A list of all possible vec indexes and their accepted variants
+
+#### `GET /api/vecs/ids`
 
 A list of all possible vec ids
 
-### `GET /api/vecs/id-to-indexes`
+#### `GET /api/vecs/id-to-indexes`
 
 A list of all possible vec ids and their supported vec indexes
 
-### `GET /api/vecs/index-to-ids`
+#### `GET /api/vecs/index-to-ids`
 
 A list of all possible vec indexes and their supported vec ids
 
-### `GET /api/query`
+#### `GET /api/query`
 
 This endpoint retrieves data based on the specified vector index and values.
 
@@ -79,11 +81,15 @@ GET /api/query?index=date&values=ohlc
 GET /api/query?index=week&values=ohlc,block-interval-average&from=0&to=20&format=md
 ```
 
-### `GET /version`
+### Meta
+
+#### `GET /version`
 
 The version of the server and thus BRK.
 
-### `GET /*`
+### Files
+
+#### `GET /*`
 
 Catch all.
 
