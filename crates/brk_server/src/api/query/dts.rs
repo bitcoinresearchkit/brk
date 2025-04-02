@@ -64,7 +64,8 @@ impl DTS for Query<'static> {
 
         contents += "\n\n  return {\n";
 
-        self.vecid_to_index_to_vec
+        self.vec_trees
+            .id_to_index_to_vec
             .iter()
             .for_each(|(id, index_to_vec)| {
                 let indexes = index_to_vec

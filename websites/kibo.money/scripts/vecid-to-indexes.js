@@ -1,45 +1,47 @@
-/** @typedef {0} Addressindex */
+/** @typedef {0} Height */
 /** @typedef {1} Dateindex */
-/** @typedef {2} Height */
-/** @typedef {3} P2PK33index */
-/** @typedef {4} P2PK65index */
-/** @typedef {5} P2PKHindex */
-/** @typedef {6} P2SHindex */
-/** @typedef {7} P2TRindex */
-/** @typedef {8} P2WPKHindex */
-/** @typedef {9} P2WSHindex */
-/** @typedef {10} Txindex */
-/** @typedef {11} Txinindex */
-/** @typedef {12} Txoutindex */
-/** @typedef {13} Weekindex */
-/** @typedef {14} Monthindex */
-/** @typedef {15} Yearindex */
-/** @typedef {16} Decadeindex */
-/** @typedef {17} Difficultyepoch */
-/** @typedef {18} Halvingepoch */
+/** @typedef {2} Weekindex */
+/** @typedef {3} Difficultyepoch */
+/** @typedef {4} Monthindex */
+/** @typedef {5} Quarterindex */
+/** @typedef {6} Yearindex */
+/** @typedef {7} Decadeindex */
+/** @typedef {8} Halvingepoch */
+/** @typedef {9} Addressindex */
+/** @typedef {10} P2PK33index */
+/** @typedef {11} P2PK65index */
+/** @typedef {12} P2PKHindex */
+/** @typedef {13} P2SHindex */
+/** @typedef {14} P2TRindex */
+/** @typedef {15} P2WPKHindex */
+/** @typedef {16} P2WSHindex */
+/** @typedef {17} Txindex */
+/** @typedef {18} Txinindex */
+/** @typedef {19} Txoutindex */
 
-/** @typedef {Addressindex | Dateindex | Height | P2PK33index | P2PK65index | P2PKHindex | P2SHindex | P2TRindex | P2WPKHindex | P2WSHindex | Txindex | Txinindex | Txoutindex | Weekindex | Monthindex | Yearindex | Decadeindex | Difficultyepoch | Halvingepoch} Index */
+/** @typedef {Height | Dateindex | Weekindex | Difficultyepoch | Monthindex | Quarterindex | Yearindex | Decadeindex | Halvingepoch | Addressindex | P2PK33index | P2PK65index | P2PKHindex | P2SHindex | P2TRindex | P2WPKHindex | P2WSHindex | Txindex | Txinindex | Txoutindex} Index */
 
 export function createVecIdToIndexes() {
-  const Addressindex = /** @satisfies {Addressindex} */ (0);
+  const Height = /** @satisfies {Height} */ (0);
   const Dateindex = /** @satisfies {Dateindex} */ (1);
-  const Height = /** @satisfies {Height} */ (2);
-  const P2PK33index = /** @satisfies {P2PK33index} */ (3);
-  const P2PK65index = /** @satisfies {P2PK65index} */ (4);
-  const P2PKHindex = /** @satisfies {P2PKHindex} */ (5);
-  const P2SHindex = /** @satisfies {P2SHindex} */ (6);
-  const P2TRindex = /** @satisfies {P2TRindex} */ (7);
-  const P2WPKHindex = /** @satisfies {P2WPKHindex} */ (8);
-  const P2WSHindex = /** @satisfies {P2WSHindex} */ (9);
-  const Txindex = /** @satisfies {Txindex} */ (10);
-  const Txinindex = /** @satisfies {Txinindex} */ (11);
-  const Txoutindex = /** @satisfies {Txoutindex} */ (12);
-  const Weekindex = /** @satisfies {Weekindex} */ (13);
-  const Monthindex = /** @satisfies {Monthindex} */ (14);
-  const Yearindex = /** @satisfies {Yearindex} */ (15);
-  const Decadeindex = /** @satisfies {Decadeindex} */ (16);
-  const Difficultyepoch = /** @satisfies {Difficultyepoch} */ (17);
-  const Halvingepoch = /** @satisfies {Halvingepoch} */ (18);
+  const Weekindex = /** @satisfies {Weekindex} */ (2);
+  const Difficultyepoch = /** @satisfies {Difficultyepoch} */ (3);
+  const Monthindex = /** @satisfies {Monthindex} */ (4);
+  const Quarterindex = /** @satisfies {Quarterindex} */ (5);
+  const Yearindex = /** @satisfies {Yearindex} */ (6);
+  const Decadeindex = /** @satisfies {Decadeindex} */ (7);
+  const Halvingepoch = /** @satisfies {Halvingepoch} */ (8);
+  const Addressindex = /** @satisfies {Addressindex} */ (9);
+  const P2PK33index = /** @satisfies {P2PK33index} */ (10);
+  const P2PK65index = /** @satisfies {P2PK65index} */ (11);
+  const P2PKHindex = /** @satisfies {P2PKHindex} */ (12);
+  const P2SHindex = /** @satisfies {P2SHindex} */ (13);
+  const P2TRindex = /** @satisfies {P2TRindex} */ (14);
+  const P2WPKHindex = /** @satisfies {P2WPKHindex} */ (15);
+  const P2WSHindex = /** @satisfies {P2WSHindex} */ (16);
+  const Txindex = /** @satisfies {Txindex} */ (17);
+  const Txinindex = /** @satisfies {Txinindex} */ (18);
+  const Txoutindex = /** @satisfies {Txoutindex} */ (19);
 
   return {
     addressindex: [Txoutindex],
@@ -52,12 +54,12 @@ export function createVecIdToIndexes() {
     "block-interval-25p": [Dateindex],
     "block-interval-75p": [Dateindex],
     "block-interval-90p": [Dateindex],
-    "block-interval-average": [Dateindex, Weekindex, Monthindex, Yearindex, Decadeindex, Difficultyepoch],
-    "block-interval-max": [Dateindex, Weekindex, Monthindex, Yearindex, Decadeindex, Difficultyepoch],
+    "block-interval-average": [Dateindex, Weekindex, Monthindex, Quarterindex, Yearindex, Decadeindex, Difficultyepoch],
+    "block-interval-max": [Dateindex, Weekindex, Monthindex, Quarterindex, Yearindex, Decadeindex, Difficultyepoch],
     "block-interval-median": [Dateindex],
-    "block-interval-min": [Dateindex, Weekindex, Monthindex, Yearindex, Decadeindex, Difficultyepoch],
+    "block-interval-min": [Dateindex, Weekindex, Monthindex, Quarterindex, Yearindex, Decadeindex, Difficultyepoch],
     blockhash: [Height],
-    close: [Dateindex, Height, Weekindex, Monthindex, Yearindex, Decadeindex, Difficultyepoch],
+    close: [Dateindex, Height, Weekindex, Monthindex, Quarterindex, Yearindex, Decadeindex, Difficultyepoch],
     "close-in-cents": [Dateindex, Height],
     date: [Dateindex],
     dateindex: [Dateindex, Height],
@@ -68,9 +70,9 @@ export function createVecIdToIndexes() {
     "first-dateindex": [Weekindex, Monthindex],
     "first-emptyindex": [Height],
     "first-height": [Dateindex, Difficultyepoch, Halvingepoch],
-    "first-monthindex": [Yearindex],
+    "first-monthindex": [Quarterindex, Yearindex],
     "first-multisigindex": [Height],
-    "first-open": [Weekindex, Monthindex, Yearindex, Decadeindex, Difficultyepoch],
+    "first-open": [Weekindex, Monthindex, Quarterindex, Yearindex, Decadeindex, Difficultyepoch],
     "first-opreturnindex": [Height],
     "first-p2pk33index": [Height],
     "first-p2pk65index": [Height],
@@ -91,13 +93,13 @@ export function createVecIdToIndexes() {
     height: [Addressindex, Height, Txindex],
     high: [Dateindex, Height],
     "high-in-cents": [Dateindex, Height],
-    "high-max": [Weekindex, Monthindex, Yearindex, Decadeindex, Difficultyepoch],
+    "high-max": [Weekindex, Monthindex, Quarterindex, Yearindex, Decadeindex, Difficultyepoch],
     "inputs-count": [Txindex],
     "is-coinbase": [Txindex],
     "is-explicitly-rbf": [Txindex],
     "last-dateindex": [Weekindex, Monthindex],
     "last-height": [Dateindex, Difficultyepoch, Halvingepoch],
-    "last-monthindex": [Yearindex],
+    "last-monthindex": [Quarterindex, Yearindex],
     "last-txindex": [Height],
     "last-txinindex": [Txindex],
     "last-txoutindex": [Txindex],
@@ -105,9 +107,9 @@ export function createVecIdToIndexes() {
     locktime: [Txindex],
     low: [Dateindex, Height],
     "low-in-cents": [Dateindex, Height],
-    "low-min": [Weekindex, Monthindex, Yearindex, Decadeindex, Difficultyepoch],
+    "low-min": [Weekindex, Monthindex, Quarterindex, Yearindex, Decadeindex, Difficultyepoch],
     monthindex: [Dateindex, Monthindex],
-    ohlc: [Dateindex, Height, Weekindex, Monthindex, Yearindex, Decadeindex, Difficultyepoch],
+    ohlc: [Dateindex, Height, Weekindex, Monthindex, Quarterindex, Yearindex, Decadeindex, Difficultyepoch],
     "ohlc-in-cents": [Dateindex, Height],
     open: [Dateindex, Height],
     "open-in-cents": [Dateindex, Height],
@@ -119,10 +121,11 @@ export function createVecIdToIndexes() {
     p2traddressbytes: [P2TRindex],
     p2wpkhaddressbytes: [P2WPKHindex],
     p2wshaddressbytes: [P2WSHindex],
+    quarterindex: [Monthindex, Quarterindex],
     "real-date": [Height],
     "sats-per-dollar": [Dateindex, Height],
     size: [Height],
-    timestamp: [Dateindex, Height, Weekindex, Monthindex, Yearindex, Decadeindex, Difficultyepoch, Halvingepoch],
+    timestamp: [Dateindex, Height, Weekindex, Monthindex, Quarterindex, Yearindex, Decadeindex, Difficultyepoch, Halvingepoch],
     "total-block-count": [Dateindex],
     "total-size": [Txindex],
     txid: [Txindex],

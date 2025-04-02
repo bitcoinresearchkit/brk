@@ -9,7 +9,7 @@
  * @import { getOwner as GetOwner, onCleanup as OnCleanup, Owner } from "../packages/solid-signals/2024-11-02/types/core/owner"
  * @import { createSignal as CreateSignal, createEffect as CreateEffect, Accessor, Setter, createMemo as CreateMemo, createRoot as CreateRoot, runWithOwner as RunWithOwner } from "../packages/solid-signals/2024-11-02/types/signals";
  * @import {Signal, Signals} from "../packages/solid-signals/types";
- * @import {Addressindex, Dateindex, Decadeindex, Difficultyepoch, Index, Halvingepoch, Height, Monthindex, P2PK33index, P2PK65index, P2PKHindex, P2SHindex, P2TRindex, P2WPKHindex, P2WSHindex, Txindex, Txinindex, Txoutindex, VecId, Weekindex, Yearindex, VecIdToIndexes} from "./vecid-to-indexes"
+ * @import {Addressindex, Dateindex, Decadeindex, Difficultyepoch, Index, Halvingepoch, Height, Monthindex, P2PK33index, P2PK65index, P2PKHindex, P2SHindex, P2TRindex, P2WPKHindex, P2WSHindex, Txindex, Txinindex, Txoutindex, VecId, Weekindex, Yearindex, VecIdToIndexes, Quarterindex} from "./vecid-to-indexes"
  */
 
 function initPackages() {
@@ -1135,45 +1135,47 @@ function createUtils() {
     /**
      * @param {Index} index
      */
-    function indexToString(index) {
+    function vecIndexToString(index) {
       switch (index) {
-        case /** @satisfies {Addressindex} */ (0):
+        case /** @satisfies {Addressindex} */ (9):
           return "Addressindex";
         case /** @satisfies {Dateindex} */ (1):
           return "Dateindex";
-        case /** @satisfies {Height} */ (2):
+        case /** @satisfies {Height} */ (0):
           return "Height";
-        case /** @satisfies {P2PK33index} */ (3):
+        case /** @satisfies {P2PK33index} */ (10):
           return "P2PK33index";
-        case /** @satisfies {P2PK65index} */ (4):
+        case /** @satisfies {P2PK65index} */ (11):
           return "P2PK65index";
-        case /** @satisfies {P2PKHindex} */ (5):
+        case /** @satisfies {P2PKHindex} */ (12):
           return "P2PKHindex";
-        case /** @satisfies {P2SHindex} */ (6):
+        case /** @satisfies {P2SHindex} */ (13):
           return "P2SHindex";
-        case /** @satisfies {P2TRindex} */ (7):
+        case /** @satisfies {P2TRindex} */ (14):
           return "P2TRindex";
-        case /** @satisfies {P2WPKHindex} */ (8):
+        case /** @satisfies {P2WPKHindex} */ (15):
           return "P2WPKHindex";
-        case /** @satisfies {P2WSHindex} */ (9):
+        case /** @satisfies {P2WSHindex} */ (16):
           return "P2WSHindex";
-        case /** @satisfies {Txindex} */ (10):
+        case /** @satisfies {Txindex} */ (17):
           return "Txindex";
-        case /** @satisfies {Txinindex} */ (11):
+        case /** @satisfies {Txinindex} */ (18):
           return "Txinindex";
-        case /** @satisfies {Txoutindex} */ (12):
+        case /** @satisfies {Txoutindex} */ (19):
           return "Txoutindex";
-        case /** @satisfies {Weekindex} */ (13):
+        case /** @satisfies {Weekindex} */ (2):
           return "Weekindex";
-        case /** @satisfies {Monthindex} */ (14):
+        case /** @satisfies {Monthindex} */ (4):
           return "Monthindex";
-        case /** @satisfies {Yearindex} */ (15):
+        case /** @satisfies {Quarterindex} */ (5):
+          return "Quarterindex";
+        case /** @satisfies {Yearindex} */ (6):
           return "Yearindex";
-        case /** @satisfies {Decadeindex} */ (16):
+        case /** @satisfies {Decadeindex} */ (7):
           return "Decadeindex";
-        case /** @satisfies {Difficultyepoch} */ (17):
+        case /** @satisfies {Difficultyepoch} */ (3):
           return "Difficultyepoch";
-        case /** @satisfies {Halvingepoch} */ (18):
+        case /** @satisfies {Halvingepoch} */ (8):
           return "Halvingepoch";
       }
     }
@@ -1185,7 +1187,7 @@ function createUtils() {
      * @param {number} [to]
      */
     function genPath(index, vecId, from, to) {
-      let path = `/query?index=${indexToString(index)}&values=${vecId}`;
+      let path = `/query?index=${vecIndexToString(index)}&values=${vecId}`;
       if (from !== undefined) {
         path += `&from=${from}`;
       }
@@ -1309,10 +1311,8 @@ function createVecsResources(signals, utils) {
       const key = `${index},${id}`;
       const found = map.get(key);
       if (found) {
-        console.log("found");
         return found;
       }
-      console.log("not found");
 
       const vec = createVecResource(index, id);
       if (!vec) throw Error("vec is undefined");
@@ -1892,7 +1892,7 @@ function main() {
               (h) => {
                 lastHeight.set(h);
               },
-              /** @satisfies {Height} */ (2),
+              /** @satisfies {Height} */ (0),
               "height",
             );
           }

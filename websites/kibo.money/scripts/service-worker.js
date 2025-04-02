@@ -12,7 +12,7 @@ self.addEventListener("install", (_event) => {
       return cache.addAll([
         "/",
         "/index.html",
-        "/assets/fonts/satoshi/2024-09/font.var.woff2",
+        "/assets/fonts/geist_mono_var_1_4_01.woff2",
         "/scripts/main.js",
         "/scripts/options.js",
         "/scripts/chart.js",

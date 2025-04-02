@@ -2,7 +2,7 @@ use std::{fs, path::Path};
 
 use brk_core::{
     Cents, Close, Dateindex, Decadeindex, Difficultyepoch, Dollars, Height, High, Low, Monthindex,
-    OHLCCents, OHLCDollars, Open, Sats, Weekindex, Yearindex,
+    OHLCCents, OHLCDollars, Open, Quarterindex, Sats, Weekindex, Yearindex,
 };
 use brk_exit::Exit;
 use brk_fetcher::Fetcher;
@@ -53,6 +53,7 @@ pub struct Vecs {
     pub weekindex_to_ohlc: StorableVec<Weekindex, OHLCDollars>,
     pub difficultyepoch_to_ohlc: StorableVec<Difficultyepoch, OHLCDollars>,
     pub monthindex_to_ohlc: StorableVec<Monthindex, OHLCDollars>,
+    pub quarterindex_to_ohlc: StorableVec<Quarterindex, OHLCDollars>,
     pub yearindex_to_ohlc: StorableVec<Yearindex, OHLCDollars>,
     // pub halvingepoch_to_ohlc: StorableVec<Halvingepoch, OHLCDollars>,
     pub decadeindex_to_ohlc: StorableVec<Decadeindex, OHLCDollars>,
@@ -235,6 +236,11 @@ impl Vecs {
             )?,
             monthindex_to_ohlc: StorableVec::forced_import(
                 &path.join("monthindex_to_ohlc"),
+                Version::from(1),
+                compressed,
+            )?,
+            quarterindex_to_ohlc: StorableVec::forced_import(
+                &path.join("quarterindex_to_ohlc"),
                 Version::from(1),
                 compressed,
             )?,
@@ -623,6 +629,52 @@ impl Vecs {
             exit,
         )?;
 
+        self.quarterindex_to_ohlc.compute_transform(
+            starting_indexes.quarterindex,
+            self.timeindexes_to_close
+                .quarterindex
+                .last
+                .as_mut()
+                .unwrap()
+                .mut_vec(),
+            |(i, close, ..)| {
+                (
+                    i,
+                    OHLCDollars {
+                        open: *self
+                            .timeindexes_to_open
+                            .quarterindex
+                            .first
+                            .as_mut()
+                            .unwrap()
+                            .get(i)
+                            .unwrap()
+                            .unwrap(),
+                        high: *self
+                            .timeindexes_to_high
+                            .quarterindex
+                            .max
+                            .as_mut()
+                            .unwrap()
+                            .get(i)
+                            .unwrap()
+                            .unwrap(),
+                        low: *self
+                            .timeindexes_to_low
+                            .quarterindex
+                            .min
+                            .as_mut()
+                            .unwrap()
+                            .get(i)
+                            .unwrap()
+                            .unwrap(),
+                        close,
+                    },
+                )
+            },
+            exit,
+        )?;
+
         self.yearindex_to_ohlc.compute_transform(
             starting_indexes.yearindex,
             self.timeindexes_to_close
@@ -750,6 +802,7 @@ impl Vecs {
                 self.weekindex_to_ohlc.any_vec(),
                 self.difficultyepoch_to_ohlc.any_vec(),
                 self.monthindex_to_ohlc.any_vec(),
+                self.quarterindex_to_ohlc.any_vec(),
                 self.yearindex_to_ohlc.any_vec(),
                 // self.halvingepoch_to_ohlc.any_vec(),
                 self.decadeindex_to_ohlc.any_vec(),

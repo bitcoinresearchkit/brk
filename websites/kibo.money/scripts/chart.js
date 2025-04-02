@@ -143,6 +143,7 @@ function createIndexSelector({ elements, signals, utils }) {
     "week",
     // "difficulty epoch",
     "month",
+    "quarter",
     "year",
     // "halving epoch",
     "decade",
@@ -173,17 +174,19 @@ function createIndexSelector({ elements, signals, utils }) {
     /** @returns {Index} */ () => {
       switch (serializedIndex()) {
         case "timestamp":
-          return /** @satisfies {Height} */ (2);
+          return /** @satisfies {Height} */ (0);
         case "date":
           return /** @satisfies {Dateindex} */ (1);
         case "week":
-          return /** @satisfies {Weekindex} */ (13);
+          return /** @satisfies {Weekindex} */ (2);
         case "month":
-          return /** @satisfies {Monthindex} */ (14);
+          return /** @satisfies {Monthindex} */ (4);
+        case "quarter":
+          return /** @satisfies {Quarterindex} */ (5);
         case "year":
-          return /** @satisfies {Yearindex} */ (15);
+          return /** @satisfies {Yearindex} */ (6);
         case "decade":
-          return /** @satisfies {Decadeindex} */ (16);
+          return /** @satisfies {Decadeindex} */ (7);
       }
     },
   );
