@@ -2,7 +2,7 @@
 
 /**
  * @import { CohortOption, CohortOptions, Color, DefaultCohortOption, DefaultCohortOptions, OptionsGroup, PartialChartOption, PartialOptionsGroup, PartialOptionsTree, RatioOption, RatioOptions, Unit } from "./types/self"
- * @import {AnySpecificSeriesBlueprint, SplitSeriesBlueprint} from '../packages/lightweight-charts/types';
+ * @import { AnySeriesBlueprint} from '../packages/lightweight-charts/wrapper';
  */
 
 function initGroups() {
@@ -2815,7 +2815,7 @@ function createPartialOptions(colors) {
   //   generateSeriesBlueprints(arg, blueprint) {
   //     return this.toList(arg).map(
   //       ({ scale, datasetId, color, name }) =>
-  //         /** @satisfies {SplitSeriesBlueprint} */ ({
+  //         /** @satisfies {AnySeriesBlueprint} */ ({
   //           title: cohortOptionOrOptions.toLegendName(
   //             arg,
   //             name,
@@ -5159,7 +5159,7 @@ export function initOptions({
   const optionsIds = env.localhost ? [] : undefined;
 
   // /**
-  //  * @param {SplitSeriesBlueprint[]} array
+  //  * @param {AnySeriesBlueprint[]} array
   //  */
   // function getMainIdFromBlueprints(array) {
   //   const searchArray = array.filter(

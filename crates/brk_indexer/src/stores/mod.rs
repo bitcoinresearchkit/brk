@@ -46,6 +46,13 @@ impl Stores {
         vecs: &mut Vecs,
         starting_indexes: &Indexes,
     ) -> color_eyre::Result<()> {
+        if self.addresshash_to_addressindex.is_empty()
+            && self.blockhash_prefix_to_height.is_empty()
+            && self.txid_prefix_to_txindex.is_empty()
+        {
+            return Ok(());
+        }
+
         vecs.height_to_blockhash
             .iter_from(starting_indexes.height, |(_, blockhash, ..)| {
                 let blockhash_prefix = BlockHashPrefix::from(blockhash);

@@ -1,28 +1,17 @@
-import {
-  Accessor,
-  Setter,
-} from "../../packages/solid-signals/v0.2.4-treeshaked/types/signals";
+import { Accessor } from "../../packages/solid-signals/v0.2.4-treeshaked/types/signals";
 import {
   DeepPartial,
   BaselineStyleOptions,
   CandlestickStyleOptions,
   LineStyleOptions,
   SeriesOptionsCommon,
-  IRange,
   Time,
   SingleValueData as _SingleValueData,
   CandlestickData as _CandlestickData,
-  SeriesType,
-  ISeriesApi,
   BaselineData,
 } from "../../packages/lightweight-charts/v5.0.5-treeshaked/types";
-import { AnyPossibleCohortId, Groups } from "../options";
+import { AnyPossibleCohortId } from "../options";
 
-type Color = () => string;
-type ColorName = keyof Colors;
-
-// TODO: Compute from VecId when displaying the Unit
-// And write a checker when localhost, similar to the dup one
 type Unit =
   | ""
   | "Bitcoin"
@@ -47,11 +36,39 @@ interface PartialOption {
   name: string;
 }
 
+interface BaseSeriesBlueprint {
+  title: string;
+  key: VecId;
+  defaultActive?: boolean;
+}
+interface BaselineSeriesBlueprint extends BaseSeriesBlueprint {
+  type: "Baseline";
+  color?: Color;
+  options?: DeepPartial<BaselineStyleOptions & SeriesOptionsCommon>;
+  data?: Accessor<BaselineData<Time>[]>;
+}
+interface CandlestickSeriesBlueprint extends BaseSeriesBlueprint {
+  type: "Candlestick";
+  color?: Color;
+  options?: DeepPartial<CandlestickStyleOptions & SeriesOptionsCommon>;
+  data?: Accessor<CandlestickData[]>;
+}
+interface LineSeriesBlueprint extends BaseSeriesBlueprint {
+  type?: "Line";
+  color: Color;
+  options?: DeepPartial<LineStyleOptions & SeriesOptionsCommon>;
+  data?: Accessor<LineData<Time>[]>;
+}
+type AnySeriesBlueprint =
+  | BaselineSeriesBlueprint
+  | CandlestickSeriesBlueprint
+  | LineSeriesBlueprint;
+
 interface PartialChartOption extends PartialOption {
   title?: string;
   unit?: Unit;
-  top?: SplitSeriesBlueprint[];
-  bottom?: SplitSeriesBlueprint[];
+  top?: AnySeriesBlueprint[];
+  bottom?: AnySeriesBlueprint[];
 }
 
 interface PartialSimulationOption extends PartialOption {
@@ -105,34 +122,6 @@ interface OptionsGroup extends PartialOptionsGroup {
   tree: OptionsTree;
 }
 
-type OHLCTuple = [number, number, number, number];
-
-interface Valued {
-  value: number;
-}
-interface Indexed {
-  index: number;
-}
-type ChartData<T> = T & Valued & Indexed;
-type SingleValueData = ChartData<_SingleValueData>;
-type CandlestickData = ChartData<_CandlestickData>;
-
-type FetchedSource = string;
-
-interface FetchedChunk {
-  id: number;
-  previous: string | null;
-  next: string | null;
-}
-
-interface Weighted {
-  weight: number;
-}
-
-type DatasetCandlestickData = ChartData<CandlestickData>;
-
-// type NotFunction<T> = T extends Function ? never : T;
-
 type DefaultCohortOption = CohortOption<AnyPossibleCohortId>;
 
 interface CohortOption<Id extends AnyPossibleCohortId> {
@@ -162,7 +151,3 @@ interface RatioOptions {
   title: string;
   list: RatioOption[];
 }
-
-// TODO: Remove
-// Fetch last of each individually when in viewport
-// type LastValues = Record<LastPath, number> | null;

@@ -27,7 +27,7 @@ pub struct Store<Key, Value> {
 }
 
 const CHECK_COLLISISONS: bool = true;
-const FJALL_VERSION: Version = Version::TWO;
+const MAJOR_FJALL_VERSION: Version = Version::TWO;
 
 impl<K, V> Store<K, V>
 where
@@ -36,7 +36,7 @@ where
     <V as TryFrom<ByteView>>::Error: error::Error + Send + Sync + 'static,
 {
     pub fn import(path: &Path, version: Version) -> color_eyre::Result<Self> {
-        let version = FJALL_VERSION + version;
+        let version = MAJOR_FJALL_VERSION + version;
 
         let meta = StoreMeta::checked_open(path, version)?;
 
@@ -92,6 +92,10 @@ where
     }
 
     pub fn remove(&mut self, key: K) {
+        if self.is_empty() {
+            return;
+        }
+
         if !self.puts.is_empty() {
             unreachable!("Shouldn't reach this");
             // self.puts.remove(&key);

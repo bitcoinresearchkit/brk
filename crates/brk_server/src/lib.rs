@@ -144,6 +144,7 @@ impl Server {
                 },
             )
             .on_body_chunk(())
+            .on_failure(())
             .on_eos(());
 
         let router = Router::new()

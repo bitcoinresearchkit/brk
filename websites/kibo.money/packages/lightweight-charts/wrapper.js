@@ -1,6 +1,26 @@
 // @ts-check
 
-/** @import {IChartApi, ISeriesApi, SeriesDefinition} from './v5.0.5-treeshaked/types' */
+/** @import {IChartApi, ISeriesApi, SeriesDefinition, SingleValueData as _SingleValueData, CandlestickData as _CandlestickData} from './v5.0.5-treeshaked/types' */
+
+/**
+ * @typedef {[number, number, number, number]} OHLCTuple
+ *
+ * @typedef {Object} Valued
+ * @property {number} value
+ *
+ * @typedef {Object} Indexed
+ * @property {number} index
+ */
+
+/**
+ * @template T
+ * @typedef {T & Valued & Indexed} ChartData<T>
+ */
+
+/**
+ * @typedef {ChartData<_SingleValueData>} SingleValueData
+ * @typedef {ChartData<_CandlestickData>} CandlestickData
+ */
 
 export default import("./v5.0.5-treeshaked/script.js").then((lc) => {
   const oklchToRGBA = createOklchToRGBA();
@@ -752,6 +772,7 @@ function createPriceScaleSelectorIfNeeded({
           },
         },
       );
+
       const field = utils.dom.createHorizontalChoiceField({
         title: unit,
         selected: serializedValue(),
@@ -759,6 +780,7 @@ function createPriceScaleSelectorIfNeeded({
         id: unit,
         signals,
       });
+
       field.addEventListener("change", (event) => {
         // @ts-ignore
         const value = event.target.value;

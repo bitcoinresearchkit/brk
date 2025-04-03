@@ -200,6 +200,10 @@ where
             .to_usize()
             .unwrap();
 
+        if len == 0 {
+            return Err(Error::IndexTooHigh);
+        }
+
         let from = from.map_or(0, |from| {
             if from >= 0 {
                 from as usize
