@@ -26,14 +26,12 @@ pub struct Stores {
 impl Stores {
     pub fn import(path: &Path) -> color_eyre::Result<Self> {
         thread::scope(|scope| {
-            let addresshash_to_addressindex = scope.spawn(|| {
-                Store::import(&path.join("addresshash_to_addressindex"), Version::from(1))
-            });
-            let blockhash_prefix_to_height = scope.spawn(|| {
-                Store::import(&path.join("blockhash_prefix_to_height"), Version::from(1))
-            });
-            let txid_prefix_to_txindex = scope
-                .spawn(|| Store::import(&path.join("txid_prefix_to_txindex"), Version::from(1)));
+            let addresshash_to_addressindex = scope
+                .spawn(|| Store::import(&path.join("addresshash_to_addressindex"), Version::ONE));
+            let blockhash_prefix_to_height = scope
+                .spawn(|| Store::import(&path.join("blockhash_prefix_to_height"), Version::ONE));
+            let txid_prefix_to_txindex =
+                scope.spawn(|| Store::import(&path.join("txid_prefix_to_txindex"), Version::ONE));
 
             Ok(Self {
                 addresshash_to_addressindex: addresshash_to_addressindex.join().unwrap()?,

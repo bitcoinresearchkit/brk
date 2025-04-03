@@ -28,7 +28,7 @@ export function init({
   elements.charts.append(utils.dom.createShadow("left"));
   elements.charts.append(utils.dom.createShadow("right"));
 
-  const { headerElement, titleElement } = utils.dom.createHeader({});
+  const { headerElement, headingElement } = utils.dom.createHeader({});
   elements.charts.append(headerElement);
 
   const chart = lightweightCharts.createChartElement({
@@ -45,10 +45,8 @@ export function init({
   let firstRun = true;
 
   signals.createEffect(selected, (option) => {
-    titleElement.innerHTML = option.title;
+    headingElement.innerHTML = option.title;
     signals.createEffect(index_, (index) => {
-      utils.url.writeParam("index", String(index));
-
       chart.reset({ owner: signals.getOwner() });
 
       const TIMERANGE_LS_KEY = `chart-timerange-${index}`;
@@ -72,7 +70,7 @@ export function init({
 
       chart.create({
         index,
-        timeScaleSetCallback: () => {
+        timeScaleSetCallback: (unknownTimeScaleCallback) => {
           const from_ = from();
           const to_ = to();
           if (from_ !== null && to_ !== null) {
@@ -80,6 +78,8 @@ export function init({
               from: from_,
               to: to_,
             });
+          } else {
+            unknownTimeScaleCallback();
           }
         },
       });
@@ -87,6 +87,7 @@ export function init({
       const candles = chart.addCandlestickSeries({
         vecId: "ohlc",
         name: "Price",
+        unit: "US Dollars",
       });
       signals.createEffect(webSockets.kraken1dCandle.latest, (latest) => {
         if (!latest) return;
@@ -98,17 +99,18 @@ export function init({
       });
 
       [
-        { blueprints: option.top, paneNumber: 0 },
-        { blueprints: option.bottom, paneNumber: 1 },
-      ].forEach(({ blueprints, paneNumber }) => {
+        { blueprints: option.top, paneIndex: 0 },
+        { blueprints: option.bottom, paneIndex: 1 },
+      ].forEach(({ blueprints, paneIndex }) => {
         blueprints?.forEach((blueprint) => {
           if (vecIdToIndexes[blueprint.key].includes(index)) {
             chart.addLineSeries({
               vecId: blueprint.key,
               color: blueprint.color,
               name: blueprint.title,
+              unit: option.unit,
               defaultActive: blueprint.defaultActive,
-              paneNumber,
+              paneIndex,
             });
           }
         });
@@ -136,7 +138,6 @@ export function init({
  * @param {Utilities} args.utils
  */
 function createIndexSelector({ elements, signals, utils }) {
-  const indexLSKey = "chart-index";
   const indexChoices = /**@type {const} */ ([
     "timestamp",
     "date",
@@ -149,8 +150,14 @@ function createIndexSelector({ elements, signals, utils }) {
     "decade",
   ]);
   /** @typedef {(typeof indexChoices)[number]} SerializedIndex */
-  const serializedIndex = signals.createSignal(
-    /** @type {SerializedIndex} */ (localStorage.getItem(indexLSKey) || "date"),
+  const serializedIndex = /** @type {Signal<SerializedIndex>} */ (
+    signals.createSignal("date", {
+      save: {
+        keyPrefix: "charts",
+        key: "index",
+        ...utils.serde.string,
+      },
+    })
   );
   const indexesField = utils.dom.createHorizontalChoiceField({
     title: "Index",
@@ -162,7 +169,6 @@ function createIndexSelector({ elements, signals, utils }) {
   indexesField.addEventListener("change", (event) => {
     // @ts-ignore
     const value = event.target.value;
-    localStorage.setItem(indexLSKey, value);
     serializedIndex.set(value);
   });
 

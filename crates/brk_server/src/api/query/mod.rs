@@ -1,17 +1,12 @@
-use std::time::Instant;
-
 use axum::{
     Json,
     extract::{Query as AxumQuery, State},
-    http::{HeaderMap, StatusCode, Uri},
+    http::{HeaderMap, StatusCode},
     response::{IntoResponse, Response},
 };
 use brk_query::{Format, Index, Output, Params};
 
-use crate::{
-    log_result,
-    traits::{HeaderMapExtended, ModifiedState, ResponseExtended},
-};
+use crate::traits::{HeaderMapExtended, ModifiedState, ResponseExtended};
 
 use super::AppState;
 
@@ -21,21 +16,14 @@ pub use dts::*;
 
 pub async fn handler(
     headers: HeaderMap,
-    uri: Uri,
     query: AxumQuery<Params>,
     State(app_state): State<AppState>,
 ) -> Response {
-    let instant = Instant::now();
-
     match req_to_response_res(headers, query, app_state) {
-        Ok(response) => {
-            log_result(response.status(), &uri, instant);
-            response
-        }
+        Ok(response) => response,
         Err(error) => {
             let mut response =
                 (StatusCode::INTERNAL_SERVER_ERROR, error.to_string()).into_response();
-            log_result(response.status(), &uri, instant);
             response.headers_mut().insert_cors();
             response
         }
