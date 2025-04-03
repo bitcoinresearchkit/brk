@@ -1,5 +1,5 @@
 import { Signal } from "../solid-signals/types";
-import { Accessor } from "../solid-signals/2024-11-02/types/signals";
+import { Accessor } from "../solid-signals/v0.2.4-treeshaked/types/signals";
 import {
   DeepPartial,
   BaselineStyleOptions,

@@ -7,7 +7,7 @@ use std::{
     fs,
     io::Cursor,
     path::{Path, PathBuf},
-    time::{Duration, Instant},
+    time::Duration,
 };
 
 use api::{ApiRoutes, DTS};

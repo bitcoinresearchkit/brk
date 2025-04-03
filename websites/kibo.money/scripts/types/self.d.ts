@@ -1,7 +1,7 @@
 import {
   Accessor,
   Setter,
-} from "../../packages/solid-signals/2024-11-02/types/signals";
+} from "../../packages/solid-signals/v0.2.4-treeshaked/types/signals";
 import {
   DeepPartial,
   BaselineStyleOptions,

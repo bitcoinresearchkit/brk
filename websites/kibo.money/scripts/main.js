@@ -5,9 +5,9 @@
  * @import { Marker,  CreatePaneParameters,  HoveredLegend, ChartPane, SplitSeries, SingleSeries, CreateSplitSeriesParameters, LineSeriesBlueprint, CandlestickSeriesBlueprint, BaselineSeriesBlueprint, CreateBaseSeriesParameters, BaseSeries, RemoveSeriesBlueprintFluff, SplitSeriesBlueprint, AnySeries, PriceSeriesType } from "../packages/lightweight-charts/types";
  * @import * as _ from "../packages/ufuzzy/v1.0.14/types"
  * @import { createChart as CreateClassicChart, LineStyleOptions, DeepPartial, ChartOptions, IChartApi, IHorzScaleBehavior, WhitespaceData, ISeriesApi, Time, LineData, LogicalRange, SeriesType, BaselineStyleOptions, SeriesOptionsCommon } from "../packages/lightweight-charts/v5.0.5-treeshaked/types"
- * @import { SignalOptions } from "../packages/solid-signals/2024-11-02/types/core/core"
- * @import { getOwner as GetOwner, onCleanup as OnCleanup, Owner } from "../packages/solid-signals/2024-11-02/types/core/owner"
- * @import { createSignal as CreateSignal, createEffect as CreateEffect, Accessor, Setter, createMemo as CreateMemo, createRoot as CreateRoot, runWithOwner as RunWithOwner } from "../packages/solid-signals/2024-11-02/types/signals";
+ * @import { SignalOptions } from "../packages/solid-signals/v0.2.4-treeshaked/types/core/core"
+ * @import { getOwner as GetOwner, onCleanup as OnCleanup, Owner } from "../packages/solid-signals/v0.2.4-treeshaked/types/core/owner"
+ * @import { createSignal as CreateSignal, createEffect as CreateEffect, Accessor, Setter, createMemo as CreateMemo, createRoot as CreateRoot, runWithOwner as RunWithOwner } from "../packages/solid-signals/v0.2.4-treeshaked/types/signals";
  * @import {Signal, Signals} from "../packages/solid-signals/types";
  * @import {Addressindex, Dateindex, Decadeindex, Difficultyepoch, Index, Halvingepoch, Height, Monthindex, P2PK33index, P2PK65index, P2PKHindex, P2SHindex, P2TRindex, P2WPKHindex, P2WSHindex, Txindex, Txinindex, Txoutindex, VecId, Weekindex, Yearindex, VecIdToIndexes, Quarterindex} from "./vecid-to-indexes"
  */
@@ -541,11 +541,11 @@ function createUtils() {
           select.append(optGroup);
           list.forEach((option) => {
             optGroup.append(this.createOption(option));
-            setters[option.value] = () => signal.set(option);
+            setters[option.value] = () => signal.set(() => option);
           });
         } else {
           select.append(this.createOption(anyOption));
-          setters[anyOption.value] = () => signal.set(anyOption);
+          setters[anyOption.value] = () => signal.set(() => anyOption);
         }
         if (index !== list.length - 1) {
           select.append(window.document.createElement("hr"));
