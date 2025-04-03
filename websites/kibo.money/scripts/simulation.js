@@ -10,8 +10,6 @@
  */
 export function init({ colors, elements, lightweightCharts, signals, utils }) {
   /**
-   * @import { ColorName } from './types/self';
-   *
    * @typedef {Object} Frequency
    * @property {string} name
    * @property {string} value
@@ -151,7 +149,7 @@ export function init({ colors, elements, lightweightCharts, signals, utils }) {
       initial: {
         amount: signals.createSignal(/** @type {number | null} */ (1000), {
           save: {
-            ...utils.serde.number,
+            ...utils.serde.optNumber,
             keyPrefix,
             key: "initial-amount",
           },
@@ -160,7 +158,7 @@ export function init({ colors, elements, lightweightCharts, signals, utils }) {
       topUp: {
         amount: signals.createSignal(/** @type {number | null} */ (150), {
           save: {
-            ...utils.serde.number,
+            ...utils.serde.optNumber,
             keyPrefix,
             key: "top-up-amount",
           },
@@ -181,14 +179,14 @@ export function init({ colors, elements, lightweightCharts, signals, utils }) {
       investment: {
         initial: signals.createSignal(/** @type {number | null} */ (1000), {
           save: {
-            ...utils.serde.number,
+            ...utils.serde.optNumber,
             keyPrefix,
             key: "initial-swap",
           },
         }),
         recurrent: signals.createSignal(/** @type {number | null} */ (5), {
           save: {
-            ...utils.serde.number,
+            ...utils.serde.optNumber,
             keyPrefix,
             key: "recurrent-swap",
           },
@@ -210,7 +208,7 @@ export function init({ colors, elements, lightweightCharts, signals, utils }) {
         /** @type {Date | null} */ (new Date("2021-04-15")),
         {
           save: {
-            ...utils.serde.date,
+            ...utils.serde.optDate,
             keyPrefix,
             key: "interval-start",
           },
@@ -218,7 +216,7 @@ export function init({ colors, elements, lightweightCharts, signals, utils }) {
       ),
       end: signals.createSignal(/** @type {Date | null} */ (new Date()), {
         save: {
-          ...utils.serde.date,
+          ...utils.serde.optDate,
           keyPrefix,
           key: "interval-end",
         },
@@ -227,7 +225,7 @@ export function init({ colors, elements, lightweightCharts, signals, utils }) {
     fees: {
       percentage: signals.createSignal(/** @type {number | null} */ (0.25), {
         save: {
-          ...utils.serde.number,
+          ...utils.serde.optNumber,
           keyPrefix,
           key: "percentage",
         },
@@ -545,8 +543,7 @@ export function init({ colors, elements, lightweightCharts, signals, utils }) {
     signals,
     colors,
     id: `simulation-0`,
-    kind: "static",
-    scale: "date",
+    fitContentOnResize: true,
     utils,
     config: [
       {
@@ -586,8 +583,7 @@ export function init({ colors, elements, lightweightCharts, signals, utils }) {
     signals,
     colors,
     id: `simulation-1`,
-    scale: "date",
-    kind: "static",
+    fitContentOnResize: true,
     utils,
     config: [
       {
@@ -609,8 +605,7 @@ export function init({ colors, elements, lightweightCharts, signals, utils }) {
     signals,
     colors,
     id: `simulation-average-price`,
-    scale: "date",
-    kind: "static",
+    fitContentOnResize: true,
     utils,
     config: [
       {
@@ -638,8 +633,7 @@ export function init({ colors, elements, lightweightCharts, signals, utils }) {
     signals,
     colors,
     id: `simulation-return-ratio`,
-    scale: "date",
-    kind: "static",
+    fitContentOnResize: true,
     utils,
     config: [
       {
@@ -670,8 +664,7 @@ export function init({ colors, elements, lightweightCharts, signals, utils }) {
     signals,
     colors,
     id: `simulation-profitability-ratios`,
-    kind: "static",
-    scale: "date",
+    fitContentOnResize: true,
     utils,
     owner,
     config: [
@@ -939,36 +932,43 @@ export function init({ colors, elements, lightweightCharts, signals, utils }) {
 
           p3.innerHTML = `You would've been ${serProfitableDaysRatio} of the time profitable and ${serUnprofitableDaysRatio} of the time unprofitable.`;
 
-          signals.createEffect(lastValues, (lastValues) => {
-            const lowestAnnual4YReturn = 0.2368;
-            // const lowestAnnual4YReturn = lastValues?.["price-4y-compound-return"] || 0
-            const serLowestAnnual4YReturn = c(
-              "cyan",
-              `${fp(lowestAnnual4YReturn)}`,
-            );
-
-            const lowestAnnual4YReturnPercentage = 1 + lowestAnnual4YReturn;
-            /**
-             * @param {number} power
-             */
-            function bitcoinValueReturn(power) {
-              return (
-                bitcoinValue * Math.pow(lowestAnnual4YReturnPercentage, power)
+          signals.createEffect(
+            () => 0.2368,
+            (lowestAnnual4YReturn) => {
+              const serLowestAnnual4YReturn = c(
+                "cyan",
+                `${fp(lowestAnnual4YReturn)}`,
               );
-            }
-            const bitcoinValueAfter4y = bitcoinValueReturn(4);
-            const serBitcoinValueAfter4y = c("purple", fd(bitcoinValueAfter4y));
-            const bitcoinValueAfter10y = bitcoinValueReturn(10);
-            const serBitcoinValueAfter10y = c(
-              "fuchsia",
-              fd(bitcoinValueAfter10y),
-            );
-            const bitcoinValueAfter21y = bitcoinValueReturn(21);
-            const serBitcoinValueAfter21y = c("pink", fd(bitcoinValueAfter21y));
 
-            /** @param {number} v */
-            p4.innerHTML = `The lowest annual return after 4 years has historically been ${serLowestAnnual4YReturn}.<br/>Using it as the baseline, your Bitcoin would be worth ${serBitcoinValueAfter4y} after 4 years, ${serBitcoinValueAfter10y} after 10 years and ${serBitcoinValueAfter21y} after 21 years.`;
-          });
+              const lowestAnnual4YReturnPercentage = 1 + lowestAnnual4YReturn;
+              /**
+               * @param {number} power
+               */
+              function bitcoinValueReturn(power) {
+                return (
+                  bitcoinValue * Math.pow(lowestAnnual4YReturnPercentage, power)
+                );
+              }
+              const bitcoinValueAfter4y = bitcoinValueReturn(4);
+              const serBitcoinValueAfter4y = c(
+                "purple",
+                fd(bitcoinValueAfter4y),
+              );
+              const bitcoinValueAfter10y = bitcoinValueReturn(10);
+              const serBitcoinValueAfter10y = c(
+                "fuchsia",
+                fd(bitcoinValueAfter10y),
+              );
+              const bitcoinValueAfter21y = bitcoinValueReturn(21);
+              const serBitcoinValueAfter21y = c(
+                "pink",
+                fd(bitcoinValueAfter21y),
+              );
+
+              /** @param {number} v */
+              p4.innerHTML = `The lowest annual return after 4 years has historically been ${serLowestAnnual4YReturn}.<br/>Using it as the baseline, your Bitcoin would be worth ${serBitcoinValueAfter4y} after 4 years, ${serBitcoinValueAfter10y} after 10 years and ${serBitcoinValueAfter21y} after 21 years.`;
+            },
+          );
 
           totalInvestedAmountData.set((a) => a);
           bitcoinValueData.set((a) => a);

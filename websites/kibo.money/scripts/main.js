@@ -1,8 +1,8 @@
 // @ts-check
 
 /**
- * @import { Option, Weighted, Color, DatasetCandlestickData, PartialChartOption, ChartOption, AnyPartialOption, ProcessedOptionAddons, OptionsTree, SimulationOption, Valued,  SingleValueData, CandlestickData, ChartData, OHLCTuple, Unit } from "./types/self"
- * @import { Marker,  CreatePaneParameters,  HoveredLegend, ChartPane, SplitSeries, SingleSeries, CreateSplitSeriesParameters, LineSeriesBlueprint, CandlestickSeriesBlueprint, BaselineSeriesBlueprint, CreateBaseSeriesParameters, BaseSeries, RemoveSeriesBlueprintFluff, SplitSeriesBlueprint, AnySeries, PriceSeriesType } from "../packages/lightweight-charts/types";
+ * @import { Option, PartialChartOption, ChartOption, AnyPartialOption, ProcessedOptionAddons, OptionsTree, SimulationOption, Unit } from "./types/self"
+ * @import {Valued,  SingleValueData, CandlestickData, ChartData, OHLCTuple} from "../packages/lightweight-charts/wrapper"
  * @import * as _ from "../packages/ufuzzy/v1.0.14/types"
  * @import { createChart as CreateClassicChart, LineStyleOptions, DeepPartial, ChartOptions, IChartApi, IHorzScaleBehavior, WhitespaceData, ISeriesApi, Time, LineData, LogicalRange, SeriesType, BaselineStyleOptions, SeriesOptionsCommon } from "../packages/lightweight-charts/v5.0.5-treeshaked/types"
  * @import { SignalOptions } from "../packages/solid-signals/v0.2.4-treeshaked/types/core/core"
@@ -885,12 +885,12 @@ function createUtils() {
         return v ? Number(v) : null;
       },
     },
-    date: {
+    optDate: {
       /**
-       * @param {Date} v
+       * @param {Date |  null} date
        */
-      serialize(v) {
-        return date.toString(v);
+      serialize(date) {
+        return date !== null ? date.toString() : "";
       },
       /**
        * @param {string} v
@@ -1609,6 +1609,8 @@ function createColors(dark, elements) {
 }
 /**
  * @typedef {ReturnType<typeof createColors>} Colors
+ * @typedef {Colors["orange"]} Color
+ * @typedef {keyof Colors} ColorName
  */
 
 /**
@@ -1676,7 +1678,7 @@ function initWebSockets(signals, utils) {
   }
 
   /**
-   * @param {(candle: DatasetCandlestickData) => void} callback
+   * @param {(candle: CandlestickData) => void} callback
    * @param {number} interval
    */
   function krakenCandleWebSocketCreator(callback, interval) {
@@ -1706,7 +1708,7 @@ function initWebSockets(signals, utils) {
 
       const dateStr = utils.date.toString(date);
 
-      /** @type {DatasetCandlestickData} */
+      /** @type {CandlestickData} */
       const candle = {
         index: -1,
         time: dateStr,
