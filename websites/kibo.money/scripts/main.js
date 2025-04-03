@@ -1,10 +1,10 @@
 // @ts-check
 
 /**
- * @import { Option, Weighted, Color, DatasetCandlestickData, PartialChartOption, ChartOption, AnyPartialOption, ProcessedOptionAddons, OptionsTree, SimulationOption, Valued,  SingleValueData, CandlestickData, ChartData, OHLCTuple } from "./types/self"
+ * @import { Option, Weighted, Color, DatasetCandlestickData, PartialChartOption, ChartOption, AnyPartialOption, ProcessedOptionAddons, OptionsTree, SimulationOption, Valued,  SingleValueData, CandlestickData, ChartData, OHLCTuple, Unit } from "./types/self"
  * @import { Marker,  CreatePaneParameters,  HoveredLegend, ChartPane, SplitSeries, SingleSeries, CreateSplitSeriesParameters, LineSeriesBlueprint, CandlestickSeriesBlueprint, BaselineSeriesBlueprint, CreateBaseSeriesParameters, BaseSeries, RemoveSeriesBlueprintFluff, SplitSeriesBlueprint, AnySeries, PriceSeriesType } from "../packages/lightweight-charts/types";
  * @import * as _ from "../packages/ufuzzy/v1.0.14/types"
- * @import { createChart as CreateClassicChart, createChartEx as CreateCustomChart, LineStyleOptions, DeepPartial, ChartOptions, IChartApi, IHorzScaleBehavior, WhitespaceData, ISeriesApi, Time, LineData, LogicalRange, SeriesMarker, SeriesType, BaselineStyleOptions, SeriesOptionsCommon } from "../packages/lightweight-charts/v5.0.5/types"
+ * @import { createChart as CreateClassicChart, LineStyleOptions, DeepPartial, ChartOptions, IChartApi, IHorzScaleBehavior, WhitespaceData, ISeriesApi, Time, LineData, LogicalRange, SeriesType, BaselineStyleOptions, SeriesOptionsCommon } from "../packages/lightweight-charts/v5.0.5-treeshaked/types"
  * @import { SignalOptions } from "../packages/solid-signals/2024-11-02/types/core/core"
  * @import { getOwner as GetOwner, onCleanup as OnCleanup, Owner } from "../packages/solid-signals/2024-11-02/types/core/owner"
  * @import { createSignal as CreateSignal, createEffect as CreateEffect, Accessor, Setter, createMemo as CreateMemo, createRoot as CreateRoot, runWithOwner as RunWithOwner } from "../packages/solid-signals/2024-11-02/types/signals";
@@ -490,30 +490,21 @@ function createUtils() {
       return { input, signal };
     },
     /**
-     * @param {Object} param0
-     * @param {string} [param0.title]
+     * @param {Object} args
+     * @param {1 | 2 | 3} [args.level]
+     * @param {string} [args.title]
      */
-    createHeader({ title }) {
+    createHeader({ title, level = 1 }) {
       const headerElement = window.document.createElement("header");
 
-      const div = window.document.createElement("div");
-      headerElement.append(div);
-
-      const h1 = window.document.createElement("h1");
-      div.append(h1);
-      h1.style.display = "flex";
-      h1.style.flexDirection = "column";
-
-      const titleElement = window.document.createElement("span");
-      if (title) {
-        titleElement.append(title);
-      }
-      h1.append(titleElement);
-      titleElement.style.display = "block";
+      const headingElement = window.document.createElement(`h${level}`);
+      headingElement.innerHTML = title || "";
+      headerElement.append(headingElement);
+      headingElement.style.display = "block";
 
       return {
         headerElement,
-        titleElement,
+        headingElement,
       };
     },
     /**
@@ -852,6 +843,20 @@ function createUtils() {
   };
 
   const serde = {
+    string: {
+      /**
+       * @param {string} v
+       */
+      serialize(v) {
+        return v;
+      },
+      /**
+       * @param {string} v
+       */
+      deserialize(v) {
+        return v;
+      },
+    },
     number: {
       /**
        * @param {number} v
@@ -1376,7 +1381,6 @@ function getElements() {
     searchInput: /** @type {HTMLInputElement} */ (
       getElementById("search-input")
     ),
-    searchSmall: getElementById("search-small"),
     searchResults: getElementById("search-results"),
     selectors: getElementById("frame-selectors"),
     style: getComputedStyle(window.document.documentElement),
@@ -2108,8 +2112,6 @@ function main() {
 
             const haystack = options.list.map((option) => option.title);
 
-            const searchSmallOgInnerHTML = elements.searchSmall.innerHTML;
-
             const RESULTS_PER_PAGE = 100;
 
             packages.ufuzzy().then((ufuzzy) => {
@@ -2193,7 +2195,6 @@ function main() {
                   });
 
                   if (!needle) {
-                    elements.searchSmall.innerHTML = searchSmallOgInnerHTML;
                     elements.searchResults.innerHTML = "";
                     return;
                   }
@@ -2253,9 +2254,6 @@ function main() {
                     );
                   }
 
-                  elements.searchSmall.innerHTML = `Found <strong>${
-                    result?.[0]?.length || 0
-                  }</strong> result(s)`;
                   elements.searchResults.innerHTML = "";
 
                   const list = computeResultPage(result, 0);

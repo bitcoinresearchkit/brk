@@ -15,6 +15,10 @@ use crate::{Error, Result};
 pub struct Version(u32);
 
 impl Version {
+    pub const ZERO: Self = Self(0);
+    pub const ONE: Self = Self(1);
+    pub const TWO: Self = Self(2);
+
     pub fn write(&self, path: &Path) -> Result<(), io::Error> {
         fs::write(path, self.as_bytes())
     }

@@ -7,13 +7,15 @@ use std::{
     fs,
     io::Cursor,
     path::{Path, PathBuf},
-    time::Instant,
+    time::{Duration, Instant},
 };
 
 use api::{ApiRoutes, DTS};
 use axum::{
     Json, Router,
-    http::{StatusCode, Uri},
+    body::Body,
+    http::{Request, Response, StatusCode, Uri},
+    middleware::Next,
     routing::get,
     serve,
 };
@@ -26,13 +28,14 @@ use files::FilesRoutes;
 use log::{error, info};
 pub use tokio;
 use tokio::net::TcpListener;
-use tower_http::compression::CompressionLayer;
+use tower_http::{compression::CompressionLayer, trace::TraceLayer};
 
 mod api;
 mod files;
 mod traits;
 
 pub use files::Website;
+use tracing::Span;
 
 #[derive(Clone)]
 pub struct AppState {
@@ -63,14 +66,16 @@ impl Server {
             } else {
                 let downloads_path = dot_brk_path().join(DOWNLOADS);
 
-                let downloaded_websites_path = downloads_path.join("brk-main").join(WEBSITES);
+                let version = format!("v{}", env!("CARGO_PKG_VERSION"));
+
+                let downloaded_websites_path = downloads_path.join(&version).join(WEBSITES);
 
                 if !fs::exists(&downloaded_websites_path)? {
                     info!("Downloading websites from Github...");
 
                     let url = format!(
-                        "https://github.com/bitcoinresearchkit/brk/archive/refs/tags/v{}.zip",
-                        env!("CARGO_PKG_VERSION")
+                        "https://github.com/bitcoinresearchkit/brk/archive/refs/tags/{}.zip",
+                        version
                     );
 
                     let response = minreq::get(url).send()?;
@@ -108,12 +113,47 @@ impl Server {
             .gzip(true)
             .zstd(true);
 
+        let response_uri_layer = axum::middleware::from_fn(
+            async |request: Request<Body>, next: Next| -> Response<Body> {
+                let uri = request.uri().clone();
+                let mut response = next.run(request).await;
+                response.extensions_mut().insert(uri);
+                response
+            },
+        );
+
+        let trace_layer = TraceLayer::new_for_http()
+            .on_request(())
+            .on_response(
+                |response: &Response<Body>, latency: Duration, _span: &Span| {
+                    let latency = latency.bright_black();
+                    let status = response.status();
+                    let uri = response.extensions().get::<Uri>().unwrap();
+                    match status {
+                        StatusCode::INTERNAL_SERVER_ERROR => {
+                            error!("{} {} {:?}", status.as_u16().red(), uri, latency)
+                        }
+                        StatusCode::NOT_MODIFIED => {
+                            info!("{} {} {:?}", status.as_u16().bright_black(), uri, latency)
+                        }
+                        StatusCode::OK => {
+                            info!("{} {} {:?}", status.as_u16().green(), uri, latency)
+                        }
+                        _ => error!("{} {} {:?}", status.as_u16().red(), uri, latency),
+                    }
+                },
+            )
+            .on_body_chunk(())
+            .on_eos(());
+
         let router = Router::new()
             .add_api_routes()
             .add_website_routes(state.website)
             .route("/version", get(Json(env!("CARGO_PKG_VERSION"))))
             .with_state(state)
-            .layer(compression_layer);
+            .layer(compression_layer)
+            .layer(response_uri_layer)
+            .layer(trace_layer);
 
         let mut port = 3110;
 
@@ -133,16 +173,5 @@ impl Server {
         serve(listener, router).await?;
 
         Ok(())
-    }
-}
-
-pub fn log_result(code: StatusCode, uri: &Uri, instant: Instant) {
-    let time = format!("{}µs", instant.elapsed().as_micros());
-    let time = time.bright_black();
-    match code {
-        StatusCode::INTERNAL_SERVER_ERROR => error!("{} {} {}", code.as_u16().red(), uri, time),
-        StatusCode::NOT_MODIFIED => info!("{} {} {}", code.as_u16().bright_black(), uri, time),
-        StatusCode::OK => info!("{} {} {}", code.as_u16().green(), uri, time),
-        _ => error!("{} {} {}", code.as_u16().red(), uri, time),
     }
 }

@@ -137,7 +137,7 @@ where
         F: FnMut((A, B, &mut Self, &mut brk_vec::StorableVec<A, B>)) -> (I, T),
     {
         self.validate_computed_version_or_reset_file(
-            Version::from(0) + self.version() + other.version(),
+            Version::ZERO + self.version() + other.version(),
         )?;
 
         let index = max_from.min(A::from(self.len()));
@@ -160,7 +160,7 @@ where
         T: StoredIndex,
     {
         self.validate_computed_version_or_reset_file(
-            Version::from(0) + self.version() + other.version(),
+            Version::ZERO + self.version() + other.version(),
         )?;
 
         let index = max_from.min(self.vec.get_last()?.cloned().unwrap_or_default());
@@ -188,7 +188,7 @@ where
         T: StoredIndex,
     {
         self.validate_computed_version_or_reset_file(
-            Version::from(0) + self.version() + first_indexes.version() + last_indexes.version(),
+            Version::ZERO + self.version() + first_indexes.version() + last_indexes.version(),
         )?;
 
         let index = max_from.min(T::from(self.len()));
@@ -213,7 +213,7 @@ where
         T: Copy + From<usize> + CheckedSub<T> + StoredIndex,
     {
         self.validate_computed_version_or_reset_file(
-            Version::from(0) + self.version() + first_indexes.version(),
+            Version::ZERO + self.version() + first_indexes.version(),
         )?;
 
         let index = max_from.min(I::from(self.len()));
@@ -250,7 +250,7 @@ where
         <T2 as TryInto<T>>::Error: error::Error + 'static,
     {
         self.validate_computed_version_or_reset_file(
-            Version::from(0) + self.version() + first_indexes.version() + last_indexes.version(),
+            Version::ZERO + self.version() + first_indexes.version() + last_indexes.version(),
         )?;
 
         let index = max_from.min(I::from(self.len()));
@@ -278,7 +278,7 @@ where
         A: StoredIndex + StoredType,
     {
         self.validate_computed_version_or_reset_file(
-            Version::from(0) + self.version() + self_to_other.version() + other_to_self.version(),
+            Version::ZERO + self.version() + self_to_other.version() + other_to_self.version(),
         )?;
 
         let index = max_from.min(I::from(self.len()));
@@ -302,7 +302,7 @@ where
         <T2 as TryInto<T>>::Error: error::Error + 'static,
     {
         self.validate_computed_version_or_reset_file(
-            Version::from(0) + self.version() + first_indexes.version() + last_indexes.version(),
+            Version::ZERO + self.version() + first_indexes.version() + last_indexes.version(),
         )?;
 
         let index = max_from.min(I::from(self.len()));

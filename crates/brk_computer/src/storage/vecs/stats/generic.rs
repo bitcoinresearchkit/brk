@@ -44,43 +44,42 @@ where
 
         let s = Self {
             first: options.first.then(|| {
-                StorableVec::forced_import(&prefix("first"), Version::from(1), compressed).unwrap()
+                StorableVec::forced_import(&prefix("first"), Version::ONE, compressed).unwrap()
             }),
             last: options.last.then(|| {
                 StorableVec::forced_import(
                     &path.with_file_name(format!("{key}_to_{name}")),
-                    Version::from(1),
+                    Version::ONE,
                     compressed,
                 )
                 .unwrap()
             }),
             min: options.min.then(|| {
-                StorableVec::forced_import(&suffix("min"), Version::from(1), compressed).unwrap()
+                StorableVec::forced_import(&suffix("min"), Version::ONE, compressed).unwrap()
             }),
             max: options.max.then(|| {
-                StorableVec::forced_import(&suffix("max"), Version::from(1), compressed).unwrap()
+                StorableVec::forced_import(&suffix("max"), Version::ONE, compressed).unwrap()
             }),
             median: options.median.then(|| {
-                StorableVec::forced_import(&suffix("median"), Version::from(1), compressed).unwrap()
+                StorableVec::forced_import(&suffix("median"), Version::ONE, compressed).unwrap()
             }),
             average: options.average.then(|| {
-                StorableVec::forced_import(&suffix("average"), Version::from(1), compressed)
-                    .unwrap()
+                StorableVec::forced_import(&suffix("average"), Version::ONE, compressed).unwrap()
             }),
             sum: options.sum.then(|| {
-                StorableVec::forced_import(&suffix("sum"), Version::from(1), compressed).unwrap()
+                StorableVec::forced_import(&suffix("sum"), Version::ONE, compressed).unwrap()
             }),
             _90p: options._90p.then(|| {
-                StorableVec::forced_import(&suffix("90p"), Version::from(1), compressed).unwrap()
+                StorableVec::forced_import(&suffix("90p"), Version::ONE, compressed).unwrap()
             }),
             _75p: options._75p.then(|| {
-                StorableVec::forced_import(&suffix("75p"), Version::from(1), compressed).unwrap()
+                StorableVec::forced_import(&suffix("75p"), Version::ONE, compressed).unwrap()
             }),
             _25p: options._25p.then(|| {
-                StorableVec::forced_import(&suffix("25p"), Version::from(1), compressed).unwrap()
+                StorableVec::forced_import(&suffix("25p"), Version::ONE, compressed).unwrap()
             }),
             _10p: options._10p.then(|| {
-                StorableVec::forced_import(&suffix("10p"), Version::from(1), compressed).unwrap()
+                StorableVec::forced_import(&suffix("10p"), Version::ONE, compressed).unwrap()
             }),
         };
 

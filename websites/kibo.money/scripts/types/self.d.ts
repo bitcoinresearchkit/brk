@@ -15,7 +15,7 @@ import {
   SeriesType,
   ISeriesApi,
   BaselineData,
-} from "../../packages/lightweight-charts/v5.0.5/types";
+} from "../../packages/lightweight-charts/v5.0.5-treeshaked/types";
 import { AnyPossibleCohortId, Groups } from "../options";
 
 type Color = () => string;
@@ -49,7 +49,7 @@ interface PartialOption {
 
 interface PartialChartOption extends PartialOption {
   title?: string;
-  unit?: string;
+  unit?: Unit;
   top?: SplitSeriesBlueprint[];
   bottom?: SplitSeriesBlueprint[];
 }
@@ -93,7 +93,7 @@ interface ChartOption
   extends Omit<PartialChartOption, "title">,
     ProcessedOptionAddons {
   kind: "chart";
-  unit: string;
+  unit: Unit;
 }
 
 type Option = UrlOption | ChartOption | SimulationOption;

@@ -1,15 +1,15 @@
-use std::{fs, path::Path, time::Instant};
+use std::{fs, path::Path};
 
 use axum::{
     body::Body,
     extract::{self, State},
-    http::{HeaderMap, StatusCode, Uri},
+    http::{HeaderMap, StatusCode},
     response::{IntoResponse, Response},
 };
 use log::{error, info};
 
 use crate::{
-    AppState, log_result,
+    AppState,
     traits::{HeaderMapExtended, ModifiedState, ResponseExtended},
 };
 
@@ -18,24 +18,18 @@ use super::minify::minify_js;
 pub async fn file_handler(
     headers: HeaderMap,
     State(app_state): State<AppState>,
-    uri: Uri,
     path: extract::Path<String>,
 ) -> Response {
-    any_handler(headers, app_state, uri, Some(path))
+    any_handler(headers, app_state, Some(path))
 }
 
-pub async fn index_handler(
-    headers: HeaderMap,
-    State(app_state): State<AppState>,
-    uri: Uri,
-) -> Response {
-    any_handler(headers, app_state, uri, None)
+pub async fn index_handler(headers: HeaderMap, State(app_state): State<AppState>) -> Response {
+    any_handler(headers, app_state, None)
 }
 
 fn any_handler(
     headers: HeaderMap,
     app_state: AppState,
-    uri: Uri,
     path: Option<extract::Path<String>>,
 ) -> Response {
     let website_path = app_state
@@ -43,8 +37,6 @@ fn any_handler(
         .as_ref()
         .expect("Should never reach here is websites_path is None")
         .join(app_state.website.to_folder_name());
-
-    let instant = Instant::now();
 
     let response = if let Some(path) = path.as_ref() {
         let path = path.0.replace("..", "").replace("\\", "");
@@ -71,8 +63,6 @@ fn any_handler(
     } else {
         path_to_response(&headers, &website_path.join("index.html"))
     };
-
-    log_result(response.status(), &uri, instant);
 
     response
 }

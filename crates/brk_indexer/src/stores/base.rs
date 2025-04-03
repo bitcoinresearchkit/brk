@@ -27,6 +27,7 @@ pub struct Store<Key, Value> {
 }
 
 const CHECK_COLLISISONS: bool = true;
+const FJALL_VERSION: Version = Version::TWO;
 
 impl<K, V> Store<K, V>
 where
@@ -35,6 +36,8 @@ where
     <V as TryFrom<ByteView>>::Error: error::Error + Send + Sync + 'static,
 {
     pub fn import(path: &Path, version: Version) -> color_eyre::Result<Self> {
+        let version = FJALL_VERSION + version;
+
         let meta = StoreMeta::checked_open(path, version)?;
 
         let keyspace = match Self::open_keyspace(path) {

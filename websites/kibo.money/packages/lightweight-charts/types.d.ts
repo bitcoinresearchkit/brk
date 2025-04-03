@@ -9,7 +9,7 @@ import {
   Time,
   ISeriesApi,
   BaselineData,
-} from "./v5.0.5/types";
+} from "./v5.0.5-treeshaked/types";
 import { VecId } from "../../scripts/vecid-to-indexes";
 
 interface BaseSeriesBlueprint {

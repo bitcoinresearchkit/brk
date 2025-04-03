@@ -284,7 +284,7 @@
       @font-face {
         font-family: "Geist mono";
         src: url("./assets/fonts/geist_mono_var_1_4_01.woff2") format("woff2");
-        font-weight: 300 500;
+        font-weight: 100 900;
         font-display: block;
         font-style: normal;
       }
@@ -371,14 +371,6 @@
           margin-bottom: 0rem;
         }
 
-        header {
-          small {
-            font-weight: var(--font-weight-base);
-            font-size: var(--font-size-base);
-            line-height: var(--line-height-base);
-          }
-        }
-
         body > &[hidden] {
           display: flex !important;
         }
@@ -447,7 +439,8 @@
         }
       }
 
-      h1 {
+      h1,
+      h2 {
         text-transform: uppercase;
         font-size: var(--font-size-2xl);
         line-height: var(--line-height-2xl);
@@ -478,6 +471,7 @@
       }
 
       input {
+        text-transform: inherit;
         border: 0;
         width: 100%;
         text-align: left;
@@ -655,7 +649,7 @@
         height: 100%;
         display: flex;
         flex-direction: column;
-        gap: 0.5rem;
+        gap: 2rem;
         padding-bottom: var(--bottom-area);
       }
 
@@ -927,7 +921,7 @@
         align-items: center;
         gap: 0.5rem;
 
-        &[data-size="sm"] {
+        &[data-size="xs"] {
           font-size: var(--font-size-xs);
           line-height: var(--line-height-xs);
         }
@@ -947,6 +941,10 @@
 
           > hr {
             min-width: 2rem;
+
+            fieldset[data-size="xs"] > div > & {
+              min-width: 1rem;
+            }
           }
 
           label {
@@ -957,6 +955,10 @@
           > div {
             display: flex;
             gap: 1.5rem;
+
+            fieldset[data-size="xs"] > div > & {
+              gap: 1rem;
+            }
           }
         }
       }
@@ -968,7 +970,7 @@
         z-index: 20;
         flex: 1;
         margin-top: 2rem;
-        margin-bottom: 1.5rem;
+        margin-bottom: 1rem;
 
         > legend {
           text-transform: lowercase;
@@ -980,7 +982,7 @@
           margin-right: var(--negative-main-padding);
           padding-left: var(--main-padding);
           padding-right: var(--main-padding);
-          padding-bottom: 1.5rem;
+          padding-bottom: 1rem;
           overflow-x: auto;
           min-width: 0;
 
@@ -1492,20 +1494,31 @@
       <div class="shadow-bottom"></div>
       <div id="resize-bar"></div>
 
-      <nav id="nav" hidden></nav>
+      <nav id="nav" hidden>
+        <h4 style="margin-top: 0.25rem">
+          <a href="/"
+            ><span style="font-weight: 500">kibo</span
+            ><span style="color: var(--gray)">.</span
+            ><span style="color: var(--orange)">money</span></a
+          >
+        </h4>
+      </nav>
 
       <search id="search" hidden>
         <header>
           <div>
-            <h3 style="display: flex; flex-direction: column">
+            <h3
+              style="
+                display: flex;
+                flex-direction: column;
+                text-transform: uppercase;
+              "
+            >
               <input placeholder="Search..." id="search-input" />
-              <small id="search-small">
-                Focus the title or press <strong>/</strong> to search
-              </small>
             </h3>
           </div>
         </header>
-        <ul id="search-results"></ul>
+        <ul id="search-results" style="text-transform: lowercase"></ul>
       </search>
 
       <footer>

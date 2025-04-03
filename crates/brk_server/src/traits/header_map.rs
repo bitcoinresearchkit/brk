@@ -17,9 +17,9 @@ pub enum ModifiedState {
 }
 
 pub trait HeaderMapExtended {
-    fn get_scheme(&self) -> &str;
+    fn _get_scheme(&self) -> &str;
     fn get_host(&self) -> &str;
-    fn check_if_host_is_any_local(&self) -> bool;
+    fn check_if_host_is_local(&self) -> bool;
     fn check_if_host_is_0000(&self) -> bool;
     fn check_if_host_is_localhost(&self) -> bool;
 
@@ -30,8 +30,7 @@ pub trait HeaderMapExtended {
     -> color_eyre::Result<(ModifiedState, DateTime)>;
 
     fn insert_cache_control_immutable(&mut self);
-    #[allow(unused)]
-    fn insert_cache_control_revalidate(&mut self, max_age: u64, stale_while_revalidate: u64);
+    fn _insert_cache_control_revalidate(&mut self, max_age: u64, stale_while_revalidate: u64);
     fn insert_last_modified(&mut self, date: DateTime);
 
     fn insert_content_disposition_attachment(&mut self);
@@ -53,8 +52,8 @@ pub trait HeaderMapExtended {
 }
 
 impl HeaderMapExtended for HeaderMap {
-    fn get_scheme(&self) -> &str {
-        if self.check_if_host_is_any_local() {
+    fn _get_scheme(&self) -> &str {
+        if self.check_if_host_is_local() {
             "http"
         } else {
             "https"
@@ -65,7 +64,7 @@ impl HeaderMapExtended for HeaderMap {
         self[HOST].to_str().unwrap()
     }
 
-    fn check_if_host_is_any_local(&self) -> bool {
+    fn check_if_host_is_local(&self) -> bool {
         self.check_if_host_is_localhost() || self.check_if_host_is_0000()
     }
 
@@ -95,7 +94,7 @@ impl HeaderMapExtended for HeaderMap {
         self.insert(header::CONTENT_DISPOSITION, "attachment".parse().unwrap());
     }
 
-    fn insert_cache_control_revalidate(&mut self, max_age: u64, stale_while_revalidate: u64) {
+    fn _insert_cache_control_revalidate(&mut self, max_age: u64, stale_while_revalidate: u64) {
         self.insert(
         header::CACHE_CONTROL,
         format!(

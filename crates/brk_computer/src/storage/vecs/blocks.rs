@@ -25,7 +25,7 @@ impl Vecs {
         Ok(Self {
             height_to_block_interval: StorableVec::forced_import(
                 &path.join("height_to_block_interval"),
-                Version::from(1),
+                Version::ONE,
                 compressed,
             )?,
             indexes_to_block_interval_stats: StorableVecsStatsFromHeight::forced_import(
@@ -38,12 +38,12 @@ impl Vecs {
             )?,
             dateindex_to_block_count: StorableVec::forced_import(
                 &path.join("dateindex_to_block_count"),
-                Version::from(1),
+                Version::ONE,
                 compressed,
             )?,
             dateindex_to_total_block_count: StorableVec::forced_import(
                 &path.join("dateindex_to_total_block_count"),
-                Version::from(1),
+                Version::ONE,
                 compressed,
             )?,
         })

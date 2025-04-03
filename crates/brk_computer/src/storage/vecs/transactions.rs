@@ -33,52 +33,52 @@ impl Vecs {
         fs::create_dir_all(path)?;
 
         Ok(Self {
-            // height_to_fee: StorableVec::forced_import(&path.join("height_to_fee"), Version::from(1))?,
+            // height_to_fee: StorableVec::forced_import(&path.join("height_to_fee"), Version::ONE)?,
             // height_to_input_count: StorableVec::forced_import(
             //     &path.join("height_to_input_count"),
-            //     Version::from(1),
+            //     Version::ONE,
             // )?,
-            // height_to_maxfeerate: StorableVec::forced_import(&path.join("height_to_maxfeerate"), Version::from(1))?,
-            // height_to_medianfeerate: StorableVec::forced_import(&path.join("height_to_medianfeerate"), Version::from(1))?,
-            // height_to_minfeerate: StorableVec::forced_import(&path.join("height_to_minfeerate"), Version::from(1))?,
+            // height_to_maxfeerate: StorableVec::forced_import(&path.join("height_to_maxfeerate"), Version::ONE)?,
+            // height_to_medianfeerate: StorableVec::forced_import(&path.join("height_to_medianfeerate"), Version::ONE)?,
+            // height_to_minfeerate: StorableVec::forced_import(&path.join("height_to_minfeerate"), Version::ONE)?,
             // height_to_output_count: StorableVec::forced_import(
             //     &path.join("height_to_output_count"),
-            //     Version::from(1),
+            //     Version::ONE,
             // )?,
-            // height_to_subsidy: StorableVec::forced_import(&path.join("height_to_subsidy"), Version::from(1))?,
-            // height_to_totalfees: StorableVec::forced_import(&path.join("height_to_totalfees"), Version::from(1))?,
-            // height_to_txcount: StorableVec::forced_import(&path.join("height_to_txcount"), Version::from(1))?,
+            // height_to_subsidy: StorableVec::forced_import(&path.join("height_to_subsidy"), Version::ONE)?,
+            // height_to_totalfees: StorableVec::forced_import(&path.join("height_to_totalfees"), Version::ONE)?,
+            // height_to_txcount: StorableVec::forced_import(&path.join("height_to_txcount"), Version::ONE)?,
             // txindex_to_fee: StorableVec::forced_import(
             //     &path.join("txindex_to_fee"),
-            //     Version::from(1),
+            //     Version::ONE,
             // )?,
             txindex_to_is_coinbase: StorableVec::forced_import(
                 &path.join("txindex_to_is_coinbase"),
-                Version::from(1),
+                Version::ONE,
                 compressed,
             )?,
-            // txindex_to_feerate: StorableVec::forced_import(&path.join("txindex_to_feerate"), Version::from(1))?,
+            // txindex_to_feerate: StorableVec::forced_import(&path.join("txindex_to_feerate"), Version::ONE)?,
             txindex_to_inputs_count: StorableVec::forced_import(
                 &path.join("txindex_to_inputs_count"),
-                Version::from(1),
+                Version::ONE,
                 compressed,
             )?,
             // txindex_to_inputs_sum: StorableVec::forced_import(
             //     &path.join("txindex_to_inputs_sum"),
-            //     Version::from(1),
+            //     Version::ONE,
             // )?,
             txindex_to_outputs_count: StorableVec::forced_import(
                 &path.join("txindex_to_outputs_count"),
-                Version::from(1),
+                Version::ONE,
                 compressed,
             )?,
             // txindex_to_outputs_sum: StorableVec::forced_import(
             //     &path.join("txindex_to_outputs_sum"),
-            //     Version::from(1),
+            //     Version::ONE,
             // )?,
             // txinindex_to_value: StorableVec::forced_import(
             //     &path.join("txinindex_to_value"),
-            //     Version::from(1),
+            //     Version::ONE,
             //     compressed,
             // )?,
         })

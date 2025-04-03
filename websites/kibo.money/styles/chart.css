@@ -29,6 +29,16 @@
 
     .lightweight-chart {
       margin-left: var(--negative-main-padding);
+
+      fieldset {
+        padding-left: var(--main-padding);
+        padding-top: 0.5rem;
+        z-index: 10;
+        position: absolute;
+        left: 0;
+        top: 0;
+        gap: 0;
+      }
     }
   }
 }

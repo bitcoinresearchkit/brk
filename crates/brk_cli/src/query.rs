@@ -1,5 +1,4 @@
 use brk_computer::Computer;
-use brk_fetcher::Fetcher;
 use brk_indexer::Indexer;
 use brk_query::{Index, Output, Params as QueryParams, Query, Tabled, Value};
 use tabled::settings::Style;
