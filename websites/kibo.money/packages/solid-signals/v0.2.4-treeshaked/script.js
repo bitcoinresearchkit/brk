@@ -637,17 +637,6 @@ var Effect = class extends Computation {
     }
   }
 };
-var EagerComputation = class extends Computation {
-  constructor(initialValue, compute2, options) {
-    super(initialValue, compute2, options);
-    !options?.defer && this.p();
-  }
-  k(state, skipQueue) {
-    if (this.a >= state && !this.x) return;
-    if (this.a === STATE_CLEAN && !skipQueue) this.f.enqueue(EFFECT_PURE, this);
-    super.k(state, skipQueue);
-  }
-};
 
 // src/signals.ts
 function createSignal(first, second, third) {
@@ -696,21 +685,6 @@ function createRoot(init) {
 function runWithOwner(owner, run) {
   return compute(owner, run, null);
 }
-function resolve(fn) {
-  return new Promise((res, rej) => {
-    createRoot((dispose) => {
-      new EagerComputation(void 0, () => {
-        try {
-          res(fn());
-        } catch (err) {
-          if (err instanceof NotReadyError) throw err;
-          rej(err);
-        }
-        dispose();
-      });
-    });
-  });
-}
 
 export {
   Owner,
@@ -721,7 +695,6 @@ export {
   flushSync,
   getOwner,
   onCleanup,
-  resolve,
   runWithOwner,
   untrack,
 };

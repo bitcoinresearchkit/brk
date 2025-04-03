@@ -1,78 +1,99 @@
 // @ts-check
 
 /**
- * @import { SignalOptions } from "./2024-11-02/types/core/core"
- * @import { getOwner as GetOwner, onCleanup as OnCleanup, Owner } from "./2024-11-02/types/core/owner"
- * @import { createSignal as CreateSignal, createEffect as CreateEffect, Accessor, Setter, createMemo as CreateMemo, createRoot as CreateRoot, runWithOwner as RunWithOwner } from "./2024-11-02/types/signals";
+ * @import { SignalOptions } from "./v0.2.4-treeshaked/types/core/core"
+ * @import { getOwner as GetOwner, onCleanup as OnCleanup, Owner } from "./v0.2.4-treeshaked/types/core/owner"
+ * @import { createSignal as CreateSignal, createEffect as CreateEffect, Accessor, Setter, createMemo as CreateMemo, createRoot as CreateRoot, runWithOwner as RunWithOwner } from "./v0.2.4-treeshaked/types/signals";
  * @import { Signal } from "./types";
  */
 
-const importSignals = import("./2024-11-02/script.js").then((_signals) => {
-  const signals = {
-    createSolidSignal: /** @type {CreateSignal} */ (_signals.createSignal),
-    createSolidEffect: /** @type {CreateEffect} */ (_signals.createEffect),
-    createEffect: /** @type {CreateEffect} */ (compute, effect) => {
-      let dispose = /** @type {VoidFunction | null} */ (null);
-      // @ts-ignore
-      _signals.createEffect(compute, (v) => {
-        dispose?.();
-        signals.createRoot((_dispose) => {
-          dispose = _dispose;
-          effect(v);
-        });
-        signals.onCleanup(() => dispose?.());
-      });
-      signals.onCleanup(() => dispose?.());
-    },
-    createMemo: /** @type {CreateMemo} */ (_signals.createMemo),
-    createRoot: /** @type {CreateRoot} */ (_signals.createRoot),
-    getOwner: /** @type {GetOwner} */ (_signals.getOwner),
-    runWithOwner: /** @type {RunWithOwner} */ (_signals.runWithOwner),
-    onCleanup: /** @type {OnCleanup} */ (_signals.onCleanup),
-    flushSync: _signals.flushSync,
-    /**
-     * @template T
-     * @param {T} initialValue
-     * @param {SignalOptions<T> & {save?: {keyPrefix: string; key: string; serialize: (v: T) => string; deserialize: (v: string) => T; serializeParam?: boolean}}} [options]
-     * @returns {Signal<T>}
-     */
-    createSignal(initialValue, options) {
-      const [get, set] = this.createSolidSignal(
-        /** @type {any} */ (initialValue),
-        options,
-      );
-
-      // @ts-ignore
-      get.set = set;
-
-      // @ts-ignore
-      get.reset = () => set(initialValue);
-
-      if (options?.save) {
-        const save = options.save;
-
-        const paramKey = save.key;
-        const storageKey = `${save.keyPrefix}-${paramKey}`;
-
-        let serialized = /** @type {string | null} */ (null);
-        if (options.save.serializeParam !== false) {
-          serialized = new URLSearchParams(window.location.search).get(
-            paramKey,
-          );
+const importSignals = import("./v0.2.4-treeshaked/script.js").then(
+  (_signals) => {
+    const signals = {
+      createSolidSignal: /** @type {typeof CreateSignal} */ (
+        _signals.createSignal
+      ),
+      createSolidEffect: /** @type {typeof CreateEffect} */ (
+        _signals.createEffect
+      ),
+      createEffect: /** @type {typeof CreateEffect} */ (
+        // @ts-ignore
+        (compute, effect) => {
+          let dispose = /** @type {VoidFunction | null} */ (null);
+          // @ts-ignore
+          _signals.createEffect(compute, (v) => {
+            dispose?.();
+            signals.createRoot((_dispose) => {
+              dispose = _dispose;
+              effect(v);
+            });
+            signals.onCleanup(() => dispose?.());
+          });
+          signals.onCleanup(() => dispose?.());
         }
+      ),
+      createMemo: /** @type {typeof CreateMemo} */ (_signals.createMemo),
+      createRoot: /** @type {typeof CreateRoot} */ (_signals.createRoot),
+      getOwner: /** @type {typeof GetOwner} */ (_signals.getOwner),
+      runWithOwner: /** @type {typeof RunWithOwner} */ (_signals.runWithOwner),
+      onCleanup: /** @type {typeof OnCleanup} */ (_signals.onCleanup),
+      flushSync: _signals.flushSync,
+      /**
+       * @template T
+       * @param {T} initialValue
+       * @param {SignalOptions<T> & {save?: {keyPrefix: string; key: string; serialize: (v: T) => string; deserialize: (v: string) => T; serializeParam?: boolean}}} [options]
+       * @returns {Signal<T>}
+       */
+      createSignal(initialValue, options) {
+        const [get, set] = this.createSolidSignal(
+          /** @type {any} */ (initialValue),
+          options,
+        );
 
-        if (serialized === null) {
-          serialized = localStorage.getItem(storageKey);
-        }
-        if (serialized) {
-          set(save.deserialize(serialized));
-        }
+        // @ts-ignore
+        get.set = set;
 
-        let firstEffect = true;
-        this.createEffect(get, (value) => {
-          if (!save) return;
+        // @ts-ignore
+        get.reset = () => set(initialValue);
 
-          if (!firstEffect) {
+        if (options?.save) {
+          const save = options.save;
+
+          const paramKey = save.key;
+          const storageKey = `${save.keyPrefix}-${paramKey}`;
+
+          let serialized = /** @type {string | null} */ (null);
+          if (options.save.serializeParam !== false) {
+            serialized = new URLSearchParams(window.location.search).get(
+              paramKey,
+            );
+          }
+
+          if (serialized === null) {
+            serialized = localStorage.getItem(storageKey);
+          }
+          if (serialized) {
+            set(() => save.deserialize(serialized));
+          }
+
+          let firstEffect = true;
+          this.createEffect(get, (value) => {
+            if (!save) return;
+
+            if (!firstEffect) {
+              if (
+                value !== undefined &&
+                value !== null &&
+                (initialValue === undefined ||
+                  initialValue === null ||
+                  save.serialize(value) !== save.serialize(initialValue))
+              ) {
+                localStorage.setItem(storageKey, save.serialize(value));
+              } else {
+                localStorage.removeItem(storageKey);
+              }
+            }
+
             if (
               value !== undefined &&
               value !== null &&
@@ -80,35 +101,23 @@ const importSignals = import("./2024-11-02/script.js").then((_signals) => {
                 initialValue === null ||
                 save.serialize(value) !== save.serialize(initialValue))
             ) {
-              localStorage.setItem(storageKey, save.serialize(value));
+              writeParam(paramKey, save.serialize(value));
             } else {
-              localStorage.removeItem(storageKey);
+              removeParam(paramKey);
             }
-          }
 
-          if (
-            value !== undefined &&
-            value !== null &&
-            (initialValue === undefined ||
-              initialValue === null ||
-              save.serialize(value) !== save.serialize(initialValue))
-          ) {
-            writeParam(paramKey, save.serialize(value));
-          } else {
-            removeParam(paramKey);
-          }
+            firstEffect = false;
+          });
+        }
 
-          firstEffect = false;
-        });
-      }
+        // @ts-ignore
+        return get;
+      },
+    };
 
-      // @ts-ignore
-      return get;
-    },
-  };
-
-  return signals;
-});
+    return signals;
+  },
+);
 
 /**
  * @param {string} key
