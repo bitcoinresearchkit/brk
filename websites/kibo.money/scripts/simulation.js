@@ -7,8 +7,16 @@
  * @param {Signals} args.signals
  * @param {Utilities} args.utils
  * @param {Elements} args.elements
+ * @param {VecsResources} args.vecsResources
  */
-export function init({ colors, elements, lightweightCharts, signals, utils }) {
+export function init({
+  colors,
+  elements,
+  lightweightCharts,
+  signals,
+  utils,
+  vecsResources,
+}) {
   /**
    * @typedef {Object} Frequency
    * @property {string} name
@@ -255,7 +263,7 @@ export function init({ colors, elements, lightweightCharts, signals, utils }) {
    * @param {string} param0.text
    */
   function createColoredSpan({ color, text }) {
-    return `<span style="color: ${colors[color]()}; font-weight: var(--font-weight-bold)">${text}</span>`;
+    return `<span style="color: ${colors[color]()}; font-weight: 500">${text}</span>`;
   }
 
   parametersElement.append(
@@ -688,8 +696,13 @@ export function init({ colors, elements, lightweightCharts, signals, utils }) {
     ],
   });
 
-  const closes = datasets.getOrCreate("date", "date-to-close");
-  closes.fetchRange(2009, new Date().getUTCFullYear()).then(() => {
+  const closes = vecsResources.getOrCreate(
+    /** @satisfies {Dateindex} */ (1),
+    "close",
+  );
+
+  closes.fetch().then((_closes) => {
+    const closes = /** @type {OHLCTuple[] | null} */ (_closes);
     signals.runWithOwner(owner, () => {
       signals.createEffect(
         () => ({

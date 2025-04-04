@@ -1,17 +1,5 @@
 // @ts-check
 
-/** @import {
-  DeepPartial,
-  BaselineStyleOptions,
-  CandlestickStyleOptions,
-  LineStyleOptions,
-  SeriesOptionsCommon,
-  Time,
-  SingleValueData as _SingleValueData,
-  CandlestickData as _CandlestickData,
-  BaselineData,
-} from "../packages/lightweight-charts/v5.0.5-treeshaked/types"} */
-
 /**
  * @typedef {"" |
  *   "Bitcoin" |

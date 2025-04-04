@@ -60,7 +60,9 @@
       display: block;
     }
     small {
-      font-size: var(--font-size-base);
+      font-size: var(--font-size-sm);
+      line-height: var(--line-height-sm);
+      display: block;
     }
   }
 
