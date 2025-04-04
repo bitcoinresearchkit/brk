@@ -26,3 +26,6 @@ toml = "0.8.20"
 [[bin]]
 name = "brk"
 path = "src/main.rs"
+
+[package.metadata.dist]
+dist = false
