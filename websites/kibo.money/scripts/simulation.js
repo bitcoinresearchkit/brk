@@ -945,7 +945,7 @@ export function init({
             p3.innerHTML = `You would've been ${serProfitableDaysRatio} of the time profitable and ${serUnprofitableDaysRatio} of the time unprofitable.`;
 
             signals.createEffect(
-              () => 0.2368,
+              () => 0.073,
               (lowestAnnual4YReturn) => {
                 const serLowestAnnual4YReturn = c(
                   "cyan",

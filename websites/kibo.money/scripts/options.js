@@ -61,7 +61,7 @@
  * @typedef {Object} PartialChartOptionSpecific
  * @property {"chart"} [kind]
  * @property {Unit} [unit]
- * @property {string} [title]
+ * @property {string} title
  * @property {AnyFetchedSeriesBlueprint[]} [top]
  * @property {AnyFetchedSeriesBlueprint[]} [bottom]
  * @typedef {PartialOption & PartialChartOptionSpecific} PartialChartOption
@@ -668,7 +668,20 @@ function createPartialOptions(colors) {
           name: "Blocks",
           tree: [
             {
-              name: "Block Interval",
+              name: "Count",
+              title: "Block Count",
+              bottom: [
+                { key: "block-count", title: "Count", color: colors.bitcoin },
+                {
+                  key: "total-block-count",
+                  title: "Total",
+                  color: colors.bitcoin,
+                },
+              ],
+            },
+            {
+              name: "Interval",
+              title: "Block Interval",
               bottom: [
                 {
                   key: "block-interval",
@@ -1066,6 +1079,8 @@ export function initOptions({
               anyPartial.unit = "Seconds";
             } else if (key.startsWith("sats-")) {
               anyPartial.unit = "Satoshis";
+            } else if (key.includes("count")) {
+              anyPartial.unit = "Count";
             } else {
               console.log(anyPartial);
               throw Error("Unit not set");

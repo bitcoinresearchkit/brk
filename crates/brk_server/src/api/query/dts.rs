@@ -31,7 +31,12 @@ impl DTS for Query<'static> {
 
         let indexes = Index::all();
 
-        let mut contents = indexes
+        let mut contents = "//
+// File auto-generated, any modification will be overwritten
+//\n\n"
+            .to_string();
+
+        contents += &indexes
             .iter()
             .enumerate()
             .map(|(i_of_i, i)| {

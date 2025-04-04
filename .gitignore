@@ -29,7 +29,6 @@ docker/kibo
 
 # Types
 paths.d.ts
-vecid-to-indexes.d.ts
 
 # Outputs
 _outputs

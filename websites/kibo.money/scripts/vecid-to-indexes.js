@@ -1,3 +1,7 @@
+//
+// File auto-generated, any modification will be overwritten
+//
+
 /** @typedef {0} Height */
 /** @typedef {1} Dateindex */
 /** @typedef {2} Weekindex */
@@ -72,7 +76,6 @@ export function createVecIdToIndexes() {
     "first-height": [Dateindex, Difficultyepoch, Halvingepoch],
     "first-monthindex": [Quarterindex, Yearindex],
     "first-multisigindex": [Height],
-    "first-open": [Weekindex, Monthindex, Quarterindex, Yearindex, Decadeindex, Difficultyepoch],
     "first-opreturnindex": [Height],
     "first-p2pk33index": [Height],
     "first-p2pk65index": [Height],
@@ -91,9 +94,8 @@ export function createVecIdToIndexes() {
     "fixed-timestamp": [Height],
     halvingepoch: [Height, Halvingepoch],
     height: [Addressindex, Height, Txindex],
-    high: [Dateindex, Height],
+    high: [Dateindex, Height, Weekindex, Monthindex, Quarterindex, Yearindex, Decadeindex, Difficultyepoch],
     "high-in-cents": [Dateindex, Height],
-    "high-max": [Weekindex, Monthindex, Quarterindex, Yearindex, Decadeindex, Difficultyepoch],
     "inputs-count": [Txindex],
     "is-coinbase": [Txindex],
     "is-explicitly-rbf": [Txindex],
@@ -105,13 +107,12 @@ export function createVecIdToIndexes() {
     "last-txoutindex": [Txindex],
     "last-yearindex": [Decadeindex],
     locktime: [Txindex],
-    low: [Dateindex, Height],
+    low: [Dateindex, Height, Weekindex, Monthindex, Quarterindex, Yearindex, Decadeindex, Difficultyepoch],
     "low-in-cents": [Dateindex, Height],
-    "low-min": [Weekindex, Monthindex, Quarterindex, Yearindex, Decadeindex, Difficultyepoch],
     monthindex: [Dateindex, Monthindex],
     ohlc: [Dateindex, Height, Weekindex, Monthindex, Quarterindex, Yearindex, Decadeindex, Difficultyepoch],
     "ohlc-in-cents": [Dateindex, Height],
-    open: [Dateindex, Height],
+    open: [Dateindex, Height, Weekindex, Monthindex, Quarterindex, Yearindex, Decadeindex, Difficultyepoch],
     "open-in-cents": [Dateindex, Height],
     "outputs-count": [Txindex],
     p2pk33addressbytes: [P2PK33index],
