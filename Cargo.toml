@@ -12,10 +12,8 @@ lto = "fat"
 codegen-units = 1
 panic = "abort"
 
-# The profile that 'dist' will build with
 [profile.dist]
 inherits = "release"
-lto = "fat"
 
 [workspace.dependencies]
 bitcoin = { version = "0.32.5", features = ["serde"] }
@@ -44,3 +42,23 @@ serde = { version = "1.0.219", features = ["derive"] }
 serde_json = { version = "1.0.140", features = ["float_roundtrip"] }
 tabled = "0.18.0"
 zerocopy = { version = "0.8.24", features = ["derive"] }
+
+[workspace.metadata.release]
+shared-version = true
+tag-name = "v{{version}}"
+
+[workspace.metadata.dist]
+# The preferred dist version to use in CI (Cargo.toml SemVer syntax)
+cargo-dist-version = "0.28.0"
+# CI backends to support
+ci = "github"
+# The installers to generate for each app
+installers = []
+# Target platforms to build apps for (Rust target-triple syntax)
+targets = [
+    "aarch64-apple-darwin",
+    "aarch64-unknown-linux-gnu",
+    "x86_64-apple-darwin",
+    "x86_64-unknown-linux-gnu",
+    "x86_64-pc-windows-msvc",
+]
