@@ -73,7 +73,7 @@ impl Server {
                     info!("Downloading websites from Github...");
 
                     let url = format!(
-                        "https://github.com/bitcoinresearchkit/brk/archive/refs/tags/{}.zip",
+                        "https://github.com/bitcoinresearchkit/brk/archive/refs/tags/v{}.zip",
                         VERSION
                     );
 
