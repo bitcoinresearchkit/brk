@@ -263,7 +263,8 @@ export function init({
    * @param {string} param0.text
    */
   function createColoredSpan({ color, text }) {
-    return `<span style="color: ${colors[color]()}; font-weight: 500">${text}</span>`;
+    return `<span style="color: ${colors[color]()}; font-weight: 500; text-transform: uppercase;
+      font-size: var(--font-size-sm);">${text}</span>`;
   }
 
   parametersElement.append(
@@ -550,24 +551,19 @@ export function init({
     parent: resultsElement,
     signals,
     colors,
-    id: `simulation-0`,
+    id: `result`,
     fitContentOnResize: true,
+    vecsResources,
     utils,
     config: [
       {
         unit: "US Dollars",
-        config: [
+        blueprints: [
           {
-            title: "Fees Paid",
+            title: "Bitcoin Value",
             type: "Line",
-            color: colors.rose,
-            data: totalFeesPaidData,
-          },
-          {
-            title: "Dollars Left",
-            type: "Line",
-            color: colors.offDollars,
-            data: dollarsLeftData,
+            color: colors.amber,
+            data: bitcoinValueData,
           },
           {
             title: "Dollars Converted",
@@ -576,10 +572,18 @@ export function init({
             data: totalInvestedAmountData,
           },
           {
-            title: "Bitcoin Value",
+            title: "Dollars Left",
             type: "Line",
-            color: colors.amber,
-            data: bitcoinValueData,
+            color: colors.offDollars,
+            data: dollarsLeftData,
+            defaultActive: false,
+          },
+          {
+            title: "Fees Paid",
+            type: "Line",
+            color: colors.rose,
+            data: totalFeesPaidData,
+            defaultActive: false,
           },
         ],
       },
@@ -590,13 +594,14 @@ export function init({
     parent: resultsElement,
     signals,
     colors,
-    id: `simulation-1`,
+    id: `bitcoin`,
     fitContentOnResize: true,
+    vecsResources,
     utils,
     config: [
       {
-        unit: "US Dollars",
-        config: [
+        unit: "Bitcoin",
+        blueprints: [
           {
             title: "Bitcoin Stack",
             type: "Line",
@@ -612,13 +617,14 @@ export function init({
     parent: resultsElement,
     signals,
     colors,
-    id: `simulation-average-price`,
+    id: `average-price`,
     fitContentOnResize: true,
+    vecsResources,
     utils,
     config: [
       {
         unit: "US Dollars",
-        config: [
+        blueprints: [
           {
             title: "Bitcoin Price",
             type: "Line",
@@ -640,27 +646,18 @@ export function init({
     parent: resultsElement,
     signals,
     colors,
-    id: `simulation-return-ratio`,
+    vecsResources,
+    id: `return-ratio`,
     fitContentOnResize: true,
     utils,
     config: [
       {
         unit: "US Dollars",
-        config: [
+        blueprints: [
           {
             title: "Return Of Investment",
             type: "Baseline",
             data: resultData,
-            // TODO: Doesn't work for some reason
-            // options: {
-            //   baseLineColor: "#888",
-            //   baseLineVisible: true,
-            //   baseLineWidth: 1,
-            //   baseValue: {
-            //     price: 0,
-            //     type: "price",
-            //   },
-            // },
           },
         ],
       },
@@ -673,333 +670,336 @@ export function init({
     colors,
     id: `simulation-profitability-ratios`,
     fitContentOnResize: true,
+    vecsResources,
     utils,
     owner,
     config: [
       {
         unit: "Percentage",
-        config: [
-          {
-            title: "Unprofitable Days Ratio",
-            type: "Line",
-            color: colors.red,
-            data: unprofitableDaysRatioData,
-          },
+        blueprints: [
           {
             title: "Profitable Days Ratio",
             type: "Line",
             color: colors.green,
             data: profitableDaysRatioData,
           },
+          {
+            title: "Unprofitable Days Ratio",
+            type: "Line",
+            color: colors.red,
+            data: unprofitableDaysRatioData,
+          },
         ],
       },
     ],
   });
 
-  const closes = vecsResources.getOrCreate(
-    /** @satisfies {Dateindex} */ (1),
-    "close",
-  );
+  vecsResources
+    .getOrCreate(/** @satisfies {Dateindex} */ (1), "close")
+    .fetch()
+    .then((_closes) => {
+      if (!_closes) return;
+      const closes = /** @type {number[]} */ (_closes);
 
-  closes.fetch().then((_closes) => {
-    const closes = /** @type {OHLCTuple[] | null} */ (_closes);
-    signals.runWithOwner(owner, () => {
-      signals.createEffect(
-        () => ({
-          initialDollarAmount: settings.dollars.initial.amount() || 0,
-          topUpAmount: settings.dollars.topUp.amount() || 0,
-          topUpFrequency: settings.dollars.topUp.frenquency(),
-          initialSwap: settings.bitcoin.investment.initial() || 0,
-          recurrentSwap: settings.bitcoin.investment.recurrent() || 0,
-          swapFrequency: settings.bitcoin.investment.frequency(),
-          start: settings.interval.start(),
-          end: settings.interval.end(),
-          fees: settings.fees.percentage(),
-        }),
-        ({
-          initialDollarAmount,
-          topUpAmount,
-          topUpFrequency,
-          initialSwap,
-          recurrentSwap,
-          swapFrequency,
-          start,
-          end,
-          fees,
-        }) => {
-          if (!start || !end || start > end) return;
+      signals.runWithOwner(owner, () => {
+        signals.createEffect(
+          () => ({
+            initialDollarAmount: settings.dollars.initial.amount() || 0,
+            topUpAmount: settings.dollars.topUp.amount() || 0,
+            topUpFrequency: settings.dollars.topUp.frenquency(),
+            initialSwap: settings.bitcoin.investment.initial() || 0,
+            recurrentSwap: settings.bitcoin.investment.recurrent() || 0,
+            swapFrequency: settings.bitcoin.investment.frequency(),
+            start: settings.interval.start(),
+            end: settings.interval.end(),
+            fees: settings.fees.percentage(),
+          }),
+          ({
+            initialDollarAmount,
+            topUpAmount,
+            topUpFrequency,
+            initialSwap,
+            recurrentSwap,
+            swapFrequency,
+            start,
+            end,
+            fees,
+          }) => {
+            if (!start || !end || start > end) return;
 
-          const range = utils.date.getRange(start, end);
+            const range = utils.date.getRange(start, end);
 
-          totalInvestedAmountData().length = 0;
-          bitcoinValueData().length = 0;
-          bitcoinData().length = 0;
-          resultData().length = 0;
-          dollarsLeftData().length = 0;
-          totalValueData().length = 0;
-          investmentData().length = 0;
-          bitcoinAddedData().length = 0;
-          averagePricePaidData().length = 0;
-          bitcoinPriceData().length = 0;
-          buyCountData().length = 0;
-          totalFeesPaidData().length = 0;
-          daysCountData().length = 0;
-          profitableDaysRatioData().length = 0;
-          unprofitableDaysRatioData().length = 0;
+            totalInvestedAmountData().length = 0;
+            bitcoinValueData().length = 0;
+            bitcoinData().length = 0;
+            resultData().length = 0;
+            dollarsLeftData().length = 0;
+            totalValueData().length = 0;
+            investmentData().length = 0;
+            bitcoinAddedData().length = 0;
+            averagePricePaidData().length = 0;
+            bitcoinPriceData().length = 0;
+            buyCountData().length = 0;
+            totalFeesPaidData().length = 0;
+            daysCountData().length = 0;
+            profitableDaysRatioData().length = 0;
+            unprofitableDaysRatioData().length = 0;
 
-          let bitcoin = 0;
-          let sats = 0;
-          let dollars = initialDollarAmount;
-          let investedAmount = 0;
-          let postFeesInvestedAmount = 0;
-          let buyCount = 0;
-          let averagePricePaid = 0;
-          let bitcoinValue = 0;
-          let roi = 0;
-          let totalValue = 0;
-          let totalFeesPaid = 0;
-          let daysCount = range.length;
-          let profitableDays = 0;
-          let unprofitableDays = 0;
-          let profitableDaysRatio = 0;
-          let unprofitableDaysRatio = 0;
-          let lastInvestDay = range[0];
-          let dailyInvestment = 0;
-          let bitcoinAdded = 0;
-          let satsAdded = 0;
-          let lastSatsAdded = 0;
+            let bitcoin = 0;
+            let sats = 0;
+            let dollars = initialDollarAmount;
+            let investedAmount = 0;
+            let postFeesInvestedAmount = 0;
+            let buyCount = 0;
+            let averagePricePaid = 0;
+            let bitcoinValue = 0;
+            let roi = 0;
+            let totalValue = 0;
+            let totalFeesPaid = 0;
+            let daysCount = range.length;
+            let profitableDays = 0;
+            let unprofitableDays = 0;
+            let profitableDaysRatio = 0;
+            let unprofitableDaysRatio = 0;
+            let lastInvestDay = range[0];
+            let dailyInvestment = 0;
+            let bitcoinAdded = 0;
+            let satsAdded = 0;
+            let lastSatsAdded = 0;
 
-          range.forEach((date, index) => {
-            const year = date.getUTCFullYear();
-            const time = utils.date.toString(date);
+            range.forEach((date, index) => {
+              const year = date.getUTCFullYear();
+              const time = utils.date.toString(date);
 
-            if (topUpFrequency.isTriggerDay(date)) {
-              dollars += topUpAmount;
-            }
-
-            const close = closes.ranges
-              .at(utils.chunkIdToIndex("date", year))
-              ?.json()?.dataset.map[utils.date.toString(date)];
-
-            if (!close) return;
-
-            dailyInvestment = 0;
-            /** @param {number} value  */
-            function invest(value) {
-              value = Math.min(dollars, value);
-              dailyInvestment += value;
-              dollars -= value;
-              buyCount += 1;
-              lastInvestDay = date;
-            }
-            if (!index) {
-              invest(initialSwap);
-            }
-            if (swapFrequency.isTriggerDay(date) && dollars > 0) {
-              invest(recurrentSwap);
-            }
-
-            investedAmount += dailyInvestment;
-
-            let dailyInvestmentPostFees =
-              dailyInvestment * (1 - (fees || 0) / 100);
-
-            totalFeesPaid += dailyInvestment - dailyInvestmentPostFees;
-
-            bitcoinAdded = dailyInvestmentPostFees / close;
-            bitcoin += bitcoinAdded;
-            satsAdded = Math.floor(bitcoinAdded * 100_000_000);
-            if (satsAdded > 0) {
-              lastSatsAdded = satsAdded;
-            }
-            sats += satsAdded;
-
-            postFeesInvestedAmount += dailyInvestmentPostFees;
-
-            bitcoinValue = close * bitcoin;
-
-            totalValue = dollars + bitcoinValue;
-
-            averagePricePaid = postFeesInvestedAmount / bitcoin;
-
-            roi = (bitcoinValue / postFeesInvestedAmount - 1) * 100;
-
-            const daysCount = index + 1;
-            profitableDaysRatio = profitableDays / daysCount;
-            unprofitableDaysRatio = unprofitableDays / daysCount;
-
-            if (roi >= 0) {
-              profitableDays += 1;
-            } else {
-              unprofitableDays += 1;
-            }
-
-            bitcoinPriceData().push({
-              time,
-              value: close,
-            });
-
-            bitcoinData().push({
-              time,
-              value: bitcoin,
-            });
-
-            totalInvestedAmountData().push({
-              time,
-              value: investedAmount,
-            });
-
-            bitcoinValueData().push({
-              time,
-              value: bitcoinValue,
-            });
-
-            resultData().push({
-              time,
-              value: roi,
-            });
-
-            dollarsLeftData().push({
-              time,
-              value: dollars,
-            });
-
-            totalValueData().push({
-              time,
-              value: totalValue,
-            });
-
-            investmentData().push({
-              time,
-              value: dailyInvestment,
-            });
-
-            bitcoinAddedData().push({
-              time,
-              value: bitcoinAdded,
-            });
-
-            averagePricePaidData().push({
-              time,
-              value: averagePricePaid,
-            });
-
-            buyCountData().push({
-              time,
-              value: buyCount,
-            });
-
-            totalFeesPaidData().push({
-              time,
-              value: totalFeesPaid,
-            });
-
-            daysCountData().push({
-              time,
-              value: daysCount,
-            });
-
-            profitableDaysRatioData().push({
-              time,
-              value: profitableDaysRatio * 100,
-            });
-
-            unprofitableDaysRatioData().push({
-              time,
-              value: unprofitableDaysRatio * 100,
-            });
-          });
-
-          const f = utils.locale.numberToUSFormat;
-          /** @param {number} v */
-          const fd = (v) => utils.formatters.dollars.format(v);
-          /** @param {number} v */
-          const fp = (v) => utils.formatters.percentage.format(v);
-          /**
-           * @param {ColorName} c
-           * @param {string} t
-           */
-          const c = (c, t) => createColoredSpan({ color: c, text: t });
-
-          const serInvestedAmount = c("dollars", fd(investedAmount));
-          const serDaysCount = c("sky", f(daysCount));
-          const serSats = c("orange", f(sats));
-          const serBitcoin = c("orange", `~${f(bitcoin)}`);
-          const serBitcoinValue = c("amber", fd(bitcoinValue));
-          const serAveragePricePaid = c("lightDollars", fd(averagePricePaid));
-          const serRoi = c("yellow", fp(roi / 100));
-          const serDollars = c("offDollars", fd(dollars));
-          const serTotalFeesPaid = c("rose", fd(totalFeesPaid));
-
-          p1.innerHTML = `After exchanging ${serInvestedAmount} in the span of ${serDaysCount} days, you would have accumulated ${serSats} Satoshis (${serBitcoin} Bitcoin) worth today ${serBitcoinValue} at an average price of ${serAveragePricePaid} per Bitcoin with a return of investment of ${serRoi}, have ${serDollars} left and paid a total of ${serTotalFeesPaid} in fees.`;
-
-          const dayDiff = Math.floor(
-            utils.date.differenceBetween(new Date(), lastInvestDay),
-          );
-          const serDailyInvestment = c("offDollars", fd(dailyInvestment));
-          const setLastSatsAdded = c("bitcoin", f(lastSatsAdded));
-          p2.innerHTML = `You would've last bought ${c("blue", dayDiff ? `${f(dayDiff)} ${dayDiff > 1 ? "days" : "day"} ago` : "today")} and exchanged ${serDailyInvestment} for approximately ${setLastSatsAdded} Satoshis`;
-
-          const serProfitableDaysRatio = c("green", fp(profitableDaysRatio));
-          const serUnprofitableDaysRatio = c("red", fp(unprofitableDaysRatio));
-
-          p3.innerHTML = `You would've been ${serProfitableDaysRatio} of the time profitable and ${serUnprofitableDaysRatio} of the time unprofitable.`;
-
-          signals.createEffect(
-            () => 0.2368,
-            (lowestAnnual4YReturn) => {
-              const serLowestAnnual4YReturn = c(
-                "cyan",
-                `${fp(lowestAnnual4YReturn)}`,
-              );
-
-              const lowestAnnual4YReturnPercentage = 1 + lowestAnnual4YReturn;
-              /**
-               * @param {number} power
-               */
-              function bitcoinValueReturn(power) {
-                return (
-                  bitcoinValue * Math.pow(lowestAnnual4YReturnPercentage, power)
-                );
+              if (topUpFrequency.isTriggerDay(date)) {
+                dollars += topUpAmount;
               }
-              const bitcoinValueAfter4y = bitcoinValueReturn(4);
-              const serBitcoinValueAfter4y = c(
-                "purple",
-                fd(bitcoinValueAfter4y),
-              );
-              const bitcoinValueAfter10y = bitcoinValueReturn(10);
-              const serBitcoinValueAfter10y = c(
-                "fuchsia",
-                fd(bitcoinValueAfter10y),
-              );
-              const bitcoinValueAfter21y = bitcoinValueReturn(21);
-              const serBitcoinValueAfter21y = c(
-                "pink",
-                fd(bitcoinValueAfter21y),
-              );
 
-              /** @param {number} v */
-              p4.innerHTML = `The lowest annual return after 4 years has historically been ${serLowestAnnual4YReturn}.<br/>Using it as the baseline, your Bitcoin would be worth ${serBitcoinValueAfter4y} after 4 years, ${serBitcoinValueAfter10y} after 10 years and ${serBitcoinValueAfter21y} after 21 years.`;
-            },
-          );
+              const close = closes[utils.date.toDateIndex(date)];
 
-          totalInvestedAmountData.set((a) => a);
-          bitcoinValueData.set((a) => a);
-          bitcoinData.set((a) => a);
-          resultData.set((a) => a);
-          dollarsLeftData.set((a) => a);
-          totalValueData.set((a) => a);
-          investmentData.set((a) => a);
-          bitcoinAddedData.set((a) => a);
-          averagePricePaidData.set((a) => a);
-          bitcoinPriceData.set((a) => a);
-          buyCountData.set((a) => a);
-          totalFeesPaidData.set((a) => a);
-          daysCountData.set((a) => a);
-          profitableDaysRatioData.set((a) => a);
-          unprofitableDaysRatioData.set((a) => a);
-        },
-      );
+              if (!close) return;
+
+              dailyInvestment = 0;
+              /** @param {number} value  */
+              function invest(value) {
+                value = Math.min(dollars, value);
+                dailyInvestment += value;
+                dollars -= value;
+                buyCount += 1;
+                lastInvestDay = date;
+              }
+              if (!index) {
+                invest(initialSwap);
+              }
+              if (swapFrequency.isTriggerDay(date) && dollars > 0) {
+                invest(recurrentSwap);
+              }
+
+              investedAmount += dailyInvestment;
+
+              let dailyInvestmentPostFees =
+                dailyInvestment * (1 - (fees || 0) / 100);
+
+              totalFeesPaid += dailyInvestment - dailyInvestmentPostFees;
+
+              bitcoinAdded = dailyInvestmentPostFees / close;
+              bitcoin += bitcoinAdded;
+              satsAdded = Math.floor(bitcoinAdded * 100_000_000);
+              if (satsAdded > 0) {
+                lastSatsAdded = satsAdded;
+              }
+              sats += satsAdded;
+
+              postFeesInvestedAmount += dailyInvestmentPostFees;
+
+              bitcoinValue = close * bitcoin;
+
+              totalValue = dollars + bitcoinValue;
+
+              averagePricePaid = postFeesInvestedAmount / bitcoin;
+
+              roi = (bitcoinValue / postFeesInvestedAmount - 1) * 100;
+
+              const daysCount = index + 1;
+              profitableDaysRatio = profitableDays / daysCount;
+              unprofitableDaysRatio = unprofitableDays / daysCount;
+
+              if (roi >= 0) {
+                profitableDays += 1;
+              } else {
+                unprofitableDays += 1;
+              }
+
+              bitcoinPriceData().push({
+                time,
+                value: close,
+              });
+
+              bitcoinData().push({
+                time,
+                value: bitcoin,
+              });
+
+              totalInvestedAmountData().push({
+                time,
+                value: investedAmount,
+              });
+
+              bitcoinValueData().push({
+                time,
+                value: bitcoinValue,
+              });
+
+              resultData().push({
+                time,
+                value: roi,
+              });
+
+              dollarsLeftData().push({
+                time,
+                value: dollars,
+              });
+
+              totalValueData().push({
+                time,
+                value: totalValue,
+              });
+
+              investmentData().push({
+                time,
+                value: dailyInvestment,
+              });
+
+              bitcoinAddedData().push({
+                time,
+                value: bitcoinAdded,
+              });
+
+              averagePricePaidData().push({
+                time,
+                value: averagePricePaid,
+              });
+
+              buyCountData().push({
+                time,
+                value: buyCount,
+              });
+
+              totalFeesPaidData().push({
+                time,
+                value: totalFeesPaid,
+              });
+
+              daysCountData().push({
+                time,
+                value: daysCount,
+              });
+
+              profitableDaysRatioData().push({
+                time,
+                value: profitableDaysRatio * 100,
+              });
+
+              unprofitableDaysRatioData().push({
+                time,
+                value: unprofitableDaysRatio * 100,
+              });
+            });
+
+            const f = utils.locale.numberToUSFormat;
+            /** @param {number} v */
+            const fd = (v) => utils.formatters.dollars.format(v);
+            /** @param {number} v */
+            const fp = (v) => utils.formatters.percentage.format(v);
+            /**
+             * @param {ColorName} c
+             * @param {string} t
+             */
+            const c = (c, t) => createColoredSpan({ color: c, text: t });
+
+            const serInvestedAmount = c("dollars", fd(investedAmount));
+            const serDaysCount = c("sky", f(daysCount));
+            const serSats = c("orange", f(sats));
+            const serBitcoin = c("orange", `~${f(bitcoin)}`);
+            const serBitcoinValue = c("amber", fd(bitcoinValue));
+            const serAveragePricePaid = c("lightDollars", fd(averagePricePaid));
+            const serRoi = c("yellow", fp(roi / 100));
+            const serDollars = c("offDollars", fd(dollars));
+            const serTotalFeesPaid = c("rose", fd(totalFeesPaid));
+
+            p1.innerHTML = `After exchanging ${serInvestedAmount} in the span of ${serDaysCount} days, you would have accumulated ${serSats} Satoshis (${serBitcoin} Bitcoin) worth today ${serBitcoinValue} at an average price of ${serAveragePricePaid} per Bitcoin with a return of investment of ${serRoi}, have ${serDollars} left and paid a total of ${serTotalFeesPaid} in fees.`;
+
+            const dayDiff = Math.floor(
+              utils.date.differenceBetween(new Date(), lastInvestDay),
+            );
+            const serDailyInvestment = c("offDollars", fd(dailyInvestment));
+            const setLastSatsAdded = c("bitcoin", f(lastSatsAdded));
+            p2.innerHTML = `You would've last bought ${c("blue", dayDiff ? `${f(dayDiff)} ${dayDiff > 1 ? "days" : "day"} ago` : "today")} and exchanged ${serDailyInvestment} for approximately ${setLastSatsAdded} Satoshis`;
+
+            const serProfitableDaysRatio = c("green", fp(profitableDaysRatio));
+            const serUnprofitableDaysRatio = c(
+              "red",
+              fp(unprofitableDaysRatio),
+            );
+
+            p3.innerHTML = `You would've been ${serProfitableDaysRatio} of the time profitable and ${serUnprofitableDaysRatio} of the time unprofitable.`;
+
+            signals.createEffect(
+              () => 0.2368,
+              (lowestAnnual4YReturn) => {
+                const serLowestAnnual4YReturn = c(
+                  "cyan",
+                  `${fp(lowestAnnual4YReturn)}`,
+                );
+
+                const lowestAnnual4YReturnPercentage = 1 + lowestAnnual4YReturn;
+                /**
+                 * @param {number} power
+                 */
+                function bitcoinValueReturn(power) {
+                  return (
+                    bitcoinValue *
+                    Math.pow(lowestAnnual4YReturnPercentage, power)
+                  );
+                }
+                const bitcoinValueAfter4y = bitcoinValueReturn(4);
+                const serBitcoinValueAfter4y = c(
+                  "purple",
+                  fd(bitcoinValueAfter4y),
+                );
+                const bitcoinValueAfter10y = bitcoinValueReturn(10);
+                const serBitcoinValueAfter10y = c(
+                  "fuchsia",
+                  fd(bitcoinValueAfter10y),
+                );
+                const bitcoinValueAfter21y = bitcoinValueReturn(21);
+                const serBitcoinValueAfter21y = c(
+                  "pink",
+                  fd(bitcoinValueAfter21y),
+                );
+
+                /** @param {number} v */
+                p4.innerHTML = `The lowest annual return after 4 years has historically been ${serLowestAnnual4YReturn}.<br/>Using it as the baseline, your Bitcoin would be worth ${serBitcoinValueAfter4y} after 4 years, ${serBitcoinValueAfter10y} after 10 years and ${serBitcoinValueAfter21y} after 21 years.`;
+              },
+            );
+
+            totalInvestedAmountData.set((a) => a);
+            bitcoinValueData.set((a) => a);
+            bitcoinData.set((a) => a);
+            resultData.set((a) => a);
+            dollarsLeftData.set((a) => a);
+            totalValueData.set((a) => a);
+            investmentData.set((a) => a);
+            bitcoinAddedData.set((a) => a);
+            averagePricePaidData.set((a) => a);
+            bitcoinPriceData.set((a) => a);
+            buyCountData.set((a) => a);
+            totalFeesPaidData.set((a) => a);
+            daysCountData.set((a) => a);
+            profitableDaysRatioData.set((a) => a);
+            unprofitableDaysRatioData.set((a) => a);
+          },
+        );
+      });
     });
-  });
 }

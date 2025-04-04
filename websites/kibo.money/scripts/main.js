@@ -1,7 +1,7 @@
 // @ts-check
 
 /**
- * @import { Option, PartialChartOption, ChartOption, AnyPartialOption, ProcessedOptionAddons, OptionsTree, SimulationOption, Unit } from "./options"
+ * @import { Option, PartialChartOption, ChartOption, AnyPartialOption, ProcessedOptionAddons, OptionsTree, SimulationOption, Unit, AnySeriesBlueprint } from "./options"
  * @import {Valued,  SingleValueData, CandlestickData, ChartData, OHLCTuple} from "../packages/lightweight-charts/wrapper"
  * @import * as _ from "../packages/ufuzzy/v1.0.14/types"
  * @import { createChart as CreateClassicChart, LineStyleOptions, DeepPartial, ChartOptions, IChartApi, IHorzScaleBehavior, WhitespaceData, ISeriesApi, Time, LineData, LogicalRange, SeriesType, BaselineStyleOptions, SeriesOptionsCommon, BaselineData, CandlestickStyleOptions } from "../packages/lightweight-charts/v5.0.5-treeshaked/types"
@@ -952,10 +952,21 @@ function createUtils() {
     },
     /**
      * @param {Date} date
-     * @returns {string}
      */
     toString(date) {
       return date.toJSON().split("T")[0];
+    },
+    /**
+     * @param {Date} date
+     */
+    toDateIndex(date) {
+      if (
+        date.getUTCFullYear() === 2009 &&
+        date.getUTCMonth() === 0 &&
+        date.getUTCDate() === 3
+      )
+        return 0;
+      return this.differenceBetween(date, new Date("2009-01-09"));
     },
     /**
      * @param {Time} time
@@ -988,7 +999,6 @@ function createUtils() {
     /**
      * @param {Date} date1
      * @param {Date} date2
-     * @returns
      */
     differenceBetween(date1, date2) {
       return Math.abs(date1.valueOf() - date2.valueOf()) / this.ONE_DAY_IN_MS;

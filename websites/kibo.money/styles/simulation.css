@@ -5,13 +5,8 @@
   > div {
     display: flex;
     flex-direction: column;
-    gap: 1.5rem;
+    gap: 2rem;
     padding: var(--main-padding);
-
-    > div {
-      display: flex;
-      flex-direction: column;
-    }
   }
 
   @media (max-width: 767px) {
@@ -67,11 +62,16 @@
   }
 
   .chart {
-    flex-shrink: 0;
+    flex: none;
     height: 400px;
 
     .lightweight-chart {
-      margin-left: calc(var(--negative-main-padding) / 2);
+      margin-left: calc(var(--negative-main-padding) * 0.75);
+
+        fieldset {
+          margin-left: -0.5rem;
+        }
+      }
     }
   }
 }

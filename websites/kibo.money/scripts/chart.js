@@ -35,7 +35,7 @@ export function init({
     parent: elements.charts,
     signals,
     colors,
-    id: "chart",
+    id: "charts",
     utils,
     vecsResources,
   });
@@ -174,6 +174,7 @@ function createIndexSelector({ elements, signals, utils }) {
 
   const fieldset = window.document.createElement("fieldset");
   fieldset.append(indexesField);
+  fieldset.dataset.size = "sm";
   elements.charts.append(fieldset);
 
   const index = signals.createMemo(
