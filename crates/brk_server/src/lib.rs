@@ -67,14 +67,14 @@ impl Server {
             } else {
                 let downloads_path = dot_brk_path().join(DOWNLOADS);
 
-                let downloaded_websites_path = downloads_path.join(VERSION).join(WEBSITES);
+                let downloaded_websites_path =
+                    downloads_path.join(format!("brk-{VERSION}")).join(WEBSITES);
 
                 if !fs::exists(&downloaded_websites_path)? {
                     info!("Downloading websites from Github...");
 
                     let url = format!(
-                        "https://github.com/bitcoinresearchkit/brk/archive/refs/tags/v{}.zip",
-                        VERSION
+                        "https://github.com/bitcoinresearchkit/brk/archive/refs/tags/v{VERSION}.zip",
                     );
 
                     let response = minreq::get(url).send()?;
