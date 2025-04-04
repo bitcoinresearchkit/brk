@@ -34,6 +34,14 @@
   </a>
 </p>
 
+> **WARNING**
+> 
+> This project is still a work in progress and while it's much better in many ways than its previous version ([kibo v0.5](https://github.com/kibo-money/kibo)), it doesn't yet include all of those datasets. If you're interested in having everything right now, please use the latter until feature parity is achieved.
+>
+> The explorer part (mempool.space/electrs) is also not viable just yet.
+>
+> Stay tuned and please be patient, it's a lot of work !
+
 The Bitcoin Research Kit is a high-performance toolchain designed to parse, index, compute, serve and visualize data from a Bitcoin Core node, enabling users to gain deeper insights into the Bitcoin network.
 
 In other words it's an alternative to [Glassnode](https://glassnode.com), [mempool.space](https://mempool.space/) and [electrs](https://github.com/romanz/electrs) all in one package with a particular focus on simplicity and the self-hosting experience.
