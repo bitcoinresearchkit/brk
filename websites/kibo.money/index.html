@@ -924,14 +924,13 @@
         &[data-size="xs"] {
           font-size: var(--font-size-xs);
           line-height: var(--line-height-xs);
+          font-weight: 500;
         }
 
         > div.field {
           text-transform: lowercase;
           display: flex;
           align-items: center;
-          /* font-size: var(--font-size-xs);
-          line-height: var(--line-height-xs); */
           gap: 1rem;
 
           > legend,
@@ -942,7 +941,7 @@
           > hr {
             min-width: 2rem;
 
-            fieldset[data-size="xs"] > div > & {
+            fieldset[data-size="xs"] & {
               min-width: 1rem;
             }
           }
@@ -956,7 +955,7 @@
             display: flex;
             gap: 1.5rem;
 
-            fieldset[data-size="xs"] > div > & {
+            fieldset[data-size="xs"] & {
               gap: 1rem;
             }
           }
