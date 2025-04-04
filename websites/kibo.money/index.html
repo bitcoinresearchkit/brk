@@ -920,10 +920,15 @@
         align-items: center;
         gap: 0.5rem;
 
+        &[data-size="sm"] {
+          font-size: var(--font-size-sm);
+          line-height: var(--line-height-sm);
+        }
+
         &[data-size="xs"] {
           font-size: var(--font-size-xs);
           line-height: var(--line-height-xs);
-          font-weight: 500;
+          font-weight: 450;
         }
 
         > div.field {
@@ -940,6 +945,10 @@
           > hr {
             min-width: 2rem;
 
+            fieldset[data-size="sm"] & {
+              min-width: 1.5rem;
+            }
+
             fieldset[data-size="xs"] & {
               min-width: 1rem;
             }
@@ -953,6 +962,10 @@
           > div {
             display: flex;
             gap: 1.5rem;
+
+            fieldset[data-size="xs"] & {
+              gap: 1.25rem;
+            }
 
             fieldset[data-size="xs"] & {
               gap: 1rem;
@@ -983,6 +996,9 @@
           padding-bottom: 1rem;
           overflow-x: auto;
           min-width: 0;
+          font-size: var(--font-size-sm);
+          line-height: var(--line-height-sm);
+          height: 2rem;
 
           > div {
             flex: 0;
@@ -1031,6 +1047,17 @@
           min-height: 0;
           height: 100%;
           margin-right: var(--negative-main-padding);
+          margin-left: var(--negative-main-padding);
+
+          fieldset {
+            padding-left: var(--main-padding);
+            padding-top: 0.5rem;
+            z-index: 10;
+            position: absolute;
+            left: 0;
+            top: 0;
+            gap: 0;
+          }
         }
 
         > .panes {

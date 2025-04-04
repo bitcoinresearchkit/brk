@@ -23,7 +23,6 @@
  *
  * @typedef {Object} BaseSeriesBlueprint
  * @property {string} title
- * @property {VecId} key
  * @property {boolean} [defaultActive]
  *
  * @typedef {Object} BaselineSeriesBlueprintSpecific
@@ -49,6 +48,8 @@
  *
  * @typedef {BaselineSeriesBlueprint | CandlestickSeriesBlueprint | LineSeriesBlueprint} AnySeriesBlueprint
  *
+ * @typedef {AnySeriesBlueprint & {key: VecId}} AnyFetchedSeriesBlueprint
+ *
  * @typedef {Object} PartialOption
  * @property {string} name
  *
@@ -61,8 +62,8 @@
  * @property {"chart"} [kind]
  * @property {Unit} [unit]
  * @property {string} [title]
- * @property {AnySeriesBlueprint[]} [top]
- * @property {AnySeriesBlueprint[]} [bottom]
+ * @property {AnyFetchedSeriesBlueprint[]} [top]
+ * @property {AnyFetchedSeriesBlueprint[]} [bottom]
  * @typedef {PartialOption & PartialChartOptionSpecific} PartialChartOption
  * @typedef {Required<PartialChartOption> & ProcessedOptionAddons} ChartOption
  *

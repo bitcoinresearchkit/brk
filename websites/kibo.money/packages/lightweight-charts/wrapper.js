@@ -1,6 +1,6 @@
 // @ts-check
 
-/** @import {IChartApi, ISeriesApi, SeriesDefinition, SingleValueData as _SingleValueData, CandlestickData as _CandlestickData} from './v5.0.5-treeshaked/types' */
+/** @import {IChartApi, ISeriesApi, SeriesDefinition, SingleValueData as _SingleValueData, CandlestickData as _CandlestickData, BaselineData, SeriesType} from './v5.0.5-treeshaked/types' */
 
 /**
  * @typedef {[number, number, number, number]} OHLCTuple
@@ -47,7 +47,7 @@ export default import("./v5.0.5-treeshaked/script.js").then((lc) => {
       autoSize: true,
       layout: {
         fontFamily: "Geist mono",
-        fontSize: 14,
+        fontSize: 13,
         background: { color: "transparent" },
         attributionLogo: false,
         colorSpace: "display-p3",
@@ -130,15 +130,18 @@ export default import("./v5.0.5-treeshaked/script.js").then((lc) => {
    * @param {VecsResources} args.vecsResources
    * @param {Owner | null} [args.owner]
    * @param {true} [args.fitContentOnResize]
+   * @param {{unit: Unit; blueprints: AnySeriesBlueprint[]}[]} [args.config]
    */
   function createChartElement({
     parent,
     signals,
     colors,
     utils,
+    id,
     vecsResources,
     owner: _owner,
     fitContentOnResize,
+    config,
   }) {
     let owner = _owner || signals.getOwner();
 
@@ -179,7 +182,7 @@ export default import("./v5.0.5-treeshaked/script.js").then((lc) => {
      * @param {ISeriesApi<SeriesType>} series
      * @param {VecResource} valuesResource
      */
-    function createSetDataEffect(series, valuesResource) {
+    function createSetFetchedDataEffect(series, valuesResource) {
       signals.runWithOwner(owner, () =>
         signals.createEffect(
           () => [timeResource?.fetched(), valuesResource.fetched()],
@@ -244,7 +247,7 @@ export default import("./v5.0.5-treeshaked/script.js").then((lc) => {
       }),
     );
 
-    return {
+    const chart = {
       inner: () => ichart,
       /**
        * @param {Object} args
@@ -272,12 +275,23 @@ export default import("./v5.0.5-treeshaked/script.js").then((lc) => {
           colors,
           utils,
         });
+
+        if (fitContentOnResize) {
+          ichart.applyOptions({
+            handleScroll: false,
+            handleScale: false,
+            timeScale: {
+              minBarSpacing: 0.001,
+            },
+          });
+        }
       },
       /**
        * @param {Object} args
-       * @param {VecId} args.vecId
        * @param {string} args.name
        * @param {Unit} args.unit
+       * @param {VecId} [args.vecId]
+       * @param {Accessor<CandlestickData[]>} [args.data]
        * @param {number} [args.paneIndex]
        * @param {boolean} [args.defaultActive]
        */
@@ -287,14 +301,11 @@ export default import("./v5.0.5-treeshaked/script.js").then((lc) => {
         unit,
         paneIndex: _paneIndex,
         defaultActive,
+        data,
       }) {
         const paneIndex = _paneIndex ?? 0;
 
         if (!ichart || !timeResource) throw Error("Chart not fully set");
-
-        const valuesResource = vecsResources.getOrCreate(vecIndex, vecId);
-        valuesResource.fetch();
-        activeResources.push(valuesResource);
 
         const green = colors.green();
         const red = colors.red();
@@ -311,31 +322,56 @@ export default import("./v5.0.5-treeshaked/script.js").then((lc) => {
           paneIndex,
         );
 
+        let url = /** @type {string | undefined} */ (undefined);
+
+        if (vecId) {
+          const valuesResource = vecsResources.getOrCreate(vecIndex, vecId);
+          valuesResource.fetch();
+          activeResources.push(valuesResource);
+          createSetFetchedDataEffect(series, valuesResource);
+
+          url = valuesResource.url;
+        } else if (data) {
+          signals.runWithOwner(owner, () =>
+            signals.createEffect(data, (data) => {
+              series.setData(data);
+            }),
+          );
+        }
+
         legend.add({
           series,
           name,
           defaultActive,
           colors: [colors.green, colors.red],
-          url: valuesResource.url,
+          url,
+        });
+
+        createPaneHeightObserver({
+          ichart,
+          paneIndex,
+          signals,
+          utils,
         });
 
         createPriceScaleSelectorIfNeeded({
           ichart,
           paneIndex,
+          seriesType: "Candlestick",
           signals,
+          id,
           unit,
           utils,
         });
-
-        createSetDataEffect(series, valuesResource);
 
         return series;
       },
       /**
        * @param {Object} args
-       * @param {VecId} args.vecId
        * @param {string} args.name
        * @param {Unit} args.unit
+       * @param {Accessor<LineData[]>} [args.data]
+       * @param {VecId} [args.vecId]
        * @param {Color} [args.color]
        * @param {number} [args.paneIndex]
        * @param {boolean} [args.defaultActive]
@@ -347,14 +383,11 @@ export default import("./v5.0.5-treeshaked/script.js").then((lc) => {
         color,
         paneIndex: _paneIndex,
         defaultActive,
+        data,
       }) {
         if (!ichart || !timeResource) throw Error("Chart not fully set");
 
         const paneIndex = _paneIndex ?? 0;
-
-        const valuesResource = vecsResources.getOrCreate(vecIndex, vecId);
-        valuesResource.fetch();
-        activeResources.push(valuesResource);
 
         color ||= colors.orange;
 
@@ -369,15 +402,33 @@ export default import("./v5.0.5-treeshaked/script.js").then((lc) => {
           paneIndex,
         );
 
+        let url = /** @type {string | undefined} */ (undefined);
+
+        if (vecId) {
+          const valuesResource = vecsResources.getOrCreate(vecIndex, vecId);
+          valuesResource.fetch();
+          activeResources.push(valuesResource);
+          createSetFetchedDataEffect(series, valuesResource);
+
+          url = valuesResource.url;
+        } else if (data) {
+          signals.runWithOwner(owner, () =>
+            signals.createEffect(data, (data) => {
+              series.setData(data);
+              ichart
+                ?.timeScale()
+                .setVisibleLogicalRange({ from: -1, to: data.length });
+            }),
+          );
+        }
+
         legend.add({
           series,
           colors: [color],
           name,
           defaultActive,
-          url: valuesResource.url,
+          url,
         });
-
-        createSetDataEffect(series, valuesResource);
 
         createPaneHeightObserver({
           ichart,
@@ -390,6 +441,94 @@ export default import("./v5.0.5-treeshaked/script.js").then((lc) => {
           ichart,
           paneIndex,
           signals,
+          seriesType: "Line",
+          id,
+          unit,
+          utils,
+        });
+
+        return series;
+      },
+      /**
+       * @param {Object} args
+       * @param {string} args.name
+       * @param {Unit} args.unit
+       * @param {Accessor<BaselineData[]>} [args.data]
+       * @param {VecId} [args.vecId]
+       * @param {number} [args.paneIndex]
+       * @param {boolean} [args.defaultActive]
+       */
+      addBaselineSeries({
+        vecId,
+        name,
+        unit,
+        paneIndex: _paneIndex,
+        defaultActive,
+        data,
+      }) {
+        if (!ichart || !timeResource) throw Error("Chart not fully set");
+
+        const paneIndex = _paneIndex ?? 0;
+
+        const series = ichart.addSeries(
+          /** @type {SeriesDefinition<'Baseline'>} */ (lc.BaselineSeries),
+          {
+            lineWidth: /** @type {any} */ (1.5),
+            visible: defaultActive !== false,
+            topLineColor: colors.green(),
+            bottomLineColor: colors.red(),
+            baseValue: {
+              price: 0,
+            },
+            baseLineStyle: 0,
+            baseLineWidth: 1,
+            baseLineVisible: true,
+            lineVisible: true,
+          },
+          paneIndex,
+        );
+
+        let url = /** @type {string | undefined} */ (undefined);
+
+        if (vecId) {
+          const valuesResource = vecsResources.getOrCreate(vecIndex, vecId);
+          valuesResource.fetch();
+          activeResources.push(valuesResource);
+          createSetFetchedDataEffect(series, valuesResource);
+
+          url = valuesResource.url;
+        } else if (data) {
+          signals.runWithOwner(owner, () =>
+            signals.createEffect(data, (data) => {
+              series.setData(data);
+              ichart
+                ?.timeScale()
+                .setVisibleLogicalRange({ from: -1, to: data.length });
+            }),
+          );
+        }
+
+        legend.add({
+          series,
+          colors: [colors.green, colors.red],
+          name,
+          defaultActive,
+          url,
+        });
+
+        createPaneHeightObserver({
+          ichart,
+          paneIndex,
+          signals,
+          utils,
+        });
+
+        createPriceScaleSelectorIfNeeded({
+          ichart,
+          paneIndex,
+          signals,
+          seriesType: "Baseline",
+          id,
           unit,
           utils,
         });
@@ -410,6 +549,41 @@ export default import("./v5.0.5-treeshaked/script.js").then((lc) => {
         legend.reset();
       },
     };
+
+    config?.forEach(({ unit, blueprints }, paneIndex) => {
+      chart.create({ index: /** @satisfies {Dateindex} */ (1) });
+
+      blueprints.forEach((blueprint) => {
+        if (blueprint.type === "Candlestick") {
+          chart.addCandlestickSeries({
+            name: blueprint.title,
+            unit,
+            data: blueprint.data,
+            defaultActive: blueprint.defaultActive,
+            paneIndex,
+          });
+        } else if (blueprint.type === "Baseline") {
+          chart.addBaselineSeries({
+            name: blueprint.title,
+            unit,
+            data: blueprint.data,
+            defaultActive: blueprint.defaultActive,
+            paneIndex,
+          });
+        } else {
+          chart.addLineSeries({
+            name: blueprint.title,
+            unit,
+            data: blueprint.data,
+            defaultActive: blueprint.defaultActive,
+            paneIndex,
+            color: blueprint.color,
+          });
+        }
+      });
+    });
+
+    return chart;
   }
 
   return {
@@ -678,7 +852,6 @@ function createPaneHeightObserver({ ichart, paneIndex, signals, utils }) {
   if (!paneIndex) return;
 
   const owner = signals.getOwner();
-  if (!owner) throw Error("Expect owner");
 
   const one = "1";
 
@@ -729,6 +902,8 @@ function createPaneHeightObserver({ ichart, paneIndex, signals, utils }) {
  * @param {Object} args
  * @param {IChartApi} args.ichart
  * @param {Unit} args.unit
+ * @param {string} args.id
+ * @param {SeriesType} args.seriesType
  * @param {number} args.paneIndex
  * @param {Signals} args.signals
  * @param {Utilities} args.utils
@@ -737,11 +912,12 @@ function createPriceScaleSelectorIfNeeded({
   ichart,
   unit,
   paneIndex,
+  id,
+  seriesType,
   signals,
   utils,
 }) {
   const owner = signals.getOwner();
-  if (!owner) throw Error("Expect owner");
 
   setTimeout(
     () => {
@@ -759,16 +935,20 @@ function createPriceScaleSelectorIfNeeded({
         return;
       }
 
+      console.log(id);
+
       const choices = /**@type {const} */ (["lin", "log"]);
 
       /** @typedef {(typeof choices)[number]} Choices */
       const serializedValue = signals.createSignal(
-        /** @satisfies {Choices} */ (paneIndex ? "lin" : "log"),
+        /** @satisfies {Choices} */ (
+          unit === "US Dollars" && seriesType !== "Baseline" ? "log" : "lin"
+        ),
         {
           save: {
             ...utils.serde.string,
-            keyPrefix: "charts",
-            key: `price-scale-${paneIndex}`,
+            keyPrefix: "",
+            key: `${id}-price-scale-${paneIndex}`,
           },
         },
       );
@@ -777,7 +957,7 @@ function createPriceScaleSelectorIfNeeded({
         title: unit,
         selected: serializedValue(),
         choices: choices,
-        id: unit,
+        id: `${id}-${unit.replace(" ", "-")}`,
         signals,
       });
 
@@ -789,6 +969,7 @@ function createPriceScaleSelectorIfNeeded({
 
       const element = window.document.createElement(tagName);
       element.dataset.size = "xs";
+      element.id = `${id}-price-scale-${paneIndex}`;
       element.append(field);
 
       const mode = signals.createMemo(() => {

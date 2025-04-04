@@ -3,6 +3,7 @@
 // import { CanvasRenderingTarget2D } from "fancy-canvas";
 type CanvasRenderingTarget2D = any;
 
+declare const baselineSeries: SeriesDefinition<"Baseline">;
 declare const candlestickSeries: SeriesDefinition<"Candlestick">;
 declare const lineSeries: SeriesDefinition<"Line">;
 export declare const customSeriesDefaultOptions: CustomSeriesOptions;
@@ -4032,6 +4033,10 @@ export type UTCTimestamp = Nominal<number, "UTCTimestamp">;
  */
 export type VisiblePriceScaleOptions = PriceScaleOptions;
 
-export { candlestickSeries as CandlestickSeries, lineSeries as LineSeries };
+export {
+  baselineSeries as BaselineSeries,
+  candlestickSeries as CandlestickSeries,
+  lineSeries as LineSeries,
+};
 
 export {};
