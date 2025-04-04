@@ -43,7 +43,7 @@ impl Kraken {
     }
 
     pub fn get_from_1d(&mut self, date: &Date) -> color_eyre::Result<OHLCCents> {
-        if self._1d.is_none() || self._1d.as_ref().unwrap().last_key_value().unwrap().0 < date {
+        if self._1d.is_none() || self._1d.as_ref().unwrap().last_key_value().unwrap().0 <= date {
             self._1d.replace(Kraken::fetch_1d()?);
         }
         self._1d

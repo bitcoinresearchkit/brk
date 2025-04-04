@@ -82,7 +82,7 @@ impl Binance {
     }
 
     pub fn get_from_1d(&mut self, date: &Date) -> color_eyre::Result<OHLCCents> {
-        if self._1d.is_none() || self._1d.as_ref().unwrap().last_key_value().unwrap().0 < date {
+        if self._1d.is_none() || self._1d.as_ref().unwrap().last_key_value().unwrap().0 <= date {
             self._1d.replace(Self::fetch_1d()?);
         }
 

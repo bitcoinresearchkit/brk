@@ -81,7 +81,7 @@ impl Kibo {
                 .last_key_value()
                 .unwrap()
                 .0
-                < date
+                <= date
         {
             self.year_to_date_to_ohlc
                 .insert(year, Self::fetch_date_prices(year)?);

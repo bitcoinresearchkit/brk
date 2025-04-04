@@ -39,8 +39,23 @@ where
         let name = path.file_name().unwrap().to_str().unwrap().to_string();
         let key = I::to_string().split("::").last().unwrap().to_lowercase();
 
-        let prefix = |s: &str| path.with_file_name(format!("{key}_to_{s}_{name}"));
-        let suffix = |s: &str| path.with_file_name(format!("{key}_to_{name}_{s}"));
+        let only_one_active = options.is_only_one_active();
+
+        let prefix = |s: &str| {
+            if only_one_active {
+                path.with_file_name(format!("{key}_to_{name}"))
+            } else {
+                path.with_file_name(format!("{key}_to_{s}_{name}"))
+            }
+        };
+
+        let suffix = |s: &str| {
+            if only_one_active {
+                path.with_file_name(format!("{key}_to_{name}"))
+            } else {
+                path.with_file_name(format!("{key}_to_{name}_{s}"))
+            }
+        };
 
         let s = Self {
             first: options.first.then(|| {
@@ -562,5 +577,25 @@ impl StorableVecGeneatorOptions {
         self._25p = false;
         self._10p = false;
         self
+    }
+
+    pub fn is_only_one_active(&self) -> bool {
+        [
+            self.average,
+            self.sum,
+            self.max,
+            self._90p,
+            self._75p,
+            self.median,
+            self._25p,
+            self._10p,
+            self.min,
+            self.first,
+            self.last,
+        ]
+        .iter()
+        .filter(|b| **b)
+        .count()
+            == 1
     }
 }
