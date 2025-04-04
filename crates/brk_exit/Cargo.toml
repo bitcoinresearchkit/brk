@@ -8,5 +8,5 @@ repository.workspace = true
 
 [dependencies]
 brk_logger = { workspace = true }
-ctrlc = { version = "3.4.5", features = ["termination"] }
+ctrlc = { version = "3.4.6", features = ["termination"] }
 log = { workspace = true }

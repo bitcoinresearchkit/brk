@@ -49,6 +49,7 @@ pub struct AppState {
 const DEV_PATH: &str = "../..";
 const DOWNLOADS: &str = "downloads";
 const WEBSITES: &str = "websites";
+const VERSION: &str = env!("CARGO_PKG_VERSION");
 
 pub struct Server(AppState);
 
@@ -66,16 +67,14 @@ impl Server {
             } else {
                 let downloads_path = dot_brk_path().join(DOWNLOADS);
 
-                let version = format!("v{}", env!("CARGO_PKG_VERSION"));
-
-                let downloaded_websites_path = downloads_path.join(&version).join(WEBSITES);
+                let downloaded_websites_path = downloads_path.join(VERSION).join(WEBSITES);
 
                 if !fs::exists(&downloaded_websites_path)? {
                     info!("Downloading websites from Github...");
 
                     let url = format!(
                         "https://github.com/bitcoinresearchkit/brk/archive/refs/tags/{}.zip",
-                        version
+                        VERSION
                     );
 
                     let response = minreq::get(url).send()?;
@@ -150,7 +149,7 @@ impl Server {
         let router = Router::new()
             .add_api_routes()
             .add_website_routes(state.website)
-            .route("/version", get(Json(env!("CARGO_PKG_VERSION"))))
+            .route("/version", get(Json(VERSION)))
             .with_state(state)
             .layer(compression_layer)
             .layer(response_uri_layer)
