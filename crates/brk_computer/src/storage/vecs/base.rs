@@ -9,17 +9,19 @@ use std::{
 
 use brk_core::CheckedSub;
 use brk_exit::Exit;
-use brk_vec::{AnyStorableVec, Compressed, Error, Result, StoredIndex, StoredType, Version};
+use brk_vec::{
+    AnyStorableVec, Compressed, Error, Result, StorableVec, StoredIndex, StoredType, Version,
+};
 
 const FLUSH_EVERY: usize = 10_000;
 
 #[derive(Debug)]
-pub struct StorableVec<I, T> {
+pub struct ComputedVec<I, T> {
     computed_version: Option<Version>,
-    vec: brk_vec::StorableVec<I, T>,
+    vec: StorableVec<I, T>,
 }
 
-impl<I, T> StorableVec<I, T>
+impl<I, T> ComputedVec<I, T>
 where
     I: StoredIndex,
     T: StoredType,
@@ -316,7 +318,7 @@ where
     }
 }
 
-impl<I, T> Clone for StorableVec<I, T>
+impl<I, T> Clone for ComputedVec<I, T>
 where
     I: StoredIndex,
     T: StoredType,

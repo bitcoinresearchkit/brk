@@ -7,9 +7,9 @@ use brk_vec::{AnyStorableVec, Compressed};
 
 mod base;
 mod blocks;
+mod grouped;
 mod indexes;
 mod marketprice;
-mod stats;
 mod transactions;
 
 use base::*;

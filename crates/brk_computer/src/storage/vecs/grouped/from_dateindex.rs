@@ -2,55 +2,68 @@ use std::path::Path;
 
 use brk_core::{Dateindex, Decadeindex, Monthindex, Quarterindex, Weekindex, Yearindex};
 use brk_exit::Exit;
-use brk_vec::{AnyStorableVec, Compressed};
+use brk_vec::{AnyStorableVec, Compressed, Result, Version};
 
-use crate::storage::vecs::{Indexes, base::StorableVec, indexes};
+use crate::storage::vecs::{Indexes, base::ComputedVec, indexes};
 
-use super::{ComputedType, StorableVecBuilder, StorableVecGeneatorOptions};
+use super::{ComputedType, ComputedVecBuilder, StorableVecGeneatorOptions};
 
 #[derive(Clone)]
-pub struct StorableVecsStatsFromDate<T>
+pub struct ComputedVecsFromDateindex<T>
 where
     T: ComputedType + PartialOrd,
 {
-    pub weekindex: StorableVecBuilder<Weekindex, T>,
-    pub monthindex: StorableVecBuilder<Monthindex, T>,
-    pub quarterindex: StorableVecBuilder<Quarterindex, T>,
-    pub yearindex: StorableVecBuilder<Yearindex, T>,
-    pub decadeindex: StorableVecBuilder<Decadeindex, T>,
+    pub dateindex: ComputedVec<Dateindex, T>,
+    pub weekindex: ComputedVecBuilder<Weekindex, T>,
+    pub monthindex: ComputedVecBuilder<Monthindex, T>,
+    pub quarterindex: ComputedVecBuilder<Quarterindex, T>,
+    pub yearindex: ComputedVecBuilder<Yearindex, T>,
+    pub decadeindex: ComputedVecBuilder<Decadeindex, T>,
 }
 
-impl<T> StorableVecsStatsFromDate<T>
+impl<T> ComputedVecsFromDateindex<T>
 where
     T: ComputedType + Ord + From<f64>,
     f64: From<T>,
 {
     pub fn forced_import(
         path: &Path,
+        name: &str,
+        version: Version,
         compressed: Compressed,
         options: StorableVecGeneatorOptions,
     ) -> color_eyre::Result<Self> {
         let options = options.remove_percentiles();
 
         Ok(Self {
-            weekindex: StorableVecBuilder::forced_import(path, compressed, options)?,
-            monthindex: StorableVecBuilder::forced_import(path, compressed, options)?,
-            quarterindex: StorableVecBuilder::forced_import(path, compressed, options)?,
-            yearindex: StorableVecBuilder::forced_import(path, compressed, options)?,
-            decadeindex: StorableVecBuilder::forced_import(path, compressed, options)?,
+            dateindex: ComputedVec::forced_import(
+                &path.join(format!("dateindex_to_{name}")),
+                version,
+                compressed,
+            )?,
+            weekindex: ComputedVecBuilder::forced_import(path, name, compressed, options)?,
+            monthindex: ComputedVecBuilder::forced_import(path, name, compressed, options)?,
+            quarterindex: ComputedVecBuilder::forced_import(path, name, compressed, options)?,
+            yearindex: ComputedVecBuilder::forced_import(path, name, compressed, options)?,
+            decadeindex: ComputedVecBuilder::forced_import(path, name, compressed, options)?,
         })
     }
 
-    pub fn compute(
+    pub fn compute<F>(
         &mut self,
-        source: &mut StorableVec<Dateindex, T>,
+        mut compute: F,
         indexes: &mut indexes::Vecs,
         starting_indexes: &Indexes,
         exit: &Exit,
-    ) -> color_eyre::Result<()> {
+    ) -> color_eyre::Result<()>
+    where
+        F: FnMut(&mut ComputedVec<Dateindex, T>) -> Result<()>,
+    {
+        compute(&mut self.dateindex)?;
+
         self.weekindex.compute(
             starting_indexes.weekindex,
-            source,
+            &mut self.dateindex,
             indexes.weekindex_to_first_dateindex.mut_vec(),
             indexes.weekindex_to_last_dateindex.mut_vec(),
             exit,
@@ -58,7 +71,7 @@ where
 
         self.monthindex.compute(
             starting_indexes.monthindex,
-            source,
+            &mut self.dateindex,
             indexes.monthindex_to_first_dateindex.mut_vec(),
             indexes.monthindex_to_last_dateindex.mut_vec(),
             exit,
@@ -91,13 +104,14 @@ where
         Ok(())
     }
 
-    pub fn as_any_vecs(&self) -> Vec<&dyn AnyStorableVec> {
+    pub fn any_vecs(&self) -> Vec<&dyn AnyStorableVec> {
         [
-            self.weekindex.as_any_vecs(),
-            self.monthindex.as_any_vecs(),
-            self.quarterindex.as_any_vecs(),
-            self.yearindex.as_any_vecs(),
-            self.decadeindex.as_any_vecs(),
+            vec![self.dateindex.any_vec()],
+            self.weekindex.any_vecs(),
+            self.monthindex.any_vecs(),
+            self.quarterindex.any_vecs(),
+            self.yearindex.any_vecs(),
+            self.decadeindex.any_vecs(),
         ]
         .concat()
     }

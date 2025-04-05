@@ -5,27 +5,27 @@ use brk_exit::Exit;
 use brk_indexer::Indexer;
 use brk_vec::{AnyStorableVec, Compressed, Version};
 
-use super::{Indexes, StorableVec, indexes};
+use super::{ComputedVec, Indexes, indexes};
 
 #[derive(Clone)]
 pub struct Vecs {
-    // pub height_to_fee: StorableVec<Txindex, Sats>,
-    // pub height_to_inputcount: StorableVec<Height, u32>,
-    // pub height_to_maxfeerate: StorableVec<Height, Feerate>,
-    // pub height_to_medianfeerate: StorableVec<Height, Feerate>,
-    // pub height_to_minfeerate: StorableVec<Height, Feerate>,
-    // pub height_to_outputcount: StorableVec<Height, u32>,
-    // pub height_to_subsidy: StorableVec<Height, u32>,
-    // pub height_to_totalfees: StorableVec<Height, Sats>,
-    // pub height_to_txcount: StorableVec<Height, u32>,
-    // pub txindex_to_fee: StorableVec<Txindex, Sats>,
-    pub txindex_to_is_coinbase: StorableVec<Txindex, bool>,
-    // pub txindex_to_feerate: StorableVec<Txindex, Feerate>,
-    pub txindex_to_inputs_count: StorableVec<Txindex, u32>,
-    // pub txindex_to_inputs_sum: StorableVec<Txindex, Sats>,
-    pub txindex_to_outputs_count: StorableVec<Txindex, u32>,
-    // pub txindex_to_outputs_sum: StorableVec<Txindex, Sats>,
-    // pub txinindex_to_value: StorableVec<Txinindex, Sats>,
+    // pub height_to_fee: ComputedVec<Txindex, Sats>,
+    // pub height_to_inputcount: ComputedVec<Height, u32>,
+    // pub height_to_maxfeerate: ComputedVec<Height, Feerate>,
+    // pub height_to_medianfeerate: ComputedVec<Height, Feerate>,
+    // pub height_to_minfeerate: ComputedVec<Height, Feerate>,
+    // pub height_to_outputcount: ComputedVec<Height, u32>,
+    // pub height_to_subsidy: ComputedVec<Height, u32>,
+    // pub height_to_totalfees: ComputedVec<Height, Sats>,
+    // pub height_to_txcount: ComputedVec<Height, u32>,
+    // pub txindex_to_fee: ComputedVec<Txindex, Sats>,
+    pub txindex_to_is_coinbase: ComputedVec<Txindex, bool>,
+    // pub txindex_to_feerate: ComputedVec<Txindex, Feerate>,
+    pub txindex_to_inputs_count: ComputedVec<Txindex, u32>,
+    // pub txindex_to_inputs_sum: ComputedVec<Txindex, Sats>,
+    pub txindex_to_outputs_count: ComputedVec<Txindex, u32>,
+    // pub txindex_to_outputs_sum: ComputedVec<Txindex, Sats>,
+    // pub txinindex_to_value: ComputedVec<Txinindex, Sats>,
 }
 
 impl Vecs {
@@ -52,13 +52,13 @@ impl Vecs {
             //     &path.join("txindex_to_fee"),
             //     Version::ONE,
             // )?,
-            txindex_to_is_coinbase: StorableVec::forced_import(
+            txindex_to_is_coinbase: ComputedVec::forced_import(
                 &path.join("txindex_to_is_coinbase"),
                 Version::ONE,
                 compressed,
             )?,
             // txindex_to_feerate: StorableVec::forced_import(&path.join("txindex_to_feerate"), Version::ONE)?,
-            txindex_to_inputs_count: StorableVec::forced_import(
+            txindex_to_inputs_count: ComputedVec::forced_import(
                 &path.join("txindex_to_inputs_count"),
                 Version::ONE,
                 compressed,
@@ -67,7 +67,7 @@ impl Vecs {
             //     &path.join("txindex_to_inputs_sum"),
             //     Version::ONE,
             // )?,
-            txindex_to_outputs_count: StorableVec::forced_import(
+            txindex_to_outputs_count: ComputedVec::forced_import(
                 &path.join("txindex_to_outputs_count"),
                 Version::ONE,
                 compressed,

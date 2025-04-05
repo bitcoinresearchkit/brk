@@ -124,7 +124,7 @@ export function createVecIdToIndexes() {
     p2wshaddressbytes: [P2WSHindex],
     quarterindex: [Monthindex, Quarterindex],
     "real-date": [Height],
-    "sats-per-dollar": [Dateindex, Height],
+    "sats-per-dollar": [Dateindex, Height, Weekindex, Monthindex, Quarterindex, Yearindex, Decadeindex, Difficultyepoch],
     size: [Height],
     timestamp: [Dateindex, Height, Weekindex, Monthindex, Quarterindex, Yearindex, Decadeindex, Difficultyepoch, Halvingepoch],
     "total-block-count": [Dateindex],
