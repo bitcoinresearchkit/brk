@@ -8,60 +8,60 @@ use brk_exit::Exit;
 use brk_indexer::Indexer;
 use brk_vec::{AnyStorableVec, Compressed, Version};
 
-use super::StorableVec;
+use super::ComputedVec;
 
 #[derive(Clone)]
 pub struct Vecs {
     // pub height_to_last_addressindex: StorableVec<Height, Addressindex>,
     // pub height_to_last_txoutindex: StorableVec<Height, Txoutindex>,
-    pub dateindex_to_date: StorableVec<Dateindex, Date>,
-    pub dateindex_to_dateindex: StorableVec<Dateindex, Dateindex>,
-    pub dateindex_to_first_height: StorableVec<Dateindex, Height>,
-    pub dateindex_to_last_height: StorableVec<Dateindex, Height>,
-    pub dateindex_to_monthindex: StorableVec<Dateindex, Monthindex>,
-    pub dateindex_to_timestamp: StorableVec<Dateindex, Timestamp>,
-    pub dateindex_to_weekindex: StorableVec<Dateindex, Weekindex>,
-    pub decadeindex_to_decadeindex: StorableVec<Decadeindex, Decadeindex>,
-    pub decadeindex_to_first_yearindex: StorableVec<Decadeindex, Yearindex>,
-    pub decadeindex_to_last_yearindex: StorableVec<Decadeindex, Yearindex>,
-    pub decadeindex_to_timestamp: StorableVec<Decadeindex, Timestamp>,
-    pub difficultyepoch_to_difficultyepoch: StorableVec<Difficultyepoch, Difficultyepoch>,
-    pub difficultyepoch_to_first_height: StorableVec<Difficultyepoch, Height>,
-    pub difficultyepoch_to_last_height: StorableVec<Difficultyepoch, Height>,
-    pub difficultyepoch_to_timestamp: StorableVec<Difficultyepoch, Timestamp>,
-    pub halvingepoch_to_first_height: StorableVec<Halvingepoch, Height>,
-    pub halvingepoch_to_halvingepoch: StorableVec<Halvingepoch, Halvingepoch>,
-    pub halvingepoch_to_last_height: StorableVec<Halvingepoch, Height>,
-    pub halvingepoch_to_timestamp: StorableVec<Halvingepoch, Timestamp>,
-    pub height_to_dateindex: StorableVec<Height, Dateindex>,
-    pub height_to_difficultyepoch: StorableVec<Height, Difficultyepoch>,
-    pub height_to_fixed_date: StorableVec<Height, Date>,
-    pub height_to_fixed_timestamp: StorableVec<Height, Timestamp>,
-    pub height_to_halvingepoch: StorableVec<Height, Halvingepoch>,
-    pub height_to_height: StorableVec<Height, Height>,
-    pub height_to_last_txindex: StorableVec<Height, Txindex>,
-    pub height_to_real_date: StorableVec<Height, Date>,
-    pub monthindex_to_first_dateindex: StorableVec<Monthindex, Dateindex>,
-    pub monthindex_to_last_dateindex: StorableVec<Monthindex, Dateindex>,
-    pub monthindex_to_monthindex: StorableVec<Monthindex, Monthindex>,
-    pub monthindex_to_quarterindex: StorableVec<Monthindex, Quarterindex>,
-    pub monthindex_to_timestamp: StorableVec<Monthindex, Timestamp>,
-    pub monthindex_to_yearindex: StorableVec<Monthindex, Yearindex>,
-    pub quarterindex_to_first_monthindex: StorableVec<Quarterindex, Monthindex>,
-    pub quarterindex_to_last_monthindex: StorableVec<Quarterindex, Monthindex>,
-    pub quarterindex_to_quarterindex: StorableVec<Quarterindex, Quarterindex>,
-    pub quarterindex_to_timestamp: StorableVec<Quarterindex, Timestamp>,
-    pub txindex_to_last_txinindex: StorableVec<Txindex, Txinindex>,
-    pub txindex_to_last_txoutindex: StorableVec<Txindex, Txoutindex>,
-    pub weekindex_to_first_dateindex: StorableVec<Weekindex, Dateindex>,
-    pub weekindex_to_last_dateindex: StorableVec<Weekindex, Dateindex>,
-    pub weekindex_to_timestamp: StorableVec<Weekindex, Timestamp>,
-    pub weekindex_to_weekindex: StorableVec<Weekindex, Weekindex>,
-    pub yearindex_to_decadeindex: StorableVec<Yearindex, Decadeindex>,
-    pub yearindex_to_first_monthindex: StorableVec<Yearindex, Monthindex>,
-    pub yearindex_to_last_monthindex: StorableVec<Yearindex, Monthindex>,
-    pub yearindex_to_timestamp: StorableVec<Yearindex, Timestamp>,
-    pub yearindex_to_yearindex: StorableVec<Yearindex, Yearindex>,
+    pub dateindex_to_date: ComputedVec<Dateindex, Date>,
+    pub dateindex_to_dateindex: ComputedVec<Dateindex, Dateindex>,
+    pub dateindex_to_first_height: ComputedVec<Dateindex, Height>,
+    pub dateindex_to_last_height: ComputedVec<Dateindex, Height>,
+    pub dateindex_to_monthindex: ComputedVec<Dateindex, Monthindex>,
+    pub dateindex_to_timestamp: ComputedVec<Dateindex, Timestamp>,
+    pub dateindex_to_weekindex: ComputedVec<Dateindex, Weekindex>,
+    pub decadeindex_to_decadeindex: ComputedVec<Decadeindex, Decadeindex>,
+    pub decadeindex_to_first_yearindex: ComputedVec<Decadeindex, Yearindex>,
+    pub decadeindex_to_last_yearindex: ComputedVec<Decadeindex, Yearindex>,
+    pub decadeindex_to_timestamp: ComputedVec<Decadeindex, Timestamp>,
+    pub difficultyepoch_to_difficultyepoch: ComputedVec<Difficultyepoch, Difficultyepoch>,
+    pub difficultyepoch_to_first_height: ComputedVec<Difficultyepoch, Height>,
+    pub difficultyepoch_to_last_height: ComputedVec<Difficultyepoch, Height>,
+    pub difficultyepoch_to_timestamp: ComputedVec<Difficultyepoch, Timestamp>,
+    pub halvingepoch_to_first_height: ComputedVec<Halvingepoch, Height>,
+    pub halvingepoch_to_halvingepoch: ComputedVec<Halvingepoch, Halvingepoch>,
+    pub halvingepoch_to_last_height: ComputedVec<Halvingepoch, Height>,
+    pub halvingepoch_to_timestamp: ComputedVec<Halvingepoch, Timestamp>,
+    pub height_to_dateindex: ComputedVec<Height, Dateindex>,
+    pub height_to_difficultyepoch: ComputedVec<Height, Difficultyepoch>,
+    pub height_to_fixed_date: ComputedVec<Height, Date>,
+    pub height_to_fixed_timestamp: ComputedVec<Height, Timestamp>,
+    pub height_to_halvingepoch: ComputedVec<Height, Halvingepoch>,
+    pub height_to_height: ComputedVec<Height, Height>,
+    pub height_to_last_txindex: ComputedVec<Height, Txindex>,
+    pub height_to_real_date: ComputedVec<Height, Date>,
+    pub monthindex_to_first_dateindex: ComputedVec<Monthindex, Dateindex>,
+    pub monthindex_to_last_dateindex: ComputedVec<Monthindex, Dateindex>,
+    pub monthindex_to_monthindex: ComputedVec<Monthindex, Monthindex>,
+    pub monthindex_to_quarterindex: ComputedVec<Monthindex, Quarterindex>,
+    pub monthindex_to_timestamp: ComputedVec<Monthindex, Timestamp>,
+    pub monthindex_to_yearindex: ComputedVec<Monthindex, Yearindex>,
+    pub quarterindex_to_first_monthindex: ComputedVec<Quarterindex, Monthindex>,
+    pub quarterindex_to_last_monthindex: ComputedVec<Quarterindex, Monthindex>,
+    pub quarterindex_to_quarterindex: ComputedVec<Quarterindex, Quarterindex>,
+    pub quarterindex_to_timestamp: ComputedVec<Quarterindex, Timestamp>,
+    pub txindex_to_last_txinindex: ComputedVec<Txindex, Txinindex>,
+    pub txindex_to_last_txoutindex: ComputedVec<Txindex, Txoutindex>,
+    pub weekindex_to_first_dateindex: ComputedVec<Weekindex, Dateindex>,
+    pub weekindex_to_last_dateindex: ComputedVec<Weekindex, Dateindex>,
+    pub weekindex_to_timestamp: ComputedVec<Weekindex, Timestamp>,
+    pub weekindex_to_weekindex: ComputedVec<Weekindex, Weekindex>,
+    pub yearindex_to_decadeindex: ComputedVec<Yearindex, Decadeindex>,
+    pub yearindex_to_first_monthindex: ComputedVec<Yearindex, Monthindex>,
+    pub yearindex_to_last_monthindex: ComputedVec<Yearindex, Monthindex>,
+    pub yearindex_to_timestamp: ComputedVec<Yearindex, Timestamp>,
+    pub yearindex_to_yearindex: ComputedVec<Yearindex, Yearindex>,
 }
 
 impl Vecs {
@@ -69,242 +69,242 @@ impl Vecs {
         fs::create_dir_all(path)?;
 
         Ok(Self {
-            dateindex_to_date: StorableVec::forced_import(
+            dateindex_to_date: ComputedVec::forced_import(
                 &path.join("dateindex_to_date"),
                 Version::ONE,
                 compressed,
             )?,
-            dateindex_to_dateindex: StorableVec::forced_import(
+            dateindex_to_dateindex: ComputedVec::forced_import(
                 &path.join("dateindex_to_dateindex"),
                 Version::ONE,
                 compressed,
             )?,
-            dateindex_to_first_height: StorableVec::forced_import(
+            dateindex_to_first_height: ComputedVec::forced_import(
                 &path.join("dateindex_to_first_height"),
                 Version::ONE,
                 compressed,
             )?,
-            dateindex_to_last_height: StorableVec::forced_import(
+            dateindex_to_last_height: ComputedVec::forced_import(
                 &path.join("dateindex_to_last_height"),
                 Version::ONE,
                 compressed,
             )?,
-            height_to_real_date: StorableVec::forced_import(
+            height_to_real_date: ComputedVec::forced_import(
                 &path.join("height_to_real_date"),
                 Version::ONE,
                 compressed,
             )?,
-            height_to_fixed_date: StorableVec::forced_import(
+            height_to_fixed_date: ComputedVec::forced_import(
                 &path.join("height_to_fixed_date"),
                 Version::ONE,
                 compressed,
             )?,
-            height_to_dateindex: StorableVec::forced_import(
+            height_to_dateindex: ComputedVec::forced_import(
                 &path.join("height_to_dateindex"),
                 Version::ONE,
                 compressed,
             )?,
-            height_to_height: StorableVec::forced_import(
+            height_to_height: ComputedVec::forced_import(
                 &path.join("height_to_height"),
                 Version::ONE,
                 compressed,
             )?,
-            height_to_last_txindex: StorableVec::forced_import(
+            height_to_last_txindex: ComputedVec::forced_import(
                 &path.join("height_to_last_txindex"),
                 Version::ONE,
                 compressed,
             )?,
-            txindex_to_last_txinindex: StorableVec::forced_import(
+            txindex_to_last_txinindex: ComputedVec::forced_import(
                 &path.join("txindex_to_last_txinindex"),
                 Version::ONE,
                 compressed,
             )?,
-            txindex_to_last_txoutindex: StorableVec::forced_import(
+            txindex_to_last_txoutindex: ComputedVec::forced_import(
                 &path.join("txindex_to_last_txoutindex"),
                 Version::ONE,
                 compressed,
             )?,
-            difficultyepoch_to_first_height: StorableVec::forced_import(
+            difficultyepoch_to_first_height: ComputedVec::forced_import(
                 &path.join("difficultyepoch_to_first_height"),
                 Version::ONE,
                 compressed,
             )?,
-            difficultyepoch_to_last_height: StorableVec::forced_import(
+            difficultyepoch_to_last_height: ComputedVec::forced_import(
                 &path.join("difficultyepoch_to_last_height"),
                 Version::ONE,
                 compressed,
             )?,
-            halvingepoch_to_first_height: StorableVec::forced_import(
+            halvingepoch_to_first_height: ComputedVec::forced_import(
                 &path.join("halvingepoch_to_first_height"),
                 Version::ONE,
                 compressed,
             )?,
-            halvingepoch_to_last_height: StorableVec::forced_import(
+            halvingepoch_to_last_height: ComputedVec::forced_import(
                 &path.join("halvingepoch_to_last_height"),
                 Version::ONE,
                 compressed,
             )?,
-            weekindex_to_first_dateindex: StorableVec::forced_import(
+            weekindex_to_first_dateindex: ComputedVec::forced_import(
                 &path.join("weekindex_to_first_dateindex"),
                 Version::ONE,
                 compressed,
             )?,
-            weekindex_to_last_dateindex: StorableVec::forced_import(
+            weekindex_to_last_dateindex: ComputedVec::forced_import(
                 &path.join("weekindex_to_last_dateindex"),
                 Version::ONE,
                 compressed,
             )?,
-            monthindex_to_first_dateindex: StorableVec::forced_import(
+            monthindex_to_first_dateindex: ComputedVec::forced_import(
                 &path.join("monthindex_to_first_dateindex"),
                 Version::ONE,
                 compressed,
             )?,
-            monthindex_to_last_dateindex: StorableVec::forced_import(
+            monthindex_to_last_dateindex: ComputedVec::forced_import(
                 &path.join("monthindex_to_last_dateindex"),
                 Version::ONE,
                 compressed,
             )?,
-            yearindex_to_first_monthindex: StorableVec::forced_import(
+            yearindex_to_first_monthindex: ComputedVec::forced_import(
                 &path.join("yearindex_to_first_monthindex"),
                 Version::ONE,
                 compressed,
             )?,
-            yearindex_to_last_monthindex: StorableVec::forced_import(
+            yearindex_to_last_monthindex: ComputedVec::forced_import(
                 &path.join("yearindex_to_last_monthindex"),
                 Version::ONE,
                 compressed,
             )?,
-            decadeindex_to_first_yearindex: StorableVec::forced_import(
+            decadeindex_to_first_yearindex: ComputedVec::forced_import(
                 &path.join("decadeindex_to_first_yearindex"),
                 Version::ONE,
                 compressed,
             )?,
-            decadeindex_to_last_yearindex: StorableVec::forced_import(
+            decadeindex_to_last_yearindex: ComputedVec::forced_import(
                 &path.join("decadeindex_to_last_yearindex"),
                 Version::ONE,
                 compressed,
             )?,
-            dateindex_to_weekindex: StorableVec::forced_import(
+            dateindex_to_weekindex: ComputedVec::forced_import(
                 &path.join("dateindex_to_weekindex"),
                 Version::ONE,
                 compressed,
             )?,
-            dateindex_to_monthindex: StorableVec::forced_import(
+            dateindex_to_monthindex: ComputedVec::forced_import(
                 &path.join("dateindex_to_monthindex"),
                 Version::ONE,
                 compressed,
             )?,
-            monthindex_to_yearindex: StorableVec::forced_import(
+            monthindex_to_yearindex: ComputedVec::forced_import(
                 &path.join("monthindex_to_yearindex"),
                 Version::ONE,
                 compressed,
             )?,
-            yearindex_to_decadeindex: StorableVec::forced_import(
+            yearindex_to_decadeindex: ComputedVec::forced_import(
                 &path.join("yearindex_to_decadeindex"),
                 Version::ONE,
                 compressed,
             )?,
-            height_to_difficultyepoch: StorableVec::forced_import(
+            height_to_difficultyepoch: ComputedVec::forced_import(
                 &path.join("height_to_difficultyepoch"),
                 Version::ONE,
                 compressed,
             )?,
-            height_to_halvingepoch: StorableVec::forced_import(
+            height_to_halvingepoch: ComputedVec::forced_import(
                 &path.join("height_to_halvingepoch"),
                 Version::ONE,
                 compressed,
             )?,
-            weekindex_to_weekindex: StorableVec::forced_import(
+            weekindex_to_weekindex: ComputedVec::forced_import(
                 &path.join("weekindex_to_weekindex"),
                 Version::ONE,
                 compressed,
             )?,
-            monthindex_to_monthindex: StorableVec::forced_import(
+            monthindex_to_monthindex: ComputedVec::forced_import(
                 &path.join("monthindex_to_monthindex"),
                 Version::ONE,
                 compressed,
             )?,
-            yearindex_to_yearindex: StorableVec::forced_import(
+            yearindex_to_yearindex: ComputedVec::forced_import(
                 &path.join("yearindex_to_yearindex"),
                 Version::ONE,
                 compressed,
             )?,
-            decadeindex_to_decadeindex: StorableVec::forced_import(
+            decadeindex_to_decadeindex: ComputedVec::forced_import(
                 &path.join("decadeindex_to_decadeindex"),
                 Version::ONE,
                 compressed,
             )?,
-            difficultyepoch_to_difficultyepoch: StorableVec::forced_import(
+            difficultyepoch_to_difficultyepoch: ComputedVec::forced_import(
                 &path.join("difficultyepoch_to_difficultyepoch"),
                 Version::ONE,
                 compressed,
             )?,
-            halvingepoch_to_halvingepoch: StorableVec::forced_import(
+            halvingepoch_to_halvingepoch: ComputedVec::forced_import(
                 &path.join("halvingepoch_to_halvingepoch"),
                 Version::ONE,
                 compressed,
             )?,
-            dateindex_to_timestamp: StorableVec::forced_import(
+            dateindex_to_timestamp: ComputedVec::forced_import(
                 &path.join("dateindex_to_timestamp"),
                 Version::ONE,
                 compressed,
             )?,
-            decadeindex_to_timestamp: StorableVec::forced_import(
+            decadeindex_to_timestamp: ComputedVec::forced_import(
                 &path.join("decadeindex_to_timestamp"),
                 Version::ONE,
                 compressed,
             )?,
-            difficultyepoch_to_timestamp: StorableVec::forced_import(
+            difficultyepoch_to_timestamp: ComputedVec::forced_import(
                 &path.join("difficultyepoch_to_timestamp"),
                 Version::ONE,
                 compressed,
             )?,
-            halvingepoch_to_timestamp: StorableVec::forced_import(
+            halvingepoch_to_timestamp: ComputedVec::forced_import(
                 &path.join("halvingepoch_to_timestamp"),
                 Version::ONE,
                 compressed,
             )?,
-            monthindex_to_timestamp: StorableVec::forced_import(
+            monthindex_to_timestamp: ComputedVec::forced_import(
                 &path.join("monthindex_to_timestamp"),
                 Version::ONE,
                 compressed,
             )?,
-            weekindex_to_timestamp: StorableVec::forced_import(
+            weekindex_to_timestamp: ComputedVec::forced_import(
                 &path.join("weekindex_to_timestamp"),
                 Version::ONE,
                 compressed,
             )?,
-            yearindex_to_timestamp: StorableVec::forced_import(
+            yearindex_to_timestamp: ComputedVec::forced_import(
                 &path.join("yearindex_to_timestamp"),
                 Version::ONE,
                 compressed,
             )?,
-            height_to_fixed_timestamp: StorableVec::forced_import(
+            height_to_fixed_timestamp: ComputedVec::forced_import(
                 &path.join("height_to_fixed_timestamp"),
                 Version::ONE,
                 compressed,
             )?,
-            monthindex_to_quarterindex: StorableVec::forced_import(
+            monthindex_to_quarterindex: ComputedVec::forced_import(
                 &path.join("monthindex_to_quarterindex"),
                 Version::ONE,
                 compressed,
             )?,
-            quarterindex_to_first_monthindex: StorableVec::forced_import(
+            quarterindex_to_first_monthindex: ComputedVec::forced_import(
                 &path.join("quarterindex_to_first_monthindex"),
                 Version::ONE,
                 compressed,
             )?,
-            quarterindex_to_last_monthindex: StorableVec::forced_import(
+            quarterindex_to_last_monthindex: ComputedVec::forced_import(
                 &path.join("quarterindex_to_last_monthindex"),
                 Version::ONE,
                 compressed,
             )?,
-            quarterindex_to_quarterindex: StorableVec::forced_import(
+            quarterindex_to_quarterindex: ComputedVec::forced_import(
                 &path.join("quarterindex_to_quarterindex"),
                 Version::ONE,
                 compressed,
             )?,
-            quarterindex_to_timestamp: StorableVec::forced_import(
+            quarterindex_to_timestamp: ComputedVec::forced_import(
                 &path.join("quarterindex_to_timestamp"),
                 Version::ONE,
                 compressed,

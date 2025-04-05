@@ -3,40 +3,41 @@ use std::path::Path;
 use brk_exit::Exit;
 use brk_vec::{AnyStorableVec, Compressed, Result, StoredIndex, StoredType, Version};
 
-use crate::storage::vecs::base::StorableVec;
+use crate::storage::vecs::base::ComputedVec;
 
 use super::ComputedType;
 
 #[derive(Clone, Debug)]
-pub struct StorableVecBuilder<I, T>
+pub struct ComputedVecBuilder<I, T>
 where
     I: StoredIndex,
     T: ComputedType,
 {
-    pub first: Option<StorableVec<I, T>>,
-    pub average: Option<StorableVec<I, T>>,
-    pub sum: Option<StorableVec<I, T>>,
-    pub max: Option<StorableVec<I, T>>,
-    pub _90p: Option<StorableVec<I, T>>,
-    pub _75p: Option<StorableVec<I, T>>,
-    pub median: Option<StorableVec<I, T>>,
-    pub _25p: Option<StorableVec<I, T>>,
-    pub _10p: Option<StorableVec<I, T>>,
-    pub min: Option<StorableVec<I, T>>,
-    pub last: Option<StorableVec<I, T>>,
+    pub first: Option<ComputedVec<I, T>>,
+    pub average: Option<ComputedVec<I, T>>,
+    pub sum: Option<ComputedVec<I, T>>,
+    pub max: Option<ComputedVec<I, T>>,
+    pub _90p: Option<ComputedVec<I, T>>,
+    pub _75p: Option<ComputedVec<I, T>>,
+    pub median: Option<ComputedVec<I, T>>,
+    pub _25p: Option<ComputedVec<I, T>>,
+    pub _10p: Option<ComputedVec<I, T>>,
+    pub min: Option<ComputedVec<I, T>>,
+    pub last: Option<ComputedVec<I, T>>,
 }
 
-impl<I, T> StorableVecBuilder<I, T>
+impl<I, T> ComputedVecBuilder<I, T>
 where
     I: StoredIndex,
     T: ComputedType,
 {
     pub fn forced_import(
         path: &Path,
+        name: &str,
         compressed: Compressed,
         options: StorableVecGeneatorOptions,
     ) -> color_eyre::Result<Self> {
-        let name = path.file_name().unwrap().to_str().unwrap().to_string();
+        // let name = path.file_name().unwrap().to_str().unwrap().to_string();
         let key = I::to_string().split("::").last().unwrap().to_lowercase();
 
         let only_one_active = options.is_only_one_active();
@@ -59,10 +60,10 @@ where
 
         let s = Self {
             first: options.first.then(|| {
-                StorableVec::forced_import(&prefix("first"), Version::ONE, compressed).unwrap()
+                ComputedVec::forced_import(&prefix("first"), Version::ONE, compressed).unwrap()
             }),
             last: options.last.then(|| {
-                StorableVec::forced_import(
+                ComputedVec::forced_import(
                     &path.with_file_name(format!("{key}_to_{name}")),
                     Version::ONE,
                     compressed,
@@ -70,31 +71,31 @@ where
                 .unwrap()
             }),
             min: options.min.then(|| {
-                StorableVec::forced_import(&suffix("min"), Version::ONE, compressed).unwrap()
+                ComputedVec::forced_import(&suffix("min"), Version::ONE, compressed).unwrap()
             }),
             max: options.max.then(|| {
-                StorableVec::forced_import(&suffix("max"), Version::ONE, compressed).unwrap()
+                ComputedVec::forced_import(&suffix("max"), Version::ONE, compressed).unwrap()
             }),
             median: options.median.then(|| {
-                StorableVec::forced_import(&suffix("median"), Version::ONE, compressed).unwrap()
+                ComputedVec::forced_import(&suffix("median"), Version::ONE, compressed).unwrap()
             }),
             average: options.average.then(|| {
-                StorableVec::forced_import(&suffix("average"), Version::ONE, compressed).unwrap()
+                ComputedVec::forced_import(&suffix("average"), Version::ONE, compressed).unwrap()
             }),
             sum: options.sum.then(|| {
-                StorableVec::forced_import(&suffix("sum"), Version::ONE, compressed).unwrap()
+                ComputedVec::forced_import(&suffix("sum"), Version::ONE, compressed).unwrap()
             }),
             _90p: options._90p.then(|| {
-                StorableVec::forced_import(&suffix("90p"), Version::ONE, compressed).unwrap()
+                ComputedVec::forced_import(&suffix("90p"), Version::ONE, compressed).unwrap()
             }),
             _75p: options._75p.then(|| {
-                StorableVec::forced_import(&suffix("75p"), Version::ONE, compressed).unwrap()
+                ComputedVec::forced_import(&suffix("75p"), Version::ONE, compressed).unwrap()
             }),
             _25p: options._25p.then(|| {
-                StorableVec::forced_import(&suffix("25p"), Version::ONE, compressed).unwrap()
+                ComputedVec::forced_import(&suffix("25p"), Version::ONE, compressed).unwrap()
             }),
             _10p: options._10p.then(|| {
-                StorableVec::forced_import(&suffix("10p"), Version::ONE, compressed).unwrap()
+                ComputedVec::forced_import(&suffix("10p"), Version::ONE, compressed).unwrap()
             }),
         };
 
@@ -104,7 +105,7 @@ where
     pub fn compute<I2>(
         &mut self,
         max_from: I,
-        source: &mut StorableVec<I2, T>,
+        source: &mut ComputedVec<I2, T>,
         first_indexes: &mut brk_vec::StorableVec<I, I2>,
         last_indexes: &mut brk_vec::StorableVec<I, I2>,
         exit: &Exit,
@@ -211,7 +212,7 @@ where
     pub fn from_aligned<I2>(
         &mut self,
         max_from: I,
-        source: &mut StorableVecBuilder<I2, T>,
+        source: &mut ComputedVecBuilder<I2, T>,
         first_indexes: &mut brk_vec::StorableVec<I, I2>,
         last_indexes: &mut brk_vec::StorableVec<I, I2>,
         exit: &Exit,
@@ -352,15 +353,11 @@ where
 
     fn starting_index(&self, max_from: I) -> I {
         max_from.min(I::from(
-            self.as_any_vecs()
-                .into_iter()
-                .map(|v| v.len())
-                .min()
-                .unwrap(),
+            self.any_vecs().into_iter().map(|v| v.len()).min().unwrap(),
         ))
     }
 
-    pub fn as_any_vecs(&self) -> Vec<&dyn AnyStorableVec> {
+    pub fn any_vecs(&self) -> Vec<&dyn AnyStorableVec> {
         let mut v: Vec<&dyn AnyStorableVec> = vec![];
 
         if let Some(first) = self.first.as_ref() {

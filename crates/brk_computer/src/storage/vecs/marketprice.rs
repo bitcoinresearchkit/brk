@@ -10,53 +10,45 @@ use brk_indexer::Indexer;
 use brk_vec::{AnyStorableVec, Compressed, Version};
 
 use super::{
-    Indexes, StorableVec, indexes,
-    stats::{
-        StorableVecGeneatorOptions, StorableVecsStatsFromDate, StorableVecsStatsFromHeightStrict,
+    ComputedVec, Indexes,
+    grouped::{
+        ComputedVecsFromDateindex, ComputedVecsFromHeightStrict, StorableVecGeneatorOptions,
     },
+    indexes,
 };
 
 #[derive(Clone)]
 pub struct Vecs {
-    pub dateindex_to_close: StorableVec<Dateindex, Close<Dollars>>,
-    pub dateindex_to_close_in_cents: StorableVec<Dateindex, Close<Cents>>,
-    pub dateindex_to_high: StorableVec<Dateindex, High<Dollars>>,
-    pub dateindex_to_high_in_cents: StorableVec<Dateindex, High<Cents>>,
-    pub dateindex_to_low: StorableVec<Dateindex, Low<Dollars>>,
-    pub dateindex_to_low_in_cents: StorableVec<Dateindex, Low<Cents>>,
-    pub dateindex_to_ohlc: StorableVec<Dateindex, OHLCDollars>,
-    pub dateindex_to_ohlc_in_cents: StorableVec<Dateindex, OHLCCents>,
-    pub dateindex_to_open: StorableVec<Dateindex, Open<Dollars>>,
-    pub dateindex_to_open_in_cents: StorableVec<Dateindex, Open<Cents>>,
-    pub dateindex_to_sats_per_dollar: StorableVec<Dateindex, Close<Sats>>,
-    pub height_to_close: StorableVec<Height, Close<Dollars>>,
-    pub height_to_close_in_cents: StorableVec<Height, Close<Cents>>,
-    pub height_to_high: StorableVec<Height, High<Dollars>>,
-    pub height_to_high_in_cents: StorableVec<Height, High<Cents>>,
-    pub height_to_low: StorableVec<Height, Low<Dollars>>,
-    pub height_to_low_in_cents: StorableVec<Height, Low<Cents>>,
-    pub height_to_ohlc: StorableVec<Height, OHLCDollars>,
-    pub height_to_ohlc_in_cents: StorableVec<Height, OHLCCents>,
-    pub height_to_open: StorableVec<Height, Open<Dollars>>,
-    pub height_to_open_in_cents: StorableVec<Height, Open<Cents>>,
-    pub height_to_sats_per_dollar: StorableVec<Height, Close<Sats>>,
-    pub timeindexes_to_close: StorableVecsStatsFromDate<Close<Dollars>>,
-    pub timeindexes_to_high: StorableVecsStatsFromDate<High<Dollars>>,
-    pub timeindexes_to_low: StorableVecsStatsFromDate<Low<Dollars>>,
-    pub timeindexes_to_open: StorableVecsStatsFromDate<Open<Dollars>>,
-    pub timeindexes_to_sats_per_dollar: StorableVecsStatsFromDate<Close<Sats>>,
-    pub chainindexes_to_close: StorableVecsStatsFromHeightStrict<Close<Dollars>>,
-    pub chainindexes_to_high: StorableVecsStatsFromHeightStrict<High<Dollars>>,
-    pub chainindexes_to_low: StorableVecsStatsFromHeightStrict<Low<Dollars>>,
-    pub chainindexes_to_open: StorableVecsStatsFromHeightStrict<Open<Dollars>>,
-    pub chainindexes_to_sats_per_dollar: StorableVecsStatsFromHeightStrict<Close<Sats>>,
-    pub weekindex_to_ohlc: StorableVec<Weekindex, OHLCDollars>,
-    pub difficultyepoch_to_ohlc: StorableVec<Difficultyepoch, OHLCDollars>,
-    pub monthindex_to_ohlc: StorableVec<Monthindex, OHLCDollars>,
-    pub quarterindex_to_ohlc: StorableVec<Quarterindex, OHLCDollars>,
-    pub yearindex_to_ohlc: StorableVec<Yearindex, OHLCDollars>,
+    // pub dateindex_to_close: ComputedVec<Dateindex, Close<Dollars>>,
+    pub dateindex_to_close_in_cents: ComputedVec<Dateindex, Close<Cents>>,
+    pub dateindex_to_high_in_cents: ComputedVec<Dateindex, High<Cents>>,
+    pub dateindex_to_low_in_cents: ComputedVec<Dateindex, Low<Cents>>,
+    pub dateindex_to_ohlc: ComputedVec<Dateindex, OHLCDollars>,
+    pub dateindex_to_ohlc_in_cents: ComputedVec<Dateindex, OHLCCents>,
+    pub dateindex_to_open_in_cents: ComputedVec<Dateindex, Open<Cents>>,
+    pub height_to_close_in_cents: ComputedVec<Height, Close<Cents>>,
+    pub height_to_high_in_cents: ComputedVec<Height, High<Cents>>,
+    pub height_to_low_in_cents: ComputedVec<Height, Low<Cents>>,
+    pub height_to_ohlc: ComputedVec<Height, OHLCDollars>,
+    pub height_to_ohlc_in_cents: ComputedVec<Height, OHLCCents>,
+    pub height_to_open_in_cents: ComputedVec<Height, Open<Cents>>,
+    pub timeindexes_to_close: ComputedVecsFromDateindex<Close<Dollars>>,
+    pub timeindexes_to_high: ComputedVecsFromDateindex<High<Dollars>>,
+    pub timeindexes_to_low: ComputedVecsFromDateindex<Low<Dollars>>,
+    pub timeindexes_to_open: ComputedVecsFromDateindex<Open<Dollars>>,
+    pub timeindexes_to_sats_per_dollar: ComputedVecsFromDateindex<Close<Sats>>,
+    pub chainindexes_to_close: ComputedVecsFromHeightStrict<Close<Dollars>>,
+    pub chainindexes_to_high: ComputedVecsFromHeightStrict<High<Dollars>>,
+    pub chainindexes_to_low: ComputedVecsFromHeightStrict<Low<Dollars>>,
+    pub chainindexes_to_open: ComputedVecsFromHeightStrict<Open<Dollars>>,
+    pub chainindexes_to_sats_per_dollar: ComputedVecsFromHeightStrict<Close<Sats>>,
+    pub weekindex_to_ohlc: ComputedVec<Weekindex, OHLCDollars>,
+    pub difficultyepoch_to_ohlc: ComputedVec<Difficultyepoch, OHLCDollars>,
+    pub monthindex_to_ohlc: ComputedVec<Monthindex, OHLCDollars>,
+    pub quarterindex_to_ohlc: ComputedVec<Quarterindex, OHLCDollars>,
+    pub yearindex_to_ohlc: ComputedVec<Yearindex, OHLCDollars>,
     // pub halvingepoch_to_ohlc: StorableVec<Halvingepoch, OHLCDollars>,
-    pub decadeindex_to_ohlc: StorableVec<Decadeindex, OHLCDollars>,
+    pub decadeindex_to_ohlc: ComputedVec<Decadeindex, OHLCDollars>,
 }
 
 impl Vecs {
@@ -64,193 +56,163 @@ impl Vecs {
         fs::create_dir_all(path)?;
 
         Ok(Self {
-            dateindex_to_ohlc_in_cents: StorableVec::forced_import(
+            dateindex_to_ohlc_in_cents: ComputedVec::forced_import(
                 &path.join("dateindex_to_ohlc_in_cents"),
                 Version::ONE,
                 compressed,
             )?,
-            dateindex_to_ohlc: StorableVec::forced_import(
+            dateindex_to_ohlc: ComputedVec::forced_import(
                 &path.join("dateindex_to_ohlc"),
                 Version::ONE,
                 compressed,
             )?,
-            dateindex_to_close_in_cents: StorableVec::forced_import(
+            dateindex_to_close_in_cents: ComputedVec::forced_import(
                 &path.join("dateindex_to_close_in_cents"),
                 Version::ONE,
                 compressed,
             )?,
-            dateindex_to_close: StorableVec::forced_import(
-                &path.join("dateindex_to_close"),
-                Version::ONE,
-                compressed,
-            )?,
-            dateindex_to_high_in_cents: StorableVec::forced_import(
+            dateindex_to_high_in_cents: ComputedVec::forced_import(
                 &path.join("dateindex_to_high_in_cents"),
                 Version::ONE,
                 compressed,
             )?,
-            dateindex_to_high: StorableVec::forced_import(
-                &path.join("dateindex_to_high"),
-                Version::ONE,
-                compressed,
-            )?,
-            dateindex_to_low_in_cents: StorableVec::forced_import(
+            dateindex_to_low_in_cents: ComputedVec::forced_import(
                 &path.join("dateindex_to_low_in_cents"),
                 Version::ONE,
                 compressed,
             )?,
-            dateindex_to_low: StorableVec::forced_import(
-                &path.join("dateindex_to_low"),
-                Version::ONE,
-                compressed,
-            )?,
-            dateindex_to_open_in_cents: StorableVec::forced_import(
+            dateindex_to_open_in_cents: ComputedVec::forced_import(
                 &path.join("dateindex_to_open_in_cents"),
                 Version::ONE,
                 compressed,
             )?,
-            dateindex_to_open: StorableVec::forced_import(
-                &path.join("dateindex_to_open"),
-                Version::ONE,
-                compressed,
-            )?,
-            dateindex_to_sats_per_dollar: StorableVec::forced_import(
-                &path.join("dateindex_to_sats_per_dollar"),
-                Version::ONE,
-                compressed,
-            )?,
-            height_to_ohlc_in_cents: StorableVec::forced_import(
+            height_to_ohlc_in_cents: ComputedVec::forced_import(
                 &path.join("height_to_ohlc_in_cents"),
                 Version::ONE,
                 compressed,
             )?,
-            height_to_ohlc: StorableVec::forced_import(
+            height_to_ohlc: ComputedVec::forced_import(
                 &path.join("height_to_ohlc"),
                 Version::ONE,
                 compressed,
             )?,
-            height_to_close_in_cents: StorableVec::forced_import(
+            height_to_close_in_cents: ComputedVec::forced_import(
                 &path.join("height_to_close_in_cents"),
                 Version::ONE,
                 compressed,
             )?,
-            height_to_close: StorableVec::forced_import(
-                &path.join("height_to_close"),
-                Version::ONE,
-                compressed,
-            )?,
-            height_to_high_in_cents: StorableVec::forced_import(
+            height_to_high_in_cents: ComputedVec::forced_import(
                 &path.join("height_to_high_in_cents"),
                 Version::ONE,
                 compressed,
             )?,
-            height_to_high: StorableVec::forced_import(
-                &path.join("height_to_high"),
-                Version::ONE,
-                compressed,
-            )?,
-            height_to_low_in_cents: StorableVec::forced_import(
+            height_to_low_in_cents: ComputedVec::forced_import(
                 &path.join("height_to_low_in_cents"),
                 Version::ONE,
                 compressed,
             )?,
-            height_to_low: StorableVec::forced_import(
-                &path.join("height_to_low"),
-                Version::ONE,
-                compressed,
-            )?,
-            height_to_open_in_cents: StorableVec::forced_import(
+            height_to_open_in_cents: ComputedVec::forced_import(
                 &path.join("height_to_open_in_cents"),
                 Version::ONE,
                 compressed,
             )?,
-            height_to_open: StorableVec::forced_import(
-                &path.join("height_to_open"),
+            timeindexes_to_open: ComputedVecsFromDateindex::forced_import(
+                path,
+                "open",
                 Version::ONE,
-                compressed,
-            )?,
-            height_to_sats_per_dollar: StorableVec::forced_import(
-                &path.join("height_to_sats_per_dollar"),
-                Version::ONE,
-                compressed,
-            )?,
-            timeindexes_to_open: StorableVecsStatsFromDate::forced_import(
-                &path.join("open"),
                 compressed,
                 StorableVecGeneatorOptions::default().add_first(),
             )?,
-            timeindexes_to_high: StorableVecsStatsFromDate::forced_import(
-                &path.join("high"),
+            timeindexes_to_high: ComputedVecsFromDateindex::forced_import(
+                path,
+                "high",
+                Version::ONE,
                 compressed,
                 StorableVecGeneatorOptions::default().add_max(),
             )?,
-            timeindexes_to_low: StorableVecsStatsFromDate::forced_import(
-                &path.join("low"),
+            timeindexes_to_low: ComputedVecsFromDateindex::forced_import(
+                path,
+                "low",
+                Version::ONE,
                 compressed,
                 StorableVecGeneatorOptions::default().add_min(),
             )?,
-            timeindexes_to_close: StorableVecsStatsFromDate::forced_import(
-                &path.join("close"),
+            timeindexes_to_close: ComputedVecsFromDateindex::forced_import(
+                path,
+                "close",
+                Version::ONE,
                 compressed,
                 StorableVecGeneatorOptions::default().add_last(),
             )?,
-            timeindexes_to_sats_per_dollar: StorableVecsStatsFromDate::forced_import(
-                &path.join("sats_per_dollar"),
+            timeindexes_to_sats_per_dollar: ComputedVecsFromDateindex::forced_import(
+                path,
+                "sats_per_dollar",
+                Version::ONE,
                 compressed,
                 StorableVecGeneatorOptions::default().add_last(),
             )?,
-            chainindexes_to_open: StorableVecsStatsFromHeightStrict::forced_import(
-                &path.join("open"),
+            chainindexes_to_open: ComputedVecsFromHeightStrict::forced_import(
+                path,
+                "open",
+                Version::ONE,
                 compressed,
                 StorableVecGeneatorOptions::default().add_first(),
             )?,
-            chainindexes_to_high: StorableVecsStatsFromHeightStrict::forced_import(
-                &path.join("high"),
+            chainindexes_to_high: ComputedVecsFromHeightStrict::forced_import(
+                path,
+                "high",
+                Version::ONE,
                 compressed,
                 StorableVecGeneatorOptions::default().add_max(),
             )?,
-            chainindexes_to_low: StorableVecsStatsFromHeightStrict::forced_import(
-                &path.join("low"),
+            chainindexes_to_low: ComputedVecsFromHeightStrict::forced_import(
+                path,
+                "low",
+                Version::ONE,
                 compressed,
                 StorableVecGeneatorOptions::default().add_min(),
             )?,
-            chainindexes_to_close: StorableVecsStatsFromHeightStrict::forced_import(
-                &path.join("close"),
+            chainindexes_to_close: ComputedVecsFromHeightStrict::forced_import(
+                path,
+                "close",
+                Version::ONE,
                 compressed,
                 StorableVecGeneatorOptions::default().add_last(),
             )?,
-            chainindexes_to_sats_per_dollar: StorableVecsStatsFromHeightStrict::forced_import(
-                &path.join("sats_per_dollar"),
+            chainindexes_to_sats_per_dollar: ComputedVecsFromHeightStrict::forced_import(
+                path,
+                "sats_per_dollar",
+                Version::ONE,
                 compressed,
                 StorableVecGeneatorOptions::default().add_last(),
             )?,
-            weekindex_to_ohlc: StorableVec::forced_import(
+            weekindex_to_ohlc: ComputedVec::forced_import(
                 &path.join("weekindex_to_ohlc"),
                 Version::ONE,
                 compressed,
             )?,
-            difficultyepoch_to_ohlc: StorableVec::forced_import(
+            difficultyepoch_to_ohlc: ComputedVec::forced_import(
                 &path.join("difficultyepoch_to_ohlc"),
                 Version::ONE,
                 compressed,
             )?,
-            monthindex_to_ohlc: StorableVec::forced_import(
+            monthindex_to_ohlc: ComputedVec::forced_import(
                 &path.join("monthindex_to_ohlc"),
                 Version::ONE,
                 compressed,
             )?,
-            quarterindex_to_ohlc: StorableVec::forced_import(
+            quarterindex_to_ohlc: ComputedVec::forced_import(
                 &path.join("quarterindex_to_ohlc"),
                 Version::ONE,
                 compressed,
             )?,
-            yearindex_to_ohlc: StorableVec::forced_import(
+            yearindex_to_ohlc: ComputedVec::forced_import(
                 &path.join("yearindex_to_ohlc"),
                 Version::ONE,
                 compressed,
             )?,
             // halvingepoch_to_ohlc: StorableVec::forced_import(&path.join("halvingepoch_to_ohlc"), Version::ONE, compressed)?,
-            decadeindex_to_ohlc: StorableVec::forced_import(
+            decadeindex_to_ohlc: ComputedVec::forced_import(
                 &path.join("decadeindex_to_ohlc"),
                 Version::ONE,
                 compressed,
@@ -320,41 +282,6 @@ impl Vecs {
             exit,
         )?;
 
-        self.height_to_open.compute_transform(
-            starting_indexes.height,
-            self.height_to_ohlc.mut_vec(),
-            |(di, ohlc, ..)| (di, ohlc.open),
-            exit,
-        )?;
-
-        self.height_to_high.compute_transform(
-            starting_indexes.height,
-            self.height_to_ohlc.mut_vec(),
-            |(di, ohlc, ..)| (di, ohlc.high),
-            exit,
-        )?;
-
-        self.height_to_low.compute_transform(
-            starting_indexes.height,
-            self.height_to_ohlc.mut_vec(),
-            |(di, ohlc, ..)| (di, ohlc.low),
-            exit,
-        )?;
-
-        self.height_to_close.compute_transform(
-            starting_indexes.height,
-            self.height_to_ohlc.mut_vec(),
-            |(di, ohlc, ..)| (di, ohlc.close),
-            exit,
-        )?;
-
-        self.height_to_sats_per_dollar.compute_transform(
-            starting_indexes.height,
-            self.height_to_close.mut_vec(),
-            |(di, close, ..)| (di, Close::from(Sats::ONE_BTC / *close)),
-            exit,
-        )?;
-
         self.dateindex_to_ohlc_in_cents.compute_transform(
             starting_indexes.dateindex,
             indexes.dateindex_to_date.mut_vec(),
@@ -400,92 +327,113 @@ impl Vecs {
             exit,
         )?;
 
-        self.dateindex_to_open.compute_transform(
-            starting_indexes.dateindex,
-            self.dateindex_to_ohlc.mut_vec(),
-            |(di, ohlc, ..)| (di, ohlc.open),
-            exit,
-        )?;
-
-        self.dateindex_to_high.compute_transform(
-            starting_indexes.dateindex,
-            self.dateindex_to_ohlc.mut_vec(),
-            |(di, ohlc, ..)| (di, ohlc.high),
-            exit,
-        )?;
-
-        self.dateindex_to_low.compute_transform(
-            starting_indexes.dateindex,
-            self.dateindex_to_ohlc.mut_vec(),
-            |(di, ohlc, ..)| (di, ohlc.low),
-            exit,
-        )?;
-
-        self.dateindex_to_close.compute_transform(
-            starting_indexes.dateindex,
-            self.dateindex_to_ohlc.mut_vec(),
-            |(di, ohlc, ..)| (di, ohlc.close),
-            exit,
-        )?;
-
-        self.dateindex_to_sats_per_dollar.compute_transform(
-            starting_indexes.dateindex,
-            self.dateindex_to_close.mut_vec(),
-            |(di, close, ..)| (di, Close::from(Sats::ONE_BTC / *close)),
-            exit,
-        )?;
-
         self.timeindexes_to_close.compute(
-            &mut self.dateindex_to_close,
+            |v| {
+                v.compute_transform(
+                    starting_indexes.dateindex,
+                    self.dateindex_to_ohlc.mut_vec(),
+                    |(di, ohlc, ..)| (di, ohlc.close),
+                    exit,
+                )
+            },
             indexes,
             starting_indexes,
             exit,
         )?;
 
         self.timeindexes_to_high.compute(
-            &mut self.dateindex_to_high,
+            |v| {
+                v.compute_transform(
+                    starting_indexes.dateindex,
+                    self.dateindex_to_ohlc.mut_vec(),
+                    |(di, ohlc, ..)| (di, ohlc.high),
+                    exit,
+                )
+            },
             indexes,
             starting_indexes,
             exit,
         )?;
 
         self.timeindexes_to_low.compute(
-            &mut self.dateindex_to_low,
+            |v| {
+                v.compute_transform(
+                    starting_indexes.dateindex,
+                    self.dateindex_to_ohlc.mut_vec(),
+                    |(di, ohlc, ..)| (di, ohlc.low),
+                    exit,
+                )
+            },
             indexes,
             starting_indexes,
             exit,
         )?;
 
         self.timeindexes_to_open.compute(
-            &mut self.dateindex_to_open,
+            |v| {
+                v.compute_transform(
+                    starting_indexes.dateindex,
+                    self.dateindex_to_ohlc.mut_vec(),
+                    |(di, ohlc, ..)| (di, ohlc.open),
+                    exit,
+                )
+            },
             indexes,
             starting_indexes,
             exit,
         )?;
 
         self.chainindexes_to_close.compute(
-            &mut self.height_to_close,
+            |v| {
+                v.compute_transform(
+                    starting_indexes.height,
+                    self.height_to_ohlc.mut_vec(),
+                    |(di, ohlc, ..)| (di, ohlc.close),
+                    exit,
+                )
+            },
             indexes,
             starting_indexes,
             exit,
         )?;
 
         self.chainindexes_to_high.compute(
-            &mut self.height_to_high,
+            |v| {
+                v.compute_transform(
+                    starting_indexes.height,
+                    self.height_to_ohlc.mut_vec(),
+                    |(di, ohlc, ..)| (di, ohlc.high),
+                    exit,
+                )
+            },
             indexes,
             starting_indexes,
             exit,
         )?;
 
         self.chainindexes_to_low.compute(
-            &mut self.height_to_low,
+            |v| {
+                v.compute_transform(
+                    starting_indexes.height,
+                    self.height_to_ohlc.mut_vec(),
+                    |(di, ohlc, ..)| (di, ohlc.low),
+                    exit,
+                )
+            },
             indexes,
             starting_indexes,
             exit,
         )?;
 
         self.chainindexes_to_open.compute(
-            &mut self.height_to_open,
+            |v| {
+                v.compute_transform(
+                    starting_indexes.height,
+                    self.height_to_ohlc.mut_vec(),
+                    |(di, ohlc, ..)| (di, ohlc.open),
+                    exit,
+                )
+            },
             indexes,
             starting_indexes,
             exit,
@@ -771,34 +719,52 @@ impl Vecs {
             exit,
         )?;
 
+        self.chainindexes_to_sats_per_dollar.compute(
+            |v| {
+                v.compute_transform(
+                    starting_indexes.height,
+                    self.chainindexes_to_close.height.mut_vec(),
+                    |(i, close, ..)| (i, Close::from(Sats::ONE_BTC / *close)),
+                    exit,
+                )
+            },
+            indexes,
+            starting_indexes,
+            exit,
+        )?;
+
+        self.timeindexes_to_sats_per_dollar.compute(
+            |v| {
+                v.compute_transform(
+                    starting_indexes.dateindex,
+                    self.timeindexes_to_close.dateindex.mut_vec(),
+                    |(i, close, ..)| (i, Close::from(Sats::ONE_BTC / *close)),
+                    exit,
+                )
+            },
+            indexes,
+            starting_indexes,
+            exit,
+        )?;
+
         Ok(())
     }
 
     pub fn as_any_vecs(&self) -> Vec<&dyn AnyStorableVec> {
         vec![
             vec![
-                self.dateindex_to_close.any_vec(),
                 self.dateindex_to_close_in_cents.any_vec(),
-                self.dateindex_to_high.any_vec(),
                 self.dateindex_to_high_in_cents.any_vec(),
-                self.dateindex_to_low.any_vec(),
                 self.dateindex_to_low_in_cents.any_vec(),
                 self.dateindex_to_ohlc.any_vec(),
                 self.dateindex_to_ohlc_in_cents.any_vec(),
-                self.dateindex_to_open.any_vec(),
                 self.dateindex_to_open_in_cents.any_vec(),
-                self.dateindex_to_sats_per_dollar.any_vec(),
-                self.height_to_close.any_vec(),
                 self.height_to_close_in_cents.any_vec(),
-                self.height_to_high.any_vec(),
                 self.height_to_high_in_cents.any_vec(),
-                self.height_to_low.any_vec(),
                 self.height_to_low_in_cents.any_vec(),
                 self.height_to_ohlc.any_vec(),
                 self.height_to_ohlc_in_cents.any_vec(),
-                self.height_to_open.any_vec(),
                 self.height_to_open_in_cents.any_vec(),
-                self.height_to_sats_per_dollar.any_vec(),
                 self.weekindex_to_ohlc.any_vec(),
                 self.difficultyepoch_to_ohlc.any_vec(),
                 self.monthindex_to_ohlc.any_vec(),
@@ -807,14 +773,16 @@ impl Vecs {
                 // self.halvingepoch_to_ohlc.any_vec(),
                 self.decadeindex_to_ohlc.any_vec(),
             ],
-            self.timeindexes_to_close.as_any_vecs(),
-            self.timeindexes_to_high.as_any_vecs(),
-            self.timeindexes_to_low.as_any_vecs(),
-            self.timeindexes_to_open.as_any_vecs(),
-            self.chainindexes_to_close.as_any_vecs(),
-            self.chainindexes_to_high.as_any_vecs(),
-            self.chainindexes_to_low.as_any_vecs(),
-            self.chainindexes_to_open.as_any_vecs(),
+            self.chainindexes_to_sats_per_dollar.any_vecs(),
+            self.timeindexes_to_sats_per_dollar.any_vecs(),
+            self.timeindexes_to_close.any_vecs(),
+            self.timeindexes_to_high.any_vecs(),
+            self.timeindexes_to_low.any_vecs(),
+            self.timeindexes_to_open.any_vecs(),
+            self.chainindexes_to_close.any_vecs(),
+            self.chainindexes_to_high.any_vecs(),
+            self.chainindexes_to_low.any_vecs(),
+            self.chainindexes_to_open.any_vecs(),
         ]
         .concat()
     }

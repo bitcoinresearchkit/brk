@@ -6,19 +6,19 @@ use std::{
 };
 
 use brk_vec::{
-    AnyStorableVec, Compressed, Error, MAX_CACHE_SIZE, MAX_PAGE_SIZE, Result, StoredIndex,
-    StoredType, Value, Version,
+    AnyStorableVec, Compressed, Error, MAX_CACHE_SIZE, MAX_PAGE_SIZE, Result, StorableVec,
+    StoredIndex, StoredType, Value, Version,
 };
 
 use super::Height;
 
 #[derive(Debug)]
-pub struct StorableVec<I, T> {
+pub struct IndexedVec<I, T> {
     height: Option<Height>,
-    vec: brk_vec::StorableVec<I, T>,
+    vec: StorableVec<I, T>,
 }
 
-impl<I, T> StorableVec<I, T>
+impl<I, T> IndexedVec<I, T>
 where
     I: StoredIndex,
     T: StoredType,
@@ -162,7 +162,7 @@ where
     }
 }
 
-impl<I, T> Clone for StorableVec<I, T>
+impl<I, T> Clone for IndexedVec<I, T>
 where
     I: StoredIndex,
     T: StoredType,
@@ -180,7 +180,7 @@ pub trait AnyIndexedVec: Send + Sync {
     fn flush(&mut self, height: Height) -> io::Result<()>;
 }
 
-impl<I, T> AnyIndexedVec for StorableVec<I, T>
+impl<I, T> AnyIndexedVec for IndexedVec<I, T>
 where
     I: StoredIndex,
     T: StoredType,

@@ -4,63 +4,78 @@ use brk_core::{
     Dateindex, Decadeindex, Difficultyepoch, Height, Monthindex, Quarterindex, Weekindex, Yearindex,
 };
 use brk_exit::Exit;
-use brk_vec::{AnyStorableVec, Compressed};
+use brk_vec::{AnyStorableVec, Compressed, Result, Version};
 
-use crate::storage::vecs::{Indexes, base::StorableVec, indexes};
+use crate::storage::vecs::{Indexes, base::ComputedVec, indexes};
 
-use super::{ComputedType, StorableVecBuilder, StorableVecGeneatorOptions};
+use super::{ComputedType, ComputedVecBuilder, StorableVecGeneatorOptions};
 
 #[derive(Clone)]
-pub struct StorableVecsStatsFromHeight<T>
+pub struct ComputedVecsFromHeight<T>
 where
     T: ComputedType + PartialOrd,
 {
-    pub dateindex: StorableVecBuilder<Dateindex, T>,
-    pub weekindex: StorableVecBuilder<Weekindex, T>,
-    pub difficultyepoch: StorableVecBuilder<Difficultyepoch, T>,
-    pub monthindex: StorableVecBuilder<Monthindex, T>,
-    pub quarterindex: StorableVecBuilder<Quarterindex, T>,
-    pub yearindex: StorableVecBuilder<Yearindex, T>,
+    pub height: ComputedVec<Height, T>,
+    pub dateindex: ComputedVecBuilder<Dateindex, T>,
+    pub weekindex: ComputedVecBuilder<Weekindex, T>,
+    pub difficultyepoch: ComputedVecBuilder<Difficultyepoch, T>,
+    pub monthindex: ComputedVecBuilder<Monthindex, T>,
+    pub quarterindex: ComputedVecBuilder<Quarterindex, T>,
+    pub yearindex: ComputedVecBuilder<Yearindex, T>,
     // TODO: pub halvingepoch: StorableVecGeneator<Halvingepoch, T>,
-    pub decadeindex: StorableVecBuilder<Decadeindex, T>,
+    pub decadeindex: ComputedVecBuilder<Decadeindex, T>,
 }
 
-impl<T> StorableVecsStatsFromHeight<T>
+impl<T> ComputedVecsFromHeight<T>
 where
     T: ComputedType + Ord + From<f64>,
     f64: From<T>,
 {
     pub fn forced_import(
         path: &Path,
+        name: &str,
+        version: Version,
         compressed: Compressed,
         options: StorableVecGeneatorOptions,
     ) -> color_eyre::Result<Self> {
-        let dateindex = StorableVecBuilder::forced_import(path, compressed, options)?;
+        let height = ComputedVec::forced_import(
+            &path.join(format!("height_to_{name}")),
+            version,
+            compressed,
+        )?;
+
+        let dateindex = ComputedVecBuilder::forced_import(path, name, compressed, options)?;
 
         let options = options.remove_percentiles();
 
         Ok(Self {
+            height,
             dateindex,
-            weekindex: StorableVecBuilder::forced_import(path, compressed, options)?,
-            difficultyepoch: StorableVecBuilder::forced_import(path, compressed, options)?,
-            monthindex: StorableVecBuilder::forced_import(path, compressed, options)?,
-            quarterindex: StorableVecBuilder::forced_import(path, compressed, options)?,
-            yearindex: StorableVecBuilder::forced_import(path, compressed, options)?,
-            // halvingepoch: StorableVecGeneator::forced_import(path, compressed, options)?,
-            decadeindex: StorableVecBuilder::forced_import(path, compressed, options)?,
+            weekindex: ComputedVecBuilder::forced_import(path, name, compressed, options)?,
+            difficultyepoch: ComputedVecBuilder::forced_import(path, name, compressed, options)?,
+            monthindex: ComputedVecBuilder::forced_import(path, name, compressed, options)?,
+            quarterindex: ComputedVecBuilder::forced_import(path, name, compressed, options)?,
+            yearindex: ComputedVecBuilder::forced_import(path, name, compressed, options)?,
+            // halvingepoch: StorableVecGeneator::forced_import(path, name, compressed, options)?,
+            decadeindex: ComputedVecBuilder::forced_import(path, name, compressed, options)?,
         })
     }
 
-    pub fn compute(
+    pub fn compute<F>(
         &mut self,
-        source: &mut StorableVec<Height, T>,
+        mut compute: F,
         indexes: &mut indexes::Vecs,
         starting_indexes: &Indexes,
         exit: &Exit,
-    ) -> color_eyre::Result<()> {
+    ) -> color_eyre::Result<()>
+    where
+        F: FnMut(&mut ComputedVec<Height, T>) -> Result<()>,
+    {
+        compute(&mut self.height)?;
+
         self.dateindex.compute(
             starting_indexes.dateindex,
-            source,
+            &mut self.height,
             indexes.dateindex_to_first_height.mut_vec(),
             indexes.dateindex_to_last_height.mut_vec(),
             exit,
@@ -108,7 +123,7 @@ where
 
         self.difficultyepoch.compute(
             starting_indexes.difficultyepoch,
-            source,
+            &mut self.height,
             indexes.difficultyepoch_to_first_height.mut_vec(),
             indexes.difficultyepoch_to_last_height.mut_vec(),
             exit,
@@ -117,16 +132,17 @@ where
         Ok(())
     }
 
-    pub fn as_any_vecs(&self) -> Vec<&dyn AnyStorableVec> {
+    pub fn any_vecs(&self) -> Vec<&dyn AnyStorableVec> {
         [
-            self.dateindex.as_any_vecs(),
-            self.weekindex.as_any_vecs(),
-            self.difficultyepoch.as_any_vecs(),
-            self.monthindex.as_any_vecs(),
-            self.quarterindex.as_any_vecs(),
-            self.yearindex.as_any_vecs(),
+            vec![self.height.any_vec()],
+            self.dateindex.any_vecs(),
+            self.weekindex.any_vecs(),
+            self.difficultyepoch.any_vecs(),
+            self.monthindex.any_vecs(),
+            self.quarterindex.any_vecs(),
+            self.yearindex.any_vecs(),
             // self.halvingepoch.as_any_vecs(),
-            self.decadeindex.as_any_vecs(),
+            self.decadeindex.any_vecs(),
         ]
         .concat()
     }

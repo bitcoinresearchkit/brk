@@ -18,50 +18,50 @@ pub use base::*;
 
 #[derive(Clone)]
 pub struct Vecs {
-    pub addressindex_to_addresstype: StorableVec<Addressindex, Addresstype>,
-    pub addressindex_to_addresstypeindex: StorableVec<Addressindex, Addresstypeindex>,
-    pub addressindex_to_height: StorableVec<Addressindex, Height>,
-    pub height_to_blockhash: StorableVec<Height, BlockHash>,
-    pub height_to_difficulty: StorableVec<Height, f64>,
-    pub height_to_first_addressindex: StorableVec<Height, Addressindex>,
-    pub height_to_first_emptyindex: StorableVec<Height, Emptyindex>,
-    pub height_to_first_multisigindex: StorableVec<Height, Multisigindex>,
-    pub height_to_first_opreturnindex: StorableVec<Height, Opreturnindex>,
-    pub height_to_first_pushonlyindex: StorableVec<Height, Pushonlyindex>,
-    pub height_to_first_txindex: StorableVec<Height, Txindex>,
-    pub height_to_first_txinindex: StorableVec<Height, Txinindex>,
-    pub height_to_first_txoutindex: StorableVec<Height, Txoutindex>,
-    pub height_to_first_unknownindex: StorableVec<Height, Unknownindex>,
-    pub height_to_first_p2pk33index: StorableVec<Height, P2PK33index>,
-    pub height_to_first_p2pk65index: StorableVec<Height, P2PK65index>,
-    pub height_to_first_p2pkhindex: StorableVec<Height, P2PKHindex>,
-    pub height_to_first_p2shindex: StorableVec<Height, P2SHindex>,
-    pub height_to_first_p2trindex: StorableVec<Height, P2TRindex>,
-    pub height_to_first_p2wpkhindex: StorableVec<Height, P2WPKHindex>,
-    pub height_to_first_p2wshindex: StorableVec<Height, P2WSHindex>,
-    pub height_to_size: StorableVec<Height, usize>,
-    pub height_to_timestamp: StorableVec<Height, Timestamp>,
-    pub height_to_weight: StorableVec<Height, Weight>,
-    pub p2pk33index_to_p2pk33addressbytes: StorableVec<P2PK33index, P2PK33AddressBytes>,
-    pub p2pk65index_to_p2pk65addressbytes: StorableVec<P2PK65index, P2PK65AddressBytes>,
-    pub p2pkhindex_to_p2pkhaddressbytes: StorableVec<P2PKHindex, P2PKHAddressBytes>,
-    pub p2shindex_to_p2shaddressbytes: StorableVec<P2SHindex, P2SHAddressBytes>,
-    pub p2trindex_to_p2traddressbytes: StorableVec<P2TRindex, P2TRAddressBytes>,
-    pub p2wpkhindex_to_p2wpkhaddressbytes: StorableVec<P2WPKHindex, P2WPKHAddressBytes>,
-    pub p2wshindex_to_p2wshaddressbytes: StorableVec<P2WSHindex, P2WSHAddressBytes>,
-    pub txindex_to_first_txinindex: StorableVec<Txindex, Txinindex>,
-    pub txindex_to_first_txoutindex: StorableVec<Txindex, Txoutindex>,
-    pub txindex_to_height: StorableVec<Txindex, Height>,
-    pub txindex_to_locktime: StorableVec<Txindex, LockTime>,
-    pub txindex_to_txid: StorableVec<Txindex, Txid>,
-    pub txindex_to_base_size: StorableVec<Txindex, usize>,
-    pub txindex_to_total_size: StorableVec<Txindex, usize>,
-    pub txindex_to_is_explicitly_rbf: StorableVec<Txindex, bool>,
-    pub txindex_to_txversion: StorableVec<Txindex, TxVersion>,
+    pub addressindex_to_addresstype: IndexedVec<Addressindex, Addresstype>,
+    pub addressindex_to_addresstypeindex: IndexedVec<Addressindex, Addresstypeindex>,
+    pub addressindex_to_height: IndexedVec<Addressindex, Height>,
+    pub height_to_blockhash: IndexedVec<Height, BlockHash>,
+    pub height_to_difficulty: IndexedVec<Height, f64>,
+    pub height_to_first_addressindex: IndexedVec<Height, Addressindex>,
+    pub height_to_first_emptyindex: IndexedVec<Height, Emptyindex>,
+    pub height_to_first_multisigindex: IndexedVec<Height, Multisigindex>,
+    pub height_to_first_opreturnindex: IndexedVec<Height, Opreturnindex>,
+    pub height_to_first_pushonlyindex: IndexedVec<Height, Pushonlyindex>,
+    pub height_to_first_txindex: IndexedVec<Height, Txindex>,
+    pub height_to_first_txinindex: IndexedVec<Height, Txinindex>,
+    pub height_to_first_txoutindex: IndexedVec<Height, Txoutindex>,
+    pub height_to_first_unknownindex: IndexedVec<Height, Unknownindex>,
+    pub height_to_first_p2pk33index: IndexedVec<Height, P2PK33index>,
+    pub height_to_first_p2pk65index: IndexedVec<Height, P2PK65index>,
+    pub height_to_first_p2pkhindex: IndexedVec<Height, P2PKHindex>,
+    pub height_to_first_p2shindex: IndexedVec<Height, P2SHindex>,
+    pub height_to_first_p2trindex: IndexedVec<Height, P2TRindex>,
+    pub height_to_first_p2wpkhindex: IndexedVec<Height, P2WPKHindex>,
+    pub height_to_first_p2wshindex: IndexedVec<Height, P2WSHindex>,
+    pub height_to_size: IndexedVec<Height, usize>,
+    pub height_to_timestamp: IndexedVec<Height, Timestamp>,
+    pub height_to_weight: IndexedVec<Height, Weight>,
+    pub p2pk33index_to_p2pk33addressbytes: IndexedVec<P2PK33index, P2PK33AddressBytes>,
+    pub p2pk65index_to_p2pk65addressbytes: IndexedVec<P2PK65index, P2PK65AddressBytes>,
+    pub p2pkhindex_to_p2pkhaddressbytes: IndexedVec<P2PKHindex, P2PKHAddressBytes>,
+    pub p2shindex_to_p2shaddressbytes: IndexedVec<P2SHindex, P2SHAddressBytes>,
+    pub p2trindex_to_p2traddressbytes: IndexedVec<P2TRindex, P2TRAddressBytes>,
+    pub p2wpkhindex_to_p2wpkhaddressbytes: IndexedVec<P2WPKHindex, P2WPKHAddressBytes>,
+    pub p2wshindex_to_p2wshaddressbytes: IndexedVec<P2WSHindex, P2WSHAddressBytes>,
+    pub txindex_to_first_txinindex: IndexedVec<Txindex, Txinindex>,
+    pub txindex_to_first_txoutindex: IndexedVec<Txindex, Txoutindex>,
+    pub txindex_to_height: IndexedVec<Txindex, Height>,
+    pub txindex_to_locktime: IndexedVec<Txindex, LockTime>,
+    pub txindex_to_txid: IndexedVec<Txindex, Txid>,
+    pub txindex_to_base_size: IndexedVec<Txindex, usize>,
+    pub txindex_to_total_size: IndexedVec<Txindex, usize>,
+    pub txindex_to_is_explicitly_rbf: IndexedVec<Txindex, bool>,
+    pub txindex_to_txversion: IndexedVec<Txindex, TxVersion>,
     /// If txoutindex == Txoutindex MAX then is it's coinbase
-    pub txinindex_to_txoutindex: StorableVec<Txinindex, Txoutindex>,
-    pub txoutindex_to_addressindex: StorableVec<Txoutindex, Addressindex>,
-    pub txoutindex_to_value: StorableVec<Txoutindex, Sats>,
+    pub txinindex_to_txoutindex: IndexedVec<Txinindex, Txoutindex>,
+    pub txoutindex_to_addressindex: IndexedVec<Txoutindex, Addressindex>,
+    pub txoutindex_to_value: IndexedVec<Txoutindex, Sats>,
 }
 
 impl Vecs {
@@ -69,217 +69,217 @@ impl Vecs {
         fs::create_dir_all(path)?;
 
         Ok(Self {
-            addressindex_to_addresstype: StorableVec::forced_import(
+            addressindex_to_addresstype: IndexedVec::forced_import(
                 &path.join("addressindex_to_addresstype"),
                 Version::ONE,
                 compressed,
             )?,
-            addressindex_to_addresstypeindex: StorableVec::forced_import(
+            addressindex_to_addresstypeindex: IndexedVec::forced_import(
                 &path.join("addressindex_to_addresstypeindex"),
                 Version::ONE,
                 compressed,
             )?,
-            addressindex_to_height: StorableVec::forced_import(
+            addressindex_to_height: IndexedVec::forced_import(
                 &path.join("addressindex_to_height"),
                 Version::ONE,
                 compressed,
             )?,
-            height_to_blockhash: StorableVec::forced_import(
+            height_to_blockhash: IndexedVec::forced_import(
                 &path.join("height_to_blockhash"),
                 Version::ONE,
                 Compressed::NO,
             )?,
-            height_to_difficulty: StorableVec::forced_import(
+            height_to_difficulty: IndexedVec::forced_import(
                 &path.join("height_to_difficulty"),
                 Version::ONE,
                 compressed,
             )?,
-            height_to_first_addressindex: StorableVec::forced_import(
+            height_to_first_addressindex: IndexedVec::forced_import(
                 &path.join("height_to_first_addressindex"),
                 Version::ONE,
                 compressed,
             )?,
-            height_to_first_emptyindex: StorableVec::forced_import(
+            height_to_first_emptyindex: IndexedVec::forced_import(
                 &path.join("height_to_first_emptyindex"),
                 Version::ONE,
                 compressed,
             )?,
-            height_to_first_multisigindex: StorableVec::forced_import(
+            height_to_first_multisigindex: IndexedVec::forced_import(
                 &path.join("height_to_first_multisigindex"),
                 Version::ONE,
                 compressed,
             )?,
-            height_to_first_opreturnindex: StorableVec::forced_import(
+            height_to_first_opreturnindex: IndexedVec::forced_import(
                 &path.join("height_to_first_opreturnindex"),
                 Version::ONE,
                 compressed,
             )?,
-            height_to_first_pushonlyindex: StorableVec::forced_import(
+            height_to_first_pushonlyindex: IndexedVec::forced_import(
                 &path.join("height_to_first_pushonlyindex"),
                 Version::ONE,
                 compressed,
             )?,
-            height_to_first_txindex: StorableVec::forced_import(
+            height_to_first_txindex: IndexedVec::forced_import(
                 &path.join("height_to_first_txindex"),
                 Version::ONE,
                 compressed,
             )?,
-            height_to_first_txinindex: StorableVec::forced_import(
+            height_to_first_txinindex: IndexedVec::forced_import(
                 &path.join("height_to_first_txinindex"),
                 Version::ONE,
                 compressed,
             )?,
-            height_to_first_txoutindex: StorableVec::forced_import(
+            height_to_first_txoutindex: IndexedVec::forced_import(
                 &path.join("height_to_first_txoutindex"),
                 Version::ONE,
                 compressed,
             )?,
-            height_to_first_unknownindex: StorableVec::forced_import(
+            height_to_first_unknownindex: IndexedVec::forced_import(
                 &path.join("height_to_first_unkownindex"),
                 Version::ONE,
                 compressed,
             )?,
-            height_to_first_p2pk33index: StorableVec::forced_import(
+            height_to_first_p2pk33index: IndexedVec::forced_import(
                 &path.join("height_to_first_p2pk33index"),
                 Version::ONE,
                 compressed,
             )?,
-            height_to_first_p2pk65index: StorableVec::forced_import(
+            height_to_first_p2pk65index: IndexedVec::forced_import(
                 &path.join("height_to_first_p2pk65index"),
                 Version::ONE,
                 compressed,
             )?,
-            height_to_first_p2pkhindex: StorableVec::forced_import(
+            height_to_first_p2pkhindex: IndexedVec::forced_import(
                 &path.join("height_to_first_p2pkhindex"),
                 Version::ONE,
                 compressed,
             )?,
-            height_to_first_p2shindex: StorableVec::forced_import(
+            height_to_first_p2shindex: IndexedVec::forced_import(
                 &path.join("height_to_first_p2shindex"),
                 Version::ONE,
                 compressed,
             )?,
-            height_to_first_p2trindex: StorableVec::forced_import(
+            height_to_first_p2trindex: IndexedVec::forced_import(
                 &path.join("height_to_first_p2trindex"),
                 Version::ONE,
                 compressed,
             )?,
-            height_to_first_p2wpkhindex: StorableVec::forced_import(
+            height_to_first_p2wpkhindex: IndexedVec::forced_import(
                 &path.join("height_to_first_p2wpkhindex"),
                 Version::ONE,
                 compressed,
             )?,
-            height_to_first_p2wshindex: StorableVec::forced_import(
+            height_to_first_p2wshindex: IndexedVec::forced_import(
                 &path.join("height_to_first_p2wshindex"),
                 Version::ONE,
                 compressed,
             )?,
-            height_to_size: StorableVec::forced_import(
+            height_to_size: IndexedVec::forced_import(
                 &path.join("height_to_size"),
                 Version::ONE,
                 compressed,
             )?,
-            height_to_timestamp: StorableVec::forced_import(
+            height_to_timestamp: IndexedVec::forced_import(
                 &path.join("height_to_timestamp"),
                 Version::ONE,
                 compressed,
             )?,
-            height_to_weight: StorableVec::forced_import(
+            height_to_weight: IndexedVec::forced_import(
                 &path.join("height_to_weight"),
                 Version::ONE,
                 compressed,
             )?,
-            p2pk33index_to_p2pk33addressbytes: StorableVec::forced_import(
+            p2pk33index_to_p2pk33addressbytes: IndexedVec::forced_import(
                 &path.join("p2pk33index_to_p2pk33addressbytes"),
                 Version::ONE,
                 Compressed::NO,
             )?,
-            p2pk65index_to_p2pk65addressbytes: StorableVec::forced_import(
+            p2pk65index_to_p2pk65addressbytes: IndexedVec::forced_import(
                 &path.join("p2pk65index_to_p2pk65addressbytes"),
                 Version::ONE,
                 Compressed::NO,
             )?,
-            p2pkhindex_to_p2pkhaddressbytes: StorableVec::forced_import(
+            p2pkhindex_to_p2pkhaddressbytes: IndexedVec::forced_import(
                 &path.join("p2pkhindex_to_p2pkhaddressbytes"),
                 Version::ONE,
                 Compressed::NO,
             )?,
-            p2shindex_to_p2shaddressbytes: StorableVec::forced_import(
+            p2shindex_to_p2shaddressbytes: IndexedVec::forced_import(
                 &path.join("p2shindex_to_p2shaddressbytes"),
                 Version::ONE,
                 Compressed::NO,
             )?,
-            p2trindex_to_p2traddressbytes: StorableVec::forced_import(
+            p2trindex_to_p2traddressbytes: IndexedVec::forced_import(
                 &path.join("p2trindex_to_p2traddressbytes"),
                 Version::ONE,
                 Compressed::NO,
             )?,
-            p2wpkhindex_to_p2wpkhaddressbytes: StorableVec::forced_import(
+            p2wpkhindex_to_p2wpkhaddressbytes: IndexedVec::forced_import(
                 &path.join("p2wpkhindex_to_p2wpkhaddressbytes"),
                 Version::ONE,
                 Compressed::NO,
             )?,
-            p2wshindex_to_p2wshaddressbytes: StorableVec::forced_import(
+            p2wshindex_to_p2wshaddressbytes: IndexedVec::forced_import(
                 &path.join("p2wshindex_to_p2wshaddressbytes"),
                 Version::ONE,
                 Compressed::NO,
             )?,
-            txindex_to_first_txinindex: StorableVec::forced_import(
+            txindex_to_first_txinindex: IndexedVec::forced_import(
                 &path.join("txindex_to_first_txinindex"),
                 Version::ONE,
                 compressed,
             )?,
-            txindex_to_first_txoutindex: StorableVec::forced_import(
+            txindex_to_first_txoutindex: IndexedVec::forced_import(
                 &path.join("txindex_to_first_txoutindex"),
                 Version::ONE,
                 Compressed::NO,
             )?,
-            txindex_to_height: StorableVec::forced_import(
+            txindex_to_height: IndexedVec::forced_import(
                 &path.join("txindex_to_height"),
                 Version::ONE,
                 compressed,
             )?,
-            txindex_to_locktime: StorableVec::forced_import(
+            txindex_to_locktime: IndexedVec::forced_import(
                 &path.join("txindex_to_locktime"),
                 Version::ONE,
                 compressed,
             )?,
-            txindex_to_txid: StorableVec::forced_import(
+            txindex_to_txid: IndexedVec::forced_import(
                 &path.join("txindex_to_txid"),
                 Version::ONE,
                 Compressed::NO,
             )?,
-            txindex_to_base_size: StorableVec::forced_import(
+            txindex_to_base_size: IndexedVec::forced_import(
                 &path.join("txindex_to_base_size"),
                 Version::ONE,
                 compressed,
             )?,
-            txindex_to_total_size: StorableVec::forced_import(
+            txindex_to_total_size: IndexedVec::forced_import(
                 &path.join("txindex_to_total_size"),
                 Version::ONE,
                 compressed,
             )?,
-            txindex_to_is_explicitly_rbf: StorableVec::forced_import(
+            txindex_to_is_explicitly_rbf: IndexedVec::forced_import(
                 &path.join("txindex_to_is_explicitly_rbf"),
                 Version::ONE,
                 compressed,
             )?,
-            txindex_to_txversion: StorableVec::forced_import(
+            txindex_to_txversion: IndexedVec::forced_import(
                 &path.join("txindex_to_txversion"),
                 Version::ONE,
                 compressed,
             )?,
-            txinindex_to_txoutindex: StorableVec::forced_import(
+            txinindex_to_txoutindex: IndexedVec::forced_import(
                 &path.join("txinindex_to_txoutindex"),
                 Version::ONE,
                 compressed,
             )?,
-            txoutindex_to_addressindex: StorableVec::forced_import(
+            txoutindex_to_addressindex: IndexedVec::forced_import(
                 &path.join("txoutindex_to_addressindex"),
                 Version::ONE,
                 compressed,
             )?,
-            txoutindex_to_value: StorableVec::forced_import(
+            txoutindex_to_value: IndexedVec::forced_import(
                 &path.join("txoutindex_to_value"),
                 Version::ONE,
                 compressed,
