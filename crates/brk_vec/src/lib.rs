@@ -224,7 +224,7 @@ where
         });
 
         if from > to {
-            return Err(Error::RangeFromAfterTo);
+            return Err(Error::RangeFromAfterTo(from, to));
         }
 
         let mut page: Option<(usize, Values<T>)> = None;

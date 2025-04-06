@@ -46,6 +46,8 @@ zerocopy = { version = "0.8.24", features = ["derive"] }
 [workspace.metadata.release]
 shared-version = true
 tag-name = "v{{version}}"
+pre-release-commit-message = "release: v{{version}}"
+tag-message = "release: v{{version}}"
 
 [workspace.metadata.dist]
 cargo-dist-version = "0.28.0"

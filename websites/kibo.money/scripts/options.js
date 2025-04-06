@@ -673,9 +673,15 @@ function createPartialOptions(colors) {
               bottom: [
                 { key: "block-count", title: "Count", color: colors.bitcoin },
                 {
+                  key: "block-count-sum",
+                  title: "Sum",
+                  color: colors.orange,
+                },
+                {
                   key: "total-block-count",
                   title: "Total",
-                  color: colors.bitcoin,
+                  color: colors.offBitcoin,
+                  defaultActive: false,
                 },
               ],
             },
@@ -755,6 +761,10 @@ function createPartialOptions(colors) {
       name: "Social",
       tree: [
         {
+          name: "Github",
+          url: () => "https://github.com/bitcoinresearchkit/brk",
+        },
+        {
           name: "Nostr",
           url: () =>
             "https://primal.net/p/npub1jagmm3x39lmwfnrtvxcs9ac7g300y3dusv9lgzhk2e4x5frpxlrqa73v44",
@@ -767,6 +777,10 @@ function createPartialOptions(colors) {
           name: "Bluesky",
           url: () => "https://bsky.app/profile/bitcoinresearchkit.org",
         },
+        {
+          name: "x",
+          url: () => "https://x.com/brkdotorg",
+        },
       ],
     },
     {
@@ -777,8 +791,16 @@ function createPartialOptions(colors) {
           url: () => "/api",
         },
         {
-          name: "Github",
+          name: "Source",
           url: () => "https://github.com/bitcoinresearchkit/brk",
+        },
+        {
+          name: "Status",
+          url: () => "https://status.kibo.money/",
+        },
+        {
+          name: "Crate",
+          url: () => "https://crates.io/crates/brk",
         },
       ],
     },
