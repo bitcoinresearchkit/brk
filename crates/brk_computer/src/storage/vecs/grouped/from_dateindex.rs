@@ -2,6 +2,7 @@ use std::path::Path;
 
 use brk_core::{Dateindex, Decadeindex, Monthindex, Quarterindex, Weekindex, Yearindex};
 use brk_exit::Exit;
+use brk_indexer::Indexer;
 use brk_vec::{AnyStorableVec, Compressed, Result, Version};
 
 use crate::storage::vecs::{Indexes, base::ComputedVec, indexes};
@@ -14,6 +15,7 @@ where
     T: ComputedType + PartialOrd,
 {
     pub dateindex: ComputedVec<Dateindex, T>,
+    pub dateindex_extra: ComputedVecBuilder<Dateindex, T>,
     pub weekindex: ComputedVecBuilder<Weekindex, T>,
     pub monthindex: ComputedVecBuilder<Monthindex, T>,
     pub quarterindex: ComputedVecBuilder<Quarterindex, T>,
@@ -33,6 +35,9 @@ where
         compressed: Compressed,
         options: StorableVecGeneatorOptions,
     ) -> color_eyre::Result<Self> {
+        let dateindex_extra =
+            ComputedVecBuilder::forced_import(path, name, compressed, options.copy_self_extra())?;
+
         let options = options.remove_percentiles();
 
         Ok(Self {
@@ -41,6 +46,7 @@ where
                 version,
                 compressed,
             )?,
+            dateindex_extra,
             weekindex: ComputedVecBuilder::forced_import(path, name, compressed, options)?,
             monthindex: ComputedVecBuilder::forced_import(path, name, compressed, options)?,
             quarterindex: ComputedVecBuilder::forced_import(path, name, compressed, options)?,
@@ -51,15 +57,31 @@ where
 
     pub fn compute<F>(
         &mut self,
-        mut compute: F,
+        indexer: &mut Indexer,
         indexes: &mut indexes::Vecs,
         starting_indexes: &Indexes,
         exit: &Exit,
+        mut compute: F,
     ) -> color_eyre::Result<()>
     where
-        F: FnMut(&mut ComputedVec<Dateindex, T>) -> Result<()>,
+        F: FnMut(
+            &mut ComputedVec<Dateindex, T>,
+            &mut Indexer,
+            &mut indexes::Vecs,
+            &Indexes,
+            &Exit,
+        ) -> Result<()>,
     {
-        compute(&mut self.dateindex)?;
+        compute(
+            &mut self.dateindex,
+            indexer,
+            indexes,
+            starting_indexes,
+            exit,
+        )?;
+
+        self.dateindex_extra
+            .extend(starting_indexes.dateindex, self.dateindex.mut_vec(), exit)?;
 
         self.weekindex.compute(
             starting_indexes.weekindex,
@@ -107,6 +129,7 @@ where
     pub fn any_vecs(&self) -> Vec<&dyn AnyStorableVec> {
         [
             vec![self.dateindex.any_vec()],
+            self.dateindex_extra.any_vecs(),
             self.weekindex.any_vecs(),
             self.monthindex.any_vecs(),
             self.quarterindex.any_vecs(),

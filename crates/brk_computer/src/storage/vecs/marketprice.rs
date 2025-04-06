@@ -55,9 +55,14 @@ impl Vecs {
     pub fn forced_import(path: &Path, compressed: Compressed) -> color_eyre::Result<Self> {
         fs::create_dir_all(path)?;
 
+        let mut fetched_path = path.to_owned();
+        fetched_path.pop();
+        fetched_path.pop();
+        fetched_path = fetched_path.join("fetched/vecs");
+
         Ok(Self {
             dateindex_to_ohlc_in_cents: ComputedVec::forced_import(
-                &path.join("dateindex_to_ohlc_in_cents"),
+                &fetched_path.join("dateindex_to_ohlc_in_cents"),
                 Version::ONE,
                 compressed,
             )?,
@@ -87,7 +92,7 @@ impl Vecs {
                 compressed,
             )?,
             height_to_ohlc_in_cents: ComputedVec::forced_import(
-                &path.join("height_to_ohlc_in_cents"),
+                &fetched_path.join("height_to_ohlc_in_cents"),
                 Version::ONE,
                 compressed,
             )?,
@@ -328,7 +333,11 @@ impl Vecs {
         )?;
 
         self.timeindexes_to_close.compute(
-            |v| {
+            indexer,
+            indexes,
+            starting_indexes,
+            exit,
+            |v, _, _, starting_indexes, exit| {
                 v.compute_transform(
                     starting_indexes.dateindex,
                     self.dateindex_to_ohlc.mut_vec(),
@@ -336,13 +345,14 @@ impl Vecs {
                     exit,
                 )
             },
-            indexes,
-            starting_indexes,
-            exit,
         )?;
 
         self.timeindexes_to_high.compute(
-            |v| {
+            indexer,
+            indexes,
+            starting_indexes,
+            exit,
+            |v, _, _, starting_indexes, exit| {
                 v.compute_transform(
                     starting_indexes.dateindex,
                     self.dateindex_to_ohlc.mut_vec(),
@@ -350,13 +360,14 @@ impl Vecs {
                     exit,
                 )
             },
-            indexes,
-            starting_indexes,
-            exit,
         )?;
 
         self.timeindexes_to_low.compute(
-            |v| {
+            indexer,
+            indexes,
+            starting_indexes,
+            exit,
+            |v, _, _, starting_indexes, exit| {
                 v.compute_transform(
                     starting_indexes.dateindex,
                     self.dateindex_to_ohlc.mut_vec(),
@@ -364,13 +375,14 @@ impl Vecs {
                     exit,
                 )
             },
-            indexes,
-            starting_indexes,
-            exit,
         )?;
 
         self.timeindexes_to_open.compute(
-            |v| {
+            indexer,
+            indexes,
+            starting_indexes,
+            exit,
+            |v, _, _, starting_indexes, exit| {
                 v.compute_transform(
                     starting_indexes.dateindex,
                     self.dateindex_to_ohlc.mut_vec(),
@@ -378,13 +390,14 @@ impl Vecs {
                     exit,
                 )
             },
-            indexes,
-            starting_indexes,
-            exit,
         )?;
 
         self.chainindexes_to_close.compute(
-            |v| {
+            indexer,
+            indexes,
+            starting_indexes,
+            exit,
+            |v, _, _, starting_indexes, exit| {
                 v.compute_transform(
                     starting_indexes.height,
                     self.height_to_ohlc.mut_vec(),
@@ -392,13 +405,14 @@ impl Vecs {
                     exit,
                 )
             },
-            indexes,
-            starting_indexes,
-            exit,
         )?;
 
         self.chainindexes_to_high.compute(
-            |v| {
+            indexer,
+            indexes,
+            starting_indexes,
+            exit,
+            |v, _, _, starting_indexes, exit| {
                 v.compute_transform(
                     starting_indexes.height,
                     self.height_to_ohlc.mut_vec(),
@@ -406,13 +420,14 @@ impl Vecs {
                     exit,
                 )
             },
-            indexes,
-            starting_indexes,
-            exit,
         )?;
 
         self.chainindexes_to_low.compute(
-            |v| {
+            indexer,
+            indexes,
+            starting_indexes,
+            exit,
+            |v, _, _, starting_indexes, exit| {
                 v.compute_transform(
                     starting_indexes.height,
                     self.height_to_ohlc.mut_vec(),
@@ -420,13 +435,14 @@ impl Vecs {
                     exit,
                 )
             },
-            indexes,
-            starting_indexes,
-            exit,
         )?;
 
         self.chainindexes_to_open.compute(
-            |v| {
+            indexer,
+            indexes,
+            starting_indexes,
+            exit,
+            |v, _, _, starting_indexes, exit| {
                 v.compute_transform(
                     starting_indexes.height,
                     self.height_to_ohlc.mut_vec(),
@@ -434,9 +450,6 @@ impl Vecs {
                     exit,
                 )
             },
-            indexes,
-            starting_indexes,
-            exit,
         )?;
 
         self.weekindex_to_ohlc.compute_transform(
@@ -720,7 +733,11 @@ impl Vecs {
         )?;
 
         self.chainindexes_to_sats_per_dollar.compute(
-            |v| {
+            indexer,
+            indexes,
+            starting_indexes,
+            exit,
+            |v, _, _, starting_indexes, exit| {
                 v.compute_transform(
                     starting_indexes.height,
                     self.chainindexes_to_close.height.mut_vec(),
@@ -728,13 +745,14 @@ impl Vecs {
                     exit,
                 )
             },
-            indexes,
-            starting_indexes,
-            exit,
         )?;
 
         self.timeindexes_to_sats_per_dollar.compute(
-            |v| {
+            indexer,
+            indexes,
+            starting_indexes,
+            exit,
+            |v, _, _, starting_indexes, exit| {
                 v.compute_transform(
                     starting_indexes.dateindex,
                     self.timeindexes_to_close.dateindex.mut_vec(),
@@ -742,9 +760,6 @@ impl Vecs {
                     exit,
                 )
             },
-            indexes,
-            starting_indexes,
-            exit,
         )?;
 
         Ok(())

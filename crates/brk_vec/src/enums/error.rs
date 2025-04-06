@@ -20,7 +20,7 @@ pub enum Error {
     ExpectVecToHaveIndex,
     FailedKeyTryIntoUsize,
     UnsupportedUnflushedState,
-    RangeFromAfterTo,
+    RangeFromAfterTo(usize, usize),
     DifferentCompressionMode,
 }
 
@@ -66,7 +66,7 @@ impl fmt::Display for Error {
                 )
             }
             Error::ZeroCopyError => write!(f, "Zero copy convert error"),
-            Error::RangeFromAfterTo => write!(f, "Range, from is after to"),
+            Error::RangeFromAfterTo(from, to) => write!(f, "Range, from {from} is after to {to}"),
             Error::DifferentCompressionMode => write!(f, "Different compression mode chosen"),
         }
     }

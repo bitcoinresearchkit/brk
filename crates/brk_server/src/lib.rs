@@ -129,14 +129,13 @@ impl Server {
                     let status = response.status();
                     let uri = response.extensions().get::<Uri>().unwrap();
                     match status {
-                        StatusCode::INTERNAL_SERVER_ERROR => {
-                            error!("{} {} {:?}", status.as_u16().red(), uri, latency)
-                        }
-                        StatusCode::NOT_MODIFIED => {
-                            info!("{} {} {:?}", status.as_u16().bright_black(), uri, latency)
-                        }
                         StatusCode::OK => {
                             info!("{} {} {:?}", status.as_u16().green(), uri, latency)
+                        }
+                        StatusCode::NOT_MODIFIED
+                        | StatusCode::TEMPORARY_REDIRECT
+                        | StatusCode::PERMANENT_REDIRECT => {
+                            info!("{} {} {:?}", status.as_u16().bright_black(), uri, latency)
                         }
                         _ => error!("{} {} {:?}", status.as_u16().red(), uri, latency),
                     }

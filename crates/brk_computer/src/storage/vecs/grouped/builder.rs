@@ -1,7 +1,7 @@
 use std::path::Path;
 
 use brk_exit::Exit;
-use brk_vec::{AnyStorableVec, Compressed, Result, StoredIndex, StoredType, Version};
+use brk_vec::{AnyStorableVec, Compressed, Result, StorableVec, StoredIndex, StoredType, Version};
 
 use crate::storage::vecs::base::ComputedVec;
 
@@ -24,6 +24,7 @@ where
     pub _10p: Option<ComputedVec<I, T>>,
     pub min: Option<ComputedVec<I, T>>,
     pub last: Option<ComputedVec<I, T>>,
+    pub total: Option<ComputedVec<I, T>>,
 }
 
 impl<I, T> ComputedVecBuilder<I, T>
@@ -37,69 +38,117 @@ where
         compressed: Compressed,
         options: StorableVecGeneatorOptions,
     ) -> color_eyre::Result<Self> {
-        // let name = path.file_name().unwrap().to_str().unwrap().to_string();
         let key = I::to_string().split("::").last().unwrap().to_lowercase();
 
         let only_one_active = options.is_only_one_active();
 
-        let prefix = |s: &str| {
+        let default = || path.join(format!("{key}_to_{name}"));
+
+        let prefix = |s: &str| path.join(format!("{key}_to_{s}_{name}"));
+
+        let maybe_prefix = |s: &str| {
             if only_one_active {
-                path.with_file_name(format!("{key}_to_{name}"))
+                default()
             } else {
-                path.with_file_name(format!("{key}_to_{s}_{name}"))
+                prefix(s)
             }
         };
 
-        let suffix = |s: &str| {
+        let suffix = |s: &str| path.join(format!("{key}_to_{name}_{s}"));
+
+        let maybe_suffix = |s: &str| {
             if only_one_active {
-                path.with_file_name(format!("{key}_to_{name}"))
+                default()
             } else {
-                path.with_file_name(format!("{key}_to_{name}_{s}"))
+                suffix(s)
             }
         };
 
         let s = Self {
             first: options.first.then(|| {
-                ComputedVec::forced_import(&prefix("first"), Version::ONE, compressed).unwrap()
+                ComputedVec::forced_import(&maybe_prefix("first"), Version::ONE, compressed)
+                    .unwrap()
             }),
             last: options.last.then(|| {
                 ComputedVec::forced_import(
-                    &path.with_file_name(format!("{key}_to_{name}")),
+                    &path.join(format!("{key}_to_{name}")),
                     Version::ONE,
                     compressed,
                 )
                 .unwrap()
             }),
             min: options.min.then(|| {
-                ComputedVec::forced_import(&suffix("min"), Version::ONE, compressed).unwrap()
+                ComputedVec::forced_import(&maybe_suffix("min"), Version::ONE, compressed).unwrap()
             }),
             max: options.max.then(|| {
-                ComputedVec::forced_import(&suffix("max"), Version::ONE, compressed).unwrap()
+                ComputedVec::forced_import(&maybe_suffix("max"), Version::ONE, compressed).unwrap()
             }),
             median: options.median.then(|| {
-                ComputedVec::forced_import(&suffix("median"), Version::ONE, compressed).unwrap()
+                ComputedVec::forced_import(&maybe_suffix("median"), Version::ONE, compressed)
+                    .unwrap()
             }),
             average: options.average.then(|| {
-                ComputedVec::forced_import(&suffix("average"), Version::ONE, compressed).unwrap()
+                ComputedVec::forced_import(&maybe_suffix("average"), Version::ONE, compressed)
+                    .unwrap()
             }),
             sum: options.sum.then(|| {
-                ComputedVec::forced_import(&suffix("sum"), Version::ONE, compressed).unwrap()
+                ComputedVec::forced_import(&maybe_suffix("sum"), Version::ONE, compressed).unwrap()
+            }),
+            total: options.total.then(|| {
+                ComputedVec::forced_import(&prefix("total"), Version::ONE, compressed).unwrap()
             }),
             _90p: options._90p.then(|| {
-                ComputedVec::forced_import(&suffix("90p"), Version::ONE, compressed).unwrap()
+                ComputedVec::forced_import(&maybe_suffix("90p"), Version::ONE, compressed).unwrap()
             }),
             _75p: options._75p.then(|| {
-                ComputedVec::forced_import(&suffix("75p"), Version::ONE, compressed).unwrap()
+                ComputedVec::forced_import(&maybe_suffix("75p"), Version::ONE, compressed).unwrap()
             }),
             _25p: options._25p.then(|| {
-                ComputedVec::forced_import(&suffix("25p"), Version::ONE, compressed).unwrap()
+                ComputedVec::forced_import(&maybe_suffix("25p"), Version::ONE, compressed).unwrap()
             }),
             _10p: options._10p.then(|| {
-                ComputedVec::forced_import(&suffix("10p"), Version::ONE, compressed).unwrap()
+                ComputedVec::forced_import(&maybe_suffix("10p"), Version::ONE, compressed).unwrap()
             }),
         };
 
         Ok(s)
+    }
+
+    pub fn extend(
+        &mut self,
+        max_from: I,
+        source: &mut StorableVec<I, T>,
+        exit: &Exit,
+    ) -> Result<()> {
+        if self.total.is_none() {
+            return Ok(());
+        };
+
+        let index = self.starting_index(max_from);
+
+        let total_vec = self.total.as_mut().unwrap();
+
+        source.iter_from(index, |(i, v)| {
+            let prev = i
+                .to_usize()
+                .unwrap()
+                .checked_sub(1)
+                .map_or(T::from(0_usize), |prev_i| {
+                    total_vec
+                        .get(I::from(prev_i))
+                        .unwrap()
+                        .unwrap_or(&T::from(0_usize))
+                        .to_owned()
+                });
+            let value = v.clone() + prev;
+            total_vec.forced_push_at(i, value, exit)?;
+
+            Ok(())
+        })?;
+
+        self.safe_flush(exit)?;
+
+        Ok(())
     }
 
     pub fn compute<I2>(
@@ -134,7 +183,8 @@ where
             let first_index = first_index.to_usize()?;
             let last_index = last_index.to_usize()?;
 
-            let needs_sum_or_average = self.sum.is_some() || self.average.is_some();
+            let needs_sum_or_total = self.sum.is_some() || self.total.is_some();
+            let needs_average_sum_or_total = needs_sum_or_total || self.average.is_some();
             let needs_sorted = self.max.is_some()
                 || self._90p.is_some()
                 || self._75p.is_some()
@@ -142,7 +192,7 @@ where
                 || self._25p.is_some()
                 || self._10p.is_some()
                 || self.min.is_some();
-            let needs_values = needs_sorted || needs_sum_or_average;
+            let needs_values = needs_sorted || needs_average_sum_or_total;
 
             if needs_values {
                 let mut values =
@@ -180,7 +230,7 @@ where
                     }
                 }
 
-                if needs_sum_or_average {
+                if needs_average_sum_or_total {
                     let len = values.len();
 
                     if let Some(average) = self.average.as_mut() {
@@ -193,9 +243,22 @@ where
                         average.forced_push_at(i, avg, exit)?;
                     }
 
-                    if let Some(sum_vec) = self.sum.as_mut() {
+                    if needs_sum_or_total {
                         let sum = values.into_iter().fold(T::from(0), |a, b| a + b);
-                        sum_vec.forced_push_at(i, sum, exit)?;
+
+                        if let Some(sum_vec) = self.sum.as_mut() {
+                            sum_vec.forced_push_at(i, sum.clone(), exit)?;
+                        }
+
+                        if let Some(total_vec) = self.total.as_mut() {
+                            let prev = i.to_usize().unwrap().checked_sub(1).map_or(
+                                T::from(0_usize),
+                                |prev_i| {
+                                    total_vec.get(I::from(prev_i)).unwrap().unwrap().to_owned()
+                                },
+                            );
+                            total_vec.forced_push_at(i, prev + sum, exit)?;
+                        }
                     }
                 }
             }
@@ -264,9 +327,10 @@ where
             let first_index = Some(first_index.to_usize()? as i64);
             let last_index = Some(last_index.to_usize()? as i64);
 
-            let needs_sum_or_average = self.sum.is_some() || self.average.is_some();
+            let needs_sum_or_total = self.sum.is_some() || self.total.is_some();
+            let needs_average_sum_or_total = needs_sum_or_total || self.average.is_some();
             let needs_sorted = self.max.is_some() || self.min.is_some();
-            let needs_values = needs_sorted || needs_sum_or_average;
+            let needs_values = needs_sorted || needs_average_sum_or_total;
 
             if needs_values {
                 if needs_sorted {
@@ -291,7 +355,7 @@ where
                     }
                 }
 
-                if needs_sum_or_average {
+                if needs_average_sum_or_total {
                     if let Some(average) = self.average.as_mut() {
                         let values = source
                             .average
@@ -309,14 +373,27 @@ where
                         average.forced_push_at(i, avg, exit)?;
                     }
 
-                    if let Some(sum_vec) = self.sum.as_mut() {
+                    if needs_sum_or_total {
                         let values = source
                             .sum
                             .as_ref()
                             .unwrap()
                             .collect_range(first_index, last_index)?;
                         let sum = values.into_iter().fold(T::from(0), |a, b| a + b);
-                        sum_vec.forced_push_at(i, sum, exit)?;
+
+                        if let Some(sum_vec) = self.sum.as_mut() {
+                            sum_vec.forced_push_at(i, sum.clone(), exit)?;
+                        }
+
+                        if let Some(total_vec) = self.total.as_mut() {
+                            let prev = i.to_usize().unwrap().checked_sub(1).map_or(
+                                T::from(0_usize),
+                                |prev_i| {
+                                    total_vec.get(I::from(prev_i)).unwrap().unwrap().to_owned()
+                                },
+                            );
+                            total_vec.forced_push_at(i, prev + sum, exit)?;
+                        }
                     }
                 }
             }
@@ -381,6 +458,9 @@ where
         if let Some(sum) = self.sum.as_ref() {
             v.push(sum.any_vec());
         }
+        if let Some(total) = self.total.as_ref() {
+            v.push(total.any_vec());
+        }
         if let Some(_90p) = self._90p.as_ref() {
             v.push(_90p.any_vec());
         }
@@ -419,6 +499,9 @@ where
         if let Some(sum) = self.sum.as_mut() {
             sum.safe_flush(exit)?;
         }
+        if let Some(total) = self.total.as_mut() {
+            total.safe_flush(exit)?;
+        }
         if let Some(_90p) = self._90p.as_mut() {
             _90p.safe_flush(exit)?;
         }
@@ -449,6 +532,7 @@ pub struct StorableVecGeneatorOptions {
     min: bool,
     first: bool,
     last: bool,
+    total: bool,
 }
 
 impl StorableVecGeneatorOptions {
@@ -507,6 +591,11 @@ impl StorableVecGeneatorOptions {
         self
     }
 
+    pub fn add_total(mut self) -> Self {
+        self.total = true;
+        self
+    }
+
     pub fn rm_min(mut self) -> Self {
         self.min = false;
         self
@@ -552,6 +641,11 @@ impl StorableVecGeneatorOptions {
         self
     }
 
+    pub fn rm_total(mut self) -> Self {
+        self.total = false;
+        self
+    }
+
     pub fn add_minmax(mut self) -> Self {
         self.min = true;
         self.max = true;
@@ -589,10 +683,18 @@ impl StorableVecGeneatorOptions {
             self.min,
             self.first,
             self.last,
+            self.total,
         ]
         .iter()
         .filter(|b| **b)
         .count()
             == 1
+    }
+
+    pub fn copy_self_extra(&self) -> Self {
+        Self {
+            total: self.total,
+            ..Self::default()
+        }
     }
 }

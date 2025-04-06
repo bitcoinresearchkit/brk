@@ -36,7 +36,7 @@ Added git tags for each version though Markdown won't display formatted on Githu
 Moved Sanakirja database wrapper to its own crate (`snkrj`) and added a robust auto defragmentation to improve disk usage without the need for user's intervention.
 Since it's not used anymore it will moved out of the repository relatively soon.
 
-# [v0.5.0](https://github.com/kibo-money/kibo/tree/eea56d394bf92c62c81da8b78b8c47ea730683f5) | [873199](https://mempool.space/block/0000000000000000000270925aa6a565be92e13164565a3f7994ca1966e48050) - 2024/12/04
+# [kibo-v0.5.0](https://github.com/kibo-money/kibo/tree/eea56d394bf92c62c81da8b78b8c47ea730683f5) | [873199](https://mempool.space/block/0000000000000000000270925aa6a565be92e13164565a3f7994ca1966e48050) - 2024/12/04
 
 ![Image of the kibo Web App version 0.5.0](https://github.com/kibo-money/kibo/blob/main/_assets/v0.5.0.jpg)
 
@@ -103,7 +103,7 @@ Since it's not used anymore it will moved out of the repository relatively soon.
 
 - Moved back to this repo
 
-# [v0.4.0](https://github.com/kibo-money/kibo/tree/a64c544815d9ef785e2fc1323582f774f16b9200) | [861950](https://mempool.space/block/00000000000000000000530d0e30ccf7deeace122dcc99f2668a06c6dad83629) - 2024/09/19
+# [kibo-v0.4.0](https://github.com/kibo-money/kibo/tree/a64c544815d9ef785e2fc1323582f774f16b9200) | [861950](https://mempool.space/block/00000000000000000000530d0e30ccf7deeace122dcc99f2668a06c6dad83629) - 2024/09/19
 
 ![Image of the kibo Web App version 0.4.0](https://github.com/kibo-money/kibo/blob/main/_assets/v0.4.0.jpg)
 
@@ -140,7 +140,7 @@ Since it's not used anymore it will moved out of the repository relatively soon.
 - Added serving of the website
 - Improved `Cache-Control` behavior
 
-# [v0.3.0](https://github.com/kibo-money/kibo/tree/b68b016091c45b071218fba01bac5b76e8eaf18c) | [853930](https://mempool.space/block/00000000000000000002eb5e9a7950ca2d5d98bd1ed28fc9098aa630d417985d) - 2024/07/26
+# [kibo-v0.3.0](https://github.com/kibo-money/kibo/tree/b68b016091c45b071218fba01bac5b76e8eaf18c) | [853930](https://mempool.space/block/00000000000000000002eb5e9a7950ca2d5d98bd1ed28fc9098aa630d417985d) - 2024/07/26
 
 ![Image of the Satonomics Web App version 0.3.0](https://github.com/kibo-money/kibo/blob/main/_assets/v0.3.0.jpg)
 
@@ -219,7 +219,7 @@ Since it's not used anymore it will moved out of the repository relatively soon.
   - Only run with a watcher if `cargo watch` is available
   - Removed id_to_path file in favor for only `paths.d.ts` in `app/src/types`
 
-# [v0.2.0](https://github.com/kibo-money/kibo/tree/248187889283597c5dbb806292297453c25e97b8) | [851286](https://mempool.space/block/0000000000000000000281ca7f1bf8c50702bfca168c7af1bdc67c977c1ac8ed) - 2024/07/08
+# [kibo-v0.2.0](https://github.com/kibo-money/kibo/tree/248187889283597c5dbb806292297453c25e97b8) | [851286](https://mempool.space/block/0000000000000000000281ca7f1bf8c50702bfca168c7af1bdc67c977c1ac8ed) - 2024/07/08
 
 ![Image of the Satonomics Web App version 0.2.0](https://github.com/kibo-money/kibo/blob/main/_assets/v0.2.0.jpg)
 
@@ -255,7 +255,7 @@ Since it's not used anymore it will moved out of the repository relatively soon.
 
 - Fixed ulimit only being run in Mac OS instead of whenever the program is detected
 
-# [v0.1.1](https://github.com/kibo-money/kibo/tree/e55b5195a9de9aea306903c94ed63cb1720fda5f) | [849240](https://mempool.space/block/000000000000000000002b8653988655071c07bb5f7181c038f9326bc86db741) - 2024/06/24
+# [kibo-v0.1.1](https://github.com/kibo-money/kibo/tree/e55b5195a9de9aea306903c94ed63cb1720fda5f) | [849240](https://mempool.space/block/000000000000000000002b8653988655071c07bb5f7181c038f9326bc86db741) - 2024/06/24
 
 ![Image of the Satonomics Web App version 0.1.1](https://github.com/kibo-money/kibo/blob/main/_assets/v0.1.1.jpg)
 
@@ -305,10 +305,10 @@ Since it's not used anymore it will moved out of the repository relatively soon.
 
 - Deleted old price datasets and their backups
 
-# [v0.1.0](https://github.com/kibo-money/kibo/tree/a1a576d088c8f83ed32d48753a7611f70a964574) | [848642](https://mempool.space/block/000000000000000000020be5761d70751252219a9557f55e91ecdfb86c4e026a) - 2024/06/19
+# [kibo-v0.1.0](https://github.com/kibo-money/kibo/tree/a1a576d088c8f83ed32d48753a7611f70a964574) | [848642](https://mempool.space/block/000000000000000000020be5761d70751252219a9557f55e91ecdfb86c4e026a) - 2024/06/19
 
 ![Image of the Satonomics Web App version 0.1.0](https://github.com/kibo-money/kibo/blob/main/_assets/v0.1.0.jpg)
 
-# v0.0.1 | [835444](https://mempool.space/block/000000000000000000009f93907a0dd83c080d5585cc7ec82c076d45f6d7c872) - 2024/03/20
+# kibo-v0.0.1 | [835444](https://mempool.space/block/000000000000000000009f93907a0dd83c080d5585cc7ec82c076d45f6d7c872) - 2024/03/20
 
 ![Image of the Satonomics Web App version 0.0.X](https://github.com/kibo-money/kibo/blob/main/_assets/v0.0.X.jpg)

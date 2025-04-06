@@ -18,6 +18,7 @@ where
     T: ComputedType + PartialOrd,
 {
     pub txindex: ComputedVec<Txindex, T>,
+    pub txindex_extra: ComputedVecBuilder<Txindex, T>,
     pub height: ComputedVecBuilder<Height, T>,
     pub dateindex: ComputedVecBuilder<Dateindex, T>,
     pub weekindex: ComputedVecBuilder<Weekindex, T>,
@@ -47,6 +48,13 @@ where
             compressed,
         )?;
 
+        let txindex_extra = ComputedVecBuilder::forced_import(
+            path,
+            name,
+            compressed,
+            StorableVecGeneatorOptions::default(),
+        )?;
+
         let height = ComputedVecBuilder::forced_import(path, name, compressed, options)?;
         let dateindex = ComputedVecBuilder::forced_import(path, name, compressed, options)?;
 
@@ -54,6 +62,7 @@ where
 
         Ok(Self {
             txindex,
+            txindex_extra,
             height,
             dateindex,
             weekindex: ComputedVecBuilder::forced_import(path, name, compressed, options)?,
@@ -68,16 +77,25 @@ where
 
     pub fn compute<F>(
         &mut self,
-        mut compute: F,
         indexer: &mut Indexer,
         indexes: &mut indexes::Vecs,
         starting_indexes: &Indexes,
         exit: &Exit,
+        mut compute: F,
     ) -> color_eyre::Result<()>
     where
-        F: FnMut(&mut ComputedVec<Txindex, T>) -> Result<()>,
+        F: FnMut(
+            &mut ComputedVec<Txindex, T>,
+            &mut Indexer,
+            &mut indexes::Vecs,
+            &Indexes,
+            &Exit,
+        ) -> Result<()>,
     {
-        compute(&mut self.txindex)?;
+        compute(&mut self.txindex, indexer, indexes, starting_indexes, exit)?;
+
+        self.txindex_extra
+            .extend(starting_indexes.txindex, self.txindex.mut_vec(), exit)?;
 
         self.height.compute(
             starting_indexes.height,
@@ -149,6 +167,7 @@ where
     pub fn any_vecs(&self) -> Vec<&dyn AnyStorableVec> {
         [
             vec![self.txindex.any_vec()],
+            self.txindex_extra.any_vecs(),
             self.height.any_vecs(),
             self.dateindex.any_vecs(),
             self.weekindex.any_vecs(),

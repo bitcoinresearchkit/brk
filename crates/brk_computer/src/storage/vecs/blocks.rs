@@ -1,12 +1,12 @@
 use std::{fs, path::Path};
 
-use brk_core::{CheckedSub, Dateindex, Timestamp};
+use brk_core::{CheckedSub, CounterU32, Timestamp};
 use brk_exit::Exit;
 use brk_indexer::Indexer;
 use brk_vec::{AnyStorableVec, Compressed, Version};
 
 use super::{
-    ComputedVec, Indexes,
+    Indexes,
     grouped::{ComputedVecsFromHeight, StorableVecGeneatorOptions},
     indexes,
 };
@@ -14,8 +14,7 @@ use super::{
 #[derive(Clone)]
 pub struct Vecs {
     pub indexes_to_block_interval: ComputedVecsFromHeight<Timestamp>,
-    pub dateindex_to_block_count: ComputedVec<Dateindex, u16>,
-    pub dateindex_to_total_block_count: ComputedVec<Dateindex, u32>,
+    pub indexes_to_block_count: ComputedVecsFromHeight<CounterU32>,
 }
 
 impl Vecs {
@@ -33,15 +32,12 @@ impl Vecs {
                     .add_minmax()
                     .add_average(),
             )?,
-            dateindex_to_block_count: ComputedVec::forced_import(
-                &path.join("dateindex_to_block_count"),
+            indexes_to_block_count: ComputedVecsFromHeight::forced_import(
+                path,
+                "block_count",
                 Version::ONE,
                 compressed,
-            )?,
-            dateindex_to_total_block_count: ComputedVec::forced_import(
-                &path.join("dateindex_to_total_block_count"),
-                Version::ONE,
-                compressed,
+                StorableVecGeneatorOptions::default().add_sum().add_total(),
             )?,
         })
     }
@@ -53,10 +49,14 @@ impl Vecs {
         starting_indexes: &Indexes,
         exit: &Exit,
     ) -> color_eyre::Result<()> {
-        let indexer_vecs = indexer.mut_vecs();
-
         self.indexes_to_block_interval.compute(
-            |v| {
+            indexer,
+            indexes,
+            starting_indexes,
+            exit,
+            |v, indexer, _, starting_indexes, exit| {
+                let indexer_vecs = indexer.mut_vecs();
+
                 v.compute_transform(
                     starting_indexes.height,
                     indexer_vecs.height_to_timestamp.mut_vec(),
@@ -72,9 +72,23 @@ impl Vecs {
                     exit,
                 )
             },
+        )?;
+
+        self.indexes_to_block_count.compute(
+            indexer,
             indexes,
             starting_indexes,
             exit,
+            |v, indexer, _, starting_indexes, exit| {
+                let indexer_vecs = indexer.mut_vecs();
+
+                v.compute_transform(
+                    starting_indexes.height,
+                    indexer_vecs.height_to_weight.mut_vec(),
+                    |(h, ..)| (h, CounterU32::from(1_u32)),
+                    exit,
+                )
+            },
         )?;
 
         Ok(())
@@ -82,11 +96,8 @@ impl Vecs {
 
     pub fn as_any_vecs(&self) -> Vec<&dyn AnyStorableVec> {
         [
-            vec![
-                self.dateindex_to_block_count.any_vec(),
-                self.dateindex_to_total_block_count.any_vec(),
-            ],
             self.indexes_to_block_interval.any_vecs(),
+            self.indexes_to_block_count.any_vecs(),
         ]
         .concat()
     }

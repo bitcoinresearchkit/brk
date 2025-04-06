@@ -4,6 +4,7 @@ use brk_core::{
     Dateindex, Decadeindex, Difficultyepoch, Height, Monthindex, Quarterindex, Weekindex, Yearindex,
 };
 use brk_exit::Exit;
+use brk_indexer::Indexer;
 use brk_vec::{AnyStorableVec, Compressed, Result, Version};
 
 use crate::storage::vecs::{Indexes, base::ComputedVec, indexes};
@@ -16,6 +17,7 @@ where
     T: ComputedType + PartialOrd,
 {
     pub height: ComputedVec<Height, T>,
+    pub height_extra: ComputedVecBuilder<Height, T>,
     pub dateindex: ComputedVecBuilder<Dateindex, T>,
     pub weekindex: ComputedVecBuilder<Weekindex, T>,
     pub difficultyepoch: ComputedVecBuilder<Difficultyepoch, T>,
@@ -44,12 +46,16 @@ where
             compressed,
         )?;
 
+        let height_extra =
+            ComputedVecBuilder::forced_import(path, name, compressed, options.copy_self_extra())?;
+
         let dateindex = ComputedVecBuilder::forced_import(path, name, compressed, options)?;
 
         let options = options.remove_percentiles();
 
         Ok(Self {
             height,
+            height_extra,
             dateindex,
             weekindex: ComputedVecBuilder::forced_import(path, name, compressed, options)?,
             difficultyepoch: ComputedVecBuilder::forced_import(path, name, compressed, options)?,
@@ -63,15 +69,25 @@ where
 
     pub fn compute<F>(
         &mut self,
-        mut compute: F,
+        indexer: &mut Indexer,
         indexes: &mut indexes::Vecs,
         starting_indexes: &Indexes,
         exit: &Exit,
+        mut compute: F,
     ) -> color_eyre::Result<()>
     where
-        F: FnMut(&mut ComputedVec<Height, T>) -> Result<()>,
+        F: FnMut(
+            &mut ComputedVec<Height, T>,
+            &mut Indexer,
+            &mut indexes::Vecs,
+            &Indexes,
+            &Exit,
+        ) -> Result<()>,
     {
-        compute(&mut self.height)?;
+        compute(&mut self.height, indexer, indexes, starting_indexes, exit)?;
+
+        self.height_extra
+            .extend(starting_indexes.height, self.height.mut_vec(), exit)?;
 
         self.dateindex.compute(
             starting_indexes.dateindex,
@@ -135,6 +151,7 @@ where
     pub fn any_vecs(&self) -> Vec<&dyn AnyStorableVec> {
         [
             vec![self.height.any_vec()],
+            self.height_extra.any_vecs(),
             self.dateindex.any_vecs(),
             self.weekindex.any_vecs(),
             self.difficultyepoch.any_vecs(),

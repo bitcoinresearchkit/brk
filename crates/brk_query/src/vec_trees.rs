@@ -17,6 +17,7 @@ impl<'a> VecTrees<'a> {
         let file_name = vec.file_name();
         let split = file_name.split("_to_").collect::<Vec<_>>();
         if split.len() != 2 {
+            dbg!(&file_name, &split);
             panic!();
         }
         let str = vec

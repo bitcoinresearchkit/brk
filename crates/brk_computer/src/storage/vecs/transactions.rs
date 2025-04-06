@@ -1,11 +1,15 @@
 use std::{fs, path::Path};
 
-use brk_core::Txindex;
+use brk_core::{CounterU64, Txindex};
 use brk_exit::Exit;
 use brk_indexer::Indexer;
 use brk_vec::{AnyStorableVec, Compressed, Version};
 
-use super::{ComputedVec, Indexes, indexes};
+use super::{
+    ComputedVec, Indexes,
+    grouped::{ComputedVecsFromTxindex, StorableVecGeneatorOptions},
+    indexes,
+};
 
 #[derive(Clone)]
 pub struct Vecs {
@@ -21,9 +25,9 @@ pub struct Vecs {
     // pub txindex_to_fee: ComputedVec<Txindex, Sats>,
     pub txindex_to_is_coinbase: ComputedVec<Txindex, bool>,
     // pub txindex_to_feerate: ComputedVec<Txindex, Feerate>,
-    pub txindex_to_inputs_count: ComputedVec<Txindex, u32>,
+    pub txindex_to_inputs_count: ComputedVecsFromTxindex<CounterU64>,
     // pub txindex_to_inputs_sum: ComputedVec<Txindex, Sats>,
-    pub txindex_to_outputs_count: ComputedVec<Txindex, u32>,
+    pub txindex_to_outputs_count: ComputedVecsFromTxindex<CounterU64>,
     // pub txindex_to_outputs_sum: ComputedVec<Txindex, Sats>,
     // pub txinindex_to_value: ComputedVec<Txinindex, Sats>,
 }
@@ -58,24 +62,20 @@ impl Vecs {
                 compressed,
             )?,
             // txindex_to_feerate: StorableVec::forced_import(&path.join("txindex_to_feerate"), Version::ONE)?,
-            txindex_to_inputs_count: ComputedVec::forced_import(
-                &path.join("txindex_to_inputs_count"),
+            txindex_to_inputs_count: ComputedVecsFromTxindex::forced_import(
+                path,
+                "inputs_count",
                 Version::ONE,
                 compressed,
+                StorableVecGeneatorOptions::default().add_sum().add_total(),
             )?,
-            // txindex_to_inputs_sum: StorableVec::forced_import(
-            //     &path.join("txindex_to_inputs_sum"),
-            //     Version::ONE,
-            // )?,
-            txindex_to_outputs_count: ComputedVec::forced_import(
-                &path.join("txindex_to_outputs_count"),
+            txindex_to_outputs_count: ComputedVecsFromTxindex::forced_import(
+                path,
+                "outputs_count",
                 Version::ONE,
                 compressed,
+                StorableVecGeneatorOptions::default().add_sum().add_total(),
             )?,
-            // txindex_to_outputs_sum: StorableVec::forced_import(
-            //     &path.join("txindex_to_outputs_sum"),
-            //     Version::ONE,
-            // )?,
             // txinindex_to_value: StorableVec::forced_import(
             //     &path.join("txinindex_to_value"),
             //     Version::ONE,
@@ -91,21 +91,51 @@ impl Vecs {
         starting_indexes: &Indexes,
         exit: &Exit,
     ) -> color_eyre::Result<()> {
+        self.txindex_to_inputs_count.compute(
+            indexer,
+            indexes,
+            starting_indexes,
+            exit,
+            |v, indexer, indexes, starting_indexes, exit| {
+                v.compute_count_from_indexes(
+                    starting_indexes.txindex,
+                    indexer.mut_vecs().txindex_to_first_txinindex.mut_vec(),
+                    indexes.txindex_to_last_txinindex.mut_vec(),
+                    exit,
+                )
+            },
+        )?;
+
+        self.txindex_to_outputs_count.compute(
+            indexer,
+            indexes,
+            starting_indexes,
+            exit,
+            |v, indexer, indexes, starting_indexes, exit| {
+                v.compute_count_from_indexes(
+                    starting_indexes.txindex,
+                    indexer.mut_vecs().txindex_to_first_txoutindex.mut_vec(),
+                    indexes.txindex_to_last_txoutindex.mut_vec(),
+                    exit,
+                )
+            },
+        )?;
+
+        // self.txindex_to_inputs_count.compute_count_from_indexes(
+        //     starting_indexes.txindex,
+        //     indexer_vecs.txindex_to_first_txinindex.mut_vec(),
+        //     indexes.txindex_to_last_txinindex.mut_vec(),
+        //     exit,
+        // )?;
+
+        // self.txindex_to_outputs_count.compute_count_from_indexes(
+        //     starting_indexes.txindex,
+        //     indexer_vecs.txindex_to_first_txoutindex.mut_vec(),
+        //     indexes.txindex_to_last_txoutindex.mut_vec(),
+        //     exit,
+        // )?;
+
         let indexer_vecs = indexer.mut_vecs();
-
-        self.txindex_to_inputs_count.compute_count_from_indexes(
-            starting_indexes.txindex,
-            indexer_vecs.txindex_to_first_txinindex.mut_vec(),
-            indexes.txindex_to_last_txinindex.mut_vec(),
-            exit,
-        )?;
-
-        self.txindex_to_outputs_count.compute_count_from_indexes(
-            starting_indexes.txindex,
-            indexer_vecs.txindex_to_first_txoutindex.mut_vec(),
-            indexes.txindex_to_last_txoutindex.mut_vec(),
-            exit,
-        )?;
 
         self.txindex_to_is_coinbase.compute_is_first_ordered(
             starting_indexes.txindex,
@@ -135,31 +165,15 @@ impl Vecs {
         //     &mut indexer.vecs().height_to_first_txindex,
         // )?;
 
-        // self.vecs.height_to_dateindex.compute(...)
-
-        // ---
-        // Date to X
-        // ---
-        // ...
-
-        // ---
-        // Month to X
-        // ---
-        // ...
-
-        // ---
-        // Year to X
-        // ---
-        // ...
-
         Ok(())
     }
 
     pub fn as_any_vecs(&self) -> Vec<&dyn AnyStorableVec> {
-        vec![
-            self.txindex_to_is_coinbase.any_vec(),
-            self.txindex_to_inputs_count.any_vec(),
-            self.txindex_to_outputs_count.any_vec(),
+        [
+            vec![self.txindex_to_is_coinbase.any_vec()],
+            self.txindex_to_outputs_count.any_vecs(),
+            self.txindex_to_inputs_count.any_vecs(),
         ]
+        .concat()
     }
 }
