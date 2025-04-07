@@ -10,7 +10,6 @@ use brk_parser::{
     rpc::{self, RpcApi},
 };
 use brk_server::{Server, Website};
-use log::info;
 
 pub fn main() -> color_eyre::Result<()> {
     color_eyre::install()?;

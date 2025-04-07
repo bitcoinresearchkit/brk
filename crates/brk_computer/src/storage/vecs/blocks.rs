@@ -1,8 +1,9 @@
 use std::{fs, path::Path};
 
-use brk_core::{CheckedSub, StoredU32, StoredUsize, Timestamp, Weight};
+use brk_core::{CheckedSub, StoredU32, StoredU64, StoredUsize, Timestamp, Weight};
 use brk_exit::Exit;
 use brk_indexer::Indexer;
+use brk_parser::bitcoin;
 use brk_vec::{AnyStorableVec, Compressed, Version};
 
 use super::{
@@ -16,7 +17,7 @@ pub struct Vecs {
     pub indexes_to_block_interval: ComputedVecsFromHeight<Timestamp>,
     pub indexes_to_block_count: ComputedVecsFromHeight<StoredU32>,
     pub indexes_to_block_weight: ComputedVecsFromHeight<Weight>,
-    // pub indexes_to_block_vbytes: ComputedVecsFromHeight<>,
+    pub indexes_to_block_vbytes: ComputedVecsFromHeight<StoredU64>,
     pub indexes_to_block_size: ComputedVecsFromHeight<StoredUsize>,
 }
 
@@ -60,6 +61,14 @@ impl Vecs {
                 compressed,
                 StorableVecGeneatorOptions::default().add_sum().add_total(),
             )?,
+            indexes_to_block_vbytes: ComputedVecsFromHeight::forced_import(
+                path,
+                "block_vbytes",
+                true,
+                Version::ZERO,
+                compressed,
+                StorableVecGeneatorOptions::default().add_sum().add_total(),
+            )?,
         })
     }
 
@@ -70,7 +79,7 @@ impl Vecs {
         starting_indexes: &Indexes,
         exit: &Exit,
     ) -> color_eyre::Result<()> {
-        self.indexes_to_block_interval.compute(
+        self.indexes_to_block_interval.compute_all(
             indexer,
             indexes,
             starting_indexes,
@@ -95,56 +104,54 @@ impl Vecs {
             },
         )?;
 
-        self.indexes_to_block_count.compute(
+        self.indexes_to_block_count.compute_all(
             indexer,
             indexes,
             starting_indexes,
             exit,
             |v, indexer, _, starting_indexes, exit| {
-                let indexer_vecs = indexer.mut_vecs();
-
                 v.compute_transform(
                     starting_indexes.height,
-                    indexer_vecs.height_to_weight.mut_vec(),
+                    indexer.mut_vecs().height_to_block_weight.mut_vec(),
                     |(h, ..)| (h, StoredU32::from(1_u32)),
                     exit,
                 )
             },
         )?;
 
-        self.indexes_to_block_weight.compute(
+        self.indexes_to_block_weight.compute_rest(
+            indexes,
+            starting_indexes,
+            exit,
+            Some(indexer.mut_vecs().height_to_block_weight.mut_vec()),
+        )?;
+
+        self.indexes_to_block_size.compute_rest(
+            indexes,
+            starting_indexes,
+            exit,
+            Some(indexer.mut_vecs().height_to_block_size.mut_vec()),
+        )?;
+
+        self.indexes_to_block_vbytes.compute_all(
             indexer,
             indexes,
             starting_indexes,
             exit,
             |v, indexer, _, starting_indexes, exit| {
-                let indexer_vecs = indexer.mut_vecs();
-
                 v.compute_transform(
                     starting_indexes.height,
-                    indexer_vecs.height_to_weight.mut_vec(),
-                    |(h, w)| (h, w),
+                    indexer.mut_vecs().height_to_block_weight.mut_vec(),
+                    |(h, w, ..)| {
+                        (
+                            h,
+                            StoredU64::from(bitcoin::Weight::from(w).to_vbytes_floor()),
+                        )
+                    },
                     exit,
                 )
             },
         )?;
-
-        // self.indexes_to_block_size.compute(
-        //     indexer,
-        //     indexes,
-        //     starting_indexes,
-        //     exit,
-        //     |v, indexer, _, starting_indexes, exit| {
-        //         let indexer_vecs = indexer.mut_vecs();
-
-        //         v.compute_transform(
-        //             starting_indexes.height,
-        //             indexer_vecs.height_to_weight.mut_vec(),
-        //             |(h, ..)| (h, StoredU32::from(1_u32)),
-        //             exit,
-        //         )
-        //     },
-        // )?;
 
         Ok(())
     }
@@ -155,6 +162,7 @@ impl Vecs {
             self.indexes_to_block_count.any_vecs(),
             self.indexes_to_block_weight.any_vecs(),
             self.indexes_to_block_size.any_vecs(),
+            self.indexes_to_block_vbytes.any_vecs(),
         ]
         .concat()
     }

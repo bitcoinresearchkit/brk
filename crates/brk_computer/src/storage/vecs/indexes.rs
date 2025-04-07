@@ -320,7 +320,7 @@ impl Vecs {
     ) -> color_eyre::Result<Indexes> {
         let indexer_vecs = indexer.mut_vecs();
 
-        let height_count = indexer_vecs.height_to_size.len();
+        let height_count = indexer_vecs.height_to_block_size.len();
         let txindexes_count = indexer_vecs.txindex_to_txid.len();
         let txinindexes_count = indexer_vecs.txinindex_to_txoutindex.len();
         let txoutindexes_count = indexer_vecs.txoutindex_to_addressindex.len();

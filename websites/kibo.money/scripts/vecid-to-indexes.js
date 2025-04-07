@@ -75,6 +75,8 @@ export function createVecIdToIndexes() {
     "block-interval-min": [Dateindex, Weekindex, Monthindex, Quarterindex, Yearindex, Decadeindex, Difficultyepoch],
     "block-size": [Height],
     "block-size-sum": [Dateindex, Weekindex, Monthindex, Quarterindex, Yearindex, Decadeindex, Difficultyepoch],
+    "block-vbytes": [Height],
+    "block-vbytes-sum": [Dateindex, Weekindex, Monthindex, Quarterindex, Yearindex, Decadeindex, Difficultyepoch],
     "block-weight": [Height],
     "block-weight-sum": [Dateindex, Weekindex, Monthindex, Quarterindex, Yearindex, Decadeindex, Difficultyepoch],
     blockhash: [Height],
@@ -142,10 +144,10 @@ export function createVecIdToIndexes() {
     quarterindex: [Monthindex, Quarterindex],
     "real-date": [Height],
     "sats-per-dollar": [Dateindex, Height, Weekindex, Monthindex, Quarterindex, Yearindex, Decadeindex, Difficultyepoch],
-    size: [Height],
     timestamp: [Dateindex, Height, Weekindex, Monthindex, Quarterindex, Yearindex, Decadeindex, Difficultyepoch, Halvingepoch],
     "total-block-count": [Dateindex, Height, Weekindex, Monthindex, Quarterindex, Yearindex, Decadeindex, Difficultyepoch],
     "total-block-size": [Dateindex, Height, Weekindex, Monthindex, Quarterindex, Yearindex, Decadeindex, Difficultyepoch],
+    "total-block-vbytes": [Dateindex, Height, Weekindex, Monthindex, Quarterindex, Yearindex, Decadeindex, Difficultyepoch],
     "total-block-weight": [Dateindex, Height, Weekindex, Monthindex, Quarterindex, Yearindex, Decadeindex, Difficultyepoch],
     "total-input-count": [Dateindex, Height, Weekindex, Monthindex, Quarterindex, Yearindex, Decadeindex, Difficultyepoch],
     "total-output-count": [Dateindex, Height, Weekindex, Monthindex, Quarterindex, Yearindex, Decadeindex, Difficultyepoch],
@@ -155,7 +157,6 @@ export function createVecIdToIndexes() {
     txversion: [Txindex],
     value: [Txoutindex],
     weekindex: [Dateindex, Weekindex],
-    weight: [Height],
     yearindex: [Monthindex, Yearindex],
   }
 }

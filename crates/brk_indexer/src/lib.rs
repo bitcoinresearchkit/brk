@@ -165,8 +165,8 @@ impl Indexer {
                     .push_if_needed(height, block.header.difficulty_float())?;
                 vecs.height_to_timestamp
                     .push_if_needed(height, Timestamp::from(block.header.time))?;
-                vecs.height_to_size.push_if_needed(height, block.total_size())?;
-                vecs.height_to_weight.push_if_needed(height, block.weight().into())?;
+                vecs.height_to_block_size.push_if_needed(height, block.total_size().into())?;
+                vecs.height_to_block_weight.push_if_needed(height, block.weight().into())?;
 
                 let inputs = block
                     .txdata
