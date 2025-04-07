@@ -6,8 +6,6 @@ use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 use crate::CheckedSub;
 
-use super::{Txinindex, Txoutindex};
-
 #[derive(
     Debug,
     Deref,
@@ -23,71 +21,53 @@ use super::{Txinindex, Txoutindex};
     KnownLayout,
     Serialize,
 )]
-pub struct CounterU64(u64);
+pub struct StoredUsize(usize);
 
-impl CounterU64 {
+impl StoredUsize {
     pub const ZERO: Self = Self(0);
 
-    pub fn new(counter: u64) -> Self {
+    pub fn new(counter: usize) -> Self {
         Self(counter)
     }
 }
 
-impl From<u64> for CounterU64 {
-    fn from(value: u64) -> Self {
+impl From<usize> for StoredUsize {
+    fn from(value: usize) -> Self {
         Self(value)
     }
 }
 
-impl From<usize> for CounterU64 {
-    fn from(value: usize) -> Self {
-        Self(value as u64)
-    }
-}
-
-impl CheckedSub<CounterU64> for CounterU64 {
+impl CheckedSub<StoredUsize> for StoredUsize {
     fn checked_sub(self, rhs: Self) -> Option<Self> {
         self.0.checked_sub(rhs.0).map(Self)
     }
 }
 
-impl Div<usize> for CounterU64 {
+impl Div<usize> for StoredUsize {
     type Output = Self;
     fn div(self, rhs: usize) -> Self::Output {
-        Self(self.0 / rhs as u64)
+        Self(self.0 / rhs)
     }
 }
 
-impl Add for CounterU64 {
+impl Add for StoredUsize {
     type Output = Self;
     fn add(self, rhs: Self) -> Self::Output {
         Self(self.0 + rhs.0)
     }
 }
 
-impl From<f64> for CounterU64 {
+impl From<f64> for StoredUsize {
     fn from(value: f64) -> Self {
         if value < 0.0 || value > u32::MAX as f64 {
             panic!()
         }
-        Self(value as u64)
+        Self(value as usize)
     }
 }
 
-impl From<CounterU64> for f64 {
-    fn from(value: CounterU64) -> Self {
+impl From<StoredUsize> for f64 {
+    fn from(value: StoredUsize) -> Self {
         value.0 as f64
-    }
-}
-
-impl From<Txinindex> for CounterU64 {
-    fn from(value: Txinindex) -> Self {
-        Self(*value)
-    }
-}
-
-impl From<Txoutindex> for CounterU64 {
-    fn from(value: Txoutindex) -> Self {
-        Self(*value)
     }
 }

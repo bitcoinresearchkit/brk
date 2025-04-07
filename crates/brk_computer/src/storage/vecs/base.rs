@@ -31,7 +31,7 @@ where
         version: Version,
         compressed: Compressed,
     ) -> brk_vec::Result<Self> {
-        let vec = brk_vec::StorableVec::forced_import(path, version, compressed)?;
+        let vec = StorableVec::forced_import(path, version, compressed)?;
 
         Ok(Self {
             computed_version: None,
@@ -88,11 +88,11 @@ where
         self.vec.len()
     }
 
-    pub fn vec(&self) -> &brk_vec::StorableVec<I, T> {
+    pub fn vec(&self) -> &StorableVec<I, T> {
         &self.vec
     }
 
-    pub fn mut_vec(&mut self) -> &mut brk_vec::StorableVec<I, T> {
+    pub fn mut_vec(&mut self) -> &mut StorableVec<I, T> {
         &mut self.vec
     }
 
@@ -129,14 +129,14 @@ where
     pub fn compute_transform<A, B, F>(
         &mut self,
         max_from: A,
-        other: &mut brk_vec::StorableVec<A, B>,
+        other: &mut StorableVec<A, B>,
         mut t: F,
         exit: &Exit,
     ) -> Result<()>
     where
         A: StoredIndex,
         B: StoredType,
-        F: FnMut((A, B, &mut Self, &mut brk_vec::StorableVec<A, B>)) -> (I, T),
+        F: FnMut((A, B, &mut Self, &mut StorableVec<A, B>)) -> (I, T),
     {
         self.validate_computed_version_or_reset_file(
             Version::ZERO + self.version() + other.version(),
@@ -154,7 +154,7 @@ where
     pub fn compute_inverse_more_to_less(
         &mut self,
         max_from: T,
-        other: &mut brk_vec::StorableVec<T, I>,
+        other: &mut StorableVec<T, I>,
         exit: &Exit,
     ) -> Result<()>
     where
@@ -181,8 +181,8 @@ where
     pub fn compute_inverse_less_to_more(
         &mut self,
         max_from: T,
-        first_indexes: &mut brk_vec::StorableVec<T, I>,
-        last_indexes: &mut brk_vec::StorableVec<T, I>,
+        first_indexes: &mut StorableVec<T, I>,
+        last_indexes: &mut StorableVec<T, I>,
         exit: &Exit,
     ) -> Result<()>
     where
@@ -207,7 +207,7 @@ where
     pub fn compute_last_index_from_first(
         &mut self,
         max_from: I,
-        first_indexes: &mut brk_vec::StorableVec<I, T>,
+        first_indexes: &mut StorableVec<I, T>,
         final_len: usize,
         exit: &Exit,
     ) -> Result<()>
@@ -242,8 +242,8 @@ where
     pub fn compute_count_from_indexes<T2>(
         &mut self,
         max_from: I,
-        first_indexes: &mut brk_vec::StorableVec<I, T2>,
-        last_indexes: &mut brk_vec::StorableVec<I, T2>,
+        first_indexes: &mut StorableVec<I, T2>,
+        last_indexes: &mut StorableVec<I, T2>,
         exit: &Exit,
     ) -> Result<()>
     where
@@ -270,8 +270,8 @@ where
     pub fn compute_is_first_ordered<A>(
         &mut self,
         max_from: I,
-        self_to_other: &mut brk_vec::StorableVec<I, A>,
-        other_to_self: &mut brk_vec::StorableVec<A, I>,
+        self_to_other: &mut StorableVec<I, A>,
+        other_to_self: &mut StorableVec<A, I>,
         exit: &Exit,
     ) -> Result<()>
     where
@@ -294,8 +294,8 @@ where
     pub fn compute_sum_from_indexes<T2>(
         &mut self,
         max_from: I,
-        first_indexes: &mut brk_vec::StorableVec<I, T2>,
-        last_indexes: &mut brk_vec::StorableVec<I, T2>,
+        first_indexes: &mut StorableVec<I, T2>,
+        last_indexes: &mut StorableVec<I, T2>,
         exit: &Exit,
     ) -> Result<()>
     where

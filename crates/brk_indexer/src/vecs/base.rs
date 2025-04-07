@@ -33,7 +33,7 @@ where
         version: Version,
         compressed: Compressed,
     ) -> brk_vec::Result<Self> {
-        let mut vec = brk_vec::StorableVec::forced_import(path, version, compressed)?;
+        let mut vec = StorableVec::forced_import(path, version, compressed)?;
 
         vec.enable_large_cache();
 
@@ -107,7 +107,7 @@ where
                 Ok(())
             }
             Ordering::Less => {
-                dbg!(index, value);
+                dbg!(index, value, self.vec.len(), self.path_height());
                 Err(Error::IndexTooHigh)
             }
         }
@@ -126,11 +126,11 @@ where
         self.vec.flush()
     }
 
-    pub fn vec(&self) -> &brk_vec::StorableVec<I, T> {
+    pub fn vec(&self) -> &StorableVec<I, T> {
         &self.vec
     }
 
-    pub fn mut_vec(&mut self) -> &mut brk_vec::StorableVec<I, T> {
+    pub fn mut_vec(&mut self) -> &mut StorableVec<I, T> {
         &mut self.vec
     }
 

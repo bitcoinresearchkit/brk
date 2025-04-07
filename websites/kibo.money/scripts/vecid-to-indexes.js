@@ -22,8 +22,13 @@
 /** @typedef {17} Txindex */
 /** @typedef {18} Txinindex */
 /** @typedef {19} Txoutindex */
+/** @typedef {20} Emptyindex */
+/** @typedef {21} Multisigindex */
+/** @typedef {22} Opreturnindex */
+/** @typedef {23} Pushonlyindex */
+/** @typedef {24} Unknownindex */
 
-/** @typedef {Height | Dateindex | Weekindex | Difficultyepoch | Monthindex | Quarterindex | Yearindex | Decadeindex | Halvingepoch | Addressindex | P2PK33index | P2PK65index | P2PKHindex | P2SHindex | P2TRindex | P2WPKHindex | P2WSHindex | Txindex | Txinindex | Txoutindex} Index */
+/** @typedef {Height | Dateindex | Weekindex | Difficultyepoch | Monthindex | Quarterindex | Yearindex | Decadeindex | Halvingepoch | Addressindex | P2PK33index | P2PK65index | P2PKHindex | P2SHindex | P2TRindex | P2WPKHindex | P2WSHindex | Txindex | Txinindex | Txoutindex | Emptyindex | Multisigindex | Opreturnindex | Pushonlyindex | Unknownindex} Index */
 
 export function createVecIdToIndexes() {
   const Height = /** @satisfies {Height} */ (0);
@@ -46,6 +51,11 @@ export function createVecIdToIndexes() {
   const Txindex = /** @satisfies {Txindex} */ (17);
   const Txinindex = /** @satisfies {Txinindex} */ (18);
   const Txoutindex = /** @satisfies {Txoutindex} */ (19);
+  const Emptyindex = /** @satisfies {Emptyindex} */ (20);
+  const Multisigindex = /** @satisfies {Multisigindex} */ (21);
+  const Opreturnindex = /** @satisfies {Opreturnindex} */ (22);
+  const Pushonlyindex = /** @satisfies {Pushonlyindex} */ (23);
+  const Unknownindex = /** @satisfies {Unknownindex} */ (24);
 
   return {
     addressindex: [Txoutindex],
@@ -63,6 +73,10 @@ export function createVecIdToIndexes() {
     "block-interval-max": [Dateindex, Weekindex, Monthindex, Quarterindex, Yearindex, Decadeindex, Difficultyepoch],
     "block-interval-median": [Dateindex],
     "block-interval-min": [Dateindex, Weekindex, Monthindex, Quarterindex, Yearindex, Decadeindex, Difficultyepoch],
+    "block-size": [Height],
+    "block-size-sum": [Dateindex, Weekindex, Monthindex, Quarterindex, Yearindex, Decadeindex, Difficultyepoch],
+    "block-weight": [Height],
+    "block-weight-sum": [Dateindex, Weekindex, Monthindex, Quarterindex, Yearindex, Decadeindex, Difficultyepoch],
     blockhash: [Height],
     close: [Dateindex, Height, Weekindex, Monthindex, Quarterindex, Yearindex, Decadeindex, Difficultyepoch],
     "close-in-cents": [Dateindex, Height],
@@ -94,11 +108,11 @@ export function createVecIdToIndexes() {
     "fixed-date": [Height],
     "fixed-timestamp": [Height],
     halvingepoch: [Height, Halvingepoch],
-    height: [Addressindex, Height, Txindex],
+    height: [Addressindex, Height, P2PK33index, P2PK65index, P2PKHindex, P2SHindex, P2TRindex, P2WPKHindex, P2WSHindex, Txindex, Txinindex, Txoutindex, Emptyindex, Multisigindex, Opreturnindex, Pushonlyindex, Unknownindex],
     high: [Dateindex, Height, Weekindex, Monthindex, Quarterindex, Yearindex, Decadeindex, Difficultyepoch],
     "high-in-cents": [Dateindex, Height],
-    "inputs-count": [Txindex],
-    "inputs-count-sum": [Dateindex, Height, Weekindex, Monthindex, Quarterindex, Yearindex, Decadeindex, Difficultyepoch],
+    "input-count": [Txindex],
+    "input-count-sum": [Dateindex, Height, Weekindex, Monthindex, Quarterindex, Yearindex, Decadeindex, Difficultyepoch],
     "is-coinbase": [Txindex],
     "is-explicitly-rbf": [Txindex],
     "last-dateindex": [Weekindex, Monthindex],
@@ -116,8 +130,8 @@ export function createVecIdToIndexes() {
     "ohlc-in-cents": [Dateindex, Height],
     open: [Dateindex, Height, Weekindex, Monthindex, Quarterindex, Yearindex, Decadeindex, Difficultyepoch],
     "open-in-cents": [Dateindex, Height],
-    "outputs-count": [Txindex],
-    "outputs-count-sum": [Dateindex, Height, Weekindex, Monthindex, Quarterindex, Yearindex, Decadeindex, Difficultyepoch],
+    "output-count": [Txindex],
+    "output-count-sum": [Dateindex, Height, Weekindex, Monthindex, Quarterindex, Yearindex, Decadeindex, Difficultyepoch],
     p2pk33addressbytes: [P2PK33index],
     p2pk65addressbytes: [P2PK65index],
     p2pkhaddressbytes: [P2PKHindex],
@@ -131,8 +145,10 @@ export function createVecIdToIndexes() {
     size: [Height],
     timestamp: [Dateindex, Height, Weekindex, Monthindex, Quarterindex, Yearindex, Decadeindex, Difficultyepoch, Halvingepoch],
     "total-block-count": [Dateindex, Height, Weekindex, Monthindex, Quarterindex, Yearindex, Decadeindex, Difficultyepoch],
-    "total-inputs-count": [Dateindex, Height, Weekindex, Monthindex, Quarterindex, Yearindex, Decadeindex, Difficultyepoch],
-    "total-outputs-count": [Dateindex, Height, Weekindex, Monthindex, Quarterindex, Yearindex, Decadeindex, Difficultyepoch],
+    "total-block-size": [Dateindex, Height, Weekindex, Monthindex, Quarterindex, Yearindex, Decadeindex, Difficultyepoch],
+    "total-block-weight": [Dateindex, Height, Weekindex, Monthindex, Quarterindex, Yearindex, Decadeindex, Difficultyepoch],
+    "total-input-count": [Dateindex, Height, Weekindex, Monthindex, Quarterindex, Yearindex, Decadeindex, Difficultyepoch],
+    "total-output-count": [Dateindex, Height, Weekindex, Monthindex, Quarterindex, Yearindex, Decadeindex, Difficultyepoch],
     "total-size": [Txindex],
     txid: [Txindex],
     txoutindex: [Txinindex],

@@ -1,6 +1,6 @@
 use std::{fs, path::Path};
 
-use brk_core::{CheckedSub, CounterU32, Timestamp};
+use brk_core::{CheckedSub, StoredU32, StoredUsize, Timestamp, Weight};
 use brk_exit::Exit;
 use brk_indexer::Indexer;
 use brk_vec::{AnyStorableVec, Compressed, Version};
@@ -14,7 +14,10 @@ use super::{
 #[derive(Clone)]
 pub struct Vecs {
     pub indexes_to_block_interval: ComputedVecsFromHeight<Timestamp>,
-    pub indexes_to_block_count: ComputedVecsFromHeight<CounterU32>,
+    pub indexes_to_block_count: ComputedVecsFromHeight<StoredU32>,
+    pub indexes_to_block_weight: ComputedVecsFromHeight<Weight>,
+    // pub indexes_to_block_vbytes: ComputedVecsFromHeight<>,
+    pub indexes_to_block_size: ComputedVecsFromHeight<StoredUsize>,
 }
 
 impl Vecs {
@@ -25,7 +28,8 @@ impl Vecs {
             indexes_to_block_interval: ComputedVecsFromHeight::forced_import(
                 path,
                 "block_interval",
-                Version::ONE,
+                true,
+                Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default()
                     .add_percentiles()
@@ -35,7 +39,24 @@ impl Vecs {
             indexes_to_block_count: ComputedVecsFromHeight::forced_import(
                 path,
                 "block_count",
-                Version::ONE,
+                true,
+                Version::ZERO,
+                compressed,
+                StorableVecGeneatorOptions::default().add_sum().add_total(),
+            )?,
+            indexes_to_block_weight: ComputedVecsFromHeight::forced_import(
+                path,
+                "block_weight",
+                false,
+                Version::ZERO,
+                compressed,
+                StorableVecGeneatorOptions::default().add_sum().add_total(),
+            )?,
+            indexes_to_block_size: ComputedVecsFromHeight::forced_import(
+                path,
+                "block_size",
+                false,
+                Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default().add_sum().add_total(),
             )?,
@@ -85,11 +106,45 @@ impl Vecs {
                 v.compute_transform(
                     starting_indexes.height,
                     indexer_vecs.height_to_weight.mut_vec(),
-                    |(h, ..)| (h, CounterU32::from(1_u32)),
+                    |(h, ..)| (h, StoredU32::from(1_u32)),
                     exit,
                 )
             },
         )?;
+
+        self.indexes_to_block_weight.compute(
+            indexer,
+            indexes,
+            starting_indexes,
+            exit,
+            |v, indexer, _, starting_indexes, exit| {
+                let indexer_vecs = indexer.mut_vecs();
+
+                v.compute_transform(
+                    starting_indexes.height,
+                    indexer_vecs.height_to_weight.mut_vec(),
+                    |(h, w)| (h, w),
+                    exit,
+                )
+            },
+        )?;
+
+        // self.indexes_to_block_size.compute(
+        //     indexer,
+        //     indexes,
+        //     starting_indexes,
+        //     exit,
+        //     |v, indexer, _, starting_indexes, exit| {
+        //         let indexer_vecs = indexer.mut_vecs();
+
+        //         v.compute_transform(
+        //             starting_indexes.height,
+        //             indexer_vecs.height_to_weight.mut_vec(),
+        //             |(h, ..)| (h, StoredU32::from(1_u32)),
+        //             exit,
+        //         )
+        //     },
+        // )?;
 
         Ok(())
     }
@@ -98,6 +153,8 @@ impl Vecs {
         [
             self.indexes_to_block_interval.any_vecs(),
             self.indexes_to_block_count.any_vecs(),
+            self.indexes_to_block_weight.any_vecs(),
+            self.indexes_to_block_size.any_vecs(),
         ]
         .concat()
     }

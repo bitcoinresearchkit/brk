@@ -16,7 +16,7 @@ pub struct ComputedVecsFromHeight<T>
 where
     T: ComputedType + PartialOrd,
 {
-    pub height: ComputedVec<Height, T>,
+    pub height: Option<ComputedVec<Height, T>>,
     pub height_extra: ComputedVecBuilder<Height, T>,
     pub dateindex: ComputedVecBuilder<Dateindex, T>,
     pub weekindex: ComputedVecBuilder<Weekindex, T>,
@@ -36,15 +36,15 @@ where
     pub fn forced_import(
         path: &Path,
         name: &str,
+        compute_source: bool,
         version: Version,
         compressed: Compressed,
         options: StorableVecGeneatorOptions,
     ) -> color_eyre::Result<Self> {
-        let height = ComputedVec::forced_import(
-            &path.join(format!("height_to_{name}")),
-            version,
-            compressed,
-        )?;
+        let height = compute_source.then(|| {
+            ComputedVec::forced_import(&path.join(format!("height_to_{name}")), version, compressed)
+                .unwrap()
+        });
 
         let height_extra =
             ComputedVecBuilder::forced_import(path, name, compressed, options.copy_self_extra())?;
@@ -84,14 +84,16 @@ where
             &Exit,
         ) -> Result<()>,
     {
-        compute(&mut self.height, indexer, indexes, starting_indexes, exit)?;
+        if let Some(height) = self.height.as_mut() {
+            compute(height, indexer, indexes, starting_indexes, exit)?;
+        }
 
         self.height_extra
             .extend(starting_indexes.height, self.height.mut_vec(), exit)?;
 
         self.dateindex.compute(
             starting_indexes.dateindex,
-            &mut self.height,
+            self.height.mut_vec(),
             indexes.dateindex_to_first_height.mut_vec(),
             indexes.dateindex_to_last_height.mut_vec(),
             exit,
