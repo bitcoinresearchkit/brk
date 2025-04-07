@@ -644,6 +644,167 @@ function initGroups() {
  * @returns {PartialOptionsTree}
  */
 function createPartialOptions(colors) {
+  /**
+   * @typedef {"total-"} TotalPrefix
+   * @typedef {Extract<VecId, `${TotalPrefix}${string}`>} TotalVecId
+   * @typedef {"-sum"} SumSuffix
+   * @typedef {Extract<VecId, `${string}${SumSuffix}`>} VecIdSum
+   * @typedef {"-average"} AverageSuffix
+   * @typedef {Extract<VecId, `${string}${AverageSuffix}`>} VecIdAverage
+   * @typedef {"-median"} MedianSuffix
+   * @typedef {Extract<VecId, `${string}${MedianSuffix}`>} VecIdMedian
+   * @typedef {"-90p"} _90pSuffix
+   * @typedef {Extract<VecId, `${string}${_90pSuffix}`>} VecId90p
+   * @typedef {"-75p"} _75pSuffix
+   * @typedef {Extract<VecId, `${string}${_75pSuffix}`>} VecId75p
+   * @typedef {"-25p"} _25pSuffix
+   * @typedef {Extract<VecId, `${string}${_25pSuffix}`>} VecId25p
+   * @typedef {"-10p"} _10pSuffix
+   * @typedef {Extract<VecId, `${string}${_10pSuffix}`>} VecId10p
+   * @typedef {"-max"} MaxSuffix
+   * @typedef {Extract<VecId, `${string}${MaxSuffix}`>} VecIdMax
+   * @typedef {"-min"} MinSuffix
+   * @typedef {Extract<VecId, `${string}${MinSuffix}`>} VecIdMin
+   * @typedef {VecId extends infer X
+      ? X extends string
+        ? `${X}${SumSuffix}` extends VecIdSum
+          ? `${TotalPrefix}${X}` extends TotalVecId
+            ? X
+            : never
+          : never
+        : never
+      : never} BaseTotalSumVecId
+   * @typedef {VecId extends infer X
+      ? X extends string
+        ? `${X}${MinSuffix}` extends VecIdMin
+          ? `${X}${MaxSuffix}` extends VecIdMax
+            ? X
+            : never
+          : never
+        : never
+      : never} MinMaxVecId
+    * @typedef {VecId extends infer X
+      ? X extends string
+        ? `${X}${AverageSuffix}` extends VecIdAverage
+          ? X
+          : never
+        : never
+      : never} AverageVecId
+    * @typedef {VecId extends infer X
+      ? X extends string
+        ? `${X}${MedianSuffix}` extends VecIdMedian
+          ? X
+          : never
+        : never
+      : never} MedianVecId
+    * @typedef {VecId extends infer X
+        ? X extends string
+          ? `${X}${_90pSuffix}` extends VecId90p
+            ? `${X}${_75pSuffix}` extends VecId75p
+              ? `${X}${_25pSuffix}` extends VecId25p
+                ? `${X}${_10pSuffix}` extends VecId10p
+                  ? X
+                  : never
+                : never
+              : never
+            : never
+          : never
+        : never} PercentilesVecId
+   * @typedef {AverageVecId & MinMaxVecId & MedianVecId & PercentilesVecId} AverageMinMaxPercentilesVecId
+   */
+
+  /**
+   * @template {BaseTotalSumVecId} T
+   * @param {Object} args
+   * @param {string} args.name
+   * @param {string} args.title
+   * @param {T} args.key
+   */
+  function createBaseSumTotal({ name, title, key }) {
+    return /** @satisfies {PartialChartOption} */ ({
+      name,
+      title,
+      bottom: [
+        { key, title: name, color: colors.bitcoin },
+        {
+          key: `${key}-sum`,
+          title: "Sum",
+          color: colors.bitcoin,
+        },
+        {
+          key: `total-${key}`,
+          title: "Total",
+          color: colors.offBitcoin,
+          defaultActive: false,
+        },
+      ],
+    });
+  }
+
+  /**
+   * @template {AverageMinMaxPercentilesVecId} T
+   * @param {Object} args
+   * @param {string} args.name
+   * @param {string} args.title
+   * @param {T} args.key
+   */
+  function createBaseAverageMinMaxPercentiles({ name, title, key }) {
+    return /** @satisfies {PartialChartOption} */ ({
+      name,
+      title,
+      bottom: [
+        { key, title: name, color: colors.bitcoin },
+        {
+          key: `${key}-average`,
+          title: "Average",
+          color: colors.orange,
+        },
+        {
+          key: `${key}-median`,
+          title: "Median",
+          color: colors.amber,
+          defaultActive: false,
+        },
+        {
+          key: `${key}-75p`,
+          title: "75p",
+          color: colors.red,
+          defaultActive: false,
+        },
+        {
+          key: `${key}-25p`,
+          title: "25p",
+          color: colors.yellow,
+          defaultActive: false,
+        },
+        {
+          key: `${key}-90p`,
+          title: "90p",
+          color: colors.rose,
+          defaultActive: false,
+        },
+        {
+          key: `${key}-10p`,
+          title: "10p",
+          color: colors.lime,
+          defaultActive: false,
+        },
+        {
+          key: `${key}-max`,
+          title: "Max",
+          color: colors.pink,
+          defaultActive: false,
+        },
+        {
+          key: `${key}-min`,
+          title: "Min",
+          color: colors.green,
+          defaultActive: false,
+        },
+      ],
+    });
+  }
+
   return [
     {
       name: "Charts",
@@ -667,82 +828,31 @@ function createPartialOptions(colors) {
         {
           name: "Blocks",
           tree: [
-            {
+            createBaseSumTotal({
               name: "Count",
               title: "Block Count",
-              bottom: [
-                { key: "block-count", title: "Count", color: colors.bitcoin },
-                {
-                  key: "block-count-sum",
-                  title: "Sum",
-                  color: colors.bitcoin,
-                },
-                {
-                  key: "total-block-count",
-                  title: "Total",
-                  color: colors.offBitcoin,
-                  defaultActive: false,
-                },
-              ],
-            },
-            {
+              key: "block-count",
+            }),
+            createBaseAverageMinMaxPercentiles({
               name: "Interval",
               title: "Block Interval",
-              bottom: [
-                {
-                  key: "block-interval",
-                  title: "Interval",
-                  color: colors.bitcoin,
-                },
-                {
-                  key: "block-interval-average",
-                  title: "Average",
-                  color: colors.orange,
-                },
-                {
-                  key: "block-interval-median",
-                  title: "Median",
-                  color: colors.amber,
-                  defaultActive: false,
-                },
-                {
-                  key: "block-interval-75p",
-                  title: "75p",
-                  color: colors.red,
-                  defaultActive: false,
-                },
-                {
-                  key: "block-interval-25p",
-                  title: "25p",
-                  color: colors.yellow,
-                  defaultActive: false,
-                },
-                {
-                  key: "block-interval-90p",
-                  title: "90p",
-                  color: colors.rose,
-                  defaultActive: false,
-                },
-                {
-                  key: "block-interval-10p",
-                  title: "10p",
-                  color: colors.lime,
-                  defaultActive: false,
-                },
-                {
-                  key: "block-interval-max",
-                  title: "Max",
-                  color: colors.pink,
-                  defaultActive: false,
-                },
-                {
-                  key: "block-interval-min",
-                  title: "Min",
-                  color: colors.green,
-                  defaultActive: false,
-                },
-              ],
-            },
+              key: "block-interval",
+            }),
+            createBaseSumTotal({
+              name: "Size",
+              title: "Block Size",
+              key: "block-size",
+            }),
+            createBaseSumTotal({
+              name: "Weight",
+              title: "Block Weight",
+              key: "block-weight",
+            }),
+            createBaseSumTotal({
+              name: "Vbytes",
+              title: "Block Virtual Bytes",
+              key: "block-vbytes",
+            }),
           ],
         },
         {
@@ -751,55 +861,21 @@ function createPartialOptions(colors) {
             {
               name: "Inputs",
               tree: [
-                {
+                createBaseSumTotal({
                   name: "Count",
                   title: "Transaction Input Count",
-                  bottom: [
-                    {
-                      key: "input-count",
-                      title: "Count",
-                      color: colors.bitcoin,
-                    },
-                    {
-                      key: "input-count-sum",
-                      title: "Sum",
-                      color: colors.bitcoin,
-                    },
-                    {
-                      key: "total-input-count",
-                      title: "Total",
-                      color: colors.offBitcoin,
-                      defaultActive: false,
-                    },
-                  ],
-                },
+                  key: "input-count",
+                }),
               ],
             },
             {
               name: "Outputs",
               tree: [
-                {
+                createBaseSumTotal({
                   name: "Count",
                   title: "Transaction Output Count",
-                  bottom: [
-                    {
-                      key: "output-count",
-                      title: "Count",
-                      color: colors.bitcoin,
-                    },
-                    {
-                      key: "output-count-sum",
-                      title: "Sum",
-                      color: colors.bitcoin,
-                    },
-                    {
-                      key: "total-output-count",
-                      title: "Total",
-                      color: colors.offBitcoin,
-                      defaultActive: false,
-                    },
-                  ],
-                },
+                  key: "output-count",
+                }),
               ],
             },
           ],
@@ -1162,6 +1238,12 @@ export function initOptions({
               anyPartial.unit = "Satoshis";
             } else if (key.includes("count")) {
               anyPartial.unit = "Count";
+            } else if (key.includes("-size")) {
+              anyPartial.unit = "Megabytes";
+            } else if (key.includes("-weight")) {
+              anyPartial.unit = "Weight";
+            } else if (key.includes("-vbytes")) {
+              anyPartial.unit = "Virtual Bytes";
             } else {
               console.log(anyPartial);
               throw Error("Unit not set");

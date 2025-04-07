@@ -5,7 +5,7 @@ use brk_core::{
 };
 use brk_exit::Exit;
 use brk_indexer::Indexer;
-use brk_vec::{AnyStorableVec, Compressed, Result, Version};
+use brk_vec::{AnyStorableVec, Compressed, Result, StorableVec, Version};
 
 use crate::storage::vecs::{Indexes, base::ComputedVec, indexes};
 
@@ -67,7 +67,7 @@ where
         })
     }
 
-    pub fn compute<F>(
+    pub fn compute_all<F>(
         &mut self,
         indexer: &mut Indexer,
         indexes: &mut indexes::Vecs,
@@ -84,16 +84,34 @@ where
             &Exit,
         ) -> Result<()>,
     {
-        if let Some(height) = self.height.as_mut() {
-            compute(height, indexer, indexes, starting_indexes, exit)?;
-        }
+        compute(
+            self.height.as_mut().unwrap(),
+            indexer,
+            indexes,
+            starting_indexes,
+            exit,
+        )?;
+
+        self.compute_rest(indexes, starting_indexes, exit, None)?;
+
+        Ok(())
+    }
+
+    pub fn compute_rest(
+        &mut self,
+        indexes: &mut indexes::Vecs,
+        starting_indexes: &Indexes,
+        exit: &Exit,
+        height: Option<&mut StorableVec<Height, T>>,
+    ) -> color_eyre::Result<()> {
+        let height = height.unwrap_or_else(|| self.height.as_mut().unwrap().mut_vec());
 
         self.height_extra
-            .extend(starting_indexes.height, self.height.mut_vec(), exit)?;
+            .extend(starting_indexes.height, height, exit)?;
 
         self.dateindex.compute(
             starting_indexes.dateindex,
-            self.height.mut_vec(),
+            height,
             indexes.dateindex_to_first_height.mut_vec(),
             indexes.dateindex_to_last_height.mut_vec(),
             exit,
@@ -141,7 +159,7 @@ where
 
         self.difficultyepoch.compute(
             starting_indexes.difficultyepoch,
-            &mut self.height,
+            height,
             indexes.difficultyepoch_to_first_height.mut_vec(),
             indexes.difficultyepoch_to_last_height.mut_vec(),
             exit,
@@ -152,7 +170,7 @@ where
 
     pub fn any_vecs(&self) -> Vec<&dyn AnyStorableVec> {
         [
-            vec![self.height.any_vec()],
+            self.height.as_ref().map_or(vec![], |v| vec![v.any_vec()]),
             self.height_extra.any_vecs(),
             self.dateindex.any_vecs(),
             self.weekindex.any_vecs(),

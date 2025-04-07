@@ -1,10 +1,9 @@
 use std::path::Path;
 
 use brk_exit::Exit;
-use brk_indexer::{Indexer, Indexes};
 use brk_vec::{AnyStorableVec, Compressed, Result, StorableVec, StoredIndex, StoredType, Version};
 
-use crate::storage::vecs::{base::ComputedVec, indexes};
+use crate::storage::vecs::base::ComputedVec;
 
 use super::ComputedType;
 
@@ -698,18 +697,4 @@ impl StorableVecGeneatorOptions {
             ..Self::default()
         }
     }
-}
-
-pub enum Source<'a, F, I, T>
-where
-    F: FnMut(
-        &mut ComputedVec<I, T>,
-        &mut Indexer,
-        &mut indexes::Vecs,
-        &Indexes,
-        &Exit,
-    ) -> Result<()>,
-{
-    Compute(F),
-    Ref(&'a mut StorableVec<I, T>),
 }
