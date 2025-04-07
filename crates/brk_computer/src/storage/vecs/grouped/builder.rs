@@ -1,9 +1,10 @@
 use std::path::Path;
 
 use brk_exit::Exit;
+use brk_indexer::{Indexer, Indexes};
 use brk_vec::{AnyStorableVec, Compressed, Result, StorableVec, StoredIndex, StoredType, Version};
 
-use crate::storage::vecs::base::ComputedVec;
+use crate::storage::vecs::{base::ComputedVec, indexes};
 
 use super::ComputedType;
 
@@ -66,48 +67,48 @@ where
 
         let s = Self {
             first: options.first.then(|| {
-                ComputedVec::forced_import(&maybe_prefix("first"), Version::ONE, compressed)
+                ComputedVec::forced_import(&maybe_prefix("first"), Version::ZERO, compressed)
                     .unwrap()
             }),
             last: options.last.then(|| {
                 ComputedVec::forced_import(
                     &path.join(format!("{key}_to_{name}")),
-                    Version::ONE,
+                    Version::ZERO,
                     compressed,
                 )
                 .unwrap()
             }),
             min: options.min.then(|| {
-                ComputedVec::forced_import(&maybe_suffix("min"), Version::ONE, compressed).unwrap()
+                ComputedVec::forced_import(&maybe_suffix("min"), Version::ZERO, compressed).unwrap()
             }),
             max: options.max.then(|| {
-                ComputedVec::forced_import(&maybe_suffix("max"), Version::ONE, compressed).unwrap()
+                ComputedVec::forced_import(&maybe_suffix("max"), Version::ZERO, compressed).unwrap()
             }),
             median: options.median.then(|| {
-                ComputedVec::forced_import(&maybe_suffix("median"), Version::ONE, compressed)
+                ComputedVec::forced_import(&maybe_suffix("median"), Version::ZERO, compressed)
                     .unwrap()
             }),
             average: options.average.then(|| {
-                ComputedVec::forced_import(&maybe_suffix("average"), Version::ONE, compressed)
+                ComputedVec::forced_import(&maybe_suffix("average"), Version::ZERO, compressed)
                     .unwrap()
             }),
             sum: options.sum.then(|| {
-                ComputedVec::forced_import(&maybe_suffix("sum"), Version::ONE, compressed).unwrap()
+                ComputedVec::forced_import(&maybe_suffix("sum"), Version::ZERO, compressed).unwrap()
             }),
             total: options.total.then(|| {
-                ComputedVec::forced_import(&prefix("total"), Version::ONE, compressed).unwrap()
+                ComputedVec::forced_import(&prefix("total"), Version::ZERO, compressed).unwrap()
             }),
             _90p: options._90p.then(|| {
-                ComputedVec::forced_import(&maybe_suffix("90p"), Version::ONE, compressed).unwrap()
+                ComputedVec::forced_import(&maybe_suffix("90p"), Version::ZERO, compressed).unwrap()
             }),
             _75p: options._75p.then(|| {
-                ComputedVec::forced_import(&maybe_suffix("75p"), Version::ONE, compressed).unwrap()
+                ComputedVec::forced_import(&maybe_suffix("75p"), Version::ZERO, compressed).unwrap()
             }),
             _25p: options._25p.then(|| {
-                ComputedVec::forced_import(&maybe_suffix("25p"), Version::ONE, compressed).unwrap()
+                ComputedVec::forced_import(&maybe_suffix("25p"), Version::ZERO, compressed).unwrap()
             }),
             _10p: options._10p.then(|| {
-                ComputedVec::forced_import(&maybe_suffix("10p"), Version::ONE, compressed).unwrap()
+                ComputedVec::forced_import(&maybe_suffix("10p"), Version::ZERO, compressed).unwrap()
             }),
         };
 
@@ -154,9 +155,9 @@ where
     pub fn compute<I2>(
         &mut self,
         max_from: I,
-        source: &mut ComputedVec<I2, T>,
-        first_indexes: &mut brk_vec::StorableVec<I, I2>,
-        last_indexes: &mut brk_vec::StorableVec<I, I2>,
+        source: &mut StorableVec<I2, T>,
+        first_indexes: &mut StorableVec<I, I2>,
+        last_indexes: &mut StorableVec<I, I2>,
         exit: &Exit,
     ) -> Result<()>
     where
@@ -276,8 +277,8 @@ where
         &mut self,
         max_from: I,
         source: &mut ComputedVecBuilder<I2, T>,
-        first_indexes: &mut brk_vec::StorableVec<I, I2>,
-        last_indexes: &mut brk_vec::StorableVec<I, I2>,
+        first_indexes: &mut StorableVec<I, I2>,
+        last_indexes: &mut StorableVec<I, I2>,
         exit: &Exit,
     ) -> Result<()>
     where
@@ -697,4 +698,18 @@ impl StorableVecGeneatorOptions {
             ..Self::default()
         }
     }
+}
+
+pub enum Source<'a, F, I, T>
+where
+    F: FnMut(
+        &mut ComputedVec<I, T>,
+        &mut Indexer,
+        &mut indexes::Vecs,
+        &Indexes,
+        &Exit,
+    ) -> Result<()>,
+{
+    Compute(F),
+    Ref(&'a mut StorableVec<I, T>),
 }

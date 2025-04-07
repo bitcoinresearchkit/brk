@@ -85,7 +85,7 @@ where
 
         self.weekindex.compute(
             starting_indexes.weekindex,
-            &mut self.dateindex,
+            self.dateindex.mut_vec(),
             indexes.weekindex_to_first_dateindex.mut_vec(),
             indexes.weekindex_to_last_dateindex.mut_vec(),
             exit,
@@ -93,7 +93,7 @@ where
 
         self.monthindex.compute(
             starting_indexes.monthindex,
-            &mut self.dateindex,
+            self.dateindex.mut_vec(),
             indexes.monthindex_to_first_dateindex.mut_vec(),
             indexes.monthindex_to_last_dateindex.mut_vec(),
             exit,

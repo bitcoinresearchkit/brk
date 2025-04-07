@@ -675,7 +675,7 @@ function createPartialOptions(colors) {
                 {
                   key: "block-count-sum",
                   title: "Sum",
-                  color: colors.orange,
+                  color: colors.bitcoin,
                 },
                 {
                   key: "total-block-count",
@@ -740,6 +740,65 @@ function createPartialOptions(colors) {
                   title: "Min",
                   color: colors.green,
                   defaultActive: false,
+                },
+              ],
+            },
+          ],
+        },
+        {
+          name: "Transactions",
+          tree: [
+            {
+              name: "Inputs",
+              tree: [
+                {
+                  name: "Count",
+                  title: "Transaction Input Count",
+                  bottom: [
+                    {
+                      key: "input-count",
+                      title: "Count",
+                      color: colors.bitcoin,
+                    },
+                    {
+                      key: "input-count-sum",
+                      title: "Sum",
+                      color: colors.bitcoin,
+                    },
+                    {
+                      key: "total-input-count",
+                      title: "Total",
+                      color: colors.offBitcoin,
+                      defaultActive: false,
+                    },
+                  ],
+                },
+              ],
+            },
+            {
+              name: "Outputs",
+              tree: [
+                {
+                  name: "Count",
+                  title: "Transaction Output Count",
+                  bottom: [
+                    {
+                      key: "output-count",
+                      title: "Count",
+                      color: colors.bitcoin,
+                    },
+                    {
+                      key: "output-count-sum",
+                      title: "Sum",
+                      color: colors.bitcoin,
+                    },
+                    {
+                      key: "total-output-count",
+                      title: "Total",
+                      color: colors.offBitcoin,
+                      defaultActive: false,
+                    },
+                  ],
                 },
               ],
             },

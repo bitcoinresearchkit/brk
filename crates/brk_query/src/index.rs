@@ -24,10 +24,15 @@ pub enum Index {
     Decadeindex,
     Difficultyepoch,
     Halvingepoch,
+    Emptyindex,
+    Multisigindex,
+    Opreturnindex,
+    Pushonlyindex,
+    Unknownindex,
 }
 
 impl Index {
-    pub fn all() -> [Self; 20] {
+    pub fn all() -> [Self; 25] {
         [
             Self::Height,
             Self::Dateindex,
@@ -49,6 +54,11 @@ impl Index {
             Self::Txindex,
             Self::Txinindex,
             Self::Txoutindex,
+            Self::Emptyindex,
+            Self::Multisigindex,
+            Self::Opreturnindex,
+            Self::Pushonlyindex,
+            Self::Unknownindex,
         ]
     }
 
@@ -75,6 +85,11 @@ impl Index {
             Self::P2TRindex => &["p2tr", "p2trindex"],
             Self::P2WPKHindex => &["p2wpkh", "p2wpkhindex"],
             Self::P2WSHindex => &["p2wsh", "p2wshindex"],
+            Self::Emptyindex => &["empty", "emptyindex"],
+            Self::Multisigindex => &["multisig", "multisigindex"],
+            Self::Opreturnindex => &["opreturn", "opreturnindex"],
+            Self::Pushonlyindex => &["pushonly", "pushonlyindex"],
+            Self::Unknownindex => &["unknown", "unknownindex"],
         }
     }
 
@@ -122,6 +137,12 @@ impl TryFrom<&str> for Index {
             v if (Self::Difficultyepoch).possible_values().contains(&v) => Self::Difficultyepoch,
             v if (Self::Halvingepoch).possible_values().contains(&v) => Self::Halvingepoch,
             v if (Self::Quarterindex).possible_values().contains(&v) => Self::Quarterindex,
+            v if (Self::Quarterindex).possible_values().contains(&v) => Self::Quarterindex,
+            v if (Self::Emptyindex).possible_values().contains(&v) => Self::Emptyindex,
+            v if (Self::Multisigindex).possible_values().contains(&v) => Self::Multisigindex,
+            v if (Self::Opreturnindex).possible_values().contains(&v) => Self::Opreturnindex,
+            v if (Self::Pushonlyindex).possible_values().contains(&v) => Self::Pushonlyindex,
+            v if (Self::Unknownindex).possible_values().contains(&v) => Self::Unknownindex,
             _ => return Err(eyre!("Bad index")),
         })
     }

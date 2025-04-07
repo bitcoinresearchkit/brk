@@ -99,7 +99,7 @@ where
 
         self.height.compute(
             starting_indexes.height,
-            &mut self.txindex,
+            self.txindex.mut_vec(),
             indexer.mut_vecs().height_to_first_txindex.mut_vec(),
             indexes.height_to_last_txindex.mut_vec(),
             exit,

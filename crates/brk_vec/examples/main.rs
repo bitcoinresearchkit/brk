@@ -7,7 +7,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     {
         let mut vec: StorableVec<usize, u32> =
-            StorableVec::forced_import(Path::new("./vec"), Version::ONE, Compressed::YES)?;
+            StorableVec::forced_import(Path::new("./vec"), Version::ZERO, Compressed::YES)?;
 
         (0..21_u32).for_each(|v| {
             vec.push(v);
@@ -21,7 +21,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     {
         let mut vec: StorableVec<usize, u32> =
-            StorableVec::forced_import(Path::new("./vec"), Version::ONE, Compressed::YES)?;
+            StorableVec::forced_import(Path::new("./vec"), Version::ZERO, Compressed::YES)?;
 
         dbg!(vec.get(0)?);
         dbg!(vec.get(0)?);
@@ -43,7 +43,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     {
         let mut vec: StorableVec<usize, u32> =
-            StorableVec::forced_import(Path::new("./vec"), Version::ONE, Compressed::YES)?;
+            StorableVec::forced_import(Path::new("./vec"), Version::ZERO, Compressed::YES)?;
 
         vec.enable_large_cache();
 

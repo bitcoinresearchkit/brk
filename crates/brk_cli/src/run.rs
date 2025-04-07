@@ -61,7 +61,7 @@ pub fn run(config: RunConfig) -> color_eyre::Result<()> {
                 loop {
                     let block_count = rpc.get_block_count()?;
 
-                    info!("{block_count} blocks found.");
+                    info!("{} blocks found.", block_count + 1);
 
                     let starting_indexes = indexer.index(&parser, rpc, &exit)?;
 

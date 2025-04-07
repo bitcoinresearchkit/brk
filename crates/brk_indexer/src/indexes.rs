@@ -5,9 +5,10 @@ use brk_core::{
     Pushonlyindex, Txindex, Txinindex, Txoutindex, Unknownindex,
 };
 use brk_parser::NUMBER_OF_UNSAFE_BLOCKS;
+use brk_vec::{Result, StoredIndex, StoredType, Value};
 use color_eyre::eyre::ContextCompat;
 
-use crate::{Stores, Vecs};
+use crate::{IndexedVec, Stores, Vecs};
 
 #[derive(Debug, Default, Clone)]
 pub struct Indexes {
@@ -65,13 +66,7 @@ impl Indexes {
             .push_if_needed(height, self.p2wpkhindex)?;
         vecs.height_to_first_p2wshindex
             .push_if_needed(height, self.p2wshindex)?;
-        Ok(())
-    }
 
-    pub fn push_future_if_needed(&mut self, vecs: &mut Vecs) -> brk_vec::Result<()> {
-        self.height.increment();
-        self.push_if_needed(vecs)?;
-        self.height.decrement();
         Ok(())
     }
 }
@@ -111,32 +106,121 @@ impl TryFrom<(&mut Vecs, &Stores, &Client)> for Indexes {
             .unwrap_or(starting_height);
 
         Ok(Self {
-            addressindex: *vecs.height_to_first_addressindex.get(height)?.context("")?,
-            emptyindex: *vecs.height_to_first_emptyindex.get(height)?.context("")?,
+            addressindex: *starting_index(
+                &vecs.height_to_first_addressindex,
+                &vecs.addressindex_to_height,
+                height,
+            )?
+            .context("")?,
+            emptyindex: *starting_index(
+                &vecs.height_to_first_emptyindex,
+                &vecs.emptyindex_to_height,
+                height,
+            )?
+            .context("")?,
             height,
-            multisigindex: *vecs
-                .height_to_first_multisigindex
-                .get(height)?
-                .context("")?,
-            opreturnindex: *vecs
-                .height_to_first_opreturnindex
-                .get(height)?
-                .context("")?,
-            p2pk33index: *vecs.height_to_first_p2pk33index.get(height)?.context("")?,
-            p2pk65index: *vecs.height_to_first_p2pk65index.get(height)?.context("")?,
-            p2pkhindex: *vecs.height_to_first_p2pkhindex.get(height)?.context("")?,
-            p2shindex: *vecs.height_to_first_p2shindex.get(height)?.context("")?,
-            p2trindex: *vecs.height_to_first_p2trindex.get(height)?.context("")?,
-            p2wpkhindex: *vecs.height_to_first_p2wpkhindex.get(height)?.context("")?,
-            p2wshindex: *vecs.height_to_first_p2wshindex.get(height)?.context("")?,
-            pushonlyindex: *vecs
-                .height_to_first_pushonlyindex
-                .get(height)?
-                .context("")?,
-            txindex: *vecs.height_to_first_txindex.get(height)?.context("")?,
-            txinindex: *vecs.height_to_first_txinindex.get(height)?.context("")?,
-            txoutindex: *vecs.height_to_first_txoutindex.get(height)?.context("")?,
-            unknownindex: *vecs.height_to_first_unknownindex.get(height)?.context("")?,
+            multisigindex: *starting_index(
+                &vecs.height_to_first_multisigindex,
+                &vecs.multisigindex_to_height,
+                height,
+            )?
+            .context("")?,
+            opreturnindex: *starting_index(
+                &vecs.height_to_first_opreturnindex,
+                &vecs.opreturnindex_to_height,
+                height,
+            )?
+            .context("")?,
+            p2pk33index: *starting_index(
+                &vecs.height_to_first_p2pk33index,
+                &vecs.p2pk33index_to_height,
+                height,
+            )?
+            .context("")?,
+            p2pk65index: *starting_index(
+                &vecs.height_to_first_p2pk65index,
+                &vecs.p2pk65index_to_height,
+                height,
+            )?
+            .context("")?,
+            p2pkhindex: *starting_index(
+                &vecs.height_to_first_p2pkhindex,
+                &vecs.p2pkhindex_to_height,
+                height,
+            )?
+            .context("")?,
+            p2shindex: *starting_index(
+                &vecs.height_to_first_p2shindex,
+                &vecs.p2shindex_to_height,
+                height,
+            )?
+            .context("")?,
+            p2trindex: *starting_index(
+                &vecs.height_to_first_p2trindex,
+                &vecs.p2trindex_to_height,
+                height,
+            )?
+            .context("")?,
+            p2wpkhindex: *starting_index(
+                &vecs.height_to_first_p2wpkhindex,
+                &vecs.p2wpkhindex_to_height,
+                height,
+            )?
+            .context("")?,
+            p2wshindex: *starting_index(
+                &vecs.height_to_first_p2wshindex,
+                &vecs.p2wshindex_to_height,
+                height,
+            )?
+            .context("")?,
+            pushonlyindex: *starting_index(
+                &vecs.height_to_first_pushonlyindex,
+                &vecs.pushonlyindex_to_height,
+                height,
+            )?
+            .context("")?,
+            txindex: *starting_index(
+                &vecs.height_to_first_txindex,
+                &vecs.txindex_to_height,
+                height,
+            )?
+            .context("")?,
+            txinindex: *starting_index(
+                &vecs.height_to_first_txinindex,
+                &vecs.txinindex_to_height,
+                height,
+            )?
+            .context("")?,
+            txoutindex: *starting_index(
+                &vecs.height_to_first_txoutindex,
+                &vecs.txoutindex_to_height,
+                height,
+            )?
+            .context("")?,
+            unknownindex: *starting_index(
+                &vecs.height_to_first_unknownindex,
+                &vecs.unknownindex_to_height,
+                height,
+            )?
+            .context("")?,
         })
+    }
+}
+
+pub fn starting_index<'a, I>(
+    height_to_index: &'a IndexedVec<Height, I>,
+    index_to_height: &'a IndexedVec<I, Height>,
+    starting_height: Height,
+) -> Result<Option<Value<'a, I>>>
+where
+    I: StoredType + StoredIndex + From<usize>,
+{
+    if height_to_index
+        .height()
+        .is_ok_and(|h| h + 1_u32 == starting_height)
+    {
+        Ok(Some(Value::Owned(I::from(index_to_height.len()))))
+    } else {
+        height_to_index.get(starting_height)
     }
 }

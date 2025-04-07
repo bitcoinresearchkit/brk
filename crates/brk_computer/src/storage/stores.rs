@@ -13,9 +13,9 @@ pub struct Stores {
 impl Stores {
     pub fn import(path: &Path) -> color_eyre::Result<Self> {
         let address_to_utxos_received =
-            Store::import(&path.join("address_to_utxos_received"), Version::ONE)?;
+            Store::import(&path.join("address_to_utxos_received"), Version::ZERO)?;
         let address_to_utxos_spent =
-            Store::import(&path.join("address_to_utxos_spent"), Version::ONE)?;
+            Store::import(&path.join("address_to_utxos_spent"), Version::ZERO)?;
 
         Ok(Self {
             address_to_utxos_received,

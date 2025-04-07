@@ -75,7 +75,7 @@ where
 
         self.difficultyepoch.compute(
             starting_indexes.difficultyepoch,
-            &mut self.height,
+            self.height.mut_vec(),
             indexes.difficultyepoch_to_first_height.mut_vec(),
             indexes.difficultyepoch_to_last_height.mut_vec(),
             exit,

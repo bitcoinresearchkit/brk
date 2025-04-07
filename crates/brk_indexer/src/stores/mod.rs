@@ -27,11 +27,11 @@ impl Stores {
     pub fn import(path: &Path) -> color_eyre::Result<Self> {
         thread::scope(|scope| {
             let addresshash_to_addressindex = scope
-                .spawn(|| Store::import(&path.join("addresshash_to_addressindex"), Version::ONE));
+                .spawn(|| Store::import(&path.join("addresshash_to_addressindex"), Version::ZERO));
             let blockhash_prefix_to_height = scope
-                .spawn(|| Store::import(&path.join("blockhash_prefix_to_height"), Version::ONE));
+                .spawn(|| Store::import(&path.join("blockhash_prefix_to_height"), Version::ZERO));
             let txid_prefix_to_txindex =
-                scope.spawn(|| Store::import(&path.join("txid_prefix_to_txindex"), Version::ONE));
+                scope.spawn(|| Store::import(&path.join("txid_prefix_to_txindex"), Version::ZERO));
 
             Ok(Self {
                 addresshash_to_addressindex: addresshash_to_addressindex.join().unwrap()?,

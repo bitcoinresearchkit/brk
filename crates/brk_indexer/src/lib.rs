@@ -31,7 +31,7 @@ pub use stores::*;
 pub use vecs::*;
 
 const SNAPSHOT_BLOCK_RANGE: usize = 1000;
-const COLLISIONS_CHECKED_UP_TO: u32 = 888_000;
+const COLLISIONS_CHECKED_UP_TO: u32 = 890_000;
 
 #[derive(Clone)]
 pub struct Indexer {
@@ -101,6 +101,7 @@ impl Indexer {
         let vecs = self.vecs.as_mut().unwrap();
         let stores = self.stores.as_mut().unwrap();
 
+        // Cloned because we want to return starting indexes for the computer
         let mut idxs = starting_indexes.clone();
 
         let start = Some(idxs.height);
@@ -152,6 +153,8 @@ impl Indexer {
                     dbg!(blockhash);
                     return Err(eyre!("Collision, expect prefix to need be set yet"));
                 }
+
+                idxs.push_if_needed(vecs)?;
 
                 stores
                     .blockhash_prefix_to_height
@@ -462,6 +465,9 @@ impl Indexer {
 
                         vecs.txoutindex_to_value.push_if_needed(txoutindex, sats)?;
 
+                        vecs.txoutindex_to_height
+                            .push_if_needed(txoutindex, height)?;
+
                         let mut addressindex = idxs.addressindex;
 
                         let mut addresshash = None;
@@ -481,18 +487,55 @@ impl Indexer {
                             idxs.addressindex.increment();
 
                             let addresstypeindex = match addresstype {
-                                Addresstype::Empty => idxs.emptyindex.copy_then_increment(),
-                                Addresstype::Multisig => idxs.multisigindex.copy_then_increment(),
-                                Addresstype::OpReturn => idxs.opreturnindex.copy_then_increment(),
-                                Addresstype::PushOnly => idxs.pushonlyindex.copy_then_increment(),
-                                Addresstype::Unknown => idxs.unknownindex.copy_then_increment(),
-                                Addresstype::P2PK65 => idxs.p2pk65index.copy_then_increment(),
-                                Addresstype::P2PK33 => idxs.p2pk33index.copy_then_increment(),
-                                Addresstype::P2PKH => idxs.p2pkhindex.copy_then_increment(),
-                                Addresstype::P2SH => idxs.p2shindex.copy_then_increment(),
-                                Addresstype::P2WPKH => idxs.p2wpkhindex.copy_then_increment(),
-                                Addresstype::P2WSH => idxs.p2wshindex.copy_then_increment(),
-                                Addresstype::P2TR => idxs.p2trindex.copy_then_increment(),
+                                Addresstype::Empty => {
+                                    vecs.emptyindex_to_height
+                                        .push_if_needed(idxs.emptyindex, height)?;
+                                    idxs.emptyindex.copy_then_increment()
+                                },
+                                Addresstype::Multisig => {
+                                    vecs.multisigindex_to_height.push_if_needed(idxs.multisigindex, height)?;
+                                    idxs.multisigindex.copy_then_increment()
+                                },
+                                Addresstype::OpReturn => {
+                                    vecs.opreturnindex_to_height.push_if_needed(idxs.opreturnindex, height)?;
+                                    idxs.opreturnindex.copy_then_increment()
+                                },
+                                Addresstype::PushOnly => {
+                                    vecs.pushonlyindex_to_height.push_if_needed(idxs.pushonlyindex, height)?;
+                                    idxs.pushonlyindex.copy_then_increment()
+                                },
+                                Addresstype::Unknown => {
+                                    vecs.unknownindex_to_height.push_if_needed(idxs.unknownindex, height)?;
+                                    idxs.unknownindex.copy_then_increment()
+                                },
+                                Addresstype::P2PK65 => {
+                                    vecs.p2pk65index_to_height.push_if_needed(idxs.p2pk65index, height)?;
+                                    idxs.p2pk65index.copy_then_increment()
+                                },
+                                Addresstype::P2PK33 => {
+                                    vecs.p2pk33index_to_height.push_if_needed(idxs.p2pk33index, height)?;
+                                    idxs.p2pk33index.copy_then_increment()
+                                },
+                                Addresstype::P2PKH => {
+                                    vecs.p2pkhindex_to_height.push_if_needed(idxs.p2pkhindex, height)?;
+                                    idxs.p2pkhindex.copy_then_increment()
+                                },
+                                Addresstype::P2SH => {
+                                    vecs.p2shindex_to_height.push_if_needed(idxs.p2shindex, height)?;
+                                    idxs.p2shindex.copy_then_increment()
+                                },
+                                Addresstype::P2WPKH => {
+                                    vecs.p2wpkhindex_to_height.push_if_needed(idxs.p2wpkhindex, height)?;
+                                    idxs.p2wpkhindex.copy_then_increment()
+                                },
+                                Addresstype::P2WSH => {
+                                    vecs.p2wshindex_to_height.push_if_needed(idxs.p2wshindex, height)?;
+                                    idxs.p2wshindex.copy_then_increment()
+                                },
+                                Addresstype::P2TR => {
+                                    vecs.p2trindex_to_height.push_if_needed(idxs.p2trindex, height)?;
+                                    idxs.p2trindex.copy_then_increment()
+                                },
                             };
 
                             vecs.addressindex_to_addresstype
@@ -579,6 +622,10 @@ impl Indexer {
                         }
 
                         vecs.txinindex_to_txoutindex.push_if_needed(txinindex, txoutindex)?;
+
+                        vecs.txinindex_to_height
+                            .push_if_needed(txinindex, height)?;
+
 
                         Ok(())
                     })?;
@@ -667,8 +714,6 @@ impl Indexer {
                 idxs.txindex += Txindex::from(tx_len);
                 idxs.txinindex += Txinindex::from(inputs_len);
                 idxs.txoutindex += Txoutindex::from(outputs_len);
-
-                idxs.push_future_if_needed(vecs)?;
 
                 export_if_needed(stores, vecs, height, false, exit)?;
 

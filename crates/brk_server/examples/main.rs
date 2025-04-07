@@ -60,13 +60,9 @@ pub fn main() -> color_eyre::Result<()> {
                 loop {
                     let block_count = rpc.get_block_count()?;
 
-                    info!("{block_count} blocks found.");
-
                     let starting_indexes = indexer.index(&parser, rpc, &exit)?;
 
                     computer.compute(&mut indexer, starting_indexes, &exit)?;
-
-                    info!("Waiting for new blocks...");
 
                     while block_count == rpc.get_block_count()? {
                         sleep(Duration::from_secs(1))
