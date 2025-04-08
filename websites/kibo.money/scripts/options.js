@@ -18,7 +18,7 @@
  *   "Transactions" |
  *   "US Dollars" |
  *   "Virtual Bytes" |
- *   "Weight"
+ *   "Weight Units"
  * } Unit
  *
  * @typedef {Object} BaseSeriesBlueprint
@@ -810,23 +810,28 @@ function createPartialOptions(colors) {
       name: "Charts",
       tree: [
         {
-          name: "btc/usd",
-          title: "Bitcoin Price in US Dollars",
-        },
-        {
-          name: "usd/sats",
-          title: "Satoshis Per US Dollar",
-          unit: "Satoshis",
-          bottom: [
+          name: "Price",
+          tree: [
             {
-              key: "sats-per-dollar",
-              title: "Satoshis",
-              color: colors.bitcoin,
+              name: "btc/usd",
+              title: "Bitcoin Price in US Dollars",
+            },
+            {
+              name: "usd/sats",
+              title: "Satoshis Per US Dollar",
+              unit: "Satoshis",
+              bottom: [
+                {
+                  key: "sats-per-dollar",
+                  title: "Satoshis",
+                  color: colors.bitcoin,
+                },
+              ],
             },
           ],
         },
         {
-          name: "Blocks",
+          name: "Block",
           tree: [
             createBaseSumTotal({
               name: "Count",
@@ -856,28 +861,33 @@ function createPartialOptions(colors) {
           ],
         },
         {
-          name: "Transactions",
+          name: "Transaction",
           tree: [
-            {
-              name: "Inputs",
-              tree: [
-                createBaseSumTotal({
-                  name: "Count",
-                  title: "Transaction Input Count",
-                  key: "input-count",
-                }),
-              ],
-            },
-            {
-              name: "Outputs",
-              tree: [
-                createBaseSumTotal({
-                  name: "Count",
-                  title: "Transaction Output Count",
-                  key: "output-count",
-                }),
-              ],
-            },
+            createBaseSumTotal({
+              name: "Count",
+              title: "Transaction Count",
+              key: "tx-count",
+            }),
+          ],
+        },
+        {
+          name: "Input",
+          tree: [
+            createBaseSumTotal({
+              name: "Count",
+              title: "Transaction Input Count",
+              key: "input-count",
+            }),
+          ],
+        },
+        {
+          name: "Output",
+          tree: [
+            createBaseSumTotal({
+              name: "Count",
+              title: "Transaction Output Count",
+              key: "output-count",
+            }),
           ],
         },
       ],
@@ -934,7 +944,7 @@ function createPartialOptions(colors) {
           url: () => "https://status.kibo.money/",
         },
         {
-          name: "Crate",
+          name: "Crates",
           url: () => "https://crates.io/crates/brk",
         },
       ],
@@ -1241,7 +1251,7 @@ export function initOptions({
             } else if (key.includes("-size")) {
               anyPartial.unit = "Megabytes";
             } else if (key.includes("-weight")) {
-              anyPartial.unit = "Weight";
+              anyPartial.unit = "Weight Units";
             } else if (key.includes("-vbytes")) {
               anyPartial.unit = "Virtual Bytes";
             } else {
