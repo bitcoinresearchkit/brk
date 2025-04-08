@@ -427,7 +427,9 @@ where
             }
         };
 
-        self.mut_file().write_all(&bytes)?;
+        let file = self.mut_file();
+        file.write_all(&bytes)?;
+        file.sync_all()?;
 
         self.reset_caches();
 

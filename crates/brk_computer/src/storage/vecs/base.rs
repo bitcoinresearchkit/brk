@@ -10,10 +10,9 @@ use std::{
 use brk_core::CheckedSub;
 use brk_exit::Exit;
 use brk_vec::{
-    AnyStorableVec, Compressed, Error, Result, StorableVec, StoredIndex, StoredType, Version,
+    AnyStorableVec, Compressed, Error, MAX_CACHE_SIZE, Result, StorableVec, StoredIndex,
+    StoredType, Version,
 };
-
-const FLUSH_EVERY: usize = 10_000;
 
 #[derive(Debug)]
 pub struct ComputedVec<I, T> {
@@ -26,6 +25,8 @@ where
     I: StoredIndex,
     T: StoredType,
 {
+    const SIZE_OF: usize = size_of::<T>();
+
     pub fn forced_import(
         path: &Path,
         version: Version,
@@ -63,7 +64,7 @@ where
             }
         }
 
-        if self.vec.pushed_len() >= FLUSH_EVERY {
+        if self.vec.pushed_len() * Self::SIZE_OF >= MAX_CACHE_SIZE {
             Ok(self.safe_flush(exit)?)
         } else {
             Ok(())
