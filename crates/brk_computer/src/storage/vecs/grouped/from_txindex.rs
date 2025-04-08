@@ -6,7 +6,7 @@ use brk_core::{
 };
 use brk_exit::Exit;
 use brk_indexer::Indexer;
-use brk_vec::{AnyStorableVec, Compressed, Result, Version};
+use brk_vec::{AnyStorableVec, Compressed, Result, StorableVec, Version};
 
 use crate::storage::vecs::{Indexes, base::ComputedVec, indexes};
 
@@ -17,7 +17,7 @@ pub struct ComputedVecsFromTxindex<T>
 where
     T: ComputedType + PartialOrd,
 {
-    pub txindex: ComputedVec<Txindex, T>,
+    pub txindex: Option<ComputedVec<Txindex, T>>,
     pub txindex_extra: ComputedVecBuilder<Txindex, T>,
     pub height: ComputedVecBuilder<Height, T>,
     pub dateindex: ComputedVecBuilder<Dateindex, T>,
@@ -38,15 +38,19 @@ where
     pub fn forced_import(
         path: &Path,
         name: &str,
+        compute_source: bool,
         version: Version,
         compressed: Compressed,
         options: StorableVecGeneatorOptions,
     ) -> color_eyre::Result<Self> {
-        let txindex = ComputedVec::forced_import(
-            &path.join(format!("txindex_to_{name}")),
-            version,
-            compressed,
-        )?;
+        let txindex = compute_source.then(|| {
+            ComputedVec::forced_import(
+                &path.join(format!("txindex_to_{name}")),
+                version,
+                compressed,
+            )
+            .unwrap()
+        });
 
         let txindex_extra = ComputedVecBuilder::forced_import(
             path,
@@ -75,7 +79,7 @@ where
         })
     }
 
-    pub fn compute<F>(
+    pub fn compute_all<F>(
         &mut self,
         indexer: &mut Indexer,
         indexes: &mut indexes::Vecs,
@@ -92,14 +96,35 @@ where
             &Exit,
         ) -> Result<()>,
     {
-        compute(&mut self.txindex, indexer, indexes, starting_indexes, exit)?;
+        compute(
+            self.txindex.as_mut().unwrap(),
+            indexer,
+            indexes,
+            starting_indexes,
+            exit,
+        )?;
+
+        self.compute_rest(indexer, indexes, starting_indexes, exit, None)?;
+
+        Ok(())
+    }
+
+    pub fn compute_rest(
+        &mut self,
+        indexer: &mut Indexer,
+        indexes: &mut indexes::Vecs,
+        starting_indexes: &Indexes,
+        exit: &Exit,
+        txindex: Option<&mut StorableVec<Txindex, T>>,
+    ) -> color_eyre::Result<()> {
+        let txindex = txindex.unwrap_or_else(|| self.txindex.as_mut().unwrap().mut_vec());
 
         self.txindex_extra
-            .extend(starting_indexes.txindex, self.txindex.mut_vec(), exit)?;
+            .extend(starting_indexes.txindex, txindex, exit)?;
 
         self.height.compute(
             starting_indexes.height,
-            self.txindex.mut_vec(),
+            txindex,
             indexer.mut_vecs().height_to_first_txindex.mut_vec(),
             indexes.height_to_last_txindex.mut_vec(),
             exit,
@@ -166,7 +191,7 @@ where
 
     pub fn any_vecs(&self) -> Vec<&dyn AnyStorableVec> {
         [
-            vec![self.txindex.any_vec()],
+            self.txindex.as_ref().map_or(vec![], |v| vec![v.any_vec()]),
             self.txindex_extra.any_vecs(),
             self.height.any_vecs(),
             self.dateindex.any_vecs(),

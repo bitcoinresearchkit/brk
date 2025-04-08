@@ -35,7 +35,7 @@
 </p>
 
 > **WARNING**
-> 
+>
 > This project is still a work in progress and while it's much better in many ways than its previous version ([kibo v0.5](https://github.com/kibo-money/kibo)), it doesn't yet include all of those datasets. If you're interested in having everything right now, please use the latter until feature parity is achieved.
 >
 > The explorer part (mempool.space/electrs) is also not viable just yet.
@@ -58,6 +58,7 @@ The toolkit can be used in various ways to accommodate as many needs as possible
   For more information visit: [`brk_cli`](https://crates.io/crates/brk_cli)
 - **[Crates](https://crates.io/crates/brk)** \
   Rust developers have access to a wide range crates, each built upon one another with its own specific purpose, enabling independent use and offering great flexibility.
+  PRs are welcome, especially if their goal is to introduce additional datasets.
 
 The primary goal of this project is to be fully-featured and accessible for everyone, regardless of their background or financial situation - whether that person is an enthusiast, researcher, miner, analyst, or simply curious.
 
