@@ -6,14 +6,18 @@ use std::{
 };
 
 use brk_vec::{
-    AnyVec, Compressed, Error, MAX_CACHE_SIZE, MAX_PAGE_SIZE, Result, StoredIndex, StoredType,
-    StoredVec, Value, Version,
+    Compressed, DynamicVec, Error, GenericVec, Result, StoredIndex, StoredType, StoredVec, Value,
+    Version,
 };
 
 use super::Height;
 
-#[derive(Debug)]
-pub struct IndexedVec<I, T> {
+#[derive(Debug, Clone)]
+pub struct IndexedVec<I, T>
+where
+    I: StoredIndex,
+    T: StoredType,
+{
     height: Option<Height>,
     vec: StoredVec<I, T>,
 }
@@ -23,11 +27,6 @@ where
     I: StoredIndex,
     T: StoredType,
 {
-    pub const SIZE_OF_T: usize = size_of::<T>();
-    pub const PER_PAGE: usize = MAX_PAGE_SIZE / Self::SIZE_OF_T;
-    pub const PAGE_SIZE: usize = Self::PER_PAGE * Self::SIZE_OF_T;
-    pub const CACHE_LENGTH: usize = MAX_CACHE_SIZE / Self::PAGE_SIZE;
-
     pub fn forced_import(
         path: &Path,
         version: Version,
@@ -35,7 +34,7 @@ where
     ) -> brk_vec::Result<Self> {
         let mut vec = StoredVec::forced_import(path, version, compressed)?;
 
-        vec.enable_large_cache_if_possible();
+        vec.enable_large_cache_if_needed();
 
         Ok(Self {
             height: Height::try_from(Self::path_height_(path).as_path()).ok(),
@@ -47,49 +46,46 @@ where
     pub fn get(&self, index: I) -> Result<Option<Value<'_, T>>> {
         self.get_(index.to_usize()?)
     }
+    #[inline]
     fn get_(&self, index: usize) -> Result<Option<Value<'_, T>>> {
-        match self.vec.index_to_pushed_index(index) {
-            Ok(index) => {
-                if let Some(index) = index {
-                    return Ok(self.vec.pushed().get(index).map(|v| Value::Ref(v)));
-                }
-            }
-            Err(Error::IndexTooHigh) => return Ok(None),
-            Err(Error::IndexTooLow) => {}
-            Err(error) => return Err(error),
-        }
+        self.vec.get_(index)
+        // match self.vec.index_to_pushed_index(index) {
+        //     Ok(index) => {
+        //         if let Some(index) = index {
+        //             return Ok(self.vec.pushed().get(index).map(|v| Value::Ref(v)));
+        //         }
+        //     }
+        //     Err(Error::IndexTooHigh) => return Ok(None),
+        //     Err(Error::IndexTooLow) => {}
+        //     Err(error) => return Err(error),
+        // }
 
-        let large_cache_len = self.vec.large_cache_len();
-        if large_cache_len != 0 {
-            let page_index = Self::index_to_page_index(index);
-            let last_index = self.vec.stored_len() - 1;
-            let max_page_index = Self::index_to_page_index(last_index);
-            let min_page_index = (max_page_index + 1) - large_cache_len;
+        // let large_cache_len = self.vec.large_cache_len();
+        // if large_cache_len != 0 {
+        //     let page_index = Self::index_to_page_index(index);
+        //     let last_index = self.vec.stored_len() - 1;
+        //     let max_page_index = Self::index_to_page_index(last_index);
+        //     let min_page_index = (max_page_index + 1) - large_cache_len;
 
-            if page_index >= min_page_index {
-                self.vec
-                    .pages()
-                    .unwrap()
-                    .get(page_index - min_page_index)
-                    .ok_or(Error::MmapsVecIsTooSmall)?
-                    .get_or_init(|| self.vec.decode_page(page_index).unwrap())
-                    .get(index)
-            }
-        }
+        //     if page_index >= min_page_index {
+        //         self.vec
+        //             .pages()
+        //             .unwrap()
+        //             .get(page_index - min_page_index)
+        //             .ok_or(Error::MmapsVecIsTooSmall)?
+        //             .get_or_init(|| self.vec.decode_page(page_index).unwrap())
+        //             .get(index)
+        //     }
+        // }
 
-        Ok(self.vec.read_(index)?.map(|v| Value::Owned(v)))
+        // Ok(self.vec.read_(index)?.map(|v| Value::Owned(v)))
     }
 
     pub fn iter_from<F>(&mut self, index: I, f: F) -> Result<()>
     where
-        F: FnMut((I, &T)) -> Result<()>,
+        F: FnMut((I, T, &mut dyn DynamicVec<I = I, T = T>)) -> Result<()>,
     {
         self.vec.iter_from(index, f)
-    }
-
-    #[inline(always)]
-    fn index_to_page_index(index: usize) -> usize {
-        index / Self::PER_PAGE
     }
 
     #[inline]
@@ -119,7 +115,7 @@ where
         Ok(())
     }
 
-    pub fn flush(&mut self, height: Height) -> io::Result<()> {
+    pub fn flush(&mut self, height: Height) -> Result<()> {
         height.write(&self.path_height())?;
         self.vec.flush()
     }
@@ -132,7 +128,7 @@ where
         &mut self.vec
     }
 
-    pub fn any_vec(&self) -> &dyn AnyVec {
+    pub fn any_vec(&self) -> &dyn brk_vec::AnyStoredVec {
         &self.vec
     }
 
@@ -160,22 +156,9 @@ where
     }
 }
 
-impl<I, T> Clone for IndexedVec<I, T>
-where
-    I: StoredIndex,
-    T: StoredType,
-{
-    fn clone(&self) -> Self {
-        Self {
-            height: self.height,
-            vec: self.vec.clone(),
-        }
-    }
-}
-
 pub trait AnyIndexedVec: Send + Sync {
     fn height(&self) -> brk_core::Result<Height>;
-    fn flush(&mut self, height: Height) -> io::Result<()>;
+    fn flush(&mut self, height: Height) -> Result<()>;
 }
 
 impl<I, T> AnyIndexedVec for IndexedVec<I, T>
@@ -187,7 +170,7 @@ where
         self.height()
     }
 
-    fn flush(&mut self, height: Height) -> io::Result<()> {
+    fn flush(&mut self, height: Height) -> Result<()> {
         self.flush(height)
     }
 }

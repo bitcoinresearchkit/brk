@@ -1,4 +1,4 @@
-use std::{fs, io, path::Path};
+use std::{fs, path::Path};
 
 use brk_core::{
     Addressbytes, Addressindex, Addresstype, Addresstypeindex, BlockHash, Emptyindex, Height,
@@ -7,7 +7,7 @@ use brk_core::{
     P2TRindex, P2WPKHAddressBytes, P2WPKHindex, P2WSHAddressBytes, P2WSHindex, Pushonlyindex, Sats,
     StoredUsize, Timestamp, TxVersion, Txid, Txindex, Txinindex, Txoutindex, Unknownindex, Weight,
 };
-use brk_vec::{AnyVec, Compressed, Version};
+use brk_vec::{AnyStoredVec, Compressed, Result, Version};
 use rayon::prelude::*;
 
 use crate::Indexes;
@@ -595,7 +595,7 @@ impl Vecs {
         }
     }
 
-    pub fn flush(&mut self, height: Height) -> io::Result<()> {
+    pub fn flush(&mut self, height: Height) -> Result<()> {
         self.as_mut_any_vecs()
             .into_par_iter()
             .try_for_each(|vec| vec.flush(height))
@@ -609,7 +609,7 @@ impl Vecs {
             .unwrap()
     }
 
-    pub fn as_any_vecs(&self) -> Vec<&dyn AnyVec> {
+    pub fn as_any_vecs(&self) -> Vec<&dyn AnyStoredVec> {
         vec![
             self.addressindex_to_addresstype.any_vec(),
             self.addressindex_to_addresstypeindex.any_vec(),

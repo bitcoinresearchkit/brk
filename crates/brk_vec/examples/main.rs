@@ -1,12 +1,16 @@
 use std::{fs, path::Path};
 
-use brk_vec::{AnyVec, RawVec, Version};
+use brk_vec::{Compressed, DynamicVec, GenericVec, StoredVec, Version};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let _ = fs::remove_dir_all("./vec");
 
+    let version = Version::ZERO;
+    let compressed = Compressed::NO;
+
     {
-        let mut vec: RawVec<usize, u32> = RawVec::forced_import(Path::new("./vec"), Version::ZERO)?;
+        let mut vec: StoredVec<usize, u32> =
+            StoredVec::forced_import(Path::new("./vec"), version, compressed)?;
 
         (0..21_u32).for_each(|v| {
             vec.push(v);
@@ -19,7 +23,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     {
-        let mut vec: RawVec<usize, u32> = RawVec::forced_import(Path::new("./vec"), Version::ZERO)?;
+        let mut vec: StoredVec<usize, u32> =
+            StoredVec::forced_import(Path::new("./vec"), version, compressed)?;
 
         dbg!(vec.get(0)?);
         dbg!(vec.get(0)?);
@@ -40,7 +45,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     {
-        let mut vec: RawVec<usize, u32> = RawVec::forced_import(Path::new("./vec"), Version::ZERO)?;
+        let mut vec: StoredVec<usize, u32> =
+            StoredVec::forced_import(Path::new("./vec"), version, compressed)?;
 
         // vec.enable_large_cache_if_possible();
 

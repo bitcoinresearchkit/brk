@@ -1,7 +1,10 @@
 use std::path::Path;
 
 use brk_exit::Exit;
-use brk_vec::{AnyStoredVec, Compressed, Result, StoredIndex, StoredType, StoredVec, Version};
+use brk_vec::{
+    AnyStoredVec, Compressed, DynamicVec, GenericVec, Result, StoredIndex, StoredType, StoredVec,
+    Version,
+};
 
 use crate::storage::vecs::base::ComputedVec;
 
@@ -123,7 +126,7 @@ where
 
         let total_vec = self.total.as_mut().unwrap();
 
-        source.iter_from(index, |(i, v)| {
+        source.iter_from(index, |(i, v, ..)| {
             let prev = i
                 .to_usize()
                 .unwrap()
@@ -132,8 +135,7 @@ where
                     total_vec
                         .get(I::from(prev_i))
                         .unwrap()
-                        .unwrap_or(&T::from(0_usize))
-                        .to_owned()
+                        .map_or(T::from(0_usize), |v| v.into_inner())
                 });
             let value = v.clone() + prev;
             total_vec.forced_push_at(i, value, exit)?;
@@ -161,18 +163,18 @@ where
     {
         let index = self.starting_index(max_from);
 
-        first_indexes.iter_from(index, |(i, first_index)| {
-            let first_index = *first_index;
+        first_indexes.iter_from(index, |(i, first_index, ..)| {
+            let first_index = first_index;
             let last_index = *last_indexes.get(i).unwrap().unwrap();
 
             if let Some(first) = self.first.as_mut() {
-                let v = source.get(first_index).unwrap().unwrap();
-                first.forced_push_at(index, v.clone(), exit)?;
+                let v = source.get(first_index).unwrap().unwrap().into_inner();
+                first.forced_push_at(index, v, exit)?;
             }
 
             if let Some(last) = self.last.as_mut() {
-                let v = source.get(last_index).unwrap().unwrap();
-                last.forced_push_at(index, v.clone(), exit)?;
+                let v = source.get(last_index).unwrap().unwrap().into_inner();
+                last.forced_push_at(index, v, exit)?;
             }
 
             let first_index = first_index.to_usize()?;
@@ -249,7 +251,12 @@ where
                             let prev = i.to_usize().unwrap().checked_sub(1).map_or(
                                 T::from(0_usize),
                                 |prev_i| {
-                                    total_vec.get(I::from(prev_i)).unwrap().unwrap().to_owned()
+                                    total_vec
+                                        .get(I::from(prev_i))
+                                        .unwrap()
+                                        .unwrap()
+                                        .to_owned()
+                                        .into_inner()
                                 },
                             );
                             total_vec.forced_push_at(i, prev + sum, exit)?;
@@ -302,8 +309,8 @@ where
                     .unwrap()
                     .get(first_index)
                     .unwrap()
-                    .cloned()
-                    .unwrap();
+                    .unwrap()
+                    .into_inner();
                 first.forced_push_at(index, v, exit)?;
             }
 

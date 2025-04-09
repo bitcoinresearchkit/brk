@@ -1,4 +1,4 @@
-use std::path::Path;
+use std::{path::Path, time::Instant};
 
 use brk_core::default_bitcoin_path;
 use brk_exit::Exit;
@@ -7,6 +7,8 @@ use brk_parser::{Parser, rpc};
 
 fn main() -> color_eyre::Result<()> {
     color_eyre::install()?;
+
+    let i = Instant::now();
 
     brk_logger::init(Some(Path::new(".log")));
 
@@ -22,12 +24,14 @@ fn main() -> color_eyre::Result<()> {
 
     let outputs = Path::new("../../_outputs");
 
-    let mut indexer = Indexer::new(outputs.join("indexed").to_owned(), true, true)?;
+    let mut indexer = Indexer::new(outputs.join("indexed").to_owned(), false, false)?;
 
     indexer.import_stores()?;
     indexer.import_vecs()?;
 
     indexer.index(&parser, rpc, &exit)?;
+
+    dbg!(i.elapsed());
 
     Ok(())
 }
