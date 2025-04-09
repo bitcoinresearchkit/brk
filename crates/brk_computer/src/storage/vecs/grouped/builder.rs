@@ -164,7 +164,6 @@ where
         let index = self.starting_index(max_from);
 
         first_indexes.iter_from(index, |(i, first_index, ..)| {
-            let first_index = first_index;
             let last_index = *last_indexes.get(i).unwrap().unwrap();
 
             if let Some(first) = self.first.as_mut() {
@@ -298,8 +297,7 @@ where
 
         let index = self.starting_index(max_from);
 
-        first_indexes.iter_from(index, |(i, first_index)| {
-            let first_index = *first_index;
+        first_indexes.iter_from(index, |(i, first_index, ..)| {
             let last_index = *last_indexes.get(i).unwrap().unwrap();
 
             if let Some(first) = self.first.as_mut() {
@@ -321,8 +319,8 @@ where
                     .unwrap()
                     .get(last_index)
                     .unwrap()
-                    .cloned()
-                    .unwrap();
+                    .unwrap()
+                    .into_inner();
                 last.forced_push_at(index, v, exit)?;
             }
 
@@ -391,7 +389,11 @@ where
                             let prev = i.to_usize().unwrap().checked_sub(1).map_or(
                                 T::from(0_usize),
                                 |prev_i| {
-                                    total_vec.get(I::from(prev_i)).unwrap().unwrap().to_owned()
+                                    total_vec
+                                        .get(I::from(prev_i))
+                                        .unwrap()
+                                        .unwrap()
+                                        .into_inner()
                                 },
                             );
                             total_vec.forced_push_at(i, prev + sum, exit)?;

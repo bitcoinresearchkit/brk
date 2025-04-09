@@ -5,7 +5,6 @@ use std::{
 };
 
 use arc_swap::{ArcSwap, Guard};
-use axum::Json;
 use memmap2::Mmap;
 use rayon::prelude::*;
 use zstd::DEFAULT_COMPRESSION_LEVEL;
@@ -232,7 +231,7 @@ where
         todo!()
     }
 
-    fn collect_range(&self, from: Option<i64>, to: Option<i64>) -> Result<Json<Vec<T>>> {
+    fn collect_range(&self, from: Option<i64>, to: Option<i64>) -> Result<Vec<Self::T>> {
         todo!()
     }
 

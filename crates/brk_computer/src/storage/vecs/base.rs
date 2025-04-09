@@ -2,7 +2,6 @@ use core::error;
 use std::{
     cmp::Ordering,
     fmt::Debug,
-    io,
     ops::{Add, Sub},
     path::{Path, PathBuf},
 };
@@ -73,7 +72,7 @@ where
         }
 
         if self.vec.pushed_len() * Self::SIZE_OF >= MAX_CACHE_SIZE {
-            Ok(self.safe_flush(exit)?)
+            self.safe_flush(exit)
         } else {
             Ok(())
         }
@@ -117,9 +116,9 @@ where
         self.vec.get(index)
     }
 
-    // pub fn collect_range(&self, from: Option<i64>, to: Option<i64>) -> Result<Vec<T>> {
-    //     self.vec.collect_range(from, to)
-    // }
+    pub fn collect_range(&self, from: Option<i64>, to: Option<i64>) -> Result<Vec<T>> {
+        self.vec.collect_range(from, to)
+    }
 
     #[inline]
     fn path_computed_version(&self) -> PathBuf {
@@ -157,7 +156,7 @@ where
             self.forced_push_at(i, v, exit)
         })?;
 
-        Ok(self.safe_flush(exit)?)
+        self.safe_flush(exit)
     }
 
     pub fn compute_inverse_more_to_less(
@@ -187,7 +186,7 @@ where
             }
         })?;
 
-        Ok(self.safe_flush(exit)?)
+        self.safe_flush(exit)
     }
 
     pub fn compute_inverse_less_to_more(
@@ -213,7 +212,7 @@ where
                 .try_for_each(|index| self.forced_push_at(I::from(index), value, exit))
         })?;
 
-        Ok(self.safe_flush(exit)?)
+        self.safe_flush(exit)
     }
 
     pub fn compute_last_index_from_first(
@@ -248,7 +247,7 @@ where
             )?;
         }
 
-        Ok(self.safe_flush(exit)?)
+        self.safe_flush(exit)
     }
 
     pub fn compute_count_from_indexes<T2>(
@@ -276,7 +275,7 @@ where
             self.forced_push_at(i, count.into(), exit)
         })?;
 
-        Ok(self.safe_flush(exit)?)
+        self.safe_flush(exit)
     }
 
     pub fn compute_is_first_ordered<A>(
@@ -304,7 +303,7 @@ where
             )
         })?;
 
-        Ok(self.safe_flush(exit)?)
+        self.safe_flush(exit)
     }
 
     pub fn compute_sum_from_indexes<T2>(
@@ -330,7 +329,7 @@ where
             self.forced_push_at(index, count.into(), exit)
         })?;
 
-        Ok(self.safe_flush(exit)?)
+        self.safe_flush(exit)
     }
 }
 

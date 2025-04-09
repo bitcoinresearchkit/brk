@@ -4,7 +4,7 @@ use brk_core::{CheckedSub, StoredU32, StoredU64, StoredUsize, Timestamp, Weight}
 use brk_exit::Exit;
 use brk_indexer::Indexer;
 use brk_parser::bitcoin;
-use brk_vec::{Compressed, DynamicVec, Version};
+use brk_vec::{Compressed, Version};
 
 use super::{
     Indexes,

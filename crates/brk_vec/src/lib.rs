@@ -14,7 +14,7 @@ use std::{
 };
 
 use arc_swap::{ArcSwap, Guard};
-use axum::{Json, response::Response};
+use axum::response::Response;
 pub use enums::*;
 use memmap2::Mmap;
 pub use structs::*;
@@ -109,7 +109,7 @@ where
         }
     }
 
-    fn collect_range(&self, from: Option<i64>, to: Option<i64>) -> Result<Json<Vec<T>>> {
+    fn collect_range(&self, from: Option<i64>, to: Option<i64>) -> Result<Vec<Self::T>> {
         match self {
             StoredVec::Raw(v) => v.collect_range(from, to),
             StoredVec::Compressed(v) => v.collect_range(from, to),
@@ -176,6 +176,11 @@ pub trait AnyStoredVec: Send + Sync {
     fn len(&self) -> usize;
     fn is_empty(&self) -> bool;
     fn flush(&mut self) -> Result<()>;
+    fn collect_range_serde_json(
+        &self,
+        from: Option<i64>,
+        to: Option<i64>,
+    ) -> Result<Vec<serde_json::Value>>;
     fn collect_range_response(&self, from: Option<i64>, to: Option<i64>) -> Result<Response>;
     fn path_vec(&self) -> PathBuf;
 }
@@ -204,6 +209,16 @@ where
         GenericVec::flush(self)
     }
 
+    #[inline]
+    fn collect_range_serde_json(
+        &self,
+        from: Option<i64>,
+        to: Option<i64>,
+    ) -> Result<Vec<serde_json::Value>> {
+        GenericVec::collect_range_serde_json(self, from, to)
+    }
+
+    #[inline]
     fn collect_range_response(&self, from: Option<i64>, to: Option<i64>) -> Result<Response> {
         GenericVec::collect_range_response(self, from, to)
     }
