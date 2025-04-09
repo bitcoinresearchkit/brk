@@ -7,7 +7,7 @@ use brk_core::{
 use brk_exit::Exit;
 use brk_fetcher::Fetcher;
 use brk_indexer::Indexer;
-use brk_vec::{AnyStorableVec, Compressed, Version};
+use brk_vec::{AnyStoredVec, Compressed, Version};
 
 use super::{
     ComputedVec, Indexes,
@@ -765,7 +765,7 @@ impl Vecs {
         Ok(())
     }
 
-    pub fn as_any_vecs(&self) -> Vec<&dyn AnyStorableVec> {
+    pub fn as_any_vecs(&self) -> Vec<&dyn AnyStoredVec> {
         vec![
             vec![
                 self.dateindex_to_close_in_cents.any_vec(),

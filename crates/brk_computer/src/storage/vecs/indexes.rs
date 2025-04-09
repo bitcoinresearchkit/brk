@@ -6,7 +6,7 @@ use brk_core::{
 };
 use brk_exit::Exit;
 use brk_indexer::Indexer;
-use brk_vec::{AnyStorableVec, Compressed, Version};
+use brk_vec::{AnyStoredVec, Compressed, Version};
 
 use super::ComputedVec;
 
@@ -784,7 +784,7 @@ impl Vecs {
         })
     }
 
-    pub fn as_any_vecs(&self) -> Vec<&dyn AnyStorableVec> {
+    pub fn as_any_vecs(&self) -> Vec<&dyn AnyStoredVec> {
         vec![
             self.dateindex_to_date.any_vec(),
             self.dateindex_to_dateindex.any_vec(),

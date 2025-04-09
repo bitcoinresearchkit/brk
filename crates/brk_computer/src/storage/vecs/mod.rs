@@ -3,7 +3,7 @@ use std::{fs, path::Path};
 use brk_exit::Exit;
 use brk_fetcher::Fetcher;
 use brk_indexer::Indexer;
-use brk_vec::{AnyStorableVec, Compressed};
+use brk_vec::{AnyStoredVec, Compressed};
 
 mod base;
 mod blocks;
@@ -63,7 +63,7 @@ impl Vecs {
         Ok(())
     }
 
-    pub fn as_any_vecs(&self) -> Vec<&dyn AnyStorableVec> {
+    pub fn as_any_vecs(&self) -> Vec<&dyn AnyStoredVec> {
         [
             self.indexes.as_any_vecs(),
             self.blocks.as_any_vecs(),

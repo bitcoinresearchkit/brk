@@ -3,7 +3,7 @@ use std::path::Path;
 use brk_core::{Difficultyepoch, Height};
 use brk_exit::Exit;
 use brk_indexer::Indexer;
-use brk_vec::{AnyStorableVec, Compressed, Result, Version};
+use brk_vec::{AnyStoredVec, Compressed, Result, Version};
 
 use crate::storage::vecs::{Indexes, base::ComputedVec, indexes};
 
@@ -84,7 +84,7 @@ where
         Ok(())
     }
 
-    pub fn any_vecs(&self) -> Vec<&dyn AnyStorableVec> {
+    pub fn any_vecs(&self) -> Vec<&dyn AnyStoredVec> {
         [
             vec![self.height.any_vec()],
             self.height_extra.any_vecs(),

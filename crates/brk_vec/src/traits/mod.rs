@@ -1,5 +1,4 @@
 mod any;
-// mod bytes;
 mod stored_index;
 mod stored_type;
 

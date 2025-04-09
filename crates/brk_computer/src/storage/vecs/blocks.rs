@@ -4,7 +4,7 @@ use brk_core::{CheckedSub, StoredU32, StoredU64, StoredUsize, Timestamp, Weight}
 use brk_exit::Exit;
 use brk_indexer::Indexer;
 use brk_parser::bitcoin;
-use brk_vec::{AnyStorableVec, Compressed, Version};
+use brk_vec::{AnyStoredVec, Compressed, Version};
 
 use super::{
     Indexes,
@@ -156,7 +156,7 @@ impl Vecs {
         Ok(())
     }
 
-    pub fn as_any_vecs(&self) -> Vec<&dyn AnyStorableVec> {
+    pub fn as_any_vecs(&self) -> Vec<&dyn AnyStoredVec> {
         [
             self.indexes_to_block_interval.any_vecs(),
             self.indexes_to_block_count.any_vecs(),

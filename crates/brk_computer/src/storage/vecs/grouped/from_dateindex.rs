@@ -3,7 +3,7 @@ use std::path::Path;
 use brk_core::{Dateindex, Decadeindex, Monthindex, Quarterindex, Weekindex, Yearindex};
 use brk_exit::Exit;
 use brk_indexer::Indexer;
-use brk_vec::{AnyStorableVec, Compressed, Result, Version};
+use brk_vec::{AnyStoredVec, Compressed, Result, Version};
 
 use crate::storage::vecs::{Indexes, base::ComputedVec, indexes};
 
@@ -126,7 +126,7 @@ where
         Ok(())
     }
 
-    pub fn any_vecs(&self) -> Vec<&dyn AnyStorableVec> {
+    pub fn any_vecs(&self) -> Vec<&dyn AnyStoredVec> {
         [
             vec![self.dateindex.any_vec()],
             self.dateindex_extra.any_vecs(),

@@ -15,6 +15,7 @@ pub enum Error {
     IO(io::Error),
     ZeroCopyError,
     IndexTooHigh,
+    EmptyVec,
     IndexTooLow,
     ExpectFileToHaveIndex,
     ExpectVecToHaveIndex,
@@ -68,6 +69,7 @@ impl fmt::Display for Error {
             Error::ZeroCopyError => write!(f, "Zero copy convert error"),
             Error::RangeFromAfterTo(from, to) => write!(f, "Range, from {from} is after to {to}"),
             Error::DifferentCompressionMode => write!(f, "Different compression mode chosen"),
+            Error::EmptyVec => write!(f, "The Vec is empty, maybe wait for a bit"),
         }
     }
 }

@@ -5,7 +5,7 @@ use brk_core::{
 };
 use brk_exit::Exit;
 use brk_indexer::Indexer;
-use brk_vec::{AnyStorableVec, Compressed, Result, StorableVec, Version};
+use brk_vec::{AnyStoredVec, Compressed, Result, StoredVec, Version};
 
 use crate::storage::vecs::{Indexes, base::ComputedVec, indexes};
 
@@ -102,7 +102,7 @@ where
         indexes: &mut indexes::Vecs,
         starting_indexes: &Indexes,
         exit: &Exit,
-        height: Option<&mut StorableVec<Height, T>>,
+        height: Option<&mut StoredVec<Height, T>>,
     ) -> color_eyre::Result<()> {
         let height = height.unwrap_or_else(|| self.height.as_mut().unwrap().mut_vec());
 
@@ -168,7 +168,7 @@ where
         Ok(())
     }
 
-    pub fn any_vecs(&self) -> Vec<&dyn AnyStorableVec> {
+    pub fn any_vecs(&self) -> Vec<&dyn AnyStoredVec> {
         [
             self.height.as_ref().map_or(vec![], |v| vec![v.any_vec()]),
             self.height_extra.any_vecs(),
