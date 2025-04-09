@@ -27,6 +27,8 @@ pub use enums::*;
 pub use structs::*;
 pub use traits::*;
 
+use crate::{Compressed, CompressedPagesMetadata, Length, StoredIndex, StoredType, Version};
+
 const ONE_KIB: usize = 1024;
 pub const MAX_PAGE_SIZE: usize = 16 * ONE_KIB;
 const ONE_MIB: usize = ONE_KIB * ONE_KIB;

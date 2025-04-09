@@ -3,7 +3,7 @@ use std::{fs, path::Path};
 use brk_core::{Sats, StoredU64, Txindex, Txinindex, Txoutindex};
 use brk_exit::Exit;
 use brk_indexer::Indexer;
-use brk_vec::{AnyStoredVec, Compressed, Version};
+use brk_vec::{Compressed, DynamicVec, Version};
 
 use super::{
     ComputedVec, Indexes,
@@ -203,7 +203,7 @@ impl Vecs {
         Ok(())
     }
 
-    pub fn as_any_vecs(&self) -> Vec<&dyn AnyStoredVec> {
+    pub fn as_any_vecs(&self) -> Vec<&dyn brk_vec::AnyStoredVec> {
         [
             vec![
                 self.txindex_to_is_coinbase.any_vec(),

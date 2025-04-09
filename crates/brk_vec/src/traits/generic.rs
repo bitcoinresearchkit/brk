@@ -1,7 +1,3 @@
-// use std::{io, path::PathBuf};
-
-// use crate::{Result};
-
 use std::{
     fs::{File, OpenOptions},
     io::{self, Seek, SeekFrom, Write},
@@ -16,17 +12,16 @@ use axum::{
 };
 use memmap2::Mmap;
 
-use crate::{Error, Result, Value, Version};
+use crate::{Error, Result, Version};
 
-use super::{StoredIndex, StoredType};
+use super::{DynamicVec, StoredIndex, StoredType};
 
-pub trait AnyVec<I, T>: Send + Sync
+pub trait GenericVec<I, T>: DynamicVec<I = I, T = T>
 where
-    I: StoredIndex + Sized,
+    I: StoredIndex,
     T: StoredType,
-    Self: Sized,
 {
-    const SIZE_OF_T: usize = size_of::<T>();
+    const SIZE_OF_T: usize = size_of::<Self::T>();
 
     fn open_file(&self) -> io::Result<File> {
         Self::open_file_(&self.path_vec())
@@ -67,15 +62,6 @@ where
     }
     fn guard(&self) -> &Option<Guard<Arc<Mmap>>>;
     fn mut_guard(&mut self) -> &mut Option<Guard<Arc<Mmap>>>;
-    #[inline]
-    fn guard_to_value(guard: &Guard<Arc<Mmap>>, index: usize) -> T {
-        let index = index * Self::SIZE_OF_T;
-        let slice = &guard[index..(index + Self::SIZE_OF_T)];
-
-        let v = T::try_ref_from_bytes(slice).unwrap();
-
-        v.clone()
-    }
 
     fn new_mmap(file: File) -> Result<Arc<Mmap>> {
         Ok(Arc::new(unsafe { Mmap::map(&file)? }))
@@ -92,39 +78,6 @@ where
             unreachable!()
         }
         Ok(())
-    }
-
-    #[inline]
-    fn get(&mut self, index: I) -> Result<Option<Value<T>>> {
-        self.get_(index.to_usize()?)
-    }
-    fn get_(&mut self, index: usize) -> Result<Option<Value<T>>>;
-    fn get_last(&mut self) -> Result<Option<Value<T>>> {
-        let len = self.len();
-        if len == 0 {
-            return Ok(None);
-        }
-        self.get_(len - 1)
-    }
-
-    #[inline]
-    fn stored_len(&self) -> usize {
-        if let Some(guard) = self.guard() {
-            guard.len() / Self::SIZE_OF_T
-        } else {
-            self.new_guard().len() / Self::SIZE_OF_T
-        }
-    }
-
-    fn pushed(&self) -> &[T];
-    #[inline]
-    fn pushed_len(&self) -> usize {
-        self.pushed().len()
-    }
-    fn mut_pushed(&mut self) -> &mut Vec<T>;
-    #[inline]
-    fn push(&mut self, value: T) {
-        self.mut_pushed().push(value)
     }
 
     #[inline]
@@ -149,12 +102,7 @@ where
     }
 
     #[inline]
-    fn len(&self) -> usize {
-        self.stored_len() + self.pushed_len()
-    }
-
-    #[inline]
-    fn has(&self, index: I) -> Result<bool> {
+    fn has(&self, index: Self::I) -> Result<bool> {
         Ok(self.has_(index.to_usize()?))
     }
     #[inline]
@@ -163,26 +111,33 @@ where
     }
 
     #[inline]
-    fn is_empty(&self) -> bool {
-        self.len() == 0
-    }
-
-    #[inline]
     fn index_type_to_string(&self) -> &str {
-        I::to_string()
+        Self::I::to_string()
     }
 
     #[inline]
     fn iter<F>(&mut self, f: F) -> Result<()>
     where
-        F: FnMut((I, T, &mut Self)) -> Result<()>,
+        F: FnMut(
+            (
+                Self::I,
+                Self::T,
+                &mut dyn DynamicVec<I = Self::I, T = Self::T>,
+            ),
+        ) -> Result<()>,
     {
-        self.iter_from(I::default(), f)
+        self.iter_from(Self::I::default(), f)
     }
 
-    fn iter_from<F>(&mut self, index: I, f: F) -> Result<()>
+    fn iter_from<F>(&mut self, index: Self::I, f: F) -> Result<()>
     where
-        F: FnMut((I, T, &mut Self)) -> Result<()>;
+        F: FnMut(
+            (
+                Self::I,
+                Self::T,
+                &mut dyn DynamicVec<I = Self::I, T = Self::T>,
+            ),
+        ) -> Result<()>;
 
     fn fix_i64(i: i64, len: usize, from: bool) -> usize {
         if i >= 0 {
@@ -202,9 +157,9 @@ where
 
     fn flush(&mut self) -> Result<()>;
 
-    fn truncate_if_needed(&mut self, index: I) -> Result<()>;
+    fn truncate_if_needed(&mut self, index: Self::I) -> Result<()>;
 
-    fn collect_range(&self, from: Option<i64>, to: Option<i64>) -> Result<Json<Vec<T>>>;
+    fn collect_range(&self, from: Option<i64>, to: Option<i64>) -> Result<Json<Vec<Self::T>>>;
 
     fn collect_range_response(&self, from: Option<i64>, to: Option<i64>) -> Result<Response> {
         Ok(self.collect_range(from, to)?.into_response())
@@ -236,12 +191,4 @@ where
     }
 
     fn version(&self) -> Version;
-
-    fn any(&self) -> &Self {
-        self
-    }
-
-    fn mut_any(&mut self) -> &mut Self {
-        self
-    }
 }

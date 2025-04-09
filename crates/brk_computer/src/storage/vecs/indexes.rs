@@ -6,7 +6,7 @@ use brk_core::{
 };
 use brk_exit::Exit;
 use brk_indexer::Indexer;
-use brk_vec::{AnyStoredVec, Compressed, Version};
+use brk_vec::{Compressed, Version};
 
 use super::ComputedVec;
 
@@ -366,8 +366,7 @@ impl Vecs {
         let starting_dateindex = self
             .height_to_dateindex
             .get(starting_indexes.height.decremented().unwrap_or_default())?
-            .copied()
-            .unwrap_or_default();
+            .map_or_else(Default::default, |v| v.into_inner());
 
         self.height_to_dateindex.compute_transform(
             starting_indexes.height,
@@ -379,7 +378,7 @@ impl Vecs {
         let starting_dateindex = if let Some(dateindex) = self
             .height_to_dateindex
             .get(starting_indexes.height.decremented().unwrap_or_default())?
-            .copied()
+            .map(|v| v.into_inner())
         {
             starting_dateindex.min(dateindex)
         } else {
@@ -452,8 +451,7 @@ impl Vecs {
         let starting_weekindex = self
             .dateindex_to_weekindex
             .get(starting_dateindex)?
-            .copied()
-            .unwrap_or_default();
+            .map_or_else(Default::default, |v| v.into_inner());
 
         self.dateindex_to_weekindex.compute_transform(
             starting_dateindex,
@@ -496,8 +494,7 @@ impl Vecs {
         let starting_monthindex = self
             .dateindex_to_monthindex
             .get(starting_dateindex)?
-            .copied()
-            .unwrap_or_default();
+            .map_or_else(Default::default, |v| v.into_inner());
 
         self.dateindex_to_monthindex.compute_transform(
             starting_dateindex,
@@ -542,8 +539,7 @@ impl Vecs {
         let starting_quarterindex = self
             .monthindex_to_quarterindex
             .get(starting_monthindex)?
-            .copied()
-            .unwrap_or_default();
+            .map_or_else(Default::default, |v| v.into_inner());
 
         self.monthindex_to_quarterindex.compute_transform(
             starting_monthindex,
@@ -588,8 +584,7 @@ impl Vecs {
         let starting_yearindex = self
             .monthindex_to_yearindex
             .get(starting_monthindex)?
-            .copied()
-            .unwrap_or_default();
+            .map_or_else(Default::default, |v| v.into_inner());
 
         self.monthindex_to_yearindex.compute_transform(
             starting_monthindex,
@@ -634,8 +629,7 @@ impl Vecs {
         let starting_decadeindex = self
             .yearindex_to_decadeindex
             .get(starting_yearindex)?
-            .copied()
-            .unwrap_or_default();
+            .map_or_else(Default::default, |v| v.into_inner());
 
         self.yearindex_to_decadeindex.compute_transform(
             starting_yearindex,
@@ -678,8 +672,7 @@ impl Vecs {
         let starting_difficultyepoch = self
             .height_to_difficultyepoch
             .get(starting_indexes.height)?
-            .copied()
-            .unwrap_or_default();
+            .map_or_else(Default::default, |v| v.into_inner());
 
         self.height_to_difficultyepoch.compute_transform(
             starting_indexes.height,
@@ -727,8 +720,7 @@ impl Vecs {
         let starting_halvingepoch = self
             .height_to_halvingepoch
             .get(starting_indexes.height)?
-            .copied()
-            .unwrap_or_default();
+            .map_or_else(Default::default, |v| v.into_inner());
 
         self.height_to_halvingepoch.compute_transform(
             starting_indexes.height,
@@ -784,7 +776,7 @@ impl Vecs {
         })
     }
 
-    pub fn as_any_vecs(&self) -> Vec<&dyn AnyStoredVec> {
+    pub fn as_any_vecs(&self) -> Vec<&dyn brk_vec::AnyStoredVec> {
         vec![
             self.dateindex_to_date.any_vec(),
             self.dateindex_to_dateindex.any_vec(),

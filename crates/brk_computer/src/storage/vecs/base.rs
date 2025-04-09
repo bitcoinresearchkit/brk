@@ -10,12 +10,20 @@ use std::{
 use brk_core::CheckedSub;
 use brk_exit::Exit;
 use brk_vec::{
-    AnyStoredVec, Compressed, Error, MAX_CACHE_SIZE, Result, StoredIndex, StoredType, StoredVec,
+    Compressed, DynamicVec, Error, GenericVec, Result, StoredIndex, StoredType, StoredVec, Value,
     Version,
 };
 
+const ONE_KIB: usize = 1024;
+const ONE_MIB: usize = ONE_KIB * ONE_KIB;
+const MAX_CACHE_SIZE: usize = 100 * ONE_MIB;
+
 #[derive(Debug)]
-pub struct ComputedVec<I, T> {
+pub struct ComputedVec<I, T>
+where
+    I: StoredIndex,
+    T: StoredType,
+{
     computed_version: Option<Version>,
     vec: StoredVec<I, T>,
 }
@@ -71,7 +79,7 @@ where
         }
     }
 
-    pub fn safe_flush(&mut self, exit: &Exit) -> io::Result<()> {
+    pub fn safe_flush(&mut self, exit: &Exit) -> Result<()> {
         if exit.triggered() {
             return Ok(());
         }
@@ -97,21 +105,21 @@ where
         &mut self.vec
     }
 
-    pub fn any_vec(&self) -> &dyn AnyStoredVec {
+    pub fn any_vec(&self) -> &dyn brk_vec::AnyStoredVec {
         &self.vec
     }
 
-    pub fn mut_any_vec(&mut self) -> &mut dyn AnyStoredVec {
+    pub fn mut_any_vec(&mut self) -> &mut dyn brk_vec::AnyStoredVec {
         &mut self.vec
     }
 
-    pub fn get(&mut self, index: I) -> Result<Option<&T>> {
+    pub fn get(&mut self, index: I) -> Result<Option<Value<T>>> {
         self.vec.get(index)
     }
 
-    pub fn collect_range(&self, from: Option<i64>, to: Option<i64>) -> Result<Vec<T>> {
-        self.vec.collect_range(from, to)
-    }
+    // pub fn collect_range(&self, from: Option<i64>, to: Option<i64>) -> Result<Vec<T>> {
+    //     self.vec.collect_range(from, to)
+    // }
 
     #[inline]
     fn path_computed_version(&self) -> PathBuf {
@@ -137,14 +145,14 @@ where
     where
         A: StoredIndex,
         B: StoredType,
-        F: FnMut((A, B, &mut Self, &mut StoredVec<A, B>)) -> (I, T),
+        F: FnMut((A, B, &mut Self, &mut dyn DynamicVec<I = A, T = B>)) -> (I, T),
     {
         self.validate_computed_version_or_reset_file(
             Version::ZERO + self.version() + other.version(),
         )?;
 
         let index = max_from.min(A::from(self.len()));
-        other.iter_from_cloned(index, |(a, b, other)| {
+        other.iter_from(index, |(a, b, other)| {
             let (i, v) = t((a, b, self, other));
             self.forced_push_at(i, v, exit)
         })?;
@@ -166,9 +174,12 @@ where
             Version::ZERO + self.version() + other.version(),
         )?;
 
-        let index = max_from.min(self.vec.get_last()?.cloned().unwrap_or_default());
+        let index = max_from.min(
+            self.vec
+                .get_last()?
+                .map_or_else(T::default, |v| v.into_inner()),
+        );
         other.iter_from(index, |(v, i, ..)| {
-            let i = *i;
             if self.get(i).unwrap().is_none_or(|old_v| *old_v > v) {
                 self.forced_push_at(i, v, exit)
             } else {
@@ -260,7 +271,7 @@ where
         first_indexes.iter_from(index, |(i, first_index, ..)| {
             let last_index = last_indexes.get(i)?.unwrap();
             let count = (*last_index + 1_usize)
-                .checked_sub(*first_index)
+                .checked_sub(first_index)
                 .unwrap_or_default();
             self.forced_push_at(i, count.into(), exit)
         })?;
@@ -286,7 +297,11 @@ where
 
         let index = max_from.min(I::from(self.len()));
         self_to_other.iter_from(index, |(i, other, ..)| {
-            self.forced_push_at(i, T::from(other_to_self.get(*other)?.unwrap() == &i), exit)
+            self.forced_push_at(
+                i,
+                T::from(other_to_self.get(other)?.unwrap().into_inner() == i),
+                exit,
+            )
         })?;
 
         Ok(self.safe_flush(exit)?)
@@ -311,7 +326,7 @@ where
         let index = max_from.min(I::from(self.len()));
         first_indexes.iter_from(index, |(index, first_index, ..)| {
             let last_index = last_indexes.get(index)?.unwrap();
-            let count = *last_index + 1_usize - *first_index;
+            let count = *last_index + 1_usize - first_index;
             self.forced_push_at(index, count.into(), exit)
         })?;
 
