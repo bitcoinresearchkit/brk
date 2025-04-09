@@ -1,6 +1,6 @@
 use std::collections::BTreeMap;
 
-use brk_vec::AnyStorableVec;
+use brk_vec::AnyStoredVec;
 use derive_deref::{Deref, DerefMut};
 
 use super::index::Index;
@@ -13,7 +13,7 @@ pub struct VecTrees<'a> {
 
 impl<'a> VecTrees<'a> {
     // Not the most performant or type safe but only built once so that's okay
-    pub fn insert(&mut self, vec: &'a dyn AnyStorableVec) {
+    pub fn insert(&mut self, vec: &'a dyn AnyStoredVec) {
         let file_name = vec.file_name();
         let split = file_name.split("_to_").collect::<Vec<_>>();
         if split.len() != 2 {
@@ -88,7 +88,7 @@ impl<'a> VecTrees<'a> {
 }
 
 #[derive(Default, Deref, DerefMut)]
-pub struct IndexToVec<'a>(BTreeMap<Index, &'a dyn AnyStorableVec>);
+pub struct IndexToVec<'a>(BTreeMap<Index, &'a dyn AnyStoredVec>);
 
 #[derive(Default, Deref, DerefMut)]
-pub struct IdToVec<'a>(BTreeMap<String, &'a dyn AnyStorableVec>);
+pub struct IdToVec<'a>(BTreeMap<String, &'a dyn AnyStoredVec>);

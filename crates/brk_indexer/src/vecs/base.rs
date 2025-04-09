@@ -6,8 +6,8 @@ use std::{
 };
 
 use brk_vec::{
-    AnyStorableVec, Compressed, Error, MAX_CACHE_SIZE, MAX_PAGE_SIZE, Result, StorableVec,
-    StoredIndex, StoredType, Value, Version,
+    AnyVec, Compressed, Error, MAX_CACHE_SIZE, MAX_PAGE_SIZE, Result, StoredIndex, StoredType,
+    StoredVec, Value, Version,
 };
 
 use super::Height;
@@ -15,7 +15,7 @@ use super::Height;
 #[derive(Debug)]
 pub struct IndexedVec<I, T> {
     height: Option<Height>,
-    vec: StorableVec<I, T>,
+    vec: StoredVec<I, T>,
 }
 
 impl<I, T> IndexedVec<I, T>
@@ -33,9 +33,9 @@ where
         version: Version,
         compressed: Compressed,
     ) -> brk_vec::Result<Self> {
-        let mut vec = StorableVec::forced_import(path, version, compressed)?;
+        let mut vec = StoredVec::forced_import(path, version, compressed)?;
 
-        vec.enable_large_cache();
+        vec.enable_large_cache_if_possible();
 
         Ok(Self {
             height: Height::try_from(Self::path_height_(path).as_path()).ok(),
@@ -67,15 +67,13 @@ where
             let min_page_index = (max_page_index + 1) - large_cache_len;
 
             if page_index >= min_page_index {
-                let values = self
-                    .vec
+                self.vec
                     .pages()
                     .unwrap()
                     .get(page_index - min_page_index)
                     .ok_or(Error::MmapsVecIsTooSmall)?
-                    .get_or_init(|| self.vec.decode_page(page_index).unwrap());
-
-                return Ok(values.get(index)?.map(|v| Value::Ref(v)));
+                    .get_or_init(|| self.vec.decode_page(page_index).unwrap())
+                    .get(index)
             }
         }
 
@@ -126,15 +124,15 @@ where
         self.vec.flush()
     }
 
-    pub fn vec(&self) -> &StorableVec<I, T> {
+    pub fn vec(&self) -> &StoredVec<I, T> {
         &self.vec
     }
 
-    pub fn mut_vec(&mut self) -> &mut StorableVec<I, T> {
+    pub fn mut_vec(&mut self) -> &mut StoredVec<I, T> {
         &mut self.vec
     }
 
-    pub fn any_vec(&self) -> &dyn AnyStorableVec {
+    pub fn any_vec(&self) -> &dyn AnyVec {
         &self.vec
     }
 

@@ -9,6 +9,8 @@ license.workspace = true
 repository.workspace = true
 
 [dependencies]
+axum = { workspace = true }
+arc-swap = "1.7.1"
 memmap2 = "0.9.5"
 rayon = { workspace = true }
 serde = { workspace = true }

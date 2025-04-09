@@ -5,7 +5,7 @@
 
 use brk_computer::Computer;
 use brk_indexer::Indexer;
-use brk_vec::AnyStorableVec;
+use brk_vec::AnyStoredVec;
 use tabled::settings::Style;
 
 mod format;
@@ -51,7 +51,7 @@ impl<'a> Query<'a> {
         }
     }
 
-    pub fn search(&self, index: Index, ids: &[&str]) -> Vec<(String, &&dyn AnyStorableVec)> {
+    pub fn search(&self, index: Index, ids: &[&str]) -> Vec<(String, &&dyn AnyStoredVec)> {
         let tuples = ids
             .iter()
             .flat_map(|s| {
@@ -86,7 +86,7 @@ impl<'a> Query<'a> {
 
     pub fn format(
         &self,
-        vecs: Vec<(String, &&dyn AnyStorableVec)>,
+        vecs: Vec<(String, &&dyn AnyStoredVec)>,
         from: Option<i64>,
         to: Option<i64>,
         format: Option<Format>,

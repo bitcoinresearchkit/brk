@@ -3,7 +3,10 @@ use std::ops::Range;
 use memmap2::Mmap;
 use zerocopy::{Immutable, IntoBytes, KnownLayout, TryFromBytes};
 
-use crate::MAX_PAGE_SIZE;
+const ONE_KIB: usize = 1024;
+pub const MAX_PAGE_SIZE: usize = 16 * ONE_KIB;
+const ONE_MIB: usize = ONE_KIB * ONE_KIB;
+pub const MAX_CACHE_SIZE: usize = 100 * ONE_MIB;
 
 use super::Result;
 

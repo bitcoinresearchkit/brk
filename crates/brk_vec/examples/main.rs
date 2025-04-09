@@ -1,13 +1,12 @@
 use std::{fs, path::Path};
 
-use brk_vec::{Compressed, StorableVec, Version};
+use brk_vec::{AnyVec, RawVec, Version};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let _ = fs::remove_dir_all("./vec");
 
     {
-        let mut vec: StorableVec<usize, u32> =
-            StorableVec::forced_import(Path::new("./vec"), Version::ZERO, Compressed::YES)?;
+        let mut vec: RawVec<usize, u32> = RawVec::forced_import(Path::new("./vec"), Version::ZERO)?;
 
         (0..21_u32).for_each(|v| {
             vec.push(v);
@@ -20,8 +19,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     {
-        let mut vec: StorableVec<usize, u32> =
-            StorableVec::forced_import(Path::new("./vec"), Version::ZERO, Compressed::YES)?;
+        let mut vec: RawVec<usize, u32> = RawVec::forced_import(Path::new("./vec"), Version::ZERO)?;
 
         dbg!(vec.get(0)?);
         dbg!(vec.get(0)?);
@@ -42,10 +40,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     {
-        let mut vec: StorableVec<usize, u32> =
-            StorableVec::forced_import(Path::new("./vec"), Version::ZERO, Compressed::YES)?;
+        let mut vec: RawVec<usize, u32> = RawVec::forced_import(Path::new("./vec"), Version::ZERO)?;
 
-        vec.enable_large_cache();
+        // vec.enable_large_cache_if_possible();
 
         dbg!(vec.get(0)?);
         dbg!(vec.get(20)?);
@@ -58,12 +55,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         dbg!(vec.get(5)?);
         dbg!(vec.get(20)?);
 
-        vec.iter(|(_, v)| {
+        vec.iter(|(_, v, ..)| {
             dbg!(v);
             Ok(())
         })?;
 
-        vec.iter_from(5, |(_, v)| {
+        vec.iter_from(5, |(_, v, ..)| {
             dbg!(v);
             Ok(())
         })?;

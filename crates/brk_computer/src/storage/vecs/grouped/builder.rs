@@ -1,7 +1,7 @@
 use std::path::Path;
 
 use brk_exit::Exit;
-use brk_vec::{AnyStorableVec, Compressed, Result, StorableVec, StoredIndex, StoredType, Version};
+use brk_vec::{AnyStoredVec, Compressed, Result, StoredIndex, StoredType, StoredVec, Version};
 
 use crate::storage::vecs::base::ComputedVec;
 
@@ -114,12 +114,7 @@ where
         Ok(s)
     }
 
-    pub fn extend(
-        &mut self,
-        max_from: I,
-        source: &mut StorableVec<I, T>,
-        exit: &Exit,
-    ) -> Result<()> {
+    pub fn extend(&mut self, max_from: I, source: &mut StoredVec<I, T>, exit: &Exit) -> Result<()> {
         if self.total.is_none() {
             return Ok(());
         };
@@ -154,9 +149,9 @@ where
     pub fn compute<I2>(
         &mut self,
         max_from: I,
-        source: &mut StorableVec<I2, T>,
-        first_indexes: &mut StorableVec<I, I2>,
-        last_indexes: &mut StorableVec<I, I2>,
+        source: &mut StoredVec<I2, T>,
+        first_indexes: &mut StoredVec<I, I2>,
+        last_indexes: &mut StoredVec<I, I2>,
         exit: &Exit,
     ) -> Result<()>
     where
@@ -276,8 +271,8 @@ where
         &mut self,
         max_from: I,
         source: &mut ComputedVecBuilder<I2, T>,
-        first_indexes: &mut StorableVec<I, I2>,
-        last_indexes: &mut StorableVec<I, I2>,
+        first_indexes: &mut StoredVec<I, I2>,
+        last_indexes: &mut StoredVec<I, I2>,
         exit: &Exit,
     ) -> Result<()>
     where
@@ -434,8 +429,8 @@ where
         ))
     }
 
-    pub fn any_vecs(&self) -> Vec<&dyn AnyStorableVec> {
-        let mut v: Vec<&dyn AnyStorableVec> = vec![];
+    pub fn any_vecs(&self) -> Vec<&dyn AnyStoredVec> {
+        let mut v: Vec<&dyn AnyStoredVec> = vec![];
 
         if let Some(first) = self.first.as_ref() {
             v.push(first.any_vec());
