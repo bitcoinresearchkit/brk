@@ -1,7 +1,6 @@
 use std::{
     cmp::Ordering,
     fmt::Debug,
-    io,
     path::{Path, PathBuf},
 };
 

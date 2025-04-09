@@ -11,6 +11,7 @@ use axum::{
     response::{IntoResponse, Response},
 };
 use memmap2::Mmap;
+use serde_json::Value;
 
 use crate::{Error, Result, Version};
 
@@ -159,10 +160,28 @@ where
 
     fn truncate_if_needed(&mut self, index: Self::I) -> Result<()>;
 
-    fn collect_range(&self, from: Option<i64>, to: Option<i64>) -> Result<Json<Vec<Self::T>>>;
+    fn collect_range(&self, from: Option<i64>, to: Option<i64>) -> Result<Vec<Self::T>>;
 
+    #[inline]
+    fn collect_range_axum_json(
+        &self,
+        from: Option<i64>,
+        to: Option<i64>,
+    ) -> Result<Json<Vec<Self::T>>> {
+        Ok(Json(self.collect_range(from, to)?))
+    }
+
+    #[inline]
+    fn collect_range_serde_json(&self, from: Option<i64>, to: Option<i64>) -> Result<Vec<Value>> {
+        self.collect_range(from, to)?
+            .into_iter()
+            .map(|v| serde_json::to_value(v).map_err(Error::from))
+            .collect::<Result<Vec<_>>>()
+    }
+
+    #[inline]
     fn collect_range_response(&self, from: Option<i64>, to: Option<i64>) -> Result<Response> {
-        Ok(self.collect_range(from, to)?.into_response())
+        Ok(self.collect_range_axum_json(from, to)?.into_response())
     }
 
     fn path(&self) -> &Path;
@@ -181,6 +200,7 @@ where
         path.join("version")
     }
 
+    #[inline]
     fn file_name(&self) -> String {
         self.path()
             .file_name()

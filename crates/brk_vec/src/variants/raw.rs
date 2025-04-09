@@ -7,7 +7,6 @@ use std::{
 };
 
 use arc_swap::{ArcSwap, Guard};
-use axum::Json;
 use memmap2::Mmap;
 use rayon::prelude::*;
 
@@ -116,8 +115,8 @@ where
 
 impl<I, T> GenericVec<I, T> for RawVec<I, T>
 where
-    I: StoredIndex + Send + Sync,
-    T: StoredType + Send + Sync,
+    I: StoredIndex,
+    T: StoredType,
 {
     fn iter_from<F>(&mut self, index: I, mut f: F) -> Result<()>
     where
@@ -130,6 +129,8 @@ where
         let guard = self.mmap.load();
 
         let start = index.to_usize()? * Self::SIZE_OF_T;
+
+        dbg!(self.path());
 
         guard[start..]
             .chunks(Self::SIZE_OF_T)
@@ -188,24 +189,22 @@ where
         Ok(())
     }
 
-    fn collect_range(&self, from: Option<i64>, to: Option<i64>) -> Result<Json<Vec<T>>> {
+    fn collect_range(&self, from: Option<i64>, to: Option<i64>) -> Result<Vec<T>> {
         let guard = self.mmap.load();
 
         let len = guard.len() / Self::SIZE_OF_T;
 
         if len == 0 {
-            return Ok(Json(vec![]));
+            return Ok(vec![]);
         }
 
         let from = from.map_or(0, |i| Self::fix_i64(i, len, true));
         let to = to.map_or(len, |i| Self::fix_i64(i, len, false));
 
-        Ok(Json(
-            guard[from * Self::SIZE_OF_T..to * Self::SIZE_OF_T]
-                .chunks(Self::SIZE_OF_T)
-                .map(|chunk| T::try_read_from_bytes(chunk).unwrap())
-                .collect::<Vec<_>>(),
-        ))
+        Ok(guard[from * Self::SIZE_OF_T..to * Self::SIZE_OF_T]
+            .chunks(Self::SIZE_OF_T)
+            .map(|chunk| T::try_read_from_bytes(chunk).unwrap())
+            .collect::<Vec<_>>())
     }
 
     #[inline]

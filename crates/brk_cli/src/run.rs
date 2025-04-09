@@ -272,9 +272,10 @@ impl RunConfig {
     }
 
     fn read(path: &Path) -> Self {
-        fs::read_to_string(path).map_or_else(RunConfig::default, |contents| {
-            toml::from_str(&contents).unwrap_or_default()
-        })
+        fs::read_to_string(path).map_or_else(
+            |_| RunConfig::default(),
+            |contents| toml::from_str(&contents).unwrap_or_default(),
+        )
     }
 
     fn write(&self, path: &Path) -> std::io::Result<()> {

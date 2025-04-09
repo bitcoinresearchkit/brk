@@ -23,6 +23,7 @@ pub enum Error {
     UnsupportedUnflushedState,
     RangeFromAfterTo(usize, usize),
     DifferentCompressionMode,
+    ToSerdeJsonValueError(serde_json::Error),
 }
 
 impl From<io::Error> for Error {
@@ -40,6 +41,12 @@ impl<A, B, C> From<zerocopy::error::ConvertError<A, B, C>> for Error {
 impl<A, B> From<zerocopy::error::SizeError<A, B>> for Error {
     fn from(_: zerocopy::error::SizeError<A, B>) -> Self {
         Self::ZeroCopyError
+    }
+}
+
+impl From<serde_json::Error> for Error {
+    fn from(error: serde_json::Error) -> Self {
+        Self::ToSerdeJsonValueError(error)
     }
 }
 
@@ -70,6 +77,7 @@ impl fmt::Display for Error {
             Error::RangeFromAfterTo(from, to) => write!(f, "Range, from {from} is after to {to}"),
             Error::DifferentCompressionMode => write!(f, "Different compression mode chosen"),
             Error::EmptyVec => write!(f, "The Vec is empty, maybe wait for a bit"),
+            Error::ToSerdeJsonValueError(error) => Debug::fmt(&error, f),
         }
     }
 }

@@ -94,7 +94,7 @@ impl<'a> Query<'a> {
         let mut values = vecs
             .iter()
             .map(|(_, vec)| -> brk_vec::Result<Vec<serde_json::Value>> {
-                vec.collect_range_values(from, to)
+                vec.collect_range_serde_json(from, to)
             })
             .collect::<brk_vec::Result<Vec<_>>>()?;
 
