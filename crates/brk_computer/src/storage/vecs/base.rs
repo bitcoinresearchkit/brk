@@ -15,7 +15,7 @@ use brk_vec::{
 
 const ONE_KIB: usize = 1024;
 const ONE_MIB: usize = ONE_KIB * ONE_KIB;
-const MAX_CACHE_SIZE: usize = 100 * ONE_MIB;
+const MAX_CACHE_SIZE: usize = 210 * ONE_MIB;
 
 #[derive(Debug)]
 pub struct ComputedVec<I, T>
@@ -24,7 +24,7 @@ where
     T: StoredType,
 {
     computed_version: Option<Version>,
-    vec: StoredVec<I, T>,
+    inner: StoredVec<I, T>,
 }
 
 impl<I, T> ComputedVec<I, T>
@@ -43,7 +43,7 @@ where
 
         Ok(Self {
             computed_version: None,
-            vec,
+            inner: vec,
         })
     }
 
@@ -52,7 +52,7 @@ where
             return Ok(());
         }
         exit.block();
-        self.vec.truncate_if_needed(index)?;
+        self.inner.truncate_if_needed(index)?;
         exit.release();
         Ok(())
     }
@@ -67,11 +67,11 @@ where
                 if ord == Ordering::Greater {
                     self.safe_truncate_if_needed(index, exit)?;
                 }
-                self.vec.push(value);
+                self.inner.push(value);
             }
         }
 
-        if self.vec.pushed_len() * Self::SIZE_OF >= MAX_CACHE_SIZE {
+        if self.inner.pushed_len() * Self::SIZE_OF >= MAX_CACHE_SIZE {
             self.safe_flush(exit)
         } else {
             Ok(())
@@ -83,52 +83,56 @@ where
             return Ok(());
         }
         exit.block();
-        self.vec.flush()?;
+        self.inner.flush()?;
         exit.release();
         Ok(())
     }
 
     fn version(&self) -> Version {
-        self.vec.version()
+        self.inner.version()
     }
 
     pub fn len(&self) -> usize {
-        self.vec.len()
+        self.inner.len()
     }
 
     pub fn vec(&self) -> &StoredVec<I, T> {
-        &self.vec
+        &self.inner
     }
 
     pub fn mut_vec(&mut self) -> &mut StoredVec<I, T> {
-        &mut self.vec
+        &mut self.inner
     }
 
     pub fn any_vec(&self) -> &dyn brk_vec::AnyStoredVec {
-        &self.vec
+        &self.inner
     }
 
     pub fn mut_any_vec(&mut self) -> &mut dyn brk_vec::AnyStoredVec {
-        &mut self.vec
+        &mut self.inner
     }
 
-    pub fn get(&mut self, index: I) -> Result<Option<Value<T>>> {
-        self.vec.get(index)
+    pub fn cached_get(&mut self, index: I) -> Result<Option<Value<T>>> {
+        self.inner.cached_get(index)
     }
 
-    pub fn collect_range(&self, from: Option<i64>, to: Option<i64>) -> Result<Vec<T>> {
-        self.vec.collect_range(from, to)
+    pub fn collect_inclusive_range(&self, from: I, to: I) -> Result<Vec<T>> {
+        self.inner.collect_inclusive_range(from, to)
+    }
+
+    pub fn path(&self) -> &Path {
+        self.inner.path()
     }
 
     #[inline]
     fn path_computed_version(&self) -> PathBuf {
-        self.vec.path().join("computed_version")
+        self.inner.path().join("computed_version")
     }
 
     fn validate_computed_version_or_reset_file(&mut self, version: Version) -> Result<()> {
         let path = self.path_computed_version();
         if version.validate(path.as_ref()).is_err() {
-            self.vec.reset()?;
+            self.inner.reset()?;
         }
         version.write(path.as_ref())?;
         Ok(())
@@ -174,12 +178,12 @@ where
         )?;
 
         let index = max_from.min(
-            self.vec
-                .get_last()?
+            self.inner
+                .cached_get_last()?
                 .map_or_else(T::default, |v| v.into_inner()),
         );
         other.iter_from(index, |(v, i, ..)| {
-            if self.get(i).unwrap().is_none_or(|old_v| *old_v > v) {
+            if self.cached_get(i).unwrap().is_none_or(|old_v| *old_v > v) {
                 self.forced_push_at(i, v, exit)
             } else {
                 Ok(())
@@ -207,7 +211,7 @@ where
         let index = max_from.min(T::from(self.len()));
         first_indexes.iter_from(index, |(value, first_index, ..)| {
             let first_index = (first_index).to_usize()?;
-            let last_index = (last_indexes.get(value)?.unwrap()).to_usize()?;
+            let last_index = (last_indexes.cached_get(value)?.unwrap()).to_usize()?;
             (first_index..last_index)
                 .try_for_each(|index| self.forced_push_at(I::from(index), value, exit))
         })?;
@@ -268,7 +272,7 @@ where
 
         let index = max_from.min(I::from(self.len()));
         first_indexes.iter_from(index, |(i, first_index, ..)| {
-            let last_index = last_indexes.get(i)?.unwrap();
+            let last_index = last_indexes.cached_get(i)?.unwrap();
             let count = (*last_index + 1_usize)
                 .checked_sub(first_index)
                 .unwrap_or_default();
@@ -298,7 +302,7 @@ where
         self_to_other.iter_from(index, |(i, other, ..)| {
             self.forced_push_at(
                 i,
-                T::from(other_to_self.get(other)?.unwrap().into_inner() == i),
+                T::from(other_to_self.cached_get(other)?.unwrap().into_inner() == i),
                 exit,
             )
         })?;
@@ -324,7 +328,7 @@ where
 
         let index = max_from.min(I::from(self.len()));
         first_indexes.iter_from(index, |(index, first_index, ..)| {
-            let last_index = last_indexes.get(index)?.unwrap();
+            let last_index = last_indexes.cached_get(index)?.unwrap();
             let count = *last_index + 1_usize - first_index;
             self.forced_push_at(index, count.into(), exit)
         })?;
@@ -341,7 +345,7 @@ where
     fn clone(&self) -> Self {
         Self {
             computed_version: self.computed_version,
-            vec: self.vec.clone(),
+            inner: self.inner.clone(),
         }
     }
 }

@@ -345,7 +345,7 @@ impl Vecs {
             |(h, d, s, ..)| {
                 let d = h
                     .decremented()
-                    .and_then(|h| s.get(h).ok())
+                    .and_then(|h| s.cached_get(h).ok())
                     .flatten()
                     .map_or(d, |prev_d| {
                         let prev_d = *prev_d;
@@ -365,7 +365,7 @@ impl Vecs {
 
         let starting_dateindex = self
             .height_to_dateindex
-            .get(starting_indexes.height.decremented().unwrap_or_default())?
+            .cached_get(starting_indexes.height.decremented().unwrap_or_default())?
             .map_or_else(Default::default, |v| v.into_inner());
 
         self.height_to_dateindex.compute_transform(
@@ -377,7 +377,7 @@ impl Vecs {
 
         let starting_dateindex = if let Some(dateindex) = self
             .height_to_dateindex
-            .get(starting_indexes.height.decremented().unwrap_or_default())?
+            .cached_get(starting_indexes.height.decremented().unwrap_or_default())?
             .map(|v| v.into_inner())
         {
             starting_dateindex.min(dateindex)
@@ -450,7 +450,7 @@ impl Vecs {
 
         let starting_weekindex = self
             .dateindex_to_weekindex
-            .get(starting_dateindex)?
+            .cached_get(starting_dateindex)?
             .map_or_else(Default::default, |v| v.into_inner());
 
         self.dateindex_to_weekindex.compute_transform(
@@ -485,7 +485,12 @@ impl Vecs {
         self.weekindex_to_timestamp.compute_transform(
             starting_weekindex,
             self.weekindex_to_first_dateindex.mut_vec(),
-            |(i, d, ..)| (i, *self.dateindex_to_timestamp.get(d).unwrap().unwrap()),
+            |(i, d, ..)| {
+                (
+                    i,
+                    *self.dateindex_to_timestamp.cached_get(d).unwrap().unwrap(),
+                )
+            },
             exit,
         )?;
 
@@ -493,7 +498,7 @@ impl Vecs {
 
         let starting_monthindex = self
             .dateindex_to_monthindex
-            .get(starting_dateindex)?
+            .cached_get(starting_dateindex)?
             .map_or_else(Default::default, |v| v.into_inner());
 
         self.dateindex_to_monthindex.compute_transform(
@@ -530,7 +535,12 @@ impl Vecs {
         self.monthindex_to_timestamp.compute_transform(
             starting_monthindex,
             self.monthindex_to_first_dateindex.mut_vec(),
-            |(i, d, ..)| (i, *self.dateindex_to_timestamp.get(d).unwrap().unwrap()),
+            |(i, d, ..)| {
+                (
+                    i,
+                    *self.dateindex_to_timestamp.cached_get(d).unwrap().unwrap(),
+                )
+            },
             exit,
         )?;
 
@@ -538,7 +548,7 @@ impl Vecs {
 
         let starting_quarterindex = self
             .monthindex_to_quarterindex
-            .get(starting_monthindex)?
+            .cached_get(starting_monthindex)?
             .map_or_else(Default::default, |v| v.into_inner());
 
         self.monthindex_to_quarterindex.compute_transform(
@@ -575,7 +585,12 @@ impl Vecs {
         self.quarterindex_to_timestamp.compute_transform(
             starting_quarterindex,
             self.quarterindex_to_first_monthindex.mut_vec(),
-            |(i, m, ..)| (i, *self.monthindex_to_timestamp.get(m).unwrap().unwrap()),
+            |(i, m, ..)| {
+                (
+                    i,
+                    *self.monthindex_to_timestamp.cached_get(m).unwrap().unwrap(),
+                )
+            },
             exit,
         )?;
 
@@ -583,7 +598,7 @@ impl Vecs {
 
         let starting_yearindex = self
             .monthindex_to_yearindex
-            .get(starting_monthindex)?
+            .cached_get(starting_monthindex)?
             .map_or_else(Default::default, |v| v.into_inner());
 
         self.monthindex_to_yearindex.compute_transform(
@@ -620,7 +635,12 @@ impl Vecs {
         self.yearindex_to_timestamp.compute_transform(
             starting_yearindex,
             self.yearindex_to_first_monthindex.mut_vec(),
-            |(i, m, ..)| (i, *self.monthindex_to_timestamp.get(m).unwrap().unwrap()),
+            |(i, m, ..)| {
+                (
+                    i,
+                    *self.monthindex_to_timestamp.cached_get(m).unwrap().unwrap(),
+                )
+            },
             exit,
         )?;
 
@@ -628,7 +648,7 @@ impl Vecs {
 
         let starting_decadeindex = self
             .yearindex_to_decadeindex
-            .get(starting_yearindex)?
+            .cached_get(starting_yearindex)?
             .map_or_else(Default::default, |v| v.into_inner());
 
         self.yearindex_to_decadeindex.compute_transform(
@@ -663,7 +683,12 @@ impl Vecs {
         self.decadeindex_to_timestamp.compute_transform(
             starting_decadeindex,
             self.decadeindex_to_first_yearindex.mut_vec(),
-            |(i, y, ..)| (i, *self.yearindex_to_timestamp.get(y).unwrap().unwrap()),
+            |(i, y, ..)| {
+                (
+                    i,
+                    *self.yearindex_to_timestamp.cached_get(y).unwrap().unwrap(),
+                )
+            },
             exit,
         )?;
 
@@ -671,7 +696,7 @@ impl Vecs {
 
         let starting_difficultyepoch = self
             .height_to_difficultyepoch
-            .get(starting_indexes.height)?
+            .cached_get(starting_indexes.height)?
             .map_or_else(Default::default, |v| v.into_inner());
 
         self.height_to_difficultyepoch.compute_transform(
@@ -709,7 +734,11 @@ impl Vecs {
             |(i, h, ..)| {
                 (
                     i,
-                    *indexer_vecs.height_to_timestamp.get(h).unwrap().unwrap(),
+                    *indexer_vecs
+                        .height_to_timestamp
+                        .cached_get(h)
+                        .unwrap()
+                        .unwrap(),
                 )
             },
             exit,
@@ -719,7 +748,7 @@ impl Vecs {
 
         let starting_halvingepoch = self
             .height_to_halvingepoch
-            .get(starting_indexes.height)?
+            .cached_get(starting_indexes.height)?
             .map_or_else(Default::default, |v| v.into_inner());
 
         self.height_to_halvingepoch.compute_transform(
@@ -757,7 +786,7 @@ impl Vecs {
         //     |(i, h, ..)| {
         //         (
         //             i,
-        //             *indexer_vecs.height_to_timestamp.get(h).unwrap().unwrap(),
+        //             *indexer_vecs.height_to_timestamp.cached_get(h).unwrap().unwrap(),
         //         )
         //     },
         //     exit,

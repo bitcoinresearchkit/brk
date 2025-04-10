@@ -22,8 +22,10 @@ impl CompressedPagesMetadata {
     const PAGE_SIZE: usize = size_of::<CompressedPageMetadata>();
 
     pub fn read(path: &Path) -> Result<CompressedPagesMetadata> {
+        let path = path.join("pages_meta");
+
         let slf = Self {
-            vec: fs::read(path)
+            vec: fs::read(&path)
                 .unwrap_or_default()
                 .chunks(Self::PAGE_SIZE)
                 .map(|bytes| {

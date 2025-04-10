@@ -243,8 +243,9 @@ impl Vecs {
                     .get_height(
                         h,
                         t,
-                        h.decremented()
-                            .map(|prev_h| *height_to_timestamp.get(prev_h).unwrap().unwrap()),
+                        h.decremented().map(|prev_h| {
+                            *height_to_timestamp.cached_get(prev_h).unwrap().unwrap()
+                        }),
                     )
                     .unwrap();
                 (h, ohlc)
@@ -470,7 +471,7 @@ impl Vecs {
                             .first
                             .as_mut()
                             .unwrap()
-                            .get(i)
+                            .cached_get(i)
                             .unwrap()
                             .unwrap(),
                         high: *self
@@ -479,7 +480,7 @@ impl Vecs {
                             .max
                             .as_mut()
                             .unwrap()
-                            .get(i)
+                            .cached_get(i)
                             .unwrap()
                             .unwrap(),
                         low: *self
@@ -488,7 +489,7 @@ impl Vecs {
                             .min
                             .as_mut()
                             .unwrap()
-                            .get(i)
+                            .cached_get(i)
                             .unwrap()
                             .unwrap(),
                         close,
@@ -516,7 +517,7 @@ impl Vecs {
                             .first
                             .as_mut()
                             .unwrap()
-                            .get(i)
+                            .cached_get(i)
                             .unwrap()
                             .unwrap(),
                         high: *self
@@ -525,7 +526,7 @@ impl Vecs {
                             .max
                             .as_mut()
                             .unwrap()
-                            .get(i)
+                            .cached_get(i)
                             .unwrap()
                             .unwrap(),
                         low: *self
@@ -534,7 +535,7 @@ impl Vecs {
                             .min
                             .as_mut()
                             .unwrap()
-                            .get(i)
+                            .cached_get(i)
                             .unwrap()
                             .unwrap(),
                         close,
@@ -562,7 +563,7 @@ impl Vecs {
                             .first
                             .as_mut()
                             .unwrap()
-                            .get(i)
+                            .cached_get(i)
                             .unwrap()
                             .unwrap(),
                         high: *self
@@ -571,7 +572,7 @@ impl Vecs {
                             .max
                             .as_mut()
                             .unwrap()
-                            .get(i)
+                            .cached_get(i)
                             .unwrap()
                             .unwrap(),
                         low: *self
@@ -580,7 +581,7 @@ impl Vecs {
                             .min
                             .as_mut()
                             .unwrap()
-                            .get(i)
+                            .cached_get(i)
                             .unwrap()
                             .unwrap(),
                         close,
@@ -608,7 +609,7 @@ impl Vecs {
                             .first
                             .as_mut()
                             .unwrap()
-                            .get(i)
+                            .cached_get(i)
                             .unwrap()
                             .unwrap(),
                         high: *self
@@ -617,7 +618,7 @@ impl Vecs {
                             .max
                             .as_mut()
                             .unwrap()
-                            .get(i)
+                            .cached_get(i)
                             .unwrap()
                             .unwrap(),
                         low: *self
@@ -626,7 +627,7 @@ impl Vecs {
                             .min
                             .as_mut()
                             .unwrap()
-                            .get(i)
+                            .cached_get(i)
                             .unwrap()
                             .unwrap(),
                         close,
@@ -654,7 +655,7 @@ impl Vecs {
                             .first
                             .as_mut()
                             .unwrap()
-                            .get(i)
+                            .cached_get(i)
                             .unwrap()
                             .unwrap(),
                         high: *self
@@ -663,7 +664,7 @@ impl Vecs {
                             .max
                             .as_mut()
                             .unwrap()
-                            .get(i)
+                            .cached_get(i)
                             .unwrap()
                             .unwrap(),
                         low: *self
@@ -672,7 +673,7 @@ impl Vecs {
                             .min
                             .as_mut()
                             .unwrap()
-                            .get(i)
+                            .cached_get(i)
                             .unwrap()
                             .unwrap(),
                         close,
@@ -704,7 +705,7 @@ impl Vecs {
                             .first
                             .as_mut()
                             .unwrap()
-                            .get(i)
+                            .cached_get(i)
                             .unwrap()
                             .unwrap(),
                         high: *self
@@ -713,7 +714,7 @@ impl Vecs {
                             .max
                             .as_mut()
                             .unwrap()
-                            .get(i)
+                            .cached_get(i)
                             .unwrap()
                             .unwrap(),
                         low: *self
@@ -722,7 +723,7 @@ impl Vecs {
                             .min
                             .as_mut()
                             .unwrap()
-                            .get(i)
+                            .cached_get(i)
                             .unwrap()
                             .unwrap(),
                         close,

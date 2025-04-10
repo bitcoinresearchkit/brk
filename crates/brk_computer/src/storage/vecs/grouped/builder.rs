@@ -2,8 +2,7 @@ use std::path::Path;
 
 use brk_exit::Exit;
 use brk_vec::{
-    AnyStoredVec, Compressed, DynamicVec, GenericVec, Result, StoredIndex, StoredType, StoredVec,
-    Version,
+    Compressed, DynamicVec, GenericVec, Result, StoredIndex, StoredType, StoredVec, Version,
 };
 
 use crate::storage::vecs::base::ComputedVec;
@@ -133,7 +132,7 @@ where
                 .checked_sub(1)
                 .map_or(T::from(0_usize), |prev_i| {
                     total_vec
-                        .get(I::from(prev_i))
+                        .cached_get(I::from(prev_i))
                         .unwrap()
                         .map_or(T::from(0_usize), |v| v.into_inner())
                 });
@@ -164,20 +163,23 @@ where
         let index = self.starting_index(max_from);
 
         first_indexes.iter_from(index, |(i, first_index, ..)| {
-            let last_index = *last_indexes.get(i).unwrap().unwrap();
+            let last_index = *last_indexes.cached_get(i)?.unwrap();
 
             if let Some(first) = self.first.as_mut() {
-                let v = source.get(first_index).unwrap().unwrap().into_inner();
+                let v = source.cached_get(first_index)?.unwrap().into_inner();
                 first.forced_push_at(index, v, exit)?;
             }
 
             if let Some(last) = self.last.as_mut() {
-                let v = source.get(last_index).unwrap().unwrap().into_inner();
+                let v = source
+                    .cached_get(last_index)
+                    .inspect_err(|_| {
+                        dbg!(last.path(), last_index);
+                    })?
+                    .unwrap()
+                    .into_inner();
                 last.forced_push_at(index, v, exit)?;
             }
-
-            let first_index = first_index.to_usize()?;
-            let last_index = last_index.to_usize()?;
 
             let needs_sum_or_total = self.sum.is_some() || self.total.is_some();
             let needs_average_sum_or_total = needs_sum_or_total || self.average.is_some();
@@ -191,8 +193,7 @@ where
             let needs_values = needs_sorted || needs_average_sum_or_total;
 
             if needs_values {
-                let mut values =
-                    source.collect_range(Some(first_index as i64), Some(last_index as i64))?;
+                let mut values = source.collect_inclusive_range(first_index, last_index)?;
 
                 if needs_sorted {
                     values.sort_unstable();
@@ -251,7 +252,7 @@ where
                                 T::from(0_usize),
                                 |prev_i| {
                                     total_vec
-                                        .get(I::from(prev_i))
+                                        .cached_get(I::from(prev_i))
                                         .unwrap()
                                         .unwrap()
                                         .to_owned()
@@ -298,14 +299,14 @@ where
         let index = self.starting_index(max_from);
 
         first_indexes.iter_from(index, |(i, first_index, ..)| {
-            let last_index = *last_indexes.get(i).unwrap().unwrap();
+            let last_index = *last_indexes.cached_get(i).unwrap().unwrap();
 
             if let Some(first) = self.first.as_mut() {
                 let v = source
                     .first
                     .as_mut()
                     .unwrap()
-                    .get(first_index)
+                    .cached_get(first_index)
                     .unwrap()
                     .unwrap()
                     .into_inner();
@@ -317,15 +318,12 @@ where
                     .last
                     .as_mut()
                     .unwrap()
-                    .get(last_index)
+                    .cached_get(last_index)
                     .unwrap()
                     .unwrap()
                     .into_inner();
                 last.forced_push_at(index, v, exit)?;
             }
-
-            let first_index = Some(first_index.to_usize()? as i64);
-            let last_index = Some(last_index.to_usize()? as i64);
 
             let needs_sum_or_total = self.sum.is_some() || self.total.is_some();
             let needs_average_sum_or_total = needs_sum_or_total || self.average.is_some();
@@ -339,7 +337,7 @@ where
                             .max
                             .as_ref()
                             .unwrap()
-                            .collect_range(first_index, last_index)?;
+                            .collect_inclusive_range(first_index, last_index)?;
                         values.sort_unstable();
                         max.forced_push_at(i, values.last().unwrap().clone(), exit)?;
                     }
@@ -349,7 +347,7 @@ where
                             .min
                             .as_ref()
                             .unwrap()
-                            .collect_range(first_index, last_index)?;
+                            .collect_inclusive_range(first_index, last_index)?;
                         values.sort_unstable();
                         min.forced_push_at(i, values.first().unwrap().clone(), exit)?;
                     }
@@ -361,7 +359,7 @@ where
                             .average
                             .as_ref()
                             .unwrap()
-                            .collect_range(first_index, last_index)?;
+                            .collect_inclusive_range(first_index, last_index)?;
                         let len = values.len() as f64;
                         let total = values
                             .into_iter()
@@ -378,7 +376,7 @@ where
                             .sum
                             .as_ref()
                             .unwrap()
-                            .collect_range(first_index, last_index)?;
+                            .collect_inclusive_range(first_index, last_index)?;
                         let sum = values.into_iter().fold(T::from(0), |a, b| a + b);
 
                         if let Some(sum_vec) = self.sum.as_mut() {
@@ -390,7 +388,7 @@ where
                                 T::from(0_usize),
                                 |prev_i| {
                                     total_vec
-                                        .get(I::from(prev_i))
+                                        .cached_get(I::from(prev_i))
                                         .unwrap()
                                         .unwrap()
                                         .into_inner()
@@ -438,8 +436,8 @@ where
         ))
     }
 
-    pub fn any_vecs(&self) -> Vec<&dyn AnyStoredVec> {
-        let mut v: Vec<&dyn AnyStoredVec> = vec![];
+    pub fn any_vecs(&self) -> Vec<&dyn brk_vec::AnyStoredVec> {
+        let mut v: Vec<&dyn brk_vec::AnyStoredVec> = vec![];
 
         if let Some(first) = self.first.as_ref() {
             v.push(first.any_vec());

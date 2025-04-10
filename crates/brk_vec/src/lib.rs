@@ -63,10 +63,40 @@ where
     type T = T;
 
     #[inline]
-    fn get_(&self, index: usize) -> Result<Option<Value<T>>> {
+    fn get_stored_(&self, index: usize, guard: &Mmap) -> Result<Option<T>> {
         match self {
-            StoredVec::Raw(v) => v.get_(index),
-            StoredVec::Compressed(v) => v.get_(index),
+            StoredVec::Raw(v) => v.get_stored_(index, guard),
+            StoredVec::Compressed(v) => v.get_stored_(index, guard),
+        }
+    }
+    #[inline]
+    fn cached_get_stored_(&mut self, index: usize, guard: &Mmap) -> Result<Option<T>> {
+        match self {
+            StoredVec::Raw(v) => v.cached_get_stored_(index, guard),
+            StoredVec::Compressed(v) => v.cached_get_stored_(index, guard),
+        }
+    }
+
+    #[inline]
+    fn mmap(&self) -> &ArcSwap<Mmap> {
+        match self {
+            StoredVec::Raw(v) => v.mmap(),
+            StoredVec::Compressed(v) => v.mmap(),
+        }
+    }
+
+    #[inline]
+    fn guard(&self) -> &Option<Guard<Arc<Mmap>>> {
+        match self {
+            StoredVec::Raw(v) => v.guard(),
+            StoredVec::Compressed(v) => v.guard(),
+        }
+    }
+    #[inline]
+    fn mut_guard(&mut self) -> &mut Option<Guard<Arc<Mmap>>> {
+        match self {
+            StoredVec::Raw(v) => v.mut_guard(),
+            StoredVec::Compressed(v) => v.mut_guard(),
         }
     }
 
@@ -96,8 +126,8 @@ where
 
 impl<I, T> GenericVec<I, T> for StoredVec<I, T>
 where
-    I: StoredIndex + Send + Sync,
-    T: StoredType + Send + Sync,
+    I: StoredIndex,
+    T: StoredType,
 {
     fn iter_from<F>(&mut self, index: I, f: F) -> Result<()>
     where
@@ -109,7 +139,7 @@ where
         }
     }
 
-    fn collect_range(&self, from: Option<i64>, to: Option<i64>) -> Result<Vec<Self::T>> {
+    fn collect_range(&self, from: Option<usize>, to: Option<usize>) -> Result<Vec<Self::T>> {
         match self {
             StoredVec::Raw(v) => v.collect_range(from, to),
             StoredVec::Compressed(v) => v.collect_range(from, to),
@@ -127,29 +157,6 @@ where
         match self {
             StoredVec::Raw(v) => v.truncate_if_needed(index),
             StoredVec::Compressed(v) => v.truncate_if_needed(index),
-        }
-    }
-
-    #[inline]
-    fn mmap(&self) -> &ArcSwap<Mmap> {
-        match self {
-            StoredVec::Raw(v) => v.mmap(),
-            StoredVec::Compressed(v) => v.mmap(),
-        }
-    }
-
-    #[inline]
-    fn guard(&self) -> &Option<Guard<Arc<Mmap>>> {
-        match self {
-            StoredVec::Raw(v) => v.guard(),
-            StoredVec::Compressed(v) => v.guard(),
-        }
-    }
-    #[inline]
-    fn mut_guard(&mut self) -> &mut Option<Guard<Arc<Mmap>>> {
-        match self {
-            StoredVec::Raw(v) => v.mut_guard(),
-            StoredVec::Compressed(v) => v.mut_guard(),
         }
     }
 
