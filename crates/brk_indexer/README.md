@@ -58,9 +58,13 @@ Stores: `src/storage/stores/mod.rs`
 
 ## Benchmark
 
-Indexing `0..885_835` took `11 hours 6 min 50 s` on a Macbook Pro M3 Pro with 36 GB of RAM
+### Result 1 - 2025-04-10
 
-`footprint` report:
-- Peak memory: `5115 MB`
-- Memory while waiting for a new block: `890 MB`
-- Reclaimable memory: `6478 MB`
+- version: `v0.0.20`
+- machine: `Macbook Pro M3 Pro (36GB RAM)`
+- mode: `raw`
+- from: `0`
+- to: `891_810`
+- time: `8 hours 27 min 3s`
+- peak memory: `6.5GB`
+- disk usage: `270 GB`

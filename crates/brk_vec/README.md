@@ -39,19 +39,3 @@ A `Vec` (an array) that is stored on disk and thus which can be much larger than
 Compared to a key/value store, the data stored is raw byte interpretation of the Vec's values without any overhead which is very efficient. Additionally it uses close to no RAM when caching isn't active and up to 100 MB when it is.
 
 Compression is also available and built on top [`zstd`](https://crates.io/crates/zstd) to save even more space (from 0 to 75%). The tradeoff being slower reading speeds, especially random reading speeds. This is due to the data being stored in compressed pages of 16 KB, which means that if you to read even one value in that page you have to uncompress the whole page.
-
-## Disclaimer
-
-Portability will depend on the type of values.
-
-Non bytes/slices types (`u8`, `u16`, ...) will be read as slice in an unsafe manner (using `std::slice::from_raw_parts`) and thus have the endianness of the system. On the other hand, `&[u8]` should be inserted as is.
-
-If portability is important to you, just create a wrapper struct which has custom `get`, `push`, ... methods and does something like:
-
-```rust
-impl StorableVecU64 {
-    pub fn push(&mut self, value: u64) {
-        self.push(&value.to_be_bytes())
-    }
-}
-```

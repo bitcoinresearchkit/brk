@@ -102,7 +102,7 @@ where
         if let Some(guard) = self.guard() {
             guard.len() / Self::SIZE_OF_T
         } else {
-            self.new_guard().len() / Self::SIZE_OF_T
+            self.mmap.load().len() / Self::SIZE_OF_T
         }
     }
 

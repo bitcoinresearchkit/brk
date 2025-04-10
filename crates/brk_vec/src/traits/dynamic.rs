@@ -83,10 +83,6 @@ pub trait DynamicVec: Send + Sync {
 
     fn mmap(&self) -> &ArcSwap<Mmap>;
 
-    #[inline]
-    fn new_guard(&self) -> Guard<Arc<Mmap>> {
-        self.mmap().load()
-    }
     fn guard(&self) -> &Option<Guard<Arc<Mmap>>>;
     fn mut_guard(&mut self) -> &mut Option<Guard<Arc<Mmap>>>;
 
