@@ -916,7 +916,7 @@ function createPartialOptions(colors) {
         },
         {
           name: "Discord",
-          url: () => "https://discord.com/invite/Cvrwpv3zEG",
+          url: () => "https://discord.com/invite/HaR3wpH3nr",
         },
         {
           name: "Bluesky",
