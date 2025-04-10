@@ -182,8 +182,10 @@ impl Vecs {
             |(txinindex, txoutindex, slf, other)| {
                 let value = if txoutindex == Txoutindex::COINBASE {
                     Sats::ZERO
-                } else if let Ok(Some(value)) =
-                    indexer_vecs.txoutindex_to_value.mut_vec().get(txoutindex)
+                } else if let Ok(Some(value)) = indexer_vecs
+                    .txoutindex_to_value
+                    .mut_vec()
+                    .cached_get(txoutindex)
                 {
                     *value
                 } else {

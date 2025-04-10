@@ -10,9 +10,7 @@ use arc_swap::{ArcSwap, Guard};
 use memmap2::Mmap;
 use rayon::prelude::*;
 
-use crate::{
-    DynamicVec, Error, GenericVec, Result, StoredIndex, StoredType, UnsafeSlice, Value, Version,
-};
+use crate::{DynamicVec, Error, GenericVec, Result, StoredIndex, StoredType, UnsafeSlice, Version};
 
 #[derive(Debug)]
 pub struct RawVec<I, T> {
@@ -73,25 +71,30 @@ where
     type T = T;
 
     #[inline]
-    fn get_(&self, index: usize) -> Result<Option<Value<T>>> {
-        match self.index_to_pushed_index(index) {
-            Ok(index) => {
-                if let Some(index) = index {
-                    return Ok(self.pushed().get(index).map(|v| Value::Ref(v)));
-                }
-            }
-            Err(Error::IndexTooHigh) => return Ok(None),
-            Err(Error::IndexTooLow) => {}
-            Err(error) => return Err(error),
-        }
-
-        let guard = self.guard.as_ref().unwrap();
+    fn get_stored_(&self, index: usize, mmap: &Mmap) -> Result<Option<T>> {
         let index = index * Self::SIZE_OF_T;
-        let slice = &guard[index..(index + Self::SIZE_OF_T)];
+        let slice = &mmap[index..(index + Self::SIZE_OF_T)];
+        Self::T::try_read_from_bytes(slice)
+            .map(|v| Some(v))
+            .map_err(Error::from)
+    }
+    #[inline]
+    fn cached_get_stored_(&mut self, index: usize, mmap: &Mmap) -> Result<Option<T>> {
+        self.get_stored_(index, mmap)
+    }
 
-        let v = Self::T::try_read_from_bytes(slice)?;
+    #[inline]
+    fn mmap(&self) -> &ArcSwap<Mmap> {
+        &self.mmap
+    }
 
-        Ok(Some(Value::Owned(v)))
+    #[inline]
+    fn guard(&self) -> &Option<Guard<Arc<Mmap>>> {
+        &self.guard
+    }
+    #[inline]
+    fn mut_guard(&mut self) -> &mut Option<Guard<Arc<Mmap>>> {
+        &mut self.guard
     }
 
     #[inline]
@@ -126,21 +129,40 @@ where
             return Err(Error::UnsupportedUnflushedState);
         }
 
+        let start = index.to_usize()?;
+
+        let stored_len = self.stored_len();
+        if start >= stored_len {
+            return Ok(());
+        }
+
         let guard = self.mmap.load();
 
-        let start = index.to_usize()? * Self::SIZE_OF_T;
+        (start..stored_len).try_for_each(|index| {
+            let v = self.get_stored_(index, &guard)?.unwrap();
+            f((I::from(index), v, self as &mut dyn DynamicVec<I = I, T = T>))
+        })
+    }
 
-        dbg!(self.path());
+    fn collect_range(&self, from: Option<usize>, to: Option<usize>) -> Result<Vec<T>> {
+        if !self.is_pushed_empty() {
+            return Err(Error::UnsupportedUnflushedState);
+        }
 
-        guard[start..]
-            .chunks(Self::SIZE_OF_T)
-            .enumerate()
-            .try_for_each(|(i, chunk)| {
-                let v = T::try_read_from_bytes(chunk).unwrap();
-                f((I::from(i), v, self as &mut dyn DynamicVec<I = I, T = T>))
-            })?;
+        let stored_len = self.stored_len();
 
-        Ok(())
+        let from = from.unwrap_or_default();
+        let to = to.map_or(stored_len, |i| i.min(stored_len));
+
+        if from >= stored_len {
+            return Ok(vec![]);
+        }
+
+        let mmap = self.mmap.load();
+
+        (from..to)
+            .map(|index| self.get_stored_(index, &mmap).map(|opt| opt.unwrap()))
+            .collect::<Result<Vec<_>>>()
     }
 
     fn flush(&mut self) -> Result<()> {
@@ -187,38 +209,6 @@ where
         self.file_set_len(len as u64)?;
 
         Ok(())
-    }
-
-    fn collect_range(&self, from: Option<i64>, to: Option<i64>) -> Result<Vec<T>> {
-        let guard = self.mmap.load();
-
-        let len = guard.len() / Self::SIZE_OF_T;
-
-        if len == 0 {
-            return Ok(vec![]);
-        }
-
-        let from = from.map_or(0, |i| Self::fix_i64(i, len, true));
-        let to = to.map_or(len, |i| Self::fix_i64(i, len, false));
-
-        Ok(guard[from * Self::SIZE_OF_T..to * Self::SIZE_OF_T]
-            .chunks(Self::SIZE_OF_T)
-            .map(|chunk| T::try_read_from_bytes(chunk).unwrap())
-            .collect::<Vec<_>>())
-    }
-
-    #[inline]
-    fn mmap(&self) -> &ArcSwap<Mmap> {
-        &self.mmap
-    }
-
-    #[inline]
-    fn guard(&self) -> &Option<Guard<Arc<Mmap>>> {
-        &self.guard
-    }
-    #[inline]
-    fn mut_guard(&mut self) -> &mut Option<Guard<Arc<Mmap>>> {
-        &mut self.guard
     }
 
     #[inline]

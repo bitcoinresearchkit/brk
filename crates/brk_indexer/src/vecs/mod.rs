@@ -374,7 +374,6 @@ impl Vecs {
     pub fn rollback_if_needed(&mut self, starting_indexes: &Indexes) -> brk_vec::Result<()> {
         let saved_height = starting_indexes.height.decremented().unwrap_or_default();
 
-        // Now we can cut everything that's out of date
         let &Indexes {
             addressindex,
             height,

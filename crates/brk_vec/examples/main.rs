@@ -6,7 +6,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let _ = fs::remove_dir_all("./vec");
 
     let version = Version::ZERO;
-    let compressed = Compressed::NO;
+    let compressed = Compressed::YES;
 
     {
         let mut vec: StoredVec<usize, u32> =
@@ -48,7 +48,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         let mut vec: StoredVec<usize, u32> =
             StoredVec::forced_import(Path::new("./vec"), version, compressed)?;
 
-        // vec.enable_large_cache_if_possible();
+        vec.enable_large_cache_if_needed();
 
         dbg!(vec.get(0)?);
         dbg!(vec.get(20)?);
@@ -71,7 +71,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             Ok(())
         })?;
 
-        dbg!(vec.collect_range(Some(-5), None)?);
+        dbg!(vec.collect_signed_range(Some(-5), None)?);
     }
 
     Ok(())
