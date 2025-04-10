@@ -1,6 +1,6 @@
 use std::{fs, path::Path};
 
-use brk_core::{Sats, StoredU64, Txindex, Txinindex, Txoutindex};
+use brk_core::{Sats, StoredU8, StoredU32, StoredU64, Txindex, Txinindex, Txoutindex};
 use brk_exit::Exit;
 use brk_indexer::Indexer;
 use brk_vec::{Compressed, DynamicVec, Version};
@@ -26,9 +26,12 @@ pub struct Vecs {
     // pub txindex_to_input_sum: ComputedVec<Txindex, Sats>,
     // pub txindex_to_output_sum: ComputedVec<Txindex, Sats>,
     // pub txindex_to_output_value: ComputedVecsFromTxindex<Sats>,
-    // pub txindex_to_version_1: ComputedVecsFromTxindex<StoredU64>,
-    // pub txindex_to_version_2: ComputedVecsFromTxindex<StoredU64>,
-    // pub txindex_to_version_3: ComputedVecsFromTxindex<StoredU64>,
+    pub txindex_to_v1: ComputedVec<Txindex, StoredU8>,
+    pub txindex_to_v2: ComputedVec<Txindex, StoredU8>,
+    pub txindex_to_v3: ComputedVec<Txindex, StoredU8>,
+    pub indexes_to_tx_v1: ComputedVecsFromHeight<StoredU32>,
+    pub indexes_to_tx_v2: ComputedVecsFromHeight<StoredU32>,
+    pub indexes_to_tx_v3: ComputedVecsFromHeight<StoredU32>,
     // pub txinindex_to_value: ComputedVec<Txinindex, Sats>,
     pub height_to_tx_count: ComputedVecsFromHeight<StoredU64>,
     pub txindex_to_input_count: ComputedVecsFromTxindex<StoredU64>,
@@ -104,6 +107,45 @@ impl Vecs {
                 Version::ZERO,
                 compressed,
             )?,
+            txindex_to_v1: ComputedVec::forced_import(
+                &path.join("txindex_to_v1"),
+                Version::ZERO,
+                compressed,
+            )?,
+            txindex_to_v2: ComputedVec::forced_import(
+                &path.join("txindex_to_v2"),
+                Version::ZERO,
+                compressed,
+            )?,
+            txindex_to_v3: ComputedVec::forced_import(
+                &path.join("txindex_to_v3"),
+                Version::ZERO,
+                compressed,
+            )?,
+            indexes_to_tx_v1: ComputedVecsFromHeight::forced_import(
+                path,
+                "tx_v1",
+                true,
+                Version::ZERO,
+                compressed,
+                StorableVecGeneatorOptions::default().add_sum().add_total(),
+            )?,
+            indexes_to_tx_v2: ComputedVecsFromHeight::forced_import(
+                path,
+                "tx_v2",
+                true,
+                Version::ZERO,
+                compressed,
+                StorableVecGeneatorOptions::default().add_sum().add_total(),
+            )?,
+            indexes_to_tx_v3: ComputedVecsFromHeight::forced_import(
+                path,
+                "tx_v3",
+                true,
+                Version::ZERO,
+                compressed,
+                StorableVecGeneatorOptions::default().add_sum().add_total(),
+            )?,
         })
     }
 
@@ -176,6 +218,51 @@ impl Vecs {
             exit,
         )?;
 
+        self.txindex_to_v1.compute_transform(
+            starting_indexes.txindex,
+            indexer_vecs.txindex_to_txversion.mut_vec(),
+            |(i, v, ..)| (i, StoredU8::from(v)),
+            exit,
+        )?;
+        // self.indexes_to_tx_v1.compute_all(
+        //     indexer,
+        //     indexes,
+        //     starting_indexes,
+        //     exit,
+        //     |vec, indexer, indexes, indexes, exit| {
+        //         vec.compute_transform(
+        //             starting_indexes.height,
+        //             indexer.mut_vecs().txindex_to_txversion.mut_vec(),
+        //             || {},
+        //             exit,
+        //         )?;
+        //     },
+        // )?;
+        self.txindex_to_v2.compute_transform(
+            starting_indexes.txindex,
+            indexer_vecs.txindex_to_txversion.mut_vec(),
+            |(i, v, ..)| (i, StoredU8::from(v)),
+            exit,
+        )?;
+        // self.indexes_to_tx_v1.compute_rest(
+        //     starting_indexes.txindex,
+        //     indexer_vecs.txindex_to_txversion.mut_vec(),
+        //     |(i, v, ..)| (i, StoredU8::from(v)),
+        //     exit,
+        // )?;
+        self.txindex_to_v3.compute_transform(
+            starting_indexes.txindex,
+            indexer_vecs.txindex_to_txversion.mut_vec(),
+            |(i, v, ..)| (i, StoredU8::from(v)),
+            exit,
+        )?;
+        // self.indexes_to_tx_v1.compute_rest(
+        //     starting_indexes.txindex,
+        //     indexer_vecs.txindex_to_txversion.mut_vec(),
+        //     |(i, v, ..)| (i, StoredU8::from(v)),
+        //     exit,
+        // )?;
+
         self.txinindex_to_value.compute_transform(
             starting_indexes.txinindex,
             indexer_vecs.txinindex_to_txoutindex.mut_vec(),
@@ -210,10 +297,16 @@ impl Vecs {
             vec![
                 self.txindex_to_is_coinbase.any_vec(),
                 self.txinindex_to_value.any_vec(),
+                self.txindex_to_v1.any_vec(),
+                self.txindex_to_v2.any_vec(),
+                self.txindex_to_v3.any_vec(),
             ],
             self.height_to_tx_count.any_vecs(),
             self.txindex_to_output_count.any_vecs(),
             self.txindex_to_input_count.any_vecs(),
+            self.indexes_to_tx_v1.any_vecs(),
+            self.indexes_to_tx_v2.any_vecs(),
+            self.indexes_to_tx_v3.any_vecs(),
         ]
         .concat()
     }

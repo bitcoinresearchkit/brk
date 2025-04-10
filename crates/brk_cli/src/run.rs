@@ -65,7 +65,7 @@ pub fn run(config: RunConfig) -> color_eyre::Result<()> {
 
                     let starting_indexes = indexer.index(&parser, rpc, &exit)?;
 
-                    // computer.compute(&mut indexer, starting_indexes, &exit)?;
+                    computer.compute(&mut indexer, starting_indexes, &exit)?;
 
                     if let Some(delay) = config.delay() {
                         sleep(Duration::from_secs(delay))

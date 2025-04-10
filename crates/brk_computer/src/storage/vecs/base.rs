@@ -12,6 +12,7 @@ use brk_vec::{
     Compressed, DynamicVec, Error, GenericVec, Result, StoredIndex, StoredType, StoredVec, Value,
     Version,
 };
+use log::info;
 
 const ONE_KIB: usize = 1024;
 const ONE_MIB: usize = ONE_KIB * ONE_KIB;
@@ -39,11 +40,11 @@ where
         version: Version,
         compressed: Compressed,
     ) -> brk_vec::Result<Self> {
-        let vec = StoredVec::forced_import(path, version, compressed)?;
+        let inner = StoredVec::forced_import(path, version, compressed)?;
 
         Ok(Self {
             computed_version: None,
-            inner: vec,
+            inner,
         })
     }
 
@@ -95,6 +96,13 @@ where
     pub fn len(&self) -> usize {
         self.inner.len()
     }
+    pub fn is_empty(&self) -> bool {
+        self.inner.is_empty()
+    }
+
+    fn file_name(&self) -> String {
+        self.inner.file_name()
+    }
 
     pub fn vec(&self) -> &StoredVec<I, T> {
         &self.inner
@@ -135,6 +143,11 @@ where
             self.inner.reset()?;
         }
         version.write(path.as_ref())?;
+
+        if self.is_empty() {
+            info!("Computing {}...", self.file_name())
+        }
+
         Ok(())
     }
 

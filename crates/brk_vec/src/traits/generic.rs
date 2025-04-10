@@ -73,7 +73,7 @@ where
         let mmap = Self::new_mmap(file)?;
         self.mmap().store(mmap);
         if self.guard().is_some() {
-            let guard = self.new_guard();
+            let guard = self.mmap().load();
             self.mut_guard().replace(guard);
         } else {
             unreachable!("This function shouldn't be called in a cloned instance")
