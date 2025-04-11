@@ -61,8 +61,7 @@ where
 
     #[inline]
     fn reset(&mut self) -> Result<()> {
-        self.file_write_all(&[])?;
-        Ok(())
+        self.file_truncate_and_write_all(0, &[])
     }
 
     fn new_mmap(file: File) -> Result<Arc<Mmap>> {
@@ -173,8 +172,6 @@ where
     fn collect_range_response(&self, from: Option<i64>, to: Option<i64>) -> Result<Response> {
         Ok(self.collect_range_axum_json(from, to)?.into_response())
     }
-
-    fn path(&self) -> &Path;
 
     #[inline]
     fn path_vec(&self) -> PathBuf {

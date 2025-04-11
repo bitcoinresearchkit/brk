@@ -363,9 +363,11 @@ impl Vecs {
             exit,
         )?;
 
+        let decremented_starting_height = starting_indexes.height.decremented().unwrap_or_default();
+
         let starting_dateindex = self
             .height_to_dateindex
-            .cached_get(starting_indexes.height.decremented().unwrap_or_default())?
+            .cached_get(decremented_starting_height)?
             .map_or_else(Default::default, |v| v.into_inner());
 
         self.height_to_dateindex.compute_transform(
@@ -377,7 +379,7 @@ impl Vecs {
 
         let starting_dateindex = if let Some(dateindex) = self
             .height_to_dateindex
-            .cached_get(starting_indexes.height.decremented().unwrap_or_default())?
+            .cached_get(decremented_starting_height)?
             .map(|v| v.into_inner())
         {
             starting_dateindex.min(dateindex)
@@ -696,7 +698,7 @@ impl Vecs {
 
         let starting_difficultyepoch = self
             .height_to_difficultyepoch
-            .cached_get(starting_indexes.height)?
+            .cached_get(decremented_starting_height)?
             .map_or_else(Default::default, |v| v.into_inner());
 
         self.height_to_difficultyepoch.compute_transform(
@@ -748,7 +750,7 @@ impl Vecs {
 
         let starting_halvingepoch = self
             .height_to_halvingepoch
-            .cached_get(starting_indexes.height)?
+            .cached_get(decremented_starting_height)?
             .map_or_else(Default::default, |v| v.into_inner());
 
         self.height_to_halvingepoch.compute_transform(

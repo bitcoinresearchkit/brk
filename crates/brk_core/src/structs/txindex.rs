@@ -7,6 +7,8 @@ use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 use crate::{CheckedSub, Error};
 
+use super::StoredU32;
+
 #[derive(
     Debug,
     PartialEq,
@@ -95,5 +97,11 @@ impl TryFrom<ByteView> for Txindex {
 impl From<Txindex> for ByteView {
     fn from(value: Txindex) -> Self {
         Self::new(value.as_bytes())
+    }
+}
+
+impl From<Txindex> for StoredU32 {
+    fn from(value: Txindex) -> Self {
+        Self::from(value.0)
     }
 }
