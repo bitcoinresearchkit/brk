@@ -18,7 +18,6 @@ where
     T: ComputedType + PartialOrd,
 {
     pub txindex: Option<ComputedVec<Txindex, T>>,
-    pub txindex_extra: ComputedVecBuilder<Txindex, T>,
     pub height: ComputedVecBuilder<Height, T>,
     pub dateindex: ComputedVecBuilder<Dateindex, T>,
     pub weekindex: ComputedVecBuilder<Weekindex, T>,
@@ -52,23 +51,14 @@ where
             .unwrap()
         });
 
-        let txindex_extra = ComputedVecBuilder::forced_import(
-            path,
-            name,
-            compressed,
-            StorableVecGeneatorOptions::default(),
-        )?;
-
         let height = ComputedVecBuilder::forced_import(path, name, compressed, options)?;
-        let dateindex = ComputedVecBuilder::forced_import(path, name, compressed, options)?;
 
         let options = options.remove_percentiles();
 
         Ok(Self {
             txindex,
-            txindex_extra,
             height,
-            dateindex,
+            dateindex: ComputedVecBuilder::forced_import(path, name, compressed, options)?,
             weekindex: ComputedVecBuilder::forced_import(path, name, compressed, options)?,
             difficultyepoch: ComputedVecBuilder::forced_import(path, name, compressed, options)?,
             monthindex: ComputedVecBuilder::forced_import(path, name, compressed, options)?,
@@ -118,9 +108,6 @@ where
         txindex: Option<&mut StoredVec<Txindex, T>>,
     ) -> color_eyre::Result<()> {
         let txindex = txindex.unwrap_or_else(|| self.txindex.as_mut().unwrap().mut_vec());
-
-        self.txindex_extra
-            .extend(starting_indexes.txindex, txindex, exit)?;
 
         self.height.compute(
             starting_indexes.height,
@@ -192,7 +179,6 @@ where
     pub fn any_vecs(&self) -> Vec<&dyn AnyStoredVec> {
         [
             self.txindex.as_ref().map_or(vec![], |v| vec![v.any_vec()]),
-            self.txindex_extra.any_vecs(),
             self.height.any_vecs(),
             self.dateindex.any_vecs(),
             self.weekindex.any_vecs(),

@@ -14,6 +14,7 @@
  *   "Percentage" |
  *   "Ratio" |
  *   "Satoshis" |
+ *   "sat/vB" |
  *   "Seconds" |
  *   "Transactions" |
  *   "US Dollars" |
@@ -869,6 +870,16 @@ function createPartialOptions(colors) {
               title: "Transaction Count",
               key: "tx-count",
             }),
+            createBaseSumTotal({
+              name: "Fee",
+              title: "Transaction Fee",
+              key: "fee",
+            }),
+            createBaseAverageMinMaxPercentiles({
+              name: "Feerate",
+              title: "Transaction Fee Rate",
+              key: "feerate",
+            }),
             {
               name: "Version",
               tree: [
@@ -899,6 +910,11 @@ function createPartialOptions(colors) {
               title: "Transaction Input Count",
               key: "input-count",
             }),
+            createBaseSumTotal({
+              name: "Value",
+              title: "Transaction Input Value",
+              key: "input-value",
+            }),
           ],
         },
         {
@@ -908,6 +924,11 @@ function createPartialOptions(colors) {
               name: "Count",
               title: "Transaction Output Count",
               key: "output-count",
+            }),
+            createBaseSumTotal({
+              name: "Value",
+              title: "Transaction Output Value",
+              key: "output-value",
             }),
           ],
         },
@@ -1265,7 +1286,14 @@ export function initOptions({
           if (key) {
             if (key.includes("-interval")) {
               anyPartial.unit = "Seconds";
-            } else if (key.startsWith("sats-")) {
+            } else if (key.includes("feerate")) {
+              anyPartial.unit = "sat/vB";
+            } else if (
+              key.startsWith("sats-") ||
+              key.includes("input-value") ||
+              key.includes("output-value") ||
+              key.includes("fee")
+            ) {
               anyPartial.unit = "Satoshis";
             } else if (key.includes("count")) {
               anyPartial.unit = "Count";
