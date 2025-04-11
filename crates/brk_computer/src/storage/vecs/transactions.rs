@@ -1,6 +1,6 @@
 use std::{fs, path::Path};
 
-use brk_core::{Sats, StoredU8, StoredU32, StoredU64, Txindex, Txinindex, Txoutindex};
+use brk_core::{Sats, StoredU32, StoredU64, TxVersion, Txindex, Txinindex, Txoutindex};
 use brk_exit::Exit;
 use brk_indexer::Indexer;
 use brk_vec::{Compressed, DynamicVec, Version};
@@ -26,9 +26,6 @@ pub struct Vecs {
     // pub txindex_to_input_sum: ComputedVec<Txindex, Sats>,
     // pub txindex_to_output_sum: ComputedVec<Txindex, Sats>,
     // pub txindex_to_output_value: ComputedVecsFromTxindex<Sats>,
-    pub txindex_to_v1: ComputedVec<Txindex, StoredU8>,
-    pub txindex_to_v2: ComputedVec<Txindex, StoredU8>,
-    pub txindex_to_v3: ComputedVec<Txindex, StoredU8>,
     pub indexes_to_tx_v1: ComputedVecsFromHeight<StoredU32>,
     pub indexes_to_tx_v2: ComputedVecsFromHeight<StoredU32>,
     pub indexes_to_tx_v3: ComputedVecsFromHeight<StoredU32>,
@@ -104,21 +101,6 @@ impl Vecs {
             // )?,
             txinindex_to_value: ComputedVec::forced_import(
                 &path.join("txinindex_to_value"),
-                Version::ZERO,
-                compressed,
-            )?,
-            txindex_to_v1: ComputedVec::forced_import(
-                &path.join("txindex_to_v1"),
-                Version::ZERO,
-                compressed,
-            )?,
-            txindex_to_v2: ComputedVec::forced_import(
-                &path.join("txindex_to_v2"),
-                Version::ZERO,
-                compressed,
-            )?,
-            txindex_to_v3: ComputedVec::forced_import(
-                &path.join("txindex_to_v3"),
                 Version::ZERO,
                 compressed,
             )?,
@@ -209,6 +191,37 @@ impl Vecs {
         //     Some(indexer.mut_vecs().txoutindex_to_value.mut_vec()),
         // )?;
 
+        let mut compute_indexes_to_tx_vany =
+            |indexes_to_tx_vany: &mut ComputedVecsFromHeight<StoredU32>, txversion| {
+                indexes_to_tx_vany.compute_all(
+                    indexer,
+                    indexes,
+                    starting_indexes,
+                    exit,
+                    |vec, indexer, indexes, starting_indexes, exit| {
+                        let indexer_vecs = indexer.mut_vecs();
+                        vec.compute_filtered_count_from_indexes(
+                            starting_indexes.height,
+                            indexer_vecs.height_to_first_txindex.mut_vec(),
+                            indexes.height_to_last_txindex.mut_vec(),
+                            |txindex| {
+                                let v = indexer_vecs
+                                    .txindex_to_txversion
+                                    .cached_get(txindex)
+                                    .unwrap()
+                                    .unwrap()
+                                    .into_inner();
+                                v == txversion
+                            },
+                            exit,
+                        )
+                    },
+                )
+            };
+        compute_indexes_to_tx_vany(&mut self.indexes_to_tx_v1, TxVersion::ONE)?;
+        compute_indexes_to_tx_vany(&mut self.indexes_to_tx_v2, TxVersion::TWO)?;
+        compute_indexes_to_tx_vany(&mut self.indexes_to_tx_v3, TxVersion::THREE)?;
+
         let indexer_vecs = indexer.mut_vecs();
 
         self.txindex_to_is_coinbase.compute_is_first_ordered(
@@ -217,51 +230,6 @@ impl Vecs {
             indexer_vecs.height_to_first_txindex.mut_vec(),
             exit,
         )?;
-
-        self.txindex_to_v1.compute_transform(
-            starting_indexes.txindex,
-            indexer_vecs.txindex_to_txversion.mut_vec(),
-            |(i, v, ..)| (i, StoredU8::from(v)),
-            exit,
-        )?;
-        // self.indexes_to_tx_v1.compute_all(
-        //     indexer,
-        //     indexes,
-        //     starting_indexes,
-        //     exit,
-        //     |vec, indexer, indexes, indexes, exit| {
-        //         vec.compute_transform(
-        //             starting_indexes.height,
-        //             indexer.mut_vecs().txindex_to_txversion.mut_vec(),
-        //             || {},
-        //             exit,
-        //         )?;
-        //     },
-        // )?;
-        self.txindex_to_v2.compute_transform(
-            starting_indexes.txindex,
-            indexer_vecs.txindex_to_txversion.mut_vec(),
-            |(i, v, ..)| (i, StoredU8::from(v)),
-            exit,
-        )?;
-        // self.indexes_to_tx_v1.compute_rest(
-        //     starting_indexes.txindex,
-        //     indexer_vecs.txindex_to_txversion.mut_vec(),
-        //     |(i, v, ..)| (i, StoredU8::from(v)),
-        //     exit,
-        // )?;
-        self.txindex_to_v3.compute_transform(
-            starting_indexes.txindex,
-            indexer_vecs.txindex_to_txversion.mut_vec(),
-            |(i, v, ..)| (i, StoredU8::from(v)),
-            exit,
-        )?;
-        // self.indexes_to_tx_v1.compute_rest(
-        //     starting_indexes.txindex,
-        //     indexer_vecs.txindex_to_txversion.mut_vec(),
-        //     |(i, v, ..)| (i, StoredU8::from(v)),
-        //     exit,
-        // )?;
 
         self.txinindex_to_value.compute_transform(
             starting_indexes.txinindex,
@@ -297,9 +265,6 @@ impl Vecs {
             vec![
                 self.txindex_to_is_coinbase.any_vec(),
                 self.txinindex_to_value.any_vec(),
-                self.txindex_to_v1.any_vec(),
-                self.txindex_to_v2.any_vec(),
-                self.txindex_to_v3.any_vec(),
             ],
             self.height_to_tx_count.any_vecs(),
             self.txindex_to_output_count.any_vecs(),

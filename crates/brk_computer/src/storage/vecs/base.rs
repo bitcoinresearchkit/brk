@@ -249,11 +249,12 @@ where
         let index = max_from.min(I::from(self.len()));
         let one = T::from(1);
         let mut prev_index: Option<I> = None;
-        first_indexes.iter_from(index, |(i, v, ..)| {
+        first_indexes.iter_from(index, |(index, v, ..)| {
             if let Some(prev_index) = prev_index.take() {
-                self.forced_push_at(prev_index, v.checked_sub(one).unwrap(), exit)?;
+                let value = v.checked_sub(one).unwrap();
+                self.forced_push_at(prev_index, value, exit)?;
             }
-            prev_index.replace(i);
+            prev_index.replace(index);
             Ok(())
         })?;
         if let Some(prev_index) = prev_index {
@@ -276,7 +277,65 @@ where
     ) -> Result<()>
     where
         T: From<T2>,
-        T2: StoredType + Copy + Add<usize, Output = T2> + CheckedSub<T2> + TryInto<T> + Default,
+        T2: StoredType
+            + StoredIndex
+            + Copy
+            + Add<usize, Output = T2>
+            + CheckedSub<T2>
+            + TryInto<T>
+            + Default,
+        <T2 as TryInto<T>>::Error: error::Error + 'static,
+    {
+        let opt: Option<Box<dyn FnMut(T2) -> bool>> = None;
+        self.compute_filtered_count_from_indexes_(max_from, first_indexes, last_indexes, opt, exit)
+    }
+
+    pub fn compute_filtered_count_from_indexes<T2, F>(
+        &mut self,
+        max_from: I,
+        first_indexes: &mut StoredVec<I, T2>,
+        last_indexes: &mut StoredVec<I, T2>,
+        filter: F,
+        exit: &Exit,
+    ) -> Result<()>
+    where
+        T: From<T2>,
+        T2: StoredType
+            + StoredIndex
+            + Copy
+            + Add<usize, Output = T2>
+            + CheckedSub<T2>
+            + TryInto<T>
+            + Default,
+        <T2 as TryInto<T>>::Error: error::Error + 'static,
+        F: FnMut(T2) -> bool,
+    {
+        self.compute_filtered_count_from_indexes_(
+            max_from,
+            first_indexes,
+            last_indexes,
+            Some(Box::new(filter)),
+            exit,
+        )
+    }
+
+    fn compute_filtered_count_from_indexes_<T2>(
+        &mut self,
+        max_from: I,
+        first_indexes: &mut StoredVec<I, T2>,
+        last_indexes: &mut StoredVec<I, T2>,
+        mut filter: Option<Box<dyn FnMut(T2) -> bool + '_>>,
+        exit: &Exit,
+    ) -> Result<()>
+    where
+        T: From<T2>,
+        T2: StoredType
+            + StoredIndex
+            + Copy
+            + Add<usize, Output = T2>
+            + CheckedSub<T2>
+            + TryInto<T>
+            + Default,
         <T2 as TryInto<T>>::Error: error::Error + 'static,
     {
         self.validate_computed_version_or_reset_file(
@@ -285,11 +344,14 @@ where
 
         let index = max_from.min(I::from(self.len()));
         first_indexes.iter_from(index, |(i, first_index, ..)| {
-            let last_index = last_indexes.cached_get(i)?.unwrap();
-            let count = (*last_index + 1_usize)
-                .checked_sub(first_index)
-                .unwrap_or_default();
-            self.forced_push_at(i, count.into(), exit)
+            let last_index = last_indexes.cached_get(i)?.unwrap().into_inner();
+            let range = first_index.to_usize().unwrap()..=last_index.to_usize().unwrap();
+            let count = if let Some(filter) = filter.as_mut() {
+                range.into_iter().filter(|i| filter(T2::from(*i))).count()
+            } else {
+                range.count()
+            };
+            self.forced_push_at(i, T::from(T2::from(count)), exit)
         })?;
 
         self.safe_flush(exit)

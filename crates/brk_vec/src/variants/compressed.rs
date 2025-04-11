@@ -278,6 +278,11 @@ where
     fn mut_pushed(&mut self) -> &mut Vec<T> {
         self.inner.mut_pushed()
     }
+
+    #[inline]
+    fn path(&self) -> &Path {
+        self.inner.path()
+    }
 }
 
 impl<I, T> GenericVec<I, T> for CompressedVec<I, T>
@@ -441,6 +446,15 @@ where
         Ok(())
     }
 
+    fn reset(&mut self) -> Result<()> {
+        let mut pages_meta = (**self.pages_meta.load()).clone();
+        pages_meta.truncate(0);
+        pages_meta.write()?;
+        self.pages_meta.store(Arc::new(pages_meta));
+        self.reset_caches();
+        self.file_truncate_and_write_all(0, &[])
+    }
+
     fn truncate_if_needed(&mut self, index: I) -> Result<()> {
         let index = index.to_usize()?;
 
@@ -453,11 +467,11 @@ where
             return Ok(());
         }
 
+        let mut pages_meta = (**self.pages_meta.load()).clone();
+
         let page_index = Self::index_to_page_index(index);
 
         let guard = self.guard().as_ref().unwrap();
-
-        let mut pages_meta = (**self.pages_meta.load()).clone();
 
         let values = self.decode_page(page_index, guard)?;
         let mut buf = vec![];
@@ -488,11 +502,6 @@ where
         self.reset_caches();
 
         Ok(())
-    }
-
-    #[inline]
-    fn path(&self) -> &Path {
-        self.inner.path()
     }
 
     #[inline]

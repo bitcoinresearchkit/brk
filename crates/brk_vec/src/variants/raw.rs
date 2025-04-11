@@ -114,6 +114,11 @@ where
     fn mut_pushed(&mut self) -> &mut Vec<T> {
         &mut self.pushed
     }
+
+    #[inline]
+    fn path(&self) -> &Path {
+        self.pathbuf.as_path()
+    }
 }
 
 impl<I, T> GenericVec<I, T> for RawVec<I, T>
@@ -209,11 +214,6 @@ where
         self.file_set_len(len as u64)?;
 
         Ok(())
-    }
-
-    #[inline]
-    fn path(&self) -> &Path {
-        self.pathbuf.as_path()
     }
 
     #[inline]

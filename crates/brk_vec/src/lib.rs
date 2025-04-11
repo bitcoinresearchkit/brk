@@ -122,6 +122,14 @@ where
             StoredVec::Compressed(v) => v.mut_pushed(),
         }
     }
+
+    #[inline]
+    fn path(&self) -> &Path {
+        match self {
+            StoredVec::Raw(v) => v.path(),
+            StoredVec::Compressed(v) => v.path(),
+        }
+    }
 }
 
 impl<I, T> GenericVec<I, T> for StoredVec<I, T>
@@ -157,14 +165,6 @@ where
         match self {
             StoredVec::Raw(v) => v.truncate_if_needed(index),
             StoredVec::Compressed(v) => v.truncate_if_needed(index),
-        }
-    }
-
-    #[inline]
-    fn path(&self) -> &Path {
-        match self {
-            StoredVec::Raw(v) => v.path(),
-            StoredVec::Compressed(v) => v.path(),
         }
     }
 

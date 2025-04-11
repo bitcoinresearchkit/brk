@@ -17,6 +17,7 @@
  *   "Seconds" |
  *   "Transactions" |
  *   "US Dollars" |
+ *   "Version" |
  *   "Virtual Bytes" |
  *   "Weight Units"
  * } Unit
@@ -868,6 +869,26 @@ function createPartialOptions(colors) {
               title: "Transaction Count",
               key: "tx-count",
             }),
+            {
+              name: "Version",
+              tree: [
+                createBaseSumTotal({
+                  name: "1",
+                  title: "Transaction V1 Count",
+                  key: "tx-v1",
+                }),
+                createBaseSumTotal({
+                  name: "2",
+                  title: "Transaction V2 Count",
+                  key: "tx-v2",
+                }),
+                createBaseSumTotal({
+                  name: "3",
+                  title: "Transaction V3 Count",
+                  key: "tx-v3",
+                }),
+              ],
+            },
           ],
         },
         {
@@ -1254,6 +1275,8 @@ export function initOptions({
               anyPartial.unit = "Weight Units";
             } else if (key.includes("-vbytes")) {
               anyPartial.unit = "Virtual Bytes";
+            } else if (key.match(/v[0-9]/g)) {
+              anyPartial.unit = "Version";
             } else {
               console.log(anyPartial);
               throw Error("Unit not set");

@@ -4,6 +4,7 @@ use brk_exit::Exit;
 use brk_vec::{
     Compressed, DynamicVec, GenericVec, Result, StoredIndex, StoredType, StoredVec, Version,
 };
+use color_eyre::eyre::ContextCompat;
 
 use crate::storage::vecs::base::ComputedVec;
 
@@ -162,8 +163,8 @@ where
     {
         let index = self.starting_index(max_from);
 
-        first_indexes.iter_from(index, |(i, first_index, ..)| {
-            let last_index = *last_indexes.cached_get(i)?.unwrap();
+        first_indexes.iter_from(index, |(i, first_index, first_indexes)| {
+            let last_index = last_indexes.cached_get(i)?.unwrap().into_inner();
 
             if let Some(first) = self.first.as_mut() {
                 let v = source.cached_get(first_index)?.unwrap().into_inner();
@@ -199,7 +200,27 @@ where
                     values.sort_unstable();
 
                     if let Some(max) = self.max.as_mut() {
-                        max.forced_push_at(i, values.last().unwrap().clone(), exit)?;
+                        max.forced_push_at(
+                            i,
+                            values
+                                .last()
+                                .context("expect some")
+                                .inspect_err(|_| {
+                                    dbg!(
+                                        &values,
+                                        max.path(),
+                                        first_indexes.path(),
+                                        first_index,
+                                        last_indexes.path(),
+                                        last_index,
+                                        source.len(),
+                                        source.path()
+                                    );
+                                })
+                                .unwrap()
+                                .clone(),
+                            exit,
+                        )?;
                     }
 
                     if let Some(_90p) = self._90p.as_mut() {

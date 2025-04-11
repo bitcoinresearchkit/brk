@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::{path::Path, sync::Arc};
 
 use arc_swap::{ArcSwap, Guard};
 use memmap2::Mmap;
@@ -113,4 +113,6 @@ pub trait DynamicVec: Send + Sync {
             Err(Error::IndexTooLow)
         }
     }
+
+    fn path(&self) -> &Path;
 }
