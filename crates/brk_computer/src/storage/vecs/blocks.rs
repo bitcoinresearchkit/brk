@@ -92,7 +92,8 @@ impl Vecs {
                     indexer_vecs.height_to_timestamp.mut_vec(),
                     |(height, timestamp, _, height_to_timestamp)| {
                         let interval = height.decremented().map_or(Timestamp::ZERO, |prev_h| {
-                            let prev_timestamp = *height_to_timestamp.get(prev_h).unwrap().unwrap();
+                            let prev_timestamp =
+                                *height_to_timestamp.cached_get(prev_h).unwrap().unwrap();
                             timestamp
                                 .checked_sub(prev_timestamp)
                                 .unwrap_or(Timestamp::ZERO)

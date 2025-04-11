@@ -2,7 +2,7 @@ use core::error;
 use std::{
     cmp::Ordering,
     fmt::Debug,
-    ops::{Add, Sub},
+    ops::Add,
     path::{Path, PathBuf},
 };
 
@@ -390,22 +390,26 @@ where
         max_from: I,
         first_indexes: &mut StoredVec<I, T2>,
         last_indexes: &mut StoredVec<I, T2>,
+        source: &mut StoredVec<T2, T>,
         exit: &Exit,
     ) -> Result<()>
     where
-        T: From<T2>,
-        T2: StoredType + Copy + Add<usize, Output = T2> + Sub<T2, Output = T2> + TryInto<T>,
-        <T2 as TryInto<T>>::Error: error::Error + 'static,
+        T: From<usize> + Add<T, Output = T>,
+        T2: StoredIndex + StoredType,
     {
         self.validate_computed_version_or_reset_file(
             Version::ZERO + self.version() + first_indexes.version() + last_indexes.version(),
         )?;
 
         let index = max_from.min(I::from(self.len()));
-        first_indexes.iter_from(index, |(index, first_index, ..)| {
-            let last_index = last_indexes.cached_get(index)?.unwrap();
-            let count = *last_index + 1_usize - first_index;
-            self.forced_push_at(index, count.into(), exit)
+        first_indexes.iter_from(index, |(i, first_index, ..)| {
+            let last_index = last_indexes.cached_get(i)?.unwrap().into_inner();
+            let range = first_index.to_usize().unwrap()..=last_index.to_usize().unwrap();
+            let mut sum = T::from(0_usize);
+            range.into_iter().for_each(|i| {
+                sum = sum.clone() + source.cached_get_(i).unwrap().unwrap().into_inner();
+            });
+            self.forced_push_at(i, sum, exit)
         })?;
 
         self.safe_flush(exit)
