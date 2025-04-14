@@ -31,13 +31,13 @@ brk_query = { version = "0", path = "crates/brk_query" }
 brk_server = { version = "0", path = "crates/brk_server" }
 brk_vec = { version = "0", path = "crates/brk_vec" }
 byteview = "0.6.1"
-clap = { version = "4.5.35", features = ["derive", "string"] }
+clap = { version = "4.5.36", features = ["derive", "string"] }
 color-eyre = "0.6.3"
 derive_deref = "1.1.1"
 fjall = "2.8.0"
-jiff = "0.2.6"
+jiff = "0.2.8"
 log = { version = "0.4.27" }
-minreq = { version = "2.13.3", features = ["https", "serde_json"] }
+minreq = { version = "2.13.4", features = ["https", "serde_json"] }
 rayon = "1.10.0"
 serde = { version = "1.0.219", features = ["derive"] }
 serde_json = { version = "1.0.140", features = ["float_roundtrip"] }
