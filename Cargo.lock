@@ -694,9 +694,9 @@ dependencies = [
 
 [[package]]
 name = "clap"
-version = "4.5.35"
+version = "4.5.36"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d8aa86934b44c19c50f87cc2790e19f54f7a67aedb64101c2e1a2e5ecfb73944"
+checksum = "2df961d8c8a0d08aa9945718ccf584145eee3f3aa06cddbeac12933781102e04"
 dependencies = [
  "clap_builder",
  "clap_derive",
@@ -704,9 +704,9 @@ dependencies = [
 
 [[package]]
 name = "clap_builder"
-version = "4.5.35"
+version = "4.5.36"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2414dbb2dd0695280da6ea9261e327479e9d37b0630f6b53ba2a11c60c679fd9"
+checksum = "132dbda40fb6753878316a489d5a1242a8ef2f0d9e47ba01c951ea8aa7d013a5"
 dependencies = [
  "anstream",
  "anstyle",
@@ -1470,9 +1470,9 @@ checksum = "4a5f13b858c8d314ee3e8f639011f7ccefe71f97f96e50151fb991f267928e2c"
 
 [[package]]
 name = "jiff"
-version = "0.2.6"
+version = "0.2.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1f33145a5cbea837164362c7bd596106eb7c5198f97d1ba6f6ebb3223952e488"
+checksum = "e5ad87c89110f55e4cd4dc2893a9790820206729eaf221555f742d540b0724a0"
 dependencies = [
  "jiff-static",
  "jiff-tzdb-platform",
@@ -1485,9 +1485,9 @@ dependencies = [
 
 [[package]]
 name = "jiff-static"
-version = "0.2.6"
+version = "0.2.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "43ce13c40ec6956157a3635d97a1ee2df323b263f09ea14165131289cb0f5c19"
+checksum = "d076d5b64a7e2fe6f0743f02c43ca4a6725c0f904203bfe276a5b3e793103605"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -1679,9 +1679,9 @@ dependencies = [
 
 [[package]]
 name = "minreq"
-version = "2.13.3"
+version = "2.13.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "567496f13503d6cae8c9f961f34536850275f396307d7a6b981eef1464032f53"
+checksum = "f0d2aaba477837b46ec1289588180fabfccf0c3b1d1a0c6b1866240cd6cd5ce9"
 dependencies = [
  "log",
  "rustls",
@@ -2574,9 +2574,9 @@ dependencies = [
 
 [[package]]
 name = "self_cell"
-version = "1.1.0"
+version = "1.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c2fdfc24bc566f839a2da4c4295b82db7d25a24253867d5c64355abb5799bdbe"
+checksum = "0f7d95a54511e0c7be3f51e8867aa8cf35148d7b9445d44de2f943e2b206e749"
 
 [[package]]
 name = "seq-macro"
