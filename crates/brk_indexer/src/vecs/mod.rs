@@ -40,9 +40,9 @@ pub struct Vecs {
     pub height_to_first_txinindex: IndexedVec<Height, Txinindex>,
     pub height_to_first_txoutindex: IndexedVec<Height, Txoutindex>,
     pub height_to_first_unknownindex: IndexedVec<Height, Unknownindex>,
-    pub height_to_block_size: IndexedVec<Height, StoredUsize>,
+    pub height_to_total_size: IndexedVec<Height, StoredUsize>,
     pub height_to_timestamp: IndexedVec<Height, Timestamp>,
-    pub height_to_block_weight: IndexedVec<Height, Weight>,
+    pub height_to_weight: IndexedVec<Height, Weight>,
     pub multisigindex_to_height: IndexedVec<Multisigindex, Height>,
     pub opreturnindex_to_height: IndexedVec<Opreturnindex, Height>,
     pub p2pk33index_to_height: IndexedVec<P2PK33index, Height>,
@@ -188,8 +188,8 @@ impl Vecs {
                 Version::ZERO,
                 compressed,
             )?,
-            height_to_block_size: IndexedVec::forced_import(
-                &path.join("height_to_block_size"),
+            height_to_total_size: IndexedVec::forced_import(
+                &path.join("height_to_total_size"),
                 Version::ZERO,
                 compressed,
             )?,
@@ -198,8 +198,8 @@ impl Vecs {
                 Version::ZERO,
                 compressed,
             )?,
-            height_to_block_weight: IndexedVec::forced_import(
-                &path.join("height_to_block_weight"),
+            height_to_weight: IndexedVec::forced_import(
+                &path.join("height_to_weight"),
                 Version::ZERO,
                 compressed,
             )?,
@@ -431,11 +431,11 @@ impl Vecs {
             .truncate_if_needed(height, saved_height)?;
         self.height_to_difficulty
             .truncate_if_needed(height, saved_height)?;
-        self.height_to_block_size
+        self.height_to_total_size
             .truncate_if_needed(height, saved_height)?;
         self.height_to_timestamp
             .truncate_if_needed(height, saved_height)?;
-        self.height_to_block_weight
+        self.height_to_weight
             .truncate_if_needed(height, saved_height)?;
 
         self.addressindex_to_addresstype
@@ -631,9 +631,9 @@ impl Vecs {
             self.height_to_first_p2trindex.any_vec(),
             self.height_to_first_p2wpkhindex.any_vec(),
             self.height_to_first_p2wshindex.any_vec(),
-            self.height_to_block_size.any_vec(),
+            self.height_to_total_size.any_vec(),
             self.height_to_timestamp.any_vec(),
-            self.height_to_block_weight.any_vec(),
+            self.height_to_weight.any_vec(),
             self.p2pk33index_to_p2pk33addressbytes.any_vec(),
             self.p2pk65index_to_p2pk65addressbytes.any_vec(),
             self.p2pkhindex_to_p2pkhaddressbytes.any_vec(),
@@ -693,9 +693,9 @@ impl Vecs {
             &mut self.height_to_first_p2trindex,
             &mut self.height_to_first_p2wpkhindex,
             &mut self.height_to_first_p2wshindex,
-            &mut self.height_to_block_size,
+            &mut self.height_to_total_size,
             &mut self.height_to_timestamp,
-            &mut self.height_to_block_weight,
+            &mut self.height_to_weight,
             &mut self.p2pk33index_to_p2pk33addressbytes,
             &mut self.p2pk65index_to_p2pk65addressbytes,
             &mut self.p2pkhindex_to_p2pkhaddressbytes,

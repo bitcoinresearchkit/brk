@@ -19,7 +19,6 @@ use super::{
 
 #[derive(Clone)]
 pub struct Vecs {
-    // pub dateindex_to_close: ComputedVec<Dateindex, Close<Dollars>>,
     pub dateindex_to_close_in_cents: ComputedVec<Dateindex, Close<Cents>>,
     pub dateindex_to_high_in_cents: ComputedVec<Dateindex, High<Cents>>,
     pub dateindex_to_low_in_cents: ComputedVec<Dateindex, Low<Cents>>,

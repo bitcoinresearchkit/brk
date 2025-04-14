@@ -1,7 +1,7 @@
 // @ts-check
 
 /**
- * @import { Option, PartialChartOption, ChartOption, AnyPartialOption, ProcessedOptionAddons, OptionsTree, SimulationOption, Unit, AnySeriesBlueprint } from "./options"
+ * @import { Option, PartialChartOption, ChartOption, AnyPartialOption, ProcessedOptionAddons, OptionsTree, SimulationOption, Unit, AnySeriesBlueprint, ChartableIndex } from "./options"
  * @import {Valued,  SingleValueData, CandlestickData, ChartData, OHLCTuple} from "../packages/lightweight-charts/wrapper"
  * @import * as _ from "../packages/ufuzzy/v1.0.14/types"
  * @import { createChart as CreateClassicChart, LineStyleOptions, DeepPartial, ChartOptions, IChartApi, IHorzScaleBehavior, WhitespaceData, ISeriesApi, Time, LineData, LogicalRange, SeriesType, BaselineStyleOptions, SeriesOptionsCommon, BaselineData, CandlestickStyleOptions } from "../packages/lightweight-charts/v5.0.5-treeshaked/types"
@@ -436,7 +436,7 @@ function createUtils() {
     createInputDollar({ id, title, signal, signals }) {
       return this.createInputNumberElement({
         id,
-        placeholder: "US Dollars",
+        placeholder: "USD",
         min: 0,
         title,
         signal,
@@ -1216,9 +1216,10 @@ function createUtils() {
       /**
        * @param {Index} index
        * @param {VecId} vecId
+       * @param {number} from
        */
-      genUrl(index, vecId) {
-        return `/api${genPath(index, vecId)}`;
+      genUrl(index, vecId, from) {
+        return `/api${genPath(index, vecId, from)}`;
       },
       /**
        * @template {number | OHLCTuple} [T=number]
@@ -1284,8 +1285,10 @@ function createVecsResources(signals, utils) {
       let loading = false;
       let at = /** @type {Date | null} */ (null);
 
+      const from = -10_000;
+
       return {
-        url: utils.api.genUrl(index, id),
+        url: utils.api.genUrl(index, id, from),
         fetched,
         async fetch() {
           if (loading) return fetched();
@@ -1302,7 +1305,7 @@ function createVecsResources(signals, utils) {
               },
               index,
               id,
-              -10_000,
+              from,
             )
           );
           at = new Date();

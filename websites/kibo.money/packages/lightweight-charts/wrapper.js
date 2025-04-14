@@ -57,9 +57,6 @@ export default import("./v5.0.5-treeshaked/script.js").then((lc) => {
         vertLines: { visible: false },
         horzLines: { visible: false },
       },
-      timeScale: {
-        minBarSpacing: 2.1,
-      },
       localization: {
         priceFormatter: utils.locale.numberToShortUSFormat,
         locale: "en-us",
@@ -942,7 +939,7 @@ function createPriceScaleSelectorIfNeeded({
       /** @typedef {(typeof choices)[number]} Choices */
       const serializedValue = signals.createSignal(
         /** @satisfies {Choices} */ (
-          unit === "US Dollars" && seriesType !== "Baseline" ? "log" : "lin"
+          unit === "USD" && seriesType !== "Baseline" ? "log" : "lin"
         ),
         {
           save: {
