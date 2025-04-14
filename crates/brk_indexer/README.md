@@ -58,13 +58,14 @@ Stores: `src/storage/stores/mod.rs`
 
 ## Benchmark
 
-### Result 1 - 2025-04-10
+### Result 1 - 2025-04-12
 
-- version: `v0.0.20`
+- version: `v0.0.21`
 - machine: `Macbook Pro M3 Pro (36GB RAM)`
 - mode: `raw`
 - from: `0`
-- to: `891_810`
-- time: `8 hours 27 min 3s`
-- peak memory: `6.5GB`
+- to: `892_098`
+- time: `7 hours 10 min 22s`
+- peak memory: `6.1GB`
 - disk usage: `270 GB`
+- overhead: `36%` (`270 GB / 741 GB`)

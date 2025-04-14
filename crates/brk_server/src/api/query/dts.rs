@@ -67,7 +67,7 @@ impl DTS for Query<'static> {
             .collect::<Vec<_>>()
             .join("\n");
 
-        contents += "\n\n  return {\n";
+        contents += "\n\n  return /** @type {const} */ ({\n";
 
         self.vec_trees
             .id_to_index_to_vec
@@ -89,7 +89,7 @@ impl DTS for Query<'static> {
                 );
             });
 
-        contents += "  }\n";
+        contents += "  });\n";
         contents.push('}');
 
         contents += "\n/** @typedef {ReturnType<typeof createVecIdToIndexes>} VecIdToIndexes */";

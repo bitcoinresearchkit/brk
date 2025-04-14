@@ -59,16 +59,28 @@ To be determined
 - Unix based operating system (Mac OS or Linux)
   - Ubuntu users need to install `open-ssl` via `sudo apt install libssl-dev pkg-config`
 
-## Install
+## Download
+
+### Binaries
+
+You can find a pre-built binary for your operating system on the releases page ([link](https://github.com/bitcoinresearchkit/brk/releases/latest)).
+
+### Cargo
 
 ```bash
+# Install
 cargo install brk # or `cargo install brk_cli`, the result is the same
+
+# Update
+cargo install brk # or `cargo install-update -a` if you have `cargo-update` installed
 ```
 
-## Update
+### Source
 
 ```bash
-cargo install brk # or `cargo install-update -a` if you have `cargo-update` installed
+git clone https://github.com/bitcoinresearchkit/brk.git
+cd brk/crates/brk
+cargo run -r
 ```
 
 ## Usage

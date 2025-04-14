@@ -46,6 +46,10 @@ impl StoreMeta {
         self.len() == 0
     }
 
+    pub fn version(&self) -> Version {
+        self.version
+    }
+
     pub fn export(&mut self, len: usize, height: Height) -> io::Result<()> {
         self.len = len;
         self.write_length()?;
@@ -59,6 +63,10 @@ impl StoreMeta {
     fn reset_(path: &Path) -> io::Result<()> {
         fs::remove_dir_all(path)?;
         fs::create_dir(path)
+    }
+
+    pub fn path(&self) -> &Path {
+        &self.pathbuf
     }
 
     fn path_version(&self) -> PathBuf {

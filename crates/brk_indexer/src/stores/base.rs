@@ -98,10 +98,10 @@ where
 
         if !self.puts.is_empty() {
             unreachable!("Shouldn't reach this");
-            // self.puts.remove(&key);
         }
-        // dbg!(&key);
-        if !self.dels.insert(key) {
+
+        if !self.dels.insert(key.clone()) {
+            dbg!(key, &self.meta.path());
             unreachable!();
         }
     }

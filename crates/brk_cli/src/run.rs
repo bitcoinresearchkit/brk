@@ -58,7 +58,25 @@ pub fn run(config: RunConfig) -> color_eyre::Result<()> {
             };
 
             if config.process() {
+                let wait_for_synced_node = || -> color_eyre::Result<()> {
+                    let is_synced = || -> color_eyre::Result<bool> {
+                        let info = rpc.get_blockchain_info()?;
+                        Ok(info.headers == info.blocks)
+                    };
+
+                    if !is_synced()? {
+                        info!("Waiting for node to be synced...");
+                        while !is_synced()? {
+                            sleep(Duration::from_secs(1))
+                        }
+                    }
+
+                    Ok(())
+                };
+
                 loop {
+                    wait_for_synced_node()?;
+
                     let block_count = rpc.get_block_count()?;
 
                     info!("{} blocks found.", block_count + 1);

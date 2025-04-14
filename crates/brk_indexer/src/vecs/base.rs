@@ -49,6 +49,10 @@ where
     pub fn cached_get(&mut self, index: I) -> Result<Option<Value<'_, T>>> {
         self.inner.cached_get(index)
     }
+    #[inline]
+    pub fn cached_get_(&mut self, index: usize) -> Result<Option<Value<'_, T>>> {
+        self.inner.cached_get_(index)
+    }
 
     pub fn iter_from<F>(&mut self, index: I, f: F) -> Result<()>
     where

@@ -87,7 +87,7 @@ export function init({
       const candles = chart.addCandlestickSeries({
         vecId: "ohlc",
         name: "Price",
-        unit: "US Dollars",
+        unit: "USD",
       });
       signals.createEffect(webSockets.kraken1dCandle.latest, (latest) => {
         if (!latest) return;
@@ -103,7 +103,10 @@ export function init({
         { blueprints: option.bottom, paneIndex: 1 },
       ].forEach(({ blueprints, paneIndex }) => {
         blueprints?.forEach((blueprint) => {
-          if (vecIdToIndexes[blueprint.key].includes(index)) {
+          const indexes = /** @type {readonly number[]} */ (
+            vecIdToIndexes[blueprint.key]
+          );
+          if (indexes.includes(index)) {
             chart.addLineSeries({
               vecId: blueprint.key,
               color: blueprint.color,
@@ -178,7 +181,7 @@ function createIndexSelector({ elements, signals, utils }) {
   elements.charts.append(fieldset);
 
   const index = signals.createMemo(
-    /** @returns {Index} */ () => {
+    /** @returns {ChartableIndex} */ () => {
       switch (serializedIndex()) {
         case "timestamp":
           return /** @satisfies {Height} */ (0);

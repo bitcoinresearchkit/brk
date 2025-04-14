@@ -1,23 +1,34 @@
 // @ts-check
 
 /**
+ * @typedef {Height | Dateindex | Weekindex | Difficultyepoch | Monthindex | Quarterindex | Yearindex | Decadeindex | Halvingepoch} ChartableIndex
+ */
+/**
+ * @template {readonly unknown[]} T
+ * @typedef {Extract<T[number], ChartableIndex> extends never ? false : true} IncludesChartableIndex
+ */
+/**
+ * @typedef {{[K in VecId]: IncludesChartableIndex<VecIdToIndexes[K]> extends true ? K : never}[VecId]} ChartableVecId
+ */
+
+/**
  * @typedef {"" |
- *   "Bitcoin" |
+ *   "BTC" |
  *   "Coinblocks" |
  *   "Count" |
  *   "Date" |
- *   "Dollars / (PetaHash / Second)" |
+ *   "USD / (PetaHash / Second)" |
  *   "ExaHash / Second" |
  *   "Height" |
  *   "Gigabytes" |
  *   "Megabytes" |
  *   "Percentage" |
  *   "Ratio" |
- *   "Satoshis" |
+ *   "Sats" |
  *   "sat/vB" |
  *   "Seconds" |
  *   "Transactions" |
- *   "US Dollars" |
+ *   "USD" |
  *   "Version" |
  *   "Virtual Bytes" |
  *   "Weight Units"
@@ -50,7 +61,7 @@
  *
  * @typedef {BaselineSeriesBlueprint | CandlestickSeriesBlueprint | LineSeriesBlueprint} AnySeriesBlueprint
  *
- * @typedef {AnySeriesBlueprint & {key: VecId}} AnyFetchedSeriesBlueprint
+ * @typedef {AnySeriesBlueprint & {key: ChartableVecId}} AnyFetchedSeriesBlueprint
  *
  * @typedef {Object} PartialOption
  * @property {string} name
@@ -131,515 +142,515 @@
  }
 */
 
-function initGroups() {
-  const xTermHolders = /** @type {const} */ ([
-    {
-      id: "sth",
-      key: "sth",
-      name: "Short Term Holders",
-      legend: "Short Term Holders - STH",
-    },
-    {
-      id: "lth",
-      key: "lth",
-      name: "Long Term Holders",
-      legend: "Long Term Holders - LTH",
-    },
-  ]);
+// function initGroups() {
+//   const xTermHolders = /** @type {const} */ ([
+//     {
+//       id: "sth",
+//       key: "sth",
+//       name: "Short Term Holders",
+//       legend: "Short Term Holders - STH",
+//     },
+//     {
+//       id: "lth",
+//       key: "lth",
+//       name: "Long Term Holders",
+//       legend: "Long Term Holders - LTH",
+//     },
+//   ]);
 
-  const upTo = /** @type {const} */ ([
-    {
-      id: "up-to-1d",
-      key: "up_to_1d",
-      name: "Up To 1 Day",
-      legend: "1D",
-    },
-    {
-      id: "up-to-1w",
-      key: "up_to_1w",
-      name: "Up To 1 Week",
-      legend: "1W",
-    },
-    {
-      id: "up-to-1m",
-      key: "up_to_1m",
-      name: "Up To 1 Month",
-      legend: "1M",
-    },
-    {
-      id: "up-to-2m",
-      key: "up_to_2m",
-      name: "Up To 2 Months",
-      legend: "2M",
-    },
-    {
-      id: "up-to-3m",
-      key: "up_to_3m",
-      name: "Up To 3 Months",
-      legend: "3M",
-    },
-    {
-      id: "up-to-4m",
-      key: "up_to_4m",
-      name: "Up To 4 Months",
-      legend: "4M",
-    },
-    {
-      id: "up-to-5m",
-      key: "up_to_5m",
-      name: "Up To 5 Months",
-      legend: "5M",
-    },
-    {
-      id: "up-to-6m",
-      key: "up_to_6m",
-      name: "Up To 6 Months",
-      legend: "6M",
-    },
-    {
-      id: "up-to-1y",
-      key: "up_to_1y",
-      name: "Up To 1 Year",
-      legend: "1Y",
-    },
-    {
-      id: "up-to-2y",
-      key: "up_to_2y",
-      name: "Up To 2 Years",
-      legend: "2Y",
-    },
-    {
-      id: "up-to-3y",
-      key: "up_to_3y",
-      name: "Up To 3 Years",
-      legend: "3Y",
-    },
-    {
-      id: "up-to-5y",
-      key: "up_to_5y",
-      name: "Up To 5 Years",
-      legend: "5Y",
-    },
-    {
-      id: "up-to-7y",
-      key: "up_to_7y",
-      name: "Up To 7 Years",
-      legend: "7Y",
-    },
-    {
-      id: "up-to-10y",
-      key: "up_to_10y",
-      name: "Up To 10 Years",
-      legend: "10Y",
-    },
-    {
-      id: "up-to-15y",
-      key: "up_to_15y",
-      name: "Up To 15 Years",
-      legend: "15Y",
-    },
-  ]);
+//   const upTo = /** @type {const} */ ([
+//     {
+//       id: "up-to-1d",
+//       key: "up_to_1d",
+//       name: "Up To 1 Day",
+//       legend: "1D",
+//     },
+//     {
+//       id: "up-to-1w",
+//       key: "up_to_1w",
+//       name: "Up To 1 Week",
+//       legend: "1W",
+//     },
+//     {
+//       id: "up-to-1m",
+//       key: "up_to_1m",
+//       name: "Up To 1 Month",
+//       legend: "1M",
+//     },
+//     {
+//       id: "up-to-2m",
+//       key: "up_to_2m",
+//       name: "Up To 2 Months",
+//       legend: "2M",
+//     },
+//     {
+//       id: "up-to-3m",
+//       key: "up_to_3m",
+//       name: "Up To 3 Months",
+//       legend: "3M",
+//     },
+//     {
+//       id: "up-to-4m",
+//       key: "up_to_4m",
+//       name: "Up To 4 Months",
+//       legend: "4M",
+//     },
+//     {
+//       id: "up-to-5m",
+//       key: "up_to_5m",
+//       name: "Up To 5 Months",
+//       legend: "5M",
+//     },
+//     {
+//       id: "up-to-6m",
+//       key: "up_to_6m",
+//       name: "Up To 6 Months",
+//       legend: "6M",
+//     },
+//     {
+//       id: "up-to-1y",
+//       key: "up_to_1y",
+//       name: "Up To 1 Year",
+//       legend: "1Y",
+//     },
+//     {
+//       id: "up-to-2y",
+//       key: "up_to_2y",
+//       name: "Up To 2 Years",
+//       legend: "2Y",
+//     },
+//     {
+//       id: "up-to-3y",
+//       key: "up_to_3y",
+//       name: "Up To 3 Years",
+//       legend: "3Y",
+//     },
+//     {
+//       id: "up-to-5y",
+//       key: "up_to_5y",
+//       name: "Up To 5 Years",
+//       legend: "5Y",
+//     },
+//     {
+//       id: "up-to-7y",
+//       key: "up_to_7y",
+//       name: "Up To 7 Years",
+//       legend: "7Y",
+//     },
+//     {
+//       id: "up-to-10y",
+//       key: "up_to_10y",
+//       name: "Up To 10 Years",
+//       legend: "10Y",
+//     },
+//     {
+//       id: "up-to-15y",
+//       key: "up_to_15y",
+//       name: "Up To 15 Years",
+//       legend: "15Y",
+//     },
+//   ]);
 
-  const fromXToY = /** @type {const} */ ([
-    {
-      id: "up-to-1d",
-      key: "up_to_1d",
-      name: "24h",
-      legend: "24h",
-    },
-    {
-      id: "from-1d-to-1w",
-      key: "from_1d_to_1w",
-      name: "From 1 Day To 1 Week",
-      legend: "1D — 1W",
-    },
-    {
-      id: "from-1w-to-1m",
-      key: "from_1w_to_1m",
-      name: "From 1 Week To 1 Month",
-      legend: "1W — 1M",
-    },
-    {
-      id: "from-1m-to-3m",
-      key: "from_1m_to_3m",
-      name: "From 1 Month To 3 Months",
-      legend: "1M — 3M",
-    },
-    {
-      id: "from-3m-to-6m",
-      key: "from_3m_to_6m",
-      name: "From 3 Months To 6 Months",
-      legend: "3M — 6M",
-    },
-    {
-      id: "from-6m-to-1y",
-      key: "from_6m_to_1y",
-      name: "From 6 Months To 1 Year",
-      legend: "6M — 1Y",
-    },
-    {
-      id: "from-1y-to-2y",
-      key: "from_1y_to_2y",
-      name: "From 1 Year To 2 Years",
-      legend: "1Y — 2Y",
-    },
-    {
-      id: "from-2y-to-3y",
-      key: "from_2y_to_3y",
-      name: "From 2 Years To 3 Years",
-      legend: "2Y — 3Y",
-    },
-    {
-      id: "from-3y-to-5y",
-      key: "from_3y_to_5y",
-      name: "From 3 Years To 5 Years",
-      legend: "3Y — 5Y",
-    },
-    {
-      id: "from-5y-to-7y",
-      key: "from_5y_to_7y",
-      name: "From 5 Years To 7 Years",
-      legend: "5Y — 7Y",
-    },
-    {
-      id: "from-7y-to-10y",
-      key: "from_7y_to_10y",
-      name: "From 7 Years To 10 Years",
-      legend: "7Y — 10Y",
-    },
-    {
-      id: "from-10y-to-15y",
-      key: "from_10y_to_15y",
-      name: "From 10 Years To 15 Years",
-      legend: "10Y — 15Y",
-    },
-    {
-      id: "from-15y",
-      key: "from_15y",
-      name: "From 15 Years To End",
-      legend: "15Y — End",
-    },
-  ]);
+//   const fromXToY = /** @type {const} */ ([
+//     {
+//       id: "up-to-1d",
+//       key: "up_to_1d",
+//       name: "24h",
+//       legend: "24h",
+//     },
+//     {
+//       id: "from-1d-to-1w",
+//       key: "from_1d_to_1w",
+//       name: "From 1 Day To 1 Week",
+//       legend: "1D — 1W",
+//     },
+//     {
+//       id: "from-1w-to-1m",
+//       key: "from_1w_to_1m",
+//       name: "From 1 Week To 1 Month",
+//       legend: "1W — 1M",
+//     },
+//     {
+//       id: "from-1m-to-3m",
+//       key: "from_1m_to_3m",
+//       name: "From 1 Month To 3 Months",
+//       legend: "1M — 3M",
+//     },
+//     {
+//       id: "from-3m-to-6m",
+//       key: "from_3m_to_6m",
+//       name: "From 3 Months To 6 Months",
+//       legend: "3M — 6M",
+//     },
+//     {
+//       id: "from-6m-to-1y",
+//       key: "from_6m_to_1y",
+//       name: "From 6 Months To 1 Year",
+//       legend: "6M — 1Y",
+//     },
+//     {
+//       id: "from-1y-to-2y",
+//       key: "from_1y_to_2y",
+//       name: "From 1 Year To 2 Years",
+//       legend: "1Y — 2Y",
+//     },
+//     {
+//       id: "from-2y-to-3y",
+//       key: "from_2y_to_3y",
+//       name: "From 2 Years To 3 Years",
+//       legend: "2Y — 3Y",
+//     },
+//     {
+//       id: "from-3y-to-5y",
+//       key: "from_3y_to_5y",
+//       name: "From 3 Years To 5 Years",
+//       legend: "3Y — 5Y",
+//     },
+//     {
+//       id: "from-5y-to-7y",
+//       key: "from_5y_to_7y",
+//       name: "From 5 Years To 7 Years",
+//       legend: "5Y — 7Y",
+//     },
+//     {
+//       id: "from-7y-to-10y",
+//       key: "from_7y_to_10y",
+//       name: "From 7 Years To 10 Years",
+//       legend: "7Y — 10Y",
+//     },
+//     {
+//       id: "from-10y-to-15y",
+//       key: "from_10y_to_15y",
+//       name: "From 10 Years To 15 Years",
+//       legend: "10Y — 15Y",
+//     },
+//     {
+//       id: "from-15y",
+//       key: "from_15y",
+//       name: "From 15 Years To End",
+//       legend: "15Y — End",
+//     },
+//   ]);
 
-  const fromX = /** @type {const} */ ([
-    {
-      id: "from-1y",
-      key: "from_1y",
-      name: "From 1 Year",
-      legend: "1Y+",
-    },
-    {
-      id: "from-2y",
-      key: "from_2y",
-      name: "From 2 Years",
-      legend: "2Y+",
-    },
-    {
-      id: "from-4y",
-      key: "from_4y",
-      name: "From 4 Years",
-      legend: "4Y+",
-    },
-    {
-      id: "from-10y",
-      key: "from_10y",
-      name: "From 10 Years",
-      legend: "10Y+",
-    },
-    {
-      id: "from-15y",
-      key: "from_15y",
-      name: "From 15 Years",
-      legend: "15Y+",
-    },
-  ]);
+//   const fromX = /** @type {const} */ ([
+//     {
+//       id: "from-1y",
+//       key: "from_1y",
+//       name: "From 1 Year",
+//       legend: "1Y+",
+//     },
+//     {
+//       id: "from-2y",
+//       key: "from_2y",
+//       name: "From 2 Years",
+//       legend: "2Y+",
+//     },
+//     {
+//       id: "from-4y",
+//       key: "from_4y",
+//       name: "From 4 Years",
+//       legend: "4Y+",
+//     },
+//     {
+//       id: "from-10y",
+//       key: "from_10y",
+//       name: "From 10 Years",
+//       legend: "10Y+",
+//     },
+//     {
+//       id: "from-15y",
+//       key: "from_15y",
+//       name: "From 15 Years",
+//       legend: "15Y+",
+//     },
+//   ]);
 
-  const epochs = /** @type {const} */ ([
-    { id: "epoch-1", key: "epoch_1", name: "Epoch 1" },
-    { id: "epoch-2", key: "epoch_2", name: "Epoch 2" },
-    { id: "epoch-3", key: "epoch_3", name: "Epoch 3" },
-    { id: "epoch-4", key: "epoch_4", name: "Epoch 4" },
-    { id: "epoch-5", key: "epoch_5", name: "Epoch 5" },
-  ]);
+//   const epochs = /** @type {const} */ ([
+//     { id: "epoch-1", key: "epoch_1", name: "Epoch 1" },
+//     { id: "epoch-2", key: "epoch_2", name: "Epoch 2" },
+//     { id: "epoch-3", key: "epoch_3", name: "Epoch 3" },
+//     { id: "epoch-4", key: "epoch_4", name: "Epoch 4" },
+//     { id: "epoch-5", key: "epoch_5", name: "Epoch 5" },
+//   ]);
 
-  const age = /** @type {const} */ ([
-    {
-      key: "",
-      id: "",
-      name: "",
-    },
-    ...xTermHolders,
-    ...upTo,
-    ...fromXToY,
-    ...fromX,
-    ...epochs,
-  ]);
+//   const age = /** @type {const} */ ([
+//     {
+//       key: "",
+//       id: "",
+//       name: "",
+//     },
+//     ...xTermHolders,
+//     ...upTo,
+//     ...fromXToY,
+//     ...fromX,
+//     ...epochs,
+//   ]);
 
-  const size = /** @type {const} */ ([
-    {
-      key: "plankton",
-      name: "Plankton",
-      size: "1 sat to 0.1 BTC",
-    },
-    {
-      key: "shrimp",
-      name: "Shrimp",
-      size: "0.1 sat to 1 BTC",
-    },
-    { key: "crab", name: "Crab", size: "1 BTC to 10 BTC" },
-    { key: "fish", name: "Fish", size: "10 BTC to 100 BTC" },
-    { key: "shark", name: "Shark", size: "100 BTC to 1000 BTC" },
-    { key: "whale", name: "Whale", size: "1000 BTC to 10 000 BTC" },
-    {
-      key: "humpback",
-      name: "Humpback",
-      size: "10 000 BTC to 100 000 BTC",
-    },
-    {
-      key: "megalodon",
-      name: "Megalodon",
-      size: "More than 100 000 BTC",
-    },
-  ]);
+//   const size = /** @type {const} */ ([
+//     {
+//       key: "plankton",
+//       name: "Plankton",
+//       size: "1 sat to 0.1 BTC",
+//     },
+//     {
+//       key: "shrimp",
+//       name: "Shrimp",
+//       size: "0.1 sat to 1 BTC",
+//     },
+//     { key: "crab", name: "Crab", size: "1 BTC to 10 BTC" },
+//     { key: "fish", name: "Fish", size: "10 BTC to 100 BTC" },
+//     { key: "shark", name: "Shark", size: "100 BTC to 1000 BTC" },
+//     { key: "whale", name: "Whale", size: "1000 BTC to 10 000 BTC" },
+//     {
+//       key: "humpback",
+//       name: "Humpback",
+//       size: "10 000 BTC to 100 000 BTC",
+//     },
+//     {
+//       key: "megalodon",
+//       name: "Megalodon",
+//       size: "More than 100 000 BTC",
+//     },
+//   ]);
 
-  const type = /** @type {const} */ ([
-    { key: "p2pk", name: "P2PK" },
-    { key: "p2pkh", name: "P2PKH" },
-    { key: "p2sh", name: "P2SH" },
-    { key: "p2wpkh", name: "P2WPKH" },
-    { key: "p2wsh", name: "P2WSH" },
-    { key: "p2tr", name: "P2TR" },
-  ]);
+//   const type = /** @type {const} */ ([
+//     { key: "p2pk", name: "P2PK" },
+//     { key: "p2pkh", name: "P2PKH" },
+//     { key: "p2sh", name: "P2SH" },
+//     { key: "p2wpkh", name: "P2WPKH" },
+//     { key: "p2wsh", name: "P2WSH" },
+//     { key: "p2tr", name: "P2TR" },
+//   ]);
 
-  const address = /** @type {const} */ ([...size, ...type]);
+//   const address = /** @type {const} */ ([...size, ...type]);
 
-  const liquidities = /** @type {const} */ ([
-    {
-      key: "illiquid",
-      id: "illiquid",
-      name: "Illiquid",
-    },
-    { key: "liquid", id: "liquid", name: "Liquid" },
-    {
-      key: "highly_liquid",
-      id: "highly-liquid",
-      name: "Highly Liquid",
-    },
-  ]);
+//   const liquidities = /** @type {const} */ ([
+//     {
+//       key: "illiquid",
+//       id: "illiquid",
+//       name: "Illiquid",
+//     },
+//     { key: "liquid", id: "liquid", name: "Liquid" },
+//     {
+//       key: "highly_liquid",
+//       id: "highly-liquid",
+//       name: "Highly Liquid",
+//     },
+//   ]);
 
-  const averages = /** @type {const} */ ([
-    { name: "1 Week", key: "1w", days: 7 },
-    { name: "8 Days", key: "8d", days: 8 },
-    { name: "13 Days", key: "13d", days: 13 },
-    { name: "21 Days", key: "21d", days: 21 },
-    { name: "1 Month", key: "1m", days: 30 },
-    { name: "34 Days", key: "34d", days: 34 },
-    { name: "55 Days", key: "55d", days: 55 },
-    { name: "89 Days", key: "89d", days: 89 },
-    { name: "144 Days", key: "144d", days: 144 },
-    { name: "1 Year", key: "1y", days: 365 },
-    { name: "2 Years", key: "2y", days: 2 * 365 },
-    { name: "200 Weeks", key: "200w", days: 200 * 7 },
-    { name: "4 Years", key: "4y", days: 4 * 365 },
-  ]);
+//   const averages = /** @type {const} */ ([
+//     { name: "1 Week", key: "1w", days: 7 },
+//     { name: "8 Days", key: "8d", days: 8 },
+//     { name: "13 Days", key: "13d", days: 13 },
+//     { name: "21 Days", key: "21d", days: 21 },
+//     { name: "1 Month", key: "1m", days: 30 },
+//     { name: "34 Days", key: "34d", days: 34 },
+//     { name: "55 Days", key: "55d", days: 55 },
+//     { name: "89 Days", key: "89d", days: 89 },
+//     { name: "144 Days", key: "144d", days: 144 },
+//     { name: "1 Year", key: "1y", days: 365 },
+//     { name: "2 Years", key: "2y", days: 2 * 365 },
+//     { name: "200 Weeks", key: "200w", days: 200 * 7 },
+//     { name: "4 Years", key: "4y", days: 4 * 365 },
+//   ]);
 
-  const totalReturns = /** @type {const} */ ([
-    { name: "1 Day", key: "1d" },
-    { name: "1 Month", key: "1m" },
-    { name: "6 Months", key: "6m" },
-    { name: "1 Year", key: "1y" },
-    { name: "2 Years", key: "2y" },
-    { name: "3 Years", key: "3y" },
-    { name: "4 Years", key: "4y" },
-    { name: "6 Years", key: "6y" },
-    { name: "8 Years", key: "8y" },
-    { name: "10 Years", key: "10y" },
-  ]);
+//   const totalReturns = /** @type {const} */ ([
+//     { name: "1 Day", key: "1d" },
+//     { name: "1 Month", key: "1m" },
+//     { name: "6 Months", key: "6m" },
+//     { name: "1 Year", key: "1y" },
+//     { name: "2 Years", key: "2y" },
+//     { name: "3 Years", key: "3y" },
+//     { name: "4 Years", key: "4y" },
+//     { name: "6 Years", key: "6y" },
+//     { name: "8 Years", key: "8y" },
+//     { name: "10 Years", key: "10y" },
+//   ]);
 
-  const compoundReturns = /** @type {const} */ ([
-    { name: "4 Years", key: "4y" },
-  ]);
+//   const compoundReturns = /** @type {const} */ ([
+//     { name: "4 Years", key: "4y" },
+//   ]);
 
-  const percentiles = /** @type {const} */ ([
-    {
-      key: "median_price_paid",
-      id: "median-price-paid",
-      name: "Median",
-      title: "Median Paid",
-      value: 50,
-    },
-    {
-      key: "95p_price_paid",
-      id: "95p-price-paid",
-      name: `95%`,
-      title: `95th Percentile Paid`,
-      value: 95,
-    },
-    {
-      key: "90p_price_paid",
-      id: "90p-price-paid",
-      name: `90%`,
-      title: `90th Percentile Paid`,
-      value: 90,
-    },
-    {
-      key: "85p_price_paid",
-      id: "85p-price-paid",
-      name: `85%`,
-      title: `85th Percentile Paid`,
-      value: 85,
-    },
-    {
-      key: "80p_price_paid",
-      id: "80p-price-paid",
-      name: `80%`,
-      title: `80th Percentile Paid`,
-      value: 80,
-    },
-    {
-      key: "75p_price_paid",
-      id: "75p-price-paid",
-      name: `75%`,
-      title: `75th Percentile Paid`,
-      value: 75,
-    },
-    {
-      key: "70p_price_paid",
-      id: "70p-price-paid",
-      name: `70%`,
-      title: `70th Percentile Paid`,
-      value: 70,
-    },
-    {
-      key: "65p_price_paid",
-      id: "65p-price-paid",
-      name: `65%`,
-      title: `65th Percentile Paid`,
-      value: 65,
-    },
-    {
-      key: "60p_price_paid",
-      id: "60p-price-paid",
-      name: `60%`,
-      title: `60th Percentile Paid`,
-      value: 60,
-    },
-    {
-      key: "55p_price_paid",
-      id: "55p-price-paid",
-      name: `55%`,
-      title: `55th Percentile Paid`,
-      value: 55,
-    },
-    {
-      key: "45p_price_paid",
-      id: "45p-price-paid",
-      name: `45%`,
-      title: `45th Percentile Paid`,
-      value: 45,
-    },
-    {
-      key: "40p_price_paid",
-      id: "40p-price-paid",
-      name: `40%`,
-      title: `40th Percentile Paid`,
-      value: 40,
-    },
-    {
-      key: "35p_price_paid",
-      id: "35p-price-paid",
-      name: `35%`,
-      title: `35th Percentile Paid`,
-      value: 35,
-    },
-    {
-      key: "30p_price_paid",
-      id: "30p-price-paid",
-      name: `30%`,
-      title: `30th Percentile Paid`,
-      value: 30,
-    },
-    {
-      key: "25p_price_paid",
-      id: "25p-price-paid",
-      name: `25%`,
-      title: `25th Percentile Paid`,
-      value: 25,
-    },
-    {
-      key: "20p_price_paid",
-      id: "20p-price-paid",
-      name: `20%`,
-      title: `20th Percentile Paid`,
-      value: 20,
-    },
-    {
-      key: "15p_price_paid",
-      id: "15p-price-paid",
-      name: `15%`,
-      title: `15th Percentile Paid`,
-      value: 15,
-    },
-    {
-      key: "10p_price_paid",
-      id: "10p-price-paid",
-      name: `10%`,
-      title: `10th Percentile Paid`,
-      value: 10,
-    },
-    {
-      key: "05p_price_paid",
-      id: "05p-price-paid",
-      name: `5%`,
-      title: `5th Percentile Paid`,
-      value: 5,
-    },
-  ]);
+//   const percentiles = /** @type {const} */ ([
+//     {
+//       key: "median_price_paid",
+//       id: "median-price-paid",
+//       name: "Median",
+//       title: "Median Paid",
+//       value: 50,
+//     },
+//     {
+//       key: "95p_price_paid",
+//       id: "95p-price-paid",
+//       name: `95%`,
+//       title: `95th Percentile Paid`,
+//       value: 95,
+//     },
+//     {
+//       key: "90p_price_paid",
+//       id: "90p-price-paid",
+//       name: `90%`,
+//       title: `90th Percentile Paid`,
+//       value: 90,
+//     },
+//     {
+//       key: "85p_price_paid",
+//       id: "85p-price-paid",
+//       name: `85%`,
+//       title: `85th Percentile Paid`,
+//       value: 85,
+//     },
+//     {
+//       key: "80p_price_paid",
+//       id: "80p-price-paid",
+//       name: `80%`,
+//       title: `80th Percentile Paid`,
+//       value: 80,
+//     },
+//     {
+//       key: "75p_price_paid",
+//       id: "75p-price-paid",
+//       name: `75%`,
+//       title: `75th Percentile Paid`,
+//       value: 75,
+//     },
+//     {
+//       key: "70p_price_paid",
+//       id: "70p-price-paid",
+//       name: `70%`,
+//       title: `70th Percentile Paid`,
+//       value: 70,
+//     },
+//     {
+//       key: "65p_price_paid",
+//       id: "65p-price-paid",
+//       name: `65%`,
+//       title: `65th Percentile Paid`,
+//       value: 65,
+//     },
+//     {
+//       key: "60p_price_paid",
+//       id: "60p-price-paid",
+//       name: `60%`,
+//       title: `60th Percentile Paid`,
+//       value: 60,
+//     },
+//     {
+//       key: "55p_price_paid",
+//       id: "55p-price-paid",
+//       name: `55%`,
+//       title: `55th Percentile Paid`,
+//       value: 55,
+//     },
+//     {
+//       key: "45p_price_paid",
+//       id: "45p-price-paid",
+//       name: `45%`,
+//       title: `45th Percentile Paid`,
+//       value: 45,
+//     },
+//     {
+//       key: "40p_price_paid",
+//       id: "40p-price-paid",
+//       name: `40%`,
+//       title: `40th Percentile Paid`,
+//       value: 40,
+//     },
+//     {
+//       key: "35p_price_paid",
+//       id: "35p-price-paid",
+//       name: `35%`,
+//       title: `35th Percentile Paid`,
+//       value: 35,
+//     },
+//     {
+//       key: "30p_price_paid",
+//       id: "30p-price-paid",
+//       name: `30%`,
+//       title: `30th Percentile Paid`,
+//       value: 30,
+//     },
+//     {
+//       key: "25p_price_paid",
+//       id: "25p-price-paid",
+//       name: `25%`,
+//       title: `25th Percentile Paid`,
+//       value: 25,
+//     },
+//     {
+//       key: "20p_price_paid",
+//       id: "20p-price-paid",
+//       name: `20%`,
+//       title: `20th Percentile Paid`,
+//       value: 20,
+//     },
+//     {
+//       key: "15p_price_paid",
+//       id: "15p-price-paid",
+//       name: `15%`,
+//       title: `15th Percentile Paid`,
+//       value: 15,
+//     },
+//     {
+//       key: "10p_price_paid",
+//       id: "10p-price-paid",
+//       name: `10%`,
+//       title: `10th Percentile Paid`,
+//       value: 10,
+//     },
+//     {
+//       key: "05p_price_paid",
+//       id: "05p-price-paid",
+//       name: `5%`,
+//       title: `5th Percentile Paid`,
+//       value: 5,
+//     },
+//   ]);
 
-  return {
-    xTermHolders,
-    upTo,
-    fromX,
-    fromXToY,
-    epochs,
-    age,
-    type,
-    size,
-    address,
-    liquidities,
-    averages,
-    totalReturns,
-    compoundReturns,
-    percentiles,
-  };
-}
-/**
- * @typedef {ReturnType<typeof initGroups>} Groups
- *
- * @typedef {Groups["age"][number]["id"]} AgeCohortId
- *
- * @typedef {Exclude<AgeCohortId, "">} AgeCohortIdSub
- *
- * @typedef {Groups["address"][number]["key"]} AddressCohortId
- *
- * @typedef {Groups["liquidities"][number]["id"]} LiquidityId
- *
- * @typedef {AgeCohortId | AddressCohortId} AnyCohortId
- *
- * @typedef {AddressCohortId | LiquidityId} AnyAddressCohortId
- *
- * @typedef {AnyCohortId | LiquidityId} AnyPossibleCohortId
- *
- * @typedef {'' | `${AgeCohortIdSub | AddressCohortId | LiquidityId}-`} AnyDatasetPrefix
- *
- * @typedef {Groups["averages"][number]["key"]} AverageName
- *
- * @typedef {Groups["totalReturns"][number]["key"]} TotalReturnKey
- *
- * @typedef {Groups["compoundReturns"][number]["key"]} CompoundReturnKey
- *
- * @typedef {Groups["percentiles"][number]["id"]} PercentileId
- */
+//   return {
+//     xTermHolders,
+//     upTo,
+//     fromX,
+//     fromXToY,
+//     epochs,
+//     age,
+//     type,
+//     size,
+//     address,
+//     liquidities,
+//     averages,
+//     totalReturns,
+//     compoundReturns,
+//     percentiles,
+//   };
+// }
+// /**
+//  * @typedef {ReturnType<typeof initGroups>} Groups
+//  *
+//  * @typedef {Groups["age"][number]["id"]} AgeCohortId
+//  *
+//  * @typedef {Exclude<AgeCohortId, "">} AgeCohortIdSub
+//  *
+//  * @typedef {Groups["address"][number]["key"]} AddressCohortId
+//  *
+//  * @typedef {Groups["liquidities"][number]["id"]} LiquidityId
+//  *
+//  * @typedef {AgeCohortId | AddressCohortId} AnyCohortId
+//  *
+//  * @typedef {AddressCohortId | LiquidityId} AnyAddressCohortId
+//  *
+//  * @typedef {AnyCohortId | LiquidityId} AnyPossibleCohortId
+//  *
+//  * @typedef {'' | `${AgeCohortIdSub | AddressCohortId | LiquidityId}-`} AnyDatasetPrefix
+//  *
+//  * @typedef {Groups["averages"][number]["key"]} AverageName
+//  *
+//  * @typedef {Groups["totalReturns"][number]["key"]} TotalReturnKey
+//  *
+//  * @typedef {Groups["compoundReturns"][number]["key"]} CompoundReturnKey
+//  *
+//  * @typedef {Groups["percentiles"][number]["id"]} PercentileId
+//  */
 
 /**
  * @param {Colors} colors
@@ -647,164 +658,152 @@ function initGroups() {
  */
 function createPartialOptions(colors) {
   /**
-   * @typedef {"total-"} TotalPrefix
-   * @typedef {Extract<VecId, `${TotalPrefix}${string}`>} TotalVecId
-   * @typedef {"-sum"} SumSuffix
-   * @typedef {Extract<VecId, `${string}${SumSuffix}`>} VecIdSum
-   * @typedef {"-average"} AverageSuffix
-   * @typedef {Extract<VecId, `${string}${AverageSuffix}`>} VecIdAverage
-   * @typedef {"-median"} MedianSuffix
-   * @typedef {Extract<VecId, `${string}${MedianSuffix}`>} VecIdMedian
-   * @typedef {"-90p"} _90pSuffix
-   * @typedef {Extract<VecId, `${string}${_90pSuffix}`>} VecId90p
-   * @typedef {"-75p"} _75pSuffix
-   * @typedef {Extract<VecId, `${string}${_75pSuffix}`>} VecId75p
-   * @typedef {"-25p"} _25pSuffix
-   * @typedef {Extract<VecId, `${string}${_25pSuffix}`>} VecId25p
-   * @typedef {"-10p"} _10pSuffix
-   * @typedef {Extract<VecId, `${string}${_10pSuffix}`>} VecId10p
-   * @typedef {"-max"} MaxSuffix
-   * @typedef {Extract<VecId, `${string}${MaxSuffix}`>} VecIdMax
-   * @typedef {"-min"} MinSuffix
-   * @typedef {Extract<VecId, `${string}${MinSuffix}`>} VecIdMin
-   * @typedef {VecId extends infer X
-      ? X extends string
-        ? `${X}${SumSuffix}` extends VecIdSum
-          ? `${TotalPrefix}${X}` extends TotalVecId
-            ? X
-            : never
-          : never
-        : never
-      : never} BaseTotalSumVecId
-   * @typedef {VecId extends infer X
-      ? X extends string
-        ? `${X}${MinSuffix}` extends VecIdMin
-          ? `${X}${MaxSuffix}` extends VecIdMax
-            ? X
-            : never
-          : never
-        : never
-      : never} MinMaxVecId
-    * @typedef {VecId extends infer X
-      ? X extends string
-        ? `${X}${AverageSuffix}` extends VecIdAverage
-          ? X
-          : never
-        : never
-      : never} AverageVecId
-    * @typedef {VecId extends infer X
-      ? X extends string
-        ? `${X}${MedianSuffix}` extends VecIdMedian
-          ? X
-          : never
-        : never
-      : never} MedianVecId
-    * @typedef {VecId extends infer X
-        ? X extends string
-          ? `${X}${_90pSuffix}` extends VecId90p
-            ? `${X}${_75pSuffix}` extends VecId75p
-              ? `${X}${_25pSuffix}` extends VecId25p
-                ? `${X}${_10pSuffix}` extends VecId10p
-                  ? X
-                  : never
-                : never
-              : never
-            : never
-          : never
-        : never} PercentilesVecId
-   * @typedef {AverageVecId & MinMaxVecId & MedianVecId & PercentilesVecId} AverageMinMaxPercentilesVecId
+   * @template {string} S
+   * @typedef {Extract<ChartableVecId, `${S}${string}`>} StartsWith
+   */
+  /**
+   * @template {string} S
+   * @typedef {Extract<ChartableVecId, `${string}${S}`>} EndsWith
+   */
+  /**
+   * @template {string} K
+   * @template {string} S
+   * @typedef {K extends `${S}${infer Rest}` ? Rest : never} WithoutPrefix
+   */
+  /**
+   * @template {string} K
+   * @template {string} S
+   * @typedef {K extends `${infer Rest}${S}` ? Rest : never} WithoutSuffix
    */
 
   /**
-   * @template {BaseTotalSumVecId} T
-   * @param {Object} args
-   * @param {string} args.name
-   * @param {string} args.title
-   * @param {T} args.key
+   * @typedef {"total-"} TotalPrefix
+   * @typedef {StartsWith<TotalPrefix>} TotalVecId
+   * @typedef {WithoutPrefix<TotalVecId, TotalPrefix>} TotalVecIdBase
+   * @typedef {"-sum"} SumSuffix
+   * @typedef {EndsWith<SumSuffix>} VecIdSum
+   * @typedef {WithoutSuffix<VecIdSum, SumSuffix>} VecIdSumBase
+   * @typedef {"-average"} AverageSuffix
+   * @typedef {EndsWith<AverageSuffix>} VecIdAverage
+   * @typedef {WithoutSuffix<VecIdAverage, AverageSuffix>} VecIdAverageBase
+   * @typedef {"-median"} MedianSuffix
+   * @typedef {EndsWith<MedianSuffix>} VecIdMedian
+   * @typedef {WithoutSuffix<VecIdMedian, MedianSuffix>} VecIdMedianBase
+   * @typedef {"-90p"} _90pSuffix
+   * @typedef {EndsWith<_90pSuffix>} VecId90p
+   * @typedef {WithoutSuffix<VecId90p, _90pSuffix>} VecId90pBase
+   * @typedef {"-75p"} _75pSuffix
+   * @typedef {EndsWith<_75pSuffix>} VecId75p
+   * @typedef {WithoutSuffix<VecId75p, _75pSuffix>} VecId75pBase
+   * @typedef {"-25p"} _25pSuffix
+   * @typedef {EndsWith<_25pSuffix>} VecId25p
+   * @typedef {WithoutSuffix<VecId25p, _25pSuffix>} VecId25pBase
+   * @typedef {"-10p"} _10pSuffix
+   * @typedef {EndsWith<_10pSuffix>} VecId10p
+   * @typedef {WithoutSuffix<VecId10p, _10pSuffix>} VecId10pBase
+   * @typedef {"-max"} MaxSuffix
+   * @typedef {EndsWith<MaxSuffix>} VecIdMax
+   * @typedef {WithoutSuffix<VecIdMax, MaxSuffix>} VecIdMaxBase
+   * @typedef {"-min"} MinSuffix
+   * @typedef {EndsWith<MinSuffix>} VecIdMin
+   * @typedef {WithoutSuffix<VecIdMin, MinSuffix>} VecIdMinBase
    */
-  function createBaseSumTotal({ name, title, key }) {
-    return /** @satisfies {PartialChartOption} */ ({
-      name,
-      title,
-      bottom: [
-        { key, title: name, color: colors.bitcoin },
-        {
-          key: `${key}-sum`,
-          title: "Sum",
-          color: colors.bitcoin,
-        },
-        {
-          key: `total-${key}`,
-          title: "Total",
-          color: colors.offBitcoin,
-          defaultActive: false,
-        },
-      ],
+
+  /**
+   *
+   * @param {Object} args
+   * @param {ChartableVecId} args.key
+   * @param {string} args.name
+   * @returns
+   */
+  function createBaseSeries({ key, name }) {
+    return { key, title: name, color: colors.bitcoin };
+  }
+
+  /**
+   * @template {VecIdAverageBase} T
+   * @param {Object} args
+   * @param {T} args.concat
+   */
+  function createAverageSeries({ concat }) {
+    return /** @satisfies {AnyFetchedSeriesBlueprint} */ ({
+      key: `${concat}-average`,
+      title: "Average",
+      color: colors.orange,
     });
   }
 
   /**
-   * @template {AverageMinMaxPercentilesVecId} T
+   * @template {VecIdSumBase & TotalVecIdBase} T
    * @param {Object} args
-   * @param {string} args.name
-   * @param {string} args.title
-   * @param {T} args.key
+   * @param {T} args.concat
    */
-  function createBaseAverageMinMaxPercentiles({ name, title, key }) {
-    return /** @satisfies {PartialChartOption} */ ({
-      name,
-      title,
-      bottom: [
-        { key, title: name, color: colors.bitcoin },
-        {
-          key: `${key}-average`,
-          title: "Average",
-          color: colors.orange,
-        },
-        {
-          key: `${key}-median`,
-          title: "Median",
-          color: colors.amber,
-          defaultActive: false,
-        },
-        {
-          key: `${key}-75p`,
-          title: "75p",
-          color: colors.red,
-          defaultActive: false,
-        },
-        {
-          key: `${key}-25p`,
-          title: "25p",
-          color: colors.yellow,
-          defaultActive: false,
-        },
-        {
-          key: `${key}-90p`,
-          title: "90p",
-          color: colors.rose,
-          defaultActive: false,
-        },
-        {
-          key: `${key}-10p`,
-          title: "10p",
-          color: colors.lime,
-          defaultActive: false,
-        },
-        {
-          key: `${key}-max`,
-          title: "Max",
-          color: colors.pink,
-          defaultActive: false,
-        },
-        {
-          key: `${key}-min`,
-          title: "Min",
-          color: colors.green,
-          defaultActive: false,
-        },
-      ],
-    });
+  function createSumTotalSeries({ concat }) {
+    return /** @satisfies {AnyFetchedSeriesBlueprint[]} */ ([
+      {
+        key: `${concat}-sum`,
+        title: "Sum",
+        color: colors.bitcoin,
+      },
+      {
+        key: `total-${concat}`,
+        title: "Total",
+        color: colors.offBitcoin,
+        defaultActive: false,
+      },
+    ]);
+  }
+
+  /**
+   * @template {VecIdMinBase & VecIdMaxBase & VecId90pBase & VecId75pBase & VecIdMedianBase & VecId25pBase & VecId10pBase} T
+   * @param {Object} args
+   * @param {T} args.concat
+   */
+  function createMinMaxPercentilesSeries({ concat }) {
+    return /** @satisfies {AnyFetchedSeriesBlueprint[]} */ ([
+      {
+        key: `${concat}-median`,
+        title: "Median",
+        color: colors.amber,
+        defaultActive: false,
+      },
+      {
+        key: `${concat}-75p`,
+        title: "75p",
+        color: colors.red,
+        defaultActive: false,
+      },
+      {
+        key: `${concat}-25p`,
+        title: "25p",
+        color: colors.yellow,
+        defaultActive: false,
+      },
+      {
+        key: `${concat}-90p`,
+        title: "90p",
+        color: colors.rose,
+        defaultActive: false,
+      },
+      {
+        key: `${concat}-10p`,
+        title: "10p",
+        color: colors.lime,
+        defaultActive: false,
+      },
+      {
+        key: `${concat}-max`,
+        title: "Max",
+        color: colors.pink,
+        defaultActive: false,
+      },
+      {
+        key: `${concat}-min`,
+        title: "Min",
+        color: colors.green,
+        defaultActive: false,
+      },
+    ]);
   }
 
   return [
@@ -821,13 +820,11 @@ function createPartialOptions(colors) {
             {
               name: "usd/sats",
               title: "Satoshis Per US Dollar",
-              unit: "Satoshis",
               bottom: [
-                {
+                createBaseSeries({
                   key: "sats-per-dollar",
-                  title: "Satoshis",
-                  color: colors.bitcoin,
-                },
+                  name: "Satoshis",
+                }),
               ],
             },
           ],
@@ -835,69 +832,185 @@ function createPartialOptions(colors) {
         {
           name: "Block",
           tree: [
-            createBaseSumTotal({
+            {
               name: "Count",
               title: "Block Count",
-              key: "block-count",
-            }),
-            createBaseAverageMinMaxPercentiles({
+              bottom: [
+                createBaseSeries({
+                  key: "block-count",
+                  name: "Count",
+                }),
+                ...createSumTotalSeries({ concat: "block-count" }),
+              ],
+            },
+            {
               name: "Interval",
               title: "Block Interval",
-              key: "block-interval",
-            }),
-            createBaseSumTotal({
+              bottom: [
+                createBaseSeries({
+                  key: "interval",
+                  name: "Interval",
+                }),
+                createAverageSeries({ concat: "block-interval" }),
+                ...createMinMaxPercentilesSeries({
+                  concat: "block-interval",
+                }),
+              ],
+            },
+            {
               name: "Size",
               title: "Block Size",
-              key: "block-size",
-            }),
-            createBaseSumTotal({
+              bottom: [
+                createBaseSeries({
+                  key: "total-size",
+                  name: "Size",
+                }),
+                ...createSumTotalSeries({ concat: "block-size" }),
+              ],
+            },
+            {
               name: "Weight",
               title: "Block Weight",
-              key: "block-weight",
-            }),
-            createBaseSumTotal({
+              bottom: [
+                createBaseSeries({
+                  key: "weight",
+                  name: "Weight",
+                }),
+                ...createSumTotalSeries({ concat: "block-weight" }),
+              ],
+            },
+            {
               name: "Vbytes",
               title: "Block Virtual Bytes",
-              key: "block-vbytes",
-            }),
+              bottom: [
+                createBaseSeries({
+                  key: "vbytes",
+                  name: "Vbytes",
+                }),
+                ...createSumTotalSeries({ concat: "block-vbytes" }),
+              ],
+            },
           ],
         },
         {
           name: "Transaction",
           tree: [
-            createBaseSumTotal({
+            {
               name: "Count",
               title: "Transaction Count",
-              key: "tx-count",
-            }),
-            createBaseSumTotal({
+              bottom: [
+                createBaseSeries({
+                  key: "tx-count",
+                  name: "Count",
+                }),
+                createAverageSeries({ concat: "tx-count" }),
+                ...createSumTotalSeries({ concat: "tx-count" }),
+                ...createMinMaxPercentilesSeries({
+                  concat: "tx-count",
+                }),
+              ],
+            },
+            {
+              name: "Subsidy",
+              title: "Subsidy",
+              bottom: [
+                createBaseSeries({
+                  key: "subsidy",
+                  name: "Subsidy",
+                }),
+                createAverageSeries({ concat: "subsidy" }),
+                ...createSumTotalSeries({ concat: "subsidy" }),
+                ...createMinMaxPercentilesSeries({ concat: "subsidy" }),
+              ],
+            },
+            {
+              name: "Coinbase",
+              title: "Coinbase",
+              bottom: [
+                createBaseSeries({
+                  key: "coinbase",
+                  name: "Coinbase",
+                }),
+                createAverageSeries({ concat: "coinbase" }),
+                ...createSumTotalSeries({ concat: "coinbase" }),
+                ...createMinMaxPercentilesSeries({ concat: "coinbase" }),
+              ],
+            },
+            {
               name: "Fee",
               title: "Transaction Fee",
-              key: "fee",
-            }),
-            createBaseAverageMinMaxPercentiles({
+              bottom: [
+                createAverageSeries({ concat: "fee" }),
+                ...createSumTotalSeries({ concat: "fee" }),
+                ...createMinMaxPercentilesSeries({ concat: "fee" }),
+              ],
+            },
+            {
               name: "Feerate",
               title: "Transaction Fee Rate",
-              key: "feerate",
-            }),
+              bottom: [
+                createAverageSeries({ concat: "feerate" }),
+                ...createMinMaxPercentilesSeries({
+                  concat: "feerate",
+                }),
+              ],
+            },
+            {
+              name: "Weight",
+              title: "Transaction Weight",
+              bottom: [
+                createAverageSeries({ concat: "tx-weight" }),
+                ...createMinMaxPercentilesSeries({
+                  concat: "tx-weight",
+                }),
+              ],
+            },
+            {
+              name: "vsize",
+              title: "Transaction Virtual Size",
+              bottom: [
+                createAverageSeries({ concat: "tx-vsize" }),
+                ...createMinMaxPercentilesSeries({
+                  concat: "tx-vsize",
+                }),
+              ],
+            },
             {
               name: "Version",
               tree: [
-                createBaseSumTotal({
+                {
                   name: "1",
                   title: "Transaction V1 Count",
-                  key: "tx-v1",
-                }),
-                createBaseSumTotal({
+                  bottom: [
+                    createBaseSeries({
+                      key: "tx-v1",
+                      name: "Count",
+                    }),
+                    ...createSumTotalSeries({ concat: "tx-v1" }),
+                  ],
+                },
+                {
                   name: "2",
                   title: "Transaction V2 Count",
-                  key: "tx-v2",
-                }),
-                createBaseSumTotal({
+                  bottom: [
+                    createBaseSeries({
+                      key: "tx-v2",
+                      name: "Count",
+                    }),
+                    ...createSumTotalSeries({ concat: "tx-v2" }),
+                  ],
+                },
+                {
                   name: "3",
                   title: "Transaction V3 Count",
-                  key: "tx-v3",
-                }),
+                  bottom: [
+                    createBaseSeries({
+                      key: "tx-v3",
+                      name: "Count",
+                    }),
+                    ...createSumTotalSeries({ concat: "tx-v3" }),
+                  ],
+                },
               ],
             },
           ],
@@ -905,31 +1018,49 @@ function createPartialOptions(colors) {
         {
           name: "Input",
           tree: [
-            createBaseSumTotal({
+            {
               name: "Count",
               title: "Transaction Input Count",
-              key: "input-count",
-            }),
-            createBaseSumTotal({
+              bottom: [
+                createAverageSeries({ concat: "input-count" }),
+                ...createSumTotalSeries({ concat: "input-count" }),
+                ...createMinMaxPercentilesSeries({
+                  concat: "input-count",
+                }),
+              ],
+            },
+            {
               name: "Value",
               title: "Transaction Input Value",
-              key: "input-value",
-            }),
+              bottom: [
+                createAverageSeries({ concat: "input-value" }),
+                ...createSumTotalSeries({ concat: "input-value" }),
+              ],
+            },
           ],
         },
         {
           name: "Output",
           tree: [
-            createBaseSumTotal({
+            {
               name: "Count",
               title: "Transaction Output Count",
-              key: "output-count",
-            }),
-            createBaseSumTotal({
+              bottom: [
+                createAverageSeries({ concat: "output-count" }),
+                ...createSumTotalSeries({ concat: "output-count" }),
+                ...createMinMaxPercentilesSeries({
+                  concat: "output-count",
+                }),
+              ],
+            },
+            {
               name: "Value",
               title: "Transaction Output Value",
-              key: "output-value",
-            }),
+              bottom: [
+                createAverageSeries({ concat: "output-value" }),
+                ...createSumTotalSeries({ concat: "output-value" }),
+              ],
+            },
           ],
         },
       ],
@@ -1284,7 +1415,7 @@ export function initOptions({
           id = `${kind}-${utils.stringToId(title)}`;
           const key = anyPartial.bottom?.at(0)?.key;
           if (key) {
-            if (key.includes("-interval")) {
+            if (key.includes("interval")) {
               anyPartial.unit = "Seconds";
             } else if (key.includes("feerate")) {
               anyPartial.unit = "sat/vB";
@@ -1292,21 +1423,23 @@ export function initOptions({
               key.startsWith("sats-") ||
               key.includes("input-value") ||
               key.includes("output-value") ||
-              key.includes("fee")
+              key.includes("fee") ||
+              key.startsWith("coinbase") ||
+              key.startsWith("subsidy")
             ) {
-              anyPartial.unit = "Satoshis";
+              anyPartial.unit = "Sats";
             } else if (key.includes("count")) {
               anyPartial.unit = "Count";
             } else if (key.includes("-size")) {
               anyPartial.unit = "Megabytes";
-            } else if (key.includes("-weight")) {
+            } else if (key.includes("weight")) {
               anyPartial.unit = "Weight Units";
-            } else if (key.includes("-vbytes")) {
+            } else if (key.includes("vbytes") || key.includes("vsize")) {
               anyPartial.unit = "Virtual Bytes";
-            } else if (key.match(/v[0-9]/g)) {
+            } else if (key.match(/v[1-3]/g)) {
               anyPartial.unit = "Version";
             } else {
-              console.log(anyPartial);
+              console.log([key, anyPartial]);
               throw Error("Unit not set");
             }
           }
@@ -1422,7 +1555,7 @@ export function initOptions({
 //         );
 
 //   switch (unit) {
-//     case "US Dollars": {
+//     case "USD": {
 //       return `$${s}`;
 //     }
 //     case "Bitcoin": {

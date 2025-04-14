@@ -12,8 +12,6 @@ use super::ComputedVec;
 
 #[derive(Clone)]
 pub struct Vecs {
-    // pub height_to_last_addressindex: StorableVec<Height, Addressindex>,
-    // pub height_to_last_txoutindex: StorableVec<Height, Txoutindex>,
     pub dateindex_to_date: ComputedVec<Dateindex, Date>,
     pub dateindex_to_dateindex: ComputedVec<Dateindex, Dateindex>,
     pub dateindex_to_first_height: ComputedVec<Dateindex, Height>,
@@ -320,7 +318,7 @@ impl Vecs {
     ) -> color_eyre::Result<Indexes> {
         let indexer_vecs = indexer.mut_vecs();
 
-        let height_count = indexer_vecs.height_to_block_size.len();
+        let height_count = indexer_vecs.height_to_total_size.len();
         let txindexes_count = indexer_vecs.txindex_to_txid.len();
         let txinindexes_count = indexer_vecs.txinindex_to_txoutindex.len();
         let txoutindexes_count = indexer_vecs.txoutindex_to_addressindex.len();
