@@ -295,10 +295,7 @@ impl Vecs {
                             |txindex| {
                                 let v = indexer_vecs
                                     .txindex_to_txversion
-                                    .cached_get(txindex)
-                                    .unwrap()
-                                    .unwrap()
-                                    .into_inner();
+                                    .double_unwrap_cached_get(txindex);
                                 v == txversion
                             },
                             exit,
@@ -326,10 +323,7 @@ impl Vecs {
                 let total_size = indexer_vecs
                     .txindex_to_total_size
                     .mut_vec()
-                    .cached_get(txindex)
-                    .unwrap()
-                    .unwrap()
-                    .into_inner();
+                    .double_unwrap_cached_get(txindex);
 
                 // This is the exact definition of a weight unit, as defined by BIP-141 (quote above).
                 let wu = base_size * 3 + total_size;
@@ -357,12 +351,12 @@ impl Vecs {
             |(txinindex, txoutindex, slf, other)| {
                 let value = if txoutindex == Txoutindex::COINBASE {
                     Sats::ZERO
-                } else if let Ok(Some(value)) = indexer_vecs
+                } else if let Some(value) = indexer_vecs
                     .txoutindex_to_value
                     .mut_vec()
-                    .cached_get(txoutindex)
+                    .unwrap_cached_get(txoutindex)
                 {
-                    *value
+                    value
                 } else {
                     dbg!(txinindex, txoutindex, slf.len(), other.len());
                     panic!()
@@ -429,11 +423,8 @@ impl Vecs {
                         if input_value.is_zero() {
                             (txindex, input_value)
                         } else {
-                            let output_value = txindex_to_output_value
-                                .cached_get(txindex)
-                                .unwrap()
-                                .unwrap()
-                                .into_inner();
+                            let output_value =
+                                txindex_to_output_value.double_unwrap_cached_get(txindex);
                             (txindex, input_value.checked_sub(output_value).unwrap())
                         }
                     },
@@ -455,10 +446,7 @@ impl Vecs {
                         let vsize = self
                             .txindex_to_vsize
                             .mut_vec()
-                            .cached_get(txindex)
-                            .unwrap()
-                            .unwrap()
-                            .into_inner();
+                            .double_unwrap_cached_get(txindex);
 
                         (txindex, Feerate::from((fee, vsize)))
                     },
@@ -496,29 +484,18 @@ impl Vecs {
                     |(height, txindex, ..)| {
                         let first_txoutindex = indexer_vecs
                             .txindex_to_first_txoutindex
-                            .cached_get(txindex)
-                            .unwrap()
-                            .unwrap()
-                            .into_inner()
-                            .to_usize()
-                            .unwrap();
+                            .double_unwrap_cached_get(txindex)
+                            .unwrap_to_usize();
                         let last_txoutindex = indexes
                             .txindex_to_last_txoutindex
                             .mut_vec()
-                            .cached_get(txindex)
-                            .unwrap()
-                            .unwrap()
-                            .into_inner()
-                            .to_usize()
-                            .unwrap();
+                            .double_unwrap_cached_get(txindex)
+                            .unwrap_to_usize();
                         let mut sats = Sats::ZERO;
                         (first_txoutindex..=last_txoutindex).for_each(|txoutindex| {
                             sats += indexer_vecs
                                 .txoutindex_to_value
-                                .cached_get_(txoutindex)
-                                .unwrap()
-                                .unwrap()
-                                .into_inner();
+                                .double_unwrap_cached_get(Txoutindex::from(txoutindex));
                         });
                         (height, sats)
                     },
@@ -540,14 +517,9 @@ impl Vecs {
                         let fees = self
                             .indexes_to_fee
                             .height
-                            .sum
-                            .as_mut()
-                            .unwrap()
+                            .unwrap_sum()
                             .mut_vec()
-                            .cached_get(height)
-                            .unwrap()
-                            .unwrap()
-                            .into_inner();
+                            .double_unwrap_cached_get(height);
                         (height, subsidy.checked_sub(fees).unwrap())
                     },
                     exit,

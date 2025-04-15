@@ -18,6 +18,7 @@ where
         + Send
         + Sync,
 {
+    fn unwrap_to_usize(self) -> usize;
     fn to_usize(self) -> Result<usize>;
     fn to_string<'a>() -> &'a str;
 }
@@ -37,7 +38,12 @@ where
         + Send
         + Sync,
 {
-    #[inline(always)]
+    #[inline]
+    fn unwrap_to_usize(self) -> usize {
+        self.to_usize().unwrap()
+    }
+
+    #[inline]
     fn to_usize(self) -> Result<usize> {
         self.try_into().map_err(|_| Error::FailedKeyTryIntoUsize)
     }
