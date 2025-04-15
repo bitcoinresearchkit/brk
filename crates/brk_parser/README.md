@@ -55,7 +55,7 @@ XOR-ed blocks are supported.
 
 A state of the local chain is saved in `{bitcoindir}/blocks/blk_index_to_blk_recap.json` to allow for faster starts (see benchmark below) but doesn't yet support locking. Thus, it is highly recommended to run one instance of `brk_parser` at a time.
 
-## Comparaison
+## Benchmark
 
 |  | [brk_parser](https://crates.io/crates/brk_parser) | [bitcoin-explorer (deprecated)](https://crates.io/crates/bitcoin-explorer) | [blocks_iterator](https://crates.io/crates/blocks_iterator) |
 | --- | --- | --- | --- |
