@@ -16,18 +16,18 @@ where
     I: StoredIndex,
     T: ComputedType,
 {
-    pub first: Option<ComputedVec<I, T>>,
-    pub average: Option<ComputedVec<I, T>>,
-    pub sum: Option<ComputedVec<I, T>>,
-    pub max: Option<ComputedVec<I, T>>,
-    pub _90p: Option<ComputedVec<I, T>>,
-    pub _75p: Option<ComputedVec<I, T>>,
-    pub median: Option<ComputedVec<I, T>>,
-    pub _25p: Option<ComputedVec<I, T>>,
-    pub _10p: Option<ComputedVec<I, T>>,
-    pub min: Option<ComputedVec<I, T>>,
-    pub last: Option<ComputedVec<I, T>>,
-    pub total: Option<ComputedVec<I, T>>,
+    first: Option<ComputedVec<I, T>>,
+    average: Option<ComputedVec<I, T>>,
+    sum: Option<ComputedVec<I, T>>,
+    max: Option<ComputedVec<I, T>>,
+    _90p: Option<ComputedVec<I, T>>,
+    _75p: Option<ComputedVec<I, T>>,
+    median: Option<ComputedVec<I, T>>,
+    _25p: Option<ComputedVec<I, T>>,
+    _10p: Option<ComputedVec<I, T>>,
+    min: Option<ComputedVec<I, T>>,
+    last: Option<ComputedVec<I, T>>,
+    total: Option<ComputedVec<I, T>>,
 }
 
 impl<I, T> ComputedVecBuilder<I, T>
@@ -128,14 +128,12 @@ where
 
         source.iter_from(index, |(i, v, ..)| {
             let prev = i
-                .to_usize()
-                .unwrap()
+                .unwrap_to_usize()
                 .checked_sub(1)
                 .map_or(T::from(0_usize), |prev_i| {
                     total_vec
-                        .cached_get(I::from(prev_i))
-                        .unwrap()
-                        .map_or(T::from(0_usize), |v| v.into_inner())
+                        .unwrap_cached_get(I::from(prev_i))
+                        .unwrap_or(T::from(0_usize))
                 });
             let value = v.clone() + prev;
             total_vec.forced_push_at(i, value, exit)?;
@@ -164,21 +162,15 @@ where
         let index = self.starting_index(max_from);
 
         first_indexes.iter_from(index, |(i, first_index, first_indexes)| {
-            let last_index = last_indexes.cached_get(i)?.unwrap().into_inner();
+            let last_index = last_indexes.double_unwrap_cached_get(i);
 
             if let Some(first) = self.first.as_mut() {
-                let v = source.cached_get(first_index)?.unwrap().into_inner();
+                let v = source.double_unwrap_cached_get(first_index);
                 first.forced_push_at(index, v, exit)?;
             }
 
             if let Some(last) = self.last.as_mut() {
-                let v = source
-                    .cached_get(last_index)
-                    .inspect_err(|_| {
-                        dbg!(last.path(), last_index);
-                    })?
-                    .unwrap()
-                    .into_inner();
+                let v = source.double_unwrap_cached_get(last_index);
                 last.forced_push_at(index, v, exit)?;
             }
 
@@ -269,17 +261,12 @@ where
                         }
 
                         if let Some(total_vec) = self.total.as_mut() {
-                            let prev = i.to_usize().unwrap().checked_sub(1).map_or(
-                                T::from(0_usize),
-                                |prev_i| {
-                                    total_vec
-                                        .cached_get(I::from(prev_i))
-                                        .unwrap()
-                                        .unwrap()
-                                        .to_owned()
-                                        .into_inner()
-                                },
-                            );
+                            let prev = i
+                                .unwrap_to_usize()
+                                .checked_sub(1)
+                                .map_or(T::from(0_usize), |prev_i| {
+                                    total_vec.double_unwrap_cached_get(I::from(prev_i))
+                                });
                             total_vec.forced_push_at(i, prev + sum, exit)?;
                         }
                     }
@@ -320,17 +307,14 @@ where
         let index = self.starting_index(max_from);
 
         first_indexes.iter_from(index, |(i, first_index, ..)| {
-            let last_index = *last_indexes.cached_get(i).unwrap().unwrap();
+            let last_index = last_indexes.double_unwrap_cached_get(i);
 
             if let Some(first) = self.first.as_mut() {
                 let v = source
                     .first
                     .as_mut()
                     .unwrap()
-                    .cached_get(first_index)
-                    .unwrap()
-                    .unwrap()
-                    .into_inner();
+                    .double_unwrap_cached_get(first_index);
                 first.forced_push_at(index, v, exit)?;
             }
 
@@ -339,10 +323,7 @@ where
                     .last
                     .as_mut()
                     .unwrap()
-                    .cached_get(last_index)
-                    .unwrap()
-                    .unwrap()
-                    .into_inner();
+                    .double_unwrap_cached_get(last_index);
                 last.forced_push_at(index, v, exit)?;
             }
 
@@ -405,16 +386,12 @@ where
                         }
 
                         if let Some(total_vec) = self.total.as_mut() {
-                            let prev = i.to_usize().unwrap().checked_sub(1).map_or(
-                                T::from(0_usize),
-                                |prev_i| {
-                                    total_vec
-                                        .cached_get(I::from(prev_i))
-                                        .unwrap()
-                                        .unwrap()
-                                        .into_inner()
-                                },
-                            );
+                            let prev = i
+                                .unwrap_to_usize()
+                                .checked_sub(1)
+                                .map_or(T::from(0_usize), |prev_i| {
+                                    total_vec.double_unwrap_cached_get(I::from(prev_i))
+                                });
                             total_vec.forced_push_at(i, prev + sum, exit)?;
                         }
                     }
@@ -455,6 +432,43 @@ where
         max_from.min(I::from(
             self.any_vecs().into_iter().map(|v| v.len()).min().unwrap(),
         ))
+    }
+
+    pub fn unwrap_first(&mut self) -> &mut ComputedVec<I, T> {
+        self.first.as_mut().unwrap()
+    }
+    pub fn unwrap_average(&mut self) -> &mut ComputedVec<I, T> {
+        self.average.as_mut().unwrap()
+    }
+    pub fn unwrap_sum(&mut self) -> &mut ComputedVec<I, T> {
+        self.sum.as_mut().unwrap()
+    }
+    pub fn unwrap_max(&mut self) -> &mut ComputedVec<I, T> {
+        self.max.as_mut().unwrap()
+    }
+    pub fn unwrap_90p(&mut self) -> &mut ComputedVec<I, T> {
+        self._90p.as_mut().unwrap()
+    }
+    pub fn unwrap_75p(&mut self) -> &mut ComputedVec<I, T> {
+        self._75p.as_mut().unwrap()
+    }
+    pub fn unwrap_median(&mut self) -> &mut ComputedVec<I, T> {
+        self.median.as_mut().unwrap()
+    }
+    pub fn unwrap_25p(&mut self) -> &mut ComputedVec<I, T> {
+        self._25p.as_mut().unwrap()
+    }
+    pub fn unwrap_10p(&mut self) -> &mut ComputedVec<I, T> {
+        self._10p.as_mut().unwrap()
+    }
+    pub fn unwrap_min(&mut self) -> &mut ComputedVec<I, T> {
+        self.min.as_mut().unwrap()
+    }
+    pub fn unwrap_last(&mut self) -> &mut ComputedVec<I, T> {
+        self.last.as_mut().unwrap()
+    }
+    pub fn unwrap_total(&mut self) -> &mut ComputedVec<I, T> {
+        self.total.as_mut().unwrap()
     }
 
     pub fn any_vecs(&self) -> Vec<&dyn brk_vec::AnyStoredVec> {

@@ -242,9 +242,8 @@ impl Vecs {
                     .get_height(
                         h,
                         t,
-                        h.decremented().map(|prev_h| {
-                            *height_to_timestamp.cached_get(prev_h).unwrap().unwrap()
-                        }),
+                        h.decremented()
+                            .map(|prev_h| height_to_timestamp.double_unwrap_cached_get(prev_h)),
                     )
                     .unwrap();
                 (h, ohlc)
@@ -454,43 +453,26 @@ impl Vecs {
 
         self.weekindex_to_ohlc.compute_transform(
             starting_indexes.weekindex,
-            self.timeindexes_to_close
-                .weekindex
-                .last
-                .as_mut()
-                .unwrap()
-                .mut_vec(),
+            self.timeindexes_to_close.weekindex.unwrap_last().mut_vec(),
             |(i, close, ..)| {
                 (
                     i,
                     OHLCDollars {
-                        open: *self
+                        open: self
                             .timeindexes_to_open
                             .weekindex
-                            .first
-                            .as_mut()
-                            .unwrap()
-                            .cached_get(i)
-                            .unwrap()
-                            .unwrap(),
-                        high: *self
+                            .unwrap_first()
+                            .double_unwrap_cached_get(i),
+                        high: self
                             .timeindexes_to_high
                             .weekindex
-                            .max
-                            .as_mut()
-                            .unwrap()
-                            .cached_get(i)
-                            .unwrap()
-                            .unwrap(),
-                        low: *self
+                            .unwrap_max()
+                            .double_unwrap_cached_get(i),
+                        low: self
                             .timeindexes_to_low
                             .weekindex
-                            .min
-                            .as_mut()
-                            .unwrap()
-                            .cached_get(i)
-                            .unwrap()
-                            .unwrap(),
+                            .unwrap_min()
+                            .double_unwrap_cached_get(i),
                         close,
                     },
                 )
@@ -502,41 +484,27 @@ impl Vecs {
             starting_indexes.difficultyepoch,
             self.chainindexes_to_close
                 .difficultyepoch
-                .last
-                .as_mut()
-                .unwrap()
+                .unwrap_last()
                 .mut_vec(),
             |(i, close, ..)| {
                 (
                     i,
                     OHLCDollars {
-                        open: *self
+                        open: self
                             .chainindexes_to_open
                             .difficultyepoch
-                            .first
-                            .as_mut()
-                            .unwrap()
-                            .cached_get(i)
-                            .unwrap()
-                            .unwrap(),
-                        high: *self
+                            .unwrap_first()
+                            .double_unwrap_cached_get(i),
+                        high: self
                             .chainindexes_to_high
                             .difficultyepoch
-                            .max
-                            .as_mut()
-                            .unwrap()
-                            .cached_get(i)
-                            .unwrap()
-                            .unwrap(),
-                        low: *self
+                            .unwrap_max()
+                            .double_unwrap_cached_get(i),
+                        low: self
                             .chainindexes_to_low
                             .difficultyepoch
-                            .min
-                            .as_mut()
-                            .unwrap()
-                            .cached_get(i)
-                            .unwrap()
-                            .unwrap(),
+                            .unwrap_min()
+                            .double_unwrap_cached_get(i),
                         close,
                     },
                 )
@@ -546,43 +514,26 @@ impl Vecs {
 
         self.monthindex_to_ohlc.compute_transform(
             starting_indexes.monthindex,
-            self.timeindexes_to_close
-                .monthindex
-                .last
-                .as_mut()
-                .unwrap()
-                .mut_vec(),
+            self.timeindexes_to_close.monthindex.unwrap_last().mut_vec(),
             |(i, close, ..)| {
                 (
                     i,
                     OHLCDollars {
-                        open: *self
+                        open: self
                             .timeindexes_to_open
                             .monthindex
-                            .first
-                            .as_mut()
-                            .unwrap()
-                            .cached_get(i)
-                            .unwrap()
-                            .unwrap(),
-                        high: *self
+                            .unwrap_first()
+                            .double_unwrap_cached_get(i),
+                        high: self
                             .timeindexes_to_high
                             .monthindex
-                            .max
-                            .as_mut()
-                            .unwrap()
-                            .cached_get(i)
-                            .unwrap()
-                            .unwrap(),
-                        low: *self
+                            .unwrap_max()
+                            .double_unwrap_cached_get(i),
+                        low: self
                             .timeindexes_to_low
                             .monthindex
-                            .min
-                            .as_mut()
-                            .unwrap()
-                            .cached_get(i)
-                            .unwrap()
-                            .unwrap(),
+                            .unwrap_min()
+                            .double_unwrap_cached_get(i),
                         close,
                     },
                 )
@@ -594,41 +545,27 @@ impl Vecs {
             starting_indexes.quarterindex,
             self.timeindexes_to_close
                 .quarterindex
-                .last
-                .as_mut()
-                .unwrap()
+                .unwrap_last()
                 .mut_vec(),
             |(i, close, ..)| {
                 (
                     i,
                     OHLCDollars {
-                        open: *self
+                        open: self
                             .timeindexes_to_open
                             .quarterindex
-                            .first
-                            .as_mut()
-                            .unwrap()
-                            .cached_get(i)
-                            .unwrap()
-                            .unwrap(),
-                        high: *self
+                            .unwrap_first()
+                            .double_unwrap_cached_get(i),
+                        high: self
                             .timeindexes_to_high
                             .quarterindex
-                            .max
-                            .as_mut()
-                            .unwrap()
-                            .cached_get(i)
-                            .unwrap()
-                            .unwrap(),
-                        low: *self
+                            .unwrap_max()
+                            .double_unwrap_cached_get(i),
+                        low: self
                             .timeindexes_to_low
                             .quarterindex
-                            .min
-                            .as_mut()
-                            .unwrap()
-                            .cached_get(i)
-                            .unwrap()
-                            .unwrap(),
+                            .unwrap_min()
+                            .double_unwrap_cached_get(i),
                         close,
                     },
                 )
@@ -638,43 +575,26 @@ impl Vecs {
 
         self.yearindex_to_ohlc.compute_transform(
             starting_indexes.yearindex,
-            self.timeindexes_to_close
-                .yearindex
-                .last
-                .as_mut()
-                .unwrap()
-                .mut_vec(),
+            self.timeindexes_to_close.yearindex.unwrap_last().mut_vec(),
             |(i, close, ..)| {
                 (
                     i,
                     OHLCDollars {
-                        open: *self
+                        open: self
                             .timeindexes_to_open
                             .yearindex
-                            .first
-                            .as_mut()
-                            .unwrap()
-                            .cached_get(i)
-                            .unwrap()
-                            .unwrap(),
-                        high: *self
+                            .unwrap_first()
+                            .double_unwrap_cached_get(i),
+                        high: self
                             .timeindexes_to_high
                             .yearindex
-                            .max
-                            .as_mut()
-                            .unwrap()
-                            .cached_get(i)
-                            .unwrap()
-                            .unwrap(),
-                        low: *self
+                            .unwrap_max()
+                            .double_unwrap_cached_get(i),
+                        low: self
                             .timeindexes_to_low
                             .yearindex
-                            .min
-                            .as_mut()
-                            .unwrap()
-                            .cached_get(i)
-                            .unwrap()
-                            .unwrap(),
+                            .unwrap_min()
+                            .double_unwrap_cached_get(i),
                         close,
                     },
                 )
@@ -689,42 +609,27 @@ impl Vecs {
             starting_indexes.decadeindex,
             self.timeindexes_to_close
                 .decadeindex
-                .last
-                .as_mut()
-                .as_mut()
-                .unwrap()
+                .unwrap_last()
                 .mut_vec(),
             |(i, close, ..)| {
                 (
                     i,
                     OHLCDollars {
-                        open: *self
+                        open: self
                             .timeindexes_to_open
                             .decadeindex
-                            .first
-                            .as_mut()
-                            .unwrap()
-                            .cached_get(i)
-                            .unwrap()
-                            .unwrap(),
-                        high: *self
+                            .unwrap_first()
+                            .double_unwrap_cached_get(i),
+                        high: self
                             .timeindexes_to_high
                             .decadeindex
-                            .max
-                            .as_mut()
-                            .unwrap()
-                            .cached_get(i)
-                            .unwrap()
-                            .unwrap(),
-                        low: *self
+                            .unwrap_max()
+                            .double_unwrap_cached_get(i),
+                        low: self
                             .timeindexes_to_low
                             .decadeindex
-                            .min
-                            .as_mut()
-                            .unwrap()
-                            .cached_get(i)
-                            .unwrap()
-                            .unwrap(),
+                            .unwrap_min()
+                            .double_unwrap_cached_get(i),
                         close,
                     },
                 )

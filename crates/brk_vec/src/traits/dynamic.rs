@@ -17,7 +17,15 @@ pub trait DynamicVec: Send + Sync {
     }
     #[inline]
     fn cached_get(&mut self, index: Self::I) -> Result<Option<Value<Self::T>>> {
-        self.get_(index.to_usize()?)
+        self.cached_get_(index.to_usize()?)
+    }
+    #[inline]
+    fn unwrap_cached_get(&mut self, index: Self::I) -> Option<Self::T> {
+        self.cached_get(index).unwrap().map(Value::into_inner)
+    }
+    #[inline]
+    fn double_unwrap_cached_get(&mut self, index: Self::I) -> Self::T {
+        self.unwrap_cached_get(index).unwrap()
     }
     #[inline]
     fn get_(&self, index: usize) -> Result<Option<Value<Self::T>>> {

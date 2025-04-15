@@ -9,8 +9,7 @@ use std::{
 use brk_core::CheckedSub;
 use brk_exit::Exit;
 use brk_vec::{
-    Compressed, DynamicVec, Error, GenericVec, Result, StoredIndex, StoredType, StoredVec, Value,
-    Version,
+    Compressed, DynamicVec, Error, GenericVec, Result, StoredIndex, StoredType, StoredVec, Version,
 };
 use log::info;
 
@@ -120,8 +119,12 @@ where
         &mut self.inner
     }
 
-    pub fn cached_get(&mut self, index: I) -> Result<Option<Value<T>>> {
-        self.inner.cached_get(index)
+    pub fn unwrap_cached_get(&mut self, index: I) -> Option<T> {
+        self.inner.unwrap_cached_get(index)
+    }
+    #[inline]
+    pub fn double_unwrap_cached_get(&mut self, index: I) -> T {
+        self.inner.double_unwrap_cached_get(index)
     }
 
     pub fn collect_inclusive_range(&self, from: I, to: I) -> Result<Vec<T>> {
@@ -196,7 +199,7 @@ where
                 .map_or_else(T::default, |v| v.into_inner()),
         );
         other.iter_from(index, |(v, i, ..)| {
-            if self.cached_get(i).unwrap().is_none_or(|old_v| *old_v > v) {
+            if self.unwrap_cached_get(i).is_none_or(|old_v| old_v > v) {
                 self.forced_push_at(i, v, exit)
             } else {
                 Ok(())
@@ -224,7 +227,7 @@ where
         let index = max_from.min(T::from(self.len()));
         first_indexes.iter_from(index, |(value, first_index, ..)| {
             let first_index = (first_index).to_usize()?;
-            let last_index = (last_indexes.cached_get(value)?.unwrap()).to_usize()?;
+            let last_index = (last_indexes.double_unwrap_cached_get(value)).to_usize()?;
             (first_index..last_index)
                 .try_for_each(|index| self.forced_push_at(I::from(index), value, exit))
         })?;
@@ -344,8 +347,8 @@ where
 
         let index = max_from.min(I::from(self.len()));
         first_indexes.iter_from(index, |(i, first_index, ..)| {
-            let last_index = last_indexes.cached_get(i)?.unwrap().into_inner();
-            let range = first_index.to_usize().unwrap()..=last_index.to_usize().unwrap();
+            let last_index = last_indexes.double_unwrap_cached_get(i);
+            let range = first_index.unwrap_to_usize()..=last_index.unwrap_to_usize();
             let count = if let Some(filter) = filter.as_mut() {
                 range.into_iter().filter(|i| filter(T2::from(*i))).count()
             } else {
@@ -377,7 +380,7 @@ where
         self_to_other.iter_from(index, |(i, other, ..)| {
             self.forced_push_at(
                 i,
-                T::from(other_to_self.cached_get(other)?.unwrap().into_inner() == i),
+                T::from(other_to_self.double_unwrap_cached_get(other) == i),
                 exit,
             )
         })?;
@@ -403,11 +406,11 @@ where
 
         let index = max_from.min(I::from(self.len()));
         first_indexes.iter_from(index, |(i, first_index, ..)| {
-            let last_index = last_indexes.cached_get(i)?.unwrap().into_inner();
-            let range = first_index.to_usize().unwrap()..=last_index.to_usize().unwrap();
+            let last_index = last_indexes.double_unwrap_cached_get(i);
+            let range = first_index.unwrap_to_usize()..=last_index.unwrap_to_usize();
             let mut sum = T::from(0_usize);
             range.into_iter().for_each(|i| {
-                sum = sum.clone() + source.cached_get_(i).unwrap().unwrap().into_inner();
+                sum = sum.clone() + source.double_unwrap_cached_get(T2::from(i));
             });
             self.forced_push_at(i, sum, exit)
         })?;
