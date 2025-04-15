@@ -41,15 +41,19 @@ The element returned by the iterator is a tuple which includes the:
 - Block: `Block` (from `bitcoin-rust`)
 - Block's Hash: `BlockHash` (also from `bitcoin-rust`)
 
+Tested with Bitcoin Core `v25.0..=v28.1`
+
 ## Requirements
 
-Even though it reads *blkXXXXX.dat* files, it **needs** `bitcoind` to run with the RPC server to filter out block forks.
+Even though it reads *blkXXXXX.dat* files, it **needs** `bitcoind` (with no particular parameters) to run with the RPC server to filter out forks.
 
 Peak memory should be around 500MB.
 
+XOR-ed blocks are supported.
+
 ## Disclaimer
 
-A state is saved in `{bitcoindir}/blocks/blk_index_to_blk_recap.json` to allow for faster starts (see benchmark below) but doesn't yet support locking. Thus it is recommended to run one instance of `brk_parser` at a time.
+A state of the local chain is saved in `{bitcoindir}/blocks/blk_index_to_blk_recap.json` to allow for faster starts (see benchmark below) but doesn't yet support locking. Thus, it is highly recommended to run one instance of `brk_parser` at a time.
 
 ## Comparaison
 
