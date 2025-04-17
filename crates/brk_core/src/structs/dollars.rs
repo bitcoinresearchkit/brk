@@ -1,10 +1,10 @@
-use std::ops::{Add, Div};
+use std::ops::{Add, Div, Mul};
 
 use derive_deref::Deref;
 use serde::Serialize;
 use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
-use super::Cents;
+use super::{Bitcoin, Cents, Sats};
 
 #[derive(
     Debug,
@@ -66,5 +66,14 @@ impl Eq for Dollars {}
 impl Ord for Dollars {
     fn cmp(&self, other: &Self) -> std::cmp::Ordering {
         self.0.partial_cmp(&other.0).unwrap()
+    }
+}
+
+impl Mul<Bitcoin> for Dollars {
+    type Output = Dollars;
+    fn mul(self, rhs: Bitcoin) -> Self::Output {
+        Self::from(Cents::from(
+            u64::from(Sats::from(rhs)) * u64::from(Cents::from(self)) / u64::from(Sats::ONE_BTC),
+        ))
     }
 }

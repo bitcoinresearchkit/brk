@@ -6,7 +6,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use brk_core::CheckedSub;
+use brk_core::{Bitcoin, CheckedSub, Close, Dollars, Height, Sats, Txindex};
 use brk_exit::Exit;
 use brk_vec::{
     Compressed, DynamicVec, Error, GenericVec, Result, StoredIndex, StoredType, StoredVec, Version,
@@ -413,6 +413,78 @@ where
                 sum = sum.clone() + source.double_unwrap_cached_get(T2::from(i));
             });
             self.forced_push_at(i, sum, exit)
+        })?;
+
+        self.safe_flush(exit)
+    }
+}
+
+impl<I> ComputedVec<I, Bitcoin>
+where
+    I: StoredIndex,
+{
+    pub fn compute_from_sats(
+        &mut self,
+        max_from: I,
+        sats: &mut StoredVec<I, Sats>,
+        exit: &Exit,
+    ) -> Result<()> {
+        self.validate_computed_version_or_reset_file(
+            Version::ZERO + self.version() + sats.version(),
+        )?;
+
+        let index = max_from.min(I::from(self.len()));
+        sats.iter_from(index, |(i, sats, ..)| {
+            let (i, v) = (i, Bitcoin::from(sats));
+            self.forced_push_at(i, v, exit)
+        })?;
+
+        self.safe_flush(exit)
+    }
+}
+
+impl ComputedVec<Height, Dollars> {
+    pub fn compute_from_bitcoin(
+        &mut self,
+        max_from: Height,
+        bitcoin: &mut StoredVec<Height, Bitcoin>,
+        price: &mut StoredVec<Height, Close<Dollars>>,
+        exit: &Exit,
+    ) -> Result<()> {
+        self.validate_computed_version_or_reset_file(
+            Version::ZERO + self.version() + bitcoin.version(),
+        )?;
+
+        let index = max_from.min(Height::from(self.len()));
+        bitcoin.iter_from(index, |(i, bitcoin, ..)| {
+            let dollars = price.double_unwrap_cached_get(i);
+            let (i, v) = (i, *dollars * bitcoin);
+            self.forced_push_at(i, v, exit)
+        })?;
+
+        self.safe_flush(exit)
+    }
+}
+
+impl ComputedVec<Txindex, Dollars> {
+    pub fn compute_from_bitcoin(
+        &mut self,
+        max_from: Txindex,
+        bitcoin: &mut StoredVec<Txindex, Bitcoin>,
+        i_to_height: &mut StoredVec<Txindex, Height>,
+        price: &mut StoredVec<Height, Close<Dollars>>,
+        exit: &Exit,
+    ) -> Result<()> {
+        self.validate_computed_version_or_reset_file(
+            Version::ZERO + self.version() + bitcoin.version(),
+        )?;
+
+        let index = max_from.min(Txindex::from(self.len()));
+        bitcoin.iter_from(index, |(i, bitcoin, ..)| {
+            let height = i_to_height.double_unwrap_cached_get(i);
+            let dollars = price.double_unwrap_cached_get(height);
+            let (i, v) = (i, *dollars * bitcoin);
+            self.forced_push_at(i, v, exit)
         })?;
 
         self.safe_flush(exit)

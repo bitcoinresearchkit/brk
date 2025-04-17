@@ -30,6 +30,8 @@ where
     total: Option<ComputedVec<I, T>>,
 }
 
+const VERSION: Version = Version::ZERO;
+
 impl<I, T> ComputedVecBuilder<I, T>
 where
     I: StoredIndex,
@@ -38,6 +40,7 @@ where
     pub fn forced_import(
         path: &Path,
         name: &str,
+        version: Version,
         compressed: Compressed,
         options: StorableVecGeneatorOptions,
     ) -> color_eyre::Result<Self> {
@@ -67,50 +70,100 @@ where
             }
         };
 
+        let version = VERSION + version;
+
         let s = Self {
             first: options.first.then(|| {
-                ComputedVec::forced_import(&maybe_prefix("first"), Version::ZERO, compressed)
-                    .unwrap()
+                ComputedVec::forced_import(
+                    &maybe_prefix("first"),
+                    version + Version::ZERO,
+                    compressed,
+                )
+                .unwrap()
             }),
             last: options.last.then(|| {
                 ComputedVec::forced_import(
                     &path.join(format!("{key}_to_{name}")),
-                    Version::ZERO,
+                    version + Version::ZERO,
                     compressed,
                 )
                 .unwrap()
             }),
             min: options.min.then(|| {
-                ComputedVec::forced_import(&maybe_suffix("min"), Version::ZERO, compressed).unwrap()
+                ComputedVec::forced_import(
+                    &maybe_suffix("min"),
+                    version + Version::ZERO,
+                    compressed,
+                )
+                .unwrap()
             }),
             max: options.max.then(|| {
-                ComputedVec::forced_import(&maybe_suffix("max"), Version::ZERO, compressed).unwrap()
+                ComputedVec::forced_import(
+                    &maybe_suffix("max"),
+                    version + Version::ZERO,
+                    compressed,
+                )
+                .unwrap()
             }),
             median: options.median.then(|| {
-                ComputedVec::forced_import(&maybe_suffix("median"), Version::ZERO, compressed)
-                    .unwrap()
+                ComputedVec::forced_import(
+                    &maybe_suffix("median"),
+                    version + Version::ZERO,
+                    compressed,
+                )
+                .unwrap()
             }),
             average: options.average.then(|| {
-                ComputedVec::forced_import(&maybe_suffix("average"), Version::ZERO, compressed)
-                    .unwrap()
+                ComputedVec::forced_import(
+                    &maybe_suffix("average"),
+                    version + Version::ZERO,
+                    compressed,
+                )
+                .unwrap()
             }),
             sum: options.sum.then(|| {
-                ComputedVec::forced_import(&maybe_suffix("sum"), Version::ZERO, compressed).unwrap()
+                ComputedVec::forced_import(
+                    &maybe_suffix("sum"),
+                    version + Version::ZERO,
+                    compressed,
+                )
+                .unwrap()
             }),
             total: options.total.then(|| {
-                ComputedVec::forced_import(&prefix("total"), Version::ZERO, compressed).unwrap()
+                ComputedVec::forced_import(&prefix("total"), version + Version::ZERO, compressed)
+                    .unwrap()
             }),
             _90p: options._90p.then(|| {
-                ComputedVec::forced_import(&maybe_suffix("90p"), Version::ZERO, compressed).unwrap()
+                ComputedVec::forced_import(
+                    &maybe_suffix("90p"),
+                    version + Version::ZERO,
+                    compressed,
+                )
+                .unwrap()
             }),
             _75p: options._75p.then(|| {
-                ComputedVec::forced_import(&maybe_suffix("75p"), Version::ZERO, compressed).unwrap()
+                ComputedVec::forced_import(
+                    &maybe_suffix("75p"),
+                    version + Version::ZERO,
+                    compressed,
+                )
+                .unwrap()
             }),
             _25p: options._25p.then(|| {
-                ComputedVec::forced_import(&maybe_suffix("25p"), Version::ZERO, compressed).unwrap()
+                ComputedVec::forced_import(
+                    &maybe_suffix("25p"),
+                    version + Version::ZERO,
+                    compressed,
+                )
+                .unwrap()
             }),
             _10p: options._10p.then(|| {
-                ComputedVec::forced_import(&maybe_suffix("10p"), Version::ZERO, compressed).unwrap()
+                ComputedVec::forced_import(
+                    &maybe_suffix("10p"),
+                    version + Version::ZERO,
+                    compressed,
+                )
+                .unwrap()
             }),
         };
 

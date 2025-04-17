@@ -64,6 +64,6 @@ A state of the local chain is saved in `{bitcoindir}/blocks/blk_index_to_blk_rec
 | `0..=855_000` | 4mn 10s | 4mn 45s | > 2h |
 | `800_000..=855_000` | 0mn 52s (4mn 10s if first run) | 0mn 55s | > 2h |
 
-\* `blocks_iterator` is with the default config (and thus with `skip_prevout = false` which does a lot more than just iterate over blocks) so it isn't an apples to apples comparaison. Will update the benchmark with `skip_prevout = true` as soon as possible.
+\* `blocks_iterator` is with the default config (and thus with `skip_prevout = false` which does a lot more than just iterate over blocks) so it isn't an apples to apples comparaison and the numbers are misleading. You should expect much closer times. Will update the benchmark with `skip_prevout = true` as soon as possible.
 
 *Benchmarked on a Macbook Pro M3 Pro*

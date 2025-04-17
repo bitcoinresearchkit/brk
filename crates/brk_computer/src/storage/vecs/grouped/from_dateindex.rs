@@ -23,6 +23,8 @@ where
     pub decadeindex: ComputedVecBuilder<Decadeindex, T>,
 }
 
+const VERSION: Version = Version::ZERO;
+
 impl<T> ComputedVecsFromDateindex<T>
 where
     T: ComputedType + Ord + From<f64>,
@@ -35,8 +37,15 @@ where
         compressed: Compressed,
         options: StorableVecGeneatorOptions,
     ) -> color_eyre::Result<Self> {
-        let dateindex_extra =
-            ComputedVecBuilder::forced_import(path, name, compressed, options.copy_self_extra())?;
+        let version = VERSION + version;
+
+        let dateindex_extra = ComputedVecBuilder::forced_import(
+            path,
+            name,
+            version,
+            compressed,
+            options.copy_self_extra(),
+        )?;
 
         let options = options.remove_percentiles();
 
@@ -47,11 +56,17 @@ where
                 compressed,
             )?,
             dateindex_extra,
-            weekindex: ComputedVecBuilder::forced_import(path, name, compressed, options)?,
-            monthindex: ComputedVecBuilder::forced_import(path, name, compressed, options)?,
-            quarterindex: ComputedVecBuilder::forced_import(path, name, compressed, options)?,
-            yearindex: ComputedVecBuilder::forced_import(path, name, compressed, options)?,
-            decadeindex: ComputedVecBuilder::forced_import(path, name, compressed, options)?,
+            weekindex: ComputedVecBuilder::forced_import(path, name, version, compressed, options)?,
+            monthindex: ComputedVecBuilder::forced_import(
+                path, name, version, compressed, options,
+            )?,
+            quarterindex: ComputedVecBuilder::forced_import(
+                path, name, version, compressed, options,
+            )?,
+            yearindex: ComputedVecBuilder::forced_import(path, name, version, compressed, options)?,
+            decadeindex: ComputedVecBuilder::forced_import(
+                path, name, version, compressed, options,
+            )?,
         })
     }
 

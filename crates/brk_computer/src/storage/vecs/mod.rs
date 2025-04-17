@@ -5,12 +5,12 @@ use brk_fetcher::Fetcher;
 use brk_indexer::Indexer;
 use brk_vec::{AnyStoredVec, Compressed};
 
-mod base;
-mod blocks;
-mod grouped;
-mod indexes;
-mod marketprice;
-mod transactions;
+pub mod base;
+pub mod blocks;
+pub mod grouped;
+pub mod indexes;
+pub mod marketprice;
+pub mod transactions;
 
 use base::*;
 use indexes::*;
@@ -30,7 +30,7 @@ impl Vecs {
         Ok(Self {
             blocks: blocks::Vecs::forced_import(path, compressed)?,
             indexes: indexes::Vecs::forced_import(path, compressed)?,
-            transactions: transactions::Vecs::forced_import(path, compressed)?,
+            transactions: transactions::Vecs::forced_import(path, compressed, fetch)?,
             marketprice: fetch.then(|| marketprice::Vecs::forced_import(path, compressed).unwrap()),
         })
     }
@@ -47,9 +47,6 @@ impl Vecs {
         self.blocks
             .compute(indexer, &mut self.indexes, &starting_indexes, exit)?;
 
-        self.transactions
-            .compute(indexer, &mut self.indexes, &starting_indexes, exit)?;
-
         if let Some(marketprice) = self.marketprice.as_mut() {
             marketprice.compute(
                 indexer,
@@ -59,6 +56,14 @@ impl Vecs {
                 exit,
             )?;
         }
+
+        self.transactions.compute(
+            indexer,
+            &mut self.indexes,
+            &starting_indexes,
+            &mut self.marketprice.as_mut(),
+            exit,
+        )?;
 
         Ok(())
     }

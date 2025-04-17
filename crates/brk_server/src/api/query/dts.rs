@@ -32,7 +32,7 @@ impl DTS for Query<'static> {
         let indexes = Index::all();
 
         let mut contents = "//
-// File auto-generated, any modification will be overwritten
+// File auto-generated, any modifications will be overwritten
 //\n\n"
             .to_string();
 
