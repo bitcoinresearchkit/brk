@@ -111,548 +111,6 @@
  */
 
 /**
- type DefaultCohortOption = CohortOption<AnyPossibleCohortId>;
-
- interface CohortOption<Id extends AnyPossibleCohortId> {
-   name: string;
-   title: string;
-   datasetId: Id;
-   color: Color;
-   filenameAddon?: string;
- }
-
- type DefaultCohortOptions = CohortOptions<AnyPossibleCohortId>;
-
- interface CohortOptions<Id extends AnyPossibleCohortId> {
-   name: string;
-   title: string;
-   list: CohortOption<Id>[];
- }
-
- interface RatioOption {
-   color: Color;
-   // valueDatasetPath: AnyDatasetPath;
-   // ratioDatasetPath: AnyDatasetPath;
-   title: string;
- }
-
- interface RatioOptions {
-   title: string;
-   list: RatioOption[];
- }
-*/
-
-// function initGroups() {
-//   const xTermHolders = /** @type {const} */ ([
-//     {
-//       id: "sth",
-//       key: "sth",
-//       name: "Short Term Holders",
-//       legend: "Short Term Holders - STH",
-//     },
-//     {
-//       id: "lth",
-//       key: "lth",
-//       name: "Long Term Holders",
-//       legend: "Long Term Holders - LTH",
-//     },
-//   ]);
-
-//   const upTo = /** @type {const} */ ([
-//     {
-//       id: "up-to-1d",
-//       key: "up_to_1d",
-//       name: "Up To 1 Day",
-//       legend: "1D",
-//     },
-//     {
-//       id: "up-to-1w",
-//       key: "up_to_1w",
-//       name: "Up To 1 Week",
-//       legend: "1W",
-//     },
-//     {
-//       id: "up-to-1m",
-//       key: "up_to_1m",
-//       name: "Up To 1 Month",
-//       legend: "1M",
-//     },
-//     {
-//       id: "up-to-2m",
-//       key: "up_to_2m",
-//       name: "Up To 2 Months",
-//       legend: "2M",
-//     },
-//     {
-//       id: "up-to-3m",
-//       key: "up_to_3m",
-//       name: "Up To 3 Months",
-//       legend: "3M",
-//     },
-//     {
-//       id: "up-to-4m",
-//       key: "up_to_4m",
-//       name: "Up To 4 Months",
-//       legend: "4M",
-//     },
-//     {
-//       id: "up-to-5m",
-//       key: "up_to_5m",
-//       name: "Up To 5 Months",
-//       legend: "5M",
-//     },
-//     {
-//       id: "up-to-6m",
-//       key: "up_to_6m",
-//       name: "Up To 6 Months",
-//       legend: "6M",
-//     },
-//     {
-//       id: "up-to-1y",
-//       key: "up_to_1y",
-//       name: "Up To 1 Year",
-//       legend: "1Y",
-//     },
-//     {
-//       id: "up-to-2y",
-//       key: "up_to_2y",
-//       name: "Up To 2 Years",
-//       legend: "2Y",
-//     },
-//     {
-//       id: "up-to-3y",
-//       key: "up_to_3y",
-//       name: "Up To 3 Years",
-//       legend: "3Y",
-//     },
-//     {
-//       id: "up-to-5y",
-//       key: "up_to_5y",
-//       name: "Up To 5 Years",
-//       legend: "5Y",
-//     },
-//     {
-//       id: "up-to-7y",
-//       key: "up_to_7y",
-//       name: "Up To 7 Years",
-//       legend: "7Y",
-//     },
-//     {
-//       id: "up-to-10y",
-//       key: "up_to_10y",
-//       name: "Up To 10 Years",
-//       legend: "10Y",
-//     },
-//     {
-//       id: "up-to-15y",
-//       key: "up_to_15y",
-//       name: "Up To 15 Years",
-//       legend: "15Y",
-//     },
-//   ]);
-
-//   const fromXToY = /** @type {const} */ ([
-//     {
-//       id: "up-to-1d",
-//       key: "up_to_1d",
-//       name: "24h",
-//       legend: "24h",
-//     },
-//     {
-//       id: "from-1d-to-1w",
-//       key: "from_1d_to_1w",
-//       name: "From 1 Day To 1 Week",
-//       legend: "1D — 1W",
-//     },
-//     {
-//       id: "from-1w-to-1m",
-//       key: "from_1w_to_1m",
-//       name: "From 1 Week To 1 Month",
-//       legend: "1W — 1M",
-//     },
-//     {
-//       id: "from-1m-to-3m",
-//       key: "from_1m_to_3m",
-//       name: "From 1 Month To 3 Months",
-//       legend: "1M — 3M",
-//     },
-//     {
-//       id: "from-3m-to-6m",
-//       key: "from_3m_to_6m",
-//       name: "From 3 Months To 6 Months",
-//       legend: "3M — 6M",
-//     },
-//     {
-//       id: "from-6m-to-1y",
-//       key: "from_6m_to_1y",
-//       name: "From 6 Months To 1 Year",
-//       legend: "6M — 1Y",
-//     },
-//     {
-//       id: "from-1y-to-2y",
-//       key: "from_1y_to_2y",
-//       name: "From 1 Year To 2 Years",
-//       legend: "1Y — 2Y",
-//     },
-//     {
-//       id: "from-2y-to-3y",
-//       key: "from_2y_to_3y",
-//       name: "From 2 Years To 3 Years",
-//       legend: "2Y — 3Y",
-//     },
-//     {
-//       id: "from-3y-to-5y",
-//       key: "from_3y_to_5y",
-//       name: "From 3 Years To 5 Years",
-//       legend: "3Y — 5Y",
-//     },
-//     {
-//       id: "from-5y-to-7y",
-//       key: "from_5y_to_7y",
-//       name: "From 5 Years To 7 Years",
-//       legend: "5Y — 7Y",
-//     },
-//     {
-//       id: "from-7y-to-10y",
-//       key: "from_7y_to_10y",
-//       name: "From 7 Years To 10 Years",
-//       legend: "7Y — 10Y",
-//     },
-//     {
-//       id: "from-10y-to-15y",
-//       key: "from_10y_to_15y",
-//       name: "From 10 Years To 15 Years",
-//       legend: "10Y — 15Y",
-//     },
-//     {
-//       id: "from-15y",
-//       key: "from_15y",
-//       name: "From 15 Years To End",
-//       legend: "15Y — End",
-//     },
-//   ]);
-
-//   const fromX = /** @type {const} */ ([
-//     {
-//       id: "from-1y",
-//       key: "from_1y",
-//       name: "From 1 Year",
-//       legend: "1Y+",
-//     },
-//     {
-//       id: "from-2y",
-//       key: "from_2y",
-//       name: "From 2 Years",
-//       legend: "2Y+",
-//     },
-//     {
-//       id: "from-4y",
-//       key: "from_4y",
-//       name: "From 4 Years",
-//       legend: "4Y+",
-//     },
-//     {
-//       id: "from-10y",
-//       key: "from_10y",
-//       name: "From 10 Years",
-//       legend: "10Y+",
-//     },
-//     {
-//       id: "from-15y",
-//       key: "from_15y",
-//       name: "From 15 Years",
-//       legend: "15Y+",
-//     },
-//   ]);
-
-//   const epochs = /** @type {const} */ ([
-//     { id: "epoch-1", key: "epoch_1", name: "Epoch 1" },
-//     { id: "epoch-2", key: "epoch_2", name: "Epoch 2" },
-//     { id: "epoch-3", key: "epoch_3", name: "Epoch 3" },
-//     { id: "epoch-4", key: "epoch_4", name: "Epoch 4" },
-//     { id: "epoch-5", key: "epoch_5", name: "Epoch 5" },
-//   ]);
-
-//   const age = /** @type {const} */ ([
-//     {
-//       key: "",
-//       id: "",
-//       name: "",
-//     },
-//     ...xTermHolders,
-//     ...upTo,
-//     ...fromXToY,
-//     ...fromX,
-//     ...epochs,
-//   ]);
-
-//   const size = /** @type {const} */ ([
-//     {
-//       key: "plankton",
-//       name: "Plankton",
-//       size: "1 sat to 0.1 BTC",
-//     },
-//     {
-//       key: "shrimp",
-//       name: "Shrimp",
-//       size: "0.1 sat to 1 BTC",
-//     },
-//     { key: "crab", name: "Crab", size: "1 BTC to 10 BTC" },
-//     { key: "fish", name: "Fish", size: "10 BTC to 100 BTC" },
-//     { key: "shark", name: "Shark", size: "100 BTC to 1000 BTC" },
-//     { key: "whale", name: "Whale", size: "1000 BTC to 10 000 BTC" },
-//     {
-//       key: "humpback",
-//       name: "Humpback",
-//       size: "10 000 BTC to 100 000 BTC",
-//     },
-//     {
-//       key: "megalodon",
-//       name: "Megalodon",
-//       size: "More than 100 000 BTC",
-//     },
-//   ]);
-
-//   const type = /** @type {const} */ ([
-//     { key: "p2pk", name: "P2PK" },
-//     { key: "p2pkh", name: "P2PKH" },
-//     { key: "p2sh", name: "P2SH" },
-//     { key: "p2wpkh", name: "P2WPKH" },
-//     { key: "p2wsh", name: "P2WSH" },
-//     { key: "p2tr", name: "P2TR" },
-//   ]);
-
-//   const address = /** @type {const} */ ([...size, ...type]);
-
-//   const liquidities = /** @type {const} */ ([
-//     {
-//       key: "illiquid",
-//       id: "illiquid",
-//       name: "Illiquid",
-//     },
-//     { key: "liquid", id: "liquid", name: "Liquid" },
-//     {
-//       key: "highly_liquid",
-//       id: "highly-liquid",
-//       name: "Highly Liquid",
-//     },
-//   ]);
-
-//   const averages = /** @type {const} */ ([
-//     { name: "1 Week", key: "1w", days: 7 },
-//     { name: "8 Days", key: "8d", days: 8 },
-//     { name: "13 Days", key: "13d", days: 13 },
-//     { name: "21 Days", key: "21d", days: 21 },
-//     { name: "1 Month", key: "1m", days: 30 },
-//     { name: "34 Days", key: "34d", days: 34 },
-//     { name: "55 Days", key: "55d", days: 55 },
-//     { name: "89 Days", key: "89d", days: 89 },
-//     { name: "144 Days", key: "144d", days: 144 },
-//     { name: "1 Year", key: "1y", days: 365 },
-//     { name: "2 Years", key: "2y", days: 2 * 365 },
-//     { name: "200 Weeks", key: "200w", days: 200 * 7 },
-//     { name: "4 Years", key: "4y", days: 4 * 365 },
-//   ]);
-
-//   const totalReturns = /** @type {const} */ ([
-//     { name: "1 Day", key: "1d" },
-//     { name: "1 Month", key: "1m" },
-//     { name: "6 Months", key: "6m" },
-//     { name: "1 Year", key: "1y" },
-//     { name: "2 Years", key: "2y" },
-//     { name: "3 Years", key: "3y" },
-//     { name: "4 Years", key: "4y" },
-//     { name: "6 Years", key: "6y" },
-//     { name: "8 Years", key: "8y" },
-//     { name: "10 Years", key: "10y" },
-//   ]);
-
-//   const compoundReturns = /** @type {const} */ ([
-//     { name: "4 Years", key: "4y" },
-//   ]);
-
-//   const percentiles = /** @type {const} */ ([
-//     {
-//       key: "median_price_paid",
-//       id: "median-price-paid",
-//       name: "Median",
-//       title: "Median Paid",
-//       value: 50,
-//     },
-//     {
-//       key: "95p_price_paid",
-//       id: "95p-price-paid",
-//       name: `95%`,
-//       title: `95th Percentile Paid`,
-//       value: 95,
-//     },
-//     {
-//       key: "90p_price_paid",
-//       id: "90p-price-paid",
-//       name: `90%`,
-//       title: `90th Percentile Paid`,
-//       value: 90,
-//     },
-//     {
-//       key: "85p_price_paid",
-//       id: "85p-price-paid",
-//       name: `85%`,
-//       title: `85th Percentile Paid`,
-//       value: 85,
-//     },
-//     {
-//       key: "80p_price_paid",
-//       id: "80p-price-paid",
-//       name: `80%`,
-//       title: `80th Percentile Paid`,
-//       value: 80,
-//     },
-//     {
-//       key: "75p_price_paid",
-//       id: "75p-price-paid",
-//       name: `75%`,
-//       title: `75th Percentile Paid`,
-//       value: 75,
-//     },
-//     {
-//       key: "70p_price_paid",
-//       id: "70p-price-paid",
-//       name: `70%`,
-//       title: `70th Percentile Paid`,
-//       value: 70,
-//     },
-//     {
-//       key: "65p_price_paid",
-//       id: "65p-price-paid",
-//       name: `65%`,
-//       title: `65th Percentile Paid`,
-//       value: 65,
-//     },
-//     {
-//       key: "60p_price_paid",
-//       id: "60p-price-paid",
-//       name: `60%`,
-//       title: `60th Percentile Paid`,
-//       value: 60,
-//     },
-//     {
-//       key: "55p_price_paid",
-//       id: "55p-price-paid",
-//       name: `55%`,
-//       title: `55th Percentile Paid`,
-//       value: 55,
-//     },
-//     {
-//       key: "45p_price_paid",
-//       id: "45p-price-paid",
-//       name: `45%`,
-//       title: `45th Percentile Paid`,
-//       value: 45,
-//     },
-//     {
-//       key: "40p_price_paid",
-//       id: "40p-price-paid",
-//       name: `40%`,
-//       title: `40th Percentile Paid`,
-//       value: 40,
-//     },
-//     {
-//       key: "35p_price_paid",
-//       id: "35p-price-paid",
-//       name: `35%`,
-//       title: `35th Percentile Paid`,
-//       value: 35,
-//     },
-//     {
-//       key: "30p_price_paid",
-//       id: "30p-price-paid",
-//       name: `30%`,
-//       title: `30th Percentile Paid`,
-//       value: 30,
-//     },
-//     {
-//       key: "25p_price_paid",
-//       id: "25p-price-paid",
-//       name: `25%`,
-//       title: `25th Percentile Paid`,
-//       value: 25,
-//     },
-//     {
-//       key: "20p_price_paid",
-//       id: "20p-price-paid",
-//       name: `20%`,
-//       title: `20th Percentile Paid`,
-//       value: 20,
-//     },
-//     {
-//       key: "15p_price_paid",
-//       id: "15p-price-paid",
-//       name: `15%`,
-//       title: `15th Percentile Paid`,
-//       value: 15,
-//     },
-//     {
-//       key: "10p_price_paid",
-//       id: "10p-price-paid",
-//       name: `10%`,
-//       title: `10th Percentile Paid`,
-//       value: 10,
-//     },
-//     {
-//       key: "05p_price_paid",
-//       id: "05p-price-paid",
-//       name: `5%`,
-//       title: `5th Percentile Paid`,
-//       value: 5,
-//     },
-//   ]);
-
-//   return {
-//     xTermHolders,
-//     upTo,
-//     fromX,
-//     fromXToY,
-//     epochs,
-//     age,
-//     type,
-//     size,
-//     address,
-//     liquidities,
-//     averages,
-//     totalReturns,
-//     compoundReturns,
-//     percentiles,
-//   };
-// }
-// /**
-//  * @typedef {ReturnType<typeof initGroups>} Groups
-//  *
-//  * @typedef {Groups["age"][number]["id"]} AgeCohortId
-//  *
-//  * @typedef {Exclude<AgeCohortId, "">} AgeCohortIdSub
-//  *
-//  * @typedef {Groups["address"][number]["key"]} AddressCohortId
-//  *
-//  * @typedef {Groups["liquidities"][number]["id"]} LiquidityId
-//  *
-//  * @typedef {AgeCohortId | AddressCohortId} AnyCohortId
-//  *
-//  * @typedef {AddressCohortId | LiquidityId} AnyAddressCohortId
-//  *
-//  * @typedef {AnyCohortId | LiquidityId} AnyPossibleCohortId
-//  *
-//  * @typedef {'' | `${AgeCohortIdSub | AddressCohortId | LiquidityId}-`} AnyDatasetPrefix
-//  *
-//  * @typedef {Groups["averages"][number]["key"]} AverageName
-//  *
-//  * @typedef {Groups["totalReturns"][number]["key"]} TotalReturnKey
-//  *
-//  * @typedef {Groups["compoundReturns"][number]["key"]} CompoundReturnKey
-//  *
-//  * @typedef {Groups["percentiles"][number]["id"]} PercentileId
-//  */
-
-/**
  * @param {Colors} colors
  * @returns {PartialOptionsTree}
  */
@@ -1575,3 +1033,545 @@ export function initOptions({
 //     }
 //   }
 // }
+
+/**
+ type DefaultCohortOption = CohortOption<AnyPossibleCohortId>;
+
+ interface CohortOption<Id extends AnyPossibleCohortId> {
+   name: string;
+   title: string;
+   datasetId: Id;
+   color: Color;
+   filenameAddon?: string;
+ }
+
+ type DefaultCohortOptions = CohortOptions<AnyPossibleCohortId>;
+
+ interface CohortOptions<Id extends AnyPossibleCohortId> {
+   name: string;
+   title: string;
+   list: CohortOption<Id>[];
+ }
+
+ interface RatioOption {
+   color: Color;
+   // valueDatasetPath: AnyDatasetPath;
+   // ratioDatasetPath: AnyDatasetPath;
+   title: string;
+ }
+
+ interface RatioOptions {
+   title: string;
+   list: RatioOption[];
+ }
+*/
+
+// function initGroups() {
+//   const xTermHolders = /** @type {const} */ ([
+//     {
+//       id: "sth",
+//       key: "sth",
+//       name: "Short Term Holders",
+//       legend: "Short Term Holders - STH",
+//     },
+//     {
+//       id: "lth",
+//       key: "lth",
+//       name: "Long Term Holders",
+//       legend: "Long Term Holders - LTH",
+//     },
+//   ]);
+
+//   const upTo = /** @type {const} */ ([
+//     {
+//       id: "up-to-1d",
+//       key: "up_to_1d",
+//       name: "Up To 1 Day",
+//       legend: "1D",
+//     },
+//     {
+//       id: "up-to-1w",
+//       key: "up_to_1w",
+//       name: "Up To 1 Week",
+//       legend: "1W",
+//     },
+//     {
+//       id: "up-to-1m",
+//       key: "up_to_1m",
+//       name: "Up To 1 Month",
+//       legend: "1M",
+//     },
+//     {
+//       id: "up-to-2m",
+//       key: "up_to_2m",
+//       name: "Up To 2 Months",
+//       legend: "2M",
+//     },
+//     {
+//       id: "up-to-3m",
+//       key: "up_to_3m",
+//       name: "Up To 3 Months",
+//       legend: "3M",
+//     },
+//     {
+//       id: "up-to-4m",
+//       key: "up_to_4m",
+//       name: "Up To 4 Months",
+//       legend: "4M",
+//     },
+//     {
+//       id: "up-to-5m",
+//       key: "up_to_5m",
+//       name: "Up To 5 Months",
+//       legend: "5M",
+//     },
+//     {
+//       id: "up-to-6m",
+//       key: "up_to_6m",
+//       name: "Up To 6 Months",
+//       legend: "6M",
+//     },
+//     {
+//       id: "up-to-1y",
+//       key: "up_to_1y",
+//       name: "Up To 1 Year",
+//       legend: "1Y",
+//     },
+//     {
+//       id: "up-to-2y",
+//       key: "up_to_2y",
+//       name: "Up To 2 Years",
+//       legend: "2Y",
+//     },
+//     {
+//       id: "up-to-3y",
+//       key: "up_to_3y",
+//       name: "Up To 3 Years",
+//       legend: "3Y",
+//     },
+//     {
+//       id: "up-to-5y",
+//       key: "up_to_5y",
+//       name: "Up To 5 Years",
+//       legend: "5Y",
+//     },
+//     {
+//       id: "up-to-7y",
+//       key: "up_to_7y",
+//       name: "Up To 7 Years",
+//       legend: "7Y",
+//     },
+//     {
+//       id: "up-to-10y",
+//       key: "up_to_10y",
+//       name: "Up To 10 Years",
+//       legend: "10Y",
+//     },
+//     {
+//       id: "up-to-15y",
+//       key: "up_to_15y",
+//       name: "Up To 15 Years",
+//       legend: "15Y",
+//     },
+//   ]);
+
+//   const fromXToY = /** @type {const} */ ([
+//     {
+//       id: "up-to-1d",
+//       key: "up_to_1d",
+//       name: "24h",
+//       legend: "24h",
+//     },
+//     {
+//       id: "from-1d-to-1w",
+//       key: "from_1d_to_1w",
+//       name: "From 1 Day To 1 Week",
+//       legend: "1D — 1W",
+//     },
+//     {
+//       id: "from-1w-to-1m",
+//       key: "from_1w_to_1m",
+//       name: "From 1 Week To 1 Month",
+//       legend: "1W — 1M",
+//     },
+//     {
+//       id: "from-1m-to-3m",
+//       key: "from_1m_to_3m",
+//       name: "From 1 Month To 3 Months",
+//       legend: "1M — 3M",
+//     },
+//     {
+//       id: "from-3m-to-6m",
+//       key: "from_3m_to_6m",
+//       name: "From 3 Months To 6 Months",
+//       legend: "3M — 6M",
+//     },
+//     {
+//       id: "from-6m-to-1y",
+//       key: "from_6m_to_1y",
+//       name: "From 6 Months To 1 Year",
+//       legend: "6M — 1Y",
+//     },
+//     {
+//       id: "from-1y-to-2y",
+//       key: "from_1y_to_2y",
+//       name: "From 1 Year To 2 Years",
+//       legend: "1Y — 2Y",
+//     },
+//     {
+//       id: "from-2y-to-3y",
+//       key: "from_2y_to_3y",
+//       name: "From 2 Years To 3 Years",
+//       legend: "2Y — 3Y",
+//     },
+//     {
+//       id: "from-3y-to-5y",
+//       key: "from_3y_to_5y",
+//       name: "From 3 Years To 5 Years",
+//       legend: "3Y — 5Y",
+//     },
+//     {
+//       id: "from-5y-to-7y",
+//       key: "from_5y_to_7y",
+//       name: "From 5 Years To 7 Years",
+//       legend: "5Y — 7Y",
+//     },
+//     {
+//       id: "from-7y-to-10y",
+//       key: "from_7y_to_10y",
+//       name: "From 7 Years To 10 Years",
+//       legend: "7Y — 10Y",
+//     },
+//     {
+//       id: "from-10y-to-15y",
+//       key: "from_10y_to_15y",
+//       name: "From 10 Years To 15 Years",
+//       legend: "10Y — 15Y",
+//     },
+//     {
+//       id: "from-15y",
+//       key: "from_15y",
+//       name: "From 15 Years To End",
+//       legend: "15Y — End",
+//     },
+//   ]);
+
+//   const fromX = /** @type {const} */ ([
+//     {
+//       id: "from-1y",
+//       key: "from_1y",
+//       name: "From 1 Year",
+//       legend: "1Y+",
+//     },
+//     {
+//       id: "from-2y",
+//       key: "from_2y",
+//       name: "From 2 Years",
+//       legend: "2Y+",
+//     },
+//     {
+//       id: "from-4y",
+//       key: "from_4y",
+//       name: "From 4 Years",
+//       legend: "4Y+",
+//     },
+//     {
+//       id: "from-10y",
+//       key: "from_10y",
+//       name: "From 10 Years",
+//       legend: "10Y+",
+//     },
+//     {
+//       id: "from-15y",
+//       key: "from_15y",
+//       name: "From 15 Years",
+//       legend: "15Y+",
+//     },
+//   ]);
+
+//   const epochs = /** @type {const} */ ([
+//     { id: "epoch-1", key: "epoch_1", name: "Epoch 1" },
+//     { id: "epoch-2", key: "epoch_2", name: "Epoch 2" },
+//     { id: "epoch-3", key: "epoch_3", name: "Epoch 3" },
+//     { id: "epoch-4", key: "epoch_4", name: "Epoch 4" },
+//     { id: "epoch-5", key: "epoch_5", name: "Epoch 5" },
+//   ]);
+
+//   const age = /** @type {const} */ ([
+//     {
+//       key: "",
+//       id: "",
+//       name: "",
+//     },
+//     ...xTermHolders,
+//     ...upTo,
+//     ...fromXToY,
+//     ...fromX,
+//     ...epochs,
+//   ]);
+
+//   const size = /** @type {const} */ ([
+//     {
+//       key: "plankton",
+//       name: "Plankton",
+//       size: "1 sat to 0.1 BTC",
+//     },
+//     {
+//       key: "shrimp",
+//       name: "Shrimp",
+//       size: "0.1 sat to 1 BTC",
+//     },
+//     { key: "crab", name: "Crab", size: "1 BTC to 10 BTC" },
+//     { key: "fish", name: "Fish", size: "10 BTC to 100 BTC" },
+//     { key: "shark", name: "Shark", size: "100 BTC to 1000 BTC" },
+//     { key: "whale", name: "Whale", size: "1000 BTC to 10 000 BTC" },
+//     {
+//       key: "humpback",
+//       name: "Humpback",
+//       size: "10 000 BTC to 100 000 BTC",
+//     },
+//     {
+//       key: "megalodon",
+//       name: "Megalodon",
+//       size: "More than 100 000 BTC",
+//     },
+//   ]);
+
+//   const type = /** @type {const} */ ([
+//     { key: "p2pk", name: "P2PK" },
+//     { key: "p2pkh", name: "P2PKH" },
+//     { key: "p2sh", name: "P2SH" },
+//     { key: "p2wpkh", name: "P2WPKH" },
+//     { key: "p2wsh", name: "P2WSH" },
+//     { key: "p2tr", name: "P2TR" },
+//   ]);
+
+//   const address = /** @type {const} */ ([...size, ...type]);
+
+//   const liquidities = /** @type {const} */ ([
+//     {
+//       key: "illiquid",
+//       id: "illiquid",
+//       name: "Illiquid",
+//     },
+//     { key: "liquid", id: "liquid", name: "Liquid" },
+//     {
+//       key: "highly_liquid",
+//       id: "highly-liquid",
+//       name: "Highly Liquid",
+//     },
+//   ]);
+
+//   const averages = /** @type {const} */ ([
+//     { name: "1 Week", key: "1w", days: 7 },
+//     { name: "8 Days", key: "8d", days: 8 },
+//     { name: "13 Days", key: "13d", days: 13 },
+//     { name: "21 Days", key: "21d", days: 21 },
+//     { name: "1 Month", key: "1m", days: 30 },
+//     { name: "34 Days", key: "34d", days: 34 },
+//     { name: "55 Days", key: "55d", days: 55 },
+//     { name: "89 Days", key: "89d", days: 89 },
+//     { name: "144 Days", key: "144d", days: 144 },
+//     { name: "1 Year", key: "1y", days: 365 },
+//     { name: "2 Years", key: "2y", days: 2 * 365 },
+//     { name: "200 Weeks", key: "200w", days: 200 * 7 },
+//     { name: "4 Years", key: "4y", days: 4 * 365 },
+//   ]);
+
+//   const totalReturns = /** @type {const} */ ([
+//     { name: "1 Day", key: "1d" },
+//     { name: "1 Month", key: "1m" },
+//     { name: "6 Months", key: "6m" },
+//     { name: "1 Year", key: "1y" },
+//     { name: "2 Years", key: "2y" },
+//     { name: "3 Years", key: "3y" },
+//     { name: "4 Years", key: "4y" },
+//     { name: "6 Years", key: "6y" },
+//     { name: "8 Years", key: "8y" },
+//     { name: "10 Years", key: "10y" },
+//   ]);
+
+//   const compoundReturns = /** @type {const} */ ([
+//     { name: "4 Years", key: "4y" },
+//   ]);
+
+//   const percentiles = /** @type {const} */ ([
+//     {
+//       key: "median_price_paid",
+//       id: "median-price-paid",
+//       name: "Median",
+//       title: "Median Paid",
+//       value: 50,
+//     },
+//     {
+//       key: "95p_price_paid",
+//       id: "95p-price-paid",
+//       name: `95%`,
+//       title: `95th Percentile Paid`,
+//       value: 95,
+//     },
+//     {
+//       key: "90p_price_paid",
+//       id: "90p-price-paid",
+//       name: `90%`,
+//       title: `90th Percentile Paid`,
+//       value: 90,
+//     },
+//     {
+//       key: "85p_price_paid",
+//       id: "85p-price-paid",
+//       name: `85%`,
+//       title: `85th Percentile Paid`,
+//       value: 85,
+//     },
+//     {
+//       key: "80p_price_paid",
+//       id: "80p-price-paid",
+//       name: `80%`,
+//       title: `80th Percentile Paid`,
+//       value: 80,
+//     },
+//     {
+//       key: "75p_price_paid",
+//       id: "75p-price-paid",
+//       name: `75%`,
+//       title: `75th Percentile Paid`,
+//       value: 75,
+//     },
+//     {
+//       key: "70p_price_paid",
+//       id: "70p-price-paid",
+//       name: `70%`,
+//       title: `70th Percentile Paid`,
+//       value: 70,
+//     },
+//     {
+//       key: "65p_price_paid",
+//       id: "65p-price-paid",
+//       name: `65%`,
+//       title: `65th Percentile Paid`,
+//       value: 65,
+//     },
+//     {
+//       key: "60p_price_paid",
+//       id: "60p-price-paid",
+//       name: `60%`,
+//       title: `60th Percentile Paid`,
+//       value: 60,
+//     },
+//     {
+//       key: "55p_price_paid",
+//       id: "55p-price-paid",
+//       name: `55%`,
+//       title: `55th Percentile Paid`,
+//       value: 55,
+//     },
+//     {
+//       key: "45p_price_paid",
+//       id: "45p-price-paid",
+//       name: `45%`,
+//       title: `45th Percentile Paid`,
+//       value: 45,
+//     },
+//     {
+//       key: "40p_price_paid",
+//       id: "40p-price-paid",
+//       name: `40%`,
+//       title: `40th Percentile Paid`,
+//       value: 40,
+//     },
+//     {
+//       key: "35p_price_paid",
+//       id: "35p-price-paid",
+//       name: `35%`,
+//       title: `35th Percentile Paid`,
+//       value: 35,
+//     },
+//     {
+//       key: "30p_price_paid",
+//       id: "30p-price-paid",
+//       name: `30%`,
+//       title: `30th Percentile Paid`,
+//       value: 30,
+//     },
+//     {
+//       key: "25p_price_paid",
+//       id: "25p-price-paid",
+//       name: `25%`,
+//       title: `25th Percentile Paid`,
+//       value: 25,
+//     },
+//     {
+//       key: "20p_price_paid",
+//       id: "20p-price-paid",
+//       name: `20%`,
+//       title: `20th Percentile Paid`,
+//       value: 20,
+//     },
+//     {
+//       key: "15p_price_paid",
+//       id: "15p-price-paid",
+//       name: `15%`,
+//       title: `15th Percentile Paid`,
+//       value: 15,
+//     },
+//     {
+//       key: "10p_price_paid",
+//       id: "10p-price-paid",
+//       name: `10%`,
+//       title: `10th Percentile Paid`,
+//       value: 10,
+//     },
+//     {
+//       key: "05p_price_paid",
+//       id: "05p-price-paid",
+//       name: `5%`,
+//       title: `5th Percentile Paid`,
+//       value: 5,
+//     },
+//   ]);
+
+//   return {
+//     xTermHolders,
+//     upTo,
+//     fromX,
+//     fromXToY,
+//     epochs,
+//     age,
+//     type,
+//     size,
+//     address,
+//     liquidities,
+//     averages,
+//     totalReturns,
+//     compoundReturns,
+//     percentiles,
+//   };
+// }
+// /**
+//  * @typedef {ReturnType<typeof initGroups>} Groups
+//  *
+//  * @typedef {Groups["age"][number]["id"]} AgeCohortId
+//  *
+//  * @typedef {Exclude<AgeCohortId, "">} AgeCohortIdSub
+//  *
+//  * @typedef {Groups["address"][number]["key"]} AddressCohortId
+//  *
+//  * @typedef {Groups["liquidities"][number]["id"]} LiquidityId
+//  *
+//  * @typedef {AgeCohortId | AddressCohortId} AnyCohortId
+//  *
+//  * @typedef {AddressCohortId | LiquidityId} AnyAddressCohortId
+//  *
+//  * @typedef {AnyCohortId | LiquidityId} AnyPossibleCohortId
+//  *
+//  * @typedef {'' | `${AgeCohortIdSub | AddressCohortId | LiquidityId}-`} AnyDatasetPrefix
+//  *
+//  * @typedef {Groups["averages"][number]["key"]} AverageName
+//  *
+//  * @typedef {Groups["totalReturns"][number]["key"]} TotalReturnKey
+//  *
+//  * @typedef {Groups["compoundReturns"][number]["key"]} CompoundReturnKey
+//  *
+//  * @typedef {Groups["percentiles"][number]["id"]} PercentileId
+//  */
