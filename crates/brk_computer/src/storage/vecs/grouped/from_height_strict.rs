@@ -20,6 +20,8 @@ where
     // TODO: pub halvingepoch: StorableVecGeneator<Halvingepoch, T>,
 }
 
+const VERSION: Version = Version::ZERO;
+
 impl<T> ComputedVecsFromHeightStrict<T>
 where
     T: ComputedType + Ord + From<f64>,
@@ -32,22 +34,31 @@ where
         compressed: Compressed,
         options: StorableVecGeneatorOptions,
     ) -> color_eyre::Result<Self> {
+        let version = VERSION + version;
+
         let height = ComputedVec::forced_import(
             &path.join(format!("height_to_{name}")),
             version,
             compressed,
         )?;
 
-        let height_extra =
-            ComputedVecBuilder::forced_import(path, name, compressed, options.copy_self_extra())?;
+        let height_extra = ComputedVecBuilder::forced_import(
+            path,
+            name,
+            version,
+            compressed,
+            options.copy_self_extra(),
+        )?;
 
         let options = options.remove_percentiles();
 
         Ok(Self {
             height,
             height_extra,
-            difficultyepoch: ComputedVecBuilder::forced_import(path, name, compressed, options)?,
-            // halvingepoch: StorableVecGeneator::forced_import(path, name, compressed, options)?,
+            difficultyepoch: ComputedVecBuilder::forced_import(
+                path, name, version, compressed, options,
+            )?,
+            // halvingepoch: StorableVecGeneator::forced_import(path, name, version, compressed, options)?,
         })
     }
 

@@ -11,14 +11,17 @@ use brk_vec::{Compressed, DynamicVec, StoredIndex, Version};
 
 use super::{
     ComputedVec, Indexes,
-    grouped::{ComputedVecsFromHeight, ComputedVecsFromTxindex, StorableVecGeneatorOptions},
-    indexes,
+    grouped::{
+        ComputedValueVecsFromHeight, ComputedValueVecsFromTxindex, ComputedVecsFromHeight,
+        ComputedVecsFromTxindex, StorableVecGeneatorOptions,
+    },
+    indexes, marketprice,
 };
 
 #[derive(Clone)]
 pub struct Vecs {
     pub indexes_to_tx_count: ComputedVecsFromHeight<StoredU64>,
-    pub indexes_to_fee: ComputedVecsFromTxindex<Sats>,
+    pub indexes_to_fee: ComputedValueVecsFromTxindex,
     pub indexes_to_feerate: ComputedVecsFromTxindex<Feerate>,
     pub indexes_to_input_value: ComputedVecsFromTxindex<Sats>,
     pub indexes_to_output_value: ComputedVecsFromTxindex<Sats>,
@@ -37,12 +40,16 @@ pub struct Vecs {
     pub txindex_to_weight: ComputedVec<Txindex, Weight>,
     /// Value == 0 when Coinbase
     pub txinindex_to_value: ComputedVec<Txinindex, Sats>,
-    pub indexes_to_subsidy: ComputedVecsFromHeight<Sats>,
-    pub indexes_to_coinbase: ComputedVecsFromHeight<Sats>,
+    pub indexes_to_subsidy: ComputedValueVecsFromHeight,
+    pub indexes_to_coinbase: ComputedValueVecsFromHeight,
 }
 
 impl Vecs {
-    pub fn forced_import(path: &Path, compressed: Compressed) -> color_eyre::Result<Self> {
+    pub fn forced_import(
+        path: &Path,
+        compressed: Compressed,
+        compute_dollars: bool,
+    ) -> color_eyre::Result<Self> {
         fs::create_dir_all(path)?;
 
         Ok(Self {
@@ -142,7 +149,7 @@ impl Vecs {
                     .add_sum()
                     .add_total(),
             )?,
-            indexes_to_fee: ComputedVecsFromTxindex::forced_import(
+            indexes_to_fee: ComputedValueVecsFromTxindex::forced_import(
                 path,
                 "fee",
                 true,
@@ -154,6 +161,7 @@ impl Vecs {
                     .add_percentiles()
                     .add_minmax()
                     .add_average(),
+                compute_dollars,
             )?,
             indexes_to_feerate: ComputedVecsFromTxindex::forced_import(
                 path,
@@ -198,7 +206,7 @@ impl Vecs {
                     .add_minmax()
                     .add_average(),
             )?,
-            indexes_to_subsidy: ComputedVecsFromHeight::forced_import(
+            indexes_to_subsidy: ComputedValueVecsFromHeight::forced_import(
                 path,
                 "subsidy",
                 true,
@@ -210,8 +218,9 @@ impl Vecs {
                     .add_total()
                     .add_minmax()
                     .add_average(),
+                compute_dollars,
             )?,
-            indexes_to_coinbase: ComputedVecsFromHeight::forced_import(
+            indexes_to_coinbase: ComputedValueVecsFromHeight::forced_import(
                 path,
                 "coinbase",
                 true,
@@ -223,6 +232,7 @@ impl Vecs {
                     .add_percentiles()
                     .add_minmax()
                     .add_average(),
+                compute_dollars,
             )?,
         })
     }
@@ -232,6 +242,7 @@ impl Vecs {
         indexer: &mut Indexer,
         indexes: &mut indexes::Vecs,
         starting_indexes: &Indexes,
+        marketprices: &mut Option<&mut marketprice::Vecs>,
         exit: &Exit,
     ) -> color_eyre::Result<()> {
         self.indexes_to_tx_count.compute_all(
@@ -403,6 +414,7 @@ impl Vecs {
         self.indexes_to_fee.compute_all(
             indexer,
             indexes,
+            marketprices,
             starting_indexes,
             exit,
             |vec, _, _, starting_indexes, exit| {
@@ -441,7 +453,7 @@ impl Vecs {
             |vec, _, _, starting_indexes, exit| {
                 vec.compute_transform(
                     starting_indexes.txindex,
-                    self.indexes_to_fee.txindex.as_mut().unwrap().mut_vec(),
+                    self.indexes_to_fee.sats.txindex.as_mut().unwrap().mut_vec(),
                     |(txindex, fee, ..)| {
                         let vsize = self
                             .txindex_to_vsize
@@ -474,6 +486,7 @@ impl Vecs {
         self.indexes_to_subsidy.compute_all(
             indexer,
             indexes,
+            marketprices,
             starting_indexes,
             exit,
             |vec, indexer, indexes, starting_indexes, exit| {
@@ -507,15 +520,22 @@ impl Vecs {
         self.indexes_to_coinbase.compute_all(
             indexer,
             indexes,
+            marketprices,
             starting_indexes,
             exit,
             |vec, _, _, starting_indexes, exit| {
                 vec.compute_transform(
                     starting_indexes.height,
-                    self.indexes_to_subsidy.height.as_mut().unwrap().mut_vec(),
+                    self.indexes_to_subsidy
+                        .sats
+                        .height
+                        .as_mut()
+                        .unwrap()
+                        .mut_vec(),
                     |(height, subsidy, ..)| {
                         let fees = self
                             .indexes_to_fee
+                            .sats
                             .height
                             .unwrap_sum()
                             .mut_vec()

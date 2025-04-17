@@ -141,7 +141,7 @@ impl From<Sats> for Amount {
 
 impl From<Bitcoin> for Sats {
     fn from(value: Bitcoin) -> Self {
-        Self((f64::from(value) * (u64::from(Sats::ONE_BTC) as f64)) as u64)
+        Self((f64::from(value) * (u64::from(Sats::ONE_BTC) as f64)).round() as u64)
     }
 }
 

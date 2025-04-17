@@ -29,6 +29,8 @@ where
     pub decadeindex: ComputedVecBuilder<Decadeindex, T>,
 }
 
+const VERSION: Version = Version::ZERO;
+
 impl<T> ComputedVecsFromTxindex<T>
 where
     T: ComputedType + Ord + From<f64>,
@@ -42,6 +44,8 @@ where
         compressed: Compressed,
         options: StorableVecGeneatorOptions,
     ) -> color_eyre::Result<Self> {
+        let version = VERSION + version;
+
         let txindex = compute_source.then(|| {
             ComputedVec::forced_import(
                 &path.join(format!("txindex_to_{name}")),
@@ -51,21 +55,29 @@ where
             .unwrap()
         });
 
-        let height = ComputedVecBuilder::forced_import(path, name, compressed, options)?;
+        let height = ComputedVecBuilder::forced_import(path, name, version, compressed, options)?;
 
         let options = options.remove_percentiles();
 
         Ok(Self {
             txindex,
             height,
-            dateindex: ComputedVecBuilder::forced_import(path, name, compressed, options)?,
-            weekindex: ComputedVecBuilder::forced_import(path, name, compressed, options)?,
-            difficultyepoch: ComputedVecBuilder::forced_import(path, name, compressed, options)?,
-            monthindex: ComputedVecBuilder::forced_import(path, name, compressed, options)?,
-            quarterindex: ComputedVecBuilder::forced_import(path, name, compressed, options)?,
-            yearindex: ComputedVecBuilder::forced_import(path, name, compressed, options)?,
-            // halvingepoch: StorableVecGeneator::forced_import(path, name, compressed, options)?,
-            decadeindex: ComputedVecBuilder::forced_import(path, name, compressed, options)?,
+            dateindex: ComputedVecBuilder::forced_import(path, name, version, compressed, options)?,
+            weekindex: ComputedVecBuilder::forced_import(path, name, version, compressed, options)?,
+            difficultyepoch: ComputedVecBuilder::forced_import(
+                path, name, version, compressed, options,
+            )?,
+            monthindex: ComputedVecBuilder::forced_import(
+                path, name, version, compressed, options,
+            )?,
+            quarterindex: ComputedVecBuilder::forced_import(
+                path, name, version, compressed, options,
+            )?,
+            yearindex: ComputedVecBuilder::forced_import(path, name, version, compressed, options)?,
+            // halvingepoch: StorableVecGeneator::forced_import(path, name, version, compressed, options)?,
+            decadeindex: ComputedVecBuilder::forced_import(
+                path, name, version, compressed, options,
+            )?,
         })
     }
 
