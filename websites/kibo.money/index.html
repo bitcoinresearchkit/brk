@@ -1051,12 +1051,32 @@
           margin-left: var(--negative-main-padding);
 
           fieldset {
-            padding-left: var(--main-padding);
-            padding-top: 0.5rem;
+            padding: 0.5rem;
             z-index: 10;
             position: absolute;
-            left: 0;
-            top: 0;
+
+            &[data-position="nw"] {
+              padding-left: var(--main-padding);
+              top: 0;
+              left: 0;
+            }
+
+            &[data-position="ne"] {
+              top: 0;
+              right: 0;
+            }
+
+            &[data-position="se"] {
+              bottom: 0;
+              right: 0;
+            }
+
+            &[data-position="sw"] {
+              padding-left: var(--main-padding);
+              bottom: 0;
+              left: 0;
+            }
+
             gap: 0;
           }
         }

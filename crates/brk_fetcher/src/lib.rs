@@ -60,9 +60,9 @@ impl Fetcher {
                 self.binance
                     .get_from_1mn(timestamp, previous_timestamp)
                     .unwrap_or_else(|_| {
-                        self.kibo.get_from_height(height).unwrap_or_else(|_| {
+                        self.kibo.get_from_height(height).unwrap_or_else(|e| {
                             let date = Date::from(timestamp);
-
+                            eprintln!("{e}");
                             panic!(
                                 "
 Can't find the price for: height: {height} - date: {date}
