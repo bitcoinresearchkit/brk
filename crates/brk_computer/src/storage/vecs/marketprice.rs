@@ -2,7 +2,7 @@ use std::{fs, path::Path};
 
 use brk_core::{
     Cents, Close, Dateindex, Decadeindex, Difficultyepoch, Dollars, Height, High, Low, Monthindex,
-    OHLCCents, OHLCDollars, Open, Quarterindex, Sats, Weekindex, Yearindex,
+    OHLCCents, OHLCDollars, OHLCSats, Open, Quarterindex, Sats, Weekindex, Yearindex,
 };
 use brk_exit::Exit;
 use brk_fetcher::Fetcher;
@@ -23,31 +23,46 @@ pub struct Vecs {
     pub dateindex_to_high_in_cents: ComputedVec<Dateindex, High<Cents>>,
     pub dateindex_to_low_in_cents: ComputedVec<Dateindex, Low<Cents>>,
     pub dateindex_to_ohlc: ComputedVec<Dateindex, OHLCDollars>,
+    pub dateindex_to_ohlc_in_sats: ComputedVec<Dateindex, OHLCSats>,
     pub dateindex_to_ohlc_in_cents: ComputedVec<Dateindex, OHLCCents>,
     pub dateindex_to_open_in_cents: ComputedVec<Dateindex, Open<Cents>>,
     pub height_to_close_in_cents: ComputedVec<Height, Close<Cents>>,
     pub height_to_high_in_cents: ComputedVec<Height, High<Cents>>,
     pub height_to_low_in_cents: ComputedVec<Height, Low<Cents>>,
     pub height_to_ohlc: ComputedVec<Height, OHLCDollars>,
+    pub height_to_ohlc_in_sats: ComputedVec<Height, OHLCSats>,
     pub height_to_ohlc_in_cents: ComputedVec<Height, OHLCCents>,
     pub height_to_open_in_cents: ComputedVec<Height, Open<Cents>>,
     pub timeindexes_to_close: ComputedVecsFromDateindex<Close<Dollars>>,
     pub timeindexes_to_high: ComputedVecsFromDateindex<High<Dollars>>,
     pub timeindexes_to_low: ComputedVecsFromDateindex<Low<Dollars>>,
     pub timeindexes_to_open: ComputedVecsFromDateindex<Open<Dollars>>,
-    pub timeindexes_to_sats_per_dollar: ComputedVecsFromDateindex<Close<Sats>>,
+    pub timeindexes_to_open_in_sats: ComputedVecsFromDateindex<Open<Sats>>,
+    pub timeindexes_to_high_in_sats: ComputedVecsFromDateindex<High<Sats>>,
+    pub timeindexes_to_low_in_sats: ComputedVecsFromDateindex<Low<Sats>>,
+    pub timeindexes_to_close_in_sats: ComputedVecsFromDateindex<Close<Sats>>,
     pub chainindexes_to_close: ComputedVecsFromHeightStrict<Close<Dollars>>,
     pub chainindexes_to_high: ComputedVecsFromHeightStrict<High<Dollars>>,
     pub chainindexes_to_low: ComputedVecsFromHeightStrict<Low<Dollars>>,
     pub chainindexes_to_open: ComputedVecsFromHeightStrict<Open<Dollars>>,
-    pub chainindexes_to_sats_per_dollar: ComputedVecsFromHeightStrict<Close<Sats>>,
+    pub chainindexes_to_open_in_sats: ComputedVecsFromHeightStrict<Open<Sats>>,
+    pub chainindexes_to_high_in_sats: ComputedVecsFromHeightStrict<High<Sats>>,
+    pub chainindexes_to_low_in_sats: ComputedVecsFromHeightStrict<Low<Sats>>,
+    pub chainindexes_to_close_in_sats: ComputedVecsFromHeightStrict<Close<Sats>>,
     pub weekindex_to_ohlc: ComputedVec<Weekindex, OHLCDollars>,
+    pub weekindex_to_ohlc_in_sats: ComputedVec<Weekindex, OHLCSats>,
     pub difficultyepoch_to_ohlc: ComputedVec<Difficultyepoch, OHLCDollars>,
+    pub difficultyepoch_to_ohlc_in_sats: ComputedVec<Difficultyepoch, OHLCSats>,
     pub monthindex_to_ohlc: ComputedVec<Monthindex, OHLCDollars>,
+    pub monthindex_to_ohlc_in_sats: ComputedVec<Monthindex, OHLCSats>,
     pub quarterindex_to_ohlc: ComputedVec<Quarterindex, OHLCDollars>,
+    pub quarterindex_to_ohlc_in_sats: ComputedVec<Quarterindex, OHLCSats>,
     pub yearindex_to_ohlc: ComputedVec<Yearindex, OHLCDollars>,
+    pub yearindex_to_ohlc_in_sats: ComputedVec<Yearindex, OHLCSats>,
     // pub halvingepoch_to_ohlc: StorableVec<Halvingepoch, OHLCDollars>,
+    // pub halvingepoch_to_ohlc_in_sats: StorableVec<Halvingepoch, OHLCSats>,
     pub decadeindex_to_ohlc: ComputedVec<Decadeindex, OHLCDollars>,
+    pub decadeindex_to_ohlc_in_sats: ComputedVec<Decadeindex, OHLCSats>,
 }
 
 impl Vecs {
@@ -67,6 +82,11 @@ impl Vecs {
             )?,
             dateindex_to_ohlc: ComputedVec::forced_import(
                 &path.join("dateindex_to_ohlc"),
+                Version::ZERO,
+                compressed,
+            )?,
+            dateindex_to_ohlc_in_sats: ComputedVec::forced_import(
+                &path.join("dateindex_to_ohlc_in_sats"),
                 Version::ZERO,
                 compressed,
             )?,
@@ -97,6 +117,11 @@ impl Vecs {
             )?,
             height_to_ohlc: ComputedVec::forced_import(
                 &path.join("height_to_ohlc"),
+                Version::ZERO,
+                compressed,
+            )?,
+            height_to_ohlc_in_sats: ComputedVec::forced_import(
+                &path.join("height_to_ohlc_in_sats"),
                 Version::ZERO,
                 compressed,
             )?,
@@ -148,9 +173,30 @@ impl Vecs {
                 compressed,
                 StorableVecGeneatorOptions::default().add_last(),
             )?,
-            timeindexes_to_sats_per_dollar: ComputedVecsFromDateindex::forced_import(
+            timeindexes_to_open_in_sats: ComputedVecsFromDateindex::forced_import(
                 path,
-                "sats_per_dollar",
+                "open_in_sats",
+                Version::ZERO,
+                compressed,
+                StorableVecGeneatorOptions::default().add_first(),
+            )?,
+            timeindexes_to_high_in_sats: ComputedVecsFromDateindex::forced_import(
+                path,
+                "high_in_sats",
+                Version::ZERO,
+                compressed,
+                StorableVecGeneatorOptions::default().add_max(),
+            )?,
+            timeindexes_to_low_in_sats: ComputedVecsFromDateindex::forced_import(
+                path,
+                "low_in_sats",
+                Version::ZERO,
+                compressed,
+                StorableVecGeneatorOptions::default().add_min(),
+            )?,
+            timeindexes_to_close_in_sats: ComputedVecsFromDateindex::forced_import(
+                path,
+                "close_in_sats",
                 Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default().add_last(),
@@ -183,9 +229,30 @@ impl Vecs {
                 compressed,
                 StorableVecGeneatorOptions::default().add_last(),
             )?,
-            chainindexes_to_sats_per_dollar: ComputedVecsFromHeightStrict::forced_import(
+            chainindexes_to_open_in_sats: ComputedVecsFromHeightStrict::forced_import(
                 path,
-                "sats_per_dollar",
+                "open_in_sats",
+                Version::ZERO,
+                compressed,
+                StorableVecGeneatorOptions::default().add_first(),
+            )?,
+            chainindexes_to_high_in_sats: ComputedVecsFromHeightStrict::forced_import(
+                path,
+                "high_in_sats",
+                Version::ZERO,
+                compressed,
+                StorableVecGeneatorOptions::default().add_max(),
+            )?,
+            chainindexes_to_low_in_sats: ComputedVecsFromHeightStrict::forced_import(
+                path,
+                "low_in_sats",
+                Version::ZERO,
+                compressed,
+                StorableVecGeneatorOptions::default().add_min(),
+            )?,
+            chainindexes_to_close_in_sats: ComputedVecsFromHeightStrict::forced_import(
+                path,
+                "close_in_sats",
                 Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default().add_last(),
@@ -195,8 +262,18 @@ impl Vecs {
                 Version::ZERO,
                 compressed,
             )?,
+            weekindex_to_ohlc_in_sats: ComputedVec::forced_import(
+                &path.join("weekindex_to_ohlc_in_sats"),
+                Version::ZERO,
+                compressed,
+            )?,
             difficultyepoch_to_ohlc: ComputedVec::forced_import(
                 &path.join("difficultyepoch_to_ohlc"),
+                Version::ZERO,
+                compressed,
+            )?,
+            difficultyepoch_to_ohlc_in_sats: ComputedVec::forced_import(
+                &path.join("difficultyepoch_to_ohlc_in_sats"),
                 Version::ZERO,
                 compressed,
             )?,
@@ -205,8 +282,18 @@ impl Vecs {
                 Version::ZERO,
                 compressed,
             )?,
+            monthindex_to_ohlc_in_sats: ComputedVec::forced_import(
+                &path.join("monthindex_to_ohlc_in_sats"),
+                Version::ZERO,
+                compressed,
+            )?,
             quarterindex_to_ohlc: ComputedVec::forced_import(
                 &path.join("quarterindex_to_ohlc"),
+                Version::ZERO,
+                compressed,
+            )?,
+            quarterindex_to_ohlc_in_sats: ComputedVec::forced_import(
+                &path.join("quarterindex_to_ohlc_in_sats"),
                 Version::ZERO,
                 compressed,
             )?,
@@ -215,9 +302,19 @@ impl Vecs {
                 Version::ZERO,
                 compressed,
             )?,
+            yearindex_to_ohlc_in_sats: ComputedVec::forced_import(
+                &path.join("yearindex_to_ohlc_in_sats"),
+                Version::ZERO,
+                compressed,
+            )?,
             // halvingepoch_to_ohlc: StorableVec::forced_import(&path.join("halvingepoch_to_ohlc"), Version::ZERO, compressed)?,
             decadeindex_to_ohlc: ComputedVec::forced_import(
                 &path.join("decadeindex_to_ohlc"),
+                Version::ZERO,
+                compressed,
+            )?,
+            decadeindex_to_ohlc_in_sats: ComputedVec::forced_import(
+                &path.join("decadeindex_to_ohlc_in_sats"),
                 Version::ZERO,
                 compressed,
             )?,
@@ -637,7 +734,52 @@ impl Vecs {
             exit,
         )?;
 
-        self.chainindexes_to_sats_per_dollar.compute(
+        self.chainindexes_to_open_in_sats.compute(
+            indexer,
+            indexes,
+            starting_indexes,
+            exit,
+            |v, _, _, starting_indexes, exit| {
+                v.compute_transform(
+                    starting_indexes.height,
+                    self.chainindexes_to_open.height.mut_vec(),
+                    |(i, open, ..)| (i, Open::new(Sats::ONE_BTC / *open)),
+                    exit,
+                )
+            },
+        )?;
+
+        self.chainindexes_to_high_in_sats.compute(
+            indexer,
+            indexes,
+            starting_indexes,
+            exit,
+            |v, _, _, starting_indexes, exit| {
+                v.compute_transform(
+                    starting_indexes.height,
+                    self.chainindexes_to_low.height.mut_vec(),
+                    |(i, low, ..)| (i, High::new(Sats::ONE_BTC / *low)),
+                    exit,
+                )
+            },
+        )?;
+
+        self.chainindexes_to_low_in_sats.compute(
+            indexer,
+            indexes,
+            starting_indexes,
+            exit,
+            |v, _, _, starting_indexes, exit| {
+                v.compute_transform(
+                    starting_indexes.height,
+                    self.chainindexes_to_high.height.mut_vec(),
+                    |(i, high, ..)| (i, Low::new(Sats::ONE_BTC / *high)),
+                    exit,
+                )
+            },
+        )?;
+
+        self.chainindexes_to_close_in_sats.compute(
             indexer,
             indexes,
             starting_indexes,
@@ -646,13 +788,58 @@ impl Vecs {
                 v.compute_transform(
                     starting_indexes.height,
                     self.chainindexes_to_close.height.mut_vec(),
-                    |(i, close, ..)| (i, Close::from(Sats::ONE_BTC / *close)),
+                    |(i, close, ..)| (i, Close::new(Sats::ONE_BTC / *close)),
                     exit,
                 )
             },
         )?;
 
-        self.timeindexes_to_sats_per_dollar.compute(
+        self.timeindexes_to_open_in_sats.compute(
+            indexer,
+            indexes,
+            starting_indexes,
+            exit,
+            |v, _, _, starting_indexes, exit| {
+                v.compute_transform(
+                    starting_indexes.dateindex,
+                    self.timeindexes_to_open.dateindex.mut_vec(),
+                    |(i, open, ..)| (i, Open::new(Sats::ONE_BTC / *open)),
+                    exit,
+                )
+            },
+        )?;
+
+        self.timeindexes_to_high_in_sats.compute(
+            indexer,
+            indexes,
+            starting_indexes,
+            exit,
+            |v, _, _, starting_indexes, exit| {
+                v.compute_transform(
+                    starting_indexes.dateindex,
+                    self.timeindexes_to_low.dateindex.mut_vec(),
+                    |(i, low, ..)| (i, High::new(Sats::ONE_BTC / *low)),
+                    exit,
+                )
+            },
+        )?;
+
+        self.timeindexes_to_low_in_sats.compute(
+            indexer,
+            indexes,
+            starting_indexes,
+            exit,
+            |v, _, _, starting_indexes, exit| {
+                v.compute_transform(
+                    starting_indexes.dateindex,
+                    self.timeindexes_to_high.dateindex.mut_vec(),
+                    |(i, high, ..)| (i, Low::new(Sats::ONE_BTC / *high)),
+                    exit,
+                )
+            },
+        )?;
+
+        self.timeindexes_to_close_in_sats.compute(
             indexer,
             indexes,
             starting_indexes,
@@ -661,10 +848,257 @@ impl Vecs {
                 v.compute_transform(
                     starting_indexes.dateindex,
                     self.timeindexes_to_close.dateindex.mut_vec(),
-                    |(i, close, ..)| (i, Close::from(Sats::ONE_BTC / *close)),
+                    |(i, close, ..)| (i, Close::new(Sats::ONE_BTC / *close)),
                     exit,
                 )
             },
+        )?;
+
+        self.height_to_ohlc_in_sats.compute_transform(
+            starting_indexes.height,
+            self.chainindexes_to_close_in_sats.height.mut_vec(),
+            |(i, close, ..)| {
+                (
+                    i,
+                    OHLCSats {
+                        open: self
+                            .chainindexes_to_open_in_sats
+                            .height
+                            .double_unwrap_cached_get(i),
+                        high: self
+                            .chainindexes_to_high_in_sats
+                            .height
+                            .double_unwrap_cached_get(i),
+                        low: self
+                            .chainindexes_to_low_in_sats
+                            .height
+                            .double_unwrap_cached_get(i),
+                        close,
+                    },
+                )
+            },
+            exit,
+        )?;
+
+        self.dateindex_to_ohlc_in_sats.compute_transform(
+            starting_indexes.dateindex,
+            self.timeindexes_to_close_in_sats.dateindex.mut_vec(),
+            |(i, close, ..)| {
+                (
+                    i,
+                    OHLCSats {
+                        open: self
+                            .timeindexes_to_open_in_sats
+                            .dateindex
+                            .double_unwrap_cached_get(i),
+                        high: self
+                            .timeindexes_to_high_in_sats
+                            .dateindex
+                            .double_unwrap_cached_get(i),
+                        low: self
+                            .timeindexes_to_low_in_sats
+                            .dateindex
+                            .double_unwrap_cached_get(i),
+                        close,
+                    },
+                )
+            },
+            exit,
+        )?;
+
+        self.weekindex_to_ohlc_in_sats.compute_transform(
+            starting_indexes.weekindex,
+            self.timeindexes_to_close_in_sats
+                .weekindex
+                .unwrap_last()
+                .mut_vec(),
+            |(i, close, ..)| {
+                (
+                    i,
+                    OHLCSats {
+                        open: self
+                            .timeindexes_to_open_in_sats
+                            .weekindex
+                            .unwrap_first()
+                            .double_unwrap_cached_get(i),
+                        high: self
+                            .timeindexes_to_high_in_sats
+                            .weekindex
+                            .unwrap_max()
+                            .double_unwrap_cached_get(i),
+                        low: self
+                            .timeindexes_to_low_in_sats
+                            .weekindex
+                            .unwrap_min()
+                            .double_unwrap_cached_get(i),
+                        close,
+                    },
+                )
+            },
+            exit,
+        )?;
+
+        self.difficultyepoch_to_ohlc_in_sats.compute_transform(
+            starting_indexes.difficultyepoch,
+            self.chainindexes_to_close_in_sats
+                .difficultyepoch
+                .unwrap_last()
+                .mut_vec(),
+            |(i, close, ..)| {
+                (
+                    i,
+                    OHLCSats {
+                        open: self
+                            .chainindexes_to_open_in_sats
+                            .difficultyepoch
+                            .unwrap_first()
+                            .double_unwrap_cached_get(i),
+                        high: self
+                            .chainindexes_to_high_in_sats
+                            .difficultyepoch
+                            .unwrap_max()
+                            .double_unwrap_cached_get(i),
+                        low: self
+                            .chainindexes_to_low_in_sats
+                            .difficultyepoch
+                            .unwrap_min()
+                            .double_unwrap_cached_get(i),
+                        close,
+                    },
+                )
+            },
+            exit,
+        )?;
+
+        self.monthindex_to_ohlc_in_sats.compute_transform(
+            starting_indexes.monthindex,
+            self.timeindexes_to_close_in_sats
+                .monthindex
+                .unwrap_last()
+                .mut_vec(),
+            |(i, close, ..)| {
+                (
+                    i,
+                    OHLCSats {
+                        open: self
+                            .timeindexes_to_open_in_sats
+                            .monthindex
+                            .unwrap_first()
+                            .double_unwrap_cached_get(i),
+                        high: self
+                            .timeindexes_to_high_in_sats
+                            .monthindex
+                            .unwrap_max()
+                            .double_unwrap_cached_get(i),
+                        low: self
+                            .timeindexes_to_low_in_sats
+                            .monthindex
+                            .unwrap_min()
+                            .double_unwrap_cached_get(i),
+                        close,
+                    },
+                )
+            },
+            exit,
+        )?;
+
+        self.quarterindex_to_ohlc_in_sats.compute_transform(
+            starting_indexes.quarterindex,
+            self.timeindexes_to_close_in_sats
+                .quarterindex
+                .unwrap_last()
+                .mut_vec(),
+            |(i, close, ..)| {
+                (
+                    i,
+                    OHLCSats {
+                        open: self
+                            .timeindexes_to_open_in_sats
+                            .quarterindex
+                            .unwrap_first()
+                            .double_unwrap_cached_get(i),
+                        high: self
+                            .timeindexes_to_high_in_sats
+                            .quarterindex
+                            .unwrap_max()
+                            .double_unwrap_cached_get(i),
+                        low: self
+                            .timeindexes_to_low_in_sats
+                            .quarterindex
+                            .unwrap_min()
+                            .double_unwrap_cached_get(i),
+                        close,
+                    },
+                )
+            },
+            exit,
+        )?;
+
+        self.yearindex_to_ohlc_in_sats.compute_transform(
+            starting_indexes.yearindex,
+            self.timeindexes_to_close_in_sats
+                .yearindex
+                .unwrap_last()
+                .mut_vec(),
+            |(i, close, ..)| {
+                (
+                    i,
+                    OHLCSats {
+                        open: self
+                            .timeindexes_to_open_in_sats
+                            .yearindex
+                            .unwrap_first()
+                            .double_unwrap_cached_get(i),
+                        high: self
+                            .timeindexes_to_high_in_sats
+                            .yearindex
+                            .unwrap_max()
+                            .double_unwrap_cached_get(i),
+                        low: self
+                            .timeindexes_to_low_in_sats
+                            .yearindex
+                            .unwrap_min()
+                            .double_unwrap_cached_get(i),
+                        close,
+                    },
+                )
+            },
+            exit,
+        )?;
+
+        // self.halvingepoch_to_ohlc
+        //     _in_sats.compute_transform(starting_indexes.halvingepoch, other, t, exit)?;
+
+        self.decadeindex_to_ohlc_in_sats.compute_transform(
+            starting_indexes.decadeindex,
+            self.timeindexes_to_close_in_sats
+                .decadeindex
+                .unwrap_last()
+                .mut_vec(),
+            |(i, close, ..)| {
+                (
+                    i,
+                    OHLCSats {
+                        open: self
+                            .timeindexes_to_open_in_sats
+                            .decadeindex
+                            .unwrap_first()
+                            .double_unwrap_cached_get(i),
+                        high: self
+                            .timeindexes_to_high_in_sats
+                            .decadeindex
+                            .unwrap_max()
+                            .double_unwrap_cached_get(i),
+                        low: self
+                            .timeindexes_to_low_in_sats
+                            .decadeindex
+                            .unwrap_min()
+                            .double_unwrap_cached_get(i),
+                        close,
+                    },
+                )
+            },
+            exit,
         )?;
 
         Ok(())
@@ -692,9 +1126,16 @@ impl Vecs {
                 self.yearindex_to_ohlc.any_vec(),
                 // self.halvingepoch_to_ohlc.any_vec(),
                 self.decadeindex_to_ohlc.any_vec(),
+                self.height_to_ohlc_in_sats.any_vec(),
+                self.dateindex_to_ohlc_in_sats.any_vec(),
+                self.weekindex_to_ohlc_in_sats.any_vec(),
+                self.difficultyepoch_to_ohlc_in_sats.any_vec(),
+                self.monthindex_to_ohlc_in_sats.any_vec(),
+                self.quarterindex_to_ohlc_in_sats.any_vec(),
+                self.yearindex_to_ohlc_in_sats.any_vec(),
+                // self.halvingepoch_to_ohlc_in_sats.any_vec(),
+                self.decadeindex_to_ohlc_in_sats.any_vec(),
             ],
-            self.chainindexes_to_sats_per_dollar.any_vecs(),
-            self.timeindexes_to_sats_per_dollar.any_vecs(),
             self.timeindexes_to_close.any_vecs(),
             self.timeindexes_to_high.any_vecs(),
             self.timeindexes_to_low.any_vecs(),
@@ -703,6 +1144,14 @@ impl Vecs {
             self.chainindexes_to_high.any_vecs(),
             self.chainindexes_to_low.any_vecs(),
             self.chainindexes_to_open.any_vecs(),
+            self.timeindexes_to_close_in_sats.any_vecs(),
+            self.timeindexes_to_high_in_sats.any_vecs(),
+            self.timeindexes_to_low_in_sats.any_vecs(),
+            self.timeindexes_to_open_in_sats.any_vecs(),
+            self.chainindexes_to_close_in_sats.any_vecs(),
+            self.chainindexes_to_high_in_sats.any_vecs(),
+            self.chainindexes_to_low_in_sats.any_vecs(),
+            self.chainindexes_to_open_in_sats.any_vecs(),
         ]
         .concat()
     }

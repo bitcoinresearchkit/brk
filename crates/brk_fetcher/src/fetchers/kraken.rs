@@ -114,10 +114,10 @@ impl Kraken {
         Ok((
             timestamp,
             OHLCCents::from((
-                Open::from(get_cents(1)),
-                High::from(get_cents(2)),
-                Low::from(get_cents(3)),
-                Close::from(get_cents(4)),
+                Open::new(get_cents(1)),
+                High::new(get_cents(2)),
+                Low::new(get_cents(3)),
+                Close::new(get_cents(4)),
             )),
         ))
     }

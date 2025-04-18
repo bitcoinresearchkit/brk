@@ -6,9 +6,9 @@
  * @import * as _ from "../packages/ufuzzy/v1.0.14/types"
  * @import { createChart as CreateClassicChart, LineStyleOptions, DeepPartial, ChartOptions, IChartApi, IHorzScaleBehavior, WhitespaceData, ISeriesApi, Time, LineData, LogicalRange, SeriesType, BaselineStyleOptions, SeriesOptionsCommon, BaselineData, CandlestickStyleOptions } from "../packages/lightweight-charts/v5.0.5-treeshaked/types"
  * @import { SignalOptions } from "../packages/solid-signals/v0.2.4-treeshaked/types/core/core"
- * @import { getOwner as GetOwner, onCleanup as OnCleanup, Owner } from "../packages/solid-signals/v0.2.4-treeshaked/types/core/owner"
- * @import { createSignal as CreateSignal, createEffect as CreateEffect, Accessor, Setter, createMemo as CreateMemo } from "../packages/solid-signals/v0.2.4-treeshaked/types/signals";
  * @import {Signal, Signals} from "../packages/solid-signals/types";
+ * @import { getOwner as GetOwner, onCleanup as OnCleanup, Owner } from "../packages/solid-signals/v0.2.4-treeshaked/types/core/owner"
+ * @import { createEffect as CreateEffect, Accessor, Setter, createMemo as CreateMemo } from "../packages/solid-signals/v0.2.4-treeshaked/types/signals";
  * @import {Addressindex, Dateindex, Decadeindex, Difficultyepoch, Index, Halvingepoch, Height, Monthindex, P2PK33index, P2PK65index, P2PKHindex, P2SHindex, P2TRindex, P2WPKHindex, P2WSHindex, Txindex, Txinindex, Txoutindex, VecId, Weekindex, Yearindex, VecIdToIndexes, Quarterindex} from "./vecid-to-indexes"
  */
 
@@ -322,40 +322,62 @@ function createUtils() {
       this.importStyle(href).addEventListener("load", callback);
     },
     /**
+     * @template {Readonly<string[]>} T
      * @param {Object} args
-     * @param {string | Accessor<string>} args.title
-     * @param {string} args.id
-     * @param {Readonly<string[]>} args.choices
-     * @param {string} args.selected
-     * @param {{createEffect: CreateEffect}} args.signals
+     * @param {string | Accessor<string>} [args.title]
+     * @param {T[number]} args.defaultValue
+     * @param {string} [args.id]
+     * @param {T} args.choices
+     * @param {string} [args.keyPrefix]
+     * @param {string} args.key
+     * @param {{createEffect: CreateEffect, createSignal: Signals["createSignal"]}} args.signals
      */
-    createHorizontalChoiceField({ title, id, choices, selected, signals }) {
+    createHorizontalChoiceField({
+      title,
+      id,
+      choices,
+      defaultValue,
+      keyPrefix,
+      key,
+      signals,
+    }) {
+      /** @type {Signal<T[number]>} */
+      const selected = signals.createSignal(defaultValue, {
+        save: {
+          ...serde.string,
+          keyPrefix: keyPrefix ?? "",
+          key,
+        },
+      });
+
       const field = window.document.createElement("div");
       field.classList.add("field");
 
-      const legend = window.document.createElement("legend");
-      if (typeof title === "string") {
-        legend.innerHTML = title;
-      } else {
-        signals.createEffect(title, (title) => {
+      if (title) {
+        const legend = window.document.createElement("legend");
+        if (typeof title === "string") {
           legend.innerHTML = title;
-        });
-      }
-      field.append(legend);
+        } else {
+          signals.createEffect(title, (title) => {
+            legend.innerHTML = title;
+          });
+        }
+        field.append(legend);
 
-      const hr = window.document.createElement("hr");
-      field.append(hr);
+        const hr = window.document.createElement("hr");
+        field.append(hr);
+      }
 
       const div = window.document.createElement("div");
       field.append(div);
 
       choices.forEach((choice) => {
-        const inputValue = choice.toLowerCase();
+        const inputValue = choice;
         const { label } = this.createLabeledInput({
-          inputId: `${id}-${choice.toLowerCase()}`,
-          inputName: id,
+          inputId: `${id ?? key}-${choice.toLowerCase()}`,
+          inputName: id ?? key,
           inputValue,
-          inputChecked: inputValue === selected,
+          inputChecked: inputValue === selected(),
           labelTitle: choice,
           type: "radio",
         });
@@ -365,7 +387,13 @@ function createUtils() {
         div.append(label);
       });
 
-      return field;
+      field.addEventListener("change", (event) => {
+        // @ts-ignore
+        const value = event.target.value;
+        selected.set(value);
+      });
+
+      return { field, selected };
     },
     /**
      * @param {Object} args

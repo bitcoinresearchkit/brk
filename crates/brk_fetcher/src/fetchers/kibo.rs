@@ -141,10 +141,10 @@ impl Kibo {
         };
 
         Ok(OHLCCents::from((
-            Open::from(get_value("open")?),
-            High::from(get_value("high")?),
-            Low::from(get_value("low")?),
-            Close::from(get_value("close")?),
+            Open::new(get_value("open")?),
+            High::new(get_value("high")?),
+            Low::new(get_value("low")?),
+            Close::new(get_value("close")?),
         )))
     }
 }

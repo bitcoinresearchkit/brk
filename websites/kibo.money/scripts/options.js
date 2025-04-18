@@ -54,14 +54,14 @@
  *
  * @typedef {Object} LineSeriesBlueprintSpecific
  * @property {"Line"} [type]
- * @property {Color} color
+ * @property {Color} [color]
  * @property {DeepPartial<LineStyleOptions & SeriesOptionsCommon>} [options]
  * @property {Accessor<LineData[]>} [data]
  * @typedef {BaseSeriesBlueprint & LineSeriesBlueprintSpecific} LineSeriesBlueprint
  *
  * @typedef {BaselineSeriesBlueprint | CandlestickSeriesBlueprint | LineSeriesBlueprint} AnySeriesBlueprint
  *
- * @typedef {AnySeriesBlueprint & {key: ChartableVecId}} AnyFetchedSeriesBlueprint
+ * @typedef {AnySeriesBlueprint & { key: ChartableVecId }} AnyFetchedSeriesBlueprint
  *
  * @typedef {Object} PartialOption
  * @property {string} name
@@ -73,27 +73,37 @@
  *
  * @typedef {Object} PartialChartOptionSpecific
  * @property {"chart"} [kind]
- * @property {Unit} [unit]
  * @property {string} title
  * @property {AnyFetchedSeriesBlueprint[]} [top]
  * @property {AnyFetchedSeriesBlueprint[]} [bottom]
+ *
  * @typedef {PartialOption & PartialChartOptionSpecific} PartialChartOption
- * @typedef {Required<PartialChartOption> & ProcessedOptionAddons} ChartOption
+ *
+ * @typedef {Object} ProcessedChartOptionAddons
+ * @property {Record<Unit, AnyFetchedSeriesBlueprint[]>} top
+ * @property {Record<Unit, AnyFetchedSeriesBlueprint[]>} bottom
+ *
+ * @typedef {Required<Omit<PartialChartOption, "top" | "bottom">> & ProcessedChartOptionAddons & ProcessedOptionAddons} ChartOption
  *
  * @typedef {Object} PartialSimulationOptionSpecific
  * @property {"simulation"} kind
  * @property {string} title
+ *
  * @typedef {PartialOption & PartialSimulationOptionSpecific} PartialSimulationOption
+ *
  * @typedef {Required<PartialSimulationOption> & ProcessedOptionAddons} SimulationOption
  *
  * @typedef {Object} PartialUrlOptionSpecific
  * @property {"url"} [kind]
  * @property {() => string} url
  * @property {boolean} [qrcode]
+ *
  * @typedef {PartialOption & PartialUrlOptionSpecific} PartialUrlOption
+ *
  * @typedef {Required<PartialUrlOption> & ProcessedOptionAddons} UrlOption
  *
  * @typedef {PartialChartOption | PartialSimulationOption | PartialUrlOption} AnyPartialOption
+ *
  * @typedef {ChartOption | SimulationOption | UrlOption} Option
  *
  * @typedef {Object} PartialOptionsGroup
@@ -106,6 +116,7 @@
  * @property {OptionsTree} tree
  *
  * @typedef {(AnyPartialOption | PartialOptionsGroup)[]} PartialOptionsTree
+ *
  * @typedef {(Option | OptionsGroup)[]} OptionsTree
  *
  */
@@ -168,33 +179,28 @@ function createPartialOptions(colors) {
    */
 
   /**
-   *
    * @param {Object} args
    * @param {ChartableVecId} args.key
    * @param {string} args.name
-   * @returns
    */
   function createBaseSeries({ key, name }) {
-    return { key, title: name, color: colors.bitcoin };
+    return { key, title: name };
   }
 
   /**
-   * @template {VecIdAverageBase} T
    * @param {Object} args
-   * @param {T} args.concat
+   * @param {VecIdAverageBase} args.concat
    */
   function createAverageSeries({ concat }) {
     return /** @satisfies {AnyFetchedSeriesBlueprint} */ ({
       key: `${concat}-average`,
       title: "Average",
-      color: colors.orange,
     });
   }
 
   /**
-   * @template {VecIdSumBase & TotalVecIdBase} T
    * @param {Object} args
-   * @param {T} args.concat
+   * @param {VecIdSumBase & TotalVecIdBase} args.concat
    */
   function createSumTotalSeries({ concat }) {
     return /** @satisfies {AnyFetchedSeriesBlueprint[]} */ ([
@@ -213,9 +219,8 @@ function createPartialOptions(colors) {
   }
 
   /**
-   * @template {VecIdMinBase & VecIdMaxBase & VecId90pBase & VecId75pBase & VecIdMedianBase & VecId25pBase & VecId10pBase} T
    * @param {Object} args
-   * @param {T} args.concat
+   * @param {VecIdMinBase & VecIdMaxBase & VecId90pBase & VecId75pBase & VecIdMedianBase & VecId25pBase & VecId10pBase} args.concat
    */
   function createMinMaxPercentilesSeries({ concat }) {
     return /** @satisfies {AnyFetchedSeriesBlueprint[]} */ ([
@@ -264,28 +269,30 @@ function createPartialOptions(colors) {
     ]);
   }
 
+  /**
+   * @param {Object} args
+   * @param {ChartableVecId & VecIdAverageBase & VecIdSumBase & TotalVecIdBase & VecIdMinBase & VecIdMaxBase & VecId90pBase & VecId75pBase & VecIdMedianBase & VecId25pBase & VecId10pBase} args.key
+   * @param {string} args.name
+   */
+  function createBaseAverageSumTotalMinMaxPercentilesSeries({ key, name }) {
+    return [
+      createBaseSeries({
+        key,
+        name,
+      }),
+      createAverageSeries({ concat: key }),
+      ...createSumTotalSeries({ concat: key }),
+      ...createMinMaxPercentilesSeries({ concat: key }),
+    ];
+  }
+
   return [
     {
       name: "Charts",
       tree: [
         {
           name: "Price",
-          tree: [
-            {
-              name: "btc/usd",
-              title: "Bitcoin Price in US Dollars",
-            },
-            {
-              name: "usd/sats",
-              title: "Satoshis Per US Dollar",
-              bottom: [
-                createBaseSeries({
-                  key: "sats-per-dollar",
-                  name: "Satoshis",
-                }),
-              ],
-            },
-          ],
+          title: "Bitcoin Price",
         },
         {
           name: "Block",
@@ -372,26 +379,36 @@ function createPartialOptions(colors) {
               name: "Subsidy",
               title: "Subsidy",
               bottom: [
-                createBaseSeries({
+                ...createBaseAverageSumTotalMinMaxPercentilesSeries({
                   key: "subsidy",
                   name: "Subsidy",
                 }),
-                createAverageSeries({ concat: "subsidy" }),
-                ...createSumTotalSeries({ concat: "subsidy" }),
-                ...createMinMaxPercentilesSeries({ concat: "subsidy" }),
+                ...createBaseAverageSumTotalMinMaxPercentilesSeries({
+                  key: "subsidy-in-btc",
+                  name: "Subsidy",
+                }),
+                ...createBaseAverageSumTotalMinMaxPercentilesSeries({
+                  key: "subsidy-in-usd",
+                  name: "Subsidy",
+                }),
               ],
             },
             {
               name: "Coinbase",
               title: "Coinbase",
               bottom: [
-                createBaseSeries({
+                ...createBaseAverageSumTotalMinMaxPercentilesSeries({
                   key: "coinbase",
                   name: "Coinbase",
                 }),
-                createAverageSeries({ concat: "coinbase" }),
-                ...createSumTotalSeries({ concat: "coinbase" }),
-                ...createMinMaxPercentilesSeries({ concat: "coinbase" }),
+                ...createBaseAverageSumTotalMinMaxPercentilesSeries({
+                  key: "coinbase-in-btc",
+                  name: "Coinbase",
+                }),
+                ...createBaseAverageSumTotalMinMaxPercentilesSeries({
+                  key: "coinbase-in-usd",
+                  name: "Coinbase",
+                }),
               ],
             },
             {
@@ -653,6 +670,53 @@ export function initOptions({
   const optionsIds = env.localhost ? [] : undefined;
 
   /**
+   * @param {AnyFetchedSeriesBlueprint[]} [arr]
+   * @param {string} id
+   */
+  function arrayToRecord(id, arr = []) {
+    return (arr || []).reduce((record, blueprint) => {
+      const key = blueprint.key;
+      /** @type {Unit} */
+      let unit;
+      if (key.includes("interval")) {
+        unit = "Seconds";
+      } else if (key.includes("feerate")) {
+        unit = "sat/vB";
+      } else if (key.includes("in-usd")) {
+        unit = "USD";
+      } else if (key.includes("in-btc")) {
+        unit = "BTC";
+      } else if (
+        key.includes("-in-sats") ||
+        key.startsWith("sats-") ||
+        key.includes("input-value") ||
+        key.includes("output-value") ||
+        key.includes("fee") ||
+        key.includes("coinbase") ||
+        key.includes("subsidy")
+      ) {
+        unit = "Sats";
+      } else if (key.includes("count")) {
+        unit = "Count";
+      } else if (key.includes("-size")) {
+        unit = "Megabytes";
+      } else if (key.includes("weight")) {
+        unit = "Weight Units";
+      } else if (key.includes("vbytes") || key.includes("vsize")) {
+        unit = "Virtual Bytes";
+      } else if (key.match(/v[1-3]/g)) {
+        unit = "Version";
+      } else {
+        console.log([id, key]);
+        throw Error("Unit not set");
+      }
+      record[unit] ??= [];
+      record[unit].push(blueprint);
+      return record;
+    }, /** @type {Record<Unit, AnyFetchedSeriesBlueprint[]>} */ ({}));
+  }
+
+  /**
    * @param {Object} args
    * @param {Option} args.option
    * @param {string} args.frame
@@ -849,6 +913,9 @@ export function initOptions({
         }
         createRenderLiEffect();
       } else {
+        /** @type {Option} */
+        let option;
+
         /** @type {string} */
         let id;
         /** @type {Option["kind"]} */
@@ -857,62 +924,36 @@ export function initOptions({
         let title;
 
         if ("kind" in anyPartial && anyPartial.kind === "simulation") {
-          // Simulation
-          kind = anyPartial.kind;
-          id = anyPartial.kind;
-          title = anyPartial.title;
+          option = /** @satisfies {SimulationOption} */ ({
+            kind: "simulation",
+            id: anyPartial.kind,
+            name: anyPartial.name,
+            path: path || [],
+            title: anyPartial.title,
+          });
         } else if ("url" in anyPartial) {
-          // Url
-          kind = "url";
-          id = `${utils.stringToId(anyPartial.name)}-url`;
-          title = anyPartial.name;
+          option = /** @satisfies {UrlOption} */ ({
+            kind: "url",
+            id: `${utils.stringToId(anyPartial.name)}-url`,
+            name: anyPartial.name,
+            path: path || [],
+            title: anyPartial.name,
+            qrcode: !!anyPartial.qrcode,
+            url: anyPartial.url,
+          });
         } else {
-          // Chart
-          kind = "chart";
-          title = anyPartial.title || anyPartial.name;
-          id = `${kind}-${utils.stringToId(title)}`;
-          const key = anyPartial.bottom?.at(0)?.key;
-          if (key) {
-            if (key.includes("interval")) {
-              anyPartial.unit = "Seconds";
-            } else if (key.includes("feerate")) {
-              anyPartial.unit = "sat/vB";
-            } else if (
-              key.startsWith("sats-") ||
-              key.includes("input-value") ||
-              key.includes("output-value") ||
-              key.includes("fee") ||
-              key.startsWith("coinbase") ||
-              key.startsWith("subsidy")
-            ) {
-              anyPartial.unit = "Sats";
-            } else if (key.includes("count")) {
-              anyPartial.unit = "Count";
-            } else if (key.includes("-size")) {
-              anyPartial.unit = "Megabytes";
-            } else if (key.includes("weight")) {
-              anyPartial.unit = "Weight Units";
-            } else if (key.includes("vbytes") || key.includes("vsize")) {
-              anyPartial.unit = "Virtual Bytes";
-            } else if (key.match(/v[1-3]/g)) {
-              anyPartial.unit = "Version";
-            } else {
-              console.log([key, anyPartial]);
-              throw Error("Unit not set");
-            }
-          }
+          const title = anyPartial.title || anyPartial.name;
+          const id = `chart-${utils.stringToId(title)}`;
+          option = /** @satisfies {ChartOption} */ ({
+            kind: "chart",
+            id,
+            name: anyPartial.name,
+            title,
+            path: path || [],
+            top: arrayToRecord(id, anyPartial.top),
+            bottom: arrayToRecord(id, anyPartial.bottom),
+          });
         }
-
-        /** @type {ProcessedOptionAddons} */
-        const optionAddons = {
-          id,
-          path: path || [],
-          title,
-        };
-
-        Object.assign(anyPartial, optionAddons, { kind });
-
-        const option = /** @type {Option} */ (anyPartial);
 
         if (urlSelected === option.id) {
           selected.set(option);

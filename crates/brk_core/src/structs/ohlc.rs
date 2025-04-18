@@ -99,6 +99,51 @@ impl From<&OHLCCents> for OHLCDollars {
     }
 }
 
+#[derive(Debug, Default, Clone, FromBytes, Immutable, IntoBytes, KnownLayout)]
+#[repr(C)]
+pub struct OHLCSats {
+    pub open: Open<Sats>,
+    pub high: High<Sats>,
+    pub low: Low<Sats>,
+    pub close: Close<Sats>,
+}
+
+impl Serialize for OHLCSats {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut tup = serializer.serialize_tuple(4)?;
+        tup.serialize_element(&self.open)?;
+        tup.serialize_element(&self.high)?;
+        tup.serialize_element(&self.low)?;
+        tup.serialize_element(&self.close)?;
+        tup.end()
+    }
+}
+
+impl From<(Open<Sats>, High<Sats>, Low<Sats>, Close<Sats>)> for OHLCSats {
+    fn from(value: (Open<Sats>, High<Sats>, Low<Sats>, Close<Sats>)) -> Self {
+        Self {
+            open: value.0,
+            high: value.1,
+            low: value.2,
+            close: value.3,
+        }
+    }
+}
+
+impl From<Close<Sats>> for OHLCSats {
+    fn from(value: Close<Sats>) -> Self {
+        Self {
+            open: Open::from(value),
+            high: High::from(value),
+            low: Low::from(value),
+            close: value,
+        }
+    }
+}
+
 #[derive(
     Debug,
     Default,
@@ -117,9 +162,37 @@ impl From<&OHLCCents> for OHLCDollars {
 )]
 #[repr(C)]
 pub struct Open<T>(T);
-impl<T> From<T> for Open<T> {
-    fn from(value: T) -> Self {
+
+impl<T> Open<T> {
+    pub fn new(value: T) -> Self {
         Self(value)
+    }
+}
+
+impl<T> From<usize> for Open<T>
+where
+    T: From<usize>,
+{
+    fn from(value: usize) -> Self {
+        Self(T::from(value))
+    }
+}
+
+impl<T> From<f64> for Open<T>
+where
+    T: From<f64>,
+{
+    fn from(value: f64) -> Self {
+        Self(T::from(value))
+    }
+}
+
+impl<T> From<Open<T>> for f64
+where
+    f64: From<T>,
+{
+    fn from(value: Open<T>) -> Self {
+        Self::from(value.0)
     }
 }
 
@@ -135,24 +208,6 @@ where
 impl From<Open<Cents>> for Open<Dollars> {
     fn from(value: Open<Cents>) -> Self {
         Self(Dollars::from(*value))
-    }
-}
-
-impl From<usize> for Open<Dollars> {
-    fn from(value: usize) -> Self {
-        Self(Dollars::from(value))
-    }
-}
-
-impl From<f64> for Open<Dollars> {
-    fn from(value: f64) -> Self {
-        Self(Dollars::from(value))
-    }
-}
-
-impl From<Open<Dollars>> for f64 {
-    fn from(value: Open<Dollars>) -> Self {
-        Self::from(value.0)
     }
 }
 
@@ -194,9 +249,37 @@ where
 )]
 #[repr(C)]
 pub struct High<T>(T);
-impl<T> From<T> for High<T> {
-    fn from(value: T) -> Self {
+
+impl<T> High<T> {
+    pub fn new(value: T) -> Self {
         Self(value)
+    }
+}
+
+impl<T> From<usize> for High<T>
+where
+    T: From<usize>,
+{
+    fn from(value: usize) -> Self {
+        Self(T::from(value))
+    }
+}
+
+impl<T> From<f64> for High<T>
+where
+    T: From<f64>,
+{
+    fn from(value: f64) -> Self {
+        Self(T::from(value))
+    }
+}
+
+impl<T> From<High<T>> for f64
+where
+    f64: From<T>,
+{
+    fn from(value: High<T>) -> Self {
+        Self::from(value.0)
     }
 }
 
@@ -212,24 +295,6 @@ where
 impl From<High<Cents>> for High<Dollars> {
     fn from(value: High<Cents>) -> Self {
         Self(Dollars::from(*value))
-    }
-}
-
-impl From<usize> for High<Dollars> {
-    fn from(value: usize) -> Self {
-        Self(Dollars::from(value))
-    }
-}
-
-impl From<f64> for High<Dollars> {
-    fn from(value: f64) -> Self {
-        Self(Dollars::from(value))
-    }
-}
-
-impl From<High<Dollars>> for f64 {
-    fn from(value: High<Dollars>) -> Self {
-        Self::from(value.0)
     }
 }
 
@@ -271,9 +336,37 @@ where
 )]
 #[repr(C)]
 pub struct Low<T>(T);
-impl<T> From<T> for Low<T> {
-    fn from(value: T) -> Self {
+
+impl<T> Low<T> {
+    pub fn new(value: T) -> Self {
         Self(value)
+    }
+}
+
+impl<T> From<usize> for Low<T>
+where
+    T: From<usize>,
+{
+    fn from(value: usize) -> Self {
+        Self(T::from(value))
+    }
+}
+
+impl<T> From<f64> for Low<T>
+where
+    T: From<f64>,
+{
+    fn from(value: f64) -> Self {
+        Self(T::from(value))
+    }
+}
+
+impl<T> From<Low<T>> for f64
+where
+    f64: From<T>,
+{
+    fn from(value: Low<T>) -> Self {
+        Self::from(value.0)
     }
 }
 
@@ -289,24 +382,6 @@ where
 impl From<Low<Cents>> for Low<Dollars> {
     fn from(value: Low<Cents>) -> Self {
         Self(Dollars::from(*value))
-    }
-}
-
-impl From<usize> for Low<Dollars> {
-    fn from(value: usize) -> Self {
-        Self(Dollars::from(value))
-    }
-}
-
-impl From<f64> for Low<Dollars> {
-    fn from(value: f64) -> Self {
-        Self(Dollars::from(value))
-    }
-}
-
-impl From<Low<Dollars>> for f64 {
-    fn from(value: Low<Dollars>) -> Self {
-        Self::from(value.0)
     }
 }
 
@@ -348,51 +423,49 @@ where
 )]
 #[repr(C)]
 pub struct Close<T>(T);
-impl<T> From<T> for Close<T> {
-    fn from(value: T) -> Self {
+
+impl<T> Close<T> {
+    pub fn new(value: T) -> Self {
         Self(value)
     }
 }
 
+impl<T> From<usize> for Close<T>
+where
+    T: From<usize>,
+{
+    fn from(value: usize) -> Self {
+        Self(T::from(value))
+    }
+}
+
+impl<T> From<f64> for Close<T>
+where
+    T: From<f64>,
+{
+    fn from(value: f64) -> Self {
+        Self(T::from(value))
+    }
+}
+
+impl<T> From<Close<T>> for f64
+where
+    f64: From<T>,
+{
+    fn from(value: Close<T>) -> Self {
+        Self::from(value.0)
+    }
+}
+
+// impl<A, B> From<Close<A>> for Close<B>
+// where
+//     B: From<A>,
+// {
+//     fn from(value: Close<A>) -> Self {
+//         Self(B::from(*value))
 impl From<Close<Cents>> for Close<Dollars> {
     fn from(value: Close<Cents>) -> Self {
         Self(Dollars::from(*value))
-    }
-}
-
-impl From<usize> for Close<Dollars> {
-    fn from(value: usize) -> Self {
-        Self(Dollars::from(value))
-    }
-}
-
-impl From<usize> for Close<Sats> {
-    fn from(value: usize) -> Self {
-        Self(Sats::from(value))
-    }
-}
-
-impl From<f64> for Close<Dollars> {
-    fn from(value: f64) -> Self {
-        Self(Dollars::from(value))
-    }
-}
-
-impl From<f64> for Close<Sats> {
-    fn from(value: f64) -> Self {
-        Self(Sats::from(value))
-    }
-}
-
-impl From<Close<Dollars>> for f64 {
-    fn from(value: Close<Dollars>) -> Self {
-        Self::from(value.0)
-    }
-}
-
-impl From<Close<Sats>> for f64 {
-    fn from(value: Close<Sats>) -> Self {
-        Self::from(value.0)
     }
 }
 

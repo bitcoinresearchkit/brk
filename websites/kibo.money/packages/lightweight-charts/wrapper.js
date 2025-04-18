@@ -1,6 +1,6 @@
 // @ts-check
 
-/** @import {IChartApi, ISeriesApi, SeriesDefinition, SingleValueData as _SingleValueData, CandlestickData as _CandlestickData, BaselineData, SeriesType} from './v5.0.5-treeshaked/types' */
+/** @import {IChartApi, ISeriesApi, SeriesDefinition, SingleValueData as _SingleValueData, CandlestickData as _CandlestickData, BaselineData, SeriesType, IPaneApi, LineSeriesOptions} from './v5.0.5-treeshaked/types' */
 
 /**
  * @typedef {[number, number, number, number]} OHLCTuple
@@ -47,7 +47,7 @@ export default import("./v5.0.5-treeshaked/script.js").then((lc) => {
       autoSize: true,
       layout: {
         fontFamily: "Geist mono",
-        fontSize: 13,
+        // fontSize: 13,
         background: { color: "transparent" },
         attributionLogo: false,
         colorSpace: "display-p3",
@@ -98,6 +98,16 @@ export default import("./v5.0.5-treeshaked/script.js").then((lc) => {
               index === /** @satisfies {Height} */ (0) ||
               index === /** @satisfies {Difficultyepoch} */ (3) ||
               index === /** @satisfies {Halvingepoch} */ (8),
+            minBarSpacing:
+              index === /** @satisfies {Monthindex} */ (4)
+                ? 1
+                : index === /** @satisfies {Quarterindex} */ (5)
+                  ? 3
+                  : index === /** @satisfies {Yearindex} */ (6)
+                    ? 12
+                    : index === /** @satisfies {Decadeindex} */ (7)
+                      ? 120
+                      : undefined,
           },
           crosshair: {
             horzLine: {
@@ -291,6 +301,7 @@ export default import("./v5.0.5-treeshaked/script.js").then((lc) => {
        * @param {Accessor<CandlestickData[]>} [args.data]
        * @param {number} [args.paneIndex]
        * @param {boolean} [args.defaultActive]
+       * @param {boolean} [args.inverse]
        */
       addCandlestickSeries({
         vecId,
@@ -299,13 +310,14 @@ export default import("./v5.0.5-treeshaked/script.js").then((lc) => {
         paneIndex: _paneIndex,
         defaultActive,
         data,
+        inverse,
       }) {
         const paneIndex = _paneIndex ?? 0;
 
         if (!ichart || !timeResource) throw Error("Chart not fully set");
 
-        const green = colors.green();
-        const red = colors.red();
+        const green = inverse ? colors.red() : colors.green();
+        const red = inverse ? colors.green() : colors.red();
         const series = ichart.addSeries(
           /** @type {SeriesDefinition<'Candlestick'>} */ (lc.CandlestickSeries),
           {
@@ -351,14 +363,11 @@ export default import("./v5.0.5-treeshaked/script.js").then((lc) => {
           utils,
         });
 
-        createPriceScaleSelectorIfNeeded({
-          ichart,
+        this.addPriceScaleSelectorIfNeeded({
           paneIndex,
           seriesType: "Candlestick",
-          signals,
           id,
           unit,
-          utils,
         });
 
         return series;
@@ -372,6 +381,7 @@ export default import("./v5.0.5-treeshaked/script.js").then((lc) => {
        * @param {Color} [args.color]
        * @param {number} [args.paneIndex]
        * @param {boolean} [args.defaultActive]
+       * @param {DeepPartial<LineStyleOptions & SeriesOptionsCommon>} [args.options]
        */
       addLineSeries({
         vecId,
@@ -381,12 +391,13 @@ export default import("./v5.0.5-treeshaked/script.js").then((lc) => {
         paneIndex: _paneIndex,
         defaultActive,
         data,
+        options,
       }) {
         if (!ichart || !timeResource) throw Error("Chart not fully set");
 
         const paneIndex = _paneIndex ?? 0;
 
-        color ||= colors.orange;
+        color ||= unit === "USD" ? colors.dollars : colors.bitcoin;
 
         const series = ichart.addSeries(
           /** @type {SeriesDefinition<'Line'>} */ (lc.LineSeries),
@@ -395,6 +406,7 @@ export default import("./v5.0.5-treeshaked/script.js").then((lc) => {
             visible: defaultActive !== false,
             priceLineVisible: false,
             color: color(),
+            ...options,
           },
           paneIndex,
         );
@@ -434,14 +446,11 @@ export default import("./v5.0.5-treeshaked/script.js").then((lc) => {
           utils,
         });
 
-        createPriceScaleSelectorIfNeeded({
-          ichart,
+        this.addPriceScaleSelectorIfNeeded({
           paneIndex,
-          signals,
           seriesType: "Line",
           id,
           unit,
-          utils,
         });
 
         return series;
@@ -520,17 +529,98 @@ export default import("./v5.0.5-treeshaked/script.js").then((lc) => {
           utils,
         });
 
-        createPriceScaleSelectorIfNeeded({
-          ichart,
+        this.addPriceScaleSelectorIfNeeded({
           paneIndex,
-          signals,
           seriesType: "Baseline",
           id,
           unit,
-          utils,
         });
 
         return series;
+      },
+      /**
+       * @param {Object} args
+       * @param {Unit} args.unit
+       * @param {string} args.id
+       * @param {SeriesType} args.seriesType
+       * @param {number} args.paneIndex
+       */
+      addPriceScaleSelectorIfNeeded({ unit, paneIndex, id, seriesType }) {
+        id = `${id}-scale`;
+
+        this.addFieldsetIfNeeded({
+          id,
+          paneIndex,
+          position: "sw",
+          createChild({ owner, pane }) {
+            const { field, selected } = utils.dom.createHorizontalChoiceField({
+              choices: /** @type {const} */ (["lin", "log"]),
+              id: utils.stringToId(`${id} ${unit}`),
+              defaultValue:
+                unit === "USD" && seriesType !== "Baseline" ? "log" : "lin",
+              key: `${id}-price-scale-${paneIndex}`,
+              signals,
+            });
+
+            signals.runWithOwner(owner, () => {
+              signals.createEffect(selected, (selected) => {
+                try {
+                  pane.priceScale("right").applyOptions({
+                    mode: selected === "lin" ? 0 : 1,
+                  });
+                } catch {}
+              });
+            });
+
+            return field;
+          },
+        });
+      },
+      /**
+       * @param {Object} args
+       * @param {string} args.id
+       * @param {number} args.paneIndex
+       * @param {"nw" | "ne" | "se" | "sw"} args.position
+       * @param {number} [args.timeout]
+       * @param {(args: {owner: Owner | null, pane: IPaneApi<Time>}) => HTMLElement} args.createChild
+       */
+      addFieldsetIfNeeded({ paneIndex, id, position, createChild }) {
+        const owner = signals.getOwner();
+        setTimeout(
+          () => {
+            const parent = ichart
+              ?.panes()
+              .at(paneIndex)
+              ?.getHTMLElement()
+              .children?.item(1)?.firstChild;
+
+            if (!parent) throw Error("Parent should exist");
+
+            if (
+              Array.from(parent.childNodes).filter(
+                (element) =>
+                  /** @type {HTMLElement} */ (element).dataset.position ===
+                  position,
+              ).length
+            ) {
+              return;
+            }
+
+            const fieldset = window.document.createElement("fieldset");
+            fieldset.dataset.size = "xs";
+            fieldset.dataset.position = position;
+            fieldset.id = `${id}-${paneIndex}`;
+            const pane = ichart?.panes().at(paneIndex);
+            if (!pane) throw Error("Expect pane");
+            pane
+              .getHTMLElement()
+              .children?.item(1)
+              ?.firstChild?.appendChild(fieldset);
+
+            fieldset.append(createChild({ owner, pane }));
+          },
+          paneIndex ? 50 : 0,
+        );
       },
       /**
        *
@@ -893,107 +983,4 @@ function createPaneHeightObserver({ ichart, paneIndex, signals, utils }) {
     }, 5);
 
   callback();
-}
-
-/**
- * @param {Object} args
- * @param {IChartApi} args.ichart
- * @param {Unit} args.unit
- * @param {string} args.id
- * @param {SeriesType} args.seriesType
- * @param {number} args.paneIndex
- * @param {Signals} args.signals
- * @param {Utilities} args.utils
- */
-function createPriceScaleSelectorIfNeeded({
-  ichart,
-  unit,
-  paneIndex,
-  id,
-  seriesType,
-  signals,
-  utils,
-}) {
-  const owner = signals.getOwner();
-
-  setTimeout(
-    () => {
-      const parent = ichart
-        ?.panes()
-        .at(paneIndex)
-        ?.getHTMLElement()
-        .children?.item(1)?.firstChild;
-
-      if (!parent) throw Error("Parent should exist");
-
-      const tagName = "fieldset";
-
-      if (parent.lastChild?.nodeName.toLowerCase() === tagName) {
-        return;
-      }
-
-      console.log(id);
-
-      const choices = /**@type {const} */ (["lin", "log"]);
-
-      /** @typedef {(typeof choices)[number]} Choices */
-      const serializedValue = signals.createSignal(
-        /** @satisfies {Choices} */ (
-          unit === "USD" && seriesType !== "Baseline" ? "log" : "lin"
-        ),
-        {
-          save: {
-            ...utils.serde.string,
-            keyPrefix: "",
-            key: `${id}-price-scale-${paneIndex}`,
-          },
-        },
-      );
-
-      const field = utils.dom.createHorizontalChoiceField({
-        title: unit,
-        selected: serializedValue(),
-        choices: choices,
-        id: `${id}-${unit.replace(" ", "-")}`,
-        signals,
-      });
-
-      field.addEventListener("change", (event) => {
-        // @ts-ignore
-        const value = event.target.value;
-        serializedValue.set(value);
-      });
-
-      const element = window.document.createElement(tagName);
-      element.dataset.size = "xs";
-      element.id = `${id}-price-scale-${paneIndex}`;
-      element.append(field);
-
-      const mode = signals.createMemo(() => {
-        switch (serializedValue()) {
-          case "lin":
-            return 0;
-          case "log":
-            return 1;
-        }
-      });
-
-      const pane = ichart?.panes().at(paneIndex);
-
-      if (!pane) throw Error("Expect pane");
-
-      signals.runWithOwner(owner, () => {
-        signals.createEffect(mode, (mode) => {
-          try {
-            pane.priceScale("right").applyOptions({
-              mode,
-            });
-          } catch {}
-        });
-      });
-
-      pane.getHTMLElement().children?.item(1)?.firstChild?.appendChild(element);
-    },
-    paneIndex ? 10 : 0,
-  );
 }
