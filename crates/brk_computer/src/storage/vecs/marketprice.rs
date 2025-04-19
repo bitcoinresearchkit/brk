@@ -65,6 +65,9 @@ pub struct Vecs {
     pub decadeindex_to_ohlc_in_sats: ComputedVec<Decadeindex, OHLCSats>,
 }
 
+const VERSION: Version = Version::ZERO;
+const VERSION_IN_SATS: Version = Version::ONE;
+
 impl Vecs {
     pub fn forced_import(path: &Path, compressed: Compressed) -> color_eyre::Result<Self> {
         fs::create_dir_all(path)?;
@@ -87,7 +90,7 @@ impl Vecs {
             )?,
             dateindex_to_ohlc_in_sats: ComputedVec::forced_import(
                 &path.join("dateindex_to_ohlc_in_sats"),
-                Version::ZERO,
+                VERSION + VERSION_IN_SATS + Version::ZERO,
                 compressed,
             )?,
             dateindex_to_close_in_cents: ComputedVec::forced_import(
@@ -122,7 +125,7 @@ impl Vecs {
             )?,
             height_to_ohlc_in_sats: ComputedVec::forced_import(
                 &path.join("height_to_ohlc_in_sats"),
-                Version::ZERO,
+                VERSION + VERSION_IN_SATS + Version::ZERO,
                 compressed,
             )?,
             height_to_close_in_cents: ComputedVec::forced_import(
@@ -176,28 +179,28 @@ impl Vecs {
             timeindexes_to_open_in_sats: ComputedVecsFromDateindex::forced_import(
                 path,
                 "open_in_sats",
-                Version::ZERO,
+                VERSION + VERSION_IN_SATS + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default().add_first(),
             )?,
             timeindexes_to_high_in_sats: ComputedVecsFromDateindex::forced_import(
                 path,
                 "high_in_sats",
-                Version::ZERO,
+                VERSION + VERSION_IN_SATS + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default().add_max(),
             )?,
             timeindexes_to_low_in_sats: ComputedVecsFromDateindex::forced_import(
                 path,
                 "low_in_sats",
-                Version::ZERO,
+                VERSION + VERSION_IN_SATS + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default().add_min(),
             )?,
             timeindexes_to_close_in_sats: ComputedVecsFromDateindex::forced_import(
                 path,
                 "close_in_sats",
-                Version::ZERO,
+                VERSION + VERSION_IN_SATS + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default().add_last(),
             )?,
@@ -232,28 +235,28 @@ impl Vecs {
             chainindexes_to_open_in_sats: ComputedVecsFromHeightStrict::forced_import(
                 path,
                 "open_in_sats",
-                Version::ZERO,
+                VERSION + VERSION_IN_SATS + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default().add_first(),
             )?,
             chainindexes_to_high_in_sats: ComputedVecsFromHeightStrict::forced_import(
                 path,
                 "high_in_sats",
-                Version::ZERO,
+                VERSION + VERSION_IN_SATS + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default().add_max(),
             )?,
             chainindexes_to_low_in_sats: ComputedVecsFromHeightStrict::forced_import(
                 path,
                 "low_in_sats",
-                Version::ZERO,
+                VERSION + VERSION_IN_SATS + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default().add_min(),
             )?,
             chainindexes_to_close_in_sats: ComputedVecsFromHeightStrict::forced_import(
                 path,
                 "close_in_sats",
-                Version::ZERO,
+                VERSION + VERSION_IN_SATS + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default().add_last(),
             )?,
@@ -264,7 +267,7 @@ impl Vecs {
             )?,
             weekindex_to_ohlc_in_sats: ComputedVec::forced_import(
                 &path.join("weekindex_to_ohlc_in_sats"),
-                Version::ZERO,
+                VERSION + VERSION_IN_SATS + Version::ZERO,
                 compressed,
             )?,
             difficultyepoch_to_ohlc: ComputedVec::forced_import(
@@ -274,7 +277,7 @@ impl Vecs {
             )?,
             difficultyepoch_to_ohlc_in_sats: ComputedVec::forced_import(
                 &path.join("difficultyepoch_to_ohlc_in_sats"),
-                Version::ZERO,
+                VERSION + VERSION_IN_SATS + Version::ZERO,
                 compressed,
             )?,
             monthindex_to_ohlc: ComputedVec::forced_import(
@@ -284,7 +287,7 @@ impl Vecs {
             )?,
             monthindex_to_ohlc_in_sats: ComputedVec::forced_import(
                 &path.join("monthindex_to_ohlc_in_sats"),
-                Version::ZERO,
+                VERSION + VERSION_IN_SATS + Version::ZERO,
                 compressed,
             )?,
             quarterindex_to_ohlc: ComputedVec::forced_import(
@@ -294,7 +297,7 @@ impl Vecs {
             )?,
             quarterindex_to_ohlc_in_sats: ComputedVec::forced_import(
                 &path.join("quarterindex_to_ohlc_in_sats"),
-                Version::ZERO,
+                VERSION + VERSION_IN_SATS + Version::ZERO,
                 compressed,
             )?,
             yearindex_to_ohlc: ComputedVec::forced_import(
@@ -304,7 +307,7 @@ impl Vecs {
             )?,
             yearindex_to_ohlc_in_sats: ComputedVec::forced_import(
                 &path.join("yearindex_to_ohlc_in_sats"),
-                Version::ZERO,
+                VERSION + VERSION_IN_SATS + Version::ZERO,
                 compressed,
             )?,
             // halvingepoch_to_ohlc: StorableVec::forced_import(&path.join("halvingepoch_to_ohlc"), Version::ZERO, compressed)?,
@@ -315,7 +318,7 @@ impl Vecs {
             )?,
             decadeindex_to_ohlc_in_sats: ComputedVec::forced_import(
                 &path.join("decadeindex_to_ohlc_in_sats"),
-                Version::ZERO,
+                VERSION + VERSION_IN_SATS + Version::ZERO,
                 compressed,
             )?,
         })

@@ -209,8 +209,6 @@ where
     ) -> Result<()>
     where
         I2: StoredIndex + StoredType,
-        T: Ord + From<f64>,
-        f64: From<T>,
     {
         let index = self.starting_index(max_from);
 
@@ -295,20 +293,14 @@ where
 
                 if needs_average_sum_or_total {
                     let len = values.len();
+                    let sum = values.into_iter().fold(T::from(0), |a, b| a + b);
 
                     if let Some(average) = self.average.as_mut() {
-                        let len = len as f64;
-                        let total = values
-                            .iter()
-                            .map(|v| f64::from(v.clone()))
-                            .fold(0.0, |a, b| a + b);
-                        let avg = T::from(total / len);
+                        let avg = sum.clone() / len;
                         average.forced_push_at(i, avg, exit)?;
                     }
 
                     if needs_sum_or_total {
-                        let sum = values.into_iter().fold(T::from(0), |a, b| a + b);
-
                         if let Some(sum_vec) = self.sum.as_mut() {
                             sum_vec.forced_push_at(i, sum.clone(), exit)?;
                         }
@@ -345,8 +337,6 @@ where
     ) -> Result<()>
     where
         I2: StoredIndex + StoredType,
-        T: Ord + From<f64>,
-        f64: From<T>,
     {
         if self._90p.is_some()
             || self._75p.is_some()
@@ -415,14 +405,12 @@ where
                             .as_ref()
                             .unwrap()
                             .collect_inclusive_range(first_index, last_index)?;
-                        let len = values.len() as f64;
-                        let total = values
-                            .into_iter()
-                            .map(|v| f64::from(v))
-                            .fold(0.0, |a, b| a + b);
+
+                        let len = values.len();
+                        let total = values.into_iter().fold(T::from(0), |a, b| a + b);
                         // TODO: Multiply by count then divide by total
                         // Right now it's not 100% accurate as there could be more or less elements in the lower timeframe (28 days vs 31 days in a month for example)
-                        let avg = T::from(total / len);
+                        let avg = total / len;
                         average.forced_push_at(i, avg, exit)?;
                     }
 
@@ -432,6 +420,7 @@ where
                             .as_ref()
                             .unwrap()
                             .collect_inclusive_range(first_index, last_index)?;
+
                         let sum = values.into_iter().fold(T::from(0), |a, b| a + b);
 
                         if let Some(sum_vec) = self.sum.as_mut() {

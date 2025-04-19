@@ -27,8 +27,7 @@ const VERSION: Version = Version::ZERO;
 
 impl<T> ComputedVecsFromDateindex<T>
 where
-    T: ComputedType + Ord + From<f64>,
-    f64: From<T>,
+    T: ComputedType,
 {
     pub fn forced_import(
         path: &Path,

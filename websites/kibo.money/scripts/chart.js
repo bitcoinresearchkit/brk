@@ -57,12 +57,13 @@ export function init({
             /** @satisfies {Unit} */ ("Sats"),
           ]),
           signals,
+          sorted: true,
         });
 
       signals.createEffect(topUnit, (topUnit) => {
         const { field: seriesTypeField, selected: topSeriesType } =
           utils.dom.createHorizontalChoiceField({
-            defaultValue: "Candles",
+            defaultValue: "Line",
             keyPrefix: "charts",
             key: "seriestype-0",
             choices: /** @type {const} */ (["Candles", "Line"]),
@@ -80,6 +81,7 @@ export function init({
               key: "unit-1",
               choices: bottomUnits,
               signals,
+              sorted: true,
             });
 
           signals.createEffect(bottomUnit, (bottomUnit) => {

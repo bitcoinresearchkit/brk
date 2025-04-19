@@ -30,8 +30,8 @@
  *   "Transactions" |
  *   "USD" |
  *   "Version" |
- *   "Virtual Bytes" |
- *   "Weight Units"
+ *   "vB" |
+ *   "WU"
  * } Unit
  *
  * @typedef {Object} BaseSeriesBlueprint
@@ -225,6 +225,18 @@ function createPartialOptions(colors) {
   function createMinMaxPercentilesSeries({ concat }) {
     return /** @satisfies {AnyFetchedSeriesBlueprint[]} */ ([
       {
+        key: `${concat}-max`,
+        title: "Max",
+        color: colors.pink,
+        defaultActive: false,
+      },
+      {
+        key: `${concat}-min`,
+        title: "Min",
+        color: colors.green,
+        defaultActive: false,
+      },
+      {
         key: `${concat}-median`,
         title: "Median",
         color: colors.amber,
@@ -254,19 +266,18 @@ function createPartialOptions(colors) {
         color: colors.lime,
         defaultActive: false,
       },
-      {
-        key: `${concat}-max`,
-        title: "Max",
-        color: colors.pink,
-        defaultActive: false,
-      },
-      {
-        key: `${concat}-min`,
-        title: "Min",
-        color: colors.green,
-        defaultActive: false,
-      },
     ]);
+  }
+
+  /**
+   * @param {VecIdAverageBase & VecIdSumBase & TotalVecIdBase & VecIdMinBase & VecIdMaxBase & VecId90pBase & VecId75pBase & VecIdMedianBase & VecId25pBase & VecId10pBase} key
+   */
+  function createAverageSumTotalMinMaxPercentilesSeries(key) {
+    return [
+      createAverageSeries({ concat: key }),
+      ...createSumTotalSeries({ concat: key }),
+      ...createMinMaxPercentilesSeries({ concat: key }),
+    ];
   }
 
   /**
@@ -280,9 +291,7 @@ function createPartialOptions(colors) {
         key,
         name,
       }),
-      createAverageSeries({ concat: key }),
-      ...createSumTotalSeries({ concat: key }),
-      ...createMinMaxPercentilesSeries({ concat: key }),
+      ...createAverageSumTotalMinMaxPercentilesSeries(key),
     ];
   }
 
@@ -363,17 +372,10 @@ function createPartialOptions(colors) {
             {
               name: "Count",
               title: "Transaction Count",
-              bottom: [
-                createBaseSeries({
-                  key: "tx-count",
-                  name: "Count",
-                }),
-                createAverageSeries({ concat: "tx-count" }),
-                ...createSumTotalSeries({ concat: "tx-count" }),
-                ...createMinMaxPercentilesSeries({
-                  concat: "tx-count",
-                }),
-              ],
+              bottom: createBaseAverageSumTotalMinMaxPercentilesSeries({
+                key: "tx-count",
+                name: "Count",
+              }),
             },
             {
               name: "Subsidy",
@@ -415,9 +417,9 @@ function createPartialOptions(colors) {
               name: "Fee",
               title: "Transaction Fee",
               bottom: [
-                createAverageSeries({ concat: "fee" }),
-                ...createSumTotalSeries({ concat: "fee" }),
-                ...createMinMaxPercentilesSeries({ concat: "fee" }),
+                ...createAverageSumTotalMinMaxPercentilesSeries("fee"),
+                ...createAverageSumTotalMinMaxPercentilesSeries("fee-in-btc"),
+                ...createAverageSumTotalMinMaxPercentilesSeries("fee-in-usd"),
               ],
             },
             {
@@ -701,9 +703,9 @@ export function initOptions({
       } else if (key.includes("-size")) {
         unit = "Megabytes";
       } else if (key.includes("weight")) {
-        unit = "Weight Units";
+        unit = "WU";
       } else if (key.includes("vbytes") || key.includes("vsize")) {
-        unit = "Virtual Bytes";
+        unit = "vB";
       } else if (key.match(/v[1-3]/g)) {
         unit = "Version";
       } else {

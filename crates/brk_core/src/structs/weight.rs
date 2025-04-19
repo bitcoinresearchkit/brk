@@ -64,3 +64,10 @@ impl Div<usize> for Weight {
         Self::from(self.0 as usize / rhs)
     }
 }
+
+impl Div<Weight> for Weight {
+    type Output = Self;
+    fn div(self, rhs: Self) -> Self::Output {
+        Self(self.0 / rhs.0)
+    }
+}

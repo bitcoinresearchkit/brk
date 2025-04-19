@@ -9,7 +9,7 @@ use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 use crate::CheckedSub;
 
-use super::{Bitcoin, Dollars, Height};
+use super::{Bitcoin, Cents, Dollars, Height};
 
 #[derive(
     Debug,
@@ -30,6 +30,7 @@ pub struct Sats(u64);
 
 impl Sats {
     pub const ZERO: Self = Self(0);
+    pub const MAX: Self = Self(u64::MAX);
     pub const ONE_BTC: Self = Self(100_000_000);
 
     pub fn is_zero(&self) -> bool {
@@ -39,8 +40,8 @@ impl Sats {
 
 impl Add for Sats {
     type Output = Self;
-    fn add(self, rhs: Sats) -> Self::Output {
-        Sats::from(self.0 + rhs.0)
+    fn add(self, rhs: Self) -> Self::Output {
+        Self::from(self.0 + rhs.0)
     }
 }
 
@@ -93,7 +94,12 @@ impl Sum for Sats {
 impl Div<Dollars> for Sats {
     type Output = Self;
     fn div(self, rhs: Dollars) -> Self::Output {
-        Self((self.0 as f64 / f64::from(rhs)) as u64)
+        let raw_cents = u64::from(Cents::from(rhs));
+        if raw_cents != 0 {
+            Self(self.0 * 100 / raw_cents)
+        } else {
+            Self::MAX
+        }
     }
 }
 
@@ -118,7 +124,7 @@ impl From<usize> for Sats {
 
 impl From<f64> for Sats {
     fn from(value: f64) -> Self {
-        Self(value as u64)
+        Self(value.round() as u64)
     }
 }
 
@@ -141,7 +147,7 @@ impl From<Sats> for Amount {
 
 impl From<Bitcoin> for Sats {
     fn from(value: Bitcoin) -> Self {
-        Self((f64::from(value) * (u64::from(Sats::ONE_BTC) as f64)).round() as u64)
+        Self((f64::from(value) * (Sats::ONE_BTC.0 as f64)).round() as u64)
     }
 }
 

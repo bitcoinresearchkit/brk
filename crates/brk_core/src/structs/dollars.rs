@@ -49,14 +49,14 @@ impl From<usize> for Dollars {
 impl Add for Dollars {
     type Output = Self;
     fn add(self, rhs: Self) -> Self::Output {
-        Self(self.0 + rhs.0)
+        Self::from(Cents::from(self) + Cents::from(rhs))
     }
 }
 
 impl Div<usize> for Dollars {
     type Output = Self;
     fn div(self, rhs: usize) -> Self::Output {
-        Self(self.0 / rhs as f64)
+        Self::from(Cents::from(self) / rhs)
     }
 }
 

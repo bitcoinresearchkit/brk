@@ -366,7 +366,7 @@ export default import("./v5.0.5-treeshaked/script.js").then((lc) => {
         this.addPriceScaleSelectorIfNeeded({
           paneIndex,
           seriesType: "Candlestick",
-          id,
+          id: `${id}-${paneIndex}`,
           unit,
         });
 
@@ -449,7 +449,7 @@ export default import("./v5.0.5-treeshaked/script.js").then((lc) => {
         this.addPriceScaleSelectorIfNeeded({
           paneIndex,
           seriesType: "Line",
-          id,
+          id: `${id}-${paneIndex}`,
           unit,
         });
 
@@ -532,7 +532,7 @@ export default import("./v5.0.5-treeshaked/script.js").then((lc) => {
         this.addPriceScaleSelectorIfNeeded({
           paneIndex,
           seriesType: "Baseline",
-          id,
+          id: `${id}-${paneIndex}`,
           unit,
         });
 

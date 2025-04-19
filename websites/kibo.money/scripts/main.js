@@ -330,17 +330,23 @@ function createUtils() {
      * @param {T} args.choices
      * @param {string} [args.keyPrefix]
      * @param {string} args.key
+     * @param {boolean} [args.sorted]
      * @param {{createEffect: CreateEffect, createSignal: Signals["createSignal"]}} args.signals
      */
     createHorizontalChoiceField({
       title,
       id,
-      choices,
+      choices: unsortedChoices,
       defaultValue,
       keyPrefix,
       key,
       signals,
+      sorted,
     }) {
+      const choices = sorted
+        ? /** @type {T} */ (/** @type {any} */ (unsortedChoices.toSorted()))
+        : unsortedChoices;
+
       /** @type {Signal<T[number]>} */
       const selected = signals.createSignal(defaultValue, {
         save: {
@@ -349,6 +355,9 @@ function createUtils() {
           key,
         },
       });
+      if (!choices.includes(selected())) {
+        selected.set(() => defaultValue);
+      }
 
       const field = window.document.createElement("div");
       field.classList.add("field");
