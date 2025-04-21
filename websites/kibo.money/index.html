@@ -37,9 +37,8 @@
         line-height: 1.5;
         -webkit-text-size-adjust: 100%;
         tab-size: 4;
-        font-family: "Geist mono", ui-sans-serif, system-ui, sans-serif,
-          "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol",
-          "Noto Color Emoji";
+        font-family: "Geist mono", ui-monospace, SFMono-Regular, Menlo, Monaco,
+          Consolas, "Liberation Mono", "Courier New", monospace;
         font-feature-settings: "ss03";
         -webkit-tap-highlight-color: transparent;
       }
@@ -134,6 +133,7 @@
         letter-spacing: inherit;
         color: inherit;
         background: transparent;
+        text-transform: inherit;
       }
 
       button,
@@ -590,7 +590,7 @@
           > fieldset {
             width: 100%;
             display: flex;
-            gap: 1rem;
+            gap: 1.25rem;
 
             > label {
               pointer-events: auto;
@@ -626,6 +626,7 @@
       }
 
       select {
+        cursor: pointer;
         -webkit-appearance: none;
         -moz-appearance: none;
         appearance: none;
@@ -884,7 +885,7 @@
         bottom: 0;
         left: 0;
         right: 0;
-        z-index: 10;
+        z-index: 20;
         pointer-events: none;
       }
       .shadow-left {
@@ -979,7 +980,6 @@
         display: flex;
         flex-direction: column;
         min-height: 0;
-        z-index: 20;
         flex: 1;
         margin-top: 2rem;
         margin-bottom: 1rem;
@@ -1607,9 +1607,8 @@
     </main>
     <aside id="aside">
       <div id="charts" hidden></div>
+      <div id="database" hidden></div>
       <div id="simulation" hidden></div>
-      <div id="live-price" hidden></div>
-      <div id="moscow-time" hidden></div>
     </aside>
     <div id="share-div" hidden>
       <div id="share-content-div">

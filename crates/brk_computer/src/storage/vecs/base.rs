@@ -154,6 +154,30 @@ where
         Ok(())
     }
 
+    pub fn compute_range<A, F>(
+        &mut self,
+        max_from: I,
+        other: &mut StoredVec<I, A>,
+        mut t: F,
+        exit: &Exit,
+    ) -> Result<()>
+    where
+        A: StoredType,
+        F: FnMut(I) -> (I, T),
+    {
+        self.validate_computed_version_or_reset_file(
+            Version::ZERO + self.version() + other.version(),
+        )?;
+
+        let index = max_from.min(I::from(self.len()));
+        (index.to_usize()?..other.len()).try_for_each(|i| {
+            let (i, v) = t(I::from(i));
+            self.forced_push_at(i, v, exit)
+        })?;
+
+        self.safe_flush(exit)
+    }
+
     pub fn compute_transform<A, B, F>(
         &mut self,
         max_from: A,

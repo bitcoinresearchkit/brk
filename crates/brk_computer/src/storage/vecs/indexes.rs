@@ -1,8 +1,10 @@
 use std::{fs, ops::Deref, path::Path};
 
 use brk_core::{
-    Date, Dateindex, Decadeindex, Difficultyepoch, Halvingepoch, Height, Monthindex, Quarterindex,
-    Timestamp, Txindex, Txinindex, Txoutindex, Weekindex, Yearindex,
+    Addressindex, Date, Dateindex, Decadeindex, Difficultyepoch, Emptyindex, Halvingepoch, Height,
+    Monthindex, Multisigindex, Opreturnindex, P2PK33index, P2PK65index, P2PKHindex, P2SHindex,
+    P2TRindex, P2WPKHindex, P2WSHindex, Pushonlyindex, Quarterindex, Timestamp, Txindex, Txinindex,
+    Txoutindex, Unknownindex, Weekindex, Yearindex,
 };
 use brk_exit::Exit;
 use brk_indexer::Indexer;
@@ -12,6 +14,7 @@ use super::ComputedVec;
 
 #[derive(Clone)]
 pub struct Vecs {
+    pub addressindex_to_addressindex: ComputedVec<Addressindex, Addressindex>,
     pub dateindex_to_date: ComputedVec<Dateindex, Date>,
     pub dateindex_to_dateindex: ComputedVec<Dateindex, Dateindex>,
     pub dateindex_to_first_height: ComputedVec<Dateindex, Height>,
@@ -27,6 +30,7 @@ pub struct Vecs {
     pub difficultyepoch_to_first_height: ComputedVec<Difficultyepoch, Height>,
     pub difficultyepoch_to_last_height: ComputedVec<Difficultyepoch, Height>,
     pub difficultyepoch_to_timestamp: ComputedVec<Difficultyepoch, Timestamp>,
+    pub emptyindex_to_emptyindex: ComputedVec<Emptyindex, Emptyindex>,
     pub halvingepoch_to_first_height: ComputedVec<Halvingepoch, Height>,
     pub halvingepoch_to_halvingepoch: ComputedVec<Halvingepoch, Halvingepoch>,
     pub halvingepoch_to_last_height: ComputedVec<Halvingepoch, Height>,
@@ -45,12 +49,26 @@ pub struct Vecs {
     pub monthindex_to_quarterindex: ComputedVec<Monthindex, Quarterindex>,
     pub monthindex_to_timestamp: ComputedVec<Monthindex, Timestamp>,
     pub monthindex_to_yearindex: ComputedVec<Monthindex, Yearindex>,
+    pub multisigindex_to_multisigindex: ComputedVec<Multisigindex, Multisigindex>,
+    pub opreturnindex_to_opreturnindex: ComputedVec<Opreturnindex, Opreturnindex>,
+    pub p2pk33index_to_p2pk33index: ComputedVec<P2PK33index, P2PK33index>,
+    pub p2pk65index_to_p2pk65index: ComputedVec<P2PK65index, P2PK65index>,
+    pub p2pkhindex_to_p2pkhindex: ComputedVec<P2PKHindex, P2PKHindex>,
+    pub p2shindex_to_p2shindex: ComputedVec<P2SHindex, P2SHindex>,
+    pub p2trindex_to_p2trindex: ComputedVec<P2TRindex, P2TRindex>,
+    pub p2wpkhindex_to_p2wpkhindex: ComputedVec<P2WPKHindex, P2WPKHindex>,
+    pub p2wshindex_to_p2wshindex: ComputedVec<P2WSHindex, P2WSHindex>,
+    pub pushonlyindex_to_pushonlyindex: ComputedVec<Pushonlyindex, Pushonlyindex>,
     pub quarterindex_to_first_monthindex: ComputedVec<Quarterindex, Monthindex>,
     pub quarterindex_to_last_monthindex: ComputedVec<Quarterindex, Monthindex>,
     pub quarterindex_to_quarterindex: ComputedVec<Quarterindex, Quarterindex>,
     pub quarterindex_to_timestamp: ComputedVec<Quarterindex, Timestamp>,
     pub txindex_to_last_txinindex: ComputedVec<Txindex, Txinindex>,
     pub txindex_to_last_txoutindex: ComputedVec<Txindex, Txoutindex>,
+    pub txindex_to_txindex: ComputedVec<Txindex, Txindex>,
+    pub txinindex_to_txinindex: ComputedVec<Txinindex, Txinindex>,
+    pub txoutindex_to_txoutindex: ComputedVec<Txoutindex, Txoutindex>,
+    pub unknownindex_to_unknownindex: ComputedVec<Unknownindex, Unknownindex>,
     pub weekindex_to_first_dateindex: ComputedVec<Weekindex, Dateindex>,
     pub weekindex_to_last_dateindex: ComputedVec<Weekindex, Dateindex>,
     pub weekindex_to_timestamp: ComputedVec<Weekindex, Timestamp>,
@@ -307,6 +325,86 @@ impl Vecs {
                 Version::ZERO,
                 compressed,
             )?,
+            p2pk33index_to_p2pk33index: ComputedVec::forced_import(
+                &path.join("p2pk33index_to_p2pk33index"),
+                Version::ZERO,
+                compressed,
+            )?,
+            p2pk65index_to_p2pk65index: ComputedVec::forced_import(
+                &path.join("p2pk65index_to_p2pk65index"),
+                Version::ZERO,
+                compressed,
+            )?,
+            p2pkhindex_to_p2pkhindex: ComputedVec::forced_import(
+                &path.join("p2pkhindex_to_p2pkhindex"),
+                Version::ZERO,
+                compressed,
+            )?,
+            p2shindex_to_p2shindex: ComputedVec::forced_import(
+                &path.join("p2shindex_to_p2shindex"),
+                Version::ZERO,
+                compressed,
+            )?,
+            p2trindex_to_p2trindex: ComputedVec::forced_import(
+                &path.join("p2trindex_to_p2trindex"),
+                Version::ZERO,
+                compressed,
+            )?,
+            p2wpkhindex_to_p2wpkhindex: ComputedVec::forced_import(
+                &path.join("p2wpkhindex_to_p2wpkhindex"),
+                Version::ZERO,
+                compressed,
+            )?,
+            p2wshindex_to_p2wshindex: ComputedVec::forced_import(
+                &path.join("p2wshindex_to_p2wshindex"),
+                Version::ZERO,
+                compressed,
+            )?,
+            txindex_to_txindex: ComputedVec::forced_import(
+                &path.join("txindex_to_txindex"),
+                Version::ZERO,
+                compressed,
+            )?,
+            txinindex_to_txinindex: ComputedVec::forced_import(
+                &path.join("txinindex_to_txinindex"),
+                Version::ZERO,
+                compressed,
+            )?,
+            emptyindex_to_emptyindex: ComputedVec::forced_import(
+                &path.join("emptyindex_to_emptyindex"),
+                Version::ZERO,
+                compressed,
+            )?,
+            multisigindex_to_multisigindex: ComputedVec::forced_import(
+                &path.join("multisigindex_to_multisigindex"),
+                Version::ZERO,
+                compressed,
+            )?,
+            opreturnindex_to_opreturnindex: ComputedVec::forced_import(
+                &path.join("opreturnindex_to_opreturnindex"),
+                Version::ZERO,
+                compressed,
+            )?,
+            pushonlyindex_to_pushonlyindex: ComputedVec::forced_import(
+                &path.join("pushonlyindex_to_pushonlyindex"),
+                Version::ZERO,
+                compressed,
+            )?,
+            unknownindex_to_unknownindex: ComputedVec::forced_import(
+                &path.join("unknownindex_to_unknownindex"),
+                Version::ZERO,
+                compressed,
+            )?,
+            addressindex_to_addressindex: ComputedVec::forced_import(
+                &path.join("addressindex_to_addressindex"),
+                Version::ZERO,
+                compressed,
+            )?,
+            txoutindex_to_txoutindex: ComputedVec::forced_import(
+                &path.join("txoutindex_to_txoutindex"),
+                Version::ZERO,
+                compressed,
+            )?,
         })
     }
 
@@ -323,10 +421,10 @@ impl Vecs {
         let txinindexes_count = indexer_vecs.txinindex_to_txoutindex.len();
         let txoutindexes_count = indexer_vecs.txoutindex_to_addressindex.len();
 
-        self.height_to_height.compute_transform(
+        self.height_to_height.compute_range(
             starting_indexes.height,
             indexer_vecs.height_to_timestamp.mut_vec(),
-            |(h, ..)| (h, h),
+            |h| (h, h),
             exit,
         )?;
 
@@ -340,12 +438,12 @@ impl Vecs {
         self.height_to_fixed_timestamp.compute_transform(
             starting_indexes.height,
             indexer_vecs.height_to_timestamp.mut_vec(),
-            |(h, d, s, ..)| {
-                let d = h
+            |(h, timestamp, s, ..)| {
+                let timestamp = h
                     .decremented()
                     .and_then(|h| s.unwrap_cached_get(h))
-                    .map_or(d, |prev_d| prev_d.max(d));
-                (h, d)
+                    .map_or(timestamp, |prev_d| prev_d.max(timestamp));
+                (h, timestamp)
             },
             exit,
         )?;
@@ -397,17 +495,17 @@ impl Vecs {
                 exit,
             )?;
 
-        self.dateindex_to_dateindex.compute_transform(
+        self.dateindex_to_dateindex.compute_range(
             starting_dateindex,
             self.dateindex_to_first_height.mut_vec(),
-            |(di, ..)| (di, di),
+            |di| (di, di),
             exit,
         )?;
 
-        self.dateindex_to_date.compute_transform(
+        self.dateindex_to_date.compute_range(
             starting_dateindex,
             self.dateindex_to_dateindex.mut_vec(),
-            |(di, ..)| (di, Date::from(di)),
+            |di| (di, Date::from(di)),
             exit,
         )?;
 
@@ -448,10 +546,10 @@ impl Vecs {
             .unwrap_cached_get(starting_dateindex)
             .unwrap_or_default();
 
-        self.dateindex_to_weekindex.compute_transform(
+        self.dateindex_to_weekindex.compute_range(
             starting_dateindex,
             self.dateindex_to_dateindex.mut_vec(),
-            |(di, ..)| (di, Weekindex::from(di)),
+            |di| (di, Weekindex::from(di)),
             exit,
         )?;
 
@@ -470,10 +568,10 @@ impl Vecs {
                 exit,
             )?;
 
-        self.weekindex_to_weekindex.compute_transform(
+        self.weekindex_to_weekindex.compute_range(
             starting_weekindex,
             self.weekindex_to_first_dateindex.mut_vec(),
-            |(wi, ..)| (wi, wi),
+            |wi| (wi, wi),
             exit,
         )?;
 
@@ -491,10 +589,10 @@ impl Vecs {
             .unwrap_cached_get(starting_dateindex)
             .unwrap_or_default();
 
-        self.dateindex_to_monthindex.compute_transform(
+        self.dateindex_to_monthindex.compute_range(
             starting_dateindex,
             self.dateindex_to_dateindex.mut_vec(),
-            |(di, ..)| (di, Monthindex::from(di)),
+            |di| (di, Monthindex::from(di)),
             exit,
         )?;
 
@@ -515,10 +613,10 @@ impl Vecs {
                 exit,
             )?;
 
-        self.monthindex_to_monthindex.compute_transform(
+        self.monthindex_to_monthindex.compute_range(
             starting_monthindex,
             self.monthindex_to_first_dateindex.mut_vec(),
-            |(mi, ..)| (mi, mi),
+            |mi| (mi, mi),
             exit,
         )?;
 
@@ -536,10 +634,10 @@ impl Vecs {
             .unwrap_cached_get(starting_monthindex)
             .unwrap_or_default();
 
-        self.monthindex_to_quarterindex.compute_transform(
+        self.monthindex_to_quarterindex.compute_range(
             starting_monthindex,
             self.monthindex_to_monthindex.mut_vec(),
-            |(mi, ..)| (mi, Quarterindex::from(mi)),
+            |mi| (mi, Quarterindex::from(mi)),
             exit,
         )?;
 
@@ -560,10 +658,10 @@ impl Vecs {
                 exit,
             )?;
 
-        self.quarterindex_to_quarterindex.compute_transform(
+        self.quarterindex_to_quarterindex.compute_range(
             starting_quarterindex,
             self.quarterindex_to_first_monthindex.mut_vec(),
-            |(yi, ..)| (yi, yi),
+            |i| (i, i),
             exit,
         )?;
 
@@ -581,10 +679,10 @@ impl Vecs {
             .unwrap_cached_get(starting_monthindex)
             .unwrap_or_default();
 
-        self.monthindex_to_yearindex.compute_transform(
+        self.monthindex_to_yearindex.compute_range(
             starting_monthindex,
             self.monthindex_to_monthindex.mut_vec(),
-            |(mi, ..)| (mi, Yearindex::from(mi)),
+            |i| (i, Yearindex::from(i)),
             exit,
         )?;
 
@@ -605,10 +703,10 @@ impl Vecs {
                 exit,
             )?;
 
-        self.yearindex_to_yearindex.compute_transform(
+        self.yearindex_to_yearindex.compute_range(
             starting_yearindex,
             self.yearindex_to_first_monthindex.mut_vec(),
-            |(yi, ..)| (yi, yi),
+            |i| (i, i),
             exit,
         )?;
 
@@ -626,10 +724,10 @@ impl Vecs {
             .unwrap_cached_get(starting_yearindex)
             .unwrap_or_default();
 
-        self.yearindex_to_decadeindex.compute_transform(
+        self.yearindex_to_decadeindex.compute_range(
             starting_yearindex,
             self.yearindex_to_yearindex.mut_vec(),
-            |(yi, ..)| (yi, Decadeindex::from(yi)),
+            |i| (i, Decadeindex::from(i)),
             exit,
         )?;
 
@@ -648,10 +746,10 @@ impl Vecs {
                 exit,
             )?;
 
-        self.decadeindex_to_decadeindex.compute_transform(
+        self.decadeindex_to_decadeindex.compute_range(
             starting_decadeindex,
             self.decadeindex_to_first_yearindex.mut_vec(),
-            |(di, ..)| (di, di),
+            |i| (i, i),
             exit,
         )?;
 
@@ -669,10 +767,10 @@ impl Vecs {
             .unwrap_cached_get(decremented_starting_height)
             .unwrap_or_default();
 
-        self.height_to_difficultyepoch.compute_transform(
+        self.height_to_difficultyepoch.compute_range(
             starting_indexes.height,
             self.height_to_height.mut_vec(),
-            |(h, ..)| (h, Difficultyepoch::from(h)),
+            |h| (h, Difficultyepoch::from(h)),
             exit,
         )?;
 
@@ -691,10 +789,10 @@ impl Vecs {
                 exit,
             )?;
 
-        self.difficultyepoch_to_difficultyepoch.compute_transform(
+        self.difficultyepoch_to_difficultyepoch.compute_range(
             starting_difficultyepoch,
             self.difficultyepoch_to_first_height.mut_vec(),
-            |(de, ..)| (de, de),
+            |i| (i, i),
             exit,
         )?;
 
@@ -717,10 +815,10 @@ impl Vecs {
             .unwrap_cached_get(decremented_starting_height)
             .unwrap_or_default();
 
-        self.height_to_halvingepoch.compute_transform(
+        self.height_to_halvingepoch.compute_range(
             starting_indexes.height,
             self.height_to_height.mut_vec(),
-            |(h, ..)| (h, Halvingepoch::from(h)),
+            |h| (h, Halvingepoch::from(h)),
             exit,
         )?;
 
@@ -739,10 +837,10 @@ impl Vecs {
                 exit,
             )?;
 
-        self.halvingepoch_to_halvingepoch.compute_transform(
+        self.halvingepoch_to_halvingepoch.compute_range(
             starting_halvingepoch,
             self.halvingepoch_to_first_height.mut_vec(),
-            |(he, ..)| (he, he),
+            |i| (i, i),
             exit,
         )?;
 
@@ -757,6 +855,105 @@ impl Vecs {
         //     },
         //     exit,
         // )?;
+
+        // ---
+
+        self.addressindex_to_addressindex.compute_range(
+            starting_indexes.addressindex,
+            indexer_vecs.addressindex_to_height.mut_vec(),
+            |i| (i, i),
+            exit,
+        )?;
+        self.txoutindex_to_txoutindex.compute_range(
+            starting_indexes.txoutindex,
+            indexer_vecs.txoutindex_to_height.mut_vec(),
+            |i| (i, i),
+            exit,
+        )?;
+        self.p2pk33index_to_p2pk33index.compute_range(
+            starting_indexes.p2pk33index,
+            indexer_vecs.p2pk33index_to_height.mut_vec(),
+            |i| (i, i),
+            exit,
+        )?;
+        self.p2pk65index_to_p2pk65index.compute_range(
+            starting_indexes.p2pk65index,
+            indexer_vecs.p2pk65index_to_height.mut_vec(),
+            |i| (i, i),
+            exit,
+        )?;
+        self.p2pkhindex_to_p2pkhindex.compute_range(
+            starting_indexes.p2pkhindex,
+            indexer_vecs.p2pkhindex_to_height.mut_vec(),
+            |i| (i, i),
+            exit,
+        )?;
+        self.p2shindex_to_p2shindex.compute_range(
+            starting_indexes.p2shindex,
+            indexer_vecs.p2shindex_to_height.mut_vec(),
+            |i| (i, i),
+            exit,
+        )?;
+        self.p2trindex_to_p2trindex.compute_range(
+            starting_indexes.p2trindex,
+            indexer_vecs.p2trindex_to_height.mut_vec(),
+            |i| (i, i),
+            exit,
+        )?;
+        self.p2wpkhindex_to_p2wpkhindex.compute_range(
+            starting_indexes.p2wpkhindex,
+            indexer_vecs.p2wpkhindex_to_height.mut_vec(),
+            |i| (i, i),
+            exit,
+        )?;
+        self.p2wshindex_to_p2wshindex.compute_range(
+            starting_indexes.p2wshindex,
+            indexer_vecs.p2wshindex_to_height.mut_vec(),
+            |i| (i, i),
+            exit,
+        )?;
+        self.txindex_to_txindex.compute_range(
+            starting_indexes.txindex,
+            indexer_vecs.txindex_to_height.mut_vec(),
+            |i| (i, i),
+            exit,
+        )?;
+        self.txinindex_to_txinindex.compute_range(
+            starting_indexes.txinindex,
+            indexer_vecs.txinindex_to_height.mut_vec(),
+            |i| (i, i),
+            exit,
+        )?;
+        self.emptyindex_to_emptyindex.compute_range(
+            starting_indexes.emptyindex,
+            indexer_vecs.emptyindex_to_height.mut_vec(),
+            |i| (i, i),
+            exit,
+        )?;
+        self.multisigindex_to_multisigindex.compute_range(
+            starting_indexes.multisigindex,
+            indexer_vecs.multisigindex_to_height.mut_vec(),
+            |i| (i, i),
+            exit,
+        )?;
+        self.opreturnindex_to_opreturnindex.compute_range(
+            starting_indexes.opreturnindex,
+            indexer_vecs.opreturnindex_to_height.mut_vec(),
+            |i| (i, i),
+            exit,
+        )?;
+        self.pushonlyindex_to_pushonlyindex.compute_range(
+            starting_indexes.pushonlyindex,
+            indexer_vecs.pushonlyindex_to_height.mut_vec(),
+            |i| (i, i),
+            exit,
+        )?;
+        self.unknownindex_to_unknownindex.compute_range(
+            starting_indexes.unknownindex,
+            indexer_vecs.unknownindex_to_height.mut_vec(),
+            |i| (i, i),
+            exit,
+        )?;
 
         Ok(Indexes {
             indexes: starting_indexes,
@@ -821,6 +1018,22 @@ impl Vecs {
             self.quarterindex_to_last_monthindex.any_vec(),
             self.quarterindex_to_quarterindex.any_vec(),
             self.quarterindex_to_timestamp.any_vec(),
+            self.p2pk33index_to_p2pk33index.any_vec(),
+            self.p2pk65index_to_p2pk65index.any_vec(),
+            self.p2pkhindex_to_p2pkhindex.any_vec(),
+            self.p2shindex_to_p2shindex.any_vec(),
+            self.p2trindex_to_p2trindex.any_vec(),
+            self.p2wpkhindex_to_p2wpkhindex.any_vec(),
+            self.p2wshindex_to_p2wshindex.any_vec(),
+            self.txindex_to_txindex.any_vec(),
+            self.txinindex_to_txinindex.any_vec(),
+            self.emptyindex_to_emptyindex.any_vec(),
+            self.multisigindex_to_multisigindex.any_vec(),
+            self.opreturnindex_to_opreturnindex.any_vec(),
+            self.pushonlyindex_to_pushonlyindex.any_vec(),
+            self.unknownindex_to_unknownindex.any_vec(),
+            self.addressindex_to_addressindex.any_vec(),
+            self.txoutindex_to_txoutindex.any_vec(),
         ]
     }
 }

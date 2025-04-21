@@ -92,6 +92,7 @@ Heartfelt thanks go out to every donor on [Nostr](https://primal.net/p/npub1jagm
 If you'd like to have your own instance hosted for you please contact [hosting@bitcoinresearchkit.org](mailto:hosting@bitcoinresearchkit.org).
 
 - 2 separate dedicated servers (1 GB/s each) with different ISPs and Cloudflare integration for enhanced performance and optimal availability
+- 99.9% SLA
 - Direct communication for feature requests and support
 - Updates delivered at your convenience
 - Optional subdomains: `*.bitcoinresearchkit.org`, `*.kibo.money` and `*.satonomics.xyz`

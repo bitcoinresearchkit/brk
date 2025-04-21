@@ -32,6 +32,7 @@ export default import("./v5.0.5-treeshaked/script.js").then((lc) => {
    * @param {Colors} args.colors
    * @param {Index} args.index
    * @param {Utilities} args.utils
+   * @param {Elements} args.elements
    * @param {DeepPartial<ChartOptions>} [args.options]
    */
   function createLightweightChart({
@@ -40,13 +41,15 @@ export default import("./v5.0.5-treeshaked/script.js").then((lc) => {
     colors,
     index,
     utils,
+    elements,
     options: _options = {},
   }) {
+    console.log(elements.style.fontFamily);
     /** @satisfies {DeepPartial<ChartOptions>} */
     const options = {
       autoSize: true,
       layout: {
-        fontFamily: "Geist mono",
+        fontFamily: elements.style.fontFamily,
         // fontSize: 13,
         background: { color: "transparent" },
         attributionLogo: false,
@@ -134,6 +137,7 @@ export default import("./v5.0.5-treeshaked/script.js").then((lc) => {
    * @param {Signals} args.signals
    * @param {Colors} args.colors
    * @param {Utilities} args.utils
+   * @param {Elements} args.elements
    * @param {VecsResources} args.vecsResources
    * @param {Owner | null} [args.owner]
    * @param {true} [args.fitContentOnResize]
@@ -144,6 +148,7 @@ export default import("./v5.0.5-treeshaked/script.js").then((lc) => {
     signals,
     colors,
     utils,
+    elements,
     id,
     vecsResources,
     owner: _owner,
@@ -281,6 +286,7 @@ export default import("./v5.0.5-treeshaked/script.js").then((lc) => {
           signals,
           colors,
           utils,
+          elements,
         });
 
         if (fitContentOnResize) {

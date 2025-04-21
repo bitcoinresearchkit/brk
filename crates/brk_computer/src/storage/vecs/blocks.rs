@@ -120,10 +120,10 @@ impl Vecs {
             starting_indexes,
             exit,
             |v, indexer, _, starting_indexes, exit| {
-                v.compute_transform(
+                v.compute_range(
                     starting_indexes.height,
                     indexer.mut_vecs().height_to_weight.mut_vec(),
-                    |(h, ..)| (h, StoredU32::from(1_u32)),
+                    |h| (h, StoredU32::from(1_u32)),
                     exit,
                 )
             },

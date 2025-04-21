@@ -38,6 +38,7 @@ export function init({
     id: "charts",
     utils,
     vecsResources,
+    elements,
   });
 
   const index = createIndexSelector({ elements, signals, utils });
