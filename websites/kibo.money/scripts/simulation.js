@@ -30,6 +30,155 @@ export function init({
 
   const simulationElement = elements.simulation;
 
+  const dom = {
+    /**
+     * @param {Object} args
+     * @param {string} args.id
+     * @param {string} args.title
+     * @param {string} args.placeholder
+     * @param {Signal<number | null>} args.signal
+     * @param {number} args.min
+     * @param {number} args.step
+     * @param {number} [args.max]
+     * @param {{createEffect: typeof CreateEffect}} args.signals
+     */
+    createInputNumberElement({
+      id,
+      title,
+      signal,
+      min,
+      max,
+      step,
+      placeholder,
+      signals,
+    }) {
+      const input = window.document.createElement("input");
+      if (!id || !title || !placeholder) throw Error("input attribute missing");
+      input.id = id;
+      input.title = title;
+      input.placeholder = placeholder;
+      input.type = "number";
+      input.min = String(min);
+      if (max) {
+        input.max = String(max);
+      }
+      input.step = String(step);
+
+      let stateValue = /** @type {string | null} */ (null);
+
+      signals.createEffect(
+        () => {
+          const value = signal();
+          return value ? String(value) : "";
+        },
+        (value) => {
+          if (stateValue !== value) {
+            input.value = value;
+            stateValue = value;
+          }
+        },
+      );
+
+      input.addEventListener("input", () => {
+        const valueSer = input.value;
+        stateValue = valueSer;
+        const value = Number(valueSer);
+        if (value >= min && (max ? value <= max : true)) {
+          signal.set(value);
+        }
+      });
+
+      return { input, signal };
+    },
+    /**
+     * @param {Object} args
+     * @param {string} args.id
+     * @param {string} args.title
+     * @param {Signal<number | null>} args.signal
+     * @param {{createEffect: typeof CreateEffect}} args.signals
+     */
+    createInputDollar({ id, title, signal, signals }) {
+      return this.createInputNumberElement({
+        id,
+        placeholder: "USD",
+        min: 0,
+        title,
+        signal,
+        signals,
+        step: 1,
+      });
+    },
+    /**
+     * @param {Object} args
+     * @param {string} args.id
+     * @param {string} args.title
+     * @param {Signal<Date | null>} args.signal
+     * @param {{createEffect: typeof CreateEffect}} args.signals
+     */
+    createInputDate({ id, title, signal, signals }) {
+      const input = window.document.createElement("input");
+      input.id = id;
+      input.title = title;
+      input.type = "date";
+      const min = "2011-01-01";
+      const minDate = new Date(min);
+      const maxDate = new Date();
+      const max = utils.date.toString(maxDate);
+      input.min = min;
+      input.max = max;
+
+      let stateValue = /** @type {string | null} */ (null);
+
+      signals.createEffect(
+        () => {
+          const dateSignal = signal();
+          return dateSignal ? utils.date.toString(dateSignal) : "";
+        },
+        (value) => {
+          if (stateValue !== value) {
+            input.value = value;
+            stateValue = value;
+          }
+        },
+      );
+
+      input.addEventListener("change", () => {
+        const value = input.value;
+        const date = new Date(value);
+        if (date >= minDate && date <= maxDate) {
+          stateValue = value;
+          signal.set(value ? date : null);
+        }
+      });
+
+      return { input, signal };
+    },
+    /**
+     * @param {Object} param0
+     * @param {Signal<any>} param0.signal
+     * @param {HTMLInputElement} [param0.input]
+     * @param {HTMLSelectElement} [param0.select]
+     */
+    createResetableInput({ input, select, signal }) {
+      const div = window.document.createElement("div");
+
+      const element = input || select;
+      if (!element) throw "createResetableField element missing";
+      div.append(element);
+
+      const button = utils.dom.createButtonElement({
+        onClick: signal.reset,
+        inside: "Reset",
+        title: "Reset field",
+      });
+      button.type = "reset";
+
+      div.append(button);
+
+      return div;
+    },
+  };
+
   const parametersElement = window.document.createElement("div");
   simulationElement.append(parametersElement);
   const resultsElement = window.document.createElement("div");
@@ -276,8 +425,8 @@ export function init({
       }),
       description:
         "The amount of dollars you have ready on the exchange on day one.",
-      input: utils.dom.createResetableInput(
-        utils.dom.createInputDollar({
+      input: dom.createResetableInput(
+        dom.createInputDollar({
           id: "simulation-dollars-initial",
           title: "Initial Dollar Amount",
           signal: settings.dollars.initial.amount,
@@ -296,11 +445,12 @@ export function init({
       }),
       description:
         "The frequency at which you'll top up your account at the exchange.",
-      input: utils.dom.createResetableInput(
+      input: dom.createResetableInput(
         utils.dom.createSelect({
           id: "top-up-frequency",
           list: frequencies.list,
           signal: settings.dollars.topUp.frenquency,
+          deep: true,
         }),
       ),
     }),
@@ -315,8 +465,8 @@ export function init({
       }),
       description:
         "The recurrent amount of dollars you'll be transfering to said exchange.",
-      input: utils.dom.createResetableInput(
-        utils.dom.createInputDollar({
+      input: dom.createResetableInput(
+        dom.createInputDollar({
           id: "simulation-dollars-top-up-amount",
           title: "Top Up Dollar Amount",
           signal: settings.dollars.topUp.amount,
@@ -335,8 +485,8 @@ export function init({
       }),
       description:
         "The amount, if available, of dollars that will be used to buy Bitcoin on day one.",
-      input: utils.dom.createResetableInput(
-        utils.dom.createInputDollar({
+      input: dom.createResetableInput(
+        dom.createInputDollar({
           id: "simulation-bitcoin-initial-investment",
           title: "Initial Swap Amount",
           signal: settings.bitcoin.investment.initial,
@@ -354,11 +504,12 @@ export function init({
         text: "Investment Frequency",
       }),
       description: "The frequency at which you'll be buying Bitcoin.",
-      input: utils.dom.createResetableInput(
+      input: dom.createResetableInput(
         utils.dom.createSelect({
           id: "investment-frequency",
           list: frequencies.list,
           signal: settings.bitcoin.investment.frequency,
+          deep: true,
         }),
       ),
     }),
@@ -373,8 +524,8 @@ export function init({
       }),
       description:
         "The recurrent amount, if available, of dollars that will be used to buy Bitcoin.",
-      input: utils.dom.createResetableInput(
-        utils.dom.createInputDollar({
+      input: dom.createResetableInput(
+        dom.createInputDollar({
           id: "simulation-bitcoin-recurrent-investment",
           title: "Bitcoin Recurrent Investment",
           signal: settings.bitcoin.investment.recurrent,
@@ -392,8 +543,8 @@ export function init({
         text: "Start",
       }),
       description: "The first day of the simulation.",
-      input: utils.dom.createResetableInput(
-        utils.dom.createInputDate({
+      input: dom.createResetableInput(
+        dom.createInputDate({
           id: "simulation-inverval-start",
           title: "First Simulation Date",
           signal: settings.interval.start,
@@ -411,8 +562,8 @@ export function init({
         text: "End",
       }),
       description: "The last day of the simulation.",
-      input: utils.dom.createResetableInput(
-        utils.dom.createInputDate({
+      input: dom.createResetableInput(
+        dom.createInputDate({
           id: "simulation-inverval-end",
           title: "Last Simulation Day",
           signal: settings.interval.end,
@@ -430,8 +581,8 @@ export function init({
         text: "Exchange",
       }),
       description: "The amount of trading fees (in %) at the exchange.",
-      input: utils.dom.createResetableInput(
-        utils.dom.createInputNumberElement({
+      input: dom.createResetableInput(
+        dom.createInputNumberElement({
           id: "simulation-fees",
           title: "Exchange Fees",
           signal: settings.fees.percentage,
@@ -555,6 +706,7 @@ export function init({
     fitContentOnResize: true,
     vecsResources,
     utils,
+    elements,
     config: [
       {
         unit: "USD",
@@ -597,6 +749,7 @@ export function init({
     id: `bitcoin`,
     fitContentOnResize: true,
     vecsResources,
+    elements,
     utils,
     config: [
       {
@@ -621,6 +774,7 @@ export function init({
     fitContentOnResize: true,
     vecsResources,
     utils,
+    elements,
     config: [
       {
         unit: "USD",
@@ -650,6 +804,8 @@ export function init({
     id: `return-ratio`,
     fitContentOnResize: true,
     utils,
+    elements,
+
     config: [
       {
         unit: "USD",
@@ -672,10 +828,11 @@ export function init({
     fitContentOnResize: true,
     vecsResources,
     utils,
+    elements,
     owner,
     config: [
       {
-        unit: "Percentage",
+        unit: "%",
         blueprints: [
           {
             title: "Profitable Days Ratio",

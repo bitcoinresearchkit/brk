@@ -1,7 +1,7 @@
 // @ts-check
 
 /**
- * @import { Option, PartialChartOption, ChartOption, AnyPartialOption, ProcessedOptionAddons, OptionsTree, SimulationOption, Unit, AnySeriesBlueprint, ChartableIndex } from "./options"
+ * @import { Option, PartialChartOption, ChartOption, AnyPartialOption, ProcessedOptionAddons, OptionsTree, SimulationOption, AnySeriesBlueprint, ChartableIndex } from "./options"
  * @import {Valued,  SingleValueData, CandlestickData, ChartData, OHLCTuple} from "../packages/lightweight-charts/wrapper"
  * @import * as _ from "../packages/ufuzzy/v1.0.14/types"
  * @import { createChart as CreateClassicChart, LineStyleOptions, DeepPartial, ChartOptions, IChartApi, IHorzScaleBehavior, WhitespaceData, ISeriesApi, Time, LineData, LogicalRange, SeriesType, BaselineStyleOptions, SeriesOptionsCommon, BaselineData, CandlestickStyleOptions } from "../packages/lightweight-charts/v5.0.5-treeshaked/types"
@@ -9,7 +9,38 @@
  * @import {Signal, Signals} from "../packages/solid-signals/types";
  * @import { getOwner as GetOwner, onCleanup as OnCleanup, Owner } from "../packages/solid-signals/v0.2.4-treeshaked/types/core/owner"
  * @import { createEffect as CreateEffect, Accessor, Setter, createMemo as CreateMemo } from "../packages/solid-signals/v0.2.4-treeshaked/types/signals";
- * @import {Addressindex, Dateindex, Decadeindex, Difficultyepoch, Index, Halvingepoch, Height, Monthindex, P2PK33index, P2PK65index, P2PKHindex, P2SHindex, P2TRindex, P2WPKHindex, P2WSHindex, Txindex, Txinindex, Txoutindex, VecId, Weekindex, Yearindex, VecIdToIndexes, Quarterindex} from "./vecid-to-indexes"
+ * @import {Addressindex, Dateindex, Decadeindex, Difficultyepoch, Index, Halvingepoch, Height, Monthindex, P2PK33index, P2PK65index, P2PKHindex, P2SHindex, P2TRindex, P2WPKHindex, P2WSHindex, Txindex, Txinindex, Txoutindex, VecId, Weekindex, Yearindex, VecIdToIndexes, Quarterindex, Emptyindex, Multisigindex, Opreturnindex, Pushonlyindex, Unknownindex} from "./vecid-to-indexes"
+ */
+
+/**
+ * @typedef {"" |
+ *   "BTC" |
+ *   "Cents" |
+ *   "Coinblocks" |
+ *   "Count" |
+ *   "Date" |
+ *   "Difficulty" |
+ *   "ExaHash / Second" |
+ *   "Gigabytes" |
+ *   "Hash" |
+ *   "Index" |
+ *   "mb" |
+ *   "%" |
+ *   "Ratio" |
+ *   "Sats" |
+ *   "Seconds" |
+ *   "Timestamp" |
+ *   "tx" |
+ *   "Type" |
+ *   "USD / (PetaHash / Second)" |
+ *   "USD" |
+ *   "Version" |
+ *   "WU" |
+ *   "Bool" |
+ *   "Locktime" |
+ *   "sat/vB" |
+ *   "vB"
+ * } Unit
  */
 
 function initPackages() {
@@ -114,22 +145,6 @@ function createUtils() {
       return element;
     },
     /**
-     * @param {string} name
-     * @param {Elements} elements
-     */
-    queryOrCreateMetaElement(name, elements) {
-      let meta = /** @type {HTMLMetaElement | null} */ (
-        window.document.querySelector(`meta[name="${name}"]`)
-      );
-
-      if (!meta) {
-        meta = window.document.createElement("meta");
-        meta.name = name;
-        elements.head.appendChild(meta);
-      }
-      return meta;
-    },
-    /**
      * @param {HTMLElement} element
      */
     isHidden(element) {
@@ -206,14 +221,14 @@ function createUtils() {
     },
     /**
      * @param {Object} arg
-     * @param {string} arg.text
+     * @param {string | HTMLElement} arg.inside
      * @param {string} arg.title
      * @param {VoidFunction} arg.onClick
      */
-    createButtonElement({ text, onClick, title }) {
+    createButtonElement({ inside: text, onClick, title }) {
       const button = window.document.createElement("button");
 
-      button.innerHTML = text;
+      button.append(text);
 
       button.title = title;
 
@@ -406,128 +421,6 @@ function createUtils() {
     },
     /**
      * @param {Object} args
-     * @param {string} args.id
-     * @param {string} args.title
-     * @param {string} args.placeholder
-     * @param {Signal<number | null>} args.signal
-     * @param {number} args.min
-     * @param {number} args.step
-     * @param {number} [args.max]
-     * @param {{createEffect: typeof CreateEffect}} args.signals
-     */
-    createInputNumberElement({
-      id,
-      title,
-      signal,
-      min,
-      max,
-      step,
-      placeholder,
-      signals,
-    }) {
-      const input = window.document.createElement("input");
-      if (!id || !title || !placeholder) throw Error("input attribute missing");
-      input.id = id;
-      input.title = title;
-      input.placeholder = placeholder;
-      input.type = "number";
-      input.min = String(min);
-      if (max) {
-        input.max = String(max);
-      }
-      input.step = String(step);
-
-      let stateValue = /** @type {string | null} */ (null);
-
-      signals.createEffect(
-        () => {
-          const value = signal();
-          return value ? String(value) : "";
-        },
-        (value) => {
-          if (stateValue !== value) {
-            input.value = value;
-            stateValue = value;
-          }
-        },
-      );
-
-      input.addEventListener("input", () => {
-        const valueSer = input.value;
-        stateValue = valueSer;
-        const value = Number(valueSer);
-        if (value >= min && (max ? value <= max : true)) {
-          signal.set(value);
-        }
-      });
-
-      return { input, signal };
-    },
-    /**
-     * @param {Object} args
-     * @param {string} args.id
-     * @param {string} args.title
-     * @param {Signal<number | null>} args.signal
-     * @param {{createEffect: typeof CreateEffect}} args.signals
-     */
-    createInputDollar({ id, title, signal, signals }) {
-      return this.createInputNumberElement({
-        id,
-        placeholder: "USD",
-        min: 0,
-        title,
-        signal,
-        signals,
-        step: 1,
-      });
-    },
-    /**
-     * @param {Object} args
-     * @param {string} args.id
-     * @param {string} args.title
-     * @param {Signal<Date | null>} args.signal
-     * @param {{createEffect: typeof CreateEffect}} args.signals
-     */
-    createInputDate({ id, title, signal, signals }) {
-      const input = window.document.createElement("input");
-      input.id = id;
-      input.title = title;
-      input.type = "date";
-      const min = "2011-01-01";
-      const minDate = new Date(min);
-      const maxDate = new Date();
-      const max = date.toString(maxDate);
-      input.min = min;
-      input.max = max;
-
-      let stateValue = /** @type {string | null} */ (null);
-
-      signals.createEffect(
-        () => {
-          const dateSignal = signal();
-          return dateSignal ? date.toString(dateSignal) : "";
-        },
-        (value) => {
-          if (stateValue !== value) {
-            input.value = value;
-            stateValue = value;
-          }
-        },
-      );
-
-      input.addEventListener("change", () => {
-        const value = input.value;
-        const date = new Date(value);
-        if (date >= minDate && date <= maxDate) {
-          stateValue = value;
-          signal.set(value ? date : null);
-        }
-      });
-
-      return { input, signal };
-    },
-    /**
-     * @param {Object} args
      * @param {1 | 2 | 3} [args.level]
      * @param {string} [args.title]
      */
@@ -556,13 +449,16 @@ function createUtils() {
       return option;
     },
     /**
-     * @template {{name: string; value: string}} T
-     * @param {Object} param0
-     * @param {string} param0.id
-     * @param {(({name: string; value: string} & T) | {name: string; list: ({name: string; value: string} & T)[]})[]} param0.list
-     * @param {Signal<T>} param0.signal
+     * @template {string} Name
+     * @template {string} Value
+     * @template {{name: Name; value: Value}} T
+     * @param {Object} args
+     * @param {string} args.id
+     * @param {boolean} [args.deep]
+     * @param {(({name: Name; value: Value} & T) | {name: string; list: ({name: Name; value: Value} & T)[]})[]} args.list
+     * @param {Signal<T>} args.signal
      */
-    createSelect({ id, list, signal }) {
+    createSelect({ id, list, signal, deep = false }) {
       const select = window.document.createElement("select");
       select.name = id;
       select.id = id;
@@ -584,7 +480,7 @@ function createUtils() {
           select.append(this.createOption(anyOption));
           setters[anyOption.value] = () => signal.set(() => anyOption);
         }
-        if (index !== list.length - 1) {
+        if (deep && index !== list.length - 1) {
           select.append(window.document.createElement("hr"));
         }
       });
@@ -600,30 +496,6 @@ function createUtils() {
       select.value = signal().value;
 
       return { select, signal };
-    },
-    /**
-     * @param {Object} param0
-     * @param {Signal<any>} param0.signal
-     * @param {HTMLInputElement} [param0.input]
-     * @param {HTMLSelectElement} [param0.select]
-     */
-    createResetableInput({ input, select, signal }) {
-      const div = window.document.createElement("div");
-
-      const element = input || select;
-      if (!element) throw "createResetableField element missing";
-      div.append(element);
-
-      const button = this.createButtonElement({
-        onClick: signal.reset,
-        text: "Reset",
-        title: "Reset field",
-      });
-      button.type = "reset";
-
-      div.append(button);
-
-      return div;
     },
     /**
      * @param {Object} args
@@ -784,6 +656,79 @@ function createUtils() {
       minimumFractionDigits: digits,
       maximumFractionDigits: digits,
     });
+  }
+
+  /**
+   * @param {VecId} id
+   */
+  function vecidToUnit(id) {
+    /** @type {Unit} */
+    let unit;
+    if (id.includes("index") || id.includes("height") || id.includes("epoch")) {
+      unit = "Index";
+    } else if (id.includes("type")) {
+      unit = "Type";
+    } else if (id === "locktime") {
+      unit = "Locktime";
+    } else if (id.startsWith("is-")) {
+      unit = "Bool";
+    } else if (
+      id.includes("hash") ||
+      id.includes("address") ||
+      id.includes("txid")
+    ) {
+      unit = "Hash";
+    } else if (id.includes("interval")) {
+      unit = "Seconds";
+    } else if (id.includes("feerate")) {
+      unit = "sat/vB";
+    } else if (id.includes("in-cents")) {
+      unit = "Cents";
+    } else if (id.includes("in-usd")) {
+      unit = "USD";
+    } else if (id.includes("in-btc")) {
+      unit = "BTC";
+    } else if (
+      id.includes("in-sats") ||
+      id.startsWith("sats-") ||
+      id.includes("input-value") ||
+      id.includes("output-value") ||
+      id.includes("fee") ||
+      id.includes("coinbase") ||
+      id.includes("subsidy")
+    ) {
+      unit = "Sats";
+    } else if (
+      id.includes("open") ||
+      id.includes("high") ||
+      id.includes("low") ||
+      id.includes("close") ||
+      id.includes("ohlc")
+    ) {
+      unit = "USD";
+    } else if (id.includes("count")) {
+      unit = "Count";
+    } else if (id.includes("date")) {
+      unit = "Date";
+    } else if (id.includes("timestamp")) {
+      unit = "Timestamp";
+    } else if (id.includes("difficulty")) {
+      unit = "Difficulty";
+    } else if (id.includes("-size")) {
+      unit = "mb";
+    } else if (id.includes("weight")) {
+      unit = "WU";
+    } else if (id.includes("vbytes") || id.includes("vsize")) {
+      unit = "vB";
+    } else if (id.includes("version") || id.match(/v[1-3]/g)) {
+      unit = "Version";
+    } else if (id === "value") {
+      unit = "Sats";
+    } else {
+      console.log();
+      throw Error(`Unit not set for "${id}"`);
+    }
+    return unit;
   }
 
   const locale = {
@@ -1298,6 +1243,7 @@ function createUtils() {
     runWhenIdle,
     getNumberOfDaysBetweenTwoDates,
     stringToId,
+    vecidToUnit,
   };
 }
 /** @typedef {ReturnType<typeof createUtils>} Utilities */
@@ -1435,6 +1381,7 @@ function getElements() {
     selectors: getElementById("frame-selectors"),
     style: getComputedStyle(window.document.documentElement),
     charts: getElementById("charts"),
+    database: getElementById("database"),
     simulation: getElementById("simulation"),
   };
 }
@@ -1920,6 +1867,12 @@ function main() {
       optionsPromise.then(async ({ initOptions }) => {
         const vecIdToIndexes = createVecIdToIndexes();
 
+        if (env.localhost) {
+          Object.keys(vecIdToIndexes).forEach((id) => {
+            utils.vecidToUnit(/** @type {VecId} */ (id));
+          });
+        }
+
         function initDark() {
           const preferredColorSchemeMatchMedia = window.matchMedia(
             "(prefers-color-scheme: dark)",
@@ -2003,7 +1956,8 @@ function main() {
                 undefined
               );
               let firstTimeLoadingChart = true;
-              let firstTimeLoadingSim = true;
+              let firstTimeLoadingDatabase = true;
+              let firstTimeLoadingSimulation = true;
 
               signals.createEffect(options.selected, (option) => {
                 if (previousElement) {
@@ -2036,7 +1990,9 @@ function main() {
                                 colors,
                                 elements,
                                 lightweightCharts,
-                                selected: /** @type {any} */ (lastChartOption),
+                                selected: /** @type {Accessor<ChartOption>} */ (
+                                  lastChartOption
+                                ),
                                 signals,
                                 utils,
                                 webSockets,
@@ -2052,15 +2008,38 @@ function main() {
 
                     break;
                   }
+                  case "database": {
+                    element = elements.database;
+
+                    if (firstTimeLoadingDatabase) {
+                      const databaseScript = import("./database.js");
+                      utils.dom.importStyleAndThen("/styles/database.css", () =>
+                        databaseScript.then(({ init }) =>
+                          signals.runWithOwner(owner, () =>
+                            init({
+                              colors,
+                              elements,
+                              signals,
+                              utils,
+                              vecsResources,
+                              vecIdToIndexes,
+                            }),
+                          ),
+                        ),
+                      );
+                    }
+                    firstTimeLoadingDatabase = false;
+
+                    break;
+                  }
                   case "simulation": {
                     element = elements.simulation;
 
                     lastSimulationOption.set(option);
 
-                    if (firstTimeLoadingSim) {
+                    if (firstTimeLoadingSimulation) {
                       const lightweightCharts = packages.lightweightCharts();
                       const simulationScript = import("./simulation.js");
-
                       utils.dom.importStyleAndThen(
                         "/styles/simulation.css",
                         () =>
@@ -2080,7 +2059,7 @@ function main() {
                           ),
                       );
                     }
-                    firstTimeLoadingSim = false;
+                    firstTimeLoadingSimulation = false;
 
                     break;
                   }

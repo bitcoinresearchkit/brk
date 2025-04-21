@@ -1,0 +1,126 @@
+#database {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  padding: var(--main-padding);
+
+  > div {
+    display: flex;
+    font-size: var(--font-size-sm);
+    margin-left: var(--negative-main-padding);
+    margin-right: var(--negative-main-padding);
+
+    table {
+      z-index: 10;
+      border-top-width: 1px;
+      border-style: dashed !important;
+      /* width: 100%; */
+      line-height: var(--line-height-sm);
+      text-transform: uppercase;
+      table-layout: auto;
+      border-collapse: separate;
+      border-spacing: 0;
+      /* border: 3px solid purple; */
+      /* min-height: 100%; */
+    }
+
+    th {
+      font-weight: 600;
+    }
+
+    th,
+    td {
+      /* border-top: 1px; */
+      border-right: 1px;
+      border-bottom: 1px;
+      border-color: var(--off-color);
+      border-style: dashed !important;
+      padding: 0.25rem 1rem;
+    }
+
+    th:first-child {
+      padding-left: var(--main-padding);
+    }
+
+    th[scope="col"] {
+      position: sticky;
+      top: 0;
+      background-color: var(--background-color);
+
+      > div {
+        display: flex;
+        flex-direction: column;
+        padding-top: 0.275rem;
+
+        > div {
+          display: flex;
+          gap: 0.25rem;
+          text-transform: lowercase;
+          color: var(--off-color);
+          text-align: left;
+          gap: 1rem;
+
+          > span {
+            width: 100%;
+          }
+
+          > button {
+            padding: 0 0.25rem;
+            margin: 0 -0.25rem;
+            font-size: 1rem;
+            line-height: 0;
+          }
+        }
+      }
+
+      &:first-child {
+        button {
+          display: none;
+        }
+      }
+
+      &:nth-child(2) {
+        button:nth-of-type(1) {
+          display: none;
+        }
+      }
+
+      &:last-child {
+        button:nth-of-type(2) {
+          display: none;
+        }
+      }
+    }
+
+    /* select {
+      width: 100%;
+    } */
+
+    tbody {
+      text-align: right;
+    }
+
+    > button {
+      padding: 1rem;
+      min-width: 10rem;
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      position: relative;
+      border-top-width: 1px;
+      width: 100%;
+      /* border-right-width: 1px; */
+      border-bottom-width: 1px;
+      border-style: dashed !important;
+
+      > span {
+        text-align: left;
+        position: sticky;
+        top: 2rem;
+        left: 0;
+        right: 0;
+      }
+    }
+  }
+}

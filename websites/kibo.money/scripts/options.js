@@ -12,28 +12,6 @@
  */
 
 /**
- * @typedef {"" |
- *   "BTC" |
- *   "Coinblocks" |
- *   "Count" |
- *   "Date" |
- *   "USD / (PetaHash / Second)" |
- *   "ExaHash / Second" |
- *   "Height" |
- *   "Gigabytes" |
- *   "Megabytes" |
- *   "Percentage" |
- *   "Ratio" |
- *   "Sats" |
- *   "sat/vB" |
- *   "Seconds" |
- *   "Transactions" |
- *   "USD" |
- *   "Version" |
- *   "vB" |
- *   "WU"
- * } Unit
- *
  * @typedef {Object} BaseSeriesBlueprint
  * @property {string} title
  * @property {boolean} [defaultActive]
@@ -85,6 +63,14 @@
  *
  * @typedef {Required<Omit<PartialChartOption, "top" | "bottom">> & ProcessedChartOptionAddons & ProcessedOptionAddons} ChartOption
  *
+ * @typedef {Object} PartialDatabaseOptionSpecific
+ * @property {"database"} kind
+ * @property {string} title
+ *
+ * @typedef {PartialOption & PartialDatabaseOptionSpecific} PartialDatabaseOption
+ *
+ * @typedef {Required<PartialDatabaseOption> & ProcessedOptionAddons} DatabaseOption
+ *
  * @typedef {Object} PartialSimulationOptionSpecific
  * @property {"simulation"} kind
  * @property {string} title
@@ -102,9 +88,9 @@
  *
  * @typedef {Required<PartialUrlOption> & ProcessedOptionAddons} UrlOption
  *
- * @typedef {PartialChartOption | PartialSimulationOption | PartialUrlOption} AnyPartialOption
+ * @typedef {PartialChartOption | PartialDatabaseOption | PartialSimulationOption | PartialUrlOption} AnyPartialOption
  *
- * @typedef {ChartOption | SimulationOption | UrlOption} Option
+ * @typedef {ChartOption | DatabaseOption | SimulationOption | UrlOption} Option
  *
  * @typedef {Object} PartialOptionsGroup
  * @property {string} name
@@ -543,6 +529,11 @@ function createPartialOptions(colors) {
       ],
     },
     {
+      kind: "database",
+      title: "Database",
+      name: "Database",
+    },
+    {
       name: "Simulations",
       tree: [
         {
@@ -677,41 +668,7 @@ export function initOptions({
    */
   function arrayToRecord(id, arr = []) {
     return (arr || []).reduce((record, blueprint) => {
-      const key = blueprint.key;
-      /** @type {Unit} */
-      let unit;
-      if (key.includes("interval")) {
-        unit = "Seconds";
-      } else if (key.includes("feerate")) {
-        unit = "sat/vB";
-      } else if (key.includes("in-usd")) {
-        unit = "USD";
-      } else if (key.includes("in-btc")) {
-        unit = "BTC";
-      } else if (
-        key.includes("-in-sats") ||
-        key.startsWith("sats-") ||
-        key.includes("input-value") ||
-        key.includes("output-value") ||
-        key.includes("fee") ||
-        key.includes("coinbase") ||
-        key.includes("subsidy")
-      ) {
-        unit = "Sats";
-      } else if (key.includes("count")) {
-        unit = "Count";
-      } else if (key.includes("-size")) {
-        unit = "Megabytes";
-      } else if (key.includes("weight")) {
-        unit = "WU";
-      } else if (key.includes("vbytes") || key.includes("vsize")) {
-        unit = "vB";
-      } else if (key.match(/v[1-3]/g)) {
-        unit = "Version";
-      } else {
-        console.log([id, key]);
-        throw Error("Unit not set");
-      }
+      const unit = utils.vecidToUnit(blueprint.key);
       record[unit] ??= [];
       record[unit].push(blueprint);
       return record;
@@ -733,7 +690,7 @@ export function initOptions({
 
       if (option.qrcode) {
         return utils.dom.createButtonElement({
-          text: option.name,
+          inside: option.name,
           title: option.title,
           onClick: () => {
             qrcode.set(option.url);
@@ -918,16 +875,17 @@ export function initOptions({
         /** @type {Option} */
         let option;
 
-        /** @type {string} */
-        let id;
-        /** @type {Option["kind"]} */
-        let kind;
-        /** @type {string} */
-        let title;
-
-        if ("kind" in anyPartial && anyPartial.kind === "simulation") {
+        if ("kind" in anyPartial && anyPartial.kind === "database") {
+          option = /** @satisfies {DatabaseOption} */ ({
+            kind: anyPartial.kind,
+            id: anyPartial.kind,
+            name: anyPartial.name,
+            path: path || [],
+            title: anyPartial.title,
+          });
+        } else if ("kind" in anyPartial && anyPartial.kind === "simulation") {
           option = /** @satisfies {SimulationOption} */ ({
-            kind: "simulation",
+            kind: anyPartial.kind,
             id: anyPartial.kind,
             name: anyPartial.name,
             path: path || [],
