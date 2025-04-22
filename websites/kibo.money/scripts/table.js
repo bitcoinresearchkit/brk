@@ -20,16 +20,17 @@ function createTable({
   const serializedIndexes = createSerializedIndexes();
   /** @type {SerializedIndex} */
   const defaultSerializedIndex = "height";
-  /** @type {Signal<SerializedIndex>} */
-  const serializedIndex = signals.createSignal(
-    /** @type {SerializedIndex} */ (defaultSerializedIndex),
-    {
-      save: {
-        ...utils.serde.string,
-        keyPrefix: "table",
-        key: "index",
+  const serializedIndex = /** @type {Signal<SerializedIndex>} */ (
+    signals.createSignal(
+      /** @type {SerializedIndex} */ (defaultSerializedIndex),
+      {
+        save: {
+          ...utils.serde.string,
+          keyPrefix: "table",
+          key: "index",
+        },
       },
-    },
+    )
   );
   const index = signals.createMemo(() =>
     serializedIndexToIndex(serializedIndex()),
