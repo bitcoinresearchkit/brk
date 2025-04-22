@@ -90,7 +90,16 @@ function createTable({
       trHead.append(th);
       const div = window.document.createElement("div");
       div.append(select);
-      const strip = window.document.createElement("div");
+      // const top = window.document.createElement("div");
+      // div.append(top);
+      // top.append(select);
+      // top.append(
+      //   utils.dom.createAnchorElement({
+      //     href: "",
+      //     blank: true,
+      //   }),
+      // );
+      const bottom = window.document.createElement("div");
       const unit = window.document.createElement("span");
       if (_unit) {
         unit.innerHTML = _unit;
@@ -110,11 +119,11 @@ function createTable({
         title: "Remove column",
         onClick: onRemove || (() => {}),
       });
-      strip.append(unit);
-      strip.append(moveLeft);
-      strip.append(moveRight);
-      strip.append(remove);
-      div.append(strip);
+      bottom.append(unit);
+      bottom.append(moveLeft);
+      bottom.append(moveRight);
+      bottom.append(remove);
+      div.append(bottom);
       th.append(div);
       return {
         element: th,
@@ -280,6 +289,8 @@ function createTable({
 
                 vec.fetch({ from, to });
 
+                const fetchedKey = vecsResources.genFetchedKey({ from, to });
+
                 columns.set((l) => {
                   const i = l.indexOf(prevVecId ?? vecId);
                   if (i === -1) {
@@ -290,7 +301,7 @@ function createTable({
                   return l;
                 });
 
-                signals.createEffect(vec.fetched, (vec) => {
+                signals.createEffect(vec.fetched[fetchedKey], (vec) => {
                   if (!vec) return;
 
                   const thIndex = colIndex() + 1;
