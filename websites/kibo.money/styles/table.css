@@ -43,6 +43,11 @@
       text-transform: lowercase;
     }
 
+    a {
+      margin: -0.2rem 0;
+      font-size: 1.2rem;
+    }
+
     th:first-child {
       padding-left: var(--main-padding);
     }
@@ -63,7 +68,14 @@
           text-transform: lowercase;
           color: var(--off-color);
           text-align: left;
-          gap: 1rem;
+
+          &:first-child {
+            gap: 0.5rem;
+          }
+
+          &:last-child {
+            gap: 1rem;
+          }
 
           > span {
             width: 100%;

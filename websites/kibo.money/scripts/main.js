@@ -1287,6 +1287,24 @@ function createUtils() {
 function createVecsResources(signals, utils) {
   const owner = signals.getOwner();
 
+  const defaultFrom = -10_000;
+  const defaultTo = undefined;
+
+  /**
+   * Defaults
+   * - from: -10_000
+   * - to: undefined
+   *
+   * @param {Object} [args]
+   * @param {number} [args.from]
+   * @param {number} [args.to]
+   */
+  function genFetchedKey(args) {
+    return `${args?.from}-${args?.to}`;
+  }
+
+  const defaultFetchedKey = genFetchedKey({ from: defaultFrom, to: defaultTo });
+
   /**
    * @template {number | OHLCTuple} [T=number]
    * @param {Index} index
@@ -1296,15 +1314,12 @@ function createVecsResources(signals, utils) {
     return signals.runWithOwner(owner, () => {
       /** @typedef {T extends number ? SingleValueData : CandlestickData} Value */
 
-      const fetched = signals.createSignal(/** @type {T[] | null} */ (null));
       let loading = false;
       let at = /** @type {Date | null} */ (null);
 
-      const from = -10_000;
-
       return {
-        url: utils.api.genUrl(index, id, from),
-        fetched,
+        url: utils.api.genUrl(index, id, defaultFrom),
+        fetched: /** @type {Record<string, Signal<T[] | null>>} */ ({}),
         /**
          * Defaults
          * - from: -10_000
@@ -1315,6 +1330,13 @@ function createVecsResources(signals, utils) {
          * @param {number} [args.to]
          */
         async fetch(args) {
+          const from = args?.from ?? defaultFrom;
+          const to = args?.to ?? defaultTo;
+          const fetchedKey = genFetchedKey({ from, to });
+          this.fetched[fetchedKey] ??= signals.createSignal(
+            /** @type {T[] | null} */ (null),
+          );
+          const fetched = this.fetched[fetchedKey];
           if (loading) return fetched();
           if (at) {
             const diff = new Date().getTime() - at.getTime();
@@ -1329,8 +1351,8 @@ function createVecsResources(signals, utils) {
               },
               index,
               id,
-              args?.from ?? from,
-              args?.to,
+              from,
+              to,
             )
           );
           at = new Date();
@@ -1362,6 +1384,8 @@ function createVecsResources(signals, utils) {
       map.set(key, /** @type {any} */ (vec));
       return vec;
     },
+    genFetchedKey,
+    defaultFetchedKey,
   };
 
   return vecs;

@@ -195,9 +195,13 @@ export default import("./v5.0.5-treeshaked/script.js").then((lc) => {
      * @param {VecResource} valuesResource
      */
     function createSetFetchedDataEffect(series, valuesResource) {
+      const fetchedKey = vecsResources.defaultFetchedKey;
       signals.runWithOwner(owner, () =>
         signals.createEffect(
-          () => [timeResource?.fetched(), valuesResource.fetched()],
+          () => [
+            timeResource?.fetched[fetchedKey](),
+            valuesResource.fetched[fetchedKey](),
+          ],
           ([indexes, _ohlcs]) => {
             if (!ichart) throw Error("IChart should be initialized");
 
