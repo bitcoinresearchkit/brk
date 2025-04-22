@@ -21,11 +21,11 @@ const importSignals = import("./v0.2.4-treeshaked/script.js").then(
         (compute, effect) => {
           let dispose = /** @type {VoidFunction | null} */ (null);
           // @ts-ignore
-          _signals.createEffect(compute, (v) => {
+          _signals.createEffect(compute, (v, oldV) => {
             dispose?.();
             signals.createRoot((_dispose) => {
               dispose = _dispose;
-              effect(v);
+              return effect(v, oldV);
             });
             signals.onCleanup(() => dispose?.());
           });

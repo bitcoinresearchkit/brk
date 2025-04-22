@@ -63,13 +63,13 @@
  *
  * @typedef {Required<Omit<PartialChartOption, "top" | "bottom">> & ProcessedChartOptionAddons & ProcessedOptionAddons} ChartOption
  *
- * @typedef {Object} PartialDatabaseOptionSpecific
- * @property {"database"} kind
+ * @typedef {Object} PartialTableOptionSpecific
+ * @property {"table"} kind
  * @property {string} title
  *
- * @typedef {PartialOption & PartialDatabaseOptionSpecific} PartialDatabaseOption
+ * @typedef {PartialOption & PartialTableOptionSpecific} PartialTableOption
  *
- * @typedef {Required<PartialDatabaseOption> & ProcessedOptionAddons} DatabaseOption
+ * @typedef {Required<PartialTableOption> & ProcessedOptionAddons} TableOption
  *
  * @typedef {Object} PartialSimulationOptionSpecific
  * @property {"simulation"} kind
@@ -88,9 +88,9 @@
  *
  * @typedef {Required<PartialUrlOption> & ProcessedOptionAddons} UrlOption
  *
- * @typedef {PartialChartOption | PartialDatabaseOption | PartialSimulationOption | PartialUrlOption} AnyPartialOption
+ * @typedef {PartialChartOption | PartialTableOption | PartialSimulationOption | PartialUrlOption} AnyPartialOption
  *
- * @typedef {ChartOption | DatabaseOption | SimulationOption | UrlOption} Option
+ * @typedef {ChartOption | TableOption | SimulationOption | UrlOption} Option
  *
  * @typedef {Object} PartialOptionsGroup
  * @property {string} name
@@ -187,17 +187,18 @@ function createPartialOptions(colors) {
   /**
    * @param {Object} args
    * @param {VecIdSumBase & TotalVecIdBase} args.concat
+   * @param {string} [args.name]
    */
-  function createSumTotalSeries({ concat }) {
+  function createSumTotalSeries({ concat, name }) {
     return /** @satisfies {AnyFetchedSeriesBlueprint[]} */ ([
       {
         key: `${concat}-sum`,
-        title: "Sum",
+        title: name ? `${name} Sum` : "Sum",
         color: colors.bitcoin,
       },
       {
         key: `total-${concat}`,
-        title: "Total",
+        title: name ? `Total ${name}` : "Total",
         color: colors.offBitcoin,
         defaultActive: false,
       },
@@ -439,41 +440,42 @@ function createPartialOptions(colors) {
               ],
             },
             {
-              name: "Version",
-              tree: [
-                {
-                  name: "1",
-                  title: "Transaction V1 Count",
-                  bottom: [
-                    createBaseSeries({
-                      key: "tx-v1",
-                      name: "Count",
-                    }),
-                    ...createSumTotalSeries({ concat: "tx-v1" }),
-                  ],
-                },
-                {
-                  name: "2",
-                  title: "Transaction V2 Count",
-                  bottom: [
-                    createBaseSeries({
-                      key: "tx-v2",
-                      name: "Count",
-                    }),
-                    ...createSumTotalSeries({ concat: "tx-v2" }),
-                  ],
-                },
-                {
-                  name: "3",
-                  title: "Transaction V3 Count",
-                  bottom: [
-                    createBaseSeries({
-                      key: "tx-v3",
-                      name: "Count",
-                    }),
-                    ...createSumTotalSeries({ concat: "tx-v3" }),
-                  ],
-                },
+              name: "Versions",
+              title: "Transaction Versions",
+              bottom: [
+                // {
+                //   name: "1",
+                //   title: "Transaction V1 Count",
+                //   bottom: [
+                createBaseSeries({
+                  key: "tx-v1",
+                  name: "v1 Count",
+                }),
+                ...createSumTotalSeries({ concat: "tx-v1", name: "v1" }),
+                //   ],
+                // },
+                // {
+                //   name: "2",
+                //   title: "Transaction V2 Count",
+                //   bottom: [
+                createBaseSeries({
+                  key: "tx-v2",
+                  name: "v2 Count",
+                }),
+                ...createSumTotalSeries({ concat: "tx-v2", name: "v2" }),
+                //   ],
+                // },
+                // {
+                //   name: "3",
+                //   title: "Transaction V3 Count",
+                //   bottom: [
+                createBaseSeries({
+                  key: "tx-v3",
+                  name: "v3 Count",
+                }),
+                ...createSumTotalSeries({ concat: "tx-v3", name: "v3" }),
+                // ],
+                // },
               ],
             },
           ],
@@ -529,9 +531,9 @@ function createPartialOptions(colors) {
       ],
     },
     {
-      kind: "database",
-      title: "Database",
-      name: "Database",
+      kind: "table",
+      title: "Table",
+      name: "Table",
     },
     {
       name: "Simulations",
@@ -875,8 +877,8 @@ export function initOptions({
         /** @type {Option} */
         let option;
 
-        if ("kind" in anyPartial && anyPartial.kind === "database") {
-          option = /** @satisfies {DatabaseOption} */ ({
+        if ("kind" in anyPartial && anyPartial.kind === "table") {
+          option = /** @satisfies {TableOption} */ ({
             kind: anyPartial.kind,
             id: anyPartial.kind,
             name: anyPartial.name,

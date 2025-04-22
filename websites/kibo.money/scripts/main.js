@@ -223,7 +223,7 @@ function createUtils() {
      * @param {Object} arg
      * @param {string | HTMLElement} arg.inside
      * @param {string} arg.title
-     * @param {VoidFunction} arg.onClick
+     * @param {(event: MouseEvent) => void} arg.onClick
      */
     createButtonElement({ inside: text, onClick, title }) {
       const button = window.document.createElement("button");
@@ -438,47 +438,62 @@ function createUtils() {
       };
     },
     /**
-     * @param {Object} param0
-     * @param {string} param0.name
-     * @param {string} param0.value
+     * @template {string} Name
+     * @template {string} Value
+     * @template {Value | {name: Name; value: Value}} T
+     * @param {T} arg
      */
-    createOption({ name, value }) {
+    createOption(arg) {
       const option = window.document.createElement("option");
-      option.value = value;
-      option.innerText = name;
+      if (typeof arg === "object") {
+        option.value = arg.value;
+        option.innerText = arg.name;
+      } else {
+        option.value = arg;
+        option.innerText = arg;
+      }
       return option;
     },
     /**
      * @template {string} Name
      * @template {string} Value
-     * @template {{name: Name; value: Value}} T
+     * @template {Value | {name: Name; value: Value}} T
      * @param {Object} args
-     * @param {string} args.id
+     * @param {string} [args.id]
      * @param {boolean} [args.deep]
-     * @param {(({name: Name; value: Value} & T) | {name: string; list: ({name: Name; value: Value} & T)[]})[]} args.list
+     * @param {readonly ((T) | {name: string; list: T[]})[]} args.list
      * @param {Signal<T>} args.signal
      */
     createSelect({ id, list, signal, deep = false }) {
       const select = window.document.createElement("select");
-      select.name = id;
-      select.id = id;
+
+      if (id) {
+        select.name = id;
+        select.id = id;
+      }
 
       /** @type {Record<string, VoidFunction>} */
       const setters = {};
 
       list.forEach((anyOption, index) => {
-        if ("list" in anyOption) {
+        if (typeof anyOption === "object" && "list" in anyOption) {
           const { name, list } = anyOption;
           const optGroup = window.document.createElement("optgroup");
           optGroup.label = name;
           select.append(optGroup);
           list.forEach((option) => {
             optGroup.append(this.createOption(option));
-            setters[option.value] = () => signal.set(() => option);
+            const key = /** @type {string} */ (
+              typeof option === "object" ? option.value : option
+            );
+            setters[key] = () => signal.set(() => option);
           });
         } else {
           select.append(this.createOption(anyOption));
-          setters[anyOption.value] = () => signal.set(() => anyOption);
+          const key = /** @type {string} */ (
+            typeof anyOption === "object" ? anyOption.value : anyOption
+          );
+          setters[key] = () => signal.set(() => anyOption);
         }
         if (deep && index !== list.length - 1) {
           select.append(window.document.createElement("hr"));
@@ -493,7 +508,10 @@ function createUtils() {
         }
       });
 
-      select.value = signal().value;
+      const initialSignal = signal();
+      const initialValue =
+        typeof initialSignal === "object" ? initialSignal.value : initialSignal;
+      select.value = String(initialValue);
 
       return { select, signal };
     },
@@ -706,7 +724,7 @@ function createUtils() {
       id.includes("ohlc")
     ) {
       unit = "USD";
-    } else if (id.includes("count")) {
+    } else if (id.includes("count") || id.match(/v[1-3]/g)) {
       unit = "Count";
     } else if (id.includes("date")) {
       unit = "Date";
@@ -720,7 +738,7 @@ function createUtils() {
       unit = "WU";
     } else if (id.includes("vbytes") || id.includes("vsize")) {
       unit = "vB";
-    } else if (id.includes("version") || id.match(/v[1-3]/g)) {
+    } else if (id.includes("version")) {
       unit = "Version";
     } else if (id === "value") {
       unit = "Sats";
@@ -837,6 +855,20 @@ function createUtils() {
        */
       deserialize(v) {
         return v;
+      },
+    },
+    vecIds: {
+      /**
+       * @param {VecId[]} v
+       */
+      serialize(v) {
+        return v.join(",");
+      },
+      /**
+       * @param {string} v
+       */
+      deserialize(v) {
+        return /** @type {VecId[]} */ (v.split(","));
       },
     },
     number: {
@@ -1273,7 +1305,16 @@ function createVecsResources(signals, utils) {
       return {
         url: utils.api.genUrl(index, id, from),
         fetched,
-        async fetch() {
+        /**
+         * Defaults
+         * - from: -10_000
+         * - to: undefined
+         *
+         * @param {Object} [args]
+         * @param {number} [args.from]
+         * @param {number} [args.to]
+         */
+        async fetch(args) {
           if (loading) return fetched();
           if (at) {
             const diff = new Date().getTime() - at.getTime();
@@ -1288,7 +1329,8 @@ function createVecsResources(signals, utils) {
               },
               index,
               id,
-              from,
+              args?.from ?? from,
+              args?.to,
             )
           );
           at = new Date();
@@ -1381,7 +1423,7 @@ function getElements() {
     selectors: getElementById("frame-selectors"),
     style: getComputedStyle(window.document.documentElement),
     charts: getElementById("charts"),
-    database: getElementById("database"),
+    table: getElementById("table"),
     simulation: getElementById("simulation"),
   };
 }
@@ -1956,7 +1998,7 @@ function main() {
                 undefined
               );
               let firstTimeLoadingChart = true;
-              let firstTimeLoadingDatabase = true;
+              let firstTimeLoadingTable = true;
               let firstTimeLoadingSimulation = true;
 
               signals.createEffect(options.selected, (option) => {
@@ -2008,13 +2050,13 @@ function main() {
 
                     break;
                   }
-                  case "database": {
-                    element = elements.database;
+                  case "table": {
+                    element = elements.table;
 
-                    if (firstTimeLoadingDatabase) {
-                      const databaseScript = import("./database.js");
-                      utils.dom.importStyleAndThen("/styles/database.css", () =>
-                        databaseScript.then(({ init }) =>
+                    if (firstTimeLoadingTable) {
+                      const tableScript = import("./table.js");
+                      utils.dom.importStyleAndThen("/styles/table.css", () =>
+                        tableScript.then(({ init }) =>
                           signals.runWithOwner(owner, () =>
                             init({
                               colors,
@@ -2022,13 +2064,14 @@ function main() {
                               signals,
                               utils,
                               vecsResources,
+                              option,
                               vecIdToIndexes,
                             }),
                           ),
                         ),
                       );
                     }
-                    firstTimeLoadingDatabase = false;
+                    firstTimeLoadingTable = false;
 
                     break;
                   }

@@ -3,22 +3,36 @@
 /**
  * @param {Object} args
  * @param {VecIdToIndexes} args.vecIdToIndexes
+ * @param {Option} args.option
  * @param {Utilities} args.utils
  * @param {Signals} args.signals
  * @param {VecsResources} args.vecsResources
  */
-function createTable({ utils, vecIdToIndexes, signals, vecsResources }) {
+function createTable({
+  utils,
+  vecIdToIndexes,
+  signals,
+  option,
+  vecsResources,
+}) {
   const indexToVecIds = createIndexToVecIds(vecIdToIndexes);
 
   const serializedIndexes = createSerializedIndexes();
   /** @type {SerializedIndex} */
   const defaultSerializedIndex = "height";
-  const serializedIndex = signals.createSignal({
-    name: /** @type {SerializedIndex} */ (defaultSerializedIndex),
-    value: String(serializedIndexToIndex(defaultSerializedIndex)),
-  });
+  /** @type {Signal<SerializedIndex>} */
+  const serializedIndex = signals.createSignal(
+    /** @type {SerializedIndex} */ (defaultSerializedIndex),
+    {
+      save: {
+        ...utils.serde.string,
+        keyPrefix: "table",
+        key: "index",
+      },
+    },
+  );
   const index = signals.createMemo(() =>
-    serializedIndexToIndex(serializedIndex().name),
+    serializedIndexToIndex(serializedIndex()),
   );
 
   const table = window.document.createElement("table");
@@ -28,21 +42,35 @@ function createTable({ utils, vecIdToIndexes, signals, vecsResources }) {
     addRandomCol: undefined,
   };
 
-  signals.createEffect(index, (index) => {
-    table.innerHTML = "";
+  signals.createEffect(index, (index, prevIndex) => {
+    if (prevIndex !== undefined) {
+      utils.url.resetParams(option);
+    }
 
+    const possibleVecIds = indexToVecIds[index];
+
+    const columns = signals.createSignal(/** @type {VecId[]} */ ([]), {
+      equals: false,
+      save: {
+        ...utils.serde.vecIds,
+        keyPrefix: `table-${serializedIndex()}`,
+        key: `columns`,
+      },
+    });
+    columns.set((l) => l.filter((id) => possibleVecIds.includes(id)));
+
+    signals.createEffect(columns, (columns) => {
+      console.log(columns);
+    });
+
+    table.innerHTML = "";
     const thead = window.document.createElement("thead");
     table.append(thead);
     const trHead = window.document.createElement("tr");
-    const selects = signals.createSignal(
-      /** @type {HTMLSelectElement[]} */ ([]),
-      {
-        equals: false,
-      },
-    );
     thead.append(trHead);
     const tbody = window.document.createElement("tbody");
     table.append(tbody);
+
     const rowElements = signals.createSignal(
       /** @type {HTMLTableRowElement[]} */ ([]),
     );
@@ -50,11 +78,12 @@ function createTable({ utils, vecIdToIndexes, signals, vecsResources }) {
     /**
      * @param {Object} args
      * @param {HTMLSelectElement} args.select
-     * @param {VoidFunction} [args.onLeft]
-     * @param {VoidFunction} [args.onRight]
-     * @param {VoidFunction} [args.onRemove]
+     * @param {Unit} [args.unit]
+     * @param {(event: MouseEvent) => void} [args.onLeft]
+     * @param {(event: MouseEvent) => void} [args.onRight]
+     * @param {(event: MouseEvent) => void} [args.onRemove]
      */
-    function addThCol({ select, onLeft, onRight, onRemove }) {
+    function addThCol({ select, onLeft, onRight, onRemove, unit: _unit }) {
       const th = window.document.createElement("th");
       th.scope = "col";
       trHead.append(th);
@@ -62,6 +91,9 @@ function createTable({ utils, vecIdToIndexes, signals, vecsResources }) {
       div.append(select);
       const strip = window.document.createElement("div");
       const unit = window.document.createElement("span");
+      if (_unit) {
+        unit.innerHTML = _unit;
+      }
       const moveLeft = utils.dom.createButtonElement({
         inside: "←",
         title: "Move column to the left",
@@ -94,22 +126,24 @@ function createTable({ utils, vecIdToIndexes, signals, vecsResources }) {
       };
     }
 
-    const { select } = utils.dom.createSelect({
-      id: "col-index",
-      list: serializedIndexes.map((serializedIndex) => ({
-        name: serializedIndex,
-        value: String(serializedIndexToIndex(serializedIndex)),
-      })),
-      signal: serializedIndex,
+    addThCol({
+      ...utils.dom.createSelect({
+        list: serializedIndexes,
+        signal: serializedIndex,
+      }),
+      unit: "Index",
     });
-    const th = addThCol({ select });
-    th.setUnit("Index");
+
+    let from = 0;
+    let to = 0;
 
     vecsResources
-      .getOrCreate(index, serializedIndex().name)
+      .getOrCreate(index, serializedIndex())
       .fetch()
       .then((vec) => {
         if (!vec) return;
+        from = /** @type {number} */ (vec[0]);
+        to = /** @type {number} */ (vec.at(-1)) + 1;
         const trs = /** @type {HTMLTableRowElement[]} */ ([]);
         for (let i = vec.length - 1; i >= 0; i--) {
           const value = vec[i];
@@ -117,184 +151,182 @@ function createTable({ utils, vecIdToIndexes, signals, vecsResources }) {
           trs.push(tr);
           tbody.append(tr);
           const th = window.document.createElement("th");
-          th.innerHTML = String(value);
+          th.innerHTML = serializeValue({
+            value,
+            unit: "Index",
+          });
           th.scope = "row";
           tr.append(th);
         }
         rowElements.set(() => trs);
       });
 
-    const columnIds = signals.createSignal(/** @type {VecId[]} */ ([]), {
-      equals: false,
-    });
-
     const owner = signals.getOwner();
 
-    const possibleVecids = indexToVecIds[index];
-
-    obj.addRandomCol = function () {
+    /**
+     * @param {VecId} vecId
+     * @param {number} [_colIndex]
+     */
+    function addCol(vecId, _colIndex = columns().length) {
       signals.runWithOwner(owner, () => {
-        const vecId =
-          possibleVecids[Math.round(Math.random() * possibleVecids.length)];
-        const colIndex = signals.createSignal(columnIds().length);
+        /** @type {VoidFunction | undefined} */
+        let dispose;
+        signals.createRoot((_dispose) => {
+          dispose = _dispose;
 
-        const vecIdOption = signals.createSignal({
-          name: vecId,
-          value: vecId,
-        });
-        const { select } = utils.dom.createSelect({
-          id: `col-${colIndex() + 1}`,
-          list: possibleVecids.map((vecId) => ({
+          const vecIdOption = signals.createSignal({
             name: vecId,
             value: vecId,
-          })),
-          signal: vecIdOption,
-        });
-        selects.set((l) => {
-          l.push(select);
-          return l;
-        });
-        /**
-         * @param {boolean} right
-         */
-        function createMoveColumnFunction(right) {
-          return () =>
-            colIndex.set((oldI) => {
-              const newI = oldI + (right ? 1 : -1);
-              const currentSelect = selects()[oldI];
-              const currentSelectSibling = currentSelect.nextSibling;
-              const newSelect = selects()[newI];
-              [selects()[oldI], selects()[newI]] = [
-                selects()[newI],
-                selects()[oldI],
-              ];
-              console.log(oldI, newI, selects());
-              const newSelectSibling = newSelect.nextSibling;
-              newSelectSibling?.before(currentSelect);
-              currentSelectSibling?.before(newSelect);
-              return newI;
-            });
-        }
-        const th = addThCol({
-          select,
-          onLeft: createMoveColumnFunction(false),
-          onRight: createMoveColumnFunction(true),
-        });
+          });
+          const { select } = utils.dom.createSelect({
+            list: possibleVecIds.map((vecId) => ({
+              name: vecId,
+              value: vecId,
+            })),
+            signal: vecIdOption,
+          });
 
-        signals.createEffect(rowElements, (rowElements) => {
-          if (!rowElements.length) return;
-          for (let i = 0; i < rowElements.length; i++) {
-            const td = window.document.createElement("td");
-            rowElements[i].append(td);
-          }
-
-          signals.createEffect(vecIdOption, ({ name: vecId }) => {
-            const unit = utils.vecidToUnit(vecId);
-            th.setUnit(unit);
-
-            const valuesPromise = vecsResources
-              .getOrCreate(index, vecId)
-              .fetch();
-
-            columnIds.set((l) => {
-              if (columnIds().length === colIndex()) {
-                l.push(vecId);
-              } else {
-                l[colIndex()] = vecId;
-              }
-              console.log(l);
+          if (_colIndex === columns().length) {
+            columns.set((l) => {
+              l.push(vecId);
               return l;
             });
+          }
 
-            valuesPromise.then((vec) => {
-              if (!vec) return;
-              // const diff = vec.length - rowElements.length;
-              for (let i = 0; i < rowElements.length; i++) {
-                const iRev = vec.length - 1 - i;
-                const value = vec[iRev];
+          const colIndex = signals.createSignal(_colIndex);
 
-                /** @type {string | number | undefined} */
-                let serialized;
+          /**
+           * @param {boolean} right
+           * @returns {(event: MouseEvent) => void}
+           */
+          function createMoveColumnFunction(right) {
+            return () => {
+              const oldColIndex = colIndex();
+              const newColIndex = oldColIndex + (right ? 1 : -1);
 
-                if (typeof value !== "number") {
-                  serialized = value;
-                } else if (value !== 18446744073709552000) {
-                  if (
-                    unit === "USD" ||
-                    unit === "Difficulty" ||
-                    unit === "sat/vB"
-                  ) {
-                    serialized = value.toLocaleString("en-us", {
-                      minimumFractionDigits: 2,
-                      maximumFractionDigits: 2,
-                    });
-                  } else if (unit === "BTC") {
-                    serialized = value.toLocaleString("en-us", {
-                      minimumFractionDigits: 8,
-                      maximumFractionDigits: 8,
-                    });
-                  } else {
-                    serialized = value.toLocaleString("en-us");
-                  }
-                }
+              const currentTh = /** @type {HTMLTableCellElement} */ (
+                trHead.childNodes[oldColIndex + 1]
+              );
+              const oterTh = /** @type {HTMLTableCellElement} */ (
+                trHead.childNodes[newColIndex + 1]
+              );
 
-                signals.runWithOwner(owner, () => {
-                  signals.createEffect(colIndex, (colIndex) => {
-                    // @ts-ignore
-                    rowElements[i].childNodes[colIndex + 1].innerHTML =
-                      serialized;
-                  });
-                });
+              if (right) {
+                oterTh.after(currentTh);
+              } else {
+                oterTh.before(currentTh);
               }
-            });
+
+              columns.set((l) => {
+                [l[oldColIndex], l[newColIndex]] = [
+                  l[newColIndex],
+                  l[oldColIndex],
+                ];
+                return l;
+              });
+
+              const rows = rowElements();
+              for (let i = 0; i < rows.length; i++) {
+                const element = rows[i].childNodes[oldColIndex + 1];
+                const sibling = rows[i].childNodes[newColIndex + 1];
+                const temp = element.textContent;
+                element.textContent = sibling.textContent;
+                sibling.textContent = temp;
+              }
+            };
+          }
+
+          const th = addThCol({
+            select,
+            unit: utils.vecidToUnit(vecId),
+            onLeft: createMoveColumnFunction(false),
+            onRight: createMoveColumnFunction(true),
+            onRemove: () => {
+              const ci = colIndex();
+              trHead.childNodes[ci + 1].remove();
+              columns.set((l) => {
+                l.splice(ci, 1);
+                return l;
+              });
+              const rows = rowElements();
+              for (let i = 0; i < rows.length; i++) {
+                rows[i].childNodes[ci + 1].remove();
+              }
+              dispose?.();
+            },
+          });
+
+          signals.createEffect(columns, () => {
+            colIndex.set(Array.from(trHead.children).indexOf(th.element) - 1);
+          });
+
+          console.log(colIndex());
+
+          signals.createEffect(rowElements, (rowElements) => {
+            if (!rowElements.length) return;
+            for (let i = 0; i < rowElements.length; i++) {
+              const td = window.document.createElement("td");
+              rowElements[i].append(td);
+            }
+
+            signals.createEffect(
+              () => vecIdOption().name,
+              (vecId, prevVecId) => {
+                const unit = utils.vecidToUnit(vecId);
+                th.setUnit(unit);
+
+                const vec = vecsResources.getOrCreate(index, vecId);
+
+                vec.fetch({ from, to });
+
+                columns.set((l) => {
+                  const i = l.indexOf(prevVecId ?? vecId);
+                  if (i === -1) {
+                    l.push(vecId);
+                  } else {
+                    l[i] = vecId;
+                  }
+                  return l;
+                });
+
+                signals.createEffect(vec.fetched, (vec) => {
+                  if (!vec) return;
+
+                  const thIndex = colIndex() + 1;
+
+                  for (let i = 0; i < rowElements.length; i++) {
+                    const iRev = vec.length - 1 - i;
+                    const value = vec[iRev];
+                    // @ts-ignore
+                    rowElements[i].childNodes[thIndex].innerHTML =
+                      serializeValue({
+                        value,
+                        unit,
+                      });
+                  }
+                });
+
+                return () => vecId;
+              },
+            );
           });
         });
-      });
 
-      // signals.runWithOwner(owner, () => {
-      //   const thIndex = thHead.length;
-      //   const possibleVecids = indexToVecIds[index()];
-      //   const i = Math.round(Math.random() * possibleVecids.length);
-      //   const vecId = signals.createSignal({
-      //     name: possibleVecids[i],
-      //     value: possibleVecids[i],
-      //   });
-      //   const th = addThCol();
-      //   const { select } = utils.dom.createSelect({
-      //     id: `col-${vecId}`,
-      //     list: possibleVecids.map((vecId) => ({
-      //       name: vecId,
-      //       value: vecId,
-      //     })),
-      //     signal: vecId,
-      //   });
-      //   th.append(select);
-      //   signals.createEffect(
-      //     () => /** @type {const} */ ([index(), vecId(), rowElements()]),
-      //     ([index, vecId, trsBody]) => {
-      //       if (!trsBody.length) return;
-      //       vecsResources
-      //         .getOrCreate(index, vecId.name)
-      //         .fetch()
-      //         .then((vec) => {
-      //           if (!vec) return;
-      //           console.log({ vec, trsBody, index });
-      //           for (let i = 0; i < vec.length; i++) {
-      //             const iRev = vec.length - 1 - i;
-      //             const value = vec[iRev];
-      //             const td = window.document.createElement("td");
-      //             td.innerHTML = String(value);
-      //             trsBody[i].append(td);
-      //           }
-      //         });
-      //     },
-      //   );
-      // });
+        signals.onCleanup(() => {
+          dispose?.();
+        });
+      });
+    }
+
+    columns().forEach((vecId, colIndex) => addCol(vecId, colIndex));
+
+    obj.addRandomCol = function () {
+      const vecId =
+        possibleVecIds[Math.floor(Math.random() * possibleVecIds.length)];
+      addCol(vecId);
     };
-    // setTimeout(addCol, 2000);
-    // addRandomCol();
-    // addRandomCol();
-    // addRandomCol();
+
+    return () => index;
   });
 
   return obj;
@@ -305,6 +337,7 @@ function createTable({ utils, vecIdToIndexes, signals, vecsResources }) {
  * @param {Colors} args.colors
  * @param {Signals} args.signals
  * @param {Utilities} args.utils
+ * @param {Option} args.option
  * @param {Elements} args.elements
  * @param {VecsResources} args.vecsResources
  * @param {VecIdToIndexes} args.vecIdToIndexes
@@ -313,13 +346,14 @@ export function init({
   colors,
   elements,
   signals,
+  option,
   utils,
   vecsResources,
   vecIdToIndexes,
 }) {
-  const parent = elements.database;
+  const parent = elements.table;
   const { headerElement } = utils.dom.createHeader({
-    title: "Database",
+    title: "Table",
   });
   parent.append(headerElement);
 
@@ -331,6 +365,7 @@ export function init({
     utils,
     vecIdToIndexes,
     vecsResources,
+    option,
   });
   div.append(table.element);
 
@@ -457,4 +492,31 @@ function createIndexToVecIds(vecIdToIndexes) {
     arr.sort();
   });
   return indexToVecIds;
+}
+
+/**
+ * @param {Object} args
+ * @param {number | OHLCTuple} args.value
+ * @param {Unit} args.unit
+ */
+function serializeValue({ value, unit }) {
+  if (typeof value !== "number") {
+    return String(value);
+  } else if (value !== 18446744073709552000) {
+    if (unit === "USD" || unit === "Difficulty" || unit === "sat/vB") {
+      return value.toLocaleString("en-us", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      });
+    } else if (unit === "BTC") {
+      return value.toLocaleString("en-us", {
+        minimumFractionDigits: 8,
+        maximumFractionDigits: 8,
+      });
+    } else {
+      return value.toLocaleString("en-us");
+    }
+  } else {
+    return "";
+  }
 }
