@@ -443,39 +443,21 @@ function createPartialOptions(colors) {
               name: "Versions",
               title: "Transaction Versions",
               bottom: [
-                // {
-                //   name: "1",
-                //   title: "Transaction V1 Count",
-                //   bottom: [
                 createBaseSeries({
                   key: "tx-v1",
                   name: "v1 Count",
                 }),
                 ...createSumTotalSeries({ concat: "tx-v1", name: "v1" }),
-                //   ],
-                // },
-                // {
-                //   name: "2",
-                //   title: "Transaction V2 Count",
-                //   bottom: [
                 createBaseSeries({
                   key: "tx-v2",
                   name: "v2 Count",
                 }),
                 ...createSumTotalSeries({ concat: "tx-v2", name: "v2" }),
-                //   ],
-                // },
-                // {
-                //   name: "3",
-                //   title: "Transaction V3 Count",
-                //   bottom: [
                 createBaseSeries({
                   key: "tx-v3",
                   name: "v3 Count",
                 }),
                 ...createSumTotalSeries({ concat: "tx-v3", name: "v3" }),
-                // ],
-                // },
               ],
             },
           ],

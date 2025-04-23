@@ -5,15 +5,15 @@ use brk_fetcher::Fetcher;
 use brk_indexer::Indexer;
 use brk_vec::{AnyStoredVec, Compressed};
 
-pub mod base;
 pub mod blocks;
 pub mod grouped;
 pub mod indexes;
 pub mod marketprice;
 pub mod transactions;
+pub mod vec;
 
-use base::*;
-use indexes::*;
+pub use indexes::*;
+pub use vec::*;
 
 #[derive(Clone)]
 pub struct Vecs {

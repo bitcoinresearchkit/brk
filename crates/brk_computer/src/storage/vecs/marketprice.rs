@@ -10,7 +10,7 @@ use brk_indexer::Indexer;
 use brk_vec::{Compressed, Version};
 
 use super::{
-    ComputedVec, Indexes,
+    EagerVec, Indexes,
     grouped::{
         ComputedVecsFromDateindex, ComputedVecsFromHeightStrict, StorableVecGeneatorOptions,
     },
@@ -19,20 +19,20 @@ use super::{
 
 #[derive(Clone)]
 pub struct Vecs {
-    pub dateindex_to_close_in_cents: ComputedVec<Dateindex, Close<Cents>>,
-    pub dateindex_to_high_in_cents: ComputedVec<Dateindex, High<Cents>>,
-    pub dateindex_to_low_in_cents: ComputedVec<Dateindex, Low<Cents>>,
-    pub dateindex_to_ohlc: ComputedVec<Dateindex, OHLCDollars>,
-    pub dateindex_to_ohlc_in_sats: ComputedVec<Dateindex, OHLCSats>,
-    pub dateindex_to_ohlc_in_cents: ComputedVec<Dateindex, OHLCCents>,
-    pub dateindex_to_open_in_cents: ComputedVec<Dateindex, Open<Cents>>,
-    pub height_to_close_in_cents: ComputedVec<Height, Close<Cents>>,
-    pub height_to_high_in_cents: ComputedVec<Height, High<Cents>>,
-    pub height_to_low_in_cents: ComputedVec<Height, Low<Cents>>,
-    pub height_to_ohlc: ComputedVec<Height, OHLCDollars>,
-    pub height_to_ohlc_in_sats: ComputedVec<Height, OHLCSats>,
-    pub height_to_ohlc_in_cents: ComputedVec<Height, OHLCCents>,
-    pub height_to_open_in_cents: ComputedVec<Height, Open<Cents>>,
+    pub dateindex_to_close_in_cents: EagerVec<Dateindex, Close<Cents>>,
+    pub dateindex_to_high_in_cents: EagerVec<Dateindex, High<Cents>>,
+    pub dateindex_to_low_in_cents: EagerVec<Dateindex, Low<Cents>>,
+    pub dateindex_to_ohlc: EagerVec<Dateindex, OHLCDollars>,
+    pub dateindex_to_ohlc_in_sats: EagerVec<Dateindex, OHLCSats>,
+    pub dateindex_to_ohlc_in_cents: EagerVec<Dateindex, OHLCCents>,
+    pub dateindex_to_open_in_cents: EagerVec<Dateindex, Open<Cents>>,
+    pub height_to_close_in_cents: EagerVec<Height, Close<Cents>>,
+    pub height_to_high_in_cents: EagerVec<Height, High<Cents>>,
+    pub height_to_low_in_cents: EagerVec<Height, Low<Cents>>,
+    pub height_to_ohlc: EagerVec<Height, OHLCDollars>,
+    pub height_to_ohlc_in_sats: EagerVec<Height, OHLCSats>,
+    pub height_to_ohlc_in_cents: EagerVec<Height, OHLCCents>,
+    pub height_to_open_in_cents: EagerVec<Height, Open<Cents>>,
     pub timeindexes_to_close: ComputedVecsFromDateindex<Close<Dollars>>,
     pub timeindexes_to_high: ComputedVecsFromDateindex<High<Dollars>>,
     pub timeindexes_to_low: ComputedVecsFromDateindex<Low<Dollars>>,
@@ -49,20 +49,20 @@ pub struct Vecs {
     pub chainindexes_to_high_in_sats: ComputedVecsFromHeightStrict<High<Sats>>,
     pub chainindexes_to_low_in_sats: ComputedVecsFromHeightStrict<Low<Sats>>,
     pub chainindexes_to_close_in_sats: ComputedVecsFromHeightStrict<Close<Sats>>,
-    pub weekindex_to_ohlc: ComputedVec<Weekindex, OHLCDollars>,
-    pub weekindex_to_ohlc_in_sats: ComputedVec<Weekindex, OHLCSats>,
-    pub difficultyepoch_to_ohlc: ComputedVec<Difficultyepoch, OHLCDollars>,
-    pub difficultyepoch_to_ohlc_in_sats: ComputedVec<Difficultyepoch, OHLCSats>,
-    pub monthindex_to_ohlc: ComputedVec<Monthindex, OHLCDollars>,
-    pub monthindex_to_ohlc_in_sats: ComputedVec<Monthindex, OHLCSats>,
-    pub quarterindex_to_ohlc: ComputedVec<Quarterindex, OHLCDollars>,
-    pub quarterindex_to_ohlc_in_sats: ComputedVec<Quarterindex, OHLCSats>,
-    pub yearindex_to_ohlc: ComputedVec<Yearindex, OHLCDollars>,
-    pub yearindex_to_ohlc_in_sats: ComputedVec<Yearindex, OHLCSats>,
+    pub weekindex_to_ohlc: EagerVec<Weekindex, OHLCDollars>,
+    pub weekindex_to_ohlc_in_sats: EagerVec<Weekindex, OHLCSats>,
+    pub difficultyepoch_to_ohlc: EagerVec<Difficultyepoch, OHLCDollars>,
+    pub difficultyepoch_to_ohlc_in_sats: EagerVec<Difficultyepoch, OHLCSats>,
+    pub monthindex_to_ohlc: EagerVec<Monthindex, OHLCDollars>,
+    pub monthindex_to_ohlc_in_sats: EagerVec<Monthindex, OHLCSats>,
+    pub quarterindex_to_ohlc: EagerVec<Quarterindex, OHLCDollars>,
+    pub quarterindex_to_ohlc_in_sats: EagerVec<Quarterindex, OHLCSats>,
+    pub yearindex_to_ohlc: EagerVec<Yearindex, OHLCDollars>,
+    pub yearindex_to_ohlc_in_sats: EagerVec<Yearindex, OHLCSats>,
     // pub halvingepoch_to_ohlc: StorableVec<Halvingepoch, OHLCDollars>,
     // pub halvingepoch_to_ohlc_in_sats: StorableVec<Halvingepoch, OHLCSats>,
-    pub decadeindex_to_ohlc: ComputedVec<Decadeindex, OHLCDollars>,
-    pub decadeindex_to_ohlc_in_sats: ComputedVec<Decadeindex, OHLCSats>,
+    pub decadeindex_to_ohlc: EagerVec<Decadeindex, OHLCDollars>,
+    pub decadeindex_to_ohlc_in_sats: EagerVec<Decadeindex, OHLCSats>,
 }
 
 const VERSION: Version = Version::ZERO;
@@ -78,72 +78,72 @@ impl Vecs {
         fetched_path = fetched_path.join("fetched/vecs");
 
         Ok(Self {
-            dateindex_to_ohlc_in_cents: ComputedVec::forced_import(
+            dateindex_to_ohlc_in_cents: EagerVec::forced_import(
                 &fetched_path.join("dateindex_to_ohlc_in_cents"),
                 Version::ZERO,
                 compressed,
             )?,
-            dateindex_to_ohlc: ComputedVec::forced_import(
+            dateindex_to_ohlc: EagerVec::forced_import(
                 &path.join("dateindex_to_ohlc"),
                 Version::ZERO,
                 compressed,
             )?,
-            dateindex_to_ohlc_in_sats: ComputedVec::forced_import(
+            dateindex_to_ohlc_in_sats: EagerVec::forced_import(
                 &path.join("dateindex_to_ohlc_in_sats"),
                 VERSION + VERSION_IN_SATS + Version::ZERO,
                 compressed,
             )?,
-            dateindex_to_close_in_cents: ComputedVec::forced_import(
+            dateindex_to_close_in_cents: EagerVec::forced_import(
                 &path.join("dateindex_to_close_in_cents"),
                 Version::ZERO,
                 compressed,
             )?,
-            dateindex_to_high_in_cents: ComputedVec::forced_import(
+            dateindex_to_high_in_cents: EagerVec::forced_import(
                 &path.join("dateindex_to_high_in_cents"),
                 Version::ZERO,
                 compressed,
             )?,
-            dateindex_to_low_in_cents: ComputedVec::forced_import(
+            dateindex_to_low_in_cents: EagerVec::forced_import(
                 &path.join("dateindex_to_low_in_cents"),
                 Version::ZERO,
                 compressed,
             )?,
-            dateindex_to_open_in_cents: ComputedVec::forced_import(
+            dateindex_to_open_in_cents: EagerVec::forced_import(
                 &path.join("dateindex_to_open_in_cents"),
                 Version::ZERO,
                 compressed,
             )?,
-            height_to_ohlc_in_cents: ComputedVec::forced_import(
+            height_to_ohlc_in_cents: EagerVec::forced_import(
                 &fetched_path.join("height_to_ohlc_in_cents"),
                 Version::ZERO,
                 compressed,
             )?,
-            height_to_ohlc: ComputedVec::forced_import(
+            height_to_ohlc: EagerVec::forced_import(
                 &path.join("height_to_ohlc"),
                 Version::ZERO,
                 compressed,
             )?,
-            height_to_ohlc_in_sats: ComputedVec::forced_import(
+            height_to_ohlc_in_sats: EagerVec::forced_import(
                 &path.join("height_to_ohlc_in_sats"),
                 VERSION + VERSION_IN_SATS + Version::ZERO,
                 compressed,
             )?,
-            height_to_close_in_cents: ComputedVec::forced_import(
+            height_to_close_in_cents: EagerVec::forced_import(
                 &path.join("height_to_close_in_cents"),
                 Version::ZERO,
                 compressed,
             )?,
-            height_to_high_in_cents: ComputedVec::forced_import(
+            height_to_high_in_cents: EagerVec::forced_import(
                 &path.join("height_to_high_in_cents"),
                 Version::ZERO,
                 compressed,
             )?,
-            height_to_low_in_cents: ComputedVec::forced_import(
+            height_to_low_in_cents: EagerVec::forced_import(
                 &path.join("height_to_low_in_cents"),
                 Version::ZERO,
                 compressed,
             )?,
-            height_to_open_in_cents: ComputedVec::forced_import(
+            height_to_open_in_cents: EagerVec::forced_import(
                 &path.join("height_to_open_in_cents"),
                 Version::ZERO,
                 compressed,
@@ -260,63 +260,63 @@ impl Vecs {
                 compressed,
                 StorableVecGeneatorOptions::default().add_last(),
             )?,
-            weekindex_to_ohlc: ComputedVec::forced_import(
+            weekindex_to_ohlc: EagerVec::forced_import(
                 &path.join("weekindex_to_ohlc"),
                 Version::ZERO,
                 compressed,
             )?,
-            weekindex_to_ohlc_in_sats: ComputedVec::forced_import(
+            weekindex_to_ohlc_in_sats: EagerVec::forced_import(
                 &path.join("weekindex_to_ohlc_in_sats"),
                 VERSION + VERSION_IN_SATS + Version::ZERO,
                 compressed,
             )?,
-            difficultyepoch_to_ohlc: ComputedVec::forced_import(
+            difficultyepoch_to_ohlc: EagerVec::forced_import(
                 &path.join("difficultyepoch_to_ohlc"),
                 Version::ZERO,
                 compressed,
             )?,
-            difficultyepoch_to_ohlc_in_sats: ComputedVec::forced_import(
+            difficultyepoch_to_ohlc_in_sats: EagerVec::forced_import(
                 &path.join("difficultyepoch_to_ohlc_in_sats"),
                 VERSION + VERSION_IN_SATS + Version::ZERO,
                 compressed,
             )?,
-            monthindex_to_ohlc: ComputedVec::forced_import(
+            monthindex_to_ohlc: EagerVec::forced_import(
                 &path.join("monthindex_to_ohlc"),
                 Version::ZERO,
                 compressed,
             )?,
-            monthindex_to_ohlc_in_sats: ComputedVec::forced_import(
+            monthindex_to_ohlc_in_sats: EagerVec::forced_import(
                 &path.join("monthindex_to_ohlc_in_sats"),
                 VERSION + VERSION_IN_SATS + Version::ZERO,
                 compressed,
             )?,
-            quarterindex_to_ohlc: ComputedVec::forced_import(
+            quarterindex_to_ohlc: EagerVec::forced_import(
                 &path.join("quarterindex_to_ohlc"),
                 Version::ZERO,
                 compressed,
             )?,
-            quarterindex_to_ohlc_in_sats: ComputedVec::forced_import(
+            quarterindex_to_ohlc_in_sats: EagerVec::forced_import(
                 &path.join("quarterindex_to_ohlc_in_sats"),
                 VERSION + VERSION_IN_SATS + Version::ZERO,
                 compressed,
             )?,
-            yearindex_to_ohlc: ComputedVec::forced_import(
+            yearindex_to_ohlc: EagerVec::forced_import(
                 &path.join("yearindex_to_ohlc"),
                 Version::ZERO,
                 compressed,
             )?,
-            yearindex_to_ohlc_in_sats: ComputedVec::forced_import(
+            yearindex_to_ohlc_in_sats: EagerVec::forced_import(
                 &path.join("yearindex_to_ohlc_in_sats"),
                 VERSION + VERSION_IN_SATS + Version::ZERO,
                 compressed,
             )?,
             // halvingepoch_to_ohlc: StorableVec::forced_import(&path.join("halvingepoch_to_ohlc"), Version::ZERO, compressed)?,
-            decadeindex_to_ohlc: ComputedVec::forced_import(
+            decadeindex_to_ohlc: EagerVec::forced_import(
                 &path.join("decadeindex_to_ohlc"),
                 Version::ZERO,
                 compressed,
             )?,
-            decadeindex_to_ohlc_in_sats: ComputedVec::forced_import(
+            decadeindex_to_ohlc_in_sats: EagerVec::forced_import(
                 &path.join("decadeindex_to_ohlc_in_sats"),
                 VERSION + VERSION_IN_SATS + Version::ZERO,
                 compressed,

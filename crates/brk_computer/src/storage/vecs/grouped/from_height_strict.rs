@@ -5,16 +5,16 @@ use brk_exit::Exit;
 use brk_indexer::Indexer;
 use brk_vec::{AnyStoredVec, Compressed, Result, Version};
 
-use crate::storage::vecs::{Indexes, base::ComputedVec, indexes};
+use crate::storage::{ComputedType, EagerVec, Indexes, indexes};
 
-use super::{ComputedType, ComputedVecBuilder, StorableVecGeneatorOptions};
+use super::{ComputedVecBuilder, StorableVecGeneatorOptions};
 
 #[derive(Clone)]
 pub struct ComputedVecsFromHeightStrict<T>
 where
     T: ComputedType + PartialOrd,
 {
-    pub height: ComputedVec<Height, T>,
+    pub height: EagerVec<Height, T>,
     pub height_extra: ComputedVecBuilder<Height, T>,
     pub difficultyepoch: ComputedVecBuilder<Difficultyepoch, T>,
     // TODO: pub halvingepoch: StorableVecGeneator<Halvingepoch, T>,
@@ -36,11 +36,8 @@ where
     ) -> color_eyre::Result<Self> {
         let version = VERSION + version;
 
-        let height = ComputedVec::forced_import(
-            &path.join(format!("height_to_{name}")),
-            version,
-            compressed,
-        )?;
+        let height =
+            EagerVec::forced_import(&path.join(format!("height_to_{name}")), version, compressed)?;
 
         let height_extra = ComputedVecBuilder::forced_import(
             path,
@@ -72,7 +69,7 @@ where
     ) -> color_eyre::Result<()>
     where
         F: FnMut(
-            &mut ComputedVec<Height, T>,
+            &mut EagerVec<Height, T>,
             &mut Indexer,
             &mut indexes::Vecs,
             &Indexes,

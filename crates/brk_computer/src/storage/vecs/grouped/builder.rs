@@ -6,9 +6,7 @@ use brk_vec::{
 };
 use color_eyre::eyre::ContextCompat;
 
-use crate::storage::vecs::base::ComputedVec;
-
-use super::ComputedType;
+use crate::storage::{ComputedType, EagerVec};
 
 #[derive(Clone, Debug)]
 pub struct ComputedVecBuilder<I, T>
@@ -16,18 +14,18 @@ where
     I: StoredIndex,
     T: ComputedType,
 {
-    first: Option<ComputedVec<I, T>>,
-    average: Option<ComputedVec<I, T>>,
-    sum: Option<ComputedVec<I, T>>,
-    max: Option<ComputedVec<I, T>>,
-    _90p: Option<ComputedVec<I, T>>,
-    _75p: Option<ComputedVec<I, T>>,
-    median: Option<ComputedVec<I, T>>,
-    _25p: Option<ComputedVec<I, T>>,
-    _10p: Option<ComputedVec<I, T>>,
-    min: Option<ComputedVec<I, T>>,
-    last: Option<ComputedVec<I, T>>,
-    total: Option<ComputedVec<I, T>>,
+    first: Option<EagerVec<I, T>>,
+    average: Option<EagerVec<I, T>>,
+    sum: Option<EagerVec<I, T>>,
+    max: Option<EagerVec<I, T>>,
+    _90p: Option<EagerVec<I, T>>,
+    _75p: Option<EagerVec<I, T>>,
+    median: Option<EagerVec<I, T>>,
+    _25p: Option<EagerVec<I, T>>,
+    _10p: Option<EagerVec<I, T>>,
+    min: Option<EagerVec<I, T>>,
+    last: Option<EagerVec<I, T>>,
+    total: Option<EagerVec<I, T>>,
 }
 
 const VERSION: Version = Version::ZERO;
@@ -74,15 +72,11 @@ where
 
         let s = Self {
             first: options.first.then(|| {
-                ComputedVec::forced_import(
-                    &maybe_prefix("first"),
-                    version + Version::ZERO,
-                    compressed,
-                )
-                .unwrap()
+                EagerVec::forced_import(&maybe_prefix("first"), version + Version::ZERO, compressed)
+                    .unwrap()
             }),
             last: options.last.then(|| {
-                ComputedVec::forced_import(
+                EagerVec::forced_import(
                     &path.join(format!("{key}_to_{name}")),
                     version + Version::ZERO,
                     compressed,
@@ -90,23 +84,15 @@ where
                 .unwrap()
             }),
             min: options.min.then(|| {
-                ComputedVec::forced_import(
-                    &maybe_suffix("min"),
-                    version + Version::ZERO,
-                    compressed,
-                )
-                .unwrap()
+                EagerVec::forced_import(&maybe_suffix("min"), version + Version::ZERO, compressed)
+                    .unwrap()
             }),
             max: options.max.then(|| {
-                ComputedVec::forced_import(
-                    &maybe_suffix("max"),
-                    version + Version::ZERO,
-                    compressed,
-                )
-                .unwrap()
+                EagerVec::forced_import(&maybe_suffix("max"), version + Version::ZERO, compressed)
+                    .unwrap()
             }),
             median: options.median.then(|| {
-                ComputedVec::forced_import(
+                EagerVec::forced_import(
                     &maybe_suffix("median"),
                     version + Version::ZERO,
                     compressed,
@@ -114,7 +100,7 @@ where
                 .unwrap()
             }),
             average: options.average.then(|| {
-                ComputedVec::forced_import(
+                EagerVec::forced_import(
                     &maybe_suffix("average"),
                     version + Version::ZERO,
                     compressed,
@@ -122,48 +108,28 @@ where
                 .unwrap()
             }),
             sum: options.sum.then(|| {
-                ComputedVec::forced_import(
-                    &maybe_suffix("sum"),
-                    version + Version::ZERO,
-                    compressed,
-                )
-                .unwrap()
+                EagerVec::forced_import(&maybe_suffix("sum"), version + Version::ZERO, compressed)
+                    .unwrap()
             }),
             total: options.total.then(|| {
-                ComputedVec::forced_import(&prefix("total"), version + Version::ZERO, compressed)
+                EagerVec::forced_import(&prefix("total"), version + Version::ZERO, compressed)
                     .unwrap()
             }),
             _90p: options._90p.then(|| {
-                ComputedVec::forced_import(
-                    &maybe_suffix("90p"),
-                    version + Version::ZERO,
-                    compressed,
-                )
-                .unwrap()
+                EagerVec::forced_import(&maybe_suffix("90p"), version + Version::ZERO, compressed)
+                    .unwrap()
             }),
             _75p: options._75p.then(|| {
-                ComputedVec::forced_import(
-                    &maybe_suffix("75p"),
-                    version + Version::ZERO,
-                    compressed,
-                )
-                .unwrap()
+                EagerVec::forced_import(&maybe_suffix("75p"), version + Version::ZERO, compressed)
+                    .unwrap()
             }),
             _25p: options._25p.then(|| {
-                ComputedVec::forced_import(
-                    &maybe_suffix("25p"),
-                    version + Version::ZERO,
-                    compressed,
-                )
-                .unwrap()
+                EagerVec::forced_import(&maybe_suffix("25p"), version + Version::ZERO, compressed)
+                    .unwrap()
             }),
             _10p: options._10p.then(|| {
-                ComputedVec::forced_import(
-                    &maybe_suffix("10p"),
-                    version + Version::ZERO,
-                    compressed,
-                )
-                .unwrap()
+                EagerVec::forced_import(&maybe_suffix("10p"), version + Version::ZERO, compressed)
+                    .unwrap()
             }),
         };
 
@@ -476,40 +442,40 @@ where
         ))
     }
 
-    pub fn unwrap_first(&mut self) -> &mut ComputedVec<I, T> {
+    pub fn unwrap_first(&mut self) -> &mut EagerVec<I, T> {
         self.first.as_mut().unwrap()
     }
-    pub fn unwrap_average(&mut self) -> &mut ComputedVec<I, T> {
+    pub fn unwrap_average(&mut self) -> &mut EagerVec<I, T> {
         self.average.as_mut().unwrap()
     }
-    pub fn unwrap_sum(&mut self) -> &mut ComputedVec<I, T> {
+    pub fn unwrap_sum(&mut self) -> &mut EagerVec<I, T> {
         self.sum.as_mut().unwrap()
     }
-    pub fn unwrap_max(&mut self) -> &mut ComputedVec<I, T> {
+    pub fn unwrap_max(&mut self) -> &mut EagerVec<I, T> {
         self.max.as_mut().unwrap()
     }
-    pub fn unwrap_90p(&mut self) -> &mut ComputedVec<I, T> {
+    pub fn unwrap_90p(&mut self) -> &mut EagerVec<I, T> {
         self._90p.as_mut().unwrap()
     }
-    pub fn unwrap_75p(&mut self) -> &mut ComputedVec<I, T> {
+    pub fn unwrap_75p(&mut self) -> &mut EagerVec<I, T> {
         self._75p.as_mut().unwrap()
     }
-    pub fn unwrap_median(&mut self) -> &mut ComputedVec<I, T> {
+    pub fn unwrap_median(&mut self) -> &mut EagerVec<I, T> {
         self.median.as_mut().unwrap()
     }
-    pub fn unwrap_25p(&mut self) -> &mut ComputedVec<I, T> {
+    pub fn unwrap_25p(&mut self) -> &mut EagerVec<I, T> {
         self._25p.as_mut().unwrap()
     }
-    pub fn unwrap_10p(&mut self) -> &mut ComputedVec<I, T> {
+    pub fn unwrap_10p(&mut self) -> &mut EagerVec<I, T> {
         self._10p.as_mut().unwrap()
     }
-    pub fn unwrap_min(&mut self) -> &mut ComputedVec<I, T> {
+    pub fn unwrap_min(&mut self) -> &mut EagerVec<I, T> {
         self.min.as_mut().unwrap()
     }
-    pub fn unwrap_last(&mut self) -> &mut ComputedVec<I, T> {
+    pub fn unwrap_last(&mut self) -> &mut EagerVec<I, T> {
         self.last.as_mut().unwrap()
     }
-    pub fn unwrap_total(&mut self) -> &mut ComputedVec<I, T> {
+    pub fn unwrap_total(&mut self) -> &mut EagerVec<I, T> {
         self.total.as_mut().unwrap()
     }
 
