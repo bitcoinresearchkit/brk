@@ -7,19 +7,18 @@ use brk_parser::bitcoin;
 use brk_vec::{Compressed, Version};
 
 use super::{
-    Indexes,
-    base::ComputedVec,
+    EagerVec, Indexes,
     grouped::{ComputedVecsFromHeight, StorableVecGeneatorOptions},
     indexes,
 };
 
 #[derive(Clone)]
 pub struct Vecs {
-    pub height_to_interval: ComputedVec<Height, Timestamp>,
+    pub height_to_interval: EagerVec<Height, Timestamp>,
     pub indexes_to_block_interval: ComputedVecsFromHeight<Timestamp>,
     pub indexes_to_block_count: ComputedVecsFromHeight<StoredU32>,
     pub indexes_to_block_weight: ComputedVecsFromHeight<Weight>,
-    pub height_to_vbytes: ComputedVec<Height, StoredU64>,
+    pub height_to_vbytes: EagerVec<Height, StoredU64>,
     pub indexes_to_block_vbytes: ComputedVecsFromHeight<StoredU64>,
     pub indexes_to_block_size: ComputedVecsFromHeight<StoredUsize>,
 }
@@ -29,7 +28,7 @@ impl Vecs {
         fs::create_dir_all(path)?;
 
         Ok(Self {
-            height_to_interval: ComputedVec::forced_import(
+            height_to_interval: EagerVec::forced_import(
                 &path.join("height_to_interval"),
                 Version::ZERO,
                 compressed,
@@ -69,7 +68,7 @@ impl Vecs {
                 compressed,
                 StorableVecGeneatorOptions::default().add_sum().add_total(),
             )?,
-            height_to_vbytes: ComputedVec::forced_import(
+            height_to_vbytes: EagerVec::forced_import(
                 &path.join("height_to_vbytes"),
                 Version::ZERO,
                 compressed,

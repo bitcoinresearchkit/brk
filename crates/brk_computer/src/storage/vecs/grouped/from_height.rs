@@ -7,16 +7,16 @@ use brk_exit::Exit;
 use brk_indexer::Indexer;
 use brk_vec::{AnyStoredVec, Compressed, Result, StoredVec, Version};
 
-use crate::storage::vecs::{Indexes, base::ComputedVec, indexes};
+use crate::storage::{ComputedType, EagerVec, Indexes, indexes};
 
-use super::{ComputedType, ComputedVecBuilder, StorableVecGeneatorOptions};
+use super::{ComputedVecBuilder, StorableVecGeneatorOptions};
 
 #[derive(Clone)]
 pub struct ComputedVecsFromHeight<T>
 where
     T: ComputedType + PartialOrd,
 {
-    pub height: Option<ComputedVec<Height, T>>,
+    pub height: Option<EagerVec<Height, T>>,
     pub height_extra: ComputedVecBuilder<Height, T>,
     pub dateindex: ComputedVecBuilder<Dateindex, T>,
     pub weekindex: ComputedVecBuilder<Weekindex, T>,
@@ -46,7 +46,7 @@ where
         let version = VERSION + version;
 
         let height = compute_source.then(|| {
-            ComputedVec::forced_import(&path.join(format!("height_to_{name}")), version, compressed)
+            EagerVec::forced_import(&path.join(format!("height_to_{name}")), version, compressed)
                 .unwrap()
         });
 
@@ -95,7 +95,7 @@ where
     ) -> color_eyre::Result<()>
     where
         F: FnMut(
-            &mut ComputedVec<Height, T>,
+            &mut EagerVec<Height, T>,
             &mut Indexer,
             &mut indexes::Vecs,
             &Indexes,

@@ -5,16 +5,16 @@ use brk_exit::Exit;
 use brk_indexer::Indexer;
 use brk_vec::{AnyStoredVec, Compressed, Result, Version};
 
-use crate::storage::vecs::{Indexes, base::ComputedVec, indexes};
+use crate::storage::{ComputedType, EagerVec, Indexes, indexes};
 
-use super::{ComputedType, ComputedVecBuilder, StorableVecGeneatorOptions};
+use super::{ComputedVecBuilder, StorableVecGeneatorOptions};
 
 #[derive(Clone)]
 pub struct ComputedVecsFromDateindex<T>
 where
     T: ComputedType + PartialOrd,
 {
-    pub dateindex: ComputedVec<Dateindex, T>,
+    pub dateindex: EagerVec<Dateindex, T>,
     pub dateindex_extra: ComputedVecBuilder<Dateindex, T>,
     pub weekindex: ComputedVecBuilder<Weekindex, T>,
     pub monthindex: ComputedVecBuilder<Monthindex, T>,
@@ -49,7 +49,7 @@ where
         let options = options.remove_percentiles();
 
         Ok(Self {
-            dateindex: ComputedVec::forced_import(
+            dateindex: EagerVec::forced_import(
                 &path.join(format!("dateindex_to_{name}")),
                 version,
                 compressed,
@@ -79,7 +79,7 @@ where
     ) -> color_eyre::Result<()>
     where
         F: FnMut(
-            &mut ComputedVec<Dateindex, T>,
+            &mut EagerVec<Dateindex, T>,
             &mut Indexer,
             &mut indexes::Vecs,
             &Indexes,

@@ -18,7 +18,7 @@ const ONE_MIB: usize = ONE_KIB * ONE_KIB;
 const MAX_CACHE_SIZE: usize = 210 * ONE_MIB;
 
 #[derive(Debug)]
-pub struct ComputedVec<I, T>
+pub struct EagerVec<I, T>
 where
     I: StoredIndex,
     T: StoredType,
@@ -27,7 +27,7 @@ where
     inner: StoredVec<I, T>,
 }
 
-impl<I, T> ComputedVec<I, T>
+impl<I, T> EagerVec<I, T>
 where
     I: StoredIndex,
     T: StoredType,
@@ -443,7 +443,7 @@ where
     }
 }
 
-impl<I> ComputedVec<I, Bitcoin>
+impl<I> EagerVec<I, Bitcoin>
 where
     I: StoredIndex,
 {
@@ -467,7 +467,7 @@ where
     }
 }
 
-impl ComputedVec<Height, Dollars> {
+impl EagerVec<Height, Dollars> {
     pub fn compute_from_bitcoin(
         &mut self,
         max_from: Height,
@@ -490,7 +490,7 @@ impl ComputedVec<Height, Dollars> {
     }
 }
 
-impl ComputedVec<Txindex, Dollars> {
+impl EagerVec<Txindex, Dollars> {
     pub fn compute_from_bitcoin(
         &mut self,
         max_from: Txindex,
@@ -515,7 +515,7 @@ impl ComputedVec<Txindex, Dollars> {
     }
 }
 
-impl<I, T> Clone for ComputedVec<I, T>
+impl<I, T> Clone for EagerVec<I, T>
 where
     I: StoredIndex,
     T: StoredType,

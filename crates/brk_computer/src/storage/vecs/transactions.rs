@@ -10,7 +10,7 @@ use brk_parser::bitcoin;
 use brk_vec::{Compressed, DynamicVec, StoredIndex, Version};
 
 use super::{
-    ComputedVec, Indexes,
+    EagerVec, Indexes,
     grouped::{
         ComputedValueVecsFromHeight, ComputedValueVecsFromTxindex, ComputedVecsFromHeight,
         ComputedVecsFromTxindex, StorableVecGeneatorOptions,
@@ -34,12 +34,12 @@ pub struct Vecs {
     pub indexes_to_tx_vsize: ComputedVecsFromTxindex<StoredUsize>,
     pub indexes_to_tx_weight: ComputedVecsFromTxindex<Weight>,
     pub txindex_to_input_count: ComputedVecsFromTxindex<StoredU64>,
-    pub txindex_to_is_coinbase: ComputedVec<Txindex, bool>,
+    pub txindex_to_is_coinbase: EagerVec<Txindex, bool>,
     pub txindex_to_output_count: ComputedVecsFromTxindex<StoredU64>,
-    pub txindex_to_vsize: ComputedVec<Txindex, StoredUsize>,
-    pub txindex_to_weight: ComputedVec<Txindex, Weight>,
+    pub txindex_to_vsize: EagerVec<Txindex, StoredUsize>,
+    pub txindex_to_weight: EagerVec<Txindex, Weight>,
     /// Value == 0 when Coinbase
-    pub txinindex_to_value: ComputedVec<Txinindex, Sats>,
+    pub txinindex_to_value: EagerVec<Txinindex, Sats>,
     pub indexes_to_subsidy: ComputedValueVecsFromHeight,
     pub indexes_to_coinbase: ComputedValueVecsFromHeight,
 }
@@ -67,7 +67,7 @@ impl Vecs {
                     .add_total(),
             )?,
             // height_to_subsidy: StorableVec::forced_import(&path.join("height_to_subsidy"), Version::ZERO)?,
-            txindex_to_is_coinbase: ComputedVec::forced_import(
+            txindex_to_is_coinbase: EagerVec::forced_import(
                 &path.join("txindex_to_is_coinbase"),
                 Version::ZERO,
                 compressed,
@@ -98,7 +98,7 @@ impl Vecs {
                     .add_sum()
                     .add_total(),
             )?,
-            txinindex_to_value: ComputedVec::forced_import(
+            txinindex_to_value: EagerVec::forced_import(
                 &path.join("txinindex_to_value"),
                 Version::ZERO,
                 compressed,
@@ -174,12 +174,12 @@ impl Vecs {
                     .add_minmax()
                     .add_average(),
             )?,
-            txindex_to_weight: ComputedVec::forced_import(
+            txindex_to_weight: EagerVec::forced_import(
                 &path.join("txindex_to_weight"),
                 Version::ZERO,
                 compressed,
             )?,
-            txindex_to_vsize: ComputedVec::forced_import(
+            txindex_to_vsize: EagerVec::forced_import(
                 &path.join("txindex_to_vsize"),
                 Version::ZERO,
                 compressed,

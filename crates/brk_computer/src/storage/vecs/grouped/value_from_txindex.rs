@@ -6,8 +6,7 @@ use brk_indexer::Indexer;
 use brk_vec::{AnyStoredVec, Compressed, Result, StoredVec, Version};
 
 use crate::storage::{
-    base::ComputedVec,
-    marketprice,
+    EagerVec, marketprice,
     vecs::{Indexes, indexes},
 };
 
@@ -74,7 +73,7 @@ impl ComputedValueVecsFromTxindex {
     ) -> color_eyre::Result<()>
     where
         F: FnMut(
-            &mut ComputedVec<Txindex, Sats>,
+            &mut EagerVec<Txindex, Sats>,
             &mut Indexer,
             &mut indexes::Vecs,
             &Indexes,
