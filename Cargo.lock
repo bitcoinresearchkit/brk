@@ -422,6 +422,7 @@ dependencies = [
  "brk_parser",
  "brk_vec",
  "color-eyre",
+ "fjall",
  "log",
 ]
 

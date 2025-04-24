@@ -4,6 +4,7 @@ use std::{
 };
 
 use brk_vec::Version;
+use fjall::{TransactionalKeyspace, TransactionalPartitionHandle};
 use zerocopy::{FromBytes, IntoBytes};
 
 use super::Height;
@@ -17,14 +18,27 @@ pub struct StoreMeta {
 }
 
 impl StoreMeta {
-    pub fn checked_open(path: &Path, version: Version) -> color_eyre::Result<Self> {
+    pub fn checked_open<F>(
+        keyspace: &TransactionalKeyspace,
+        path: &Path,
+        version: Version,
+        open_partition_handle: F,
+    ) -> color_eyre::Result<(Self, TransactionalPartitionHandle)>
+    where
+        F: Fn() -> fjall::Result<TransactionalPartitionHandle>,
+    {
         fs::create_dir_all(path)?;
 
         let is_same_version = Version::try_from(Self::path_version_(path).as_path())
             .is_ok_and(|prev_version| version == prev_version);
 
+        let mut partition = open_partition_handle()?;
+
         if !is_same_version {
             Self::reset_(path)?;
+            keyspace.delete_partition(partition)?;
+            keyspace.persist(fjall::PersistMode::SyncAll)?;
+            partition = open_partition_handle()?;
         }
 
         let slf = Self {
@@ -36,7 +50,7 @@ impl StoreMeta {
 
         slf.version.write(&slf.path_version())?;
 
-        Ok(slf)
+        Ok((slf, partition))
     }
 
     pub fn len(&self) -> usize {

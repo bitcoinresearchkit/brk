@@ -20,6 +20,7 @@ use bitcoin::{Transaction, TxIn, TxOut};
 use brk_exit::Exit;
 use brk_vec::Compressed;
 use color_eyre::eyre::{ContextCompat, eyre};
+use fjall::TransactionalKeyspace;
 use log::info;
 use rayon::prelude::*;
 mod indexes;
@@ -44,13 +45,13 @@ pub struct Indexer {
 
 impl Indexer {
     pub fn new(
-        indexes_dir: PathBuf,
+        outputs_dir: &Path,
         compressed: bool,
         check_collisions: bool,
     ) -> color_eyre::Result<Self> {
         setrlimit()?;
         Ok(Self {
-            path: indexes_dir,
+            path: outputs_dir.to_owned(),
             vecs: None,
             stores: None,
             compressed: Compressed::from(compressed),
@@ -59,14 +60,17 @@ impl Indexer {
     }
 
     pub fn import_vecs(&mut self) -> color_eyre::Result<()> {
-        self.vecs = Some(Vecs::import(&self.path.join("vecs"), self.compressed)?);
+        self.vecs = Some(Vecs::forced_import(
+            &self.path.join("vecs/indexed"),
+            self.compressed,
+        )?);
         Ok(())
     }
 
     /// Do NOT import multiple times are things will break !!!
     /// Clone struct instead
     pub fn import_stores(&mut self) -> color_eyre::Result<()> {
-        self.stores = Some(Stores::import(&self.path.join("stores"))?);
+        self.stores = Some(Stores::forced_import(&self.path.join("stores"))?);
         Ok(())
     }
 
@@ -704,7 +708,7 @@ impl Indexer {
                         vecs.txindex_to_txversion.push_if_needed(txindex, tx.version.into())?;
                         vecs.txindex_to_txid.push_if_needed(txindex, txid)?;
                         vecs.txindex_to_height.push_if_needed(txindex, height)?;
-                        vecs.txindex_to_locktime.push_if_needed(txindex, tx.lock_time.into())?;
+                        vecs.txindex_to_rawlocktime.push_if_needed(txindex, tx.lock_time.into())?;
                         vecs.txindex_to_base_size.push_if_needed(txindex, tx.base_size())?;
                         vecs.txindex_to_total_size.push_if_needed(txindex, tx.total_size())?;
                         vecs.txindex_to_is_explicitly_rbf.push_if_needed(txindex, tx.is_explicitly_rbf())?;
@@ -728,10 +732,6 @@ impl Indexer {
         Ok(starting_indexes)
     }
 
-    pub fn path(&self) -> &Path {
-        &self.path
-    }
-
     pub fn vecs(&self) -> &Vecs {
         self.vecs.as_ref().unwrap()
     }
@@ -746,6 +746,10 @@ impl Indexer {
 
     pub fn mut_stores(&mut self) -> &mut Stores {
         self.stores.as_mut().unwrap()
+    }
+
+    pub fn keyspace(&self) -> &TransactionalKeyspace {
+        &self.stores().keyspace
     }
 }
 

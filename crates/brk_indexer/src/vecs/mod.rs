@@ -2,10 +2,11 @@ use std::{fs, path::Path};
 
 use brk_core::{
     Addressbytes, Addressindex, Addresstype, Addresstypeindex, BlockHash, Emptyindex, Height,
-    LockTime, Multisigindex, Opreturnindex, P2PK33AddressBytes, P2PK33index, P2PK65AddressBytes,
-    P2PK65index, P2PKHAddressBytes, P2PKHindex, P2SHAddressBytes, P2SHindex, P2TRAddressBytes,
-    P2TRindex, P2WPKHAddressBytes, P2WPKHindex, P2WSHAddressBytes, P2WSHindex, Pushonlyindex, Sats,
-    StoredUsize, Timestamp, TxVersion, Txid, Txindex, Txinindex, Txoutindex, Unknownindex, Weight,
+    Multisigindex, Opreturnindex, P2PK33AddressBytes, P2PK33index, P2PK65AddressBytes, P2PK65index,
+    P2PKHAddressBytes, P2PKHindex, P2SHAddressBytes, P2SHindex, P2TRAddressBytes, P2TRindex,
+    P2WPKHAddressBytes, P2WPKHindex, P2WSHAddressBytes, P2WSHindex, Pushonlyindex, RawLockTime,
+    Sats, StoredUsize, Timestamp, TxVersion, Txid, Txindex, Txinindex, Txoutindex, Unknownindex,
+    Weight,
 };
 use brk_vec::{AnyStoredVec, Compressed, Result, Version};
 use rayon::prelude::*;
@@ -65,7 +66,7 @@ pub struct Vecs {
     pub txindex_to_first_txoutindex: IndexedVec<Txindex, Txoutindex>,
     pub txindex_to_height: IndexedVec<Txindex, Height>,
     pub txindex_to_is_explicitly_rbf: IndexedVec<Txindex, bool>,
-    pub txindex_to_locktime: IndexedVec<Txindex, LockTime>,
+    pub txindex_to_rawlocktime: IndexedVec<Txindex, RawLockTime>,
     pub txindex_to_total_size: IndexedVec<Txindex, usize>,
     pub txindex_to_txid: IndexedVec<Txindex, Txid>,
     pub txindex_to_txversion: IndexedVec<Txindex, TxVersion>,
@@ -79,7 +80,7 @@ pub struct Vecs {
 }
 
 impl Vecs {
-    pub fn import(path: &Path, compressed: Compressed) -> color_eyre::Result<Self> {
+    pub fn forced_import(path: &Path, compressed: Compressed) -> color_eyre::Result<Self> {
         fs::create_dir_all(path)?;
 
         Ok(Self {
@@ -253,7 +254,7 @@ impl Vecs {
                 Version::ZERO,
                 compressed,
             )?,
-            txindex_to_locktime: IndexedVec::forced_import(
+            txindex_to_rawlocktime: IndexedVec::forced_import(
                 &path.join("txindex_to_locktime"),
                 Version::ZERO,
                 compressed,
@@ -466,7 +467,7 @@ impl Vecs {
             .truncate_if_needed(txindex, saved_height)?;
         self.txindex_to_height
             .truncate_if_needed(txindex, saved_height)?;
-        self.txindex_to_locktime
+        self.txindex_to_rawlocktime
             .truncate_if_needed(txindex, saved_height)?;
         self.txindex_to_txid
             .truncate_if_needed(txindex, saved_height)?;
@@ -644,7 +645,7 @@ impl Vecs {
             self.txindex_to_first_txinindex.any_vec(),
             self.txindex_to_first_txoutindex.any_vec(),
             self.txindex_to_height.any_vec(),
-            self.txindex_to_locktime.any_vec(),
+            self.txindex_to_rawlocktime.any_vec(),
             self.txindex_to_txid.any_vec(),
             self.txindex_to_base_size.any_vec(),
             self.txindex_to_total_size.any_vec(),
@@ -706,7 +707,7 @@ impl Vecs {
             &mut self.txindex_to_first_txinindex,
             &mut self.txindex_to_first_txoutindex,
             &mut self.txindex_to_height,
-            &mut self.txindex_to_locktime,
+            &mut self.txindex_to_rawlocktime,
             &mut self.txindex_to_txid,
             &mut self.txindex_to_base_size,
             &mut self.txindex_to_total_size,

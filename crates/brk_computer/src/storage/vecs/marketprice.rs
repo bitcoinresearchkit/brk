@@ -74,8 +74,7 @@ impl Vecs {
 
         let mut fetched_path = path.to_owned();
         fetched_path.pop();
-        fetched_path.pop();
-        fetched_path = fetched_path.join("fetched/vecs");
+        fetched_path = fetched_path.join("fetched");
 
         Ok(Self {
             dateindex_to_ohlc_in_cents: EagerVec::forced_import(

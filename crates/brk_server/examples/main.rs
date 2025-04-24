@@ -32,14 +32,14 @@ pub fn main() -> color_eyre::Result<()> {
 
     let compressed = true;
 
-    let mut indexer = Indexer::new(outputs_dir.join("indexed"), compressed, true)?;
+    let mut indexer = Indexer::new(outputs_dir, compressed, true)?;
     indexer.import_stores()?;
     indexer.import_vecs()?;
 
     let fetcher = Some(Fetcher::import(None)?);
 
-    let mut computer = Computer::new(outputs_dir.join("computed"), fetcher, compressed);
-    computer.import_stores()?;
+    let mut computer = Computer::new(outputs_dir, fetcher, compressed);
+    computer.import_stores(&indexer)?;
     computer.import_vecs()?;
 
     tokio::runtime::Builder::new_multi_thread()

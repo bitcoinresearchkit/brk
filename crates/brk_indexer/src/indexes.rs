@@ -207,19 +207,20 @@ impl TryFrom<(&mut Vecs, &Stores, &Client)> for Indexes {
     }
 }
 
-pub fn starting_index<'a, I>(
+pub fn starting_index<'a, I, T>(
     height_to_index: &'a IndexedVec<Height, I>,
-    index_to_height: &'a IndexedVec<I, Height>,
+    index_to_else: &'a IndexedVec<I, T>,
     starting_height: Height,
 ) -> Result<Option<Value<'a, I>>>
 where
     I: StoredType + StoredIndex + From<usize>,
+    T: StoredType,
 {
     if height_to_index
         .height()
         .is_ok_and(|h| h + 1_u32 == starting_height)
     {
-        Ok(Some(Value::Owned(I::from(index_to_height.len()))))
+        Ok(Some(Value::Owned(I::from(index_to_else.len()))))
     } else {
         height_to_index.get(starting_height)
     }

@@ -65,12 +65,6 @@ impl From<bitcoin::locktime::absolute::Time> for Timestamp {
     }
 }
 
-impl From<Timestamp> for bitcoin::locktime::absolute::Time {
-    fn from(value: Timestamp) -> Self {
-        bitcoin::locktime::absolute::Time::from_consensus(*value).unwrap()
-    }
-}
-
 impl From<usize> for Timestamp {
     fn from(value: usize) -> Self {
         Self(value as u32)

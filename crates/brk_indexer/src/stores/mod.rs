@@ -1,10 +1,11 @@
-use std::{path::Path, thread};
+use std::{fs, path::Path, thread};
 
 use brk_core::{
     AddressHash, Addressbytes, Addressindex, Addresstype, BlockHashPrefix, Height, TxidPrefix,
     Txindex,
 };
 use brk_vec::{Value, Version};
+use fjall::{PersistMode, TransactionalKeyspace};
 
 use crate::Indexes;
 
@@ -18,22 +19,52 @@ use super::Vecs;
 
 #[derive(Clone)]
 pub struct Stores {
+    pub keyspace: TransactionalKeyspace,
     pub addresshash_to_addressindex: Store<AddressHash, Addressindex>,
     pub blockhash_prefix_to_height: Store<BlockHashPrefix, Height>,
     pub txid_prefix_to_txindex: Store<TxidPrefix, Txindex>,
 }
 
 impl Stores {
-    pub fn import(path: &Path) -> color_eyre::Result<Self> {
+    pub fn forced_import(path: &Path) -> color_eyre::Result<Self> {
+        fs::create_dir_all(path)?;
+
+        let keyspace = match Self::open_keyspace(path) {
+            Ok(keyspace) => keyspace,
+            Err(_) => {
+                fs::remove_dir_all(path)?;
+                return Self::forced_import(path);
+            }
+        };
+
         thread::scope(|scope| {
-            let addresshash_to_addressindex = scope
-                .spawn(|| Store::import(&path.join("addresshash_to_addressindex"), Version::ZERO));
-            let blockhash_prefix_to_height = scope
-                .spawn(|| Store::import(&path.join("blockhash_prefix_to_height"), Version::ZERO));
-            let txid_prefix_to_txindex =
-                scope.spawn(|| Store::import(&path.join("txid_prefix_to_txindex"), Version::ZERO));
+            let addresshash_to_addressindex = scope.spawn(|| {
+                Store::import(
+                    keyspace.clone(),
+                    path,
+                    "addresshash_to_addressindex",
+                    Version::ZERO,
+                )
+            });
+            let blockhash_prefix_to_height = scope.spawn(|| {
+                Store::import(
+                    keyspace.clone(),
+                    path,
+                    "blockhash_prefix_to_height",
+                    Version::ZERO,
+                )
+            });
+            let txid_prefix_to_txindex = scope.spawn(|| {
+                Store::import(
+                    keyspace.clone(),
+                    path,
+                    "txid_prefix_to_txindex",
+                    Version::ZERO,
+                )
+            });
 
             Ok(Self {
+                keyspace: keyspace.clone(),
                 addresshash_to_addressindex: addresshash_to_addressindex.join().unwrap()?,
                 blockhash_prefix_to_height: blockhash_prefix_to_height.join().unwrap()?,
                 txid_prefix_to_txindex: txid_prefix_to_txindex.join().unwrap()?,
@@ -204,7 +235,7 @@ impl Stores {
     }
 
     pub fn commit(&mut self, height: Height) -> fjall::Result<()> {
-        thread::scope(|scope| {
+        thread::scope(|scope| -> fjall::Result<()> {
             let addresshash_to_addressindex_commit_handle =
                 scope.spawn(|| self.addresshash_to_addressindex.commit(height));
             let blockhash_prefix_to_height_commit_handle =
@@ -217,12 +248,20 @@ impl Stores {
             txid_prefix_to_txindex_commit_handle.join().unwrap()?;
 
             Ok(())
-        })
+        })?;
+
+        self.keyspace.persist(PersistMode::SyncAll)
     }
 
     pub fn rotate_memtables(&self) {
         self.addresshash_to_addressindex.rotate_memtable();
         self.blockhash_prefix_to_height.rotate_memtable();
         self.txid_prefix_to_txindex.rotate_memtable();
+    }
+
+    fn open_keyspace(path: &Path) -> fjall::Result<TransactionalKeyspace> {
+        fjall::Config::new(path.join("fjall"))
+            .max_write_buffer_size(32 * 1024 * 1024)
+            .open_transactional()
     }
 }

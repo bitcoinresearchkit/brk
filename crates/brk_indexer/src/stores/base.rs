@@ -10,7 +10,7 @@ use brk_core::Height;
 use brk_vec::{Value, Version};
 use byteview::ByteView;
 use fjall::{
-    PartitionCreateOptions, PersistMode, ReadTransaction, Result, TransactionalKeyspace,
+    PartitionCreateOptions, ReadTransaction, Result, TransactionalKeyspace,
     TransactionalPartitionHandle,
 };
 use zerocopy::{Immutable, IntoBytes};
@@ -20,7 +20,7 @@ use super::StoreMeta;
 pub struct Store<Key, Value> {
     meta: StoreMeta,
     keyspace: TransactionalKeyspace,
-    part: TransactionalPartitionHandle,
+    partition: TransactionalPartitionHandle,
     rtx: ReadTransaction,
     puts: BTreeMap<Key, Value>,
     dels: BTreeSet<Key>,
@@ -35,36 +35,31 @@ where
     V: Debug + Clone + Into<ByteView> + TryFrom<ByteView>,
     <V as TryFrom<ByteView>>::Error: error::Error + Send + Sync + 'static,
 {
-    pub fn import(path: &Path, version: Version) -> color_eyre::Result<Self> {
+    pub fn import(
+        keyspace: TransactionalKeyspace,
+        path: &Path,
+        name: &str,
+        version: Version,
+    ) -> color_eyre::Result<Self> {
         let version = MAJOR_FJALL_VERSION + version;
 
-        let meta = StoreMeta::checked_open(path, version)?;
-
-        let keyspace = match Self::open_keyspace(path) {
-            Ok(keyspace) => keyspace,
-            Err(e) => {
-                dbg!(e);
-                meta.reset()?;
-                return Self::import(path, version);
-            }
-        };
-
-        let part = match Self::open_partition_handle(&keyspace) {
-            Ok(part) => part,
-            Err(e) => {
-                dbg!(e);
-                drop(keyspace);
-                meta.reset()?;
-                return Self::import(path, version);
-            }
-        };
+        let (meta, partition) = StoreMeta::checked_open(
+            &keyspace,
+            &path.join(format!("meta/{name}")),
+            version,
+            || {
+                Self::open_partition_handle(&keyspace, name).inspect_err(|_| {
+                    eprintln!("Delete {path:?} and try again");
+                })
+            },
+        )?;
 
         let rtx = keyspace.read_tx();
 
         Ok(Self {
             meta,
             keyspace,
-            part,
+            partition,
             rtx,
             puts: BTreeMap::new(),
             dels: BTreeSet::new(),
@@ -74,7 +69,7 @@ where
     pub fn get(&self, key: &K) -> color_eyre::Result<Option<Value<V>>> {
         if let Some(v) = self.puts.get(key) {
             Ok(Some(Value::Ref(v)))
-        } else if let Some(slice) = self.rtx.get(&self.part, key.as_bytes())? {
+        } else if let Some(slice) = self.rtx.get(&self.partition, key.as_bytes())? {
             Ok(Some(Value::Owned(V::try_from(slice.as_bytes().into())?)))
         } else {
             Ok(None)
@@ -117,25 +112,25 @@ where
 
         mem::take(&mut self.dels)
             .into_iter()
-            .for_each(|key| wtx.remove(&self.part, key.as_bytes()));
+            .for_each(|key| wtx.remove(&self.partition, key.as_bytes()));
 
         mem::take(&mut self.puts)
             .into_iter()
             .for_each(|(key, value)| {
                 if CHECK_COLLISISONS {
                     #[allow(unused_must_use)]
-                    if let Ok(Some(value)) = wtx.get(&self.part, key.as_bytes()) {
+                    if let Ok(Some(value)) = wtx.get(&self.partition, key.as_bytes()) {
                         dbg!(
                             &key,
                             V::try_from(value.as_bytes().into()).unwrap(),
                             &self.meta,
-                            self.rtx.get(&self.part, key.as_bytes())
+                            self.rtx.get(&self.partition, key.as_bytes())
                         );
                         unreachable!();
                     }
                 }
                 wtx.insert(
-                    &self.part,
+                    &self.partition,
                     key.as_bytes(),
                     &*ByteView::try_from(value).unwrap(),
                 )
@@ -143,15 +138,13 @@ where
 
         wtx.commit()?;
 
-        self.keyspace.persist(PersistMode::SyncAll)?;
-
         self.rtx = self.keyspace.read_tx();
 
         Ok(())
     }
 
     pub fn rotate_memtable(&self) {
-        let _ = self.part.inner().rotate_memtable();
+        let _ = self.partition.inner().rotate_memtable();
     }
 
     pub fn height(&self) -> Option<Height> {
@@ -172,17 +165,12 @@ where
         self.meta.needs(height)
     }
 
-    fn open_keyspace(path: &Path) -> Result<TransactionalKeyspace> {
-        fjall::Config::new(path.join("fjall"))
-            .max_write_buffer_size(32 * 1024 * 1024)
-            .open_transactional()
-    }
-
     fn open_partition_handle(
         keyspace: &TransactionalKeyspace,
+        name: &str,
     ) -> Result<TransactionalPartitionHandle> {
         keyspace.open_partition(
-            "partition",
+            name,
             PartitionCreateOptions::default()
                 .bloom_filter_bits(Some(5))
                 .max_memtable_size(8 * 1024 * 1024)
@@ -200,7 +188,7 @@ where
         Self {
             meta: self.meta.clone(),
             keyspace: self.keyspace.clone(),
-            part: self.part.clone(),
+            partition: self.partition.clone(),
             rtx: self.keyspace.read_tx(),
             puts: self.puts.clone(),
             dels: self.dels.clone(),

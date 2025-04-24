@@ -10,10 +10,10 @@ pub fn query(params: QueryParams) -> color_eyre::Result<()> {
 
     let compressed = config.compressed();
 
-    let mut indexer = Indexer::new(config.indexeddir(), compressed, config.check_collisions())?;
+    let mut indexer = Indexer::new(&config.outputsdir(), compressed, config.check_collisions())?;
     indexer.import_vecs()?;
 
-    let mut computer = Computer::new(config.computeddir(), config.fetcher(), compressed);
+    let mut computer = Computer::new(&config.outputsdir(), config.fetcher(), compressed);
     computer.import_vecs()?;
 
     let query = Query::build(&indexer, &computer);
