@@ -12,7 +12,7 @@ pub mod marketprice;
 pub mod transactions;
 pub mod vec;
 
-pub use indexes::*;
+pub use indexes::Indexes;
 pub use vec::*;
 
 #[derive(Clone)]

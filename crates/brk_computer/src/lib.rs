@@ -26,9 +26,9 @@ pub struct Computer {
 }
 
 impl Computer {
-    pub fn new(computed_dir: PathBuf, fetcher: Option<Fetcher>, compressed: bool) -> Self {
+    pub fn new(outputs_dir: &Path, fetcher: Option<Fetcher>, compressed: bool) -> Self {
         Self {
-            path: computed_dir,
+            path: outputs_dir.to_owned(),
             fetcher,
             vecs: None,
             stores: None,
@@ -38,7 +38,7 @@ impl Computer {
 
     pub fn import_vecs(&mut self) -> color_eyre::Result<()> {
         self.vecs = Some(Vecs::import(
-            &self.path.join("vecs"),
+            &self.path.join("vecs/computed"),
             self.fetcher.is_some(),
             self.compressed,
         )?);
@@ -47,8 +47,11 @@ impl Computer {
 
     /// Do NOT import multiple times or things will break !!!
     /// Clone struct instead
-    pub fn import_stores(&mut self) -> color_eyre::Result<()> {
-        self.stores = Some(Stores::import(&self.path.join("stores"))?);
+    pub fn import_stores(&mut self, indexer: &Indexer) -> color_eyre::Result<()> {
+        self.stores = Some(Stores::import(
+            &self.path.join("stores"),
+            indexer.keyspace(),
+        )?);
         Ok(())
     }
 }
@@ -70,10 +73,6 @@ impl Computer {
         )?;
 
         Ok(())
-    }
-
-    pub fn path(&self) -> &Path {
-        &self.path
     }
 
     pub fn vecs(&self) -> &Vecs {

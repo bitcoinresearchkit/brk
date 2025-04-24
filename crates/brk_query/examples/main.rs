@@ -11,10 +11,10 @@ pub fn main() -> color_eyre::Result<()> {
 
     let compressed = true;
 
-    let mut indexer = Indexer::new(outputs_dir.join("indexed"), compressed, true)?;
+    let mut indexer = Indexer::new(outputs_dir, compressed, true)?;
     indexer.import_vecs()?;
 
-    let mut computer = Computer::new(outputs_dir.join("computed"), None, compressed);
+    let mut computer = Computer::new(outputs_dir, None, compressed);
     computer.import_vecs()?;
 
     let query = Query::build(&indexer, &computer);

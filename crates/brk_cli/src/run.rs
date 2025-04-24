@@ -28,12 +28,12 @@ pub fn run(config: RunConfig) -> color_eyre::Result<()> {
 
     let compressed = config.compressed();
 
-    let mut indexer = Indexer::new(config.indexeddir(), compressed, config.check_collisions())?;
+    let mut indexer = Indexer::new(&config.outputsdir(), compressed, config.check_collisions())?;
     indexer.import_stores()?;
     indexer.import_vecs()?;
 
-    let mut computer = Computer::new(config.computeddir(), config.fetcher(), compressed);
-    computer.import_stores()?;
+    let mut computer = Computer::new(&config.outputsdir(), config.fetcher(), compressed);
+    computer.import_stores(&indexer)?;
     computer.import_vecs()?;
 
     tokio::runtime::Builder::new_multi_thread()
@@ -357,16 +357,8 @@ impl RunConfig {
             .map_or_else(default_brk_path, |s| Self::fix_user_path(s.as_ref()))
     }
 
-    fn outputsdir(&self) -> PathBuf {
+    pub fn outputsdir(&self) -> PathBuf {
         self.brkdir().join("outputs")
-    }
-
-    pub fn indexeddir(&self) -> PathBuf {
-        self.outputsdir().join("indexed")
-    }
-
-    pub fn computeddir(&self) -> PathBuf {
-        self.outputsdir().join("computed")
     }
 
     pub fn harsdir(&self) -> PathBuf {

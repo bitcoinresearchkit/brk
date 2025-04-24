@@ -181,12 +181,6 @@ impl From<bitcoin::locktime::absolute::Height> for Height {
     }
 }
 
-impl From<Height> for bitcoin::locktime::absolute::Height {
-    fn from(value: Height) -> Self {
-        bitcoin::locktime::absolute::Height::from_consensus(value.0).unwrap()
-    }
-}
-
 impl TryFrom<&std::path::Path> for Height {
     type Error = crate::Error;
     fn try_from(value: &std::path::Path) -> Result<Self, Self::Error> {
