@@ -26,82 +26,82 @@ use super::StoredU32;
     KnownLayout,
     Serialize,
 )]
-pub struct Txindex(u32);
+pub struct TxIndex(u32);
 
-impl Txindex {
+impl TxIndex {
     pub fn incremented(self) -> Self {
         Self(*self + 1)
     }
 }
 
-impl Add<Txindex> for Txindex {
+impl Add<TxIndex> for TxIndex {
     type Output = Self;
-    fn add(self, rhs: Txindex) -> Self::Output {
+    fn add(self, rhs: TxIndex) -> Self::Output {
         Self(self.0 + rhs.0)
     }
 }
 
-impl Add<usize> for Txindex {
+impl Add<usize> for TxIndex {
     type Output = Self;
     fn add(self, rhs: usize) -> Self::Output {
         Self(self.0 + rhs as u32)
     }
 }
 
-impl AddAssign<Txindex> for Txindex {
-    fn add_assign(&mut self, rhs: Txindex) {
+impl AddAssign<TxIndex> for TxIndex {
+    fn add_assign(&mut self, rhs: TxIndex) {
         self.0 += rhs.0
     }
 }
 
-impl CheckedSub<Txindex> for Txindex {
-    fn checked_sub(self, rhs: Txindex) -> Option<Self> {
-        self.0.checked_sub(rhs.0).map(Txindex::from)
+impl CheckedSub<TxIndex> for TxIndex {
+    fn checked_sub(self, rhs: TxIndex) -> Option<Self> {
+        self.0.checked_sub(rhs.0).map(TxIndex::from)
     }
 }
 
-impl From<u32> for Txindex {
+impl From<u32> for TxIndex {
     fn from(value: u32) -> Self {
         Self(value)
     }
 }
 
-impl From<u64> for Txindex {
+impl From<u64> for TxIndex {
     fn from(value: u64) -> Self {
         Self(value as u32)
     }
 }
-impl From<Txindex> for u64 {
-    fn from(value: Txindex) -> Self {
+impl From<TxIndex> for u64 {
+    fn from(value: TxIndex) -> Self {
         value.0 as u64
     }
 }
 
-impl From<usize> for Txindex {
+impl From<usize> for TxIndex {
     fn from(value: usize) -> Self {
         Self(value as u32)
     }
 }
-impl From<Txindex> for usize {
-    fn from(value: Txindex) -> Self {
+impl From<TxIndex> for usize {
+    fn from(value: TxIndex) -> Self {
         value.0 as usize
     }
 }
 
-impl TryFrom<ByteView> for Txindex {
+impl TryFrom<ByteView> for TxIndex {
     type Error = Error;
     fn try_from(value: ByteView) -> Result<Self, Self::Error> {
         Ok(Self::read_from_bytes(&value)?)
     }
 }
-impl From<Txindex> for ByteView {
-    fn from(value: Txindex) -> Self {
+impl From<TxIndex> for ByteView {
+    fn from(value: TxIndex) -> Self {
         Self::new(value.as_bytes())
     }
 }
 
-impl From<Txindex> for StoredU32 {
-    fn from(value: Txindex) -> Self {
+impl From<TxIndex> for StoredU32 {
+    fn from(value: TxIndex) -> Self {
         Self::from(value.0)
     }
 }

@@ -5,7 +5,7 @@ use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 use crate::CheckedSub;
 
-use super::Monthindex;
+use super::MonthIndex;
 
 #[derive(
     Debug,
@@ -23,27 +23,27 @@ use super::Monthindex;
     IntoBytes,
     KnownLayout,
 )]
-pub struct Quarterindex(u16);
+pub struct QuarterIndex(u16);
 
-impl From<u16> for Quarterindex {
+impl From<u16> for QuarterIndex {
     fn from(value: u16) -> Self {
         Self(value)
     }
 }
 
-impl From<usize> for Quarterindex {
+impl From<usize> for QuarterIndex {
     fn from(value: usize) -> Self {
         Self(value as u16)
     }
 }
 
-impl From<Quarterindex> for usize {
-    fn from(value: Quarterindex) -> Self {
+impl From<QuarterIndex> for usize {
+    fn from(value: QuarterIndex) -> Self {
         value.0 as usize
     }
 }
 
-impl Add<usize> for Quarterindex {
+impl Add<usize> for QuarterIndex {
     type Output = Self;
 
     fn add(self, rhs: usize) -> Self::Output {
@@ -51,13 +51,13 @@ impl Add<usize> for Quarterindex {
     }
 }
 
-impl From<Monthindex> for Quarterindex {
-    fn from(value: Monthindex) -> Self {
+impl From<MonthIndex> for QuarterIndex {
+    fn from(value: MonthIndex) -> Self {
         Self((usize::from(value) / 3) as u16)
     }
 }
 
-impl CheckedSub for Quarterindex {
+impl CheckedSub for QuarterIndex {
     fn checked_sub(self, rhs: Self) -> Option<Self> {
         self.0.checked_sub(rhs.0).map(Self)
     }

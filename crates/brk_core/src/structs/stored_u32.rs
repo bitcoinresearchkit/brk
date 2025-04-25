@@ -39,6 +39,9 @@ impl From<u32> for StoredU32 {
 
 impl From<usize> for StoredU32 {
     fn from(value: usize) -> Self {
+        if value > u32::MAX as usize {
+            panic!("usize too big (value = {value})")
+        }
         Self(value as u32)
     }
 }
@@ -75,5 +78,11 @@ impl From<f64> for StoredU32 {
 impl From<StoredU32> for f64 {
     fn from(value: StoredU32) -> Self {
         value.0 as f64
+    }
+}
+
+impl From<StoredU32> for usize {
+    fn from(value: StoredU32) -> Self {
+        value.0 as usize
     }
 }

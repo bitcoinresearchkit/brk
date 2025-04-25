@@ -1,6 +1,6 @@
 use std::path::Path;
 
-use brk_core::{Bitcoin, Dollars, Sats, Txindex};
+use brk_core::{Bitcoin, Dollars, Sats, TxIndex};
 use brk_exit::Exit;
 use brk_indexer::Indexer;
 use brk_vec::{AnyStoredVec, Compressed, Result, StoredVec, Version};
@@ -73,7 +73,7 @@ impl ComputedValueVecsFromTxindex {
     ) -> color_eyre::Result<()>
     where
         F: FnMut(
-            &mut EagerVec<Txindex, Sats>,
+            &mut EagerVec<TxIndex, Sats>,
             &mut Indexer,
             &mut indexes::Vecs,
             &Indexes,
@@ -100,7 +100,7 @@ impl ComputedValueVecsFromTxindex {
         marketprices: &mut Option<&mut marketprice::Vecs>,
         starting_indexes: &Indexes,
         exit: &Exit,
-        mut txindex: Option<&mut StoredVec<Txindex, Sats>>,
+        mut txindex: Option<&mut StoredVec<TxIndex, Sats>>,
     ) -> color_eyre::Result<()> {
         if let Some(txindex) = txindex.as_mut() {
             self.sats
@@ -136,11 +136,11 @@ impl ComputedValueVecsFromTxindex {
                 indexes,
                 starting_indexes,
                 exit,
-                |v, indexer, _, starting_indexes, exit| {
+                |v, _, indexes, starting_indexes, exit| {
                     v.compute_from_bitcoin(
                         starting_indexes.txindex,
                         txindex,
-                        indexer.mut_vecs().txindex_to_height.mut_vec(),
+                        indexes.txindex_to_height.mut_vec(),
                         price,
                         exit,
                     )

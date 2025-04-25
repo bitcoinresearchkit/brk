@@ -12,40 +12,42 @@ use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 use crate::Error;
 
-use super::Addresstype;
+use super::OutputType;
 
 #[derive(Debug, PartialEq, Eq)]
-pub enum Addressbytes {
-    P2PK65(P2PK65AddressBytes),
-    P2PK33(P2PK33AddressBytes),
-    P2PKH(P2PKHAddressBytes),
-    P2SH(P2SHAddressBytes),
-    P2WPKH(P2WPKHAddressBytes),
-    P2WSH(P2WSHAddressBytes),
-    P2TR(P2TRAddressBytes),
+pub enum AddressBytes {
+    P2PK65(P2PK65Bytes),
+    P2PK33(P2PK33Bytes),
+    P2PKH(P2PKHBytes),
+    P2SH(P2SHBytes),
+    P2WPKH(P2WPKHBytes),
+    P2WSH(P2WSHBytes),
+    P2TR(P2TRBytes),
+    P2A(P2ABytes),
 }
 
-impl Addressbytes {
+impl AddressBytes {
     pub fn as_slice(&self) -> &[u8] {
         match self {
-            Addressbytes::P2PK65(bytes) => &bytes[..],
-            Addressbytes::P2PK33(bytes) => &bytes[..],
-            Addressbytes::P2PKH(bytes) => &bytes[..],
-            Addressbytes::P2SH(bytes) => &bytes[..],
-            Addressbytes::P2WPKH(bytes) => &bytes[..],
-            Addressbytes::P2WSH(bytes) => &bytes[..],
-            Addressbytes::P2TR(bytes) => &bytes[..],
+            AddressBytes::P2PK65(bytes) => &bytes[..],
+            AddressBytes::P2PK33(bytes) => &bytes[..],
+            AddressBytes::P2PKH(bytes) => &bytes[..],
+            AddressBytes::P2SH(bytes) => &bytes[..],
+            AddressBytes::P2WPKH(bytes) => &bytes[..],
+            AddressBytes::P2WSH(bytes) => &bytes[..],
+            AddressBytes::P2TR(bytes) => &bytes[..],
+            AddressBytes::P2A(bytes) => &bytes[..],
         }
     }
 }
 
-impl TryFrom<(&ScriptBuf, Addresstype)> for Addressbytes {
+impl TryFrom<(&ScriptBuf, OutputType)> for AddressBytes {
     type Error = Error;
-    fn try_from(tuple: (&ScriptBuf, Addresstype)) -> Result<Self, Self::Error> {
-        let (script, addresstype) = tuple;
+    fn try_from(tuple: (&ScriptBuf, OutputType)) -> Result<Self, Self::Error> {
+        let (script, outputtype) = tuple;
 
-        match addresstype {
-            Addresstype::P2PK65 => {
+        match outputtype {
+            OutputType::P2PK65 => {
                 let bytes = script.as_bytes();
                 let bytes = match bytes.len() {
                     67 => &bytes[1..66],
@@ -54,9 +56,9 @@ impl TryFrom<(&ScriptBuf, Addresstype)> for Addressbytes {
                         return Err(Error::WrongLength);
                     }
                 };
-                Ok(Self::P2PK65(P2PK65AddressBytes(U8x65::from(bytes))))
+                Ok(Self::P2PK65(P2PK65Bytes(U8x65::from(bytes))))
             }
-            Addresstype::P2PK33 => {
+            OutputType::P2PK33 => {
                 let bytes = script.as_bytes();
                 let bytes = match bytes.len() {
                     35 => &bytes[1..34],
@@ -65,47 +67,50 @@ impl TryFrom<(&ScriptBuf, Addresstype)> for Addressbytes {
                         return Err(Error::WrongLength);
                     }
                 };
-                Ok(Self::P2PK33(P2PK33AddressBytes(U8x33::from(bytes))))
+                Ok(Self::P2PK33(P2PK33Bytes(U8x33::from(bytes))))
             }
-            Addresstype::P2PKH => {
+            OutputType::P2PKH => {
                 let bytes = &script.as_bytes()[3..23];
-                Ok(Self::P2PKH(P2PKHAddressBytes(U8x20::from(bytes))))
+                Ok(Self::P2PKH(P2PKHBytes(U8x20::from(bytes))))
             }
-            Addresstype::P2SH => {
+            OutputType::P2SH => {
                 let bytes = &script.as_bytes()[2..22];
-                Ok(Self::P2SH(P2SHAddressBytes(U8x20::from(bytes))))
+                Ok(Self::P2SH(P2SHBytes(U8x20::from(bytes))))
             }
-            Addresstype::P2WPKH => {
+            OutputType::P2WPKH => {
                 let bytes = &script.as_bytes()[2..];
-                Ok(Self::P2WPKH(P2WPKHAddressBytes(U8x20::from(bytes))))
+                Ok(Self::P2WPKH(P2WPKHBytes(U8x20::from(bytes))))
             }
-            Addresstype::P2WSH => {
+            OutputType::P2WSH => {
                 let bytes = &script.as_bytes()[2..];
-                Ok(Self::P2WSH(P2WSHAddressBytes(U8x32::from(bytes))))
+                Ok(Self::P2WSH(P2WSHBytes(U8x32::from(bytes))))
             }
-            Addresstype::P2TR => {
+            OutputType::P2TR => {
                 let bytes = &script.as_bytes()[2..];
-                Ok(Self::P2TR(P2TRAddressBytes(U8x32::from(bytes))))
+                Ok(Self::P2TR(P2TRBytes(U8x32::from(bytes))))
             }
-            Addresstype::Multisig => Err(Error::WrongAddressType),
-            Addresstype::PushOnly => Err(Error::WrongAddressType),
-            Addresstype::Unknown => Err(Error::WrongAddressType),
-            Addresstype::Empty => Err(Error::WrongAddressType),
-            Addresstype::OpReturn => Err(Error::WrongAddressType),
+            OutputType::P2A => {
+                let bytes = &script.as_bytes()[2..];
+                Ok(Self::P2A(P2ABytes(U8x2::from(bytes))))
+            }
+            OutputType::P2MS => Err(Error::WrongAddressType),
+            OutputType::Unknown => Err(Error::WrongAddressType),
+            OutputType::Empty => Err(Error::WrongAddressType),
+            OutputType::OpReturn => Err(Error::WrongAddressType),
         }
     }
 }
 
 #[derive(Debug, Clone, Deref, PartialEq, Eq, Immutable, IntoBytes, KnownLayout, FromBytes)]
-pub struct P2PK65AddressBytes(U8x65);
+pub struct P2PK65Bytes(U8x65);
 
-impl fmt::Display for P2PK65AddressBytes {
+impl fmt::Display for P2PK65Bytes {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.to_hex_string(Case::Lower))
     }
 }
 
-impl Serialize for P2PK65AddressBytes {
+impl Serialize for P2PK65Bytes {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: Serializer,
@@ -114,22 +119,22 @@ impl Serialize for P2PK65AddressBytes {
     }
 }
 
-impl From<P2PK65AddressBytes> for Addressbytes {
-    fn from(value: P2PK65AddressBytes) -> Self {
+impl From<P2PK65Bytes> for AddressBytes {
+    fn from(value: P2PK65Bytes) -> Self {
         Self::P2PK65(value)
     }
 }
 
 #[derive(Debug, Clone, Deref, PartialEq, Eq, Immutable, IntoBytes, KnownLayout, FromBytes)]
-pub struct P2PK33AddressBytes(U8x33);
+pub struct P2PK33Bytes(U8x33);
 
-impl fmt::Display for P2PK33AddressBytes {
+impl fmt::Display for P2PK33Bytes {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.to_hex_string(Case::Lower))
     }
 }
 
-impl Serialize for P2PK33AddressBytes {
+impl Serialize for P2PK33Bytes {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: Serializer,
@@ -138,16 +143,16 @@ impl Serialize for P2PK33AddressBytes {
     }
 }
 
-impl From<P2PK33AddressBytes> for Addressbytes {
-    fn from(value: P2PK33AddressBytes) -> Self {
+impl From<P2PK33Bytes> for AddressBytes {
+    fn from(value: P2PK33Bytes) -> Self {
         Self::P2PK33(value)
     }
 }
 
 #[derive(Debug, Clone, Deref, PartialEq, Eq, Immutable, IntoBytes, KnownLayout, FromBytes)]
-pub struct P2PKHAddressBytes(U8x20);
+pub struct P2PKHBytes(U8x20);
 
-impl fmt::Display for P2PKHAddressBytes {
+impl fmt::Display for P2PKHBytes {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let script = Builder::new()
             .push_opcode(opcodes::all::OP_DUP)
@@ -161,7 +166,7 @@ impl fmt::Display for P2PKHAddressBytes {
     }
 }
 
-impl Serialize for P2PKHAddressBytes {
+impl Serialize for P2PKHBytes {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: Serializer,
@@ -170,16 +175,16 @@ impl Serialize for P2PKHAddressBytes {
     }
 }
 
-impl From<P2PKHAddressBytes> for Addressbytes {
-    fn from(value: P2PKHAddressBytes) -> Self {
+impl From<P2PKHBytes> for AddressBytes {
+    fn from(value: P2PKHBytes) -> Self {
         Self::P2PKH(value)
     }
 }
 
 #[derive(Debug, Clone, Deref, PartialEq, Eq, Immutable, IntoBytes, KnownLayout, FromBytes)]
-pub struct P2SHAddressBytes(U8x20);
+pub struct P2SHBytes(U8x20);
 
-impl fmt::Display for P2SHAddressBytes {
+impl fmt::Display for P2SHBytes {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let script = Builder::new()
             .push_opcode(opcodes::all::OP_HASH160)
@@ -191,7 +196,7 @@ impl fmt::Display for P2SHAddressBytes {
     }
 }
 
-impl Serialize for P2SHAddressBytes {
+impl Serialize for P2SHBytes {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: Serializer,
@@ -200,16 +205,16 @@ impl Serialize for P2SHAddressBytes {
     }
 }
 
-impl From<P2SHAddressBytes> for Addressbytes {
-    fn from(value: P2SHAddressBytes) -> Self {
+impl From<P2SHBytes> for AddressBytes {
+    fn from(value: P2SHBytes) -> Self {
         Self::P2SH(value)
     }
 }
 
 #[derive(Debug, Clone, Deref, PartialEq, Eq, Immutable, IntoBytes, KnownLayout, FromBytes)]
-pub struct P2WPKHAddressBytes(U8x20);
+pub struct P2WPKHBytes(U8x20);
 
-impl fmt::Display for P2WPKHAddressBytes {
+impl fmt::Display for P2WPKHBytes {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let script = Builder::new().push_int(0).push_slice(*self.0).into_script();
         let address = Address::from_script(&script, Network::Bitcoin).unwrap();
@@ -217,7 +222,7 @@ impl fmt::Display for P2WPKHAddressBytes {
     }
 }
 
-impl Serialize for P2WPKHAddressBytes {
+impl Serialize for P2WPKHBytes {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: Serializer,
@@ -226,16 +231,16 @@ impl Serialize for P2WPKHAddressBytes {
     }
 }
 
-impl From<P2WPKHAddressBytes> for Addressbytes {
-    fn from(value: P2WPKHAddressBytes) -> Self {
+impl From<P2WPKHBytes> for AddressBytes {
+    fn from(value: P2WPKHBytes) -> Self {
         Self::P2WPKH(value)
     }
 }
 
 #[derive(Debug, Clone, Deref, PartialEq, Eq, Immutable, IntoBytes, KnownLayout, FromBytes)]
-pub struct P2WSHAddressBytes(U8x32);
+pub struct P2WSHBytes(U8x32);
 
-impl fmt::Display for P2WSHAddressBytes {
+impl fmt::Display for P2WSHBytes {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let script = Builder::new().push_int(0).push_slice(*self.0).into_script();
         let address = Address::from_script(&script, Network::Bitcoin).unwrap();
@@ -243,7 +248,7 @@ impl fmt::Display for P2WSHAddressBytes {
     }
 }
 
-impl Serialize for P2WSHAddressBytes {
+impl Serialize for P2WSHBytes {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: Serializer,
@@ -252,16 +257,16 @@ impl Serialize for P2WSHAddressBytes {
     }
 }
 
-impl From<P2WSHAddressBytes> for Addressbytes {
-    fn from(value: P2WSHAddressBytes) -> Self {
+impl From<P2WSHBytes> for AddressBytes {
+    fn from(value: P2WSHBytes) -> Self {
         Self::P2WSH(value)
     }
 }
 
 #[derive(Debug, Clone, Deref, PartialEq, Eq, Immutable, IntoBytes, KnownLayout, FromBytes)]
-pub struct P2TRAddressBytes(U8x32);
+pub struct P2TRBytes(U8x32);
 
-impl fmt::Display for P2TRAddressBytes {
+impl fmt::Display for P2TRBytes {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let script = Builder::new().push_int(1).push_slice(*self.0).into_script();
         let address = Address::from_script(&script, Network::Bitcoin).unwrap();
@@ -269,7 +274,7 @@ impl fmt::Display for P2TRAddressBytes {
     }
 }
 
-impl Serialize for P2TRAddressBytes {
+impl Serialize for P2TRBytes {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: Serializer,
@@ -278,9 +283,57 @@ impl Serialize for P2TRAddressBytes {
     }
 }
 
-impl From<P2TRAddressBytes> for Addressbytes {
-    fn from(value: P2TRAddressBytes) -> Self {
+impl From<P2TRBytes> for AddressBytes {
+    fn from(value: P2TRBytes) -> Self {
         Self::P2TR(value)
+    }
+}
+
+#[derive(Debug, Clone, Deref, PartialEq, Eq, Immutable, IntoBytes, KnownLayout, FromBytes)]
+pub struct P2ABytes(U8x2);
+
+impl fmt::Display for P2ABytes {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let script = Builder::new().push_int(1).push_slice(*self.0).into_script();
+        let address = Address::from_script(&script, Network::Bitcoin).unwrap();
+        write!(f, "{}", address)
+    }
+}
+
+impl Serialize for P2ABytes {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.collect_str(&self.to_string())
+    }
+}
+
+impl From<P2ABytes> for AddressBytes {
+    fn from(value: P2ABytes) -> Self {
+        Self::P2A(value)
+    }
+}
+
+#[derive(
+    Debug,
+    Clone,
+    Deref,
+    DerefMut,
+    PartialEq,
+    Eq,
+    Immutable,
+    IntoBytes,
+    KnownLayout,
+    FromBytes,
+    Serialize,
+)]
+pub struct U8x2([u8; 2]);
+impl From<&[u8]> for U8x2 {
+    fn from(slice: &[u8]) -> Self {
+        let mut arr = [0; 2];
+        arr.copy_from_slice(slice);
+        Self(arr)
     }
 }
 

@@ -1,8 +1,8 @@
 use std::{fs, path::Path};
 
 use brk_core::{
-    Cents, Close, Dateindex, Decadeindex, Difficultyepoch, Dollars, Height, High, Low, Monthindex,
-    OHLCCents, OHLCDollars, OHLCSats, Open, Quarterindex, Sats, Weekindex, Yearindex,
+    Cents, Close, DateIndex, DecadeIndex, DifficultyEpoch, Dollars, Height, High, Low, MonthIndex,
+    OHLCCents, OHLCDollars, OHLCSats, Open, QuarterIndex, Sats, WeekIndex, YearIndex,
 };
 use brk_exit::Exit;
 use brk_fetcher::Fetcher;
@@ -19,13 +19,13 @@ use super::{
 
 #[derive(Clone)]
 pub struct Vecs {
-    pub dateindex_to_close_in_cents: EagerVec<Dateindex, Close<Cents>>,
-    pub dateindex_to_high_in_cents: EagerVec<Dateindex, High<Cents>>,
-    pub dateindex_to_low_in_cents: EagerVec<Dateindex, Low<Cents>>,
-    pub dateindex_to_ohlc: EagerVec<Dateindex, OHLCDollars>,
-    pub dateindex_to_ohlc_in_sats: EagerVec<Dateindex, OHLCSats>,
-    pub dateindex_to_ohlc_in_cents: EagerVec<Dateindex, OHLCCents>,
-    pub dateindex_to_open_in_cents: EagerVec<Dateindex, Open<Cents>>,
+    pub dateindex_to_close_in_cents: EagerVec<DateIndex, Close<Cents>>,
+    pub dateindex_to_high_in_cents: EagerVec<DateIndex, High<Cents>>,
+    pub dateindex_to_low_in_cents: EagerVec<DateIndex, Low<Cents>>,
+    pub dateindex_to_ohlc: EagerVec<DateIndex, OHLCDollars>,
+    pub dateindex_to_ohlc_in_sats: EagerVec<DateIndex, OHLCSats>,
+    pub dateindex_to_ohlc_in_cents: EagerVec<DateIndex, OHLCCents>,
+    pub dateindex_to_open_in_cents: EagerVec<DateIndex, Open<Cents>>,
     pub height_to_close_in_cents: EagerVec<Height, Close<Cents>>,
     pub height_to_high_in_cents: EagerVec<Height, High<Cents>>,
     pub height_to_low_in_cents: EagerVec<Height, Low<Cents>>,
@@ -49,20 +49,20 @@ pub struct Vecs {
     pub chainindexes_to_high_in_sats: ComputedVecsFromHeightStrict<High<Sats>>,
     pub chainindexes_to_low_in_sats: ComputedVecsFromHeightStrict<Low<Sats>>,
     pub chainindexes_to_close_in_sats: ComputedVecsFromHeightStrict<Close<Sats>>,
-    pub weekindex_to_ohlc: EagerVec<Weekindex, OHLCDollars>,
-    pub weekindex_to_ohlc_in_sats: EagerVec<Weekindex, OHLCSats>,
-    pub difficultyepoch_to_ohlc: EagerVec<Difficultyepoch, OHLCDollars>,
-    pub difficultyepoch_to_ohlc_in_sats: EagerVec<Difficultyepoch, OHLCSats>,
-    pub monthindex_to_ohlc: EagerVec<Monthindex, OHLCDollars>,
-    pub monthindex_to_ohlc_in_sats: EagerVec<Monthindex, OHLCSats>,
-    pub quarterindex_to_ohlc: EagerVec<Quarterindex, OHLCDollars>,
-    pub quarterindex_to_ohlc_in_sats: EagerVec<Quarterindex, OHLCSats>,
-    pub yearindex_to_ohlc: EagerVec<Yearindex, OHLCDollars>,
-    pub yearindex_to_ohlc_in_sats: EagerVec<Yearindex, OHLCSats>,
+    pub weekindex_to_ohlc: EagerVec<WeekIndex, OHLCDollars>,
+    pub weekindex_to_ohlc_in_sats: EagerVec<WeekIndex, OHLCSats>,
+    pub difficultyepoch_to_ohlc: EagerVec<DifficultyEpoch, OHLCDollars>,
+    pub difficultyepoch_to_ohlc_in_sats: EagerVec<DifficultyEpoch, OHLCSats>,
+    pub monthindex_to_ohlc: EagerVec<MonthIndex, OHLCDollars>,
+    pub monthindex_to_ohlc_in_sats: EagerVec<MonthIndex, OHLCSats>,
+    pub quarterindex_to_ohlc: EagerVec<QuarterIndex, OHLCDollars>,
+    pub quarterindex_to_ohlc_in_sats: EagerVec<QuarterIndex, OHLCSats>,
+    pub yearindex_to_ohlc: EagerVec<YearIndex, OHLCDollars>,
+    pub yearindex_to_ohlc_in_sats: EagerVec<YearIndex, OHLCSats>,
     // pub halvingepoch_to_ohlc: StorableVec<Halvingepoch, OHLCDollars>,
     // pub halvingepoch_to_ohlc_in_sats: StorableVec<Halvingepoch, OHLCSats>,
-    pub decadeindex_to_ohlc: EagerVec<Decadeindex, OHLCDollars>,
-    pub decadeindex_to_ohlc_in_sats: EagerVec<Decadeindex, OHLCSats>,
+    pub decadeindex_to_ohlc: EagerVec<DecadeIndex, OHLCDollars>,
+    pub decadeindex_to_ohlc_in_sats: EagerVec<DecadeIndex, OHLCSats>,
 }
 
 const VERSION: Version = Version::ZERO;

@@ -6,7 +6,7 @@ use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 use crate::CheckedSub;
 
-use super::Vin;
+use super::Vout;
 
 #[derive(
     Debug,
@@ -25,49 +25,55 @@ use super::Vin;
     KnownLayout,
     Serialize,
 )]
-pub struct Txinindex(u64);
+pub struct OutputIndex(u64);
 
-impl Txinindex {
+impl OutputIndex {
+    pub const COINBASE: Self = Self(u64::MAX);
+
     pub fn incremented(self) -> Self {
         Self(*self + 1)
     }
+
+    pub fn is_coinbase(self) -> bool {
+        self == Self::COINBASE
+    }
 }
 
-impl Add<Txinindex> for Txinindex {
+impl Add<OutputIndex> for OutputIndex {
     type Output = Self;
-    fn add(self, rhs: Txinindex) -> Self::Output {
+    fn add(self, rhs: OutputIndex) -> Self::Output {
         Self(self.0 + rhs.0)
     }
 }
 
-impl Add<Vin> for Txinindex {
+impl Add<Vout> for OutputIndex {
     type Output = Self;
-    fn add(self, rhs: Vin) -> Self::Output {
+    fn add(self, rhs: Vout) -> Self::Output {
         Self(self.0 + u64::from(rhs))
     }
 }
 
-impl Add<usize> for Txinindex {
+impl Add<usize> for OutputIndex {
     type Output = Self;
     fn add(self, rhs: usize) -> Self::Output {
         Self(self.0 + rhs as u64)
     }
 }
 
-impl AddAssign<Txinindex> for Txinindex {
-    fn add_assign(&mut self, rhs: Txinindex) {
+impl AddAssign<OutputIndex> for OutputIndex {
+    fn add_assign(&mut self, rhs: OutputIndex) {
         self.0 += rhs.0
     }
 }
 
-impl CheckedSub<Txinindex> for Txinindex {
+impl CheckedSub<OutputIndex> for OutputIndex {
     fn checked_sub(self, rhs: Self) -> Option<Self> {
         self.0.checked_sub(rhs.0).map(Self::from)
     }
 }
 
-impl From<Txinindex> for u32 {
-    fn from(value: Txinindex) -> Self {
+impl From<OutputIndex> for u32 {
+    fn from(value: OutputIndex) -> Self {
         if value.0 > u32::MAX as u64 {
             panic!()
         }
@@ -75,24 +81,24 @@ impl From<Txinindex> for u32 {
     }
 }
 
-impl From<u64> for Txinindex {
+impl From<u64> for OutputIndex {
     fn from(value: u64) -> Self {
         Self(value)
     }
 }
-impl From<Txinindex> for u64 {
-    fn from(value: Txinindex) -> Self {
+impl From<OutputIndex> for u64 {
+    fn from(value: OutputIndex) -> Self {
         value.0
     }
 }
 
-impl From<usize> for Txinindex {
+impl From<usize> for OutputIndex {
     fn from(value: usize) -> Self {
         Self(value as u64)
     }
 }
-impl From<Txinindex> for usize {
-    fn from(value: Txinindex) -> Self {
+impl From<OutputIndex> for usize {
+    fn from(value: OutputIndex) -> Self {
         value.0 as usize
     }
 }

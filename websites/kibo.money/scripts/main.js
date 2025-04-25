@@ -9,7 +9,7 @@
  * @import {Signal, Signals} from "../packages/solid-signals/types";
  * @import { getOwner as GetOwner, onCleanup as OnCleanup, Owner } from "../packages/solid-signals/v0.2.4-treeshaked/types/core/owner"
  * @import { createEffect as CreateEffect, Accessor, Setter, createMemo as CreateMemo } from "../packages/solid-signals/v0.2.4-treeshaked/types/signals";
- * @import {Addressindex, Dateindex, Decadeindex, Difficultyepoch, Index, Halvingepoch, Height, Monthindex, P2PK33index, P2PK65index, P2PKHindex, P2SHindex, P2TRindex, P2WPKHindex, P2WSHindex, Txindex, Txinindex, Txoutindex, VecId, Weekindex, Yearindex, VecIdToIndexes, Quarterindex, Emptyindex, Multisigindex, Opreturnindex, Pushonlyindex, Unknownindex} from "./vecid-to-indexes"
+ * @import {Addressindex, Dateindex, Decadeindex, Difficultyepoch, Index, Halvingepoch, Height, Monthindex, P2PK33index, P2PK65index, P2PKHindex, P2SHindex, P2TRindex, P2WPKHindex, P2WSHindex, Txindex, Inputindex, Outputindex, VecId, Weekindex, Yearindex, VecIdToIndexes, Quarterindex, Emptyindex, P2MSindex, Opreturnindex, Pushonlyindex, Unknownindex} from "./vecid-to-indexes"
  */
 
 /**
@@ -1188,10 +1188,10 @@ function createUtils() {
           return "P2WSHindex";
         case /** @satisfies {Txindex} */ (17):
           return "Txindex";
-        case /** @satisfies {Txinindex} */ (18):
-          return "Txinindex";
-        case /** @satisfies {Txoutindex} */ (19):
-          return "Txoutindex";
+        case /** @satisfies {Inputindex} */ (18):
+          return "Inputindex";
+        case /** @satisfies {Outputindex} */ (19):
+          return "Outputindex";
         case /** @satisfies {Weekindex} */ (2):
           return "Weekindex";
         case /** @satisfies {Monthindex} */ (4):

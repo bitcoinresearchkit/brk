@@ -2,7 +2,7 @@ use jiff::{Span, civil::Date as Date_, tz::TimeZone};
 use serde::{Serialize, Serializer};
 use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
-use super::{Dateindex, Timestamp};
+use super::{DateIndex, Timestamp};
 
 #[derive(
     Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, FromBytes, Immutable, IntoBytes, KnownLayout,
@@ -58,9 +58,9 @@ impl From<Timestamp> for Date {
     }
 }
 
-impl From<Dateindex> for Date {
-    fn from(value: Dateindex) -> Self {
-        if value == Dateindex::default() {
+impl From<DateIndex> for Date {
+    fn from(value: DateIndex) -> Self {
+        if value == DateIndex::default() {
             Date::INDEX_ZERO
         } else {
             Self::from(

@@ -1,8 +1,11 @@
 use std::ops::Add;
 
+use byteview::ByteView;
 use derive_deref::{Deref, DerefMut};
 use serde::Serialize;
 use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
+
+use crate::Error;
 
 #[derive(
     Debug,
@@ -19,9 +22,9 @@ use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
     KnownLayout,
     Serialize,
 )]
-pub struct Addresstypeindex(u32);
+pub struct OutputTypeIndex(u32);
 
-impl Addresstypeindex {
+impl OutputTypeIndex {
     pub fn increment(&mut self) {
         self.0 += 1;
     }
@@ -37,47 +40,58 @@ impl Addresstypeindex {
     }
 }
 
-impl From<u32> for Addresstypeindex {
+impl From<u32> for OutputTypeIndex {
     fn from(value: u32) -> Self {
         Self(value)
     }
 }
 
-impl From<u64> for Addresstypeindex {
+impl From<u64> for OutputTypeIndex {
     fn from(value: u64) -> Self {
         Self(value as u32)
     }
 }
-impl From<Addresstypeindex> for u64 {
-    fn from(value: Addresstypeindex) -> Self {
+impl From<OutputTypeIndex> for u64 {
+    fn from(value: OutputTypeIndex) -> Self {
         value.0 as u64
     }
 }
 
-impl From<usize> for Addresstypeindex {
+impl From<usize> for OutputTypeIndex {
     fn from(value: usize) -> Self {
         Self(value as u32)
     }
 }
-impl From<Addresstypeindex> for usize {
-    fn from(value: Addresstypeindex) -> Self {
+impl From<OutputTypeIndex> for usize {
+    fn from(value: OutputTypeIndex) -> Self {
         value.0 as usize
     }
 }
 
-impl Add<usize> for Addresstypeindex {
+impl Add<usize> for OutputTypeIndex {
     type Output = Self;
     fn add(self, rhs: usize) -> Self::Output {
         Self(self.0 + rhs as u32)
     }
 }
 
-impl Add<Addresstypeindex> for Addresstypeindex {
+impl Add<OutputTypeIndex> for OutputTypeIndex {
     type Output = Self;
-    fn add(self, rhs: Addresstypeindex) -> Self::Output {
+    fn add(self, rhs: OutputTypeIndex) -> Self::Output {
         Self(self.0 + rhs.0)
     }
 }
+impl TryFrom<ByteView> for OutputTypeIndex {
+    type Error = Error;
+    fn try_from(value: ByteView) -> Result<Self, Self::Error> {
+        Ok(Self::read_from_bytes(&value)?)
+    }
+}
+impl From<OutputTypeIndex> for ByteView {
+    fn from(value: OutputTypeIndex) -> Self {
+        Self::new(value.as_bytes())
+    }
+}
 
 #[derive(
     Debug,
@@ -96,23 +110,23 @@ impl Add<Addresstypeindex> for Addresstypeindex {
     KnownLayout,
     Serialize,
 )]
-pub struct Emptyindex(Addresstypeindex);
-impl From<Addresstypeindex> for Emptyindex {
-    fn from(value: Addresstypeindex) -> Self {
+pub struct EmptyOutputIndex(OutputTypeIndex);
+impl From<OutputTypeIndex> for EmptyOutputIndex {
+    fn from(value: OutputTypeIndex) -> Self {
         Self(value)
     }
 }
-impl From<Emptyindex> for usize {
-    fn from(value: Emptyindex) -> Self {
+impl From<EmptyOutputIndex> for usize {
+    fn from(value: EmptyOutputIndex) -> Self {
         Self::from(*value)
     }
 }
-impl From<usize> for Emptyindex {
+impl From<usize> for EmptyOutputIndex {
     fn from(value: usize) -> Self {
-        Self(Addresstypeindex::from(value))
+        Self(OutputTypeIndex::from(value))
     }
 }
-impl Add<usize> for Emptyindex {
+impl Add<usize> for EmptyOutputIndex {
     type Output = Self;
     fn add(self, rhs: usize) -> Self::Output {
         Self(*self + rhs)
@@ -136,23 +150,23 @@ impl Add<usize> for Emptyindex {
     KnownLayout,
     Serialize,
 )]
-pub struct Multisigindex(Addresstypeindex);
-impl From<Addresstypeindex> for Multisigindex {
-    fn from(value: Addresstypeindex) -> Self {
+pub struct P2MSIndex(OutputTypeIndex);
+impl From<OutputTypeIndex> for P2MSIndex {
+    fn from(value: OutputTypeIndex) -> Self {
         Self(value)
     }
 }
-impl From<Multisigindex> for usize {
-    fn from(value: Multisigindex) -> Self {
+impl From<P2MSIndex> for usize {
+    fn from(value: P2MSIndex) -> Self {
         Self::from(*value)
     }
 }
-impl From<usize> for Multisigindex {
+impl From<usize> for P2MSIndex {
     fn from(value: usize) -> Self {
-        Self(Addresstypeindex::from(value))
+        Self(OutputTypeIndex::from(value))
     }
 }
-impl Add<usize> for Multisigindex {
+impl Add<usize> for P2MSIndex {
     type Output = Self;
     fn add(self, rhs: usize) -> Self::Output {
         Self(*self + rhs)
@@ -176,23 +190,23 @@ impl Add<usize> for Multisigindex {
     KnownLayout,
     Serialize,
 )]
-pub struct Opreturnindex(Addresstypeindex);
-impl From<Addresstypeindex> for Opreturnindex {
-    fn from(value: Addresstypeindex) -> Self {
+pub struct P2AIndex(OutputTypeIndex);
+impl From<OutputTypeIndex> for P2AIndex {
+    fn from(value: OutputTypeIndex) -> Self {
         Self(value)
     }
 }
-impl From<Opreturnindex> for usize {
-    fn from(value: Opreturnindex) -> Self {
+impl From<P2AIndex> for usize {
+    fn from(value: P2AIndex) -> Self {
         Self::from(*value)
     }
 }
-impl From<usize> for Opreturnindex {
+impl From<usize> for P2AIndex {
     fn from(value: usize) -> Self {
-        Self(Addresstypeindex::from(value))
+        Self(OutputTypeIndex::from(value))
     }
 }
-impl Add<usize> for Opreturnindex {
+impl Add<usize> for P2AIndex {
     type Output = Self;
     fn add(self, rhs: usize) -> Self::Output {
         Self(*self + rhs)
@@ -216,23 +230,23 @@ impl Add<usize> for Opreturnindex {
     KnownLayout,
     Serialize,
 )]
-pub struct Pushonlyindex(Addresstypeindex);
-impl From<Addresstypeindex> for Pushonlyindex {
-    fn from(value: Addresstypeindex) -> Self {
+pub struct OpReturnIndex(OutputTypeIndex);
+impl From<OutputTypeIndex> for OpReturnIndex {
+    fn from(value: OutputTypeIndex) -> Self {
         Self(value)
     }
 }
-impl From<Pushonlyindex> for usize {
-    fn from(value: Pushonlyindex) -> Self {
+impl From<OpReturnIndex> for usize {
+    fn from(value: OpReturnIndex) -> Self {
         Self::from(*value)
     }
 }
-impl From<usize> for Pushonlyindex {
+impl From<usize> for OpReturnIndex {
     fn from(value: usize) -> Self {
-        Self(Addresstypeindex::from(value))
+        Self(OutputTypeIndex::from(value))
     }
 }
-impl Add<usize> for Pushonlyindex {
+impl Add<usize> for OpReturnIndex {
     type Output = Self;
     fn add(self, rhs: usize) -> Self::Output {
         Self(*self + rhs)
@@ -256,23 +270,23 @@ impl Add<usize> for Pushonlyindex {
     KnownLayout,
     Serialize,
 )]
-pub struct Unknownindex(Addresstypeindex);
-impl From<Addresstypeindex> for Unknownindex {
-    fn from(value: Addresstypeindex) -> Self {
+pub struct UnknownOutputIndex(OutputTypeIndex);
+impl From<OutputTypeIndex> for UnknownOutputIndex {
+    fn from(value: OutputTypeIndex) -> Self {
         Self(value)
     }
 }
-impl From<Unknownindex> for usize {
-    fn from(value: Unknownindex) -> Self {
+impl From<UnknownOutputIndex> for usize {
+    fn from(value: UnknownOutputIndex) -> Self {
         Self::from(*value)
     }
 }
-impl From<usize> for Unknownindex {
+impl From<usize> for UnknownOutputIndex {
     fn from(value: usize) -> Self {
-        Self(Addresstypeindex::from(value))
+        Self(OutputTypeIndex::from(value))
     }
 }
-impl Add<usize> for Unknownindex {
+impl Add<usize> for UnknownOutputIndex {
     type Output = Self;
     fn add(self, rhs: usize) -> Self::Output {
         Self(*self + rhs)
@@ -296,23 +310,23 @@ impl Add<usize> for Unknownindex {
     KnownLayout,
     Serialize,
 )]
-pub struct P2PK33index(Addresstypeindex);
-impl From<Addresstypeindex> for P2PK33index {
-    fn from(value: Addresstypeindex) -> Self {
+pub struct P2PK33Index(OutputTypeIndex);
+impl From<OutputTypeIndex> for P2PK33Index {
+    fn from(value: OutputTypeIndex) -> Self {
         Self(value)
     }
 }
-impl From<P2PK33index> for usize {
-    fn from(value: P2PK33index) -> Self {
+impl From<P2PK33Index> for usize {
+    fn from(value: P2PK33Index) -> Self {
         Self::from(*value)
     }
 }
-impl From<usize> for P2PK33index {
+impl From<usize> for P2PK33Index {
     fn from(value: usize) -> Self {
-        Self(Addresstypeindex::from(value))
+        Self(OutputTypeIndex::from(value))
     }
 }
-impl Add<usize> for P2PK33index {
+impl Add<usize> for P2PK33Index {
     type Output = Self;
     fn add(self, rhs: usize) -> Self::Output {
         Self(*self + rhs)
@@ -336,23 +350,23 @@ impl Add<usize> for P2PK33index {
     KnownLayout,
     Serialize,
 )]
-pub struct P2PK65index(Addresstypeindex);
-impl From<Addresstypeindex> for P2PK65index {
-    fn from(value: Addresstypeindex) -> Self {
+pub struct P2PK65Index(OutputTypeIndex);
+impl From<OutputTypeIndex> for P2PK65Index {
+    fn from(value: OutputTypeIndex) -> Self {
         Self(value)
     }
 }
-impl From<P2PK65index> for usize {
-    fn from(value: P2PK65index) -> Self {
+impl From<P2PK65Index> for usize {
+    fn from(value: P2PK65Index) -> Self {
         Self::from(*value)
     }
 }
-impl From<usize> for P2PK65index {
+impl From<usize> for P2PK65Index {
     fn from(value: usize) -> Self {
-        Self(Addresstypeindex::from(value))
+        Self(OutputTypeIndex::from(value))
     }
 }
-impl Add<usize> for P2PK65index {
+impl Add<usize> for P2PK65Index {
     type Output = Self;
     fn add(self, rhs: usize) -> Self::Output {
         Self(*self + rhs)
@@ -376,23 +390,23 @@ impl Add<usize> for P2PK65index {
     KnownLayout,
     Serialize,
 )]
-pub struct P2PKHindex(Addresstypeindex);
-impl From<Addresstypeindex> for P2PKHindex {
-    fn from(value: Addresstypeindex) -> Self {
+pub struct P2PKHIndex(OutputTypeIndex);
+impl From<OutputTypeIndex> for P2PKHIndex {
+    fn from(value: OutputTypeIndex) -> Self {
         Self(value)
     }
 }
-impl From<P2PKHindex> for usize {
-    fn from(value: P2PKHindex) -> Self {
+impl From<P2PKHIndex> for usize {
+    fn from(value: P2PKHIndex) -> Self {
         Self::from(*value)
     }
 }
-impl From<usize> for P2PKHindex {
+impl From<usize> for P2PKHIndex {
     fn from(value: usize) -> Self {
-        Self(Addresstypeindex::from(value))
+        Self(OutputTypeIndex::from(value))
     }
 }
-impl Add<usize> for P2PKHindex {
+impl Add<usize> for P2PKHIndex {
     type Output = Self;
     fn add(self, rhs: usize) -> Self::Output {
         Self(*self + rhs)
@@ -416,23 +430,23 @@ impl Add<usize> for P2PKHindex {
     KnownLayout,
     Serialize,
 )]
-pub struct P2SHindex(Addresstypeindex);
-impl From<Addresstypeindex> for P2SHindex {
-    fn from(value: Addresstypeindex) -> Self {
+pub struct P2SHIndex(OutputTypeIndex);
+impl From<OutputTypeIndex> for P2SHIndex {
+    fn from(value: OutputTypeIndex) -> Self {
         Self(value)
     }
 }
-impl From<P2SHindex> for usize {
-    fn from(value: P2SHindex) -> Self {
+impl From<P2SHIndex> for usize {
+    fn from(value: P2SHIndex) -> Self {
         Self::from(*value)
     }
 }
-impl From<usize> for P2SHindex {
+impl From<usize> for P2SHIndex {
     fn from(value: usize) -> Self {
-        Self(Addresstypeindex::from(value))
+        Self(OutputTypeIndex::from(value))
     }
 }
-impl Add<usize> for P2SHindex {
+impl Add<usize> for P2SHIndex {
     type Output = Self;
     fn add(self, rhs: usize) -> Self::Output {
         Self(*self + rhs)
@@ -456,23 +470,23 @@ impl Add<usize> for P2SHindex {
     KnownLayout,
     Serialize,
 )]
-pub struct P2TRindex(Addresstypeindex);
-impl From<Addresstypeindex> for P2TRindex {
-    fn from(value: Addresstypeindex) -> Self {
+pub struct P2TRIndex(OutputTypeIndex);
+impl From<OutputTypeIndex> for P2TRIndex {
+    fn from(value: OutputTypeIndex) -> Self {
         Self(value)
     }
 }
-impl From<P2TRindex> for usize {
-    fn from(value: P2TRindex) -> Self {
+impl From<P2TRIndex> for usize {
+    fn from(value: P2TRIndex) -> Self {
         Self::from(*value)
     }
 }
-impl From<usize> for P2TRindex {
+impl From<usize> for P2TRIndex {
     fn from(value: usize) -> Self {
-        Self(Addresstypeindex::from(value))
+        Self(OutputTypeIndex::from(value))
     }
 }
-impl Add<usize> for P2TRindex {
+impl Add<usize> for P2TRIndex {
     type Output = Self;
     fn add(self, rhs: usize) -> Self::Output {
         Self(*self + rhs)
@@ -496,23 +510,23 @@ impl Add<usize> for P2TRindex {
     KnownLayout,
     Serialize,
 )]
-pub struct P2WPKHindex(Addresstypeindex);
-impl From<Addresstypeindex> for P2WPKHindex {
-    fn from(value: Addresstypeindex) -> Self {
+pub struct P2WPKHIndex(OutputTypeIndex);
+impl From<OutputTypeIndex> for P2WPKHIndex {
+    fn from(value: OutputTypeIndex) -> Self {
         Self(value)
     }
 }
-impl From<P2WPKHindex> for usize {
-    fn from(value: P2WPKHindex) -> Self {
+impl From<P2WPKHIndex> for usize {
+    fn from(value: P2WPKHIndex) -> Self {
         Self::from(*value)
     }
 }
-impl From<usize> for P2WPKHindex {
+impl From<usize> for P2WPKHIndex {
     fn from(value: usize) -> Self {
-        Self(Addresstypeindex::from(value))
+        Self(OutputTypeIndex::from(value))
     }
 }
-impl Add<usize> for P2WPKHindex {
+impl Add<usize> for P2WPKHIndex {
     type Output = Self;
     fn add(self, rhs: usize) -> Self::Output {
         Self(*self + rhs)
@@ -536,23 +550,23 @@ impl Add<usize> for P2WPKHindex {
     KnownLayout,
     Serialize,
 )]
-pub struct P2WSHindex(Addresstypeindex);
-impl From<Addresstypeindex> for P2WSHindex {
-    fn from(value: Addresstypeindex) -> Self {
+pub struct P2WSHIndex(OutputTypeIndex);
+impl From<OutputTypeIndex> for P2WSHIndex {
+    fn from(value: OutputTypeIndex) -> Self {
         Self(value)
     }
 }
-impl From<P2WSHindex> for usize {
-    fn from(value: P2WSHindex) -> Self {
+impl From<P2WSHIndex> for usize {
+    fn from(value: P2WSHIndex) -> Self {
         Self::from(*value)
     }
 }
-impl From<usize> for P2WSHindex {
+impl From<usize> for P2WSHIndex {
     fn from(value: usize) -> Self {
-        Self(Addresstypeindex::from(value))
+        Self(OutputTypeIndex::from(value))
     }
 }
-impl Add<usize> for P2WSHindex {
+impl Add<usize> for P2WSHIndex {
     type Output = Self;
     fn add(self, rhs: usize) -> Self::Output {
         Self(*self + rhs)

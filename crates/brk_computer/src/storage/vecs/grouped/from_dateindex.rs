@@ -1,6 +1,6 @@
 use std::path::Path;
 
-use brk_core::{Dateindex, Decadeindex, Monthindex, Quarterindex, Weekindex, Yearindex};
+use brk_core::{DateIndex, DecadeIndex, MonthIndex, QuarterIndex, WeekIndex, YearIndex};
 use brk_exit::Exit;
 use brk_indexer::Indexer;
 use brk_vec::{AnyStoredVec, Compressed, Result, Version};
@@ -14,13 +14,13 @@ pub struct ComputedVecsFromDateindex<T>
 where
     T: ComputedType + PartialOrd,
 {
-    pub dateindex: EagerVec<Dateindex, T>,
-    pub dateindex_extra: ComputedVecBuilder<Dateindex, T>,
-    pub weekindex: ComputedVecBuilder<Weekindex, T>,
-    pub monthindex: ComputedVecBuilder<Monthindex, T>,
-    pub quarterindex: ComputedVecBuilder<Quarterindex, T>,
-    pub yearindex: ComputedVecBuilder<Yearindex, T>,
-    pub decadeindex: ComputedVecBuilder<Decadeindex, T>,
+    pub dateindex: EagerVec<DateIndex, T>,
+    pub dateindex_extra: ComputedVecBuilder<DateIndex, T>,
+    pub weekindex: ComputedVecBuilder<WeekIndex, T>,
+    pub monthindex: ComputedVecBuilder<MonthIndex, T>,
+    pub quarterindex: ComputedVecBuilder<QuarterIndex, T>,
+    pub yearindex: ComputedVecBuilder<YearIndex, T>,
+    pub decadeindex: ComputedVecBuilder<DecadeIndex, T>,
 }
 
 const VERSION: Version = Version::ZERO;
@@ -79,7 +79,7 @@ where
     ) -> color_eyre::Result<()>
     where
         F: FnMut(
-            &mut EagerVec<Dateindex, T>,
+            &mut EagerVec<DateIndex, T>,
             &mut Indexer,
             &mut indexes::Vecs,
             &Indexes,

@@ -1,6 +1,6 @@
 use std::path::Path;
 
-use brk_core::{Difficultyepoch, Height};
+use brk_core::{DifficultyEpoch, Height};
 use brk_exit::Exit;
 use brk_indexer::Indexer;
 use brk_vec::{AnyStoredVec, Compressed, Result, Version};
@@ -16,7 +16,7 @@ where
 {
     pub height: EagerVec<Height, T>,
     pub height_extra: ComputedVecBuilder<Height, T>,
-    pub difficultyepoch: ComputedVecBuilder<Difficultyepoch, T>,
+    pub difficultyepoch: ComputedVecBuilder<DifficultyEpoch, T>,
     // TODO: pub halvingepoch: StorableVecGeneator<Halvingepoch, T>,
 }
 

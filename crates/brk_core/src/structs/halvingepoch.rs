@@ -23,27 +23,27 @@ use super::Height;
     IntoBytes,
     KnownLayout,
 )]
-pub struct Halvingepoch(u8);
+pub struct HalvingEpoch(u8);
 
-impl From<u8> for Halvingepoch {
+impl From<u8> for HalvingEpoch {
     fn from(value: u8) -> Self {
         Self(value)
     }
 }
 
-impl From<usize> for Halvingepoch {
+impl From<usize> for HalvingEpoch {
     fn from(value: usize) -> Self {
         Self(value as u8)
     }
 }
 
-impl From<Halvingepoch> for usize {
-    fn from(value: Halvingepoch) -> Self {
+impl From<HalvingEpoch> for usize {
+    fn from(value: HalvingEpoch) -> Self {
         value.0 as usize
     }
 }
 
-impl Add<usize> for Halvingepoch {
+impl Add<usize> for HalvingEpoch {
     type Output = Self;
 
     fn add(self, rhs: usize) -> Self::Output {
@@ -51,13 +51,13 @@ impl Add<usize> for Halvingepoch {
     }
 }
 
-impl From<Height> for Halvingepoch {
+impl From<Height> for HalvingEpoch {
     fn from(value: Height) -> Self {
         Self((u32::from(value) / 210_000) as u8)
     }
 }
 
-impl CheckedSub for Halvingepoch {
+impl CheckedSub for HalvingEpoch {
     fn checked_sub(self, rhs: Self) -> Option<Self> {
         self.0.checked_sub(rhs.0).map(Self)
     }

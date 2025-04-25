@@ -23,38 +23,38 @@ use super::Date;
     KnownLayout,
     Serialize,
 )]
-pub struct Dateindex(u16);
+pub struct DateIndex(u16);
 
-impl Dateindex {
+impl DateIndex {
     pub const BYTES: usize = size_of::<Self>();
 }
 
-impl From<Dateindex> for usize {
-    fn from(value: Dateindex) -> Self {
+impl From<DateIndex> for usize {
+    fn from(value: DateIndex) -> Self {
         value.0 as usize
     }
 }
 
-impl From<usize> for Dateindex {
+impl From<usize> for DateIndex {
     fn from(value: usize) -> Self {
         Self(value as u16)
     }
 }
 
-impl From<Dateindex> for i64 {
-    fn from(value: Dateindex) -> Self {
+impl From<DateIndex> for i64 {
+    fn from(value: DateIndex) -> Self {
         value.0 as i64
     }
 }
 
-impl Add<usize> for Dateindex {
+impl Add<usize> for DateIndex {
     type Output = Self;
     fn add(self, rhs: usize) -> Self::Output {
         Self(self.0 + rhs as u16)
     }
 }
 
-impl TryFrom<Date> for Dateindex {
+impl TryFrom<Date> for DateIndex {
     type Error = Error;
     fn try_from(value: Date) -> Result<Self, Self::Error> {
         let value_ = jiff::civil::Date::from(value);
@@ -72,7 +72,7 @@ impl TryFrom<Date> for Dateindex {
     }
 }
 
-impl CheckedSub for Dateindex {
+impl CheckedSub for DateIndex {
     fn checked_sub(self, rhs: Self) -> Option<Self> {
         self.0.checked_sub(rhs.0).map(Self)
     }
