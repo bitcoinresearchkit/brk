@@ -5,7 +5,7 @@ use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 use crate::CheckedSub;
 
-use super::{Date, Dateindex};
+use super::{Date, DateIndex};
 
 #[derive(
     Debug,
@@ -23,27 +23,27 @@ use super::{Date, Dateindex};
     IntoBytes,
     KnownLayout,
 )]
-pub struct Weekindex(u16);
+pub struct WeekIndex(u16);
 
-impl From<u16> for Weekindex {
+impl From<u16> for WeekIndex {
     fn from(value: u16) -> Self {
         Self(value)
     }
 }
 
-impl From<usize> for Weekindex {
+impl From<usize> for WeekIndex {
     fn from(value: usize) -> Self {
         Self(value as u16)
     }
 }
 
-impl From<Weekindex> for usize {
-    fn from(value: Weekindex) -> Self {
+impl From<WeekIndex> for usize {
+    fn from(value: WeekIndex) -> Self {
         value.0 as usize
     }
 }
 
-impl Add<usize> for Weekindex {
+impl Add<usize> for WeekIndex {
     type Output = Self;
 
     fn add(self, rhs: usize) -> Self::Output {
@@ -51,13 +51,13 @@ impl Add<usize> for Weekindex {
     }
 }
 
-impl From<Dateindex> for Weekindex {
-    fn from(value: Dateindex) -> Self {
+impl From<DateIndex> for WeekIndex {
+    fn from(value: DateIndex) -> Self {
         Self::from(Date::from(value))
     }
 }
 
-impl From<Date> for Weekindex {
+impl From<Date> for WeekIndex {
     fn from(value: Date) -> Self {
         let date = jiff::civil::Date::from(value).iso_week_date();
 
@@ -81,7 +81,7 @@ impl From<Date> for Weekindex {
     }
 }
 
-impl CheckedSub for Weekindex {
+impl CheckedSub for WeekIndex {
     fn checked_sub(self, rhs: Self) -> Option<Self> {
         self.0.checked_sub(rhs.0).map(Self)
     }

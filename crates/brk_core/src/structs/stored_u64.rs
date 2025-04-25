@@ -6,7 +6,7 @@ use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 use crate::CheckedSub;
 
-use super::{Txindex, Txinindex, Txoutindex};
+use super::{InputIndex, OutputIndex, TxIndex};
 
 #[derive(
     Debug,
@@ -80,20 +80,20 @@ impl From<StoredU64> for f64 {
     }
 }
 
-impl From<Txindex> for StoredU64 {
-    fn from(value: Txindex) -> Self {
+impl From<TxIndex> for StoredU64 {
+    fn from(value: TxIndex) -> Self {
         Self(*value as u64)
     }
 }
 
-impl From<Txinindex> for StoredU64 {
-    fn from(value: Txinindex) -> Self {
+impl From<InputIndex> for StoredU64 {
+    fn from(value: InputIndex) -> Self {
         Self(*value)
     }
 }
 
-impl From<Txoutindex> for StoredU64 {
-    fn from(value: Txoutindex) -> Self {
+impl From<OutputIndex> for StoredU64 {
+    fn from(value: OutputIndex) -> Self {
         Self(*value)
     }
 }

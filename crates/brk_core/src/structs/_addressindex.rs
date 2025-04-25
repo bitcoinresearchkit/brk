@@ -21,9 +21,9 @@ use crate::Error;
     KnownLayout,
     Serialize,
 )]
-pub struct Addressindex(u32);
+pub struct AddressIndex(u32);
 
-impl Addressindex {
+impl AddressIndex {
     pub const BYTES: usize = size_of::<Self>();
 
     pub fn increment(&mut self) {
@@ -35,56 +35,56 @@ impl Addressindex {
     }
 }
 
-impl From<u32> for Addressindex {
+impl From<u32> for AddressIndex {
     fn from(value: u32) -> Self {
         Self(value)
     }
 }
 
-impl From<u64> for Addressindex {
+impl From<u64> for AddressIndex {
     fn from(value: u64) -> Self {
         Self(value as u32)
     }
 }
-impl From<Addressindex> for u64 {
-    fn from(value: Addressindex) -> Self {
+impl From<AddressIndex> for u64 {
+    fn from(value: AddressIndex) -> Self {
         value.0 as u64
     }
 }
 
-impl From<usize> for Addressindex {
+impl From<usize> for AddressIndex {
     fn from(value: usize) -> Self {
         Self(value as u32)
     }
 }
-impl From<Addressindex> for usize {
-    fn from(value: Addressindex) -> Self {
+impl From<AddressIndex> for usize {
+    fn from(value: AddressIndex) -> Self {
         value.0 as usize
     }
 }
 
-impl TryFrom<ByteView> for Addressindex {
+impl TryFrom<ByteView> for AddressIndex {
     type Error = Error;
     fn try_from(value: ByteView) -> Result<Self, Self::Error> {
         Ok(Self::read_from_bytes(&value)?)
     }
 }
-impl From<Addressindex> for ByteView {
-    fn from(value: Addressindex) -> Self {
+impl From<AddressIndex> for ByteView {
+    fn from(value: AddressIndex) -> Self {
         Self::new(value.as_bytes())
     }
 }
 
-impl Add<usize> for Addressindex {
+impl Add<usize> for AddressIndex {
     type Output = Self;
     fn add(self, rhs: usize) -> Self::Output {
         Self(self.0 + rhs as u32)
     }
 }
 
-impl Add<Addressindex> for Addressindex {
+impl Add<AddressIndex> for AddressIndex {
     type Output = Self;
-    fn add(self, rhs: Addressindex) -> Self::Output {
+    fn add(self, rhs: AddressIndex) -> Self::Output {
         Self(self.0 + rhs.0)
     }
 }

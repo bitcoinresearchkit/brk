@@ -6,7 +6,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use brk_core::{Bitcoin, CheckedSub, Close, Dollars, Height, Sats, Txindex};
+use brk_core::{Bitcoin, CheckedSub, Close, Dollars, Height, Sats, TxIndex};
 use brk_exit::Exit;
 use brk_vec::{
     Compressed, DynamicVec, Error, GenericVec, Result, StoredIndex, StoredType, StoredVec, Version,
@@ -490,12 +490,12 @@ impl EagerVec<Height, Dollars> {
     }
 }
 
-impl EagerVec<Txindex, Dollars> {
+impl EagerVec<TxIndex, Dollars> {
     pub fn compute_from_bitcoin(
         &mut self,
-        max_from: Txindex,
-        bitcoin: &mut StoredVec<Txindex, Bitcoin>,
-        i_to_height: &mut StoredVec<Txindex, Height>,
+        max_from: TxIndex,
+        bitcoin: &mut StoredVec<TxIndex, Bitcoin>,
+        i_to_height: &mut StoredVec<TxIndex, Height>,
         price: &mut StoredVec<Height, Close<Dollars>>,
         exit: &Exit,
     ) -> Result<()> {
@@ -503,7 +503,7 @@ impl EagerVec<Txindex, Dollars> {
             Version::ZERO + self.version() + bitcoin.version(),
         )?;
 
-        let index = max_from.min(Txindex::from(self.len()));
+        let index = max_from.min(TxIndex::from(self.len()));
         bitcoin.iter_from(index, |(i, bitcoin, ..)| {
             let height = i_to_height.double_unwrap_cached_get(i);
             let dollars = price.double_unwrap_cached_get(height);

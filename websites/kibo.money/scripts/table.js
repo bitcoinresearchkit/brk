@@ -414,13 +414,13 @@ function createSerializedIndexes() {
     /** @satisfies {VecId} */ ("p2wpkhindex"),
     /** @satisfies {VecId} */ ("p2wshindex"),
     /** @satisfies {VecId} */ ("txindex"),
-    /** @satisfies {VecId} */ ("txinindex"),
-    /** @satisfies {VecId} */ ("txoutindex"),
-    /** @satisfies {VecId} */ ("emptyindex"),
-    /** @satisfies {VecId} */ ("multisigindex"),
+    /** @satisfies {VecId} */ ("inputindex"),
+    /** @satisfies {VecId} */ ("outputindex"),
+    /** @satisfies {VecId} */ ("emptyoutputindex"),
+    /** @satisfies {VecId} */ ("p2msindex"),
     /** @satisfies {VecId} */ ("opreturnindex"),
     /** @satisfies {VecId} */ ("pushonlyindex"),
-    /** @satisfies {VecId} */ ("unknownindex"),
+    /** @satisfies {VecId} */ ("unknownoutputindex"),
   ]);
 }
 /** @typedef {ReturnType<typeof createSerializedIndexes>} SerializedIndexes */
@@ -468,19 +468,19 @@ function serializedIndexToIndex(serializedIndex) {
       return /** @satisfies {P2WSHindex} */ (16);
     case "txindex":
       return /** @satisfies {Txindex} */ (17);
-    case "txinindex":
-      return /** @satisfies {Txinindex} */ (18);
-    case "txoutindex":
-      return /** @satisfies {Txoutindex} */ (19);
-    case "emptyindex":
+    case "inputindex":
+      return /** @satisfies {Inputindex} */ (18);
+    case "outputindex":
+      return /** @satisfies {Outputindex} */ (19);
+    case "emptyoutputindex":
       return /** @satisfies {Emptyindex} */ (20);
-    case "multisigindex":
-      return /** @satisfies {Multisigindex} */ (21);
+    case "p2msindex":
+      return /** @satisfies {P2MSindex} */ (21);
     case "opreturnindex":
       return /** @satisfies {Opreturnindex} */ (22);
     case "pushonlyindex":
       return /** @satisfies {Pushonlyindex} */ (23);
-    case "unknownindex":
+    case "unknownoutputindex":
       return /** @satisfies {Unknownindex} */ (24);
   }
 }

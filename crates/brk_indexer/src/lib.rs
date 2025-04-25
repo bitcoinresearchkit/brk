@@ -11,8 +11,8 @@ use std::{
 };
 
 use brk_core::{
-    AddressHash, Addressbytes, Addressindex, Addresstype, BlockHash, BlockHashPrefix, Height, Sats,
-    Timestamp, Txid, TxidPrefix, Txindex, Txinindex, Txoutindex, Vin, Vout, setrlimit,
+    AddressBytes, AddressBytesHash, BlockHash, BlockHashPrefix, Height, InputIndex, OutputIndex,
+    OutputType, OutputTypeIndex, Sats, Timestamp, TxIndex, Txid, TxidPrefix, Vin, Vout, setrlimit,
 };
 pub use brk_parser::*;
 
@@ -21,7 +21,7 @@ use brk_exit::Exit;
 use brk_vec::Compressed;
 use color_eyre::eyre::{ContextCompat, eyre};
 use fjall::TransactionalKeyspace;
-use log::info;
+use log::{error, info};
 use rayon::prelude::*;
 mod indexes;
 mod stores;
@@ -32,7 +32,7 @@ pub use stores::*;
 pub use vecs::*;
 
 const SNAPSHOT_BLOCK_RANGE: usize = 1000;
-const COLLISIONS_CHECKED_UP_TO: u32 = 893_000;
+const COLLISIONS_CHECKED_UP_TO: u32 = 0;
 
 #[derive(Clone)]
 pub struct Indexer {
@@ -150,18 +150,18 @@ impl Indexer {
                 let blockhash_prefix = BlockHashPrefix::from(&blockhash);
 
                 if stores
-                    .blockhash_prefix_to_height
+                    .blockhashprefix_to_height
                     .get(&blockhash_prefix)?
                     .is_some_and(|prev_height| *prev_height != height)
                 {
-                    dbg!(blockhash);
+                    error!("BlockHash: {blockhash}");
                     return Err(eyre!("Collision, expect prefix to need be set yet"));
                 }
 
                 idxs.push_if_needed(vecs)?;
 
                 stores
-                    .blockhash_prefix_to_height
+                    .blockhashprefix_to_height
                     .insert_if_needed(blockhash_prefix, height, height);
 
                 vecs.height_to_blockhash.push_if_needed(height, blockhash)?;
@@ -172,29 +172,33 @@ impl Indexer {
                 vecs.height_to_total_size.push_if_needed(height, block.total_size().into())?;
                 vecs.height_to_weight.push_if_needed(height, block.weight().into())?;
 
-                let inputs = block
-                    .txdata
-                    .iter()
-                    .enumerate()
-                    .flat_map(|(index, tx)| {
-                        tx.input
-                            .iter()
-                            .enumerate()
-                            .map(move |(vin, txin)| (Txindex::from(index), Vin::from(vin), txin, tx))
-                    })
-                    .collect::<Vec<_>>();
+                let (inputs, outputs) = thread::scope(|s| {
+                    let inputs_handle = s.spawn(|| block
+                        .txdata
+                        .iter()
+                        .enumerate()
+                        .flat_map(|(index, tx)| {
+                            tx.input
+                                .iter()
+                                .enumerate()
+                                .map(move |(vin, txin)| (TxIndex::from(index), Vin::from(vin), txin, tx))
+                        })
+                        .collect::<Vec<_>>());
 
-                let outputs = block
-                    .txdata
-                    .iter()
-                    .enumerate()
-                    .flat_map(|(index, tx)| {
-                        tx.output
-                            .iter()
-                            .enumerate()
-                            .map(move |(vout, txout)| (Txindex::from(index), Vout::from(vout), txout, tx))
-                    })
-                    .collect::<Vec<_>>();
+                    let outputs_handle = s.spawn(||  block
+                        .txdata
+                        .iter()
+                        .enumerate()
+                        .flat_map(|(index, tx)| {
+                            tx.output
+                                .iter()
+                                .enumerate()
+                                .map(move |(vout, txout)| (TxIndex::from(index), Vout::from(vout), txout, tx))
+                        })
+                        .collect::<Vec<_>>());
+
+                    (inputs_handle.join().unwrap(), outputs_handle.join().unwrap())
+                });
 
                 let tx_len = block.txdata.len();
                 let outputs_len = outputs.len();
@@ -203,7 +207,7 @@ impl Indexer {
                 let (
                     txid_prefix_to_txid_and_block_txindex_and_prev_txindex_join_handle,
                     input_source_vec_handle,
-                    txoutindex_to_txout_addresstype_addressbytes_res_addressindex_opt_handle,
+                    outputindex_to_txout_outputtype_addressbytes_res_addressindex_opt_handle,
                 ) = thread::scope(|scope| {
                     let txid_prefix_to_txid_and_block_txindex_and_prev_txindex_handle =
                         scope.spawn(|| -> color_eyre::Result<_> {
@@ -217,14 +221,14 @@ impl Indexer {
                                     let txid_prefix = TxidPrefix::from(&txid);
 
                                     let prev_txindex_opt =
-                                        if check_collisions && stores.txid_prefix_to_txindex.needs(height) {
+                                        if check_collisions && stores.txidprefix_to_txindex.needs(height) {
                                             // Should only find collisions for two txids (duplicates), see below
-                                            stores.txid_prefix_to_txindex.get(&txid_prefix)?.map(|v| *v)
+                                            stores.txidprefix_to_txindex.get(&txid_prefix)?.map(|v| *v)
                                         } else {
                                             None
                                         };
 
-                                    Ok((txid_prefix, (tx, txid, Txindex::from(index), prev_txindex_opt)))
+                                    Ok((txid_prefix, (tx, txid, TxIndex::from(index), prev_txindex_opt)))
                                 })
                                 .try_fold(BTreeMap::new, |mut map, tuple| {
                                     let (key, value) = tuple?;
@@ -246,19 +250,19 @@ impl Indexer {
                         inputs
                             .into_par_iter()
                             .enumerate()
-                            .map(|(block_txinindex, (block_txindex, vin, txin, tx))| -> color_eyre::Result<(Txinindex, InputSource)> {
+                            .map(|(block_inputindex, (block_txindex, vin, txin, tx))| -> color_eyre::Result<(InputIndex, InputSource)> {
                                 let txindex = idxs.txindex + block_txindex;
-                                let txinindex = idxs.txinindex + Txinindex::from(block_txinindex);
+                                let inputindex = idxs.inputindex + InputIndex::from(block_inputindex);
 
                                 let outpoint = txin.previous_output;
                                 let txid = Txid::from(outpoint.txid);
 
                                 if tx.is_coinbase() {
-                                    return Ok((txinindex, InputSource::SameBlock((tx, txindex, txin, vin))));
+                                    return Ok((inputindex, InputSource::SameBlock((tx, txindex, txin, vin))));
                                 }
 
                                 let prev_txindex = if let Some(txindex) = stores
-                                    .txid_prefix_to_txindex
+                                    .txidprefix_to_txindex
                                     .get(&TxidPrefix::from(&txid))?
                                     .map(|v| *v)
                                     .and_then(|txindex| {
@@ -268,24 +272,24 @@ impl Indexer {
                                     txindex
                                 } else {
                                     // dbg!(indexes.txindex + block_txindex, txindex, txin, vin);
-                                    return Ok((txinindex, InputSource::SameBlock((tx, txindex, txin, vin))));
+                                    return Ok((inputindex, InputSource::SameBlock((tx, txindex, txin, vin))));
                                 };
 
                                 let vout = Vout::from(outpoint.vout);
 
-                                let txoutindex = *vecs
-                                    .txindex_to_first_txoutindex
+                                let outputindex = *vecs
+                                    .txindex_to_first_outputindex
                                     .get(prev_txindex)?
-                                    .context("Expect txoutindex to not be none")
+                                    .context("Expect outputindex to not be none")
                                     .inspect_err(|_| {
                                         dbg!(outpoint.txid, prev_txindex, vout);
                                     })?
                                     + vout;
 
-                                Ok((txinindex, InputSource::PreviousBlock((
+                                Ok((inputindex, InputSource::PreviousBlock((
                                     vin,
                                     txindex,
-                                    txoutindex,
+                                    outputindex,
                                 ))))
                             })
                             .try_fold(BTreeMap::new, |mut map, tuple| -> color_eyre::Result<_> {
@@ -304,71 +308,58 @@ impl Indexer {
                             })
                     });
 
-                    let txoutindex_to_txout_addresstype_addressbytes_res_addressindex_opt_handle = scope.spawn(|| {
+                    let outputindex_to_txout_outputtype_addressbytes_res_addressindex_opt_handle = scope.spawn(|| {
                         outputs
                             .into_par_iter()
                             .enumerate()
                             .map(
                                 #[allow(clippy::type_complexity)]
-                                |(block_txoutindex, (block_txindex, vout, txout, tx))| -> color_eyre::Result<(
-                                    Txoutindex,
+                                |(block_outputindex, (block_txindex, vout, txout, tx))| -> color_eyre::Result<(
+                                    OutputIndex,
                                     (
                                         &TxOut,
-                                        Txindex,
+                                        TxIndex,
                                         Vout,
-                                        Addresstype,
-                                        brk_core::Result<Addressbytes>,
-                                        Option<Addressindex>,
+                                        OutputType,
+                                        brk_core::Result<AddressBytes>,
+                                        Option<OutputTypeIndex>,
                                         &Transaction,
                                     ),
                                 )> {
                                     let txindex = idxs.txindex + block_txindex;
-                                    let txoutindex = idxs.txoutindex + Txoutindex::from(block_txoutindex);
+                                    let outputindex = idxs.outputindex + OutputIndex::from(block_outputindex);
 
                                     let script = &txout.script_pubkey;
 
-                                    let addresstype = Addresstype::from(script);
+                                    let outputtype = OutputType::from(script);
 
-                                    let addressbytes_res =
-                                        Addressbytes::try_from((script, addresstype)).inspect_err(|_| {
+                                    let address_bytes_res =
+                                        AddressBytes::try_from((script, outputtype)).inspect_err(|_| {
                                             // dbg!(&txout, height, txi, &tx.compute_txid());
                                         });
 
-                                    let addressindex_opt = addressbytes_res.as_ref().ok().and_then(|addressbytes| {
+                                    let outputtypeindex_opt = address_bytes_res.as_ref().ok().and_then(|addressbytes| {
                                         stores
-                                            .addresshash_to_addressindex
-                                            .get(&AddressHash::from((addressbytes, addresstype)))
+                                            .addressbyteshash_to_outputtypeindex
+                                            .get(&AddressBytesHash::from((addressbytes, outputtype)))
                                             .unwrap()
                                             .map(|v| *v)
                                             // Checking if not in the future
-                                            .and_then(|addressindex_local| {
-                                                (addressindex_local < idxs.addressindex).then_some(addressindex_local)
+                                            .and_then(|outputtypeindex_local| {
+                                                (outputtypeindex_local < idxs.outputtypeindex(outputtype)).then_some(outputtypeindex_local)
                                             })
                                     });
 
-                                    if let Some(Some(addressindex)) = check_collisions.then_some(addressindex_opt) {
-                                        let addressbytes = addressbytes_res.as_ref().unwrap();
-
-                                        let prev_addresstype = *vecs
-                                            .addressindex_to_addresstype
-                                            .get(addressindex)?
-                                            .context("Expect to have address type")?;
-
-                                        let addresstypeindex = *vecs
-                                            .addressindex_to_addresstypeindex
-                                            .get(addressindex)?
-                                            .context("Expect to have address type index")?;
+                                    if let Some(Some(outputtypeindex)) = check_collisions.then_some(outputtypeindex_opt) {
+                                        let addressbytes = address_bytes_res.as_ref().unwrap();
 
                                         let prev_addressbytes_opt =
-                                            vecs.get_addressbytes(prev_addresstype, addresstypeindex)?;
-
+                                            vecs.get_addressbytes(outputtype, outputtypeindex)?;
                                         let prev_addressbytes =
                                             prev_addressbytes_opt.as_ref().context("Expect to have addressbytes")?;
 
-                                        if (vecs.addressindex_to_addresstype.hasnt(addressindex)?
-                                            && addresstype != prev_addresstype)
-                                            || (stores.addresshash_to_addressindex.needs(height)
-                                                && prev_addressbytes != addressbytes)
+                                        if stores.addressbyteshash_to_outputtypeindex.needs(height)
+                                                && prev_addressbytes != addressbytes
                                         {
                                             let txid = tx.compute_txid();
                                             dbg!(
@@ -376,30 +367,28 @@ impl Indexer {
                                                 txid,
                                                 vout,
                                                 block_txindex,
-                                                addresstype,
-                                                prev_addresstype,
+                                                outputtype,
                                                 prev_addressbytes,
                                                 addressbytes,
-                                                idxs.addressindex,
-                                                addressindex,
-                                                addresstypeindex,
+                                                &idxs,
+                                                outputtypeindex,
+                                                outputtypeindex,
                                                 txout,
-                                                AddressHash::from((addressbytes, addresstype)),
-                                                AddressHash::from((prev_addressbytes, prev_addresstype))
+                                                AddressBytesHash::from((addressbytes, outputtype)),
                                             );
                                             panic!()
                                         }
                                     }
 
                                     Ok((
-                                        txoutindex,
+                                        outputindex,
                                         (
                                             txout,
                                             txindex,
                                             vout,
-                                            addresstype,
-                                            addressbytes_res,
-                                            addressindex_opt,
+                                            outputtype,
+                                            address_bytes_res,
+                                            outputtypeindex_opt,
                                             tx,
                                         ),
                                     ))
@@ -424,7 +413,7 @@ impl Indexer {
                     (
                         txid_prefix_to_txid_and_block_txindex_and_prev_txindex_handle.join(),
                         input_source_vec_handle.join(),
-                        txoutindex_to_txout_addresstype_addressbytes_res_addressindex_opt_handle.join(),
+                        outputindex_to_txout_outputtype_addressbytes_res_addressindex_opt_handle.join(),
                     )
                 });
 
@@ -439,158 +428,139 @@ impl Indexer {
                     .ok()
                     .context("Export input_source_vec_handle to join")??;
 
-                let txoutindex_to_txout_addresstype_addressbytes_res_addressindex_opt =
-                    txoutindex_to_txout_addresstype_addressbytes_res_addressindex_opt_handle
+                let outputindex_to_txout_outputtype_addressbytes_res_addressindex_opt =
+                    outputindex_to_txout_outputtype_addressbytes_res_addressindex_opt_handle
                         .ok()
                         .context(
-                            "Expect txoutindex_to_txout_addresstype_addressbytes_res_addressindex_opt_handle to join",
+                            "Expect outputindex_to_txout_outputtype_addressbytes_res_addressindex_opt_handle to join",
                         )??;
 
-                let mut new_txindexvout_to_txoutindex: BTreeMap<
-                    (Txindex, Vout),
-                    Txoutindex,
+                let mut new_txindexvout_to_outputindex: BTreeMap<
+                    (TxIndex, Vout),
+                    OutputIndex,
                 > = BTreeMap::new();
 
-                let mut already_added_addresshash: BTreeMap<AddressHash, Addressindex> = BTreeMap::new();
+                let mut already_added_addressbyteshash: BTreeMap<AddressBytesHash, OutputTypeIndex> = BTreeMap::new();
 
-                txoutindex_to_txout_addresstype_addressbytes_res_addressindex_opt
+                outputindex_to_txout_outputtype_addressbytes_res_addressindex_opt
                 .into_iter()
                 .try_for_each(
                     |(
-                        txoutindex,
-                        (txout, txindex, vout, addresstype, addressbytes_res, addressindex_opt, _tx),
+                        outputindex,
+                        (txout, txindex, vout, outputtype, addressbytes_res, outputtypeindex_opt, _tx),
                     )|
                      -> color_eyre::Result<()> {
                         let sats = Sats::from(txout.value);
 
                         if vout.is_zero() {
-                            vecs.txindex_to_first_txoutindex.push_if_needed(txindex, txoutindex)?;
+                            vecs.txindex_to_first_outputindex.push_if_needed(txindex, outputindex)?;
                         }
 
-                        vecs.txoutindex_to_value.push_if_needed(txoutindex, sats)?;
+                        vecs.outputindex_to_value.push_if_needed(outputindex, sats)?;
 
-                        vecs.txoutindex_to_height
-                            .push_if_needed(txoutindex, height)?;
+                        vecs.outputindex_to_outputtype
+                            .push_if_needed(outputindex, outputtype)?;
 
-                        let mut addressindex = idxs.addressindex;
+                        let mut addressbyteshash = None;
 
-                        let mut addresshash = None;
+                        let outputtypeindex;
 
-                        if let Some(addressindex_local) = addressindex_opt.or_else(|| {
+                        if let Some(outputtypeindex_local) = outputtypeindex_opt.or_else(|| {
                             addressbytes_res.as_ref().ok().and_then(|addressbytes| {
                                 // Check if address was first seen before in this iterator
                                 // Example: https://mempool.space/address/046a0765b5865641ce08dd39690aade26dfbf5511430ca428a3089261361cef170e3929a68aee3d8d4848b0c5111b0a37b82b86ad559fd2a745b44d8e8d9dfdc0c
-                                addresshash.replace(AddressHash::from((addressbytes, addresstype)));
-                                already_added_addresshash
-                                    .get(addresshash.as_ref().unwrap())
+                                addressbyteshash.replace(AddressBytesHash::from((addressbytes, outputtype)));
+                                already_added_addressbyteshash
+                                    .get(addressbyteshash.as_ref().unwrap())
                                     .cloned()
                             })
                         }) {
-                            addressindex = addressindex_local;
+                            outputtypeindex = outputtypeindex_local;
                         } else {
-                            idxs.addressindex.increment();
-
-                            let addresstypeindex = match addresstype {
-                                Addresstype::Empty => {
-                                    vecs.emptyindex_to_height
-                                        .push_if_needed(idxs.emptyindex, height)?;
-                                    idxs.emptyindex.copy_then_increment()
-                                },
-                                Addresstype::Multisig => {
-                                    vecs.multisigindex_to_height.push_if_needed(idxs.multisigindex, height)?;
-                                    idxs.multisigindex.copy_then_increment()
-                                },
-                                Addresstype::OpReturn => {
-                                    vecs.opreturnindex_to_height.push_if_needed(idxs.opreturnindex, height)?;
-                                    idxs.opreturnindex.copy_then_increment()
-                                },
-                                Addresstype::PushOnly => {
-                                    vecs.pushonlyindex_to_height.push_if_needed(idxs.pushonlyindex, height)?;
-                                    idxs.pushonlyindex.copy_then_increment()
-                                },
-                                Addresstype::Unknown => {
-                                    vecs.unknownindex_to_height.push_if_needed(idxs.unknownindex, height)?;
-                                    idxs.unknownindex.copy_then_increment()
-                                },
-                                Addresstype::P2PK65 => {
-                                    vecs.p2pk65index_to_height.push_if_needed(idxs.p2pk65index, height)?;
+                            outputtypeindex = match outputtype {
+                                OutputType::P2PK65 => {
                                     idxs.p2pk65index.copy_then_increment()
                                 },
-                                Addresstype::P2PK33 => {
-                                    vecs.p2pk33index_to_height.push_if_needed(idxs.p2pk33index, height)?;
+                                OutputType::P2PK33 => {
                                     idxs.p2pk33index.copy_then_increment()
                                 },
-                                Addresstype::P2PKH => {
-                                    vecs.p2pkhindex_to_height.push_if_needed(idxs.p2pkhindex, height)?;
+                                OutputType::P2PKH => {
                                     idxs.p2pkhindex.copy_then_increment()
                                 },
-                                Addresstype::P2SH => {
-                                    vecs.p2shindex_to_height.push_if_needed(idxs.p2shindex, height)?;
+                                OutputType::P2MS => {
+                                    vecs.p2msindex_to_txindex.push_if_needed(idxs.p2msindex, txindex)?;
+                                    idxs.p2msindex.copy_then_increment()
+                                },
+                                OutputType::P2SH => {
                                     idxs.p2shindex.copy_then_increment()
                                 },
-                                Addresstype::P2WPKH => {
-                                    vecs.p2wpkhindex_to_height.push_if_needed(idxs.p2wpkhindex, height)?;
+                                OutputType::OpReturn => {
+                                    vecs.opreturnindex_to_txindex.push_if_needed(idxs.opreturnindex, txindex)?;
+                                    idxs.opreturnindex.copy_then_increment()
+                                },
+                                OutputType::P2WPKH => {
                                     idxs.p2wpkhindex.copy_then_increment()
                                 },
-                                Addresstype::P2WSH => {
-                                    vecs.p2wshindex_to_height.push_if_needed(idxs.p2wshindex, height)?;
+                                OutputType::P2WSH => {
                                     idxs.p2wshindex.copy_then_increment()
                                 },
-                                Addresstype::P2TR => {
-                                    vecs.p2trindex_to_height.push_if_needed(idxs.p2trindex, height)?;
+                                OutputType::P2TR => {
                                     idxs.p2trindex.copy_then_increment()
+                                },
+                                OutputType::P2A => {
+                                    idxs.p2aindex.copy_then_increment()
+                                },
+                                OutputType::Empty => {
+                                    vecs.emptyoutputindex_to_txindex
+                                        .push_if_needed(idxs.emptyoutputindex, txindex)?;
+                                    idxs.emptyoutputindex.copy_then_increment()
+                                },
+                                OutputType::Unknown => {
+                                    vecs.unknownoutputindex_to_txindex.push_if_needed(idxs.unknownoutputindex, txindex)?;
+                                    idxs.unknownoutputindex.copy_then_increment()
                                 },
                             };
 
-                            vecs.addressindex_to_addresstype
-                                .push_if_needed(addressindex, addresstype)?;
-
-                            vecs.addressindex_to_addresstypeindex
-                                .push_if_needed(addressindex, addresstypeindex)?;
-
-                            vecs.addressindex_to_height
-                                .push_if_needed(addressindex, height)?;
-
                             if let Ok(addressbytes) = addressbytes_res {
-                                let addresshash = addresshash.unwrap();
+                                let addressbyteshash = addressbyteshash.unwrap();
 
-                                already_added_addresshash
-                                    .insert(addresshash, addressindex);
+                                already_added_addressbyteshash
+                                    .insert(addressbyteshash, outputtypeindex);
 
-                                stores.addresshash_to_addressindex.insert_if_needed(
-                                    addresshash,
-                                    addressindex,
+                                stores.addressbyteshash_to_outputtypeindex.insert_if_needed(
+                                    addressbyteshash,
+                                    outputtypeindex,
                                     height,
                                 );
 
-                                vecs.push_addressbytes_if_needed(addresstypeindex, addressbytes)?;
+                                vecs.push_bytes_if_needed(outputtypeindex, addressbytes)?;
                             }
                         }
 
-                        new_txindexvout_to_txoutindex
-                            .insert((txindex, vout), txoutindex);
+                        vecs.outputindex_to_outputtypeindex
+                            .push_if_needed(outputindex, outputtypeindex)?;
 
-                        vecs.txoutindex_to_addressindex
-                            .push_if_needed(txoutindex, addressindex)?;
+                        new_txindexvout_to_outputindex
+                            .insert((txindex, vout), outputindex);
 
                         Ok(())
                     },
                 )?;
 
-                drop(already_added_addresshash);
+                drop(already_added_addressbyteshash);
 
                 input_source_vec
                     .into_iter()
                     .map(
                         #[allow(clippy::type_complexity)]
-                        |(txinindex, input_source)| -> color_eyre::Result<(
-                            Txinindex, Vin, Txindex, Txoutindex
+                        |(inputindex, input_source)| -> color_eyre::Result<(
+                            InputIndex, Vin, TxIndex, OutputIndex
                         )> {
                             match input_source {
-                                InputSource::PreviousBlock((vin, txindex, txoutindex)) => Ok((txinindex, vin, txindex, txoutindex)),
+                                InputSource::PreviousBlock((vin, txindex, outputindex)) => Ok((inputindex, vin, txindex, outputindex)),
                                 InputSource::SameBlock((tx, txindex, txin, vin)) => {
                                     if tx.is_coinbase() {
-                                        return Ok((txinindex, vin, txindex, Txoutindex::COINBASE));
+                                        return Ok((inputindex, vin, txindex, OutputIndex::COINBASE));
                                     }
 
                                     let outpoint = txin.previous_output;
@@ -606,37 +576,33 @@ impl Indexer {
                                         .2;
                                     let prev_txindex = idxs.txindex + block_txindex;
 
-                                    let prev_txoutindex = new_txindexvout_to_txoutindex
+                                    let prev_outputindex = new_txindexvout_to_outputindex
                                         .remove(&(prev_txindex, vout))
                                         .context("should have found addressindex from same block")
                                         .inspect_err(|_| {
-                                            dbg!(&new_txindexvout_to_txoutindex, txin, prev_txindex, vout, txid);
+                                            dbg!(&new_txindexvout_to_outputindex, txin, prev_txindex, vout, txid);
                                         })?;
 
-                                    Ok((txinindex, vin, txindex, prev_txoutindex))
+                                    Ok((inputindex, vin, txindex, prev_outputindex))
                                 }
                             }
                         },
                     )
                     .try_for_each(|res| -> color_eyre::Result<()> {
-                        let (txinindex, vin, txindex, txoutindex) = res?;
+                        let (inputindex, vin, txindex, outputindex) = res?;
 
                         if vin.is_zero() {
-                            vecs.txindex_to_first_txinindex.push_if_needed(txindex, txinindex)?;
+                            vecs.txindex_to_first_inputindex.push_if_needed(txindex, inputindex)?;
                         }
 
-                        vecs.txinindex_to_txoutindex.push_if_needed(txinindex, txoutindex)?;
-
-                        vecs.txinindex_to_height
-                            .push_if_needed(txinindex, height)?;
-
+                        vecs.inputindex_to_outputindex.push_if_needed(inputindex, outputindex)?;
 
                         Ok(())
                     })?;
 
-                drop(new_txindexvout_to_txoutindex);
+                drop(new_txindexvout_to_outputindex);
 
-                let mut txindex_to_tx_and_txid: BTreeMap<Txindex, (&Transaction, Txid)> = BTreeMap::default();
+                let mut txindex_to_tx_and_txid: BTreeMap<TxIndex, (&Transaction, Txid)> = BTreeMap::default();
 
                 txid_prefix_to_txid_and_block_txindex_and_prev_txindex
                     .into_iter()
@@ -649,7 +615,7 @@ impl Indexer {
                             match prev_txindex_opt {
                                 None => {
                                     stores
-                                        .txid_prefix_to_txindex
+                                        .txidprefix_to_txindex
                                         .insert_if_needed(txid_prefix, txindex, height);
                                 }
                                 Some(prev_txindex) => {
@@ -659,7 +625,7 @@ impl Indexer {
                                     }
 
                                     if !check_collisions {
-                                        return Ok(())
+                                        return Ok(());
                                     }
 
                                     let len = vecs.txindex_to_txid.len();
@@ -690,9 +656,7 @@ impl Indexer {
                                     let is_dup = only_known_dup_txids.contains(prev_txid);
 
                                     if !is_dup {
-                                        let prev_height =
-                                            vecs.txindex_to_height.get(prev_txindex)?.expect("To have height");
-                                        dbg!(height, txindex, prev_height, prev_txid, prev_txindex);
+                                        dbg!(height, txindex, prev_txid, prev_txindex);
                                         return Err(eyre!("Expect none"));
                                     }
                                 }
@@ -707,17 +671,16 @@ impl Indexer {
                     .try_for_each(|(txindex, (tx, txid))| -> color_eyre::Result<()> {
                         vecs.txindex_to_txversion.push_if_needed(txindex, tx.version.into())?;
                         vecs.txindex_to_txid.push_if_needed(txindex, txid)?;
-                        vecs.txindex_to_height.push_if_needed(txindex, height)?;
                         vecs.txindex_to_rawlocktime.push_if_needed(txindex, tx.lock_time.into())?;
-                        vecs.txindex_to_base_size.push_if_needed(txindex, tx.base_size())?;
-                        vecs.txindex_to_total_size.push_if_needed(txindex, tx.total_size())?;
+                        vecs.txindex_to_base_size.push_if_needed(txindex, tx.base_size().into())?;
+                        vecs.txindex_to_total_size.push_if_needed(txindex, tx.total_size().into())?;
                         vecs.txindex_to_is_explicitly_rbf.push_if_needed(txindex, tx.is_explicitly_rbf())?;
                         Ok(())
                     })?;
 
-                idxs.txindex += Txindex::from(tx_len);
-                idxs.txinindex += Txinindex::from(inputs_len);
-                idxs.txoutindex += Txoutindex::from(outputs_len);
+                idxs.txindex += TxIndex::from(tx_len);
+                idxs.inputindex += InputIndex::from(inputs_len);
+                idxs.outputindex += OutputIndex::from(outputs_len);
 
                 export_if_needed(stores, vecs, height, false, exit)?;
 
@@ -755,6 +718,6 @@ impl Indexer {
 
 #[derive(Debug)]
 enum InputSource<'a> {
-    PreviousBlock((Vin, Txindex, Txoutindex)),
-    SameBlock((&'a Transaction, Txindex, &'a TxIn, Vin)),
+    PreviousBlock((Vin, TxIndex, OutputIndex)),
+    SameBlock((&'a Transaction, TxIndex, &'a TxIn, Vin)),
 }

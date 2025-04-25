@@ -5,7 +5,7 @@ use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 use crate::CheckedSub;
 
-use super::{Date, Dateindex, Yearindex};
+use super::{Date, DateIndex, YearIndex};
 
 #[derive(
     Debug,
@@ -23,27 +23,27 @@ use super::{Date, Dateindex, Yearindex};
     IntoBytes,
     KnownLayout,
 )]
-pub struct Monthindex(u16);
+pub struct MonthIndex(u16);
 
-impl From<u16> for Monthindex {
+impl From<u16> for MonthIndex {
     fn from(value: u16) -> Self {
         Self(value)
     }
 }
 
-impl From<usize> for Monthindex {
+impl From<usize> for MonthIndex {
     fn from(value: usize) -> Self {
         Self(value as u16)
     }
 }
 
-impl From<Monthindex> for usize {
-    fn from(value: Monthindex) -> Self {
+impl From<MonthIndex> for usize {
+    fn from(value: MonthIndex) -> Self {
         value.0 as usize
     }
 }
 
-impl Add<usize> for Monthindex {
+impl Add<usize> for MonthIndex {
     type Output = Self;
 
     fn add(self, rhs: usize) -> Self::Output {
@@ -51,19 +51,19 @@ impl Add<usize> for Monthindex {
     }
 }
 
-impl From<Dateindex> for Monthindex {
-    fn from(value: Dateindex) -> Self {
+impl From<DateIndex> for MonthIndex {
+    fn from(value: DateIndex) -> Self {
         Self::from(Date::from(value))
     }
 }
 
-impl From<Date> for Monthindex {
+impl From<Date> for MonthIndex {
     fn from(value: Date) -> Self {
-        Self(u16::from(Yearindex::from(value)) * 12 + value.month() as u16 - 1)
+        Self(u16::from(YearIndex::from(value)) * 12 + value.month() as u16 - 1)
     }
 }
 
-impl CheckedSub for Monthindex {
+impl CheckedSub for MonthIndex {
     fn checked_sub(self, rhs: Self) -> Option<Self> {
         self.0.checked_sub(rhs.0).map(Self)
     }

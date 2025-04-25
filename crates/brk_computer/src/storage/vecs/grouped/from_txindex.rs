@@ -1,8 +1,8 @@
 use std::path::Path;
 
 use brk_core::{
-    Dateindex, Decadeindex, Difficultyepoch, Height, Monthindex, Quarterindex, Txindex, Weekindex,
-    Yearindex,
+    DateIndex, DecadeIndex, DifficultyEpoch, Height, MonthIndex, QuarterIndex, TxIndex, WeekIndex,
+    YearIndex,
 };
 use brk_exit::Exit;
 use brk_indexer::Indexer;
@@ -17,16 +17,16 @@ pub struct ComputedVecsFromTxindex<T>
 where
     T: ComputedType + PartialOrd,
 {
-    pub txindex: Option<EagerVec<Txindex, T>>,
+    pub txindex: Option<EagerVec<TxIndex, T>>,
     pub height: ComputedVecBuilder<Height, T>,
-    pub dateindex: ComputedVecBuilder<Dateindex, T>,
-    pub weekindex: ComputedVecBuilder<Weekindex, T>,
-    pub difficultyepoch: ComputedVecBuilder<Difficultyepoch, T>,
-    pub monthindex: ComputedVecBuilder<Monthindex, T>,
-    pub quarterindex: ComputedVecBuilder<Quarterindex, T>,
-    pub yearindex: ComputedVecBuilder<Yearindex, T>,
+    pub dateindex: ComputedVecBuilder<DateIndex, T>,
+    pub weekindex: ComputedVecBuilder<WeekIndex, T>,
+    pub difficultyepoch: ComputedVecBuilder<DifficultyEpoch, T>,
+    pub monthindex: ComputedVecBuilder<MonthIndex, T>,
+    pub quarterindex: ComputedVecBuilder<QuarterIndex, T>,
+    pub yearindex: ComputedVecBuilder<YearIndex, T>,
     // TODO: pub halvingepoch: StorableVecGeneator<Halvingepoch, T>,
-    pub decadeindex: ComputedVecBuilder<Decadeindex, T>,
+    pub decadeindex: ComputedVecBuilder<DecadeIndex, T>,
 }
 
 const VERSION: Version = Version::ZERO;
@@ -91,7 +91,7 @@ where
     ) -> color_eyre::Result<()>
     where
         F: FnMut(
-            &mut EagerVec<Txindex, T>,
+            &mut EagerVec<TxIndex, T>,
             &mut Indexer,
             &mut indexes::Vecs,
             &Indexes,
@@ -117,7 +117,7 @@ where
         indexes: &mut indexes::Vecs,
         starting_indexes: &Indexes,
         exit: &Exit,
-        txindex: Option<&mut StoredVec<Txindex, T>>,
+        txindex: Option<&mut StoredVec<TxIndex, T>>,
     ) -> color_eyre::Result<()> {
         let txindex = txindex.unwrap_or_else(|| self.txindex.as_mut().unwrap().mut_vec());
 

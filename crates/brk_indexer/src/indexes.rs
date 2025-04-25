@@ -1,8 +1,8 @@
 use bitcoincore_rpc::Client;
 use brk_core::{
-    Addressindex, BlockHash, CheckedSub, Emptyindex, Height, Multisigindex, Opreturnindex,
-    P2PK33index, P2PK65index, P2PKHindex, P2SHindex, P2TRindex, P2WPKHindex, P2WSHindex,
-    Pushonlyindex, Txindex, Txinindex, Txoutindex, Unknownindex,
+    BlockHash, CheckedSub, EmptyOutputIndex, Height, InputIndex, OpReturnIndex, OutputIndex,
+    OutputType, OutputTypeIndex, P2AIndex, P2MSIndex, P2PK33Index, P2PK65Index, P2PKHIndex,
+    P2SHIndex, P2TRIndex, P2WPKHIndex, P2WSHIndex, TxIndex, UnknownOutputIndex,
 };
 use brk_parser::NUMBER_OF_UNSAFE_BLOCKS;
 use brk_vec::{Result, StoredIndex, StoredType, Value};
@@ -12,46 +12,60 @@ use crate::{IndexedVec, Stores, Vecs};
 
 #[derive(Debug, Default, Clone)]
 pub struct Indexes {
-    pub addressindex: Addressindex,
-    pub emptyindex: Emptyindex,
+    pub emptyoutputindex: EmptyOutputIndex,
     pub height: Height,
-    pub multisigindex: Multisigindex,
-    pub opreturnindex: Opreturnindex,
-    pub p2pk33index: P2PK33index,
-    pub p2pk65index: P2PK65index,
-    pub p2pkhindex: P2PKHindex,
-    pub p2shindex: P2SHindex,
-    pub p2trindex: P2TRindex,
-    pub p2wpkhindex: P2WPKHindex,
-    pub p2wshindex: P2WSHindex,
-    pub pushonlyindex: Pushonlyindex,
-    pub txindex: Txindex,
-    pub txinindex: Txinindex,
-    pub txoutindex: Txoutindex,
-    pub unknownindex: Unknownindex,
+    pub opreturnindex: OpReturnIndex,
+    pub p2msindex: P2MSIndex,
+    pub p2pk33index: P2PK33Index,
+    pub p2pk65index: P2PK65Index,
+    pub p2pkhindex: P2PKHIndex,
+    pub p2shindex: P2SHIndex,
+    pub p2trindex: P2TRIndex,
+    pub p2wpkhindex: P2WPKHIndex,
+    pub p2wshindex: P2WSHIndex,
+    pub p2aindex: P2AIndex,
+    pub txindex: TxIndex,
+    pub inputindex: InputIndex,
+    pub outputindex: OutputIndex,
+    pub unknownoutputindex: UnknownOutputIndex,
 }
 
 impl Indexes {
+    pub fn outputtypeindex(&self, outputtype: OutputType) -> OutputTypeIndex {
+        match outputtype {
+            OutputType::Empty => *self.emptyoutputindex,
+            OutputType::OpReturn => *self.opreturnindex,
+            OutputType::P2A => *self.p2aindex,
+            OutputType::P2MS => *self.p2msindex,
+            OutputType::P2PK33 => *self.p2pkhindex,
+            OutputType::P2PK65 => *self.p2pk65index,
+            OutputType::P2PKH => *self.p2pkhindex,
+            OutputType::P2SH => *self.p2shindex,
+            OutputType::P2TR => *self.p2trindex,
+            OutputType::P2WPKH => *self.p2wpkhindex,
+            OutputType::P2WSH => *self.p2wshindex,
+            OutputType::Unknown => *self.unknownoutputindex,
+        }
+    }
+
     pub fn push_if_needed(&self, vecs: &mut Vecs) -> brk_vec::Result<()> {
         let height = self.height;
         vecs.height_to_first_txindex
             .push_if_needed(height, self.txindex)?;
-        vecs.height_to_first_txinindex
-            .push_if_needed(height, self.txinindex)?;
-        vecs.height_to_first_txoutindex
-            .push_if_needed(height, self.txoutindex)?;
-        vecs.height_to_first_addressindex
-            .push_if_needed(height, self.addressindex)?;
-        vecs.height_to_first_emptyindex
-            .push_if_needed(height, self.emptyindex)?;
-        vecs.height_to_first_multisigindex
-            .push_if_needed(height, self.multisigindex)?;
+        vecs.height_to_first_inputindex
+            .push_if_needed(height, self.inputindex)?;
+        vecs.height_to_first_outputindex
+            .push_if_needed(height, self.outputindex)?;
+        vecs.height_to_first_emptyoutputindex
+            .push_if_needed(height, self.emptyoutputindex)?;
+        vecs.height_to_first_p2msindex
+            .push_if_needed(height, self.p2msindex)?;
         vecs.height_to_first_opreturnindex
             .push_if_needed(height, self.opreturnindex)?;
-        vecs.height_to_first_pushonlyindex
-            .push_if_needed(height, self.pushonlyindex)?;
-        vecs.height_to_first_unknownindex
-            .push_if_needed(height, self.unknownindex)?;
+        vecs.height_to_first_p2aindex
+            .push_if_needed(height, self.p2aindex)?;
+        vecs.height_to_first_unknownoutputindex
+            .push_if_needed(height, self.unknownoutputindex)?;
         vecs.height_to_first_p2pk33index
             .push_if_needed(height, self.p2pk33index)?;
         vecs.height_to_first_p2pk65index
@@ -106,100 +120,90 @@ impl TryFrom<(&mut Vecs, &Stores, &Client)> for Indexes {
             .unwrap_or(starting_height);
 
         Ok(Self {
-            addressindex: *starting_index(
-                &vecs.height_to_first_addressindex,
-                &vecs.addressindex_to_height,
-                height,
-            )?
-            .context("")?,
-            emptyindex: *starting_index(
-                &vecs.height_to_first_emptyindex,
-                &vecs.emptyindex_to_height,
+            emptyoutputindex: *starting_index(
+                &vecs.height_to_first_emptyoutputindex,
+                &vecs.emptyoutputindex_to_txindex,
                 height,
             )?
             .context("")?,
             height,
-            multisigindex: *starting_index(
-                &vecs.height_to_first_multisigindex,
-                &vecs.multisigindex_to_height,
+            p2msindex: *starting_index(
+                &vecs.height_to_first_p2msindex,
+                &vecs.p2msindex_to_txindex,
                 height,
             )?
             .context("")?,
             opreturnindex: *starting_index(
                 &vecs.height_to_first_opreturnindex,
-                &vecs.opreturnindex_to_height,
+                &vecs.opreturnindex_to_txindex,
                 height,
             )?
             .context("")?,
             p2pk33index: *starting_index(
                 &vecs.height_to_first_p2pk33index,
-                &vecs.p2pk33index_to_height,
+                &vecs.p2pk33index_to_p2pk33bytes,
                 height,
             )?
             .context("")?,
             p2pk65index: *starting_index(
                 &vecs.height_to_first_p2pk65index,
-                &vecs.p2pk65index_to_height,
+                &vecs.p2pk65index_to_p2pk65bytes,
                 height,
             )?
             .context("")?,
             p2pkhindex: *starting_index(
                 &vecs.height_to_first_p2pkhindex,
-                &vecs.p2pkhindex_to_height,
+                &vecs.p2pkhindex_to_p2pkhbytes,
                 height,
             )?
             .context("")?,
             p2shindex: *starting_index(
                 &vecs.height_to_first_p2shindex,
-                &vecs.p2shindex_to_height,
+                &vecs.p2shindex_to_p2shbytes,
                 height,
             )?
             .context("")?,
             p2trindex: *starting_index(
                 &vecs.height_to_first_p2trindex,
-                &vecs.p2trindex_to_height,
+                &vecs.p2trindex_to_p2trbytes,
                 height,
             )?
             .context("")?,
             p2wpkhindex: *starting_index(
                 &vecs.height_to_first_p2wpkhindex,
-                &vecs.p2wpkhindex_to_height,
+                &vecs.p2wpkhindex_to_p2wpkhbytes,
                 height,
             )?
             .context("")?,
             p2wshindex: *starting_index(
                 &vecs.height_to_first_p2wshindex,
-                &vecs.p2wshindex_to_height,
+                &vecs.p2wshindex_to_p2wshbytes,
                 height,
             )?
             .context("")?,
-            pushonlyindex: *starting_index(
-                &vecs.height_to_first_pushonlyindex,
-                &vecs.pushonlyindex_to_height,
+            p2aindex: *starting_index(
+                &vecs.height_to_first_p2aindex,
+                &vecs.p2aindex_to_p2abytes,
                 height,
             )?
             .context("")?,
-            txindex: *starting_index(
-                &vecs.height_to_first_txindex,
-                &vecs.txindex_to_height,
+            txindex: *starting_index(&vecs.height_to_first_txindex, &vecs.txindex_to_txid, height)?
+                .context("")?,
+            inputindex: *starting_index(
+                &vecs.height_to_first_inputindex,
+                &vecs.inputindex_to_outputindex,
                 height,
             )?
             .context("")?,
-            txinindex: *starting_index(
-                &vecs.height_to_first_txinindex,
-                &vecs.txinindex_to_height,
+            outputindex: *starting_index(
+                &vecs.height_to_first_outputindex,
+                &vecs.outputindex_to_value,
                 height,
             )?
             .context("")?,
-            txoutindex: *starting_index(
-                &vecs.height_to_first_txoutindex,
-                &vecs.txoutindex_to_height,
-                height,
-            )?
-            .context("")?,
-            unknownindex: *starting_index(
-                &vecs.height_to_first_unknownindex,
-                &vecs.unknownindex_to_height,
+            unknownoutputindex: *starting_index(
+                &vecs.height_to_first_unknownoutputindex,
+                &vecs.unknownoutputindex_to_txindex,
                 height,
             )?
             .context("")?,

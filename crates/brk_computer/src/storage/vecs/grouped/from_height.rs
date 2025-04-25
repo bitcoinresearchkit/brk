@@ -1,7 +1,7 @@
 use std::path::Path;
 
 use brk_core::{
-    Dateindex, Decadeindex, Difficultyepoch, Height, Monthindex, Quarterindex, Weekindex, Yearindex,
+    DateIndex, DecadeIndex, DifficultyEpoch, Height, MonthIndex, QuarterIndex, WeekIndex, YearIndex,
 };
 use brk_exit::Exit;
 use brk_indexer::Indexer;
@@ -18,14 +18,14 @@ where
 {
     pub height: Option<EagerVec<Height, T>>,
     pub height_extra: ComputedVecBuilder<Height, T>,
-    pub dateindex: ComputedVecBuilder<Dateindex, T>,
-    pub weekindex: ComputedVecBuilder<Weekindex, T>,
-    pub difficultyepoch: ComputedVecBuilder<Difficultyepoch, T>,
-    pub monthindex: ComputedVecBuilder<Monthindex, T>,
-    pub quarterindex: ComputedVecBuilder<Quarterindex, T>,
-    pub yearindex: ComputedVecBuilder<Yearindex, T>,
+    pub dateindex: ComputedVecBuilder<DateIndex, T>,
+    pub weekindex: ComputedVecBuilder<WeekIndex, T>,
+    pub difficultyepoch: ComputedVecBuilder<DifficultyEpoch, T>,
+    pub monthindex: ComputedVecBuilder<MonthIndex, T>,
+    pub quarterindex: ComputedVecBuilder<QuarterIndex, T>,
+    pub yearindex: ComputedVecBuilder<YearIndex, T>,
     // TODO: pub halvingepoch: StorableVecGeneator<Halvingepoch, T>,
-    pub decadeindex: ComputedVecBuilder<Decadeindex, T>,
+    pub decadeindex: ComputedVecBuilder<DecadeIndex, T>,
 }
 
 const VERSION: Version = Version::ZERO;

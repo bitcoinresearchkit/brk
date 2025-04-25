@@ -24,7 +24,7 @@ fn main() -> color_eyre::Result<()> {
 
     let outputs = Path::new("../../_outputs");
 
-    let mut indexer = Indexer::new(outputs, false, false)?;
+    let mut indexer = Indexer::new(outputs, false, true)?;
 
     indexer.import_stores()?;
     indexer.import_vecs()?;

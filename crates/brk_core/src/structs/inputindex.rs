@@ -6,7 +6,7 @@ use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 use crate::CheckedSub;
 
-use super::Vout;
+use super::Vin;
 
 #[derive(
     Debug,
@@ -25,55 +25,49 @@ use super::Vout;
     KnownLayout,
     Serialize,
 )]
-pub struct Txoutindex(u64);
+pub struct InputIndex(u64);
 
-impl Txoutindex {
-    pub const COINBASE: Self = Self(u64::MAX);
-
+impl InputIndex {
     pub fn incremented(self) -> Self {
         Self(*self + 1)
     }
-
-    pub fn is_coinbase(self) -> bool {
-        self == Self::COINBASE
-    }
 }
 
-impl Add<Txoutindex> for Txoutindex {
+impl Add<InputIndex> for InputIndex {
     type Output = Self;
-    fn add(self, rhs: Txoutindex) -> Self::Output {
+    fn add(self, rhs: InputIndex) -> Self::Output {
         Self(self.0 + rhs.0)
     }
 }
 
-impl Add<Vout> for Txoutindex {
+impl Add<Vin> for InputIndex {
     type Output = Self;
-    fn add(self, rhs: Vout) -> Self::Output {
+    fn add(self, rhs: Vin) -> Self::Output {
         Self(self.0 + u64::from(rhs))
     }
 }
 
-impl Add<usize> for Txoutindex {
+impl Add<usize> for InputIndex {
     type Output = Self;
     fn add(self, rhs: usize) -> Self::Output {
         Self(self.0 + rhs as u64)
     }
 }
 
-impl AddAssign<Txoutindex> for Txoutindex {
-    fn add_assign(&mut self, rhs: Txoutindex) {
+impl AddAssign<InputIndex> for InputIndex {
+    fn add_assign(&mut self, rhs: InputIndex) {
         self.0 += rhs.0
     }
 }
 
-impl CheckedSub<Txoutindex> for Txoutindex {
+impl CheckedSub<InputIndex> for InputIndex {
     fn checked_sub(self, rhs: Self) -> Option<Self> {
         self.0.checked_sub(rhs.0).map(Self::from)
     }
 }
 
-impl From<Txoutindex> for u32 {
-    fn from(value: Txoutindex) -> Self {
+impl From<InputIndex> for u32 {
+    fn from(value: InputIndex) -> Self {
         if value.0 > u32::MAX as u64 {
             panic!()
         }
@@ -81,24 +75,24 @@ impl From<Txoutindex> for u32 {
     }
 }
 
-impl From<u64> for Txoutindex {
+impl From<u64> for InputIndex {
     fn from(value: u64) -> Self {
         Self(value)
     }
 }
-impl From<Txoutindex> for u64 {
-    fn from(value: Txoutindex) -> Self {
+impl From<InputIndex> for u64 {
+    fn from(value: InputIndex) -> Self {
         value.0
     }
 }
 
-impl From<usize> for Txoutindex {
+impl From<usize> for InputIndex {
     fn from(value: usize) -> Self {
         Self(value as u64)
     }
 }
-impl From<Txoutindex> for usize {
-    fn from(value: Txoutindex) -> Self {
+impl From<InputIndex> for usize {
+    fn from(value: InputIndex) -> Self {
         value.0 as usize
     }
 }
