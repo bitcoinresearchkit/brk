@@ -1,4 +1,7 @@
-use std::{fmt::Debug, ops::Add};
+use std::{
+    fmt::Debug,
+    ops::{Add, Div},
+};
 
 use serde::{Deserialize, Serialize};
 use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
@@ -43,6 +46,14 @@ impl From<HalvingEpoch> for usize {
     }
 }
 
+impl Add for HalvingEpoch {
+    type Output = Self;
+
+    fn add(self, rhs: Self) -> Self::Output {
+        Self::from(self.0 + rhs.0)
+    }
+}
+
 impl Add<usize> for HalvingEpoch {
     type Output = Self;
 
@@ -60,5 +71,12 @@ impl From<Height> for HalvingEpoch {
 impl CheckedSub for HalvingEpoch {
     fn checked_sub(self, rhs: Self) -> Option<Self> {
         self.0.checked_sub(rhs.0).map(Self)
+    }
+}
+
+impl Div<usize> for HalvingEpoch {
+    type Output = Self;
+    fn div(self, rhs: usize) -> Self::Output {
+        Self::from(self.0 as usize / rhs)
     }
 }

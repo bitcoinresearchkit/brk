@@ -1,6 +1,9 @@
 use std::{fs, path::Path};
 
-use brk_core::{CheckedSub, Height, StoredU32, StoredU64, StoredUsize, Timestamp, Weight};
+use brk_core::{
+    CheckedSub, DifficultyEpoch, HalvingEpoch, Height, StoredU32, StoredU64, StoredUsize,
+    Timestamp, Weight,
+};
 use brk_exit::Exit;
 use brk_indexer::Indexer;
 use brk_parser::bitcoin;
@@ -8,19 +11,22 @@ use brk_vec::{Compressed, Version};
 
 use super::{
     EagerVec, Indexes,
-    grouped::{ComputedVecsFromHeight, StorableVecGeneatorOptions},
+    grouped::{ComputedVecsFromDateindex, ComputedVecsFromHeight, StorableVecGeneatorOptions},
     indexes,
 };
 
 #[derive(Clone)]
 pub struct Vecs {
     pub height_to_interval: EagerVec<Height, Timestamp>,
-    pub indexes_to_block_interval: ComputedVecsFromHeight<Timestamp>,
-    pub indexes_to_block_count: ComputedVecsFromHeight<StoredU32>,
-    pub indexes_to_block_weight: ComputedVecsFromHeight<Weight>,
     pub height_to_vbytes: EagerVec<Height, StoredU64>,
-    pub indexes_to_block_vbytes: ComputedVecsFromHeight<StoredU64>,
+    pub difficultyepoch_to_timestamp: EagerVec<DifficultyEpoch, Timestamp>,
+    pub halvingepoch_to_timestamp: EagerVec<HalvingEpoch, Timestamp>,
+    pub timeindexes_to_timestamp: ComputedVecsFromDateindex<Timestamp>,
+    pub indexes_to_block_count: ComputedVecsFromHeight<StoredU32>,
+    pub indexes_to_block_interval: ComputedVecsFromHeight<Timestamp>,
     pub indexes_to_block_size: ComputedVecsFromHeight<StoredUsize>,
+    pub indexes_to_block_vbytes: ComputedVecsFromHeight<StoredU64>,
+    pub indexes_to_block_weight: ComputedVecsFromHeight<Weight>,
 }
 
 impl Vecs {
@@ -32,6 +38,13 @@ impl Vecs {
                 &path.join("height_to_interval"),
                 Version::ZERO,
                 compressed,
+            )?,
+            timeindexes_to_timestamp: ComputedVecsFromDateindex::forced_import(
+                path,
+                "timestamp",
+                Version::ZERO,
+                compressed,
+                StorableVecGeneatorOptions::default().add_first(),
             )?,
             indexes_to_block_interval: ComputedVecsFromHeight::forced_import(
                 path,
@@ -81,6 +94,16 @@ impl Vecs {
                 compressed,
                 StorableVecGeneatorOptions::default().add_sum().add_total(),
             )?,
+            difficultyepoch_to_timestamp: EagerVec::forced_import(
+                &path.join("difficultyepoch_to_timestamp"),
+                Version::ZERO,
+                compressed,
+            )?,
+            halvingepoch_to_timestamp: EagerVec::forced_import(
+                &path.join("halvingepoch_to_timestamp"),
+                Version::ZERO,
+                compressed,
+            )?,
         })
     }
 
@@ -91,9 +114,43 @@ impl Vecs {
         starting_indexes: &Indexes,
         exit: &Exit,
     ) -> color_eyre::Result<()> {
+        self.timeindexes_to_timestamp.compute(
+            indexer,
+            indexes,
+            starting_indexes,
+            exit,
+            |vec, _, indexes, starting_indexes, exit| {
+                vec.compute_transform(
+                    starting_indexes.dateindex,
+                    indexes.dateindex_to_date.mut_vec(),
+                    |(di, d, ..)| (di, Timestamp::from(d)),
+                    exit,
+                )
+            },
+        )?;
+
+        self.indexes_to_block_count.compute_all(
+            indexer,
+            indexes,
+            starting_indexes,
+            exit,
+            |v, indexer, _, starting_indexes, exit| {
+                let indexer_vecs = indexer.mut_vecs();
+
+                v.compute_range(
+                    starting_indexes.height,
+                    indexer_vecs.height_to_weight.mut_vec(),
+                    |h| (h, StoredU32::from(1_u32)),
+                    exit,
+                )
+            },
+        )?;
+
+        let indexer_vecs = indexer.mut_vecs();
+
         self.height_to_interval.compute_transform(
             starting_indexes.height,
-            indexer.mut_vecs().height_to_timestamp.mut_vec(),
+            indexer_vecs.height_to_timestamp.mut_vec(),
             |(height, timestamp, _, height_to_timestamp)| {
                 let interval = height.decremented().map_or(Timestamp::ZERO, |prev_h| {
                     let prev_timestamp = height_to_timestamp.double_unwrap_cached_get(prev_h);
@@ -113,38 +170,23 @@ impl Vecs {
             Some(self.height_to_interval.mut_vec()),
         )?;
 
-        self.indexes_to_block_count.compute_all(
-            indexer,
-            indexes,
-            starting_indexes,
-            exit,
-            |v, indexer, _, starting_indexes, exit| {
-                v.compute_range(
-                    starting_indexes.height,
-                    indexer.mut_vecs().height_to_weight.mut_vec(),
-                    |h| (h, StoredU32::from(1_u32)),
-                    exit,
-                )
-            },
-        )?;
-
         self.indexes_to_block_weight.compute_rest(
             indexes,
             starting_indexes,
             exit,
-            Some(indexer.mut_vecs().height_to_weight.mut_vec()),
+            Some(indexer_vecs.height_to_weight.mut_vec()),
         )?;
 
         self.indexes_to_block_size.compute_rest(
             indexes,
             starting_indexes,
             exit,
-            Some(indexer.mut_vecs().height_to_total_size.mut_vec()),
+            Some(indexer_vecs.height_to_total_size.mut_vec()),
         )?;
 
         self.height_to_vbytes.compute_transform(
             starting_indexes.height,
-            indexer.mut_vecs().height_to_weight.mut_vec(),
+            indexer_vecs.height_to_weight.mut_vec(),
             |(h, w, ..)| {
                 (
                     h,
@@ -161,6 +203,30 @@ impl Vecs {
             Some(self.height_to_vbytes.mut_vec()),
         )?;
 
+        self.difficultyepoch_to_timestamp.compute_transform(
+            starting_indexes.difficultyepoch,
+            indexes.difficultyepoch_to_first_height.mut_vec(),
+            |(i, h, ..)| {
+                (
+                    i,
+                    indexer_vecs.height_to_timestamp.double_unwrap_cached_get(h),
+                )
+            },
+            exit,
+        )?;
+
+        self.halvingepoch_to_timestamp.compute_transform(
+            starting_indexes.halvingepoch,
+            indexes.halvingepoch_to_first_height.mut_vec(),
+            |(i, h, ..)| {
+                (
+                    i,
+                    indexer_vecs.height_to_timestamp.double_unwrap_cached_get(h),
+                )
+            },
+            exit,
+        )?;
+
         Ok(())
     }
 
@@ -169,12 +235,15 @@ impl Vecs {
             vec![
                 self.height_to_interval.any_vec(),
                 self.height_to_vbytes.any_vec(),
+                self.difficultyepoch_to_timestamp.any_vec(),
+                self.halvingepoch_to_timestamp.any_vec(),
             ],
-            self.indexes_to_block_interval.any_vecs(),
+            self.timeindexes_to_timestamp.any_vecs(),
             self.indexes_to_block_count.any_vecs(),
-            self.indexes_to_block_weight.any_vecs(),
+            self.indexes_to_block_interval.any_vecs(),
             self.indexes_to_block_size.any_vecs(),
             self.indexes_to_block_vbytes.any_vecs(),
+            self.indexes_to_block_weight.any_vecs(),
         ]
         .concat()
     }

@@ -98,17 +98,17 @@ export default import("./v5.0.5-treeshaked/script.js").then((lc) => {
           timeScale: {
             borderVisible: false,
             timeVisible:
-              index === /** @satisfies {Height} */ (0) ||
-              index === /** @satisfies {Difficultyepoch} */ (3) ||
-              index === /** @satisfies {Halvingepoch} */ (8),
+              index === /** @satisfies {Height} */ (5) ||
+              index === /** @satisfies {DifficultyEpoch} */ (2) ||
+              index === /** @satisfies {HalvingEpoch} */ (4),
             minBarSpacing:
-              index === /** @satisfies {Monthindex} */ (4)
+              index === /** @satisfies {MonthIndex} */ (7)
                 ? 1
-                : index === /** @satisfies {Quarterindex} */ (5)
+                : index === /** @satisfies {QuarterIndex} */ (19)
                   ? 3
-                  : index === /** @satisfies {Yearindex} */ (6)
+                  : index === /** @satisfies {YearIndex} */ (23)
                     ? 12
-                    : index === /** @satisfies {Decadeindex} */ (7)
+                    : index === /** @satisfies {DecadeIndex} */ (1)
                       ? 120
                       : undefined,
           },
@@ -199,8 +199,8 @@ export default import("./v5.0.5-treeshaked/script.js").then((lc) => {
       signals.runWithOwner(owner, () =>
         signals.createEffect(
           () => [
-            timeResource?.fetched[fetchedKey](),
-            valuesResource.fetched[fetchedKey](),
+            timeResource?.fetched[fetchedKey].vec(),
+            valuesResource.fetched[fetchedKey].vec(),
           ],
           ([indexes, _ohlcs]) => {
             if (!ichart) throw Error("IChart should be initialized");
@@ -238,9 +238,9 @@ export default import("./v5.0.5-treeshaked/script.js").then((lc) => {
             timeScaleSetCallback?.(() => {
               if (
                 !timeScaleSet &&
-                (vecIndex === /** @satisfies {Quarterindex} */ (5) ||
-                  vecIndex === /** @satisfies {Yearindex} */ (6) ||
-                  vecIndex === /** @satisfies {Decadeindex} */ (7))
+                (vecIndex === /** @satisfies {QuarterIndex} */ (19) ||
+                  vecIndex === /** @satisfies {YearIndex} */ (23) ||
+                  vecIndex === /** @satisfies {DecadeIndex} */ (1))
               ) {
                 ichart
                   ?.timeScale()
@@ -278,8 +278,8 @@ export default import("./v5.0.5-treeshaked/script.js").then((lc) => {
 
         timeResource = vecsResources.getOrCreate(
           vecIndex,
-          vecIndex === /** @satisfies {Height} */ (0)
-            ? "fixed-timestamp"
+          vecIndex === /** @satisfies {Height} */ (5)
+            ? "timestamp-fixed"
             : "timestamp",
         );
         timeResource.fetch();
@@ -648,7 +648,7 @@ export default import("./v5.0.5-treeshaked/script.js").then((lc) => {
     };
 
     config?.forEach(({ unit, blueprints }, paneIndex) => {
-      chart.create({ index: /** @satisfies {Dateindex} */ (1) });
+      chart.create({ index: /** @satisfies {DateIndex} */ (0) });
 
       blueprints.forEach((blueprint) => {
         if (blueprint.type === "Candlestick") {

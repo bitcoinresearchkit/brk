@@ -4,8 +4,8 @@ use brk_core::{
     AddressBytes, BlockHash, EmptyOutputIndex, Height, InputIndex, OpReturnIndex, OutputIndex,
     OutputType, OutputTypeIndex, P2ABytes, P2AIndex, P2MSIndex, P2PK33Bytes, P2PK33Index,
     P2PK65Bytes, P2PK65Index, P2PKHBytes, P2PKHIndex, P2SHBytes, P2SHIndex, P2TRBytes, P2TRIndex,
-    P2WPKHBytes, P2WPKHIndex, P2WSHBytes, P2WSHIndex, RawLockTime, Sats, StoredU32, StoredUsize,
-    Timestamp, TxIndex, TxVersion, Txid, UnknownOutputIndex, Weight,
+    P2WPKHBytes, P2WPKHIndex, P2WSHBytes, P2WSHIndex, RawLockTime, Sats, StoredF64, StoredU32,
+    StoredUsize, Timestamp, TxIndex, TxVersion, Txid, UnknownOutputIndex, Weight,
 };
 use brk_vec::{AnyStoredVec, Compressed, Result, Version};
 use rayon::prelude::*;
@@ -20,7 +20,7 @@ pub use base::*;
 pub struct Vecs {
     pub emptyoutputindex_to_txindex: IndexedVec<EmptyOutputIndex, TxIndex>,
     pub height_to_blockhash: IndexedVec<Height, BlockHash>,
-    pub height_to_difficulty: IndexedVec<Height, f64>,
+    pub height_to_difficulty: IndexedVec<Height, StoredF64>,
     pub height_to_first_emptyoutputindex: IndexedVec<Height, EmptyOutputIndex>,
     pub height_to_first_inputindex: IndexedVec<Height, InputIndex>,
     pub height_to_first_opreturnindex: IndexedVec<Height, OpReturnIndex>,

@@ -301,7 +301,7 @@ function createTable({
                   return l;
                 });
 
-                signals.createEffect(vec.fetched[fetchedKey], (vec) => {
+                signals.createEffect(vec.fetched[fetchedKey].vec, (vec) => {
                   if (!vec) return;
 
                   const thIndex = colIndex() + 1;
@@ -396,16 +396,18 @@ export function init({
 
 function createSerializedIndexes() {
   return /** @type {const} */ ([
-    /** @satisfies {VecId} */ ("height"),
     /** @satisfies {VecId} */ ("dateindex"),
-    /** @satisfies {VecId} */ ("weekindex"),
-    /** @satisfies {VecId} */ ("difficultyepoch"),
-    /** @satisfies {VecId} */ ("monthindex"),
-    /** @satisfies {VecId} */ ("quarterindex"),
-    /** @satisfies {VecId} */ ("yearindex"),
     /** @satisfies {VecId} */ ("decadeindex"),
+    /** @satisfies {VecId} */ ("difficultyepoch"),
+    /** @satisfies {VecId} */ ("emptyoutputindex"),
     /** @satisfies {VecId} */ ("halvingepoch"),
-    /** @satisfies {VecId} */ ("addressindex"),
+    /** @satisfies {VecId} */ ("height"),
+    /** @satisfies {VecId} */ ("inputindex"),
+    /** @satisfies {VecId} */ ("monthindex"),
+    /** @satisfies {VecId} */ ("opreturnindex"),
+    /** @satisfies {VecId} */ ("outputindex"),
+    /** @satisfies {VecId} */ ("p2aindex"),
+    /** @satisfies {VecId} */ ("p2msindex"),
     /** @satisfies {VecId} */ ("p2pk33index"),
     /** @satisfies {VecId} */ ("p2pk65index"),
     /** @satisfies {VecId} */ ("p2pkhindex"),
@@ -413,14 +415,11 @@ function createSerializedIndexes() {
     /** @satisfies {VecId} */ ("p2trindex"),
     /** @satisfies {VecId} */ ("p2wpkhindex"),
     /** @satisfies {VecId} */ ("p2wshindex"),
+    /** @satisfies {VecId} */ ("quarterindex"),
     /** @satisfies {VecId} */ ("txindex"),
-    /** @satisfies {VecId} */ ("inputindex"),
-    /** @satisfies {VecId} */ ("outputindex"),
-    /** @satisfies {VecId} */ ("emptyoutputindex"),
-    /** @satisfies {VecId} */ ("p2msindex"),
-    /** @satisfies {VecId} */ ("opreturnindex"),
-    /** @satisfies {VecId} */ ("pushonlyindex"),
     /** @satisfies {VecId} */ ("unknownoutputindex"),
+    /** @satisfies {VecId} */ ("weekindex"),
+    /** @satisfies {VecId} */ ("yearindex"),
   ]);
 }
 /** @typedef {ReturnType<typeof createSerializedIndexes>} SerializedIndexes */
@@ -433,55 +432,53 @@ function createSerializedIndexes() {
 function serializedIndexToIndex(serializedIndex) {
   switch (serializedIndex) {
     case "height":
-      return /** @satisfies {Height} */ (0);
+      return /** @satisfies {Height} */ (5);
     case "dateindex":
-      return /** @satisfies {Dateindex} */ (1);
+      return /** @satisfies {DateIndex} */ (0);
     case "weekindex":
-      return /** @satisfies {Weekindex} */ (2);
+      return /** @satisfies {WeekIndex} */ (22);
     case "difficultyepoch":
-      return /** @satisfies {Difficultyepoch} */ (3);
+      return /** @satisfies {DifficultyEpoch} */ (2);
     case "monthindex":
-      return /** @satisfies {Monthindex} */ (4);
+      return /** @satisfies {MonthIndex} */ (7);
     case "quarterindex":
-      return /** @satisfies {Quarterindex} */ (5);
+      return /** @satisfies {QuarterIndex} */ (19);
     case "yearindex":
-      return /** @satisfies {Yearindex} */ (6);
+      return /** @satisfies {YearIndex} */ (23);
     case "decadeindex":
-      return /** @satisfies {Decadeindex} */ (7);
+      return /** @satisfies {DecadeIndex} */ (1);
     case "halvingepoch":
-      return /** @satisfies {Halvingepoch} */ (8);
-    case "addressindex":
-      return /** @satisfies {Addressindex} */ (9);
-    case "p2pk33index":
-      return /** @satisfies {P2PK33index} */ (10);
-    case "p2pk65index":
-      return /** @satisfies {P2PK65index} */ (11);
-    case "p2pkhindex":
-      return /** @satisfies {P2PKHindex} */ (12);
-    case "p2shindex":
-      return /** @satisfies {P2SHindex} */ (13);
-    case "p2trindex":
-      return /** @satisfies {P2TRindex} */ (14);
-    case "p2wpkhindex":
-      return /** @satisfies {P2WPKHindex} */ (15);
-    case "p2wshindex":
-      return /** @satisfies {P2WSHindex} */ (16);
+      return /** @satisfies {HalvingEpoch} */ (4);
     case "txindex":
-      return /** @satisfies {Txindex} */ (17);
+      return /** @satisfies {TxIndex} */ (20);
     case "inputindex":
-      return /** @satisfies {Inputindex} */ (18);
+      return /** @satisfies {InputIndex} */ (6);
     case "outputindex":
-      return /** @satisfies {Outputindex} */ (19);
-    case "emptyoutputindex":
-      return /** @satisfies {Emptyindex} */ (20);
+      return /** @satisfies {OutputIndex} */ (9);
+    case "p2pk33index":
+      return /** @satisfies {P2PK33Index} */ (12);
+    case "p2pk65index":
+      return /** @satisfies {P2PK65Index} */ (13);
+    case "p2pkhindex":
+      return /** @satisfies {P2PKHIndex} */ (14);
+    case "p2shindex":
+      return /** @satisfies {P2SHIndex} */ (15);
+    case "p2trindex":
+      return /** @satisfies {P2TRIndex} */ (16);
+    case "p2wpkhindex":
+      return /** @satisfies {P2WPKHIndex} */ (17);
+    case "p2wshindex":
+      return /** @satisfies {P2WSHIndex} */ (18);
+    case "p2aindex":
+      return /** @satisfies {P2AIndex} */ (10);
     case "p2msindex":
-      return /** @satisfies {P2MSindex} */ (21);
+      return /** @satisfies {P2MSIndex} */ (11);
     case "opreturnindex":
-      return /** @satisfies {Opreturnindex} */ (22);
-    case "pushonlyindex":
-      return /** @satisfies {Pushonlyindex} */ (23);
+      return /** @satisfies {OpReturnIndex} */ (8);
+    case "emptyoutputindex":
+      return /** @satisfies {EmptyOutputIndex} */ (3);
     case "unknownoutputindex":
-      return /** @satisfies {Unknownindex} */ (24);
+      return /** @satisfies {UnknownOutputIndex} */ (21);
   }
 }
 

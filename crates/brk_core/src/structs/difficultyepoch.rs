@@ -1,4 +1,7 @@
-use std::{fmt::Debug, ops::Add};
+use std::{
+    fmt::Debug,
+    ops::{Add, Div},
+};
 
 use serde::{Deserialize, Serialize};
 use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
@@ -43,11 +46,26 @@ impl From<DifficultyEpoch> for usize {
     }
 }
 
+impl Add for DifficultyEpoch {
+    type Output = Self;
+
+    fn add(self, rhs: Self) -> Self::Output {
+        Self::from(self.0 + rhs.0)
+    }
+}
+
 impl Add<usize> for DifficultyEpoch {
     type Output = Self;
 
     fn add(self, rhs: usize) -> Self::Output {
         Self::from(self.0 + rhs as u16)
+    }
+}
+
+impl Div<usize> for DifficultyEpoch {
+    type Output = Self;
+    fn div(self, rhs: usize) -> Self::Output {
+        Self::from(self.0 as usize / rhs)
     }
 }
 

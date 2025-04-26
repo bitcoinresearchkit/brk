@@ -252,7 +252,7 @@ where
         first_indexes.iter_from(index, |(value, first_index, ..)| {
             let first_index = (first_index).to_usize()?;
             let last_index = (last_indexes.double_unwrap_cached_get(value)).to_usize()?;
-            (first_index..last_index)
+            (first_index..=last_index)
                 .try_for_each(|index| self.forced_push_at(I::from(index), value, exit))
         })?;
 

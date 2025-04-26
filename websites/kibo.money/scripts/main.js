@@ -9,7 +9,7 @@
  * @import {Signal, Signals} from "../packages/solid-signals/types";
  * @import { getOwner as GetOwner, onCleanup as OnCleanup, Owner } from "../packages/solid-signals/v0.2.4-treeshaked/types/core/owner"
  * @import { createEffect as CreateEffect, Accessor, Setter, createMemo as CreateMemo } from "../packages/solid-signals/v0.2.4-treeshaked/types/signals";
- * @import {Addressindex, Dateindex, Decadeindex, Difficultyepoch, Index, Halvingepoch, Height, Monthindex, P2PK33index, P2PK65index, P2PKHindex, P2SHindex, P2TRindex, P2WPKHindex, P2WSHindex, Txindex, Inputindex, Outputindex, VecId, Weekindex, Yearindex, VecIdToIndexes, Quarterindex, Emptyindex, P2MSindex, Opreturnindex, Pushonlyindex, Unknownindex} from "./vecid-to-indexes"
+ * @import {DateIndex, DecadeIndex, DifficultyEpoch, Index, HalvingEpoch, Height, MonthIndex, P2PK33Index, P2PK65Index, P2PKHIndex, P2SHIndex, P2MSIndex, P2AIndex, P2TRIndex, P2WPKHIndex, P2WSHIndex, TxIndex, InputIndex, OutputIndex, VecId, WeekIndex, YearIndex, VecIdToIndexes, QuarterIndex, EmptyOutputIndex, OpReturnIndex, UnknownOutputIndex} from "./vecid-to-indexes"
  */
 
 /**
@@ -686,11 +686,12 @@ function createUtils() {
       unit = "Index";
     } else if (id.includes("type")) {
       unit = "Type";
-    } else if (id === "locktime") {
+    } else if (id === "rawlocktime") {
       unit = "Locktime";
     } else if (id.startsWith("is-")) {
       unit = "Bool";
     } else if (
+      id.includes("bytes") ||
       id.includes("hash") ||
       id.includes("address") ||
       id.includes("txid")
@@ -1079,8 +1080,9 @@ function createUtils() {
      * @template T
      * @param {(value: T) => void} callback
      * @param {string} path
+     * @param {boolean} [mustBeArray]
      */
-    async function fetchApi(callback, path) {
+    async function fetchApi(callback, path, mustBeArray) {
       const url = `/api${path}`;
 
       /** @type {T | null} */
@@ -1119,7 +1121,10 @@ function createUtils() {
 
         let fetchedJson = /** @type {T | null} */ (null);
         try {
-          fetchedJson = /** @type {T} */ (await fetchedResponse.json());
+          const f = await fetchedResponse.json();
+          fetchedJson = /** @type {T} */ (
+            mustBeArray && !Array.isArray(f) ? [f] : f
+          );
         } catch (_) {
           return cachedJson;
         }
@@ -1166,46 +1171,54 @@ function createUtils() {
      */
     function vecIndexToString(index) {
       switch (index) {
-        case /** @satisfies {Addressindex} */ (9):
-          return "Addressindex";
-        case /** @satisfies {Dateindex} */ (1):
-          return "Dateindex";
-        case /** @satisfies {Height} */ (0):
-          return "Height";
-        case /** @satisfies {P2PK33index} */ (10):
-          return "P2PK33index";
-        case /** @satisfies {P2PK65index} */ (11):
-          return "P2PK65index";
-        case /** @satisfies {P2PKHindex} */ (12):
-          return "P2PKHindex";
-        case /** @satisfies {P2SHindex} */ (13):
-          return "P2SHindex";
-        case /** @satisfies {P2TRindex} */ (14):
-          return "P2TRindex";
-        case /** @satisfies {P2WPKHindex} */ (15):
-          return "P2WPKHindex";
-        case /** @satisfies {P2WSHindex} */ (16):
-          return "P2WSHindex";
-        case /** @satisfies {Txindex} */ (17):
-          return "Txindex";
-        case /** @satisfies {Inputindex} */ (18):
-          return "Inputindex";
-        case /** @satisfies {Outputindex} */ (19):
-          return "Outputindex";
-        case /** @satisfies {Weekindex} */ (2):
-          return "Weekindex";
-        case /** @satisfies {Monthindex} */ (4):
-          return "Monthindex";
-        case /** @satisfies {Quarterindex} */ (5):
-          return "Quarterindex";
-        case /** @satisfies {Yearindex} */ (6):
-          return "Yearindex";
-        case /** @satisfies {Decadeindex} */ (7):
-          return "Decadeindex";
-        case /** @satisfies {Difficultyepoch} */ (3):
-          return "Difficultyepoch";
-        case /** @satisfies {Halvingepoch} */ (8):
-          return "Halvingepoch";
+        case /** @satisfies {DateIndex} */ (0):
+          return "dateindex";
+        case /** @satisfies {DecadeIndex} */ (1):
+          return "decadeindex";
+        case /** @satisfies {DifficultyEpoch} */ (2):
+          return "difficultyepoch";
+        case /** @satisfies {EmptyOutputIndex} */ (3):
+          return "emptyoutputindex";
+        case /** @satisfies {HalvingEpoch} */ (4):
+          return "halvingepoch";
+        case /** @satisfies {Height} */ (5):
+          return "height";
+        case /** @satisfies {InputIndex} */ (6):
+          return "inputindex";
+        case /** @satisfies {MonthIndex} */ (7):
+          return "monthindex";
+        case /** @satisfies {OpReturnIndex} */ (8):
+          return "opreturnindex";
+        case /** @satisfies {OutputIndex} */ (9):
+          return "outputindex";
+        case /** @satisfies {P2AIndex} */ (10):
+          return "p2aindex";
+        case /** @satisfies {P2MSIndex} */ (11):
+          return "p2msindex";
+        case /** @satisfies {P2PK33Index} */ (12):
+          return "p2pk33index";
+        case /** @satisfies {P2PK65Index} */ (13):
+          return "p2pk65index";
+        case /** @satisfies {P2PKHIndex} */ (14):
+          return "p2pkhindex";
+        case /** @satisfies {P2SHIndex} */ (15):
+          return "p2shindex";
+        case /** @satisfies {P2TRIndex} */ (16):
+          return "p2trindex";
+        case /** @satisfies {P2WPKHIndex} */ (17):
+          return "p2wpkhindex";
+        case /** @satisfies {P2WSHIndex} */ (18):
+          return "p2wshindex";
+        case /** @satisfies {QuarterIndex} */ (19):
+          return "quarterindex";
+        case /** @satisfies {TxIndex} */ (20):
+          return "txindex";
+        case /** @satisfies {UnknownOutputIndex} */ (21):
+          return "unknownoutputindex";
+        case /** @satisfies {WeekIndex} */ (22):
+          return "weekindex";
+        case /** @satisfies {YearIndex} */ (23):
+          return "yearindex";
       }
     }
 
@@ -1244,7 +1257,7 @@ function createUtils() {
        * @param {number} [to]
        */
       fetchVec(callback, index, vecId, from, to) {
-        return fetchApi(callback, genPath(index, vecId, from, to));
+        return fetchApi(callback, genPath(index, vecId, from, to), true);
       },
       /**
        * @template {number | OHLCTuple} [T=number]
@@ -1314,12 +1327,12 @@ function createVecsResources(signals, utils) {
     return signals.runWithOwner(owner, () => {
       /** @typedef {T extends number ? SingleValueData : CandlestickData} Value */
 
-      let loading = false;
-      let at = /** @type {Date | null} */ (null);
+      const fetchedRecord =
+        /** @type {Record<string, {loading: boolean, at: Date | null, vec: Signal<T[] | null>}>} */ ({});
 
       return {
         url: utils.api.genUrl(index, id, defaultFrom),
-        fetched: /** @type {Record<string, Signal<T[] | null>>} */ ({}),
+        fetched: fetchedRecord,
         /**
          * Defaults
          * - from: -10_000
@@ -1333,21 +1346,23 @@ function createVecsResources(signals, utils) {
           const from = args?.from ?? defaultFrom;
           const to = args?.to ?? defaultTo;
           const fetchedKey = genFetchedKey({ from, to });
-          this.fetched[fetchedKey] ??= signals.createSignal(
-            /** @type {T[] | null} */ (null),
-          );
-          const fetched = this.fetched[fetchedKey];
-          if (loading) return fetched();
-          if (at) {
-            const diff = new Date().getTime() - at.getTime();
+          fetchedRecord[fetchedKey] ??= {
+            loading: false,
+            at: null,
+            vec: signals.createSignal(/** @type {T[] | null} */ (null)),
+          };
+          const fetched = fetchedRecord[fetchedKey];
+          if (fetched.loading) return fetched.vec();
+          if (fetched.at) {
+            const diff = new Date().getTime() - fetched.at.getTime();
             const ONE_MINUTE_IN_MS = 60_000;
-            if (diff < ONE_MINUTE_IN_MS) return fetched();
+            if (diff < ONE_MINUTE_IN_MS) return fetched.vec();
           }
-          loading = true;
+          fetched.loading = true;
           const res = /** @type {T[] | null} */ (
             await utils.api.fetchVec(
               (values) => {
-                fetched.set(/** @type {T[]} */ (values));
+                fetched.vec.set(/** @type {T[]} */ (values));
               },
               index,
               id,
@@ -1355,8 +1370,8 @@ function createVecsResources(signals, utils) {
               to,
             )
           );
-          at = new Date();
-          loading = false;
+          fetched.at = new Date();
+          fetched.loading = false;
           return res;
         },
       };
@@ -1967,7 +1982,7 @@ function main() {
               (h) => {
                 lastHeight.set(h);
               },
-              /** @satisfies {Height} */ (0),
+              /** @satisfies {Height} */ (5),
               "height",
             );
           }

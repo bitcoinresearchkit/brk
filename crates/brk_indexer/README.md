@@ -58,10 +58,9 @@ Stores: `src/storage/stores/mod.rs`
 
 ## Benchmark
 
-### Result 1 - 2025-04-12
+### `v0.0.21`
 
-- version: `v0.0.21`
-- machine: `Macbook Pro M3 Pro (36GB RAM)`
+- machine: `MBP M3 Pro (36GB RAM)`
 - mode: `raw`
 - from: `0`
 - to: `892_098`
@@ -69,3 +68,10 @@ Stores: `src/storage/stores/mod.rs`
 - peak memory: `6.1GB`
 - disk usage: `270 GB`
 - overhead: `36%` (`270 GB / 741 GB`)
+
+### `v0.0.31`
+
+- machine: `MBP M3 Pro (36GB RAM)`
+- mode: `raw`
+- disk usage: `208 GB`
+- overhead: `28%` (`208 GB / 744 GB`)
