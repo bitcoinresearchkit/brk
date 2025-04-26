@@ -32,7 +32,7 @@ pub use stores::*;
 pub use vecs::*;
 
 const SNAPSHOT_BLOCK_RANGE: usize = 1000;
-const COLLISIONS_CHECKED_UP_TO: u32 = 0;
+const COLLISIONS_CHECKED_UP_TO: u32 = 893_000;
 
 #[derive(Clone)]
 pub struct Indexer {
@@ -166,39 +166,35 @@ impl Indexer {
 
                 vecs.height_to_blockhash.push_if_needed(height, blockhash)?;
                 vecs.height_to_difficulty
-                    .push_if_needed(height, block.header.difficulty_float())?;
+                    .push_if_needed(height, block.header.difficulty_float().into())?;
                 vecs.height_to_timestamp
                     .push_if_needed(height, Timestamp::from(block.header.time))?;
                 vecs.height_to_total_size.push_if_needed(height, block.total_size().into())?;
                 vecs.height_to_weight.push_if_needed(height, block.weight().into())?;
 
-                let (inputs, outputs) = thread::scope(|s| {
-                    let inputs_handle = s.spawn(|| block
-                        .txdata
-                        .iter()
-                        .enumerate()
-                        .flat_map(|(index, tx)| {
-                            tx.input
-                                .iter()
-                                .enumerate()
-                                .map(move |(vin, txin)| (TxIndex::from(index), Vin::from(vin), txin, tx))
-                        })
-                        .collect::<Vec<_>>());
+                let inputs = block
+                    .txdata
+                    .iter()
+                    .enumerate()
+                    .flat_map(|(index, tx)| {
+                        tx.input
+                            .iter()
+                            .enumerate()
+                            .map(move |(vin, txin)| (TxIndex::from(index), Vin::from(vin), txin, tx))
+                    })
+                    .collect::<Vec<_>>();
 
-                    let outputs_handle = s.spawn(||  block
-                        .txdata
-                        .iter()
-                        .enumerate()
-                        .flat_map(|(index, tx)| {
-                            tx.output
-                                .iter()
-                                .enumerate()
-                                .map(move |(vout, txout)| (TxIndex::from(index), Vout::from(vout), txout, tx))
-                        })
-                        .collect::<Vec<_>>());
-
-                    (inputs_handle.join().unwrap(), outputs_handle.join().unwrap())
-                });
+                let outputs = block
+                    .txdata
+                    .iter()
+                    .enumerate()
+                    .flat_map(|(index, tx)| {
+                        tx.output
+                            .iter()
+                            .enumerate()
+                            .map(move |(vout, txout)| (TxIndex::from(index), Vout::from(vout), txout, tx))
+                    })
+                    .collect::<Vec<_>>();
 
                 let tx_len = block.txdata.len();
                 let outputs_len = outputs.len();

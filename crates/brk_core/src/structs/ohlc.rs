@@ -6,7 +6,7 @@ use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 use super::{Cents, Dollars, Sats};
 
-#[derive(Debug, Default, Clone, FromBytes, Immutable, IntoBytes, KnownLayout, Serialize)]
+#[derive(Debug, Default, Clone, FromBytes, Immutable, IntoBytes, KnownLayout)]
 #[repr(C)]
 pub struct OHLCCents {
     pub open: Open<Cents>,
@@ -34,6 +34,20 @@ impl From<Close<Cents>> for OHLCCents {
             low: Low::from(value),
             close: value,
         }
+    }
+}
+
+impl Serialize for OHLCCents {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut tup = serializer.serialize_tuple(4)?;
+        tup.serialize_element(&self.open)?;
+        tup.serialize_element(&self.high)?;
+        tup.serialize_element(&self.low)?;
+        tup.serialize_element(&self.close)?;
+        tup.end()
     }
 }
 

@@ -295,19 +295,19 @@ function createIndexSelector({ elements, signals, utils }) {
     /** @returns {ChartableIndex} */ () => {
       switch (selected()) {
         case "timestamp":
-          return /** @satisfies {Height} */ (0);
+          return /** @satisfies {Height} */ (5);
         case "date":
-          return /** @satisfies {Dateindex} */ (1);
+          return /** @satisfies {DateIndex} */ (0);
         case "week":
-          return /** @satisfies {Weekindex} */ (2);
+          return /** @satisfies {WeekIndex} */ (22);
         case "month":
-          return /** @satisfies {Monthindex} */ (4);
+          return /** @satisfies {MonthIndex} */ (7);
         case "quarter":
-          return /** @satisfies {Quarterindex} */ (5);
+          return /** @satisfies {QuarterIndex} */ (19);
         case "year":
-          return /** @satisfies {Yearindex} */ (6);
+          return /** @satisfies {YearIndex} */ (23);
         case "decade":
-          return /** @satisfies {Decadeindex} */ (7);
+          return /** @satisfies {DecadeIndex} */ (1);
       }
     },
   );
