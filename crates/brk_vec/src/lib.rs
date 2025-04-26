@@ -239,3 +239,43 @@ where
         GenericVec::file_name(self)
     }
 }
+
+#[derive(Debug)]
+pub enum StoredVecIterator<'a, I, T>
+where
+    I: StoredIndex,
+    T: StoredType,
+{
+    Raw(RawVecIterator<'a, I, T>),
+    Compressed(CompressedVecIterator<'a, I, T>),
+}
+
+impl<'a, I, T> Iterator for StoredVecIterator<'a, I, T>
+where
+    I: StoredIndex,
+    T: StoredType,
+{
+    type Item = (I, Value<'a, T>);
+    fn next(&mut self) -> Option<Self::Item> {
+        match self {
+            Self::Compressed(i) => i.next(),
+            Self::Raw(i) => i.next(),
+        }
+    }
+}
+
+impl<'a, I, T> IntoIterator for &'a StoredVec<I, T>
+where
+    I: StoredIndex,
+    T: StoredType,
+{
+    type Item = (I, Value<'a, T>);
+    type IntoIter = StoredVecIterator<'a, I, T>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        match self {
+            StoredVec::Compressed(v) => StoredVecIterator::Compressed(v.into_iter()),
+            StoredVec::Raw(v) => StoredVecIterator::Raw(v.into_iter()),
+        }
+    }
+}

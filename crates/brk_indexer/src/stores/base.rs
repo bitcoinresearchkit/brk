@@ -10,7 +10,7 @@ use brk_core::Height;
 use brk_vec::{Value, Version};
 use byteview::ByteView;
 use fjall::{
-    PartitionCreateOptions, ReadTransaction, Result, TransactionalKeyspace,
+    PartitionCreateOptions, PersistMode, ReadTransaction, Result, TransactionalKeyspace,
     TransactionalPartitionHandle,
 };
 use zerocopy::{Immutable, IntoBytes};
@@ -19,6 +19,7 @@ use super::StoreMeta;
 
 pub struct Store<Key, Value> {
     meta: StoreMeta,
+    name: String,
     keyspace: TransactionalKeyspace,
     partition: TransactionalPartitionHandle,
     rtx: ReadTransaction,
@@ -58,6 +59,7 @@ where
 
         Ok(Self {
             meta,
+            name: name.to_owned(),
             keyspace,
             partition,
             rtx,
@@ -177,6 +179,13 @@ where
                 .manual_journal_persist(true),
         )
     }
+
+    pub fn reset_partition(&mut self) -> Result<()> {
+        self.keyspace.delete_partition(self.partition.clone())?;
+        self.keyspace.persist(PersistMode::SyncAll)?;
+        self.partition = Self::open_partition_handle(&self.keyspace, &self.name)?;
+        Ok(())
+    }
 }
 
 impl<Key, Value> Clone for Store<Key, Value>
@@ -187,6 +196,7 @@ where
     fn clone(&self) -> Self {
         Self {
             meta: self.meta.clone(),
+            name: self.name.clone(),
             keyspace: self.keyspace.clone(),
             partition: self.partition.clone(),
             rtx: self.keyspace.read_tx(),
