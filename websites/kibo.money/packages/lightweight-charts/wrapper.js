@@ -1,6 +1,6 @@
 // @ts-check
 
-/** @import {IChartApi, ISeriesApi, SeriesDefinition, SingleValueData as _SingleValueData, CandlestickData as _CandlestickData, BaselineData, SeriesType, IPaneApi, LineSeriesOptions} from './v5.0.5-treeshaked/types' */
+/** @import {IChartApi, ISeriesApi, SeriesDefinition, SingleValueData as _SingleValueData, CandlestickData as _CandlestickData, BaselineData, SeriesType, IPaneApi, LineSeriesOptions} from './v5.0.6-treeshaked/types' */
 
 /**
  * @typedef {[number, number, number, number]} OHLCTuple
@@ -22,7 +22,7 @@
  * @typedef {ChartData<_CandlestickData>} CandlestickData
  */
 
-export default import("./v5.0.5-treeshaked/script.js").then((lc) => {
+export default import("./v5.0.6-treeshaked/script.js").then((lc) => {
   const oklchToRGBA = createOklchToRGBA();
 
   /**

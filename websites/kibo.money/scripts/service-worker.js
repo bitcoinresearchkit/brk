@@ -20,8 +20,8 @@ self.addEventListener("install", (_event) => {
         "/scripts/simulation.js",
         "/styles/simulation.css",
         "/packages/lean-qr/v2.3.4/script.js",
-        "/packages/lightweight-charts/v5.0.5-treeshaked/script.js",
-        "/packages/solid-signals/v0.2.4-treeshaked/script.js",
+        "/packages/lightweight-charts/v5.0.6-treeshaked/script.js",
+        "/packages/solid-signals/v0.3.0-treeshaked/script.js",
         "/packages/ufuzzy/v1.0.14/script.js",
       ]);
     }),
