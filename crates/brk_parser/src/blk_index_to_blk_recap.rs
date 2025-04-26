@@ -14,7 +14,11 @@ pub struct BlkIndexToBlkRecap {
 }
 
 impl BlkIndexToBlkRecap {
-    pub fn import(bitcoin_dir: &Path, blk_index_to_blk_path: &BlkIndexToBlkPath, start: Option<Height>) -> (Self, u16) {
+    pub fn import(
+        bitcoin_dir: &Path,
+        blk_index_to_blk_path: &BlkIndexToBlkPath,
+        start: Option<Height>,
+    ) -> (Self, u16) {
         let path = bitcoin_dir.join("blk_index_to_blk_recap.json");
 
         let tree = {
@@ -40,17 +44,19 @@ impl BlkIndexToBlkRecap {
 
         let mut unprocessed_keys = self.tree.keys().copied().collect::<BTreeSet<_>>();
 
-        blk_index_to_blk_path.iter().for_each(|(blk_index, blk_path)| {
-            unprocessed_keys.remove(blk_index);
-            if let Some(blk_recap) = self.tree.get(blk_index) {
-                if blk_recap.has_different_modified_time(blk_path) {
-                    self.tree.remove(blk_index).unwrap();
-                    if min_removed_blk_index.is_none_or(|_blk_index| *blk_index < _blk_index) {
-                        min_removed_blk_index.replace(*blk_index);
+        blk_index_to_blk_path
+            .iter()
+            .for_each(|(blk_index, blk_path)| {
+                unprocessed_keys.remove(blk_index);
+                if let Some(blk_recap) = self.tree.get(blk_index) {
+                    if blk_recap.has_different_modified_time(blk_path) {
+                        self.tree.remove(blk_index).unwrap();
+                        if min_removed_blk_index.is_none_or(|_blk_index| *blk_index < _blk_index) {
+                            min_removed_blk_index.replace(*blk_index);
+                        }
                     }
                 }
-            }
-        });
+            });
 
         unprocessed_keys.into_iter().for_each(|blk_index| {
             self.tree.remove(&blk_index).unwrap();
@@ -71,7 +77,11 @@ impl BlkIndexToBlkRecap {
 
         let mut start = None;
 
-        if let Some(found) = self.tree.iter().find(|(_, recap)| recap.max_height >= height) {
+        if let Some(found) = self
+            .tree
+            .iter()
+            .find(|(_, recap)| recap.max_height >= height)
+        {
             start = Some(*found.0);
         }
 

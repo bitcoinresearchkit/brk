@@ -29,6 +29,12 @@ use super::StoredU32;
 pub struct TxIndex(u32);
 
 impl TxIndex {
+    pub const ZERO: Self = Self(0);
+
+    pub fn new(txindex: u32) -> Self {
+        Self(txindex)
+    }
+
     pub fn incremented(self) -> Self {
         Self(*self + 1)
     }

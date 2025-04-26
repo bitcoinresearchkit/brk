@@ -12,7 +12,7 @@ use zstd::DEFAULT_COMPRESSION_LEVEL;
 
 use crate::{
     CompressedPageMetadata, CompressedPagesMetadata, DynamicVec, Error, GenericVec, RawVec, Result,
-    StoredIndex, StoredType, UnsafeSlice, Version,
+    StoredIndex, StoredType, UnsafeSlice, Value, Version,
 };
 
 const ONE_KIB: usize = 1024;
@@ -193,6 +193,14 @@ where
     fn page_index_to_index(page_index: usize) -> usize {
         page_index * Self::PER_PAGE
     }
+
+    fn stored_len_(pages_meta: &Guard<Arc<CompressedPagesMetadata>>) -> usize {
+        if let Some(last) = pages_meta.last() {
+            (pages_meta.len() - 1) * Self::PER_PAGE + last.values_len as usize
+        } else {
+            0
+        }
+    }
 }
 
 impl<I, T> DynamicVec for CompressedVec<I, T>
@@ -262,12 +270,7 @@ where
     }
 
     fn stored_len(&self) -> usize {
-        let pages_meta = self.pages_meta.load();
-        if let Some(last) = pages_meta.last() {
-            (pages_meta.len() - 1) * Self::PER_PAGE + last.values_len as usize
-        } else {
-            0
-        }
+        Self::stored_len_(&self.pages_meta.load())
     }
 
     #[inline]
@@ -521,6 +524,77 @@ where
             decoded_page: None,
             decoded_pages: None,
             pages_meta: self.pages_meta.clone(),
+        }
+    }
+}
+
+#[derive(Debug)]
+pub struct CompressedVecIterator<'a, I, T> {
+    vec: &'a CompressedVec<I, T>,
+    guard: Guard<Arc<Mmap>>,
+    decoded_page: Option<(usize, Vec<T>)>,
+    // second_decoded_page?: Option<(usize, Vec<T>)>,
+    pages_meta: Guard<Arc<CompressedPagesMetadata>>,
+    stored_len: usize,
+    index: usize,
+}
+
+impl<'a, I, T> Iterator for CompressedVecIterator<'a, I, T>
+where
+    I: StoredIndex,
+    T: StoredType,
+{
+    type Item = (I, Value<'a, T>);
+    fn next(&mut self) -> Option<Self::Item> {
+        let mmap = &self.guard;
+        let i = self.index;
+        let stored_len = self.stored_len;
+
+        let result = if i >= stored_len {
+            let j = i - stored_len;
+            if j >= self.vec.pushed_len() {
+                return None;
+            }
+            self.vec
+                .pushed()
+                .get(j)
+                .map(|v| (I::from(i), Value::Ref(v)))
+        } else {
+            CompressedVec::<I, T>::cached_get_stored__(
+                i,
+                mmap,
+                stored_len,
+                &mut self.decoded_page,
+                &self.pages_meta,
+            )
+            .unwrap()
+            .map(|v| (I::from(i), Value::Owned(v)))
+        };
+
+        self.index += 1;
+
+        result
+    }
+}
+
+impl<'a, I, T> IntoIterator for &'a CompressedVec<I, T>
+where
+    I: StoredIndex,
+    T: StoredType,
+{
+    type Item = (I, Value<'a, T>);
+    type IntoIter = CompressedVecIterator<'a, I, T>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        let pages_meta = self.pages_meta.load();
+        let stored_len = CompressedVec::<I, T>::stored_len_(&pages_meta);
+        CompressedVecIterator {
+            vec: self,
+            guard: self.mmap().load(),
+            decoded_page: None,
+            pages_meta,
+            stored_len,
+            index: 0,
         }
     }
 }

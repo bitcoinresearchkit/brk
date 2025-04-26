@@ -19,36 +19,29 @@ use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
     FromBytes,
     Serialize,
 )]
-pub struct Weight(u32);
+pub struct Weight(u64);
 
 impl From<bitcoin::Weight> for Weight {
     fn from(value: bitcoin::Weight) -> Self {
-        let wu = value.to_wu();
-        if wu > u32::MAX as u64 {
-            unreachable!("wu is too big, shouldn't happen")
-        }
-        Self(wu as u32)
+        Self(value.to_wu())
     }
 }
 
 impl From<Weight> for bitcoin::Weight {
     fn from(value: Weight) -> Self {
-        Self::from_wu(*value as u64)
+        Self::from_wu(value.0)
     }
 }
 
 impl From<usize> for Weight {
     fn from(value: usize) -> Self {
-        if value > u32::MAX as usize {
-            panic!()
-        }
-        Self(value as u32)
+        Self(value as u64)
     }
 }
 
 impl From<f64> for Weight {
     fn from(value: f64) -> Self {
-        Self(value as u32)
+        Self(value as u64)
     }
 }
 

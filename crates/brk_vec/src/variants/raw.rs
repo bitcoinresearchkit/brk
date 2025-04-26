@@ -10,7 +10,9 @@ use arc_swap::{ArcSwap, Guard};
 use memmap2::Mmap;
 use rayon::prelude::*;
 
-use crate::{DynamicVec, Error, GenericVec, Result, StoredIndex, StoredType, UnsafeSlice, Version};
+use crate::{
+    DynamicVec, Error, GenericVec, Result, StoredIndex, StoredType, UnsafeSlice, Value, Version,
+};
 
 #[derive(Debug)]
 pub struct RawVec<I, T> {
@@ -236,6 +238,64 @@ where
             guard: None,
             pushed: vec![],
             phantom: PhantomData,
+        }
+    }
+}
+
+#[derive(Debug)]
+pub struct RawVecIterator<'a, I, T> {
+    vec: &'a RawVec<I, T>,
+    guard: Guard<Arc<Mmap>>,
+    index: usize,
+}
+
+impl<I, T> RawVecIterator<'_, I, T> {
+    const SIZE_OF_T: usize = size_of::<T>();
+}
+
+impl<'a, I, T> Iterator for RawVecIterator<'a, I, T>
+where
+    I: StoredIndex,
+    T: StoredType,
+{
+    type Item = (I, Value<'a, T>);
+    fn next(&mut self) -> Option<Self::Item> {
+        let mmap = &self.guard;
+        let vec = self.vec;
+        let i = self.index;
+
+        let stored_len = mmap.len() / Self::SIZE_OF_T;
+
+        let result = if i >= stored_len {
+            let j = i - stored_len;
+            if j >= vec.pushed_len() {
+                return None;
+            }
+            vec.pushed().get(j).map(|v| (I::from(i), Value::Ref(v)))
+        } else {
+            vec.get_stored_(i, mmap)
+                .unwrap()
+                .map(|v| (I::from(i), Value::Owned(v)))
+        };
+
+        self.index += 1;
+        result
+    }
+}
+
+impl<'a, I, T> IntoIterator for &'a RawVec<I, T>
+where
+    I: StoredIndex,
+    T: StoredType,
+{
+    type Item = (I, Value<'a, T>);
+    type IntoIter = RawVecIterator<'a, I, T>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        RawVecIterator {
+            vec: self,
+            guard: self.mmap.load(),
+            index: 0,
         }
     }
 }
