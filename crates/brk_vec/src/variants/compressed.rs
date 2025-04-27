@@ -324,30 +324,21 @@ where
         })
     }
 
-    fn collect_range(&self, from: Option<usize>, to: Option<usize>) -> Result<Vec<Self::T>> {
-        if !self.is_pushed_empty() {
-            return Err(Error::UnsupportedUnflushedState);
-        }
-
+    fn collect_range(&self, from: Option<usize>, to: Option<usize>) -> Result<Vec<T>> {
         let stored_len = self.stored_len();
-
         let from = from.unwrap_or_default();
         let to = to.map_or(stored_len, |i| i.min(stored_len));
 
-        if from >= stored_len {
+        if from >= stored_len || from >= to {
             return Ok(vec![]);
         }
 
-        let mmap = self.mmap().load();
-        let pages_meta = self.pages_meta.load();
-        let mut decoded_page: Option<(usize, Vec<T>)> = None;
-
-        (from..to)
-            .map(|index| {
-                Self::cached_get_stored__(index, &mmap, stored_len, &mut decoded_page, &pages_meta)
-                    .map(|opt| opt.unwrap())
-            })
-            .collect::<Result<Vec<_>>>()
+        Ok(self
+            .into_iter()
+            .skip(from)
+            .take(to - from)
+            .map(|(_, v)| v.into_inner())
+            .collect::<Vec<_>>())
     }
 
     fn flush(&mut self) -> Result<()> {

@@ -75,3 +75,4 @@ Stores: `src/storage/stores/mod.rs`
 - mode: `raw`
 - disk usage: `208 GB`
 - overhead: `28%` (`208 GB / 744 GB`)
+- peak memory: `5.7GB`
