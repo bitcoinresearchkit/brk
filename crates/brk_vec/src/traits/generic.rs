@@ -10,7 +10,6 @@ use axum::{
     response::{IntoResponse, Response},
 };
 use memmap2::Mmap;
-use serde_json::Value;
 
 use crate::{Error, Result, Version};
 
@@ -161,7 +160,11 @@ where
     }
 
     #[inline]
-    fn collect_range_serde_json(&self, from: Option<i64>, to: Option<i64>) -> Result<Vec<Value>> {
+    fn collect_range_serde_json(
+        &self,
+        from: Option<i64>,
+        to: Option<i64>,
+    ) -> Result<Vec<serde_json::Value>> {
         self.collect_signed_range(from, to)?
             .into_iter()
             .map(|v| serde_json::to_value(v).map_err(Error::from))

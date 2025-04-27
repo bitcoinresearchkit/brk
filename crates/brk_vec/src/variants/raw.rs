@@ -152,24 +152,20 @@ where
     }
 
     fn collect_range(&self, from: Option<usize>, to: Option<usize>) -> Result<Vec<T>> {
-        if !self.is_pushed_empty() {
-            return Err(Error::UnsupportedUnflushedState);
-        }
-
         let stored_len = self.stored_len();
-
         let from = from.unwrap_or_default();
         let to = to.map_or(stored_len, |i| i.min(stored_len));
 
-        if from >= stored_len {
+        if from >= stored_len || from >= to {
             return Ok(vec![]);
         }
 
-        let mmap = self.mmap.load();
-
-        (from..to)
-            .map(|index| self.get_stored_(index, &mmap).map(|opt| opt.unwrap()))
-            .collect::<Result<Vec<_>>>()
+        Ok(self
+            .into_iter()
+            .skip(from)
+            .take(to - from)
+            .map(|(_, v)| v.into_inner())
+            .collect::<Vec<_>>())
     }
 
     fn flush(&mut self) -> Result<()> {
