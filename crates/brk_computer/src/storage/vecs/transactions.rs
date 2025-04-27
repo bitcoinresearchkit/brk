@@ -20,28 +20,40 @@ use super::{
 
 #[derive(Clone)]
 pub struct Vecs {
-    pub indexes_to_tx_count: ComputedVecsFromHeight<StoredU64>,
+    // pub txindex_to_is_v1: LazyVec<Txindex, bool>,
+    // pub txindex_to_is_v2: LazyVec<Txindex, bool>,
+    // pub txindex_to_is_v3: LazyVec<Txindex, bool>,
+    pub indexes_to_coinbase: ComputedValueVecsFromHeight,
+    pub indexes_to_emptyoutput_count: ComputedVecsFromHeight<StoredU32>,
     pub indexes_to_fee: ComputedValueVecsFromTxindex,
     pub indexes_to_feerate: ComputedVecsFromTxindex<Feerate>,
+    /// Value == 0 when Coinbase
     pub indexes_to_input_value: ComputedVecsFromTxindex<Sats>,
+    pub indexes_to_opreturn_count: ComputedVecsFromHeight<StoredU32>,
     pub indexes_to_output_value: ComputedVecsFromTxindex<Sats>,
-    // pub txindex_to_is_v1: LazyVec<Txindex, bool>,
+    pub indexes_to_p2a_count: ComputedVecsFromHeight<StoredU32>,
+    pub indexes_to_p2ms_count: ComputedVecsFromHeight<StoredU32>,
+    pub indexes_to_p2pk33_count: ComputedVecsFromHeight<StoredU32>,
+    pub indexes_to_p2pk65_count: ComputedVecsFromHeight<StoredU32>,
+    pub indexes_to_p2pkh_count: ComputedVecsFromHeight<StoredU32>,
+    pub indexes_to_p2sh_count: ComputedVecsFromHeight<StoredU32>,
+    pub indexes_to_p2tr_count: ComputedVecsFromHeight<StoredU32>,
+    pub indexes_to_p2wpkh_count: ComputedVecsFromHeight<StoredU32>,
+    pub indexes_to_p2wsh_count: ComputedVecsFromHeight<StoredU32>,
+    pub indexes_to_subsidy: ComputedValueVecsFromHeight,
+    pub indexes_to_tx_count: ComputedVecsFromHeight<StoredU64>,
     pub indexes_to_tx_v1: ComputedVecsFromHeight<StoredU32>,
-    // pub txindex_to_is_v2: LazyVec<Txindex, bool>,
     pub indexes_to_tx_v2: ComputedVecsFromHeight<StoredU32>,
-    // pub txindex_to_is_v3: LazyVec<Txindex, bool>,
     pub indexes_to_tx_v3: ComputedVecsFromHeight<StoredU32>,
     pub indexes_to_tx_vsize: ComputedVecsFromTxindex<StoredUsize>,
     pub indexes_to_tx_weight: ComputedVecsFromTxindex<Weight>,
+    pub indexes_to_unknownoutput_count: ComputedVecsFromHeight<StoredU32>,
+    pub inputindex_to_value: EagerVec<InputIndex, Sats>,
     pub txindex_to_input_count: ComputedVecsFromTxindex<StoredU64>,
     pub txindex_to_is_coinbase: EagerVec<TxIndex, bool>,
     pub txindex_to_output_count: ComputedVecsFromTxindex<StoredU64>,
     pub txindex_to_vsize: EagerVec<TxIndex, StoredUsize>,
     pub txindex_to_weight: EagerVec<TxIndex, Weight>,
-    /// Value == 0 when Coinbase
-    pub inputindex_to_value: EagerVec<InputIndex, Sats>,
-    pub indexes_to_subsidy: ComputedValueVecsFromHeight,
-    pub indexes_to_coinbase: ComputedValueVecsFromHeight,
 }
 
 impl Vecs {
@@ -234,6 +246,162 @@ impl Vecs {
                     .add_average(),
                 compute_dollars,
             )?,
+            indexes_to_p2a_count: ComputedVecsFromHeight::forced_import(
+                path,
+                "p2a_count",
+                true,
+                Version::ZERO,
+                compressed,
+                StorableVecGeneatorOptions::default()
+                    .add_average()
+                    .add_minmax()
+                    .add_percentiles()
+                    .add_sum()
+                    .add_total(),
+            )?,
+            indexes_to_p2ms_count: ComputedVecsFromHeight::forced_import(
+                path,
+                "p2ms_count",
+                true,
+                Version::ZERO,
+                compressed,
+                StorableVecGeneatorOptions::default()
+                    .add_average()
+                    .add_minmax()
+                    .add_percentiles()
+                    .add_sum()
+                    .add_total(),
+            )?,
+            indexes_to_p2pk33_count: ComputedVecsFromHeight::forced_import(
+                path,
+                "p2pk33_count",
+                true,
+                Version::ZERO,
+                compressed,
+                StorableVecGeneatorOptions::default()
+                    .add_average()
+                    .add_minmax()
+                    .add_percentiles()
+                    .add_sum()
+                    .add_total(),
+            )?,
+            indexes_to_p2pk65_count: ComputedVecsFromHeight::forced_import(
+                path,
+                "p2pk65_count",
+                true,
+                Version::ZERO,
+                compressed,
+                StorableVecGeneatorOptions::default()
+                    .add_average()
+                    .add_minmax()
+                    .add_percentiles()
+                    .add_sum()
+                    .add_total(),
+            )?,
+            indexes_to_p2pkh_count: ComputedVecsFromHeight::forced_import(
+                path,
+                "p2pkh_count",
+                true,
+                Version::ZERO,
+                compressed,
+                StorableVecGeneatorOptions::default()
+                    .add_average()
+                    .add_minmax()
+                    .add_percentiles()
+                    .add_sum()
+                    .add_total(),
+            )?,
+            indexes_to_p2sh_count: ComputedVecsFromHeight::forced_import(
+                path,
+                "p2sh_count",
+                true,
+                Version::ZERO,
+                compressed,
+                StorableVecGeneatorOptions::default()
+                    .add_average()
+                    .add_minmax()
+                    .add_percentiles()
+                    .add_sum()
+                    .add_total(),
+            )?,
+            indexes_to_p2tr_count: ComputedVecsFromHeight::forced_import(
+                path,
+                "p2tr_count",
+                true,
+                Version::ZERO,
+                compressed,
+                StorableVecGeneatorOptions::default()
+                    .add_average()
+                    .add_minmax()
+                    .add_percentiles()
+                    .add_sum()
+                    .add_total(),
+            )?,
+            indexes_to_p2wpkh_count: ComputedVecsFromHeight::forced_import(
+                path,
+                "p2wpkh_count",
+                true,
+                Version::ZERO,
+                compressed,
+                StorableVecGeneatorOptions::default()
+                    .add_average()
+                    .add_minmax()
+                    .add_percentiles()
+                    .add_sum()
+                    .add_total(),
+            )?,
+            indexes_to_p2wsh_count: ComputedVecsFromHeight::forced_import(
+                path,
+                "p2wsh_count",
+                true,
+                Version::ZERO,
+                compressed,
+                StorableVecGeneatorOptions::default()
+                    .add_average()
+                    .add_minmax()
+                    .add_percentiles()
+                    .add_sum()
+                    .add_total(),
+            )?,
+            indexes_to_opreturn_count: ComputedVecsFromHeight::forced_import(
+                path,
+                "opreturn_count",
+                true,
+                Version::ZERO,
+                compressed,
+                StorableVecGeneatorOptions::default()
+                    .add_average()
+                    .add_minmax()
+                    .add_percentiles()
+                    .add_sum()
+                    .add_total(),
+            )?,
+            indexes_to_unknownoutput_count: ComputedVecsFromHeight::forced_import(
+                path,
+                "unknownoutput_count",
+                true,
+                Version::ZERO,
+                compressed,
+                StorableVecGeneatorOptions::default()
+                    .add_average()
+                    .add_minmax()
+                    .add_percentiles()
+                    .add_sum()
+                    .add_total(),
+            )?,
+            indexes_to_emptyoutput_count: ComputedVecsFromHeight::forced_import(
+                path,
+                "emptyoutput_count",
+                true,
+                Version::ZERO,
+                compressed,
+                StorableVecGeneatorOptions::default()
+                    .add_average()
+                    .add_minmax()
+                    .add_percentiles()
+                    .add_sum()
+                    .add_total(),
+            )?,
         })
     }
 
@@ -356,10 +524,11 @@ impl Vecs {
             exit,
         )?;
 
+        let inputs_len = indexer_vecs.inputindex_to_outputindex.vec().len();
         self.inputindex_to_value.compute_transform(
             starting_indexes.inputindex,
             indexer_vecs.inputindex_to_outputindex.mut_vec(),
-            |(inputindex, outputindex, slf, other)| {
+            |(inputindex, outputindex, slf, ..)| {
                 let value = if outputindex == OutputIndex::COINBASE {
                     Sats::ZERO
                 } else if let Some(value) = indexer_vecs
@@ -369,7 +538,7 @@ impl Vecs {
                 {
                     value
                 } else {
-                    dbg!(inputindex, outputindex, slf.len(), other.len());
+                    dbg!(inputindex, outputindex, slf.len(), inputs_len);
                     panic!()
                 };
                 (inputindex, value)
@@ -547,6 +716,181 @@ impl Vecs {
             },
         )?;
 
+        self.indexes_to_p2a_count.compute_all(
+            indexer,
+            indexes,
+            starting_indexes,
+            exit,
+            |v, indexer, indexes, starting_indexes, exit| {
+                v.compute_count_from_indexes(
+                    starting_indexes.height,
+                    indexer.mut_vecs().height_to_first_p2aindex.mut_vec(),
+                    indexes.height_to_last_p2aindex.mut_vec(),
+                    exit,
+                )
+            },
+        )?;
+        self.indexes_to_p2ms_count.compute_all(
+            indexer,
+            indexes,
+            starting_indexes,
+            exit,
+            |v, indexer, indexes, starting_indexes, exit| {
+                v.compute_count_from_indexes(
+                    starting_indexes.height,
+                    indexer.mut_vecs().height_to_first_p2msindex.mut_vec(),
+                    indexes.height_to_last_p2msindex.mut_vec(),
+                    exit,
+                )
+            },
+        )?;
+        self.indexes_to_p2pk33_count.compute_all(
+            indexer,
+            indexes,
+            starting_indexes,
+            exit,
+            |v, indexer, indexes, starting_indexes, exit| {
+                v.compute_count_from_indexes(
+                    starting_indexes.height,
+                    indexer.mut_vecs().height_to_first_p2pk33index.mut_vec(),
+                    indexes.height_to_last_p2pk33index.mut_vec(),
+                    exit,
+                )
+            },
+        )?;
+        self.indexes_to_p2pk65_count.compute_all(
+            indexer,
+            indexes,
+            starting_indexes,
+            exit,
+            |v, indexer, indexes, starting_indexes, exit| {
+                v.compute_count_from_indexes(
+                    starting_indexes.height,
+                    indexer.mut_vecs().height_to_first_p2pk65index.mut_vec(),
+                    indexes.height_to_last_p2pk65index.mut_vec(),
+                    exit,
+                )
+            },
+        )?;
+        self.indexes_to_p2pkh_count.compute_all(
+            indexer,
+            indexes,
+            starting_indexes,
+            exit,
+            |v, indexer, indexes, starting_indexes, exit| {
+                v.compute_count_from_indexes(
+                    starting_indexes.height,
+                    indexer.mut_vecs().height_to_first_p2pkhindex.mut_vec(),
+                    indexes.height_to_last_p2pkhindex.mut_vec(),
+                    exit,
+                )
+            },
+        )?;
+        self.indexes_to_p2sh_count.compute_all(
+            indexer,
+            indexes,
+            starting_indexes,
+            exit,
+            |v, indexer, indexes, starting_indexes, exit| {
+                v.compute_count_from_indexes(
+                    starting_indexes.height,
+                    indexer.mut_vecs().height_to_first_p2shindex.mut_vec(),
+                    indexes.height_to_last_p2shindex.mut_vec(),
+                    exit,
+                )
+            },
+        )?;
+        self.indexes_to_p2tr_count.compute_all(
+            indexer,
+            indexes,
+            starting_indexes,
+            exit,
+            |v, indexer, indexes, starting_indexes, exit| {
+                v.compute_count_from_indexes(
+                    starting_indexes.height,
+                    indexer.mut_vecs().height_to_first_p2trindex.mut_vec(),
+                    indexes.height_to_last_p2trindex.mut_vec(),
+                    exit,
+                )
+            },
+        )?;
+        self.indexes_to_p2wpkh_count.compute_all(
+            indexer,
+            indexes,
+            starting_indexes,
+            exit,
+            |v, indexer, indexes, starting_indexes, exit| {
+                v.compute_count_from_indexes(
+                    starting_indexes.height,
+                    indexer.mut_vecs().height_to_first_p2wpkhindex.mut_vec(),
+                    indexes.height_to_last_p2wpkhindex.mut_vec(),
+                    exit,
+                )
+            },
+        )?;
+        self.indexes_to_p2wsh_count.compute_all(
+            indexer,
+            indexes,
+            starting_indexes,
+            exit,
+            |v, indexer, indexes, starting_indexes, exit| {
+                v.compute_count_from_indexes(
+                    starting_indexes.height,
+                    indexer.mut_vecs().height_to_first_p2wshindex.mut_vec(),
+                    indexes.height_to_last_p2wshindex.mut_vec(),
+                    exit,
+                )
+            },
+        )?;
+        self.indexes_to_opreturn_count.compute_all(
+            indexer,
+            indexes,
+            starting_indexes,
+            exit,
+            |v, indexer, indexes, starting_indexes, exit| {
+                v.compute_count_from_indexes(
+                    starting_indexes.height,
+                    indexer.mut_vecs().height_to_first_opreturnindex.mut_vec(),
+                    indexes.height_to_last_opreturnindex.mut_vec(),
+                    exit,
+                )
+            },
+        )?;
+        self.indexes_to_unknownoutput_count.compute_all(
+            indexer,
+            indexes,
+            starting_indexes,
+            exit,
+            |v, indexer, indexes, starting_indexes, exit| {
+                v.compute_count_from_indexes(
+                    starting_indexes.height,
+                    indexer
+                        .mut_vecs()
+                        .height_to_first_unknownoutputindex
+                        .mut_vec(),
+                    indexes.height_to_last_unknownoutputindex.mut_vec(),
+                    exit,
+                )
+            },
+        )?;
+        self.indexes_to_emptyoutput_count.compute_all(
+            indexer,
+            indexes,
+            starting_indexes,
+            exit,
+            |v, indexer, indexes, starting_indexes, exit| {
+                v.compute_count_from_indexes(
+                    starting_indexes.height,
+                    indexer
+                        .mut_vecs()
+                        .height_to_first_emptyoutputindex
+                        .mut_vec(),
+                    indexes.height_to_last_emptyoutputindex.mut_vec(),
+                    exit,
+                )
+            },
+        )?;
+
         Ok(())
     }
 
@@ -572,6 +916,18 @@ impl Vecs {
             self.indexes_to_tx_weight.any_vecs(),
             self.txindex_to_input_count.any_vecs(),
             self.txindex_to_output_count.any_vecs(),
+            self.indexes_to_p2a_count.any_vecs(),
+            self.indexes_to_p2ms_count.any_vecs(),
+            self.indexes_to_p2pk33_count.any_vecs(),
+            self.indexes_to_p2pk65_count.any_vecs(),
+            self.indexes_to_p2pkh_count.any_vecs(),
+            self.indexes_to_p2sh_count.any_vecs(),
+            self.indexes_to_p2tr_count.any_vecs(),
+            self.indexes_to_p2wpkh_count.any_vecs(),
+            self.indexes_to_p2wsh_count.any_vecs(),
+            self.indexes_to_opreturn_count.any_vecs(),
+            self.indexes_to_unknownoutput_count.any_vecs(),
+            self.indexes_to_emptyoutput_count.any_vecs(),
         ]
         .concat()
     }

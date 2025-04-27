@@ -21,7 +21,7 @@ pub struct Vecs {
     pub blocks: blocks::Vecs,
     pub indexes: indexes::Vecs,
     pub mining: mining::Vecs,
-    // pub transactions: transactions::Vecs,
+    pub transactions: transactions::Vecs,
     pub marketprice: Option<marketprice::Vecs>,
 }
 
@@ -33,7 +33,7 @@ impl Vecs {
             blocks: blocks::Vecs::forced_import(path, compressed)?,
             indexes: indexes::Vecs::forced_import(path, compressed)?,
             mining: mining::Vecs::forced_import(path, compressed)?,
-            // transactions: transactions::Vecs::forced_import(path, compressed, fetch)?,
+            transactions: transactions::Vecs::forced_import(path, compressed, fetch)?,
             marketprice: fetch.then(|| marketprice::Vecs::forced_import(path, compressed).unwrap()),
         })
     }
@@ -63,13 +63,13 @@ impl Vecs {
             )?;
         }
 
-        // self.transactions.compute(
-        //     indexer,
-        //     &mut self.indexes,
-        //     &starting_indexes,
-        //     &mut self.marketprice.as_mut(),
-        //     exit,
-        // )?;
+        self.transactions.compute(
+            indexer,
+            &mut self.indexes,
+            &starting_indexes,
+            &mut self.marketprice.as_mut(),
+            exit,
+        )?;
 
         Ok(())
     }
@@ -79,7 +79,7 @@ impl Vecs {
             self.indexes.as_any_vecs(),
             self.blocks.as_any_vecs(),
             self.mining.as_any_vecs(),
-            // self.transactions.as_any_vecs(),
+            self.transactions.as_any_vecs(),
             self.marketprice
                 .as_ref()
                 .map_or(vec![], |v| v.as_any_vecs()),

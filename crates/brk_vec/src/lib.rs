@@ -52,6 +52,10 @@ where
             Self::Raw(_) => {}
         }
     }
+
+    pub fn iter(&self) -> StoredVecIterator<'_, I, T> {
+        self.into_iter()
+    }
 }
 
 impl<I, T> DynamicVec for StoredVec<I, T>
@@ -137,16 +141,6 @@ where
     I: StoredIndex,
     T: StoredType,
 {
-    fn iter_from<F>(&mut self, index: I, f: F) -> Result<()>
-    where
-        F: FnMut((I, T, &mut dyn DynamicVec<I = I, T = T>)) -> Result<()>,
-    {
-        match self {
-            StoredVec::Raw(v) => v.iter_from(index, f),
-            StoredVec::Compressed(v) => v.iter_from(index, f),
-        }
-    }
-
     fn collect_range(&self, from: Option<usize>, to: Option<usize>) -> Result<Vec<Self::T>> {
         match self {
             StoredVec::Raw(v) => v.collect_range(from, to),
@@ -248,6 +242,25 @@ where
 {
     Raw(RawVecIterator<'a, I, T>),
     Compressed(CompressedVecIterator<'a, I, T>),
+}
+
+impl<'a, I, T> StoredVecIterator<'a, I, T>
+where
+    I: StoredIndex,
+    T: StoredType,
+{
+    pub fn get(&mut self, i: usize) -> Option<(I, Value<'a, T>)> {
+        match self {
+            Self::Compressed(iter) => {
+                iter.set(i);
+                iter.next()
+            }
+            Self::Raw(iter) => {
+                iter.set(i);
+                iter.next()
+            }
+        }
+    }
 }
 
 impl<'a, I, T> Iterator for StoredVecIterator<'a, I, T>
