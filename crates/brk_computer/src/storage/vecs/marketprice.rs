@@ -7,7 +7,7 @@ use brk_core::{
 use brk_exit::Exit;
 use brk_fetcher::Fetcher;
 use brk_indexer::Indexer;
-use brk_vec::{Compressed, Version};
+use brk_vec::{Compressed, StoredIndex, Version};
 
 use super::{
     EagerVec, Indexes,
@@ -336,13 +336,18 @@ impl Vecs {
         self.height_to_ohlc_in_cents.compute_transform(
             starting_indexes.height,
             indexer_vecs.height_to_timestamp.mut_vec(),
-            |(h, t, _, height_to_timestamp)| {
+            |(h, t, _, height_to_timestamp_iter)| {
                 let ohlc = fetcher
                     .get_height(
                         h,
                         t,
-                        h.decremented()
-                            .map(|prev_h| height_to_timestamp.double_unwrap_cached_get(prev_h)),
+                        h.decremented().map(|prev_h| {
+                            height_to_timestamp_iter
+                                .get(prev_h.unwrap_to_usize())
+                                .unwrap()
+                                .1
+                                .into_inner()
+                        }),
                     )
                     .unwrap();
                 (h, ohlc)

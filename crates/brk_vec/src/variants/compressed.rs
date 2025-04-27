@@ -201,6 +201,10 @@ where
             0
         }
     }
+
+    pub fn iter(&self) -> CompressedVecIterator<'_, I, T> {
+        self.into_iter()
+    }
 }
 
 impl<I, T> DynamicVec for CompressedVec<I, T>
@@ -293,37 +297,6 @@ where
     I: StoredIndex,
     T: StoredType,
 {
-    fn iter_from<F>(&mut self, index: I, mut f: F) -> Result<()>
-    where
-        F: FnMut((I, T, &mut dyn DynamicVec<I = Self::I, T = Self::T>)) -> Result<()>,
-    {
-        if !self.is_pushed_empty() {
-            return Err(Error::UnsupportedUnflushedState);
-        }
-
-        let start = index.to_usize()?;
-
-        let stored_len = self.stored_len();
-        if start >= stored_len {
-            return Ok(());
-        }
-
-        let mmap = self.mmap().load();
-        let pages_meta = self.pages_meta.load();
-
-        (start..stored_len).try_for_each(|index| {
-            let v = Self::cached_get_stored__(
-                index,
-                &mmap,
-                stored_len,
-                &mut self.decoded_page,
-                &pages_meta,
-            )?
-            .unwrap();
-            f((I::from(index), v, self as &mut dyn DynamicVec<I = I, T = T>))
-        })
-    }
-
     fn collect_range(&self, from: Option<usize>, to: Option<usize>) -> Result<Vec<T>> {
         let stored_len = self.stored_len();
         let from = from.unwrap_or_default();
@@ -528,6 +501,12 @@ pub struct CompressedVecIterator<'a, I, T> {
     pages_meta: Guard<Arc<CompressedPagesMetadata>>,
     stored_len: usize,
     index: usize,
+}
+
+impl<I, T> CompressedVecIterator<'_, I, T> {
+    pub fn set(&mut self, i: usize) {
+        self.index = i
+    }
 }
 
 impl<'a, I, T> Iterator for CompressedVecIterator<'a, I, T>

@@ -62,6 +62,10 @@ where
             phantom: PhantomData,
         })
     }
+
+    pub fn iter(&self) -> RawVecIterator<'_, I, T> {
+        self.into_iter()
+    }
 }
 
 impl<I, T> DynamicVec for RawVec<I, T>
@@ -128,29 +132,6 @@ where
     I: StoredIndex,
     T: StoredType,
 {
-    fn iter_from<F>(&mut self, index: I, mut f: F) -> Result<()>
-    where
-        F: FnMut((I, T, &mut dyn DynamicVec<I = Self::I, T = Self::T>)) -> Result<()>,
-    {
-        if !self.is_pushed_empty() {
-            return Err(Error::UnsupportedUnflushedState);
-        }
-
-        let start = index.to_usize()?;
-
-        let stored_len = self.stored_len();
-        if start >= stored_len {
-            return Ok(());
-        }
-
-        let guard = self.mmap.load();
-
-        (start..stored_len).try_for_each(|index| {
-            let v = self.get_stored_(index, &guard)?.unwrap();
-            f((I::from(index), v, self as &mut dyn DynamicVec<I = I, T = T>))
-        })
-    }
-
     fn collect_range(&self, from: Option<usize>, to: Option<usize>) -> Result<Vec<T>> {
         let stored_len = self.stored_len();
         let from = from.unwrap_or_default();
@@ -247,6 +228,10 @@ pub struct RawVecIterator<'a, I, T> {
 
 impl<I, T> RawVecIterator<'_, I, T> {
     const SIZE_OF_T: usize = size_of::<T>();
+
+    pub fn set(&mut self, i: usize) {
+        self.index = i
+    }
 }
 
 impl<'a, I, T> Iterator for RawVecIterator<'a, I, T>

@@ -24,7 +24,7 @@ pub fn main() -> color_eyre::Result<()> {
 
     let outputs_dir = Path::new("../../_outputs");
 
-    let compressed = true;
+    let compressed = false;
 
     let mut indexer = Indexer::new(outputs_dir, compressed, true)?;
     indexer.import_stores()?;

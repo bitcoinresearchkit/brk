@@ -5,7 +5,7 @@ use derive_deref::{Deref, DerefMut};
 use serde::Serialize;
 use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
-use crate::Error;
+use crate::{CheckedSub, Error};
 
 #[derive(
     Debug,
@@ -132,6 +132,11 @@ impl Add<usize> for EmptyOutputIndex {
         Self(*self + rhs)
     }
 }
+impl CheckedSub<EmptyOutputIndex> for EmptyOutputIndex {
+    fn checked_sub(self, rhs: Self) -> Option<Self> {
+        self.0.0.checked_sub(rhs.0.0).map(OutputTypeIndex).map(Self)
+    }
+}
 
 #[derive(
     Debug,
@@ -170,6 +175,11 @@ impl Add<usize> for P2MSIndex {
     type Output = Self;
     fn add(self, rhs: usize) -> Self::Output {
         Self(*self + rhs)
+    }
+}
+impl CheckedSub<P2MSIndex> for P2MSIndex {
+    fn checked_sub(self, rhs: Self) -> Option<Self> {
+        self.0.0.checked_sub(rhs.0.0).map(OutputTypeIndex).map(Self)
     }
 }
 
@@ -212,6 +222,11 @@ impl Add<usize> for P2AIndex {
         Self(*self + rhs)
     }
 }
+impl CheckedSub<P2AIndex> for P2AIndex {
+    fn checked_sub(self, rhs: Self) -> Option<Self> {
+        self.0.0.checked_sub(rhs.0.0).map(OutputTypeIndex).map(Self)
+    }
+}
 
 #[derive(
     Debug,
@@ -250,6 +265,11 @@ impl Add<usize> for OpReturnIndex {
     type Output = Self;
     fn add(self, rhs: usize) -> Self::Output {
         Self(*self + rhs)
+    }
+}
+impl CheckedSub<OpReturnIndex> for OpReturnIndex {
+    fn checked_sub(self, rhs: Self) -> Option<Self> {
+        self.0.0.checked_sub(rhs.0.0).map(OutputTypeIndex).map(Self)
     }
 }
 
@@ -292,6 +312,11 @@ impl Add<usize> for UnknownOutputIndex {
         Self(*self + rhs)
     }
 }
+impl CheckedSub<UnknownOutputIndex> for UnknownOutputIndex {
+    fn checked_sub(self, rhs: Self) -> Option<Self> {
+        self.0.0.checked_sub(rhs.0.0).map(OutputTypeIndex).map(Self)
+    }
+}
 
 #[derive(
     Debug,
@@ -330,6 +355,11 @@ impl Add<usize> for P2PK33Index {
     type Output = Self;
     fn add(self, rhs: usize) -> Self::Output {
         Self(*self + rhs)
+    }
+}
+impl CheckedSub<P2PK33Index> for P2PK33Index {
+    fn checked_sub(self, rhs: Self) -> Option<Self> {
+        self.0.0.checked_sub(rhs.0.0).map(OutputTypeIndex).map(Self)
     }
 }
 
@@ -372,6 +402,11 @@ impl Add<usize> for P2PK65Index {
         Self(*self + rhs)
     }
 }
+impl CheckedSub<P2PK65Index> for P2PK65Index {
+    fn checked_sub(self, rhs: Self) -> Option<Self> {
+        self.0.0.checked_sub(rhs.0.0).map(OutputTypeIndex).map(Self)
+    }
+}
 
 #[derive(
     Debug,
@@ -410,6 +445,11 @@ impl Add<usize> for P2PKHIndex {
     type Output = Self;
     fn add(self, rhs: usize) -> Self::Output {
         Self(*self + rhs)
+    }
+}
+impl CheckedSub<P2PKHIndex> for P2PKHIndex {
+    fn checked_sub(self, rhs: Self) -> Option<Self> {
+        self.0.0.checked_sub(rhs.0.0).map(OutputTypeIndex).map(Self)
     }
 }
 
@@ -452,6 +492,11 @@ impl Add<usize> for P2SHIndex {
         Self(*self + rhs)
     }
 }
+impl CheckedSub<P2SHIndex> for P2SHIndex {
+    fn checked_sub(self, rhs: Self) -> Option<Self> {
+        self.0.0.checked_sub(rhs.0.0).map(OutputTypeIndex).map(Self)
+    }
+}
 
 #[derive(
     Debug,
@@ -490,6 +535,11 @@ impl Add<usize> for P2TRIndex {
     type Output = Self;
     fn add(self, rhs: usize) -> Self::Output {
         Self(*self + rhs)
+    }
+}
+impl CheckedSub<P2TRIndex> for P2TRIndex {
+    fn checked_sub(self, rhs: Self) -> Option<Self> {
+        self.0.0.checked_sub(rhs.0.0).map(OutputTypeIndex).map(Self)
     }
 }
 
@@ -532,6 +582,11 @@ impl Add<usize> for P2WPKHIndex {
         Self(*self + rhs)
     }
 }
+impl CheckedSub<P2WPKHIndex> for P2WPKHIndex {
+    fn checked_sub(self, rhs: Self) -> Option<Self> {
+        self.0.0.checked_sub(rhs.0.0).map(OutputTypeIndex).map(Self)
+    }
+}
 
 #[derive(
     Debug,
@@ -570,5 +625,10 @@ impl Add<usize> for P2WSHIndex {
     type Output = Self;
     fn add(self, rhs: usize) -> Self::Output {
         Self(*self + rhs)
+    }
+}
+impl CheckedSub<P2WSHIndex> for P2WSHIndex {
+    fn checked_sub(self, rhs: Self) -> Option<Self> {
+        self.0.0.checked_sub(rhs.0.0).map(OutputTypeIndex).map(Self)
     }
 }

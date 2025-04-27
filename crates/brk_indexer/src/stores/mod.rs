@@ -4,7 +4,7 @@ use brk_core::{
     AddressBytes, AddressBytesHash, BlockHashPrefix, Height, OutputType, OutputTypeIndex, TxIndex,
     TxidPrefix,
 };
-use brk_vec::{Value, Version};
+use brk_vec::{StoredIndex, Value, Version};
 use fjall::{PersistMode, TransactionalKeyspace};
 
 use crate::Indexes;
@@ -88,11 +88,12 @@ impl Stores {
 
         if starting_indexes.height != Height::ZERO {
             vecs.height_to_blockhash
-                .iter_from(starting_indexes.height, |(_, blockhash, ..)| {
-                    let blockhashprefix = BlockHashPrefix::from(blockhash);
+                .into_iter()
+                .skip(starting_indexes.height.unwrap_to_usize())
+                .for_each(|(_, v)| {
+                    let blockhashprefix = BlockHashPrefix::from(Value::into_inner(v));
                     self.blockhashprefix_to_height.remove(blockhashprefix);
-                    Ok(())
-                })?;
+                });
 
             if let Some(mut index) = vecs
                 .height_to_first_p2pk65index
@@ -234,8 +235,10 @@ impl Stores {
 
         if starting_indexes.txindex != TxIndex::ZERO {
             vecs.txindex_to_txid
-                .iter_from(starting_indexes.txindex, |(txindex, txid, ..)| {
-                    let txidprefix = TxidPrefix::from(&txid);
+                .into_iter()
+                .skip(starting_indexes.txindex.unwrap_to_usize())
+                .for_each(|(txindex, txid)| {
+                    let txidprefix = TxidPrefix::from(&txid.into_inner());
 
                     // "d5d27987d2a3dfc724e359870c6644b40e497bdc0589a033220fe15429d88599"
                     let is_not_first_dup = txindex != TxIndex::new(142783)
@@ -248,9 +251,7 @@ impl Stores {
                     if is_not_first_dup && is_not_second_dup {
                         self.txidprefix_to_txindex.remove(txidprefix);
                     }
-
-                    Ok(())
-                })?;
+                });
         } else {
             self.txidprefix_to_txindex.reset_partition()?;
         }

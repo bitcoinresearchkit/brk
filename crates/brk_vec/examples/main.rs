@@ -61,22 +61,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         dbg!(vec.get(5)?);
         dbg!(vec.get(20)?);
 
-        vec.iter(|(_, v, ..)| {
-            dbg!(v);
-            Ok(())
-        })?;
-
-        vec.iter_from(5, |(_, v, ..)| {
-            dbg!(v);
-            Ok(())
-        })?;
-
         dbg!(vec.collect_signed_range(Some(-5), None)?);
 
         vec.push(vec.len() as u32);
-        dbg!(vec.get_last());
+        dbg!(vec.last()?);
 
-        dbg!(vec.into_iter().map(|v| v).collect::<Vec<_>>());
+        dbg!(vec.into_iter().collect::<Vec<_>>());
     }
 
     Ok(())

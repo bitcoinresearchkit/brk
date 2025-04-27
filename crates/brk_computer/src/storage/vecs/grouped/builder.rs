@@ -145,20 +145,22 @@ where
 
         let total_vec = self.total.as_mut().unwrap();
 
-        source.iter_from(index, |(i, v, ..)| {
-            let prev = i
-                .unwrap_to_usize()
-                .checked_sub(1)
-                .map_or(T::from(0_usize), |prev_i| {
-                    total_vec
-                        .unwrap_cached_get(I::from(prev_i))
-                        .unwrap_or(T::from(0_usize))
-                });
-            let value = v.clone() + prev;
-            total_vec.forced_push_at(i, value, exit)?;
-
-            Ok(())
-        })?;
+        source
+            .into_iter()
+            .skip(index.unwrap_to_usize())
+            .try_for_each(|(i, v)| -> Result<()> {
+                let v = v.into_inner();
+                let prev = i
+                    .unwrap_to_usize()
+                    .checked_sub(1)
+                    .map_or(T::from(0_usize), |prev_i| {
+                        total_vec
+                            .unwrap_cached_get(I::from(prev_i))
+                            .unwrap_or(T::from(0_usize))
+                    });
+                let value = v.clone() + prev;
+                total_vec.forced_push_at(i, value, exit)
+            })?;
 
         self.safe_flush(exit)?;
 
@@ -178,114 +180,119 @@ where
     {
         let index = self.starting_index(max_from);
 
-        first_indexes.iter_from(index, |(i, first_index, first_indexes)| {
-            let last_index = last_indexes.double_unwrap_cached_get(i);
+        first_indexes
+            .into_iter()
+            .skip(index.unwrap_to_usize())
+            .try_for_each(|(i, first_index)| -> Result<()> {
+                let first_index = first_index.into_inner();
 
-            if let Some(first) = self.first.as_mut() {
-                let v = source.double_unwrap_cached_get(first_index);
-                first.forced_push_at(index, v, exit)?;
-            }
+                let last_index = last_indexes.double_unwrap_cached_get(i);
 
-            if let Some(last) = self.last.as_mut() {
-                let v = source.double_unwrap_cached_get(last_index);
-                last.forced_push_at(index, v, exit)?;
-            }
+                if let Some(first) = self.first.as_mut() {
+                    let v = source.double_unwrap_cached_get(first_index);
+                    first.forced_push_at(index, v, exit)?;
+                }
 
-            let needs_sum_or_total = self.sum.is_some() || self.total.is_some();
-            let needs_average_sum_or_total = needs_sum_or_total || self.average.is_some();
-            let needs_sorted = self.max.is_some()
-                || self._90p.is_some()
-                || self._75p.is_some()
-                || self.median.is_some()
-                || self._25p.is_some()
-                || self._10p.is_some()
-                || self.min.is_some();
-            let needs_values = needs_sorted || needs_average_sum_or_total;
+                if let Some(last) = self.last.as_mut() {
+                    let v = source.double_unwrap_cached_get(last_index);
+                    last.forced_push_at(index, v, exit)?;
+                }
 
-            if needs_values {
-                let mut values = source.collect_inclusive_range(first_index, last_index)?;
+                let needs_sum_or_total = self.sum.is_some() || self.total.is_some();
+                let needs_average_sum_or_total = needs_sum_or_total || self.average.is_some();
+                let needs_sorted = self.max.is_some()
+                    || self._90p.is_some()
+                    || self._75p.is_some()
+                    || self.median.is_some()
+                    || self._25p.is_some()
+                    || self._10p.is_some()
+                    || self.min.is_some();
+                let needs_values = needs_sorted || needs_average_sum_or_total;
 
-                if needs_sorted {
-                    values.sort_unstable();
+                if needs_values {
+                    let mut values = source.collect_inclusive_range(first_index, last_index)?;
 
-                    if let Some(max) = self.max.as_mut() {
-                        max.forced_push_at(
-                            i,
-                            values
-                                .last()
-                                .context("expect some")
-                                .inspect_err(|_| {
-                                    dbg!(
-                                        &values,
-                                        max.path(),
-                                        first_indexes.path(),
-                                        first_index,
-                                        last_indexes.path(),
-                                        last_index,
-                                        source.len(),
-                                        source.path()
-                                    );
-                                })
-                                .unwrap()
-                                .clone(),
-                            exit,
-                        )?;
+                    if needs_sorted {
+                        values.sort_unstable();
+
+                        if let Some(max) = self.max.as_mut() {
+                            max.forced_push_at(
+                                i,
+                                values
+                                    .last()
+                                    .context("expect some")
+                                    .inspect_err(|_| {
+                                        dbg!(
+                                            &values,
+                                            max.path(),
+                                            first_indexes.path(),
+                                            first_index,
+                                            last_indexes.path(),
+                                            last_index,
+                                            source.len(),
+                                            source.path()
+                                        );
+                                    })
+                                    .unwrap()
+                                    .clone(),
+                                exit,
+                            )?;
+                        }
+
+                        if let Some(_90p) = self._90p.as_mut() {
+                            _90p.forced_push_at(i, Self::get_percentile(&values, 0.90), exit)?;
+                        }
+
+                        if let Some(_75p) = self._75p.as_mut() {
+                            _75p.forced_push_at(i, Self::get_percentile(&values, 0.75), exit)?;
+                        }
+
+                        if let Some(median) = self.median.as_mut() {
+                            median.forced_push_at(i, Self::get_percentile(&values, 0.50), exit)?;
+                        }
+
+                        if let Some(_25p) = self._25p.as_mut() {
+                            _25p.forced_push_at(i, Self::get_percentile(&values, 0.25), exit)?;
+                        }
+
+                        if let Some(_10p) = self._10p.as_mut() {
+                            _10p.forced_push_at(i, Self::get_percentile(&values, 0.10), exit)?;
+                        }
+
+                        if let Some(min) = self.min.as_mut() {
+                            min.forced_push_at(i, values.first().unwrap().clone(), exit)?;
+                        }
                     }
 
-                    if let Some(_90p) = self._90p.as_mut() {
-                        _90p.forced_push_at(i, Self::get_percentile(&values, 0.90), exit)?;
-                    }
+                    if needs_average_sum_or_total {
+                        let len = values.len();
+                        let sum = values.into_iter().fold(T::from(0), |a, b| a + b);
 
-                    if let Some(_75p) = self._75p.as_mut() {
-                        _75p.forced_push_at(i, Self::get_percentile(&values, 0.75), exit)?;
-                    }
+                        if let Some(average) = self.average.as_mut() {
+                            let avg = sum.clone() / len;
+                            average.forced_push_at(i, avg, exit)?;
+                        }
 
-                    if let Some(median) = self.median.as_mut() {
-                        median.forced_push_at(i, Self::get_percentile(&values, 0.50), exit)?;
-                    }
+                        if needs_sum_or_total {
+                            if let Some(sum_vec) = self.sum.as_mut() {
+                                sum_vec.forced_push_at(i, sum.clone(), exit)?;
+                            }
 
-                    if let Some(_25p) = self._25p.as_mut() {
-                        _25p.forced_push_at(i, Self::get_percentile(&values, 0.25), exit)?;
-                    }
-
-                    if let Some(_10p) = self._10p.as_mut() {
-                        _10p.forced_push_at(i, Self::get_percentile(&values, 0.10), exit)?;
-                    }
-
-                    if let Some(min) = self.min.as_mut() {
-                        min.forced_push_at(i, values.first().unwrap().clone(), exit)?;
+                            if let Some(total_vec) = self.total.as_mut() {
+                                let prev = i
+                                    .unwrap_to_usize()
+                                    .checked_sub(1)
+                                    .map_or(T::from(0_usize), |prev_i| {
+                                        total_vec.double_unwrap_cached_get(I::from(prev_i))
+                                    });
+                                total_vec.forced_push_at(i, prev + sum, exit)?;
+                            }
+                        }
                     }
                 }
 
-                if needs_average_sum_or_total {
-                    let len = values.len();
-                    let sum = values.into_iter().fold(T::from(0), |a, b| a + b);
-
-                    if let Some(average) = self.average.as_mut() {
-                        let avg = sum.clone() / len;
-                        average.forced_push_at(i, avg, exit)?;
-                    }
-
-                    if needs_sum_or_total {
-                        if let Some(sum_vec) = self.sum.as_mut() {
-                            sum_vec.forced_push_at(i, sum.clone(), exit)?;
-                        }
-
-                        if let Some(total_vec) = self.total.as_mut() {
-                            let prev = i
-                                .unwrap_to_usize()
-                                .checked_sub(1)
-                                .map_or(T::from(0_usize), |prev_i| {
-                                    total_vec.double_unwrap_cached_get(I::from(prev_i))
-                                });
-                            total_vec.forced_push_at(i, prev + sum, exit)?;
-                        }
-                    }
-                }
-            }
-
-            Ok(())
-        })?;
+                Ok(())
+            })?;
 
         self.safe_flush(exit)?;
 
@@ -315,99 +322,104 @@ where
 
         let index = self.starting_index(max_from);
 
-        first_indexes.iter_from(index, |(i, first_index, ..)| {
-            let last_index = last_indexes.double_unwrap_cached_get(i);
+        first_indexes
+            .into_iter()
+            .skip(index.unwrap_to_usize())
+            .try_for_each(|(i, first_index, ..)| -> Result<()> {
+                let first_index = first_index.into_inner();
 
-            if let Some(first) = self.first.as_mut() {
-                let v = source
-                    .first
-                    .as_mut()
-                    .unwrap()
-                    .double_unwrap_cached_get(first_index);
-                first.forced_push_at(index, v, exit)?;
-            }
+                let last_index = last_indexes.double_unwrap_cached_get(i);
 
-            if let Some(last) = self.last.as_mut() {
-                let v = source
-                    .last
-                    .as_mut()
-                    .unwrap()
-                    .double_unwrap_cached_get(last_index);
-                last.forced_push_at(index, v, exit)?;
-            }
+                if let Some(first) = self.first.as_mut() {
+                    let v = source
+                        .first
+                        .as_mut()
+                        .unwrap()
+                        .double_unwrap_cached_get(first_index);
+                    first.forced_push_at(index, v, exit)?;
+                }
 
-            let needs_sum_or_total = self.sum.is_some() || self.total.is_some();
-            let needs_average_sum_or_total = needs_sum_or_total || self.average.is_some();
-            let needs_sorted = self.max.is_some() || self.min.is_some();
-            let needs_values = needs_sorted || needs_average_sum_or_total;
+                if let Some(last) = self.last.as_mut() {
+                    let v = source
+                        .last
+                        .as_mut()
+                        .unwrap()
+                        .double_unwrap_cached_get(last_index);
+                    last.forced_push_at(index, v, exit)?;
+                }
 
-            if needs_values {
-                if needs_sorted {
-                    if let Some(max) = self.max.as_mut() {
-                        let mut values = source
-                            .max
-                            .as_ref()
-                            .unwrap()
-                            .collect_inclusive_range(first_index, last_index)?;
-                        values.sort_unstable();
-                        max.forced_push_at(i, values.last().unwrap().clone(), exit)?;
+                let needs_sum_or_total = self.sum.is_some() || self.total.is_some();
+                let needs_average_sum_or_total = needs_sum_or_total || self.average.is_some();
+                let needs_sorted = self.max.is_some() || self.min.is_some();
+                let needs_values = needs_sorted || needs_average_sum_or_total;
+
+                if needs_values {
+                    if needs_sorted {
+                        if let Some(max) = self.max.as_mut() {
+                            let mut values = source
+                                .max
+                                .as_ref()
+                                .unwrap()
+                                .collect_inclusive_range(first_index, last_index)?;
+                            values.sort_unstable();
+                            max.forced_push_at(i, values.last().unwrap().clone(), exit)?;
+                        }
+
+                        if let Some(min) = self.min.as_mut() {
+                            let mut values = source
+                                .min
+                                .as_ref()
+                                .unwrap()
+                                .collect_inclusive_range(first_index, last_index)?;
+                            values.sort_unstable();
+                            min.forced_push_at(i, values.first().unwrap().clone(), exit)?;
+                        }
                     }
 
-                    if let Some(min) = self.min.as_mut() {
-                        let mut values = source
-                            .min
-                            .as_ref()
-                            .unwrap()
-                            .collect_inclusive_range(first_index, last_index)?;
-                        values.sort_unstable();
-                        min.forced_push_at(i, values.first().unwrap().clone(), exit)?;
+                    if needs_average_sum_or_total {
+                        if let Some(average) = self.average.as_mut() {
+                            let values = source
+                                .average
+                                .as_ref()
+                                .unwrap()
+                                .collect_inclusive_range(first_index, last_index)?;
+
+                            let len = values.len();
+                            let total = values.into_iter().fold(T::from(0), |a, b| a + b);
+                            // TODO: Multiply by count then divide by total
+                            // Right now it's not 100% accurate as there could be more or less elements in the lower timeframe (28 days vs 31 days in a month for example)
+                            let avg = total / len;
+                            average.forced_push_at(i, avg, exit)?;
+                        }
+
+                        if needs_sum_or_total {
+                            let values = source
+                                .sum
+                                .as_ref()
+                                .unwrap()
+                                .collect_inclusive_range(first_index, last_index)?;
+
+                            let sum = values.into_iter().fold(T::from(0), |a, b| a + b);
+
+                            if let Some(sum_vec) = self.sum.as_mut() {
+                                sum_vec.forced_push_at(i, sum.clone(), exit)?;
+                            }
+
+                            if let Some(total_vec) = self.total.as_mut() {
+                                let prev = i
+                                    .unwrap_to_usize()
+                                    .checked_sub(1)
+                                    .map_or(T::from(0_usize), |prev_i| {
+                                        total_vec.double_unwrap_cached_get(I::from(prev_i))
+                                    });
+                                total_vec.forced_push_at(i, prev + sum, exit)?;
+                            }
+                        }
                     }
                 }
 
-                if needs_average_sum_or_total {
-                    if let Some(average) = self.average.as_mut() {
-                        let values = source
-                            .average
-                            .as_ref()
-                            .unwrap()
-                            .collect_inclusive_range(first_index, last_index)?;
-
-                        let len = values.len();
-                        let total = values.into_iter().fold(T::from(0), |a, b| a + b);
-                        // TODO: Multiply by count then divide by total
-                        // Right now it's not 100% accurate as there could be more or less elements in the lower timeframe (28 days vs 31 days in a month for example)
-                        let avg = total / len;
-                        average.forced_push_at(i, avg, exit)?;
-                    }
-
-                    if needs_sum_or_total {
-                        let values = source
-                            .sum
-                            .as_ref()
-                            .unwrap()
-                            .collect_inclusive_range(first_index, last_index)?;
-
-                        let sum = values.into_iter().fold(T::from(0), |a, b| a + b);
-
-                        if let Some(sum_vec) = self.sum.as_mut() {
-                            sum_vec.forced_push_at(i, sum.clone(), exit)?;
-                        }
-
-                        if let Some(total_vec) = self.total.as_mut() {
-                            let prev = i
-                                .unwrap_to_usize()
-                                .checked_sub(1)
-                                .map_or(T::from(0_usize), |prev_i| {
-                                    total_vec.double_unwrap_cached_get(I::from(prev_i))
-                                });
-                            total_vec.forced_push_at(i, prev + sum, exit)?;
-                        }
-                    }
-                }
-            }
-
-            Ok(())
-        })?;
+                Ok(())
+            })?;
 
         self.safe_flush(exit)?;
 

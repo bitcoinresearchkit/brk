@@ -98,30 +98,6 @@ where
         Self::I::to_string()
     }
 
-    #[inline]
-    fn iter<F>(&mut self, f: F) -> Result<()>
-    where
-        F: FnMut(
-            (
-                Self::I,
-                Self::T,
-                &mut dyn DynamicVec<I = Self::I, T = Self::T>,
-            ),
-        ) -> Result<()>,
-    {
-        self.iter_from(Self::I::default(), f)
-    }
-
-    fn iter_from<F>(&mut self, index: Self::I, f: F) -> Result<()>
-    where
-        F: FnMut(
-            (
-                Self::I,
-                Self::T,
-                &mut dyn DynamicVec<I = Self::I, T = Self::T>,
-            ),
-        ) -> Result<()>;
-
     fn flush(&mut self) -> Result<()>;
 
     fn truncate_if_needed(&mut self, index: Self::I) -> Result<()>;

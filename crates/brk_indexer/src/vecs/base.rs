@@ -5,8 +5,8 @@ use std::{
 };
 
 use brk_vec::{
-    Compressed, DynamicVec, Error, GenericVec, Result, StoredIndex, StoredType, StoredVec, Value,
-    Version,
+    Compressed, DynamicVec, Error, GenericVec, Result, StoredIndex, StoredType, StoredVec,
+    StoredVecIterator, Value, Version,
 };
 
 use super::Height;
@@ -52,13 +52,6 @@ where
     #[inline]
     pub fn double_unwrap_cached_get(&mut self, index: I) -> T {
         self.inner.double_unwrap_cached_get(index)
-    }
-
-    pub fn iter_from<F>(&mut self, index: I, f: F) -> Result<()>
-    where
-        F: FnMut((I, T, &mut dyn DynamicVec<I = I, T = T>)) -> Result<()>,
-    {
-        self.inner.iter_from(index, f)
     }
 
     #[inline]
@@ -127,6 +120,10 @@ where
     fn path_height_(path: &Path) -> PathBuf {
         path.join("height")
     }
+
+    pub fn iter(&self) -> StoredVecIterator<'_, I, T> {
+        self.into_iter()
+    }
 }
 
 pub trait AnyIndexedVec: Send + Sync {
@@ -145,5 +142,18 @@ where
 
     fn flush(&mut self, height: Height) -> Result<()> {
         self.flush(height)
+    }
+}
+
+impl<'a, I, T> IntoIterator for &'a IndexedVec<I, T>
+where
+    I: StoredIndex,
+    T: StoredType,
+{
+    type Item = (I, Value<'a, T>);
+    type IntoIter = StoredVecIterator<'a, I, T>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.inner.into_iter()
     }
 }

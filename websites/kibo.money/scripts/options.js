@@ -356,163 +356,182 @@ function createPartialOptions(colors) {
         {
           name: "Transaction",
           tree: [
-            // {
-            //   name: "Count",
-            //   title: "Transaction Count",
-            //   bottom: createBaseAverageSumTotalMinMaxPercentilesSeries({
-            //     key: "tx-count",
-            //     name: "Count",
-            //   }),
-            // },
-            //     {
-            //       name: "Subsidy",
-            //       title: "Subsidy",
-            //       bottom: [
-            //         ...createBaseAverageSumTotalMinMaxPercentilesSeries({
-            //           key: "subsidy",
-            //           name: "Subsidy",
-            //         }),
-            //         ...createBaseAverageSumTotalMinMaxPercentilesSeries({
-            //           key: "subsidy-in-btc",
-            //           name: "Subsidy",
-            //         }),
-            //         ...createBaseAverageSumTotalMinMaxPercentilesSeries({
-            //           key: "subsidy-in-usd",
-            //           name: "Subsidy",
-            //         }),
-            //       ],
-            //     },
-            //     {
-            //       name: "Coinbase",
-            //       title: "Coinbase",
-            //       bottom: [
-            //         ...createBaseAverageSumTotalMinMaxPercentilesSeries({
-            //           key: "coinbase",
-            //           name: "Coinbase",
-            //         }),
-            //         ...createBaseAverageSumTotalMinMaxPercentilesSeries({
-            //           key: "coinbase-in-btc",
-            //           name: "Coinbase",
-            //         }),
-            //         ...createBaseAverageSumTotalMinMaxPercentilesSeries({
-            //           key: "coinbase-in-usd",
-            //           name: "Coinbase",
-            //         }),
-            //       ],
-            //     },
-            //     {
-            //       name: "Fee",
-            //       title: "Transaction Fee",
-            //       bottom: [
-            //         ...createAverageSumTotalMinMaxPercentilesSeries("fee"),
-            //         ...createAverageSumTotalMinMaxPercentilesSeries("fee-in-btc"),
-            //         ...createAverageSumTotalMinMaxPercentilesSeries("fee-in-usd"),
-            //       ],
-            //     },
-            //     {
-            //       name: "Feerate",
-            //       title: "Transaction Fee Rate",
-            //       bottom: [
-            //         createAverageSeries({ concat: "feerate" }),
-            //         ...createMinMaxPercentilesSeries({
-            //           concat: "feerate",
-            //         }),
-            //       ],
-            //     },
-            //     {
-            //       name: "Weight",
-            //       title: "Transaction Weight",
-            //       bottom: [
-            //         createAverageSeries({ concat: "tx-weight" }),
-            //         ...createMinMaxPercentilesSeries({
-            //           concat: "tx-weight",
-            //         }),
-            //       ],
-            //     },
-            //     {
-            //       name: "vsize",
-            //       title: "Transaction Virtual Size",
-            //       bottom: [
-            //         createAverageSeries({ concat: "tx-vsize" }),
-            //         ...createMinMaxPercentilesSeries({
-            //           concat: "tx-vsize",
-            //         }),
-            //       ],
-            //     },
-            //     {
-            //       name: "Versions",
-            //       title: "Transaction Versions",
-            //       bottom: [
-            //         createBaseSeries({
-            //           key: "tx-v1",
-            //           name: "v1 Count",
-            //         }),
-            //         ...createSumTotalSeries({ concat: "tx-v1", name: "v1" }),
-            //         createBaseSeries({
-            //           key: "tx-v2",
-            //           name: "v2 Count",
-            //         }),
-            //         ...createSumTotalSeries({ concat: "tx-v2", name: "v2" }),
-            //         createBaseSeries({
-            //           key: "tx-v3",
-            //           name: "v3 Count",
-            //         }),
-            //         ...createSumTotalSeries({ concat: "tx-v3", name: "v3" }),
-            //       ],
-            //     },
+            {
+              name: "Count",
+              title: "Transaction Count",
+              bottom: createBaseAverageSumTotalMinMaxPercentilesSeries({
+                key: "tx-count",
+                name: "Count",
+              }),
+            },
+            {
+              name: "Subsidy",
+              title: "Subsidy",
+              bottom: [
+                ...createBaseAverageSumTotalMinMaxPercentilesSeries({
+                  key: "subsidy",
+                  name: "Subsidy",
+                }),
+                ...createBaseAverageSumTotalMinMaxPercentilesSeries({
+                  key: "subsidy-in-btc",
+                  name: "Subsidy",
+                }),
+                ...createBaseAverageSumTotalMinMaxPercentilesSeries({
+                  key: "subsidy-in-usd",
+                  name: "Subsidy",
+                }),
+              ],
+            },
+            {
+              name: "Coinbase",
+              title: "Coinbase",
+              bottom: [
+                ...createBaseAverageSumTotalMinMaxPercentilesSeries({
+                  key: "coinbase",
+                  name: "Coinbase",
+                }),
+                ...createBaseAverageSumTotalMinMaxPercentilesSeries({
+                  key: "coinbase-in-btc",
+                  name: "Coinbase",
+                }),
+                ...createBaseAverageSumTotalMinMaxPercentilesSeries({
+                  key: "coinbase-in-usd",
+                  name: "Coinbase",
+                }),
+              ],
+            },
+            {
+              name: "Fee",
+              title: "Transaction Fee",
+              bottom: [
+                ...createAverageSumTotalMinMaxPercentilesSeries("fee"),
+                ...createAverageSumTotalMinMaxPercentilesSeries("fee-in-btc"),
+                ...createAverageSumTotalMinMaxPercentilesSeries("fee-in-usd"),
+              ],
+            },
+            {
+              name: "Feerate",
+              title: "Transaction Fee Rate",
+              bottom: [
+                createAverageSeries({ concat: "feerate" }),
+                ...createMinMaxPercentilesSeries({
+                  concat: "feerate",
+                }),
+              ],
+            },
+            {
+              name: "Weight",
+              title: "Transaction Weight",
+              bottom: [
+                createAverageSeries({ concat: "tx-weight" }),
+                ...createMinMaxPercentilesSeries({
+                  concat: "tx-weight",
+                }),
+              ],
+            },
+            {
+              name: "vsize",
+              title: "Transaction Virtual Size",
+              bottom: [
+                createAverageSeries({ concat: "tx-vsize" }),
+                ...createMinMaxPercentilesSeries({
+                  concat: "tx-vsize",
+                }),
+              ],
+            },
+            {
+              name: "Versions",
+              title: "Transaction Versions",
+              bottom: [
+                createBaseSeries({
+                  key: "tx-v1",
+                  name: "v1 Count",
+                }),
+                ...createSumTotalSeries({ concat: "tx-v1", name: "v1" }),
+                createBaseSeries({
+                  key: "tx-v2",
+                  name: "v2 Count",
+                }),
+                ...createSumTotalSeries({ concat: "tx-v2", name: "v2" }),
+                createBaseSeries({
+                  key: "tx-v3",
+                  name: "v3 Count",
+                }),
+                ...createSumTotalSeries({ concat: "tx-v3", name: "v3" }),
+              ],
+            },
           ],
         },
         {
           name: "Input",
           tree: [
-            // {
-            //   name: "Count",
-            //   title: "Transaction Input Count",
-            //   bottom: [
-            //     createAverageSeries({ concat: "input-count" }),
-            //     ...createSumTotalSeries({ concat: "input-count" }),
-            //     ...createMinMaxPercentilesSeries({
-            //       concat: "input-count",
-            //     }),
-            //   ],
-            // },
-            // {
-            //   name: "Value",
-            //   title: "Transaction Input Value",
-            //   bottom: [
-            //     createAverageSeries({ concat: "input-value" }),
-            //     ...createSumTotalSeries({ concat: "input-value" }),
-            //   ],
-            // },
+            {
+              name: "Count",
+              title: "Transaction Input Count",
+              bottom: [
+                createAverageSeries({ concat: "input-count" }),
+                ...createSumTotalSeries({ concat: "input-count" }),
+                ...createMinMaxPercentilesSeries({
+                  concat: "input-count",
+                }),
+              ],
+            },
+            {
+              name: "Value",
+              title: "Transaction Input Value",
+              bottom: [
+                createAverageSeries({ concat: "input-value" }),
+                ...createSumTotalSeries({ concat: "input-value" }),
+              ],
+            },
           ],
         },
         {
           name: "Output",
           tree: [
-            // {
-            //   name: "Count",
-            //   title: "Transaction Output Count",
-            //   bottom: [
-            //     createAverageSeries({ concat: "output-count" }),
-            //     ...createSumTotalSeries({ concat: "output-count" }),
-            //     ...createMinMaxPercentilesSeries({
-            //       concat: "output-count",
-            //     }),
-            //   ],
-            // },
-            // {
-            //   name: "Value",
-            //   title: "Transaction Output Value",
-            //   bottom: [
-            //     createAverageSeries({ concat: "output-value" }),
-            //     ...createSumTotalSeries({ concat: "output-value" }),
-            //   ],
-            // },
+            {
+              name: "Count",
+              title: "Transaction Output Count",
+              bottom: [
+                createAverageSeries({ concat: "output-count" }),
+                ...createSumTotalSeries({ concat: "output-count" }),
+                ...createMinMaxPercentilesSeries({
+                  concat: "output-count",
+                }),
+              ],
+            },
+            {
+              name: "Value",
+              title: "Transaction Output Value",
+              bottom: [
+                createAverageSeries({ concat: "output-value" }),
+                ...createSumTotalSeries({ concat: "output-value" }),
+              ],
+            },
+            {
+              name: "By type",
+              tree: [],
+              // title: "Transaction Output Value",
+              // bottom: [
+              //   createAverageSeries({ concat: "output-value" }),
+              //   ...createSumTotalSeries({ concat: "output-value" }),
+              // ],
+            },
           ],
         },
         {
           name: "Mining",
           tree: [
+            {
+              name: "Supply",
+              title: "Circulating Supply",
+              bottom: [
+                createBaseSeries({
+                  key: "total-subsidy-in-btc",
+                  name: "Supply",
+                }),
+              ],
+            },
             {
               name: "Difficulty",
               title: "Difficulty",

@@ -45,7 +45,7 @@ pub trait DynamicVec: Send + Sync {
             .map(Value::Owned))
     }
     fn get_stored_(&self, index: usize, mmap: &Mmap) -> Result<Option<Self::T>>;
-    fn get_last(&self) -> Result<Option<Value<Self::T>>> {
+    fn last(&self) -> Result<Option<Value<Self::T>>> {
         let len = self.len();
         if len == 0 {
             return Ok(None);

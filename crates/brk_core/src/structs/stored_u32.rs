@@ -6,6 +6,11 @@ use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 use crate::CheckedSub;
 
+use super::{
+    EmptyOutputIndex, OpReturnIndex, P2AIndex, P2MSIndex, P2PK33Index, P2PK65Index, P2PKHIndex,
+    P2SHIndex, P2TRIndex, P2WPKHIndex, P2WSHIndex, UnknownOutputIndex,
+};
+
 #[derive(
     Debug,
     Deref,
@@ -84,5 +89,77 @@ impl From<StoredU32> for f64 {
 impl From<StoredU32> for usize {
     fn from(value: StoredU32) -> Self {
         value.0 as usize
+    }
+}
+
+impl From<P2PK65Index> for StoredU32 {
+    fn from(value: P2PK65Index) -> Self {
+        Self::from(usize::from(value))
+    }
+}
+
+impl From<P2PK33Index> for StoredU32 {
+    fn from(value: P2PK33Index) -> Self {
+        Self::from(usize::from(value))
+    }
+}
+
+impl From<P2PKHIndex> for StoredU32 {
+    fn from(value: P2PKHIndex) -> Self {
+        Self::from(usize::from(value))
+    }
+}
+
+impl From<OpReturnIndex> for StoredU32 {
+    fn from(value: OpReturnIndex) -> Self {
+        Self::from(usize::from(value))
+    }
+}
+
+impl From<P2MSIndex> for StoredU32 {
+    fn from(value: P2MSIndex) -> Self {
+        Self::from(usize::from(value))
+    }
+}
+
+impl From<P2SHIndex> for StoredU32 {
+    fn from(value: P2SHIndex) -> Self {
+        Self::from(usize::from(value))
+    }
+}
+
+impl From<P2WSHIndex> for StoredU32 {
+    fn from(value: P2WSHIndex) -> Self {
+        Self::from(usize::from(value))
+    }
+}
+
+impl From<P2WPKHIndex> for StoredU32 {
+    fn from(value: P2WPKHIndex) -> Self {
+        Self::from(usize::from(value))
+    }
+}
+
+impl From<P2TRIndex> for StoredU32 {
+    fn from(value: P2TRIndex) -> Self {
+        Self::from(usize::from(value))
+    }
+}
+
+impl From<P2AIndex> for StoredU32 {
+    fn from(value: P2AIndex) -> Self {
+        Self::from(usize::from(value))
+    }
+}
+
+impl From<UnknownOutputIndex> for StoredU32 {
+    fn from(value: UnknownOutputIndex) -> Self {
+        Self::from(usize::from(value))
+    }
+}
+
+impl From<EmptyOutputIndex> for StoredU32 {
+    fn from(value: EmptyOutputIndex) -> Self {
+        Self::from(usize::from(value))
     }
 }
