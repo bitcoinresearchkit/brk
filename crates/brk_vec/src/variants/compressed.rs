@@ -23,12 +23,8 @@ pub const MAX_PAGE_SIZE: usize = 16 * ONE_KIB;
 #[derive(Debug)]
 pub struct CompressedVec<I, T> {
     inner: RawVec<I, T>,
-    decoded_page: Option<(usize, Vec<T>)>,
     decoded_pages: Option<Vec<OnceLock<Vec<T>>>>,
     pages_meta: Arc<ArcSwap<CompressedPagesMetadata>>,
-    // pages: Option<Vec<OnceLock<Values<T>>>>,
-    // page: Option<(usize, Values<T>)>,
-    // length: Length
 }
 
 impl<I, T> CompressedVec<I, T>
@@ -71,7 +67,6 @@ where
 
         Ok(Self {
             inner: RawVec::import(path, version)?,
-            decoded_page: None,
             decoded_pages: None,
             pages_meta: Arc::new(ArcSwap::new(Arc::new(CompressedPagesMetadata::read(path)?))),
         })
@@ -175,12 +170,7 @@ where
         self.decoded_pages.as_ref().map_or(0, |v| v.len())
     }
 
-    fn reset_small_cache(&mut self) {
-        self.decoded_page.take();
-    }
-
     fn reset_caches(&mut self) {
-        self.reset_small_cache();
         self.reset_large_cache();
     }
 
@@ -202,8 +192,21 @@ where
         }
     }
 
+    #[inline]
     pub fn iter(&self) -> CompressedVecIterator<'_, I, T> {
         self.into_iter()
+    }
+
+    #[inline]
+    pub fn iter_at(&self, i: I) -> CompressedVecIterator<'_, I, T> {
+        self.iter_at_(i.unwrap_to_usize())
+    }
+
+    #[inline]
+    pub fn iter_at_(&self, i: usize) -> CompressedVecIterator<'_, I, T> {
+        let mut iter = self.into_iter();
+        iter.set_(i);
+        iter
     }
 }
 
@@ -247,16 +250,6 @@ where
             .decode_page(page_index, mmap)?
             .get(decoded_index)
             .cloned())
-    }
-    #[inline]
-    fn cached_get_stored_(&mut self, index: usize, mmap: &Mmap) -> Result<Option<T>> {
-        Self::cached_get_stored__(
-            index,
-            mmap,
-            self.stored_len(),
-            &mut self.decoded_page,
-            &self.pages_meta.load(),
-        )
     }
 
     #[inline]
@@ -307,8 +300,7 @@ where
         }
 
         Ok(self
-            .into_iter()
-            .skip(from)
+            .iter_at_(from)
             .take(to - from)
             .map(|(_, v)| v.into_inner())
             .collect::<Vec<_>>())
@@ -342,12 +334,6 @@ where
                 .and_then(|v| v.last_mut().and_then(|lock| lock.take()))
             {
                 values
-            } else if self
-                .decoded_page
-                .as_ref()
-                .is_some_and(|(page_index, _)| *page_index == last_page_index)
-            {
-                self.decoded_page.take().unwrap().1
             } else {
                 Self::decode_page_(
                     stored_len,
@@ -485,7 +471,6 @@ where
     fn clone(&self) -> Self {
         Self {
             inner: self.inner.clone(),
-            decoded_page: None,
             decoded_pages: None,
             pages_meta: self.pages_meta.clone(),
         }
@@ -503,9 +488,31 @@ pub struct CompressedVecIterator<'a, I, T> {
     index: usize,
 }
 
-impl<I, T> CompressedVecIterator<'_, I, T> {
-    pub fn set(&mut self, i: usize) {
-        self.index = i
+impl<I, T> CompressedVecIterator<'_, I, T>
+where
+    I: StoredIndex,
+    T: StoredType,
+{
+    #[inline]
+    pub fn set(&mut self, i: I) -> &mut Self {
+        self.index = i.unwrap_to_usize();
+        self
+    }
+
+    #[inline]
+    pub fn set_(&mut self, i: usize) {
+        self.index = i;
+    }
+
+    #[inline]
+    pub fn get(&mut self, i: I) -> Option<(I, Value<'_, T>)> {
+        self.set(i).next()
+    }
+
+    #[inline]
+    pub fn get_(&mut self, i: usize) -> Option<(I, Value<'_, T>)> {
+        self.set_(i);
+        self.next()
     }
 }
 

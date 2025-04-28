@@ -63,8 +63,21 @@ where
         })
     }
 
+    #[inline]
     pub fn iter(&self) -> RawVecIterator<'_, I, T> {
         self.into_iter()
+    }
+
+    #[inline]
+    pub fn iter_at(&self, i: I) -> RawVecIterator<'_, I, T> {
+        self.iter_at_(i.unwrap_to_usize())
+    }
+
+    #[inline]
+    pub fn iter_at_(&self, i: usize) -> RawVecIterator<'_, I, T> {
+        let mut iter = self.into_iter();
+        iter.set_(i);
+        iter
     }
 }
 
@@ -83,10 +96,6 @@ where
         Self::T::try_read_from_bytes(slice)
             .map(|v| Some(v))
             .map_err(Error::from)
-    }
-    #[inline]
-    fn cached_get_stored_(&mut self, index: usize, mmap: &Mmap) -> Result<Option<T>> {
-        self.get_stored_(index, mmap)
     }
 
     #[inline]
@@ -142,8 +151,7 @@ where
         }
 
         Ok(self
-            .into_iter()
-            .skip(from)
+            .iter_at_(from)
             .take(to - from)
             .map(|(_, v)| v.into_inner())
             .collect::<Vec<_>>())
@@ -226,11 +234,33 @@ pub struct RawVecIterator<'a, I, T> {
     index: usize,
 }
 
-impl<I, T> RawVecIterator<'_, I, T> {
+impl<I, T> RawVecIterator<'_, I, T>
+where
+    I: StoredIndex,
+    T: StoredType,
+{
     const SIZE_OF_T: usize = size_of::<T>();
 
-    pub fn set(&mut self, i: usize) {
-        self.index = i
+    #[inline]
+    pub fn set(&mut self, i: I) -> &mut Self {
+        self.index = i.unwrap_to_usize();
+        self
+    }
+
+    #[inline]
+    pub fn set_(&mut self, i: usize) {
+        self.index = i;
+    }
+
+    #[inline]
+    pub fn get(&mut self, i: I) -> Option<(I, Value<'_, T>)> {
+        self.set(i).next()
+    }
+
+    #[inline]
+    pub fn get_(&mut self, i: usize) -> Option<(I, Value<'_, T>)> {
+        self.set_(i);
+        self.next()
     }
 }
 
@@ -261,6 +291,18 @@ where
 
         self.index += 1;
         result
+    }
+
+    fn last(mut self) -> Option<Self::Item>
+    where
+        Self: Sized,
+    {
+        let len = self.vec.len();
+        if len == 0 {
+            return None;
+        }
+        self.get_(len - 1)
+            .map(|(i, v)| (i, Value::Owned(v.into_inner())))
     }
 }
 

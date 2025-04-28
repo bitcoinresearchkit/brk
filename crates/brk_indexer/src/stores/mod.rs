@@ -4,7 +4,7 @@ use brk_core::{
     AddressBytes, AddressBytesHash, BlockHashPrefix, Height, OutputType, OutputTypeIndex, TxIndex,
     TxidPrefix,
 };
-use brk_vec::{StoredIndex, Value, Version};
+use brk_vec::{Value, Version};
 use fjall::{PersistMode, TransactionalKeyspace};
 
 use crate::Indexes;
@@ -88,8 +88,7 @@ impl Stores {
 
         if starting_indexes.height != Height::ZERO {
             vecs.height_to_blockhash
-                .into_iter()
-                .skip(starting_indexes.height.unwrap_to_usize())
+                .iter_at(starting_indexes.height)
                 .for_each(|(_, v)| {
                     let blockhashprefix = BlockHashPrefix::from(Value::into_inner(v));
                     self.blockhashprefix_to_height.remove(blockhashprefix);
@@ -235,8 +234,7 @@ impl Stores {
 
         if starting_indexes.txindex != TxIndex::ZERO {
             vecs.txindex_to_txid
-                .into_iter()
-                .skip(starting_indexes.txindex.unwrap_to_usize())
+                .iter_at(starting_indexes.txindex)
                 .for_each(|(txindex, txid)| {
                     let txidprefix = TxidPrefix::from(&txid.into_inner());
 

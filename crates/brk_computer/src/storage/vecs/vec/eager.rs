@@ -120,18 +120,6 @@ where
         &mut self.inner
     }
 
-    pub fn unwrap_cached_get(&mut self, index: I) -> Option<T> {
-        self.inner.unwrap_cached_get(index)
-    }
-    #[inline]
-    pub fn double_unwrap_cached_get(&mut self, index: I) -> T {
-        self.inner.double_unwrap_cached_get(index)
-    }
-
-    // pub fn collect_inclusive_range(&self, from: I, to: I) -> Result<Vec<T>> {
-    //     self.inner.collect_inclusive_range(from, to)
-    // }
-
     pub fn path(&self) -> &Path {
         self.inner.path()
     }
@@ -193,21 +181,17 @@ where
     where
         A: StoredIndex,
         B: StoredType,
-        F: FnMut((A, B, &mut Self, &'_ mut StoredVecIterator<'_, A, B>)) -> (I, T),
+        F: FnMut((A, B)) -> (I, T),
     {
         self.validate_computed_version_or_reset_file(
             Version::ZERO + self.version() + other.version(),
         )?;
 
         let index = max_from.min(A::from(self.len()));
-        let mut other_iter = other.iter();
-        other
-            .iter()
-            .skip(index.unwrap_to_usize())
-            .try_for_each(|(a, b)| {
-                let (i, v) = t((a, b.into_inner(), self, &mut other_iter));
-                self.forced_push_at(i, v, exit)
-            })?;
+        other.iter_at(index).try_for_each(|(a, b)| {
+            let (i, v) = t((a, b.into_inner()));
+            self.forced_push_at(i, v, exit)
+        })?;
 
         self.safe_flush(exit)
     }
@@ -228,20 +212,14 @@ where
 
         let index = max_from.min(
             self.inner
-                .cached_get_last()?
-                .map_or_else(T::default, |v| v.into_inner()),
+                .iter()
+                .last()
+                .map_or_else(T::default, |(_, v)| v.into_inner()),
         );
-        other
-            .iter()
-            .skip(index.unwrap_to_usize())
-            .try_for_each(|(v, i)| {
-                let i = i.into_inner();
-                if self.unwrap_cached_get(i).is_none_or(|old_v| old_v > v) {
-                    self.forced_push_at(i, v, exit)
-                } else {
-                    Ok(())
-                }
-            })?;
+        other.iter_at(index).try_for_each(|(v, i)| {
+            let i = i.into_inner();
+            self.forced_push_at(i, v, exit)
+        })?;
 
         self.safe_flush(exit)
     }
@@ -265,11 +243,10 @@ where
 
         let index = max_from.min(T::from(self.len()));
         first_indexes
-            .iter()
-            .skip(index.unwrap_to_usize())
+            .iter_at(index)
             .try_for_each(|(value, first_index)| {
                 let first_index = (first_index).to_usize()?;
-                let last_index = last_indexes_iter.get(value).unwrap().1.to_usize()?;
+                let last_index = last_indexes_iter.unwrap_get_inner(value).unwrap_to_usize();
                 (first_index..=last_index)
                     .try_for_each(|index| self.forced_push_at(I::from(index), value, exit))
             })?;
@@ -295,8 +272,7 @@ where
         let one = T::from(1);
         let mut prev_index: Option<I> = None;
         first_indexes
-            .iter()
-            .skip(index.unwrap_to_usize())
+            .iter_at(index)
             .try_for_each(|(index, v)| -> Result<()> {
                 if let Some(prev_index) = prev_index.take() {
                     let value = v.checked_sub(one).unwrap();
@@ -396,8 +372,7 @@ where
         let mut other_iter = first_indexes.iter();
         let index = max_from.min(I::from(self.len()));
         first_indexes
-            .iter()
-            .skip(index.unwrap_to_usize())
+            .iter_at(index)
             .try_for_each(|(i, first_index)| {
                 let end = other_iter
                     .get(i + 1)
@@ -434,23 +409,20 @@ where
 
         let mut other_to_self_iter = other_to_self.iter();
         let index = max_from.min(I::from(self.len()));
-        self_to_other
-            .iter()
-            .skip(index.unwrap_to_usize())
-            .try_for_each(|(i, other)| {
-                self.forced_push_at(
-                    i,
-                    T::from(
-                        other_to_self_iter
-                            .get(other.into_inner())
-                            .unwrap()
-                            .1
-                            .into_inner()
-                            == i,
-                    ),
-                    exit,
-                )
-            })?;
+        self_to_other.iter_at(index).try_for_each(|(i, other)| {
+            self.forced_push_at(
+                i,
+                T::from(
+                    other_to_self_iter
+                        .get(other.into_inner())
+                        .unwrap()
+                        .1
+                        .into_inner()
+                        == i,
+                ),
+                exit,
+            )
+        })?;
 
         self.safe_flush(exit)
     }
@@ -475,8 +447,7 @@ where
         let mut source_iter = source.iter();
         let index = max_from.min(I::from(self.len()));
         first_indexes
-            .iter()
-            .skip(index.unwrap_to_usize())
+            .iter_at(index)
             .try_for_each(|(i, first_index)| {
                 let last_index = last_indexes_iter.get(i).unwrap().1.into_inner();
                 let range = first_index.unwrap_to_usize()..=last_index.unwrap_to_usize();
@@ -506,12 +477,10 @@ where
         )?;
 
         let index = max_from.min(I::from(self.len()));
-        sats.iter()
-            .skip(index.unwrap_to_usize())
-            .try_for_each(|(i, sats)| {
-                let (i, v) = (i, Bitcoin::from(sats.into_inner()));
-                self.forced_push_at(i, v, exit)
-            })?;
+        sats.iter_at(index).try_for_each(|(i, sats)| {
+            let (i, v) = (i, Bitcoin::from(sats.into_inner()));
+            self.forced_push_at(i, v, exit)
+        })?;
 
         self.safe_flush(exit)
     }
@@ -531,14 +500,11 @@ impl EagerVec<Height, Dollars> {
 
         let mut price_iter = price.iter();
         let index = max_from.min(Height::from(self.len()));
-        bitcoin
-            .iter()
-            .skip(index.unwrap_to_usize())
-            .try_for_each(|(i, bitcoin)| {
-                let dollars = price_iter.get(i).unwrap().1.into_inner();
-                let (i, v) = (i, *dollars * bitcoin.into_inner());
-                self.forced_push_at(i, v, exit)
-            })?;
+        bitcoin.iter_at(index).try_for_each(|(i, bitcoin)| {
+            let dollars = price_iter.get(i).unwrap().1.into_inner();
+            let (i, v) = (i, *dollars * bitcoin.into_inner());
+            self.forced_push_at(i, v, exit)
+        })?;
 
         self.safe_flush(exit)
     }
@@ -560,15 +526,12 @@ impl EagerVec<TxIndex, Dollars> {
         let mut i_to_height_iter = i_to_height.iter();
         let mut price_iter = price.iter();
         let index = max_from.min(TxIndex::from(self.len()));
-        bitcoin
-            .iter()
-            .skip(index.unwrap_to_usize())
-            .try_for_each(|(i, bitcoin, ..)| {
-                let height = i_to_height_iter.get(i).unwrap().1.into_inner();
-                let dollars = price_iter.get(height).unwrap().1.into_inner();
-                let (i, v) = (i, *dollars * bitcoin.into_inner());
-                self.forced_push_at(i, v, exit)
-            })?;
+        bitcoin.iter_at(index).try_for_each(|(i, bitcoin, ..)| {
+            let height = i_to_height_iter.get(i).unwrap().1.into_inner();
+            let dollars = price_iter.get(height).unwrap().1.into_inner();
+            let (i, v) = (i, *dollars * bitcoin.into_inner());
+            self.forced_push_at(i, v, exit)
+        })?;
 
         self.safe_flush(exit)
     }

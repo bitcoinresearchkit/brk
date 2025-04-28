@@ -706,13 +706,14 @@ impl Vecs {
             exit,
         )?;
 
+        let mut height_to_timestamp_iter = indexer_vecs.height_to_timestamp.iter();
         self.height_to_timestamp_fixed.compute_transform(
             starting_indexes.height,
             indexer_vecs.height_to_timestamp.vec(),
-            |(h, timestamp, s, ..)| {
+            |(h, timestamp, ..)| {
                 let timestamp = h
                     .decremented()
-                    .and_then(|h| s.unwrap_cached_get(h))
+                    .map(|h| height_to_timestamp_iter.unwrap_get_inner(h))
                     .map_or(timestamp, |prev_d| prev_d.max(timestamp));
                 (h, timestamp)
             },
@@ -734,7 +735,8 @@ impl Vecs {
 
         let starting_dateindex = self
             .height_to_dateindex
-            .unwrap_cached_get(decremented_starting_height)
+            .iter()
+            .get_inner(decremented_starting_height)
             .unwrap_or_default();
 
         self.height_to_dateindex.compute_transform(
@@ -746,7 +748,8 @@ impl Vecs {
 
         let starting_dateindex = if let Some(dateindex) = self
             .height_to_dateindex
-            .unwrap_cached_get(decremented_starting_height)
+            .iter()
+            .get_inner(decremented_starting_height)
         {
             starting_dateindex.min(dateindex)
         } else {
@@ -790,7 +793,8 @@ impl Vecs {
 
         let starting_weekindex = self
             .dateindex_to_weekindex
-            .unwrap_cached_get(starting_dateindex)
+            .iter()
+            .get_inner(starting_dateindex)
             .unwrap_or_default();
 
         self.dateindex_to_weekindex.compute_range(
@@ -828,7 +832,8 @@ impl Vecs {
 
         let starting_difficultyepoch = self
             .height_to_difficultyepoch
-            .unwrap_cached_get(decremented_starting_height)
+            .iter()
+            .get_inner(decremented_starting_height)
             .unwrap_or_default();
 
         self.height_to_difficultyepoch.compute_range(
@@ -866,7 +871,8 @@ impl Vecs {
 
         let starting_monthindex = self
             .dateindex_to_monthindex
-            .unwrap_cached_get(starting_dateindex)
+            .iter()
+            .get_inner(starting_dateindex)
             .unwrap_or_default();
 
         self.dateindex_to_monthindex.compute_range(
@@ -906,7 +912,8 @@ impl Vecs {
 
         let starting_quarterindex = self
             .monthindex_to_quarterindex
-            .unwrap_cached_get(starting_monthindex)
+            .iter()
+            .get_inner(starting_monthindex)
             .unwrap_or_default();
 
         self.monthindex_to_quarterindex.compute_range(
@@ -946,7 +953,8 @@ impl Vecs {
 
         let starting_yearindex = self
             .monthindex_to_yearindex
-            .unwrap_cached_get(starting_monthindex)
+            .iter()
+            .get_inner(starting_monthindex)
             .unwrap_or_default();
 
         self.monthindex_to_yearindex.compute_range(
@@ -986,7 +994,8 @@ impl Vecs {
 
         let starting_halvingepoch = self
             .height_to_halvingepoch
-            .unwrap_cached_get(decremented_starting_height)
+            .iter()
+            .get_inner(decremented_starting_height)
             .unwrap_or_default();
 
         self.height_to_halvingepoch.compute_range(
@@ -1024,7 +1033,8 @@ impl Vecs {
 
         let starting_decadeindex = self
             .yearindex_to_decadeindex
-            .unwrap_cached_get(starting_yearindex)
+            .iter()
+            .get_inner(starting_yearindex)
             .unwrap_or_default();
 
         self.yearindex_to_decadeindex.compute_range(

@@ -45,14 +45,6 @@ where
     pub fn get(&self, index: I) -> Result<Option<Value<'_, T>>> {
         self.inner.get(index)
     }
-    #[inline]
-    pub fn unwrap_cached_get(&mut self, index: I) -> Option<T> {
-        self.inner.unwrap_cached_get(index)
-    }
-    #[inline]
-    pub fn double_unwrap_cached_get(&mut self, index: I) -> T {
-        self.inner.double_unwrap_cached_get(index)
-    }
 
     #[inline]
     pub fn push_if_needed(&mut self, index: I, value: T) -> Result<()> {
@@ -123,6 +115,12 @@ where
 
     pub fn iter(&self) -> StoredVecIterator<'_, I, T> {
         self.into_iter()
+    }
+
+    pub fn iter_at(&self, i: I) -> StoredVecIterator<'_, I, T> {
+        let mut iter = self.into_iter();
+        iter.set(i);
+        iter
     }
 }
 

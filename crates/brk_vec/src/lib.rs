@@ -56,6 +56,12 @@ where
     pub fn iter(&self) -> StoredVecIterator<'_, I, T> {
         self.into_iter()
     }
+
+    pub fn iter_at(&self, i: I) -> StoredVecIterator<'_, I, T> {
+        let mut iter = self.into_iter();
+        iter.set(i);
+        iter
+    }
 }
 
 impl<I, T> DynamicVec for StoredVec<I, T>
@@ -71,13 +77,6 @@ where
         match self {
             StoredVec::Raw(v) => v.get_stored_(index, guard),
             StoredVec::Compressed(v) => v.get_stored_(index, guard),
-        }
-    }
-    #[inline]
-    fn cached_get_stored_(&mut self, index: usize, guard: &Mmap) -> Result<Option<T>> {
-        match self {
-            StoredVec::Raw(v) => v.cached_get_stored_(index, guard),
-            StoredVec::Compressed(v) => v.cached_get_stored_(index, guard),
         }
     }
 
@@ -244,7 +243,7 @@ where
     Compressed(CompressedVecIterator<'a, I, T>),
 }
 
-impl<'a, I, T> StoredVecIterator<'a, I, T>
+impl<I, T> StoredVecIterator<'_, I, T>
 where
     I: StoredIndex,
     T: StoredType,
@@ -255,33 +254,32 @@ where
     }
 
     #[inline]
-    pub fn get(&mut self, i: I) -> Option<(I, Value<'a, T>)> {
+    pub fn get_inner(&mut self, i: I) -> Option<T> {
+        self.get_(i.unwrap_to_usize()).map(|(_, v)| v.into_inner())
+    }
+
+    #[inline]
+    pub fn get(&mut self, i: I) -> Option<(I, Value<'_, T>)> {
         self.get_(i.unwrap_to_usize())
     }
 
     #[inline]
-    pub fn get_(&mut self, i: usize) -> Option<(I, Value<'a, T>)> {
+    pub fn get_(&mut self, i: usize) -> Option<(I, Value<'_, T>)> {
         match self {
-            Self::Compressed(iter) => {
-                iter.set(i);
-                iter.next()
-            }
-            Self::Raw(iter) => {
-                iter.set(i);
-                iter.next()
-            }
+            Self::Compressed(iter) => iter.get_(i),
+            Self::Raw(iter) => iter.get_(i),
         }
     }
 
     pub fn set(&mut self, i: I) {
         match self {
             Self::Compressed(iter) => {
-                iter.set(i.unwrap_to_usize());
+                iter.set(i);
             }
             Self::Raw(iter) => {
-                iter.set(i.unwrap_to_usize());
+                iter.set(i);
             }
-        }
+        };
     }
 }
 
@@ -296,6 +294,23 @@ where
             Self::Compressed(i) => i.next(),
             Self::Raw(i) => i.next(),
         }
+    }
+
+    fn last(self) -> Option<Self::Item>
+    where
+        Self: Sized,
+    {
+        match self {
+            Self::Compressed(i) => i.last(),
+            Self::Raw(i) => i.last(),
+        }
+    }
+
+    fn skip(self, _: usize) -> std::iter::Skip<Self>
+    where
+        Self: Sized,
+    {
+        todo!("")
     }
 }
 
