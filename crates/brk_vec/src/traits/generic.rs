@@ -104,10 +104,10 @@ where
 
     fn collect_range(&self, from: Option<usize>, to: Option<usize>) -> Result<Vec<Self::T>>;
 
-    #[inline]
-    fn collect_inclusive_range(&self, from: I, to: I) -> Result<Vec<Self::T>> {
-        self.collect_range(Some(from.to_usize()?), Some(to.to_usize()? + 1))
-    }
+    // #[inline]
+    // fn collect_inclusive_range(&self, from: I, to: I) -> Result<Vec<Self::T>> {
+    //     self.collect_range(Some(from.to_usize()?), Some(to.to_usize()? + 1))
+    // }
 
     #[inline]
     fn i64_to_usize(i: i64, len: usize) -> usize {
@@ -119,6 +119,7 @@ where
         }
     }
 
+    #[doc(hidden)]
     fn collect_signed_range(&self, from: Option<i64>, to: Option<i64>) -> Result<Vec<Self::T>> {
         let len = self.len();
         let from = from.map(|i| Self::i64_to_usize(i, len));

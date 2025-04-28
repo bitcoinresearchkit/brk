@@ -7,7 +7,7 @@ use brk_core::{
 use brk_exit::Exit;
 use brk_indexer::Indexer;
 use brk_parser::bitcoin;
-use brk_vec::{Compressed, StoredIndex, Version};
+use brk_vec::{Compressed, Version};
 use color_eyre::eyre::ContextCompat;
 
 use super::{
@@ -110,8 +110,8 @@ impl Vecs {
 
     pub fn compute(
         &mut self,
-        indexer: &mut Indexer,
-        indexes: &mut indexes::Vecs,
+        indexer: &Indexer,
+        indexes: &indexes::Vecs,
         starting_indexes: &Indexes,
         exit: &Exit,
     ) -> color_eyre::Result<()> {
@@ -123,7 +123,7 @@ impl Vecs {
             |vec, _, indexes, starting_indexes, exit| {
                 vec.compute_transform(
                     starting_indexes.dateindex,
-                    indexes.dateindex_to_date.mut_vec(),
+                    indexes.dateindex_to_date.vec(),
                     |(di, d, ..)| (di, Timestamp::from(d)),
                     exit,
                 )
@@ -136,18 +136,18 @@ impl Vecs {
             starting_indexes,
             exit,
             |v, indexer, _, starting_indexes, exit| {
-                let indexer_vecs = indexer.mut_vecs();
+                let indexer_vecs = indexer.vecs();
 
                 v.compute_range(
                     starting_indexes.height,
-                    indexer_vecs.height_to_weight.mut_vec(),
+                    indexer_vecs.height_to_weight.vec(),
                     |h| (h, StoredU32::from(1_u32)),
                     exit,
                 )
             },
         )?;
 
-        let indexer_vecs = indexer.mut_vecs();
+        let indexer_vecs = indexer.vecs();
 
         self.height_to_interval.compute_transform(
             starting_indexes.height,
@@ -155,7 +155,7 @@ impl Vecs {
             |(height, timestamp, _, height_to_timestamp_iter)| {
                 let interval = height.decremented().map_or(Timestamp::ZERO, |prev_h| {
                     let prev_timestamp = height_to_timestamp_iter
-                        .get(prev_h.unwrap_to_usize())
+                        .get(prev_h)
                         .context("To work")
                         .inspect_err(|_| {
                             dbg!(prev_h);
@@ -176,26 +176,26 @@ impl Vecs {
             indexes,
             starting_indexes,
             exit,
-            Some(self.height_to_interval.mut_vec()),
+            Some(self.height_to_interval.vec()),
         )?;
 
         self.indexes_to_block_weight.compute_rest(
             indexes,
             starting_indexes,
             exit,
-            Some(indexer_vecs.height_to_weight.mut_vec()),
+            Some(indexer_vecs.height_to_weight.vec()),
         )?;
 
         self.indexes_to_block_size.compute_rest(
             indexes,
             starting_indexes,
             exit,
-            Some(indexer_vecs.height_to_total_size.mut_vec()),
+            Some(indexer_vecs.height_to_total_size.vec()),
         )?;
 
         self.height_to_vbytes.compute_transform(
             starting_indexes.height,
-            indexer_vecs.height_to_weight.mut_vec(),
+            indexer_vecs.height_to_weight.vec(),
             |(h, w, ..)| {
                 (
                     h,
@@ -209,30 +209,22 @@ impl Vecs {
             indexes,
             starting_indexes,
             exit,
-            Some(self.height_to_vbytes.mut_vec()),
+            Some(self.height_to_vbytes.vec()),
         )?;
+
+        let mut height_to_timestamp_iter = indexer_vecs.height_to_timestamp.iter();
 
         self.difficultyepoch_to_timestamp.compute_transform(
             starting_indexes.difficultyepoch,
-            indexes.difficultyepoch_to_first_height.mut_vec(),
-            |(i, h, ..)| {
-                (
-                    i,
-                    indexer_vecs.height_to_timestamp.double_unwrap_cached_get(h),
-                )
-            },
+            indexes.difficultyepoch_to_first_height.vec(),
+            |(i, h, ..)| (i, height_to_timestamp_iter.get(h).unwrap().1.into_inner()),
             exit,
         )?;
 
         self.halvingepoch_to_timestamp.compute_transform(
             starting_indexes.halvingepoch,
-            indexes.halvingepoch_to_first_height.mut_vec(),
-            |(i, h, ..)| {
-                (
-                    i,
-                    indexer_vecs.height_to_timestamp.double_unwrap_cached_get(h),
-                )
-            },
+            indexes.halvingepoch_to_first_height.vec(),
+            |(i, h, ..)| (i, height_to_timestamp_iter.get(h).unwrap().1.into_inner()),
             exit,
         )?;
 

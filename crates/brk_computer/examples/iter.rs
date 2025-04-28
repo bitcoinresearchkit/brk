@@ -31,7 +31,7 @@ pub fn main() -> color_eyre::Result<()> {
     //     dbg!(t);
     // });
     (0..2).for_each(|i| {
-        dbg!(height_to_timestamp_iter.get(i));
+        dbg!(height_to_timestamp_iter.get_(i));
     });
     //     for_each(|t| {
     //     dbg!(t);

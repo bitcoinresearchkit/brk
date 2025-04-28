@@ -83,8 +83,8 @@ where
 
     pub fn compute_all<F>(
         &mut self,
-        indexer: &mut Indexer,
-        indexes: &mut indexes::Vecs,
+        indexer: &Indexer,
+        indexes: &indexes::Vecs,
         starting_indexes: &Indexes,
         exit: &Exit,
         mut compute: F,
@@ -92,8 +92,8 @@ where
     where
         F: FnMut(
             &mut EagerVec<TxIndex, T>,
-            &mut Indexer,
-            &mut indexes::Vecs,
+            &Indexer,
+            &indexes::Vecs,
             &Indexes,
             &Exit,
         ) -> Result<()>,
@@ -113,75 +113,75 @@ where
 
     pub fn compute_rest(
         &mut self,
-        indexer: &mut Indexer,
-        indexes: &mut indexes::Vecs,
+        indexer: &Indexer,
+        indexes: &indexes::Vecs,
         starting_indexes: &Indexes,
         exit: &Exit,
-        txindex: Option<&mut StoredVec<TxIndex, T>>,
+        txindex: Option<&StoredVec<TxIndex, T>>,
     ) -> color_eyre::Result<()> {
-        let txindex = txindex.unwrap_or_else(|| self.txindex.as_mut().unwrap().mut_vec());
+        let txindex = txindex.unwrap_or_else(|| self.txindex.as_ref().unwrap().vec());
 
         self.height.compute(
             starting_indexes.height,
             txindex,
-            indexer.mut_vecs().height_to_first_txindex.mut_vec(),
-            indexes.height_to_last_txindex.mut_vec(),
+            indexer.vecs().height_to_first_txindex.vec(),
+            indexes.height_to_last_txindex.vec(),
             exit,
         )?;
 
         self.dateindex.from_aligned(
             starting_indexes.dateindex,
-            &mut self.height,
-            indexes.dateindex_to_first_height.mut_vec(),
-            indexes.dateindex_to_last_height.mut_vec(),
+            &self.height,
+            indexes.dateindex_to_first_height.vec(),
+            indexes.dateindex_to_last_height.vec(),
             exit,
         )?;
 
         self.weekindex.from_aligned(
             starting_indexes.weekindex,
-            &mut self.dateindex,
-            indexes.weekindex_to_first_dateindex.mut_vec(),
-            indexes.weekindex_to_last_dateindex.mut_vec(),
+            &self.dateindex,
+            indexes.weekindex_to_first_dateindex.vec(),
+            indexes.weekindex_to_last_dateindex.vec(),
             exit,
         )?;
 
         self.monthindex.from_aligned(
             starting_indexes.monthindex,
-            &mut self.dateindex,
-            indexes.monthindex_to_first_dateindex.mut_vec(),
-            indexes.monthindex_to_last_dateindex.mut_vec(),
+            &self.dateindex,
+            indexes.monthindex_to_first_dateindex.vec(),
+            indexes.monthindex_to_last_dateindex.vec(),
             exit,
         )?;
 
         self.quarterindex.from_aligned(
             starting_indexes.quarterindex,
-            &mut self.monthindex,
-            indexes.quarterindex_to_first_monthindex.mut_vec(),
-            indexes.quarterindex_to_last_monthindex.mut_vec(),
+            &self.monthindex,
+            indexes.quarterindex_to_first_monthindex.vec(),
+            indexes.quarterindex_to_last_monthindex.vec(),
             exit,
         )?;
 
         self.yearindex.from_aligned(
             starting_indexes.yearindex,
-            &mut self.monthindex,
-            indexes.yearindex_to_first_monthindex.mut_vec(),
-            indexes.yearindex_to_last_monthindex.mut_vec(),
+            &self.monthindex,
+            indexes.yearindex_to_first_monthindex.vec(),
+            indexes.yearindex_to_last_monthindex.vec(),
             exit,
         )?;
 
         self.decadeindex.from_aligned(
             starting_indexes.decadeindex,
-            &mut self.yearindex,
-            indexes.decadeindex_to_first_yearindex.mut_vec(),
-            indexes.decadeindex_to_last_yearindex.mut_vec(),
+            &self.yearindex,
+            indexes.decadeindex_to_first_yearindex.vec(),
+            indexes.decadeindex_to_last_yearindex.vec(),
             exit,
         )?;
 
         self.difficultyepoch.from_aligned(
             starting_indexes.difficultyepoch,
-            &mut self.height,
-            indexes.difficultyepoch_to_first_height.mut_vec(),
-            indexes.difficultyepoch_to_last_height.mut_vec(),
+            &self.height,
+            indexes.difficultyepoch_to_first_height.vec(),
+            indexes.difficultyepoch_to_last_height.vec(),
             exit,
         )?;
 

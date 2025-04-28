@@ -87,20 +87,14 @@ where
 
     pub fn compute_all<F>(
         &mut self,
-        indexer: &mut Indexer,
-        indexes: &mut indexes::Vecs,
+        indexer: &Indexer,
+        indexes: &indexes::Vecs,
         starting_indexes: &Indexes,
         exit: &Exit,
         mut compute: F,
     ) -> color_eyre::Result<()>
     where
-        F: FnMut(
-            &mut EagerVec<Height, T>,
-            &mut Indexer,
-            &mut indexes::Vecs,
-            &Indexes,
-            &Exit,
-        ) -> Result<()>,
+        F: FnMut(&mut EagerVec<Height, T>, &Indexer, &indexes::Vecs, &Indexes, &Exit) -> Result<()>,
     {
         compute(
             self.height.as_mut().unwrap(),
@@ -117,12 +111,12 @@ where
 
     pub fn compute_rest(
         &mut self,
-        indexes: &mut indexes::Vecs,
+        indexes: &indexes::Vecs,
         starting_indexes: &Indexes,
         exit: &Exit,
-        height: Option<&mut StoredVec<Height, T>>,
+        height: Option<&StoredVec<Height, T>>,
     ) -> color_eyre::Result<()> {
-        let height = height.unwrap_or_else(|| self.height.as_mut().unwrap().mut_vec());
+        let height = height.unwrap_or_else(|| self.height.as_ref().unwrap().vec());
 
         self.height_extra
             .extend(starting_indexes.height, height, exit)?;
@@ -130,56 +124,56 @@ where
         self.dateindex.compute(
             starting_indexes.dateindex,
             height,
-            indexes.dateindex_to_first_height.mut_vec(),
-            indexes.dateindex_to_last_height.mut_vec(),
+            indexes.dateindex_to_first_height.vec(),
+            indexes.dateindex_to_last_height.vec(),
             exit,
         )?;
 
         self.weekindex.from_aligned(
             starting_indexes.weekindex,
-            &mut self.dateindex,
-            indexes.weekindex_to_first_dateindex.mut_vec(),
-            indexes.weekindex_to_last_dateindex.mut_vec(),
+            &self.dateindex,
+            indexes.weekindex_to_first_dateindex.vec(),
+            indexes.weekindex_to_last_dateindex.vec(),
             exit,
         )?;
 
         self.monthindex.from_aligned(
             starting_indexes.monthindex,
-            &mut self.dateindex,
-            indexes.monthindex_to_first_dateindex.mut_vec(),
-            indexes.monthindex_to_last_dateindex.mut_vec(),
+            &self.dateindex,
+            indexes.monthindex_to_first_dateindex.vec(),
+            indexes.monthindex_to_last_dateindex.vec(),
             exit,
         )?;
 
         self.quarterindex.from_aligned(
             starting_indexes.quarterindex,
-            &mut self.monthindex,
-            indexes.quarterindex_to_first_monthindex.mut_vec(),
-            indexes.quarterindex_to_last_monthindex.mut_vec(),
+            &self.monthindex,
+            indexes.quarterindex_to_first_monthindex.vec(),
+            indexes.quarterindex_to_last_monthindex.vec(),
             exit,
         )?;
 
         self.yearindex.from_aligned(
             starting_indexes.yearindex,
-            &mut self.monthindex,
-            indexes.yearindex_to_first_monthindex.mut_vec(),
-            indexes.yearindex_to_last_monthindex.mut_vec(),
+            &self.monthindex,
+            indexes.yearindex_to_first_monthindex.vec(),
+            indexes.yearindex_to_last_monthindex.vec(),
             exit,
         )?;
 
         self.decadeindex.from_aligned(
             starting_indexes.decadeindex,
-            &mut self.yearindex,
-            indexes.decadeindex_to_first_yearindex.mut_vec(),
-            indexes.decadeindex_to_last_yearindex.mut_vec(),
+            &self.yearindex,
+            indexes.decadeindex_to_first_yearindex.vec(),
+            indexes.decadeindex_to_last_yearindex.vec(),
             exit,
         )?;
 
         self.difficultyepoch.compute(
             starting_indexes.difficultyepoch,
             height,
-            indexes.difficultyepoch_to_first_height.mut_vec(),
-            indexes.difficultyepoch_to_last_height.mut_vec(),
+            indexes.difficultyepoch_to_first_height.vec(),
+            indexes.difficultyepoch_to_last_height.vec(),
             exit,
         )?;
 
