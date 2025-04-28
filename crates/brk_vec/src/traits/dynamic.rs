@@ -16,18 +16,6 @@ pub trait DynamicVec: Send + Sync {
         self.get_(index.to_usize()?)
     }
     #[inline]
-    fn cached_get(&mut self, index: Self::I) -> Result<Option<Value<Self::T>>> {
-        self.cached_get_(index.to_usize()?)
-    }
-    #[inline]
-    fn unwrap_cached_get(&mut self, index: Self::I) -> Option<Self::T> {
-        self.cached_get(index).unwrap().map(Value::into_inner)
-    }
-    #[inline]
-    fn double_unwrap_cached_get(&mut self, index: Self::I) -> Self::T {
-        self.unwrap_cached_get(index).unwrap()
-    }
-    #[inline]
     fn get_(&self, index: usize) -> Result<Option<Value<Self::T>>> {
         match self.index_to_pushed_index(index) {
             Ok(index) => {
@@ -45,40 +33,13 @@ pub trait DynamicVec: Send + Sync {
             .map(Value::Owned))
     }
     fn get_stored_(&self, index: usize, mmap: &Mmap) -> Result<Option<Self::T>>;
-    fn last(&self) -> Result<Option<Value<Self::T>>> {
-        let len = self.len();
-        if len == 0 {
-            return Ok(None);
-        }
-        self.get_(len - 1)
-    }
-    #[inline]
-    fn cached_get_(&mut self, index: usize) -> Result<Option<Value<Self::T>>> {
-        match self.index_to_pushed_index(index) {
-            Ok(index) => {
-                if let Some(index) = index {
-                    return Ok(self.pushed().get(index).map(Value::Ref));
-                }
-            }
-            Err(Error::IndexTooHigh) => return Ok(None),
-            Err(Error::IndexTooLow) => {}
-            Err(error) => return Err(error),
-        }
-
-        let mmap = Arc::clone(self.guard().as_ref().unwrap());
-
-        Ok(self
-            .cached_get_stored_(index.to_usize()?, &mmap)?
-            .map(Value::Owned))
-    }
-    fn cached_get_stored_(&mut self, index: usize, mmap: &Mmap) -> Result<Option<Self::T>>;
-    fn cached_get_last(&mut self) -> Result<Option<Value<Self::T>>> {
-        let len = self.len();
-        if len == 0 {
-            return Ok(None);
-        }
-        self.cached_get_(len - 1)
-    }
+    // fn last(&self) -> Result<Option<Value<Self::T>>> {
+    //     let len = self.len();
+    //     if len == 0 {
+    //         return Ok(None);
+    //     }
+    //     self.get_(len - 1)
+    // }
 
     #[inline]
     fn len(&self) -> usize {

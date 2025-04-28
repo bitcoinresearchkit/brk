@@ -144,22 +144,13 @@ where
 
         let total_vec = self.total.as_mut().unwrap();
 
-        source
-            .into_iter()
-            .skip(index.unwrap_to_usize())
-            .try_for_each(|(i, v)| -> Result<()> {
-                let v = v.into_inner();
-                let prev = i
-                    .unwrap_to_usize()
-                    .checked_sub(1)
-                    .map_or(T::from(0_usize), |prev_i| {
-                        total_vec
-                            .unwrap_cached_get(I::from(prev_i))
-                            .unwrap_or(T::from(0_usize))
-                    });
-                let value = v.clone() + prev;
-                total_vec.forced_push_at(i, value, exit)
-            })?;
+        let mut total = index.decremented().map_or(T::from(0_usize), |index| {
+            total_vec.iter().unwrap_get_inner(index)
+        });
+        source.iter_at(index).try_for_each(|(i, v)| -> Result<()> {
+            total = total.clone() + v.into_inner();
+            total_vec.forced_push_at(i, total.clone(), exit)
+        })?;
 
         self.safe_flush(exit)?;
 
@@ -182,9 +173,16 @@ where
         let mut last_indexes_iter = last_indexes.iter();
         let mut source_iter = source.iter();
 
+        let total_vec = self.total.as_mut();
+
+        let mut total = total_vec.map(|total_vec| {
+            index.decremented().map_or(T::from(0_usize), |index| {
+                total_vec.iter().unwrap_get_inner(index)
+            })
+        });
+
         first_indexes
-            .into_iter()
-            .skip(index.unwrap_to_usize())
+            .iter_at(index)
             .try_for_each(|(i, first_index)| -> Result<()> {
                 let first_index = first_index.into_inner();
 
@@ -290,13 +288,9 @@ where
                             }
 
                             if let Some(total_vec) = self.total.as_mut() {
-                                let prev = i
-                                    .unwrap_to_usize()
-                                    .checked_sub(1)
-                                    .map_or(T::from(0_usize), |prev_i| {
-                                        total_vec.double_unwrap_cached_get(I::from(prev_i))
-                                    });
-                                total_vec.forced_push_at(i, prev + sum, exit)?;
+                                let t = total.as_ref().unwrap().clone() + sum;
+                                total.replace(t.clone());
+                                total_vec.forced_push_at(i, t, exit)?;
                             }
                         }
                     }
@@ -342,9 +336,14 @@ where
         let mut source_average_iter = source.average.as_ref().map(|f| f.iter());
         let mut source_sum_iter = source.sum.as_ref().map(|f| f.iter());
 
+        let mut total = self.total.as_mut().map(|total_vec| {
+            index.decremented().map_or(T::from(0_usize), |index| {
+                total_vec.iter().unwrap_get_inner(index)
+            })
+        });
+
         first_indexes
-            .into_iter()
-            .skip(index.unwrap_to_usize())
+            .iter_at(index)
             .try_for_each(|(i, first_index, ..)| -> Result<()> {
                 let first_index = first_index.into_inner();
 
@@ -374,10 +373,9 @@ where
                 if needs_values {
                     if needs_sorted {
                         if let Some(max) = self.max.as_mut() {
+                            let source_max_iter = source_max_iter.as_mut().unwrap();
+                            source_max_iter.set(first_index);
                             let mut values = source_max_iter
-                                .as_mut()
-                                .unwrap()
-                                .skip(first_index.unwrap_to_usize())
                                 .take(
                                     last_index
                                         .checked_sub(first_index)
@@ -391,10 +389,9 @@ where
                         }
 
                         if let Some(min) = self.min.as_mut() {
+                            let source_min_iter = source_min_iter.as_mut().unwrap();
+                            source_min_iter.set(first_index);
                             let mut values = source_min_iter
-                                .as_mut()
-                                .unwrap()
-                                .skip(first_index.unwrap_to_usize())
                                 .take(
                                     last_index
                                         .checked_sub(first_index)
@@ -410,10 +407,9 @@ where
 
                     if needs_average_sum_or_total {
                         if let Some(average) = self.average.as_mut() {
+                            let source_average_iter = source_average_iter.as_mut().unwrap();
+                            source_average_iter.set(first_index);
                             let values = source_average_iter
-                                .as_mut()
-                                .unwrap()
-                                .skip(first_index.unwrap_to_usize())
                                 .take(
                                     last_index
                                         .checked_sub(first_index)
@@ -432,10 +428,9 @@ where
                         }
 
                         if needs_sum_or_total {
+                            let source_sum_iter = source_sum_iter.as_mut().unwrap();
+                            source_sum_iter.set(first_index);
                             let values = source_sum_iter
-                                .as_mut()
-                                .unwrap()
-                                .skip(first_index.unwrap_to_usize())
                                 .take(
                                     last_index
                                         .checked_sub(first_index)
@@ -452,13 +447,9 @@ where
                             }
 
                             if let Some(total_vec) = self.total.as_mut() {
-                                let prev = i
-                                    .unwrap_to_usize()
-                                    .checked_sub(1)
-                                    .map_or(T::from(0_usize), |prev_i| {
-                                        total_vec.double_unwrap_cached_get(I::from(prev_i))
-                                    });
-                                total_vec.forced_push_at(i, prev + sum, exit)?;
+                                let t = total.as_ref().unwrap().clone() + sum;
+                                total.replace(t.clone());
+                                total_vec.forced_push_at(i, t, exit)?;
                             }
                         }
                     }

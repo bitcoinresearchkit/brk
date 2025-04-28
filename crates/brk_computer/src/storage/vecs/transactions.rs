@@ -531,13 +531,13 @@ impl Vecs {
         self.inputindex_to_value.compute_transform(
             starting_indexes.inputindex,
             indexer.vecs().inputindex_to_outputindex.vec(),
-            |(inputindex, outputindex, slf, ..)| {
+            |(inputindex, outputindex)| {
                 let value = if outputindex == OutputIndex::COINBASE {
                     Sats::ZERO
                 } else if let Some((_, value)) = outputindex_to_value_iter.get(outputindex) {
                     value.into_inner()
                 } else {
-                    dbg!(inputindex, outputindex, slf.len(), inputs_len);
+                    dbg!(inputindex, outputindex, inputs_len);
                     panic!()
                 };
                 (inputindex, value)

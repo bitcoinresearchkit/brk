@@ -333,10 +333,11 @@ impl Vecs {
     ) -> color_eyre::Result<()> {
         let indexer_vecs = indexer.vecs();
 
+        let mut height_to_timestamp_iter = indexer_vecs.height_to_timestamp.iter();
         self.height_to_ohlc_in_cents.compute_transform(
             starting_indexes.height,
             indexer_vecs.height_to_timestamp.vec(),
-            |(h, t, _, height_to_timestamp_iter)| {
+            |(h, t)| {
                 let ohlc = fetcher
                     .get_height(
                         h,
@@ -551,6 +552,9 @@ impl Vecs {
             },
         )?;
 
+        let mut weekindex_first_iter = self.timeindexes_to_open.weekindex.unwrap_first().iter();
+        let mut weekindex_max_iter = self.timeindexes_to_high.weekindex.unwrap_max().iter();
+        let mut weekindex_min_iter = self.timeindexes_to_low.weekindex.unwrap_min().iter();
         self.weekindex_to_ohlc.compute_transform(
             starting_indexes.weekindex,
             self.timeindexes_to_close.weekindex.unwrap_last().vec(),
@@ -558,21 +562,9 @@ impl Vecs {
                 (
                     i,
                     OHLCDollars {
-                        open: self
-                            .timeindexes_to_open
-                            .weekindex
-                            .unwrap_first()
-                            .double_unwrap_cached_get(i),
-                        high: self
-                            .timeindexes_to_high
-                            .weekindex
-                            .unwrap_max()
-                            .double_unwrap_cached_get(i),
-                        low: self
-                            .timeindexes_to_low
-                            .weekindex
-                            .unwrap_min()
-                            .double_unwrap_cached_get(i),
+                        open: weekindex_first_iter.unwrap_get_inner(i),
+                        high: weekindex_max_iter.unwrap_get_inner(i),
+                        low: weekindex_min_iter.unwrap_get_inner(i),
                         close,
                     },
                 )
@@ -580,6 +572,18 @@ impl Vecs {
             exit,
         )?;
 
+        let mut difficultyepoch_first_iter = self
+            .chainindexes_to_open
+            .difficultyepoch
+            .unwrap_first()
+            .iter();
+        let mut difficultyepoch_max_iter = self
+            .chainindexes_to_high
+            .difficultyepoch
+            .unwrap_max()
+            .iter();
+        let mut difficultyepoch_min_iter =
+            self.chainindexes_to_low.difficultyepoch.unwrap_min().iter();
         self.difficultyepoch_to_ohlc.compute_transform(
             starting_indexes.difficultyepoch,
             self.chainindexes_to_close
@@ -590,21 +594,9 @@ impl Vecs {
                 (
                     i,
                     OHLCDollars {
-                        open: self
-                            .chainindexes_to_open
-                            .difficultyepoch
-                            .unwrap_first()
-                            .double_unwrap_cached_get(i),
-                        high: self
-                            .chainindexes_to_high
-                            .difficultyepoch
-                            .unwrap_max()
-                            .double_unwrap_cached_get(i),
-                        low: self
-                            .chainindexes_to_low
-                            .difficultyepoch
-                            .unwrap_min()
-                            .double_unwrap_cached_get(i),
+                        open: difficultyepoch_first_iter.unwrap_get_inner(i),
+                        high: difficultyepoch_max_iter.unwrap_get_inner(i),
+                        low: difficultyepoch_min_iter.unwrap_get_inner(i),
                         close,
                     },
                 )
@@ -612,6 +604,9 @@ impl Vecs {
             exit,
         )?;
 
+        let mut monthindex_first_iter = self.timeindexes_to_open.monthindex.unwrap_first().iter();
+        let mut monthindex_max_iter = self.timeindexes_to_high.monthindex.unwrap_max().iter();
+        let mut monthindex_min_iter = self.timeindexes_to_low.monthindex.unwrap_min().iter();
         self.monthindex_to_ohlc.compute_transform(
             starting_indexes.monthindex,
             self.timeindexes_to_close.monthindex.unwrap_last().vec(),
@@ -619,21 +614,9 @@ impl Vecs {
                 (
                     i,
                     OHLCDollars {
-                        open: self
-                            .timeindexes_to_open
-                            .monthindex
-                            .unwrap_first()
-                            .double_unwrap_cached_get(i),
-                        high: self
-                            .timeindexes_to_high
-                            .monthindex
-                            .unwrap_max()
-                            .double_unwrap_cached_get(i),
-                        low: self
-                            .timeindexes_to_low
-                            .monthindex
-                            .unwrap_min()
-                            .double_unwrap_cached_get(i),
+                        open: monthindex_first_iter.unwrap_get_inner(i),
+                        high: monthindex_max_iter.unwrap_get_inner(i),
+                        low: monthindex_min_iter.unwrap_get_inner(i),
                         close,
                     },
                 )
@@ -641,6 +624,10 @@ impl Vecs {
             exit,
         )?;
 
+        let mut quarterindex_first_iter =
+            self.timeindexes_to_open.quarterindex.unwrap_first().iter();
+        let mut quarterindex_max_iter = self.timeindexes_to_high.quarterindex.unwrap_max().iter();
+        let mut quarterindex_min_iter = self.timeindexes_to_low.quarterindex.unwrap_min().iter();
         self.quarterindex_to_ohlc.compute_transform(
             starting_indexes.quarterindex,
             self.timeindexes_to_close.quarterindex.unwrap_last().vec(),
@@ -648,21 +635,9 @@ impl Vecs {
                 (
                     i,
                     OHLCDollars {
-                        open: self
-                            .timeindexes_to_open
-                            .quarterindex
-                            .unwrap_first()
-                            .double_unwrap_cached_get(i),
-                        high: self
-                            .timeindexes_to_high
-                            .quarterindex
-                            .unwrap_max()
-                            .double_unwrap_cached_get(i),
-                        low: self
-                            .timeindexes_to_low
-                            .quarterindex
-                            .unwrap_min()
-                            .double_unwrap_cached_get(i),
+                        open: quarterindex_first_iter.unwrap_get_inner(i),
+                        high: quarterindex_max_iter.unwrap_get_inner(i),
+                        low: quarterindex_min_iter.unwrap_get_inner(i),
                         close,
                     },
                 )
@@ -670,6 +645,9 @@ impl Vecs {
             exit,
         )?;
 
+        let mut yearindex_first_iter = self.timeindexes_to_open.yearindex.unwrap_first().iter();
+        let mut yearindex_max_iter = self.timeindexes_to_high.yearindex.unwrap_max().iter();
+        let mut yearindex_min_iter = self.timeindexes_to_low.yearindex.unwrap_min().iter();
         self.yearindex_to_ohlc.compute_transform(
             starting_indexes.yearindex,
             self.timeindexes_to_close.yearindex.unwrap_last().vec(),
@@ -677,21 +655,9 @@ impl Vecs {
                 (
                     i,
                     OHLCDollars {
-                        open: self
-                            .timeindexes_to_open
-                            .yearindex
-                            .unwrap_first()
-                            .double_unwrap_cached_get(i),
-                        high: self
-                            .timeindexes_to_high
-                            .yearindex
-                            .unwrap_max()
-                            .double_unwrap_cached_get(i),
-                        low: self
-                            .timeindexes_to_low
-                            .yearindex
-                            .unwrap_min()
-                            .double_unwrap_cached_get(i),
+                        open: yearindex_first_iter.unwrap_get_inner(i),
+                        high: yearindex_max_iter.unwrap_get_inner(i),
+                        low: yearindex_min_iter.unwrap_get_inner(i),
                         close,
                     },
                 )
@@ -702,6 +668,9 @@ impl Vecs {
         // self.halvingepoch_to_ohlc
         //     .compute_transform(starting_indexes.halvingepoch, other, t, exit)?;
 
+        let mut decadeindex_first_iter = self.timeindexes_to_open.decadeindex.unwrap_first().iter();
+        let mut decadeindex_max_iter = self.timeindexes_to_high.decadeindex.unwrap_max().iter();
+        let mut decadeindex_min_iter = self.timeindexes_to_low.decadeindex.unwrap_min().iter();
         self.decadeindex_to_ohlc.compute_transform(
             starting_indexes.decadeindex,
             self.timeindexes_to_close.decadeindex.unwrap_last().vec(),
@@ -709,21 +678,9 @@ impl Vecs {
                 (
                     i,
                     OHLCDollars {
-                        open: self
-                            .timeindexes_to_open
-                            .decadeindex
-                            .unwrap_first()
-                            .double_unwrap_cached_get(i),
-                        high: self
-                            .timeindexes_to_high
-                            .decadeindex
-                            .unwrap_max()
-                            .double_unwrap_cached_get(i),
-                        low: self
-                            .timeindexes_to_low
-                            .decadeindex
-                            .unwrap_min()
-                            .double_unwrap_cached_get(i),
+                        open: decadeindex_first_iter.unwrap_get_inner(i),
+                        high: decadeindex_max_iter.unwrap_get_inner(i),
+                        low: decadeindex_min_iter.unwrap_get_inner(i),
                         close,
                     },
                 )
@@ -851,6 +808,9 @@ impl Vecs {
             },
         )?;
 
+        let mut height_first_iter = self.chainindexes_to_open_in_sats.height.iter();
+        let mut height_max_iter = self.chainindexes_to_high_in_sats.height.iter();
+        let mut height_min_iter = self.chainindexes_to_low_in_sats.height.iter();
         self.height_to_ohlc_in_sats.compute_transform(
             starting_indexes.height,
             self.chainindexes_to_close_in_sats.height.vec(),
@@ -858,18 +818,9 @@ impl Vecs {
                 (
                     i,
                     OHLCSats {
-                        open: self
-                            .chainindexes_to_open_in_sats
-                            .height
-                            .double_unwrap_cached_get(i),
-                        high: self
-                            .chainindexes_to_high_in_sats
-                            .height
-                            .double_unwrap_cached_get(i),
-                        low: self
-                            .chainindexes_to_low_in_sats
-                            .height
-                            .double_unwrap_cached_get(i),
+                        open: height_first_iter.unwrap_get_inner(i),
+                        high: height_max_iter.unwrap_get_inner(i),
+                        low: height_min_iter.unwrap_get_inner(i),
                         close,
                     },
                 )
@@ -877,6 +828,9 @@ impl Vecs {
             exit,
         )?;
 
+        let mut dateindex_first_iter = self.timeindexes_to_open_in_sats.dateindex.iter();
+        let mut dateindex_max_iter = self.timeindexes_to_high_in_sats.dateindex.iter();
+        let mut dateindex_min_iter = self.timeindexes_to_low_in_sats.dateindex.iter();
         self.dateindex_to_ohlc_in_sats.compute_transform(
             starting_indexes.dateindex,
             self.timeindexes_to_close_in_sats.dateindex.vec(),
@@ -884,18 +838,9 @@ impl Vecs {
                 (
                     i,
                     OHLCSats {
-                        open: self
-                            .timeindexes_to_open_in_sats
-                            .dateindex
-                            .double_unwrap_cached_get(i),
-                        high: self
-                            .timeindexes_to_high_in_sats
-                            .dateindex
-                            .double_unwrap_cached_get(i),
-                        low: self
-                            .timeindexes_to_low_in_sats
-                            .dateindex
-                            .double_unwrap_cached_get(i),
+                        open: dateindex_first_iter.unwrap_get_inner(i),
+                        high: dateindex_max_iter.unwrap_get_inner(i),
+                        low: dateindex_min_iter.unwrap_get_inner(i),
                         close,
                     },
                 )
@@ -903,6 +848,21 @@ impl Vecs {
             exit,
         )?;
 
+        let mut weekindex_first_iter = self
+            .timeindexes_to_open_in_sats
+            .weekindex
+            .unwrap_first()
+            .iter();
+        let mut weekindex_max_iter = self
+            .timeindexes_to_high_in_sats
+            .weekindex
+            .unwrap_max()
+            .iter();
+        let mut weekindex_min_iter = self
+            .timeindexes_to_low_in_sats
+            .weekindex
+            .unwrap_min()
+            .iter();
         self.weekindex_to_ohlc_in_sats.compute_transform(
             starting_indexes.weekindex,
             self.timeindexes_to_close_in_sats
@@ -913,21 +873,9 @@ impl Vecs {
                 (
                     i,
                     OHLCSats {
-                        open: self
-                            .timeindexes_to_open_in_sats
-                            .weekindex
-                            .unwrap_first()
-                            .double_unwrap_cached_get(i),
-                        high: self
-                            .timeindexes_to_high_in_sats
-                            .weekindex
-                            .unwrap_max()
-                            .double_unwrap_cached_get(i),
-                        low: self
-                            .timeindexes_to_low_in_sats
-                            .weekindex
-                            .unwrap_min()
-                            .double_unwrap_cached_get(i),
+                        open: weekindex_first_iter.unwrap_get_inner(i),
+                        high: weekindex_max_iter.unwrap_get_inner(i),
+                        low: weekindex_min_iter.unwrap_get_inner(i),
                         close,
                     },
                 )
@@ -935,6 +883,21 @@ impl Vecs {
             exit,
         )?;
 
+        let mut difficultyepoch_first_iter = self
+            .chainindexes_to_open_in_sats
+            .difficultyepoch
+            .unwrap_first()
+            .iter();
+        let mut difficultyepoch_max_iter = self
+            .chainindexes_to_high_in_sats
+            .difficultyepoch
+            .unwrap_max()
+            .iter();
+        let mut difficultyepoch_min_iter = self
+            .chainindexes_to_low_in_sats
+            .difficultyepoch
+            .unwrap_min()
+            .iter();
         self.difficultyepoch_to_ohlc_in_sats.compute_transform(
             starting_indexes.difficultyepoch,
             self.chainindexes_to_close_in_sats
@@ -945,21 +908,9 @@ impl Vecs {
                 (
                     i,
                     OHLCSats {
-                        open: self
-                            .chainindexes_to_open_in_sats
-                            .difficultyepoch
-                            .unwrap_first()
-                            .double_unwrap_cached_get(i),
-                        high: self
-                            .chainindexes_to_high_in_sats
-                            .difficultyepoch
-                            .unwrap_max()
-                            .double_unwrap_cached_get(i),
-                        low: self
-                            .chainindexes_to_low_in_sats
-                            .difficultyepoch
-                            .unwrap_min()
-                            .double_unwrap_cached_get(i),
+                        open: difficultyepoch_first_iter.unwrap_get_inner(i),
+                        high: difficultyepoch_max_iter.unwrap_get_inner(i),
+                        low: difficultyepoch_min_iter.unwrap_get_inner(i),
                         close,
                     },
                 )
@@ -967,6 +918,21 @@ impl Vecs {
             exit,
         )?;
 
+        let mut monthindex_first_iter = self
+            .timeindexes_to_open_in_sats
+            .monthindex
+            .unwrap_first()
+            .iter();
+        let mut monthindex_max_iter = self
+            .timeindexes_to_high_in_sats
+            .monthindex
+            .unwrap_max()
+            .iter();
+        let mut monthindex_min_iter = self
+            .timeindexes_to_low_in_sats
+            .monthindex
+            .unwrap_min()
+            .iter();
         self.monthindex_to_ohlc_in_sats.compute_transform(
             starting_indexes.monthindex,
             self.timeindexes_to_close_in_sats
@@ -977,21 +943,9 @@ impl Vecs {
                 (
                     i,
                     OHLCSats {
-                        open: self
-                            .timeindexes_to_open_in_sats
-                            .monthindex
-                            .unwrap_first()
-                            .double_unwrap_cached_get(i),
-                        high: self
-                            .timeindexes_to_high_in_sats
-                            .monthindex
-                            .unwrap_max()
-                            .double_unwrap_cached_get(i),
-                        low: self
-                            .timeindexes_to_low_in_sats
-                            .monthindex
-                            .unwrap_min()
-                            .double_unwrap_cached_get(i),
+                        open: monthindex_first_iter.unwrap_get_inner(i),
+                        high: monthindex_max_iter.unwrap_get_inner(i),
+                        low: monthindex_min_iter.unwrap_get_inner(i),
                         close,
                     },
                 )
@@ -999,6 +953,21 @@ impl Vecs {
             exit,
         )?;
 
+        let mut quarterindex_first_iter = self
+            .timeindexes_to_open_in_sats
+            .quarterindex
+            .unwrap_first()
+            .iter();
+        let mut quarterindex_max_iter = self
+            .timeindexes_to_high_in_sats
+            .quarterindex
+            .unwrap_max()
+            .iter();
+        let mut quarterindex_min_iter = self
+            .timeindexes_to_low_in_sats
+            .quarterindex
+            .unwrap_min()
+            .iter();
         self.quarterindex_to_ohlc_in_sats.compute_transform(
             starting_indexes.quarterindex,
             self.timeindexes_to_close_in_sats
@@ -1009,21 +978,9 @@ impl Vecs {
                 (
                     i,
                     OHLCSats {
-                        open: self
-                            .timeindexes_to_open_in_sats
-                            .quarterindex
-                            .unwrap_first()
-                            .double_unwrap_cached_get(i),
-                        high: self
-                            .timeindexes_to_high_in_sats
-                            .quarterindex
-                            .unwrap_max()
-                            .double_unwrap_cached_get(i),
-                        low: self
-                            .timeindexes_to_low_in_sats
-                            .quarterindex
-                            .unwrap_min()
-                            .double_unwrap_cached_get(i),
+                        open: quarterindex_first_iter.unwrap_get_inner(i),
+                        high: quarterindex_max_iter.unwrap_get_inner(i),
+                        low: quarterindex_min_iter.unwrap_get_inner(i),
                         close,
                     },
                 )
@@ -1031,6 +988,21 @@ impl Vecs {
             exit,
         )?;
 
+        let mut yearindex_first_iter = self
+            .timeindexes_to_open_in_sats
+            .yearindex
+            .unwrap_first()
+            .iter();
+        let mut yearindex_max_iter = self
+            .timeindexes_to_high_in_sats
+            .yearindex
+            .unwrap_max()
+            .iter();
+        let mut yearindex_min_iter = self
+            .timeindexes_to_low_in_sats
+            .yearindex
+            .unwrap_min()
+            .iter();
         self.yearindex_to_ohlc_in_sats.compute_transform(
             starting_indexes.yearindex,
             self.timeindexes_to_close_in_sats
@@ -1041,21 +1013,9 @@ impl Vecs {
                 (
                     i,
                     OHLCSats {
-                        open: self
-                            .timeindexes_to_open_in_sats
-                            .yearindex
-                            .unwrap_first()
-                            .double_unwrap_cached_get(i),
-                        high: self
-                            .timeindexes_to_high_in_sats
-                            .yearindex
-                            .unwrap_max()
-                            .double_unwrap_cached_get(i),
-                        low: self
-                            .timeindexes_to_low_in_sats
-                            .yearindex
-                            .unwrap_min()
-                            .double_unwrap_cached_get(i),
+                        open: yearindex_first_iter.unwrap_get_inner(i),
+                        high: yearindex_max_iter.unwrap_get_inner(i),
+                        low: yearindex_min_iter.unwrap_get_inner(i),
                         close,
                     },
                 )
@@ -1066,6 +1026,21 @@ impl Vecs {
         // self.halvingepoch_to_ohlc
         //     _in_sats.compute_transform(starting_indexes.halvingepoch, other, t, exit)?;
 
+        let mut decadeindex_first_iter = self
+            .timeindexes_to_open_in_sats
+            .decadeindex
+            .unwrap_first()
+            .iter();
+        let mut decadeindex_max_iter = self
+            .timeindexes_to_high_in_sats
+            .decadeindex
+            .unwrap_max()
+            .iter();
+        let mut decadeindex_min_iter = self
+            .timeindexes_to_low_in_sats
+            .decadeindex
+            .unwrap_min()
+            .iter();
         self.decadeindex_to_ohlc_in_sats.compute_transform(
             starting_indexes.decadeindex,
             self.timeindexes_to_close_in_sats
@@ -1076,21 +1051,9 @@ impl Vecs {
                 (
                     i,
                     OHLCSats {
-                        open: self
-                            .timeindexes_to_open_in_sats
-                            .decadeindex
-                            .unwrap_first()
-                            .double_unwrap_cached_get(i),
-                        high: self
-                            .timeindexes_to_high_in_sats
-                            .decadeindex
-                            .unwrap_max()
-                            .double_unwrap_cached_get(i),
-                        low: self
-                            .timeindexes_to_low_in_sats
-                            .decadeindex
-                            .unwrap_min()
-                            .double_unwrap_cached_get(i),
+                        open: decadeindex_first_iter.unwrap_get_inner(i),
+                        high: decadeindex_max_iter.unwrap_get_inner(i),
+                        low: decadeindex_min_iter.unwrap_get_inner(i),
                         close,
                     },
                 )

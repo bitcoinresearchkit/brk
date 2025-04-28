@@ -8,7 +8,6 @@ use brk_exit::Exit;
 use brk_indexer::Indexer;
 use brk_parser::bitcoin;
 use brk_vec::{Compressed, Version};
-use color_eyre::eyre::ContextCompat;
 
 use super::{
     EagerVec, Indexes,
@@ -149,20 +148,13 @@ impl Vecs {
 
         let indexer_vecs = indexer.vecs();
 
+        let mut height_to_timestamp_iter = indexer_vecs.height_to_timestamp.iter();
         self.height_to_interval.compute_transform(
             starting_indexes.height,
             indexer_vecs.height_to_timestamp.vec(),
-            |(height, timestamp, _, height_to_timestamp_iter)| {
+            |(height, timestamp)| {
                 let interval = height.decremented().map_or(Timestamp::ZERO, |prev_h| {
-                    let prev_timestamp = height_to_timestamp_iter
-                        .get(prev_h)
-                        .context("To work")
-                        .inspect_err(|_| {
-                            dbg!(prev_h);
-                        })
-                        .unwrap()
-                        .1
-                        .into_inner();
+                    let prev_timestamp = height_to_timestamp_iter.unwrap_get_inner(prev_h);
                     timestamp
                         .checked_sub(prev_timestamp)
                         .unwrap_or(Timestamp::ZERO)

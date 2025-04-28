@@ -21,6 +21,7 @@ where
     fn unwrap_to_usize(self) -> usize;
     fn to_usize(self) -> Result<usize>;
     fn to_string<'a>() -> &'a str;
+    fn decremented(self) -> Option<Self>;
 }
 impl<I> StoredIndex for I
 where
@@ -51,5 +52,10 @@ where
     #[inline]
     fn to_string<'a>() -> &'a str {
         std::any::type_name::<I>()
+    }
+
+    #[inline]
+    fn decremented(self) -> Option<Self> {
+        self.unwrap_to_usize().checked_sub(1).map(Self::from)
     }
 }

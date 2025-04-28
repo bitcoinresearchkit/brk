@@ -64,7 +64,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         dbg!(vec.collect_signed_range(Some(-5), None)?);
 
         vec.push(vec.len() as u32);
-        dbg!(vec.last()?);
+        dbg!(vec.iter().last());
 
         dbg!(vec.into_iter().collect::<Vec<_>>());
     }

@@ -28,18 +28,6 @@ where
     pub fn is_empty(&self) -> bool {
         self.inner.is_empty()
     }
-
-    pub fn unwrap_cached_get(&mut self, index: I) -> Option<T> {
-        self.inner.unwrap_cached_get(index)
-    }
-    #[inline]
-    pub fn double_unwrap_cached_get(&mut self, index: I) -> T {
-        self.inner.double_unwrap_cached_get(index)
-    }
-
-    // pub fn collect_inclusive_range(&self, from: I, to: I) -> Result<Vec<T>> {
-    //     self.inner.collect_inclusive_range(from, to)
-    // }
 }
 
 impl<I, T> Clone for LazyVec<I, T>

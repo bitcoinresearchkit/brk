@@ -36,7 +36,6 @@ pub fn main() -> color_eyre::Result<()> {
     //     for_each(|t| {
     //     dbg!(t);
     // });
-    // .skip(0)
     // .try_for_each(|(height, timestamp)| -> Result<()> {
     //     let interval = height.decremented().map_or(Timestamp::ZERO, |prev_h| {
     //         dbg!((height, prev_h));
