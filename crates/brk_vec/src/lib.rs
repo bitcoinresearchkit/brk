@@ -249,7 +249,18 @@ where
     I: StoredIndex,
     T: StoredType,
 {
-    pub fn get(&mut self, i: usize) -> Option<(I, Value<'a, T>)> {
+    #[inline]
+    pub fn unwrap_get_inner(&mut self, i: I) -> T {
+        self.get_(i.unwrap_to_usize()).unwrap().1.into_inner()
+    }
+
+    #[inline]
+    pub fn get(&mut self, i: I) -> Option<(I, Value<'a, T>)> {
+        self.get_(i.unwrap_to_usize())
+    }
+
+    #[inline]
+    pub fn get_(&mut self, i: usize) -> Option<(I, Value<'a, T>)> {
         match self {
             Self::Compressed(iter) => {
                 iter.set(i);
@@ -258,6 +269,17 @@ where
             Self::Raw(iter) => {
                 iter.set(i);
                 iter.next()
+            }
+        }
+    }
+
+    pub fn set(&mut self, i: I) {
+        match self {
+            Self::Compressed(iter) => {
+                iter.set(i.unwrap_to_usize());
+            }
+            Self::Raw(iter) => {
+                iter.set(i.unwrap_to_usize());
             }
         }
     }

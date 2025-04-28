@@ -40,7 +40,7 @@ impl Vecs {
 
     pub fn compute(
         &mut self,
-        indexer: &mut Indexer,
+        indexer: &Indexer,
         starting_indexes: brk_indexer::Indexes,
         fetcher: Option<&mut Fetcher>,
         exit: &Exit,
@@ -48,15 +48,15 @@ impl Vecs {
         let starting_indexes = self.indexes.compute(indexer, starting_indexes, exit)?;
 
         self.blocks
-            .compute(indexer, &mut self.indexes, &starting_indexes, exit)?;
+            .compute(indexer, &self.indexes, &starting_indexes, exit)?;
 
         self.mining
-            .compute(indexer, &mut self.indexes, &starting_indexes, exit)?;
+            .compute(indexer, &self.indexes, &starting_indexes, exit)?;
 
         if let Some(marketprice) = self.marketprice.as_mut() {
             marketprice.compute(
                 indexer,
-                &mut self.indexes,
+                &self.indexes,
                 &starting_indexes,
                 fetcher.unwrap(),
                 exit,
@@ -65,9 +65,9 @@ impl Vecs {
 
         self.transactions.compute(
             indexer,
-            &mut self.indexes,
+            &self.indexes,
             &starting_indexes,
-            &mut self.marketprice.as_mut(),
+            self.marketprice.as_ref(),
             exit,
         )?;
 

@@ -3,7 +3,7 @@ use std::{fs, path::Path};
 use brk_core::{DifficultyEpoch, HalvingEpoch, StoredF64};
 use brk_exit::Exit;
 use brk_indexer::Indexer;
-use brk_vec::{Compressed, DynamicVec, Version};
+use brk_vec::{Compressed, Version};
 
 use super::{
     Indexes,
@@ -50,11 +50,12 @@ impl Vecs {
 
     pub fn compute(
         &mut self,
-        indexer: &mut Indexer,
-        indexes: &mut indexes::Vecs,
+        indexer: &Indexer,
+        indexes: &indexes::Vecs,
         starting_indexes: &Indexes,
         exit: &Exit,
     ) -> color_eyre::Result<()> {
+        let mut height_to_difficultyepoch_iter = indexes.height_to_difficultyepoch.iter();
         self.indexes_to_difficultyepoch.compute(
             indexer,
             indexes,
@@ -63,14 +64,15 @@ impl Vecs {
             |vec, _, indexes, starting_indexes, exit| {
                 vec.compute_transform(
                     starting_indexes.dateindex,
-                    indexes.dateindex_to_last_height.mut_vec(),
+                    indexes.dateindex_to_last_height.vec(),
                     |(di, height, ..)| {
                         (
                             di,
-                            indexes
-                                .height_to_difficultyepoch
-                                .mut_vec()
-                                .double_unwrap_cached_get(height),
+                            height_to_difficultyepoch_iter
+                                .get(height)
+                                .unwrap()
+                                .1
+                                .into_inner(),
                         )
                     },
                     exit,
@@ -78,6 +80,7 @@ impl Vecs {
             },
         )?;
 
+        let mut height_to_halvingepoch_iter = indexes.height_to_halvingepoch.iter();
         self.indexes_to_halvingepoch.compute(
             indexer,
             indexes,
@@ -86,16 +89,8 @@ impl Vecs {
             |vec, _, indexes, starting_indexes, exit| {
                 vec.compute_transform(
                     starting_indexes.dateindex,
-                    indexes.dateindex_to_last_height.mut_vec(),
-                    |(di, height, ..)| {
-                        (
-                            di,
-                            indexes
-                                .height_to_halvingepoch
-                                .mut_vec()
-                                .double_unwrap_cached_get(height),
-                        )
-                    },
+                    indexes.dateindex_to_last_height.vec(),
+                    |(di, height, ..)| (di, height_to_halvingepoch_iter.unwrap_get_inner(height)),
                     exit,
                 )
             },
@@ -105,7 +100,7 @@ impl Vecs {
             indexes,
             starting_indexes,
             exit,
-            Some(indexer.mut_vecs().height_to_difficulty.mut_vec()),
+            Some(indexer.vecs().height_to_difficulty.vec()),
         )?;
 
         Ok(())

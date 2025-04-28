@@ -71,8 +71,8 @@ where
 
     pub fn compute<F>(
         &mut self,
-        indexer: &mut Indexer,
-        indexes: &mut indexes::Vecs,
+        indexer: &Indexer,
+        indexes: &indexes::Vecs,
         starting_indexes: &Indexes,
         exit: &Exit,
         mut compute: F,
@@ -80,8 +80,8 @@ where
     where
         F: FnMut(
             &mut EagerVec<DateIndex, T>,
-            &mut Indexer,
-            &mut indexes::Vecs,
+            &Indexer,
+            &indexes::Vecs,
             &Indexes,
             &Exit,
         ) -> Result<()>,
@@ -95,45 +95,45 @@ where
         )?;
 
         self.dateindex_extra
-            .extend(starting_indexes.dateindex, self.dateindex.mut_vec(), exit)?;
+            .extend(starting_indexes.dateindex, self.dateindex.vec(), exit)?;
 
         self.weekindex.compute(
             starting_indexes.weekindex,
-            self.dateindex.mut_vec(),
-            indexes.weekindex_to_first_dateindex.mut_vec(),
-            indexes.weekindex_to_last_dateindex.mut_vec(),
+            self.dateindex.vec(),
+            indexes.weekindex_to_first_dateindex.vec(),
+            indexes.weekindex_to_last_dateindex.vec(),
             exit,
         )?;
 
         self.monthindex.compute(
             starting_indexes.monthindex,
-            self.dateindex.mut_vec(),
-            indexes.monthindex_to_first_dateindex.mut_vec(),
-            indexes.monthindex_to_last_dateindex.mut_vec(),
+            self.dateindex.vec(),
+            indexes.monthindex_to_first_dateindex.vec(),
+            indexes.monthindex_to_last_dateindex.vec(),
             exit,
         )?;
 
         self.quarterindex.from_aligned(
             starting_indexes.quarterindex,
-            &mut self.monthindex,
-            indexes.quarterindex_to_first_monthindex.mut_vec(),
-            indexes.quarterindex_to_last_monthindex.mut_vec(),
+            &self.monthindex,
+            indexes.quarterindex_to_first_monthindex.vec(),
+            indexes.quarterindex_to_last_monthindex.vec(),
             exit,
         )?;
 
         self.yearindex.from_aligned(
             starting_indexes.yearindex,
-            &mut self.monthindex,
-            indexes.yearindex_to_first_monthindex.mut_vec(),
-            indexes.yearindex_to_last_monthindex.mut_vec(),
+            &self.monthindex,
+            indexes.yearindex_to_first_monthindex.vec(),
+            indexes.yearindex_to_last_monthindex.vec(),
             exit,
         )?;
 
         self.decadeindex.from_aligned(
             starting_indexes.decadeindex,
-            &mut self.yearindex,
-            indexes.decadeindex_to_first_yearindex.mut_vec(),
-            indexes.decadeindex_to_last_yearindex.mut_vec(),
+            &self.yearindex,
+            indexes.decadeindex_to_first_yearindex.vec(),
+            indexes.decadeindex_to_last_yearindex.vec(),
             exit,
         )?;
 

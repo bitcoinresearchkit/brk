@@ -61,31 +61,25 @@ where
 
     pub fn compute<F>(
         &mut self,
-        indexer: &mut Indexer,
-        indexes: &mut indexes::Vecs,
+        indexer: &Indexer,
+        indexes: &indexes::Vecs,
         starting_indexes: &Indexes,
         exit: &Exit,
         mut compute: F,
     ) -> color_eyre::Result<()>
     where
-        F: FnMut(
-            &mut EagerVec<Height, T>,
-            &mut Indexer,
-            &mut indexes::Vecs,
-            &Indexes,
-            &Exit,
-        ) -> Result<()>,
+        F: FnMut(&mut EagerVec<Height, T>, &Indexer, &indexes::Vecs, &Indexes, &Exit) -> Result<()>,
     {
         compute(&mut self.height, indexer, indexes, starting_indexes, exit)?;
 
         self.height_extra
-            .extend(starting_indexes.height, self.height.mut_vec(), exit)?;
+            .extend(starting_indexes.height, self.height.vec(), exit)?;
 
         self.difficultyepoch.compute(
             starting_indexes.difficultyepoch,
-            self.height.mut_vec(),
-            indexes.difficultyepoch_to_first_height.mut_vec(),
-            indexes.difficultyepoch_to_last_height.mut_vec(),
+            self.height.vec(),
+            indexes.difficultyepoch_to_first_height.vec(),
+            indexes.difficultyepoch_to_last_height.vec(),
             exit,
         )?;
 

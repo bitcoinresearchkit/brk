@@ -64,9 +64,9 @@ impl ComputedValueVecsFromTxindex {
 
     pub fn compute_all<F>(
         &mut self,
-        indexer: &mut Indexer,
-        indexes: &mut indexes::Vecs,
-        marketprices: &mut Option<&mut marketprice::Vecs>,
+        indexer: &Indexer,
+        indexes: &indexes::Vecs,
+        marketprices: Option<&marketprice::Vecs>,
         starting_indexes: &Indexes,
         exit: &Exit,
         mut compute: F,
@@ -74,8 +74,8 @@ impl ComputedValueVecsFromTxindex {
     where
         F: FnMut(
             &mut EagerVec<TxIndex, Sats>,
-            &mut Indexer,
-            &mut indexes::Vecs,
+            &Indexer,
+            &indexes::Vecs,
             &Indexes,
             &Exit,
         ) -> Result<()>,
@@ -95,14 +95,14 @@ impl ComputedValueVecsFromTxindex {
 
     pub fn compute_rest(
         &mut self,
-        indexer: &mut Indexer,
-        indexes: &mut indexes::Vecs,
-        marketprices: &mut Option<&mut marketprice::Vecs>,
+        indexer: &Indexer,
+        indexes: &indexes::Vecs,
+        marketprices: Option<&marketprice::Vecs>,
         starting_indexes: &Indexes,
         exit: &Exit,
-        mut txindex: Option<&mut StoredVec<TxIndex, Sats>>,
+        txindex: Option<&StoredVec<TxIndex, Sats>>,
     ) -> color_eyre::Result<()> {
-        if let Some(txindex) = txindex.as_mut() {
+        if let Some(txindex) = txindex.as_ref() {
             self.sats
                 .compute_rest(indexer, indexes, starting_indexes, exit, Some(txindex))?;
         } else {
@@ -110,7 +110,7 @@ impl ComputedValueVecsFromTxindex {
                 .compute_rest(indexer, indexes, starting_indexes, exit, None)?;
         }
 
-        let txindex = txindex.unwrap_or_else(|| self.sats.txindex.as_mut().unwrap().mut_vec());
+        let txindex = txindex.unwrap_or_else(|| self.sats.txindex.as_ref().unwrap().vec());
 
         self.bitcoin.compute_all(
             indexer,
@@ -123,14 +123,10 @@ impl ComputedValueVecsFromTxindex {
         )?;
 
         let txindex = self.bitcoin.txindex.as_mut().unwrap().mut_vec();
-        let price = marketprices
-            .as_mut()
-            .unwrap()
-            .chainindexes_to_close
-            .height
-            .mut_vec();
 
         if let Some(dollars) = self.dollars.as_mut() {
+            let price = marketprices.unwrap().chainindexes_to_close.height.vec();
+
             dollars.compute_all(
                 indexer,
                 indexes,
@@ -140,7 +136,7 @@ impl ComputedValueVecsFromTxindex {
                     v.compute_from_bitcoin(
                         starting_indexes.txindex,
                         txindex,
-                        indexes.txindex_to_height.mut_vec(),
+                        indexes.txindex_to_height.vec(),
                         price,
                         exit,
                     )

@@ -10,7 +10,7 @@ use brk_core::{Bitcoin, CheckedSub, Close, Dollars, Height, Sats, TxIndex};
 use brk_exit::Exit;
 use brk_vec::{
     Compressed, DynamicVec, Error, GenericVec, Result, StoredIndex, StoredType, StoredVec,
-    StoredVecIterator, Version,
+    StoredVecIterator, Value, Version,
 };
 use log::info;
 
@@ -108,7 +108,7 @@ where
         &self.inner
     }
 
-    pub fn mut_vec(&mut self) -> &mut StoredVec<I, T> {
+    pub fn mut_vec(&mut self) -> &StoredVec<I, T> {
         &mut self.inner
     }
 
@@ -128,9 +128,9 @@ where
         self.inner.double_unwrap_cached_get(index)
     }
 
-    pub fn collect_inclusive_range(&self, from: I, to: I) -> Result<Vec<T>> {
-        self.inner.collect_inclusive_range(from, to)
-    }
+    // pub fn collect_inclusive_range(&self, from: I, to: I) -> Result<Vec<T>> {
+    //     self.inner.collect_inclusive_range(from, to)
+    // }
 
     pub fn path(&self) -> &Path {
         self.inner.path()
@@ -155,10 +155,14 @@ where
         Ok(())
     }
 
+    pub fn iter(&self) -> StoredVecIterator<I, T> {
+        self.into_iter()
+    }
+
     pub fn compute_range<A, F>(
         &mut self,
         max_from: I,
-        other: &mut StoredVec<I, A>,
+        other: &StoredVec<I, A>,
         mut t: F,
         exit: &Exit,
     ) -> Result<()>
@@ -211,7 +215,7 @@ where
     pub fn compute_inverse_more_to_less(
         &mut self,
         max_from: T,
-        other: &mut StoredVec<T, I>,
+        other: &StoredVec<T, I>,
         exit: &Exit,
     ) -> Result<()>
     where
@@ -245,8 +249,8 @@ where
     pub fn compute_inverse_less_to_more(
         &mut self,
         max_from: T,
-        first_indexes: &mut StoredVec<T, I>,
-        last_indexes: &mut StoredVec<T, I>,
+        first_indexes: &StoredVec<T, I>,
+        last_indexes: &StoredVec<T, I>,
         exit: &Exit,
     ) -> Result<()>
     where
@@ -257,13 +261,15 @@ where
             Version::ZERO + self.version() + first_indexes.version() + last_indexes.version(),
         )?;
 
+        let mut last_indexes_iter = last_indexes.iter();
+
         let index = max_from.min(T::from(self.len()));
         first_indexes
             .iter()
             .skip(index.unwrap_to_usize())
             .try_for_each(|(value, first_index)| {
                 let first_index = (first_index).to_usize()?;
-                let last_index = (last_indexes.double_unwrap_cached_get(value)).to_usize()?;
+                let last_index = last_indexes_iter.get(value).unwrap().1.to_usize()?;
                 (first_index..=last_index)
                     .try_for_each(|index| self.forced_push_at(I::from(index), value, exit))
             })?;
@@ -274,7 +280,7 @@ where
     pub fn compute_last_index_from_first(
         &mut self,
         max_from: I,
-        first_indexes: &mut StoredVec<I, T>,
+        first_indexes: &StoredVec<I, T>,
         final_len: usize,
         exit: &Exit,
     ) -> Result<()>
@@ -310,11 +316,11 @@ where
         self.safe_flush(exit)
     }
 
-    pub fn compute_count_from_indexes<T2>(
+    pub fn compute_count_from_indexes<T2, T3>(
         &mut self,
         max_from: I,
-        first_indexes: &mut StoredVec<I, T2>,
-        last_indexes: &mut StoredVec<I, T2>,
+        first_indexes: &StoredVec<I, T2>,
+        other_to_else: &StoredVec<T2, T3>,
         exit: &Exit,
     ) -> Result<()>
     where
@@ -327,16 +333,17 @@ where
             + TryInto<T>
             + Default,
         <T2 as TryInto<T>>::Error: error::Error + 'static,
+        T3: StoredType,
     {
         let opt: Option<Box<dyn FnMut(T2) -> bool>> = None;
-        self.compute_filtered_count_from_indexes_(max_from, first_indexes, last_indexes, opt, exit)
+        self.compute_filtered_count_from_indexes_(max_from, first_indexes, other_to_else, opt, exit)
     }
 
-    pub fn compute_filtered_count_from_indexes<T2, F>(
+    pub fn compute_filtered_count_from_indexes<T2, T3, F>(
         &mut self,
         max_from: I,
-        first_indexes: &mut StoredVec<I, T2>,
-        last_indexes: &mut StoredVec<I, T2>,
+        first_indexes: &StoredVec<I, T2>,
+        other_to_else: &StoredVec<T2, T3>,
         filter: F,
         exit: &Exit,
     ) -> Result<()>
@@ -350,22 +357,23 @@ where
             + TryInto<T>
             + Default,
         <T2 as TryInto<T>>::Error: error::Error + 'static,
+        T3: StoredType,
         F: FnMut(T2) -> bool,
     {
         self.compute_filtered_count_from_indexes_(
             max_from,
             first_indexes,
-            last_indexes,
+            other_to_else,
             Some(Box::new(filter)),
             exit,
         )
     }
 
-    fn compute_filtered_count_from_indexes_<T2>(
+    fn compute_filtered_count_from_indexes_<T2, T3>(
         &mut self,
         max_from: I,
-        first_indexes: &mut StoredVec<I, T2>,
-        last_indexes: &mut StoredVec<I, T2>,
+        first_indexes: &StoredVec<I, T2>,
+        other_to_else: &StoredVec<T2, T3>,
         mut filter: Option<Box<dyn FnMut(T2) -> bool + '_>>,
         exit: &Exit,
     ) -> Result<()>
@@ -378,19 +386,25 @@ where
             + CheckedSub<T2>
             + TryInto<T>
             + Default,
+        T3: StoredType,
         <T2 as TryInto<T>>::Error: error::Error + 'static,
     {
         self.validate_computed_version_or_reset_file(
-            Version::ZERO + self.version() + first_indexes.version() + last_indexes.version(),
+            Version::ZERO + self.version() + first_indexes.version(), // + last_indexes.version(),
         )?;
 
+        let mut other_iter = first_indexes.iter();
         let index = max_from.min(I::from(self.len()));
         first_indexes
             .iter()
             .skip(index.unwrap_to_usize())
             .try_for_each(|(i, first_index)| {
-                let last_index = last_indexes.double_unwrap_cached_get(i);
-                let range = first_index.unwrap_to_usize()..=last_index.unwrap_to_usize();
+                let end = other_iter
+                    .get(i + 1)
+                    .map(|(_, v)| v.into_inner().unwrap_to_usize())
+                    .unwrap_or_else(|| other_to_else.len());
+
+                let range = first_index.unwrap_to_usize()..end;
                 let count = if let Some(filter) = filter.as_mut() {
                     range.into_iter().filter(|i| filter(T2::from(*i))).count()
                 } else {
@@ -405,8 +419,8 @@ where
     pub fn compute_is_first_ordered<A>(
         &mut self,
         max_from: I,
-        self_to_other: &mut StoredVec<I, A>,
-        other_to_self: &mut StoredVec<A, I>,
+        self_to_other: &StoredVec<I, A>,
+        other_to_self: &StoredVec<A, I>,
         exit: &Exit,
     ) -> Result<()>
     where
@@ -418,6 +432,7 @@ where
             Version::ZERO + self.version() + self_to_other.version() + other_to_self.version(),
         )?;
 
+        let mut other_to_self_iter = other_to_self.iter();
         let index = max_from.min(I::from(self.len()));
         self_to_other
             .iter()
@@ -425,7 +440,14 @@ where
             .try_for_each(|(i, other)| {
                 self.forced_push_at(
                     i,
-                    T::from(other_to_self.double_unwrap_cached_get(other.into_inner()) == i),
+                    T::from(
+                        other_to_self_iter
+                            .get(other.into_inner())
+                            .unwrap()
+                            .1
+                            .into_inner()
+                            == i,
+                    ),
                     exit,
                 )
             })?;
@@ -436,9 +458,9 @@ where
     pub fn compute_sum_from_indexes<T2>(
         &mut self,
         max_from: I,
-        first_indexes: &mut StoredVec<I, T2>,
-        last_indexes: &mut StoredVec<I, T2>,
-        source: &mut StoredVec<T2, T>,
+        first_indexes: &StoredVec<I, T2>,
+        last_indexes: &StoredVec<I, T2>,
+        source: &StoredVec<T2, T>,
         exit: &Exit,
     ) -> Result<()>
     where
@@ -449,16 +471,18 @@ where
             Version::ZERO + self.version() + first_indexes.version() + last_indexes.version(),
         )?;
 
+        let mut last_indexes_iter = last_indexes.iter();
+        let mut source_iter = source.iter();
         let index = max_from.min(I::from(self.len()));
         first_indexes
             .iter()
             .skip(index.unwrap_to_usize())
             .try_for_each(|(i, first_index)| {
-                let last_index = last_indexes.double_unwrap_cached_get(i);
+                let last_index = last_indexes_iter.get(i).unwrap().1.into_inner();
                 let range = first_index.unwrap_to_usize()..=last_index.unwrap_to_usize();
                 let mut sum = T::from(0_usize);
                 range.into_iter().for_each(|i| {
-                    sum = sum.clone() + source.double_unwrap_cached_get(T2::from(i));
+                    sum = sum.clone() + source_iter.get(T2::from(i)).unwrap().1.into_inner();
                 });
                 self.forced_push_at(i, sum, exit)
             })?;
@@ -474,7 +498,7 @@ where
     pub fn compute_from_sats(
         &mut self,
         max_from: I,
-        sats: &mut StoredVec<I, Sats>,
+        sats: &StoredVec<I, Sats>,
         exit: &Exit,
     ) -> Result<()> {
         self.validate_computed_version_or_reset_file(
@@ -497,20 +521,21 @@ impl EagerVec<Height, Dollars> {
     pub fn compute_from_bitcoin(
         &mut self,
         max_from: Height,
-        bitcoin: &mut StoredVec<Height, Bitcoin>,
-        price: &mut StoredVec<Height, Close<Dollars>>,
+        bitcoin: &StoredVec<Height, Bitcoin>,
+        price: &StoredVec<Height, Close<Dollars>>,
         exit: &Exit,
     ) -> Result<()> {
         self.validate_computed_version_or_reset_file(
             Version::ZERO + self.version() + bitcoin.version(),
         )?;
 
+        let mut price_iter = price.iter();
         let index = max_from.min(Height::from(self.len()));
         bitcoin
             .iter()
             .skip(index.unwrap_to_usize())
             .try_for_each(|(i, bitcoin)| {
-                let dollars = price.double_unwrap_cached_get(i);
+                let dollars = price_iter.get(i).unwrap().1.into_inner();
                 let (i, v) = (i, *dollars * bitcoin.into_inner());
                 self.forced_push_at(i, v, exit)
             })?;
@@ -523,22 +548,24 @@ impl EagerVec<TxIndex, Dollars> {
     pub fn compute_from_bitcoin(
         &mut self,
         max_from: TxIndex,
-        bitcoin: &mut StoredVec<TxIndex, Bitcoin>,
-        i_to_height: &mut StoredVec<TxIndex, Height>,
-        price: &mut StoredVec<Height, Close<Dollars>>,
+        bitcoin: &StoredVec<TxIndex, Bitcoin>,
+        i_to_height: &StoredVec<TxIndex, Height>,
+        price: &StoredVec<Height, Close<Dollars>>,
         exit: &Exit,
     ) -> Result<()> {
         self.validate_computed_version_or_reset_file(
             Version::ZERO + self.version() + bitcoin.version(),
         )?;
 
+        let mut i_to_height_iter = i_to_height.iter();
+        let mut price_iter = price.iter();
         let index = max_from.min(TxIndex::from(self.len()));
         bitcoin
             .iter()
             .skip(index.unwrap_to_usize())
             .try_for_each(|(i, bitcoin, ..)| {
-                let height = i_to_height.double_unwrap_cached_get(i);
-                let dollars = price.double_unwrap_cached_get(height);
+                let height = i_to_height_iter.get(i).unwrap().1.into_inner();
+                let dollars = price_iter.get(height).unwrap().1.into_inner();
                 let (i, v) = (i, *dollars * bitcoin.into_inner());
                 self.forced_push_at(i, v, exit)
             })?;
@@ -557,5 +584,18 @@ where
             computed_version: self.computed_version,
             inner: self.inner.clone(),
         }
+    }
+}
+
+impl<'a, I, T> IntoIterator for &'a EagerVec<I, T>
+where
+    I: StoredIndex,
+    T: StoredType,
+{
+    type Item = (I, Value<'a, T>);
+    type IntoIter = StoredVecIterator<'a, I, T>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.inner.into_iter()
     }
 }

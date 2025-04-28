@@ -64,9 +64,9 @@ impl ComputedValueVecsFromHeight {
 
     pub fn compute_all<F>(
         &mut self,
-        indexer: &mut Indexer,
-        indexes: &mut indexes::Vecs,
-        marketprices: &mut Option<&mut marketprice::Vecs>,
+        indexer: &Indexer,
+        indexes: &indexes::Vecs,
+        marketprices: Option<&marketprice::Vecs>,
         starting_indexes: &Indexes,
         exit: &Exit,
         mut compute: F,
@@ -74,8 +74,8 @@ impl ComputedValueVecsFromHeight {
     where
         F: FnMut(
             &mut EagerVec<Height, Sats>,
-            &mut Indexer,
-            &mut indexes::Vecs,
+            &Indexer,
+            &indexes::Vecs,
             &Indexes,
             &Exit,
         ) -> Result<()>,
@@ -95,14 +95,14 @@ impl ComputedValueVecsFromHeight {
 
     pub fn compute_rest(
         &mut self,
-        indexer: &mut Indexer,
-        indexes: &mut indexes::Vecs,
-        marketprices: &mut Option<&mut marketprice::Vecs>,
+        indexer: &Indexer,
+        indexes: &indexes::Vecs,
+        marketprices: Option<&marketprice::Vecs>,
         starting_indexes: &Indexes,
         exit: &Exit,
-        mut height: Option<&mut StoredVec<Height, Sats>>,
+        height: Option<&StoredVec<Height, Sats>>,
     ) -> color_eyre::Result<()> {
-        if let Some(height) = height.as_mut() {
+        if let Some(height) = height.as_ref() {
             self.sats
                 .compute_rest(indexes, starting_indexes, exit, Some(height))?;
         } else {
@@ -110,7 +110,7 @@ impl ComputedValueVecsFromHeight {
                 .compute_rest(indexes, starting_indexes, exit, None)?;
         }
 
-        let height = height.unwrap_or_else(|| self.sats.height.as_mut().unwrap().mut_vec());
+        let height = height.unwrap_or_else(|| self.sats.height.as_ref().unwrap().vec());
 
         self.bitcoin.compute_all(
             indexer,
@@ -122,13 +122,13 @@ impl ComputedValueVecsFromHeight {
             },
         )?;
 
-        let txindex = self.bitcoin.height.as_mut().unwrap().mut_vec();
+        let txindex = self.bitcoin.height.as_ref().unwrap().vec();
         let price = marketprices
-            .as_mut()
+            .as_ref()
             .unwrap()
             .chainindexes_to_close
             .height
-            .mut_vec();
+            .vec();
 
         if let Some(dollars) = self.dollars.as_mut() {
             dollars.compute_all(
