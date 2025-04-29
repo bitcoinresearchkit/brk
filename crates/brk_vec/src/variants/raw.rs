@@ -293,6 +293,7 @@ where
         result
     }
 
+    #[inline]
     fn last(mut self) -> Option<Self::Item>
     where
         Self: Sized,

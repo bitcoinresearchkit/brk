@@ -196,8 +196,20 @@ where
                 }
 
                 if let Some(last) = self.last.as_mut() {
-                    let last_index = first_index + *count_index;
-                    let v = source_iter.get(last_index).unwrap().1.into_inner();
+                    let count_index = *count_index;
+                    if count_index == 0 {
+                        panic!("should compute last if count can be 0")
+                    }
+                    let last_index = first_index + (count_index - 1);
+                    let v = source_iter
+                        .get(last_index)
+                        .context("to work")
+                        .inspect_err(|_| {
+                            dbg!(first_index, count_index, last_index);
+                        })
+                        .unwrap()
+                        .1
+                        .into_inner();
                     last.forced_push_at(index, v, exit)?;
                 }
 
@@ -356,7 +368,11 @@ where
                 }
 
                 if let Some(last) = self.last.as_mut() {
-                    let last_index = first_index + *count_index;
+                    let count_index = *count_index;
+                    if count_index == 0 {
+                        panic!("should compute last if count can be 0")
+                    }
+                    let last_index = first_index + (count_index - 1);
                     let v = source_last_iter
                         .as_mut()
                         .unwrap()

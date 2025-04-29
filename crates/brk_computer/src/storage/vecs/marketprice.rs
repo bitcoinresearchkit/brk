@@ -337,7 +337,7 @@ impl Vecs {
         self.height_to_ohlc_in_cents.compute_transform(
             starting_indexes.height,
             indexer_vecs.height_to_timestamp.vec(),
-            |(h, t)| {
+            |(h, t, ..)| {
                 let ohlc = fetcher
                     .get_height(
                         h,

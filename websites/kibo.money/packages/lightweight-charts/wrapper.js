@@ -196,6 +196,8 @@ export default import("./v5.0.6-treeshaked/script.js").then((lc) => {
      */
     function createSetFetchedDataEffect(series, valuesResource) {
       const fetchedKey = vecsResources.defaultFetchedKey;
+      console.log(fetchedKey);
+
       signals.runWithOwner(owner, () =>
         signals.createEffect(
           () => [
@@ -211,9 +213,10 @@ export default import("./v5.0.6-treeshaked/script.js").then((lc) => {
             const data = new Array(length);
             let prevTime = null;
             let offset = 0;
+
             for (let i = 0; i < length; i++) {
               const time = indexes[i];
-              if (prevTime && prevTime === time) {
+              if (prevTime === time) {
                 offset += 1;
               }
               const v = ohlcs[i];
@@ -233,8 +236,10 @@ export default import("./v5.0.6-treeshaked/script.js").then((lc) => {
               }
               prevTime = time;
             }
+
             data.length -= offset;
             series.setData(data);
+
             timeScaleSetCallback?.(() => {
               if (
                 !timeScaleSet &&
@@ -428,7 +433,6 @@ export default import("./v5.0.6-treeshaked/script.js").then((lc) => {
           valuesResource.fetch();
           activeResources.push(valuesResource);
           createSetFetchedDataEffect(series, valuesResource);
-
           url = valuesResource.url;
         } else if (data) {
           signals.runWithOwner(owner, () =>

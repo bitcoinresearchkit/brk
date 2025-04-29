@@ -182,7 +182,7 @@ where
     where
         A: StoredIndex,
         B: StoredType,
-        F: FnMut((A, B)) -> (I, T),
+        F: FnMut((A, B, &Self)) -> (I, T),
     {
         self.validate_computed_version_or_reset_file(
             Version::ZERO + self.version() + other.version(),
@@ -190,7 +190,7 @@ where
 
         let index = max_from.min(A::from(self.len()));
         other.iter_at(index).try_for_each(|(a, b)| {
-            let (i, v) = t((a, b.into_inner()));
+            let (i, v) = t((a, b.into_inner(), self));
             self.forced_push_at(i, v, exit)
         })?;
 
@@ -217,9 +217,21 @@ where
                 .last()
                 .map_or_else(T::default, |(_, v)| v.into_inner()),
         );
-        other.iter_at(index).try_for_each(|(v, i)| {
+        let mut prev_i = None;
+        other.iter_at(index).try_for_each(|(v, i)| -> Result<()> {
             let i = i.into_inner();
-            self.forced_push_at(i, v, exit)
+            if prev_i.is_some_and(|prev_i| prev_i == i) {
+                return Ok(());
+            }
+            if self
+                .inner
+                .get(i)?
+                .is_none_or(|old_v| old_v.into_inner() > v)
+            {
+                self.forced_push_at(i, v, exit)?;
+            }
+            prev_i.replace(i);
+            Ok(())
         })?;
 
         self.safe_flush(exit)
