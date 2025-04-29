@@ -29,7 +29,7 @@
   <a href="https://bsky.app/profile/bitcoinresearchkit.org">
     <img src="https://img.shields.io/badge/bluesky-blue?link=https%3A%2F%2Fbsky.app%2Fprofile%2Fbitcoinresearchkit.org" alt="Bluesky" />
   </a>
-  <a href="https://x.com/0xbrk">
+  <a href="https://x.com/brkdotorg">
     <img src="https://img.shields.io/badge/x.com-black" alt="X" />
   </a>
 </p>
