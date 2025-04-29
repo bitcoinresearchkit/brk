@@ -18,34 +18,28 @@ pub struct Vecs {
     pub dateindex_to_dateindex: EagerVec<DateIndex, DateIndex>,
     pub dateindex_to_first_height: EagerVec<DateIndex, Height>,
     pub dateindex_to_height_count: EagerVec<DateIndex, StoredUsize>,
-    pub dateindex_to_last_height: EagerVec<DateIndex, Height>,
     pub dateindex_to_monthindex: EagerVec<DateIndex, MonthIndex>,
     pub dateindex_to_weekindex: EagerVec<DateIndex, WeekIndex>,
     pub decadeindex_to_decadeindex: EagerVec<DecadeIndex, DecadeIndex>,
     pub decadeindex_to_first_yearindex: EagerVec<DecadeIndex, YearIndex>,
-    pub decadeindex_to_last_yearindex: EagerVec<DecadeIndex, YearIndex>,
     pub decadeindex_to_yearindex_count: EagerVec<DecadeIndex, StoredUsize>,
     pub difficultyepoch_to_difficultyepoch: EagerVec<DifficultyEpoch, DifficultyEpoch>,
     pub difficultyepoch_to_first_height: EagerVec<DifficultyEpoch, Height>,
     pub difficultyepoch_to_height_count: EagerVec<DifficultyEpoch, StoredUsize>,
-    pub difficultyepoch_to_last_height: EagerVec<DifficultyEpoch, Height>,
     pub emptyoutputindex_to_emptyoutputindex: EagerVec<EmptyOutputIndex, EmptyOutputIndex>,
     pub halvingepoch_to_first_height: EagerVec<HalvingEpoch, Height>,
     pub halvingepoch_to_halvingepoch: EagerVec<HalvingEpoch, HalvingEpoch>,
-    pub halvingepoch_to_last_height: EagerVec<HalvingEpoch, Height>,
     pub height_to_date: EagerVec<Height, Date>,
     pub height_to_date_fixed: EagerVec<Height, Date>,
     pub height_to_dateindex: EagerVec<Height, DateIndex>,
     pub height_to_difficultyepoch: EagerVec<Height, DifficultyEpoch>,
     pub height_to_halvingepoch: EagerVec<Height, HalvingEpoch>,
     pub height_to_height: EagerVec<Height, Height>,
-    pub height_to_last_txindex: EagerVec<Height, TxIndex>,
     pub height_to_timestamp_fixed: EagerVec<Height, Timestamp>,
     pub height_to_txindex_count: EagerVec<Height, StoredUsize>,
     pub inputindex_to_inputindex: EagerVec<InputIndex, InputIndex>,
     pub monthindex_to_dateindex_count: EagerVec<MonthIndex, StoredUsize>,
     pub monthindex_to_first_dateindex: EagerVec<MonthIndex, DateIndex>,
-    pub monthindex_to_last_dateindex: EagerVec<MonthIndex, DateIndex>,
     pub monthindex_to_monthindex: EagerVec<MonthIndex, MonthIndex>,
     pub monthindex_to_quarterindex: EagerVec<MonthIndex, QuarterIndex>,
     pub monthindex_to_yearindex: EagerVec<MonthIndex, YearIndex>,
@@ -61,21 +55,16 @@ pub struct Vecs {
     pub p2wpkhindex_to_p2wpkhindex: EagerVec<P2WPKHIndex, P2WPKHIndex>,
     pub p2wshindex_to_p2wshindex: EagerVec<P2WSHIndex, P2WSHIndex>,
     pub quarterindex_to_first_monthindex: EagerVec<QuarterIndex, MonthIndex>,
-    pub quarterindex_to_last_monthindex: EagerVec<QuarterIndex, MonthIndex>,
     pub quarterindex_to_monthindex_count: EagerVec<QuarterIndex, StoredUsize>,
     pub quarterindex_to_quarterindex: EagerVec<QuarterIndex, QuarterIndex>,
     pub txindex_to_height: EagerVec<TxIndex, Height>,
-    pub txindex_to_last_inputindex: EagerVec<TxIndex, InputIndex>,
-    pub txindex_to_last_outputindex: EagerVec<TxIndex, OutputIndex>,
     pub txindex_to_txindex: EagerVec<TxIndex, TxIndex>,
     pub unknownoutputindex_to_unknownoutputindex: EagerVec<UnknownOutputIndex, UnknownOutputIndex>,
     pub weekindex_to_dateindex_count: EagerVec<WeekIndex, StoredUsize>,
     pub weekindex_to_first_dateindex: EagerVec<WeekIndex, DateIndex>,
-    pub weekindex_to_last_dateindex: EagerVec<WeekIndex, DateIndex>,
     pub weekindex_to_weekindex: EagerVec<WeekIndex, WeekIndex>,
     pub yearindex_to_decadeindex: EagerVec<YearIndex, DecadeIndex>,
     pub yearindex_to_first_monthindex: EagerVec<YearIndex, MonthIndex>,
-    pub yearindex_to_last_monthindex: EagerVec<YearIndex, MonthIndex>,
     pub yearindex_to_monthindex_count: EagerVec<YearIndex, StoredUsize>,
     pub yearindex_to_yearindex: EagerVec<YearIndex, YearIndex>,
 }
@@ -100,11 +89,6 @@ impl Vecs {
                 Version::ZERO,
                 compressed,
             )?,
-            dateindex_to_last_height: EagerVec::forced_import(
-                &path.join("dateindex_to_last_height"),
-                Version::ZERO,
-                compressed,
-            )?,
             height_to_date: EagerVec::forced_import(
                 &path.join("height_to_date"),
                 Version::ZERO,
@@ -125,23 +109,8 @@ impl Vecs {
                 Version::ZERO,
                 compressed,
             )?,
-            height_to_last_txindex: EagerVec::forced_import(
-                &path.join("height_to_last_txindex"),
-                Version::ZERO,
-                compressed,
-            )?,
             txindex_to_height: EagerVec::forced_import(
                 &path.join("txindex_to_height"),
-                Version::ZERO,
-                compressed,
-            )?,
-            txindex_to_last_inputindex: EagerVec::forced_import(
-                &path.join("txindex_to_last_inputindex"),
-                Version::ZERO,
-                compressed,
-            )?,
-            txindex_to_last_outputindex: EagerVec::forced_import(
-                &path.join("txindex_to_last_outputindex"),
                 Version::ZERO,
                 compressed,
             )?,
@@ -150,18 +119,8 @@ impl Vecs {
                 Version::ZERO,
                 compressed,
             )?,
-            difficultyepoch_to_last_height: EagerVec::forced_import(
-                &path.join("difficultyepoch_to_last_height"),
-                Version::ZERO,
-                compressed,
-            )?,
             halvingepoch_to_first_height: EagerVec::forced_import(
                 &path.join("halvingepoch_to_first_height"),
-                Version::ZERO,
-                compressed,
-            )?,
-            halvingepoch_to_last_height: EagerVec::forced_import(
-                &path.join("halvingepoch_to_last_height"),
                 Version::ZERO,
                 compressed,
             )?,
@@ -170,18 +129,8 @@ impl Vecs {
                 Version::ZERO,
                 compressed,
             )?,
-            weekindex_to_last_dateindex: EagerVec::forced_import(
-                &path.join("weekindex_to_last_dateindex"),
-                Version::ZERO,
-                compressed,
-            )?,
             monthindex_to_first_dateindex: EagerVec::forced_import(
                 &path.join("monthindex_to_first_dateindex"),
-                Version::ZERO,
-                compressed,
-            )?,
-            monthindex_to_last_dateindex: EagerVec::forced_import(
-                &path.join("monthindex_to_last_dateindex"),
                 Version::ZERO,
                 compressed,
             )?,
@@ -190,18 +139,8 @@ impl Vecs {
                 Version::ZERO,
                 compressed,
             )?,
-            yearindex_to_last_monthindex: EagerVec::forced_import(
-                &path.join("yearindex_to_last_monthindex"),
-                Version::ZERO,
-                compressed,
-            )?,
             decadeindex_to_first_yearindex: EagerVec::forced_import(
                 &path.join("decadeindex_to_first_yearindex"),
-                Version::ZERO,
-                compressed,
-            )?,
-            decadeindex_to_last_yearindex: EagerVec::forced_import(
-                &path.join("decadeindex_to_last_yearindex"),
                 Version::ZERO,
                 compressed,
             )?,
@@ -277,11 +216,6 @@ impl Vecs {
             )?,
             quarterindex_to_first_monthindex: EagerVec::forced_import(
                 &path.join("quarterindex_to_first_monthindex"),
-                Version::ZERO,
-                compressed,
-            )?,
-            quarterindex_to_last_monthindex: EagerVec::forced_import(
-                &path.join("quarterindex_to_last_monthindex"),
                 Version::ZERO,
                 compressed,
             )?,
@@ -405,66 +339,6 @@ impl Vecs {
                 Version::ZERO,
                 compressed,
             )?,
-            // height_to_last_p2aindex: EagerVec::forced_import(
-            //     &path.join("height_to_last_p2aindex"),
-            //     Version::ZERO,
-            //     compressed,
-            // )?,
-            // height_to_last_p2msindex: EagerVec::forced_import(
-            //     &path.join("height_to_last_p2msindex"),
-            //     Version::ZERO,
-            //     compressed,
-            // )?,
-            // height_to_last_p2pk33index: EagerVec::forced_import(
-            //     &path.join("height_to_last_p2pk33index"),
-            //     Version::ZERO,
-            //     compressed,
-            // )?,
-            // height_to_last_p2pk65index: EagerVec::forced_import(
-            //     &path.join("height_to_last_p2pk65index"),
-            //     Version::ZERO,
-            //     compressed,
-            // )?,
-            // height_to_last_p2pkhindex: EagerVec::forced_import(
-            //     &path.join("height_to_last_p2pkhindex"),
-            //     Version::ZERO,
-            //     compressed,
-            // )?,
-            // height_to_last_p2shindex: EagerVec::forced_import(
-            //     &path.join("height_to_last_p2shindex"),
-            //     Version::ZERO,
-            //     compressed,
-            // )?,
-            // height_to_last_p2trindex: EagerVec::forced_import(
-            //     &path.join("height_to_last_p2trindex"),
-            //     Version::ZERO,
-            //     compressed,
-            // )?,
-            // height_to_last_p2wpkhindex: EagerVec::forced_import(
-            //     &path.join("height_to_last_p2wpkhindex"),
-            //     Version::ZERO,
-            //     compressed,
-            // )?,
-            // height_to_last_p2wshindex: EagerVec::forced_import(
-            //     &path.join("height_to_last_p2wshindex"),
-            //     Version::ZERO,
-            //     compressed,
-            // )?,
-            // height_to_last_opreturnindex: EagerVec::forced_import(
-            //     &path.join("height_to_last_opreturnindex"),
-            //     Version::ZERO,
-            //     compressed,
-            // )?,
-            // height_to_last_unknownoutputindex: EagerVec::forced_import(
-            //     &path.join("height_to_last_unknownoutputindex"),
-            //     Version::ZERO,
-            //     compressed,
-            // )?,
-            // height_to_last_emptyoutputindex: EagerVec::forced_import(
-            //     &path.join("height_to_last_emptyoutputindex"),
-            //     Version::ZERO,
-            //     compressed,
-            // )?,
         })
     }
 
@@ -475,11 +349,6 @@ impl Vecs {
         exit: &Exit,
     ) -> color_eyre::Result<Indexes> {
         let indexer_vecs = indexer.vecs();
-
-        let height_count = indexer_vecs.height_to_total_size.len();
-        let txindexes_count = indexer_vecs.txindex_to_txid.len();
-        let inputindexes_count = indexer_vecs.inputindex_to_outputindex.len();
-        let outputindexes_count = indexer_vecs.outputindex_to_value.len();
 
         // ---
         // OutputIndex
@@ -577,101 +446,6 @@ impl Vecs {
                 exit,
             )?;
 
-        // self.height_to_last_p2aindex.compute_last_index_from_first(
-        //     starting_indexes.height,
-        //     indexer_vecs.height_to_first_p2aindex.vec(),
-        //     height_count,
-        //     exit,
-        // )?;
-
-        // self.height_to_last_p2msindex
-        //     .compute_last_index_from_first(
-        //         starting_indexes.height,
-        //         indexer_vecs.height_to_first_p2msindex.vec(),
-        //         height_count,
-        //         exit,
-        //     )?;
-
-        // self.height_to_last_p2pk33index
-        //     .compute_last_index_from_first(
-        //         starting_indexes.height,
-        //         indexer_vecs.height_to_first_p2pk33index.vec(),
-        //         height_count,
-        //         exit,
-        //     )?;
-
-        // self.height_to_last_p2pk65index
-        //     .compute_last_index_from_first(
-        //         starting_indexes.height,
-        //         indexer_vecs.height_to_first_p2pk65index.vec(),
-        //         height_count,
-        //         exit,
-        //     )?;
-
-        // self.height_to_last_p2pkhindex
-        //     .compute_last_index_from_first(
-        //         starting_indexes.height,
-        //         indexer_vecs.height_to_first_p2pkhindex.vec(),
-        //         height_count,
-        //         exit,
-        //     )?;
-
-        // self.height_to_last_p2shindex
-        //     .compute_last_index_from_first(
-        //         starting_indexes.height,
-        //         indexer_vecs.height_to_first_p2shindex.vec(),
-        //         height_count,
-        //         exit,
-        //     )?;
-
-        // self.height_to_last_p2trindex
-        //     .compute_last_index_from_first(
-        //         starting_indexes.height,
-        //         indexer_vecs.height_to_first_p2trindex.vec(),
-        //         height_count,
-        //         exit,
-        //     )?;
-
-        // self.height_to_last_p2wpkhindex
-        //     .compute_last_index_from_first(
-        //         starting_indexes.height,
-        //         indexer_vecs.height_to_first_p2wpkhindex.vec(),
-        //         height_count,
-        //         exit,
-        //     )?;
-
-        // self.height_to_last_p2wshindex
-        //     .compute_last_index_from_first(
-        //         starting_indexes.height,
-        //         indexer_vecs.height_to_first_p2wshindex.vec(),
-        //         height_count,
-        //         exit,
-        //     )?;
-
-        // self.height_to_last_opreturnindex
-        //     .compute_last_index_from_first(
-        //         starting_indexes.height,
-        //         indexer_vecs.height_to_first_opreturnindex.vec(),
-        //         height_count,
-        //         exit,
-        //     )?;
-
-        // self.height_to_last_unknownoutputindex
-        //     .compute_last_index_from_first(
-        //         starting_indexes.height,
-        //         indexer_vecs.height_to_first_unknownoutputindex.vec(),
-        //         height_count,
-        //         exit,
-        //     )?;
-
-        // self.height_to_last_emptyoutputindex
-        //     .compute_last_index_from_first(
-        //         starting_indexes.height,
-        //         indexer_vecs.height_to_first_emptyoutputindex.vec(),
-        //         height_count,
-        //         exit,
-        //     )?;
-
         // ---
         // InputIndex
         // ---
@@ -687,33 +461,10 @@ impl Vecs {
         // TxIndex
         // ---
 
-        self.txindex_to_last_inputindex
-            .compute_last_index_from_first(
-                starting_indexes.txindex,
-                indexer_vecs.txindex_to_first_inputindex.vec(),
-                inputindexes_count,
-                exit,
-            )?;
-
-        self.txindex_to_last_outputindex
-            .compute_last_index_from_first(
-                starting_indexes.txindex,
-                indexer_vecs.txindex_to_first_outputindex.vec(),
-                outputindexes_count,
-                exit,
-            )?;
-
         self.txindex_to_txindex.compute_range(
             starting_indexes.txindex,
-            self.txindex_to_last_inputindex.vec(),
+            indexer_vecs.txindex_to_txid.vec(),
             |i| (i, i),
-            exit,
-        )?;
-
-        self.height_to_last_txindex.compute_last_index_from_first(
-            starting_indexes.height,
-            indexer_vecs.height_to_first_txindex.vec(),
-            txindexes_count,
             exit,
         )?;
 
@@ -806,16 +557,6 @@ impl Vecs {
                 exit,
             )?;
 
-        let date_count = self.dateindex_to_first_height.len();
-
-        self.dateindex_to_last_height
-            .compute_last_index_from_first(
-                starting_dateindex,
-                self.dateindex_to_first_height.vec(),
-                height_count,
-                exit,
-            )?;
-
         self.dateindex_to_dateindex.compute_range(
             starting_dateindex,
             self.dateindex_to_first_height.vec(),
@@ -861,14 +602,6 @@ impl Vecs {
                 exit,
             )?;
 
-        self.weekindex_to_last_dateindex
-            .compute_last_index_from_first(
-                starting_weekindex,
-                self.weekindex_to_first_dateindex.vec(),
-                date_count,
-                exit,
-            )?;
-
         self.weekindex_to_weekindex.compute_range(
             starting_weekindex,
             self.weekindex_to_first_dateindex.vec(),
@@ -908,14 +641,6 @@ impl Vecs {
                 exit,
             )?;
 
-        self.difficultyepoch_to_last_height
-            .compute_last_index_from_first(
-                starting_difficultyepoch,
-                self.difficultyepoch_to_first_height.vec(),
-                height_count,
-                exit,
-            )?;
-
         self.difficultyepoch_to_difficultyepoch.compute_range(
             starting_difficultyepoch,
             self.difficultyepoch_to_first_height.vec(),
@@ -952,16 +677,6 @@ impl Vecs {
             .compute_inverse_more_to_less(
                 starting_dateindex,
                 self.dateindex_to_monthindex.vec(),
-                exit,
-            )?;
-
-        let month_count = self.monthindex_to_first_dateindex.len();
-
-        self.monthindex_to_last_dateindex
-            .compute_last_index_from_first(
-                starting_monthindex,
-                self.monthindex_to_first_dateindex.vec(),
-                date_count,
                 exit,
             )?;
 
@@ -1006,14 +721,6 @@ impl Vecs {
 
         // let quarter_count = self.quarterindex_to_first_monthindex.len();
 
-        self.quarterindex_to_last_monthindex
-            .compute_last_index_from_first(
-                starting_quarterindex,
-                self.quarterindex_to_first_monthindex.vec(),
-                month_count,
-                exit,
-            )?;
-
         self.quarterindex_to_quarterindex.compute_range(
             starting_quarterindex,
             self.quarterindex_to_first_monthindex.vec(),
@@ -1050,16 +757,6 @@ impl Vecs {
             .compute_inverse_more_to_less(
                 starting_monthindex,
                 self.monthindex_to_yearindex.vec(),
-                exit,
-            )?;
-
-        let year_count = self.yearindex_to_first_monthindex.len();
-
-        self.yearindex_to_last_monthindex
-            .compute_last_index_from_first(
-                starting_yearindex,
-                self.yearindex_to_first_monthindex.vec(),
-                month_count,
                 exit,
             )?;
 
@@ -1101,14 +798,6 @@ impl Vecs {
                 exit,
             )?;
 
-        self.halvingepoch_to_last_height
-            .compute_last_index_from_first(
-                starting_halvingepoch,
-                self.halvingepoch_to_first_height.vec(),
-                height_count,
-                exit,
-            )?;
-
         self.halvingepoch_to_halvingepoch.compute_range(
             starting_halvingepoch,
             self.halvingepoch_to_first_height.vec(),
@@ -1137,14 +826,6 @@ impl Vecs {
             .compute_inverse_more_to_less(
                 starting_yearindex,
                 self.yearindex_to_decadeindex.vec(),
-                exit,
-            )?;
-
-        self.decadeindex_to_last_yearindex
-            .compute_last_index_from_first(
-                starting_decadeindex,
-                self.decadeindex_to_first_yearindex.vec(),
-                year_count,
                 exit,
             )?;
 
@@ -1181,26 +862,16 @@ impl Vecs {
             self.dateindex_to_date.any_vec(),
             self.dateindex_to_dateindex.any_vec(),
             self.dateindex_to_first_height.any_vec(),
-            self.dateindex_to_last_height.any_vec(),
             self.height_to_dateindex.any_vec(),
             self.height_to_date_fixed.any_vec(),
             self.height_to_height.any_vec(),
-            self.height_to_last_txindex.any_vec(),
             self.height_to_date.any_vec(),
-            self.txindex_to_last_inputindex.any_vec(),
-            self.txindex_to_last_outputindex.any_vec(),
             self.difficultyepoch_to_first_height.any_vec(),
-            self.difficultyepoch_to_last_height.any_vec(),
             self.halvingepoch_to_first_height.any_vec(),
-            self.halvingepoch_to_last_height.any_vec(),
             self.weekindex_to_first_dateindex.any_vec(),
-            self.weekindex_to_last_dateindex.any_vec(),
             self.monthindex_to_first_dateindex.any_vec(),
-            self.monthindex_to_last_dateindex.any_vec(),
             self.yearindex_to_first_monthindex.any_vec(),
-            self.yearindex_to_last_monthindex.any_vec(),
             self.decadeindex_to_first_yearindex.any_vec(),
-            self.decadeindex_to_last_yearindex.any_vec(),
             self.dateindex_to_weekindex.any_vec(),
             self.dateindex_to_monthindex.any_vec(),
             self.monthindex_to_yearindex.any_vec(),
@@ -1216,7 +887,6 @@ impl Vecs {
             self.height_to_timestamp_fixed.any_vec(),
             self.monthindex_to_quarterindex.any_vec(),
             self.quarterindex_to_first_monthindex.any_vec(),
-            self.quarterindex_to_last_monthindex.any_vec(),
             self.quarterindex_to_quarterindex.any_vec(),
             self.p2pk33index_to_p2pk33index.any_vec(),
             self.p2pk65index_to_p2pk65index.any_vec(),
@@ -1241,18 +911,6 @@ impl Vecs {
             self.quarterindex_to_monthindex_count.any_vec(),
             self.yearindex_to_monthindex_count.any_vec(),
             self.decadeindex_to_yearindex_count.any_vec(),
-            // self.height_to_last_p2aindex.any_vec(),
-            // self.height_to_last_p2msindex.any_vec(),
-            // self.height_to_last_p2pk33index.any_vec(),
-            // self.height_to_last_p2pk65index.any_vec(),
-            // self.height_to_last_p2pkhindex.any_vec(),
-            // self.height_to_last_p2shindex.any_vec(),
-            // self.height_to_last_p2trindex.any_vec(),
-            // self.height_to_last_p2wpkhindex.any_vec(),
-            // self.height_to_last_p2wshindex.any_vec(),
-            // self.height_to_last_opreturnindex.any_vec(),
-            // self.height_to_last_unknownoutputindex.any_vec(),
-            // self.height_to_last_emptyoutputindex.any_vec(),
         ]
     }
 }
