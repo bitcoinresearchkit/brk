@@ -64,7 +64,7 @@ impl Vecs {
             |vec, _, indexes, starting_indexes, exit| {
                 vec.compute_transform(
                     starting_indexes.dateindex,
-                    indexes.dateindex_to_last_height.vec(),
+                    indexes.dateindex_to_first_height.vec(),
                     |(di, height, ..)| {
                         (
                             di,
@@ -89,7 +89,7 @@ impl Vecs {
             |vec, _, indexes, starting_indexes, exit| {
                 vec.compute_transform(
                     starting_indexes.dateindex,
-                    indexes.dateindex_to_last_height.vec(),
+                    indexes.dateindex_to_first_height.vec(),
                     |(di, height, ..)| (di, height_to_halvingepoch_iter.unwrap_get_inner(height)),
                     exit,
                 )

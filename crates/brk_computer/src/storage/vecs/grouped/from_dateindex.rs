@@ -101,7 +101,7 @@ where
             starting_indexes.weekindex,
             self.dateindex.vec(),
             indexes.weekindex_to_first_dateindex.vec(),
-            indexes.weekindex_to_last_dateindex.vec(),
+            indexes.weekindex_to_dateindex_count.vec(),
             exit,
         )?;
 
@@ -109,7 +109,7 @@ where
             starting_indexes.monthindex,
             self.dateindex.vec(),
             indexes.monthindex_to_first_dateindex.vec(),
-            indexes.monthindex_to_last_dateindex.vec(),
+            indexes.monthindex_to_dateindex_count.vec(),
             exit,
         )?;
 
@@ -117,7 +117,7 @@ where
             starting_indexes.quarterindex,
             &self.monthindex,
             indexes.quarterindex_to_first_monthindex.vec(),
-            indexes.quarterindex_to_last_monthindex.vec(),
+            indexes.quarterindex_to_monthindex_count.vec(),
             exit,
         )?;
 
@@ -125,7 +125,7 @@ where
             starting_indexes.yearindex,
             &self.monthindex,
             indexes.yearindex_to_first_monthindex.vec(),
-            indexes.yearindex_to_last_monthindex.vec(),
+            indexes.yearindex_to_monthindex_count.vec(),
             exit,
         )?;
 
@@ -133,7 +133,7 @@ where
             starting_indexes.decadeindex,
             &self.yearindex,
             indexes.decadeindex_to_first_yearindex.vec(),
-            indexes.decadeindex_to_last_yearindex.vec(),
+            indexes.decadeindex_to_yearindex_count.vec(),
             exit,
         )?;
 

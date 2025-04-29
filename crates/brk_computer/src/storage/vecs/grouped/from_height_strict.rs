@@ -79,7 +79,7 @@ where
             starting_indexes.difficultyepoch,
             self.height.vec(),
             indexes.difficultyepoch_to_first_height.vec(),
-            indexes.difficultyepoch_to_last_height.vec(),
+            indexes.difficultyepoch_to_height_count.vec(),
             exit,
         )?;
 

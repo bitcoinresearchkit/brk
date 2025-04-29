@@ -4,7 +4,7 @@ use brk_core::{
     Date, DateIndex, DecadeIndex, DifficultyEpoch, EmptyOutputIndex, HalvingEpoch, Height,
     InputIndex, MonthIndex, OpReturnIndex, OutputIndex, P2AIndex, P2MSIndex, P2PK33Index,
     P2PK65Index, P2PKHIndex, P2SHIndex, P2TRIndex, P2WPKHIndex, P2WSHIndex, QuarterIndex,
-    Timestamp, TxIndex, UnknownOutputIndex, WeekIndex, YearIndex,
+    StoredUsize, Timestamp, TxIndex, UnknownOutputIndex, WeekIndex, YearIndex,
 };
 use brk_exit::Exit;
 use brk_indexer::Indexer;
@@ -17,14 +17,17 @@ pub struct Vecs {
     pub dateindex_to_date: EagerVec<DateIndex, Date>,
     pub dateindex_to_dateindex: EagerVec<DateIndex, DateIndex>,
     pub dateindex_to_first_height: EagerVec<DateIndex, Height>,
+    pub dateindex_to_height_count: EagerVec<DateIndex, StoredUsize>,
     pub dateindex_to_last_height: EagerVec<DateIndex, Height>,
     pub dateindex_to_monthindex: EagerVec<DateIndex, MonthIndex>,
     pub dateindex_to_weekindex: EagerVec<DateIndex, WeekIndex>,
     pub decadeindex_to_decadeindex: EagerVec<DecadeIndex, DecadeIndex>,
     pub decadeindex_to_first_yearindex: EagerVec<DecadeIndex, YearIndex>,
     pub decadeindex_to_last_yearindex: EagerVec<DecadeIndex, YearIndex>,
+    pub decadeindex_to_yearindex_count: EagerVec<DecadeIndex, StoredUsize>,
     pub difficultyepoch_to_difficultyepoch: EagerVec<DifficultyEpoch, DifficultyEpoch>,
     pub difficultyepoch_to_first_height: EagerVec<DifficultyEpoch, Height>,
+    pub difficultyepoch_to_height_count: EagerVec<DifficultyEpoch, StoredUsize>,
     pub difficultyepoch_to_last_height: EagerVec<DifficultyEpoch, Height>,
     pub emptyoutputindex_to_emptyoutputindex: EagerVec<EmptyOutputIndex, EmptyOutputIndex>,
     pub halvingepoch_to_first_height: EagerVec<HalvingEpoch, Height>,
@@ -36,21 +39,11 @@ pub struct Vecs {
     pub height_to_difficultyepoch: EagerVec<Height, DifficultyEpoch>,
     pub height_to_halvingepoch: EagerVec<Height, HalvingEpoch>,
     pub height_to_height: EagerVec<Height, Height>,
-    // pub height_to_last_emptyoutputindex: EagerVec<Height, EmptyOutputIndex>,
-    // pub height_to_last_opreturnindex: EagerVec<Height, OpReturnIndex>,
-    // pub height_to_last_p2aindex: EagerVec<Height, P2AIndex>,
-    // pub height_to_last_p2msindex: EagerVec<Height, P2MSIndex>,
-    // pub height_to_last_p2pk33index: EagerVec<Height, P2PK33Index>,
-    // pub height_to_last_p2pk65index: EagerVec<Height, P2PK65Index>,
-    // pub height_to_last_p2pkhindex: EagerVec<Height, P2PKHIndex>,
-    // pub height_to_last_p2shindex: EagerVec<Height, P2SHIndex>,
-    // pub height_to_last_p2trindex: EagerVec<Height, P2TRIndex>,
-    // pub height_to_last_p2wpkhindex: EagerVec<Height, P2WPKHIndex>,
-    // pub height_to_last_p2wshindex: EagerVec<Height, P2WSHIndex>,
     pub height_to_last_txindex: EagerVec<Height, TxIndex>,
-    // pub height_to_last_unknownoutputindex: EagerVec<Height, UnknownOutputIndex>,
     pub height_to_timestamp_fixed: EagerVec<Height, Timestamp>,
+    pub height_to_txindex_count: EagerVec<Height, StoredUsize>,
     pub inputindex_to_inputindex: EagerVec<InputIndex, InputIndex>,
+    pub monthindex_to_dateindex_count: EagerVec<MonthIndex, StoredUsize>,
     pub monthindex_to_first_dateindex: EagerVec<MonthIndex, DateIndex>,
     pub monthindex_to_last_dateindex: EagerVec<MonthIndex, DateIndex>,
     pub monthindex_to_monthindex: EagerVec<MonthIndex, MonthIndex>,
@@ -69,18 +62,21 @@ pub struct Vecs {
     pub p2wshindex_to_p2wshindex: EagerVec<P2WSHIndex, P2WSHIndex>,
     pub quarterindex_to_first_monthindex: EagerVec<QuarterIndex, MonthIndex>,
     pub quarterindex_to_last_monthindex: EagerVec<QuarterIndex, MonthIndex>,
+    pub quarterindex_to_monthindex_count: EagerVec<QuarterIndex, StoredUsize>,
     pub quarterindex_to_quarterindex: EagerVec<QuarterIndex, QuarterIndex>,
     pub txindex_to_height: EagerVec<TxIndex, Height>,
     pub txindex_to_last_inputindex: EagerVec<TxIndex, InputIndex>,
     pub txindex_to_last_outputindex: EagerVec<TxIndex, OutputIndex>,
     pub txindex_to_txindex: EagerVec<TxIndex, TxIndex>,
     pub unknownoutputindex_to_unknownoutputindex: EagerVec<UnknownOutputIndex, UnknownOutputIndex>,
+    pub weekindex_to_dateindex_count: EagerVec<WeekIndex, StoredUsize>,
     pub weekindex_to_first_dateindex: EagerVec<WeekIndex, DateIndex>,
     pub weekindex_to_last_dateindex: EagerVec<WeekIndex, DateIndex>,
     pub weekindex_to_weekindex: EagerVec<WeekIndex, WeekIndex>,
     pub yearindex_to_decadeindex: EagerVec<YearIndex, DecadeIndex>,
     pub yearindex_to_first_monthindex: EagerVec<YearIndex, MonthIndex>,
     pub yearindex_to_last_monthindex: EagerVec<YearIndex, MonthIndex>,
+    pub yearindex_to_monthindex_count: EagerVec<YearIndex, StoredUsize>,
     pub yearindex_to_yearindex: EagerVec<YearIndex, YearIndex>,
 }
 
@@ -366,6 +362,46 @@ impl Vecs {
             )?,
             outputindex_to_outputindex: EagerVec::forced_import(
                 &path.join("outputindex_to_outputindex"),
+                Version::ZERO,
+                compressed,
+            )?,
+            height_to_txindex_count: EagerVec::forced_import(
+                &path.join("height_to_txindex_count"),
+                Version::ZERO,
+                compressed,
+            )?,
+            dateindex_to_height_count: EagerVec::forced_import(
+                &path.join("dateindex_to_height_count"),
+                Version::ZERO,
+                compressed,
+            )?,
+            weekindex_to_dateindex_count: EagerVec::forced_import(
+                &path.join("weekindex_to_dateindex_count"),
+                Version::ZERO,
+                compressed,
+            )?,
+            difficultyepoch_to_height_count: EagerVec::forced_import(
+                &path.join("difficultyepoch_to_height_count"),
+                Version::ZERO,
+                compressed,
+            )?,
+            monthindex_to_dateindex_count: EagerVec::forced_import(
+                &path.join("monthindex_to_dateindex_count"),
+                Version::ZERO,
+                compressed,
+            )?,
+            quarterindex_to_monthindex_count: EagerVec::forced_import(
+                &path.join("quarterindex_to_monthindex_count"),
+                Version::ZERO,
+                compressed,
+            )?,
+            yearindex_to_monthindex_count: EagerVec::forced_import(
+                &path.join("yearindex_to_monthindex_count"),
+                Version::ZERO,
+                compressed,
+            )?,
+            decadeindex_to_yearindex_count: EagerVec::forced_import(
+                &path.join("decadeindex_to_yearindex_count"),
                 Version::ZERO,
                 compressed,
             )?,
@@ -681,10 +717,17 @@ impl Vecs {
             exit,
         )?;
 
+        self.height_to_txindex_count.compute_count_from_indexes(
+            starting_indexes.height,
+            indexer_vecs.height_to_first_txindex.vec(),
+            indexer_vecs.txindex_to_txid.vec(),
+            exit,
+        )?;
+
         self.txindex_to_height.compute_inverse_less_to_more(
             starting_indexes.height,
             indexer_vecs.height_to_first_txindex.vec(),
-            self.height_to_last_txindex.vec(),
+            self.height_to_txindex_count.vec(),
             exit,
         )?;
 
@@ -787,6 +830,13 @@ impl Vecs {
             exit,
         )?;
 
+        self.dateindex_to_height_count.compute_count_from_indexes(
+            starting_dateindex,
+            self.dateindex_to_first_height.vec(),
+            indexer_vecs.height_to_weight.vec(),
+            exit,
+        )?;
+
         // ---
         // WeekIndex
         // ---
@@ -826,6 +876,14 @@ impl Vecs {
             exit,
         )?;
 
+        self.weekindex_to_dateindex_count
+            .compute_count_from_indexes(
+                starting_weekindex,
+                self.weekindex_to_first_dateindex.vec(),
+                self.dateindex_to_date.vec(),
+                exit,
+            )?;
+
         // ---
         // DifficultyEpoch
         // ---
@@ -864,6 +922,14 @@ impl Vecs {
             |i| (i, i),
             exit,
         )?;
+
+        self.difficultyepoch_to_height_count
+            .compute_count_from_indexes(
+                starting_difficultyepoch,
+                self.difficultyepoch_to_first_height.vec(),
+                self.height_to_date.vec(),
+                exit,
+            )?;
 
         // ---
         // MonthIndex
@@ -906,6 +972,14 @@ impl Vecs {
             exit,
         )?;
 
+        self.monthindex_to_dateindex_count
+            .compute_count_from_indexes(
+                starting_monthindex,
+                self.monthindex_to_first_dateindex.vec(),
+                self.dateindex_to_date.vec(),
+                exit,
+            )?;
+
         // ---
         // QuarterIndex
         // ---
@@ -946,6 +1020,14 @@ impl Vecs {
             |i| (i, i),
             exit,
         )?;
+
+        self.quarterindex_to_monthindex_count
+            .compute_count_from_indexes(
+                starting_quarterindex,
+                self.quarterindex_to_first_monthindex.vec(),
+                self.monthindex_to_monthindex.vec(),
+                exit,
+            )?;
 
         // ---
         // YearIndex
@@ -988,6 +1070,13 @@ impl Vecs {
             exit,
         )?;
 
+        self.yearindex_to_monthindex_count
+            .compute_count_from_indexes(
+                starting_yearindex,
+                self.yearindex_to_first_monthindex.vec(),
+                self.monthindex_to_monthindex.vec(),
+                exit,
+            )?;
         // ---
         // HalvingEpoch
         // ---
@@ -1066,6 +1155,14 @@ impl Vecs {
             exit,
         )?;
 
+        self.decadeindex_to_yearindex_count
+            .compute_count_from_indexes(
+                starting_decadeindex,
+                self.decadeindex_to_first_yearindex.vec(),
+                self.yearindex_to_yearindex.vec(),
+                exit,
+            )?;
+
         Ok(Indexes {
             indexes: starting_indexes,
             dateindex: starting_dateindex,
@@ -1136,6 +1233,14 @@ impl Vecs {
             self.p2aindex_to_p2aindex.any_vec(),
             self.unknownoutputindex_to_unknownoutputindex.any_vec(),
             self.outputindex_to_outputindex.any_vec(),
+            self.height_to_txindex_count.any_vec(),
+            self.dateindex_to_height_count.any_vec(),
+            self.weekindex_to_dateindex_count.any_vec(),
+            self.difficultyepoch_to_height_count.any_vec(),
+            self.monthindex_to_dateindex_count.any_vec(),
+            self.quarterindex_to_monthindex_count.any_vec(),
+            self.yearindex_to_monthindex_count.any_vec(),
+            self.decadeindex_to_yearindex_count.any_vec(),
             // self.height_to_last_p2aindex.any_vec(),
             // self.height_to_last_p2msindex.any_vec(),
             // self.height_to_last_p2pk33index.any_vec(),

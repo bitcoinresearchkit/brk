@@ -6,12 +6,13 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use brk_core::{Bitcoin, CheckedSub, Close, Dollars, Height, Sats, TxIndex};
+use brk_core::{Bitcoin, CheckedSub, Close, Dollars, Height, Sats, StoredUsize, TxIndex};
 use brk_exit::Exit;
 use brk_vec::{
     Compressed, DynamicVec, Error, GenericVec, Result, StoredIndex, StoredType, StoredVec,
     StoredVecIterator, Value, Version,
 };
+use color_eyre::eyre::ContextCompat;
 use log::info;
 
 const ONE_KIB: usize = 1024;
@@ -228,7 +229,7 @@ where
         &mut self,
         max_from: T,
         first_indexes: &StoredVec<T, I>,
-        last_indexes: &StoredVec<T, I>,
+        indexes_count: &StoredVec<T, StoredUsize>,
         exit: &Exit,
     ) -> Result<()>
     where
@@ -236,18 +237,18 @@ where
         T: StoredIndex,
     {
         self.validate_computed_version_or_reset_file(
-            Version::ZERO + self.version() + first_indexes.version() + last_indexes.version(),
+            Version::ZERO + self.version() + first_indexes.version() + indexes_count.version(),
         )?;
 
-        let mut last_indexes_iter = last_indexes.iter();
+        let mut indexes_count_iter = indexes_count.iter();
 
         let index = max_from.min(T::from(self.len()));
         first_indexes
             .iter_at(index)
             .try_for_each(|(value, first_index)| {
                 let first_index = (first_index).to_usize()?;
-                let last_index = last_indexes_iter.unwrap_get_inner(value).unwrap_to_usize();
-                (first_index..=last_index)
+                let count = *indexes_count_iter.unwrap_get_inner(value);
+                (first_index..first_index + count)
                     .try_for_each(|index| self.forced_push_at(I::from(index), value, exit))
             })?;
 
@@ -275,7 +276,13 @@ where
             .iter_at(index)
             .try_for_each(|(index, v)| -> Result<()> {
                 if let Some(prev_index) = prev_index.take() {
-                    let value = v.checked_sub(one).unwrap();
+                    let value = v
+                        .checked_sub(one)
+                        .context("Should work")
+                        .inspect_err(|_| {
+                            dbg!(index, prev_index, v);
+                        })
+                        .unwrap();
                     self.forced_push_at(prev_index, value, exit)?;
                 }
                 prev_index.replace(index);
@@ -431,7 +438,7 @@ where
         &mut self,
         max_from: I,
         first_indexes: &StoredVec<I, T2>,
-        last_indexes: &StoredVec<I, T2>,
+        indexes_count: &StoredVec<I, StoredUsize>,
         source: &StoredVec<T2, T>,
         exit: &Exit,
     ) -> Result<()>
@@ -440,17 +447,18 @@ where
         T2: StoredIndex + StoredType,
     {
         self.validate_computed_version_or_reset_file(
-            Version::ZERO + self.version() + first_indexes.version() + last_indexes.version(),
+            Version::ZERO + self.version() + first_indexes.version() + indexes_count.version(),
         )?;
 
-        let mut last_indexes_iter = last_indexes.iter();
+        let mut indexes_count_iter = indexes_count.iter();
         let mut source_iter = source.iter();
         let index = max_from.min(I::from(self.len()));
         first_indexes
             .iter_at(index)
             .try_for_each(|(i, first_index)| {
-                let last_index = last_indexes_iter.get(i).unwrap().1.into_inner();
-                let range = first_index.unwrap_to_usize()..=last_index.unwrap_to_usize();
+                let count = *indexes_count_iter.get(i).unwrap().1.into_inner();
+                let first_index = first_index.unwrap_to_usize();
+                let range = first_index..first_index + count;
                 let mut sum = T::from(0_usize);
                 range.into_iter().for_each(|i| {
                     sum = sum.clone() + source_iter.get(T2::from(i)).unwrap().1.into_inner();

@@ -18,11 +18,11 @@ pub use vec::*;
 
 #[derive(Clone)]
 pub struct Vecs {
-    pub blocks: blocks::Vecs,
     pub indexes: indexes::Vecs,
-    pub mining: mining::Vecs,
-    pub transactions: transactions::Vecs,
-    pub marketprice: Option<marketprice::Vecs>,
+    // pub blocks: blocks::Vecs,
+    // pub mining: mining::Vecs,
+    // pub transactions: transactions::Vecs,
+    // pub marketprice: Option<marketprice::Vecs>,
 }
 
 impl Vecs {
@@ -30,11 +30,11 @@ impl Vecs {
         fs::create_dir_all(path)?;
 
         Ok(Self {
-            blocks: blocks::Vecs::forced_import(path, compressed)?,
+            // blocks: blocks::Vecs::forced_import(path, compressed)?,
             indexes: indexes::Vecs::forced_import(path, compressed)?,
-            mining: mining::Vecs::forced_import(path, compressed)?,
-            transactions: transactions::Vecs::forced_import(path, compressed, fetch)?,
-            marketprice: fetch.then(|| marketprice::Vecs::forced_import(path, compressed).unwrap()),
+            // mining: mining::Vecs::forced_import(path, compressed)?,
+            // transactions: transactions::Vecs::forced_import(path, compressed, fetch)?,
+            // marketprice: fetch.then(|| marketprice::Vecs::forced_import(path, compressed).unwrap()),
         })
     }
 
@@ -47,29 +47,29 @@ impl Vecs {
     ) -> color_eyre::Result<()> {
         let starting_indexes = self.indexes.compute(indexer, starting_indexes, exit)?;
 
-        self.blocks
-            .compute(indexer, &self.indexes, &starting_indexes, exit)?;
+        // self.blocks
+        //     .compute(indexer, &self.indexes, &starting_indexes, exit)?;
 
-        self.mining
-            .compute(indexer, &self.indexes, &starting_indexes, exit)?;
+        // self.mining
+        //     .compute(indexer, &self.indexes, &starting_indexes, exit)?;
 
-        if let Some(marketprice) = self.marketprice.as_mut() {
-            marketprice.compute(
-                indexer,
-                &self.indexes,
-                &starting_indexes,
-                fetcher.unwrap(),
-                exit,
-            )?;
-        }
+        // if let Some(marketprice) = self.marketprice.as_mut() {
+        //     marketprice.compute(
+        //         indexer,
+        //         &self.indexes,
+        //         &starting_indexes,
+        //         fetcher.unwrap(),
+        //         exit,
+        //     )?;
+        // }
 
-        self.transactions.compute(
-            indexer,
-            &self.indexes,
-            &starting_indexes,
-            self.marketprice.as_ref(),
-            exit,
-        )?;
+        // self.transactions.compute(
+        //     indexer,
+        //     &self.indexes,
+        //     &starting_indexes,
+        //     self.marketprice.as_ref(),
+        //     exit,
+        // )?;
 
         Ok(())
     }
@@ -77,12 +77,12 @@ impl Vecs {
     pub fn as_any_vecs(&self) -> Vec<&dyn AnyStoredVec> {
         [
             self.indexes.as_any_vecs(),
-            self.blocks.as_any_vecs(),
-            self.mining.as_any_vecs(),
-            self.transactions.as_any_vecs(),
-            self.marketprice
-                .as_ref()
-                .map_or(vec![], |v| v.as_any_vecs()),
+            // self.blocks.as_any_vecs(),
+            // self.mining.as_any_vecs(),
+            // self.transactions.as_any_vecs(),
+            // self.marketprice
+            //     .as_ref()
+            //     .map_or(vec![], |v| v.as_any_vecs()),
         ]
         .concat()
     }
