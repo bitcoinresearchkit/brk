@@ -255,50 +255,6 @@ where
         self.safe_flush(exit)
     }
 
-    pub fn compute_last_index_from_first(
-        &mut self,
-        max_from: I,
-        first_indexes: &StoredVec<I, T>,
-        final_len: usize,
-        exit: &Exit,
-    ) -> Result<()>
-    where
-        T: Copy + From<usize> + CheckedSub<T> + StoredIndex,
-    {
-        self.validate_computed_version_or_reset_file(
-            Version::ZERO + self.version() + first_indexes.version(),
-        )?;
-
-        let index = max_from.min(I::from(self.len()));
-        let one = T::from(1);
-        let mut prev_index: Option<I> = None;
-        first_indexes
-            .iter_at(index)
-            .try_for_each(|(index, v)| -> Result<()> {
-                if let Some(prev_index) = prev_index.take() {
-                    let value = v
-                        .checked_sub(one)
-                        .context("Should work")
-                        .inspect_err(|_| {
-                            dbg!(index, prev_index, v);
-                        })
-                        .unwrap();
-                    self.forced_push_at(prev_index, value, exit)?;
-                }
-                prev_index.replace(index);
-                Ok(())
-            })?;
-        if let Some(prev_index) = prev_index {
-            self.forced_push_at(
-                prev_index,
-                T::from(final_len).checked_sub(one).unwrap(),
-                exit,
-            )?;
-        }
-
-        self.safe_flush(exit)
-    }
-
     pub fn compute_count_from_indexes<T2, T3>(
         &mut self,
         max_from: I,
