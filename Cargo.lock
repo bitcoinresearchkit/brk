@@ -387,7 +387,7 @@ dependencies = [
 
 [[package]]
 name = "brk"
-version = "0.0.30"
+version = "0.0.31"
 dependencies = [
  "brk_cli",
  "brk_computer",
@@ -404,7 +404,7 @@ dependencies = [
 
 [[package]]
 name = "brk_cli"
-version = "0.0.30"
+version = "0.0.31"
 dependencies = [
  "brk_computer",
  "brk_core",
@@ -425,7 +425,7 @@ dependencies = [
 
 [[package]]
 name = "brk_computer"
-version = "0.0.30"
+version = "0.0.31"
 dependencies = [
  "brk_core",
  "brk_exit",
@@ -441,7 +441,7 @@ dependencies = [
 
 [[package]]
 name = "brk_core"
-version = "0.0.30"
+version = "0.0.31"
 dependencies = [
  "bitcoin",
  "bitcoincore-rpc",
@@ -458,7 +458,7 @@ dependencies = [
 
 [[package]]
 name = "brk_exit"
-version = "0.0.30"
+version = "0.0.31"
 dependencies = [
  "brk_logger",
  "ctrlc",
@@ -467,7 +467,7 @@ dependencies = [
 
 [[package]]
 name = "brk_fetcher"
-version = "0.0.30"
+version = "0.0.31"
 dependencies = [
  "brk_core",
  "brk_logger",
@@ -480,7 +480,7 @@ dependencies = [
 
 [[package]]
 name = "brk_indexer"
-version = "0.0.30"
+version = "0.0.31"
 dependencies = [
  "bitcoin",
  "bitcoincore-rpc",
@@ -499,7 +499,7 @@ dependencies = [
 
 [[package]]
 name = "brk_logger"
-version = "0.0.30"
+version = "0.0.31"
 dependencies = [
  "color-eyre",
  "env_logger",
@@ -509,7 +509,7 @@ dependencies = [
 
 [[package]]
 name = "brk_parser"
-version = "0.0.30"
+version = "0.0.31"
 dependencies = [
  "bitcoin",
  "bitcoincore-rpc",
@@ -524,7 +524,7 @@ dependencies = [
 
 [[package]]
 name = "brk_query"
-version = "0.0.30"
+version = "0.0.31"
 dependencies = [
  "brk_computer",
  "brk_indexer",
@@ -540,7 +540,7 @@ dependencies = [
 
 [[package]]
 name = "brk_server"
-version = "0.0.30"
+version = "0.0.31"
 dependencies = [
  "axum",
  "brk_computer",
@@ -566,7 +566,7 @@ dependencies = [
 
 [[package]]
 name = "brk_vec"
-version = "0.0.30"
+version = "0.0.31"
 dependencies = [
  "arc-swap",
  "axum",
