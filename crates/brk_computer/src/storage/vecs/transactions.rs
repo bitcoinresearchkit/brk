@@ -530,7 +530,7 @@ impl Vecs {
         self.inputindex_to_value.compute_transform(
             starting_indexes.inputindex,
             indexer.vecs().inputindex_to_outputindex.vec(),
-            |(inputindex, outputindex)| {
+            |(inputindex, outputindex, ..)| {
                 let value = if outputindex == OutputIndex::COINBASE {
                     Sats::ZERO
                 } else if let Some((_, value)) = outputindex_to_value_iter.get(outputindex) {

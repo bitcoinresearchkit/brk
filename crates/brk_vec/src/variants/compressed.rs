@@ -552,6 +552,19 @@ where
 
         result
     }
+
+    #[inline]
+    fn last(mut self) -> Option<Self::Item>
+    where
+        Self: Sized,
+    {
+        let len = self.vec.len();
+        if len == 0 {
+            return None;
+        }
+        self.get_(len - 1)
+            .map(|(i, v)| (i, Value::Owned(v.into_inner())))
+    }
 }
 
 impl<'a, I, T> IntoIterator for &'a CompressedVec<I, T>

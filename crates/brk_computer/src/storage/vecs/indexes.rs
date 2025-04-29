@@ -500,16 +500,24 @@ impl Vecs {
             exit,
         )?;
 
-        let mut height_to_timestamp_iter = indexer_vecs.height_to_timestamp.iter();
+        let mut prev_timestamp_fixed = None;
         self.height_to_timestamp_fixed.compute_transform(
             starting_indexes.height,
             indexer_vecs.height_to_timestamp.vec(),
-            |(h, timestamp, ..)| {
-                let timestamp = h
-                    .decremented()
-                    .map(|h| height_to_timestamp_iter.unwrap_get_inner(h))
-                    .map_or(timestamp, |prev_d| prev_d.max(timestamp));
-                (h, timestamp)
+            |(h, timestamp, height_to_timestamp_fixed_iter)| {
+                if prev_timestamp_fixed.is_none() {
+                    if let Some(prev_h) = h.decremented() {
+                        prev_timestamp_fixed.replace(
+                            height_to_timestamp_fixed_iter
+                                .iter()
+                                .unwrap_get_inner(prev_h),
+                        );
+                    }
+                }
+                let timestamp_fixed =
+                    prev_timestamp_fixed.map_or(timestamp, |prev_d| prev_d.max(timestamp));
+                prev_timestamp_fixed.replace(timestamp_fixed);
+                (h, timestamp_fixed)
             },
             exit,
         )?;
@@ -862,32 +870,36 @@ impl Vecs {
             self.dateindex_to_date.any_vec(),
             self.dateindex_to_dateindex.any_vec(),
             self.dateindex_to_first_height.any_vec(),
-            self.height_to_dateindex.any_vec(),
-            self.height_to_date_fixed.any_vec(),
-            self.height_to_height.any_vec(),
-            self.height_to_date.any_vec(),
-            self.difficultyepoch_to_first_height.any_vec(),
-            self.halvingepoch_to_first_height.any_vec(),
-            self.weekindex_to_first_dateindex.any_vec(),
-            self.monthindex_to_first_dateindex.any_vec(),
-            self.yearindex_to_first_monthindex.any_vec(),
-            self.decadeindex_to_first_yearindex.any_vec(),
-            self.dateindex_to_weekindex.any_vec(),
+            self.dateindex_to_height_count.any_vec(),
             self.dateindex_to_monthindex.any_vec(),
-            self.monthindex_to_yearindex.any_vec(),
-            self.yearindex_to_decadeindex.any_vec(),
+            self.dateindex_to_weekindex.any_vec(),
+            self.decadeindex_to_decadeindex.any_vec(),
+            self.decadeindex_to_first_yearindex.any_vec(),
+            self.decadeindex_to_yearindex_count.any_vec(),
+            self.difficultyepoch_to_difficultyepoch.any_vec(),
+            self.difficultyepoch_to_first_height.any_vec(),
+            self.difficultyepoch_to_height_count.any_vec(),
+            self.emptyoutputindex_to_emptyoutputindex.any_vec(),
+            self.halvingepoch_to_first_height.any_vec(),
+            self.halvingepoch_to_halvingepoch.any_vec(),
+            self.height_to_date.any_vec(),
+            self.height_to_date_fixed.any_vec(),
+            self.height_to_dateindex.any_vec(),
             self.height_to_difficultyepoch.any_vec(),
             self.height_to_halvingepoch.any_vec(),
-            self.weekindex_to_weekindex.any_vec(),
-            self.monthindex_to_monthindex.any_vec(),
-            self.yearindex_to_yearindex.any_vec(),
-            self.decadeindex_to_decadeindex.any_vec(),
-            self.difficultyepoch_to_difficultyepoch.any_vec(),
-            self.halvingepoch_to_halvingepoch.any_vec(),
+            self.height_to_height.any_vec(),
             self.height_to_timestamp_fixed.any_vec(),
+            self.height_to_txindex_count.any_vec(),
+            self.inputindex_to_inputindex.any_vec(),
+            self.monthindex_to_dateindex_count.any_vec(),
+            self.monthindex_to_first_dateindex.any_vec(),
+            self.monthindex_to_monthindex.any_vec(),
             self.monthindex_to_quarterindex.any_vec(),
-            self.quarterindex_to_first_monthindex.any_vec(),
-            self.quarterindex_to_quarterindex.any_vec(),
+            self.monthindex_to_yearindex.any_vec(),
+            self.opreturnindex_to_opreturnindex.any_vec(),
+            self.outputindex_to_outputindex.any_vec(),
+            self.p2aindex_to_p2aindex.any_vec(),
+            self.p2msindex_to_p2msindex.any_vec(),
             self.p2pk33index_to_p2pk33index.any_vec(),
             self.p2pk65index_to_p2pk65index.any_vec(),
             self.p2pkhindex_to_p2pkhindex.any_vec(),
@@ -895,22 +907,19 @@ impl Vecs {
             self.p2trindex_to_p2trindex.any_vec(),
             self.p2wpkhindex_to_p2wpkhindex.any_vec(),
             self.p2wshindex_to_p2wshindex.any_vec(),
-            self.txindex_to_txindex.any_vec(),
-            self.inputindex_to_inputindex.any_vec(),
-            self.emptyoutputindex_to_emptyoutputindex.any_vec(),
-            self.p2msindex_to_p2msindex.any_vec(),
-            self.opreturnindex_to_opreturnindex.any_vec(),
-            self.p2aindex_to_p2aindex.any_vec(),
-            self.unknownoutputindex_to_unknownoutputindex.any_vec(),
-            self.outputindex_to_outputindex.any_vec(),
-            self.height_to_txindex_count.any_vec(),
-            self.dateindex_to_height_count.any_vec(),
-            self.weekindex_to_dateindex_count.any_vec(),
-            self.difficultyepoch_to_height_count.any_vec(),
-            self.monthindex_to_dateindex_count.any_vec(),
+            self.quarterindex_to_first_monthindex.any_vec(),
             self.quarterindex_to_monthindex_count.any_vec(),
+            self.quarterindex_to_quarterindex.any_vec(),
+            self.txindex_to_height.any_vec(),
+            self.txindex_to_txindex.any_vec(),
+            self.unknownoutputindex_to_unknownoutputindex.any_vec(),
+            self.weekindex_to_dateindex_count.any_vec(),
+            self.weekindex_to_first_dateindex.any_vec(),
+            self.weekindex_to_weekindex.any_vec(),
+            self.yearindex_to_decadeindex.any_vec(),
+            self.yearindex_to_first_monthindex.any_vec(),
             self.yearindex_to_monthindex_count.any_vec(),
-            self.decadeindex_to_yearindex_count.any_vec(),
+            self.yearindex_to_yearindex.any_vec(),
         ]
     }
 }

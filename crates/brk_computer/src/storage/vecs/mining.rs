@@ -62,17 +62,16 @@ impl Vecs {
             starting_indexes,
             exit,
             |vec, _, indexes, starting_indexes, exit| {
+                let mut height_count_iter = indexes.dateindex_to_height_count.iter();
                 vec.compute_transform(
                     starting_indexes.dateindex,
                     indexes.dateindex_to_first_height.vec(),
                     |(di, height, ..)| {
                         (
                             di,
-                            height_to_difficultyepoch_iter
-                                .get(height)
-                                .unwrap()
-                                .1
-                                .into_inner(),
+                            height_to_difficultyepoch_iter.unwrap_get_inner(
+                                height + (*height_count_iter.unwrap_get_inner(di) - 1),
+                            ),
                         )
                     },
                     exit,
@@ -87,10 +86,18 @@ impl Vecs {
             starting_indexes,
             exit,
             |vec, _, indexes, starting_indexes, exit| {
+                let mut height_count_iter = indexes.dateindex_to_height_count.iter();
                 vec.compute_transform(
                     starting_indexes.dateindex,
                     indexes.dateindex_to_first_height.vec(),
-                    |(di, height, ..)| (di, height_to_halvingepoch_iter.unwrap_get_inner(height)),
+                    |(di, height, ..)| {
+                        (
+                            di,
+                            height_to_halvingepoch_iter.unwrap_get_inner(
+                                height + (*height_count_iter.unwrap_get_inner(di) - 1),
+                            ),
+                        )
+                    },
                     exit,
                 )
             },

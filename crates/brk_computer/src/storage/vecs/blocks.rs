@@ -152,7 +152,7 @@ impl Vecs {
         self.height_to_interval.compute_transform(
             starting_indexes.height,
             indexer_vecs.height_to_timestamp.vec(),
-            |(height, timestamp)| {
+            |(height, timestamp, ..)| {
                 let interval = height.decremented().map_or(Timestamp::ZERO, |prev_h| {
                     let prev_timestamp = height_to_timestamp_iter.unwrap_get_inner(prev_h);
                     timestamp
