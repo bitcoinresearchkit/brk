@@ -209,14 +209,14 @@ impl Vecs {
         self.difficultyepoch_to_timestamp.compute_transform(
             starting_indexes.difficultyepoch,
             indexes.difficultyepoch_to_first_height.vec(),
-            |(i, h, ..)| (i, height_to_timestamp_iter.get(h).unwrap().1.into_inner()),
+            |(i, h, ..)| (i, height_to_timestamp_iter.unwrap_get_inner(h)),
             exit,
         )?;
 
         self.halvingepoch_to_timestamp.compute_transform(
             starting_indexes.halvingepoch,
             indexes.halvingepoch_to_first_height.vec(),
-            |(i, h, ..)| (i, height_to_timestamp_iter.get(h).unwrap().1.into_inner()),
+            |(i, h, ..)| (i, height_to_timestamp_iter.unwrap_get_inner(h)),
             exit,
         )?;
 

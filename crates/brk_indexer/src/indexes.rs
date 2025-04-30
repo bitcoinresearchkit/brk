@@ -5,7 +5,7 @@ use brk_core::{
     P2SHIndex, P2TRIndex, P2WPKHIndex, P2WSHIndex, TxIndex, UnknownOutputIndex,
 };
 use brk_parser::NUMBER_OF_UNSAFE_BLOCKS;
-use brk_vec::{Result, StoredIndex, StoredType, Value};
+use brk_vec::{StoredIndex, StoredType};
 use color_eyre::eyre::ContextCompat;
 
 use crate::{IndexedVec, Stores, Vecs};
@@ -107,115 +107,116 @@ impl TryFrom<(&mut Vecs, &Stores, &Client)> for Indexes {
                     })
                     .unwrap();
 
-                vecs.height_to_blockhash.get(*height).map_or(true, |opt| {
-                    opt.is_none_or(|saved_blockhash| {
+                vecs.height_to_blockhash
+                    .iter()
+                    .get(*height)
+                    .is_none_or(|saved_blockhash| {
                         let b = &rpc_blockhash != saved_blockhash.as_ref();
                         if b {
                             dbg!(rpc_blockhash, saved_blockhash.as_ref());
                         }
                         b
                     })
-                })
             })
             .unwrap_or(starting_height);
 
         Ok(Self {
-            emptyoutputindex: *starting_index(
+            emptyoutputindex: starting_index(
                 &vecs.height_to_first_emptyoutputindex,
                 &vecs.emptyoutputindex_to_txindex,
                 height,
-            )?
+            )
             .context("")?,
             height,
-            p2msindex: *starting_index(
+            p2msindex: starting_index(
                 &vecs.height_to_first_p2msindex,
                 &vecs.p2msindex_to_txindex,
                 height,
-            )?
+            )
             .context("")?,
-            opreturnindex: *starting_index(
+            opreturnindex: starting_index(
                 &vecs.height_to_first_opreturnindex,
                 &vecs.opreturnindex_to_txindex,
                 height,
-            )?
+            )
             .context("")?,
-            p2pk33index: *starting_index(
+            p2pk33index: starting_index(
                 &vecs.height_to_first_p2pk33index,
                 &vecs.p2pk33index_to_p2pk33bytes,
                 height,
-            )?
+            )
             .context("")?,
-            p2pk65index: *starting_index(
+            p2pk65index: starting_index(
                 &vecs.height_to_first_p2pk65index,
                 &vecs.p2pk65index_to_p2pk65bytes,
                 height,
-            )?
+            )
             .context("")?,
-            p2pkhindex: *starting_index(
+            p2pkhindex: starting_index(
                 &vecs.height_to_first_p2pkhindex,
                 &vecs.p2pkhindex_to_p2pkhbytes,
                 height,
-            )?
+            )
             .context("")?,
-            p2shindex: *starting_index(
+            p2shindex: starting_index(
                 &vecs.height_to_first_p2shindex,
                 &vecs.p2shindex_to_p2shbytes,
                 height,
-            )?
+            )
             .context("")?,
-            p2trindex: *starting_index(
+            p2trindex: starting_index(
                 &vecs.height_to_first_p2trindex,
                 &vecs.p2trindex_to_p2trbytes,
                 height,
-            )?
+            )
             .context("")?,
-            p2wpkhindex: *starting_index(
+            p2wpkhindex: starting_index(
                 &vecs.height_to_first_p2wpkhindex,
                 &vecs.p2wpkhindex_to_p2wpkhbytes,
                 height,
-            )?
+            )
             .context("")?,
-            p2wshindex: *starting_index(
+            p2wshindex: starting_index(
                 &vecs.height_to_first_p2wshindex,
                 &vecs.p2wshindex_to_p2wshbytes,
                 height,
-            )?
+            )
             .context("")?,
-            p2aindex: *starting_index(
+            p2aindex: starting_index(
                 &vecs.height_to_first_p2aindex,
                 &vecs.p2aindex_to_p2abytes,
                 height,
-            )?
+            )
             .context("")?,
-            txindex: *starting_index(&vecs.height_to_first_txindex, &vecs.txindex_to_txid, height)?
+            txindex: starting_index(&vecs.height_to_first_txindex, &vecs.txindex_to_txid, height)
                 .context("")?,
-            inputindex: *starting_index(
+            inputindex: starting_index(
                 &vecs.height_to_first_inputindex,
                 &vecs.inputindex_to_outputindex,
                 height,
-            )?
+            )
             .context("")?,
-            outputindex: *starting_index(
+            outputindex: starting_index(
                 &vecs.height_to_first_outputindex,
                 &vecs.outputindex_to_value,
                 height,
-            )?
+            )
             .context("")?,
-            unknownoutputindex: *starting_index(
+            unknownoutputindex: starting_index(
                 &vecs.height_to_first_unknownoutputindex,
                 &vecs.unknownoutputindex_to_txindex,
                 height,
-            )?
+            )
             .context("")?,
         })
     }
 }
 
-pub fn starting_index<'a, I, T>(
-    height_to_index: &'a IndexedVec<Height, I>,
-    index_to_else: &'a IndexedVec<I, T>,
+pub fn starting_index<I, T>(
+    height_to_index: &IndexedVec<Height, I>,
+    index_to_else: &IndexedVec<I, T>,
     starting_height: Height,
-) -> Result<Option<Value<'a, I>>>
+) -> Option<I>
 where
     I: StoredType + StoredIndex + From<usize>,
     T: StoredType,
@@ -224,8 +225,8 @@ where
         .height()
         .is_ok_and(|h| h + 1_u32 == starting_height)
     {
-        Ok(Some(Value::Owned(I::from(index_to_else.len()))))
+        Some(I::from(index_to_else.len()))
     } else {
-        height_to_index.get(starting_height)
+        height_to_index.iter().get_inner(starting_height)
     }
 }

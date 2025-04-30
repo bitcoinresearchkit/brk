@@ -20,7 +20,6 @@ pub struct RawVec<I, T> {
     pathbuf: PathBuf,
     // Consider  Arc<ArcSwap<Option<Mmap>>> for dataraces when reorg ?
     mmap: Arc<ArcSwap<Mmap>>,
-    guard: Option<Guard<Arc<Mmap>>>,
     pushed: Vec<T>,
     phantom: PhantomData<I>,
 }
@@ -51,11 +50,9 @@ where
 
         let file = Self::open_file_(Self::path_vec_(path).as_path())?;
         let mmap = Arc::new(ArcSwap::new(Self::new_mmap(file)?));
-        let guard = Some(mmap.load());
 
         Ok(Self {
             mmap,
-            guard,
             version,
             pathbuf: path.to_owned(),
             pushed: vec![],
@@ -90,7 +87,7 @@ where
     type T = T;
 
     #[inline]
-    fn get_stored_(&self, index: usize, mmap: &Mmap) -> Result<Option<T>> {
+    fn read_(&self, index: usize, mmap: &Mmap) -> Result<Option<T>> {
         let index = index * Self::SIZE_OF_T;
         let slice = &mmap[index..(index + Self::SIZE_OF_T)];
         Self::T::try_read_from_bytes(slice)
@@ -104,21 +101,8 @@ where
     }
 
     #[inline]
-    fn guard(&self) -> &Option<Guard<Arc<Mmap>>> {
-        &self.guard
-    }
-    #[inline]
-    fn mut_guard(&mut self) -> &mut Option<Guard<Arc<Mmap>>> {
-        &mut self.guard
-    }
-
-    #[inline]
     fn stored_len(&self) -> usize {
-        if let Some(guard) = self.guard() {
-            guard.len() / Self::SIZE_OF_T
-        } else {
-            self.mmap.load().len() / Self::SIZE_OF_T
-        }
+        self.mmap.load().len() / Self::SIZE_OF_T
     }
 
     #[inline]
@@ -218,9 +202,7 @@ where
         Self {
             version: self.version,
             pathbuf: self.pathbuf.clone(),
-            // Consider  Arc<ArcSwap<Option<Mmap>>> for dataraces when reorg ?
             mmap: self.mmap.clone(),
-            guard: None,
             pushed: vec![],
             phantom: PhantomData,
         }
@@ -239,8 +221,6 @@ where
     I: StoredIndex,
     T: StoredType,
 {
-    const SIZE_OF_T: usize = size_of::<T>();
-
     #[inline]
     pub fn set(&mut self, i: I) -> &mut Self {
         self.index = i.unwrap_to_usize();
@@ -253,14 +233,14 @@ where
     }
 
     #[inline]
-    pub fn get(&mut self, i: I) -> Option<(I, Value<'_, T>)> {
-        self.set(i).next()
+    pub fn get(&mut self, i: I) -> Option<Value<'_, T>> {
+        self.set(i).next().map(|(_, v)| v)
     }
 
     #[inline]
-    pub fn get_(&mut self, i: usize) -> Option<(I, Value<'_, T>)> {
+    pub fn get_(&mut self, i: usize) -> Option<Value<'_, T>> {
         self.set_(i);
-        self.next()
+        self.next().map(|(_, v)| v)
     }
 }
 
@@ -272,28 +252,21 @@ where
     type Item = (I, Value<'a, T>);
     fn next(&mut self) -> Option<Self::Item> {
         let mmap = &self.guard;
-        let vec = self.vec;
-        let i = self.index;
+        let index = self.index;
 
-        let stored_len = mmap.len() / Self::SIZE_OF_T;
+        let opt = self
+            .vec
+            .get_or_read_(index, mmap)
+            .unwrap()
+            .map(|v| (I::from(index), v));
 
-        let result = if i >= stored_len {
-            let j = i - stored_len;
-            if j >= vec.pushed_len() {
-                return None;
-            }
-            vec.pushed().get(j).map(|v| (I::from(i), Value::Ref(v)))
-        } else {
-            vec.get_stored_(i, mmap)
-                .unwrap()
-                .map(|v| (I::from(i), Value::Owned(v)))
-        };
+        if opt.is_some() {
+            self.index += 1;
+        }
 
-        self.index += 1;
-        result
+        opt
     }
 
-    #[inline]
     fn last(mut self) -> Option<Self::Item>
     where
         Self: Sized,
@@ -302,8 +275,9 @@ where
         if len == 0 {
             return None;
         }
-        self.get_(len - 1)
-            .map(|(i, v)| (i, Value::Owned(v.into_inner())))
+        let i = len - 1;
+        self.get_(i)
+            .map(|v| (I::from(i), Value::Owned(v.into_inner())))
     }
 }
 

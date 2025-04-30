@@ -5,7 +5,7 @@ use std::{
 };
 
 use brk_vec::{
-    Compressed, DynamicVec, Error, GenericVec, Result, StoredIndex, StoredType, StoredVec,
+    Compressed, DynamicVec, Error, GenericVec, Mmap, Result, StoredIndex, StoredType, StoredVec,
     StoredVecIterator, Value, Version,
 };
 
@@ -31,19 +31,15 @@ where
         version: Version,
         compressed: Compressed,
     ) -> brk_vec::Result<Self> {
-        let mut inner = StoredVec::forced_import(path, version, compressed)?;
-
-        inner.enable_large_cache_if_needed();
-
         Ok(Self {
             height: Height::try_from(Self::path_height_(path).as_path()).ok(),
-            inner,
+            inner: StoredVec::forced_import(path, version, compressed)?,
         })
     }
 
     #[inline]
-    pub fn get(&self, index: I) -> Result<Option<Value<'_, T>>> {
-        self.inner.get(index)
+    pub fn get_or_read(&self, index: I, mmap: &Mmap) -> Result<Option<Value<T>>> {
+        self.inner.get_or_read(index, mmap)
     }
 
     #[inline]

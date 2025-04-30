@@ -79,7 +79,7 @@ impl Vecs {
             height_to_blockhash: IndexedVec::forced_import(
                 &path.join("height_to_blockhash"),
                 Version::ZERO,
-                compressed,
+                Compressed::NO,
             )?,
             height_to_difficulty: IndexedVec::forced_import(
                 &path.join("height_to_difficulty"),
@@ -204,7 +204,7 @@ impl Vecs {
             p2aindex_to_p2abytes: IndexedVec::forced_import(
                 &path.join("p2aindex_to_p2abytes"),
                 Version::ZERO,
-                compressed,
+                Compressed::NO,
             )?,
             p2msindex_to_txindex: IndexedVec::forced_import(
                 &path.join("p2msindex_to_txindex"),
@@ -214,37 +214,37 @@ impl Vecs {
             p2pk33index_to_p2pk33bytes: IndexedVec::forced_import(
                 &path.join("p2pk33index_to_p2pk33bytes"),
                 Version::ZERO,
-                compressed,
+                Compressed::NO,
             )?,
             p2pk65index_to_p2pk65bytes: IndexedVec::forced_import(
                 &path.join("p2pk65index_to_p2pk65bytes"),
                 Version::ZERO,
-                compressed,
+                Compressed::NO,
             )?,
             p2pkhindex_to_p2pkhbytes: IndexedVec::forced_import(
                 &path.join("p2pkhindex_to_p2pkhbytes"),
                 Version::ZERO,
-                compressed,
+                Compressed::NO,
             )?,
             p2shindex_to_p2shbytes: IndexedVec::forced_import(
                 &path.join("p2shindex_to_p2shbytes"),
                 Version::ZERO,
-                compressed,
+                Compressed::NO,
             )?,
             p2trindex_to_p2trbytes: IndexedVec::forced_import(
                 &path.join("p2trindex_to_p2trbytes"),
                 Version::ZERO,
-                compressed,
+                Compressed::NO,
             )?,
             p2wpkhindex_to_p2wpkhbytes: IndexedVec::forced_import(
                 &path.join("p2wpkhindex_to_p2wpkhbytes"),
                 Version::ZERO,
-                compressed,
+                Compressed::NO,
             )?,
             p2wshindex_to_p2wshbytes: IndexedVec::forced_import(
                 &path.join("p2wshindex_to_p2wshbytes"),
                 Version::ZERO,
-                compressed,
+                Compressed::NO,
             )?,
             txindex_to_base_size: IndexedVec::forced_import(
                 &path.join("txindex_to_base_size"),
@@ -259,7 +259,7 @@ impl Vecs {
             txindex_to_first_outputindex: IndexedVec::forced_import(
                 &path.join("txindex_to_first_outputindex"),
                 Version::ZERO,
-                compressed,
+                Compressed::NO,
             )?,
             txindex_to_is_explicitly_rbf: IndexedVec::forced_import(
                 &path.join("txindex_to_is_explicitly_rbf"),
@@ -279,7 +279,7 @@ impl Vecs {
             txindex_to_txid: IndexedVec::forced_import(
                 &path.join("txindex_to_txid"),
                 Version::ZERO,
-                compressed,
+                Compressed::NO,
             )?,
             txindex_to_txversion: IndexedVec::forced_import(
                 &path.join("txindex_to_txversion"),
@@ -406,50 +406,6 @@ impl Vecs {
             .truncate_if_needed(unknownoutputindex, saved_height)?;
 
         Ok(())
-    }
-
-    pub fn get_addressbytes(
-        &self,
-        outputtype: OutputType,
-        outputtypeindex: OutputTypeIndex,
-    ) -> brk_vec::Result<Option<AddressBytes>> {
-        Ok(match outputtype {
-            OutputType::P2PK65 => self
-                .p2pk65index_to_p2pk65bytes
-                .get(outputtypeindex.into())?
-                .map(|v| AddressBytes::from(v.into_inner())),
-            OutputType::P2PK33 => self
-                .p2pk33index_to_p2pk33bytes
-                .get(outputtypeindex.into())?
-                .map(|v| AddressBytes::from(v.into_inner())),
-            OutputType::P2PKH => self
-                .p2pkhindex_to_p2pkhbytes
-                .get(outputtypeindex.into())?
-                .map(|v| AddressBytes::from(v.into_inner())),
-            OutputType::P2SH => self
-                .p2shindex_to_p2shbytes
-                .get(outputtypeindex.into())?
-                .map(|v| AddressBytes::from(v.into_inner())),
-            OutputType::P2WPKH => self
-                .p2wpkhindex_to_p2wpkhbytes
-                .get(outputtypeindex.into())?
-                .map(|v| AddressBytes::from(v.into_inner())),
-            OutputType::P2WSH => self
-                .p2wshindex_to_p2wshbytes
-                .get(outputtypeindex.into())?
-                .map(|v| AddressBytes::from(v.into_inner())),
-            OutputType::P2TR => self
-                .p2trindex_to_p2trbytes
-                .get(outputtypeindex.into())?
-                .map(|v| AddressBytes::from(v.into_inner())),
-            OutputType::P2A => self
-                .p2aindex_to_p2abytes
-                .get(outputtypeindex.into())?
-                .map(|v| AddressBytes::from(v.into_inner())),
-            OutputType::Empty | OutputType::OpReturn | OutputType::P2MS | OutputType::Unknown => {
-                unreachable!()
-            }
-        })
     }
 
     pub fn push_bytes_if_needed(

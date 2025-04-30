@@ -186,12 +186,12 @@ where
             .try_for_each(|(i, first_index)| -> Result<()> {
                 let first_index = first_index.into_inner();
 
-                let count_index = count_indexes_iter.get(i).unwrap().1.into_inner();
+                let count_index = count_indexes_iter.unwrap_get_inner(i);
 
                 if let Some(first) = self.first.as_mut() {
                     let f = source_iter
-                        .get(first_index)
-                        .map_or(T::from(0_usize), |f| f.1.into_inner());
+                        .get_inner(first_index)
+                        .unwrap_or_else(|| T::from(0_usize));
                     first.forced_push_at(index, f, exit)?;
                 }
 
@@ -201,15 +201,13 @@ where
                         panic!("should compute last if count can be 0")
                     }
                     let last_index = first_index + (count_index - 1);
-                    let v = source_iter
-                        .get(last_index)
-                        .context("to work")
-                        .inspect_err(|_| {
-                            dbg!(first_index, count_index, last_index);
-                        })
-                        .unwrap()
-                        .1
-                        .into_inner();
+                    let v = source_iter.unwrap_get_inner(last_index);
+                    // .context("to work")
+                    // .inspect_err(|_| {
+                    //     dbg!(first_index, count_index, last_index);
+                    // })
+                    // .unwrap()
+                    // .into_inner();
                     last.forced_push_at(index, v, exit)?;
                 }
 
@@ -357,7 +355,7 @@ where
             .try_for_each(|(i, first_index, ..)| -> Result<()> {
                 let first_index = first_index.into_inner();
 
-                let count_index = count_indexes_iter.get(i).unwrap().1.into_inner();
+                let count_index = count_indexes_iter.unwrap_get_inner(i);
 
                 if let Some(first) = self.first.as_mut() {
                     let v = source_first_iter

@@ -21,7 +21,7 @@ color-eyre = { workspace = true }
 log = { workspace = true }
 serde = { workspace = true }
 tabled = { workspace = true }
-toml = "0.8.20"
+toml = "0.8.22"
 
 [[bin]]
 name = "brk"

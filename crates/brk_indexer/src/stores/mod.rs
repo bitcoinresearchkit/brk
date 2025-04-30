@@ -96,12 +96,14 @@ impl Stores {
 
             if let Some(mut index) = vecs
                 .height_to_first_p2pk65index
-                .get(starting_indexes.height)?
+                .iter()
+                .get(starting_indexes.height)
                 .map(Value::into_inner)
             {
-                while let Some(typedbytes) = vecs
-                    .p2pk65index_to_p2pk65bytes
-                    .get(index)?
+                let mut p2pk65index_to_p2pk65bytes_iter = vecs.p2pk65index_to_p2pk65bytes.iter();
+
+                while let Some(typedbytes) = p2pk65index_to_p2pk65bytes_iter
+                    .get(index)
                     .map(Value::into_inner)
                 {
                     let bytes = AddressBytes::from(typedbytes);
@@ -113,12 +115,14 @@ impl Stores {
 
             if let Some(mut index) = vecs
                 .height_to_first_p2pk33index
-                .get(starting_indexes.height)?
+                .iter()
+                .get(starting_indexes.height)
                 .map(Value::into_inner)
             {
-                while let Some(typedbytes) = vecs
-                    .p2pk33index_to_p2pk33bytes
-                    .get(index)?
+                let mut p2pk33index_to_p2pk33bytes_iter = vecs.p2pk33index_to_p2pk33bytes.iter();
+
+                while let Some(typedbytes) = p2pk33index_to_p2pk33bytes_iter
+                    .get(index)
                     .map(Value::into_inner)
                 {
                     let bytes = AddressBytes::from(typedbytes);
@@ -130,12 +134,14 @@ impl Stores {
 
             if let Some(mut index) = vecs
                 .height_to_first_p2pkhindex
-                .get(starting_indexes.height)?
+                .iter()
+                .get(starting_indexes.height)
                 .map(Value::into_inner)
             {
-                while let Some(typedbytes) = vecs
-                    .p2pkhindex_to_p2pkhbytes
-                    .get(index)?
+                let mut p2pkhindex_to_p2pkhbytes_iter = vecs.p2pkhindex_to_p2pkhbytes.iter();
+
+                while let Some(typedbytes) = p2pkhindex_to_p2pkhbytes_iter
+                    .get(index)
                     .map(Value::into_inner)
                 {
                     let bytes = AddressBytes::from(typedbytes);
@@ -147,12 +153,14 @@ impl Stores {
 
             if let Some(mut index) = vecs
                 .height_to_first_p2shindex
-                .get(starting_indexes.height)?
+                .iter()
+                .get(starting_indexes.height)
                 .map(Value::into_inner)
             {
-                while let Some(typedbytes) = vecs
-                    .p2shindex_to_p2shbytes
-                    .get(index)?
+                let mut p2shindex_to_p2shbytes_iter = vecs.p2shindex_to_p2shbytes.iter();
+
+                while let Some(typedbytes) = p2shindex_to_p2shbytes_iter
+                    .get(index)
                     .map(Value::into_inner)
                 {
                     let bytes = AddressBytes::from(typedbytes);
@@ -164,12 +172,14 @@ impl Stores {
 
             if let Some(mut index) = vecs
                 .height_to_first_p2trindex
-                .get(starting_indexes.height)?
+                .iter()
+                .get(starting_indexes.height)
                 .map(Value::into_inner)
             {
-                while let Some(typedbytes) = vecs
-                    .p2trindex_to_p2trbytes
-                    .get(index)?
+                let mut p2trindex_to_p2trbytes_iter = vecs.p2trindex_to_p2trbytes.iter();
+
+                while let Some(typedbytes) = p2trindex_to_p2trbytes_iter
+                    .get(index)
                     .map(Value::into_inner)
                 {
                     let bytes = AddressBytes::from(typedbytes);
@@ -181,12 +191,14 @@ impl Stores {
 
             if let Some(mut index) = vecs
                 .height_to_first_p2wpkhindex
-                .get(starting_indexes.height)?
+                .iter()
+                .get(starting_indexes.height)
                 .map(Value::into_inner)
             {
-                while let Some(typedbytes) = vecs
-                    .p2wpkhindex_to_p2wpkhbytes
-                    .get(index)?
+                let mut p2wpkhindex_to_p2wpkhbytes_iter = vecs.p2wpkhindex_to_p2wpkhbytes.iter();
+
+                while let Some(typedbytes) = p2wpkhindex_to_p2wpkhbytes_iter
+                    .get(index)
                     .map(Value::into_inner)
                 {
                     let bytes = AddressBytes::from(typedbytes);
@@ -198,12 +210,14 @@ impl Stores {
 
             if let Some(mut index) = vecs
                 .height_to_first_p2wshindex
-                .get(starting_indexes.height)?
+                .iter()
+                .get(starting_indexes.height)
                 .map(Value::into_inner)
             {
-                while let Some(typedbytes) = vecs
-                    .p2wshindex_to_p2wshbytes
-                    .get(index)?
+                let mut p2wshindex_to_p2wshbytes_iter = vecs.p2wshindex_to_p2wshbytes.iter();
+
+                while let Some(typedbytes) = p2wshindex_to_p2wshbytes_iter
+                    .get(index)
                     .map(Value::into_inner)
                 {
                     let bytes = AddressBytes::from(typedbytes);
@@ -215,11 +229,14 @@ impl Stores {
 
             if let Some(mut index) = vecs
                 .height_to_first_p2aindex
-                .get(starting_indexes.height)?
+                .iter()
+                .get(starting_indexes.height)
                 .map(Value::into_inner)
             {
+                let mut p2aindex_to_p2abytes_iter = vecs.p2aindex_to_p2abytes.iter();
+
                 while let Some(typedbytes) =
-                    vecs.p2aindex_to_p2abytes.get(index)?.map(Value::into_inner)
+                    p2aindex_to_p2abytes_iter.get(index).map(Value::into_inner)
                 {
                     let bytes = AddressBytes::from(typedbytes);
                     let hash = AddressBytesHash::from((&bytes, OutputType::P2A));

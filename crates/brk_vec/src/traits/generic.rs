@@ -20,8 +20,6 @@ where
     I: StoredIndex,
     T: StoredType,
 {
-    const SIZE_OF_T: usize = size_of::<Self::T>();
-
     fn open_file(&self) -> io::Result<File> {
         Self::open_file_(&self.path_vec())
     }
@@ -70,12 +68,6 @@ where
     fn update_mmap(&mut self, file: File) -> Result<()> {
         let mmap = Self::new_mmap(file)?;
         self.mmap().store(mmap);
-        if self.guard().is_some() {
-            let guard = self.mmap().load();
-            self.mut_guard().replace(guard);
-        } else {
-            unreachable!("This function shouldn't be called in a cloned instance")
-        }
         Ok(())
     }
 
