@@ -4,4 +4,4 @@ cargo clean
 rustup update
 cargo upgrade --incompatible
 cargo update
-cargo build --all-targets
+cargo build -r --all-targets

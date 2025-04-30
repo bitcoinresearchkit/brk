@@ -15,9 +15,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         (0..21_u32).for_each(|v| {
             vec.push(v);
         });
-        dbg!(vec.get(0)?);
-        dbg!(vec.get(20)?);
-        dbg!(vec.get(21)?);
+
+        let mut iter = vec.iter();
+        dbg!(iter.get(0));
+        dbg!(iter.get(20));
+        dbg!(iter.get(21));
 
         vec.flush()?;
     }
@@ -25,21 +27,25 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     {
         let mut vec: StoredVec<usize, u32> =
             StoredVec::forced_import(Path::new("./vec"), version, compressed)?;
+        let mut iter = vec.iter();
 
-        dbg!(vec.get(0)?);
-        dbg!(vec.get(0)?);
-        dbg!(vec.get(1)?);
-        dbg!(vec.get(2)?);
-        dbg!(vec.get(20)?);
-        dbg!(vec.get(20)?);
-        dbg!(vec.get(0)?);
+        dbg!(iter.get(0));
+        dbg!(iter.get(0));
+        dbg!(iter.get(1));
+        dbg!(iter.get(2));
+        dbg!(iter.get(20));
+        dbg!(iter.get(20));
+        dbg!(iter.get(0));
 
         vec.push(21);
         vec.push(22);
-        dbg!(vec.get(20)?);
-        dbg!(vec.get(21)?);
-        dbg!(vec.get(22)?);
-        dbg!(vec.get(23)?);
+
+        let mut iter = vec.iter();
+
+        dbg!(iter.get(20));
+        dbg!(iter.get(21));
+        dbg!(iter.get(22));
+        dbg!(iter.get(23));
 
         vec.flush()?;
     }
@@ -47,19 +53,20 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     {
         let mut vec: StoredVec<usize, u32> =
             StoredVec::forced_import(Path::new("./vec"), version, compressed)?;
+        let mut iter = vec.iter();
 
-        vec.enable_large_cache_if_needed();
-
-        dbg!(vec.get(0)?);
-        dbg!(vec.get(20)?);
-        dbg!(vec.get(21)?);
-        dbg!(vec.get(22)?);
+        dbg!(iter.get(0));
+        dbg!(iter.get(20));
+        dbg!(iter.get(21));
+        dbg!(iter.get(22));
 
         vec.truncate_if_needed(14)?;
 
-        dbg!(vec.get(0)?);
-        dbg!(vec.get(5)?);
-        dbg!(vec.get(20)?);
+        let mut iter = vec.iter();
+
+        dbg!(iter.get(0));
+        dbg!(iter.get(5));
+        dbg!(iter.get(20));
 
         dbg!(vec.collect_signed_range(Some(-5), None)?);
 

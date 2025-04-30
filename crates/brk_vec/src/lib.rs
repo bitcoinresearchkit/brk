@@ -8,15 +8,12 @@ mod structs;
 mod traits;
 mod variants;
 
-use std::{
-    path::{Path, PathBuf},
-    sync::Arc,
-};
+use std::path::{Path, PathBuf};
 
-use arc_swap::{ArcSwap, Guard};
+use arc_swap::ArcSwap;
 use axum::response::Response;
 pub use enums::*;
-use memmap2::Mmap;
+pub use memmap2::Mmap;
 pub use structs::*;
 pub use traits::*;
 use variants::*;
@@ -46,13 +43,6 @@ where
         }
     }
 
-    pub fn enable_large_cache_if_needed(&mut self) {
-        match self {
-            StoredVec::Compressed(v) => v.enable_large_cache(),
-            Self::Raw(_) => {}
-        }
-    }
-
     pub fn iter(&self) -> StoredVecIterator<'_, I, T> {
         self.into_iter()
     }
@@ -73,10 +63,10 @@ where
     type T = T;
 
     #[inline]
-    fn get_stored_(&self, index: usize, guard: &Mmap) -> Result<Option<T>> {
+    fn read_(&self, index: usize, guard: &Mmap) -> Result<Option<T>> {
         match self {
-            StoredVec::Raw(v) => v.get_stored_(index, guard),
-            StoredVec::Compressed(v) => v.get_stored_(index, guard),
+            StoredVec::Raw(v) => v.read_(index, guard),
+            StoredVec::Compressed(v) => v.read_(index, guard),
         }
     }
 
@@ -85,21 +75,6 @@ where
         match self {
             StoredVec::Raw(v) => v.mmap(),
             StoredVec::Compressed(v) => v.mmap(),
-        }
-    }
-
-    #[inline]
-    fn guard(&self) -> &Option<Guard<Arc<Mmap>>> {
-        match self {
-            StoredVec::Raw(v) => v.guard(),
-            StoredVec::Compressed(v) => v.guard(),
-        }
-    }
-    #[inline]
-    fn mut_guard(&mut self) -> &mut Option<Guard<Arc<Mmap>>> {
-        match self {
-            StoredVec::Raw(v) => v.mut_guard(),
-            StoredVec::Compressed(v) => v.mut_guard(),
         }
     }
 
@@ -250,21 +225,21 @@ where
 {
     #[inline]
     pub fn unwrap_get_inner(&mut self, i: I) -> T {
-        self.get_(i.unwrap_to_usize()).unwrap().1.into_inner()
+        self.get_(i.unwrap_to_usize()).unwrap().into_inner()
     }
 
     #[inline]
     pub fn get_inner(&mut self, i: I) -> Option<T> {
-        self.get_(i.unwrap_to_usize()).map(|(_, v)| v.into_inner())
+        self.get_(i.unwrap_to_usize()).map(|v| v.into_inner())
     }
 
     #[inline]
-    pub fn get(&mut self, i: I) -> Option<(I, Value<'_, T>)> {
+    pub fn get(&mut self, i: I) -> Option<Value<'_, T>> {
         self.get_(i.unwrap_to_usize())
     }
 
     #[inline]
-    pub fn get_(&mut self, i: usize) -> Option<(I, Value<'_, T>)> {
+    pub fn get_(&mut self, i: usize) -> Option<Value<'_, T>> {
         match self {
             Self::Compressed(iter) => iter.get_(i),
             Self::Raw(iter) => iter.get_(i),

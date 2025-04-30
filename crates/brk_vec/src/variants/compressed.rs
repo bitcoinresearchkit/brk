@@ -2,7 +2,7 @@ use std::{
     fs::{self, File},
     mem,
     path::Path,
-    sync::{Arc, OnceLock},
+    sync::Arc,
 };
 
 use arc_swap::{ArcSwap, Guard};
@@ -23,7 +23,6 @@ pub const MAX_PAGE_SIZE: usize = 16 * ONE_KIB;
 #[derive(Debug)]
 pub struct CompressedVec<I, T> {
     inner: RawVec<I, T>,
-    decoded_pages: Option<Vec<OnceLock<Vec<T>>>>,
     pages_meta: Arc<ArcSwap<CompressedPagesMetadata>>,
 }
 
@@ -67,31 +66,8 @@ where
 
         Ok(Self {
             inner: RawVec::import(path, version)?,
-            decoded_pages: None,
             pages_meta: Arc::new(ArcSwap::new(Arc::new(CompressedPagesMetadata::read(path)?))),
         })
-    }
-
-    fn cached_get_stored__(
-        index: usize,
-        mmap: &Mmap,
-        stored_len: usize,
-        decoded_page: &mut Option<(usize, Vec<T>)>,
-        compressed_pages_meta: &CompressedPagesMetadata,
-    ) -> Result<Option<T>> {
-        let page_index = Self::index_to_page_index(index);
-
-        if decoded_page.as_ref().is_none_or(|b| b.0 != page_index) {
-            let values = Self::decode_page_(stored_len, page_index, mmap, compressed_pages_meta)?;
-            decoded_page.replace((page_index, values));
-        }
-
-        Ok(decoded_page
-            .as_ref()
-            .unwrap()
-            .1
-            .get(index % Self::PER_PAGE)
-            .cloned())
     }
 
     fn decode_page(&self, page_index: usize, mmap: &Mmap) -> Result<Vec<T>> {
@@ -140,40 +116,6 @@ where
         zstd::encode_all(bytes.as_slice(), DEFAULT_COMPRESSION_LEVEL).unwrap()
     }
 
-    pub fn enable_large_cache(&mut self) {
-        self.decoded_pages.replace(vec![]);
-        self.reset_large_cache();
-    }
-
-    pub fn disable_large_cache(&mut self) {
-        self.decoded_pages.take();
-    }
-
-    fn reset_large_cache(&mut self) {
-        let stored_len = self.stored_len();
-
-        if let Some(pages) = self.decoded_pages.as_mut() {
-            pages.par_iter_mut().for_each(|lock| {
-                lock.take();
-            });
-
-            let len = (stored_len as f64 / Self::PER_PAGE as f64).ceil() as usize;
-            let len = Self::CACHE_LENGTH.min(len);
-
-            if pages.len() != len {
-                pages.resize_with(len, Default::default);
-            }
-        }
-    }
-
-    pub fn large_cache_len(&self) -> usize {
-        self.decoded_pages.as_ref().map_or(0, |v| v.len())
-    }
-
-    fn reset_caches(&mut self) {
-        self.reset_large_cache();
-    }
-
     #[inline(always)]
     fn index_to_page_index(index: usize) -> usize {
         index / Self::PER_PAGE
@@ -219,32 +161,9 @@ where
     type T = T;
 
     #[inline]
-    fn get_stored_(&self, index: usize, mmap: &Mmap) -> Result<Option<T>> {
-        let cached_start = self
-            .stored_len()
-            .checked_sub(Self::CACHE_LENGTH)
-            .unwrap_or_default();
-
-        let decoded_index = index % Self::PER_PAGE;
-
-        if index >= cached_start {
-            let trimmed_index = index - cached_start;
-            if let Some(decoded_pages) = self.decoded_pages.as_ref() {
-                let decoded_page = decoded_pages
-                    .get(Self::index_to_page_index(trimmed_index))
-                    .unwrap();
-
-                return Ok(decoded_page
-                    .get_or_init(|| {
-                        self.decode_page(Self::index_to_page_index(index), mmap)
-                            .unwrap()
-                    })
-                    .get(decoded_index)
-                    .cloned());
-            }
-        }
-
+    fn read_(&self, index: usize, mmap: &Mmap) -> Result<Option<T>> {
         let page_index = Self::index_to_page_index(index);
+        let decoded_index = index % Self::PER_PAGE;
 
         Ok(self
             .decode_page(page_index, mmap)?
@@ -258,14 +177,6 @@ where
     }
 
     #[inline]
-    fn guard(&self) -> &Option<Guard<Arc<Mmap>>> {
-        self.inner.guard()
-    }
-    #[inline]
-    fn mut_guard(&mut self) -> &mut Option<Guard<Arc<Mmap>>> {
-        self.inner.mut_guard()
-    }
-
     fn stored_len(&self) -> usize {
         Self::stored_len_(&self.pages_meta.load())
     }
@@ -328,24 +239,16 @@ where
 
             let last_page_index = pages_meta.len() - 1;
 
-            values = if let Some(values) = self
-                .decoded_pages
-                .as_mut()
-                .and_then(|v| v.last_mut().and_then(|lock| lock.take()))
-            {
-                values
-            } else {
-                Self::decode_page_(
-                    stored_len,
-                    last_page_index,
-                    self.guard().as_ref().unwrap(),
-                    &pages_meta,
-                )
-                .inspect_err(|_| {
-                    dbg!(last_page_index, &pages_meta);
-                })
-                .unwrap()
-            };
+            values = Self::decode_page_(
+                stored_len,
+                last_page_index,
+                &self.mmap().load(),
+                &pages_meta,
+            )
+            .inspect_err(|_| {
+                dbg!(last_page_index, &pages_meta);
+            })
+            .unwrap();
 
             truncate_at.replace(pages_meta.pop().unwrap().start);
             starting_page_index = last_page_index;
@@ -394,8 +297,6 @@ where
 
         self.pages_meta.store(Arc::new(pages_meta));
 
-        self.reset_caches();
-
         Ok(())
     }
 
@@ -404,7 +305,6 @@ where
         pages_meta.truncate(0);
         pages_meta.write()?;
         self.pages_meta.store(Arc::new(pages_meta));
-        self.reset_caches();
         self.file_truncate_and_write_all(0, &[])
     }
 
@@ -424,9 +324,7 @@ where
 
         let page_index = Self::index_to_page_index(index);
 
-        let guard = self.guard().as_ref().unwrap();
-
-        let values = self.decode_page(page_index, guard)?;
+        let values = self.decode_page(page_index, &self.mmap().load())?;
         let mut buf = vec![];
 
         let mut page = pages_meta.truncate(page_index).unwrap();
@@ -452,8 +350,6 @@ where
 
         self.file_truncate_and_write_all(len, &buf)?;
 
-        self.reset_caches();
-
         Ok(())
     }
 
@@ -471,7 +367,6 @@ where
     fn clone(&self) -> Self {
         Self {
             inner: self.inner.clone(),
-            decoded_pages: None,
             pages_meta: self.pages_meta.clone(),
         }
     }
@@ -493,6 +388,9 @@ where
     I: StoredIndex,
     T: StoredType,
 {
+    const SIZE_OF_T: usize = size_of::<T>();
+    const PER_PAGE: usize = MAX_PAGE_SIZE / Self::SIZE_OF_T;
+
     #[inline]
     pub fn set(&mut self, i: I) -> &mut Self {
         self.index = i.unwrap_to_usize();
@@ -505,14 +403,14 @@ where
     }
 
     #[inline]
-    pub fn get(&mut self, i: I) -> Option<(I, Value<'_, T>)> {
-        self.set(i).next()
+    pub fn get(&mut self, i: I) -> Option<Value<'_, T>> {
+        self.set(i).next().map(|(_, v)| v)
     }
 
     #[inline]
-    pub fn get_(&mut self, i: usize) -> Option<(I, Value<'_, T>)> {
+    pub fn get_(&mut self, i: usize) -> Option<Value<'_, T>> {
         self.set_(i);
-        self.next()
+        self.next().map(|(_, v)| v)
     }
 }
 
@@ -537,15 +435,25 @@ where
                 .get(j)
                 .map(|v| (I::from(i), Value::Ref(v)))
         } else {
-            CompressedVec::<I, T>::cached_get_stored__(
-                i,
-                mmap,
-                stored_len,
-                &mut self.decoded_page,
-                &self.pages_meta,
-            )
-            .unwrap()
-            .map(|v| (I::from(i), Value::Owned(v)))
+            let page_index = i / Self::PER_PAGE;
+
+            if self.decoded_page.as_ref().is_none_or(|b| b.0 != page_index) {
+                let values = CompressedVec::<I, T>::decode_page_(
+                    stored_len,
+                    page_index,
+                    mmap,
+                    &self.pages_meta,
+                )
+                .unwrap();
+                self.decoded_page.replace((page_index, values));
+            }
+
+            self.decoded_page
+                .as_ref()
+                .unwrap()
+                .1
+                .get(i % Self::PER_PAGE)
+                .map(|v| (I::from(i), Value::Owned(v.clone())))
         };
 
         self.index += 1;
@@ -562,8 +470,9 @@ where
         if len == 0 {
             return None;
         }
-        self.get_(len - 1)
-            .map(|(i, v)| (i, Value::Owned(v.into_inner())))
+        let i = len - 1;
+        self.get_(i)
+            .map(|v| (I::from(i), Value::Owned(v.into_inner())))
     }
 }
 

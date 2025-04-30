@@ -1,45 +1,42 @@
-use std::{path::Path, sync::Arc};
+use std::path::Path;
 
-use arc_swap::{ArcSwap, Guard};
+use arc_swap::ArcSwap;
 use memmap2::Mmap;
 
-use crate::{Error, Result, Value};
+use crate::{Result, Value};
 
 use super::{StoredIndex, StoredType};
 
 pub trait DynamicVec: Send + Sync {
     type I: StoredIndex;
     type T: StoredType;
+    const SIZE_OF_T: usize = size_of::<Self::T>();
 
     #[inline]
-    fn get(&self, index: Self::I) -> Result<Option<Value<Self::T>>> {
-        self.get_(index.to_usize()?)
+    fn read(&self, index: Self::I, mmap: &Mmap) -> Result<Option<Self::T>> {
+        self.read_(index.to_usize()?, mmap)
+    }
+    fn read_(&self, index: usize, mmap: &Mmap) -> Result<Option<Self::T>>;
+
+    #[inline]
+    fn get_or_read(&self, index: Self::I, mmap: &Mmap) -> Result<Option<Value<Self::T>>> {
+        self.get_or_read_(index.to_usize()?, mmap)
     }
     #[inline]
-    fn get_(&self, index: usize) -> Result<Option<Value<Self::T>>> {
-        match self.index_to_pushed_index(index) {
-            Ok(index) => {
-                if let Some(index) = index {
-                    return Ok(self.pushed().get(index).map(Value::Ref));
-                }
+    fn get_or_read_(&self, index: usize, mmap: &Mmap) -> Result<Option<Value<Self::T>>> {
+        let stored_len = mmap.len() / Self::SIZE_OF_T;
+
+        if index >= stored_len {
+            let pushed = self.pushed();
+            let j = index - stored_len;
+            if j >= pushed.len() {
+                return Ok(None);
             }
-            Err(Error::IndexTooHigh) => return Ok(None),
-            Err(Error::IndexTooLow) => {}
-            Err(error) => return Err(error),
+            Ok(pushed.get(j).map(Value::Ref))
+        } else {
+            Ok(self.read_(index, mmap)?.map(Value::Owned))
         }
-
-        Ok(self
-            .get_stored_(index.to_usize()?, self.guard().as_ref().unwrap())?
-            .map(Value::Owned))
     }
-    fn get_stored_(&self, index: usize, mmap: &Mmap) -> Result<Option<Self::T>>;
-    // fn last(&self) -> Result<Option<Value<Self::T>>> {
-    //     let len = self.len();
-    //     if len == 0 {
-    //         return Ok(None);
-    //     }
-    //     self.get_(len - 1)
-    // }
 
     #[inline]
     fn len(&self) -> usize {
@@ -52,9 +49,6 @@ pub trait DynamicVec: Send + Sync {
 
     fn mmap(&self) -> &ArcSwap<Mmap>;
 
-    fn guard(&self) -> &Option<Guard<Arc<Mmap>>>;
-    fn mut_guard(&mut self) -> &mut Option<Guard<Arc<Mmap>>>;
-
     fn stored_len(&self) -> usize;
 
     fn pushed(&self) -> &[Self::T];
@@ -66,21 +60,6 @@ pub trait DynamicVec: Send + Sync {
     #[inline]
     fn push(&mut self, value: Self::T) {
         self.mut_pushed().push(value)
-    }
-    #[inline]
-    fn index_to_pushed_index(&self, index: usize) -> Result<Option<usize>> {
-        let stored_len = self.stored_len();
-
-        if index >= stored_len {
-            let index = index - stored_len;
-            if index >= self.pushed_len() {
-                Err(Error::IndexTooHigh)
-            } else {
-                Ok(Some(index))
-            }
-        } else {
-            Err(Error::IndexTooLow)
-        }
     }
 
     fn path(&self) -> &Path;

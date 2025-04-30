@@ -12,7 +12,6 @@ use brk_vec::{
     Compressed, DynamicVec, Error, GenericVec, Result, StoredIndex, StoredType, StoredVec,
     StoredVecIterator, Value, Version,
 };
-use color_eyre::eyre::ContextCompat;
 use log::info;
 
 const ONE_KIB: usize = 1024;
@@ -223,11 +222,7 @@ where
             if prev_i.is_some_and(|prev_i| prev_i == i) {
                 return Ok(());
             }
-            if self
-                .inner
-                .get(i)?
-                .is_none_or(|old_v| old_v.into_inner() > v)
-            {
+            if self.iter().get_inner(i).is_none_or(|old_v| old_v > v) {
                 self.forced_push_at(i, v, exit)?;
             }
             prev_i.replace(i);
@@ -350,8 +345,8 @@ where
             .iter_at(index)
             .try_for_each(|(i, first_index)| {
                 let end = other_iter
-                    .get(i + 1)
-                    .map(|(_, v)| v.into_inner().unwrap_to_usize())
+                    .get_inner(i + 1)
+                    .map(|v| v.unwrap_to_usize())
                     .unwrap_or_else(|| other_to_else.len());
 
                 let range = first_index.unwrap_to_usize()..end;
@@ -387,14 +382,7 @@ where
         self_to_other.iter_at(index).try_for_each(|(i, other)| {
             self.forced_push_at(
                 i,
-                T::from(
-                    other_to_self_iter
-                        .get(other.into_inner())
-                        .unwrap()
-                        .1
-                        .into_inner()
-                        == i,
-                ),
+                T::from(other_to_self_iter.unwrap_get_inner(other.into_inner()) == i),
                 exit,
             )
         })?;
@@ -424,12 +412,12 @@ where
         first_indexes
             .iter_at(index)
             .try_for_each(|(i, first_index)| {
-                let count = *indexes_count_iter.get(i).unwrap().1.into_inner();
+                let count = *indexes_count_iter.unwrap_get_inner(i);
                 let first_index = first_index.unwrap_to_usize();
                 let range = first_index..first_index + count;
                 let mut sum = T::from(0_usize);
                 range.into_iter().for_each(|i| {
-                    sum = sum.clone() + source_iter.get(T2::from(i)).unwrap().1.into_inner();
+                    sum = sum.clone() + source_iter.unwrap_get_inner(T2::from(i));
                 });
                 self.forced_push_at(i, sum, exit)
             })?;
@@ -477,7 +465,7 @@ impl EagerVec<Height, Dollars> {
         let mut price_iter = price.iter();
         let index = max_from.min(Height::from(self.len()));
         bitcoin.iter_at(index).try_for_each(|(i, bitcoin)| {
-            let dollars = price_iter.get(i).unwrap().1.into_inner();
+            let dollars = price_iter.unwrap_get_inner(i);
             let (i, v) = (i, *dollars * bitcoin.into_inner());
             self.forced_push_at(i, v, exit)
         })?;
@@ -503,8 +491,8 @@ impl EagerVec<TxIndex, Dollars> {
         let mut price_iter = price.iter();
         let index = max_from.min(TxIndex::from(self.len()));
         bitcoin.iter_at(index).try_for_each(|(i, bitcoin, ..)| {
-            let height = i_to_height_iter.get(i).unwrap().1.into_inner();
-            let dollars = price_iter.get(height).unwrap().1.into_inner();
+            let height = i_to_height_iter.unwrap_get_inner(i);
+            let dollars = price_iter.unwrap_get_inner(height);
             let (i, v) = (i, *dollars * bitcoin.into_inner());
             self.forced_push_at(i, v, exit)
         })?;

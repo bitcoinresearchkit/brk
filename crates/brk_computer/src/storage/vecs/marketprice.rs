@@ -342,9 +342,8 @@ impl Vecs {
                     .get_height(
                         h,
                         t,
-                        h.decremented().map(|prev_h| {
-                            height_to_timestamp_iter.get(prev_h).unwrap().1.into_inner()
-                        }),
+                        h.decremented()
+                            .map(|prev_h| height_to_timestamp_iter.unwrap_get_inner(prev_h)),
                     )
                     .unwrap();
                 (h, ohlc)

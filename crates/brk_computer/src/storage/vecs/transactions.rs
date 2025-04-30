@@ -471,11 +471,7 @@ impl Vecs {
                             indexer.vecs().height_to_first_txindex.vec(),
                             indexer.vecs().txindex_to_txid.vec(),
                             |txindex| {
-                                let v = txindex_to_txversion_iter
-                                    .get(txindex)
-                                    .unwrap()
-                                    .1
-                                    .into_inner();
+                                let v = txindex_to_txversion_iter.unwrap_get_inner(txindex);
                                 v == txversion
                             },
                             exit,
@@ -499,11 +495,7 @@ impl Vecs {
             starting_indexes.txindex,
             indexer.vecs().txindex_to_base_size.vec(),
             |(txindex, base_size, ..)| {
-                let total_size = txindex_to_total_size_iter
-                    .get(txindex)
-                    .unwrap()
-                    .1
-                    .into_inner();
+                let total_size = txindex_to_total_size_iter.unwrap_get_inner(txindex);
 
                 // This is the exact definition of a weight unit, as defined by BIP-141 (quote above).
                 let wu = usize::from(base_size) * 3 + usize::from(total_size);
@@ -533,7 +525,7 @@ impl Vecs {
             |(inputindex, outputindex, ..)| {
                 let value = if outputindex == OutputIndex::COINBASE {
                     Sats::ZERO
-                } else if let Some((_, value)) = outputindex_to_value_iter.get(outputindex) {
+                } else if let Some(value) = outputindex_to_value_iter.get(outputindex) {
                     value.into_inner()
                 } else {
                     dbg!(inputindex, outputindex, inputs_len);
