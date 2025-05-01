@@ -11,8 +11,8 @@ use rayon::prelude::*;
 use zstd::DEFAULT_COMPRESSION_LEVEL;
 
 use crate::{
-    CompressedPageMetadata, CompressedPagesMetadata, DynamicVec, Error, GenericVec, RawVec, Result,
-    StoredIndex, StoredType, UnsafeSlice, Value, VecIterator, Version,
+    BaseVecIterator, CompressedPageMetadata, CompressedPagesMetadata, DynamicVec, Error,
+    GenericVec, RawVec, Result, StoredIndex, StoredType, UnsafeSlice, Value, Version,
 };
 
 const ONE_KIB: usize = 1024;
@@ -392,24 +392,21 @@ where
     const PER_PAGE: usize = MAX_PAGE_SIZE / Self::SIZE_OF_T;
 }
 
-// impl<'a, I, T> VecIterator<'a> for CompressedVecIterator<'a, I, T>
-// where
-//     I: StoredIndex,
-//     T: StoredType,
-// {
-//     type I = I;
-//     type T = T;
+impl<I, T> BaseVecIterator for CompressedVecIterator<'_, I, T>
+where
+    I: StoredIndex,
+    T: StoredType,
+{
+    #[inline]
+    fn mut_index(&mut self) -> &mut usize {
+        &mut self.index
+    }
 
-//     #[inline]
-//     fn mut_index(&mut self) -> &mut usize {
-//         &mut self.index
-//     }
-
-//     #[inline]
-//     fn len(&self) -> usize {
-//         self.vec.len()
-//     }
-// }
+    #[inline]
+    fn len(&self) -> usize {
+        self.vec.len()
+    }
+}
 
 impl<'a, I, T> Iterator for CompressedVecIterator<'a, I, T>
 where

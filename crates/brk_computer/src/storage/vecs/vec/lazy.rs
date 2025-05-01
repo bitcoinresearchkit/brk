@@ -1,6 +1,8 @@
 use std::marker::PhantomData;
 
-use brk_vec::{StoredIndex, StoredType, StoredVec, StoredVecIterator, Value, Version};
+use brk_vec::{
+    BaseVecIterator, StoredIndex, StoredType, StoredVec, StoredVecIterator, Value, Version,
+};
 
 // LazyVec owns SourceVecs
 //
@@ -29,8 +31,8 @@ where
     source2: StoredVec<S2I, S2T>,
     compute: for<'a> fn(
         usize,
-        &mut (dyn Iterator<Item = (S1I, Value<'a, S1T>)>),
-        &mut (dyn Iterator<Item = (S2I, Value<'a, S2T>)>),
+        &mut dyn BaseVecIterator<Item = (S1I, Value<'a, S1T>)>,
+        &mut dyn BaseVecIterator<Item = (S2I, Value<'a, S2T>)>,
     ) -> Option<T>,
     phantom: PhantomData<I>,
 }
@@ -50,8 +52,8 @@ where
         source2: StoredVec<S2I, S2T>,
         compute: for<'a> fn(
             usize,
-            &mut (dyn Iterator<Item = (S1I, Value<'a, S1T>)>),
-            &mut (dyn Iterator<Item = (S2I, Value<'a, S2T>)>),
+            &mut dyn BaseVecIterator<Item = (S1I, Value<'a, S1T>)>,
+            &mut dyn BaseVecIterator<Item = (S2I, Value<'a, S2T>)>,
         ) -> Option<T>,
     ) -> Self {
         Self {
@@ -119,30 +121,6 @@ where
     }
 }
 
-// impl<'a, I, T, S1I, S1T, S2I, S2T> VecIterator<'a> for LazyVecIterator<'a, I, T, S1I, S1T, S2I, S2T>
-// where
-//     I: StoredIndex,
-//     T: StoredType,
-//     S1I: StoredIndex,
-//     S1T: StoredType,
-//     S2I: StoredIndex,
-//     S2T: StoredType,
-// {
-//     type I = I;
-//     type T = T;
-
-//     #[inline]
-//     fn mut_index(&mut self) -> &mut usize {
-//         &mut self.index
-//     }
-
-//     #[inline]
-//     fn len(&self) -> usize {
-//         todo!();
-//         // self.vec.len()
-//     }
-// }
-
 impl<'a, I, T, S1I, S1T, S2I, S2T> Iterator for LazyVecIterator<'a, I, T, S1I, S1T, S2I, S2T>
 where
     I: StoredIndex,
@@ -166,19 +144,27 @@ where
         }
         opt
     }
+}
 
-    // fn last(mut self) -> Option<Self::Item>
-    // where
-    //     Self: Sized,
-    // {
-    //     let len = self.vec.len();
-    //     if len == 0 {
-    //         return None;
-    //     }
-    //     let i = len - 1;
-    //     self.get_(i)
-    //         .map(|v| (I::from(i), Value::Owned(v.into_inner())))
-    // }
+impl<I, T, S1I, S1T, S2I, S2T> BaseVecIterator for LazyVecIterator<'_, I, T, S1I, S1T, S2I, S2T>
+where
+    I: StoredIndex,
+    T: StoredType,
+    S1I: StoredIndex,
+    S1T: StoredType,
+    S2I: StoredIndex,
+    S2T: StoredType,
+{
+    #[inline]
+    fn mut_index(&mut self) -> &mut usize {
+        &mut self.index
+    }
+
+    #[inline]
+    fn len(&self) -> usize {
+        todo!();
+        // self.vec.len()
+    }
 }
 
 impl<'a, I, T, S1I, S1T, S2I, S2T> IntoIterator for &'a LazyVec<I, T, S1I, S1T, S2I, S2T>

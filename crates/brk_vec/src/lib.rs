@@ -218,31 +218,6 @@ where
     Compressed(CompressedVecIterator<'a, I, T>),
 }
 
-// impl<I, T> StoredVecIterator<'_, I, T>
-// impl<'a, I, T> VecIterator<'a> for StoredVecIterator<'a, I, T>
-// where
-//     I: StoredIndex,
-//     T: StoredType,
-// {
-//     type I = I;
-//     type T = T;
-
-//     #[inline]
-//     fn mut_index(&mut self) -> &mut usize {
-//         match self {
-//             Self::Compressed(iter) => iter.mut_index(),
-//             Self::Raw(iter) => iter.mut_index(),
-//         }
-//     }
-
-//     fn len(&self) -> usize {
-//         match self {
-//             Self::Compressed(i) => i.len(),
-//             Self::Raw(i) => i.len(),
-//         }
-//     }
-// }
-
 impl<'a, I, T> Iterator for StoredVecIterator<'a, I, T>
 where
     I: StoredIndex,
@@ -253,6 +228,27 @@ where
         match self {
             Self::Compressed(i) => i.next(),
             Self::Raw(i) => i.next(),
+        }
+    }
+}
+
+impl<I, T> BaseVecIterator for StoredVecIterator<'_, I, T>
+where
+    I: StoredIndex,
+    T: StoredType,
+{
+    #[inline]
+    fn mut_index(&mut self) -> &mut usize {
+        match self {
+            Self::Compressed(iter) => iter.mut_index(),
+            Self::Raw(iter) => iter.mut_index(),
+        }
+    }
+
+    fn len(&self) -> usize {
+        match self {
+            Self::Compressed(i) => i.len(),
+            Self::Raw(i) => i.len(),
         }
     }
 }
