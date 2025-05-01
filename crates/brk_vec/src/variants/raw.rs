@@ -11,8 +11,8 @@ use memmap2::Mmap;
 use rayon::prelude::*;
 
 use crate::{
-    DynamicVec, Error, GenericVec, Result, StoredIndex, StoredType, UnsafeSlice, Value,
-    VecIterator, Version,
+    BaseVecIterator, DynamicVec, Error, GenericVec, Result, StoredIndex, StoredType, UnsafeSlice,
+    Value, Version,
 };
 
 #[derive(Debug)]
@@ -217,24 +217,21 @@ pub struct RawVecIterator<'a, I, T> {
     index: usize,
 }
 
-// impl<'a, I, T> VecIterator<'a> for RawVecIterator<'a, I, T>
-// where
-//     I: StoredIndex,
-//     T: StoredType,
-// {
-//     type I = I;
-//     type T = T;
+impl<I, T> BaseVecIterator for RawVecIterator<'_, I, T>
+where
+    I: StoredIndex,
+    T: StoredType,
+{
+    #[inline]
+    fn mut_index(&mut self) -> &mut usize {
+        &mut self.index
+    }
 
-//     #[inline]
-//     fn mut_index(&mut self) -> &mut usize {
-//         &mut self.index
-//     }
-
-//     #[inline]
-//     fn len(&self) -> usize {
-//         self.vec.len()
-//     }
-// }
+    #[inline]
+    fn len(&self) -> usize {
+        self.vec.len()
+    }
+}
 
 impl<'a, I, T> Iterator for RawVecIterator<'a, I, T>
 where

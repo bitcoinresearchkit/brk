@@ -1,35 +1,22 @@
+use std::iter::Skip;
+
 use crate::Value;
 
 use super::{StoredIndex, StoredType};
 
-// pub trait BaseVecIterator: Iterator {
-//     fn mut_index(&mut self) -> &mut usize;
-
-//     fn len(&self) -> usize;
-
-//     fn is_empty(&self) -> bool {
-//         self.len() == 0
-//     }
-
-//     #[inline]
-//     fn set_(&mut self, i: usize) -> &mut Self {
-//         *self.mut_index() = i;
-//         self
-//     }
-
-//     fn skip(self, _: usize) -> std::iter::Skip<Self>
-//     where
-//         Self: Sized,
-//     {
-//         todo!("")
-//     }
-// }
-
-pub trait VecIterator<'a>: Iterator<Item = (Self::I, Value<'a, Self::T>)> + 'a {
-    type I: StoredIndex;
-    type T: StoredType;
-
+pub trait BaseVecIterator: Iterator {
     fn mut_index(&mut self) -> &mut usize;
+
+    #[inline]
+    fn set_(&mut self, i: usize) {
+        *self.mut_index() = i;
+    }
+
+    #[inline]
+    fn next_at(&mut self, i: usize) -> Option<Self::Item> {
+        self.set_(i);
+        self.next()
+    }
 
     fn len(&self) -> usize;
 
@@ -37,47 +24,26 @@ pub trait VecIterator<'a>: Iterator<Item = (Self::I, Value<'a, Self::T>)> + 'a {
         self.len() == 0
     }
 
-    #[inline]
-    fn set_(&mut self, i: usize) -> &mut Self {
-        *self.mut_index() = i;
-        self
-    }
-
-    fn skip(self, _: usize) -> std::iter::Skip<Self>
+    fn skip(self, _: usize) -> Skip<Self>
     where
         Self: Sized,
     {
         todo!("")
     }
+}
 
-    //     fn set(&mut self, i: Self::I) -> &mut Self;
+pub trait VecIterator<'a>: BaseVecIterator<Item = (Self::I, Value<'a, Self::T>)> + 'a {
+    type I: StoredIndex;
+    type T: StoredType;
 
-    //     fn get_(&mut self, i: usize) -> Option<Value<'a, Self::T>>;
-
-    //     fn get(&mut self, i: Self::I) -> Option<Value<'a, Self::T>>;
-
-    //     fn unwrap_get_inner(&mut self, i: Self::I) -> Self::T;
-
-    //     fn get_inner(&mut self, i: Self::I) -> Option<Self::T>;
-
-    //     fn last(self) -> Option<Self::Item>;
-    // }
-
-    // impl<'a, I, T, Iter> VecIterator<'a, I, T> for Iter
-    // where
-    //     I: StoredIndex,
-    //     T: StoredType + 'a,
-    //     Iter: Iterator<Item = (I, Value<'a, T>)> + BaseVecIterator,
-    // {
     #[inline]
-    fn set(&mut self, i: Self::I) -> &mut Self {
+    fn set(&mut self, i: Self::I) {
         self.set_(i.unwrap_to_usize())
     }
 
     #[inline]
     fn get_(&mut self, i: usize) -> Option<Value<'a, Self::T>> {
-        self.set_(i);
-        self.next().map(|(_, v)| v)
+        self.next_at(i).map(|(_, v)| v)
     }
 
     #[inline]
@@ -111,19 +77,10 @@ pub trait VecIterator<'a>: Iterator<Item = (Self::I, Value<'a, Self::T>)> + 'a {
 
 impl<'a, I, T, Iter> VecIterator<'a> for Iter
 where
-    Iter: Iterator<Item = (I, Value<'a, T>)> + 'a,
+    Iter: BaseVecIterator<Item = (I, Value<'a, T>)> + 'a,
     I: StoredIndex,
     T: StoredType + 'a,
 {
     type I = I;
     type T = T;
-
-    fn len(&self) -> usize {
-        todo!()
-    }
-
-    fn mut_index(&mut self) -> &mut usize {
-        todo!()
-    }
 }
-// pub trait VecIterator<'a>: Iterator<Item = (Self::I, Value<'a, Self::T>)> + 'a {

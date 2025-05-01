@@ -111,31 +111,25 @@ impl Vecs {
                     .add_total(),
             )?,
             inputindex_to_value: LazyVec::init(
-                // &path.join("inputindex_to_value"),
                 Version::ZERO,
                 indexer.vecs().outputindex_to_value.vec().clone(),
                 indexer.vecs().inputindex_to_outputindex.vec().clone(),
                 |index, outputindex_to_value_iter, inputindex_to_outputindex_iter| {
-                    // outputindex_to_value_iter.get(i)
-                    // inputindex_to_outputindex_iter.get
-                    // let mut outputindex_to_value_iter = indexer.vecs().outputindex_to_value.iter();
-                    // self.inputindex_to_value.compute_transform(
-                    //     starting_indexes.inputindex,
-                    //     indexer.vecs().inputindex_to_outputindex.vec(),
-                    //     |(inputindex, outputindex, ..)| {
-                    //         let value = if outputindex == OutputIndex::COINBASE {
-                    //             Sats::ZERO
-                    //         } else if let Some(value) = outputindex_to_value_iter.get(outputindex) {
-                    //             value.into_inner()
-                    //         } else {
-                    //             dbg!(inputindex, outputindex);
-                    //             panic!()
-                    //         };
-                    //         (inputindex, value)
-                    //     },
-                    //     exit,
-                    // )?;
-                    Some(Sats::ZERO)
+                    inputindex_to_outputindex_iter.next_at(index).map(
+                        |(inputindex, outputindex)| {
+                            let outputindex = outputindex.into_inner();
+                            if outputindex == OutputIndex::COINBASE {
+                                Sats::ZERO
+                            } else if let Some((_, value)) =
+                                outputindex_to_value_iter.next_at(outputindex.unwrap_to_usize())
+                            {
+                                value.into_inner()
+                            } else {
+                                dbg!(inputindex, outputindex);
+                                panic!()
+                            }
+                        },
+                    )
                 },
             ),
             indexes_to_tx_v1: ComputedVecsFromHeight::forced_import(
