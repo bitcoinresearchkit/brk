@@ -3,7 +3,7 @@ use std::{fs, path::Path};
 use brk_core::{DifficultyEpoch, HalvingEpoch, StoredF64};
 use brk_exit::Exit;
 use brk_indexer::Indexer;
-use brk_vec::{Compressed, Version};
+use brk_vec::{Compressed, VecIterator, Version};
 
 use super::{
     Indexes,

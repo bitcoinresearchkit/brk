@@ -6,10 +6,10 @@ use brk_core::{
 use brk_exit::Exit;
 use brk_indexer::Indexer;
 use brk_parser::bitcoin;
-use brk_vec::{Compressed, DynamicVec, StoredIndex, Version};
+use brk_vec::{Compressed, StoredIndex, VecIterator, Version};
 
 use super::{
-    EagerVec, Indexes,
+    EagerVec, Indexes, LazyVec,
     grouped::{
         ComputedValueVecsFromHeight, ComputedValueVecsFromTxindex, ComputedVecsFromHeight,
         ComputedVecsFromTxindex, StorableVecGeneatorOptions,
@@ -47,7 +47,7 @@ pub struct Vecs {
     pub indexes_to_tx_vsize: ComputedVecsFromTxindex<StoredUsize>,
     pub indexes_to_tx_weight: ComputedVecsFromTxindex<Weight>,
     pub indexes_to_unknownoutput_count: ComputedVecsFromHeight<StoredUsize>,
-    pub inputindex_to_value: EagerVec<InputIndex, Sats>,
+    pub inputindex_to_value: LazyVec<InputIndex, Sats, OutputIndex, Sats, InputIndex, OutputIndex>,
     pub indexes_to_input_count: ComputedVecsFromTxindex<StoredUsize>,
     pub txindex_to_is_coinbase: EagerVec<TxIndex, bool>,
     pub indexes_to_output_count: ComputedVecsFromTxindex<StoredUsize>,
@@ -58,6 +58,7 @@ pub struct Vecs {
 impl Vecs {
     pub fn forced_import(
         path: &Path,
+        indexer: &Indexer,
         compressed: Compressed,
         compute_dollars: bool,
     ) -> color_eyre::Result<Self> {
@@ -109,11 +110,34 @@ impl Vecs {
                     .add_sum()
                     .add_total(),
             )?,
-            inputindex_to_value: EagerVec::forced_import(
-                &path.join("inputindex_to_value"),
+            inputindex_to_value: LazyVec::init(
+                // &path.join("inputindex_to_value"),
                 Version::ZERO,
-                compressed,
-            )?,
+                indexer.vecs().outputindex_to_value.vec().clone(),
+                indexer.vecs().inputindex_to_outputindex.vec().clone(),
+                |index, outputindex_to_value_iter, inputindex_to_outputindex_iter| {
+                    // outputindex_to_value_iter.get(i)
+                    // inputindex_to_outputindex_iter.get
+                    // let mut outputindex_to_value_iter = indexer.vecs().outputindex_to_value.iter();
+                    // self.inputindex_to_value.compute_transform(
+                    //     starting_indexes.inputindex,
+                    //     indexer.vecs().inputindex_to_outputindex.vec(),
+                    //     |(inputindex, outputindex, ..)| {
+                    //         let value = if outputindex == OutputIndex::COINBASE {
+                    //             Sats::ZERO
+                    //         } else if let Some(value) = outputindex_to_value_iter.get(outputindex) {
+                    //             value.into_inner()
+                    //         } else {
+                    //             dbg!(inputindex, outputindex);
+                    //             panic!()
+                    //         };
+                    //         (inputindex, value)
+                    //     },
+                    //     exit,
+                    // )?;
+                    Some(Sats::ZERO)
+                },
+            ),
             indexes_to_tx_v1: ComputedVecsFromHeight::forced_import(
                 path,
                 "tx_v1",
@@ -517,24 +541,23 @@ impl Vecs {
             exit,
         )?;
 
-        let mut outputindex_to_value_iter = indexer.vecs().outputindex_to_value.iter();
-        let inputs_len = indexer.vecs().inputindex_to_outputindex.vec().len();
-        self.inputindex_to_value.compute_transform(
-            starting_indexes.inputindex,
-            indexer.vecs().inputindex_to_outputindex.vec(),
-            |(inputindex, outputindex, ..)| {
-                let value = if outputindex == OutputIndex::COINBASE {
-                    Sats::ZERO
-                } else if let Some(value) = outputindex_to_value_iter.get(outputindex) {
-                    value.into_inner()
-                } else {
-                    dbg!(inputindex, outputindex, inputs_len);
-                    panic!()
-                };
-                (inputindex, value)
-            },
-            exit,
-        )?;
+        // let mut outputindex_to_value_iter = indexer.vecs().outputindex_to_value.iter();
+        // self.inputindex_to_value.compute_transform(
+        //     starting_indexes.inputindex,
+        //     indexer.vecs().inputindex_to_outputindex.vec(),
+        //     |(inputindex, outputindex, ..)| {
+        //         let value = if outputindex == OutputIndex::COINBASE {
+        //             Sats::ZERO
+        //         } else if let Some(value) = outputindex_to_value_iter.get(outputindex) {
+        //             value.into_inner()
+        //         } else {
+        //             dbg!(inputindex, outputindex);
+        //             panic!()
+        //         };
+        //         (inputindex, value)
+        //     },
+        //     exit,
+        // )?;
 
         self.indexes_to_output_value.compute_all(
             indexer,
@@ -552,21 +575,21 @@ impl Vecs {
             },
         )?;
 
-        self.indexes_to_input_value.compute_all(
-            indexer,
-            indexes,
-            starting_indexes,
-            exit,
-            |vec, indexer, _, starting_indexes, exit| {
-                vec.compute_sum_from_indexes(
-                    starting_indexes.txindex,
-                    indexer.vecs().txindex_to_first_inputindex.vec(),
-                    self.indexes_to_input_count.txindex.as_ref().unwrap().vec(),
-                    self.inputindex_to_value.vec(),
-                    exit,
-                )
-            },
-        )?;
+        // self.indexes_to_input_value.compute_all(
+        //     indexer,
+        //     indexes,
+        //     starting_indexes,
+        //     exit,
+        //     |vec, indexer, _, starting_indexes, exit| {
+        //         vec.compute_sum_from_indexes(
+        //             starting_indexes.txindex,
+        //             indexer.vecs().txindex_to_first_inputindex.vec(),
+        //             self.indexes_to_input_count.txindex.as_ref().unwrap().vec(),
+        //             self.inputindex_to_value.vec(),
+        //             exit,
+        //         )
+        //     },
+        // )?;
 
         self.indexes_to_fee.compute_all(
             indexer,
@@ -868,7 +891,7 @@ impl Vecs {
         [
             vec![
                 self.txindex_to_is_coinbase.any_vec(),
-                self.inputindex_to_value.any_vec(),
+                // self.inputindex_to_value.any_vec(),
                 self.txindex_to_weight.any_vec(),
                 self.txindex_to_vsize.any_vec(),
             ],

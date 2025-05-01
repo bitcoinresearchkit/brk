@@ -12,7 +12,7 @@ use zstd::DEFAULT_COMPRESSION_LEVEL;
 
 use crate::{
     CompressedPageMetadata, CompressedPagesMetadata, DynamicVec, Error, GenericVec, RawVec, Result,
-    StoredIndex, StoredType, UnsafeSlice, Value, Version,
+    StoredIndex, StoredType, UnsafeSlice, Value, VecIterator, Version,
 };
 
 const ONE_KIB: usize = 1024;
@@ -390,29 +390,26 @@ where
 {
     const SIZE_OF_T: usize = size_of::<T>();
     const PER_PAGE: usize = MAX_PAGE_SIZE / Self::SIZE_OF_T;
-
-    #[inline]
-    pub fn set(&mut self, i: I) -> &mut Self {
-        self.index = i.unwrap_to_usize();
-        self
-    }
-
-    #[inline]
-    pub fn set_(&mut self, i: usize) {
-        self.index = i;
-    }
-
-    #[inline]
-    pub fn get(&mut self, i: I) -> Option<Value<'_, T>> {
-        self.set(i).next().map(|(_, v)| v)
-    }
-
-    #[inline]
-    pub fn get_(&mut self, i: usize) -> Option<Value<'_, T>> {
-        self.set_(i);
-        self.next().map(|(_, v)| v)
-    }
 }
+
+// impl<'a, I, T> VecIterator<'a> for CompressedVecIterator<'a, I, T>
+// where
+//     I: StoredIndex,
+//     T: StoredType,
+// {
+//     type I = I;
+//     type T = T;
+
+//     #[inline]
+//     fn mut_index(&mut self) -> &mut usize {
+//         &mut self.index
+//     }
+
+//     #[inline]
+//     fn len(&self) -> usize {
+//         self.vec.len()
+//     }
+// }
 
 impl<'a, I, T> Iterator for CompressedVecIterator<'a, I, T>
 where
@@ -420,6 +417,7 @@ where
     T: StoredType,
 {
     type Item = (I, Value<'a, T>);
+
     fn next(&mut self) -> Option<Self::Item> {
         let mmap = &self.guard;
         let i = self.index;
@@ -459,20 +457,6 @@ where
         self.index += 1;
 
         result
-    }
-
-    #[inline]
-    fn last(mut self) -> Option<Self::Item>
-    where
-        Self: Sized,
-    {
-        let len = self.vec.len();
-        if len == 0 {
-            return None;
-        }
-        let i = len - 1;
-        self.get_(i)
-            .map(|v| (I::from(i), Value::Owned(v.into_inner())))
     }
 }
 

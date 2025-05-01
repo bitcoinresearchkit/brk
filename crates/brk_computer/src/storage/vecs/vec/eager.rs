@@ -10,7 +10,7 @@ use brk_core::{Bitcoin, CheckedSub, Close, Dollars, Height, Sats, StoredUsize, T
 use brk_exit::Exit;
 use brk_vec::{
     Compressed, DynamicVec, Error, GenericVec, Result, StoredIndex, StoredType, StoredVec,
-    StoredVecIterator, Value, Version,
+    StoredVecIterator, Value, VecIterator, Version,
 };
 use log::info;
 
@@ -211,10 +211,7 @@ where
         )?;
 
         let index = max_from.min(
-            self.inner
-                .iter()
-                .last()
-                .map_or_else(T::default, |(_, v)| v.into_inner()),
+            VecIterator::last(self.inner.iter()).map_or_else(T::default, |(_, v)| v.into_inner()),
         );
         let mut prev_i = None;
         other.iter_at(index).try_for_each(|(v, i)| -> Result<()> {

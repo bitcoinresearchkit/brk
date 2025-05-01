@@ -14,7 +14,7 @@ pub fn query(params: QueryParams) -> color_eyre::Result<()> {
     indexer.import_vecs()?;
 
     let mut computer = Computer::new(&config.outputsdir(), config.fetcher(), compressed);
-    computer.import_vecs()?;
+    computer.import_vecs(&indexer)?;
 
     let query = Query::build(&indexer, &computer);
 

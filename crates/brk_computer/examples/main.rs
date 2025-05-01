@@ -34,7 +34,7 @@ pub fn main() -> color_eyre::Result<()> {
 
     let mut computer = Computer::new(outputs_dir, Some(fetcher), compressed);
     computer.import_stores(&indexer)?;
-    computer.import_vecs()?;
+    computer.import_vecs(&indexer)?;
 
     let starting_indexes = indexer.index(&parser, rpc, &exit)?;
 

@@ -11,7 +11,8 @@ use memmap2::Mmap;
 use rayon::prelude::*;
 
 use crate::{
-    DynamicVec, Error, GenericVec, Result, StoredIndex, StoredType, UnsafeSlice, Value, Version,
+    DynamicVec, Error, GenericVec, Result, StoredIndex, StoredType, UnsafeSlice, Value,
+    VecIterator, Version,
 };
 
 #[derive(Debug)]
@@ -216,33 +217,24 @@ pub struct RawVecIterator<'a, I, T> {
     index: usize,
 }
 
-impl<I, T> RawVecIterator<'_, I, T>
-where
-    I: StoredIndex,
-    T: StoredType,
-{
-    #[inline]
-    pub fn set(&mut self, i: I) -> &mut Self {
-        self.index = i.unwrap_to_usize();
-        self
-    }
+// impl<'a, I, T> VecIterator<'a> for RawVecIterator<'a, I, T>
+// where
+//     I: StoredIndex,
+//     T: StoredType,
+// {
+//     type I = I;
+//     type T = T;
 
-    #[inline]
-    pub fn set_(&mut self, i: usize) {
-        self.index = i;
-    }
+//     #[inline]
+//     fn mut_index(&mut self) -> &mut usize {
+//         &mut self.index
+//     }
 
-    #[inline]
-    pub fn get(&mut self, i: I) -> Option<Value<'_, T>> {
-        self.set(i).next().map(|(_, v)| v)
-    }
-
-    #[inline]
-    pub fn get_(&mut self, i: usize) -> Option<Value<'_, T>> {
-        self.set_(i);
-        self.next().map(|(_, v)| v)
-    }
-}
+//     #[inline]
+//     fn len(&self) -> usize {
+//         self.vec.len()
+//     }
+// }
 
 impl<'a, I, T> Iterator for RawVecIterator<'a, I, T>
 where
@@ -250,6 +242,7 @@ where
     T: StoredType,
 {
     type Item = (I, Value<'a, T>);
+
     fn next(&mut self) -> Option<Self::Item> {
         let mmap = &self.guard;
         let index = self.index;
@@ -265,19 +258,6 @@ where
         }
 
         opt
-    }
-
-    fn last(mut self) -> Option<Self::Item>
-    where
-        Self: Sized,
-    {
-        let len = self.vec.len();
-        if len == 0 {
-            return None;
-        }
-        let i = len - 1;
-        self.get_(i)
-            .map(|v| (I::from(i), Value::Owned(v.into_inner())))
     }
 }
 

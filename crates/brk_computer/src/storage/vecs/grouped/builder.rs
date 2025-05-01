@@ -2,7 +2,9 @@ use std::path::Path;
 
 use brk_core::{CheckedSub, StoredUsize};
 use brk_exit::Exit;
-use brk_vec::{Compressed, DynamicVec, Result, StoredIndex, StoredType, StoredVec, Version};
+use brk_vec::{
+    Compressed, DynamicVec, Result, StoredIndex, StoredType, StoredVec, VecIterator, Version,
+};
 use color_eyre::eyre::ContextCompat;
 
 use crate::storage::{ComputedType, EagerVec};

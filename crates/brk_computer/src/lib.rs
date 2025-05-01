@@ -36,9 +36,10 @@ impl Computer {
         }
     }
 
-    pub fn import_vecs(&mut self) -> color_eyre::Result<()> {
+    pub fn import_vecs(&mut self, indexer: &Indexer) -> color_eyre::Result<()> {
         self.vecs = Some(Vecs::import(
             &self.path.join("vecs/computed"),
+            indexer,
             self.fetcher.is_some(),
             self.compressed,
         )?);
