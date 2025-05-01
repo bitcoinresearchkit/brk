@@ -218,45 +218,30 @@ where
     Compressed(CompressedVecIterator<'a, I, T>),
 }
 
-impl<I, T> StoredVecIterator<'_, I, T>
-where
-    I: StoredIndex,
-    T: StoredType,
-{
-    #[inline]
-    pub fn unwrap_get_inner(&mut self, i: I) -> T {
-        self.get_(i.unwrap_to_usize()).unwrap().into_inner()
-    }
+// impl<I, T> StoredVecIterator<'_, I, T>
+// impl<'a, I, T> VecIterator<'a> for StoredVecIterator<'a, I, T>
+// where
+//     I: StoredIndex,
+//     T: StoredType,
+// {
+//     type I = I;
+//     type T = T;
 
-    #[inline]
-    pub fn get_inner(&mut self, i: I) -> Option<T> {
-        self.get_(i.unwrap_to_usize()).map(|v| v.into_inner())
-    }
+//     #[inline]
+//     fn mut_index(&mut self) -> &mut usize {
+//         match self {
+//             Self::Compressed(iter) => iter.mut_index(),
+//             Self::Raw(iter) => iter.mut_index(),
+//         }
+//     }
 
-    #[inline]
-    pub fn get(&mut self, i: I) -> Option<Value<'_, T>> {
-        self.get_(i.unwrap_to_usize())
-    }
-
-    #[inline]
-    pub fn get_(&mut self, i: usize) -> Option<Value<'_, T>> {
-        match self {
-            Self::Compressed(iter) => iter.get_(i),
-            Self::Raw(iter) => iter.get_(i),
-        }
-    }
-
-    pub fn set(&mut self, i: I) {
-        match self {
-            Self::Compressed(iter) => {
-                iter.set(i);
-            }
-            Self::Raw(iter) => {
-                iter.set(i);
-            }
-        };
-    }
-}
+//     fn len(&self) -> usize {
+//         match self {
+//             Self::Compressed(i) => i.len(),
+//             Self::Raw(i) => i.len(),
+//         }
+//     }
+// }
 
 impl<'a, I, T> Iterator for StoredVecIterator<'a, I, T>
 where
@@ -269,23 +254,6 @@ where
             Self::Compressed(i) => i.next(),
             Self::Raw(i) => i.next(),
         }
-    }
-
-    fn last(self) -> Option<Self::Item>
-    where
-        Self: Sized,
-    {
-        match self {
-            Self::Compressed(i) => i.last(),
-            Self::Raw(i) => i.last(),
-        }
-    }
-
-    fn skip(self, _: usize) -> std::iter::Skip<Self>
-    where
-        Self: Sized,
-    {
-        todo!("")
     }
 }
 

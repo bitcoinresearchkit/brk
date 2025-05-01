@@ -6,7 +6,7 @@ use std::{
 
 use brk_vec::{
     Compressed, DynamicVec, Error, GenericVec, Mmap, Result, StoredIndex, StoredType, StoredVec,
-    StoredVecIterator, Value, Version,
+    StoredVecIterator, Value, VecIterator, Version,
 };
 
 use super::Height;

@@ -34,7 +34,7 @@ pub fn run(config: RunConfig) -> color_eyre::Result<()> {
 
     let mut computer = Computer::new(&config.outputsdir(), config.fetcher(), compressed);
     computer.import_stores(&indexer)?;
-    computer.import_vecs()?;
+    computer.import_vecs(&indexer)?;
 
     tokio::runtime::Builder::new_multi_thread()
         .enable_all()

@@ -26,14 +26,19 @@ pub struct Vecs {
 }
 
 impl Vecs {
-    pub fn import(path: &Path, fetch: bool, compressed: Compressed) -> color_eyre::Result<Self> {
+    pub fn import(
+        path: &Path,
+        indexer: &Indexer,
+        fetch: bool,
+        compressed: Compressed,
+    ) -> color_eyre::Result<Self> {
         fs::create_dir_all(path)?;
 
         Ok(Self {
             blocks: blocks::Vecs::forced_import(path, compressed)?,
             indexes: indexes::Vecs::forced_import(path, compressed)?,
             mining: mining::Vecs::forced_import(path, compressed)?,
-            transactions: transactions::Vecs::forced_import(path, compressed, fetch)?,
+            transactions: transactions::Vecs::forced_import(path, indexer, compressed, fetch)?,
             marketprice: fetch.then(|| marketprice::Vecs::forced_import(path, compressed).unwrap()),
         })
     }

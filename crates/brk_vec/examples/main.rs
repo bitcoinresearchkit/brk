@@ -1,6 +1,6 @@
 use std::{fs, path::Path};
 
-use brk_vec::{Compressed, DynamicVec, GenericVec, StoredVec, Version};
+use brk_vec::{Compressed, DynamicVec, GenericVec, StoredVec, VecIterator, Version};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let _ = fs::remove_dir_all("./vec");
@@ -64,14 +64,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
         let mut iter = vec.iter();
 
-        dbg!(iter.get(0));
-        dbg!(iter.get(5));
+        iter.get(0);
+        iter.get(5);
         dbg!(iter.get(20));
 
         dbg!(vec.collect_signed_range(Some(-5), None)?);
 
         vec.push(vec.len() as u32);
-        dbg!(vec.iter().last());
+        dbg!(VecIterator::last(vec.iter()));
 
         dbg!(vec.into_iter().collect::<Vec<_>>());
     }

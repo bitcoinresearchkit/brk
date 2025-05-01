@@ -18,7 +18,7 @@ pub use brk_parser::*;
 
 use bitcoin::{Transaction, TxIn, TxOut};
 use brk_exit::Exit;
-use brk_vec::{Compressed, DynamicVec};
+use brk_vec::{Compressed, DynamicVec, VecIterator};
 use color_eyre::eyre::{ContextCompat, eyre};
 use fjall::TransactionalKeyspace;
 use log::{error, info};
