@@ -3,12 +3,9 @@ use std::{
     io::{self, Seek, SeekFrom, Write},
     path::{Path, PathBuf},
     sync::Arc,
+    time::{self, Duration},
 };
 
-use axum::{
-    Json,
-    response::{IntoResponse, Response},
-};
 use memmap2::Mmap;
 
 use crate::{Error, Result, Version};
@@ -96,11 +93,6 @@ where
 
     fn collect_range(&self, from: Option<usize>, to: Option<usize>) -> Result<Vec<Self::T>>;
 
-    // #[inline]
-    // fn collect_inclusive_range(&self, from: I, to: I) -> Result<Vec<Self::T>> {
-    //     self.collect_range(Some(from.to_usize()?), Some(to.to_usize()? + 1))
-    // }
-
     #[inline]
     fn i64_to_usize(i: i64, len: usize) -> usize {
         if i >= 0 {
@@ -120,15 +112,6 @@ where
     }
 
     #[inline]
-    fn collect_range_axum_json(
-        &self,
-        from: Option<i64>,
-        to: Option<i64>,
-    ) -> Result<Json<Vec<Self::T>>> {
-        Ok(Json(self.collect_signed_range(from, to)?))
-    }
-
-    #[inline]
     fn collect_range_serde_json(
         &self,
         from: Option<i64>,
@@ -138,11 +121,6 @@ where
             .into_iter()
             .map(|v| serde_json::to_value(v).map_err(Error::from))
             .collect::<Result<Vec<_>>>()
-    }
-
-    #[inline]
-    fn collect_range_response(&self, from: Option<i64>, to: Option<i64>) -> Result<Response> {
-        Ok(self.collect_range_axum_json(from, to)?.into_response())
     }
 
     #[inline]
@@ -165,13 +143,21 @@ where
     }
 
     #[inline]
-    fn file_name(&self) -> String {
+    fn name(&self) -> String {
         self.path()
             .file_name()
             .unwrap()
             .to_str()
             .unwrap()
             .to_owned()
+    }
+
+    fn modified_time(&self) -> Result<Duration> {
+        Ok(self
+            .path_vec()
+            .metadata()?
+            .modified()?
+            .duration_since(time::UNIX_EPOCH)?)
     }
 
     fn version(&self) -> Version;

@@ -1063,7 +1063,7 @@ impl Vecs {
         Ok(())
     }
 
-    pub fn any_vecs(&self) -> Vec<&dyn brk_vec::AnyStoredVec> {
+    pub fn any_vecs(&self) -> Vec<&dyn brk_vec::AnyVec> {
         vec![
             vec![
                 self.dateindex_to_close_in_cents.any_vec(),

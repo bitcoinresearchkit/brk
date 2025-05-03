@@ -82,7 +82,7 @@ where
         &mut self.inner
     }
 
-    pub fn any_vec(&self) -> &dyn brk_vec::AnyStoredVec {
+    pub fn any_vec(&self) -> &dyn brk_vec::AnyVec {
         &self.inner
     }
 

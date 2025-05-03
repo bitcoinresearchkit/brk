@@ -1,4 +1,4 @@
-use std::path::Path;
+use std::{path::Path, time::Duration};
 
 use brk_exit::Exit;
 use clap_derive::ValueEnum;
@@ -12,7 +12,9 @@ mod lazy3;
 
 pub use _type::*;
 use brk_core::StoredPhantom;
-use brk_vec::{Compressed, GenericVec, Result, StoredIndex, StoredType, StoredVec, Version};
+use brk_vec::{
+    AnyVec, Compressed, GenericVec, Result, StoredIndex, StoredType, StoredVec, Version,
+};
 pub use eager::*;
 pub use lazy1::*;
 pub use lazy2::*;
@@ -38,7 +40,7 @@ impl Computation {
 }
 
 #[derive(Clone)]
-enum Dependencies<T, S1I, S1T, S2I, S2T, S3I, S3T> {
+pub enum Dependencies<T, S1I, S1T, S2I, S2T, S3I, S3T> {
     From1(StoredVec<S1I, S1T>, ComputeFrom1<T, S1I, S1T>),
     From2(
         (StoredVec<S1I, S1T>, StoredVec<S2I, S2T>),
@@ -70,7 +72,6 @@ pub enum ComputedVec<I, T, S1I, S1T, S2I, S2T, S3I, S3T> {
     LazyFrom1(LazyVecFrom1<I, T, S1I, S1T>),
     LazyFrom2(LazyVecFrom2<I, T, S1I, S1T, S2I, S2T>),
     LazyFrom3(LazyVecFrom3<I, T, S1I, S1T, S2I, S2T, S3I, S3T>),
-    // Lazy4
 }
 
 impl<I, T, S1I, S1T, S2I, S2T, S3I, S3T> ComputedVec<I, T, S1I, S1T, S2I, S2T, S3I, S3T>
@@ -87,6 +88,7 @@ where
     pub fn forced_import_or_init_from_1(
         mode: Computation,
         path: &Path,
+        name: &str,
         version: Version,
         compressed: Compressed,
         source: StoredVec<S1I, S1T>,
@@ -97,13 +99,17 @@ where
                 vec: EagerVec::forced_import(path, version, compressed)?,
                 deps: Dependencies::From1(source, compute),
             },
-            Computation::Lazy => Self::LazyFrom1(LazyVecFrom1::init(version, source, compute)),
+            Computation::Lazy => {
+                Self::LazyFrom1(LazyVecFrom1::init(name, version, source, compute))
+            }
         })
     }
 
+    #[allow(clippy::too_many_arguments)]
     pub fn forced_import_or_init_from_2(
-        mode: Computation,
         path: &Path,
+        name: &str,
+        mode: Computation,
         version: Version,
         compressed: Compressed,
         source1: StoredVec<S1I, S1T>,
@@ -116,7 +122,7 @@ where
                 deps: Dependencies::From2((source1, source2), compute),
             },
             Computation::Lazy => {
-                Self::LazyFrom2(LazyVecFrom2::init(version, source1, source2, compute))
+                Self::LazyFrom2(LazyVecFrom2::init(name, version, source1, source2, compute))
             }
         })
     }
@@ -125,6 +131,7 @@ where
     pub fn forced_import_or_init_from_3(
         mode: Computation,
         path: &Path,
+        name: &str,
         version: Version,
         compressed: Compressed,
         source1: StoredVec<S1I, S1T>,
@@ -138,7 +145,7 @@ where
                 deps: Dependencies::From3((source1, source2, source3), compute),
             },
             Computation::Lazy => Self::LazyFrom3(LazyVecFrom3::init(
-                version, source1, source2, source3, compute,
+                name, version, source1, source2, source3, compute,
             )),
         })
     }
@@ -188,6 +195,57 @@ where
                 };
                 vec.compute_to(max_from, 1, version, t, exit)
             }
+        }
+    }
+}
+
+impl<I, T, S1I, S1T, S2I, S2T, S3I, S3T> AnyVec for ComputedVec<I, T, S1I, S1T, S2I, S2T, S3I, S3T>
+where
+    I: StoredIndex,
+    T: StoredType,
+    S1I: StoredIndex,
+    S1T: StoredType,
+    S2I: StoredIndex,
+    S2T: StoredType,
+    S3I: StoredIndex,
+    S3T: StoredType,
+{
+    fn name(&self) -> String {
+        match self {
+            ComputedVec::Eager { vec, .. } => vec.name(),
+            ComputedVec::LazyFrom1(v) => v.name(),
+            ComputedVec::LazyFrom2(v) => v.name(),
+            ComputedVec::LazyFrom3(v) => v.name(),
+        }
+    }
+
+    fn index_type_to_string(&self) -> &str {
+        I::to_string()
+    }
+
+    fn len(&self) -> usize {
+        match self {
+            ComputedVec::Eager { vec, .. } => vec.len(),
+            ComputedVec::LazyFrom1(v) => v.len(),
+            ComputedVec::LazyFrom2(v) => v.len(),
+            ComputedVec::LazyFrom3(v) => v.len(),
+        }
+    }
+
+    fn collect_range_serde_json(
+        &self,
+        from: Option<i64>,
+        to: Option<i64>,
+    ) -> Result<Vec<serde_json::Value>> {
+        todo!()
+    }
+
+    fn modified_time(&self) -> Result<Duration> {
+        match self {
+            ComputedVec::Eager { vec, .. } => vec.modified_time(),
+            ComputedVec::LazyFrom1(v) => v.modified_time(),
+            ComputedVec::LazyFrom2(v) => v.modified_time(),
+            ComputedVec::LazyFrom3(v) => v.modified_time(),
         }
     }
 }

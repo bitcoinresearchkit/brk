@@ -7,7 +7,7 @@ use brk_core::{
     P2WPKHBytes, P2WPKHIndex, P2WSHBytes, P2WSHIndex, RawLockTime, Sats, StoredF64, StoredU32,
     StoredUsize, Timestamp, TxIndex, TxVersion, Txid, UnknownOutputIndex, Weight,
 };
-use brk_vec::{AnyStoredVec, Compressed, Result, Version};
+use brk_vec::{AnyVec, Compressed, Result, Version};
 use rayon::prelude::*;
 
 use crate::Indexes;
@@ -455,7 +455,7 @@ impl Vecs {
             .unwrap()
     }
 
-    pub fn any_vecs(&self) -> Vec<&dyn AnyStoredVec> {
+    pub fn any_vecs(&self) -> Vec<&dyn AnyVec> {
         vec![
             self.emptyoutputindex_to_txindex.any_vec(),
             self.height_to_blockhash.any_vec(),

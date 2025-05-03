@@ -523,8 +523,8 @@ where
         self.total.as_mut().unwrap()
     }
 
-    pub fn any_vecs(&self) -> Vec<&dyn brk_vec::AnyStoredVec> {
-        let mut v: Vec<&dyn brk_vec::AnyStoredVec> = vec![];
+    pub fn any_vecs(&self) -> Vec<&dyn brk_vec::AnyVec> {
+        let mut v: Vec<&dyn brk_vec::AnyVec> = vec![];
 
         if let Some(first) = self.first.as_ref() {
             v.push(first.any_vec());

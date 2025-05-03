@@ -5,7 +5,7 @@ use brk_core::{
 };
 use brk_exit::Exit;
 use brk_indexer::Indexer;
-use brk_vec::{AnyStoredVec, Compressed, Result, StoredVec, Version};
+use brk_vec::{AnyVec, Compressed, Result, StoredVec, Version};
 
 use crate::storage::{ComputedType, EagerVec, Indexes, indexes};
 
@@ -180,7 +180,7 @@ where
         Ok(())
     }
 
-    pub fn any_vecs(&self) -> Vec<&dyn AnyStoredVec> {
+    pub fn any_vecs(&self) -> Vec<&dyn AnyVec> {
         [
             self.height.as_ref().map_or(vec![], |v| vec![v.any_vec()]),
             self.height_extra.any_vecs(),

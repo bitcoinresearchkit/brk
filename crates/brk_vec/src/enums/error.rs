@@ -1,6 +1,7 @@
 use std::{
     fmt::{self, Debug},
     io,
+    time::SystemTimeError,
 };
 
 use crate::Version;
@@ -23,7 +24,14 @@ pub enum Error {
     UnsupportedUnflushedState,
     RangeFromAfterTo(usize, usize),
     DifferentCompressionMode,
+    SystemTimeError,
     ToSerdeJsonValueError(serde_json::Error),
+}
+
+impl From<SystemTimeError> for Error {
+    fn from(_: SystemTimeError) -> Self {
+        Self::SystemTimeError
+    }
 }
 
 impl From<io::Error> for Error {
@@ -74,6 +82,7 @@ impl fmt::Display for Error {
                 )
             }
             Error::ZeroCopyError => write!(f, "Zero copy convert error"),
+            Error::SystemTimeError => write!(f, "SystemTimeError"),
             Error::RangeFromAfterTo(from, to) => write!(f, "Range, from {from} is after to {to}"),
             Error::DifferentCompressionMode => write!(f, "Different compression mode chosen"),
             Error::EmptyVec => write!(f, "The Vec is empty, maybe wait for a bit"),

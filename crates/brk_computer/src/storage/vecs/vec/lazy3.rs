@@ -1,7 +1,7 @@
 use std::marker::PhantomData;
 
 use brk_vec::{
-    BaseVecIterator, StoredIndex, StoredType, StoredVec, StoredVecIterator, Value, Version,
+    AnyVec, BaseVecIterator, StoredIndex, StoredType, StoredVec, StoredVecIterator, Value, Version,
 };
 
 pub type ComputeFrom3<T, S1I, S1T, S2I, S2T, S3I, S3T> = for<'a> fn(
@@ -13,6 +13,7 @@ pub type ComputeFrom3<T, S1I, S1T, S2I, S2T, S3I, S3T> = for<'a> fn(
 
 #[derive(Clone)]
 pub struct LazyVecFrom3<I, T, S1I, S1T, S2I, S2T, S3I, S3T> {
+    name: String,
     version: Version,
     source1: StoredVec<S1I, S1T>,
     source2: StoredVec<S2I, S2T>,
@@ -33,6 +34,7 @@ where
     S3T: StoredType,
 {
     pub fn init(
+        name: &str,
         version: Version,
         source1: StoredVec<S1I, S1T>,
         source2: StoredVec<S2I, S2T>,
@@ -40,6 +42,7 @@ where
         compute: ComputeFrom3<T, S1I, S1T, S2I, S2T, S3I, S3T>,
     ) -> Self {
         Self {
+            name: name.to_string(),
             version,
             source1,
             source2,
@@ -137,5 +140,45 @@ where
             source3: self.source3.iter(),
             index: 0,
         }
+    }
+}
+
+impl<I, T, S1I, S1T, S2I, S2T, S3I, S3T> AnyVec for LazyVecFrom3<I, T, S1I, S1T, S2I, S2T, S3I, S3T>
+where
+    I: StoredIndex,
+    T: StoredType,
+    S1I: StoredIndex,
+    S1T: StoredType,
+    S2I: StoredIndex,
+    S2T: StoredType,
+    S3I: StoredIndex,
+    S3T: StoredType,
+{
+    fn name(&self) -> String {
+        self.name.clone()
+    }
+
+    fn index_type_to_string(&self) -> &str {
+        I::to_string()
+    }
+
+    fn len(&self) -> usize {
+        self.source1.len().min(self.source2.len())
+    }
+
+    fn modified_time(&self) -> brk_vec::Result<std::time::Duration> {
+        Ok(self
+            .source1
+            .modified_time()?
+            .min(self.source2.modified_time()?))
+    }
+
+    fn collect_range_serde_json(
+        &self,
+        from: Option<i64>,
+        to: Option<i64>,
+    ) -> brk_vec::Result<Vec<serde_json::Value>> {
+        todo!()
+        // self.
     }
 }

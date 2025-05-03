@@ -8,10 +8,9 @@ mod structs;
 mod traits;
 mod variants;
 
-use std::path::{Path, PathBuf};
+use std::{path::Path, time::Duration};
 
 use arc_swap::ArcSwap;
-use axum::response::Response;
 pub use enums::*;
 pub use memmap2::Mmap;
 pub use structs::*;
@@ -141,22 +140,7 @@ where
     }
 }
 
-pub trait AnyStoredVec: Send + Sync {
-    fn file_name(&self) -> String;
-    fn index_type_to_string(&self) -> &str;
-    fn len(&self) -> usize;
-    fn is_empty(&self) -> bool;
-    fn flush(&mut self) -> Result<()>;
-    fn collect_range_serde_json(
-        &self,
-        from: Option<i64>,
-        to: Option<i64>,
-    ) -> Result<Vec<serde_json::Value>>;
-    fn collect_range_response(&self, from: Option<i64>, to: Option<i64>) -> Result<Response>;
-    fn path_vec(&self) -> PathBuf;
-}
-
-impl<I, T> AnyStoredVec for StoredVec<I, T>
+impl<I, T> AnyVec for StoredVec<I, T>
 where
     I: StoredIndex,
     T: StoredType,
@@ -167,17 +151,8 @@ where
     }
 
     #[inline]
-    fn is_empty(&self) -> bool {
-        DynamicVec::is_empty(self)
-    }
-
-    #[inline]
     fn index_type_to_string(&self) -> &str {
         GenericVec::index_type_to_string(self)
-    }
-
-    fn flush(&mut self) -> Result<()> {
-        GenericVec::flush(self)
     }
 
     #[inline]
@@ -190,17 +165,12 @@ where
     }
 
     #[inline]
-    fn collect_range_response(&self, from: Option<i64>, to: Option<i64>) -> Result<Response> {
-        GenericVec::collect_range_response(self, from, to)
+    fn modified_time(&self) -> Result<Duration> {
+        GenericVec::modified_time(self)
     }
 
-    #[inline]
-    fn path_vec(&self) -> PathBuf {
-        GenericVec::path_vec(self)
-    }
-
-    fn file_name(&self) -> String {
-        GenericVec::file_name(self)
+    fn name(&self) -> String {
+        GenericVec::name(self)
     }
 }
 

@@ -53,9 +53,9 @@ fn req_to_response_res(
     if to.is_none() {
         let not_modified = vecs
             .iter()
-            .map(|(_, vec)| headers.check_if_modified_since(&vec.path_vec()))
+            .map(|(_, vec)| headers.check_if_modified_since_(vec.modified_time()?))
             .all(|res| {
-                res.is_ok_and(|(modified, date_modified)| {
+                res.ok().is_some_and(|(modified, date_modified)| {
                     if date_modified_opt.is_none_or(|dm| dm > date_modified) {
                         date_modified_opt.replace(date_modified);
                     }

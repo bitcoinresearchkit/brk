@@ -223,7 +223,7 @@ impl Vecs {
         Ok(())
     }
 
-    pub fn any_vecs(&self) -> Vec<&dyn brk_vec::AnyStoredVec> {
+    pub fn any_vecs(&self) -> Vec<&dyn brk_vec::AnyVec> {
         [
             vec![
                 self.height_to_interval.any_vec(),
