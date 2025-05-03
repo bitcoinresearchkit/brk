@@ -1,5 +1,5 @@
 use byteview::ByteView;
-use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
+use zerocopy_derive::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 use crate::Error;
 

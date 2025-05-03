@@ -1,6 +1,6 @@
 use std::path::Path;
 
-use brk_computer::Computer;
+use brk_computer::{Computation, Computer};
 use brk_core::default_bitcoin_path;
 use brk_exit::Exit;
 use brk_fetcher::Fetcher;
@@ -34,7 +34,7 @@ pub fn main() -> color_eyre::Result<()> {
 
     let mut computer = Computer::new(outputs_dir, Some(fetcher), compressed);
     computer.import_stores(&indexer)?;
-    computer.import_vecs(&indexer)?;
+    computer.import_vecs(&indexer, Computation::Lazy)?;
 
     let starting_indexes = indexer.index(&parser, rpc, &exit)?;
 

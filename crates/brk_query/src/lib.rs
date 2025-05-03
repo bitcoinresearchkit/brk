@@ -34,13 +34,13 @@ impl<'a> Query<'a> {
 
         indexer
             .vecs()
-            .as_any_vecs()
+            .any_vecs()
             .into_iter()
             .for_each(|vec| vec_trees.insert(vec));
 
         computer
             .vecs()
-            .as_any_vecs()
+            .any_vecs()
             .into_iter()
             .for_each(|vec| vec_trees.insert(vec));
 

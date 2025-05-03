@@ -2,11 +2,14 @@ use std::ops::{Add, Div};
 
 use derive_deref::Deref;
 use serde::Serialize;
-use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
+use zerocopy_derive::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 use crate::CheckedSub;
 
+pub type StoredPhantom = StoredU8;
+
 #[derive(
+    Default,
     Debug,
     Deref,
     Clone,
@@ -75,5 +78,18 @@ impl From<f64> for StoredU8 {
 impl From<StoredU8> for f64 {
     fn from(value: StoredU8) -> Self {
         value.0 as f64
+    }
+}
+
+impl Add<usize> for StoredU8 {
+    type Output = Self;
+    fn add(self, rhs: usize) -> Self::Output {
+        Self(self.0.checked_add(rhs as u8).unwrap())
+    }
+}
+
+impl From<StoredU8> for usize {
+    fn from(value: StoredU8) -> Self {
+        value.0 as usize
     }
 }

@@ -442,20 +442,20 @@ impl Vecs {
     }
 
     pub fn flush(&mut self, height: Height) -> Result<()> {
-        self.as_mut_any_vecs()
+        self.mut_any_vecs()
             .into_par_iter()
             .try_for_each(|vec| vec.flush(height))
     }
 
     pub fn starting_height(&mut self) -> Height {
-        self.as_mut_any_vecs()
+        self.mut_any_vecs()
             .into_iter()
             .map(|vec| vec.height().map(Height::incremented).unwrap_or_default())
             .min()
             .unwrap()
     }
 
-    pub fn as_any_vecs(&self) -> Vec<&dyn AnyStoredVec> {
+    pub fn any_vecs(&self) -> Vec<&dyn AnyStoredVec> {
         vec![
             self.emptyoutputindex_to_txindex.any_vec(),
             self.height_to_blockhash.any_vec(),
@@ -504,7 +504,7 @@ impl Vecs {
         ]
     }
 
-    fn as_mut_any_vecs(&mut self) -> Vec<&mut dyn AnyIndexedVec> {
+    fn mut_any_vecs(&mut self) -> Vec<&mut dyn AnyIndexedVec> {
         vec![
             &mut self.emptyoutputindex_to_txindex,
             &mut self.height_to_blockhash,

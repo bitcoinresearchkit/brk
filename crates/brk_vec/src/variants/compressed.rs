@@ -359,11 +359,7 @@ where
     }
 }
 
-impl<I, T> Clone for CompressedVec<I, T>
-where
-    I: StoredIndex,
-    T: StoredType,
-{
+impl<I, T> Clone for CompressedVec<I, T> {
     fn clone(&self) -> Self {
         Self {
             inner: self.inner.clone(),

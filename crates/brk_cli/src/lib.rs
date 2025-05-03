@@ -2,7 +2,8 @@ use std::fs;
 
 use brk_core::{dot_brk_log_path, dot_brk_path};
 use brk_query::Params as QueryArgs;
-use clap::{Parser, Subcommand};
+use clap::Parser;
+use clap_derive::{Parser, Subcommand};
 use query::query;
 use run::{RunConfig, run};
 

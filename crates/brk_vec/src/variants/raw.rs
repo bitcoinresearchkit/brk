@@ -194,11 +194,7 @@ where
     }
 }
 
-impl<I, T> Clone for RawVec<I, T>
-where
-    I: StoredIndex,
-    T: StoredType,
-{
+impl<I, T> Clone for RawVec<I, T> {
     fn clone(&self) -> Self {
         Self {
             version: self.version,

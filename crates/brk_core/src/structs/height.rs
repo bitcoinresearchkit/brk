@@ -5,7 +5,8 @@ use std::{
 
 use bitcoincore_rpc::{Client, RpcApi};
 use serde::{Deserialize, Serialize};
-use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
+use zerocopy::{FromBytes, IntoBytes};
+use zerocopy_derive::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 use crate::CheckedSub;
 

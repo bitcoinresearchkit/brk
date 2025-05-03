@@ -1,7 +1,7 @@
 use std::{fmt::Debug, ops::Add};
 
 use serde::{Deserialize, Serialize};
-use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
+use zerocopy_derive::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 use crate::CheckedSub;
 

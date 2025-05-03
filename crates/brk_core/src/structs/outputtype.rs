@@ -1,6 +1,6 @@
 use bitcoin::{ScriptBuf, opcodes::all::OP_PUSHBYTES_2};
 use serde::Serialize;
-use zerocopy::{Immutable, IntoBytes, KnownLayout, TryFromBytes};
+use zerocopy_derive::{Immutable, IntoBytes, KnownLayout, TryFromBytes};
 
 #[derive(
     Debug,

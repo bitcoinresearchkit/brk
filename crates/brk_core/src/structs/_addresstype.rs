@@ -1,5 +1,5 @@
 use serde::Serialize;
-use zerocopy::{Immutable, IntoBytes, KnownLayout, TryFromBytes};
+use zerocopy_derive::{Immutable, IntoBytes, KnownLayout, TryFromBytes};
 
 use super::OutputType;
 

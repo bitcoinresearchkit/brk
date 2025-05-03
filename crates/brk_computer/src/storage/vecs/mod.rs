@@ -30,6 +30,7 @@ impl Vecs {
         path: &Path,
         indexer: &Indexer,
         fetch: bool,
+        computation: Computation,
         compressed: Compressed,
     ) -> color_eyre::Result<Self> {
         fs::create_dir_all(path)?;
@@ -38,7 +39,13 @@ impl Vecs {
             blocks: blocks::Vecs::forced_import(path, compressed)?,
             indexes: indexes::Vecs::forced_import(path, compressed)?,
             mining: mining::Vecs::forced_import(path, compressed)?,
-            transactions: transactions::Vecs::forced_import(path, indexer, compressed, fetch)?,
+            transactions: transactions::Vecs::forced_import(
+                path,
+                indexer,
+                computation,
+                compressed,
+                fetch,
+            )?,
             marketprice: fetch.then(|| marketprice::Vecs::forced_import(path, compressed).unwrap()),
         })
     }
@@ -79,15 +86,13 @@ impl Vecs {
         Ok(())
     }
 
-    pub fn as_any_vecs(&self) -> Vec<&dyn AnyStoredVec> {
+    pub fn any_vecs(&self) -> Vec<&dyn AnyStoredVec> {
         [
-            self.indexes.as_any_vecs(),
-            self.blocks.as_any_vecs(),
-            self.mining.as_any_vecs(),
-            self.transactions.as_any_vecs(),
-            self.marketprice
-                .as_ref()
-                .map_or(vec![], |v| v.as_any_vecs()),
+            self.indexes.any_vecs(),
+            self.blocks.any_vecs(),
+            self.mining.any_vecs(),
+            self.transactions.any_vecs(),
+            self.marketprice.as_ref().map_or(vec![], |v| v.any_vecs()),
         ]
         .concat()
     }

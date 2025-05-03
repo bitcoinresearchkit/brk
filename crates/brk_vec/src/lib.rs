@@ -19,11 +19,7 @@ pub use traits::*;
 use variants::*;
 
 #[derive(Debug, Clone)]
-pub enum StoredVec<I, T>
-where
-    I: StoredIndex,
-    T: StoredType,
-{
+pub enum StoredVec<I, T> {
     Raw(RawVec<I, T>),
     Compressed(CompressedVec<I, T>),
 }
@@ -209,11 +205,7 @@ where
 }
 
 #[derive(Debug)]
-pub enum StoredVecIterator<'a, I, T>
-where
-    I: StoredIndex,
-    T: StoredType,
-{
+pub enum StoredVecIterator<'a, I, T> {
     Raw(RawVecIterator<'a, I, T>),
     Compressed(CompressedVecIterator<'a, I, T>),
 }

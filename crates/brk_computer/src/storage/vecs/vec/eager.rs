@@ -18,12 +18,8 @@ const ONE_KIB: usize = 1024;
 const ONE_MIB: usize = ONE_KIB * ONE_KIB;
 const MAX_CACHE_SIZE: usize = 210 * ONE_MIB;
 
-#[derive(Debug)]
-pub struct EagerVec<I, T>
-where
-    I: StoredIndex,
-    T: StoredType,
-{
+#[derive(Debug, Clone)]
+pub struct EagerVec<I, T> {
     computed_version: Option<Version>,
     inner: StoredVec<I, T>,
 }
@@ -89,8 +85,8 @@ where
         Ok(())
     }
 
-    fn version(&self) -> Version {
-        self.inner.version()
+    pub fn version(&self) -> Version {
+        self.computed_version.unwrap()
     }
 
     pub fn len(&self) -> usize {
@@ -147,28 +143,42 @@ where
         self.into_iter()
     }
 
+    pub fn compute_to<F>(
+        &mut self,
+        max_from: I,
+        to: usize,
+        version: Version,
+        mut t: F,
+        exit: &Exit,
+    ) -> Result<()>
+    where
+        F: FnMut(I) -> (I, T),
+    {
+        self.validate_computed_version_or_reset_file(
+            Version::ZERO + self.inner.version() + version,
+        )?;
+
+        let index = max_from.min(I::from(self.len()));
+        (index.to_usize()?..to).try_for_each(|i| {
+            let (i, v) = t(I::from(i));
+            self.forced_push_at(i, v, exit)
+        })?;
+
+        self.safe_flush(exit)
+    }
+
     pub fn compute_range<A, F>(
         &mut self,
         max_from: I,
         other: &StoredVec<I, A>,
-        mut t: F,
+        t: F,
         exit: &Exit,
     ) -> Result<()>
     where
         A: StoredType,
         F: FnMut(I) -> (I, T),
     {
-        self.validate_computed_version_or_reset_file(
-            Version::ZERO + self.version() + other.version(),
-        )?;
-
-        let index = max_from.min(I::from(self.len()));
-        (index.to_usize()?..other.len()).try_for_each(|i| {
-            let (i, v) = t(I::from(i));
-            self.forced_push_at(i, v, exit)
-        })?;
-
-        self.safe_flush(exit)
+        self.compute_to(max_from, other.len(), other.version(), t, exit)
     }
 
     pub fn compute_transform<A, B, F>(
@@ -184,7 +194,7 @@ where
         F: FnMut((A, B, &Self)) -> (I, T),
     {
         self.validate_computed_version_or_reset_file(
-            Version::ZERO + self.version() + other.version(),
+            Version::ZERO + self.inner.version() + other.version(),
         )?;
 
         let index = max_from.min(A::from(self.len()));
@@ -207,7 +217,7 @@ where
         T: StoredIndex,
     {
         self.validate_computed_version_or_reset_file(
-            Version::ZERO + self.version() + other.version(),
+            Version::ZERO + self.inner.version() + other.version(),
         )?;
 
         let index = max_from.min(
@@ -241,7 +251,10 @@ where
         T: StoredIndex,
     {
         self.validate_computed_version_or_reset_file(
-            Version::ZERO + self.version() + first_indexes.version() + indexes_count.version(),
+            Version::ZERO
+                + self.inner.version()
+                + first_indexes.version()
+                + indexes_count.version(),
         )?;
 
         let mut indexes_count_iter = indexes_count.iter();
@@ -333,7 +346,7 @@ where
         <T2 as TryInto<T>>::Error: error::Error + 'static,
     {
         self.validate_computed_version_or_reset_file(
-            Version::ZERO + self.version() + first_indexes.version(), // + last_indexes.version(),
+            Version::ZERO + self.inner.version() + first_indexes.version(), // + last_indexes.version(),
         )?;
 
         let mut other_iter = first_indexes.iter();
@@ -371,7 +384,10 @@ where
         A: StoredIndex + StoredType,
     {
         self.validate_computed_version_or_reset_file(
-            Version::ZERO + self.version() + self_to_other.version() + other_to_self.version(),
+            Version::ZERO
+                + self.inner.version()
+                + self_to_other.version()
+                + other_to_self.version(),
         )?;
 
         let mut other_to_self_iter = other_to_self.iter();
@@ -400,7 +416,10 @@ where
         T2: StoredIndex + StoredType,
     {
         self.validate_computed_version_or_reset_file(
-            Version::ZERO + self.version() + first_indexes.version() + indexes_count.version(),
+            Version::ZERO
+                + self.inner.version()
+                + first_indexes.version()
+                + indexes_count.version(),
         )?;
 
         let mut indexes_count_iter = indexes_count.iter();
@@ -434,7 +453,7 @@ where
         exit: &Exit,
     ) -> Result<()> {
         self.validate_computed_version_or_reset_file(
-            Version::ZERO + self.version() + sats.version(),
+            Version::ZERO + self.inner.version() + sats.version(),
         )?;
 
         let index = max_from.min(I::from(self.len()));
@@ -456,7 +475,7 @@ impl EagerVec<Height, Dollars> {
         exit: &Exit,
     ) -> Result<()> {
         self.validate_computed_version_or_reset_file(
-            Version::ZERO + self.version() + bitcoin.version(),
+            Version::ZERO + self.inner.version() + bitcoin.version(),
         )?;
 
         let mut price_iter = price.iter();
@@ -481,7 +500,7 @@ impl EagerVec<TxIndex, Dollars> {
         exit: &Exit,
     ) -> Result<()> {
         self.validate_computed_version_or_reset_file(
-            Version::ZERO + self.version() + bitcoin.version(),
+            Version::ZERO + self.inner.version() + bitcoin.version(),
         )?;
 
         let mut i_to_height_iter = i_to_height.iter();
@@ -495,19 +514,6 @@ impl EagerVec<TxIndex, Dollars> {
         })?;
 
         self.safe_flush(exit)
-    }
-}
-
-impl<I, T> Clone for EagerVec<I, T>
-where
-    I: StoredIndex,
-    T: StoredType,
-{
-    fn clone(&self) -> Self {
-        Self {
-            computed_version: self.computed_version,
-            inner: self.inner.clone(),
-        }
     }
 }
 

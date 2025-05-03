@@ -8,7 +8,7 @@ use bitcoin::{
 };
 use derive_deref::{Deref, DerefMut};
 use serde::{Serialize, Serializer};
-use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
+use zerocopy_derive::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 use crate::Error;
 

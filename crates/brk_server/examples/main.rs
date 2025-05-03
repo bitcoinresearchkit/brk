@@ -1,6 +1,6 @@
 use std::{path::Path, thread::sleep, time::Duration};
 
-use brk_computer::Computer;
+use brk_computer::{Computation, Computer};
 use brk_core::default_bitcoin_path;
 use brk_exit::Exit;
 use brk_fetcher::Fetcher;
@@ -40,7 +40,7 @@ pub fn main() -> color_eyre::Result<()> {
 
     let mut computer = Computer::new(outputs_dir, fetcher, compressed);
     computer.import_stores(&indexer)?;
-    computer.import_vecs(&indexer)?;
+    computer.import_vecs(&indexer, Computation::Lazy)?;
 
     tokio::runtime::Builder::new_multi_thread()
         .enable_all()

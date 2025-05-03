@@ -5,14 +5,14 @@ use std::{
     time::Duration,
 };
 
-use brk_computer::Computer;
+use brk_computer::{Computation, Computer};
 use brk_core::{default_bitcoin_path, default_brk_path, dot_brk_path};
 use brk_exit::Exit;
 use brk_fetcher::Fetcher;
 use brk_indexer::Indexer;
 use brk_parser::rpc::{self, Auth, Client, RpcApi};
 use brk_server::{Server, Website, tokio};
-use clap::{Parser, ValueEnum};
+use clap_derive::{Parser, ValueEnum};
 use color_eyre::eyre::eyre;
 use log::info;
 use serde::{Deserialize, Serialize};
@@ -34,7 +34,7 @@ pub fn run(config: RunConfig) -> color_eyre::Result<()> {
 
     let mut computer = Computer::new(&config.outputsdir(), config.fetcher(), compressed);
     computer.import_stores(&indexer)?;
-    computer.import_vecs(&indexer)?;
+    computer.import_vecs(&indexer, config.computation())?;
 
     tokio::runtime::Builder::new_multi_thread()
         .enable_all()
@@ -122,6 +122,10 @@ pub struct RunConfig {
     /// Executed by the runner, default: all, saved
     #[arg(short, long)]
     mode: Option<Mode>,
+
+    /// Computation mode for compatible datasets, `lazy` computes data whenever requested without saving it, `eager` computes the data once and saves it to disk, default: Lazy, saved
+    #[arg(short, long)]
+    computation: Option<Computation>,
 
     /// Activate compression of datasets, set to true to save disk space or false if prioritize speed, default: true, saved
     #[arg(short, long, value_name = "BOOL")]
@@ -411,6 +415,10 @@ impl RunConfig {
     pub fn fetcher(&self) -> Option<Fetcher> {
         self.fetch()
             .then(|| Fetcher::import(Some(self.harsdir().as_path())).unwrap())
+    }
+
+    pub fn computation(&self) -> Computation {
+        self.computation.unwrap_or_default()
     }
 
     pub fn compressed(&self) -> bool {

@@ -4,40 +4,22 @@ use brk_vec::{
     BaseVecIterator, StoredIndex, StoredType, StoredVec, StoredVecIterator, Value, Version,
 };
 
-// LazyVec owns SourceVecs
-//
-// Functions:
-// init()
-// version()
-// iter()
-// len() ?
-//
-// When .iter() called convert SourcesVecs into iterators
-// iter owns source iters
-// call compute function to convert index and source iters to T
+pub type ComputeFrom2<T, S1I, S1T, S2I, S2T> = for<'a> fn(
+    usize,
+    &mut dyn BaseVecIterator<Item = (S1I, Value<'a, S1T>)>,
+    &mut dyn BaseVecIterator<Item = (S2I, Value<'a, S2T>)>,
+) -> Option<T>;
 
 #[derive(Clone)]
-pub struct LazyVec<I, T, S1I, S1T, S2I, S2T>
-where
-    I: StoredIndex,
-    T: StoredType,
-    S1I: StoredIndex,
-    S1T: StoredType,
-    S2I: StoredIndex,
-    S2T: StoredType,
-{
+pub struct LazyVecFrom2<I, T, S1I, S1T, S2I, S2T> {
     version: Version,
     source1: StoredVec<S1I, S1T>,
     source2: StoredVec<S2I, S2T>,
-    compute: for<'a> fn(
-        usize,
-        &mut dyn BaseVecIterator<Item = (S1I, Value<'a, S1T>)>,
-        &mut dyn BaseVecIterator<Item = (S2I, Value<'a, S2T>)>,
-    ) -> Option<T>,
+    compute: ComputeFrom2<T, S1I, S1T, S2I, S2T>,
     phantom: PhantomData<I>,
 }
 
-impl<I, T, S1I, S1T, S2I, S2T> LazyVec<I, T, S1I, S1T, S2I, S2T>
+impl<I, T, S1I, S1T, S2I, S2T> LazyVecFrom2<I, T, S1I, S1T, S2I, S2T>
 where
     I: StoredIndex,
     T: StoredType,
@@ -50,11 +32,7 @@ where
         version: Version,
         source1: StoredVec<S1I, S1T>,
         source2: StoredVec<S2I, S2T>,
-        compute: for<'a> fn(
-            usize,
-            &mut dyn BaseVecIterator<Item = (S1I, Value<'a, S1T>)>,
-            &mut dyn BaseVecIterator<Item = (S2I, Value<'a, S2T>)>,
-        ) -> Option<T>,
+        compute: ComputeFrom2<T, S1I, S1T, S2I, S2T>,
     ) -> Self {
         Self {
             version,
@@ -68,57 +46,13 @@ where
     fn version(&self) -> Version {
         self.version
     }
-
-    fn len(&self) -> usize {
-        todo!()
-    }
 }
 
-pub struct LazyVecIterator<'a, I, T, S1I, S1T, S2I, S2T>
-where
-    I: StoredIndex,
-    T: StoredType,
-    S1I: StoredIndex,
-    S1T: StoredType,
-    S2I: StoredIndex,
-    S2T: StoredType,
-{
-    lazy: &'a LazyVec<I, T, S1I, S1T, S2I, S2T>,
+pub struct LazyVecIterator<'a, I, T, S1I, S1T, S2I, S2T> {
+    lazy: &'a LazyVecFrom2<I, T, S1I, S1T, S2I, S2T>,
     source1: StoredVecIterator<'a, S1I, S1T>,
     source2: StoredVecIterator<'a, S2I, S2T>,
     index: usize,
-}
-
-impl<I, T, S1I, S1T, S2I, S2T> LazyVecIterator<'_, I, T, S1I, S1T, S2I, S2T>
-where
-    I: StoredIndex,
-    T: StoredType,
-    S1I: StoredIndex,
-    S1T: StoredType,
-    S2I: StoredIndex,
-    S2T: StoredType,
-{
-    #[inline]
-    pub fn set(&mut self, i: I) -> &mut Self {
-        self.index = i.unwrap_to_usize();
-        self
-    }
-
-    #[inline]
-    pub fn set_(&mut self, i: usize) {
-        self.index = i;
-    }
-
-    #[inline]
-    pub fn get(&mut self, i: I) -> Option<Value<'_, T>> {
-        self.set(i).next().map(|(_, v)| v)
-    }
-
-    #[inline]
-    pub fn get_(&mut self, i: usize) -> Option<Value<'_, T>> {
-        self.set_(i);
-        self.next().map(|(_, v)| v)
-    }
 }
 
 impl<'a, I, T, S1I, S1T, S2I, S2T> Iterator for LazyVecIterator<'a, I, T, S1I, S1T, S2I, S2T>
@@ -163,11 +97,10 @@ where
     #[inline]
     fn len(&self) -> usize {
         todo!();
-        // self.vec.len()
     }
 }
 
-impl<'a, I, T, S1I, S1T, S2I, S2T> IntoIterator for &'a LazyVec<I, T, S1I, S1T, S2I, S2T>
+impl<'a, I, T, S1I, S1T, S2I, S2T> IntoIterator for &'a LazyVecFrom2<I, T, S1I, S1T, S2I, S2T>
 where
     I: StoredIndex,
     T: StoredType + 'a,

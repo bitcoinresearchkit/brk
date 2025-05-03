@@ -1,4 +1,4 @@
-use clap::ValueEnum;
+use clap_derive::ValueEnum;
 use color_eyre::eyre::eyre;
 use serde::Deserialize;
 

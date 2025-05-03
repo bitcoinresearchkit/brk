@@ -3,7 +3,7 @@ use std::{fmt, mem};
 use bitcoin::hashes::Hash;
 use derive_deref::Deref;
 use serde::{Serialize, Serializer};
-use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
+use zerocopy_derive::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 #[derive(Debug, Deref, Clone, PartialEq, Eq, Immutable, IntoBytes, KnownLayout, FromBytes)]
 pub struct Txid([u8; 32]);
