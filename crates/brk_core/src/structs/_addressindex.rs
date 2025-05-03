@@ -2,7 +2,7 @@ use std::ops::Add;
 
 use byteview::ByteView;
 use serde::Serialize;
-use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
+use zerocopy_derive::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 use crate::Error;
 

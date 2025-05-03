@@ -91,7 +91,7 @@ where
             vec![self.height.any_vec()],
             self.height_extra.any_vecs(),
             self.difficultyepoch.any_vecs(),
-            // self.halvingepoch.as_any_vecs(),
+            // self.halvingepoch.any_vecs(),
         ]
         .concat()
     }

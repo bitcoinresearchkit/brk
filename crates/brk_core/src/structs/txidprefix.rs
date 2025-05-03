@@ -1,6 +1,7 @@
 use byteview::ByteView;
 use derive_deref::Deref;
-use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
+use zerocopy::{FromBytes, IntoBytes};
+use zerocopy_derive::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 use crate::{Error, copy_first_8bytes};
 

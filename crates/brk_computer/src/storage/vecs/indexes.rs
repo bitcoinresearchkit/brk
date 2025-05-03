@@ -865,7 +865,7 @@ impl Vecs {
         })
     }
 
-    pub fn as_any_vecs(&self) -> Vec<&dyn brk_vec::AnyStoredVec> {
+    pub fn any_vecs(&self) -> Vec<&dyn brk_vec::AnyStoredVec> {
         vec![
             self.dateindex_to_date.any_vec(),
             self.dateindex_to_dateindex.any_vec(),

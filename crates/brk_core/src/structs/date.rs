@@ -1,6 +1,6 @@
 use jiff::{Span, civil::Date as Date_, tz::TimeZone};
 use serde::{Serialize, Serializer};
-use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
+use zerocopy_derive::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 use super::{DateIndex, Timestamp};
 

@@ -14,6 +14,7 @@ mod storage;
 
 use brk_vec::Compressed;
 use log::info;
+pub use storage::Computation;
 use storage::{Stores, Vecs};
 
 #[derive(Clone)]
@@ -36,11 +37,16 @@ impl Computer {
         }
     }
 
-    pub fn import_vecs(&mut self, indexer: &Indexer) -> color_eyre::Result<()> {
+    pub fn import_vecs(
+        &mut self,
+        indexer: &Indexer,
+        computation: Computation,
+    ) -> color_eyre::Result<()> {
         self.vecs = Some(Vecs::import(
             &self.path.join("vecs/computed"),
             indexer,
             self.fetcher.is_some(),
+            computation,
             self.compressed,
         )?);
         Ok(())

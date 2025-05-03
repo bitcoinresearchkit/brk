@@ -1,6 +1,6 @@
 use bitcoin::absolute::LockTime;
 use serde::Serialize;
-use zerocopy::{Immutable, IntoBytes, KnownLayout, TryFromBytes};
+use zerocopy_derive::{Immutable, IntoBytes, KnownLayout, TryFromBytes};
 
 #[derive(Debug, Immutable, Clone, Copy, IntoBytes, KnownLayout, TryFromBytes, Serialize)]
 pub struct RawLockTime(u32);

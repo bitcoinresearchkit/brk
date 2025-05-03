@@ -1,4 +1,4 @@
-use clap::ValueEnum;
+use clap_derive::ValueEnum;
 use serde::{Deserialize, Serialize};
 
 #[derive(

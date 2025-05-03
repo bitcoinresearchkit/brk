@@ -9,7 +9,7 @@ use brk_parser::bitcoin;
 use brk_vec::{Compressed, StoredIndex, VecIterator, Version};
 
 use super::{
-    EagerVec, Indexes, LazyVec,
+    Computation, ComputedVec, ComputedVecFrom2, EagerVec, Indexes,
     grouped::{
         ComputedValueVecsFromHeight, ComputedValueVecsFromTxindex, ComputedVecsFromHeight,
         ComputedVecsFromTxindex, StorableVecGeneatorOptions,
@@ -47,7 +47,8 @@ pub struct Vecs {
     pub indexes_to_tx_vsize: ComputedVecsFromTxindex<StoredUsize>,
     pub indexes_to_tx_weight: ComputedVecsFromTxindex<Weight>,
     pub indexes_to_unknownoutput_count: ComputedVecsFromHeight<StoredUsize>,
-    pub inputindex_to_value: LazyVec<InputIndex, Sats, OutputIndex, Sats, InputIndex, OutputIndex>,
+    pub inputindex_to_value:
+        ComputedVecFrom2<InputIndex, Sats, OutputIndex, Sats, InputIndex, OutputIndex>,
     pub indexes_to_input_count: ComputedVecsFromTxindex<StoredUsize>,
     pub txindex_to_is_coinbase: EagerVec<TxIndex, bool>,
     pub indexes_to_output_count: ComputedVecsFromTxindex<StoredUsize>,
@@ -59,6 +60,7 @@ impl Vecs {
     pub fn forced_import(
         path: &Path,
         indexer: &Indexer,
+        computation: Computation,
         compressed: Compressed,
         compute_dollars: bool,
     ) -> color_eyre::Result<Self> {
@@ -110,8 +112,11 @@ impl Vecs {
                     .add_sum()
                     .add_total(),
             )?,
-            inputindex_to_value: LazyVec::init(
+            inputindex_to_value: ComputedVec::forced_import_or_init_from_2(
+                computation,
+                &path.join("inputindex_to_value"),
                 Version::ZERO,
+                compressed,
                 indexer.vecs().outputindex_to_value.vec().clone(),
                 indexer.vecs().inputindex_to_outputindex.vec().clone(),
                 |index, outputindex_to_value_iter, inputindex_to_outputindex_iter| {
@@ -131,7 +136,7 @@ impl Vecs {
                         },
                     )
                 },
-            ),
+            )?,
             indexes_to_tx_v1: ComputedVecsFromHeight::forced_import(
                 path,
                 "tx_v1",
@@ -536,22 +541,22 @@ impl Vecs {
         )?;
 
         // let mut outputindex_to_value_iter = indexer.vecs().outputindex_to_value.iter();
-        // self.inputindex_to_value.compute_transform(
-        //     starting_indexes.inputindex,
-        //     indexer.vecs().inputindex_to_outputindex.vec(),
-        //     |(inputindex, outputindex, ..)| {
-        //         let value = if outputindex == OutputIndex::COINBASE {
-        //             Sats::ZERO
-        //         } else if let Some(value) = outputindex_to_value_iter.get(outputindex) {
-        //             value.into_inner()
-        //         } else {
-        //             dbg!(inputindex, outputindex);
-        //             panic!()
-        //         };
-        //         (inputindex, value)
-        //     },
-        //     exit,
-        // )?;
+        self.inputindex_to_value.compute_if_necessary(
+            starting_indexes.inputindex,
+            // indexer.vecs().inputindex_to_outputindex.vec(),
+            // |(inputindex, outputindex, ..)| {
+            //     let value = if outputindex == OutputIndex::COINBASE {
+            //         Sats::ZERO
+            //     } else if let Some(value) = outputindex_to_value_iter.get(outputindex) {
+            //         value.into_inner()
+            //     } else {
+            //         dbg!(inputindex, outputindex);
+            //         panic!()
+            //     };
+            //     (inputindex, value)
+            // },
+            exit,
+        )?;
 
         self.indexes_to_output_value.compute_all(
             indexer,
@@ -881,7 +886,7 @@ impl Vecs {
         Ok(())
     }
 
-    pub fn as_any_vecs(&self) -> Vec<&dyn brk_vec::AnyStoredVec> {
+    pub fn any_vecs(&self) -> Vec<&dyn brk_vec::AnyStoredVec> {
         [
             vec![
                 self.txindex_to_is_coinbase.any_vec(),

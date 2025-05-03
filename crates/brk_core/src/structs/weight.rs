@@ -2,7 +2,7 @@ use std::ops::{Add, Div};
 
 use derive_deref::Deref;
 use serde::Serialize;
-use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
+use zerocopy_derive::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 #[derive(
     Debug,

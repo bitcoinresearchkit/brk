@@ -1,6 +1,6 @@
 use std::path::Path;
 
-use brk_computer::Computer;
+use brk_computer::{Computation, Computer};
 use brk_indexer::Indexer;
 use brk_query::{Index, Query};
 
@@ -15,7 +15,7 @@ pub fn main() -> color_eyre::Result<()> {
     indexer.import_vecs()?;
 
     let mut computer = Computer::new(outputs_dir, None, compressed);
-    computer.import_vecs(&indexer)?;
+    computer.import_vecs(&indexer, Computation::Lazy)?;
 
     let query = Query::build(&indexer, &computer);
 

@@ -4,7 +4,7 @@ use bitcoin::hashes::Hash;
 use bitcoincore_rpc::{Client, RpcApi};
 use derive_deref::Deref;
 use serde::{Serialize, Serializer};
-use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
+use zerocopy_derive::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 use super::Height;
 

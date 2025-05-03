@@ -2,7 +2,7 @@ use std::ops::{Add, Div, Mul};
 
 use derive_deref::Deref;
 use serde::Serialize;
-use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
+use zerocopy_derive::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 use super::{Bitcoin, Cents, Sats};
 

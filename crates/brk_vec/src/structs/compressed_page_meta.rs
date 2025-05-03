@@ -1,4 +1,4 @@
-use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
+use zerocopy_derive::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 #[derive(Debug, Clone, IntoBytes, Immutable, FromBytes, KnownLayout)]
 pub struct CompressedPageMetadata {

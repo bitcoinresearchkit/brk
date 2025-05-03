@@ -1,4 +1,5 @@
-use clap::{Parser, builder::PossibleValuesParser};
+use clap::builder::PossibleValuesParser;
+use clap_derive::Parser;
 use serde::Deserialize;
 use serde_with::{OneOrMany, formats::PreferOne, serde_as};
 

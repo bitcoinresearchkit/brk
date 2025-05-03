@@ -198,7 +198,7 @@ where
             self.monthindex.any_vecs(),
             self.quarterindex.any_vecs(),
             self.yearindex.any_vecs(),
-            // self.halvingepoch.as_any_vecs(),
+            // self.halvingepoch.any_vecs(),
             self.decadeindex.any_vecs(),
         ]
         .concat()

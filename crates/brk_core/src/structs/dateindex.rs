@@ -2,7 +2,7 @@ use std::ops::Add;
 
 use serde::Serialize;
 // use color_eyre::eyre::eyre;
-use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
+use zerocopy_derive::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 use crate::{CheckedSub, Error};
 
