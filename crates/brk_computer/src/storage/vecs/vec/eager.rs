@@ -4,6 +4,7 @@ use std::{
     fmt::Debug,
     ops::Add,
     path::{Path, PathBuf},
+    time::Duration,
 };
 
 use brk_core::{Bitcoin, CheckedSub, Close, Dollars, Height, Sats, StoredUsize, TxIndex};
@@ -96,8 +97,12 @@ where
         self.inner.is_empty()
     }
 
-    fn file_name(&self) -> String {
-        self.inner.file_name()
+    pub fn name(&self) -> String {
+        self.inner.name()
+    }
+
+    pub fn modified_time(&self) -> Result<Duration> {
+        self.inner.modified_time()
     }
 
     pub fn vec(&self) -> &StoredVec<I, T> {
@@ -108,11 +113,11 @@ where
         &mut self.inner
     }
 
-    pub fn any_vec(&self) -> &dyn brk_vec::AnyStoredVec {
+    pub fn any_vec(&self) -> &dyn brk_vec::AnyVec {
         &self.inner
     }
 
-    pub fn mut_any_vec(&mut self) -> &mut dyn brk_vec::AnyStoredVec {
+    pub fn mut_any_vec(&mut self) -> &mut dyn brk_vec::AnyVec {
         &mut self.inner
     }
 
@@ -133,7 +138,7 @@ where
         version.write(path.as_ref())?;
 
         if self.is_empty() {
-            info!("Computing {}...", self.file_name())
+            info!("Computing {}...", self.name())
         }
 
         Ok(())

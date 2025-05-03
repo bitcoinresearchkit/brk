@@ -435,6 +435,7 @@ dependencies = [
  "fjall",
  "log",
  "serde",
+ "serde_json",
 ]
 
 [[package]]
@@ -571,7 +572,6 @@ name = "brk_vec"
 version = "0.0.31"
 dependencies = [
  "arc-swap",
- "axum",
  "memmap2",
  "rayon",
  "serde",

@@ -113,7 +113,7 @@ impl Vecs {
         Ok(())
     }
 
-    pub fn any_vecs(&self) -> Vec<&dyn brk_vec::AnyStoredVec> {
+    pub fn any_vecs(&self) -> Vec<&dyn brk_vec::AnyVec> {
         [
             self.indexes_to_difficulty.any_vecs(),
             self.indexes_to_difficultyepoch.any_vecs(),

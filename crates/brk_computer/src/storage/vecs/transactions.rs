@@ -6,7 +6,7 @@ use brk_core::{
 use brk_exit::Exit;
 use brk_indexer::Indexer;
 use brk_parser::bitcoin;
-use brk_vec::{Compressed, StoredIndex, VecIterator, Version};
+use brk_vec::{AnyVec, Compressed, StoredIndex, VecIterator, Version};
 
 use super::{
     Computation, ComputedVec, ComputedVecFrom2, EagerVec, Indexes,
@@ -113,8 +113,9 @@ impl Vecs {
                     .add_total(),
             )?,
             inputindex_to_value: ComputedVec::forced_import_or_init_from_2(
+                path,
+                "inputindex_to_value",
                 computation,
-                &path.join("inputindex_to_value"),
                 Version::ZERO,
                 compressed,
                 indexer.vecs().outputindex_to_value.vec().clone(),
@@ -728,6 +729,7 @@ impl Vecs {
                 )
             },
         )?;
+
         self.indexes_to_p2ms_count.compute_all(
             indexer,
             indexes,
@@ -742,6 +744,7 @@ impl Vecs {
                 )
             },
         )?;
+
         self.indexes_to_p2pk33_count.compute_all(
             indexer,
             indexes,
@@ -756,6 +759,7 @@ impl Vecs {
                 )
             },
         )?;
+
         self.indexes_to_p2pk65_count.compute_all(
             indexer,
             indexes,
@@ -770,6 +774,7 @@ impl Vecs {
                 )
             },
         )?;
+
         self.indexes_to_p2pkh_count.compute_all(
             indexer,
             indexes,
@@ -784,6 +789,7 @@ impl Vecs {
                 )
             },
         )?;
+
         self.indexes_to_p2sh_count.compute_all(
             indexer,
             indexes,
@@ -798,6 +804,7 @@ impl Vecs {
                 )
             },
         )?;
+
         self.indexes_to_p2tr_count.compute_all(
             indexer,
             indexes,
@@ -812,6 +819,7 @@ impl Vecs {
                 )
             },
         )?;
+
         self.indexes_to_p2wpkh_count.compute_all(
             indexer,
             indexes,
@@ -826,6 +834,7 @@ impl Vecs {
                 )
             },
         )?;
+
         self.indexes_to_p2wsh_count.compute_all(
             indexer,
             indexes,
@@ -840,6 +849,7 @@ impl Vecs {
                 )
             },
         )?;
+
         self.indexes_to_opreturn_count.compute_all(
             indexer,
             indexes,
@@ -854,6 +864,7 @@ impl Vecs {
                 )
             },
         )?;
+
         self.indexes_to_unknownoutput_count.compute_all(
             indexer,
             indexes,
@@ -868,6 +879,7 @@ impl Vecs {
                 )
             },
         )?;
+
         self.indexes_to_emptyoutput_count.compute_all(
             indexer,
             indexes,
@@ -886,13 +898,13 @@ impl Vecs {
         Ok(())
     }
 
-    pub fn any_vecs(&self) -> Vec<&dyn brk_vec::AnyStoredVec> {
+    pub fn any_vecs(&self) -> Vec<&dyn brk_vec::AnyVec> {
         [
             vec![
+                self.inputindex_to_value.any_vec(),
                 self.txindex_to_is_coinbase.any_vec(),
-                // self.inputindex_to_value.any_vec(),
-                self.txindex_to_weight.any_vec(),
                 self.txindex_to_vsize.any_vec(),
+                self.txindex_to_weight.any_vec(),
             ],
             self.indexes_to_tx_count.any_vecs(),
             self.indexes_to_coinbase.any_vecs(),

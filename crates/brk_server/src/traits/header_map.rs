@@ -1,4 +1,7 @@
-use std::{path::Path, time};
+use std::{
+    path::Path,
+    time::{self, Duration},
+};
 
 use axum::http::{
     HeaderMap,
@@ -28,6 +31,10 @@ pub trait HeaderMapExtended {
     fn get_if_modified_since(&self) -> Option<DateTime>;
     fn check_if_modified_since(&self, path: &Path)
     -> color_eyre::Result<(ModifiedState, DateTime)>;
+    fn check_if_modified_since_(
+        &self,
+        duration: Duration,
+    ) -> color_eyre::Result<(ModifiedState, DateTime)>;
 
     fn insert_cache_control_immutable(&mut self);
     fn _insert_cache_control_revalidate(&mut self, max_age: u64, stale_while_revalidate: u64);
@@ -118,11 +125,17 @@ impl HeaderMapExtended for HeaderMap {
         &self,
         path: &Path,
     ) -> color_eyre::Result<(ModifiedState, DateTime)> {
-        let duration = path
-            .metadata()?
-            .modified()?
-            .duration_since(time::UNIX_EPOCH)
-            .unwrap();
+        self.check_if_modified_since_(
+            path.metadata()?
+                .modified()?
+                .duration_since(time::UNIX_EPOCH)?,
+        )
+    }
+
+    fn check_if_modified_since_(
+        &self,
+        duration: Duration,
+    ) -> color_eyre::Result<(ModifiedState, DateTime)> {
         let date = Timestamp::new(duration.as_secs() as i64, 0)
             .unwrap()
             .to_zoned(TimeZone::UTC)

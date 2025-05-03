@@ -1,7 +1,7 @@
 use std::marker::PhantomData;
 
 use brk_vec::{
-    BaseVecIterator, StoredIndex, StoredType, StoredVec, StoredVecIterator, Value, Version,
+    AnyVec, BaseVecIterator, StoredIndex, StoredType, StoredVec, StoredVecIterator, Value, Version,
 };
 
 pub type ComputeFrom1<T, S1I, S1T> =
@@ -9,6 +9,7 @@ pub type ComputeFrom1<T, S1I, S1T> =
 
 #[derive(Clone)]
 pub struct LazyVecFrom1<I, T, S1I, S1T> {
+    name: String,
     version: Version,
     source: StoredVec<S1I, S1T>,
     compute: ComputeFrom1<T, S1I, S1T>,
@@ -23,11 +24,13 @@ where
     S1T: StoredType,
 {
     pub fn init(
+        name: &str,
         version: Version,
         source: StoredVec<S1I, S1T>,
         compute: ComputeFrom1<T, S1I, S1T>,
     ) -> Self {
         Self {
+            name: name.to_owned(),
             version,
             source,
             compute,
@@ -99,5 +102,38 @@ where
             source: self.source.iter(),
             index: 0,
         }
+    }
+}
+
+impl<I, T, S1I, S1T> AnyVec for LazyVecFrom1<I, T, S1I, S1T>
+where
+    I: StoredIndex,
+    T: StoredType,
+    S1I: StoredIndex,
+    S1T: StoredType,
+{
+    fn name(&self) -> String {
+        self.name.clone()
+    }
+
+    fn index_type_to_string(&self) -> &str {
+        I::to_string()
+    }
+
+    fn len(&self) -> usize {
+        self.source.len()
+    }
+
+    fn modified_time(&self) -> brk_vec::Result<std::time::Duration> {
+        self.source.modified_time()
+    }
+
+    fn collect_range_serde_json(
+        &self,
+        from: Option<i64>,
+        to: Option<i64>,
+    ) -> brk_vec::Result<Vec<serde_json::Value>> {
+        todo!()
+        // self.
     }
 }

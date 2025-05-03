@@ -3,7 +3,7 @@ use std::path::Path;
 use brk_core::{Bitcoin, Dollars, Height, Sats};
 use brk_exit::Exit;
 use brk_indexer::Indexer;
-use brk_vec::{AnyStoredVec, Compressed, Result, StoredVec, Version};
+use brk_vec::{AnyVec, Compressed, Result, StoredVec, Version};
 
 use crate::storage::{
     EagerVec, marketprice,
@@ -145,7 +145,7 @@ impl ComputedValueVecsFromHeight {
         Ok(())
     }
 
-    pub fn any_vecs(&self) -> Vec<&dyn AnyStoredVec> {
+    pub fn any_vecs(&self) -> Vec<&dyn AnyVec> {
         [
             self.sats.any_vecs(),
             self.bitcoin.any_vecs(),
