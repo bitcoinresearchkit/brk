@@ -6,11 +6,11 @@ use brk_core::{
 };
 use brk_exit::Exit;
 use brk_indexer::Indexer;
-use brk_vec::{AnyVec, Compressed, Result, StoredVec, Version};
+use brk_vec::{AnyIterableVec, AnyVec, Compressed, EagerVec, Result, StoredVec, Version};
 
-use crate::storage::{ComputedType, EagerVec, Indexes, indexes};
+use crate::storage::{Indexes, indexes};
 
-use super::{ComputedVecBuilder, StorableVecGeneatorOptions};
+use super::{ComputedType, ComputedVecBuilder, StorableVecGeneatorOptions};
 
 #[derive(Clone)]
 pub struct ComputedVecsFromTxindex<T>
@@ -119,7 +119,7 @@ where
         exit: &Exit,
         txindex: Option<&StoredVec<TxIndex, T>>,
     ) -> color_eyre::Result<()> {
-        let txindex = txindex.unwrap_or_else(|| self.txindex.as_ref().unwrap().vec());
+        let txindex = txindex.unwrap_or_else(|| self.txindex.as_ref().unwrap().iter_vec());
 
         self.height.compute(
             starting_indexes.height,
@@ -188,18 +188,18 @@ where
         Ok(())
     }
 
-    pub fn any_vecs(&self) -> Vec<&dyn AnyVec> {
+    pub fn vecs(&self) -> Vec<&dyn AnyVec> {
         [
             self.txindex.as_ref().map_or(vec![], |v| vec![v.any_vec()]),
-            self.height.any_vecs(),
-            self.dateindex.any_vecs(),
-            self.weekindex.any_vecs(),
-            self.difficultyepoch.any_vecs(),
-            self.monthindex.any_vecs(),
-            self.quarterindex.any_vecs(),
-            self.yearindex.any_vecs(),
-            // self.halvingepoch.any_vecs(),
-            self.decadeindex.any_vecs(),
+            self.height.vecs(),
+            self.dateindex.vecs(),
+            self.weekindex.vecs(),
+            self.difficultyepoch.vecs(),
+            self.monthindex.vecs(),
+            self.quarterindex.vecs(),
+            self.yearindex.vecs(),
+            // self.halvingepoch.vecs(),
+            self.decadeindex.vecs(),
         ]
         .concat()
     }

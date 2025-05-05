@@ -1,6 +1,8 @@
 use std::{fs, path::Path};
 
-use brk_vec::{Compressed, DynamicVec, GenericVec, StoredVec, VecIterator, Version};
+use brk_vec::{
+    AnyVec, CollectableVec, Compressed, GenericStoredVec, StoredVec, VecIterator, Version,
+};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let _ = fs::remove_dir_all("./vec");
@@ -16,7 +18,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             vec.push(v);
         });
 
-        let mut iter = vec.iter();
+        let mut iter = vec.into_iter();
         dbg!(iter.get(0));
         dbg!(iter.get(20));
         dbg!(iter.get(21));
@@ -27,7 +29,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     {
         let mut vec: StoredVec<usize, u32> =
             StoredVec::forced_import(Path::new("./vec"), version, compressed)?;
-        let mut iter = vec.iter();
+        let mut iter = vec.into_iter();
 
         dbg!(iter.get(0));
         dbg!(iter.get(0));
@@ -40,7 +42,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         vec.push(21);
         vec.push(22);
 
-        let mut iter = vec.iter();
+        let mut iter = vec.into_iter();
 
         dbg!(iter.get(20));
         dbg!(iter.get(21));
@@ -53,7 +55,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     {
         let mut vec: StoredVec<usize, u32> =
             StoredVec::forced_import(Path::new("./vec"), version, compressed)?;
-        let mut iter = vec.iter();
+        let mut iter = vec.into_iter();
 
         dbg!(iter.get(0));
         dbg!(iter.get(20));
@@ -62,7 +64,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
         vec.truncate_if_needed(14)?;
 
-        let mut iter = vec.iter();
+        let mut iter = vec.into_iter();
 
         iter.get(0);
         iter.get(5);
@@ -71,7 +73,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         dbg!(vec.collect_signed_range(Some(-5), None)?);
 
         vec.push(vec.len() as u32);
-        dbg!(VecIterator::last(vec.iter()));
+        dbg!(VecIterator::last(vec.into_iter()));
 
         dbg!(vec.into_iter().collect::<Vec<_>>());
     }

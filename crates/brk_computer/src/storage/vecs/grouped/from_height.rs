@@ -5,11 +5,11 @@ use brk_core::{
 };
 use brk_exit::Exit;
 use brk_indexer::Indexer;
-use brk_vec::{AnyVec, Compressed, Result, StoredVec, Version};
+use brk_vec::{AnyIterableVec, AnyVec, Compressed, EagerVec, Result, StoredVec, Version};
 
-use crate::storage::{ComputedType, EagerVec, Indexes, indexes};
+use crate::storage::{Indexes, indexes};
 
-use super::{ComputedVecBuilder, StorableVecGeneatorOptions};
+use super::{ComputedType, ComputedVecBuilder, StorableVecGeneatorOptions};
 
 #[derive(Clone)]
 pub struct ComputedVecsFromHeight<T>
@@ -114,9 +114,9 @@ where
         indexes: &indexes::Vecs,
         starting_indexes: &Indexes,
         exit: &Exit,
-        height: Option<&StoredVec<Height, T>>,
+        height: Option<&impl AnyIterableVec<Height, T>>,
     ) -> color_eyre::Result<()> {
-        let height = height.unwrap_or_else(|| self.height.as_ref().unwrap().vec());
+        let height = height.unwrap_or_else(|| self.height.as_ref().unwrap().iter_vec());
 
         self.height_extra
             .extend(starting_indexes.height, height, exit)?;
@@ -124,74 +124,74 @@ where
         self.dateindex.compute(
             starting_indexes.dateindex,
             height,
-            indexes.dateindex_to_first_height.vec(),
-            indexes.dateindex_to_height_count.vec(),
+            indexes.dateindex_to_first_height.iter_vec(),
+            indexes.dateindex_to_height_count.iter_vec(),
             exit,
         )?;
 
         self.weekindex.from_aligned(
             starting_indexes.weekindex,
             &self.dateindex,
-            indexes.weekindex_to_first_dateindex.vec(),
-            indexes.weekindex_to_dateindex_count.vec(),
+            indexes.weekindex_to_first_dateindex.iter_vec(),
+            indexes.weekindex_to_dateindex_count.iter_vec(),
             exit,
         )?;
 
         self.monthindex.from_aligned(
             starting_indexes.monthindex,
             &self.dateindex,
-            indexes.monthindex_to_first_dateindex.vec(),
-            indexes.monthindex_to_dateindex_count.vec(),
+            indexes.monthindex_to_first_dateindex.iter_vec(),
+            indexes.monthindex_to_dateindex_count.iter_vec(),
             exit,
         )?;
 
         self.quarterindex.from_aligned(
             starting_indexes.quarterindex,
             &self.monthindex,
-            indexes.quarterindex_to_first_monthindex.vec(),
-            indexes.quarterindex_to_monthindex_count.vec(),
+            indexes.quarterindex_to_first_monthindex.iter_vec(),
+            indexes.quarterindex_to_monthindex_count.iter_vec(),
             exit,
         )?;
 
         self.yearindex.from_aligned(
             starting_indexes.yearindex,
             &self.monthindex,
-            indexes.yearindex_to_first_monthindex.vec(),
-            indexes.yearindex_to_monthindex_count.vec(),
+            indexes.yearindex_to_first_monthindex.iter_vec(),
+            indexes.yearindex_to_monthindex_count.iter_vec(),
             exit,
         )?;
 
         self.decadeindex.from_aligned(
             starting_indexes.decadeindex,
             &self.yearindex,
-            indexes.decadeindex_to_first_yearindex.vec(),
-            indexes.decadeindex_to_yearindex_count.vec(),
+            indexes.decadeindex_to_first_yearindex.iter_vec(),
+            indexes.decadeindex_to_yearindex_count.iter_vec(),
             exit,
         )?;
 
         self.difficultyepoch.compute(
             starting_indexes.difficultyepoch,
             height,
-            indexes.difficultyepoch_to_first_height.vec(),
-            indexes.difficultyepoch_to_height_count.vec(),
+            indexes.difficultyepoch_to_first_height.iter_vec(),
+            indexes.difficultyepoch_to_height_count.iter_vec(),
             exit,
         )?;
 
         Ok(())
     }
 
-    pub fn any_vecs(&self) -> Vec<&dyn AnyVec> {
+    pub fn vecs(&self) -> Vec<&dyn AnyVec> {
         [
             self.height.as_ref().map_or(vec![], |v| vec![v.any_vec()]),
-            self.height_extra.any_vecs(),
-            self.dateindex.any_vecs(),
-            self.weekindex.any_vecs(),
-            self.difficultyepoch.any_vecs(),
-            self.monthindex.any_vecs(),
-            self.quarterindex.any_vecs(),
-            self.yearindex.any_vecs(),
-            // self.halvingepoch.any_vecs(),
-            self.decadeindex.any_vecs(),
+            self.height_extra.vecs(),
+            self.dateindex.vecs(),
+            self.weekindex.vecs(),
+            self.difficultyepoch.vecs(),
+            self.monthindex.vecs(),
+            self.quarterindex.vecs(),
+            self.yearindex.vecs(),
+            // self.halvingepoch.vecs(),
+            self.decadeindex.vecs(),
         ]
         .concat()
     }

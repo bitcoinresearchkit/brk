@@ -3,11 +3,11 @@ use std::path::Path;
 use brk_core::{DifficultyEpoch, Height};
 use brk_exit::Exit;
 use brk_indexer::Indexer;
-use brk_vec::{AnyVec, Compressed, Result, Version};
+use brk_vec::{AnyIterableVec, AnyVec, Compressed, EagerVec, Result, Version};
 
-use crate::storage::{ComputedType, EagerVec, Indexes, indexes};
+use crate::storage::{Indexes, indexes};
 
-use super::{ComputedVecBuilder, StorableVecGeneatorOptions};
+use super::{ComputedType, ComputedVecBuilder, StorableVecGeneatorOptions};
 
 #[derive(Clone)]
 pub struct ComputedVecsFromHeightStrict<T>
@@ -73,25 +73,25 @@ where
         compute(&mut self.height, indexer, indexes, starting_indexes, exit)?;
 
         self.height_extra
-            .extend(starting_indexes.height, self.height.vec(), exit)?;
+            .extend(starting_indexes.height, self.height.iter_vec(), exit)?;
 
         self.difficultyepoch.compute(
             starting_indexes.difficultyepoch,
-            self.height.vec(),
-            indexes.difficultyepoch_to_first_height.vec(),
-            indexes.difficultyepoch_to_height_count.vec(),
+            self.height.iter_vec(),
+            indexes.difficultyepoch_to_first_height.iter_vec(),
+            indexes.difficultyepoch_to_height_count.iter_vec(),
             exit,
         )?;
 
         Ok(())
     }
 
-    pub fn any_vecs(&self) -> Vec<&dyn AnyVec> {
+    pub fn vecs(&self) -> Vec<&dyn AnyVec> {
         [
             vec![self.height.any_vec()],
-            self.height_extra.any_vecs(),
-            self.difficultyepoch.any_vecs(),
-            // self.halvingepoch.any_vecs(),
+            self.height_extra.vecs(),
+            self.difficultyepoch.vecs(),
+            // self.halvingepoch.vecs(),
         ]
         .concat()
     }

@@ -7,14 +7,10 @@ use brk_core::{
     P2WPKHBytes, P2WPKHIndex, P2WSHBytes, P2WSHIndex, RawLockTime, Sats, StoredF64, StoredU32,
     StoredUsize, Timestamp, TxIndex, TxVersion, Txid, UnknownOutputIndex, Weight,
 };
-use brk_vec::{AnyVec, Compressed, Result, Version};
+use brk_vec::{AnyCollectableVec, AnyIndexedVec, Compressed, IndexedVec, Result, Version};
 use rayon::prelude::*;
 
 use crate::Indexes;
-
-mod base;
-
-pub use base::*;
 
 #[derive(Clone)]
 pub struct Vecs {
@@ -442,69 +438,69 @@ impl Vecs {
     }
 
     pub fn flush(&mut self, height: Height) -> Result<()> {
-        self.mut_any_vecs()
+        self.mut_vecs()
             .into_par_iter()
             .try_for_each(|vec| vec.flush(height))
     }
 
     pub fn starting_height(&mut self) -> Height {
-        self.mut_any_vecs()
+        self.mut_vecs()
             .into_iter()
             .map(|vec| vec.height().map(Height::incremented).unwrap_or_default())
             .min()
             .unwrap()
     }
 
-    pub fn any_vecs(&self) -> Vec<&dyn AnyVec> {
+    pub fn vecs(&self) -> Vec<&dyn AnyCollectableVec> {
         vec![
-            self.emptyoutputindex_to_txindex.any_vec(),
-            self.height_to_blockhash.any_vec(),
-            self.height_to_difficulty.any_vec(),
-            self.height_to_first_emptyoutputindex.any_vec(),
-            self.height_to_first_inputindex.any_vec(),
-            self.height_to_first_opreturnindex.any_vec(),
-            self.height_to_first_outputindex.any_vec(),
-            self.height_to_first_p2aindex.any_vec(),
-            self.height_to_first_p2msindex.any_vec(),
-            self.height_to_first_p2pk33index.any_vec(),
-            self.height_to_first_p2pk65index.any_vec(),
-            self.height_to_first_p2pkhindex.any_vec(),
-            self.height_to_first_p2shindex.any_vec(),
-            self.height_to_first_p2trindex.any_vec(),
-            self.height_to_first_p2wpkhindex.any_vec(),
-            self.height_to_first_p2wshindex.any_vec(),
-            self.height_to_first_txindex.any_vec(),
-            self.height_to_first_unknownoutputindex.any_vec(),
-            self.height_to_timestamp.any_vec(),
-            self.height_to_total_size.any_vec(),
-            self.height_to_weight.any_vec(),
-            self.inputindex_to_outputindex.any_vec(),
-            self.opreturnindex_to_txindex.any_vec(),
-            self.outputindex_to_outputtype.any_vec(),
-            self.outputindex_to_outputtypeindex.any_vec(),
-            self.outputindex_to_value.any_vec(),
-            self.p2aindex_to_p2abytes.any_vec(),
-            self.p2msindex_to_txindex.any_vec(),
-            self.p2pk33index_to_p2pk33bytes.any_vec(),
-            self.p2pk65index_to_p2pk65bytes.any_vec(),
-            self.p2pkhindex_to_p2pkhbytes.any_vec(),
-            self.p2shindex_to_p2shbytes.any_vec(),
-            self.p2trindex_to_p2trbytes.any_vec(),
-            self.p2wpkhindex_to_p2wpkhbytes.any_vec(),
-            self.p2wshindex_to_p2wshbytes.any_vec(),
-            self.txindex_to_base_size.any_vec(),
-            self.txindex_to_first_inputindex.any_vec(),
-            self.txindex_to_first_outputindex.any_vec(),
-            self.txindex_to_is_explicitly_rbf.any_vec(),
-            self.txindex_to_rawlocktime.any_vec(),
-            self.txindex_to_total_size.any_vec(),
-            self.txindex_to_txid.any_vec(),
-            self.txindex_to_txversion.any_vec(),
-            self.unknownoutputindex_to_txindex.any_vec(),
+            &self.emptyoutputindex_to_txindex,
+            &self.height_to_blockhash,
+            &self.height_to_difficulty,
+            &self.height_to_first_emptyoutputindex,
+            &self.height_to_first_inputindex,
+            &self.height_to_first_opreturnindex,
+            &self.height_to_first_outputindex,
+            &self.height_to_first_p2aindex,
+            &self.height_to_first_p2msindex,
+            &self.height_to_first_p2pk33index,
+            &self.height_to_first_p2pk65index,
+            &self.height_to_first_p2pkhindex,
+            &self.height_to_first_p2shindex,
+            &self.height_to_first_p2trindex,
+            &self.height_to_first_p2wpkhindex,
+            &self.height_to_first_p2wshindex,
+            &self.height_to_first_txindex,
+            &self.height_to_first_unknownoutputindex,
+            &self.height_to_timestamp,
+            &self.height_to_total_size,
+            &self.height_to_weight,
+            &self.inputindex_to_outputindex,
+            &self.opreturnindex_to_txindex,
+            &self.outputindex_to_outputtype,
+            &self.outputindex_to_outputtypeindex,
+            &self.outputindex_to_value,
+            &self.p2aindex_to_p2abytes,
+            &self.p2msindex_to_txindex,
+            &self.p2pk33index_to_p2pk33bytes,
+            &self.p2pk65index_to_p2pk65bytes,
+            &self.p2pkhindex_to_p2pkhbytes,
+            &self.p2shindex_to_p2shbytes,
+            &self.p2trindex_to_p2trbytes,
+            &self.p2wpkhindex_to_p2wpkhbytes,
+            &self.p2wshindex_to_p2wshbytes,
+            &self.txindex_to_base_size,
+            &self.txindex_to_first_inputindex,
+            &self.txindex_to_first_outputindex,
+            &self.txindex_to_is_explicitly_rbf,
+            &self.txindex_to_rawlocktime,
+            &self.txindex_to_total_size,
+            &self.txindex_to_txid,
+            &self.txindex_to_txversion,
+            &self.unknownoutputindex_to_txindex,
         ]
     }
 
-    fn mut_any_vecs(&mut self) -> Vec<&mut dyn AnyIndexedVec> {
+    fn mut_vecs(&mut self) -> Vec<&mut dyn AnyIndexedVec> {
         vec![
             &mut self.emptyoutputindex_to_txindex,
             &mut self.height_to_blockhash,

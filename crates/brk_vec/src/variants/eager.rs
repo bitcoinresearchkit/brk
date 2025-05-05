@@ -9,11 +9,13 @@ use std::{
 
 use brk_core::{Bitcoin, CheckedSub, Close, Dollars, Height, Sats, StoredUsize, TxIndex};
 use brk_exit::Exit;
-use brk_vec::{
-    Compressed, DynamicVec, Error, GenericVec, Result, StoredIndex, StoredType, StoredVec,
-    StoredVecIterator, Value, VecIterator, Version,
-};
 use log::info;
+
+use crate::{
+    AnyCollectableVec, AnyIterableVec, AnyVec, BoxedVecIterator, CollectableVec, Compressed, Error,
+    GenericStoredVec, Result, StoredIndex, StoredType, StoredVec, StoredVecIterator, Value,
+    VecIterator, Version,
+};
 
 const ONE_KIB: usize = 1024;
 const ONE_MIB: usize = ONE_KIB * ONE_KIB;
@@ -32,11 +34,7 @@ where
 {
     const SIZE_OF: usize = size_of::<T>();
 
-    pub fn forced_import(
-        path: &Path,
-        version: Version,
-        compressed: Compressed,
-    ) -> brk_vec::Result<Self> {
+    pub fn forced_import(path: &Path, version: Version, compressed: Compressed) -> Result<Self> {
         let inner = StoredVec::forced_import(path, version, compressed)?;
 
         Ok(Self {
@@ -105,21 +103,21 @@ where
         self.inner.modified_time()
     }
 
-    pub fn vec(&self) -> &StoredVec<I, T> {
-        &self.inner
-    }
+    // pub fn vec(&self) -> &StoredVec<I, T> {
+    //     &self.inner
+    // }
 
-    pub fn mut_vec(&mut self) -> &StoredVec<I, T> {
-        &mut self.inner
-    }
+    // pub fn mut_vec(&mut self) -> &StoredVec<I, T> {
+    //     &mut self.inner
+    // }
 
-    pub fn any_vec(&self) -> &dyn brk_vec::AnyVec {
-        &self.inner
-    }
+    // pub fn any_vec(&self) -> &dyn AnyVec {
+    //     &self.inner
+    // }
 
-    pub fn mut_any_vec(&mut self) -> &mut dyn brk_vec::AnyVec {
-        &mut self.inner
-    }
+    // pub fn mut_any_vec(&mut self) -> &mut dyn AnyVec {
+    //     &mut self.inner
+    // }
 
     pub fn path(&self) -> &Path {
         self.inner.path()
@@ -175,7 +173,7 @@ where
     pub fn compute_range<A, F>(
         &mut self,
         max_from: I,
-        other: &StoredVec<I, A>,
+        other: &impl AnyIterableVec<I, A>,
         t: F,
         exit: &Exit,
     ) -> Result<()>
@@ -189,7 +187,7 @@ where
     pub fn compute_transform<A, B, F>(
         &mut self,
         max_from: A,
-        other: &StoredVec<A, B>,
+        other: &impl AnyIterableVec<A, B>,
         mut t: F,
         exit: &Exit,
     ) -> Result<()>
@@ -214,7 +212,7 @@ where
     pub fn compute_inverse_more_to_less(
         &mut self,
         max_from: T,
-        other: &StoredVec<T, I>,
+        other: &impl AnyIterableVec<T, I>,
         exit: &Exit,
     ) -> Result<()>
     where
@@ -226,7 +224,8 @@ where
         )?;
 
         let index = max_from.min(
-            VecIterator::last(self.inner.iter()).map_or_else(T::default, |(_, v)| v.into_inner()),
+            VecIterator::last(self.inner.into_iter())
+                .map_or_else(T::default, |(_, v)| v.into_inner()),
         );
         let mut prev_i = None;
         other.iter_at(index).try_for_each(|(v, i)| -> Result<()> {
@@ -247,8 +246,8 @@ where
     pub fn compute_inverse_less_to_more(
         &mut self,
         max_from: T,
-        first_indexes: &StoredVec<T, I>,
-        indexes_count: &StoredVec<T, StoredUsize>,
+        first_indexes: &impl AnyIterableVec<T, I>,
+        indexes_count: &impl AnyIterableVec<T, StoredUsize>,
         exit: &Exit,
     ) -> Result<()>
     where
@@ -280,8 +279,8 @@ where
     pub fn compute_count_from_indexes<T2, T3>(
         &mut self,
         max_from: I,
-        first_indexes: &StoredVec<I, T2>,
-        other_to_else: &StoredVec<T2, T3>,
+        first_indexes: &impl AnyIterableVec<I, T2>,
+        other_to_else: &impl AnyIterableVec<T2, T3>,
         exit: &Exit,
     ) -> Result<()>
     where
@@ -303,8 +302,8 @@ where
     pub fn compute_filtered_count_from_indexes<T2, T3, F>(
         &mut self,
         max_from: I,
-        first_indexes: &StoredVec<I, T2>,
-        other_to_else: &StoredVec<T2, T3>,
+        first_indexes: &impl AnyIterableVec<I, T2>,
+        other_to_else: &impl AnyIterableVec<T2, T3>,
         filter: F,
         exit: &Exit,
     ) -> Result<()>
@@ -333,8 +332,8 @@ where
     fn compute_filtered_count_from_indexes_<T2, T3>(
         &mut self,
         max_from: I,
-        first_indexes: &StoredVec<I, T2>,
-        other_to_else: &StoredVec<T2, T3>,
+        first_indexes: &impl AnyIterableVec<I, T2>,
+        other_to_else: &impl AnyIterableVec<T2, T3>,
         mut filter: Option<Box<dyn FnMut(T2) -> bool + '_>>,
         exit: &Exit,
     ) -> Result<()>
@@ -351,7 +350,7 @@ where
         <T2 as TryInto<T>>::Error: error::Error + 'static,
     {
         self.validate_computed_version_or_reset_file(
-            Version::ZERO + self.inner.version() + first_indexes.version(), // + last_indexes.version(),
+            Version::ZERO + self.inner.version() + first_indexes.version(),
         )?;
 
         let mut other_iter = first_indexes.iter();
@@ -379,8 +378,8 @@ where
     pub fn compute_is_first_ordered<A>(
         &mut self,
         max_from: I,
-        self_to_other: &StoredVec<I, A>,
-        other_to_self: &StoredVec<A, I>,
+        self_to_other: &impl AnyIterableVec<I, A>,
+        other_to_self: &impl AnyIterableVec<A, I>,
         exit: &Exit,
     ) -> Result<()>
     where
@@ -411,9 +410,9 @@ where
     pub fn compute_sum_from_indexes<T2>(
         &mut self,
         max_from: I,
-        first_indexes: &StoredVec<I, T2>,
-        indexes_count: &StoredVec<I, StoredUsize>,
-        source: &StoredVec<T2, T>,
+        first_indexes: &impl AnyIterableVec<I, T2>,
+        indexes_count: &impl AnyIterableVec<I, StoredUsize>,
+        source: &impl AnyIterableVec<T2, T>,
         exit: &Exit,
     ) -> Result<()>
     where
@@ -454,7 +453,7 @@ where
     pub fn compute_from_sats(
         &mut self,
         max_from: I,
-        sats: &StoredVec<I, Sats>,
+        sats: &impl AnyIterableVec<I, Sats>,
         exit: &Exit,
     ) -> Result<()> {
         self.validate_computed_version_or_reset_file(
@@ -475,8 +474,8 @@ impl EagerVec<Height, Dollars> {
     pub fn compute_from_bitcoin(
         &mut self,
         max_from: Height,
-        bitcoin: &StoredVec<Height, Bitcoin>,
-        price: &StoredVec<Height, Close<Dollars>>,
+        bitcoin: &impl AnyIterableVec<Height, Bitcoin>,
+        price: &impl AnyIterableVec<Height, Close<Dollars>>,
         exit: &Exit,
     ) -> Result<()> {
         self.validate_computed_version_or_reset_file(
@@ -499,9 +498,9 @@ impl EagerVec<TxIndex, Dollars> {
     pub fn compute_from_bitcoin(
         &mut self,
         max_from: TxIndex,
-        bitcoin: &StoredVec<TxIndex, Bitcoin>,
-        i_to_height: &StoredVec<TxIndex, Height>,
-        price: &StoredVec<Height, Close<Dollars>>,
+        bitcoin: &impl AnyIterableVec<TxIndex, Bitcoin>,
+        i_to_height: &impl AnyIterableVec<TxIndex, Height>,
+        price: &impl AnyIterableVec<Height, Close<Dollars>>,
         exit: &Exit,
     ) -> Result<()> {
         self.validate_computed_version_or_reset_file(
@@ -532,5 +531,64 @@ where
 
     fn into_iter(self) -> Self::IntoIter {
         self.inner.into_iter()
+    }
+}
+
+impl<I, T> AnyVec for EagerVec<I, T>
+where
+    I: StoredIndex,
+    T: StoredType,
+{
+    #[inline]
+    fn version(&self) -> Version {
+        self.inner.version()
+    }
+
+    #[inline]
+    fn name(&self) -> String {
+        self.inner.name()
+    }
+
+    #[inline]
+    fn len(&self) -> usize {
+        self.inner.len()
+    }
+
+    #[inline]
+    fn modified_time(&self) -> Result<Duration> {
+        self.inner.modified_time()
+    }
+
+    #[inline]
+    fn index_type_to_string(&self) -> &str {
+        I::to_string()
+    }
+}
+
+impl<I, T> AnyIterableVec<I, T> for EagerVec<I, T>
+where
+    I: StoredIndex,
+    T: StoredType,
+{
+    fn boxed_iter<'a>(&'a self) -> BoxedVecIterator<'a, I, T>
+    where
+        I: StoredIndex,
+        T: StoredType + 'a,
+    {
+        Box::new(self.inner.into_iter())
+    }
+}
+
+impl<I, T> AnyCollectableVec for EagerVec<I, T>
+where
+    I: StoredIndex,
+    T: StoredType,
+{
+    fn collect_range_serde_json(
+        &self,
+        from: Option<i64>,
+        to: Option<i64>,
+    ) -> Result<Vec<serde_json::Value>> {
+        CollectableVec::collect_range_serde_json(self, from, to)
     }
 }

@@ -409,6 +409,7 @@ dependencies = [
  "brk_parser",
  "brk_query",
  "brk_server",
+ "brk_vec",
  "clap",
  "clap_derive",
  "color-eyre",
@@ -553,6 +554,7 @@ dependencies = [
  "brk_logger",
  "brk_parser",
  "brk_query",
+ "brk_vec",
  "clap",
  "clap_derive",
  "color-eyre",
@@ -572,6 +574,11 @@ name = "brk_vec"
 version = "0.0.31"
 dependencies = [
  "arc-swap",
+ "brk_core",
+ "brk_exit",
+ "clap",
+ "clap_derive",
+ "log",
  "memmap2",
  "rayon",
  "serde",

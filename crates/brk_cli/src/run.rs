@@ -5,13 +5,14 @@ use std::{
     time::Duration,
 };
 
-use brk_computer::{Computation, Computer};
+use brk_computer::Computer;
 use brk_core::{default_bitcoin_path, default_brk_path, dot_brk_path};
 use brk_exit::Exit;
 use brk_fetcher::Fetcher;
 use brk_indexer::Indexer;
 use brk_parser::rpc::{self, Auth, Client, RpcApi};
 use brk_server::{Server, Website, tokio};
+use brk_vec::Computation;
 use clap_derive::{Parser, ValueEnum};
 use color_eyre::eyre::eyre;
 use log::info;

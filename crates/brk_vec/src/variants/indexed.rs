@@ -2,21 +2,20 @@ use std::{
     cmp::Ordering,
     fmt::Debug,
     path::{Path, PathBuf},
+    time::Duration,
 };
 
-use brk_vec::{
-    Compressed, DynamicVec, Error, GenericVec, Mmap, Result, StoredIndex, StoredType, StoredVec,
-    StoredVecIterator, Value, VecIterator, Version,
+use brk_core::Height;
+
+use crate::{
+    AnyCollectableVec, AnyIterableVec, AnyVec, BoxedVecIterator, CollectableVec, Compressed, Error,
+    GenericStoredVec, Mmap, Result, StoredIndex, StoredType, StoredVec, Value, Version,
 };
 
-use super::Height;
+use super::StoredVecIterator;
 
 #[derive(Debug, Clone)]
-pub struct IndexedVec<I, T>
-where
-    I: StoredIndex,
-    T: StoredType,
-{
+pub struct IndexedVec<I, T> {
     height: Option<Height>,
     inner: StoredVec<I, T>,
 }
@@ -26,11 +25,7 @@ where
     I: StoredIndex,
     T: StoredType,
 {
-    pub fn forced_import(
-        path: &Path,
-        version: Version,
-        compressed: Compressed,
-    ) -> brk_vec::Result<Self> {
+    pub fn forced_import(path: &Path, version: Version, compressed: Compressed) -> Result<Self> {
         Ok(Self {
             height: Height::try_from(Self::path_height_(path).as_path()).ok(),
             inner: StoredVec::forced_import(path, version, compressed)?,
@@ -44,7 +39,8 @@ where
 
     #[inline]
     pub fn push_if_needed(&mut self, index: I, value: T) -> Result<()> {
-        match self.inner.len().cmp(&index.to_usize()?) {
+        let len = self.inner.len();
+        match len.cmp(&index.to_usize()?) {
             Ordering::Greater => {
                 // dbg!(len, index, &self.pathbuf);
                 // panic!();
@@ -55,13 +51,13 @@ where
                 Ok(())
             }
             Ordering::Less => {
-                dbg!(index, value, self.inner.len(), self.path_height());
+                dbg!(index, value, len, self.path_height());
                 Err(Error::IndexTooHigh)
             }
         }
     }
 
-    pub fn truncate_if_needed(&mut self, index: I, height: Height) -> brk_vec::Result<()> {
+    pub fn truncate_if_needed(&mut self, index: I, height: Height) -> Result<()> {
         if self.height.is_none_or(|self_height| self_height != height) {
             height.write(&self.path_height())?;
         }
@@ -82,18 +78,6 @@ where
         &mut self.inner
     }
 
-    pub fn any_vec(&self) -> &dyn brk_vec::AnyVec {
-        &self.inner
-    }
-
-    pub fn len(&self) -> usize {
-        self.inner.len()
-    }
-
-    pub fn is_empty(&self) -> bool {
-        self.inner.is_empty()
-    }
-
     #[inline]
     pub fn hasnt(&self, index: I) -> Result<bool> {
         self.inner.has(index).map(|b| !b)
@@ -108,19 +92,40 @@ where
     fn path_height_(path: &Path) -> PathBuf {
         path.join("height")
     }
+}
 
-    pub fn iter(&self) -> StoredVecIterator<'_, I, T> {
-        self.into_iter()
+impl<I, T> AnyVec for IndexedVec<I, T>
+where
+    I: StoredIndex,
+    T: StoredType,
+{
+    #[inline]
+    fn version(&self) -> Version {
+        self.inner.version()
     }
 
-    pub fn iter_at(&self, i: I) -> StoredVecIterator<'_, I, T> {
-        let mut iter = self.into_iter();
-        iter.set(i);
-        iter
+    #[inline]
+    fn name(&self) -> String {
+        self.inner.name()
+    }
+
+    #[inline]
+    fn len(&self) -> usize {
+        self.inner.len()
+    }
+
+    #[inline]
+    fn modified_time(&self) -> Result<Duration> {
+        self.inner.modified_time()
+    }
+
+    #[inline]
+    fn index_type_to_string(&self) -> &str {
+        I::to_string()
     }
 }
 
-pub trait AnyIndexedVec: Send + Sync {
+pub trait AnyIndexedVec: AnyVec {
     fn height(&self) -> brk_core::Result<Height>;
     fn flush(&mut self, height: Height) -> Result<()>;
 }
@@ -149,5 +154,32 @@ where
 
     fn into_iter(self) -> Self::IntoIter {
         self.inner.into_iter()
+    }
+}
+
+impl<I, T> AnyIterableVec<I, T> for IndexedVec<I, T>
+where
+    I: StoredIndex,
+    T: StoredType,
+{
+    fn boxed_iter<'a>(&'a self) -> BoxedVecIterator<'a, I, T>
+    where
+        T: 'a,
+    {
+        Box::new(self.into_iter())
+    }
+}
+
+impl<I, T> AnyCollectableVec for IndexedVec<I, T>
+where
+    I: StoredIndex,
+    T: StoredType,
+{
+    fn collect_range_serde_json(
+        &self,
+        from: Option<i64>,
+        to: Option<i64>,
+    ) -> Result<Vec<serde_json::Value>> {
+        CollectableVec::collect_range_serde_json(self, from, to)
     }
 }

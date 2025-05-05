@@ -6,17 +6,70 @@ use std::{
     time::{self, Duration},
 };
 
+use arc_swap::ArcSwap;
 use memmap2::Mmap;
 
-use crate::{Error, Result, Version};
+use crate::{Result, Value};
 
-use super::{DynamicVec, StoredIndex, StoredType};
+use super::{StoredIndex, StoredType};
 
-pub trait GenericVec<I, T>: DynamicVec<I = I, T = T>
+pub trait GenericStoredVec<I, T>: Send + Sync
 where
     I: StoredIndex,
     T: StoredType,
 {
+    const SIZE_OF_T: usize = size_of::<T>();
+
+    #[inline]
+    fn read(&self, index: I, mmap: &Mmap) -> Result<Option<T>> {
+        self.read_(index.to_usize()?, mmap)
+    }
+    fn read_(&self, index: usize, mmap: &Mmap) -> Result<Option<T>>;
+
+    #[inline]
+    fn get_or_read(&self, index: I, mmap: &Mmap) -> Result<Option<Value<T>>> {
+        self.get_or_read_(index.to_usize()?, mmap)
+    }
+    #[inline]
+    fn get_or_read_(&self, index: usize, mmap: &Mmap) -> Result<Option<Value<T>>> {
+        let stored_len = mmap.len() / Self::SIZE_OF_T;
+
+        if index >= stored_len {
+            let pushed = self.pushed();
+            let j = index - stored_len;
+            if j >= pushed.len() {
+                return Ok(None);
+            }
+            Ok(pushed.get(j).map(Value::Ref))
+        } else {
+            Ok(self.read_(index, mmap)?.map(Value::Owned))
+        }
+    }
+
+    #[inline]
+    fn len_(&self) -> usize {
+        self.stored_len() + self.pushed_len()
+    }
+
+    fn mmap(&self) -> &ArcSwap<Mmap>;
+
+    fn stored_len(&self) -> usize;
+
+    fn pushed(&self) -> &[T];
+    #[inline]
+    fn pushed_len(&self) -> usize {
+        self.pushed().len()
+    }
+    fn mut_pushed(&mut self) -> &mut Vec<T>;
+    #[inline]
+    fn push(&mut self, value: T) {
+        self.mut_pushed().push(value)
+    }
+
+    fn path(&self) -> &Path;
+
+    // ---
+
     fn open_file(&self) -> io::Result<File> {
         Self::open_file_(&self.path_vec())
     }
@@ -74,54 +127,17 @@ where
     }
 
     #[inline]
-    fn has(&self, index: Self::I) -> Result<bool> {
+    fn has(&self, index: I) -> Result<bool> {
         Ok(self.has_(index.to_usize()?))
     }
     #[inline]
     fn has_(&self, index: usize) -> bool {
-        index < self.len()
-    }
-
-    #[inline]
-    fn index_type_to_string(&self) -> &str {
-        Self::I::to_string()
+        index < self.len_()
     }
 
     fn flush(&mut self) -> Result<()>;
 
-    fn truncate_if_needed(&mut self, index: Self::I) -> Result<()>;
-
-    fn collect_range(&self, from: Option<usize>, to: Option<usize>) -> Result<Vec<Self::T>>;
-
-    #[inline]
-    fn i64_to_usize(i: i64, len: usize) -> usize {
-        if i >= 0 {
-            i as usize
-        } else {
-            let v = len as i64 + i;
-            if v < 0 { 0 } else { v as usize }
-        }
-    }
-
-    #[doc(hidden)]
-    fn collect_signed_range(&self, from: Option<i64>, to: Option<i64>) -> Result<Vec<Self::T>> {
-        let len = self.len();
-        let from = from.map(|i| Self::i64_to_usize(i, len));
-        let to = to.map(|i| Self::i64_to_usize(i, len));
-        self.collect_range(from, to)
-    }
-
-    #[inline]
-    fn collect_range_serde_json(
-        &self,
-        from: Option<i64>,
-        to: Option<i64>,
-    ) -> Result<Vec<serde_json::Value>> {
-        self.collect_signed_range(from, to)?
-            .into_iter()
-            .map(|v| serde_json::to_value(v).map_err(Error::from))
-            .collect::<Result<Vec<_>>>()
-    }
+    fn truncate_if_needed(&mut self, index: I) -> Result<()>;
 
     #[inline]
     fn path_vec(&self) -> PathBuf {
@@ -143,7 +159,7 @@ where
     }
 
     #[inline]
-    fn name(&self) -> String {
+    fn name_(&self) -> String {
         self.path()
             .file_name()
             .unwrap()
@@ -152,13 +168,11 @@ where
             .to_owned()
     }
 
-    fn modified_time(&self) -> Result<Duration> {
+    fn modified_time_(&self) -> Result<Duration> {
         Ok(self
             .path_vec()
             .metadata()?
             .modified()?
             .duration_since(time::UNIX_EPOCH)?)
     }
-
-    fn version(&self) -> Version;
 }

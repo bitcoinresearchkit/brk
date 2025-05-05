@@ -5,10 +5,10 @@ use brk_core::{
     P2SHIndex, P2TRIndex, P2WPKHIndex, P2WSHIndex, TxIndex, UnknownOutputIndex,
 };
 use brk_parser::NUMBER_OF_UNSAFE_BLOCKS;
-use brk_vec::{StoredIndex, StoredType, VecIterator};
+use brk_vec::{AnyIterableVec, AnyVec, IndexedVec, StoredIndex, StoredType};
 use color_eyre::eyre::ContextCompat;
 
-use crate::{IndexedVec, Stores, Vecs};
+use crate::{Stores, Vecs};
 
 #[derive(Debug, Default, Clone)]
 pub struct Indexes {
