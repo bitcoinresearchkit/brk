@@ -36,11 +36,11 @@ impl Computation {
 }
 
 #[derive(Clone)]
-pub enum Dependencies<T, S1I, S1T, S2I, S2T, S3I, S3T> {
-    From1(BoxedAnyIterableVec<S1I, S1T>, ComputeFrom1<T, S1I, S1T>),
+pub enum Dependencies<I, T, S1I, S1T, S2I, S2T, S3I, S3T> {
+    From1(BoxedAnyIterableVec<S1I, S1T>, ComputeFrom1<I, T, S1I, S1T>),
     From2(
         (BoxedAnyIterableVec<S1I, S1T>, BoxedAnyIterableVec<S2I, S2T>),
-        ComputeFrom2<T, S1I, S1T, S2I, S2T>,
+        ComputeFrom2<I, T, S1I, S1T, S2I, S2T>,
     ),
     From3(
         (
@@ -48,7 +48,7 @@ pub enum Dependencies<T, S1I, S1T, S2I, S2T, S3I, S3T> {
             BoxedAnyIterableVec<S2I, S2T>,
             BoxedAnyIterableVec<S3I, S3T>,
         ),
-        ComputeFrom3<T, S1I, S1T, S2I, S2T, S3I, S3T>,
+        ComputeFrom3<I, T, S1I, S1T, S2I, S2T, S3I, S3T>,
     ),
 }
 
@@ -63,7 +63,7 @@ pub type ComputedVecFrom3<I, T, S1I, S1T, S2I, S2T, S3I, S3T> =
 pub enum ComputedVec<I, T, S1I, S1T, S2I, S2T, S3I, S3T> {
     Eager {
         vec: EagerVec<I, T>,
-        deps: Dependencies<T, S1I, S1T, S2I, S2T, S3I, S3T>,
+        deps: Dependencies<I, T, S1I, S1T, S2I, S2T, S3I, S3T>,
     },
     LazyFrom1(LazyVecFrom1<I, T, S1I, S1T>),
     LazyFrom2(LazyVecFrom2<I, T, S1I, S1T, S2I, S2T>),
@@ -88,7 +88,7 @@ where
         version: Version,
         compressed: Compressed,
         source: BoxedAnyIterableVec<S1I, S1T>,
-        compute: ComputeFrom1<T, S1I, S1T>,
+        compute: ComputeFrom1<I, T, S1I, S1T>,
     ) -> Result<Self> {
         Ok(match mode {
             Computation::Eager => Self::Eager {
@@ -110,7 +110,7 @@ where
         compressed: Compressed,
         source1: BoxedAnyIterableVec<S1I, S1T>,
         source2: BoxedAnyIterableVec<S2I, S2T>,
-        compute: ComputeFrom2<T, S1I, S1T, S2I, S2T>,
+        compute: ComputeFrom2<I, T, S1I, S1T, S2I, S2T>,
     ) -> Result<Self> {
         Ok(match mode {
             Computation::Eager => Self::Eager {
@@ -133,7 +133,7 @@ where
         source1: BoxedAnyIterableVec<S1I, S1T>,
         source2: BoxedAnyIterableVec<S2I, S2T>,
         source3: BoxedAnyIterableVec<S3I, S3T>,
-        compute: ComputeFrom3<T, S1I, S1T, S2I, S2T, S3I, S3T>,
+        compute: ComputeFrom3<I, T, S1I, S1T, S2I, S2T, S3I, S3T>,
     ) -> Result<Self> {
         Ok(match mode {
             Computation::Eager => Self::Eager {
@@ -161,11 +161,7 @@ where
             Dependencies::From1(source, compute) => {
                 let version = source.version();
                 let mut iter = source.iter();
-                let t = |i: I| {
-                    compute(i.unwrap_to_usize(), &mut *iter)
-                        .map(|v| (i, v))
-                        .unwrap()
-                };
+                let t = |i: I| compute(i, &mut *iter).map(|v| (i, v)).unwrap();
                 vec.compute_to(max_from, 1, version, t, exit)
             }
             Dependencies::From2((source1, source2), compute) => {
@@ -173,7 +169,7 @@ where
                 let mut iter1 = source1.iter();
                 let mut iter2 = source2.iter();
                 let t = |i: I| {
-                    compute(i.unwrap_to_usize(), &mut *iter1, &mut *iter2)
+                    compute(i, &mut *iter1, &mut *iter2)
                         .map(|v| (i, v))
                         .unwrap()
                 };
@@ -185,7 +181,7 @@ where
                 let mut iter2 = source2.iter();
                 let mut iter3 = source3.iter();
                 let t = |i: I| {
-                    compute(i.unwrap_to_usize(), &mut *iter1, &mut *iter2, &mut *iter3)
+                    compute(i, &mut *iter1, &mut *iter2, &mut *iter3)
                         .map(|v| (i, v))
                         .unwrap()
                 };

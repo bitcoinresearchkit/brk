@@ -163,11 +163,6 @@ where
 
         Ok(())
     }
-
-    // #[inline]
-    // fn version(&self) -> Version {
-    //     self.version
-    // }
 }
 
 impl<I, T> AnyVec for RawVec<I, T>

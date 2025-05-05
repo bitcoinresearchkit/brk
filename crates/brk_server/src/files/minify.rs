@@ -4,7 +4,7 @@ use std::{fs, path::Path};
 
 use oxc::{
     allocator::Allocator,
-    codegen::{CodeGenerator, CodegenOptions, LegalComment},
+    codegen::{Codegen, CodegenOptions, LegalComment},
     minifier::{CompressOptions, MangleOptions, Minifier, MinifierOptions},
     parser::Parser,
     span::SourceType,
@@ -26,7 +26,7 @@ pub fn minify_js(path: &Path) -> String {
     })
     .build(&allocator, &mut program);
 
-    CodeGenerator::new()
+    Codegen::new()
         .with_options(CodegenOptions {
             minify: true,
             single_quote: false,

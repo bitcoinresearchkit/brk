@@ -5,15 +5,15 @@ use crate::{
     BoxedVecIterator, CollectableVec, Result, StoredIndex, StoredType, Value, Version,
 };
 
-pub type ComputeFrom1<T, S1I, S1T> =
-    for<'a> fn(usize, &mut dyn BaseVecIterator<Item = (S1I, Value<'a, S1T>)>) -> Option<T>;
+pub type ComputeFrom1<I, T, S1I, S1T> =
+    for<'a> fn(I, &mut dyn BaseVecIterator<Item = (S1I, Value<'a, S1T>)>) -> Option<T>;
 
 #[derive(Clone)]
 pub struct LazyVecFrom1<I, T, S1I, S1T> {
     name: String,
     version: Version,
     source: BoxedAnyIterableVec<S1I, S1T>,
-    compute: ComputeFrom1<T, S1I, S1T>,
+    compute: ComputeFrom1<I, T, S1I, S1T>,
     phantom: PhantomData<I>,
 }
 
@@ -28,7 +28,7 @@ where
         name: &str,
         version: Version,
         source: BoxedAnyIterableVec<S1I, S1T>,
-        compute: ComputeFrom1<T, S1I, S1T>,
+        compute: ComputeFrom1<I, T, S1I, S1T>,
     ) -> Self {
         Self {
             name: name.to_owned(),
@@ -60,8 +60,8 @@ where
     type Item = (I, Value<'a, T>);
 
     fn next(&mut self) -> Option<Self::Item> {
-        let opt = (self.lazy.compute)(self.index, &mut *self.source)
-            .map(|v| (I::from(self.index), Value::Owned(v)));
+        let index = I::from(self.index);
+        let opt = (self.lazy.compute)(index, &mut *self.source).map(|v| (index, Value::Owned(v)));
         if opt.is_some() {
             self.index += 1;
         }
