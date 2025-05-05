@@ -7,10 +7,10 @@ use brk_core::{
 use brk_exit::Exit;
 use brk_indexer::Indexer;
 use brk_parser::bitcoin;
-use brk_vec::{Compressed, VecIterator, Version};
+use brk_vec::{AnyIterableVec, Compressed, Computation, EagerVec, VecIterator, Version};
 
 use super::{
-    EagerVec, Indexes,
+    Indexes,
     grouped::{ComputedVecsFromDateindex, ComputedVecsFromHeight, StorableVecGeneatorOptions},
     indexes,
 };
@@ -30,7 +30,11 @@ pub struct Vecs {
 }
 
 impl Vecs {
-    pub fn forced_import(path: &Path, compressed: Compressed) -> color_eyre::Result<Self> {
+    pub fn forced_import(
+        path: &Path,
+        computation: Computation,
+        compressed: Compressed,
+    ) -> color_eyre::Result<Self> {
         fs::create_dir_all(path)?;
 
         Ok(Self {
@@ -223,7 +227,7 @@ impl Vecs {
         Ok(())
     }
 
-    pub fn any_vecs(&self) -> Vec<&dyn brk_vec::AnyVec> {
+    pub fn vecs(&self) -> Vec<&dyn brk_vec::AnyVec> {
         [
             vec![
                 self.height_to_interval.any_vec(),
@@ -231,12 +235,12 @@ impl Vecs {
                 self.difficultyepoch_to_timestamp.any_vec(),
                 self.halvingepoch_to_timestamp.any_vec(),
             ],
-            self.timeindexes_to_timestamp.any_vecs(),
-            self.indexes_to_block_count.any_vecs(),
-            self.indexes_to_block_interval.any_vecs(),
-            self.indexes_to_block_size.any_vecs(),
-            self.indexes_to_block_vbytes.any_vecs(),
-            self.indexes_to_block_weight.any_vecs(),
+            self.timeindexes_to_timestamp.vecs(),
+            self.indexes_to_block_count.vecs(),
+            self.indexes_to_block_interval.vecs(),
+            self.indexes_to_block_size.vecs(),
+            self.indexes_to_block_vbytes.vecs(),
+            self.indexes_to_block_weight.vecs(),
         ]
         .concat()
     }

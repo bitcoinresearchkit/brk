@@ -3,7 +3,7 @@ use std::{fs, path::Path};
 use brk_core::{DifficultyEpoch, HalvingEpoch, StoredF64};
 use brk_exit::Exit;
 use brk_indexer::Indexer;
-use brk_vec::{Compressed, VecIterator, Version};
+use brk_vec::{Compressed, Computation, VecIterator, Version};
 
 use super::{
     Indexes,
@@ -19,7 +19,11 @@ pub struct Vecs {
 }
 
 impl Vecs {
-    pub fn forced_import(path: &Path, compressed: Compressed) -> color_eyre::Result<Self> {
+    pub fn forced_import(
+        path: &Path,
+        computation: Computation,
+        compressed: Compressed,
+    ) -> color_eyre::Result<Self> {
         fs::create_dir_all(path)?;
 
         Ok(Self {
@@ -113,11 +117,11 @@ impl Vecs {
         Ok(())
     }
 
-    pub fn any_vecs(&self) -> Vec<&dyn brk_vec::AnyVec> {
+    pub fn vecs(&self) -> Vec<&dyn brk_vec::AnyVec> {
         [
-            self.indexes_to_difficulty.any_vecs(),
-            self.indexes_to_difficultyepoch.any_vecs(),
-            self.indexes_to_halvingepoch.any_vecs(),
+            self.indexes_to_difficulty.vecs(),
+            self.indexes_to_difficultyepoch.vecs(),
+            self.indexes_to_halvingepoch.vecs(),
         ]
         .concat()
     }

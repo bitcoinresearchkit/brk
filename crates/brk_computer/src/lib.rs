@@ -12,9 +12,8 @@ pub use brk_parser::rpc;
 
 mod storage;
 
-use brk_vec::Compressed;
+use brk_vec::{AnyCollectableVec, Compressed, Computation};
 use log::info;
-pub use storage::Computation;
 use storage::{Stores, Vecs};
 
 #[derive(Clone)]
@@ -82,13 +81,14 @@ impl Computer {
         Ok(())
     }
 
-    pub fn vecs(&self) -> &Vecs {
-        self.vecs.as_ref().unwrap()
+    pub fn vecs(&self) -> Vec<&dyn AnyCollectableVec> {
+        // pub fn vecs(&self) -> &Vecs {
+        self.vecs.as_ref().unwrap().vecs()
     }
 
-    pub fn mut_vecs(&mut self) -> &mut Vecs {
-        self.vecs.as_mut().unwrap()
-    }
+    // pub fn mut_vecs(&mut self) -> &mut Vecs {
+    //     self.vecs.as_mut().unwrap()
+    // }
 
     pub fn stores(&self) -> &Stores {
         self.stores.as_ref().unwrap()

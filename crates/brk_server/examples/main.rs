@@ -1,6 +1,6 @@
 use std::{path::Path, thread::sleep, time::Duration};
 
-use brk_computer::{Computation, Computer};
+use brk_computer::Computer;
 use brk_core::default_bitcoin_path;
 use brk_exit::Exit;
 use brk_fetcher::Fetcher;
@@ -10,6 +10,7 @@ use brk_parser::{
     rpc::{self, RpcApi},
 };
 use brk_server::{Server, Website};
+use brk_vec::Computation;
 
 pub fn main() -> color_eyre::Result<()> {
     color_eyre::install()?;

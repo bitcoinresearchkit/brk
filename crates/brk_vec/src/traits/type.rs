@@ -17,6 +17,7 @@ where
         + Serialize,
 {
 }
+
 impl<T> StoredType for T where
     T: Sized
         + Debug

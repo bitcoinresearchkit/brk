@@ -4,21 +4,17 @@ use brk_exit::Exit;
 use clap_derive::ValueEnum;
 use serde::{Deserialize, Serialize};
 
-mod _type;
-mod eager;
-mod lazy1;
-mod lazy2;
-mod lazy3;
-
-pub use _type::*;
 use brk_core::StoredPhantom;
-use brk_vec::{
-    AnyVec, Compressed, GenericVec, Result, StoredIndex, StoredType, StoredVec, Version,
+
+use crate::{
+    AnyCollectableVec, AnyIterableVec, AnyVec, BaseVecIterator, BoxedAnyIterableVec,
+    BoxedVecIterator, CollectableVec, Compressed, Result, StoredIndex, StoredType, Value, Version,
 };
-pub use eager::*;
-pub use lazy1::*;
-pub use lazy2::*;
-pub use lazy3::*;
+
+use super::{
+    ComputeFrom1, ComputeFrom2, ComputeFrom3, EagerVec, LazyVecFrom1, LazyVecFrom1Iterator,
+    LazyVecFrom2, LazyVecFrom2Iterator, LazyVecFrom3, LazyVecFrom3Iterator, StoredVecIterator,
+};
 
 #[derive(
     Default, Debug, PartialEq, PartialOrd, Ord, Eq, Clone, Copy, Serialize, Deserialize, ValueEnum,
@@ -41,16 +37,16 @@ impl Computation {
 
 #[derive(Clone)]
 pub enum Dependencies<T, S1I, S1T, S2I, S2T, S3I, S3T> {
-    From1(StoredVec<S1I, S1T>, ComputeFrom1<T, S1I, S1T>),
+    From1(BoxedAnyIterableVec<S1I, S1T>, ComputeFrom1<T, S1I, S1T>),
     From2(
-        (StoredVec<S1I, S1T>, StoredVec<S2I, S2T>),
+        (BoxedAnyIterableVec<S1I, S1T>, BoxedAnyIterableVec<S2I, S2T>),
         ComputeFrom2<T, S1I, S1T, S2I, S2T>,
     ),
     From3(
         (
-            StoredVec<S1I, S1T>,
-            StoredVec<S2I, S2T>,
-            StoredVec<S3I, S3T>,
+            BoxedAnyIterableVec<S1I, S1T>,
+            BoxedAnyIterableVec<S2I, S2T>,
+            BoxedAnyIterableVec<S3I, S3T>,
         ),
         ComputeFrom3<T, S1I, S1T, S2I, S2T, S3I, S3T>,
     ),
@@ -91,9 +87,9 @@ where
         name: &str,
         version: Version,
         compressed: Compressed,
-        source: StoredVec<S1I, S1T>,
+        source: BoxedAnyIterableVec<S1I, S1T>,
         compute: ComputeFrom1<T, S1I, S1T>,
-    ) -> brk_vec::Result<Self> {
+    ) -> Result<Self> {
         Ok(match mode {
             Computation::Eager => Self::Eager {
                 vec: EagerVec::forced_import(path, version, compressed)?,
@@ -112,10 +108,10 @@ where
         mode: Computation,
         version: Version,
         compressed: Compressed,
-        source1: StoredVec<S1I, S1T>,
-        source2: StoredVec<S2I, S2T>,
+        source1: BoxedAnyIterableVec<S1I, S1T>,
+        source2: BoxedAnyIterableVec<S2I, S2T>,
         compute: ComputeFrom2<T, S1I, S1T, S2I, S2T>,
-    ) -> brk_vec::Result<Self> {
+    ) -> Result<Self> {
         Ok(match mode {
             Computation::Eager => Self::Eager {
                 vec: EagerVec::forced_import(path, version, compressed)?,
@@ -134,11 +130,11 @@ where
         name: &str,
         version: Version,
         compressed: Compressed,
-        source1: StoredVec<S1I, S1T>,
-        source2: StoredVec<S2I, S2T>,
-        source3: StoredVec<S3I, S3T>,
+        source1: BoxedAnyIterableVec<S1I, S1T>,
+        source2: BoxedAnyIterableVec<S2I, S2T>,
+        source3: BoxedAnyIterableVec<S3I, S3T>,
         compute: ComputeFrom3<T, S1I, S1T, S2I, S2T, S3I, S3T>,
-    ) -> brk_vec::Result<Self> {
+    ) -> Result<Self> {
         Ok(match mode {
             Computation::Eager => Self::Eager {
                 vec: EagerVec::forced_import(path, version, compressed)?,
@@ -166,7 +162,7 @@ where
                 let version = source.version();
                 let mut iter = source.iter();
                 let t = |i: I| {
-                    compute(i.unwrap_to_usize(), &mut iter)
+                    compute(i.unwrap_to_usize(), &mut *iter)
                         .map(|v| (i, v))
                         .unwrap()
                 };
@@ -177,7 +173,7 @@ where
                 let mut iter1 = source1.iter();
                 let mut iter2 = source2.iter();
                 let t = |i: I| {
-                    compute(i.unwrap_to_usize(), &mut iter1, &mut iter2)
+                    compute(i.unwrap_to_usize(), &mut *iter1, &mut *iter2)
                         .map(|v| (i, v))
                         .unwrap()
                 };
@@ -189,7 +185,7 @@ where
                 let mut iter2 = source2.iter();
                 let mut iter3 = source3.iter();
                 let t = |i: I| {
-                    compute(i.unwrap_to_usize(), &mut iter1, &mut iter2, &mut iter3)
+                    compute(i.unwrap_to_usize(), &mut *iter1, &mut *iter2, &mut *iter3)
                         .map(|v| (i, v))
                         .unwrap()
                 };
@@ -210,6 +206,15 @@ where
     S3I: StoredIndex,
     S3T: StoredType,
 {
+    fn version(&self) -> Version {
+        match self {
+            ComputedVec::Eager { vec, .. } => vec.version(),
+            ComputedVec::LazyFrom1(v) => v.version(),
+            ComputedVec::LazyFrom2(v) => v.version(),
+            ComputedVec::LazyFrom3(v) => v.version(),
+        }
+    }
+
     fn name(&self) -> String {
         match self {
             ComputedVec::Eager { vec, .. } => vec.name(),
@@ -232,14 +237,6 @@ where
         }
     }
 
-    fn collect_range_serde_json(
-        &self,
-        from: Option<i64>,
-        to: Option<i64>,
-    ) -> Result<Vec<serde_json::Value>> {
-        todo!()
-    }
-
     fn modified_time(&self) -> Result<Duration> {
         match self {
             ComputedVec::Eager { vec, .. } => vec.modified_time(),
@@ -247,5 +244,133 @@ where
             ComputedVec::LazyFrom2(v) => v.modified_time(),
             ComputedVec::LazyFrom3(v) => v.modified_time(),
         }
+    }
+}
+
+pub enum ComputedVecIterator<'a, I, T, S1I, S1T, S2I, S2T, S3I, S3T> {
+    Eager(StoredVecIterator<'a, I, T>),
+    LazyFrom1(LazyVecFrom1Iterator<'a, I, T, S1I, S1T>),
+    LazyFrom2(LazyVecFrom2Iterator<'a, I, T, S1I, S1T, S2I, S2T>),
+    LazyFrom3(LazyVecFrom3Iterator<'a, I, T, S1I, S1T, S2I, S2T, S3I, S3T>),
+}
+
+impl<'a, I, T, S1I, S1T, S2I, S2T, S3I, S3T> Iterator
+    for ComputedVecIterator<'a, I, T, S1I, S1T, S2I, S2T, S3I, S3T>
+where
+    I: StoredIndex,
+    T: StoredType,
+    S1I: StoredIndex,
+    S1T: StoredType,
+    S2I: StoredIndex,
+    S2T: StoredType,
+    S3I: StoredIndex,
+    S3T: StoredType,
+{
+    type Item = (I, Value<'a, T>);
+    fn next(&mut self) -> Option<Self::Item> {
+        match self {
+            Self::Eager(i) => i.next(),
+            Self::LazyFrom1(i) => i.next(),
+            Self::LazyFrom2(i) => i.next(),
+            Self::LazyFrom3(i) => i.next(),
+        }
+    }
+}
+
+impl<I, T, S1I, S1T, S2I, S2T, S3I, S3T> BaseVecIterator
+    for ComputedVecIterator<'_, I, T, S1I, S1T, S2I, S2T, S3I, S3T>
+where
+    I: StoredIndex,
+    T: StoredType,
+    S1I: StoredIndex,
+    S1T: StoredType,
+    S2I: StoredIndex,
+    S2T: StoredType,
+    S3I: StoredIndex,
+    S3T: StoredType,
+{
+    #[inline]
+    fn mut_index(&mut self) -> &mut usize {
+        match self {
+            Self::Eager(i) => i.mut_index(),
+            Self::LazyFrom1(i) => i.mut_index(),
+            Self::LazyFrom2(i) => i.mut_index(),
+            Self::LazyFrom3(i) => i.mut_index(),
+        }
+    }
+
+    fn len(&self) -> usize {
+        match self {
+            Self::Eager(i) => i.len(),
+            Self::LazyFrom1(i) => i.len(),
+            Self::LazyFrom2(i) => i.len(),
+            Self::LazyFrom3(i) => i.len(),
+        }
+    }
+}
+
+impl<'a, I, T, S1I, S1T, S2I, S2T, S3I, S3T> IntoIterator
+    for &'a ComputedVec<I, T, S1I, S1T, S2I, S2T, S3I, S3T>
+where
+    I: StoredIndex,
+    T: StoredType,
+    S1I: StoredIndex,
+    S1T: StoredType,
+    S2I: StoredIndex,
+    S2T: StoredType,
+    S3I: StoredIndex,
+    S3T: StoredType,
+{
+    type Item = (I, Value<'a, T>);
+    type IntoIter = ComputedVecIterator<'a, I, T, S1I, S1T, S2I, S2T, S3I, S3T>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        match self {
+            ComputedVec::Eager { vec, .. } => ComputedVecIterator::Eager(vec.into_iter()),
+            ComputedVec::LazyFrom1(v) => ComputedVecIterator::LazyFrom1(v.into_iter()),
+            ComputedVec::LazyFrom2(v) => ComputedVecIterator::LazyFrom2(v.into_iter()),
+            ComputedVec::LazyFrom3(v) => ComputedVecIterator::LazyFrom3(v.into_iter()),
+        }
+    }
+}
+
+impl<I, T, S1I, S1T, S2I, S2T, S3I, S3T> AnyIterableVec<I, T>
+    for ComputedVec<I, T, S1I, S1T, S2I, S2T, S3I, S3T>
+where
+    I: StoredIndex,
+    T: StoredType,
+    S1I: StoredIndex,
+    S1T: StoredType,
+    S2I: StoredIndex,
+    S2T: StoredType,
+    S3I: StoredIndex,
+    S3T: StoredType,
+{
+    fn boxed_iter<'a>(&'a self) -> BoxedVecIterator<'a, I, T>
+    where
+        T: 'a,
+    {
+        Box::new(self.into_iter())
+    }
+}
+
+impl<I, T, S1I, S1T, S2I, S2T, S3I, S3T> AnyCollectableVec
+    for ComputedVec<I, T, S1I, S1T, S2I, S2T, S3I, S3T>
+where
+    I: StoredIndex,
+    T: StoredType,
+    S1I: StoredIndex,
+    S1T: StoredType,
+    S2I: StoredIndex,
+    S2T: StoredType,
+    S3I: StoredIndex,
+    S3T: StoredType,
+{
+    fn collect_range_serde_json(
+        &self,
+        from: Option<i64>,
+        to: Option<i64>,
+    ) -> Result<Vec<serde_json::Value>> {
+        CollectableVec::collect_range_serde_json(self, from, to)
     }
 }

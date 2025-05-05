@@ -6,10 +6,13 @@ use brk_core::{
 use brk_exit::Exit;
 use brk_indexer::Indexer;
 use brk_parser::bitcoin;
-use brk_vec::{AnyVec, Compressed, StoredIndex, VecIterator, Version};
+use brk_vec::{
+    AnyIterableVec, AnyVec, Compressed, Computation, ComputedVec, ComputedVecFrom2, EagerVec,
+    StoredIndex, VecIterator, Version,
+};
 
 use super::{
-    Computation, ComputedVec, ComputedVecFrom2, EagerVec, Indexes,
+    Indexes,
     grouped::{
         ComputedValueVecsFromHeight, ComputedValueVecsFromTxindex, ComputedVecsFromHeight,
         ComputedVecsFromTxindex, StorableVecGeneatorOptions,
@@ -49,6 +52,7 @@ pub struct Vecs {
     pub indexes_to_unknownoutput_count: ComputedVecsFromHeight<StoredUsize>,
     pub inputindex_to_value:
         ComputedVecFrom2<InputIndex, Sats, OutputIndex, Sats, InputIndex, OutputIndex>,
+    // Bitcoin and dollar version too
     pub indexes_to_input_count: ComputedVecsFromTxindex<StoredUsize>,
     pub txindex_to_is_coinbase: EagerVec<TxIndex, bool>,
     pub indexes_to_output_count: ComputedVecsFromTxindex<StoredUsize>,
@@ -541,23 +545,8 @@ impl Vecs {
             exit,
         )?;
 
-        // let mut outputindex_to_value_iter = indexer.vecs().outputindex_to_value.iter();
-        self.inputindex_to_value.compute_if_necessary(
-            starting_indexes.inputindex,
-            // indexer.vecs().inputindex_to_outputindex.vec(),
-            // |(inputindex, outputindex, ..)| {
-            //     let value = if outputindex == OutputIndex::COINBASE {
-            //         Sats::ZERO
-            //     } else if let Some(value) = outputindex_to_value_iter.get(outputindex) {
-            //         value.into_inner()
-            //     } else {
-            //         dbg!(inputindex, outputindex);
-            //         panic!()
-            //     };
-            //     (inputindex, value)
-            // },
-            exit,
-        )?;
+        self.inputindex_to_value
+            .compute_if_necessary(starting_indexes.inputindex, exit)?;
 
         self.indexes_to_output_value.compute_all(
             indexer,
@@ -898,7 +887,7 @@ impl Vecs {
         Ok(())
     }
 
-    pub fn any_vecs(&self) -> Vec<&dyn brk_vec::AnyVec> {
+    pub fn vecs(&self) -> Vec<&dyn brk_vec::AnyVec> {
         [
             vec![
                 self.inputindex_to_value.any_vec(),
@@ -906,32 +895,32 @@ impl Vecs {
                 self.txindex_to_vsize.any_vec(),
                 self.txindex_to_weight.any_vec(),
             ],
-            self.indexes_to_tx_count.any_vecs(),
-            self.indexes_to_coinbase.any_vecs(),
-            self.indexes_to_fee.any_vecs(),
-            self.indexes_to_feerate.any_vecs(),
-            self.indexes_to_input_value.any_vecs(),
-            self.indexes_to_output_value.any_vecs(),
-            self.indexes_to_subsidy.any_vecs(),
-            self.indexes_to_tx_v1.any_vecs(),
-            self.indexes_to_tx_v2.any_vecs(),
-            self.indexes_to_tx_v3.any_vecs(),
-            self.indexes_to_tx_vsize.any_vecs(),
-            self.indexes_to_tx_weight.any_vecs(),
-            self.indexes_to_input_count.any_vecs(),
-            self.indexes_to_output_count.any_vecs(),
-            self.indexes_to_p2a_count.any_vecs(),
-            self.indexes_to_p2ms_count.any_vecs(),
-            self.indexes_to_p2pk33_count.any_vecs(),
-            self.indexes_to_p2pk65_count.any_vecs(),
-            self.indexes_to_p2pkh_count.any_vecs(),
-            self.indexes_to_p2sh_count.any_vecs(),
-            self.indexes_to_p2tr_count.any_vecs(),
-            self.indexes_to_p2wpkh_count.any_vecs(),
-            self.indexes_to_p2wsh_count.any_vecs(),
-            self.indexes_to_opreturn_count.any_vecs(),
-            self.indexes_to_unknownoutput_count.any_vecs(),
-            self.indexes_to_emptyoutput_count.any_vecs(),
+            self.indexes_to_tx_count.vecs(),
+            self.indexes_to_coinbase.vecs(),
+            self.indexes_to_fee.vecs(),
+            self.indexes_to_feerate.vecs(),
+            self.indexes_to_input_value.vecs(),
+            self.indexes_to_output_value.vecs(),
+            self.indexes_to_subsidy.vecs(),
+            self.indexes_to_tx_v1.vecs(),
+            self.indexes_to_tx_v2.vecs(),
+            self.indexes_to_tx_v3.vecs(),
+            self.indexes_to_tx_vsize.vecs(),
+            self.indexes_to_tx_weight.vecs(),
+            self.indexes_to_input_count.vecs(),
+            self.indexes_to_output_count.vecs(),
+            self.indexes_to_p2a_count.vecs(),
+            self.indexes_to_p2ms_count.vecs(),
+            self.indexes_to_p2pk33_count.vecs(),
+            self.indexes_to_p2pk65_count.vecs(),
+            self.indexes_to_p2pkh_count.vecs(),
+            self.indexes_to_p2sh_count.vecs(),
+            self.indexes_to_p2tr_count.vecs(),
+            self.indexes_to_p2wpkh_count.vecs(),
+            self.indexes_to_p2wsh_count.vecs(),
+            self.indexes_to_opreturn_count.vecs(),
+            self.indexes_to_unknownoutput_count.vecs(),
+            self.indexes_to_emptyoutput_count.vecs(),
         ]
         .concat()
     }

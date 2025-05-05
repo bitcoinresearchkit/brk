@@ -8,13 +8,14 @@ use brk_core::{
 };
 use brk_exit::Exit;
 use brk_indexer::Indexer;
-use brk_vec::{Compressed, VecIterator, Version};
-
-use super::EagerVec;
+use brk_vec::{
+    AnyCollectableVec, CloneableAnyIterableVec, Compressed, Computation, ComputedVec,
+    ComputedVecFrom1, EagerVec, VecIterator, Version,
+};
 
 #[derive(Clone)]
 pub struct Vecs {
-    pub dateindex_to_date: EagerVec<DateIndex, Date>,
+    pub dateindex_to_date: ComputedVecFrom1<DateIndex, Date, DateIndex, DateIndex>,
     pub dateindex_to_dateindex: EagerVec<DateIndex, DateIndex>,
     pub dateindex_to_first_height: EagerVec<DateIndex, Height>,
     pub dateindex_to_height_count: EagerVec<DateIndex, StoredUsize>,
@@ -70,20 +71,36 @@ pub struct Vecs {
 }
 
 impl Vecs {
-    pub fn forced_import(path: &Path, compressed: Compressed) -> color_eyre::Result<Self> {
+    pub fn forced_import(
+        path: &Path,
+        computation: Computation,
+        compressed: Compressed,
+    ) -> color_eyre::Result<Self> {
         fs::create_dir_all(path)?;
 
+        let dateindex_to_dateindex = EagerVec::forced_import(
+            &path.join("dateindex_to_dateindex"),
+            Version::ZERO,
+            compressed,
+        )?;
+
+        let dateindex_to_date = ComputedVec::forced_import_or_init_from_1(
+            computation,
+            path,
+            "dateindex_to_date",
+            Version::ZERO,
+            compressed,
+            dateindex_to_dateindex.boxed_clone(),
+            |index, dateindex_to_dateindex_iter| {
+                dateindex_to_dateindex_iter
+                    .next_at(index)
+                    .map(|(dateindex, _)| Date::from(dateindex))
+            },
+        )?;
+
         Ok(Self {
-            dateindex_to_date: EagerVec::forced_import(
-                &path.join("dateindex_to_date"),
-                Version::ZERO,
-                compressed,
-            )?,
-            dateindex_to_dateindex: EagerVec::forced_import(
-                &path.join("dateindex_to_dateindex"),
-                Version::ZERO,
-                compressed,
-            )?,
+            dateindex_to_date,
+            dateindex_to_dateindex,
             dateindex_to_first_height: EagerVec::forced_import(
                 &path.join("dateindex_to_first_height"),
                 Version::ZERO,
@@ -356,84 +373,84 @@ impl Vecs {
 
         self.outputindex_to_outputindex.compute_range(
             starting_indexes.outputindex,
-            indexer_vecs.outputindex_to_value.vec(),
+            &indexer_vecs.outputindex_to_value,
             |i| (i, i),
             exit,
         )?;
 
         self.p2pk33index_to_p2pk33index.compute_range(
             starting_indexes.p2pk33index,
-            indexer_vecs.p2pk33index_to_p2pk33bytes.vec(),
+            &indexer_vecs.p2pk33index_to_p2pk33bytes,
             |i| (i, i),
             exit,
         )?;
 
         self.p2pk65index_to_p2pk65index.compute_range(
             starting_indexes.p2pk65index,
-            indexer_vecs.p2pk65index_to_p2pk65bytes.vec(),
+            &indexer_vecs.p2pk65index_to_p2pk65bytes,
             |i| (i, i),
             exit,
         )?;
 
         self.p2pkhindex_to_p2pkhindex.compute_range(
             starting_indexes.p2pkhindex,
-            indexer_vecs.p2pkhindex_to_p2pkhbytes.vec(),
+            &indexer_vecs.p2pkhindex_to_p2pkhbytes,
             |i| (i, i),
             exit,
         )?;
 
         self.p2shindex_to_p2shindex.compute_range(
             starting_indexes.p2shindex,
-            indexer_vecs.p2shindex_to_p2shbytes.vec(),
+            &indexer_vecs.p2shindex_to_p2shbytes,
             |i| (i, i),
             exit,
         )?;
 
         self.p2trindex_to_p2trindex.compute_range(
             starting_indexes.p2trindex,
-            indexer_vecs.p2trindex_to_p2trbytes.vec(),
+            &indexer_vecs.p2trindex_to_p2trbytes,
             |i| (i, i),
             exit,
         )?;
 
         self.p2wpkhindex_to_p2wpkhindex.compute_range(
             starting_indexes.p2wpkhindex,
-            indexer_vecs.p2wpkhindex_to_p2wpkhbytes.vec(),
+            &indexer_vecs.p2wpkhindex_to_p2wpkhbytes,
             |i| (i, i),
             exit,
         )?;
 
         self.p2wshindex_to_p2wshindex.compute_range(
             starting_indexes.p2wshindex,
-            indexer_vecs.p2wshindex_to_p2wshbytes.vec(),
+            &indexer_vecs.p2wshindex_to_p2wshbytes,
             |i| (i, i),
             exit,
         )?;
 
         self.emptyoutputindex_to_emptyoutputindex.compute_range(
             starting_indexes.emptyoutputindex,
-            indexer_vecs.emptyoutputindex_to_txindex.vec(),
+            &indexer_vecs.emptyoutputindex_to_txindex,
             |i| (i, i),
             exit,
         )?;
 
         self.p2msindex_to_p2msindex.compute_range(
             starting_indexes.p2msindex,
-            indexer_vecs.p2msindex_to_txindex.vec(),
+            &indexer_vecs.p2msindex_to_txindex,
             |i| (i, i),
             exit,
         )?;
 
         self.opreturnindex_to_opreturnindex.compute_range(
             starting_indexes.opreturnindex,
-            indexer_vecs.opreturnindex_to_txindex.vec(),
+            &indexer_vecs.opreturnindex_to_txindex,
             |i| (i, i),
             exit,
         )?;
 
         self.p2aindex_to_p2aindex.compute_range(
             starting_indexes.p2aindex,
-            indexer_vecs.p2aindex_to_p2abytes.vec(),
+            &indexer_vecs.p2aindex_to_p2abytes,
             |i| (i, i),
             exit,
         )?;
@@ -441,7 +458,7 @@ impl Vecs {
         self.unknownoutputindex_to_unknownoutputindex
             .compute_range(
                 starting_indexes.unknownoutputindex,
-                indexer_vecs.unknownoutputindex_to_txindex.vec(),
+                &indexer_vecs.unknownoutputindex_to_txindex,
                 |i| (i, i),
                 exit,
             )?;
@@ -452,7 +469,7 @@ impl Vecs {
 
         self.inputindex_to_inputindex.compute_range(
             starting_indexes.inputindex,
-            indexer_vecs.inputindex_to_outputindex.vec(),
+            &indexer_vecs.inputindex_to_outputindex,
             |i| (i, i),
             exit,
         )?;
@@ -463,22 +480,22 @@ impl Vecs {
 
         self.txindex_to_txindex.compute_range(
             starting_indexes.txindex,
-            indexer_vecs.txindex_to_txid.vec(),
+            &indexer_vecs.txindex_to_txid,
             |i| (i, i),
             exit,
         )?;
 
         self.height_to_txindex_count.compute_count_from_indexes(
             starting_indexes.height,
-            indexer_vecs.height_to_first_txindex.vec(),
-            indexer_vecs.txindex_to_txid.vec(),
+            &indexer_vecs.height_to_first_txindex,
+            &indexer_vecs.txindex_to_txid,
             exit,
         )?;
 
         self.txindex_to_height.compute_inverse_less_to_more(
             starting_indexes.height,
-            indexer_vecs.height_to_first_txindex.vec(),
-            self.height_to_txindex_count.vec(),
+            &indexer_vecs.height_to_first_txindex,
+            &self.height_to_txindex_count,
             exit,
         )?;
 
@@ -488,14 +505,14 @@ impl Vecs {
 
         self.height_to_height.compute_range(
             starting_indexes.height,
-            indexer_vecs.height_to_timestamp.vec(),
+            &indexer_vecs.height_to_timestamp,
             |h| (h, h),
             exit,
         )?;
 
         self.height_to_date.compute_transform(
             starting_indexes.height,
-            indexer_vecs.height_to_timestamp.vec(),
+            &indexer_vecs.height_to_timestamp,
             |(h, t, ..)| (h, Date::from(t)),
             exit,
         )?;
@@ -503,7 +520,7 @@ impl Vecs {
         let mut prev_timestamp_fixed = None;
         self.height_to_timestamp_fixed.compute_transform(
             starting_indexes.height,
-            indexer_vecs.height_to_timestamp.vec(),
+            &indexer_vecs.height_to_timestamp,
             |(h, timestamp, height_to_timestamp_fixed_iter)| {
                 if prev_timestamp_fixed.is_none() {
                     if let Some(prev_h) = h.decremented() {
@@ -524,7 +541,7 @@ impl Vecs {
 
         self.height_to_date_fixed.compute_transform(
             starting_indexes.height,
-            self.height_to_timestamp_fixed.vec(),
+            &self.height_to_timestamp_fixed,
             |(h, t, ..)| (h, Date::from(t)),
             exit,
         )?;
@@ -543,7 +560,7 @@ impl Vecs {
 
         self.height_to_dateindex.compute_transform(
             starting_indexes.height,
-            self.height_to_date_fixed.vec(),
+            &self.height_to_date_fixed,
             |(h, d, ..)| (h, DateIndex::try_from(d).unwrap()),
             exit,
         )?;
@@ -561,28 +578,24 @@ impl Vecs {
         self.dateindex_to_first_height
             .compute_inverse_more_to_less(
                 starting_indexes.height,
-                self.height_to_dateindex.vec(),
+                &self.height_to_dateindex,
                 exit,
             )?;
 
         self.dateindex_to_dateindex.compute_range(
             starting_dateindex,
-            self.dateindex_to_first_height.vec(),
+            &self.dateindex_to_first_height,
             |di| (di, di),
             exit,
         )?;
 
-        self.dateindex_to_date.compute_range(
-            starting_dateindex,
-            self.dateindex_to_dateindex.vec(),
-            |di| (di, Date::from(di)),
-            exit,
-        )?;
+        self.dateindex_to_date
+            .compute_if_necessary(starting_dateindex, exit)?;
 
         self.dateindex_to_height_count.compute_count_from_indexes(
             starting_dateindex,
-            self.dateindex_to_first_height.vec(),
-            indexer_vecs.height_to_weight.vec(),
+            &self.dateindex_to_first_height,
+            &indexer_vecs.height_to_weight,
             exit,
         )?;
 
@@ -598,21 +611,17 @@ impl Vecs {
 
         self.dateindex_to_weekindex.compute_range(
             starting_dateindex,
-            self.dateindex_to_dateindex.vec(),
+            &self.dateindex_to_dateindex,
             |di| (di, WeekIndex::from(di)),
             exit,
         )?;
 
         self.weekindex_to_first_dateindex
-            .compute_inverse_more_to_less(
-                starting_dateindex,
-                self.dateindex_to_weekindex.vec(),
-                exit,
-            )?;
+            .compute_inverse_more_to_less(starting_dateindex, &self.dateindex_to_weekindex, exit)?;
 
         self.weekindex_to_weekindex.compute_range(
             starting_weekindex,
-            self.weekindex_to_first_dateindex.vec(),
+            &self.weekindex_to_first_dateindex,
             |wi| (wi, wi),
             exit,
         )?;
@@ -620,8 +629,8 @@ impl Vecs {
         self.weekindex_to_dateindex_count
             .compute_count_from_indexes(
                 starting_weekindex,
-                self.weekindex_to_first_dateindex.vec(),
-                self.dateindex_to_date.vec(),
+                &self.weekindex_to_first_dateindex,
+                &self.dateindex_to_date,
                 exit,
             )?;
 
@@ -637,7 +646,7 @@ impl Vecs {
 
         self.height_to_difficultyepoch.compute_range(
             starting_indexes.height,
-            self.height_to_height.vec(),
+            &self.height_to_height,
             |h| (h, DifficultyEpoch::from(h)),
             exit,
         )?;
@@ -645,13 +654,13 @@ impl Vecs {
         self.difficultyepoch_to_first_height
             .compute_inverse_more_to_less(
                 starting_indexes.height,
-                self.height_to_difficultyepoch.vec(),
+                &self.height_to_difficultyepoch,
                 exit,
             )?;
 
         self.difficultyepoch_to_difficultyepoch.compute_range(
             starting_difficultyepoch,
-            self.difficultyepoch_to_first_height.vec(),
+            &self.difficultyepoch_to_first_height,
             |i| (i, i),
             exit,
         )?;
@@ -659,8 +668,8 @@ impl Vecs {
         self.difficultyepoch_to_height_count
             .compute_count_from_indexes(
                 starting_difficultyepoch,
-                self.difficultyepoch_to_first_height.vec(),
-                self.height_to_date.vec(),
+                &self.difficultyepoch_to_first_height,
+                &self.height_to_date,
                 exit,
             )?;
 
@@ -676,7 +685,7 @@ impl Vecs {
 
         self.dateindex_to_monthindex.compute_range(
             starting_dateindex,
-            self.dateindex_to_dateindex.vec(),
+            &self.dateindex_to_dateindex,
             |di| (di, MonthIndex::from(di)),
             exit,
         )?;
@@ -684,13 +693,13 @@ impl Vecs {
         self.monthindex_to_first_dateindex
             .compute_inverse_more_to_less(
                 starting_dateindex,
-                self.dateindex_to_monthindex.vec(),
+                &self.dateindex_to_monthindex,
                 exit,
             )?;
 
         self.monthindex_to_monthindex.compute_range(
             starting_monthindex,
-            self.monthindex_to_first_dateindex.vec(),
+            &self.monthindex_to_first_dateindex,
             |mi| (mi, mi),
             exit,
         )?;
@@ -698,8 +707,8 @@ impl Vecs {
         self.monthindex_to_dateindex_count
             .compute_count_from_indexes(
                 starting_monthindex,
-                self.monthindex_to_first_dateindex.vec(),
-                self.dateindex_to_date.vec(),
+                &self.monthindex_to_first_dateindex,
+                &self.dateindex_to_date,
                 exit,
             )?;
 
@@ -715,7 +724,7 @@ impl Vecs {
 
         self.monthindex_to_quarterindex.compute_range(
             starting_monthindex,
-            self.monthindex_to_monthindex.vec(),
+            &self.monthindex_to_monthindex,
             |mi| (mi, QuarterIndex::from(mi)),
             exit,
         )?;
@@ -723,7 +732,7 @@ impl Vecs {
         self.quarterindex_to_first_monthindex
             .compute_inverse_more_to_less(
                 starting_monthindex,
-                self.monthindex_to_quarterindex.vec(),
+                &self.monthindex_to_quarterindex,
                 exit,
             )?;
 
@@ -731,7 +740,7 @@ impl Vecs {
 
         self.quarterindex_to_quarterindex.compute_range(
             starting_quarterindex,
-            self.quarterindex_to_first_monthindex.vec(),
+            &self.quarterindex_to_first_monthindex,
             |i| (i, i),
             exit,
         )?;
@@ -739,8 +748,8 @@ impl Vecs {
         self.quarterindex_to_monthindex_count
             .compute_count_from_indexes(
                 starting_quarterindex,
-                self.quarterindex_to_first_monthindex.vec(),
-                self.monthindex_to_monthindex.vec(),
+                &self.quarterindex_to_first_monthindex,
+                &self.monthindex_to_monthindex,
                 exit,
             )?;
 
@@ -756,7 +765,7 @@ impl Vecs {
 
         self.monthindex_to_yearindex.compute_range(
             starting_monthindex,
-            self.monthindex_to_monthindex.vec(),
+            &self.monthindex_to_monthindex,
             |i| (i, YearIndex::from(i)),
             exit,
         )?;
@@ -764,13 +773,13 @@ impl Vecs {
         self.yearindex_to_first_monthindex
             .compute_inverse_more_to_less(
                 starting_monthindex,
-                self.monthindex_to_yearindex.vec(),
+                &self.monthindex_to_yearindex,
                 exit,
             )?;
 
         self.yearindex_to_yearindex.compute_range(
             starting_yearindex,
-            self.yearindex_to_first_monthindex.vec(),
+            &self.yearindex_to_first_monthindex,
             |i| (i, i),
             exit,
         )?;
@@ -778,8 +787,8 @@ impl Vecs {
         self.yearindex_to_monthindex_count
             .compute_count_from_indexes(
                 starting_yearindex,
-                self.yearindex_to_first_monthindex.vec(),
-                self.monthindex_to_monthindex.vec(),
+                &self.yearindex_to_first_monthindex,
+                &self.monthindex_to_monthindex,
                 exit,
             )?;
         // ---
@@ -794,7 +803,7 @@ impl Vecs {
 
         self.height_to_halvingepoch.compute_range(
             starting_indexes.height,
-            self.height_to_height.vec(),
+            &self.height_to_height,
             |h| (h, HalvingEpoch::from(h)),
             exit,
         )?;
@@ -802,13 +811,13 @@ impl Vecs {
         self.halvingepoch_to_first_height
             .compute_inverse_more_to_less(
                 starting_indexes.height,
-                self.height_to_halvingepoch.vec(),
+                &self.height_to_halvingepoch,
                 exit,
             )?;
 
         self.halvingepoch_to_halvingepoch.compute_range(
             starting_halvingepoch,
-            self.halvingepoch_to_first_height.vec(),
+            &self.halvingepoch_to_first_height,
             |i| (i, i),
             exit,
         )?;
@@ -825,7 +834,7 @@ impl Vecs {
 
         self.yearindex_to_decadeindex.compute_range(
             starting_yearindex,
-            self.yearindex_to_yearindex.vec(),
+            &self.yearindex_to_yearindex,
             |i| (i, DecadeIndex::from(i)),
             exit,
         )?;
@@ -833,13 +842,13 @@ impl Vecs {
         self.decadeindex_to_first_yearindex
             .compute_inverse_more_to_less(
                 starting_yearindex,
-                self.yearindex_to_decadeindex.vec(),
+                &self.yearindex_to_decadeindex,
                 exit,
             )?;
 
         self.decadeindex_to_decadeindex.compute_range(
             starting_decadeindex,
-            self.decadeindex_to_first_yearindex.vec(),
+            &self.decadeindex_to_first_yearindex,
             |i| (i, i),
             exit,
         )?;
@@ -847,8 +856,8 @@ impl Vecs {
         self.decadeindex_to_yearindex_count
             .compute_count_from_indexes(
                 starting_decadeindex,
-                self.decadeindex_to_first_yearindex.vec(),
-                self.yearindex_to_yearindex.vec(),
+                &self.decadeindex_to_first_yearindex,
+                &self.yearindex_to_yearindex,
                 exit,
             )?;
 
@@ -865,61 +874,61 @@ impl Vecs {
         })
     }
 
-    pub fn any_vecs(&self) -> Vec<&dyn brk_vec::AnyVec> {
+    pub fn vecs(&self) -> Vec<&dyn AnyCollectableVec> {
         vec![
-            self.dateindex_to_date.any_vec(),
-            self.dateindex_to_dateindex.any_vec(),
-            self.dateindex_to_first_height.any_vec(),
-            self.dateindex_to_height_count.any_vec(),
-            self.dateindex_to_monthindex.any_vec(),
-            self.dateindex_to_weekindex.any_vec(),
-            self.decadeindex_to_decadeindex.any_vec(),
-            self.decadeindex_to_first_yearindex.any_vec(),
-            self.decadeindex_to_yearindex_count.any_vec(),
-            self.difficultyepoch_to_difficultyepoch.any_vec(),
-            self.difficultyepoch_to_first_height.any_vec(),
-            self.difficultyepoch_to_height_count.any_vec(),
-            self.emptyoutputindex_to_emptyoutputindex.any_vec(),
-            self.halvingepoch_to_first_height.any_vec(),
-            self.halvingepoch_to_halvingepoch.any_vec(),
-            self.height_to_date.any_vec(),
-            self.height_to_date_fixed.any_vec(),
-            self.height_to_dateindex.any_vec(),
-            self.height_to_difficultyepoch.any_vec(),
-            self.height_to_halvingepoch.any_vec(),
-            self.height_to_height.any_vec(),
-            self.height_to_timestamp_fixed.any_vec(),
-            self.height_to_txindex_count.any_vec(),
-            self.inputindex_to_inputindex.any_vec(),
-            self.monthindex_to_dateindex_count.any_vec(),
-            self.monthindex_to_first_dateindex.any_vec(),
-            self.monthindex_to_monthindex.any_vec(),
-            self.monthindex_to_quarterindex.any_vec(),
-            self.monthindex_to_yearindex.any_vec(),
-            self.opreturnindex_to_opreturnindex.any_vec(),
-            self.outputindex_to_outputindex.any_vec(),
-            self.p2aindex_to_p2aindex.any_vec(),
-            self.p2msindex_to_p2msindex.any_vec(),
-            self.p2pk33index_to_p2pk33index.any_vec(),
-            self.p2pk65index_to_p2pk65index.any_vec(),
-            self.p2pkhindex_to_p2pkhindex.any_vec(),
-            self.p2shindex_to_p2shindex.any_vec(),
-            self.p2trindex_to_p2trindex.any_vec(),
-            self.p2wpkhindex_to_p2wpkhindex.any_vec(),
-            self.p2wshindex_to_p2wshindex.any_vec(),
-            self.quarterindex_to_first_monthindex.any_vec(),
-            self.quarterindex_to_monthindex_count.any_vec(),
-            self.quarterindex_to_quarterindex.any_vec(),
-            self.txindex_to_height.any_vec(),
-            self.txindex_to_txindex.any_vec(),
-            self.unknownoutputindex_to_unknownoutputindex.any_vec(),
-            self.weekindex_to_dateindex_count.any_vec(),
-            self.weekindex_to_first_dateindex.any_vec(),
-            self.weekindex_to_weekindex.any_vec(),
-            self.yearindex_to_decadeindex.any_vec(),
-            self.yearindex_to_first_monthindex.any_vec(),
-            self.yearindex_to_monthindex_count.any_vec(),
-            self.yearindex_to_yearindex.any_vec(),
+            &self.dateindex_to_date,
+            &self.dateindex_to_dateindex,
+            &self.dateindex_to_first_height,
+            &self.dateindex_to_height_count,
+            &self.dateindex_to_monthindex,
+            &self.dateindex_to_weekindex,
+            &self.decadeindex_to_decadeindex,
+            &self.decadeindex_to_first_yearindex,
+            &self.decadeindex_to_yearindex_count,
+            &self.difficultyepoch_to_difficultyepoch,
+            &self.difficultyepoch_to_first_height,
+            &self.difficultyepoch_to_height_count,
+            &self.emptyoutputindex_to_emptyoutputindex,
+            &self.halvingepoch_to_first_height,
+            &self.halvingepoch_to_halvingepoch,
+            &self.height_to_date,
+            &self.height_to_date_fixed,
+            &self.height_to_dateindex,
+            &self.height_to_difficultyepoch,
+            &self.height_to_halvingepoch,
+            &self.height_to_height,
+            &self.height_to_timestamp_fixed,
+            &self.height_to_txindex_count,
+            &self.inputindex_to_inputindex,
+            &self.monthindex_to_dateindex_count,
+            &self.monthindex_to_first_dateindex,
+            &self.monthindex_to_monthindex,
+            &self.monthindex_to_quarterindex,
+            &self.monthindex_to_yearindex,
+            &self.opreturnindex_to_opreturnindex,
+            &self.outputindex_to_outputindex,
+            &self.p2aindex_to_p2aindex,
+            &self.p2msindex_to_p2msindex,
+            &self.p2pk33index_to_p2pk33index,
+            &self.p2pk65index_to_p2pk65index,
+            &self.p2pkhindex_to_p2pkhindex,
+            &self.p2shindex_to_p2shindex,
+            &self.p2trindex_to_p2trindex,
+            &self.p2wpkhindex_to_p2wpkhindex,
+            &self.p2wshindex_to_p2wshindex,
+            &self.quarterindex_to_first_monthindex,
+            &self.quarterindex_to_monthindex_count,
+            &self.quarterindex_to_quarterindex,
+            &self.txindex_to_height,
+            &self.txindex_to_txindex,
+            &self.unknownoutputindex_to_unknownoutputindex,
+            &self.weekindex_to_dateindex_count,
+            &self.weekindex_to_first_dateindex,
+            &self.weekindex_to_weekindex,
+            &self.yearindex_to_decadeindex,
+            &self.yearindex_to_first_monthindex,
+            &self.yearindex_to_monthindex_count,
+            &self.yearindex_to_yearindex,
         ]
     }
 }

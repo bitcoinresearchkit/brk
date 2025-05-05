@@ -1,7 +1,8 @@
 use std::marker::PhantomData;
 
-use brk_vec::{
-    AnyVec, BaseVecIterator, StoredIndex, StoredType, StoredVec, StoredVecIterator, Value, Version,
+use crate::{
+    AnyCollectableVec, AnyIterableVec, AnyVec, BaseVecIterator, BoxedAnyIterableVec,
+    BoxedVecIterator, CollectableVec, Result, StoredIndex, StoredType, Value, Version,
 };
 
 pub type ComputeFrom1<T, S1I, S1T> =
@@ -11,7 +12,7 @@ pub type ComputeFrom1<T, S1I, S1T> =
 pub struct LazyVecFrom1<I, T, S1I, S1T> {
     name: String,
     version: Version,
-    source: StoredVec<S1I, S1T>,
+    source: BoxedAnyIterableVec<S1I, S1T>,
     compute: ComputeFrom1<T, S1I, S1T>,
     phantom: PhantomData<I>,
 }
@@ -26,7 +27,7 @@ where
     pub fn init(
         name: &str,
         version: Version,
-        source: StoredVec<S1I, S1T>,
+        source: BoxedAnyIterableVec<S1I, S1T>,
         compute: ComputeFrom1<T, S1I, S1T>,
     ) -> Self {
         Self {
@@ -43,13 +44,13 @@ where
     }
 }
 
-pub struct LazyVecIterator<'a, I, T, S1I, S1T> {
+pub struct LazyVecFrom1Iterator<'a, I, T, S1I, S1T> {
     lazy: &'a LazyVecFrom1<I, T, S1I, S1T>,
-    source: StoredVecIterator<'a, S1I, S1T>,
+    source: BoxedVecIterator<'a, S1I, S1T>,
     index: usize,
 }
 
-impl<'a, I, T, S1I, S1T> Iterator for LazyVecIterator<'a, I, T, S1I, S1T>
+impl<'a, I, T, S1I, S1T> Iterator for LazyVecFrom1Iterator<'a, I, T, S1I, S1T>
 where
     I: StoredIndex,
     T: StoredType + 'a,
@@ -59,7 +60,7 @@ where
     type Item = (I, Value<'a, T>);
 
     fn next(&mut self) -> Option<Self::Item> {
-        let opt = (self.lazy.compute)(self.index, &mut self.lazy.source.iter())
+        let opt = (self.lazy.compute)(self.index, &mut *self.source)
             .map(|v| (I::from(self.index), Value::Owned(v)));
         if opt.is_some() {
             self.index += 1;
@@ -68,7 +69,7 @@ where
     }
 }
 
-impl<I, T, S1I, S1T> BaseVecIterator for LazyVecIterator<'_, I, T, S1I, S1T>
+impl<I, T, S1I, S1T> BaseVecIterator for LazyVecFrom1Iterator<'_, I, T, S1I, S1T>
 where
     I: StoredIndex,
     T: StoredType,
@@ -82,7 +83,7 @@ where
 
     #[inline]
     fn len(&self) -> usize {
-        todo!();
+        self.source.len()
     }
 }
 
@@ -94,10 +95,10 @@ where
     S1T: StoredType,
 {
     type Item = (I, Value<'a, T>);
-    type IntoIter = LazyVecIterator<'a, I, T, S1I, S1T>;
+    type IntoIter = LazyVecFrom1Iterator<'a, I, T, S1I, S1T>;
 
     fn into_iter(self) -> Self::IntoIter {
-        LazyVecIterator {
+        LazyVecFrom1Iterator {
             lazy: self,
             source: self.source.iter(),
             index: 0,
@@ -112,6 +113,10 @@ where
     S1I: StoredIndex,
     S1T: StoredType,
 {
+    fn version(&self) -> Version {
+        self.version()
+    }
+
     fn name(&self) -> String {
         self.name.clone()
     }
@@ -124,16 +129,38 @@ where
         self.source.len()
     }
 
-    fn modified_time(&self) -> brk_vec::Result<std::time::Duration> {
+    fn modified_time(&self) -> Result<std::time::Duration> {
         self.source.modified_time()
     }
+}
 
+impl<I, T, S1I, S1T> AnyIterableVec<I, T> for LazyVecFrom1<I, T, S1I, S1T>
+where
+    I: StoredIndex,
+    T: StoredType,
+    S1I: StoredIndex,
+    S1T: StoredType,
+{
+    fn boxed_iter<'a>(&'a self) -> BoxedVecIterator<'a, I, T>
+    where
+        T: 'a,
+    {
+        Box::new(self.into_iter())
+    }
+}
+
+impl<I, T, S1I, S1T> AnyCollectableVec for LazyVecFrom1<I, T, S1I, S1T>
+where
+    I: StoredIndex,
+    T: StoredType,
+    S1I: StoredIndex,
+    S1T: StoredType,
+{
     fn collect_range_serde_json(
         &self,
         from: Option<i64>,
         to: Option<i64>,
-    ) -> brk_vec::Result<Vec<serde_json::Value>> {
-        todo!()
-        // self.
+    ) -> Result<Vec<serde_json::Value>> {
+        CollectableVec::collect_range_serde_json(self, from, to)
     }
 }

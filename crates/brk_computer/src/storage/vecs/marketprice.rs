@@ -7,10 +7,10 @@ use brk_core::{
 use brk_exit::Exit;
 use brk_fetcher::Fetcher;
 use brk_indexer::Indexer;
-use brk_vec::{Compressed, VecIterator, Version};
+use brk_vec::{AnyIterableVec, Compressed, Computation, EagerVec, VecIterator, Version};
 
 use super::{
-    EagerVec, Indexes,
+    Indexes,
     grouped::{
         ComputedVecsFromDateindex, ComputedVecsFromHeightStrict, StorableVecGeneatorOptions,
     },
@@ -69,7 +69,11 @@ const VERSION: Version = Version::ZERO;
 const VERSION_IN_SATS: Version = Version::ONE;
 
 impl Vecs {
-    pub fn forced_import(path: &Path, compressed: Compressed) -> color_eyre::Result<Self> {
+    pub fn forced_import(
+        path: &Path,
+        computation: Computation,
+        compressed: Compressed,
+    ) -> color_eyre::Result<Self> {
         fs::create_dir_all(path)?;
 
         let mut fetched_path = path.to_owned();
@@ -336,7 +340,7 @@ impl Vecs {
         let mut height_to_timestamp_iter = indexer_vecs.height_to_timestamp.iter();
         self.height_to_ohlc_in_cents.compute_transform(
             starting_indexes.height,
-            indexer_vecs.height_to_timestamp.vec(),
+            indexer_vecs.height_to_timestamp.iter_vec(),
             |(h, t, ..)| {
                 let ohlc = fetcher
                     .get_height(
@@ -353,42 +357,42 @@ impl Vecs {
 
         self.height_to_open_in_cents.compute_transform(
             starting_indexes.height,
-            self.height_to_ohlc_in_cents.vec(),
+            self.height_to_ohlc_in_cents.iter_vec(),
             |(di, ohlc, ..)| (di, ohlc.open),
             exit,
         )?;
 
         self.height_to_high_in_cents.compute_transform(
             starting_indexes.height,
-            self.height_to_ohlc_in_cents.vec(),
+            self.height_to_ohlc_in_cents.iter_vec(),
             |(di, ohlc, ..)| (di, ohlc.high),
             exit,
         )?;
 
         self.height_to_low_in_cents.compute_transform(
             starting_indexes.height,
-            self.height_to_ohlc_in_cents.vec(),
+            self.height_to_ohlc_in_cents.iter_vec(),
             |(di, ohlc, ..)| (di, ohlc.low),
             exit,
         )?;
 
         self.height_to_close_in_cents.compute_transform(
             starting_indexes.height,
-            self.height_to_ohlc_in_cents.vec(),
+            self.height_to_ohlc_in_cents.iter_vec(),
             |(di, ohlc, ..)| (di, ohlc.close),
             exit,
         )?;
 
         self.height_to_ohlc.compute_transform(
             starting_indexes.height,
-            self.height_to_ohlc_in_cents.vec(),
+            self.height_to_ohlc_in_cents.iter_vec(),
             |(di, ohlc, ..)| (di, OHLCDollars::from(ohlc)),
             exit,
         )?;
 
         self.dateindex_to_ohlc_in_cents.compute_transform(
             starting_indexes.dateindex,
-            indexes.dateindex_to_date.vec(),
+            indexes.dateindex_to_date.iter_vec(),
             |(di, d, ..)| {
                 let ohlc = fetcher.get_date(d).unwrap();
                 (di, ohlc)
@@ -398,35 +402,35 @@ impl Vecs {
 
         self.dateindex_to_open_in_cents.compute_transform(
             starting_indexes.dateindex,
-            self.dateindex_to_ohlc_in_cents.vec(),
+            self.dateindex_to_ohlc_in_cents.iter_vec(),
             |(di, ohlc, ..)| (di, ohlc.open),
             exit,
         )?;
 
         self.dateindex_to_high_in_cents.compute_transform(
             starting_indexes.dateindex,
-            self.dateindex_to_ohlc_in_cents.vec(),
+            self.dateindex_to_ohlc_in_cents.iter_vec(),
             |(di, ohlc, ..)| (di, ohlc.high),
             exit,
         )?;
 
         self.dateindex_to_low_in_cents.compute_transform(
             starting_indexes.dateindex,
-            self.dateindex_to_ohlc_in_cents.vec(),
+            self.dateindex_to_ohlc_in_cents.iter_vec(),
             |(di, ohlc, ..)| (di, ohlc.low),
             exit,
         )?;
 
         self.dateindex_to_close_in_cents.compute_transform(
             starting_indexes.dateindex,
-            self.dateindex_to_ohlc_in_cents.vec(),
+            self.dateindex_to_ohlc_in_cents.iter_vec(),
             |(di, ohlc, ..)| (di, ohlc.close),
             exit,
         )?;
 
         self.dateindex_to_ohlc.compute_transform(
             starting_indexes.dateindex,
-            self.dateindex_to_ohlc_in_cents.vec(),
+            self.dateindex_to_ohlc_in_cents.iter_vec(),
             |(di, ohlc, ..)| (di, OHLCDollars::from(ohlc)),
             exit,
         )?;
@@ -439,7 +443,7 @@ impl Vecs {
             |v, _, _, starting_indexes, exit| {
                 v.compute_transform(
                     starting_indexes.dateindex,
-                    self.dateindex_to_ohlc.vec(),
+                    self.dateindex_to_ohlc.iter_vec(),
                     |(di, ohlc, ..)| (di, ohlc.close),
                     exit,
                 )
@@ -454,7 +458,7 @@ impl Vecs {
             |v, _, _, starting_indexes, exit| {
                 v.compute_transform(
                     starting_indexes.dateindex,
-                    self.dateindex_to_ohlc.vec(),
+                    self.dateindex_to_ohlc.iter_vec(),
                     |(di, ohlc, ..)| (di, ohlc.high),
                     exit,
                 )
@@ -469,7 +473,7 @@ impl Vecs {
             |v, _, _, starting_indexes, exit| {
                 v.compute_transform(
                     starting_indexes.dateindex,
-                    self.dateindex_to_ohlc.vec(),
+                    self.dateindex_to_ohlc.iter_vec(),
                     |(di, ohlc, ..)| (di, ohlc.low),
                     exit,
                 )
@@ -484,7 +488,7 @@ impl Vecs {
             |v, _, _, starting_indexes, exit| {
                 v.compute_transform(
                     starting_indexes.dateindex,
-                    self.dateindex_to_ohlc.vec(),
+                    self.dateindex_to_ohlc.iter_vec(),
                     |(di, ohlc, ..)| (di, ohlc.open),
                     exit,
                 )
@@ -499,7 +503,7 @@ impl Vecs {
             |v, _, _, starting_indexes, exit| {
                 v.compute_transform(
                     starting_indexes.height,
-                    self.height_to_ohlc.vec(),
+                    self.height_to_ohlc.iter_vec(),
                     |(di, ohlc, ..)| (di, ohlc.close),
                     exit,
                 )
@@ -514,7 +518,7 @@ impl Vecs {
             |v, _, _, starting_indexes, exit| {
                 v.compute_transform(
                     starting_indexes.height,
-                    self.height_to_ohlc.vec(),
+                    self.height_to_ohlc.iter_vec(),
                     |(di, ohlc, ..)| (di, ohlc.high),
                     exit,
                 )
@@ -529,7 +533,7 @@ impl Vecs {
             |v, _, _, starting_indexes, exit| {
                 v.compute_transform(
                     starting_indexes.height,
-                    self.height_to_ohlc.vec(),
+                    self.height_to_ohlc.iter_vec(),
                     |(di, ohlc, ..)| (di, ohlc.low),
                     exit,
                 )
@@ -544,7 +548,7 @@ impl Vecs {
             |v, _, _, starting_indexes, exit| {
                 v.compute_transform(
                     starting_indexes.height,
-                    self.height_to_ohlc.vec(),
+                    self.height_to_ohlc.iter_vec(),
                     |(di, ohlc, ..)| (di, ohlc.open),
                     exit,
                 )
@@ -556,7 +560,7 @@ impl Vecs {
         let mut weekindex_min_iter = self.timeindexes_to_low.weekindex.unwrap_min().iter();
         self.weekindex_to_ohlc.compute_transform(
             starting_indexes.weekindex,
-            self.timeindexes_to_close.weekindex.unwrap_last().vec(),
+            self.timeindexes_to_close.weekindex.unwrap_last().iter_vec(),
             |(i, close, ..)| {
                 (
                     i,
@@ -588,7 +592,7 @@ impl Vecs {
             self.chainindexes_to_close
                 .difficultyepoch
                 .unwrap_last()
-                .vec(),
+                .iter_vec(),
             |(i, close, ..)| {
                 (
                     i,
@@ -608,7 +612,10 @@ impl Vecs {
         let mut monthindex_min_iter = self.timeindexes_to_low.monthindex.unwrap_min().iter();
         self.monthindex_to_ohlc.compute_transform(
             starting_indexes.monthindex,
-            self.timeindexes_to_close.monthindex.unwrap_last().vec(),
+            self.timeindexes_to_close
+                .monthindex
+                .unwrap_last()
+                .iter_vec(),
             |(i, close, ..)| {
                 (
                     i,
@@ -629,7 +636,10 @@ impl Vecs {
         let mut quarterindex_min_iter = self.timeindexes_to_low.quarterindex.unwrap_min().iter();
         self.quarterindex_to_ohlc.compute_transform(
             starting_indexes.quarterindex,
-            self.timeindexes_to_close.quarterindex.unwrap_last().vec(),
+            self.timeindexes_to_close
+                .quarterindex
+                .unwrap_last()
+                .iter_vec(),
             |(i, close, ..)| {
                 (
                     i,
@@ -649,7 +659,7 @@ impl Vecs {
         let mut yearindex_min_iter = self.timeindexes_to_low.yearindex.unwrap_min().iter();
         self.yearindex_to_ohlc.compute_transform(
             starting_indexes.yearindex,
-            self.timeindexes_to_close.yearindex.unwrap_last().vec(),
+            self.timeindexes_to_close.yearindex.unwrap_last().iter_vec(),
             |(i, close, ..)| {
                 (
                     i,
@@ -672,7 +682,10 @@ impl Vecs {
         let mut decadeindex_min_iter = self.timeindexes_to_low.decadeindex.unwrap_min().iter();
         self.decadeindex_to_ohlc.compute_transform(
             starting_indexes.decadeindex,
-            self.timeindexes_to_close.decadeindex.unwrap_last().vec(),
+            self.timeindexes_to_close
+                .decadeindex
+                .unwrap_last()
+                .iter_vec(),
             |(i, close, ..)| {
                 (
                     i,
@@ -695,7 +708,7 @@ impl Vecs {
             |v, _, _, starting_indexes, exit| {
                 v.compute_transform(
                     starting_indexes.height,
-                    self.chainindexes_to_open.height.vec(),
+                    self.chainindexes_to_open.height.iter_vec(),
                     |(i, open, ..)| (i, Open::new(Sats::ONE_BTC / *open)),
                     exit,
                 )
@@ -710,7 +723,7 @@ impl Vecs {
             |v, _, _, starting_indexes, exit| {
                 v.compute_transform(
                     starting_indexes.height,
-                    self.chainindexes_to_low.height.vec(),
+                    self.chainindexes_to_low.height.iter_vec(),
                     |(i, low, ..)| (i, High::new(Sats::ONE_BTC / *low)),
                     exit,
                 )
@@ -725,7 +738,7 @@ impl Vecs {
             |v, _, _, starting_indexes, exit| {
                 v.compute_transform(
                     starting_indexes.height,
-                    self.chainindexes_to_high.height.vec(),
+                    self.chainindexes_to_high.height.iter_vec(),
                     |(i, high, ..)| (i, Low::new(Sats::ONE_BTC / *high)),
                     exit,
                 )
@@ -740,7 +753,7 @@ impl Vecs {
             |v, _, _, starting_indexes, exit| {
                 v.compute_transform(
                     starting_indexes.height,
-                    self.chainindexes_to_close.height.vec(),
+                    self.chainindexes_to_close.height.iter_vec(),
                     |(i, close, ..)| (i, Close::new(Sats::ONE_BTC / *close)),
                     exit,
                 )
@@ -755,7 +768,7 @@ impl Vecs {
             |v, _, _, starting_indexes, exit| {
                 v.compute_transform(
                     starting_indexes.dateindex,
-                    self.timeindexes_to_open.dateindex.vec(),
+                    self.timeindexes_to_open.dateindex.iter_vec(),
                     |(i, open, ..)| (i, Open::new(Sats::ONE_BTC / *open)),
                     exit,
                 )
@@ -770,7 +783,7 @@ impl Vecs {
             |v, _, _, starting_indexes, exit| {
                 v.compute_transform(
                     starting_indexes.dateindex,
-                    self.timeindexes_to_low.dateindex.vec(),
+                    self.timeindexes_to_low.dateindex.iter_vec(),
                     |(i, low, ..)| (i, High::new(Sats::ONE_BTC / *low)),
                     exit,
                 )
@@ -785,7 +798,7 @@ impl Vecs {
             |v, _, _, starting_indexes, exit| {
                 v.compute_transform(
                     starting_indexes.dateindex,
-                    self.timeindexes_to_high.dateindex.vec(),
+                    self.timeindexes_to_high.dateindex.iter_vec(),
                     |(i, high, ..)| (i, Low::new(Sats::ONE_BTC / *high)),
                     exit,
                 )
@@ -800,7 +813,7 @@ impl Vecs {
             |v, _, _, starting_indexes, exit| {
                 v.compute_transform(
                     starting_indexes.dateindex,
-                    self.timeindexes_to_close.dateindex.vec(),
+                    self.timeindexes_to_close.dateindex.iter_vec(),
                     |(i, close, ..)| (i, Close::new(Sats::ONE_BTC / *close)),
                     exit,
                 )
@@ -812,7 +825,7 @@ impl Vecs {
         let mut height_min_iter = self.chainindexes_to_low_in_sats.height.iter();
         self.height_to_ohlc_in_sats.compute_transform(
             starting_indexes.height,
-            self.chainindexes_to_close_in_sats.height.vec(),
+            self.chainindexes_to_close_in_sats.height.iter_vec(),
             |(i, close, ..)| {
                 (
                     i,
@@ -832,7 +845,7 @@ impl Vecs {
         let mut dateindex_min_iter = self.timeindexes_to_low_in_sats.dateindex.iter();
         self.dateindex_to_ohlc_in_sats.compute_transform(
             starting_indexes.dateindex,
-            self.timeindexes_to_close_in_sats.dateindex.vec(),
+            self.timeindexes_to_close_in_sats.dateindex.iter_vec(),
             |(i, close, ..)| {
                 (
                     i,
@@ -867,7 +880,7 @@ impl Vecs {
             self.timeindexes_to_close_in_sats
                 .weekindex
                 .unwrap_last()
-                .vec(),
+                .iter_vec(),
             |(i, close, ..)| {
                 (
                     i,
@@ -902,7 +915,7 @@ impl Vecs {
             self.chainindexes_to_close_in_sats
                 .difficultyepoch
                 .unwrap_last()
-                .vec(),
+                .iter_vec(),
             |(i, close, ..)| {
                 (
                     i,
@@ -937,7 +950,7 @@ impl Vecs {
             self.timeindexes_to_close_in_sats
                 .monthindex
                 .unwrap_last()
-                .vec(),
+                .iter_vec(),
             |(i, close, ..)| {
                 (
                     i,
@@ -972,7 +985,7 @@ impl Vecs {
             self.timeindexes_to_close_in_sats
                 .quarterindex
                 .unwrap_last()
-                .vec(),
+                .iter_vec(),
             |(i, close, ..)| {
                 (
                     i,
@@ -1007,7 +1020,7 @@ impl Vecs {
             self.timeindexes_to_close_in_sats
                 .yearindex
                 .unwrap_last()
-                .vec(),
+                .iter_vec(),
             |(i, close, ..)| {
                 (
                     i,
@@ -1045,7 +1058,7 @@ impl Vecs {
             self.timeindexes_to_close_in_sats
                 .decadeindex
                 .unwrap_last()
-                .vec(),
+                .iter_vec(),
             |(i, close, ..)| {
                 (
                     i,
@@ -1063,7 +1076,7 @@ impl Vecs {
         Ok(())
     }
 
-    pub fn any_vecs(&self) -> Vec<&dyn brk_vec::AnyVec> {
+    pub fn vecs(&self) -> Vec<&dyn brk_vec::AnyVec> {
         vec![
             vec![
                 self.dateindex_to_close_in_cents.any_vec(),
@@ -1095,22 +1108,22 @@ impl Vecs {
                 // self.halvingepoch_to_ohlc_in_sats.any_vec(),
                 self.decadeindex_to_ohlc_in_sats.any_vec(),
             ],
-            self.timeindexes_to_close.any_vecs(),
-            self.timeindexes_to_high.any_vecs(),
-            self.timeindexes_to_low.any_vecs(),
-            self.timeindexes_to_open.any_vecs(),
-            self.chainindexes_to_close.any_vecs(),
-            self.chainindexes_to_high.any_vecs(),
-            self.chainindexes_to_low.any_vecs(),
-            self.chainindexes_to_open.any_vecs(),
-            self.timeindexes_to_close_in_sats.any_vecs(),
-            self.timeindexes_to_high_in_sats.any_vecs(),
-            self.timeindexes_to_low_in_sats.any_vecs(),
-            self.timeindexes_to_open_in_sats.any_vecs(),
-            self.chainindexes_to_close_in_sats.any_vecs(),
-            self.chainindexes_to_high_in_sats.any_vecs(),
-            self.chainindexes_to_low_in_sats.any_vecs(),
-            self.chainindexes_to_open_in_sats.any_vecs(),
+            self.timeindexes_to_close.vecs(),
+            self.timeindexes_to_high.vecs(),
+            self.timeindexes_to_low.vecs(),
+            self.timeindexes_to_open.vecs(),
+            self.chainindexes_to_close.vecs(),
+            self.chainindexes_to_high.vecs(),
+            self.chainindexes_to_low.vecs(),
+            self.chainindexes_to_open.vecs(),
+            self.timeindexes_to_close_in_sats.vecs(),
+            self.timeindexes_to_high_in_sats.vecs(),
+            self.timeindexes_to_low_in_sats.vecs(),
+            self.timeindexes_to_open_in_sats.vecs(),
+            self.chainindexes_to_close_in_sats.vecs(),
+            self.chainindexes_to_high_in_sats.vecs(),
+            self.chainindexes_to_low_in_sats.vecs(),
+            self.chainindexes_to_open_in_sats.vecs(),
         ]
         .concat()
     }

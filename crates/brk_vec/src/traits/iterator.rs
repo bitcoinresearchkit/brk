@@ -32,9 +32,9 @@ pub trait BaseVecIterator: Iterator {
     }
 }
 
-pub trait VecIterator<'a>: BaseVecIterator<Item = (Self::I, Value<'a, Self::T>)> + 'a {
+pub trait VecIterator<'a>: BaseVecIterator<Item = (Self::I, Value<'a, Self::T>)> {
     type I: StoredIndex;
-    type T: StoredType;
+    type T: StoredType + 'a;
 
     #[inline]
     fn set(&mut self, i: Self::I) {
@@ -77,10 +77,13 @@ pub trait VecIterator<'a>: BaseVecIterator<Item = (Self::I, Value<'a, Self::T>)>
 
 impl<'a, I, T, Iter> VecIterator<'a> for Iter
 where
-    Iter: BaseVecIterator<Item = (I, Value<'a, T>)> + 'a,
+    Iter: BaseVecIterator<Item = (I, Value<'a, T>)>,
     I: StoredIndex,
     T: StoredType + 'a,
 {
     type I = I;
     type T = T;
 }
+
+pub type BoxedVecIterator<'a, I, T> =
+    Box<dyn VecIterator<'a, I = I, T = T, Item = (I, Value<'a, T>)> + 'a>;

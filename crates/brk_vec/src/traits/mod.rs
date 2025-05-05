@@ -1,13 +1,13 @@
 mod any;
-mod dynamic;
+mod collectable;
 mod generic;
+mod index;
 mod iterator;
-mod stored_index;
-mod stored_type;
+mod r#type;
 
 pub use any::*;
-pub use dynamic::*;
+pub use collectable::*;
 pub use generic::*;
+pub use index::*;
 pub use iterator::*;
-pub use stored_index::*;
-pub use stored_type::*;
+pub use r#type::*;

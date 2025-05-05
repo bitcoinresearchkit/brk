@@ -18,7 +18,7 @@ pub use brk_parser::*;
 
 use bitcoin::{Transaction, TxIn, TxOut};
 use brk_exit::Exit;
-use brk_vec::{Compressed, DynamicVec, VecIterator};
+use brk_vec::{AnyVec, Compressed, GenericStoredVec, VecIterator};
 use color_eyre::eyre::{ContextCompat, eyre};
 use fjall::TransactionalKeyspace;
 use log::{error, info};
@@ -648,7 +648,7 @@ impl Indexer {
                 let mut txindex_to_tx_and_txid: BTreeMap<TxIndex, (&Transaction, Txid)> = BTreeMap::default();
 
                 let mut txindex_to_txid_iter = vecs
-                    .txindex_to_txid.iter();
+                    .txindex_to_txid.into_iter();
 
                 txid_prefix_to_txid_and_block_txindex_and_prev_txindex
                     .into_iter()

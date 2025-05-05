@@ -23,6 +23,7 @@ where
     fn to_string<'a>() -> &'a str;
     fn decremented(self) -> Option<Self>;
 }
+
 impl<I> StoredIndex for I
 where
     I: Debug

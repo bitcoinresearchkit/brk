@@ -3,11 +3,12 @@ use std::path::Path;
 use brk_core::{CheckedSub, StoredUsize};
 use brk_exit::Exit;
 use brk_vec::{
-    Compressed, DynamicVec, Result, StoredIndex, StoredType, StoredVec, VecIterator, Version,
+    AnyIterableVec, AnyVec, Compressed, EagerVec, Result, StoredIndex, StoredType, VecIterator,
+    Version,
 };
 use color_eyre::eyre::ContextCompat;
 
-use crate::storage::{ComputedType, EagerVec};
+use super::ComputedType;
 
 #[derive(Clone, Debug)]
 pub struct ComputedVecBuilder<I, T>
@@ -137,7 +138,12 @@ where
         Ok(s)
     }
 
-    pub fn extend(&mut self, max_from: I, source: &StoredVec<I, T>, exit: &Exit) -> Result<()> {
+    pub fn extend(
+        &mut self,
+        max_from: I,
+        source: &impl AnyIterableVec<I, T>,
+        exit: &Exit,
+    ) -> Result<()> {
         if self.total.is_none() {
             return Ok(());
         };
@@ -162,9 +168,9 @@ where
     pub fn compute<I2>(
         &mut self,
         max_from: I,
-        source: &StoredVec<I2, T>,
-        first_indexes: &StoredVec<I, I2>,
-        count_indexes: &StoredVec<I, StoredUsize>,
+        source: &impl AnyIterableVec<I2, T>,
+        first_indexes: &impl AnyIterableVec<I, I2>,
+        count_indexes: &impl AnyIterableVec<I, StoredUsize>,
         exit: &Exit,
     ) -> Result<()>
     where
@@ -244,12 +250,12 @@ where
                                         dbg!(
                                             &values,
                                             max.path(),
-                                            first_indexes.path(),
+                                            first_indexes.name(),
                                             first_index,
-                                            count_indexes.path(),
+                                            count_indexes.name(),
                                             count_index,
                                             source.len(),
-                                            source.path()
+                                            source.name()
                                         );
                                     })
                                     .unwrap()
@@ -319,8 +325,8 @@ where
         &mut self,
         max_from: I,
         source: &ComputedVecBuilder<I2, T>,
-        first_indexes: &StoredVec<I, I2>,
-        count_indexes: &StoredVec<I, StoredUsize>,
+        first_indexes: &impl AnyIterableVec<I, I2>,
+        count_indexes: &impl AnyIterableVec<I, StoredUsize>,
         exit: &Exit,
     ) -> Result<()>
     where
@@ -482,7 +488,7 @@ where
 
     fn starting_index(&self, max_from: I) -> I {
         max_from.min(I::from(
-            self.any_vecs().into_iter().map(|v| v.len()).min().unwrap(),
+            self.vecs().into_iter().map(|v| v.len()).min().unwrap(),
         ))
     }
 
@@ -523,7 +529,7 @@ where
         self.total.as_mut().unwrap()
     }
 
-    pub fn any_vecs(&self) -> Vec<&dyn brk_vec::AnyVec> {
+    pub fn vecs(&self) -> Vec<&dyn brk_vec::AnyVec> {
         let mut v: Vec<&dyn brk_vec::AnyVec> = vec![];
 
         if let Some(first) = self.first.as_ref() {

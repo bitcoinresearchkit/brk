@@ -1,8 +1,9 @@
 use std::path::Path;
 
-use brk_computer::{Computation, Computer};
+use brk_computer::Computer;
 use brk_indexer::Indexer;
 use brk_query::{Index, Query};
+use brk_vec::Computation;
 
 pub fn main() -> color_eyre::Result<()> {
     color_eyre::install()?;

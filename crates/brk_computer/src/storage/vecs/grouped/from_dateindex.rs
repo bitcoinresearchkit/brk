@@ -3,11 +3,11 @@ use std::path::Path;
 use brk_core::{DateIndex, DecadeIndex, MonthIndex, QuarterIndex, WeekIndex, YearIndex};
 use brk_exit::Exit;
 use brk_indexer::Indexer;
-use brk_vec::{AnyVec, Compressed, Result, Version};
+use brk_vec::{AnyIterableVec, AnyVec, Compressed, EagerVec, Result, Version};
 
-use crate::storage::{ComputedType, EagerVec, Indexes, indexes};
+use crate::storage::{Indexes, indexes};
 
-use super::{ComputedVecBuilder, StorableVecGeneatorOptions};
+use super::{ComputedType, ComputedVecBuilder, StorableVecGeneatorOptions};
 
 #[derive(Clone)]
 pub struct ComputedVecsFromDateindex<T>
@@ -95,60 +95,60 @@ where
         )?;
 
         self.dateindex_extra
-            .extend(starting_indexes.dateindex, self.dateindex.vec(), exit)?;
+            .extend(starting_indexes.dateindex, self.dateindex.iter_vec(), exit)?;
 
         self.weekindex.compute(
             starting_indexes.weekindex,
-            self.dateindex.vec(),
-            indexes.weekindex_to_first_dateindex.vec(),
-            indexes.weekindex_to_dateindex_count.vec(),
+            self.dateindex.iter_vec(),
+            indexes.weekindex_to_first_dateindex.iter_vec(),
+            indexes.weekindex_to_dateindex_count.iter_vec(),
             exit,
         )?;
 
         self.monthindex.compute(
             starting_indexes.monthindex,
-            self.dateindex.vec(),
-            indexes.monthindex_to_first_dateindex.vec(),
-            indexes.monthindex_to_dateindex_count.vec(),
+            self.dateindex.iter_vec(),
+            indexes.monthindex_to_first_dateindex.iter_vec(),
+            indexes.monthindex_to_dateindex_count.iter_vec(),
             exit,
         )?;
 
         self.quarterindex.from_aligned(
             starting_indexes.quarterindex,
             &self.monthindex,
-            indexes.quarterindex_to_first_monthindex.vec(),
-            indexes.quarterindex_to_monthindex_count.vec(),
+            indexes.quarterindex_to_first_monthindex.iter_vec(),
+            indexes.quarterindex_to_monthindex_count.iter_vec(),
             exit,
         )?;
 
         self.yearindex.from_aligned(
             starting_indexes.yearindex,
             &self.monthindex,
-            indexes.yearindex_to_first_monthindex.vec(),
-            indexes.yearindex_to_monthindex_count.vec(),
+            indexes.yearindex_to_first_monthindex.iter_vec(),
+            indexes.yearindex_to_monthindex_count.iter_vec(),
             exit,
         )?;
 
         self.decadeindex.from_aligned(
             starting_indexes.decadeindex,
             &self.yearindex,
-            indexes.decadeindex_to_first_yearindex.vec(),
-            indexes.decadeindex_to_yearindex_count.vec(),
+            indexes.decadeindex_to_first_yearindex.iter_vec(),
+            indexes.decadeindex_to_yearindex_count.iter_vec(),
             exit,
         )?;
 
         Ok(())
     }
 
-    pub fn any_vecs(&self) -> Vec<&dyn AnyVec> {
+    pub fn vecs(&self) -> Vec<&dyn AnyVec> {
         [
             vec![self.dateindex.any_vec()],
-            self.dateindex_extra.any_vecs(),
-            self.weekindex.any_vecs(),
-            self.monthindex.any_vecs(),
-            self.quarterindex.any_vecs(),
-            self.yearindex.any_vecs(),
-            self.decadeindex.any_vecs(),
+            self.dateindex_extra.vecs(),
+            self.weekindex.vecs(),
+            self.monthindex.vecs(),
+            self.quarterindex.vecs(),
+            self.yearindex.vecs(),
+            self.decadeindex.vecs(),
         ]
         .concat()
     }

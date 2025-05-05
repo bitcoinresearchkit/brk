@@ -16,6 +16,7 @@ brk_logger = { workspace = true }
 brk_parser = { workspace = true }
 brk_query = { workspace = true }
 brk_server = { workspace = true }
+brk_vec = { workspace = true }
 clap = { workspace = true }
 clap_derive = { workspace = true }
 color-eyre = { workspace = true }

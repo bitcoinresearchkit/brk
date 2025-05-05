@@ -4,7 +4,7 @@ use brk_core::{
     AddressBytes, AddressBytesHash, BlockHashPrefix, Height, OutputType, OutputTypeIndex, TxIndex,
     TxidPrefix,
 };
-use brk_vec::{Value, VecIterator, Version};
+use brk_vec::{AnyIterableVec, Value, Version};
 use fjall::{PersistMode, TransactionalKeyspace};
 
 use crate::Indexes;

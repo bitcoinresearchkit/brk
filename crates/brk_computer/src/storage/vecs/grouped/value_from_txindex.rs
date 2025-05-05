@@ -3,10 +3,10 @@ use std::path::Path;
 use brk_core::{Bitcoin, Dollars, Sats, TxIndex};
 use brk_exit::Exit;
 use brk_indexer::Indexer;
-use brk_vec::{AnyVec, Compressed, Result, StoredVec, Version};
+use brk_vec::{AnyVec, Compressed, EagerVec, Result, StoredVec, Version};
 
 use crate::storage::{
-    EagerVec, marketprice,
+    marketprice,
     vecs::{Indexes, indexes},
 };
 
@@ -147,11 +147,11 @@ impl ComputedValueVecsFromTxindex {
         Ok(())
     }
 
-    pub fn any_vecs(&self) -> Vec<&dyn AnyVec> {
+    pub fn vecs(&self) -> Vec<&dyn AnyVec> {
         [
-            self.sats.any_vecs(),
-            self.bitcoin.any_vecs(),
-            self.dollars.as_ref().map_or(vec![], |v| v.any_vecs()),
+            self.sats.vecs(),
+            self.bitcoin.vecs(),
+            self.dollars.as_ref().map_or(vec![], |v| v.vecs()),
         ]
         .concat()
     }

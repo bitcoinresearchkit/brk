@@ -3,6 +3,7 @@ use std::{
     mem,
     path::Path,
     sync::Arc,
+    time::Duration,
 };
 
 use arc_swap::{ArcSwap, Guard};
@@ -11,8 +12,9 @@ use rayon::prelude::*;
 use zstd::DEFAULT_COMPRESSION_LEVEL;
 
 use crate::{
-    BaseVecIterator, CompressedPageMetadata, CompressedPagesMetadata, DynamicVec, Error,
-    GenericVec, RawVec, Result, StoredIndex, StoredType, UnsafeSlice, Value, Version,
+    AnyCollectableVec, AnyIterableVec, AnyVec, BaseVecIterator, BoxedVecIterator, CollectableVec,
+    CompressedPageMetadata, CompressedPagesMetadata, Error, GenericStoredVec, RawVec, Result,
+    StoredIndex, StoredType, UnsafeSlice, Value, Version,
 };
 
 const ONE_KIB: usize = 1024;
@@ -152,14 +154,11 @@ where
     }
 }
 
-impl<I, T> DynamicVec for CompressedVec<I, T>
+impl<I, T> GenericStoredVec<I, T> for CompressedVec<I, T>
 where
     I: StoredIndex,
     T: StoredType,
 {
-    type I = I;
-    type T = T;
-
     #[inline]
     fn read_(&self, index: usize, mmap: &Mmap) -> Result<Option<T>> {
         let page_index = Self::index_to_page_index(index);
@@ -193,28 +192,6 @@ where
     #[inline]
     fn path(&self) -> &Path {
         self.inner.path()
-    }
-}
-
-impl<I, T> GenericVec<I, T> for CompressedVec<I, T>
-where
-    I: StoredIndex,
-    T: StoredType,
-{
-    fn collect_range(&self, from: Option<usize>, to: Option<usize>) -> Result<Vec<T>> {
-        let stored_len = self.stored_len();
-        let from = from.unwrap_or_default();
-        let to = to.map_or(stored_len, |i| i.min(stored_len));
-
-        if from >= stored_len || from >= to {
-            return Ok(vec![]);
-        }
-
-        Ok(self
-            .iter_at_(from)
-            .take(to - from)
-            .map(|(_, v)| v.into_inner())
-            .collect::<Vec<_>>())
     }
 
     fn flush(&mut self) -> Result<()> {
@@ -352,10 +329,36 @@ where
 
         Ok(())
     }
+}
 
+impl<I, T> AnyVec for CompressedVec<I, T>
+where
+    I: StoredIndex,
+    T: StoredType,
+{
     #[inline]
     fn version(&self) -> Version {
         self.inner.version()
+    }
+
+    #[inline]
+    fn name(&self) -> String {
+        self.name_()
+    }
+
+    #[inline]
+    fn len(&self) -> usize {
+        self.len_()
+    }
+
+    #[inline]
+    fn modified_time(&self) -> Result<Duration> {
+        self.modified_time_()
+    }
+
+    #[inline]
+    fn index_type_to_string(&self) -> &str {
+        I::to_string()
     }
 }
 
@@ -472,5 +475,32 @@ where
             stored_len,
             index: 0,
         }
+    }
+}
+
+impl<I, T> AnyIterableVec<I, T> for CompressedVec<I, T>
+where
+    I: StoredIndex,
+    T: StoredType,
+{
+    fn boxed_iter<'a>(&'a self) -> BoxedVecIterator<'a, I, T>
+    where
+        T: 'a,
+    {
+        Box::new(self.into_iter())
+    }
+}
+
+impl<I, T> AnyCollectableVec for CompressedVec<I, T>
+where
+    I: StoredIndex,
+    T: StoredType,
+{
+    fn collect_range_serde_json(
+        &self,
+        from: Option<i64>,
+        to: Option<i64>,
+    ) -> Result<Vec<serde_json::Value>> {
+        CollectableVec::collect_range_serde_json(self, from, to)
     }
 }

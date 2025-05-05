@@ -3,10 +3,10 @@ use std::path::Path;
 use brk_core::{Bitcoin, Dollars, Height, Sats};
 use brk_exit::Exit;
 use brk_indexer::Indexer;
-use brk_vec::{AnyVec, Compressed, Result, StoredVec, Version};
+use brk_vec::{AnyIterableVec, AnyVec, Compressed, EagerVec, Result, StoredVec, Version};
 
 use crate::storage::{
-    EagerVec, marketprice,
+    marketprice,
     vecs::{Indexes, indexes},
 };
 
@@ -110,7 +110,7 @@ impl ComputedValueVecsFromHeight {
                 .compute_rest(indexes, starting_indexes, exit, None)?;
         }
 
-        let height = height.unwrap_or_else(|| self.sats.height.as_ref().unwrap().vec());
+        let height = height.unwrap_or_else(|| self.sats.height.as_ref().unwrap().iter_vec());
 
         self.bitcoin.compute_all(
             indexer,
@@ -122,13 +122,13 @@ impl ComputedValueVecsFromHeight {
             },
         )?;
 
-        let txindex = self.bitcoin.height.as_ref().unwrap().vec();
+        let txindex = self.bitcoin.height.as_ref().unwrap().iter_vec();
         let price = marketprices
             .as_ref()
             .unwrap()
             .chainindexes_to_close
             .height
-            .vec();
+            .iter_vec();
 
         if let Some(dollars) = self.dollars.as_mut() {
             dollars.compute_all(
@@ -145,11 +145,11 @@ impl ComputedValueVecsFromHeight {
         Ok(())
     }
 
-    pub fn any_vecs(&self) -> Vec<&dyn AnyVec> {
+    pub fn vecs(&self) -> Vec<&dyn AnyVec> {
         [
-            self.sats.any_vecs(),
-            self.bitcoin.any_vecs(),
-            self.dollars.as_ref().map_or(vec![], |v| v.any_vecs()),
+            self.sats.vecs(),
+            self.bitcoin.vecs(),
+            self.dollars.as_ref().map_or(vec![], |v| v.vecs()),
         ]
         .concat()
     }
