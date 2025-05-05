@@ -84,41 +84,6 @@ where
         Ok(())
     }
 
-    pub fn version(&self) -> Version {
-        self.computed_version.unwrap()
-    }
-
-    pub fn len(&self) -> usize {
-        self.inner.len()
-    }
-    pub fn is_empty(&self) -> bool {
-        self.inner.is_empty()
-    }
-
-    pub fn name(&self) -> String {
-        self.inner.name()
-    }
-
-    pub fn modified_time(&self) -> Result<Duration> {
-        self.inner.modified_time()
-    }
-
-    // pub fn vec(&self) -> &StoredVec<I, T> {
-    //     &self.inner
-    // }
-
-    // pub fn mut_vec(&mut self) -> &StoredVec<I, T> {
-    //     &mut self.inner
-    // }
-
-    // pub fn any_vec(&self) -> &dyn AnyVec {
-    //     &self.inner
-    // }
-
-    // pub fn mut_any_vec(&mut self) -> &mut dyn AnyVec {
-    //     &mut self.inner
-    // }
-
     pub fn path(&self) -> &Path {
         self.inner.path()
     }
@@ -134,16 +99,13 @@ where
             self.inner.reset()?;
         }
         version.write(path.as_ref())?;
+        self.computed_version = Some(version);
 
         if self.is_empty() {
             info!("Computing {}...", self.name())
         }
 
         Ok(())
-    }
-
-    pub fn iter(&self) -> StoredVecIterator<I, T> {
-        self.into_iter()
     }
 
     pub fn compute_to<F>(
@@ -541,7 +503,7 @@ where
 {
     #[inline]
     fn version(&self) -> Version {
-        self.inner.version()
+        self.computed_version.unwrap()
     }
 
     #[inline]

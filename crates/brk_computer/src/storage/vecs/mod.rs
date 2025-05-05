@@ -35,7 +35,7 @@ impl Vecs {
 
         Ok(Self {
             // blocks: blocks::Vecs::forced_import(path, computation, compressed)?,
-            indexes: indexes::Vecs::forced_import(path, computation, compressed)?,
+            indexes: indexes::Vecs::forced_import(path, indexer, computation, compressed)?,
             // mining: mining::Vecs::forced_import(path, computation, compressed)?,
             // transactions: transactions::Vecs::forced_import(
             //     path,

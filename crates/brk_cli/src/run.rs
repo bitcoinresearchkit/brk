@@ -125,7 +125,7 @@ pub struct RunConfig {
     mode: Option<Mode>,
 
     /// Computation mode for compatible datasets, `lazy` computes data whenever requested without saving it, `eager` computes the data once and saves it to disk, default: Lazy, saved
-    #[arg(short, long)]
+    #[arg(short = 'C', long)]
     computation: Option<Computation>,
 
     /// Activate compression of datasets, set to true to save disk space or false if prioritize speed, default: true, saved
