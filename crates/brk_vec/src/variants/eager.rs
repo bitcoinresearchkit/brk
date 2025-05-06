@@ -93,7 +93,7 @@ where
         self.inner.path().join("computed_version")
     }
 
-    fn validate_computed_version_or_reset_file(&mut self, version: Version) -> Result<()> {
+    pub fn validate_computed_version_or_reset_file(&mut self, version: Version) -> Result<()> {
         let path = self.path_computed_version();
         if version.validate(path.as_ref()).is_err() {
             self.inner.reset()?;
@@ -503,7 +503,12 @@ where
 {
     #[inline]
     fn version(&self) -> Version {
-        self.computed_version.unwrap()
+        self.computed_version
+            .or_else(|| {
+                dbg!(self.path());
+                None
+            })
+            .unwrap()
     }
 
     #[inline]

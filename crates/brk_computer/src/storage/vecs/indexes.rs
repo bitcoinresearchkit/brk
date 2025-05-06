@@ -459,6 +459,7 @@ impl Vecs {
             height_to_date,
             height_to_difficultyepoch,
             height_to_halvingepoch,
+            height_to_height,
             inputindex_to_inputindex,
             monthindex_to_first_dateindex,
             monthindex_to_monthindex,
@@ -484,7 +485,6 @@ impl Vecs {
             yearindex_to_decadeindex,
             yearindex_to_first_monthindex,
             yearindex_to_yearindex,
-
             height_to_date_fixed: EagerVec::forced_import(
                 &path.join("height_to_date_fixed"),
                 Version::ZERO,
@@ -495,7 +495,6 @@ impl Vecs {
                 Version::ZERO,
                 compressed,
             )?,
-            height_to_height,
             txindex_to_height: EagerVec::forced_import(
                 &path.join("txindex_to_height"),
                 Version::ZERO,

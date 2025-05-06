@@ -3,7 +3,7 @@ use std::path::Path;
 use brk_core::{DifficultyEpoch, Height};
 use brk_exit::Exit;
 use brk_indexer::Indexer;
-use brk_vec::{AnyIterableVec, AnyVec, Compressed, EagerVec, Result, Version};
+use brk_vec::{AnyCollectableVec, Compressed, EagerVec, Result, Version};
 
 use crate::storage::{Indexes, indexes};
 
@@ -73,22 +73,22 @@ where
         compute(&mut self.height, indexer, indexes, starting_indexes, exit)?;
 
         self.height_extra
-            .extend(starting_indexes.height, self.height.iter_vec(), exit)?;
+            .extend(starting_indexes.height, &self.height, exit)?;
 
         self.difficultyepoch.compute(
             starting_indexes.difficultyepoch,
-            self.height.iter_vec(),
-            indexes.difficultyepoch_to_first_height.iter_vec(),
-            indexes.difficultyepoch_to_height_count.iter_vec(),
+            &self.height,
+            &indexes.difficultyepoch_to_first_height,
+            &indexes.difficultyepoch_to_height_count,
             exit,
         )?;
 
         Ok(())
     }
 
-    pub fn vecs(&self) -> Vec<&dyn AnyVec> {
+    pub fn vecs(&self) -> Vec<&dyn AnyCollectableVec> {
         [
-            vec![self.height.any_vec()],
+            vec![&self.height as &dyn AnyCollectableVec],
             self.height_extra.vecs(),
             self.difficultyepoch.vecs(),
             // self.halvingepoch.vecs(),

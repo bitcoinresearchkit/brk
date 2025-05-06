@@ -6,7 +6,9 @@ use brk_core::{
 };
 use brk_exit::Exit;
 use brk_indexer::Indexer;
-use brk_vec::{AnyIterableVec, AnyVec, Compressed, EagerVec, Result, StoredVec, Version};
+use brk_vec::{
+    AnyCollectableVec, CollectableVec, Compressed, EagerVec, Result, StoredVec, Version,
+};
 
 use crate::storage::{Indexes, indexes};
 
@@ -106,7 +108,8 @@ where
             exit,
         )?;
 
-        self.compute_rest(indexer, indexes, starting_indexes, exit, None)?;
+        let txindex: Option<&StoredVec<TxIndex, T>> = None;
+        self.compute_rest(indexer, indexes, starting_indexes, exit, txindex)?;
 
         Ok(())
     }
@@ -117,80 +120,92 @@ where
         indexes: &indexes::Vecs,
         starting_indexes: &Indexes,
         exit: &Exit,
-        txindex: Option<&StoredVec<TxIndex, T>>,
+        txindex: Option<&impl CollectableVec<TxIndex, T>>,
     ) -> color_eyre::Result<()> {
-        let txindex = txindex.unwrap_or_else(|| self.txindex.as_ref().unwrap().iter_vec());
+        if let Some(txindex) = txindex {
+            self.height.compute(
+                starting_indexes.height,
+                txindex,
+                &indexer.vecs().height_to_first_txindex,
+                &indexes.height_to_txindex_count,
+                exit,
+            )?;
+        } else {
+            let txindex = self.txindex.as_ref().unwrap();
 
-        self.height.compute(
-            starting_indexes.height,
-            txindex,
-            indexer.vecs().height_to_first_txindex.vec(),
-            indexes.height_to_txindex_count.vec(),
-            exit,
-        )?;
+            self.height.compute(
+                starting_indexes.height,
+                txindex,
+                &indexer.vecs().height_to_first_txindex,
+                &indexes.height_to_txindex_count,
+                exit,
+            )?;
+        }
 
         self.dateindex.from_aligned(
             starting_indexes.dateindex,
             &self.height,
-            indexes.dateindex_to_first_height.vec(),
-            indexes.dateindex_to_height_count.vec(),
+            &indexes.dateindex_to_first_height,
+            &indexes.dateindex_to_height_count,
             exit,
         )?;
 
         self.weekindex.from_aligned(
             starting_indexes.weekindex,
             &self.dateindex,
-            indexes.weekindex_to_first_dateindex.vec(),
-            indexes.weekindex_to_dateindex_count.vec(),
+            &indexes.weekindex_to_first_dateindex,
+            &indexes.weekindex_to_dateindex_count,
             exit,
         )?;
 
         self.monthindex.from_aligned(
             starting_indexes.monthindex,
             &self.dateindex,
-            indexes.monthindex_to_first_dateindex.vec(),
-            indexes.monthindex_to_dateindex_count.vec(),
+            &indexes.monthindex_to_first_dateindex,
+            &indexes.monthindex_to_dateindex_count,
             exit,
         )?;
 
         self.quarterindex.from_aligned(
             starting_indexes.quarterindex,
             &self.monthindex,
-            indexes.quarterindex_to_first_monthindex.vec(),
-            indexes.quarterindex_to_monthindex_count.vec(),
+            &indexes.quarterindex_to_first_monthindex,
+            &indexes.quarterindex_to_monthindex_count,
             exit,
         )?;
 
         self.yearindex.from_aligned(
             starting_indexes.yearindex,
             &self.monthindex,
-            indexes.yearindex_to_first_monthindex.vec(),
-            indexes.yearindex_to_monthindex_count.vec(),
+            &indexes.yearindex_to_first_monthindex,
+            &indexes.yearindex_to_monthindex_count,
             exit,
         )?;
 
         self.decadeindex.from_aligned(
             starting_indexes.decadeindex,
             &self.yearindex,
-            indexes.decadeindex_to_first_yearindex.vec(),
-            indexes.decadeindex_to_yearindex_count.vec(),
+            &indexes.decadeindex_to_first_yearindex,
+            &indexes.decadeindex_to_yearindex_count,
             exit,
         )?;
 
         self.difficultyepoch.from_aligned(
             starting_indexes.difficultyepoch,
             &self.height,
-            indexes.difficultyepoch_to_first_height.vec(),
-            indexes.difficultyepoch_to_height_count.vec(),
+            &indexes.difficultyepoch_to_first_height,
+            &indexes.difficultyepoch_to_height_count,
             exit,
         )?;
 
         Ok(())
     }
 
-    pub fn vecs(&self) -> Vec<&dyn AnyVec> {
+    pub fn vecs(&self) -> Vec<&dyn AnyCollectableVec> {
         [
-            self.txindex.as_ref().map_or(vec![], |v| vec![v.any_vec()]),
+            self.txindex
+                .as_ref()
+                .map_or(vec![], |v| vec![v as &dyn AnyCollectableVec]),
             self.height.vecs(),
             self.dateindex.vecs(),
             self.weekindex.vecs(),

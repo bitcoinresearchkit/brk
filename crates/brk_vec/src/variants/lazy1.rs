@@ -60,6 +60,9 @@ where
     type Item = (I, Value<'a, T>);
 
     fn next(&mut self) -> Option<Self::Item> {
+        if self.index >= self.len() {
+            return None;
+        }
         let index = I::from(self.index);
         let opt = (self.lazy.compute)(index, &mut *self.source).map(|v| (index, Value::Owned(v)));
         if opt.is_some() {

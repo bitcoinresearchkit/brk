@@ -7,7 +7,7 @@ use brk_core::{
 use brk_exit::Exit;
 use brk_indexer::Indexer;
 use brk_parser::bitcoin;
-use brk_vec::{AnyIterableVec, Compressed, Computation, EagerVec, VecIterator, Version};
+use brk_vec::{AnyCollectableVec, AnyIterableVec, Compressed, Computation, EagerVec, Version};
 
 use super::{
     Indexes,
@@ -32,7 +32,7 @@ pub struct Vecs {
 impl Vecs {
     pub fn forced_import(
         path: &Path,
-        computation: Computation,
+        _computation: Computation,
         compressed: Compressed,
     ) -> color_eyre::Result<Self> {
         fs::create_dir_all(path)?;
@@ -126,7 +126,7 @@ impl Vecs {
             |vec, _, indexes, starting_indexes, exit| {
                 vec.compute_transform(
                     starting_indexes.dateindex,
-                    indexes.dateindex_to_date.vec(),
+                    &indexes.dateindex_to_date,
                     |(di, d, ..)| (di, Timestamp::from(d)),
                     exit,
                 )
@@ -143,7 +143,7 @@ impl Vecs {
 
                 v.compute_range(
                     starting_indexes.height,
-                    indexer_vecs.height_to_weight.vec(),
+                    &indexer_vecs.height_to_weight,
                     |h| (h, StoredU32::from(1_u32)),
                     exit,
                 )
@@ -155,7 +155,7 @@ impl Vecs {
         let mut height_to_timestamp_iter = indexer_vecs.height_to_timestamp.iter();
         self.height_to_interval.compute_transform(
             starting_indexes.height,
-            indexer_vecs.height_to_timestamp.vec(),
+            &indexer_vecs.height_to_timestamp,
             |(height, timestamp, ..)| {
                 let interval = height.decremented().map_or(Timestamp::ZERO, |prev_h| {
                     let prev_timestamp = height_to_timestamp_iter.unwrap_get_inner(prev_h);
@@ -172,26 +172,26 @@ impl Vecs {
             indexes,
             starting_indexes,
             exit,
-            Some(self.height_to_interval.vec()),
+            Some(&self.height_to_interval),
         )?;
 
         self.indexes_to_block_weight.compute_rest(
             indexes,
             starting_indexes,
             exit,
-            Some(indexer_vecs.height_to_weight.vec()),
+            Some(&indexer_vecs.height_to_weight),
         )?;
 
         self.indexes_to_block_size.compute_rest(
             indexes,
             starting_indexes,
             exit,
-            Some(indexer_vecs.height_to_total_size.vec()),
+            Some(&indexer_vecs.height_to_total_size),
         )?;
 
         self.height_to_vbytes.compute_transform(
             starting_indexes.height,
-            indexer_vecs.height_to_weight.vec(),
+            &indexer_vecs.height_to_weight,
             |(h, w, ..)| {
                 (
                     h,
@@ -205,21 +205,21 @@ impl Vecs {
             indexes,
             starting_indexes,
             exit,
-            Some(self.height_to_vbytes.vec()),
+            Some(&self.height_to_vbytes),
         )?;
 
         let mut height_to_timestamp_iter = indexer_vecs.height_to_timestamp.iter();
 
         self.difficultyepoch_to_timestamp.compute_transform(
             starting_indexes.difficultyepoch,
-            indexes.difficultyepoch_to_first_height.vec(),
+            &indexes.difficultyepoch_to_first_height,
             |(i, h, ..)| (i, height_to_timestamp_iter.unwrap_get_inner(h)),
             exit,
         )?;
 
         self.halvingepoch_to_timestamp.compute_transform(
             starting_indexes.halvingepoch,
-            indexes.halvingepoch_to_first_height.vec(),
+            &indexes.halvingepoch_to_first_height,
             |(i, h, ..)| (i, height_to_timestamp_iter.unwrap_get_inner(h)),
             exit,
         )?;
@@ -227,13 +227,13 @@ impl Vecs {
         Ok(())
     }
 
-    pub fn vecs(&self) -> Vec<&dyn brk_vec::AnyVec> {
+    pub fn vecs(&self) -> Vec<&dyn AnyCollectableVec> {
         [
             vec![
-                self.height_to_interval.any_vec(),
-                self.height_to_vbytes.any_vec(),
-                self.difficultyepoch_to_timestamp.any_vec(),
-                self.halvingepoch_to_timestamp.any_vec(),
+                &self.height_to_interval as &dyn AnyCollectableVec,
+                &self.height_to_vbytes,
+                &self.difficultyepoch_to_timestamp,
+                &self.halvingepoch_to_timestamp,
             ],
             self.timeindexes_to_timestamp.vecs(),
             self.indexes_to_block_count.vecs(),

@@ -103,9 +103,9 @@ where
 
     #[allow(clippy::too_many_arguments)]
     pub fn forced_import_or_init_from_2(
+        mode: Computation,
         path: &Path,
         name: &str,
-        mode: Computation,
         version: Version,
         compressed: Compressed,
         source1: BoxedAnyIterableVec<S1I, S1T>,
