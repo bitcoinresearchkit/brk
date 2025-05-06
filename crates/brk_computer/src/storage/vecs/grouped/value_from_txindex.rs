@@ -3,7 +3,9 @@ use std::path::Path;
 use brk_core::{Bitcoin, Dollars, Sats, TxIndex};
 use brk_exit::Exit;
 use brk_indexer::Indexer;
-use brk_vec::{AnyVec, Compressed, EagerVec, Result, StoredVec, Version};
+use brk_vec::{
+    AnyCollectableVec, CollectableVec, Compressed, EagerVec, Result, StoredVec, Version,
+};
 
 use crate::storage::{
     marketprice,
@@ -88,7 +90,15 @@ impl ComputedValueVecsFromTxindex {
             exit,
         )?;
 
-        self.compute_rest(indexer, indexes, marketprices, starting_indexes, exit, None)?;
+        let txindex: Option<&StoredVec<TxIndex, Sats>> = None;
+        self.compute_rest(
+            indexer,
+            indexes,
+            marketprices,
+            starting_indexes,
+            exit,
+            txindex,
+        )?;
 
         Ok(())
     }
@@ -100,32 +110,45 @@ impl ComputedValueVecsFromTxindex {
         marketprices: Option<&marketprice::Vecs>,
         starting_indexes: &Indexes,
         exit: &Exit,
-        txindex: Option<&StoredVec<TxIndex, Sats>>,
+        txindex: Option<&impl CollectableVec<TxIndex, Sats>>,
     ) -> color_eyre::Result<()> {
-        if let Some(txindex) = txindex.as_ref() {
+        if let Some(txindex) = txindex {
             self.sats
                 .compute_rest(indexer, indexes, starting_indexes, exit, Some(txindex))?;
+
+            self.bitcoin.compute_all(
+                indexer,
+                indexes,
+                starting_indexes,
+                exit,
+                |v, _, _, starting_indexes, exit| {
+                    v.compute_from_sats(starting_indexes.txindex, txindex, exit)
+                },
+            )?;
         } else {
+            let txindex: Option<&StoredVec<TxIndex, Sats>> = None;
             self.sats
-                .compute_rest(indexer, indexes, starting_indexes, exit, None)?;
+                .compute_rest(indexer, indexes, starting_indexes, exit, txindex)?;
+
+            self.bitcoin.compute_all(
+                indexer,
+                indexes,
+                starting_indexes,
+                exit,
+                |v, _, _, starting_indexes, exit| {
+                    v.compute_from_sats(
+                        starting_indexes.txindex,
+                        self.sats.txindex.as_ref().unwrap(),
+                        exit,
+                    )
+                },
+            )?;
         }
 
-        let txindex = txindex.unwrap_or_else(|| self.sats.txindex.as_ref().unwrap().vec());
-
-        self.bitcoin.compute_all(
-            indexer,
-            indexes,
-            starting_indexes,
-            exit,
-            |v, _, _, starting_indexes, exit| {
-                v.compute_from_sats(starting_indexes.txindex, txindex, exit)
-            },
-        )?;
-
-        let txindex = self.bitcoin.txindex.as_mut().unwrap().mut_vec();
+        let txindex = self.bitcoin.txindex.as_mut().unwrap();
 
         if let Some(dollars) = self.dollars.as_mut() {
-            let price = marketprices.unwrap().chainindexes_to_close.height.vec();
+            let price = &marketprices.unwrap().chainindexes_to_close.height;
 
             dollars.compute_all(
                 indexer,
@@ -136,7 +159,7 @@ impl ComputedValueVecsFromTxindex {
                     v.compute_from_bitcoin(
                         starting_indexes.txindex,
                         txindex,
-                        indexes.txindex_to_height.vec(),
+                        &indexes.txindex_to_height,
                         price,
                         exit,
                     )
@@ -147,7 +170,7 @@ impl ComputedValueVecsFromTxindex {
         Ok(())
     }
 
-    pub fn vecs(&self) -> Vec<&dyn AnyVec> {
+    pub fn vecs(&self) -> Vec<&dyn AnyCollectableVec> {
         [
             self.sats.vecs(),
             self.bitcoin.vecs(),

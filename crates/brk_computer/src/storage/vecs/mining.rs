@@ -3,7 +3,7 @@ use std::{fs, path::Path};
 use brk_core::{DifficultyEpoch, HalvingEpoch, StoredF64};
 use brk_exit::Exit;
 use brk_indexer::Indexer;
-use brk_vec::{Compressed, Computation, VecIterator, Version};
+use brk_vec::{AnyCollectableVec, Compressed, Computation, VecIterator, Version};
 
 use super::{
     Indexes,
@@ -21,7 +21,7 @@ pub struct Vecs {
 impl Vecs {
     pub fn forced_import(
         path: &Path,
-        computation: Computation,
+        _computation: Computation,
         compressed: Compressed,
     ) -> color_eyre::Result<Self> {
         fs::create_dir_all(path)?;
@@ -59,17 +59,17 @@ impl Vecs {
         starting_indexes: &Indexes,
         exit: &Exit,
     ) -> color_eyre::Result<()> {
-        let mut height_to_difficultyepoch_iter = indexes.height_to_difficultyepoch.iter();
+        let mut height_to_difficultyepoch_iter = indexes.height_to_difficultyepoch.into_iter();
         self.indexes_to_difficultyepoch.compute(
             indexer,
             indexes,
             starting_indexes,
             exit,
             |vec, _, indexes, starting_indexes, exit| {
-                let mut height_count_iter = indexes.dateindex_to_height_count.iter();
+                let mut height_count_iter = indexes.dateindex_to_height_count.into_iter();
                 vec.compute_transform(
                     starting_indexes.dateindex,
-                    indexes.dateindex_to_first_height.vec(),
+                    &indexes.dateindex_to_first_height,
                     |(di, height, ..)| {
                         (
                             di,
@@ -83,17 +83,17 @@ impl Vecs {
             },
         )?;
 
-        let mut height_to_halvingepoch_iter = indexes.height_to_halvingepoch.iter();
+        let mut height_to_halvingepoch_iter = indexes.height_to_halvingepoch.into_iter();
         self.indexes_to_halvingepoch.compute(
             indexer,
             indexes,
             starting_indexes,
             exit,
             |vec, _, indexes, starting_indexes, exit| {
-                let mut height_count_iter = indexes.dateindex_to_height_count.iter();
+                let mut height_count_iter = indexes.dateindex_to_height_count.into_iter();
                 vec.compute_transform(
                     starting_indexes.dateindex,
-                    indexes.dateindex_to_first_height.vec(),
+                    &indexes.dateindex_to_first_height,
                     |(di, height, ..)| {
                         (
                             di,
@@ -111,13 +111,13 @@ impl Vecs {
             indexes,
             starting_indexes,
             exit,
-            Some(indexer.vecs().height_to_difficulty.vec()),
+            Some(&indexer.vecs().height_to_difficulty),
         )?;
 
         Ok(())
     }
 
-    pub fn vecs(&self) -> Vec<&dyn brk_vec::AnyVec> {
+    pub fn vecs(&self) -> Vec<&dyn AnyCollectableVec> {
         [
             self.indexes_to_difficulty.vecs(),
             self.indexes_to_difficultyepoch.vecs(),

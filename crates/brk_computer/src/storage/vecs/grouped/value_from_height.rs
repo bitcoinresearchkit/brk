@@ -3,7 +3,9 @@ use std::path::Path;
 use brk_core::{Bitcoin, Dollars, Height, Sats};
 use brk_exit::Exit;
 use brk_indexer::Indexer;
-use brk_vec::{AnyIterableVec, AnyVec, Compressed, EagerVec, Result, StoredVec, Version};
+use brk_vec::{
+    AnyCollectableVec, CollectableVec, Compressed, EagerVec, Result, StoredVec, Version,
+};
 
 use crate::storage::{
     marketprice,
@@ -88,7 +90,15 @@ impl ComputedValueVecsFromHeight {
             exit,
         )?;
 
-        self.compute_rest(indexer, indexes, marketprices, starting_indexes, exit, None)?;
+        let height: Option<&StoredVec<Height, Sats>> = None;
+        self.compute_rest(
+            indexer,
+            indexes,
+            marketprices,
+            starting_indexes,
+            exit,
+            height,
+        )?;
 
         Ok(())
     }
@@ -100,35 +110,44 @@ impl ComputedValueVecsFromHeight {
         marketprices: Option<&marketprice::Vecs>,
         starting_indexes: &Indexes,
         exit: &Exit,
-        height: Option<&StoredVec<Height, Sats>>,
+        height: Option<&impl CollectableVec<Height, Sats>>,
     ) -> color_eyre::Result<()> {
-        if let Some(height) = height.as_ref() {
+        if let Some(height) = height {
             self.sats
                 .compute_rest(indexes, starting_indexes, exit, Some(height))?;
+
+            self.bitcoin.compute_all(
+                indexer,
+                indexes,
+                starting_indexes,
+                exit,
+                |v, _, _, starting_indexes, exit| {
+                    v.compute_from_sats(starting_indexes.height, height, exit)
+                },
+            )?;
         } else {
+            let height: Option<&StoredVec<Height, Sats>> = None;
+
             self.sats
-                .compute_rest(indexes, starting_indexes, exit, None)?;
+                .compute_rest(indexes, starting_indexes, exit, height)?;
+
+            self.bitcoin.compute_all(
+                indexer,
+                indexes,
+                starting_indexes,
+                exit,
+                |v, _, _, starting_indexes, exit| {
+                    v.compute_from_sats(
+                        starting_indexes.height,
+                        self.sats.height.as_ref().unwrap(),
+                        exit,
+                    )
+                },
+            )?;
         }
 
-        let height = height.unwrap_or_else(|| self.sats.height.as_ref().unwrap().iter_vec());
-
-        self.bitcoin.compute_all(
-            indexer,
-            indexes,
-            starting_indexes,
-            exit,
-            |v, _, _, starting_indexes, exit| {
-                v.compute_from_sats(starting_indexes.height, height, exit)
-            },
-        )?;
-
-        let txindex = self.bitcoin.height.as_ref().unwrap().iter_vec();
-        let price = marketprices
-            .as_ref()
-            .unwrap()
-            .chainindexes_to_close
-            .height
-            .iter_vec();
+        let txindex = self.bitcoin.height.as_ref().unwrap();
+        let price = &marketprices.as_ref().unwrap().chainindexes_to_close.height;
 
         if let Some(dollars) = self.dollars.as_mut() {
             dollars.compute_all(
@@ -145,7 +164,7 @@ impl ComputedValueVecsFromHeight {
         Ok(())
     }
 
-    pub fn vecs(&self) -> Vec<&dyn AnyVec> {
+    pub fn vecs(&self) -> Vec<&dyn AnyCollectableVec> {
         [
             self.sats.vecs(),
             self.bitcoin.vecs(),

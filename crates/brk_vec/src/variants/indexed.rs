@@ -5,6 +5,7 @@ use std::{
     time::Duration,
 };
 
+use arc_swap::ArcSwap;
 use brk_core::Height;
 
 use crate::{
@@ -70,12 +71,8 @@ where
         self.inner.flush()
     }
 
-    pub fn vec(&self) -> &StoredVec<I, T> {
-        &self.inner
-    }
-
-    pub fn mut_vec(&mut self) -> &mut StoredVec<I, T> {
-        &mut self.inner
+    pub fn mmap(&self) -> &ArcSwap<Mmap> {
+        self.inner.mmap()
     }
 
     #[inline]

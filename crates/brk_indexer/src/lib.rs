@@ -18,7 +18,7 @@ pub use brk_parser::*;
 
 use bitcoin::{Transaction, TxIn, TxOut};
 use brk_exit::Exit;
-use brk_vec::{AnyVec, Compressed, GenericStoredVec, VecIterator};
+use brk_vec::{AnyVec, Compressed, VecIterator};
 use color_eyre::eyre::{ContextCompat, eyre};
 use fjall::TransactionalKeyspace;
 use log::{error, info};
@@ -245,7 +245,7 @@ impl Indexer {
 
                     let input_source_vec_handle = scope.spawn(|| {
                         let txindex_to_first_outputindex_mmap = vecs
-                            .txindex_to_first_outputindex.vec().mmap().load();
+                            .txindex_to_first_outputindex.mmap().load();
 
                         inputs
                             .into_par_iter()
@@ -308,14 +308,14 @@ impl Indexer {
 
                     let outputindex_to_txout_outputtype_addressbytes_res_addressindex_opt_handle = scope.spawn(|| {
                         let p2pk65index_to_p2pk65bytes_mmap = vecs
-                            .p2pk65index_to_p2pk65bytes.vec().mmap().load();
-                        let p2pk33index_to_p2pk33bytes_mmap = vecs.p2pk33index_to_p2pk33bytes.vec().mmap().load();
-                        let p2pkhindex_to_p2pkhbytes_mmap = vecs.p2pkhindex_to_p2pkhbytes.vec().mmap().load();
-                        let p2shindex_to_p2shbytes_mmap = vecs.p2shindex_to_p2shbytes.vec().mmap().load();
-                        let p2wpkhindex_to_p2wpkhbytes_mmap = vecs.p2wpkhindex_to_p2wpkhbytes.vec().mmap().load();
-                        let p2wshindex_to_p2wshbytes_mmap = vecs.p2wshindex_to_p2wshbytes.vec().mmap().load();
-                        let p2trindex_to_p2trbytes_mmap = vecs.p2trindex_to_p2trbytes.vec().mmap().load();
-                       let p2aindex_to_p2abytes_mmap = vecs.p2aindex_to_p2abytes.vec().mmap().load();
+                            .p2pk65index_to_p2pk65bytes.mmap().load();
+                        let p2pk33index_to_p2pk33bytes_mmap = vecs.p2pk33index_to_p2pk33bytes.mmap().load();
+                        let p2pkhindex_to_p2pkhbytes_mmap = vecs.p2pkhindex_to_p2pkhbytes.mmap().load();
+                        let p2shindex_to_p2shbytes_mmap = vecs.p2shindex_to_p2shbytes.mmap().load();
+                        let p2wpkhindex_to_p2wpkhbytes_mmap = vecs.p2wpkhindex_to_p2wpkhbytes.mmap().load();
+                        let p2wshindex_to_p2wshbytes_mmap = vecs.p2wshindex_to_p2wshbytes.mmap().load();
+                        let p2trindex_to_p2trbytes_mmap = vecs.p2trindex_to_p2trbytes.mmap().load();
+                       let p2aindex_to_p2abytes_mmap = vecs.p2aindex_to_p2abytes.mmap().load();
 
                         outputs
                             .into_par_iter()

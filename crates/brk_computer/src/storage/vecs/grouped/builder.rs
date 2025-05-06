@@ -3,7 +3,7 @@ use std::path::Path;
 use brk_core::{CheckedSub, StoredUsize};
 use brk_exit::Exit;
 use brk_vec::{
-    AnyIterableVec, AnyVec, Compressed, EagerVec, Result, StoredIndex, StoredType, VecIterator,
+    AnyCollectableVec, AnyIterableVec, Compressed, EagerVec, Result, StoredIndex, StoredType,
     Version,
 };
 use color_eyre::eyre::ContextCompat;
@@ -178,6 +178,10 @@ where
     {
         let index = self.starting_index(max_from);
 
+        self.validate_computed_version_or_reset_file(
+            source.version() + first_indexes.version() + count_indexes.version(),
+        )?;
+
         let mut count_indexes_iter = count_indexes.iter();
         let mut source_iter = source.iter();
 
@@ -341,6 +345,10 @@ where
             panic!("unsupported");
         }
 
+        self.validate_computed_version_or_reset_file(
+            VERSION + first_indexes.version() + count_indexes.version(),
+        )?;
+
         let index = self.starting_index(max_from);
 
         let mut count_indexes_iter = count_indexes.iter();
@@ -495,6 +503,7 @@ where
     pub fn unwrap_first(&mut self) -> &mut EagerVec<I, T> {
         self.first.as_mut().unwrap()
     }
+    #[allow(unused)]
     pub fn unwrap_average(&mut self) -> &mut EagerVec<I, T> {
         self.average.as_mut().unwrap()
     }
@@ -504,18 +513,23 @@ where
     pub fn unwrap_max(&mut self) -> &mut EagerVec<I, T> {
         self.max.as_mut().unwrap()
     }
+    #[allow(unused)]
     pub fn unwrap_90p(&mut self) -> &mut EagerVec<I, T> {
         self._90p.as_mut().unwrap()
     }
+    #[allow(unused)]
     pub fn unwrap_75p(&mut self) -> &mut EagerVec<I, T> {
         self._75p.as_mut().unwrap()
     }
+    #[allow(unused)]
     pub fn unwrap_median(&mut self) -> &mut EagerVec<I, T> {
         self.median.as_mut().unwrap()
     }
+    #[allow(unused)]
     pub fn unwrap_25p(&mut self) -> &mut EagerVec<I, T> {
         self._25p.as_mut().unwrap()
     }
+    #[allow(unused)]
     pub fn unwrap_10p(&mut self) -> &mut EagerVec<I, T> {
         self._10p.as_mut().unwrap()
     }
@@ -525,48 +539,49 @@ where
     pub fn unwrap_last(&mut self) -> &mut EagerVec<I, T> {
         self.last.as_mut().unwrap()
     }
+    #[allow(unused)]
     pub fn unwrap_total(&mut self) -> &mut EagerVec<I, T> {
         self.total.as_mut().unwrap()
     }
 
-    pub fn vecs(&self) -> Vec<&dyn brk_vec::AnyVec> {
-        let mut v: Vec<&dyn brk_vec::AnyVec> = vec![];
+    pub fn vecs(&self) -> Vec<&dyn AnyCollectableVec> {
+        let mut v: Vec<&dyn AnyCollectableVec> = vec![];
 
         if let Some(first) = self.first.as_ref() {
-            v.push(first.any_vec());
+            v.push(first);
         }
         if let Some(last) = self.last.as_ref() {
-            v.push(last.any_vec());
+            v.push(last);
         }
         if let Some(min) = self.min.as_ref() {
-            v.push(min.any_vec());
+            v.push(min);
         }
         if let Some(max) = self.max.as_ref() {
-            v.push(max.any_vec());
+            v.push(max);
         }
         if let Some(median) = self.median.as_ref() {
-            v.push(median.any_vec());
+            v.push(median);
         }
         if let Some(average) = self.average.as_ref() {
-            v.push(average.any_vec());
+            v.push(average);
         }
         if let Some(sum) = self.sum.as_ref() {
-            v.push(sum.any_vec());
+            v.push(sum);
         }
         if let Some(total) = self.total.as_ref() {
-            v.push(total.any_vec());
+            v.push(total);
         }
         if let Some(_90p) = self._90p.as_ref() {
-            v.push(_90p.any_vec());
+            v.push(_90p);
         }
         if let Some(_75p) = self._75p.as_ref() {
-            v.push(_75p.any_vec());
+            v.push(_75p);
         }
         if let Some(_25p) = self._25p.as_ref() {
-            v.push(_25p.any_vec());
+            v.push(_25p);
         }
         if let Some(_10p) = self._10p.as_ref() {
-            v.push(_10p.any_vec());
+            v.push(_10p);
         }
 
         v
@@ -612,6 +627,47 @@ where
 
         Ok(())
     }
+
+    fn validate_computed_version_or_reset_file(&mut self, version: Version) -> Result<()> {
+        if let Some(first) = self.first.as_mut() {
+            first.validate_computed_version_or_reset_file(Version::ZERO + version)?;
+        }
+        if let Some(last) = self.last.as_mut() {
+            last.validate_computed_version_or_reset_file(Version::ZERO + version)?;
+        }
+        if let Some(min) = self.min.as_mut() {
+            min.validate_computed_version_or_reset_file(Version::ZERO + version)?;
+        }
+        if let Some(max) = self.max.as_mut() {
+            max.validate_computed_version_or_reset_file(Version::ZERO + version)?;
+        }
+        if let Some(median) = self.median.as_mut() {
+            median.validate_computed_version_or_reset_file(Version::ZERO + version)?;
+        }
+        if let Some(average) = self.average.as_mut() {
+            average.validate_computed_version_or_reset_file(Version::ZERO + version)?;
+        }
+        if let Some(sum) = self.sum.as_mut() {
+            sum.validate_computed_version_or_reset_file(Version::ZERO + version)?;
+        }
+        if let Some(total) = self.total.as_mut() {
+            total.validate_computed_version_or_reset_file(Version::ZERO + version)?;
+        }
+        if let Some(_90p) = self._90p.as_mut() {
+            _90p.validate_computed_version_or_reset_file(Version::ZERO + version)?;
+        }
+        if let Some(_75p) = self._75p.as_mut() {
+            _75p.validate_computed_version_or_reset_file(Version::ZERO + version)?;
+        }
+        if let Some(_25p) = self._25p.as_mut() {
+            _25p.validate_computed_version_or_reset_file(Version::ZERO + version)?;
+        }
+        if let Some(_10p) = self._10p.as_mut() {
+            _10p.validate_computed_version_or_reset_file(Version::ZERO + version)?;
+        }
+
+        Ok(())
+    }
 }
 
 #[derive(Default, Clone, Copy)]
@@ -651,6 +707,7 @@ impl StorableVecGeneatorOptions {
         self
     }
 
+    #[allow(unused)]
     pub fn add_median(mut self) -> Self {
         self.median = true;
         self
@@ -666,21 +723,25 @@ impl StorableVecGeneatorOptions {
         self
     }
 
+    #[allow(unused)]
     pub fn add_90p(mut self) -> Self {
         self._90p = true;
         self
     }
 
+    #[allow(unused)]
     pub fn add_75p(mut self) -> Self {
         self._75p = true;
         self
     }
 
+    #[allow(unused)]
     pub fn add_25p(mut self) -> Self {
         self._25p = true;
         self
     }
 
+    #[allow(unused)]
     pub fn add_10p(mut self) -> Self {
         self._10p = true;
         self
@@ -691,51 +752,61 @@ impl StorableVecGeneatorOptions {
         self
     }
 
+    #[allow(unused)]
     pub fn rm_min(mut self) -> Self {
         self.min = false;
         self
     }
 
+    #[allow(unused)]
     pub fn rm_max(mut self) -> Self {
         self.max = false;
         self
     }
 
+    #[allow(unused)]
     pub fn rm_median(mut self) -> Self {
         self.median = false;
         self
     }
 
+    #[allow(unused)]
     pub fn rm_average(mut self) -> Self {
         self.average = false;
         self
     }
 
+    #[allow(unused)]
     pub fn rm_sum(mut self) -> Self {
         self.sum = false;
         self
     }
 
+    #[allow(unused)]
     pub fn rm_90p(mut self) -> Self {
         self._90p = false;
         self
     }
 
+    #[allow(unused)]
     pub fn rm_75p(mut self) -> Self {
         self._75p = false;
         self
     }
 
+    #[allow(unused)]
     pub fn rm_25p(mut self) -> Self {
         self._25p = false;
         self
     }
 
+    #[allow(unused)]
     pub fn rm_10p(mut self) -> Self {
         self._10p = false;
         self
     }
 
+    #[allow(unused)]
     pub fn rm_total(mut self) -> Self {
         self.total = false;
         self
