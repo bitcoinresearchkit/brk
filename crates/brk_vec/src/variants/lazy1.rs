@@ -1,3 +1,4 @@
+use core::panic;
 use std::marker::PhantomData;
 
 use crate::{
@@ -30,6 +31,10 @@ where
         source: BoxedAnyIterableVec<S1I, S1T>,
         compute: ComputeFrom1<I, T, S1I, S1T>,
     ) -> Self {
+        if source.index_type_to_string() != I::to_string() {
+            panic!("Should have same index");
+        }
+
         Self {
             name: name.to_owned(),
             version,

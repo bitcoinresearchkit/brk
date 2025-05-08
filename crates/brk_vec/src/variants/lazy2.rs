@@ -37,6 +37,18 @@ where
         source2: BoxedAnyIterableVec<S2I, S2T>,
         compute: ComputeFrom2<I, T, S1I, S1T, S2I, S2T>,
     ) -> Self {
+        if ([
+            source1.index_type_to_string(),
+            source2.index_type_to_string(),
+        ])
+        .into_iter()
+        .filter(|t| *t == I::to_string())
+        .count()
+            == 0
+        {
+            panic!("At least one should have same index");
+        }
+
         Self {
             name: name.to_string(),
             version,
@@ -98,7 +110,17 @@ where
 
     #[inline]
     fn len(&self) -> usize {
-        self.source1.len().min(self.source2.len())
+        let len1 = if self.source1.index_type_to_string() == I::to_string() {
+            self.source1.len()
+        } else {
+            usize::MAX
+        };
+        let len2 = if self.source2.index_type_to_string() == I::to_string() {
+            self.source2.len()
+        } else {
+            usize::MAX
+        };
+        len1.min(len2)
     }
 }
 
@@ -146,7 +168,17 @@ where
     }
 
     fn len(&self) -> usize {
-        self.source1.len().min(self.source2.len())
+        let len1 = if self.source1.index_type_to_string() == I::to_string() {
+            self.source1.len()
+        } else {
+            usize::MAX
+        };
+        let len2 = if self.source2.index_type_to_string() == I::to_string() {
+            self.source2.len()
+        } else {
+            usize::MAX
+        };
+        len1.min(len2)
     }
 
     fn modified_time(&self) -> Result<std::time::Duration> {

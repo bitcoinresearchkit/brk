@@ -33,19 +33,24 @@ impl Vecs {
     ) -> color_eyre::Result<Self> {
         fs::create_dir_all(path)?;
 
+        let indexes = indexes::Vecs::forced_import(path, indexer, computation, compressed)?;
+
+        let marketprice =
+            fetch.then(|| marketprice::Vecs::forced_import(path, computation, compressed).unwrap());
+
         Ok(Self {
             blocks: blocks::Vecs::forced_import(path, computation, compressed)?,
-            indexes: indexes::Vecs::forced_import(path, indexer, computation, compressed)?,
             mining: mining::Vecs::forced_import(path, computation, compressed)?,
             transactions: transactions::Vecs::forced_import(
                 path,
                 indexer,
+                &indexes,
                 computation,
                 compressed,
-                fetch,
+                marketprice.as_ref(),
             )?,
-            marketprice: fetch
-                .then(|| marketprice::Vecs::forced_import(path, computation, compressed).unwrap()),
+            indexes,
+            marketprice,
         })
     }
 
