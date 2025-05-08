@@ -93,8 +93,9 @@ If you'd like to have your own instance hosted for you please contact [hosting@b
 
 - 2 separate dedicated servers (1 GB/s each) with different ISPs and Cloudflare integration for enhanced performance and optimal availability
 - 99.9% SLA
-- Direct communication for feature requests and support
+- Configurated for speed (`raw + eager`)
 - Updates delivered at your convenience
+- Direct communication for feature requests and support
 - Optional subdomains: `*.bitcoinresearchkit.org`, `*.kibo.money` and `*.satonomics.xyz`
 - Logo featured in the Readme if desired
 
