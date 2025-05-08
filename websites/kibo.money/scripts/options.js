@@ -476,14 +476,14 @@ function createPartialOptions(colors) {
                 }),
               ],
             },
-            {
-              name: "Value",
-              title: "Transaction Input Value",
-              bottom: [
-                createAverageSeries({ concat: "input-value" }),
-                ...createSumTotalSeries({ concat: "input-value" }),
-              ],
-            },
+            // {
+            //   name: "Value",
+            //   title: "Transaction Input Value",
+            //   bottom: [
+            //     createAverageSeries({ concat: "input-value" }),
+            //     ...createSumTotalSeries({ concat: "input-value" }),
+            //   ],
+            // },
           ],
         },
         {
@@ -500,14 +500,14 @@ function createPartialOptions(colors) {
                 }),
               ],
             },
-            {
-              name: "Value",
-              title: "Transaction Output Value",
-              bottom: [
-                createAverageSeries({ concat: "output-value" }),
-                ...createSumTotalSeries({ concat: "output-value" }),
-              ],
-            },
+            // {
+            //   name: "Value",
+            //   title: "Transaction Output Value",
+            //   bottom: [
+            //     createAverageSeries({ concat: "output-value" }),
+            //     ...createSumTotalSeries({ concat: "output-value" }),
+            //   ],
+            // },
             {
               name: "By type",
               tree: [],

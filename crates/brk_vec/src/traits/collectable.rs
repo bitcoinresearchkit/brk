@@ -4,6 +4,7 @@ use super::{AnyIterableVec, AnyVec, StoredIndex, StoredType};
 
 pub trait CollectableVec<I, T>: AnyVec + AnyIterableVec<I, T>
 where
+    Self: Clone,
     I: StoredIndex,
     T: StoredType,
 {
@@ -56,7 +57,7 @@ where
 
 impl<I, T, V> CollectableVec<I, T> for V
 where
-    V: AnyVec + AnyIterableVec<I, T>,
+    V: AnyVec + AnyIterableVec<I, T> + Clone,
     I: StoredIndex,
     T: StoredType,
 {
