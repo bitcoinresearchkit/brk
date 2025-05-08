@@ -1,4 +1,4 @@
-use std::{path::Path, time::Duration};
+use std::{fs, path::Path, time::Duration};
 
 use brk_exit::Exit;
 use clap_derive::ValueEnum;
@@ -90,12 +90,14 @@ where
         source: BoxedAnyIterableVec<S1I, S1T>,
         compute: ComputeFrom1<I, T, S1I, S1T>,
     ) -> Result<Self> {
+        let full_path = path.join(name);
         Ok(match mode {
             Computation::Eager => Self::Eager {
-                vec: EagerVec::forced_import(path, version, compressed)?,
+                vec: EagerVec::forced_import(&full_path, version, compressed)?,
                 deps: Dependencies::From1(source, compute),
             },
             Computation::Lazy => {
+                let _ = fs::remove_dir_all(full_path);
                 Self::LazyFrom1(LazyVecFrom1::init(name, version, source, compute))
             }
         })
@@ -112,12 +114,14 @@ where
         source2: BoxedAnyIterableVec<S2I, S2T>,
         compute: ComputeFrom2<I, T, S1I, S1T, S2I, S2T>,
     ) -> Result<Self> {
+        let full_path = path.join(name);
         Ok(match mode {
             Computation::Eager => Self::Eager {
-                vec: EagerVec::forced_import(path, version, compressed)?,
+                vec: EagerVec::forced_import(&full_path, version, compressed)?,
                 deps: Dependencies::From2((source1, source2), compute),
             },
             Computation::Lazy => {
+                let _ = fs::remove_dir_all(full_path);
                 Self::LazyFrom2(LazyVecFrom2::init(name, version, source1, source2, compute))
             }
         })
@@ -135,14 +139,18 @@ where
         source3: BoxedAnyIterableVec<S3I, S3T>,
         compute: ComputeFrom3<I, T, S1I, S1T, S2I, S2T, S3I, S3T>,
     ) -> Result<Self> {
+        let full_path = path.join(name);
         Ok(match mode {
             Computation::Eager => Self::Eager {
-                vec: EagerVec::forced_import(path, version, compressed)?,
+                vec: EagerVec::forced_import(&full_path, version, compressed)?,
                 deps: Dependencies::From3((source1, source2, source3), compute),
             },
-            Computation::Lazy => Self::LazyFrom3(LazyVecFrom3::init(
-                name, version, source1, source2, source3, compute,
-            )),
+            Computation::Lazy => {
+                let _ = fs::remove_dir_all(full_path);
+                Self::LazyFrom3(LazyVecFrom3::init(
+                    name, version, source1, source2, source3, compute,
+                ))
+            }
         })
     }
 
