@@ -96,6 +96,7 @@ If you'd like to have your own instance hosted for you please contact [hosting@b
 - Configurated for speed (`raw + eager`)
 - Updates delivered at your convenience
 - Direct communication for feature requests and support
+- Bitcoin Core or Knots with desired version
 - Optional subdomains: `*.bitcoinresearchkit.org`, `*.kibo.money` and `*.satonomics.xyz`
 - Logo featured in the Readme if desired
 

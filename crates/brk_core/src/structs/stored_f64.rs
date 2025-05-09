@@ -9,6 +9,7 @@ use crate::CheckedSub;
 #[derive(
     Debug,
     Deref,
+    Default,
     Clone,
     Copy,
     PartialEq,

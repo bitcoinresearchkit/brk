@@ -53,7 +53,12 @@ pub trait VecIterator<'a>: BaseVecIterator<Item = (Self::I, Value<'a, Self::T>)>
 
     #[inline]
     fn unwrap_get_inner(&mut self, i: Self::I) -> Self::T {
-        self.get_(i.unwrap_to_usize()).unwrap().into_inner()
+        self.unwrap_get_inner_(i.unwrap_to_usize())
+    }
+
+    #[inline]
+    fn unwrap_get_inner_(&mut self, i: usize) -> Self::T {
+        self.get_(i).unwrap().into_inner()
     }
 
     #[inline]

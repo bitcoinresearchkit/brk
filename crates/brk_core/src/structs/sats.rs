@@ -156,3 +156,18 @@ impl From<Sats> for u64 {
         value.0
     }
 }
+
+impl From<u128> for Sats {
+    fn from(value: u128) -> Self {
+        if value > u64::MAX as u128 {
+            panic!("u128 bigger than u64")
+        }
+        Self(value as u64)
+    }
+}
+
+impl From<Sats> for u128 {
+    fn from(value: Sats) -> Self {
+        value.0 as u128
+    }
+}

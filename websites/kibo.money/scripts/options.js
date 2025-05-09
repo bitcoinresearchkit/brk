@@ -168,9 +168,10 @@ function createPartialOptions(colors) {
    * @param {Object} args
    * @param {ChartableVecId} args.key
    * @param {string} args.name
+   * @param {Color} [args.color]
    */
-  function createBaseSeries({ key, name }) {
-    return { key, title: name };
+  function createBaseSeries({ key, name, color }) {
+    return { key, title: name, color };
   }
 
   /**
@@ -560,6 +561,89 @@ function createPartialOptions(colors) {
                   key: "halvingepoch",
                   name: "Epoch",
                 }),
+              ],
+            },
+          ],
+        },
+        {
+          name: "Market",
+          tree: [
+            {
+              name: "Capitalization",
+              title: "Market Capitalization",
+              bottom: [
+                createBaseSeries({
+                  key: "marketcap",
+                  name: "Capitalization",
+                }),
+              ],
+            },
+            {
+              name: "All Time High",
+              tree: [
+                {
+                  name: "Value",
+                  title: "All Time High",
+                  top: [
+                    createBaseSeries({
+                      key: "ath",
+                      name: "ath",
+                    }),
+                  ],
+                },
+                {
+                  name: "drawdown",
+                  title: "All Time High Drawdown",
+                  top: [
+                    createBaseSeries({
+                      key: "ath",
+                      name: "ath",
+                    }),
+                  ],
+                  bottom: [
+                    createBaseSeries({
+                      key: "drawdown",
+                      name: "Drawdown",
+                      color: colors.red,
+                    }),
+                  ],
+                },
+                {
+                  name: "days since",
+                  title: "Number of days Since All Time High",
+                  top: [
+                    createBaseSeries({
+                      key: "ath",
+                      name: "ath",
+                    }),
+                  ],
+                  bottom: [
+                    createBaseSeries({
+                      key: "days-since-ath",
+                      name: "Days",
+                    }),
+                  ],
+                },
+                {
+                  name: "max between",
+                  title: "Maximum time between All Time Highs",
+                  top: [
+                    createBaseSeries({
+                      key: "ath",
+                      name: "ath",
+                    }),
+                  ],
+                  bottom: [
+                    createBaseSeries({
+                      key: "max-days-between-ath",
+                      name: "Days",
+                    }),
+                    createBaseSeries({
+                      key: "max-years-between-ath",
+                      name: "Years",
+                    }),
+                  ],
+                },
               ],
             },
           ],

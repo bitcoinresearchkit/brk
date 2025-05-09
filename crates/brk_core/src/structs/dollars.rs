@@ -22,6 +22,10 @@ use super::{Bitcoin, Cents, Sats};
 )]
 pub struct Dollars(f64);
 
+impl Dollars {
+    pub const ZERO: Self = Self(0.0);
+}
+
 impl From<f64> for Dollars {
     fn from(value: f64) -> Self {
         Self(value)
@@ -73,7 +77,7 @@ impl Mul<Bitcoin> for Dollars {
     type Output = Dollars;
     fn mul(self, rhs: Bitcoin) -> Self::Output {
         Self::from(Cents::from(
-            u64::from(Sats::from(rhs)) * u64::from(Cents::from(self)) / u64::from(Sats::ONE_BTC),
+            u128::from(Sats::from(rhs)) * u128::from(Cents::from(self)) / u128::from(Sats::ONE_BTC),
         ))
     }
 }

@@ -25,7 +25,7 @@
  *   "Hash" |
  *   "Index" |
  *   "mb" |
- *   "%" |
+ *   "percentage" |
  *   "Ratio" |
  *   "Sats" |
  *   "Seconds" |
@@ -37,6 +37,8 @@
  *   "Version" |
  *   "WU" |
  *   "Bool" |
+ *   "Days" |
+ *   "Years" |
  *   "Locktime" |
  *   "sat/vB" |
  *   "vB"
@@ -686,6 +688,10 @@ function createUtils() {
       unit = "Index";
     } else if (id.includes("type")) {
       unit = "Type";
+    } else if (id.includes("days-")) {
+      unit = "Days";
+    } else if (id.includes("years-")) {
+      unit = "Years";
     } else if (id === "rawlocktime") {
       unit = "Locktime";
     } else if (id.startsWith("is-")) {
@@ -722,7 +728,9 @@ function createUtils() {
       id.includes("high") ||
       id.includes("low") ||
       id.includes("close") ||
-      id.includes("ohlc")
+      id.includes("ohlc") ||
+      id.includes("marketcap") ||
+      id.includes("ath")
     ) {
       unit = "USD";
     } else if (id.includes("count") || id.match(/v[1-3]/g)) {
@@ -743,6 +751,8 @@ function createUtils() {
       unit = "Version";
     } else if (id === "value") {
       unit = "Sats";
+    } else if (id === "drawdown") {
+      unit = "percentage";
     } else {
       console.log();
       throw Error(`Unit not set for "${id}"`);
