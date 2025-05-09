@@ -13,12 +13,12 @@ use brk_vec::{
 };
 
 use super::{
-    Indexes,
+    Indexes, fetched,
     grouped::{
         ComputedValueVecsFromHeight, ComputedValueVecsFromTxindex, ComputedVecsFromHeight,
         ComputedVecsFromTxindex, StorableVecGeneatorOptions,
     },
-    indexes, marketprice,
+    indexes,
 };
 
 #[derive(Clone)]
@@ -94,9 +94,9 @@ impl Vecs {
         indexes: &indexes::Vecs,
         computation: Computation,
         compressed: Compressed,
-        marketprices: Option<&marketprice::Vecs>,
+        fetched: Option<&fetched::Vecs>,
     ) -> color_eyre::Result<Self> {
-        let compute_dollars = marketprices.is_some();
+        let compute_dollars = fetched.is_some();
 
         fs::create_dir_all(path)?;
 
@@ -455,7 +455,7 @@ impl Vecs {
                 Version::ZERO,
                 computation,
                 compressed,
-                marketprices,
+                fetched,
                 StorableVecGeneatorOptions::default()
                     .add_sum()
                     .add_total()
@@ -700,7 +700,7 @@ impl Vecs {
         indexer: &Indexer,
         indexes: &indexes::Vecs,
         starting_indexes: &Indexes,
-        marketprices: Option<&marketprice::Vecs>,
+        fetched: Option<&fetched::Vecs>,
         exit: &Exit,
     ) -> color_eyre::Result<()> {
         self.indexes_to_tx_count.compute_all(
@@ -845,7 +845,7 @@ impl Vecs {
         self.indexes_to_coinbase.compute_all(
             indexer,
             indexes,
-            marketprices,
+            fetched,
             starting_indexes,
             exit,
             |vec, indexer, _, starting_indexes, exit| {
@@ -878,7 +878,7 @@ impl Vecs {
         self.indexes_to_subsidy.compute_all(
             indexer,
             indexes,
-            marketprices,
+            fetched,
             starting_indexes,
             exit,
             |vec, _, _, starting_indexes, exit| {

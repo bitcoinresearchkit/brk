@@ -56,6 +56,7 @@ export function createVecIdToIndexes() {
   const YearIndex = /** @satisfies {YearIndex} */ (23);
 
   return /** @type {const} */ ({
+    ath: [DateIndex, DecadeIndex, MonthIndex, QuarterIndex, WeekIndex, YearIndex],
     "base-size": [TxIndex],
     "block-count": [Height],
     "block-count-sum": [DateIndex, DecadeIndex, DifficultyEpoch, MonthIndex, QuarterIndex, WeekIndex, YearIndex],
@@ -108,9 +109,11 @@ export function createVecIdToIndexes() {
     "date-fixed": [Height],
     dateindex: [DateIndex, Height],
     "dateindex-count": [MonthIndex, WeekIndex],
+    "days-since-ath": [DateIndex, DecadeIndex, MonthIndex, QuarterIndex, WeekIndex, YearIndex],
     decadeindex: [DecadeIndex, YearIndex],
     difficulty: [DateIndex, DecadeIndex, DifficultyEpoch, Height, MonthIndex, QuarterIndex, WeekIndex, YearIndex],
     difficultyepoch: [DateIndex, DecadeIndex, DifficultyEpoch, Height, MonthIndex, QuarterIndex, WeekIndex, YearIndex],
+    drawdown: [DateIndex, DecadeIndex, MonthIndex, QuarterIndex, WeekIndex, YearIndex],
     "emptyoutput-count": [Height],
     "emptyoutput-count-10p": [DateIndex],
     "emptyoutput-count-25p": [DateIndex],
@@ -202,6 +205,9 @@ export function createVecIdToIndexes() {
     low: [DateIndex, DecadeIndex, DifficultyEpoch, Height, MonthIndex, QuarterIndex, WeekIndex, YearIndex],
     "low-in-cents": [DateIndex, Height],
     "low-in-sats": [DateIndex, DecadeIndex, DifficultyEpoch, Height, MonthIndex, QuarterIndex, WeekIndex, YearIndex],
+    marketcap: [DateIndex, DecadeIndex, MonthIndex, QuarterIndex, WeekIndex, YearIndex],
+    "max-days-between-ath": [DateIndex, DecadeIndex, MonthIndex, QuarterIndex, WeekIndex, YearIndex],
+    "max-years-between-ath": [DateIndex, DecadeIndex, MonthIndex, QuarterIndex, WeekIndex, YearIndex],
     monthindex: [DateIndex, MonthIndex],
     "monthindex-count": [QuarterIndex, YearIndex],
     ohlc: [DateIndex, DecadeIndex, DifficultyEpoch, Height, MonthIndex, QuarterIndex, WeekIndex, YearIndex],

@@ -9,7 +9,7 @@ use brk_vec::{
 };
 
 use crate::storage::{
-    marketprice,
+    fetched,
     vecs::{Indexes, indexes},
 };
 
@@ -48,11 +48,11 @@ impl ComputedValueVecsFromTxindex {
         version: Version,
         computation: Computation,
         compressed: Compressed,
-        marketprices: Option<&marketprice::Vecs>,
+        fetched: Option<&fetched::Vecs>,
         options: StorableVecGeneatorOptions,
     ) -> color_eyre::Result<Self> {
         let compute_source = source.is_none();
-        let compute_dollars = marketprices.is_some();
+        let compute_dollars = fetched.is_some();
 
         let sats = ComputedVecsFromTxindex::forced_import(
             path,
@@ -84,7 +84,7 @@ impl ComputedValueVecsFromTxindex {
             options,
         )?;
 
-        let dollars_txindex = marketprices.map(|marketprices| {
+        let dollars_txindex = fetched.map(|fetched| {
             ComputedVecFrom3::forced_import_or_init_from_3(
                 computation,
                 path,
@@ -93,7 +93,7 @@ impl ComputedValueVecsFromTxindex {
                 compressed,
                 bitcoin_txindex.boxed_clone(),
                 indexes.txindex_to_height.boxed_clone(),
-                marketprices.chainindexes_to_close.height.boxed_clone(),
+                fetched.chainindexes_to_close.height.boxed_clone(),
                 |txindex: TxIndex,
                  txindex_to_btc_iter,
                  txindex_to_height_iter,
@@ -138,7 +138,7 @@ impl ComputedValueVecsFromTxindex {
     //     &mut self,
     //     indexer: &Indexer,
     //     indexes: &indexes::Vecs,
-    //     marketprices: Option<&marketprice::Vecs>,
+    //     fetched: Option<&marketprice::Vecs>,
     //     starting_indexes: &Indexes,
     //     exit: &Exit,
     //     mut compute: F,
@@ -164,7 +164,7 @@ impl ComputedValueVecsFromTxindex {
     //     self.compute_rest(
     //         indexer,
     //         indexes,
-    //         marketprices,
+    //         fetched,
     //         starting_indexes,
     //         exit,
     //         txindex,

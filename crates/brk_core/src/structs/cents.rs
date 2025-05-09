@@ -59,3 +59,18 @@ impl Div<usize> for Cents {
         Self(self.0 / rhs as u64)
     }
 }
+
+impl From<u128> for Cents {
+    fn from(value: u128) -> Self {
+        if value > u64::MAX as u128 {
+            panic!("u128 bigger than u64")
+        }
+        Self(value as u64)
+    }
+}
+
+impl From<Cents> for u128 {
+    fn from(value: Cents) -> Self {
+        value.0 as u128
+    }
+}

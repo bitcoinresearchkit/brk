@@ -16,6 +16,7 @@ use super::{
     Debug,
     Deref,
     Clone,
+    Default,
     Copy,
     PartialEq,
     Eq,

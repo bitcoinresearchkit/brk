@@ -8,7 +8,7 @@ use brk_vec::{
 };
 
 use crate::storage::{
-    marketprice,
+    fetched,
     vecs::{Indexes, indexes},
 };
 
@@ -68,7 +68,7 @@ impl ComputedValueVecsFromHeight {
         &mut self,
         indexer: &Indexer,
         indexes: &indexes::Vecs,
-        marketprices: Option<&marketprice::Vecs>,
+        fetched: Option<&fetched::Vecs>,
         starting_indexes: &Indexes,
         exit: &Exit,
         mut compute: F,
@@ -91,14 +91,7 @@ impl ComputedValueVecsFromHeight {
         )?;
 
         let height: Option<&StoredVec<Height, Sats>> = None;
-        self.compute_rest(
-            indexer,
-            indexes,
-            marketprices,
-            starting_indexes,
-            exit,
-            height,
-        )?;
+        self.compute_rest(indexer, indexes, fetched, starting_indexes, exit, height)?;
 
         Ok(())
     }
@@ -107,7 +100,7 @@ impl ComputedValueVecsFromHeight {
         &mut self,
         indexer: &Indexer,
         indexes: &indexes::Vecs,
-        marketprices: Option<&marketprice::Vecs>,
+        fetched: Option<&fetched::Vecs>,
         starting_indexes: &Indexes,
         exit: &Exit,
         height: Option<&impl CollectableVec<Height, Sats>>,
@@ -147,7 +140,7 @@ impl ComputedValueVecsFromHeight {
         }
 
         let txindex = self.bitcoin.height.as_ref().unwrap();
-        let price = &marketprices.as_ref().unwrap().chainindexes_to_close.height;
+        let price = &fetched.as_ref().unwrap().chainindexes_to_close.height;
 
         if let Some(dollars) = self.dollars.as_mut() {
             dollars.compute_all(

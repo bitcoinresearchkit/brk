@@ -6,9 +6,10 @@ use brk_indexer::Indexer;
 use brk_vec::{AnyCollectableVec, Compressed, Computation};
 
 pub mod blocks;
+pub mod fetched;
 pub mod grouped;
 pub mod indexes;
-pub mod marketprice;
+pub mod market;
 pub mod mining;
 pub mod transactions;
 
@@ -19,8 +20,9 @@ pub struct Vecs {
     pub indexes: indexes::Vecs,
     pub blocks: blocks::Vecs,
     pub mining: mining::Vecs,
+    pub market: market::Vecs,
     pub transactions: transactions::Vecs,
-    pub marketprice: Option<marketprice::Vecs>,
+    pub fetched: Option<fetched::Vecs>,
 }
 
 impl Vecs {
@@ -35,22 +37,23 @@ impl Vecs {
 
         let indexes = indexes::Vecs::forced_import(path, indexer, computation, compressed)?;
 
-        let marketprice =
-            fetch.then(|| marketprice::Vecs::forced_import(path, computation, compressed).unwrap());
+        let fetched =
+            fetch.then(|| fetched::Vecs::forced_import(path, computation, compressed).unwrap());
 
         Ok(Self {
             blocks: blocks::Vecs::forced_import(path, computation, compressed)?,
             mining: mining::Vecs::forced_import(path, computation, compressed)?,
+            market: market::Vecs::forced_import(path, computation, compressed)?,
             transactions: transactions::Vecs::forced_import(
                 path,
                 indexer,
                 &indexes,
                 computation,
                 compressed,
-                marketprice.as_ref(),
+                fetched.as_ref(),
             )?,
             indexes,
-            marketprice,
+            fetched,
         })
     }
 
@@ -69,8 +72,8 @@ impl Vecs {
         self.mining
             .compute(indexer, &self.indexes, &starting_indexes, exit)?;
 
-        if let Some(marketprice) = self.marketprice.as_mut() {
-            marketprice.compute(
+        if let Some(fetched) = self.fetched.as_mut() {
+            fetched.compute(
                 indexer,
                 &self.indexes,
                 &starting_indexes,
@@ -83,9 +86,20 @@ impl Vecs {
             indexer,
             &self.indexes,
             &starting_indexes,
-            self.marketprice.as_ref(),
+            self.fetched.as_ref(),
             exit,
         )?;
+
+        if let Some(fetched) = self.fetched.as_ref() {
+            self.market.compute(
+                indexer,
+                &self.indexes,
+                fetched,
+                &mut self.transactions,
+                &starting_indexes,
+                exit,
+            )?;
+        }
 
         Ok(())
     }
@@ -95,8 +109,9 @@ impl Vecs {
             self.indexes.vecs(),
             self.blocks.vecs(),
             self.mining.vecs(),
+            self.market.vecs(),
             self.transactions.vecs(),
-            self.marketprice.as_ref().map_or(vec![], |v| v.vecs()),
+            self.fetched.as_ref().map_or(vec![], |v| v.vecs()),
         ]
         .concat()
     }
