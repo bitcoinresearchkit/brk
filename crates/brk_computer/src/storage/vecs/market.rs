@@ -19,6 +19,20 @@ pub struct Vecs {
     pub indexes_to_days_since_ath: ComputedVecsFromDateindex<StoredUsize>,
     pub indexes_to_max_days_between_ath: ComputedVecsFromDateindex<StoredUsize>,
     pub indexes_to_max_years_between_ath: ComputedVecsFromDateindex<StoredF64>,
+
+    pub indexes_to_1w_sma: ComputedVecsFromDateindex<Dollars>,
+    pub indexes_to_8d_sma: ComputedVecsFromDateindex<Dollars>,
+    pub indexes_to_13d_sma: ComputedVecsFromDateindex<Dollars>,
+    pub indexes_to_21d_sma: ComputedVecsFromDateindex<Dollars>,
+    pub indexes_to_1m_sma: ComputedVecsFromDateindex<Dollars>,
+    pub indexes_to_34d_sma: ComputedVecsFromDateindex<Dollars>,
+    pub indexes_to_55d_sma: ComputedVecsFromDateindex<Dollars>,
+    pub indexes_to_89d_sma: ComputedVecsFromDateindex<Dollars>,
+    pub indexes_to_144d_sma: ComputedVecsFromDateindex<Dollars>,
+    pub indexes_to_1y_sma: ComputedVecsFromDateindex<Dollars>,
+    pub indexes_to_2y_sma: ComputedVecsFromDateindex<Dollars>,
+    pub indexes_to_200w_sma: ComputedVecsFromDateindex<Dollars>,
+    pub indexes_to_4y_sma: ComputedVecsFromDateindex<Dollars>,
 }
 
 impl Vecs {
@@ -68,6 +82,98 @@ impl Vecs {
             indexes_to_max_years_between_ath: ComputedVecsFromDateindex::forced_import(
                 path,
                 "max_years_between_ath",
+                Version::ZERO,
+                compressed,
+                StorableVecGeneatorOptions::default().add_last(),
+            )?,
+
+            indexes_to_1w_sma: ComputedVecsFromDateindex::forced_import(
+                path,
+                "1w_sma",
+                Version::ZERO,
+                compressed,
+                StorableVecGeneatorOptions::default().add_last(),
+            )?,
+            indexes_to_8d_sma: ComputedVecsFromDateindex::forced_import(
+                path,
+                "8d_sma",
+                Version::ZERO,
+                compressed,
+                StorableVecGeneatorOptions::default().add_last(),
+            )?,
+            indexes_to_13d_sma: ComputedVecsFromDateindex::forced_import(
+                path,
+                "13d_sma",
+                Version::ZERO,
+                compressed,
+                StorableVecGeneatorOptions::default().add_last(),
+            )?,
+            indexes_to_21d_sma: ComputedVecsFromDateindex::forced_import(
+                path,
+                "21d_sma",
+                Version::ZERO,
+                compressed,
+                StorableVecGeneatorOptions::default().add_last(),
+            )?,
+            indexes_to_1m_sma: ComputedVecsFromDateindex::forced_import(
+                path,
+                "1m_sma",
+                Version::ZERO,
+                compressed,
+                StorableVecGeneatorOptions::default().add_last(),
+            )?,
+            indexes_to_34d_sma: ComputedVecsFromDateindex::forced_import(
+                path,
+                "34d_sma",
+                Version::ZERO,
+                compressed,
+                StorableVecGeneatorOptions::default().add_last(),
+            )?,
+            indexes_to_55d_sma: ComputedVecsFromDateindex::forced_import(
+                path,
+                "55d_sma",
+                Version::ZERO,
+                compressed,
+                StorableVecGeneatorOptions::default().add_last(),
+            )?,
+            indexes_to_89d_sma: ComputedVecsFromDateindex::forced_import(
+                path,
+                "89d_sma",
+                Version::ZERO,
+                compressed,
+                StorableVecGeneatorOptions::default().add_last(),
+            )?,
+            indexes_to_144d_sma: ComputedVecsFromDateindex::forced_import(
+                path,
+                "144d_sma",
+                Version::ZERO,
+                compressed,
+                StorableVecGeneatorOptions::default().add_last(),
+            )?,
+            indexes_to_1y_sma: ComputedVecsFromDateindex::forced_import(
+                path,
+                "1y_sma",
+                Version::ZERO,
+                compressed,
+                StorableVecGeneatorOptions::default().add_last(),
+            )?,
+            indexes_to_2y_sma: ComputedVecsFromDateindex::forced_import(
+                path,
+                "2y_sma",
+                Version::ZERO,
+                compressed,
+                StorableVecGeneatorOptions::default().add_last(),
+            )?,
+            indexes_to_200w_sma: ComputedVecsFromDateindex::forced_import(
+                path,
+                "200w_sma",
+                Version::ZERO,
+                compressed,
+                StorableVecGeneatorOptions::default().add_last(),
+            )?,
+            indexes_to_4y_sma: ComputedVecsFromDateindex::forced_import(
+                path,
+                "4y_sma",
                 Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default().add_last(),
@@ -236,6 +342,201 @@ impl Vecs {
             },
         )?;
 
+        self.indexes_to_1w_sma.compute(
+            indexer,
+            indexes,
+            starting_indexes,
+            exit,
+            |v, _, _, starting_indexes, exit| {
+                v.compute_sma(
+                    starting_indexes.dateindex,
+                    &fetched.timeindexes_to_close.dateindex,
+                    7,
+                    exit,
+                )
+            },
+        )?;
+
+        self.indexes_to_8d_sma.compute(
+            indexer,
+            indexes,
+            starting_indexes,
+            exit,
+            |v, _, _, starting_indexes, exit| {
+                v.compute_sma(
+                    starting_indexes.dateindex,
+                    &fetched.timeindexes_to_close.dateindex,
+                    8,
+                    exit,
+                )
+            },
+        )?;
+
+        self.indexes_to_13d_sma.compute(
+            indexer,
+            indexes,
+            starting_indexes,
+            exit,
+            |v, _, _, starting_indexes, exit| {
+                v.compute_sma(
+                    starting_indexes.dateindex,
+                    &fetched.timeindexes_to_close.dateindex,
+                    13,
+                    exit,
+                )
+            },
+        )?;
+
+        self.indexes_to_21d_sma.compute(
+            indexer,
+            indexes,
+            starting_indexes,
+            exit,
+            |v, _, _, starting_indexes, exit| {
+                v.compute_sma(
+                    starting_indexes.dateindex,
+                    &fetched.timeindexes_to_close.dateindex,
+                    21,
+                    exit,
+                )
+            },
+        )?;
+
+        self.indexes_to_1m_sma.compute(
+            indexer,
+            indexes,
+            starting_indexes,
+            exit,
+            |v, _, _, starting_indexes, exit| {
+                v.compute_sma(
+                    starting_indexes.dateindex,
+                    &fetched.timeindexes_to_close.dateindex,
+                    30,
+                    exit,
+                )
+            },
+        )?;
+
+        self.indexes_to_34d_sma.compute(
+            indexer,
+            indexes,
+            starting_indexes,
+            exit,
+            |v, _, _, starting_indexes, exit| {
+                v.compute_sma(
+                    starting_indexes.dateindex,
+                    &fetched.timeindexes_to_close.dateindex,
+                    34,
+                    exit,
+                )
+            },
+        )?;
+
+        self.indexes_to_55d_sma.compute(
+            indexer,
+            indexes,
+            starting_indexes,
+            exit,
+            |v, _, _, starting_indexes, exit| {
+                v.compute_sma(
+                    starting_indexes.dateindex,
+                    &fetched.timeindexes_to_close.dateindex,
+                    55,
+                    exit,
+                )
+            },
+        )?;
+
+        self.indexes_to_89d_sma.compute(
+            indexer,
+            indexes,
+            starting_indexes,
+            exit,
+            |v, _, _, starting_indexes, exit| {
+                v.compute_sma(
+                    starting_indexes.dateindex,
+                    &fetched.timeindexes_to_close.dateindex,
+                    89,
+                    exit,
+                )
+            },
+        )?;
+
+        self.indexes_to_144d_sma.compute(
+            indexer,
+            indexes,
+            starting_indexes,
+            exit,
+            |v, _, _, starting_indexes, exit| {
+                v.compute_sma(
+                    starting_indexes.dateindex,
+                    &fetched.timeindexes_to_close.dateindex,
+                    144,
+                    exit,
+                )
+            },
+        )?;
+
+        self.indexes_to_1y_sma.compute(
+            indexer,
+            indexes,
+            starting_indexes,
+            exit,
+            |v, _, _, starting_indexes, exit| {
+                v.compute_sma(
+                    starting_indexes.dateindex,
+                    &fetched.timeindexes_to_close.dateindex,
+                    365,
+                    exit,
+                )
+            },
+        )?;
+
+        self.indexes_to_2y_sma.compute(
+            indexer,
+            indexes,
+            starting_indexes,
+            exit,
+            |v, _, _, starting_indexes, exit| {
+                v.compute_sma(
+                    starting_indexes.dateindex,
+                    &fetched.timeindexes_to_close.dateindex,
+                    2 * 365,
+                    exit,
+                )
+            },
+        )?;
+
+        self.indexes_to_200w_sma.compute(
+            indexer,
+            indexes,
+            starting_indexes,
+            exit,
+            |v, _, _, starting_indexes, exit| {
+                v.compute_sma(
+                    starting_indexes.dateindex,
+                    &fetched.timeindexes_to_close.dateindex,
+                    200 * 7,
+                    exit,
+                )
+            },
+        )?;
+
+        self.indexes_to_4y_sma.compute(
+            indexer,
+            indexes,
+            starting_indexes,
+            exit,
+            |v, _, _, starting_indexes, exit| {
+                v.compute_sma(
+                    starting_indexes.dateindex,
+                    &fetched.timeindexes_to_close.dateindex,
+                    4 * 365,
+                    exit,
+                )
+            },
+        )?;
+
         Ok(())
     }
 
@@ -247,6 +548,19 @@ impl Vecs {
             self.indexes_to_days_since_ath.vecs(),
             self.indexes_to_max_days_between_ath.vecs(),
             self.indexes_to_max_years_between_ath.vecs(),
+            self.indexes_to_1w_sma.vecs(),
+            self.indexes_to_8d_sma.vecs(),
+            self.indexes_to_13d_sma.vecs(),
+            self.indexes_to_21d_sma.vecs(),
+            self.indexes_to_1m_sma.vecs(),
+            self.indexes_to_34d_sma.vecs(),
+            self.indexes_to_55d_sma.vecs(),
+            self.indexes_to_89d_sma.vecs(),
+            self.indexes_to_144d_sma.vecs(),
+            self.indexes_to_1y_sma.vecs(),
+            self.indexes_to_2y_sma.vecs(),
+            self.indexes_to_200w_sma.vecs(),
+            self.indexes_to_4y_sma.vecs(),
         ]
         .concat()
     }

@@ -2,7 +2,7 @@ use core::error;
 use std::{
     cmp::Ordering,
     fmt::Debug,
-    ops::Add,
+    ops::{Add, Div},
     path::{Path, PathBuf},
     time::Duration,
 };
@@ -403,6 +403,46 @@ where
                 });
                 self.forced_push_at(i, sum, exit)
             })?;
+
+        self.safe_flush(exit)
+    }
+
+    pub fn compute_sma<T2>(
+        &mut self,
+        max_from: I,
+        source: &impl AnyIterableVec<I, T2>,
+        len: usize,
+        exit: &Exit,
+    ) -> Result<()>
+    where
+        T: Add<T, Output = T> + From<T2> + Div<usize, Output = T> + From<f32>,
+        T2: StoredType,
+        f32: From<T> + From<T2>,
+    {
+        self.validate_computed_version_or_reset_file(
+            Version::ZERO + self.inner.version() + source.version(),
+        )?;
+
+        let index = max_from.min(I::from(self.len()));
+        let mut prev = None;
+        source.iter_at(index).try_for_each(|(i, value)| {
+            let value = value.into_inner();
+            if prev.is_none() {
+                let i = i.unwrap_to_usize();
+                prev.replace(if i > 0 {
+                    self.into_iter().unwrap_get_inner_(i - 1)
+                } else {
+                    T::from(0.0)
+                });
+            }
+            let sma = T::from(
+                (f32::from(prev.clone().unwrap()) * (len - 1) as f32 + f32::from(value))
+                    / len as f32,
+            );
+
+            prev.replace(sma.clone());
+            self.forced_push_at(i, sma, exit)
+        })?;
 
         self.safe_flush(exit)
     }
