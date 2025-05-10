@@ -730,7 +730,8 @@ function createUtils() {
       id.includes("close") ||
       id.includes("ohlc") ||
       id.includes("marketcap") ||
-      id.includes("ath")
+      id.includes("ath") ||
+      id.includes("-sma")
     ) {
       unit = "USD";
     } else if (id.includes("count") || id.match(/v[1-3]/g)) {

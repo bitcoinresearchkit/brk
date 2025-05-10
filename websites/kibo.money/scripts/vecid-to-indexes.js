@@ -56,6 +56,19 @@ export function createVecIdToIndexes() {
   const YearIndex = /** @satisfies {YearIndex} */ (23);
 
   return /** @type {const} */ ({
+    "13d-sma": [DateIndex, DecadeIndex, MonthIndex, QuarterIndex, WeekIndex, YearIndex],
+    "144d-sma": [DateIndex, DecadeIndex, MonthIndex, QuarterIndex, WeekIndex, YearIndex],
+    "1m-sma": [DateIndex, DecadeIndex, MonthIndex, QuarterIndex, WeekIndex, YearIndex],
+    "1w-sma": [DateIndex, DecadeIndex, MonthIndex, QuarterIndex, WeekIndex, YearIndex],
+    "1y-sma": [DateIndex, DecadeIndex, MonthIndex, QuarterIndex, WeekIndex, YearIndex],
+    "200w-sma": [DateIndex, DecadeIndex, MonthIndex, QuarterIndex, WeekIndex, YearIndex],
+    "21d-sma": [DateIndex, DecadeIndex, MonthIndex, QuarterIndex, WeekIndex, YearIndex],
+    "2y-sma": [DateIndex, DecadeIndex, MonthIndex, QuarterIndex, WeekIndex, YearIndex],
+    "34d-sma": [DateIndex, DecadeIndex, MonthIndex, QuarterIndex, WeekIndex, YearIndex],
+    "4y-sma": [DateIndex, DecadeIndex, MonthIndex, QuarterIndex, WeekIndex, YearIndex],
+    "55d-sma": [DateIndex, DecadeIndex, MonthIndex, QuarterIndex, WeekIndex, YearIndex],
+    "89d-sma": [DateIndex, DecadeIndex, MonthIndex, QuarterIndex, WeekIndex, YearIndex],
+    "8d-sma": [DateIndex, DecadeIndex, MonthIndex, QuarterIndex, WeekIndex, YearIndex],
     ath: [DateIndex, DecadeIndex, MonthIndex, QuarterIndex, WeekIndex, YearIndex],
     "base-size": [TxIndex],
     "block-count": [Height],

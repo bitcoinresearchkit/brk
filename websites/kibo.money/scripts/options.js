@@ -510,8 +510,216 @@ function createPartialOptions(colors) {
             //   ],
             // },
             {
-              name: "By type",
-              tree: [],
+              name: "types",
+              tree: [
+                {
+                  name: "p2pk",
+                  title: "Pay To Public Key Outputs",
+                  bottom: [
+                    createBaseSeries({
+                      key: "p2pk33-count",
+                      name: "33B Count",
+                    }),
+                    createBaseSeries({
+                      key: "p2pk33-count-sum",
+                      name: "33B sum",
+                    }),
+                    createBaseSeries({
+                      key: "total-p2pk33-count",
+                      name: "33B total",
+                    }),
+                    createBaseSeries({
+                      key: "p2pk65-count",
+                      name: "65B Count",
+                    }),
+                    createBaseSeries({
+                      key: "p2pk65-count-sum",
+                      name: "65B sum",
+                    }),
+                    createBaseSeries({
+                      key: "total-p2pk65-count",
+                      name: "65B total",
+                    }),
+                  ],
+                },
+                {
+                  name: "p2pkh",
+                  title: "Pay To Public Key Hash Outputs",
+                  bottom: [
+                    createBaseSeries({
+                      key: "p2pkh-count",
+                      name: "Count",
+                    }),
+                    createBaseSeries({
+                      key: "p2pkh-count-sum",
+                      name: "sum",
+                    }),
+                    createBaseSeries({
+                      key: "total-p2pkh-count",
+                      name: "total",
+                    }),
+                  ],
+                },
+                {
+                  name: "p2ms",
+                  title: "Pay To Multisig Outputs",
+                  bottom: [
+                    createBaseSeries({
+                      key: "p2ms-count",
+                      name: "Count",
+                    }),
+                    createBaseSeries({
+                      key: "p2ms-count-sum",
+                      name: "sum",
+                    }),
+                    createBaseSeries({
+                      key: "total-p2ms-count",
+                      name: "total",
+                    }),
+                  ],
+                },
+                {
+                  name: "p2sh",
+                  title: "Pay To Script Hash Outputs",
+                  bottom: [
+                    createBaseSeries({
+                      key: "p2sh-count",
+                      name: "Count",
+                    }),
+                    createBaseSeries({
+                      key: "p2sh-count-sum",
+                      name: "sum",
+                    }),
+                    createBaseSeries({
+                      key: "total-p2sh-count",
+                      name: "total",
+                    }),
+                  ],
+                },
+                {
+                  name: "op_return",
+                  title: "op_return outputs",
+                  bottom: [
+                    createBaseSeries({ key: "opreturn-count", name: "Count" }),
+                    createBaseSeries({
+                      key: "opreturn-count-sum",
+                      name: "sum",
+                    }),
+                    createBaseSeries({
+                      key: "total-opreturn-count",
+                      name: "total",
+                    }),
+                  ],
+                },
+                {
+                  name: "p2wpkh",
+                  title: "Pay To Witness Public Key Hash Outputs",
+                  bottom: [
+                    createBaseSeries({
+                      key: "p2wpkh-count",
+                      name: "Count",
+                    }),
+                    createBaseSeries({
+                      key: "p2wpkh-count-sum",
+                      name: "sum",
+                    }),
+                    createBaseSeries({
+                      key: "total-p2wpkh-count",
+                      name: "total",
+                    }),
+                  ],
+                },
+                {
+                  name: "p2wsh",
+                  title: "Pay To Witness Script Hash Outputs",
+                  bottom: [
+                    createBaseSeries({
+                      key: "p2wsh-count",
+                      name: "Count",
+                    }),
+                    createBaseSeries({
+                      key: "p2wsh-count-sum",
+                      name: "sum",
+                    }),
+                    createBaseSeries({
+                      key: "total-p2wsh-count",
+                      name: "total",
+                    }),
+                  ],
+                },
+                {
+                  name: "p2tr",
+                  title: "Pay To Taproot Outputs",
+                  bottom: [
+                    createBaseSeries({
+                      key: "p2tr-count",
+                      name: "Count",
+                    }),
+                    createBaseSeries({
+                      key: "p2tr-count-sum",
+                      name: "sum",
+                    }),
+                    createBaseSeries({
+                      key: "total-p2tr-count",
+                      name: "total",
+                    }),
+                  ],
+                },
+                {
+                  name: "p2a",
+                  title: "Pay To Anchor outputs",
+                  bottom: [
+                    createBaseSeries({
+                      key: "p2a-count",
+                      name: "Count",
+                    }),
+                    createBaseSeries({
+                      key: "p2a-count-sum",
+                      name: "sum",
+                    }),
+                    createBaseSeries({
+                      key: "total-p2a-count",
+                      name: "total",
+                    }),
+                  ],
+                },
+                {
+                  name: "empty",
+                  title: "empty outputs",
+                  bottom: [
+                    createBaseSeries({
+                      key: "emptyoutput-count",
+                      name: "Count",
+                    }),
+                    createBaseSeries({
+                      key: "emptyoutput-count-sum",
+                      name: "sum",
+                    }),
+                    createBaseSeries({
+                      key: "total-emptyoutput-count",
+                      name: "total",
+                    }),
+                  ],
+                },
+                {
+                  name: "unknown",
+                  title: "unknown outputs",
+                  bottom: [
+                    createBaseSeries({
+                      key: "unknownoutput-count",
+                      name: "Count",
+                    }),
+                    createBaseSeries({
+                      key: "unknownoutput-count-sum",
+                      name: "sum",
+                    }),
+                    createBaseSeries({
+                      key: "total-unknownoutput-count",
+                      name: "total",
+                    }),
+                  ],
+                },
+              ],
               // title: "Transaction Output Value",
               // bottom: [
               //   createAverageSeries({ concat: "output-value" }),
@@ -641,6 +849,141 @@ function createPartialOptions(colors) {
                     createBaseSeries({
                       key: "max-years-between-ath",
                       name: "Years",
+                    }),
+                  ],
+                },
+              ],
+            },
+            {
+              name: "Average",
+              tree: [
+                {
+                  name: "1 week",
+                  title: "1 Week Market Price Moving Average",
+                  top: [
+                    createBaseSeries({
+                      key: "1w-sma",
+                      name: "Average",
+                    }),
+                  ],
+                },
+                {
+                  name: "8 days",
+                  title: "8 Days Market Price Moving Average",
+                  top: [
+                    createBaseSeries({
+                      key: "8d-sma",
+                      name: "Average",
+                    }),
+                  ],
+                },
+                {
+                  name: "13 days",
+                  title: "13 Days Market Price Moving Average",
+                  top: [
+                    createBaseSeries({
+                      key: "13d-sma",
+                      name: "Average",
+                    }),
+                  ],
+                },
+                {
+                  name: "21 days",
+                  title: "21 Days Market Price Moving Average",
+                  top: [
+                    createBaseSeries({
+                      key: "21d-sma",
+                      name: "Average",
+                    }),
+                  ],
+                },
+                {
+                  name: "1 month",
+                  title: "1 Month Market Price Moving Average",
+                  top: [
+                    createBaseSeries({
+                      key: "1m-sma",
+                      name: "Average",
+                    }),
+                  ],
+                },
+                {
+                  name: "34 days",
+                  title: "34 Days Market Price Moving Average",
+                  top: [
+                    createBaseSeries({
+                      key: "34d-sma",
+                      name: "Average",
+                    }),
+                  ],
+                },
+                {
+                  name: "55 days",
+                  title: "55 Days Market Price Moving Average",
+                  top: [
+                    createBaseSeries({
+                      key: "55d-sma",
+                      name: "Average",
+                    }),
+                  ],
+                },
+                {
+                  name: "89 days",
+                  title: "89 Days Market Price Moving Average",
+                  top: [
+                    createBaseSeries({
+                      key: "89d-sma",
+                      name: "Average",
+                    }),
+                  ],
+                },
+                {
+                  name: "144 days",
+                  title: "144 Days Market Price Moving Average",
+                  top: [
+                    createBaseSeries({
+                      key: "144d-sma",
+                      name: "Average",
+                    }),
+                  ],
+                },
+                {
+                  name: "1 year",
+                  title: "1 year Market Price Moving Average",
+                  top: [
+                    createBaseSeries({
+                      key: "1y-sma",
+                      name: "Average",
+                    }),
+                  ],
+                },
+                {
+                  name: "2 year",
+                  title: "2 year Market Price Moving Average",
+                  top: [
+                    createBaseSeries({
+                      key: "2y-sma",
+                      name: "Average",
+                    }),
+                  ],
+                },
+                {
+                  name: "200 weeks",
+                  title: "200 Weeks Market Price Moving Average",
+                  top: [
+                    createBaseSeries({
+                      key: "200w-sma",
+                      name: "Average",
+                    }),
+                  ],
+                },
+                {
+                  name: "4 year",
+                  title: "4 year Market Price Moving Average",
+                  top: [
+                    createBaseSeries({
+                      key: "4y-sma",
+                      name: "Average",
                     }),
                   ],
                 },

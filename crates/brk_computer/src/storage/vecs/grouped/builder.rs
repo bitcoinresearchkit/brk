@@ -176,11 +176,11 @@ where
     where
         I2: StoredIndex + StoredType + CheckedSub<I2>,
     {
-        let index = self.starting_index(max_from);
-
         self.validate_computed_version_or_reset_file(
             source.version() + first_indexes.version() + count_indexes.version(),
         )?;
+
+        let index = self.starting_index(max_from);
 
         let mut count_indexes_iter = count_indexes.iter();
         let mut source_iter = source.iter();

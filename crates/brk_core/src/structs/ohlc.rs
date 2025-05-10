@@ -453,12 +453,30 @@ where
     }
 }
 
+impl<T> From<f32> for Close<T>
+where
+    T: From<f32>,
+{
+    fn from(value: f32) -> Self {
+        Self(T::from(value))
+    }
+}
+
 impl<T> From<f64> for Close<T>
 where
     T: From<f64>,
 {
     fn from(value: f64) -> Self {
         Self(T::from(value))
+    }
+}
+
+impl<T> From<Close<T>> for f32
+where
+    f32: From<T>,
+{
+    fn from(value: Close<T>) -> Self {
+        Self::from(value.0)
     }
 }
 
