@@ -20,6 +20,10 @@ impl Version {
     pub const ONE: Self = Self(1);
     pub const TWO: Self = Self(2);
 
+    pub const fn new(v: u32) -> Self {
+        Self(v)
+    }
+
     pub fn write(&self, path: &Path) -> Result<(), io::Error> {
         fs::write(path, self.as_bytes())
     }

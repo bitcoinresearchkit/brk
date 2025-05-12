@@ -1,4 +1,4 @@
-use std::ops::{Add, Div};
+use std::ops::{Add, Div, Mul};
 
 use serde::Serialize;
 use zerocopy_derive::{FromBytes, Immutable, IntoBytes, KnownLayout};
@@ -72,5 +72,12 @@ impl From<u128> for Cents {
 impl From<Cents> for u128 {
     fn from(value: Cents) -> Self {
         value.0 as u128
+    }
+}
+
+impl Mul<Cents> for Cents {
+    type Output = Cents;
+    fn mul(self, rhs: Cents) -> Self::Output {
+        Self(self.0 * rhs.0)
     }
 }

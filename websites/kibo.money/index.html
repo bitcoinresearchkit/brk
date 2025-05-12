@@ -994,12 +994,17 @@
           margin-right: var(--negative-main-padding);
           padding-left: var(--main-padding);
           padding-right: var(--main-padding);
-          padding-bottom: 1rem;
+          padding-top: 0.5rem;
+          padding-bottom: 0.5rem;
           overflow-x: auto;
           min-width: 0;
           font-size: var(--font-size-sm);
           line-height: var(--line-height-sm);
-          height: 2rem;
+          scrollbar-width: thin;
+
+          &:empty {
+            display: none;
+          }
 
           > div {
             flex: 0;

@@ -11,6 +11,7 @@ use brk_indexer::{Indexer, Indexes};
 pub use brk_parser::rpc;
 
 mod storage;
+mod utils;
 
 use brk_vec::{AnyCollectableVec, Compressed, Computation};
 use log::info;

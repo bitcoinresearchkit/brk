@@ -1,0 +1,106 @@
+use std::ops::{Add, Div, Mul, Sub};
+
+use derive_deref::Deref;
+use serde::Serialize;
+use zerocopy_derive::{FromBytes, Immutable, IntoBytes, KnownLayout};
+
+use crate::CheckedSub;
+
+use super::Dollars;
+
+#[derive(
+    Debug,
+    Deref,
+    Default,
+    Clone,
+    Copy,
+    PartialEq,
+    PartialOrd,
+    FromBytes,
+    Immutable,
+    IntoBytes,
+    KnownLayout,
+    Serialize,
+)]
+pub struct StoredF32(f32);
+
+impl From<f32> for StoredF32 {
+    fn from(value: f32) -> Self {
+        Self(value)
+    }
+}
+
+impl From<f64> for StoredF32 {
+    fn from(value: f64) -> Self {
+        Self(value as f32)
+    }
+}
+
+impl From<usize> for StoredF32 {
+    fn from(value: usize) -> Self {
+        Self(value as f32)
+    }
+}
+
+impl CheckedSub<StoredF32> for StoredF32 {
+    fn checked_sub(self, rhs: Self) -> Option<Self> {
+        Some(Self(self.0 - rhs.0))
+    }
+}
+
+impl Div<usize> for StoredF32 {
+    type Output = Self;
+    fn div(self, rhs: usize) -> Self::Output {
+        Self(self.0 / rhs as f32)
+    }
+}
+
+impl Add for StoredF32 {
+    type Output = Self;
+    fn add(self, rhs: Self) -> Self::Output {
+        Self(self.0 + rhs.0)
+    }
+}
+
+impl From<StoredF32> for f32 {
+    fn from(value: StoredF32) -> Self {
+        value.0
+    }
+}
+
+impl Eq for StoredF32 {}
+
+#[allow(clippy::derive_ord_xor_partial_ord)]
+impl Ord for StoredF32 {
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        self.0.partial_cmp(&other.0).unwrap()
+    }
+}
+
+impl Div<Dollars> for StoredF32 {
+    type Output = Self;
+    fn div(self, rhs: Dollars) -> Self::Output {
+        Self::from(self.0 as f64 / *rhs)
+    }
+}
+
+impl Mul<usize> for StoredF32 {
+    type Output = Self;
+    fn mul(self, rhs: usize) -> Self::Output {
+        Self(self.0 * rhs as f32)
+    }
+}
+
+impl Mul<StoredF32> for usize {
+    type Output = StoredF32;
+    fn mul(self, rhs: StoredF32) -> Self::Output {
+        StoredF32(self as f32 * rhs.0)
+    }
+}
+
+impl Sub<StoredF32> for StoredF32 {
+    type Output = Self;
+    fn sub(self, rhs: StoredF32) -> Self::Output {
+        Self(self.0 - rhs.0)
+    }
+}

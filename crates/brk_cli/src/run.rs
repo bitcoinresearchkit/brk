@@ -1,7 +1,7 @@
 use std::{
     fs,
     path::{Path, PathBuf},
-    thread::sleep,
+    thread::{self, sleep},
     time::Duration,
 };
 
@@ -33,77 +33,85 @@ pub fn run(config: RunConfig) -> color_eyre::Result<()> {
     indexer.import_stores()?;
     indexer.import_vecs()?;
 
-    let mut computer = Computer::new(&config.outputsdir(), config.fetcher(), compressed);
-    computer.import_stores(&indexer)?;
-    computer.import_vecs(&indexer, config.computation())?;
+    let wait_for_synced_node = || -> color_eyre::Result<()> {
+        let is_synced = || -> color_eyre::Result<bool> {
+            let info = rpc.get_blockchain_info()?;
+            Ok(info.headers == info.blocks)
+        };
 
-    tokio::runtime::Builder::new_multi_thread()
-        .enable_all()
-        .build()?
-        .block_on(async {
-            let server = if config.serve() {
-                let served_indexer = indexer.clone();
-                let served_computer = computer.clone();
+        if !is_synced()? {
+            info!("Waiting for node to be synced...");
+            while !is_synced()? {
+                sleep(Duration::from_secs(1))
+            }
+        }
 
-                let server = Server::new(served_indexer, served_computer, config.website())?;
+        Ok(())
+    };
 
-                let opt = Some(tokio::spawn(async move {
-                    server.serve().await.unwrap();
-                }));
+    let f = move || -> color_eyre::Result<()> {
+        let mut computer = Computer::new(&config.outputsdir(), config.fetcher(), compressed);
+        computer.import_stores(&indexer)?;
+        computer.import_vecs(&indexer, config.computation())?;
 
-                sleep(Duration::from_secs(1));
+        tokio::runtime::Builder::new_multi_thread()
+            .enable_all()
+            .build()?
+            .block_on(async {
+                let server = if config.serve() {
+                    let served_indexer = indexer.clone();
+                    let served_computer = computer.clone();
 
-                opt
-            } else {
-                None
-            };
+                    let server = Server::new(served_indexer, served_computer, config.website())?;
 
-            if config.process() {
-                let wait_for_synced_node = || -> color_eyre::Result<()> {
-                    let is_synced = || -> color_eyre::Result<bool> {
-                        let info = rpc.get_blockchain_info()?;
-                        Ok(info.headers == info.blocks)
-                    };
+                    let opt = Some(tokio::spawn(async move {
+                        server.serve().await.unwrap();
+                    }));
 
-                    if !is_synced()? {
-                        info!("Waiting for node to be synced...");
-                        while !is_synced()? {
+                    sleep(Duration::from_secs(1));
+
+                    opt
+                } else {
+                    None
+                };
+
+                if config.process() {
+                    loop {
+                        wait_for_synced_node()?;
+
+                        let block_count = rpc.get_block_count()?;
+
+                        info!("{} blocks found.", block_count + 1);
+
+                        let starting_indexes = indexer.index(&parser, rpc, &exit)?;
+
+                        computer.compute(&mut indexer, starting_indexes, &exit)?;
+
+                        if let Some(delay) = config.delay() {
+                            sleep(Duration::from_secs(delay))
+                        }
+
+                        info!("Waiting for new blocks...");
+
+                        while block_count == rpc.get_block_count()? {
                             sleep(Duration::from_secs(1))
                         }
                     }
-
-                    Ok(())
-                };
-
-                loop {
-                    wait_for_synced_node()?;
-
-                    let block_count = rpc.get_block_count()?;
-
-                    info!("{} blocks found.", block_count + 1);
-
-                    let starting_indexes = indexer.index(&parser, rpc, &exit)?;
-
-                    computer.compute(&mut indexer, starting_indexes, &exit)?;
-
-                    if let Some(delay) = config.delay() {
-                        sleep(Duration::from_secs(delay))
-                    }
-
-                    info!("Waiting for new blocks...");
-
-                    while block_count == rpc.get_block_count()? {
-                        sleep(Duration::from_secs(1))
-                    }
                 }
-            }
 
-            if let Some(handle) = server {
-                handle.await.unwrap();
-            }
+                if let Some(handle) = server {
+                    handle.await.unwrap();
+                }
 
-            Ok(())
-        })
+                Ok(())
+            })
+    };
+
+    thread::Builder::new()
+        .stack_size(64 * 1024 * 1024)
+        .spawn(f)?
+        .join()
+        .unwrap()
 }
 
 #[derive(Parser, Debug, Default, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize)]

@@ -35,8 +35,14 @@ impl Fetcher {
     pub fn get_date(&mut self, date: Date) -> color_eyre::Result<OHLCCents> {
         self.kraken
             .get_from_1d(&date)
-            .or_else(|_| self.binance.get_from_1d(&date))
-            .or_else(|_| self.kibo.get_from_date(&date))
+            .or_else(|e| {
+                eprintln!("{e}");
+                self.binance.get_from_1d(&date)
+            })
+            .or_else(|e| {
+                eprintln!("{e}");
+                self.kibo.get_from_date(&date)
+            })
     }
 
     pub fn get_height(
@@ -56,10 +62,12 @@ impl Fetcher {
         let ohlc = self
             .kraken
             .get_from_1mn(timestamp, previous_timestamp)
-            .unwrap_or_else(|_| {
+            .unwrap_or_else(|e| {
+                eprintln!("{e}");
                 self.binance
                     .get_from_1mn(timestamp, previous_timestamp)
-                    .unwrap_or_else(|_| {
+                    .unwrap_or_else(|e| {
+                        eprintln!("{e}");
                         self.kibo.get_from_height(height).unwrap_or_else(|e| {
                             let date = Date::from(timestamp);
                             eprintln!("{e}");

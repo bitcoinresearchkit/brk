@@ -1,6 +1,7 @@
 use core::error;
 use std::{
     cmp::Ordering,
+    f32,
     fmt::Debug,
     ops::{Add, Div},
     path::{Path, PathBuf},
@@ -86,6 +87,10 @@ where
 
     pub fn path(&self) -> &Path {
         self.inner.path()
+    }
+
+    pub fn inner_version(&self) -> Version {
+        self.inner.version()
     }
 
     #[inline]
@@ -411,8 +416,24 @@ where
         &mut self,
         max_from: I,
         source: &impl AnyIterableVec<I, T2>,
-        len: usize,
+        sma: usize,
         exit: &Exit,
+    ) -> Result<()>
+    where
+        T: Add<T, Output = T> + From<T2> + Div<usize, Output = T> + From<f32>,
+        T2: StoredType,
+        f32: From<T> + From<T2>,
+    {
+        self.compute_sma_(max_from, source, sma, exit, None)
+    }
+
+    pub fn compute_sma_<T2>(
+        &mut self,
+        max_from: I,
+        source: &impl AnyIterableVec<I, T2>,
+        sma: usize,
+        exit: &Exit,
+        min_i: Option<I>,
     ) -> Result<()>
     where
         T: Add<T, Output = T> + From<T2> + Div<usize, Output = T> + From<f32>,
@@ -425,23 +446,30 @@ where
 
         let index = max_from.min(I::from(self.len()));
         let mut prev = None;
+        let min_prev_i = min_i.unwrap_or_default().unwrap_to_usize();
         source.iter_at(index).try_for_each(|(i, value)| {
             let value = value.into_inner();
-            if prev.is_none() {
-                let i = i.unwrap_to_usize();
-                prev.replace(if i > 0 {
-                    self.into_iter().unwrap_get_inner_(i - 1)
-                } else {
-                    T::from(0.0)
-                });
-            }
-            let sma = T::from(
-                (f32::from(prev.clone().unwrap()) * (len - 1) as f32 + f32::from(value))
-                    / len as f32,
-            );
 
-            prev.replace(sma.clone());
-            self.forced_push_at(i, sma, exit)
+            if min_i.is_none() || min_i.is_some_and(|min_i| min_i <= i) {
+                if prev.is_none() {
+                    let i = i.unwrap_to_usize();
+                    prev.replace(if i > min_prev_i {
+                        self.into_iter().unwrap_get_inner_(i - 1)
+                    } else {
+                        T::from(0.0)
+                    });
+                }
+                let len = (i.unwrap_to_usize() - min_prev_i + 1).min(sma);
+                let sma = T::from(
+                    (f32::from(prev.clone().unwrap()) * (len - 1) as f32 + f32::from(value))
+                        / len as f32,
+                );
+
+                prev.replace(sma.clone());
+                self.forced_push_at(i, sma, exit)
+            } else {
+                self.forced_push_at(i, T::from(f32::NAN), exit)
+            }
         })?;
 
         self.safe_flush(exit)

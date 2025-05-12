@@ -7,15 +7,15 @@ use brk_vec::{AnyCollectableVec, Compressed, Computation, VecIterator, Version};
 
 use super::{
     Indexes,
-    grouped::{ComputedVecsFromDateindex, ComputedVecsFromHeight, StorableVecGeneatorOptions},
+    grouped::{ComputedVecsFromDateIndex, ComputedVecsFromHeight, StorableVecGeneatorOptions},
     indexes,
 };
 
 #[derive(Clone)]
 pub struct Vecs {
     pub indexes_to_difficulty: ComputedVecsFromHeight<StoredF64>,
-    pub indexes_to_difficultyepoch: ComputedVecsFromDateindex<DifficultyEpoch>,
-    pub indexes_to_halvingepoch: ComputedVecsFromDateindex<HalvingEpoch>,
+    pub indexes_to_difficultyepoch: ComputedVecsFromDateIndex<DifficultyEpoch>,
+    pub indexes_to_halvingepoch: ComputedVecsFromDateIndex<HalvingEpoch>,
 }
 
 impl Vecs {
@@ -35,14 +35,14 @@ impl Vecs {
                 compressed,
                 StorableVecGeneatorOptions::default().add_last(),
             )?,
-            indexes_to_difficultyepoch: ComputedVecsFromDateindex::forced_import(
+            indexes_to_difficultyepoch: ComputedVecsFromDateIndex::forced_import(
                 path,
                 "difficultyepoch",
                 Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default().add_last(),
             )?,
-            indexes_to_halvingepoch: ComputedVecsFromDateindex::forced_import(
+            indexes_to_halvingepoch: ComputedVecsFromDateIndex::forced_import(
                 path,
                 "halvingepoch",
                 Version::ZERO,

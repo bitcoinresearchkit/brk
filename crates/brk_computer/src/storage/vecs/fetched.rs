@@ -12,7 +12,7 @@ use brk_vec::{AnyCollectableVec, AnyIterableVec, Compressed, Computation, EagerV
 use super::{
     Indexes,
     grouped::{
-        ComputedVecsFromDateindex, ComputedVecsFromHeightStrict, StorableVecGeneatorOptions,
+        ComputedVecsFromDateIndex, ComputedVecsFromHeightStrict, StorableVecGeneatorOptions,
     },
     indexes,
 };
@@ -33,14 +33,14 @@ pub struct Vecs {
     pub height_to_ohlc_in_sats: EagerVec<Height, OHLCSats>,
     pub height_to_ohlc_in_cents: EagerVec<Height, OHLCCents>,
     pub height_to_open_in_cents: EagerVec<Height, Open<Cents>>,
-    pub timeindexes_to_close: ComputedVecsFromDateindex<Close<Dollars>>,
-    pub timeindexes_to_high: ComputedVecsFromDateindex<High<Dollars>>,
-    pub timeindexes_to_low: ComputedVecsFromDateindex<Low<Dollars>>,
-    pub timeindexes_to_open: ComputedVecsFromDateindex<Open<Dollars>>,
-    pub timeindexes_to_open_in_sats: ComputedVecsFromDateindex<Open<Sats>>,
-    pub timeindexes_to_high_in_sats: ComputedVecsFromDateindex<High<Sats>>,
-    pub timeindexes_to_low_in_sats: ComputedVecsFromDateindex<Low<Sats>>,
-    pub timeindexes_to_close_in_sats: ComputedVecsFromDateindex<Close<Sats>>,
+    pub timeindexes_to_close: ComputedVecsFromDateIndex<Close<Dollars>>,
+    pub timeindexes_to_high: ComputedVecsFromDateIndex<High<Dollars>>,
+    pub timeindexes_to_low: ComputedVecsFromDateIndex<Low<Dollars>>,
+    pub timeindexes_to_open: ComputedVecsFromDateIndex<Open<Dollars>>,
+    pub timeindexes_to_open_in_sats: ComputedVecsFromDateIndex<Open<Sats>>,
+    pub timeindexes_to_high_in_sats: ComputedVecsFromDateIndex<High<Sats>>,
+    pub timeindexes_to_low_in_sats: ComputedVecsFromDateIndex<Low<Sats>>,
+    pub timeindexes_to_close_in_sats: ComputedVecsFromDateIndex<Close<Sats>>,
     pub chainindexes_to_close: ComputedVecsFromHeightStrict<Close<Dollars>>,
     pub chainindexes_to_high: ComputedVecsFromHeightStrict<High<Dollars>>,
     pub chainindexes_to_low: ComputedVecsFromHeightStrict<Low<Dollars>>,
@@ -151,56 +151,56 @@ impl Vecs {
                 Version::ZERO,
                 compressed,
             )?,
-            timeindexes_to_open: ComputedVecsFromDateindex::forced_import(
+            timeindexes_to_open: ComputedVecsFromDateIndex::forced_import(
                 path,
                 "open",
                 Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default().add_first(),
             )?,
-            timeindexes_to_high: ComputedVecsFromDateindex::forced_import(
+            timeindexes_to_high: ComputedVecsFromDateIndex::forced_import(
                 path,
                 "high",
                 Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default().add_max(),
             )?,
-            timeindexes_to_low: ComputedVecsFromDateindex::forced_import(
+            timeindexes_to_low: ComputedVecsFromDateIndex::forced_import(
                 path,
                 "low",
                 Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default().add_min(),
             )?,
-            timeindexes_to_close: ComputedVecsFromDateindex::forced_import(
+            timeindexes_to_close: ComputedVecsFromDateIndex::forced_import(
                 path,
                 "close",
                 Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default().add_last(),
             )?,
-            timeindexes_to_open_in_sats: ComputedVecsFromDateindex::forced_import(
+            timeindexes_to_open_in_sats: ComputedVecsFromDateIndex::forced_import(
                 path,
                 "open_in_sats",
                 VERSION + VERSION_IN_SATS + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default().add_first(),
             )?,
-            timeindexes_to_high_in_sats: ComputedVecsFromDateindex::forced_import(
+            timeindexes_to_high_in_sats: ComputedVecsFromDateIndex::forced_import(
                 path,
                 "high_in_sats",
                 VERSION + VERSION_IN_SATS + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default().add_max(),
             )?,
-            timeindexes_to_low_in_sats: ComputedVecsFromDateindex::forced_import(
+            timeindexes_to_low_in_sats: ComputedVecsFromDateIndex::forced_import(
                 path,
                 "low_in_sats",
                 VERSION + VERSION_IN_SATS + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default().add_min(),
             )?,
-            timeindexes_to_close_in_sats: ComputedVecsFromDateindex::forced_import(
+            timeindexes_to_close_in_sats: ComputedVecsFromDateIndex::forced_import(
                 path,
                 "close_in_sats",
                 VERSION + VERSION_IN_SATS + Version::ZERO,
