@@ -832,7 +832,7 @@ export function init({
     owner,
     config: [
       {
-        unit: "%",
+        unit: "percentage",
         blueprints: [
           {
             title: "Profitable Days Ratio",

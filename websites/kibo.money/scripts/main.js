@@ -41,7 +41,9 @@
  *   "Years" |
  *   "Locktime" |
  *   "sat/vB" |
- *   "vB"
+ *   "cagr" |
+ *   "vB" |
+ *   "performance" |
  * } Unit
  */
 
@@ -686,6 +688,10 @@ function createUtils() {
     let unit;
     if (id.includes("index") || id.includes("height") || id.includes("epoch")) {
       unit = "Index";
+    } else if (id.endsWith("cagr")) {
+      unit = "cagr";
+    } else if (id.endsWith("returns")) {
+      unit = "performance";
     } else if (id === "drawdown" || id.endsWith("oscillator")) {
       unit = "percentage";
     } else if (id.endsWith("-as-price")) {
@@ -726,7 +732,8 @@ function createUtils() {
       id.includes("output-value") ||
       id.includes("fee") ||
       id.includes("coinbase") ||
-      id.includes("subsidy")
+      id.includes("subsidy") ||
+      id.endsWith("stack")
     ) {
       unit = "Sats";
     } else if (
@@ -737,7 +744,9 @@ function createUtils() {
       id.includes("ohlc") ||
       id.includes("marketcap") ||
       id.includes("ath") ||
-      id.includes("-sma")
+      id.includes("-sma") ||
+      id.endsWith("-price") ||
+      id.startsWith("price-")
     ) {
       unit = "USD";
     } else if (id.includes("count") || id.match(/v[1-3]/g)) {
@@ -1618,6 +1627,20 @@ function createColors(dark, elements) {
     _200w: violet,
     _4y: purple,
     _10y: fuchsia,
+
+    // r1d: pink,
+    // r1w: red,
+    // r1m: amber,
+    // r3m: yellow,
+    // r6m: lime,
+    // r1y: green,
+    // r2y: emerald,
+    // r3y: teal,
+    // r4y: blue,
+    // r5y: indigo,
+    // r6y: violet,
+    // r8y: purple,
+    // r10y: fuchsia,
 
     p2pk: lime,
     p2pkh: violet,

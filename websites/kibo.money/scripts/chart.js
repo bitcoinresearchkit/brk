@@ -238,7 +238,11 @@ export function init({
                         unit,
                         defaultActive: blueprint.defaultActive,
                         paneIndex,
-                        options: blueprint.options,
+                        options: {
+                          ...blueprint.options,
+                          topLineColor: blueprint.colors?.[0](),
+                          bottomLineColor: blueprint.colors?.[1](),
+                        },
                       });
                       break;
                     }

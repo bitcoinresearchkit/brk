@@ -1,4 +1,4 @@
-use std::ops::{Add, Div};
+use std::ops::{Add, Div, Mul};
 
 use derive_deref::Deref;
 use serde::Serialize;
@@ -40,6 +40,13 @@ impl CheckedSub<StoredF64> for StoredF64 {
     }
 }
 
+impl Mul<usize> for StoredF64 {
+    type Output = Self;
+    fn mul(self, rhs: usize) -> Self::Output {
+        Self(self.0 * rhs as f64)
+    }
+}
+
 impl Div<usize> for StoredF64 {
     type Output = Self;
     fn div(self, rhs: usize) -> Self::Output {
@@ -66,5 +73,11 @@ impl Eq for StoredF64 {}
 impl Ord for StoredF64 {
     fn cmp(&self, other: &Self) -> std::cmp::Ordering {
         self.0.partial_cmp(&other.0).unwrap()
+    }
+}
+
+impl CheckedSub<usize> for StoredF64 {
+    fn checked_sub(self, rhs: usize) -> Option<Self> {
+        Some(Self(self.0 - rhs as f64))
     }
 }

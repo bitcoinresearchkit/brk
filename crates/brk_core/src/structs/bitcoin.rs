@@ -3,7 +3,7 @@ use std::ops::{Add, Div, Mul};
 use serde::Serialize;
 use zerocopy_derive::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
-use super::Sats;
+use super::{Sats, StoredF64};
 
 #[derive(
     Debug,
@@ -50,6 +50,12 @@ impl From<Sats> for Bitcoin {
 impl From<f64> for Bitcoin {
     fn from(value: f64) -> Self {
         Self(value)
+    }
+}
+
+impl From<StoredF64> for Bitcoin {
+    fn from(value: StoredF64) -> Self {
+        Self(*value)
     }
 }
 

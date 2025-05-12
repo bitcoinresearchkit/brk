@@ -333,7 +333,7 @@ impl ComputedRatioVecsFromDateIndex {
                         if price == Dollars::ZERO {
                             (i, StoredF32::from(1.0))
                         } else {
-                            (i, *close / price)
+                            (i, StoredF32::from(*close / price))
                         }
                     },
                     exit,
