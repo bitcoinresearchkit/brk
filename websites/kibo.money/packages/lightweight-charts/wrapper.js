@@ -1,6 +1,6 @@
 // @ts-check
 
-/** @import {IChartApi, ISeriesApi, SeriesDefinition, SingleValueData as _SingleValueData, CandlestickData as _CandlestickData, BaselineData, SeriesType, IPaneApi, LineSeriesOptions} from './v5.0.6-treeshaked/types' */
+/** @import {IChartApi, ISeriesApi, SeriesDefinition, SingleValueData as _SingleValueData, CandlestickData as _CandlestickData, BaselineData, SeriesType, IPaneApi, LineSeriesOptions, BaselineStyleOptions} from './v5.0.6-treeshaked/types' */
 
 /**
  * @typedef {[number, number, number, number]} OHLCTuple
@@ -485,7 +485,7 @@ export default import("./v5.0.6-treeshaked/script.js").then((lc) => {
        * @param {VecId} [args.vecId]
        * @param {number} [args.paneIndex]
        * @param {boolean} [args.defaultActive]
-       * @param {DeepPartial<LineStyleOptions & SeriesOptionsCommon>} [args.options]
+       * @param {DeepPartial<BaselineStyleOptions & SeriesOptionsCommon>} [args.options]
        */
       addBaselineSeries({
         vecId,
@@ -507,18 +507,18 @@ export default import("./v5.0.6-treeshaked/script.js").then((lc) => {
           {
             lineWidth: /** @type {any} */ (1.5),
             visible: defaultActive !== false,
-            topLineColor: colors.green(),
-            bottomLineColor: colors.red(),
+            ...options,
+            topLineColor: options?.topLineColor ?? colors.green(),
+            bottomLineColor: options?.bottomLineColor ?? colors.red(),
             priceLineVisible: false,
-            // bottomFillColor1: "transparent",
-            // bottomFillColor2: "transparent",
-            // topFillColor1: "transparent",
-            // topFillColor2: "transparent",
+            bottomFillColor1: "transparent",
+            bottomFillColor2: "transparent",
+            topFillColor1: "transparent",
+            topFillColor2: "transparent",
             baseValue: {
               price: 0,
             },
             lineVisible: true,
-            ...options,
           },
           paneIndex,
         );
@@ -545,7 +545,10 @@ export default import("./v5.0.6-treeshaked/script.js").then((lc) => {
 
         (paneIndex ? legendBottom : legendTop).add({
           series,
-          colors: [colors.green, colors.red],
+          colors: [
+            () => options?.topLineColor ?? colors.green(),
+            () => options?.bottomLineColor ?? colors.red(),
+          ],
           name,
           defaultActive,
           url,

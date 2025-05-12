@@ -19,6 +19,7 @@
  * @typedef {Object} BaselineSeriesBlueprintSpecific
  * @property {"Baseline"} type
  * @property {Color} [color]
+ * @property {[Color, Color]} [colors]
  * @property {DeepPartial<BaselineStyleOptions & SeriesOptionsCommon>} [options]
  * @property {Accessor<BaselineData[]>} [data]
  * @typedef {BaseSeriesBlueprint & BaselineSeriesBlueprintSpecific} BaselineSeriesBlueprint
@@ -1091,6 +1092,117 @@ function createPartialOptions(colors) {
                     }),
                   ],
                 })),
+              ],
+            },
+            {
+              name: "Returns",
+              tree: [
+                {
+                  name: "1 Day",
+                  title: `1 Day Returns`,
+                  top: [
+                    createBaseSeries({
+                      key: `price-1d-ago`,
+                      name: `Price 1d ago`,
+                    }),
+                  ],
+                  bottom: [
+                    /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
+                      key: `1d-returns`,
+                      title: "1d",
+                      type: "Baseline",
+                    }),
+                  ],
+                },
+                .../** @type {const} */ ([
+                  { name: "1 Week", key: "1w" },
+                  { name: "1 Month", key: "1m" },
+                  { name: "3 Months", key: "3m" },
+                  { name: "6 Months", key: "6m" },
+                  { name: "1 Year", key: "1y" },
+                ]).map(
+                  ({ name, key }) =>
+                    /** @satisfies {PartialChartOption} */ ({
+                      name,
+                      title: `${name} Returns`,
+                      top: [
+                        createBaseSeries({
+                          key: `price-${key}-ago`,
+                          name: `lump sum`,
+                          color: colors.cyan,
+                        }),
+                        createBaseSeries({
+                          key: `${key}-dca-avg-price`,
+                          name: `dca`,
+                          color: colors.orange,
+                        }),
+                      ],
+                      bottom: [
+                        /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
+                          key: `${key}-returns`,
+                          title: "lump sum",
+                          type: "Baseline",
+                        }),
+                        /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
+                          key: `${key}-dca-returns`,
+                          title: "dca",
+                          type: "Baseline",
+                          colors: [colors.yellow, colors.pink],
+                        }),
+                      ],
+                    }),
+                ),
+                .../** @type {const} */ ([
+                  { name: "2 Year", key: "2y" },
+                  { name: "3 Year", key: "3y" },
+                  { name: "4 Year", key: "4y" },
+                  { name: "5 Year", key: "5y" },
+                  { name: "6 Year", key: "6y" },
+                  { name: "8 Year", key: "8y" },
+                  { name: "10 Year", key: "10y" },
+                ]).map(
+                  ({ name, key }) =>
+                    /** @satisfies {PartialChartOption} */ ({
+                      name,
+                      title: `${name} Returns`,
+                      top: [
+                        createBaseSeries({
+                          key: `price-${key}-ago`,
+                          name: `lump sum`,
+                          color: colors.cyan,
+                        }),
+                        createBaseSeries({
+                          key: `${key}-dca-avg-price`,
+                          name: `dca`,
+                          color: colors.orange,
+                        }),
+                      ],
+                      bottom: [
+                        /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
+                          key: `${key}-returns`,
+                          title: "lump sum",
+                          type: "Baseline",
+                        }),
+                        /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
+                          key: `${key}-cagr`,
+                          title: "lump sum",
+                          type: "Baseline",
+                        }),
+                        /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
+                          key: `${key}-dca-returns`,
+                          title: "dca",
+                          type: "Baseline",
+                          colors: [colors.yellow, colors.pink],
+                        }),
+                        /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
+                          key: `${key}-dca-cagr`,
+                          title: "dca",
+                          type: "Baseline",
+                          colors: [colors.yellow, colors.pink],
+                        }),
+                      ],
+                    }),
+                ),
               ],
             },
           ],

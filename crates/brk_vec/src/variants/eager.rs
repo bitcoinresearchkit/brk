@@ -3,12 +3,14 @@ use std::{
     cmp::Ordering,
     f32,
     fmt::Debug,
-    ops::{Add, Div},
+    ops::{Add, Div, Mul},
     path::{Path, PathBuf},
     time::Duration,
 };
 
-use brk_core::{Bitcoin, CheckedSub, Close, Dollars, Height, Sats, StoredUsize, TxIndex};
+use brk_core::{
+    Bitcoin, CheckedSub, Close, DateIndex, Dollars, Height, Sats, StoredUsize, TxIndex,
+};
 use brk_exit::Exit;
 use log::info;
 
@@ -21,6 +23,7 @@ use crate::{
 const ONE_KIB: usize = 1024;
 const ONE_MIB: usize = ONE_KIB * ONE_KIB;
 const MAX_CACHE_SIZE: usize = 210 * ONE_MIB;
+const DCA_AMOUNT: Dollars = Dollars::mint(100.0);
 
 #[derive(Debug, Clone)]
 pub struct EagerVec<I, T> {
@@ -171,6 +174,88 @@ where
         other.iter_at(index).try_for_each(|(a, b)| {
             let (i, v) = t((a, b.into_inner(), self));
             self.forced_push_at(i, v, exit)
+        })?;
+
+        self.safe_flush(exit)
+    }
+
+    pub fn compute_divide<T2, T3, T4>(
+        &mut self,
+        max_from: I,
+        divided: &impl AnyIterableVec<I, T2>,
+        divider: &impl AnyIterableVec<I, T3>,
+        exit: &Exit,
+    ) -> Result<()>
+    where
+        T2: StoredType + Div<T3, Output = T4>,
+        T3: StoredType,
+        T4: Mul<usize, Output = T4> + CheckedSub<usize>,
+        T: From<T4>,
+    {
+        self.compute_divide_(max_from, divided, divider, exit, false, false)
+    }
+
+    pub fn compute_percentage<T2, T3, T4>(
+        &mut self,
+        max_from: I,
+        divided: &impl AnyIterableVec<I, T2>,
+        divider: &impl AnyIterableVec<I, T3>,
+        exit: &Exit,
+    ) -> Result<()>
+    where
+        T2: StoredType + Div<T3, Output = T4>,
+        T3: StoredType,
+        T4: Mul<usize, Output = T4> + CheckedSub<usize>,
+        T: From<T4>,
+    {
+        self.compute_divide_(max_from, divided, divider, exit, true, false)
+    }
+
+    pub fn compute_percentage_difference<T2, T3, T4>(
+        &mut self,
+        max_from: I,
+        divided: &impl AnyIterableVec<I, T2>,
+        divider: &impl AnyIterableVec<I, T3>,
+        exit: &Exit,
+    ) -> Result<()>
+    where
+        T2: StoredType + Div<T3, Output = T4>,
+        T3: StoredType,
+        T4: Mul<usize, Output = T4> + CheckedSub<usize>,
+        T: From<T4>,
+    {
+        self.compute_divide_(max_from, divided, divider, exit, true, true)
+    }
+
+    pub fn compute_divide_<T2, T3, T4>(
+        &mut self,
+        max_from: I,
+        divided: &impl AnyIterableVec<I, T2>,
+        divider: &impl AnyIterableVec<I, T3>,
+        exit: &Exit,
+        as_percentage: bool,
+        as_difference: bool,
+    ) -> Result<()>
+    where
+        T2: StoredType + Div<T3, Output = T4>,
+        T3: StoredType,
+        T4: Mul<usize, Output = T4> + CheckedSub<usize>,
+        T: From<T4>,
+    {
+        self.validate_computed_version_or_reset_file(
+            Version::ZERO + self.inner.version() + divided.version() + divider.version(),
+        )?;
+
+        let index = max_from.min(I::from(self.len()));
+        let multiplier = if as_percentage { 100 } else { 1 };
+        let subtract = if as_difference { multiplier } else { 0 };
+
+        let mut divider_iter = divider.iter();
+        divided.iter_at(index).try_for_each(|(i, divided)| {
+            let v = (divided.into_inner() / divider_iter.unwrap_get_inner(i) * multiplier)
+                .checked_sub(subtract)
+                .unwrap();
+            self.forced_push_at(i, T::from(v), exit)
         })?;
 
         self.safe_flush(exit)
@@ -470,6 +555,186 @@ where
             } else {
                 self.forced_push_at(i, T::from(f32::NAN), exit)
             }
+        })?;
+
+        self.safe_flush(exit)
+    }
+
+    pub fn compute_previous_value<T2>(
+        &mut self,
+        max_from: I,
+        source: &impl AnyIterableVec<I, T2>,
+        len: usize,
+        exit: &Exit,
+    ) -> Result<()>
+    where
+        I: CheckedSub,
+        T2: StoredType + Default,
+        f32: From<T2>,
+        T: From<f32>,
+    {
+        self.validate_computed_version_or_reset_file(
+            Version::ZERO + self.inner.version() + source.version(),
+        )?;
+
+        let index = max_from.min(I::from(self.len()));
+        let mut source_iter = source.iter();
+        (index.to_usize()?..source.len()).try_for_each(|i| {
+            let i = I::from(i);
+
+            let previous_value = i
+                .checked_sub(I::from(len))
+                .map(|prev_i| f32::from(source_iter.unwrap_get_inner(prev_i)))
+                .unwrap_or(f32::NAN);
+
+            self.forced_push_at(i, T::from(previous_value), exit)
+        })?;
+
+        self.safe_flush(exit)
+    }
+
+    pub fn compute_percentage_change<T2>(
+        &mut self,
+        max_from: I,
+        source: &impl AnyIterableVec<I, T2>,
+        len: usize,
+        exit: &Exit,
+    ) -> Result<()>
+    where
+        I: CheckedSub,
+        T2: StoredType + Default,
+        f32: From<T2>,
+        T: From<f32>,
+    {
+        self.validate_computed_version_or_reset_file(
+            Version::ZERO + self.inner.version() + source.version(),
+        )?;
+
+        let index = max_from.min(I::from(self.len()));
+        let mut source_iter = source.iter();
+        source.iter_at(index).try_for_each(|(i, b)| {
+            let previous_value = f32::from(
+                i.checked_sub(I::from(len))
+                    .map(|prev_i| source_iter.unwrap_get_inner(prev_i))
+                    .unwrap_or_default(),
+            );
+
+            let last_value = f32::from(b.into_inner());
+
+            let percentage_change = ((last_value / previous_value) - 1.0) * 100.0;
+
+            self.forced_push_at(i, T::from(percentage_change), exit)
+        })?;
+
+        self.safe_flush(exit)
+    }
+
+    pub fn compute_cagr<T2>(
+        &mut self,
+        max_from: I,
+        percentage_returns: &impl AnyIterableVec<I, T2>,
+        days: usize,
+        exit: &Exit,
+    ) -> Result<()>
+    where
+        I: CheckedSub,
+        T2: StoredType + Default,
+        f32: From<T2>,
+        T: From<f32>,
+    {
+        self.validate_computed_version_or_reset_file(
+            Version::ZERO + self.inner.version() + percentage_returns.version(),
+        )?;
+
+        if days % 365 != 0 {
+            panic!("bad days");
+        }
+
+        let years = days / 365;
+        let index = max_from.min(I::from(self.len()));
+        percentage_returns
+            .iter_at(index)
+            .try_for_each(|(i, percentage)| {
+                let percentage = percentage.into_inner();
+
+                let cagr = (((f32::from(percentage) / 100.0 + 1.0).powf(1.0 / years as f32)) - 1.0)
+                    * 100.0;
+
+                self.forced_push_at(i, T::from(cagr), exit)
+            })?;
+
+        self.safe_flush(exit)
+    }
+}
+
+impl EagerVec<DateIndex, Sats> {
+    pub fn compute_dca_stack(
+        &mut self,
+        max_from: DateIndex,
+        closes: &impl AnyIterableVec<DateIndex, Close<Dollars>>,
+        len: usize,
+        exit: &Exit,
+    ) -> Result<()> {
+        self.validate_computed_version_or_reset_file(
+            Version::ZERO + self.inner.version() + closes.version(),
+        )?;
+
+        let mut other_iter = closes.iter();
+        let mut prev = None;
+
+        let index = max_from.min(DateIndex::from(self.len()));
+        closes.iter_at(index).try_for_each(|(i, closes)| {
+            let price = *closes.into_inner();
+            let i_usize = i.unwrap_to_usize();
+            if prev.is_none() {
+                if i_usize == 0 {
+                    prev.replace(Sats::ZERO);
+                } else {
+                    prev.replace(self.into_iter().unwrap_get_inner_(i_usize - 1));
+                }
+            }
+
+            let mut stack = Sats::ZERO;
+
+            if price != Dollars::ZERO {
+                stack = prev.unwrap() + Sats::from(Bitcoin::from(DCA_AMOUNT / price));
+                if i_usize >= len {
+                    let prev_price = *other_iter.unwrap_get_inner_(i_usize - len);
+                    if prev_price != Dollars::ZERO {
+                        stack = stack
+                            .checked_sub(Sats::from(Bitcoin::from(DCA_AMOUNT / prev_price)))
+                            .unwrap();
+                    }
+                }
+            }
+
+            prev.replace(stack);
+
+            self.forced_push_at(i, stack, exit)
+        })?;
+
+        self.safe_flush(exit)
+    }
+}
+
+impl EagerVec<DateIndex, Dollars> {
+    pub fn compute_dca_avg_price(
+        &mut self,
+        max_from: DateIndex,
+        stacks: &impl AnyIterableVec<DateIndex, Sats>,
+        len: usize,
+        exit: &Exit,
+    ) -> Result<()> {
+        self.validate_computed_version_or_reset_file(
+            Version::ONE + self.inner.version() + stacks.version(),
+        )?;
+
+        let index = max_from.min(DateIndex::from(self.len()));
+
+        stacks.iter_at(index).try_for_each(|(i, stack)| {
+            let stack = stack.into_inner();
+            let avg_price = DCA_AMOUNT * len.min(i.unwrap_to_usize() + 1) / Bitcoin::from(stack);
+            self.forced_push_at(i, avg_price, exit)
         })?;
 
         self.safe_flush(exit)

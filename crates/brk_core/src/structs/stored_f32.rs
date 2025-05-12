@@ -6,7 +6,7 @@ use zerocopy_derive::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 use crate::CheckedSub;
 
-use super::Dollars;
+use super::{Dollars, StoredF64};
 
 #[derive(
     Debug,
@@ -33,6 +33,12 @@ impl From<f32> for StoredF32 {
 impl From<f64> for StoredF32 {
     fn from(value: f64) -> Self {
         Self(value as f32)
+    }
+}
+
+impl From<StoredF64> for StoredF32 {
+    fn from(value: StoredF64) -> Self {
+        Self(*value as f32)
     }
 }
 

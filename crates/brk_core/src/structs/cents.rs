@@ -81,3 +81,10 @@ impl Mul<Cents> for Cents {
         Self(self.0 * rhs.0)
     }
 }
+
+impl Mul<usize> for Cents {
+    type Output = Cents;
+    fn mul(self, rhs: usize) -> Self::Output {
+        Self(self.0 * rhs as u64)
+    }
+}

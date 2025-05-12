@@ -7,7 +7,7 @@ use derive_deref::Deref;
 use serde::Serialize;
 use zerocopy_derive::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
-use super::{Bitcoin, Cents, Close, Sats, StoredF32};
+use super::{Bitcoin, Cents, Close, Sats, StoredF32, StoredF64};
 
 #[derive(
     Debug,
@@ -27,6 +27,10 @@ pub struct Dollars(f64);
 
 impl Dollars {
     pub const ZERO: Self = Self(0.0);
+
+    pub const fn mint(dollars: f64) -> Self {
+        Self(dollars)
+    }
 }
 
 impl From<f32> for Dollars {
@@ -79,9 +83,23 @@ impl Add for Dollars {
 }
 
 impl Div<Dollars> for Dollars {
-    type Output = StoredF32;
+    type Output = StoredF64;
     fn div(self, rhs: Dollars) -> Self::Output {
-        StoredF32::from((self.0 / rhs.0) as f32)
+        StoredF64::from(self.0 / rhs.0)
+    }
+}
+
+impl Div<Close<Dollars>> for Dollars {
+    type Output = StoredF64;
+    fn div(self, rhs: Close<Dollars>) -> Self::Output {
+        StoredF64::from(self.0 / rhs.0)
+    }
+}
+
+impl Div<Dollars> for Close<Dollars> {
+    type Output = StoredF64;
+    fn div(self, rhs: Dollars) -> Self::Output {
+        StoredF64::from(self.0 / rhs.0)
     }
 }
 
@@ -89,6 +107,13 @@ impl Div<usize> for Dollars {
     type Output = Self;
     fn div(self, rhs: usize) -> Self::Output {
         Self::from(Cents::from(self) / rhs)
+    }
+}
+
+impl Div<Bitcoin> for Dollars {
+    type Output = Self;
+    fn div(self, rhs: Bitcoin) -> Self::Output {
+        Self(f64::from(self) / f64::from(rhs))
     }
 }
 
@@ -118,6 +143,13 @@ impl Mul<StoredF32> for Dollars {
         } else {
             Self::from(Cents::from(Self::from(self.0 * *rhs as f64)))
         }
+    }
+}
+
+impl Mul<usize> for Dollars {
+    type Output = Self;
+    fn mul(self, rhs: usize) -> Self::Output {
+        Self::from(Cents::from(self) * rhs)
     }
 }
 
