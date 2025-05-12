@@ -38,7 +38,7 @@ impl Kibo {
             .unwrap()
             .get(usize::from(height.checked_sub(key).unwrap()))
             .cloned()
-            .ok_or(color_eyre::eyre::Error::msg("Couldn't find height in kibo"))
+            .ok_or(eyre!("Couldn't find height in kibo"))
     }
 
     fn fetch_height_prices(height: Height) -> color_eyre::Result<Vec<OHLCCents>> {

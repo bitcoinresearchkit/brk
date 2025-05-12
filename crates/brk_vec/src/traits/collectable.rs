@@ -11,7 +11,7 @@ where
     fn collect_range(&self, from: Option<usize>, to: Option<usize>) -> Result<Vec<T>> {
         let len = self.len();
         let from = from.unwrap_or_default();
-        let to = to.map_or(len, |i| i.min(len));
+        let to = to.map_or(len, |to| to.min(len));
 
         if from >= len || from >= to {
             return Ok(vec![]);

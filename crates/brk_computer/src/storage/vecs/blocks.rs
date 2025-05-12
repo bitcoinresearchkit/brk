@@ -11,7 +11,7 @@ use brk_vec::{AnyCollectableVec, AnyIterableVec, Compressed, Computation, EagerV
 
 use super::{
     Indexes,
-    grouped::{ComputedVecsFromDateindex, ComputedVecsFromHeight, StorableVecGeneatorOptions},
+    grouped::{ComputedVecsFromDateIndex, ComputedVecsFromHeight, StorableVecGeneatorOptions},
     indexes,
 };
 
@@ -21,7 +21,7 @@ pub struct Vecs {
     pub height_to_vbytes: EagerVec<Height, StoredU64>,
     pub difficultyepoch_to_timestamp: EagerVec<DifficultyEpoch, Timestamp>,
     pub halvingepoch_to_timestamp: EagerVec<HalvingEpoch, Timestamp>,
-    pub timeindexes_to_timestamp: ComputedVecsFromDateindex<Timestamp>,
+    pub timeindexes_to_timestamp: ComputedVecsFromDateIndex<Timestamp>,
     pub indexes_to_block_count: ComputedVecsFromHeight<StoredU32>,
     pub indexes_to_block_interval: ComputedVecsFromHeight<Timestamp>,
     pub indexes_to_block_size: ComputedVecsFromHeight<StoredUsize>,
@@ -43,7 +43,7 @@ impl Vecs {
                 Version::ZERO,
                 compressed,
             )?,
-            timeindexes_to_timestamp: ComputedVecsFromDateindex::forced_import(
+            timeindexes_to_timestamp: ComputedVecsFromDateIndex::forced_import(
                 path,
                 "timestamp",
                 Version::ZERO,

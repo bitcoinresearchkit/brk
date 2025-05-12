@@ -10,7 +10,7 @@ use crate::storage::{Indexes, indexes};
 use super::{ComputedType, ComputedVecBuilder, StorableVecGeneatorOptions};
 
 #[derive(Clone)]
-pub struct ComputedVecsFromDateindex<T>
+pub struct ComputedVecsFromDateIndex<T>
 where
     T: ComputedType + PartialOrd,
 {
@@ -25,7 +25,7 @@ where
 
 const VERSION: Version = Version::ZERO;
 
-impl<T> ComputedVecsFromDateindex<T>
+impl<T> ComputedVecsFromDateIndex<T>
 where
     T: ComputedType,
 {
@@ -94,6 +94,15 @@ where
             exit,
         )?;
 
+        self.compute_rest(indexes, starting_indexes, exit)
+    }
+
+    pub fn compute_rest(
+        &mut self,
+        indexes: &indexes::Vecs,
+        starting_indexes: &Indexes,
+        exit: &Exit,
+    ) -> color_eyre::Result<()> {
         self.dateindex_extra
             .extend(starting_indexes.dateindex, &self.dateindex, exit)?;
 

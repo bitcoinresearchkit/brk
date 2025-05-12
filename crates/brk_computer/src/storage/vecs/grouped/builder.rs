@@ -8,6 +8,8 @@ use brk_vec::{
 };
 use color_eyre::eyre::ContextCompat;
 
+use crate::utils::get_percentile;
+
 use super::ComputedType;
 
 #[derive(Clone, Debug)]
@@ -269,23 +271,23 @@ where
                         }
 
                         if let Some(_90p) = self._90p.as_mut() {
-                            _90p.forced_push_at(i, Self::get_percentile(&values, 0.90), exit)?;
+                            _90p.forced_push_at(i, get_percentile(&values, 0.90), exit)?;
                         }
 
                         if let Some(_75p) = self._75p.as_mut() {
-                            _75p.forced_push_at(i, Self::get_percentile(&values, 0.75), exit)?;
+                            _75p.forced_push_at(i, get_percentile(&values, 0.75), exit)?;
                         }
 
                         if let Some(median) = self.median.as_mut() {
-                            median.forced_push_at(i, Self::get_percentile(&values, 0.50), exit)?;
+                            median.forced_push_at(i, get_percentile(&values, 0.50), exit)?;
                         }
 
                         if let Some(_25p) = self._25p.as_mut() {
-                            _25p.forced_push_at(i, Self::get_percentile(&values, 0.25), exit)?;
+                            _25p.forced_push_at(i, get_percentile(&values, 0.25), exit)?;
                         }
 
                         if let Some(_10p) = self._10p.as_mut() {
-                            _10p.forced_push_at(i, Self::get_percentile(&values, 0.10), exit)?;
+                            _10p.forced_push_at(i, get_percentile(&values, 0.10), exit)?;
                         }
 
                         if let Some(min) = self.min.as_mut() {
@@ -470,28 +472,6 @@ where
         self.safe_flush(exit)?;
 
         Ok(())
-    }
-
-    fn get_percentile(sorted: &[T], percentile: f64) -> T {
-        let len = sorted.len();
-
-        if len == 0 {
-            panic!();
-        } else if len == 1 {
-            sorted[0].clone()
-        } else {
-            let index = (len - 1) as f64 * percentile;
-
-            let fract = index.fract();
-
-            if fract != 0.0 {
-                let left = sorted.get(index as usize).unwrap().clone();
-                let right = sorted.get(index.ceil() as usize).unwrap().clone();
-                left / 2 + right / 2
-            } else {
-                sorted.get(index as usize).unwrap().clone()
-            }
-        }
     }
 
     fn starting_index(&self, max_from: I) -> I {

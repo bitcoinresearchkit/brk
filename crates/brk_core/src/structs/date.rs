@@ -14,6 +14,7 @@ impl Date {
     pub const INDEX_ZERO_: Date_ = Date_::constant(2009, 1, 3);
     pub const INDEX_ONE: Self = Self(20090109);
     pub const INDEX_ONE_: Date_ = Date_::constant(2009, 1, 9);
+    pub const MIN_RATIO: Self = Self(20120101);
 
     pub fn new(year: u16, month: u8, day: u8) -> Self {
         Self(year as u32 * 1_00_00 + month as u32 * 1_00 + day as u32)

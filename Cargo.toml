@@ -30,8 +30,8 @@ brk_parser = { version = "0", path = "crates/brk_parser" }
 brk_query = { version = "0", path = "crates/brk_query" }
 brk_server = { version = "0", path = "crates/brk_server" }
 brk_vec = { version = "0", path = "crates/brk_vec" }
-byteview = "0.6.1"
-clap = { version = "4.5.37", features = ["string"] }
+byteview = "0.7.0"
+clap = { version = "4.5.38", features = ["string"] }
 clap_derive = "4.5.32"
 color-eyre = "0.6.4"
 derive_deref = "1.1.1"

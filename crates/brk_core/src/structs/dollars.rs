@@ -1,10 +1,13 @@
-use std::ops::{Add, Div, Mul};
+use std::{
+    f64,
+    ops::{Add, Div, Mul},
+};
 
 use derive_deref::Deref;
 use serde::Serialize;
 use zerocopy_derive::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
-use super::{Bitcoin, Cents, Close, Sats};
+use super::{Bitcoin, Cents, Close, Sats, StoredF32};
 
 #[derive(
     Debug,
@@ -75,6 +78,13 @@ impl Add for Dollars {
     }
 }
 
+impl Div<Dollars> for Dollars {
+    type Output = StoredF32;
+    fn div(self, rhs: Dollars) -> Self::Output {
+        StoredF32::from((self.0 / rhs.0) as f32)
+    }
+}
+
 impl Div<usize> for Dollars {
     type Output = Self;
     fn div(self, rhs: usize) -> Self::Output {
@@ -97,6 +107,17 @@ impl Mul<Bitcoin> for Dollars {
         Self::from(Cents::from(
             u128::from(Sats::from(rhs)) * u128::from(Cents::from(self)) / u128::from(Sats::ONE_BTC),
         ))
+    }
+}
+
+impl Mul<StoredF32> for Dollars {
+    type Output = Self;
+    fn mul(self, rhs: StoredF32) -> Self::Output {
+        if rhs.is_nan() {
+            Self(f64::NAN)
+        } else {
+            Self::from(Cents::from(Self::from(self.0 * *rhs as f64)))
+        }
     }
 }
 

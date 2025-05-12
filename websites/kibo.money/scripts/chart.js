@@ -229,14 +229,34 @@ export function init({
                   vecIdToIndexes[blueprint.key]
                 );
                 if (indexes.includes(index)) {
-                  chart.addLineSeries({
-                    vecId: blueprint.key,
-                    color: blueprint.color,
-                    name: blueprint.title,
-                    unit,
-                    defaultActive: blueprint.defaultActive,
-                    paneIndex,
-                  });
+                  switch (blueprint.type) {
+                    case "Baseline": {
+                      chart.addBaselineSeries({
+                        vecId: blueprint.key,
+                        // color: blueprint.color,
+                        name: blueprint.title,
+                        unit,
+                        defaultActive: blueprint.defaultActive,
+                        paneIndex,
+                        options: blueprint.options,
+                      });
+                      break;
+                    }
+                    case "Candlestick": {
+                      throw Error("TODO");
+                      break;
+                    }
+                    default:
+                      chart.addLineSeries({
+                        vecId: blueprint.key,
+                        color: blueprint.color,
+                        name: blueprint.title,
+                        unit,
+                        defaultActive: blueprint.defaultActive,
+                        paneIndex,
+                        options: blueprint.options,
+                      });
+                  }
                 }
               });
             });

@@ -39,6 +39,11 @@
  *
  * @typedef {BaselineSeriesBlueprint | CandlestickSeriesBlueprint | LineSeriesBlueprint} AnySeriesBlueprint
  *
+ * @typedef {AnySeriesBlueprint["type"]} SeriesType
+ *
+ * @typedef {BaselineSeriesBlueprint & { key: ChartableVecId }} FetchedBaselineSeriesBlueprint
+ * @typedef {CandlestickSeriesBlueprint & { key: ChartableVecId }} FetchedCandlestickSeriesBlueprint
+ * @typedef {LineSeriesBlueprint & { key: ChartableVecId }} FetchedLineSeriesBlueprint
  * @typedef {AnySeriesBlueprint & { key: ChartableVecId }} AnyFetchedSeriesBlueprint
  *
  * @typedef {Object} PartialOption
@@ -164,14 +169,38 @@ function createPartialOptions(colors) {
    * @typedef {WithoutSuffix<VecIdMin, MinSuffix>} VecIdMinBase
    */
 
+  const averages = /** @type {const} */ ([
+    { name: "1 Week", key: "1w", days: 7 },
+    { name: "8 Days", key: "8d", days: 8 },
+    { name: "13 Days", key: "13d", days: 13 },
+    { name: "21 Days", key: "21d", days: 21 },
+    { name: "1 Month", key: "1m", days: 30 },
+    { name: "34 Days", key: "34d", days: 34 },
+    { name: "55 Days", key: "55d", days: 55 },
+    { name: "89 Days", key: "89d", days: 89 },
+    { name: "144 Days", key: "144d", days: 144 },
+    { name: "1 Year", key: "1y", days: 365 },
+    { name: "2 Years", key: "2y", days: 2 * 365 },
+    { name: "200 Weeks", key: "200w", days: 200 * 7 },
+    { name: "4 Years", key: "4y", days: 4 * 365 },
+  ]);
+
   /**
    * @param {Object} args
    * @param {ChartableVecId} args.key
    * @param {string} args.name
    * @param {Color} [args.color]
+   * @param {boolean} [args.defaultActive]
+   * @param {DeepPartial<LineStyleOptions & SeriesOptionsCommon>} [args.options]
    */
-  function createBaseSeries({ key, name, color }) {
-    return { key, title: name, color };
+  function createBaseSeries({ key, name, color, defaultActive, options }) {
+    return /** @satisfies {AnyFetchedSeriesBlueprint} */ ({
+      key,
+      title: name,
+      color,
+      defaultActive,
+      options,
+    });
   }
 
   /**
@@ -858,135 +887,210 @@ function createPartialOptions(colors) {
               name: "Average",
               tree: [
                 {
-                  name: "1 week",
-                  title: "1 Week Market Price Moving Average",
+                  name: "Compare",
+                  title: "Moving Averages",
+                  top: averages.map(({ days, key, name }) =>
+                    createBaseSeries({
+                      key: `${key}-sma`,
+                      name: key,
+                      color: colors[`_${key}`],
+                    }),
+                  ),
+                },
+                ...averages.map(({ key, name }) => ({
+                  name,
+                  title: `${name} Market Price Moving Average`,
                   top: [
                     createBaseSeries({
-                      key: "1w-sma",
+                      key: `${key}-sma`,
                       name: "Average",
+                      color: colors[`_${key}`],
                     }),
-                  ],
-                },
-                {
-                  name: "8 days",
-                  title: "8 Days Market Price Moving Average",
-                  top: [
                     createBaseSeries({
-                      key: "8d-sma",
-                      name: "Average",
+                      key: `${key}-sma-ratio-p1sd-as-price`,
+                      name: "+1σ",
+                      color: colors.orange,
+                      defaultActive: false,
                     }),
-                  ],
-                },
-                {
-                  name: "13 days",
-                  title: "13 Days Market Price Moving Average",
-                  top: [
                     createBaseSeries({
-                      key: "13d-sma",
-                      name: "Average",
+                      key: `${key}-sma-ratio-p2sd-as-price`,
+                      name: "+2σ",
+                      color: colors.red,
+                      defaultActive: false,
                     }),
-                  ],
-                },
-                {
-                  name: "21 days",
-                  title: "21 Days Market Price Moving Average",
-                  top: [
                     createBaseSeries({
-                      key: "21d-sma",
-                      name: "Average",
+                      key: `${key}-sma-ratio-p3sd-as-price`,
+                      name: "+3σ",
+                      color: colors.pink,
+                      defaultActive: false,
                     }),
-                  ],
-                },
-                {
-                  name: "1 month",
-                  title: "1 Month Market Price Moving Average",
-                  top: [
                     createBaseSeries({
-                      key: "1m-sma",
-                      name: "Average",
+                      key: `${key}-sma-ratio-m1sd-as-price`,
+                      name: "−1σ",
+                      color: colors.cyan,
+                      defaultActive: false,
                     }),
-                  ],
-                },
-                {
-                  name: "34 days",
-                  title: "34 Days Market Price Moving Average",
-                  top: [
                     createBaseSeries({
-                      key: "34d-sma",
-                      name: "Average",
+                      key: `${key}-sma-ratio-m2sd-as-price`,
+                      name: "−2σ",
+                      color: colors.blue,
+                      defaultActive: false,
                     }),
-                  ],
-                },
-                {
-                  name: "55 days",
-                  title: "55 Days Market Price Moving Average",
-                  top: [
                     createBaseSeries({
-                      key: "55d-sma",
-                      name: "Average",
+                      key: `${key}-sma-ratio-m3sd-as-price`,
+                      name: "−3σ",
+                      color: colors.violet,
+                      defaultActive: false,
                     }),
-                  ],
-                },
-                {
-                  name: "89 days",
-                  title: "89 Days Market Price Moving Average",
-                  top: [
                     createBaseSeries({
-                      key: "89d-sma",
-                      name: "Average",
+                      key: `${key}-sma-ratio-p99-as-price`,
+                      name: "p99",
+                      color: colors.orange,
+                      defaultActive: false,
                     }),
-                  ],
-                },
-                {
-                  name: "144 days",
-                  title: "144 Days Market Price Moving Average",
-                  top: [
                     createBaseSeries({
-                      key: "144d-sma",
-                      name: "Average",
+                      key: `${key}-sma-ratio-p99-5-as-price`,
+                      name: "p99.5",
+                      color: colors.red,
+                      defaultActive: false,
                     }),
-                  ],
-                },
-                {
-                  name: "1 year",
-                  title: "1 year Market Price Moving Average",
-                  top: [
                     createBaseSeries({
-                      key: "1y-sma",
-                      name: "Average",
+                      key: `${key}-sma-ratio-p99-9-as-price`,
+                      name: "p99.9",
+                      color: colors.pink,
+                      defaultActive: false,
                     }),
-                  ],
-                },
-                {
-                  name: "2 year",
-                  title: "2 year Market Price Moving Average",
-                  top: [
                     createBaseSeries({
-                      key: "2y-sma",
-                      name: "Average",
+                      key: `${key}-sma-ratio-p1-as-price`,
+                      name: "p1",
+                      color: colors.cyan,
+                      defaultActive: false,
                     }),
-                  ],
-                },
-                {
-                  name: "200 weeks",
-                  title: "200 Weeks Market Price Moving Average",
-                  top: [
                     createBaseSeries({
-                      key: "200w-sma",
-                      name: "Average",
+                      key: `${key}-sma-ratio-p0-5-as-price`,
+                      name: "p0.5",
+                      color: colors.blue,
+                      defaultActive: false,
                     }),
-                  ],
-                },
-                {
-                  name: "4 year",
-                  title: "4 year Market Price Moving Average",
-                  top: [
                     createBaseSeries({
-                      key: "4y-sma",
-                      name: "Average",
+                      key: `${key}-sma-ratio-p0-1-as-price`,
+                      name: "p0.1",
+                      color: colors.violet,
+                      defaultActive: false,
                     }),
                   ],
-                },
+                  bottom: [
+                    /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
+                      key: `${key}-sma-ratio`,
+                      title: "Ratio",
+                      type: "Baseline",
+                      options: {
+                        baseValue: { type: "price", price: 1 },
+                      },
+                    }),
+                    createBaseSeries({
+                      key: `${key}-sma-ratio-sma`,
+                      name: "sma",
+                      color: colors.yellow,
+                      defaultActive: false,
+                    }),
+                    createBaseSeries({
+                      key: `${key}-sma-ratio-p1sd`,
+                      name: "+1σ",
+                      color: colors.orange,
+                      defaultActive: false,
+                    }),
+                    createBaseSeries({
+                      key: `${key}-sma-ratio-p2sd`,
+                      name: "+2σ",
+                      color: colors.red,
+                      defaultActive: false,
+                    }),
+                    createBaseSeries({
+                      key: `${key}-sma-ratio-p3sd`,
+                      name: "+3σ",
+                      color: colors.pink,
+                      defaultActive: false,
+                    }),
+                    createBaseSeries({
+                      key: `${key}-sma-ratio-m1sd`,
+                      name: "−1σ",
+                      color: colors.cyan,
+                      defaultActive: false,
+                    }),
+                    createBaseSeries({
+                      key: `${key}-sma-ratio-m2sd`,
+                      name: "−2σ",
+                      color: colors.blue,
+                      defaultActive: false,
+                    }),
+                    createBaseSeries({
+                      key: `${key}-sma-ratio-m3sd`,
+                      name: "−3σ",
+                      color: colors.violet,
+                      defaultActive: false,
+                    }),
+                    createBaseSeries({
+                      key: `${key}-sma-ratio-p99`,
+                      name: "p99",
+                      color: colors.orange,
+                      defaultActive: false,
+                    }),
+                    createBaseSeries({
+                      key: `${key}-sma-ratio-p99-5`,
+                      name: "p99.5",
+                      color: colors.red,
+                      defaultActive: false,
+                    }),
+                    createBaseSeries({
+                      key: `${key}-sma-ratio-p99-9`,
+                      name: "p99.9",
+                      color: colors.pink,
+                      defaultActive: false,
+                    }),
+                    createBaseSeries({
+                      key: `${key}-sma-ratio-p1`,
+                      name: "p1",
+                      color: colors.cyan,
+                      defaultActive: false,
+                    }),
+                    createBaseSeries({
+                      key: `${key}-sma-ratio-p0-5`,
+                      name: "p0.5",
+                      color: colors.blue,
+                      defaultActive: false,
+                    }),
+                    createBaseSeries({
+                      key: `${key}-sma-ratio-p0-1`,
+                      name: "p0.1",
+                      color: colors.violet,
+                      defaultActive: false,
+                    }),
+                    createBaseSeries({
+                      key: `${key}-sma-ratio-1w-sma`,
+                      name: "1w sma",
+                      color: colors.fuchsia,
+                      defaultActive: false,
+                    }),
+                    createBaseSeries({
+                      key: `${key}-sma-ratio-1m-sma`,
+                      name: "1m sma",
+                      color: colors.pink,
+                      defaultActive: false,
+                    }),
+                    createBaseSeries({
+                      key: `${key}-sma-ratio-1y-sma`,
+                      name: "1y sma",
+                      color: colors.rose,
+                      defaultActive: false,
+                    }),
+                    /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
+                      key: `${key}-sma-ratio-1y-sma-momentum-oscillator`,
+                      title: "1Y Momentum",
+                      type: "Baseline",
+                    }),
+                  ],
+                })),
               ],
             },
           ],
@@ -1826,22 +1930,6 @@ export function initOptions({
 //       id: "highly-liquid",
 //       name: "Highly Liquid",
 //     },
-//   ]);
-
-//   const averages = /** @type {const} */ ([
-//     { name: "1 Week", key: "1w", days: 7 },
-//     { name: "8 Days", key: "8d", days: 8 },
-//     { name: "13 Days", key: "13d", days: 13 },
-//     { name: "21 Days", key: "21d", days: 21 },
-//     { name: "1 Month", key: "1m", days: 30 },
-//     { name: "34 Days", key: "34d", days: 34 },
-//     { name: "55 Days", key: "55d", days: 55 },
-//     { name: "89 Days", key: "89d", days: 89 },
-//     { name: "144 Days", key: "144d", days: 144 },
-//     { name: "1 Year", key: "1y", days: 365 },
-//     { name: "2 Years", key: "2y", days: 2 * 365 },
-//     { name: "200 Weeks", key: "200w", days: 200 * 7 },
-//     { name: "4 Years", key: "4y", days: 4 * 365 },
 //   ]);
 
 //   const totalReturns = /** @type {const} */ ([

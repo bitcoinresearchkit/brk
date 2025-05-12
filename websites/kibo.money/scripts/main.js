@@ -4,7 +4,7 @@
  * @import { Option, PartialChartOption, ChartOption, AnyPartialOption, ProcessedOptionAddons, OptionsTree, SimulationOption, AnySeriesBlueprint, ChartableIndex } from "./options"
  * @import {Valued,  SingleValueData, CandlestickData, ChartData, OHLCTuple} from "../packages/lightweight-charts/wrapper"
  * @import * as _ from "../packages/ufuzzy/v1.0.14/types"
- * @import { createChart as CreateClassicChart, LineStyleOptions, DeepPartial, ChartOptions, IChartApi, IHorzScaleBehavior, WhitespaceData, ISeriesApi, Time, LineData, LogicalRange, SeriesType, BaselineStyleOptions, SeriesOptionsCommon, BaselineData, CandlestickStyleOptions } from "../packages/lightweight-charts/v5.0.6-treeshaked/types"
+ * @import { createChart as CreateClassicChart, LineStyleOptions, DeepPartial, ChartOptions, IChartApi, IHorzScaleBehavior, WhitespaceData, ISeriesApi, Time, LineData, LogicalRange, BaselineStyleOptions, SeriesOptionsCommon, BaselineData, CandlestickStyleOptions } from "../packages/lightweight-charts/v5.0.6-treeshaked/types"
  * @import { SignalOptions } from "../packages/solid-signals/v0.3.0-treeshaked/types/core/core"
  * @import {Signal, Signals} from "../packages/solid-signals/types";
  * @import { getOwner as GetOwner, onCleanup as OnCleanup, Owner } from "../packages/solid-signals/v0.3.0-treeshaked/types/core/owner"
@@ -686,6 +686,10 @@ function createUtils() {
     let unit;
     if (id.includes("index") || id.includes("height") || id.includes("epoch")) {
       unit = "Index";
+    } else if (id === "drawdown" || id.endsWith("oscillator")) {
+      unit = "percentage";
+    } else if (id.endsWith("-as-price")) {
+      unit = "USD";
     } else if (id.includes("type")) {
       unit = "Type";
     } else if (id.includes("days-")) {
@@ -711,6 +715,8 @@ function createUtils() {
       unit = "Cents";
     } else if (id.includes("in-usd")) {
       unit = "USD";
+    } else if (id.includes("ratio")) {
+      unit = "Ratio";
     } else if (id.includes("in-btc")) {
       unit = "BTC";
     } else if (
@@ -752,8 +758,6 @@ function createUtils() {
       unit = "Version";
     } else if (id === "value") {
       unit = "Sats";
-    } else if (id === "drawdown") {
-      unit = "percentage";
     } else {
       console.log();
       throw Error(`Unit not set for "${id}"`);
@@ -1083,7 +1087,13 @@ function createUtils() {
    * @param {string} s
    */
   function stringToId(s) {
-    return s.replace(/\W/g, " ").trim().replace(/ +/g, "-").toLowerCase();
+    return (
+      s
+        // .replace(/\W/g, " ")
+        .trim()
+        .replace(/ +/g, "-")
+        .toLowerCase()
+    );
   }
 
   const api = (() => {
@@ -1581,6 +1591,7 @@ function createColors(dark, elements) {
     red,
     sky,
     blue,
+    emerald,
     rose,
     green,
     amber,

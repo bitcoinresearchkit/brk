@@ -50,7 +50,6 @@ export default import("./v5.0.6-treeshaked/script.js").then((lc) => {
       autoSize: true,
       layout: {
         fontFamily: elements.style.fontFamily,
-        // fontSize: 13,
         background: { color: "transparent" },
         attributionLogo: false,
         colorSpace: "display-p3",
@@ -71,10 +70,6 @@ export default import("./v5.0.6-treeshaked/script.js").then((lc) => {
     const chart = lc.createChart(element, options);
 
     chart.priceScale("right").applyOptions({
-      // scaleMargins: {
-      //   top: 0.15,
-      //   bottom: 0.05,
-      // },
       minimumWidth: 80,
     });
 
@@ -161,15 +156,23 @@ export default import("./v5.0.6-treeshaked/script.js").then((lc) => {
     div.classList.add("chart");
     parent.append(div);
 
-    const legend = createLegend({
+    const legendTop = createLegend({
       parent: div,
       utils,
       signals,
+      paneIndex: 0,
     });
 
     const chartDiv = window.document.createElement("div");
     chartDiv.classList.add("lightweight-chart");
     div.append(chartDiv);
+
+    const legendBottom = createLegend({
+      parent: div,
+      utils,
+      signals,
+      paneIndex: 1,
+    });
 
     let ichart = /** @type {IChartApi | null} */ (null);
     let timeScaleSet = false;
@@ -220,7 +223,12 @@ export default import("./v5.0.6-treeshaked/script.js").then((lc) => {
                 offset += 1;
               }
               const v = ohlcs[i];
-              if (typeof v === "number") {
+              if (v === null) {
+                data[i - offset] = {
+                  time,
+                  value: NaN,
+                };
+              } else if (typeof v === "number") {
                 data[i - offset] = {
                   time,
                   value: v,
@@ -363,7 +371,7 @@ export default import("./v5.0.6-treeshaked/script.js").then((lc) => {
           );
         }
 
-        legend.add({
+        (paneIndex ? legendBottom : legendTop).add({
           series,
           name,
           defaultActive,
@@ -445,7 +453,7 @@ export default import("./v5.0.6-treeshaked/script.js").then((lc) => {
           );
         }
 
-        legend.add({
+        (paneIndex ? legendBottom : legendTop).add({
           series,
           colors: [color],
           name,
@@ -477,6 +485,7 @@ export default import("./v5.0.6-treeshaked/script.js").then((lc) => {
        * @param {VecId} [args.vecId]
        * @param {number} [args.paneIndex]
        * @param {boolean} [args.defaultActive]
+       * @param {DeepPartial<LineStyleOptions & SeriesOptionsCommon>} [args.options]
        */
       addBaselineSeries({
         vecId,
@@ -485,10 +494,13 @@ export default import("./v5.0.6-treeshaked/script.js").then((lc) => {
         paneIndex: _paneIndex,
         defaultActive,
         data,
+        options,
       }) {
         if (!ichart || !timeResource) throw Error("Chart not fully set");
 
         const paneIndex = _paneIndex ?? 0;
+
+        console.log("OPTIONS", options);
 
         const series = ichart.addSeries(
           /** @type {SeriesDefinition<'Baseline'>} */ (lc.BaselineSeries),
@@ -497,13 +509,16 @@ export default import("./v5.0.6-treeshaked/script.js").then((lc) => {
             visible: defaultActive !== false,
             topLineColor: colors.green(),
             bottomLineColor: colors.red(),
+            priceLineVisible: false,
+            // bottomFillColor1: "transparent",
+            // bottomFillColor2: "transparent",
+            // topFillColor1: "transparent",
+            // topFillColor2: "transparent",
             baseValue: {
               price: 0,
             },
-            baseLineStyle: 0,
-            baseLineWidth: 1,
-            baseLineVisible: true,
             lineVisible: true,
+            ...options,
           },
           paneIndex,
         );
@@ -528,7 +543,7 @@ export default import("./v5.0.6-treeshaked/script.js").then((lc) => {
           );
         }
 
-        legend.add({
+        (paneIndex ? legendBottom : legendTop).add({
           series,
           colors: [colors.green, colors.red],
           name,
@@ -647,7 +662,8 @@ export default import("./v5.0.6-treeshaked/script.js").then((lc) => {
         ichart = null;
         timeScaleSet = false;
         activeResources.length = 0;
-        legend.reset();
+        legendTop.reset();
+        legendBottom.reset();
       },
     };
 
@@ -697,9 +713,10 @@ export default import("./v5.0.6-treeshaked/script.js").then((lc) => {
  * @param {Object} args
  * @param {Element} args.parent
  * @param {Signals} args.signals
+ * @param {number} args.paneIndex
  * @param {Utilities} args.utils
  */
-function createLegend({ parent, signals, utils }) {
+function createLegend({ parent, signals, utils, paneIndex }) {
   const legendElement = window.document.createElement("legend");
   parent.append(legendElement);
 
@@ -721,7 +738,7 @@ function createLegend({ parent, signals, utils }) {
 
       legendElement.append(div);
 
-      const nameId = utils.stringToId(name);
+      const nameId = `${utils.stringToId(name)}-${paneIndex}`;
 
       const active = signals.createSignal(defaultActive ?? true, {
         save: {
