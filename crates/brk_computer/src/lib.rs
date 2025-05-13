@@ -7,15 +7,17 @@ use std::path::{Path, PathBuf};
 
 use brk_exit::Exit;
 use brk_fetcher::Fetcher;
-use brk_indexer::{Indexer, Indexes};
+use brk_indexer::Indexer;
 pub use brk_parser::rpc;
-
-mod storage;
-mod utils;
-
 use brk_vec::{AnyCollectableVec, Compressed, Computation};
+
+mod stores;
+mod utils;
+mod vecs;
+
 use log::info;
-use storage::{Stores, Vecs};
+use stores::Stores;
+use vecs::Vecs;
 
 #[derive(Clone)]
 pub struct Computer {
@@ -67,7 +69,7 @@ impl Computer {
     pub fn compute(
         &mut self,
         indexer: &mut Indexer,
-        starting_indexes: Indexes,
+        starting_indexes: brk_indexer::Indexes,
         exit: &Exit,
     ) -> color_eyre::Result<()> {
         info!("Computing...");

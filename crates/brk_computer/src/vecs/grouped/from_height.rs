@@ -1,26 +1,23 @@
 use std::path::Path;
 
 use brk_core::{
-    DateIndex, DecadeIndex, DifficultyEpoch, Height, MonthIndex, QuarterIndex, TxIndex, WeekIndex,
-    YearIndex,
+    DateIndex, DecadeIndex, DifficultyEpoch, Height, MonthIndex, QuarterIndex, WeekIndex, YearIndex,
 };
 use brk_exit::Exit;
 use brk_indexer::Indexer;
-use brk_vec::{
-    AnyCollectableVec, CollectableVec, Compressed, EagerVec, Result, StoredVec, Version,
-};
+use brk_vec::{AnyCollectableVec, AnyIterableVec, Compressed, EagerVec, Result, Version};
 
-use crate::storage::{Indexes, indexes};
+use crate::vecs::{Indexes, indexes};
 
 use super::{ComputedType, ComputedVecBuilder, StorableVecGeneatorOptions};
 
 #[derive(Clone)]
-pub struct ComputedVecsFromTxindex<T>
+pub struct ComputedVecsFromHeight<T>
 where
     T: ComputedType + PartialOrd,
 {
-    pub txindex: Option<EagerVec<TxIndex, T>>,
-    pub height: ComputedVecBuilder<Height, T>,
+    pub height: Option<EagerVec<Height, T>>,
+    pub height_extra: ComputedVecBuilder<Height, T>,
     pub dateindex: ComputedVecBuilder<DateIndex, T>,
     pub weekindex: ComputedVecBuilder<WeekIndex, T>,
     pub difficultyepoch: ComputedVecBuilder<DifficultyEpoch, T>,
@@ -33,7 +30,7 @@ where
 
 const VERSION: Version = Version::ZERO;
 
-impl<T> ComputedVecsFromTxindex<T>
+impl<T> ComputedVecsFromHeight<T>
 where
     T: ComputedType + Ord + From<f64>,
     f64: From<T>,
@@ -48,23 +45,28 @@ where
     ) -> color_eyre::Result<Self> {
         let version = VERSION + version;
 
-        let txindex = compute_source.then(|| {
-            EagerVec::forced_import(
-                &path.join(format!("txindex_to_{name}")),
-                version,
-                compressed,
-            )
-            .unwrap()
+        let height = compute_source.then(|| {
+            EagerVec::forced_import(&path.join(format!("height_to_{name}")), version, compressed)
+                .unwrap()
         });
 
-        let height = ComputedVecBuilder::forced_import(path, name, version, compressed, options)?;
+        let height_extra = ComputedVecBuilder::forced_import(
+            path,
+            name,
+            version,
+            compressed,
+            options.copy_self_extra(),
+        )?;
+
+        let dateindex =
+            ComputedVecBuilder::forced_import(path, name, version, compressed, options)?;
 
         let options = options.remove_percentiles();
 
         Ok(Self {
-            txindex,
             height,
-            dateindex: ComputedVecBuilder::forced_import(path, name, version, compressed, options)?,
+            height_extra,
+            dateindex,
             weekindex: ComputedVecBuilder::forced_import(path, name, version, compressed, options)?,
             difficultyepoch: ComputedVecBuilder::forced_import(
                 path, name, version, compressed, options,
@@ -83,7 +85,6 @@ where
         })
     }
 
-    #[allow(unused)]
     pub fn compute_all<F>(
         &mut self,
         indexer: &Indexer,
@@ -93,63 +94,70 @@ where
         mut compute: F,
     ) -> color_eyre::Result<()>
     where
-        F: FnMut(
-            &mut EagerVec<TxIndex, T>,
-            &Indexer,
-            &indexes::Vecs,
-            &Indexes,
-            &Exit,
-        ) -> Result<()>,
+        F: FnMut(&mut EagerVec<Height, T>, &Indexer, &indexes::Vecs, &Indexes, &Exit) -> Result<()>,
     {
         compute(
-            self.txindex.as_mut().unwrap(),
+            self.height.as_mut().unwrap(),
             indexer,
             indexes,
             starting_indexes,
             exit,
         )?;
 
-        let txindex: Option<&StoredVec<TxIndex, T>> = None;
-        self.compute_rest(indexer, indexes, starting_indexes, exit, txindex)?;
+        let height: Option<&EagerVec<Height, T>> = None;
+        self.compute_rest(indexes, starting_indexes, exit, height)?;
 
         Ok(())
     }
 
     pub fn compute_rest(
         &mut self,
-        indexer: &Indexer,
         indexes: &indexes::Vecs,
         starting_indexes: &Indexes,
         exit: &Exit,
-        txindex: Option<&impl CollectableVec<TxIndex, T>>,
+        height: Option<&impl AnyIterableVec<Height, T>>,
     ) -> color_eyre::Result<()> {
-        if let Some(txindex) = txindex {
-            self.height.compute(
-                starting_indexes.height,
-                txindex,
-                &indexer.vecs().height_to_first_txindex,
-                &indexes.height_to_txindex_count,
+        if let Some(height) = height {
+            self.height_extra
+                .extend(starting_indexes.height, height, exit)?;
+
+            self.dateindex.compute(
+                starting_indexes.dateindex,
+                height,
+                &indexes.dateindex_to_first_height,
+                &indexes.dateindex_to_height_count,
+                exit,
+            )?;
+
+            self.difficultyepoch.compute(
+                starting_indexes.difficultyepoch,
+                height,
+                &indexes.difficultyepoch_to_first_height,
+                &indexes.difficultyepoch_to_height_count,
                 exit,
             )?;
         } else {
-            let txindex = self.txindex.as_ref().unwrap();
+            let height = self.height.as_ref().unwrap();
 
-            self.height.compute(
-                starting_indexes.height,
-                txindex,
-                &indexer.vecs().height_to_first_txindex,
-                &indexes.height_to_txindex_count,
+            self.height_extra
+                .extend(starting_indexes.height, height, exit)?;
+
+            self.dateindex.compute(
+                starting_indexes.dateindex,
+                height,
+                &indexes.dateindex_to_first_height,
+                &indexes.dateindex_to_height_count,
+                exit,
+            )?;
+
+            self.difficultyepoch.compute(
+                starting_indexes.difficultyepoch,
+                height,
+                &indexes.difficultyepoch_to_first_height,
+                &indexes.difficultyepoch_to_height_count,
                 exit,
             )?;
         }
-
-        self.dateindex.from_aligned(
-            starting_indexes.dateindex,
-            &self.height,
-            &indexes.dateindex_to_first_height,
-            &indexes.dateindex_to_height_count,
-            exit,
-        )?;
 
         self.weekindex.from_aligned(
             starting_indexes.weekindex,
@@ -191,23 +199,15 @@ where
             exit,
         )?;
 
-        self.difficultyepoch.from_aligned(
-            starting_indexes.difficultyepoch,
-            &self.height,
-            &indexes.difficultyepoch_to_first_height,
-            &indexes.difficultyepoch_to_height_count,
-            exit,
-        )?;
-
         Ok(())
     }
 
     pub fn vecs(&self) -> Vec<&dyn AnyCollectableVec> {
         [
-            self.txindex
+            self.height
                 .as_ref()
                 .map_or(vec![], |v| vec![v as &dyn AnyCollectableVec]),
-            self.height.vecs(),
+            self.height_extra.vecs(),
             self.dateindex.vecs(),
             self.weekindex.vecs(),
             self.difficultyepoch.vecs(),

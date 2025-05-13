@@ -8,10 +8,7 @@ use brk_vec::{
     Computation, ComputedVecFrom3, LazyVecFrom1, StoredIndex, StoredVec, Version,
 };
 
-use crate::storage::{
-    fetched,
-    vecs::{Indexes, indexes},
-};
+use crate::vecs::{Indexes, fetched, indexes};
 
 use super::{ComputedVecsFromTxindex, StorableVecGeneatorOptions};
 
