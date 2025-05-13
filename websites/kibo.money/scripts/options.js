@@ -16,25 +16,31 @@
  * @property {string} title
  * @property {boolean} [defaultActive]
  *
+ * @typedef {Object} CreatePriceLine
+ * @property {number} value
+ *
+ * @typedef {Object} CreatePriceLineOptions
+ * @property {CreatePriceLine} createPriceLine
+ *
  * @typedef {Object} BaselineSeriesBlueprintSpecific
  * @property {"Baseline"} type
  * @property {Color} [color]
  * @property {[Color, Color]} [colors]
- * @property {DeepPartial<BaselineStyleOptions & SeriesOptionsCommon>} [options]
+ * @property {DeepPartial<BaselineStyleOptions & SeriesOptionsCommon & CreatePriceLineOptions>} [options]
  * @property {Accessor<BaselineData[]>} [data]
  * @typedef {BaseSeriesBlueprint & BaselineSeriesBlueprintSpecific} BaselineSeriesBlueprint
  *
  * @typedef {Object} CandlestickSeriesBlueprintSpecific
  * @property {"Candlestick"} type
  * @property {Color} [color]
- * @property {DeepPartial<CandlestickStyleOptions & SeriesOptionsCommon>} [options]
+ * @property {DeepPartial<CandlestickStyleOptions & SeriesOptionsCommon & CreatePriceLineOptions>} [options]
  * @property {Accessor<CandlestickData[]>} [data]
  * @typedef {BaseSeriesBlueprint & CandlestickSeriesBlueprintSpecific} CandlestickSeriesBlueprint
  *
  * @typedef {Object} LineSeriesBlueprintSpecific
  * @property {"Line"} [type]
  * @property {Color} [color]
- * @property {DeepPartial<LineStyleOptions & SeriesOptionsCommon>} [options]
+ * @property {DeepPartial<LineStyleOptions & SeriesOptionsCommon & CreatePriceLineOptions>} [options]
  * @property {Accessor<LineData[]>} [data]
  * @typedef {BaseSeriesBlueprint & LineSeriesBlueprintSpecific} LineSeriesBlueprint
  *
@@ -42,10 +48,12 @@
  *
  * @typedef {AnySeriesBlueprint["type"]} SeriesType
  *
- * @typedef {BaselineSeriesBlueprint & { key: ChartableVecId }} FetchedBaselineSeriesBlueprint
- * @typedef {CandlestickSeriesBlueprint & { key: ChartableVecId }} FetchedCandlestickSeriesBlueprint
- * @typedef {LineSeriesBlueprint & { key: ChartableVecId }} FetchedLineSeriesBlueprint
- * @typedef {AnySeriesBlueprint & { key: ChartableVecId }} AnyFetchedSeriesBlueprint
+ * @typedef {{ key: ChartableVecId }} FetchedAnySeriesOptions
+ *
+ * @typedef {BaselineSeriesBlueprint & FetchedAnySeriesOptions} FetchedBaselineSeriesBlueprint
+ * @typedef {CandlestickSeriesBlueprint & FetchedAnySeriesOptions} FetchedCandlestickSeriesBlueprint
+ * @typedef {LineSeriesBlueprint & FetchedAnySeriesOptions} FetchedLineSeriesBlueprint
+ * @typedef {AnySeriesBlueprint & FetchedAnySeriesOptions} AnyFetchedSeriesBlueprint
  *
  * @typedef {Object} PartialOption
  * @property {string} name
@@ -986,7 +994,10 @@ function createPartialOptions(colors) {
                       title: "Ratio",
                       type: "Baseline",
                       options: {
-                        baseValue: { type: "price", price: 1 },
+                        baseValue: { price: 1 },
+                        createPriceLine: {
+                          value: 1,
+                        },
                       },
                     }),
                     createBaseSeries({
@@ -1089,6 +1100,11 @@ function createPartialOptions(colors) {
                       key: `${key}-sma-ratio-1y-sma-momentum-oscillator`,
                       title: "1Y Momentum",
                       type: "Baseline",
+                      options: {
+                        createPriceLine: {
+                          value: 0,
+                        },
+                      },
                     }),
                   ],
                 })),
@@ -1111,6 +1127,11 @@ function createPartialOptions(colors) {
                       key: `1d-returns`,
                       title: "1d",
                       type: "Baseline",
+                      options: {
+                        createPriceLine: {
+                          value: 0,
+                        },
+                      },
                     }),
                   ],
                 },
@@ -1142,12 +1163,22 @@ function createPartialOptions(colors) {
                           key: `${key}-returns`,
                           title: "lump sum",
                           type: "Baseline",
+                          options: {
+                            createPriceLine: {
+                              value: 0,
+                            },
+                          },
                         }),
                         /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
                           key: `${key}-dca-returns`,
                           title: "dca",
                           type: "Baseline",
                           colors: [colors.yellow, colors.pink],
+                          options: {
+                            createPriceLine: {
+                              value: 0,
+                            },
+                          },
                         }),
                       ],
                     }),
@@ -1182,23 +1213,43 @@ function createPartialOptions(colors) {
                           key: `${key}-returns`,
                           title: "lump sum",
                           type: "Baseline",
+                          options: {
+                            createPriceLine: {
+                              value: 0,
+                            },
+                          },
                         }),
                         /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
                           key: `${key}-cagr`,
                           title: "lump sum",
                           type: "Baseline",
+                          options: {
+                            createPriceLine: {
+                              value: 0,
+                            },
+                          },
                         }),
                         /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
                           key: `${key}-dca-returns`,
                           title: "dca",
                           type: "Baseline",
                           colors: [colors.yellow, colors.pink],
+                          options: {
+                            createPriceLine: {
+                              value: 0,
+                            },
+                          },
                         }),
                         /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
                           key: `${key}-dca-cagr`,
                           title: "dca",
                           type: "Baseline",
                           colors: [colors.yellow, colors.pink],
+                          options: {
+                            createPriceLine: {
+                              value: 0,
+                            },
+                          },
                         }),
                       ],
                     }),

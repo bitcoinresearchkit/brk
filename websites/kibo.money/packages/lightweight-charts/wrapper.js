@@ -76,7 +76,7 @@ export default import("./v5.0.6-treeshaked/script.js").then((lc) => {
     signals.createEffect(
       () => ({
         defaultColor: colors.default(),
-        offColor: colors.off(),
+        offColor: colors.gray(),
         borderColor: colors.border(),
       }),
       ({ defaultColor, offColor, borderColor }) => {
@@ -404,7 +404,7 @@ export default import("./v5.0.6-treeshaked/script.js").then((lc) => {
        * @param {Color} [args.color]
        * @param {number} [args.paneIndex]
        * @param {boolean} [args.defaultActive]
-       * @param {DeepPartial<LineStyleOptions & SeriesOptionsCommon>} [args.options]
+       * @param {DeepPartial<LineStyleOptions & SeriesOptionsCommon & CreatePriceLineOptions>} [args.options]
        */
       addLineSeries({
         vecId,
@@ -433,6 +433,17 @@ export default import("./v5.0.6-treeshaked/script.js").then((lc) => {
           },
           paneIndex,
         );
+
+        const createPriceLine = options?.createPriceLine;
+        if (createPriceLine) {
+          series.createPriceLine({
+            price: createPriceLine.value || 0,
+            color: colors.gray(),
+            axisLabelVisible: false,
+            lineWidth: 1,
+            lineStyle: 4,
+          });
+        }
 
         let url = /** @type {string | undefined} */ (undefined);
 
@@ -485,7 +496,7 @@ export default import("./v5.0.6-treeshaked/script.js").then((lc) => {
        * @param {VecId} [args.vecId]
        * @param {number} [args.paneIndex]
        * @param {boolean} [args.defaultActive]
-       * @param {DeepPartial<BaselineStyleOptions & SeriesOptionsCommon>} [args.options]
+       * @param {DeepPartial<BaselineStyleOptions & SeriesOptionsCommon & CreatePriceLineOptions>} [args.options]
        */
       addBaselineSeries({
         vecId,
@@ -507,6 +518,9 @@ export default import("./v5.0.6-treeshaked/script.js").then((lc) => {
           {
             lineWidth: /** @type {any} */ (1.5),
             visible: defaultActive !== false,
+            baseValue: {
+              price: 0,
+            },
             ...options,
             topLineColor: options?.topLineColor ?? colors.green(),
             bottomLineColor: options?.bottomLineColor ?? colors.red(),
@@ -515,13 +529,21 @@ export default import("./v5.0.6-treeshaked/script.js").then((lc) => {
             bottomFillColor2: "transparent",
             topFillColor1: "transparent",
             topFillColor2: "transparent",
-            baseValue: {
-              price: 0,
-            },
             lineVisible: true,
           },
           paneIndex,
         );
+
+        const createPriceLine = options?.createPriceLine;
+        if (createPriceLine) {
+          series.createPriceLine({
+            price: createPriceLine.value || 0,
+            color: colors.gray(),
+            axisLabelVisible: false,
+            lineWidth: 1,
+            lineStyle: 4,
+          });
+        }
 
         let url = /** @type {string | undefined} */ (undefined);
 

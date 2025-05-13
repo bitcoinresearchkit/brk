@@ -79,14 +79,7 @@ impl DTS for Query<'static> {
                     .collect::<Vec<_>>()
                     .join(", ");
 
-                contents += &format!(
-                    "    {}: [{indexes}],\n",
-                    if id.contains("-") {
-                        format!("\"{id}\"")
-                    } else {
-                        id.to_owned()
-                    }
-                );
+                contents += &format!("    \"{id}\": [{indexes}],\n");
             });
 
         contents += "  });\n";

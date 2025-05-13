@@ -6,6 +6,7 @@ use brk_indexer::Indexer;
 use brk_vec::{AnyCollectableVec, Compressed, Computation};
 
 pub mod blocks;
+pub mod constants;
 pub mod fetched;
 pub mod grouped;
 pub mod indexes;
@@ -18,6 +19,7 @@ pub use indexes::Indexes;
 #[derive(Clone)]
 pub struct Vecs {
     pub indexes: indexes::Vecs,
+    pub constants: constants::Vecs,
     pub blocks: blocks::Vecs,
     pub mining: mining::Vecs,
     pub market: market::Vecs,
@@ -43,6 +45,7 @@ impl Vecs {
         Ok(Self {
             blocks: blocks::Vecs::forced_import(path, computation, compressed)?,
             mining: mining::Vecs::forced_import(path, computation, compressed)?,
+            constants: constants::Vecs::forced_import(path, computation, compressed)?,
             market: market::Vecs::forced_import(path, computation, compressed)?,
             transactions: transactions::Vecs::forced_import(
                 path,
@@ -65,6 +68,9 @@ impl Vecs {
         exit: &Exit,
     ) -> color_eyre::Result<()> {
         let starting_indexes = self.indexes.compute(indexer, starting_indexes, exit)?;
+
+        self.constants
+            .compute(indexer, &self.indexes, &starting_indexes, exit)?;
 
         self.blocks
             .compute(indexer, &self.indexes, &starting_indexes, exit)?;
@@ -106,6 +112,7 @@ impl Vecs {
 
     pub fn vecs(&self) -> Vec<&dyn AnyCollectableVec> {
         [
+            self.constants.vecs(),
             self.indexes.vecs(),
             self.blocks.vecs(),
             self.mining.vecs(),

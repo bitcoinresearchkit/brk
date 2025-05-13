@@ -1,7 +1,7 @@
 // @ts-check
 
 /**
- * @import { Option, PartialChartOption, ChartOption, AnyPartialOption, ProcessedOptionAddons, OptionsTree, SimulationOption, AnySeriesBlueprint, ChartableIndex } from "./options"
+ * @import { Option, PartialChartOption, ChartOption, AnyPartialOption, ProcessedOptionAddons, OptionsTree, SimulationOption, AnySeriesBlueprint, ChartableIndex,CreatePriceLineOptions } from "./options"
  * @import {Valued,  SingleValueData, CandlestickData, ChartData, OHLCTuple} from "../packages/lightweight-charts/wrapper"
  * @import * as _ from "../packages/ufuzzy/v1.0.14/types"
  * @import { createChart as CreateClassicChart, LineStyleOptions, DeepPartial, ChartOptions, IChartApi, IHorzScaleBehavior, WhitespaceData, ISeriesApi, Time, LineData, LogicalRange, BaselineStyleOptions, SeriesOptionsCommon, BaselineData, CandlestickStyleOptions } from "../packages/lightweight-charts/v5.0.6-treeshaked/types"
@@ -41,9 +41,10 @@
  *   "Years" |
  *   "Locktime" |
  *   "sat/vB" |
+ *   "constant" |
  *   "cagr" |
  *   "vB" |
- *   "performance" |
+ *   "performance"
  * } Unit
  */
 
@@ -688,6 +689,8 @@ function createUtils() {
     let unit;
     if (id.includes("index") || id.includes("height") || id.includes("epoch")) {
       unit = "Index";
+    } else if (id === "0" || id === "1" || id === "50" || id === "100") {
+      unit = "constant";
     } else if (id.endsWith("cagr")) {
       unit = "cagr";
     } else if (id.endsWith("returns")) {
@@ -1563,7 +1566,7 @@ function createColors(dark, elements) {
   function rose() {
     return getColor("rose");
   }
-  function off() {
+  function gray() {
     return getColor("gray");
   }
 
@@ -1585,7 +1588,7 @@ function createColors(dark, elements) {
 
   return {
     default: textColor,
-    off,
+    gray,
     border: borderColor,
     lightBitcoin: yellow,
     bitcoin: orange,

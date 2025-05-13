@@ -7,10 +7,7 @@ use brk_vec::{
     AnyCollectableVec, CollectableVec, Compressed, EagerVec, Result, StoredVec, Version,
 };
 
-use crate::storage::{
-    fetched,
-    vecs::{Indexes, indexes},
-};
+use crate::vecs::{Indexes, fetched, indexes};
 
 use super::{ComputedVecsFromHeight, StorableVecGeneatorOptions};
 

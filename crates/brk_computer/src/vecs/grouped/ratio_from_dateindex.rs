@@ -10,11 +10,8 @@ use brk_vec::{
 // use rayon::prelude::*;
 
 use crate::{
-    storage::{
-        fetched,
-        vecs::{Indexes, indexes},
-    },
     utils::get_percentile,
+    vecs::{Indexes, fetched, indexes},
 };
 
 use super::{ComputedVecsFromDateIndex, StorableVecGeneatorOptions};
