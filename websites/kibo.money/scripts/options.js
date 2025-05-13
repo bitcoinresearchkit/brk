@@ -33,7 +33,7 @@
  * @typedef {Object} CandlestickSeriesBlueprintSpecific
  * @property {"Candlestick"} type
  * @property {Color} [color]
- * @property {DeepPartial<CandlestickStyleOptions & SeriesOptionsCommon & CreatePriceLineOptions>} [options]
+ * @property {DeepPartial<CandlestickStyleOptions & SeriesOptionsCommon>} [options]
  * @property {Accessor<CandlestickData[]>} [data]
  * @typedef {BaseSeriesBlueprint & CandlestickSeriesBlueprintSpecific} CandlestickSeriesBlueprint
  *
@@ -1199,12 +1199,12 @@ function createPartialOptions(colors) {
                       top: [
                         createBaseSeries({
                           key: `price-${key}-ago`,
-                          name: `lump sum`,
+                          name: `lump sum price`,
                           color: colors.cyan,
                         }),
                         createBaseSeries({
                           key: `${key}-dca-avg-price`,
-                          name: `dca`,
+                          name: `dca avg. price`,
                           color: colors.orange,
                         }),
                       ],

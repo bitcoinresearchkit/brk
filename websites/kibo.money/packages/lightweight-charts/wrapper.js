@@ -1,6 +1,6 @@
 // @ts-check
 
-/** @import {IChartApi, ISeriesApi, SeriesDefinition, SingleValueData as _SingleValueData, CandlestickData as _CandlestickData, BaselineData, SeriesType, IPaneApi, LineSeriesOptions, BaselineStyleOptions} from './v5.0.6-treeshaked/types' */
+/** @import {IChartApi, ISeriesApi, SeriesDefinition, SingleValueData as _SingleValueData, CandlestickData as _CandlestickData, BaselineData, SeriesType, IPaneApi, BaselineStyleOptions} from './v5.0.6-treeshaked/types' */
 
 /**
  * @typedef {[number, number, number, number]} OHLCTuple
@@ -434,15 +434,9 @@ export default import("./v5.0.6-treeshaked/script.js").then((lc) => {
           paneIndex,
         );
 
-        const createPriceLine = options?.createPriceLine;
-        if (createPriceLine) {
-          series.createPriceLine({
-            price: createPriceLine.value || 0,
-            color: colors.gray(),
-            axisLabelVisible: false,
-            lineWidth: 1,
-            lineStyle: 4,
-          });
+        const priceLineOptions = options?.createPriceLine;
+        if (priceLineOptions) {
+          createPriceLine(series, priceLineOptions, colors);
         }
 
         let url = /** @type {string | undefined} */ (undefined);
@@ -534,15 +528,9 @@ export default import("./v5.0.6-treeshaked/script.js").then((lc) => {
           paneIndex,
         );
 
-        const createPriceLine = options?.createPriceLine;
-        if (createPriceLine) {
-          series.createPriceLine({
-            price: createPriceLine.value || 0,
-            color: colors.gray(),
-            axisLabelVisible: false,
-            lineWidth: 1,
-            lineStyle: 4,
-          });
+        const priceLineOptions = options?.createPriceLine;
+        if (priceLineOptions) {
+          createPriceLine(series, priceLineOptions, colors);
         }
 
         let url = /** @type {string | undefined} */ (undefined);
@@ -1039,4 +1027,19 @@ function createPaneHeightObserver({ ichart, paneIndex, signals, utils }) {
     }, 5);
 
   callback();
+}
+
+/**
+ * @param {ISeriesApi<SeriesType>} series
+ * @param {DeepPartial<CreatePriceLine>} options
+ * @param {Colors} colors
+ */
+function createPriceLine(series, options, colors) {
+  series.createPriceLine({
+    price: options.value || 0,
+    color: colors.gray(),
+    axisLabelVisible: false,
+    lineWidth: 1,
+    lineStyle: 4,
+  });
 }
