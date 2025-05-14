@@ -194,6 +194,10 @@ function createPartialOptions(colors) {
     { name: "4 Years", key: "4y", days: 4 * 365 },
   ]);
 
+  const dcaClasses = /** @type {const} */ ([
+    2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025,
+  ]);
+
   /**
    * @param {Object} args
    * @param {ChartableVecId} args.key
@@ -330,6 +334,506 @@ function createPartialOptions(colors) {
           title: "Bitcoin Price",
         },
         {
+          name: "Market",
+          tree: [
+            {
+              name: "Capitalization",
+              title: "Market Capitalization",
+              bottom: [
+                createBaseSeries({
+                  key: "marketcap",
+                  name: "Capitalization",
+                }),
+              ],
+            },
+            {
+              name: "All Time High",
+              tree: [
+                {
+                  name: "Value",
+                  title: "All Time High",
+                  top: [
+                    createBaseSeries({
+                      key: "ath",
+                      name: "ath",
+                    }),
+                  ],
+                },
+                {
+                  name: "drawdown",
+                  title: "All Time High Drawdown",
+                  top: [
+                    createBaseSeries({
+                      key: "ath",
+                      name: "ath",
+                    }),
+                  ],
+                  bottom: [
+                    createBaseSeries({
+                      key: "drawdown",
+                      name: "Drawdown",
+                      color: colors.red,
+                    }),
+                  ],
+                },
+                {
+                  name: "days since",
+                  title: "Number of days Since All Time High",
+                  top: [
+                    createBaseSeries({
+                      key: "ath",
+                      name: "ath",
+                    }),
+                  ],
+                  bottom: [
+                    createBaseSeries({
+                      key: "days-since-ath",
+                      name: "Days",
+                    }),
+                  ],
+                },
+                {
+                  name: "max between",
+                  title: "Maximum time between All Time Highs",
+                  top: [
+                    createBaseSeries({
+                      key: "ath",
+                      name: "ath",
+                    }),
+                  ],
+                  bottom: [
+                    createBaseSeries({
+                      key: "max-days-between-ath",
+                      name: "Days",
+                    }),
+                    createBaseSeries({
+                      key: "max-years-between-ath",
+                      name: "Years",
+                    }),
+                  ],
+                },
+              ],
+            },
+            {
+              name: "Average",
+              tree: [
+                {
+                  name: "Compare",
+                  title: "Moving Averages",
+                  top: averages.map(({ days, key, name }) =>
+                    createBaseSeries({
+                      key: `${key}-sma`,
+                      name: key,
+                      color: colors[`_${key}`],
+                    }),
+                  ),
+                },
+                ...averages.map(({ key, name }) => ({
+                  name,
+                  title: `${name} Market Price Moving Average`,
+                  top: [
+                    createBaseSeries({
+                      key: `${key}-sma`,
+                      name: "Average",
+                      color: colors[`_${key}`],
+                    }),
+                    createBaseSeries({
+                      key: `${key}-sma-ratio-p1sd-as-price`,
+                      name: "+1σ",
+                      color: colors.orange,
+                      defaultActive: false,
+                    }),
+                    createBaseSeries({
+                      key: `${key}-sma-ratio-p2sd-as-price`,
+                      name: "+2σ",
+                      color: colors.red,
+                      defaultActive: false,
+                    }),
+                    createBaseSeries({
+                      key: `${key}-sma-ratio-p3sd-as-price`,
+                      name: "+3σ",
+                      color: colors.pink,
+                      defaultActive: false,
+                    }),
+                    createBaseSeries({
+                      key: `${key}-sma-ratio-m1sd-as-price`,
+                      name: "−1σ",
+                      color: colors.cyan,
+                      defaultActive: false,
+                    }),
+                    createBaseSeries({
+                      key: `${key}-sma-ratio-m2sd-as-price`,
+                      name: "−2σ",
+                      color: colors.blue,
+                      defaultActive: false,
+                    }),
+                    createBaseSeries({
+                      key: `${key}-sma-ratio-m3sd-as-price`,
+                      name: "−3σ",
+                      color: colors.violet,
+                      defaultActive: false,
+                    }),
+                    createBaseSeries({
+                      key: `${key}-sma-ratio-p99-as-price`,
+                      name: "p99",
+                      color: colors.orange,
+                      defaultActive: false,
+                    }),
+                    createBaseSeries({
+                      key: `${key}-sma-ratio-p99-5-as-price`,
+                      name: "p99.5",
+                      color: colors.red,
+                      defaultActive: false,
+                    }),
+                    createBaseSeries({
+                      key: `${key}-sma-ratio-p99-9-as-price`,
+                      name: "p99.9",
+                      color: colors.pink,
+                      defaultActive: false,
+                    }),
+                    createBaseSeries({
+                      key: `${key}-sma-ratio-p1-as-price`,
+                      name: "p1",
+                      color: colors.cyan,
+                      defaultActive: false,
+                    }),
+                    createBaseSeries({
+                      key: `${key}-sma-ratio-p0-5-as-price`,
+                      name: "p0.5",
+                      color: colors.blue,
+                      defaultActive: false,
+                    }),
+                    createBaseSeries({
+                      key: `${key}-sma-ratio-p0-1-as-price`,
+                      name: "p0.1",
+                      color: colors.violet,
+                      defaultActive: false,
+                    }),
+                  ],
+                  bottom: [
+                    /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
+                      key: `${key}-sma-ratio`,
+                      title: "Ratio",
+                      type: "Baseline",
+                      options: {
+                        baseValue: { price: 1 },
+                        createPriceLine: {
+                          value: 1,
+                        },
+                      },
+                    }),
+                    createBaseSeries({
+                      key: `${key}-sma-ratio-sma`,
+                      name: "sma",
+                      color: colors.yellow,
+                      defaultActive: false,
+                    }),
+                    createBaseSeries({
+                      key: `${key}-sma-ratio-p1sd`,
+                      name: "+1σ",
+                      color: colors.orange,
+                      defaultActive: false,
+                    }),
+                    createBaseSeries({
+                      key: `${key}-sma-ratio-p2sd`,
+                      name: "+2σ",
+                      color: colors.red,
+                      defaultActive: false,
+                    }),
+                    createBaseSeries({
+                      key: `${key}-sma-ratio-p3sd`,
+                      name: "+3σ",
+                      color: colors.pink,
+                      defaultActive: false,
+                    }),
+                    createBaseSeries({
+                      key: `${key}-sma-ratio-m1sd`,
+                      name: "−1σ",
+                      color: colors.cyan,
+                      defaultActive: false,
+                    }),
+                    createBaseSeries({
+                      key: `${key}-sma-ratio-m2sd`,
+                      name: "−2σ",
+                      color: colors.blue,
+                      defaultActive: false,
+                    }),
+                    createBaseSeries({
+                      key: `${key}-sma-ratio-m3sd`,
+                      name: "−3σ",
+                      color: colors.violet,
+                      defaultActive: false,
+                    }),
+                    createBaseSeries({
+                      key: `${key}-sma-ratio-p99`,
+                      name: "p99",
+                      color: colors.orange,
+                      defaultActive: false,
+                    }),
+                    createBaseSeries({
+                      key: `${key}-sma-ratio-p99-5`,
+                      name: "p99.5",
+                      color: colors.red,
+                      defaultActive: false,
+                    }),
+                    createBaseSeries({
+                      key: `${key}-sma-ratio-p99-9`,
+                      name: "p99.9",
+                      color: colors.pink,
+                      defaultActive: false,
+                    }),
+                    createBaseSeries({
+                      key: `${key}-sma-ratio-p1`,
+                      name: "p1",
+                      color: colors.cyan,
+                      defaultActive: false,
+                    }),
+                    createBaseSeries({
+                      key: `${key}-sma-ratio-p0-5`,
+                      name: "p0.5",
+                      color: colors.blue,
+                      defaultActive: false,
+                    }),
+                    createBaseSeries({
+                      key: `${key}-sma-ratio-p0-1`,
+                      name: "p0.1",
+                      color: colors.violet,
+                      defaultActive: false,
+                    }),
+                    createBaseSeries({
+                      key: `${key}-sma-ratio-1w-sma`,
+                      name: "1w sma",
+                      color: colors.fuchsia,
+                      defaultActive: false,
+                    }),
+                    createBaseSeries({
+                      key: `${key}-sma-ratio-1m-sma`,
+                      name: "1m sma",
+                      color: colors.pink,
+                      defaultActive: false,
+                    }),
+                    createBaseSeries({
+                      key: `${key}-sma-ratio-1y-sma`,
+                      name: "1y sma",
+                      color: colors.rose,
+                      defaultActive: false,
+                    }),
+                    /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
+                      key: `${key}-sma-ratio-1y-sma-momentum-oscillator`,
+                      title: "1Y Momentum",
+                      type: "Baseline",
+                      options: {
+                        createPriceLine: {
+                          value: 0,
+                        },
+                      },
+                    }),
+                  ],
+                })),
+              ],
+            },
+            {
+              name: "Performance",
+              tree: /** @type {const} */ ([
+                { name: "1 Day", key: "1d" },
+                { name: "1 Week", key: "1w" },
+                { name: "1 Month", key: "1m" },
+                { name: "3 Month", key: "3m" },
+                { name: "6 Month", key: "6m" },
+                { name: "1 Year", key: "1y" },
+                { name: "2 Year", key: "2y" },
+                { name: "3 Year", key: "3y" },
+                { name: "4 Year", key: "4y" },
+                { name: "5 Year", key: "5y" },
+                { name: "6 Year", key: "6y" },
+                { name: "8 Year", key: "8y" },
+                { name: "10 Year", key: "10y" },
+              ]).map(({ name, key }) => ({
+                name,
+                title: `${name} Performance`,
+                bottom: [
+                  /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
+                    key: `${key}-returns`,
+                    title: "Returns",
+                    type: "Baseline",
+                    options: {
+                      createPriceLine: {
+                        value: 0,
+                      },
+                    },
+                  }),
+                ],
+              })),
+            },
+            {
+              name: "DCA vs Lump sum",
+              tree: [
+                .../** @type {const} */ ([
+                  { name: "1 Week", key: "1w" },
+                  { name: "1 Month", key: "1m" },
+                  { name: "3 Month", key: "3m" },
+                  { name: "6 Month", key: "6m" },
+                  { name: "1 Year", key: "1y" },
+                ]).map(
+                  ({ name, key }) =>
+                    /** @satisfies {PartialChartOption} */ ({
+                      name,
+                      title: `${name} DCA vs Lump Sum Returns`,
+                      top: [
+                        createBaseSeries({
+                          key: `${key}-dca-avg-price`,
+                          name: `dca`,
+                          color: colors.orange,
+                        }),
+                        createBaseSeries({
+                          key: `price-${key}-ago`,
+                          name: `lump sum`,
+                          color: colors.cyan,
+                        }),
+                      ],
+                      bottom: [
+                        /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
+                          key: `${key}-dca-returns`,
+                          title: "dca",
+                          type: "Baseline",
+                          colors: [colors.yellow, colors.pink],
+                          options: {
+                            createPriceLine: {
+                              value: 0,
+                            },
+                          },
+                        }),
+                        /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
+                          key: `${key}-returns`,
+                          title: "lump sum",
+                          type: "Baseline",
+                          options: {
+                            createPriceLine: {
+                              value: 0,
+                            },
+                          },
+                        }),
+                      ],
+                    }),
+                ),
+                .../** @type {const} */ ([
+                  { name: "2 Year", key: "2y" },
+                  { name: "3 Year", key: "3y" },
+                  { name: "4 Year", key: "4y" },
+                  { name: "5 Year", key: "5y" },
+                  { name: "6 Year", key: "6y" },
+                  { name: "8 Year", key: "8y" },
+                  { name: "10 Year", key: "10y" },
+                ]).map(
+                  ({ name, key }) =>
+                    /** @satisfies {PartialChartOption} */ ({
+                      name,
+                      title: `${name} DCA vs Lump Sum Returns`,
+                      top: [
+                        createBaseSeries({
+                          key: `${key}-dca-avg-price`,
+                          name: `dca avg. price`,
+                          color: colors.orange,
+                        }),
+                        createBaseSeries({
+                          key: `price-${key}-ago`,
+                          name: `lump sum price`,
+                          color: colors.cyan,
+                        }),
+                      ],
+                      bottom: [
+                        /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
+                          key: `${key}-dca-returns`,
+                          title: "dca",
+                          type: "Baseline",
+                          colors: [colors.yellow, colors.pink],
+                          options: {
+                            createPriceLine: {
+                              value: 0,
+                            },
+                          },
+                        }),
+                        /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
+                          key: `${key}-dca-cagr`,
+                          title: "dca",
+                          type: "Baseline",
+                          colors: [colors.yellow, colors.pink],
+                          options: {
+                            createPriceLine: {
+                              value: 0,
+                            },
+                          },
+                        }),
+                        /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
+                          key: `${key}-returns`,
+                          title: "lump sum",
+                          type: "Baseline",
+                          options: {
+                            createPriceLine: {
+                              value: 0,
+                            },
+                          },
+                        }),
+                        /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
+                          key: `${key}-cagr`,
+                          title: "lump sum",
+                          type: "Baseline",
+                          options: {
+                            createPriceLine: {
+                              value: 0,
+                            },
+                          },
+                        }),
+                      ],
+                    }),
+                ),
+              ],
+            },
+            {
+              name: "DCA Class",
+              tree: [
+                {
+                  name: "Compare",
+                  title: "DCA Classes",
+                  top: dcaClasses.map((year) =>
+                    createBaseSeries({
+                      key: `dca-class-${year}-avg-price`,
+                      name: `${year}`,
+                      color: colors[year],
+                    }),
+                  ),
+                },
+                ...dcaClasses.map(
+                  (year) =>
+                    /** @satisfies {PartialChartOption} */ ({
+                      name: `${year}`,
+                      title: `DCA Since ${year}`,
+                      top: [
+                        createBaseSeries({
+                          key: `dca-class-${year}-avg-price`,
+                          name: `avg. price`,
+                          color: colors[year],
+                        }),
+                      ],
+                      bottom: [
+                        /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
+                          key: `dca-class-${year}-returns`,
+                          title: "dca",
+                          type: "Baseline",
+                          options: {
+                            createPriceLine: {
+                              value: 0,
+                            },
+                          },
+                        }),
+                      ],
+                    }),
+                ),
+              ],
+            },
+          ],
+        },
+        {
           name: "Block",
           tree: [
             {
@@ -402,61 +906,6 @@ function createPartialOptions(colors) {
                 key: "tx-count",
                 name: "Count",
               }),
-            },
-            {
-              name: "Subsidy",
-              title: "Subsidy",
-              bottom: [
-                ...createBaseAverageSumTotalMinMaxPercentilesSeries({
-                  key: "subsidy",
-                  name: "Subsidy",
-                }),
-                ...createBaseAverageSumTotalMinMaxPercentilesSeries({
-                  key: "subsidy-in-btc",
-                  name: "Subsidy",
-                }),
-                ...createBaseAverageSumTotalMinMaxPercentilesSeries({
-                  key: "subsidy-in-usd",
-                  name: "Subsidy",
-                }),
-              ],
-            },
-            {
-              name: "Coinbase",
-              title: "Coinbase",
-              bottom: [
-                ...createBaseAverageSumTotalMinMaxPercentilesSeries({
-                  key: "coinbase",
-                  name: "Coinbase",
-                }),
-                ...createBaseAverageSumTotalMinMaxPercentilesSeries({
-                  key: "coinbase-in-btc",
-                  name: "Coinbase",
-                }),
-                ...createBaseAverageSumTotalMinMaxPercentilesSeries({
-                  key: "coinbase-in-usd",
-                  name: "Coinbase",
-                }),
-              ],
-            },
-            {
-              name: "Fee",
-              title: "Transaction Fee",
-              bottom: [
-                ...createAverageSumTotalMinMaxPercentilesSeries("fee"),
-                ...createAverageSumTotalMinMaxPercentilesSeries("fee-in-btc"),
-                ...createAverageSumTotalMinMaxPercentilesSeries("fee-in-usd"),
-              ],
-            },
-            {
-              name: "Feerate",
-              title: "Transaction Fee Rate",
-              bottom: [
-                createAverageSeries({ concat: "feerate" }),
-                ...createMinMaxPercentilesSeries({
-                  concat: "feerate",
-                }),
-              ],
             },
             {
               name: "Weight",
@@ -775,7 +1224,62 @@ function createPartialOptions(colors) {
               bottom: [
                 createBaseSeries({
                   key: "total-subsidy-in-btc",
-                  name: "Supply",
+                  name: "Mined",
+                }),
+              ],
+            },
+            {
+              name: "Coinbase",
+              title: "Coinbase",
+              bottom: [
+                ...createBaseAverageSumTotalMinMaxPercentilesSeries({
+                  key: "coinbase",
+                  name: "Coinbase",
+                }),
+                ...createBaseAverageSumTotalMinMaxPercentilesSeries({
+                  key: "coinbase-in-btc",
+                  name: "Coinbase",
+                }),
+                ...createBaseAverageSumTotalMinMaxPercentilesSeries({
+                  key: "coinbase-in-usd",
+                  name: "Coinbase",
+                }),
+              ],
+            },
+            {
+              name: "Subsidy",
+              title: "Subsidy",
+              bottom: [
+                ...createBaseAverageSumTotalMinMaxPercentilesSeries({
+                  key: "subsidy",
+                  name: "Subsidy",
+                }),
+                ...createBaseAverageSumTotalMinMaxPercentilesSeries({
+                  key: "subsidy-in-btc",
+                  name: "Subsidy",
+                }),
+                ...createBaseAverageSumTotalMinMaxPercentilesSeries({
+                  key: "subsidy-in-usd",
+                  name: "Subsidy",
+                }),
+              ],
+            },
+            {
+              name: "Fee",
+              title: "Transaction Fee",
+              bottom: [
+                ...createAverageSumTotalMinMaxPercentilesSeries("fee"),
+                ...createAverageSumTotalMinMaxPercentilesSeries("fee-in-btc"),
+                ...createAverageSumTotalMinMaxPercentilesSeries("fee-in-usd"),
+              ],
+            },
+            {
+              name: "Feerate",
+              title: "Transaction Fee Rate",
+              bottom: [
+                createAverageSeries({ concat: "feerate" }),
+                ...createMinMaxPercentilesSeries({
+                  concat: "feerate",
                 }),
               ],
             },
@@ -807,453 +1311,6 @@ function createPartialOptions(colors) {
                   key: "halvingepoch",
                   name: "Epoch",
                 }),
-              ],
-            },
-          ],
-        },
-        {
-          name: "Market",
-          tree: [
-            {
-              name: "Capitalization",
-              title: "Market Capitalization",
-              bottom: [
-                createBaseSeries({
-                  key: "marketcap",
-                  name: "Capitalization",
-                }),
-              ],
-            },
-            {
-              name: "All Time High",
-              tree: [
-                {
-                  name: "Value",
-                  title: "All Time High",
-                  top: [
-                    createBaseSeries({
-                      key: "ath",
-                      name: "ath",
-                    }),
-                  ],
-                },
-                {
-                  name: "drawdown",
-                  title: "All Time High Drawdown",
-                  top: [
-                    createBaseSeries({
-                      key: "ath",
-                      name: "ath",
-                    }),
-                  ],
-                  bottom: [
-                    createBaseSeries({
-                      key: "drawdown",
-                      name: "Drawdown",
-                      color: colors.red,
-                    }),
-                  ],
-                },
-                {
-                  name: "days since",
-                  title: "Number of days Since All Time High",
-                  top: [
-                    createBaseSeries({
-                      key: "ath",
-                      name: "ath",
-                    }),
-                  ],
-                  bottom: [
-                    createBaseSeries({
-                      key: "days-since-ath",
-                      name: "Days",
-                    }),
-                  ],
-                },
-                {
-                  name: "max between",
-                  title: "Maximum time between All Time Highs",
-                  top: [
-                    createBaseSeries({
-                      key: "ath",
-                      name: "ath",
-                    }),
-                  ],
-                  bottom: [
-                    createBaseSeries({
-                      key: "max-days-between-ath",
-                      name: "Days",
-                    }),
-                    createBaseSeries({
-                      key: "max-years-between-ath",
-                      name: "Years",
-                    }),
-                  ],
-                },
-              ],
-            },
-            {
-              name: "Average",
-              tree: [
-                {
-                  name: "Compare",
-                  title: "Moving Averages",
-                  top: averages.map(({ days, key, name }) =>
-                    createBaseSeries({
-                      key: `${key}-sma`,
-                      name: key,
-                      color: colors[`_${key}`],
-                    }),
-                  ),
-                },
-                ...averages.map(({ key, name }) => ({
-                  name,
-                  title: `${name} Market Price Moving Average`,
-                  top: [
-                    createBaseSeries({
-                      key: `${key}-sma`,
-                      name: "Average",
-                      color: colors[`_${key}`],
-                    }),
-                    createBaseSeries({
-                      key: `${key}-sma-ratio-p1sd-as-price`,
-                      name: "+1σ",
-                      color: colors.orange,
-                      defaultActive: false,
-                    }),
-                    createBaseSeries({
-                      key: `${key}-sma-ratio-p2sd-as-price`,
-                      name: "+2σ",
-                      color: colors.red,
-                      defaultActive: false,
-                    }),
-                    createBaseSeries({
-                      key: `${key}-sma-ratio-p3sd-as-price`,
-                      name: "+3σ",
-                      color: colors.pink,
-                      defaultActive: false,
-                    }),
-                    createBaseSeries({
-                      key: `${key}-sma-ratio-m1sd-as-price`,
-                      name: "−1σ",
-                      color: colors.cyan,
-                      defaultActive: false,
-                    }),
-                    createBaseSeries({
-                      key: `${key}-sma-ratio-m2sd-as-price`,
-                      name: "−2σ",
-                      color: colors.blue,
-                      defaultActive: false,
-                    }),
-                    createBaseSeries({
-                      key: `${key}-sma-ratio-m3sd-as-price`,
-                      name: "−3σ",
-                      color: colors.violet,
-                      defaultActive: false,
-                    }),
-                    createBaseSeries({
-                      key: `${key}-sma-ratio-p99-as-price`,
-                      name: "p99",
-                      color: colors.orange,
-                      defaultActive: false,
-                    }),
-                    createBaseSeries({
-                      key: `${key}-sma-ratio-p99-5-as-price`,
-                      name: "p99.5",
-                      color: colors.red,
-                      defaultActive: false,
-                    }),
-                    createBaseSeries({
-                      key: `${key}-sma-ratio-p99-9-as-price`,
-                      name: "p99.9",
-                      color: colors.pink,
-                      defaultActive: false,
-                    }),
-                    createBaseSeries({
-                      key: `${key}-sma-ratio-p1-as-price`,
-                      name: "p1",
-                      color: colors.cyan,
-                      defaultActive: false,
-                    }),
-                    createBaseSeries({
-                      key: `${key}-sma-ratio-p0-5-as-price`,
-                      name: "p0.5",
-                      color: colors.blue,
-                      defaultActive: false,
-                    }),
-                    createBaseSeries({
-                      key: `${key}-sma-ratio-p0-1-as-price`,
-                      name: "p0.1",
-                      color: colors.violet,
-                      defaultActive: false,
-                    }),
-                  ],
-                  bottom: [
-                    /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
-                      key: `${key}-sma-ratio`,
-                      title: "Ratio",
-                      type: "Baseline",
-                      options: {
-                        baseValue: { price: 1 },
-                        createPriceLine: {
-                          value: 1,
-                        },
-                      },
-                    }),
-                    createBaseSeries({
-                      key: `${key}-sma-ratio-sma`,
-                      name: "sma",
-                      color: colors.yellow,
-                      defaultActive: false,
-                    }),
-                    createBaseSeries({
-                      key: `${key}-sma-ratio-p1sd`,
-                      name: "+1σ",
-                      color: colors.orange,
-                      defaultActive: false,
-                    }),
-                    createBaseSeries({
-                      key: `${key}-sma-ratio-p2sd`,
-                      name: "+2σ",
-                      color: colors.red,
-                      defaultActive: false,
-                    }),
-                    createBaseSeries({
-                      key: `${key}-sma-ratio-p3sd`,
-                      name: "+3σ",
-                      color: colors.pink,
-                      defaultActive: false,
-                    }),
-                    createBaseSeries({
-                      key: `${key}-sma-ratio-m1sd`,
-                      name: "−1σ",
-                      color: colors.cyan,
-                      defaultActive: false,
-                    }),
-                    createBaseSeries({
-                      key: `${key}-sma-ratio-m2sd`,
-                      name: "−2σ",
-                      color: colors.blue,
-                      defaultActive: false,
-                    }),
-                    createBaseSeries({
-                      key: `${key}-sma-ratio-m3sd`,
-                      name: "−3σ",
-                      color: colors.violet,
-                      defaultActive: false,
-                    }),
-                    createBaseSeries({
-                      key: `${key}-sma-ratio-p99`,
-                      name: "p99",
-                      color: colors.orange,
-                      defaultActive: false,
-                    }),
-                    createBaseSeries({
-                      key: `${key}-sma-ratio-p99-5`,
-                      name: "p99.5",
-                      color: colors.red,
-                      defaultActive: false,
-                    }),
-                    createBaseSeries({
-                      key: `${key}-sma-ratio-p99-9`,
-                      name: "p99.9",
-                      color: colors.pink,
-                      defaultActive: false,
-                    }),
-                    createBaseSeries({
-                      key: `${key}-sma-ratio-p1`,
-                      name: "p1",
-                      color: colors.cyan,
-                      defaultActive: false,
-                    }),
-                    createBaseSeries({
-                      key: `${key}-sma-ratio-p0-5`,
-                      name: "p0.5",
-                      color: colors.blue,
-                      defaultActive: false,
-                    }),
-                    createBaseSeries({
-                      key: `${key}-sma-ratio-p0-1`,
-                      name: "p0.1",
-                      color: colors.violet,
-                      defaultActive: false,
-                    }),
-                    createBaseSeries({
-                      key: `${key}-sma-ratio-1w-sma`,
-                      name: "1w sma",
-                      color: colors.fuchsia,
-                      defaultActive: false,
-                    }),
-                    createBaseSeries({
-                      key: `${key}-sma-ratio-1m-sma`,
-                      name: "1m sma",
-                      color: colors.pink,
-                      defaultActive: false,
-                    }),
-                    createBaseSeries({
-                      key: `${key}-sma-ratio-1y-sma`,
-                      name: "1y sma",
-                      color: colors.rose,
-                      defaultActive: false,
-                    }),
-                    /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
-                      key: `${key}-sma-ratio-1y-sma-momentum-oscillator`,
-                      title: "1Y Momentum",
-                      type: "Baseline",
-                      options: {
-                        createPriceLine: {
-                          value: 0,
-                        },
-                      },
-                    }),
-                  ],
-                })),
-              ],
-            },
-            {
-              name: "Returns",
-              tree: [
-                {
-                  name: "1 Day",
-                  title: `1 Day Returns`,
-                  top: [
-                    createBaseSeries({
-                      key: `price-1d-ago`,
-                      name: `Price 1d ago`,
-                    }),
-                  ],
-                  bottom: [
-                    /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
-                      key: `1d-returns`,
-                      title: "1d",
-                      type: "Baseline",
-                      options: {
-                        createPriceLine: {
-                          value: 0,
-                        },
-                      },
-                    }),
-                  ],
-                },
-                .../** @type {const} */ ([
-                  { name: "1 Week", key: "1w" },
-                  { name: "1 Month", key: "1m" },
-                  { name: "3 Months", key: "3m" },
-                  { name: "6 Months", key: "6m" },
-                  { name: "1 Year", key: "1y" },
-                ]).map(
-                  ({ name, key }) =>
-                    /** @satisfies {PartialChartOption} */ ({
-                      name,
-                      title: `${name} Returns`,
-                      top: [
-                        createBaseSeries({
-                          key: `price-${key}-ago`,
-                          name: `lump sum`,
-                          color: colors.cyan,
-                        }),
-                        createBaseSeries({
-                          key: `${key}-dca-avg-price`,
-                          name: `dca`,
-                          color: colors.orange,
-                        }),
-                      ],
-                      bottom: [
-                        /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
-                          key: `${key}-returns`,
-                          title: "lump sum",
-                          type: "Baseline",
-                          options: {
-                            createPriceLine: {
-                              value: 0,
-                            },
-                          },
-                        }),
-                        /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
-                          key: `${key}-dca-returns`,
-                          title: "dca",
-                          type: "Baseline",
-                          colors: [colors.yellow, colors.pink],
-                          options: {
-                            createPriceLine: {
-                              value: 0,
-                            },
-                          },
-                        }),
-                      ],
-                    }),
-                ),
-                .../** @type {const} */ ([
-                  { name: "2 Year", key: "2y" },
-                  { name: "3 Year", key: "3y" },
-                  { name: "4 Year", key: "4y" },
-                  { name: "5 Year", key: "5y" },
-                  { name: "6 Year", key: "6y" },
-                  { name: "8 Year", key: "8y" },
-                  { name: "10 Year", key: "10y" },
-                ]).map(
-                  ({ name, key }) =>
-                    /** @satisfies {PartialChartOption} */ ({
-                      name,
-                      title: `${name} Returns`,
-                      top: [
-                        createBaseSeries({
-                          key: `price-${key}-ago`,
-                          name: `lump sum price`,
-                          color: colors.cyan,
-                        }),
-                        createBaseSeries({
-                          key: `${key}-dca-avg-price`,
-                          name: `dca avg. price`,
-                          color: colors.orange,
-                        }),
-                      ],
-                      bottom: [
-                        /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
-                          key: `${key}-returns`,
-                          title: "lump sum",
-                          type: "Baseline",
-                          options: {
-                            createPriceLine: {
-                              value: 0,
-                            },
-                          },
-                        }),
-                        /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
-                          key: `${key}-cagr`,
-                          title: "lump sum",
-                          type: "Baseline",
-                          options: {
-                            createPriceLine: {
-                              value: 0,
-                            },
-                          },
-                        }),
-                        /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
-                          key: `${key}-dca-returns`,
-                          title: "dca",
-                          type: "Baseline",
-                          colors: [colors.yellow, colors.pink],
-                          options: {
-                            createPriceLine: {
-                              value: 0,
-                            },
-                          },
-                        }),
-                        /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
-                          key: `${key}-dca-cagr`,
-                          title: "dca",
-                          type: "Baseline",
-                          colors: [colors.yellow, colors.pink],
-                          options: {
-                            createPriceLine: {
-                              value: 0,
-                            },
-                          },
-                        }),
-                      ],
-                    }),
-                ),
               ],
             },
           ],

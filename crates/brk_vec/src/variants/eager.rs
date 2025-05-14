@@ -9,7 +9,7 @@ use std::{
 };
 
 use brk_core::{
-    Bitcoin, CheckedSub, Close, DateIndex, Dollars, Height, Sats, StoredUsize, TxIndex,
+    Bitcoin, CheckedSub, Close, Date, DateIndex, Dollars, Height, Sats, StoredUsize, TxIndex,
 };
 use brk_exit::Exit;
 use log::info;
@@ -668,7 +668,7 @@ where
 }
 
 impl EagerVec<DateIndex, Sats> {
-    pub fn compute_dca_stack(
+    pub fn compute_dca_stack_via_len(
         &mut self,
         max_from: DateIndex,
         closes: &impl AnyIterableVec<DateIndex, Close<Dollars>>,
@@ -676,7 +676,7 @@ impl EagerVec<DateIndex, Sats> {
         exit: &Exit,
     ) -> Result<()> {
         self.validate_computed_version_or_reset_file(
-            Version::ZERO + self.inner.version() + closes.version(),
+            Version::new(5) + self.inner.version() + closes.version(),
         )?;
 
         let mut other_iter = closes.iter();
@@ -698,6 +698,7 @@ impl EagerVec<DateIndex, Sats> {
 
             if price != Dollars::ZERO {
                 stack = prev.unwrap() + Sats::from(Bitcoin::from(DCA_AMOUNT / price));
+
                 if i_usize >= len {
                     let prev_price = *other_iter.unwrap_get_inner_(i_usize - len);
                     if prev_price != Dollars::ZERO {
@@ -715,10 +716,49 @@ impl EagerVec<DateIndex, Sats> {
 
         self.safe_flush(exit)
     }
+
+    pub fn compute_dca_stack_via_from(
+        &mut self,
+        max_from: DateIndex,
+        closes: &impl AnyIterableVec<DateIndex, Close<Dollars>>,
+        from: DateIndex,
+        exit: &Exit,
+    ) -> Result<()> {
+        self.validate_computed_version_or_reset_file(
+            Version::ZERO + self.inner.version() + closes.version(),
+        )?;
+
+        let mut prev = None;
+
+        let index = max_from.min(DateIndex::from(self.len()));
+        closes.iter_at(index).try_for_each(|(i, closes)| {
+            let price = *closes.into_inner();
+            let i_usize = i.unwrap_to_usize();
+            if prev.is_none() {
+                if i_usize == 0 {
+                    prev.replace(Sats::ZERO);
+                } else {
+                    prev.replace(self.into_iter().unwrap_get_inner_(i_usize - 1));
+                }
+            }
+
+            let mut stack = Sats::ZERO;
+
+            if price != Dollars::ZERO && i >= from {
+                stack = prev.unwrap() + Sats::from(Bitcoin::from(DCA_AMOUNT / price));
+            }
+
+            prev.replace(stack);
+
+            self.forced_push_at(i, stack, exit)
+        })?;
+
+        self.safe_flush(exit)
+    }
 }
 
 impl EagerVec<DateIndex, Dollars> {
-    pub fn compute_dca_avg_price(
+    pub fn compute_dca_avg_price_via_len(
         &mut self,
         max_from: DateIndex,
         stacks: &impl AnyIterableVec<DateIndex, Sats>,
@@ -726,14 +766,51 @@ impl EagerVec<DateIndex, Dollars> {
         exit: &Exit,
     ) -> Result<()> {
         self.validate_computed_version_or_reset_file(
-            Version::ONE + self.inner.version() + stacks.version(),
+            Version::TWO + self.inner.version() + stacks.version(),
         )?;
 
         let index = max_from.min(DateIndex::from(self.len()));
 
+        let first_price_date = DateIndex::try_from(Date::new(2010, 8, 16)).unwrap();
+
         stacks.iter_at(index).try_for_each(|(i, stack)| {
             let stack = stack.into_inner();
-            let avg_price = DCA_AMOUNT * len.min(i.unwrap_to_usize() + 1) / Bitcoin::from(stack);
+            let mut avg_price = Dollars::from(f64::NAN);
+            if i > first_price_date {
+                avg_price = DCA_AMOUNT
+                    * len
+                        .min(i.unwrap_to_usize() + 1)
+                        .min(i.checked_sub(first_price_date).unwrap().unwrap_to_usize() + 1)
+                    / Bitcoin::from(stack);
+            }
+            self.forced_push_at(i, avg_price, exit)
+        })?;
+
+        self.safe_flush(exit)
+    }
+
+    pub fn compute_dca_avg_price_via_from(
+        &mut self,
+        max_from: DateIndex,
+        stacks: &impl AnyIterableVec<DateIndex, Sats>,
+        from: DateIndex,
+        exit: &Exit,
+    ) -> Result<()> {
+        self.validate_computed_version_or_reset_file(
+            Version::ZERO + self.inner.version() + stacks.version(),
+        )?;
+
+        let index = max_from.min(DateIndex::from(self.len()));
+
+        let from_usize = from.unwrap_to_usize();
+
+        stacks.iter_at(index).try_for_each(|(i, stack)| {
+            let stack = stack.into_inner();
+            let mut avg_price = Dollars::from(f64::NAN);
+            if i >= from {
+                avg_price =
+                    DCA_AMOUNT * (i.unwrap_to_usize() + 1 - from_usize) / Bitcoin::from(stack);
+            }
             self.forced_push_at(i, avg_price, exit)
         })?;
 

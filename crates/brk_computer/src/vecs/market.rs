@@ -1,6 +1,6 @@
 use std::{fs, path::Path, thread};
 
-use brk_core::{Dollars, Sats, StoredF32, StoredUsize};
+use brk_core::{Date, DateIndex, Dollars, Sats, StoredF32, StoredUsize};
 use brk_exit::Exit;
 use brk_indexer::Indexer;
 use brk_vec::{AnyCollectableVec, Compressed, Computation, StoredIndex, VecIterator, Version};
@@ -13,7 +13,7 @@ use super::{
     indexes, transactions,
 };
 
-const VERSION: Version = Version::new(10);
+const VERSION: Version = Version::new(0);
 
 #[derive(Clone)]
 pub struct Vecs {
@@ -116,6 +116,42 @@ pub struct Vecs {
     pub _6y_dca_cagr: ComputedVecsFromDateIndex<StoredF32>,
     pub _8y_dca_cagr: ComputedVecsFromDateIndex<StoredF32>,
     pub _10y_dca_cagr: ComputedVecsFromDateIndex<StoredF32>,
+
+    pub dca_class_2025_stack: ComputedVecsFromDateIndex<Sats>,
+    pub dca_class_2024_stack: ComputedVecsFromDateIndex<Sats>,
+    pub dca_class_2023_stack: ComputedVecsFromDateIndex<Sats>,
+    pub dca_class_2022_stack: ComputedVecsFromDateIndex<Sats>,
+    pub dca_class_2021_stack: ComputedVecsFromDateIndex<Sats>,
+    pub dca_class_2020_stack: ComputedVecsFromDateIndex<Sats>,
+    pub dca_class_2019_stack: ComputedVecsFromDateIndex<Sats>,
+    pub dca_class_2018_stack: ComputedVecsFromDateIndex<Sats>,
+    pub dca_class_2017_stack: ComputedVecsFromDateIndex<Sats>,
+    pub dca_class_2016_stack: ComputedVecsFromDateIndex<Sats>,
+    pub dca_class_2015_stack: ComputedVecsFromDateIndex<Sats>,
+
+    pub dca_class_2025_avg_price: ComputedVecsFromDateIndex<Dollars>,
+    pub dca_class_2024_avg_price: ComputedVecsFromDateIndex<Dollars>,
+    pub dca_class_2023_avg_price: ComputedVecsFromDateIndex<Dollars>,
+    pub dca_class_2022_avg_price: ComputedVecsFromDateIndex<Dollars>,
+    pub dca_class_2021_avg_price: ComputedVecsFromDateIndex<Dollars>,
+    pub dca_class_2020_avg_price: ComputedVecsFromDateIndex<Dollars>,
+    pub dca_class_2019_avg_price: ComputedVecsFromDateIndex<Dollars>,
+    pub dca_class_2018_avg_price: ComputedVecsFromDateIndex<Dollars>,
+    pub dca_class_2017_avg_price: ComputedVecsFromDateIndex<Dollars>,
+    pub dca_class_2016_avg_price: ComputedVecsFromDateIndex<Dollars>,
+    pub dca_class_2015_avg_price: ComputedVecsFromDateIndex<Dollars>,
+
+    pub dca_class_2025_returns: ComputedVecsFromDateIndex<StoredF32>,
+    pub dca_class_2024_returns: ComputedVecsFromDateIndex<StoredF32>,
+    pub dca_class_2023_returns: ComputedVecsFromDateIndex<StoredF32>,
+    pub dca_class_2022_returns: ComputedVecsFromDateIndex<StoredF32>,
+    pub dca_class_2021_returns: ComputedVecsFromDateIndex<StoredF32>,
+    pub dca_class_2020_returns: ComputedVecsFromDateIndex<StoredF32>,
+    pub dca_class_2019_returns: ComputedVecsFromDateIndex<StoredF32>,
+    pub dca_class_2018_returns: ComputedVecsFromDateIndex<StoredF32>,
+    pub dca_class_2017_returns: ComputedVecsFromDateIndex<StoredF32>,
+    pub dca_class_2016_returns: ComputedVecsFromDateIndex<StoredF32>,
+    pub dca_class_2015_returns: ComputedVecsFromDateIndex<StoredF32>,
 }
 
 impl Vecs {
@@ -795,6 +831,240 @@ impl Vecs {
                 compressed,
                 StorableVecGeneatorOptions::default().add_last(),
             )?,
+
+            dca_class_2025_stack: ComputedVecsFromDateIndex::forced_import(
+                path,
+                "dca_class_2025_stack",
+                VERSION + Version::ZERO,
+                compressed,
+                StorableVecGeneatorOptions::default().add_last(),
+            )?,
+            dca_class_2024_stack: ComputedVecsFromDateIndex::forced_import(
+                path,
+                "dca_class_2024_stack",
+                VERSION + Version::ZERO,
+                compressed,
+                StorableVecGeneatorOptions::default().add_last(),
+            )?,
+            dca_class_2023_stack: ComputedVecsFromDateIndex::forced_import(
+                path,
+                "dca_class_2023_stack",
+                VERSION + Version::ZERO,
+                compressed,
+                StorableVecGeneatorOptions::default().add_last(),
+            )?,
+            dca_class_2022_stack: ComputedVecsFromDateIndex::forced_import(
+                path,
+                "dca_class_2022_stack",
+                VERSION + Version::ZERO,
+                compressed,
+                StorableVecGeneatorOptions::default().add_last(),
+            )?,
+            dca_class_2021_stack: ComputedVecsFromDateIndex::forced_import(
+                path,
+                "dca_class_2021_stack",
+                VERSION + Version::ZERO,
+                compressed,
+                StorableVecGeneatorOptions::default().add_last(),
+            )?,
+            dca_class_2020_stack: ComputedVecsFromDateIndex::forced_import(
+                path,
+                "dca_class_2020_stack",
+                VERSION + Version::ZERO,
+                compressed,
+                StorableVecGeneatorOptions::default().add_last(),
+            )?,
+            dca_class_2019_stack: ComputedVecsFromDateIndex::forced_import(
+                path,
+                "dca_class_2019_stack",
+                VERSION + Version::ZERO,
+                compressed,
+                StorableVecGeneatorOptions::default().add_last(),
+            )?,
+            dca_class_2018_stack: ComputedVecsFromDateIndex::forced_import(
+                path,
+                "dca_class_2018_stack",
+                VERSION + Version::ZERO,
+                compressed,
+                StorableVecGeneatorOptions::default().add_last(),
+            )?,
+            dca_class_2017_stack: ComputedVecsFromDateIndex::forced_import(
+                path,
+                "dca_class_2017_stack",
+                VERSION + Version::ZERO,
+                compressed,
+                StorableVecGeneatorOptions::default().add_last(),
+            )?,
+            dca_class_2016_stack: ComputedVecsFromDateIndex::forced_import(
+                path,
+                "dca_class_2016_stack",
+                VERSION + Version::ZERO,
+                compressed,
+                StorableVecGeneatorOptions::default().add_last(),
+            )?,
+            dca_class_2015_stack: ComputedVecsFromDateIndex::forced_import(
+                path,
+                "dca_class_2015_stack",
+                VERSION + Version::ZERO,
+                compressed,
+                StorableVecGeneatorOptions::default().add_last(),
+            )?,
+
+            dca_class_2025_avg_price: ComputedVecsFromDateIndex::forced_import(
+                path,
+                "dca_class_2025_avg_price",
+                VERSION + Version::ZERO,
+                compressed,
+                StorableVecGeneatorOptions::default().add_last(),
+            )?,
+            dca_class_2024_avg_price: ComputedVecsFromDateIndex::forced_import(
+                path,
+                "dca_class_2024_avg_price",
+                VERSION + Version::ZERO,
+                compressed,
+                StorableVecGeneatorOptions::default().add_last(),
+            )?,
+            dca_class_2023_avg_price: ComputedVecsFromDateIndex::forced_import(
+                path,
+                "dca_class_2023_avg_price",
+                VERSION + Version::ZERO,
+                compressed,
+                StorableVecGeneatorOptions::default().add_last(),
+            )?,
+            dca_class_2022_avg_price: ComputedVecsFromDateIndex::forced_import(
+                path,
+                "dca_class_2022_avg_price",
+                VERSION + Version::ZERO,
+                compressed,
+                StorableVecGeneatorOptions::default().add_last(),
+            )?,
+            dca_class_2021_avg_price: ComputedVecsFromDateIndex::forced_import(
+                path,
+                "dca_class_2021_avg_price",
+                VERSION + Version::ZERO,
+                compressed,
+                StorableVecGeneatorOptions::default().add_last(),
+            )?,
+            dca_class_2020_avg_price: ComputedVecsFromDateIndex::forced_import(
+                path,
+                "dca_class_2020_avg_price",
+                VERSION + Version::ZERO,
+                compressed,
+                StorableVecGeneatorOptions::default().add_last(),
+            )?,
+            dca_class_2019_avg_price: ComputedVecsFromDateIndex::forced_import(
+                path,
+                "dca_class_2019_avg_price",
+                VERSION + Version::ZERO,
+                compressed,
+                StorableVecGeneatorOptions::default().add_last(),
+            )?,
+            dca_class_2018_avg_price: ComputedVecsFromDateIndex::forced_import(
+                path,
+                "dca_class_2018_avg_price",
+                VERSION + Version::ZERO,
+                compressed,
+                StorableVecGeneatorOptions::default().add_last(),
+            )?,
+            dca_class_2017_avg_price: ComputedVecsFromDateIndex::forced_import(
+                path,
+                "dca_class_2017_avg_price",
+                VERSION + Version::ZERO,
+                compressed,
+                StorableVecGeneatorOptions::default().add_last(),
+            )?,
+            dca_class_2016_avg_price: ComputedVecsFromDateIndex::forced_import(
+                path,
+                "dca_class_2016_avg_price",
+                VERSION + Version::ZERO,
+                compressed,
+                StorableVecGeneatorOptions::default().add_last(),
+            )?,
+            dca_class_2015_avg_price: ComputedVecsFromDateIndex::forced_import(
+                path,
+                "dca_class_2015_avg_price",
+                VERSION + Version::ZERO,
+                compressed,
+                StorableVecGeneatorOptions::default().add_last(),
+            )?,
+
+            dca_class_2025_returns: ComputedVecsFromDateIndex::forced_import(
+                path,
+                "dca_class_2025_returns",
+                VERSION + Version::ZERO,
+                compressed,
+                StorableVecGeneatorOptions::default().add_last(),
+            )?,
+            dca_class_2024_returns: ComputedVecsFromDateIndex::forced_import(
+                path,
+                "dca_class_2024_returns",
+                VERSION + Version::ZERO,
+                compressed,
+                StorableVecGeneatorOptions::default().add_last(),
+            )?,
+            dca_class_2023_returns: ComputedVecsFromDateIndex::forced_import(
+                path,
+                "dca_class_2023_returns",
+                VERSION + Version::ZERO,
+                compressed,
+                StorableVecGeneatorOptions::default().add_last(),
+            )?,
+            dca_class_2022_returns: ComputedVecsFromDateIndex::forced_import(
+                path,
+                "dca_class_2022_returns",
+                VERSION + Version::ZERO,
+                compressed,
+                StorableVecGeneatorOptions::default().add_last(),
+            )?,
+            dca_class_2021_returns: ComputedVecsFromDateIndex::forced_import(
+                path,
+                "dca_class_2021_returns",
+                VERSION + Version::ZERO,
+                compressed,
+                StorableVecGeneatorOptions::default().add_last(),
+            )?,
+            dca_class_2020_returns: ComputedVecsFromDateIndex::forced_import(
+                path,
+                "dca_class_2020_returns",
+                VERSION + Version::ZERO,
+                compressed,
+                StorableVecGeneatorOptions::default().add_last(),
+            )?,
+            dca_class_2019_returns: ComputedVecsFromDateIndex::forced_import(
+                path,
+                "dca_class_2019_returns",
+                VERSION + Version::ZERO,
+                compressed,
+                StorableVecGeneatorOptions::default().add_last(),
+            )?,
+            dca_class_2018_returns: ComputedVecsFromDateIndex::forced_import(
+                path,
+                "dca_class_2018_returns",
+                VERSION + Version::ZERO,
+                compressed,
+                StorableVecGeneatorOptions::default().add_last(),
+            )?,
+            dca_class_2017_returns: ComputedVecsFromDateIndex::forced_import(
+                path,
+                "dca_class_2017_returns",
+                VERSION + Version::ZERO,
+                compressed,
+                StorableVecGeneatorOptions::default().add_last(),
+            )?,
+            dca_class_2016_returns: ComputedVecsFromDateIndex::forced_import(
+                path,
+                "dca_class_2016_returns",
+                VERSION + Version::ZERO,
+                compressed,
+                StorableVecGeneatorOptions::default().add_last(),
+            )?,
+            dca_class_2015_returns: ComputedVecsFromDateIndex::forced_import(
+                path,
+                "dca_class_2015_returns",
+                VERSION + Version::ZERO,
+                compressed,
+                StorableVecGeneatorOptions::default().add_last(),
+            )?,
         })
     }
 
@@ -1151,7 +1421,7 @@ impl Vecs {
                     starting_indexes,
                     exit,
                     |v, _, _, starting_indexes, exit| {
-                        v.compute_dca_stack(
+                        v.compute_dca_stack_via_len(
                             starting_indexes.dateindex,
                             &fetched.timeindexes_to_close.dateindex,
                             days,
@@ -1166,7 +1436,7 @@ impl Vecs {
                     starting_indexes,
                     exit,
                     |v, _, _, starting_indexes, exit| {
-                        v.compute_dca_avg_price(
+                        v.compute_dca_avg_price_via_len(
                             starting_indexes.dateindex,
                             &dca_stack.dateindex,
                             days,
@@ -1206,6 +1476,128 @@ impl Vecs {
                         },
                     )?;
                 }
+
+                Ok(())
+            },
+        )?;
+
+        [
+            (
+                2015,
+                &mut self.dca_class_2015_avg_price,
+                &mut self.dca_class_2015_returns,
+                &mut self.dca_class_2015_stack,
+            ),
+            (
+                2016,
+                &mut self.dca_class_2016_avg_price,
+                &mut self.dca_class_2016_returns,
+                &mut self.dca_class_2016_stack,
+            ),
+            (
+                2017,
+                &mut self.dca_class_2017_avg_price,
+                &mut self.dca_class_2017_returns,
+                &mut self.dca_class_2017_stack,
+            ),
+            (
+                2018,
+                &mut self.dca_class_2018_avg_price,
+                &mut self.dca_class_2018_returns,
+                &mut self.dca_class_2018_stack,
+            ),
+            (
+                2019,
+                &mut self.dca_class_2019_avg_price,
+                &mut self.dca_class_2019_returns,
+                &mut self.dca_class_2019_stack,
+            ),
+            (
+                2020,
+                &mut self.dca_class_2020_avg_price,
+                &mut self.dca_class_2020_returns,
+                &mut self.dca_class_2020_stack,
+            ),
+            (
+                2021,
+                &mut self.dca_class_2021_avg_price,
+                &mut self.dca_class_2021_returns,
+                &mut self.dca_class_2021_stack,
+            ),
+            (
+                2022,
+                &mut self.dca_class_2022_avg_price,
+                &mut self.dca_class_2022_returns,
+                &mut self.dca_class_2022_stack,
+            ),
+            (
+                2023,
+                &mut self.dca_class_2023_avg_price,
+                &mut self.dca_class_2023_returns,
+                &mut self.dca_class_2023_stack,
+            ),
+            (
+                2024,
+                &mut self.dca_class_2024_avg_price,
+                &mut self.dca_class_2024_returns,
+                &mut self.dca_class_2024_stack,
+            ),
+            (
+                2025,
+                &mut self.dca_class_2025_avg_price,
+                &mut self.dca_class_2025_returns,
+                &mut self.dca_class_2025_stack,
+            ),
+        ]
+        .into_iter()
+        .try_for_each(
+            |(year, avg_price, returns, stack)| -> color_eyre::Result<()> {
+                let dateindex = DateIndex::try_from(Date::new(year, 1, 1)).unwrap();
+
+                stack.compute(
+                    indexer,
+                    indexes,
+                    starting_indexes,
+                    exit,
+                    |v, _, _, starting_indexes, exit| {
+                        v.compute_dca_stack_via_from(
+                            starting_indexes.dateindex,
+                            &fetched.timeindexes_to_close.dateindex,
+                            dateindex,
+                            exit,
+                        )
+                    },
+                )?;
+
+                avg_price.compute(
+                    indexer,
+                    indexes,
+                    starting_indexes,
+                    exit,
+                    |v, _, _, starting_indexes, exit| {
+                        v.compute_dca_avg_price_via_from(
+                            starting_indexes.dateindex,
+                            &stack.dateindex,
+                            dateindex,
+                            exit,
+                        )
+                    },
+                )?;
+
+                returns.compute(
+                    indexer,
+                    indexes,
+                    starting_indexes,
+                    exit,
+                    |v, _, _, starting_indexes, exit| {
+                        v.compute_percentage_difference(
+                            starting_indexes.dateindex,
+                            &fetched.timeindexes_to_close.dateindex,
+                            &avg_price.dateindex,
+                            exit,
+                        )
+                    },
+                )?;
 
                 Ok(())
             },
@@ -1348,6 +1740,39 @@ impl Vecs {
             self._6y_dca_stack.vecs(),
             self._8y_dca_stack.vecs(),
             self._10y_dca_stack.vecs(),
+            self.dca_class_2025_stack.vecs(),
+            self.dca_class_2024_stack.vecs(),
+            self.dca_class_2023_stack.vecs(),
+            self.dca_class_2022_stack.vecs(),
+            self.dca_class_2021_stack.vecs(),
+            self.dca_class_2020_stack.vecs(),
+            self.dca_class_2019_stack.vecs(),
+            self.dca_class_2018_stack.vecs(),
+            self.dca_class_2017_stack.vecs(),
+            self.dca_class_2016_stack.vecs(),
+            self.dca_class_2015_stack.vecs(),
+            self.dca_class_2025_avg_price.vecs(),
+            self.dca_class_2024_avg_price.vecs(),
+            self.dca_class_2023_avg_price.vecs(),
+            self.dca_class_2022_avg_price.vecs(),
+            self.dca_class_2021_avg_price.vecs(),
+            self.dca_class_2020_avg_price.vecs(),
+            self.dca_class_2019_avg_price.vecs(),
+            self.dca_class_2018_avg_price.vecs(),
+            self.dca_class_2017_avg_price.vecs(),
+            self.dca_class_2016_avg_price.vecs(),
+            self.dca_class_2015_avg_price.vecs(),
+            self.dca_class_2025_returns.vecs(),
+            self.dca_class_2024_returns.vecs(),
+            self.dca_class_2023_returns.vecs(),
+            self.dca_class_2022_returns.vecs(),
+            self.dca_class_2021_returns.vecs(),
+            self.dca_class_2020_returns.vecs(),
+            self.dca_class_2019_returns.vecs(),
+            self.dca_class_2018_returns.vecs(),
+            self.dca_class_2017_returns.vecs(),
+            self.dca_class_2016_returns.vecs(),
+            self.dca_class_2015_returns.vecs(),
         ]
         .concat()
     }
