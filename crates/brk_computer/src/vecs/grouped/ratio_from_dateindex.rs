@@ -51,6 +51,7 @@ pub struct ComputedRatioVecsFromDateIndex {
     pub ratio_m1sd_as_price: ComputedVecsFromDateIndex<Dollars>,
     pub ratio_m2sd_as_price: ComputedVecsFromDateIndex<Dollars>,
     pub ratio_m3sd_as_price: ComputedVecsFromDateIndex<Dollars>,
+    pub ratio_zscore: ComputedVecsFromDateIndex<StoredF32>,
 }
 
 const VERSION: Version = Version::ZERO;
@@ -75,217 +76,224 @@ impl ComputedRatioVecsFromDateIndex {
             ratio: ComputedVecsFromDateIndex::forced_import(
                 path,
                 &format!("{name}_ratio"),
-                VERSION + version + Version::TWO,
+                VERSION + version + Version::ZERO,
                 compressed,
                 options,
             )?,
             ratio_sma: ComputedVecsFromDateIndex::forced_import(
                 path,
                 &format!("{name}_ratio_sma"),
-                VERSION + version + Version::TWO,
+                VERSION + version + Version::ZERO,
                 compressed,
                 options,
             )?,
             ratio_1w_sma: ComputedVecsFromDateIndex::forced_import(
                 path,
                 &format!("{name}_ratio_1w_sma"),
-                VERSION + version + Version::TWO,
+                VERSION + version + Version::ZERO,
                 compressed,
                 options,
             )?,
             ratio_1m_sma: ComputedVecsFromDateIndex::forced_import(
                 path,
                 &format!("{name}_ratio_1m_sma"),
-                VERSION + version + Version::TWO,
+                VERSION + version + Version::ZERO,
                 compressed,
                 options,
             )?,
             ratio_1y_sma: ComputedVecsFromDateIndex::forced_import(
                 path,
                 &format!("{name}_ratio_1y_sma"),
-                VERSION + version + Version::TWO,
+                VERSION + version + Version::ZERO,
                 compressed,
                 options,
             )?,
             ratio_1y_sma_momentum_oscillator: ComputedVecsFromDateIndex::forced_import(
                 path,
                 &format!("{name}_ratio_1y_sma_momentum_oscillator"),
-                VERSION + version + Version::TWO,
+                VERSION + version + Version::ZERO,
                 compressed,
                 options,
             )?,
             ratio_standard_deviation: ComputedVecsFromDateIndex::forced_import(
                 path,
                 &format!("{name}_ratio_standard_deviation"),
-                VERSION + version + Version::TWO,
+                VERSION + version + Version::ZERO,
                 compressed,
                 options,
             )?,
             ratio_p99_9: ComputedVecsFromDateIndex::forced_import(
                 path,
                 &format!("{name}_ratio_p99_9"),
-                VERSION + version + Version::TWO,
+                VERSION + version + Version::ZERO,
                 compressed,
                 options,
             )?,
             ratio_p99_5: ComputedVecsFromDateIndex::forced_import(
                 path,
                 &format!("{name}_ratio_p99_5"),
-                VERSION + version + Version::TWO,
+                VERSION + version + Version::ZERO,
                 compressed,
                 options,
             )?,
             ratio_p99: ComputedVecsFromDateIndex::forced_import(
                 path,
                 &format!("{name}_ratio_p99"),
-                VERSION + version + Version::TWO,
+                VERSION + version + Version::ZERO,
                 compressed,
                 options,
             )?,
             ratio_p1: ComputedVecsFromDateIndex::forced_import(
                 path,
                 &format!("{name}_ratio_p1"),
-                VERSION + version + Version::TWO,
+                VERSION + version + Version::ZERO,
                 compressed,
                 options,
             )?,
             ratio_p0_5: ComputedVecsFromDateIndex::forced_import(
                 path,
                 &format!("{name}_ratio_p0_5"),
-                VERSION + version + Version::TWO,
+                VERSION + version + Version::ZERO,
                 compressed,
                 options,
             )?,
             ratio_p0_1: ComputedVecsFromDateIndex::forced_import(
                 path,
                 &format!("{name}_ratio_p0_1"),
-                VERSION + version + Version::TWO,
+                VERSION + version + Version::ZERO,
                 compressed,
                 options,
             )?,
             ratio_p1sd: ComputedVecsFromDateIndex::forced_import(
                 path,
                 &format!("{name}_ratio_p1sd"),
-                VERSION + version + Version::TWO,
+                VERSION + version + Version::ZERO,
                 compressed,
                 options,
             )?,
             ratio_p2sd: ComputedVecsFromDateIndex::forced_import(
                 path,
                 &format!("{name}_ratio_p2sd"),
-                VERSION + version + Version::TWO,
+                VERSION + version + Version::ZERO,
                 compressed,
                 options,
             )?,
             ratio_p3sd: ComputedVecsFromDateIndex::forced_import(
                 path,
                 &format!("{name}_ratio_p3sd"),
-                VERSION + version + Version::TWO,
+                VERSION + version + Version::ZERO,
                 compressed,
                 options,
             )?,
             ratio_m1sd: ComputedVecsFromDateIndex::forced_import(
                 path,
                 &format!("{name}_ratio_m1sd"),
-                VERSION + version + Version::TWO,
+                VERSION + version + Version::ZERO,
                 compressed,
                 options,
             )?,
             ratio_m2sd: ComputedVecsFromDateIndex::forced_import(
                 path,
                 &format!("{name}_ratio_m2sd"),
-                VERSION + version + Version::TWO,
+                VERSION + version + Version::ZERO,
                 compressed,
                 options,
             )?,
             ratio_m3sd: ComputedVecsFromDateIndex::forced_import(
                 path,
                 &format!("{name}_ratio_m3sd"),
-                VERSION + version + Version::TWO,
+                VERSION + version + Version::ZERO,
                 compressed,
                 options,
             )?,
             ratio_p99_9_as_price: ComputedVecsFromDateIndex::forced_import(
                 path,
                 &format!("{name}_ratio_p99_9_as_price"),
-                VERSION + version + Version::TWO,
+                VERSION + version + Version::ZERO,
                 compressed,
                 options,
             )?,
             ratio_p99_5_as_price: ComputedVecsFromDateIndex::forced_import(
                 path,
                 &format!("{name}_ratio_p99_5_as_price"),
-                VERSION + version + Version::TWO,
+                VERSION + version + Version::ZERO,
                 compressed,
                 options,
             )?,
             ratio_p99_as_price: ComputedVecsFromDateIndex::forced_import(
                 path,
                 &format!("{name}_ratio_p99_as_price"),
-                VERSION + version + Version::TWO,
+                VERSION + version + Version::ZERO,
                 compressed,
                 options,
             )?,
             ratio_p1_as_price: ComputedVecsFromDateIndex::forced_import(
                 path,
                 &format!("{name}_ratio_p1_as_price"),
-                VERSION + version + Version::TWO,
+                VERSION + version + Version::ZERO,
                 compressed,
                 options,
             )?,
             ratio_p0_5_as_price: ComputedVecsFromDateIndex::forced_import(
                 path,
                 &format!("{name}_ratio_p0_5_as_price"),
-                VERSION + version + Version::TWO,
+                VERSION + version + Version::ZERO,
                 compressed,
                 options,
             )?,
             ratio_p0_1_as_price: ComputedVecsFromDateIndex::forced_import(
                 path,
                 &format!("{name}_ratio_p0_1_as_price"),
-                VERSION + version + Version::TWO,
+                VERSION + version + Version::ZERO,
                 compressed,
                 options,
             )?,
             ratio_p1sd_as_price: ComputedVecsFromDateIndex::forced_import(
                 path,
                 &format!("{name}_ratio_p1sd_as_price"),
-                VERSION + version + Version::TWO,
+                VERSION + version + Version::ZERO,
                 compressed,
                 options,
             )?,
             ratio_p2sd_as_price: ComputedVecsFromDateIndex::forced_import(
                 path,
                 &format!("{name}_ratio_p2sd_as_price"),
-                VERSION + version + Version::TWO,
+                VERSION + version + Version::ZERO,
                 compressed,
                 options,
             )?,
             ratio_p3sd_as_price: ComputedVecsFromDateIndex::forced_import(
                 path,
                 &format!("{name}_ratio_p3sd_as_price"),
-                VERSION + version + Version::TWO,
+                VERSION + version + Version::ZERO,
                 compressed,
                 options,
             )?,
             ratio_m1sd_as_price: ComputedVecsFromDateIndex::forced_import(
                 path,
                 &format!("{name}_ratio_m1sd_as_price"),
-                VERSION + version + Version::TWO,
+                VERSION + version + Version::ZERO,
                 compressed,
                 options,
             )?,
             ratio_m2sd_as_price: ComputedVecsFromDateIndex::forced_import(
                 path,
                 &format!("{name}_ratio_m2sd_as_price"),
-                VERSION + version + Version::TWO,
+                VERSION + version + Version::ZERO,
                 compressed,
                 options,
             )?,
             ratio_m3sd_as_price: ComputedVecsFromDateIndex::forced_import(
                 path,
                 &format!("{name}_ratio_m3sd_as_price"),
-                VERSION + version + Version::TWO,
+                VERSION + version + Version::ZERO,
+                compressed,
+                options,
+            )?,
+            ratio_zscore: ComputedVecsFromDateIndex::forced_import(
+                path,
+                &format!("{name}_ratio_zscore"),
+                VERSION + version + Version::ZERO,
                 compressed,
                 options,
             )?,
@@ -426,7 +434,6 @@ impl ComputedRatioVecsFromDateIndex {
         )?;
 
         let ratio_version = self.ratio.dateindex.version();
-
         self.mut_ratio_vecs()
             .iter_mut()
             .try_for_each(|v| -> Result<()> {
@@ -811,6 +818,27 @@ impl ComputedRatioVecsFromDateIndex {
             },
         )?;
 
+        self.ratio_zscore.compute(
+            indexer,
+            indexes,
+            starting_indexes,
+            exit,
+            |vec, _, _, starting_indexes, exit| {
+                let mut sma_iter = self.ratio_sma.dateindex.into_iter();
+                let mut sd_iter = self.ratio_standard_deviation.dateindex.into_iter();
+                vec.compute_transform(
+                    starting_indexes.dateindex,
+                    &self.ratio.dateindex,
+                    |(i, ratio, ..)| {
+                        let sma = sma_iter.unwrap_get_inner(i);
+                        let sd = sd_iter.unwrap_get_inner(i);
+                        (i, (ratio - sma) / sd)
+                    },
+                    exit,
+                )
+            },
+        )?;
+
         Ok(())
     }
 
@@ -866,6 +894,7 @@ impl ComputedRatioVecsFromDateIndex {
             self.ratio_m1sd_as_price.vecs(),
             self.ratio_m2sd_as_price.vecs(),
             self.ratio_m3sd_as_price.vecs(),
+            self.ratio_zscore.vecs(),
         ]
         .concat()
     }

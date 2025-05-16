@@ -11,7 +11,7 @@ use brk_exit::Exit;
 use brk_indexer::Indexer;
 use brk_vec::{
     AnyCollectableVec, CloneableAnyIterableVec, Compressed, Computation, ComputedVec,
-    ComputedVecFrom1, EagerVec, VecIterator, Version,
+    ComputedVecFrom1, ComputedVecFrom2, EagerVec, StoredIndex, VecIterator, Version,
 };
 
 #[derive(Clone)]
@@ -53,6 +53,7 @@ pub struct Vecs {
     pub opreturnindex_to_opreturnindex:
         ComputedVecFrom1<OpReturnIndex, OpReturnIndex, OpReturnIndex, TxIndex>,
     pub outputindex_to_outputindex: ComputedVecFrom1<OutputIndex, OutputIndex, OutputIndex, Sats>,
+    pub outputindex_to_txindex: EagerVec<OutputIndex, TxIndex>,
     pub p2aindex_to_p2aindex: ComputedVecFrom1<P2AIndex, P2AIndex, P2AIndex, P2ABytes>,
     pub p2msindex_to_p2msindex: ComputedVecFrom1<P2MSIndex, P2MSIndex, P2MSIndex, TxIndex>,
     pub p2pk33index_to_p2pk33index:
@@ -70,6 +71,10 @@ pub struct Vecs {
     pub quarterindex_to_quarterindex:
         ComputedVecFrom1<QuarterIndex, QuarterIndex, QuarterIndex, MonthIndex>,
     pub txindex_to_height: EagerVec<TxIndex, Height>,
+    pub txindex_to_input_count:
+        ComputedVecFrom2<TxIndex, StoredUsize, TxIndex, InputIndex, InputIndex, OutputIndex>,
+    pub txindex_to_output_count:
+        ComputedVecFrom2<TxIndex, StoredUsize, TxIndex, OutputIndex, OutputIndex, Sats>,
     pub txindex_to_txindex: ComputedVecFrom1<TxIndex, TxIndex, TxIndex, Txid>,
     pub unknownoutputindex_to_unknownoutputindex:
         ComputedVecFrom1<UnknownOutputIndex, UnknownOutputIndex, UnknownOutputIndex, TxIndex>,
@@ -119,6 +124,52 @@ impl Vecs {
             compressed,
             indexer.vecs().txindex_to_txid.boxed_clone(),
             |index, _| Some(index),
+        )?;
+
+        let txindex_to_input_count = ComputedVec::forced_import_or_init_from_2(
+            computation,
+            path,
+            "txindex_to_input_count",
+            Version::ZERO,
+            compressed,
+            indexer.vecs().txindex_to_first_inputindex.boxed_clone(),
+            indexer.vecs().inputindex_to_outputindex.boxed_clone(),
+            |index: TxIndex, txindex_to_first_inputindex_iter, inputindex_to_outputindex_iter| {
+                let txindex = index.unwrap_to_usize();
+                txindex_to_first_inputindex_iter
+                    .next_at(txindex)
+                    .map(|(_, start)| {
+                        let start = usize::from(start.into_inner());
+                        let end = txindex_to_first_inputindex_iter
+                            .next_at(txindex + 1)
+                            .map(|(_, v)| usize::from(v.into_inner()))
+                            .unwrap_or_else(|| inputindex_to_outputindex_iter.len());
+                        StoredUsize::from((start..end).count())
+                    })
+            },
+        )?;
+
+        let txindex_to_output_count = ComputedVec::forced_import_or_init_from_2(
+            computation,
+            path,
+            "txindex_to_output_count",
+            Version::ZERO,
+            compressed,
+            indexer.vecs().txindex_to_first_outputindex.boxed_clone(),
+            indexer.vecs().outputindex_to_value.boxed_clone(),
+            |index: TxIndex, txindex_to_first_outputindex_iter, outputindex_to_value_iter| {
+                let txindex = index.unwrap_to_usize();
+                txindex_to_first_outputindex_iter
+                    .next_at(txindex)
+                    .map(|(_, start)| {
+                        let start = usize::from(start.into_inner());
+                        let end = txindex_to_first_outputindex_iter
+                            .next_at(txindex + 1)
+                            .map(|(_, v)| usize::from(v.into_inner()))
+                            .unwrap_or_else(|| outputindex_to_value_iter.len());
+                        StoredUsize::from((start..end).count())
+                    })
+            },
         )?;
 
         let p2pk33index_to_p2pk33index = ComputedVec::forced_import_or_init_from_1(
@@ -479,6 +530,8 @@ impl Vecs {
             quarterindex_to_first_monthindex,
             quarterindex_to_quarterindex,
             txindex_to_txindex,
+            txindex_to_input_count,
+            txindex_to_output_count,
             unknownoutputindex_to_unknownoutputindex,
             weekindex_to_first_dateindex,
             weekindex_to_weekindex,
@@ -545,6 +598,11 @@ impl Vecs {
                 Version::ZERO,
                 compressed,
             )?,
+            outputindex_to_txindex: EagerVec::forced_import(
+                &path.join("outputindex_to_txindex"),
+                Version::ZERO,
+                compressed,
+            )?,
         })
     }
 
@@ -562,6 +620,13 @@ impl Vecs {
 
         self.outputindex_to_outputindex
             .compute_if_necessary(starting_indexes.outputindex, exit)?;
+
+        self.outputindex_to_txindex.compute_inverse_less_to_more(
+            starting_indexes.txindex,
+            &indexer_vecs.txindex_to_first_outputindex,
+            &self.txindex_to_output_count,
+            exit,
+        )?;
 
         self.p2pk33index_to_p2pk33index
             .compute_if_necessary(starting_indexes.p2pk33index, exit)?;
@@ -993,6 +1058,8 @@ impl Vecs {
             &self.quarterindex_to_quarterindex,
             &self.txindex_to_height,
             &self.txindex_to_txindex,
+            &self.txindex_to_input_count,
+            &self.txindex_to_output_count,
             &self.unknownoutputindex_to_unknownoutputindex,
             &self.weekindex_to_dateindex_count,
             &self.weekindex_to_first_dateindex,
@@ -1001,6 +1068,7 @@ impl Vecs {
             &self.yearindex_to_first_monthindex,
             &self.yearindex_to_monthindex_count,
             &self.yearindex_to_yearindex,
+            &self.outputindex_to_txindex,
         ]
     }
 }

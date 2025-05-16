@@ -17,7 +17,7 @@ inherits = "release"
 
 [workspace.dependencies]
 axum = "0.8.4"
-bitcoin = { version = "0.32.5", features = ["serde"] }
+bitcoin = { version = "0.32.6", features = ["serde"] }
 bitcoincore-rpc = "0.19.0"
 brk_cli = { version = "0", path = "crates/brk_cli" }
 brk_computer = { version = "0", path = "crates/brk_computer" }

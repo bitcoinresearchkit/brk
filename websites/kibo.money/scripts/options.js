@@ -628,6 +628,16 @@ function createPartialOptions(colors) {
                         },
                       },
                     }),
+                    /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
+                      key: `${key}-sma-ratio-zscore`,
+                      title: "Score",
+                      type: "Baseline",
+                      options: {
+                        createPriceLine: {
+                          value: 0,
+                        },
+                      },
+                    }),
                   ],
                 })),
               ],
@@ -834,6 +844,106 @@ function createPartialOptions(colors) {
           ],
         },
         {
+          name: "Mining",
+          tree: [
+            {
+              name: "Supply",
+              title: "Circulating Supply",
+              bottom: [
+                createBaseSeries({
+                  key: "total-subsidy-in-btc",
+                  name: "Mined",
+                }),
+              ],
+            },
+            {
+              name: "Coinbase",
+              title: "Coinbase",
+              bottom: [
+                ...createBaseAverageSumTotalMinMaxPercentilesSeries({
+                  key: "coinbase",
+                  name: "Coinbase",
+                }),
+                ...createBaseAverageSumTotalMinMaxPercentilesSeries({
+                  key: "coinbase-in-btc",
+                  name: "Coinbase",
+                }),
+                ...createBaseAverageSumTotalMinMaxPercentilesSeries({
+                  key: "coinbase-in-usd",
+                  name: "Coinbase",
+                }),
+              ],
+            },
+            {
+              name: "Subsidy",
+              title: "Subsidy",
+              bottom: [
+                ...createBaseAverageSumTotalMinMaxPercentilesSeries({
+                  key: "subsidy",
+                  name: "Subsidy",
+                }),
+                ...createBaseAverageSumTotalMinMaxPercentilesSeries({
+                  key: "subsidy-in-btc",
+                  name: "Subsidy",
+                }),
+                ...createBaseAverageSumTotalMinMaxPercentilesSeries({
+                  key: "subsidy-in-usd",
+                  name: "Subsidy",
+                }),
+              ],
+            },
+            {
+              name: "Fee",
+              title: "Transaction Fee",
+              bottom: [
+                ...createAverageSumTotalMinMaxPercentilesSeries("fee"),
+                ...createAverageSumTotalMinMaxPercentilesSeries("fee-in-btc"),
+                ...createAverageSumTotalMinMaxPercentilesSeries("fee-in-usd"),
+              ],
+            },
+            {
+              name: "Feerate",
+              title: "Transaction Fee Rate",
+              bottom: [
+                createAverageSeries({ concat: "feerate" }),
+                ...createMinMaxPercentilesSeries({
+                  concat: "feerate",
+                }),
+              ],
+            },
+            {
+              name: "Difficulty",
+              title: "Difficulty",
+              bottom: [
+                createBaseSeries({
+                  key: "difficulty",
+                  name: "Value",
+                }),
+              ],
+            },
+            {
+              name: "Difficulty Epoch",
+              title: "Difficulty Epoch",
+              bottom: [
+                createBaseSeries({
+                  key: "difficultyepoch",
+                  name: "Epoch",
+                }),
+              ],
+            },
+            {
+              name: "Halving Epoch",
+              title: "Halving Epoch",
+              bottom: [
+                createBaseSeries({
+                  key: "halvingepoch",
+                  name: "Epoch",
+                }),
+              ],
+            },
+          ],
+        },
+        {
           name: "Block",
           tree: [
             {
@@ -985,6 +1095,16 @@ function createPartialOptions(colors) {
                 ...createSumTotalSeries({ concat: "output-count" }),
                 ...createMinMaxPercentilesSeries({
                   concat: "output-count",
+                }),
+              ],
+            },
+            {
+              name: "Unspent Count",
+              title: "Unspent Transaction Output Count",
+              bottom: [
+                createBaseSeries({
+                  key: "utxo-count-bis",
+                  name: "total",
                 }),
               ],
             },
@@ -1212,106 +1332,6 @@ function createPartialOptions(colors) {
               //   createAverageSeries({ concat: "output-value" }),
               //   ...createSumTotalSeries({ concat: "output-value" }),
               // ],
-            },
-          ],
-        },
-        {
-          name: "Mining",
-          tree: [
-            {
-              name: "Supply",
-              title: "Circulating Supply",
-              bottom: [
-                createBaseSeries({
-                  key: "total-subsidy-in-btc",
-                  name: "Mined",
-                }),
-              ],
-            },
-            {
-              name: "Coinbase",
-              title: "Coinbase",
-              bottom: [
-                ...createBaseAverageSumTotalMinMaxPercentilesSeries({
-                  key: "coinbase",
-                  name: "Coinbase",
-                }),
-                ...createBaseAverageSumTotalMinMaxPercentilesSeries({
-                  key: "coinbase-in-btc",
-                  name: "Coinbase",
-                }),
-                ...createBaseAverageSumTotalMinMaxPercentilesSeries({
-                  key: "coinbase-in-usd",
-                  name: "Coinbase",
-                }),
-              ],
-            },
-            {
-              name: "Subsidy",
-              title: "Subsidy",
-              bottom: [
-                ...createBaseAverageSumTotalMinMaxPercentilesSeries({
-                  key: "subsidy",
-                  name: "Subsidy",
-                }),
-                ...createBaseAverageSumTotalMinMaxPercentilesSeries({
-                  key: "subsidy-in-btc",
-                  name: "Subsidy",
-                }),
-                ...createBaseAverageSumTotalMinMaxPercentilesSeries({
-                  key: "subsidy-in-usd",
-                  name: "Subsidy",
-                }),
-              ],
-            },
-            {
-              name: "Fee",
-              title: "Transaction Fee",
-              bottom: [
-                ...createAverageSumTotalMinMaxPercentilesSeries("fee"),
-                ...createAverageSumTotalMinMaxPercentilesSeries("fee-in-btc"),
-                ...createAverageSumTotalMinMaxPercentilesSeries("fee-in-usd"),
-              ],
-            },
-            {
-              name: "Feerate",
-              title: "Transaction Fee Rate",
-              bottom: [
-                createAverageSeries({ concat: "feerate" }),
-                ...createMinMaxPercentilesSeries({
-                  concat: "feerate",
-                }),
-              ],
-            },
-            {
-              name: "Difficulty",
-              title: "Difficulty",
-              bottom: [
-                createBaseSeries({
-                  key: "difficulty",
-                  name: "Value",
-                }),
-              ],
-            },
-            {
-              name: "Difficulty Epoch",
-              title: "Difficulty Epoch",
-              bottom: [
-                createBaseSeries({
-                  key: "difficultyepoch",
-                  name: "Epoch",
-                }),
-              ],
-            },
-            {
-              name: "Halving Epoch",
-              title: "Halving Epoch",
-              bottom: [
-                createBaseSeries({
-                  key: "halvingepoch",
-                  name: "Epoch",
-                }),
-              ],
             },
           ],
         },

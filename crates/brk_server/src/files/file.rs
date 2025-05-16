@@ -38,7 +38,7 @@ fn any_handler(
         .expect("Should never reach here is websites_path is None")
         .join(app_state.website.to_folder_name());
 
-    let response = if let Some(path) = path.as_ref() {
+    if let Some(path) = path.as_ref() {
         let path = path.0.replace("..", "").replace("\\", "");
 
         let mut path = website_path.join(&path);
@@ -62,9 +62,7 @@ fn any_handler(
         path_to_response(&headers, &path)
     } else {
         path_to_response(&headers, &website_path.join("index.html"))
-    };
-
-    response
+    }
 }
 
 fn path_to_response(headers: &HeaderMap, path: &Path) -> Response {

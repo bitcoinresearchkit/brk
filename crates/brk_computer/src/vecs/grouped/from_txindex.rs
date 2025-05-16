@@ -19,7 +19,7 @@ pub struct ComputedVecsFromTxindex<T>
 where
     T: ComputedType + PartialOrd,
 {
-    pub txindex: Option<EagerVec<TxIndex, T>>,
+    pub txindex: Option<Box<EagerVec<TxIndex, T>>>,
     pub height: ComputedVecBuilder<Height, T>,
     pub dateindex: ComputedVecBuilder<DateIndex, T>,
     pub weekindex: ComputedVecBuilder<WeekIndex, T>,
@@ -49,12 +49,14 @@ where
         let version = VERSION + version;
 
         let txindex = compute_source.then(|| {
-            EagerVec::forced_import(
-                &path.join(format!("txindex_to_{name}")),
-                version,
-                compressed,
+            Box::new(
+                EagerVec::forced_import(
+                    &path.join(format!("txindex_to_{name}")),
+                    version,
+                    compressed,
+                )
+                .unwrap(),
             )
-            .unwrap()
         });
 
         let height = ComputedVecBuilder::forced_import(path, name, version, compressed, options)?;
@@ -132,7 +134,7 @@ where
                 exit,
             )?;
         } else {
-            let txindex = self.txindex.as_ref().unwrap();
+            let txindex = self.txindex.as_ref().unwrap().as_ref();
 
             self.height.compute(
                 starting_indexes.height,
@@ -206,7 +208,7 @@ where
         [
             self.txindex
                 .as_ref()
-                .map_or(vec![], |v| vec![v as &dyn AnyCollectableVec]),
+                .map_or(vec![], |v| vec![v.as_ref() as &dyn AnyCollectableVec]),
             self.height.vecs(),
             self.dateindex.vecs(),
             self.weekindex.vecs(),

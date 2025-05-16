@@ -744,16 +744,8 @@ impl Indexer {
         self.vecs.as_ref().unwrap()
     }
 
-    pub fn mut_vecs(&mut self) -> &mut Vecs {
-        self.vecs.as_mut().unwrap()
-    }
-
     pub fn stores(&self) -> &Stores {
         self.stores.as_ref().unwrap()
-    }
-
-    pub fn mut_stores(&mut self) -> &mut Stores {
-        self.stores.as_mut().unwrap()
     }
 
     pub fn keyspace(&self) -> &TransactionalKeyspace {

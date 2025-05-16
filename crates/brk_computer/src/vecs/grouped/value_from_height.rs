@@ -129,14 +129,14 @@ impl ComputedValueVecsFromHeight {
                 |v, _, _, starting_indexes, exit| {
                     v.compute_from_sats(
                         starting_indexes.height,
-                        self.sats.height.as_ref().unwrap(),
+                        self.sats.height.as_ref().unwrap().as_ref(),
                         exit,
                     )
                 },
             )?;
         }
 
-        let txindex = self.bitcoin.height.as_ref().unwrap();
+        let txindex = self.bitcoin.height.as_ref().unwrap().as_ref();
         let price = &fetched.as_ref().unwrap().chainindexes_to_close.height;
 
         if let Some(dollars) = self.dollars.as_mut() {
