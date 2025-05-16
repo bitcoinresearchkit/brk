@@ -84,9 +84,8 @@ impl Parser {
         thread::spawn(move || {
             let xor_bytes = xor_bytes;
 
-            blk_index_to_blk_path
-                .range(blk_index..)
-                .try_for_each(move |(blk_index, blk_path)| {
+            let _ = blk_index_to_blk_path.range(blk_index..).try_for_each(
+                move |(blk_index, blk_path)| {
                     let mut xor_i = XORIndex::default();
 
                     let blk_index = *blk_index;
@@ -139,7 +138,8 @@ impl Parser {
                     }
 
                     ControlFlow::Continue(())
-                });
+                },
+            );
         });
 
         thread::spawn(move || {
@@ -177,7 +177,7 @@ impl Parser {
 
                 // Sending in bulk to not lock threads in standby
                 drain_and_send(&mut bulk)
-            });
+            })?;
 
             drain_and_send(&mut bulk)
         });
@@ -187,7 +187,7 @@ impl Parser {
 
             let mut future_blocks = BTreeMap::default();
 
-            recv_block
+            let _ = recv_block
                 .iter()
                 .try_for_each(|(blk_metadata, block)| -> ControlFlow<(), _> {
                     let hash = block.block_hash();

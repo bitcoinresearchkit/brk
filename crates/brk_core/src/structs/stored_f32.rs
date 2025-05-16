@@ -90,6 +90,13 @@ impl Div<Dollars> for StoredF32 {
     }
 }
 
+impl Div<StoredF32> for StoredF32 {
+    type Output = Self;
+    fn div(self, rhs: StoredF32) -> Self::Output {
+        Self::from(self.0 / rhs.0)
+    }
+}
+
 impl Mul<usize> for StoredF32 {
     type Output = Self;
     fn mul(self, rhs: usize) -> Self::Output {

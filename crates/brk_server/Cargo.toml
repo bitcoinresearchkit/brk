@@ -23,9 +23,9 @@ color-eyre = { workspace = true }
 jiff = { workspace = true }
 log = { workspace = true }
 minreq = { workspace = true }
-oxc = { version = "0.69.0", features = ["codegen", "minifier"] }
+oxc = { version = "0.70.0", features = ["codegen", "minifier"] }
 serde = { workspace = true }
 tokio = { version = "1.45.0", features = ["full"] }
 tower-http = { version = "0.6.4", features = ["compression-full", "trace"] }
-zip = "2.6.1"
+zip = "3.0.0"
 tracing = "0.1.41"

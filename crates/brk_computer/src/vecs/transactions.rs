@@ -9,7 +9,8 @@ use brk_indexer::Indexer;
 use brk_parser::bitcoin;
 use brk_vec::{
     AnyCollectableVec, AnyIterableVec, CloneableAnyIterableVec, Compressed, Computation,
-    ComputedVec, ComputedVecFrom1, ComputedVecFrom2, ComputedVecFrom3, StoredIndex, Version,
+    ComputedVec, ComputedVecFrom1, ComputedVecFrom2, ComputedVecFrom3, StoredIndex, VecIterator,
+    Version,
 };
 
 use super::{
@@ -73,18 +74,15 @@ pub struct Vecs {
     pub indexes_to_unknownoutput_count: ComputedVecsFromHeight<StoredUsize>,
     pub inputindex_to_value:
         ComputedVecFrom2<InputIndex, Sats, InputIndex, OutputIndex, OutputIndex, Sats>,
-    pub txindex_to_input_count:
-        ComputedVecFrom2<TxIndex, StoredUsize, TxIndex, InputIndex, InputIndex, OutputIndex>,
     pub indexes_to_input_count: ComputedVecsFromTxindex<StoredUsize>,
     pub txindex_to_is_coinbase: ComputedVecFrom2<TxIndex, bool, TxIndex, Height, Height, TxIndex>,
-    pub txindex_to_output_count:
-        ComputedVecFrom2<TxIndex, StoredUsize, TxIndex, OutputIndex, OutputIndex, Sats>,
     pub indexes_to_output_count: ComputedVecsFromTxindex<StoredUsize>,
     pub txindex_to_vsize: ComputedVecFrom1<TxIndex, StoredUsize, TxIndex, Weight>,
     pub txindex_to_weight:
         ComputedVecFrom2<TxIndex, Weight, TxIndex, StoredU32, TxIndex, StoredU32>,
     pub txindex_to_fee: ComputedVecFrom2<TxIndex, Sats, TxIndex, Sats, TxIndex, Sats>,
     pub txindex_to_feerate: ComputedVecFrom2<TxIndex, Feerate, TxIndex, Sats, TxIndex, StoredUsize>,
+    pub indexes_to_utxo_count: ComputedVecsFromHeight<StoredUsize>,
 }
 
 impl Vecs {
@@ -196,29 +194,6 @@ impl Vecs {
             },
         )?;
 
-        let txindex_to_input_count = ComputedVec::forced_import_or_init_from_2(
-            computation,
-            path,
-            "txindex_to_input_count",
-            Version::ZERO,
-            compressed,
-            indexer.vecs().txindex_to_first_inputindex.boxed_clone(),
-            indexer.vecs().inputindex_to_outputindex.boxed_clone(),
-            |index: TxIndex, txindex_to_first_inputindex_iter, inputindex_to_outputindex_iter| {
-                let txindex = index.unwrap_to_usize();
-                txindex_to_first_inputindex_iter
-                    .next_at(txindex)
-                    .map(|(_, start)| {
-                        let start = usize::from(start.into_inner());
-                        let end = txindex_to_first_inputindex_iter
-                            .next_at(txindex + 1)
-                            .map(|(_, v)| usize::from(v.into_inner()))
-                            .unwrap_or_else(|| inputindex_to_outputindex_iter.len());
-                        StoredUsize::from((start..end).count())
-                    })
-            },
-        )?;
-
         let txindex_to_input_value = ComputedVec::forced_import_or_init_from_3(
             computation,
             path,
@@ -226,7 +201,7 @@ impl Vecs {
             Version::ZERO,
             compressed,
             indexer.vecs().txindex_to_first_inputindex.boxed_clone(),
-            txindex_to_input_count.boxed_clone(),
+            indexes.txindex_to_input_count.boxed_clone(),
             inputindex_to_value.boxed_clone(),
             |index: TxIndex,
              txindex_to_first_inputindex_iter,
@@ -268,29 +243,6 @@ impl Vecs {
         //             .add_total(),
         //     )?;
 
-        let txindex_to_output_count = ComputedVec::forced_import_or_init_from_2(
-            computation,
-            path,
-            "txindex_to_output_count",
-            Version::ZERO,
-            compressed,
-            indexer.vecs().txindex_to_first_outputindex.boxed_clone(),
-            indexer.vecs().outputindex_to_value.boxed_clone(),
-            |index: TxIndex, txindex_to_first_outputindex_iter, outputindex_to_value_iter| {
-                let txindex = index.unwrap_to_usize();
-                txindex_to_first_outputindex_iter
-                    .next_at(txindex)
-                    .map(|(_, start)| {
-                        let start = usize::from(start.into_inner());
-                        let end = txindex_to_first_outputindex_iter
-                            .next_at(txindex + 1)
-                            .map(|(_, v)| usize::from(v.into_inner()))
-                            .unwrap_or_else(|| outputindex_to_value_iter.len());
-                        StoredUsize::from((start..end).count())
-                    })
-            },
-        )?;
-
         let txindex_to_output_value = ComputedVec::forced_import_or_init_from_3(
             computation,
             path,
@@ -298,7 +250,7 @@ impl Vecs {
             Version::ZERO,
             compressed,
             indexer.vecs().txindex_to_first_outputindex.boxed_clone(),
-            txindex_to_output_count.boxed_clone(),
+            indexes.txindex_to_output_count.boxed_clone(),
             indexer.vecs().outputindex_to_value.boxed_clone(),
             |index: TxIndex,
              txindex_to_first_outputindex_iter,
@@ -680,6 +632,14 @@ impl Vecs {
                     .add_sum()
                     .add_total(),
             )?,
+            indexes_to_utxo_count: ComputedVecsFromHeight::forced_import(
+                path,
+                "utxo_count_bis",
+                true,
+                Version::TWO,
+                compressed,
+                StorableVecGeneatorOptions::default().add_last(),
+            )?,
             txindex_to_is_coinbase,
             inputindex_to_value,
             // indexes_to_input_value,
@@ -690,8 +650,6 @@ impl Vecs {
             txindex_to_feerate,
             txindex_to_vsize,
             txindex_to_weight,
-            txindex_to_input_count,
-            txindex_to_output_count,
         })
     }
 
@@ -723,7 +681,7 @@ impl Vecs {
             indexes,
             starting_indexes,
             exit,
-            Some(&self.txindex_to_input_count),
+            Some(&indexes.txindex_to_input_count),
         )?;
 
         self.indexes_to_output_count.compute_rest(
@@ -731,7 +689,7 @@ impl Vecs {
             indexes,
             starting_indexes,
             exit,
-            Some(&self.txindex_to_output_count),
+            Some(&indexes.txindex_to_output_count),
         )?;
 
         let compute_indexes_to_tx_vany =
@@ -851,7 +809,7 @@ impl Vecs {
             |vec, indexer, _, starting_indexes, exit| {
                 let mut txindex_to_first_outputindex_iter =
                     indexer.vecs().txindex_to_first_outputindex.iter();
-                let mut txindex_to_output_count_iter = self.txindex_to_output_count.iter();
+                let mut txindex_to_output_count_iter = indexes.txindex_to_output_count.iter();
                 let mut outputindex_to_value_iter = indexer.vecs().outputindex_to_value.iter();
                 vec.compute_transform(
                     starting_indexes.height,
@@ -886,7 +844,12 @@ impl Vecs {
                     self.indexes_to_fee.sats.height.unwrap_sum().iter();
                 vec.compute_transform(
                     starting_indexes.height,
-                    self.indexes_to_coinbase.sats.height.as_ref().unwrap(),
+                    self.indexes_to_coinbase
+                        .sats
+                        .height
+                        .as_ref()
+                        .unwrap()
+                        .as_ref(),
                     |(height, subsidy, ..)| {
                         let fees = indexes_to_fee_sum_iter.unwrap_get_inner(height);
                         (height, subsidy.checked_sub(fees).unwrap())
@@ -1076,6 +1039,58 @@ impl Vecs {
             },
         )?;
 
+        self.indexes_to_utxo_count.compute_all(
+            indexer,
+            indexes,
+            starting_indexes,
+            exit,
+            |v, _, _, starting_indexes, exit| {
+                let mut input_count_iter = self
+                    .indexes_to_input_count
+                    .height
+                    .unwrap_total()
+                    .into_iter();
+                let mut opreturn_count_iter = self
+                    .indexes_to_opreturn_count
+                    .height_extra
+                    .unwrap_total()
+                    .into_iter();
+                v.compute_transform(
+                    starting_indexes.height,
+                    self.indexes_to_output_count.height.unwrap_total(),
+                    |(h, output_count, ..)| {
+                        let input_count = input_count_iter.unwrap_get_inner(h);
+                        let opreturn_count = opreturn_count_iter.unwrap_get_inner(h);
+                        let block_count = usize::from(h + 1_usize);
+                        // -1 > genesis output is unspendable
+                        let mut utxo_count =
+                            *output_count - (*input_count - block_count) - *opreturn_count - 1;
+
+                        // txid dup: e3bf3d07d4b0375638d5f1db5255fe07ba2c4cb067cd81b84ee974b6585fb468
+                        // Block 91_722 https://mempool.space/block/00000000000271a2dc26e7667f8419f2e15416dc6955e5a6c6cdf3f2574dd08e
+                        // Block 91_880 https://mempool.space/block/00000000000743f190a18c5577a3c2d2a1f610ae9601ac046a38084ccb7cd721
+                        //
+                        // txid dup: d5d27987d2a3dfc724e359870c6644b40e497bdc0589a033220fe15429d88599
+                        // Block 91_812 https://mempool.space/block/00000000000af0aed4792b1acee3d966af36cf5def14935db8de83d6f9306f2f
+                        // Block 91_842 https://mempool.space/block/00000000000a4d0a398161ffc163c503763b1f4360639393e0e4c8e300e0caec
+                        //
+                        // Warning: Dups invalidate the previous coinbase according to
+                        // https://chainquery.com/bitcoin-cli/gettxoutsetinfo
+
+                        if h >= Height::new(91_842) {
+                            utxo_count -= 1;
+                        }
+                        if h >= Height::new(91_880) {
+                            utxo_count -= 1;
+                        }
+
+                        (h, StoredUsize::from(utxo_count))
+                    },
+                    exit,
+                )
+            },
+        )?;
+
         Ok(())
     }
 
@@ -1085,10 +1100,8 @@ impl Vecs {
                 &self.inputindex_to_value as &dyn AnyCollectableVec,
                 &self.txindex_to_fee,
                 &self.txindex_to_feerate,
-                &self.txindex_to_input_count,
                 &self.txindex_to_input_value,
                 &self.txindex_to_is_coinbase,
-                &self.txindex_to_output_count,
                 &self.txindex_to_output_value,
                 &self.txindex_to_vsize,
                 &self.txindex_to_weight,
@@ -1117,6 +1130,7 @@ impl Vecs {
             self.indexes_to_tx_vsize.vecs(),
             self.indexes_to_tx_weight.vecs(),
             self.indexes_to_unknownoutput_count.vecs(),
+            self.indexes_to_utxo_count.vecs(),
         ]
         .concat()
     }

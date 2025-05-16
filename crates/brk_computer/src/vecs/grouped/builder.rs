@@ -18,18 +18,18 @@ where
     I: StoredIndex,
     T: ComputedType,
 {
-    first: Option<EagerVec<I, T>>,
-    average: Option<EagerVec<I, T>>,
-    sum: Option<EagerVec<I, T>>,
-    max: Option<EagerVec<I, T>>,
-    _90p: Option<EagerVec<I, T>>,
-    _75p: Option<EagerVec<I, T>>,
-    median: Option<EagerVec<I, T>>,
-    _25p: Option<EagerVec<I, T>>,
-    _10p: Option<EagerVec<I, T>>,
-    min: Option<EagerVec<I, T>>,
-    last: Option<EagerVec<I, T>>,
-    total: Option<EagerVec<I, T>>,
+    first: Option<Box<EagerVec<I, T>>>,
+    average: Option<Box<EagerVec<I, T>>>,
+    sum: Option<Box<EagerVec<I, T>>>,
+    max: Option<Box<EagerVec<I, T>>>,
+    _90p: Option<Box<EagerVec<I, T>>>,
+    _75p: Option<Box<EagerVec<I, T>>>,
+    median: Option<Box<EagerVec<I, T>>>,
+    _25p: Option<Box<EagerVec<I, T>>>,
+    _10p: Option<Box<EagerVec<I, T>>>,
+    min: Option<Box<EagerVec<I, T>>>,
+    last: Option<Box<EagerVec<I, T>>>,
+    total: Option<Box<EagerVec<I, T>>>,
 }
 
 const VERSION: Version = Version::ZERO;
@@ -76,64 +76,120 @@ where
 
         let s = Self {
             first: options.first.then(|| {
-                EagerVec::forced_import(&maybe_prefix("first"), version + Version::ZERO, compressed)
-                    .unwrap()
+                Box::new(
+                    EagerVec::forced_import(
+                        &maybe_prefix("first"),
+                        version + Version::ZERO,
+                        compressed,
+                    )
+                    .unwrap(),
+                )
             }),
             last: options.last.then(|| {
-                EagerVec::forced_import(
-                    &path.join(format!("{key}_to_{name}")),
-                    version + Version::ZERO,
-                    compressed,
+                Box::new(
+                    EagerVec::forced_import(
+                        &path.join(format!("{key}_to_{name}")),
+                        version + Version::ZERO,
+                        compressed,
+                    )
+                    .unwrap(),
                 )
-                .unwrap()
             }),
             min: options.min.then(|| {
-                EagerVec::forced_import(&maybe_suffix("min"), version + Version::ZERO, compressed)
-                    .unwrap()
+                Box::new(
+                    EagerVec::forced_import(
+                        &maybe_suffix("min"),
+                        version + Version::ZERO,
+                        compressed,
+                    )
+                    .unwrap(),
+                )
             }),
             max: options.max.then(|| {
-                EagerVec::forced_import(&maybe_suffix("max"), version + Version::ZERO, compressed)
-                    .unwrap()
+                Box::new(
+                    EagerVec::forced_import(
+                        &maybe_suffix("max"),
+                        version + Version::ZERO,
+                        compressed,
+                    )
+                    .unwrap(),
+                )
             }),
             median: options.median.then(|| {
-                EagerVec::forced_import(
-                    &maybe_suffix("median"),
-                    version + Version::ZERO,
-                    compressed,
+                Box::new(
+                    EagerVec::forced_import(
+                        &maybe_suffix("median"),
+                        version + Version::ZERO,
+                        compressed,
+                    )
+                    .unwrap(),
                 )
-                .unwrap()
             }),
             average: options.average.then(|| {
-                EagerVec::forced_import(
-                    &maybe_suffix("average"),
-                    version + Version::ZERO,
-                    compressed,
+                Box::new(
+                    EagerVec::forced_import(
+                        &maybe_suffix("average"),
+                        version + Version::ZERO,
+                        compressed,
+                    )
+                    .unwrap(),
                 )
-                .unwrap()
             }),
             sum: options.sum.then(|| {
-                EagerVec::forced_import(&maybe_suffix("sum"), version + Version::ZERO, compressed)
-                    .unwrap()
+                Box::new(
+                    EagerVec::forced_import(
+                        &maybe_suffix("sum"),
+                        version + Version::ZERO,
+                        compressed,
+                    )
+                    .unwrap(),
+                )
             }),
             total: options.total.then(|| {
-                EagerVec::forced_import(&prefix("total"), version + Version::ZERO, compressed)
-                    .unwrap()
+                Box::new(
+                    EagerVec::forced_import(&prefix("total"), version + Version::ZERO, compressed)
+                        .unwrap(),
+                )
             }),
             _90p: options._90p.then(|| {
-                EagerVec::forced_import(&maybe_suffix("90p"), version + Version::ZERO, compressed)
-                    .unwrap()
+                Box::new(
+                    EagerVec::forced_import(
+                        &maybe_suffix("90p"),
+                        version + Version::ZERO,
+                        compressed,
+                    )
+                    .unwrap(),
+                )
             }),
             _75p: options._75p.then(|| {
-                EagerVec::forced_import(&maybe_suffix("75p"), version + Version::ZERO, compressed)
-                    .unwrap()
+                Box::new(
+                    EagerVec::forced_import(
+                        &maybe_suffix("75p"),
+                        version + Version::ZERO,
+                        compressed,
+                    )
+                    .unwrap(),
+                )
             }),
             _25p: options._25p.then(|| {
-                EagerVec::forced_import(&maybe_suffix("25p"), version + Version::ZERO, compressed)
-                    .unwrap()
+                Box::new(
+                    EagerVec::forced_import(
+                        &maybe_suffix("25p"),
+                        version + Version::ZERO,
+                        compressed,
+                    )
+                    .unwrap(),
+                )
             }),
             _10p: options._10p.then(|| {
-                EagerVec::forced_import(&maybe_suffix("10p"), version + Version::ZERO, compressed)
-                    .unwrap()
+                Box::new(
+                    EagerVec::forced_import(
+                        &maybe_suffix("10p"),
+                        version + Version::ZERO,
+                        compressed,
+                    )
+                    .unwrap(),
+                )
             }),
         };
 
@@ -480,88 +536,88 @@ where
         ))
     }
 
-    pub fn unwrap_first(&mut self) -> &mut EagerVec<I, T> {
-        self.first.as_mut().unwrap()
+    pub fn unwrap_first(&self) -> &EagerVec<I, T> {
+        self.first.as_ref().unwrap()
     }
     #[allow(unused)]
-    pub fn unwrap_average(&mut self) -> &mut EagerVec<I, T> {
-        self.average.as_mut().unwrap()
+    pub fn unwrap_average(&self) -> &EagerVec<I, T> {
+        self.average.as_ref().unwrap()
     }
-    pub fn unwrap_sum(&mut self) -> &mut EagerVec<I, T> {
-        self.sum.as_mut().unwrap()
+    pub fn unwrap_sum(&self) -> &EagerVec<I, T> {
+        self.sum.as_ref().unwrap()
     }
-    pub fn unwrap_max(&mut self) -> &mut EagerVec<I, T> {
-        self.max.as_mut().unwrap()
-    }
-    #[allow(unused)]
-    pub fn unwrap_90p(&mut self) -> &mut EagerVec<I, T> {
-        self._90p.as_mut().unwrap()
+    pub fn unwrap_max(&self) -> &EagerVec<I, T> {
+        self.max.as_ref().unwrap()
     }
     #[allow(unused)]
-    pub fn unwrap_75p(&mut self) -> &mut EagerVec<I, T> {
-        self._75p.as_mut().unwrap()
+    pub fn unwrap_90p(&self) -> &EagerVec<I, T> {
+        self._90p.as_ref().unwrap()
     }
     #[allow(unused)]
-    pub fn unwrap_median(&mut self) -> &mut EagerVec<I, T> {
-        self.median.as_mut().unwrap()
+    pub fn unwrap_75p(&self) -> &EagerVec<I, T> {
+        self._75p.as_ref().unwrap()
     }
     #[allow(unused)]
-    pub fn unwrap_25p(&mut self) -> &mut EagerVec<I, T> {
-        self._25p.as_mut().unwrap()
+    pub fn unwrap_median(&self) -> &EagerVec<I, T> {
+        self.median.as_ref().unwrap()
     }
     #[allow(unused)]
-    pub fn unwrap_10p(&mut self) -> &mut EagerVec<I, T> {
-        self._10p.as_mut().unwrap()
-    }
-    pub fn unwrap_min(&mut self) -> &mut EagerVec<I, T> {
-        self.min.as_mut().unwrap()
-    }
-    pub fn unwrap_last(&mut self) -> &mut EagerVec<I, T> {
-        self.last.as_mut().unwrap()
+    pub fn unwrap_25p(&self) -> &EagerVec<I, T> {
+        self._25p.as_ref().unwrap()
     }
     #[allow(unused)]
-    pub fn unwrap_total(&mut self) -> &mut EagerVec<I, T> {
-        self.total.as_mut().unwrap()
+    pub fn unwrap_10p(&self) -> &EagerVec<I, T> {
+        self._10p.as_ref().unwrap()
+    }
+    pub fn unwrap_min(&self) -> &EagerVec<I, T> {
+        self.min.as_ref().unwrap()
+    }
+    pub fn unwrap_last(&self) -> &EagerVec<I, T> {
+        self.last.as_ref().unwrap()
+    }
+    #[allow(unused)]
+    pub fn unwrap_total(&self) -> &EagerVec<I, T> {
+        self.total.as_ref().unwrap()
     }
 
     pub fn vecs(&self) -> Vec<&dyn AnyCollectableVec> {
         let mut v: Vec<&dyn AnyCollectableVec> = vec![];
 
         if let Some(first) = self.first.as_ref() {
-            v.push(first);
+            v.push(first.as_ref());
         }
         if let Some(last) = self.last.as_ref() {
-            v.push(last);
+            v.push(last.as_ref());
         }
         if let Some(min) = self.min.as_ref() {
-            v.push(min);
+            v.push(min.as_ref());
         }
         if let Some(max) = self.max.as_ref() {
-            v.push(max);
+            v.push(max.as_ref());
         }
         if let Some(median) = self.median.as_ref() {
-            v.push(median);
+            v.push(median.as_ref());
         }
         if let Some(average) = self.average.as_ref() {
-            v.push(average);
+            v.push(average.as_ref());
         }
         if let Some(sum) = self.sum.as_ref() {
-            v.push(sum);
+            v.push(sum.as_ref());
         }
         if let Some(total) = self.total.as_ref() {
-            v.push(total);
+            v.push(total.as_ref());
         }
         if let Some(_90p) = self._90p.as_ref() {
-            v.push(_90p);
+            v.push(_90p.as_ref());
         }
         if let Some(_75p) = self._75p.as_ref() {
-            v.push(_75p);
+            v.push(_75p.as_ref());
         }
         if let Some(_25p) = self._25p.as_ref() {
-            v.push(_25p);
+            v.push(_25p.as_ref());
         }
         if let Some(_10p) = self._10p.as_ref() {
-            v.push(_10p);
+            v.push(_10p.as_ref());
         }
 
         v

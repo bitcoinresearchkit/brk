@@ -13,6 +13,7 @@ pub mod indexes;
 pub mod market;
 pub mod mining;
 pub mod transactions;
+pub mod utxos;
 
 pub use indexes::Indexes;
 
@@ -24,6 +25,7 @@ pub struct Vecs {
     pub mining: mining::Vecs,
     pub market: market::Vecs,
     pub transactions: transactions::Vecs,
+    // pub utxos: utxos::Vecs,
     pub fetched: Option<fetched::Vecs>,
 }
 
@@ -47,6 +49,7 @@ impl Vecs {
             mining: mining::Vecs::forced_import(path, computation, compressed)?,
             constants: constants::Vecs::forced_import(path, computation, compressed)?,
             market: market::Vecs::forced_import(path, computation, compressed)?,
+            // utxos: utxos::Vecs::forced_import(path, computation, compressed)?,
             transactions: transactions::Vecs::forced_import(
                 path,
                 indexer,

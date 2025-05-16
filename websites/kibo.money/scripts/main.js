@@ -44,7 +44,8 @@
  *   "constant" |
  *   "cagr" |
  *   "vB" |
- *   "performance"
+ *   "performance" |
+ *   "zscore"
  * } Unit
  */
 
@@ -691,6 +692,8 @@ function createUtils() {
       unit = "Index";
     } else if (id === "0" || id === "1" || id === "50" || id === "100") {
       unit = "constant";
+    } else if (id.endsWith("zscore")) {
+      unit = "zscore";
     } else if (id.endsWith("cagr")) {
       unit = "cagr";
     } else if (id.endsWith("returns")) {
