@@ -4,7 +4,7 @@ members = ["crates/*"]
 package.description = "The Bitcoin Research Kit is a suite of tools designed to extract, compute and display data stored on a Bitcoin Core node"
 package.license = "MIT"
 package.edition = "2024"
-package.version = "0.0.37"
+package.version = "0.0.38"
 package.repository = "https://github.com/bitcoinresearchkit/brk"
 
 [profile.release]
