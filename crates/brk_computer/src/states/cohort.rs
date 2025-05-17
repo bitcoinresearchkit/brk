@@ -4,9 +4,10 @@ use brk_core::{Dollars, Sats, StoredUsize};
 
 // Vecs ? probably
 #[derive(Default)]
-pub struct CohortStates {
+pub struct CohortState {
     pub realized_cap: Dollars,
     pub supply: Sats,
+    pub unspendable_supply: Sats,
     pub utxo_count: StoredUsize,
     // pub price_to_amount: PriceToValue<Amount>, save it not rounded in fjall
 }

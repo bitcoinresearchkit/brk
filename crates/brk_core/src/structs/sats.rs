@@ -28,10 +28,12 @@ use super::{Bitcoin, Cents, Dollars, Height};
 )]
 pub struct Sats(u64);
 
+#[allow(clippy::inconsistent_digit_grouping)]
 impl Sats {
     pub const ZERO: Self = Self(0);
     pub const MAX: Self = Self(u64::MAX);
-    pub const ONE_BTC: Self = Self(100_000_000);
+    pub const ONE_BTC: Self = Self(1_00_000_000);
+    pub const FIFTY_BTC: Self = Self(50_00_000_000);
 
     pub fn is_zero(&self) -> bool {
         *self == Self::ZERO

@@ -739,7 +739,8 @@ function createUtils() {
       id.includes("fee") ||
       id.includes("coinbase") ||
       id.includes("subsidy") ||
-      id.endsWith("stack")
+      id.endsWith("stack") ||
+      id.includes("supply")
     ) {
       unit = "Sats";
     } else if (
@@ -752,7 +753,8 @@ function createUtils() {
       id.includes("ath") ||
       id.includes("-sma") ||
       id.endsWith("-price") ||
-      id.startsWith("price-")
+      id.startsWith("price-") ||
+      id.startsWith("realized-")
     ) {
       unit = "USD";
     } else if (id.includes("count") || id.match(/v[1-3]/g)) {

@@ -10,6 +10,7 @@ pub struct Outputs<T> {
     // pub by_epoch: OutputsByEpoch<T>,
     // pub by_size: OutputsBySize<T>,
     // pub by_value: OutputsByValue<T>,
+    // pub by_type: OutputsByType<T>, // all but op-return
 }
 
 #[derive(Default)]
@@ -105,3 +106,6 @@ pub struct OutputsByValue<T> {
     pub from_1_000_000_000usd: T,
     // ...
 }
+
+// #[derive(Default)]
+// pub struct OutputsByType<T> {}

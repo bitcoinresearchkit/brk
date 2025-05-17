@@ -1,6 +1,6 @@
 use std::ops::{Add, Div};
 
-use derive_deref::Deref;
+use derive_deref::{Deref, DerefMut};
 use serde::Serialize;
 use zerocopy_derive::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
@@ -15,6 +15,7 @@ use super::{
 #[derive(
     Debug,
     Deref,
+    DerefMut,
     Clone,
     Default,
     Copy,

@@ -270,8 +270,10 @@ export function init({
               ?.timeScale()
               .subscribeVisibleLogicalRangeChange(
                 utils.debounce((t) => {
-                  from.set(t.from);
-                  to.set(t.to);
+                  if (t) {
+                    from.set(t.from);
+                    to.set(t.to);
+                  }
                 }),
               );
 

@@ -3,6 +3,8 @@ use std::ops::{Add, Div, Mul};
 use serde::Serialize;
 use zerocopy_derive::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
+use crate::CheckedSub;
+
 use super::Dollars;
 
 #[derive(
@@ -86,5 +88,11 @@ impl Mul<usize> for Cents {
     type Output = Cents;
     fn mul(self, rhs: usize) -> Self::Output {
         Self(self.0 * rhs as u64)
+    }
+}
+
+impl CheckedSub for Cents {
+    fn checked_sub(self, rhs: Self) -> Option<Self> {
+        self.0.checked_sub(rhs.0).map(Cents::from)
     }
 }
