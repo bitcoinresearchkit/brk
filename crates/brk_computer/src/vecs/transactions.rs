@@ -82,7 +82,7 @@ pub struct Vecs {
         ComputedVecFrom2<TxIndex, Weight, TxIndex, StoredU32, TxIndex, StoredU32>,
     pub txindex_to_fee: ComputedVecFrom2<TxIndex, Sats, TxIndex, Sats, TxIndex, Sats>,
     pub txindex_to_feerate: ComputedVecFrom2<TxIndex, Feerate, TxIndex, Sats, TxIndex, StoredUsize>,
-    pub indexes_to_utxo_count: ComputedVecsFromHeight<StoredUsize>,
+    pub indexes_to_exact_utxo_count: ComputedVecsFromHeight<StoredUsize>,
 }
 
 impl Vecs {
@@ -632,9 +632,9 @@ impl Vecs {
                     .add_sum()
                     .add_total(),
             )?,
-            indexes_to_utxo_count: ComputedVecsFromHeight::forced_import(
+            indexes_to_exact_utxo_count: ComputedVecsFromHeight::forced_import(
                 path,
-                "utxo_count_bis",
+                "exact_utxo_count",
                 true,
                 Version::TWO,
                 compressed,
@@ -1039,7 +1039,7 @@ impl Vecs {
             },
         )?;
 
-        self.indexes_to_utxo_count.compute_all(
+        self.indexes_to_exact_utxo_count.compute_all(
             indexer,
             indexes,
             starting_indexes,
@@ -1130,7 +1130,7 @@ impl Vecs {
             self.indexes_to_tx_vsize.vecs(),
             self.indexes_to_tx_weight.vecs(),
             self.indexes_to_unknownoutput_count.vecs(),
-            self.indexes_to_utxo_count.vecs(),
+            self.indexes_to_exact_utxo_count.vecs(),
         ]
         .concat()
     }

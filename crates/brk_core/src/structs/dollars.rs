@@ -1,11 +1,13 @@
 use std::{
     f64,
-    ops::{Add, Div, Mul},
+    ops::{Add, AddAssign, Div, Mul},
 };
 
 use derive_deref::Deref;
 use serde::Serialize;
 use zerocopy_derive::{FromBytes, Immutable, IntoBytes, KnownLayout};
+
+use crate::CheckedSub;
 
 use super::{Bitcoin, Cents, Close, Sats, StoredF32, StoredF64};
 
@@ -168,5 +170,19 @@ impl From<Close<Dollars>> for u128 {
 impl From<Dollars> for u128 {
     fn from(value: Dollars) -> Self {
         u128::from(Cents::from(value))
+    }
+}
+
+impl AddAssign for Dollars {
+    fn add_assign(&mut self, rhs: Self) {
+        *self = Dollars::from(Cents::from(*self) + Cents::from(rhs));
+    }
+}
+
+impl CheckedSub for Dollars {
+    fn checked_sub(self, rhs: Self) -> Option<Self> {
+        Cents::from(self)
+            .checked_sub(Cents::from(rhs))
+            .map(Dollars::from)
     }
 }

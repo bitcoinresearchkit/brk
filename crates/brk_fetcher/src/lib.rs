@@ -3,7 +3,7 @@
 #![doc = include_str!("../examples/main.rs")]
 #![doc = "```"]
 
-use std::{collections::BTreeMap, fs, path::Path};
+use std::{collections::BTreeMap, fs, path::Path, thread::sleep, time::Duration};
 
 use brk_core::{Cents, Close, Date, Dollars, Height, High, Low, OHLCCents, Open, Timestamp};
 use color_eyre::eyre::Error;
@@ -51,6 +51,16 @@ impl Fetcher {
         timestamp: Timestamp,
         previous_timestamp: Option<Timestamp>,
     ) -> color_eyre::Result<OHLCCents> {
+        self.get_height_(height, timestamp, previous_timestamp, 0)
+    }
+
+    fn get_height_(
+        &mut self,
+        height: Height,
+        timestamp: Timestamp,
+        previous_timestamp: Option<Timestamp>,
+        tries: usize,
+    ) -> color_eyre::Result<OHLCCents> {
         let timestamp = timestamp.floor_seconds();
 
         if previous_timestamp.is_none() && height != Height::ZERO {
@@ -69,6 +79,14 @@ impl Fetcher {
                     .unwrap_or_else(|e| {
                         eprintln!("{e}");
                         self.kibo.get_from_height(height).unwrap_or_else(|e| {
+                            sleep(Duration::from_secs(30));
+
+                            if tries < 8 * 60 * 2 {
+                                return self
+                                    .get_height_(height, timestamp, previous_timestamp, tries + 1)
+                                    .unwrap();
+                            }
+
                             let date = Date::from(timestamp);
                             eprintln!("{e}");
                             panic!(

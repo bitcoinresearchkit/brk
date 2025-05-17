@@ -25,7 +25,7 @@ pub struct Vecs {
     pub mining: mining::Vecs,
     pub market: market::Vecs,
     pub transactions: transactions::Vecs,
-    // pub utxos: utxos::Vecs,
+    pub utxos: utxos::Vecs,
     pub fetched: Option<fetched::Vecs>,
 }
 
@@ -49,7 +49,7 @@ impl Vecs {
             mining: mining::Vecs::forced_import(path, computation, compressed)?,
             constants: constants::Vecs::forced_import(path, computation, compressed)?,
             market: market::Vecs::forced_import(path, computation, compressed)?,
-            // utxos: utxos::Vecs::forced_import(path, computation, compressed)?,
+            utxos: utxos::Vecs::forced_import(path, computation, compressed, fetched.as_ref())?,
             transactions: transactions::Vecs::forced_import(
                 path,
                 indexer,
@@ -110,6 +110,15 @@ impl Vecs {
             )?;
         }
 
+        self.utxos.compute(
+            indexer,
+            &self.indexes,
+            &self.transactions,
+            self.fetched.as_ref(),
+            &starting_indexes,
+            exit,
+        )?;
+
         Ok(())
     }
 
@@ -121,6 +130,7 @@ impl Vecs {
             self.mining.vecs(),
             self.market.vecs(),
             self.transactions.vecs(),
+            self.utxos.vecs(),
             self.fetched.as_ref().map_or(vec![], |v| v.vecs()),
         ]
         .concat()
