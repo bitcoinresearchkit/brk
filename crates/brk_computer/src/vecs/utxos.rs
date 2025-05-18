@@ -1,4 +1,4 @@
-use std::{fs, path::Path, thread};
+use std::{collections::BTreeMap, fs, path::Path, thread};
 
 use brk_core::{
     Bitcoin, CheckedSub, Dollars, Height, InputIndex, OutputIndex, OutputType, Sats, StoredUsize,
@@ -9,11 +9,10 @@ use brk_vec::{
     AnyCollectableVec, AnyVec, BaseVecIterator, Compressed, Computation, EagerVec, StoredIndex,
     VecIterator, Version,
 };
-use color_eyre::eyre::ContextCompat;
 use derive_deref::{Deref, DerefMut};
 use rayon::prelude::*;
 
-use crate::states::{CohortState, Outputs};
+use crate::states::{CohortState, Outputs, RealizedState, ReceivedState, SentState};
 
 use super::{
     Indexes, fetched,
@@ -21,22 +20,10 @@ use super::{
     indexes, transactions,
 };
 
+const VERSION: Version = Version::new(3);
+
 #[derive(Clone, Deref, DerefMut)]
 pub struct Vecs(Outputs<Vecs_>);
-
-#[derive(Clone)]
-pub struct Vecs_ {
-    pub height_to_realized_cap: Option<EagerVec<Height, Dollars>>,
-    pub indexes_to_realized_cap: Option<ComputedVecsFromHeight<Dollars>>,
-    pub height_to_supply: EagerVec<Height, Sats>,
-    pub indexes_to_supply: ComputedValueVecsFromHeight,
-    pub height_to_unspendable_supply: EagerVec<Height, Sats>,
-    pub indexes_to_unspendable_supply: ComputedValueVecsFromHeight,
-    pub height_to_utxo_count: EagerVec<Height, StoredUsize>,
-    pub indexes_to_utxo_count: ComputedVecsFromHeight<StoredUsize>,
-}
-
-const VERSION: Version = Version::new(3);
 
 impl Vecs {
     pub fn forced_import(
@@ -45,73 +32,8 @@ impl Vecs {
         compressed: Compressed,
         fetched: Option<&fetched::Vecs>,
     ) -> color_eyre::Result<Self> {
-        let compute_dollars = fetched.is_some();
-
-        fs::create_dir_all(path)?;
-
         Ok(Self(Outputs {
-            all: Vecs_ {
-                height_to_realized_cap: compute_dollars.then(|| {
-                    EagerVec::forced_import(
-                        &path.join("height_to_realized_cap"),
-                        VERSION + Version::ZERO,
-                        compressed,
-                    )
-                    .unwrap()
-                }),
-                indexes_to_realized_cap: compute_dollars.then(|| {
-                    ComputedVecsFromHeight::forced_import(
-                        path,
-                        "realized_cap",
-                        false,
-                        VERSION + Version::ZERO,
-                        compressed,
-                        StorableVecGeneatorOptions::default().add_last(),
-                    )
-                    .unwrap()
-                }),
-                height_to_supply: EagerVec::forced_import(
-                    &path.join("height_to_supply"),
-                    VERSION + Version::ZERO,
-                    compressed,
-                )?,
-                indexes_to_supply: ComputedValueVecsFromHeight::forced_import(
-                    path,
-                    "supply",
-                    false,
-                    VERSION + Version::ZERO,
-                    compressed,
-                    StorableVecGeneatorOptions::default().add_last(),
-                    compute_dollars,
-                )?,
-                height_to_unspendable_supply: EagerVec::forced_import(
-                    &path.join("height_to_unspendable_supply"),
-                    VERSION + Version::ZERO,
-                    compressed,
-                )?,
-                indexes_to_unspendable_supply: ComputedValueVecsFromHeight::forced_import(
-                    path,
-                    "unspendable_supply",
-                    false,
-                    VERSION + Version::ZERO,
-                    compressed,
-                    StorableVecGeneatorOptions::default().add_last(),
-                    compute_dollars,
-                )?,
-                height_to_utxo_count: EagerVec::forced_import(
-                    &path.join("height_to_utxo_count"),
-                    VERSION + Version::new(111),
-                    compressed,
-                )?,
-                indexes_to_utxo_count: ComputedVecsFromHeight::forced_import(
-                    path,
-                    "utxo_count",
-                    false,
-                    VERSION + Version::ZERO,
-                    compressed,
-                    StorableVecGeneatorOptions::default().add_last(),
-                )?,
-            },
+            all: Vecs_::forced_import(path, _computation, compressed, fetched)?,
         }))
     }
 
@@ -133,8 +55,16 @@ impl Vecs {
         let inputindex_to_outputindex = &indexer_vecs.inputindex_to_outputindex;
         let outputindex_to_value = &indexer_vecs.outputindex_to_value;
         let txindex_to_height = &indexes.txindex_to_height;
+        let height_to_timestamp_fixed = &indexes.height_to_timestamp_fixed;
         let outputindex_to_txindex = &indexes.outputindex_to_txindex;
         let outputindex_to_outputtype = &indexer_vecs.outputindex_to_outputtype;
+        let height_to_unclaimed_rewards = transactions
+            .indexes_to_unclaimed_rewards
+            .sats
+            .height
+            .as_ref()
+            .unwrap()
+            .as_ref();
         let height_to_close = &fetched
             .as_ref()
             .map(|fetched| &fetched.chainindexes_to_close.height);
@@ -157,10 +87,13 @@ impl Vecs {
         let mut height_to_close_iter = height_to_close.as_ref().map(|v| v.into_iter());
         let mut height_to_opreturn_count_iter = height_to_opreturn_count.into_iter();
         let mut outputindex_to_outputtype_iter = outputindex_to_outputtype.into_iter();
+        let mut height_to_unclaimed_rewards_iter = height_to_unclaimed_rewards.into_iter();
+        let mut height_to_timestamp_fixed_iter = height_to_timestamp_fixed.into_iter();
 
         let base_version = Version::ZERO
             + height_to_first_outputindex.version()
             + height_to_first_inputindex.version()
+            + height_to_timestamp_fixed.version()
             + height_to_output_count.version()
             + height_to_input_count.version()
             + inputindex_to_outputindex.version()
@@ -169,6 +102,7 @@ impl Vecs {
             + outputindex_to_txindex.version()
             + height_to_opreturn_count.version()
             + outputindex_to_outputtype.version()
+            + height_to_unclaimed_rewards.version()
             + height_to_close
                 .as_ref()
                 .map_or(Version::ZERO, |v| v.version());
@@ -227,6 +161,10 @@ impl Vecs {
         (starting_height.unwrap_to_usize()..height_to_first_outputindex_iter.len())
             .map(Height::from)
             .try_for_each(|height| -> color_eyre::Result<()> {
+                let sent_state = SentState::default();
+                let received_state = ReceivedState::default();
+                let realized_state = RealizedState::default();
+
                 let first_outputindex = height_to_first_outputindex_iter
                     .unwrap_get_inner(height)
                     .unwrap_to_usize();
@@ -237,35 +175,52 @@ impl Vecs {
                 let input_count = height_to_input_count_iter.unwrap_get_inner(height);
                 let opreturn_count = height_to_opreturn_count_iter.unwrap_get_inner(height);
 
-                let (sent_sats_dollars, (mut received_spendable, mut received_unspendable)) =
+                let (sent_sats_price_tuple, (mut received_spendable, mut received_unspendable)) =
                     thread::scope(|s| {
                         // Skip coinbase
-                        let sent_sats_dollars = s.spawn(|| {
+                        let sent_sats_price_tuple = s.spawn(|| {
+                            let mut txindex_to_height = BTreeMap::new();
+                            let mut height_to_timestamp_price_sats = BTreeMap::new();
+
                             (first_inputindex + 1..first_inputindex + *input_count)
                                 .map(InputIndex::from)
                                 .map(|inputindex| {
                                     inputindex_to_outputindex_iter.unwrap_get_inner(inputindex)
                                 })
-                                .map(|outputindex| {
+                                .for_each(|outputindex| {
                                     let value =
                                         outputindex_to_value_iter.unwrap_get_inner(outputindex);
 
-                                    if let Some(height_to_close_iter) =
-                                        height_to_close_iter.as_mut()
-                                    {
-                                        let txindex = outputindex_to_txindex_iter
-                                            .unwrap_get_inner(outputindex);
-                                        let height =
-                                            txindex_to_height_iter.unwrap_get_inner(txindex);
-                                        let dollars =
-                                            *height_to_close_iter.unwrap_get_inner(height);
+                                    let txindex =
+                                        outputindex_to_txindex_iter.unwrap_get_inner(outputindex);
 
-                                        (value, dollars)
-                                    } else {
-                                        (value, Dollars::ZERO)
-                                    }
-                                })
-                                .collect::<Vec<_>>()
+                                    let height =
+                                        *txindex_to_height.entry(txindex).or_insert_with(|| {
+                                            txindex_to_height_iter.unwrap_get_inner(txindex)
+                                        });
+
+                                    let entry = height_to_timestamp_price_sats
+                                        .entry(height)
+                                        .or_insert_with(|| {
+                                            let timestamp = height_to_timestamp_fixed_iter
+                                                .unwrap_get_inner(height);
+
+                                            if let Some(height_to_close_iter) =
+                                                height_to_close_iter.as_mut()
+                                            {
+                                                let dollars =
+                                                    *height_to_close_iter.unwrap_get_inner(height);
+
+                                                (timestamp, dollars, Sats::ZERO)
+                                            } else {
+                                                (timestamp, Dollars::ZERO, Sats::ZERO)
+                                            }
+                                        });
+
+                                    entry.2 += value;
+                                });
+
+                            height_to_timestamp_price_sats
                         });
 
                         let received = s.spawn(|| {
@@ -277,8 +232,12 @@ impl Vecs {
                                     let value =
                                         outputindex_to_value_iter_2.unwrap_get_inner(outputindex);
 
-                                    if outputindex_to_outputtype_iter.unwrap_get_inner(outputindex)
-                                        == OutputType::OpReturn
+                                    let outputtype = outputindex_to_outputtype_iter
+                                        .unwrap_get_inner(outputindex);
+
+                                    if outputtype == OutputType::OpReturn
+                                        || outputtype == OutputType::Empty
+                                        || outputtype == OutputType::Unknown
                                     {
                                         unspendable += value
                                     } else {
@@ -288,12 +247,19 @@ impl Vecs {
                             (spendable, unspendable)
                         });
 
-                        (sent_sats_dollars.join().unwrap(), received.join().unwrap())
+                        (
+                            sent_sats_price_tuple.join().unwrap(),
+                            received.join().unwrap(),
+                        )
                     });
 
-                let (sent, realized_cap_destroyed) = sent_sats_dollars
-                    .into_par_iter()
-                    .map(|(sats, dollars)| (sats, dollars * Bitcoin::from(sats)))
+                let (sent, realized_cap_destroyed) = sent_sats_price_tuple
+                    .par_iter()
+                    .map(|(_, (_, dollars, sats))| {
+                        let dollars = *dollars;
+                        let sats = *sats;
+                        (sats, dollars * Bitcoin::from(sats))
+                    })
                     .reduce(
                         || (Sats::ZERO, Dollars::ZERO),
                         |acc, (sats, dollars)| (acc.0 + sats, acc.1 + dollars),
@@ -313,6 +279,8 @@ impl Vecs {
                     *input_count - 1
                 };
 
+                received_unspendable += height_to_unclaimed_rewards_iter.unwrap_get_inner(height);
+
                 state.supply -= sent;
 
                 state.supply += received_spendable;
@@ -327,15 +295,6 @@ impl Vecs {
                     let realized_cap_created = price * Bitcoin::from(received);
                     state.realized_cap = (state.realized_cap + realized_cap_created)
                         .checked_sub(realized_cap_destroyed)
-                        .context("to work")
-                        .inspect_err(|_| {
-                            dbg!((
-                                height,
-                                state.realized_cap,
-                                realized_cap_created,
-                                realized_cap_destroyed
-                            ));
-                        })
                         .unwrap();
                 }
 
@@ -395,21 +354,111 @@ impl Vecs {
     }
 
     pub fn vecs(&self) -> Vec<&dyn AnyCollectableVec> {
+        [self.all.vecs()].concat()
+    }
+}
+
+#[derive(Clone)]
+pub struct Vecs_ {
+    pub height_to_realized_cap: Option<EagerVec<Height, Dollars>>,
+    pub indexes_to_realized_cap: Option<ComputedVecsFromHeight<Dollars>>,
+    pub height_to_supply: EagerVec<Height, Sats>,
+    pub indexes_to_supply: ComputedValueVecsFromHeight,
+    pub height_to_unspendable_supply: EagerVec<Height, Sats>,
+    pub indexes_to_unspendable_supply: ComputedValueVecsFromHeight,
+    pub height_to_utxo_count: EagerVec<Height, StoredUsize>,
+    pub indexes_to_utxo_count: ComputedVecsFromHeight<StoredUsize>,
+}
+
+impl Vecs_ {
+    pub fn forced_import(
+        path: &Path,
+        _computation: Computation,
+        compressed: Compressed,
+        fetched: Option<&fetched::Vecs>,
+    ) -> color_eyre::Result<Self> {
+        let compute_dollars = fetched.is_some();
+
+        fs::create_dir_all(path)?;
+
+        Ok(Self {
+            height_to_realized_cap: compute_dollars.then(|| {
+                EagerVec::forced_import(
+                    &path.join("height_to_realized_cap"),
+                    VERSION + Version::ZERO,
+                    compressed,
+                )
+                .unwrap()
+            }),
+            indexes_to_realized_cap: compute_dollars.then(|| {
+                ComputedVecsFromHeight::forced_import(
+                    path,
+                    "realized_cap",
+                    false,
+                    VERSION + Version::ZERO,
+                    compressed,
+                    StorableVecGeneatorOptions::default().add_last(),
+                )
+                .unwrap()
+            }),
+            height_to_supply: EagerVec::forced_import(
+                &path.join("height_to_supply"),
+                VERSION + Version::ZERO,
+                compressed,
+            )?,
+            indexes_to_supply: ComputedValueVecsFromHeight::forced_import(
+                path,
+                "supply",
+                false,
+                VERSION + Version::ZERO,
+                compressed,
+                StorableVecGeneatorOptions::default().add_last(),
+                compute_dollars,
+            )?,
+            height_to_unspendable_supply: EagerVec::forced_import(
+                &path.join("height_to_unspendable_supply"),
+                VERSION + Version::ZERO,
+                compressed,
+            )?,
+            indexes_to_unspendable_supply: ComputedValueVecsFromHeight::forced_import(
+                path,
+                "unspendable_supply",
+                false,
+                VERSION + Version::ZERO,
+                compressed,
+                StorableVecGeneatorOptions::default().add_last(),
+                compute_dollars,
+            )?,
+            height_to_utxo_count: EagerVec::forced_import(
+                &path.join("height_to_utxo_count"),
+                VERSION + Version::new(111),
+                compressed,
+            )?,
+            indexes_to_utxo_count: ComputedVecsFromHeight::forced_import(
+                path,
+                "utxo_count",
+                false,
+                VERSION + Version::ZERO,
+                compressed,
+                StorableVecGeneatorOptions::default().add_last(),
+            )?,
+        })
+    }
+
+    pub fn vecs(&self) -> Vec<&dyn AnyCollectableVec> {
         [
             vec![
-                &self.all.height_to_supply as &dyn AnyCollectableVec,
-                &self.all.height_to_unspendable_supply,
-                &self.all.height_to_utxo_count,
+                &self.height_to_supply as &dyn AnyCollectableVec,
+                &self.height_to_unspendable_supply,
+                &self.height_to_utxo_count,
             ],
-            self.all
-                .height_to_realized_cap
+            self.height_to_realized_cap
                 .as_ref()
                 .map_or(vec![], |v| vec![v as &dyn AnyCollectableVec]),
-            self.all.indexes_to_supply.vecs(),
-            self.all.indexes_to_unspendable_supply.vecs(),
-            self.all.indexes_to_utxo_count.vecs(),
-            self.all
-                .indexes_to_realized_cap
+            self.indexes_to_supply.vecs(),
+            self.indexes_to_unspendable_supply.vecs(),
+            self.indexes_to_utxo_count.vecs(),
+            self.indexes_to_realized_cap
                 .as_ref()
                 .map_or(vec![], |v| v.vecs()),
         ]
