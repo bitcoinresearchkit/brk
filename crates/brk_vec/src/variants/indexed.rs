@@ -26,10 +26,17 @@ where
     I: StoredIndex,
     T: StoredType,
 {
-    pub fn forced_import(path: &Path, version: Version, compressed: Compressed) -> Result<Self> {
+    pub fn forced_import(
+        path: &Path,
+        value_name: &str,
+        version: Version,
+        compressed: Compressed,
+    ) -> Result<Self> {
+        let inner = StoredVec::forced_import(path, value_name, version, compressed)?;
+
         Ok(Self {
-            height: Height::try_from(Self::path_height_(path).as_path()).ok(),
-            inner: StoredVec::forced_import(path, version, compressed)?,
+            height: Height::try_from(Self::path_height_(inner.path()).as_path()).ok(),
+            inner,
         })
     }
 
@@ -117,7 +124,7 @@ where
     }
 
     #[inline]
-    fn index_type_to_string(&self) -> &str {
+    fn index_type_to_string(&self) -> String {
         I::to_string()
     }
 }

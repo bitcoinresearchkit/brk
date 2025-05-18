@@ -35,7 +35,7 @@ where
     S3T: StoredType,
 {
     pub fn init(
-        name: &str,
+        value_name: &str,
         version: Version,
         source1: BoxedAnyIterableVec<S1I, S1T>,
         source2: BoxedAnyIterableVec<S2I, S2T>,
@@ -56,7 +56,7 @@ where
         }
 
         Self {
-            name: name.to_string(),
+            name: I::to_folder_name(value_name),
             version,
             source1,
             source2,
@@ -192,7 +192,7 @@ where
         self.name.clone()
     }
 
-    fn index_type_to_string(&self) -> &str {
+    fn index_type_to_string(&self) -> String {
         I::to_string()
     }
 

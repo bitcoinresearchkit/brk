@@ -102,7 +102,7 @@ impl Vecs {
         let inputindex_to_value = ComputedVec::forced_import_or_init_from_2(
             computation,
             path,
-            "inputindex_to_value",
+            "value",
             Version::ZERO,
             compressed,
             indexer.vecs().inputindex_to_outputindex.boxed_clone(),
@@ -129,7 +129,7 @@ impl Vecs {
         let txindex_to_weight = ComputedVec::forced_import_or_init_from_2(
             computation,
             path,
-            "txindex_to_weight",
+            "weight",
             Version::ZERO,
             compressed,
             indexer.vecs().txindex_to_base_size.boxed_clone(),
@@ -157,7 +157,7 @@ impl Vecs {
         let txindex_to_vsize = ComputedVec::forced_import_or_init_from_1(
             computation,
             path,
-            "txindex_to_vsize",
+            "vsize",
             Version::ZERO,
             compressed,
             txindex_to_weight.boxed_clone(),
@@ -174,7 +174,7 @@ impl Vecs {
         let txindex_to_is_coinbase = ComputedVec::forced_import_or_init_from_2(
             computation,
             path,
-            "txindex_to_is_coinbase",
+            "is_coinbase",
             Version::ZERO,
             compressed,
             indexes.txindex_to_height.boxed_clone(),
@@ -198,7 +198,7 @@ impl Vecs {
         let txindex_to_input_value = ComputedVec::forced_import_or_init_from_3(
             computation,
             path,
-            "txindex_to_input_value",
+            "input_value",
             Version::ZERO,
             compressed,
             indexer.vecs().txindex_to_first_inputindex.boxed_clone(),
@@ -247,7 +247,7 @@ impl Vecs {
         let txindex_to_output_value = ComputedVec::forced_import_or_init_from_3(
             computation,
             path,
-            "txindex_to_output_value",
+            "output_value",
             Version::ZERO,
             compressed,
             indexer.vecs().txindex_to_first_outputindex.boxed_clone(),
@@ -296,7 +296,7 @@ impl Vecs {
         let txindex_to_fee = ComputedVecFrom2::forced_import_or_init_from_2(
             computation,
             path,
-            "txindex_to_fee",
+            "fee",
             Version::ZERO,
             compressed,
             txindex_to_input_value.boxed_clone(),
@@ -319,7 +319,7 @@ impl Vecs {
         let txindex_to_feerate = ComputedVecFrom2::forced_import_or_init_from_2(
             computation,
             path,
-            "txindex_to_feerate",
+            "feerate",
             Version::ZERO,
             compressed,
             txindex_to_fee.boxed_clone(),

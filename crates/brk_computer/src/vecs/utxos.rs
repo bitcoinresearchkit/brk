@@ -12,7 +12,7 @@ use brk_vec::{
 use derive_deref::{Deref, DerefMut};
 use rayon::prelude::*;
 
-use crate::states::{CohortState, Outputs, RealizedState, ReceivedState, SentState};
+use crate::states::{CohortState, Outputs, OutputsByTerm, RealizedState, ReceivedState, SentState};
 
 use super::{
     Indexes, fetched,
@@ -33,7 +33,11 @@ impl Vecs {
         fetched: Option<&fetched::Vecs>,
     ) -> color_eyre::Result<Self> {
         Ok(Self(Outputs {
-            all: Vecs_::forced_import(path, _computation, compressed, fetched)?,
+            all: Vecs_::forced_import(path, None, _computation, compressed, fetched)?,
+            // by_term: OutputsByTerm {
+            //     short: Vecs_::forced_import(path, Some("sth"), _computation, compressed, fetched)?,
+            //     long: Vecs_::forced_import(path, Some("lth"), _computation, compressed, fetched)?,
+            // },
         }))
     }
 
@@ -373,6 +377,7 @@ pub struct Vecs_ {
 impl Vecs_ {
     pub fn forced_import(
         path: &Path,
+        cohort_name: Option<&str>,
         _computation: Computation,
         compressed: Compressed,
         fetched: Option<&fetched::Vecs>,
@@ -381,10 +386,15 @@ impl Vecs_ {
 
         fs::create_dir_all(path)?;
 
+        // let prefix = |s: &str| cohort_name.map_or(s.to_string(), |name| format!("{s}_{name}"));
+
+        let suffix = |s: &str| cohort_name.map_or(s.to_string(), |name| format!("{name}_{s}"));
+
         Ok(Self {
             height_to_realized_cap: compute_dollars.then(|| {
                 EagerVec::forced_import(
-                    &path.join("height_to_realized_cap"),
+                    path,
+                    &suffix("realized_cap"),
                     VERSION + Version::ZERO,
                     compressed,
                 )
@@ -393,7 +403,7 @@ impl Vecs_ {
             indexes_to_realized_cap: compute_dollars.then(|| {
                 ComputedVecsFromHeight::forced_import(
                     path,
-                    "realized_cap",
+                    &suffix("realized_cap"),
                     false,
                     VERSION + Version::ZERO,
                     compressed,
@@ -402,13 +412,14 @@ impl Vecs_ {
                 .unwrap()
             }),
             height_to_supply: EagerVec::forced_import(
-                &path.join("height_to_supply"),
+                path,
+                &suffix("supply"),
                 VERSION + Version::ZERO,
                 compressed,
             )?,
             indexes_to_supply: ComputedValueVecsFromHeight::forced_import(
                 path,
-                "supply",
+                &suffix("supply"),
                 false,
                 VERSION + Version::ZERO,
                 compressed,
@@ -416,13 +427,14 @@ impl Vecs_ {
                 compute_dollars,
             )?,
             height_to_unspendable_supply: EagerVec::forced_import(
-                &path.join("height_to_unspendable_supply"),
+                path,
+                &suffix("unspendable_supply"),
                 VERSION + Version::ZERO,
                 compressed,
             )?,
             indexes_to_unspendable_supply: ComputedValueVecsFromHeight::forced_import(
                 path,
-                "unspendable_supply",
+                &suffix("unspendable_supply"),
                 false,
                 VERSION + Version::ZERO,
                 compressed,
@@ -430,13 +442,14 @@ impl Vecs_ {
                 compute_dollars,
             )?,
             height_to_utxo_count: EagerVec::forced_import(
-                &path.join("height_to_utxo_count"),
+                path,
+                &suffix("utxo_count"),
                 VERSION + Version::new(111),
                 compressed,
             )?,
             indexes_to_utxo_count: ComputedVecsFromHeight::forced_import(
                 path,
-                "utxo_count",
+                &suffix("utxo_count"),
                 false,
                 VERSION + Version::ZERO,
                 compressed,

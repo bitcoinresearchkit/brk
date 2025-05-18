@@ -191,7 +191,7 @@ where
     }
 
     #[inline]
-    fn index_type_to_string(&self) -> &str {
+    fn index_type_to_string(&self) -> String {
         I::to_string()
     }
 }

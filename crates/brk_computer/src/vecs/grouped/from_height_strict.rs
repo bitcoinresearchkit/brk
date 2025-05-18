@@ -36,8 +36,7 @@ where
     ) -> color_eyre::Result<Self> {
         let version = VERSION + version;
 
-        let height =
-            EagerVec::forced_import(&path.join(format!("height_to_{name}")), version, compressed)?;
+        let height = EagerVec::forced_import(path, name, version, compressed)?;
 
         let height_extra = ComputedVecBuilder::forced_import(
             path,
