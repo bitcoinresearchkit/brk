@@ -1,8 +1,8 @@
 use std::{fs, path::Path};
 
 use brk_core::{
-    CheckedSub, Feerate, Height, InputIndex, OutputIndex, Sats, StoredU32, StoredUsize, TxIndex,
-    TxVersion, Weight,
+    CheckedSub, Feerate, HalvingEpoch, Height, InputIndex, OutputIndex, Sats, StoredU32,
+    StoredUsize, TxIndex, TxVersion, Weight,
 };
 use brk_exit::Exit;
 use brk_indexer::Indexer;
@@ -65,6 +65,7 @@ pub struct Vecs {
     pub indexes_to_p2wpkh_count: ComputedVecsFromHeight<StoredUsize>,
     pub indexes_to_p2wsh_count: ComputedVecsFromHeight<StoredUsize>,
     pub indexes_to_subsidy: ComputedValueVecsFromHeight,
+    pub indexes_to_unclaimed_rewards: ComputedValueVecsFromHeight,
     pub indexes_to_tx_count: ComputedVecsFromHeight<StoredUsize>,
     pub indexes_to_tx_v1: ComputedVecsFromHeight<StoredUsize>,
     pub indexes_to_tx_v2: ComputedVecsFromHeight<StoredUsize>,
@@ -476,6 +477,15 @@ impl Vecs {
                     .add_average(),
                 compute_dollars,
             )?,
+            indexes_to_unclaimed_rewards: ComputedValueVecsFromHeight::forced_import(
+                path,
+                "unclaimed_rewards",
+                true,
+                Version::ZERO,
+                compressed,
+                StorableVecGeneatorOptions::default().add_sum().add_total(),
+                compute_dollars,
+            )?,
             indexes_to_p2a_count: ComputedVecsFromHeight::forced_import(
                 path,
                 "p2a_count",
@@ -850,9 +860,35 @@ impl Vecs {
                         .as_ref()
                         .unwrap()
                         .as_ref(),
-                    |(height, subsidy, ..)| {
+                    |(height, coinbase, ..)| {
                         let fees = indexes_to_fee_sum_iter.unwrap_get_inner(height);
-                        (height, subsidy.checked_sub(fees).unwrap())
+                        (height, coinbase.checked_sub(fees).unwrap())
+                    },
+                    exit,
+                )
+            },
+        )?;
+
+        self.indexes_to_unclaimed_rewards.compute_all(
+            indexer,
+            indexes,
+            fetched,
+            starting_indexes,
+            exit,
+            |vec, _, _, starting_indexes, exit| {
+                vec.compute_transform(
+                    starting_indexes.height,
+                    self.indexes_to_subsidy
+                        .sats
+                        .height
+                        .as_ref()
+                        .unwrap()
+                        .as_ref(),
+                    |(height, subsidy, ..)| {
+                        let halving = HalvingEpoch::from(height);
+                        let expected =
+                            Sats::FIFTY_BTC / 2_usize.pow(halving.unwrap_to_usize() as u32);
+                        (height, expected.checked_sub(subsidy).unwrap())
                     },
                     exit,
                 )
@@ -1131,6 +1167,7 @@ impl Vecs {
             self.indexes_to_tx_weight.vecs(),
             self.indexes_to_unknownoutput_count.vecs(),
             self.indexes_to_exact_utxo_count.vecs(),
+            self.indexes_to_unclaimed_rewards.vecs(),
         ]
         .concat()
     }
