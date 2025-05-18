@@ -79,7 +79,7 @@ pub trait VecIterator<'a>: BaseVecIterator<Item = (Self::I, Value<'a, Self::T>)>
         self.next().map(|(i, v)| (i, Value::Owned(v.into_inner())))
     }
 
-    fn index_type_to_string(&self) -> &str {
+    fn index_type_to_string(&self) -> String {
         Self::I::to_string()
     }
 }

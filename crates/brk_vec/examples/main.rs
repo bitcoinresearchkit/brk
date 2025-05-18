@@ -12,7 +12,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     {
         let mut vec: StoredVec<usize, u32> =
-            StoredVec::forced_import(Path::new("./vec"), version, compressed)?;
+            StoredVec::forced_import(Path::new("."), "vec", version, compressed)?;
 
         (0..21_u32).for_each(|v| {
             vec.push(v);
@@ -28,7 +28,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     {
         let mut vec: StoredVec<usize, u32> =
-            StoredVec::forced_import(Path::new("./vec"), version, compressed)?;
+            StoredVec::forced_import(Path::new("."), "vec", version, compressed)?;
         let mut iter = vec.into_iter();
 
         dbg!(iter.get(0));
@@ -54,7 +54,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     {
         let mut vec: StoredVec<usize, u32> =
-            StoredVec::forced_import(Path::new("./vec"), version, compressed)?;
+            StoredVec::forced_import(Path::new("."), "vec", version, compressed)?;
         let mut iter = vec.into_iter();
 
         dbg!(iter.get(0));

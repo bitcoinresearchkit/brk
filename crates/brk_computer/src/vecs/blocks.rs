@@ -39,7 +39,8 @@ impl Vecs {
 
         Ok(Self {
             height_to_interval: EagerVec::forced_import(
-                &path.join("height_to_interval"),
+                path,
+                "interval",
                 Version::ZERO,
                 compressed,
             )?,
@@ -85,11 +86,7 @@ impl Vecs {
                 compressed,
                 StorableVecGeneatorOptions::default().add_sum().add_total(),
             )?,
-            height_to_vbytes: EagerVec::forced_import(
-                &path.join("height_to_vbytes"),
-                Version::ZERO,
-                compressed,
-            )?,
+            height_to_vbytes: EagerVec::forced_import(path, "vbytes", Version::ZERO, compressed)?,
             indexes_to_block_vbytes: ComputedVecsFromHeight::forced_import(
                 path,
                 "block_vbytes",
@@ -99,12 +96,14 @@ impl Vecs {
                 StorableVecGeneatorOptions::default().add_sum().add_total(),
             )?,
             difficultyepoch_to_timestamp: EagerVec::forced_import(
-                &path.join("difficultyepoch_to_timestamp"),
+                path,
+                "timestamp",
                 Version::ZERO,
                 compressed,
             )?,
             halvingepoch_to_timestamp: EagerVec::forced_import(
-                &path.join("halvingepoch_to_timestamp"),
+                path,
+                "timestamp",
                 Version::ZERO,
                 compressed,
             )?,

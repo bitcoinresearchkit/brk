@@ -51,6 +51,9 @@ impl ComputedValueVecsFromTxindex {
         let compute_source = source.is_none();
         let compute_dollars = fetched.is_some();
 
+        let name_in_btc = format!("{name}_in_btc");
+        let name_in_usd = format!("{name}_in_usd");
+
         let sats = ComputedVecsFromTxindex::forced_import(
             path,
             name,
@@ -61,7 +64,7 @@ impl ComputedValueVecsFromTxindex {
         )?;
 
         let bitcoin_txindex = LazyVecFrom1::init(
-            "txindex_to_{name}_in_btc",
+            &name_in_btc,
             VERSION + version,
             source.map_or_else(|| sats.txindex.as_ref().unwrap().boxed_clone(), |s| s),
             |txindex: TxIndex, iter| {
@@ -74,7 +77,7 @@ impl ComputedValueVecsFromTxindex {
 
         let bitcoin = ComputedVecsFromTxindex::forced_import(
             path,
-            &format!("{name}_in_btc"),
+            &name_in_btc,
             false,
             VERSION + version,
             compressed,
@@ -85,7 +88,7 @@ impl ComputedValueVecsFromTxindex {
             ComputedVecFrom3::forced_import_or_init_from_3(
                 computation,
                 path,
-                "txindex_to_{name}_in_usd",
+                &name_in_usd,
                 VERSION + version,
                 compressed,
                 bitcoin_txindex.boxed_clone(),
@@ -120,7 +123,7 @@ impl ComputedValueVecsFromTxindex {
             dollars: compute_dollars.then(|| {
                 ComputedVecsFromTxindex::forced_import(
                     path,
-                    &format!("{name}_in_usd"),
+                    &name_in_usd,
                     false,
                     VERSION + version,
                     compressed,

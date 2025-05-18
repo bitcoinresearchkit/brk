@@ -72,13 +72,13 @@ impl Fetcher {
         let ohlc = self
             .kraken
             .get_from_1mn(timestamp, previous_timestamp)
-            .unwrap_or_else(|e| {
-                eprintln!("{e}");
+            .unwrap_or_else(|_| {
+                // eprintln!("{e}");
                 self.binance
                     .get_from_1mn(timestamp, previous_timestamp)
-                    .unwrap_or_else(|e| {
-                        eprintln!("{e}");
-                        self.kibo.get_from_height(height).unwrap_or_else(|e| {
+                    .unwrap_or_else(|_| {
+                        // eprintln!("{e}");
+                        self.kibo.get_from_height(height).unwrap_or_else(|_| {
                             sleep(Duration::from_secs(30));
 
                             if tries < 8 * 60 * 2 {
@@ -88,7 +88,7 @@ impl Fetcher {
                             }
 
                             let date = Date::from(timestamp);
-                            eprintln!("{e}");
+                            // eprintln!("{e}");
                             panic!(
                                 "
 Can't find the price for: height: {height} - date: {date}

@@ -46,27 +46,23 @@ where
         compressed: Compressed,
         options: StorableVecGeneatorOptions,
     ) -> color_eyre::Result<Self> {
-        let key = I::to_string().split("::").last().unwrap().to_lowercase();
-
         let only_one_active = options.is_only_one_active();
 
-        let default = || path.join(format!("{key}_to_{name}"));
-
-        let prefix = |s: &str| path.join(format!("{key}_to_{s}_{name}"));
+        let prefix = |s: &str| format!("{s}_{name}");
 
         let maybe_prefix = |s: &str| {
             if only_one_active {
-                default()
+                name.to_string()
             } else {
                 prefix(s)
             }
         };
 
-        let suffix = |s: &str| path.join(format!("{key}_to_{name}_{s}"));
+        let suffix = |s: &str| format!("{name}_{s}");
 
         let maybe_suffix = |s: &str| {
             if only_one_active {
-                default()
+                name.to_string()
             } else {
                 suffix(s)
             }
@@ -78,6 +74,7 @@ where
             first: options.first.then(|| {
                 Box::new(
                     EagerVec::forced_import(
+                        path,
                         &maybe_prefix("first"),
                         version + Version::ZERO,
                         compressed,
@@ -87,17 +84,14 @@ where
             }),
             last: options.last.then(|| {
                 Box::new(
-                    EagerVec::forced_import(
-                        &path.join(format!("{key}_to_{name}")),
-                        version + Version::ZERO,
-                        compressed,
-                    )
-                    .unwrap(),
+                    EagerVec::forced_import(path, name, version + Version::ZERO, compressed)
+                        .unwrap(),
                 )
             }),
             min: options.min.then(|| {
                 Box::new(
                     EagerVec::forced_import(
+                        path,
                         &maybe_suffix("min"),
                         version + Version::ZERO,
                         compressed,
@@ -108,6 +102,7 @@ where
             max: options.max.then(|| {
                 Box::new(
                     EagerVec::forced_import(
+                        path,
                         &maybe_suffix("max"),
                         version + Version::ZERO,
                         compressed,
@@ -118,6 +113,7 @@ where
             median: options.median.then(|| {
                 Box::new(
                     EagerVec::forced_import(
+                        path,
                         &maybe_suffix("median"),
                         version + Version::ZERO,
                         compressed,
@@ -128,6 +124,7 @@ where
             average: options.average.then(|| {
                 Box::new(
                     EagerVec::forced_import(
+                        path,
                         &maybe_suffix("average"),
                         version + Version::ZERO,
                         compressed,
@@ -138,6 +135,7 @@ where
             sum: options.sum.then(|| {
                 Box::new(
                     EagerVec::forced_import(
+                        path,
                         &maybe_suffix("sum"),
                         version + Version::ZERO,
                         compressed,
@@ -147,13 +145,19 @@ where
             }),
             total: options.total.then(|| {
                 Box::new(
-                    EagerVec::forced_import(&prefix("total"), version + Version::ZERO, compressed)
-                        .unwrap(),
+                    EagerVec::forced_import(
+                        path,
+                        &prefix("total"),
+                        version + Version::ZERO,
+                        compressed,
+                    )
+                    .unwrap(),
                 )
             }),
             _90p: options._90p.then(|| {
                 Box::new(
                     EagerVec::forced_import(
+                        path,
                         &maybe_suffix("90p"),
                         version + Version::ZERO,
                         compressed,
@@ -164,6 +168,7 @@ where
             _75p: options._75p.then(|| {
                 Box::new(
                     EagerVec::forced_import(
+                        path,
                         &maybe_suffix("75p"),
                         version + Version::ZERO,
                         compressed,
@@ -174,6 +179,7 @@ where
             _25p: options._25p.then(|| {
                 Box::new(
                     EagerVec::forced_import(
+                        path,
                         &maybe_suffix("25p"),
                         version + Version::ZERO,
                         compressed,
@@ -184,6 +190,7 @@ where
             _10p: options._10p.then(|| {
                 Box::new(
                     EagerVec::forced_import(
+                        path,
                         &maybe_suffix("10p"),
                         version + Version::ZERO,
                         compressed,

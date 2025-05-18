@@ -21,13 +21,19 @@ where
     I: StoredIndex,
     T: StoredType,
 {
-    pub fn forced_import(path: &Path, version: Version, compressed: Compressed) -> Result<Self> {
+    pub fn forced_import(
+        path: &Path,
+        value_name: &str,
+        version: Version,
+        compressed: Compressed,
+    ) -> Result<Self> {
+        let path = I::path(path, value_name);
         if *compressed {
             Ok(Self::Compressed(CompressedVec::forced_import(
-                path, version,
+                &path, version,
             )?))
         } else {
-            Ok(Self::Raw(RawVec::forced_import(path, version)?))
+            Ok(Self::Raw(RawVec::forced_import(&path, version)?))
         }
     }
 }
@@ -113,7 +119,7 @@ where
     }
 
     #[inline]
-    fn index_type_to_string(&self) -> &str {
+    fn index_type_to_string(&self) -> String {
         I::to_string()
     }
 

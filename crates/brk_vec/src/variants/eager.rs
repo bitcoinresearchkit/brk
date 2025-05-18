@@ -38,8 +38,13 @@ where
 {
     const SIZE_OF: usize = size_of::<T>();
 
-    pub fn forced_import(path: &Path, version: Version, compressed: Compressed) -> Result<Self> {
-        let inner = StoredVec::forced_import(path, version, compressed)?;
+    pub fn forced_import(
+        path: &Path,
+        value_name: &str,
+        version: Version,
+        compressed: Compressed,
+    ) -> Result<Self> {
+        let inner = StoredVec::forced_import(path, value_name, version, compressed)?;
 
         Ok(Self {
             computed_version: None,
@@ -937,7 +942,7 @@ where
     }
 
     #[inline]
-    fn index_type_to_string(&self) -> &str {
+    fn index_type_to_string(&self) -> String {
         I::to_string()
     }
 }

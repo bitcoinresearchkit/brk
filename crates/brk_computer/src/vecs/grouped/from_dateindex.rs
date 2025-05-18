@@ -49,11 +49,7 @@ where
         let options = options.remove_percentiles();
 
         Ok(Self {
-            dateindex: EagerVec::forced_import(
-                &path.join(format!("dateindex_to_{name}")),
-                version,
-                compressed,
-            )?,
+            dateindex: EagerVec::forced_import(path, name, version, compressed)?,
             dateindex_extra,
             weekindex: ComputedVecBuilder::forced_import(path, name, version, compressed, options)?,
             monthindex: ComputedVecBuilder::forced_import(

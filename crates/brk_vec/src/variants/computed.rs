@@ -84,21 +84,20 @@ where
     pub fn forced_import_or_init_from_1(
         mode: Computation,
         path: &Path,
-        name: &str,
+        value_name: &str,
         version: Version,
         compressed: Compressed,
         source: BoxedAnyIterableVec<S1I, S1T>,
         compute: ComputeFrom1<I, T, S1I, S1T>,
     ) -> Result<Self> {
-        let full_path = path.join(name);
         Ok(match mode {
             Computation::Eager => Self::Eager {
-                vec: EagerVec::forced_import(&full_path, version, compressed)?,
+                vec: EagerVec::forced_import(path, value_name, version, compressed)?,
                 deps: Dependencies::From1(source, compute),
             },
             Computation::Lazy => {
-                let _ = fs::remove_dir_all(full_path);
-                Self::LazyFrom1(LazyVecFrom1::init(name, version, source, compute))
+                let _ = fs::remove_dir_all(I::path(path, value_name));
+                Self::LazyFrom1(LazyVecFrom1::init(value_name, version, source, compute))
             }
         })
     }
@@ -107,22 +106,23 @@ where
     pub fn forced_import_or_init_from_2(
         mode: Computation,
         path: &Path,
-        name: &str,
+        value_name: &str,
         version: Version,
         compressed: Compressed,
         source1: BoxedAnyIterableVec<S1I, S1T>,
         source2: BoxedAnyIterableVec<S2I, S2T>,
         compute: ComputeFrom2<I, T, S1I, S1T, S2I, S2T>,
     ) -> Result<Self> {
-        let full_path = path.join(name);
         Ok(match mode {
             Computation::Eager => Self::Eager {
-                vec: EagerVec::forced_import(&full_path, version, compressed)?,
+                vec: EagerVec::forced_import(path, value_name, version, compressed)?,
                 deps: Dependencies::From2((source1, source2), compute),
             },
             Computation::Lazy => {
-                let _ = fs::remove_dir_all(full_path);
-                Self::LazyFrom2(LazyVecFrom2::init(name, version, source1, source2, compute))
+                let _ = fs::remove_dir_all(I::path(path, value_name));
+                Self::LazyFrom2(LazyVecFrom2::init(
+                    value_name, version, source1, source2, compute,
+                ))
             }
         })
     }
@@ -131,7 +131,7 @@ where
     pub fn forced_import_or_init_from_3(
         mode: Computation,
         path: &Path,
-        name: &str,
+        value_name: &str,
         version: Version,
         compressed: Compressed,
         source1: BoxedAnyIterableVec<S1I, S1T>,
@@ -139,16 +139,15 @@ where
         source3: BoxedAnyIterableVec<S3I, S3T>,
         compute: ComputeFrom3<I, T, S1I, S1T, S2I, S2T, S3I, S3T>,
     ) -> Result<Self> {
-        let full_path = path.join(name);
         Ok(match mode {
             Computation::Eager => Self::Eager {
-                vec: EagerVec::forced_import(&full_path, version, compressed)?,
+                vec: EagerVec::forced_import(path, value_name, version, compressed)?,
                 deps: Dependencies::From3((source1, source2, source3), compute),
             },
             Computation::Lazy => {
-                let _ = fs::remove_dir_all(full_path);
+                let _ = fs::remove_dir_all(I::path(path, value_name));
                 Self::LazyFrom3(LazyVecFrom3::init(
-                    name, version, source1, source2, source3, compute,
+                    value_name, version, source1, source2, source3, compute,
                 ))
             }
         })
@@ -228,7 +227,7 @@ where
         }
     }
 
-    fn index_type_to_string(&self) -> &str {
+    fn index_type_to_string(&self) -> String {
         I::to_string()
     }
 
