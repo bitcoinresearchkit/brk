@@ -1169,6 +1169,8 @@ impl Vecs {
             self.indexes_to_exact_utxo_count.vecs(),
             self.indexes_to_unclaimed_rewards.vecs(),
         ]
-        .concat()
+        .into_iter()
+        .flatten()
+        .collect::<Vec<_>>()
     }
 }

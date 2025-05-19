@@ -13,7 +13,7 @@ use super::{
     indexes, transactions,
 };
 
-const VERSION: Version = Version::new(0);
+const VERSION: Version = Version::ZERO;
 
 #[derive(Clone)]
 pub struct Vecs {
@@ -1774,6 +1774,8 @@ impl Vecs {
             self.dca_class_2016_returns.vecs(),
             self.dca_class_2015_returns.vecs(),
         ]
-        .concat()
+        .into_iter()
+        .flatten()
+        .collect::<Vec<_>>()
     }
 }

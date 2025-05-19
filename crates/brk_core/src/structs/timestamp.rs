@@ -1,4 +1,7 @@
-use std::ops::{Add, Div};
+use std::{
+    cmp::Ordering,
+    ops::{Add, Div},
+};
 
 use derive_deref::Deref;
 use jiff::{civil::date, tz::TimeZone};
@@ -26,6 +29,8 @@ use super::Date;
 )]
 pub struct Timestamp(u32);
 
+const ONE_DAY_IN_SEC: i64 = 24 * 60 * 60;
+
 impl Timestamp {
     pub const ZERO: Self = Self(0);
 
@@ -38,6 +43,19 @@ impl Timestamp {
         let d = jiff::civil::DateTime::from(t);
         let d = date(d.year(), d.month(), d.day()).at(d.hour(), d.minute(), 0, 0);
         Self::from(d.to_zoned(TimeZone::UTC).unwrap().timestamp())
+    }
+
+    pub fn difference_in_days_between(earlier: Self, later: Self) -> usize {
+        match later.cmp(&earlier) {
+            Ordering::Less => panic!("Shouldn't be used with inverted"),
+            Ordering::Equal => 0,
+            Ordering::Greater => {
+                (jiff::Timestamp::from(earlier)
+                    .duration_until(jiff::Timestamp::from(later))
+                    .as_secs()
+                    / ONE_DAY_IN_SEC) as usize
+            }
+        }
     }
 }
 

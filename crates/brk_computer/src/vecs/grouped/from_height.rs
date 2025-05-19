@@ -215,6 +215,8 @@ where
             // self.halvingepoch.vecs(),
             self.decadeindex.vecs(),
         ]
-        .concat()
+        .into_iter()
+        .flatten()
+        .collect::<Vec<_>>()
     }
 }

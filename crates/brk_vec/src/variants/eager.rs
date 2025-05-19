@@ -681,7 +681,7 @@ impl EagerVec<DateIndex, Sats> {
         exit: &Exit,
     ) -> Result<()> {
         self.validate_computed_version_or_reset_file(
-            Version::new(5) + self.inner.version() + closes.version(),
+            Version::ZERO + self.inner.version() + closes.version(),
         )?;
 
         let mut other_iter = closes.iter();

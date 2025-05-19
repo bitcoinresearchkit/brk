@@ -241,6 +241,8 @@ impl Vecs {
             self.indexes_to_block_vbytes.vecs(),
             self.indexes_to_block_weight.vecs(),
         ]
-        .concat()
+        .into_iter()
+        .flatten()
+        .collect::<Vec<_>>()
     }
 }

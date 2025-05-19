@@ -439,6 +439,8 @@ dependencies = [
  "rayon",
  "serde",
  "serde_json",
+ "zerocopy",
+ "zerocopy-derive",
 ]
 
 [[package]]

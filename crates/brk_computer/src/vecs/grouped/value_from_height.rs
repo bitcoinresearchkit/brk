@@ -165,6 +165,8 @@ impl ComputedValueVecsFromHeight {
             self.bitcoin.vecs(),
             self.dollars.as_ref().map_or(vec![], |v| v.vecs()),
         ]
-        .concat()
+        .into_iter()
+        .flatten()
+        .collect::<Vec<_>>()
     }
 }

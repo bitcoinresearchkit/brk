@@ -123,6 +123,8 @@ impl Vecs {
             self.indexes_to_difficultyepoch.vecs(),
             self.indexes_to_halvingepoch.vecs(),
         ]
-        .concat()
+        .into_iter()
+        .flatten()
+        .collect::<Vec<_>>()
     }
 }
