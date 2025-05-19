@@ -740,7 +740,8 @@ function createUtils() {
       id.includes("coinbase") ||
       id.includes("subsidy") ||
       id.endsWith("stack") ||
-      id.includes("supply")
+      id.includes("supply") ||
+      id.includes("rewards")
     ) {
       unit = "Sats";
     } else if (
@@ -798,6 +799,8 @@ function createUtils() {
         return numberToUSFormat(value, 1);
       } else if (absoluteValue < 100_000) {
         return numberToUSFormat(value, 0);
+      } else if (absoluteValue < 200_000) {
+        return `${numberToUSFormat(value / 1_000, 2)}K`;
       } else if (absoluteValue < 1_000_000) {
         return `${numberToUSFormat(value / 1_000, 1)}K`;
       } else if (absoluteValue >= 900_000_000_000_000_000) {

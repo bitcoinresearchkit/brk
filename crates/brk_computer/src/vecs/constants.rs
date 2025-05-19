@@ -144,6 +144,8 @@ impl Vecs {
             self._50.vecs(),
             self._100.vecs(),
         ]
-        .concat()
+        .into_iter()
+        .flatten()
+        .collect::<Vec<_>>()
     }
 }

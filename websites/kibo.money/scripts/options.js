@@ -325,6 +325,23 @@ function createPartialOptions(colors) {
     ];
   }
 
+  /**
+   * @param {Object} args
+   * @param {ChartableVecId & VecIdSumBase & TotalVecIdBase} args.key
+   * @param {string} args.name
+   */
+  function createBaseSumTotalSeries({ key, name }) {
+    return [
+      createBaseSeries({
+        key,
+        name,
+      }),
+      ...createSumTotalSeries({
+        concat: key,
+      }),
+    ];
+  }
+
   return [
     {
       name: "Charts",
@@ -902,6 +919,24 @@ function createPartialOptions(colors) {
               ],
             },
             {
+              name: "Unclaimed Rewards",
+              title: "Unclaimed Rewards",
+              bottom: [
+                ...createBaseSumTotalSeries({
+                  key: "unclaimed-rewards",
+                  name: "unclaimed",
+                }),
+                ...createBaseSumTotalSeries({
+                  key: "unclaimed-rewards-in-btc",
+                  name: "unclaimed",
+                }),
+                ...createBaseSumTotalSeries({
+                  key: "unclaimed-rewards-in-usd",
+                  name: "unclaimed",
+                }),
+              ],
+            },
+            {
               name: "Feerate",
               title: "Transaction Fee Rate",
               bottom: [
@@ -1338,62 +1373,62 @@ function createPartialOptions(colors) {
         {
           name: "UTXOs",
           tree: [
-            {
-              name: "supply",
-              title: "Supply",
-              bottom: [
-                createBaseSeries({
-                  key: "supply",
-                  name: "Supply",
-                }),
-                createBaseSeries({
-                  key: "supply-in-btc",
-                  name: "Supply",
-                }),
-                createBaseSeries({
-                  key: "supply-in-usd",
-                  name: "Supply",
-                }),
-              ],
-            },
-            {
-              name: "unspendable supply",
-              title: "Unspendable Supply",
-              bottom: [
-                createBaseSeries({
-                  key: "unspendable-supply",
-                  name: "Supply",
-                }),
-                createBaseSeries({
-                  key: "unspendable-supply-in-btc",
-                  name: "Supply",
-                }),
-                createBaseSeries({
-                  key: "unspendable-supply-in-usd",
-                  name: "Supply",
-                }),
-              ],
-            },
-            {
-              name: "count",
-              title: "UTXO Count",
-              bottom: [
-                createBaseSeries({
-                  key: "utxo-count",
-                  name: "Count",
-                }),
-              ],
-            },
-            {
-              name: "realized cap",
-              title: "Realized Capitalization",
-              bottom: [
-                createBaseSeries({
-                  key: "realized-cap",
-                  name: "Realized Cap",
-                }),
-              ],
-            },
+            // {
+            //   name: "supply",
+            //   title: "Supply",
+            //   bottom: [
+            //     createBaseSeries({
+            //       key: "supply",
+            //       name: "Supply",
+            //     }),
+            //     createBaseSeries({
+            //       key: "supply-in-btc",
+            //       name: "Supply",
+            //     }),
+            //     createBaseSeries({
+            //       key: "supply-in-usd",
+            //       name: "Supply",
+            //     }),
+            //   ],
+            // },
+            // {
+            //   name: "unspendable supply",
+            //   title: "Unspendable Supply",
+            //   bottom: [
+            //     createBaseSeries({
+            //       key: "unspendable-supply",
+            //       name: "Supply",
+            //     }),
+            //     createBaseSeries({
+            //       key: "unspendable-supply-in-btc",
+            //       name: "Supply",
+            //     }),
+            //     createBaseSeries({
+            //       key: "unspendable-supply-in-usd",
+            //       name: "Supply",
+            //     }),
+            //   ],
+            // },
+            // {
+            //   name: "count",
+            //   title: "UTXO Count",
+            //   bottom: [
+            //     createBaseSeries({
+            //       key: "utxo-count",
+            //       name: "Count",
+            //     }),
+            //   ],
+            // },
+            // {
+            //   name: "realized cap",
+            //   title: "Realized Capitalization",
+            //   bottom: [
+            //     createBaseSeries({
+            //       key: "realized-cap",
+            //       name: "Realized Cap",
+            //     }),
+            //   ],
+            // },
           ],
         },
       ],

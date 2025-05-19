@@ -896,6 +896,8 @@ impl ComputedRatioVecsFromDateIndex {
             self.ratio_m3sd_as_price.vecs(),
             self.ratio_zscore.vecs(),
         ]
-        .concat()
+        .into_iter()
+        .flatten()
+        .collect::<Vec<_>>()
     }
 }

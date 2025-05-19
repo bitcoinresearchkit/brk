@@ -1089,6 +1089,8 @@ impl Vecs {
             self.chainindexes_to_low_in_sats.vecs(),
             self.chainindexes_to_open_in_sats.vecs(),
         ]
-        .concat()
+        .into_iter()
+        .flatten()
+        .collect::<Vec<_>>()
     }
 }

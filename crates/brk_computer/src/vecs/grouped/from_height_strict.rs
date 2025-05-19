@@ -92,6 +92,8 @@ where
             self.difficultyepoch.vecs(),
             // self.halvingepoch.vecs(),
         ]
-        .concat()
+        .into_iter()
+        .flatten()
+        .collect::<Vec<_>>()
     }
 }

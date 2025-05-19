@@ -23,3 +23,5 @@ log = { workspace = true }
 rayon = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
+zerocopy = { workspace = true }
+zerocopy-derive = { workspace = true }

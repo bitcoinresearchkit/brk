@@ -32,6 +32,46 @@ pub enum OutputType {
     Unknown = 255,
 }
 
+impl OutputType {
+    pub fn is_spendable(&self) -> bool {
+        match self {
+            Self::P2PK65 => true,
+            Self::P2PK33 => true,
+            Self::P2PKH => true,
+            Self::P2MS => true,
+            Self::P2SH => true,
+            Self::OpReturn => false,
+            Self::P2WPKH => true,
+            Self::P2WSH => true,
+            Self::P2TR => true,
+            Self::P2A => true,
+            Self::Empty => false,
+            Self::Unknown => false,
+        }
+    }
+
+    pub fn is_unspendable(&self) -> bool {
+        !self.is_spendable()
+    }
+
+    pub fn as_vec() -> Vec<Self> {
+        vec![
+            Self::P2PK65,
+            Self::P2PK33,
+            Self::P2PKH,
+            Self::P2MS,
+            Self::P2SH,
+            Self::OpReturn,
+            Self::P2WPKH,
+            Self::P2WSH,
+            Self::P2TR,
+            Self::P2A,
+            Self::Empty,
+            Self::Unknown,
+        ]
+    }
+}
+
 impl From<&ScriptBuf> for OutputType {
     fn from(script: &ScriptBuf) -> Self {
         if script.is_p2pk() {
