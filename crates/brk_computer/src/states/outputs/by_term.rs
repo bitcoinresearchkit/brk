@@ -1,3 +1,5 @@
+use super::OutputFilter;
+
 #[derive(Default, Clone)]
 pub struct OutputsByTerm<T> {
     pub short: T,
@@ -5,7 +7,22 @@ pub struct OutputsByTerm<T> {
 }
 
 impl<T> OutputsByTerm<T> {
-    pub fn mut_flatten(&mut self) -> Vec<&mut T> {
-        vec![&mut self.short, &mut self.long]
+    pub fn as_mut_vec(&mut self) -> [&mut T; 2] {
+        [&mut self.short, &mut self.long]
+    }
+}
+
+impl<T> OutputsByTerm<(OutputFilter, T)> {
+    pub fn vecs(&self) -> [&T; 2] {
+        [&self.short.1, &self.long.1]
+    }
+}
+
+impl<T> From<OutputsByTerm<T>> for OutputsByTerm<(OutputFilter, T)> {
+    fn from(value: OutputsByTerm<T>) -> Self {
+        Self {
+            long: (OutputFilter::From(155), value.long),
+            short: (OutputFilter::To(155), value.short),
+        }
     }
 }

@@ -16,7 +16,11 @@ impl<'a> VecTrees<'a> {
     pub fn insert(&mut self, vec: &'a dyn AnyCollectableVec) {
         let name = vec.name();
         let split = name.split("_to_").collect::<Vec<_>>();
-        if split.len() != 2 {
+        if split.len() != 2
+            && !(split.len() == 3
+                && (split.get(1) == Some(&"up")
+                    || split.get(1).is_some_and(|s| s.starts_with("from"))))
+        {
             dbg!(&name, &split);
             panic!();
         }
@@ -35,7 +39,7 @@ impl<'a> VecTrees<'a> {
             dbg!(&name, split[0], index.to_string());
             panic!();
         }
-        let key = split[1].to_string().replace("_", "-");
+        let key = split[1..].join("_").to_string().replace("_", "-");
         let prev = self
             .id_to_index_to_vec
             .entry(key.clone())

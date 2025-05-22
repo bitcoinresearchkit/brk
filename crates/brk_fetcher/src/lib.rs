@@ -36,7 +36,7 @@ impl Fetcher {
         self.kraken
             .get_from_1d(&date)
             .or_else(|e| {
-                eprintln!("{e}");
+                // eprintln!("{e}");
                 self.binance.get_from_1d(&date)
             })
             .or_else(|e| {
@@ -82,6 +82,8 @@ impl Fetcher {
                             sleep(Duration::from_secs(30));
 
                             if tries < 8 * 60 * 2 {
+                                self.clear();
+
                                 return self
                                     .get_height_(height, timestamp, previous_timestamp, tries + 1)
                                     .unwrap();
@@ -155,5 +157,11 @@ How to fix this:
         }
 
         Ok(final_ohlc)
+    }
+
+    pub fn clear(&mut self) {
+        self.binance.clear();
+        self.kibo.clear();
+        self.kraken.clear();
     }
 }

@@ -28,6 +28,12 @@ use super::Height;
 )]
 pub struct HalvingEpoch(u8);
 
+impl HalvingEpoch {
+    pub fn new(value: u8) -> Self {
+        Self(value)
+    }
+}
+
 impl From<u8> for HalvingEpoch {
     fn from(value: u8) -> Self {
         Self(value)

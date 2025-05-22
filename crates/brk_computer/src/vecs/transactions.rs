@@ -784,6 +784,7 @@ impl Vecs {
             starting_indexes,
             exit,
             Some(&self.txindex_to_fee),
+            fetched,
         )?;
 
         self.indexes_to_feerate.compute_rest(

@@ -18,18 +18,18 @@ where
     I: StoredIndex,
     T: ComputedType,
 {
-    first: Option<Box<EagerVec<I, T>>>,
-    average: Option<Box<EagerVec<I, T>>>,
-    sum: Option<Box<EagerVec<I, T>>>,
-    max: Option<Box<EagerVec<I, T>>>,
-    _90p: Option<Box<EagerVec<I, T>>>,
-    _75p: Option<Box<EagerVec<I, T>>>,
-    median: Option<Box<EagerVec<I, T>>>,
-    _25p: Option<Box<EagerVec<I, T>>>,
-    _10p: Option<Box<EagerVec<I, T>>>,
-    min: Option<Box<EagerVec<I, T>>>,
-    last: Option<Box<EagerVec<I, T>>>,
-    total: Option<Box<EagerVec<I, T>>>,
+    pub first: Option<Box<EagerVec<I, T>>>,
+    pub average: Option<Box<EagerVec<I, T>>>,
+    pub sum: Option<Box<EagerVec<I, T>>>,
+    pub max: Option<Box<EagerVec<I, T>>>,
+    pub _90p: Option<Box<EagerVec<I, T>>>,
+    pub _75p: Option<Box<EagerVec<I, T>>>,
+    pub median: Option<Box<EagerVec<I, T>>>,
+    pub _25p: Option<Box<EagerVec<I, T>>>,
+    pub _10p: Option<Box<EagerVec<I, T>>>,
+    pub min: Option<Box<EagerVec<I, T>>>,
+    pub last: Option<Box<EagerVec<I, T>>>,
+    pub total: Option<Box<EagerVec<I, T>>>,
 }
 
 const VERSION: Version = Version::ZERO;
@@ -537,7 +537,7 @@ where
         Ok(())
     }
 
-    fn starting_index(&self, max_from: I) -> I {
+    pub fn starting_index(&self, max_from: I) -> I {
         max_from.min(I::from(
             self.vecs().into_iter().map(|v| v.len()).min().unwrap(),
         ))
@@ -671,7 +671,7 @@ where
         Ok(())
     }
 
-    fn validate_computed_version_or_reset_file(&mut self, version: Version) -> Result<()> {
+    pub fn validate_computed_version_or_reset_file(&mut self, version: Version) -> Result<()> {
         if let Some(first) = self.first.as_mut() {
             first.validate_computed_version_or_reset_file(Version::ZERO + version)?;
         }

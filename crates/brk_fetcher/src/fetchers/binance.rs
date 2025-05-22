@@ -238,4 +238,9 @@ impl Binance {
     fn url(query: &str) -> String {
         format!("https://api.binance.com/api/v3/uiKlines?symbol=BTCUSDT&{query}")
     }
+
+    pub fn clear(&mut self) {
+        self._1d.take();
+        self._1mn.take();
+    }
 }

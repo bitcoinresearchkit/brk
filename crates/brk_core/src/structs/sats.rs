@@ -35,6 +35,10 @@ impl Sats {
     pub const ONE_BTC: Self = Self(1_00_000_000);
     pub const FIFTY_BTC: Self = Self(50_00_000_000);
 
+    pub fn new(sats: u64) -> Self {
+        Self(sats)
+    }
+
     pub fn is_zero(&self) -> bool {
         *self == Self::ZERO
     }

@@ -147,4 +147,9 @@ impl Kibo {
             Close::new(get_value("close")?),
         )))
     }
+
+    pub fn clear(&mut self) {
+        self.height_to_ohlc_vec.clear();
+        self.year_to_date_to_ohlc.clear();
+    }
 }

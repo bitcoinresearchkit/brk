@@ -1,3 +1,5 @@
+use super::OutputFilter;
+
 #[derive(Default, Clone)]
 pub struct OutputsByUpTo<T> {
     pub _1d: T,
@@ -11,15 +13,18 @@ pub struct OutputsByUpTo<T> {
     pub _1y: T,
     pub _2y: T,
     pub _3y: T,
+    pub _4y: T,
     pub _5y: T,
+    pub _6y: T,
     pub _7y: T,
+    pub _8y: T,
     pub _10y: T,
     pub _15y: T,
 }
 
 impl<T> OutputsByUpTo<T> {
-    pub fn mut_flatten(&mut self) -> Vec<&mut T> {
-        vec![
+    pub fn as_mut_vec(&mut self) -> [&mut T; 18] {
+        [
             &mut self._1d,
             &mut self._1w,
             &mut self._1m,
@@ -31,10 +36,63 @@ impl<T> OutputsByUpTo<T> {
             &mut self._1y,
             &mut self._2y,
             &mut self._3y,
+            &mut self._4y,
             &mut self._5y,
+            &mut self._6y,
             &mut self._7y,
+            &mut self._8y,
             &mut self._10y,
             &mut self._15y,
         ]
+    }
+}
+
+impl<T> OutputsByUpTo<(OutputFilter, T)> {
+    pub fn vecs(&self) -> [&T; 18] {
+        [
+            &self._1d.1,
+            &self._1w.1,
+            &self._1m.1,
+            &self._2m.1,
+            &self._3m.1,
+            &self._4m.1,
+            &self._5m.1,
+            &self._6m.1,
+            &self._1y.1,
+            &self._2y.1,
+            &self._3y.1,
+            &self._4y.1,
+            &self._5y.1,
+            &self._6y.1,
+            &self._7y.1,
+            &self._8y.1,
+            &self._10y.1,
+            &self._15y.1,
+        ]
+    }
+}
+
+impl<T> From<OutputsByUpTo<T>> for OutputsByUpTo<(OutputFilter, T)> {
+    fn from(value: OutputsByUpTo<T>) -> Self {
+        Self {
+            _1d: (OutputFilter::To(1), value._1d),
+            _1w: (OutputFilter::To(7), value._1w),
+            _1m: (OutputFilter::To(30), value._1m),
+            _2m: (OutputFilter::To(2 * 30), value._2m),
+            _3m: (OutputFilter::To(3 * 30), value._3m),
+            _4m: (OutputFilter::To(4 * 30), value._4m),
+            _5m: (OutputFilter::To(5 * 30), value._5m),
+            _6m: (OutputFilter::To(6 * 30), value._6m),
+            _1y: (OutputFilter::To(365), value._1y),
+            _2y: (OutputFilter::To(2 * 365), value._2y),
+            _3y: (OutputFilter::To(3 * 365), value._3y),
+            _4y: (OutputFilter::To(4 * 365), value._4y),
+            _5y: (OutputFilter::To(5 * 365), value._5y),
+            _6y: (OutputFilter::To(6 * 365), value._6y),
+            _7y: (OutputFilter::To(7 * 365), value._7y),
+            _8y: (OutputFilter::To(8 * 365), value._8y),
+            _10y: (OutputFilter::To(10 * 365), value._10y),
+            _15y: (OutputFilter::To(15 * 365), value._15y),
+        }
     }
 }
