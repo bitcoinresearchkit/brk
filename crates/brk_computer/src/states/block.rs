@@ -1,40 +1,64 @@
-#![allow(unused)]
+use std::ops::{Add, AddAssign, SubAssign};
 
-use std::{
-    iter::Sum,
-    ops::{Add, AddAssign, SubAssign},
-};
+use brk_core::{Dollars, Sats, Timestamp};
 
-use brk_core::{CheckedSub, Sats, StoredU32};
-use serde::Serialize;
-use zerocopy_derive::{FromBytes, Immutable, IntoBytes, KnownLayout};
+use super::{OutputsByType, SupplyState};
 
-#[derive(Debug, Default, Clone, FromBytes, Immutable, IntoBytes, KnownLayout, Serialize)]
+#[derive(Debug, Clone)]
 pub struct BlockState {
-    pub utxos: usize,
-    pub value: Sats,
+    pub supply: SupplyState,
+    pub price: Option<Dollars>,
+    pub timestamp: Timestamp,
 }
 
 impl Add<BlockState> for BlockState {
     type Output = Self;
-    fn add(self, rhs: BlockState) -> Self::Output {
-        Self {
-            utxos: self.utxos + rhs.utxos,
-            value: self.value + rhs.value,
-        }
+    fn add(mut self, rhs: BlockState) -> Self::Output {
+        self.supply += &rhs.supply;
+        self
     }
 }
 
 impl AddAssign<&BlockState> for BlockState {
     fn add_assign(&mut self, rhs: &BlockState) {
-        self.utxos += rhs.utxos;
-        self.value += rhs.value;
+        self.supply += &rhs.supply;
     }
 }
 
 impl SubAssign for BlockState {
     fn sub_assign(&mut self, rhs: Self) {
-        self.utxos = self.utxos.checked_sub(rhs.utxos).unwrap();
-        self.value = self.value.checked_sub(rhs.value).unwrap();
+        self.supply -= rhs.supply;
+    }
+}
+
+pub struct ReceivedBlockStateData<'a> {
+    pub received: &'a OutputsByType<(SupplyState, Vec<Sats>)>,
+    pub timestamp: Timestamp,
+    pub price: Option<Dollars>,
+}
+impl<'a> From<ReceivedBlockStateData<'a>> for BlockState {
+    fn from(
+        ReceivedBlockStateData {
+            received,
+            timestamp,
+            price,
+        }: ReceivedBlockStateData<'a>,
+    ) -> Self {
+        let mut block_state = BlockState {
+            supply: SupplyState::default(),
+            price,
+            timestamp,
+        };
+        received
+            .spendable
+            .as_vec()
+            .into_iter()
+            .for_each(|spendable_block_state| {
+                block_state.supply += &spendable_block_state.0;
+            });
+        block_state.supply.value += received.unspendable.unknown.0.value;
+        block_state.supply.utxos +=
+            received.unspendable.empty.0.utxos + received.unspendable.unknown.0.utxos;
+        block_state
     }
 }

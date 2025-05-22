@@ -39,19 +39,24 @@ impl Timestamp {
     }
 
     pub fn floor_seconds(self) -> Self {
-        let t = jiff::Timestamp::from(self).to_zoned(TimeZone::UTC);
-        let d = jiff::civil::DateTime::from(t);
-        let d = date(d.year(), d.month(), d.day()).at(d.hour(), d.minute(), 0, 0);
-        Self::from(d.to_zoned(TimeZone::UTC).unwrap().timestamp())
+        let zoned = jiff::Timestamp::from(self).to_zoned(TimeZone::UTC);
+        let date_time = jiff::civil::DateTime::from(zoned);
+        let trunc_date_time = date(date_time.year(), date_time.month(), date_time.day()).at(
+            date_time.hour(),
+            date_time.minute(),
+            0,
+            0,
+        );
+        Self::from(trunc_date_time.to_zoned(TimeZone::UTC).unwrap().timestamp())
     }
 
-    pub fn difference_in_days_between(earlier: Self, later: Self) -> usize {
-        match later.cmp(&earlier) {
-            Ordering::Less => panic!("Shouldn't be used with inverted"),
+    pub fn difference_in_days_between(&self, other: Self) -> usize {
+        match self.cmp(&other) {
             Ordering::Equal => 0,
-            Ordering::Greater => {
-                (jiff::Timestamp::from(earlier)
-                    .duration_until(jiff::Timestamp::from(later))
+            Ordering::Greater => other.difference_in_days_between(*self),
+            Ordering::Less => {
+                (jiff::Timestamp::from(*self)
+                    .duration_until(jiff::Timestamp::from(other))
                     .as_secs()
                     / ONE_DAY_IN_SEC) as usize
             }

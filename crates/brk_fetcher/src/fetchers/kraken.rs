@@ -129,4 +129,9 @@ impl Kraken {
     fn url(interval: usize) -> String {
         format!("https://api.kraken.com/0/public/OHLC?pair=XBTUSD&interval={interval}")
     }
+
+    pub fn clear(&mut self) {
+        self._1d.take();
+        self._1mn.take();
+    }
 }

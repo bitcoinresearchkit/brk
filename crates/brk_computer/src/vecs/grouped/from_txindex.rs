@@ -1,16 +1,17 @@
 use std::path::Path;
 
 use brk_core::{
-    DateIndex, DecadeIndex, DifficultyEpoch, Height, MonthIndex, QuarterIndex, TxIndex, WeekIndex,
-    YearIndex,
+    Bitcoin, DateIndex, DecadeIndex, DifficultyEpoch, Dollars, Height, MonthIndex, QuarterIndex,
+    Sats, TxIndex, WeekIndex, YearIndex,
 };
 use brk_exit::Exit;
 use brk_indexer::Indexer;
 use brk_vec::{
-    AnyCollectableVec, CollectableVec, Compressed, EagerVec, Result, StoredVec, Version,
+    AnyCollectableVec, AnyVec, CollectableVec, Compressed, EagerVec, Result, StoredIndex,
+    VecIterator, Version,
 };
 
-use crate::vecs::{Indexes, indexes};
+use crate::vecs::{Indexes, fetched, indexes};
 
 use super::{ComputedType, ComputedVecBuilder, StorableVecGeneatorOptions};
 
@@ -77,37 +78,37 @@ where
         })
     }
 
-    #[allow(unused)]
-    pub fn compute_all<F>(
-        &mut self,
-        indexer: &Indexer,
-        indexes: &indexes::Vecs,
-        starting_indexes: &Indexes,
-        exit: &Exit,
-        mut compute: F,
-    ) -> color_eyre::Result<()>
-    where
-        F: FnMut(
-            &mut EagerVec<TxIndex, T>,
-            &Indexer,
-            &indexes::Vecs,
-            &Indexes,
-            &Exit,
-        ) -> Result<()>,
-    {
-        compute(
-            self.txindex.as_mut().unwrap(),
-            indexer,
-            indexes,
-            starting_indexes,
-            exit,
-        )?;
+    // #[allow(unused)]
+    // pub fn compute_all<F>(
+    //     &mut self,
+    //     indexer: &Indexer,
+    //     indexes: &indexes::Vecs,
+    //     starting_indexes: &Indexes,
+    //     exit: &Exit,
+    //     mut compute: F,
+    // ) -> color_eyre::Result<()>
+    // where
+    //     F: FnMut(
+    //         &mut EagerVec<TxIndex, T>,
+    //         &Indexer,
+    //         &indexes::Vecs,
+    //         &Indexes,
+    //         &Exit,
+    //     ) -> Result<()>,
+    // {
+    //     compute(
+    //         self.txindex.as_mut().unwrap(),
+    //         indexer,
+    //         indexes,
+    //         starting_indexes,
+    //         exit,
+    //     )?;
 
-        let txindex: Option<&StoredVec<TxIndex, T>> = None;
-        self.compute_rest(indexer, indexes, starting_indexes, exit, txindex)?;
+    //     let txindex: Option<&StoredVec<TxIndex, T>> = None;
+    //     self.compute_rest(indexer, indexes, starting_indexes, exit, txindex)?;
 
-        Ok(())
-    }
+    //     Ok(())
+    // }
 
     pub fn compute_rest(
         &mut self,
@@ -116,7 +117,7 @@ where
         starting_indexes: &Indexes,
         exit: &Exit,
         txindex: Option<&impl CollectableVec<TxIndex, T>>,
-    ) -> color_eyre::Result<()> {
+    ) -> Result<()> {
         if let Some(txindex) = txindex {
             self.height.compute(
                 starting_indexes.height,
@@ -137,6 +138,15 @@ where
             )?;
         }
 
+        self.compute_after_height(indexes, starting_indexes, exit)
+    }
+
+    fn compute_after_height(
+        &mut self,
+        indexes: &indexes::Vecs,
+        starting_indexes: &Indexes,
+        exit: &Exit,
+    ) -> Result<()> {
         self.dateindex.from_aligned(
             starting_indexes.dateindex,
             &self.height,
@@ -214,5 +224,364 @@ where
         .into_iter()
         .flatten()
         .collect::<Vec<_>>()
+    }
+}
+
+impl ComputedVecsFromTxindex<Bitcoin> {
+    pub fn compute_rest_from_sats(
+        &mut self,
+        indexer: &Indexer,
+        indexes: &indexes::Vecs,
+        starting_indexes: &Indexes,
+        exit: &Exit,
+        sats: &ComputedVecsFromTxindex<Sats>,
+        txindex: Option<&impl CollectableVec<TxIndex, Bitcoin>>,
+    ) -> Result<()> {
+        let txindex_version = if let Some(txindex) = txindex {
+            txindex.version()
+        } else {
+            self.txindex.as_ref().unwrap().as_ref().version()
+        };
+
+        self.height
+            .validate_computed_version_or_reset_file(txindex_version)?;
+
+        let starting_index = self.height.starting_index(starting_indexes.height);
+
+        (starting_index.unwrap_to_usize()..indexer.vecs().height_to_weight.len())
+            .map(Height::from)
+            .try_for_each(|height| -> Result<()> {
+                if let Some(first) = self.height.first.as_mut() {
+                    first.forced_push_at(
+                        height,
+                        Bitcoin::from(
+                            sats.height
+                                .unwrap_first()
+                                .into_iter()
+                                .unwrap_get_inner(height),
+                        ),
+                        exit,
+                    )?;
+                }
+                if let Some(average) = self.height.average.as_mut() {
+                    average.forced_push_at(
+                        height,
+                        Bitcoin::from(
+                            sats.height
+                                .unwrap_average()
+                                .into_iter()
+                                .unwrap_get_inner(height),
+                        ),
+                        exit,
+                    )?;
+                }
+                if let Some(sum) = self.height.sum.as_mut() {
+                    sum.forced_push_at(
+                        height,
+                        Bitcoin::from(
+                            sats.height
+                                .unwrap_sum()
+                                .into_iter()
+                                .unwrap_get_inner(height),
+                        ),
+                        exit,
+                    )?;
+                }
+                if let Some(max) = self.height.max.as_mut() {
+                    max.forced_push_at(
+                        height,
+                        Bitcoin::from(
+                            sats.height
+                                .unwrap_max()
+                                .into_iter()
+                                .unwrap_get_inner(height),
+                        ),
+                        exit,
+                    )?;
+                }
+                if let Some(_90p) = self.height._90p.as_mut() {
+                    _90p.forced_push_at(
+                        height,
+                        Bitcoin::from(
+                            sats.height
+                                .unwrap_90p()
+                                .into_iter()
+                                .unwrap_get_inner(height),
+                        ),
+                        exit,
+                    )?;
+                }
+                if let Some(_75p) = self.height._75p.as_mut() {
+                    _75p.forced_push_at(
+                        height,
+                        Bitcoin::from(
+                            sats.height
+                                .unwrap_75p()
+                                .into_iter()
+                                .unwrap_get_inner(height),
+                        ),
+                        exit,
+                    )?;
+                }
+                if let Some(median) = self.height.median.as_mut() {
+                    median.forced_push_at(
+                        height,
+                        Bitcoin::from(
+                            sats.height
+                                .unwrap_median()
+                                .into_iter()
+                                .unwrap_get_inner(height),
+                        ),
+                        exit,
+                    )?;
+                }
+                if let Some(_25p) = self.height._25p.as_mut() {
+                    _25p.forced_push_at(
+                        height,
+                        Bitcoin::from(
+                            sats.height
+                                .unwrap_25p()
+                                .into_iter()
+                                .unwrap_get_inner(height),
+                        ),
+                        exit,
+                    )?;
+                }
+                if let Some(_10p) = self.height._10p.as_mut() {
+                    _10p.forced_push_at(
+                        height,
+                        Bitcoin::from(
+                            sats.height
+                                .unwrap_10p()
+                                .into_iter()
+                                .unwrap_get_inner(height),
+                        ),
+                        exit,
+                    )?;
+                }
+                if let Some(min) = self.height.min.as_mut() {
+                    min.forced_push_at(
+                        height,
+                        Bitcoin::from(
+                            sats.height
+                                .unwrap_min()
+                                .into_iter()
+                                .unwrap_get_inner(height),
+                        ),
+                        exit,
+                    )?;
+                }
+                if let Some(last) = self.height.last.as_mut() {
+                    last.forced_push_at(
+                        height,
+                        Bitcoin::from(
+                            sats.height
+                                .unwrap_last()
+                                .into_iter()
+                                .unwrap_get_inner(height),
+                        ),
+                        exit,
+                    )?;
+                }
+                if let Some(total) = self.height.total.as_mut() {
+                    total.forced_push_at(
+                        height,
+                        Bitcoin::from(
+                            sats.height
+                                .unwrap_total()
+                                .into_iter()
+                                .unwrap_get_inner(height),
+                        ),
+                        exit,
+                    )?;
+                }
+                Ok(())
+            })?;
+
+        self.height.safe_flush(exit)?;
+
+        self.compute_after_height(indexes, starting_indexes, exit)
+    }
+}
+
+impl ComputedVecsFromTxindex<Dollars> {
+    pub fn compute_rest_from_bitcoin(
+        &mut self,
+        indexer: &Indexer,
+        indexes: &indexes::Vecs,
+        starting_indexes: &Indexes,
+        exit: &Exit,
+        bitcoin: &ComputedVecsFromTxindex<Bitcoin>,
+        txindex: Option<&impl CollectableVec<TxIndex, Dollars>>,
+        fetched: &fetched::Vecs,
+    ) -> Result<()> {
+        let txindex_version = if let Some(txindex) = txindex {
+            txindex.version()
+        } else {
+            self.txindex.as_ref().unwrap().as_ref().version()
+        };
+
+        self.height
+            .validate_computed_version_or_reset_file(txindex_version)?;
+
+        let starting_index = self.height.starting_index(starting_indexes.height);
+
+        let mut close_iter = fetched.chainindexes_to_close.height.into_iter();
+
+        (starting_index.unwrap_to_usize()..indexer.vecs().height_to_weight.len())
+            .map(Height::from)
+            .try_for_each(|height| -> Result<()> {
+                let price = *close_iter.unwrap_get_inner(height);
+
+                if let Some(first) = self.height.first.as_mut() {
+                    first.forced_push_at(
+                        height,
+                        price
+                            * bitcoin
+                                .height
+                                .unwrap_first()
+                                .into_iter()
+                                .unwrap_get_inner(height),
+                        exit,
+                    )?;
+                }
+                if let Some(average) = self.height.average.as_mut() {
+                    average.forced_push_at(
+                        height,
+                        price
+                            * bitcoin
+                                .height
+                                .unwrap_average()
+                                .into_iter()
+                                .unwrap_get_inner(height),
+                        exit,
+                    )?;
+                }
+                if let Some(sum) = self.height.sum.as_mut() {
+                    sum.forced_push_at(
+                        height,
+                        price
+                            * bitcoin
+                                .height
+                                .unwrap_sum()
+                                .into_iter()
+                                .unwrap_get_inner(height),
+                        exit,
+                    )?;
+                }
+                if let Some(max) = self.height.max.as_mut() {
+                    max.forced_push_at(
+                        height,
+                        price
+                            * bitcoin
+                                .height
+                                .unwrap_max()
+                                .into_iter()
+                                .unwrap_get_inner(height),
+                        exit,
+                    )?;
+                }
+                if let Some(_90p) = self.height._90p.as_mut() {
+                    _90p.forced_push_at(
+                        height,
+                        price
+                            * bitcoin
+                                .height
+                                .unwrap_90p()
+                                .into_iter()
+                                .unwrap_get_inner(height),
+                        exit,
+                    )?;
+                }
+                if let Some(_75p) = self.height._75p.as_mut() {
+                    _75p.forced_push_at(
+                        height,
+                        price
+                            * bitcoin
+                                .height
+                                .unwrap_75p()
+                                .into_iter()
+                                .unwrap_get_inner(height),
+                        exit,
+                    )?;
+                }
+                if let Some(median) = self.height.median.as_mut() {
+                    median.forced_push_at(
+                        height,
+                        price
+                            * bitcoin
+                                .height
+                                .unwrap_median()
+                                .into_iter()
+                                .unwrap_get_inner(height),
+                        exit,
+                    )?;
+                }
+                if let Some(_25p) = self.height._25p.as_mut() {
+                    _25p.forced_push_at(
+                        height,
+                        price
+                            * bitcoin
+                                .height
+                                .unwrap_25p()
+                                .into_iter()
+                                .unwrap_get_inner(height),
+                        exit,
+                    )?;
+                }
+                if let Some(_10p) = self.height._10p.as_mut() {
+                    _10p.forced_push_at(
+                        height,
+                        price
+                            * bitcoin
+                                .height
+                                .unwrap_10p()
+                                .into_iter()
+                                .unwrap_get_inner(height),
+                        exit,
+                    )?;
+                }
+                if let Some(min) = self.height.min.as_mut() {
+                    min.forced_push_at(
+                        height,
+                        price
+                            * bitcoin
+                                .height
+                                .unwrap_min()
+                                .into_iter()
+                                .unwrap_get_inner(height),
+                        exit,
+                    )?;
+                }
+                if let Some(last) = self.height.last.as_mut() {
+                    last.forced_push_at(
+                        height,
+                        price
+                            * bitcoin
+                                .height
+                                .unwrap_last()
+                                .into_iter()
+                                .unwrap_get_inner(height),
+                        exit,
+                    )?;
+                }
+                if let Some(total) = self.height.total.as_mut() {
+                    total.forced_push_at(
+                        height,
+                        price
+                            * bitcoin
+                                .height
+                                .unwrap_total()
+                                .into_iter()
+                                .unwrap_get_inner(height),
+                        exit,
+                    )?;
+                }
+                Ok(())
+            })?;
+
+        self.height.safe_flush(exit)?;
+
+        self.compute_after_height(indexes, starting_indexes, exit)
     }
 }

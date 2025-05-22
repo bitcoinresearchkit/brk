@@ -17,7 +17,7 @@ pub struct OutputsByValue<T> {
 }
 
 impl<T> OutputsByValue<T> {
-    pub fn mut_flatten(&mut self) -> Vec<&mut T> {
+    pub fn as_mut_vec(&mut self) -> Vec<&mut T> {
         vec![
             &mut self.up_to_1cent,
             &mut self.from_1c_to_10c,

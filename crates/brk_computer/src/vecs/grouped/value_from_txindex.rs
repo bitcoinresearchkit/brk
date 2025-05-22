@@ -180,6 +180,7 @@ impl ComputedValueVecsFromTxindex {
         starting_indexes: &Indexes,
         exit: &Exit,
         txindex: Option<&impl CollectableVec<TxIndex, Sats>>,
+        fetched: Option<&fetched::Vecs>,
     ) -> color_eyre::Result<()> {
         if let Some(txindex) = txindex {
             self.sats
@@ -190,11 +191,12 @@ impl ComputedValueVecsFromTxindex {
                 .compute_rest(indexer, indexes, starting_indexes, exit, txindex)?;
         }
 
-        self.bitcoin.compute_rest(
+        self.bitcoin.compute_rest_from_sats(
             indexer,
             indexes,
             starting_indexes,
             exit,
+            &self.sats,
             Some(&self.bitcoin_txindex),
         )?;
 
@@ -203,12 +205,14 @@ impl ComputedValueVecsFromTxindex {
 
             dollars_txindex.compute_if_necessary(starting_indexes.txindex, exit)?;
 
-            dollars.compute_rest(
+            dollars.compute_rest_from_bitcoin(
                 indexer,
                 indexes,
                 starting_indexes,
                 exit,
+                &self.bitcoin,
                 Some(dollars_txindex),
+                fetched.as_ref().unwrap(),
             )?;
         }
 
