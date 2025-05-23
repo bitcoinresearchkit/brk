@@ -3,7 +3,7 @@ use brk_core::{Bitcoin, CheckedSub, Dollars};
 use super::SupplyState;
 
 // Vecs ? probably
-#[derive(Default, Clone)]
+#[derive(Debug, Default, Clone)]
 pub struct CohortState {
     pub supply: SupplyState,
     pub realized_cap: Option<Dollars>,
@@ -18,7 +18,7 @@ impl CohortState {
         }
     }
 
-    pub fn decrement(&mut self, supply_state: SupplyState, price: Option<Dollars>) {
+    pub fn decrement(&mut self, supply_state: &SupplyState, price: Option<Dollars>) {
         if let Some(realized_cap) = self.realized_cap.as_mut() {
             *realized_cap = realized_cap
                 .checked_sub(price.unwrap() * Bitcoin::from(supply_state.value))

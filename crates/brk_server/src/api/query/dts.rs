@@ -57,15 +57,15 @@ impl DTS for Query<'static> {
 
         contents += "\n\nexport function createVecIdToIndexes() {\n";
 
-        contents += &indexes
-            .iter()
-            .enumerate()
-            .map(|(i_of_i, i)| {
-                // let lowered = i.to_string().to_lowercase();
-                format!("  const {i} = /** @satisfies {{{i}}} */ ({i_of_i});",)
-            })
-            .collect::<Vec<_>>()
-            .join("\n");
+        // contents += &indexes
+        //     .iter()
+        //     .enumerate()
+        //     .map(|(i_of_i, i)| {
+        //         // let lowered = i.to_string().to_lowercase();
+        //         format!("  const {i} = /** @satisfies {{{i}}} */ ({i_of_i});",)
+        //     })
+        //     .collect::<Vec<_>>()
+        //     .join("\n");
 
         contents += "\n\n  return /** @type {const} */ ({\n";
 
@@ -75,7 +75,8 @@ impl DTS for Query<'static> {
             .for_each(|(id, index_to_vec)| {
                 let indexes = index_to_vec
                     .keys()
-                    .map(|i| i.to_string())
+                    .map(|i| (*i as u8).to_string())
+                    // .map(|i| i.to_string())
                     .collect::<Vec<_>>()
                     .join(", ");
 

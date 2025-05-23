@@ -37,13 +37,13 @@ pub struct Outputs<T> {
     pub all: T,
     pub by_term: OutputsByTerm<T>,
     // pub by_up_to: OutputsByUpTo<T>,
-    // pub by_from: OutputsByFrom<T>,
+    pub by_from: OutputsByFrom<T>,
     // pub by_range: OutputsByRange<T>,
-    // pub by_epoch: OutputsByEpoch<T>,
-    // pub by_size: OutputsBySize<T>,
+    pub by_epoch: OutputsByEpoch<T>,
+    pub by_size: OutputsBySize<T>,
     // // Needs whole UTXO set, TODO later
     // // pub by_value: OutputsByValue<T>,
-    // pub by_spendable_type: OutputsBySpendableType<T>,
+    pub by_spendable_type: OutputsBySpendableType<T>,
 }
 
 impl<T> Outputs<T> {
@@ -52,12 +52,12 @@ impl<T> Outputs<T> {
             .into_iter()
             .chain(self.by_term.as_mut_vec())
             // .chain(self.by_up_to.as_mut_vec())
-            // .chain(self.by_from.as_mut_vec())
+            .chain(self.by_from.as_mut_vec())
             // .chain(self.by_range.as_mut_vec())
-            // .chain(self.by_epoch.as_mut_vec())
-            // .chain(self.by_size.as_mut_vec())
+            .chain(self.by_epoch.as_mut_vec())
+            .chain(self.by_size.as_mut_vec())
             // // .chain(self.by_value.as_mut_vec())
-            // .chain(self.by_spendable_type.as_mut_vec())
+            .chain(self.by_spendable_type.as_mut_vec())
             .collect::<Vec<_>>()
     }
 }
@@ -73,9 +73,9 @@ impl Outputs<(OutputFilter, vecs::utxos::cohort::Vecs)> {
         self.by_term
             .as_mut_vec()
             .into_par_iter()
-            //     .chain(self.by_up_to.as_mut_vec())
-            //     .chain(self.by_from.as_mut_vec())
-            //     .chain(self.by_range.as_mut_vec())
+            // .chain(self.by_up_to.as_mut_vec())
+            .chain(self.by_from.as_mut_vec())
+            // .chain(self.by_range.as_mut_vec())
             .for_each(|(filter, v)| {
                 let state = &mut v.state;
 
@@ -107,7 +107,7 @@ impl Outputs<(OutputFilter, vecs::utxos::cohort::Vecs)> {
                         if is && !was {
                             state.increment(&block_state.supply, block_state.price);
                         } else if was && !is {
-                            state.decrement(block_state.supply.clone(), block_state.price);
+                            state.decrement(&block_state.supply, block_state.price);
                         }
 
                         ControlFlow::Continue(())
@@ -124,10 +124,10 @@ impl Outputs<(OutputFilter, vecs::utxos::cohort::Vecs)> {
             .by_term
             .as_mut_vec()
             .into_iter()
-            //     .chain(self.by_up_to.as_mut_vec())
-            //     .chain(self.by_from.as_mut_vec())
-            //     .chain(self.by_range.as_mut_vec())
-            //     .chain(self.by_epoch.as_mut_vec())
+            // .chain(self.by_up_to.as_mut_vec())
+            .chain(self.by_from.as_mut_vec())
+            // .chain(self.by_range.as_mut_vec())
+            .chain(self.by_epoch.as_mut_vec())
             .collect::<Vec<_>>();
 
         let last_timestamp = chain_state.last().unwrap().timestamp;
@@ -143,41 +143,41 @@ impl Outputs<(OutputFilter, vecs::utxos::cohort::Vecs)> {
                 .timestamp
                 .difference_in_days_between(last_timestamp);
 
-            self.all.1.state.decrement(supply_state.clone(), price);
+            self.all.1.state.decrement(&supply_state, price);
 
-            // by_spendable_type.as_typed_vec().into_iter().for_each(
-            //     |(output_type, (supply_state, _))| {
-            //         self.by_spendable_type
-            //             .get_mut(output_type)
-            //             .1
-            //             .state
-            //             .decrement(supply_state.clone(), price)
-            //     },
-            // );
+            by_spendable_type.as_typed_vec().into_iter().for_each(
+                |(output_type, (supply_state, _))| {
+                    self.by_spendable_type
+                        .get_mut(output_type)
+                        .1
+                        .state
+                        .decrement(supply_state, price)
+                },
+            );
 
-            // by_spendable_type
-            //     .as_vec()
-            //     .into_iter()
-            //     .flat_map(|(_, sats_received)| sats_received.iter())
-            //     .for_each(|sats| {
-            //         let sats = *sats;
-            //         self.by_size
-            //             .as_mut_vec()
-            //             .iter_mut()
-            //             .filter(|(filter, _)| match filter {
-            //                 OutputFilter::Size(range) => range.contains(&sats),
-            //                 _ => unreachable!(),
-            //             })
-            //             .for_each(|(_, vec)| {
-            //                 vec.state.decrement(
-            //                     SupplyState {
-            //                         utxos: 1,
-            //                         value: sats,
-            //                     },
-            //                     price,
-            //                 );
-            //             });
-            //     });
+            by_spendable_type
+                .as_vec()
+                .into_iter()
+                .flat_map(|(_, sats_received)| sats_received.iter())
+                .for_each(|sats| {
+                    let sats = *sats;
+                    self.by_size
+                        .as_mut_vec()
+                        .iter_mut()
+                        .filter(|(filter, _)| match filter {
+                            OutputFilter::Size(range) => range.contains(&sats),
+                            _ => unreachable!(),
+                        })
+                        .for_each(|(_, vec)| {
+                            vec.state.decrement(
+                                &SupplyState {
+                                    utxos: 1,
+                                    value: sats,
+                                },
+                                price,
+                            );
+                        });
+                });
 
             time_based_vecs
                 .iter_mut()
@@ -189,7 +189,7 @@ impl Outputs<(OutputFilter, vecs::utxos::cohort::Vecs)> {
                     _ => unreachable!(),
                 })
                 .for_each(|(_, vecs)| {
-                    vecs.state.decrement(supply_state.clone(), price);
+                    vecs.state.decrement(&supply_state, price);
                 });
         });
     }
@@ -205,7 +205,7 @@ impl Outputs<(OutputFilter, vecs::utxos::cohort::Vecs)> {
         [
             &mut self.all.1,
             &mut self.by_term.short.1,
-            // &mut self.by_epoch.mut_vec_from_height(height).1,
+            &mut self.by_epoch.mut_vec_from_height(height).1,
             // Skip from and range as can't receive in the past
         ]
         .into_iter()
@@ -214,43 +214,44 @@ impl Outputs<(OutputFilter, vecs::utxos::cohort::Vecs)> {
             v.state.increment(&supply_state, price);
         });
 
-        // let mut by_size = self.by_size.as_mut_vec();
+        let mut by_size = self.by_size.as_mut_vec();
 
-        // received
-        //     .spendable
-        //     .as_vec()
-        //     .into_iter()
-        //     .flat_map(|(_, sats_received)| sats_received.iter())
-        //     .for_each(|sats| {
-        //         let sats = *sats;
-        // by_size
-        //     .iter_mut()
-        //     .filter(|(filter, _)| match filter {
-        //         OutputFilter::Size(range) => range.contains(&sats),
-        //         _ => unreachable!(),
-        //     })
-        //     .for_each(|(_, vec)| {
-        //         vec.state.increment(
-        //             &SupplyState {
-        //                 utxos: 1,
-        //                 value: sats,
-        //             },
-        //             price,
-        //         );
-        //     });
-        // });
+        received
+            .spendable
+            .as_vec()
+            .into_iter()
+            .flat_map(|(_, sats_received)| sats_received.iter())
+            .for_each(|sats| {
+                let sats = *sats;
 
-        // self.by_spendable_type
-        //     .as_mut_vec()
-        //     .into_iter()
-        //     .for_each(|(filter, vecs)| {
-        //         let output_type = match filter {
-        //             OutputFilter::Type(output_type) => *output_type,
-        //             _ => unreachable!(),
-        //         };
-        //         vecs.state
-        //             .increment(&received.spendable.get(output_type).0, price)
-        //     });
+                by_size
+                    .iter_mut()
+                    .filter(|(filter, _)| match filter {
+                        OutputFilter::Size(range) => range.contains(&sats),
+                        _ => unreachable!(),
+                    })
+                    .for_each(|(_, vec)| {
+                        vec.state.increment(
+                            &SupplyState {
+                                utxos: 1,
+                                value: sats,
+                            },
+                            price,
+                        );
+                    });
+            });
+
+        self.by_spendable_type
+            .as_mut_vec()
+            .into_iter()
+            .for_each(|(filter, vecs)| {
+                let output_type = match filter {
+                    OutputFilter::Type(output_type) => *output_type,
+                    _ => unreachable!(),
+                };
+                vecs.state
+                    .increment(&received.spendable.get(output_type).0, price)
+            });
     }
 }
 
@@ -260,12 +261,12 @@ impl<T> Outputs<(OutputFilter, T)> {
             .into_iter()
             .chain(self.by_term.vecs())
             // .chain(self.by_up_to.vecs())
-            // .chain(self.by_from.vecs())
+            .chain(self.by_from.vecs())
             // .chain(self.by_range.vecs())
-            // .chain(self.by_epoch.vecs())
-            // .chain(self.by_size.vecs())
+            .chain(self.by_epoch.vecs())
+            .chain(self.by_size.vecs())
             // // .chain(self.by_value.vecs())
-            // .chain(self.by_spendable_type.vecs())
+            .chain(self.by_spendable_type.vecs())
             .collect::<Vec<_>>()
     }
 }
@@ -276,13 +277,13 @@ impl<T> From<Outputs<T>> for Outputs<(OutputFilter, T)> {
             all: (OutputFilter::All, value.all),
             by_term: OutputsByTerm::from(value.by_term),
             // by_up_to: OutputsByUpTo::from(value.by_up_to),
-            // by_from: OutputsByFrom::from(value.by_from),
+            by_from: OutputsByFrom::from(value.by_from),
             // by_range: OutputsByRange::from(value.by_range),
-            // by_epoch: OutputsByEpoch::from(value.by_epoch),
-            // by_size: OutputsBySize::from(value.by_size),
+            by_epoch: OutputsByEpoch::from(value.by_epoch),
+            by_size: OutputsBySize::from(value.by_size),
             // // Needs whole UTXO set, TODO later
             // // by_value: OutputsByValue<T>,
-            // by_spendable_type: OutputsBySpendableType::from(value.by_spendable_type),
+            by_spendable_type: OutputsBySpendableType::from(value.by_spendable_type),
         }
     }
 }

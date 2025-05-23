@@ -15,6 +15,7 @@ pub struct OutputsBySpendableType<T> {
     pub p2wsh: T,
     pub p2tr: T,
     pub p2a: T,
+    pub unknown: T,
 }
 
 impl<T> OutputsBySpendableType<T> {
@@ -29,6 +30,7 @@ impl<T> OutputsBySpendableType<T> {
             OutputType::P2WSH => &self.p2wsh,
             OutputType::P2TR => &self.p2tr,
             OutputType::P2A => &self.p2a,
+            OutputType::Unknown => &self.unknown,
             _ => unreachable!(),
         }
     }
@@ -44,11 +46,12 @@ impl<T> OutputsBySpendableType<T> {
             OutputType::P2WSH => &mut self.p2wsh,
             OutputType::P2TR => &mut self.p2tr,
             OutputType::P2A => &mut self.p2a,
+            OutputType::Unknown => &mut self.unknown,
             _ => unreachable!(),
         }
     }
 
-    pub fn as_vec(&self) -> [&T; 9] {
+    pub fn as_vec(&self) -> [&T; 10] {
         [
             &self.p2pk65,
             &self.p2pk33,
@@ -59,10 +62,11 @@ impl<T> OutputsBySpendableType<T> {
             &self.p2wsh,
             &self.p2tr,
             &self.p2a,
+            &self.unknown,
         ]
     }
 
-    pub fn as_mut_vec(&mut self) -> [&mut T; 9] {
+    pub fn as_mut_vec(&mut self) -> [&mut T; 10] {
         [
             &mut self.p2pk65,
             &mut self.p2pk33,
@@ -73,10 +77,11 @@ impl<T> OutputsBySpendableType<T> {
             &mut self.p2wsh,
             &mut self.p2tr,
             &mut self.p2a,
+            &mut self.unknown,
         ]
     }
 
-    pub fn as_typed_vec(&self) -> [(OutputType, &T); 9] {
+    pub fn as_typed_vec(&self) -> [(OutputType, &T); 10] {
         [
             (OutputType::P2PK65, &self.p2pk65),
             (OutputType::P2PK33, &self.p2pk33),
@@ -87,12 +92,13 @@ impl<T> OutputsBySpendableType<T> {
             (OutputType::P2WSH, &self.p2wsh),
             (OutputType::P2TR, &self.p2tr),
             (OutputType::P2A, &self.p2a),
+            (OutputType::Unknown, &self.unknown),
         ]
     }
 }
 
 impl<T> OutputsBySpendableType<(OutputFilter, T)> {
-    pub fn vecs(&self) -> [&T; 9] {
+    pub fn vecs(&self) -> [&T; 10] {
         [
             &self.p2pk65.1,
             &self.p2pk33.1,
@@ -103,6 +109,7 @@ impl<T> OutputsBySpendableType<(OutputFilter, T)> {
             &self.p2wsh.1,
             &self.p2tr.1,
             &self.p2a.1,
+            &self.unknown.1,
         ]
     }
 }
@@ -119,6 +126,7 @@ impl<T> From<OutputsBySpendableType<T>> for OutputsBySpendableType<(OutputFilter
             p2wsh: (OutputFilter::Type(OutputType::P2WSH), value.p2wsh),
             p2tr: (OutputFilter::Type(OutputType::P2TR), value.p2tr),
             p2a: (OutputFilter::Type(OutputType::P2A), value.p2a),
+            unknown: (OutputFilter::Type(OutputType::Unknown), value.unknown),
         }
     }
 }

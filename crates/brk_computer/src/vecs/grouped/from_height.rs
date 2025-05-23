@@ -103,9 +103,7 @@ where
         )?;
 
         let height: Option<&EagerVec<Height, T>> = None;
-        self.compute_rest(indexes, starting_indexes, exit, height)?;
-
-        Ok(())
+        self.compute_rest(indexes, starting_indexes, exit, height)
     }
 
     pub fn compute_rest(

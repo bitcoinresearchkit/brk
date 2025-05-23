@@ -39,7 +39,7 @@ impl<'a> VecTrees<'a> {
             dbg!(&name, split[0], index.to_string());
             panic!();
         }
-        let key = split[1..].join("_").to_string().replace("_", "-");
+        let key = split[1..].join("_to_").to_string().replace("_", "-");
         let prev = self
             .id_to_index_to_vec
             .entry(key.clone())

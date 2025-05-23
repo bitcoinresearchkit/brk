@@ -342,6 +342,303 @@ function createPartialOptions(colors) {
     ];
   }
 
+  /**
+   * @typedef {"-ratio"} RatioCapSuffix
+   * @typedef {EndsWith<RatioCapSuffix>} VecIdRatioCap
+   * @typedef {WithoutSuffix<VecIdRatioCap, RatioCapSuffix>} VecIdRatioCapBase
+   */
+
+  /**
+   *
+   * @param {Object} args
+   * @param {string} args.name
+   * @param {string} args.title
+   * @param {VecIdRatioCapBase} args.key
+   * @param {Color} [args.color]
+   */
+  function createPriceWithRatio({ name, title, key, color }) {
+    return {
+      name,
+      title,
+      top: [
+        createBaseSeries({
+          key,
+          name: "Average",
+          color,
+        }),
+        createBaseSeries({
+          key: `${key}-ratio-p1sd-as-price`,
+          name: "+1σ",
+          color: colors.orange,
+          defaultActive: false,
+        }),
+        createBaseSeries({
+          key: `${key}-ratio-p2sd-as-price`,
+          name: "+2σ",
+          color: colors.red,
+          defaultActive: false,
+        }),
+        createBaseSeries({
+          key: `${key}-ratio-p3sd-as-price`,
+          name: "+3σ",
+          color: colors.pink,
+          defaultActive: false,
+        }),
+        createBaseSeries({
+          key: `${key}-ratio-m1sd-as-price`,
+          name: "−1σ",
+          color: colors.cyan,
+          defaultActive: false,
+        }),
+        createBaseSeries({
+          key: `${key}-ratio-m2sd-as-price`,
+          name: "−2σ",
+          color: colors.blue,
+          defaultActive: false,
+        }),
+        createBaseSeries({
+          key: `${key}-ratio-m3sd-as-price`,
+          name: "−3σ",
+          color: colors.violet,
+          defaultActive: false,
+        }),
+        createBaseSeries({
+          key: `${key}-ratio-p99-as-price`,
+          name: "p99",
+          color: colors.orange,
+          defaultActive: false,
+        }),
+        createBaseSeries({
+          key: `${key}-ratio-p99-5-as-price`,
+          name: "p99.5",
+          color: colors.red,
+          defaultActive: false,
+        }),
+        createBaseSeries({
+          key: `${key}-ratio-p99-9-as-price`,
+          name: "p99.9",
+          color: colors.pink,
+          defaultActive: false,
+        }),
+        createBaseSeries({
+          key: `${key}-ratio-p1-as-price`,
+          name: "p1",
+          color: colors.cyan,
+          defaultActive: false,
+        }),
+        createBaseSeries({
+          key: `${key}-ratio-p0-5-as-price`,
+          name: "p0.5",
+          color: colors.blue,
+          defaultActive: false,
+        }),
+        createBaseSeries({
+          key: `${key}-ratio-p0-1-as-price`,
+          name: "p0.1",
+          color: colors.violet,
+          defaultActive: false,
+        }),
+      ],
+      bottom: [
+        /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
+          key: `${key}-ratio`,
+          title: "Ratio",
+          type: "Baseline",
+          options: {
+            baseValue: { price: 1 },
+            createPriceLine: {
+              value: 1,
+            },
+          },
+        }),
+        createBaseSeries({
+          key: `${key}-ratio-sma`,
+          name: "sma",
+          color: colors.yellow,
+          defaultActive: false,
+        }),
+        createBaseSeries({
+          key: `${key}-ratio-p1sd`,
+          name: "+1σ",
+          color: colors.orange,
+          defaultActive: false,
+        }),
+        createBaseSeries({
+          key: `${key}-ratio-p2sd`,
+          name: "+2σ",
+          color: colors.red,
+          defaultActive: false,
+        }),
+        createBaseSeries({
+          key: `${key}-ratio-p3sd`,
+          name: "+3σ",
+          color: colors.pink,
+          defaultActive: false,
+        }),
+        createBaseSeries({
+          key: `${key}-ratio-m1sd`,
+          name: "−1σ",
+          color: colors.cyan,
+          defaultActive: false,
+        }),
+        createBaseSeries({
+          key: `${key}-ratio-m2sd`,
+          name: "−2σ",
+          color: colors.blue,
+          defaultActive: false,
+        }),
+        createBaseSeries({
+          key: `${key}-ratio-m3sd`,
+          name: "−3σ",
+          color: colors.violet,
+          defaultActive: false,
+        }),
+        createBaseSeries({
+          key: `${key}-ratio-p99`,
+          name: "p99",
+          color: colors.orange,
+          defaultActive: false,
+        }),
+        createBaseSeries({
+          key: `${key}-ratio-p99-5`,
+          name: "p99.5",
+          color: colors.red,
+          defaultActive: false,
+        }),
+        createBaseSeries({
+          key: `${key}-ratio-p99-9`,
+          name: "p99.9",
+          color: colors.pink,
+          defaultActive: false,
+        }),
+        createBaseSeries({
+          key: `${key}-ratio-p1`,
+          name: "p1",
+          color: colors.cyan,
+          defaultActive: false,
+        }),
+        createBaseSeries({
+          key: `${key}-ratio-p0-5`,
+          name: "p0.5",
+          color: colors.blue,
+          defaultActive: false,
+        }),
+        createBaseSeries({
+          key: `${key}-ratio-p0-1`,
+          name: "p0.1",
+          color: colors.violet,
+          defaultActive: false,
+        }),
+        createBaseSeries({
+          key: `${key}-ratio-1w-sma`,
+          name: "1w sma",
+          color: colors.fuchsia,
+          defaultActive: false,
+        }),
+        createBaseSeries({
+          key: `${key}-ratio-1m-sma`,
+          name: "1m sma",
+          color: colors.pink,
+          defaultActive: false,
+        }),
+        createBaseSeries({
+          key: `${key}-ratio-1y-sma`,
+          name: "1y sma",
+          color: colors.rose,
+          defaultActive: false,
+        }),
+        /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
+          key: `${key}-ratio-1y-sma-momentum-oscillator`,
+          title: "1Y Momentum",
+          type: "Baseline",
+          options: {
+            createPriceLine: {
+              value: 0,
+            },
+          },
+        }),
+        /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
+          key: `${key}-ratio-zscore`,
+          title: "Score",
+          type: "Baseline",
+          options: {
+            createPriceLine: {
+              value: 0,
+            },
+          },
+        }),
+      ],
+    };
+  }
+
+  /**
+   * @typedef {"-realized-cap"} RealizedCapSuffix
+   * @typedef {EndsWith<RealizedCapSuffix>} VecIdRealizedCap
+   * @typedef {WithoutSuffix<VecIdRealizedCap, RealizedCapSuffix>} VecIdRealizedCapBase
+   */
+
+  /**
+   *
+   * @param {Object} args
+   * @param {string} args.name
+   * @param {string} args.title
+   * @param {"" | VecIdRealizedCapBase} args.key
+   */
+  function createUTXOGroupFolder({ name, title, key: _key }) {
+    const key = _key
+      ? /** @type {const} */ (`${_key}-`)
+      : /** @type {const} */ ("");
+
+    return /** @satisfies {PartialOptionsGroup} */ ({
+      name: name || "all",
+      tree: [
+        {
+          name: "supply",
+          title: `${title} Supply`,
+          bottom: [
+            createBaseSeries({
+              key: `${key}supply`,
+              name: "Supply",
+            }),
+            createBaseSeries({
+              key: `${key}supply-in-btc`,
+              name: "Supply",
+            }),
+            createBaseSeries({
+              key: `${key}supply-in-usd`,
+              name: "Supply",
+            }),
+          ],
+        },
+        {
+          name: "utxo count",
+          title: `${title} UTXO Count`,
+          bottom: [
+            createBaseSeries({
+              key: `${key}utxo-count`,
+              name: "Count",
+            }),
+          ],
+        },
+        {
+          name: "realized cap",
+          title: `${title} Realized Capitalization`,
+          bottom: [
+            createBaseSeries({
+              key: `${key}realized-cap`,
+              name: "Realized Cap",
+            }),
+          ],
+        },
+        createPriceWithRatio({
+          key: `${key}realized-price`,
+          name: "realized price",
+          title: `${title} Realized Price`,
+        }),
+      ],
+    });
+  }
+
   return [
     {
       name: "Charts",
@@ -445,218 +742,14 @@ function createPartialOptions(colors) {
                     }),
                   ),
                 },
-                ...averages.map(({ key, name }) => ({
-                  name,
-                  title: `${name} Market Price Moving Average`,
-                  top: [
-                    createBaseSeries({
-                      key: `${key}-sma`,
-                      name: "Average",
-                      color: colors[`_${key}`],
-                    }),
-                    createBaseSeries({
-                      key: `${key}-sma-ratio-p1sd-as-price`,
-                      name: "+1σ",
-                      color: colors.orange,
-                      defaultActive: false,
-                    }),
-                    createBaseSeries({
-                      key: `${key}-sma-ratio-p2sd-as-price`,
-                      name: "+2σ",
-                      color: colors.red,
-                      defaultActive: false,
-                    }),
-                    createBaseSeries({
-                      key: `${key}-sma-ratio-p3sd-as-price`,
-                      name: "+3σ",
-                      color: colors.pink,
-                      defaultActive: false,
-                    }),
-                    createBaseSeries({
-                      key: `${key}-sma-ratio-m1sd-as-price`,
-                      name: "−1σ",
-                      color: colors.cyan,
-                      defaultActive: false,
-                    }),
-                    createBaseSeries({
-                      key: `${key}-sma-ratio-m2sd-as-price`,
-                      name: "−2σ",
-                      color: colors.blue,
-                      defaultActive: false,
-                    }),
-                    createBaseSeries({
-                      key: `${key}-sma-ratio-m3sd-as-price`,
-                      name: "−3σ",
-                      color: colors.violet,
-                      defaultActive: false,
-                    }),
-                    createBaseSeries({
-                      key: `${key}-sma-ratio-p99-as-price`,
-                      name: "p99",
-                      color: colors.orange,
-                      defaultActive: false,
-                    }),
-                    createBaseSeries({
-                      key: `${key}-sma-ratio-p99-5-as-price`,
-                      name: "p99.5",
-                      color: colors.red,
-                      defaultActive: false,
-                    }),
-                    createBaseSeries({
-                      key: `${key}-sma-ratio-p99-9-as-price`,
-                      name: "p99.9",
-                      color: colors.pink,
-                      defaultActive: false,
-                    }),
-                    createBaseSeries({
-                      key: `${key}-sma-ratio-p1-as-price`,
-                      name: "p1",
-                      color: colors.cyan,
-                      defaultActive: false,
-                    }),
-                    createBaseSeries({
-                      key: `${key}-sma-ratio-p0-5-as-price`,
-                      name: "p0.5",
-                      color: colors.blue,
-                      defaultActive: false,
-                    }),
-                    createBaseSeries({
-                      key: `${key}-sma-ratio-p0-1-as-price`,
-                      name: "p0.1",
-                      color: colors.violet,
-                      defaultActive: false,
-                    }),
-                  ],
-                  bottom: [
-                    /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
-                      key: `${key}-sma-ratio`,
-                      title: "Ratio",
-                      type: "Baseline",
-                      options: {
-                        baseValue: { price: 1 },
-                        createPriceLine: {
-                          value: 1,
-                        },
-                      },
-                    }),
-                    createBaseSeries({
-                      key: `${key}-sma-ratio-sma`,
-                      name: "sma",
-                      color: colors.yellow,
-                      defaultActive: false,
-                    }),
-                    createBaseSeries({
-                      key: `${key}-sma-ratio-p1sd`,
-                      name: "+1σ",
-                      color: colors.orange,
-                      defaultActive: false,
-                    }),
-                    createBaseSeries({
-                      key: `${key}-sma-ratio-p2sd`,
-                      name: "+2σ",
-                      color: colors.red,
-                      defaultActive: false,
-                    }),
-                    createBaseSeries({
-                      key: `${key}-sma-ratio-p3sd`,
-                      name: "+3σ",
-                      color: colors.pink,
-                      defaultActive: false,
-                    }),
-                    createBaseSeries({
-                      key: `${key}-sma-ratio-m1sd`,
-                      name: "−1σ",
-                      color: colors.cyan,
-                      defaultActive: false,
-                    }),
-                    createBaseSeries({
-                      key: `${key}-sma-ratio-m2sd`,
-                      name: "−2σ",
-                      color: colors.blue,
-                      defaultActive: false,
-                    }),
-                    createBaseSeries({
-                      key: `${key}-sma-ratio-m3sd`,
-                      name: "−3σ",
-                      color: colors.violet,
-                      defaultActive: false,
-                    }),
-                    createBaseSeries({
-                      key: `${key}-sma-ratio-p99`,
-                      name: "p99",
-                      color: colors.orange,
-                      defaultActive: false,
-                    }),
-                    createBaseSeries({
-                      key: `${key}-sma-ratio-p99-5`,
-                      name: "p99.5",
-                      color: colors.red,
-                      defaultActive: false,
-                    }),
-                    createBaseSeries({
-                      key: `${key}-sma-ratio-p99-9`,
-                      name: "p99.9",
-                      color: colors.pink,
-                      defaultActive: false,
-                    }),
-                    createBaseSeries({
-                      key: `${key}-sma-ratio-p1`,
-                      name: "p1",
-                      color: colors.cyan,
-                      defaultActive: false,
-                    }),
-                    createBaseSeries({
-                      key: `${key}-sma-ratio-p0-5`,
-                      name: "p0.5",
-                      color: colors.blue,
-                      defaultActive: false,
-                    }),
-                    createBaseSeries({
-                      key: `${key}-sma-ratio-p0-1`,
-                      name: "p0.1",
-                      color: colors.violet,
-                      defaultActive: false,
-                    }),
-                    createBaseSeries({
-                      key: `${key}-sma-ratio-1w-sma`,
-                      name: "1w sma",
-                      color: colors.fuchsia,
-                      defaultActive: false,
-                    }),
-                    createBaseSeries({
-                      key: `${key}-sma-ratio-1m-sma`,
-                      name: "1m sma",
-                      color: colors.pink,
-                      defaultActive: false,
-                    }),
-                    createBaseSeries({
-                      key: `${key}-sma-ratio-1y-sma`,
-                      name: "1y sma",
-                      color: colors.rose,
-                      defaultActive: false,
-                    }),
-                    /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
-                      key: `${key}-sma-ratio-1y-sma-momentum-oscillator`,
-                      title: "1Y Momentum",
-                      type: "Baseline",
-                      options: {
-                        createPriceLine: {
-                          value: 0,
-                        },
-                      },
-                    }),
-                    /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
-                      key: `${key}-sma-ratio-zscore`,
-                      title: "Score",
-                      type: "Baseline",
-                      options: {
-                        createPriceLine: {
-                          value: 0,
-                        },
-                      },
-                    }),
-                  ],
-                })),
+                ...averages.map(({ key, name }) =>
+                  createPriceWithRatio({
+                    key: `${key}-sma`,
+                    name,
+                    title: `${name} Market Price Moving Average`,
+                    color: colors[`_${key}`],
+                  }),
+                ),
               ],
             },
             {
@@ -1373,62 +1466,304 @@ function createPartialOptions(colors) {
         {
           name: "UTXOs",
           tree: [
-            // {
-            //   name: "supply",
-            //   title: "Supply",
-            //   bottom: [
-            //     createBaseSeries({
-            //       key: "supply",
-            //       name: "Supply",
-            //     }),
-            //     createBaseSeries({
-            //       key: "supply-in-btc",
-            //       name: "Supply",
-            //     }),
-            //     createBaseSeries({
-            //       key: "supply-in-usd",
-            //       name: "Supply",
-            //     }),
-            //   ],
-            // },
-            // {
-            //   name: "unspendable supply",
-            //   title: "Unspendable Supply",
-            //   bottom: [
-            //     createBaseSeries({
-            //       key: "unspendable-supply",
-            //       name: "Supply",
-            //     }),
-            //     createBaseSeries({
-            //       key: "unspendable-supply-in-btc",
-            //       name: "Supply",
-            //     }),
-            //     createBaseSeries({
-            //       key: "unspendable-supply-in-usd",
-            //       name: "Supply",
-            //     }),
-            //   ],
-            // },
-            // {
-            //   name: "count",
-            //   title: "UTXO Count",
-            //   bottom: [
-            //     createBaseSeries({
-            //       key: "utxo-count",
-            //       name: "Count",
-            //     }),
-            //   ],
-            // },
-            // {
-            //   name: "realized cap",
-            //   title: "Realized Capitalization",
-            //   bottom: [
-            //     createBaseSeries({
-            //       key: "realized-cap",
-            //       name: "Realized Cap",
-            //     }),
-            //   ],
-            // },
+            createUTXOGroupFolder({
+              key: "",
+              name: "",
+              title: "",
+            }),
+            {
+              name: "term",
+              tree: [
+                createUTXOGroupFolder({
+                  key: "sth",
+                  name: "short",
+                  title: "Short Term Holders",
+                }),
+                createUTXOGroupFolder({
+                  key: "lth",
+                  name: "long",
+                  title: "Long Term Holders",
+                }),
+              ],
+            },
+            {
+              name: "From",
+              tree: [
+                createUTXOGroupFolder({
+                  key: "from-1d",
+                  name: "1d",
+                  title: "From 1 Day",
+                }),
+                createUTXOGroupFolder({
+                  key: "from-1w",
+                  name: "1w",
+                  title: "From 1 Week",
+                }),
+                createUTXOGroupFolder({
+                  key: "from-1m",
+                  name: "1m",
+                  title: "From 1 Month",
+                }),
+                createUTXOGroupFolder({
+                  key: "from-2m",
+                  name: "2m",
+                  title: "From 2 Months",
+                }),
+                createUTXOGroupFolder({
+                  key: "from-3m",
+                  name: "3m",
+                  title: "From 3 Months",
+                }),
+                createUTXOGroupFolder({
+                  key: "from-4m",
+                  name: "4m",
+                  title: "From 4 Months",
+                }),
+                createUTXOGroupFolder({
+                  key: "from-5m",
+                  name: "5m",
+                  title: "From 5 Months",
+                }),
+                createUTXOGroupFolder({
+                  key: "from-6m",
+                  name: "6m",
+                  title: "From 6 Months",
+                }),
+                createUTXOGroupFolder({
+                  key: "from-1y",
+                  name: "1y",
+                  title: "From 1 Year",
+                }),
+                createUTXOGroupFolder({
+                  key: "from-2y",
+                  name: "2y",
+                  title: "From 2 Years",
+                }),
+                createUTXOGroupFolder({
+                  key: "from-3y",
+                  name: "3y",
+                  title: "From 3 Years",
+                }),
+                createUTXOGroupFolder({
+                  key: "from-4y",
+                  name: "4y",
+                  title: "From 4 Years",
+                }),
+                createUTXOGroupFolder({
+                  key: "from-5y",
+                  name: "5y",
+                  title: "From 5 Years",
+                }),
+                createUTXOGroupFolder({
+                  key: "from-6y",
+                  name: "6y",
+                  title: "From 6 Years",
+                }),
+                createUTXOGroupFolder({
+                  key: "from-7y",
+                  name: "7y",
+                  title: "From 7 Years",
+                }),
+                createUTXOGroupFolder({
+                  key: "from-8y",
+                  name: "8y",
+                  title: "From 8 Years",
+                }),
+                createUTXOGroupFolder({
+                  key: "from-10y",
+                  name: "10y",
+                  title: "From 10 Years",
+                }),
+                createUTXOGroupFolder({
+                  key: "from-15y",
+                  name: "15y",
+                  title: "From 15 Years",
+                }),
+              ],
+            },
+            {
+              name: "Epoch",
+              tree: [
+                createUTXOGroupFolder({
+                  key: "epoch-0",
+                  name: "0",
+                  title: "Epoch 0",
+                }),
+                createUTXOGroupFolder({
+                  key: "epoch-1",
+                  name: "1",
+                  title: "Epoch 1",
+                }),
+                createUTXOGroupFolder({
+                  key: "epoch-2",
+                  name: "2",
+                  title: "Epoch 2",
+                }),
+                createUTXOGroupFolder({
+                  key: "epoch-3",
+                  name: "3",
+                  title: "Epoch 3",
+                }),
+                createUTXOGroupFolder({
+                  key: "epoch-4",
+                  name: "4",
+                  title: "Epoch 4",
+                }),
+              ],
+            },
+            {
+              name: "size",
+              tree: [
+                createUTXOGroupFolder({
+                  key: "from-1sat-10sats",
+                  name: "1sat..10sats",
+                  title: "UTXOs from 1 sat to 10 sats",
+                }),
+                createUTXOGroupFolder({
+                  key: "from-10sats-100sats",
+                  name: "10sat..100sats",
+                  title: "UTXOs from 10 sats to 100 sats",
+                }),
+                createUTXOGroupFolder({
+                  key: "from-100sats-1-000sats",
+                  name: "100sat..1_000sats",
+                  title: "UTXOs from 100 sats to 1,000 sats",
+                }),
+                createUTXOGroupFolder({
+                  key: "from-1-000sats-10-000sats",
+                  name: "1_000sat..10_000sats",
+                  title: "UTXOs from 1,000 sats to 10,000 sats",
+                }),
+                createUTXOGroupFolder({
+                  key: "from-10-000sats-100-000sats",
+                  name: "10_000sat..100_000sats",
+                  title: "UTXOs from 10,000 sats to 100,000 sats",
+                }),
+                createUTXOGroupFolder({
+                  key: "from-100-000sats-1-000-000sats",
+                  name: "100_000sat..1_000_000sats",
+                  title: "UTXOs from 100,000 sats to 1,000,000 sats",
+                }),
+                createUTXOGroupFolder({
+                  key: "from-1-000-000sats-10-000-000sats",
+                  name: "1_000_000sat..10_000_000sats",
+                  title: "UTXOs from 1,000,000 sats to 10,000,000 sats",
+                }),
+                createUTXOGroupFolder({
+                  key: "from-10-000-000sats-1btc",
+                  name: "10_000_000sat..1btc",
+                  title: "UTXOs from 10,000,000 sats to 1 BTC",
+                }),
+                createUTXOGroupFolder({
+                  key: "from-1btc-10btc",
+                  name: "1btc..10btc",
+                  title: "UTXOs from 1 BTC to 10 BTC",
+                }),
+                createUTXOGroupFolder({
+                  key: "from-10btc-100btc",
+                  name: "10btc..100btc",
+                  title: "UTXOs from 10 BTC to 100 BTC",
+                }),
+                createUTXOGroupFolder({
+                  key: "from-100btc-1-000btc",
+                  name: "100btc..1_000btc",
+                  title: "UTXOs from 100 BTC to 1,000 BTC",
+                }),
+                createUTXOGroupFolder({
+                  key: "from-1-000btc-10-000btc",
+                  name: "1_000btc..10_000btc",
+                  title: "UTXOs from 1,000 BTC to 10,000 BTC",
+                }),
+                createUTXOGroupFolder({
+                  key: "from-10-000btc-100-000btc",
+                  name: "10_000btc..100_000btc",
+                  title: "UTXOs from 10,000 BTC to 100,000 BTC",
+                }),
+                createUTXOGroupFolder({
+                  key: "from-100-000btc",
+                  name: "100_000btc..inf",
+                  title: "UTXOs from 100,000 BTC",
+                }),
+              ],
+            },
+            {
+              name: "type",
+              tree: [
+                createUTXOGroupFolder({
+                  key: "p2pk65",
+                  name: "p2pk65",
+                  title: "Pay To Long Public Key",
+                }),
+                createUTXOGroupFolder({
+                  key: "p2pk33",
+                  name: "p2pk33",
+                  title: "Pay To Short Public Key",
+                }),
+                createUTXOGroupFolder({
+                  key: "p2pkh",
+                  name: "p2pkh",
+                  title: "Pay To Public Key Hash",
+                }),
+                createUTXOGroupFolder({
+                  key: "p2ms",
+                  name: "p2ms",
+                  title: "Pay To Bare Multisig",
+                }),
+                createUTXOGroupFolder({
+                  key: "p2sh",
+                  name: "p2sh",
+                  title: "Pay To Script Hash",
+                }),
+                createUTXOGroupFolder({
+                  key: "p2wpkh",
+                  name: "p2wpkh",
+                  title: "Pay To Witness Public Key Hash",
+                }),
+                createUTXOGroupFolder({
+                  key: "p2wsh",
+                  name: "p2wsh",
+                  title: "Pay To Witness Script Hash",
+                }),
+                createUTXOGroupFolder({
+                  key: "p2tr",
+                  name: "p2tr",
+                  title: "Pay To Taproot",
+                }),
+                createUTXOGroupFolder({
+                  key: "p2a",
+                  name: "p2a",
+                  title: "Pay To Anchor",
+                }),
+                createUTXOGroupFolder({
+                  key: "unknown",
+                  name: "unknown",
+                  title: "Pay To Unknown",
+                }),
+              ],
+            },
+            {
+              name: "Unspendable",
+              tree: [
+                {
+                  name: "supply",
+                  title: "Unspendable Supply",
+                  bottom: [
+                    createBaseSeries({
+                      key: "unspendable-supply",
+                      name: "Supply",
+                    }),
+                    createBaseSeries({
+                      key: "unspendable-supply-in-btc",
+                      name: "Supply",
+                    }),
+                    createBaseSeries({
+                      key: "unspendable-supply-in-usd",
+                      name: "Supply",
+                    }),
+                  ],
+                },
+              ],
+            },
           ],
         },
       ],

@@ -18,7 +18,7 @@ use super::{ComputedVecsFromDateIndex, StorableVecGeneatorOptions};
 
 #[derive(Clone)]
 pub struct ComputedRatioVecsFromDateIndex {
-    pub price: ComputedVecsFromDateIndex<Dollars>,
+    pub price: Option<ComputedVecsFromDateIndex<Dollars>>,
 
     pub ratio: ComputedVecsFromDateIndex<StoredF32>,
     pub ratio_sma: ComputedVecsFromDateIndex<StoredF32>,
@@ -60,19 +60,22 @@ impl ComputedRatioVecsFromDateIndex {
     pub fn forced_import(
         path: &Path,
         name: &str,
-        // _compute_source: bool,
+        compute_source: bool,
         version: Version,
         compressed: Compressed,
         options: StorableVecGeneatorOptions,
     ) -> color_eyre::Result<Self> {
         Ok(Self {
-            price: ComputedVecsFromDateIndex::forced_import(
-                path,
-                name,
-                VERSION + version,
-                compressed,
-                options,
-            )?,
+            price: compute_source.then(|| {
+                ComputedVecsFromDateIndex::forced_import(
+                    path,
+                    name,
+                    VERSION + version,
+                    compressed,
+                    options,
+                )
+                .unwrap()
+            }),
             ratio: ComputedVecsFromDateIndex::forced_import(
                 path,
                 &format!("{name}_ratio"),
@@ -300,7 +303,7 @@ impl ComputedRatioVecsFromDateIndex {
         })
     }
 
-    pub fn compute<F>(
+    pub fn compute_all<F>(
         &mut self,
         indexer: &Indexer,
         indexes: &indexes::Vecs,
@@ -319,7 +322,33 @@ impl ComputedRatioVecsFromDateIndex {
         ) -> Result<()>,
     {
         self.price
+            .as_mut()
+            .unwrap()
             .compute(indexer, indexes, starting_indexes, exit, compute)?;
+
+        let date_to_price_opt: Option<&EagerVec<DateIndex, Dollars>> = None;
+        self.compute_rest(
+            indexer,
+            indexes,
+            fetched,
+            starting_indexes,
+            exit,
+            date_to_price_opt,
+        )
+    }
+
+    pub fn compute_rest(
+        &mut self,
+        indexer: &Indexer,
+        indexes: &indexes::Vecs,
+        fetched: &fetched::Vecs,
+        starting_indexes: &Indexes,
+        exit: &Exit,
+        date_to_price_opt: Option<&impl AnyIterableVec<DateIndex, Dollars>>,
+    ) -> color_eyre::Result<()> {
+        let date_to_price = date_to_price_opt.unwrap_or_else(|| unsafe {
+            std::mem::transmute(&self.price.as_ref().unwrap().dateindex)
+        });
 
         let closes = &fetched.timeindexes_to_close.dateindex;
 
@@ -329,7 +358,7 @@ impl ComputedRatioVecsFromDateIndex {
             starting_indexes,
             exit,
             |v, _, _, starting_indexes, exit| {
-                let mut price = self.price.dateindex.into_iter();
+                let mut price = date_to_price.iter();
                 v.compute_transform(
                     starting_indexes.dateindex,
                     closes,
@@ -590,6 +619,10 @@ impl ComputedRatioVecsFromDateIndex {
         self.ratio_m3sd
             .compute_rest(indexes, starting_indexes, exit)?;
 
+        let date_to_price = date_to_price_opt.unwrap_or_else(|| unsafe {
+            std::mem::transmute(&self.price.as_ref().unwrap().dateindex)
+        });
+
         self.ratio_p99_as_price.compute(
             indexer,
             indexes,
@@ -599,7 +632,7 @@ impl ComputedRatioVecsFromDateIndex {
                 let mut iter = self.ratio_p99.dateindex.into_iter();
                 vec.compute_transform(
                     starting_indexes.dateindex,
-                    &self.price.dateindex,
+                    date_to_price,
                     |(i, price, ..)| {
                         let multiplier = iter.unwrap_get_inner(i);
                         (i, price * multiplier)
@@ -618,7 +651,7 @@ impl ComputedRatioVecsFromDateIndex {
                 let mut iter = self.ratio_p99_5.dateindex.into_iter();
                 vec.compute_transform(
                     starting_indexes.dateindex,
-                    &self.price.dateindex,
+                    date_to_price,
                     |(i, price, ..)| {
                         let multiplier = iter.unwrap_get_inner(i);
                         (i, price * multiplier)
@@ -637,7 +670,7 @@ impl ComputedRatioVecsFromDateIndex {
                 let mut iter = self.ratio_p99_9.dateindex.into_iter();
                 vec.compute_transform(
                     starting_indexes.dateindex,
-                    &self.price.dateindex,
+                    date_to_price,
                     |(i, price, ..)| {
                         let multiplier = iter.unwrap_get_inner(i);
                         (i, price * multiplier)
@@ -656,7 +689,7 @@ impl ComputedRatioVecsFromDateIndex {
                 let mut iter = self.ratio_p1.dateindex.into_iter();
                 vec.compute_transform(
                     starting_indexes.dateindex,
-                    &self.price.dateindex,
+                    date_to_price,
                     |(i, price, ..)| {
                         let multiplier = iter.unwrap_get_inner(i);
                         (i, price * multiplier)
@@ -675,7 +708,7 @@ impl ComputedRatioVecsFromDateIndex {
                 let mut iter = self.ratio_p0_5.dateindex.into_iter();
                 vec.compute_transform(
                     starting_indexes.dateindex,
-                    &self.price.dateindex,
+                    date_to_price,
                     |(i, price, ..)| {
                         let multiplier = iter.unwrap_get_inner(i);
                         (i, price * multiplier)
@@ -694,7 +727,7 @@ impl ComputedRatioVecsFromDateIndex {
                 let mut iter = self.ratio_p0_1.dateindex.into_iter();
                 vec.compute_transform(
                     starting_indexes.dateindex,
-                    &self.price.dateindex,
+                    date_to_price,
                     |(i, price, ..)| {
                         let multiplier = iter.unwrap_get_inner(i);
                         (i, price * multiplier)
@@ -713,7 +746,7 @@ impl ComputedRatioVecsFromDateIndex {
                 let mut iter = self.ratio_p1sd.dateindex.into_iter();
                 vec.compute_transform(
                     starting_indexes.dateindex,
-                    &self.price.dateindex,
+                    date_to_price,
                     |(i, price, ..)| {
                         let multiplier = iter.unwrap_get_inner(i);
                         (i, price * multiplier)
@@ -732,7 +765,7 @@ impl ComputedRatioVecsFromDateIndex {
                 let mut iter = self.ratio_p2sd.dateindex.into_iter();
                 vec.compute_transform(
                     starting_indexes.dateindex,
-                    &self.price.dateindex,
+                    date_to_price,
                     |(i, price, ..)| {
                         let multiplier = iter.unwrap_get_inner(i);
                         (i, price * multiplier)
@@ -751,7 +784,7 @@ impl ComputedRatioVecsFromDateIndex {
                 let mut iter = self.ratio_p3sd.dateindex.into_iter();
                 vec.compute_transform(
                     starting_indexes.dateindex,
-                    &self.price.dateindex,
+                    date_to_price,
                     |(i, price, ..)| {
                         let multiplier = iter.unwrap_get_inner(i);
                         (i, price * multiplier)
@@ -770,7 +803,7 @@ impl ComputedRatioVecsFromDateIndex {
                 let mut iter = self.ratio_m1sd.dateindex.into_iter();
                 vec.compute_transform(
                     starting_indexes.dateindex,
-                    &self.price.dateindex,
+                    date_to_price,
                     |(i, price, ..)| {
                         let multiplier = iter.unwrap_get_inner(i);
                         (i, price * multiplier)
@@ -789,7 +822,7 @@ impl ComputedRatioVecsFromDateIndex {
                 let mut iter = self.ratio_m2sd.dateindex.into_iter();
                 vec.compute_transform(
                     starting_indexes.dateindex,
-                    &self.price.dateindex,
+                    date_to_price,
                     |(i, price, ..)| {
                         let multiplier = iter.unwrap_get_inner(i);
                         (i, price * multiplier)
@@ -808,7 +841,7 @@ impl ComputedRatioVecsFromDateIndex {
                 let mut iter = self.ratio_m3sd.dateindex.into_iter();
                 vec.compute_transform(
                     starting_indexes.dateindex,
-                    &self.price.dateindex,
+                    date_to_price,
                     |(i, price, ..)| {
                         let multiplier = iter.unwrap_get_inner(i);
                         (i, price * multiplier)
@@ -862,7 +895,7 @@ impl ComputedRatioVecsFromDateIndex {
 
     pub fn vecs(&self) -> Vec<&dyn AnyCollectableVec> {
         [
-            self.price.vecs(),
+            self.price.as_ref().map_or(vec![], |v| v.vecs()),
             self.ratio.vecs(),
             self.ratio_sma.vecs(),
             self.ratio_1w_sma.vecs(),

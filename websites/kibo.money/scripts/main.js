@@ -688,11 +688,7 @@ function createUtils() {
   function vecidToUnit(id) {
     /** @type {Unit} */
     let unit;
-    if (id.includes("index") || id.includes("height") || id.includes("epoch")) {
-      unit = "Index";
-    } else if (id === "0" || id === "1" || id === "50" || id === "100") {
-      unit = "constant";
-    } else if (id.endsWith("zscore")) {
+    if (id.endsWith("zscore")) {
       unit = "zscore";
     } else if (id.endsWith("cagr")) {
       unit = "cagr";
@@ -741,7 +737,8 @@ function createUtils() {
       id.includes("subsidy") ||
       id.endsWith("stack") ||
       id.includes("supply") ||
-      id.includes("rewards")
+      id.includes("rewards") ||
+      id.includes("realized-cap")
     ) {
       unit = "Sats";
     } else if (
@@ -764,6 +761,14 @@ function createUtils() {
       unit = "Date";
     } else if (id.includes("timestamp")) {
       unit = "Timestamp";
+    } else if (
+      id.includes("index") ||
+      id.includes("height") ||
+      id.includes("epoch")
+    ) {
+      unit = "Index";
+    } else if (id === "0" || id === "1" || id === "50" || id === "100") {
+      unit = "constant";
     } else if (id.includes("difficulty")) {
       unit = "Difficulty";
     } else if (id.includes("-size")) {

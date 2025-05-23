@@ -2,7 +2,7 @@ use std::fmt::{self, Debug};
 
 use color_eyre::eyre::eyre;
 
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub enum Index {
     DateIndex,
     DecadeIndex,

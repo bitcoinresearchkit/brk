@@ -20,14 +20,14 @@ impl Add<BlockState> for BlockState {
 }
 
 impl AddAssign<&BlockState> for BlockState {
-    fn add_assign(&mut self, rhs: &BlockState) {
+    fn add_assign(&mut self, rhs: &Self) {
         self.supply += &rhs.supply;
     }
 }
 
-impl SubAssign for BlockState {
-    fn sub_assign(&mut self, rhs: Self) {
-        self.supply -= rhs.supply;
+impl SubAssign<&BlockState> for BlockState {
+    fn sub_assign(&mut self, rhs: &Self) {
+        self.supply -= &rhs.supply;
     }
 }
 
@@ -56,9 +56,7 @@ impl<'a> From<ReceivedBlockStateData<'a>> for BlockState {
             .for_each(|spendable_block_state| {
                 block_state.supply += &spendable_block_state.0;
             });
-        block_state.supply.value += received.unspendable.unknown.0.value;
-        block_state.supply.utxos +=
-            received.unspendable.empty.0.utxos + received.unspendable.unknown.0.utxos;
+        block_state.supply.utxos += received.unspendable.empty.0.utxos;
         block_state
     }
 }
