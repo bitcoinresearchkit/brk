@@ -4,7 +4,7 @@
 pub struct OutputsByUnspendableType<T> {
     pub op_return: T,
     pub empty: T,
-    pub unknown: T,
+    // pub unknown: T,
 }
 
 impl<T> OutputsByUnspendableType<T> {
@@ -33,8 +33,12 @@ impl<T> OutputsByUnspendableType<T> {
     //         .collect::<Vec<_>>()
     // }
 
-    pub fn as_vec(&self) -> [&T; 3] {
-        [&self.op_return, &self.empty, &self.unknown]
+    pub fn as_vec(&self) -> [&T; 2] {
+        [
+            &self.op_return,
+            &self.empty,
+            // &self.unknown
+        ]
     }
 
     // pub fn as_mut_vec(&mut self) -> [&mut T; 3] {

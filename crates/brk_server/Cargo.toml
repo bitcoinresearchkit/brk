@@ -27,5 +27,5 @@ oxc = { version = "0.71.0", features = ["codegen", "minifier"] }
 serde = { workspace = true }
 tokio = { version = "1.45.0", features = ["full"] }
 tower-http = { version = "0.6.4", features = ["compression-full", "trace"] }
-zip = "3.0.0"
+zip = "4.0.0"
 tracing = "0.1.41"

@@ -27,8 +27,8 @@ impl AddAssign<&SupplyState> for SupplyState {
     }
 }
 
-impl SubAssign for SupplyState {
-    fn sub_assign(&mut self, rhs: Self) {
+impl SubAssign<&SupplyState> for SupplyState {
+    fn sub_assign(&mut self, rhs: &Self) {
         self.utxos = self.utxos.checked_sub(rhs.utxos).unwrap();
         self.value = self.value.checked_sub(rhs.value).unwrap();
     }

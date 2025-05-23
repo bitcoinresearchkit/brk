@@ -12,7 +12,8 @@ use crate::{
     vecs::{
         Indexes, fetched,
         grouped::{
-            ComputedValueVecsFromHeight, ComputedVecsFromHeight, StorableVecGeneatorOptions,
+            ComputedRatioVecsFromDateIndex, ComputedValueVecsFromHeight, ComputedVecsFromHeight,
+            StorableVecGeneatorOptions,
         },
         indexes,
     },
@@ -30,6 +31,9 @@ pub struct Vecs {
     pub indexes_to_supply: ComputedValueVecsFromHeight,
     pub height_to_utxo_count: EagerVec<Height, StoredUsize>,
     pub indexes_to_utxo_count: ComputedVecsFromHeight<StoredUsize>,
+
+    pub indexes_to_realized_price: Option<ComputedVecsFromHeight<Dollars>>,
+    pub indexes_to_realized_price_extra: Option<ComputedRatioVecsFromDateIndex>,
 }
 
 impl Vecs {
@@ -38,6 +42,7 @@ impl Vecs {
         cohort_name: Option<&str>,
         _computation: Computation,
         compressed: Compressed,
+        version: Version,
         fetched: Option<&fetched::Vecs>,
     ) -> color_eyre::Result<Self> {
         let compute_dollars = fetched.is_some();
@@ -48,15 +53,20 @@ impl Vecs {
 
         let suffix = |s: &str| cohort_name.map_or(s.to_string(), |name| format!("{name}_{s}"));
 
+        let mut state = CohortState::default();
+        if compute_dollars {
+            state.realized_cap = Some(Dollars::ZERO);
+        }
+
         Ok(Self {
             starting_height: Height::ZERO,
-            state: CohortState::default(),
+            state,
 
             height_to_realized_cap: compute_dollars.then(|| {
                 EagerVec::forced_import(
                     path,
                     &suffix("realized_cap"),
-                    VERSION + Version::ZERO,
+                    VERSION + Version::ZERO + version,
                     compressed,
                 )
                 .unwrap()
@@ -66,7 +76,7 @@ impl Vecs {
                     path,
                     &suffix("realized_cap"),
                     false,
-                    VERSION + Version::ZERO,
+                    VERSION + Version::ZERO + version,
                     compressed,
                     StorableVecGeneatorOptions::default().add_last(),
                 )
@@ -75,14 +85,14 @@ impl Vecs {
             height_to_supply: EagerVec::forced_import(
                 path,
                 &suffix("supply"),
-                VERSION + Version::ZERO,
+                VERSION + Version::ZERO + version,
                 compressed,
             )?,
             indexes_to_supply: ComputedValueVecsFromHeight::forced_import(
                 path,
                 &suffix("supply"),
                 false,
-                VERSION + Version::ZERO,
+                VERSION + Version::ZERO + version,
                 compressed,
                 StorableVecGeneatorOptions::default().add_last(),
                 compute_dollars,
@@ -90,22 +100,45 @@ impl Vecs {
             height_to_utxo_count: EagerVec::forced_import(
                 path,
                 &suffix("utxo_count"),
-                VERSION + Version::ZERO,
+                VERSION + Version::ZERO + version,
                 compressed,
             )?,
             indexes_to_utxo_count: ComputedVecsFromHeight::forced_import(
                 path,
                 &suffix("utxo_count"),
                 false,
-                VERSION + Version::ZERO,
+                VERSION + Version::ZERO + version,
                 compressed,
                 StorableVecGeneatorOptions::default().add_last(),
             )?,
+
+            indexes_to_realized_price: compute_dollars.then(|| {
+                ComputedVecsFromHeight::forced_import(
+                    path,
+                    &suffix("realized_price"),
+                    true,
+                    VERSION + Version::ZERO + version,
+                    compressed,
+                    StorableVecGeneatorOptions::default().add_last(),
+                )
+                .unwrap()
+            }),
+            indexes_to_realized_price_extra: compute_dollars.then(|| {
+                ComputedRatioVecsFromDateIndex::forced_import(
+                    path,
+                    &suffix("realized_price"),
+                    false,
+                    VERSION + Version::ZERO,
+                    compressed,
+                    StorableVecGeneatorOptions::default().add_last(),
+                )
+                .unwrap()
+            }),
         })
     }
 
-    pub fn init(&mut self, starting_indexes: &Indexes) -> Height {
-        self.starting_height = [
+    pub fn starting_height(&self) -> Height {
+        [
             self.height_to_supply.len(),
             self.height_to_utxo_count.len(),
             self.height_to_realized_cap
@@ -116,29 +149,33 @@ impl Vecs {
         .map(Height::from)
         .min()
         .unwrap()
-        .min(starting_indexes.height);
+    }
 
-        if let Some(height_to_realized_cap) = self.height_to_realized_cap.as_mut() {
-            if let Some(prev_height) = self.starting_height.checked_sub(Height::new(1)) {
-                self.state.supply.value = self
-                    .height_to_supply
-                    .into_iter()
-                    .unwrap_get_inner(prev_height);
-                self.state.supply.utxos = *self
-                    .height_to_utxo_count
-                    .into_iter()
-                    .unwrap_get_inner(prev_height);
+    pub fn init(&mut self, starting_height: Height) {
+        if starting_height > self.starting_height() {
+            unreachable!()
+        }
+
+        self.starting_height = starting_height;
+
+        if let Some(prev_height) = starting_height.checked_sub(Height::new(1)) {
+            self.state.supply.value = self
+                .height_to_supply
+                .into_iter()
+                .unwrap_get_inner(prev_height);
+            self.state.supply.utxos = *self
+                .height_to_utxo_count
+                .into_iter()
+                .unwrap_get_inner(prev_height);
+
+            if let Some(height_to_realized_cap) = self.height_to_realized_cap.as_mut() {
                 self.state.realized_cap = Some(
                     height_to_realized_cap
                         .into_iter()
                         .unwrap_get_inner(prev_height),
                 );
-            } else {
-                self.state.realized_cap = Some(Dollars::ZERO);
             }
         }
-
-        self.starting_height
     }
 
     pub fn validate_computed_versions(&mut self, base_version: Version) -> Result<()> {
@@ -157,10 +194,15 @@ impl Vecs {
                 base_version + height_to_realized_cap.inner_version(),
             )?;
         }
+
         Ok(())
     }
 
     pub fn forced_pushed_at(&mut self, height: Height, exit: &Exit) -> Result<()> {
+        if self.starting_height > height {
+            return Ok(());
+        }
+
         self.height_to_supply
             .forced_push_at(height, self.state.supply.value, exit)?;
 
@@ -173,7 +215,10 @@ impl Vecs {
         if let Some(height_to_realized_cap) = self.height_to_realized_cap.as_mut() {
             height_to_realized_cap.forced_push_at(
                 height,
-                self.state.realized_cap.unwrap(),
+                self.state.realized_cap.unwrap_or_else(|| {
+                    dbg!(&self.state);
+                    panic!();
+                }),
                 exit,
             )?;
         }
@@ -225,6 +270,41 @@ impl Vecs {
             )?;
         }
 
+        if let Some(indexes_to_realized_price) = self.indexes_to_realized_price.as_mut() {
+            indexes_to_realized_price.compute_all(
+                indexer,
+                indexes,
+                starting_indexes,
+                exit,
+                |vec, _, _, starting_indexes, exit| {
+                    vec.compute_divide(
+                        starting_indexes.height,
+                        self.height_to_realized_cap.as_ref().unwrap(),
+                        &**self.indexes_to_supply.bitcoin.height.as_ref().unwrap(),
+                        exit,
+                    )
+                },
+            )?;
+        }
+
+        if let Some(indexes_to_realized_price_extra) = self.indexes_to_realized_price_extra.as_mut()
+        {
+            indexes_to_realized_price_extra.compute_rest(
+                indexer,
+                indexes,
+                fetched.as_ref().unwrap(),
+                starting_indexes,
+                exit,
+                Some(
+                    self.indexes_to_realized_price
+                        .as_ref()
+                        .unwrap()
+                        .dateindex
+                        .unwrap_last(),
+                ),
+            )?;
+        }
+
         Ok(())
     }
 
@@ -240,6 +320,12 @@ impl Vecs {
             self.indexes_to_supply.vecs(),
             self.indexes_to_utxo_count.vecs(),
             self.indexes_to_realized_cap
+                .as_ref()
+                .map_or(vec![], |v| v.vecs()),
+            self.indexes_to_realized_price
+                .as_ref()
+                .map_or(vec![], |v| v.vecs()),
+            self.indexes_to_realized_price_extra
                 .as_ref()
                 .map_or(vec![], |v| v.vecs()),
         ]
@@ -261,6 +347,9 @@ impl Clone for Vecs {
             indexes_to_supply: self.indexes_to_supply.clone(),
             height_to_utxo_count: self.height_to_utxo_count.clone(),
             indexes_to_utxo_count: self.indexes_to_utxo_count.clone(),
+
+            indexes_to_realized_price: self.indexes_to_realized_price.clone(),
+            indexes_to_realized_price_extra: self.indexes_to_realized_price_extra.clone(),
         }
     }
 }

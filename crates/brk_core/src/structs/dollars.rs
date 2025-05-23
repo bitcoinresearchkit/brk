@@ -186,3 +186,9 @@ impl CheckedSub for Dollars {
             .map(Dollars::from)
     }
 }
+
+impl CheckedSub<usize> for Dollars {
+    fn checked_sub(self, rhs: usize) -> Option<Self> {
+        Some(Self(self.0 - rhs as f64))
+    }
+}

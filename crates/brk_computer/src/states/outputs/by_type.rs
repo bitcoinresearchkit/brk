@@ -37,9 +37,9 @@ impl<T> OutputsByType<T> {
             OutputType::P2WSH => &mut self.spendable.p2wsh,
             OutputType::P2TR => &mut self.spendable.p2tr,
             OutputType::P2A => &mut self.spendable.p2a,
+            OutputType::Unknown => &mut self.spendable.unknown,
             OutputType::OpReturn => &mut self.unspendable.op_return,
             OutputType::Empty => &mut self.unspendable.empty,
-            OutputType::Unknown => &mut self.unspendable.unknown,
         }
     }
 

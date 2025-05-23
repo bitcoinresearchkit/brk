@@ -2,7 +2,7 @@ use std::ops::Range;
 
 use brk_core::{HalvingEpoch, OutputType, Sats};
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub enum OutputFilter {
     All,
     To(usize),

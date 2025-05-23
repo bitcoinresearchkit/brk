@@ -209,6 +209,7 @@ impl Vecs {
             indexes_to_1w_sma: ComputedRatioVecsFromDateIndex::forced_import(
                 path,
                 "1w_sma",
+                true,
                 VERSION + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default().add_last(),
@@ -216,6 +217,7 @@ impl Vecs {
             indexes_to_8d_sma: ComputedRatioVecsFromDateIndex::forced_import(
                 path,
                 "8d_sma",
+                true,
                 VERSION + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default().add_last(),
@@ -223,6 +225,7 @@ impl Vecs {
             indexes_to_13d_sma: ComputedRatioVecsFromDateIndex::forced_import(
                 path,
                 "13d_sma",
+                true,
                 VERSION + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default().add_last(),
@@ -230,6 +233,7 @@ impl Vecs {
             indexes_to_21d_sma: ComputedRatioVecsFromDateIndex::forced_import(
                 path,
                 "21d_sma",
+                true,
                 VERSION + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default().add_last(),
@@ -237,6 +241,7 @@ impl Vecs {
             indexes_to_1m_sma: ComputedRatioVecsFromDateIndex::forced_import(
                 path,
                 "1m_sma",
+                true,
                 VERSION + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default().add_last(),
@@ -244,6 +249,7 @@ impl Vecs {
             indexes_to_34d_sma: ComputedRatioVecsFromDateIndex::forced_import(
                 path,
                 "34d_sma",
+                true,
                 VERSION + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default().add_last(),
@@ -251,6 +257,7 @@ impl Vecs {
             indexes_to_55d_sma: ComputedRatioVecsFromDateIndex::forced_import(
                 path,
                 "55d_sma",
+                true,
                 VERSION + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default().add_last(),
@@ -258,6 +265,7 @@ impl Vecs {
             indexes_to_89d_sma: ComputedRatioVecsFromDateIndex::forced_import(
                 path,
                 "89d_sma",
+                true,
                 VERSION + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default().add_last(),
@@ -265,6 +273,7 @@ impl Vecs {
             indexes_to_144d_sma: ComputedRatioVecsFromDateIndex::forced_import(
                 path,
                 "144d_sma",
+                true,
                 VERSION + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default().add_last(),
@@ -272,6 +281,7 @@ impl Vecs {
             indexes_to_1y_sma: ComputedRatioVecsFromDateIndex::forced_import(
                 path,
                 "1y_sma",
+                true,
                 VERSION + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default().add_last(),
@@ -279,6 +289,7 @@ impl Vecs {
             indexes_to_2y_sma: ComputedRatioVecsFromDateIndex::forced_import(
                 path,
                 "2y_sma",
+                true,
                 VERSION + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default().add_last(),
@@ -286,6 +297,7 @@ impl Vecs {
             indexes_to_200w_sma: ComputedRatioVecsFromDateIndex::forced_import(
                 path,
                 "200w_sma",
+                true,
                 VERSION + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default().add_last(),
@@ -293,6 +305,7 @@ impl Vecs {
             indexes_to_4y_sma: ComputedRatioVecsFromDateIndex::forced_import(
                 path,
                 "4y_sma",
+                true,
                 VERSION + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default().add_last(),
@@ -1622,7 +1635,7 @@ impl Vecs {
             .into_iter()
             .for_each(|(vecs, sma)| {
                 s.spawn(move || -> color_eyre::Result<()> {
-                    vecs.compute(
+                    vecs.compute_all(
                         indexer,
                         indexes,
                         fetched,
