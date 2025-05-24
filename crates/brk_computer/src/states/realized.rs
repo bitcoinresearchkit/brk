@@ -1,11 +1,61 @@
-use brk_core::Dollars;
+use brk_core::{Bitcoin, CheckedSub, Dollars};
 
-#[derive(Debug, Default)]
+use super::SupplyState;
+
+#[derive(Debug, Default, Clone)]
 pub struct RealizedState {
-    realized_profit: Dollars,
-    realized_loss: Dollars,
-    value_created: Dollars,
-    adjusted_value_created: Dollars,
-    value_destroyed: Dollars,
-    adjusted_value_destroyed: Dollars,
+    pub realized_cap: Dollars,
+    // pub realized_profit: Dollars,
+    // pub realized_loss: Dollars,
+    // pub value_created: Dollars,
+    // pub adjusted_value_created: Dollars,
+    // pub value_destroyed: Dollars,
+    // pub adjusted_value_destroyed: Dollars,
+}
+
+impl RealizedState {
+    pub const NAN: Self = Self {
+        realized_cap: Dollars::NAN,
+        // realized_profit: Dollars::NAN,
+        // realized_loss: Dollars::NAN,
+        // value_created: Dollars::NAN,
+        // adjusted_value_created: Dollars::NAN,
+        // value_destroyed: Dollars::NAN,
+        // adjusted_value_destroyed: Dollars::NAN,
+    };
+
+    pub fn increment(&mut self, supply_state: &SupplyState, price: Dollars) {
+        if supply_state.value.is_not_zero() {
+            if self.realized_cap == Dollars::NAN {
+                self.realized_cap = Dollars::ZERO;
+            }
+            self.realized_cap += price * Bitcoin::from(supply_state.value);
+        }
+
+        // if self.realized_profit == Dollars::NAN {
+        //     self.realized_profit = Dollars::ZERO;
+        // }
+        // if self.realized_loss == Dollars::NAN {
+        //     self.realized_loss = Dollars::ZERO;
+        // }
+        // if self.value_created == Dollars::NAN {
+        //     self.value_created = Dollars::ZERO;
+        // }
+        // if self.adjusted_value_created == Dollars::NAN {
+        //     self.adjusted_value_created = Dollars::ZERO;
+        // }
+        // if self.value_destroyed == Dollars::NAN {
+        //     self.value_destroyed = Dollars::ZERO;
+        // }
+        // if self.adjusted_value_destroyed == Dollars::NAN {
+        //     self.adjusted_value_destroyed = Dollars::ZERO;
+        // }
+    }
+
+    pub fn decrement(&mut self, supply_state: &SupplyState, price: Dollars) {
+        self.realized_cap = self
+            .realized_cap
+            .checked_sub(price * Bitcoin::from(supply_state.value))
+            .unwrap();
+    }
 }

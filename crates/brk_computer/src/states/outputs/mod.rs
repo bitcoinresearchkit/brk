@@ -2,7 +2,7 @@ use brk_vec::StoredIndex;
 use rayon::prelude::*;
 use std::{collections::BTreeMap, ops::ControlFlow};
 
-use brk_core::{Dollars, HalvingEpoch, Height, Sats, Timestamp};
+use brk_core::{Dollars, HalvingEpoch, Height, Timestamp};
 
 mod by_epoch;
 mod by_from;
@@ -30,7 +30,7 @@ pub use filter::*;
 
 use crate::vecs;
 
-use super::{BlockState, SupplyState};
+use super::{BlockState, Transacted};
 
 #[derive(Default, Clone)]
 pub struct Outputs<T> {
@@ -38,12 +38,12 @@ pub struct Outputs<T> {
     pub by_term: OutputsByTerm<T>,
     // pub by_up_to: OutputsByUpTo<T>,
     pub by_from: OutputsByFrom<T>,
-    // pub by_range: OutputsByRange<T>,
+    pub by_range: OutputsByRange<T>,
     pub by_epoch: OutputsByEpoch<T>,
+    pub by_type: OutputsBySpendableType<T>,
     pub by_size: OutputsBySize<T>,
     // // Needs whole UTXO set, TODO later
     // // pub by_value: OutputsByValue<T>,
-    pub by_spendable_type: OutputsBySpendableType<T>,
 }
 
 impl<T> Outputs<T> {
@@ -53,11 +53,11 @@ impl<T> Outputs<T> {
             .chain(self.by_term.as_mut_vec())
             // .chain(self.by_up_to.as_mut_vec())
             .chain(self.by_from.as_mut_vec())
-            // .chain(self.by_range.as_mut_vec())
+            .chain(self.by_range.as_mut_vec())
             .chain(self.by_epoch.as_mut_vec())
             .chain(self.by_size.as_mut_vec())
+            .chain(self.by_type.as_mut_vec())
             // // .chain(self.by_value.as_mut_vec())
-            .chain(self.by_spendable_type.as_mut_vec())
             .collect::<Vec<_>>()
     }
 }
@@ -75,7 +75,7 @@ impl Outputs<(OutputFilter, vecs::utxos::cohort::Vecs)> {
             .into_par_iter()
             // .chain(self.by_up_to.as_mut_vec())
             .chain(self.by_from.as_mut_vec())
-            // .chain(self.by_range.as_mut_vec())
+            .chain(self.by_range.as_mut_vec())
             .for_each(|(filter, v)| {
                 let state = &mut v.state;
 
@@ -86,7 +86,7 @@ impl Outputs<(OutputFilter, vecs::utxos::cohort::Vecs)> {
                         OutputFilter::Range(range) => range.contains(&days_old),
                         OutputFilter::All
                         | OutputFilter::Epoch(_)
-                        | OutputFilter::Size(_)
+                        | OutputFilter::Size
                         | OutputFilter::Type(_) => unreachable!(),
                     }
                 };
@@ -98,12 +98,14 @@ impl Outputs<(OutputFilter, vecs::utxos::cohort::Vecs)> {
                             .timestamp
                             .difference_in_days_between(prev_timestamp);
                         let days_old = block_state.timestamp.difference_in_days_between(timestamp);
+
                         if prev_days_old == days_old {
                             return ControlFlow::Continue(());
                         }
 
                         let is = check_days_old(days_old);
                         let was = check_days_old(prev_days_old);
+
                         if is && !was {
                             state.increment(&block_state.supply, block_state.price);
                         } else if was && !is {
@@ -117,7 +119,7 @@ impl Outputs<(OutputFilter, vecs::utxos::cohort::Vecs)> {
 
     pub fn send(
         &mut self,
-        height_to_sent: BTreeMap<Height, OutputsByType<(SupplyState, Vec<Sats>)>>,
+        height_to_sent: BTreeMap<Height, Transacted>,
         chain_state: &[BlockState],
     ) {
         let mut time_based_vecs = self
@@ -126,58 +128,21 @@ impl Outputs<(OutputFilter, vecs::utxos::cohort::Vecs)> {
             .into_iter()
             // .chain(self.by_up_to.as_mut_vec())
             .chain(self.by_from.as_mut_vec())
-            // .chain(self.by_range.as_mut_vec())
+            .chain(self.by_range.as_mut_vec())
             .chain(self.by_epoch.as_mut_vec())
             .collect::<Vec<_>>();
 
         let last_timestamp = chain_state.last().unwrap().timestamp;
 
-        height_to_sent.into_iter().for_each(|(height, by_type)| {
-            let by_spendable_type = by_type.spendable;
-
+        height_to_sent.into_iter().for_each(|(height, sent)| {
             let block_state = chain_state.get(height.unwrap_to_usize()).unwrap();
             let price = block_state.price;
-            let supply_state = by_spendable_type.reduce();
 
             let days_old = block_state
                 .timestamp
                 .difference_in_days_between(last_timestamp);
 
-            self.all.1.state.decrement(&supply_state, price);
-
-            by_spendable_type.as_typed_vec().into_iter().for_each(
-                |(output_type, (supply_state, _))| {
-                    self.by_spendable_type
-                        .get_mut(output_type)
-                        .1
-                        .state
-                        .decrement(supply_state, price)
-                },
-            );
-
-            by_spendable_type
-                .as_vec()
-                .into_iter()
-                .flat_map(|(_, sats_received)| sats_received.iter())
-                .for_each(|sats| {
-                    let sats = *sats;
-                    self.by_size
-                        .as_mut_vec()
-                        .iter_mut()
-                        .filter(|(filter, _)| match filter {
-                            OutputFilter::Size(range) => range.contains(&sats),
-                            _ => unreachable!(),
-                        })
-                        .for_each(|(_, vec)| {
-                            vec.state.decrement(
-                                &SupplyState {
-                                    utxos: 1,
-                                    value: sats,
-                                },
-                                price,
-                            );
-                        });
-                });
+            self.all.1.state.decrement(&sent.spendable_supply, price);
 
             time_based_vecs
                 .iter_mut()
@@ -189,18 +154,31 @@ impl Outputs<(OutputFilter, vecs::utxos::cohort::Vecs)> {
                     _ => unreachable!(),
                 })
                 .for_each(|(_, vecs)| {
-                    vecs.state.decrement(&supply_state, price);
+                    vecs.state.decrement(&sent.spendable_supply, price);
                 });
+
+            sent.by_type.spendable.as_typed_vec().into_iter().for_each(
+                |(output_type, supply_state)| {
+                    self.by_type
+                        .get_mut(output_type)
+                        .1
+                        .state
+                        .decrement(supply_state, price)
+                },
+            );
+
+            sent.by_size.into_iter().for_each(|(group, supply_state)| {
+                self.by_size
+                    .get_mut(group)
+                    .1
+                    .state
+                    .decrement(&supply_state, price);
+            });
         });
     }
 
-    pub fn receive(
-        &mut self,
-        received: OutputsByType<(SupplyState, Vec<Sats>)>,
-        height: Height,
-        price: Option<Dollars>,
-    ) {
-        let supply_state = received.spendable.reduce();
+    pub fn receive(&mut self, received: Transacted, height: Height, price: Option<Dollars>) {
+        let supply_state = received.spendable_supply;
 
         [
             &mut self.all.1,
@@ -214,34 +192,7 @@ impl Outputs<(OutputFilter, vecs::utxos::cohort::Vecs)> {
             v.state.increment(&supply_state, price);
         });
 
-        let mut by_size = self.by_size.as_mut_vec();
-
-        received
-            .spendable
-            .as_vec()
-            .into_iter()
-            .flat_map(|(_, sats_received)| sats_received.iter())
-            .for_each(|sats| {
-                let sats = *sats;
-
-                by_size
-                    .iter_mut()
-                    .filter(|(filter, _)| match filter {
-                        OutputFilter::Size(range) => range.contains(&sats),
-                        _ => unreachable!(),
-                    })
-                    .for_each(|(_, vec)| {
-                        vec.state.increment(
-                            &SupplyState {
-                                utxos: 1,
-                                value: sats,
-                            },
-                            price,
-                        );
-                    });
-            });
-
-        self.by_spendable_type
+        self.by_type
             .as_mut_vec()
             .into_iter()
             .for_each(|(filter, vecs)| {
@@ -250,7 +201,18 @@ impl Outputs<(OutputFilter, vecs::utxos::cohort::Vecs)> {
                     _ => unreachable!(),
                 };
                 vecs.state
-                    .increment(&received.spendable.get(output_type).0, price)
+                    .increment(received.by_type.get(output_type), price)
+            });
+
+        received
+            .by_size
+            .into_iter()
+            .for_each(|(group, supply_state)| {
+                self.by_size
+                    .get_mut(group)
+                    .1
+                    .state
+                    .increment(&supply_state, price);
             });
     }
 }
@@ -262,11 +224,11 @@ impl<T> Outputs<(OutputFilter, T)> {
             .chain(self.by_term.vecs())
             // .chain(self.by_up_to.vecs())
             .chain(self.by_from.vecs())
-            // .chain(self.by_range.vecs())
+            .chain(self.by_range.vecs())
             .chain(self.by_epoch.vecs())
             .chain(self.by_size.vecs())
             // // .chain(self.by_value.vecs())
-            .chain(self.by_spendable_type.vecs())
+            .chain(self.by_type.vecs())
             .collect::<Vec<_>>()
     }
 }
@@ -278,12 +240,12 @@ impl<T> From<Outputs<T>> for Outputs<(OutputFilter, T)> {
             by_term: OutputsByTerm::from(value.by_term),
             // by_up_to: OutputsByUpTo::from(value.by_up_to),
             by_from: OutputsByFrom::from(value.by_from),
-            // by_range: OutputsByRange::from(value.by_range),
+            by_range: OutputsByRange::from(value.by_range),
             by_epoch: OutputsByEpoch::from(value.by_epoch),
             by_size: OutputsBySize::from(value.by_size),
             // // Needs whole UTXO set, TODO later
             // // by_value: OutputsByValue<T>,
-            by_spendable_type: OutputsBySpendableType::from(value.by_spendable_type),
+            by_type: OutputsBySpendableType::from(value.by_type),
         }
     }
 }

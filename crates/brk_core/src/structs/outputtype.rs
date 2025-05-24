@@ -45,8 +45,8 @@ impl OutputType {
             Self::P2WSH => true,
             Self::P2TR => true,
             Self::P2A => true,
-            Self::Empty => false,
-            Self::Unknown => false,
+            Self::Empty => true,
+            Self::Unknown => true,
         }
     }
 

@@ -1,6 +1,6 @@
 use std::ops::Range;
 
-use brk_core::{HalvingEpoch, OutputType, Sats};
+use brk_core::{HalvingEpoch, OutputType};
 
 #[derive(Debug, Clone)]
 pub enum OutputFilter {
@@ -8,7 +8,7 @@ pub enum OutputFilter {
     To(usize),
     Range(Range<usize>),
     From(usize),
-    Size(Range<Sats>),
+    Size,
     Epoch(HalvingEpoch),
     Type(OutputType),
 }

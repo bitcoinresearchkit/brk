@@ -29,6 +29,7 @@ pub struct Dollars(f64);
 
 impl Dollars {
     pub const ZERO: Self = Self(0.0);
+    pub const NAN: Self = Self(f64::NAN);
 
     pub const fn mint(dollars: f64) -> Self {
         Self(dollars)

@@ -8,11 +8,13 @@ use std::{
     time::Duration,
 };
 
+use arc_swap::ArcSwap;
 use brk_core::{
     Bitcoin, CheckedSub, Close, Date, DateIndex, Dollars, Height, Sats, StoredUsize, TxIndex,
 };
 use brk_exit::Exit;
 use log::info;
+use memmap2::Mmap;
 
 use crate::{
     AnyCollectableVec, AnyIterableVec, AnyVec, BoxedVecIterator, CollectableVec, Compressed, Error,
@@ -95,6 +97,14 @@ where
 
     pub fn path(&self) -> &Path {
         self.inner.path()
+    }
+
+    pub fn get_or_read(&self, index: I, mmap: &Mmap) -> Result<Option<Value<T>>> {
+        self.inner.get_or_read(index, mmap)
+    }
+
+    pub fn mmap(&self) -> &ArcSwap<Mmap> {
+        self.inner.mmap()
     }
 
     pub fn inner_version(&self) -> Version {

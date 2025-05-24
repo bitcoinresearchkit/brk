@@ -1,8 +1,8 @@
 use std::ops::{Add, AddAssign, SubAssign};
 
-use brk_core::{Dollars, Sats, Timestamp};
+use brk_core::{Dollars, Timestamp};
 
-use super::{OutputsByType, SupplyState};
+use super::SupplyState;
 
 #[derive(Debug, Clone)]
 pub struct BlockState {
@@ -28,35 +28,5 @@ impl AddAssign<&BlockState> for BlockState {
 impl SubAssign<&BlockState> for BlockState {
     fn sub_assign(&mut self, rhs: &Self) {
         self.supply -= &rhs.supply;
-    }
-}
-
-pub struct ReceivedBlockStateData<'a> {
-    pub received: &'a OutputsByType<(SupplyState, Vec<Sats>)>,
-    pub timestamp: Timestamp,
-    pub price: Option<Dollars>,
-}
-impl<'a> From<ReceivedBlockStateData<'a>> for BlockState {
-    fn from(
-        ReceivedBlockStateData {
-            received,
-            timestamp,
-            price,
-        }: ReceivedBlockStateData<'a>,
-    ) -> Self {
-        let mut block_state = BlockState {
-            supply: SupplyState::default(),
-            price,
-            timestamp,
-        };
-        received
-            .spendable
-            .as_vec()
-            .into_iter()
-            .for_each(|spendable_block_state| {
-                block_state.supply += &spendable_block_state.0;
-            });
-        block_state.supply.utxos += received.unspendable.empty.0.utxos;
-        block_state
     }
 }

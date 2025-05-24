@@ -20,6 +20,12 @@ impl Add<SupplyState> for SupplyState {
     }
 }
 
+impl AddAssign<SupplyState> for SupplyState {
+    fn add_assign(&mut self, rhs: Self) {
+        *self += &rhs;
+    }
+}
+
 impl AddAssign<&SupplyState> for SupplyState {
     fn add_assign(&mut self, rhs: &Self) {
         self.utxos += rhs.utxos;

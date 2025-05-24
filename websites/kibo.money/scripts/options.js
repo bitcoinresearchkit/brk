@@ -352,18 +352,19 @@ function createPartialOptions(colors) {
    *
    * @param {Object} args
    * @param {string} args.name
+   * @param {string} args.legend
    * @param {string} args.title
    * @param {VecIdRatioCapBase} args.key
    * @param {Color} [args.color]
    */
-  function createPriceWithRatio({ name, title, key, color }) {
+  function createPriceWithRatio({ name, title, legend, key, color }) {
     return {
       name,
       title,
       top: [
         createBaseSeries({
           key,
-          name: "Average",
+          name: legend,
           color,
         }),
         createBaseSeries({
@@ -633,6 +634,7 @@ function createPartialOptions(colors) {
         createPriceWithRatio({
           key: `${key}realized-price`,
           name: "realized price",
+          legend: "realized",
           title: `${title} Realized Price`,
         }),
       ],
@@ -747,6 +749,7 @@ function createPartialOptions(colors) {
                     key: `${key}-sma`,
                     name,
                     title: `${name} Market Price Moving Average`,
+                    legend: "average",
                     color: colors[`_${key}`],
                   }),
                 ),
@@ -785,6 +788,11 @@ function createPartialOptions(colors) {
                 ],
               })),
             },
+          ],
+        },
+        {
+          name: "Investing",
+          tree: [
             {
               name: "DCA vs Lump sum",
               tree: [
@@ -1582,6 +1590,71 @@ function createPartialOptions(colors) {
               ],
             },
             {
+              name: "Range",
+              tree: [
+                createUTXOGroupFolder({
+                  key: "from-1d-to-1w",
+                  name: "1d..1w",
+                  title: "Between 1 Day and 1 Week",
+                }),
+                createUTXOGroupFolder({
+                  key: "from-1w-to-1m",
+                  name: "1w..1m",
+                  title: "Between 1 Week and 1 Month",
+                }),
+                createUTXOGroupFolder({
+                  key: "from-1m-to-3m",
+                  name: "1m..3m",
+                  title: "Between 1 Month and 3 Months",
+                }),
+                createUTXOGroupFolder({
+                  key: "from-3m-to-6m",
+                  name: "3m..6m",
+                  title: "Between 3 Month and 6 Months",
+                }),
+                createUTXOGroupFolder({
+                  key: "from-6m-to-1y",
+                  name: "6m..1y",
+                  title: "Between 6 Months and 1 Year",
+                }),
+                createUTXOGroupFolder({
+                  key: "from-1y-to-2y",
+                  name: "1y..2y",
+                  title: "Between 1 Year and 2 Years",
+                }),
+                createUTXOGroupFolder({
+                  key: "from-2y-to-3y",
+                  name: "2y..3y",
+                  title: "Between 2 Years and 3 Years",
+                }),
+                createUTXOGroupFolder({
+                  key: "from-3y-to-4y",
+                  name: "3y..4y",
+                  title: "Between 3 Years and 4 Years",
+                }),
+                createUTXOGroupFolder({
+                  key: "from-4y-to-5y",
+                  name: "4y..5y",
+                  title: "Between 4 Years and 5 Years",
+                }),
+                createUTXOGroupFolder({
+                  key: "from-5y-to-7y",
+                  name: "5y..7y",
+                  title: "Between 5 Years and 7 Years",
+                }),
+                createUTXOGroupFolder({
+                  key: "from-7y-to-10y",
+                  name: "7y..10y",
+                  title: "Between 7 Years and 10 Years",
+                }),
+                createUTXOGroupFolder({
+                  key: "from-10y-to-15y",
+                  name: "10y..15y",
+                  title: "Between 10 Years and 15 Years",
+                }),
+              ],
+            },
+            {
               name: "Epoch",
               tree: [
                 createUTXOGroupFolder({
@@ -1615,74 +1688,79 @@ function createPartialOptions(colors) {
               name: "size",
               tree: [
                 createUTXOGroupFolder({
-                  key: "from-1sat-10sats",
+                  key: "0sat",
+                  name: "0sat",
+                  title: "0 sat",
+                }),
+                createUTXOGroupFolder({
+                  key: "from-1sat-to-10sats",
                   name: "1sat..10sats",
-                  title: "UTXOs from 1 sat to 10 sats",
+                  title: "From 1 sat to 10 sats",
                 }),
                 createUTXOGroupFolder({
-                  key: "from-10sats-100sats",
+                  key: "from-10sats-to-100sats",
                   name: "10sat..100sats",
-                  title: "UTXOs from 10 sats to 100 sats",
+                  title: "From 10 sats to 100 sats",
                 }),
                 createUTXOGroupFolder({
-                  key: "from-100sats-1-000sats",
+                  key: "from-100sats-to-1-000sats",
                   name: "100sat..1_000sats",
-                  title: "UTXOs from 100 sats to 1,000 sats",
+                  title: "From 100 sats to 1,000 sats",
                 }),
                 createUTXOGroupFolder({
-                  key: "from-1-000sats-10-000sats",
+                  key: "from-1-000sats-to-10-000sats",
                   name: "1_000sat..10_000sats",
-                  title: "UTXOs from 1,000 sats to 10,000 sats",
+                  title: "From 1,000 sats to 10,000 sats",
                 }),
                 createUTXOGroupFolder({
-                  key: "from-10-000sats-100-000sats",
+                  key: "from-10-000sats-to-100-000sats",
                   name: "10_000sat..100_000sats",
-                  title: "UTXOs from 10,000 sats to 100,000 sats",
+                  title: "From 10,000 sats to 100,000 sats",
                 }),
                 createUTXOGroupFolder({
-                  key: "from-100-000sats-1-000-000sats",
+                  key: "from-100-000sats-to-1-000-000sats",
                   name: "100_000sat..1_000_000sats",
-                  title: "UTXOs from 100,000 sats to 1,000,000 sats",
+                  title: "From 100,000 sats to 1,000,000 sats",
                 }),
                 createUTXOGroupFolder({
-                  key: "from-1-000-000sats-10-000-000sats",
+                  key: "from-1-000-000sats-to-10-000-000sats",
                   name: "1_000_000sat..10_000_000sats",
-                  title: "UTXOs from 1,000,000 sats to 10,000,000 sats",
+                  title: "From 1,000,000 sats to 10,000,000 sats",
                 }),
                 createUTXOGroupFolder({
-                  key: "from-10-000-000sats-1btc",
+                  key: "from-10-000-000sats-to-1btc",
                   name: "10_000_000sat..1btc",
-                  title: "UTXOs from 10,000,000 sats to 1 BTC",
+                  title: "From 10,000,000 sats to 1 BTC",
                 }),
                 createUTXOGroupFolder({
-                  key: "from-1btc-10btc",
+                  key: "from-1btc-to-10btc",
                   name: "1btc..10btc",
-                  title: "UTXOs from 1 BTC to 10 BTC",
+                  title: "From 1 BTC to 10 BTC",
                 }),
                 createUTXOGroupFolder({
-                  key: "from-10btc-100btc",
+                  key: "from-10btc-to-100btc",
                   name: "10btc..100btc",
-                  title: "UTXOs from 10 BTC to 100 BTC",
+                  title: "From 10 BTC to 100 BTC",
                 }),
                 createUTXOGroupFolder({
-                  key: "from-100btc-1-000btc",
+                  key: "from-100btc-to-1-000btc",
                   name: "100btc..1_000btc",
-                  title: "UTXOs from 100 BTC to 1,000 BTC",
+                  title: "From 100 BTC to 1,000 BTC",
                 }),
                 createUTXOGroupFolder({
-                  key: "from-1-000btc-10-000btc",
+                  key: "from-1-000btc-to-10-000btc",
                   name: "1_000btc..10_000btc",
-                  title: "UTXOs from 1,000 BTC to 10,000 BTC",
+                  title: "From 1,000 BTC to 10,000 BTC",
                 }),
                 createUTXOGroupFolder({
-                  key: "from-10-000btc-100-000btc",
+                  key: "from-10-000btc-to-100-000btc",
                   name: "10_000btc..100_000btc",
-                  title: "UTXOs from 10,000 BTC to 100,000 BTC",
+                  title: "From 10,000 BTC to 100,000 BTC",
                 }),
                 createUTXOGroupFolder({
                   key: "from-100-000btc",
-                  name: "100_000btc..inf",
-                  title: "UTXOs from 100,000 BTC",
+                  name: "100_000btc+",
+                  title: "From 100,000 BTC",
                 }),
               ],
             },
@@ -1738,6 +1816,11 @@ function createPartialOptions(colors) {
                   key: "unknown",
                   name: "unknown",
                   title: "Pay To Unknown",
+                }),
+                createUTXOGroupFolder({
+                  key: "empty",
+                  name: "empty",
+                  title: "Pay To Empty",
                 }),
               ],
             },

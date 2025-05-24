@@ -44,7 +44,7 @@ impl<'a> VecTrees<'a> {
             .id_to_index_to_vec
             .entry(key.clone())
             .or_default()
-            .insert(index.clone(), vec);
+            .insert(index, vec);
         if prev.is_some() {
             dbg!(&key, str, name);
             panic!()
