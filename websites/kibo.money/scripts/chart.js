@@ -293,7 +293,7 @@ export function init({
  */
 function createIndexSelector({ elements, signals, utils }) {
   const { field, selected } = utils.dom.createHorizontalChoiceField({
-    title: "Index",
+    // title: "Index",
     defaultValue: "date",
     keyPrefix: "charts",
     key: "index",

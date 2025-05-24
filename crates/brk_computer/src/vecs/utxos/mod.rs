@@ -12,7 +12,7 @@ use rayon::prelude::*;
 
 use crate::states::{
     BlockState, OutputFilter, Outputs, OutputsByEpoch, OutputsByFrom, OutputsByRange,
-    OutputsBySize, OutputsBySpendableType, OutputsByTerm, SupplyState, Transacted,
+    OutputsBySize, OutputsBySpendableType, OutputsByTerm, OutputsByUpTo, SupplyState, Transacted,
 };
 
 use super::{
@@ -101,152 +101,152 @@ impl Vecs {
                             fetched,
                         )?,
                     },
-                    // by_up_to: OutputsByUpTo {
-                    //     _1d: cohort::Vecs::forced_import(
-                    //         path,
-                    //         Some("up_to_1d"),
-                    //         _computation,
-                    //         compressed,
-                    //         VERSION + Version::ZERO,
-                    //         fetched,
-                    //     )?,
-                    //     _1w: cohort::Vecs::forced_import(
-                    //         path,
-                    //         Some("up_to_1w"),
-                    //         _computation,
-                    //         compressed,
-                    //         VERSION + Version::ZERO,
-                    //         fetched,
-                    //     )?,
-                    //     _1m: cohort::Vecs::forced_import(
-                    //         path,
-                    //         Some("up_to_1m"),
-                    //         _computation,
-                    //         compressed,
-                    //         VERSION + Version::ZERO,
-                    //         fetched,
-                    //     )?,
-                    //     _2m: cohort::Vecs::forced_import(
-                    //         path,
-                    //         Some("up_to_2m"),
-                    //         _computation,
-                    //         compressed,
-                    //         VERSION + Version::ZERO,
-                    //         fetched,
-                    //     )?,
-                    //     _3m: cohort::Vecs::forced_import(
-                    //         path,
-                    //         Some("up_to_3m"),
-                    //         _computation,
-                    //         compressed,
-                    //         VERSION + Version::ZERO,
-                    //         fetched,
-                    //     )?,
-                    //     _4m: cohort::Vecs::forced_import(
-                    //         path,
-                    //         Some("up_to_4m"),
-                    //         _computation,
-                    //         compressed,
-                    //         VERSION + Version::ZERO,
-                    //         fetched,
-                    //     )?,
-                    //     _5m: cohort::Vecs::forced_import(
-                    //         path,
-                    //         Some("up_to_5m"),
-                    //         _computation,
-                    //         compressed,
-                    //         VERSION + Version::ZERO,
-                    //         fetched,
-                    //     )?,
-                    //     _6m: cohort::Vecs::forced_import(
-                    //         path,
-                    //         Some("up_to_6m"),
-                    //         _computation,
-                    //         compressed,
-                    //         VERSION + Version::ZERO,
-                    //         fetched,
-                    //     )?,
-                    //     _1y: cohort::Vecs::forced_import(
-                    //         path,
-                    //         Some("up_to_1y"),
-                    //         _computation,
-                    //         compressed,
-                    //         VERSION + Version::ZERO,
-                    //         fetched,
-                    //     )?,
-                    //     _2y: cohort::Vecs::forced_import(
-                    //         path,
-                    //         Some("up_to_2y"),
-                    //         _computation,
-                    //         compressed,
-                    //         VERSION + Version::ZERO,
-                    //         fetched,
-                    //     )?,
-                    //     _3y: cohort::Vecs::forced_import(
-                    //         path,
-                    //         Some("up_to_3y"),
-                    //         _computation,
-                    //         compressed,
-                    //         VERSION + Version::ZERO,
-                    //         fetched,
-                    //     )?,
-                    //     _4y: cohort::Vecs::forced_import(
-                    //         path,
-                    //         Some("up_to_4y"),
-                    //         _computation,
-                    //         compressed,
-                    //         VERSION + Version::ZERO,
-                    //         fetched,
-                    //     )?,
-                    //     _5y: cohort::Vecs::forced_import(
-                    //         path,
-                    //         Some("up_to_5y"),
-                    //         _computation,
-                    //         compressed,
-                    //         VERSION + Version::ZERO,
-                    //         fetched,
-                    //     )?,
-                    //     _6y: cohort::Vecs::forced_import(
-                    //         path,
-                    //         Some("up_to_6y"),
-                    //         _computation,
-                    //         compressed,
-                    //         VERSION + Version::ZERO,
-                    //         fetched,
-                    //     )?,
-                    //     _7y: cohort::Vecs::forced_import(
-                    //         path,
-                    //         Some("up_to_7y"),
-                    //         _computation,
-                    //         compressed,
-                    //         VERSION + Version::ZERO,
-                    //         fetched,
-                    //     )?,
-                    //     _8y: cohort::Vecs::forced_import(
-                    //         path,
-                    //         Some("up_to_8y"),
-                    //         _computation,
-                    //         compressed,
-                    //         VERSION + Version::ZERO,
-                    //         fetched,
-                    //     )?,
-                    //     _10y: cohort::Vecs::forced_import(
-                    //         path,
-                    //         Some("up_to_10y"),
-                    //         _computation,
-                    //         compressed,
-                    //         VERSION + Version::ZERO,
-                    //         fetched,
-                    //     )?,
-                    //     _15y: cohort::Vecs::forced_import(
-                    //         path,
-                    //         Some("up_to_15y"),
-                    //         _computation,
-                    //         compressed,
-                    //         VERSION + Version::ZERO,
-                    //         fetched,
-                    //     )?,
-                    // },
+                    by_up_to: OutputsByUpTo {
+                        _1d: cohort::Vecs::forced_import(
+                            path,
+                            Some("up_to_1d"),
+                            _computation,
+                            compressed,
+                            VERSION + Version::ZERO,
+                            fetched,
+                        )?,
+                        _1w: cohort::Vecs::forced_import(
+                            path,
+                            Some("up_to_1w"),
+                            _computation,
+                            compressed,
+                            VERSION + Version::ZERO,
+                            fetched,
+                        )?,
+                        _1m: cohort::Vecs::forced_import(
+                            path,
+                            Some("up_to_1m"),
+                            _computation,
+                            compressed,
+                            VERSION + Version::ZERO,
+                            fetched,
+                        )?,
+                        _2m: cohort::Vecs::forced_import(
+                            path,
+                            Some("up_to_2m"),
+                            _computation,
+                            compressed,
+                            VERSION + Version::ZERO,
+                            fetched,
+                        )?,
+                        _3m: cohort::Vecs::forced_import(
+                            path,
+                            Some("up_to_3m"),
+                            _computation,
+                            compressed,
+                            VERSION + Version::ZERO,
+                            fetched,
+                        )?,
+                        _4m: cohort::Vecs::forced_import(
+                            path,
+                            Some("up_to_4m"),
+                            _computation,
+                            compressed,
+                            VERSION + Version::ZERO,
+                            fetched,
+                        )?,
+                        _5m: cohort::Vecs::forced_import(
+                            path,
+                            Some("up_to_5m"),
+                            _computation,
+                            compressed,
+                            VERSION + Version::ZERO,
+                            fetched,
+                        )?,
+                        _6m: cohort::Vecs::forced_import(
+                            path,
+                            Some("up_to_6m"),
+                            _computation,
+                            compressed,
+                            VERSION + Version::ZERO,
+                            fetched,
+                        )?,
+                        _1y: cohort::Vecs::forced_import(
+                            path,
+                            Some("up_to_1y"),
+                            _computation,
+                            compressed,
+                            VERSION + Version::ZERO,
+                            fetched,
+                        )?,
+                        _2y: cohort::Vecs::forced_import(
+                            path,
+                            Some("up_to_2y"),
+                            _computation,
+                            compressed,
+                            VERSION + Version::ZERO,
+                            fetched,
+                        )?,
+                        _3y: cohort::Vecs::forced_import(
+                            path,
+                            Some("up_to_3y"),
+                            _computation,
+                            compressed,
+                            VERSION + Version::ZERO,
+                            fetched,
+                        )?,
+                        _4y: cohort::Vecs::forced_import(
+                            path,
+                            Some("up_to_4y"),
+                            _computation,
+                            compressed,
+                            VERSION + Version::ZERO,
+                            fetched,
+                        )?,
+                        _5y: cohort::Vecs::forced_import(
+                            path,
+                            Some("up_to_5y"),
+                            _computation,
+                            compressed,
+                            VERSION + Version::ZERO,
+                            fetched,
+                        )?,
+                        _6y: cohort::Vecs::forced_import(
+                            path,
+                            Some("up_to_6y"),
+                            _computation,
+                            compressed,
+                            VERSION + Version::ZERO,
+                            fetched,
+                        )?,
+                        _7y: cohort::Vecs::forced_import(
+                            path,
+                            Some("up_to_7y"),
+                            _computation,
+                            compressed,
+                            VERSION + Version::ZERO,
+                            fetched,
+                        )?,
+                        _8y: cohort::Vecs::forced_import(
+                            path,
+                            Some("up_to_8y"),
+                            _computation,
+                            compressed,
+                            VERSION + Version::ZERO,
+                            fetched,
+                        )?,
+                        _10y: cohort::Vecs::forced_import(
+                            path,
+                            Some("up_to_10y"),
+                            _computation,
+                            compressed,
+                            VERSION + Version::ZERO,
+                            fetched,
+                        )?,
+                        _15y: cohort::Vecs::forced_import(
+                            path,
+                            Some("up_to_15y"),
+                            _computation,
+                            compressed,
+                            VERSION + Version::ZERO,
+                            fetched,
+                        )?,
+                    },
                     by_from: OutputsByFrom {
                         _1d: cohort::Vecs::forced_import(
                             path,
@@ -1191,14 +1191,18 @@ impl Vecs {
 
         let mut flat_vecs_ = self.utxos_vecs.as_mut_vec();
 
+        info!("Flushing...");
+
         // Flush rest of values
         flat_vecs_
-            .iter_mut()
+            .par_iter_mut()
             .try_for_each(|(_, v)| v.safe_flush_height_vecs(exit))?;
         self.height_to_unspendable_supply.safe_flush(exit)?;
 
+        info!("Computing rest...");
+
         // Compute other vecs from height vecs
-        flat_vecs_.iter_mut().try_for_each(|(_, v)| {
+        flat_vecs_.par_iter_mut().try_for_each(|(_, v)| {
             v.compute_rest(indexer, indexes, fetched, starting_indexes, exit)
         })?;
         self.indexes_to_unspendable_supply.compute_rest(
@@ -1209,6 +1213,8 @@ impl Vecs {
             exit,
             Some(&self.height_to_unspendable_supply),
         )?;
+
+        info!("Chain state...");
 
         // Save chain state
         self.chain_state.truncate_if_needed(Height::ZERO)?;

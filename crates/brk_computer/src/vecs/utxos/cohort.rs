@@ -117,7 +117,7 @@ impl Vecs {
                     path,
                     &suffix("realized_price"),
                     true,
-                    VERSION + Version::ZERO + version,
+                    VERSION + Version::new(2) + version,
                     compressed,
                     StorableVecGeneatorOptions::default().add_last(),
                 )
@@ -128,7 +128,7 @@ impl Vecs {
                     path,
                     &suffix("realized_price"),
                     false,
-                    VERSION + Version::ZERO,
+                    VERSION + Version::new(2) + version,
                     compressed,
                     StorableVecGeneatorOptions::default().add_last(),
                 )

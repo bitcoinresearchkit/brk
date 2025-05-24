@@ -1,4 +1,7 @@
-use std::ops::{Add, Div, Mul, Sub};
+use std::{
+    cmp::Ordering,
+    ops::{Add, Div, Mul, Sub},
+};
 
 use derive_deref::Deref;
 use serde::Serialize;
@@ -79,7 +82,12 @@ impl Eq for StoredF32 {}
 #[allow(clippy::derive_ord_xor_partial_ord)]
 impl Ord for StoredF32 {
     fn cmp(&self, other: &Self) -> std::cmp::Ordering {
-        self.0.partial_cmp(&other.0).unwrap()
+        match (self.0.is_nan(), other.0.is_nan()) {
+            (true, true) => Ordering::Equal,
+            (true, false) => Ordering::Less,
+            (false, true) => Ordering::Greater,
+            (false, false) => self.0.partial_cmp(&other.0).unwrap(),
+        }
     }
 }
 

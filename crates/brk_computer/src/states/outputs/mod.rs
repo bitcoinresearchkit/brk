@@ -36,7 +36,7 @@ use super::{BlockState, Transacted};
 pub struct Outputs<T> {
     pub all: T,
     pub by_term: OutputsByTerm<T>,
-    // pub by_up_to: OutputsByUpTo<T>,
+    pub by_up_to: OutputsByUpTo<T>,
     pub by_from: OutputsByFrom<T>,
     pub by_range: OutputsByRange<T>,
     pub by_epoch: OutputsByEpoch<T>,
@@ -51,7 +51,7 @@ impl<T> Outputs<T> {
         [&mut self.all]
             .into_iter()
             .chain(self.by_term.as_mut_vec())
-            // .chain(self.by_up_to.as_mut_vec())
+            .chain(self.by_up_to.as_mut_vec())
             .chain(self.by_from.as_mut_vec())
             .chain(self.by_range.as_mut_vec())
             .chain(self.by_epoch.as_mut_vec())
@@ -73,7 +73,7 @@ impl Outputs<(OutputFilter, vecs::utxos::cohort::Vecs)> {
         self.by_term
             .as_mut_vec()
             .into_par_iter()
-            // .chain(self.by_up_to.as_mut_vec())
+            .chain(self.by_up_to.as_mut_vec())
             .chain(self.by_from.as_mut_vec())
             .chain(self.by_range.as_mut_vec())
             .for_each(|(filter, v)| {
@@ -126,7 +126,7 @@ impl Outputs<(OutputFilter, vecs::utxos::cohort::Vecs)> {
             .by_term
             .as_mut_vec()
             .into_iter()
-            // .chain(self.by_up_to.as_mut_vec())
+            .chain(self.by_up_to.as_mut_vec())
             .chain(self.by_from.as_mut_vec())
             .chain(self.by_range.as_mut_vec())
             .chain(self.by_epoch.as_mut_vec())
@@ -187,7 +187,7 @@ impl Outputs<(OutputFilter, vecs::utxos::cohort::Vecs)> {
             // Skip from and range as can't receive in the past
         ]
         .into_iter()
-        // .chain(self.by_up_to.as_mut_vec().map(|(_, v)| v))
+        .chain(self.by_up_to.as_mut_vec().map(|(_, v)| v))
         .for_each(|v| {
             v.state.increment(&supply_state, price);
         });
@@ -222,7 +222,7 @@ impl<T> Outputs<(OutputFilter, T)> {
         [&self.all.1]
             .into_iter()
             .chain(self.by_term.vecs())
-            // .chain(self.by_up_to.vecs())
+            .chain(self.by_up_to.vecs())
             .chain(self.by_from.vecs())
             .chain(self.by_range.vecs())
             .chain(self.by_epoch.vecs())
@@ -238,7 +238,7 @@ impl<T> From<Outputs<T>> for Outputs<(OutputFilter, T)> {
         Self {
             all: (OutputFilter::All, value.all),
             by_term: OutputsByTerm::from(value.by_term),
-            // by_up_to: OutputsByUpTo::from(value.by_up_to),
+            by_up_to: OutputsByUpTo::from(value.by_up_to),
             by_from: OutputsByFrom::from(value.by_from),
             by_range: OutputsByRange::from(value.by_range),
             by_epoch: OutputsByEpoch::from(value.by_epoch),

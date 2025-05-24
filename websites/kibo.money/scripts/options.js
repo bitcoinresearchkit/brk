@@ -179,23 +179,552 @@ function createPartialOptions(colors) {
    */
 
   const averages = /** @type {const} */ ([
-    { name: "1 Week", key: "1w", days: 7 },
-    { name: "8 Days", key: "8d", days: 8 },
-    { name: "13 Days", key: "13d", days: 13 },
-    { name: "21 Days", key: "21d", days: 21 },
-    { name: "1 Month", key: "1m", days: 30 },
-    { name: "34 Days", key: "34d", days: 34 },
-    { name: "55 Days", key: "55d", days: 55 },
-    { name: "89 Days", key: "89d", days: 89 },
-    { name: "144 Days", key: "144d", days: 144 },
-    { name: "1 Year", key: "1y", days: 365 },
-    { name: "2 Years", key: "2y", days: 2 * 365 },
-    { name: "200 Weeks", key: "200w", days: 200 * 7 },
-    { name: "4 Years", key: "4y", days: 4 * 365 },
+    { name: "1 Week", key: "1w", days: 7, color: colors.orange },
+    { name: "8 Days", key: "8d", days: 8, color: colors.amber },
+    { name: "13 Days", key: "13d", days: 13, color: colors.yellow },
+    { name: "21 Days", key: "21d", days: 21, color: colors.lime },
+    { name: "1 Month", key: "1m", days: 30, color: colors.green },
+    { name: "34 Days", key: "34d", days: 34, color: colors.emerald },
+    { name: "55 Days", key: "55d", days: 55, color: colors.teal },
+    { name: "89 Days", key: "89d", days: 89, color: colors.cyan },
+    { name: "144 Days", key: "144d", days: 144, color: colors.sky },
+    { name: "1 Year", key: "1y", days: 365, color: colors.blue },
+    { name: "2 Years", key: "2y", days: 2 * 365, color: colors.indigo },
+    { name: "200 Weeks", key: "200w", days: 200 * 7, color: colors.violet },
+    { name: "4 Years", key: "4y", days: 4 * 365, color: colors.purple },
   ]);
 
   const dcaClasses = /** @type {const} */ ([
-    2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025,
+    { year: 2015, color: colors.pink, defaultActive: false },
+    { year: 2016, color: colors.red, defaultActive: false },
+    { year: 2017, color: colors.orange, defaultActive: true },
+    { year: 2018, color: colors.yellow, defaultActive: true },
+    { year: 2019, color: colors.green, defaultActive: true },
+    { year: 2020, color: colors.teal, defaultActive: true },
+    { year: 2021, color: colors.sky, defaultActive: true },
+    { year: 2022, color: colors.blue, defaultActive: true },
+    { year: 2023, color: colors.purple, defaultActive: true },
+    { year: 2024, color: colors.fuchsia, defaultActive: true },
+    { year: 2025, color: colors.pink, defaultActive: true },
+  ]);
+
+  const terms = /** @type {const} */ ([
+    {
+      key: "sth",
+      name: "short",
+      title: "Short Term Holders",
+      color: colors.yellow,
+    },
+    {
+      key: "lth",
+      name: "long",
+      title: "Long Term Holders",
+      color: colors.fuchsia,
+    },
+  ]);
+
+  const upTo = /** @type {const} */ ([
+    {
+      key: "up-to-1d",
+      name: "1d",
+      title: "Up to 1 Day",
+      color: colors.pink,
+    },
+    {
+      key: "up-to-1w",
+      name: "1w",
+      title: "Up to 1 Week",
+      color: colors.red,
+    },
+    {
+      key: "up-to-1m",
+      name: "1m",
+      title: "Up to 1 Month",
+      color: colors.orange,
+    },
+    {
+      key: "up-to-2m",
+      name: "2m",
+      title: "Up to 2 Months",
+      color: colors.amber,
+    },
+    {
+      key: "up-to-3m",
+      name: "3m",
+      title: "Up to 3 Months",
+      color: colors.yellow,
+    },
+    {
+      key: "up-to-4m",
+      name: "4m",
+      title: "Up to 4 Months",
+      color: colors.lime,
+    },
+    {
+      key: "up-to-5m",
+      name: "5m",
+      title: "Up to 5 Months",
+      color: colors.green,
+    },
+    {
+      key: "up-to-6m",
+      name: "6m",
+      title: "Up to 6 Months",
+      color: colors.teal,
+    },
+    {
+      key: "up-to-1y",
+      name: "1y",
+      title: "Up to 1 Year",
+      color: colors.sky,
+    },
+    {
+      key: "up-to-2y",
+      name: "2y",
+      title: "Up to 2 Years",
+      color: colors.indigo,
+    },
+    {
+      key: "up-to-3y",
+      name: "3y",
+      title: "Up to 3 Years",
+      color: colors.violet,
+    },
+    {
+      key: "up-to-4y",
+      name: "4y",
+      title: "Up to 4 Years",
+      color: colors.purple,
+    },
+    {
+      key: "up-to-5y",
+      name: "5y",
+      title: "Up to 5 Years",
+      color: colors.fuchsia,
+    },
+    {
+      key: "up-to-6y",
+      name: "6y",
+      title: "Up to 6 Years",
+      color: colors.pink,
+    },
+    {
+      key: "up-to-7y",
+      name: "7y",
+      title: "Up to 7 Years",
+      color: colors.red,
+    },
+    {
+      key: "up-to-8y",
+      name: "8y",
+      title: "Up to 8 Years",
+      color: colors.orange,
+    },
+    {
+      key: "up-to-10y",
+      name: "10y",
+      title: "Up to 10 Years",
+      color: colors.amber,
+    },
+    {
+      key: "up-to-15y",
+      name: "15y",
+      title: "Up to 15 Years",
+      color: colors.yellow,
+    },
+  ]);
+
+  const from = /** @type {const} */ ([
+    {
+      key: "from-1d",
+      name: "1d",
+      title: "From 1 Day",
+      color: colors.red,
+    },
+    {
+      key: "from-1w",
+      name: "1w",
+      title: "From 1 Week",
+      color: colors.orange,
+    },
+    {
+      key: "from-1m",
+      name: "1m",
+      title: "From 1 Month",
+      color: colors.yellow,
+    },
+    {
+      key: "from-2m",
+      name: "2m",
+      title: "From 2 Months",
+      color: colors.lime,
+    },
+    {
+      key: "from-3m",
+      name: "3m",
+      title: "From 3 Months",
+      color: colors.green,
+    },
+    {
+      key: "from-4m",
+      name: "4m",
+      title: "From 4 Months",
+      color: colors.teal,
+    },
+    {
+      key: "from-5m",
+      name: "5m",
+      title: "From 5 Months",
+      color: colors.cyan,
+    },
+    {
+      key: "from-6m",
+      name: "6m",
+      title: "From 6 Months",
+      color: colors.blue,
+    },
+    {
+      key: "from-1y",
+      name: "1y",
+      title: "From 1 Year",
+      color: colors.indigo,
+    },
+    {
+      key: "from-2y",
+      name: "2y",
+      title: "From 2 Years",
+      color: colors.violet,
+    },
+    {
+      key: "from-3y",
+      name: "3y",
+      title: "From 3 Years",
+      color: colors.purple,
+    },
+    {
+      key: "from-4y",
+      name: "4y",
+      title: "From 4 Years",
+      color: colors.fuchsia,
+    },
+    {
+      key: "from-5y",
+      name: "5y",
+      title: "From 5 Years",
+      color: colors.pink,
+    },
+    {
+      key: "from-6y",
+      name: "6y",
+      title: "From 6 Years",
+      color: colors.rose,
+    },
+    {
+      key: "from-7y",
+      name: "7y",
+      title: "From 7 Years",
+      color: colors.red,
+    },
+    {
+      key: "from-8y",
+      name: "8y",
+      title: "From 8 Years",
+      color: colors.orange,
+    },
+    {
+      key: "from-10y",
+      name: "10y",
+      title: "From 10 Years",
+      color: colors.yellow,
+    },
+    {
+      key: "from-15y",
+      name: "15y",
+      title: "From 15 Years",
+      color: colors.lime,
+    },
+  ]);
+
+  const range = /** @type {const} */ ([
+    {
+      key: "up-to-1d",
+      name: "24h",
+      title: "Last 24 hours",
+      color: colors.pink,
+    },
+    {
+      key: "from-1d-to-1w",
+      name: "1d..1w",
+      title: "From 1 Day ago to 1 Week ago",
+      color: colors.red,
+    },
+    {
+      key: "from-1w-to-1m",
+      name: "1w..1m",
+      title: "From 1 Week ago to 1 Month ago",
+      color: colors.orange,
+    },
+    {
+      key: "from-1m-to-3m",
+      name: "1m..3m",
+      title: "From 1 Month ago to 3 Months ago",
+      color: colors.yellow,
+    },
+    {
+      key: "from-3m-to-6m",
+      name: "3m..6m",
+      title: "From 3 Month ago to 6 Months ago",
+      color: colors.lime,
+    },
+    {
+      key: "from-6m-to-1y",
+      name: "6m..1y",
+      title: "From 6 Months ago to 1 Year ago",
+      color: colors.green,
+    },
+    {
+      key: "from-1y-to-2y",
+      name: "1y..2y",
+      title: "From 1 Year ago to 2 Years ago",
+      color: colors.cyan,
+    },
+    {
+      key: "from-2y-to-3y",
+      name: "2y..3y",
+      title: "From 2 Years ago to 3 Years ago",
+      color: colors.blue,
+    },
+    {
+      key: "from-3y-to-4y",
+      name: "3y..4y",
+      title: "From 3 Years ago to 4 Years ago",
+      color: colors.indigo,
+    },
+    {
+      key: "from-4y-to-5y",
+      name: "4y..5y",
+      title: "From 4 Years ago to 5 Years ago",
+      color: colors.violet,
+    },
+    {
+      key: "from-5y-to-7y",
+      name: "5y..7y",
+      title: "From 5 Years ago to 7 Years ago",
+      color: colors.purple,
+    },
+    {
+      key: "from-7y-to-10y",
+      name: "7y..10y",
+      title: "From 7 Years ago to 10 Years ago",
+      color: colors.fuchsia,
+    },
+    {
+      key: "from-10y-to-15y",
+      name: "10y..15y",
+      title: "From 10 Years ago to 15 Years ago",
+      color: colors.pink,
+    },
+    {
+      key: "from-15y",
+      name: "15y+",
+      title: "From 15 Years ago to genesis (2009-01-03)",
+      color: colors.red,
+    },
+  ]);
+
+  const epoch = /** @type {const} */ ([
+    {
+      key: "epoch-0",
+      name: "0",
+      title: "Epoch 0",
+      color: colors.red,
+    },
+    {
+      key: "epoch-1",
+      name: "1",
+      title: "Epoch 1",
+      color: colors.yellow,
+    },
+    {
+      key: "epoch-2",
+      name: "2",
+      title: "Epoch 2",
+      color: colors.orange,
+    },
+    {
+      key: "epoch-3",
+      name: "3",
+      title: "Epoch 3",
+      color: colors.lime,
+    },
+    {
+      key: "epoch-4",
+      name: "4",
+      title: "Epoch 4",
+      color: colors.green,
+    },
+  ]);
+
+  const size = /** @type {const } */ ([
+    {
+      key: "0sat",
+      name: "0sat",
+      title: "0 sat",
+      color: colors.red,
+    },
+    {
+      key: "from-1sat-to-10sats",
+      name: "1sat..10sats",
+      title: "From 1 sat to 10 sats",
+      color: colors.orange,
+    },
+    {
+      key: "from-10sats-to-100sats",
+      name: "10sat..100sats",
+      title: "From 10 sats to 100 sats",
+      color: colors.yellow,
+    },
+    {
+      key: "from-100sats-to-1-000sats",
+      name: "100sat..1_000sats",
+      title: "From 100 sats to 1,000 sats",
+      color: colors.lime,
+    },
+    {
+      key: "from-1-000sats-to-10-000sats",
+      name: "1_000sat..10_000sats",
+      title: "From 1,000 sats to 10,000 sats",
+      color: colors.green,
+    },
+    {
+      key: "from-10-000sats-to-100-000sats",
+      name: "10_000sat..100_000sats",
+      title: "From 10,000 sats to 100,000 sats",
+      color: colors.cyan,
+    },
+    {
+      key: "from-100-000sats-to-1-000-000sats",
+      name: "100_000sat..1_000_000sats",
+      title: "From 100,000 sats to 1,000,000 sats",
+      color: colors.blue,
+    },
+    {
+      key: "from-1-000-000sats-to-10-000-000sats",
+      name: "1_000_000sat..10_000_000sats",
+      title: "From 1,000,000 sats to 10,000,000 sats",
+      color: colors.indigo,
+    },
+    {
+      key: "from-10-000-000sats-to-1btc",
+      name: "10_000_000sat..1btc",
+      title: "From 10,000,000 sats to 1 BTC",
+      color: colors.purple,
+    },
+    {
+      key: "from-1btc-to-10btc",
+      name: "1btc..10btc",
+      title: "From 1 BTC to 10 BTC",
+      color: colors.violet,
+    },
+    {
+      key: "from-10btc-to-100btc",
+      name: "10btc..100btc",
+      title: "From 10 BTC to 100 BTC",
+      color: colors.fuchsia,
+    },
+    {
+      key: "from-100btc-to-1-000btc",
+      name: "100btc..1_000btc",
+      title: "From 100 BTC to 1,000 BTC",
+      color: colors.pink,
+    },
+    {
+      key: "from-1-000btc-to-10-000btc",
+      name: "1_000btc..10_000btc",
+      title: "From 1,000 BTC to 10,000 BTC",
+      color: colors.red,
+    },
+    {
+      key: "from-10-000btc-to-100-000btc",
+      name: "10_000btc..100_000btc",
+      title: "From 10,000 BTC to 100,000 BTC",
+      color: colors.orange,
+    },
+    {
+      key: "from-100-000btc",
+      name: "100_000btc+",
+      title: "From 100,000 BTC",
+      color: colors.yellow,
+    },
+  ]);
+
+  const type = /** @type {const} */ ([
+    {
+      key: "p2pk65",
+      name: "p2pk65",
+      title: "Pay To Long Public Key",
+      color: colors.red,
+    },
+    {
+      key: "p2pk33",
+      name: "p2pk33",
+      title: "Pay To Short Public Key",
+      color: colors.orange,
+    },
+    {
+      key: "p2pkh",
+      name: "p2pkh",
+      title: "Pay To Public Key Hash",
+      color: colors.yellow,
+    },
+    {
+      key: "p2ms",
+      name: "p2ms",
+      title: "Pay To Bare Multisig",
+      color: colors.lime,
+    },
+    {
+      key: "p2sh",
+      name: "p2sh",
+      title: "Pay To Script Hash",
+      color: colors.green,
+    },
+    {
+      key: "p2wpkh",
+      name: "p2wpkh",
+      title: "Pay To Witness Public Key Hash",
+      color: colors.teal,
+    },
+    {
+      key: "p2wsh",
+      name: "p2wsh",
+      title: "Pay To Witness Script Hash",
+      color: colors.blue,
+    },
+    {
+      key: "p2tr",
+      name: "p2tr",
+      title: "Pay To Taproot",
+      color: colors.indigo,
+    },
+    {
+      key: "p2a",
+      name: "p2a",
+      title: "Pay To Anchor",
+      color: colors.purple,
+    },
+    {
+      key: "unknown",
+      name: "unknown",
+      title: "Pay To Unknown",
+      color: colors.violet,
+    },
+    {
+      key: "empty",
+      name: "empty",
+      title: "Pay To Empty",
+      color: colors.fuchsia,
+    },
   ]);
 
   /**
@@ -237,12 +766,12 @@ function createPartialOptions(colors) {
       {
         key: `${concat}-sum`,
         title: name ? `${name} Sum` : "Sum",
-        color: colors.bitcoin,
+        color: colors.orange,
       },
       {
         key: `total-${concat}`,
         title: name ? `Total ${name}` : "Total",
-        color: colors.offBitcoin,
+        color: colors.red,
         defaultActive: false,
       },
     ]);
@@ -579,64 +1108,110 @@ function createPartialOptions(colors) {
    */
 
   /**
-   *
-   * @param {Object} args
-   * @param {string} args.name
-   * @param {string} args.title
-   * @param {"" | VecIdRealizedCapBase} args.key
+   * @typedef {Object} UTXOGroupObject
+   * @property {string} args.name
+   * @property {string} args.title
+   * @property {Color} args.color
+   * @property {"" | VecIdRealizedCapBase} args.key
    */
-  function createUTXOGroupFolder({ name, title, key: _key }) {
-    const key = _key
-      ? /** @type {const} */ (`${_key}-`)
-      : /** @type {const} */ ("");
+
+  /**
+   * @typedef {Object} UTXOGroupsObject
+   * @property {string} args.name
+   * @property {string} args.title
+   * @property {readonly UTXOGroupObject[]} args.list
+   */
+
+  /**
+   * @param {UTXOGroupObject | UTXOGroupsObject} args
+   */
+  function createUTXOGroupFolder(args) {
+    /**
+     * @template {"" | VecIdRealizedCapBase} T
+     * @param {T} _key
+     */
+    const fixKey = (_key) =>
+      _key !== ""
+        ? /** @type {Exclude<"" | `${T}-`, "-">} */ (`${_key}-`)
+        : /** @type {const} */ ("");
+    0;
+
+    const list = "list" in args ? args.list : [args];
+    const useGroupName = "list" in args;
 
     return /** @satisfies {PartialOptionsGroup} */ ({
-      name: name || "all",
+      name: args.name || "all",
       tree: [
         {
           name: "supply",
-          title: `${title} Supply`,
-          bottom: [
-            createBaseSeries({
-              key: `${key}supply`,
-              name: "Supply",
-            }),
-            createBaseSeries({
-              key: `${key}supply-in-btc`,
-              name: "Supply",
-            }),
-            createBaseSeries({
-              key: `${key}supply-in-usd`,
-              name: "Supply",
-            }),
-          ],
+          title: `${args.title} Supply`,
+          bottom: list.flatMap(({ color, name, key: _key }) => {
+            const key = fixKey(_key);
+            return /** @type {const} */ ([
+              createBaseSeries({
+                key: `${key}supply`,
+                name: useGroupName ? name : "Supply",
+                color: color,
+              }),
+              createBaseSeries({
+                key: `${key}supply-in-btc`,
+                name: useGroupName ? name : "Supply",
+                color,
+              }),
+              createBaseSeries({
+                key: `${key}supply-in-usd`,
+                name: useGroupName ? name : "Supply",
+              }),
+            ]);
+          }),
         },
         {
           name: "utxo count",
-          title: `${title} UTXO Count`,
-          bottom: [
-            createBaseSeries({
-              key: `${key}utxo-count`,
-              name: "Count",
-            }),
-          ],
+          title: `${args.title} UTXO Count`,
+          bottom: list.flatMap(({ color, name, key: _key }) => {
+            const key = fixKey(_key);
+            return /** @type {const} */ ([
+              createBaseSeries({
+                key: `${key}utxo-count`,
+                name: useGroupName ? name : "Count",
+                color,
+              }),
+            ]);
+          }),
         },
         {
           name: "realized cap",
-          title: `${title} Realized Capitalization`,
-          bottom: [
-            createBaseSeries({
-              key: `${key}realized-cap`,
-              name: "Realized Cap",
-            }),
-          ],
+          title: `${args.title} Realized Capitalization`,
+          bottom: list.flatMap(({ color, name, key: _key }) => {
+            const key = fixKey(_key);
+            return /** @type {const} */ ([
+              createBaseSeries({
+                key: `${key}realized-cap`,
+                name: useGroupName ? name : "Realized Cap",
+                color,
+              }),
+            ]);
+          }),
         },
-        createPriceWithRatio({
-          key: `${key}realized-price`,
-          name: "realized price",
-          legend: "realized",
-          title: `${title} Realized Price`,
-        }),
+        "list" in args
+          ? {
+              name: "Realized Price",
+              title: `${args.title} Realized Prices`,
+              top: args.list.map(({ color, name, key }) =>
+                createBaseSeries({
+                  key: `${fixKey(key)}realized-price`,
+                  name,
+                  color,
+                }),
+              ),
+            }
+          : createPriceWithRatio({
+              title: `${args.title} Realized Price`,
+              key: `${fixKey(args.key)}realized-price`,
+              name: "realized price",
+              legend: "realized",
+              color: args.color,
+            }),
       ],
     });
   }
@@ -664,70 +1239,72 @@ function createPartialOptions(colors) {
             },
             {
               name: "All Time High",
-              tree: [
-                {
-                  name: "Value",
-                  title: "All Time High",
-                  top: [
-                    createBaseSeries({
-                      key: "ath",
-                      name: "ath",
-                    }),
-                  ],
-                },
-                {
-                  name: "drawdown",
-                  title: "All Time High Drawdown",
-                  top: [
-                    createBaseSeries({
-                      key: "ath",
-                      name: "ath",
-                    }),
-                  ],
-                  bottom: [
-                    createBaseSeries({
-                      key: "drawdown",
-                      name: "Drawdown",
-                      color: colors.red,
-                    }),
-                  ],
-                },
-                {
-                  name: "days since",
-                  title: "Number of days Since All Time High",
-                  top: [
-                    createBaseSeries({
-                      key: "ath",
-                      name: "ath",
-                    }),
-                  ],
-                  bottom: [
-                    createBaseSeries({
-                      key: "days-since-ath",
-                      name: "Days",
-                    }),
-                  ],
-                },
-                {
-                  name: "max between",
-                  title: "Maximum time between All Time Highs",
-                  top: [
-                    createBaseSeries({
-                      key: "ath",
-                      name: "ath",
-                    }),
-                  ],
-                  bottom: [
-                    createBaseSeries({
-                      key: "max-days-between-ath",
-                      name: "Days",
-                    }),
-                    createBaseSeries({
-                      key: "max-years-between-ath",
-                      name: "Years",
-                    }),
-                  ],
-                },
+              title: "All Time High",
+              // tree: [
+              //   {
+              //     name: "Value",
+              top: [
+                createBaseSeries({
+                  key: "ath",
+                  name: "ath",
+                }),
+              ],
+              // },
+              // {
+              //   name: "drawdown",
+              //   title: "All Time High Drawdown",
+              //   top: [
+              //   createBaseSeries({
+              //     key: "ath",
+              //     name: "ath",
+              //   }),
+              // ],
+              bottom: [
+                createBaseSeries({
+                  key: "drawdown",
+                  name: "Drawdown",
+                  color: colors.red,
+                }),
+                //   ],
+                // },
+                // {
+                //   name: "days since",
+                //   title: "Number of days Since All Time High",
+                //   top: [
+                //     createBaseSeries({
+                //       key: "ath",
+                //       name: "ath",
+                //     }),
+                //   ],
+                // bottom: [
+                createBaseSeries({
+                  key: "days-since-ath",
+                  name: "Days since",
+                }),
+                //   ],
+                // },
+                // {
+                //   name: "max between",
+                //   title: "Maximum time between All Time Highs",
+                //   top: [
+                //     createBaseSeries({
+                //       key: "ath",
+                //       name: "ath",
+                //     }),
+                //   ],
+                //   bottom: [
+                createBaseSeries({
+                  key: "max-days-between-ath",
+                  name: "Max",
+                  color: colors.red,
+                }),
+                createBaseSeries({
+                  key: "max-years-between-ath",
+                  name: "Max",
+                  color: colors.red,
+                }),
+                // ],
+                // },
               ],
             },
             {
@@ -736,21 +1313,21 @@ function createPartialOptions(colors) {
                 {
                   name: "Compare",
                   title: "Moving Averages",
-                  top: averages.map(({ days, key, name }) =>
+                  top: averages.map(({ days, key, name, color }) =>
                     createBaseSeries({
                       key: `${key}-sma`,
                       name: key,
-                      color: colors[`_${key}`],
+                      color,
                     }),
                   ),
                 },
-                ...averages.map(({ key, name }) =>
+                ...averages.map(({ key, name, color }) =>
                   createPriceWithRatio({
                     key: `${key}-sma`,
                     name,
                     title: `${name} Market Price Moving Average`,
                     legend: "average",
-                    color: colors[`_${key}`],
+                    color,
                   }),
                 ),
               ],
@@ -923,16 +1500,17 @@ function createPartialOptions(colors) {
                 {
                   name: "Compare",
                   title: "DCA Classes",
-                  top: dcaClasses.map((year) =>
+                  top: dcaClasses.map(({ year, color, defaultActive }) =>
                     createBaseSeries({
                       key: `dca-class-${year}-avg-price`,
                       name: `${year}`,
-                      color: colors[year],
+                      color,
+                      defaultActive,
                     }),
                   ),
                 },
                 ...dcaClasses.map(
-                  (year) =>
+                  ({ year, color }) =>
                     /** @satisfies {PartialChartOption} */ ({
                       name: `${year}`,
                       title: `DCA Since ${year}`,
@@ -940,7 +1518,7 @@ function createPartialOptions(colors) {
                         createBaseSeries({
                           key: `dca-class-${year}-avg-price`,
                           name: `avg. price`,
-                          color: colors[year],
+                          color,
                         }),
                       ],
                       bottom: [
@@ -1478,373 +2056,106 @@ function createPartialOptions(colors) {
               key: "",
               name: "",
               title: "",
+              color: colors.orange,
             }),
             {
               name: "term",
               tree: [
                 createUTXOGroupFolder({
-                  key: "sth",
-                  name: "short",
-                  title: "Short Term Holders",
+                  name: "Compare",
+                  title: "Compare By Term",
+                  list: terms,
                 }),
+                ...terms.map(createUTXOGroupFolder),
+              ],
+            },
+            {
+              name: "Up to",
+              tree: [
                 createUTXOGroupFolder({
-                  key: "lth",
-                  name: "long",
-                  title: "Long Term Holders",
+                  name: "Compare",
+                  title: "Compare By Up To",
+                  list: upTo,
                 }),
+                ...upTo.map(createUTXOGroupFolder),
               ],
             },
             {
               name: "From",
               tree: [
                 createUTXOGroupFolder({
-                  key: "from-1d",
-                  name: "1d",
-                  title: "From 1 Day",
+                  name: "Compare",
+                  title: "Compare By From",
+                  list: from,
                 }),
-                createUTXOGroupFolder({
-                  key: "from-1w",
-                  name: "1w",
-                  title: "From 1 Week",
-                }),
-                createUTXOGroupFolder({
-                  key: "from-1m",
-                  name: "1m",
-                  title: "From 1 Month",
-                }),
-                createUTXOGroupFolder({
-                  key: "from-2m",
-                  name: "2m",
-                  title: "From 2 Months",
-                }),
-                createUTXOGroupFolder({
-                  key: "from-3m",
-                  name: "3m",
-                  title: "From 3 Months",
-                }),
-                createUTXOGroupFolder({
-                  key: "from-4m",
-                  name: "4m",
-                  title: "From 4 Months",
-                }),
-                createUTXOGroupFolder({
-                  key: "from-5m",
-                  name: "5m",
-                  title: "From 5 Months",
-                }),
-                createUTXOGroupFolder({
-                  key: "from-6m",
-                  name: "6m",
-                  title: "From 6 Months",
-                }),
-                createUTXOGroupFolder({
-                  key: "from-1y",
-                  name: "1y",
-                  title: "From 1 Year",
-                }),
-                createUTXOGroupFolder({
-                  key: "from-2y",
-                  name: "2y",
-                  title: "From 2 Years",
-                }),
-                createUTXOGroupFolder({
-                  key: "from-3y",
-                  name: "3y",
-                  title: "From 3 Years",
-                }),
-                createUTXOGroupFolder({
-                  key: "from-4y",
-                  name: "4y",
-                  title: "From 4 Years",
-                }),
-                createUTXOGroupFolder({
-                  key: "from-5y",
-                  name: "5y",
-                  title: "From 5 Years",
-                }),
-                createUTXOGroupFolder({
-                  key: "from-6y",
-                  name: "6y",
-                  title: "From 6 Years",
-                }),
-                createUTXOGroupFolder({
-                  key: "from-7y",
-                  name: "7y",
-                  title: "From 7 Years",
-                }),
-                createUTXOGroupFolder({
-                  key: "from-8y",
-                  name: "8y",
-                  title: "From 8 Years",
-                }),
-                createUTXOGroupFolder({
-                  key: "from-10y",
-                  name: "10y",
-                  title: "From 10 Years",
-                }),
-                createUTXOGroupFolder({
-                  key: "from-15y",
-                  name: "15y",
-                  title: "From 15 Years",
-                }),
+                ...from.map(createUTXOGroupFolder),
               ],
             },
             {
               name: "Range",
               tree: [
                 createUTXOGroupFolder({
-                  key: "from-1d-to-1w",
-                  name: "1d..1w",
-                  title: "Between 1 Day and 1 Week",
+                  name: "Compare",
+                  title: "Compare By Range",
+                  list: range,
                 }),
-                createUTXOGroupFolder({
-                  key: "from-1w-to-1m",
-                  name: "1w..1m",
-                  title: "Between 1 Week and 1 Month",
-                }),
-                createUTXOGroupFolder({
-                  key: "from-1m-to-3m",
-                  name: "1m..3m",
-                  title: "Between 1 Month and 3 Months",
-                }),
-                createUTXOGroupFolder({
-                  key: "from-3m-to-6m",
-                  name: "3m..6m",
-                  title: "Between 3 Month and 6 Months",
-                }),
-                createUTXOGroupFolder({
-                  key: "from-6m-to-1y",
-                  name: "6m..1y",
-                  title: "Between 6 Months and 1 Year",
-                }),
-                createUTXOGroupFolder({
-                  key: "from-1y-to-2y",
-                  name: "1y..2y",
-                  title: "Between 1 Year and 2 Years",
-                }),
-                createUTXOGroupFolder({
-                  key: "from-2y-to-3y",
-                  name: "2y..3y",
-                  title: "Between 2 Years and 3 Years",
-                }),
-                createUTXOGroupFolder({
-                  key: "from-3y-to-4y",
-                  name: "3y..4y",
-                  title: "Between 3 Years and 4 Years",
-                }),
-                createUTXOGroupFolder({
-                  key: "from-4y-to-5y",
-                  name: "4y..5y",
-                  title: "Between 4 Years and 5 Years",
-                }),
-                createUTXOGroupFolder({
-                  key: "from-5y-to-7y",
-                  name: "5y..7y",
-                  title: "Between 5 Years and 7 Years",
-                }),
-                createUTXOGroupFolder({
-                  key: "from-7y-to-10y",
-                  name: "7y..10y",
-                  title: "Between 7 Years and 10 Years",
-                }),
-                createUTXOGroupFolder({
-                  key: "from-10y-to-15y",
-                  name: "10y..15y",
-                  title: "Between 10 Years and 15 Years",
-                }),
+                ...range.map(createUTXOGroupFolder),
               ],
             },
             {
               name: "Epoch",
               tree: [
                 createUTXOGroupFolder({
-                  key: "epoch-0",
-                  name: "0",
-                  title: "Epoch 0",
+                  name: "Compare",
+                  title: "Compare By Epoch",
+                  list: epoch,
                 }),
-                createUTXOGroupFolder({
-                  key: "epoch-1",
-                  name: "1",
-                  title: "Epoch 1",
-                }),
-                createUTXOGroupFolder({
-                  key: "epoch-2",
-                  name: "2",
-                  title: "Epoch 2",
-                }),
-                createUTXOGroupFolder({
-                  key: "epoch-3",
-                  name: "3",
-                  title: "Epoch 3",
-                }),
-                createUTXOGroupFolder({
-                  key: "epoch-4",
-                  name: "4",
-                  title: "Epoch 4",
-                }),
+                ...epoch.map(createUTXOGroupFolder),
               ],
             },
             {
               name: "size",
               tree: [
                 createUTXOGroupFolder({
-                  key: "0sat",
-                  name: "0sat",
-                  title: "0 sat",
+                  name: "Compare",
+                  title: "Compare By Size",
+                  list: size,
                 }),
-                createUTXOGroupFolder({
-                  key: "from-1sat-to-10sats",
-                  name: "1sat..10sats",
-                  title: "From 1 sat to 10 sats",
-                }),
-                createUTXOGroupFolder({
-                  key: "from-10sats-to-100sats",
-                  name: "10sat..100sats",
-                  title: "From 10 sats to 100 sats",
-                }),
-                createUTXOGroupFolder({
-                  key: "from-100sats-to-1-000sats",
-                  name: "100sat..1_000sats",
-                  title: "From 100 sats to 1,000 sats",
-                }),
-                createUTXOGroupFolder({
-                  key: "from-1-000sats-to-10-000sats",
-                  name: "1_000sat..10_000sats",
-                  title: "From 1,000 sats to 10,000 sats",
-                }),
-                createUTXOGroupFolder({
-                  key: "from-10-000sats-to-100-000sats",
-                  name: "10_000sat..100_000sats",
-                  title: "From 10,000 sats to 100,000 sats",
-                }),
-                createUTXOGroupFolder({
-                  key: "from-100-000sats-to-1-000-000sats",
-                  name: "100_000sat..1_000_000sats",
-                  title: "From 100,000 sats to 1,000,000 sats",
-                }),
-                createUTXOGroupFolder({
-                  key: "from-1-000-000sats-to-10-000-000sats",
-                  name: "1_000_000sat..10_000_000sats",
-                  title: "From 1,000,000 sats to 10,000,000 sats",
-                }),
-                createUTXOGroupFolder({
-                  key: "from-10-000-000sats-to-1btc",
-                  name: "10_000_000sat..1btc",
-                  title: "From 10,000,000 sats to 1 BTC",
-                }),
-                createUTXOGroupFolder({
-                  key: "from-1btc-to-10btc",
-                  name: "1btc..10btc",
-                  title: "From 1 BTC to 10 BTC",
-                }),
-                createUTXOGroupFolder({
-                  key: "from-10btc-to-100btc",
-                  name: "10btc..100btc",
-                  title: "From 10 BTC to 100 BTC",
-                }),
-                createUTXOGroupFolder({
-                  key: "from-100btc-to-1-000btc",
-                  name: "100btc..1_000btc",
-                  title: "From 100 BTC to 1,000 BTC",
-                }),
-                createUTXOGroupFolder({
-                  key: "from-1-000btc-to-10-000btc",
-                  name: "1_000btc..10_000btc",
-                  title: "From 1,000 BTC to 10,000 BTC",
-                }),
-                createUTXOGroupFolder({
-                  key: "from-10-000btc-to-100-000btc",
-                  name: "10_000btc..100_000btc",
-                  title: "From 10,000 BTC to 100,000 BTC",
-                }),
-                createUTXOGroupFolder({
-                  key: "from-100-000btc",
-                  name: "100_000btc+",
-                  title: "From 100,000 BTC",
-                }),
+                ...size.map(createUTXOGroupFolder),
               ],
             },
             {
               name: "type",
               tree: [
                 createUTXOGroupFolder({
-                  key: "p2pk65",
-                  name: "p2pk65",
-                  title: "Pay To Long Public Key",
+                  name: "Compare",
+                  title: "Compare By Type",
+                  list: type,
                 }),
-                createUTXOGroupFolder({
-                  key: "p2pk33",
-                  name: "p2pk33",
-                  title: "Pay To Short Public Key",
-                }),
-                createUTXOGroupFolder({
-                  key: "p2pkh",
-                  name: "p2pkh",
-                  title: "Pay To Public Key Hash",
-                }),
-                createUTXOGroupFolder({
-                  key: "p2ms",
-                  name: "p2ms",
-                  title: "Pay To Bare Multisig",
-                }),
-                createUTXOGroupFolder({
-                  key: "p2sh",
-                  name: "p2sh",
-                  title: "Pay To Script Hash",
-                }),
-                createUTXOGroupFolder({
-                  key: "p2wpkh",
-                  name: "p2wpkh",
-                  title: "Pay To Witness Public Key Hash",
-                }),
-                createUTXOGroupFolder({
-                  key: "p2wsh",
-                  name: "p2wsh",
-                  title: "Pay To Witness Script Hash",
-                }),
-                createUTXOGroupFolder({
-                  key: "p2tr",
-                  name: "p2tr",
-                  title: "Pay To Taproot",
-                }),
-                createUTXOGroupFolder({
-                  key: "p2a",
-                  name: "p2a",
-                  title: "Pay To Anchor",
-                }),
-                createUTXOGroupFolder({
-                  key: "unknown",
-                  name: "unknown",
-                  title: "Pay To Unknown",
-                }),
-                createUTXOGroupFolder({
-                  key: "empty",
-                  name: "empty",
-                  title: "Pay To Empty",
-                }),
+                ...type.map(createUTXOGroupFolder),
               ],
             },
+          ],
+        },
+        {
+          name: "Unspendable",
+          tree: [
             {
-              name: "Unspendable",
-              tree: [
-                {
-                  name: "supply",
-                  title: "Unspendable Supply",
-                  bottom: [
-                    createBaseSeries({
-                      key: "unspendable-supply",
-                      name: "Supply",
-                    }),
-                    createBaseSeries({
-                      key: "unspendable-supply-in-btc",
-                      name: "Supply",
-                    }),
-                    createBaseSeries({
-                      key: "unspendable-supply-in-usd",
-                      name: "Supply",
-                    }),
-                  ],
-                },
+              name: "supply",
+              title: "Unspendable Supply",
+              bottom: [
+                createBaseSeries({
+                  key: "unspendable-supply",
+                  name: "Supply",
+                }),
+                createBaseSeries({
+                  key: "unspendable-supply-in-btc",
+                  name: "Supply",
+                }),
+                createBaseSeries({
+                  key: "unspendable-supply-in-usd",
+                  name: "Supply",
+                }),
               ],
             },
           ],
