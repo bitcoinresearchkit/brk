@@ -420,7 +420,7 @@ export default import("./v5.0.6-treeshaked/script.js").then((lc) => {
 
         const paneIndex = _paneIndex ?? 0;
 
-        color ||= unit === "USD" ? colors.dollars : colors.bitcoin;
+        color ||= unit === "USD" ? colors.green : colors.orange;
 
         const series = ichart.addSeries(
           /** @type {SeriesDefinition<'Line'>} */ (lc.LineSeries),

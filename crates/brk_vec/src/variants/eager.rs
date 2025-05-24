@@ -267,7 +267,9 @@ where
 
         let mut divider_iter = divider.iter();
         divided.iter_at(index).try_for_each(|(i, divided)| {
-            let v = (divided.into_inner() / divider_iter.unwrap_get_inner(i) * multiplier)
+            let divided = divided.into_inner();
+            let divider = divider_iter.unwrap_get_inner(i);
+            let v = (divided / divider * multiplier)
                 .checked_sub(subtract)
                 .unwrap();
             self.forced_push_at(i, T::from(v), exit)
