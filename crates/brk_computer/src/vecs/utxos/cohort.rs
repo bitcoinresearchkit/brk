@@ -8,7 +8,7 @@ use brk_vec::{
 };
 
 use crate::{
-    states::CohortState,
+    states::{CohortState, RealizedState},
     vecs::{
         Indexes, fetched,
         grouped::{
@@ -55,7 +55,7 @@ impl Vecs {
 
         let mut state = CohortState::default();
         if compute_dollars {
-            state.realized_cap = Some(Dollars::ZERO);
+            state.realized = Some(RealizedState::NAN);
         }
 
         Ok(Self {
@@ -169,11 +169,9 @@ impl Vecs {
                 .unwrap_get_inner(prev_height);
 
             if let Some(height_to_realized_cap) = self.height_to_realized_cap.as_mut() {
-                self.state.realized_cap = Some(
-                    height_to_realized_cap
-                        .into_iter()
-                        .unwrap_get_inner(prev_height),
-                );
+                self.state.realized.as_mut().unwrap().realized_cap = height_to_realized_cap
+                    .into_iter()
+                    .unwrap_get_inner(prev_height);
             }
         }
     }
@@ -215,10 +213,14 @@ impl Vecs {
         if let Some(height_to_realized_cap) = self.height_to_realized_cap.as_mut() {
             height_to_realized_cap.forced_push_at(
                 height,
-                self.state.realized_cap.unwrap_or_else(|| {
-                    dbg!(&self.state);
-                    panic!();
-                }),
+                self.state
+                    .realized
+                    .as_ref()
+                    .unwrap_or_else(|| {
+                        dbg!(&self.state);
+                        panic!();
+                    })
+                    .realized_cap,
                 exit,
             )?;
         }

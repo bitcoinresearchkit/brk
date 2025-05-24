@@ -1,18 +1,18 @@
 use std::{cmp::Ordering, collections::BTreeMap, mem, path::Path, thread};
 
-use brk_core::{Height, InputIndex, OutputIndex, Sats};
+use brk_core::{Height, InputIndex, OutputIndex, OutputType, Sats};
 use brk_exit::Exit;
 use brk_indexer::Indexer;
 use brk_vec::{
     AnyCollectableVec, AnyVec, BaseVecIterator, CollectableVec, Compressed, Computation, EagerVec,
-    GenericStoredVec, StoredIndex, StoredVec, VecIterator, Version,
+    GenericStoredVec, StoredIndex, StoredVec, UnsafeSlice, VecIterator, Version,
 };
 use log::info;
+use rayon::prelude::*;
 
 use crate::states::{
     BlockState, OutputFilter, Outputs, OutputsByEpoch, OutputsByFrom, OutputsByRange,
-    OutputsBySize, OutputsBySpendableType, OutputsByTerm, OutputsByType, OutputsByUpTo,
-    ReceivedBlockStateData, SupplyState,
+    OutputsBySize, OutputsBySpendableType, OutputsByTerm, SupplyState, Transacted,
 };
 
 use super::{
@@ -23,7 +23,7 @@ use super::{
 
 pub mod cohort;
 
-const VERSION: Version = Version::new(99);
+const VERSION: Version = Version::new(999);
 
 #[derive(Clone)]
 pub struct Vecs {
@@ -32,6 +32,8 @@ pub struct Vecs {
     // cointime,...
     pub height_to_unspendable_supply: EagerVec<Height, Sats>,
     pub indexes_to_unspendable_supply: ComputedValueVecsFromHeight,
+    // pub height_to_opreturn_supply: EagerVec<Height, Sats>,
+    // pub indexes_to_opreturn_supply: ComputedValueVecsFromHeight,
     utxos_vecs: Outputs<(OutputFilter, cohort::Vecs)>,
 }
 
@@ -391,104 +393,104 @@ impl Vecs {
                             fetched,
                         )?,
                     },
-                    // by_range: OutputsByRange {
-                    //     _1d_to_1w: cohort::Vecs::forced_import(
-                    //         path,
-                    //         Some("from_1d_to_1w"),
-                    //         _computation,
-                    //         compressed,
-                    //         VERSION + Version::ZERO,
-                    //         fetched,
-                    //     )?,
-                    //     _1w_to_1m: cohort::Vecs::forced_import(
-                    //         path,
-                    //         Some("from_1w_to_1m"),
-                    //         _computation,
-                    //         compressed,
-                    //         VERSION + Version::ZERO,
-                    //         fetched,
-                    //     )?,
-                    //     _1m_to_3m: cohort::Vecs::forced_import(
-                    //         path,
-                    //         Some("from_1m_to_3m"),
-                    //         _computation,
-                    //         compressed,
-                    //         VERSION + Version::ZERO,
-                    //         fetched,
-                    //     )?,
-                    //     _3m_to_6m: cohort::Vecs::forced_import(
-                    //         path,
-                    //         Some("from_3m_to_6m"),
-                    //         _computation,
-                    //         compressed,
-                    //         VERSION + Version::ZERO,
-                    //         fetched,
-                    //     )?,
-                    //     _6m_to_1y: cohort::Vecs::forced_import(
-                    //         path,
-                    //         Some("from_6m_to_1y"),
-                    //         _computation,
-                    //         compressed,
-                    //         VERSION + Version::ZERO,
-                    //         fetched,
-                    //     )?,
-                    //     _1y_to_2y: cohort::Vecs::forced_import(
-                    //         path,
-                    //         Some("from_1y_to_2y"),
-                    //         _computation,
-                    //         compressed,
-                    //         VERSION + Version::ZERO,
-                    //         fetched,
-                    //     )?,
-                    //     _2y_to_3y: cohort::Vecs::forced_import(
-                    //         path,
-                    //         Some("from_2y_to_3y"),
-                    //         _computation,
-                    //         compressed,
-                    //         VERSION + Version::ZERO,
-                    //         fetched,
-                    //     )?,
-                    //     _3y_to_4y: cohort::Vecs::forced_import(
-                    //         path,
-                    //         Some("from_3y_to_4y"),
-                    //         _computation,
-                    //         compressed,
-                    //         VERSION + Version::ZERO,
-                    //         fetched,
-                    //     )?,
-                    //     _4y_to_5y: cohort::Vecs::forced_import(
-                    //         path,
-                    //         Some("from_4y_to_5y"),
-                    //         _computation,
-                    //         compressed,
-                    //         VERSION + Version::ZERO,
-                    //         fetched,
-                    //     )?,
-                    //     _5y_to_7y: cohort::Vecs::forced_import(
-                    //         path,
-                    //         Some("from_5y_to_7y"),
-                    //         _computation,
-                    //         compressed,
-                    //         VERSION + Version::ZERO,
-                    //         fetched,
-                    //     )?,
-                    //     _7y_to_10y: cohort::Vecs::forced_import(
-                    //         path,
-                    //         Some("from_7y_to_10y"),
-                    //         _computation,
-                    //         compressed,
-                    //         VERSION + Version::ZERO,
-                    //         fetched,
-                    //     )?,
-                    //     _10y_to_15y: cohort::Vecs::forced_import(
-                    //         path,
-                    //         Some("from_10y_to_15y"),
-                    //         _computation,
-                    //         compressed,
-                    //         VERSION + Version::ZERO,
-                    //         fetched,
-                    //     )?,
-                    // },
+                    by_range: OutputsByRange {
+                        _1d_to_1w: cohort::Vecs::forced_import(
+                            path,
+                            Some("from_1d_to_1w"),
+                            _computation,
+                            compressed,
+                            VERSION + Version::ZERO,
+                            fetched,
+                        )?,
+                        _1w_to_1m: cohort::Vecs::forced_import(
+                            path,
+                            Some("from_1w_to_1m"),
+                            _computation,
+                            compressed,
+                            VERSION + Version::ZERO,
+                            fetched,
+                        )?,
+                        _1m_to_3m: cohort::Vecs::forced_import(
+                            path,
+                            Some("from_1m_to_3m"),
+                            _computation,
+                            compressed,
+                            VERSION + Version::ZERO,
+                            fetched,
+                        )?,
+                        _3m_to_6m: cohort::Vecs::forced_import(
+                            path,
+                            Some("from_3m_to_6m"),
+                            _computation,
+                            compressed,
+                            VERSION + Version::ZERO,
+                            fetched,
+                        )?,
+                        _6m_to_1y: cohort::Vecs::forced_import(
+                            path,
+                            Some("from_6m_to_1y"),
+                            _computation,
+                            compressed,
+                            VERSION + Version::ZERO,
+                            fetched,
+                        )?,
+                        _1y_to_2y: cohort::Vecs::forced_import(
+                            path,
+                            Some("from_1y_to_2y"),
+                            _computation,
+                            compressed,
+                            VERSION + Version::ZERO,
+                            fetched,
+                        )?,
+                        _2y_to_3y: cohort::Vecs::forced_import(
+                            path,
+                            Some("from_2y_to_3y"),
+                            _computation,
+                            compressed,
+                            VERSION + Version::ZERO,
+                            fetched,
+                        )?,
+                        _3y_to_4y: cohort::Vecs::forced_import(
+                            path,
+                            Some("from_3y_to_4y"),
+                            _computation,
+                            compressed,
+                            VERSION + Version::ZERO,
+                            fetched,
+                        )?,
+                        _4y_to_5y: cohort::Vecs::forced_import(
+                            path,
+                            Some("from_4y_to_5y"),
+                            _computation,
+                            compressed,
+                            VERSION + Version::ZERO,
+                            fetched,
+                        )?,
+                        _5y_to_7y: cohort::Vecs::forced_import(
+                            path,
+                            Some("from_5y_to_7y"),
+                            _computation,
+                            compressed,
+                            VERSION + Version::ZERO,
+                            fetched,
+                        )?,
+                        _7y_to_10y: cohort::Vecs::forced_import(
+                            path,
+                            Some("from_7y_to_10y"),
+                            _computation,
+                            compressed,
+                            VERSION + Version::ZERO,
+                            fetched,
+                        )?,
+                        _10y_to_15y: cohort::Vecs::forced_import(
+                            path,
+                            Some("from_10y_to_15y"),
+                            _computation,
+                            compressed,
+                            VERSION + Version::ZERO,
+                            fetched,
+                        )?,
+                    },
                     by_epoch: OutputsByEpoch {
                         _0: cohort::Vecs::forced_import(
                             path,
@@ -532,6 +534,14 @@ impl Vecs {
                         )?,
                     },
                     by_size: OutputsBySize {
+                        _0sat: cohort::Vecs::forced_import(
+                            path,
+                            Some("0sat"),
+                            _computation,
+                            compressed,
+                            VERSION + Version::ZERO,
+                            fetched,
+                        )?,
                         from_1sat_to_10sats: cohort::Vecs::forced_import(
                             path,
                             Some("from_1sat_to_10sats"),
@@ -738,7 +748,7 @@ impl Vecs {
                     //         fetched,
                     //     )?,
                     // },
-                    by_spendable_type: OutputsBySpendableType {
+                    by_type: OutputsBySpendableType {
                         p2pk65: cohort::Vecs::forced_import(
                             path,
                             Some("p2pk65"),
@@ -819,14 +829,14 @@ impl Vecs {
                             VERSION + Version::ZERO,
                             fetched,
                         )?,
-                        // empty: cohort::Vecs::forced_import(
-                        //     path,
-                        //     Some("empty"),
-                        //     _computation,
-                        //     compressed,
-                        // VERSION + Version::ZERO,
-                        // fetched,
-                        // )?,
+                        empty: cohort::Vecs::forced_import(
+                            path,
+                            Some("empty"),
+                            _computation,
+                            compressed,
+                            VERSION + Version::ZERO,
+                            fetched,
+                        )?,
                         unknown: cohort::Vecs::forced_import(
                             path,
                             Some("unknown"),
@@ -873,18 +883,19 @@ impl Vecs {
             .as_ref()
             .map(|fetched| &fetched.chainindexes_to_close.height);
 
+        let inputindex_to_outputindex_mmap = inputindex_to_outputindex.mmap().load();
+        let outputindex_to_value_mmap = outputindex_to_value.mmap().load();
+        let outputindex_to_outputtype_mmap = outputindex_to_outputtype.mmap().load();
+        let outputindex_to_txindex_mmap = outputindex_to_txindex.mmap().load();
+        let txindex_to_height_mmap = txindex_to_height.mmap().load();
+
         let mut height_to_first_outputindex_iter = height_to_first_outputindex.into_iter();
         let mut height_to_first_inputindex_iter = height_to_first_inputindex.into_iter();
         let mut height_to_output_count_iter = height_to_output_count.into_iter();
         let mut height_to_input_count_iter = height_to_input_count.into_iter();
-        let mut inputindex_to_outputindex_iter = inputindex_to_outputindex.into_iter();
-        let mut outputindex_to_value_iter = outputindex_to_value.into_iter();
-        let mut outputindex_to_value_iter_2 = outputindex_to_value.into_iter();
-        let mut txindex_to_height_iter = txindex_to_height.into_iter();
-        let mut outputindex_to_txindex_iter = outputindex_to_txindex.into_iter();
+        // let mut outputindex_to_value_iter_2 = outputindex_to_value.into_iter();
         let mut height_to_close_iter = height_to_close.as_ref().map(|v| v.into_iter());
-        let mut outputindex_to_outputtype_iter = outputindex_to_outputtype.into_iter();
-        let mut outputindex_to_outputtype_iter_2 = outputindex_to_outputtype.into_iter();
+        // let mut outputindex_to_outputtype_iter_2 = outputindex_to_outputtype.into_iter();
         let mut height_to_unclaimed_rewards_iter = height_to_unclaimed_rewards.into_iter();
         let mut height_to_timestamp_fixed_iter = height_to_timestamp_fixed.into_iter();
 
@@ -1012,104 +1023,134 @@ impl Vecs {
                     }
 
                     let sent_handle = s.spawn(|| {
-                        let mut txindex_to_height = BTreeMap::new();
-                        let mut height_to_sent: BTreeMap<
-                            Height,
-                            OutputsByType<(SupplyState, Vec<Sats>)>,
-                        > = BTreeMap::new();
-
                         // Skip coinbase
                         (first_inputindex + 1..first_inputindex + *input_count)
+                            .into_par_iter()
                             .map(InputIndex::from)
-                            .for_each(|inputindex| {
-                                let outputindex =
-                                    inputindex_to_outputindex_iter.unwrap_get_inner(inputindex);
+                            .map(|inputindex| {
+                                let outputindex = inputindex_to_outputindex
+                                    .get_or_read(inputindex, &inputindex_to_outputindex_mmap)
+                                    .unwrap()
+                                    .unwrap()
+                                    .into_inner();
 
-                                let value = outputindex_to_value_iter.unwrap_get_inner(outputindex);
+                                let value = outputindex_to_value
+                                    .get_or_read(outputindex, &outputindex_to_value_mmap)
+                                    .unwrap()
+                                    .unwrap()
+                                    .into_inner();
 
-                                let input_type =
-                                    outputindex_to_outputtype_iter.unwrap_get_inner(outputindex);
+                                let input_type = outputindex_to_outputtype
+                                    .get_or_read(outputindex, &outputindex_to_outputtype_mmap)
+                                    .unwrap()
+                                    .unwrap()
+                                    .into_inner();
 
-                                let input_txindex =
-                                    outputindex_to_txindex_iter.unwrap_get_inner(outputindex);
+                                if input_type.is_unspendable() {
+                                    unreachable!()
+                                }
 
-                                let input_height =
-                                    *txindex_to_height.entry(input_txindex).or_insert_with(|| {
-                                        txindex_to_height_iter.unwrap_get_inner(input_txindex)
-                                    });
+                                let input_txindex = outputindex_to_txindex
+                                    .get_or_read(outputindex, &outputindex_to_txindex_mmap)
+                                    .unwrap()
+                                    .unwrap()
+                                    .into_inner();
 
-                                let input_data = height_to_sent.entry(input_height).or_default();
+                                // let input_height = *cached_txindex_to_height
+                                //     .entry(input_txindex)
+                                //     .or_insert_with(|| {
+                                let height = txindex_to_height
+                                    .get_or_read(input_txindex, &txindex_to_height_mmap)
+                                    .unwrap()
+                                    .unwrap()
+                                    .into_inner();
+                                // });
 
-                                let (sent_supply, sats_vec) = input_data.get_mut(input_type);
-
-                                sent_supply.utxos += 1;
-                                sent_supply.value += value;
-                                sats_vec.push(value);
-                            });
-
-                        height_to_sent
+                                (height, value, input_type)
+                            })
+                            .fold(
+                                BTreeMap::<Height, Transacted>::default,
+                                |mut tree, (height, value, input_type)| {
+                                    tree.entry(height).or_default().iterate(value, input_type);
+                                    tree
+                                },
+                            )
+                            .reduce(BTreeMap::<Height, Transacted>::default, |first, second| {
+                                let (mut source, to_consume) = if first.len() > second.len() {
+                                    (first, second)
+                                } else {
+                                    (second, first)
+                                };
+                                to_consume.into_iter().for_each(|(k, v)| {
+                                    *source.entry(k).or_default() += v;
+                                });
+                                source
+                            })
                     });
 
                     let received_handle = s.spawn(|| {
-                        let mut by_type: OutputsByType<(SupplyState, Vec<Sats>)> =
-                            OutputsByType::default();
-
                         (first_outputindex..first_outputindex + *output_count)
+                            .into_par_iter()
                             .map(OutputIndex::from)
-                            .for_each(|outputindex| {
-                                let value =
-                                    outputindex_to_value_iter_2.unwrap_get_inner(outputindex);
+                            .map(|outputindex| {
+                                let value = outputindex_to_value
+                                    .get_or_read(outputindex, &outputindex_to_value_mmap)
+                                    .unwrap()
+                                    .unwrap()
+                                    .into_inner();
 
-                                let output_type =
-                                    outputindex_to_outputtype_iter_2.unwrap_get_inner(outputindex);
+                                let output_type = outputindex_to_outputtype
+                                    .get_or_read(outputindex, &outputindex_to_outputtype_mmap)
+                                    .unwrap()
+                                    .unwrap()
+                                    .into_inner();
 
-                                let (received_supply, sats_vec) = by_type.get_mut(output_type);
-
-                                received_supply.value += value;
-                                received_supply.utxos += 1;
-                                sats_vec.push(value);
-                            });
-
-                        by_type
+                                (value, output_type)
+                            })
+                            .fold(
+                                Transacted::default,
+                                |mut transacted, (value, output_type)| {
+                                    transacted.iterate(value, output_type);
+                                    transacted
+                                },
+                            )
+                            .reduce(Transacted::default, |acc, transacted| acc + transacted)
                     });
 
                     (sent_handle.join().unwrap(), received_handle.join().unwrap())
                 });
 
                 unspendable_supply += received
+                    .by_type
                     .unspendable
                     .as_vec()
                     .into_iter()
-                    .map(|state| state.0.value)
+                    .map(|state| state.value)
                     .sum::<Sats>()
                     + height_to_unclaimed_rewards_iter.unwrap_get_inner(height);
 
                 if height == Height::new(0) {
-                    received.spendable.p2pk65.1.remove(0);
-                    received.spendable.p2pk65.0.utxos -= 1;
-                    received.spendable.p2pk65.0.value -= Sats::FIFTY_BTC;
+                    received = Transacted::default();
                     unspendable_supply += Sats::FIFTY_BTC;
                 } else if height == Height::new(91_842) || height == Height::new(91_880) {
                     // Need to destroy invalid coinbases due to duplicate txids
-                    let entry = if height == Height::new(91_842) {
+                    if height == Height::new(91_842) {
                         height_to_sent.entry(Height::new(91_812)).or_default()
                     } else {
                         height_to_sent.entry(Height::new(91_722)).or_default()
-                    };
-                    entry.spendable.p2pk65.0.value += Sats::FIFTY_BTC;
-                    entry.spendable.p2pk65.0.utxos += 1;
-                    entry.spendable.p2pk65.1.push(Sats::FIFTY_BTC);
+                    }
+                    .iterate(Sats::FIFTY_BTC, OutputType::P2PK65);
                 };
 
                 if chain_state_starting_height <= height {
                     // RECEIVE
 
                     // Push current block state before processing sends and receives
-                    chain_state.push(BlockState::from(ReceivedBlockStateData {
-                        received: &received,
+                    chain_state.push(BlockState {
+                        supply: received.spendable_supply.clone(),
                         price,
                         timestamp,
-                    }));
+                    });
 
                     self.utxos_vecs.receive(received, height, price);
 
@@ -1117,17 +1158,12 @@ impl Vecs {
 
                     // SEND
 
-                    height_to_sent
-                        .iter()
-                        .for_each(|(height, sent_data_by_type)| {
-                            let block_state =
-                                chain_state.get_mut(height.unwrap_to_usize()).unwrap();
+                    let unsafe_chain_state = UnsafeSlice::new(&mut chain_state);
 
-                            sent_data_by_type
-                                .as_vec()
-                                .into_iter()
-                                .for_each(|(supply, _)| block_state.supply -= supply);
-                        });
+                    height_to_sent.par_iter().for_each(|(height, sent)| unsafe {
+                        (*unsafe_chain_state.get(height.unwrap_to_usize())).supply -=
+                            &sent.spendable_supply;
+                    });
 
                     self.utxos_vecs.send(height_to_sent, chain_state.as_slice());
                 } else {
@@ -1150,6 +1186,8 @@ impl Vecs {
             })?;
 
         exit.block();
+
+        info!("Computing utxo set datasets...");
 
         let mut flat_vecs_ = self.utxos_vecs.as_mut_vec();
 

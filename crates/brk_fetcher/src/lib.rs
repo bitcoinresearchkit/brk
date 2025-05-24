@@ -35,7 +35,7 @@ impl Fetcher {
     pub fn get_date(&mut self, date: Date) -> color_eyre::Result<OHLCCents> {
         self.kraken
             .get_from_1d(&date)
-            .or_else(|e| {
+            .or_else(|_| {
                 // eprintln!("{e}");
                 self.binance.get_from_1d(&date)
             })

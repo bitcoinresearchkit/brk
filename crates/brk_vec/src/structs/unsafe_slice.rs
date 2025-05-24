@@ -19,6 +19,11 @@ impl<'a, T> UnsafeSlice<'a, T> {
         }
     }
 
+    /// SAFETY: It is UB
+    pub fn get(&self, i: usize) -> *mut T {
+        self.0[i].get()
+    }
+
     pub fn copy_slice(&self, start: usize, slice: &[T])
     where
         T: Copy,

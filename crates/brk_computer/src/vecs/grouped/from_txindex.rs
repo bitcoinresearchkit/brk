@@ -405,6 +405,7 @@ impl ComputedVecsFromTxindex<Bitcoin> {
 }
 
 impl ComputedVecsFromTxindex<Dollars> {
+    #[allow(clippy::too_many_arguments)]
     pub fn compute_rest_from_bitcoin(
         &mut self,
         indexer: &Indexer,

@@ -42,6 +42,10 @@ impl Sats {
     pub fn is_zero(&self) -> bool {
         *self == Self::ZERO
     }
+
+    pub fn is_not_zero(&self) -> bool {
+        *self != Self::ZERO
+    }
 }
 
 impl Add for Sats {
@@ -137,6 +141,12 @@ impl From<f64> for Sats {
 impl From<Sats> for f64 {
     fn from(value: Sats) -> Self {
         value.0 as f64
+    }
+}
+
+impl From<Sats> for usize {
+    fn from(value: Sats) -> Self {
+        value.0 as usize
     }
 }
 
