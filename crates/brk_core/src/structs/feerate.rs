@@ -1,22 +1,14 @@
-use std::ops::{Add, Div};
+use std::{
+    cmp::Ordering,
+    ops::{Add, Div},
+};
 
 use serde::Serialize;
 use zerocopy_derive::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 use super::{Sats, StoredUsize};
 
-#[derive(
-    Debug,
-    Clone,
-    Copy,
-    Serialize,
-    PartialEq,
-    PartialOrd,
-    FromBytes,
-    Immutable,
-    IntoBytes,
-    KnownLayout,
-)]
+#[derive(Debug, Clone, Copy, Serialize, FromBytes, Immutable, IntoBytes, KnownLayout)]
 pub struct Feerate(f32);
 
 impl From<(Sats, StoredUsize)> for Feerate {
@@ -56,11 +48,34 @@ impl From<usize> for Feerate {
     }
 }
 
+impl PartialEq for Feerate {
+    fn eq(&self, other: &Self) -> bool {
+        match (self.0.is_nan(), other.0.is_nan()) {
+            (true, true) => true,
+            (true, false) => false,
+            (false, true) => false,
+            (false, false) => self.0 == other.0,
+        }
+    }
+}
+
 impl Eq for Feerate {}
 
 #[allow(clippy::derive_ord_xor_partial_ord)]
+impl PartialOrd for Feerate {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+#[allow(clippy::derive_ord_xor_partial_ord)]
 impl Ord for Feerate {
-    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
-        self.0.partial_cmp(&other.0).unwrap()
+    fn cmp(&self, other: &Self) -> Ordering {
+        match (self.0.is_nan(), other.0.is_nan()) {
+            (true, true) => Ordering::Equal,
+            (true, false) => Ordering::Less,
+            (false, true) => Ordering::Greater,
+            (false, false) => self.0.partial_cmp(&other.0).unwrap(),
+        }
     }
 }

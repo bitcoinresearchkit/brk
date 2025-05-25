@@ -12,18 +12,7 @@ use crate::CheckedSub;
 use super::{Dollars, StoredF64};
 
 #[derive(
-    Debug,
-    Deref,
-    Default,
-    Clone,
-    Copy,
-    PartialEq,
-    PartialOrd,
-    FromBytes,
-    Immutable,
-    IntoBytes,
-    KnownLayout,
-    Serialize,
+    Debug, Deref, Default, Clone, Copy, FromBytes, Immutable, IntoBytes, KnownLayout, Serialize,
 )]
 pub struct StoredF32(f32);
 
@@ -77,20 +66,6 @@ impl From<StoredF32> for f32 {
     }
 }
 
-impl Eq for StoredF32 {}
-
-#[allow(clippy::derive_ord_xor_partial_ord)]
-impl Ord for StoredF32 {
-    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
-        match (self.0.is_nan(), other.0.is_nan()) {
-            (true, true) => Ordering::Equal,
-            (true, false) => Ordering::Less,
-            (false, true) => Ordering::Greater,
-            (false, false) => self.0.partial_cmp(&other.0).unwrap(),
-        }
-    }
-}
-
 impl Div<Dollars> for StoredF32 {
     type Output = Self;
     fn div(self, rhs: Dollars) -> Self::Output {
@@ -123,5 +98,37 @@ impl Sub<StoredF32> for StoredF32 {
     type Output = Self;
     fn sub(self, rhs: StoredF32) -> Self::Output {
         Self(self.0 - rhs.0)
+    }
+}
+
+impl PartialEq for StoredF32 {
+    fn eq(&self, other: &Self) -> bool {
+        match (self.0.is_nan(), other.0.is_nan()) {
+            (true, true) => true,
+            (true, false) => false,
+            (false, true) => false,
+            (false, false) => self.0 == other.0,
+        }
+    }
+}
+
+impl Eq for StoredF32 {}
+
+#[allow(clippy::derive_ord_xor_partial_ord)]
+impl PartialOrd for StoredF32 {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+#[allow(clippy::derive_ord_xor_partial_ord)]
+impl Ord for StoredF32 {
+    fn cmp(&self, other: &Self) -> Ordering {
+        match (self.0.is_nan(), other.0.is_nan()) {
+            (true, true) => Ordering::Equal,
+            (true, false) => Ordering::Less,
+            (false, true) => Ordering::Greater,
+            (false, false) => self.0.partial_cmp(&other.0).unwrap(),
+        }
     }
 }

@@ -1,23 +1,14 @@
-use std::ops::{Add, Div, Mul};
+use std::{
+    cmp::Ordering,
+    ops::{Add, Div, Mul},
+};
 
 use serde::Serialize;
 use zerocopy_derive::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 use super::{Sats, StoredF64};
 
-#[derive(
-    Debug,
-    Default,
-    Clone,
-    Copy,
-    PartialEq,
-    PartialOrd,
-    FromBytes,
-    Immutable,
-    IntoBytes,
-    KnownLayout,
-    Serialize,
-)]
+#[derive(Debug, Default, Clone, Copy, FromBytes, Immutable, IntoBytes, KnownLayout, Serialize)]
 pub struct Bitcoin(f64);
 
 impl Add for Bitcoin {
@@ -71,11 +62,34 @@ impl From<usize> for Bitcoin {
     }
 }
 
+impl PartialEq for Bitcoin {
+    fn eq(&self, other: &Self) -> bool {
+        match (self.0.is_nan(), other.0.is_nan()) {
+            (true, true) => true,
+            (true, false) => false,
+            (false, true) => false,
+            (false, false) => self.0 == other.0,
+        }
+    }
+}
+
 impl Eq for Bitcoin {}
 
 #[allow(clippy::derive_ord_xor_partial_ord)]
+impl PartialOrd for Bitcoin {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+#[allow(clippy::derive_ord_xor_partial_ord)]
 impl Ord for Bitcoin {
-    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
-        self.0.partial_cmp(&other.0).unwrap()
+    fn cmp(&self, other: &Self) -> Ordering {
+        match (self.0.is_nan(), other.0.is_nan()) {
+            (true, true) => Ordering::Equal,
+            (true, false) => Ordering::Less,
+            (false, true) => Ordering::Greater,
+            (false, false) => self.0.partial_cmp(&other.0).unwrap(),
+        }
     }
 }

@@ -28,28 +28,16 @@ impl RealizedState {
         if supply_state.value.is_not_zero() {
             if self.realized_cap == Dollars::NAN {
                 self.realized_cap = Dollars::ZERO;
+                // self.realized_profit = Dollars::ZERO;
+                // self.realized_loss = Dollars::ZERO;
+                // self.value_created = Dollars::ZERO;
+                // self.adjusted_value_created = Dollars::ZERO;
+                // self.value_destroyed = Dollars::ZERO;
+                // self.adjusted_value_destroyed = Dollars::ZERO;
             }
+
             self.realized_cap += price * Bitcoin::from(supply_state.value);
         }
-
-        // if self.realized_profit == Dollars::NAN {
-        //     self.realized_profit = Dollars::ZERO;
-        // }
-        // if self.realized_loss == Dollars::NAN {
-        //     self.realized_loss = Dollars::ZERO;
-        // }
-        // if self.value_created == Dollars::NAN {
-        //     self.value_created = Dollars::ZERO;
-        // }
-        // if self.adjusted_value_created == Dollars::NAN {
-        //     self.adjusted_value_created = Dollars::ZERO;
-        // }
-        // if self.value_destroyed == Dollars::NAN {
-        //     self.value_destroyed = Dollars::ZERO;
-        // }
-        // if self.adjusted_value_destroyed == Dollars::NAN {
-        //     self.adjusted_value_destroyed = Dollars::ZERO;
-        // }
     }
 
     pub fn decrement(&mut self, supply_state: &SupplyState, price: Dollars) {

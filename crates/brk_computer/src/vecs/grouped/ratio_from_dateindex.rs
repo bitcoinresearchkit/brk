@@ -7,7 +7,6 @@ use brk_vec::{
     AnyCollectableVec, AnyIterableVec, AnyVec, CollectableVec, Compressed, EagerVec, Result,
     StoredIndex, VecIterator, Version,
 };
-// use rayon::prelude::*;
 
 use crate::{
     utils::get_percentile,
