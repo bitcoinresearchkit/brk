@@ -13,18 +13,7 @@ use crate::CheckedSub;
 use super::{Bitcoin, Cents, Close, Sats, StoredF32, StoredF64};
 
 #[derive(
-    Debug,
-    Default,
-    Clone,
-    Copy,
-    PartialEq,
-    PartialOrd,
-    Deref,
-    FromBytes,
-    Immutable,
-    IntoBytes,
-    KnownLayout,
-    Serialize,
+    Debug, Default, Clone, Copy, Deref, FromBytes, Immutable, IntoBytes, KnownLayout, Serialize,
 )]
 pub struct Dollars(f64);
 
@@ -141,20 +130,6 @@ impl Div<Bitcoin> for Dollars {
     }
 }
 
-impl Eq for Dollars {}
-
-#[allow(clippy::derive_ord_xor_partial_ord)]
-impl Ord for Dollars {
-    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
-        match (self.0.is_nan(), other.0.is_nan()) {
-            (true, true) => Ordering::Equal,
-            (true, false) => Ordering::Less,
-            (false, true) => Ordering::Greater,
-            (false, false) => self.0.partial_cmp(&other.0).unwrap(),
-        }
-    }
-}
-
 impl Mul<Bitcoin> for Dollars {
     type Output = Self;
     fn mul(self, rhs: Bitcoin) -> Self::Output {
@@ -230,5 +205,37 @@ impl CheckedSub for Dollars {
 impl CheckedSub<usize> for Dollars {
     fn checked_sub(self, rhs: usize) -> Option<Self> {
         Some(Self(self.0 - rhs as f64))
+    }
+}
+
+impl PartialEq for Dollars {
+    fn eq(&self, other: &Self) -> bool {
+        match (self.0.is_nan(), other.0.is_nan()) {
+            (true, true) => true,
+            (true, false) => false,
+            (false, true) => false,
+            (false, false) => self.0 == other.0,
+        }
+    }
+}
+
+impl Eq for Dollars {}
+
+#[allow(clippy::derive_ord_xor_partial_ord)]
+impl PartialOrd for Dollars {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+#[allow(clippy::derive_ord_xor_partial_ord)]
+impl Ord for Dollars {
+    fn cmp(&self, other: &Self) -> Ordering {
+        match (self.0.is_nan(), other.0.is_nan()) {
+            (true, true) => Ordering::Equal,
+            (true, false) => Ordering::Less,
+            (false, true) => Ordering::Greater,
+            (false, false) => self.0.partial_cmp(&other.0).unwrap(),
+        }
     }
 }
