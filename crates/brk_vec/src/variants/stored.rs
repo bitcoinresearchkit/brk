@@ -28,6 +28,12 @@ where
         compressed: Compressed,
     ) -> Result<Self> {
         let path = I::path(path, value_name);
+
+        if version == Version::ZERO {
+            dbg!(path, value_name);
+            panic!("Version must be at least 1, can't verify endianess otherwise");
+        }
+
         if *compressed {
             Ok(Self::Compressed(CompressedVec::forced_import(
                 &path, version,

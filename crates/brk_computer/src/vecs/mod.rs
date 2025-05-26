@@ -3,7 +3,7 @@ use std::{fs, path::Path};
 use brk_exit::Exit;
 use brk_fetcher::Fetcher;
 use brk_indexer::Indexer;
-use brk_vec::{AnyCollectableVec, Compressed, Computation};
+use brk_vec::{AnyCollectableVec, Compressed, Computation, Version};
 
 pub mod blocks;
 pub mod constants;
@@ -16,6 +16,8 @@ pub mod transactions;
 pub mod utxos;
 
 pub use indexes::Indexes;
+
+const VERSION: Version = Version::ZERO;
 
 #[derive(Clone)]
 pub struct Vecs {
@@ -32,6 +34,7 @@ pub struct Vecs {
 impl Vecs {
     pub fn import(
         path: &Path,
+        version: Version,
         indexer: &Indexer,
         fetch: bool,
         computation: Computation,
@@ -39,19 +42,59 @@ impl Vecs {
     ) -> color_eyre::Result<Self> {
         fs::create_dir_all(path)?;
 
-        let indexes = indexes::Vecs::forced_import(path, indexer, computation, compressed)?;
+        let indexes = indexes::Vecs::forced_import(
+            path,
+            version + VERSION + Version::ZERO,
+            indexer,
+            computation,
+            compressed,
+        )?;
 
-        let fetched =
-            fetch.then(|| fetched::Vecs::forced_import(path, computation, compressed).unwrap());
+        let fetched = fetch.then(|| {
+            fetched::Vecs::forced_import(
+                path,
+                version + VERSION + Version::ZERO,
+                computation,
+                compressed,
+            )
+            .unwrap()
+        });
 
         Ok(Self {
-            blocks: blocks::Vecs::forced_import(path, computation, compressed)?,
-            mining: mining::Vecs::forced_import(path, computation, compressed)?,
-            constants: constants::Vecs::forced_import(path, computation, compressed)?,
-            market: market::Vecs::forced_import(path, computation, compressed)?,
-            utxos: utxos::Vecs::forced_import(path, computation, compressed, fetched.as_ref())?,
+            blocks: blocks::Vecs::forced_import(
+                path,
+                version + VERSION + Version::ZERO,
+                computation,
+                compressed,
+            )?,
+            mining: mining::Vecs::forced_import(
+                path,
+                version + VERSION + Version::ZERO,
+                computation,
+                compressed,
+            )?,
+            constants: constants::Vecs::forced_import(
+                path,
+                version + VERSION + Version::ZERO,
+                computation,
+                compressed,
+            )?,
+            market: market::Vecs::forced_import(
+                path,
+                version + VERSION + Version::ZERO,
+                computation,
+                compressed,
+            )?,
+            utxos: utxos::Vecs::forced_import(
+                path,
+                version + VERSION + Version::ZERO,
+                computation,
+                compressed,
+                fetched.as_ref(),
+            )?,
             transactions: transactions::Vecs::forced_import(
                 path,
+                version + VERSION + Version::ZERO,
                 indexer,
                 &indexes,
                 computation,

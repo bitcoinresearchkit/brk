@@ -36,12 +36,10 @@ where
         compressed: Compressed,
         options: StorableVecGeneatorOptions,
     ) -> color_eyre::Result<Self> {
-        let version = VERSION + version;
-
         let dateindex_extra = ComputedVecBuilder::forced_import(
             path,
             name,
-            version,
+            version + VERSION + Version::ZERO,
             compressed,
             options.copy_self_extra(),
         )?;
@@ -49,18 +47,47 @@ where
         let options = options.remove_percentiles();
 
         Ok(Self {
-            dateindex: EagerVec::forced_import(path, name, version, compressed)?,
+            dateindex: EagerVec::forced_import(
+                path,
+                name,
+                version + VERSION + Version::ZERO,
+                compressed,
+            )?,
             dateindex_extra,
-            weekindex: ComputedVecBuilder::forced_import(path, name, version, compressed, options)?,
+            weekindex: ComputedVecBuilder::forced_import(
+                path,
+                name,
+                version + VERSION + Version::ZERO,
+                compressed,
+                options,
+            )?,
             monthindex: ComputedVecBuilder::forced_import(
-                path, name, version, compressed, options,
+                path,
+                name,
+                version + VERSION + Version::ZERO,
+                compressed,
+                options,
             )?,
             quarterindex: ComputedVecBuilder::forced_import(
-                path, name, version, compressed, options,
+                path,
+                name,
+                version + VERSION + Version::ZERO,
+                compressed,
+                options,
             )?,
-            yearindex: ComputedVecBuilder::forced_import(path, name, version, compressed, options)?,
+            yearindex: ComputedVecBuilder::forced_import(
+                path,
+                name,
+                version + VERSION + Version::ZERO,
+                compressed,
+                options,
+            )?,
             decadeindex: ComputedVecBuilder::forced_import(
-                path, name, version, compressed, options,
+                path,
+                name,
+                version + VERSION + Version::ZERO,
+                compressed,
+                options,
             )?,
         })
     }

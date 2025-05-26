@@ -14,6 +14,8 @@ use brk_vec::{
     ComputedVecFrom1, ComputedVecFrom2, EagerVec, StoredIndex, VecIterator, Version,
 };
 
+const VERSION: Version = Version::ZERO;
+
 #[derive(Clone)]
 pub struct Vecs {
     pub dateindex_to_date: ComputedVecFrom1<DateIndex, Date, DateIndex, DateIndex>,
@@ -90,6 +92,7 @@ pub struct Vecs {
 impl Vecs {
     pub fn forced_import(
         path: &Path,
+        version: Version,
         indexer: &Indexer,
         computation: Computation,
         compressed: Compressed,
@@ -100,7 +103,7 @@ impl Vecs {
             computation,
             path,
             "outputindex",
-            Version::ZERO,
+            version + VERSION + Version::ZERO,
             compressed,
             indexer.vecs().outputindex_to_value.boxed_clone(),
             |index, _| Some(index),
@@ -110,7 +113,7 @@ impl Vecs {
             computation,
             path,
             "inputindex",
-            Version::ZERO,
+            version + VERSION + Version::ZERO,
             compressed,
             indexer.vecs().inputindex_to_outputindex.boxed_clone(),
             |index, _| Some(index),
@@ -120,7 +123,7 @@ impl Vecs {
             computation,
             path,
             "txindex",
-            Version::ZERO,
+            version + VERSION + Version::ZERO,
             compressed,
             indexer.vecs().txindex_to_txid.boxed_clone(),
             |index, _| Some(index),
@@ -130,7 +133,7 @@ impl Vecs {
             computation,
             path,
             "input_count",
-            Version::ZERO,
+            version + VERSION + Version::ZERO,
             compressed,
             indexer.vecs().txindex_to_first_inputindex.boxed_clone(),
             indexer.vecs().inputindex_to_outputindex.boxed_clone(),
@@ -153,7 +156,7 @@ impl Vecs {
             computation,
             path,
             "output_count",
-            Version::ZERO,
+            version + VERSION + Version::ZERO,
             compressed,
             indexer.vecs().txindex_to_first_outputindex.boxed_clone(),
             indexer.vecs().outputindex_to_value.boxed_clone(),
@@ -176,7 +179,7 @@ impl Vecs {
             computation,
             path,
             "p2pk33index",
-            Version::ZERO,
+            version + VERSION + Version::ZERO,
             compressed,
             indexer.vecs().p2pk33index_to_p2pk33bytes.boxed_clone(),
             |index, _| Some(index),
@@ -185,7 +188,7 @@ impl Vecs {
             computation,
             path,
             "p2pk65index",
-            Version::ZERO,
+            version + VERSION + Version::ZERO,
             compressed,
             indexer.vecs().p2pk65index_to_p2pk65bytes.boxed_clone(),
             |index, _| Some(index),
@@ -194,7 +197,7 @@ impl Vecs {
             computation,
             path,
             "p2pkhindex",
-            Version::ZERO,
+            version + VERSION + Version::ZERO,
             compressed,
             indexer.vecs().p2pkhindex_to_p2pkhbytes.boxed_clone(),
             |index, _| Some(index),
@@ -203,7 +206,7 @@ impl Vecs {
             computation,
             path,
             "p2shindex",
-            Version::ZERO,
+            version + VERSION + Version::ZERO,
             compressed,
             indexer.vecs().p2shindex_to_p2shbytes.boxed_clone(),
             |index, _| Some(index),
@@ -212,7 +215,7 @@ impl Vecs {
             computation,
             path,
             "p2trindex",
-            Version::ZERO,
+            version + VERSION + Version::ZERO,
             compressed,
             indexer.vecs().p2trindex_to_p2trbytes.boxed_clone(),
             |index, _| Some(index),
@@ -221,7 +224,7 @@ impl Vecs {
             computation,
             path,
             "p2wpkhindex",
-            Version::ZERO,
+            version + VERSION + Version::ZERO,
             compressed,
             indexer.vecs().p2wpkhindex_to_p2wpkhbytes.boxed_clone(),
             |index, _| Some(index),
@@ -230,7 +233,7 @@ impl Vecs {
             computation,
             path,
             "p2wshindex",
-            Version::ZERO,
+            version + VERSION + Version::ZERO,
             compressed,
             indexer.vecs().p2wshindex_to_p2wshbytes.boxed_clone(),
             |index, _| Some(index),
@@ -239,7 +242,7 @@ impl Vecs {
             computation,
             path,
             "p2aindex",
-            Version::ZERO,
+            version + VERSION + Version::ZERO,
             compressed,
             indexer.vecs().p2aindex_to_p2abytes.boxed_clone(),
             |index, _| Some(index),
@@ -248,7 +251,7 @@ impl Vecs {
             computation,
             path,
             "p2msindex",
-            Version::ZERO,
+            version + VERSION + Version::ZERO,
             compressed,
             indexer.vecs().p2msindex_to_txindex.boxed_clone(),
             |index, _| Some(index),
@@ -257,7 +260,7 @@ impl Vecs {
             computation,
             path,
             "emptyoutputindex",
-            Version::ZERO,
+            version + VERSION + Version::ZERO,
             compressed,
             indexer.vecs().emptyoutputindex_to_txindex.boxed_clone(),
             |index, _| Some(index),
@@ -266,7 +269,7 @@ impl Vecs {
             computation,
             path,
             "unknownoutputindex",
-            Version::ZERO,
+            version + VERSION + Version::ZERO,
             compressed,
             indexer.vecs().unknownoutputindex_to_txindex.boxed_clone(),
             |index, _| Some(index),
@@ -275,20 +278,24 @@ impl Vecs {
             computation,
             path,
             "opreturnindex",
-            Version::ZERO,
+            version + VERSION + Version::ZERO,
             compressed,
             indexer.vecs().opreturnindex_to_txindex.boxed_clone(),
             |index, _| Some(index),
         )?;
 
-        let dateindex_to_first_height =
-            EagerVec::forced_import(path, "first_height", Version::ZERO, compressed)?;
+        let dateindex_to_first_height = EagerVec::forced_import(
+            path,
+            "first_height",
+            version + VERSION + Version::ZERO,
+            compressed,
+        )?;
 
         let dateindex_to_dateindex = ComputedVec::forced_import_or_init_from_1(
             computation,
             path,
             "dateindex",
-            Version::ZERO,
+            version + VERSION + Version::ZERO,
             compressed,
             dateindex_to_first_height.boxed_clone(),
             |index, _| Some(index),
@@ -298,19 +305,20 @@ impl Vecs {
             computation,
             path,
             "date",
-            Version::ZERO,
+            version + VERSION + Version::ZERO,
             compressed,
             dateindex_to_dateindex.boxed_clone(),
             |index, _| Some(Date::from(index)),
         )?;
 
-        let height_to_date = EagerVec::forced_import(path, "date", Version::ZERO, compressed)?;
+        let height_to_date =
+            EagerVec::forced_import(path, "date", version + VERSION + Version::ZERO, compressed)?;
 
         let height_to_height = ComputedVec::forced_import_or_init_from_1(
             computation,
             path,
             "height",
-            Version::ZERO,
+            version + VERSION + Version::ZERO,
             compressed,
             height_to_date.boxed_clone(),
             |index, _| Some(index),
@@ -320,20 +328,24 @@ impl Vecs {
             computation,
             path,
             "difficultyepoch",
-            Version::ZERO,
+            version + VERSION + Version::ZERO,
             compressed,
             height_to_height.boxed_clone(),
             |index, _| Some(DifficultyEpoch::from(index)),
         )?;
 
-        let difficultyepoch_to_first_height =
-            EagerVec::forced_import(path, "first_height", Version::ZERO, compressed)?;
+        let difficultyepoch_to_first_height = EagerVec::forced_import(
+            path,
+            "first_height",
+            version + VERSION + Version::ZERO,
+            compressed,
+        )?;
 
         let difficultyepoch_to_difficultyepoch = ComputedVec::forced_import_or_init_from_1(
             computation,
             path,
             "difficultyepoch",
-            Version::ZERO,
+            version + VERSION + Version::ZERO,
             compressed,
             difficultyepoch_to_first_height.boxed_clone(),
             |index, _| Some(index),
@@ -343,52 +355,72 @@ impl Vecs {
             computation,
             path,
             "halvingepoch",
-            Version::ZERO,
+            version + VERSION + Version::ZERO,
             compressed,
             height_to_height.boxed_clone(),
             |index, _| Some(HalvingEpoch::from(index)),
         )?;
 
-        let halvingepoch_to_first_height =
-            EagerVec::forced_import(path, "first_height", Version::ZERO, compressed)?;
+        let halvingepoch_to_first_height = EagerVec::forced_import(
+            path,
+            "first_height",
+            version + VERSION + Version::ZERO,
+            compressed,
+        )?;
 
         let halvingepoch_to_halvingepoch = ComputedVec::forced_import_or_init_from_1(
             computation,
             path,
             "halvingepoch",
-            Version::ZERO,
+            version + VERSION + Version::ZERO,
             compressed,
             halvingepoch_to_first_height.boxed_clone(),
             |index, _| Some(index),
         )?;
 
-        let dateindex_to_weekindex =
-            EagerVec::forced_import(path, "weekindex", Version::ZERO, compressed)?;
+        let dateindex_to_weekindex = EagerVec::forced_import(
+            path,
+            "weekindex",
+            version + VERSION + Version::ZERO,
+            compressed,
+        )?;
 
-        let weekindex_to_first_dateindex =
-            EagerVec::forced_import(path, "first_dateindex", Version::ZERO, compressed)?;
+        let weekindex_to_first_dateindex = EagerVec::forced_import(
+            path,
+            "first_dateindex",
+            version + VERSION + Version::ZERO,
+            compressed,
+        )?;
 
         let weekindex_to_weekindex = ComputedVec::forced_import_or_init_from_1(
             computation,
             path,
             "weekindex",
-            Version::ZERO,
+            version + VERSION + Version::ZERO,
             compressed,
             weekindex_to_first_dateindex.boxed_clone(),
             |index, _| Some(index),
         )?;
 
-        let dateindex_to_monthindex =
-            EagerVec::forced_import(path, "monthindex", Version::ZERO, compressed)?;
+        let dateindex_to_monthindex = EagerVec::forced_import(
+            path,
+            "monthindex",
+            version + VERSION + Version::ZERO,
+            compressed,
+        )?;
 
-        let monthindex_to_first_dateindex =
-            EagerVec::forced_import(path, "first_dateindex", Version::ZERO, compressed)?;
+        let monthindex_to_first_dateindex = EagerVec::forced_import(
+            path,
+            "first_dateindex",
+            version + VERSION + Version::ZERO,
+            compressed,
+        )?;
 
         let monthindex_to_monthindex = ComputedVec::forced_import_or_init_from_1(
             computation,
             path,
             "monthindex",
-            Version::ZERO,
+            version + VERSION + Version::ZERO,
             compressed,
             monthindex_to_first_dateindex.boxed_clone(),
             |index, _| Some(index),
@@ -398,20 +430,24 @@ impl Vecs {
             computation,
             path,
             "quarterindex",
-            Version::ZERO,
+            version + VERSION + Version::ZERO,
             compressed,
             monthindex_to_monthindex.boxed_clone(),
             |index, _| Some(QuarterIndex::from(index)),
         )?;
 
-        let quarterindex_to_first_monthindex =
-            EagerVec::forced_import(path, "first_monthindex", Version::ZERO, compressed)?;
+        let quarterindex_to_first_monthindex = EagerVec::forced_import(
+            path,
+            "first_monthindex",
+            version + VERSION + Version::ZERO,
+            compressed,
+        )?;
 
         let quarterindex_to_quarterindex = ComputedVec::forced_import_or_init_from_1(
             computation,
             path,
             "quarterindex",
-            Version::ZERO,
+            version + VERSION + Version::ZERO,
             compressed,
             quarterindex_to_first_monthindex.boxed_clone(),
             |index, _| Some(index),
@@ -421,20 +457,24 @@ impl Vecs {
             computation,
             path,
             "yearindex",
-            Version::ZERO,
+            version + VERSION + Version::ZERO,
             compressed,
             monthindex_to_monthindex.boxed_clone(),
             |index, _| Some(YearIndex::from(index)),
         )?;
 
-        let yearindex_to_first_monthindex =
-            EagerVec::forced_import(path, "first_monthindex", Version::ZERO, compressed)?;
+        let yearindex_to_first_monthindex = EagerVec::forced_import(
+            path,
+            "first_monthindex",
+            version + VERSION + Version::ZERO,
+            compressed,
+        )?;
 
         let yearindex_to_yearindex = ComputedVec::forced_import_or_init_from_1(
             computation,
             path,
             "yearindex",
-            Version::ZERO,
+            version + VERSION + Version::ZERO,
             compressed,
             yearindex_to_first_monthindex.boxed_clone(),
             |index, _| Some(index),
@@ -444,20 +484,24 @@ impl Vecs {
             computation,
             path,
             "decadeindex",
-            Version::ZERO,
+            version + VERSION + Version::ZERO,
             compressed,
             yearindex_to_yearindex.boxed_clone(),
             |index, _| Some(DecadeIndex::from(index)),
         )?;
 
-        let decadeindex_to_first_yearindex =
-            EagerVec::forced_import(path, "first_yearindex", Version::ZERO, compressed)?;
+        let decadeindex_to_first_yearindex = EagerVec::forced_import(
+            path,
+            "first_yearindex",
+            version + VERSION + Version::ZERO,
+            compressed,
+        )?;
 
         let decadeindex_to_decadeindex = ComputedVec::forced_import_or_init_from_1(
             computation,
             path,
             "decadeindex",
-            Version::ZERO,
+            version + VERSION + Version::ZERO,
             compressed,
             decadeindex_to_first_yearindex.boxed_clone(),
             |index, _| Some(index),
@@ -510,74 +554,79 @@ impl Vecs {
             height_to_date_fixed: EagerVec::forced_import(
                 path,
                 "date_fixed",
-                Version::ZERO,
+                version + VERSION + Version::ZERO,
                 compressed,
             )?,
             height_to_dateindex: EagerVec::forced_import(
                 path,
                 "dateindex",
-                Version::ZERO,
+                version + VERSION + Version::ZERO,
                 compressed,
             )?,
-            txindex_to_height: EagerVec::forced_import(path, "height", Version::ZERO, compressed)?,
+            txindex_to_height: EagerVec::forced_import(
+                path,
+                "height",
+                version + VERSION + Version::ZERO,
+                compressed,
+            )?,
             height_to_timestamp_fixed: EagerVec::forced_import(
                 path,
                 "timestamp_fixed",
-                Version::ZERO,
+                version + VERSION + Version::ZERO,
                 compressed,
             )?,
             height_to_txindex_count: EagerVec::forced_import(
                 path,
                 "txindex_count",
-                Version::ZERO,
+                version + VERSION + Version::ZERO,
                 compressed,
             )?,
             dateindex_to_height_count: EagerVec::forced_import(
                 path,
                 "height_count",
-                Version::ZERO,
+                version + VERSION + Version::ZERO,
                 compressed,
             )?,
             weekindex_to_dateindex_count: EagerVec::forced_import(
                 path,
                 "dateindex_count",
-                Version::ZERO,
+                version + VERSION + Version::ZERO,
                 compressed,
             )?,
             difficultyepoch_to_height_count: EagerVec::forced_import(
                 path,
                 "height_count",
-                Version::ZERO,
+                version + VERSION + Version::ZERO,
                 compressed,
             )?,
             monthindex_to_dateindex_count: EagerVec::forced_import(
                 path,
                 "dateindex_count",
-                Version::ZERO,
+                version + VERSION + Version::ZERO,
                 compressed,
             )?,
             quarterindex_to_monthindex_count: EagerVec::forced_import(
                 path,
                 "monthindex_count",
-                Version::ZERO,
+                version + VERSION + Version::ZERO,
                 compressed,
             )?,
             yearindex_to_monthindex_count: EagerVec::forced_import(
                 path,
                 "monthindex_count",
-                Version::ZERO,
+                version + VERSION + Version::ZERO,
                 compressed,
             )?,
             decadeindex_to_yearindex_count: EagerVec::forced_import(
                 path,
                 "yearindex_count",
-                Version::ZERO,
+                version + VERSION + Version::ZERO,
                 compressed,
             )?,
             outputindex_to_txindex: EagerVec::forced_import(
                 path,
                 "txindex",
-                Version::ZERO,
+                version + VERSION + Version::ZERO,
                 compressed,
             )?,
         })

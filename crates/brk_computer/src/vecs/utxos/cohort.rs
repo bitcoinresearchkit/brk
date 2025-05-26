@@ -66,7 +66,7 @@ impl Vecs {
                 EagerVec::forced_import(
                     path,
                     &suffix("realized_cap"),
-                    VERSION + Version::ZERO + version,
+                    version + VERSION + Version::ZERO,
                     compressed,
                 )
                 .unwrap()
@@ -76,7 +76,7 @@ impl Vecs {
                     path,
                     &suffix("realized_cap"),
                     false,
-                    VERSION + Version::ZERO + version,
+                    version + VERSION + Version::ZERO,
                     compressed,
                     StorableVecGeneatorOptions::default().add_last(),
                 )
@@ -85,14 +85,14 @@ impl Vecs {
             height_to_supply: EagerVec::forced_import(
                 path,
                 &suffix("supply"),
-                VERSION + Version::ZERO + version,
+                version + VERSION + Version::ZERO,
                 compressed,
             )?,
             indexes_to_supply: ComputedValueVecsFromHeight::forced_import(
                 path,
                 &suffix("supply"),
                 false,
-                VERSION + Version::ZERO + version,
+                version + VERSION + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default().add_last(),
                 compute_dollars,
@@ -100,14 +100,14 @@ impl Vecs {
             height_to_utxo_count: EagerVec::forced_import(
                 path,
                 &suffix("utxo_count"),
-                VERSION + Version::ZERO + version,
+                version + VERSION + Version::ZERO,
                 compressed,
             )?,
             indexes_to_utxo_count: ComputedVecsFromHeight::forced_import(
                 path,
                 &suffix("utxo_count"),
                 false,
-                VERSION + Version::ZERO + version,
+                version + VERSION + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default().add_last(),
             )?,
@@ -117,7 +117,7 @@ impl Vecs {
                     path,
                     &suffix("realized_price"),
                     true,
-                    VERSION + Version::new(2) + version,
+                    version + VERSION + Version::ZERO,
                     compressed,
                     StorableVecGeneatorOptions::default().add_last(),
                 )
@@ -128,7 +128,7 @@ impl Vecs {
                     path,
                     &suffix("realized_price"),
                     false,
-                    VERSION + Version::new(2) + version,
+                    version + VERSION + Version::ZERO,
                     compressed,
                     StorableVecGeneatorOptions::default().add_last(),
                 )

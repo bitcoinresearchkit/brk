@@ -11,6 +11,8 @@ use super::{
     indexes,
 };
 
+const VERSION: Version = Version::ZERO;
+
 #[derive(Clone)]
 pub struct Vecs {
     pub indexes_to_difficulty: ComputedVecsFromHeight<StoredF64>,
@@ -21,6 +23,7 @@ pub struct Vecs {
 impl Vecs {
     pub fn forced_import(
         path: &Path,
+        version: Version,
         _computation: Computation,
         compressed: Compressed,
     ) -> color_eyre::Result<Self> {
@@ -31,21 +34,21 @@ impl Vecs {
                 path,
                 "difficulty",
                 false,
-                Version::ZERO,
+                version + VERSION + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default().add_last(),
             )?,
             indexes_to_difficultyepoch: ComputedVecsFromDateIndex::forced_import(
                 path,
                 "difficultyepoch",
-                Version::ZERO,
+                version + VERSION + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default().add_last(),
             )?,
             indexes_to_halvingepoch: ComputedVecsFromDateIndex::forced_import(
                 path,
                 "halvingepoch",
-                Version::ZERO,
+                version + VERSION + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default().add_last(),
             )?,

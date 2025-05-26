@@ -22,6 +22,8 @@ use super::{
     indexes,
 };
 
+const VERSION: Version = Version::ZERO;
+
 #[derive(Clone)]
 pub struct Vecs {
     // pub txindex_to_is_v1: LazyVec<Txindex, bool>,
@@ -89,6 +91,7 @@ pub struct Vecs {
 impl Vecs {
     pub fn forced_import(
         path: &Path,
+        version: Version,
         indexer: &Indexer,
         indexes: &indexes::Vecs,
         computation: Computation,
@@ -103,7 +106,7 @@ impl Vecs {
             computation,
             path,
             "value",
-            Version::ZERO,
+            version + VERSION + Version::ZERO,
             compressed,
             indexer.vecs().inputindex_to_outputindex.boxed_clone(),
             indexer.vecs().outputindex_to_value.boxed_clone(),
@@ -130,7 +133,7 @@ impl Vecs {
             computation,
             path,
             "weight",
-            Version::ZERO,
+            version + VERSION + Version::ZERO,
             compressed,
             indexer.vecs().txindex_to_base_size.boxed_clone(),
             indexer.vecs().txindex_to_total_size.boxed_clone(),
@@ -158,7 +161,7 @@ impl Vecs {
             computation,
             path,
             "vsize",
-            Version::ZERO,
+            version + VERSION + Version::ZERO,
             compressed,
             txindex_to_weight.boxed_clone(),
             |index: TxIndex, iter| {
@@ -175,7 +178,7 @@ impl Vecs {
             computation,
             path,
             "is_coinbase",
-            Version::ZERO,
+            version + VERSION + Version::ZERO,
             compressed,
             indexes.txindex_to_height.boxed_clone(),
             indexer.vecs().height_to_first_txindex.boxed_clone(),
@@ -199,7 +202,7 @@ impl Vecs {
             computation,
             path,
             "input_value",
-            Version::ZERO,
+            version + VERSION + Version::ZERO,
             compressed,
             indexer.vecs().txindex_to_first_inputindex.boxed_clone(),
             indexes.txindex_to_input_count.boxed_clone(),
@@ -236,7 +239,7 @@ impl Vecs {
         //         path,
         //         "input_value",
         //         true,
-        //         Version::ZERO,
+        //         version + VERSION + Version::ZERO,
         //         compressed,
         //         StorableVecGeneatorOptions::default()
         //             .add_average()
@@ -248,7 +251,7 @@ impl Vecs {
             computation,
             path,
             "output_value",
-            Version::ZERO,
+            version + VERSION + Version::ZERO,
             compressed,
             indexer.vecs().txindex_to_first_outputindex.boxed_clone(),
             indexes.txindex_to_output_count.boxed_clone(),
@@ -285,7 +288,7 @@ impl Vecs {
         //         path,
         //         "output_value",
         //         true,
-        //         Version::ZERO,
+        //         version + VERSION + Version::ZERO,
         //         compressed,
         //         StorableVecGeneatorOptions::default()
         //             .add_average()
@@ -297,7 +300,7 @@ impl Vecs {
             computation,
             path,
             "fee",
-            Version::ZERO,
+            version + VERSION + Version::ZERO,
             compressed,
             txindex_to_input_value.boxed_clone(),
             txindex_to_output_value.boxed_clone(),
@@ -320,7 +323,7 @@ impl Vecs {
             computation,
             path,
             "feerate",
-            Version::ZERO,
+            version + VERSION + Version::ZERO,
             compressed,
             txindex_to_fee.boxed_clone(),
             txindex_to_vsize.boxed_clone(),
@@ -341,7 +344,7 @@ impl Vecs {
                 path,
                 "tx_count",
                 true,
-                Version::ZERO,
+                version + VERSION + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default()
                     .add_average()
@@ -354,7 +357,7 @@ impl Vecs {
                 path,
                 "input_count",
                 false,
-                Version::ZERO,
+                version + VERSION + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default()
                     .add_average()
@@ -367,7 +370,7 @@ impl Vecs {
                 path,
                 "output_count",
                 false,
-                Version::ZERO,
+                version + VERSION + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default()
                     .add_average()
@@ -380,7 +383,7 @@ impl Vecs {
                 path,
                 "tx_v1",
                 true,
-                Version::ZERO,
+                version + VERSION + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default().add_sum().add_total(),
             )?,
@@ -388,7 +391,7 @@ impl Vecs {
                 path,
                 "tx_v2",
                 true,
-                Version::ZERO,
+                version + VERSION + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default().add_sum().add_total(),
             )?,
@@ -396,7 +399,7 @@ impl Vecs {
                 path,
                 "tx_v3",
                 true,
-                Version::ZERO,
+                version + VERSION + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default().add_sum().add_total(),
             )?,
@@ -405,7 +408,7 @@ impl Vecs {
                 "fee",
                 indexes,
                 Some(txindex_to_fee.boxed_clone()),
-                Version::ZERO,
+                version + VERSION + Version::ZERO,
                 computation,
                 compressed,
                 fetched,
@@ -420,7 +423,7 @@ impl Vecs {
                 path,
                 "feerate",
                 false,
-                Version::ZERO,
+                version + VERSION + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default()
                     .add_percentiles()
@@ -431,7 +434,7 @@ impl Vecs {
                 path,
                 "tx_vsize",
                 false,
-                Version::ZERO,
+                version + VERSION + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default()
                     .add_percentiles()
@@ -442,7 +445,7 @@ impl Vecs {
                 path,
                 "tx_weight",
                 false,
-                Version::ZERO,
+                version + VERSION + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default()
                     .add_percentiles()
@@ -453,7 +456,7 @@ impl Vecs {
                 path,
                 "subsidy",
                 true,
-                Version::ZERO,
+                version + VERSION + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default()
                     .add_percentiles()
@@ -467,7 +470,7 @@ impl Vecs {
                 path,
                 "coinbase",
                 true,
-                Version::ZERO,
+                version + VERSION + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default()
                     .add_sum()
@@ -481,7 +484,7 @@ impl Vecs {
                 path,
                 "unclaimed_rewards",
                 true,
-                Version::ZERO,
+                version + VERSION + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default().add_sum().add_total(),
                 compute_dollars,
@@ -490,7 +493,7 @@ impl Vecs {
                 path,
                 "p2a_count",
                 true,
-                Version::ZERO,
+                version + VERSION + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default()
                     .add_average()
@@ -503,7 +506,7 @@ impl Vecs {
                 path,
                 "p2ms_count",
                 true,
-                Version::ZERO,
+                version + VERSION + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default()
                     .add_average()
@@ -516,7 +519,7 @@ impl Vecs {
                 path,
                 "p2pk33_count",
                 true,
-                Version::ZERO,
+                version + VERSION + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default()
                     .add_average()
@@ -529,7 +532,7 @@ impl Vecs {
                 path,
                 "p2pk65_count",
                 true,
-                Version::ZERO,
+                version + VERSION + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default()
                     .add_average()
@@ -542,7 +545,7 @@ impl Vecs {
                 path,
                 "p2pkh_count",
                 true,
-                Version::ZERO,
+                version + VERSION + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default()
                     .add_average()
@@ -555,7 +558,7 @@ impl Vecs {
                 path,
                 "p2sh_count",
                 true,
-                Version::ZERO,
+                version + VERSION + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default()
                     .add_average()
@@ -568,7 +571,7 @@ impl Vecs {
                 path,
                 "p2tr_count",
                 true,
-                Version::ZERO,
+                version + VERSION + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default()
                     .add_average()
@@ -581,7 +584,7 @@ impl Vecs {
                 path,
                 "p2wpkh_count",
                 true,
-                Version::ZERO,
+                version + VERSION + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default()
                     .add_average()
@@ -594,7 +597,7 @@ impl Vecs {
                 path,
                 "p2wsh_count",
                 true,
-                Version::ZERO,
+                version + VERSION + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default()
                     .add_average()
@@ -607,7 +610,7 @@ impl Vecs {
                 path,
                 "opreturn_count",
                 true,
-                Version::ZERO,
+                version + VERSION + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default()
                     .add_average()
@@ -620,7 +623,7 @@ impl Vecs {
                 path,
                 "unknownoutput_count",
                 true,
-                Version::ZERO,
+                version + VERSION + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default()
                     .add_average()
@@ -633,7 +636,7 @@ impl Vecs {
                 path,
                 "emptyoutput_count",
                 true,
-                Version::ZERO,
+                version + VERSION + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default()
                     .add_average()
@@ -646,7 +649,7 @@ impl Vecs {
                 path,
                 "exact_utxo_count",
                 true,
-                Version::TWO,
+                version + VERSION + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default().add_last(),
             )?,

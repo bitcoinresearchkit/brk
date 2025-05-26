@@ -42,12 +42,10 @@ where
         name: &str,
         version: Version,
     ) -> color_eyre::Result<Self> {
-        let version = MAJOR_FJALL_VERSION + version;
-
         let (meta, partition) = StoreMeta::checked_open(
             &keyspace,
             &path.join(format!("meta/{name}")),
-            version,
+            MAJOR_FJALL_VERSION + version,
             || {
                 Self::open_partition_handle(&keyspace, name).inspect_err(|_| {
                     eprintln!("Delete {path:?} and try again");

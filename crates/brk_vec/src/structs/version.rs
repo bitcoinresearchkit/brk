@@ -13,14 +13,14 @@ use crate::{Error, Result};
 #[derive(
     Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, FromBytes, IntoBytes, Immutable, KnownLayout,
 )]
-pub struct Version(u32);
+pub struct Version(u64);
 
 impl Version {
     pub const ZERO: Self = Self(0);
     pub const ONE: Self = Self(1);
     pub const TWO: Self = Self(2);
 
-    pub const fn new(v: u32) -> Self {
+    pub const fn new(v: u64) -> Self {
         Self(v)
     }
 
@@ -49,8 +49,8 @@ impl Version {
     }
 }
 
-impl From<u32> for Version {
-    fn from(value: u32) -> Self {
+impl From<u64> for Version {
+    fn from(value: u64) -> Self {
         Self(value)
     }
 }

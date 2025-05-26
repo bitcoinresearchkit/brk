@@ -34,14 +34,13 @@ where
         compressed: Compressed,
         options: StorableVecGeneatorOptions,
     ) -> color_eyre::Result<Self> {
-        let version = VERSION + version;
-
-        let height = EagerVec::forced_import(path, name, version, compressed)?;
+        let height =
+            EagerVec::forced_import(path, name, version + VERSION + Version::ZERO, compressed)?;
 
         let height_extra = ComputedVecBuilder::forced_import(
             path,
             name,
-            version,
+            version + VERSION + Version::ZERO,
             compressed,
             options.copy_self_extra(),
         )?;
@@ -52,9 +51,13 @@ where
             height,
             height_extra,
             difficultyepoch: ComputedVecBuilder::forced_import(
-                path, name, version, compressed, options,
+                path,
+                name,
+                version + VERSION + Version::ZERO,
+                compressed,
+                options,
             )?,
-            // halvingepoch: StorableVecGeneator::forced_import(path, name, version, compressed, options)?,
+            // halvingepoch: StorableVecGeneator::forced_import(path, name, version + VERSION + Version::ZERO, compressed, options)?,
         })
     }
 

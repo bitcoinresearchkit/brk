@@ -5,12 +5,12 @@ use super::SupplyState;
 #[derive(Debug, Default, Clone)]
 pub struct RealizedState {
     pub realized_cap: Dollars,
-    // pub realized_profit: Dollars,
-    // pub realized_loss: Dollars,
-    // pub value_created: Dollars,
-    // pub adjusted_value_created: Dollars,
-    // pub value_destroyed: Dollars,
-    // pub adjusted_value_destroyed: Dollars,
+    // pub realized_profit: Dollars, // sent price vs now price
+    // pub realized_loss: Dollars, // sent price vs now price
+    // pub value_created: Dollars, // supply * price now
+    // pub adjusted_value_created: Dollars, // supply - up to 1 hour supply * price now
+    // pub value_destroyed: Dollars, // supply * price then
+    // pub adjusted_value_destroyed: Dollars, // supply - up to 1 hour supply * price then
 }
 
 impl RealizedState {

@@ -68,15 +68,13 @@ where
             }
         };
 
-        let version = VERSION + version;
-
         let s = Self {
             first: options.first.then(|| {
                 Box::new(
                     EagerVec::forced_import(
                         path,
                         &maybe_prefix("first"),
-                        version + Version::ZERO,
+                        version + VERSION + Version::ZERO,
                         compressed,
                     )
                     .unwrap(),
@@ -93,7 +91,7 @@ where
                     EagerVec::forced_import(
                         path,
                         &maybe_suffix("min"),
-                        version + Version::ZERO,
+                        version + VERSION + Version::ZERO,
                         compressed,
                     )
                     .unwrap(),
@@ -104,7 +102,7 @@ where
                     EagerVec::forced_import(
                         path,
                         &maybe_suffix("max"),
-                        version + Version::ZERO,
+                        version + VERSION + Version::ZERO,
                         compressed,
                     )
                     .unwrap(),
@@ -115,7 +113,7 @@ where
                     EagerVec::forced_import(
                         path,
                         &maybe_suffix("median"),
-                        version + Version::ZERO,
+                        version + VERSION + Version::ZERO,
                         compressed,
                     )
                     .unwrap(),
@@ -126,7 +124,7 @@ where
                     EagerVec::forced_import(
                         path,
                         &maybe_suffix("average"),
-                        version + Version::ZERO,
+                        version + VERSION + Version::ZERO,
                         compressed,
                     )
                     .unwrap(),
@@ -137,7 +135,7 @@ where
                     EagerVec::forced_import(
                         path,
                         &maybe_suffix("sum"),
-                        version + Version::ZERO,
+                        version + VERSION + Version::ZERO,
                         compressed,
                     )
                     .unwrap(),
@@ -148,7 +146,7 @@ where
                     EagerVec::forced_import(
                         path,
                         &prefix("total"),
-                        version + Version::ZERO,
+                        version + VERSION + Version::ZERO,
                         compressed,
                     )
                     .unwrap(),
@@ -159,7 +157,7 @@ where
                     EagerVec::forced_import(
                         path,
                         &maybe_suffix("90p"),
-                        version + Version::ZERO,
+                        version + VERSION + Version::ZERO,
                         compressed,
                     )
                     .unwrap(),
@@ -170,7 +168,7 @@ where
                     EagerVec::forced_import(
                         path,
                         &maybe_suffix("75p"),
-                        version + Version::ZERO,
+                        version + VERSION + Version::ZERO,
                         compressed,
                     )
                     .unwrap(),
@@ -181,7 +179,7 @@ where
                     EagerVec::forced_import(
                         path,
                         &maybe_suffix("25p"),
-                        version + Version::ZERO,
+                        version + VERSION + Version::ZERO,
                         compressed,
                     )
                     .unwrap(),
@@ -192,7 +190,7 @@ where
                     EagerVec::forced_import(
                         path,
                         &maybe_suffix("10p"),
-                        version + Version::ZERO,
+                        version + VERSION + Version::ZERO,
                         compressed,
                     )
                     .unwrap(),

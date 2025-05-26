@@ -43,21 +43,28 @@ where
         compressed: Compressed,
         options: StorableVecGeneatorOptions,
     ) -> color_eyre::Result<Self> {
-        let version = VERSION + version;
-
-        let height = compute_source
-            .then(|| Box::new(EagerVec::forced_import(path, name, version, compressed).unwrap()));
+        let height = compute_source.then(|| {
+            Box::new(
+                EagerVec::forced_import(path, name, version + VERSION + Version::ZERO, compressed)
+                    .unwrap(),
+            )
+        });
 
         let height_extra = ComputedVecBuilder::forced_import(
             path,
             name,
-            version,
+            version + VERSION + Version::ZERO,
             compressed,
             options.copy_self_extra(),
         )?;
 
-        let dateindex =
-            ComputedVecBuilder::forced_import(path, name, version, compressed, options)?;
+        let dateindex = ComputedVecBuilder::forced_import(
+            path,
+            name,
+            version + VERSION + Version::ZERO,
+            compressed,
+            options,
+        )?;
 
         let options = options.remove_percentiles();
 
@@ -65,20 +72,48 @@ where
             height,
             height_extra,
             dateindex,
-            weekindex: ComputedVecBuilder::forced_import(path, name, version, compressed, options)?,
+            weekindex: ComputedVecBuilder::forced_import(
+                path,
+                name,
+                version + VERSION + Version::ZERO,
+                compressed,
+                options,
+            )?,
             difficultyepoch: ComputedVecBuilder::forced_import(
-                path, name, version, compressed, options,
+                path,
+                name,
+                version + VERSION + Version::ZERO,
+                compressed,
+                options,
             )?,
             monthindex: ComputedVecBuilder::forced_import(
-                path, name, version, compressed, options,
+                path,
+                name,
+                version + VERSION + Version::ZERO,
+                compressed,
+                options,
             )?,
             quarterindex: ComputedVecBuilder::forced_import(
-                path, name, version, compressed, options,
+                path,
+                name,
+                version + VERSION + Version::ZERO,
+                compressed,
+                options,
             )?,
-            yearindex: ComputedVecBuilder::forced_import(path, name, version, compressed, options)?,
-            // halvingepoch: StorableVecGeneator::forced_import(path, name, version, compressed, options)?,
+            yearindex: ComputedVecBuilder::forced_import(
+                path,
+                name,
+                version + VERSION + Version::ZERO,
+                compressed,
+                options,
+            )?,
+            // halvingepoch: StorableVecGeneator::forced_import(path, name, version + VERSION + Version::ZERO, compressed, options)?,
             decadeindex: ComputedVecBuilder::forced_import(
-                path, name, version, compressed, options,
+                path,
+                name,
+                version + VERSION + Version::ZERO,
+                compressed,
+                options,
             )?,
         })
     }

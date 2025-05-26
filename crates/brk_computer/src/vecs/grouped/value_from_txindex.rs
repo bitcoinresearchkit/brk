@@ -33,7 +33,7 @@ pub struct ComputedValueVecsFromTxindex {
     pub dollars: Option<ComputedVecsFromTxindex<Dollars>>,
 }
 
-const VERSION: Version = Version::ONE;
+const VERSION: Version = Version::ZERO;
 
 impl ComputedValueVecsFromTxindex {
     #[allow(clippy::too_many_arguments)]
@@ -58,14 +58,14 @@ impl ComputedValueVecsFromTxindex {
             path,
             name,
             compute_source,
-            VERSION + version,
+            version + VERSION,
             compressed,
             options,
         )?;
 
         let bitcoin_txindex = LazyVecFrom1::init(
             &name_in_btc,
-            VERSION + version,
+            version + VERSION,
             source.map_or_else(|| sats.txindex.as_ref().unwrap().boxed_clone(), |s| s),
             |txindex: TxIndex, iter| {
                 iter.next_at(txindex.unwrap_to_usize()).map(|(_, value)| {
@@ -79,7 +79,7 @@ impl ComputedValueVecsFromTxindex {
             path,
             &name_in_btc,
             false,
-            VERSION + version,
+            version + VERSION,
             compressed,
             options,
         )?;
@@ -89,7 +89,7 @@ impl ComputedValueVecsFromTxindex {
                 computation,
                 path,
                 &name_in_usd,
-                VERSION + version,
+                version + VERSION,
                 compressed,
                 bitcoin_txindex.boxed_clone(),
                 indexes.txindex_to_height.boxed_clone(),
@@ -125,7 +125,7 @@ impl ComputedValueVecsFromTxindex {
                     path,
                     &name_in_usd,
                     false,
-                    VERSION + version,
+                    version + VERSION,
                     compressed,
                     options,
                 )

@@ -23,7 +23,7 @@ use super::{
 
 pub mod cohort;
 
-const VERSION: Version = Version::new(999);
+const VERSION: Version = Version::ZERO;
 
 #[derive(Clone)]
 pub struct Vecs {
@@ -40,6 +40,7 @@ pub struct Vecs {
 impl Vecs {
     pub fn forced_import(
         path: &Path,
+        version: Version,
         _computation: Computation,
         compressed: Compressed,
         fetched: Option<&fetched::Vecs>,
@@ -54,21 +55,21 @@ impl Vecs {
             chain_state: StoredVec::forced_import(
                 &states_path,
                 "chain",
-                VERSION + Version::ZERO,
+                version + VERSION + Version::ZERO,
                 Compressed::NO,
             )?,
 
             height_to_unspendable_supply: EagerVec::forced_import(
                 path,
                 "unspendable_supply",
-                VERSION + Version::ZERO,
+                version + VERSION + Version::ZERO,
                 compressed,
             )?,
             indexes_to_unspendable_supply: ComputedValueVecsFromHeight::forced_import(
                 path,
                 "unspendable_supply",
                 false,
-                VERSION + Version::ZERO,
+                version + VERSION + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default().add_last(),
                 compute_dollars,
@@ -80,7 +81,7 @@ impl Vecs {
                         None,
                         _computation,
                         compressed,
-                        VERSION + Version::ZERO,
+                        version + VERSION + Version::ZERO,
                         fetched,
                     )?,
                     by_term: OutputsByTerm {
@@ -89,7 +90,7 @@ impl Vecs {
                             Some("sth"),
                             _computation,
                             compressed,
-                            VERSION + Version::ZERO,
+                            version + VERSION + Version::ZERO,
                             fetched,
                         )?,
                         long: cohort::Vecs::forced_import(
@@ -97,7 +98,7 @@ impl Vecs {
                             Some("lth"),
                             _computation,
                             compressed,
-                            VERSION + Version::ZERO,
+                            version + VERSION + Version::ZERO,
                             fetched,
                         )?,
                     },
@@ -107,7 +108,7 @@ impl Vecs {
                             Some("up_to_1d"),
                             _computation,
                             compressed,
-                            VERSION + Version::ZERO,
+                            version + VERSION + Version::ZERO,
                             fetched,
                         )?,
                         _1w: cohort::Vecs::forced_import(
@@ -115,7 +116,7 @@ impl Vecs {
                             Some("up_to_1w"),
                             _computation,
                             compressed,
-                            VERSION + Version::ZERO,
+                            version + VERSION + Version::ZERO,
                             fetched,
                         )?,
                         _1m: cohort::Vecs::forced_import(
@@ -123,7 +124,7 @@ impl Vecs {
                             Some("up_to_1m"),
                             _computation,
                             compressed,
-                            VERSION + Version::ZERO,
+                            version + VERSION + Version::ZERO,
                             fetched,
                         )?,
                         _2m: cohort::Vecs::forced_import(
@@ -131,7 +132,7 @@ impl Vecs {
                             Some("up_to_2m"),
                             _computation,
                             compressed,
-                            VERSION + Version::ZERO,
+                            version + VERSION + Version::ZERO,
                             fetched,
                         )?,
                         _3m: cohort::Vecs::forced_import(
@@ -139,7 +140,7 @@ impl Vecs {
                             Some("up_to_3m"),
                             _computation,
                             compressed,
-                            VERSION + Version::ZERO,
+                            version + VERSION + Version::ZERO,
                             fetched,
                         )?,
                         _4m: cohort::Vecs::forced_import(
@@ -147,7 +148,7 @@ impl Vecs {
                             Some("up_to_4m"),
                             _computation,
                             compressed,
-                            VERSION + Version::ZERO,
+                            version + VERSION + Version::ZERO,
                             fetched,
                         )?,
                         _5m: cohort::Vecs::forced_import(
@@ -155,7 +156,7 @@ impl Vecs {
                             Some("up_to_5m"),
                             _computation,
                             compressed,
-                            VERSION + Version::ZERO,
+                            version + VERSION + Version::ZERO,
                             fetched,
                         )?,
                         _6m: cohort::Vecs::forced_import(
@@ -163,7 +164,7 @@ impl Vecs {
                             Some("up_to_6m"),
                             _computation,
                             compressed,
-                            VERSION + Version::ZERO,
+                            version + VERSION + Version::ZERO,
                             fetched,
                         )?,
                         _1y: cohort::Vecs::forced_import(
@@ -171,7 +172,7 @@ impl Vecs {
                             Some("up_to_1y"),
                             _computation,
                             compressed,
-                            VERSION + Version::ZERO,
+                            version + VERSION + Version::ZERO,
                             fetched,
                         )?,
                         _2y: cohort::Vecs::forced_import(
@@ -179,7 +180,7 @@ impl Vecs {
                             Some("up_to_2y"),
                             _computation,
                             compressed,
-                            VERSION + Version::ZERO,
+                            version + VERSION + Version::ZERO,
                             fetched,
                         )?,
                         _3y: cohort::Vecs::forced_import(
@@ -187,7 +188,7 @@ impl Vecs {
                             Some("up_to_3y"),
                             _computation,
                             compressed,
-                            VERSION + Version::ZERO,
+                            version + VERSION + Version::ZERO,
                             fetched,
                         )?,
                         _4y: cohort::Vecs::forced_import(
@@ -195,7 +196,7 @@ impl Vecs {
                             Some("up_to_4y"),
                             _computation,
                             compressed,
-                            VERSION + Version::ZERO,
+                            version + VERSION + Version::ZERO,
                             fetched,
                         )?,
                         _5y: cohort::Vecs::forced_import(
@@ -203,7 +204,7 @@ impl Vecs {
                             Some("up_to_5y"),
                             _computation,
                             compressed,
-                            VERSION + Version::ZERO,
+                            version + VERSION + Version::ZERO,
                             fetched,
                         )?,
                         _6y: cohort::Vecs::forced_import(
@@ -211,7 +212,7 @@ impl Vecs {
                             Some("up_to_6y"),
                             _computation,
                             compressed,
-                            VERSION + Version::ZERO,
+                            version + VERSION + Version::ZERO,
                             fetched,
                         )?,
                         _7y: cohort::Vecs::forced_import(
@@ -219,7 +220,7 @@ impl Vecs {
                             Some("up_to_7y"),
                             _computation,
                             compressed,
-                            VERSION + Version::ZERO,
+                            version + VERSION + Version::ZERO,
                             fetched,
                         )?,
                         _8y: cohort::Vecs::forced_import(
@@ -227,7 +228,7 @@ impl Vecs {
                             Some("up_to_8y"),
                             _computation,
                             compressed,
-                            VERSION + Version::ZERO,
+                            version + VERSION + Version::ZERO,
                             fetched,
                         )?,
                         _10y: cohort::Vecs::forced_import(
@@ -235,7 +236,7 @@ impl Vecs {
                             Some("up_to_10y"),
                             _computation,
                             compressed,
-                            VERSION + Version::ZERO,
+                            version + VERSION + Version::ZERO,
                             fetched,
                         )?,
                         _15y: cohort::Vecs::forced_import(
@@ -243,7 +244,7 @@ impl Vecs {
                             Some("up_to_15y"),
                             _computation,
                             compressed,
-                            VERSION + Version::ZERO,
+                            version + VERSION + Version::ZERO,
                             fetched,
                         )?,
                     },
@@ -253,7 +254,7 @@ impl Vecs {
                             Some("from_1d"),
                             _computation,
                             compressed,
-                            VERSION + Version::ZERO,
+                            version + VERSION + Version::ZERO,
                             fetched,
                         )?,
                         _1w: cohort::Vecs::forced_import(
@@ -261,7 +262,7 @@ impl Vecs {
                             Some("from_1w"),
                             _computation,
                             compressed,
-                            VERSION + Version::ZERO,
+                            version + VERSION + Version::ZERO,
                             fetched,
                         )?,
                         _1m: cohort::Vecs::forced_import(
@@ -269,7 +270,7 @@ impl Vecs {
                             Some("from_1m"),
                             _computation,
                             compressed,
-                            VERSION + Version::ZERO,
+                            version + VERSION + Version::ZERO,
                             fetched,
                         )?,
                         _2m: cohort::Vecs::forced_import(
@@ -277,7 +278,7 @@ impl Vecs {
                             Some("from_2m"),
                             _computation,
                             compressed,
-                            VERSION + Version::ZERO,
+                            version + VERSION + Version::ZERO,
                             fetched,
                         )?,
                         _3m: cohort::Vecs::forced_import(
@@ -285,7 +286,7 @@ impl Vecs {
                             Some("from_3m"),
                             _computation,
                             compressed,
-                            VERSION + Version::ZERO,
+                            version + VERSION + Version::ZERO,
                             fetched,
                         )?,
                         _4m: cohort::Vecs::forced_import(
@@ -293,7 +294,7 @@ impl Vecs {
                             Some("from_4m"),
                             _computation,
                             compressed,
-                            VERSION + Version::ZERO,
+                            version + VERSION + Version::ZERO,
                             fetched,
                         )?,
                         _5m: cohort::Vecs::forced_import(
@@ -301,7 +302,7 @@ impl Vecs {
                             Some("from_5m"),
                             _computation,
                             compressed,
-                            VERSION + Version::ZERO,
+                            version + VERSION + Version::ZERO,
                             fetched,
                         )?,
                         _6m: cohort::Vecs::forced_import(
@@ -309,7 +310,7 @@ impl Vecs {
                             Some("from_6m"),
                             _computation,
                             compressed,
-                            VERSION + Version::ZERO,
+                            version + VERSION + Version::ZERO,
                             fetched,
                         )?,
                         _1y: cohort::Vecs::forced_import(
@@ -317,7 +318,7 @@ impl Vecs {
                             Some("from_1y"),
                             _computation,
                             compressed,
-                            VERSION + Version::ZERO,
+                            version + VERSION + Version::ZERO,
                             fetched,
                         )?,
                         _2y: cohort::Vecs::forced_import(
@@ -325,7 +326,7 @@ impl Vecs {
                             Some("from_2y"),
                             _computation,
                             compressed,
-                            VERSION + Version::ZERO,
+                            version + VERSION + Version::ZERO,
                             fetched,
                         )?,
                         _3y: cohort::Vecs::forced_import(
@@ -333,7 +334,7 @@ impl Vecs {
                             Some("from_3y"),
                             _computation,
                             compressed,
-                            VERSION + Version::ZERO,
+                            version + VERSION + Version::ZERO,
                             fetched,
                         )?,
                         _4y: cohort::Vecs::forced_import(
@@ -341,7 +342,7 @@ impl Vecs {
                             Some("from_4y"),
                             _computation,
                             compressed,
-                            VERSION + Version::ZERO,
+                            version + VERSION + Version::ZERO,
                             fetched,
                         )?,
                         _5y: cohort::Vecs::forced_import(
@@ -349,7 +350,7 @@ impl Vecs {
                             Some("from_5y"),
                             _computation,
                             compressed,
-                            VERSION + Version::ZERO,
+                            version + VERSION + Version::ZERO,
                             fetched,
                         )?,
                         _6y: cohort::Vecs::forced_import(
@@ -357,7 +358,7 @@ impl Vecs {
                             Some("from_6y"),
                             _computation,
                             compressed,
-                            VERSION + Version::ZERO,
+                            version + VERSION + Version::ZERO,
                             fetched,
                         )?,
                         _7y: cohort::Vecs::forced_import(
@@ -365,7 +366,7 @@ impl Vecs {
                             Some("from_7y"),
                             _computation,
                             compressed,
-                            VERSION + Version::ZERO,
+                            version + VERSION + Version::ZERO,
                             fetched,
                         )?,
                         _8y: cohort::Vecs::forced_import(
@@ -373,7 +374,7 @@ impl Vecs {
                             Some("from_8y"),
                             _computation,
                             compressed,
-                            VERSION + Version::ZERO,
+                            version + VERSION + Version::ZERO,
                             fetched,
                         )?,
                         _10y: cohort::Vecs::forced_import(
@@ -381,7 +382,7 @@ impl Vecs {
                             Some("from_10y"),
                             _computation,
                             compressed,
-                            VERSION + Version::ZERO,
+                            version + VERSION + Version::ZERO,
                             fetched,
                         )?,
                         _15y: cohort::Vecs::forced_import(
@@ -389,7 +390,7 @@ impl Vecs {
                             Some("from_15y"),
                             _computation,
                             compressed,
-                            VERSION + Version::ZERO,
+                            version + VERSION + Version::ZERO,
                             fetched,
                         )?,
                     },
@@ -399,7 +400,7 @@ impl Vecs {
                             Some("from_1d_to_1w"),
                             _computation,
                             compressed,
-                            VERSION + Version::ZERO,
+                            version + VERSION + Version::ZERO,
                             fetched,
                         )?,
                         _1w_to_1m: cohort::Vecs::forced_import(
@@ -407,7 +408,7 @@ impl Vecs {
                             Some("from_1w_to_1m"),
                             _computation,
                             compressed,
-                            VERSION + Version::ZERO,
+                            version + VERSION + Version::ZERO,
                             fetched,
                         )?,
                         _1m_to_3m: cohort::Vecs::forced_import(
@@ -415,7 +416,7 @@ impl Vecs {
                             Some("from_1m_to_3m"),
                             _computation,
                             compressed,
-                            VERSION + Version::ZERO,
+                            version + VERSION + Version::ZERO,
                             fetched,
                         )?,
                         _3m_to_6m: cohort::Vecs::forced_import(
@@ -423,7 +424,7 @@ impl Vecs {
                             Some("from_3m_to_6m"),
                             _computation,
                             compressed,
-                            VERSION + Version::ZERO,
+                            version + VERSION + Version::ZERO,
                             fetched,
                         )?,
                         _6m_to_1y: cohort::Vecs::forced_import(
@@ -431,7 +432,7 @@ impl Vecs {
                             Some("from_6m_to_1y"),
                             _computation,
                             compressed,
-                            VERSION + Version::ZERO,
+                            version + VERSION + Version::ZERO,
                             fetched,
                         )?,
                         _1y_to_2y: cohort::Vecs::forced_import(
@@ -439,7 +440,7 @@ impl Vecs {
                             Some("from_1y_to_2y"),
                             _computation,
                             compressed,
-                            VERSION + Version::ZERO,
+                            version + VERSION + Version::ZERO,
                             fetched,
                         )?,
                         _2y_to_3y: cohort::Vecs::forced_import(
@@ -447,7 +448,7 @@ impl Vecs {
                             Some("from_2y_to_3y"),
                             _computation,
                             compressed,
-                            VERSION + Version::ZERO,
+                            version + VERSION + Version::ZERO,
                             fetched,
                         )?,
                         _3y_to_4y: cohort::Vecs::forced_import(
@@ -455,7 +456,7 @@ impl Vecs {
                             Some("from_3y_to_4y"),
                             _computation,
                             compressed,
-                            VERSION + Version::ZERO,
+                            version + VERSION + Version::ZERO,
                             fetched,
                         )?,
                         _4y_to_5y: cohort::Vecs::forced_import(
@@ -463,7 +464,7 @@ impl Vecs {
                             Some("from_4y_to_5y"),
                             _computation,
                             compressed,
-                            VERSION + Version::ZERO,
+                            version + VERSION + Version::ZERO,
                             fetched,
                         )?,
                         _5y_to_7y: cohort::Vecs::forced_import(
@@ -471,7 +472,7 @@ impl Vecs {
                             Some("from_5y_to_7y"),
                             _computation,
                             compressed,
-                            VERSION + Version::ZERO,
+                            version + VERSION + Version::ZERO,
                             fetched,
                         )?,
                         _7y_to_10y: cohort::Vecs::forced_import(
@@ -479,7 +480,7 @@ impl Vecs {
                             Some("from_7y_to_10y"),
                             _computation,
                             compressed,
-                            VERSION + Version::ZERO,
+                            version + VERSION + Version::ZERO,
                             fetched,
                         )?,
                         _10y_to_15y: cohort::Vecs::forced_import(
@@ -487,7 +488,7 @@ impl Vecs {
                             Some("from_10y_to_15y"),
                             _computation,
                             compressed,
-                            VERSION + Version::ZERO,
+                            version + VERSION + Version::ZERO,
                             fetched,
                         )?,
                     },
@@ -497,7 +498,7 @@ impl Vecs {
                             Some("epoch_0"),
                             _computation,
                             compressed,
-                            VERSION + Version::ZERO,
+                            version + VERSION + Version::ZERO,
                             fetched,
                         )?,
                         _1: cohort::Vecs::forced_import(
@@ -505,7 +506,7 @@ impl Vecs {
                             Some("epoch_1"),
                             _computation,
                             compressed,
-                            VERSION + Version::ZERO,
+                            version + VERSION + Version::ZERO,
                             fetched,
                         )?,
                         _2: cohort::Vecs::forced_import(
@@ -513,7 +514,7 @@ impl Vecs {
                             Some("epoch_2"),
                             _computation,
                             compressed,
-                            VERSION + Version::ZERO,
+                            version + VERSION + Version::ZERO,
                             fetched,
                         )?,
                         _3: cohort::Vecs::forced_import(
@@ -521,7 +522,7 @@ impl Vecs {
                             Some("epoch_3"),
                             _computation,
                             compressed,
-                            VERSION + Version::ZERO,
+                            version + VERSION + Version::ZERO,
                             fetched,
                         )?,
                         _4: cohort::Vecs::forced_import(
@@ -529,7 +530,7 @@ impl Vecs {
                             Some("epoch_4"),
                             _computation,
                             compressed,
-                            VERSION + Version::ZERO,
+                            version + VERSION + Version::ZERO,
                             fetched,
                         )?,
                     },
@@ -539,7 +540,7 @@ impl Vecs {
                             Some("0sat"),
                             _computation,
                             compressed,
-                            VERSION + Version::ZERO,
+                            version + VERSION + Version::ZERO,
                             fetched,
                         )?,
                         from_1sat_to_10sats: cohort::Vecs::forced_import(
@@ -547,7 +548,7 @@ impl Vecs {
                             Some("from_1sat_to_10sats"),
                             _computation,
                             compressed,
-                            VERSION + Version::ZERO,
+                            version + VERSION + Version::ZERO,
                             fetched,
                         )?,
                         from_10sats_to_100sats: cohort::Vecs::forced_import(
@@ -555,7 +556,7 @@ impl Vecs {
                             Some("from_10sats_to_100sats"),
                             _computation,
                             compressed,
-                            VERSION + Version::ZERO,
+                            version + VERSION + Version::ZERO,
                             fetched,
                         )?,
                         from_100sats_to_1_000sats: cohort::Vecs::forced_import(
@@ -563,7 +564,7 @@ impl Vecs {
                             Some("from_100sats_to_1_000sats"),
                             _computation,
                             compressed,
-                            VERSION + Version::ZERO,
+                            version + VERSION + Version::ZERO,
                             fetched,
                         )?,
                         from_1_000sats_to_10_000sats: cohort::Vecs::forced_import(
@@ -571,7 +572,7 @@ impl Vecs {
                             Some("from_1_000sats_to_10_000sats"),
                             _computation,
                             compressed,
-                            VERSION + Version::ZERO,
+                            version + VERSION + Version::ZERO,
                             fetched,
                         )?,
                         from_10_000sats_to_100_000sats: cohort::Vecs::forced_import(
@@ -579,7 +580,7 @@ impl Vecs {
                             Some("from_10_000sats_to_100_000sats"),
                             _computation,
                             compressed,
-                            VERSION + Version::ZERO,
+                            version + VERSION + Version::ZERO,
                             fetched,
                         )?,
                         from_100_000sats_to_1_000_000sats: cohort::Vecs::forced_import(
@@ -587,7 +588,7 @@ impl Vecs {
                             Some("from_100_000sats_to_1_000_000sats"),
                             _computation,
                             compressed,
-                            VERSION + Version::ZERO,
+                            version + VERSION + Version::ZERO,
                             fetched,
                         )?,
                         from_1_000_000sats_to_10_000_000sats: cohort::Vecs::forced_import(
@@ -595,7 +596,7 @@ impl Vecs {
                             Some("from_1_000_000sats_to_10_000_000sats"),
                             _computation,
                             compressed,
-                            VERSION + Version::ZERO,
+                            version + VERSION + Version::ZERO,
                             fetched,
                         )?,
                         from_10_000_000sats_to_1btc: cohort::Vecs::forced_import(
@@ -603,7 +604,7 @@ impl Vecs {
                             Some("from_10_000_000sats_to_1btc"),
                             _computation,
                             compressed,
-                            VERSION + Version::ZERO,
+                            version + VERSION + Version::ZERO,
                             fetched,
                         )?,
                         from_1btc_to_10btc: cohort::Vecs::forced_import(
@@ -611,7 +612,7 @@ impl Vecs {
                             Some("from_1btc_to_10btc"),
                             _computation,
                             compressed,
-                            VERSION + Version::ZERO,
+                            version + VERSION + Version::ZERO,
                             fetched,
                         )?,
                         from_10btc_to_100btc: cohort::Vecs::forced_import(
@@ -619,7 +620,7 @@ impl Vecs {
                             Some("from_10btc_to_100btc"),
                             _computation,
                             compressed,
-                            VERSION + Version::ZERO,
+                            version + VERSION + Version::ZERO,
                             fetched,
                         )?,
                         from_100btc_to_1_000btc: cohort::Vecs::forced_import(
@@ -627,7 +628,7 @@ impl Vecs {
                             Some("from_100btc_to_1_000btc"),
                             _computation,
                             compressed,
-                            VERSION + Version::ZERO,
+                            version + VERSION + Version::ZERO,
                             fetched,
                         )?,
                         from_1_000btc_to_10_000btc: cohort::Vecs::forced_import(
@@ -635,7 +636,7 @@ impl Vecs {
                             Some("from_1_000btc_to_10_000btc"),
                             _computation,
                             compressed,
-                            VERSION + Version::ZERO,
+                            version + VERSION + Version::ZERO,
                             fetched,
                         )?,
                         from_10_000btc_to_100_000btc: cohort::Vecs::forced_import(
@@ -643,7 +644,7 @@ impl Vecs {
                             Some("from_10_000btc_to_100_000btc"),
                             _computation,
                             compressed,
-                            VERSION + Version::ZERO,
+                            version + VERSION + Version::ZERO,
                             fetched,
                         )?,
                         from_100_000btc: cohort::Vecs::forced_import(
@@ -651,7 +652,7 @@ impl Vecs {
                             Some("from_100_000btc"),
                             _computation,
                             compressed,
-                            VERSION + Version::ZERO,
+                            version + VERSION + Version::ZERO,
                             fetched,
                         )?,
                     },
@@ -754,7 +755,7 @@ impl Vecs {
                             Some("p2pk65"),
                             _computation,
                             compressed,
-                            VERSION + Version::ZERO,
+                            version + VERSION + Version::ZERO,
                             fetched,
                         )?,
                         p2pk33: cohort::Vecs::forced_import(
@@ -762,7 +763,7 @@ impl Vecs {
                             Some("p2pk33"),
                             _computation,
                             compressed,
-                            VERSION + Version::ZERO,
+                            version + VERSION + Version::ZERO,
                             fetched,
                         )?,
                         p2pkh: cohort::Vecs::forced_import(
@@ -770,7 +771,7 @@ impl Vecs {
                             Some("p2pkh"),
                             _computation,
                             compressed,
-                            VERSION + Version::ZERO,
+                            version + VERSION + Version::ZERO,
                             fetched,
                         )?,
                         p2ms: cohort::Vecs::forced_import(
@@ -778,7 +779,7 @@ impl Vecs {
                             Some("p2ms"),
                             _computation,
                             compressed,
-                            VERSION + Version::ZERO,
+                            version + VERSION + Version::ZERO,
                             fetched,
                         )?,
                         p2sh: cohort::Vecs::forced_import(
@@ -786,7 +787,7 @@ impl Vecs {
                             Some("p2sh"),
                             _computation,
                             compressed,
-                            VERSION + Version::ZERO,
+                            version + VERSION + Version::ZERO,
                             fetched,
                         )?,
                         // op_return: cohort::Vecs::forced_import(
@@ -802,7 +803,7 @@ impl Vecs {
                             Some("p2wpkh"),
                             _computation,
                             compressed,
-                            VERSION + Version::ZERO,
+                            version + VERSION + Version::ZERO,
                             fetched,
                         )?,
                         p2wsh: cohort::Vecs::forced_import(
@@ -810,7 +811,7 @@ impl Vecs {
                             Some("p2wsh"),
                             _computation,
                             compressed,
-                            VERSION + Version::ZERO,
+                            version + VERSION + Version::ZERO,
                             fetched,
                         )?,
                         p2tr: cohort::Vecs::forced_import(
@@ -818,7 +819,7 @@ impl Vecs {
                             Some("p2tr"),
                             _computation,
                             compressed,
-                            VERSION + Version::ZERO,
+                            version + VERSION + Version::ZERO,
                             fetched,
                         )?,
                         p2a: cohort::Vecs::forced_import(
@@ -826,7 +827,7 @@ impl Vecs {
                             Some("p2a"),
                             _computation,
                             compressed,
-                            VERSION + Version::ZERO,
+                            version + VERSION + Version::ZERO,
                             fetched,
                         )?,
                         empty: cohort::Vecs::forced_import(
@@ -834,7 +835,7 @@ impl Vecs {
                             Some("empty"),
                             _computation,
                             compressed,
-                            VERSION + Version::ZERO,
+                            version + VERSION + Version::ZERO,
                             fetched,
                         )?,
                         unknown: cohort::Vecs::forced_import(
@@ -842,7 +843,7 @@ impl Vecs {
                             Some("unknown"),
                             _computation,
                             compressed,
-                            VERSION + Version::ZERO,
+                            version + VERSION + Version::ZERO,
                             fetched,
                         )?,
                     },

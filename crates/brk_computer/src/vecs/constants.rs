@@ -11,6 +11,8 @@ use super::{
     indexes,
 };
 
+const VERSION: Version = Version::ZERO;
+
 #[derive(Clone)]
 pub struct Vecs {
     pub _0: ComputedVecsFromHeight<StoredU8>,
@@ -22,6 +24,7 @@ pub struct Vecs {
 impl Vecs {
     pub fn forced_import(
         path: &Path,
+        version: Version,
         _computation: Computation,
         compressed: Compressed,
     ) -> color_eyre::Result<Self> {
@@ -32,7 +35,7 @@ impl Vecs {
                 path,
                 "0",
                 true,
-                Version::ZERO,
+                version + VERSION + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default().add_last(),
             )?,
@@ -40,7 +43,7 @@ impl Vecs {
                 path,
                 "1",
                 true,
-                Version::ZERO,
+                version + VERSION + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default().add_last(),
             )?,
@@ -48,7 +51,7 @@ impl Vecs {
                 path,
                 "50",
                 true,
-                Version::ZERO,
+                version + VERSION + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default().add_last(),
             )?,
@@ -56,7 +59,7 @@ impl Vecs {
                 path,
                 "100",
                 true,
-                Version::ZERO,
+                version + VERSION + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default().add_last(),
             )?,

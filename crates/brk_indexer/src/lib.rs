@@ -18,7 +18,7 @@ pub use brk_parser::*;
 
 use bitcoin::{Transaction, TxIn, TxOut};
 use brk_exit::Exit;
-use brk_vec::{AnyVec, Compressed, VecIterator};
+use brk_vec::{AnyVec, Compressed, VecIterator, Version};
 use color_eyre::eyre::{ContextCompat, eyre};
 use fjall::TransactionalKeyspace;
 use log::{error, info};
@@ -33,6 +33,7 @@ pub use vecs::*;
 
 const SNAPSHOT_BLOCK_RANGE: usize = 1000;
 const COLLISIONS_CHECKED_UP_TO: u32 = 893_000;
+const VERSION: Version = Version::ONE;
 
 #[derive(Clone)]
 pub struct Indexer {
@@ -62,6 +63,7 @@ impl Indexer {
     pub fn import_vecs(&mut self) -> color_eyre::Result<()> {
         self.vecs = Some(Vecs::forced_import(
             &self.path.join("vecs/indexed"),
+            VERSION + Version::ZERO,
             self.compressed,
         )?);
         Ok(())
@@ -70,7 +72,10 @@ impl Indexer {
     /// Do NOT import multiple times are things will break !!!
     /// Clone struct instead
     pub fn import_stores(&mut self) -> color_eyre::Result<()> {
-        self.stores = Some(Stores::forced_import(&self.path.join("stores"))?);
+        self.stores = Some(Stores::forced_import(
+            &self.path.join("stores"),
+            VERSION + Version::ZERO,
+        )?);
         Ok(())
     }
 
