@@ -1,6 +1,9 @@
 use std::path::Path;
 
+use brk_vec::Version;
 use fjall::TransactionalKeyspace;
+
+const _VERSION: Version = Version::ZERO;
 
 #[derive(Clone)]
 pub struct Stores {
@@ -9,18 +12,18 @@ pub struct Stores {
 }
 
 impl Stores {
-    pub fn import(_: &Path, _: &TransactionalKeyspace) -> color_eyre::Result<Self> {
+    pub fn import(_: &Path, _: Version, _: &TransactionalKeyspace) -> color_eyre::Result<Self> {
         // let address_to_utxos_received = Store::import(
         //     keyspace.clone(),
         //     path,
         //     "address_to_utxos_received",
-        //     Version::ZERO,
+        //     version + VERSION + Version::ZERO,
         // )?;
         // let address_to_utxos_spent = Store::import(
         //     keyspace.clone(),
         //     path,
         //     "address_to_utxos_spent",
-        //     Version::ZERO,
+        //     version + VERSION + Version::ZERO,
         // )?;
 
         Ok(Self {

@@ -783,7 +783,7 @@ impl EagerVec<DateIndex, Dollars> {
         exit: &Exit,
     ) -> Result<()> {
         self.validate_computed_version_or_reset_file(
-            Version::TWO + self.inner.version() + stacks.version(),
+            Version::ZERO + self.inner.version() + stacks.version(),
         )?;
 
         let index = max_from.min(DateIndex::from(self.len()));

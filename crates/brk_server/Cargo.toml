@@ -25,7 +25,7 @@ log = { workspace = true }
 minreq = { workspace = true }
 oxc = { version = "0.72.0", features = ["codegen", "minifier"] }
 serde = { workspace = true }
-tokio = { version = "1.45.0", features = ["full"] }
+tokio = { version = "1.45.1", features = ["full"] }
 tower-http = { version = "0.6.4", features = ["compression-full", "trace"] }
 zip = "4.0.0"
 tracing = "0.1.41"

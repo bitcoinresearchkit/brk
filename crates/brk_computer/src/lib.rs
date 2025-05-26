@@ -9,7 +9,7 @@ use brk_exit::Exit;
 use brk_fetcher::Fetcher;
 use brk_indexer::Indexer;
 pub use brk_parser::rpc;
-use brk_vec::{AnyCollectableVec, Compressed, Computation};
+use brk_vec::{AnyCollectableVec, Compressed, Computation, Version};
 
 mod states;
 mod stores;
@@ -29,6 +29,8 @@ pub struct Computer {
     compressed: Compressed,
 }
 
+const VERSION: Version = Version::ONE;
+
 impl Computer {
     pub fn new(outputs_dir: &Path, fetcher: Option<Fetcher>, compressed: bool) -> Self {
         Self {
@@ -47,6 +49,7 @@ impl Computer {
     ) -> color_eyre::Result<()> {
         self.vecs = Some(Vecs::import(
             &self.path.join("vecs/computed"),
+            VERSION + Version::ZERO,
             indexer,
             self.fetcher.is_some(),
             computation,
@@ -60,6 +63,7 @@ impl Computer {
     pub fn import_stores(&mut self, indexer: &Indexer) -> color_eyre::Result<()> {
         self.stores = Some(Stores::import(
             &self.path.join("stores"),
+            VERSION + Version::ZERO,
             indexer.keyspace(),
         )?);
         Ok(())

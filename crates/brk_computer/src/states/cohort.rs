@@ -24,4 +24,8 @@ impl CohortState {
             realized.decrement(supply_state, price.unwrap());
         }
     }
+
+    pub fn send(&mut self, supply_state: &SupplyState, price: Option<Dollars>) {}
+
+    pub fn receive(&mut self, supply_state: &SupplyState, price: Option<Dollars>) {}
 }

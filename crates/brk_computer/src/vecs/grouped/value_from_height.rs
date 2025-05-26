@@ -18,7 +18,7 @@ pub struct ComputedValueVecsFromHeight {
     pub dollars: Option<ComputedVecsFromHeight<Dollars>>,
 }
 
-const VERSION: Version = Version::ONE;
+const VERSION: Version = Version::ZERO;
 
 impl ComputedValueVecsFromHeight {
     pub fn forced_import(
@@ -35,7 +35,7 @@ impl ComputedValueVecsFromHeight {
                 path,
                 name,
                 compute_source,
-                VERSION + version,
+                version + VERSION,
                 compressed,
                 options,
             )?,
@@ -43,7 +43,7 @@ impl ComputedValueVecsFromHeight {
                 path,
                 &format!("{name}_in_btc"),
                 true,
-                VERSION + version,
+                version + VERSION,
                 compressed,
                 options,
             )?,
@@ -52,7 +52,7 @@ impl ComputedValueVecsFromHeight {
                     path,
                     &format!("{name}_in_usd"),
                     true,
-                    VERSION + version,
+                    version + VERSION,
                     compressed,
                     options,
                 )

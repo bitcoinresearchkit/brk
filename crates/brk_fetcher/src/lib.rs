@@ -11,6 +11,9 @@ use color_eyre::eyre::Error;
 mod fetchers;
 
 use fetchers::*;
+use log::info;
+
+const TRIES: usize = 12 * 60 * 2;
 
 #[derive(Clone)]
 pub struct Fetcher {
@@ -33,15 +36,31 @@ impl Fetcher {
     }
 
     pub fn get_date(&mut self, date: Date) -> color_eyre::Result<OHLCCents> {
+        self.get_date_(date, 0)
+    }
+
+    fn get_date_(&mut self, date: Date, tries: usize) -> color_eyre::Result<OHLCCents> {
         self.kraken
             .get_from_1d(&date)
             .or_else(|_| {
                 // eprintln!("{e}");
                 self.binance.get_from_1d(&date)
             })
-            .or_else(|e| {
-                eprintln!("{e}");
+            .or_else(|_| {
+                // eprintln!("{e}");
                 self.kibo.get_from_date(&date)
+            })
+            .or_else(|e| {
+                sleep(Duration::from_secs(30));
+
+                if tries < TRIES {
+                    self.clear();
+                    info!("Retrying to fetch date price...");
+                    self.get_date_(date, tries + 1)
+                } else {
+                    info!("Failed to fetch date prices...");
+                    Err(e)
+                }
             })
     }
 
@@ -81,13 +100,17 @@ impl Fetcher {
                         self.kibo.get_from_height(height).unwrap_or_else(|_| {
                             sleep(Duration::from_secs(30));
 
-                            if tries < 8 * 60 * 2 {
+                            if tries < TRIES {
                                 self.clear();
+
+                                info!("Retrying to fetch height prices...");
 
                                 return self
                                     .get_height_(height, timestamp, previous_timestamp, tries + 1)
                                     .unwrap();
                             }
+
+                            info!("Failed to fetch height prices");
 
                             let date = Date::from(timestamp);
                             // eprintln!("{e}");
@@ -111,8 +134,6 @@ How to fix this:
                         })
                     })
             });
-
-        // self.ohlc.height.insert(height, ohlc);
 
         Ok(ohlc)
     }

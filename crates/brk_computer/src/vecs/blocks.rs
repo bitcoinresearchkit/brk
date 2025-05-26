@@ -15,6 +15,8 @@ use super::{
     indexes,
 };
 
+const VERSION: Version = Version::ZERO;
+
 #[derive(Clone)]
 pub struct Vecs {
     pub height_to_interval: EagerVec<Height, Timestamp>,
@@ -32,6 +34,7 @@ pub struct Vecs {
 impl Vecs {
     pub fn forced_import(
         path: &Path,
+        version: Version,
         _computation: Computation,
         compressed: Compressed,
     ) -> color_eyre::Result<Self> {
@@ -41,13 +44,13 @@ impl Vecs {
             height_to_interval: EagerVec::forced_import(
                 path,
                 "interval",
-                Version::ZERO,
+                version + VERSION + Version::ZERO,
                 compressed,
             )?,
             timeindexes_to_timestamp: ComputedVecsFromDateIndex::forced_import(
                 path,
                 "timestamp",
-                Version::ZERO,
+                version + VERSION + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default().add_first(),
             )?,
@@ -55,7 +58,7 @@ impl Vecs {
                 path,
                 "block_interval",
                 false,
-                Version::ZERO,
+                version + VERSION + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default()
                     .add_percentiles()
@@ -66,7 +69,7 @@ impl Vecs {
                 path,
                 "block_count",
                 true,
-                Version::ZERO,
+                version + VERSION + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default().add_sum().add_total(),
             )?,
@@ -74,7 +77,7 @@ impl Vecs {
                 path,
                 "block_weight",
                 false,
-                Version::ZERO,
+                version + VERSION + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default().add_sum().add_total(),
             )?,
@@ -82,29 +85,34 @@ impl Vecs {
                 path,
                 "block_size",
                 false,
-                Version::ZERO,
+                version + VERSION + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default().add_sum().add_total(),
             )?,
-            height_to_vbytes: EagerVec::forced_import(path, "vbytes", Version::ZERO, compressed)?,
+            height_to_vbytes: EagerVec::forced_import(
+                path,
+                "vbytes",
+                version + VERSION + Version::ZERO,
+                compressed,
+            )?,
             indexes_to_block_vbytes: ComputedVecsFromHeight::forced_import(
                 path,
                 "block_vbytes",
                 false,
-                Version::ZERO,
+                version + VERSION + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default().add_sum().add_total(),
             )?,
             difficultyepoch_to_timestamp: EagerVec::forced_import(
                 path,
                 "timestamp",
-                Version::ZERO,
+                version + VERSION + Version::ZERO,
                 compressed,
             )?,
             halvingepoch_to_timestamp: EagerVec::forced_import(
                 path,
                 "timestamp",
-                Version::ZERO,
+                version + VERSION + Version::ZERO,
                 compressed,
             )?,
         })

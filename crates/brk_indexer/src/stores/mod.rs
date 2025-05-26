@@ -25,15 +25,17 @@ pub struct Stores {
     pub txidprefix_to_txindex: Store<TxidPrefix, TxIndex>,
 }
 
+const VERSION: Version = Version::ZERO;
+
 impl Stores {
-    pub fn forced_import(path: &Path) -> color_eyre::Result<Self> {
+    pub fn forced_import(path: &Path, version: Version) -> color_eyre::Result<Self> {
         fs::create_dir_all(path)?;
 
         let keyspace = match Self::open_keyspace(path) {
             Ok(keyspace) => keyspace,
             Err(_) => {
                 fs::remove_dir_all(path)?;
-                return Self::forced_import(path);
+                return Self::forced_import(path, version);
             }
         };
 
@@ -43,7 +45,7 @@ impl Stores {
                     keyspace.clone(),
                     path,
                     "addressbyteshash_to_outputtypeindex",
-                    Version::ZERO,
+                    version + VERSION + Version::ZERO,
                 )
             });
             let blockhashprefix_to_height = scope.spawn(|| {
@@ -51,7 +53,7 @@ impl Stores {
                     keyspace.clone(),
                     path,
                     "blockhashprefix_to_height",
-                    Version::ZERO,
+                    version + VERSION + Version::ZERO,
                 )
             });
             let txidprefix_to_txindex = scope.spawn(|| {
@@ -59,7 +61,7 @@ impl Stores {
                     keyspace.clone(),
                     path,
                     "txidprefix_to_txindex",
-                    Version::ZERO,
+                    version + VERSION + Version::ZERO,
                 )
             });
 
