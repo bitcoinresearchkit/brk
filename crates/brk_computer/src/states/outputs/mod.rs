@@ -2,7 +2,7 @@ use brk_vec::StoredIndex;
 use rayon::prelude::*;
 use std::{collections::BTreeMap, ops::ControlFlow};
 
-use brk_core::{Dollars, HalvingEpoch, Height, Timestamp};
+use brk_core::{CheckedSub, Dollars, HalvingEpoch, Height, Timestamp};
 
 mod by_epoch;
 mod by_from;
@@ -133,16 +133,27 @@ impl Outputs<(OutputFilter, vecs::utxos::cohort::Vecs)> {
             .collect::<Vec<_>>();
 
         let last_timestamp = chain_state.last().unwrap().timestamp;
+        let current_price = chain_state.last().unwrap().price;
 
         height_to_sent.into_iter().for_each(|(height, sent)| {
             let block_state = chain_state.get(height.unwrap_to_usize()).unwrap();
-            let price = block_state.price;
+            let prev_price = block_state.price;
 
             let days_old = block_state
                 .timestamp
                 .difference_in_days_between(last_timestamp);
 
-            self.all.1.state.decrement(&sent.spendable_supply, price);
+            let older_than_hour =
+                jiff::Timestamp::from(last_timestamp.checked_sub(block_state.timestamp).unwrap())
+                    .as_second()
+                    >= 60 * 60;
+
+            self.all.1.state.send(
+                &sent.spendable_supply,
+                current_price,
+                prev_price,
+                older_than_hour,
+            );
 
             time_based_vecs
                 .iter_mut()
@@ -154,25 +165,32 @@ impl Outputs<(OutputFilter, vecs::utxos::cohort::Vecs)> {
                     _ => unreachable!(),
                 })
                 .for_each(|(_, vecs)| {
-                    vecs.state.decrement(&sent.spendable_supply, price);
+                    vecs.state.send(
+                        &sent.spendable_supply,
+                        current_price,
+                        prev_price,
+                        older_than_hour,
+                    );
                 });
 
             sent.by_type.spendable.as_typed_vec().into_iter().for_each(
                 |(output_type, supply_state)| {
-                    self.by_type
-                        .get_mut(output_type)
-                        .1
-                        .state
-                        .decrement(supply_state, price)
+                    self.by_type.get_mut(output_type).1.state.send(
+                        supply_state,
+                        current_price,
+                        prev_price,
+                        older_than_hour,
+                    )
                 },
             );
 
             sent.by_size.into_iter().for_each(|(group, supply_state)| {
-                self.by_size
-                    .get_mut(group)
-                    .1
-                    .state
-                    .decrement(&supply_state, price);
+                self.by_size.get_mut(group).1.state.send(
+                    &supply_state,
+                    current_price,
+                    prev_price,
+                    older_than_hour,
+                );
             });
         });
     }
@@ -189,7 +207,7 @@ impl Outputs<(OutputFilter, vecs::utxos::cohort::Vecs)> {
         .into_iter()
         .chain(self.by_up_to.as_mut_vec().map(|(_, v)| v))
         .for_each(|v| {
-            v.state.increment(&supply_state, price);
+            v.state.receive(&supply_state, price);
         });
 
         self.by_type
@@ -200,8 +218,7 @@ impl Outputs<(OutputFilter, vecs::utxos::cohort::Vecs)> {
                     OutputFilter::Type(output_type) => *output_type,
                     _ => unreachable!(),
                 };
-                vecs.state
-                    .increment(received.by_type.get(output_type), price)
+                vecs.state.receive(received.by_type.get(output_type), price)
             });
 
         received
@@ -212,7 +229,7 @@ impl Outputs<(OutputFilter, vecs::utxos::cohort::Vecs)> {
                     .get_mut(group)
                     .1
                     .state
-                    .increment(&supply_state, price);
+                    .receive(&supply_state, price);
             });
     }
 }

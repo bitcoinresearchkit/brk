@@ -26,6 +26,10 @@ pub enum Error {
     DifferentCompressionMode,
     SystemTimeError,
     ToSerdeJsonValueError(serde_json::Error),
+    Jiff(jiff::Error),
+    WrongLength,
+    WrongAddressType,
+    UnindexableDate,
 }
 
 impl From<SystemTimeError> for Error {
@@ -37,6 +41,12 @@ impl From<SystemTimeError> for Error {
 impl From<io::Error> for Error {
     fn from(value: io::Error) -> Self {
         Self::IO(value)
+    }
+}
+
+impl From<jiff::Error> for Error {
+    fn from(value: jiff::Error) -> Self {
+        Self::Jiff(value)
     }
 }
 
@@ -87,6 +97,13 @@ impl fmt::Display for Error {
             Error::DifferentCompressionMode => write!(f, "Different compression mode chosen"),
             Error::EmptyVec => write!(f, "The Vec is empty, maybe wait for a bit"),
             Error::ToSerdeJsonValueError(error) => Debug::fmt(&error, f),
+            Error::Jiff(error) => Debug::fmt(&error, f),
+            Error::WrongLength => write!(f, "Wrong length"),
+            Error::WrongAddressType => write!(f, "Wrong address type"),
+            Error::UnindexableDate => write!(
+                f,
+                "Date cannot be indexed, must be 2009-01-03, 2009-01-09 or greater"
+            ),
         }
     }
 }

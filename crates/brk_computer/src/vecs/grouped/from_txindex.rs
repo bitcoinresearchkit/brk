@@ -2,13 +2,12 @@ use std::path::Path;
 
 use brk_core::{
     Bitcoin, DateIndex, DecadeIndex, DifficultyEpoch, Dollars, Height, MonthIndex, QuarterIndex,
-    Sats, TxIndex, WeekIndex, YearIndex,
+    Result, Sats, TxIndex, Version, WeekIndex, YearIndex,
 };
 use brk_exit::Exit;
 use brk_indexer::Indexer;
 use brk_vec::{
-    AnyCollectableVec, AnyVec, CollectableVec, Compressed, EagerVec, Result, StoredIndex,
-    VecIterator, Version,
+    AnyCollectableVec, AnyVec, CollectableVec, Compressed, EagerVec, StoredIndex, VecIterator,
 };
 
 use crate::vecs::{Indexes, fetched, indexes};
@@ -425,12 +424,12 @@ impl ComputedVecsFromTxindex<Bitcoin> {
                         exit,
                     )?;
                 }
-                if let Some(total) = self.height.total.as_mut() {
-                    total.forced_push_at(
+                if let Some(cumulative) = self.height.cumulative.as_mut() {
+                    cumulative.forced_push_at(
                         height,
                         Bitcoin::from(
                             sats.height
-                                .unwrap_total()
+                                .unwrap_cumulative()
                                 .into_iter()
                                 .unwrap_get_inner(height),
                         ),
@@ -608,13 +607,13 @@ impl ComputedVecsFromTxindex<Dollars> {
                         exit,
                     )?;
                 }
-                if let Some(total) = self.height.total.as_mut() {
-                    total.forced_push_at(
+                if let Some(cumulative) = self.height.cumulative.as_mut() {
+                    cumulative.forced_push_at(
                         height,
                         price
                             * bitcoin
                                 .height
-                                .unwrap_total()
+                                .unwrap_cumulative()
                                 .into_iter()
                                 .unwrap_get_inner(height),
                         exit,

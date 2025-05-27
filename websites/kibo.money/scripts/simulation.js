@@ -720,13 +720,13 @@ export function init({
           {
             title: "Dollars Converted",
             type: "Line",
-            color: colors.dollars,
+            color: colors.green,
             data: totalInvestedAmountData,
           },
           {
             title: "Dollars Left",
             type: "Line",
-            color: colors.offDollars,
+            color: colors.emerald,
             data: dollarsLeftData,
             defaultActive: false,
           },
@@ -758,7 +758,7 @@ export function init({
           {
             title: "Bitcoin Stack",
             type: "Line",
-            color: colors.bitcoin,
+            color: colors.orange,
             data: bitcoinData,
           },
         ],
@@ -788,7 +788,7 @@ export function init({
           {
             title: "Average Price Paid",
             type: "Line",
-            color: colors.lightDollars,
+            color: colors.lime,
             data: averagePricePaidData,
           },
         ],
@@ -1074,14 +1074,14 @@ export function init({
              */
             const c = (c, t) => createColoredSpan({ color: c, text: t });
 
-            const serInvestedAmount = c("dollars", fd(investedAmount));
+            const serInvestedAmount = c("green", fd(investedAmount));
             const serDaysCount = c("sky", f(daysCount));
             const serSats = c("orange", f(sats));
             const serBitcoin = c("orange", `~${f(bitcoin)}`);
             const serBitcoinValue = c("amber", fd(bitcoinValue));
-            const serAveragePricePaid = c("lightDollars", fd(averagePricePaid));
+            const serAveragePricePaid = c("lime", fd(averagePricePaid));
             const serRoi = c("yellow", fp(roi / 100));
-            const serDollars = c("offDollars", fd(dollars));
+            const serDollars = c("emerald", fd(dollars));
             const serTotalFeesPaid = c("rose", fd(totalFeesPaid));
 
             p1.innerHTML = `After exchanging ${serInvestedAmount} in the span of ${serDaysCount} days, you would have accumulated ${serSats} Satoshis (${serBitcoin} Bitcoin) worth today ${serBitcoinValue} at an average price of ${serAveragePricePaid} per Bitcoin with a return of investment of ${serRoi}, have ${serDollars} left and paid a total of ${serTotalFeesPaid} in fees.`;
@@ -1089,8 +1089,8 @@ export function init({
             const dayDiff = Math.floor(
               utils.date.differenceBetween(new Date(), lastInvestDay),
             );
-            const serDailyInvestment = c("offDollars", fd(dailyInvestment));
-            const setLastSatsAdded = c("bitcoin", f(lastSatsAdded));
+            const serDailyInvestment = c("emerald", fd(dailyInvestment));
+            const setLastSatsAdded = c("orange", f(lastSatsAdded));
             p2.innerHTML = `You would've last bought ${c("blue", dayDiff ? `${f(dayDiff)} ${dayDiff > 1 ? "days" : "day"} ago` : "today")} and exchanged ${serDailyInvestment} for approximately ${setLastSatsAdded} Satoshis`;
 
             const serProfitableDaysRatio = c("green", fp(profitableDaysRatio));

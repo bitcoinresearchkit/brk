@@ -1,11 +1,11 @@
 use std::{f32, path::Path};
 
-use brk_core::{Date, DateIndex, Dollars, StoredF32};
+use brk_core::{Date, DateIndex, Dollars, Result, StoredF32, Version};
 use brk_exit::Exit;
 use brk_indexer::Indexer;
 use brk_vec::{
-    AnyCollectableVec, AnyIterableVec, AnyVec, CollectableVec, Compressed, EagerVec, Result,
-    StoredIndex, VecIterator, Version,
+    AnyCollectableVec, AnyIterableVec, AnyVec, CollectableVec, Compressed, EagerVec, StoredIndex,
+    VecIterator,
 };
 
 use crate::{

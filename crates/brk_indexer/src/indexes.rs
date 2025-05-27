@@ -2,7 +2,7 @@ use bitcoincore_rpc::Client;
 use brk_core::{
     BlockHash, CheckedSub, EmptyOutputIndex, Height, InputIndex, OpReturnIndex, OutputIndex,
     OutputType, OutputTypeIndex, P2AIndex, P2MSIndex, P2PK33Index, P2PK65Index, P2PKHIndex,
-    P2SHIndex, P2TRIndex, P2WPKHIndex, P2WSHIndex, TxIndex, UnknownOutputIndex,
+    P2SHIndex, P2TRIndex, P2WPKHIndex, P2WSHIndex, Result, TxIndex, UnknownOutputIndex,
 };
 use brk_parser::NUMBER_OF_UNSAFE_BLOCKS;
 use brk_vec::{AnyIterableVec, AnyVec, IndexedVec, StoredIndex, StoredType};
@@ -48,7 +48,7 @@ impl Indexes {
         }
     }
 
-    pub fn push_if_needed(&self, vecs: &mut Vecs) -> brk_vec::Result<()> {
+    pub fn push_if_needed(&self, vecs: &mut Vecs) -> Result<()> {
         let height = self.height;
         vecs.height_to_first_txindex
             .push_if_needed(height, self.txindex)?;

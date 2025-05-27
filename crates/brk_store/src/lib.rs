@@ -6,8 +6,7 @@ use std::{
     path::Path,
 };
 
-use brk_core::Height;
-use brk_vec::{Value, Version};
+use brk_core::{Height, Value, Version};
 use byteview::ByteView;
 use fjall::{
     PartitionCreateOptions, PersistMode, ReadTransaction, Result, TransactionalKeyspace,
@@ -15,7 +14,8 @@ use fjall::{
 };
 use zerocopy::{Immutable, IntoBytes};
 
-use super::StoreMeta;
+mod meta;
+use meta::*;
 
 pub struct Store<Key, Value> {
     meta: StoreMeta,
@@ -47,7 +47,8 @@ where
             &path.join(format!("meta/{name}")),
             MAJOR_FJALL_VERSION + version,
             || {
-                Self::open_partition_handle(&keyspace, name).inspect_err(|_| {
+                Self::open_partition_handle(&keyspace, name).inspect_err(|e| {
+                    eprintln!("{e}");
                     eprintln!("Delete {path:?} and try again");
                 })
             },

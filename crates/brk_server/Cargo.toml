@@ -8,6 +8,7 @@ repository.workspace = true
 
 [dependencies]
 axum = { workspace = true }
+bitcoincore-rpc = { workspace = true }
 brk_computer = { workspace = true }
 brk_exit = { workspace = true }
 brk_core = { workspace = true }
@@ -25,7 +26,7 @@ log = { workspace = true }
 minreq = { workspace = true }
 oxc = { version = "0.72.0", features = ["codegen", "minifier"] }
 serde = { workspace = true }
-tokio = { version = "1.45.1", features = ["full"] }
+tokio = { workspace = true }
 tower-http = { version = "0.6.4", features = ["compression-full", "trace"] }
 zip = "4.0.0"
 tracing = "0.1.41"

@@ -2,12 +2,12 @@ use std::{fs, path::Path};
 
 use brk_core::{
     Cents, Close, DateIndex, DecadeIndex, DifficultyEpoch, Dollars, Height, High, Low, MonthIndex,
-    OHLCCents, OHLCDollars, OHLCSats, Open, QuarterIndex, Sats, WeekIndex, YearIndex,
+    OHLCCents, OHLCDollars, OHLCSats, Open, QuarterIndex, Sats, Version, WeekIndex, YearIndex,
 };
 use brk_exit::Exit;
 use brk_fetcher::Fetcher;
 use brk_indexer::Indexer;
-use brk_vec::{AnyCollectableVec, AnyIterableVec, Compressed, Computation, EagerVec, Version};
+use brk_vec::{AnyCollectableVec, AnyIterableVec, Compressed, Computation, EagerVec};
 
 use super::{
     Indexes,

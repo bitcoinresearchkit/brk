@@ -1,11 +1,9 @@
 use std::{fs, path::Path};
 
-use brk_core::{CheckedSub, Dollars, Height, Sats, StoredUsize};
+use brk_core::{CheckedSub, Dollars, Height, Result, Sats, StoredUsize, Version};
 use brk_exit::Exit;
 use brk_indexer::Indexer;
-use brk_vec::{
-    AnyCollectableVec, AnyVec, Compressed, Computation, EagerVec, Result, VecIterator, Version,
-};
+use brk_vec::{AnyCollectableVec, AnyVec, Compressed, Computation, EagerVec, VecIterator};
 
 use crate::{
     states::{CohortState, RealizedState},
@@ -31,6 +29,19 @@ pub struct Vecs {
     pub indexes_to_supply: ComputedValueVecsFromHeight,
     pub height_to_utxo_count: EagerVec<Height, StoredUsize>,
     pub indexes_to_utxo_count: ComputedVecsFromHeight<StoredUsize>,
+
+    pub height_to_realized_profit: Option<EagerVec<Height, Dollars>>,
+    pub indexes_to_realized_profit: Option<ComputedVecsFromHeight<Dollars>>,
+    pub height_to_realized_loss: Option<EagerVec<Height, Dollars>>,
+    pub indexes_to_realized_loss: Option<ComputedVecsFromHeight<Dollars>>,
+    pub height_to_value_created: Option<EagerVec<Height, Dollars>>,
+    pub indexes_to_value_created: Option<ComputedVecsFromHeight<Dollars>>,
+    pub height_to_adjusted_value_created: Option<EagerVec<Height, Dollars>>,
+    pub indexes_to_adjusted_value_created: Option<ComputedVecsFromHeight<Dollars>>,
+    pub height_to_value_destroyed: Option<EagerVec<Height, Dollars>>,
+    pub indexes_to_value_destroyed: Option<ComputedVecsFromHeight<Dollars>>,
+    pub height_to_adjusted_value_destroyed: Option<EagerVec<Height, Dollars>>,
+    pub indexes_to_adjusted_value_destroyed: Option<ComputedVecsFromHeight<Dollars>>,
 
     pub indexes_to_realized_price: Option<ComputedVecsFromHeight<Dollars>>,
     pub indexes_to_realized_price_extra: Option<ComputedRatioVecsFromDateIndex>,
@@ -134,6 +145,130 @@ impl Vecs {
                 )
                 .unwrap()
             }),
+            height_to_realized_profit: compute_dollars.then(|| {
+                EagerVec::forced_import(
+                    path,
+                    &suffix("realized_profit"),
+                    version + VERSION + Version::ZERO,
+                    compressed,
+                )
+                .unwrap()
+            }),
+            indexes_to_realized_profit: compute_dollars.then(|| {
+                ComputedVecsFromHeight::forced_import(
+                    path,
+                    &suffix("realized_profit"),
+                    false,
+                    version + VERSION + Version::ZERO,
+                    compressed,
+                    StorableVecGeneatorOptions::default()
+                        .add_sum()
+                        .add_cumulative(),
+                )
+                .unwrap()
+            }),
+            height_to_realized_loss: compute_dollars.then(|| {
+                EagerVec::forced_import(
+                    path,
+                    &suffix("realized_loss"),
+                    version + VERSION + Version::ZERO,
+                    compressed,
+                )
+                .unwrap()
+            }),
+            indexes_to_realized_loss: compute_dollars.then(|| {
+                ComputedVecsFromHeight::forced_import(
+                    path,
+                    &suffix("realized_loss"),
+                    false,
+                    version + VERSION + Version::ZERO,
+                    compressed,
+                    StorableVecGeneatorOptions::default()
+                        .add_sum()
+                        .add_cumulative(),
+                )
+                .unwrap()
+            }),
+            height_to_value_created: compute_dollars.then(|| {
+                EagerVec::forced_import(
+                    path,
+                    &suffix("value_created"),
+                    version + VERSION + Version::ZERO,
+                    compressed,
+                )
+                .unwrap()
+            }),
+            indexes_to_value_created: compute_dollars.then(|| {
+                ComputedVecsFromHeight::forced_import(
+                    path,
+                    &suffix("value_created"),
+                    false,
+                    version + VERSION + Version::ZERO,
+                    compressed,
+                    StorableVecGeneatorOptions::default().add_sum(),
+                )
+                .unwrap()
+            }),
+            height_to_adjusted_value_created: compute_dollars.then(|| {
+                EagerVec::forced_import(
+                    path,
+                    &suffix("adjusted_value_created"),
+                    version + VERSION + Version::ZERO,
+                    compressed,
+                )
+                .unwrap()
+            }),
+            indexes_to_adjusted_value_created: compute_dollars.then(|| {
+                ComputedVecsFromHeight::forced_import(
+                    path,
+                    &suffix("adjusted_value_created"),
+                    false,
+                    version + VERSION + Version::ZERO,
+                    compressed,
+                    StorableVecGeneatorOptions::default().add_sum(),
+                )
+                .unwrap()
+            }),
+            height_to_value_destroyed: compute_dollars.then(|| {
+                EagerVec::forced_import(
+                    path,
+                    &suffix("value_destroyed"),
+                    version + VERSION + Version::ZERO,
+                    compressed,
+                )
+                .unwrap()
+            }),
+            indexes_to_value_destroyed: compute_dollars.then(|| {
+                ComputedVecsFromHeight::forced_import(
+                    path,
+                    &suffix("value_destroyed"),
+                    false,
+                    version + VERSION + Version::ZERO,
+                    compressed,
+                    StorableVecGeneatorOptions::default().add_sum(),
+                )
+                .unwrap()
+            }),
+            height_to_adjusted_value_destroyed: compute_dollars.then(|| {
+                EagerVec::forced_import(
+                    path,
+                    &suffix("adjusted_value_destroyed"),
+                    version + VERSION + Version::ZERO,
+                    compressed,
+                )
+                .unwrap()
+            }),
+            indexes_to_adjusted_value_destroyed: compute_dollars.then(|| {
+                ComputedVecsFromHeight::forced_import(
+                    path,
+                    &suffix("adjusted_value_destroyed"),
+                    false,
+                    version + VERSION + Version::ZERO,
+                    compressed,
+                    StorableVecGeneatorOptions::default().add_sum(),
+                )
+                .unwrap()
+            }),
         })
     }
 
@@ -142,6 +277,24 @@ impl Vecs {
             self.height_to_supply.len(),
             self.height_to_utxo_count.len(),
             self.height_to_realized_cap
+                .as_ref()
+                .map_or(usize::MAX, |v| v.len()),
+            self.height_to_realized_profit
+                .as_ref()
+                .map_or(usize::MAX, |v| v.len()),
+            self.height_to_realized_loss
+                .as_ref()
+                .map_or(usize::MAX, |v| v.len()),
+            self.height_to_value_created
+                .as_ref()
+                .map_or(usize::MAX, |v| v.len()),
+            self.height_to_adjusted_value_created
+                .as_ref()
+                .map_or(usize::MAX, |v| v.len()),
+            self.height_to_value_destroyed
+                .as_ref()
+                .map_or(usize::MAX, |v| v.len()),
+            self.height_to_adjusted_value_destroyed
                 .as_ref()
                 .map_or(usize::MAX, |v| v.len()),
         ]
@@ -169,7 +322,7 @@ impl Vecs {
                 .unwrap_get_inner(prev_height);
 
             if let Some(height_to_realized_cap) = self.height_to_realized_cap.as_mut() {
-                self.state.realized.as_mut().unwrap().realized_cap = height_to_realized_cap
+                self.state.realized.as_mut().unwrap().cap = height_to_realized_cap
                     .into_iter()
                     .unwrap_get_inner(prev_height);
             }
@@ -191,6 +344,73 @@ impl Vecs {
             height_to_realized_cap.validate_computed_version_or_reset_file(
                 base_version + height_to_realized_cap.inner_version(),
             )?;
+
+            let height_to_realized_profit_inner_version = self
+                .height_to_realized_profit
+                .as_ref()
+                .unwrap()
+                .inner_version();
+            self.height_to_realized_profit
+                .as_mut()
+                .unwrap()
+                .validate_computed_version_or_reset_file(
+                    base_version + height_to_realized_profit_inner_version,
+                )?;
+            let height_to_realized_loss_inner_version = self
+                .height_to_realized_loss
+                .as_ref()
+                .unwrap()
+                .inner_version();
+            self.height_to_realized_loss
+                .as_mut()
+                .unwrap()
+                .validate_computed_version_or_reset_file(
+                    base_version + height_to_realized_loss_inner_version,
+                )?;
+            let height_to_value_created_inner_version = self
+                .height_to_value_created
+                .as_ref()
+                .unwrap()
+                .inner_version();
+            self.height_to_value_created
+                .as_mut()
+                .unwrap()
+                .validate_computed_version_or_reset_file(
+                    base_version + height_to_value_created_inner_version,
+                )?;
+            let height_to_adjusted_value_created_inner_version = self
+                .height_to_adjusted_value_created
+                .as_ref()
+                .unwrap()
+                .inner_version();
+            self.height_to_adjusted_value_created
+                .as_mut()
+                .unwrap()
+                .validate_computed_version_or_reset_file(
+                    base_version + height_to_adjusted_value_created_inner_version,
+                )?;
+            let height_to_value_destroyed_inner_version = self
+                .height_to_value_destroyed
+                .as_ref()
+                .unwrap()
+                .inner_version();
+            self.height_to_value_destroyed
+                .as_mut()
+                .unwrap()
+                .validate_computed_version_or_reset_file(
+                    base_version + height_to_value_destroyed_inner_version,
+                )?;
+            let height_to_adjusted_value_destroyed_inner_version = self
+                .height_to_adjusted_value_destroyed
+                .as_ref()
+                .unwrap()
+                .inner_version();
+            self.height_to_adjusted_value_destroyed
+                .as_mut()
+                .unwrap()
+                .validate_computed_version_or_reset_file(
+                    base_version + height_to_adjusted_value_destroyed_inner_version,
+                )?;
         }
 
         Ok(())
@@ -211,18 +431,37 @@ impl Vecs {
         )?;
 
         if let Some(height_to_realized_cap) = self.height_to_realized_cap.as_mut() {
-            height_to_realized_cap.forced_push_at(
-                height,
-                self.state
-                    .realized
-                    .as_ref()
-                    .unwrap_or_else(|| {
-                        dbg!(&self.state);
-                        panic!();
-                    })
-                    .realized_cap,
-                exit,
-            )?;
+            let realized = self.state.realized.as_ref().unwrap_or_else(|| {
+                dbg!(&self.state);
+                panic!();
+            });
+
+            height_to_realized_cap.forced_push_at(height, realized.cap, exit)?;
+
+            self.height_to_realized_profit
+                .as_mut()
+                .unwrap()
+                .forced_push_at(height, realized.profit, exit)?;
+            self.height_to_realized_loss
+                .as_mut()
+                .unwrap()
+                .forced_push_at(height, realized.loss, exit)?;
+            self.height_to_value_created
+                .as_mut()
+                .unwrap()
+                .forced_push_at(height, realized.value_created, exit)?;
+            self.height_to_adjusted_value_created
+                .as_mut()
+                .unwrap()
+                .forced_push_at(height, realized.adj_value_created, exit)?;
+            self.height_to_value_destroyed
+                .as_mut()
+                .unwrap()
+                .forced_push_at(height, realized.value_destroyed, exit)?;
+            self.height_to_adjusted_value_destroyed
+                .as_mut()
+                .unwrap()
+                .forced_push_at(height, realized.adj_value_destroyed, exit)?;
         }
         Ok(())
     }
@@ -234,6 +473,30 @@ impl Vecs {
 
         if let Some(height_to_realized_cap) = self.height_to_realized_cap.as_mut() {
             height_to_realized_cap.safe_flush(exit)?;
+            self.height_to_realized_profit
+                .as_mut()
+                .unwrap()
+                .safe_flush(exit)?;
+            self.height_to_realized_loss
+                .as_mut()
+                .unwrap()
+                .safe_flush(exit)?;
+            self.height_to_value_created
+                .as_mut()
+                .unwrap()
+                .safe_flush(exit)?;
+            self.height_to_adjusted_value_created
+                .as_mut()
+                .unwrap()
+                .safe_flush(exit)?;
+            self.height_to_value_destroyed
+                .as_mut()
+                .unwrap()
+                .safe_flush(exit)?;
+            self.height_to_adjusted_value_destroyed
+                .as_mut()
+                .unwrap()
+                .safe_flush(exit)?;
         }
 
         Ok(())
@@ -270,41 +533,102 @@ impl Vecs {
                 exit,
                 Some(self.height_to_realized_cap.as_ref().unwrap()),
             )?;
-        }
 
-        if let Some(indexes_to_realized_price) = self.indexes_to_realized_price.as_mut() {
-            indexes_to_realized_price.compute_all(
-                indexer,
-                indexes,
-                starting_indexes,
-                exit,
-                |vec, _, _, starting_indexes, exit| {
-                    vec.compute_divide(
-                        starting_indexes.height,
-                        self.height_to_realized_cap.as_ref().unwrap(),
-                        &**self.indexes_to_supply.bitcoin.height.as_ref().unwrap(),
-                        exit,
-                    )
-                },
-            )?;
-        }
+            self.indexes_to_realized_price
+                .as_mut()
+                .unwrap()
+                .compute_all(
+                    indexer,
+                    indexes,
+                    starting_indexes,
+                    exit,
+                    |vec, _, _, starting_indexes, exit| {
+                        vec.compute_divide(
+                            starting_indexes.height,
+                            self.height_to_realized_cap.as_ref().unwrap(),
+                            &**self.indexes_to_supply.bitcoin.height.as_ref().unwrap(),
+                            exit,
+                        )
+                    },
+                )?;
 
-        if let Some(indexes_to_realized_price_extra) = self.indexes_to_realized_price_extra.as_mut()
-        {
-            indexes_to_realized_price_extra.compute_rest(
-                indexer,
-                indexes,
-                fetched.as_ref().unwrap(),
-                starting_indexes,
-                exit,
-                Some(
-                    self.indexes_to_realized_price
-                        .as_ref()
-                        .unwrap()
-                        .dateindex
-                        .unwrap_last(),
-                ),
-            )?;
+            self.indexes_to_realized_price_extra
+                .as_mut()
+                .unwrap()
+                .compute_rest(
+                    indexer,
+                    indexes,
+                    fetched.as_ref().unwrap(),
+                    starting_indexes,
+                    exit,
+                    Some(
+                        self.indexes_to_realized_price
+                            .as_ref()
+                            .unwrap()
+                            .dateindex
+                            .unwrap_last(),
+                    ),
+                )?;
+
+            self.indexes_to_realized_profit
+                .as_mut()
+                .unwrap()
+                .compute_rest(
+                    indexes,
+                    starting_indexes,
+                    exit,
+                    Some(self.height_to_realized_profit.as_ref().unwrap()),
+                )?;
+
+            self.indexes_to_realized_loss
+                .as_mut()
+                .unwrap()
+                .compute_rest(
+                    indexes,
+                    starting_indexes,
+                    exit,
+                    Some(self.height_to_realized_loss.as_ref().unwrap()),
+                )?;
+
+            self.indexes_to_value_created
+                .as_mut()
+                .unwrap()
+                .compute_rest(
+                    indexes,
+                    starting_indexes,
+                    exit,
+                    Some(self.height_to_value_created.as_ref().unwrap()),
+                )?;
+
+            self.indexes_to_adjusted_value_created
+                .as_mut()
+                .unwrap()
+                .compute_rest(
+                    indexes,
+                    starting_indexes,
+                    exit,
+                    Some(self.height_to_adjusted_value_created.as_ref().unwrap()),
+                )?;
+
+            self.indexes_to_value_destroyed
+                .as_mut()
+                .unwrap()
+                .compute_rest(
+                    indexes,
+                    starting_indexes,
+                    exit,
+                    Some(self.height_to_value_destroyed.as_ref().unwrap()),
+                )?;
+
+            self.indexes_to_adjusted_value_destroyed
+                .as_mut()
+                .unwrap()
+                .compute_rest(
+                    indexes,
+                    starting_indexes,
+                    exit,
+                    Some(self.height_to_adjusted_value_destroyed.as_ref().unwrap()),
+                )?;
         }
 
         Ok(())
@@ -330,6 +654,42 @@ impl Vecs {
             self.indexes_to_realized_price_extra
                 .as_ref()
                 .map_or(vec![], |v| v.vecs()),
+            self.height_to_realized_profit
+                .as_ref()
+                .map_or(vec![], |v| vec![v as &dyn AnyCollectableVec]),
+            self.indexes_to_realized_profit
+                .as_ref()
+                .map_or(vec![], |v| v.vecs()),
+            self.height_to_realized_loss
+                .as_ref()
+                .map_or(vec![], |v| vec![v as &dyn AnyCollectableVec]),
+            self.indexes_to_realized_loss
+                .as_ref()
+                .map_or(vec![], |v| v.vecs()),
+            self.height_to_value_created
+                .as_ref()
+                .map_or(vec![], |v| vec![v as &dyn AnyCollectableVec]),
+            self.indexes_to_value_created
+                .as_ref()
+                .map_or(vec![], |v| v.vecs()),
+            self.height_to_adjusted_value_created
+                .as_ref()
+                .map_or(vec![], |v| vec![v as &dyn AnyCollectableVec]),
+            self.indexes_to_adjusted_value_created
+                .as_ref()
+                .map_or(vec![], |v| v.vecs()),
+            self.height_to_value_destroyed
+                .as_ref()
+                .map_or(vec![], |v| vec![v as &dyn AnyCollectableVec]),
+            self.indexes_to_value_destroyed
+                .as_ref()
+                .map_or(vec![], |v| v.vecs()),
+            self.height_to_adjusted_value_destroyed
+                .as_ref()
+                .map_or(vec![], |v| vec![v as &dyn AnyCollectableVec]),
+            self.indexes_to_adjusted_value_destroyed
+                .as_ref()
+                .map_or(vec![], |v| v.vecs()),
         ]
         .into_iter()
         .flatten()
@@ -349,6 +709,19 @@ impl Clone for Vecs {
             indexes_to_supply: self.indexes_to_supply.clone(),
             height_to_utxo_count: self.height_to_utxo_count.clone(),
             indexes_to_utxo_count: self.indexes_to_utxo_count.clone(),
+
+            height_to_realized_profit: self.height_to_realized_profit.clone(),
+            indexes_to_realized_profit: self.indexes_to_realized_profit.clone(),
+            height_to_realized_loss: self.height_to_realized_loss.clone(),
+            indexes_to_realized_loss: self.indexes_to_realized_loss.clone(),
+            height_to_value_created: self.height_to_value_created.clone(),
+            indexes_to_value_created: self.indexes_to_value_created.clone(),
+            height_to_adjusted_value_created: self.height_to_adjusted_value_created.clone(),
+            indexes_to_adjusted_value_created: self.indexes_to_adjusted_value_created.clone(),
+            height_to_value_destroyed: self.height_to_value_destroyed.clone(),
+            indexes_to_value_destroyed: self.indexes_to_value_destroyed.clone(),
+            height_to_adjusted_value_destroyed: self.height_to_adjusted_value_destroyed.clone(),
+            indexes_to_adjusted_value_destroyed: self.indexes_to_adjusted_value_destroyed.clone(),
 
             indexes_to_realized_price: self.indexes_to_realized_price.clone(),
             indexes_to_realized_price_extra: self.indexes_to_realized_price_extra.clone(),

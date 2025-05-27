@@ -1,6 +1,6 @@
 use std::iter::Skip;
 
-use crate::Value;
+use brk_core::Value;
 
 use super::{StoredIndex, StoredType};
 

@@ -2,18 +2,13 @@ use std::{fs, path::Path, thread};
 
 use brk_core::{
     AddressBytes, AddressBytesHash, BlockHashPrefix, Height, OutputType, OutputTypeIndex, TxIndex,
-    TxidPrefix,
+    TxidPrefix, Value, Version,
 };
-use brk_vec::{AnyIterableVec, Value, Version};
+use brk_store::Store;
+use brk_vec::AnyIterableVec;
 use fjall::{PersistMode, TransactionalKeyspace};
 
 use crate::Indexes;
-
-mod base;
-mod meta;
-
-pub use base::*;
-pub use meta::*;
 
 use super::Vecs;
 

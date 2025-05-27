@@ -5,10 +5,9 @@ use std::{
     path::Path,
 };
 
+use brk_core::{Error, Result};
 use zerocopy::{FromBytes, IntoBytes};
 use zerocopy_derive::{FromBytes, Immutable, IntoBytes, KnownLayout};
-
-use crate::{Error, Result};
 
 #[derive(
     Debug,

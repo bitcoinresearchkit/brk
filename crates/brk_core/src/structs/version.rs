@@ -58,7 +58,7 @@ impl From<u64> for Version {
 impl TryFrom<&Path> for Version {
     type Error = Error;
     fn try_from(value: &Path) -> Result<Self, Self::Error> {
-        let mut buf = [0; 4];
+        let mut buf = [0; 8];
         fs::read(value)?.as_slice().read_exact(&mut buf)?;
         Ok(*(Self::ref_from_bytes(&buf)?))
     }

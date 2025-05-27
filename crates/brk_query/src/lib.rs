@@ -4,6 +4,7 @@
 #![doc = "```"]
 
 use brk_computer::Computer;
+use brk_core::Result;
 use brk_indexer::Indexer;
 use brk_vec::AnyCollectableVec;
 use tabled::settings::Style;
@@ -92,10 +93,10 @@ impl<'a> Query<'a> {
     ) -> color_eyre::Result<Output> {
         let mut values = vecs
             .iter()
-            .map(|(_, vec)| -> brk_vec::Result<Vec<serde_json::Value>> {
+            .map(|(_, vec)| -> Result<Vec<serde_json::Value>> {
                 vec.collect_range_serde_json(from, to)
             })
-            .collect::<brk_vec::Result<Vec<_>>>()?;
+            .collect::<Result<Vec<_>>>()?;
 
         if values.is_empty() {
             return Ok(Output::default(format));

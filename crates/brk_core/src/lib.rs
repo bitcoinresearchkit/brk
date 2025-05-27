@@ -1,9 +1,9 @@
 #![doc = include_str!("../README.md")]
 
-mod error;
+mod enums;
 mod structs;
 mod utils;
 
-pub use error::*;
+pub use enums::*;
 pub use structs::*;
 pub use utils::*;

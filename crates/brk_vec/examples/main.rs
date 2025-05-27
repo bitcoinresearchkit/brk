@@ -1,8 +1,7 @@
 use std::{fs, path::Path};
 
-use brk_vec::{
-    AnyVec, CollectableVec, Compressed, GenericStoredVec, StoredVec, VecIterator, Version,
-};
+use brk_core::Version;
+use brk_vec::{AnyVec, CollectableVec, Compressed, GenericStoredVec, StoredVec, VecIterator};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let _ = fs::remove_dir_all("./vec");

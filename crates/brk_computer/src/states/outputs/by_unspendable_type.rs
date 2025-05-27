@@ -2,12 +2,12 @@ use std::ops::{Add, AddAssign};
 
 #[derive(Default, Clone)]
 pub struct OutputsByUnspendableType<T> {
-    pub op_return: T,
+    pub opreturn: T,
 }
 
 impl<T> OutputsByUnspendableType<T> {
     pub fn as_vec(&self) -> [&T; 1] {
-        [&self.op_return]
+        [&self.opreturn]
     }
 }
 
@@ -18,7 +18,7 @@ where
     type Output = Self;
     fn add(self, rhs: Self) -> Self::Output {
         Self {
-            op_return: self.op_return + rhs.op_return,
+            opreturn: self.opreturn + rhs.opreturn,
         }
     }
 }
@@ -28,6 +28,6 @@ where
     T: AddAssign,
 {
     fn add_assign(&mut self, rhs: Self) {
-        self.op_return += rhs.op_return;
+        self.opreturn += rhs.opreturn;
     }
 }

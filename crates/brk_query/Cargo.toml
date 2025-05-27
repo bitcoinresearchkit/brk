@@ -7,6 +7,7 @@ version.workspace = true
 repository.workspace = true
 
 [dependencies]
+brk_core = { workspace = true }
 brk_computer = { workspace = true }
 brk_indexer = { workspace = true }
 brk_vec = { workspace = true }

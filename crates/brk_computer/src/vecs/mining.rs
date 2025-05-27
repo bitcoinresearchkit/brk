@@ -1,9 +1,9 @@
 use std::{fs, path::Path};
 
-use brk_core::{DifficultyEpoch, HalvingEpoch, StoredF64};
+use brk_core::{DifficultyEpoch, HalvingEpoch, StoredF64, Version};
 use brk_exit::Exit;
 use brk_indexer::Indexer;
-use brk_vec::{AnyCollectableVec, Compressed, Computation, VecIterator, Version};
+use brk_vec::{AnyCollectableVec, Compressed, Computation, VecIterator};
 
 use super::{
     Indexes,

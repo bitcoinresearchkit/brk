@@ -4,10 +4,9 @@ use std::{
     path::{Path, PathBuf},
 };
 
+use brk_core::Result;
 use rayon::prelude::*;
 use zerocopy::{IntoBytes, TryFromBytes};
-
-use crate::Result;
 
 use super::{CompressedPageMetadata, UnsafeSlice};
 

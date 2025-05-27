@@ -1,9 +1,9 @@
 use std::{fs, path::Path};
 
-use brk_core::StoredU8;
+use brk_core::{StoredU8, Version};
 use brk_exit::Exit;
 use brk_indexer::Indexer;
-use brk_vec::{AnyCollectableVec, AnyVec, Compressed, Computation, Version};
+use brk_vec::{AnyCollectableVec, AnyVec, Compressed, Computation};
 
 use super::{
     Indexes,

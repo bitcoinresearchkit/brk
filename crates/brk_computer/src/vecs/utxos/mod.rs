@@ -1,11 +1,11 @@
 use std::{cmp::Ordering, collections::BTreeMap, mem, path::Path, thread};
 
-use brk_core::{Height, InputIndex, OutputIndex, OutputType, Sats};
+use brk_core::{Height, InputIndex, OutputIndex, OutputType, Sats, Version};
 use brk_exit::Exit;
 use brk_indexer::Indexer;
 use brk_vec::{
     AnyCollectableVec, AnyVec, BaseVecIterator, CollectableVec, Compressed, Computation, EagerVec,
-    GenericStoredVec, StoredIndex, StoredVec, UnsafeSlice, VecIterator, Version,
+    GenericStoredVec, StoredIndex, StoredVec, UnsafeSlice, VecIterator,
 };
 use log::info;
 use rayon::prelude::*;
@@ -24,6 +24,7 @@ use super::{
 pub mod cohort;
 
 const VERSION: Version = Version::ZERO;
+const BYSIZE_VERSION: Version = Version::ONE;
 
 #[derive(Clone)]
 pub struct Vecs {
@@ -32,8 +33,8 @@ pub struct Vecs {
     // cointime,...
     pub height_to_unspendable_supply: EagerVec<Height, Sats>,
     pub indexes_to_unspendable_supply: ComputedValueVecsFromHeight,
-    // pub height_to_opreturn_supply: EagerVec<Height, Sats>,
-    // pub indexes_to_opreturn_supply: ComputedValueVecsFromHeight,
+    pub height_to_opreturn_supply: EagerVec<Height, Sats>,
+    pub indexes_to_opreturn_supply: ComputedValueVecsFromHeight,
     utxos_vecs: Outputs<(OutputFilter, cohort::Vecs)>,
 }
 
@@ -68,6 +69,21 @@ impl Vecs {
             indexes_to_unspendable_supply: ComputedValueVecsFromHeight::forced_import(
                 path,
                 "unspendable_supply",
+                false,
+                version + VERSION + Version::ZERO,
+                compressed,
+                StorableVecGeneatorOptions::default().add_last(),
+                compute_dollars,
+            )?,
+            height_to_opreturn_supply: EagerVec::forced_import(
+                path,
+                "opreturn_supply",
+                version + VERSION + Version::ZERO,
+                compressed,
+            )?,
+            indexes_to_opreturn_supply: ComputedValueVecsFromHeight::forced_import(
+                path,
+                "opreturn_supply",
                 false,
                 version + VERSION + Version::ZERO,
                 compressed,
@@ -540,7 +556,7 @@ impl Vecs {
                             Some("0sat"),
                             _computation,
                             compressed,
-                            version + VERSION + Version::ZERO,
+                            version + BYSIZE_VERSION + Version::ZERO,
                             fetched,
                         )?,
                         from_1sat_to_10sats: cohort::Vecs::forced_import(
@@ -548,7 +564,7 @@ impl Vecs {
                             Some("from_1sat_to_10sats"),
                             _computation,
                             compressed,
-                            version + VERSION + Version::ZERO,
+                            version + BYSIZE_VERSION + Version::ZERO,
                             fetched,
                         )?,
                         from_10sats_to_100sats: cohort::Vecs::forced_import(
@@ -556,7 +572,7 @@ impl Vecs {
                             Some("from_10sats_to_100sats"),
                             _computation,
                             compressed,
-                            version + VERSION + Version::ZERO,
+                            version + BYSIZE_VERSION + Version::ZERO,
                             fetched,
                         )?,
                         from_100sats_to_1_000sats: cohort::Vecs::forced_import(
@@ -564,7 +580,7 @@ impl Vecs {
                             Some("from_100sats_to_1_000sats"),
                             _computation,
                             compressed,
-                            version + VERSION + Version::ZERO,
+                            version + BYSIZE_VERSION + Version::ZERO,
                             fetched,
                         )?,
                         from_1_000sats_to_10_000sats: cohort::Vecs::forced_import(
@@ -572,7 +588,7 @@ impl Vecs {
                             Some("from_1_000sats_to_10_000sats"),
                             _computation,
                             compressed,
-                            version + VERSION + Version::ZERO,
+                            version + BYSIZE_VERSION + Version::ZERO,
                             fetched,
                         )?,
                         from_10_000sats_to_100_000sats: cohort::Vecs::forced_import(
@@ -580,7 +596,7 @@ impl Vecs {
                             Some("from_10_000sats_to_100_000sats"),
                             _computation,
                             compressed,
-                            version + VERSION + Version::ZERO,
+                            version + BYSIZE_VERSION + Version::ZERO,
                             fetched,
                         )?,
                         from_100_000sats_to_1_000_000sats: cohort::Vecs::forced_import(
@@ -588,7 +604,7 @@ impl Vecs {
                             Some("from_100_000sats_to_1_000_000sats"),
                             _computation,
                             compressed,
-                            version + VERSION + Version::ZERO,
+                            version + BYSIZE_VERSION + Version::ZERO,
                             fetched,
                         )?,
                         from_1_000_000sats_to_10_000_000sats: cohort::Vecs::forced_import(
@@ -596,7 +612,7 @@ impl Vecs {
                             Some("from_1_000_000sats_to_10_000_000sats"),
                             _computation,
                             compressed,
-                            version + VERSION + Version::ZERO,
+                            version + BYSIZE_VERSION + Version::ZERO,
                             fetched,
                         )?,
                         from_10_000_000sats_to_1btc: cohort::Vecs::forced_import(
@@ -604,7 +620,7 @@ impl Vecs {
                             Some("from_10_000_000sats_to_1btc"),
                             _computation,
                             compressed,
-                            version + VERSION + Version::ZERO,
+                            version + BYSIZE_VERSION + Version::ZERO,
                             fetched,
                         )?,
                         from_1btc_to_10btc: cohort::Vecs::forced_import(
@@ -612,7 +628,7 @@ impl Vecs {
                             Some("from_1btc_to_10btc"),
                             _computation,
                             compressed,
-                            version + VERSION + Version::ZERO,
+                            version + BYSIZE_VERSION + Version::ZERO,
                             fetched,
                         )?,
                         from_10btc_to_100btc: cohort::Vecs::forced_import(
@@ -620,7 +636,7 @@ impl Vecs {
                             Some("from_10btc_to_100btc"),
                             _computation,
                             compressed,
-                            version + VERSION + Version::ZERO,
+                            version + BYSIZE_VERSION + Version::ZERO,
                             fetched,
                         )?,
                         from_100btc_to_1_000btc: cohort::Vecs::forced_import(
@@ -628,7 +644,7 @@ impl Vecs {
                             Some("from_100btc_to_1_000btc"),
                             _computation,
                             compressed,
-                            version + VERSION + Version::ZERO,
+                            version + BYSIZE_VERSION + Version::ZERO,
                             fetched,
                         )?,
                         from_1_000btc_to_10_000btc: cohort::Vecs::forced_import(
@@ -636,7 +652,7 @@ impl Vecs {
                             Some("from_1_000btc_to_10_000btc"),
                             _computation,
                             compressed,
-                            version + VERSION + Version::ZERO,
+                            version + BYSIZE_VERSION + Version::ZERO,
                             fetched,
                         )?,
                         from_10_000btc_to_100_000btc: cohort::Vecs::forced_import(
@@ -644,7 +660,7 @@ impl Vecs {
                             Some("from_10_000btc_to_100_000btc"),
                             _computation,
                             compressed,
-                            version + VERSION + Version::ZERO,
+                            version + BYSIZE_VERSION + Version::ZERO,
                             fetched,
                         )?,
                         from_100_000btc: cohort::Vecs::forced_import(
@@ -652,7 +668,7 @@ impl Vecs {
                             Some("from_100_000btc"),
                             _computation,
                             compressed,
-                            version + VERSION + Version::ZERO,
+                            version + BYSIZE_VERSION + Version::ZERO,
                             fetched,
                         )?,
                     },
@@ -790,9 +806,9 @@ impl Vecs {
                             version + VERSION + Version::ZERO,
                             fetched,
                         )?,
-                        // op_return: cohort::Vecs::forced_import(
+                        // opreturn: cohort::Vecs::forced_import(
                         //     path,
-                        //     Some("op_return"),
+                        //     Some("opreturn"),
                         //     _computation,
                         //     compressed,
                         // VERSION + Version::ZERO,
@@ -925,6 +941,10 @@ impl Vecs {
             .validate_computed_version_or_reset_file(
                 base_version + self.height_to_unspendable_supply.inner_version(),
             )?;
+        self.height_to_opreturn_supply
+            .validate_computed_version_or_reset_file(
+                base_version + self.height_to_opreturn_supply.inner_version(),
+            )?;
 
         let mut chain_state: Vec<BlockState>;
         let mut chain_state_starting_height = Height::from(self.chain_state.len());
@@ -972,7 +992,8 @@ impl Vecs {
         let starting_height = starting_indexes
             .height
             .min(stateful_starting_height)
-            .min(Height::from(self.height_to_unspendable_supply.len()));
+            .min(Height::from(self.height_to_unspendable_supply.len()))
+            .min(Height::from(self.height_to_opreturn_supply.len()));
 
         // ---
         // INIT
@@ -990,11 +1011,24 @@ impl Vecs {
             Sats::ZERO
         };
 
+        let mut opreturn_supply = if let Some(prev_height) = starting_height.decremented() {
+            self.height_to_opreturn_supply
+                .into_iter()
+                .unwrap_get_inner(prev_height)
+        } else {
+            Sats::ZERO
+        };
+
         let mut height = Height::ZERO;
         (starting_height.unwrap_to_usize()..height_to_first_outputindex_iter.len())
             .map(Height::from)
             .try_for_each(|_height| -> color_eyre::Result<()> {
                 height = _height;
+
+                self.utxos_vecs
+                    .as_mut_vec()
+                    .iter_mut()
+                    .for_each(|(_, v)| v.state.reset_single_iteration_values());
 
                 info!("Processing utxo set at {height}...");
 
@@ -1130,6 +1164,8 @@ impl Vecs {
                     .sum::<Sats>()
                     + height_to_unclaimed_rewards_iter.unwrap_get_inner(height);
 
+                opreturn_supply += received.by_type.unspendable.opreturn.value;
+
                 if height == Height::new(0) {
                     received = Transacted::default();
                     unspendable_supply += Sats::FIFTY_BTC;
@@ -1183,6 +1219,9 @@ impl Vecs {
                     exit,
                 )?;
 
+                self.height_to_opreturn_supply
+                    .forced_push_at(height, opreturn_supply, exit)?;
+
                 Ok(())
             })?;
 
@@ -1199,6 +1238,10 @@ impl Vecs {
             .par_iter_mut()
             .try_for_each(|(_, v)| v.safe_flush_height_vecs(exit))?;
         self.height_to_unspendable_supply.safe_flush(exit)?;
+        flat_vecs_
+            .par_iter_mut()
+            .try_for_each(|(_, v)| v.safe_flush_height_vecs(exit))?;
+        self.height_to_opreturn_supply.safe_flush(exit)?;
 
         info!("Computing rest...");
 
@@ -1213,6 +1256,14 @@ impl Vecs {
             starting_indexes,
             exit,
             Some(&self.height_to_unspendable_supply),
+        )?;
+        self.indexes_to_opreturn_supply.compute_rest(
+            indexer,
+            indexes,
+            fetched,
+            starting_indexes,
+            exit,
+            Some(&self.height_to_opreturn_supply),
         )?;
 
         info!("Chain state...");
@@ -1239,7 +1290,11 @@ impl Vecs {
                 .flat_map(|v| v.vecs())
                 .collect::<Vec<_>>(),
             self.indexes_to_unspendable_supply.vecs(),
-            vec![&self.height_to_unspendable_supply],
+            self.indexes_to_opreturn_supply.vecs(),
+            vec![
+                &self.height_to_unspendable_supply,
+                &self.height_to_opreturn_supply,
+            ],
         ]
         .into_iter()
         .flatten()

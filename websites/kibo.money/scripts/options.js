@@ -146,9 +146,9 @@ function createPartialOptions(colors) {
    */
 
   /**
-   * @typedef {"total-"} TotalPrefix
-   * @typedef {StartsWith<TotalPrefix>} TotalVecId
-   * @typedef {WithoutPrefix<TotalVecId, TotalPrefix>} TotalVecIdBase
+   * @typedef {"cumulative-"} CumulativePrefix
+   * @typedef {StartsWith<CumulativePrefix>} CumulativeVecId
+   * @typedef {WithoutPrefix<CumulativeVecId, CumulativePrefix>} CumulativeVecIdBase
    * @typedef {"-sum"} SumSuffix
    * @typedef {EndsWith<SumSuffix>} VecIdSum
    * @typedef {WithoutSuffix<VecIdSum, SumSuffix>} VecIdSumBase
@@ -758,10 +758,10 @@ function createPartialOptions(colors) {
 
   /**
    * @param {Object} args
-   * @param {VecIdSumBase & TotalVecIdBase} args.concat
+   * @param {VecIdSumBase & CumulativeVecIdBase} args.concat
    * @param {string} [args.name]
    */
-  function createSumTotalSeries({ concat, name }) {
+  function createSumCumulativeSeries({ concat, name }) {
     return /** @satisfies {AnyFetchedSeriesBlueprint[]} */ ([
       {
         key: `${concat}-sum`,
@@ -769,8 +769,8 @@ function createPartialOptions(colors) {
         color: colors.orange,
       },
       {
-        key: `total-${concat}`,
-        title: name ? `Total ${name}` : "Total",
+        key: `cumulative-${concat}`,
+        title: name ? `Cumulative ${name}` : "Cumulative",
         color: colors.red,
         defaultActive: false,
       },
@@ -829,43 +829,46 @@ function createPartialOptions(colors) {
   }
 
   /**
-   * @param {VecIdAverageBase & VecIdSumBase & TotalVecIdBase & VecIdMinBase & VecIdMaxBase & VecId90pBase & VecId75pBase & VecIdMedianBase & VecId25pBase & VecId10pBase} key
+   * @param {VecIdAverageBase & VecIdSumBase & CumulativeVecIdBase & VecIdMinBase & VecIdMaxBase & VecId90pBase & VecId75pBase & VecIdMedianBase & VecId25pBase & VecId10pBase} key
    */
-  function createAverageSumTotalMinMaxPercentilesSeries(key) {
+  function createAverageSumCumulativeMinMaxPercentilesSeries(key) {
     return [
       createAverageSeries({ concat: key }),
-      ...createSumTotalSeries({ concat: key }),
+      ...createSumCumulativeSeries({ concat: key }),
       ...createMinMaxPercentilesSeries({ concat: key }),
     ];
   }
 
   /**
    * @param {Object} args
-   * @param {ChartableVecId & VecIdAverageBase & VecIdSumBase & TotalVecIdBase & VecIdMinBase & VecIdMaxBase & VecId90pBase & VecId75pBase & VecIdMedianBase & VecId25pBase & VecId10pBase} args.key
+   * @param {ChartableVecId & VecIdAverageBase & VecIdSumBase & CumulativeVecIdBase & VecIdMinBase & VecIdMaxBase & VecId90pBase & VecId75pBase & VecIdMedianBase & VecId25pBase & VecId10pBase} args.key
    * @param {string} args.name
    */
-  function createBaseAverageSumTotalMinMaxPercentilesSeries({ key, name }) {
+  function createBaseAverageSumCumulativeMinMaxPercentilesSeries({
+    key,
+    name,
+  }) {
     return [
       createBaseSeries({
         key,
         name,
       }),
-      ...createAverageSumTotalMinMaxPercentilesSeries(key),
+      ...createAverageSumCumulativeMinMaxPercentilesSeries(key),
     ];
   }
 
   /**
    * @param {Object} args
-   * @param {ChartableVecId & VecIdSumBase & TotalVecIdBase} args.key
+   * @param {ChartableVecId & VecIdSumBase & CumulativeVecIdBase} args.key
    * @param {string} args.name
    */
-  function createBaseSumTotalSeries({ key, name }) {
+  function createBaseSumCumulativeSeries({ key, name }) {
     return [
       createBaseSeries({
         key,
         name,
       }),
-      ...createSumTotalSeries({
+      ...createSumCumulativeSeries({
         concat: key,
       }),
     ];
@@ -1180,38 +1183,81 @@ function createPartialOptions(colors) {
           }),
         },
         {
-          name: "realized cap",
-          title: `${args.title} Realized Capitalization`,
-          bottom: list.flatMap(({ color, name, key: _key }) => {
-            const key = fixKey(_key);
-            return /** @type {const} */ ([
-              createBaseSeries({
-                key: `${key}realized-cap`,
-                name: useGroupName ? name : "Realized Cap",
-                color,
+          name: "Realized",
+          tree: [
+            {
+              name: "cap",
+              title: `${args.title} Realized Capitalization`,
+              bottom: list.flatMap(({ color, name, key: _key }) => {
+                const key = fixKey(_key);
+                return /** @type {const} */ ([
+                  createBaseSeries({
+                    key: `${key}realized-cap`,
+                    name: useGroupName ? name : "Cap",
+                    color,
+                  }),
+                ]);
               }),
-            ]);
-          }),
-        },
-        "list" in args
-          ? {
-              name: "Realized Price",
-              title: `${args.title} Realized Prices`,
-              top: args.list.map(({ color, name, key }) =>
-                createBaseSeries({
-                  key: `${fixKey(key)}realized-price`,
-                  name,
-                  color,
+            },
+            "list" in args
+              ? {
+                  name: "Price",
+                  title: `${args.title} Realized Prices`,
+                  top: args.list.map(({ color, name, key }) =>
+                    createBaseSeries({
+                      key: `${fixKey(key)}realized-price`,
+                      name,
+                      color,
+                    }),
+                  ),
+                }
+              : createPriceWithRatio({
+                  title: `${args.title} Realized Price`,
+                  key: `${fixKey(args.key)}realized-price`,
+                  name: "price",
+                  legend: "realized",
+                  color: args.color,
                 }),
-              ),
-            }
-          : createPriceWithRatio({
-              title: `${args.title} Realized Price`,
-              key: `${fixKey(args.key)}realized-price`,
-              name: "realized price",
-              legend: "realized",
-              color: args.color,
-            }),
+            {
+              name: "profit",
+              title: `${args.title} Realized Profit`,
+              bottom: list.flatMap(({ color, name, key: _key }) => {
+                const key = fixKey(_key);
+                return /** @type {const} */ ([
+                  createBaseSeries({
+                    key: `${key}realized-profit`,
+                    name: useGroupName ? name : "Profit",
+                    color: useGroupName ? color : colors.green,
+                  }),
+                  createBaseSeries({
+                    key: `${key}realized-profit-sum`,
+                    name: useGroupName ? name : "Profit",
+                    color: useGroupName ? color : colors.green,
+                  }),
+                ]);
+              }),
+            },
+            {
+              name: "loss",
+              title: `${args.title} Realized Loss`,
+              bottom: list.flatMap(({ color, name, key: _key }) => {
+                const key = fixKey(_key);
+                return /** @type {const} */ ([
+                  createBaseSeries({
+                    key: `${key}realized-loss`,
+                    name: useGroupName ? name : "Loss",
+                    color: useGroupName ? color : colors.red,
+                  }),
+                  createBaseSeries({
+                    key: `${key}realized-loss-sum`,
+                    name: useGroupName ? name : "Loss",
+                    color: useGroupName ? color : colors.red,
+                  }),
+                ]);
+              }),
+            },
+          ],
+        },
       ],
     });
   }
@@ -1249,50 +1295,16 @@ function createPartialOptions(colors) {
                   name: "ath",
                 }),
               ],
-              // },
-              // {
-              //   name: "drawdown",
-              //   title: "All Time High Drawdown",
-              //   top: [
-              //   createBaseSeries({
-              //     key: "ath",
-              //     name: "ath",
-              //   }),
-              // ],
               bottom: [
                 createBaseSeries({
                   key: "drawdown",
                   name: "Drawdown",
                   color: colors.red,
                 }),
-                //   ],
-                // },
-                // {
-                //   name: "days since",
-                //   title: "Number of days Since All Time High",
-                //   top: [
-                //     createBaseSeries({
-                //       key: "ath",
-                //       name: "ath",
-                //     }),
-                //   ],
-                // bottom: [
                 createBaseSeries({
                   key: "days-since-ath",
                   name: "Days since",
                 }),
-                //   ],
-                // },
-                // {
-                //   name: "max between",
-                //   title: "Maximum time between All Time Highs",
-                //   top: [
-                //     createBaseSeries({
-                //       key: "ath",
-                //       name: "ath",
-                //     }),
-                //   ],
-                //   bottom: [
                 createBaseSeries({
                   key: "max-days-between-ath",
                   name: "Max",
@@ -1303,8 +1315,6 @@ function createPartialOptions(colors) {
                   name: "Max",
                   color: colors.red,
                 }),
-                // ],
-                // },
               ],
             },
             {
@@ -1547,7 +1557,7 @@ function createPartialOptions(colors) {
               title: "Circulating Supply",
               bottom: [
                 createBaseSeries({
-                  key: "total-subsidy-in-btc",
+                  key: "cumulative-subsidy-in-btc",
                   name: "Mined",
                 }),
               ],
@@ -1556,15 +1566,15 @@ function createPartialOptions(colors) {
               name: "Coinbase",
               title: "Coinbase",
               bottom: [
-                ...createBaseAverageSumTotalMinMaxPercentilesSeries({
+                ...createBaseAverageSumCumulativeMinMaxPercentilesSeries({
                   key: "coinbase",
                   name: "Coinbase",
                 }),
-                ...createBaseAverageSumTotalMinMaxPercentilesSeries({
+                ...createBaseAverageSumCumulativeMinMaxPercentilesSeries({
                   key: "coinbase-in-btc",
                   name: "Coinbase",
                 }),
-                ...createBaseAverageSumTotalMinMaxPercentilesSeries({
+                ...createBaseAverageSumCumulativeMinMaxPercentilesSeries({
                   key: "coinbase-in-usd",
                   name: "Coinbase",
                 }),
@@ -1574,15 +1584,15 @@ function createPartialOptions(colors) {
               name: "Subsidy",
               title: "Subsidy",
               bottom: [
-                ...createBaseAverageSumTotalMinMaxPercentilesSeries({
+                ...createBaseAverageSumCumulativeMinMaxPercentilesSeries({
                   key: "subsidy",
                   name: "Subsidy",
                 }),
-                ...createBaseAverageSumTotalMinMaxPercentilesSeries({
+                ...createBaseAverageSumCumulativeMinMaxPercentilesSeries({
                   key: "subsidy-in-btc",
                   name: "Subsidy",
                 }),
-                ...createBaseAverageSumTotalMinMaxPercentilesSeries({
+                ...createBaseAverageSumCumulativeMinMaxPercentilesSeries({
                   key: "subsidy-in-usd",
                   name: "Subsidy",
                 }),
@@ -1592,24 +1602,28 @@ function createPartialOptions(colors) {
               name: "Fee",
               title: "Transaction Fee",
               bottom: [
-                ...createAverageSumTotalMinMaxPercentilesSeries("fee"),
-                ...createAverageSumTotalMinMaxPercentilesSeries("fee-in-btc"),
-                ...createAverageSumTotalMinMaxPercentilesSeries("fee-in-usd"),
+                ...createAverageSumCumulativeMinMaxPercentilesSeries("fee"),
+                ...createAverageSumCumulativeMinMaxPercentilesSeries(
+                  "fee-in-btc",
+                ),
+                ...createAverageSumCumulativeMinMaxPercentilesSeries(
+                  "fee-in-usd",
+                ),
               ],
             },
             {
               name: "Unclaimed Rewards",
               title: "Unclaimed Rewards",
               bottom: [
-                ...createBaseSumTotalSeries({
+                ...createBaseSumCumulativeSeries({
                   key: "unclaimed-rewards",
                   name: "unclaimed",
                 }),
-                ...createBaseSumTotalSeries({
+                ...createBaseSumCumulativeSeries({
                   key: "unclaimed-rewards-in-btc",
                   name: "unclaimed",
                 }),
-                ...createBaseSumTotalSeries({
+                ...createBaseSumCumulativeSeries({
                   key: "unclaimed-rewards-in-usd",
                   name: "unclaimed",
                 }),
@@ -1668,7 +1682,7 @@ function createPartialOptions(colors) {
                   key: "block-count",
                   name: "Count",
                 }),
-                ...createSumTotalSeries({ concat: "block-count" }),
+                ...createSumCumulativeSeries({ concat: "block-count" }),
               ],
             },
             {
@@ -1693,7 +1707,7 @@ function createPartialOptions(colors) {
                   key: "total-size",
                   name: "Size",
                 }),
-                ...createSumTotalSeries({ concat: "block-size" }),
+                ...createSumCumulativeSeries({ concat: "block-size" }),
               ],
             },
             {
@@ -1704,7 +1718,7 @@ function createPartialOptions(colors) {
                   key: "weight",
                   name: "Weight",
                 }),
-                ...createSumTotalSeries({ concat: "block-weight" }),
+                ...createSumCumulativeSeries({ concat: "block-weight" }),
               ],
             },
             {
@@ -1715,7 +1729,7 @@ function createPartialOptions(colors) {
                   key: "vbytes",
                   name: "Vbytes",
                 }),
-                ...createSumTotalSeries({ concat: "block-vbytes" }),
+                ...createSumCumulativeSeries({ concat: "block-vbytes" }),
               ],
             },
           ],
@@ -1726,7 +1740,7 @@ function createPartialOptions(colors) {
             {
               name: "Count",
               title: "Transaction Count",
-              bottom: createBaseAverageSumTotalMinMaxPercentilesSeries({
+              bottom: createBaseAverageSumCumulativeMinMaxPercentilesSeries({
                 key: "tx-count",
                 name: "Count",
               }),
@@ -1759,17 +1773,17 @@ function createPartialOptions(colors) {
                   key: "tx-v1",
                   name: "v1 Count",
                 }),
-                ...createSumTotalSeries({ concat: "tx-v1", name: "v1" }),
+                ...createSumCumulativeSeries({ concat: "tx-v1", name: "v1" }),
                 createBaseSeries({
                   key: "tx-v2",
                   name: "v2 Count",
                 }),
-                ...createSumTotalSeries({ concat: "tx-v2", name: "v2" }),
+                ...createSumCumulativeSeries({ concat: "tx-v2", name: "v2" }),
                 createBaseSeries({
                   key: "tx-v3",
                   name: "v3 Count",
                 }),
-                ...createSumTotalSeries({ concat: "tx-v3", name: "v3" }),
+                ...createSumCumulativeSeries({ concat: "tx-v3", name: "v3" }),
               ],
             },
           ],
@@ -1782,7 +1796,7 @@ function createPartialOptions(colors) {
               title: "Transaction Input Count",
               bottom: [
                 createAverageSeries({ concat: "input-count" }),
-                ...createSumTotalSeries({ concat: "input-count" }),
+                ...createSumCumulativeSeries({ concat: "input-count" }),
                 ...createMinMaxPercentilesSeries({
                   concat: "input-count",
                 }),
@@ -1793,7 +1807,7 @@ function createPartialOptions(colors) {
             //   title: "Transaction Input Value",
             //   bottom: [
             //     createAverageSeries({ concat: "input-value" }),
-            //     ...createSumTotalSeries({ concat: "input-value" }),
+            //     ...createSumCumulativeSeries({ concat: "input-value" }),
             //   ],
             // },
           ],
@@ -1806,247 +1820,247 @@ function createPartialOptions(colors) {
               title: "Transaction Output Count",
               bottom: [
                 createAverageSeries({ concat: "output-count" }),
-                ...createSumTotalSeries({ concat: "output-count" }),
+                ...createSumCumulativeSeries({ concat: "output-count" }),
                 ...createMinMaxPercentilesSeries({
                   concat: "output-count",
                 }),
               ],
             },
-            {
-              name: "Unspent Count",
-              title: "Unspent Transaction Output Count",
-              bottom: [
-                createBaseSeries({
-                  key: "exact-utxo-count",
-                  name: "total",
-                }),
-              ],
-            },
+            // {
+            //   name: "Unspent Count",
+            //   title: "Unspent Transaction Output Count",
+            //   bottom: [
+            //     createBaseSeries({
+            //       key: "exact-utxo-count",
+            //       name: "cumulative",
+            //     }),
+            //   ],
+            // },
             // {
             //   name: "Value",
             //   title: "Transaction Output Value",
             //   bottom: [
             //     createAverageSeries({ concat: "output-value" }),
-            //     ...createSumTotalSeries({ concat: "output-value" }),
+            //     ...createSumCumulativeSeries({ concat: "output-value" }),
             //   ],
             // },
-            {
-              name: "types",
-              tree: [
-                {
-                  name: "p2pk",
-                  title: "Pay To Public Key Outputs",
-                  bottom: [
-                    createBaseSeries({
-                      key: "p2pk33-count",
-                      name: "33B Count",
-                    }),
-                    createBaseSeries({
-                      key: "p2pk33-count-sum",
-                      name: "33B sum",
-                    }),
-                    createBaseSeries({
-                      key: "total-p2pk33-count",
-                      name: "33B total",
-                    }),
-                    createBaseSeries({
-                      key: "p2pk65-count",
-                      name: "65B Count",
-                    }),
-                    createBaseSeries({
-                      key: "p2pk65-count-sum",
-                      name: "65B sum",
-                    }),
-                    createBaseSeries({
-                      key: "total-p2pk65-count",
-                      name: "65B total",
-                    }),
-                  ],
-                },
-                {
-                  name: "p2pkh",
-                  title: "Pay To Public Key Hash Outputs",
-                  bottom: [
-                    createBaseSeries({
-                      key: "p2pkh-count",
-                      name: "Count",
-                    }),
-                    createBaseSeries({
-                      key: "p2pkh-count-sum",
-                      name: "sum",
-                    }),
-                    createBaseSeries({
-                      key: "total-p2pkh-count",
-                      name: "total",
-                    }),
-                  ],
-                },
-                {
-                  name: "p2ms",
-                  title: "Pay To Multisig Outputs",
-                  bottom: [
-                    createBaseSeries({
-                      key: "p2ms-count",
-                      name: "Count",
-                    }),
-                    createBaseSeries({
-                      key: "p2ms-count-sum",
-                      name: "sum",
-                    }),
-                    createBaseSeries({
-                      key: "total-p2ms-count",
-                      name: "total",
-                    }),
-                  ],
-                },
-                {
-                  name: "p2sh",
-                  title: "Pay To Script Hash Outputs",
-                  bottom: [
-                    createBaseSeries({
-                      key: "p2sh-count",
-                      name: "Count",
-                    }),
-                    createBaseSeries({
-                      key: "p2sh-count-sum",
-                      name: "sum",
-                    }),
-                    createBaseSeries({
-                      key: "total-p2sh-count",
-                      name: "total",
-                    }),
-                  ],
-                },
-                {
-                  name: "op_return",
-                  title: "op_return outputs",
-                  bottom: [
-                    createBaseSeries({ key: "opreturn-count", name: "Count" }),
-                    createBaseSeries({
-                      key: "opreturn-count-sum",
-                      name: "sum",
-                    }),
-                    createBaseSeries({
-                      key: "total-opreturn-count",
-                      name: "total",
-                    }),
-                  ],
-                },
-                {
-                  name: "p2wpkh",
-                  title: "Pay To Witness Public Key Hash Outputs",
-                  bottom: [
-                    createBaseSeries({
-                      key: "p2wpkh-count",
-                      name: "Count",
-                    }),
-                    createBaseSeries({
-                      key: "p2wpkh-count-sum",
-                      name: "sum",
-                    }),
-                    createBaseSeries({
-                      key: "total-p2wpkh-count",
-                      name: "total",
-                    }),
-                  ],
-                },
-                {
-                  name: "p2wsh",
-                  title: "Pay To Witness Script Hash Outputs",
-                  bottom: [
-                    createBaseSeries({
-                      key: "p2wsh-count",
-                      name: "Count",
-                    }),
-                    createBaseSeries({
-                      key: "p2wsh-count-sum",
-                      name: "sum",
-                    }),
-                    createBaseSeries({
-                      key: "total-p2wsh-count",
-                      name: "total",
-                    }),
-                  ],
-                },
-                {
-                  name: "p2tr",
-                  title: "Pay To Taproot Outputs",
-                  bottom: [
-                    createBaseSeries({
-                      key: "p2tr-count",
-                      name: "Count",
-                    }),
-                    createBaseSeries({
-                      key: "p2tr-count-sum",
-                      name: "sum",
-                    }),
-                    createBaseSeries({
-                      key: "total-p2tr-count",
-                      name: "total",
-                    }),
-                  ],
-                },
-                {
-                  name: "p2a",
-                  title: "Pay To Anchor outputs",
-                  bottom: [
-                    createBaseSeries({
-                      key: "p2a-count",
-                      name: "Count",
-                    }),
-                    createBaseSeries({
-                      key: "p2a-count-sum",
-                      name: "sum",
-                    }),
-                    createBaseSeries({
-                      key: "total-p2a-count",
-                      name: "total",
-                    }),
-                  ],
-                },
-                {
-                  name: "empty",
-                  title: "empty outputs",
-                  bottom: [
-                    createBaseSeries({
-                      key: "emptyoutput-count",
-                      name: "Count",
-                    }),
-                    createBaseSeries({
-                      key: "emptyoutput-count-sum",
-                      name: "sum",
-                    }),
-                    createBaseSeries({
-                      key: "total-emptyoutput-count",
-                      name: "total",
-                    }),
-                  ],
-                },
-                {
-                  name: "unknown",
-                  title: "unknown outputs",
-                  bottom: [
-                    createBaseSeries({
-                      key: "unknownoutput-count",
-                      name: "Count",
-                    }),
-                    createBaseSeries({
-                      key: "unknownoutput-count-sum",
-                      name: "sum",
-                    }),
-                    createBaseSeries({
-                      key: "total-unknownoutput-count",
-                      name: "total",
-                    }),
-                  ],
-                },
-              ],
-              // title: "Transaction Output Value",
-              // bottom: [
-              //   createAverageSeries({ concat: "output-value" }),
-              //   ...createSumTotalSeries({ concat: "output-value" }),
-              // ],
-            },
+            // {
+            //   name: "types",
+            //   tree: [
+            //     {
+            //       name: "p2pk",
+            //       title: "Pay To Public Key Outputs",
+            //       bottom: [
+            //         createBaseSeries({
+            //           key: "p2pk33-count",
+            //           name: "33B Count",
+            //         }),
+            //         createBaseSeries({
+            //           key: "p2pk33-count-sum",
+            //           name: "33B sum",
+            //         }),
+            //         createBaseSeries({
+            //           key: "cumulative-p2pk33-count",
+            //           name: "33B cumulative",
+            //         }),
+            //         createBaseSeries({
+            //           key: "p2pk65-count",
+            //           name: "65B Count",
+            //         }),
+            //         createBaseSeries({
+            //           key: "p2pk65-count-sum",
+            //           name: "65B sum",
+            //         }),
+            //         createBaseSeries({
+            //           key: "cumulative-p2pk65-count",
+            //           name: "65B cumulative",
+            //         }),
+            //       ],
+            //     },
+            //     {
+            //       name: "p2pkh",
+            //       title: "Pay To Public Key Hash Outputs",
+            //       bottom: [
+            //         createBaseSeries({
+            //           key: "p2pkh-count",
+            //           name: "Count",
+            //         }),
+            //         createBaseSeries({
+            //           key: "p2pkh-count-sum",
+            //           name: "sum",
+            //         }),
+            //         createBaseSeries({
+            //           key: "cumulative-p2pkh-count",
+            //           name: "cumulative",
+            //         }),
+            //       ],
+            //     },
+            //     {
+            //       name: "p2ms",
+            //       title: "Pay To Multisig Outputs",
+            //       bottom: [
+            //         createBaseSeries({
+            //           key: "p2ms-count",
+            //           name: "Count",
+            //         }),
+            //         createBaseSeries({
+            //           key: "p2ms-count-sum",
+            //           name: "sum",
+            //         }),
+            //         createBaseSeries({
+            //           key: "cumulative-p2ms-count",
+            //           name: "cumulative",
+            //         }),
+            //       ],
+            //     },
+            //     {
+            //       name: "p2sh",
+            //       title: "Pay To Script Hash Outputs",
+            //       bottom: [
+            //         createBaseSeries({
+            //           key: "p2sh-count",
+            //           name: "Count",
+            //         }),
+            //         createBaseSeries({
+            //           key: "p2sh-count-sum",
+            //           name: "sum",
+            //         }),
+            //         createBaseSeries({
+            //           key: "cumulative-p2sh-count",
+            //           name: "cumulative",
+            //         }),
+            //       ],
+            //     },
+            //     {
+            //       name: "op_return",
+            //       title: "op_return outputs",
+            //       bottom: [
+            //         createBaseSeries({ key: "opreturn-count", name: "Count" }),
+            //         createBaseSeries({
+            //           key: "opreturn-count-sum",
+            //           name: "sum",
+            //         }),
+            //         createBaseSeries({
+            //           key: "cumulative-opreturn-count",
+            //           name: "cumulative",
+            //         }),
+            //       ],
+            //     },
+            //     {
+            //       name: "p2wpkh",
+            //       title: "Pay To Witness Public Key Hash Outputs",
+            //       bottom: [
+            //         createBaseSeries({
+            //           key: "p2wpkh-count",
+            //           name: "Count",
+            //         }),
+            //         createBaseSeries({
+            //           key: "p2wpkh-count-sum",
+            //           name: "sum",
+            //         }),
+            //         createBaseSeries({
+            //           key: "cumulative-p2wpkh-count",
+            //           name: "cumulative",
+            //         }),
+            //       ],
+            //     },
+            //     {
+            //       name: "p2wsh",
+            //       title: "Pay To Witness Script Hash Outputs",
+            //       bottom: [
+            //         createBaseSeries({
+            //           key: "p2wsh-count",
+            //           name: "Count",
+            //         }),
+            //         createBaseSeries({
+            //           key: "p2wsh-count-sum",
+            //           name: "sum",
+            //         }),
+            //         createBaseSeries({
+            //           key: "cumulative-p2wsh-count",
+            //           name: "cumulative",
+            //         }),
+            //       ],
+            //     },
+            //     {
+            //       name: "p2tr",
+            //       title: "Pay To Taproot Outputs",
+            //       bottom: [
+            //         createBaseSeries({
+            //           key: "p2tr-count",
+            //           name: "Count",
+            //         }),
+            //         createBaseSeries({
+            //           key: "p2tr-count-sum",
+            //           name: "sum",
+            //         }),
+            //         createBaseSeries({
+            //           key: "cumulative-p2tr-count",
+            //           name: "cumulative",
+            //         }),
+            //       ],
+            //     },
+            //     {
+            //       name: "p2a",
+            //       title: "Pay To Anchor outputs",
+            //       bottom: [
+            //         createBaseSeries({
+            //           key: "p2a-count",
+            //           name: "Count",
+            //         }),
+            //         createBaseSeries({
+            //           key: "p2a-count-sum",
+            //           name: "sum",
+            //         }),
+            //         createBaseSeries({
+            //           key: "cumulative-p2a-count",
+            //           name: "cumulative",
+            //         }),
+            //       ],
+            //     },
+            //     {
+            //       name: "empty",
+            //       title: "empty outputs",
+            //       bottom: [
+            //         createBaseSeries({
+            //           key: "emptyoutput-count",
+            //           name: "Count",
+            //         }),
+            //         createBaseSeries({
+            //           key: "emptyoutput-count-sum",
+            //           name: "sum",
+            //         }),
+            //         createBaseSeries({
+            //           key: "cumulative-emptyoutput-count",
+            //           name: "cumulative",
+            //         }),
+            //       ],
+            //     },
+            //     {
+            //       name: "unknown",
+            //       title: "unknown outputs",
+            //       bottom: [
+            //         createBaseSeries({
+            //           key: "unknownoutput-count",
+            //           name: "Count",
+            //         }),
+            //         createBaseSeries({
+            //           key: "unknownoutput-count-sum",
+            //           name: "sum",
+            //         }),
+            //         createBaseSeries({
+            //           key: "cumulative-unknownoutput-count",
+            //           name: "cumulative",
+            //         }),
+            //       ],
+            //     },
+            //   ],
+            //   // title: "Transaction Output Value",
+            //   // bottom: [
+            //   //   createAverageSeries({ concat: "output-value" }),
+            //   //   ...createSumCumulativeSeries({ concat: "output-value" }),
+            //   // ],
+            // },
           ],
         },
         {
@@ -2156,6 +2170,45 @@ function createPartialOptions(colors) {
                   key: "unspendable-supply-in-usd",
                   name: "Supply",
                 }),
+              ],
+            },
+            {
+              name: "op_return",
+              tree: [
+                {
+                  name: "outputs",
+                  title: "op_return outputs",
+                  bottom: [
+                    createBaseSeries({ key: "opreturn-count", name: "Count" }),
+                    createBaseSeries({
+                      key: "opreturn-count-sum",
+                      name: "sum",
+                    }),
+                    createBaseSeries({
+                      key: "cumulative-opreturn-count",
+                      name: "cumulative",
+                      color: colors.red,
+                    }),
+                  ],
+                },
+                {
+                  name: "supply",
+                  title: "OP-return Supply",
+                  bottom: [
+                    createBaseSeries({
+                      key: "opreturn-supply",
+                      name: "Supply",
+                    }),
+                    createBaseSeries({
+                      key: "opreturn-supply-in-btc",
+                      name: "Supply",
+                    }),
+                    createBaseSeries({
+                      key: "opreturn-supply-in-usd",
+                      name: "Supply",
+                    }),
+                  ],
+                },
               ],
             },
           ],
@@ -2632,319 +2685,6 @@ export function initOptions({
 }
 /** @typedef {ReturnType<typeof initOptions>} Options */
 
-// /**
-//  * @param {Number | undefined} value
-//  * @param {Unit} unit
-//  */
-// function formatValue(value, unit) {
-//   if (!value) return "";
-
-//   const s =
-//     unit !== "Count"
-//       ? utils.locale.numberToShortUSFormat(value)
-//       : utils.locale.numberToUSFormat(
-//           value,
-//           unit === "Count" ? 0 : undefined,
-//         );
-
-//   switch (unit) {
-//     case "USD": {
-//       return `$${s}`;
-//     }
-//     case "Bitcoin": {
-//       return `₿${s}`;
-//     }
-//     case "Percentage": {
-//       return `${s}%`;
-//     }
-//     case "Seconds": {
-//       return `${s} sec`;
-//     }
-//     case "Megabytes": {
-//       return `${s} MB`;
-//     }
-//     default: {
-//       return s;
-//     }
-//   }
-// }
-
-/**
- type DefaultCohortOption = CohortOption<AnyPossibleCohortId>;
-
- interface CohortOption<Id extends AnyPossibleCohortId> {
-   name: string;
-   title: string;
-   datasetId: Id;
-   color: Color;
-   filenameAddon?: string;
- }
-
- type DefaultCohortOptions = CohortOptions<AnyPossibleCohortId>;
-
- interface CohortOptions<Id extends AnyPossibleCohortId> {
-   name: string;
-   title: string;
-   list: CohortOption<Id>[];
- }
-
- interface RatioOption {
-   color: Color;
-   // valueDatasetPath: AnyDatasetPath;
-   // ratioDatasetPath: AnyDatasetPath;
-   title: string;
- }
-
- interface RatioOptions {
-   title: string;
-   list: RatioOption[];
- }
-*/
-
-// function initGroups() {
-//   const xTermHolders = /** @type {const} */ ([
-//     {
-//       id: "sth",
-//       key: "sth",
-//       name: "Short Term Holders",
-//       legend: "Short Term Holders - STH",
-//     },
-//     {
-//       id: "lth",
-//       key: "lth",
-//       name: "Long Term Holders",
-//       legend: "Long Term Holders - LTH",
-//     },
-//   ]);
-
-//   const upTo = /** @type {const} */ ([
-//     {
-//       id: "up-to-1d",
-//       key: "up_to_1d",
-//       name: "Up To 1 Day",
-//       legend: "1D",
-//     },
-//     {
-//       id: "up-to-1w",
-//       key: "up_to_1w",
-//       name: "Up To 1 Week",
-//       legend: "1W",
-//     },
-//     {
-//       id: "up-to-1m",
-//       key: "up_to_1m",
-//       name: "Up To 1 Month",
-//       legend: "1M",
-//     },
-//     {
-//       id: "up-to-2m",
-//       key: "up_to_2m",
-//       name: "Up To 2 Months",
-//       legend: "2M",
-//     },
-//     {
-//       id: "up-to-3m",
-//       key: "up_to_3m",
-//       name: "Up To 3 Months",
-//       legend: "3M",
-//     },
-//     {
-//       id: "up-to-4m",
-//       key: "up_to_4m",
-//       name: "Up To 4 Months",
-//       legend: "4M",
-//     },
-//     {
-//       id: "up-to-5m",
-//       key: "up_to_5m",
-//       name: "Up To 5 Months",
-//       legend: "5M",
-//     },
-//     {
-//       id: "up-to-6m",
-//       key: "up_to_6m",
-//       name: "Up To 6 Months",
-//       legend: "6M",
-//     },
-//     {
-//       id: "up-to-1y",
-//       key: "up_to_1y",
-//       name: "Up To 1 Year",
-//       legend: "1Y",
-//     },
-//     {
-//       id: "up-to-2y",
-//       key: "up_to_2y",
-//       name: "Up To 2 Years",
-//       legend: "2Y",
-//     },
-//     {
-//       id: "up-to-3y",
-//       key: "up_to_3y",
-//       name: "Up To 3 Years",
-//       legend: "3Y",
-//     },
-//     {
-//       id: "up-to-5y",
-//       key: "up_to_5y",
-//       name: "Up To 5 Years",
-//       legend: "5Y",
-//     },
-//     {
-//       id: "up-to-7y",
-//       key: "up_to_7y",
-//       name: "Up To 7 Years",
-//       legend: "7Y",
-//     },
-//     {
-//       id: "up-to-10y",
-//       key: "up_to_10y",
-//       name: "Up To 10 Years",
-//       legend: "10Y",
-//     },
-//     {
-//       id: "up-to-15y",
-//       key: "up_to_15y",
-//       name: "Up To 15 Years",
-//       legend: "15Y",
-//     },
-//   ]);
-
-//   const fromXToY = /** @type {const} */ ([
-//     {
-//       id: "up-to-1d",
-//       key: "up_to_1d",
-//       name: "24h",
-//       legend: "24h",
-//     },
-//     {
-//       id: "from-1d-to-1w",
-//       key: "from_1d_to_1w",
-//       name: "From 1 Day To 1 Week",
-//       legend: "1D — 1W",
-//     },
-//     {
-//       id: "from-1w-to-1m",
-//       key: "from_1w_to_1m",
-//       name: "From 1 Week To 1 Month",
-//       legend: "1W — 1M",
-//     },
-//     {
-//       id: "from-1m-to-3m",
-//       key: "from_1m_to_3m",
-//       name: "From 1 Month To 3 Months",
-//       legend: "1M — 3M",
-//     },
-//     {
-//       id: "from-3m-to-6m",
-//       key: "from_3m_to_6m",
-//       name: "From 3 Months To 6 Months",
-//       legend: "3M — 6M",
-//     },
-//     {
-//       id: "from-6m-to-1y",
-//       key: "from_6m_to_1y",
-//       name: "From 6 Months To 1 Year",
-//       legend: "6M — 1Y",
-//     },
-//     {
-//       id: "from-1y-to-2y",
-//       key: "from_1y_to_2y",
-//       name: "From 1 Year To 2 Years",
-//       legend: "1Y — 2Y",
-//     },
-//     {
-//       id: "from-2y-to-3y",
-//       key: "from_2y_to_3y",
-//       name: "From 2 Years To 3 Years",
-//       legend: "2Y — 3Y",
-//     },
-//     {
-//       id: "from-3y-to-5y",
-//       key: "from_3y_to_5y",
-//       name: "From 3 Years To 5 Years",
-//       legend: "3Y — 5Y",
-//     },
-//     {
-//       id: "from-5y-to-7y",
-//       key: "from_5y_to_7y",
-//       name: "From 5 Years To 7 Years",
-//       legend: "5Y — 7Y",
-//     },
-//     {
-//       id: "from-7y-to-10y",
-//       key: "from_7y_to_10y",
-//       name: "From 7 Years To 10 Years",
-//       legend: "7Y — 10Y",
-//     },
-//     {
-//       id: "from-10y-to-15y",
-//       key: "from_10y_to_15y",
-//       name: "From 10 Years To 15 Years",
-//       legend: "10Y — 15Y",
-//     },
-//     {
-//       id: "from-15y",
-//       key: "from_15y",
-//       name: "From 15 Years To End",
-//       legend: "15Y — End",
-//     },
-//   ]);
-
-//   const fromX = /** @type {const} */ ([
-//     {
-//       id: "from-1y",
-//       key: "from_1y",
-//       name: "From 1 Year",
-//       legend: "1Y+",
-//     },
-//     {
-//       id: "from-2y",
-//       key: "from_2y",
-//       name: "From 2 Years",
-//       legend: "2Y+",
-//     },
-//     {
-//       id: "from-4y",
-//       key: "from_4y",
-//       name: "From 4 Years",
-//       legend: "4Y+",
-//     },
-//     {
-//       id: "from-10y",
-//       key: "from_10y",
-//       name: "From 10 Years",
-//       legend: "10Y+",
-//     },
-//     {
-//       id: "from-15y",
-//       key: "from_15y",
-//       name: "From 15 Years",
-//       legend: "15Y+",
-//     },
-//   ]);
-
-//   const epochs = /** @type {const} */ ([
-//     { id: "epoch-1", key: "epoch_1", name: "Epoch 1" },
-//     { id: "epoch-2", key: "epoch_2", name: "Epoch 2" },
-//     { id: "epoch-3", key: "epoch_3", name: "Epoch 3" },
-//     { id: "epoch-4", key: "epoch_4", name: "Epoch 4" },
-//     { id: "epoch-5", key: "epoch_5", name: "Epoch 5" },
-//   ]);
-
-//   const age = /** @type {const} */ ([
-//     {
-//       key: "",
-//       id: "",
-//       name: "",
-//     },
-//     ...xTermHolders,
-//     ...upTo,
-//     ...fromXToY,
-//     ...fromX,
-//     ...epochs,
-//   ]);
-
 //   const size = /** @type {const} */ ([
 //     {
 //       key: "plankton",
@@ -2997,159 +2737,6 @@ export function initOptions({
 //     },
 //   ]);
 
-//   const totalReturns = /** @type {const} */ ([
-//     { name: "1 Day", key: "1d" },
-//     { name: "1 Month", key: "1m" },
-//     { name: "6 Months", key: "6m" },
-//     { name: "1 Year", key: "1y" },
-//     { name: "2 Years", key: "2y" },
-//     { name: "3 Years", key: "3y" },
-//     { name: "4 Years", key: "4y" },
-//     { name: "6 Years", key: "6y" },
-//     { name: "8 Years", key: "8y" },
-//     { name: "10 Years", key: "10y" },
-//   ]);
-
-//   const compoundReturns = /** @type {const} */ ([
-//     { name: "4 Years", key: "4y" },
-//   ]);
-
-//   const percentiles = /** @type {const} */ ([
-//     {
-//       key: "median_price_paid",
-//       id: "median-price-paid",
-//       name: "Median",
-//       title: "Median Paid",
-//       value: 50,
-//     },
-//     {
-//       key: "95p_price_paid",
-//       id: "95p-price-paid",
-//       name: `95%`,
-//       title: `95th Percentile Paid`,
-//       value: 95,
-//     },
-//     {
-//       key: "90p_price_paid",
-//       id: "90p-price-paid",
-//       name: `90%`,
-//       title: `90th Percentile Paid`,
-//       value: 90,
-//     },
-//     {
-//       key: "85p_price_paid",
-//       id: "85p-price-paid",
-//       name: `85%`,
-//       title: `85th Percentile Paid`,
-//       value: 85,
-//     },
-//     {
-//       key: "80p_price_paid",
-//       id: "80p-price-paid",
-//       name: `80%`,
-//       title: `80th Percentile Paid`,
-//       value: 80,
-//     },
-//     {
-//       key: "75p_price_paid",
-//       id: "75p-price-paid",
-//       name: `75%`,
-//       title: `75th Percentile Paid`,
-//       value: 75,
-//     },
-//     {
-//       key: "70p_price_paid",
-//       id: "70p-price-paid",
-//       name: `70%`,
-//       title: `70th Percentile Paid`,
-//       value: 70,
-//     },
-//     {
-//       key: "65p_price_paid",
-//       id: "65p-price-paid",
-//       name: `65%`,
-//       title: `65th Percentile Paid`,
-//       value: 65,
-//     },
-//     {
-//       key: "60p_price_paid",
-//       id: "60p-price-paid",
-//       name: `60%`,
-//       title: `60th Percentile Paid`,
-//       value: 60,
-//     },
-//     {
-//       key: "55p_price_paid",
-//       id: "55p-price-paid",
-//       name: `55%`,
-//       title: `55th Percentile Paid`,
-//       value: 55,
-//     },
-//     {
-//       key: "45p_price_paid",
-//       id: "45p-price-paid",
-//       name: `45%`,
-//       title: `45th Percentile Paid`,
-//       value: 45,
-//     },
-//     {
-//       key: "40p_price_paid",
-//       id: "40p-price-paid",
-//       name: `40%`,
-//       title: `40th Percentile Paid`,
-//       value: 40,
-//     },
-//     {
-//       key: "35p_price_paid",
-//       id: "35p-price-paid",
-//       name: `35%`,
-//       title: `35th Percentile Paid`,
-//       value: 35,
-//     },
-//     {
-//       key: "30p_price_paid",
-//       id: "30p-price-paid",
-//       name: `30%`,
-//       title: `30th Percentile Paid`,
-//       value: 30,
-//     },
-//     {
-//       key: "25p_price_paid",
-//       id: "25p-price-paid",
-//       name: `25%`,
-//       title: `25th Percentile Paid`,
-//       value: 25,
-//     },
-//     {
-//       key: "20p_price_paid",
-//       id: "20p-price-paid",
-//       name: `20%`,
-//       title: `20th Percentile Paid`,
-//       value: 20,
-//     },
-//     {
-//       key: "15p_price_paid",
-//       id: "15p-price-paid",
-//       name: `15%`,
-//       title: `15th Percentile Paid`,
-//       value: 15,
-//     },
-//     {
-//       key: "10p_price_paid",
-//       id: "10p-price-paid",
-//       name: `10%`,
-//       title: `10th Percentile Paid`,
-//       value: 10,
-//     },
-//     {
-//       key: "05p_price_paid",
-//       id: "05p-price-paid",
-//       name: `5%`,
-//       title: `5th Percentile Paid`,
-//       value: 5,
-//     },
-//   ]);
-
 //   return {
 //     xTermHolders,
 //     upTo,
@@ -3162,7 +2749,7 @@ export function initOptions({
 //     address,
 //     liquidities,
 //     averages,
-//     totalReturns,
+//     cumulativeReturns,
 //     compoundReturns,
 //     percentiles,
 //   };
@@ -3188,7 +2775,7 @@ export function initOptions({
 //  *
 //  * @typedef {Groups["averages"][number]["key"]} AverageName
 //  *
-//  * @typedef {Groups["totalReturns"][number]["key"]} TotalReturnKey
+//  * @typedef {Groups["cumulativeReturns"][number]["key"]} CumulativeReturnKey
 //  *
 //  * @typedef {Groups["compoundReturns"][number]["key"]} CompoundReturnKey
 //  *
