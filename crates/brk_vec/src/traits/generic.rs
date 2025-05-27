@@ -7,9 +7,8 @@ use std::{
 };
 
 use arc_swap::ArcSwap;
+use brk_core::{Result, Value};
 use memmap2::Mmap;
-
-use crate::{Result, Value};
 
 use super::{StoredIndex, StoredType};
 

@@ -1,11 +1,11 @@
 use std::path::Path;
 
-use brk_core::{Bitcoin, Close, Dollars, Height, Sats, TxIndex};
+use brk_core::{Bitcoin, Close, Dollars, Height, Sats, TxIndex, Version};
 use brk_exit::Exit;
 use brk_indexer::Indexer;
 use brk_vec::{
     AnyCollectableVec, BoxedAnyIterableVec, CloneableAnyIterableVec, CollectableVec, Compressed,
-    Computation, ComputedVecFrom3, LazyVecFrom1, StoredIndex, StoredVec, Version,
+    Computation, ComputedVecFrom3, LazyVecFrom1, StoredIndex, StoredVec,
 };
 
 use crate::vecs::{Indexes, fetched, indexes};

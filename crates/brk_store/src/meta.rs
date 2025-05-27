@@ -3,7 +3,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use brk_vec::Version;
+use brk_core::Version;
 use fjall::{TransactionalKeyspace, TransactionalPartitionHandle};
 use zerocopy::{FromBytes, IntoBytes};
 
@@ -29,8 +29,11 @@ impl StoreMeta {
     {
         fs::create_dir_all(path)?;
 
-        let is_same_version = Version::try_from(Self::path_version_(path).as_path())
-            .is_ok_and(|prev_version| version == prev_version);
+        let read_version = Version::try_from(Self::path_version_(path).as_path());
+
+        let is_same_version = read_version
+            .as_ref()
+            .is_ok_and(|prev_version| &version == prev_version);
 
         let mut partition = open_partition_handle()?;
 
@@ -56,13 +59,13 @@ impl StoreMeta {
     pub fn len(&self) -> usize {
         self.len
     }
-    pub fn is_empty(&self) -> bool {
-        self.len() == 0
-    }
+    // pub fn is_empty(&self) -> bool {
+    //     self.len() == 0
+    // }
 
-    pub fn version(&self) -> Version {
-        self.version
-    }
+    // pub fn version(&self) -> Version {
+    //     self.version
+    // }
 
     pub fn export(&mut self, len: usize, height: Height) -> io::Result<()> {
         self.len = len;
@@ -71,9 +74,9 @@ impl StoreMeta {
         height.write(&self.path_height())
     }
 
-    pub fn reset(&self) -> io::Result<()> {
-        Self::reset_(self.pathbuf.as_path())
-    }
+    // pub fn reset(&self) -> io::Result<()> {
+    //     Self::reset_(self.pathbuf.as_path())
+    // }
     fn reset_(path: &Path) -> io::Result<()> {
         fs::remove_dir_all(path)?;
         fs::create_dir(path)

@@ -1,9 +1,9 @@
 use std::path::Path;
 
-use brk_core::{DifficultyEpoch, Height};
+use brk_core::{DifficultyEpoch, Height, Result, Version};
 use brk_exit::Exit;
 use brk_indexer::Indexer;
-use brk_vec::{AnyCollectableVec, Compressed, EagerVec, Result, Version};
+use brk_vec::{AnyCollectableVec, Compressed, EagerVec};
 
 use crate::vecs::{Indexes, indexes};
 

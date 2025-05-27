@@ -13,9 +13,6 @@ use brk_core::Height;
 use crossbeam::channel::{Receiver, bounded};
 use rayon::prelude::*;
 
-pub use bitcoin;
-pub use bitcoincore_rpc as rpc;
-
 mod blk_index_to_blk_path;
 mod blk_index_to_blk_recap;
 mod blk_metadata;

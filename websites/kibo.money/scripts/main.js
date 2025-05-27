@@ -45,9 +45,16 @@
  *   "cagr" |
  *   "vB" |
  *   "performance" |
- *   "zscore"
+ *   "sd" |
+ *   "Epoch" |
+ *   "Height" |
+ *   "Type" |
+ *   "zscore" |
+ *   "Bytes"
  * } Unit
  */
+
+const localhost = window.location.hostname === "localhost";
 
 function initPackages() {
   const imports = {
@@ -682,110 +689,217 @@ function createUtils() {
     });
   }
 
+  const thoroughUnitCheck = localhost;
+
   /**
    * @param {VecId} id
    */
   function vecidToUnit(id) {
-    /** @type {Unit} */
+    /** @type {Unit | undefined} */
     let unit;
-    if (id.endsWith("zscore")) {
-      unit = "zscore";
-    } else if (id.endsWith("cagr")) {
-      unit = "cagr";
-    } else if (id.endsWith("returns")) {
-      unit = "performance";
-    } else if (id === "drawdown" || id.endsWith("oscillator")) {
-      unit = "percentage";
-    } else if (id.endsWith("-as-price")) {
-      unit = "USD";
-    } else if (id.includes("type")) {
-      unit = "Type";
-    } else if (id.includes("days-")) {
-      unit = "Days";
-    } else if (id.includes("years-")) {
-      unit = "Years";
-    } else if (id === "rawlocktime") {
-      unit = "Locktime";
-    } else if (id.startsWith("is-")) {
-      unit = "Bool";
-    } else if (
-      id.includes("bytes") ||
-      id.includes("hash") ||
-      id.includes("address") ||
-      id.includes("txid")
+
+    if (
+      (!unit || thoroughUnitCheck) &&
+      (id.includes("in-sats") ||
+        id.endsWith("supply") ||
+        id.endsWith("stack") ||
+        id.endsWith("value") ||
+        ((id.includes("coinbase") ||
+          id.includes("fee") ||
+          id.includes("subsidy") ||
+          id.includes("rewards")) &&
+          !(
+            id.startsWith("is-") ||
+            id.includes("in-btc") ||
+            id.includes("in-usd")
+          )))
     ) {
-      unit = "Hash";
-    } else if (id.includes("interval")) {
-      unit = "Seconds";
-    } else if (id.includes("feerate")) {
-      unit = "sat/vB";
-    } else if (id.includes("in-cents")) {
-      unit = "Cents";
-    } else if (id.includes("in-usd")) {
-      unit = "USD";
-    } else if (id.includes("ratio")) {
-      unit = "Ratio";
-    } else if (id.includes("in-btc")) {
+      if (unit) throw Error(`Unit "${unit}" already assigned "${id}"`);
+      unit = "Sats";
+    }
+    if ((!unit || thoroughUnitCheck) && id.includes("in-btc")) {
+      if (unit) throw Error(`Unit "${unit}" already assigned "${id}"`);
       unit = "BTC";
-    } else if (
-      id.includes("in-sats") ||
-      id.startsWith("sats-") ||
-      id.includes("input-value") ||
-      id.includes("output-value") ||
-      id.includes("fee") ||
-      id.includes("coinbase") ||
-      id.includes("subsidy") ||
-      id.endsWith("stack") ||
-      id.includes("supply") ||
-      id.includes("rewards") ||
-      id.includes("realized-cap")
+    }
+    if (
+      (!unit || thoroughUnitCheck) &&
+      (id === "high" ||
+        id === "ohlc" ||
+        id === "low" ||
+        id === "close" ||
+        id === "open" ||
+        id === "marketcap" ||
+        id.startsWith("price") ||
+        id.endsWith("price") ||
+        id.endsWith("value-created") ||
+        id.endsWith("value-destroyed") ||
+        id.endsWith("realized-cap") ||
+        id.endsWith("realized-loss") ||
+        id.endsWith("realized-loss-sum") ||
+        id.endsWith("realized-profit") ||
+        id.endsWith("realized-profit-sum") ||
+        id.includes("in-usd") ||
+        (!id.includes("ratio") && id.endsWith("sma")) ||
+        id.endsWith("ath"))
     ) {
-      unit = "Sats";
-    } else if (
-      id.includes("open") ||
-      id.includes("high") ||
-      id.includes("low") ||
-      id.includes("close") ||
-      id.includes("ohlc") ||
-      id.includes("marketcap") ||
-      id.includes("ath") ||
-      id.includes("-sma") ||
-      id.endsWith("-price") ||
-      id.startsWith("price-") ||
-      id.startsWith("realized-")
-    ) {
+      if (unit) throw Error(`Unit "${unit}" already assigned "${id}"`);
       unit = "USD";
-    } else if (id.includes("count") || id.match(/v[1-3]/g)) {
-      unit = "Count";
-    } else if (id.includes("date")) {
-      unit = "Date";
-    } else if (id.includes("timestamp")) {
-      unit = "Timestamp";
-    } else if (
-      id.includes("index") ||
-      id.includes("height") ||
-      id.includes("epoch")
+    }
+    if ((!unit || thoroughUnitCheck) && id.endsWith("cents")) {
+      if (unit) throw Error(`Unit "${unit}" already assigned "${id}"`);
+      unit = "Cents";
+    }
+    if (
+      (!unit || thoroughUnitCheck) &&
+      (id.endsWith("ratio") ||
+        (id.includes("ratio") &&
+          (id.endsWith("-sma") ||
+            id.endsWith("-1w-sma") ||
+            id.endsWith("-1m-sma") ||
+            id.endsWith("-1y-sma"))) ||
+        id.endsWith("1sd") ||
+        id.endsWith("2sd") ||
+        id.endsWith("3sd") ||
+        id.endsWith("p0-1") ||
+        id.endsWith("p0-5") ||
+        id.endsWith("p1") ||
+        id.endsWith("p99") ||
+        id.endsWith("p99-5") ||
+        id.endsWith("p99-9"))
     ) {
-      unit = "Index";
-    } else if (id === "0" || id === "1" || id === "50" || id === "100") {
-      unit = "constant";
-    } else if (id.includes("difficulty")) {
-      unit = "Difficulty";
-    } else if (id.includes("-size")) {
-      unit = "mb";
-    } else if (id.includes("weight")) {
-      unit = "WU";
-    } else if (id.includes("vbytes") || id.includes("vsize")) {
-      unit = "vB";
-    } else if (id.includes("version")) {
+      if (unit) throw Error(`Unit "${unit}" already assigned "${id}"`);
+      unit = "Ratio";
+    }
+    if (
+      (!unit || thoroughUnitCheck) &&
+      (id === "drawdown" || id.endsWith("oscillator"))
+    ) {
+      if (unit) throw Error(`Unit "${unit}" already assigned "${id}"`);
+      unit = "percentage";
+    }
+    if (
+      (!unit || thoroughUnitCheck) &&
+      (id.endsWith("count") ||
+        id.includes("-count-") ||
+        id.startsWith("block-count") ||
+        id.includes("tx-v"))
+    ) {
+      if (unit) throw Error(`Unit "${unit}" already assigned "${id}"`);
+      unit = "Count";
+    }
+    if ((!unit || thoroughUnitCheck) && id.startsWith("is-")) {
+      if (unit) throw Error(`Unit "${unit}" already assigned "${id}"`);
+      unit = "Bool";
+    }
+    if ((!unit || thoroughUnitCheck) && id.endsWith("type")) {
+      if (unit) throw Error(`Unit "${unit}" already assigned "${id}"`);
+      unit = "Type";
+    }
+    if (
+      (!unit || thoroughUnitCheck) &&
+      (id === "interval" || id.startsWith("block-interval"))
+    ) {
+      if (unit) throw Error(`Unit "${unit}" already assigned "${id}"`);
+      unit = "Seconds";
+    }
+    if ((!unit || thoroughUnitCheck) && id.endsWith("returns")) {
+      if (unit) throw Error(`Unit "${unit}" already assigned "${id}"`);
+      unit = "performance";
+    }
+    if ((!unit || thoroughUnitCheck) && id.endsWith("zscore")) {
+      if (unit) throw Error(`Unit "${unit}" already assigned "${id}"`);
+      unit = "zscore";
+    }
+    if ((!unit || thoroughUnitCheck) && id.endsWith("locktime")) {
+      if (unit) throw Error(`Unit "${unit}" already assigned "${id}"`);
+      unit = "Locktime";
+    }
+    if ((!unit || thoroughUnitCheck) && id.endsWith("cagr")) {
+      if (unit) throw Error(`Unit "${unit}" already assigned "${id}"`);
+      unit = "cagr";
+    }
+    if ((!unit || thoroughUnitCheck) && id.endsWith("version")) {
+      if (unit) throw Error(`Unit "${unit}" already assigned "${id}"`);
       unit = "Version";
-    } else if (id === "value") {
-      unit = "Sats";
-    } else {
+    }
+    if (
+      (!unit || thoroughUnitCheck) &&
+      (id === "txid" || (id.endsWith("bytes") && !id.endsWith("vbytes")))
+    ) {
+      if (unit) throw Error(`Unit "${unit}" already assigned "${id}"`);
+      unit = "Bytes";
+    }
+    if ((!unit || thoroughUnitCheck) && id.endsWith("standard-deviation")) {
+      if (unit) throw Error(`Unit "${unit}" already assigned "${id}"`);
+      unit = "sd";
+    }
+    if (
+      (!unit || thoroughUnitCheck) &&
+      (id.endsWith("-size") || id.endsWith("-size-sum"))
+    ) {
+      if (unit) throw Error(`Unit "${unit}" already assigned "${id}"`);
+      unit = "mb";
+    }
+    if (
+      (!unit || thoroughUnitCheck) &&
+      (id.endsWith("vsize") ||
+        id.endsWith("vbytes") ||
+        id.endsWith("-vbytes-sum"))
+    ) {
+      if (unit) throw Error(`Unit "${unit}" already assigned "${id}"`);
+      unit = "vB";
+    }
+    if ((!unit || thoroughUnitCheck) && id.includes("weight")) {
+      if (unit) throw Error(`Unit "${unit}" already assigned "${id}"`);
+      unit = "WU";
+    }
+    if ((!unit || thoroughUnitCheck) && id.endsWith("index")) {
+      if (unit) throw Error(`Unit "${unit}" already assigned "${id}"`);
+      unit = "Index";
+    }
+    if (
+      (!unit || thoroughUnitCheck) &&
+      (id === "date" || id === "date-fixed")
+    ) {
+      if (unit) throw Error(`Unit "${unit}" already assigned "${id}"`);
+      unit = "Date";
+    }
+    if (
+      (!unit || thoroughUnitCheck) &&
+      (id === "timestamp" || id === "timestamp-fixed")
+    ) {
+      if (unit) throw Error(`Unit "${unit}" already assigned "${id}"`);
+      unit = "Timestamp";
+    }
+    if ((!unit || thoroughUnitCheck) && id.endsWith("height")) {
+      if (unit) throw Error(`Unit "${unit}" already assigned "${id}"`);
+      unit = "Height";
+    }
+    if ((!unit || thoroughUnitCheck) && id.endsWith("epoch")) {
+      if (unit) throw Error(`Unit "${unit}" already assigned "${id}"`);
+      unit = "Epoch";
+    }
+    if ((!unit || thoroughUnitCheck) && id === "difficulty") {
+      if (unit) throw Error(`Unit "${unit}" already assigned "${id}"`);
+      unit = "Difficulty";
+    }
+    if ((!unit || thoroughUnitCheck) && id === "blockhash") {
+      if (unit) throw Error(`Unit "${unit}" already assigned "${id}"`);
+      unit = "Hash";
+    }
+    if (
+      (!unit || thoroughUnitCheck) &&
+      (id === "0" || id === "1" || id === "50" || id === "100")
+    ) {
+      if (unit) throw Error(`Unit "${unit}" already assigned "${id}"`);
+      unit = "constant";
+    }
+
+    if (!unit) {
       console.log();
       throw Error(`Unit not set for "${id}"`);
     }
-    return unit;
+    return /** @type {Unit} */ (unit);
   }
 
   const locale = {
@@ -1476,7 +1590,7 @@ function initEnv() {
     iphone,
     ipad,
     ios,
-    localhost: window.location.hostname === "localhost",
+    localhost,
   };
 }
 /** @typedef {ReturnType<typeof initEnv>} Env */

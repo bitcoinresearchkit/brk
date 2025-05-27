@@ -1,6 +1,6 @@
 use std::time::Duration;
 
-use crate::{Result, Version};
+use brk_core::{Result, Version};
 
 use super::{BoxedVecIterator, StoredIndex, StoredType};
 

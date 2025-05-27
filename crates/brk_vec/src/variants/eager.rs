@@ -10,16 +10,16 @@ use std::{
 
 use arc_swap::ArcSwap;
 use brk_core::{
-    Bitcoin, CheckedSub, Close, Date, DateIndex, Dollars, Height, Sats, StoredUsize, TxIndex,
+    Bitcoin, CheckedSub, Close, Date, DateIndex, Dollars, Error, Height, Result, Sats, StoredUsize,
+    TxIndex, Value, Version,
 };
 use brk_exit::Exit;
 use log::info;
 use memmap2::Mmap;
 
 use crate::{
-    AnyCollectableVec, AnyIterableVec, AnyVec, BoxedVecIterator, CollectableVec, Compressed, Error,
-    GenericStoredVec, Result, StoredIndex, StoredType, StoredVec, StoredVecIterator, Value,
-    VecIterator, Version,
+    AnyCollectableVec, AnyIterableVec, AnyVec, BoxedVecIterator, CollectableVec, Compressed,
+    GenericStoredVec, StoredIndex, StoredType, StoredVec, StoredVecIterator, VecIterator,
 };
 
 const ONE_KIB: usize = 1024;

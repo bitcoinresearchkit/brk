@@ -5,13 +5,13 @@ use brk_core::{
     InputIndex, MonthIndex, OpReturnIndex, OutputIndex, P2ABytes, P2AIndex, P2MSIndex, P2PK33Bytes,
     P2PK33Index, P2PK65Bytes, P2PK65Index, P2PKHBytes, P2PKHIndex, P2SHBytes, P2SHIndex, P2TRBytes,
     P2TRIndex, P2WPKHBytes, P2WPKHIndex, P2WSHBytes, P2WSHIndex, QuarterIndex, Sats, StoredUsize,
-    Timestamp, TxIndex, Txid, UnknownOutputIndex, WeekIndex, YearIndex,
+    Timestamp, TxIndex, Txid, UnknownOutputIndex, Version, WeekIndex, YearIndex,
 };
 use brk_exit::Exit;
 use brk_indexer::Indexer;
 use brk_vec::{
     AnyCollectableVec, CloneableAnyIterableVec, Compressed, Computation, ComputedVec,
-    ComputedVecFrom1, ComputedVecFrom2, EagerVec, StoredIndex, VecIterator, Version,
+    ComputedVecFrom1, ComputedVecFrom2, EagerVec, StoredIndex, VecIterator,
 };
 
 const VERSION: Version = Version::ZERO;

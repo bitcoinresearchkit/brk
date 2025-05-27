@@ -1,9 +1,10 @@
 use std::{fs, path::Path};
 
+use brk_core::Version;
 use brk_exit::Exit;
 use brk_fetcher::Fetcher;
 use brk_indexer::Indexer;
-use brk_vec::{AnyCollectableVec, Compressed, Computation, Version};
+use brk_vec::{AnyCollectableVec, Compressed, Computation};
 
 pub mod blocks;
 pub mod constants;

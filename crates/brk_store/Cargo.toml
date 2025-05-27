@@ -1,0 +1,16 @@
+[package]
+name = "brk_store"
+description = "A thin wrapper around fjall"
+keywords = ["store", "fjall"]
+categories = ["database"]
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+brk_core = { workspace = true }
+byteview = { workspace = true }
+color-eyre = { workspace = true }
+fjall = { workspace = true }
+zerocopy = { workspace = true }

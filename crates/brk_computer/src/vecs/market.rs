@@ -1,9 +1,9 @@
 use std::{fs, path::Path, thread};
 
-use brk_core::{Date, DateIndex, Dollars, Sats, StoredF32, StoredUsize};
+use brk_core::{Date, DateIndex, Dollars, Sats, StoredF32, StoredUsize, Version};
 use brk_exit::Exit;
 use brk_indexer::Indexer;
-use brk_vec::{AnyCollectableVec, Compressed, Computation, StoredIndex, VecIterator, Version};
+use brk_vec::{AnyCollectableVec, Compressed, Computation, StoredIndex, VecIterator};
 
 use super::{
     Indexes, fetched,
@@ -1097,17 +1097,17 @@ impl Vecs {
             starting_indexes,
             exit,
             |v, _, _, starting_indexes, exit| {
-                let mut total_subsidy_in_btc = transactions
+                let mut cumulative_subsidy_in_btc = transactions
                     .indexes_to_subsidy
                     .bitcoin
                     .dateindex
-                    .unwrap_total()
+                    .unwrap_cumulative()
                     .into_iter();
                 v.compute_transform(
                     starting_indexes.dateindex,
                     &fetched.timeindexes_to_close.dateindex,
                     |(i, close, ..)| {
-                        let supply = total_subsidy_in_btc.unwrap_get_inner(i);
+                        let supply = cumulative_subsidy_in_btc.unwrap_get_inner(i);
                         (i, *close * supply)
                     },
                     exit,

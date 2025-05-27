@@ -2,12 +2,11 @@ use std::{fs, path::Path};
 
 use brk_core::{
     CheckedSub, DifficultyEpoch, HalvingEpoch, Height, StoredU32, StoredU64, StoredUsize,
-    Timestamp, Weight,
+    Timestamp, Version, Weight,
 };
 use brk_exit::Exit;
 use brk_indexer::Indexer;
-use brk_parser::bitcoin;
-use brk_vec::{AnyCollectableVec, AnyIterableVec, Compressed, Computation, EagerVec, Version};
+use brk_vec::{AnyCollectableVec, AnyIterableVec, Compressed, Computation, EagerVec};
 
 use super::{
     Indexes,
@@ -71,7 +70,9 @@ impl Vecs {
                 true,
                 version + VERSION + Version::ZERO,
                 compressed,
-                StorableVecGeneatorOptions::default().add_sum().add_total(),
+                StorableVecGeneatorOptions::default()
+                    .add_sum()
+                    .add_cumulative(),
             )?,
             indexes_to_block_weight: ComputedVecsFromHeight::forced_import(
                 path,
@@ -79,7 +80,9 @@ impl Vecs {
                 false,
                 version + VERSION + Version::ZERO,
                 compressed,
-                StorableVecGeneatorOptions::default().add_sum().add_total(),
+                StorableVecGeneatorOptions::default()
+                    .add_sum()
+                    .add_cumulative(),
             )?,
             indexes_to_block_size: ComputedVecsFromHeight::forced_import(
                 path,
@@ -87,7 +90,9 @@ impl Vecs {
                 false,
                 version + VERSION + Version::ZERO,
                 compressed,
-                StorableVecGeneatorOptions::default().add_sum().add_total(),
+                StorableVecGeneatorOptions::default()
+                    .add_sum()
+                    .add_cumulative(),
             )?,
             height_to_vbytes: EagerVec::forced_import(
                 path,
@@ -101,7 +106,9 @@ impl Vecs {
                 false,
                 version + VERSION + Version::ZERO,
                 compressed,
-                StorableVecGeneatorOptions::default().add_sum().add_total(),
+                StorableVecGeneatorOptions::default()
+                    .add_sum()
+                    .add_cumulative(),
             )?,
             difficultyepoch_to_timestamp: EagerVec::forced_import(
                 path,

@@ -36,6 +36,10 @@ pub use brk_query as query;
 #[doc(inline)]
 pub use brk_server as server;
 
+#[cfg(feature = "store")]
+#[doc(inline)]
+pub use brk_store as store;
+
 #[cfg(feature = "vec")]
 #[doc(inline)]
 pub use brk_vec as vec;

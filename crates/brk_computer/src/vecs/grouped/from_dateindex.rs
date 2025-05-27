@@ -1,9 +1,11 @@
 use std::path::Path;
 
-use brk_core::{DateIndex, DecadeIndex, MonthIndex, QuarterIndex, WeekIndex, YearIndex};
+use brk_core::{
+    DateIndex, DecadeIndex, MonthIndex, QuarterIndex, Result, Version, WeekIndex, YearIndex,
+};
 use brk_exit::Exit;
 use brk_indexer::Indexer;
-use brk_vec::{AnyCollectableVec, Compressed, EagerVec, Result, Version};
+use brk_vec::{AnyCollectableVec, Compressed, EagerVec};
 
 use crate::vecs::{Indexes, indexes};
 

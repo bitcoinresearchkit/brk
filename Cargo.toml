@@ -29,6 +29,7 @@ brk_logger = { version = "0", path = "crates/brk_logger" }
 brk_parser = { version = "0", path = "crates/brk_parser" }
 brk_query = { version = "0", path = "crates/brk_query" }
 brk_server = { version = "0", path = "crates/brk_server" }
+brk_store = { version = "0", path = "crates/brk_store" }
 brk_vec = { version = "0", path = "crates/brk_vec" }
 byteview = "0.7.0"
 clap = { version = "4.5.38", features = ["string"] }
@@ -44,6 +45,7 @@ serde = { version = "1.0.219" }
 serde_derive = "1.0.219"
 serde_json = { version = "1.0.140", features = ["float_roundtrip"] }
 tabled = "0.19.0"
+tokio = { version = "1.45.1", features = ["rt-multi-thread"] }
 zerocopy = { version = "0.8.25" }
 zerocopy-derive = "0.8.25"
 

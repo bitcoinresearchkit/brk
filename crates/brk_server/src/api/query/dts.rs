@@ -57,16 +57,6 @@ impl DTS for Query<'static> {
 
         contents += "\n\nexport function createVecIdToIndexes() {\n";
 
-        // contents += &indexes
-        //     .iter()
-        //     .enumerate()
-        //     .map(|(i_of_i, i)| {
-        //         // let lowered = i.to_string().to_lowercase();
-        //         format!("  const {i} = /** @satisfies {{{i}}} */ ({i_of_i});",)
-        //     })
-        //     .collect::<Vec<_>>()
-        //     .join("\n");
-
         contents += "\n\n  return /** @type {const} */ ({\n";
 
         self.vec_trees

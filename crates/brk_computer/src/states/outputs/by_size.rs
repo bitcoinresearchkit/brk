@@ -107,31 +107,31 @@ impl<T> OutputsBySize<T> {
     pub fn get_mut(&mut self, group: usize) -> &mut T {
         if group == 0 {
             &mut self._0sat
-        } else if group == 10 {
+        } else if group == 1 {
             &mut self.from_1sat_to_10sats
-        } else if group == 100 {
+        } else if group == 10 {
             &mut self.from_10sats_to_100sats
-        } else if group == 1_000 {
+        } else if group == 100 {
             &mut self.from_100sats_to_1_000sats
-        } else if group == 10_000 {
+        } else if group == 1_000 {
             &mut self.from_1_000sats_to_10_000sats
-        } else if group == 100_000 {
+        } else if group == 10_000 {
             &mut self.from_10_000sats_to_100_000sats
-        } else if group == 1_000_000 {
+        } else if group == 100_000 {
             &mut self.from_100_000sats_to_1_000_000sats
-        } else if group == 10_000_000 {
+        } else if group == 1_000_000 {
             &mut self.from_1_000_000sats_to_10_000_000sats
-        } else if group == 1_00_000_000 {
+        } else if group == 10_000_000 {
             &mut self.from_10_000_000sats_to_1btc
-        } else if group == 10_00_000_000 {
+        } else if group == 1_00_000_000 {
             &mut self.from_1btc_to_10btc
-        } else if group == 100_00_000_000 {
+        } else if group == 10_00_000_000 {
             &mut self.from_10btc_to_100btc
-        } else if group == 1_000_00_000_000 {
+        } else if group == 100_00_000_000 {
             &mut self.from_100btc_to_1_000btc
-        } else if group == 10_000_00_000_000 {
+        } else if group == 1_000_00_000_000 {
             &mut self.from_1_000btc_to_10_000btc
-        } else if group == 100_000_00_000_000 {
+        } else if group == 10_000_00_000_000 {
             &mut self.from_10_000btc_to_100_000btc
         } else {
             &mut self.from_100_000btc

@@ -1,4 +1,4 @@
-use crate::{Error, Result};
+use brk_core::{Error, Result};
 
 use super::{AnyIterableVec, AnyVec, StoredIndex, StoredType};
 

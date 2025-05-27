@@ -6,11 +6,11 @@ use std::{
 };
 
 use arc_swap::ArcSwap;
-use brk_core::Height;
+use brk_core::{Error, Height, Result, Value, Version};
 
 use crate::{
-    AnyCollectableVec, AnyIterableVec, AnyVec, BoxedVecIterator, CollectableVec, Compressed, Error,
-    GenericStoredVec, Mmap, Result, StoredIndex, StoredType, StoredVec, Value, Version,
+    AnyCollectableVec, AnyIterableVec, AnyVec, BoxedVecIterator, CollectableVec, Compressed,
+    GenericStoredVec, Mmap, StoredIndex, StoredType, StoredVec,
 };
 
 use super::StoredVecIterator;

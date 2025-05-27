@@ -24,7 +24,7 @@ impl<T> OutputsByType<T> {
             OutputType::P2A => &self.spendable.p2a,
             OutputType::Empty => &self.spendable.empty,
             OutputType::Unknown => &self.spendable.unknown,
-            OutputType::OpReturn => &self.unspendable.op_return,
+            OutputType::OpReturn => &self.unspendable.opreturn,
         }
     }
 
@@ -41,7 +41,7 @@ impl<T> OutputsByType<T> {
             OutputType::P2A => &mut self.spendable.p2a,
             OutputType::Unknown => &mut self.spendable.unknown,
             OutputType::Empty => &mut self.spendable.empty,
-            OutputType::OpReturn => &mut self.unspendable.op_return,
+            OutputType::OpReturn => &mut self.unspendable.opreturn,
         }
     }
 

@@ -1,11 +1,8 @@
 use std::path::Path;
 
-use brk_core::{CheckedSub, StoredUsize};
+use brk_core::{CheckedSub, Result, StoredUsize, Version};
 use brk_exit::Exit;
-use brk_vec::{
-    AnyCollectableVec, AnyIterableVec, Compressed, EagerVec, Result, StoredIndex, StoredType,
-    Version,
-};
+use brk_vec::{AnyCollectableVec, AnyIterableVec, Compressed, EagerVec, StoredIndex, StoredType};
 use color_eyre::eyre::ContextCompat;
 
 use crate::utils::get_percentile;
@@ -29,7 +26,7 @@ where
     pub _10p: Option<Box<EagerVec<I, T>>>,
     pub min: Option<Box<EagerVec<I, T>>>,
     pub last: Option<Box<EagerVec<I, T>>>,
-    pub total: Option<Box<EagerVec<I, T>>>,
+    pub cumulative: Option<Box<EagerVec<I, T>>>,
 }
 
 const VERSION: Version = Version::ZERO;
@@ -141,11 +138,11 @@ where
                     .unwrap(),
                 )
             }),
-            total: options.total.then(|| {
+            cumulative: options.cumulative.then(|| {
                 Box::new(
                     EagerVec::forced_import(
                         path,
-                        &prefix("total"),
+                        &prefix("cumulative"),
                         version + VERSION + Version::ZERO,
                         compressed,
                     )
@@ -207,20 +204,20 @@ where
         source: &impl AnyIterableVec<I, T>,
         exit: &Exit,
     ) -> Result<()> {
-        if self.total.is_none() {
+        if self.cumulative.is_none() {
             return Ok(());
         };
 
         let index = self.starting_index(max_from);
 
-        let total_vec = self.total.as_mut().unwrap();
+        let cumulative_vec = self.cumulative.as_mut().unwrap();
 
-        let mut total = index.decremented().map_or(T::from(0_usize), |index| {
-            total_vec.iter().unwrap_get_inner(index)
+        let mut cumulative = index.decremented().map_or(T::from(0_usize), |index| {
+            cumulative_vec.iter().unwrap_get_inner(index)
         });
         source.iter_at(index).try_for_each(|(i, v)| -> Result<()> {
-            total = total.clone() + v.into_inner();
-            total_vec.forced_push_at(i, total.clone(), exit)
+            cumulative = cumulative.clone() + v.into_inner();
+            cumulative_vec.forced_push_at(i, cumulative.clone(), exit)
         })?;
 
         self.safe_flush(exit)?;
@@ -248,11 +245,11 @@ where
         let mut count_indexes_iter = count_indexes.iter();
         let mut source_iter = source.iter();
 
-        let total_vec = self.total.as_mut();
+        let cumulative_vec = self.cumulative.as_mut();
 
-        let mut total = total_vec.map(|total_vec| {
+        let mut cumulative = cumulative_vec.map(|cumulative_vec| {
             index.decremented().map_or(T::from(0_usize), |index| {
-                total_vec.iter().unwrap_get_inner(index)
+                cumulative_vec.iter().unwrap_get_inner(index)
             })
         });
 
@@ -286,8 +283,9 @@ where
                     last.forced_push_at(index, v, exit)?;
                 }
 
-                let needs_sum_or_total = self.sum.is_some() || self.total.is_some();
-                let needs_average_sum_or_total = needs_sum_or_total || self.average.is_some();
+                let needs_sum_or_cumulative = self.sum.is_some() || self.cumulative.is_some();
+                let needs_average_sum_or_cumulative =
+                    needs_sum_or_cumulative || self.average.is_some();
                 let needs_sorted = self.max.is_some()
                     || self._90p.is_some()
                     || self._75p.is_some()
@@ -295,7 +293,7 @@ where
                     || self._25p.is_some()
                     || self._10p.is_some()
                     || self.min.is_some();
-                let needs_values = needs_sorted || needs_average_sum_or_total;
+                let needs_values = needs_sorted || needs_average_sum_or_cumulative;
 
                 if needs_values {
                     source_iter.set(first_index);
@@ -356,7 +354,7 @@ where
                         }
                     }
 
-                    if needs_average_sum_or_total {
+                    if needs_average_sum_or_cumulative {
                         let len = values.len();
                         let sum = values.into_iter().fold(T::from(0), |a, b| a + b);
 
@@ -365,15 +363,15 @@ where
                             average.forced_push_at(i, avg, exit)?;
                         }
 
-                        if needs_sum_or_total {
+                        if needs_sum_or_cumulative {
                             if let Some(sum_vec) = self.sum.as_mut() {
                                 sum_vec.forced_push_at(i, sum.clone(), exit)?;
                             }
 
-                            if let Some(total_vec) = self.total.as_mut() {
-                                let t = total.as_ref().unwrap().clone() + sum;
-                                total.replace(t.clone());
-                                total_vec.forced_push_at(i, t, exit)?;
+                            if let Some(cumulative_vec) = self.cumulative.as_mut() {
+                                let t = cumulative.as_ref().unwrap().clone() + sum;
+                                cumulative.replace(t.clone());
+                                cumulative_vec.forced_push_at(i, t, exit)?;
                             }
                         }
                     }
@@ -423,9 +421,9 @@ where
         let mut source_average_iter = source.average.as_ref().map(|f| f.iter());
         let mut source_sum_iter = source.sum.as_ref().map(|f| f.iter());
 
-        let mut total = self.total.as_mut().map(|total_vec| {
+        let mut cumulative = self.cumulative.as_mut().map(|cumulative_vec| {
             index.decremented().map_or(T::from(0_usize), |index| {
-                total_vec.iter().unwrap_get_inner(index)
+                cumulative_vec.iter().unwrap_get_inner(index)
             })
         });
 
@@ -457,10 +455,11 @@ where
                     last.forced_push_at(index, v, exit)?;
                 }
 
-                let needs_sum_or_total = self.sum.is_some() || self.total.is_some();
-                let needs_average_sum_or_total = needs_sum_or_total || self.average.is_some();
+                let needs_sum_or_cumulative = self.sum.is_some() || self.cumulative.is_some();
+                let needs_average_sum_or_cumulative =
+                    needs_sum_or_cumulative || self.average.is_some();
                 let needs_sorted = self.max.is_some() || self.min.is_some();
-                let needs_values = needs_sorted || needs_average_sum_or_total;
+                let needs_values = needs_sorted || needs_average_sum_or_cumulative;
 
                 if needs_values {
                     if needs_sorted {
@@ -487,7 +486,7 @@ where
                         }
                     }
 
-                    if needs_average_sum_or_total {
+                    if needs_average_sum_or_cumulative {
                         if let Some(average) = self.average.as_mut() {
                             let source_average_iter = source_average_iter.as_mut().unwrap();
                             source_average_iter.set(first_index);
@@ -497,14 +496,14 @@ where
                                 .collect::<Vec<_>>();
 
                             let len = values.len();
-                            let total = values.into_iter().fold(T::from(0), |a, b| a + b);
-                            // TODO: Multiply by count then divide by total
+                            let cumulative = values.into_iter().fold(T::from(0), |a, b| a + b);
+                            // TODO: Multiply by count then divide by cumulative
                             // Right now it's not 100% accurate as there could be more or less elements in the lower timeframe (28 days vs 31 days in a month for example)
-                            let avg = total / len;
+                            let avg = cumulative / len;
                             average.forced_push_at(i, avg, exit)?;
                         }
 
-                        if needs_sum_or_total {
+                        if needs_sum_or_cumulative {
                             let source_sum_iter = source_sum_iter.as_mut().unwrap();
                             source_sum_iter.set(first_index);
                             let values = source_sum_iter
@@ -518,10 +517,10 @@ where
                                 sum_vec.forced_push_at(i, sum.clone(), exit)?;
                             }
 
-                            if let Some(total_vec) = self.total.as_mut() {
-                                let t = total.as_ref().unwrap().clone() + sum;
-                                total.replace(t.clone());
-                                total_vec.forced_push_at(i, t, exit)?;
+                            if let Some(cumulative_vec) = self.cumulative.as_mut() {
+                                let t = cumulative.as_ref().unwrap().clone() + sum;
+                                cumulative.replace(t.clone());
+                                cumulative_vec.forced_push_at(i, t, exit)?;
                             }
                         }
                     }
@@ -581,8 +580,8 @@ where
         self.last.as_ref().unwrap()
     }
     #[allow(unused)]
-    pub fn unwrap_total(&self) -> &EagerVec<I, T> {
-        self.total.as_ref().unwrap()
+    pub fn unwrap_cumulative(&self) -> &EagerVec<I, T> {
+        self.cumulative.as_ref().unwrap()
     }
 
     pub fn vecs(&self) -> Vec<&dyn AnyCollectableVec> {
@@ -609,8 +608,8 @@ where
         if let Some(sum) = self.sum.as_ref() {
             v.push(sum.as_ref());
         }
-        if let Some(total) = self.total.as_ref() {
-            v.push(total.as_ref());
+        if let Some(cumulative) = self.cumulative.as_ref() {
+            v.push(cumulative.as_ref());
         }
         if let Some(_90p) = self._90p.as_ref() {
             v.push(_90p.as_ref());
@@ -650,8 +649,8 @@ where
         if let Some(sum) = self.sum.as_mut() {
             sum.safe_flush(exit)?;
         }
-        if let Some(total) = self.total.as_mut() {
-            total.safe_flush(exit)?;
+        if let Some(cumulative) = self.cumulative.as_mut() {
+            cumulative.safe_flush(exit)?;
         }
         if let Some(_90p) = self._90p.as_mut() {
             _90p.safe_flush(exit)?;
@@ -691,8 +690,8 @@ where
         if let Some(sum) = self.sum.as_mut() {
             sum.validate_computed_version_or_reset_file(Version::ZERO + version)?;
         }
-        if let Some(total) = self.total.as_mut() {
-            total.validate_computed_version_or_reset_file(Version::ZERO + version)?;
+        if let Some(cumulative) = self.cumulative.as_mut() {
+            cumulative.validate_computed_version_or_reset_file(Version::ZERO + version)?;
         }
         if let Some(_90p) = self._90p.as_mut() {
             _90p.validate_computed_version_or_reset_file(Version::ZERO + version)?;
@@ -724,7 +723,7 @@ pub struct StorableVecGeneatorOptions {
     min: bool,
     first: bool,
     last: bool,
-    total: bool,
+    cumulative: bool,
 }
 
 impl StorableVecGeneatorOptions {
@@ -788,8 +787,8 @@ impl StorableVecGeneatorOptions {
         self
     }
 
-    pub fn add_total(mut self) -> Self {
-        self.total = true;
+    pub fn add_cumulative(mut self) -> Self {
+        self.cumulative = true;
         self
     }
 
@@ -848,8 +847,8 @@ impl StorableVecGeneatorOptions {
     }
 
     #[allow(unused)]
-    pub fn rm_total(mut self) -> Self {
-        self.total = false;
+    pub fn rm_cumulative(mut self) -> Self {
+        self.cumulative = false;
         self
     }
 
@@ -890,7 +889,7 @@ impl StorableVecGeneatorOptions {
             self.min,
             self.first,
             self.last,
-            self.total,
+            self.cumulative,
         ]
         .iter()
         .filter(|b| **b)
@@ -900,7 +899,7 @@ impl StorableVecGeneatorOptions {
 
     pub fn copy_self_extra(&self) -> Self {
         Self {
-            total: self.total,
+            cumulative: self.cumulative,
             ..Self::default()
         }
     }

@@ -4,10 +4,11 @@ use brk_core::{
     AddressBytes, BlockHash, EmptyOutputIndex, Height, InputIndex, OpReturnIndex, OutputIndex,
     OutputType, OutputTypeIndex, P2ABytes, P2AIndex, P2MSIndex, P2PK33Bytes, P2PK33Index,
     P2PK65Bytes, P2PK65Index, P2PKHBytes, P2PKHIndex, P2SHBytes, P2SHIndex, P2TRBytes, P2TRIndex,
-    P2WPKHBytes, P2WPKHIndex, P2WSHBytes, P2WSHIndex, RawLockTime, Sats, StoredF64, StoredU32,
-    StoredUsize, Timestamp, TxIndex, TxVersion, Txid, UnknownOutputIndex, Weight,
+    P2WPKHBytes, P2WPKHIndex, P2WSHBytes, P2WSHIndex, RawLockTime, Result, Sats, StoredF64,
+    StoredU32, StoredUsize, Timestamp, TxIndex, TxVersion, Txid, UnknownOutputIndex, Version,
+    Weight,
 };
-use brk_vec::{AnyCollectableVec, AnyIndexedVec, Compressed, IndexedVec, Result, Version};
+use brk_vec::{AnyCollectableVec, AnyIndexedVec, Compressed, IndexedVec};
 use rayon::prelude::*;
 
 use crate::Indexes;
@@ -340,7 +341,7 @@ impl Vecs {
         })
     }
 
-    pub fn rollback_if_needed(&mut self, starting_indexes: &Indexes) -> brk_vec::Result<()> {
+    pub fn rollback_if_needed(&mut self, starting_indexes: &Indexes) -> Result<()> {
         let saved_height = starting_indexes.height.decremented().unwrap_or_default();
 
         let &Indexes {
@@ -458,7 +459,7 @@ impl Vecs {
         &mut self,
         index: OutputTypeIndex,
         bytes: AddressBytes,
-    ) -> brk_vec::Result<()> {
+    ) -> Result<()> {
         match bytes {
             AddressBytes::P2PK65(bytes) => self
                 .p2pk65index_to_p2pk65bytes

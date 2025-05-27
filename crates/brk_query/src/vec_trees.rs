@@ -18,8 +18,12 @@ impl<'a> VecTrees<'a> {
         let split = name.split("_to_").collect::<Vec<_>>();
         if split.len() != 2
             && !(split.len() == 3
-                && (split.get(1) == Some(&"up")
-                    || split.get(1).is_some_and(|s| s.starts_with("from"))))
+                && split.get(1).is_some_and(|s| {
+                    s == &"up"
+                        || s.starts_with("from")
+                        || s == &"cumulative_up"
+                        || s.starts_with("cumulative_from")
+                }))
         {
             dbg!(&name, &split);
             panic!();

@@ -4,7 +4,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use crate::{Error, Result};
+use brk_core::{Error, Result};
 
 pub trait StoredIndex
 where

@@ -1,6 +1,6 @@
 use std::{fs, io, ops::Deref, path::Path};
 
-use crate::{Error, Result};
+use brk_core::{Error, Result};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Compressed(bool);

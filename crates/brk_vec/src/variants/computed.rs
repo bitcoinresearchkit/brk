@@ -4,11 +4,11 @@ use brk_exit::Exit;
 use clap_derive::ValueEnum;
 use serde::{Deserialize, Serialize};
 
-use brk_core::StoredPhantom;
+use brk_core::{Result, StoredPhantom, Value, Version};
 
 use crate::{
     AnyCollectableVec, AnyIterableVec, AnyVec, BaseVecIterator, BoxedAnyIterableVec,
-    BoxedVecIterator, CollectableVec, Compressed, Result, StoredIndex, StoredType, Value, Version,
+    BoxedVecIterator, CollectableVec, Compressed, StoredIndex, StoredType,
 };
 
 use super::{

@@ -12,13 +12,14 @@ use std::{
 
 use brk_core::{
     AddressBytes, AddressBytesHash, BlockHash, BlockHashPrefix, Height, InputIndex, OutputIndex,
-    OutputType, OutputTypeIndex, Sats, Timestamp, TxIndex, Txid, TxidPrefix, Vin, Vout, setrlimit,
+    OutputType, OutputTypeIndex, Sats, Timestamp, TxIndex, Txid, TxidPrefix, Version, Vin, Vout,
+    setrlimit,
 };
-pub use brk_parser::*;
 
 use bitcoin::{Transaction, TxIn, TxOut};
 use brk_exit::Exit;
-use brk_vec::{AnyVec, Compressed, VecIterator, Version};
+use brk_parser::Parser;
+use brk_vec::{AnyVec, Compressed, VecIterator};
 use color_eyre::eyre::{ContextCompat, eyre};
 use fjall::TransactionalKeyspace;
 use log::{error, info};
@@ -82,7 +83,7 @@ impl Indexer {
     pub fn index(
         &mut self,
         parser: &Parser,
-        rpc: &'static rpc::Client,
+        rpc: &'static bitcoincore_rpc::Client,
         exit: &Exit,
     ) -> color_eyre::Result<Indexes> {
         let starting_indexes = Indexes::try_from((

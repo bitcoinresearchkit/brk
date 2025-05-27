@@ -5,7 +5,7 @@ use brk_core::{default_bitcoin_path, default_brk_path};
 use brk_exit::Exit;
 use brk_fetcher::Fetcher;
 use brk_indexer::Indexer;
-use brk_parser::{Parser, rpc};
+use brk_parser::Parser;
 use brk_vec::Computation;
 
 pub fn main() -> color_eyre::Result<()> {
@@ -15,9 +15,9 @@ pub fn main() -> color_eyre::Result<()> {
 
     let bitcoin_dir = default_bitcoin_path();
 
-    let rpc = Box::leak(Box::new(rpc::Client::new(
+    let rpc = Box::leak(Box::new(bitcoincore_rpc::Client::new(
         "http://localhost:8332",
-        rpc::Auth::CookieFile(bitcoin_dir.join(".cookie")),
+        bitcoincore_rpc::Auth::CookieFile(bitcoin_dir.join(".cookie")),
     )?));
     let exit = Exit::new();
 

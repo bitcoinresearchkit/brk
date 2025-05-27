@@ -1,6 +1,6 @@
 use std::path::Path;
 
-use brk_vec::Version;
+use brk_core::Version;
 use fjall::TransactionalKeyspace;
 
 const _VERSION: Version = Version::ZERO;
