@@ -8,9 +8,10 @@ use brk_vec::{
     GenericStoredVec, StoredIndex, StoredVec, UnsafeSlice, VecIterator,
 };
 use log::info;
+use outputs::OutputCohorts;
 use rayon::prelude::*;
 
-use crate::states::{
+use brk_state::{
     BlockState, OutputFilter, Outputs, OutputsByEpoch, OutputsByFrom, OutputsByRange,
     OutputsBySize, OutputsBySpendableType, OutputsByTerm, OutputsByUpTo, SupplyState, Transacted,
 };
@@ -22,6 +23,7 @@ use super::{
 };
 
 pub mod cohort;
+mod outputs;
 
 const VERSION: Version = Version::ZERO;
 const BYSIZE_VERSION: Version = Version::ONE;

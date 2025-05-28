@@ -15,6 +15,7 @@ brk_fetcher = { workspace = true }
 brk_indexer = { workspace = true }
 brk_logger = { workspace = true }
 brk_parser = { workspace = true }
+brk_state = { workspace = true }
 brk_vec = { workspace = true }
 clap = { workspace = true }
 clap_derive = { workspace = true }

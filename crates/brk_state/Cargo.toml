@@ -1,0 +1,16 @@
+[package]
+name = "brk_state"
+description = "States used primarily by the computer"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+brk_core = { workspace = true }
+brk_vec = { workspace = true }
+brk_store = { workspace = true }
+rayon = { workspace = true }
+serde = { workspace = true }
+zerocopy = { workspace = true }
+zerocopy-derive = { workspace = true }

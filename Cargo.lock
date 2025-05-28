@@ -393,6 +393,7 @@ dependencies = [
  "brk_parser",
  "brk_query",
  "brk_server",
+ "brk_state",
  "brk_store",
  "brk_vec",
 ]
@@ -434,6 +435,7 @@ dependencies = [
  "brk_indexer",
  "brk_logger",
  "brk_parser",
+ "brk_state",
  "brk_vec",
  "clap",
  "clap_derive",
@@ -581,6 +583,19 @@ dependencies = [
  "tower-http",
  "tracing",
  "zip",
+]
+
+[[package]]
+name = "brk_state"
+version = "0.0.40"
+dependencies = [
+ "brk_core",
+ "brk_store",
+ "brk_vec",
+ "rayon",
+ "serde",
+ "zerocopy",
+ "zerocopy-derive",
 ]
 
 [[package]]
