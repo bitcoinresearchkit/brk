@@ -1,34 +1,17 @@
-// @ts-check
-
 const version = "v1";
 
 self.addEventListener("install", (_event) => {
-  console.log("service-worker: install");
-
-  const event = /** @type {any} */ (_event);
-
-  event.waitUntil(
-    caches.open(version).then((cache) => {
-      return cache.addAll([
-        "/",
-        "/index.html",
-        "/assets/fonts/geist_mono_var_1_4_01.woff2",
-        "/scripts/main.js",
-        "/scripts/options.js",
-        "/scripts/chart.js",
-        "/styles/chart.css",
-        "/scripts/simulation.js",
-        "/styles/simulation.css",
-        "/packages/lean-qr/v2.3.4/script.js",
-        "/packages/lightweight-charts/v5.0.6-treeshaked/script.js",
-        "/packages/solid-signals/v0.3.0-treeshaked/script.js",
-        "/packages/ufuzzy/v1.0.14/script.js",
-      ]);
-    }),
-  );
-
-  // @ts-ignore
+  console.log("sw: install");
+  // The worker skips waiting and becomes active immediately
   self.skipWaiting();
+});
+
+self.addEventListener("activate", (event) => {
+  console.log("sw: active");
+  event.waitUntil(
+    // Claim clients, so the SW starts controlling pages immediately
+    self.clients.claim(),
+  );
 });
 
 self.addEventListener("fetch", (_event) => {
@@ -56,18 +39,20 @@ self.addEventListener("fetch", (_event) => {
   }
   request = new Request(url, request.mode !== "navigate" ? request : undefined);
 
-  console.log(`service-worker: fetching: ${url}`);
+  console.log(request);
+
+  console.log(`service-worker: fetch ${url}`);
 
   event.respondWith(
     caches.match(request).then(async (cachedResponse) => {
       return fetch(request)
         .then((response) => {
-          const { status } = response;
+          const { status, type } = response;
 
           if (method !== "GET" || slashApiSlashMatches) {
             // API calls are cached in script.js
             return response;
-          } else if (status === 200 || status === 304) {
+          } else if ((status === 200 || status === 304) && type === "basic") {
             if (status === 200) {
               const clonedResponse = response.clone();
               caches.open(version).then((cache) => {

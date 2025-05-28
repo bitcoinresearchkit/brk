@@ -23,8 +23,6 @@ export function init({
   vecsResources,
   vecIdToIndexes,
 }) {
-  console.log("init chart state");
-
   elements.charts.append(utils.dom.createShadow("left"));
   elements.charts.append(utils.dom.createShadow("right"));
 
@@ -223,7 +221,7 @@ export function init({
               { blueprints: option.bottom, paneIndex: 1 },
             ].forEach(({ blueprints, paneIndex }) => {
               const unit = paneIndex ? bottomUnit : topUnit;
-              console.log({ unit });
+
               blueprints[unit]?.forEach((blueprint) => {
                 const indexes = /** @type {readonly number[]} */ (
                   vecIdToIndexes[blueprint.key]

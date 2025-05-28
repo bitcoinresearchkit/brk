@@ -13,12 +13,12 @@ pub mod grouped;
 pub mod indexes;
 pub mod market;
 pub mod mining;
+pub mod statefull;
 pub mod transactions;
-pub mod utxos;
 
 pub use indexes::Indexes;
 
-const VERSION: Version = Version::ZERO;
+const VERSION: Version = Version::ONE;
 
 #[derive(Clone)]
 pub struct Vecs {
@@ -28,7 +28,7 @@ pub struct Vecs {
     pub mining: mining::Vecs,
     pub market: market::Vecs,
     pub transactions: transactions::Vecs,
-    pub utxos: utxos::Vecs,
+    pub statefull: statefull::Vecs,
     pub fetched: Option<fetched::Vecs>,
 }
 
@@ -86,7 +86,7 @@ impl Vecs {
                 computation,
                 compressed,
             )?,
-            utxos: utxos::Vecs::forced_import(
+            statefull: statefull::Vecs::forced_import(
                 path,
                 version + VERSION + Version::ZERO,
                 computation,
@@ -154,7 +154,7 @@ impl Vecs {
             )?;
         }
 
-        self.utxos.compute(
+        self.statefull.compute(
             indexer,
             &self.indexes,
             &self.transactions,
@@ -174,7 +174,7 @@ impl Vecs {
             self.mining.vecs(),
             self.market.vecs(),
             self.transactions.vecs(),
-            self.utxos.vecs(),
+            self.statefull.vecs(),
             self.fetched.as_ref().map_or(vec![], |v| v.vecs()),
         ]
         .into_iter()

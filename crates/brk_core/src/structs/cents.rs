@@ -22,11 +22,11 @@ use super::Dollars;
     KnownLayout,
     Serialize,
 )]
-pub struct Cents(u64);
+pub struct Cents(i64);
 
 impl From<Dollars> for Cents {
     fn from(value: Dollars) -> Self {
-        Self((*value * 100.0).round() as u64)
+        Self((*value * 100.0).round() as i64)
     }
 }
 
@@ -36,15 +36,36 @@ impl From<Cents> for f64 {
     }
 }
 
+impl From<i64> for Cents {
+    fn from(value: i64) -> Self {
+        Self(value)
+    }
+}
+
 impl From<u64> for Cents {
     fn from(value: u64) -> Self {
-        Self(value)
+        Self(value as i64)
+    }
+}
+
+impl From<usize> for Cents {
+    fn from(value: usize) -> Self {
+        Self(value as i64)
+    }
+}
+
+impl From<Cents> for i64 {
+    fn from(value: Cents) -> Self {
+        value.0
     }
 }
 
 impl From<Cents> for u64 {
     fn from(value: Cents) -> Self {
-        value.0
+        if value.0 < 0 {
+            panic!("Shouldn't convert neg cents to u64")
+        }
+        value.0 as u64
     }
 }
 
@@ -58,21 +79,24 @@ impl Add for Cents {
 impl Div<usize> for Cents {
     type Output = Self;
     fn div(self, rhs: usize) -> Self::Output {
-        Self(self.0 / rhs as u64)
+        Self(self.0 / rhs as i64)
     }
 }
 
 impl From<u128> for Cents {
     fn from(value: u128) -> Self {
-        if value > u64::MAX as u128 {
-            panic!("u128 bigger than u64")
+        if value > i64::MAX as u128 {
+            panic!("u128 bigger than i64")
         }
-        Self(value as u64)
+        Self(value as i64)
     }
 }
 
 impl From<Cents> for u128 {
     fn from(value: Cents) -> Self {
+        if value.0 < 0 {
+            panic!("Shouldn't convert neg cents to u128")
+        }
         value.0 as u128
     }
 }
@@ -87,7 +111,7 @@ impl Mul<Cents> for Cents {
 impl Mul<usize> for Cents {
     type Output = Cents;
     fn mul(self, rhs: usize) -> Self::Output {
-        Self(self.0 * rhs as u64)
+        Self(self.0 * rhs as i64)
     }
 }
 

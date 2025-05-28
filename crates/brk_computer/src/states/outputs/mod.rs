@@ -62,7 +62,7 @@ impl<T> Outputs<T> {
     }
 }
 
-impl Outputs<(OutputFilter, vecs::utxos::cohort::Vecs)> {
+impl Outputs<(OutputFilter, vecs::statefull::cohort::Vecs)> {
     pub fn tick_tock_next_block(&mut self, chain_state: &[BlockState], timestamp: Timestamp) {
         if chain_state.is_empty() {
             return;
