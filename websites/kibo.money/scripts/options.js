@@ -875,9 +875,9 @@ function createPartialOptions(colors) {
   }
 
   /**
-   * @typedef {"-ratio"} RatioCapSuffix
-   * @typedef {EndsWith<RatioCapSuffix>} VecIdRatioCap
-   * @typedef {WithoutSuffix<VecIdRatioCap, RatioCapSuffix>} VecIdRatioCapBase
+   * @typedef {"-ratio-zscore"} RatioZScoreCapSuffix
+   * @typedef {EndsWith<RatioZScoreCapSuffix>} VecIdRatioZScoreCap
+   * @typedef {WithoutSuffix<VecIdRatioZScoreCap, RatioZScoreCapSuffix>} VecIdRatioZScoreCapBase
    */
 
   /**
@@ -886,7 +886,7 @@ function createPartialOptions(colors) {
    * @param {string} args.name
    * @param {string} args.legend
    * @param {string} args.title
-   * @param {VecIdRatioCapBase} args.key
+   * @param {VecIdRatioZScoreCapBase} args.key
    * @param {Color} [args.color]
    */
   function createPriceWithRatio({ name, title, legend, key, color }) {
@@ -1230,7 +1230,7 @@ function createPartialOptions(colors) {
                     color: useGroupName ? color : colors.green,
                   }),
                   createBaseSeries({
-                    key: `${key}realized-profit-sum`,
+                    key: `${key}realized-profit`,
                     name: useGroupName ? name : "Profit",
                     color: useGroupName ? color : colors.green,
                   }),
@@ -1249,7 +1249,7 @@ function createPartialOptions(colors) {
                     color: useGroupName ? color : colors.red,
                   }),
                   createBaseSeries({
-                    key: `${key}realized-loss-sum`,
+                    key: `${key}realized-loss`,
                     name: useGroupName ? name : "Loss",
                     color: useGroupName ? color : colors.red,
                   }),

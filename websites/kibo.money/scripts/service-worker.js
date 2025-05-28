@@ -1,23 +1,19 @@
 const version = "v1";
 
-self.addEventListener("install", (_event) => {
+/** @type {ServiceWorkerGlobalScope} */
+const sw = /** @type {any} */ (self);
+
+sw.addEventListener("install", (_event) => {
   console.log("sw: install");
-  // The worker skips waiting and becomes active immediately
-  self.skipWaiting();
+  sw.skipWaiting();
 });
 
-self.addEventListener("activate", (event) => {
+sw.addEventListener("activate", (event) => {
   console.log("sw: active");
-  event.waitUntil(
-    // Claim clients, so the SW starts controlling pages immediately
-    self.clients.claim(),
-  );
+  event.waitUntil(sw.clients.claim());
 });
 
-self.addEventListener("fetch", (_event) => {
-  const event = /** @type {any} */ (_event);
-
-  /** @type {Request} */
+sw.addEventListener("fetch", (event) => {
   let request = event.request;
   const method = request.method;
   let url = request.url;
@@ -67,7 +63,13 @@ self.addEventListener("fetch", (_event) => {
         .catch(() => {
           console.log("service-worker: offline");
 
-          return cachedResponse;
+          return (
+            cachedResponse ||
+            new Response("Offline", {
+              status: 503,
+              statusText: "Service Unavailable",
+            })
+          );
         });
     }),
   );

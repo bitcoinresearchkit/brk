@@ -29,6 +29,7 @@ brk_logger = { version = "0", path = "crates/brk_logger" }
 brk_parser = { version = "0", path = "crates/brk_parser" }
 brk_query = { version = "0", path = "crates/brk_query" }
 brk_server = { version = "0", path = "crates/brk_server" }
+brk_state = { version = "0", path = "crates/brk_state" }
 brk_store = { version = "0", path = "crates/brk_store" }
 brk_vec = { version = "0", path = "crates/brk_vec" }
 byteview = "0.7.0"

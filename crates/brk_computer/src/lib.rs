@@ -11,7 +11,6 @@ use brk_fetcher::Fetcher;
 use brk_indexer::Indexer;
 use brk_vec::{AnyCollectableVec, Compressed, Computation};
 
-mod states;
 mod stores;
 mod utils;
 mod vecs;

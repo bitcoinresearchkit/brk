@@ -5,18 +5,16 @@ use brk_core::{
 };
 use brk_exit::Exit;
 use brk_indexer::Indexer;
+use brk_state::{CohortState, RealizedState};
 use brk_vec::{AnyCollectableVec, AnyVec, Compressed, Computation, EagerVec, VecIterator};
 
-use crate::{
-    states::{CohortState, RealizedState},
-    vecs::{
-        Indexes, fetched,
-        grouped::{
-            ComputedRatioVecsFromDateIndex, ComputedValueVecsFromHeight, ComputedVecsFromHeight,
-            StorableVecGeneatorOptions,
-        },
-        indexes,
+use crate::vecs::{
+    Indexes, fetched,
+    grouped::{
+        ComputedRatioVecsFromDateIndex, ComputedValueVecsFromHeight, ComputedVecsFromHeight,
+        StorableVecGeneatorOptions,
     },
+    indexes,
 };
 
 const VERSION: Version = Version::ZERO;

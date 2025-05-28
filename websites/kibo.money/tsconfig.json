@@ -4,7 +4,8 @@
     "strict": true,
     "target": "ESNext",
     "module": "ESNext",
-    "outDir": "/tmp/kibo"
+    "outDir": "/tmp/kibo",
+    "lib": ["DOM", "DOM.Iterable", "ESNext", "WebWorker"]
   },
   "exclude": ["assets", "packages", "ignore"]
 }
