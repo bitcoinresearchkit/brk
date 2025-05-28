@@ -44,7 +44,6 @@ export default import("./v5.0.6-treeshaked/script.js").then((lc) => {
     elements,
     options: _options = {},
   }) {
-    console.log(elements.style.fontFamily);
     /** @satisfies {DeepPartial<ChartOptions>} */
     const options = {
       autoSize: true,
@@ -199,7 +198,6 @@ export default import("./v5.0.6-treeshaked/script.js").then((lc) => {
      */
     function createSetFetchedDataEffect(series, valuesResource) {
       const fetchedKey = vecsResources.defaultFetchedKey;
-      console.log(fetchedKey);
 
       signals.runWithOwner(owner, () =>
         signals.createEffect(

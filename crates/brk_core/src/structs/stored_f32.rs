@@ -1,3 +1,4 @@
+use core::panic;
 use std::{
     cmp::Ordering,
     ops::{Add, Div, Mul, Sub},
@@ -24,7 +25,16 @@ impl From<f32> for StoredF32 {
 
 impl From<f64> for StoredF32 {
     fn from(value: f64) -> Self {
+        if value > f32::MAX as f64 {
+            panic!("f64 is too big")
+        }
         Self(value as f32)
+    }
+}
+
+impl From<StoredF32> for f64 {
+    fn from(value: StoredF32) -> Self {
+        value.0 as f64
     }
 }
 

@@ -147,10 +147,17 @@ impl Mul<Bitcoin> for Dollars {
 impl Mul<StoredF32> for Dollars {
     type Output = Self;
     fn mul(self, rhs: StoredF32) -> Self::Output {
+        self * *rhs as f64
+    }
+}
+
+impl Mul<f64> for Dollars {
+    type Output = Self;
+    fn mul(self, rhs: f64) -> Self::Output {
         if rhs.is_nan() {
             self
         } else {
-            Self::from(Cents::from(Self::from(self.0 * *rhs as f64)))
+            Self::from(Cents::from(self) * Cents::from(Dollars::from(rhs)))
         }
     }
 }
@@ -204,7 +211,9 @@ impl CheckedSub for Dollars {
 
 impl CheckedSub<usize> for Dollars {
     fn checked_sub(self, rhs: usize) -> Option<Self> {
-        Some(Self(self.0 - rhs as f64))
+        Some(Dollars::from(
+            Cents::from(self).checked_sub(Cents::from(rhs)).unwrap(),
+        ))
     }
 }
 

@@ -1153,6 +1153,7 @@
         window.document.documentElement.dataset.display = "standalone";
       }
 
+      console.log(navigator);
       if ("serviceWorker" in navigator) {
         navigator.serviceWorker.register("/scripts/service-worker.js");
       }

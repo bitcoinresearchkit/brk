@@ -32,7 +32,7 @@ brk_server = { version = "0", path = "crates/brk_server" }
 brk_store = { version = "0", path = "crates/brk_store" }
 brk_vec = { version = "0", path = "crates/brk_vec" }
 byteview = "0.7.0"
-clap = { version = "4.5.38", features = ["string"] }
+clap = { version = "4.5.39", features = ["string"] }
 clap_derive = "4.5.32"
 color-eyre = "0.6.4"
 derive_deref = "1.1.1"

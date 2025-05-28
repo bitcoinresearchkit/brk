@@ -194,6 +194,61 @@ where
         self.safe_flush(exit)
     }
 
+    pub fn compute_add(
+        &mut self,
+        max_from: I,
+        added: &impl AnyIterableVec<I, T>,
+        adder: &impl AnyIterableVec<I, T>,
+        exit: &Exit,
+    ) -> Result<()>
+    where
+        T: Add<Output = T>,
+    {
+        self.validate_computed_version_or_reset_file(
+            Version::ZERO + self.inner.version() + added.version() + adder.version(),
+        )?;
+
+        let index = max_from.min(I::from(self.len()));
+        let mut added_iter = adder.iter();
+
+        added.iter_at(index).try_for_each(|(i, v)| {
+            let v = v.into_inner() + added_iter.unwrap_get_inner(i);
+
+            self.forced_push_at(i, v, exit)
+        })?;
+
+        self.safe_flush(exit)
+    }
+
+    pub fn compute_subtract(
+        &mut self,
+        max_from: I,
+        subtracted: &impl AnyIterableVec<I, T>,
+        subtracter: &impl AnyIterableVec<I, T>,
+        exit: &Exit,
+    ) -> Result<()>
+    where
+        T: CheckedSub,
+    {
+        self.validate_computed_version_or_reset_file(
+            Version::ZERO + self.inner.version() + subtracted.version() + subtracter.version(),
+        )?;
+
+        let index = max_from.min(I::from(self.len()));
+        let mut subtracted_iter = subtracter.iter();
+
+        subtracted.iter_at(index).try_for_each(|(i, v)| {
+            let v = v
+                .into_inner()
+                .checked_sub(subtracted_iter.unwrap_get_inner(i))
+                .unwrap();
+
+            self.forced_push_at(i, v, exit)
+        })?;
+
+        self.safe_flush(exit)
+    }
+
     pub fn compute_divide<T2, T3, T4>(
         &mut self,
         max_from: I,
@@ -605,6 +660,37 @@ where
                 .unwrap_or(f32::NAN);
 
             self.forced_push_at(i, T::from(previous_value), exit)
+        })?;
+
+        self.safe_flush(exit)
+    }
+
+    pub fn compute_change(
+        &mut self,
+        max_from: I,
+        source: &impl AnyIterableVec<I, T>,
+        len: usize,
+        exit: &Exit,
+    ) -> Result<()>
+    where
+        I: CheckedSub,
+        T: CheckedSub + Default,
+    {
+        self.validate_computed_version_or_reset_file(
+            Version::ZERO + self.inner.version() + source.version(),
+        )?;
+
+        let index = max_from.min(I::from(self.len()));
+        let mut source_iter = source.iter();
+        source.iter_at(index).try_for_each(|(i, current)| {
+            let current = current.into_inner();
+
+            let prev = i
+                .checked_sub(I::from(len))
+                .map(|prev_i| source_iter.unwrap_get_inner(prev_i))
+                .unwrap_or_default();
+
+            self.forced_push_at(i, current.checked_sub(prev).unwrap(), exit)
         })?;
 
         self.safe_flush(exit)

@@ -729,17 +729,13 @@ function createUtils() {
         id === "close" ||
         id === "open" ||
         id === "marketcap" ||
+        id.includes("in-usd") ||
         id.startsWith("price") ||
         id.endsWith("price") ||
         id.endsWith("value-created") ||
         id.endsWith("value-destroyed") ||
-        id.endsWith("realized-cap") ||
-        id.endsWith("realized-loss") ||
-        id.endsWith("realized-loss-sum") ||
-        id.endsWith("realized-profit") ||
-        id.endsWith("realized-profit-sum") ||
-        id.includes("in-usd") ||
-        (!id.includes("ratio") && id.endsWith("sma")) ||
+        (id.includes("realized") && !id.includes("ratio")) ||
+        (id.endsWith("sma") && !id.includes("ratio")) ||
         id.endsWith("ath"))
     ) {
       if (unit) throw Error(`Unit "${unit}" already assigned "${id}"`);
@@ -752,11 +748,7 @@ function createUtils() {
     if (
       (!unit || thoroughUnitCheck) &&
       (id.endsWith("ratio") ||
-        (id.includes("ratio") &&
-          (id.endsWith("-sma") ||
-            id.endsWith("-1w-sma") ||
-            id.endsWith("-1m-sma") ||
-            id.endsWith("-1y-sma"))) ||
+        (id.includes("ratio") && id.endsWith("sma")) ||
         id.endsWith("1sd") ||
         id.endsWith("2sd") ||
         id.endsWith("3sd") ||
@@ -2244,8 +2236,6 @@ function main() {
 
                 switch (option.kind) {
                   case "chart": {
-                    console.log("chart", option);
-
                     element = elements.charts;
 
                     lastChartOption.set(option);
