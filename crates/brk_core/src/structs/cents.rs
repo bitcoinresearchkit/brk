@@ -108,6 +108,13 @@ impl Mul<Cents> for Cents {
     }
 }
 
+impl Mul<i64> for Cents {
+    type Output = Cents;
+    fn mul(self, rhs: i64) -> Self::Output {
+        Self(self.0 * rhs)
+    }
+}
+
 impl Mul<usize> for Cents {
     type Output = Cents;
     fn mul(self, rhs: usize) -> Self::Output {

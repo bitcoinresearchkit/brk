@@ -147,18 +147,18 @@ impl Mul<Bitcoin> for Dollars {
 impl Mul<StoredF32> for Dollars {
     type Output = Self;
     fn mul(self, rhs: StoredF32) -> Self::Output {
-        self * *rhs as f64
+        if rhs.fract() != 0.0 {
+            Self::from(self.0 * *rhs as f64)
+        } else {
+            self * *rhs as i64
+        }
     }
 }
 
-impl Mul<f64> for Dollars {
+impl Mul<i64> for Dollars {
     type Output = Self;
-    fn mul(self, rhs: f64) -> Self::Output {
-        if rhs.is_nan() {
-            self
-        } else {
-            Self::from(Cents::from(self) * Cents::from(Dollars::from(rhs)))
-        }
+    fn mul(self, rhs: i64) -> Self::Output {
+        Self::from(Cents::from(self) * rhs)
     }
 }
 

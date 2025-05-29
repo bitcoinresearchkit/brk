@@ -13,7 +13,7 @@ pub mod grouped;
 pub mod indexes;
 pub mod market;
 pub mod mining;
-pub mod statefull;
+pub mod stateful;
 pub mod transactions;
 
 pub use indexes::Indexes;
@@ -28,7 +28,7 @@ pub struct Vecs {
     pub mining: mining::Vecs,
     pub market: market::Vecs,
     pub transactions: transactions::Vecs,
-    pub statefull: statefull::Vecs,
+    pub stateful: stateful::Vecs,
     pub fetched: Option<fetched::Vecs>,
 }
 
@@ -86,7 +86,7 @@ impl Vecs {
                 computation,
                 compressed,
             )?,
-            statefull: statefull::Vecs::forced_import(
+            stateful: stateful::Vecs::forced_import(
                 path,
                 version + VERSION + Version::ZERO,
                 computation,
@@ -154,7 +154,7 @@ impl Vecs {
             )?;
         }
 
-        self.statefull.compute(
+        self.stateful.compute(
             indexer,
             &self.indexes,
             &self.transactions,
@@ -174,7 +174,7 @@ impl Vecs {
             self.mining.vecs(),
             self.market.vecs(),
             self.transactions.vecs(),
-            self.statefull.vecs(),
+            self.stateful.vecs(),
             self.fetched.as_ref().map_or(vec![], |v| v.vecs()),
         ]
         .into_iter()
