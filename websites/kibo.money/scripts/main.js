@@ -703,7 +703,7 @@ function createUtils() {
       (id.includes("in-sats") ||
         id.endsWith("supply") ||
         id.endsWith("stack") ||
-        id.endsWith("value") ||
+        (id.endsWith("value") && !id.includes("realized")) ||
         ((id.includes("coinbase") ||
           id.includes("fee") ||
           id.includes("subsidy") ||

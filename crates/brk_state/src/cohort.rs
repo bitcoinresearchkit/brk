@@ -1,12 +1,13 @@
-use brk_core::Dollars;
+use brk_core::{Dollars, Sats};
+use brk_store::Store;
 
 use super::{RealizedState, SupplyState};
 
-#[derive(Debug, Default, Clone)]
+#[derive(Default, Clone)]
 pub struct CohortState {
     pub supply: SupplyState,
     pub realized: Option<RealizedState>,
-    // pub price_to_amount: PriceToValue<Amount>, save it not rounded in fjall
+    // pub price_to_amount: Store<Dollars, Sats>,
 }
 
 impl CohortState {

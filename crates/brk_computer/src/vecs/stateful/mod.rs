@@ -1032,7 +1032,7 @@ impl Vecs {
                     .iter_mut()
                     .for_each(|(_, v)| v.state.reset_single_iteration_values());
 
-                info!("Processing utxo set at {height}...");
+                info!("Processing chain at {height}...");
 
                 let timestamp = height_to_timestamp_fixed_iter.unwrap_get_inner(height);
                 let price = height_to_close_iter
@@ -1182,8 +1182,6 @@ impl Vecs {
                 };
 
                 if chain_state_starting_height <= height {
-                    // RECEIVE
-
                     // Push current block state before processing sends and receives
                     chain_state.push(BlockState {
                         supply: received.spendable_supply.clone(),
@@ -1192,10 +1190,6 @@ impl Vecs {
                     });
 
                     self.utxos_vecs.receive(received, height, price);
-
-                    // ---
-
-                    // SEND
 
                     let unsafe_chain_state = UnsafeSlice::new(&mut chain_state);
 
@@ -1229,8 +1223,6 @@ impl Vecs {
 
         exit.block();
 
-        info!("Computing utxo set datasets...");
-
         let mut flat_vecs_ = self.utxos_vecs.as_mut_vec();
 
         info!("Flushing...");
@@ -1240,10 +1232,16 @@ impl Vecs {
             .par_iter_mut()
             .try_for_each(|(_, v)| v.safe_flush_height_vecs(exit))?;
         self.height_to_unspendable_supply.safe_flush(exit)?;
-        flat_vecs_
-            .par_iter_mut()
-            .try_for_each(|(_, v)| v.safe_flush_height_vecs(exit))?;
         self.height_to_opreturn_supply.safe_flush(exit)?;
+
+        // Save chain state
+        self.chain_state.truncate_if_needed(Height::ZERO)?;
+        mem::take(&mut chain_state)
+            .into_iter()
+            .for_each(|block_state| {
+                self.chain_state.push(block_state.supply);
+            });
+        self.chain_state.flush()?;
 
         info!("Computing rest...");
 
@@ -1267,17 +1265,6 @@ impl Vecs {
             exit,
             Some(&self.height_to_opreturn_supply),
         )?;
-
-        info!("Chain state...");
-
-        // Save chain state
-        self.chain_state.truncate_if_needed(Height::ZERO)?;
-        mem::take(&mut chain_state)
-            .into_iter()
-            .for_each(|block_state| {
-                self.chain_state.push(block_state.supply);
-            });
-        self.chain_state.flush()?;
 
         exit.release();
 

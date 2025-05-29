@@ -23,10 +23,11 @@ pub struct Vecs {
     starting_height: Height,
     pub state: CohortState,
 
+    // Cumulative
     pub height_to_realized_cap: Option<EagerVec<Height, Dollars>>,
     pub height_to_supply: EagerVec<Height, Sats>,
     pub height_to_utxo_count: EagerVec<Height, StoredUsize>,
-
+    // Single
     pub height_to_realized_profit: Option<EagerVec<Height, Dollars>>,
     pub height_to_realized_loss: Option<EagerVec<Height, Dollars>>,
     pub height_to_value_created: Option<EagerVec<Height, Dollars>>,
@@ -129,7 +130,6 @@ impl Vecs {
                 compressed,
                 StorableVecGeneatorOptions::default().add_last(),
             )?,
-
             indexes_to_realized_price: compute_dollars.then(|| {
                 ComputedVecsFromHeight::forced_import(
                     path,
@@ -197,7 +197,7 @@ impl Vecs {
                     path,
                     &suffix("negative_realized_loss"),
                     true,
-                    version + VERSION + Version::ZERO,
+                    version + VERSION + Version::ONE,
                     compressed,
                     StorableVecGeneatorOptions::default().add_sum(),
                 )
@@ -227,7 +227,7 @@ impl Vecs {
                 ComputedVecsFromHeight::forced_import(
                     path,
                     &suffix("realized_value"),
-                    false,
+                    true,
                     version + VERSION + Version::ZERO,
                     compressed,
                     StorableVecGeneatorOptions::default().add_sum(),
@@ -318,7 +318,7 @@ impl Vecs {
                 EagerVec::forced_import(
                     path,
                     &suffix("sell_side_risk_ratio"),
-                    version + VERSION + Version::ZERO,
+                    version + VERSION + Version::ONE,
                     compressed,
                 )
                 .unwrap()
@@ -504,7 +504,7 @@ impl Vecs {
 
         if let Some(height_to_realized_cap) = self.height_to_realized_cap.as_mut() {
             let realized = self.state.realized.as_ref().unwrap_or_else(|| {
-                dbg!(&self.state);
+                dbg!((&self.state.realized, &self.state.supply));
                 panic!();
             });
 
@@ -674,7 +674,7 @@ impl Vecs {
                         vec.compute_transform(
                             starting_indexes.height,
                             self.height_to_realized_loss.as_ref().unwrap(),
-                            |(i, v, ..)| (i, v * -1.0),
+                            |(i, v, ..)| (i, v * -1_i64),
                             exit,
                         )
                     },
@@ -809,7 +809,7 @@ impl Vecs {
             self.dateindex_to_sell_side_risk_ratio
                 .as_mut()
                 .unwrap()
-                .compute_divide(
+                .compute_percentage(
                     starting_indexes.dateindex,
                     self.indexes_to_realized_value
                         .as_ref()
@@ -919,31 +919,30 @@ impl Clone for Vecs {
             state: CohortState::default(),
 
             height_to_realized_cap: self.height_to_realized_cap.clone(),
-            indexes_to_realized_cap: self.indexes_to_realized_cap.clone(),
             height_to_supply: self.height_to_supply.clone(),
-            indexes_to_supply: self.indexes_to_supply.clone(),
             height_to_utxo_count: self.height_to_utxo_count.clone(),
-            indexes_to_utxo_count: self.indexes_to_utxo_count.clone(),
-
             height_to_realized_profit: self.height_to_realized_profit.clone(),
-            indexes_to_realized_profit: self.indexes_to_realized_profit.clone(),
             height_to_realized_loss: self.height_to_realized_loss.clone(),
+            height_to_value_created: self.height_to_value_created.clone(),
+            height_to_adjusted_value_created: self.height_to_adjusted_value_created.clone(),
+            height_to_value_destroyed: self.height_to_value_destroyed.clone(),
+            height_to_adjusted_value_destroyed: self.height_to_adjusted_value_destroyed.clone(),
+
+            indexes_to_supply: self.indexes_to_supply.clone(),
+            indexes_to_utxo_count: self.indexes_to_utxo_count.clone(),
+            indexes_to_realized_cap: self.indexes_to_realized_cap.clone(),
+            indexes_to_realized_profit: self.indexes_to_realized_profit.clone(),
             indexes_to_realized_loss: self.indexes_to_realized_loss.clone(),
             indexes_to_negative_realized_loss: self.indexes_to_negative_realized_loss.clone(),
-            height_to_value_created: self.height_to_value_created.clone(),
             indexes_to_value_created: self.indexes_to_value_created.clone(),
-            height_to_adjusted_value_created: self.height_to_adjusted_value_created.clone(),
             indexes_to_adjusted_value_created: self.indexes_to_adjusted_value_created.clone(),
-            height_to_value_destroyed: self.height_to_value_destroyed.clone(),
             indexes_to_value_destroyed: self.indexes_to_value_destroyed.clone(),
-            height_to_adjusted_value_destroyed: self.height_to_adjusted_value_destroyed.clone(),
             indexes_to_adjusted_value_destroyed: self.indexes_to_adjusted_value_destroyed.clone(),
             dateindex_to_realized_cap_30d_change: self.dateindex_to_realized_cap_30d_change.clone(),
             indexes_to_realized_value: self.indexes_to_realized_value.clone(),
             indexes_to_net_realized_profit_and_loss: self
                 .indexes_to_net_realized_profit_and_loss
                 .clone(),
-
             indexes_to_realized_price: self.indexes_to_realized_price.clone(),
             dateindex_to_sell_side_risk_ratio: self.dateindex_to_sell_side_risk_ratio.clone(),
             indexes_to_realized_price_extra: self.indexes_to_realized_price_extra.clone(),

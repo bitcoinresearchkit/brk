@@ -1196,6 +1196,21 @@ function createPartialOptions(colors) {
                     name: useGroupName ? name : "Cap",
                     color,
                   }),
+                  ...(!("list" in args)
+                    ? [
+                        /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
+                          type: "Baseline",
+                          key: `${key}realized-cap-30d-change`,
+                          title: "30d change",
+                          defaultActive: false,
+                          options: {
+                            createPriceLine: {
+                              value: 0,
+                            },
+                          },
+                        }),
+                      ]
+                    : []),
                 ]);
               }),
             },
@@ -1229,11 +1244,6 @@ function createPartialOptions(colors) {
                     name: useGroupName ? name : "Profit",
                     color: useGroupName ? color : colors.green,
                   }),
-                  createBaseSeries({
-                    key: `${key}realized-profit`,
-                    name: useGroupName ? name : "Profit",
-                    color: useGroupName ? color : colors.green,
-                  }),
                 ]);
               }),
             },
@@ -1248,13 +1258,85 @@ function createPartialOptions(colors) {
                     name: useGroupName ? name : "Loss",
                     color: useGroupName ? color : colors.red,
                   }),
-                  createBaseSeries({
-                    key: `${key}realized-loss`,
-                    name: useGroupName ? name : "Loss",
-                    color: useGroupName ? color : colors.red,
-                  }),
                 ]);
               }),
+            },
+            ...(!("list" in args)
+              ? [
+                  {
+                    name: "profit and loss",
+                    title: `${args.title} Realized Profit And Loss`,
+                    bottom: [
+                      createBaseSeries({
+                        key: `${fixKey(args.key)}realized-profit`,
+                        name: "Profit",
+                        color: colors.green,
+                      }),
+                      createBaseSeries({
+                        key: `${fixKey(args.key)}negative-realized-loss`,
+                        name: "Loss",
+                        color: colors.red,
+                      }),
+                    ],
+                  },
+                ]
+              : []),
+            {
+              name: "Net Profit And Loss",
+              title: `${args.title} Net Realized Profit And Loss`,
+              bottom: list.flatMap(
+                ({ color, name, key }) =>
+                  /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
+                    type: "Baseline",
+                    key: `${fixKey(key)}net-realized-profit-and-loss`,
+                    title: useGroupName ? name : "Net",
+                    color: useGroupName ? color : undefined,
+                    options: {
+                      createPriceLine: {
+                        value: 0,
+                      },
+                    },
+                  }),
+              ),
+            },
+            {
+              name: "Spent Output Profit Ratio",
+              title: `${args.title} Spent Output Profit Ratio`,
+              bottom: list.flatMap(({ color, name, key }) => [
+                /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
+                  type: "Baseline",
+                  key: `${fixKey(key)}spent-output-profit-ratio`,
+                  title: useGroupName ? name : "sopr",
+                  color: useGroupName ? color : undefined,
+                  options: {
+                    createPriceLine: {
+                      value: 1,
+                    },
+                  },
+                }),
+                /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
+                  type: "Baseline",
+                  key: `${fixKey(key)}adjusted-spent-output-profit-ratio`,
+                  title: useGroupName ? name : "asopr",
+                  color: useGroupName ? color : undefined,
+                  options: {
+                    createPriceLine: {
+                      value: 1,
+                    },
+                  },
+                }),
+              ]),
+            },
+            {
+              name: "Sell Side Risk Ratio",
+              title: `${args.title} Sell Side Risk Ratio`,
+              bottom: list.flatMap(({ color, name, key }) =>
+                createBaseSeries({
+                  key: `${fixKey(key)}sell-side-risk-ratio`,
+                  name: useGroupName ? name : "Risk",
+                  color: color,
+                }),
+              ),
             },
           ],
         },
