@@ -3,7 +3,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use brk_core::Version;
+use brk_core::{Result, Version};
 use fjall::{TransactionalKeyspace, TransactionalPartitionHandle};
 use zerocopy::{FromBytes, IntoBytes};
 
@@ -23,9 +23,9 @@ impl StoreMeta {
         path: &Path,
         version: Version,
         open_partition_handle: F,
-    ) -> color_eyre::Result<(Self, TransactionalPartitionHandle)>
+    ) -> Result<(Self, TransactionalPartitionHandle)>
     where
-        F: Fn() -> fjall::Result<TransactionalPartitionHandle>,
+        F: Fn() -> Result<TransactionalPartitionHandle>,
     {
         fs::create_dir_all(path)?;
 
@@ -109,7 +109,7 @@ impl StoreMeta {
         path.join("height")
     }
 
-    fn read_length_(path: &Path) -> color_eyre::Result<usize> {
+    fn read_length_(path: &Path) -> Result<usize> {
         Ok(fs::read(Self::path_length(path))
             .map(|v| usize::read_from_bytes(v.as_slice()).unwrap_or_default())
             .unwrap_or_default())

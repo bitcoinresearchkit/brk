@@ -5,7 +5,7 @@ use brk_core::{
 };
 use brk_exit::Exit;
 use brk_indexer::Indexer;
-use brk_vec::{AnyCollectableVec, Compressed, EagerVec};
+use brk_vec::{AnyCollectableVec, AnyIterableVec, Compressed, EagerVec};
 
 use crate::vecs::{Indexes, indexes};
 
@@ -16,7 +16,7 @@ pub struct ComputedVecsFromDateIndex<T>
 where
     T: ComputedType + PartialOrd,
 {
-    pub dateindex: EagerVec<DateIndex, T>,
+    pub dateindex: Option<EagerVec<DateIndex, T>>,
     pub dateindex_extra: ComputedVecBuilder<DateIndex, T>,
     pub weekindex: ComputedVecBuilder<WeekIndex, T>,
     pub monthindex: ComputedVecBuilder<MonthIndex, T>,
@@ -34,10 +34,16 @@ where
     pub fn forced_import(
         path: &Path,
         name: &str,
+        compute_source: bool,
         version: Version,
         compressed: Compressed,
         options: StorableVecGeneatorOptions,
     ) -> color_eyre::Result<Self> {
+        let dateindex = compute_source.then(|| {
+            EagerVec::forced_import(path, name, version + VERSION + Version::ZERO, compressed)
+                .unwrap()
+        });
+
         let dateindex_extra = ComputedVecBuilder::forced_import(
             path,
             name,
@@ -49,12 +55,7 @@ where
         let options = options.remove_percentiles();
 
         Ok(Self {
-            dateindex: EagerVec::forced_import(
-                path,
-                name,
-                version + VERSION + Version::ZERO,
-                compressed,
-            )?,
+            dateindex,
             dateindex_extra,
             weekindex: ComputedVecBuilder::forced_import(
                 path,
@@ -94,7 +95,7 @@ where
         })
     }
 
-    pub fn compute<F>(
+    pub fn compute_all<F>(
         &mut self,
         indexer: &Indexer,
         indexes: &indexes::Vecs,
@@ -112,14 +113,15 @@ where
         ) -> Result<()>,
     {
         compute(
-            &mut self.dateindex,
+            self.dateindex.as_mut().unwrap(),
             indexer,
             indexes,
             starting_indexes,
             exit,
         )?;
 
-        self.compute_rest(indexes, starting_indexes, exit)
+        let dateindex: Option<&EagerVec<DateIndex, T>> = None;
+        self.compute_rest(indexes, starting_indexes, exit, dateindex)
     }
 
     pub fn compute_rest(
@@ -127,25 +129,49 @@ where
         indexes: &indexes::Vecs,
         starting_indexes: &Indexes,
         exit: &Exit,
+        dateindex: Option<&impl AnyIterableVec<DateIndex, T>>,
     ) -> color_eyre::Result<()> {
-        self.dateindex_extra
-            .extend(starting_indexes.dateindex, &self.dateindex, exit)?;
+        if let Some(dateindex) = dateindex {
+            self.dateindex_extra
+                .extend(starting_indexes.dateindex, dateindex, exit)?;
 
-        self.weekindex.compute(
-            starting_indexes.weekindex,
-            &self.dateindex,
-            &indexes.weekindex_to_first_dateindex,
-            &indexes.weekindex_to_dateindex_count,
-            exit,
-        )?;
+            self.weekindex.compute(
+                starting_indexes.weekindex,
+                dateindex,
+                &indexes.weekindex_to_first_dateindex,
+                &indexes.weekindex_to_dateindex_count,
+                exit,
+            )?;
 
-        self.monthindex.compute(
-            starting_indexes.monthindex,
-            &self.dateindex,
-            &indexes.monthindex_to_first_dateindex,
-            &indexes.monthindex_to_dateindex_count,
-            exit,
-        )?;
+            self.monthindex.compute(
+                starting_indexes.monthindex,
+                dateindex,
+                &indexes.monthindex_to_first_dateindex,
+                &indexes.monthindex_to_dateindex_count,
+                exit,
+            )?;
+        } else {
+            let dateindex = self.dateindex.as_ref().unwrap();
+
+            self.dateindex_extra
+                .extend(starting_indexes.dateindex, dateindex, exit)?;
+
+            self.weekindex.compute(
+                starting_indexes.weekindex,
+                dateindex,
+                &indexes.weekindex_to_first_dateindex,
+                &indexes.weekindex_to_dateindex_count,
+                exit,
+            )?;
+
+            self.monthindex.compute(
+                starting_indexes.monthindex,
+                dateindex,
+                &indexes.monthindex_to_first_dateindex,
+                &indexes.monthindex_to_dateindex_count,
+                exit,
+            )?;
+        }
 
         self.quarterindex.from_aligned(
             starting_indexes.quarterindex,
@@ -176,7 +202,9 @@ where
 
     pub fn vecs(&self) -> Vec<&dyn AnyCollectableVec> {
         [
-            vec![&self.dateindex as &dyn AnyCollectableVec],
+            self.dateindex
+                .as_ref()
+                .map_or(vec![], |v| vec![v as &dyn AnyCollectableVec]),
             self.dateindex_extra.vecs(),
             self.weekindex.vecs(),
             self.monthindex.vecs(),

@@ -11,6 +11,7 @@ bitcoin = { workspace = true }
 bitcoincore-rpc = { workspace = true }
 byteview = { workspace = true }
 derive_deref = { workspace = true }
+fjall = { workspace = true }
 jiff = { workspace = true }
 log = { workspace = true }
 rapidhash = "1.4.0"
@@ -19,6 +20,7 @@ serde = { workspace = true }
 serde_bytes = "0.11.17"
 serde_derive = { workspace = true }
 serde_json = { workspace = true }
+thiserror = "2.0.12"
 zerocopy = { workspace = true }
 zerocopy-derive = { workspace = true }
 

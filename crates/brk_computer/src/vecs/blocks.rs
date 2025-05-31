@@ -49,6 +49,7 @@ impl Vecs {
             timeindexes_to_timestamp: ComputedVecsFromDateIndex::forced_import(
                 path,
                 "timestamp",
+                true,
                 version + VERSION + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default().add_first(),
@@ -132,7 +133,7 @@ impl Vecs {
         starting_indexes: &Indexes,
         exit: &Exit,
     ) -> color_eyre::Result<()> {
-        self.timeindexes_to_timestamp.compute(
+        self.timeindexes_to_timestamp.compute_all(
             indexer,
             indexes,
             starting_indexes,

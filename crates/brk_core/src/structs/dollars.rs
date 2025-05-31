@@ -4,11 +4,12 @@ use std::{
     ops::{Add, AddAssign, Div, Mul},
 };
 
+use byteview::ByteView;
 use derive_deref::Deref;
 use serde::Serialize;
 use zerocopy_derive::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
-use crate::CheckedSub;
+use crate::{CheckedSub, Error, copy_first_8bytes};
 
 use super::{Bitcoin, Cents, Close, Sats, StoredF32, StoredF64};
 
@@ -133,12 +134,18 @@ impl Div<Bitcoin> for Dollars {
 impl Mul<Bitcoin> for Dollars {
     type Output = Self;
     fn mul(self, rhs: Bitcoin) -> Self::Output {
+        self * Sats::from(rhs)
+    }
+}
+
+impl Mul<Sats> for Dollars {
+    type Output = Self;
+    fn mul(self, rhs: Sats) -> Self::Output {
         if self.is_nan() {
             self
         } else {
             Self::from(Cents::from(
-                u128::from(Sats::from(rhs)) * u128::from(Cents::from(self))
-                    / u128::from(Sats::ONE_BTC),
+                u128::from(rhs) * u128::from(Cents::from(self)) / u128::from(Sats::ONE_BTC),
             ))
         }
     }
@@ -246,5 +253,25 @@ impl Ord for Dollars {
             (false, true) => Ordering::Greater,
             (false, false) => self.0.partial_cmp(&other.0).unwrap(),
         }
+    }
+}
+
+impl TryFrom<ByteView> for Dollars {
+    type Error = Error;
+    fn try_from(value: ByteView) -> Result<Self, Self::Error> {
+        let bytes = copy_first_8bytes(&value)?;
+        Ok(Self::from(f64::from_be_bytes(bytes)))
+    }
+}
+
+impl From<Dollars> for ByteView {
+    fn from(value: Dollars) -> Self {
+        Self::from(&value)
+    }
+}
+
+impl From<&Dollars> for ByteView {
+    fn from(value: &Dollars) -> Self {
+        Self::new(&value.to_be_bytes())
     }
 }

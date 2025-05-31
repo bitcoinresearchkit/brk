@@ -511,7 +511,7 @@ export default import("./v5.0.6-treeshaked/script.js").then((lc) => {
             lineWidth: /** @type {any} */ (1.5),
             visible: defaultActive !== false,
             baseValue: {
-              price: 0,
+              price: options?.createPriceLine?.value ?? 0,
             },
             ...options,
             topLineColor: options?.topLineColor ?? colors.green(),

@@ -41,6 +41,7 @@ impl Vecs {
             indexes_to_difficultyepoch: ComputedVecsFromDateIndex::forced_import(
                 path,
                 "difficultyepoch",
+                true,
                 version + VERSION + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default().add_last(),
@@ -48,6 +49,7 @@ impl Vecs {
             indexes_to_halvingepoch: ComputedVecsFromDateIndex::forced_import(
                 path,
                 "halvingepoch",
+                true,
                 version + VERSION + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default().add_last(),
@@ -63,7 +65,7 @@ impl Vecs {
         exit: &Exit,
     ) -> color_eyre::Result<()> {
         let mut height_to_difficultyepoch_iter = indexes.height_to_difficultyepoch.into_iter();
-        self.indexes_to_difficultyepoch.compute(
+        self.indexes_to_difficultyepoch.compute_all(
             indexer,
             indexes,
             starting_indexes,
@@ -87,7 +89,7 @@ impl Vecs {
         )?;
 
         let mut height_to_halvingepoch_iter = indexes.height_to_halvingepoch.into_iter();
-        self.indexes_to_halvingepoch.compute(
+        self.indexes_to_halvingepoch.compute_all(
             indexer,
             indexes,
             starting_indexes,

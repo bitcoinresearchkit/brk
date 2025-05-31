@@ -58,9 +58,14 @@ where
         if exit.triggered() {
             return Ok(());
         }
-        exit.block();
+        let blocked = exit.blocked();
+        if !blocked {
+            exit.block();
+        }
         self.inner.truncate_if_needed(index)?;
-        exit.release();
+        if !blocked {
+            exit.release();
+        }
         Ok(())
     }
 
@@ -89,9 +94,14 @@ where
         if exit.triggered() {
             return Ok(());
         }
-        exit.block();
+        let blocked = exit.blocked();
+        if !blocked {
+            exit.block();
+        }
         self.inner.flush()?;
-        exit.release();
+        if !blocked {
+            exit.release();
+        }
         Ok(())
     }
 

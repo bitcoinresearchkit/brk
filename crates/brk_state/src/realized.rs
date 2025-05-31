@@ -1,6 +1,6 @@
 use std::cmp::Ordering;
 
-use brk_core::{Bitcoin, CheckedSub, Dollars};
+use brk_core::{CheckedSub, Dollars};
 
 use super::SupplyState;
 
@@ -52,12 +52,12 @@ impl RealizedState {
             self.adj_value_destroyed = Dollars::ZERO;
         }
 
-        let value = price * Bitcoin::from(supply_state.value);
+        let value = price * supply_state.value;
         self.cap += value;
     }
 
     pub fn decrement(&mut self, supply_state: &SupplyState, price: Dollars) {
-        let value = price * Bitcoin::from(supply_state.value);
+        let value = price * supply_state.value;
         self.cap = self.cap.checked_sub(value).unwrap();
     }
 
@@ -72,8 +72,8 @@ impl RealizedState {
         prev_price: Dollars,
         older_than_hour: bool,
     ) {
-        let current_value = current_price * Bitcoin::from(supply_state.value);
-        let prev_value = prev_price * Bitcoin::from(supply_state.value);
+        let current_value = current_price * supply_state.value;
+        let prev_value = prev_price * supply_state.value;
 
         self.value_created += current_value;
         self.value_destroyed += prev_value;

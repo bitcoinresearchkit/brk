@@ -47,12 +47,14 @@ impl Computer {
         computation: Computation,
     ) -> color_eyre::Result<()> {
         self.vecs = Some(Vecs::import(
+            // TODO: Give self.path, join inside import
             &self.path.join("vecs/computed"),
             VERSION + Version::ZERO,
             indexer,
             self.fetcher.is_some(),
             computation,
             self.compressed,
+            indexer.keyspace(),
         )?);
         Ok(())
     }
@@ -61,6 +63,7 @@ impl Computer {
     /// Clone struct instead
     pub fn import_stores(&mut self, indexer: &Indexer) -> color_eyre::Result<()> {
         self.stores = Some(Stores::import(
+            // TODO: Give self.path, join inside import
             &self.path.join("stores"),
             VERSION + Version::ZERO,
             indexer.keyspace(),

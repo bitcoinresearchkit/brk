@@ -167,6 +167,7 @@ impl Vecs {
             indexes_to_marketcap: ComputedVecsFromDateIndex::forced_import(
                 path,
                 "marketcap",
+                true,
                 version + VERSION + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default().add_last(),
@@ -174,6 +175,7 @@ impl Vecs {
             indexes_to_ath: ComputedVecsFromDateIndex::forced_import(
                 path,
                 "ath",
+                true,
                 version + VERSION + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default().add_last(),
@@ -181,6 +183,7 @@ impl Vecs {
             indexes_to_drawdown: ComputedVecsFromDateIndex::forced_import(
                 path,
                 "drawdown",
+                true,
                 version + VERSION + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default().add_last(),
@@ -188,6 +191,7 @@ impl Vecs {
             indexes_to_days_since_ath: ComputedVecsFromDateIndex::forced_import(
                 path,
                 "days_since_ath",
+                true,
                 version + VERSION + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default().add_last(),
@@ -195,6 +199,7 @@ impl Vecs {
             indexes_to_max_days_between_ath: ComputedVecsFromDateIndex::forced_import(
                 path,
                 "max_days_between_ath",
+                true,
                 version + VERSION + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default().add_last(),
@@ -202,6 +207,7 @@ impl Vecs {
             indexes_to_max_years_between_ath: ComputedVecsFromDateIndex::forced_import(
                 path,
                 "max_years_between_ath",
+                true,
                 version + VERSION + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default().add_last(),
@@ -315,6 +321,7 @@ impl Vecs {
             _1d_returns: ComputedVecsFromDateIndex::forced_import(
                 path,
                 "1d_returns",
+                true,
                 version + VERSION + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default().add_last(),
@@ -322,6 +329,7 @@ impl Vecs {
             _1w_returns: ComputedVecsFromDateIndex::forced_import(
                 path,
                 "1w_returns",
+                true,
                 version + VERSION + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default().add_last(),
@@ -329,6 +337,7 @@ impl Vecs {
             _1m_returns: ComputedVecsFromDateIndex::forced_import(
                 path,
                 "1m_returns",
+                true,
                 version + VERSION + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default().add_last(),
@@ -336,6 +345,7 @@ impl Vecs {
             _3m_returns: ComputedVecsFromDateIndex::forced_import(
                 path,
                 "3m_returns",
+                true,
                 version + VERSION + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default().add_last(),
@@ -343,6 +353,7 @@ impl Vecs {
             _6m_returns: ComputedVecsFromDateIndex::forced_import(
                 path,
                 "6m_returns",
+                true,
                 version + VERSION + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default().add_last(),
@@ -350,6 +361,7 @@ impl Vecs {
             _1y_returns: ComputedVecsFromDateIndex::forced_import(
                 path,
                 "1y_returns",
+                true,
                 version + VERSION + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default().add_last(),
@@ -357,6 +369,7 @@ impl Vecs {
             _2y_returns: ComputedVecsFromDateIndex::forced_import(
                 path,
                 "2y_returns",
+                true,
                 version + VERSION + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default().add_last(),
@@ -364,6 +377,7 @@ impl Vecs {
             _3y_returns: ComputedVecsFromDateIndex::forced_import(
                 path,
                 "3y_returns",
+                true,
                 version + VERSION + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default().add_last(),
@@ -371,6 +385,7 @@ impl Vecs {
             _4y_returns: ComputedVecsFromDateIndex::forced_import(
                 path,
                 "4y_returns",
+                true,
                 version + VERSION + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default().add_last(),
@@ -378,6 +393,7 @@ impl Vecs {
             _5y_returns: ComputedVecsFromDateIndex::forced_import(
                 path,
                 "5y_returns",
+                true,
                 version + VERSION + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default().add_last(),
@@ -385,6 +401,7 @@ impl Vecs {
             _6y_returns: ComputedVecsFromDateIndex::forced_import(
                 path,
                 "6y_returns",
+                true,
                 version + VERSION + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default().add_last(),
@@ -392,6 +409,7 @@ impl Vecs {
             _8y_returns: ComputedVecsFromDateIndex::forced_import(
                 path,
                 "8y_returns",
+                true,
                 version + VERSION + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default().add_last(),
@@ -399,6 +417,7 @@ impl Vecs {
             _10y_returns: ComputedVecsFromDateIndex::forced_import(
                 path,
                 "10y_returns",
+                true,
                 version + VERSION + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default().add_last(),
@@ -406,6 +425,7 @@ impl Vecs {
             _2y_cagr: ComputedVecsFromDateIndex::forced_import(
                 path,
                 "2y_cagr",
+                true,
                 version + VERSION + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default().add_last(),
@@ -413,6 +433,7 @@ impl Vecs {
             _3y_cagr: ComputedVecsFromDateIndex::forced_import(
                 path,
                 "3y_cagr",
+                true,
                 version + VERSION + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default().add_last(),
@@ -420,6 +441,7 @@ impl Vecs {
             _4y_cagr: ComputedVecsFromDateIndex::forced_import(
                 path,
                 "4y_cagr",
+                true,
                 version + VERSION + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default().add_last(),
@@ -427,6 +449,7 @@ impl Vecs {
             _5y_cagr: ComputedVecsFromDateIndex::forced_import(
                 path,
                 "5y_cagr",
+                true,
                 version + VERSION + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default().add_last(),
@@ -434,6 +457,7 @@ impl Vecs {
             _6y_cagr: ComputedVecsFromDateIndex::forced_import(
                 path,
                 "6y_cagr",
+                true,
                 version + VERSION + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default().add_last(),
@@ -441,6 +465,7 @@ impl Vecs {
             _8y_cagr: ComputedVecsFromDateIndex::forced_import(
                 path,
                 "8y_cagr",
+                true,
                 version + VERSION + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default().add_last(),
@@ -448,6 +473,7 @@ impl Vecs {
             _10y_cagr: ComputedVecsFromDateIndex::forced_import(
                 path,
                 "10y_cagr",
+                true,
                 version + VERSION + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default().add_last(),
@@ -456,6 +482,7 @@ impl Vecs {
             _1w_dca_returns: ComputedVecsFromDateIndex::forced_import(
                 path,
                 "1w_dca_returns",
+                true,
                 version + VERSION + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default().add_last(),
@@ -463,6 +490,7 @@ impl Vecs {
             _1m_dca_returns: ComputedVecsFromDateIndex::forced_import(
                 path,
                 "1m_dca_returns",
+                true,
                 version + VERSION + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default().add_last(),
@@ -470,6 +498,7 @@ impl Vecs {
             _3m_dca_returns: ComputedVecsFromDateIndex::forced_import(
                 path,
                 "3m_dca_returns",
+                true,
                 version + VERSION + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default().add_last(),
@@ -477,6 +506,7 @@ impl Vecs {
             _6m_dca_returns: ComputedVecsFromDateIndex::forced_import(
                 path,
                 "6m_dca_returns",
+                true,
                 version + VERSION + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default().add_last(),
@@ -484,6 +514,7 @@ impl Vecs {
             _1y_dca_returns: ComputedVecsFromDateIndex::forced_import(
                 path,
                 "1y_dca_returns",
+                true,
                 version + VERSION + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default().add_last(),
@@ -491,6 +522,7 @@ impl Vecs {
             _2y_dca_returns: ComputedVecsFromDateIndex::forced_import(
                 path,
                 "2y_dca_returns",
+                true,
                 version + VERSION + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default().add_last(),
@@ -498,6 +530,7 @@ impl Vecs {
             _3y_dca_returns: ComputedVecsFromDateIndex::forced_import(
                 path,
                 "3y_dca_returns",
+                true,
                 version + VERSION + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default().add_last(),
@@ -505,6 +538,7 @@ impl Vecs {
             _4y_dca_returns: ComputedVecsFromDateIndex::forced_import(
                 path,
                 "4y_dca_returns",
+                true,
                 version + VERSION + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default().add_last(),
@@ -512,6 +546,7 @@ impl Vecs {
             _5y_dca_returns: ComputedVecsFromDateIndex::forced_import(
                 path,
                 "5y_dca_returns",
+                true,
                 version + VERSION + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default().add_last(),
@@ -519,6 +554,7 @@ impl Vecs {
             _6y_dca_returns: ComputedVecsFromDateIndex::forced_import(
                 path,
                 "6y_dca_returns",
+                true,
                 version + VERSION + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default().add_last(),
@@ -526,6 +562,7 @@ impl Vecs {
             _8y_dca_returns: ComputedVecsFromDateIndex::forced_import(
                 path,
                 "8y_dca_returns",
+                true,
                 version + VERSION + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default().add_last(),
@@ -533,6 +570,7 @@ impl Vecs {
             _10y_dca_returns: ComputedVecsFromDateIndex::forced_import(
                 path,
                 "10y_dca_returns",
+                true,
                 version + VERSION + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default().add_last(),
@@ -540,6 +578,7 @@ impl Vecs {
             _2y_dca_cagr: ComputedVecsFromDateIndex::forced_import(
                 path,
                 "2y_dca_cagr",
+                true,
                 version + VERSION + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default().add_last(),
@@ -547,6 +586,7 @@ impl Vecs {
             _3y_dca_cagr: ComputedVecsFromDateIndex::forced_import(
                 path,
                 "3y_dca_cagr",
+                true,
                 version + VERSION + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default().add_last(),
@@ -554,6 +594,7 @@ impl Vecs {
             _4y_dca_cagr: ComputedVecsFromDateIndex::forced_import(
                 path,
                 "4y_dca_cagr",
+                true,
                 version + VERSION + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default().add_last(),
@@ -561,6 +602,7 @@ impl Vecs {
             _5y_dca_cagr: ComputedVecsFromDateIndex::forced_import(
                 path,
                 "5y_dca_cagr",
+                true,
                 version + VERSION + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default().add_last(),
@@ -568,6 +610,7 @@ impl Vecs {
             _6y_dca_cagr: ComputedVecsFromDateIndex::forced_import(
                 path,
                 "6y_dca_cagr",
+                true,
                 version + VERSION + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default().add_last(),
@@ -575,6 +618,7 @@ impl Vecs {
             _8y_dca_cagr: ComputedVecsFromDateIndex::forced_import(
                 path,
                 "8y_dca_cagr",
+                true,
                 version + VERSION + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default().add_last(),
@@ -582,6 +626,7 @@ impl Vecs {
             _10y_dca_cagr: ComputedVecsFromDateIndex::forced_import(
                 path,
                 "10y_dca_cagr",
+                true,
                 version + VERSION + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default().add_last(),
@@ -589,6 +634,7 @@ impl Vecs {
             _1w_dca_avg_price: ComputedVecsFromDateIndex::forced_import(
                 path,
                 "1w_dca_avg_price",
+                true,
                 version + VERSION + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default().add_last(),
@@ -596,6 +642,7 @@ impl Vecs {
             _1m_dca_avg_price: ComputedVecsFromDateIndex::forced_import(
                 path,
                 "1m_dca_avg_price",
+                true,
                 version + VERSION + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default().add_last(),
@@ -603,6 +650,7 @@ impl Vecs {
             _3m_dca_avg_price: ComputedVecsFromDateIndex::forced_import(
                 path,
                 "3m_dca_avg_price",
+                true,
                 version + VERSION + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default().add_last(),
@@ -610,6 +658,7 @@ impl Vecs {
             _6m_dca_avg_price: ComputedVecsFromDateIndex::forced_import(
                 path,
                 "6m_dca_avg_price",
+                true,
                 version + VERSION + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default().add_last(),
@@ -617,6 +666,7 @@ impl Vecs {
             _1y_dca_avg_price: ComputedVecsFromDateIndex::forced_import(
                 path,
                 "1y_dca_avg_price",
+                true,
                 version + VERSION + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default().add_last(),
@@ -624,6 +674,7 @@ impl Vecs {
             _2y_dca_avg_price: ComputedVecsFromDateIndex::forced_import(
                 path,
                 "2y_dca_avg_price",
+                true,
                 version + VERSION + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default().add_last(),
@@ -631,6 +682,7 @@ impl Vecs {
             _3y_dca_avg_price: ComputedVecsFromDateIndex::forced_import(
                 path,
                 "3y_dca_avg_price",
+                true,
                 version + VERSION + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default().add_last(),
@@ -638,6 +690,7 @@ impl Vecs {
             _4y_dca_avg_price: ComputedVecsFromDateIndex::forced_import(
                 path,
                 "4y_dca_avg_price",
+                true,
                 version + VERSION + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default().add_last(),
@@ -645,6 +698,7 @@ impl Vecs {
             _5y_dca_avg_price: ComputedVecsFromDateIndex::forced_import(
                 path,
                 "5y_dca_avg_price",
+                true,
                 version + VERSION + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default().add_last(),
@@ -652,6 +706,7 @@ impl Vecs {
             _6y_dca_avg_price: ComputedVecsFromDateIndex::forced_import(
                 path,
                 "6y_dca_avg_price",
+                true,
                 version + VERSION + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default().add_last(),
@@ -659,6 +714,7 @@ impl Vecs {
             _8y_dca_avg_price: ComputedVecsFromDateIndex::forced_import(
                 path,
                 "8y_dca_avg_price",
+                true,
                 version + VERSION + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default().add_last(),
@@ -666,6 +722,7 @@ impl Vecs {
             _10y_dca_avg_price: ComputedVecsFromDateIndex::forced_import(
                 path,
                 "10y_dca_avg_price",
+                true,
                 version + VERSION + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default().add_last(),
@@ -673,6 +730,7 @@ impl Vecs {
             price_1d_ago: ComputedVecsFromDateIndex::forced_import(
                 path,
                 "price_1d_ago",
+                true,
                 version + VERSION + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default().add_last(),
@@ -680,6 +738,7 @@ impl Vecs {
             price_1w_ago: ComputedVecsFromDateIndex::forced_import(
                 path,
                 "price_1w_ago",
+                true,
                 version + VERSION + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default().add_last(),
@@ -687,6 +746,7 @@ impl Vecs {
             price_1m_ago: ComputedVecsFromDateIndex::forced_import(
                 path,
                 "price_1m_ago",
+                true,
                 version + VERSION + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default().add_last(),
@@ -694,6 +754,7 @@ impl Vecs {
             price_3m_ago: ComputedVecsFromDateIndex::forced_import(
                 path,
                 "price_3m_ago",
+                true,
                 version + VERSION + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default().add_last(),
@@ -701,6 +762,7 @@ impl Vecs {
             price_6m_ago: ComputedVecsFromDateIndex::forced_import(
                 path,
                 "price_6m_ago",
+                true,
                 version + VERSION + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default().add_last(),
@@ -708,6 +770,7 @@ impl Vecs {
             price_1y_ago: ComputedVecsFromDateIndex::forced_import(
                 path,
                 "price_1y_ago",
+                true,
                 version + VERSION + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default().add_last(),
@@ -715,6 +778,7 @@ impl Vecs {
             price_2y_ago: ComputedVecsFromDateIndex::forced_import(
                 path,
                 "price_2y_ago",
+                true,
                 version + VERSION + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default().add_last(),
@@ -722,6 +786,7 @@ impl Vecs {
             price_3y_ago: ComputedVecsFromDateIndex::forced_import(
                 path,
                 "price_3y_ago",
+                true,
                 version + VERSION + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default().add_last(),
@@ -729,6 +794,7 @@ impl Vecs {
             price_4y_ago: ComputedVecsFromDateIndex::forced_import(
                 path,
                 "price_4y_ago",
+                true,
                 version + VERSION + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default().add_last(),
@@ -736,6 +802,7 @@ impl Vecs {
             price_5y_ago: ComputedVecsFromDateIndex::forced_import(
                 path,
                 "price_5y_ago",
+                true,
                 version + VERSION + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default().add_last(),
@@ -743,6 +810,7 @@ impl Vecs {
             price_6y_ago: ComputedVecsFromDateIndex::forced_import(
                 path,
                 "price_6y_ago",
+                true,
                 version + VERSION + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default().add_last(),
@@ -750,6 +818,7 @@ impl Vecs {
             price_8y_ago: ComputedVecsFromDateIndex::forced_import(
                 path,
                 "price_8y_ago",
+                true,
                 version + VERSION + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default().add_last(),
@@ -757,6 +826,7 @@ impl Vecs {
             price_10y_ago: ComputedVecsFromDateIndex::forced_import(
                 path,
                 "price_10y_ago",
+                true,
                 version + VERSION + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default().add_last(),
@@ -764,6 +834,7 @@ impl Vecs {
             _1w_dca_stack: ComputedVecsFromDateIndex::forced_import(
                 path,
                 "1w_dca_stack",
+                true,
                 version + VERSION + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default().add_last(),
@@ -771,6 +842,7 @@ impl Vecs {
             _1m_dca_stack: ComputedVecsFromDateIndex::forced_import(
                 path,
                 "1m_dca_stack",
+                true,
                 version + VERSION + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default().add_last(),
@@ -778,6 +850,7 @@ impl Vecs {
             _3m_dca_stack: ComputedVecsFromDateIndex::forced_import(
                 path,
                 "3m_dca_stack",
+                true,
                 version + VERSION + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default().add_last(),
@@ -785,6 +858,7 @@ impl Vecs {
             _6m_dca_stack: ComputedVecsFromDateIndex::forced_import(
                 path,
                 "6m_dca_stack",
+                true,
                 version + VERSION + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default().add_last(),
@@ -792,6 +866,7 @@ impl Vecs {
             _1y_dca_stack: ComputedVecsFromDateIndex::forced_import(
                 path,
                 "1y_dca_stack",
+                true,
                 version + VERSION + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default().add_last(),
@@ -799,6 +874,7 @@ impl Vecs {
             _2y_dca_stack: ComputedVecsFromDateIndex::forced_import(
                 path,
                 "2y_dca_stack",
+                true,
                 version + VERSION + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default().add_last(),
@@ -806,6 +882,7 @@ impl Vecs {
             _3y_dca_stack: ComputedVecsFromDateIndex::forced_import(
                 path,
                 "3y_dca_stack",
+                true,
                 version + VERSION + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default().add_last(),
@@ -813,6 +890,7 @@ impl Vecs {
             _4y_dca_stack: ComputedVecsFromDateIndex::forced_import(
                 path,
                 "4y_dca_stack",
+                true,
                 version + VERSION + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default().add_last(),
@@ -820,6 +898,7 @@ impl Vecs {
             _5y_dca_stack: ComputedVecsFromDateIndex::forced_import(
                 path,
                 "5y_dca_stack",
+                true,
                 version + VERSION + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default().add_last(),
@@ -827,6 +906,7 @@ impl Vecs {
             _6y_dca_stack: ComputedVecsFromDateIndex::forced_import(
                 path,
                 "6y_dca_stack",
+                true,
                 version + VERSION + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default().add_last(),
@@ -834,6 +914,7 @@ impl Vecs {
             _8y_dca_stack: ComputedVecsFromDateIndex::forced_import(
                 path,
                 "8y_dca_stack",
+                true,
                 version + VERSION + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default().add_last(),
@@ -841,6 +922,7 @@ impl Vecs {
             _10y_dca_stack: ComputedVecsFromDateIndex::forced_import(
                 path,
                 "10y_dca_stack",
+                true,
                 version + VERSION + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default().add_last(),
@@ -849,6 +931,7 @@ impl Vecs {
             dca_class_2025_stack: ComputedVecsFromDateIndex::forced_import(
                 path,
                 "dca_class_2025_stack",
+                true,
                 version + VERSION + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default().add_last(),
@@ -856,6 +939,7 @@ impl Vecs {
             dca_class_2024_stack: ComputedVecsFromDateIndex::forced_import(
                 path,
                 "dca_class_2024_stack",
+                true,
                 version + VERSION + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default().add_last(),
@@ -863,6 +947,7 @@ impl Vecs {
             dca_class_2023_stack: ComputedVecsFromDateIndex::forced_import(
                 path,
                 "dca_class_2023_stack",
+                true,
                 version + VERSION + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default().add_last(),
@@ -870,6 +955,7 @@ impl Vecs {
             dca_class_2022_stack: ComputedVecsFromDateIndex::forced_import(
                 path,
                 "dca_class_2022_stack",
+                true,
                 version + VERSION + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default().add_last(),
@@ -877,6 +963,7 @@ impl Vecs {
             dca_class_2021_stack: ComputedVecsFromDateIndex::forced_import(
                 path,
                 "dca_class_2021_stack",
+                true,
                 version + VERSION + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default().add_last(),
@@ -884,6 +971,7 @@ impl Vecs {
             dca_class_2020_stack: ComputedVecsFromDateIndex::forced_import(
                 path,
                 "dca_class_2020_stack",
+                true,
                 version + VERSION + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default().add_last(),
@@ -891,6 +979,7 @@ impl Vecs {
             dca_class_2019_stack: ComputedVecsFromDateIndex::forced_import(
                 path,
                 "dca_class_2019_stack",
+                true,
                 version + VERSION + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default().add_last(),
@@ -898,6 +987,7 @@ impl Vecs {
             dca_class_2018_stack: ComputedVecsFromDateIndex::forced_import(
                 path,
                 "dca_class_2018_stack",
+                true,
                 version + VERSION + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default().add_last(),
@@ -905,6 +995,7 @@ impl Vecs {
             dca_class_2017_stack: ComputedVecsFromDateIndex::forced_import(
                 path,
                 "dca_class_2017_stack",
+                true,
                 version + VERSION + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default().add_last(),
@@ -912,6 +1003,7 @@ impl Vecs {
             dca_class_2016_stack: ComputedVecsFromDateIndex::forced_import(
                 path,
                 "dca_class_2016_stack",
+                true,
                 version + VERSION + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default().add_last(),
@@ -919,6 +1011,7 @@ impl Vecs {
             dca_class_2015_stack: ComputedVecsFromDateIndex::forced_import(
                 path,
                 "dca_class_2015_stack",
+                true,
                 version + VERSION + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default().add_last(),
@@ -927,6 +1020,7 @@ impl Vecs {
             dca_class_2025_avg_price: ComputedVecsFromDateIndex::forced_import(
                 path,
                 "dca_class_2025_avg_price",
+                true,
                 version + VERSION + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default().add_last(),
@@ -934,6 +1028,7 @@ impl Vecs {
             dca_class_2024_avg_price: ComputedVecsFromDateIndex::forced_import(
                 path,
                 "dca_class_2024_avg_price",
+                true,
                 version + VERSION + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default().add_last(),
@@ -941,6 +1036,7 @@ impl Vecs {
             dca_class_2023_avg_price: ComputedVecsFromDateIndex::forced_import(
                 path,
                 "dca_class_2023_avg_price",
+                true,
                 version + VERSION + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default().add_last(),
@@ -948,6 +1044,7 @@ impl Vecs {
             dca_class_2022_avg_price: ComputedVecsFromDateIndex::forced_import(
                 path,
                 "dca_class_2022_avg_price",
+                true,
                 version + VERSION + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default().add_last(),
@@ -955,6 +1052,7 @@ impl Vecs {
             dca_class_2021_avg_price: ComputedVecsFromDateIndex::forced_import(
                 path,
                 "dca_class_2021_avg_price",
+                true,
                 version + VERSION + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default().add_last(),
@@ -962,6 +1060,7 @@ impl Vecs {
             dca_class_2020_avg_price: ComputedVecsFromDateIndex::forced_import(
                 path,
                 "dca_class_2020_avg_price",
+                true,
                 version + VERSION + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default().add_last(),
@@ -969,6 +1068,7 @@ impl Vecs {
             dca_class_2019_avg_price: ComputedVecsFromDateIndex::forced_import(
                 path,
                 "dca_class_2019_avg_price",
+                true,
                 version + VERSION + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default().add_last(),
@@ -976,6 +1076,7 @@ impl Vecs {
             dca_class_2018_avg_price: ComputedVecsFromDateIndex::forced_import(
                 path,
                 "dca_class_2018_avg_price",
+                true,
                 version + VERSION + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default().add_last(),
@@ -983,6 +1084,7 @@ impl Vecs {
             dca_class_2017_avg_price: ComputedVecsFromDateIndex::forced_import(
                 path,
                 "dca_class_2017_avg_price",
+                true,
                 version + VERSION + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default().add_last(),
@@ -990,6 +1092,7 @@ impl Vecs {
             dca_class_2016_avg_price: ComputedVecsFromDateIndex::forced_import(
                 path,
                 "dca_class_2016_avg_price",
+                true,
                 version + VERSION + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default().add_last(),
@@ -997,6 +1100,7 @@ impl Vecs {
             dca_class_2015_avg_price: ComputedVecsFromDateIndex::forced_import(
                 path,
                 "dca_class_2015_avg_price",
+                true,
                 version + VERSION + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default().add_last(),
@@ -1005,6 +1109,7 @@ impl Vecs {
             dca_class_2025_returns: ComputedVecsFromDateIndex::forced_import(
                 path,
                 "dca_class_2025_returns",
+                true,
                 version + VERSION + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default().add_last(),
@@ -1012,6 +1117,7 @@ impl Vecs {
             dca_class_2024_returns: ComputedVecsFromDateIndex::forced_import(
                 path,
                 "dca_class_2024_returns",
+                true,
                 version + VERSION + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default().add_last(),
@@ -1019,6 +1125,7 @@ impl Vecs {
             dca_class_2023_returns: ComputedVecsFromDateIndex::forced_import(
                 path,
                 "dca_class_2023_returns",
+                true,
                 version + VERSION + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default().add_last(),
@@ -1026,6 +1133,7 @@ impl Vecs {
             dca_class_2022_returns: ComputedVecsFromDateIndex::forced_import(
                 path,
                 "dca_class_2022_returns",
+                true,
                 version + VERSION + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default().add_last(),
@@ -1033,6 +1141,7 @@ impl Vecs {
             dca_class_2021_returns: ComputedVecsFromDateIndex::forced_import(
                 path,
                 "dca_class_2021_returns",
+                true,
                 version + VERSION + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default().add_last(),
@@ -1040,6 +1149,7 @@ impl Vecs {
             dca_class_2020_returns: ComputedVecsFromDateIndex::forced_import(
                 path,
                 "dca_class_2020_returns",
+                true,
                 version + VERSION + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default().add_last(),
@@ -1047,6 +1157,7 @@ impl Vecs {
             dca_class_2019_returns: ComputedVecsFromDateIndex::forced_import(
                 path,
                 "dca_class_2019_returns",
+                true,
                 version + VERSION + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default().add_last(),
@@ -1054,6 +1165,7 @@ impl Vecs {
             dca_class_2018_returns: ComputedVecsFromDateIndex::forced_import(
                 path,
                 "dca_class_2018_returns",
+                true,
                 version + VERSION + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default().add_last(),
@@ -1061,6 +1173,7 @@ impl Vecs {
             dca_class_2017_returns: ComputedVecsFromDateIndex::forced_import(
                 path,
                 "dca_class_2017_returns",
+                true,
                 version + VERSION + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default().add_last(),
@@ -1068,6 +1181,7 @@ impl Vecs {
             dca_class_2016_returns: ComputedVecsFromDateIndex::forced_import(
                 path,
                 "dca_class_2016_returns",
+                true,
                 version + VERSION + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default().add_last(),
@@ -1075,6 +1189,7 @@ impl Vecs {
             dca_class_2015_returns: ComputedVecsFromDateIndex::forced_import(
                 path,
                 "dca_class_2015_returns",
+                true,
                 version + VERSION + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default().add_last(),
@@ -1091,7 +1206,7 @@ impl Vecs {
         starting_indexes: &Indexes,
         exit: &Exit,
     ) -> color_eyre::Result<()> {
-        self.indexes_to_marketcap.compute(
+        self.indexes_to_marketcap.compute_all(
             indexer,
             indexes,
             starting_indexes,
@@ -1105,7 +1220,7 @@ impl Vecs {
                     .into_iter();
                 v.compute_transform(
                     starting_indexes.dateindex,
-                    &fetched.timeindexes_to_close.dateindex,
+                    fetched.timeindexes_to_close.dateindex.as_ref().unwrap(),
                     |(i, close, ..)| {
                         let supply = cumulative_subsidy_in_btc.unwrap_get_inner(i);
                         (i, *close * supply)
@@ -1115,7 +1230,7 @@ impl Vecs {
             },
         )?;
 
-        self.indexes_to_ath.compute(
+        self.indexes_to_ath.compute_all(
             indexer,
             indexes,
             starting_indexes,
@@ -1124,7 +1239,7 @@ impl Vecs {
                 let mut prev = None;
                 v.compute_transform(
                     starting_indexes.dateindex,
-                    &fetched.timeindexes_to_high.dateindex,
+                    fetched.timeindexes_to_high.dateindex.as_ref().unwrap(),
                     |(i, high, slf)| {
                         if prev.is_none() {
                             let i = i.unwrap_to_usize();
@@ -1143,17 +1258,22 @@ impl Vecs {
             },
         )?;
 
-        self.indexes_to_drawdown.compute(
+        self.indexes_to_drawdown.compute_all(
             indexer,
             indexes,
             starting_indexes,
             exit,
             |v, _, _, starting_indexes, exit| {
-                let mut close_iter = fetched.timeindexes_to_close.dateindex.into_iter();
+                let mut close_iter = fetched
+                    .timeindexes_to_close
+                    .dateindex
+                    .as_ref()
+                    .unwrap()
+                    .into_iter();
 
                 v.compute_transform(
                     starting_indexes.dateindex,
-                    &self.indexes_to_ath.dateindex,
+                    self.indexes_to_ath.dateindex.as_ref().unwrap(),
                     |(i, ath, ..)| {
                         if ath == Dollars::ZERO {
                             return (i, StoredF32::default());
@@ -1167,17 +1287,22 @@ impl Vecs {
             },
         )?;
 
-        self.indexes_to_days_since_ath.compute(
+        self.indexes_to_days_since_ath.compute_all(
             indexer,
             indexes,
             starting_indexes,
             exit,
             |v, _, _, starting_indexes, exit| {
-                let mut high_iter = fetched.timeindexes_to_high.dateindex.into_iter();
+                let mut high_iter = fetched
+                    .timeindexes_to_high
+                    .dateindex
+                    .as_ref()
+                    .unwrap()
+                    .into_iter();
                 let mut prev = None;
                 v.compute_transform(
                     starting_indexes.dateindex,
-                    &self.indexes_to_ath.dateindex,
+                    self.indexes_to_ath.dateindex.as_ref().unwrap(),
                     |(i, ath, slf)| {
                         if prev.is_none() {
                             let i = i.unwrap_to_usize();
@@ -1200,7 +1325,7 @@ impl Vecs {
             },
         )?;
 
-        self.indexes_to_max_days_between_ath.compute(
+        self.indexes_to_max_days_between_ath.compute_all(
             indexer,
             indexes,
             starting_indexes,
@@ -1209,7 +1334,7 @@ impl Vecs {
                 let mut prev = None;
                 v.compute_transform(
                     starting_indexes.dateindex,
-                    &self.indexes_to_days_since_ath.dateindex,
+                    self.indexes_to_days_since_ath.dateindex.as_ref().unwrap(),
                     |(i, days, slf)| {
                         if prev.is_none() {
                             let i = i.unwrap_to_usize();
@@ -1228,7 +1353,7 @@ impl Vecs {
             },
         )?;
 
-        self.indexes_to_max_years_between_ath.compute(
+        self.indexes_to_max_years_between_ath.compute_all(
             indexer,
             indexes,
             starting_indexes,
@@ -1236,7 +1361,10 @@ impl Vecs {
             |v, _, _, starting_indexes, exit| {
                 v.compute_transform(
                     starting_indexes.dateindex,
-                    &self.indexes_to_max_days_between_ath.dateindex,
+                    self.indexes_to_max_days_between_ath
+                        .dateindex
+                        .as_ref()
+                        .unwrap(),
                     |(i, max, ..)| (i, StoredF32::from(*max as f64 / 365.0)),
                     exit,
                 )
@@ -1295,7 +1423,7 @@ impl Vecs {
         ]
         .into_iter()
         .try_for_each(|(days, ago, returns, cagr)| -> color_eyre::Result<()> {
-            ago.compute(
+            ago.compute_all(
                 indexer,
                 indexes,
                 starting_indexes,
@@ -1303,14 +1431,14 @@ impl Vecs {
                 |v, _, _, starting_indexes, exit| {
                     v.compute_previous_value(
                         starting_indexes.dateindex,
-                        &fetched.timeindexes_to_close.dateindex,
+                        fetched.timeindexes_to_close.dateindex.as_ref().unwrap(),
                         days,
                         exit,
                     )
                 },
             )?;
 
-            returns.compute(
+            returns.compute_all(
                 indexer,
                 indexes,
                 starting_indexes,
@@ -1318,7 +1446,7 @@ impl Vecs {
                 |v, _, _, starting_indexes, exit| {
                     v.compute_percentage_change(
                         starting_indexes.dateindex,
-                        &fetched.timeindexes_to_close.dateindex,
+                        fetched.timeindexes_to_close.dateindex.as_ref().unwrap(),
                         days,
                         exit,
                     )
@@ -1326,13 +1454,18 @@ impl Vecs {
             )?;
 
             if let Some(cagr) = cagr {
-                cagr.compute(
+                cagr.compute_all(
                     indexer,
                     indexes,
                     starting_indexes,
                     exit,
                     |v, _, _, starting_indexes, exit| {
-                        v.compute_cagr(starting_indexes.dateindex, &returns.dateindex, days, exit)
+                        v.compute_cagr(
+                            starting_indexes.dateindex,
+                            returns.dateindex.as_ref().unwrap(),
+                            days,
+                            exit,
+                        )
                     },
                 )?;
             }
@@ -1429,7 +1562,7 @@ impl Vecs {
         .into_iter()
         .try_for_each(
             |(days, dca_stack, dca_avg_price, dca_returns, dca_cagr)| -> color_eyre::Result<()> {
-                dca_stack.compute(
+                dca_stack.compute_all(
                     indexer,
                     indexes,
                     starting_indexes,
@@ -1437,14 +1570,14 @@ impl Vecs {
                     |v, _, _, starting_indexes, exit| {
                         v.compute_dca_stack_via_len(
                             starting_indexes.dateindex,
-                            &fetched.timeindexes_to_close.dateindex,
+                            fetched.timeindexes_to_close.dateindex.as_ref().unwrap(),
                             days,
                             exit,
                         )
                     },
                 )?;
 
-                dca_avg_price.compute(
+                dca_avg_price.compute_all(
                     indexer,
                     indexes,
                     starting_indexes,
@@ -1452,14 +1585,14 @@ impl Vecs {
                     |v, _, _, starting_indexes, exit| {
                         v.compute_dca_avg_price_via_len(
                             starting_indexes.dateindex,
-                            &dca_stack.dateindex,
+                            dca_stack.dateindex.as_ref().unwrap(),
                             days,
                             exit,
                         )
                     },
                 )?;
 
-                dca_returns.compute(
+                dca_returns.compute_all(
                     indexer,
                     indexes,
                     starting_indexes,
@@ -1467,15 +1600,15 @@ impl Vecs {
                     |v, _, _, starting_indexes, exit| {
                         v.compute_percentage_difference(
                             starting_indexes.dateindex,
-                            &fetched.timeindexes_to_close.dateindex,
-                            &dca_avg_price.dateindex,
+                            fetched.timeindexes_to_close.dateindex.as_ref().unwrap(),
+                            dca_avg_price.dateindex.as_ref().unwrap(),
                             exit,
                         )
                     },
                 )?;
 
                 if let Some(dca_cagr) = dca_cagr {
-                    dca_cagr.compute(
+                    dca_cagr.compute_all(
                         indexer,
                         indexes,
                         starting_indexes,
@@ -1483,7 +1616,7 @@ impl Vecs {
                         |v, _, _, starting_indexes, exit| {
                             v.compute_cagr(
                                 starting_indexes.dateindex,
-                                &dca_returns.dateindex,
+                                dca_returns.dateindex.as_ref().unwrap(),
                                 days,
                                 exit,
                             )
@@ -1568,7 +1701,7 @@ impl Vecs {
             |(year, avg_price, returns, stack)| -> color_eyre::Result<()> {
                 let dateindex = DateIndex::try_from(Date::new(year, 1, 1)).unwrap();
 
-                stack.compute(
+                stack.compute_all(
                     indexer,
                     indexes,
                     starting_indexes,
@@ -1576,14 +1709,14 @@ impl Vecs {
                     |v, _, _, starting_indexes, exit| {
                         v.compute_dca_stack_via_from(
                             starting_indexes.dateindex,
-                            &fetched.timeindexes_to_close.dateindex,
+                            fetched.timeindexes_to_close.dateindex.as_ref().unwrap(),
                             dateindex,
                             exit,
                         )
                     },
                 )?;
 
-                avg_price.compute(
+                avg_price.compute_all(
                     indexer,
                     indexes,
                     starting_indexes,
@@ -1591,14 +1724,14 @@ impl Vecs {
                     |v, _, _, starting_indexes, exit| {
                         v.compute_dca_avg_price_via_from(
                             starting_indexes.dateindex,
-                            &stack.dateindex,
+                            stack.dateindex.as_ref().unwrap(),
                             dateindex,
                             exit,
                         )
                     },
                 )?;
 
-                returns.compute(
+                returns.compute_all(
                     indexer,
                     indexes,
                     starting_indexes,
@@ -1606,8 +1739,8 @@ impl Vecs {
                     |v, _, _, starting_indexes, exit| {
                         v.compute_percentage_difference(
                             starting_indexes.dateindex,
-                            &fetched.timeindexes_to_close.dateindex,
-                            &avg_price.dateindex,
+                            fetched.timeindexes_to_close.dateindex.as_ref().unwrap(),
+                            avg_price.dateindex.as_ref().unwrap(),
                             exit,
                         )
                     },
@@ -1645,7 +1778,7 @@ impl Vecs {
                         |v, _, _, starting_indexes, exit| {
                             v.compute_sma(
                                 starting_indexes.dateindex,
-                                &fetched.timeindexes_to_close.dateindex,
+                                fetched.timeindexes_to_close.dateindex.as_ref().unwrap(),
                                 sma,
                                 exit,
                             )
