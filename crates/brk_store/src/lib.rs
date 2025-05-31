@@ -6,10 +6,10 @@ use std::{
     path::Path,
 };
 
-use brk_core::{Height, Value, Version};
+use brk_core::{Height, Result, Value, Version};
 use byteview::ByteView;
 use fjall::{
-    PartitionCreateOptions, PersistMode, ReadTransaction, Result, TransactionalKeyspace,
+    PartitionCreateOptions, PersistMode, ReadTransaction, TransactionalKeyspace,
     TransactionalPartitionHandle,
 };
 use zerocopy::{Immutable, IntoBytes};
@@ -25,29 +25,34 @@ pub struct Store<Key, Value> {
     rtx: ReadTransaction,
     puts: BTreeMap<Key, Value>,
     dels: BTreeSet<Key>,
+    bloom_filter_bits: Option<Option<u8>>,
 }
 
+/// Use default if will read
+const DEFAULT_BLOOM_FILTER_BITS: Option<u8> = Some(5);
 const CHECK_COLLISISONS: bool = true;
 const MAJOR_FJALL_VERSION: Version = Version::TWO;
 
 impl<K, V> Store<K, V>
 where
-    K: Debug + Clone + Into<ByteView> + Ord + Immutable + IntoBytes,
+    K: Debug + Clone + Into<ByteView> + TryFrom<ByteView> + Ord + Immutable + IntoBytes,
     V: Debug + Clone + Into<ByteView> + TryFrom<ByteView>,
+    <K as TryFrom<ByteView>>::Error: error::Error + Send + Sync + 'static,
     <V as TryFrom<ByteView>>::Error: error::Error + Send + Sync + 'static,
 {
     pub fn import(
-        keyspace: TransactionalKeyspace,
+        keyspace: &TransactionalKeyspace,
         path: &Path,
         name: &str,
         version: Version,
-    ) -> color_eyre::Result<Self> {
+        bloom_filter_bits: Option<Option<u8>>,
+    ) -> Result<Self> {
         let (meta, partition) = StoreMeta::checked_open(
-            &keyspace,
+            keyspace,
             &path.join(format!("meta/{name}")),
             MAJOR_FJALL_VERSION + version,
             || {
-                Self::open_partition_handle(&keyspace, name).inspect_err(|e| {
+                Self::open_partition_handle(keyspace, name, bloom_filter_bits).inspect_err(|e| {
                     eprintln!("{e}");
                     eprintln!("Delete {path:?} and try again");
                 })
@@ -59,11 +64,12 @@ where
         Ok(Self {
             meta,
             name: name.to_owned(),
-            keyspace,
+            keyspace: keyspace.clone(),
             partition,
             rtx,
             puts: BTreeMap::new(),
             dels: BTreeSet::new(),
+            bloom_filter_bits,
         })
     }
 
@@ -75,6 +81,29 @@ where
         } else {
             Ok(None)
         }
+    }
+
+    pub fn get_mut_or_default(&mut self, key: &K) -> &mut V
+    where
+        V: Default,
+    {
+        self.puts.entry(key.clone()).or_insert_with(|| {
+            if let Some(slice) = self.rtx.get(&self.partition, key.as_bytes()).unwrap() {
+                V::try_from(slice.as_bytes().into()).unwrap()
+            } else {
+                V::default()
+            }
+        })
+    }
+
+    pub fn unordered_clone_iter(&self) -> impl Iterator<Item = (K, V)> {
+        self.rtx
+            .iter(&self.partition)
+            .map(|res| res.unwrap())
+            .map(|(k, v)| (K::try_from(ByteView::from(k)).unwrap(), v))
+            .filter(|(k, _)| !self.puts.contains_key(k) && !self.dels.contains(k))
+            .map(|(k, v)| (k, V::try_from(ByteView::from(v)).unwrap()))
+            .chain(self.puts.iter().map(|(k, v)| (k.clone(), v.clone())))
     }
 
     pub fn insert_if_needed(&mut self, key: K, value: V, height: Height) {
@@ -100,6 +129,19 @@ where
             dbg!(key, &self.meta.path());
             unreachable!();
         }
+    }
+
+    pub fn retain_or_del<F>(&mut self, retain: F)
+    where
+        F: Fn(&K, &mut V) -> bool,
+    {
+        self.puts.retain(|k, v| {
+            let ret = retain(k, v);
+            if !ret {
+                self.dels.insert(k.clone());
+            }
+            ret
+        });
     }
 
     pub fn commit(&mut self, height: Height) -> Result<()> {
@@ -169,20 +211,24 @@ where
     fn open_partition_handle(
         keyspace: &TransactionalKeyspace,
         name: &str,
+        bloom_filter_bits: Option<Option<u8>>,
     ) -> Result<TransactionalPartitionHandle> {
-        keyspace.open_partition(
-            name,
-            PartitionCreateOptions::default()
-                .bloom_filter_bits(Some(5))
-                .max_memtable_size(8 * 1024 * 1024)
-                .manual_journal_persist(true),
-        )
+        keyspace
+            .open_partition(
+                name,
+                PartitionCreateOptions::default()
+                    .bloom_filter_bits(bloom_filter_bits.unwrap_or(DEFAULT_BLOOM_FILTER_BITS))
+                    .max_memtable_size(8 * 1024 * 1024)
+                    .manual_journal_persist(true),
+            )
+            .map_err(|e| e.into())
     }
 
     pub fn reset_partition(&mut self) -> Result<()> {
         self.keyspace.delete_partition(self.partition.clone())?;
         self.keyspace.persist(PersistMode::SyncAll)?;
-        self.partition = Self::open_partition_handle(&self.keyspace, &self.name)?;
+        self.partition =
+            Self::open_partition_handle(&self.keyspace, &self.name, self.bloom_filter_bits)?;
         Ok(())
     }
 }
@@ -201,6 +247,7 @@ where
             rtx: self.keyspace.read_tx(),
             puts: self.puts.clone(),
             dels: self.dels.clone(),
+            bloom_filter_bits: self.bloom_filter_bits,
         }
     }
 }

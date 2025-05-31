@@ -32,12 +32,12 @@ brk_server = { version = "0", path = "crates/brk_server" }
 brk_state = { version = "0", path = "crates/brk_state" }
 brk_store = { version = "0", path = "crates/brk_store" }
 brk_vec = { version = "0", path = "crates/brk_vec" }
-byteview = "0.7.0"
+byteview = "=0.6.1"
 clap = { version = "4.5.39", features = ["string"] }
 clap_derive = "4.5.32"
-color-eyre = "0.6.4"
+color-eyre = "0.6.5"
 derive_deref = "1.1.1"
-fjall = "2.10.0"
+fjall = "2.11.0"
 jiff = "0.2.14"
 log = { version = "0.4.27" }
 minreq = { version = "2.13.4", features = ["https", "serde_json"] }

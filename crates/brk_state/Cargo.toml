@@ -10,6 +10,7 @@ repository.workspace = true
 brk_core = { workspace = true }
 brk_vec = { workspace = true }
 brk_store = { workspace = true }
+fjall = { workspace = true }
 rayon = { workspace = true }
 serde = { workspace = true }
 zerocopy = { workspace = true }

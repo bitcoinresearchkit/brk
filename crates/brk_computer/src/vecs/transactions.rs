@@ -864,12 +864,7 @@ impl Vecs {
                     self.indexes_to_fee.sats.height.unwrap_sum().iter();
                 vec.compute_transform(
                     starting_indexes.height,
-                    self.indexes_to_coinbase
-                        .sats
-                        .height
-                        .as_ref()
-                        .unwrap()
-                        .as_ref(),
+                    self.indexes_to_coinbase.sats.height.as_ref().unwrap(),
                     |(height, coinbase, ..)| {
                         let fees = indexes_to_fee_sum_iter.unwrap_get_inner(height);
                         (height, coinbase.checked_sub(fees).unwrap())
@@ -888,12 +883,7 @@ impl Vecs {
             |vec, _, _, starting_indexes, exit| {
                 vec.compute_transform(
                     starting_indexes.height,
-                    self.indexes_to_subsidy
-                        .sats
-                        .height
-                        .as_ref()
-                        .unwrap()
-                        .as_ref(),
+                    self.indexes_to_subsidy.sats.height.as_ref().unwrap(),
                     |(height, subsidy, ..)| {
                         let halving = HalvingEpoch::from(height);
                         let expected =

@@ -1,8 +1,8 @@
 use std::{fs, path::Path, thread};
 
 use brk_core::{
-    AddressBytes, AddressBytesHash, BlockHashPrefix, Height, OutputType, OutputTypeIndex, TxIndex,
-    TxidPrefix, Value, Version,
+    AddressBytes, AddressBytesHash, BlockHashPrefix, Height, OutputType, OutputTypeIndex, Result,
+    TxIndex, TxidPrefix, Value, Version,
 };
 use brk_store::Store;
 use brk_vec::AnyIterableVec;
@@ -37,26 +37,29 @@ impl Stores {
         thread::scope(|scope| {
             let addressbyteshash_to_outputtypeindex = scope.spawn(|| {
                 Store::import(
-                    keyspace.clone(),
+                    &keyspace,
                     path,
                     "addressbyteshash_to_outputtypeindex",
                     version + VERSION + Version::ZERO,
+                    None,
                 )
             });
             let blockhashprefix_to_height = scope.spawn(|| {
                 Store::import(
-                    keyspace.clone(),
+                    &keyspace,
                     path,
                     "blockhashprefix_to_height",
                     version + VERSION + Version::ZERO,
+                    None,
                 )
             });
             let txidprefix_to_txindex = scope.spawn(|| {
                 Store::import(
-                    keyspace.clone(),
+                    &keyspace,
                     path,
                     "txidprefix_to_txindex",
                     version + VERSION + Version::ZERO,
+                    None,
                 )
             });
 
@@ -285,8 +288,8 @@ impl Stores {
         .unwrap()
     }
 
-    pub fn commit(&mut self, height: Height) -> fjall::Result<()> {
-        thread::scope(|scope| -> fjall::Result<()> {
+    pub fn commit(&mut self, height: Height) -> Result<()> {
+        thread::scope(|scope| -> Result<()> {
             let addressbyteshash_to_outputtypeindex_commit_handle =
                 scope.spawn(|| self.addressbyteshash_to_outputtypeindex.commit(height));
             let blockhashprefix_to_height_commit_handle =
@@ -303,7 +306,9 @@ impl Stores {
             Ok(())
         })?;
 
-        self.keyspace.persist(PersistMode::SyncAll)
+        self.keyspace
+            .persist(PersistMode::SyncAll)
+            .map_err(|e| e.into())
     }
 
     pub fn rotate_memtables(&self) {

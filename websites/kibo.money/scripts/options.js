@@ -1273,8 +1273,14 @@ function createPartialOptions(colors) {
                         color: colors.green,
                       }),
                       createBaseSeries({
-                        key: `${fixKey(args.key)}negative-realized-loss`,
+                        key: `${fixKey(args.key)}realized-loss`,
                         name: "Loss",
+                        color: colors.red,
+                        defaultActive: false,
+                      }),
+                      createBaseSeries({
+                        key: `${fixKey(args.key)}negative-realized-loss`,
+                        name: "Negative Loss",
                         color: colors.red,
                       }),
                     ],
@@ -2818,48 +2824,3 @@ export function initOptions({
 //       name: "Highly Liquid",
 //     },
 //   ]);
-
-//   return {
-//     xTermHolders,
-//     upTo,
-//     fromX,
-//     fromXToY,
-//     epochs,
-//     age,
-//     type,
-//     size,
-//     address,
-//     liquidities,
-//     averages,
-//     cumulativeReturns,
-//     compoundReturns,
-//     percentiles,
-//   };
-// }
-// /**
-//  * @typedef {ReturnType<typeof initGroups>} Groups
-//  *
-//  * @typedef {Groups["age"][number]["id"]} AgeCohortId
-//  *
-//  * @typedef {Exclude<AgeCohortId, "">} AgeCohortIdSub
-//  *
-//  * @typedef {Groups["address"][number]["key"]} AddressCohortId
-//  *
-//  * @typedef {Groups["liquidities"][number]["id"]} LiquidityId
-//  *
-//  * @typedef {AgeCohortId | AddressCohortId} AnyCohortId
-//  *
-//  * @typedef {AddressCohortId | LiquidityId} AnyAddressCohortId
-//  *
-//  * @typedef {AnyCohortId | LiquidityId} AnyPossibleCohortId
-//  *
-//  * @typedef {'' | `${AgeCohortIdSub | AddressCohortId | LiquidityId}-`} AnyDatasetPrefix
-//  *
-//  * @typedef {Groups["averages"][number]["key"]} AverageName
-//  *
-//  * @typedef {Groups["cumulativeReturns"][number]["key"]} CumulativeReturnKey
-//  *
-//  * @typedef {Groups["compoundReturns"][number]["key"]} CompoundReturnKey
-//  *
-//  * @typedef {Groups["percentiles"][number]["id"]} PercentileId
-//  */

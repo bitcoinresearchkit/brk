@@ -4,10 +4,11 @@ use std::{
 };
 
 use bitcoin::Amount;
+use byteview::ByteView;
 use serde::Serialize;
 use zerocopy_derive::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
-use crate::CheckedSub;
+use crate::{CheckedSub, Error, copy_first_8bytes};
 
 use super::{Bitcoin, Cents, Dollars, Height};
 
@@ -185,5 +186,25 @@ impl From<u128> for Sats {
 impl From<Sats> for u128 {
     fn from(value: Sats) -> Self {
         value.0 as u128
+    }
+}
+
+impl TryFrom<ByteView> for Sats {
+    type Error = Error;
+    fn try_from(value: ByteView) -> Result<Self, Self::Error> {
+        let bytes = copy_first_8bytes(&value)?;
+        Ok(Self::from(u64::from_be_bytes(bytes)))
+    }
+}
+
+impl From<&Sats> for ByteView {
+    fn from(value: &Sats) -> Self {
+        Self::new(&value.0.to_be_bytes())
+    }
+}
+
+impl From<Sats> for ByteView {
+    fn from(value: Sats) -> Self {
+        Self::from(&value)
     }
 }

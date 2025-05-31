@@ -69,6 +69,7 @@ impl ComputedRatioVecsFromDateIndex {
                 ComputedVecsFromDateIndex::forced_import(
                     path,
                     name,
+                    true,
                     version + VERSION,
                     compressed,
                     options,
@@ -78,6 +79,7 @@ impl ComputedRatioVecsFromDateIndex {
             ratio: ComputedVecsFromDateIndex::forced_import(
                 path,
                 &format!("{name}_ratio"),
+                true,
                 version + VERSION + Version::ZERO,
                 compressed,
                 options,
@@ -85,6 +87,7 @@ impl ComputedRatioVecsFromDateIndex {
             ratio_sma: ComputedVecsFromDateIndex::forced_import(
                 path,
                 &format!("{name}_ratio_sma"),
+                true,
                 version + VERSION + Version::ZERO,
                 compressed,
                 options,
@@ -92,6 +95,7 @@ impl ComputedRatioVecsFromDateIndex {
             ratio_1w_sma: ComputedVecsFromDateIndex::forced_import(
                 path,
                 &format!("{name}_ratio_1w_sma"),
+                true,
                 version + VERSION + Version::ZERO,
                 compressed,
                 options,
@@ -99,6 +103,7 @@ impl ComputedRatioVecsFromDateIndex {
             ratio_1m_sma: ComputedVecsFromDateIndex::forced_import(
                 path,
                 &format!("{name}_ratio_1m_sma"),
+                true,
                 version + VERSION + Version::ZERO,
                 compressed,
                 options,
@@ -106,6 +111,7 @@ impl ComputedRatioVecsFromDateIndex {
             ratio_1y_sma: ComputedVecsFromDateIndex::forced_import(
                 path,
                 &format!("{name}_ratio_1y_sma"),
+                true,
                 version + VERSION + Version::ZERO,
                 compressed,
                 options,
@@ -113,6 +119,7 @@ impl ComputedRatioVecsFromDateIndex {
             ratio_1y_sma_momentum_oscillator: ComputedVecsFromDateIndex::forced_import(
                 path,
                 &format!("{name}_ratio_1y_sma_momentum_oscillator"),
+                true,
                 version + VERSION + Version::ZERO,
                 compressed,
                 options,
@@ -120,6 +127,7 @@ impl ComputedRatioVecsFromDateIndex {
             ratio_standard_deviation: ComputedVecsFromDateIndex::forced_import(
                 path,
                 &format!("{name}_ratio_standard_deviation"),
+                true,
                 version + VERSION + Version::ZERO,
                 compressed,
                 options,
@@ -127,6 +135,7 @@ impl ComputedRatioVecsFromDateIndex {
             ratio_p99_9: ComputedVecsFromDateIndex::forced_import(
                 path,
                 &format!("{name}_ratio_p99_9"),
+                true,
                 version + VERSION + Version::ZERO,
                 compressed,
                 options,
@@ -134,6 +143,7 @@ impl ComputedRatioVecsFromDateIndex {
             ratio_p99_5: ComputedVecsFromDateIndex::forced_import(
                 path,
                 &format!("{name}_ratio_p99_5"),
+                true,
                 version + VERSION + Version::ZERO,
                 compressed,
                 options,
@@ -141,6 +151,7 @@ impl ComputedRatioVecsFromDateIndex {
             ratio_p99: ComputedVecsFromDateIndex::forced_import(
                 path,
                 &format!("{name}_ratio_p99"),
+                true,
                 version + VERSION + Version::ZERO,
                 compressed,
                 options,
@@ -148,6 +159,7 @@ impl ComputedRatioVecsFromDateIndex {
             ratio_p1: ComputedVecsFromDateIndex::forced_import(
                 path,
                 &format!("{name}_ratio_p1"),
+                true,
                 version + VERSION + Version::ZERO,
                 compressed,
                 options,
@@ -155,6 +167,7 @@ impl ComputedRatioVecsFromDateIndex {
             ratio_p0_5: ComputedVecsFromDateIndex::forced_import(
                 path,
                 &format!("{name}_ratio_p0_5"),
+                true,
                 version + VERSION + Version::ZERO,
                 compressed,
                 options,
@@ -162,6 +175,7 @@ impl ComputedRatioVecsFromDateIndex {
             ratio_p0_1: ComputedVecsFromDateIndex::forced_import(
                 path,
                 &format!("{name}_ratio_p0_1"),
+                true,
                 version + VERSION + Version::ZERO,
                 compressed,
                 options,
@@ -169,6 +183,7 @@ impl ComputedRatioVecsFromDateIndex {
             ratio_p1sd: ComputedVecsFromDateIndex::forced_import(
                 path,
                 &format!("{name}_ratio_p1sd"),
+                true,
                 version + VERSION + Version::ZERO,
                 compressed,
                 options,
@@ -176,6 +191,7 @@ impl ComputedRatioVecsFromDateIndex {
             ratio_p2sd: ComputedVecsFromDateIndex::forced_import(
                 path,
                 &format!("{name}_ratio_p2sd"),
+                true,
                 version + VERSION + Version::ZERO,
                 compressed,
                 options,
@@ -183,6 +199,7 @@ impl ComputedRatioVecsFromDateIndex {
             ratio_p3sd: ComputedVecsFromDateIndex::forced_import(
                 path,
                 &format!("{name}_ratio_p3sd"),
+                true,
                 version + VERSION + Version::ZERO,
                 compressed,
                 options,
@@ -190,6 +207,7 @@ impl ComputedRatioVecsFromDateIndex {
             ratio_m1sd: ComputedVecsFromDateIndex::forced_import(
                 path,
                 &format!("{name}_ratio_m1sd"),
+                true,
                 version + VERSION + Version::ZERO,
                 compressed,
                 options,
@@ -197,6 +215,7 @@ impl ComputedRatioVecsFromDateIndex {
             ratio_m2sd: ComputedVecsFromDateIndex::forced_import(
                 path,
                 &format!("{name}_ratio_m2sd"),
+                true,
                 version + VERSION + Version::ZERO,
                 compressed,
                 options,
@@ -204,6 +223,7 @@ impl ComputedRatioVecsFromDateIndex {
             ratio_m3sd: ComputedVecsFromDateIndex::forced_import(
                 path,
                 &format!("{name}_ratio_m3sd"),
+                true,
                 version + VERSION + Version::ZERO,
                 compressed,
                 options,
@@ -211,6 +231,7 @@ impl ComputedRatioVecsFromDateIndex {
             ratio_p99_9_as_price: ComputedVecsFromDateIndex::forced_import(
                 path,
                 &format!("{name}_ratio_p99_9_as_price"),
+                true,
                 version + VERSION + Version::ZERO,
                 compressed,
                 options,
@@ -218,6 +239,7 @@ impl ComputedRatioVecsFromDateIndex {
             ratio_p99_5_as_price: ComputedVecsFromDateIndex::forced_import(
                 path,
                 &format!("{name}_ratio_p99_5_as_price"),
+                true,
                 version + VERSION + Version::ZERO,
                 compressed,
                 options,
@@ -225,6 +247,7 @@ impl ComputedRatioVecsFromDateIndex {
             ratio_p99_as_price: ComputedVecsFromDateIndex::forced_import(
                 path,
                 &format!("{name}_ratio_p99_as_price"),
+                true,
                 version + VERSION + Version::ZERO,
                 compressed,
                 options,
@@ -232,6 +255,7 @@ impl ComputedRatioVecsFromDateIndex {
             ratio_p1_as_price: ComputedVecsFromDateIndex::forced_import(
                 path,
                 &format!("{name}_ratio_p1_as_price"),
+                true,
                 version + VERSION + Version::ZERO,
                 compressed,
                 options,
@@ -239,6 +263,7 @@ impl ComputedRatioVecsFromDateIndex {
             ratio_p0_5_as_price: ComputedVecsFromDateIndex::forced_import(
                 path,
                 &format!("{name}_ratio_p0_5_as_price"),
+                true,
                 version + VERSION + Version::ZERO,
                 compressed,
                 options,
@@ -246,6 +271,7 @@ impl ComputedRatioVecsFromDateIndex {
             ratio_p0_1_as_price: ComputedVecsFromDateIndex::forced_import(
                 path,
                 &format!("{name}_ratio_p0_1_as_price"),
+                true,
                 version + VERSION + Version::ZERO,
                 compressed,
                 options,
@@ -253,6 +279,7 @@ impl ComputedRatioVecsFromDateIndex {
             ratio_p1sd_as_price: ComputedVecsFromDateIndex::forced_import(
                 path,
                 &format!("{name}_ratio_p1sd_as_price"),
+                true,
                 version + VERSION + Version::ZERO,
                 compressed,
                 options,
@@ -260,6 +287,7 @@ impl ComputedRatioVecsFromDateIndex {
             ratio_p2sd_as_price: ComputedVecsFromDateIndex::forced_import(
                 path,
                 &format!("{name}_ratio_p2sd_as_price"),
+                true,
                 version + VERSION + Version::ZERO,
                 compressed,
                 options,
@@ -267,6 +295,7 @@ impl ComputedRatioVecsFromDateIndex {
             ratio_p3sd_as_price: ComputedVecsFromDateIndex::forced_import(
                 path,
                 &format!("{name}_ratio_p3sd_as_price"),
+                true,
                 version + VERSION + Version::ZERO,
                 compressed,
                 options,
@@ -274,6 +303,7 @@ impl ComputedRatioVecsFromDateIndex {
             ratio_m1sd_as_price: ComputedVecsFromDateIndex::forced_import(
                 path,
                 &format!("{name}_ratio_m1sd_as_price"),
+                true,
                 version + VERSION + Version::ZERO,
                 compressed,
                 options,
@@ -281,6 +311,7 @@ impl ComputedRatioVecsFromDateIndex {
             ratio_m2sd_as_price: ComputedVecsFromDateIndex::forced_import(
                 path,
                 &format!("{name}_ratio_m2sd_as_price"),
+                true,
                 version + VERSION + Version::ZERO,
                 compressed,
                 options,
@@ -288,6 +319,7 @@ impl ComputedRatioVecsFromDateIndex {
             ratio_m3sd_as_price: ComputedVecsFromDateIndex::forced_import(
                 path,
                 &format!("{name}_ratio_m3sd_as_price"),
+                true,
                 version + VERSION + Version::ZERO,
                 compressed,
                 options,
@@ -295,6 +327,7 @@ impl ComputedRatioVecsFromDateIndex {
             ratio_zscore: ComputedVecsFromDateIndex::forced_import(
                 path,
                 &format!("{name}_ratio_zscore"),
+                true,
                 version + VERSION + Version::ZERO,
                 compressed,
                 options,
@@ -320,10 +353,13 @@ impl ComputedRatioVecsFromDateIndex {
             &Exit,
         ) -> Result<()>,
     {
-        self.price
-            .as_mut()
-            .unwrap()
-            .compute(indexer, indexes, starting_indexes, exit, compute)?;
+        self.price.as_mut().unwrap().compute_all(
+            indexer,
+            indexes,
+            starting_indexes,
+            exit,
+            compute,
+        )?;
 
         let date_to_price_opt: Option<&EagerVec<DateIndex, Dollars>> = None;
         self.compute_rest(
@@ -349,9 +385,9 @@ impl ComputedRatioVecsFromDateIndex {
             std::mem::transmute(&self.price.as_ref().unwrap().dateindex)
         });
 
-        let closes = &fetched.timeindexes_to_close.dateindex;
+        let closes = fetched.timeindexes_to_close.dateindex.as_ref().unwrap();
 
-        self.ratio.compute(
+        self.ratio.compute_all(
             indexer,
             indexes,
             starting_indexes,
@@ -376,7 +412,7 @@ impl ComputedRatioVecsFromDateIndex {
 
         let min_ratio_date = DateIndex::try_from(Date::MIN_RATIO).unwrap();
 
-        self.ratio_sma.compute(
+        self.ratio_sma.compute_all(
             indexer,
             indexes,
             starting_indexes,
@@ -384,7 +420,7 @@ impl ComputedRatioVecsFromDateIndex {
             |v, _, _, starting_indexes, exit| {
                 v.compute_sma_(
                     starting_indexes.dateindex,
-                    &self.ratio.dateindex,
+                    self.ratio.dateindex.as_ref().unwrap(),
                     usize::MAX,
                     exit,
                     Some(min_ratio_date),
@@ -392,7 +428,7 @@ impl ComputedRatioVecsFromDateIndex {
             },
         )?;
 
-        self.ratio_1w_sma.compute(
+        self.ratio_1w_sma.compute_all(
             indexer,
             indexes,
             starting_indexes,
@@ -400,7 +436,7 @@ impl ComputedRatioVecsFromDateIndex {
             |v, _, _, starting_indexes, exit| {
                 v.compute_sma_(
                     starting_indexes.dateindex,
-                    &self.ratio.dateindex,
+                    self.ratio.dateindex.as_ref().unwrap(),
                     7,
                     exit,
                     Some(min_ratio_date),
@@ -408,7 +444,7 @@ impl ComputedRatioVecsFromDateIndex {
             },
         )?;
 
-        self.ratio_1m_sma.compute(
+        self.ratio_1m_sma.compute_all(
             indexer,
             indexes,
             starting_indexes,
@@ -416,7 +452,7 @@ impl ComputedRatioVecsFromDateIndex {
             |v, _, _, starting_indexes, exit| {
                 v.compute_sma_(
                     starting_indexes.dateindex,
-                    &self.ratio.dateindex,
+                    self.ratio.dateindex.as_ref().unwrap(),
                     30,
                     exit,
                     Some(min_ratio_date),
@@ -424,7 +460,7 @@ impl ComputedRatioVecsFromDateIndex {
             },
         )?;
 
-        self.ratio_1y_sma.compute(
+        self.ratio_1y_sma.compute_all(
             indexer,
             indexes,
             starting_indexes,
@@ -432,7 +468,7 @@ impl ComputedRatioVecsFromDateIndex {
             |v, _, _, starting_indexes, exit| {
                 v.compute_sma_(
                     starting_indexes.dateindex,
-                    &self.ratio.dateindex,
+                    self.ratio.dateindex.as_ref().unwrap(),
                     365,
                     exit,
                     Some(min_ratio_date),
@@ -440,16 +476,17 @@ impl ComputedRatioVecsFromDateIndex {
             },
         )?;
 
-        self.ratio_1y_sma_momentum_oscillator.compute(
+        self.ratio_1y_sma_momentum_oscillator.compute_all(
             indexer,
             indexes,
             starting_indexes,
             exit,
             |v, _, _, starting_indexes, exit| {
-                let mut ratio_1y_sma_iter = self.ratio_1y_sma.dateindex.into_iter();
+                let mut ratio_1y_sma_iter =
+                    self.ratio_1y_sma.dateindex.as_ref().unwrap().into_iter();
                 v.compute_transform(
                     starting_indexes.dateindex,
-                    &self.ratio.dateindex,
+                    self.ratio.dateindex.as_ref().unwrap(),
                     |(i, ratio, ..)| {
                         (
                             i,
@@ -461,7 +498,7 @@ impl ComputedRatioVecsFromDateIndex {
             },
         )?;
 
-        let ratio_version = self.ratio.dateindex.version();
+        let ratio_version = self.ratio.dateindex.as_ref().unwrap().version();
         self.mut_ratio_vecs()
             .iter_mut()
             .try_for_each(|v| -> Result<()> {
@@ -478,7 +515,7 @@ impl ComputedRatioVecsFromDateIndex {
             .unwrap()
             .min(starting_indexes.dateindex);
 
-        let mut sorted = self.ratio.dateindex.collect_range(
+        let mut sorted = self.ratio.dateindex.as_ref().unwrap().collect_range(
             Some(min_ratio_date.unwrap_to_usize()),
             Some(starting_dateindex.unwrap_to_usize()),
         )?;
@@ -489,68 +526,116 @@ impl ComputedRatioVecsFromDateIndex {
         //     unreachable!();
         // }
 
-        let mut sma_iter = self.ratio_sma.dateindex.into_iter();
+        let mut sma_iter = self.ratio_sma.dateindex.as_ref().unwrap().into_iter();
 
         let nan = StoredF32::from(f32::NAN);
         self.ratio
             .dateindex
+            .as_ref()
+            .unwrap()
             .iter_at(starting_dateindex)
             .try_for_each(|(index, ratio)| -> Result<()> {
                 if index < min_ratio_date {
-                    self.ratio_p0_1.dateindex.forced_push_at(index, nan, exit)?;
-                    self.ratio_p0_5.dateindex.forced_push_at(index, nan, exit)?;
-                    self.ratio_p1.dateindex.forced_push_at(index, nan, exit)?;
-                    self.ratio_p99.dateindex.forced_push_at(index, nan, exit)?;
+                    self.ratio_p0_1
+                        .dateindex
+                        .as_mut()
+                        .unwrap()
+                        .forced_push_at(index, nan, exit)?;
+                    self.ratio_p0_5
+                        .dateindex
+                        .as_mut()
+                        .unwrap()
+                        .forced_push_at(index, nan, exit)?;
+                    self.ratio_p1
+                        .dateindex
+                        .as_mut()
+                        .unwrap()
+                        .forced_push_at(index, nan, exit)?;
+                    self.ratio_p99
+                        .dateindex
+                        .as_mut()
+                        .unwrap()
+                        .forced_push_at(index, nan, exit)?;
                     self.ratio_p99_5
                         .dateindex
+                        .as_mut()
+                        .unwrap()
                         .forced_push_at(index, nan, exit)?;
                     self.ratio_p99_9
                         .dateindex
+                        .as_mut()
+                        .unwrap()
                         .forced_push_at(index, nan, exit)?;
                     self.ratio_standard_deviation
                         .dateindex
+                        .as_mut()
+                        .unwrap()
                         .forced_push_at(index, nan, exit)?;
 
-                    self.ratio_p1sd.dateindex.forced_push_at(index, nan, exit)?;
-                    self.ratio_p2sd.dateindex.forced_push_at(index, nan, exit)?;
-                    self.ratio_p3sd.dateindex.forced_push_at(index, nan, exit)?;
-                    self.ratio_m1sd.dateindex.forced_push_at(index, nan, exit)?;
-                    self.ratio_m2sd.dateindex.forced_push_at(index, nan, exit)?;
-                    self.ratio_m3sd.dateindex.forced_push_at(index, nan, exit)?;
+                    self.ratio_p1sd
+                        .dateindex
+                        .as_mut()
+                        .unwrap()
+                        .forced_push_at(index, nan, exit)?;
+                    self.ratio_p2sd
+                        .dateindex
+                        .as_mut()
+                        .unwrap()
+                        .forced_push_at(index, nan, exit)?;
+                    self.ratio_p3sd
+                        .dateindex
+                        .as_mut()
+                        .unwrap()
+                        .forced_push_at(index, nan, exit)?;
+                    self.ratio_m1sd
+                        .dateindex
+                        .as_mut()
+                        .unwrap()
+                        .forced_push_at(index, nan, exit)?;
+                    self.ratio_m2sd
+                        .dateindex
+                        .as_mut()
+                        .unwrap()
+                        .forced_push_at(index, nan, exit)?;
+                    self.ratio_m3sd
+                        .dateindex
+                        .as_mut()
+                        .unwrap()
+                        .forced_push_at(index, nan, exit)?;
                 } else {
                     let ratio = ratio.into_inner();
                     let pos = sorted.binary_search(&ratio).unwrap_or_else(|pos| pos);
                     sorted.insert(pos, ratio);
-                    self.ratio_p0_1.dateindex.forced_push_at(
+                    self.ratio_p0_1.dateindex.as_mut().unwrap().forced_push_at(
                         index,
                         get_percentile(&sorted, 0.001),
                         exit,
                     )?;
-                    self.ratio_p0_5.dateindex.forced_push_at(
+                    self.ratio_p0_5.dateindex.as_mut().unwrap().forced_push_at(
                         index,
                         get_percentile(&sorted, 0.005),
                         exit,
                     )?;
-                    self.ratio_p1.dateindex.forced_push_at(
+                    self.ratio_p1.dateindex.as_mut().unwrap().forced_push_at(
                         index,
                         get_percentile(&sorted, 0.01),
                         exit,
                     )?;
-                    self.ratio_p99.dateindex.forced_push_at(
+                    self.ratio_p99.dateindex.as_mut().unwrap().forced_push_at(
                         index,
                         get_percentile(&sorted, 0.99),
                         exit,
                     )?;
-                    self.ratio_p99_5.dateindex.forced_push_at(
-                        index,
-                        get_percentile(&sorted, 0.995),
-                        exit,
-                    )?;
-                    self.ratio_p99_9.dateindex.forced_push_at(
-                        index,
-                        get_percentile(&sorted, 0.999),
-                        exit,
-                    )?;
+                    self.ratio_p99_5
+                        .dateindex
+                        .as_mut()
+                        .unwrap()
+                        .forced_push_at(index, get_percentile(&sorted, 0.995), exit)?;
+                    self.ratio_p99_9
+                        .dateindex
+                        .as_mut()
+                        .unwrap()
+                        .forced_push_at(index, get_percentile(&sorted, 0.999), exit)?;
 
                     let avg = sma_iter.unwrap_get_inner(index);
 
@@ -562,26 +647,40 @@ impl ComputedRatioVecsFromDateIndex {
 
                     self.ratio_standard_deviation
                         .dateindex
+                        .as_mut()
+                        .unwrap()
                         .forced_push_at(index, sd, exit)?;
 
-                    self.ratio_p1sd
-                        .dateindex
-                        .forced_push_at(index, avg + sd, exit)?;
-                    self.ratio_p2sd
-                        .dateindex
-                        .forced_push_at(index, avg + 2 * sd, exit)?;
-                    self.ratio_p3sd
-                        .dateindex
-                        .forced_push_at(index, avg + 3 * sd, exit)?;
-                    self.ratio_m1sd
-                        .dateindex
-                        .forced_push_at(index, avg - sd, exit)?;
-                    self.ratio_m2sd
-                        .dateindex
-                        .forced_push_at(index, avg - 2 * sd, exit)?;
-                    self.ratio_m3sd
-                        .dateindex
-                        .forced_push_at(index, avg - 3 * sd, exit)?;
+                    self.ratio_p1sd.dateindex.as_mut().unwrap().forced_push_at(
+                        index,
+                        avg + sd,
+                        exit,
+                    )?;
+                    self.ratio_p2sd.dateindex.as_mut().unwrap().forced_push_at(
+                        index,
+                        avg + 2 * sd,
+                        exit,
+                    )?;
+                    self.ratio_p3sd.dateindex.as_mut().unwrap().forced_push_at(
+                        index,
+                        avg + 3 * sd,
+                        exit,
+                    )?;
+                    self.ratio_m1sd.dateindex.as_mut().unwrap().forced_push_at(
+                        index,
+                        avg - sd,
+                        exit,
+                    )?;
+                    self.ratio_m2sd.dateindex.as_mut().unwrap().forced_push_at(
+                        index,
+                        avg - 2 * sd,
+                        exit,
+                    )?;
+                    self.ratio_m3sd.dateindex.as_mut().unwrap().forced_push_at(
+                        index,
+                        avg - 3 * sd,
+                        exit,
+                    )?;
                 }
 
                 Ok(())
@@ -591,44 +690,96 @@ impl ComputedRatioVecsFromDateIndex {
             .into_iter()
             .try_for_each(|v| v.safe_flush(exit))?;
 
-        self.ratio_p99_9
-            .compute_rest(indexes, starting_indexes, exit)?;
-        self.ratio_p99_5
-            .compute_rest(indexes, starting_indexes, exit)?;
-        self.ratio_p99
-            .compute_rest(indexes, starting_indexes, exit)?;
-        self.ratio_p1
-            .compute_rest(indexes, starting_indexes, exit)?;
-        self.ratio_p0_5
-            .compute_rest(indexes, starting_indexes, exit)?;
-        self.ratio_p0_1
-            .compute_rest(indexes, starting_indexes, exit)?;
-        self.ratio_standard_deviation
-            .compute_rest(indexes, starting_indexes, exit)?;
-        self.ratio_p1sd
-            .compute_rest(indexes, starting_indexes, exit)?;
-        self.ratio_p2sd
-            .compute_rest(indexes, starting_indexes, exit)?;
-        self.ratio_p3sd
-            .compute_rest(indexes, starting_indexes, exit)?;
-        self.ratio_m1sd
-            .compute_rest(indexes, starting_indexes, exit)?;
-        self.ratio_m2sd
-            .compute_rest(indexes, starting_indexes, exit)?;
-        self.ratio_m3sd
-            .compute_rest(indexes, starting_indexes, exit)?;
+        self.ratio_p99_9.compute_rest(
+            indexes,
+            starting_indexes,
+            exit,
+            None as Option<&EagerVec<_, _>>,
+        )?;
+        self.ratio_p99_5.compute_rest(
+            indexes,
+            starting_indexes,
+            exit,
+            None as Option<&EagerVec<_, _>>,
+        )?;
+        self.ratio_p99.compute_rest(
+            indexes,
+            starting_indexes,
+            exit,
+            None as Option<&EagerVec<_, _>>,
+        )?;
+        self.ratio_p1.compute_rest(
+            indexes,
+            starting_indexes,
+            exit,
+            None as Option<&EagerVec<_, _>>,
+        )?;
+        self.ratio_p0_5.compute_rest(
+            indexes,
+            starting_indexes,
+            exit,
+            None as Option<&EagerVec<_, _>>,
+        )?;
+        self.ratio_p0_1.compute_rest(
+            indexes,
+            starting_indexes,
+            exit,
+            None as Option<&EagerVec<_, _>>,
+        )?;
+        self.ratio_standard_deviation.compute_rest(
+            indexes,
+            starting_indexes,
+            exit,
+            None as Option<&EagerVec<_, _>>,
+        )?;
+        self.ratio_p1sd.compute_rest(
+            indexes,
+            starting_indexes,
+            exit,
+            None as Option<&EagerVec<_, _>>,
+        )?;
+        self.ratio_p2sd.compute_rest(
+            indexes,
+            starting_indexes,
+            exit,
+            None as Option<&EagerVec<_, _>>,
+        )?;
+        self.ratio_p3sd.compute_rest(
+            indexes,
+            starting_indexes,
+            exit,
+            None as Option<&EagerVec<_, _>>,
+        )?;
+        self.ratio_m1sd.compute_rest(
+            indexes,
+            starting_indexes,
+            exit,
+            None as Option<&EagerVec<_, _>>,
+        )?;
+        self.ratio_m2sd.compute_rest(
+            indexes,
+            starting_indexes,
+            exit,
+            None as Option<&EagerVec<_, _>>,
+        )?;
+        self.ratio_m3sd.compute_rest(
+            indexes,
+            starting_indexes,
+            exit,
+            None as Option<&EagerVec<_, _>>,
+        )?;
 
         let date_to_price = date_to_price_opt.unwrap_or_else(|| unsafe {
             std::mem::transmute(&self.price.as_ref().unwrap().dateindex)
         });
 
-        self.ratio_p99_as_price.compute(
+        self.ratio_p99_as_price.compute_all(
             indexer,
             indexes,
             starting_indexes,
             exit,
             |vec, _, _, starting_indexes, exit| {
-                let mut iter = self.ratio_p99.dateindex.into_iter();
+                let mut iter = self.ratio_p99.dateindex.as_ref().unwrap().into_iter();
                 vec.compute_transform(
                     starting_indexes.dateindex,
                     date_to_price,
@@ -641,13 +792,13 @@ impl ComputedRatioVecsFromDateIndex {
             },
         )?;
 
-        self.ratio_p99_5_as_price.compute(
+        self.ratio_p99_5_as_price.compute_all(
             indexer,
             indexes,
             starting_indexes,
             exit,
             |vec, _, _, starting_indexes, exit| {
-                let mut iter = self.ratio_p99_5.dateindex.into_iter();
+                let mut iter = self.ratio_p99_5.dateindex.as_ref().unwrap().into_iter();
                 vec.compute_transform(
                     starting_indexes.dateindex,
                     date_to_price,
@@ -660,13 +811,13 @@ impl ComputedRatioVecsFromDateIndex {
             },
         )?;
 
-        self.ratio_p99_9_as_price.compute(
+        self.ratio_p99_9_as_price.compute_all(
             indexer,
             indexes,
             starting_indexes,
             exit,
             |vec, _, _, starting_indexes, exit| {
-                let mut iter = self.ratio_p99_9.dateindex.into_iter();
+                let mut iter = self.ratio_p99_9.dateindex.as_ref().unwrap().into_iter();
                 vec.compute_transform(
                     starting_indexes.dateindex,
                     date_to_price,
@@ -679,13 +830,13 @@ impl ComputedRatioVecsFromDateIndex {
             },
         )?;
 
-        self.ratio_p1_as_price.compute(
+        self.ratio_p1_as_price.compute_all(
             indexer,
             indexes,
             starting_indexes,
             exit,
             |vec, _, _, starting_indexes, exit| {
-                let mut iter = self.ratio_p1.dateindex.into_iter();
+                let mut iter = self.ratio_p1.dateindex.as_ref().unwrap().into_iter();
                 vec.compute_transform(
                     starting_indexes.dateindex,
                     date_to_price,
@@ -698,13 +849,13 @@ impl ComputedRatioVecsFromDateIndex {
             },
         )?;
 
-        self.ratio_p0_5_as_price.compute(
+        self.ratio_p0_5_as_price.compute_all(
             indexer,
             indexes,
             starting_indexes,
             exit,
             |vec, _, _, starting_indexes, exit| {
-                let mut iter = self.ratio_p0_5.dateindex.into_iter();
+                let mut iter = self.ratio_p0_5.dateindex.as_ref().unwrap().into_iter();
                 vec.compute_transform(
                     starting_indexes.dateindex,
                     date_to_price,
@@ -717,13 +868,13 @@ impl ComputedRatioVecsFromDateIndex {
             },
         )?;
 
-        self.ratio_p0_1_as_price.compute(
+        self.ratio_p0_1_as_price.compute_all(
             indexer,
             indexes,
             starting_indexes,
             exit,
             |vec, _, _, starting_indexes, exit| {
-                let mut iter = self.ratio_p0_1.dateindex.into_iter();
+                let mut iter = self.ratio_p0_1.dateindex.as_ref().unwrap().into_iter();
                 vec.compute_transform(
                     starting_indexes.dateindex,
                     date_to_price,
@@ -736,13 +887,13 @@ impl ComputedRatioVecsFromDateIndex {
             },
         )?;
 
-        self.ratio_p1sd_as_price.compute(
+        self.ratio_p1sd_as_price.compute_all(
             indexer,
             indexes,
             starting_indexes,
             exit,
             |vec, _, _, starting_indexes, exit| {
-                let mut iter = self.ratio_p1sd.dateindex.into_iter();
+                let mut iter = self.ratio_p1sd.dateindex.as_ref().unwrap().into_iter();
                 vec.compute_transform(
                     starting_indexes.dateindex,
                     date_to_price,
@@ -755,13 +906,13 @@ impl ComputedRatioVecsFromDateIndex {
             },
         )?;
 
-        self.ratio_p2sd_as_price.compute(
+        self.ratio_p2sd_as_price.compute_all(
             indexer,
             indexes,
             starting_indexes,
             exit,
             |vec, _, _, starting_indexes, exit| {
-                let mut iter = self.ratio_p2sd.dateindex.into_iter();
+                let mut iter = self.ratio_p2sd.dateindex.as_ref().unwrap().into_iter();
                 vec.compute_transform(
                     starting_indexes.dateindex,
                     date_to_price,
@@ -774,13 +925,13 @@ impl ComputedRatioVecsFromDateIndex {
             },
         )?;
 
-        self.ratio_p3sd_as_price.compute(
+        self.ratio_p3sd_as_price.compute_all(
             indexer,
             indexes,
             starting_indexes,
             exit,
             |vec, _, _, starting_indexes, exit| {
-                let mut iter = self.ratio_p3sd.dateindex.into_iter();
+                let mut iter = self.ratio_p3sd.dateindex.as_ref().unwrap().into_iter();
                 vec.compute_transform(
                     starting_indexes.dateindex,
                     date_to_price,
@@ -793,13 +944,13 @@ impl ComputedRatioVecsFromDateIndex {
             },
         )?;
 
-        self.ratio_m1sd_as_price.compute(
+        self.ratio_m1sd_as_price.compute_all(
             indexer,
             indexes,
             starting_indexes,
             exit,
             |vec, _, _, starting_indexes, exit| {
-                let mut iter = self.ratio_m1sd.dateindex.into_iter();
+                let mut iter = self.ratio_m1sd.dateindex.as_ref().unwrap().into_iter();
                 vec.compute_transform(
                     starting_indexes.dateindex,
                     date_to_price,
@@ -812,13 +963,13 @@ impl ComputedRatioVecsFromDateIndex {
             },
         )?;
 
-        self.ratio_m2sd_as_price.compute(
+        self.ratio_m2sd_as_price.compute_all(
             indexer,
             indexes,
             starting_indexes,
             exit,
             |vec, _, _, starting_indexes, exit| {
-                let mut iter = self.ratio_m2sd.dateindex.into_iter();
+                let mut iter = self.ratio_m2sd.dateindex.as_ref().unwrap().into_iter();
                 vec.compute_transform(
                     starting_indexes.dateindex,
                     date_to_price,
@@ -831,13 +982,13 @@ impl ComputedRatioVecsFromDateIndex {
             },
         )?;
 
-        self.ratio_m3sd_as_price.compute(
+        self.ratio_m3sd_as_price.compute_all(
             indexer,
             indexes,
             starting_indexes,
             exit,
             |vec, _, _, starting_indexes, exit| {
-                let mut iter = self.ratio_m3sd.dateindex.into_iter();
+                let mut iter = self.ratio_m3sd.dateindex.as_ref().unwrap().into_iter();
                 vec.compute_transform(
                     starting_indexes.dateindex,
                     date_to_price,
@@ -850,17 +1001,22 @@ impl ComputedRatioVecsFromDateIndex {
             },
         )?;
 
-        self.ratio_zscore.compute(
+        self.ratio_zscore.compute_all(
             indexer,
             indexes,
             starting_indexes,
             exit,
             |vec, _, _, starting_indexes, exit| {
-                let mut sma_iter = self.ratio_sma.dateindex.into_iter();
-                let mut sd_iter = self.ratio_standard_deviation.dateindex.into_iter();
+                let mut sma_iter = self.ratio_sma.dateindex.as_ref().unwrap().into_iter();
+                let mut sd_iter = self
+                    .ratio_standard_deviation
+                    .dateindex
+                    .as_ref()
+                    .unwrap()
+                    .into_iter();
                 vec.compute_transform(
                     starting_indexes.dateindex,
-                    &self.ratio.dateindex,
+                    self.ratio.dateindex.as_ref().unwrap(),
                     |(i, ratio, ..)| {
                         let sma = sma_iter.unwrap_get_inner(i);
                         let sd = sd_iter.unwrap_get_inner(i);
@@ -876,19 +1032,19 @@ impl ComputedRatioVecsFromDateIndex {
 
     fn mut_ratio_vecs(&mut self) -> Vec<&mut EagerVec<DateIndex, StoredF32>> {
         vec![
-            &mut self.ratio_standard_deviation.dateindex,
-            &mut self.ratio_p99_9.dateindex,
-            &mut self.ratio_p99_5.dateindex,
-            &mut self.ratio_p99.dateindex,
-            &mut self.ratio_p1.dateindex,
-            &mut self.ratio_p0_5.dateindex,
-            &mut self.ratio_p0_1.dateindex,
-            &mut self.ratio_p1sd.dateindex,
-            &mut self.ratio_p2sd.dateindex,
-            &mut self.ratio_p3sd.dateindex,
-            &mut self.ratio_m1sd.dateindex,
-            &mut self.ratio_m2sd.dateindex,
-            &mut self.ratio_m3sd.dateindex,
+            self.ratio_standard_deviation.dateindex.as_mut().unwrap(),
+            self.ratio_p99_9.dateindex.as_mut().unwrap(),
+            self.ratio_p99_5.dateindex.as_mut().unwrap(),
+            self.ratio_p99.dateindex.as_mut().unwrap(),
+            self.ratio_p1.dateindex.as_mut().unwrap(),
+            self.ratio_p0_5.dateindex.as_mut().unwrap(),
+            self.ratio_p0_1.dateindex.as_mut().unwrap(),
+            self.ratio_p1sd.dateindex.as_mut().unwrap(),
+            self.ratio_p2sd.dateindex.as_mut().unwrap(),
+            self.ratio_p3sd.dateindex.as_mut().unwrap(),
+            self.ratio_m1sd.dateindex.as_mut().unwrap(),
+            self.ratio_m2sd.dateindex.as_mut().unwrap(),
+            self.ratio_m3sd.dateindex.as_mut().unwrap(),
         ]
     }
 

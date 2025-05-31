@@ -169,6 +169,7 @@ impl Vecs {
             timeindexes_to_open: ComputedVecsFromDateIndex::forced_import(
                 path,
                 "open",
+                true,
                 version + VERSION + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default().add_first(),
@@ -176,6 +177,7 @@ impl Vecs {
             timeindexes_to_high: ComputedVecsFromDateIndex::forced_import(
                 path,
                 "high",
+                true,
                 version + VERSION + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default().add_max(),
@@ -183,6 +185,7 @@ impl Vecs {
             timeindexes_to_low: ComputedVecsFromDateIndex::forced_import(
                 path,
                 "low",
+                true,
                 version + VERSION + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default().add_min(),
@@ -190,6 +193,7 @@ impl Vecs {
             timeindexes_to_close: ComputedVecsFromDateIndex::forced_import(
                 path,
                 "close",
+                true,
                 version + VERSION + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default().add_last(),
@@ -197,6 +201,7 @@ impl Vecs {
             timeindexes_to_open_in_sats: ComputedVecsFromDateIndex::forced_import(
                 path,
                 "open_in_sats",
+                true,
                 version + VERSION + VERSION_IN_SATS + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default().add_first(),
@@ -204,6 +209,7 @@ impl Vecs {
             timeindexes_to_high_in_sats: ComputedVecsFromDateIndex::forced_import(
                 path,
                 "high_in_sats",
+                true,
                 version + VERSION + VERSION_IN_SATS + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default().add_max(),
@@ -211,6 +217,7 @@ impl Vecs {
             timeindexes_to_low_in_sats: ComputedVecsFromDateIndex::forced_import(
                 path,
                 "low_in_sats",
+                true,
                 version + VERSION + VERSION_IN_SATS + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default().add_min(),
@@ -218,6 +225,7 @@ impl Vecs {
             timeindexes_to_close_in_sats: ComputedVecsFromDateIndex::forced_import(
                 path,
                 "close_in_sats",
+                true,
                 version + VERSION + VERSION_IN_SATS + Version::ZERO,
                 compressed,
                 StorableVecGeneatorOptions::default().add_last(),
@@ -463,7 +471,7 @@ impl Vecs {
             exit,
         )?;
 
-        self.timeindexes_to_close.compute(
+        self.timeindexes_to_close.compute_all(
             indexer,
             indexes,
             starting_indexes,
@@ -478,7 +486,7 @@ impl Vecs {
             },
         )?;
 
-        self.timeindexes_to_high.compute(
+        self.timeindexes_to_high.compute_all(
             indexer,
             indexes,
             starting_indexes,
@@ -493,7 +501,7 @@ impl Vecs {
             },
         )?;
 
-        self.timeindexes_to_low.compute(
+        self.timeindexes_to_low.compute_all(
             indexer,
             indexes,
             starting_indexes,
@@ -508,7 +516,7 @@ impl Vecs {
             },
         )?;
 
-        self.timeindexes_to_open.compute(
+        self.timeindexes_to_open.compute_all(
             indexer,
             indexes,
             starting_indexes,
@@ -776,7 +784,7 @@ impl Vecs {
             },
         )?;
 
-        self.timeindexes_to_open_in_sats.compute(
+        self.timeindexes_to_open_in_sats.compute_all(
             indexer,
             indexes,
             starting_indexes,
@@ -784,14 +792,14 @@ impl Vecs {
             |v, _, _, starting_indexes, exit| {
                 v.compute_transform(
                     starting_indexes.dateindex,
-                    &self.timeindexes_to_open.dateindex,
+                    self.timeindexes_to_open.dateindex.as_ref().unwrap(),
                     |(i, open, ..)| (i, Open::new(Sats::ONE_BTC / *open)),
                     exit,
                 )
             },
         )?;
 
-        self.timeindexes_to_high_in_sats.compute(
+        self.timeindexes_to_high_in_sats.compute_all(
             indexer,
             indexes,
             starting_indexes,
@@ -799,14 +807,14 @@ impl Vecs {
             |v, _, _, starting_indexes, exit| {
                 v.compute_transform(
                     starting_indexes.dateindex,
-                    &self.timeindexes_to_low.dateindex,
+                    self.timeindexes_to_low.dateindex.as_ref().unwrap(),
                     |(i, low, ..)| (i, High::new(Sats::ONE_BTC / *low)),
                     exit,
                 )
             },
         )?;
 
-        self.timeindexes_to_low_in_sats.compute(
+        self.timeindexes_to_low_in_sats.compute_all(
             indexer,
             indexes,
             starting_indexes,
@@ -814,14 +822,14 @@ impl Vecs {
             |v, _, _, starting_indexes, exit| {
                 v.compute_transform(
                     starting_indexes.dateindex,
-                    &self.timeindexes_to_high.dateindex,
+                    self.timeindexes_to_high.dateindex.as_ref().unwrap(),
                     |(i, high, ..)| (i, Low::new(Sats::ONE_BTC / *high)),
                     exit,
                 )
             },
         )?;
 
-        self.timeindexes_to_close_in_sats.compute(
+        self.timeindexes_to_close_in_sats.compute_all(
             indexer,
             indexes,
             starting_indexes,
@@ -829,7 +837,7 @@ impl Vecs {
             |v, _, _, starting_indexes, exit| {
                 v.compute_transform(
                     starting_indexes.dateindex,
-                    &self.timeindexes_to_close.dateindex,
+                    self.timeindexes_to_close.dateindex.as_ref().unwrap(),
                     |(i, close, ..)| (i, Close::new(Sats::ONE_BTC / *close)),
                     exit,
                 )
@@ -856,12 +864,30 @@ impl Vecs {
             exit,
         )?;
 
-        let mut dateindex_first_iter = self.timeindexes_to_open_in_sats.dateindex.iter();
-        let mut dateindex_max_iter = self.timeindexes_to_high_in_sats.dateindex.iter();
-        let mut dateindex_min_iter = self.timeindexes_to_low_in_sats.dateindex.iter();
+        let mut dateindex_first_iter = self
+            .timeindexes_to_open_in_sats
+            .dateindex
+            .as_ref()
+            .unwrap()
+            .iter();
+        let mut dateindex_max_iter = self
+            .timeindexes_to_high_in_sats
+            .dateindex
+            .as_ref()
+            .unwrap()
+            .iter();
+        let mut dateindex_min_iter = self
+            .timeindexes_to_low_in_sats
+            .dateindex
+            .as_ref()
+            .unwrap()
+            .iter();
         self.dateindex_to_ohlc_in_sats.compute_transform(
             starting_indexes.dateindex,
-            &self.timeindexes_to_close_in_sats.dateindex,
+            self.timeindexes_to_close_in_sats
+                .dateindex
+                .as_ref()
+                .unwrap(),
             |(i, close, ..)| {
                 (
                     i,
