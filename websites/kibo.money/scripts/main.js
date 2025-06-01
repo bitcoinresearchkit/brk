@@ -702,6 +702,9 @@ function createUtils() {
       (!unit || thoroughUnitCheck) &&
       (id.includes("in-sats") ||
         id.endsWith("supply") ||
+        id.endsWith("supply-even") ||
+        id.endsWith("supply-in-profit") ||
+        id.endsWith("supply-in-loss") ||
         id.endsWith("stack") ||
         (id.endsWith("value") && !id.includes("realized")) ||
         ((id.includes("coinbase") ||

@@ -30,3 +30,6 @@ tokio = { workspace = true }
 tower-http = { version = "0.6.4", features = ["compression-full", "trace"] }
 zip = "4.0.0"
 tracing = "0.1.41"
+
+[package.metadata.cargo-machete]
+ignored = ["clap"]

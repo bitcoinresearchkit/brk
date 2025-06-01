@@ -9,8 +9,7 @@ license.workspace = true
 repository.workspace = true
 
 [dependencies]
+arc-swap = { workspace = true }
 brk_core = { workspace = true }
 byteview = { workspace = true }
-color-eyre = { workspace = true }
 fjall = { workspace = true }
-zerocopy = { workspace = true }

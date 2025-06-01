@@ -1,8 +1,6 @@
 use std::{fs, path::Path};
 
-use brk_core::{
-    CheckedSub, DateIndex, Dollars, Height, Result, Sats, StoredF32, StoredUsize, Version,
-};
+use brk_core::{DateIndex, Dollars, Height, Result, Sats, StoredF32, StoredUsize, Version};
 use brk_exit::Exit;
 use brk_indexer::Indexer;
 use brk_state::CohortState;
@@ -572,7 +570,7 @@ impl Vecs {
 
         self.starting_height = starting_height;
 
-        if let Some(prev_height) = starting_height.checked_sub(Height::new(1)) {
+        if let Some(prev_height) = starting_height.decremented() {
             self.state.supply.value = self
                 .height_to_supply
                 .into_iter()
@@ -581,6 +579,8 @@ impl Vecs {
                 .height_to_utxo_count
                 .into_iter()
                 .unwrap_get_inner(prev_height);
+
+            self.state.price_to_amount.copy_db_to_puts();
 
             if let Some(height_to_realized_cap) = self.height_to_realized_cap.as_mut() {
                 self.state.realized.as_mut().unwrap().cap = height_to_realized_cap

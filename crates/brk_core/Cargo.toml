@@ -18,9 +18,7 @@ rapidhash = "1.4.0"
 rlimit = "0.10.2"
 serde = { workspace = true }
 serde_bytes = "0.11.17"
-serde_derive = { workspace = true }
 serde_json = { workspace = true }
-thiserror = "2.0.12"
 zerocopy = { workspace = true }
 zerocopy-derive = { workspace = true }
 

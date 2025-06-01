@@ -4,11 +4,14 @@ use std::{
 };
 
 use bitcoincore_rpc::{Client, RpcApi};
+use byteview::ByteView;
 use serde::{Deserialize, Serialize};
 use zerocopy::{FromBytes, IntoBytes};
 use zerocopy_derive::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 use crate::CheckedSub;
+
+use super::StoredUsize;
 
 #[derive(
     Debug,
@@ -147,11 +150,17 @@ impl From<u64> for Height {
     }
 }
 
+impl From<StoredUsize> for Height {
+    fn from(value: StoredUsize) -> Self {
+        Self(*value as u32)
+    }
+}
 impl From<usize> for Height {
     fn from(value: usize) -> Self {
         Self(value as u32)
     }
 }
+
 impl From<Height> for usize {
     fn from(value: Height) -> Self {
         value.0 as usize
@@ -189,10 +198,9 @@ impl TryFrom<&std::path::Path> for Height {
     }
 }
 
-impl TryFrom<byteview::ByteView> for Height {
-    type Error = crate::Error;
-    fn try_from(value: byteview::ByteView) -> Result<Self, Self::Error> {
-        Ok(Self::read_from_bytes(&value)?)
+impl From<ByteView> for Height {
+    fn from(value: byteview::ByteView) -> Self {
+        Self::read_from_bytes(&value).unwrap()
     }
 }
 

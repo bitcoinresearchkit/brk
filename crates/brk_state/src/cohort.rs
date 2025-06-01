@@ -30,16 +30,10 @@ impl CohortState {
                 keyspace,
                 path,
                 &format!("{name}_price_to_amount"),
-                version + Version::TWO,
+                version + Version::new(3),
                 Some(None),
             )?,
         })
-    }
-
-    pub fn commit(&mut self, height: Height) -> Result<()> {
-        self.price_to_amount
-            .retain_or_del(|_, sats| *sats != Sats::ZERO);
-        self.price_to_amount.commit(height)
     }
 
     pub fn reset_single_iteration_values(&mut self) {
@@ -53,7 +47,7 @@ impl CohortState {
         if let Some(realized) = self.realized.as_mut() {
             let price = price.unwrap();
             realized.increment(supply_state, price);
-            *self.price_to_amount.get_mut_or_default(&price) += supply_state.value;
+            *self.price_to_amount.puts_entry_or_default(&price) += supply_state.value;
         }
     }
 
@@ -62,7 +56,7 @@ impl CohortState {
         if let Some(realized) = self.realized.as_mut() {
             let price = price.unwrap();
             realized.decrement(supply_state, price);
-            *self.price_to_amount.get_mut_or_default(&price) -= supply_state.value;
+            *self.price_to_amount.puts_entry_or_default(&price) -= supply_state.value;
         }
     }
 
@@ -71,7 +65,7 @@ impl CohortState {
         if let Some(realized) = self.realized.as_mut() {
             let price = price.unwrap();
             realized.receive(supply_state, price);
-            *self.price_to_amount.get_mut_or_default(&price) += supply_state.value;
+            *self.price_to_amount.puts_entry_or_default(&price) += supply_state.value;
         }
     }
 
@@ -87,7 +81,7 @@ impl CohortState {
             let current_price = current_price.unwrap();
             let prev_price = prev_price.unwrap();
             realized.send(supply_state, current_price, prev_price, older_than_hour);
-            *self.price_to_amount.get_mut_or_default(&prev_price) -= supply_state.value;
+            *self.price_to_amount.puts_entry_or_default(&prev_price) -= supply_state.value;
         }
     }
 
@@ -114,21 +108,32 @@ impl CohortState {
                     }
                     Ordering::Less => {
                         state.supply_in_profit += sats;
-                        // if price > Dollars::ZERO {
-                        //     state.unrealized_profit +=
-                        //         current_price.checked_sub(price).unwrap() * sats;
-                        // }
+                        if price > Dollars::ZERO && current_price > Dollars::ZERO {
+                            let diff = current_price.checked_sub(price).unwrap();
+                            if diff <= Dollars::ZERO {
+                                dbg!(price, current_price, diff, sats);
+                                panic!();
+                            }
+                            state.unrealized_profit += diff * sats;
+                        }
                     }
                     Ordering::Greater => {
                         state.supply_in_loss += sats;
-                        // state.unrealized_loss += price.checked_sub(current_price).unwrap() * sats;
+                        if price > Dollars::ZERO && current_price > Dollars::ZERO {
+                            let diff = price.checked_sub(current_price).unwrap();
+                            if diff <= Dollars::ZERO {
+                                dbg!(price, current_price, diff, sats);
+                                panic!();
+                            }
+                            state.unrealized_loss += diff * sats;
+                        }
                     }
                 }
             };
 
         self.price_to_amount
-            .unordered_clone_iter()
-            .for_each(|(price, sats)| {
+            .puts_iter()
+            .for_each(|(&price, &sats)| {
                 update_state(price, height_price, sats, &mut height_unrealized_state);
 
                 if let Some(date_price) = date_price {
@@ -142,5 +147,14 @@ impl CohortState {
             });
 
         (height_unrealized_state, date_unrealized_state)
+    }
+
+    pub fn commit(&mut self, height: Height) -> Result<()> {
+        self.price_to_amount
+            .retain_or_del(|_, sats| *sats > Sats::ZERO);
+        let price_to_amount_puts = self.price_to_amount.clone_puts();
+        self.price_to_amount.commit(height)?;
+        self.price_to_amount.append_puts(price_to_amount_puts);
+        Ok(())
     }
 }

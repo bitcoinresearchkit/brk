@@ -1154,8 +1154,27 @@ function createPartialOptions(colors) {
               createBaseSeries({
                 key: `${key}supply`,
                 name: useGroupName ? name : "Supply",
-                color: color,
+                color: "list" in args ? color : colors.default,
               }),
+              ...(!("list" in args)
+                ? [
+                    createBaseSeries({
+                      key: `${key}supply-in-profit`,
+                      name: useGroupName ? name : "In Profit",
+                      color: colors.green,
+                    }),
+                    createBaseSeries({
+                      key: `${key}supply-in-loss`,
+                      name: useGroupName ? name : "In Loss",
+                      color: colors.red,
+                    }),
+                    createBaseSeries({
+                      key: `${key}supply-even`,
+                      name: useGroupName ? name : "Even",
+                      color: colors.yellow,
+                    }),
+                  ]
+                : []),
               createBaseSeries({
                 key: `${key}supply-in-btc`,
                 name: useGroupName ? name : "Supply",
@@ -1343,6 +1362,39 @@ function createPartialOptions(colors) {
                   color: color,
                 }),
               ),
+            },
+          ],
+        },
+        {
+          name: "Unrealized",
+          tree: [
+            {
+              name: "profit",
+              title: `${args.title} Unrealized Profit`,
+              bottom: list.flatMap(({ color, name, key: _key }) => {
+                const key = fixKey(_key);
+                return /** @type {const} */ ([
+                  createBaseSeries({
+                    key: `${key}unrealized-profit`,
+                    name: useGroupName ? name : "Profit",
+                    color: useGroupName ? color : colors.green,
+                  }),
+                ]);
+              }),
+            },
+            {
+              name: "loss",
+              title: `${args.title} Unrealized Loss`,
+              bottom: list.flatMap(({ color, name, key: _key }) => {
+                const key = fixKey(_key);
+                return /** @type {const} */ ([
+                  createBaseSeries({
+                    key: `${key}unrealized-loss`,
+                    name: useGroupName ? name : "Loss",
+                    color: useGroupName ? color : colors.red,
+                  }),
+                ]);
+              }),
             },
           ],
         },
