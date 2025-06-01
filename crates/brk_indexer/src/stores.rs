@@ -26,7 +26,7 @@ impl Stores {
     pub fn forced_import(path: &Path, version: Version) -> color_eyre::Result<Self> {
         fs::create_dir_all(path)?;
 
-        let keyspace = match Self::open_keyspace(path) {
+        let keyspace = match brk_store::open_keyspace(path) {
             Ok(keyspace) => keyspace,
             Err(_) => {
                 fs::remove_dir_all(path)?;
@@ -315,11 +315,5 @@ impl Stores {
         self.addressbyteshash_to_outputtypeindex.rotate_memtable();
         self.blockhashprefix_to_height.rotate_memtable();
         self.txidprefix_to_txindex.rotate_memtable();
-    }
-
-    fn open_keyspace(path: &Path) -> fjall::Result<TransactionalKeyspace> {
-        fjall::Config::new(path.join("fjall"))
-            .max_write_buffer_size(32 * 1024 * 1024)
-            .open_transactional()
     }
 }

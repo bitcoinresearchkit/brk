@@ -437,18 +437,11 @@ dependencies = [
  "brk_parser",
  "brk_state",
  "brk_vec",
- "clap",
- "clap_derive",
  "color-eyre",
- "derive_deref",
  "fjall",
  "jiff",
  "log",
  "rayon",
- "serde",
- "serde_json",
- "zerocopy",
- "zerocopy-derive",
 ]
 
 [[package]]
@@ -466,9 +459,7 @@ dependencies = [
  "rlimit",
  "serde",
  "serde_bytes",
- "serde_derive",
  "serde_json",
- "thiserror",
  "zerocopy",
  "zerocopy-derive",
 ]
@@ -507,12 +498,10 @@ dependencies = [
  "brk_parser",
  "brk_store",
  "brk_vec",
- "byteview",
  "color-eyre",
  "fjall",
  "log",
  "rayon",
- "zerocopy",
 ]
 
 [[package]]
@@ -593,9 +582,7 @@ version = "0.0.40"
 dependencies = [
  "brk_core",
  "brk_store",
- "brk_vec",
  "fjall",
- "rayon",
  "serde",
  "zerocopy",
  "zerocopy-derive",
@@ -605,11 +592,10 @@ dependencies = [
 name = "brk_store"
 version = "0.0.40"
 dependencies = [
+ "arc-swap",
  "brk_core",
  "byteview",
- "color-eyre",
  "fjall",
- "zerocopy",
 ]
 
 [[package]]

@@ -9,7 +9,7 @@ use derive_deref::Deref;
 use serde::Serialize;
 use zerocopy_derive::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
-use crate::{CheckedSub, Error, copy_first_8bytes};
+use crate::{CheckedSub, copy_first_8bytes};
 
 use super::{Bitcoin, Cents, Close, Sats, StoredF32, StoredF64};
 
@@ -256,11 +256,10 @@ impl Ord for Dollars {
     }
 }
 
-impl TryFrom<ByteView> for Dollars {
-    type Error = Error;
-    fn try_from(value: ByteView) -> Result<Self, Self::Error> {
-        let bytes = copy_first_8bytes(&value)?;
-        Ok(Self::from(f64::from_be_bytes(bytes)))
+impl From<ByteView> for Dollars {
+    fn from(value: ByteView) -> Self {
+        let bytes = copy_first_8bytes(&value).unwrap();
+        Self::from(f64::from_be_bytes(bytes))
     }
 }
 

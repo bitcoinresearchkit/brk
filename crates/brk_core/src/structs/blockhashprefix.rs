@@ -3,7 +3,7 @@ use derive_deref::Deref;
 use zerocopy::{FromBytes, IntoBytes};
 use zerocopy_derive::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
-use crate::{Error, copy_first_8bytes};
+use crate::copy_first_8bytes;
 
 use super::BlockHash;
 
@@ -35,10 +35,9 @@ impl From<&BlockHash> for BlockHashPrefix {
     }
 }
 
-impl TryFrom<ByteView> for BlockHashPrefix {
-    type Error = Error;
-    fn try_from(value: ByteView) -> Result<Self, Self::Error> {
-        Ok(Self::read_from_bytes(&value)?)
+impl From<ByteView> for BlockHashPrefix {
+    fn from(value: ByteView) -> Self {
+        Self::read_from_bytes(&value).unwrap()
     }
 }
 

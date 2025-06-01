@@ -6,7 +6,7 @@ use serde::Serialize;
 use zerocopy::{FromBytes, IntoBytes};
 use zerocopy_derive::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
-use crate::{CheckedSub, Error};
+use crate::CheckedSub;
 
 use super::StoredU32;
 
@@ -95,10 +95,9 @@ impl From<TxIndex> for usize {
     }
 }
 
-impl TryFrom<ByteView> for TxIndex {
-    type Error = Error;
-    fn try_from(value: ByteView) -> Result<Self, Self::Error> {
-        Ok(Self::read_from_bytes(&value)?)
+impl From<ByteView> for TxIndex {
+    fn from(value: ByteView) -> Self {
+        Self::read_from_bytes(&value).unwrap()
     }
 }
 impl From<TxIndex> for ByteView {

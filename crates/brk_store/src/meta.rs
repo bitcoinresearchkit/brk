@@ -3,9 +3,8 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use brk_core::{Result, Version};
+use brk_core::{Result, Version, copy_first_8bytes};
 use fjall::{TransactionalKeyspace, TransactionalPartitionHandle};
-use zerocopy::{FromBytes, IntoBytes};
 
 use super::Height;
 
@@ -48,7 +47,7 @@ impl StoreMeta {
             pathbuf: path.to_owned(),
             version,
             height: Height::try_from(Self::path_height_(path).as_path()).ok(),
-            len: Self::read_length_(path)?,
+            len: Self::read_length_(path),
         };
 
         slf.version.write(&slf.path_version())?;
@@ -109,16 +108,16 @@ impl StoreMeta {
         path.join("height")
     }
 
-    fn read_length_(path: &Path) -> Result<usize> {
-        Ok(fs::read(Self::path_length(path))
-            .map(|v| usize::read_from_bytes(v.as_slice()).unwrap_or_default())
-            .unwrap_or_default())
+    fn read_length_(path: &Path) -> usize {
+        fs::read(Self::path_length(path))
+            .map(|v| usize::from_ne_bytes(copy_first_8bytes(v.as_slice()).unwrap_or_default()))
+            .unwrap_or_default()
     }
     fn write_length(&self) -> io::Result<()> {
         Self::write_length_(&self.pathbuf, self.len)
     }
     fn write_length_(path: &Path, len: usize) -> io::Result<()> {
-        fs::write(Self::path_length(path), len.as_bytes())
+        fs::write(Self::path_length(path), len.to_ne_bytes())
     }
     fn path_length(path: &Path) -> PathBuf {
         path.join("length")

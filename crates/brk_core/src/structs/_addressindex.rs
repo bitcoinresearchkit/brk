@@ -63,9 +63,8 @@ impl From<AddressIndex> for usize {
     }
 }
 
-impl TryFrom<ByteView> for AddressIndex {
-    type Error = Error;
-    fn try_from(value: ByteView) -> Result<Self, Self::Error> {
+impl From<ByteView> for AddressIndex {
+    fn from(value: ByteView) -> Self {
         Ok(Self::read_from_bytes(&value)?)
     }
 }

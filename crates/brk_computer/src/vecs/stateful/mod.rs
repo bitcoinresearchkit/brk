@@ -1,6 +1,6 @@
 use std::{cmp::Ordering, collections::BTreeMap, mem, path::Path, thread};
 
-use brk_core::{DateIndex, Height, InputIndex, OutputIndex, OutputType, Sats, Version};
+use brk_core::{DateIndex, Height, InputIndex, OutputIndex, OutputType, Result, Sats, Version};
 use brk_exit::Exit;
 use brk_indexer::Indexer;
 use brk_vec::{
@@ -1174,6 +1174,9 @@ impl Vecs {
         };
         if stateful_starting_height.is_zero() {
             info!("Starting processing utxos from the start");
+            flat_vecs_
+                .iter_mut()
+                .try_for_each(|(_, v)| v.state.price_to_amount.reset_partition())?;
         }
         let starting_height = starting_indexes
             .height
@@ -1399,8 +1402,9 @@ impl Vecs {
                 let dateindex = DateIndex::try_from(date).unwrap();
                 let date_first_height = dateindex_to_first_height_iter.unwrap_get_inner(dateindex);
                 let date_height_count = dateindex_to_height_count_iter.unwrap_get_inner(dateindex);
-                let is_date_last_height =
-                    date_first_height + Height::from(*date_height_count) == height;
+                let is_date_last_height = date_first_height
+                    + Height::from(date_height_count).decremented().unwrap()
+                    == height;
                 let date_price = dateindex_to_close_iter
                     .as_mut()
                     .map(|v| is_date_last_height.then(|| *v.unwrap_get_inner(dateindex)));
@@ -1417,12 +1421,9 @@ impl Vecs {
 
                 if height != Height::ZERO && height.unwrap_to_usize() % 100_000 == 0 {
                     info!("Flushing...");
-
-                    utxos_vecs
-                        .par_iter_mut()
-                        .try_for_each(|(_, v)| v.safe_flush_stateful_vecs(height, exit))?;
-                    self.height_to_unspendable_supply.safe_flush(exit)?;
-                    self.height_to_opreturn_supply.safe_flush(exit)?;
+                    exit.block();
+                    self.flush_vecs(height, exit)?;
+                    exit.release();
                 }
 
                 Ok(())
@@ -1432,13 +1433,7 @@ impl Vecs {
 
         info!("Flushing...");
 
-        // Flush rest of values
-        self.utxos_vecs
-            .as_mut_vec()
-            .par_iter_mut()
-            .try_for_each(|(_, v)| v.safe_flush_stateful_vecs(height, exit))?;
-        self.height_to_unspendable_supply.safe_flush(exit)?;
-        self.height_to_opreturn_supply.safe_flush(exit)?;
+        self.flush_vecs(height, exit)?;
 
         // Save chain state
         self.chain_state.truncate_if_needed(Height::ZERO)?;
@@ -1477,6 +1472,17 @@ impl Vecs {
 
         exit.release();
 
+        Ok(())
+    }
+
+    fn flush_vecs(&mut self, height: Height, exit: &Exit) -> Result<()> {
+        // Flush rest of values
+        self.utxos_vecs
+            .as_mut_vec()
+            .par_iter_mut()
+            .try_for_each(|(_, v)| v.safe_flush_stateful_vecs(height, exit))?;
+        self.height_to_unspendable_supply.safe_flush(exit)?;
+        self.height_to_opreturn_supply.safe_flush(exit)?;
         Ok(())
     }
 
