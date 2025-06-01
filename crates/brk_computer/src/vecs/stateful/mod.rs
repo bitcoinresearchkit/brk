@@ -1419,7 +1419,7 @@ impl Vecs {
                     )
                 })?;
 
-                if height != Height::ZERO && height.unwrap_to_usize() % 100_000 == 0 {
+                if height != Height::ZERO && height.unwrap_to_usize() % 50_000 == 0 {
                     info!("Flushing...");
                     exit.block();
                     self.flush_vecs(height, exit)?;
