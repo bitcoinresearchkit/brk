@@ -93,14 +93,22 @@ where
         }
     }
 
-    pub fn first_key_value(&self) -> Result<Option<(K, V)>> {
+    pub fn puts_first_key_value(&self) -> Option<(&K, &V)> {
+        self.puts.first_key_value()
+    }
+
+    pub fn puts_last_key_value(&self) -> Option<(&K, &V)> {
+        self.puts.last_key_value()
+    }
+
+    pub fn rtx_first_key_value(&self) -> Result<Option<(K, V)>> {
         Ok(self
             .rtx
             .first_key_value(&self.partition.load())?
             .map(|(k, v)| (K::from(ByteView::from(k)), V::from(ByteView::from(v)))))
     }
 
-    pub fn last_key_value(&self) -> Result<Option<(K, V)>> {
+    pub fn rtx_last_key_value(&self) -> Result<Option<(K, V)>> {
         Ok(self
             .rtx
             .last_key_value(&self.partition.load())?

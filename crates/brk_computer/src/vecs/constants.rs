@@ -3,7 +3,7 @@ use std::{fs, path::Path};
 use brk_core::{StoredU8, Version};
 use brk_exit::Exit;
 use brk_indexer::Indexer;
-use brk_vec::{AnyCollectableVec, AnyVec, Compressed, Computation};
+use brk_vec::{AnyCollectableVec, AnyVec, Computation, Format};
 
 use super::{
     Indexes,
@@ -26,7 +26,7 @@ impl Vecs {
         path: &Path,
         version: Version,
         _computation: Computation,
-        compressed: Compressed,
+        format: Format,
     ) -> color_eyre::Result<Self> {
         fs::create_dir_all(path)?;
 
@@ -36,7 +36,7 @@ impl Vecs {
                 "0",
                 true,
                 version + VERSION + Version::ZERO,
-                compressed,
+                format,
                 StorableVecGeneatorOptions::default().add_last(),
             )?,
             _1: ComputedVecsFromHeight::forced_import(
@@ -44,7 +44,7 @@ impl Vecs {
                 "1",
                 true,
                 version + VERSION + Version::ZERO,
-                compressed,
+                format,
                 StorableVecGeneatorOptions::default().add_last(),
             )?,
             _50: ComputedVecsFromHeight::forced_import(
@@ -52,7 +52,7 @@ impl Vecs {
                 "50",
                 true,
                 version + VERSION + Version::ZERO,
-                compressed,
+                format,
                 StorableVecGeneatorOptions::default().add_last(),
             )?,
             _100: ComputedVecsFromHeight::forced_import(
@@ -60,7 +60,7 @@ impl Vecs {
                 "100",
                 true,
                 version + VERSION + Version::ZERO,
-                compressed,
+                format,
                 StorableVecGeneatorOptions::default().add_last(),
             )?,
         })

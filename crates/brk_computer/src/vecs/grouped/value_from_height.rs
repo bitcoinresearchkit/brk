@@ -3,7 +3,7 @@ use std::path::Path;
 use brk_core::{Bitcoin, Dollars, Height, Result, Sats, Version};
 use brk_exit::Exit;
 use brk_indexer::Indexer;
-use brk_vec::{AnyCollectableVec, CollectableVec, Compressed, EagerVec, StoredVec};
+use brk_vec::{AnyCollectableVec, CollectableVec, EagerVec, Format, StoredVec};
 
 use crate::vecs::{Indexes, fetched, indexes};
 
@@ -24,7 +24,7 @@ impl ComputedValueVecsFromHeight {
         name: &str,
         compute_source: bool,
         version: Version,
-        compressed: Compressed,
+        format: Format,
         options: StorableVecGeneatorOptions,
         compute_dollars: bool,
     ) -> color_eyre::Result<Self> {
@@ -34,7 +34,7 @@ impl ComputedValueVecsFromHeight {
                 name,
                 compute_source,
                 version + VERSION,
-                compressed,
+                format,
                 options,
             )?,
             bitcoin: ComputedVecsFromHeight::forced_import(
@@ -42,7 +42,7 @@ impl ComputedValueVecsFromHeight {
                 &format!("{name}_in_btc"),
                 true,
                 version + VERSION,
-                compressed,
+                format,
                 options,
             )?,
             dollars: compute_dollars.then(|| {
@@ -51,7 +51,7 @@ impl ComputedValueVecsFromHeight {
                     &format!("{name}_in_usd"),
                     true,
                     version + VERSION,
-                    compressed,
+                    format,
                     options,
                 )
                 .unwrap()

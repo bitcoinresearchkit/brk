@@ -3,7 +3,7 @@ use std::{fs, path::Path};
 use brk_core::{DifficultyEpoch, HalvingEpoch, StoredF64, Version};
 use brk_exit::Exit;
 use brk_indexer::Indexer;
-use brk_vec::{AnyCollectableVec, Compressed, Computation, VecIterator};
+use brk_vec::{AnyCollectableVec, Computation, Format, VecIterator};
 
 use super::{
     Indexes,
@@ -25,7 +25,7 @@ impl Vecs {
         path: &Path,
         version: Version,
         _computation: Computation,
-        compressed: Compressed,
+        format: Format,
     ) -> color_eyre::Result<Self> {
         fs::create_dir_all(path)?;
 
@@ -35,7 +35,7 @@ impl Vecs {
                 "difficulty",
                 false,
                 version + VERSION + Version::ZERO,
-                compressed,
+                format,
                 StorableVecGeneatorOptions::default().add_last(),
             )?,
             indexes_to_difficultyepoch: ComputedVecsFromDateIndex::forced_import(
@@ -43,7 +43,7 @@ impl Vecs {
                 "difficultyepoch",
                 true,
                 version + VERSION + Version::ZERO,
-                compressed,
+                format,
                 StorableVecGeneatorOptions::default().add_last(),
             )?,
             indexes_to_halvingepoch: ComputedVecsFromDateIndex::forced_import(
@@ -51,7 +51,7 @@ impl Vecs {
                 "halvingepoch",
                 true,
                 version + VERSION + Version::ZERO,
-                compressed,
+                format,
                 StorableVecGeneatorOptions::default().add_last(),
             )?,
         })

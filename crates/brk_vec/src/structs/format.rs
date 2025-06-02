@@ -1,20 +1,33 @@
-use std::{fs, io, ops::Deref, path::Path};
+use std::{fs, io, path::Path};
 
 use brk_core::{Error, Result};
+use clap_derive::ValueEnum;
+use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
-pub struct Compressed(bool);
+#[derive(
+    Default, Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, ValueEnum,
+)]
+pub enum Format {
+    #[default]
+    Compressed,
+    Raw,
+}
 
-impl Compressed {
-    pub const YES: Self = Self(true);
-    pub const NO: Self = Self(false);
-
+impl Format {
     pub fn write(&self, path: &Path) -> Result<(), io::Error> {
         fs::write(path, self.as_bytes())
     }
 
+    pub fn is_compressed(&self) -> bool {
+        *self == Self::Compressed
+    }
+
     fn as_bytes(&self) -> Vec<u8> {
-        if self.0 { vec![1] } else { vec![0] }
+        if self.is_compressed() {
+            vec![1]
+        } else {
+            vec![0]
+        }
     }
 
     fn from_bytes(bytes: &[u8]) -> Self {
@@ -22,16 +35,16 @@ impl Compressed {
             panic!();
         }
         if bytes[0] == 1 {
-            Self(true)
+            Self::Compressed
         } else if bytes[0] == 0 {
-            Self(false)
+            Self::Raw
         } else {
             panic!()
         }
     }
 
     pub fn validate(&self, path: &Path) -> Result<()> {
-        if let Ok(prev_compressed) = Compressed::try_from(path) {
+        if let Ok(prev_compressed) = Format::try_from(path) {
             if prev_compressed != *self {
                 return Err(Error::DifferentCompressionMode);
             }
@@ -41,22 +54,9 @@ impl Compressed {
     }
 }
 
-impl TryFrom<&Path> for Compressed {
+impl TryFrom<&Path> for Format {
     type Error = Error;
     fn try_from(value: &Path) -> Result<Self, Self::Error> {
         Ok(Self::from_bytes(&fs::read(value)?))
-    }
-}
-
-impl From<bool> for Compressed {
-    fn from(value: bool) -> Self {
-        Self(value)
-    }
-}
-
-impl Deref for Compressed {
-    type Target = bool;
-    fn deref(&self) -> &Self::Target {
-        &self.0
     }
 }

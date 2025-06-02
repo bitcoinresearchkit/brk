@@ -565,11 +565,71 @@ function createPartialOptions(colors) {
     },
   ]);
 
-  const size = /** @type {const } */ ([
+  const fromSize = /** @type {const} */ ([
     {
-      key: "0sat",
-      name: "0sat",
-      title: "0 sat",
+      key: "from-1-000sats",
+      name: "1_000sats",
+      title: "From 1,000 sats",
+      color: colors.cyan,
+    },
+    {
+      key: "from-1btc",
+      name: "1btc",
+      title: "From 1 BTC",
+      color: colors.violet,
+    },
+    {
+      key: "from-10btc",
+      name: "10btc",
+      title: "From 10 BTC",
+      color: colors.purple,
+    },
+    {
+      key: "from-100btc",
+      name: "100btc",
+      title: "From 100 BTC",
+      color: colors.pink,
+    },
+  ]);
+
+  const upToSize = /** @type {const} */ ([
+    {
+      key: "up-to-1-000sats",
+      name: "1_000sats",
+      title: "Up to 1,000 sats",
+      color: colors.yellow,
+    },
+    {
+      key: "up-to-10-000sats",
+      name: "10_000sats",
+      title: "Up to 10,000 sats",
+      color: colors.green,
+    },
+    {
+      key: "up-to-1btc",
+      name: "1btc",
+      title: "Up to 1 btc",
+      color: colors.cyan,
+    },
+    {
+      key: "up-to-10btc",
+      name: "10btc",
+      title: "Up to 10 btc",
+      color: colors.blue,
+    },
+    {
+      key: "up-to-100btc",
+      name: "100btc",
+      title: "Up to 100 btc",
+      color: colors.violet,
+    },
+  ]);
+
+  const sizeRanges = /** @type {const} */ ([
+    {
+      key: "0sats",
+      name: "0sats",
+      title: "0 sats",
       color: colors.red,
     },
     {
@@ -1398,6 +1458,81 @@ function createPartialOptions(colors) {
             },
           ],
         },
+        ...("list" in args
+          ? [
+              {
+                name: "Price paid",
+                tree: [
+                  {
+                    name: "Average",
+                    title: `${args.title} Average Price Paid`,
+                    bottom: list.flatMap(({ color, name, key: _key }) => {
+                      const key = fixKey(_key);
+                      return /** @type {const} */ ([
+                        createBaseSeries({
+                          key: `${key}realized-price`,
+                          name,
+                          color: color,
+                        }),
+                      ]);
+                    }),
+                  },
+                  {
+                    name: "Min",
+                    title: `${args.title} Min Price Paid`,
+                    bottom: list.flatMap(({ color, name, key: _key }) => {
+                      const key = fixKey(_key);
+                      return /** @type {const} */ ([
+                        createBaseSeries({
+                          key: `${key}min-price-paid`,
+                          name,
+                          color: color,
+                        }),
+                      ]);
+                    }),
+                  },
+                  {
+                    name: "Max",
+                    title: `${args.title} Max Price Paid`,
+                    bottom: list.flatMap(({ color, name, key: _key }) => {
+                      const key = fixKey(_key);
+                      return /** @type {const} */ ([
+                        createBaseSeries({
+                          key: `${key}max-price-paid`,
+                          name,
+                          color: color,
+                        }),
+                      ]);
+                    }),
+                  },
+                ],
+              },
+            ]
+          : [
+              {
+                name: "Price paid",
+                title: `${args.title} Prices Paid`,
+                top: [
+                  createBaseSeries({
+                    key: `${fixKey(args.key)}realized-price`,
+                    name: "Average",
+                    color: args.color,
+                  }),
+                  createBaseSeries({
+                    key: `${fixKey(args.key)}min-price-paid`,
+                    name: "Min",
+                    color: colors.green,
+                    // defaultActive: false,
+                  }),
+                  createBaseSeries({
+                    key: `${fixKey(args.key)}max-price-paid`,
+                    name: "Max",
+                    color: colors.red,
+                    // defaultActive: false,
+                  }),
+                ],
+              },
+            ]),
       ],
     });
   }
@@ -1446,12 +1581,12 @@ function createPartialOptions(colors) {
                   name: "Days since",
                 }),
                 createBaseSeries({
-                  key: "max-days-between-ath",
+                  key: "max-days-between-aths",
                   name: "Max",
                   color: colors.red,
                 }),
                 createBaseSeries({
-                  key: "max-years-between-ath",
+                  key: "max-years-between-aths",
                   name: "Max",
                   color: colors.red,
                 }),
@@ -2224,7 +2359,7 @@ function createPartialOptions(colors) {
               ],
             },
             {
-              name: "Up to",
+              name: "Up to date",
               tree: [
                 createUTXOGroupFolder({
                   name: "Compare",
@@ -2235,7 +2370,7 @@ function createPartialOptions(colors) {
               ],
             },
             {
-              name: "From",
+              name: "From Date",
               tree: [
                 createUTXOGroupFolder({
                   name: "Compare",
@@ -2246,7 +2381,7 @@ function createPartialOptions(colors) {
               ],
             },
             {
-              name: "Range",
+              name: "Date Range",
               tree: [
                 createUTXOGroupFolder({
                   name: "Compare",
@@ -2268,14 +2403,36 @@ function createPartialOptions(colors) {
               ],
             },
             {
-              name: "size",
+              name: "Up to size",
               tree: [
                 createUTXOGroupFolder({
                   name: "Compare",
-                  title: "Compare By Size",
-                  list: size,
+                  title: "Compare By Up To Size",
+                  list: upToSize,
                 }),
-                ...size.map(createUTXOGroupFolder),
+                ...upToSize.map(createUTXOGroupFolder),
+              ],
+            },
+            {
+              name: "From size",
+              tree: [
+                createUTXOGroupFolder({
+                  name: "Compare",
+                  title: "Compare By From Size",
+                  list: fromSize,
+                }),
+                ...fromSize.map(createUTXOGroupFolder),
+              ],
+            },
+            {
+              name: "Size range",
+              tree: [
+                createUTXOGroupFolder({
+                  name: "Compare",
+                  title: "Compare By Size Range",
+                  list: sizeRanges,
+                }),
+                ...sizeRanges.map(createUTXOGroupFolder),
               ],
             },
             {

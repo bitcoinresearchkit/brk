@@ -4,6 +4,7 @@ use brk_core::default_bitcoin_path;
 use brk_exit::Exit;
 use brk_indexer::Indexer;
 use brk_parser::Parser;
+use brk_vec::Format;
 
 fn main() -> color_eyre::Result<()> {
     color_eyre::install()?;
@@ -24,7 +25,7 @@ fn main() -> color_eyre::Result<()> {
 
     let outputs = Path::new("../../_outputs");
 
-    let mut indexer = Indexer::new(outputs, false, false)?;
+    let mut indexer = Indexer::new(outputs, Format::Raw, false)?;
 
     indexer.import_stores()?;
     indexer.import_vecs()?;

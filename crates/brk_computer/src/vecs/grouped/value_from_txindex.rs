@@ -4,8 +4,8 @@ use brk_core::{Bitcoin, Close, Dollars, Height, Sats, TxIndex, Version};
 use brk_exit::Exit;
 use brk_indexer::Indexer;
 use brk_vec::{
-    AnyCollectableVec, BoxedAnyIterableVec, CloneableAnyIterableVec, CollectableVec, Compressed,
-    Computation, ComputedVecFrom3, LazyVecFrom1, StoredIndex, StoredVec,
+    AnyCollectableVec, BoxedAnyIterableVec, CloneableAnyIterableVec, CollectableVec, Computation,
+    ComputedVecFrom3, Format, LazyVecFrom1, StoredIndex, StoredVec,
 };
 
 use crate::vecs::{Indexes, fetched, indexes};
@@ -44,7 +44,7 @@ impl ComputedValueVecsFromTxindex {
         source: Option<BoxedAnyIterableVec<TxIndex, Sats>>,
         version: Version,
         computation: Computation,
-        compressed: Compressed,
+        format: Format,
         fetched: Option<&fetched::Vecs>,
         options: StorableVecGeneatorOptions,
     ) -> color_eyre::Result<Self> {
@@ -59,7 +59,7 @@ impl ComputedValueVecsFromTxindex {
             name,
             compute_source,
             version + VERSION,
-            compressed,
+            format,
             options,
         )?;
 
@@ -80,7 +80,7 @@ impl ComputedValueVecsFromTxindex {
             &name_in_btc,
             false,
             version + VERSION,
-            compressed,
+            format,
             options,
         )?;
 
@@ -90,7 +90,7 @@ impl ComputedValueVecsFromTxindex {
                 path,
                 &name_in_usd,
                 version + VERSION,
-                compressed,
+                format,
                 bitcoin_txindex.boxed_clone(),
                 indexes.txindex_to_height.boxed_clone(),
                 fetched.chainindexes_to_close.height.boxed_clone(),
@@ -126,7 +126,7 @@ impl ComputedValueVecsFromTxindex {
                     &name_in_usd,
                     false,
                     version + VERSION,
-                    compressed,
+                    format,
                     options,
                 )
                 .unwrap()

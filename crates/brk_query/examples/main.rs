@@ -3,19 +3,19 @@ use std::path::Path;
 use brk_computer::Computer;
 use brk_indexer::Indexer;
 use brk_query::{Index, Query};
-use brk_vec::Computation;
+use brk_vec::{Computation, Format};
 
 pub fn main() -> color_eyre::Result<()> {
     color_eyre::install()?;
 
     let outputs_dir = Path::new("../../_outputs");
 
-    let compressed = true;
+    let format = Format::Compressed;
 
-    let mut indexer = Indexer::new(outputs_dir, compressed, true)?;
+    let mut indexer = Indexer::new(outputs_dir, format, true)?;
     indexer.import_vecs()?;
 
-    let mut computer = Computer::new(outputs_dir, None, compressed);
+    let mut computer = Computer::new(outputs_dir, None, format);
     computer.import_vecs(&indexer, Computation::Lazy)?;
 
     let query = Query::build(&indexer, &computer);

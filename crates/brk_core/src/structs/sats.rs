@@ -207,3 +207,10 @@ impl From<Sats> for ByteView {
         Self::from(&value)
     }
 }
+
+impl Mul<Sats> for usize {
+    type Output = Sats;
+    fn mul(self, rhs: Sats) -> Self::Output {
+        Self::Output::from(rhs.0 * self as u64)
+    }
+}

@@ -2,7 +2,7 @@ use std::path::Path;
 
 use brk_core::{CheckedSub, Result, StoredUsize, Version};
 use brk_exit::Exit;
-use brk_vec::{AnyCollectableVec, AnyIterableVec, Compressed, EagerVec, StoredIndex, StoredType};
+use brk_vec::{AnyCollectableVec, AnyIterableVec, EagerVec, Format, StoredIndex, StoredType};
 use color_eyre::eyre::ContextCompat;
 
 use crate::utils::get_percentile;
@@ -40,7 +40,7 @@ where
         path: &Path,
         name: &str,
         version: Version,
-        compressed: Compressed,
+        format: Format,
         options: StorableVecGeneatorOptions,
     ) -> color_eyre::Result<Self> {
         let only_one_active = options.is_only_one_active();
@@ -72,15 +72,14 @@ where
                         path,
                         &maybe_prefix("first"),
                         version + VERSION + Version::ZERO,
-                        compressed,
+                        format,
                     )
                     .unwrap(),
                 )
             }),
             last: options.last.then(|| {
                 Box::new(
-                    EagerVec::forced_import(path, name, version + Version::ZERO, compressed)
-                        .unwrap(),
+                    EagerVec::forced_import(path, name, version + Version::ZERO, format).unwrap(),
                 )
             }),
             min: options.min.then(|| {
@@ -89,7 +88,7 @@ where
                         path,
                         &maybe_suffix("min"),
                         version + VERSION + Version::ZERO,
-                        compressed,
+                        format,
                     )
                     .unwrap(),
                 )
@@ -100,7 +99,7 @@ where
                         path,
                         &maybe_suffix("max"),
                         version + VERSION + Version::ZERO,
-                        compressed,
+                        format,
                     )
                     .unwrap(),
                 )
@@ -111,7 +110,7 @@ where
                         path,
                         &maybe_suffix("median"),
                         version + VERSION + Version::ZERO,
-                        compressed,
+                        format,
                     )
                     .unwrap(),
                 )
@@ -122,7 +121,7 @@ where
                         path,
                         &maybe_suffix("average"),
                         version + VERSION + Version::ZERO,
-                        compressed,
+                        format,
                     )
                     .unwrap(),
                 )
@@ -133,7 +132,7 @@ where
                         path,
                         &maybe_suffix("sum"),
                         version + VERSION + Version::ZERO,
-                        compressed,
+                        format,
                     )
                     .unwrap(),
                 )
@@ -144,7 +143,7 @@ where
                         path,
                         &prefix("cumulative"),
                         version + VERSION + Version::ZERO,
-                        compressed,
+                        format,
                     )
                     .unwrap(),
                 )
@@ -155,7 +154,7 @@ where
                         path,
                         &maybe_suffix("90p"),
                         version + VERSION + Version::ZERO,
-                        compressed,
+                        format,
                     )
                     .unwrap(),
                 )
@@ -166,7 +165,7 @@ where
                         path,
                         &maybe_suffix("75p"),
                         version + VERSION + Version::ZERO,
-                        compressed,
+                        format,
                     )
                     .unwrap(),
                 )
@@ -177,7 +176,7 @@ where
                         path,
                         &maybe_suffix("25p"),
                         version + VERSION + Version::ZERO,
-                        compressed,
+                        format,
                     )
                     .unwrap(),
                 )
@@ -188,7 +187,7 @@ where
                         path,
                         &maybe_suffix("10p"),
                         version + VERSION + Version::ZERO,
-                        compressed,
+                        format,
                     )
                     .unwrap(),
                 )

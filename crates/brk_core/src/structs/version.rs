@@ -1,6 +1,7 @@
 use std::{
     fs,
     io::{self, Read},
+    iter::Sum,
     ops::Add,
     path::Path,
 };
@@ -68,5 +69,11 @@ impl Add<Version> for Version {
     type Output = Self;
     fn add(self, rhs: Version) -> Self::Output {
         Self(self.0 + rhs.0)
+    }
+}
+
+impl Sum for Version {
+    fn sum<I: Iterator<Item = Self>>(iter: I) -> Self {
+        iter.fold(Self::ZERO, Add::add)
     }
 }

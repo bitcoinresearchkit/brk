@@ -12,7 +12,7 @@ use brk_exit::Exit;
 use brk_fetcher::Fetcher;
 use brk_indexer::Indexer;
 use brk_server::{Server, Website};
-use brk_vec::Computation;
+use brk_vec::{Computation, Format};
 use clap_derive::{Parser, ValueEnum};
 use color_eyre::eyre::eyre;
 use log::info;
@@ -27,9 +27,9 @@ pub fn run(config: RunConfig) -> color_eyre::Result<()> {
 
     let parser = brk_parser::Parser::new(config.blocksdir(), rpc);
 
-    let compressed = config.compressed();
+    let format = config.format();
 
-    let mut indexer = Indexer::new(&config.outputsdir(), compressed, config.check_collisions())?;
+    let mut indexer = Indexer::new(&config.outputsdir(), format, config.check_collisions())?;
     indexer.import_stores()?;
     indexer.import_vecs()?;
 
@@ -50,7 +50,7 @@ pub fn run(config: RunConfig) -> color_eyre::Result<()> {
     };
 
     let f = move || -> color_eyre::Result<()> {
-        let mut computer = Computer::new(&config.outputsdir(), config.fetcher(), compressed);
+        let mut computer = Computer::new(&config.outputsdir(), config.fetcher(), format);
         computer.import_stores(&indexer)?;
         computer.import_vecs(&indexer, config.computation())?;
 
@@ -133,15 +133,15 @@ pub struct RunConfig {
     mode: Option<Mode>,
 
     /// Computation mode for compatible datasets, `lazy` computes data whenever requested without saving it, `eager` computes the data once and saves it to disk, default: Lazy, saved
-    #[arg(short = 'C', long)]
+    #[arg(short, long)]
     computation: Option<Computation>,
 
     /// Activate compression of datasets, set to true to save disk space or false if prioritize speed, default: true, saved
-    #[arg(short, long, value_name = "BOOL")]
-    compressed: Option<bool>,
+    #[arg(short, long, value_name = "FORMAT")]
+    format: Option<Format>,
 
     /// Activate fetching prices from exchanges APIs and the computation of all related datasets, default: true, saved
-    #[arg(short, long, value_name = "BOOL")]
+    #[arg(short = 'F', long, value_name = "BOOL")]
     fetch: Option<bool>,
 
     /// Website served by the server (if active), default: kibo.money, saved
@@ -204,12 +204,16 @@ impl RunConfig {
                 config_saved.mode = Some(mode);
             }
 
+            if let Some(computation) = config_args.computation.take() {
+                config_saved.computation = Some(computation);
+            }
+
             if let Some(fetch) = config_args.fetch.take() {
                 config_saved.fetch = Some(fetch);
             }
 
-            if let Some(compressed) = config_args.compressed.take() {
-                config_saved.compressed = Some(compressed);
+            if let Some(format) = config_args.format.take() {
+                config_saved.format = Some(format);
             }
 
             if let Some(website) = config_args.website.take() {
@@ -430,8 +434,8 @@ impl RunConfig {
         self.computation.unwrap_or_default()
     }
 
-    pub fn compressed(&self) -> bool {
-        self.compressed.is_none_or(|b| b)
+    pub fn format(&self) -> Format {
+        self.format.unwrap_or_default()
     }
 
     pub fn check_collisions(&self) -> bool {
