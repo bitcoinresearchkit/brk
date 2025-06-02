@@ -10,15 +10,15 @@ use std::{
 
 use arc_swap::ArcSwap;
 use brk_core::{
-    Bitcoin, CheckedSub, Close, Date, DateIndex, Dollars, Error, Height, Result, Sats, StoredUsize,
-    TxIndex, Value, Version,
+    Bitcoin, CheckedSub, Close, Date, DateIndex, Dollars, Error, Height, Result, Sats, StoredF32,
+    StoredUsize, TxIndex, Value, Version,
 };
 use brk_exit::Exit;
 use log::info;
 use memmap2::Mmap;
 
 use crate::{
-    AnyCollectableVec, AnyIterableVec, AnyVec, BoxedVecIterator, CollectableVec, Compressed,
+    AnyCollectableVec, AnyIterableVec, AnyVec, BoxedVecIterator, CollectableVec, Format,
     GenericStoredVec, StoredIndex, StoredType, StoredVec, StoredVecIterator, VecIterator,
 };
 
@@ -44,9 +44,9 @@ where
         path: &Path,
         value_name: &str,
         version: Version,
-        compressed: Compressed,
+        format: Format,
     ) -> Result<Self> {
-        let inner = StoredVec::forced_import(path, value_name, version, compressed)?;
+        let inner = StoredVec::forced_import(path, value_name, version, format)?;
 
         Ok(Self {
             computed_version: None,
@@ -219,10 +219,10 @@ where
         )?;
 
         let index = max_from.min(I::from(self.len()));
-        let mut added_iter = adder.iter();
+        let mut adder_iter = adder.iter();
 
         added.iter_at(index).try_for_each(|(i, v)| {
-            let v = v.into_inner() + added_iter.unwrap_get_inner(i);
+            let v = v.into_inner() + adder_iter.unwrap_get_inner(i);
 
             self.forced_push_at(i, v, exit)
         })?;
@@ -245,15 +245,80 @@ where
         )?;
 
         let index = max_from.min(I::from(self.len()));
-        let mut subtracted_iter = subtracter.iter();
+        let mut subtracter_iter = subtracter.iter();
 
         subtracted.iter_at(index).try_for_each(|(i, v)| {
             let v = v
                 .into_inner()
-                .checked_sub(subtracted_iter.unwrap_get_inner(i))
+                .checked_sub(subtracter_iter.unwrap_get_inner(i))
                 .unwrap();
 
             self.forced_push_at(i, v, exit)
+        })?;
+
+        self.safe_flush(exit)
+    }
+
+    pub fn compute_max<T2>(
+        &mut self,
+        max_from: I,
+        source: &impl AnyIterableVec<I, T2>,
+        exit: &Exit,
+    ) -> Result<()>
+    where
+        T: From<T2> + Ord,
+        T2: StoredType,
+    {
+        self.validate_computed_version_or_reset_file(
+            Version::ZERO + self.inner.version() + source.version(),
+        )?;
+
+        let index = max_from.min(I::from(self.len()));
+
+        let mut prev = None;
+
+        source.iter_at(index).try_for_each(|(i, v)| {
+            if prev.is_none() {
+                let i = i.unwrap_to_usize();
+                prev.replace(if i > 0 {
+                    self.into_iter().unwrap_get_inner_(i - 1)
+                } else {
+                    T::from(source.iter().unwrap_get_inner_(0))
+                });
+            }
+            let max = prev.clone().unwrap().max(T::from(v.into_inner()));
+            prev.replace(max.clone());
+
+            self.forced_push_at(i, max, exit)
+        })?;
+
+        self.safe_flush(exit)
+    }
+
+    pub fn compute_multiply<T2, T3, T4>(
+        &mut self,
+        max_from: I,
+        multiplied: &impl AnyIterableVec<I, T2>,
+        multiplier: &impl AnyIterableVec<I, T3>,
+        exit: &Exit,
+    ) -> Result<()>
+    where
+        T2: StoredType + Mul<T3, Output = T4>,
+        T3: StoredType,
+        T4: StoredType,
+        T: From<T4>,
+    {
+        self.validate_computed_version_or_reset_file(
+            Version::ZERO + self.inner.version() + multiplied.version() + multiplier.version(),
+        )?;
+
+        let index = max_from.min(I::from(self.len()));
+        let mut multiplier_iter = multiplier.iter();
+
+        multiplied.iter_at(index).try_for_each(|(i, v)| {
+            let v = v.into_inner() * multiplier_iter.unwrap_get_inner(i);
+
+            self.forced_push_at(i, v.into(), exit)
         })?;
 
         self.safe_flush(exit)
@@ -338,6 +403,36 @@ where
                 .checked_sub(subtract)
                 .unwrap();
             self.forced_push_at(i, T::from(v), exit)
+        })?;
+
+        self.safe_flush(exit)
+    }
+
+    pub fn compute_drawdown(
+        &mut self,
+        max_from: I,
+        close: &impl AnyIterableVec<I, Close<Dollars>>,
+        ath: &impl AnyIterableVec<I, Dollars>,
+        exit: &Exit,
+    ) -> Result<()>
+    where
+        T: From<StoredF32>,
+    {
+        self.validate_computed_version_or_reset_file(
+            Version::ZERO + self.inner.version() + ath.version() + close.version(),
+        )?;
+
+        let index = max_from.min(I::from(self.len()));
+        let mut close_iter = close.iter();
+        ath.iter_at(index).try_for_each(|(i, ath)| {
+            let ath = ath.into_inner();
+            if ath == Dollars::ZERO {
+                self.forced_push_at(i, T::from(StoredF32::default()), exit)
+            } else {
+                let close = *close_iter.unwrap_get_inner(i);
+                let drawdown = StoredF32::from((*ath - *close) / *ath * -100.0);
+                self.forced_push_at(i, T::from(drawdown), exit)
+            }
         })?;
 
         self.safe_flush(exit)
@@ -574,6 +669,115 @@ where
                     sum = sum.clone() + source_iter.unwrap_get_inner(T2::from(i));
                 });
                 self.forced_push_at(i, sum, exit)
+            })?;
+
+        self.safe_flush(exit)
+    }
+
+    pub fn compute_sum_of_others(
+        &mut self,
+        max_from: I,
+        others: &[&impl AnyIterableVec<I, T>],
+        exit: &Exit,
+    ) -> Result<()>
+    where
+        T: From<usize> + Add<T, Output = T>,
+    {
+        self.validate_computed_version_or_reset_file(
+            Version::ZERO + self.inner.version() + others.iter().map(|v| v.version()).sum(),
+        )?;
+
+        if others.is_empty() {
+            unreachable!("others should've length of 1 at least");
+        }
+
+        let mut others_iter = others[1..].iter().map(|v| v.iter()).collect::<Vec<_>>();
+
+        let index = max_from.min(I::from(self.len()));
+        others
+            .first()
+            .unwrap()
+            .iter_at(index)
+            .try_for_each(|(i, v)| {
+                let mut sum = v.into_inner();
+                others_iter.iter_mut().for_each(|iter| {
+                    sum = sum.clone() + iter.unwrap_get_inner(i);
+                });
+                self.forced_push_at(i, sum, exit)
+            })?;
+
+        self.safe_flush(exit)
+    }
+
+    pub fn compute_min_of_others(
+        &mut self,
+        max_from: I,
+        others: &[&impl AnyIterableVec<I, T>],
+        exit: &Exit,
+    ) -> Result<()>
+    where
+        T: From<usize> + Add<T, Output = T> + Ord,
+    {
+        self.validate_computed_version_or_reset_file(
+            Version::ZERO + self.inner.version() + others.iter().map(|v| v.version()).sum(),
+        )?;
+
+        if others.is_empty() {
+            unreachable!("others should've length of 1 at least");
+        }
+
+        let mut others_iter = others[1..].iter().map(|v| v.iter()).collect::<Vec<_>>();
+
+        let index = max_from.min(I::from(self.len()));
+        others
+            .first()
+            .unwrap()
+            .iter_at(index)
+            .try_for_each(|(i, v)| {
+                let min = v.into_inner();
+                let min = others_iter
+                    .iter_mut()
+                    .map(|iter| iter.unwrap_get_inner(i))
+                    .min()
+                    .map_or(min.clone(), |min2| min.min(min2));
+                self.forced_push_at(i, min, exit)
+            })?;
+
+        self.safe_flush(exit)
+    }
+
+    pub fn compute_max_of_others(
+        &mut self,
+        max_from: I,
+        others: &[&impl AnyIterableVec<I, T>],
+        exit: &Exit,
+    ) -> Result<()>
+    where
+        T: From<usize> + Add<T, Output = T> + Ord,
+    {
+        self.validate_computed_version_or_reset_file(
+            Version::ZERO + self.inner.version() + others.iter().map(|v| v.version()).sum(),
+        )?;
+
+        if others.is_empty() {
+            unreachable!("others should've length of 1 at least");
+        }
+
+        let mut others_iter = others[1..].iter().map(|v| v.iter()).collect::<Vec<_>>();
+
+        let index = max_from.min(I::from(self.len()));
+        others
+            .first()
+            .unwrap()
+            .iter_at(index)
+            .try_for_each(|(i, v)| {
+                let max = v.into_inner();
+                let max = others_iter
+                    .iter_mut()
+                    .map(|iter| iter.unwrap_get_inner(i))
+                    .max()
+                    .map_or(max.clone(), |max2| max.max(max2));
+                self.forced_push_at(i, max, exit)
             })?;
 
         self.safe_flush(exit)

@@ -9,7 +9,7 @@ use arc_swap::ArcSwap;
 use brk_core::{Error, Height, Result, Value, Version};
 
 use crate::{
-    AnyCollectableVec, AnyIterableVec, AnyVec, BoxedVecIterator, CollectableVec, Compressed,
+    AnyCollectableVec, AnyIterableVec, AnyVec, BoxedVecIterator, CollectableVec, Format,
     GenericStoredVec, Mmap, StoredIndex, StoredType, StoredVec,
 };
 
@@ -30,9 +30,9 @@ where
         path: &Path,
         value_name: &str,
         version: Version,
-        compressed: Compressed,
+        format: Format,
     ) -> Result<Self> {
-        let inner = StoredVec::forced_import(path, value_name, version, compressed)?;
+        let inner = StoredVec::forced_import(path, value_name, version, format)?;
 
         Ok(Self {
             height: Height::try_from(Self::path_height_(inner.path()).as_path()).ok(),

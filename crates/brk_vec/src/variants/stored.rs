@@ -6,7 +6,7 @@ use memmap2::Mmap;
 
 use crate::{
     AnyCollectableVec, AnyIterableVec, AnyVec, BaseVecIterator, BoxedVecIterator, CollectableVec,
-    Compressed, GenericStoredVec, StoredIndex, StoredType,
+    Format, GenericStoredVec, StoredIndex, StoredType,
 };
 
 use super::{CompressedVec, CompressedVecIterator, RawVec, RawVecIterator};
@@ -26,7 +26,7 @@ where
         path: &Path,
         value_name: &str,
         version: Version,
-        compressed: Compressed,
+        format: Format,
     ) -> Result<Self> {
         let path = I::path(path, value_name);
 
@@ -35,7 +35,7 @@ where
             panic!("Version must be at least 1, can't verify endianess otherwise");
         }
 
-        if *compressed {
+        if format.is_compressed() {
             Ok(Self::Compressed(CompressedVec::forced_import(
                 &path, version,
             )?))

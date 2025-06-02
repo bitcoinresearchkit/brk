@@ -104,7 +104,7 @@ impl From<Cents> for u128 {
 impl Mul<Cents> for Cents {
     type Output = Cents;
     fn mul(self, rhs: Cents) -> Self::Output {
-        Self(self.0 * rhs.0)
+        Self(self.0.checked_mul(rhs.0).unwrap())
     }
 }
 

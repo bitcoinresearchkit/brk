@@ -5,7 +5,7 @@ use brk_core::{
 };
 use brk_exit::Exit;
 use brk_indexer::Indexer;
-use brk_vec::{AnyCollectableVec, AnyIterableVec, Compressed, EagerVec};
+use brk_vec::{AnyCollectableVec, AnyIterableVec, EagerVec, Format};
 
 use crate::vecs::{Indexes, indexes};
 
@@ -36,19 +36,18 @@ where
         name: &str,
         compute_source: bool,
         version: Version,
-        compressed: Compressed,
+        format: Format,
         options: StorableVecGeneatorOptions,
     ) -> color_eyre::Result<Self> {
         let dateindex = compute_source.then(|| {
-            EagerVec::forced_import(path, name, version + VERSION + Version::ZERO, compressed)
-                .unwrap()
+            EagerVec::forced_import(path, name, version + VERSION + Version::ZERO, format).unwrap()
         });
 
         let dateindex_extra = ComputedVecBuilder::forced_import(
             path,
             name,
             version + VERSION + Version::ZERO,
-            compressed,
+            format,
             options.copy_self_extra(),
         )?;
 
@@ -61,35 +60,35 @@ where
                 path,
                 name,
                 version + VERSION + Version::ZERO,
-                compressed,
+                format,
                 options,
             )?,
             monthindex: ComputedVecBuilder::forced_import(
                 path,
                 name,
                 version + VERSION + Version::ZERO,
-                compressed,
+                format,
                 options,
             )?,
             quarterindex: ComputedVecBuilder::forced_import(
                 path,
                 name,
                 version + VERSION + Version::ZERO,
-                compressed,
+                format,
                 options,
             )?,
             yearindex: ComputedVecBuilder::forced_import(
                 path,
                 name,
                 version + VERSION + Version::ZERO,
-                compressed,
+                format,
                 options,
             )?,
             decadeindex: ComputedVecBuilder::forced_import(
                 path,
                 name,
                 version + VERSION + Version::ZERO,
-                compressed,
+                format,
                 options,
             )?,
         })

@@ -4,7 +4,7 @@ use brk_core::Version;
 use brk_exit::Exit;
 use brk_fetcher::Fetcher;
 use brk_indexer::Indexer;
-use brk_vec::{AnyCollectableVec, Compressed, Computation};
+use brk_vec::{AnyCollectableVec, Computation, Format};
 use fjall::TransactionalKeyspace;
 
 pub mod blocks;
@@ -40,7 +40,7 @@ impl Vecs {
         indexer: &Indexer,
         fetch: bool,
         computation: Computation,
-        compressed: Compressed,
+        format: Format,
         keyspace: &TransactionalKeyspace,
     ) -> color_eyre::Result<Self> {
         fs::create_dir_all(path)?;
@@ -50,7 +50,7 @@ impl Vecs {
             version + VERSION + Version::ZERO,
             indexer,
             computation,
-            compressed,
+            format,
         )?;
 
         let fetched = fetch.then(|| {
@@ -58,7 +58,7 @@ impl Vecs {
                 path,
                 version + VERSION + Version::ZERO,
                 computation,
-                compressed,
+                format,
             )
             .unwrap()
         });
@@ -68,31 +68,31 @@ impl Vecs {
                 path,
                 version + VERSION + Version::ZERO,
                 computation,
-                compressed,
+                format,
             )?,
             mining: mining::Vecs::forced_import(
                 path,
                 version + VERSION + Version::ZERO,
                 computation,
-                compressed,
+                format,
             )?,
             constants: constants::Vecs::forced_import(
                 path,
                 version + VERSION + Version::ZERO,
                 computation,
-                compressed,
+                format,
             )?,
             market: market::Vecs::forced_import(
                 path,
                 version + VERSION + Version::ZERO,
                 computation,
-                compressed,
+                format,
             )?,
             stateful: stateful::Vecs::forced_import(
                 path,
                 version + VERSION + Version::ZERO,
                 computation,
-                compressed,
+                format,
                 fetched.as_ref(),
                 keyspace,
             )?,
@@ -102,7 +102,7 @@ impl Vecs {
                 indexer,
                 &indexes,
                 computation,
-                compressed,
+                format,
                 fetched.as_ref(),
             )?,
             indexes,
@@ -162,7 +162,8 @@ impl Vecs {
             &self.indexes,
             &self.transactions,
             self.fetched.as_ref(),
-            &starting_indexes,
+            &self.market,
+            starting_indexes,
             exit,
         )?;
 

@@ -4,9 +4,7 @@ use brk_core::{DateIndex, Dollars, Height, Result, Sats, StoredF32, StoredUsize,
 use brk_exit::Exit;
 use brk_indexer::Indexer;
 use brk_state::CohortState;
-use brk_vec::{
-    AnyCollectableVec, AnyVec, Compressed, Computation, EagerVec, StoredIndex, VecIterator,
-};
+use brk_vec::{AnyCollectableVec, AnyVec, Computation, EagerVec, Format, StoredIndex, VecIterator};
 use fjall::TransactionalKeyspace;
 
 use crate::vecs::{
@@ -15,7 +13,7 @@ use crate::vecs::{
         ComputedRatioVecsFromDateIndex, ComputedValueVecsFromHeight, ComputedVecsFromDateIndex,
         ComputedVecsFromHeight, StorableVecGeneatorOptions,
     },
-    indexes,
+    indexes, market,
 };
 
 const VERSION: Version = Version::ZERO;
@@ -30,22 +28,24 @@ pub struct Vecs {
     pub height_to_supply: EagerVec<Height, Sats>,
     pub height_to_utxo_count: EagerVec<Height, StoredUsize>,
     // Single
-    pub height_to_realized_profit: Option<EagerVec<Height, Dollars>>,
-    pub height_to_realized_loss: Option<EagerVec<Height, Dollars>>,
-    pub height_to_value_created: Option<EagerVec<Height, Dollars>>,
-    pub height_to_adjusted_value_created: Option<EagerVec<Height, Dollars>>,
-    pub height_to_value_destroyed: Option<EagerVec<Height, Dollars>>,
-    pub height_to_adjusted_value_destroyed: Option<EagerVec<Height, Dollars>>,
-    pub height_to_supply_in_profit: Option<EagerVec<Height, Sats>>,
-    pub height_to_supply_in_loss: Option<EagerVec<Height, Sats>>,
-    pub height_to_supply_even: Option<EagerVec<Height, Sats>>,
-    pub height_to_unrealized_profit: Option<EagerVec<Height, Dollars>>,
-    pub height_to_unrealized_loss: Option<EagerVec<Height, Dollars>>,
-    pub dateindex_to_supply_in_profit: Option<EagerVec<DateIndex, Sats>>,
-    pub dateindex_to_supply_in_loss: Option<EagerVec<DateIndex, Sats>>,
     pub dateindex_to_supply_even: Option<EagerVec<DateIndex, Sats>>,
-    pub dateindex_to_unrealized_profit: Option<EagerVec<DateIndex, Dollars>>,
+    pub dateindex_to_supply_in_loss: Option<EagerVec<DateIndex, Sats>>,
+    pub dateindex_to_supply_in_profit: Option<EagerVec<DateIndex, Sats>>,
     pub dateindex_to_unrealized_loss: Option<EagerVec<DateIndex, Dollars>>,
+    pub dateindex_to_unrealized_profit: Option<EagerVec<DateIndex, Dollars>>,
+    pub height_to_adjusted_value_created: Option<EagerVec<Height, Dollars>>,
+    pub height_to_adjusted_value_destroyed: Option<EagerVec<Height, Dollars>>,
+    pub height_to_max_price_paid: Option<EagerVec<Height, Dollars>>,
+    pub height_to_min_price_paid: Option<EagerVec<Height, Dollars>>,
+    pub height_to_realized_loss: Option<EagerVec<Height, Dollars>>,
+    pub height_to_realized_profit: Option<EagerVec<Height, Dollars>>,
+    pub height_to_supply_even: Option<EagerVec<Height, Sats>>,
+    pub height_to_supply_in_loss: Option<EagerVec<Height, Sats>>,
+    pub height_to_supply_in_profit: Option<EagerVec<Height, Sats>>,
+    pub height_to_unrealized_loss: Option<EagerVec<Height, Dollars>>,
+    pub height_to_unrealized_profit: Option<EagerVec<Height, Dollars>>,
+    pub height_to_value_created: Option<EagerVec<Height, Dollars>>,
+    pub height_to_value_destroyed: Option<EagerVec<Height, Dollars>>,
 
     pub dateindex_to_adjusted_spent_output_profit_ratio: Option<EagerVec<DateIndex, StoredF32>>,
     pub dateindex_to_realized_cap_30d_change: Option<EagerVec<DateIndex, Dollars>>,
@@ -70,6 +70,17 @@ pub struct Vecs {
     pub indexes_to_supply_even: Option<ComputedVecsFromDateIndex<Sats>>,
     pub indexes_to_unrealized_profit: Option<ComputedVecsFromDateIndex<Dollars>>,
     pub indexes_to_unrealized_loss: Option<ComputedVecsFromDateIndex<Dollars>>,
+    pub indexes_to_min_price_paid: Option<ComputedVecsFromHeight<Dollars>>,
+    pub indexes_to_max_price_paid: Option<ComputedVecsFromHeight<Dollars>>,
+    pub indexes_to_halved_supply: ComputedValueVecsFromHeight,
+    pub height_to_negative_unrealized_loss: Option<EagerVec<Height, Dollars>>,
+    pub indexes_to_negative_unrealized_loss: Option<ComputedVecsFromDateIndex<Dollars>>,
+    pub height_to_net_unrealized_profit_and_loss: Option<EagerVec<Height, Dollars>>,
+    pub indexes_to_net_unrealized_profit_and_loss: Option<ComputedVecsFromDateIndex<Dollars>>,
+    pub height_to_net_unrealized_profit_and_loss_relative_to_market_cap:
+        Option<EagerVec<Height, Dollars>>,
+    pub indexes_to_net_unrealized_profit_and_loss_relative_to_market_cap:
+        Option<ComputedVecsFromDateIndex<Dollars>>,
 }
 
 impl Vecs {
@@ -78,7 +89,7 @@ impl Vecs {
         path: &Path,
         cohort_name: Option<&str>,
         _computation: Computation,
-        compressed: Compressed,
+        format: Format,
         version: Version,
         fetched: Option<&fetched::Vecs>,
         keyspace: &TransactionalKeyspace,
@@ -109,7 +120,7 @@ impl Vecs {
                     path,
                     &suffix("supply_in_profit"),
                     version + VERSION + Version::ZERO,
-                    compressed,
+                    format,
                 )
                 .unwrap()
             }),
@@ -118,7 +129,7 @@ impl Vecs {
                     path,
                     &suffix("supply_in_profit"),
                     version + VERSION + Version::ZERO,
-                    compressed,
+                    format,
                 )
                 .unwrap()
             }),
@@ -128,7 +139,7 @@ impl Vecs {
                     &suffix("supply_in_profit"),
                     false,
                     version + VERSION + Version::ZERO,
-                    compressed,
+                    format,
                     StorableVecGeneatorOptions::default().add_last(),
                 )
                 .unwrap()
@@ -138,7 +149,7 @@ impl Vecs {
                     path,
                     &suffix("supply_even"),
                     version + VERSION + Version::ZERO,
-                    compressed,
+                    format,
                 )
                 .unwrap()
             }),
@@ -147,7 +158,7 @@ impl Vecs {
                     path,
                     &suffix("supply_even"),
                     version + VERSION + Version::ZERO,
-                    compressed,
+                    format,
                 )
                 .unwrap()
             }),
@@ -157,7 +168,7 @@ impl Vecs {
                     &suffix("supply_even"),
                     false,
                     version + VERSION + Version::ZERO,
-                    compressed,
+                    format,
                     StorableVecGeneatorOptions::default().add_last(),
                 )
                 .unwrap()
@@ -167,7 +178,7 @@ impl Vecs {
                     path,
                     &suffix("supply_in_loss"),
                     version + VERSION + Version::ZERO,
-                    compressed,
+                    format,
                 )
                 .unwrap()
             }),
@@ -176,7 +187,7 @@ impl Vecs {
                     path,
                     &suffix("supply_in_loss"),
                     version + VERSION + Version::ZERO,
-                    compressed,
+                    format,
                 )
                 .unwrap()
             }),
@@ -186,7 +197,7 @@ impl Vecs {
                     &suffix("supply_in_loss"),
                     false,
                     version + VERSION + Version::ZERO,
-                    compressed,
+                    format,
                     StorableVecGeneatorOptions::default().add_last(),
                 )
                 .unwrap()
@@ -196,7 +207,7 @@ impl Vecs {
                     path,
                     &suffix("unrealized_profit"),
                     version + VERSION + Version::ZERO,
-                    compressed,
+                    format,
                 )
                 .unwrap()
             }),
@@ -205,7 +216,7 @@ impl Vecs {
                     path,
                     &suffix("unrealized_profit"),
                     version + VERSION + Version::ZERO,
-                    compressed,
+                    format,
                 )
                 .unwrap()
             }),
@@ -215,7 +226,7 @@ impl Vecs {
                     &suffix("unrealized_profit"),
                     false,
                     version + VERSION + Version::ZERO,
-                    compressed,
+                    format,
                     StorableVecGeneatorOptions::default().add_last(),
                 )
                 .unwrap()
@@ -225,7 +236,25 @@ impl Vecs {
                     path,
                     &suffix("unrealized_loss"),
                     version + VERSION + Version::ZERO,
-                    compressed,
+                    format,
+                )
+                .unwrap()
+            }),
+            height_to_min_price_paid: compute_dollars.then(|| {
+                EagerVec::forced_import(
+                    path,
+                    &suffix("min_price_paid"),
+                    version + VERSION + Version::ZERO,
+                    format,
+                )
+                .unwrap()
+            }),
+            height_to_max_price_paid: compute_dollars.then(|| {
+                EagerVec::forced_import(
+                    path,
+                    &suffix("max_price_paid"),
+                    version + VERSION + Version::ZERO,
+                    format,
                 )
                 .unwrap()
             }),
@@ -234,7 +263,7 @@ impl Vecs {
                     path,
                     &suffix("unrealized_loss"),
                     version + VERSION + Version::ZERO,
-                    compressed,
+                    format,
                 )
                 .unwrap()
             }),
@@ -244,7 +273,7 @@ impl Vecs {
                     &suffix("unrealized_loss"),
                     false,
                     version + VERSION + Version::ZERO,
-                    compressed,
+                    format,
                     StorableVecGeneatorOptions::default().add_last(),
                 )
                 .unwrap()
@@ -254,7 +283,7 @@ impl Vecs {
                     path,
                     &suffix("realized_cap"),
                     version + VERSION + Version::ZERO,
-                    compressed,
+                    format,
                 )
                 .unwrap()
             }),
@@ -264,7 +293,29 @@ impl Vecs {
                     &suffix("realized_cap"),
                     false,
                     version + VERSION + Version::ZERO,
-                    compressed,
+                    format,
+                    StorableVecGeneatorOptions::default().add_last(),
+                )
+                .unwrap()
+            }),
+            indexes_to_min_price_paid: compute_dollars.then(|| {
+                ComputedVecsFromHeight::forced_import(
+                    path,
+                    &suffix("min_price_paid"),
+                    false,
+                    version + VERSION + Version::ZERO,
+                    format,
+                    StorableVecGeneatorOptions::default().add_last(),
+                )
+                .unwrap()
+            }),
+            indexes_to_max_price_paid: compute_dollars.then(|| {
+                ComputedVecsFromHeight::forced_import(
+                    path,
+                    &suffix("max_price_paid"),
+                    false,
+                    version + VERSION + Version::ZERO,
+                    format,
                     StorableVecGeneatorOptions::default().add_last(),
                 )
                 .unwrap()
@@ -273,14 +324,14 @@ impl Vecs {
                 path,
                 &suffix("supply"),
                 version + VERSION + Version::ZERO,
-                compressed,
+                format,
             )?,
             indexes_to_supply: ComputedValueVecsFromHeight::forced_import(
                 path,
                 &suffix("supply"),
                 false,
                 version + VERSION + Version::ZERO,
-                compressed,
+                format,
                 StorableVecGeneatorOptions::default().add_last(),
                 compute_dollars,
             )?,
@@ -288,14 +339,14 @@ impl Vecs {
                 path,
                 &suffix("utxo_count"),
                 version + VERSION + Version::ZERO,
-                compressed,
+                format,
             )?,
             indexes_to_utxo_count: ComputedVecsFromHeight::forced_import(
                 path,
                 &suffix("utxo_count"),
                 false,
                 version + VERSION + Version::ZERO,
-                compressed,
+                format,
                 StorableVecGeneatorOptions::default().add_last(),
             )?,
             indexes_to_realized_price: compute_dollars.then(|| {
@@ -304,7 +355,7 @@ impl Vecs {
                     &suffix("realized_price"),
                     true,
                     version + VERSION + Version::ZERO,
-                    compressed,
+                    format,
                     StorableVecGeneatorOptions::default().add_last(),
                 )
                 .unwrap()
@@ -315,7 +366,7 @@ impl Vecs {
                     &suffix("realized_price"),
                     false,
                     version + VERSION + Version::ZERO,
-                    compressed,
+                    format,
                     StorableVecGeneatorOptions::default().add_last(),
                 )
                 .unwrap()
@@ -325,7 +376,7 @@ impl Vecs {
                     path,
                     &suffix("realized_profit"),
                     version + VERSION + Version::ZERO,
-                    compressed,
+                    format,
                 )
                 .unwrap()
             }),
@@ -335,7 +386,7 @@ impl Vecs {
                     &suffix("realized_profit"),
                     false,
                     version + VERSION + Version::ZERO,
-                    compressed,
+                    format,
                     StorableVecGeneatorOptions::default().add_sum(),
                 )
                 .unwrap()
@@ -345,7 +396,7 @@ impl Vecs {
                     path,
                     &suffix("realized_loss"),
                     version + VERSION + Version::ZERO,
-                    compressed,
+                    format,
                 )
                 .unwrap()
             }),
@@ -355,7 +406,7 @@ impl Vecs {
                     &suffix("realized_loss"),
                     false,
                     version + VERSION + Version::ZERO,
-                    compressed,
+                    format,
                     StorableVecGeneatorOptions::default().add_sum(),
                 )
                 .unwrap()
@@ -366,7 +417,7 @@ impl Vecs {
                     &suffix("negative_realized_loss"),
                     true,
                     version + VERSION + Version::ONE,
-                    compressed,
+                    format,
                     StorableVecGeneatorOptions::default().add_sum(),
                 )
                 .unwrap()
@@ -376,7 +427,7 @@ impl Vecs {
                     path,
                     &suffix("value_created"),
                     version + VERSION + Version::ZERO,
-                    compressed,
+                    format,
                 )
                 .unwrap()
             }),
@@ -386,7 +437,7 @@ impl Vecs {
                     &suffix("value_created"),
                     false,
                     version + VERSION + Version::ZERO,
-                    compressed,
+                    format,
                     StorableVecGeneatorOptions::default().add_sum(),
                 )
                 .unwrap()
@@ -397,7 +448,7 @@ impl Vecs {
                     &suffix("realized_value"),
                     true,
                     version + VERSION + Version::ZERO,
-                    compressed,
+                    format,
                     StorableVecGeneatorOptions::default().add_sum(),
                 )
                 .unwrap()
@@ -407,7 +458,7 @@ impl Vecs {
                     path,
                     &suffix("adjusted_value_created"),
                     version + VERSION + Version::ZERO,
-                    compressed,
+                    format,
                 )
                 .unwrap()
             }),
@@ -417,7 +468,7 @@ impl Vecs {
                     &suffix("adjusted_value_created"),
                     false,
                     version + VERSION + Version::ZERO,
-                    compressed,
+                    format,
                     StorableVecGeneatorOptions::default().add_sum(),
                 )
                 .unwrap()
@@ -427,7 +478,7 @@ impl Vecs {
                     path,
                     &suffix("value_destroyed"),
                     version + VERSION + Version::ZERO,
-                    compressed,
+                    format,
                 )
                 .unwrap()
             }),
@@ -437,7 +488,7 @@ impl Vecs {
                     &suffix("value_destroyed"),
                     false,
                     version + VERSION + Version::ZERO,
-                    compressed,
+                    format,
                     StorableVecGeneatorOptions::default().add_sum(),
                 )
                 .unwrap()
@@ -447,7 +498,7 @@ impl Vecs {
                     path,
                     &suffix("adjusted_value_destroyed"),
                     version + VERSION + Version::ZERO,
-                    compressed,
+                    format,
                 )
                 .unwrap()
             }),
@@ -457,7 +508,7 @@ impl Vecs {
                     &suffix("adjusted_value_destroyed"),
                     false,
                     version + VERSION + Version::ZERO,
-                    compressed,
+                    format,
                     StorableVecGeneatorOptions::default().add_sum(),
                 )
                 .unwrap()
@@ -467,7 +518,7 @@ impl Vecs {
                     path,
                     &suffix("realized_cap_30d_change"),
                     version + VERSION + Version::ZERO,
-                    compressed,
+                    format,
                 )
                 .unwrap()
             }),
@@ -477,7 +528,7 @@ impl Vecs {
                     &suffix("net_realized_profit_and_loss"),
                     true,
                     version + VERSION + Version::ZERO,
-                    compressed,
+                    format,
                     StorableVecGeneatorOptions::default().add_sum(),
                 )
                 .unwrap()
@@ -487,7 +538,7 @@ impl Vecs {
                     path,
                     &suffix("sell_side_risk_ratio"),
                     version + VERSION + Version::ONE,
-                    compressed,
+                    format,
                 )
                 .unwrap()
             }),
@@ -496,7 +547,7 @@ impl Vecs {
                     path,
                     &suffix("spent_output_profit_ratio"),
                     version + VERSION + Version::ZERO,
-                    compressed,
+                    format,
                 )
                 .unwrap()
             }),
@@ -505,10 +556,84 @@ impl Vecs {
                     path,
                     &suffix("adjusted_spent_output_profit_ratio"),
                     version + VERSION + Version::ZERO,
-                    compressed,
+                    format,
                 )
                 .unwrap()
             }),
+            indexes_to_halved_supply: ComputedValueVecsFromHeight::forced_import(
+                path,
+                &suffix("halved_supply"),
+                true,
+                version + VERSION + Version::ZERO,
+                format,
+                StorableVecGeneatorOptions::default().add_last(),
+                compute_dollars,
+            )?,
+
+            height_to_negative_unrealized_loss: compute_dollars.then(|| {
+                EagerVec::forced_import(
+                    path,
+                    &suffix("negative_unrealized_loss"),
+                    version + VERSION + Version::ZERO,
+                    format,
+                )
+                .unwrap()
+            }),
+            indexes_to_negative_unrealized_loss: compute_dollars.then(|| {
+                ComputedVecsFromDateIndex::forced_import(
+                    path,
+                    &suffix("negative_unrealized_loss"),
+                    false,
+                    version + VERSION + Version::ZERO,
+                    format,
+                    StorableVecGeneatorOptions::default().add_last(),
+                )
+                .unwrap()
+            }),
+            height_to_net_unrealized_profit_and_loss: compute_dollars.then(|| {
+                EagerVec::forced_import(
+                    path,
+                    &suffix("net_unrealized_profit_and_loss"),
+                    version + VERSION + Version::ZERO,
+                    format,
+                )
+                .unwrap()
+            }),
+            indexes_to_net_unrealized_profit_and_loss: compute_dollars.then(|| {
+                ComputedVecsFromDateIndex::forced_import(
+                    path,
+                    &suffix("net_unrealized_profit_and_loss"),
+                    false,
+                    version + VERSION + Version::ZERO,
+                    format,
+                    StorableVecGeneatorOptions::default().add_last(),
+                )
+                .unwrap()
+            }),
+            height_to_net_unrealized_profit_and_loss_relative_to_market_cap: compute_dollars.then(
+                || {
+                    EagerVec::forced_import(
+                        path,
+                        &suffix("net_unrealized_profit_and_loss_relative_to_market_cap"),
+                        version + VERSION + Version::ZERO,
+                        format,
+                    )
+                    .unwrap()
+                },
+            ),
+            indexes_to_net_unrealized_profit_and_loss_relative_to_market_cap: compute_dollars.then(
+                || {
+                    ComputedVecsFromDateIndex::forced_import(
+                        path,
+                        &suffix("net_unrealized_profit_and_loss_relative_to_market_cap"),
+                        false,
+                        version + VERSION + Version::ZERO,
+                        format,
+                        StorableVecGeneatorOptions::default().add_last(),
+                    )
+                    .unwrap()
+                },
+            ),
         })
     }
 
@@ -554,6 +679,12 @@ impl Vecs {
                 .as_ref()
                 .map_or(usize::MAX, |v| v.len()),
             self.height_to_unrealized_loss
+                .as_ref()
+                .map_or(usize::MAX, |v| v.len()),
+            self.height_to_min_price_paid
+                .as_ref()
+                .map_or(usize::MAX, |v| v.len()),
+            self.height_to_max_price_paid
                 .as_ref()
                 .map_or(usize::MAX, |v| v.len()),
         ]
@@ -779,6 +910,28 @@ impl Vecs {
                 .validate_computed_version_or_reset_file(
                     base_version + dateindex_to_unrealized_loss_inner_version,
                 )?;
+            let height_to_min_price_paid_inner_version = self
+                .height_to_min_price_paid
+                .as_ref()
+                .unwrap()
+                .inner_version();
+            self.height_to_min_price_paid
+                .as_mut()
+                .unwrap()
+                .validate_computed_version_or_reset_file(
+                    base_version + height_to_min_price_paid_inner_version,
+                )?;
+            let height_to_max_price_paid_inner_version = self
+                .height_to_max_price_paid
+                .as_ref()
+                .unwrap()
+                .inner_version();
+            self.height_to_max_price_paid
+                .as_mut()
+                .unwrap()
+                .validate_computed_version_or_reset_file(
+                    base_version + height_to_max_price_paid_inner_version,
+                )?;
         }
 
         Ok(())
@@ -843,6 +996,31 @@ impl Vecs {
         exit: &Exit,
     ) -> Result<()> {
         if let Some(height_price) = height_price {
+            self.height_to_min_price_paid
+                .as_mut()
+                .unwrap()
+                .forced_push_at(
+                    height,
+                    self.state
+                        .price_to_amount
+                        .puts_first_key_value()
+                        .map(|(&dollars, _)| dollars)
+                        .unwrap_or(Dollars::NAN),
+                    exit,
+                )?;
+            self.height_to_max_price_paid
+                .as_mut()
+                .unwrap()
+                .forced_push_at(
+                    height,
+                    self.state
+                        .price_to_amount
+                        .puts_last_key_value()
+                        .map(|(&dollars, _)| dollars)
+                        .unwrap_or(Dollars::NAN),
+                    exit,
+                )?;
+
             let (height_unrealized_state, date_unrealized_state) = self
                 .state
                 .compute_unrealized_states(height_price, date_price.unwrap());
@@ -968,9 +1146,298 @@ impl Vecs {
                 .as_mut()
                 .unwrap()
                 .safe_flush(exit)?;
+            self.height_to_min_price_paid
+                .as_mut()
+                .unwrap()
+                .safe_flush(exit)?;
+            self.height_to_max_price_paid
+                .as_mut()
+                .unwrap()
+                .safe_flush(exit)?;
         }
 
         self.state.commit(height)?;
+
+        Ok(())
+    }
+
+    pub fn compute_from_stateful(
+        &mut self,
+        starting_indexes: &Indexes,
+        others: &[&Self],
+        exit: &Exit,
+    ) -> Result<()> {
+        self.height_to_supply.compute_sum_of_others(
+            starting_indexes.height,
+            others
+                .iter()
+                .map(|v| &v.height_to_supply)
+                .collect::<Vec<_>>()
+                .as_slice(),
+            exit,
+        )?;
+        self.height_to_utxo_count.compute_sum_of_others(
+            starting_indexes.height,
+            others
+                .iter()
+                .map(|v| &v.height_to_utxo_count)
+                .collect::<Vec<_>>()
+                .as_slice(),
+            exit,
+        )?;
+
+        if let Some(height_to_realized_cap) = &mut self.height_to_realized_cap {
+            height_to_realized_cap.compute_sum_of_others(
+                starting_indexes.height,
+                others
+                    .iter()
+                    .map(|v| v.height_to_realized_cap.as_ref().unwrap())
+                    .collect::<Vec<_>>()
+                    .as_slice(),
+                exit,
+            )?;
+
+            self.height_to_min_price_paid
+                .as_mut()
+                .unwrap()
+                .compute_min_of_others(
+                    starting_indexes.height,
+                    others
+                        .iter()
+                        .map(|v| v.height_to_min_price_paid.as_ref().unwrap())
+                        .collect::<Vec<_>>()
+                        .as_slice(),
+                    exit,
+                )?;
+            self.height_to_max_price_paid
+                .as_mut()
+                .unwrap()
+                .compute_max_of_others(
+                    starting_indexes.height,
+                    others
+                        .iter()
+                        .map(|v| v.height_to_max_price_paid.as_ref().unwrap())
+                        .collect::<Vec<_>>()
+                        .as_slice(),
+                    exit,
+                )?;
+            self.height_to_realized_profit
+                .as_mut()
+                .unwrap()
+                .compute_sum_of_others(
+                    starting_indexes.height,
+                    others
+                        .iter()
+                        .map(|v| v.height_to_realized_profit.as_ref().unwrap())
+                        .collect::<Vec<_>>()
+                        .as_slice(),
+                    exit,
+                )?;
+            self.height_to_realized_loss
+                .as_mut()
+                .unwrap()
+                .compute_sum_of_others(
+                    starting_indexes.height,
+                    others
+                        .iter()
+                        .map(|v| v.height_to_realized_loss.as_ref().unwrap())
+                        .collect::<Vec<_>>()
+                        .as_slice(),
+                    exit,
+                )?;
+            self.height_to_value_created
+                .as_mut()
+                .unwrap()
+                .compute_sum_of_others(
+                    starting_indexes.height,
+                    others
+                        .iter()
+                        .map(|v| v.height_to_value_created.as_ref().unwrap())
+                        .collect::<Vec<_>>()
+                        .as_slice(),
+                    exit,
+                )?;
+            self.height_to_adjusted_value_created
+                .as_mut()
+                .unwrap()
+                .compute_sum_of_others(
+                    starting_indexes.height,
+                    others
+                        .iter()
+                        .map(|v| v.height_to_adjusted_value_created.as_ref().unwrap())
+                        .collect::<Vec<_>>()
+                        .as_slice(),
+                    exit,
+                )?;
+            self.height_to_value_destroyed
+                .as_mut()
+                .unwrap()
+                .compute_sum_of_others(
+                    starting_indexes.height,
+                    others
+                        .iter()
+                        .map(|v| v.height_to_value_destroyed.as_ref().unwrap())
+                        .collect::<Vec<_>>()
+                        .as_slice(),
+                    exit,
+                )?;
+            self.height_to_adjusted_value_destroyed
+                .as_mut()
+                .unwrap()
+                .compute_sum_of_others(
+                    starting_indexes.height,
+                    others
+                        .iter()
+                        .map(|v| v.height_to_adjusted_value_destroyed.as_ref().unwrap())
+                        .collect::<Vec<_>>()
+                        .as_slice(),
+                    exit,
+                )?;
+            self.height_to_supply_in_profit
+                .as_mut()
+                .unwrap()
+                .compute_sum_of_others(
+                    starting_indexes.height,
+                    others
+                        .iter()
+                        .map(|v| v.height_to_supply_in_profit.as_ref().unwrap())
+                        .collect::<Vec<_>>()
+                        .as_slice(),
+                    exit,
+                )?;
+            self.height_to_supply_in_loss
+                .as_mut()
+                .unwrap()
+                .compute_sum_of_others(
+                    starting_indexes.height,
+                    others
+                        .iter()
+                        .map(|v| v.height_to_supply_in_loss.as_ref().unwrap())
+                        .collect::<Vec<_>>()
+                        .as_slice(),
+                    exit,
+                )?;
+            self.height_to_supply_even
+                .as_mut()
+                .unwrap()
+                .compute_sum_of_others(
+                    starting_indexes.height,
+                    others
+                        .iter()
+                        .map(|v| v.height_to_supply_even.as_ref().unwrap())
+                        .collect::<Vec<_>>()
+                        .as_slice(),
+                    exit,
+                )?;
+            self.height_to_unrealized_profit
+                .as_mut()
+                .unwrap()
+                .compute_sum_of_others(
+                    starting_indexes.height,
+                    others
+                        .iter()
+                        .map(|v| v.height_to_unrealized_profit.as_ref().unwrap())
+                        .collect::<Vec<_>>()
+                        .as_slice(),
+                    exit,
+                )?;
+            self.height_to_unrealized_loss
+                .as_mut()
+                .unwrap()
+                .compute_sum_of_others(
+                    starting_indexes.height,
+                    others
+                        .iter()
+                        .map(|v| v.height_to_unrealized_loss.as_ref().unwrap())
+                        .collect::<Vec<_>>()
+                        .as_slice(),
+                    exit,
+                )?;
+            self.dateindex_to_supply_in_profit
+                .as_mut()
+                .unwrap()
+                .compute_sum_of_others(
+                    starting_indexes.dateindex,
+                    others
+                        .iter()
+                        .map(|v| v.dateindex_to_supply_in_profit.as_ref().unwrap())
+                        .collect::<Vec<_>>()
+                        .as_slice(),
+                    exit,
+                )?;
+            self.dateindex_to_supply_in_loss
+                .as_mut()
+                .unwrap()
+                .compute_sum_of_others(
+                    starting_indexes.dateindex,
+                    others
+                        .iter()
+                        .map(|v| v.dateindex_to_supply_in_loss.as_ref().unwrap())
+                        .collect::<Vec<_>>()
+                        .as_slice(),
+                    exit,
+                )?;
+            self.dateindex_to_supply_even
+                .as_mut()
+                .unwrap()
+                .compute_sum_of_others(
+                    starting_indexes.dateindex,
+                    others
+                        .iter()
+                        .map(|v| v.dateindex_to_supply_even.as_ref().unwrap())
+                        .collect::<Vec<_>>()
+                        .as_slice(),
+                    exit,
+                )?;
+            self.dateindex_to_unrealized_profit
+                .as_mut()
+                .unwrap()
+                .compute_sum_of_others(
+                    starting_indexes.dateindex,
+                    others
+                        .iter()
+                        .map(|v| v.dateindex_to_unrealized_profit.as_ref().unwrap())
+                        .collect::<Vec<_>>()
+                        .as_slice(),
+                    exit,
+                )?;
+            self.dateindex_to_unrealized_loss
+                .as_mut()
+                .unwrap()
+                .compute_sum_of_others(
+                    starting_indexes.dateindex,
+                    others
+                        .iter()
+                        .map(|v| v.dateindex_to_unrealized_loss.as_ref().unwrap())
+                        .collect::<Vec<_>>()
+                        .as_slice(),
+                    exit,
+                )?;
+            self.height_to_min_price_paid
+                .as_mut()
+                .unwrap()
+                .compute_min_of_others(
+                    starting_indexes.height,
+                    others
+                        .iter()
+                        .map(|v| v.height_to_min_price_paid.as_ref().unwrap())
+                        .collect::<Vec<_>>()
+                        .as_slice(),
+                    exit,
+                )?;
+            self.height_to_max_price_paid
+                .as_mut()
+                .unwrap()
+                .compute_max_of_others(
+                    starting_indexes.height,
+                    others
+                        .iter()
+                        .map(|v| v.height_to_max_price_paid.as_ref().unwrap())
+                        .collect::<Vec<_>>()
+                        .as_slice(),
+                    exit,
+                )?;
+        }
 
         Ok(())
     }
@@ -981,6 +1448,7 @@ impl Vecs {
         indexes: &indexes::Vecs,
         fetched: Option<&fetched::Vecs>,
         starting_indexes: &Indexes,
+        market: &market::Vecs,
         exit: &Exit,
     ) -> color_eyre::Result<()> {
         self.indexes_to_supply.compute_rest(
@@ -997,6 +1465,22 @@ impl Vecs {
             starting_indexes,
             exit,
             Some(&self.height_to_utxo_count),
+        )?;
+
+        self.indexes_to_halved_supply.compute_all(
+            indexer,
+            indexes,
+            fetched,
+            starting_indexes,
+            exit,
+            |v, _, _, starting_indexes, exit| {
+                v.compute_transform(
+                    starting_indexes.height,
+                    &self.height_to_supply,
+                    |(h, sats, ..)| (h, sats / 2),
+                    exit,
+                )
+            },
         )?;
 
         if let Some(indexes_to_realized_cap) = self.indexes_to_realized_cap.as_mut() {
@@ -1267,6 +1751,112 @@ impl Vecs {
                     exit,
                     Some(self.dateindex_to_unrealized_loss.as_ref().unwrap()),
                 )?;
+
+            self.indexes_to_min_price_paid
+                .as_mut()
+                .unwrap()
+                .compute_rest(
+                    indexes,
+                    starting_indexes,
+                    exit,
+                    Some(self.height_to_min_price_paid.as_ref().unwrap()),
+                )?;
+            self.indexes_to_max_price_paid
+                .as_mut()
+                .unwrap()
+                .compute_rest(
+                    indexes,
+                    starting_indexes,
+                    exit,
+                    Some(self.height_to_max_price_paid.as_ref().unwrap()),
+                )?;
+
+            self.height_to_negative_unrealized_loss
+                .as_mut()
+                .unwrap()
+                .compute_transform(
+                    starting_indexes.height,
+                    self.height_to_unrealized_loss.as_ref().unwrap(),
+                    |(h, v, ..)| (h, v * -1_i64),
+                    exit,
+                )?;
+            self.indexes_to_negative_unrealized_loss
+                .as_mut()
+                .unwrap()
+                .compute_all(
+                    indexer,
+                    indexes,
+                    starting_indexes,
+                    exit,
+                    |v, _, _, starting_indexes, exit| {
+                        v.compute_transform(
+                            starting_indexes.dateindex,
+                            self.dateindex_to_unrealized_loss.as_ref().unwrap(),
+                            |(h, v, ..)| (h, v * -1_i64),
+                            exit,
+                        )
+                    },
+                )?;
+            self.height_to_net_unrealized_profit_and_loss
+                .as_mut()
+                .unwrap()
+                .compute_subtract(
+                    starting_indexes.height,
+                    self.height_to_unrealized_profit.as_ref().unwrap(),
+                    self.height_to_unrealized_loss.as_ref().unwrap(),
+                    exit,
+                )?;
+
+            self.indexes_to_net_unrealized_profit_and_loss
+                .as_mut()
+                .unwrap()
+                .compute_all(
+                    indexer,
+                    indexes,
+                    starting_indexes,
+                    exit,
+                    |vec, _, _, starting_indexes, exit| {
+                        vec.compute_subtract(
+                            starting_indexes.dateindex,
+                            self.dateindex_to_unrealized_profit.as_ref().unwrap(),
+                            self.dateindex_to_unrealized_loss.as_ref().unwrap(),
+                            exit,
+                        )
+                    },
+                )?;
+            self.height_to_net_unrealized_profit_and_loss_relative_to_market_cap
+                .as_mut()
+                .unwrap()
+                .compute_percentage(
+                    starting_indexes.height,
+                    self.height_to_net_unrealized_profit_and_loss
+                        .as_ref()
+                        .unwrap(),
+                    &market.height_to_marketcap,
+                    exit,
+                )?;
+            self.indexes_to_net_unrealized_profit_and_loss_relative_to_market_cap
+                .as_mut()
+                .unwrap()
+                .compute_all(
+                    indexer,
+                    indexes,
+                    starting_indexes,
+                    exit,
+                    |vec, _, _, starting_indexes, exit| {
+                        vec.compute_percentage(
+                            starting_indexes.dateindex,
+                            self.indexes_to_net_unrealized_profit_and_loss
+                                .as_ref()
+                                .unwrap()
+                                .dateindex
+                                .as_ref()
+                                .unwrap(),
+                            market.indexes_to_marketcap.dateindex.as_ref().unwrap(),
+                            exit,
+                        )
+                    },
+                )?;
         }
 
         Ok(())
@@ -1379,6 +1969,12 @@ impl Vecs {
             self.dateindex_to_unrealized_loss
                 .as_ref()
                 .map_or(vec![], |v| vec![v]),
+            self.height_to_min_price_paid
+                .as_ref()
+                .map_or(vec![], |v| vec![v]),
+            self.height_to_max_price_paid
+                .as_ref()
+                .map_or(vec![], |v| vec![v]),
             self.indexes_to_supply_in_profit
                 .as_ref()
                 .map_or(vec![], |v| v.vecs()),
@@ -1392,6 +1988,31 @@ impl Vecs {
                 .as_ref()
                 .map_or(vec![], |v| v.vecs()),
             self.indexes_to_unrealized_loss
+                .as_ref()
+                .map_or(vec![], |v| v.vecs()),
+            self.indexes_to_min_price_paid
+                .as_ref()
+                .map_or(vec![], |v| v.vecs()),
+            self.indexes_to_max_price_paid
+                .as_ref()
+                .map_or(vec![], |v| v.vecs()),
+            self.indexes_to_halved_supply.vecs(),
+            self.height_to_negative_unrealized_loss
+                .as_ref()
+                .map_or(vec![], |v| vec![v]),
+            self.indexes_to_negative_unrealized_loss
+                .as_ref()
+                .map_or(vec![], |v| v.vecs()),
+            self.height_to_net_unrealized_profit_and_loss
+                .as_ref()
+                .map_or(vec![], |v| vec![v]),
+            self.indexes_to_net_unrealized_profit_and_loss
+                .as_ref()
+                .map_or(vec![], |v| v.vecs()),
+            self.height_to_net_unrealized_profit_and_loss_relative_to_market_cap
+                .as_ref()
+                .map_or(vec![], |v| vec![v]),
+            self.indexes_to_net_unrealized_profit_and_loss_relative_to_market_cap
                 .as_ref()
                 .map_or(vec![], |v| v.vecs()),
         ]

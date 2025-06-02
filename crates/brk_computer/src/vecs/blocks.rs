@@ -6,7 +6,7 @@ use brk_core::{
 };
 use brk_exit::Exit;
 use brk_indexer::Indexer;
-use brk_vec::{AnyCollectableVec, AnyIterableVec, Compressed, Computation, EagerVec};
+use brk_vec::{AnyCollectableVec, AnyIterableVec, Computation, EagerVec, Format};
 
 use super::{
     Indexes,
@@ -35,7 +35,7 @@ impl Vecs {
         path: &Path,
         version: Version,
         _computation: Computation,
-        compressed: Compressed,
+        format: Format,
     ) -> color_eyre::Result<Self> {
         fs::create_dir_all(path)?;
 
@@ -44,14 +44,14 @@ impl Vecs {
                 path,
                 "interval",
                 version + VERSION + Version::ZERO,
-                compressed,
+                format,
             )?,
             timeindexes_to_timestamp: ComputedVecsFromDateIndex::forced_import(
                 path,
                 "timestamp",
                 true,
                 version + VERSION + Version::ZERO,
-                compressed,
+                format,
                 StorableVecGeneatorOptions::default().add_first(),
             )?,
             indexes_to_block_interval: ComputedVecsFromHeight::forced_import(
@@ -59,7 +59,7 @@ impl Vecs {
                 "block_interval",
                 false,
                 version + VERSION + Version::ZERO,
-                compressed,
+                format,
                 StorableVecGeneatorOptions::default()
                     .add_percentiles()
                     .add_minmax()
@@ -70,7 +70,7 @@ impl Vecs {
                 "block_count",
                 true,
                 version + VERSION + Version::ZERO,
-                compressed,
+                format,
                 StorableVecGeneatorOptions::default()
                     .add_sum()
                     .add_cumulative(),
@@ -80,7 +80,7 @@ impl Vecs {
                 "block_weight",
                 false,
                 version + VERSION + Version::ZERO,
-                compressed,
+                format,
                 StorableVecGeneatorOptions::default()
                     .add_sum()
                     .add_cumulative(),
@@ -90,7 +90,7 @@ impl Vecs {
                 "block_size",
                 false,
                 version + VERSION + Version::ZERO,
-                compressed,
+                format,
                 StorableVecGeneatorOptions::default()
                     .add_sum()
                     .add_cumulative(),
@@ -99,14 +99,14 @@ impl Vecs {
                 path,
                 "vbytes",
                 version + VERSION + Version::ZERO,
-                compressed,
+                format,
             )?,
             indexes_to_block_vbytes: ComputedVecsFromHeight::forced_import(
                 path,
                 "block_vbytes",
                 false,
                 version + VERSION + Version::ZERO,
-                compressed,
+                format,
                 StorableVecGeneatorOptions::default()
                     .add_sum()
                     .add_cumulative(),
@@ -115,13 +115,13 @@ impl Vecs {
                 path,
                 "timestamp",
                 version + VERSION + Version::ZERO,
-                compressed,
+                format,
             )?,
             halvingepoch_to_timestamp: EagerVec::forced_import(
                 path,
                 "timestamp",
                 version + VERSION + Version::ZERO,
-                compressed,
+                format,
             )?,
         })
     }

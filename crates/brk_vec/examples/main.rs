@@ -1,17 +1,17 @@
 use std::{fs, path::Path};
 
 use brk_core::Version;
-use brk_vec::{AnyVec, CollectableVec, Compressed, GenericStoredVec, StoredVec, VecIterator};
+use brk_vec::{AnyVec, CollectableVec, Format, GenericStoredVec, StoredVec, VecIterator};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let _ = fs::remove_dir_all("./vec");
 
     let version = Version::ZERO;
-    let compressed = Compressed::YES;
+    let format = Format::Compressed;
 
     {
         let mut vec: StoredVec<usize, u32> =
-            StoredVec::forced_import(Path::new("."), "vec", version, compressed)?;
+            StoredVec::forced_import(Path::new("."), "vec", version, format)?;
 
         (0..21_u32).for_each(|v| {
             vec.push(v);
@@ -27,7 +27,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     {
         let mut vec: StoredVec<usize, u32> =
-            StoredVec::forced_import(Path::new("."), "vec", version, compressed)?;
+            StoredVec::forced_import(Path::new("."), "vec", version, format)?;
         let mut iter = vec.into_iter();
 
         dbg!(iter.get(0));
@@ -53,7 +53,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     {
         let mut vec: StoredVec<usize, u32> =
-            StoredVec::forced_import(Path::new("."), "vec", version, compressed)?;
+            StoredVec::forced_import(Path::new("."), "vec", version, format)?;
         let mut iter = vec.into_iter();
 
         dbg!(iter.get(0));

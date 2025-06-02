@@ -8,7 +8,7 @@ use brk_core::{Result, StoredPhantom, Value, Version};
 
 use crate::{
     AnyCollectableVec, AnyIterableVec, AnyVec, BaseVecIterator, BoxedAnyIterableVec,
-    BoxedVecIterator, CollectableVec, Compressed, StoredIndex, StoredType,
+    BoxedVecIterator, CollectableVec, Format, StoredIndex, StoredType,
 };
 
 use super::{
@@ -86,13 +86,13 @@ where
         path: &Path,
         value_name: &str,
         version: Version,
-        compressed: Compressed,
+        format: Format,
         source: BoxedAnyIterableVec<S1I, S1T>,
         compute: ComputeFrom1<I, T, S1I, S1T>,
     ) -> Result<Self> {
         Ok(match mode {
             Computation::Eager => Self::Eager {
-                vec: EagerVec::forced_import(path, value_name, version, compressed)?,
+                vec: EagerVec::forced_import(path, value_name, version, format)?,
                 deps: Dependencies::From1(source, compute),
             },
             Computation::Lazy => {
@@ -108,14 +108,14 @@ where
         path: &Path,
         value_name: &str,
         version: Version,
-        compressed: Compressed,
+        format: Format,
         source1: BoxedAnyIterableVec<S1I, S1T>,
         source2: BoxedAnyIterableVec<S2I, S2T>,
         compute: ComputeFrom2<I, T, S1I, S1T, S2I, S2T>,
     ) -> Result<Self> {
         Ok(match mode {
             Computation::Eager => Self::Eager {
-                vec: EagerVec::forced_import(path, value_name, version, compressed)?,
+                vec: EagerVec::forced_import(path, value_name, version, format)?,
                 deps: Dependencies::From2((source1, source2), compute),
             },
             Computation::Lazy => {
@@ -133,7 +133,7 @@ where
         path: &Path,
         value_name: &str,
         version: Version,
-        compressed: Compressed,
+        format: Format,
         source1: BoxedAnyIterableVec<S1I, S1T>,
         source2: BoxedAnyIterableVec<S2I, S2T>,
         source3: BoxedAnyIterableVec<S3I, S3T>,
@@ -141,7 +141,7 @@ where
     ) -> Result<Self> {
         Ok(match mode {
             Computation::Eager => Self::Eager {
-                vec: EagerVec::forced_import(path, value_name, version, compressed)?,
+                vec: EagerVec::forced_import(path, value_name, version, format)?,
                 deps: Dependencies::From3((source1, source2, source3), compute),
             },
             Computation::Lazy => {

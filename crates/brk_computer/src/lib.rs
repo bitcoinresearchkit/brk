@@ -9,7 +9,7 @@ use brk_core::Version;
 use brk_exit::Exit;
 use brk_fetcher::Fetcher;
 use brk_indexer::Indexer;
-use brk_vec::{AnyCollectableVec, Compressed, Computation};
+use brk_vec::{AnyCollectableVec, Computation, Format};
 
 mod stores;
 mod utils;
@@ -25,19 +25,19 @@ pub struct Computer {
     fetcher: Option<Fetcher>,
     vecs: Option<Vecs>,
     stores: Option<Stores>,
-    compressed: Compressed,
+    format: Format,
 }
 
 const VERSION: Version = Version::ONE;
 
 impl Computer {
-    pub fn new(outputs_dir: &Path, fetcher: Option<Fetcher>, compressed: bool) -> Self {
+    pub fn new(outputs_dir: &Path, fetcher: Option<Fetcher>, format: Format) -> Self {
         Self {
             path: outputs_dir.to_owned(),
             fetcher,
             vecs: None,
             stores: None,
-            compressed: Compressed::from(compressed),
+            format,
         }
     }
 
@@ -53,7 +53,7 @@ impl Computer {
             indexer,
             self.fetcher.is_some(),
             computation,
-            self.compressed,
+            self.format,
             indexer.keyspace(),
         )?);
         Ok(())
@@ -80,15 +80,10 @@ impl Computer {
         exit: &Exit,
     ) -> color_eyre::Result<()> {
         info!("Computing...");
-
-        self.vecs.as_mut().unwrap().compute(
-            indexer,
-            starting_indexes,
-            self.fetcher.as_mut(),
-            exit,
-        )?;
-
-        Ok(())
+        self.vecs
+            .as_mut()
+            .unwrap()
+            .compute(indexer, starting_indexes, self.fetcher.as_mut(), exit)
     }
 
     pub fn vecs(&self) -> Vec<&dyn AnyCollectableVec> {

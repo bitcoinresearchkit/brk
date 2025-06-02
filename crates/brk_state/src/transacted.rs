@@ -12,7 +12,7 @@ use super::{OutputsByType, SupplyState};
 pub struct Transacted {
     pub spendable_supply: SupplyState,
     pub by_type: OutputsByType<SupplyState>,
-    pub by_size: BTreeMap<usize, SupplyState>,
+    pub by_size_group: BTreeMap<usize, SupplyState>,
 }
 
 impl Transacted {
@@ -32,35 +32,35 @@ impl Transacted {
 
         // Need to be in sync with by_size !! but plenty fast (I think)
         if _value == 0 {
-            *self.by_size.entry(0).or_default() += &supply;
+            *self.by_size_group.entry(0).or_default() += &supply;
         } else if _value < 10 {
-            *self.by_size.entry(1).or_default() += &supply;
+            *self.by_size_group.entry(1).or_default() += &supply;
         } else if _value < 100 {
-            *self.by_size.entry(10).or_default() += &supply;
+            *self.by_size_group.entry(10).or_default() += &supply;
         } else if _value < 1_000 {
-            *self.by_size.entry(100).or_default() += &supply;
+            *self.by_size_group.entry(100).or_default() += &supply;
         } else if _value < 10_000 {
-            *self.by_size.entry(1_000).or_default() += &supply;
+            *self.by_size_group.entry(1_000).or_default() += &supply;
         } else if _value < 100_000 {
-            *self.by_size.entry(10_000).or_default() += &supply;
+            *self.by_size_group.entry(10_000).or_default() += &supply;
         } else if _value < 1_000_000 {
-            *self.by_size.entry(100_000).or_default() += &supply;
+            *self.by_size_group.entry(100_000).or_default() += &supply;
         } else if _value < 10_000_000 {
-            *self.by_size.entry(1_000_000).or_default() += &supply;
+            *self.by_size_group.entry(1_000_000).or_default() += &supply;
         } else if _value < 1_00_000_000 {
-            *self.by_size.entry(10_000_000).or_default() += &supply;
+            *self.by_size_group.entry(10_000_000).or_default() += &supply;
         } else if _value < 10_00_000_000 {
-            *self.by_size.entry(1_00_000_000).or_default() += &supply;
+            *self.by_size_group.entry(1_00_000_000).or_default() += &supply;
         } else if _value < 100_00_000_000 {
-            *self.by_size.entry(10_00_000_000).or_default() += &supply;
+            *self.by_size_group.entry(10_00_000_000).or_default() += &supply;
         } else if _value < 1_000_00_000_000 {
-            *self.by_size.entry(100_00_000_000).or_default() += &supply;
+            *self.by_size_group.entry(100_00_000_000).or_default() += &supply;
         } else if _value < 10_000_00_000_000 {
-            *self.by_size.entry(1_000_00_000_000).or_default() += &supply;
+            *self.by_size_group.entry(1_000_00_000_000).or_default() += &supply;
         } else if _value < 100_000_00_000_000 {
-            *self.by_size.entry(10_000_00_000_000).or_default() += &supply;
+            *self.by_size_group.entry(10_000_00_000_000).or_default() += &supply;
         } else {
-            *self.by_size.entry(100_000_00_000_000).or_default() += &supply;
+            *self.by_size_group.entry(100_000_00_000_000).or_default() += &supply;
         }
     }
 
@@ -86,14 +86,15 @@ impl Add for Transacted {
         Self {
             spendable_supply: self.spendable_supply + rhs.spendable_supply,
             by_type: self.by_type + rhs.by_type,
-            by_size: Self::merge_by_size(self.by_size, rhs.by_size),
+            by_size_group: Self::merge_by_size(self.by_size_group, rhs.by_size_group),
         }
     }
 }
 
 impl AddAssign for Transacted {
     fn add_assign(&mut self, rhs: Self) {
-        self.by_size = Self::merge_by_size(mem::take(&mut self.by_size), rhs.by_size);
+        self.by_size_group =
+            Self::merge_by_size(mem::take(&mut self.by_size_group), rhs.by_size_group);
         self.spendable_supply += &rhs.spendable_supply;
         self.by_type += rhs.by_type;
     }

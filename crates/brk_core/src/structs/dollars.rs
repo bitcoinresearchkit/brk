@@ -11,7 +11,7 @@ use zerocopy_derive::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 use crate::{CheckedSub, copy_first_8bytes};
 
-use super::{Bitcoin, Cents, Close, Sats, StoredF32, StoredF64};
+use super::{Bitcoin, Cents, Close, High, Sats, StoredF32, StoredF64};
 
 #[derive(
     Debug, Default, Clone, Copy, Deref, FromBytes, Immutable, IntoBytes, KnownLayout, Serialize,
@@ -59,6 +59,12 @@ impl From<Dollars> for f64 {
 
 impl From<Close<Dollars>> for Dollars {
     fn from(value: Close<Dollars>) -> Self {
+        Self(value.0)
+    }
+}
+
+impl From<High<Dollars>> for Dollars {
+    fn from(value: High<Dollars>) -> Self {
         Self(value.0)
     }
 }
@@ -131,10 +137,38 @@ impl Div<Bitcoin> for Dollars {
     }
 }
 
+impl Mul<Dollars> for Dollars {
+    type Output = Self;
+    fn mul(self, rhs: Dollars) -> Self::Output {
+        Self::from(Cents::from(self) * Cents::from(rhs))
+    }
+}
+
+impl Mul<Close<Dollars>> for Dollars {
+    type Output = Self;
+    fn mul(self, rhs: Close<Dollars>) -> Self::Output {
+        Self::from(Cents::from(self) * Cents::from(*rhs))
+    }
+}
+
+impl Mul<Dollars> for Close<Dollars> {
+    type Output = Dollars;
+    fn mul(self, rhs: Dollars) -> Self::Output {
+        Dollars::from(Cents::from(*self) * Cents::from(rhs))
+    }
+}
+
 impl Mul<Bitcoin> for Dollars {
     type Output = Self;
     fn mul(self, rhs: Bitcoin) -> Self::Output {
         self * Sats::from(rhs)
+    }
+}
+
+impl Mul<Bitcoin> for Close<Dollars> {
+    type Output = Dollars;
+    fn mul(self, rhs: Bitcoin) -> Self::Output {
+        *self * Sats::from(rhs)
     }
 }
 
@@ -183,6 +217,12 @@ impl Mul<usize> for Dollars {
 impl From<u128> for Dollars {
     fn from(value: u128) -> Self {
         Self::from(Cents::from(value))
+    }
+}
+
+impl From<StoredF64> for Dollars {
+    fn from(value: StoredF64) -> Self {
+        Self(*value)
     }
 }
 

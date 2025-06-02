@@ -3,7 +3,7 @@ use std::path::Path;
 use brk_core::{DifficultyEpoch, Height, Result, Version};
 use brk_exit::Exit;
 use brk_indexer::Indexer;
-use brk_vec::{AnyCollectableVec, Compressed, EagerVec};
+use brk_vec::{AnyCollectableVec, EagerVec, Format};
 
 use crate::vecs::{Indexes, indexes};
 
@@ -31,17 +31,17 @@ where
         path: &Path,
         name: &str,
         version: Version,
-        compressed: Compressed,
+        format: Format,
         options: StorableVecGeneatorOptions,
     ) -> color_eyre::Result<Self> {
         let height =
-            EagerVec::forced_import(path, name, version + VERSION + Version::ZERO, compressed)?;
+            EagerVec::forced_import(path, name, version + VERSION + Version::ZERO, format)?;
 
         let height_extra = ComputedVecBuilder::forced_import(
             path,
             name,
             version + VERSION + Version::ZERO,
-            compressed,
+            format,
             options.copy_self_extra(),
         )?;
 
@@ -54,10 +54,10 @@ where
                 path,
                 name,
                 version + VERSION + Version::ZERO,
-                compressed,
+                format,
                 options,
             )?,
-            // halvingepoch: StorableVecGeneator::forced_import(path, name, version + VERSION + Version::ZERO, compressed, options)?,
+            // halvingepoch: StorableVecGeneator::forced_import(path, name, version + VERSION + Version::ZERO, format, options)?,
         })
     }
 

@@ -734,6 +734,7 @@ function createUtils() {
         id === "marketcap" ||
         id.includes("in-usd") ||
         id.startsWith("price") ||
+        id.endsWith("price-paid") ||
         id.endsWith("price") ||
         id.endsWith("value-created") ||
         id.endsWith("value-destroyed") ||

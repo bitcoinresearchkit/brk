@@ -6,7 +6,7 @@ use brk_exit::Exit;
 use brk_fetcher::Fetcher;
 use brk_indexer::Indexer;
 use brk_parser::Parser;
-use brk_vec::Computation;
+use brk_vec::{Computation, Format};
 
 pub fn main() -> color_eyre::Result<()> {
     color_eyre::install()?;
@@ -31,15 +31,15 @@ pub fn main() -> color_eyre::Result<()> {
             let outputs_dir = _outputs_dir.as_path();
             // let outputs_dir = Path::new("../../_outputs");
 
-            let compressed = false;
+            let format = Format::Raw;
 
-            let mut indexer = Indexer::new(outputs_dir, compressed, true)?;
+            let mut indexer = Indexer::new(outputs_dir, format, true)?;
             indexer.import_stores()?;
             indexer.import_vecs()?;
 
             let fetcher = Fetcher::import(None)?;
 
-            let mut computer = Computer::new(outputs_dir, Some(fetcher), compressed);
+            let mut computer = Computer::new(outputs_dir, Some(fetcher), format);
             computer.import_stores(&indexer)?;
             computer.import_vecs(&indexer, Computation::Lazy)?;
 
