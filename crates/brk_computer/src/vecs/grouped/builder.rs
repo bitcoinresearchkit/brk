@@ -207,6 +207,8 @@ where
             return Ok(());
         };
 
+        self.validate_computed_version_or_reset_file(source.version())?;
+
         let index = self.starting_index(max_from);
 
         let cumulative_vec = self.cumulative.as_mut().unwrap();

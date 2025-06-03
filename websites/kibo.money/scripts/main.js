@@ -38,6 +38,7 @@
  *   "WU" |
  *   "Bool" |
  *   "Days" |
+ *   "%mcap" |
  *   "Years" |
  *   "Locktime" |
  *   "sat/vB" |
@@ -738,7 +739,9 @@ function createUtils() {
         id.endsWith("price") ||
         id.endsWith("value-created") ||
         id.endsWith("value-destroyed") ||
-        (id.includes("realized") && !id.includes("ratio")) ||
+        (id.includes("realized") &&
+          !id.includes("ratio") &&
+          !id.includes("relative-to")) ||
         (id.endsWith("sma") && !id.includes("ratio")) ||
         id.endsWith("ath"))
     ) {
@@ -870,6 +873,10 @@ function createUtils() {
     if ((!unit || thoroughUnitCheck) && id.endsWith("height")) {
       if (unit) throw Error(`Unit "${unit}" already assigned "${id}"`);
       unit = "Height";
+    }
+    if ((!unit || thoroughUnitCheck) && id.endsWith("relative-to-market-cap")) {
+      if (unit) throw Error(`Unit "${unit}" already assigned "${id}"`);
+      unit = "%mcap";
     }
     if ((!unit || thoroughUnitCheck) && id.endsWith("epoch")) {
       if (unit) throw Error(`Unit "${unit}" already assigned "${id}"`);

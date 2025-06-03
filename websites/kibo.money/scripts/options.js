@@ -568,8 +568,8 @@ function createPartialOptions(colors) {
   const fromSize = /** @type {const} */ ([
     {
       key: "from-1-000sats",
-      name: "1_000sats",
-      title: "From 1,000 sats",
+      name: "1K sats",
+      title: "From 1K sats",
       color: colors.cyan,
     },
     {
@@ -595,14 +595,14 @@ function createPartialOptions(colors) {
   const upToSize = /** @type {const} */ ([
     {
       key: "up-to-1-000sats",
-      name: "1_000sats",
-      title: "Up to 1,000 sats",
+      name: "1K sats",
+      title: "Up to 1K sats",
       color: colors.yellow,
     },
     {
       key: "up-to-10-000sats",
-      name: "10_000sats",
-      title: "Up to 10,000 sats",
+      name: "10K sats",
+      title: "Up to 10K sats",
       color: colors.green,
     },
     {
@@ -628,92 +628,92 @@ function createPartialOptions(colors) {
   const sizeRanges = /** @type {const} */ ([
     {
       key: "0sats",
-      name: "0sats",
+      name: "0 sats",
       title: "0 sats",
       color: colors.red,
     },
     {
       key: "from-1sat-to-10sats",
-      name: "1sat..10sats",
+      name: "1 sat..10 sats",
       title: "From 1 sat to 10 sats",
       color: colors.orange,
     },
     {
       key: "from-10sats-to-100sats",
-      name: "10sat..100sats",
+      name: "10 sats..100 sats",
       title: "From 10 sats to 100 sats",
       color: colors.yellow,
     },
     {
       key: "from-100sats-to-1-000sats",
-      name: "100sat..1_000sats",
-      title: "From 100 sats to 1,000 sats",
+      name: "100 sats..1K sats",
+      title: "From 100 sats to 1K sats",
       color: colors.lime,
     },
     {
       key: "from-1-000sats-to-10-000sats",
-      name: "1_000sat..10_000sats",
-      title: "From 1,000 sats to 10,000 sats",
+      name: "1K sats..10K sats",
+      title: "From 1K sats to 10K sats",
       color: colors.green,
     },
     {
       key: "from-10-000sats-to-100-000sats",
-      name: "10_000sat..100_000sats",
-      title: "From 10,000 sats to 100,000 sats",
+      name: "10K sats..100K sats",
+      title: "From 10K sats to 100K sats",
       color: colors.cyan,
     },
     {
       key: "from-100-000sats-to-1-000-000sats",
-      name: "100_000sat..1_000_000sats",
-      title: "From 100,000 sats to 1,000,000 sats",
+      name: "100K sats .. 1M sats",
+      title: "From 100K sats to 1M sats",
       color: colors.blue,
     },
     {
       key: "from-1-000-000sats-to-10-000-000sats",
-      name: "1_000_000sat..10_000_000sats",
-      title: "From 1,000,000 sats to 10,000,000 sats",
+      name: "1M sats..10M sats",
+      title: "From 1M sats to 10M sats",
       color: colors.indigo,
     },
     {
       key: "from-10-000-000sats-to-1btc",
-      name: "10_000_000sat..1btc",
-      title: "From 10,000,000 sats to 1 BTC",
+      name: "10M sats..1 btc",
+      title: "From 10M sats to 1 BTC",
       color: colors.purple,
     },
     {
       key: "from-1btc-to-10btc",
-      name: "1btc..10btc",
+      name: "1 btc..10 btc",
       title: "From 1 BTC to 10 BTC",
       color: colors.violet,
     },
     {
       key: "from-10btc-to-100btc",
-      name: "10btc..100btc",
+      name: "10 btc..100 btc",
       title: "From 10 BTC to 100 BTC",
       color: colors.fuchsia,
     },
     {
       key: "from-100btc-to-1-000btc",
-      name: "100btc..1_000btc",
-      title: "From 100 BTC to 1,000 BTC",
+      name: "100 btc..1K btc",
+      title: "From 100 BTC to 1K BTC",
       color: colors.pink,
     },
     {
       key: "from-1-000btc-to-10-000btc",
-      name: "1_000btc..10_000btc",
-      title: "From 1,000 BTC to 10,000 BTC",
+      name: "1K btc..10K btc",
+      title: "From 1K BTC to 10K BTC",
       color: colors.red,
     },
     {
       key: "from-10-000btc-to-100-000btc",
-      name: "10_000btc..100_000btc",
-      title: "From 10,000 BTC to 100,000 BTC",
+      name: "10K btc..100K btc",
+      title: "From 10K BTC to 100K BTC",
       color: colors.orange,
     },
     {
       key: "from-100-000btc",
-      name: "100_000btc+",
-      title: "From 100,000 BTC",
+      name: "100K btc+",
+      title: "From 100K BTC",
       color: colors.yellow,
     },
   ]);
@@ -1216,8 +1216,26 @@ function createPartialOptions(colors) {
                 name: useGroupName ? name : "Supply",
                 color: "list" in args ? color : colors.default,
               }),
+              createBaseSeries({
+                key: `${key}supply-in-btc`,
+                name: useGroupName ? name : "Supply",
+                color: "list" in args ? color : colors.default,
+              }),
+              createBaseSeries({
+                key: `${key}supply-in-usd`,
+                name: useGroupName ? name : "Supply",
+                color: "list" in args ? color : colors.default,
+              }),
               ...(!("list" in args)
                 ? [
+                    createBaseSeries({
+                      key: `${key}halved-supply`,
+                      name: useGroupName ? name : "Halved",
+                      color: "list" in args ? color : colors.gray,
+                      options: {
+                        lineStyle: 4,
+                      },
+                    }),
                     createBaseSeries({
                       key: `${key}supply-in-profit`,
                       name: useGroupName ? name : "In Profit",
@@ -1233,17 +1251,54 @@ function createPartialOptions(colors) {
                       name: useGroupName ? name : "Even",
                       color: colors.yellow,
                     }),
+                    createBaseSeries({
+                      key: `${key}halved-supply-in-btc`,
+                      name: useGroupName ? name : "Halved",
+                      color: "list" in args ? color : colors.gray,
+                      options: {
+                        lineStyle: 4,
+                      },
+                    }),
+                    // createBaseSeries({
+                    //   key: `${key}supply-in-profit-in-btc`,
+                    //   name: useGroupName ? name : "In Profit",
+                    //   color: colors.green,
+                    // }),
+                    // createBaseSeries({
+                    //   key: `${key}supply-in-loss-in-btc`,
+                    //   name: useGroupName ? name : "In Loss",
+                    //   color: colors.red,
+                    // }),
+                    // createBaseSeries({
+                    //   key: `${key}supply-even-in-btc`,
+                    //   name: useGroupName ? name : "Even",
+                    //   color: colors.yellow,
+                    // }),
+                    createBaseSeries({
+                      key: `${key}halved-supply-in-usd`,
+                      name: useGroupName ? name : "Halved",
+                      color: "list" in args ? color : colors.gray,
+                      options: {
+                        lineStyle: 4,
+                      },
+                    }),
+                    // createBaseSeries({
+                    //   key: `${key}supply-in-profit-in-usd`,
+                    //   name: useGroupName ? name : "In Profit",
+                    //   color: colors.green,
+                    // }),
+                    // createBaseSeries({
+                    //   key: `${key}supply-in-loss-in-usd`,
+                    //   name: useGroupName ? name : "In Loss",
+                    //   color: colors.red,
+                    // }),
+                    // createBaseSeries({
+                    //   key: `${key}supply-even-in-usd`,
+                    //   name: useGroupName ? name : "Even",
+                    //   color: colors.yellow,
+                    // }),
                   ]
                 : []),
-              createBaseSeries({
-                key: `${key}supply-in-btc`,
-                name: useGroupName ? name : "Supply",
-                color,
-              }),
-              createBaseSeries({
-                key: `${key}supply-in-usd`,
-                name: useGroupName ? name : "Supply",
-              }),
             ]);
           }),
         },
@@ -1312,34 +1367,6 @@ function createPartialOptions(colors) {
                   legend: "realized",
                   color: args.color,
                 }),
-            {
-              name: "profit",
-              title: `${args.title} Realized Profit`,
-              bottom: list.flatMap(({ color, name, key: _key }) => {
-                const key = fixKey(_key);
-                return /** @type {const} */ ([
-                  createBaseSeries({
-                    key: `${key}realized-profit`,
-                    name: useGroupName ? name : "Profit",
-                    color: useGroupName ? color : colors.green,
-                  }),
-                ]);
-              }),
-            },
-            {
-              name: "loss",
-              title: `${args.title} Realized Loss`,
-              bottom: list.flatMap(({ color, name, key: _key }) => {
-                const key = fixKey(_key);
-                return /** @type {const} */ ([
-                  createBaseSeries({
-                    key: `${key}realized-loss`,
-                    name: useGroupName ? name : "Loss",
-                    color: useGroupName ? color : colors.red,
-                  }),
-                ]);
-              }),
-            },
             ...(!("list" in args)
               ? [
                   {
@@ -1365,9 +1392,38 @@ function createPartialOptions(colors) {
                     ],
                   },
                 ]
-              : []),
+              : [
+                  {
+                    name: "profit",
+                    title: `${args.title} Realized Profit`,
+                    bottom: list.flatMap(({ color, name, key: _key }) => {
+                      const key = fixKey(_key);
+                      return /** @type {const} */ ([
+                        createBaseSeries({
+                          key: `${key}realized-profit`,
+                          name: useGroupName ? name : "Profit",
+                          color: useGroupName ? color : colors.green,
+                        }),
+                      ]);
+                    }),
+                  },
+                  {
+                    name: "loss",
+                    title: `${args.title} Realized Loss`,
+                    bottom: list.flatMap(({ color, name, key: _key }) => {
+                      const key = fixKey(_key);
+                      return /** @type {const} */ ([
+                        createBaseSeries({
+                          key: `${key}realized-loss`,
+                          name: useGroupName ? name : "Loss",
+                          color: useGroupName ? color : colors.red,
+                        }),
+                      ]);
+                    }),
+                  },
+                ]),
             {
-              name: "Net Profit And Loss",
+              name: "Net pnl",
               title: `${args.title} Net Realized Profit And Loss`,
               bottom: list.flatMap(
                 ({ color, name, key }) =>
@@ -1385,7 +1441,7 @@ function createPartialOptions(colors) {
               ),
             },
             {
-              name: "Spent Output Profit Ratio",
+              name: "sopr",
               title: `${args.title} Spent Output Profit Ratio`,
               bottom: list.flatMap(({ color, name, key }) => [
                 /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
@@ -1428,33 +1484,96 @@ function createPartialOptions(colors) {
         {
           name: "Unrealized",
           tree: [
+            ...(!("list" in args)
+              ? [
+                  {
+                    name: "profit and loss",
+                    title: `${args.title} Unrealized Profit And Loss`,
+                    bottom: [
+                      // createBaseSeries({
+                      //   key: `0`,
+                      //   name: "Base",
+                      //   color: colors.gray,
+                      //   options: {
+                      //     lineStyle: 4,
+                      //   },
+                      // }),
+                      createBaseSeries({
+                        key: `${fixKey(args.key)}unrealized-profit`,
+                        name: "Profit",
+                        color: colors.green,
+                      }),
+                      createBaseSeries({
+                        key: `${fixKey(args.key)}unrealized-loss`,
+                        name: "Loss",
+                        color: colors.red,
+                        defaultActive: false,
+                      }),
+                      createBaseSeries({
+                        key: `${fixKey(args.key)}negative-unrealized-loss`,
+                        name: "Negative Loss",
+                        color: colors.red,
+                      }),
+                    ],
+                  },
+                ]
+              : [
+                  {
+                    name: "profit",
+                    title: `${args.title} Unrealized Profit`,
+                    bottom: list.flatMap(({ color, name, key: _key }) => {
+                      const key = fixKey(_key);
+                      return /** @type {const} */ ([
+                        createBaseSeries({
+                          key: `${key}unrealized-profit`,
+                          name: useGroupName ? name : "Profit",
+                          color: useGroupName ? color : colors.green,
+                        }),
+                      ]);
+                    }),
+                  },
+                  {
+                    name: "loss",
+                    title: `${args.title} Unrealized Loss`,
+                    bottom: list.flatMap(({ color, name, key: _key }) => {
+                      const key = fixKey(_key);
+                      return /** @type {const} */ ([
+                        createBaseSeries({
+                          key: `${key}unrealized-loss`,
+                          name: useGroupName ? name : "Loss",
+                          color: useGroupName ? color : colors.red,
+                        }),
+                      ]);
+                    }),
+                  },
+                ]),
             {
-              name: "profit",
-              title: `${args.title} Unrealized Profit`,
-              bottom: list.flatMap(({ color, name, key: _key }) => {
-                const key = fixKey(_key);
-                return /** @type {const} */ ([
-                  createBaseSeries({
-                    key: `${key}unrealized-profit`,
-                    name: useGroupName ? name : "Profit",
-                    color: useGroupName ? color : colors.green,
-                  }),
-                ]);
-              }),
-            },
-            {
-              name: "loss",
-              title: `${args.title} Unrealized Loss`,
-              bottom: list.flatMap(({ color, name, key: _key }) => {
-                const key = fixKey(_key);
-                return /** @type {const} */ ([
-                  createBaseSeries({
-                    key: `${key}unrealized-loss`,
-                    name: useGroupName ? name : "Loss",
-                    color: useGroupName ? color : colors.red,
-                  }),
-                ]);
-              }),
+              name: "Net pnl",
+              title: `${args.title} Net Unrealized Profit And Loss`,
+              bottom: list.flatMap(({ color, name, key }) => [
+                /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
+                  type: "Baseline",
+                  key: `${fixKey(key)}net-unrealized-profit-and-loss`,
+                  title: useGroupName ? name : "Net",
+                  color: useGroupName ? color : undefined,
+                  options: {
+                    createPriceLine: {
+                      value: 0,
+                    },
+                  },
+                }),
+                /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
+                  type: "Baseline",
+                  key: `${fixKey(key)}net-unrealized-profit-and-loss-relative-to-market-cap`,
+                  title: useGroupName ? name : "Net",
+                  color: useGroupName ? color : undefined,
+                  options: {
+                    createPriceLine: {
+                      value: 0,
+                    },
+                  },
+                }),
+              ]),
             },
           ],
         },
@@ -2554,6 +2673,20 @@ function createPartialOptions(colors) {
       ],
     },
     {
+      name: "Services",
+      tree: [
+        {
+          name: "Self-host",
+          url: () => "https://crates.io/crates/brk_cli",
+        },
+        {
+          name: "Hosting as a service",
+          url: () =>
+            "https://github.com/bitcoinresearchkit/brk?tab=readme-ov-file#hosting-as-a-service",
+        },
+      ],
+    },
+    {
       name: "Developers",
       tree: [
         {
@@ -2575,26 +2708,18 @@ function createPartialOptions(colors) {
       ],
     },
     {
-      name: "Donations",
+      name: "Donate",
       tree: [
         {
-          name: "Bitcoin QR Code",
+          name: "Bitcoin",
           qrcode: true,
           url: () => "bitcoin:bc1q098zsm89m7kgyze338vfejhpdt92ua9p3peuve",
         },
         {
-          name: "Lightning QR Code",
+          name: "Lightning",
           qrcode: true,
           url: () =>
             "lightning:lnurl1dp68gurn8ghj7ampd3kx2ar0veekzar0wd5xjtnrdakj7tnhv4kxctttdehhwm30d3h82unvwqhkxmmww3jkuar8d35kgetj8yuq363hv4",
-        },
-        {
-          name: "Geyser",
-          url: () => "https://geyser.fund/project/brk",
-        },
-        {
-          name: "OpenSats",
-          url: () => "https://opensats.org/",
         },
       ],
     },
