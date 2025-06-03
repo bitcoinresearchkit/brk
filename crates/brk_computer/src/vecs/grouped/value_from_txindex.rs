@@ -203,7 +203,11 @@ impl ComputedValueVecsFromTxindex {
         if let Some(dollars) = self.dollars.as_mut() {
             let dollars_txindex = self.dollars_txindex.as_mut().unwrap();
 
-            dollars_txindex.compute_if_necessary(starting_indexes.txindex, exit)?;
+            dollars_txindex.compute_if_necessary(
+                starting_indexes.txindex,
+                &indexer.vecs().txindex_to_txid,
+                exit,
+            )?;
 
             dollars.compute_rest_from_bitcoin(
                 indexer,

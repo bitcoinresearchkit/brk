@@ -883,6 +883,14 @@ function createUtils() {
       if (unit) throw Error(`Unit "${unit}" already assigned "${id}"`);
       unit = "Hash";
     }
+    if ((!unit || thoroughUnitCheck) && id.includes("days-between")) {
+      if (unit) throw Error(`Unit "${unit}" already assigned "${id}"`);
+      unit = "Days";
+    }
+    if ((!unit || thoroughUnitCheck) && id.includes("years-between")) {
+      if (unit) throw Error(`Unit "${unit}" already assigned "${id}"`);
+      unit = "Years";
+    }
     if (
       (!unit || thoroughUnitCheck) &&
       (id === "0" || id === "1" || id === "50" || id === "100")

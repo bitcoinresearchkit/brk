@@ -81,6 +81,8 @@ pub struct Vecs {
         Option<EagerVec<Height, Dollars>>,
     pub indexes_to_net_unrealized_profit_and_loss_relative_to_market_cap:
         Option<ComputedVecsFromDateIndex<Dollars>>,
+    // pub indexes_to_net_realized_profit_and_loss_relative_to_realized_cap:
+    // Option<ComputedVecsFromHeight<Dollars>>,
 }
 
 impl Vecs {
