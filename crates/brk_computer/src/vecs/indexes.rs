@@ -5,7 +5,7 @@ use brk_core::{
     InputIndex, MonthIndex, OpReturnIndex, OutputIndex, P2ABytes, P2AIndex, P2MSIndex, P2PK33Bytes,
     P2PK33Index, P2PK65Bytes, P2PK65Index, P2PKHBytes, P2PKHIndex, P2SHBytes, P2SHIndex, P2TRBytes,
     P2TRIndex, P2WPKHBytes, P2WPKHIndex, P2WSHBytes, P2WSHIndex, QuarterIndex, Sats, StoredUsize,
-    Timestamp, TxIndex, Txid, UnknownOutputIndex, Version, WeekIndex, YearIndex,
+    Timestamp, TxIndex, Txid, UnknownOutputIndex, Version, WeekIndex, Weight, YearIndex,
 };
 use brk_exit::Exit;
 use brk_indexer::Indexer;
@@ -44,7 +44,7 @@ pub struct Vecs {
     pub height_to_dateindex: EagerVec<Height, DateIndex>,
     pub height_to_difficultyepoch: ComputedVecFrom1<Height, DifficultyEpoch, Height, Height>,
     pub height_to_halvingepoch: ComputedVecFrom1<Height, HalvingEpoch, Height, Height>,
-    pub height_to_height: ComputedVecFrom1<Height, Height, Height, Date>,
+    pub height_to_height: ComputedVecFrom1<Height, Height, Height, Weight>,
     pub height_to_timestamp_fixed: EagerVec<Height, Timestamp>,
     pub height_to_txindex_count: EagerVec<Height, StoredUsize>,
     pub inputindex_to_inputindex: ComputedVecFrom1<InputIndex, InputIndex, InputIndex, OutputIndex>,
@@ -322,7 +322,7 @@ impl Vecs {
             "height",
             version + VERSION + Version::ZERO,
             format,
-            height_to_date.boxed_clone(),
+            indexer.vecs().height_to_weight.boxed_clone(),
             |index, _| Some(index),
         )?;
 
@@ -642,8 +642,17 @@ impl Vecs {
         // OutputIndex
         // ---
 
-        self.outputindex_to_outputindex
-            .compute_if_necessary(starting_indexes.outputindex, exit)?;
+        self.outputindex_to_outputindex.compute_if_necessary(
+            starting_indexes.outputindex,
+            &indexer_vecs.outputindex_to_value,
+            exit,
+        )?;
+
+        self.txindex_to_output_count.compute_if_necessary(
+            starting_indexes.txindex,
+            &indexer_vecs.txindex_to_txid,
+            exit,
+        )?;
 
         self.outputindex_to_txindex.compute_inverse_less_to_more(
             starting_indexes.txindex,
@@ -652,55 +661,99 @@ impl Vecs {
             exit,
         )?;
 
-        self.p2pk33index_to_p2pk33index
-            .compute_if_necessary(starting_indexes.p2pk33index, exit)?;
+        self.p2pk33index_to_p2pk33index.compute_if_necessary(
+            starting_indexes.p2pk33index,
+            &indexer_vecs.p2pk33index_to_p2pk33bytes,
+            exit,
+        )?;
 
-        self.p2pk65index_to_p2pk65index
-            .compute_if_necessary(starting_indexes.p2pk65index, exit)?;
+        self.p2pk65index_to_p2pk65index.compute_if_necessary(
+            starting_indexes.p2pk65index,
+            &indexer_vecs.p2pk65index_to_p2pk65bytes,
+            exit,
+        )?;
 
-        self.p2pkhindex_to_p2pkhindex
-            .compute_if_necessary(starting_indexes.p2pkhindex, exit)?;
+        self.p2pkhindex_to_p2pkhindex.compute_if_necessary(
+            starting_indexes.p2pkhindex,
+            &indexer_vecs.p2pkhindex_to_p2pkhbytes,
+            exit,
+        )?;
 
-        self.p2shindex_to_p2shindex
-            .compute_if_necessary(starting_indexes.p2shindex, exit)?;
+        self.p2shindex_to_p2shindex.compute_if_necessary(
+            starting_indexes.p2shindex,
+            &indexer_vecs.p2shindex_to_p2shbytes,
+            exit,
+        )?;
 
-        self.p2trindex_to_p2trindex
-            .compute_if_necessary(starting_indexes.p2trindex, exit)?;
+        self.p2trindex_to_p2trindex.compute_if_necessary(
+            starting_indexes.p2trindex,
+            &indexer_vecs.p2trindex_to_p2trbytes,
+            exit,
+        )?;
 
-        self.p2wpkhindex_to_p2wpkhindex
-            .compute_if_necessary(starting_indexes.p2wpkhindex, exit)?;
+        self.p2wpkhindex_to_p2wpkhindex.compute_if_necessary(
+            starting_indexes.p2wpkhindex,
+            &indexer_vecs.p2wpkhindex_to_p2wpkhbytes,
+            exit,
+        )?;
 
-        self.p2wshindex_to_p2wshindex
-            .compute_if_necessary(starting_indexes.p2wshindex, exit)?;
+        self.p2wshindex_to_p2wshindex.compute_if_necessary(
+            starting_indexes.p2wshindex,
+            &indexer_vecs.p2wshindex_to_p2wshbytes,
+            exit,
+        )?;
 
         self.emptyoutputindex_to_emptyoutputindex
-            .compute_if_necessary(starting_indexes.emptyoutputindex, exit)?;
+            .compute_if_necessary(
+                starting_indexes.emptyoutputindex,
+                &indexer_vecs.emptyoutputindex_to_txindex,
+                exit,
+            )?;
 
-        self.p2msindex_to_p2msindex
-            .compute_if_necessary(starting_indexes.p2msindex, exit)?;
+        self.p2msindex_to_p2msindex.compute_if_necessary(
+            starting_indexes.p2msindex,
+            &indexer_vecs.p2msindex_to_txindex,
+            exit,
+        )?;
 
-        self.opreturnindex_to_opreturnindex
-            .compute_if_necessary(starting_indexes.opreturnindex, exit)?;
+        self.opreturnindex_to_opreturnindex.compute_if_necessary(
+            starting_indexes.opreturnindex,
+            &indexer_vecs.opreturnindex_to_txindex,
+            exit,
+        )?;
 
-        self.p2aindex_to_p2aindex
-            .compute_if_necessary(starting_indexes.p2aindex, exit)?;
+        self.p2aindex_to_p2aindex.compute_if_necessary(
+            starting_indexes.p2aindex,
+            &indexer_vecs.p2aindex_to_p2abytes,
+            exit,
+        )?;
 
         self.unknownoutputindex_to_unknownoutputindex
-            .compute_if_necessary(starting_indexes.unknownoutputindex, exit)?;
+            .compute_if_necessary(
+                starting_indexes.unknownoutputindex,
+                &indexer_vecs.unknownoutputindex_to_txindex,
+                exit,
+            )?;
 
         // ---
         // InputIndex
         // ---
 
-        self.inputindex_to_inputindex
-            .compute_if_necessary(starting_indexes.inputindex, exit)?;
+        self.inputindex_to_inputindex.compute_if_necessary(
+            starting_indexes.inputindex,
+            &indexer_vecs.inputindex_to_outputindex,
+            exit,
+        )?;
 
         // ---
         // TxIndex
         // ---
 
-        self.txindex_to_txindex
-            .compute_if_necessary(starting_indexes.txindex, exit)?;
+        self.txindex_to_txindex.compute_if_necessary(
+            starting_indexes.txindex,
+            &indexer_vecs.txindex_to_txid,
+            exit,
+        )?;
 
         self.height_to_txindex_count.compute_count_from_indexes(
             starting_indexes.height,
@@ -720,8 +773,11 @@ impl Vecs {
         // Height
         // ---
 
-        self.height_to_height
-            .compute_if_necessary(starting_indexes.height, exit)?;
+        self.height_to_height.compute_if_necessary(
+            starting_indexes.height,
+            &indexer_vecs.height_to_weight,
+            exit,
+        )?;
 
         self.height_to_date.compute_transform(
             starting_indexes.height,
@@ -795,11 +851,17 @@ impl Vecs {
                 exit,
             )?;
 
-        self.dateindex_to_dateindex
-            .compute_if_necessary(starting_dateindex, exit)?;
+        self.dateindex_to_dateindex.compute_if_necessary(
+            starting_dateindex,
+            &self.dateindex_to_first_height,
+            exit,
+        )?;
 
-        self.dateindex_to_date
-            .compute_if_necessary(starting_dateindex, exit)?;
+        self.dateindex_to_date.compute_if_necessary(
+            starting_dateindex,
+            &self.dateindex_to_first_height,
+            exit,
+        )?;
 
         self.dateindex_to_height_count.compute_count_from_indexes(
             starting_dateindex,
@@ -828,8 +890,11 @@ impl Vecs {
         self.weekindex_to_first_dateindex
             .compute_inverse_more_to_less(starting_dateindex, &self.dateindex_to_weekindex, exit)?;
 
-        self.weekindex_to_weekindex
-            .compute_if_necessary(starting_weekindex, exit)?;
+        self.weekindex_to_weekindex.compute_if_necessary(
+            starting_weekindex,
+            &self.weekindex_to_first_dateindex,
+            exit,
+        )?;
 
         self.weekindex_to_dateindex_count
             .compute_count_from_indexes(
@@ -849,8 +914,11 @@ impl Vecs {
             .get_inner(decremented_starting_height)
             .unwrap_or_default();
 
-        self.height_to_difficultyepoch
-            .compute_if_necessary(starting_indexes.height, exit)?;
+        self.height_to_difficultyepoch.compute_if_necessary(
+            starting_indexes.height,
+            &indexer_vecs.height_to_weight,
+            exit,
+        )?;
 
         self.difficultyepoch_to_first_height
             .compute_inverse_more_to_less(
@@ -860,7 +928,11 @@ impl Vecs {
             )?;
 
         self.difficultyepoch_to_difficultyepoch
-            .compute_if_necessary(starting_difficultyepoch, exit)?;
+            .compute_if_necessary(
+                starting_difficultyepoch,
+                &self.difficultyepoch_to_first_height,
+                exit,
+            )?;
 
         self.difficultyepoch_to_height_count
             .compute_count_from_indexes(
@@ -894,8 +966,11 @@ impl Vecs {
                 exit,
             )?;
 
-        self.monthindex_to_monthindex
-            .compute_if_necessary(starting_monthindex, exit)?;
+        self.monthindex_to_monthindex.compute_if_necessary(
+            starting_monthindex,
+            &self.monthindex_to_first_dateindex,
+            exit,
+        )?;
 
         self.monthindex_to_dateindex_count
             .compute_count_from_indexes(
@@ -915,8 +990,11 @@ impl Vecs {
             .get_inner(starting_monthindex)
             .unwrap_or_default();
 
-        self.monthindex_to_quarterindex
-            .compute_if_necessary(starting_monthindex, exit)?;
+        self.monthindex_to_quarterindex.compute_if_necessary(
+            starting_monthindex,
+            &self.monthindex_to_first_dateindex,
+            exit,
+        )?;
 
         self.quarterindex_to_first_monthindex
             .compute_inverse_more_to_less(
@@ -927,8 +1005,11 @@ impl Vecs {
 
         // let quarter_count = self.quarterindex_to_first_monthindex.len();
 
-        self.quarterindex_to_quarterindex
-            .compute_if_necessary(starting_quarterindex, exit)?;
+        self.quarterindex_to_quarterindex.compute_if_necessary(
+            starting_quarterindex,
+            &self.quarterindex_to_first_monthindex,
+            exit,
+        )?;
 
         self.quarterindex_to_monthindex_count
             .compute_count_from_indexes(
@@ -948,8 +1029,11 @@ impl Vecs {
             .get_inner(starting_monthindex)
             .unwrap_or_default();
 
-        self.monthindex_to_yearindex
-            .compute_if_necessary(starting_monthindex, exit)?;
+        self.monthindex_to_yearindex.compute_if_necessary(
+            starting_monthindex,
+            &self.monthindex_to_first_dateindex,
+            exit,
+        )?;
 
         self.yearindex_to_first_monthindex
             .compute_inverse_more_to_less(
@@ -958,8 +1042,11 @@ impl Vecs {
                 exit,
             )?;
 
-        self.yearindex_to_yearindex
-            .compute_if_necessary(starting_yearindex, exit)?;
+        self.yearindex_to_yearindex.compute_if_necessary(
+            starting_yearindex,
+            &self.yearindex_to_first_monthindex,
+            exit,
+        )?;
 
         self.yearindex_to_monthindex_count
             .compute_count_from_indexes(
@@ -978,8 +1065,11 @@ impl Vecs {
             .get_inner(decremented_starting_height)
             .unwrap_or_default();
 
-        self.height_to_halvingepoch
-            .compute_if_necessary(starting_indexes.height, exit)?;
+        self.height_to_halvingepoch.compute_if_necessary(
+            starting_indexes.height,
+            &indexer_vecs.height_to_weight,
+            exit,
+        )?;
 
         self.halvingepoch_to_first_height
             .compute_inverse_more_to_less(
@@ -988,8 +1078,11 @@ impl Vecs {
                 exit,
             )?;
 
-        self.halvingepoch_to_halvingepoch
-            .compute_if_necessary(starting_halvingepoch, exit)?;
+        self.halvingepoch_to_halvingepoch.compute_if_necessary(
+            starting_halvingepoch,
+            &self.halvingepoch_to_first_height,
+            exit,
+        )?;
 
         // ---
         // DecadeIndex
@@ -1001,8 +1094,11 @@ impl Vecs {
             .get_inner(starting_yearindex)
             .unwrap_or_default();
 
-        self.yearindex_to_decadeindex
-            .compute_if_necessary(starting_yearindex, exit)?;
+        self.yearindex_to_decadeindex.compute_if_necessary(
+            starting_yearindex,
+            &self.yearindex_to_first_monthindex,
+            exit,
+        )?;
 
         self.decadeindex_to_first_yearindex
             .compute_inverse_more_to_less(
@@ -1011,8 +1107,11 @@ impl Vecs {
                 exit,
             )?;
 
-        self.decadeindex_to_decadeindex
-            .compute_if_necessary(starting_decadeindex, exit)?;
+        self.decadeindex_to_decadeindex.compute_if_necessary(
+            starting_decadeindex,
+            &self.decadeindex_to_first_yearindex,
+            exit,
+        )?;
 
         self.decadeindex_to_yearindex_count
             .compute_count_from_indexes(

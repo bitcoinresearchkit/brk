@@ -737,20 +737,35 @@ impl Vecs {
         compute_indexes_to_tx_vany(&mut self.indexes_to_tx_v2, TxVersion::TWO)?;
         compute_indexes_to_tx_vany(&mut self.indexes_to_tx_v3, TxVersion::THREE)?;
 
-        self.txindex_to_is_coinbase
-            .compute_if_necessary(starting_indexes.txindex, exit)?;
+        self.txindex_to_is_coinbase.compute_if_necessary(
+            starting_indexes.txindex,
+            &indexer.vecs().txindex_to_txid,
+            exit,
+        )?;
 
-        self.txindex_to_weight
-            .compute_if_necessary(starting_indexes.txindex, exit)?;
+        self.txindex_to_weight.compute_if_necessary(
+            starting_indexes.txindex,
+            &indexer.vecs().txindex_to_txid,
+            exit,
+        )?;
 
-        self.txindex_to_vsize
-            .compute_if_necessary(starting_indexes.txindex, exit)?;
+        self.txindex_to_vsize.compute_if_necessary(
+            starting_indexes.txindex,
+            &indexer.vecs().txindex_to_txid,
+            exit,
+        )?;
 
-        self.inputindex_to_value
-            .compute_if_necessary(starting_indexes.inputindex, exit)?;
+        self.inputindex_to_value.compute_if_necessary(
+            starting_indexes.inputindex,
+            &indexer.vecs().inputindex_to_outputindex,
+            exit,
+        )?;
 
-        self.txindex_to_output_value
-            .compute_if_necessary(starting_indexes.txindex, exit)?;
+        self.txindex_to_output_value.compute_if_necessary(
+            starting_indexes.txindex,
+            &indexer.vecs().txindex_to_txid,
+            exit,
+        )?;
 
         // self.indexes_to_output_value.compute_all(
         //     indexer,
@@ -768,8 +783,11 @@ impl Vecs {
         //     },
         // )?;
 
-        self.txindex_to_input_value
-            .compute_if_necessary(starting_indexes.txindex, exit)?;
+        self.txindex_to_input_value.compute_if_necessary(
+            starting_indexes.txindex,
+            &indexer.vecs().txindex_to_txid,
+            exit,
+        )?;
 
         // self.indexes_to_input_value.compute_all(
         //     indexer,

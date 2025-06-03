@@ -153,7 +153,12 @@ where
         })
     }
 
-    pub fn compute_if_necessary(&mut self, max_from: I, exit: &Exit) -> Result<()> {
+    pub fn compute_if_necessary<T2>(
+        &mut self,
+        max_from: I,
+        len_source: &impl AnyIterableVec<I, T2>,
+        exit: &Exit,
+    ) -> Result<()> {
         let (vec, dependencies) = if let ComputedVec::Eager {
             vec,
             deps: dependencies,
@@ -164,12 +169,14 @@ where
             return Ok(());
         };
 
+        let len = len_source.len();
+
         match dependencies {
             Dependencies::From1(source, compute) => {
                 let version = source.version();
                 let mut iter = source.iter();
                 let t = |i: I| compute(i, &mut *iter).map(|v| (i, v)).unwrap();
-                vec.compute_to(max_from, 1, version, t, exit)
+                vec.compute_to(max_from, len, version, t, exit)
             }
             Dependencies::From2((source1, source2), compute) => {
                 let version = source1.version() + source2.version();
@@ -180,7 +187,7 @@ where
                         .map(|v| (i, v))
                         .unwrap()
                 };
-                vec.compute_to(max_from, 1, version, t, exit)
+                vec.compute_to(max_from, len, version, t, exit)
             }
             Dependencies::From3((source1, source2, source3), compute) => {
                 let version = source1.version() + source2.version() + source3.version();
@@ -192,7 +199,7 @@ where
                         .map(|v| (i, v))
                         .unwrap()
                 };
-                vec.compute_to(max_from, 1, version, t, exit)
+                vec.compute_to(max_from, len, version, t, exit)
             }
         }
     }
