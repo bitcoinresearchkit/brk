@@ -5,6 +5,7 @@ use std::{
     fmt::Debug,
     ops::{Add, Div, Mul},
     path::{Path, PathBuf},
+    sync::Arc,
     time::Duration,
 };
 
@@ -29,7 +30,7 @@ const DCA_AMOUNT: Dollars = Dollars::mint(100.0);
 
 #[derive(Debug, Clone)]
 pub struct EagerVec<I, T> {
-    computed_version: Option<Version>,
+    computed_version: Arc<ArcSwap<Option<Version>>>,
     inner: StoredVec<I, T>,
 }
 
@@ -49,7 +50,7 @@ where
         let inner = StoredVec::forced_import(path, value_name, version, format)?;
 
         Ok(Self {
-            computed_version: None,
+            computed_version: Arc::new(ArcSwap::from_pointee(None)),
             inner,
         })
     }
@@ -132,7 +133,7 @@ where
             self.inner.reset()?;
         }
         version.write(path.as_ref())?;
-        self.computed_version = Some(version);
+        self.computed_version.store(Arc::new(Some(version)));
 
         if self.is_empty() {
             info!("Computing {}...", self.name())
@@ -177,6 +178,25 @@ where
         F: FnMut(I) -> (I, T),
     {
         self.compute_to(max_from, other.len(), other.version(), t, exit)
+    }
+
+    pub fn compute_from_index<T2>(
+        &mut self,
+        max_from: I,
+        other: &impl AnyIterableVec<I, T2>,
+        exit: &Exit,
+    ) -> Result<()>
+    where
+        T: From<I>,
+        T2: StoredType,
+    {
+        self.compute_to(
+            max_from,
+            other.len(),
+            other.version(),
+            |i| (i, T::from(i)),
+            exit,
+        )
     }
 
     pub fn compute_transform<A, B, F>(
@@ -579,7 +599,10 @@ where
         <T2 as TryInto<T>>::Error: error::Error + 'static,
     {
         self.validate_computed_version_or_reset_file(
-            Version::ZERO + self.inner.version() + first_indexes.version(),
+            Version::ZERO
+                + self.inner.version()
+                + first_indexes.version()
+                + other_to_else.version(),
         )?;
 
         let mut other_iter = first_indexes.iter();
@@ -1193,7 +1216,11 @@ impl EagerVec<TxIndex, Dollars> {
         exit: &Exit,
     ) -> Result<()> {
         self.validate_computed_version_or_reset_file(
-            Version::ZERO + self.inner.version() + bitcoin.version(),
+            Version::ZERO
+                + self.inner.version()
+                + bitcoin.version()
+                + i_to_height.version()
+                + price.version(),
         )?;
 
         let mut i_to_height_iter = i_to_height.iter();
@@ -1231,6 +1258,7 @@ where
     #[inline]
     fn version(&self) -> Version {
         self.computed_version
+            .load()
             .or_else(|| {
                 dbg!(self.path());
                 None

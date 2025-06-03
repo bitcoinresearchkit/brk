@@ -805,6 +805,18 @@ impl Vecs {
         //     },
         // )?;
 
+        self.txindex_to_fee.compute_if_necessary(
+            starting_indexes.txindex,
+            &indexer.vecs().txindex_to_txid,
+            exit,
+        )?;
+
+        self.txindex_to_feerate.compute_if_necessary(
+            starting_indexes.txindex,
+            &indexer.vecs().txindex_to_txid,
+            exit,
+        )?;
+
         self.indexes_to_fee.compute_rest(
             indexer,
             indexes,

@@ -585,7 +585,7 @@ impl Vecs {
                 ComputedVecsFromDateIndex::forced_import(
                     path,
                     &suffix("negative_unrealized_loss"),
-                    false,
+                    true,
                     version + VERSION + Version::ZERO,
                     format,
                     StorableVecGeneatorOptions::default().add_last(),
@@ -605,7 +605,7 @@ impl Vecs {
                 ComputedVecsFromDateIndex::forced_import(
                     path,
                     &suffix("net_unrealized_profit_and_loss"),
-                    false,
+                    true,
                     version + VERSION + Version::ZERO,
                     format,
                     StorableVecGeneatorOptions::default().add_last(),
@@ -628,7 +628,7 @@ impl Vecs {
                     ComputedVecsFromDateIndex::forced_import(
                         path,
                         &suffix("net_unrealized_profit_and_loss_relative_to_market_cap"),
-                        false,
+                        true,
                         version + VERSION + Version::ZERO,
                         format,
                         StorableVecGeneatorOptions::default().add_last(),
