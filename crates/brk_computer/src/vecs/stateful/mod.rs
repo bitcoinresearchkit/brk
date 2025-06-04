@@ -29,7 +29,7 @@ use super::{
 pub mod cohort;
 mod outputs;
 
-const VERSION: Version = Version::new(21);
+const VERSION: Version = Version::new(9);
 
 #[derive(Clone)]
 pub struct Vecs {
@@ -40,6 +40,10 @@ pub struct Vecs {
     pub indexes_to_unspendable_supply: ComputedValueVecsFromHeight,
     pub height_to_opreturn_supply: EagerVec<Height, Sats>,
     pub indexes_to_opreturn_supply: ComputedValueVecsFromHeight,
+    // pub height_to_satdays_destroyed: EagerVec<Height, Sats>,
+    // pub indexes_to_satdays_destroyed: ComputedValueVecsFromHeight,
+    // pub height_to_satblocks_destroyed: EagerVec<Height, Sats>,
+    // pub indexes_to_satblocks_destroyed: ComputedValueVecsFromHeight,
     utxos_vecs: Outputs<(OutputFilter, cohort::Vecs)>,
 }
 
@@ -98,6 +102,36 @@ impl Vecs {
                 StorableVecGeneatorOptions::default().add_last(),
                 compute_dollars,
             )?,
+            // height_to_satdays_destroyed: EagerVec::forced_import(
+            //     path,
+            //     "satdays_destroyed",
+            //     version,
+            //     format,
+            // )?,
+            // indexes_to_satdays_destroyed: ComputedValueVecsFromHeight::forced_import(
+            //     path,
+            //     "satdays_destroyed",
+            //     false,
+            //     version + VERSION + Version::ZERO,
+            //     format,
+            //     StorableVecGeneatorOptions::default().add_last(),
+            //     compute_dollars,
+            // )?,
+            // height_to_satblocks_destroyed: EagerVec::forced_import(
+            //     path,
+            //     "satblocks_destroyed",
+            //     version,
+            //     format,
+            // )?,
+            // indexes_to_satblocks_destroyed: ComputedValueVecsFromHeight::forced_import(
+            //     path,
+            //     "satblocks_destroyed",
+            //     false,
+            //     version + VERSION + Version::ZERO,
+            //     format,
+            //     StorableVecGeneatorOptions::default().add_last(),
+            //     compute_dollars,
+            // )?,
             utxos_vecs: {
                 Outputs::<(OutputFilter, cohort::Vecs)>::from(Outputs {
                     all: cohort::Vecs::forced_import(
@@ -109,6 +143,7 @@ impl Vecs {
                         fetched,
                         keyspace,
                         &stores_path,
+                        false,
                     )?,
                     by_term: OutputsByTerm {
                         short: cohort::Vecs::forced_import(
@@ -120,6 +155,7 @@ impl Vecs {
                             fetched,
                             keyspace,
                             &stores_path,
+                            true,
                         )?,
                         long: cohort::Vecs::forced_import(
                             path,
@@ -130,6 +166,7 @@ impl Vecs {
                             fetched,
                             keyspace,
                             &stores_path,
+                            true,
                         )?,
                     },
                     by_up_to_date: OutputsByUpToDate {
@@ -142,6 +179,7 @@ impl Vecs {
                             fetched,
                             keyspace,
                             &stores_path,
+                            true,
                         )?,
                         _1w: cohort::Vecs::forced_import(
                             path,
@@ -152,6 +190,7 @@ impl Vecs {
                             fetched,
                             keyspace,
                             &stores_path,
+                            true,
                         )?,
                         _1m: cohort::Vecs::forced_import(
                             path,
@@ -162,6 +201,7 @@ impl Vecs {
                             fetched,
                             keyspace,
                             &stores_path,
+                            true,
                         )?,
                         _2m: cohort::Vecs::forced_import(
                             path,
@@ -172,6 +212,7 @@ impl Vecs {
                             fetched,
                             keyspace,
                             &stores_path,
+                            true,
                         )?,
                         _3m: cohort::Vecs::forced_import(
                             path,
@@ -182,6 +223,7 @@ impl Vecs {
                             fetched,
                             keyspace,
                             &stores_path,
+                            true,
                         )?,
                         _4m: cohort::Vecs::forced_import(
                             path,
@@ -192,6 +234,7 @@ impl Vecs {
                             fetched,
                             keyspace,
                             &stores_path,
+                            true,
                         )?,
                         _5m: cohort::Vecs::forced_import(
                             path,
@@ -202,6 +245,7 @@ impl Vecs {
                             fetched,
                             keyspace,
                             &stores_path,
+                            true,
                         )?,
                         _6m: cohort::Vecs::forced_import(
                             path,
@@ -212,6 +256,7 @@ impl Vecs {
                             fetched,
                             keyspace,
                             &stores_path,
+                            true,
                         )?,
                         _1y: cohort::Vecs::forced_import(
                             path,
@@ -222,6 +267,7 @@ impl Vecs {
                             fetched,
                             keyspace,
                             &stores_path,
+                            true,
                         )?,
                         _2y: cohort::Vecs::forced_import(
                             path,
@@ -232,6 +278,7 @@ impl Vecs {
                             fetched,
                             keyspace,
                             &stores_path,
+                            true,
                         )?,
                         _3y: cohort::Vecs::forced_import(
                             path,
@@ -242,6 +289,7 @@ impl Vecs {
                             fetched,
                             keyspace,
                             &stores_path,
+                            true,
                         )?,
                         _4y: cohort::Vecs::forced_import(
                             path,
@@ -252,6 +300,7 @@ impl Vecs {
                             fetched,
                             keyspace,
                             &stores_path,
+                            true,
                         )?,
                         _5y: cohort::Vecs::forced_import(
                             path,
@@ -262,6 +311,7 @@ impl Vecs {
                             fetched,
                             keyspace,
                             &stores_path,
+                            true,
                         )?,
                         _6y: cohort::Vecs::forced_import(
                             path,
@@ -272,6 +322,7 @@ impl Vecs {
                             fetched,
                             keyspace,
                             &stores_path,
+                            true,
                         )?,
                         _7y: cohort::Vecs::forced_import(
                             path,
@@ -282,6 +333,7 @@ impl Vecs {
                             fetched,
                             keyspace,
                             &stores_path,
+                            true,
                         )?,
                         _8y: cohort::Vecs::forced_import(
                             path,
@@ -292,6 +344,7 @@ impl Vecs {
                             fetched,
                             keyspace,
                             &stores_path,
+                            true,
                         )?,
                         _10y: cohort::Vecs::forced_import(
                             path,
@@ -302,6 +355,7 @@ impl Vecs {
                             fetched,
                             keyspace,
                             &stores_path,
+                            true,
                         )?,
                         _15y: cohort::Vecs::forced_import(
                             path,
@@ -312,6 +366,7 @@ impl Vecs {
                             fetched,
                             keyspace,
                             &stores_path,
+                            true,
                         )?,
                     },
                     by_from_date: OutputsByFromDate {
@@ -324,6 +379,7 @@ impl Vecs {
                             fetched,
                             keyspace,
                             &stores_path,
+                            true,
                         )?,
                         _1w: cohort::Vecs::forced_import(
                             path,
@@ -334,6 +390,7 @@ impl Vecs {
                             fetched,
                             keyspace,
                             &stores_path,
+                            true,
                         )?,
                         _1m: cohort::Vecs::forced_import(
                             path,
@@ -344,6 +401,7 @@ impl Vecs {
                             fetched,
                             keyspace,
                             &stores_path,
+                            true,
                         )?,
                         _2m: cohort::Vecs::forced_import(
                             path,
@@ -354,6 +412,7 @@ impl Vecs {
                             fetched,
                             keyspace,
                             &stores_path,
+                            true,
                         )?,
                         _3m: cohort::Vecs::forced_import(
                             path,
@@ -364,6 +423,7 @@ impl Vecs {
                             fetched,
                             keyspace,
                             &stores_path,
+                            true,
                         )?,
                         _4m: cohort::Vecs::forced_import(
                             path,
@@ -374,6 +434,7 @@ impl Vecs {
                             fetched,
                             keyspace,
                             &stores_path,
+                            true,
                         )?,
                         _5m: cohort::Vecs::forced_import(
                             path,
@@ -384,6 +445,7 @@ impl Vecs {
                             fetched,
                             keyspace,
                             &stores_path,
+                            true,
                         )?,
                         _6m: cohort::Vecs::forced_import(
                             path,
@@ -394,6 +456,7 @@ impl Vecs {
                             fetched,
                             keyspace,
                             &stores_path,
+                            true,
                         )?,
                         _1y: cohort::Vecs::forced_import(
                             path,
@@ -404,6 +467,7 @@ impl Vecs {
                             fetched,
                             keyspace,
                             &stores_path,
+                            true,
                         )?,
                         _2y: cohort::Vecs::forced_import(
                             path,
@@ -414,6 +478,7 @@ impl Vecs {
                             fetched,
                             keyspace,
                             &stores_path,
+                            true,
                         )?,
                         _3y: cohort::Vecs::forced_import(
                             path,
@@ -424,6 +489,7 @@ impl Vecs {
                             fetched,
                             keyspace,
                             &stores_path,
+                            true,
                         )?,
                         _4y: cohort::Vecs::forced_import(
                             path,
@@ -434,6 +500,7 @@ impl Vecs {
                             fetched,
                             keyspace,
                             &stores_path,
+                            true,
                         )?,
                         _5y: cohort::Vecs::forced_import(
                             path,
@@ -444,6 +511,7 @@ impl Vecs {
                             fetched,
                             keyspace,
                             &stores_path,
+                            true,
                         )?,
                         _6y: cohort::Vecs::forced_import(
                             path,
@@ -454,6 +522,7 @@ impl Vecs {
                             fetched,
                             keyspace,
                             &stores_path,
+                            true,
                         )?,
                         _7y: cohort::Vecs::forced_import(
                             path,
@@ -464,6 +533,7 @@ impl Vecs {
                             fetched,
                             keyspace,
                             &stores_path,
+                            true,
                         )?,
                         _8y: cohort::Vecs::forced_import(
                             path,
@@ -474,6 +544,7 @@ impl Vecs {
                             fetched,
                             keyspace,
                             &stores_path,
+                            true,
                         )?,
                         _10y: cohort::Vecs::forced_import(
                             path,
@@ -484,6 +555,7 @@ impl Vecs {
                             fetched,
                             keyspace,
                             &stores_path,
+                            true,
                         )?,
                         _15y: cohort::Vecs::forced_import(
                             path,
@@ -494,6 +566,7 @@ impl Vecs {
                             fetched,
                             keyspace,
                             &stores_path,
+                            true,
                         )?,
                     },
                     by_date_range: OutputsByDateRange {
@@ -506,6 +579,7 @@ impl Vecs {
                             fetched,
                             keyspace,
                             &stores_path,
+                            true,
                         )?,
                         _1d_to_1w: cohort::Vecs::forced_import(
                             path,
@@ -516,6 +590,7 @@ impl Vecs {
                             fetched,
                             keyspace,
                             &stores_path,
+                            true,
                         )?,
                         _1w_to_1m: cohort::Vecs::forced_import(
                             path,
@@ -526,6 +601,7 @@ impl Vecs {
                             fetched,
                             keyspace,
                             &stores_path,
+                            true,
                         )?,
                         _1m_to_3m: cohort::Vecs::forced_import(
                             path,
@@ -536,6 +612,7 @@ impl Vecs {
                             fetched,
                             keyspace,
                             &stores_path,
+                            true,
                         )?,
                         _3m_to_6m: cohort::Vecs::forced_import(
                             path,
@@ -546,6 +623,7 @@ impl Vecs {
                             fetched,
                             keyspace,
                             &stores_path,
+                            true,
                         )?,
                         _6m_to_1y: cohort::Vecs::forced_import(
                             path,
@@ -556,6 +634,7 @@ impl Vecs {
                             fetched,
                             keyspace,
                             &stores_path,
+                            true,
                         )?,
                         _1y_to_2y: cohort::Vecs::forced_import(
                             path,
@@ -566,6 +645,7 @@ impl Vecs {
                             fetched,
                             keyspace,
                             &stores_path,
+                            true,
                         )?,
                         _2y_to_3y: cohort::Vecs::forced_import(
                             path,
@@ -576,6 +656,7 @@ impl Vecs {
                             fetched,
                             keyspace,
                             &stores_path,
+                            true,
                         )?,
                         _3y_to_4y: cohort::Vecs::forced_import(
                             path,
@@ -586,6 +667,7 @@ impl Vecs {
                             fetched,
                             keyspace,
                             &stores_path,
+                            true,
                         )?,
                         _4y_to_5y: cohort::Vecs::forced_import(
                             path,
@@ -596,6 +678,7 @@ impl Vecs {
                             fetched,
                             keyspace,
                             &stores_path,
+                            true,
                         )?,
                         _5y_to_7y: cohort::Vecs::forced_import(
                             path,
@@ -606,6 +689,7 @@ impl Vecs {
                             fetched,
                             keyspace,
                             &stores_path,
+                            true,
                         )?,
                         _7y_to_10y: cohort::Vecs::forced_import(
                             path,
@@ -616,6 +700,7 @@ impl Vecs {
                             fetched,
                             keyspace,
                             &stores_path,
+                            true,
                         )?,
                         _10y_to_15y: cohort::Vecs::forced_import(
                             path,
@@ -626,6 +711,7 @@ impl Vecs {
                             fetched,
                             keyspace,
                             &stores_path,
+                            true,
                         )?,
                         _15y_to_end: cohort::Vecs::forced_import(
                             path,
@@ -636,6 +722,7 @@ impl Vecs {
                             fetched,
                             keyspace,
                             &stores_path,
+                            true,
                         )?,
                     },
                     by_epoch: OutputsByEpoch {
@@ -648,6 +735,7 @@ impl Vecs {
                             fetched,
                             keyspace,
                             &stores_path,
+                            true,
                         )?,
                         _1: cohort::Vecs::forced_import(
                             path,
@@ -658,6 +746,7 @@ impl Vecs {
                             fetched,
                             keyspace,
                             &stores_path,
+                            true,
                         )?,
                         _2: cohort::Vecs::forced_import(
                             path,
@@ -668,6 +757,7 @@ impl Vecs {
                             fetched,
                             keyspace,
                             &stores_path,
+                            true,
                         )?,
                         _3: cohort::Vecs::forced_import(
                             path,
@@ -678,6 +768,7 @@ impl Vecs {
                             fetched,
                             keyspace,
                             &stores_path,
+                            true,
                         )?,
                         _4: cohort::Vecs::forced_import(
                             path,
@@ -688,6 +779,7 @@ impl Vecs {
                             fetched,
                             keyspace,
                             &stores_path,
+                            true,
                         )?,
                     },
                     by_size_range: OutputsBySizeRange {
@@ -700,6 +792,7 @@ impl Vecs {
                             fetched,
                             keyspace,
                             &stores_path,
+                            true,
                         )?,
                         from_1sat_to_10sats: cohort::Vecs::forced_import(
                             path,
@@ -710,6 +803,7 @@ impl Vecs {
                             fetched,
                             keyspace,
                             &stores_path,
+                            true,
                         )?,
                         from_10sats_to_100sats: cohort::Vecs::forced_import(
                             path,
@@ -720,6 +814,7 @@ impl Vecs {
                             fetched,
                             keyspace,
                             &stores_path,
+                            true,
                         )?,
                         from_100sats_to_1_000sats: cohort::Vecs::forced_import(
                             path,
@@ -730,6 +825,7 @@ impl Vecs {
                             fetched,
                             keyspace,
                             &stores_path,
+                            true,
                         )?,
                         from_1_000sats_to_10_000sats: cohort::Vecs::forced_import(
                             path,
@@ -740,6 +836,7 @@ impl Vecs {
                             fetched,
                             keyspace,
                             &stores_path,
+                            true,
                         )?,
                         from_10_000sats_to_100_000sats: cohort::Vecs::forced_import(
                             path,
@@ -750,6 +847,7 @@ impl Vecs {
                             fetched,
                             keyspace,
                             &stores_path,
+                            true,
                         )?,
                         from_100_000sats_to_1_000_000sats: cohort::Vecs::forced_import(
                             path,
@@ -760,6 +858,7 @@ impl Vecs {
                             fetched,
                             keyspace,
                             &stores_path,
+                            true,
                         )?,
                         from_1_000_000sats_to_10_000_000sats: cohort::Vecs::forced_import(
                             path,
@@ -770,6 +869,7 @@ impl Vecs {
                             fetched,
                             keyspace,
                             &stores_path,
+                            true,
                         )?,
                         from_10_000_000sats_to_1btc: cohort::Vecs::forced_import(
                             path,
@@ -780,6 +880,7 @@ impl Vecs {
                             fetched,
                             keyspace,
                             &stores_path,
+                            true,
                         )?,
                         from_1btc_to_10btc: cohort::Vecs::forced_import(
                             path,
@@ -790,6 +891,7 @@ impl Vecs {
                             fetched,
                             keyspace,
                             &stores_path,
+                            true,
                         )?,
                         from_10btc_to_100btc: cohort::Vecs::forced_import(
                             path,
@@ -800,6 +902,7 @@ impl Vecs {
                             fetched,
                             keyspace,
                             &stores_path,
+                            true,
                         )?,
                         from_100btc_to_1_000btc: cohort::Vecs::forced_import(
                             path,
@@ -810,6 +913,7 @@ impl Vecs {
                             fetched,
                             keyspace,
                             &stores_path,
+                            true,
                         )?,
                         from_1_000btc_to_10_000btc: cohort::Vecs::forced_import(
                             path,
@@ -820,6 +924,7 @@ impl Vecs {
                             fetched,
                             keyspace,
                             &stores_path,
+                            true,
                         )?,
                         from_10_000btc_to_100_000btc: cohort::Vecs::forced_import(
                             path,
@@ -830,6 +935,7 @@ impl Vecs {
                             fetched,
                             keyspace,
                             &stores_path,
+                            true,
                         )?,
                         from_100_000btc: cohort::Vecs::forced_import(
                             path,
@@ -840,6 +946,7 @@ impl Vecs {
                             fetched,
                             keyspace,
                             &stores_path,
+                            true,
                         )?,
                     },
                     by_up_to_size: OutputsByUpToSize {
@@ -852,6 +959,7 @@ impl Vecs {
                             fetched,
                             keyspace,
                             &stores_path,
+                            true,
                         )?,
                         _10_000sats: cohort::Vecs::forced_import(
                             path,
@@ -862,6 +970,7 @@ impl Vecs {
                             fetched,
                             keyspace,
                             &stores_path,
+                            true,
                         )?,
                         _1btc: cohort::Vecs::forced_import(
                             path,
@@ -872,6 +981,7 @@ impl Vecs {
                             fetched,
                             keyspace,
                             &stores_path,
+                            true,
                         )?,
                         _10btc: cohort::Vecs::forced_import(
                             path,
@@ -882,6 +992,7 @@ impl Vecs {
                             fetched,
                             keyspace,
                             &stores_path,
+                            true,
                         )?,
                         _100btc: cohort::Vecs::forced_import(
                             path,
@@ -892,6 +1003,7 @@ impl Vecs {
                             fetched,
                             keyspace,
                             &stores_path,
+                            true,
                         )?,
                     },
                     by_from_size: OutputsByFromSize {
@@ -904,6 +1016,7 @@ impl Vecs {
                             fetched,
                             keyspace,
                             &stores_path,
+                            true,
                         )?,
                         _1btc: cohort::Vecs::forced_import(
                             path,
@@ -914,6 +1027,7 @@ impl Vecs {
                             fetched,
                             keyspace,
                             &stores_path,
+                            true,
                         )?,
                         _10btc: cohort::Vecs::forced_import(
                             path,
@@ -924,6 +1038,7 @@ impl Vecs {
                             fetched,
                             keyspace,
                             &stores_path,
+                            true,
                         )?,
                         _100btc: cohort::Vecs::forced_import(
                             path,
@@ -934,6 +1049,7 @@ impl Vecs {
                             fetched,
                             keyspace,
                             &stores_path,
+                            true,
                         )?,
                     },
                     // by_value: OutputsByValue {
@@ -1039,6 +1155,7 @@ impl Vecs {
                             fetched,
                             keyspace,
                             &stores_path,
+                            true,
                         )?,
                         p2pk33: cohort::Vecs::forced_import(
                             path,
@@ -1049,6 +1166,7 @@ impl Vecs {
                             fetched,
                             keyspace,
                             &stores_path,
+                            true,
                         )?,
                         p2pkh: cohort::Vecs::forced_import(
                             path,
@@ -1059,6 +1177,7 @@ impl Vecs {
                             fetched,
                             keyspace,
                             &stores_path,
+                            true,
                         )?,
                         p2ms: cohort::Vecs::forced_import(
                             path,
@@ -1069,6 +1188,7 @@ impl Vecs {
                             fetched,
                             keyspace,
                             &stores_path,
+                            true,
                         )?,
                         p2sh: cohort::Vecs::forced_import(
                             path,
@@ -1079,6 +1199,7 @@ impl Vecs {
                             fetched,
                             keyspace,
                             &stores_path,
+                            true,
                         )?,
                         // opreturn: cohort::Vecs::forced_import(
                         //     path,
@@ -1098,6 +1219,7 @@ impl Vecs {
                             fetched,
                             keyspace,
                             &stores_path,
+                            true,
                         )?,
                         p2wsh: cohort::Vecs::forced_import(
                             path,
@@ -1108,6 +1230,7 @@ impl Vecs {
                             fetched,
                             keyspace,
                             &stores_path,
+                            true,
                         )?,
                         p2tr: cohort::Vecs::forced_import(
                             path,
@@ -1118,6 +1241,7 @@ impl Vecs {
                             fetched,
                             keyspace,
                             &stores_path,
+                            true,
                         )?,
                         p2a: cohort::Vecs::forced_import(
                             path,
@@ -1128,6 +1252,7 @@ impl Vecs {
                             fetched,
                             keyspace,
                             &stores_path,
+                            true,
                         )?,
                         empty: cohort::Vecs::forced_import(
                             path,
@@ -1138,6 +1263,7 @@ impl Vecs {
                             fetched,
                             keyspace,
                             &stores_path,
+                            true,
                         )?,
                         unknown: cohort::Vecs::forced_import(
                             path,
@@ -1148,6 +1274,7 @@ impl Vecs {
                             fetched,
                             keyspace,
                             &stores_path,
+                            true,
                         )?,
                     },
                 })
@@ -1250,6 +1377,14 @@ impl Vecs {
             .validate_computed_version_or_reset_file(
                 base_version + self.height_to_opreturn_supply.inner_version(),
             )?;
+        // self.height_to_satblocks_destroyed
+        //     .validate_computed_version_or_reset_file(
+        //         base_version + self.height_to_satblocks_destroyed.inner_version(),
+        //     )?;
+        // self.height_to_satdays_destroyed
+        //     .validate_computed_version_or_reset_file(
+        //         base_version + self.height_to_satdays_destroyed.inner_version(),
+        //     )?;
 
         let mut chain_state: Vec<BlockState>;
         let mut chain_state_starting_height = Height::from(self.chain_state.len());
@@ -1302,6 +1437,8 @@ impl Vecs {
             .min(stateful_starting_height)
             .min(Height::from(self.height_to_unspendable_supply.len()))
             .min(Height::from(self.height_to_opreturn_supply.len()));
+        // .min(Height::from(self.height_to_satblocks_destroyed.len()));
+        // .min(Height::from(self.height_to_satdays_destroyed.len()));
 
         // ---
         // INIT
@@ -1318,7 +1455,6 @@ impl Vecs {
         } else {
             Sats::ZERO
         };
-
         let mut opreturn_supply = if let Some(prev_height) = starting_height.decremented() {
             self.height_to_opreturn_supply
                 .into_iter()
@@ -1326,6 +1462,20 @@ impl Vecs {
         } else {
             Sats::ZERO
         };
+        // let mut satblocks_destroyed = if let Some(prev_height) = starting_height.decremented() {
+        //     self.height_to_satblocks_destroyed
+        //         .into_iter()
+        //         .unwrap_get_inner(prev_height)
+        // } else {
+        //     Sats::ZERO
+        // };
+        // let mut satdays_destroyed = if let Some(prev_height) = starting_height.decremented() {
+        //     self.height_to_satdays_destroyed
+        //         .into_iter()
+        //         .unwrap_get_inner(prev_height)
+        // } else {
+        //     Sats::ZERO
+        // };
 
         let mut height = starting_height;
         starting_indexes.update_from_height(height, indexes);
@@ -1561,12 +1711,39 @@ impl Vecs {
 
         info!("Computing rest...");
 
-        // Compute other vecs from height vecs
         self.utxos_vecs
             .as_mut_vecs()
             .par_iter_mut()
             .try_for_each(|(_, v)| {
-                v.compute_rest(indexer, indexes, fetched, &starting_indexes, market, exit)
+                v.compute_rest_part1(indexer, indexes, fetched, &starting_indexes, exit)
+            })?;
+        let height_to_supply = self.utxos_vecs.all.1.height_to_supply.clone();
+        let dateindex_to_supply = self
+            .utxos_vecs
+            .all
+            .1
+            .indexes_to_supply
+            .sats
+            .dateindex
+            .unwrap_last()
+            .clone();
+        let height_to_realized_cap = self.utxos_vecs.all.1.height_to_realized_cap.clone();
+        let height_to_realized_cap = height_to_realized_cap.as_ref();
+        self.utxos_vecs
+            .as_mut_vecs()
+            .par_iter_mut()
+            .try_for_each(|(_, v)| {
+                v.compute_rest_part2(
+                    indexer,
+                    indexes,
+                    fetched,
+                    &starting_indexes,
+                    market,
+                    &height_to_supply,
+                    &dateindex_to_supply,
+                    height_to_realized_cap,
+                    exit,
+                )
             })?;
         self.indexes_to_unspendable_supply.compute_rest(
             indexer,
@@ -1584,6 +1761,22 @@ impl Vecs {
             exit,
             Some(&self.height_to_opreturn_supply),
         )?;
+        // self.indexes_to_satblocks_destroyed.compute_rest(
+        //     indexer,
+        //     indexes,
+        //     fetched,
+        //     &starting_indexes,
+        //     exit,
+        //     Some(&self.height_to_satblocks_destroyed),
+        // )?;
+        // self.indexes_to_satdays_destroyed.compute_rest(
+        //     indexer,
+        //     indexes,
+        //     fetched,
+        //     &starting_indexes,
+        //     exit,
+        //     Some(&self.height_to_satdays_destroyed),
+        // )?;
 
         exit.release();
 
@@ -1602,6 +1795,8 @@ impl Vecs {
             .try_for_each(|(_, v)| v.safe_flush_stateful_vecs(height, exit))?;
         self.height_to_unspendable_supply.safe_flush(exit)?;
         self.height_to_opreturn_supply.safe_flush(exit)?;
+        // self.height_to_satblocks_destroyed.safe_flush(exit)?;
+        // self.height_to_satdays_destroyed.safe_flush(exit)?;
 
         self.chain_state.truncate_if_needed(Height::ZERO)?;
         chain_state.iter().for_each(|block_state| {
@@ -1625,6 +1820,16 @@ impl Vecs {
                 &self.height_to_unspendable_supply,
                 &self.height_to_opreturn_supply,
             ],
+            // self.indexes_to_satblocks_destroyed.vecs(),
+            // vec![
+            //     &self.height_to_unspendable_supply,
+            //     &self.height_to_satblocks_destroyed,
+            // ],
+            // self.indexes_to_satdays_destroyed.vecs(),
+            // vec![
+            //     &self.height_to_unspendable_supply,
+            //     &self.height_to_satdays_destroyed,
+            // ],
         ]
         .into_iter()
         .flatten()

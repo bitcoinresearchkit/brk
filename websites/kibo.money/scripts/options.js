@@ -48,7 +48,7 @@
  *
  * @typedef {AnySeriesBlueprint["type"]} SeriesType
  *
- * @typedef {{ key: ChartableVecId }} FetchedAnySeriesOptions
+ * @typedef {{ key: ChartableVecId, unit?: Unit | Unit[] }} FetchedAnySeriesOptions
  *
  * @typedef {BaselineSeriesBlueprint & FetchedAnySeriesOptions} FetchedBaselineSeriesBlueprint
  * @typedef {CandlestickSeriesBlueprint & FetchedAnySeriesOptions} FetchedCandlestickSeriesBlueprint
@@ -447,7 +447,7 @@ function createPartialOptions(colors) {
 
   const range = /** @type {const} */ ([
     {
-      key: "up-to-1d",
+      key: "start-to-1d",
       name: "24h",
       title: "Last 24 hours",
       color: colors.pink,
@@ -525,7 +525,7 @@ function createPartialOptions(colors) {
       color: colors.pink,
     },
     {
-      key: "from-15y",
+      key: "from-15y-to-end",
       name: "15y+",
       title: "From 15 Years ago to genesis (2009-01-03)",
       color: colors.red,
@@ -1165,9 +1165,9 @@ function createPartialOptions(colors) {
   }
 
   /**
-   * @typedef {"-realized-cap"} RealizedCapSuffix
-   * @typedef {EndsWith<RealizedCapSuffix>} VecIdRealizedCap
-   * @typedef {WithoutSuffix<VecIdRealizedCap, RealizedCapSuffix>} VecIdRealizedCapBase
+   * @typedef {"-supply-in-profit"} SupplyInProfitSuffix
+   * @typedef {EndsWith<SupplyInProfitSuffix>} VecIdSupplyInProfit
+   * @typedef {WithoutSuffix<VecIdSupplyInProfit, SupplyInProfitSuffix>} CohortId
    */
 
   /**
@@ -1175,7 +1175,7 @@ function createPartialOptions(colors) {
    * @property {string} args.name
    * @property {string} args.title
    * @property {Color} args.color
-   * @property {"" | VecIdRealizedCapBase} args.key
+   * @property {"" | CohortId} args.key
    */
 
   /**
@@ -1190,7 +1190,7 @@ function createPartialOptions(colors) {
    */
   function createUTXOGroupFolder(args) {
     /**
-     * @template {"" | VecIdRealizedCapBase} T
+     * @template {"" | CohortId} T
      * @param {T} _key
      */
     const fixKey = (_key) =>
@@ -1259,21 +1259,21 @@ function createPartialOptions(colors) {
                         lineStyle: 4,
                       },
                     }),
-                    // createBaseSeries({
-                    //   key: `${key}supply-in-profit-in-btc`,
-                    //   name: useGroupName ? name : "In Profit",
-                    //   color: colors.green,
-                    // }),
-                    // createBaseSeries({
-                    //   key: `${key}supply-in-loss-in-btc`,
-                    //   name: useGroupName ? name : "In Loss",
-                    //   color: colors.red,
-                    // }),
-                    // createBaseSeries({
-                    //   key: `${key}supply-even-in-btc`,
-                    //   name: useGroupName ? name : "Even",
-                    //   color: colors.yellow,
-                    // }),
+                    createBaseSeries({
+                      key: `${key}supply-in-profit-in-btc`,
+                      name: useGroupName ? name : "In Profit",
+                      color: colors.green,
+                    }),
+                    createBaseSeries({
+                      key: `${key}supply-in-loss-in-btc`,
+                      name: useGroupName ? name : "In Loss",
+                      color: colors.red,
+                    }),
+                    createBaseSeries({
+                      key: `${key}supply-even-in-btc`,
+                      name: useGroupName ? name : "Even",
+                      color: colors.yellow,
+                    }),
                     createBaseSeries({
                       key: `${key}halved-supply-in-usd`,
                       name: useGroupName ? name : "Halved",
@@ -1282,21 +1282,60 @@ function createPartialOptions(colors) {
                         lineStyle: 4,
                       },
                     }),
-                    // createBaseSeries({
-                    //   key: `${key}supply-in-profit-in-usd`,
-                    //   name: useGroupName ? name : "In Profit",
-                    //   color: colors.green,
-                    // }),
-                    // createBaseSeries({
-                    //   key: `${key}supply-in-loss-in-usd`,
-                    //   name: useGroupName ? name : "In Loss",
-                    //   color: colors.red,
-                    // }),
-                    // createBaseSeries({
-                    //   key: `${key}supply-even-in-usd`,
-                    //   name: useGroupName ? name : "Even",
-                    //   color: colors.yellow,
-                    // }),
+                    createBaseSeries({
+                      key: `${key}supply-in-profit-in-usd`,
+                      name: useGroupName ? name : "In Profit",
+                      color: colors.green,
+                    }),
+                    createBaseSeries({
+                      key: `${key}supply-in-loss-in-usd`,
+                      name: useGroupName ? name : "In Loss",
+                      color: colors.red,
+                    }),
+                    createBaseSeries({
+                      key: `${key}supply-even-in-usd`,
+                      name: useGroupName ? name : "Even",
+                      color: colors.yellow,
+                    }),
+                    ...(key
+                      ? [
+                          createBaseSeries({
+                            key: `${key}supply-relative-to-circulating-supply`,
+                            name: useGroupName ? name : "Supply",
+                            color: colors.default,
+                          }),
+                          createBaseSeries({
+                            key: `${key}supply-in-profit-relative-to-circulating-supply`,
+                            name: useGroupName ? name : "In Profit",
+                            color: colors.green,
+                          }),
+                          createBaseSeries({
+                            key: `${key}supply-in-loss-relative-to-circulating-supply`,
+                            name: useGroupName ? name : "In Loss",
+                            color: colors.red,
+                          }),
+                          createBaseSeries({
+                            key: `${key}supply-even-relative-to-circulating-supply`,
+                            name: useGroupName ? name : "Even",
+                            color: colors.yellow,
+                          }),
+                        ]
+                      : []),
+                    createBaseSeries({
+                      key: `${key}supply-in-profit-relative-to-own-supply`,
+                      name: useGroupName ? name : "In Profit",
+                      color: colors.green,
+                    }),
+                    createBaseSeries({
+                      key: `${key}supply-in-loss-relative-to-own-supply`,
+                      name: useGroupName ? name : "In Loss",
+                      color: colors.red,
+                    }),
+                    createBaseSeries({
+                      key: `${key}supply-even-relative-to-own-supply`,
+                      name: useGroupName ? name : "Even",
+                      color: colors.yellow,
+                    }),
                   ]
                 : []),
             ]);
@@ -1370,7 +1409,7 @@ function createPartialOptions(colors) {
             ...(!("list" in args)
               ? [
                   {
-                    name: "profit and loss",
+                    name: "pnl",
                     title: `${args.title} Realized Profit And Loss`,
                     bottom: [
                       createBaseSeries({
@@ -1425,20 +1464,30 @@ function createPartialOptions(colors) {
             {
               name: "Net pnl",
               title: `${args.title} Net Realized Profit And Loss`,
-              bottom: list.flatMap(
-                ({ color, name, key }) =>
-                  /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
-                    type: "Baseline",
-                    key: `${fixKey(key)}net-realized-profit-and-loss`,
-                    title: useGroupName ? name : "Net",
-                    color: useGroupName ? color : undefined,
-                    options: {
-                      createPriceLine: {
-                        value: 0,
-                      },
+              bottom: list.flatMap(({ color, name, key }) => [
+                /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
+                  type: "Baseline",
+                  key: `${fixKey(key)}net-realized-profit-and-loss`,
+                  title: useGroupName ? name : "Net",
+                  color: useGroupName ? color : undefined,
+                  options: {
+                    createPriceLine: {
+                      value: 0,
                     },
-                  }),
-              ),
+                  },
+                }),
+                /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
+                  type: "Baseline",
+                  key: `${fixKey(key)}net-realized-profit-and-loss-relative-to-realized-cap`,
+                  title: useGroupName ? name : "Net",
+                  color: useGroupName ? color : undefined,
+                  options: {
+                    createPriceLine: {
+                      value: 0,
+                    },
+                  },
+                }),
+              ]),
             },
             {
               name: "sopr",
@@ -1487,7 +1536,7 @@ function createPartialOptions(colors) {
             ...(!("list" in args)
               ? [
                   {
-                    name: "profit and loss",
+                    name: "pnl",
                     title: `${args.title} Unrealized Profit And Loss`,
                     bottom: [
                       // createBaseSeries({

@@ -68,6 +68,12 @@ impl CheckedSub<Sats> for Sats {
     }
 }
 
+impl CheckedSub<usize> for Sats {
+    fn checked_sub(self, rhs: usize) -> Option<Self> {
+        self.0.checked_sub(rhs as u64).map(Self::from)
+    }
+}
+
 impl SubAssign for Sats {
     fn sub_assign(&mut self, rhs: Self) {
         *self = self.checked_sub(rhs).unwrap();
@@ -77,21 +83,28 @@ impl SubAssign for Sats {
 impl Mul<Sats> for Sats {
     type Output = Self;
     fn mul(self, rhs: Sats) -> Self::Output {
-        Sats::from(self.0 * rhs.0)
+        Sats::from(self.0.checked_mul(rhs.0).unwrap())
+    }
+}
+
+impl Mul<usize> for Sats {
+    type Output = Self;
+    fn mul(self, rhs: usize) -> Self::Output {
+        Sats::from(self.0.checked_mul(rhs as u64).unwrap())
     }
 }
 
 impl Mul<u64> for Sats {
     type Output = Self;
     fn mul(self, rhs: u64) -> Self::Output {
-        Sats::from(self.0 * rhs)
+        Sats::from(self.0.checked_mul(rhs).unwrap())
     }
 }
 
 impl Mul<Height> for Sats {
     type Output = Self;
     fn mul(self, rhs: Height) -> Self::Output {
-        Sats::from(self.0 * u64::from(rhs))
+        Sats::from(self.0.checked_mul(u64::from(rhs)).unwrap())
     }
 }
 
@@ -110,6 +123,17 @@ impl Div<Dollars> for Sats {
             Self(self.0 * 100 / raw_cents)
         } else {
             Self::MAX
+        }
+    }
+}
+
+impl Div<Sats> for Sats {
+    type Output = Self;
+    fn div(self, rhs: Sats) -> Self::Output {
+        if rhs.0 == 0 {
+            Self(0)
+        } else {
+            Self(self.0 / rhs.0)
         }
     }
 }

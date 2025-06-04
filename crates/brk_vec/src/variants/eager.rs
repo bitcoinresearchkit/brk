@@ -11,8 +11,8 @@ use std::{
 
 use arc_swap::ArcSwap;
 use brk_core::{
-    Bitcoin, CheckedSub, Close, Date, DateIndex, Dollars, Error, Height, Result, Sats, StoredF32,
-    StoredUsize, TxIndex, Value, Version,
+    Bitcoin, CheckedSub, Close, Date, DateIndex, Dollars, Error, Result, Sats, StoredF32,
+    StoredUsize, Value, Version,
 };
 use brk_exit::Exit;
 use log::info;
@@ -1182,12 +1182,15 @@ where
     }
 }
 
-impl EagerVec<Height, Dollars> {
+impl<I> EagerVec<I, Dollars>
+where
+    I: StoredIndex,
+{
     pub fn compute_from_bitcoin(
         &mut self,
-        max_from: Height,
-        bitcoin: &impl AnyIterableVec<Height, Bitcoin>,
-        price: &impl AnyIterableVec<Height, Close<Dollars>>,
+        max_from: I,
+        bitcoin: &impl AnyIterableVec<I, Bitcoin>,
+        price: &impl AnyIterableVec<I, Close<Dollars>>,
         exit: &Exit,
     ) -> Result<()> {
         self.validate_computed_version_or_reset_file(
@@ -1195,7 +1198,7 @@ impl EagerVec<Height, Dollars> {
         )?;
 
         let mut price_iter = price.iter();
-        let index = max_from.min(Height::from(self.len()));
+        let index = max_from.min(I::from(self.len()));
         bitcoin.iter_at(index).try_for_each(|(i, bitcoin)| {
             let dollars = price_iter.unwrap_get_inner(i);
             let (i, v) = (i, *dollars * bitcoin.into_inner());
@@ -1206,36 +1209,36 @@ impl EagerVec<Height, Dollars> {
     }
 }
 
-impl EagerVec<TxIndex, Dollars> {
-    pub fn compute_from_bitcoin(
-        &mut self,
-        max_from: TxIndex,
-        bitcoin: &impl AnyIterableVec<TxIndex, Bitcoin>,
-        i_to_height: &impl AnyIterableVec<TxIndex, Height>,
-        price: &impl AnyIterableVec<Height, Close<Dollars>>,
-        exit: &Exit,
-    ) -> Result<()> {
-        self.validate_computed_version_or_reset_file(
-            Version::ZERO
-                + self.inner.version()
-                + bitcoin.version()
-                + i_to_height.version()
-                + price.version(),
-        )?;
+// impl EagerVec<TxIndex, Dollars> {
+//     pub fn compute_txindex_from_bitcoin(
+//         &mut self,
+//         max_from: TxIndex,
+//         bitcoin: &impl AnyIterableVec<TxIndex, Bitcoin>,
+//         i_to_height: &impl AnyIterableVec<TxIndex, Height>,
+//         price: &impl AnyIterableVec<Height, Close<Dollars>>,
+//         exit: &Exit,
+//     ) -> Result<()> {
+//         self.validate_computed_version_or_reset_file(
+//             Version::ZERO
+//                 + self.inner.version()
+//                 + bitcoin.version()
+//                 + i_to_height.version()
+//                 + price.version(),
+//         )?;
 
-        let mut i_to_height_iter = i_to_height.iter();
-        let mut price_iter = price.iter();
-        let index = max_from.min(TxIndex::from(self.len()));
-        bitcoin.iter_at(index).try_for_each(|(i, bitcoin, ..)| {
-            let height = i_to_height_iter.unwrap_get_inner(i);
-            let dollars = price_iter.unwrap_get_inner(height);
-            let (i, v) = (i, *dollars * bitcoin.into_inner());
-            self.forced_push_at(i, v, exit)
-        })?;
+//         let mut i_to_height_iter = i_to_height.iter();
+//         let mut price_iter = price.iter();
+//         let index = max_from.min(TxIndex::from(self.len()));
+//         bitcoin.iter_at(index).try_for_each(|(i, bitcoin, ..)| {
+//             let height = i_to_height_iter.unwrap_get_inner(i);
+//             let dollars = price_iter.unwrap_get_inner(height);
+//             let (i, v) = (i, *dollars * bitcoin.into_inner());
+//             self.forced_push_at(i, v, exit)
+//         })?;
 
-        self.safe_flush(exit)
-    }
-}
+//         self.safe_flush(exit)
+//     }
+// }
 
 impl<'a, I, T> IntoIterator for &'a EagerVec<I, T>
 where
