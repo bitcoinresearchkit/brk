@@ -1,17 +1,23 @@
 use std::{fs, path::Path};
 
-use brk_core::{DateIndex, Dollars, Height, Result, Sats, StoredF32, StoredUsize, Version};
+use brk_core::{
+    DateIndex, Dollars, Height, Result, Sats, StoredF32, StoredF64, StoredUsize, Version,
+};
 use brk_exit::Exit;
 use brk_indexer::Indexer;
 use brk_state::CohortState;
-use brk_vec::{AnyCollectableVec, AnyVec, Computation, EagerVec, Format, StoredIndex, VecIterator};
+use brk_vec::{
+    AnyCollectableVec, AnyIterableVec, AnyVec, Computation, EagerVec, Format, StoredIndex,
+    VecIterator,
+};
 use fjall::TransactionalKeyspace;
 
 use crate::vecs::{
     Indexes, fetched,
     grouped::{
-        ComputedRatioVecsFromDateIndex, ComputedValueVecsFromHeight, ComputedVecsFromDateIndex,
-        ComputedVecsFromHeight, StorableVecGeneatorOptions,
+        ComputedHeightValueVecs, ComputedRatioVecsFromDateIndex, ComputedValueVecsFromDateIndex,
+        ComputedValueVecsFromHeight, ComputedVecsFromDateIndex, ComputedVecsFromHeight,
+        StorableVecGeneatorOptions,
     },
     indexes, market,
 };
@@ -65,9 +71,6 @@ pub struct Vecs {
     pub indexes_to_utxo_count: ComputedVecsFromHeight<StoredUsize>,
     pub indexes_to_value_created: Option<ComputedVecsFromHeight<Dollars>>,
     pub indexes_to_value_destroyed: Option<ComputedVecsFromHeight<Dollars>>,
-    pub indexes_to_supply_in_profit: Option<ComputedVecsFromDateIndex<Sats>>,
-    pub indexes_to_supply_in_loss: Option<ComputedVecsFromDateIndex<Sats>>,
-    pub indexes_to_supply_even: Option<ComputedVecsFromDateIndex<Sats>>,
     pub indexes_to_unrealized_profit: Option<ComputedVecsFromDateIndex<Dollars>>,
     pub indexes_to_unrealized_loss: Option<ComputedVecsFromDateIndex<Dollars>>,
     pub indexes_to_min_price_paid: Option<ComputedVecsFromHeight<Dollars>>,
@@ -78,11 +81,37 @@ pub struct Vecs {
     pub height_to_net_unrealized_profit_and_loss: Option<EagerVec<Height, Dollars>>,
     pub indexes_to_net_unrealized_profit_and_loss: Option<ComputedVecsFromDateIndex<Dollars>>,
     pub height_to_net_unrealized_profit_and_loss_relative_to_market_cap:
-        Option<EagerVec<Height, Dollars>>,
+        Option<EagerVec<Height, StoredF32>>,
     pub indexes_to_net_unrealized_profit_and_loss_relative_to_market_cap:
-        Option<ComputedVecsFromDateIndex<Dollars>>,
-    // pub indexes_to_net_realized_profit_and_loss_relative_to_realized_cap:
-    // Option<ComputedVecsFromHeight<Dollars>>,
+        Option<ComputedVecsFromDateIndex<StoredF32>>,
+    pub indexes_to_net_realized_profit_and_loss_relative_to_realized_cap:
+        Option<ComputedVecsFromHeight<StoredF32>>,
+    pub height_to_supply_even_value: Option<ComputedHeightValueVecs>,
+    pub height_to_supply_in_loss_value: Option<ComputedHeightValueVecs>,
+    pub height_to_supply_in_profit_value: Option<ComputedHeightValueVecs>,
+    pub indexes_to_supply_even: Option<ComputedValueVecsFromDateIndex>,
+    pub indexes_to_supply_in_loss: Option<ComputedValueVecsFromDateIndex>,
+    pub indexes_to_supply_in_profit: Option<ComputedValueVecsFromDateIndex>,
+    pub height_to_supply_even_relative_to_own_supply: Option<EagerVec<Height, StoredF64>>,
+    pub height_to_supply_in_loss_relative_to_own_supply: Option<EagerVec<Height, StoredF64>>,
+    pub height_to_supply_in_profit_relative_to_own_supply: Option<EagerVec<Height, StoredF64>>,
+    pub indexes_to_supply_even_relative_to_own_supply: Option<ComputedVecsFromDateIndex<StoredF64>>,
+    pub indexes_to_supply_in_loss_relative_to_own_supply:
+        Option<ComputedVecsFromDateIndex<StoredF64>>,
+    pub indexes_to_supply_in_profit_relative_to_own_supply:
+        Option<ComputedVecsFromDateIndex<StoredF64>>,
+    pub indexes_to_supply_relative_to_circulating_supply: Option<ComputedVecsFromHeight<StoredF64>>,
+    pub height_to_supply_even_relative_to_circulating_supply: Option<EagerVec<Height, StoredF64>>,
+    pub height_to_supply_in_loss_relative_to_circulating_supply:
+        Option<EagerVec<Height, StoredF64>>,
+    pub height_to_supply_in_profit_relative_to_circulating_supply:
+        Option<EagerVec<Height, StoredF64>>,
+    pub indexes_to_supply_even_relative_to_circulating_supply:
+        Option<ComputedVecsFromDateIndex<StoredF64>>,
+    pub indexes_to_supply_in_loss_relative_to_circulating_supply:
+        Option<ComputedVecsFromDateIndex<StoredF64>>,
+    pub indexes_to_supply_in_profit_relative_to_circulating_supply:
+        Option<ComputedVecsFromDateIndex<StoredF64>>,
 }
 
 impl Vecs {
@@ -96,6 +125,7 @@ impl Vecs {
         fetched: Option<&fetched::Vecs>,
         keyspace: &TransactionalKeyspace,
         stores_path: &Path,
+        compute_relative_to_all: bool,
     ) -> color_eyre::Result<Self> {
         let compute_dollars = fetched.is_some();
 
@@ -136,13 +166,14 @@ impl Vecs {
                 .unwrap()
             }),
             indexes_to_supply_in_profit: compute_dollars.then(|| {
-                ComputedVecsFromDateIndex::forced_import(
+                ComputedValueVecsFromDateIndex::forced_import(
                     path,
                     &suffix("supply_in_profit"),
                     false,
                     version + VERSION + Version::ZERO,
                     format,
                     StorableVecGeneatorOptions::default().add_last(),
+                    compute_dollars,
                 )
                 .unwrap()
             }),
@@ -165,13 +196,14 @@ impl Vecs {
                 .unwrap()
             }),
             indexes_to_supply_even: compute_dollars.then(|| {
-                ComputedVecsFromDateIndex::forced_import(
+                ComputedValueVecsFromDateIndex::forced_import(
                     path,
                     &suffix("supply_even"),
                     false,
                     version + VERSION + Version::ZERO,
                     format,
                     StorableVecGeneatorOptions::default().add_last(),
+                    compute_dollars,
                 )
                 .unwrap()
             }),
@@ -194,13 +226,14 @@ impl Vecs {
                 .unwrap()
             }),
             indexes_to_supply_in_loss: compute_dollars.then(|| {
-                ComputedVecsFromDateIndex::forced_import(
+                ComputedValueVecsFromDateIndex::forced_import(
                     path,
                     &suffix("supply_in_loss"),
                     false,
                     version + VERSION + Version::ZERO,
                     format,
                     StorableVecGeneatorOptions::default().add_last(),
+                    compute_dollars,
                 )
                 .unwrap()
             }),
@@ -636,6 +669,195 @@ impl Vecs {
                     .unwrap()
                 },
             ),
+            indexes_to_net_realized_profit_and_loss_relative_to_realized_cap: compute_dollars.then(
+                || {
+                    ComputedVecsFromHeight::forced_import(
+                        path,
+                        &suffix("net_realized_profit_and_loss_relative_to_realized_cap"),
+                        true,
+                        version + VERSION + Version::ZERO,
+                        format,
+                        StorableVecGeneatorOptions::default().add_last(),
+                    )
+                    .unwrap()
+                },
+            ),
+            height_to_supply_even_value: compute_dollars.then(|| {
+                ComputedHeightValueVecs::forced_import(
+                    path,
+                    &suffix("supply_even"),
+                    false,
+                    version,
+                    format,
+                    compute_dollars,
+                )
+                .unwrap()
+            }),
+            height_to_supply_in_loss_value: compute_dollars.then(|| {
+                ComputedHeightValueVecs::forced_import(
+                    path,
+                    &suffix("supply_in_loss"),
+                    false,
+                    version,
+                    format,
+                    compute_dollars,
+                )
+                .unwrap()
+            }),
+            height_to_supply_in_profit_value: compute_dollars.then(|| {
+                ComputedHeightValueVecs::forced_import(
+                    path,
+                    &suffix("supply_in_profit"),
+                    false,
+                    version,
+                    format,
+                    compute_dollars,
+                )
+                .unwrap()
+            }),
+            height_to_supply_even_relative_to_own_supply: compute_dollars.then(|| {
+                EagerVec::forced_import(
+                    path,
+                    &suffix("supply_even_relative_to_own_supply"),
+                    version,
+                    format,
+                )
+                .unwrap()
+            }),
+            height_to_supply_in_loss_relative_to_own_supply: compute_dollars.then(|| {
+                EagerVec::forced_import(
+                    path,
+                    &suffix("supply_in_loss_relative_to_own_supply"),
+                    version,
+                    format,
+                )
+                .unwrap()
+            }),
+            height_to_supply_in_profit_relative_to_own_supply: compute_dollars.then(|| {
+                EagerVec::forced_import(
+                    path,
+                    &suffix("supply_in_profit_relative_to_own_supply"),
+                    version,
+                    format,
+                )
+                .unwrap()
+            }),
+            indexes_to_supply_even_relative_to_own_supply: compute_dollars.then(|| {
+                ComputedVecsFromDateIndex::forced_import(
+                    path,
+                    &suffix("supply_even_relative_to_own_supply"),
+                    true,
+                    version,
+                    format,
+                    StorableVecGeneatorOptions::default().add_last(),
+                )
+                .unwrap()
+            }),
+            indexes_to_supply_in_loss_relative_to_own_supply: compute_dollars.then(|| {
+                ComputedVecsFromDateIndex::forced_import(
+                    path,
+                    &suffix("supply_in_loss_relative_to_own_supply"),
+                    true,
+                    version,
+                    format,
+                    StorableVecGeneatorOptions::default().add_last(),
+                )
+                .unwrap()
+            }),
+            indexes_to_supply_in_profit_relative_to_own_supply: compute_dollars.then(|| {
+                ComputedVecsFromDateIndex::forced_import(
+                    path,
+                    &suffix("supply_in_profit_relative_to_own_supply"),
+                    true,
+                    version,
+                    format,
+                    StorableVecGeneatorOptions::default().add_last(),
+                )
+                .unwrap()
+            }),
+            indexes_to_supply_relative_to_circulating_supply: compute_relative_to_all.then(|| {
+                ComputedVecsFromHeight::forced_import(
+                    path,
+                    &suffix("supply_relative_to_circulating_supply"),
+                    true,
+                    version,
+                    format,
+                    StorableVecGeneatorOptions::default().add_last(),
+                )
+                .unwrap()
+            }),
+            height_to_supply_even_relative_to_circulating_supply: (compute_relative_to_all
+                && compute_dollars)
+                .then(|| {
+                    EagerVec::forced_import(
+                        path,
+                        &suffix("supply_even_relative_to_circulating_supply"),
+                        version,
+                        format,
+                    )
+                    .unwrap()
+                }),
+            height_to_supply_in_loss_relative_to_circulating_supply: (compute_relative_to_all
+                && compute_dollars)
+                .then(|| {
+                    EagerVec::forced_import(
+                        path,
+                        &suffix("supply_in_loss_relative_to_circulating_supply"),
+                        version,
+                        format,
+                    )
+                    .unwrap()
+                }),
+            height_to_supply_in_profit_relative_to_circulating_supply: (compute_relative_to_all
+                && compute_dollars)
+                .then(|| {
+                    EagerVec::forced_import(
+                        path,
+                        &suffix("supply_in_profit_relative_to_circulating_supply"),
+                        version,
+                        format,
+                    )
+                    .unwrap()
+                }),
+            indexes_to_supply_even_relative_to_circulating_supply: (compute_relative_to_all
+                && compute_dollars)
+                .then(|| {
+                    ComputedVecsFromDateIndex::forced_import(
+                        path,
+                        &suffix("supply_even_relative_to_circulating_supply"),
+                        true,
+                        version,
+                        format,
+                        StorableVecGeneatorOptions::default().add_last(),
+                    )
+                    .unwrap()
+                }),
+            indexes_to_supply_in_loss_relative_to_circulating_supply: (compute_relative_to_all
+                && compute_dollars)
+                .then(|| {
+                    ComputedVecsFromDateIndex::forced_import(
+                        path,
+                        &suffix("supply_in_loss_relative_to_circulating_supply"),
+                        true,
+                        version,
+                        format,
+                        StorableVecGeneatorOptions::default().add_last(),
+                    )
+                    .unwrap()
+                }),
+            indexes_to_supply_in_profit_relative_to_circulating_supply: (compute_relative_to_all
+                && compute_dollars)
+                .then(|| {
+                    ComputedVecsFromDateIndex::forced_import(
+                        path,
+                        &suffix("supply_in_profit_relative_to_circulating_supply"),
+                        true,
+                        version,
+                        format,
+                        StorableVecGeneatorOptions::default().add_last(),
+                    )
+                    .unwrap()
+                }),
         })
     }
 
@@ -1444,13 +1666,13 @@ impl Vecs {
         Ok(())
     }
 
-    pub fn compute_rest(
+    #[allow(clippy::too_many_arguments)]
+    pub fn compute_rest_part1(
         &mut self,
         indexer: &Indexer,
         indexes: &indexes::Vecs,
         fetched: Option<&fetched::Vecs>,
         starting_indexes: &Indexes,
-        market: &market::Vecs,
         exit: &Exit,
     ) -> color_eyre::Result<()> {
         self.indexes_to_supply.compute_rest(
@@ -1484,6 +1706,42 @@ impl Vecs {
                 )
             },
         )?;
+
+        Ok(())
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    pub fn compute_rest_part2(
+        &mut self,
+        indexer: &Indexer,
+        indexes: &indexes::Vecs,
+        fetched: Option<&fetched::Vecs>,
+        starting_indexes: &Indexes,
+        market: &market::Vecs,
+        height_to_supply: &impl AnyIterableVec<Height, Sats>,
+        dateindex_to_supply: &impl AnyIterableVec<DateIndex, Sats>,
+        height_to_realized_cap: Option<&impl AnyIterableVec<Height, Dollars>>,
+        exit: &Exit,
+    ) -> color_eyre::Result<()> {
+        if let Some(v) = self
+            .indexes_to_supply_relative_to_circulating_supply
+            .as_mut()
+        {
+            v.compute_all(
+                indexer,
+                indexes,
+                starting_indexes,
+                exit,
+                |v, _, _, starting_indexes, exit| {
+                    v.compute_percentage(
+                        starting_indexes.height,
+                        &self.height_to_supply,
+                        height_to_supply,
+                        exit,
+                    )
+                },
+            )?;
+        }
 
         if let Some(indexes_to_realized_cap) = self.indexes_to_realized_cap.as_mut() {
             indexes_to_realized_cap.compute_rest(
@@ -1715,7 +1973,9 @@ impl Vecs {
                 .as_mut()
                 .unwrap()
                 .compute_rest(
+                    indexer,
                     indexes,
+                    fetched,
                     starting_indexes,
                     exit,
                     Some(self.dateindex_to_supply_in_profit.as_ref().unwrap()),
@@ -1724,13 +1984,17 @@ impl Vecs {
                 .as_mut()
                 .unwrap()
                 .compute_rest(
+                    indexer,
                     indexes,
+                    fetched,
                     starting_indexes,
                     exit,
                     Some(self.dateindex_to_supply_in_loss.as_ref().unwrap()),
                 )?;
             self.indexes_to_supply_even.as_mut().unwrap().compute_rest(
+                indexer,
                 indexes,
+                fetched,
                 starting_indexes,
                 exit,
                 Some(self.dateindex_to_supply_even.as_ref().unwrap()),
@@ -1859,6 +2123,216 @@ impl Vecs {
                         )
                     },
                 )?;
+
+            self.indexes_to_net_realized_profit_and_loss_relative_to_realized_cap
+                .as_mut()
+                .unwrap()
+                .compute_all(
+                    indexer,
+                    indexes,
+                    starting_indexes,
+                    exit,
+                    |vec, _, _, starting_indexes, exit| {
+                        vec.compute_percentage(
+                            starting_indexes.height,
+                            self.indexes_to_net_realized_profit_and_loss
+                                .as_ref()
+                                .unwrap()
+                                .height
+                                .as_ref()
+                                .unwrap(),
+                            *height_to_realized_cap.as_ref().unwrap(),
+                            exit,
+                        )
+                    },
+                )?;
+
+            self.height_to_supply_even_value
+                .as_mut()
+                .unwrap()
+                .compute_rest(
+                    fetched,
+                    starting_indexes,
+                    exit,
+                    Some(self.height_to_supply_even.as_ref().unwrap()),
+                )?;
+            self.height_to_supply_in_loss_value
+                .as_mut()
+                .unwrap()
+                .compute_rest(
+                    fetched,
+                    starting_indexes,
+                    exit,
+                    Some(self.height_to_supply_in_loss.as_ref().unwrap()),
+                )?;
+            self.height_to_supply_in_profit_value
+                .as_mut()
+                .unwrap()
+                .compute_rest(
+                    fetched,
+                    starting_indexes,
+                    exit,
+                    Some(self.height_to_supply_in_profit.as_ref().unwrap()),
+                )?;
+            self.height_to_supply_even_relative_to_own_supply
+                .as_mut()
+                .unwrap()
+                .compute_percentage(
+                    starting_indexes.height,
+                    self.height_to_supply_even.as_ref().unwrap(),
+                    &self.height_to_supply,
+                    exit,
+                )?;
+            self.height_to_supply_in_loss_relative_to_own_supply
+                .as_mut()
+                .unwrap()
+                .compute_percentage(
+                    starting_indexes.height,
+                    self.height_to_supply_in_loss.as_ref().unwrap(),
+                    &self.height_to_supply,
+                    exit,
+                )?;
+            self.height_to_supply_in_profit_relative_to_own_supply
+                .as_mut()
+                .unwrap()
+                .compute_percentage(
+                    starting_indexes.height,
+                    self.height_to_supply_even.as_ref().unwrap(),
+                    &self.height_to_supply,
+                    exit,
+                )?;
+            self.indexes_to_supply_even_relative_to_own_supply
+                .as_mut()
+                .unwrap()
+                .compute_all(
+                    indexer,
+                    indexes,
+                    starting_indexes,
+                    exit,
+                    |v, _, _, starting_indexes, exit| {
+                        v.compute_percentage(
+                            starting_indexes.dateindex,
+                            self.dateindex_to_supply_even.as_ref().unwrap(),
+                            self.indexes_to_supply.sats.dateindex.unwrap_last(),
+                            exit,
+                        )
+                    },
+                )?;
+            self.indexes_to_supply_in_loss_relative_to_own_supply
+                .as_mut()
+                .unwrap()
+                .compute_all(
+                    indexer,
+                    indexes,
+                    starting_indexes,
+                    exit,
+                    |v, _, _, starting_indexes, exit| {
+                        v.compute_percentage(
+                            starting_indexes.dateindex,
+                            self.dateindex_to_supply_even.as_ref().unwrap(),
+                            self.indexes_to_supply.sats.dateindex.unwrap_last(),
+                            exit,
+                        )
+                    },
+                )?;
+            self.indexes_to_supply_in_profit_relative_to_own_supply
+                .as_mut()
+                .unwrap()
+                .compute_all(
+                    indexer,
+                    indexes,
+                    starting_indexes,
+                    exit,
+                    |v, _, _, starting_indexes, exit| {
+                        v.compute_percentage(
+                            starting_indexes.dateindex,
+                            self.dateindex_to_supply_even.as_ref().unwrap(),
+                            self.indexes_to_supply.sats.dateindex.unwrap_last(),
+                            exit,
+                        )
+                    },
+                )?;
+
+            if let Some(height_to_supply_even_relative_to_circulating_supply) = self
+                .height_to_supply_even_relative_to_circulating_supply
+                .as_mut()
+            {
+                height_to_supply_even_relative_to_circulating_supply.compute_percentage(
+                    starting_indexes.height,
+                    self.height_to_supply_even.as_ref().unwrap(),
+                    height_to_supply,
+                    exit,
+                )?;
+                self.height_to_supply_in_loss_relative_to_circulating_supply
+                    .as_mut()
+                    .unwrap()
+                    .compute_percentage(
+                        starting_indexes.height,
+                        self.height_to_supply_in_loss.as_ref().unwrap(),
+                        height_to_supply,
+                        exit,
+                    )?;
+                self.height_to_supply_in_profit_relative_to_circulating_supply
+                    .as_mut()
+                    .unwrap()
+                    .compute_percentage(
+                        starting_indexes.height,
+                        self.height_to_supply_in_profit.as_ref().unwrap(),
+                        height_to_supply,
+                        exit,
+                    )?;
+                self.indexes_to_supply_even_relative_to_circulating_supply
+                    .as_mut()
+                    .unwrap()
+                    .compute_all(
+                        indexer,
+                        indexes,
+                        starting_indexes,
+                        exit,
+                        |v, _, _, starting_indexes, exit| {
+                            v.compute_percentage(
+                                starting_indexes.dateindex,
+                                self.dateindex_to_supply_even.as_ref().unwrap(),
+                                dateindex_to_supply,
+                                exit,
+                            )
+                        },
+                    )?;
+                self.indexes_to_supply_in_loss_relative_to_circulating_supply
+                    .as_mut()
+                    .unwrap()
+                    .compute_all(
+                        indexer,
+                        indexes,
+                        starting_indexes,
+                        exit,
+                        |v, _, _, starting_indexes, exit| {
+                            v.compute_percentage(
+                                starting_indexes.dateindex,
+                                self.dateindex_to_supply_in_loss.as_ref().unwrap(),
+                                dateindex_to_supply,
+                                exit,
+                            )
+                        },
+                    )?;
+                self.indexes_to_supply_in_profit_relative_to_circulating_supply
+                    .as_mut()
+                    .unwrap()
+                    .compute_all(
+                        indexer,
+                        indexes,
+                        starting_indexes,
+                        exit,
+                        |v, _, _, starting_indexes, exit| {
+                            v.compute_percentage(
+                                starting_indexes.dateindex,
+                                self.dateindex_to_supply_in_profit.as_ref().unwrap(),
+                                dateindex_to_supply,
+                                exit,
+                            )
+                        },
+                    )?;
+            }
         }
 
         Ok(())
@@ -2015,6 +2489,57 @@ impl Vecs {
                 .as_ref()
                 .map_or(vec![], |v| vec![v]),
             self.indexes_to_net_unrealized_profit_and_loss_relative_to_market_cap
+                .as_ref()
+                .map_or(vec![], |v| v.vecs()),
+            self.indexes_to_net_realized_profit_and_loss_relative_to_realized_cap
+                .as_ref()
+                .map_or(vec![], |v| v.vecs()),
+            self.height_to_supply_even_value
+                .as_ref()
+                .map_or(vec![], |v| v.vecs()),
+            self.height_to_supply_in_loss_value
+                .as_ref()
+                .map_or(vec![], |v| v.vecs()),
+            self.height_to_supply_in_profit_value
+                .as_ref()
+                .map_or(vec![], |v| v.vecs()),
+            self.height_to_supply_even_relative_to_own_supply
+                .as_ref()
+                .map_or(vec![], |v| vec![v]),
+            self.height_to_supply_in_loss_relative_to_own_supply
+                .as_ref()
+                .map_or(vec![], |v| vec![v]),
+            self.height_to_supply_in_profit_relative_to_own_supply
+                .as_ref()
+                .map_or(vec![], |v| vec![v]),
+            self.indexes_to_supply_even_relative_to_own_supply
+                .as_ref()
+                .map_or(vec![], |v| v.vecs()),
+            self.indexes_to_supply_in_loss_relative_to_own_supply
+                .as_ref()
+                .map_or(vec![], |v| v.vecs()),
+            self.indexes_to_supply_in_profit_relative_to_own_supply
+                .as_ref()
+                .map_or(vec![], |v| v.vecs()),
+            self.indexes_to_supply_relative_to_circulating_supply
+                .as_ref()
+                .map_or(vec![], |v| v.vecs()),
+            self.height_to_supply_even_relative_to_circulating_supply
+                .as_ref()
+                .map_or(vec![], |v| vec![v]),
+            self.height_to_supply_in_loss_relative_to_circulating_supply
+                .as_ref()
+                .map_or(vec![], |v| vec![v]),
+            self.height_to_supply_in_profit_relative_to_circulating_supply
+                .as_ref()
+                .map_or(vec![], |v| vec![v]),
+            self.indexes_to_supply_even_relative_to_circulating_supply
+                .as_ref()
+                .map_or(vec![], |v| v.vecs()),
+            self.indexes_to_supply_in_loss_relative_to_circulating_supply
+                .as_ref()
+                .map_or(vec![], |v| v.vecs()),
+            self.indexes_to_supply_in_profit_relative_to_circulating_supply
                 .as_ref()
                 .map_or(vec![], |v| v.vecs()),
         ]

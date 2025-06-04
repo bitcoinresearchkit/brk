@@ -27,7 +27,7 @@ minreq = { workspace = true }
 oxc = { version = "0.72.2", features = ["codegen", "minifier"] }
 serde = { workspace = true }
 tokio = { workspace = true }
-tower-http = { version = "0.6.5", features = ["compression-full", "trace"] }
+tower-http = { version = "0.6.6", features = ["compression-full", "trace"] }
 zip = "4.0.0"
 tracing = "0.1.41"
 

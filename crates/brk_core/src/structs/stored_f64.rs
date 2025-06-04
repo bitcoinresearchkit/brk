@@ -7,7 +7,7 @@ use derive_deref::Deref;
 use serde::Serialize;
 use zerocopy_derive::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
-use crate::CheckedSub;
+use crate::{CheckedSub, Sats};
 
 #[derive(
     Debug, Deref, Default, Clone, Copy, FromBytes, Immutable, IntoBytes, KnownLayout, Serialize,
@@ -94,5 +94,11 @@ impl Ord for StoredF64 {
             (false, true) => Ordering::Greater,
             (false, false) => self.0.partial_cmp(&other.0).unwrap(),
         }
+    }
+}
+
+impl From<Sats> for StoredF64 {
+    fn from(value: Sats) -> Self {
+        Self(u64::from(value) as f64)
     }
 }

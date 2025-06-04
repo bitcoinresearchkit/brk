@@ -39,6 +39,9 @@
  *   "Bool" |
  *   "Days" |
  *   "%mcap" |
+ *   "%rcap" |
+ *   "%self" |
+ *   "%all" |
  *   "Years" |
  *   "Locktime" |
  *   "sat/vB" |
@@ -702,7 +705,8 @@ function createUtils() {
     if (
       (!unit || thoroughUnitCheck) &&
       (id.includes("in-sats") ||
-        id.endsWith("supply") ||
+        (id.endsWith("supply") &&
+          !(id.endsWith("circulating-supply") || id.endsWith("-own-supply"))) ||
         id.endsWith("supply-even") ||
         id.endsWith("supply-in-profit") ||
         id.endsWith("supply-in-loss") ||
@@ -743,7 +747,7 @@ function createUtils() {
           !id.includes("ratio") &&
           !id.includes("relative-to")) ||
         (id.endsWith("sma") && !id.includes("ratio")) ||
-        id.endsWith("ath"))
+        id === "ath")
     ) {
       if (unit) throw Error(`Unit "${unit}" already assigned "${id}"`);
       unit = "USD";
@@ -878,6 +882,24 @@ function createUtils() {
       if (unit) throw Error(`Unit "${unit}" already assigned "${id}"`);
       unit = "%mcap";
     }
+    if (
+      (!unit || thoroughUnitCheck) &&
+      id.endsWith("relative-to-realized-cap")
+    ) {
+      if (unit) throw Error(`Unit "${unit}" already assigned "${id}"`);
+      unit = "%rcap";
+    }
+    if (
+      (!unit || thoroughUnitCheck) &&
+      id.endsWith("relative-to-circulating-supply")
+    ) {
+      if (unit) throw Error(`Unit "${unit}" already assigned "${id}"`);
+      unit = "%all";
+    }
+    if ((!unit || thoroughUnitCheck) && id.endsWith("relative-to-own-supply")) {
+      if (unit) throw Error(`Unit "${unit}" already assigned "${id}"`);
+      unit = "%self";
+    }
     if ((!unit || thoroughUnitCheck) && id.endsWith("epoch")) {
       if (unit) throw Error(`Unit "${unit}" already assigned "${id}"`);
       unit = "Epoch";
@@ -890,7 +912,10 @@ function createUtils() {
       if (unit) throw Error(`Unit "${unit}" already assigned "${id}"`);
       unit = "Hash";
     }
-    if ((!unit || thoroughUnitCheck) && id.includes("days-between")) {
+    if (
+      (!unit || thoroughUnitCheck) &&
+      (id.includes("days-between") || id.includes("days-since"))
+    ) {
       if (unit) throw Error(`Unit "${unit}" already assigned "${id}"`);
       unit = "Days";
     }

@@ -31,7 +31,7 @@ impl OutputFilter {
                 OutputFilter::All => false,
                 OutputFilter::To(to2) => to >= to2,
                 OutputFilter::Range(range) => range.end <= *to,
-                OutputFilter::From(_) => true,
+                OutputFilter::From(_) => false,
                 OutputFilter::Epoch(_) => false,
                 OutputFilter::Type(_) => false,
             },
