@@ -1,7 +1,8 @@
+use core::panic;
 use std::{fs, path::Path};
 
 use brk_core::{
-    DateIndex, Dollars, Height, Result, Sats, StoredF32, StoredF64, StoredUsize, Version,
+    Bitcoin, DateIndex, Dollars, Height, Result, Sats, StoredF32, StoredF64, StoredUsize, Version,
 };
 use brk_exit::Exit;
 use brk_indexer::Indexer;
@@ -16,8 +17,7 @@ use crate::vecs::{
     Indexes, fetched,
     grouped::{
         ComputedHeightValueVecs, ComputedRatioVecsFromDateIndex, ComputedValueVecsFromDateIndex,
-        ComputedValueVecsFromHeight, ComputedVecsFromDateIndex, ComputedVecsFromHeight,
-        StorableVecGeneatorOptions,
+        ComputedVecsFromDateIndex, ComputedVecsFromHeight, StorableVecGeneatorOptions,
     },
     indexes, market,
 };
@@ -52,7 +52,11 @@ pub struct Vecs {
     pub height_to_unrealized_profit: Option<EagerVec<Height, Dollars>>,
     pub height_to_value_created: Option<EagerVec<Height, Dollars>>,
     pub height_to_value_destroyed: Option<EagerVec<Height, Dollars>>,
+    pub height_to_satblocks_destroyed: EagerVec<Height, Sats>,
+    pub height_to_satdays_destroyed: EagerVec<Height, Sats>,
 
+    pub indexes_to_coinblocks_destroyed: ComputedVecsFromHeight<Bitcoin>,
+    pub indexes_to_coindays_destroyed: ComputedVecsFromHeight<Bitcoin>,
     pub dateindex_to_adjusted_spent_output_profit_ratio: Option<EagerVec<DateIndex, StoredF32>>,
     pub dateindex_to_realized_cap_30d_change: Option<EagerVec<DateIndex, Dollars>>,
     pub dateindex_to_sell_side_risk_ratio: Option<EagerVec<DateIndex, StoredF32>>,
@@ -67,7 +71,8 @@ pub struct Vecs {
     pub indexes_to_realized_price_extra: Option<ComputedRatioVecsFromDateIndex>,
     pub indexes_to_realized_profit: Option<ComputedVecsFromHeight<Dollars>>,
     pub indexes_to_realized_value: Option<ComputedVecsFromHeight<Dollars>>,
-    pub indexes_to_supply: ComputedValueVecsFromHeight,
+    pub height_to_supply_value: ComputedHeightValueVecs,
+    pub indexes_to_supply: ComputedValueVecsFromDateIndex,
     pub indexes_to_utxo_count: ComputedVecsFromHeight<StoredUsize>,
     pub indexes_to_value_created: Option<ComputedVecsFromHeight<Dollars>>,
     pub indexes_to_value_destroyed: Option<ComputedVecsFromHeight<Dollars>>,
@@ -75,7 +80,8 @@ pub struct Vecs {
     pub indexes_to_unrealized_loss: Option<ComputedVecsFromDateIndex<Dollars>>,
     pub indexes_to_min_price_paid: Option<ComputedVecsFromHeight<Dollars>>,
     pub indexes_to_max_price_paid: Option<ComputedVecsFromHeight<Dollars>>,
-    pub indexes_to_halved_supply: ComputedValueVecsFromHeight,
+    pub height_to_halved_supply_value: ComputedHeightValueVecs,
+    pub indexes_to_halved_supply: ComputedValueVecsFromDateIndex,
     pub height_to_negative_unrealized_loss: Option<EagerVec<Height, Dollars>>,
     pub indexes_to_negative_unrealized_loss: Option<ComputedVecsFromDateIndex<Dollars>>,
     pub height_to_net_unrealized_profit_and_loss: Option<EagerVec<Height, Dollars>>,
@@ -139,7 +145,7 @@ impl Vecs {
             keyspace,
             stores_path,
             cohort_name.unwrap_or_default(),
-            version,
+            version + VERSION + Version::ZERO,
             compute_dollars,
         )?;
 
@@ -361,11 +367,19 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
             )?,
-            indexes_to_supply: ComputedValueVecsFromHeight::forced_import(
+            height_to_supply_value: ComputedHeightValueVecs::forced_import(
                 path,
                 &suffix("supply"),
                 false,
                 version + VERSION + Version::ZERO,
+                format,
+                compute_dollars,
+            )?,
+            indexes_to_supply: ComputedValueVecsFromDateIndex::forced_import(
+                path,
+                &suffix("supply"),
+                true,
+                version + VERSION + Version::ONE,
                 format,
                 StorableVecGeneatorOptions::default().add_last(),
                 compute_dollars,
@@ -595,7 +609,15 @@ impl Vecs {
                 )
                 .unwrap()
             }),
-            indexes_to_halved_supply: ComputedValueVecsFromHeight::forced_import(
+            height_to_halved_supply_value: ComputedHeightValueVecs::forced_import(
+                path,
+                &suffix("halved_supply"),
+                true,
+                version + VERSION + Version::ZERO,
+                format,
+                compute_dollars,
+            )?,
+            indexes_to_halved_supply: ComputedValueVecsFromDateIndex::forced_import(
                 path,
                 &suffix("halved_supply"),
                 true,
@@ -604,7 +626,6 @@ impl Vecs {
                 StorableVecGeneatorOptions::default().add_last(),
                 compute_dollars,
             )?,
-
             height_to_negative_unrealized_loss: compute_dollars.then(|| {
                 EagerVec::forced_import(
                     path,
@@ -687,7 +708,7 @@ impl Vecs {
                     path,
                     &suffix("supply_even"),
                     false,
-                    version,
+                    version + VERSION + Version::ZERO,
                     format,
                     compute_dollars,
                 )
@@ -698,7 +719,7 @@ impl Vecs {
                     path,
                     &suffix("supply_in_loss"),
                     false,
-                    version,
+                    version + VERSION + Version::ZERO,
                     format,
                     compute_dollars,
                 )
@@ -709,7 +730,7 @@ impl Vecs {
                     path,
                     &suffix("supply_in_profit"),
                     false,
-                    version,
+                    version + VERSION + Version::ZERO,
                     format,
                     compute_dollars,
                 )
@@ -719,7 +740,7 @@ impl Vecs {
                 EagerVec::forced_import(
                     path,
                     &suffix("supply_even_relative_to_own_supply"),
-                    version,
+                    version + VERSION + Version::ZERO,
                     format,
                 )
                 .unwrap()
@@ -728,7 +749,7 @@ impl Vecs {
                 EagerVec::forced_import(
                     path,
                     &suffix("supply_in_loss_relative_to_own_supply"),
-                    version,
+                    version + VERSION + Version::ZERO,
                     format,
                 )
                 .unwrap()
@@ -737,7 +758,7 @@ impl Vecs {
                 EagerVec::forced_import(
                     path,
                     &suffix("supply_in_profit_relative_to_own_supply"),
-                    version,
+                    version + VERSION + Version::ZERO,
                     format,
                 )
                 .unwrap()
@@ -747,7 +768,7 @@ impl Vecs {
                     path,
                     &suffix("supply_even_relative_to_own_supply"),
                     true,
-                    version,
+                    version + VERSION + Version::ZERO,
                     format,
                     StorableVecGeneatorOptions::default().add_last(),
                 )
@@ -758,7 +779,7 @@ impl Vecs {
                     path,
                     &suffix("supply_in_loss_relative_to_own_supply"),
                     true,
-                    version,
+                    version + VERSION + Version::ZERO,
                     format,
                     StorableVecGeneatorOptions::default().add_last(),
                 )
@@ -769,7 +790,7 @@ impl Vecs {
                     path,
                     &suffix("supply_in_profit_relative_to_own_supply"),
                     true,
-                    version,
+                    version + VERSION + Version::ZERO,
                     format,
                     StorableVecGeneatorOptions::default().add_last(),
                 )
@@ -780,7 +801,7 @@ impl Vecs {
                     path,
                     &suffix("supply_relative_to_circulating_supply"),
                     true,
-                    version,
+                    version + VERSION + Version::ZERO,
                     format,
                     StorableVecGeneatorOptions::default().add_last(),
                 )
@@ -792,7 +813,7 @@ impl Vecs {
                     EagerVec::forced_import(
                         path,
                         &suffix("supply_even_relative_to_circulating_supply"),
-                        version,
+                        version + VERSION + Version::ZERO,
                         format,
                     )
                     .unwrap()
@@ -803,7 +824,7 @@ impl Vecs {
                     EagerVec::forced_import(
                         path,
                         &suffix("supply_in_loss_relative_to_circulating_supply"),
-                        version,
+                        version + VERSION + Version::ZERO,
                         format,
                     )
                     .unwrap()
@@ -814,7 +835,7 @@ impl Vecs {
                     EagerVec::forced_import(
                         path,
                         &suffix("supply_in_profit_relative_to_circulating_supply"),
-                        version,
+                        version + VERSION + Version::ZERO,
                         format,
                     )
                     .unwrap()
@@ -826,7 +847,7 @@ impl Vecs {
                         path,
                         &suffix("supply_even_relative_to_circulating_supply"),
                         true,
-                        version,
+                        version + VERSION + Version::ZERO,
                         format,
                         StorableVecGeneatorOptions::default().add_last(),
                     )
@@ -839,7 +860,7 @@ impl Vecs {
                         path,
                         &suffix("supply_in_loss_relative_to_circulating_supply"),
                         true,
-                        version,
+                        version + VERSION + Version::ZERO,
                         format,
                         StorableVecGeneatorOptions::default().add_last(),
                     )
@@ -852,12 +873,44 @@ impl Vecs {
                         path,
                         &suffix("supply_in_profit_relative_to_circulating_supply"),
                         true,
-                        version,
+                        version + VERSION + Version::ZERO,
                         format,
                         StorableVecGeneatorOptions::default().add_last(),
                     )
                     .unwrap()
                 }),
+            height_to_satblocks_destroyed: EagerVec::forced_import(
+                path,
+                &suffix("satblocks_destroyed"),
+                version + VERSION + Version::ZERO,
+                format,
+            )?,
+            height_to_satdays_destroyed: EagerVec::forced_import(
+                path,
+                &suffix("satdays_destroyed"),
+                version + VERSION + Version::ZERO,
+                format,
+            )?,
+            indexes_to_coinblocks_destroyed: ComputedVecsFromHeight::forced_import(
+                path,
+                &suffix("coinblocks_destroyed"),
+                true,
+                version + VERSION + Version::ZERO,
+                format,
+                StorableVecGeneatorOptions::default()
+                    .add_sum()
+                    .add_cumulative(),
+            )?,
+            indexes_to_coindays_destroyed: ComputedVecsFromHeight::forced_import(
+                path,
+                &suffix("coindays_destroyed"),
+                true,
+                version + VERSION + Version::ZERO,
+                format,
+                StorableVecGeneatorOptions::default()
+                    .add_sum()
+                    .add_cumulative(),
+            )?,
         })
     }
 
@@ -911,6 +964,8 @@ impl Vecs {
             self.height_to_max_price_paid
                 .as_ref()
                 .map_or(usize::MAX, |v| v.len()),
+            self.height_to_satdays_destroyed.len(),
+            self.height_to_satblocks_destroyed.len(),
         ]
         .into_iter()
         .map(Height::from)
@@ -954,6 +1009,16 @@ impl Vecs {
         self.height_to_utxo_count
             .validate_computed_version_or_reset_file(
                 base_version + self.height_to_utxo_count.inner_version(),
+            )?;
+
+        self.height_to_satblocks_destroyed
+            .validate_computed_version_or_reset_file(
+                base_version + self.height_to_satblocks_destroyed.inner_version(),
+            )?;
+
+        self.height_to_satdays_destroyed
+            .validate_computed_version_or_reset_file(
+                base_version + self.height_to_satdays_destroyed.inner_version(),
             )?;
 
         if let Some(height_to_realized_cap) = self.height_to_realized_cap.as_mut().as_mut() {
@@ -1175,6 +1240,18 @@ impl Vecs {
             exit,
         )?;
 
+        self.height_to_satblocks_destroyed.forced_push_at(
+            height,
+            self.state.satblocks_destroyed,
+            exit,
+        )?;
+
+        self.height_to_satdays_destroyed.forced_push_at(
+            height,
+            self.state.satdays_destroyed,
+            exit,
+        )?;
+
         if let Some(height_to_realized_cap) = self.height_to_realized_cap.as_mut() {
             let realized = self.state.realized.as_ref().unwrap_or_else(|| {
                 dbg!((&self.state.realized, &self.state.supply));
@@ -1301,8 +1378,9 @@ impl Vecs {
 
     pub fn safe_flush_stateful_vecs(&mut self, height: Height, exit: &Exit) -> Result<()> {
         self.height_to_supply.safe_flush(exit)?;
-
         self.height_to_utxo_count.safe_flush(exit)?;
+        self.height_to_satdays_destroyed.safe_flush(exit)?;
+        self.height_to_satblocks_destroyed.safe_flush(exit)?;
 
         if let Some(height_to_realized_cap) = self.height_to_realized_cap.as_mut() {
             height_to_realized_cap.safe_flush(exit)?;
@@ -1405,6 +1483,24 @@ impl Vecs {
             others
                 .iter()
                 .map(|v| &v.height_to_utxo_count)
+                .collect::<Vec<_>>()
+                .as_slice(),
+            exit,
+        )?;
+        self.height_to_satblocks_destroyed.compute_sum_of_others(
+            starting_indexes.height,
+            others
+                .iter()
+                .map(|v| &v.height_to_satblocks_destroyed)
+                .collect::<Vec<_>>()
+                .as_slice(),
+            exit,
+        )?;
+        self.height_to_satdays_destroyed.compute_sum_of_others(
+            starting_indexes.height,
+            others
+                .iter()
+                .map(|v| &v.height_to_satdays_destroyed)
                 .collect::<Vec<_>>()
                 .as_slice(),
             exit,
@@ -1675,13 +1771,37 @@ impl Vecs {
         starting_indexes: &Indexes,
         exit: &Exit,
     ) -> color_eyre::Result<()> {
-        self.indexes_to_supply.compute_rest(
+        self.height_to_supply_value.compute_rest(
+            fetched,
+            starting_indexes,
+            exit,
+            Some(&self.height_to_supply),
+        )?;
+
+        self.indexes_to_supply.compute_all(
             indexer,
             indexes,
             fetched,
             starting_indexes,
             exit,
-            Some(&self.height_to_supply),
+            |v, _, indexes, starting_indexes, exit| {
+                let mut dateindex_to_height_count_iter =
+                    indexes.dateindex_to_height_count.into_iter();
+                let mut height_to_supply_iter = self.height_to_supply.into_iter();
+                v.compute_transform(
+                    starting_indexes.dateindex,
+                    &indexes.dateindex_to_first_height,
+                    |(i, height, ..)| {
+                        let count = dateindex_to_height_count_iter.unwrap_get_inner(i);
+                        if count == StoredUsize::default() {
+                            unreachable!()
+                        }
+                        let supply = height_to_supply_iter.unwrap_get_inner(height + (*count - 1));
+                        (i, supply)
+                    },
+                    exit,
+                )
+            },
         )?;
 
         self.indexes_to_utxo_count.compute_rest(
@@ -1689,6 +1809,22 @@ impl Vecs {
             starting_indexes,
             exit,
             Some(&self.height_to_utxo_count),
+        )?;
+
+        self.height_to_halved_supply_value.compute_all(
+            indexer,
+            indexes,
+            fetched,
+            starting_indexes,
+            exit,
+            |v, _, _, starting_indexes, exit| {
+                v.compute_transform(
+                    starting_indexes.height,
+                    &self.height_to_supply,
+                    |(h, v, ..)| (h, v / 2),
+                    exit,
+                )
+            },
         )?;
 
         self.indexes_to_halved_supply.compute_all(
@@ -1699,9 +1835,37 @@ impl Vecs {
             exit,
             |v, _, _, starting_indexes, exit| {
                 v.compute_transform(
+                    starting_indexes.dateindex,
+                    self.indexes_to_supply.sats.dateindex.as_ref().unwrap(),
+                    |(i, sats, ..)| (i, sats / 2),
+                    exit,
+                )
+            },
+        )?;
+
+        self.indexes_to_coinblocks_destroyed.compute_all(
+            indexer,
+            indexes,
+            starting_indexes,
+            exit,
+            |v, _, _, starting_indexes, exit| {
+                v.compute_from_sats(
                     starting_indexes.height,
-                    &self.height_to_supply,
-                    |(h, sats, ..)| (h, sats / 2),
+                    &self.height_to_satblocks_destroyed,
+                    exit,
+                )
+            },
+        )?;
+
+        self.indexes_to_coindays_destroyed.compute_all(
+            indexer,
+            indexes,
+            starting_indexes,
+            exit,
+            |v, _, _, starting_indexes, exit| {
+                v.compute_from_sats(
+                    starting_indexes.height,
+                    &self.height_to_satdays_destroyed,
                     exit,
                 )
             },
@@ -1718,8 +1882,8 @@ impl Vecs {
         fetched: Option<&fetched::Vecs>,
         starting_indexes: &Indexes,
         market: &market::Vecs,
-        height_to_supply: &impl AnyIterableVec<Height, Sats>,
-        dateindex_to_supply: &impl AnyIterableVec<DateIndex, Sats>,
+        height_to_supply: &impl AnyIterableVec<Height, Bitcoin>,
+        dateindex_to_supply: &impl AnyIterableVec<DateIndex, Bitcoin>,
         height_to_realized_cap: Option<&impl AnyIterableVec<Height, Dollars>>,
         exit: &Exit,
     ) -> color_eyre::Result<()> {
@@ -1735,7 +1899,7 @@ impl Vecs {
                 |v, _, _, starting_indexes, exit| {
                     v.compute_percentage(
                         starting_indexes.height,
-                        &self.height_to_supply,
+                        &self.height_to_supply_value.bitcoin,
                         height_to_supply,
                         exit,
                     )
@@ -1763,7 +1927,7 @@ impl Vecs {
                         vec.compute_divide(
                             starting_indexes.height,
                             self.height_to_realized_cap.as_ref().unwrap(),
-                            self.indexes_to_supply.bitcoin.height.as_ref().unwrap(),
+                            &self.height_to_supply_value.bitcoin,
                             exit,
                         )
                     },
@@ -2213,7 +2377,7 @@ impl Vecs {
                         v.compute_percentage(
                             starting_indexes.dateindex,
                             self.dateindex_to_supply_even.as_ref().unwrap(),
-                            self.indexes_to_supply.sats.dateindex.unwrap_last(),
+                            self.indexes_to_supply.sats.dateindex.as_ref().unwrap(),
                             exit,
                         )
                     },
@@ -2230,7 +2394,7 @@ impl Vecs {
                         v.compute_percentage(
                             starting_indexes.dateindex,
                             self.dateindex_to_supply_even.as_ref().unwrap(),
-                            self.indexes_to_supply.sats.dateindex.unwrap_last(),
+                            self.indexes_to_supply.sats.dateindex.as_ref().unwrap(),
                             exit,
                         )
                     },
@@ -2247,7 +2411,7 @@ impl Vecs {
                         v.compute_percentage(
                             starting_indexes.dateindex,
                             self.dateindex_to_supply_even.as_ref().unwrap(),
-                            self.indexes_to_supply.sats.dateindex.unwrap_last(),
+                            self.indexes_to_supply.sats.dateindex.as_ref().unwrap(),
                             exit,
                         )
                     },
@@ -2259,7 +2423,7 @@ impl Vecs {
             {
                 height_to_supply_even_relative_to_circulating_supply.compute_percentage(
                     starting_indexes.height,
-                    self.height_to_supply_even.as_ref().unwrap(),
+                    &self.height_to_supply_even_value.as_ref().unwrap().bitcoin,
                     height_to_supply,
                     exit,
                 )?;
@@ -2268,7 +2432,11 @@ impl Vecs {
                     .unwrap()
                     .compute_percentage(
                         starting_indexes.height,
-                        self.height_to_supply_in_loss.as_ref().unwrap(),
+                        &self
+                            .height_to_supply_in_loss_value
+                            .as_ref()
+                            .unwrap()
+                            .bitcoin,
                         height_to_supply,
                         exit,
                     )?;
@@ -2277,7 +2445,11 @@ impl Vecs {
                     .unwrap()
                     .compute_percentage(
                         starting_indexes.height,
-                        self.height_to_supply_in_profit.as_ref().unwrap(),
+                        &self
+                            .height_to_supply_in_profit_value
+                            .as_ref()
+                            .unwrap()
+                            .bitcoin,
                         height_to_supply,
                         exit,
                     )?;
@@ -2292,7 +2464,13 @@ impl Vecs {
                         |v, _, _, starting_indexes, exit| {
                             v.compute_percentage(
                                 starting_indexes.dateindex,
-                                self.dateindex_to_supply_even.as_ref().unwrap(),
+                                self.indexes_to_supply_even
+                                    .as_ref()
+                                    .unwrap()
+                                    .bitcoin
+                                    .dateindex
+                                    .as_ref()
+                                    .unwrap(),
                                 dateindex_to_supply,
                                 exit,
                             )
@@ -2309,7 +2487,13 @@ impl Vecs {
                         |v, _, _, starting_indexes, exit| {
                             v.compute_percentage(
                                 starting_indexes.dateindex,
-                                self.dateindex_to_supply_in_loss.as_ref().unwrap(),
+                                self.indexes_to_supply_in_loss
+                                    .as_ref()
+                                    .unwrap()
+                                    .bitcoin
+                                    .dateindex
+                                    .as_ref()
+                                    .unwrap(),
                                 dateindex_to_supply,
                                 exit,
                             )
@@ -2326,7 +2510,13 @@ impl Vecs {
                         |v, _, _, starting_indexes, exit| {
                             v.compute_percentage(
                                 starting_indexes.dateindex,
-                                self.dateindex_to_supply_in_profit.as_ref().unwrap(),
+                                self.indexes_to_supply_in_profit
+                                    .as_ref()
+                                    .unwrap()
+                                    .bitcoin
+                                    .dateindex
+                                    .as_ref()
+                                    .unwrap(),
                                 dateindex_to_supply,
                                 exit,
                             )
@@ -2343,10 +2533,14 @@ impl Vecs {
             vec![
                 &self.height_to_supply as &dyn AnyCollectableVec,
                 &self.height_to_utxo_count,
+                &self.height_to_satblocks_destroyed,
+                &self.height_to_satdays_destroyed,
             ],
             self.height_to_realized_cap
                 .as_ref()
                 .map_or(vec![], |v| vec![v as &dyn AnyCollectableVec]),
+            self.height_to_supply_value.vecs(),
+            self.height_to_halved_supply_value.vecs(),
             self.indexes_to_supply.vecs(),
             self.indexes_to_utxo_count.vecs(),
             self.indexes_to_realized_cap
@@ -2542,6 +2736,8 @@ impl Vecs {
             self.indexes_to_supply_in_profit_relative_to_circulating_supply
                 .as_ref()
                 .map_or(vec![], |v| v.vecs()),
+            self.indexes_to_coinblocks_destroyed.vecs(),
+            self.indexes_to_coindays_destroyed.vecs(),
         ]
         .into_iter()
         .flatten()

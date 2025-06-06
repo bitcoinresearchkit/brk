@@ -503,8 +503,6 @@ export default import("./v5.0.6-treeshaked/script.js").then((lc) => {
 
         const paneIndex = _paneIndex ?? 0;
 
-        console.log("OPTIONS", options);
-
         const series = ichart.addSeries(
           /** @type {SeriesDefinition<'Baseline'>} */ (lc.BaselineSeries),
           {

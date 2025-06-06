@@ -24,6 +24,7 @@ impl<'a> VecTrees<'a> {
                         || s.ends_with("relative")
                         || s.starts_with("from")
                         || s == &"cumulative_up"
+                        || s.starts_with("cumulative_start")
                         || s.starts_with("cumulative_from")
                 }))
             && !(split.len() == 4

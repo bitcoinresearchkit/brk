@@ -29,7 +29,7 @@ use super::{
 pub mod cohort;
 mod outputs;
 
-const VERSION: Version = Version::new(9);
+const VERSION: Version = Version::new(5);
 
 #[derive(Clone)]
 pub struct Vecs {
@@ -40,10 +40,6 @@ pub struct Vecs {
     pub indexes_to_unspendable_supply: ComputedValueVecsFromHeight,
     pub height_to_opreturn_supply: EagerVec<Height, Sats>,
     pub indexes_to_opreturn_supply: ComputedValueVecsFromHeight,
-    // pub height_to_satdays_destroyed: EagerVec<Height, Sats>,
-    // pub indexes_to_satdays_destroyed: ComputedValueVecsFromHeight,
-    // pub height_to_satblocks_destroyed: EagerVec<Height, Sats>,
-    // pub indexes_to_satblocks_destroyed: ComputedValueVecsFromHeight,
     utxos_vecs: Outputs<(OutputFilter, cohort::Vecs)>,
 }
 
@@ -102,36 +98,6 @@ impl Vecs {
                 StorableVecGeneatorOptions::default().add_last(),
                 compute_dollars,
             )?,
-            // height_to_satdays_destroyed: EagerVec::forced_import(
-            //     path,
-            //     "satdays_destroyed",
-            //     version,
-            //     format,
-            // )?,
-            // indexes_to_satdays_destroyed: ComputedValueVecsFromHeight::forced_import(
-            //     path,
-            //     "satdays_destroyed",
-            //     false,
-            //     version + VERSION + Version::ZERO,
-            //     format,
-            //     StorableVecGeneatorOptions::default().add_last(),
-            //     compute_dollars,
-            // )?,
-            // height_to_satblocks_destroyed: EagerVec::forced_import(
-            //     path,
-            //     "satblocks_destroyed",
-            //     version,
-            //     format,
-            // )?,
-            // indexes_to_satblocks_destroyed: ComputedValueVecsFromHeight::forced_import(
-            //     path,
-            //     "satblocks_destroyed",
-            //     false,
-            //     version + VERSION + Version::ZERO,
-            //     format,
-            //     StorableVecGeneatorOptions::default().add_last(),
-            //     compute_dollars,
-            // )?,
             utxos_vecs: {
                 Outputs::<(OutputFilter, cohort::Vecs)>::from(Outputs {
                     all: cohort::Vecs::forced_import(
@@ -603,9 +569,9 @@ impl Vecs {
                             &stores_path,
                             true,
                         )?,
-                        _1m_to_3m: cohort::Vecs::forced_import(
+                        _1m_to_2m: cohort::Vecs::forced_import(
                             path,
-                            Some("from_1m_to_3m"),
+                            Some("from_1m_to_2m"),
                             _computation,
                             format,
                             version + VERSION + Version::ZERO,
@@ -614,9 +580,42 @@ impl Vecs {
                             &stores_path,
                             true,
                         )?,
-                        _3m_to_6m: cohort::Vecs::forced_import(
+                        _2m_to_3m: cohort::Vecs::forced_import(
                             path,
-                            Some("from_3m_to_6m"),
+                            Some("from_2m_to_3m"),
+                            _computation,
+                            format,
+                            version + VERSION + Version::ZERO,
+                            fetched,
+                            keyspace,
+                            &stores_path,
+                            true,
+                        )?,
+                        _3m_to_4m: cohort::Vecs::forced_import(
+                            path,
+                            Some("from_3m_to_4m"),
+                            _computation,
+                            format,
+                            version + VERSION + Version::ZERO,
+                            fetched,
+                            keyspace,
+                            &stores_path,
+                            true,
+                        )?,
+                        _4m_to_5m: cohort::Vecs::forced_import(
+                            path,
+                            Some("from_4m_to_5m"),
+                            _computation,
+                            format,
+                            version + VERSION + Version::ZERO,
+                            fetched,
+                            keyspace,
+                            &stores_path,
+                            true,
+                        )?,
+                        _5m_to_6m: cohort::Vecs::forced_import(
+                            path,
+                            Some("from_5m_to_6m"),
                             _computation,
                             format,
                             version + VERSION + Version::ZERO,
@@ -680,9 +679,9 @@ impl Vecs {
                             &stores_path,
                             true,
                         )?,
-                        _5y_to_7y: cohort::Vecs::forced_import(
+                        _5y_to_6y: cohort::Vecs::forced_import(
                             path,
-                            Some("from_5y_to_7y"),
+                            Some("from_5y_to_6y"),
                             _computation,
                             format,
                             version + VERSION + Version::ZERO,
@@ -691,9 +690,31 @@ impl Vecs {
                             &stores_path,
                             true,
                         )?,
-                        _7y_to_10y: cohort::Vecs::forced_import(
+                        _6y_to_7y: cohort::Vecs::forced_import(
                             path,
-                            Some("from_7y_to_10y"),
+                            Some("from_6y_to_7y"),
+                            _computation,
+                            format,
+                            version + VERSION + Version::ZERO,
+                            fetched,
+                            keyspace,
+                            &stores_path,
+                            true,
+                        )?,
+                        _7y_to_8y: cohort::Vecs::forced_import(
+                            path,
+                            Some("from_7y_to_8y"),
+                            _computation,
+                            format,
+                            version + VERSION + Version::ZERO,
+                            fetched,
+                            keyspace,
+                            &stores_path,
+                            true,
+                        )?,
+                        _8y_to_10y: cohort::Vecs::forced_import(
+                            path,
+                            Some("from_8y_to_10y"),
                             _computation,
                             format,
                             version + VERSION + Version::ZERO,
@@ -1377,14 +1398,6 @@ impl Vecs {
             .validate_computed_version_or_reset_file(
                 base_version + self.height_to_opreturn_supply.inner_version(),
             )?;
-        // self.height_to_satblocks_destroyed
-        //     .validate_computed_version_or_reset_file(
-        //         base_version + self.height_to_satblocks_destroyed.inner_version(),
-        //     )?;
-        // self.height_to_satdays_destroyed
-        //     .validate_computed_version_or_reset_file(
-        //         base_version + self.height_to_satdays_destroyed.inner_version(),
-        //     )?;
 
         let mut chain_state: Vec<BlockState>;
         let mut chain_state_starting_height = Height::from(self.chain_state.len());
@@ -1437,8 +1450,6 @@ impl Vecs {
             .min(stateful_starting_height)
             .min(Height::from(self.height_to_unspendable_supply.len()))
             .min(Height::from(self.height_to_opreturn_supply.len()));
-        // .min(Height::from(self.height_to_satblocks_destroyed.len()));
-        // .min(Height::from(self.height_to_satdays_destroyed.len()));
 
         // ---
         // INIT
@@ -1462,20 +1473,6 @@ impl Vecs {
         } else {
             Sats::ZERO
         };
-        // let mut satblocks_destroyed = if let Some(prev_height) = starting_height.decremented() {
-        //     self.height_to_satblocks_destroyed
-        //         .into_iter()
-        //         .unwrap_get_inner(prev_height)
-        // } else {
-        //     Sats::ZERO
-        // };
-        // let mut satdays_destroyed = if let Some(prev_height) = starting_height.decremented() {
-        //     self.height_to_satdays_destroyed
-        //         .into_iter()
-        //         .unwrap_get_inner(prev_height)
-        // } else {
-        //     Sats::ZERO
-        // };
 
         let mut height = starting_height;
         starting_indexes.update_from_height(height, indexes);
@@ -1717,18 +1714,16 @@ impl Vecs {
             .try_for_each(|(_, v)| {
                 v.compute_rest_part1(indexer, indexes, fetched, &starting_indexes, exit)
             })?;
-        let height_to_supply = self.utxos_vecs.all.1.height_to_supply.clone();
+        let height_to_supply = self.utxos_vecs.all.1.height_to_supply_value.bitcoin.clone();
         let dateindex_to_supply = self
             .utxos_vecs
             .all
             .1
             .indexes_to_supply
-            .sats
+            .bitcoin
             .dateindex
-            .unwrap_last()
             .clone();
         let height_to_realized_cap = self.utxos_vecs.all.1.height_to_realized_cap.clone();
-        let height_to_realized_cap = height_to_realized_cap.as_ref();
         self.utxos_vecs
             .as_mut_vecs()
             .par_iter_mut()
@@ -1740,8 +1735,8 @@ impl Vecs {
                     &starting_indexes,
                     market,
                     &height_to_supply,
-                    &dateindex_to_supply,
-                    height_to_realized_cap,
+                    dateindex_to_supply.as_ref().unwrap(),
+                    height_to_realized_cap.as_ref(),
                     exit,
                 )
             })?;
@@ -1761,22 +1756,6 @@ impl Vecs {
             exit,
             Some(&self.height_to_opreturn_supply),
         )?;
-        // self.indexes_to_satblocks_destroyed.compute_rest(
-        //     indexer,
-        //     indexes,
-        //     fetched,
-        //     &starting_indexes,
-        //     exit,
-        //     Some(&self.height_to_satblocks_destroyed),
-        // )?;
-        // self.indexes_to_satdays_destroyed.compute_rest(
-        //     indexer,
-        //     indexes,
-        //     fetched,
-        //     &starting_indexes,
-        //     exit,
-        //     Some(&self.height_to_satdays_destroyed),
-        // )?;
 
         exit.release();
 
@@ -1795,8 +1774,6 @@ impl Vecs {
             .try_for_each(|(_, v)| v.safe_flush_stateful_vecs(height, exit))?;
         self.height_to_unspendable_supply.safe_flush(exit)?;
         self.height_to_opreturn_supply.safe_flush(exit)?;
-        // self.height_to_satblocks_destroyed.safe_flush(exit)?;
-        // self.height_to_satdays_destroyed.safe_flush(exit)?;
 
         self.chain_state.truncate_if_needed(Height::ZERO)?;
         chain_state.iter().for_each(|block_state| {
@@ -1820,16 +1797,6 @@ impl Vecs {
                 &self.height_to_unspendable_supply,
                 &self.height_to_opreturn_supply,
             ],
-            // self.indexes_to_satblocks_destroyed.vecs(),
-            // vec![
-            //     &self.height_to_unspendable_supply,
-            //     &self.height_to_satblocks_destroyed,
-            // ],
-            // self.indexes_to_satdays_destroyed.vecs(),
-            // vec![
-            //     &self.height_to_unspendable_supply,
-            //     &self.height_to_satdays_destroyed,
-            // ],
         ]
         .into_iter()
         .flatten()

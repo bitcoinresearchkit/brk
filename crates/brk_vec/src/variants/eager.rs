@@ -408,20 +408,23 @@ where
         T: From<T4>,
     {
         self.validate_computed_version_or_reset_file(
-            Version::ZERO + self.inner.version() + divided.version() + divider.version(),
+            Version::ONE + self.inner.version() + divided.version() + divider.version(),
         )?;
 
         let index = max_from.min(I::from(self.len()));
         let multiplier = if as_percentage { 100 } else { 1 };
-        let subtract = if as_difference { multiplier } else { 0 };
 
         let mut divider_iter = divider.iter();
         divided.iter_at(index).try_for_each(|(i, divided)| {
             let divided = divided.into_inner();
             let divider = divider_iter.unwrap_get_inner(i);
-            let v = (divided / divider * multiplier)
-                .checked_sub(subtract)
-                .unwrap();
+            let mut v = divided / divider;
+            if as_percentage {
+                v = v * multiplier;
+            }
+            if as_difference {
+                v = v.checked_sub(multiplier).unwrap();
+            }
             self.forced_push_at(i, T::from(v), exit)
         })?;
 

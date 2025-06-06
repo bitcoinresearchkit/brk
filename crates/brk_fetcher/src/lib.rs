@@ -18,7 +18,7 @@ const TRIES: usize = 12 * 60 * 2;
 #[derive(Clone)]
 pub struct Fetcher {
     binance: Binance,
-    kraken: Kraken,
+    // kraken: Kraken,
     kibo: Kibo,
 }
 
@@ -30,7 +30,7 @@ impl Fetcher {
 
         Ok(Self {
             binance: Binance::init(hars_path),
-            kraken: Kraken::default(),
+            // kraken: Kraken::default(),
             kibo: Kibo::default(),
         })
     }
@@ -40,12 +40,8 @@ impl Fetcher {
     }
 
     fn get_date_(&mut self, date: Date, tries: usize) -> color_eyre::Result<OHLCCents> {
-        self.kraken
+        self.binance
             .get_from_1d(&date)
-            .or_else(|_| {
-                // eprintln!("{e}");
-                self.binance.get_from_1d(&date)
-            })
             .or_else(|_| {
                 // eprintln!("{e}");
                 self.kibo.get_from_date(&date)
@@ -89,33 +85,36 @@ impl Fetcher {
         let previous_timestamp = previous_timestamp.map(|t| t.floor_seconds());
 
         let ohlc = self
-            .kraken
+            .binance
             .get_from_1mn(timestamp, previous_timestamp)
-            .unwrap_or_else(|_| {
-                // eprintln!("{e}");
-                self.binance
-                    .get_from_1mn(timestamp, previous_timestamp)
-                    .unwrap_or_else(|_| {
-                        // eprintln!("{e}");
-                        self.kibo.get_from_height(height).unwrap_or_else(|_| {
-                            sleep(Duration::from_secs(30));
+            .unwrap_or_else(|_report| {
+                // eprintln!("{_report}");
+                // self.kraken
+                //     .get_from_1mn(timestamp, previous_timestamp)
+                //     .unwrap_or_else(|_report| {
+                //         // eprintln!("{_report}");
+                self.kibo.get_from_height(height).unwrap_or_else(|_report| {
+                    // eprintln!("{_report}");
 
-                            if tries < TRIES {
-                                self.clear();
+                    sleep(Duration::from_secs(30));
 
-                                info!("Retrying to fetch height prices...");
+                    if tries < TRIES {
+                        self.clear();
 
-                                return self
-                                    .get_height_(height, timestamp, previous_timestamp, tries + 1)
-                                    .unwrap();
-                            }
+                        info!("Retrying to fetch height prices...");
+                        // dbg!((height, timestamp, previous_timestamp));
 
-                            info!("Failed to fetch height prices");
+                        return self
+                            .get_height_(height, timestamp, previous_timestamp, tries + 1)
+                            .unwrap();
+                    }
 
-                            let date = Date::from(timestamp);
-                            // eprintln!("{e}");
-                            panic!(
-                                "
+                    info!("Failed to fetch height prices");
+
+                    let date = Date::from(timestamp);
+                    // eprintln!("{e}");
+                    panic!(
+                        "
 Can't find the price for: height: {height} - date: {date}
 1mn APIs are limited to the last 16 hours for Binance's and the last 10 hours for Kraken's
 How to fix this:
@@ -130,9 +129,9 @@ How to fix this:
 8. Export to a har file (if there is no explicit button, click on the cog button)
 9. Move the file to 'parser/imports/binance.har'
         "
-                            )
-                        })
-                    })
+                    )
+                })
+                // })
             });
 
         Ok(ohlc)
@@ -183,6 +182,6 @@ How to fix this:
     pub fn clear(&mut self) {
         self.binance.clear();
         self.kibo.clear();
-        self.kraken.clear();
+        // self.kraken.clear();
     }
 }

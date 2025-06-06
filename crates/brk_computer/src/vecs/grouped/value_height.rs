@@ -1,10 +1,11 @@
 use std::path::Path;
 
-use brk_core::{Bitcoin, Dollars, Height, Sats, Version};
+use brk_core::{Bitcoin, Dollars, Height, Result, Sats, Version};
 use brk_exit::Exit;
-use brk_vec::{AnyCollectableVec, CollectableVec, EagerVec, Format};
+use brk_indexer::Indexer;
+use brk_vec::{AnyCollectableVec, CollectableVec, EagerVec, Format, StoredVec};
 
-use crate::vecs::{Indexes, fetched};
+use crate::vecs::{Indexes, fetched, indexes};
 
 #[derive(Clone)]
 pub struct ComputedHeightValueVecs {
@@ -47,37 +48,37 @@ impl ComputedHeightValueVecs {
         })
     }
 
-    // pub fn compute_all<F>(
-    //     &mut self,
-    //     indexer: &Indexer,
-    //     indexes: &indexes::Vecs,
-    //     fetched: Option<&fetched::Vecs>,
-    //     starting_indexes: &Indexes,
-    //     exit: &Exit,
-    //     mut compute: F,
-    // ) -> color_eyre::Result<()>
-    // where
-    //     F: FnMut(
-    //         &mut EagerVec<Height, Sats>,
-    //         &Indexer,
-    //         &indexes::Vecs,
-    //         &Indexes,
-    //         &Exit,
-    //     ) -> Result<()>,
-    // {
-    //     compute(
-    //         self.sats.as_mut().unwrap(),
-    //         indexer,
-    //         indexes,
-    //         starting_indexes,
-    //         exit,
-    //     )?;
+    pub fn compute_all<F>(
+        &mut self,
+        indexer: &Indexer,
+        indexes: &indexes::Vecs,
+        fetched: Option<&fetched::Vecs>,
+        starting_indexes: &Indexes,
+        exit: &Exit,
+        mut compute: F,
+    ) -> color_eyre::Result<()>
+    where
+        F: FnMut(
+            &mut EagerVec<Height, Sats>,
+            &Indexer,
+            &indexes::Vecs,
+            &Indexes,
+            &Exit,
+        ) -> Result<()>,
+    {
+        compute(
+            self.sats.as_mut().unwrap(),
+            indexer,
+            indexes,
+            starting_indexes,
+            exit,
+        )?;
 
-    //     let height: Option<&StoredVec<Height, Sats>> = None;
-    //     self.compute_rest(fetched, starting_indexes, exit, height)?;
+        let height: Option<&StoredVec<Height, Sats>> = None;
+        self.compute_rest(fetched, starting_indexes, exit, height)?;
 
-    //     Ok(())
-    // }
+        Ok(())
+    }
 
     pub fn compute_rest(
         &mut self,

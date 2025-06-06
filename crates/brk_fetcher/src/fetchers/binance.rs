@@ -95,7 +95,7 @@ impl Binance {
     }
 
     pub fn fetch_1d() -> color_eyre::Result<BTreeMap<Date, OHLCCents>> {
-        info!("Fetching daily prices from Kraken...");
+        info!("Fetching daily prices from Binance...");
 
         retry(
             |_| Self::json_to_date_to_ohlc(&minreq::get(Self::url("interval=1d")).send()?.json()?),

@@ -8,11 +8,11 @@ fn main() -> color_eyre::Result<()> {
 
     let mut fetcher = Fetcher::import(None)?;
 
-    dbg!(fetcher.get_date(Date::new(2025, 1, 1))?);
+    dbg!(fetcher.get_date(Date::new(2025, 6, 5))?);
     dbg!(fetcher.get_height(
-        881_000_u32.into(),
-        1740683986_u32.into(),
-        Some(1740683000_u32.into())
+        899911_u32.into(),
+        1749133056_u32.into(),
+        Some(1749132055_u32.into())
     )?);
 
     Ok(())

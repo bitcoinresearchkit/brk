@@ -72,9 +72,15 @@ impl OutputCohorts for Outputs<(OutputFilter, cohort::Vecs)> {
             let block_state = chain_state.get(height.unwrap_to_usize()).unwrap();
             let prev_price = block_state.price;
 
+            let blocks_old = chain_state.len() - 1 - height.unwrap_to_usize();
+
             let days_old = block_state
                 .timestamp
                 .difference_in_days_between(last_timestamp);
+
+            let days_old_foat = block_state
+                .timestamp
+                .difference_in_days_between_float(last_timestamp);
 
             let older_than_hour =
                 jiff::Timestamp::from(last_timestamp.checked_sub(block_state.timestamp).unwrap())
@@ -95,6 +101,8 @@ impl OutputCohorts for Outputs<(OutputFilter, cohort::Vecs)> {
                         &sent.spendable_supply,
                         current_price,
                         prev_price,
+                        blocks_old,
+                        days_old_foat,
                         older_than_hour,
                     );
                 });
@@ -105,6 +113,8 @@ impl OutputCohorts for Outputs<(OutputFilter, cohort::Vecs)> {
                         supply_state,
                         current_price,
                         prev_price,
+                        blocks_old,
+                        days_old_foat,
                         older_than_hour,
                     )
                 },
@@ -117,6 +127,8 @@ impl OutputCohorts for Outputs<(OutputFilter, cohort::Vecs)> {
                         &supply_state,
                         current_price,
                         prev_price,
+                        blocks_old,
+                        days_old_foat,
                         older_than_hour,
                     );
                 });
@@ -159,93 +171,86 @@ impl OutputCohorts for Outputs<(OutputFilter, cohort::Vecs)> {
     }
 
     fn compute_overlaping_vecs(&mut self, starting_indexes: &Indexes, exit: &Exit) -> Result<()> {
-        self.all
-            .1
-            .compute_from_stateful(starting_indexes, &self.by_epoch.vecs(), exit)?;
+        let by_date_range = self.by_date_range.as_vec();
+        let by_size_range = self.by_size_range.as_vec();
 
-        self.by_from_date
-            .as_mut_vec()
-            .into_iter()
-            .try_for_each(|(filter, vecs)| {
-                vecs.compute_from_stateful(
-                    starting_indexes,
-                    self.by_date_range
-                        .as_vec()
-                        .into_iter()
-                        .filter(|(other, _)| filter.includes(other))
-                        .map(|(_, v)| v)
-                        .collect::<Vec<_>>()
-                        .as_slice(),
-                    exit,
-                )
-            })?;
-
-        self.by_up_to_date
-            .as_mut_vec()
-            .into_iter()
-            .try_for_each(|(filter, vecs)| {
-                vecs.compute_from_stateful(
-                    starting_indexes,
-                    self.by_date_range
-                        .as_vec()
-                        .into_iter()
-                        .filter(|(other, _)| filter.includes(other))
-                        .map(|(_, v)| v)
-                        .collect::<Vec<_>>()
-                        .as_slice(),
-                    exit,
-                )
-            })?;
-
-        self.by_term
-            .as_mut_vec()
-            .into_iter()
-            .try_for_each(|(filter, vecs)| {
-                vecs.compute_from_stateful(
-                    starting_indexes,
-                    self.by_date_range
-                        .as_vec()
-                        .into_iter()
-                        .filter(|(other, _)| filter.includes(other))
-                        .map(|(_, v)| v)
-                        .collect::<Vec<_>>()
-                        .as_slice(),
-                    exit,
-                )
-            })?;
-
-        self.by_up_to_size
-            .as_mut_vec()
-            .into_iter()
-            .try_for_each(|(filter, vecs)| {
-                vecs.compute_from_stateful(
-                    starting_indexes,
-                    self.by_date_range
-                        .as_vec()
-                        .into_iter()
-                        .filter(|(other, _)| filter.includes(other))
-                        .map(|(_, v)| v)
-                        .collect::<Vec<_>>()
-                        .as_slice(),
-                    exit,
-                )
-            })?;
-
-        self.by_from_size
-            .as_mut_vec()
-            .into_iter()
-            .try_for_each(|(filter, vecs)| {
-                vecs.compute_from_stateful(
-                    starting_indexes,
-                    self.by_size_range
-                        .as_vec()
-                        .into_iter()
-                        .filter(|(other, _)| filter.includes(other))
-                        .map(|(_, v)| v)
-                        .collect::<Vec<_>>()
-                        .as_slice(),
-                    exit,
-                )
-            })
+        [
+            vec![(&mut self.all.1, self.by_epoch.vecs().to_vec())],
+            self.by_from_date
+                .as_mut_vec()
+                .into_iter()
+                .map(|(filter, vecs)| {
+                    (
+                        vecs,
+                        by_date_range
+                            .into_iter()
+                            .filter(|(other, _)| filter.includes(other))
+                            .map(|(_, v)| v)
+                            .collect::<Vec<_>>(),
+                    )
+                })
+                .collect::<Vec<_>>(),
+            self.by_up_to_date
+                .as_mut_vec()
+                .into_iter()
+                .map(|(filter, vecs)| {
+                    (
+                        vecs,
+                        by_date_range
+                            .into_iter()
+                            .filter(|(other, _)| filter.includes(other))
+                            .map(|(_, v)| v)
+                            .collect::<Vec<_>>(),
+                    )
+                })
+                .collect::<Vec<_>>(),
+            self.by_term
+                .as_mut_vec()
+                .into_iter()
+                .map(|(filter, vecs)| {
+                    (
+                        vecs,
+                        by_date_range
+                            .into_iter()
+                            .filter(|(other, _)| filter.includes(other))
+                            .map(|(_, v)| v)
+                            .collect::<Vec<_>>(),
+                    )
+                })
+                .collect::<Vec<_>>(),
+            self.by_from_size
+                .as_mut_vec()
+                .into_iter()
+                .map(|(filter, vecs)| {
+                    (
+                        vecs,
+                        by_size_range
+                            .into_iter()
+                            .filter(|(other, _)| filter.includes(other))
+                            .map(|(_, v)| v)
+                            .collect::<Vec<_>>(),
+                    )
+                })
+                .collect::<Vec<_>>(),
+            self.by_up_to_size
+                .as_mut_vec()
+                .into_iter()
+                .map(|(filter, vecs)| {
+                    (
+                        vecs,
+                        by_size_range
+                            .into_iter()
+                            .filter(|(other, _)| filter.includes(other))
+                            .map(|(_, v)| v)
+                            .collect::<Vec<_>>(),
+                    )
+                })
+                .collect::<Vec<_>>(),
+        ]
+        .into_par_iter()
+        .flatten()
+        .try_for_each(|(vecs, stateful)| {
+            vecs.compute_from_stateful(starting_indexes, &stateful, exit)
+        })
     }
 }
