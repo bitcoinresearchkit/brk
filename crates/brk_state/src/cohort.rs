@@ -62,7 +62,20 @@ impl CohortState {
         if let Some(realized) = self.realized.as_mut() {
             let price = price.unwrap();
             realized.decrement(supply_state, price);
-            *self.price_to_amount.puts_entry_or_default(&price) -= supply_state.value;
+            self.decrement_price_to_amount(supply_state, price);
+        }
+    }
+
+    fn decrement_price_to_amount(&mut self, supply_state: &SupplyState, price: Dollars) {
+        let amount = self.price_to_amount.puts_entry_or_default(&price);
+        *amount -= supply_state.value;
+        if *amount == Sats::ZERO {
+            if self.price_to_amount.puts_remove(&price).is_none() {
+                unreachable!()
+            }
+            if !self.price_to_amount.dels_insert(price) {
+                unreachable!()
+            }
         }
     }
 
@@ -95,7 +108,7 @@ impl CohortState {
             let current_price = current_price.unwrap();
             let prev_price = prev_price.unwrap();
             realized.send(supply_state, current_price, prev_price, older_than_hour);
-            *self.price_to_amount.puts_entry_or_default(&prev_price) -= supply_state.value;
+            self.decrement_price_to_amount(supply_state, prev_price);
         }
     }
 
@@ -164,8 +177,8 @@ impl CohortState {
     }
 
     pub fn commit(&mut self, height: Height) -> Result<()> {
-        self.price_to_amount
-            .retain_or_del(|_, sats| *sats > Sats::ZERO);
+        // self.price_to_amount
+        //     .retain_or_del(|_, sats| *sats > Sats::ZERO);
         let price_to_amount_puts = self.price_to_amount.clone_puts();
         self.price_to_amount.commit(height)?;
         self.price_to_amount.append_puts(price_to_amount_puts);

@@ -36,18 +36,28 @@ impl StoreMeta {
 
         let mut partition = open_partition_handle()?;
 
+        let mut did_reset = false;
+
         if !is_same_version {
+            did_reset = true;
             Self::reset_(path)?;
             keyspace.delete_partition(partition)?;
             keyspace.persist(fjall::PersistMode::SyncAll)?;
             partition = open_partition_handle()?;
         }
 
+        let len = Self::read_length_(path);
+
+        if did_reset && len != 0 {
+            dbg!(&path);
+            unreachable!();
+        }
+
         let slf = Self {
             pathbuf: path.to_owned(),
             version,
             height: Height::try_from(Self::path_height_(path).as_path()).ok(),
-            len: Self::read_length_(path),
+            len,
         };
 
         slf.version.write(&slf.path_version())?;
@@ -57,6 +67,10 @@ impl StoreMeta {
 
     pub fn len(&self) -> usize {
         self.len
+    }
+
+    pub fn reset_len(&mut self) {
+        self.len = 0
     }
     // pub fn is_empty(&self) -> bool {
     //     self.len() == 0
@@ -110,7 +124,7 @@ impl StoreMeta {
 
     fn read_length_(path: &Path) -> usize {
         fs::read(Self::path_length(path))
-            .map(|v| usize::from_ne_bytes(copy_first_8bytes(v.as_slice()).unwrap_or_default()))
+            .map(|v| usize::from_ne_bytes(copy_first_8bytes(v.as_slice()).unwrap()))
             .unwrap_or_default()
     }
     fn write_length(&self) -> io::Result<()> {
