@@ -8,7 +8,7 @@ use brk_core::{OutputType, Sats};
 
 use super::{OutputsByType, SupplyState};
 
-#[derive(Default)]
+#[derive(Default, Debug)]
 pub struct Transacted {
     pub spendable_supply: SupplyState,
     pub by_type: OutputsByType<SupplyState>,

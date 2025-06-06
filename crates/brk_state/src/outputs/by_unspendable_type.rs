@@ -1,6 +1,6 @@
 use std::ops::{Add, AddAssign};
 
-#[derive(Default, Clone)]
+#[derive(Default, Clone, Debug)]
 pub struct OutputsByUnspendableType<T> {
     pub opreturn: T,
 }

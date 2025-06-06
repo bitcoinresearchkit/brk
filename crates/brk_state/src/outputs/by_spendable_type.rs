@@ -4,7 +4,7 @@ use brk_core::OutputType;
 
 use super::OutputFilter;
 
-#[derive(Default, Clone)]
+#[derive(Default, Clone, Debug)]
 pub struct OutputsBySpendableType<T> {
     pub p2pk65: T,
     pub p2pk33: T,

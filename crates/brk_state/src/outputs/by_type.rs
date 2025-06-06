@@ -4,7 +4,7 @@ use brk_core::OutputType;
 
 use super::{OutputsBySpendableType, OutputsByUnspendableType};
 
-#[derive(Default, Clone)]
+#[derive(Default, Clone, Debug)]
 pub struct OutputsByType<T> {
     pub spendable: OutputsBySpendableType<T>,
     pub unspendable: OutputsByUnspendableType<T>,
