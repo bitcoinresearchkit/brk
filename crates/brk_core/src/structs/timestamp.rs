@@ -62,6 +62,19 @@ impl Timestamp {
             }
         }
     }
+
+    pub fn difference_in_days_between_float(&self, other: Self) -> f64 {
+        match self.cmp(&other) {
+            Ordering::Equal => 0.0,
+            Ordering::Greater => other.difference_in_days_between_float(*self),
+            Ordering::Less => {
+                jiff::Timestamp::from(*self)
+                    .duration_until(jiff::Timestamp::from(other))
+                    .as_secs() as f64
+                    / ONE_DAY_IN_SEC as f64
+            }
+        }
+    }
 }
 
 impl From<u32> for Timestamp {

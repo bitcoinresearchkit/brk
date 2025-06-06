@@ -12,6 +12,8 @@ use super::{RealizedState, SupplyState};
 pub struct CohortState {
     pub supply: SupplyState,
     pub realized: Option<RealizedState>,
+    pub satblocks_destroyed: Sats,
+    pub satdays_destroyed: Sats,
     pub price_to_amount: Store<Dollars, Sats>,
 }
 
@@ -26,6 +28,8 @@ impl CohortState {
         Ok(Self {
             supply: SupplyState::default(),
             realized: compute_dollars.then_some(RealizedState::NAN),
+            satblocks_destroyed: Sats::ZERO,
+            satdays_destroyed: Sats::ZERO,
             price_to_amount: Store::import(
                 keyspace,
                 path,
@@ -37,6 +41,8 @@ impl CohortState {
     }
 
     pub fn reset_single_iteration_values(&mut self) {
+        self.satdays_destroyed = Sats::ZERO;
+        self.satblocks_destroyed = Sats::ZERO;
         if let Some(realized) = self.realized.as_mut() {
             realized.reset_single_iteration_values();
         }
@@ -74,9 +80,17 @@ impl CohortState {
         supply_state: &SupplyState,
         current_price: Option<Dollars>,
         prev_price: Option<Dollars>,
+        blocks_old: usize,
+        days_old: f64,
         older_than_hour: bool,
     ) {
         self.supply -= supply_state;
+
+        self.satblocks_destroyed += supply_state.value * blocks_old;
+
+        self.satdays_destroyed +=
+            Sats::from((u64::from(supply_state.value) as f64 * days_old).floor() as u64);
+
         if let Some(realized) = self.realized.as_mut() {
             let current_price = current_price.unwrap();
             let prev_price = prev_price.unwrap();

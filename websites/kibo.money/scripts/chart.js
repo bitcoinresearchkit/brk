@@ -238,8 +238,10 @@ export function init({
                         paneIndex,
                         options: {
                           ...blueprint.options,
-                          topLineColor: blueprint.colors?.[0](),
-                          bottomLineColor: blueprint.colors?.[1](),
+                          topLineColor:
+                            blueprint.color?.() ?? blueprint.colors?.[0](),
+                          bottomLineColor:
+                            blueprint.color?.() ?? blueprint.colors?.[1](),
                         },
                       });
                       break;

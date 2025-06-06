@@ -13,7 +13,7 @@
     white-space: nowrap;
     overflow-x: auto;
     padding-bottom: 1rem;
-    margin-bottom: -1rem;
+    margin-bottom: -2rem;
     padding-left: var(--main-padding);
     margin-left: var(--negative-main-padding);
     padding-right: var(--main-padding);
@@ -28,7 +28,11 @@
     flex: 1;
   }
 
-  > * {
+  .lightweight-chart {
     z-index: 30;
+  }
+
+  > * {
+    /* z-index: 30; */
   }
 }

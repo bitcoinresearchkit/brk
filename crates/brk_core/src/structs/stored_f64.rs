@@ -7,7 +7,7 @@ use derive_deref::Deref;
 use serde::Serialize;
 use zerocopy_derive::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
-use crate::{CheckedSub, Sats};
+use crate::{Bitcoin, CheckedSub, Sats};
 
 #[derive(
     Debug, Deref, Default, Clone, Copy, FromBytes, Immutable, IntoBytes, KnownLayout, Serialize,
@@ -100,5 +100,11 @@ impl Ord for StoredF64 {
 impl From<Sats> for StoredF64 {
     fn from(value: Sats) -> Self {
         Self(u64::from(value) as f64)
+    }
+}
+
+impl From<Bitcoin> for StoredF64 {
+    fn from(value: Bitcoin) -> Self {
+        Self(f64::from(value))
     }
 }

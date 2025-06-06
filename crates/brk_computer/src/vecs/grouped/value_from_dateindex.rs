@@ -1,9 +1,9 @@
 use std::path::Path;
 
-use brk_core::{Bitcoin, DateIndex, Dollars, Sats, Version};
+use brk_core::{Bitcoin, DateIndex, Dollars, Result, Sats, Version};
 use brk_exit::Exit;
 use brk_indexer::Indexer;
-use brk_vec::{AnyCollectableVec, CollectableVec, Format, StoredVec};
+use brk_vec::{AnyCollectableVec, CollectableVec, EagerVec, Format, StoredVec};
 
 use crate::vecs::{Indexes, fetched, grouped::ComputedVecsFromDateIndex, indexes};
 
@@ -59,37 +59,37 @@ impl ComputedValueVecsFromDateIndex {
         })
     }
 
-    // pub fn compute_all<F>(
-    //     &mut self,
-    //     indexer: &Indexer,
-    //     indexes: &indexes::Vecs,
-    //     fetched: Option<&fetched::Vecs>,
-    //     starting_indexes: &Indexes,
-    //     exit: &Exit,
-    //     mut compute: F,
-    // ) -> color_eyre::Result<()>
-    // where
-    //     F: FnMut(
-    //         &mut EagerVec<DateIndex, Sats>,
-    //         &Indexer,
-    //         &indexes::Vecs,
-    //         &Indexes,
-    //         &Exit,
-    //     ) -> Result<()>,
-    // {
-    //     compute(
-    //         self.sats.dateindex.as_mut().unwrap(),
-    //         indexer,
-    //         indexes,
-    //         starting_indexes,
-    //         exit,
-    //     )?;
+    pub fn compute_all<F>(
+        &mut self,
+        indexer: &Indexer,
+        indexes: &indexes::Vecs,
+        fetched: Option<&fetched::Vecs>,
+        starting_indexes: &Indexes,
+        exit: &Exit,
+        mut compute: F,
+    ) -> color_eyre::Result<()>
+    where
+        F: FnMut(
+            &mut EagerVec<DateIndex, Sats>,
+            &Indexer,
+            &indexes::Vecs,
+            &Indexes,
+            &Exit,
+        ) -> Result<()>,
+    {
+        compute(
+            self.sats.dateindex.as_mut().unwrap(),
+            indexer,
+            indexes,
+            starting_indexes,
+            exit,
+        )?;
 
-    //     let dateindex: Option<&StoredVec<DateIndex, Sats>> = None;
-    //     self.compute_rest(indexer, indexes, fetched, starting_indexes, exit, dateindex)?;
+        let dateindex: Option<&StoredVec<DateIndex, Sats>> = None;
+        self.compute_rest(indexer, indexes, fetched, starting_indexes, exit, dateindex)?;
 
-    //     Ok(())
-    // }
+        Ok(())
+    }
 
     pub fn compute_rest(
         &mut self,

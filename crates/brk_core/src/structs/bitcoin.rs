@@ -6,6 +6,8 @@ use std::{
 use serde::Serialize;
 use zerocopy_derive::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
+use crate::CheckedSub;
+
 use super::{Sats, StoredF64};
 
 #[derive(Debug, Default, Clone, Copy, FromBytes, Immutable, IntoBytes, KnownLayout, Serialize)]
@@ -22,6 +24,20 @@ impl Mul for Bitcoin {
     type Output = Self;
     fn mul(self, rhs: Self) -> Self::Output {
         Self::from(Sats::from(self) * Sats::from(rhs))
+    }
+}
+
+impl Mul<usize> for Bitcoin {
+    type Output = Self;
+    fn mul(self, rhs: usize) -> Self::Output {
+        Self::from(Sats::from(self) * rhs)
+    }
+}
+
+impl Div<Bitcoin> for Bitcoin {
+    type Output = Self;
+    fn div(self, rhs: Bitcoin) -> Self::Output {
+        Self::from(Sats::from(self) / Sats::from(rhs))
     }
 }
 
@@ -91,5 +107,11 @@ impl Ord for Bitcoin {
             (false, true) => Ordering::Greater,
             (false, false) => self.0.partial_cmp(&other.0).unwrap(),
         }
+    }
+}
+
+impl CheckedSub<usize> for Bitcoin {
+    fn checked_sub(self, rhs: usize) -> Option<Self> {
+        Some(Self(self.0 - rhs as f64))
     }
 }

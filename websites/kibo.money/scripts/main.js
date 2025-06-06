@@ -16,7 +16,10 @@
  * @typedef {"" |
  *   "BTC" |
  *   "Cents" |
- *   "Coinblocks" |
+ *   "coinblocks" |
+ *   "coindays" |
+ *   "satblocks" |
+ *   "satdays" |
  *   "Count" |
  *   "Date" |
  *   "Difficulty" |
@@ -873,6 +876,22 @@ function createUtils() {
     ) {
       if (unit) throw Error(`Unit "${unit}" already assigned "${id}"`);
       unit = "Timestamp";
+    }
+    if ((!unit || thoroughUnitCheck) && id.includes("coinblocks")) {
+      if (unit) throw Error(`Unit "${unit}" already assigned "${id}"`);
+      unit = "coinblocks";
+    }
+    if ((!unit || thoroughUnitCheck) && id.includes("coindays")) {
+      if (unit) throw Error(`Unit "${unit}" already assigned "${id}"`);
+      unit = "coindays";
+    }
+    if ((!unit || thoroughUnitCheck) && id.includes("satblocks")) {
+      if (unit) throw Error(`Unit "${unit}" already assigned "${id}"`);
+      unit = "satblocks";
+    }
+    if ((!unit || thoroughUnitCheck) && id.includes("satdays")) {
+      if (unit) throw Error(`Unit "${unit}" already assigned "${id}"`);
+      unit = "satdays";
     }
     if ((!unit || thoroughUnitCheck) && id.endsWith("height")) {
       if (unit) throw Error(`Unit "${unit}" already assigned "${id}"`);

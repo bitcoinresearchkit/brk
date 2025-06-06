@@ -465,15 +465,33 @@ function createPartialOptions(colors) {
       color: colors.orange,
     },
     {
-      key: "from-1m-to-3m",
-      name: "1m..3m",
-      title: "From 1 Month ago to 3 Months ago",
+      key: "from-1m-to-2m",
+      name: "1m..2m",
+      title: "From 1 Month ago to 2 Months ago",
       color: colors.yellow,
     },
     {
-      key: "from-3m-to-6m",
-      name: "3m..6m",
-      title: "From 3 Month ago to 6 Months ago",
+      key: "from-2m-to-3m",
+      name: "2m..3m",
+      title: "From 2 Month ago to 3 Months ago",
+      color: colors.yellow,
+    },
+    {
+      key: "from-3m-to-4m",
+      name: "3m..4m",
+      title: "From 3 Month ago to 4 Months ago",
+      color: colors.lime,
+    },
+    {
+      key: "from-4m-to-5m",
+      name: "4m..5m",
+      title: "From 4 Month ago to 5 Months ago",
+      color: colors.lime,
+    },
+    {
+      key: "from-5m-to-6m",
+      name: "5m..6m",
+      title: "From 5 Month ago to 6 Months ago",
       color: colors.lime,
     },
     {
@@ -507,15 +525,27 @@ function createPartialOptions(colors) {
       color: colors.violet,
     },
     {
-      key: "from-5y-to-7y",
-      name: "5y..7y",
-      title: "From 5 Years ago to 7 Years ago",
+      key: "from-5y-to-6y",
+      name: "5y..6y",
+      title: "From 5 Years ago to 6 Years ago",
       color: colors.purple,
     },
     {
-      key: "from-7y-to-10y",
-      name: "7y..10y",
-      title: "From 7 Years ago to 10 Years ago",
+      key: "from-6y-to-7y",
+      name: "6y..7y",
+      title: "From 6 Years ago to 7 Years ago",
+      color: colors.purple,
+    },
+    {
+      key: "from-7y-to-8y",
+      name: "7y..8y",
+      title: "From 7 Years ago to 8 Years ago",
+      color: colors.fuchsia,
+    },
+    {
+      key: "from-8y-to-10y",
+      name: "8y..10y",
+      title: "From 8 Years ago to 10 Years ago",
       color: colors.fuchsia,
     },
     {
@@ -1489,34 +1519,78 @@ function createPartialOptions(colors) {
                 }),
               ]),
             },
-            {
-              name: "sopr",
-              title: `${args.title} Spent Output Profit Ratio`,
-              bottom: list.flatMap(({ color, name, key }) => [
-                /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
-                  type: "Baseline",
-                  key: `${fixKey(key)}spent-output-profit-ratio`,
-                  title: useGroupName ? name : "sopr",
-                  color: useGroupName ? color : undefined,
-                  options: {
-                    createPriceLine: {
-                      value: 1,
-                    },
+            ...(!("list" in args)
+              ? [
+                  {
+                    name: "sopr",
+                    title: `${args.title} Spent Output Profit Ratio`,
+                    bottom: list.flatMap(({ color, name, key }) => [
+                      /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
+                        type: "Baseline",
+                        key: `${fixKey(key)}spent-output-profit-ratio`,
+                        title: useGroupName ? name : "sopr",
+                        color: useGroupName ? color : undefined,
+                        options: {
+                          createPriceLine: {
+                            value: 1,
+                          },
+                        },
+                      }),
+                      /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
+                        type: "Baseline",
+                        key: `${fixKey(key)}adjusted-spent-output-profit-ratio`,
+                        title: useGroupName ? name : "asopr",
+                        color: useGroupName ? color : undefined,
+                        options: {
+                          createPriceLine: {
+                            value: 1,
+                          },
+                        },
+                      }),
+                    ]),
                   },
-                }),
-                /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
-                  type: "Baseline",
-                  key: `${fixKey(key)}adjusted-spent-output-profit-ratio`,
-                  title: useGroupName ? name : "asopr",
-                  color: useGroupName ? color : undefined,
-                  options: {
-                    createPriceLine: {
-                      value: 1,
-                    },
+                ]
+              : [
+                  {
+                    name: "sopr",
+                    tree: [
+                      {
+                        name: "Normal",
+                        title: `${args.title} Spent Output Profit Ratio`,
+                        bottom: list.flatMap(({ color, name, key }) => [
+                          /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
+                            type: "Baseline",
+                            key: `${fixKey(key)}spent-output-profit-ratio`,
+                            title: useGroupName ? name : "sopr",
+                            color: useGroupName ? color : undefined,
+                            options: {
+                              createPriceLine: {
+                                value: 1,
+                              },
+                            },
+                          }),
+                        ]),
+                      },
+                      {
+                        name: "Adjusted",
+                        title: `${args.title} Adjusted Spent Output Profit Ratio`,
+                        bottom: list.flatMap(({ color, name, key }) => [
+                          /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
+                            type: "Baseline",
+                            key: `${fixKey(key)}adjusted-spent-output-profit-ratio`,
+                            title: useGroupName ? name : "asopr",
+                            color: useGroupName ? color : undefined,
+                            options: {
+                              createPriceLine: {
+                                value: 1,
+                              },
+                            },
+                          }),
+                        ]),
+                      },
+                    ],
                   },
-                }),
-              ]),
-            },
+                ]),
             {
               name: "Sell Side Risk Ratio",
               title: `${args.title} Sell Side Risk Ratio`,
@@ -1634,7 +1708,7 @@ function createPartialOptions(colors) {
                   {
                     name: "Average",
                     title: `${args.title} Average Price Paid`,
-                    bottom: list.flatMap(({ color, name, key: _key }) => {
+                    top: list.flatMap(({ color, name, key: _key }) => {
                       const key = fixKey(_key);
                       return /** @type {const} */ ([
                         createBaseSeries({
@@ -1648,7 +1722,7 @@ function createPartialOptions(colors) {
                   {
                     name: "Min",
                     title: `${args.title} Min Price Paid`,
-                    bottom: list.flatMap(({ color, name, key: _key }) => {
+                    top: list.flatMap(({ color, name, key: _key }) => {
                       const key = fixKey(_key);
                       return /** @type {const} */ ([
                         createBaseSeries({
@@ -1662,7 +1736,7 @@ function createPartialOptions(colors) {
                   {
                     name: "Max",
                     title: `${args.title} Max Price Paid`,
-                    bottom: list.flatMap(({ color, name, key: _key }) => {
+                    top: list.flatMap(({ color, name, key: _key }) => {
                       const key = fixKey(_key);
                       return /** @type {const} */ ([
                         createBaseSeries({
@@ -1701,6 +1775,35 @@ function createPartialOptions(colors) {
                 ],
               },
             ]),
+        {
+          name: "Coins Destroyed",
+          title: `${args.title} Coins Destroyed`,
+          bottom: list.flatMap(({ color, name, key: _key }) => {
+            const key = fixKey(_key);
+            return /** @type {const} */ ([
+              createBaseSeries({
+                key: `${key}coinblocks-destroyed`,
+                name: useGroupName ? name : "destroyed",
+                color,
+              }),
+              createBaseSeries({
+                key: `${key}coindays-destroyed`,
+                name: useGroupName ? name : "destroyed",
+                color,
+              }),
+              createBaseSeries({
+                key: `${key}coinblocks-destroyed-sum`,
+                name: useGroupName ? name : "destroyed",
+                color,
+              }),
+              createBaseSeries({
+                key: `${key}coindays-destroyed-sum`,
+                name: useGroupName ? name : "destroyed",
+                color,
+              }),
+            ]);
+          }),
+        },
       ],
     });
   }
@@ -2722,14 +2825,14 @@ function createPartialOptions(colors) {
       ],
     },
     {
-      name: "Services",
+      name: "Hosting",
       tree: [
         {
-          name: "Self-host",
+          name: "Self",
           url: () => "https://crates.io/crates/brk_cli",
         },
         {
-          name: "Hosting as a service",
+          name: "As a service",
           url: () =>
             "https://github.com/bitcoinresearchkit/brk?tab=readme-ov-file#hosting-as-a-service",
         },
