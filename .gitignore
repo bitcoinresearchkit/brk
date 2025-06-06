@@ -14,27 +14,5 @@ _*
 .vscode
 .zed
 
-# Flamegraph
-flamegraph/
-flamegraph.svg
-
-# Benchmarks
-benches
-
-# Snapshots
-snapshots*/
-
-# Docker
-docker/kibo
-
-# Types
-paths.d.ts
-
-# Outputs
-_outputs
-
 # Logs
 .log
-
-# Cloudflare
-cloudflared

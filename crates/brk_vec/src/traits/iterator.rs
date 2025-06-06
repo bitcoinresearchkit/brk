@@ -1,4 +1,4 @@
-use std::iter::Skip;
+use std::{iter::Skip, path::Path};
 
 use brk_core::Value;
 
@@ -19,6 +19,8 @@ pub trait BaseVecIterator: Iterator {
     }
 
     fn len(&self) -> usize;
+
+    fn path(&self) -> &Path;
 
     fn is_empty(&self) -> bool {
         self.len() == 0
@@ -58,7 +60,12 @@ pub trait VecIterator<'a>: BaseVecIterator<Item = (Self::I, Value<'a, Self::T>)>
 
     #[inline]
     fn unwrap_get_inner_(&mut self, i: usize) -> Self::T {
-        self.get_(i).unwrap().into_inner()
+        self.get_(i)
+            .unwrap_or_else(|| {
+                dbg!(self.path(), i, self.len());
+                panic!("unwrap_get_inner_")
+            })
+            .into_inner()
     }
 
     #[inline]

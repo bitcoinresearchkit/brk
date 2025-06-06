@@ -1792,12 +1792,12 @@ function createPartialOptions(colors) {
                 color,
               }),
               createBaseSeries({
-                key: `${key}coinblocks-destroyed-sum`,
+                key: `${key}coinblocks-destroyed`,
                 name: useGroupName ? name : "destroyed",
                 color,
               }),
               createBaseSeries({
-                key: `${key}coindays-destroyed-sum`,
+                key: `${key}coindays-destroyed`,
                 name: useGroupName ? name : "destroyed",
                 color,
               }),

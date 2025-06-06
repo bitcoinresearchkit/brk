@@ -4,6 +4,7 @@ description = "A library that finds requested datasets"
 license.workspace = true
 edition.workspace = true
 version.workspace = true
+homepage.workspace = true
 repository.workspace = true
 
 [dependencies]

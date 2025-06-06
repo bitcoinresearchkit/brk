@@ -1,4 +1,4 @@
-use std::marker::PhantomData;
+use std::{marker::PhantomData, path::Path};
 
 use brk_core::{Result, Value, Version};
 
@@ -93,6 +93,11 @@ where
     #[inline]
     fn len(&self) -> usize {
         self.source.len()
+    }
+
+    #[inline]
+    fn path(&self) -> &Path {
+        self.source.path()
     }
 }
 

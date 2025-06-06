@@ -895,21 +895,17 @@ impl Vecs {
                 path,
                 &suffix("coinblocks_destroyed"),
                 true,
-                version + VERSION + Version::ZERO,
+                version + VERSION + Version::ONE,
                 format,
-                StorableVecGeneatorOptions::default()
-                    .add_sum()
-                    .add_cumulative(),
+                StorableVecGeneatorOptions::default().add_sum(),
             )?,
             indexes_to_coindays_destroyed: ComputedVecsFromHeight::forced_import(
                 path,
                 &suffix("coindays_destroyed"),
                 true,
-                version + VERSION + Version::ZERO,
+                version + VERSION + Version::ONE,
                 format,
-                StorableVecGeneatorOptions::default()
-                    .add_sum()
-                    .add_cumulative(),
+                StorableVecGeneatorOptions::default().add_sum(),
             )?,
         })
     }

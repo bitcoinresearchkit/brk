@@ -230,6 +230,11 @@ where
     fn len(&self) -> usize {
         self.vec.len()
     }
+
+    #[inline]
+    fn path(&self) -> &Path {
+        self.vec.path()
+    }
 }
 
 impl<'a, I, T> Iterator for RawVecIterator<'a, I, T>

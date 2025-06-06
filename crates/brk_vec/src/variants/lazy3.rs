@@ -1,4 +1,4 @@
-use std::marker::PhantomData;
+use std::{marker::PhantomData, path::Path};
 
 use brk_core::{Result, Value, Version};
 
@@ -146,6 +146,11 @@ where
             usize::MAX
         };
         len1.min(len2).min(len3)
+    }
+
+    #[inline]
+    fn path(&self) -> &Path {
+        self.source1.path()
     }
 }
 

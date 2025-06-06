@@ -190,6 +190,14 @@ where
             Self::Raw(i) => i.len(),
         }
     }
+
+    #[inline]
+    fn path(&self) -> &Path {
+        match self {
+            Self::Compressed(i) => i.path(),
+            Self::Raw(i) => i.path(),
+        }
+    }
 }
 
 impl<'a, I, T> IntoIterator for &'a StoredVec<I, T>
