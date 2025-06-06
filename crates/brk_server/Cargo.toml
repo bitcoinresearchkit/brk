@@ -4,6 +4,7 @@ description = "A crate that serves Bitcoin data and swappable front-ends, built 
 version.workspace = true
 edition.workspace = true
 license.workspace = true
+homepage.workspace = true
 repository.workspace = true
 
 [dependencies]

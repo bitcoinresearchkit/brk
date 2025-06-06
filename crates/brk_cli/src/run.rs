@@ -144,7 +144,7 @@ pub struct RunConfig {
     #[arg(short = 'F', long, value_name = "BOOL")]
     fetch: Option<bool>,
 
-    /// Website served by the server (if active), default: kibo.money, saved
+    /// Website served by the server (if active), default: default, saved
     #[arg(short, long)]
     website: Option<Website>,
 
@@ -418,7 +418,7 @@ impl RunConfig {
     }
 
     pub fn website(&self) -> Website {
-        self.website.unwrap_or(Website::KiboMoney)
+        self.website.unwrap_or(Website::Default)
     }
 
     pub fn fetch(&self) -> bool {

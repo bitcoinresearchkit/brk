@@ -18,6 +18,7 @@ pub mod stateful;
 pub mod transactions;
 
 pub use indexes::Indexes;
+use log::info;
 
 const VERSION: Version = Version::ONE;
 
@@ -119,16 +120,20 @@ impl Vecs {
     ) -> color_eyre::Result<()> {
         let starting_indexes = self.indexes.compute(indexer, starting_indexes, exit)?;
 
+        info!("Computing constants...");
         self.constants
             .compute(indexer, &self.indexes, &starting_indexes, exit)?;
 
+        info!("Computing blocks...");
         self.blocks
             .compute(indexer, &self.indexes, &starting_indexes, exit)?;
 
+        info!("Computing mining...");
         self.mining
             .compute(indexer, &self.indexes, &starting_indexes, exit)?;
 
         if let Some(fetched) = self.fetched.as_mut() {
+            info!("Computing fetched...");
             fetched.compute(
                 indexer,
                 &self.indexes,
@@ -138,6 +143,7 @@ impl Vecs {
             )?;
         }
 
+        info!("Computing transactions...");
         self.transactions.compute(
             indexer,
             &self.indexes,
@@ -147,6 +153,7 @@ impl Vecs {
         )?;
 
         if let Some(fetched) = self.fetched.as_ref() {
+            info!("Computing market...");
             self.market.compute(
                 indexer,
                 &self.indexes,
@@ -157,6 +164,7 @@ impl Vecs {
             )?;
         }
 
+        info!("Computing stateful...");
         self.stateful.compute(
             indexer,
             &self.indexes,

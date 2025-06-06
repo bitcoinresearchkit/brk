@@ -48,7 +48,7 @@ pub fn main() -> color_eyre::Result<()> {
             let served_indexer = indexer.clone();
             let served_computer = computer.clone();
 
-            let server = Server::new(served_indexer, served_computer, Website::KiboMoney)?;
+            let server = Server::new(served_indexer, served_computer, Website::Default)?;
 
             let server = tokio::spawn(async move {
                 server.serve().await.unwrap();

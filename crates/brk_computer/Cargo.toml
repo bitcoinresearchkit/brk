@@ -4,6 +4,7 @@ description = "A Bitcoin dataset computer, built on top of brk_indexer"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
+homepage.workspace = true
 repository.workspace = true
 
 [dependencies]

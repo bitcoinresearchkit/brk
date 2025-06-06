@@ -1388,7 +1388,7 @@ impl Vecs {
             + dateindex_to_height_count.version();
 
         separate_utxo_vecs
-            .iter_mut()
+            .par_iter_mut()
             .try_for_each(|(_, v)| v.validate_computed_versions(base_version))?;
         self.height_to_unspendable_supply
             .validate_computed_version_or_reset_file(
@@ -1403,7 +1403,7 @@ impl Vecs {
         let mut chain_state_starting_height = Height::from(self.chain_state.len());
 
         let stateful_starting_height = match separate_utxo_vecs
-            .iter_mut()
+            .par_iter_mut()
             .map(|(_, v)| v.starting_height())
             .min()
             .unwrap_or_default()
@@ -1442,7 +1442,7 @@ impl Vecs {
         if stateful_starting_height.is_zero() {
             info!("Starting processing utxos from the start");
             separate_utxo_vecs
-                .iter_mut()
+                .par_iter_mut()
                 .try_for_each(|(_, v)| v.state.price_to_amount.reset_partition())?;
         }
         let starting_height = starting_indexes
@@ -1451,12 +1451,16 @@ impl Vecs {
             .min(Height::from(self.height_to_unspendable_supply.len()))
             .min(Height::from(self.height_to_opreturn_supply.len()));
 
+        if starting_height == Height::from(height_to_date_fixed.len()) {
+            return Ok(());
+        }
+
         // ---
         // INIT
         // ---
 
         separate_utxo_vecs
-            .iter_mut()
+            .par_iter_mut()
             .for_each(|(_, v)| v.init(starting_height));
 
         let mut unspendable_supply = if let Some(prev_height) = starting_height.decremented() {
@@ -1703,10 +1707,12 @@ impl Vecs {
 
         self.flush_states(height, &chain_state, exit)?;
 
+        info!("Computing overlaping...");
+
         self.utxos_vecs
             .compute_overlaping_vecs(&starting_indexes, exit)?;
 
-        info!("Computing rest...");
+        info!("Computing rest part 1...");
 
         self.utxos_vecs
             .as_mut_vecs()
@@ -1714,6 +1720,9 @@ impl Vecs {
             .try_for_each(|(_, v)| {
                 v.compute_rest_part1(indexer, indexes, fetched, &starting_indexes, exit)
             })?;
+
+        info!("Computing rest part 2...");
+
         let height_to_supply = self.utxos_vecs.all.1.height_to_supply_value.bitcoin.clone();
         let dateindex_to_supply = self
             .utxos_vecs
@@ -1724,6 +1733,7 @@ impl Vecs {
             .dateindex
             .clone();
         let height_to_realized_cap = self.utxos_vecs.all.1.height_to_realized_cap.clone();
+
         self.utxos_vecs
             .as_mut_vecs()
             .par_iter_mut()

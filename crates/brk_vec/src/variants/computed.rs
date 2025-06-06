@@ -317,6 +317,16 @@ where
             Self::LazyFrom3(i) => i.len(),
         }
     }
+
+    #[inline]
+    fn path(&self) -> &Path {
+        match self {
+            Self::Eager(i) => i.path(),
+            Self::LazyFrom1(i) => i.path(),
+            Self::LazyFrom2(i) => i.path(),
+            Self::LazyFrom3(i) => i.path(),
+        }
+    }
 }
 
 impl<'a, I, T, S1I, S1T, S2I, S2T, S3I, S3T> IntoIterator

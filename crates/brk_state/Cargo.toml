@@ -4,6 +4,7 @@ description = "Various states used mainly by the computer"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
+homepage.workspace = true
 repository.workspace = true
 
 [dependencies]
