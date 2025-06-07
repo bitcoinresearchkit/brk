@@ -180,18 +180,18 @@ function createPartialOptions(colors) {
 
   const averages = /** @type {const} */ ([
     { name: "1 Week", key: "1w", days: 7, color: colors.orange },
-    { name: "8 Days", key: "8d", days: 8, color: colors.amber },
-    { name: "13 Days", key: "13d", days: 13, color: colors.yellow },
-    { name: "21 Days", key: "21d", days: 21, color: colors.lime },
+    { name: "8 Day", key: "8d", days: 8, color: colors.amber },
+    { name: "13 Day", key: "13d", days: 13, color: colors.yellow },
+    { name: "21 Day", key: "21d", days: 21, color: colors.lime },
     { name: "1 Month", key: "1m", days: 30, color: colors.green },
-    { name: "34 Days", key: "34d", days: 34, color: colors.emerald },
-    { name: "55 Days", key: "55d", days: 55, color: colors.teal },
-    { name: "89 Days", key: "89d", days: 89, color: colors.cyan },
-    { name: "144 Days", key: "144d", days: 144, color: colors.sky },
+    { name: "34 Day", key: "34d", days: 34, color: colors.emerald },
+    { name: "55 Day", key: "55d", days: 55, color: colors.teal },
+    { name: "89 Day", key: "89d", days: 89, color: colors.cyan },
+    { name: "144 Day", key: "144d", days: 144, color: colors.sky },
     { name: "1 Year", key: "1y", days: 365, color: colors.blue },
-    { name: "2 Years", key: "2y", days: 2 * 365, color: colors.indigo },
-    { name: "200 Weeks", key: "200w", days: 200 * 7, color: colors.violet },
-    { name: "4 Years", key: "4y", days: 4 * 365, color: colors.purple },
+    { name: "2 Year", key: "2y", days: 2 * 365, color: colors.indigo },
+    { name: "200 Week", key: "200w", days: 200 * 7, color: colors.violet },
+    { name: "4 Year", key: "4y", days: 4 * 365, color: colors.purple },
   ]);
 
   const dcaClasses = /** @type {const} */ ([
@@ -1862,7 +1862,7 @@ function createPartialOptions(colors) {
               tree: [
                 {
                   name: "Compare",
-                  title: "Moving Averages",
+                  title: "Market Price Moving Averages",
                   top: averages.map(({ days, key, name, color }) =>
                     createBaseSeries({
                       key: `${key}-sma`,
