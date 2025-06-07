@@ -54,8 +54,8 @@ pub struct Vecs {
     pub height_to_satblocks_destroyed: EagerVec<Height, Sats>,
     pub height_to_satdays_destroyed: EagerVec<Height, Sats>,
 
-    pub indexes_to_coinblocks_destroyed: ComputedVecsFromHeight<Bitcoin>,
-    pub indexes_to_coindays_destroyed: ComputedVecsFromHeight<Bitcoin>,
+    pub indexes_to_coinblocks_destroyed: ComputedVecsFromHeight<StoredF64>,
+    pub indexes_to_coindays_destroyed: ComputedVecsFromHeight<StoredF64>,
     pub dateindex_to_adjusted_spent_output_profit_ratio: Option<EagerVec<DateIndex, StoredF32>>,
     pub dateindex_to_realized_cap_30d_change: Option<EagerVec<DateIndex, Dollars>>,
     pub dateindex_to_sell_side_risk_ratio: Option<EagerVec<DateIndex, StoredF32>>,
@@ -891,7 +891,7 @@ impl Vecs {
                 path,
                 &suffix("coinblocks_destroyed"),
                 true,
-                version + VERSION + Version::ONE,
+                version + VERSION + Version::TWO,
                 format,
                 StorableVecGeneatorOptions::default().add_sum(),
             )?,
@@ -899,7 +899,7 @@ impl Vecs {
                 path,
                 &suffix("coindays_destroyed"),
                 true,
-                version + VERSION + Version::ONE,
+                version + VERSION + Version::TWO,
                 format,
                 StorableVecGeneatorOptions::default().add_sum(),
             )?,
@@ -1839,9 +1839,10 @@ impl Vecs {
             starting_indexes,
             exit,
             |v, _, _, starting_indexes, exit| {
-                v.compute_from_sats(
+                v.compute_transform(
                     starting_indexes.height,
                     &self.height_to_satblocks_destroyed,
+                    |(i, v, ..)| (i, StoredF64::from(Bitcoin::from(v))),
                     exit,
                 )
             },
@@ -1853,9 +1854,10 @@ impl Vecs {
             starting_indexes,
             exit,
             |v, _, _, starting_indexes, exit| {
-                v.compute_from_sats(
+                v.compute_transform(
                     starting_indexes.height,
                     &self.height_to_satdays_destroyed,
+                    |(i, v, ..)| (i, StoredF64::from(Bitcoin::from(v))),
                     exit,
                 )
             },
