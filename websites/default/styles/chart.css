@@ -28,11 +28,12 @@
     flex: 1;
   }
 
-  .lightweight-chart {
-    z-index: 30;
+  > .chart > legend,
+  > fieldset {
+    z-index: 20;
   }
 
-  > * {
-    /* z-index: 30; */
+  .lightweight-chart {
+    z-index: 40;
   }
 }
