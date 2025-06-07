@@ -35,9 +35,10 @@ impl Mul<usize> for Bitcoin {
 }
 
 impl Div<Bitcoin> for Bitcoin {
-    type Output = Self;
+    type Output = StoredF64;
     fn div(self, rhs: Bitcoin) -> Self::Output {
-        Self::from(Sats::from(self) / Sats::from(rhs))
+        StoredF64::from(self.0 / rhs.0)
+        // Self::from(Sats::from(self) / Sats::from(rhs))
     }
 }
 

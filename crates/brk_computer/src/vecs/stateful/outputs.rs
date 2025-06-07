@@ -109,12 +109,8 @@ impl OutputCohorts for Outputs<(OutputFilter, cohort::Vecs)> {
                     );
                 });
 
-            sent.by_type
-                .spendable
-                .as_typed_vec()
-                .into_iter()
-                .filter(|(_, suply_state)| suply_state.utxos > 0)
-                .for_each(|(output_type, supply_state)| {
+            sent.by_type.spendable.as_typed_vec().into_iter().for_each(
+                |(output_type, supply_state)| {
                     self.by_type.get_mut(output_type).1.state.send(
                         supply_state,
                         current_price,
@@ -123,7 +119,8 @@ impl OutputCohorts for Outputs<(OutputFilter, cohort::Vecs)> {
                         days_old_foat,
                         older_than_hour,
                     )
-                });
+                },
+            );
 
             sent.by_size_group
                 .into_iter()

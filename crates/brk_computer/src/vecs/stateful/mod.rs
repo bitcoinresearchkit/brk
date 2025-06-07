@@ -7,7 +7,6 @@ use brk_vec::{
     AnyCollectableVec, AnyVec, BaseVecIterator, CollectableVec, Computation, EagerVec, Format,
     GenericStoredVec, StoredIndex, StoredVec, UnsafeSlice, VecIterator,
 };
-use fjall::TransactionalKeyspace;
 use log::info;
 use outputs::OutputCohorts;
 use rayon::prelude::*;
@@ -29,7 +28,7 @@ use super::{
 pub mod cohort;
 mod outputs;
 
-const VERSION: Version = Version::new(4);
+const VERSION: Version = Version::new(5);
 
 #[derive(Clone)]
 pub struct Vecs {
@@ -50,15 +49,13 @@ impl Vecs {
         _computation: Computation,
         format: Format,
         fetched: Option<&fetched::Vecs>,
-        keyspace: &TransactionalKeyspace,
     ) -> color_eyre::Result<Self> {
         let compute_dollars = fetched.is_some();
 
         let mut root_path = path.to_owned();
         root_path.pop();
-        let states_path = root_path.join("states");
         root_path.pop();
-        let stores_path = root_path.join("stores");
+        let states_path = root_path.join("states");
 
         Ok(Self {
             chain_state: StoredVec::forced_import(
@@ -107,8 +104,7 @@ impl Vecs {
                         format,
                         version + VERSION + Version::ZERO,
                         fetched,
-                        keyspace,
-                        &stores_path,
+                        &states_path,
                         false,
                     )?,
                     by_term: OutputsByTerm {
@@ -119,8 +115,7 @@ impl Vecs {
                             format,
                             version + VERSION + Version::ZERO,
                             fetched,
-                            keyspace,
-                            &stores_path,
+                            &states_path,
                             true,
                         )?,
                         long: cohort::Vecs::forced_import(
@@ -130,8 +125,7 @@ impl Vecs {
                             format,
                             version + VERSION + Version::ZERO,
                             fetched,
-                            keyspace,
-                            &stores_path,
+                            &states_path,
                             true,
                         )?,
                     },
@@ -143,8 +137,7 @@ impl Vecs {
                             format,
                             version + VERSION + Version::ZERO,
                             fetched,
-                            keyspace,
-                            &stores_path,
+                            &states_path,
                             true,
                         )?,
                         _1w: cohort::Vecs::forced_import(
@@ -154,8 +147,7 @@ impl Vecs {
                             format,
                             version + VERSION + Version::ZERO,
                             fetched,
-                            keyspace,
-                            &stores_path,
+                            &states_path,
                             true,
                         )?,
                         _1m: cohort::Vecs::forced_import(
@@ -165,8 +157,7 @@ impl Vecs {
                             format,
                             version + VERSION + Version::ZERO,
                             fetched,
-                            keyspace,
-                            &stores_path,
+                            &states_path,
                             true,
                         )?,
                         _2m: cohort::Vecs::forced_import(
@@ -176,8 +167,7 @@ impl Vecs {
                             format,
                             version + VERSION + Version::ZERO,
                             fetched,
-                            keyspace,
-                            &stores_path,
+                            &states_path,
                             true,
                         )?,
                         _3m: cohort::Vecs::forced_import(
@@ -187,8 +177,7 @@ impl Vecs {
                             format,
                             version + VERSION + Version::ZERO,
                             fetched,
-                            keyspace,
-                            &stores_path,
+                            &states_path,
                             true,
                         )?,
                         _4m: cohort::Vecs::forced_import(
@@ -198,8 +187,7 @@ impl Vecs {
                             format,
                             version + VERSION + Version::ZERO,
                             fetched,
-                            keyspace,
-                            &stores_path,
+                            &states_path,
                             true,
                         )?,
                         _5m: cohort::Vecs::forced_import(
@@ -209,8 +197,7 @@ impl Vecs {
                             format,
                             version + VERSION + Version::ZERO,
                             fetched,
-                            keyspace,
-                            &stores_path,
+                            &states_path,
                             true,
                         )?,
                         _6m: cohort::Vecs::forced_import(
@@ -220,8 +207,7 @@ impl Vecs {
                             format,
                             version + VERSION + Version::ZERO,
                             fetched,
-                            keyspace,
-                            &stores_path,
+                            &states_path,
                             true,
                         )?,
                         _1y: cohort::Vecs::forced_import(
@@ -231,8 +217,7 @@ impl Vecs {
                             format,
                             version + VERSION + Version::ZERO,
                             fetched,
-                            keyspace,
-                            &stores_path,
+                            &states_path,
                             true,
                         )?,
                         _2y: cohort::Vecs::forced_import(
@@ -242,8 +227,7 @@ impl Vecs {
                             format,
                             version + VERSION + Version::ZERO,
                             fetched,
-                            keyspace,
-                            &stores_path,
+                            &states_path,
                             true,
                         )?,
                         _3y: cohort::Vecs::forced_import(
@@ -253,8 +237,7 @@ impl Vecs {
                             format,
                             version + VERSION + Version::ZERO,
                             fetched,
-                            keyspace,
-                            &stores_path,
+                            &states_path,
                             true,
                         )?,
                         _4y: cohort::Vecs::forced_import(
@@ -264,8 +247,7 @@ impl Vecs {
                             format,
                             version + VERSION + Version::ZERO,
                             fetched,
-                            keyspace,
-                            &stores_path,
+                            &states_path,
                             true,
                         )?,
                         _5y: cohort::Vecs::forced_import(
@@ -275,8 +257,7 @@ impl Vecs {
                             format,
                             version + VERSION + Version::ZERO,
                             fetched,
-                            keyspace,
-                            &stores_path,
+                            &states_path,
                             true,
                         )?,
                         _6y: cohort::Vecs::forced_import(
@@ -286,8 +267,7 @@ impl Vecs {
                             format,
                             version + VERSION + Version::ZERO,
                             fetched,
-                            keyspace,
-                            &stores_path,
+                            &states_path,
                             true,
                         )?,
                         _7y: cohort::Vecs::forced_import(
@@ -297,8 +277,7 @@ impl Vecs {
                             format,
                             version + VERSION + Version::ZERO,
                             fetched,
-                            keyspace,
-                            &stores_path,
+                            &states_path,
                             true,
                         )?,
                         _8y: cohort::Vecs::forced_import(
@@ -308,8 +287,7 @@ impl Vecs {
                             format,
                             version + VERSION + Version::ZERO,
                             fetched,
-                            keyspace,
-                            &stores_path,
+                            &states_path,
                             true,
                         )?,
                         _10y: cohort::Vecs::forced_import(
@@ -319,8 +297,7 @@ impl Vecs {
                             format,
                             version + VERSION + Version::ZERO,
                             fetched,
-                            keyspace,
-                            &stores_path,
+                            &states_path,
                             true,
                         )?,
                         _15y: cohort::Vecs::forced_import(
@@ -330,8 +307,7 @@ impl Vecs {
                             format,
                             version + VERSION + Version::ZERO,
                             fetched,
-                            keyspace,
-                            &stores_path,
+                            &states_path,
                             true,
                         )?,
                     },
@@ -343,8 +319,7 @@ impl Vecs {
                             format,
                             version + VERSION + Version::ZERO,
                             fetched,
-                            keyspace,
-                            &stores_path,
+                            &states_path,
                             true,
                         )?,
                         _1w: cohort::Vecs::forced_import(
@@ -354,8 +329,7 @@ impl Vecs {
                             format,
                             version + VERSION + Version::ZERO,
                             fetched,
-                            keyspace,
-                            &stores_path,
+                            &states_path,
                             true,
                         )?,
                         _1m: cohort::Vecs::forced_import(
@@ -365,8 +339,7 @@ impl Vecs {
                             format,
                             version + VERSION + Version::ZERO,
                             fetched,
-                            keyspace,
-                            &stores_path,
+                            &states_path,
                             true,
                         )?,
                         _2m: cohort::Vecs::forced_import(
@@ -376,8 +349,7 @@ impl Vecs {
                             format,
                             version + VERSION + Version::ZERO,
                             fetched,
-                            keyspace,
-                            &stores_path,
+                            &states_path,
                             true,
                         )?,
                         _3m: cohort::Vecs::forced_import(
@@ -387,8 +359,7 @@ impl Vecs {
                             format,
                             version + VERSION + Version::ZERO,
                             fetched,
-                            keyspace,
-                            &stores_path,
+                            &states_path,
                             true,
                         )?,
                         _4m: cohort::Vecs::forced_import(
@@ -398,8 +369,7 @@ impl Vecs {
                             format,
                             version + VERSION + Version::ZERO,
                             fetched,
-                            keyspace,
-                            &stores_path,
+                            &states_path,
                             true,
                         )?,
                         _5m: cohort::Vecs::forced_import(
@@ -409,8 +379,7 @@ impl Vecs {
                             format,
                             version + VERSION + Version::ZERO,
                             fetched,
-                            keyspace,
-                            &stores_path,
+                            &states_path,
                             true,
                         )?,
                         _6m: cohort::Vecs::forced_import(
@@ -420,8 +389,7 @@ impl Vecs {
                             format,
                             version + VERSION + Version::ZERO,
                             fetched,
-                            keyspace,
-                            &stores_path,
+                            &states_path,
                             true,
                         )?,
                         _1y: cohort::Vecs::forced_import(
@@ -431,8 +399,7 @@ impl Vecs {
                             format,
                             version + VERSION + Version::ZERO,
                             fetched,
-                            keyspace,
-                            &stores_path,
+                            &states_path,
                             true,
                         )?,
                         _2y: cohort::Vecs::forced_import(
@@ -442,8 +409,7 @@ impl Vecs {
                             format,
                             version + VERSION + Version::ZERO,
                             fetched,
-                            keyspace,
-                            &stores_path,
+                            &states_path,
                             true,
                         )?,
                         _3y: cohort::Vecs::forced_import(
@@ -453,8 +419,7 @@ impl Vecs {
                             format,
                             version + VERSION + Version::ZERO,
                             fetched,
-                            keyspace,
-                            &stores_path,
+                            &states_path,
                             true,
                         )?,
                         _4y: cohort::Vecs::forced_import(
@@ -464,8 +429,7 @@ impl Vecs {
                             format,
                             version + VERSION + Version::ZERO,
                             fetched,
-                            keyspace,
-                            &stores_path,
+                            &states_path,
                             true,
                         )?,
                         _5y: cohort::Vecs::forced_import(
@@ -475,8 +439,7 @@ impl Vecs {
                             format,
                             version + VERSION + Version::ZERO,
                             fetched,
-                            keyspace,
-                            &stores_path,
+                            &states_path,
                             true,
                         )?,
                         _6y: cohort::Vecs::forced_import(
@@ -486,8 +449,7 @@ impl Vecs {
                             format,
                             version + VERSION + Version::ZERO,
                             fetched,
-                            keyspace,
-                            &stores_path,
+                            &states_path,
                             true,
                         )?,
                         _7y: cohort::Vecs::forced_import(
@@ -497,8 +459,7 @@ impl Vecs {
                             format,
                             version + VERSION + Version::ZERO,
                             fetched,
-                            keyspace,
-                            &stores_path,
+                            &states_path,
                             true,
                         )?,
                         _8y: cohort::Vecs::forced_import(
@@ -508,8 +469,7 @@ impl Vecs {
                             format,
                             version + VERSION + Version::ZERO,
                             fetched,
-                            keyspace,
-                            &stores_path,
+                            &states_path,
                             true,
                         )?,
                         _10y: cohort::Vecs::forced_import(
@@ -519,8 +479,7 @@ impl Vecs {
                             format,
                             version + VERSION + Version::ZERO,
                             fetched,
-                            keyspace,
-                            &stores_path,
+                            &states_path,
                             true,
                         )?,
                         _15y: cohort::Vecs::forced_import(
@@ -530,8 +489,7 @@ impl Vecs {
                             format,
                             version + VERSION + Version::ZERO,
                             fetched,
-                            keyspace,
-                            &stores_path,
+                            &states_path,
                             true,
                         )?,
                     },
@@ -543,8 +501,7 @@ impl Vecs {
                             format,
                             version + VERSION + Version::ZERO,
                             fetched,
-                            keyspace,
-                            &stores_path,
+                            &states_path,
                             true,
                         )?,
                         _1d_to_1w: cohort::Vecs::forced_import(
@@ -554,8 +511,7 @@ impl Vecs {
                             format,
                             version + VERSION + Version::ZERO,
                             fetched,
-                            keyspace,
-                            &stores_path,
+                            &states_path,
                             true,
                         )?,
                         _1w_to_1m: cohort::Vecs::forced_import(
@@ -565,8 +521,7 @@ impl Vecs {
                             format,
                             version + VERSION + Version::ZERO,
                             fetched,
-                            keyspace,
-                            &stores_path,
+                            &states_path,
                             true,
                         )?,
                         _1m_to_2m: cohort::Vecs::forced_import(
@@ -576,8 +531,7 @@ impl Vecs {
                             format,
                             version + VERSION + Version::ZERO,
                             fetched,
-                            keyspace,
-                            &stores_path,
+                            &states_path,
                             true,
                         )?,
                         _2m_to_3m: cohort::Vecs::forced_import(
@@ -587,8 +541,7 @@ impl Vecs {
                             format,
                             version + VERSION + Version::ZERO,
                             fetched,
-                            keyspace,
-                            &stores_path,
+                            &states_path,
                             true,
                         )?,
                         _3m_to_4m: cohort::Vecs::forced_import(
@@ -598,8 +551,7 @@ impl Vecs {
                             format,
                             version + VERSION + Version::ZERO,
                             fetched,
-                            keyspace,
-                            &stores_path,
+                            &states_path,
                             true,
                         )?,
                         _4m_to_5m: cohort::Vecs::forced_import(
@@ -609,8 +561,7 @@ impl Vecs {
                             format,
                             version + VERSION + Version::ZERO,
                             fetched,
-                            keyspace,
-                            &stores_path,
+                            &states_path,
                             true,
                         )?,
                         _5m_to_6m: cohort::Vecs::forced_import(
@@ -620,8 +571,7 @@ impl Vecs {
                             format,
                             version + VERSION + Version::ZERO,
                             fetched,
-                            keyspace,
-                            &stores_path,
+                            &states_path,
                             true,
                         )?,
                         _6m_to_1y: cohort::Vecs::forced_import(
@@ -631,8 +581,7 @@ impl Vecs {
                             format,
                             version + VERSION + Version::ZERO,
                             fetched,
-                            keyspace,
-                            &stores_path,
+                            &states_path,
                             true,
                         )?,
                         _1y_to_2y: cohort::Vecs::forced_import(
@@ -642,8 +591,7 @@ impl Vecs {
                             format,
                             version + VERSION + Version::ZERO,
                             fetched,
-                            keyspace,
-                            &stores_path,
+                            &states_path,
                             true,
                         )?,
                         _2y_to_3y: cohort::Vecs::forced_import(
@@ -653,8 +601,7 @@ impl Vecs {
                             format,
                             version + VERSION + Version::ZERO,
                             fetched,
-                            keyspace,
-                            &stores_path,
+                            &states_path,
                             true,
                         )?,
                         _3y_to_4y: cohort::Vecs::forced_import(
@@ -664,8 +611,7 @@ impl Vecs {
                             format,
                             version + VERSION + Version::ZERO,
                             fetched,
-                            keyspace,
-                            &stores_path,
+                            &states_path,
                             true,
                         )?,
                         _4y_to_5y: cohort::Vecs::forced_import(
@@ -675,8 +621,7 @@ impl Vecs {
                             format,
                             version + VERSION + Version::ZERO,
                             fetched,
-                            keyspace,
-                            &stores_path,
+                            &states_path,
                             true,
                         )?,
                         _5y_to_6y: cohort::Vecs::forced_import(
@@ -686,8 +631,7 @@ impl Vecs {
                             format,
                             version + VERSION + Version::ZERO,
                             fetched,
-                            keyspace,
-                            &stores_path,
+                            &states_path,
                             true,
                         )?,
                         _6y_to_7y: cohort::Vecs::forced_import(
@@ -697,8 +641,7 @@ impl Vecs {
                             format,
                             version + VERSION + Version::ZERO,
                             fetched,
-                            keyspace,
-                            &stores_path,
+                            &states_path,
                             true,
                         )?,
                         _7y_to_8y: cohort::Vecs::forced_import(
@@ -708,8 +651,7 @@ impl Vecs {
                             format,
                             version + VERSION + Version::ZERO,
                             fetched,
-                            keyspace,
-                            &stores_path,
+                            &states_path,
                             true,
                         )?,
                         _8y_to_10y: cohort::Vecs::forced_import(
@@ -719,8 +661,7 @@ impl Vecs {
                             format,
                             version + VERSION + Version::ZERO,
                             fetched,
-                            keyspace,
-                            &stores_path,
+                            &states_path,
                             true,
                         )?,
                         _10y_to_15y: cohort::Vecs::forced_import(
@@ -730,8 +671,7 @@ impl Vecs {
                             format,
                             version + VERSION + Version::ZERO,
                             fetched,
-                            keyspace,
-                            &stores_path,
+                            &states_path,
                             true,
                         )?,
                         _15y_to_end: cohort::Vecs::forced_import(
@@ -741,8 +681,7 @@ impl Vecs {
                             format,
                             version + VERSION + Version::ZERO,
                             fetched,
-                            keyspace,
-                            &stores_path,
+                            &states_path,
                             true,
                         )?,
                     },
@@ -754,8 +693,7 @@ impl Vecs {
                             format,
                             version + VERSION + Version::ZERO,
                             fetched,
-                            keyspace,
-                            &stores_path,
+                            &states_path,
                             true,
                         )?,
                         _1: cohort::Vecs::forced_import(
@@ -765,8 +703,7 @@ impl Vecs {
                             format,
                             version + VERSION + Version::ZERO,
                             fetched,
-                            keyspace,
-                            &stores_path,
+                            &states_path,
                             true,
                         )?,
                         _2: cohort::Vecs::forced_import(
@@ -776,8 +713,7 @@ impl Vecs {
                             format,
                             version + VERSION + Version::ZERO,
                             fetched,
-                            keyspace,
-                            &stores_path,
+                            &states_path,
                             true,
                         )?,
                         _3: cohort::Vecs::forced_import(
@@ -787,8 +723,7 @@ impl Vecs {
                             format,
                             version + VERSION + Version::ZERO,
                             fetched,
-                            keyspace,
-                            &stores_path,
+                            &states_path,
                             true,
                         )?,
                         _4: cohort::Vecs::forced_import(
@@ -798,8 +733,7 @@ impl Vecs {
                             format,
                             version + VERSION + Version::ZERO,
                             fetched,
-                            keyspace,
-                            &stores_path,
+                            &states_path,
                             true,
                         )?,
                     },
@@ -811,8 +745,7 @@ impl Vecs {
                             format,
                             version + VERSION + Version::ZERO,
                             fetched,
-                            keyspace,
-                            &stores_path,
+                            &states_path,
                             true,
                         )?,
                         from_1sat_to_10sats: cohort::Vecs::forced_import(
@@ -822,8 +755,7 @@ impl Vecs {
                             format,
                             version + VERSION + Version::ZERO,
                             fetched,
-                            keyspace,
-                            &stores_path,
+                            &states_path,
                             true,
                         )?,
                         from_10sats_to_100sats: cohort::Vecs::forced_import(
@@ -833,8 +765,7 @@ impl Vecs {
                             format,
                             version + VERSION + Version::ZERO,
                             fetched,
-                            keyspace,
-                            &stores_path,
+                            &states_path,
                             true,
                         )?,
                         from_100sats_to_1_000sats: cohort::Vecs::forced_import(
@@ -844,8 +775,7 @@ impl Vecs {
                             format,
                             version + VERSION + Version::ZERO,
                             fetched,
-                            keyspace,
-                            &stores_path,
+                            &states_path,
                             true,
                         )?,
                         from_1_000sats_to_10_000sats: cohort::Vecs::forced_import(
@@ -855,8 +785,7 @@ impl Vecs {
                             format,
                             version + VERSION + Version::ZERO,
                             fetched,
-                            keyspace,
-                            &stores_path,
+                            &states_path,
                             true,
                         )?,
                         from_10_000sats_to_100_000sats: cohort::Vecs::forced_import(
@@ -866,8 +795,7 @@ impl Vecs {
                             format,
                             version + VERSION + Version::ZERO,
                             fetched,
-                            keyspace,
-                            &stores_path,
+                            &states_path,
                             true,
                         )?,
                         from_100_000sats_to_1_000_000sats: cohort::Vecs::forced_import(
@@ -877,8 +805,7 @@ impl Vecs {
                             format,
                             version + VERSION + Version::ZERO,
                             fetched,
-                            keyspace,
-                            &stores_path,
+                            &states_path,
                             true,
                         )?,
                         from_1_000_000sats_to_10_000_000sats: cohort::Vecs::forced_import(
@@ -888,8 +815,7 @@ impl Vecs {
                             format,
                             version + VERSION + Version::ZERO,
                             fetched,
-                            keyspace,
-                            &stores_path,
+                            &states_path,
                             true,
                         )?,
                         from_10_000_000sats_to_1btc: cohort::Vecs::forced_import(
@@ -899,8 +825,7 @@ impl Vecs {
                             format,
                             version + VERSION + Version::ZERO,
                             fetched,
-                            keyspace,
-                            &stores_path,
+                            &states_path,
                             true,
                         )?,
                         from_1btc_to_10btc: cohort::Vecs::forced_import(
@@ -910,8 +835,7 @@ impl Vecs {
                             format,
                             version + VERSION + Version::ZERO,
                             fetched,
-                            keyspace,
-                            &stores_path,
+                            &states_path,
                             true,
                         )?,
                         from_10btc_to_100btc: cohort::Vecs::forced_import(
@@ -921,8 +845,7 @@ impl Vecs {
                             format,
                             version + VERSION + Version::ZERO,
                             fetched,
-                            keyspace,
-                            &stores_path,
+                            &states_path,
                             true,
                         )?,
                         from_100btc_to_1_000btc: cohort::Vecs::forced_import(
@@ -932,8 +855,7 @@ impl Vecs {
                             format,
                             version + VERSION + Version::ZERO,
                             fetched,
-                            keyspace,
-                            &stores_path,
+                            &states_path,
                             true,
                         )?,
                         from_1_000btc_to_10_000btc: cohort::Vecs::forced_import(
@@ -943,8 +865,7 @@ impl Vecs {
                             format,
                             version + VERSION + Version::ZERO,
                             fetched,
-                            keyspace,
-                            &stores_path,
+                            &states_path,
                             true,
                         )?,
                         from_10_000btc_to_100_000btc: cohort::Vecs::forced_import(
@@ -954,8 +875,7 @@ impl Vecs {
                             format,
                             version + VERSION + Version::ZERO,
                             fetched,
-                            keyspace,
-                            &stores_path,
+                            &states_path,
                             true,
                         )?,
                         from_100_000btc: cohort::Vecs::forced_import(
@@ -965,8 +885,7 @@ impl Vecs {
                             format,
                             version + VERSION + Version::ZERO,
                             fetched,
-                            keyspace,
-                            &stores_path,
+                            &states_path,
                             true,
                         )?,
                     },
@@ -978,8 +897,7 @@ impl Vecs {
                             format,
                             version + VERSION + Version::ZERO,
                             fetched,
-                            keyspace,
-                            &stores_path,
+                            &states_path,
                             true,
                         )?,
                         _10_000sats: cohort::Vecs::forced_import(
@@ -989,8 +907,7 @@ impl Vecs {
                             format,
                             version + VERSION + Version::ZERO,
                             fetched,
-                            keyspace,
-                            &stores_path,
+                            &states_path,
                             true,
                         )?,
                         _1btc: cohort::Vecs::forced_import(
@@ -1000,8 +917,7 @@ impl Vecs {
                             format,
                             version + VERSION + Version::ZERO,
                             fetched,
-                            keyspace,
-                            &stores_path,
+                            &states_path,
                             true,
                         )?,
                         _10btc: cohort::Vecs::forced_import(
@@ -1011,8 +927,7 @@ impl Vecs {
                             format,
                             version + VERSION + Version::ZERO,
                             fetched,
-                            keyspace,
-                            &stores_path,
+                            &states_path,
                             true,
                         )?,
                         _100btc: cohort::Vecs::forced_import(
@@ -1022,8 +937,7 @@ impl Vecs {
                             format,
                             version + VERSION + Version::ZERO,
                             fetched,
-                            keyspace,
-                            &stores_path,
+                            &states_path,
                             true,
                         )?,
                     },
@@ -1035,8 +949,7 @@ impl Vecs {
                             format,
                             version + VERSION + Version::ZERO,
                             fetched,
-                            keyspace,
-                            &stores_path,
+                            &states_path,
                             true,
                         )?,
                         _1btc: cohort::Vecs::forced_import(
@@ -1046,8 +959,7 @@ impl Vecs {
                             format,
                             version + VERSION + Version::ZERO,
                             fetched,
-                            keyspace,
-                            &stores_path,
+                            &states_path,
                             true,
                         )?,
                         _10btc: cohort::Vecs::forced_import(
@@ -1057,8 +969,7 @@ impl Vecs {
                             format,
                             version + VERSION + Version::ZERO,
                             fetched,
-                            keyspace,
-                            &stores_path,
+                            &states_path,
                             true,
                         )?,
                         _100btc: cohort::Vecs::forced_import(
@@ -1068,8 +979,7 @@ impl Vecs {
                             format,
                             version + VERSION + Version::ZERO,
                             fetched,
-                            keyspace,
-                            &stores_path,
+                            &states_path,
                             true,
                         )?,
                     },
@@ -1174,8 +1084,7 @@ impl Vecs {
                             format,
                             version + VERSION + Version::ZERO,
                             fetched,
-                            keyspace,
-                            &stores_path,
+                            &states_path,
                             true,
                         )?,
                         p2pk33: cohort::Vecs::forced_import(
@@ -1185,8 +1094,7 @@ impl Vecs {
                             format,
                             version + VERSION + Version::ZERO,
                             fetched,
-                            keyspace,
-                            &stores_path,
+                            &states_path,
                             true,
                         )?,
                         p2pkh: cohort::Vecs::forced_import(
@@ -1196,8 +1104,7 @@ impl Vecs {
                             format,
                             version + VERSION + Version::ZERO,
                             fetched,
-                            keyspace,
-                            &stores_path,
+                            &states_path,
                             true,
                         )?,
                         p2ms: cohort::Vecs::forced_import(
@@ -1207,8 +1114,7 @@ impl Vecs {
                             format,
                             version + VERSION + Version::ZERO,
                             fetched,
-                            keyspace,
-                            &stores_path,
+                            &states_path,
                             true,
                         )?,
                         p2sh: cohort::Vecs::forced_import(
@@ -1218,8 +1124,7 @@ impl Vecs {
                             format,
                             version + VERSION + Version::ZERO,
                             fetched,
-                            keyspace,
-                            &stores_path,
+                            &states_path,
                             true,
                         )?,
                         p2wpkh: cohort::Vecs::forced_import(
@@ -1229,8 +1134,7 @@ impl Vecs {
                             format,
                             version + VERSION + Version::ZERO,
                             fetched,
-                            keyspace,
-                            &stores_path,
+                            &states_path,
                             true,
                         )?,
                         p2wsh: cohort::Vecs::forced_import(
@@ -1240,8 +1144,7 @@ impl Vecs {
                             format,
                             version + VERSION + Version::ZERO,
                             fetched,
-                            keyspace,
-                            &stores_path,
+                            &states_path,
                             true,
                         )?,
                         p2tr: cohort::Vecs::forced_import(
@@ -1251,8 +1154,7 @@ impl Vecs {
                             format,
                             version + VERSION + Version::ZERO,
                             fetched,
-                            keyspace,
-                            &stores_path,
+                            &states_path,
                             true,
                         )?,
                         p2a: cohort::Vecs::forced_import(
@@ -1262,8 +1164,7 @@ impl Vecs {
                             format,
                             version + VERSION + Version::ZERO,
                             fetched,
-                            keyspace,
-                            &stores_path,
+                            &states_path,
                             true,
                         )?,
                         empty: cohort::Vecs::forced_import(
@@ -1273,8 +1174,7 @@ impl Vecs {
                             format,
                             version + VERSION + Version::ZERO,
                             fetched,
-                            keyspace,
-                            &stores_path,
+                            &states_path,
                             true,
                         )?,
                         unknown: cohort::Vecs::forced_import(
@@ -1284,8 +1184,7 @@ impl Vecs {
                             format,
                             version + VERSION + Version::ZERO,
                             fetched,
-                            keyspace,
-                            &stores_path,
+                            &states_path,
                             true,
                         )?,
                     },
@@ -1434,7 +1333,7 @@ impl Vecs {
             info!("Starting processing utxos from the start");
             separate_utxo_vecs
                 .par_iter_mut()
-                .try_for_each(|(_, v)| v.state.price_to_amount.reset_partition())?;
+                .try_for_each(|(_, v)| v.state.price_to_amount.reset())?;
         }
         let starting_height = starting_indexes
             .height

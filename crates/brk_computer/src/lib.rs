@@ -54,7 +54,6 @@ impl Computer {
             self.fetcher.is_some(),
             computation,
             self.format,
-            indexer.keyspace(),
         )?);
         Ok(())
     }

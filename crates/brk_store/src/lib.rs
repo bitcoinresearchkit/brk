@@ -31,7 +31,6 @@ pub struct Store<Key, Value> {
     puts: BTreeMap<Key, Value>,
     dels: BTreeSet<Key>,
     bloom_filter_bits: Option<Option<u8>>,
-    override_partition: bool,
 }
 
 /// Use default if will read
@@ -81,7 +80,6 @@ where
             puts: BTreeMap::new(),
             dels: BTreeSet::new(),
             bloom_filter_bits,
-            override_partition: false,
         })
     }
 
@@ -95,79 +93,33 @@ where
         }
     }
 
-    pub fn puts_first_key_value(&self) -> Option<(&K, &V)> {
-        self.puts.first_key_value()
-    }
+    // pub fn puts_first_key_value(&self) -> Option<(&K, &V)> {
+    //     self.puts.first_key_value()
+    // }
 
-    pub fn puts_last_key_value(&self) -> Option<(&K, &V)> {
-        self.puts.last_key_value()
-    }
+    // pub fn puts_last_key_value(&self) -> Option<(&K, &V)> {
+    //     self.puts.last_key_value()
+    // }
 
-    pub fn rtx_first_key_value(&self) -> Result<Option<(K, V)>> {
-        Ok(self
-            .rtx
-            .first_key_value(&self.partition.load())?
-            .map(|(k, v)| (K::from(ByteView::from(k)), V::from(ByteView::from(v)))))
-    }
+    // pub fn rtx_first_key_value(&self) -> Result<Option<(K, V)>> {
+    //     Ok(self
+    //         .rtx
+    //         .first_key_value(&self.partition.load())?
+    //         .map(|(k, v)| (K::from(ByteView::from(k)), V::from(ByteView::from(v)))))
+    // }
 
-    pub fn rtx_last_key_value(&self) -> Result<Option<(K, V)>> {
-        Ok(self
-            .rtx
-            .last_key_value(&self.partition.load())?
-            .map(|(k, v)| (K::from(ByteView::from(k)), V::from(ByteView::from(v)))))
-    }
+    // pub fn rtx_last_key_value(&self) -> Result<Option<(K, V)>> {
+    //     Ok(self
+    //         .rtx
+    //         .last_key_value(&self.partition.load())?
+    //         .map(|(k, v)| (K::from(ByteView::from(k)), V::from(ByteView::from(v)))))
+    // }
 
-    pub fn puts_entry_or_default(&mut self, key: &'a K) -> &mut V
-    where
-        V: Default,
-    {
-        if !self.dels.is_empty() {
-            self.dels.remove(key);
-        }
-        self.puts.entry(key.clone()).or_default()
-    }
-
-    pub fn puts_remove(&mut self, key: &K) -> Option<V> {
-        self.puts.remove(key)
-    }
-
-    pub fn dels_insert(&mut self, key: K) -> bool {
-        self.dels.insert(key)
-    }
-
-    pub fn tx_iter(&self) -> impl Iterator<Item = (K, V)> {
-        self.rtx
-            .iter(&self.partition.load())
-            .map(|res| res.unwrap())
-            .map(|(k, v)| (K::from(ByteView::from(k)), V::from(ByteView::from(v))))
-    }
-
-    pub fn puts_iter(&self) -> impl Iterator<Item = (&K, &V)> {
-        self.puts.iter()
-    }
-
-    pub fn clone_puts(&self) -> BTreeMap<K, V> {
-        self.puts.clone()
-    }
-
-    pub fn append_puts(&mut self, mut other: BTreeMap<K, V>) {
-        self.puts.append(&mut other);
-    }
-
-    pub fn copy_db_to_puts(&mut self) {
-        self.override_partition = true;
-        self.append_puts(self.tx_iter().collect());
-        self.meta.reset_len();
-    }
-
-    // pub fn unordered_clone_iter(&self) -> impl Iterator<Item = (K, V)> {
+    // pub fn tx_iter(&self) -> impl Iterator<Item = (K, V)> {
     //     self.rtx
-    //         .keys(&self.partition.load())
+    //         .iter(&self.partition.load())
     //         .map(|res| res.unwrap())
-    //         .map(|k| K::from(ByteView::from(k)))
-    //         .filter(|k| !self.puts.contains_key(k) && !self.dels.contains(k))
-    //         .map(|k| (k, self.rtx.get(partition, key) V::from(ByteView::from(v))))
-    //         .chain(self.puts.iter().map(|(k, v)| (k.clone(), v.clone())))
+    //         .map(|(k, v)| (K::from(ByteView::from(k)), V::from(ByteView::from(v))))
     // }
 
     pub fn insert_if_needed(&mut self, key: K, value: V, height: Height) {
@@ -214,10 +166,6 @@ where
         }
 
         self.meta.export(self.len(), height)?;
-
-        if self.override_partition {
-            self.reset_partition()?;
-        }
 
         let mut wtx = self.keyspace.write_tx();
 
@@ -338,7 +286,6 @@ where
             puts: self.puts.clone(),
             dels: self.dels.clone(),
             bloom_filter_bits: self.bloom_filter_bits,
-            override_partition: self.override_partition,
         }
     }
 }

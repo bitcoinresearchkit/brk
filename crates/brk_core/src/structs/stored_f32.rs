@@ -76,6 +76,12 @@ impl From<StoredF32> for f32 {
     }
 }
 
+impl From<Dollars> for StoredF32 {
+    fn from(value: Dollars) -> Self {
+        StoredF32::from(f64::from(value))
+    }
+}
+
 impl Div<Dollars> for StoredF32 {
     type Output = Self;
     fn div(self, rhs: Dollars) -> Self::Output {

@@ -344,7 +344,7 @@ where
         self.safe_flush(exit)
     }
 
-    pub fn compute_divide<T2, T3, T4>(
+    pub fn compute_divide<T2, T3, T4, T5>(
         &mut self,
         max_from: I,
         divided: &impl AnyIterableVec<I, T2>,
@@ -352,15 +352,16 @@ where
         exit: &Exit,
     ) -> Result<()>
     where
-        T2: StoredType + Div<T3, Output = T4>,
+        T2: StoredType + Mul<usize, Output = T4>,
         T3: StoredType,
-        T4: Mul<usize, Output = T4> + CheckedSub<usize>,
-        T: From<T4>,
+        T4: Div<T3, Output = T5> + From<T2>,
+        T5: CheckedSub<usize>,
+        T: From<T5>,
     {
         self.compute_divide_(max_from, divided, divider, exit, false, false)
     }
 
-    pub fn compute_percentage<T2, T3, T4>(
+    pub fn compute_percentage<T2, T3, T4, T5>(
         &mut self,
         max_from: I,
         divided: &impl AnyIterableVec<I, T2>,
@@ -368,15 +369,16 @@ where
         exit: &Exit,
     ) -> Result<()>
     where
-        T2: StoredType + Div<T3, Output = T4>,
+        T2: StoredType + Mul<usize, Output = T4>,
         T3: StoredType,
-        T4: Mul<usize, Output = T4> + CheckedSub<usize>,
-        T: From<T4>,
+        T4: Div<T3, Output = T5> + From<T2>,
+        T5: CheckedSub<usize>,
+        T: From<T5>,
     {
         self.compute_divide_(max_from, divided, divider, exit, true, false)
     }
 
-    pub fn compute_percentage_difference<T2, T3, T4>(
+    pub fn compute_percentage_difference<T2, T3, T4, T5>(
         &mut self,
         max_from: I,
         divided: &impl AnyIterableVec<I, T2>,
@@ -384,15 +386,16 @@ where
         exit: &Exit,
     ) -> Result<()>
     where
-        T2: StoredType + Div<T3, Output = T4>,
+        T2: StoredType + Mul<usize, Output = T4>,
         T3: StoredType,
-        T4: Mul<usize, Output = T4> + CheckedSub<usize>,
-        T: From<T4>,
+        T4: Div<T3, Output = T5> + From<T2>,
+        T5: CheckedSub<usize>,
+        T: From<T5>,
     {
         self.compute_divide_(max_from, divided, divider, exit, true, true)
     }
 
-    pub fn compute_divide_<T2, T3, T4>(
+    pub fn compute_divide_<T2, T3, T4, T5>(
         &mut self,
         max_from: I,
         divided: &impl AnyIterableVec<I, T2>,
@@ -402,10 +405,11 @@ where
         as_difference: bool,
     ) -> Result<()>
     where
-        T2: StoredType + Div<T3, Output = T4>,
+        T2: StoredType + Mul<usize, Output = T4>,
         T3: StoredType,
-        T4: Mul<usize, Output = T4> + CheckedSub<usize>,
-        T: From<T4>,
+        T4: Div<T3, Output = T5> + From<T2>,
+        T5: CheckedSub<usize>,
+        T: From<T5>,
     {
         self.validate_computed_version_or_reset_file(
             Version::ONE + self.inner.version() + divided.version() + divider.version(),
@@ -418,10 +422,13 @@ where
         divided.iter_at(index).try_for_each(|(i, divided)| {
             let divided = divided.into_inner();
             let divider = divider_iter.unwrap_get_inner(i);
-            let mut v = divided / divider;
-            if as_percentage {
-                v = v * multiplier;
-            }
+
+            let v = if as_percentage {
+                divided * multiplier
+            } else {
+                T4::from(divided)
+            };
+            let mut v = v / divider;
             if as_difference {
                 v = v.checked_sub(multiplier).unwrap();
             }

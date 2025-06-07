@@ -15,6 +15,8 @@ pub enum Error {
     Fjall(fjall::Error),
     SystemTimeError(time::SystemTimeError),
     ZeroCopyError,
+    BincodeEncodeError(bincode::error::EncodeError),
+    BincodeDecodeError(bincode::error::DecodeError),
 
     WrongEndian,
     DifferentVersion { found: Version, expected: Version },
@@ -77,6 +79,18 @@ impl From<serde_json::Error> for Error {
     }
 }
 
+impl From<bincode::error::DecodeError> for Error {
+    fn from(error: bincode::error::DecodeError) -> Self {
+        Self::BincodeDecodeError(error)
+    }
+}
+
+impl From<bincode::error::EncodeError> for Error {
+    fn from(error: bincode::error::EncodeError) -> Self {
+        Self::BincodeEncodeError(error)
+    }
+}
+
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
@@ -85,6 +99,8 @@ impl fmt::Display for Error {
             Error::SerdeJson(error) => Debug::fmt(&error, f),
             Error::Jiff(error) => Debug::fmt(&error, f),
             Error::Fjall(error) => Debug::fmt(&error, f),
+            Error::BincodeDecodeError(error) => Debug::fmt(&error, f),
+            Error::BincodeEncodeError(error) => Debug::fmt(&error, f),
             Error::ZeroCopyError => write!(f, "ZeroCopy error"),
 
             Error::WrongEndian => write!(f, "Wrong endian"),

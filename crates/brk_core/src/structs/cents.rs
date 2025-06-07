@@ -24,6 +24,12 @@ use super::Dollars;
 )]
 pub struct Cents(i64);
 
+impl Cents {
+    pub const fn mint(value: i64) -> Self {
+        Self(value)
+    }
+}
+
 impl From<Dollars> for Cents {
     fn from(value: Dollars) -> Self {
         Self((*value * 100.0).round() as i64)
@@ -45,6 +51,15 @@ impl From<i64> for Cents {
 impl From<u64> for Cents {
     fn from(value: u64) -> Self {
         Self(value as i64)
+    }
+}
+
+impl From<Cents> for usize {
+    fn from(value: Cents) -> Self {
+        if value.0 < 0 {
+            panic!()
+        }
+        value.0 as usize
     }
 }
 
@@ -73,6 +88,13 @@ impl Add for Cents {
     type Output = Self;
     fn add(self, rhs: Self) -> Self::Output {
         Self(self.0 + rhs.0)
+    }
+}
+
+impl Div<Cents> for Cents {
+    type Output = Self;
+    fn div(self, rhs: Self) -> Self::Output {
+        Self(self.0 / rhs.0)
     }
 }
 

@@ -1,10 +1,8 @@
 use std::{cmp::Ordering, path::Path};
 
-use brk_core::{CheckedSub, Dollars, Height, Result, Sats, Version};
-use brk_store::Store;
-use fjall::TransactionalKeyspace;
+use brk_core::{CheckedSub, Dollars, Height, Result, Sats};
 
-use crate::UnrealizedState;
+use crate::{PriceToAmount, UnrealizedState};
 
 use super::{RealizedState, SupplyState};
 
@@ -14,29 +12,17 @@ pub struct CohortState {
     pub realized: Option<RealizedState>,
     pub satblocks_destroyed: Sats,
     pub satdays_destroyed: Sats,
-    pub price_to_amount: Store<Dollars, Sats>,
+    pub price_to_amount: PriceToAmount,
 }
 
 impl CohortState {
-    pub fn default_and_import(
-        keyspace: &TransactionalKeyspace,
-        path: &Path,
-        name: &str,
-        version: Version,
-        compute_dollars: bool,
-    ) -> Result<Self> {
+    pub fn default_and_import(path: &Path, name: &str, compute_dollars: bool) -> Result<Self> {
         Ok(Self {
             supply: SupplyState::default(),
             realized: compute_dollars.then_some(RealizedState::NAN),
             satblocks_destroyed: Sats::ZERO,
             satdays_destroyed: Sats::ZERO,
-            price_to_amount: Store::import(
-                keyspace,
-                path,
-                &format!("{name}_price_to_amount"),
-                version + Version::new(3),
-                Some(None),
-            )?,
+            price_to_amount: PriceToAmount::forced_import(path, name),
         })
     }
 
@@ -50,41 +36,45 @@ impl CohortState {
 
     pub fn increment(&mut self, supply_state: &SupplyState, price: Option<Dollars>) {
         self.supply += supply_state;
-        if let Some(realized) = self.realized.as_mut() {
-            let price = price.unwrap();
-            realized.increment(supply_state, price);
-            *self.price_to_amount.puts_entry_or_default(&price) += supply_state.value;
+
+        if supply_state.value > Sats::ZERO {
+            if let Some(realized) = self.realized.as_mut() {
+                let price = price.unwrap();
+                realized.increment(supply_state, price);
+                *self.price_to_amount.entry(price).or_default() += supply_state.value;
+            }
         }
     }
 
     pub fn decrement(&mut self, supply_state: &SupplyState, price: Option<Dollars>) {
         self.supply -= supply_state;
-        if let Some(realized) = self.realized.as_mut() {
-            let price = price.unwrap();
-            realized.decrement(supply_state, price);
-            self.decrement_price_to_amount(supply_state, price);
+
+        if supply_state.value > Sats::ZERO {
+            if let Some(realized) = self.realized.as_mut() {
+                let price = price.unwrap();
+                realized.decrement(supply_state, price);
+                self.decrement_price_to_amount(supply_state, price);
+            }
         }
     }
 
     fn decrement_price_to_amount(&mut self, supply_state: &SupplyState, price: Dollars) {
-        let amount = self.price_to_amount.puts_entry_or_default(&price);
+        let amount = self.price_to_amount.get_mut(&price).unwrap();
         *amount -= supply_state.value;
         if *amount == Sats::ZERO {
-            if self.price_to_amount.puts_remove(&price).is_none() {
-                unreachable!()
-            }
-            if !self.price_to_amount.dels_insert(price) {
-                unreachable!()
-            }
+            self.price_to_amount.remove(&price);
         }
     }
 
     pub fn receive(&mut self, supply_state: &SupplyState, price: Option<Dollars>) {
         self.supply += supply_state;
-        if let Some(realized) = self.realized.as_mut() {
-            let price = price.unwrap();
-            realized.receive(supply_state, price);
-            *self.price_to_amount.puts_entry_or_default(&price) += supply_state.value;
+
+        if supply_state.value > Sats::ZERO {
+            if let Some(realized) = self.realized.as_mut() {
+                let price = price.unwrap();
+                realized.receive(supply_state, price);
+                *self.price_to_amount.entry(price).or_default() += supply_state.value;
+            }
         }
     }
 
@@ -99,16 +89,18 @@ impl CohortState {
     ) {
         self.supply -= supply_state;
 
-        self.satblocks_destroyed += supply_state.value * blocks_old;
+        if supply_state.value > Sats::ZERO {
+            self.satblocks_destroyed += supply_state.value * blocks_old;
 
-        self.satdays_destroyed +=
-            Sats::from((u64::from(supply_state.value) as f64 * days_old).floor() as u64);
+            self.satdays_destroyed +=
+                Sats::from((u64::from(supply_state.value) as f64 * days_old).floor() as u64);
 
-        if let Some(realized) = self.realized.as_mut() {
-            let current_price = current_price.unwrap();
-            let prev_price = prev_price.unwrap();
-            realized.send(supply_state, current_price, prev_price, older_than_hour);
-            self.decrement_price_to_amount(supply_state, prev_price);
+            if let Some(realized) = self.realized.as_mut() {
+                let current_price = current_price.unwrap();
+                let prev_price = prev_price.unwrap();
+                realized.send(supply_state, current_price, prev_price, older_than_hour);
+                self.decrement_price_to_amount(supply_state, prev_price);
+            }
         }
     }
 
@@ -158,30 +150,23 @@ impl CohortState {
                 }
             };
 
-        self.price_to_amount
-            .puts_iter()
-            .for_each(|(&price, &sats)| {
-                update_state(price, height_price, sats, &mut height_unrealized_state);
+        self.price_to_amount.iter().for_each(|(&price, &sats)| {
+            update_state(price, height_price, sats, &mut height_unrealized_state);
 
-                if let Some(date_price) = date_price {
-                    update_state(
-                        price,
-                        date_price,
-                        sats,
-                        date_unrealized_state.as_mut().unwrap(),
-                    )
-                }
-            });
+            if let Some(date_price) = date_price {
+                update_state(
+                    price,
+                    date_price,
+                    sats,
+                    date_unrealized_state.as_mut().unwrap(),
+                )
+            }
+        });
 
         (height_unrealized_state, date_unrealized_state)
     }
 
     pub fn commit(&mut self, height: Height) -> Result<()> {
-        // self.price_to_amount
-        //     .retain_or_del(|_, sats| *sats > Sats::ZERO);
-        let price_to_amount_puts = self.price_to_amount.clone_puts();
-        self.price_to_amount.commit(height)?;
-        self.price_to_amount.append_puts(price_to_amount_puts);
-        Ok(())
+        self.price_to_amount.flush(height)
     }
 }

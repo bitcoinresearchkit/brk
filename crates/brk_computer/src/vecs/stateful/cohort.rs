@@ -11,7 +11,6 @@ use brk_vec::{
     AnyCollectableVec, AnyIterableVec, AnyVec, Computation, EagerVec, Format, StoredIndex,
     VecIterator,
 };
-use fjall::TransactionalKeyspace;
 
 use crate::vecs::{
     Indexes, fetched,
@@ -129,8 +128,7 @@ impl Vecs {
         format: Format,
         version: Version,
         fetched: Option<&fetched::Vecs>,
-        keyspace: &TransactionalKeyspace,
-        stores_path: &Path,
+        states_path: &Path,
         compute_relative_to_all: bool,
     ) -> color_eyre::Result<Self> {
         let compute_dollars = fetched.is_some();
@@ -142,10 +140,8 @@ impl Vecs {
         let suffix = |s: &str| cohort_name.map_or(s.to_string(), |name| format!("{name}_{s}"));
 
         let state = CohortState::default_and_import(
-            keyspace,
-            stores_path,
+            states_path,
             cohort_name.unwrap_or_default(),
-            version + VERSION + Version::ZERO,
             compute_dollars,
         )?;
 
@@ -671,7 +667,7 @@ impl Vecs {
                     EagerVec::forced_import(
                         path,
                         &suffix("net_unrealized_profit_and_loss_relative_to_market_cap"),
-                        version + VERSION + Version::ZERO,
+                        version + VERSION + Version::ONE,
                         format,
                     )
                     .unwrap()
@@ -683,7 +679,7 @@ impl Vecs {
                         path,
                         &suffix("net_unrealized_profit_and_loss_relative_to_market_cap"),
                         true,
-                        version + VERSION + Version::ZERO,
+                        version + VERSION + Version::ONE,
                         format,
                         StorableVecGeneatorOptions::default().add_last(),
                     )
@@ -740,7 +736,7 @@ impl Vecs {
                 EagerVec::forced_import(
                     path,
                     &suffix("supply_even_relative_to_own_supply"),
-                    version + VERSION + Version::ZERO,
+                    version + VERSION + Version::ONE,
                     format,
                 )
                 .unwrap()
@@ -749,7 +745,7 @@ impl Vecs {
                 EagerVec::forced_import(
                     path,
                     &suffix("supply_in_loss_relative_to_own_supply"),
-                    version + VERSION + Version::ZERO,
+                    version + VERSION + Version::ONE,
                     format,
                 )
                 .unwrap()
@@ -758,7 +754,7 @@ impl Vecs {
                 EagerVec::forced_import(
                     path,
                     &suffix("supply_in_profit_relative_to_own_supply"),
-                    version + VERSION + Version::ZERO,
+                    version + VERSION + Version::ONE,
                     format,
                 )
                 .unwrap()
@@ -768,7 +764,7 @@ impl Vecs {
                     path,
                     &suffix("supply_even_relative_to_own_supply"),
                     true,
-                    version + VERSION + Version::ZERO,
+                    version + VERSION + Version::ONE,
                     format,
                     StorableVecGeneatorOptions::default().add_last(),
                 )
@@ -779,7 +775,7 @@ impl Vecs {
                     path,
                     &suffix("supply_in_loss_relative_to_own_supply"),
                     true,
-                    version + VERSION + Version::ZERO,
+                    version + VERSION + Version::ONE,
                     format,
                     StorableVecGeneatorOptions::default().add_last(),
                 )
@@ -790,7 +786,7 @@ impl Vecs {
                     path,
                     &suffix("supply_in_profit_relative_to_own_supply"),
                     true,
-                    version + VERSION + Version::ZERO,
+                    version + VERSION + Version::ONE,
                     format,
                     StorableVecGeneatorOptions::default().add_last(),
                 )
@@ -801,7 +797,7 @@ impl Vecs {
                     path,
                     &suffix("supply_relative_to_circulating_supply"),
                     true,
-                    version + VERSION + Version::ZERO,
+                    version + VERSION + Version::ONE,
                     format,
                     StorableVecGeneatorOptions::default().add_last(),
                 )
@@ -813,7 +809,7 @@ impl Vecs {
                     EagerVec::forced_import(
                         path,
                         &suffix("supply_even_relative_to_circulating_supply"),
-                        version + VERSION + Version::ZERO,
+                        version + VERSION + Version::ONE,
                         format,
                     )
                     .unwrap()
@@ -824,7 +820,7 @@ impl Vecs {
                     EagerVec::forced_import(
                         path,
                         &suffix("supply_in_loss_relative_to_circulating_supply"),
-                        version + VERSION + Version::ZERO,
+                        version + VERSION + Version::ONE,
                         format,
                     )
                     .unwrap()
@@ -835,7 +831,7 @@ impl Vecs {
                     EagerVec::forced_import(
                         path,
                         &suffix("supply_in_profit_relative_to_circulating_supply"),
-                        version + VERSION + Version::ZERO,
+                        version + VERSION + Version::ONE,
                         format,
                     )
                     .unwrap()
@@ -847,7 +843,7 @@ impl Vecs {
                         path,
                         &suffix("supply_even_relative_to_circulating_supply"),
                         true,
-                        version + VERSION + Version::ZERO,
+                        version + VERSION + Version::ONE,
                         format,
                         StorableVecGeneatorOptions::default().add_last(),
                     )
@@ -860,7 +856,7 @@ impl Vecs {
                         path,
                         &suffix("supply_in_loss_relative_to_circulating_supply"),
                         true,
-                        version + VERSION + Version::ZERO,
+                        version + VERSION + Version::ONE,
                         format,
                         StorableVecGeneatorOptions::default().add_last(),
                     )
@@ -873,7 +869,7 @@ impl Vecs {
                         path,
                         &suffix("supply_in_profit_relative_to_circulating_supply"),
                         true,
-                        version + VERSION + Version::ZERO,
+                        version + VERSION + Version::ONE,
                         format,
                         StorableVecGeneatorOptions::default().add_last(),
                     )
@@ -985,8 +981,6 @@ impl Vecs {
                 .height_to_utxo_count
                 .into_iter()
                 .unwrap_get_inner(prev_height);
-
-            self.state.price_to_amount.copy_db_to_puts();
 
             if let Some(height_to_realized_cap) = self.height_to_realized_cap.as_mut() {
                 self.state.realized.as_mut().unwrap().cap = height_to_realized_cap
@@ -1300,7 +1294,7 @@ impl Vecs {
                     height,
                     self.state
                         .price_to_amount
-                        .puts_first_key_value()
+                        .first_key_value()
                         .map(|(&dollars, _)| dollars)
                         .unwrap_or(Dollars::NAN),
                     exit,
@@ -1312,7 +1306,7 @@ impl Vecs {
                     height,
                     self.state
                         .price_to_amount
-                        .puts_last_key_value()
+                        .last_key_value()
                         .map(|(&dollars, _)| dollars)
                         .unwrap_or(Dollars::NAN),
                     exit,
@@ -2339,8 +2333,8 @@ impl Vecs {
                 .unwrap()
                 .compute_percentage(
                     starting_indexes.height,
-                    self.height_to_supply_even.as_ref().unwrap(),
-                    &self.height_to_supply,
+                    &self.height_to_supply_even_value.as_ref().unwrap().bitcoin,
+                    &self.height_to_supply_value.bitcoin,
                     exit,
                 )?;
             self.height_to_supply_in_loss_relative_to_own_supply
@@ -2348,8 +2342,12 @@ impl Vecs {
                 .unwrap()
                 .compute_percentage(
                     starting_indexes.height,
-                    self.height_to_supply_in_loss.as_ref().unwrap(),
-                    &self.height_to_supply,
+                    &self
+                        .height_to_supply_in_loss_value
+                        .as_ref()
+                        .unwrap()
+                        .bitcoin,
+                    &self.height_to_supply_value.bitcoin,
                     exit,
                 )?;
             self.height_to_supply_in_profit_relative_to_own_supply
@@ -2357,8 +2355,12 @@ impl Vecs {
                 .unwrap()
                 .compute_percentage(
                     starting_indexes.height,
-                    self.height_to_supply_even.as_ref().unwrap(),
-                    &self.height_to_supply,
+                    &self
+                        .height_to_supply_in_profit_value
+                        .as_ref()
+                        .unwrap()
+                        .bitcoin,
+                    &self.height_to_supply_value.bitcoin,
                     exit,
                 )?;
             self.indexes_to_supply_even_relative_to_own_supply
@@ -2372,8 +2374,14 @@ impl Vecs {
                     |v, _, _, starting_indexes, exit| {
                         v.compute_percentage(
                             starting_indexes.dateindex,
-                            self.dateindex_to_supply_even.as_ref().unwrap(),
-                            self.indexes_to_supply.sats.dateindex.as_ref().unwrap(),
+                            self.indexes_to_supply_even
+                                .as_ref()
+                                .unwrap()
+                                .bitcoin
+                                .dateindex
+                                .as_ref()
+                                .unwrap(),
+                            self.indexes_to_supply.bitcoin.dateindex.as_ref().unwrap(),
                             exit,
                         )
                     },
@@ -2389,8 +2397,14 @@ impl Vecs {
                     |v, _, _, starting_indexes, exit| {
                         v.compute_percentage(
                             starting_indexes.dateindex,
-                            self.dateindex_to_supply_even.as_ref().unwrap(),
-                            self.indexes_to_supply.sats.dateindex.as_ref().unwrap(),
+                            self.indexes_to_supply_in_loss
+                                .as_ref()
+                                .unwrap()
+                                .bitcoin
+                                .dateindex
+                                .as_ref()
+                                .unwrap(),
+                            self.indexes_to_supply.bitcoin.dateindex.as_ref().unwrap(),
                             exit,
                         )
                     },
@@ -2406,8 +2420,14 @@ impl Vecs {
                     |v, _, _, starting_indexes, exit| {
                         v.compute_percentage(
                             starting_indexes.dateindex,
-                            self.dateindex_to_supply_even.as_ref().unwrap(),
-                            self.indexes_to_supply.sats.dateindex.as_ref().unwrap(),
+                            self.indexes_to_supply_in_profit
+                                .as_ref()
+                                .unwrap()
+                                .bitcoin
+                                .dateindex
+                                .as_ref()
+                                .unwrap(),
+                            self.indexes_to_supply.bitcoin.dateindex.as_ref().unwrap(),
                             exit,
                         )
                     },

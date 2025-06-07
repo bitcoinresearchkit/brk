@@ -1256,6 +1256,15 @@ function createPartialOptions(colors) {
                 name: useGroupName ? name : "Supply",
                 color: "list" in args ? color : colors.default,
               }),
+              ...(key
+                ? [
+                    createBaseSeries({
+                      key: `${key}supply-relative-to-circulating-supply`,
+                      name: useGroupName ? name : "Supply",
+                      color: "list" in args ? color : colors.default,
+                    }),
+                  ]
+                : []),
               ...(!("list" in args)
                 ? [
                     createBaseSeries({
@@ -1329,11 +1338,6 @@ function createPartialOptions(colors) {
                     }),
                     ...(key
                       ? [
-                          createBaseSeries({
-                            key: `${key}supply-relative-to-circulating-supply`,
-                            name: useGroupName ? name : "Supply",
-                            color: colors.default,
-                          }),
                           createBaseSeries({
                             key: `${key}supply-in-profit-relative-to-circulating-supply`,
                             name: useGroupName ? name : "In Profit",
@@ -1781,16 +1785,6 @@ function createPartialOptions(colors) {
           bottom: list.flatMap(({ color, name, key: _key }) => {
             const key = fixKey(_key);
             return /** @type {const} */ ([
-              createBaseSeries({
-                key: `${key}coinblocks-destroyed`,
-                name: useGroupName ? name : "destroyed",
-                color,
-              }),
-              createBaseSeries({
-                key: `${key}coindays-destroyed`,
-                name: useGroupName ? name : "destroyed",
-                color,
-              }),
               createBaseSeries({
                 key: `${key}coinblocks-destroyed`,
                 name: useGroupName ? name : "destroyed",

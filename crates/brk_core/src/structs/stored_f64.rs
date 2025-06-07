@@ -1,5 +1,6 @@
 use std::{
     cmp::Ordering,
+    f64,
     ops::{Add, Div, Mul},
 };
 
@@ -7,12 +8,16 @@ use derive_deref::Deref;
 use serde::Serialize;
 use zerocopy_derive::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
-use crate::{Bitcoin, CheckedSub, Sats};
+use crate::{Bitcoin, CheckedSub, Dollars};
 
 #[derive(
     Debug, Deref, Default, Clone, Copy, FromBytes, Immutable, IntoBytes, KnownLayout, Serialize,
 )]
 pub struct StoredF64(f64);
+
+impl StoredF64 {
+    pub const NAN: Self = Self(f64::NAN);
+}
 
 impl From<f64> for StoredF64 {
     fn from(value: f64) -> Self {
@@ -59,6 +64,12 @@ impl From<StoredF64> for f64 {
     }
 }
 
+impl From<Dollars> for StoredF64 {
+    fn from(value: Dollars) -> Self {
+        Self(f64::from(value))
+    }
+}
+
 impl CheckedSub<usize> for StoredF64 {
     fn checked_sub(self, rhs: usize) -> Option<Self> {
         Some(Self(self.0 - rhs as f64))
@@ -94,12 +105,6 @@ impl Ord for StoredF64 {
             (false, true) => Ordering::Greater,
             (false, false) => self.0.partial_cmp(&other.0).unwrap(),
         }
-    }
-}
-
-impl From<Sats> for StoredF64 {
-    fn from(value: Sats) -> Self {
-        Self(u64::from(value) as f64)
     }
 }
 

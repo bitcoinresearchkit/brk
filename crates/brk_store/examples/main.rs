@@ -11,33 +11,9 @@ fn main() -> Result<()> {
     let mut store: Store<Dollars, Sats> =
         brk_store::Store::import(&keyspace, p, "n", Version::ZERO, None)?;
 
-    store.copy_db_to_puts();
-
-    *store.puts_entry_or_default(&Dollars::from(10.0)) += Sats::ONE_BTC;
-    *store.puts_entry_or_default(&Dollars::from(1.0)) += Sats::ONE_BTC;
-    *store.puts_entry_or_default(&Dollars::ZERO) += Sats::ONE_BTC;
-    *store.puts_entry_or_default(&Dollars::ZERO) += Sats::ONE_BTC;
-
-    dbg!(store.tx_iter().collect::<Vec<_>>());
+    store.insert_if_needed(Dollars::from(10.0), Sats::FIFTY_BTC, Height::ZERO);
 
     store.commit(Height::ZERO)?;
-
-    store.copy_db_to_puts();
-
-    dbg!(store.tx_iter().collect::<Vec<_>>());
-
-    *store.puts_entry_or_default(&Dollars::from(10.0)) += Sats::ONE_BTC;
-    *store.puts_entry_or_default(&Dollars::from(1.0)) += Sats::ONE_BTC;
-    *store.puts_entry_or_default(&Dollars::ZERO) += Sats::ONE_BTC;
-    *store.puts_entry_or_default(&Dollars::ZERO) += Sats::ONE_BTC;
-
-    dbg!(store.tx_iter().collect::<Vec<_>>());
-
-    store.commit(Height::from(1_u32))?;
-
-    store.copy_db_to_puts();
-
-    dbg!(store.tx_iter().collect::<Vec<_>>());
 
     Ok(())
 }
