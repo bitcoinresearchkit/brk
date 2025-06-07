@@ -1,13 +1,13 @@
 // @ts-check
 
 /**
- * @import { SignalOptions } from "./v0.3.0-treeshaked/types/core/core"
- * @import { getOwner as GetOwner, onCleanup as OnCleanup, Owner } from "./v0.3.0-treeshaked/types/core/owner"
- * @import { createSignal as CreateSignal, createEffect as CreateEffect, Accessor, Setter, createMemo as CreateMemo, createRoot as CreateRoot, runWithOwner as RunWithOwner } from "./v0.3.0-treeshaked/types/signals";
+ * @import { SignalOptions } from "./v0.3.2-treeshaked/types/core/core"
+ * @import { getOwner as GetOwner, onCleanup as OnCleanup } from "./v0.3.2-treeshaked/types/core/owner"
+ * @import { createSignal as CreateSignal, createEffect as CreateEffect, createMemo as CreateMemo, createRoot as CreateRoot, runWithOwner as RunWithOwner } from "./v0.3.2-treeshaked/types/signals";
  * @import { Signal } from "./types";
  */
 
-const importSignals = import("./v0.3.0-treeshaked/script.js").then(
+const importSignals = import("./v0.3.2-treeshaked/script.js").then(
   (_signals) => {
     const signals = {
       createSolidSignal: /** @type {typeof CreateSignal} */ (

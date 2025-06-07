@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <title>kibo.money</title>
+    <!-- <title>kibo.money</title> -->
     <meta
       name="description"
       content="An open source Bitcoin Core data extractor and visualizer"
@@ -764,7 +764,7 @@
           text-transform: uppercase;
 
           & + * {
-            margin-top: 1.5rem;
+            margin-top: 1.25rem;
           }
 
           > details,
@@ -887,7 +887,7 @@
         bottom: 0;
         left: 0;
         right: 0;
-        z-index: 20;
+        z-index: 10;
         pointer-events: none;
       }
       .shadow-left {
@@ -901,7 +901,7 @@
         left: 0;
         top: 0;
         bottom: 0;
-        z-index: 40 !important;
+        z-index: 50;
         pointer-events: none;
       }
       .shadow-right {
@@ -915,7 +915,7 @@
         right: 0;
         top: 0;
         bottom: 0;
-        z-index: 10;
+        z-index: 30;
         pointer-events: none;
       }
 
@@ -1160,7 +1160,6 @@
         window.document.documentElement.dataset.display = "standalone";
       }
 
-      console.log(navigator);
       if ("serviceWorker" in navigator) {
         navigator.serviceWorker.register("/scripts/service-worker.js");
       }
@@ -1535,29 +1534,11 @@
   </head>
   <body>
     <main id="main">
-      <script>
-        // Prevent width jumping
-        const savedWidth = localStorage.getItem("bar-width");
-        if (savedWidth) {
-          const main = window.document.getElementById("main");
-          if (!main) throw "Should exist";
-          main.style.width = `${savedWidth}px`;
-        }
-      </script>
-
       <div class="shadow-top"></div>
       <div class="shadow-bottom"></div>
       <div id="resize-bar"></div>
 
-      <nav id="nav" hidden>
-        <h4 style="margin-top: 0.25rem">
-          <a href="/"
-            ><span style="font-weight: 500">kibo</span
-            ><span style="color: var(--gray)">.</span
-            ><span style="color: var(--orange)">money</span></a
-          >
-        </h4>
-      </nav>
+      <nav id="nav" hidden></nav>
 
       <search id="search" hidden>
         <header>
@@ -1625,5 +1606,15 @@
         <a id="share-anchor" href="/"></a>
       </div>
     </div>
+
+    <script>
+      // Prevent width jumping
+      const savedWidth = localStorage.getItem("bar-width");
+      if (savedWidth) {
+        const main = window.document.getElementById("main");
+        if (!main) throw "Should exist";
+        main.style.width = `${savedWidth}px`;
+      }
+    </script>
   </body>
 </html>
