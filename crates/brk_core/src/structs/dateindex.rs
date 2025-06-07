@@ -1,4 +1,7 @@
-use std::ops::Add;
+use std::{
+    fmt,
+    ops::{Add, Rem},
+};
 
 use serde::Serialize;
 // use color_eyre::eyre::eyre;
@@ -75,5 +78,18 @@ impl TryFrom<Date> for DateIndex {
 impl CheckedSub for DateIndex {
     fn checked_sub(self, rhs: Self) -> Option<Self> {
         self.0.checked_sub(rhs.0).map(Self)
+    }
+}
+
+impl Rem<usize> for DateIndex {
+    type Output = Self;
+    fn rem(self, rhs: usize) -> Self::Output {
+        Self(self.0 % rhs as u16)
+    }
+}
+
+impl fmt::Display for DateIndex {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.0)
     }
 }
