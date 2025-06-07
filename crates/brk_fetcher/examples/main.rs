@@ -1,10 +1,14 @@
-use brk_core::Date;
-use brk_fetcher::Fetcher;
+use brk_core::{Date, Height};
+use brk_fetcher::{BRK, Fetcher};
 
 fn main() -> color_eyre::Result<()> {
     color_eyre::install()?;
 
     brk_logger::init(None);
+
+    let mut brk = BRK::default();
+    dbg!(brk.get_from_height(Height::new(900_000))?);
+    dbg!(brk.get_from_date(Date::new(2025, 6, 7))?);
 
     let mut fetcher = Fetcher::import(None)?;
 
