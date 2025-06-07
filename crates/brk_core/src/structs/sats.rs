@@ -3,9 +3,10 @@ use std::{
     ops::{Add, AddAssign, Div, Mul, SubAssign},
 };
 
+use bincode::{Decode, Encode};
 use bitcoin::Amount;
 use byteview::ByteView;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use zerocopy_derive::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 use crate::{CheckedSub, copy_first_8bytes};
@@ -26,6 +27,9 @@ use super::{Bitcoin, Cents, Dollars, Height};
     IntoBytes,
     KnownLayout,
     Serialize,
+    Deserialize,
+    Encode,
+    Decode,
 )]
 pub struct Sats(u64);
 

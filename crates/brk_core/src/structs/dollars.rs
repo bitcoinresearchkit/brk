@@ -4,9 +4,10 @@ use std::{
     ops::{Add, AddAssign, Div, Mul},
 };
 
+use bincode::{Decode, Encode};
 use byteview::ByteView;
 use derive_deref::Deref;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use zerocopy_derive::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 use crate::{CheckedSub, copy_first_8bytes};
@@ -14,7 +15,19 @@ use crate::{CheckedSub, copy_first_8bytes};
 use super::{Bitcoin, Cents, Close, High, Sats, StoredF32, StoredF64};
 
 #[derive(
-    Debug, Default, Clone, Copy, Deref, FromBytes, Immutable, IntoBytes, KnownLayout, Serialize,
+    Debug,
+    Default,
+    Clone,
+    Copy,
+    Deref,
+    FromBytes,
+    Immutable,
+    IntoBytes,
+    KnownLayout,
+    Serialize,
+    Deserialize,
+    Encode,
+    Decode,
 )]
 pub struct Dollars(f64);
 
@@ -85,10 +98,10 @@ impl Add for Dollars {
 impl Div<Dollars> for Dollars {
     type Output = StoredF64;
     fn div(self, rhs: Dollars) -> Self::Output {
-        if self.is_nan() {
-            StoredF64::from(self.0)
+        if self.is_nan() || rhs == Dollars::ZERO {
+            StoredF64::NAN
         } else {
-            StoredF64::from(self.0 / rhs.0)
+            StoredF64::from(f64::from(self) / f64::from(rhs))
         }
     }
 }
@@ -96,10 +109,10 @@ impl Div<Dollars> for Dollars {
 impl Div<Close<Dollars>> for Dollars {
     type Output = StoredF64;
     fn div(self, rhs: Close<Dollars>) -> Self::Output {
-        if self.is_nan() {
-            StoredF64::from(self.0)
+        if self.is_nan() || *rhs == Dollars::ZERO {
+            StoredF64::NAN
         } else {
-            StoredF64::from(self.0 / rhs.0)
+            StoredF64::from(f64::from(self) / f64::from(*rhs))
         }
     }
 }
@@ -107,10 +120,10 @@ impl Div<Close<Dollars>> for Dollars {
 impl Div<Dollars> for Close<Dollars> {
     type Output = StoredF64;
     fn div(self, rhs: Dollars) -> Self::Output {
-        if self.is_nan() {
-            StoredF64::from(self.0)
+        if self.is_nan() || rhs == Dollars::ZERO {
+            StoredF64::NAN
         } else {
-            StoredF64::from(self.0 / rhs.0)
+            StoredF64::from(f64::from(*self) / f64::from(rhs))
         }
     }
 }
@@ -118,8 +131,8 @@ impl Div<Dollars> for Close<Dollars> {
 impl Div<usize> for Dollars {
     type Output = Self;
     fn div(self, rhs: usize) -> Self::Output {
-        if self.is_nan() {
-            self
+        if self.is_nan() || rhs == 0 {
+            Dollars::NAN
         } else {
             Self::from(Cents::from(self) / rhs)
         }
@@ -155,6 +168,13 @@ impl Mul<Dollars> for Close<Dollars> {
     type Output = Dollars;
     fn mul(self, rhs: Dollars) -> Self::Output {
         Dollars::from(Cents::from(*self) * Cents::from(rhs))
+    }
+}
+
+impl Mul<usize> for Close<Dollars> {
+    type Output = Dollars;
+    fn mul(self, rhs: usize) -> Self::Output {
+        Dollars::from(Cents::from(*self) * rhs)
     }
 }
 

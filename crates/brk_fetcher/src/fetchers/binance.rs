@@ -17,7 +17,7 @@ use crate::{Close, Date, Dollars, Fetcher, High, Low, Open, fetchers::retry};
 pub struct Binance {
     path: Option<PathBuf>,
     _1mn: Option<BTreeMap<Timestamp, OHLCCents>>,
-    _1d: Option<BTreeMap<Date, OHLCCents>>,
+    pub _1d: Option<BTreeMap<Date, OHLCCents>>,
     har: Option<BTreeMap<Timestamp, OHLCCents>>,
 }
 

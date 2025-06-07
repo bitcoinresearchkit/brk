@@ -36,10 +36,7 @@ impl StoreMeta {
 
         let mut partition = open_partition_handle()?;
 
-        let mut did_reset = false;
-
         if !is_same_version {
-            did_reset = true;
             Self::reset_(path)?;
             keyspace.delete_partition(partition)?;
             keyspace.persist(fjall::PersistMode::SyncAll)?;
@@ -47,11 +44,6 @@ impl StoreMeta {
         }
 
         let len = Self::read_length_(path);
-
-        if did_reset && len != 0 {
-            dbg!(&path);
-            unreachable!();
-        }
 
         let slf = Self {
             pathbuf: path.to_owned(),
@@ -69,9 +61,6 @@ impl StoreMeta {
         self.len
     }
 
-    pub fn reset_len(&mut self) {
-        self.len = 0
-    }
     // pub fn is_empty(&self) -> bool {
     //     self.len() == 0
     // }

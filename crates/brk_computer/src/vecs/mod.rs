@@ -5,7 +5,6 @@ use brk_exit::Exit;
 use brk_fetcher::Fetcher;
 use brk_indexer::Indexer;
 use brk_vec::{AnyCollectableVec, Computation, Format};
-use fjall::TransactionalKeyspace;
 
 pub mod blocks;
 pub mod constants;
@@ -42,7 +41,6 @@ impl Vecs {
         fetch: bool,
         computation: Computation,
         format: Format,
-        keyspace: &TransactionalKeyspace,
     ) -> color_eyre::Result<Self> {
         fs::create_dir_all(path)?;
 
@@ -95,7 +93,6 @@ impl Vecs {
                 computation,
                 format,
                 fetched.as_ref(),
-                keyspace,
             )?,
             transactions: transactions::Vecs::forced_import(
                 path,
