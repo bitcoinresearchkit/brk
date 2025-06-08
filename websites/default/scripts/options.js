@@ -2796,10 +2796,6 @@ function createPartialOptions(colors) {
       name: "Social",
       tree: [
         {
-          name: "Github",
-          url: () => "https://github.com/bitcoinresearchkit/brk",
-        },
-        {
           name: "Nostr",
           url: () =>
             "https://primal.net/p/npub1jagmm3x39lmwfnrtvxcs9ac7g300y3dusv9lgzhk2e4x5frpxlrqa73v44",
@@ -2866,6 +2862,10 @@ function createPartialOptions(colors) {
           qrcode: true,
           url: () =>
             "lightning:lnurl1dp68gurn8ghj7ampd3kx2ar0veekzar0wd5xjtnrdakj7tnhv4kxctttdehhwm30d3h82unvwqhkxmmww3jkuar8d35kgetj8yuq363hv4",
+        },
+        {
+          name: "Geyser",
+          url: () => "https://geyser.fund/project/brk",
         },
       ],
     },

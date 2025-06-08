@@ -1,76 +1,81 @@
-const version = "v1";
+const CACHE_NAME = "v1";
 
 /** @type {ServiceWorkerGlobalScope} */
 const sw = /** @type {any} */ (self);
 
-sw.addEventListener("install", (_event) => {
+sw.addEventListener("install", (event) => {
   console.log("sw: install");
-  sw.skipWaiting();
+  event.waitUntil(sw.skipWaiting());
 });
 
 sw.addEventListener("activate", (event) => {
   console.log("sw: active");
   event.waitUntil(sw.clients.claim());
+  event.waitUntil(caches.delete(CACHE_NAME));
 });
 
+async function indexHTMLOrOffline() {
+  return caches.match("/index.html").then((cached) => {
+    if (cached) return cached;
+    return new Response("Offline and no cached version", {
+      status: 503,
+      statusText: "Service Unavailable",
+      headers: { "Content-Type": "text/plain" },
+    });
+  });
+}
+
 sw.addEventListener("fetch", (event) => {
-  let request = event.request;
-  const method = request.method;
-  let url = request.url;
+  const req = event.request;
+  const url = new URL(req.url);
 
-  const { pathname, origin } = new URL(url);
-
-  const slashMatches = url.match(/\//g);
-  const dotMatches = pathname.split("/").at(-1)?.match(/./g);
-  const endsWithDotHtml = pathname.endsWith(".html");
-  const slashApiSlashMatches = url.match(/\/api\//g);
-
-  if (
-    slashMatches &&
-    slashMatches.length <= 3 &&
-    !slashApiSlashMatches &&
-    (!dotMatches || endsWithDotHtml)
-  ) {
-    url = `${origin}/`;
+  // 1) Bypass API calls & non-GETs
+  if (req.method !== "GET" || url.pathname.startsWith("/api")) {
+    return; // let the browser handle it
   }
-  request = new Request(url, request.mode !== "navigate" ? request : undefined);
 
-  console.log(request);
-
-  console.log(`service-worker: fetch ${url}`);
-
-  event.respondWith(
-    caches.match(request).then(async (cachedResponse) => {
-      return fetch(request)
+  // 2) NAVIGATION: network‐first on your shell
+  if (req.mode === "navigate") {
+    event.respondWith(
+      // Always fetch index.html
+      fetch("/index.html")
         .then((response) => {
-          const { status, type } = response;
-
-          if (method !== "GET" || slashApiSlashMatches) {
-            // API calls are cached in script.js
-            return response;
-          } else if ((status === 200 || status === 304) && type === "basic") {
-            if (status === 200) {
-              const clonedResponse = response.clone();
-              caches.open(version).then((cache) => {
-                cache.put(request, clonedResponse);
-              });
+          // If we got a valid 2xx back, cache it (optional) and return it
+          if (response.ok || response.status === 304) {
+            if (response.ok) {
+              const clone = response.clone();
+              caches
+                .open(CACHE_NAME)
+                .then((cache) => cache.put("/index.html", clone));
             }
             return response;
-          } else {
-            return cachedResponse || response;
           }
+          throw new Error("Non-2xx on shell");
         })
-        .catch(() => {
-          console.log("service-worker: offline");
+        // On any failure, fall back to the cached shell
+        .catch(indexHTMLOrOffline),
+    );
+    return;
+  }
 
-          return (
-            cachedResponse ||
-            new Response("Offline", {
-              status: 503,
-              statusText: "Service Unavailable",
-            })
-          );
-        });
-    }),
+  // 3) For all other GETs: network-first, fallback to cache
+  event.respondWith(
+    fetch(req)
+      .then((response) => {
+        if (response.ok) {
+          const clone = response.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(req, clone));
+        }
+        return response;
+      })
+      .catch(async () => {
+        return caches
+          .match(req)
+          .then((cached) => {
+            return cached || indexHTMLOrOffline();
+          })
+          .catch(indexHTMLOrOffline);
+      })
+      .catch(indexHTMLOrOffline),
   );
 });

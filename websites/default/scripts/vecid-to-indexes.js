@@ -2,6 +2,8 @@
 // File auto-generated, any modifications will be overwritten
 //
 
+export const VERSION = "v0.0.45";
+
 /** @typedef {0} DateIndex */
 /** @typedef {1} DecadeIndex */
 /** @typedef {2} DifficultyEpoch */
@@ -30,8 +32,6 @@
 /** @typedef {DateIndex | DecadeIndex | DifficultyEpoch | EmptyOutputIndex | HalvingEpoch | Height | InputIndex | MonthIndex | OpReturnIndex | OutputIndex | P2AIndex | P2MSIndex | P2PK33Index | P2PK65Index | P2PKHIndex | P2SHIndex | P2TRIndex | P2WPKHIndex | P2WSHIndex | QuarterIndex | TxIndex | UnknownOutputIndex | WeekIndex | YearIndex} Index */
 
 export function createVecIdToIndexes() {
-
-
   return /** @type {const} */ ({
     "0": [0, 1, 2, 5, 7, 19, 22, 23],
     "0sats-adjusted-spent-output-profit-ratio": [0],
