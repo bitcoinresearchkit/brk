@@ -48,8 +48,10 @@ where
         fs::create_dir_all(path)?;
 
         let version_path = Self::path_version_(path);
-        version.validate(version_path.as_ref())?;
-        version.write(version_path.as_ref())?;
+
+        if !version.validate(version_path.as_ref())? {
+            version.write(version_path.as_ref())?;
+        }
 
         let file = Self::open_file_(Self::path_vec_(path).as_path())?;
         let mmap = Arc::new(ArcSwap::new(Self::new_mmap(file)?));

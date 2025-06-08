@@ -37,29 +37,13 @@ pub async fn handler(
 fn req_to_response_res(
     headers: HeaderMap,
     AxumQuery(Params {
-        format,
-        from,
         index,
-        mut to,
-        count,
         values,
+        rest,
     }): AxumQuery<Params>,
     AppState { query, .. }: AppState,
 ) -> color_eyre::Result<Response> {
     let index = Index::try_from(index.as_str())?;
-
-    if to.is_none() {
-        if let Some(c) = count {
-            let c = c as i64;
-            if let Some(f) = from {
-                if f.is_positive() || f.abs() > c {
-                    to.replace(f + c);
-                }
-            } else {
-                to.replace(c);
-            }
-        }
-    }
 
     let vecs = query.search(
         index,
@@ -69,6 +53,10 @@ fn req_to_response_res(
     if vecs.is_empty() {
         return Ok(Json(vec![] as Vec<usize>).into_response());
     }
+
+    let from = rest.from();
+    let to = rest.to();
+    let format = rest.format();
 
     let weight = vecs
         .iter()

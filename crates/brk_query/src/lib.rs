@@ -19,7 +19,7 @@ mod vec_trees;
 pub use format::Format;
 pub use index::Index;
 pub use output::{Output, Value};
-pub use params::Params;
+pub use params::{Params, ParamsOpt};
 pub use table::Tabled;
 use vec_trees::VecTrees;
 

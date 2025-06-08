@@ -33,7 +33,9 @@ impl Version {
         Self(self.0.swap_bytes())
     }
 
-    pub fn validate(&self, path: &Path) -> Result<()> {
+    /// Ok(true) if existed and is same
+    /// Ok(false) if didn't exist
+    pub fn validate(&self, path: &Path) -> Result<bool> {
         if let Ok(prev_version) = Version::try_from(path) {
             if prev_version != *self {
                 if prev_version.swap_bytes() == *self {
@@ -44,9 +46,11 @@ impl Version {
                     expected: *self,
                 });
             }
-        }
 
-        Ok(())
+            Ok(true)
+        } else {
+            Ok(false)
+        }
     }
 }
 
