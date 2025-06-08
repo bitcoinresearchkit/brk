@@ -45,10 +45,11 @@ pub struct AppState {
     websites_path: Option<PathBuf>,
 }
 
+pub const VERSION: &str = env!("CARGO_PKG_VERSION");
+
 const DEV_PATH: &str = "../..";
 const DOWNLOADS: &str = "downloads";
 const WEBSITES: &str = "websites";
-const VERSION: &str = env!("CARGO_PKG_VERSION");
 
 pub struct Server(AppState);
 

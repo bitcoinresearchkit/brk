@@ -2189,8 +2189,10 @@ function main() {
   createKeyDownEventListener();
 
   packages.signals().then((signals) =>
-    vecidToIndexesPromise.then(({ createVecIdToIndexes }) =>
+    vecidToIndexesPromise.then(({ createVecIdToIndexes, VERSION }) =>
       optionsPromise.then(async ({ initOptions }) => {
+        console.log(`VERSION = ${VERSION}`);
+
         const vecIdToIndexes = createVecIdToIndexes();
 
         if (env.localhost) {

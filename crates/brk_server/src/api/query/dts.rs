@@ -2,7 +2,7 @@ use std::{fs, io, path::Path};
 
 use brk_query::{Index, Query};
 
-use crate::Website;
+use crate::{VERSION, Website};
 
 const SCRIPTS: &str = "scripts";
 
@@ -31,10 +31,16 @@ impl DTS for Query<'static> {
 
         let indexes = Index::all();
 
-        let mut contents = "//
+        let mut contents = format!(
+            "//
 // File auto-generated, any modifications will be overwritten
-//\n\n"
-            .to_string();
+//
+
+export const VERSION = \"v{}\";
+
+",
+            VERSION
+        );
 
         contents += &indexes
             .iter()
@@ -57,7 +63,7 @@ impl DTS for Query<'static> {
 
         contents += "\n\nexport function createVecIdToIndexes() {\n";
 
-        contents += "\n\n  return /** @type {const} */ ({\n";
+        contents += "  return /** @type {const} */ ({\n";
 
         self.vec_trees
             .id_to_index_to_vec
