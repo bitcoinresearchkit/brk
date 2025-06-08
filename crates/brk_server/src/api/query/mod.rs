@@ -40,12 +40,26 @@ fn req_to_response_res(
         format,
         from,
         index,
-        to,
+        mut to,
+        count,
         values,
     }): AxumQuery<Params>,
     AppState { query, .. }: AppState,
 ) -> color_eyre::Result<Response> {
     let index = Index::try_from(index.as_str())?;
+
+    if to.is_none() {
+        if let Some(c) = count {
+            let c = c as i64;
+            if let Some(f) = from {
+                if f.is_positive() || f.abs() > c {
+                    to.replace(f + c);
+                }
+            } else {
+                to.replace(c);
+            }
+        }
+    }
 
     let vecs = query.search(
         index,

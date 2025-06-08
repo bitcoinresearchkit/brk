@@ -23,8 +23,11 @@ pub struct Params {
     pub from: Option<i64>,
     #[clap(short, long, allow_hyphen_values = true)]
     #[serde(default, alias = "t")]
-    /// Inclusive ending index, if negative will be from the end
+    /// Exclusive ending index, if negative will be from the end, overrides 'count'
     pub to: Option<i64>,
+    #[serde(default, alias = "c")]
+    /// Number of values
+    pub count: Option<usize>,
     #[clap(short = 'F', long)]
     /// Format of the output
     pub format: Option<Format>,
