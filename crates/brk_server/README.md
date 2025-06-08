@@ -41,19 +41,35 @@ The API uses `brk_query` and so inherites all of its features including formats.
 
 ### API
 
-#### `GET /api/vecs/indexes`
+#### [`GET /api/vecs/index-count`](https://bitcoinresearchkit.org/api/vecs/index-count)
+
+Count of all possible indexes
+
+#### [`GET /api/vecs/id-count`](https://bitcoinresearchkit.org/api/vecs/id-count)
+
+Count of all possible ids
+
+#### [`GET /api/vecs/variant-count`](https://bitcoinresearchkit.org/api/vecs/variant-count)
+
+Count of all possible variants
+
+#### [`GET /api/vecs/indexes`](https://bitcoinresearchkit.org/api/vecs/indexes)
 
 A list of all possible vec indexes and their accepted variants
 
-#### `GET /api/vecs/ids`
+#### [`GET /api/vecs/ids`](https://bitcoinresearchkit.org/api/vecs/ids)
 
 A list of all possible vec ids
 
-#### `GET /api/vecs/id-to-indexes`
+#### [`GET /api/vecs/variants`](https://bitcoinresearchkit.org/api/vecs/variants)
+
+A list of all possible variants
+
+#### [`GET /api/vecs/id-to-indexes`](https://bitcoinresearchkit.org/api/vecs/id-to-indexes)
 
 A list of all possible vec ids and their supported vec indexes
 
-#### `GET /api/vecs/index-to-ids`
+#### [`GET /api/vecs/index-to-ids`](https://bitcoinresearchkit.org/api/vecs/index-to-ids)
 
 A list of all possible vec indexes and their supported vec ids
 
@@ -67,8 +83,9 @@ This endpoint retrieves data based on the specified vector index and values.
 | --- | --- | --- | --- |
 | `index` | `VecIndex` | Yes | The vector index to query. |
 | `values` | `VecId[]` | Yes | A comma or space-separated list of vector IDs to retrieve. |
-| `from` | `unsigned int` | No | The starting index for pagination (default is 0). |
-| `to` | `unsigned int` | No | The ending index for pagination (default is the total number of results). |
+| `from` | `signed int` | No | Inclusive starting index for pagination (default is 0). |
+| `to` | `signed int` | No | Exclusive ending index for pagination (default is the total number of results). Overrides `count` |
+| `count` | `unsigned int` | No | The number of values requested |
 | `format` | `string` | No | The format of the response. Options include `json`, `csv`, `tsv`, or `md` (default is `json`). |
 
 **Examples:**
@@ -80,7 +97,7 @@ GET /api/query?index=week&values=ohlc,block-interval-average&from=0&to=20&format
 
 ### Meta
 
-#### `GET /version`
+#### [`GET /version`](https://bitcoinresearchkit.org/version)
 
 The version of the server and thus BRK.
 

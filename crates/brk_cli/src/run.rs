@@ -1,7 +1,7 @@
 use std::{
     fs,
     path::{Path, PathBuf},
-    thread::{self, sleep},
+    thread::sleep,
     time::Duration,
 };
 
@@ -49,69 +49,61 @@ pub fn run(config: RunConfig) -> color_eyre::Result<()> {
         Ok(())
     };
 
-    let f = move || -> color_eyre::Result<()> {
-        let mut computer = Computer::new(&config.outputsdir(), config.fetcher(), format);
-        computer.import_stores(&indexer)?;
-        computer.import_vecs(&indexer, config.computation())?;
+    let mut computer = Computer::new(&config.outputsdir(), config.fetcher(), format);
+    computer.import_stores(&indexer)?;
+    computer.import_vecs(&indexer, config.computation())?;
 
-        tokio::runtime::Builder::new_multi_thread()
-            .enable_all()
-            .build()?
-            .block_on(async {
-                let server = if config.serve() {
-                    let served_indexer = indexer.clone();
-                    let served_computer = computer.clone();
+    tokio::runtime::Builder::new_multi_thread()
+        .enable_all()
+        .build()?
+        .block_on(async {
+            let server = if config.serve() {
+                let served_indexer = indexer.clone();
+                let served_computer = computer.clone();
 
-                    let server = Server::new(served_indexer, served_computer, config.website())?;
+                let server = Server::new(served_indexer, served_computer, config.website())?;
 
-                    let opt = Some(tokio::spawn(async move {
-                        server.serve().await.unwrap();
-                    }));
+                let opt = Some(tokio::spawn(async move {
+                    server.serve().await.unwrap();
+                }));
 
-                    sleep(Duration::from_secs(1));
+                sleep(Duration::from_secs(1));
 
-                    opt
-                } else {
-                    None
-                };
+                opt
+            } else {
+                None
+            };
 
-                if config.process() {
-                    loop {
-                        wait_for_synced_node()?;
+            if config.process() {
+                loop {
+                    wait_for_synced_node()?;
 
-                        let block_count = rpc.get_block_count()?;
+                    let block_count = rpc.get_block_count()?;
 
-                        info!("{} blocks found.", block_count + 1);
+                    info!("{} blocks found.", block_count + 1);
 
-                        let starting_indexes = indexer.index(&parser, rpc, &exit)?;
+                    let starting_indexes = indexer.index(&parser, rpc, &exit)?;
 
-                        computer.compute(&mut indexer, starting_indexes, &exit)?;
+                    computer.compute(&mut indexer, starting_indexes, &exit)?;
 
-                        if let Some(delay) = config.delay() {
-                            sleep(Duration::from_secs(delay))
-                        }
+                    if let Some(delay) = config.delay() {
+                        sleep(Duration::from_secs(delay))
+                    }
 
-                        info!("Waiting for new blocks...");
+                    info!("Waiting for new blocks...");
 
-                        while block_count == rpc.get_block_count()? {
-                            sleep(Duration::from_secs(1))
-                        }
+                    while block_count == rpc.get_block_count()? {
+                        sleep(Duration::from_secs(1))
                     }
                 }
+            }
 
-                if let Some(handle) = server {
-                    handle.await.unwrap();
-                }
+            if let Some(handle) = server {
+                handle.await.unwrap();
+            }
 
-                Ok(())
-            })
-    };
-
-    thread::Builder::new()
-        .stack_size(128 * 1024 * 1024)
-        .spawn(f)?
-        .join()
-        .unwrap()
+            Ok(())
+        })
 }
 
 #[derive(Parser, Debug, Default, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize)]

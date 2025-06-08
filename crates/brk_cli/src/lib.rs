@@ -1,4 +1,4 @@
-use std::fs;
+use std::{fs, thread};
 
 use brk_core::{dot_brk_log_path, dot_brk_path};
 use brk_query::Params as QueryArgs;
@@ -35,8 +35,12 @@ pub fn main() -> color_eyre::Result<()> {
 
     let cli = Cli::parse();
 
-    match cli.command {
-        Commands::Run(args) => run(args),
-        Commands::Query(args) => query(args),
-    }
+    thread::Builder::new()
+        .stack_size(128 * 1024 * 1024)
+        .spawn(|| match cli.command {
+            Commands::Run(args) => run(args),
+            Commands::Query(args) => query(args),
+        })?
+        .join()
+        .unwrap()
 }
