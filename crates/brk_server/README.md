@@ -73,6 +73,27 @@ A list of all possible vec ids and their supported vec indexes
 
 A list of all possible vec indexes and their supported vec ids
 
+#### `GET /api/{INDEX}-to-{VALUE}`
+
+This endpoint retrieves data based on the specified vector index and id.
+
+**Parameters:**
+
+| Parameter | Type | Required | Description |
+| --- | --- | --- | --- |
+| `from` | `signed int` | No | Inclusive starting index for pagination (default is 0). |
+| `to` | `signed int` | No | Exclusive ending index for pagination (default is the total number of results). Overrides `count` |
+| `count` | `unsigned int` | No | The number of values requested |
+| `format` | `string` | No | The format of the response. Options include `json`, `csv`, `tsv`, or `md` (default is `json`). |
+
+**Examples:**
+
+```
+GET /api/date-to-close
+GET /date-to-close?from=-100
+GET /date-to-close?count=100&format=csv
+```
+
 #### `GET /api/query`
 
 This endpoint retrieves data based on the specified vector index and values.
