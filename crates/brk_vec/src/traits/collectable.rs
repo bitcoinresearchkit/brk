@@ -27,7 +27,7 @@ where
     #[inline]
     fn i64_to_usize(i: i64, len: usize) -> usize {
         if i >= 0 {
-            i as usize
+            (i as usize).min(len)
         } else {
             let v = len as i64 + i;
             if v < 0 { 0 } else { v as usize }
