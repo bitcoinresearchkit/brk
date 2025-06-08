@@ -149,6 +149,11 @@ where
             StoredVec::Compressed(v) => v.name(),
         }
     }
+
+    #[inline]
+    fn value_type_to_size_of(&self) -> usize {
+        size_of::<T>()
+    }
 }
 
 #[derive(Debug)]

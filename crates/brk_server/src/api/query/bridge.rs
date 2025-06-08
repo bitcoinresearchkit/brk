@@ -7,12 +7,12 @@ use crate::{VERSION, Website};
 const SCRIPTS: &str = "scripts";
 
 #[allow(clippy::upper_case_acronyms)]
-pub trait DTS {
-    fn generate_dts_file(&self, website: Website, websites_path: &Path) -> io::Result<()>;
+pub trait Bridge {
+    fn generate_bridge_file(&self, website: Website, websites_path: &Path) -> io::Result<()>;
 }
 
-impl DTS for Query<'static> {
-    fn generate_dts_file(&self, website: Website, websites_path: &Path) -> io::Result<()> {
+impl Bridge for Query<'static> {
+    fn generate_bridge_file(&self, website: Website, websites_path: &Path) -> io::Result<()> {
         if website.is_none() {
             return Ok(());
         }

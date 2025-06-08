@@ -5,14 +5,18 @@ use axum::{
     response::{IntoResponse, Response},
 };
 use brk_query::{Format, Index, Output, Params};
+use brk_vec::{CollectableVec, StoredVec};
+use color_eyre::eyre::eyre;
 
 use crate::traits::{HeaderMapExtended, ModifiedState, ResponseExtended};
 
 use super::AppState;
 
-mod dts;
+mod bridge;
 
-pub use dts::*;
+pub use bridge::*;
+
+const MAX_WEIGHT: usize = 320_000;
 
 pub async fn handler(
     headers: HeaderMap,
@@ -48,6 +52,23 @@ fn req_to_response_res(
         &values.iter().map(|v| v.as_str()).collect::<Vec<_>>(),
     );
 
+    if vecs.is_empty() {
+        return Ok(Json(vec![] as Vec<usize>).into_response());
+    }
+
+    let weight = vecs
+        .iter()
+        .map(|(_, v)| {
+            let len = v.len();
+            let count = StoredVec::<usize, usize>::range_count(from, to, len);
+            count * v.value_type_to_size_of()
+        })
+        .sum::<usize>();
+
+    if weight > MAX_WEIGHT {
+        return Err(eyre!("Request is too heavy, max weight is {MAX_WEIGHT}"));
+    }
+
     let mut date_modified_opt = None;
 
     if to.is_none() {
@@ -75,8 +96,8 @@ fn req_to_response_res(
         Output::TSV(s) => s.into_response(),
         Output::Json(v) => match v {
             brk_query::Value::Single(v) => Json(v).into_response(),
-            brk_query::Value::List(l) => Json(l).into_response(),
-            brk_query::Value::Matrix(m) => Json(m).into_response(),
+            brk_query::Value::List(v) => Json(v).into_response(),
+            brk_query::Value::Matrix(v) => Json(v).into_response(),
         },
         Output::MD(s) => s.into_response(),
     };
