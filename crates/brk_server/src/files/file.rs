@@ -43,7 +43,7 @@ fn any_handler(
 
         let mut path = website_path.join(&path);
 
-        if !path.exists() {
+        if !path.exists() || path.is_dir() {
             if path.extension().is_some() {
                 let mut response: Response<Body> = (
                     StatusCode::INTERNAL_SERVER_ERROR,
