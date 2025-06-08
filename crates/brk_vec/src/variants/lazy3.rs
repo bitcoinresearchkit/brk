@@ -229,6 +229,11 @@ where
             .min(self.source2.modified_time()?)
             .min(self.source3.modified_time()?))
     }
+
+    #[inline]
+    fn value_type_to_size_of(&self) -> usize {
+        size_of::<T>()
+    }
 }
 
 impl<I, T, S1I, S1T, S2I, S2T, S3I, S3T> AnyIterableVec<I, T>

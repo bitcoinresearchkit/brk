@@ -13,6 +13,7 @@ pub trait AnyVec: Send + Sync {
     }
     fn modified_time(&self) -> Result<Duration>;
     fn index_type_to_string(&self) -> String;
+    fn value_type_to_size_of(&self) -> usize;
 }
 
 pub trait AnyIterableVec<I, T>: AnyVec {

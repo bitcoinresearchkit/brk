@@ -12,7 +12,7 @@ use super::AppState;
 mod explorer;
 mod query;
 
-pub use query::DTS;
+pub use query::Bridge;
 
 pub trait ApiRoutes {
     fn add_api_routes(self) -> Self;

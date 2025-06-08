@@ -1298,6 +1298,11 @@ where
     fn index_type_to_string(&self) -> String {
         I::to_string()
     }
+
+    #[inline]
+    fn value_type_to_size_of(&self) -> usize {
+        size_of::<T>()
+    }
 }
 
 impl<I, T> AnyIterableVec<I, T> for EagerVec<I, T>

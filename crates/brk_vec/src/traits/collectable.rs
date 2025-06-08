@@ -34,6 +34,12 @@ where
         }
     }
 
+    fn range_count(from: Option<i64>, to: Option<i64>, len: usize) -> usize {
+        let from = from.map(|i| Self::i64_to_usize(i, len));
+        let to = to.map(|i| Self::i64_to_usize(i, len));
+        (from.unwrap_or_default()..to.unwrap_or(len)).count()
+    }
+
     #[doc(hidden)]
     fn collect_signed_range(&self, from: Option<i64>, to: Option<i64>) -> Result<Vec<T>> {
         let len = self.len();

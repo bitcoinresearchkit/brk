@@ -10,7 +10,7 @@ use std::{
     time::Duration,
 };
 
-use api::{ApiRoutes, DTS};
+use api::{ApiRoutes, Bridge};
 use axum::{
     Json, Router,
     body::Body,
@@ -89,7 +89,7 @@ impl Server {
                 downloaded_websites_path
             };
 
-            query.generate_dts_file(website, websites_path.as_path())?;
+            query.generate_bridge_file(website, websites_path.as_path())?;
 
             Some(websites_path)
         } else {

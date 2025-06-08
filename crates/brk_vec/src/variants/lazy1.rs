@@ -146,6 +146,11 @@ where
     fn modified_time(&self) -> Result<std::time::Duration> {
         self.source.modified_time()
     }
+
+    #[inline]
+    fn value_type_to_size_of(&self) -> usize {
+        size_of::<T>()
+    }
 }
 
 impl<I, T, S1I, S1T> AnyIterableVec<I, T> for LazyVecFrom1<I, T, S1I, S1T>
