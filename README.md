@@ -31,20 +31,22 @@
   </a>
 </p>
 
-The Bitcoin Research Kit is a high-performance toolchain designed to parse, index, compute, serve and visualize data from a Bitcoin Core node, enabling users to gain deeper insights into the Bitcoin network.
+The Bitcoin Research Kit is a high-performance toolchain designed to parse, index, compute, serve and visualize data from a Bitcoin node, enabling users to gain deeper insights into the Bitcoin network.
 
-In other words it's an alternative to [Glassnode](https://glassnode.com), [mempool.space](https://mempool.space/) (soon) and [electrs](https://github.com/romanz/electrs) (soon) all in one package with a particular focus on simplicity and the self-hosting experience.
+In other words it's an alternative to [Glassnode](https://glassnode.com), [mempool.space](https://mempool.space/) (soon) and [electrs](https://github.com/romanz/electrs) (soon) all in one package with a particular focus on simplicity and ease of use.
 
 The toolkit can be used in various ways to accommodate as many needs as possible:
 
-- **[Website](https://kibo.money)** \
-  Everyone is welcome to visit [kibo.money](https://kibo.money) which is the official showcase of the suite's capabilities and served by default when running BRK. \
-  Researchers and developers are free to use the API which endpoints documentation can be found [here](https://github.com/bitcoinresearchkit/brk/tree/main/crates/brk_server#endpoints). \
-  As a token of gratitude to the community and to stimulate curiosity, both the website and the API are entirely free, allowing anyone to use them.
+- **[Website](https://bitcoinresearchkit.org)** \
+  Everyone is welcome to visit the official instance and showcase of the suite's capabilities. \
+  It has a wide range of functionalities including charts, tables and simulations which you can visit for free and without the need for an account. \
+  Also available at: [kibo.money](https://kibo.money) // [satonomics.xyz](https://satonomics.xyz)
+- **[API](https://github.com/bitcoinresearchkit/brk/tree/main/crates/brk_server#endpoints)** \
+  Researchers and developers are free to use BRK's public API with ![Datasets variant count](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fbitcoinresearchkit.org%2Fapi%2Fvecs%2Fvariant-count&query=%24&style=flat&label=%20&color=white) dataset variants at your disposal. \
+  Just like the website, it's entirely free, with no authentication or rate-limiting.
 - **[CLI](https://crates.io/crates/brk_cli)** \
-  Node runners are strongly encouraged to try out and self-host their own instance. \
-  A lot of effort has gone into making this as easy as possible. \
-  For more information visit: [`brk_cli`](https://crates.io/crates/brk_cli)
+  Node runners are strongly encouraged to try out and self-host their own instance using BRK's command line interface. \
+  The CLI has multiple cogs available for users to tweak to adapt to all situations with even the possibility for web developers to create their own custom website which could later on be added as an alternative front-end.
 - **[Crates](https://crates.io/crates/brk)** \
   Rust developers have access to a wide range crates, each built upon one another with its own specific purpose, enabling independent use and offering great flexibility.
   PRs are welcome, especially if their goal is to introduce additional datasets.
@@ -76,7 +78,7 @@ If you'd like to have your own instance hosted for you please contact [hosting@b
 
 - 2 separate dedicated servers (1 GB/s each) with different ISPs and Cloudflare integration for enhanced performance and optimal availability
 - 99.99% SLA
-- Configurated for speed
+- Configured for speed
 - Updates delivered at your convenience
 - Direct communication for feature requests and support
 - Bitcoin Core or Knots with desired version
