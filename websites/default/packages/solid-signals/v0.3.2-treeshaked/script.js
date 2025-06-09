@@ -1,4 +1,5 @@
 // @ts-nocheck
+
 // src/core/error.ts
 var NotReadyError = class extends Error {};
 var EffectError = class extends Error {
@@ -351,7 +352,7 @@ var Computation = class extends Owner {
     this.w = error;
     this.write(
       UNCHANGED,
-      (this.d & ~LOADING_BIT) | ERROR_BIT | UNINITIALIZED_BIT,
+      (this.d & ~LOADING_BIT) | ERROR_BIT | UNINITIALIZED_BIT
     );
   }
   /**
@@ -427,7 +428,7 @@ function update(node) {
     if (error instanceof NotReadyError) {
       node.write(
         UNCHANGED,
-        newFlags | LOADING_BIT | (node.d & UNINITIALIZED_BIT),
+        newFlags | LOADING_BIT | (node.d & UNINITIALIZED_BIT)
       );
     } else {
       node.C(error);
@@ -617,7 +618,7 @@ function createSignal(first, second, third) {
       const node2 = new Computation(
         first(p ? untrack(p[0]) : second),
         null,
-        third,
+        third
       );
       return [node2.read.bind(node2), node2.write.bind(node2)];
     });
@@ -628,7 +629,7 @@ function createSignal(first, second, third) {
   const node = new Computation(
     first,
     null,
-    needsId ? { id: o.getNextChildId(), ...second } : second,
+    needsId ? { id: o.getNextChildId(), ...second } : second
   );
   return [node.read.bind(node), node.write.bind(node)];
 }
@@ -658,7 +659,7 @@ function createRoot(init, options) {
   return compute(
     owner,
     !init.length ? init : () => init(() => owner.dispose()),
-    null,
+    null
   );
 }
 function runWithOwner(owner, run) {

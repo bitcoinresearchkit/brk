@@ -1,16 +1,15 @@
 // @ts-nocheck
 
 /**
- * Copyright (c) 2024, Leon Sorokin
+ * Copyright (c) 2025, Leon Sorokin
  * All rights reserved. (MIT Licensed)
  *
  * uFuzzy.js (μFuzzy)
  * A tiny, efficient fuzzy matcher that doesn't suck
- * https://github.com/leeoniya/uFuzzy (v1.0.14)
+ * https://github.com/leeoniya/uFuzzy (v1.0.18)
  */
 
-const cmp = new Intl.Collator("en", { numeric: true, sensitivity: "base" })
-  .compare;
+const cmp = (a, b) => (a > b ? 1 : a < b ? -1 : 0);
 
 const inf = Infinity;
 
@@ -24,6 +23,8 @@ const PUNCT_RE = /\p{P}/gu;
 
 const LATIN_UPPER = "A-Z";
 const LATIN_LOWER = "a-z";
+
+const COLLATE_ARGS = ["en", { numeric: true, sensitivity: "base" }];
 
 const swapAlpha = (str, upper, lower) =>
   str.replace(LATIN_UPPER, upper).replace(LATIN_LOWER, lower);
@@ -75,8 +76,12 @@ const OPTS = {
   // (since intraIns is between each char, it can accum to nonsense matches)
   intraFilt: (term, match, index) => true, // should this also accept WIP info?
 
+  toUpper: (str) => str.toLocaleUpperCase(),
+  toLower: (str) => str.toLocaleLowerCase(),
+  compare: null,
+
   // final sorting fn
-  sort: (info, haystack, needle) => {
+  sort: (info, haystack, needle, compare = cmp) => {
     let {
       idx,
       chars,
@@ -88,6 +93,7 @@ const OPTS = {
       start,
       intraIns,
       interIns,
+      cases,
     } = info;
 
     return idx
@@ -109,8 +115,10 @@ const OPTS = {
           interIns[ia] - interIns[ib] ||
           // earliest start of match
           start[ia] - start[ib] ||
+          // case match
+          cases[ib] - cases[ia] ||
           // alphabetic
-          cmp(haystack[idx[ia]], haystack[idx[ib]])
+          compare(haystack[idx[ia]], haystack[idx[ib]])
       );
   },
 };
@@ -145,6 +153,9 @@ function uFuzzy(opts) {
     intraBound: _intraBound,
     interBound: _interBound,
     intraChars,
+    toUpper,
+    toLower,
+    compare,
   } = opts;
 
   intraIns ??= intraMode;
@@ -152,11 +163,16 @@ function uFuzzy(opts) {
   intraTrn ??= intraMode;
   intraDel ??= intraMode;
 
+  compare ??=
+    typeof Intl == "undefined"
+      ? cmp
+      : new Intl.Collator(...COLLATE_ARGS).compare;
+
   let alpha = opts.letters ?? opts.alpha;
 
   if (alpha != null) {
-    let upper = alpha.toLocaleUpperCase();
-    let lower = alpha.toLocaleLowerCase();
+    let upper = toUpper(alpha);
+    let lower = toLower(alpha);
 
     _interSplit = swapAlpha(_interSplit, upper, lower);
     _intraSplit = swapAlpha(_intraSplit, upper, lower);
@@ -232,7 +248,7 @@ function uFuzzy(opts) {
   );
   let contrsRe = new RegExp(intraContr, "gi" + uFlag);
 
-  const split = (needle) => {
+  const split = (needle, keepCase = false) => {
     let exacts = [];
 
     needle = needle.replace(EXACTS_RE, (m) => {
@@ -240,7 +256,9 @@ function uFuzzy(opts) {
       return EXACT_HERE;
     });
 
-    needle = needle.replace(trimRe, "").toLocaleLowerCase();
+    needle = needle.replace(trimRe, "");
+
+    if (!keepCase) needle = toLower(needle);
 
     if (withIntraSplit)
       needle = needle.replace(intraSplit, (m) => m[0] + " " + m[1]);
@@ -460,8 +478,24 @@ function uFuzzy(opts) {
 
   const info = (idxs, haystack, needle) => {
     let [query, parts, contrs] = prepQuery(needle, 1);
+    let partsCased = split(needle, true);
     let [queryR] = prepQuery(needle, 2);
     let partsLen = parts.length;
+
+    let _terms = Array(partsLen);
+    let _termsCased = Array(partsLen);
+
+    for (let j = 0; j < partsLen; j++) {
+      let part = parts[j];
+      let partCased = partsCased[j];
+
+      let term = part[0] == '"' ? part.slice(1, -1) : part + contrs[j];
+      let termCased =
+        partCased[0] == '"' ? partCased.slice(1, -1) : partCased + contrs[j];
+
+      _terms[j] = term;
+      _termsCased[j] = termCased;
+    }
 
     let len = idxs.length;
 
@@ -478,6 +512,9 @@ function uFuzzy(opts) {
 
       // contiguous chars matched
       chars: field.slice(),
+
+      // case matched in term (via term.includes(match))
+      cases: field.slice(),
 
       // contiguous (no fuzz) and bounded terms (intra=0, lft2/1, rgt2/1)
       // excludes terms that are contiguous but have < 2 bounds (substrings)
@@ -520,24 +557,27 @@ function uFuzzy(opts) {
       let rgt1 = 0;
       let chars = 0;
       let terms = 0;
+      let cases = 0;
       let inter = 0;
       let intra = 0;
 
       let refine = [];
 
       for (let j = 0, k = 2; j < partsLen; j++, k += 2) {
-        let group = m[k].toLocaleLowerCase();
-        let part = parts[j];
-        let term = part[0] == '"' ? part.slice(1, -1) : part + contrs[j];
+        let group = toLower(m[k]);
+        let term = _terms[j];
+        let termCased = _termsCased[j];
         let termLen = term.length;
         let groupLen = group.length;
         let fullMatch = group == term;
+
+        if (m[k] == termCased) cases++;
 
         // this won't handle the case when an exact match exists across the boundary of the current group and the next junk
         // e.g. blob,ob when searching for 'bob' but finding the earlier `blob` (with extra insertion)
         if (!fullMatch && m[k + 1].length >= termLen) {
           // probe for exact match in inter junk (TODO: maybe even in this matched part?)
-          let idxOf = m[k + 1].toLocaleLowerCase().indexOf(term);
+          let idxOf = toLower(m[k + 1]).indexOf(term);
 
           if (idxOf > -1) {
             refine.push(idxAcc, groupLen, idxOf, termLen);
@@ -685,6 +725,7 @@ function uFuzzy(opts) {
         info.interRgt1[ii] = rgt1;
         info.chars[ii] = chars;
         info.terms[ii] = terms;
+        info.cases[ii] = cases;
         info.interIns[ii] = inter;
         info.intraIns[ii] = intra;
 
@@ -906,7 +947,7 @@ function uFuzzy(opts) {
 
         let needle = needles[ni];
         let _info = info(idxs, haystack, needle);
-        let order = opts.sort(_info, haystack, needle);
+        let order = opts.sort(_info, haystack, needle, compare);
 
         // offset idxs for concat'ing infos
         if (ni > 0) {

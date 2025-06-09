@@ -34,7 +34,7 @@ declare class uFuzzy {
   ): uFuzzy.InfoIdxOrder;
 
   /** utility for splitting needle into terms following defined interSplit/intraSplit opts. useful for out-of-order permutes */
-  split(needle: string): uFuzzy.Terms;
+  split(needle: string, keepCase?: boolean): uFuzzy.Terms;
 
   /** util for creating out-of-order permutations of a needle terms array */
   static permute(arr: unknown[]): unknown[][];
@@ -99,6 +99,8 @@ declare namespace uFuzzy {
 
   export type IntraSliceIdxs = [from: number, to: number];
 
+  type CompareFn = (a: string, b: string) => number;
+
   export interface Options {
     // whether regexps use a /u unicode flag
     unicode?: boolean; // false
@@ -158,7 +160,21 @@ declare namespace uFuzzy {
     /** post-filters matches during .info() based on cmp of term in needle vs partial match */
     intraFilt?: (term: string, match: string, index: number) => boolean; // should this also accept WIP info?
 
-    sort?: (info: Info, haystack: string[], needle: string) => InfoIdxOrder;
+    /** default: toLocaleUpperCase() */
+    toUpper?: (str: string) => string;
+
+    /** default: toLocaleLowerCase() */
+    toLower?: (str: string) => string;
+
+    /** final sorting cmp when all other match metrics are equal */
+    compare?: CompareFn;
+
+    sort?: (
+      info: Info,
+      haystack: string[],
+      needle: string,
+      compare?: CompareFn
+    ) => InfoIdxOrder;
   }
 
   export interface Info {
@@ -187,6 +203,9 @@ declare namespace uFuzzy {
 
     /** number of exactly-matched terms (intra = 0) where both lft and rgt landed on a BoundMode.Loose or BoundMode.Strict boundary */
     terms: number[];
+
+    /** number of needle terms with case-sensitive partial matches */
+    cases: number[];
 
     /** offset ranges within match for highlighting: [startIdx0, endIdx0, startIdx1, endIdx1,...] */
     ranges: number[][];

@@ -45,6 +45,7 @@ export function init({
 
   signals.createEffect(selected, (option) => {
     headingElement.innerHTML = option.title;
+
     signals.createEffect(index, (index) => {
       const { field: topUnitField, selected: topUnit } =
         utils.dom.createHorizontalChoiceField({
@@ -126,7 +127,7 @@ export function init({
                   key: "from",
                   serializeParam: firstRun,
                 },
-              },
+              }
             );
             const to = signals.createSignal(
               /** @type {number | null} */ (null),
@@ -137,7 +138,7 @@ export function init({
                   key: "to",
                   serializeParam: firstRun,
                 },
-              },
+              }
             );
 
             chart.create({
@@ -274,7 +275,7 @@ export function init({
                     from.set(t.from);
                     to.set(t.to);
                   }
-                }),
+                })
               );
 
             firstRun = false;
@@ -293,7 +294,6 @@ export function init({
  */
 function createIndexSelector({ elements, signals, utils }) {
   const { field, selected } = utils.dom.createHorizontalChoiceField({
-    // title: "Index",
     defaultValue: "date",
     keyPrefix: "charts",
     key: "index",
@@ -335,7 +335,7 @@ function createIndexSelector({ elements, signals, utils }) {
         case "decade":
           return /** @satisfies {DecadeIndex} */ (1);
       }
-    },
+    }
   );
 
   return index;
