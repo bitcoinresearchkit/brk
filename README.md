@@ -70,21 +70,13 @@ In contrast, existing alternatives tend to be either [very costly](https://studi
 - [`brk_store`](https://crates.io/crates/brk_store): A thin wrapper around [`fjall`](https://crates.io/crates/fjall)
 - [`brk_vec`](https://crates.io/crates/brk_vec): A push-only, truncable, compressable, saveable Vec
 
-## Acknowledgments
-
-Deepest gratitude to the [Open Sats](https://opensats.org/) public charity. Their grant — from December 2024 to the present — has been critical in sustaining this project.
-
-Heartfelt thanks go out to every donor on [Nostr](https://primal.net/p/npub1jagmm3x39lmwfnrtvxcs9ac7g300y3dusv9lgzhk2e4x5frpxlrqa73v44) and [Geyser.fund](https://geyser.fund/project/brk) whose support has ensured the availability of the [kibo.money](https://kibo.money) public instance.
-
 ## Hosting as a service
-
-*Soon™*
 
 If you'd like to have your own instance hosted for you please contact [hosting@bitcoinresearchkit.org](mailto:hosting@bitcoinresearchkit.org).
 
 - 2 separate dedicated servers (1 GB/s each) with different ISPs and Cloudflare integration for enhanced performance and optimal availability
 - 99.99% SLA
-- Configurated for speed (`raw + eager`)
+- Configurated for speed
 - Updates delivered at your convenience
 - Direct communication for feature requests and support
 - Bitcoin Core or Knots with desired version
@@ -92,6 +84,12 @@ If you'd like to have your own instance hosted for you please contact [hosting@b
 - Logo featured in the Readme if desired
 
 Pricing: `0.01 BTC / month` *or* `0.1 BTC / year`
+
+## Acknowledgments
+
+Deepest gratitude to the [Open Sats](https://opensats.org/) public charity. Their grant — from December 2024 to the present — has been critical in sustaining this project.
+
+Heartfelt thanks go out to every donor on [Nostr](https://primal.net/p/npub1jagmm3x39lmwfnrtvxcs9ac7g300y3dusv9lgzhk2e4x5frpxlrqa73v44) and [Geyser.fund](https://geyser.fund/project/brk) whose support has ensured the availability of the [kibo.money](https://kibo.money) public instance.
 
 ## Donate
 

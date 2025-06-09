@@ -1,4 +1,4 @@
-const CACHE_NAME = "v1";
+const CACHE_NAME = "cache";
 
 /** @type {ServiceWorkerGlobalScope} */
 const sw = /** @type {any} */ (self);
@@ -11,7 +11,17 @@ sw.addEventListener("install", (event) => {
 sw.addEventListener("activate", (event) => {
   console.log("sw: active");
   event.waitUntil(sw.clients.claim());
-  event.waitUntil(caches.delete(CACHE_NAME));
+  event.waitUntil(
+    caches
+      .keys()
+      .then((keys) =>
+        Promise.all(
+          keys
+            .filter((key) => key !== CACHE_NAME && key !== "api")
+            .map((key) => caches.delete(key))
+        )
+      )
+  );
 });
 
 async function indexHTMLOrOffline() {
@@ -53,7 +63,7 @@ sw.addEventListener("fetch", (event) => {
           throw new Error("Non-2xx on shell");
         })
         // On any failure, fall back to the cached shell
-        .catch(indexHTMLOrOffline),
+        .catch(indexHTMLOrOffline)
     );
     return;
   }
@@ -76,6 +86,6 @@ sw.addEventListener("fetch", (event) => {
           })
           .catch(indexHTMLOrOffline);
       })
-      .catch(indexHTMLOrOffline),
+      .catch(indexHTMLOrOffline)
   );
 });

@@ -68,9 +68,8 @@
     .lightweight-chart {
       margin-left: calc(var(--negative-main-padding) * 0.75);
 
-        fieldset {
-          margin-left: -0.5rem;
-        }
+      fieldset {
+        margin-left: -0.5rem;
       }
     }
   }

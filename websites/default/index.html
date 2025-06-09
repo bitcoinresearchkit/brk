@@ -1,4 +1,4 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="utf-8" />
@@ -649,15 +649,7 @@
         height: 100%;
         display: flex;
         flex-direction: column;
-        gap: 2rem;
         padding-bottom: var(--bottom-area);
-      }
-
-      nav {
-        header {
-          display: flex;
-          justify-content: center;
-        }
       }
 
       sup {
@@ -728,6 +720,7 @@
        */
 
       .tree {
+        margin-top: -0.125rem;
         user-select: none;
         -webkit-user-select: none;
 
@@ -800,14 +793,6 @@
         }
       }
 
-      search {
-        ul {
-          display: flex;
-          flex-direction: column;
-          gap: 1rem;
-        }
-      }
-
       #share-div {
         font-size: var(--font-size-sm);
         line-height: var(--line-height-sm);
@@ -848,16 +833,12 @@
       }
 
       search {
-        > #search-no-input-text {
-          color: var(--off-color);
+        gap: 1rem;
 
-          &:has(+ ul li) {
-            display: none;
-          }
-
-          > button {
-            color: var(--color);
-          }
+        ul {
+          display: flex;
+          flex-direction: column;
+          gap: 0.5rem;
         }
       }
 
@@ -1133,7 +1114,7 @@
       // @ts-check
 
       const preferredColorSchemeMatchMedia = window.matchMedia(
-        "(prefers-color-scheme: dark)",
+        "(prefers-color-scheme: dark)"
       );
 
       const themeColor = window.document.createElement("meta");
@@ -1143,7 +1124,7 @@
       /** @param {boolean} dark */
       function updateThemeColor(dark) {
         const backgroundColor = getComputedStyle(
-          window.document.documentElement,
+          window.document.documentElement
         ).getPropertyValue(dark ? "--black" : "--white");
         themeColor.content = backgroundColor;
       }
@@ -1153,7 +1134,7 @@
         "change",
         ({ matches }) => {
           updateThemeColor(matches);
-        },
+        }
       );
 
       if ("standalone" in window.navigator && !!window.navigator.standalone) {

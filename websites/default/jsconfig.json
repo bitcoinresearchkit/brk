@@ -3,7 +3,8 @@
     "checkJs": true,
     "strict": true,
     "target": "ESNext",
-    "module": "ESNext"
+    "module": "ESNext",
+    "skipLibCheck": true
   },
   "exclude": ["assets", "packages", "ignore"]
 }

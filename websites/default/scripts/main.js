@@ -3,7 +3,7 @@
 /**
  * @import { Option, PartialChartOption, ChartOption, AnyPartialOption, ProcessedOptionAddons, OptionsTree, SimulationOption, AnySeriesBlueprint, ChartableIndex,CreatePriceLineOptions, CreatePriceLine } from "./options"
  * @import {Valued,  SingleValueData, CandlestickData, ChartData, OHLCTuple} from "../packages/lightweight-charts/wrapper"
- * @import * as _ from "../packages/ufuzzy/v1.0.14/types"
+ * @import * as _ from "../packages/ufuzzy/v1.0.18/types"
  * @import { createChart as CreateClassicChart, LineStyleOptions, DeepPartial, ChartOptions, IChartApi, IHorzScaleBehavior, WhitespaceData, ISeriesApi, Time, LineData, LogicalRange, BaselineStyleOptions, SeriesOptionsCommon, BaselineData, CandlestickStyleOptions } from "../packages/lightweight-charts/v5.0.7-treeshaked/types"
  * @import { SignalOptions } from "../packages/solid-signals/v0.3.2-treeshaked/types/core/core"
  * @import {Signal, Signals} from "../packages/solid-signals/types";
@@ -67,22 +67,22 @@ function initPackages() {
   const imports = {
     async signals() {
       return import("../packages/solid-signals/wrapper.js").then((d) =>
-        d.default.then((d) => d),
+        d.default.then((d) => d)
       );
     },
     async lightweightCharts() {
       return window.document.fonts.ready.then(() =>
         import("../packages/lightweight-charts/wrapper.js").then((d) =>
-          d.default.then((d) => d),
-        ),
+          d.default.then((d) => d)
+        )
       );
     },
     async leanQr() {
-      return import("../packages/lean-qr/v2.3.4/script.js").then((d) => d);
+      return import("../packages/lean-qr/v2.5.0/script.js").then((d) => d);
     },
     async ufuzzy() {
-      return import("../packages/ufuzzy/v1.0.14/script.js").then(
-        ({ default: d }) => d,
+      return import("../packages/ufuzzy/v1.0.18/script.js").then(
+        ({ default: d }) => d
       );
     },
   };
@@ -256,6 +256,7 @@ function createUtils() {
 
       return button;
     },
+
     /**
      * @param {Object} args
      * @param {string} args.inputName
@@ -359,7 +360,6 @@ function createUtils() {
     /**
      * @template {Readonly<string[]>} T
      * @param {Object} args
-     * @param {string | Accessor<string>} [args.title]
      * @param {T[number]} args.defaultValue
      * @param {string} [args.id]
      * @param {T} args.choices
@@ -369,7 +369,6 @@ function createUtils() {
      * @param {{createEffect: CreateEffect, createSignal: Signals["createSignal"]}} args.signals
      */
     createHorizontalChoiceField({
-      title,
       id,
       choices: unsortedChoices,
       defaultValue,
@@ -396,21 +395,6 @@ function createUtils() {
 
       const field = window.document.createElement("div");
       field.classList.add("field");
-
-      if (title) {
-        const legend = window.document.createElement("legend");
-        if (typeof title === "string") {
-          legend.innerHTML = title;
-        } else {
-          signals.createEffect(title, (title) => {
-            legend.innerHTML = title;
-          });
-        }
-        field.append(legend);
-
-        const hr = window.document.createElement("hr");
-        field.append(hr);
-      }
 
       const div = window.document.createElement("div");
       field.append(div);
@@ -587,7 +571,13 @@ function createUtils() {
       const urlParams = new URLSearchParams(window.location.search);
       pathname ||= window.location.pathname;
 
-      window.history.pushState(null, "", `${pathname}?${urlParams.toString()}`);
+      try {
+        window.history.pushState(
+          null,
+          "",
+          `${pathname}?${urlParams.toString()}`
+        );
+      } catch (_) {}
     },
     /**
      * @param {Object} args
@@ -598,11 +588,13 @@ function createUtils() {
       urlParams ||= new URLSearchParams(window.location.search);
       pathname ||= window.location.pathname;
 
-      window.history.replaceState(
-        null,
-        "",
-        `${pathname}?${urlParams.toString()}`,
-      );
+      try {
+        window.history.replaceState(
+          null,
+          "",
+          `${pathname}?${urlParams.toString()}`
+        );
+      } catch (_) {}
     },
     /**
      * @param {Option} option
@@ -971,12 +963,8 @@ function createUtils() {
         return numberToUSFormat(value, 2);
       } else if (absoluteValue < 1_000) {
         return numberToUSFormat(value, 1);
-      } else if (absoluteValue < 100_000) {
-        return numberToUSFormat(value, 0);
-      } else if (absoluteValue < 200_000) {
-        return `${numberToUSFormat(value / 1_000, 2)}K`;
       } else if (absoluteValue < 1_000_000) {
-        return `${numberToUSFormat(value / 1_000, 1)}K`;
+        return numberToUSFormat(value, 0);
       } else if (absoluteValue >= 900_000_000_000_000_000) {
         return "Inf.";
       }
@@ -987,24 +975,10 @@ function createUtils() {
       const letterIndex = Math.floor(log / 3);
       const letter = suffices[letterIndex];
 
-      const modulused = log % 3;
-
-      if (modulused === 0) {
-        return `${numberToUSFormat(
-          value / (1_000_000 * 1_000 ** letterIndex),
-          3,
-        )}${letter}`;
-      } else if (modulused === 1) {
-        return `${numberToUSFormat(
-          value / (1_000_000 * 1_000 ** letterIndex),
-          2,
-        )}${letter}`;
-      } else {
-        return `${numberToUSFormat(
-          value / (1_000_000 * 1_000 ** letterIndex),
-          1,
-        )}${letter}`;
-      }
+      return `${numberToUSFormat(
+        value / (1_000_000 * 1_000 ** letterIndex),
+        3
+      )}${letter}`;
     },
   };
 
@@ -1170,8 +1144,8 @@ function createUtils() {
           today.getUTCDate(),
           0,
           0,
-          0,
-        ),
+          0
+        )
       );
     },
     /**
@@ -1273,7 +1247,7 @@ function createUtils() {
    */
   function getNumberOfDaysBetweenTwoDates(oldest, youngest) {
     return Math.round(
-      Math.abs((youngest.getTime() - oldest.getTime()) / date.ONE_DAY_IN_MS),
+      Math.abs((youngest.getTime() - oldest.getTime()) / date.ONE_DAY_IN_MS)
     );
   }
 
@@ -1291,6 +1265,8 @@ function createUtils() {
   }
 
   const api = (() => {
+    const CACHE_NAME = "api";
+
     /**
      * @template T
      * @param {(value: T) => void} callback
@@ -1306,7 +1282,7 @@ function createUtils() {
       /** @type {Cache | undefined} */
       let cache;
       try {
-        cache = await caches.open("api");
+        cache = await caches.open(CACHE_NAME);
         const cachedResponse = await cache.match(url);
         if (cachedResponse) {
           console.log(`cache: ${url}`);
@@ -1582,7 +1558,7 @@ function createVecsResources(signals, utils) {
               index,
               id,
               from,
-              to,
+              to
             )
           );
           fetched.at = new Date();
@@ -1772,8 +1748,6 @@ function createColors(dark, elements) {
     default: textColor,
     gray,
     border: borderColor,
-    // dollars: green,
-    // offDollars: emerald,
 
     red,
     orange,
@@ -1793,141 +1767,6 @@ function createColors(dark, elements) {
     fuchsia,
     pink,
     rose,
-
-    // _1d: pink,
-    // _1w: red,
-    // _8d: orange,
-    // _13d: amber,
-    // _21d: yellow,
-    // _1m: lime,
-    // _34d: green,
-    // _55d: emerald,
-    // _89d: teal,
-    // _144d: cyan,
-    // _6m: sky,
-    // _1y: blue,
-    // _2y: indigo,
-    // _200w: violet,
-    // _4y: purple,
-    // _10y: fuchsia,
-
-    // 2015: pink,
-    // 2016: red,
-    // 2017: orange,
-    // 2018: amber,
-    // 2019: yellow,
-    // 2020: lime,
-    // 2021: green,
-    // 2022: emerald,
-    // 2023: teal,
-    // 2024: cyan,
-    // 2025: sky,
-    // 2026: blue,
-    // 2027: indigo,
-    // 2028: violet,
-    // 2029: purple,
-    // 2030: fuchsia,
-
-    // r1d: pink,
-    // r1w: red,
-    // r1m: amber,
-    // r3m: yellow,
-    // r6m: lime,
-    // r1y: green,
-    // r2y: emerald,
-    // r3y: teal,
-    // r4y: blue,
-    // r5y: indigo,
-    // r6y: violet,
-    // r8y: purple,
-    // r10y: fuchsia,
-
-    // p2pk: lime,
-    // p2pkh: violet,
-    // p2sh: emerald,
-    // p2wpkh: cyan,
-    // p2wsh: pink,
-    // p2tr: blue,
-    // crab: red,
-    // fish: lime,
-    // humpback: violet,
-    // plankton: emerald,
-    // shark: cyan,
-    // shrimp: pink,
-    // whale: blue,
-    // megalodon: purple,
-    // realizedPrice: orange,
-    // oneMonthHolders: cyan,
-    // threeMonthsHolders: lime,
-    // sth: yellow,
-    // sixMonthsHolder: red,
-    // oneYearHolders: pink,
-    // twoYearsHolders: purple,
-    // lth: fuchsia,
-    // balancedPrice: yellow,
-    // cointimePrice: yellow,
-    // trueMarketMeanPrice: blue,
-    // vaultedPrice: green,
-    // cvdd: lime,
-    // terminalPrice: red,
-    // loss: red,
-    // profit: green,
-    // thermoCap: green,
-    // investorCap: rose,
-    // realizedCap: orange,
-    // offLiveliness: red,
-    // liveliness: rose,
-    // vaultedness: green,
-    // activityToVaultednessRatio: violet,
-    // up_to_1d: pink,
-    // up_to_1w: red,
-    // up_to_1m: orange,
-    // up_to_2m: amber,
-    // up_to_3m: yellow,
-    // up_to_4m: lime,
-    // up_to_5m: green,
-    // up_to_6m: teal,
-    // up_to_1y: sky,
-    // up_to_2y: indigo,
-    // up_to_3y: violet,
-    // up_to_4y: purple,
-    // up_to_5y: red,
-    // up_to_7y: orange,
-    // up_to_10y: amber,
-    // up_to_15y: yellow,
-    // from_10y_to_15y: purple,
-    // from_7y_to_10y: violet,
-    // from_5y_to_7y: indigo,
-    // from_3y_to_5y: sky,
-    // from_2y_to_3y: teal,
-    // from_1y_to_2y: green,
-    // from_6m_to_1y: lime,
-    // from_3m_to_6m: yellow,
-    // from_1m_to_3m: amber,
-    // from_1w_to_1m: orange,
-    // from_1d_to_1w: red,
-    // from_1y: green,
-    // from_2y: teal,
-    // from_4y: indigo,
-    // from_10y: violet,
-    // from_15y: fuchsia,
-    // coinblocksCreated: purple,
-    // coinblocksDestroyed: red,
-    // coinblocksStored: green,
-    // momentumGreen: green,
-    // momentumYellow: yellow,
-    // momentumRed: red,
-    // probability0_1p: red,
-    // probability0_5p: orange,
-    // probability1p: yellow,
-    // epoch_1: red,
-    // epoch_2: orange,
-    // epoch_3: yellow,
-    // epoch_4: green,
-    // epoch_5: blue,
-    // highly_liquid: red,
-    // liquid: lime,
-    // illiquid: cyan,
   };
 }
 /**
@@ -1980,7 +1819,7 @@ function initWebSockets(signals, utils) {
 
         window.document.addEventListener(
           "visibilitychange",
-          reinitWebSocketIfDocumentNotHidden,
+          reinitWebSocketIfDocumentNotHidden
         );
 
         window.document.addEventListener("online", reinitWebSocket);
@@ -1989,7 +1828,7 @@ function initWebSockets(signals, utils) {
         ws?.close();
         window.document.removeEventListener(
           "visibilitychange",
-          reinitWebSocketIfDocumentNotHidden,
+          reinitWebSocketIfDocumentNotHidden
         );
         window.document.removeEventListener("online", reinitWebSocket);
         live.set(false);
@@ -2016,7 +1855,7 @@ function initWebSockets(signals, utils) {
             symbol: ["BTC/USD"],
             interval: 1440,
           },
-        }),
+        })
       );
     });
 
@@ -2049,7 +1888,7 @@ function initWebSockets(signals, utils) {
   }
 
   const kraken1dCandle = createWebsocket((callback) =>
-    krakenCandleWebSocketCreator(callback, 1440),
+    krakenCandleWebSocketCreator(callback, 1440)
   );
 
   kraken1dCandle.open();
@@ -2060,9 +1899,9 @@ function initWebSockets(signals, utils) {
         const close = latest.close;
         console.log("close:", close);
 
-        window.document.title = `${latest.close.toLocaleString(
-          "en-us",
-        )} | ${window.location.host}`;
+        window.document.title = `${latest.close.toLocaleString("en-us")} | ${
+          window.location.host
+        }`;
       }
     });
   }
@@ -2108,7 +1947,7 @@ function main() {
             }
 
             const frame = window.document.getElementById(
-              /** @type {string} */ (input.value),
+              /** @type {string} */ (input.value)
             );
 
             if (!frame) {
@@ -2203,23 +2042,23 @@ function main() {
 
         function initDark() {
           const preferredColorSchemeMatchMedia = window.matchMedia(
-            "(prefers-color-scheme: dark)",
+            "(prefers-color-scheme: dark)"
           );
           const dark = signals.createSignal(
-            preferredColorSchemeMatchMedia.matches,
+            preferredColorSchemeMatchMedia.matches
           );
           preferredColorSchemeMatchMedia.addEventListener(
             "change",
             ({ matches }) => {
               dark.set(matches);
-            },
+            }
           );
           return dark;
         }
         const dark = initDark();
 
         const qrcode = signals.createSignal(
-          /** @type {string | null} */ (null),
+          /** @type {string | null} */ (null)
         );
 
         function createLastHeightResource() {
@@ -2230,7 +2069,7 @@ function main() {
                 lastHeight.set(h);
               },
               /** @satisfies {Height} */ (5),
-              "height",
+              "height"
             );
           }
           fetchLastHeight();
@@ -2272,10 +2111,10 @@ function main() {
 
             function createApplyOptionEffect() {
               const lastChartOption = signals.createSignal(
-                /** @type {ChartOption | null} */ (null),
+                /** @type {ChartOption | null} */ (null)
               );
               const lastSimulationOption = signals.createSignal(
-                /** @type {SimulationOption | null} */ (null),
+                /** @type {SimulationOption | null} */ (null)
               );
 
               const owner = signals.getOwner();
@@ -2324,10 +2163,10 @@ function main() {
                                 webSockets,
                                 vecsResources,
                                 vecIdToIndexes,
-                              }),
-                            ),
-                          ),
-                        ),
+                              })
+                            )
+                          )
+                        )
                       );
                     }
                     firstTimeLoadingChart = false;
@@ -2350,9 +2189,9 @@ function main() {
                               vecsResources,
                               option,
                               vecIdToIndexes,
-                            }),
-                          ),
-                        ),
+                            })
+                          )
+                        )
                       );
                     }
                     firstTimeLoadingTable = false;
@@ -2380,10 +2219,10 @@ function main() {
                                   signals,
                                   utils,
                                   vecsResources,
-                                }),
-                              ),
-                            ),
-                          ),
+                                })
+                              )
+                            )
+                          )
                       );
                     }
                     firstTimeLoadingSimulation = false;
@@ -2489,7 +2328,7 @@ function main() {
                 if (indexes?.length) {
                   const maxIndex = Math.min(
                     (order || indexes).length - 1,
-                    minIndex + RESULTS_PER_PAGE - 1,
+                    minIndex + RESULTS_PER_PAGE - 1
                   );
 
                   list = Array(maxIndex - minIndex + 1);
@@ -2565,7 +2404,7 @@ function main() {
                     haystack,
                     needle,
                     undefined,
-                    infoThresh,
+                    infoThresh
                   );
 
                   if (!result?.[0]?.length || !result?.[1]) {
@@ -2573,7 +2412,7 @@ function main() {
                       haystack,
                       needle,
                       outOfOrder,
-                      infoThresh,
+                      infoThresh
                     );
                   }
 
@@ -2582,7 +2421,7 @@ function main() {
                       haystack,
                       needle,
                       outOfOrder,
-                      infoThresh,
+                      infoThresh
                     );
                   }
 
@@ -2591,7 +2430,7 @@ function main() {
                       haystack,
                       needle,
                       outOfOrder,
-                      infoThresh,
+                      infoThresh
                     );
                   }
 
@@ -2600,7 +2439,7 @@ function main() {
                       haystack,
                       needle,
                       undefined,
-                      infoThresh,
+                      infoThresh
                     );
                   }
 
@@ -2609,7 +2448,7 @@ function main() {
                       haystack,
                       needle,
                       outOfOrder,
-                      infoThresh,
+                      infoThresh
                     );
                   }
 
@@ -2711,7 +2550,7 @@ function main() {
               localStorage.setItem(barWidthLocalStorageKey, String(width));
             } else {
               elements.main.style.width = elements.style.getPropertyValue(
-                "--default-main-width",
+                "--default-main-width"
               );
               localStorage.removeItem(barWidthLocalStorageKey);
             }
@@ -2747,8 +2586,8 @@ function main() {
           window.addEventListener("mouseleave", setResizeFalse);
         }
         initDesktopResizeBar();
-      }),
-    ),
+      })
+    )
   );
 }
 main();

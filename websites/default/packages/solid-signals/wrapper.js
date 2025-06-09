@@ -46,7 +46,7 @@ const importSignals = import("./v0.3.2-treeshaked/script.js").then(
       createSignal(initialValue, options) {
         const [get, set] = this.createSolidSignal(
           /** @type {any} */ (initialValue),
-          options,
+          options
         );
 
         // @ts-ignore
@@ -64,7 +64,7 @@ const importSignals = import("./v0.3.2-treeshaked/script.js").then(
           let serialized = /** @type {string | null} */ (null);
           if (options.save.serializeParam !== false) {
             serialized = new URLSearchParams(window.location.search).get(
-              paramKey,
+              paramKey
             );
           }
 
@@ -115,7 +115,7 @@ const importSignals = import("./v0.3.2-treeshaked/script.js").then(
     };
 
     return signals;
-  },
+  }
 );
 
 /**
@@ -131,11 +131,13 @@ function writeParam(key, value) {
     urlParams.delete(key);
   }
 
-  window.history.replaceState(
-    null,
-    "",
-    `${window.location.pathname}?${urlParams.toString()}`,
-  );
+  try {
+    window.history.replaceState(
+      null,
+      "",
+      `${window.location.pathname}?${urlParams.toString()}`
+    );
+  } catch (_) {}
 }
 
 /**
