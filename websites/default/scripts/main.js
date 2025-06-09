@@ -67,14 +67,14 @@ function initPackages() {
   const imports = {
     async signals() {
       return import("../packages/solid-signals/wrapper.js").then((d) =>
-        d.default.then((d) => d)
+        d.default.then((d) => d),
       );
     },
     async lightweightCharts() {
       return window.document.fonts.ready.then(() =>
         import("../packages/lightweight-charts/wrapper.js").then((d) =>
-          d.default.then((d) => d)
-        )
+          d.default.then((d) => d),
+        ),
       );
     },
     async leanQr() {
@@ -82,7 +82,7 @@ function initPackages() {
     },
     async ufuzzy() {
       return import("../packages/ufuzzy/v1.0.18/script.js").then(
-        ({ default: d }) => d
+        ({ default: d }) => d,
       );
     },
   };
@@ -575,7 +575,7 @@ function createUtils() {
         window.history.pushState(
           null,
           "",
-          `${pathname}?${urlParams.toString()}`
+          `${pathname}?${urlParams.toString()}`,
         );
       } catch (_) {}
     },
@@ -592,7 +592,7 @@ function createUtils() {
         window.history.replaceState(
           null,
           "",
-          `${pathname}?${urlParams.toString()}`
+          `${pathname}?${urlParams.toString()}`,
         );
       } catch (_) {}
     },
@@ -951,35 +951,6 @@ function createUtils() {
 
   const locale = {
     numberToUSFormat,
-    /** @param {number} value  */
-    numberToShortUSFormat(value) {
-      const absoluteValue = Math.abs(value);
-
-      if (isNaN(value)) {
-        return "";
-      } else if (absoluteValue < 10) {
-        return numberToUSFormat(value, 3);
-      } else if (absoluteValue < 100) {
-        return numberToUSFormat(value, 2);
-      } else if (absoluteValue < 1_000) {
-        return numberToUSFormat(value, 1);
-      } else if (absoluteValue < 1_000_000) {
-        return numberToUSFormat(value, 0);
-      } else if (absoluteValue >= 900_000_000_000_000_000) {
-        return "Inf.";
-      }
-
-      const log = Math.floor(Math.log10(absoluteValue) - 6);
-
-      const suffices = ["M", "B", "T", "P", "E"];
-      const letterIndex = Math.floor(log / 3);
-      const letter = suffices[letterIndex];
-
-      return `${numberToUSFormat(
-        value / (1_000_000 * 1_000 ** letterIndex),
-        3
-      )}${letter}`;
-    },
   };
 
   const storage = {
@@ -1144,8 +1115,8 @@ function createUtils() {
           today.getUTCDate(),
           0,
           0,
-          0
-        )
+          0,
+        ),
       );
     },
     /**
@@ -1247,7 +1218,7 @@ function createUtils() {
    */
   function getNumberOfDaysBetweenTwoDates(oldest, youngest) {
     return Math.round(
-      Math.abs((youngest.getTime() - oldest.getTime()) / date.ONE_DAY_IN_MS)
+      Math.abs((youngest.getTime() - oldest.getTime()) / date.ONE_DAY_IN_MS),
     );
   }
 
@@ -1558,7 +1529,7 @@ function createVecsResources(signals, utils) {
               index,
               id,
               from,
-              to
+              to,
             )
           );
           fetched.at = new Date();
@@ -1819,7 +1790,7 @@ function initWebSockets(signals, utils) {
 
         window.document.addEventListener(
           "visibilitychange",
-          reinitWebSocketIfDocumentNotHidden
+          reinitWebSocketIfDocumentNotHidden,
         );
 
         window.document.addEventListener("online", reinitWebSocket);
@@ -1828,7 +1799,7 @@ function initWebSockets(signals, utils) {
         ws?.close();
         window.document.removeEventListener(
           "visibilitychange",
-          reinitWebSocketIfDocumentNotHidden
+          reinitWebSocketIfDocumentNotHidden,
         );
         window.document.removeEventListener("online", reinitWebSocket);
         live.set(false);
@@ -1855,7 +1826,7 @@ function initWebSockets(signals, utils) {
             symbol: ["BTC/USD"],
             interval: 1440,
           },
-        })
+        }),
       );
     });
 
@@ -1888,7 +1859,7 @@ function initWebSockets(signals, utils) {
   }
 
   const kraken1dCandle = createWebsocket((callback) =>
-    krakenCandleWebSocketCreator(callback, 1440)
+    krakenCandleWebSocketCreator(callback, 1440),
   );
 
   kraken1dCandle.open();
@@ -1947,7 +1918,7 @@ function main() {
             }
 
             const frame = window.document.getElementById(
-              /** @type {string} */ (input.value)
+              /** @type {string} */ (input.value),
             );
 
             if (!frame) {
@@ -2042,23 +2013,23 @@ function main() {
 
         function initDark() {
           const preferredColorSchemeMatchMedia = window.matchMedia(
-            "(prefers-color-scheme: dark)"
+            "(prefers-color-scheme: dark)",
           );
           const dark = signals.createSignal(
-            preferredColorSchemeMatchMedia.matches
+            preferredColorSchemeMatchMedia.matches,
           );
           preferredColorSchemeMatchMedia.addEventListener(
             "change",
             ({ matches }) => {
               dark.set(matches);
-            }
+            },
           );
           return dark;
         }
         const dark = initDark();
 
         const qrcode = signals.createSignal(
-          /** @type {string | null} */ (null)
+          /** @type {string | null} */ (null),
         );
 
         function createLastHeightResource() {
@@ -2069,7 +2040,7 @@ function main() {
                 lastHeight.set(h);
               },
               /** @satisfies {Height} */ (5),
-              "height"
+              "height",
             );
           }
           fetchLastHeight();
@@ -2109,136 +2080,131 @@ function main() {
           function initSelectedFrame() {
             console.log("selected: init");
 
-            function createApplyOptionEffect() {
-              const lastChartOption = signals.createSignal(
-                /** @type {ChartOption | null} */ (null)
-              );
-              const lastSimulationOption = signals.createSignal(
-                /** @type {SimulationOption | null} */ (null)
-              );
+            const chartOption = signals.createSignal(
+              /** @type {ChartOption | null} */ (null),
+            );
+            const simOption = signals.createSignal(
+              /** @type {SimulationOption | null} */ (null),
+            );
 
-              const owner = signals.getOwner();
+            const owner = signals.getOwner();
 
-              let previousElement = /** @type {HTMLElement | undefined} */ (
-                undefined
-              );
-              let firstTimeLoadingChart = true;
-              let firstTimeLoadingTable = true;
-              let firstTimeLoadingSimulation = true;
+            let previousElement = /** @type {HTMLElement | undefined} */ (
+              undefined
+            );
+            let firstTimeLoadingChart = true;
+            let firstTimeLoadingTable = true;
+            let firstTimeLoadingSimulation = true;
 
-              signals.createEffect(options.selected, (option) => {
-                if (previousElement) {
-                  previousElement.hidden = true;
-                  utils.url.resetParams(option);
-                  utils.url.pushHistory(option.id);
-                } else {
-                  utils.url.replaceHistory({ pathname: option.id });
-                }
+            signals.createEffect(options.selected, (option) => {
+              if (previousElement) {
+                previousElement.hidden = true;
+                utils.url.resetParams(option);
+                utils.url.pushHistory(option.id);
+              } else {
+                utils.url.replaceHistory({ pathname: option.id });
+              }
 
-                /** @type {HTMLElement} */
-                let element;
+              /** @type {HTMLElement} */
+              let element;
 
-                switch (option.kind) {
-                  case "chart": {
-                    element = elements.charts;
+              switch (option.kind) {
+                case "chart": {
+                  element = elements.charts;
 
-                    lastChartOption.set(option);
+                  chartOption.set(option);
 
-                    if (firstTimeLoadingChart) {
-                      const lightweightCharts = packages.lightweightCharts();
-                      const chartScript = import("./chart.js");
-                      utils.dom.importStyleAndThen("/styles/chart.css", () =>
-                        chartScript.then(({ init: initChartsElement }) =>
-                          lightweightCharts.then((lightweightCharts) =>
-                            signals.runWithOwner(owner, () =>
-                              initChartsElement({
-                                colors,
-                                elements,
-                                lightweightCharts,
-                                selected: /** @type {Accessor<ChartOption>} */ (
-                                  lastChartOption
-                                ),
-                                signals,
-                                utils,
-                                webSockets,
-                                vecsResources,
-                                vecIdToIndexes,
-                              })
-                            )
-                          )
-                        )
-                      );
-                    }
-                    firstTimeLoadingChart = false;
-
-                    break;
+                  if (firstTimeLoadingChart) {
+                    const lightweightCharts = packages.lightweightCharts();
+                    const chartScript = import("./chart.js");
+                    utils.dom.importStyleAndThen("/styles/chart.css", () =>
+                      chartScript.then(({ init: initChartsElement }) =>
+                        lightweightCharts.then((lightweightCharts) =>
+                          signals.runWithOwner(owner, () =>
+                            initChartsElement({
+                              colors,
+                              elements,
+                              lightweightCharts,
+                              selected: /** @type {Accessor<ChartOption>} */ (
+                                chartOption
+                              ),
+                              signals,
+                              utils,
+                              webSockets,
+                              vecsResources,
+                              vecIdToIndexes,
+                            }),
+                          ),
+                        ),
+                      ),
+                    );
                   }
-                  case "table": {
-                    element = elements.table;
+                  firstTimeLoadingChart = false;
 
-                    if (firstTimeLoadingTable) {
-                      const tableScript = import("./table.js");
-                      utils.dom.importStyleAndThen("/styles/table.css", () =>
-                        tableScript.then(({ init }) =>
+                  break;
+                }
+                case "table": {
+                  element = elements.table;
+
+                  if (firstTimeLoadingTable) {
+                    const tableScript = import("./table.js");
+                    utils.dom.importStyleAndThen("/styles/table.css", () =>
+                      tableScript.then(({ init }) =>
+                        signals.runWithOwner(owner, () =>
+                          init({
+                            colors,
+                            elements,
+                            signals,
+                            utils,
+                            vecsResources,
+                            option,
+                            vecIdToIndexes,
+                          }),
+                        ),
+                      ),
+                    );
+                  }
+                  firstTimeLoadingTable = false;
+
+                  break;
+                }
+                case "simulation": {
+                  element = elements.simulation;
+
+                  simOption.set(option);
+
+                  if (firstTimeLoadingSimulation) {
+                    const lightweightCharts = packages.lightweightCharts();
+                    const simulationScript = import("./simulation.js");
+                    utils.dom.importStyleAndThen("/styles/simulation.css", () =>
+                      simulationScript.then(({ init }) =>
+                        lightweightCharts.then((lightweightCharts) =>
                           signals.runWithOwner(owner, () =>
                             init({
                               colors,
                               elements,
+                              lightweightCharts,
                               signals,
                               utils,
                               vecsResources,
-                              option,
-                              vecIdToIndexes,
-                            })
-                          )
-                        )
-                      );
-                    }
-                    firstTimeLoadingTable = false;
-
-                    break;
+                            }),
+                          ),
+                        ),
+                      ),
+                    );
                   }
-                  case "simulation": {
-                    element = elements.simulation;
+                  firstTimeLoadingSimulation = false;
 
-                    lastSimulationOption.set(option);
-
-                    if (firstTimeLoadingSimulation) {
-                      const lightweightCharts = packages.lightweightCharts();
-                      const simulationScript = import("./simulation.js");
-                      utils.dom.importStyleAndThen(
-                        "/styles/simulation.css",
-                        () =>
-                          simulationScript.then(({ init }) =>
-                            lightweightCharts.then((lightweightCharts) =>
-                              signals.runWithOwner(owner, () =>
-                                init({
-                                  colors,
-                                  elements,
-                                  lightweightCharts,
-                                  signals,
-                                  utils,
-                                  vecsResources,
-                                })
-                              )
-                            )
-                          )
-                      );
-                    }
-                    firstTimeLoadingSimulation = false;
-
-                    break;
-                  }
-                  case "url": {
-                    return;
-                  }
+                  break;
                 }
+                case "url": {
+                  return;
+                }
+              }
 
-                element.hidden = false;
-                previousElement = element;
-              });
-            }
-            createApplyOptionEffect();
+              element.hidden = false;
+              previousElement = element;
+            });
           }
 
           function createMobileSwitchEffect() {
@@ -2328,7 +2294,7 @@ function main() {
                 if (indexes?.length) {
                   const maxIndex = Math.min(
                     (order || indexes).length - 1,
-                    minIndex + RESULTS_PER_PAGE - 1
+                    minIndex + RESULTS_PER_PAGE - 1,
                   );
 
                   list = Array(maxIndex - minIndex + 1);
@@ -2404,7 +2370,7 @@ function main() {
                     haystack,
                     needle,
                     undefined,
-                    infoThresh
+                    infoThresh,
                   );
 
                   if (!result?.[0]?.length || !result?.[1]) {
@@ -2412,7 +2378,7 @@ function main() {
                       haystack,
                       needle,
                       outOfOrder,
-                      infoThresh
+                      infoThresh,
                     );
                   }
 
@@ -2421,7 +2387,7 @@ function main() {
                       haystack,
                       needle,
                       outOfOrder,
-                      infoThresh
+                      infoThresh,
                     );
                   }
 
@@ -2430,7 +2396,7 @@ function main() {
                       haystack,
                       needle,
                       outOfOrder,
-                      infoThresh
+                      infoThresh,
                     );
                   }
 
@@ -2439,7 +2405,7 @@ function main() {
                       haystack,
                       needle,
                       undefined,
-                      infoThresh
+                      infoThresh,
                     );
                   }
 
@@ -2448,7 +2414,7 @@ function main() {
                       haystack,
                       needle,
                       outOfOrder,
-                      infoThresh
+                      infoThresh,
                     );
                   }
 
@@ -2550,7 +2516,7 @@ function main() {
               localStorage.setItem(barWidthLocalStorageKey, String(width));
             } else {
               elements.main.style.width = elements.style.getPropertyValue(
-                "--default-main-width"
+                "--default-main-width",
               );
               localStorage.removeItem(barWidthLocalStorageKey);
             }
@@ -2586,8 +2552,8 @@ function main() {
           window.addEventListener("mouseleave", setResizeFalse);
         }
         initDesktopResizeBar();
-      })
-    )
+      }),
+    ),
   );
 }
 main();

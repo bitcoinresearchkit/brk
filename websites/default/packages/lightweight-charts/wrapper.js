@@ -59,7 +59,7 @@ export default import("./v5.0.7-treeshaked/script.js").then((lc) => {
         horzLines: { visible: false },
       },
       localization: {
-        priceFormatter: utils.locale.numberToShortUSFormat,
+        priceFormatter: numberToShortUSFormat,
         locale: "en-us",
       },
       ..._options,
@@ -99,12 +99,12 @@ export default import("./v5.0.7-treeshaked/script.js").then((lc) => {
               index === /** @satisfies {MonthIndex} */ (7)
                 ? 1
                 : index === /** @satisfies {QuarterIndex} */ (19)
-                ? 3
-                : index === /** @satisfies {YearIndex} */ (23)
-                ? 12
-                : index === /** @satisfies {DecadeIndex} */ (1)
-                ? 120
-                : undefined,
+                  ? 3
+                  : index === /** @satisfies {YearIndex} */ (23)
+                    ? 12
+                    : index === /** @satisfies {DecadeIndex} */ (1)
+                      ? 120
+                      : undefined,
           },
           crosshair: {
             horzLine: {
@@ -118,7 +118,7 @@ export default import("./v5.0.7-treeshaked/script.js").then((lc) => {
             mode: 3,
           },
         });
-      }
+      },
     );
 
     return chart;
@@ -178,7 +178,7 @@ export default import("./v5.0.7-treeshaked/script.js").then((lc) => {
 
     if (fitContentOnResize) {
       new ResizeObserver(() => ichart?.timeScale().fitContent()).observe(
-        chartDiv
+        chartDiv,
       );
     }
 
@@ -266,8 +266,8 @@ export default import("./v5.0.7-treeshaked/script.js").then((lc) => {
               }
             });
             timeScaleSet = true;
-          }
-        )
+          },
+        ),
       );
     }
 
@@ -278,7 +278,7 @@ export default import("./v5.0.7-treeshaked/script.js").then((lc) => {
         activeResources.forEach((v) => {
           v.fetch();
         });
-      })
+      }),
     );
 
     const chart = {
@@ -298,7 +298,7 @@ export default import("./v5.0.7-treeshaked/script.js").then((lc) => {
           vecIndex,
           vecIndex === /** @satisfies {Height} */ (5)
             ? "timestamp-fixed"
-            : "timestamp"
+            : "timestamp",
         );
         timeResource.fetch();
 
@@ -325,6 +325,7 @@ export default import("./v5.0.7-treeshaked/script.js").then((lc) => {
        * @param {Object} args
        * @param {string} args.name
        * @param {Unit} args.unit
+       * @param {number} args.order
        * @param {VecId} [args.vecId]
        * @param {Accessor<CandlestickData[]>} [args.data]
        * @param {number} [args.paneIndex]
@@ -335,6 +336,7 @@ export default import("./v5.0.7-treeshaked/script.js").then((lc) => {
         vecId,
         name,
         unit,
+        order,
         paneIndex: _paneIndex,
         defaultActive,
         data,
@@ -356,7 +358,7 @@ export default import("./v5.0.7-treeshaked/script.js").then((lc) => {
             borderVisible: false,
             visible: defaultActive !== false,
           },
-          paneIndex
+          paneIndex,
         );
 
         let url = /** @type {string | undefined} */ (undefined);
@@ -372,7 +374,7 @@ export default import("./v5.0.7-treeshaked/script.js").then((lc) => {
           signals.runWithOwner(owner, () =>
             signals.createEffect(data, (data) => {
               series.setData(data);
-            })
+            }),
           );
         }
 
@@ -398,12 +400,15 @@ export default import("./v5.0.7-treeshaked/script.js").then((lc) => {
           unit,
         });
 
+        series.setSeriesOrder(order);
+
         return series;
       },
       /**
        * @param {Object} args
        * @param {string} args.name
        * @param {Unit} args.unit
+       * @param {number} args.order
        * @param {Accessor<LineData[]>} [args.data]
        * @param {VecId} [args.vecId]
        * @param {Color} [args.color]
@@ -415,6 +420,7 @@ export default import("./v5.0.7-treeshaked/script.js").then((lc) => {
         vecId,
         name,
         unit,
+        order,
         color,
         paneIndex: _paneIndex,
         defaultActive,
@@ -436,7 +442,7 @@ export default import("./v5.0.7-treeshaked/script.js").then((lc) => {
             color: color(),
             ...options,
           },
-          paneIndex
+          paneIndex,
         );
 
         const priceLineOptions = options?.createPriceLine;
@@ -459,7 +465,7 @@ export default import("./v5.0.7-treeshaked/script.js").then((lc) => {
               ichart
                 ?.timeScale()
                 .setVisibleLogicalRange({ from: -1, to: data.length });
-            })
+            }),
           );
         }
 
@@ -485,12 +491,15 @@ export default import("./v5.0.7-treeshaked/script.js").then((lc) => {
           unit,
         });
 
+        series.setSeriesOrder(order);
+
         return series;
       },
       /**
        * @param {Object} args
        * @param {string} args.name
        * @param {Unit} args.unit
+       * @param {number} args.order
        * @param {Accessor<BaselineData[]>} [args.data]
        * @param {VecId} [args.vecId]
        * @param {number} [args.paneIndex]
@@ -501,6 +510,7 @@ export default import("./v5.0.7-treeshaked/script.js").then((lc) => {
         vecId,
         name,
         unit,
+        order,
         paneIndex: _paneIndex,
         defaultActive,
         data,
@@ -528,7 +538,7 @@ export default import("./v5.0.7-treeshaked/script.js").then((lc) => {
             topFillColor2: "transparent",
             lineVisible: true,
           },
-          paneIndex
+          paneIndex,
         );
 
         const priceLineOptions = options?.createPriceLine;
@@ -552,7 +562,7 @@ export default import("./v5.0.7-treeshaked/script.js").then((lc) => {
               ichart
                 ?.timeScale()
                 .setVisibleLogicalRange({ from: -1, to: data.length });
-            })
+            }),
           );
         }
 
@@ -580,6 +590,8 @@ export default import("./v5.0.7-treeshaked/script.js").then((lc) => {
           id: `${id}-${paneIndex}`,
           unit,
         });
+
+        series.setSeriesOrder(order);
 
         return series;
       },
@@ -645,7 +657,7 @@ export default import("./v5.0.7-treeshaked/script.js").then((lc) => {
               Array.from(parent.childNodes).filter(
                 (element) =>
                   /** @type {HTMLElement} */ (element).dataset.position ===
-                  position
+                  position,
               ).length
             ) {
               return;
@@ -664,7 +676,7 @@ export default import("./v5.0.7-treeshaked/script.js").then((lc) => {
 
             fieldset.append(createChild({ owner, pane }));
           },
-          paneIndex ? 50 : 0
+          paneIndex ? 50 : 0,
         );
       },
       /**
@@ -686,7 +698,7 @@ export default import("./v5.0.7-treeshaked/script.js").then((lc) => {
     config?.forEach(({ unit, blueprints }, paneIndex) => {
       chart.create({ index: /** @satisfies {DateIndex} */ (0) });
 
-      blueprints.forEach((blueprint) => {
+      blueprints.forEach((blueprint, order) => {
         if (blueprint.type === "Candlestick") {
           chart.addCandlestickSeries({
             name: blueprint.title,
@@ -694,6 +706,7 @@ export default import("./v5.0.7-treeshaked/script.js").then((lc) => {
             data: blueprint.data,
             defaultActive: blueprint.defaultActive,
             paneIndex,
+            order,
           });
         } else if (blueprint.type === "Baseline") {
           chart.addBaselineSeries({
@@ -702,6 +715,7 @@ export default import("./v5.0.7-treeshaked/script.js").then((lc) => {
             data: blueprint.data,
             defaultActive: blueprint.defaultActive,
             paneIndex,
+            order,
           });
         } else {
           chart.addLineSeries({
@@ -711,6 +725,7 @@ export default import("./v5.0.7-treeshaked/script.js").then((lc) => {
             defaultActive: blueprint.defaultActive,
             paneIndex,
             color: blueprint.color,
+            order,
           });
         }
       });
@@ -737,7 +752,7 @@ function createLegend({ parent, signals, utils, paneIndex }) {
   parent.append(legendElement);
 
   const hovered = signals.createSignal(
-    /** @type {ISeriesApi<SeriesType> | null} */ (null)
+    /** @type {ISeriesApi<SeriesType> | null} */ (null),
   );
 
   return {
@@ -830,7 +845,7 @@ function createLegend({ parent, signals, utils, paneIndex }) {
             } else {
               spanColor.style.backgroundColor = tameColor(color);
             }
-          }
+          },
         );
       });
 
@@ -906,7 +921,7 @@ function createOklchToRGBA() {
       return rgb.map((c) =>
         Math.abs(c) > 0.0031308
           ? (c < 0 ? -1 : 1) * (1.055 * Math.abs(c) ** (1 / 2.4) - 0.055)
-          : 12.92 * c
+          : 12.92 * c,
       );
     }
     /**
@@ -918,7 +933,7 @@ function createOklchToRGBA() {
           1, 0.3963377773761749, 0.2158037573099136, 1, -0.1055613458156586,
           -0.0638541728258133, 1, -0.0894841775298119, -1.2914855480194092,
         ]),
-        lab
+        lab,
       );
       const LMS = /** @type {[number, number, number]} */ (
         LMSg.map((val) => val ** 3)
@@ -929,7 +944,7 @@ function createOklchToRGBA() {
           -0.0405757452148008, 1.112286803280317, -0.0717110580655164,
           -0.0763729366746601, -0.4214933324022432, 1.5869240198367816,
         ]),
-        LMS
+        LMS,
       );
     }
     /**
@@ -942,7 +957,7 @@ function createOklchToRGBA() {
           -0.9692436362808796, 1.8759675015077202, 0.04155505740717559,
           0.05563007969699366, -0.20397695888897652, 1.0569715142428786,
         ],
-        xyz
+        xyz,
       );
     }
 
@@ -965,8 +980,8 @@ function createOklchToRGBA() {
       });
       const rgb = srgbLinear2rgb(
         xyz2rgbLinear(
-          oklab2xyz(oklch2oklab(/** @type {[number, number, number]} */ (lch)))
-        )
+          oklab2xyz(oklch2oklab(/** @type {[number, number, number]} */ (lch))),
+        ),
       ).map((v) => {
         return Math.max(Math.min(Math.round(v * 255), 255), 0);
       });
@@ -1045,4 +1060,47 @@ function createPriceLine(series, options, colors) {
     lineWidth: 1,
     lineStyle: 4,
   });
+}
+
+/**
+ * @param {number} value
+ * @param {number} [digits]
+ * @param {Intl.NumberFormatOptions} [options]
+ */
+function numberToUSFormat(value, digits, options) {
+  return value.toLocaleString("en-us", {
+    ...options,
+    minimumFractionDigits: digits,
+    maximumFractionDigits: digits,
+  });
+}
+
+/** @param {number} value  */
+function numberToShortUSFormat(value) {
+  const absoluteValue = Math.abs(value);
+
+  if (isNaN(value)) {
+    return "";
+  } else if (absoluteValue < 10) {
+    return numberToUSFormat(value, 3);
+  } else if (absoluteValue < 1_000) {
+    return numberToUSFormat(value, 2);
+  } else if (absoluteValue < 10_000) {
+    return numberToUSFormat(value, 1);
+  } else if (absoluteValue < 1_000_000) {
+    return numberToUSFormat(value, 0);
+  } else if (absoluteValue >= 900_000_000_000_000_000) {
+    return "Inf.";
+  }
+
+  const log = Math.floor(Math.log10(absoluteValue) - 6);
+
+  const suffices = ["M", "B", "T", "P", "E"];
+  const letterIndex = Math.floor(log / 3);
+  const letter = suffices[letterIndex];
+
+  return `${numberToUSFormat(
+    value / (1_000_000 * 1_000 ** letterIndex),
+    3,
+  )}${letter}`;
 }
