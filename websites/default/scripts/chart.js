@@ -1,5 +1,7 @@
 // @ts-check
 
+const keyPrefix = "chart";
+
 /**
  * @param {Object} args
  * @param {Colors} args.colors
@@ -43,244 +45,271 @@ export function init({
 
   let firstRun = true;
 
+  const { field: seriesTypeField, selected: topSeriesType } =
+    utils.dom.createHorizontalChoiceField({
+      defaultValue: "Line",
+      keyPrefix,
+      key: "seriestype-0",
+      choices: /** @type {const} */ (["Auto", "Candles", "Line"]),
+      signals,
+    });
+
+  const { field: topUnitField, selected: topUnit } =
+    utils.dom.createHorizontalChoiceField({
+      defaultValue: "USD",
+      keyPrefix,
+      key: "unit-0",
+      choices: /** @type {const} */ ([
+        /** @satisfies {Unit} */ ("USD"),
+        /** @satisfies {Unit} */ ("Sats"),
+      ]),
+      signals,
+      sorted: true,
+    });
+
   signals.createEffect(selected, (option) => {
     headingElement.innerHTML = option.title;
 
+    const bottomUnits = /** @type {readonly Unit[]} */ (
+      Object.keys(option.bottom)
+    );
+    const { field: bottomUnitField, selected: bottomUnit } =
+      utils.dom.createHorizontalChoiceField({
+        defaultValue: bottomUnits.at(0) || "",
+        keyPrefix,
+        key: "unit-1",
+        choices: bottomUnits,
+        signals,
+        sorted: true,
+      });
+
+    // signals.createEffect(bottomUnit, (bottomUnit) => {
+    chart.reset({ owner: signals.getOwner() });
+
+    chart.addFieldsetIfNeeded({
+      id: "charts-unit-0",
+      paneIndex: 0,
+      position: "nw",
+      createChild() {
+        return topUnitField;
+      },
+    });
+
+    if (bottomUnits.length) {
+      chart.addFieldsetIfNeeded({
+        id: "charts-unit-1",
+        paneIndex: 1,
+        position: "nw",
+        createChild() {
+          return bottomUnitField;
+        },
+      });
+    }
+
+    chart.addFieldsetIfNeeded({
+      id: "charts-seriestype-0",
+      paneIndex: 0,
+      position: "ne",
+      createChild() {
+        return seriesTypeField;
+      },
+    });
+
     signals.createEffect(index, (index) => {
-      const { field: topUnitField, selected: topUnit } =
-        utils.dom.createHorizontalChoiceField({
-          defaultValue: "USD",
-          keyPrefix: "charts",
-          key: "unit-0",
-          choices: /** @type {const} */ ([
-            /** @satisfies {Unit} */ ("USD"),
-            /** @satisfies {Unit} */ ("Sats"),
-          ]),
-          signals,
-          sorted: true,
-        });
+      const TIMERANGE_LS_KEY = `chart-timerange-${index}`;
 
-      signals.createEffect(topUnit, (topUnit) => {
-        const { field: seriesTypeField, selected: topSeriesType } =
-          utils.dom.createHorizontalChoiceField({
-            defaultValue: "Line",
-            keyPrefix: "charts",
-            key: "seriestype-0",
-            choices: /** @type {const} */ (["Candles", "Line"]),
-            signals,
-          });
+      const from = signals.createSignal(/** @type {number | null} */ (null), {
+        save: {
+          ...utils.serde.optNumber,
+          keyPrefix: TIMERANGE_LS_KEY,
+          key: "from",
+          serializeParam: firstRun,
+        },
+      });
+      const to = signals.createSignal(/** @type {number | null} */ (null), {
+        save: {
+          ...utils.serde.optNumber,
+          keyPrefix: TIMERANGE_LS_KEY,
+          key: "to",
+          serializeParam: firstRun,
+        },
+      });
 
-        signals.createEffect(topSeriesType, (topSeriesType) => {
-          const bottomUnits = /** @type {readonly Unit[]} */ (
-            Object.keys(option.bottom)
-          );
-          const { field: bottomUnitField, selected: bottomUnit } =
-            utils.dom.createHorizontalChoiceField({
-              defaultValue: bottomUnits.at(0) || "",
-              keyPrefix: "charts",
-              key: "unit-1",
-              choices: bottomUnits,
-              signals,
-              sorted: true,
+      chart.create({
+        index,
+        timeScaleSetCallback: (unknownTimeScaleCallback) => {
+          const from_ = from();
+          const to_ = to();
+          if (from_ !== null && to_ !== null) {
+            chart.inner()?.timeScale().setVisibleLogicalRange({
+              from: from_,
+              to: to_,
             });
+          } else {
+            unknownTimeScaleCallback();
+          }
+        },
+      });
 
-          signals.createEffect(bottomUnit, (bottomUnit) => {
-            chart.reset({ owner: signals.getOwner() });
+      /** @type {ISeriesApi<any> | null} */
+      let prevPriceSeries = null;
+      signals.createEffect(
+        () => [topUnit(), topSeriesType()],
+        ([topUnit, topSeriesType]) => {
+          if (prevPriceSeries) {
+            chart.inner()?.removeSeries(prevPriceSeries);
+          }
 
-            chart.addFieldsetIfNeeded({
-              id: "charts-unit-0",
-              paneIndex: 0,
-              position: "nw",
-              createChild() {
-                return topUnitField;
-              },
-            });
-
-            if (bottomUnits.length) {
-              chart.addFieldsetIfNeeded({
-                id: "charts-unit-1",
-                paneIndex: 1,
-                position: "nw",
-                createChild() {
-                  return bottomUnitField;
-                },
-              });
-            }
-
-            chart.addFieldsetIfNeeded({
-              id: "charts-seriestype-0",
-              paneIndex: 0,
-              position: "ne",
-              createChild() {
-                return seriesTypeField;
-              },
-            });
-
-            const TIMERANGE_LS_KEY = `chart-timerange-${index}`;
-
-            const from = signals.createSignal(
-              /** @type {number | null} */ (null),
-              {
-                save: {
-                  ...utils.serde.optNumber,
-                  keyPrefix: TIMERANGE_LS_KEY,
-                  key: "from",
-                  serializeParam: firstRun,
-                },
-              }
-            );
-            const to = signals.createSignal(
-              /** @type {number | null} */ (null),
-              {
-                save: {
-                  ...utils.serde.optNumber,
-                  keyPrefix: TIMERANGE_LS_KEY,
-                  key: "to",
-                  serializeParam: firstRun,
-                },
-              }
-            );
-
-            chart.create({
-              index,
-              timeScaleSetCallback: (unknownTimeScaleCallback) => {
-                const from_ = from();
-                const to_ = to();
-                if (from_ !== null && to_ !== null) {
-                  chart.inner()?.timeScale().setVisibleLogicalRange({
-                    from: from_,
-                    to: to_,
+          switch (topUnit) {
+            case "USD": {
+              switch (topSeriesType) {
+                case "Candles": {
+                  prevPriceSeries = chart.addCandlestickSeries({
+                    vecId: "ohlc",
+                    name: "Price",
+                    unit: topUnit,
+                    order: 0,
                   });
-                } else {
-                  unknownTimeScaleCallback();
+                  break;
                 }
-              },
-            });
-
-            switch (topUnit) {
-              case "USD": {
-                switch (topSeriesType) {
-                  case "Candles": {
-                    const candles = chart.addCandlestickSeries({
-                      vecId: "ohlc",
-                      name: "Price",
-                      unit: topUnit,
-                    });
-                    break;
-                  }
-                  case "Line": {
-                    const line = chart.addLineSeries({
-                      vecId: "close",
-                      name: "Price",
-                      unit: topUnit,
-                      color: colors.default,
-                      options: {
-                        priceLineVisible: true,
-                      },
-                    });
-                  }
+                case "Line": {
+                  prevPriceSeries = chart.addLineSeries({
+                    vecId: "close",
+                    name: "Price",
+                    unit: topUnit,
+                    color: colors.default,
+                    options: {
+                      priceLineVisible: true,
+                    },
+                    order: 0,
+                  });
                 }
-                // signals.createEffect(webSockets.kraken1dCandle.latest, (latest) => {
-                //   if (!latest) return;
-                //   const last = /** @type { CandlestickData | undefined} */ (
-                //     candles.data().at(-1)
-                //   );
-                //   if (!last) return;
-                //   candles?.update({ ...last, close: latest.close });
-                // });
-                break;
               }
-              case "Sats": {
-                switch (topSeriesType) {
-                  case "Candles": {
-                    const candles = chart.addCandlestickSeries({
-                      vecId: "ohlc-in-sats",
-                      name: "Price",
-                      unit: topUnit,
-                      inverse: true,
-                    });
-                    break;
-                  }
-                  case "Line": {
-                    const line = chart.addLineSeries({
-                      vecId: "close-in-sats",
-                      name: "Price",
-                      unit: topUnit,
-                      color: colors.default,
-                      options: {
-                        priceLineVisible: true,
-                      },
-                    });
-                  }
+              // signals.createEffect(webSockets.kraken1dCandle.latest, (latest) => {
+              //   if (!latest) return;
+              //   const last = /** @type { CandlestickData | undefined} */ (
+              //     candles.data().at(-1)
+              //   );
+              //   if (!last) return;
+              //   candles?.update({ ...last, close: latest.close });
+              // });
+              break;
+            }
+            case "Sats": {
+              switch (topSeriesType) {
+                case "Candles": {
+                  prevPriceSeries = chart.addCandlestickSeries({
+                    vecId: "ohlc-in-sats",
+                    name: "Price",
+                    unit: topUnit,
+                    inverse: true,
+                    order: 0,
+                  });
+                  break;
                 }
-                break;
+                case "Line": {
+                  prevPriceSeries = chart.addLineSeries({
+                    vecId: "close-in-sats",
+                    name: "Price",
+                    unit: topUnit,
+                    color: colors.default,
+                    options: {
+                      priceLineVisible: true,
+                    },
+                    order: 0,
+                  });
+                }
+              }
+              break;
+            }
+          }
+        },
+      );
+
+      [
+        {
+          blueprints: option.top,
+          paneIndex: 0,
+          unit: topUnit,
+          prevSeriesList: /** @type {ISeriesApi<any>[]} */ ([]),
+        },
+        {
+          blueprints: option.bottom,
+          paneIndex: 1,
+          unit: bottomUnit,
+          prevSeriesList: /** @type {ISeriesApi<any>[]} */ ([]),
+        },
+      ].forEach(({ blueprints, paneIndex, unit, prevSeriesList }) => {
+        signals.createEffect(unit, (unit) => {
+          prevSeriesList.splice(0).forEach((series) => {
+            chart.inner()?.removeSeries(series);
+          });
+
+          blueprints[unit]?.forEach((blueprint, order) => {
+            order++;
+
+            const indexes = /** @type {readonly number[]} */ (
+              vecIdToIndexes[blueprint.key]
+            );
+
+            if (indexes.includes(index)) {
+              switch (blueprint.type) {
+                case "Baseline": {
+                  prevSeriesList.push(
+                    chart.addBaselineSeries({
+                      vecId: blueprint.key,
+                      // color: blueprint.color,
+                      name: blueprint.title,
+                      unit,
+                      defaultActive: blueprint.defaultActive,
+                      paneIndex,
+                      options: {
+                        ...blueprint.options,
+                        topLineColor:
+                          blueprint.color?.() ?? blueprint.colors?.[0](),
+                        bottomLineColor:
+                          blueprint.color?.() ?? blueprint.colors?.[1](),
+                      },
+                      order,
+                    }),
+                  );
+                  break;
+                }
+                case "Candlestick": {
+                  throw Error("TODO");
+                  break;
+                }
+                default:
+                  prevSeriesList.push(
+                    chart.addLineSeries({
+                      vecId: blueprint.key,
+                      color: blueprint.color,
+                      name: blueprint.title,
+                      unit,
+                      defaultActive: blueprint.defaultActive,
+                      paneIndex,
+                      options: blueprint.options,
+                      order,
+                    }),
+                  );
               }
             }
-
-            [
-              { blueprints: option.top, paneIndex: 0 },
-              { blueprints: option.bottom, paneIndex: 1 },
-            ].forEach(({ blueprints, paneIndex }) => {
-              const unit = paneIndex ? bottomUnit : topUnit;
-
-              blueprints[unit]?.forEach((blueprint) => {
-                const indexes = /** @type {readonly number[]} */ (
-                  vecIdToIndexes[blueprint.key]
-                );
-                if (indexes.includes(index)) {
-                  switch (blueprint.type) {
-                    case "Baseline": {
-                      chart.addBaselineSeries({
-                        vecId: blueprint.key,
-                        // color: blueprint.color,
-                        name: blueprint.title,
-                        unit,
-                        defaultActive: blueprint.defaultActive,
-                        paneIndex,
-                        options: {
-                          ...blueprint.options,
-                          topLineColor:
-                            blueprint.color?.() ?? blueprint.colors?.[0](),
-                          bottomLineColor:
-                            blueprint.color?.() ?? blueprint.colors?.[1](),
-                        },
-                      });
-                      break;
-                    }
-                    case "Candlestick": {
-                      throw Error("TODO");
-                      break;
-                    }
-                    default:
-                      chart.addLineSeries({
-                        vecId: blueprint.key,
-                        color: blueprint.color,
-                        name: blueprint.title,
-                        unit,
-                        defaultActive: blueprint.defaultActive,
-                        paneIndex,
-                        options: blueprint.options,
-                      });
-                  }
-                }
-              });
-            });
-
-            chart
-              .inner()
-              ?.timeScale()
-              .subscribeVisibleLogicalRangeChange(
-                utils.debounce((t) => {
-                  if (t) {
-                    from.set(t.from);
-                    to.set(t.to);
-                  }
-                })
-              );
-
-            firstRun = false;
           });
         });
+
+        chart
+          .inner()
+          ?.timeScale()
+          .subscribeVisibleLogicalRangeChange(
+            utils.debounce((t) => {
+              if (t) {
+                from.set(t.from);
+                to.set(t.to);
+              }
+            }),
+          );
+
+        firstRun = false;
       });
     });
   });
@@ -295,7 +324,7 @@ export function init({
 function createIndexSelector({ elements, signals, utils }) {
   const { field, selected } = utils.dom.createHorizontalChoiceField({
     defaultValue: "date",
-    keyPrefix: "charts",
+    keyPrefix,
     key: "index",
     choices: /**@type {const} */ ([
       "timestamp",
@@ -335,7 +364,7 @@ function createIndexSelector({ elements, signals, utils }) {
         case "decade":
           return /** @satisfies {DecadeIndex} */ (1);
       }
-    }
+    },
   );
 
   return index;

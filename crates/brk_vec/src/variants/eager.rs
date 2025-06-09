@@ -1116,12 +1116,12 @@ impl EagerVec<DateIndex, Dollars> {
         exit: &Exit,
     ) -> Result<()> {
         self.validate_computed_version_or_reset_file(
-            Version::ZERO + self.inner.version() + stacks.version(),
+            Version::ONE + self.inner.version() + stacks.version(),
         )?;
 
         let index = max_from.min(DateIndex::from(self.len()));
 
-        let first_price_date = DateIndex::try_from(Date::new(2010, 8, 16)).unwrap();
+        let first_price_date = DateIndex::try_from(Date::new(2010, 7, 12)).unwrap();
 
         stacks.iter_at(index).try_for_each(|(i, stack)| {
             let stack = stack.into_inner();
