@@ -7,7 +7,9 @@
 
   > div {
     display: flex;
-    font-size: var(--font-size-sm);
+    font-size: var(--font-size-xs);
+    line--line-height: var(--line-height-xs);
+    font-weight: 450;
     margin-left: var(--negative-main-padding);
     margin-right: var(--negative-main-padding);
 
@@ -36,7 +38,7 @@
       border-bottom: 1px;
       border-color: var(--off-color);
       border-style: dashed !important;
-      padding: 0.25rem 1rem;
+      padding: 0.25rem 0.75rem;
     }
 
     td {
@@ -84,7 +86,7 @@
           > button {
             padding: 0 0.25rem;
             margin: 0 -0.25rem;
-            font-size: 1rem;
+            font-size: 0.75rem;
             line-height: 0;
           }
         }
@@ -126,7 +128,6 @@
       position: relative;
       border-top-width: 1px;
       width: 100%;
-      /* border-right-width: 1px; */
       border-bottom-width: 1px;
       border-style: dashed !important;
 

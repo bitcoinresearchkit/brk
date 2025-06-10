@@ -29,11 +29,11 @@ function createTable({
           keyPrefix: "table",
           key: "index",
         },
-      }
+      },
     )
   );
   const index = signals.createMemo(() =>
-    serializedIndexToIndex(serializedIndex())
+    serializedIndexToIndex(serializedIndex()),
   );
 
   const table = window.document.createElement("table");
@@ -73,7 +73,7 @@ function createTable({
     table.append(tbody);
 
     const rowElements = signals.createSignal(
-      /** @type {HTMLTableRowElement[]} */ ([])
+      /** @type {HTMLTableRowElement[]} */ ([]),
     );
 
     /**
@@ -197,7 +197,7 @@ function createTable({
           });
 
           signals.createEffect(vecIdOption, (vecIdOption) => {
-            select.style.width = `${30 + 8.5 * vecIdOption.name.length}px`;
+            select.style.width = `${21 + 7.25 * vecIdOption.name.length}px`;
           });
 
           if (_colIndex === columns().length) {
@@ -323,7 +323,7 @@ function createTable({
                 });
 
                 return () => vecId;
-              }
+              },
             );
           });
         });
@@ -368,9 +368,7 @@ export function init({
   vecIdToIndexes,
 }) {
   const parent = elements.table;
-  const { headerElement } = utils.dom.createHeader({
-    title: "Table",
-  });
+  const { headerElement } = utils.dom.createHeader("Table");
   parent.append(headerElement);
 
   const div = window.document.createElement("div");
@@ -394,7 +392,7 @@ export function init({
       },
       inside: span,
       title: "Click or tap to add a column to the table",
-    })
+    }),
   );
 }
 
@@ -499,7 +497,7 @@ function createIndexToVecIds(vecIdToIndexes) {
       });
       return arr;
     },
-    /** @type {VecId[][]} */ (new Array(24))
+    /** @type {VecId[][]} */ (new Array(24)),
   );
   indexToVecIds.forEach((arr) => {
     arr.sort();

@@ -2,14 +2,14 @@
 
 /**
  * @import { Option, PartialChartOption, ChartOption, AnyPartialOption, ProcessedOptionAddons, OptionsTree, SimulationOption, AnySeriesBlueprint, ChartableIndex,CreatePriceLineOptions, CreatePriceLine } from "./options"
- * @import {Valued,  SingleValueData, CandlestickData, ChartData, OHLCTuple} from "../packages/lightweight-charts/wrapper"
+ * @import { Valued,  SingleValueData, CandlestickData, ChartData, OHLCTuple, Series } from "../packages/lightweight-charts/wrapper"
  * @import * as _ from "../packages/ufuzzy/v1.0.18/types"
  * @import { createChart as CreateClassicChart, LineStyleOptions, DeepPartial, ChartOptions, IChartApi, IHorzScaleBehavior, WhitespaceData, ISeriesApi, Time, LineData, LogicalRange, BaselineStyleOptions, SeriesOptionsCommon, BaselineData, CandlestickStyleOptions } from "../packages/lightweight-charts/v5.0.7-treeshaked/types"
  * @import { SignalOptions } from "../packages/solid-signals/v0.3.2-treeshaked/types/core/core"
  * @import {Signal, Signals} from "../packages/solid-signals/types";
  * @import { getOwner as GetOwner, onCleanup as OnCleanup, Owner } from "../packages/solid-signals/v0.3.2-treeshaked/types/core/owner"
  * @import { createEffect as CreateEffect, Accessor, Setter, createMemo as CreateMemo } from "../packages/solid-signals/v0.3.2-treeshaked/types/signals";
- * @import {DateIndex, DecadeIndex, DifficultyEpoch, Index, HalvingEpoch, Height, MonthIndex, P2PK33Index, P2PK65Index, P2PKHIndex, P2SHIndex, P2MSIndex, P2AIndex, P2TRIndex, P2WPKHIndex, P2WSHIndex, TxIndex, InputIndex, OutputIndex, VecId, WeekIndex, YearIndex, VecIdToIndexes, QuarterIndex, EmptyOutputIndex, OpReturnIndex, UnknownOutputIndex} from "./vecid-to-indexes"
+ * @import { DateIndex, DecadeIndex, DifficultyEpoch, Index, HalvingEpoch, Height, MonthIndex, P2PK33Index, P2PK65Index, P2PKHIndex, P2SHIndex, P2MSIndex, P2AIndex, P2TRIndex, P2WPKHIndex, P2WSHIndex, TxIndex, InputIndex, OutputIndex, VecId, WeekIndex, YearIndex, VecIdToIndexes, QuarterIndex, EmptyOutputIndex, OpReturnIndex, UnknownOutputIndex } from "./vecid-to-indexes"
  */
 
 /**
@@ -378,7 +378,11 @@ function createUtils() {
       sorted,
     }) {
       const choices = sorted
-        ? /** @type {T} */ (/** @type {any} */ (unsortedChoices.toSorted()))
+        ? /** @type {T} */ (
+            /** @type {any} */ (
+              unsortedChoices.toSorted((a, b) => a.localeCompare(b))
+            )
+          )
         : unsortedChoices;
 
       /** @type {Signal<T[number]>} */
@@ -389,7 +393,9 @@ function createUtils() {
           key,
         },
       });
+
       if (!choices.includes(selected())) {
+        console.log(choices, "don't include", selected());
         selected.set(() => defaultValue);
       }
 
@@ -424,15 +430,14 @@ function createUtils() {
       return { field, selected };
     },
     /**
-     * @param {Object} args
-     * @param {1 | 2 | 3} [args.level]
-     * @param {string} [args.title]
+     * @param {string} [title]
+     * @param {1 | 2 | 3} [level]
      */
-    createHeader({ title, level = 1 }) {
+    createHeader(title = "", level = 1) {
       const headerElement = window.document.createElement("header");
 
       const headingElement = window.document.createElement(`h${level}`);
-      headingElement.innerHTML = title || "";
+      headingElement.innerHTML = title;
       headerElement.append(headingElement);
       headingElement.style.display = "block";
 

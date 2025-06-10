@@ -3,7 +3,7 @@
 /**
  * @import { SignalOptions } from "./v0.3.2-treeshaked/types/core/core"
  * @import { getOwner as GetOwner, onCleanup as OnCleanup } from "./v0.3.2-treeshaked/types/core/owner"
- * @import { createSignal as CreateSignal, createEffect as CreateEffect, createMemo as CreateMemo, createRoot as CreateRoot, runWithOwner as RunWithOwner } from "./v0.3.2-treeshaked/types/signals";
+ * @import { createSignal as CreateSignal, createEffect as CreateEffect, createMemo as CreateMemo, createRoot as CreateRoot, runWithOwner as RunWithOwner, Accessor } from "./v0.3.2-treeshaked/types/signals";
  * @import { Signal } from "./types";
  */
 
@@ -40,13 +40,13 @@ const importSignals = import("./v0.3.2-treeshaked/script.js").then(
       /**
        * @template T
        * @param {T} initialValue
-       * @param {SignalOptions<T> & {save?: {keyPrefix: string; key: string; serialize: (v: T) => string; deserialize: (v: string) => T; serializeParam?: boolean}}} [options]
+       * @param {SignalOptions<T> & {save?: {keyPrefix: string | Accessor<string>; key: string; serialize: (v: T) => string; deserialize: (v: string) => T; serializeParam?: boolean}}} [options]
        * @returns {Signal<T>}
        */
       createSignal(initialValue, options) {
         const [get, set] = this.createSolidSignal(
           /** @type {any} */ (initialValue),
-          options
+          options,
         );
 
         // @ts-ignore
@@ -59,27 +59,42 @@ const importSignals = import("./v0.3.2-treeshaked/script.js").then(
           const save = options.save;
 
           const paramKey = save.key;
-          const storageKey = `${save.keyPrefix}-${paramKey}`;
+          const storageKey = this.createMemo(
+            () =>
+              `${typeof save.keyPrefix === "string" ? save.keyPrefix : save.keyPrefix()}-${paramKey}`,
+          );
 
           let serialized = /** @type {string | null} */ (null);
           if (options.save.serializeParam !== false) {
             serialized = new URLSearchParams(window.location.search).get(
-              paramKey
+              paramKey,
+            );
+          }
+          if (serialized === null) {
+            serialized = localStorage.getItem(storageKey());
+          }
+          if (serialized) {
+            set(() =>
+              serialized ? save.deserialize(serialized) : initialValue,
             );
           }
 
-          if (serialized === null) {
-            serialized = localStorage.getItem(storageKey);
-          }
-          if (serialized) {
-            set(() => save.deserialize(serialized));
-          }
+          let firstRun1 = true;
+          this.createEffect(storageKey, (storageKey) => {
+            if (!firstRun1) {
+              serialized = localStorage.getItem(storageKey);
+              set(() =>
+                serialized ? save.deserialize(serialized) : initialValue,
+              );
+            }
+            firstRun1 = false;
+          });
 
-          let firstEffect = true;
+          let firstRun2 = true;
           this.createEffect(get, (value) => {
             if (!save) return;
 
-            if (!firstEffect) {
+            if (!firstRun2) {
               if (
                 value !== undefined &&
                 value !== null &&
@@ -87,9 +102,9 @@ const importSignals = import("./v0.3.2-treeshaked/script.js").then(
                   initialValue === null ||
                   save.serialize(value) !== save.serialize(initialValue))
               ) {
-                localStorage.setItem(storageKey, save.serialize(value));
+                localStorage.setItem(storageKey(), save.serialize(value));
               } else {
-                localStorage.removeItem(storageKey);
+                localStorage.removeItem(storageKey());
               }
             }
 
@@ -105,7 +120,7 @@ const importSignals = import("./v0.3.2-treeshaked/script.js").then(
               removeParam(paramKey);
             }
 
-            firstEffect = false;
+            firstRun2 = false;
           });
         }
 
@@ -115,7 +130,7 @@ const importSignals = import("./v0.3.2-treeshaked/script.js").then(
     };
 
     return signals;
-  }
+  },
 );
 
 /**
@@ -135,7 +150,7 @@ function writeParam(key, value) {
     window.history.replaceState(
       null,
       "",
-      `${window.location.pathname}?${urlParams.toString()}`
+      `${window.location.pathname}?${urlParams.toString()}`,
     );
   } catch (_) {}
 }

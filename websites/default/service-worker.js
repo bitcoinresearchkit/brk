@@ -16,11 +16,9 @@ sw.addEventListener("activate", (event) => {
       .keys()
       .then((keys) =>
         Promise.all(
-          keys
-            .filter((key) => key !== CACHE_NAME && key !== "api")
-            .map((key) => caches.delete(key))
-        )
-      )
+          keys.filter((key) => key !== "api").map((key) => caches.delete(key)),
+        ),
+      ),
   );
 });
 
@@ -63,7 +61,7 @@ sw.addEventListener("fetch", (event) => {
           throw new Error("Non-2xx on shell");
         })
         // On any failure, fall back to the cached shell
-        .catch(indexHTMLOrOffline)
+        .catch(indexHTMLOrOffline),
     );
     return;
   }
@@ -86,6 +84,6 @@ sw.addEventListener("fetch", (event) => {
           })
           .catch(indexHTMLOrOffline);
       })
-      .catch(indexHTMLOrOffline)
+      .catch(indexHTMLOrOffline),
   );
 });

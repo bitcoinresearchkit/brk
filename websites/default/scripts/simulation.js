@@ -391,9 +391,7 @@ export function init({
   };
 
   parametersElement.append(
-    utils.dom.createHeader({
-      title: "Save in Bitcoin",
-    }).headerElement,
+    utils.dom.createHeader("Save in Bitcoin").headerElement,
   );
 
   /**
@@ -698,7 +696,11 @@ export function init({
     },
   );
 
+  const index = () => /** @type {DateIndex} */ (0);
+
   lightweightCharts.createChartElement({
+    index,
+    owner,
     parent: resultsElement,
     signals,
     colors,
@@ -743,6 +745,8 @@ export function init({
   });
 
   lightweightCharts.createChartElement({
+    index,
+    owner,
     parent: resultsElement,
     signals,
     colors,
@@ -767,6 +771,8 @@ export function init({
   });
 
   lightweightCharts.createChartElement({
+    index,
+    owner,
     parent: resultsElement,
     signals,
     colors,
@@ -797,6 +803,8 @@ export function init({
   });
 
   lightweightCharts.createChartElement({
+    index,
+    owner,
     parent: resultsElement,
     signals,
     colors,
@@ -805,7 +813,6 @@ export function init({
     fitContentOnResize: true,
     utils,
     elements,
-
     config: [
       {
         unit: "USD",
@@ -821,6 +828,7 @@ export function init({
   });
 
   lightweightCharts.createChartElement({
+    index,
     parent: resultsElement,
     signals,
     colors,
