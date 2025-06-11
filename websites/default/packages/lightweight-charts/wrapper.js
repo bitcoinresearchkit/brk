@@ -174,8 +174,6 @@ export default import("./v5.0.7-treeshaked/script.js").then((lc) => {
                 ? 120
                 : 0.5;
 
-      console.log({ minBarSpacing, fitContent });
-
       ichart.applyOptions({
         timeScale: {
           timeVisible:
@@ -379,13 +377,13 @@ export default import("./v5.0.7-treeshaked/script.js").then((lc) => {
                 const fetchedKey = vecsResources.defaultFetchedKey;
                 signals.createEffect(
                   () => [
-                    timeResource.fetched[fetchedKey].vec(),
-                    valuesResource.fetched[fetchedKey].vec(),
+                    timeResource.fetched().get(fetchedKey)?.vec(),
+                    valuesResource.fetched().get(fetchedKey)?.vec(),
                   ],
                   ([indexes, _ohlcs]) => {
-                    if (!indexes || !_ohlcs) return;
+                    if (!indexes?.length || !_ohlcs?.length) return;
 
-                    const seriesData = series.inner.data();
+                    // const seriesData = series.inner.data();
                     // const set = seriesData.length === 0;
 
                     const ohlcs = /** @type {OHLCTuple[]} */ (_ohlcs);

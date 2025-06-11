@@ -3106,7 +3106,7 @@ export function initOptions({
           summary.append(supCount);
 
           signals.createEffect(childOptionsCount, (childOptionsCount) => {
-            supCount.innerHTML = childOptionsCount.toLocaleString();
+            supCount.innerHTML = childOptionsCount.toLocaleString("en-us");
           });
 
           details.addEventListener("toggle", () => {

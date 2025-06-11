@@ -31,13 +31,13 @@ const importSignals = import("./v0.3.2-treeshaked/script.js").then(
             if (dispose) {
               dispose();
               dispose = null;
-              console.debug("effectCount = ", --effectCount);
+              // console.log("effectCount = ", --effectCount);
             }
           }
 
           // @ts-ignore
           _signals.createEffect(compute, (v, oldV) => {
-            console.debug("effectCount = ", ++effectCount);
+            // console.log("effectCount = ", ++effectCount);
             cleanup();
             signals.createRoot((_dispose) => {
               dispose = _dispose;

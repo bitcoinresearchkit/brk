@@ -305,22 +305,25 @@ function createTable({
                   return l;
                 });
 
-                signals.createEffect(vec.fetched[fetchedKey].vec, (vec) => {
-                  if (!vec) return;
+                signals.createEffect(
+                  () => vec.fetched().get(fetchedKey)?.vec(),
+                  (vec) => {
+                    if (!vec?.length) return;
 
-                  const thIndex = colIndex() + 1;
+                    const thIndex = colIndex() + 1;
 
-                  for (let i = 0; i < rowElements.length; i++) {
-                    const iRev = vec.length - 1 - i;
-                    const value = vec[iRev];
-                    // @ts-ignore
-                    rowElements[i].childNodes[thIndex].innerHTML =
-                      serializeValue({
-                        value,
-                        unit,
-                      });
-                  }
-                });
+                    for (let i = 0; i < rowElements.length; i++) {
+                      const iRev = vec.length - 1 - i;
+                      const value = vec[iRev];
+                      // @ts-ignore
+                      rowElements[i].childNodes[thIndex].innerHTML =
+                        serializeValue({
+                          value,
+                          unit,
+                        });
+                    }
+                  },
+                );
 
                 return () => vecId;
               },
