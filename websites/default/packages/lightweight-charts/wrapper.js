@@ -1,6 +1,6 @@
 // @ts-check
 
-/** @import {IChartApi, ISeriesApi, SeriesDefinition, SingleValueData as _SingleValueData, CandlestickData as _CandlestickData, BaselineData, SeriesType, IPaneApi, BaselineStyleOptions} from './v5.0.7-treeshaked/types' */
+/** @import {IChartApi, ISeriesApi, SeriesDefinition, SingleValueData as _SingleValueData, CandlestickData as _CandlestickData, BaselineData, SeriesType, IPaneApi, BaselineStyleOptions, CandlestickStyleOptions, WhitespaceData} from './v5.0.7-treeshaked/types' */
 
 /**
  * @typedef {[number, number, number, number]} OHLCTuple
@@ -10,6 +10,14 @@
  *
  * @typedef {Object} Indexed
  * @property {number} index
+ */
+
+/**
+ * @typedef {Object} Series
+ * @property {ISeriesApi<SeriesType>} inner
+ * @property {string} id
+ * @property {Signal<boolean>} active
+ * @property {VoidFunction} remove
  */
 
 /**
@@ -27,48 +35,100 @@ export default import("./v5.0.7-treeshaked/script.js").then((lc) => {
 
   /**
    * @param {Object} args
-   * @param {HTMLElement} args.element
+   * @param {string} args.id
+   * @param {HTMLElement} args.parent
    * @param {Signals} args.signals
    * @param {Colors} args.colors
-   * @param {Index} args.index
    * @param {Utilities} args.utils
    * @param {Elements} args.elements
-   * @param {DeepPartial<ChartOptions>} [args.options]
+   * @param {VecsResources} args.vecsResources
+   * @param {Accessor<Index>} args.index
+   * @param {((unknownTimeScaleCallback: VoidFunction) => void)} [args.timeScaleSetCallback]
+   * @param {Owner | null} args.owner
+   * @param {true} [args.fitContentOnResize]
+   * @param {{unit: Unit; blueprints: AnySeriesBlueprint[]}[]} [args.config]
    */
-  function createLightweightChart({
-    element,
+  function createChartElement({
+    parent,
     signals,
     colors,
-    index,
     utils,
     elements,
-    options: _options = {},
+    id,
+    index,
+    vecsResources,
+    timeScaleSetCallback,
+    owner: _owner,
+    fitContentOnResize,
+    config,
   }) {
-    /** @satisfies {DeepPartial<ChartOptions>} */
-    const options = {
-      autoSize: true,
-      layout: {
-        fontFamily: elements.style.fontFamily,
-        background: { color: "transparent" },
-        attributionLogo: false,
-        colorSpace: "display-p3",
-        colorParsers: [oklchToRGBA],
-      },
-      grid: {
-        vertLines: { visible: false },
-        horzLines: { visible: false },
-      },
-      localization: {
-        priceFormatter: numberToShortUSFormat,
-        locale: "en-us",
-      },
-      ..._options,
-    };
+    const owner = _owner || signals.getOwner();
+
+    const div = window.document.createElement("div");
+    div.classList.add("chart");
+    parent.append(div);
+
+    const legendTop = createLegend({
+      utils,
+      signals,
+      paneIndex: 0,
+    });
+    div.append(legendTop.element);
+
+    const chartDiv = window.document.createElement("div");
+    chartDiv.classList.add("lightweight-chart");
+    div.append(chartDiv);
+
+    const legendBottom = createLegend({
+      utils,
+      signals,
+      paneIndex: 1,
+    });
+    div.append(legendBottom.element);
 
     /** @type {IChartApi} */
-    const chart = lc.createChart(element, options);
+    const ichart = lc.createChart(
+      chartDiv,
+      /** @satisfies {DeepPartial<ChartOptions>} */ ({
+        autoSize: true,
+        layout: {
+          fontFamily: elements.style.fontFamily,
+          background: { color: "transparent" },
+          attributionLogo: false,
+          colorSpace: "display-p3",
+          colorParsers: [oklchToRGBA],
+        },
+        grid: {
+          vertLines: { visible: false },
+          horzLines: { visible: false },
+        },
+        rightPriceScale: {
+          borderVisible: false,
+        },
+        timeScale: {
+          borderVisible: false,
+        },
+        localization: {
+          priceFormatter: numberToShortUSFormat,
+          locale: "en-us",
+        },
+        crosshair: {
+          mode: 3,
+        },
+        ...(fitContentOnResize
+          ? {
+              handleScroll: false,
+              handleScale: false,
+              timeScale: {
+                minBarSpacing: 0.001,
+              },
+            }
+          : {}),
+        // ..._options,
+      }),
+    );
 
-    chart.priceScale("right").applyOptions({
+    ichart.priceScale("right").applyOptions({
       minimumWidth: 80,
     });
 
@@ -79,22 +139,39 @@ export default import("./v5.0.7-treeshaked/script.js").then((lc) => {
         borderColor: colors.border(),
       }),
       ({ defaultColor, offColor, borderColor }) => {
-        chart.applyOptions({
+        ichart.applyOptions({
           layout: {
             textColor: offColor,
             panes: {
               separatorColor: borderColor,
             },
           },
-          rightPriceScale: {
-            borderVisible: false,
+          crosshair: {
+            horzLine: {
+              color: offColor,
+              labelBackgroundColor: defaultColor,
+            },
+            vertLine: {
+              color: offColor,
+              labelBackgroundColor: defaultColor,
+            },
           },
+        });
+      },
+    );
+
+    signals.createEffect(index, (index) => {
+      ichart.applyOptions({
+        timeScale: {
+          timeVisible:
+            index === /** @satisfies {Height} */ (5) ||
+            index === /** @satisfies {DifficultyEpoch} */ (2) ||
+            index === /** @satisfies {HalvingEpoch} */ (4),
+        },
+      });
+      if (!fitContentOnResize) {
+        ichart.applyOptions({
           timeScale: {
-            borderVisible: false,
-            timeVisible:
-              index === /** @satisfies {Height} */ (5) ||
-              index === /** @satisfies {DifficultyEpoch} */ (2) ||
-              index === /** @satisfies {HalvingEpoch} */ (4),
             minBarSpacing:
               index === /** @satisfies {MonthIndex} */ (7)
                 ? 1
@@ -106,174 +183,12 @@ export default import("./v5.0.7-treeshaked/script.js").then((lc) => {
                       ? 120
                       : undefined,
           },
-          crosshair: {
-            horzLine: {
-              color: offColor,
-              labelBackgroundColor: defaultColor,
-            },
-            vertLine: {
-              color: offColor,
-              labelBackgroundColor: defaultColor,
-            },
-            mode: 3,
-          },
         });
-      },
-    );
-
-    return chart;
-  }
-
-  /**
-   * @param {Object} args
-   * @param {string} args.id
-   * @param {HTMLElement} args.parent
-   * @param {Signals} args.signals
-   * @param {Colors} args.colors
-   * @param {Utilities} args.utils
-   * @param {Elements} args.elements
-   * @param {VecsResources} args.vecsResources
-   * @param {Owner | null} [args.owner]
-   * @param {true} [args.fitContentOnResize]
-   * @param {{unit: Unit; blueprints: AnySeriesBlueprint[]}[]} [args.config]
-   */
-  function createChartElement({
-    parent,
-    signals,
-    colors,
-    utils,
-    elements,
-    id,
-    vecsResources,
-    owner: _owner,
-    fitContentOnResize,
-    config,
-  }) {
-    let owner = _owner || signals.getOwner();
-
-    const div = window.document.createElement("div");
-    div.classList.add("chart");
-    parent.append(div);
-
-    const legendTop = createLegend({
-      parent: div,
-      utils,
-      signals,
-      paneIndex: 0,
+      }
     });
 
-    const chartDiv = window.document.createElement("div");
-    chartDiv.classList.add("lightweight-chart");
-    div.append(chartDiv);
-
-    const legendBottom = createLegend({
-      parent: div,
-      utils,
-      signals,
-      paneIndex: 1,
-    });
-
-    let ichart = /** @type {IChartApi | null} */ (null);
-    let timeScaleSet = false;
-
-    if (fitContentOnResize) {
-      new ResizeObserver(() => ichart?.timeScale().fitContent()).observe(
-        chartDiv,
-      );
-    }
-
-    /** @type {Index} */
-    let vecIndex = 0; // Default value, overwritten
-
-    let timeResource = /** @type {VecResource| null} */ (null);
-
-    let timeScaleSetCallback =
-      /** @type {((unknownTimeScaleCallback: VoidFunction) => void) | null} */ (
-        null
-      );
-
-    /**
-     * @param {ISeriesApi<SeriesType>} series
-     * @param {VecResource} valuesResource
-     */
-    function createSetFetchedDataEffect(series, valuesResource) {
-      const fetchedKey = vecsResources.defaultFetchedKey;
-
-      signals.runWithOwner(owner, () =>
-        signals.createEffect(
-          () => [
-            timeResource?.fetched[fetchedKey].vec(),
-            valuesResource.fetched[fetchedKey].vec(),
-          ],
-          ([indexes, _ohlcs]) => {
-            if (!ichart) throw Error("IChart should be initialized");
-
-            if (!indexes || !_ohlcs) return;
-            const ohlcs = /** @type {OHLCTuple[]} */ (_ohlcs);
-            let length = Math.min(indexes.length, ohlcs.length);
-            const data = new Array(length);
-            let prevTime = null;
-            let offset = 0;
-
-            for (let i = 0; i < length; i++) {
-              const time = indexes[i];
-              const sameTime = prevTime === time;
-              if (sameTime) {
-                offset += 1;
-              }
-              const v = ohlcs[i];
-              const offsetedI = i - offset;
-              if (v === null) {
-                data[offsetedI] = {
-                  time,
-                  value: NaN,
-                };
-              } else if (typeof v === "number") {
-                data[offsetedI] = {
-                  time,
-                  value: v,
-                };
-              } else {
-                if (sameTime) {
-                  console.log(data[offsetedI]);
-                }
-                // const prev = sameTime ? data[offsetedI] : undefined;
-                let [open, high, low, close] = v;
-                data[offsetedI] = {
-                  time,
-                  open: sameTime ? data[offsetedI].open : open,
-                  high: sameTime ? Math.max(data[offsetedI].high, high) : high,
-                  low: sameTime ? Math.min(data[offsetedI].low, low) : low,
-                  close,
-                };
-              }
-              prevTime = time;
-            }
-
-            data.length -= offset;
-            series.setData(data);
-
-            timeScaleSetCallback?.(() => {
-              if (
-                !timeScaleSet &&
-                (vecIndex === /** @satisfies {QuarterIndex} */ (19) ||
-                  vecIndex === /** @satisfies {YearIndex} */ (23) ||
-                  vecIndex === /** @satisfies {DecadeIndex} */ (1))
-              ) {
-                ichart
-                  ?.timeScale()
-                  .setVisibleLogicalRange({ from: -1, to: data.length });
-              }
-            });
-            timeScaleSet = true;
-          },
-        ),
-      );
-    }
-
-    const activeResources = /** @type {VecResource[]} */ ([]);
-
-    ichart?.subscribeCrosshairMove(
+    const activeResources = /** @type {Set<VecResource>} */ (new Set());
+    ichart.subscribeCrosshairMove(
       utils.debounce(() => {
         activeResources.forEach((v) => {
           v.fetch();
@@ -281,46 +196,298 @@ export default import("./v5.0.7-treeshaked/script.js").then((lc) => {
       }),
     );
 
-    const chart = {
-      inner: () => ichart,
-      /**
-       * @param {Object} args
-       * @param {Index} args.index
-       * @param {((unknownTimeScaleCallback: VoidFunction) => void)} [args.timeScaleSetCallback]
-       */
-      create({ index: _index, timeScaleSetCallback: _timeScaleSetCallback }) {
-        vecIndex = _index;
-        timeScaleSetCallback = _timeScaleSetCallback || null;
+    const timeResource = signals.createMemo(() => {
+      const i = index();
+      const timeResource = vecsResources.getOrCreate(
+        i,
+        i === /** @satisfies {Height} */ (5) ? "timestamp-fixed" : "timestamp",
+      );
+      timeResource.fetch();
+      return timeResource;
+    });
 
-        if (ichart) throw Error("IChart shouldn't be initialized");
+    let timeScaleSet = false;
 
-        timeResource = vecsResources.getOrCreate(
-          vecIndex,
-          vecIndex === /** @satisfies {Height} */ (5)
-            ? "timestamp-fixed"
-            : "timestamp",
-        );
-        timeResource.fetch();
+    if (fitContentOnResize) {
+      new ResizeObserver(() => ichart.timeScale().fitContent()).observe(
+        chartDiv,
+      );
+    }
 
-        ichart = createLightweightChart({
-          index: vecIndex,
-          element: chartDiv,
-          signals,
-          colors,
-          utils,
-          elements,
+    /**
+     * @param {Object} args
+     * @param {string} args.id
+     * @param {number} args.paneIndex
+     * @param {"nw" | "ne" | "se" | "sw"} args.position
+     * @param {number} [args.timeout]
+     * @param {(args: {owner: Owner | null, pane: IPaneApi<Time>}) => HTMLElement} args.createChild
+     */
+    function addFieldsetIfNeeded({ paneIndex, id, position, createChild }) {
+      const owner = signals.getOwner();
+      setTimeout(
+        () => {
+          const parent = ichart
+            ?.panes()
+            .at(paneIndex)
+            ?.getHTMLElement()
+            .children?.item(1)?.firstChild;
+
+          if (!parent) throw Error("Parent should exist");
+
+          if (
+            Array.from(parent.childNodes).filter(
+              (element) =>
+                /** @type {HTMLElement} */ (element).dataset.position ===
+                position,
+            ).length
+          ) {
+            return;
+          }
+
+          const fieldset = window.document.createElement("fieldset");
+          fieldset.dataset.size = "xs";
+          fieldset.dataset.position = position;
+          fieldset.id = `${id}-${paneIndex}`;
+          const pane = ichart.panes().at(paneIndex);
+          if (!pane) throw Error("Expect pane");
+          pane
+            .getHTMLElement()
+            .children?.item(1)
+            ?.firstChild?.appendChild(fieldset);
+
+          fieldset.append(createChild({ owner, pane }));
+        },
+        paneIndex ? 50 : 0,
+      );
+    }
+
+    /**
+     * @param {Object} args
+     * @param {Unit} args.unit
+     * @param {string} args.id
+     * @param {SeriesType} args.seriesType
+     * @param {number} args.paneIndex
+     */
+    function addPriceScaleSelectorIfNeeded({
+      unit,
+      paneIndex,
+      id,
+      seriesType,
+    }) {
+      id = `${id}-scale`;
+
+      addFieldsetIfNeeded({
+        id,
+        paneIndex,
+        position: "sw",
+        createChild({ owner, pane }) {
+          const { field, selected } = utils.dom.createHorizontalChoiceField({
+            choices: /** @type {const} */ (["lin", "log"]),
+            id: utils.stringToId(`${id} ${unit}`),
+            defaultValue:
+              unit === "USD" && seriesType !== "Baseline" ? "log" : "lin",
+            key: `${id}-price-scale-${paneIndex}`,
+            signals,
+          });
+
+          signals.runWithOwner(owner, () => {
+            signals.createEffect(selected, (selected) => {
+              try {
+                pane.priceScale("right").applyOptions({
+                  mode: selected === "lin" ? 0 : 1,
+                });
+              } catch {}
+            });
+          });
+
+          return field;
+        },
+      });
+    }
+
+    /**
+     * @param {Object} args
+     * @param {ISeriesApi<SeriesType>} args.iseries
+     * @param {string} args.name
+     * @param {Unit} args.unit
+     * @param {number} args.order
+     * @param {Color[]} args.colors
+     * @param {SeriesType} args.seriesType
+     * @param {VecId} [args.vecId]
+     * @param {Accessor<WhitespaceData[]>} [args.data]
+     * @param {number} args.paneIndex
+     * @param {boolean} [args.defaultActive]
+     */
+    function addSeries({
+      iseries,
+      vecId,
+      name,
+      unit,
+      order,
+      seriesType,
+      paneIndex,
+      defaultActive,
+      colors,
+      data,
+    }) {
+      return signals.createRoot((dispose) => {
+        const id = `${utils.stringToId(name)}-${paneIndex}`;
+
+        const active = signals.createSignal(defaultActive ?? true, {
+          save: {
+            keyPrefix: "",
+            key: id,
+            ...utils.serde.boolean,
+          },
         });
 
-        if (fitContentOnResize) {
-          ichart.applyOptions({
-            handleScroll: false,
-            handleScale: false,
-            timeScale: {
-              minBarSpacing: 0.001,
-            },
+        let url = /** @type {string | undefined} */ (undefined);
+
+        signals.createEffect(active, (active) =>
+          // Or remove ?
+          iseries.applyOptions({
+            visible: active,
+          }),
+        );
+
+        iseries.setSeriesOrder(order);
+
+        /** @type {Series} */
+        const series = {
+          inner: iseries,
+          active,
+          id,
+          remove() {
+            dispose();
+            chart.inner.removeSeries(iseries);
+          },
+        };
+
+        if (vecId) {
+          signals.createEffect(index, (index) => {
+            const valuesResource = vecsResources.getOrCreate(index, vecId);
+            url = valuesResource.url;
+            signals.createEffect(active, (active) => {
+              if (active) {
+                valuesResource.fetch();
+                activeResources.add(valuesResource);
+
+                const fetchedKey = vecsResources.defaultFetchedKey;
+                signals.createEffect(
+                  () => [
+                    timeResource().fetched[fetchedKey].vec(),
+                    valuesResource.fetched[fetchedKey].vec(),
+                  ],
+                  ([indexes, _ohlcs]) => {
+                    if (!indexes || !_ohlcs) return;
+                    const ohlcs = /** @type {OHLCTuple[]} */ (_ohlcs);
+                    let length = Math.min(indexes.length, ohlcs.length);
+                    const data = new Array(length);
+                    let prevTime = null;
+                    let offset = 0;
+
+                    for (let i = 0; i < length; i++) {
+                      const time = indexes[i];
+                      const sameTime = prevTime === time;
+                      if (sameTime) {
+                        offset += 1;
+                      }
+                      const v = ohlcs[i];
+                      const offsetedI = i - offset;
+                      if (v === null) {
+                        data[offsetedI] = {
+                          time,
+                          value: NaN,
+                        };
+                      } else if (typeof v === "number") {
+                        data[offsetedI] = {
+                          time,
+                          value: v,
+                        };
+                      } else {
+                        if (sameTime) {
+                          console.log(data[offsetedI]);
+                        }
+                        // const prev = sameTime ? data[offsetedI] : undefined;
+                        let [open, high, low, close] = v;
+                        data[offsetedI] = {
+                          time,
+                          open: sameTime ? data[offsetedI].open : open,
+                          high: sameTime
+                            ? Math.max(data[offsetedI].high, high)
+                            : high,
+                          low: sameTime
+                            ? Math.min(data[offsetedI].low, low)
+                            : low,
+                          close,
+                        };
+                      }
+                      prevTime = time;
+                    }
+
+                    data.length -= offset;
+                    series.inner.setData(data);
+
+                    timeScaleSetCallback?.(() => {
+                      if (
+                        !timeScaleSet &&
+                        (index === /** @satisfies {QuarterIndex} */ (19) ||
+                          index === /** @satisfies {YearIndex} */ (23) ||
+                          index === /** @satisfies {DecadeIndex} */ (1))
+                      ) {
+                        ichart.timeScale().setVisibleLogicalRange({
+                          from: -1,
+                          to: data.length,
+                        });
+                      }
+                    });
+                    timeScaleSet = true;
+                  },
+                );
+              } else {
+                activeResources.delete(valuesResource);
+              }
+            });
+          });
+        } else if (data) {
+          signals.createEffect(data, (data) => {
+            iseries.setData(data);
           });
         }
-      },
+
+        (paneIndex ? legendBottom : legendTop).addOrReplace({
+          series,
+          name,
+          colors,
+          url,
+          order,
+        });
+
+        createPaneHeightObserver({
+          ichart,
+          paneIndex,
+          signals,
+          utils,
+        });
+
+        addPriceScaleSelectorIfNeeded({
+          paneIndex,
+          seriesType,
+          id,
+          unit,
+        });
+
+        return series;
+      });
+    }
+
+    const chart = {
+      inner: ichart,
+      legendTop,
+      legendBottom,
+
+      addFieldsetIfNeeded,
+
       /**
        * @param {Object} args
        * @param {string} args.name
@@ -331,6 +498,7 @@ export default import("./v5.0.7-treeshaked/script.js").then((lc) => {
        * @param {number} [args.paneIndex]
        * @param {boolean} [args.defaultActive]
        * @param {boolean} [args.inverse]
+       * @param {DeepPartial<CandlestickStyleOptions & SeriesOptionsCommon & CreatePriceLineOptions>} [args.options]
        */
       addCandlestickSeries({
         vecId,
@@ -344,65 +512,35 @@ export default import("./v5.0.7-treeshaked/script.js").then((lc) => {
       }) {
         const paneIndex = _paneIndex ?? 0;
 
-        if (!ichart || !timeResource) throw Error("Chart not fully set");
+        if (!timeResource) throw Error("Chart not fully set");
 
-        const green = inverse ? colors.red() : colors.green();
-        const red = inverse ? colors.green() : colors.red();
-        const series = ichart.addSeries(
+        const green = inverse ? colors.red : colors.green;
+        const red = inverse ? colors.green : colors.red;
+        const iseries = ichart.addSeries(
           /** @type {SeriesDefinition<'Candlestick'>} */ (lc.CandlestickSeries),
           {
-            upColor: green,
-            downColor: red,
-            wickUpColor: green,
-            wickDownColor: red,
+            upColor: green(),
+            downColor: red(),
+            wickUpColor: green(),
+            wickDownColor: red(),
             borderVisible: false,
             visible: defaultActive !== false,
           },
           paneIndex,
         );
 
-        let url = /** @type {string | undefined} */ (undefined);
-
-        if (vecId) {
-          const valuesResource = vecsResources.getOrCreate(vecIndex, vecId);
-          valuesResource.fetch();
-          activeResources.push(valuesResource);
-          createSetFetchedDataEffect(series, valuesResource);
-
-          url = valuesResource.url;
-        } else if (data) {
-          signals.runWithOwner(owner, () =>
-            signals.createEffect(data, (data) => {
-              series.setData(data);
-            }),
-          );
-        }
-
-        (paneIndex ? legendBottom : legendTop).add({
-          series,
+        return addSeries({
+          colors: [green, red],
+          iseries,
           name,
-          defaultActive,
-          colors: [colors.green, colors.red],
-          url,
-        });
-
-        createPaneHeightObserver({
-          ichart,
-          paneIndex,
-          signals,
-          utils,
-        });
-
-        this.addPriceScaleSelectorIfNeeded({
+          order,
           paneIndex,
           seriesType: "Candlestick",
-          id: `${id}-${paneIndex}`,
           unit,
+          data,
+          defaultActive,
+          vecId,
         });
-
-        series.setSeriesOrder(order);
-
-        return series;
       },
       /**
        * @param {Object} args
@@ -433,7 +571,7 @@ export default import("./v5.0.7-treeshaked/script.js").then((lc) => {
 
         color ||= unit === "USD" ? colors.green : colors.orange;
 
-        const series = ichart.addSeries(
+        const iseries = ichart.addSeries(
           /** @type {SeriesDefinition<'Line'>} */ (lc.LineSeries),
           {
             lineWidth: /** @type {any} */ (1.5),
@@ -447,53 +585,21 @@ export default import("./v5.0.7-treeshaked/script.js").then((lc) => {
 
         const priceLineOptions = options?.createPriceLine;
         if (priceLineOptions) {
-          createPriceLine(series, priceLineOptions, colors);
+          createPriceLine(iseries, priceLineOptions, colors);
         }
 
-        let url = /** @type {string | undefined} */ (undefined);
-
-        if (vecId) {
-          const valuesResource = vecsResources.getOrCreate(vecIndex, vecId);
-          valuesResource.fetch();
-          activeResources.push(valuesResource);
-          createSetFetchedDataEffect(series, valuesResource);
-          url = valuesResource.url;
-        } else if (data) {
-          signals.runWithOwner(owner, () =>
-            signals.createEffect(data, (data) => {
-              series.setData(data);
-              ichart
-                ?.timeScale()
-                .setVisibleLogicalRange({ from: -1, to: data.length });
-            }),
-          );
-        }
-
-        (paneIndex ? legendBottom : legendTop).add({
-          series,
+        return addSeries({
           colors: [color],
+          iseries,
           name,
-          defaultActive,
-          url,
-        });
-
-        createPaneHeightObserver({
-          ichart,
-          paneIndex,
-          signals,
-          utils,
-        });
-
-        this.addPriceScaleSelectorIfNeeded({
+          order,
           paneIndex,
           seriesType: "Line",
-          id: `${id}-${paneIndex}`,
           unit,
+          data,
+          defaultActive,
+          vecId,
         });
-
-        series.setSeriesOrder(order);
-
-        return series;
       },
       /**
        * @param {Object} args
@@ -520,7 +626,7 @@ export default import("./v5.0.7-treeshaked/script.js").then((lc) => {
 
         const paneIndex = _paneIndex ?? 0;
 
-        const series = ichart.addSeries(
+        const iseries = ichart.addSeries(
           /** @type {SeriesDefinition<'Baseline'>} */ (lc.BaselineSeries),
           {
             lineWidth: /** @type {any} */ (1.5),
@@ -543,161 +649,40 @@ export default import("./v5.0.7-treeshaked/script.js").then((lc) => {
 
         const priceLineOptions = options?.createPriceLine;
         if (priceLineOptions) {
-          createPriceLine(series, priceLineOptions, colors);
+          createPriceLine(iseries, priceLineOptions, colors);
         }
 
-        let url = /** @type {string | undefined} */ (undefined);
-
-        if (vecId) {
-          const valuesResource = vecsResources.getOrCreate(vecIndex, vecId);
-          valuesResource.fetch();
-          activeResources.push(valuesResource);
-          createSetFetchedDataEffect(series, valuesResource);
-
-          url = valuesResource.url;
-        } else if (data) {
-          signals.runWithOwner(owner, () =>
-            signals.createEffect(data, (data) => {
-              series.setData(data);
-              ichart
-                ?.timeScale()
-                .setVisibleLogicalRange({ from: -1, to: data.length });
-            }),
-          );
-        }
-
-        (paneIndex ? legendBottom : legendTop).add({
-          series,
+        return addSeries({
           colors: [
             () => options?.topLineColor ?? colors.green(),
             () => options?.bottomLineColor ?? colors.red(),
           ],
+          iseries,
           name,
-          defaultActive,
-          url,
-        });
-
-        createPaneHeightObserver({
-          ichart,
-          paneIndex,
-          signals,
-          utils,
-        });
-
-        this.addPriceScaleSelectorIfNeeded({
+          order,
           paneIndex,
           seriesType: "Baseline",
-          id: `${id}-${paneIndex}`,
           unit,
-        });
-
-        series.setSeriesOrder(order);
-
-        return series;
-      },
-      /**
-       * @param {Object} args
-       * @param {Unit} args.unit
-       * @param {string} args.id
-       * @param {SeriesType} args.seriesType
-       * @param {number} args.paneIndex
-       */
-      addPriceScaleSelectorIfNeeded({ unit, paneIndex, id, seriesType }) {
-        id = `${id}-scale`;
-
-        this.addFieldsetIfNeeded({
-          id,
-          paneIndex,
-          position: "sw",
-          createChild({ owner, pane }) {
-            const { field, selected } = utils.dom.createHorizontalChoiceField({
-              choices: /** @type {const} */ (["lin", "log"]),
-              id: utils.stringToId(`${id} ${unit}`),
-              defaultValue:
-                unit === "USD" && seriesType !== "Baseline" ? "log" : "lin",
-              key: `${id}-price-scale-${paneIndex}`,
-              signals,
-            });
-
-            signals.runWithOwner(owner, () => {
-              signals.createEffect(selected, (selected) => {
-                try {
-                  pane.priceScale("right").applyOptions({
-                    mode: selected === "lin" ? 0 : 1,
-                  });
-                } catch {}
-              });
-            });
-
-            return field;
-          },
+          data,
+          defaultActive,
+          vecId,
         });
       },
-      /**
-       * @param {Object} args
-       * @param {string} args.id
-       * @param {number} args.paneIndex
-       * @param {"nw" | "ne" | "se" | "sw"} args.position
-       * @param {number} [args.timeout]
-       * @param {(args: {owner: Owner | null, pane: IPaneApi<Time>}) => HTMLElement} args.createChild
-       */
-      addFieldsetIfNeeded({ paneIndex, id, position, createChild }) {
-        const owner = signals.getOwner();
-        setTimeout(
-          () => {
-            const parent = ichart
-              ?.panes()
-              .at(paneIndex)
-              ?.getHTMLElement()
-              .children?.item(1)?.firstChild;
-
-            if (!parent) throw Error("Parent should exist");
-
-            if (
-              Array.from(parent.childNodes).filter(
-                (element) =>
-                  /** @type {HTMLElement} */ (element).dataset.position ===
-                  position,
-              ).length
-            ) {
-              return;
-            }
-
-            const fieldset = window.document.createElement("fieldset");
-            fieldset.dataset.size = "xs";
-            fieldset.dataset.position = position;
-            fieldset.id = `${id}-${paneIndex}`;
-            const pane = ichart?.panes().at(paneIndex);
-            if (!pane) throw Error("Expect pane");
-            pane
-              .getHTMLElement()
-              .children?.item(1)
-              ?.firstChild?.appendChild(fieldset);
-
-            fieldset.append(createChild({ owner, pane }));
-          },
-          paneIndex ? 50 : 0,
-        );
-      },
-      /**
-       *
-       * @param {Object} args
-       * @param {Owner | null} args.owner
-       */
-      reset({ owner: _owner }) {
-        owner = _owner;
-        ichart?.remove();
-        ichart = null;
-        timeScaleSet = false;
-        activeResources.length = 0;
-        legendTop.reset();
-        legendBottom.reset();
-      },
+      // /**
+      //  *
+      //  * @param {Object} args
+      //  * @param {Owner | null} args.owner
+      //  */
+      // reset({ owner: _owner }) {
+      //   owner = _owner;
+      //   timeScaleSet = false;
+      //   activeResources.length = 0;
+      //   legendTop.reset();
+      //   legendBottom.reset();
+      // },
     };
 
     config?.forEach(({ unit, blueprints }, paneIndex) => {
-      chart.create({ index: /** @satisfies {DateIndex} */ (0) });
-
       blueprints.forEach((blueprint, order) => {
         if (blueprint.type === "Candlestick") {
           chart.addCandlestickSeries({
@@ -742,57 +727,73 @@ export default import("./v5.0.7-treeshaked/script.js").then((lc) => {
 
 /**
  * @param {Object} args
- * @param {Element} args.parent
  * @param {Signals} args.signals
  * @param {number} args.paneIndex
  * @param {Utilities} args.utils
  */
-function createLegend({ parent, signals, utils, paneIndex }) {
-  const legendElement = window.document.createElement("legend");
-  parent.append(legendElement);
+function createLegend({ signals, utils, paneIndex }) {
+  const element = window.document.createElement("legend");
 
-  const hovered = signals.createSignal(
-    /** @type {ISeriesApi<SeriesType> | null} */ (null),
-  );
+  const hovered = signals.createSignal(/** @type {Series | null} */ (null));
+
+  /** @type {HTMLElement[]} */
+  const legends = [];
+
+  // /** @type {VoidFunction[]} */
+  // const disposes = [];
+
+  // /**
+  //  * @param {number} start
+  //  */
+  // function disposeFrom(start) {
+  //   disposes.splice(start).forEach((dispose) => dispose());
+  // }
+
+  // signals.onCleanup(() => disposeFrom(0));
 
   return {
+    element,
     /**
      * @param {Object} args
-     * @param {ISeriesApi<SeriesType>} args.series
+     * @param {Series} args.series
      * @param {string} args.name
+     * @param {number} args.order
      * @param {Color[]} args.colors
-     * @param {boolean} [args.defaultActive]
      * @param {string} [args.url]
      */
-    add({ series, name, colors, defaultActive, url }) {
+    addOrReplace({ series, name, colors, url, order }) {
+      // signals.createRoot((dispose) => {
+      //   disposes.at(order)?.();
+
+      //   if (disposes.length < order) {
+      //     throw Error("Unreachable");
+      //   }
+
+      //   disposes[order] = dispose;
+
       const div = window.document.createElement("div");
 
-      legendElement.append(div);
-
-      const nameId = `${utils.stringToId(name)}-${paneIndex}`;
-
-      const active = signals.createSignal(defaultActive ?? true, {
-        save: {
-          keyPrefix: "",
-          key: nameId,
-          ...utils.serde.boolean,
-        },
-      });
-
-      signals.createEffect(active, (active) => {
-        series.applyOptions({
-          visible: active,
-        });
-      });
+      const prev = legends[order];
+      if (prev) {
+        prev.replaceWith(div);
+      } else {
+        const elementAtOrder = Array.from(element.children).at(order);
+        if (elementAtOrder) {
+          elementAtOrder.before(div);
+        } else {
+          element.append(div);
+        }
+      }
+      legends[order] = div;
 
       const { input, label } = utils.dom.createLabeledInput({
-        inputId: utils.stringToId(`legend-${nameId}`),
-        inputName: utils.stringToId(`selected-${nameId}`),
+        inputId: utils.stringToId(`legend-${series.id}`),
+        inputName: utils.stringToId(`selected-${series.id}`),
         inputValue: "value",
         labelTitle: "Click to toggle",
-        inputChecked: active(),
+        inputChecked: series.active(),
         onClick: () => {
-          active.set(input.checked);
+          series.active.set(input.checked);
         },
         type: "checkbox",
       });
@@ -852,7 +853,7 @@ function createLegend({ parent, signals, utils, paneIndex }) {
       const initialColors = /** @type {Record<string, any>} */ ({});
       const darkenedColors = /** @type {Record<string, any>} */ ({});
 
-      const seriesOptions = series.options();
+      const seriesOptions = series.inner.options();
       if (!seriesOptions) return;
 
       Object.entries(seriesOptions).forEach(([k, v]) => {
@@ -868,9 +869,9 @@ function createLegend({ parent, signals, utils, paneIndex }) {
 
       signals.createEffect(shouldHighlight, (shouldHighlight) => {
         if (shouldHighlight) {
-          series.applyOptions(initialColors);
+          series.inner.applyOptions(initialColors);
         } else {
-          series.applyOptions(darkenedColors);
+          series.inner.applyOptions(darkenedColors);
         }
       });
 
@@ -882,11 +883,131 @@ function createLegend({ parent, signals, utils, paneIndex }) {
         anchor.title = "Click to view data";
         div.append(anchor);
       }
+      // });
     },
-    reset() {
-      legendElement.innerHTML = "";
+    /**
+     * @param {number} start
+     */
+    removeFrom(start) {
+      // disposeFrom(start);
+      legends.splice(start).forEach((child) => child.remove());
     },
   };
+}
+
+/**
+ * @param {Object} args
+ * @param {IChartApi} args.ichart
+ * @param {number} args.paneIndex
+ * @param {Signals} args.signals
+ * @param {Utilities} args.utils
+ */
+function createPaneHeightObserver({ ichart, paneIndex, signals, utils }) {
+  if (!paneIndex) return;
+
+  const owner = signals.getOwner();
+
+  const one = "1";
+
+  const callback = () =>
+    setTimeout(() => {
+      try {
+        const _element = ichart.panes().at(paneIndex)?.getHTMLElement();
+        if (!_element) return callback();
+        const element = _element;
+
+        if (element.dataset.observed === one) return;
+        element.dataset.observed = one;
+
+        signals.runWithOwner(owner, () => {
+          const height = signals.createSignal(null, {
+            save: {
+              keyPrefix: "charts",
+              key: `height-${paneIndex}`,
+              ...utils.serde.optNumber,
+            },
+          });
+
+          const savedHeight = height();
+          if (savedHeight !== null) {
+            ichart.panes().at(paneIndex)?.setHeight(savedHeight);
+          }
+
+          let firstRun = true;
+          new ResizeObserver(() => {
+            if (firstRun && savedHeight !== null) {
+              firstRun = false;
+            } else {
+              const h = ichart.panes().at(paneIndex)?.getHeight();
+              if (h === undefined) return;
+              height.set(h);
+            }
+          }).observe(element);
+        });
+      } catch {
+        callback();
+      }
+    }, 5);
+
+  callback();
+}
+
+/**
+ * @param {ISeriesApi<SeriesType>} series
+ * @param {DeepPartial<CreatePriceLine>} options
+ * @param {Colors} colors
+ */
+function createPriceLine(series, options, colors) {
+  series.createPriceLine({
+    price: options.value || 0,
+    color: colors.gray(),
+    axisLabelVisible: false,
+    lineWidth: 1,
+    lineStyle: 4,
+  });
+}
+
+/** @param {number} value  */
+function numberToShortUSFormat(value) {
+  const absoluteValue = Math.abs(value);
+
+  if (isNaN(value)) {
+    return "";
+  } else if (absoluteValue < 10) {
+    return numberToUSFormat(value, 3);
+  } else if (absoluteValue < 1_000) {
+    return numberToUSFormat(value, 2);
+  } else if (absoluteValue < 10_000) {
+    return numberToUSFormat(value, 1);
+  } else if (absoluteValue < 1_000_000) {
+    return numberToUSFormat(value, 0);
+  } else if (absoluteValue >= 900_000_000_000_000_000) {
+    return "Inf.";
+  }
+
+  const log = Math.floor(Math.log10(absoluteValue) - 6);
+
+  const suffices = ["M", "B", "T", "P", "E"];
+  const letterIndex = Math.floor(log / 3);
+  const letter = suffices[letterIndex];
+
+  return `${numberToUSFormat(
+    value / (1_000_000 * 1_000 ** letterIndex),
+    3,
+  )}${letter}`;
+}
+
+/**
+ * @param {number} value
+ * @param {number} [digits]
+ * @param {Intl.NumberFormatOptions} [options]
+ */
+function numberToUSFormat(value, digits, options) {
+  return value.toLocaleString("en-us", {
+    ...options,
+    minimumFractionDigits: digits,
+    maximumFractionDigits: digits,
+  });
 }
 
 function createOklchToRGBA() {
@@ -988,119 +1109,4 @@ function createOklchToRGBA() {
       return [...rgb, alpha];
     };
   }
-}
-
-/**
- * @param {Object} args
- * @param {IChartApi} args.ichart
- * @param {number} args.paneIndex
- * @param {Signals} args.signals
- * @param {Utilities} args.utils
- */
-function createPaneHeightObserver({ ichart, paneIndex, signals, utils }) {
-  if (!paneIndex) return;
-
-  const owner = signals.getOwner();
-
-  const one = "1";
-
-  const callback = () =>
-    setTimeout(() => {
-      try {
-        const _element = ichart?.panes().at(paneIndex)?.getHTMLElement();
-        if (!_element) return callback();
-        const element = _element;
-
-        if (element.dataset.observed === one) return;
-        element.dataset.observed = one;
-
-        signals.runWithOwner(owner, () => {
-          const height = signals.createSignal(null, {
-            save: {
-              keyPrefix: "charts",
-              key: `height-${paneIndex}`,
-              ...utils.serde.optNumber,
-            },
-          });
-
-          const savedHeight = height();
-          if (savedHeight !== null) {
-            ichart.panes().at(paneIndex)?.setHeight(savedHeight);
-          }
-
-          let firstRun = true;
-          new ResizeObserver(() => {
-            if (firstRun && savedHeight !== null) {
-              firstRun = false;
-            } else {
-              const h = ichart.panes().at(paneIndex)?.getHeight();
-              if (h === undefined) return;
-              height.set(h);
-            }
-          }).observe(element);
-        });
-      } catch {
-        callback();
-      }
-    }, 5);
-
-  callback();
-}
-
-/**
- * @param {ISeriesApi<SeriesType>} series
- * @param {DeepPartial<CreatePriceLine>} options
- * @param {Colors} colors
- */
-function createPriceLine(series, options, colors) {
-  series.createPriceLine({
-    price: options.value || 0,
-    color: colors.gray(),
-    axisLabelVisible: false,
-    lineWidth: 1,
-    lineStyle: 4,
-  });
-}
-
-/**
- * @param {number} value
- * @param {number} [digits]
- * @param {Intl.NumberFormatOptions} [options]
- */
-function numberToUSFormat(value, digits, options) {
-  return value.toLocaleString("en-us", {
-    ...options,
-    minimumFractionDigits: digits,
-    maximumFractionDigits: digits,
-  });
-}
-
-/** @param {number} value  */
-function numberToShortUSFormat(value) {
-  const absoluteValue = Math.abs(value);
-
-  if (isNaN(value)) {
-    return "";
-  } else if (absoluteValue < 10) {
-    return numberToUSFormat(value, 3);
-  } else if (absoluteValue < 1_000) {
-    return numberToUSFormat(value, 2);
-  } else if (absoluteValue < 10_000) {
-    return numberToUSFormat(value, 1);
-  } else if (absoluteValue < 1_000_000) {
-    return numberToUSFormat(value, 0);
-  } else if (absoluteValue >= 900_000_000_000_000_000) {
-    return "Inf.";
-  }
-
-  const log = Math.floor(Math.log10(absoluteValue) - 6);
-
-  const suffices = ["M", "B", "T", "P", "E"];
-  const letterIndex = Math.floor(log / 3);
-  const letter = suffices[letterIndex];
-
-  return `${numberToUSFormat(
-    value / (1_000_000 * 1_000 ** letterIndex),
-    3,
-  )}${letter}`;
 }
