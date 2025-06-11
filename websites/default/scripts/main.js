@@ -2250,50 +2250,46 @@ function main() {
           initSelected();
 
           function initFolders() {
-            function initTreeElement() {
+            // async function scrollToSelected() {
+            //   if (!options.selected()) throw "Selected should be set by now";
+            //   const selectedId = options.selected().id;
+
+            //   const path = options.selected().path;
+
+            //   let i = 0;
+            //   while (i !== path.length) {
+            //     try {
+            //       const id = path[i];
+            //       const details = /** @type {HTMLDetailsElement} */ (
+            //         utils.dom.getElementById(id)
+            //       );
+            //       details.open = true;
+            //       i++;
+            //     } catch {
+            //       await utils.next();
+            //     }
+            //   }
+
+            //   await utils.next();
+            //   await utils.next();
+
+            //   utils.dom
+            //     .getElementById(`${selectedId}-nav-selector`)
+            //     .scrollIntoView({
+            //       behavior: "instant",
+            //       block: "center",
+            //     });
+            // }
+
+            utils.dom.onFirstIntersection(elements.nav, () => {
               options.treeElement.set(() => {
                 const treeElement = window.document.createElement("div");
                 treeElement.classList.add("tree");
                 elements.nav.append(treeElement);
                 return treeElement;
               });
-            }
 
-            async function scrollToSelected() {
-              if (!options.selected()) throw "Selected should be set by now";
-              const selectedId = options.selected().id;
-
-              const path = options.selected().path;
-
-              let i = 0;
-              while (i !== path.length) {
-                try {
-                  const id = path[i];
-                  const details = /** @type {HTMLDetailsElement} */ (
-                    utils.dom.getElementById(id)
-                  );
-                  details.open = true;
-                  i++;
-                } catch {
-                  await utils.next();
-                }
-              }
-
-              await utils.next();
-              await utils.next();
-
-              utils.dom
-                .getElementById(`${selectedId}-nav-selector`)
-                .scrollIntoView({
-                  behavior: "instant",
-                  block: "center",
-                });
-            }
-
-            utils.dom.onFirstIntersection(elements.nav, () => {
-              console.log("nav: init");
-              initTreeElement();
-              scrollToSelected();
+              // setTimeout(scrollToSelected, 10);
             });
           }
           initFolders();
