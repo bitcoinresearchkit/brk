@@ -28,10 +28,36 @@ export function init({
   elements.charts.append(utils.dom.createShadow("left"));
   elements.charts.append(utils.dom.createShadow("right"));
 
-  const { headerElement, headingElement } = utils.dom.createHeader({});
+  const { headerElement, headingElement } = utils.dom.createHeader();
   elements.charts.append(headerElement);
 
+  const { index, fieldset } = createIndexSelector({ signals, utils });
+
+  const TIMERANGE_LS_KEY = signals.createMemo(
+    () => `chart-timerange-${index()}`,
+  );
+
+  let firstRun = true;
+
+  const from = signals.createSignal(/** @type {number | null} */ (null), {
+    save: {
+      ...utils.serde.optNumber,
+      keyPrefix: TIMERANGE_LS_KEY,
+      key: "from",
+      serializeParam: firstRun,
+    },
+  });
+  const to = signals.createSignal(/** @type {number | null} */ (null), {
+    save: {
+      ...utils.serde.optNumber,
+      keyPrefix: TIMERANGE_LS_KEY,
+      key: "to",
+      serializeParam: firstRun,
+    },
+  });
+
   const chart = lightweightCharts.createChartElement({
+    owner: signals.getOwner(),
     parent: elements.charts,
     signals,
     colors,
@@ -39,18 +65,42 @@ export function init({
     utils,
     vecsResources,
     elements,
+    index,
+    timeScaleSetCallback: (unknownTimeScaleCallback) => {
+      const from_ = from();
+      const to_ = to();
+      if (from_ !== null && to_ !== null) {
+        chart.inner.timeScale().setVisibleLogicalRange({
+          from: from_,
+          to: to_,
+        });
+      } else {
+        unknownTimeScaleCallback();
+      }
+    },
   });
 
-  const index = createIndexSelector({ elements, signals, utils });
+  chart.inner.timeScale().subscribeVisibleLogicalRangeChange(
+    utils.debounce((t) => {
+      if (t) {
+        from.set(t.from);
+        to.set(t.to);
+      }
+    }),
+  );
 
-  let firstRun = true;
+  elements.charts.append(fieldset);
 
   const { field: seriesTypeField, selected: topSeriesType } =
     utils.dom.createHorizontalChoiceField({
       defaultValue: "Line",
       keyPrefix,
       key: "seriestype-0",
-      choices: /** @type {const} */ (["Auto", "Candles", "Line"]),
+      choices: /** @type {const} */ ([
+        // "Auto",
+        "Candles",
+        "Line",
+      ]),
       signals,
     });
 
@@ -67,6 +117,18 @@ export function init({
       sorted: true,
     });
 
+  chart.addFieldsetIfNeeded({
+    id: "charts-unit-0",
+    paneIndex: 0,
+    position: "nw",
+    createChild() {
+      return topUnitField;
+    },
+  });
+
+  const seriesListTop = /** @type {Series[]} */ ([]);
+  const seriesListBottom = /** @type {Series[]} */ ([]);
+
   signals.createEffect(selected, (option) => {
     headingElement.innerHTML = option.title;
 
@@ -82,18 +144,6 @@ export function init({
         signals,
         sorted: true,
       });
-
-    // signals.createEffect(bottomUnit, (bottomUnit) => {
-    chart.reset({ owner: signals.getOwner() });
-
-    chart.addFieldsetIfNeeded({
-      id: "charts-unit-0",
-      paneIndex: 0,
-      position: "nw",
-      createChild() {
-        return topUnitField;
-      },
-    });
 
     if (bottomUnits.length) {
       chart.addFieldsetIfNeeded({
@@ -116,64 +166,25 @@ export function init({
     });
 
     signals.createEffect(index, (index) => {
-      const TIMERANGE_LS_KEY = `chart-timerange-${index}`;
-
-      const from = signals.createSignal(/** @type {number | null} */ (null), {
-        save: {
-          ...utils.serde.optNumber,
-          keyPrefix: TIMERANGE_LS_KEY,
-          key: "from",
-          serializeParam: firstRun,
-        },
-      });
-      const to = signals.createSignal(/** @type {number | null} */ (null), {
-        save: {
-          ...utils.serde.optNumber,
-          keyPrefix: TIMERANGE_LS_KEY,
-          key: "to",
-          serializeParam: firstRun,
-        },
-      });
-
-      chart.create({
-        index,
-        timeScaleSetCallback: (unknownTimeScaleCallback) => {
-          const from_ = from();
-          const to_ = to();
-          if (from_ !== null && to_ !== null) {
-            chart.inner()?.timeScale().setVisibleLogicalRange({
-              from: from_,
-              to: to_,
-            });
-          } else {
-            unknownTimeScaleCallback();
-          }
-        },
-      });
-
-      /** @type {ISeriesApi<any> | null} */
-      let prevPriceSeries = null;
       signals.createEffect(
         () => [topUnit(), topSeriesType()],
         ([topUnit, topSeriesType]) => {
-          if (prevPriceSeries) {
-            chart.inner()?.removeSeries(prevPriceSeries);
-          }
-
           switch (topUnit) {
             case "USD": {
               switch (topSeriesType) {
                 case "Candles": {
-                  prevPriceSeries = chart.addCandlestickSeries({
+                  const series = chart.addCandlestickSeries({
                     vecId: "ohlc",
                     name: "Price",
                     unit: topUnit,
                     order: 0,
                   });
+                  seriesListTop[0]?.remove();
+                  seriesListTop[0] = series;
                   break;
                 }
                 case "Line": {
-                  prevPriceSeries = chart.addLineSeries({
+                  const series = chart.addLineSeries({
                     vecId: "close",
                     name: "Price",
                     unit: topUnit,
@@ -183,6 +194,8 @@ export function init({
                     },
                     order: 0,
                   });
+                  seriesListTop[0]?.remove();
+                  seriesListTop[0] = series;
                 }
               }
               // signals.createEffect(webSockets.kraken1dCandle.latest, (latest) => {
@@ -198,17 +211,19 @@ export function init({
             case "Sats": {
               switch (topSeriesType) {
                 case "Candles": {
-                  prevPriceSeries = chart.addCandlestickSeries({
+                  const series = chart.addCandlestickSeries({
                     vecId: "ohlc-in-sats",
                     name: "Price",
                     unit: topUnit,
                     inverse: true,
                     order: 0,
                   });
+                  seriesListTop[0]?.remove();
+                  seriesListTop[0] = series;
                   break;
                 }
                 case "Line": {
-                  prevPriceSeries = chart.addLineSeries({
+                  const series = chart.addLineSeries({
                     vecId: "close-in-sats",
                     name: "Price",
                     unit: topUnit,
@@ -218,6 +233,8 @@ export function init({
                     },
                     order: 0,
                   });
+                  seriesListTop[0]?.remove();
+                  seriesListTop[0] = series;
                 }
               }
               break;
@@ -231,97 +248,97 @@ export function init({
           blueprints: option.top,
           paneIndex: 0,
           unit: topUnit,
-          prevSeriesList: /** @type {ISeriesApi<any>[]} */ ([]),
+          seriesList: seriesListTop,
+          orderStart: 1,
+          legend: chart.legendTop,
         },
         {
           blueprints: option.bottom,
           paneIndex: 1,
           unit: bottomUnit,
-          prevSeriesList: /** @type {ISeriesApi<any>[]} */ ([]),
+          seriesList: seriesListBottom,
+          orderStart: 0,
+          legend: chart.legendBottom,
         },
-      ].forEach(({ blueprints, paneIndex, unit, prevSeriesList }) => {
-        signals.createEffect(unit, (unit) => {
-          prevSeriesList.splice(0).forEach((series) => {
-            chart.inner()?.removeSeries(series);
-          });
+      ].forEach(
+        ({
+          blueprints,
+          paneIndex,
+          unit,
+          seriesList: seriesList,
+          orderStart,
+          legend,
+        }) => {
+          signals.createEffect(unit, (unit) => {
+            legend.removeFrom(orderStart);
 
-          blueprints[unit]?.forEach((blueprint, order) => {
-            order++;
+            seriesList.splice(orderStart).forEach((series) => {
+              series.remove();
+            });
 
-            const indexes = /** @type {readonly number[]} */ (
-              vecIdToIndexes[blueprint.key]
-            );
+            blueprints[unit]?.forEach((blueprint, order) => {
+              order += orderStart;
 
-            if (indexes.includes(index)) {
-              switch (blueprint.type) {
-                case "Baseline": {
-                  prevSeriesList.push(
-                    chart.addBaselineSeries({
-                      vecId: blueprint.key,
-                      // color: blueprint.color,
-                      name: blueprint.title,
-                      unit,
-                      defaultActive: blueprint.defaultActive,
-                      paneIndex,
-                      options: {
-                        ...blueprint.options,
-                        topLineColor:
-                          blueprint.color?.() ?? blueprint.colors?.[0](),
-                        bottomLineColor:
-                          blueprint.color?.() ?? blueprint.colors?.[1](),
-                      },
-                      order,
-                    }),
-                  );
-                  break;
+              const indexes = /** @type {readonly number[]} */ (
+                vecIdToIndexes[blueprint.key]
+              );
+
+              if (indexes.includes(index)) {
+                switch (blueprint.type) {
+                  case "Baseline": {
+                    seriesList.push(
+                      chart.addBaselineSeries({
+                        vecId: blueprint.key,
+                        name: blueprint.title,
+                        unit,
+                        defaultActive: blueprint.defaultActive,
+                        paneIndex,
+                        options: {
+                          ...blueprint.options,
+                          topLineColor:
+                            blueprint.color?.() ?? blueprint.colors?.[0](),
+                          bottomLineColor:
+                            blueprint.color?.() ?? blueprint.colors?.[1](),
+                        },
+                        order,
+                      }),
+                    );
+                    break;
+                  }
+                  case "Candlestick": {
+                    throw Error("TODO");
+                  }
+                  default:
+                    seriesList.push(
+                      chart.addLineSeries({
+                        vecId: blueprint.key,
+                        color: blueprint.color,
+                        name: blueprint.title,
+                        unit,
+                        defaultActive: blueprint.defaultActive,
+                        paneIndex,
+                        options: blueprint.options,
+                        order,
+                      }),
+                    );
                 }
-                case "Candlestick": {
-                  throw Error("TODO");
-                  break;
-                }
-                default:
-                  prevSeriesList.push(
-                    chart.addLineSeries({
-                      vecId: blueprint.key,
-                      color: blueprint.color,
-                      name: blueprint.title,
-                      unit,
-                      defaultActive: blueprint.defaultActive,
-                      paneIndex,
-                      options: blueprint.options,
-                      order,
-                    }),
-                  );
               }
-            }
+            });
           });
-        });
+        },
+      );
 
-        chart
-          .inner()
-          ?.timeScale()
-          .subscribeVisibleLogicalRangeChange(
-            utils.debounce((t) => {
-              if (t) {
-                from.set(t.from);
-                to.set(t.to);
-              }
-            }),
-          );
-
-        firstRun = false;
-      });
+      firstRun = false;
     });
   });
 }
 
 /**
  * @param {Object} args
- * @param {Elements} args.elements
  * @param {Signals} args.signals
  * @param {Utilities} args.utils
  */
-function createIndexSelector({ elements, signals, utils }) {
+function createIndexSelector({ signals, utils }) {
   const { field, selected } = utils.dom.createHorizontalChoiceField({
     defaultValue: "date",
     keyPrefix,
@@ -344,7 +361,6 @@ function createIndexSelector({ elements, signals, utils }) {
   const fieldset = window.document.createElement("fieldset");
   fieldset.append(field);
   fieldset.dataset.size = "sm";
-  elements.charts.append(fieldset);
 
   const index = signals.createMemo(
     /** @returns {ChartableIndex} */ () => {
@@ -367,5 +383,5 @@ function createIndexSelector({ elements, signals, utils }) {
     },
   );
 
-  return index;
+  return { fieldset, index };
 }

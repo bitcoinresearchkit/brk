@@ -73,7 +73,7 @@ A list of all possible vec ids and their supported vec indexes
 
 A list of all possible vec indexes and their supported vec ids
 
-#### `GET /api/{INDEX}-to-{VALUE}`
+#### `GET /api/{INDEX}-to-{ID}`
 
 This endpoint retrieves data based on the specified vector index and id.
 

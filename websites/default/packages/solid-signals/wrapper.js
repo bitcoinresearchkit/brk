@@ -7,6 +7,8 @@
  * @import { Signal } from "./types";
  */
 
+let effectCount = 0;
+
 const importSignals = import("./v0.3.2-treeshaked/script.js").then(
   (_signals) => {
     const signals = {
@@ -20,16 +22,26 @@ const importSignals = import("./v0.3.2-treeshaked/script.js").then(
         // @ts-ignore
         (compute, effect) => {
           let dispose = /** @type {VoidFunction | null} */ (null);
+
+          function cleanup() {
+            if (dispose) {
+              dispose();
+              dispose = null;
+              console.log("effectCount = ", --effectCount);
+            }
+          }
+
           // @ts-ignore
           _signals.createEffect(compute, (v, oldV) => {
-            dispose?.();
+            console.log("effectCount = ", ++effectCount);
+            cleanup();
             signals.createRoot((_dispose) => {
               dispose = _dispose;
               return effect(v, oldV);
             });
-            signals.onCleanup(() => dispose?.());
+            signals.onCleanup(cleanup);
           });
-          signals.onCleanup(() => dispose?.());
+          signals.onCleanup(cleanup);
         }
       ),
       createMemo: /** @type {typeof CreateMemo} */ (_signals.createMemo),
