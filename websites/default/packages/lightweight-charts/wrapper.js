@@ -45,7 +45,7 @@ export default import("./v5.0.7-treeshaked/script.js").then((lc) => {
    * @param {Accessor<Index>} args.index
    * @param {((unknownTimeScaleCallback: VoidFunction) => void)} [args.timeScaleSetCallback]
    * @param {Owner | null} args.owner
-   * @param {true} [args.fitContentOnResize]
+   * @param {true} [args.fitContent]
    * @param {{unit: Unit; blueprints: AnySeriesBlueprint[]}[]} [args.config]
    */
   function createChartElement({
@@ -54,16 +54,14 @@ export default import("./v5.0.7-treeshaked/script.js").then((lc) => {
     colors,
     utils,
     elements,
-    id,
+    id: chartId,
     index,
     vecsResources,
     timeScaleSetCallback,
     owner: _owner,
-    fitContentOnResize,
+    fitContent,
     config,
   }) {
-    const owner = _owner || signals.getOwner();
-
     const div = window.document.createElement("div");
     div.classList.add("chart");
     parent.append(div);
@@ -71,7 +69,6 @@ export default import("./v5.0.7-treeshaked/script.js").then((lc) => {
     const legendTop = createLegend({
       utils,
       signals,
-      paneIndex: 0,
     });
     div.append(legendTop.element);
 
@@ -82,7 +79,6 @@ export default import("./v5.0.7-treeshaked/script.js").then((lc) => {
     const legendBottom = createLegend({
       utils,
       signals,
-      paneIndex: 1,
     });
     div.append(legendBottom.element);
 
@@ -107,6 +103,11 @@ export default import("./v5.0.7-treeshaked/script.js").then((lc) => {
         },
         timeScale: {
           borderVisible: false,
+          ...(fitContent
+            ? {
+                minBarSpacing: 0.001,
+              }
+            : {}),
         },
         localization: {
           priceFormatter: numberToShortUSFormat,
@@ -115,13 +116,10 @@ export default import("./v5.0.7-treeshaked/script.js").then((lc) => {
         crosshair: {
           mode: 3,
         },
-        ...(fitContentOnResize
+        ...(fitContent
           ? {
-              handleScroll: false,
               handleScale: false,
-              timeScale: {
-                minBarSpacing: 0.001,
-              },
+              handleScroll: false,
             }
           : {}),
         // ..._options,
@@ -160,7 +158,11 @@ export default import("./v5.0.7-treeshaked/script.js").then((lc) => {
       },
     );
 
+    let timeScaleSet = false;
+
     signals.createEffect(index, (index) => {
+      timeScaleSet = false;
+
       ichart.applyOptions({
         timeScale: {
           timeVisible:
@@ -169,7 +171,7 @@ export default import("./v5.0.7-treeshaked/script.js").then((lc) => {
             index === /** @satisfies {HalvingEpoch} */ (4),
         },
       });
-      if (!fitContentOnResize) {
+      if (!fitContent) {
         ichart.applyOptions({
           timeScale: {
             minBarSpacing:
@@ -196,19 +198,7 @@ export default import("./v5.0.7-treeshaked/script.js").then((lc) => {
       }),
     );
 
-    const timeResource = signals.createMemo(() => {
-      const i = index();
-      const timeResource = vecsResources.getOrCreate(
-        i,
-        i === /** @satisfies {Height} */ (5) ? "timestamp-fixed" : "timestamp",
-      );
-      timeResource.fetch();
-      return timeResource;
-    });
-
-    let timeScaleSet = false;
-
-    if (fitContentOnResize) {
+    if (fitContent) {
       new ResizeObserver(() => ichart.timeScale().fitContent()).observe(
         chartDiv,
       );
@@ -220,43 +210,47 @@ export default import("./v5.0.7-treeshaked/script.js").then((lc) => {
      * @param {number} args.paneIndex
      * @param {"nw" | "ne" | "se" | "sw"} args.position
      * @param {number} [args.timeout]
-     * @param {(args: {owner: Owner | null, pane: IPaneApi<Time>}) => HTMLElement} args.createChild
+     * @param {(pane: IPaneApi<Time>) => HTMLElement} args.createChild
      */
     function addFieldsetIfNeeded({ paneIndex, id, position, createChild }) {
       const owner = signals.getOwner();
+
       setTimeout(
-        () => {
-          const parent = ichart
-            ?.panes()
-            .at(paneIndex)
-            ?.getHTMLElement()
-            .children?.item(1)?.firstChild;
+        () =>
+          signals.runWithOwner(owner, () => {
+            const parent = ichart
+              ?.panes()
+              .at(paneIndex)
+              ?.getHTMLElement()
+              .children?.item(1)?.firstChild;
 
-          if (!parent) throw Error("Parent should exist");
+            if (!parent) throw Error("Parent should exist");
 
-          if (
-            Array.from(parent.childNodes).filter(
+            const children = Array.from(parent.childNodes).filter(
               (element) =>
                 /** @type {HTMLElement} */ (element).dataset.position ===
                 position,
-            ).length
-          ) {
-            return;
-          }
+            );
 
-          const fieldset = window.document.createElement("fieldset");
-          fieldset.dataset.size = "xs";
-          fieldset.dataset.position = position;
-          fieldset.id = `${id}-${paneIndex}`;
-          const pane = ichart.panes().at(paneIndex);
-          if (!pane) throw Error("Expect pane");
-          pane
-            .getHTMLElement()
-            .children?.item(1)
-            ?.firstChild?.appendChild(fieldset);
+            if (children.length === 1) {
+              children[0].remove();
+            } else if (children.length > 1) {
+              throw Error("Unreacable");
+            }
 
-          fieldset.append(createChild({ owner, pane }));
-        },
+            const fieldset = window.document.createElement("fieldset");
+            fieldset.dataset.size = "xs";
+            fieldset.dataset.position = position;
+            fieldset.id = `${id}-${paneIndex}`;
+            const pane = ichart.panes().at(paneIndex);
+            if (!pane) throw Error("Expect pane");
+            pane
+              .getHTMLElement()
+              .children?.item(1)
+              ?.firstChild?.appendChild(fieldset);
+
+            fieldset.append(createChild(pane));
+          }),
         paneIndex ? 50 : 0,
       );
     }
@@ -264,40 +258,32 @@ export default import("./v5.0.7-treeshaked/script.js").then((lc) => {
     /**
      * @param {Object} args
      * @param {Unit} args.unit
-     * @param {string} args.id
      * @param {SeriesType} args.seriesType
      * @param {number} args.paneIndex
      */
-    function addPriceScaleSelectorIfNeeded({
-      unit,
-      paneIndex,
-      id,
-      seriesType,
-    }) {
-      id = `${id}-scale`;
+    function addPriceScaleSelectorIfNeeded({ unit, paneIndex, seriesType }) {
+      const id = `${chartId}-scale`;
 
       addFieldsetIfNeeded({
         id,
         paneIndex,
         position: "sw",
-        createChild({ owner, pane }) {
+        createChild(pane) {
           const { field, selected } = utils.dom.createHorizontalChoiceField({
             choices: /** @type {const} */ (["lin", "log"]),
-            id: utils.stringToId(`${id} ${unit}`),
+            id: utils.stringToId(`${id} ${paneIndex} ${unit}`),
             defaultValue:
               unit === "USD" && seriesType !== "Baseline" ? "log" : "lin",
             key: `${id}-price-scale-${paneIndex}`,
             signals,
           });
 
-          signals.runWithOwner(owner, () => {
-            signals.createEffect(selected, (selected) => {
-              try {
-                pane.priceScale("right").applyOptions({
-                  mode: selected === "lin" ? 0 : 1,
-                });
-              } catch {}
-            });
+          signals.createEffect(selected, (selected) => {
+            try {
+              pane.priceScale("right").applyOptions({
+                mode: selected === "lin" ? 0 : 1,
+              });
+            } catch {}
           });
 
           return field;
@@ -352,6 +338,9 @@ export default import("./v5.0.7-treeshaked/script.js").then((lc) => {
 
         iseries.setSeriesOrder(order);
 
+        /** @type {VecResource | undefined} */
+        let _valuesResource;
+
         /** @type {Series} */
         const series = {
           inner: iseries,
@@ -360,12 +349,25 @@ export default import("./v5.0.7-treeshaked/script.js").then((lc) => {
           remove() {
             dispose();
             chart.inner.removeSeries(iseries);
+            if (_valuesResource) {
+              activeResources.delete(_valuesResource);
+            }
           },
         };
 
         if (vecId) {
           signals.createEffect(index, (index) => {
+            const timeResource = vecsResources.getOrCreate(
+              index,
+              index === /** @satisfies {Height} */ (5)
+                ? "timestamp-fixed"
+                : "timestamp",
+            );
+            timeResource.fetch();
+
             const valuesResource = vecsResources.getOrCreate(index, vecId);
+            _valuesResource = valuesResource;
+
             url = valuesResource.url;
             signals.createEffect(active, (active) => {
               if (active) {
@@ -375,25 +377,29 @@ export default import("./v5.0.7-treeshaked/script.js").then((lc) => {
                 const fetchedKey = vecsResources.defaultFetchedKey;
                 signals.createEffect(
                   () => [
-                    timeResource().fetched[fetchedKey].vec(),
+                    timeResource.fetched[fetchedKey].vec(),
                     valuesResource.fetched[fetchedKey].vec(),
                   ],
                   ([indexes, _ohlcs]) => {
                     if (!indexes || !_ohlcs) return;
+
+                    const seriesData = series.inner.data();
+                    // const set = seriesData.length === 0;
+
                     const ohlcs = /** @type {OHLCTuple[]} */ (_ohlcs);
                     let length = Math.min(indexes.length, ohlcs.length);
                     const data = new Array(length);
                     let prevTime = null;
-                    let offset = 0;
+                    let timeOffset = 0;
 
                     for (let i = 0; i < length; i++) {
                       const time = indexes[i];
                       const sameTime = prevTime === time;
                       if (sameTime) {
-                        offset += 1;
+                        timeOffset += 1;
                       }
                       const v = ohlcs[i];
-                      const offsetedI = i - offset;
+                      const offsetedI = i - timeOffset;
                       if (v === null) {
                         data[offsetedI] = {
                           time,
@@ -425,8 +431,21 @@ export default import("./v5.0.7-treeshaked/script.js").then((lc) => {
                       prevTime = time;
                     }
 
-                    data.length -= offset;
-                    series.inner.setData(data);
+                    data.length -= timeOffset;
+
+                    // if (set) {
+                    iseries.setData(data);
+
+                    if (fitContent) {
+                      ichart.timeScale().fitContent();
+                    }
+                    // } else {
+                    // let seriesDataOffset = 0;
+                    // while seriesData
+                    //   data.forEach((bar) => {
+                    //     iseries.update(bar, true);
+                    //   });
+                    // }
 
                     timeScaleSetCallback?.(() => {
                       if (
@@ -452,6 +471,10 @@ export default import("./v5.0.7-treeshaked/script.js").then((lc) => {
         } else if (data) {
           signals.createEffect(data, (data) => {
             iseries.setData(data);
+
+            if (fitContent) {
+              ichart.timeScale().fitContent();
+            }
           });
         }
 
@@ -473,7 +496,6 @@ export default import("./v5.0.7-treeshaked/script.js").then((lc) => {
         addPriceScaleSelectorIfNeeded({
           paneIndex,
           seriesType,
-          id,
           unit,
         });
 
@@ -505,15 +527,11 @@ export default import("./v5.0.7-treeshaked/script.js").then((lc) => {
         name,
         unit,
         order,
-        paneIndex: _paneIndex,
+        paneIndex = 0,
         defaultActive,
         data,
         inverse,
       }) {
-        const paneIndex = _paneIndex ?? 0;
-
-        if (!timeResource) throw Error("Chart not fully set");
-
         const green = inverse ? colors.red : colors.green;
         const red = inverse ? colors.green : colors.red;
         const iseries = ichart.addSeries(
@@ -560,15 +578,11 @@ export default import("./v5.0.7-treeshaked/script.js").then((lc) => {
         unit,
         order,
         color,
-        paneIndex: _paneIndex,
+        paneIndex = 0,
         defaultActive,
         data,
         options,
       }) {
-        if (!ichart || !timeResource) throw Error("Chart not fully set");
-
-        const paneIndex = _paneIndex ?? 0;
-
         color ||= unit === "USD" ? colors.green : colors.orange;
 
         const iseries = ichart.addSeries(
@@ -622,8 +636,6 @@ export default import("./v5.0.7-treeshaked/script.js").then((lc) => {
         data,
         options,
       }) {
-        if (!ichart || !timeResource) throw Error("Chart not fully set");
-
         const paneIndex = _paneIndex ?? 0;
 
         const iseries = ichart.addSeries(
@@ -668,18 +680,6 @@ export default import("./v5.0.7-treeshaked/script.js").then((lc) => {
           vecId,
         });
       },
-      // /**
-      //  *
-      //  * @param {Object} args
-      //  * @param {Owner | null} args.owner
-      //  */
-      // reset({ owner: _owner }) {
-      //   owner = _owner;
-      //   timeScaleSet = false;
-      //   activeResources.length = 0;
-      //   legendTop.reset();
-      //   legendBottom.reset();
-      // },
     };
 
     config?.forEach(({ unit, blueprints }, paneIndex) => {
@@ -728,28 +728,15 @@ export default import("./v5.0.7-treeshaked/script.js").then((lc) => {
 /**
  * @param {Object} args
  * @param {Signals} args.signals
- * @param {number} args.paneIndex
  * @param {Utilities} args.utils
  */
-function createLegend({ signals, utils, paneIndex }) {
+function createLegend({ signals, utils }) {
   const element = window.document.createElement("legend");
 
   const hovered = signals.createSignal(/** @type {Series | null} */ (null));
 
   /** @type {HTMLElement[]} */
   const legends = [];
-
-  // /** @type {VoidFunction[]} */
-  // const disposes = [];
-
-  // /**
-  //  * @param {number} start
-  //  */
-  // function disposeFrom(start) {
-  //   disposes.splice(start).forEach((dispose) => dispose());
-  // }
-
-  // signals.onCleanup(() => disposeFrom(0));
 
   return {
     element,
@@ -762,15 +749,6 @@ function createLegend({ signals, utils, paneIndex }) {
      * @param {string} [args.url]
      */
     addOrReplace({ series, name, colors, url, order }) {
-      // signals.createRoot((dispose) => {
-      //   disposes.at(order)?.();
-
-      //   if (disposes.length < order) {
-      //     throw Error("Unreachable");
-      //   }
-
-      //   disposes[order] = dispose;
-
       const div = window.document.createElement("div");
 
       const prev = legends[order];
@@ -883,7 +861,6 @@ function createLegend({ signals, utils, paneIndex }) {
         anchor.title = "Click to view data";
         div.append(anchor);
       }
-      // });
     },
     /**
      * @param {number} start
@@ -991,10 +968,29 @@ function numberToShortUSFormat(value) {
   const letterIndex = Math.floor(log / 3);
   const letter = suffices[letterIndex];
 
-  return `${numberToUSFormat(
-    value / (1_000_000 * 1_000 ** letterIndex),
-    3,
-  )}${letter}`;
+  const modulused = log % 3;
+
+  // return `${numberToUSFormat(
+  //   value / (1_000_000 * 1_000 ** letterIndex),
+  //   3,
+  // )}${letter}`;
+
+  if (modulused === 0) {
+    return `${numberToUSFormat(
+      value / (1_000_000 * 1_000 ** letterIndex),
+      3,
+    )}${letter}`;
+  } else if (modulused === 1) {
+    return `${numberToUSFormat(
+      value / (1_000_000 * 1_000 ** letterIndex),
+      2,
+    )}${letter}`;
+  } else {
+    return `${numberToUSFormat(
+      value / (1_000_000 * 1_000 ** letterIndex),
+      1,
+    )}${letter}`;
+  }
 }
 
 /**

@@ -1261,7 +1261,7 @@ function createUtils() {
         cache = await caches.open(CACHE_NAME);
         const cachedResponse = await cache.match(url);
         if (cachedResponse) {
-          console.log(`cache: ${url}`);
+          console.debug(`cache: ${url}`);
           const json = /** @type {T} */ await cachedResponse.json();
           cachedJson = json;
           callback(json);
@@ -1298,7 +1298,7 @@ function createUtils() {
 
         if (!fetchedJson) return cachedJson;
 
-        console.log(`fetch: ${url}`);
+        console.debug(`fetch: ${url}`);
 
         if (Array.isArray(cachedJson) && Array.isArray(fetchedJson)) {
           const previousLength = cachedJson?.length || 0;
@@ -2005,559 +2005,578 @@ function main() {
 
   packages.signals().then((signals) =>
     vecidToIndexesPromise.then(({ createVecIdToIndexes, VERSION }) =>
-      optionsPromise.then(async ({ initOptions }) => {
-        console.log(`VERSION = ${VERSION}`);
+      optionsPromise.then(async ({ initOptions }) =>
+        signals.createRoot(() => {
+          const owner = signals.getOwner();
 
-        const vecIdToIndexes = createVecIdToIndexes();
+          console.log(`VERSION = ${VERSION}`);
 
-        if (env.localhost) {
-          Object.keys(vecIdToIndexes).forEach((id) => {
-            utils.vecidToUnit(/** @type {VecId} */ (id));
-          });
-        }
+          const vecIdToIndexes = createVecIdToIndexes();
 
-        function initDark() {
-          const preferredColorSchemeMatchMedia = window.matchMedia(
-            "(prefers-color-scheme: dark)",
-          );
-          const dark = signals.createSignal(
-            preferredColorSchemeMatchMedia.matches,
-          );
-          preferredColorSchemeMatchMedia.addEventListener(
-            "change",
-            ({ matches }) => {
-              dark.set(matches);
-            },
-          );
-          return dark;
-        }
-        const dark = initDark();
-
-        const qrcode = signals.createSignal(
-          /** @type {string | null} */ (null),
-        );
-
-        function createLastHeightResource() {
-          const lastHeight = signals.createSignal(0);
-          function fetchLastHeight() {
-            utils.api.fetchLast(
-              (h) => {
-                lastHeight.set(h);
-              },
-              /** @satisfies {Height} */ (5),
-              "height",
-            );
+          if (env.localhost) {
+            Object.keys(vecIdToIndexes).forEach((id) => {
+              utils.vecidToUnit(/** @type {VecId} */ (id));
+            });
           }
-          fetchLastHeight();
-          setInterval(fetchLastHeight, 10_000);
-          return lastHeight;
-        }
-        const lastHeight = createLastHeightResource();
 
-        const webSockets = initWebSockets(signals, utils);
-
-        const vecsResources = createVecsResources(signals, utils);
-
-        const colors = createColors(dark, elements);
-
-        const options = initOptions({
-          colors,
-          env,
-          signals,
-          utils,
-          webSockets,
-          qrcode,
-        });
-
-        // const urlSelected = utils.url.pathnameToSelectedId();
-        // function createWindowPopStateEvent() {
-        //   window.addEventListener("popstate", (event) => {
-        //     const urlSelected = utils.url.pathnameToSelectedId();
-        //     const option = options.list.find((option) => urlSelected === option.id);
-        //     if (option) {
-        //       options.selected.set(option);
-        //     }
-        //   });
-        // }
-        // createWindowPopStateEvent();
-
-        function initSelected() {
-          function initSelectedFrame() {
-            console.log("selected: init");
-
-            const chartOption = signals.createSignal(
-              /** @type {ChartOption | null} */ (null),
+          function initDark() {
+            const preferredColorSchemeMatchMedia = window.matchMedia(
+              "(prefers-color-scheme: dark)",
             );
-            const simOption = signals.createSignal(
-              /** @type {SimulationOption | null} */ (null),
+            const dark = signals.createSignal(
+              preferredColorSchemeMatchMedia.matches,
             );
-
-            const owner = signals.getOwner();
-
-            let previousElement = /** @type {HTMLElement | undefined} */ (
-              undefined
+            preferredColorSchemeMatchMedia.addEventListener(
+              "change",
+              ({ matches }) => {
+                dark.set(matches);
+              },
             );
-            let firstTimeLoadingChart = true;
-            let firstTimeLoadingTable = true;
-            let firstTimeLoadingSimulation = true;
+            return dark;
+          }
+          const dark = initDark();
 
-            signals.createEffect(options.selected, (option) => {
-              if (previousElement) {
-                previousElement.hidden = true;
-                utils.url.resetParams(option);
-                utils.url.pushHistory(option.id);
-              } else {
-                utils.url.replaceHistory({ pathname: option.id });
-              }
+          const qrcode = signals.createSignal(
+            /** @type {string | null} */ (null),
+          );
 
-              /** @type {HTMLElement} */
-              let element;
+          function createLastHeightResource() {
+            const lastHeight = signals.createSignal(0);
+            function fetchLastHeight() {
+              utils.api.fetchLast(
+                (h) => {
+                  lastHeight.set(h);
+                },
+                /** @satisfies {Height} */ (5),
+                "height",
+              );
+            }
+            fetchLastHeight();
+            setInterval(fetchLastHeight, 10_000);
+            return lastHeight;
+          }
+          const lastHeight = createLastHeightResource();
 
-              switch (option.kind) {
-                case "chart": {
-                  element = elements.charts;
+          const webSockets = initWebSockets(signals, utils);
 
-                  chartOption.set(option);
+          const vecsResources = createVecsResources(signals, utils);
 
-                  if (firstTimeLoadingChart) {
-                    const lightweightCharts = packages.lightweightCharts();
-                    const chartScript = import("./chart.js");
-                    utils.dom.importStyleAndThen("/styles/chart.css", () =>
-                      chartScript.then(({ init: initChartsElement }) =>
-                        lightweightCharts.then((lightweightCharts) =>
-                          signals.runWithOwner(owner, () =>
-                            initChartsElement({
-                              colors,
-                              elements,
-                              lightweightCharts,
-                              selected: /** @type {Accessor<ChartOption>} */ (
-                                chartOption
-                              ),
-                              signals,
-                              utils,
-                              webSockets,
-                              vecsResources,
-                              vecIdToIndexes,
-                            }),
+          const colors = createColors(dark, elements);
+
+          const options = initOptions({
+            colors,
+            env,
+            signals,
+            utils,
+            webSockets,
+            qrcode,
+          });
+
+          // const urlSelected = utils.url.pathnameToSelectedId();
+          // function createWindowPopStateEvent() {
+          //   window.addEventListener("popstate", (event) => {
+          //     const urlSelected = utils.url.pathnameToSelectedId();
+          //     const option = options.list.find((option) => urlSelected === option.id);
+          //     if (option) {
+          //       options.selected.set(option);
+          //     }
+          //   });
+          // }
+          // createWindowPopStateEvent();
+
+          function initSelected() {
+            let firstRun = true;
+            function initSelectedFrame() {
+              if (!firstRun) throw Error("Unreachable");
+              firstRun = false;
+
+              console.log("selected: init");
+
+              const owner = signals.getOwner();
+
+              const chartOption = signals.createSignal(
+                /** @type {ChartOption | null} */ (null),
+              );
+              const simOption = signals.createSignal(
+                /** @type {SimulationOption | null} */ (null),
+              );
+
+              let previousElement = /** @type {HTMLElement | undefined} */ (
+                undefined
+              );
+              let firstTimeLoadingChart = true;
+              let firstTimeLoadingTable = true;
+              let firstTimeLoadingSimulation = true;
+
+              signals.createEffect(options.selected, (option) => {
+                if (previousElement) {
+                  previousElement.hidden = true;
+                  utils.url.resetParams(option);
+                  utils.url.pushHistory(option.id);
+                } else {
+                  utils.url.replaceHistory({ pathname: option.id });
+                }
+
+                /** @type {HTMLElement} */
+                let element;
+
+                switch (option.kind) {
+                  case "chart": {
+                    element = elements.charts;
+
+                    chartOption.set(option);
+
+                    if (firstTimeLoadingChart) {
+                      const lightweightCharts = packages.lightweightCharts();
+                      const chartScript = import("./chart.js");
+                      utils.dom.importStyleAndThen("/styles/chart.css", () =>
+                        chartScript.then(({ init: initChartsElement }) =>
+                          lightweightCharts.then((lightweightCharts) =>
+                            signals.runWithOwner(owner, () =>
+                              initChartsElement({
+                                colors,
+                                elements,
+                                lightweightCharts,
+                                selected: /** @type {Accessor<ChartOption>} */ (
+                                  chartOption
+                                ),
+                                signals,
+                                utils,
+                                webSockets,
+                                vecsResources,
+                                vecIdToIndexes,
+                              }),
+                            ),
                           ),
                         ),
-                      ),
-                    );
+                      );
+                    }
+                    firstTimeLoadingChart = false;
+
+                    break;
                   }
-                  firstTimeLoadingChart = false;
+                  case "table": {
+                    element = elements.table;
 
-                  break;
-                }
-                case "table": {
-                  element = elements.table;
-
-                  if (firstTimeLoadingTable) {
-                    const tableScript = import("./table.js");
-                    utils.dom.importStyleAndThen("/styles/table.css", () =>
-                      tableScript.then(({ init }) =>
-                        signals.runWithOwner(owner, () =>
-                          init({
-                            colors,
-                            elements,
-                            signals,
-                            utils,
-                            vecsResources,
-                            option,
-                            vecIdToIndexes,
-                          }),
-                        ),
-                      ),
-                    );
-                  }
-                  firstTimeLoadingTable = false;
-
-                  break;
-                }
-                case "simulation": {
-                  element = elements.simulation;
-
-                  simOption.set(option);
-
-                  if (firstTimeLoadingSimulation) {
-                    const lightweightCharts = packages.lightweightCharts();
-                    const simulationScript = import("./simulation.js");
-                    utils.dom.importStyleAndThen("/styles/simulation.css", () =>
-                      simulationScript.then(({ init }) =>
-                        lightweightCharts.then((lightweightCharts) =>
+                    if (firstTimeLoadingTable) {
+                      const tableScript = import("./table.js");
+                      utils.dom.importStyleAndThen("/styles/table.css", () =>
+                        tableScript.then(({ init }) =>
                           signals.runWithOwner(owner, () =>
                             init({
                               colors,
                               elements,
-                              lightweightCharts,
                               signals,
                               utils,
                               vecsResources,
+                              option,
+                              vecIdToIndexes,
                             }),
                           ),
                         ),
-                      ),
-                    );
+                      );
+                    }
+                    firstTimeLoadingTable = false;
+
+                    break;
                   }
-                  firstTimeLoadingSimulation = false;
+                  case "simulation": {
+                    element = elements.simulation;
 
-                  break;
-                }
-                case "url": {
-                  return;
-                }
-              }
+                    simOption.set(option);
 
-              element.hidden = false;
-              previousElement = element;
-            });
-          }
+                    if (firstTimeLoadingSimulation) {
+                      const lightweightCharts = packages.lightweightCharts();
+                      const simulationScript = import("./simulation.js");
+                      utils.dom.importStyleAndThen(
+                        "/styles/simulation.css",
+                        () =>
+                          simulationScript.then(({ init }) =>
+                            lightweightCharts.then((lightweightCharts) =>
+                              signals.runWithOwner(owner, () =>
+                                init({
+                                  colors,
+                                  elements,
+                                  lightweightCharts,
+                                  signals,
+                                  utils,
+                                  vecsResources,
+                                }),
+                              ),
+                            ),
+                          ),
+                      );
+                    }
+                    firstTimeLoadingSimulation = false;
 
-          function createMobileSwitchEffect() {
-            let firstRun = true;
-            signals.createEffect(options.selected, () => {
-              if (!firstRun && !utils.dom.isHidden(elements.asideLabel)) {
-                elements.asideLabel.click();
-              }
-              firstRun = false;
-            });
-          }
-          createMobileSwitchEffect();
-
-          utils.dom.onFirstIntersection(elements.aside, initSelectedFrame);
-        }
-        initSelected();
-
-        function initFolders() {
-          function initTreeElement() {
-            options.treeElement.set(() => {
-              const treeElement = window.document.createElement("div");
-              treeElement.classList.add("tree");
-              elements.nav.append(treeElement);
-              return treeElement;
-            });
-          }
-
-          async function scrollToSelected() {
-            if (!options.selected()) throw "Selected should be set by now";
-            const selectedId = options.selected().id;
-
-            const path = options.selected().path;
-
-            let i = 0;
-            while (i !== path.length) {
-              try {
-                const id = path[i];
-                const details = /** @type {HTMLDetailsElement} */ (
-                  utils.dom.getElementById(id)
-                );
-                details.open = true;
-                i++;
-              } catch {
-                await utils.next();
-              }
-            }
-
-            await utils.next();
-
-            utils.dom
-              .getElementById(`${selectedId}-nav-selector`)
-              .scrollIntoView({
-                behavior: "instant",
-                block: "center",
-              });
-          }
-
-          utils.dom.onFirstIntersection(elements.nav, () => {
-            console.log("nav: init");
-            initTreeElement();
-            scrollToSelected();
-          });
-        }
-        initFolders();
-
-        function initSearch() {
-          function initSearchFrame() {
-            console.log("search: init");
-
-            const haystack = options.list.map((option) => option.title);
-
-            const RESULTS_PER_PAGE = 100;
-
-            packages.ufuzzy().then((ufuzzy) => {
-              /**
-               * @param {uFuzzy.SearchResult} searchResult
-               * @param {number} pageIndex
-               */
-              function computeResultPage(searchResult, pageIndex) {
-                /** @type {{ option: Option, title: string }[]} */
-                let list = [];
-
-                let [indexes, info, order] = searchResult || [null, null, null];
-
-                const minIndex = pageIndex * RESULTS_PER_PAGE;
-
-                if (indexes?.length) {
-                  const maxIndex = Math.min(
-                    (order || indexes).length - 1,
-                    minIndex + RESULTS_PER_PAGE - 1,
-                  );
-
-                  list = Array(maxIndex - minIndex + 1);
-
-                  for (let i = minIndex; i <= maxIndex; i++) {
-                    let index = indexes[i];
-
-                    const title = haystack[index];
-
-                    list[i % 100] = {
-                      option: options.list[index],
-                      title,
-                    };
+                    break;
                   }
-                }
-
-                return list;
-              }
-
-              /** @type {uFuzzy.Options} */
-              const config = {
-                intraIns: Infinity,
-                intraChars: `[a-z\d' ]`,
-              };
-
-              const fuzzyMultiInsert = /** @type {uFuzzy} */ (
-                ufuzzy({
-                  intraIns: 1,
-                })
-              );
-              const fuzzyMultiInsertFuzzier = /** @type {uFuzzy} */ (
-                ufuzzy(config)
-              );
-              const fuzzySingleError = /** @type {uFuzzy} */ (
-                ufuzzy({
-                  intraMode: 1,
-                  ...config,
-                })
-              );
-              const fuzzySingleErrorFuzzier = /** @type {uFuzzy} */ (
-                ufuzzy({
-                  intraMode: 1,
-                  ...config,
-                })
-              );
-
-              /** @type {VoidFunction | undefined} */
-              let dispose;
-
-              function inputEvent() {
-                signals.createRoot((_dispose) => {
-                  const needle = /** @type {string} */ (
-                    elements.searchInput.value
-                  );
-
-                  dispose?.();
-
-                  dispose = _dispose;
-
-                  elements.searchResults.scrollTo({
-                    top: 0,
-                  });
-
-                  if (!needle) {
-                    elements.searchResults.innerHTML = "";
+                  case "url": {
                     return;
                   }
+                }
 
-                  const outOfOrder = 5;
-                  const infoThresh = 5_000;
+                element.hidden = false;
+                previousElement = element;
+              });
+            }
 
-                  let result = fuzzyMultiInsert?.search(
-                    haystack,
-                    needle,
-                    undefined,
-                    infoThresh,
+            function createMobileSwitchEffect() {
+              let firstRun = true;
+              signals.createEffect(options.selected, () => {
+                if (!firstRun && !utils.dom.isHidden(elements.asideLabel)) {
+                  elements.asideLabel.click();
+                }
+                firstRun = false;
+              });
+            }
+            createMobileSwitchEffect();
+
+            utils.dom.onFirstIntersection(elements.aside, () =>
+              signals.runWithOwner(owner, initSelectedFrame),
+            );
+          }
+          initSelected();
+
+          function initFolders() {
+            function initTreeElement() {
+              options.treeElement.set(() => {
+                const treeElement = window.document.createElement("div");
+                treeElement.classList.add("tree");
+                elements.nav.append(treeElement);
+                return treeElement;
+              });
+            }
+
+            async function scrollToSelected() {
+              if (!options.selected()) throw "Selected should be set by now";
+              const selectedId = options.selected().id;
+
+              const path = options.selected().path;
+
+              let i = 0;
+              while (i !== path.length) {
+                try {
+                  const id = path[i];
+                  const details = /** @type {HTMLDetailsElement} */ (
+                    utils.dom.getElementById(id)
                   );
+                  details.open = true;
+                  i++;
+                } catch {
+                  await utils.next();
+                }
+              }
 
-                  if (!result?.[0]?.length || !result?.[1]) {
-                    result = fuzzyMultiInsert?.search(
-                      haystack,
-                      needle,
-                      outOfOrder,
-                      infoThresh,
+              await utils.next();
+
+              utils.dom
+                .getElementById(`${selectedId}-nav-selector`)
+                .scrollIntoView({
+                  behavior: "instant",
+                  block: "center",
+                });
+            }
+
+            utils.dom.onFirstIntersection(elements.nav, () => {
+              console.log("nav: init");
+              initTreeElement();
+              scrollToSelected();
+            });
+          }
+          initFolders();
+
+          function initSearch() {
+            function initSearchFrame() {
+              console.log("search: init");
+
+              const haystack = options.list.map((option) => option.title);
+
+              const RESULTS_PER_PAGE = 100;
+
+              packages.ufuzzy().then((ufuzzy) => {
+                /**
+                 * @param {uFuzzy.SearchResult} searchResult
+                 * @param {number} pageIndex
+                 */
+                function computeResultPage(searchResult, pageIndex) {
+                  /** @type {{ option: Option, title: string }[]} */
+                  let list = [];
+
+                  let [indexes, info, order] = searchResult || [
+                    null,
+                    null,
+                    null,
+                  ];
+
+                  const minIndex = pageIndex * RESULTS_PER_PAGE;
+
+                  if (indexes?.length) {
+                    const maxIndex = Math.min(
+                      (order || indexes).length - 1,
+                      minIndex + RESULTS_PER_PAGE - 1,
                     );
+
+                    list = Array(maxIndex - minIndex + 1);
+
+                    for (let i = minIndex; i <= maxIndex; i++) {
+                      let index = indexes[i];
+
+                      const title = haystack[index];
+
+                      list[i % 100] = {
+                        option: options.list[index],
+                        title,
+                      };
+                    }
                   }
 
-                  if (!result?.[0]?.length || !result?.[1]) {
-                    result = fuzzySingleError?.search(
-                      haystack,
-                      needle,
-                      outOfOrder,
-                      infoThresh,
-                    );
-                  }
+                  return list;
+                }
 
-                  if (!result?.[0]?.length || !result?.[1]) {
-                    result = fuzzySingleErrorFuzzier?.search(
-                      haystack,
-                      needle,
-                      outOfOrder,
-                      infoThresh,
-                    );
-                  }
+                /** @type {uFuzzy.Options} */
+                const config = {
+                  intraIns: Infinity,
+                  intraChars: `[a-z\d' ]`,
+                };
 
-                  if (!result?.[0]?.length || !result?.[1]) {
-                    result = fuzzyMultiInsertFuzzier?.search(
+                const fuzzyMultiInsert = /** @type {uFuzzy} */ (
+                  ufuzzy({
+                    intraIns: 1,
+                  })
+                );
+                const fuzzyMultiInsertFuzzier = /** @type {uFuzzy} */ (
+                  ufuzzy(config)
+                );
+                const fuzzySingleError = /** @type {uFuzzy} */ (
+                  ufuzzy({
+                    intraMode: 1,
+                    ...config,
+                  })
+                );
+                const fuzzySingleErrorFuzzier = /** @type {uFuzzy} */ (
+                  ufuzzy({
+                    intraMode: 1,
+                    ...config,
+                  })
+                );
+
+                /** @type {VoidFunction | undefined} */
+                let dispose;
+
+                function inputEvent() {
+                  signals.createRoot((_dispose) => {
+                    const needle = /** @type {string} */ (
+                      elements.searchInput.value
+                    );
+
+                    dispose?.();
+
+                    dispose = _dispose;
+
+                    elements.searchResults.scrollTo({
+                      top: 0,
+                    });
+
+                    if (!needle) {
+                      elements.searchResults.innerHTML = "";
+                      return;
+                    }
+
+                    const outOfOrder = 5;
+                    const infoThresh = 5_000;
+
+                    let result = fuzzyMultiInsert?.search(
                       haystack,
                       needle,
                       undefined,
                       infoThresh,
                     );
-                  }
 
-                  if (!result?.[0]?.length || !result?.[1]) {
-                    result = fuzzyMultiInsertFuzzier?.search(
-                      haystack,
-                      needle,
-                      outOfOrder,
-                      infoThresh,
-                    );
-                  }
-
-                  elements.searchResults.innerHTML = "";
-
-                  const list = computeResultPage(result, 0);
-
-                  list.forEach(({ option, title }) => {
-                    const li = window.document.createElement("li");
-                    elements.searchResults.appendChild(li);
-
-                    const element = options.createOptionElement({
-                      option,
-                      frame: "search",
-                      name: title,
-                      qrcode,
-                    });
-
-                    if (element) {
-                      li.append(element);
+                    if (!result?.[0]?.length || !result?.[1]) {
+                      result = fuzzyMultiInsert?.search(
+                        haystack,
+                        needle,
+                        outOfOrder,
+                        infoThresh,
+                      );
                     }
+
+                    if (!result?.[0]?.length || !result?.[1]) {
+                      result = fuzzySingleError?.search(
+                        haystack,
+                        needle,
+                        outOfOrder,
+                        infoThresh,
+                      );
+                    }
+
+                    if (!result?.[0]?.length || !result?.[1]) {
+                      result = fuzzySingleErrorFuzzier?.search(
+                        haystack,
+                        needle,
+                        outOfOrder,
+                        infoThresh,
+                      );
+                    }
+
+                    if (!result?.[0]?.length || !result?.[1]) {
+                      result = fuzzyMultiInsertFuzzier?.search(
+                        haystack,
+                        needle,
+                        undefined,
+                        infoThresh,
+                      );
+                    }
+
+                    if (!result?.[0]?.length || !result?.[1]) {
+                      result = fuzzyMultiInsertFuzzier?.search(
+                        haystack,
+                        needle,
+                        outOfOrder,
+                        infoThresh,
+                      );
+                    }
+
+                    elements.searchResults.innerHTML = "";
+
+                    const list = computeResultPage(result, 0);
+
+                    list.forEach(({ option, title }) => {
+                      const li = window.document.createElement("li");
+                      elements.searchResults.appendChild(li);
+
+                      const element = options.createOptionElement({
+                        option,
+                        frame: "search",
+                        name: title,
+                        qrcode,
+                      });
+
+                      if (element) {
+                        li.append(element);
+                      }
+                    });
                   });
+                }
+
+                if (elements.searchInput.value) {
+                  inputEvent();
+                }
+
+                elements.searchInput.addEventListener("input", inputEvent);
+              });
+            }
+            utils.dom.onFirstIntersection(elements.search, initSearchFrame);
+          }
+          initSearch();
+
+          function initShare() {
+            const shareDiv = utils.dom.getElementById("share-div");
+            const shareContentDiv =
+              utils.dom.getElementById("share-content-div");
+
+            shareDiv.addEventListener("click", () => {
+              qrcode.set(null);
+            });
+
+            shareContentDiv.addEventListener("click", (event) => {
+              event.stopPropagation();
+              event.preventDefault();
+            });
+
+            packages.leanQr().then(({ generate }) =>
+              signals.runWithOwner(owner, () => {
+                const imgQrcode = /** @type {HTMLImageElement} */ (
+                  utils.dom.getElementById("share-img")
+                );
+
+                const anchor = /** @type {HTMLAnchorElement} */ (
+                  utils.dom.getElementById("share-anchor")
+                );
+
+                signals.createEffect(qrcode, (qrcode) => {
+                  if (!qrcode) {
+                    shareDiv.hidden = true;
+                    return;
+                  }
+
+                  const href = qrcode;
+                  anchor.href = href;
+                  anchor.innerText =
+                    (href.startsWith("http")
+                      ? href.split("//").at(-1)
+                      : href.split(":").at(-1)) || "";
+
+                  imgQrcode.src =
+                    generate(/** @type {any} */ (href))?.toDataURL({
+                      // @ts-ignore
+                      padX: 0,
+                      padY: 0,
+                    }) || "";
+
+                  shareDiv.hidden = false;
                 });
-              }
-
-              if (elements.searchInput.value) {
-                inputEvent();
-              }
-
-              elements.searchInput.addEventListener("input", inputEvent);
-            });
-          }
-          utils.dom.onFirstIntersection(elements.search, initSearchFrame);
-        }
-        initSearch();
-
-        function initShare() {
-          const shareDiv = utils.dom.getElementById("share-div");
-          const shareContentDiv = utils.dom.getElementById("share-content-div");
-
-          shareDiv.addEventListener("click", () => {
-            qrcode.set(null);
-          });
-
-          shareContentDiv.addEventListener("click", (event) => {
-            event.stopPropagation();
-            event.preventDefault();
-          });
-
-          packages.leanQr().then(({ generate }) => {
-            const imgQrcode = /** @type {HTMLImageElement} */ (
-              utils.dom.getElementById("share-img")
+              }),
             );
+          }
+          initShare();
 
-            const anchor = /** @type {HTMLAnchorElement} */ (
-              utils.dom.getElementById("share-anchor")
-            );
+          function initDesktopResizeBar() {
+            const resizeBar = utils.dom.getElementById("resize-bar");
+            let resize = false;
+            let startingWidth = 0;
+            let startingClientX = 0;
 
-            signals.createEffect(qrcode, (qrcode) => {
-              if (!qrcode) {
-                shareDiv.hidden = true;
-                return;
+            const barWidthLocalStorageKey = "bar-width";
+
+            /**
+             * @param {number | null} width
+             */
+            function setBarWidth(width) {
+              if (typeof width === "number") {
+                elements.main.style.width = `${width}px`;
+                localStorage.setItem(barWidthLocalStorageKey, String(width));
+              } else {
+                elements.main.style.width = elements.style.getPropertyValue(
+                  "--default-main-width",
+                );
+                localStorage.removeItem(barWidthLocalStorageKey);
               }
+            }
 
-              const href = qrcode;
-              anchor.href = href;
-              anchor.innerText =
-                (href.startsWith("http")
-                  ? href.split("//").at(-1)
-                  : href.split(":").at(-1)) || "";
+            /**
+             * @param {MouseEvent} event
+             */
+            function mouseMoveEvent(event) {
+              if (resize) {
+                setBarWidth(startingWidth + (event.clientX - startingClientX));
+              }
+            }
 
-              imgQrcode.src =
-                generate(/** @type {any} */ (href))?.toDataURL({
-                  // @ts-ignore
-                  padX: 0,
-                  padY: 0,
-                }) || "";
-
-              shareDiv.hidden = false;
+            resizeBar.addEventListener("mousedown", (event) => {
+              startingClientX = event.clientX;
+              startingWidth = elements.main.clientWidth;
+              resize = true;
+              window.document.documentElement.dataset.resize = "";
+              window.addEventListener("mousemove", mouseMoveEvent);
             });
-          });
-        }
-        initShare();
 
-        function initDesktopResizeBar() {
-          const resizeBar = utils.dom.getElementById("resize-bar");
-          let resize = false;
-          let startingWidth = 0;
-          let startingClientX = 0;
+            resizeBar.addEventListener("dblclick", () => {
+              setBarWidth(null);
+            });
 
-          const barWidthLocalStorageKey = "bar-width";
-
-          /**
-           * @param {number | null} width
-           */
-          function setBarWidth(width) {
-            if (typeof width === "number") {
-              elements.main.style.width = `${width}px`;
-              localStorage.setItem(barWidthLocalStorageKey, String(width));
-            } else {
-              elements.main.style.width = elements.style.getPropertyValue(
-                "--default-main-width",
-              );
-              localStorage.removeItem(barWidthLocalStorageKey);
-            }
+            const setResizeFalse = () => {
+              resize = false;
+              delete window.document.documentElement.dataset.resize;
+              window.removeEventListener("mousemove", mouseMoveEvent);
+            };
+            window.addEventListener("mouseup", setResizeFalse);
+            window.addEventListener("mouseleave", setResizeFalse);
           }
-
-          /**
-           * @param {MouseEvent} event
-           */
-          function mouseMoveEvent(event) {
-            if (resize) {
-              setBarWidth(startingWidth + (event.clientX - startingClientX));
-            }
-          }
-
-          resizeBar.addEventListener("mousedown", (event) => {
-            startingClientX = event.clientX;
-            startingWidth = elements.main.clientWidth;
-            resize = true;
-            window.document.documentElement.dataset.resize = "";
-            window.addEventListener("mousemove", mouseMoveEvent);
-          });
-
-          resizeBar.addEventListener("dblclick", () => {
-            setBarWidth(null);
-          });
-
-          const setResizeFalse = () => {
-            resize = false;
-            delete window.document.documentElement.dataset.resize;
-            window.removeEventListener("mousemove", mouseMoveEvent);
-          };
-          window.addEventListener("mouseup", setResizeFalse);
-          window.addEventListener("mouseleave", setResizeFalse);
-        }
-        initDesktopResizeBar();
-      }),
+          initDesktopResizeBar();
+        }),
+      ),
     ),
   );
 }

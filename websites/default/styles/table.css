@@ -111,9 +111,10 @@
       }
     }
 
-    /* select {
-      width: 100%;
-    } */
+    select {
+      margin-right: -4px;
+      /* width: 100%; */
+    }
 
     tbody {
       text-align: right;

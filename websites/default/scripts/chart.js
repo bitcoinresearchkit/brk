@@ -67,6 +67,9 @@ export function init({
     elements,
     index,
     timeScaleSetCallback: (unknownTimeScaleCallback) => {
+      // TODO: Although it mostly works in practice, need to make it more robust, there is no guarantee that this runs in order and wait for `from` and `to` to update when `index` and thus `TIMERANGE_LS_KEY` is updated
+      // Need to have the right values before the update
+
       const from_ = from();
       const to_ = to();
       if (from_ !== null && to_ !== null) {
@@ -96,11 +99,7 @@ export function init({
       defaultValue: "Line",
       keyPrefix,
       key: "seriestype-0",
-      choices: /** @type {const} */ ([
-        // "Auto",
-        "Candles",
-        "Line",
-      ]),
+      choices: /** @type {const} */ (["Candles", "Line"]),
       signals,
     });
 

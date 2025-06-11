@@ -128,7 +128,7 @@ pub struct RunConfig {
     #[arg(short, long)]
     computation: Option<Computation>,
 
-    /// Activate compression of datasets, set to true to save disk space or false if prioritize speed, default: true, saved
+    /// Activate compression of datasets, set to true to save disk space or false if prioritize speed, default: compressed, saved
     #[arg(short, long, value_name = "FORMAT")]
     format: Option<Format>,
 
