@@ -163,30 +163,32 @@ export default import("./v5.0.7-treeshaked/script.js").then((lc) => {
     signals.createEffect(index, (index) => {
       timeScaleSet = false;
 
+      const minBarSpacing =
+        index === /** @satisfies {MonthIndex} */ (7)
+          ? 1
+          : index === /** @satisfies {QuarterIndex} */ (19)
+            ? 3
+            : index === /** @satisfies {YearIndex} */ (23)
+              ? 12
+              : index === /** @satisfies {DecadeIndex} */ (1)
+                ? 120
+                : 0.5;
+
+      console.log({ minBarSpacing, fitContent });
+
       ichart.applyOptions({
         timeScale: {
           timeVisible:
             index === /** @satisfies {Height} */ (5) ||
             index === /** @satisfies {DifficultyEpoch} */ (2) ||
             index === /** @satisfies {HalvingEpoch} */ (4),
+          ...(!fitContent
+            ? {
+                minBarSpacing,
+              }
+            : {}),
         },
       });
-      if (!fitContent) {
-        ichart.applyOptions({
-          timeScale: {
-            minBarSpacing:
-              index === /** @satisfies {MonthIndex} */ (7)
-                ? 1
-                : index === /** @satisfies {QuarterIndex} */ (19)
-                  ? 3
-                  : index === /** @satisfies {YearIndex} */ (23)
-                    ? 12
-                    : index === /** @satisfies {DecadeIndex} */ (1)
-                      ? 120
-                      : undefined,
-          },
-        });
-      }
     });
 
     const activeResources = /** @type {Set<VecResource>} */ (new Set());
