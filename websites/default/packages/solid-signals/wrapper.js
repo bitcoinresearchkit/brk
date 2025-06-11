@@ -23,17 +23,21 @@ const importSignals = import("./v0.3.2-treeshaked/script.js").then(
         (compute, effect) => {
           let dispose = /** @type {VoidFunction | null} */ (null);
 
+          if (_signals.getOwner() === null) {
+            throw Error("No owner");
+          }
+
           function cleanup() {
             if (dispose) {
               dispose();
               dispose = null;
-              console.log("effectCount = ", --effectCount);
+              console.debug("effectCount = ", --effectCount);
             }
           }
 
           // @ts-ignore
           _signals.createEffect(compute, (v, oldV) => {
-            console.log("effectCount = ", ++effectCount);
+            console.debug("effectCount = ", ++effectCount);
             cleanup();
             signals.createRoot((_dispose) => {
               dispose = _dispose;
