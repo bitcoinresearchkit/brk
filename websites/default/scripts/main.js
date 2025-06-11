@@ -1494,8 +1494,11 @@ function createVecsResources(signals, utils) {
     return signals.runWithOwner(owner, () => {
       /** @typedef {T extends number ? SingleValueData : CandlestickData} Value */
 
-      const fetchedRecord =
-        /** @type {Record<string, {loading: boolean, at: Date | null, vec: Signal<T[] | null>}>} */ ({});
+      const fetchedRecord = signals.createSignal(
+        /** @type {Map<string, {loading: boolean, at: Date | null, vec: Signal<T[] | null>}>} */ (
+          new Map()
+        ),
+      );
 
       return {
         url: utils.api.genUrl(index, id, defaultFrom),
@@ -1513,12 +1516,18 @@ function createVecsResources(signals, utils) {
           const from = args?.from ?? defaultFrom;
           const to = args?.to ?? defaultTo;
           const fetchedKey = genFetchedKey({ from, to });
-          fetchedRecord[fetchedKey] ??= {
-            loading: false,
-            at: null,
-            vec: signals.createSignal(/** @type {T[] | null} */ (null)),
-          };
-          const fetched = fetchedRecord[fetchedKey];
+          if (!fetchedRecord().has(fetchedKey)) {
+            fetchedRecord.set((map) => {
+              map.set(fetchedKey, {
+                loading: false,
+                at: null,
+                vec: signals.createSignal(/** @type {T[] | null} */ (null)),
+              });
+              return map;
+            });
+          }
+          const fetched = fetchedRecord().get(fetchedKey);
+          if (!fetched) throw Error("Unreachable");
           if (fetched.loading) return fetched.vec();
           if (fetched.at) {
             const diff = new Date().getTime() - fetched.at.getTime();
@@ -1529,7 +1538,9 @@ function createVecsResources(signals, utils) {
           const res = /** @type {T[] | null} */ (
             await utils.api.fetchVec(
               (values) => {
-                fetched.vec.set(/** @type {T[]} */ (values));
+                if (values.length || !fetched.vec()) {
+                  fetched.vec.set(values);
+                }
               },
               index,
               id,
@@ -2268,6 +2279,7 @@ function main() {
                 }
               }
 
+              await utils.next();
               await utils.next();
 
               utils.dom

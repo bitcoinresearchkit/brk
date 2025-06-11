@@ -10,7 +10,7 @@ sw.addEventListener("install", (event) => {
 
 sw.addEventListener("activate", (event) => {
   console.log("sw: active");
-  event.waitUntil(sw.clients.claim());
+  sw.clients.claim();
   event.waitUntil(
     caches
       .keys()
@@ -42,6 +42,8 @@ sw.addEventListener("fetch", (event) => {
     return; // let the browser handle it
   }
 
+  const cache = caches.open(CACHE_NAME);
+
   // 2) NAVIGATION: network‐first on your shell
   if (req.mode === "navigate") {
     event.respondWith(
@@ -52,9 +54,7 @@ sw.addEventListener("fetch", (event) => {
           if (response.ok || response.status === 304) {
             if (response.ok) {
               const clone = response.clone();
-              caches
-                .open(CACHE_NAME)
-                .then((cache) => cache.put("/index.html", clone));
+              cache.then((cache) => cache.put("/index.html", clone));
             }
             return response;
           }
@@ -72,7 +72,7 @@ sw.addEventListener("fetch", (event) => {
       .then((response) => {
         if (response.ok) {
           const clone = response.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(req, clone));
+          cache.then((cache) => cache.put(req, clone));
         }
         return response;
       })

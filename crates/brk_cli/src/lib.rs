@@ -20,9 +20,9 @@ struct Cli {
 
 #[derive(Subcommand, Debug)]
 enum Commands {
-    /// Run the indexer, computer and server
+    /// Run the indexer, computer and server, use `run -h` for more information
     Run(RunConfig),
-    /// Query generated datasets via the `run` command in a similar fashion as the server's API
+    /// Query generated datasets via the `run` command in a similar fashion as the server's API, use `query -h` for more information
     Query(QueryArgs),
 }
 
