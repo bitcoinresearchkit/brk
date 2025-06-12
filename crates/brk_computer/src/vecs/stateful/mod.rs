@@ -1443,7 +1443,10 @@ impl Vecs {
                                 let height = txindex_to_height
                                     .get_or_read(input_txindex, &txindex_to_height_mmap)
                                     .unwrap()
-                                    .unwrap()
+                                    .unwrap_or_else(|| {
+                                        dbg!(input_txindex, txindex_to_height.len());
+                                        unreachable!("")
+                                    })
                                     .into_inner();
 
                                 (height, value, input_type)

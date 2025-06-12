@@ -31,7 +31,7 @@ where
     }
     #[inline]
     fn get_or_read_(&self, index: usize, mmap: &Mmap) -> Result<Option<Value<T>>> {
-        let stored_len = mmap.len() / Self::SIZE_OF_T;
+        let stored_len = self.stored_len_(mmap);
 
         if index >= stored_len {
             let pushed = self.pushed();
@@ -53,6 +53,7 @@ where
     fn mmap(&self) -> &ArcSwap<Mmap>;
 
     fn stored_len(&self) -> usize;
+    fn stored_len_(&self, mmap: &Mmap) -> usize;
 
     fn pushed(&self) -> &[T];
     #[inline]

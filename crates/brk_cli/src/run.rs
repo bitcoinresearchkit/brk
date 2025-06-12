@@ -133,7 +133,7 @@ pub struct RunConfig {
     #[arg(short, long)]
     computation: Option<Computation>,
 
-    /// Format of computed datasets, `compressed` to save disk space, `raw` to prioritize speed, default: `compressed`, saved
+    /// Format of computed datasets, `compressed` to save disk space (experimental), `raw` to prioritize speed, default: `raw`, saved
     #[serde(default, deserialize_with = "default_on_error")]
     #[arg(short, long)]
     format: Option<Format>,

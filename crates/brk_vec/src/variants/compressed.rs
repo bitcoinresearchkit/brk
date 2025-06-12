@@ -133,7 +133,7 @@ where
         page_index * Self::PER_PAGE
     }
 
-    fn stored_len_(pages_meta: &Guard<Arc<CompressedPagesMetadata>>) -> usize {
+    fn stored_len__(pages_meta: &Guard<Arc<CompressedPagesMetadata>>) -> usize {
         if let Some(last) = pages_meta.last() {
             (pages_meta.len() - 1) * Self::PER_PAGE + last.values_len as usize
         } else {
@@ -182,7 +182,11 @@ where
 
     #[inline]
     fn stored_len(&self) -> usize {
-        Self::stored_len_(&self.pages_meta.load())
+        Self::stored_len__(&self.pages_meta.load())
+    }
+    #[inline]
+    fn stored_len_(&self, _: &Mmap) -> usize {
+        self.stored_len()
     }
 
     #[inline]
@@ -481,7 +485,7 @@ where
 
     fn into_iter(self) -> Self::IntoIter {
         let pages_meta = self.pages_meta.load();
-        let stored_len = CompressedVec::<I, T>::stored_len_(&pages_meta);
+        let stored_len = CompressedVec::<I, T>::stored_len__(&pages_meta);
         CompressedVecIterator {
             vec: self,
             guard: self.mmap().load(),

@@ -124,6 +124,7 @@ pub async fn variant_handler(
     Query(params_opt): Query<ParamsOpt>,
     state: State<AppState>,
 ) -> Response {
+    let variant = variant.replace("_", "-");
     let mut split = variant.split(TO_SEPARATOR);
     let params = Params::from((
         (
