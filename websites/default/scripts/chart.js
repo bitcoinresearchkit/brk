@@ -10,7 +10,7 @@ const CANDLE = "candle";
  * @param {Object} args
  * @param {Colors} args.colors
  * @param {LightweightCharts} args.lightweightCharts
- * @param {Accessor<ChartOption>} args.selected
+ * @param {Accessor<ChartOption>} args.option
  * @param {Signals} args.signals
  * @param {Utilities} args.utils
  * @param {WebSockets} args.webSockets
@@ -22,7 +22,7 @@ export function init({
   colors,
   elements,
   lightweightCharts,
-  selected,
+  option,
   signals,
   utils,
   webSockets,
@@ -35,7 +35,12 @@ export function init({
   const { headerElement, headingElement } = utils.dom.createHeader();
   elements.charts.append(headerElement);
 
-  const { index, fieldset } = createIndexSelector({ signals, utils });
+  const { index, fieldset } = createIndexSelector({
+    option,
+    vecIdToIndexes,
+    signals,
+    utils,
+  });
 
   const TIMERANGE_LS_KEY = signals.createMemo(
     () => `chart-timerange-${index()}`
@@ -231,7 +236,7 @@ export function init({
     }
   }
 
-  signals.createEffect(selected, (option) => {
+  signals.createEffect(option, (option) => {
     headingElement.innerHTML = option.title;
 
     const bottomUnits = /** @type {readonly Unit[]} */ (
@@ -449,25 +454,53 @@ export function init({
 
 /**
  * @param {Object} args
+ * @param {Accessor<ChartOption>} args.option
+ * @param {VecIdToIndexes} args.vecIdToIndexes
  * @param {Signals} args.signals
  * @param {Utilities} args.utils
  */
-function createIndexSelector({ signals, utils }) {
+function createIndexSelector({ option, vecIdToIndexes, signals, utils }) {
+  const choices_ = /** @type {const} */ ([
+    "timestamp",
+    "date",
+    "week",
+    // "difficulty epoch",
+    "month",
+    "quarter",
+    "year",
+    // "halving epoch",
+    "decade",
+  ]);
+
+  /** @type {Accessor<typeof choices_>} */
+  const choices = signals.createMemo(() => {
+    const o = option();
+
+    if (!Object.keys(o.top).length && !Object.keys(o.bottom).length) {
+      return [...choices_];
+    }
+    const rawIndexes = new Set(
+      [Object.values(o.top), Object.values(o.bottom)]
+        .flat(2)
+        .map((blueprint) => vecIdToIndexes[blueprint.key])
+        .flat()
+    );
+
+    const serializedIndexes = [...rawIndexes].flatMap((index) => {
+      const c = utils.serde.chartableIndex.serialize(index);
+      return c ? [c] : [];
+    });
+
+    return /** @type {any} */ (
+      choices_.filter((choice) => serializedIndexes.includes(choice))
+    );
+  });
+
   const { field, selected } = utils.dom.createHorizontalChoiceField({
     defaultValue: "date",
     keyPrefix,
     key: "index",
-    choices: /**@type {const} */ ([
-      "timestamp",
-      "date",
-      "week",
-      // "difficulty epoch",
-      "month",
-      "quarter",
-      "year",
-      // "halving epoch",
-      "decade",
-    ]),
+    choices,
     id: "index",
     signals,
   });
@@ -476,25 +509,8 @@ function createIndexSelector({ signals, utils }) {
   fieldset.append(field);
   fieldset.dataset.size = "sm";
 
-  const index = signals.createMemo(
-    /** @returns {ChartableIndex} */ () => {
-      switch (selected()) {
-        case "timestamp":
-          return /** @satisfies {Height} */ (5);
-        case "date":
-          return /** @satisfies {DateIndex} */ (0);
-        case "week":
-          return /** @satisfies {WeekIndex} */ (22);
-        case "month":
-          return /** @satisfies {MonthIndex} */ (7);
-        case "quarter":
-          return /** @satisfies {QuarterIndex} */ (19);
-        case "year":
-          return /** @satisfies {YearIndex} */ (23);
-        case "decade":
-          return /** @satisfies {DecadeIndex} */ (1);
-      }
-    }
+  const index = signals.createMemo(() =>
+    utils.serde.chartableIndex.deserialize(selected())
   );
 
   return { fieldset, index };

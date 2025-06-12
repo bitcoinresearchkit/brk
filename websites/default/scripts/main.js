@@ -362,11 +362,11 @@ function createUtils() {
      * @param {Object} args
      * @param {T[number]} args.defaultValue
      * @param {string} [args.id]
-     * @param {T} args.choices
+     * @param {T | Accessor<T>} args.choices
      * @param {string} [args.keyPrefix]
      * @param {string} args.key
      * @param {boolean} [args.sorted]
-     * @param {{createEffect: CreateEffect, createSignal: Signals["createSignal"]}} args.signals
+     * @param {{createEffect: CreateEffect, createMemo: CreateMemo, createSignal: Signals["createSignal"]}} args.signals
      */
     createHorizontalChoiceField({
       id,
@@ -377,13 +377,21 @@ function createUtils() {
       signals,
       sorted,
     }) {
-      const choices = sorted
-        ? /** @type {T} */ (
-            /** @type {any} */ (
-              unsortedChoices.toSorted((a, b) => a.localeCompare(b))
+      const choices = signals.createMemo(() => {
+        /** @type {T} */
+        let c;
+        if (typeof unsortedChoices === "function") {
+          c = unsortedChoices();
+        } else {
+          c = unsortedChoices;
+        }
+
+        return sorted
+          ? /** @type {T} */ (
+              /** @type {any} */ (c.toSorted((a, b) => a.localeCompare(b)))
             )
-          )
-        : unsortedChoices;
+          : c;
+      });
 
       /** @type {Signal<T[number]>} */
       const selected = signals.createSignal(defaultValue, {
@@ -394,31 +402,39 @@ function createUtils() {
         },
       });
 
-      if (!choices.includes(selected())) {
-        console.log(choices, "don't include", selected());
-        selected.set(() => defaultValue);
-      }
-
       const field = window.document.createElement("div");
       field.classList.add("field");
 
       const div = window.document.createElement("div");
       field.append(div);
 
-      choices.forEach((choice) => {
-        const inputValue = choice;
-        const { label } = this.createLabeledInput({
-          inputId: `${id ?? key}-${choice.toLowerCase()}`,
-          inputName: id ?? key,
-          inputValue,
-          inputChecked: inputValue === selected(),
-          labelTitle: choice,
-          type: "radio",
-        });
+      signals.createEffect(choices, (choices) => {
+        const s = selected();
+        if (!choices.includes(s)) {
+          if (choices.includes(defaultValue)) {
+            selected.set(() => defaultValue);
+          } else if (choices.length) {
+            selected.set(() => choices[0]);
+          }
+        }
 
-        const text = window.document.createTextNode(choice);
-        label.append(text);
-        div.append(label);
+        div.innerHTML = "";
+
+        choices.forEach((choice) => {
+          const inputValue = choice;
+          const { label } = this.createLabeledInput({
+            inputId: `${id ?? key}-${choice.toLowerCase()}`,
+            inputName: id ?? key,
+            inputValue,
+            inputChecked: inputValue === selected(),
+            labelTitle: choice,
+            type: "radio",
+          });
+
+          const text = window.document.createTextNode(choice);
+          label.append(text);
+          div.append(label);
+        });
       });
 
       field.addEventListener("change", (event) => {
@@ -1093,6 +1109,116 @@ function createUtils() {
         }
       },
     },
+    index: {
+      /**
+       * @param {Index} v
+       */
+      serialize(v) {
+        switch (v) {
+          case /** @satisfies {DateIndex} */ (0):
+            return "dateindex";
+          case /** @satisfies {DecadeIndex} */ (1):
+            return "decadeindex";
+          case /** @satisfies {DifficultyEpoch} */ (2):
+            return "difficultyepoch";
+          case /** @satisfies {EmptyOutputIndex} */ (3):
+            return "emptyoutputindex";
+          case /** @satisfies {HalvingEpoch} */ (4):
+            return "halvingepoch";
+          case /** @satisfies {Height} */ (5):
+            return "height";
+          case /** @satisfies {InputIndex} */ (6):
+            return "inputindex";
+          case /** @satisfies {MonthIndex} */ (7):
+            return "monthindex";
+          case /** @satisfies {OpReturnIndex} */ (8):
+            return "opreturnindex";
+          case /** @satisfies {OutputIndex} */ (9):
+            return "outputindex";
+          case /** @satisfies {P2AIndex} */ (10):
+            return "p2aindex";
+          case /** @satisfies {P2MSIndex} */ (11):
+            return "p2msindex";
+          case /** @satisfies {P2PK33Index} */ (12):
+            return "p2pk33index";
+          case /** @satisfies {P2PK65Index} */ (13):
+            return "p2pk65index";
+          case /** @satisfies {P2PKHIndex} */ (14):
+            return "p2pkhindex";
+          case /** @satisfies {P2SHIndex} */ (15):
+            return "p2shindex";
+          case /** @satisfies {P2TRIndex} */ (16):
+            return "p2trindex";
+          case /** @satisfies {P2WPKHIndex} */ (17):
+            return "p2wpkhindex";
+          case /** @satisfies {P2WSHIndex} */ (18):
+            return "p2wshindex";
+          case /** @satisfies {QuarterIndex} */ (19):
+            return "quarterindex";
+          case /** @satisfies {TxIndex} */ (20):
+            return "txindex";
+          case /** @satisfies {UnknownOutputIndex} */ (21):
+            return "unknownoutputindex";
+          case /** @satisfies {WeekIndex} */ (22):
+            return "weekindex";
+          case /** @satisfies {YearIndex} */ (23):
+            return "yearindex";
+        }
+      },
+    },
+    chartableIndex: {
+      /**
+       * @param {Index} v
+       */
+      serialize(v) {
+        switch (v) {
+          case /** @satisfies {DateIndex} */ (0):
+            return "date";
+          case /** @satisfies {DecadeIndex} */ (1):
+            return "decade";
+          // case /** @satisfies {DifficultyEpoch} */ (2):
+          //   return "difficulty";
+          // case /** @satisfies {HalvingEpoch} */ (4):
+          //   return "halving";
+          case /** @satisfies {Height} */ (5):
+            return "timestamp";
+          case /** @satisfies {MonthIndex} */ (7):
+            return "month";
+          case /** @satisfies {QuarterIndex} */ (19):
+            return "quarter";
+          case /** @satisfies {WeekIndex} */ (22):
+            return "week";
+          case /** @satisfies {YearIndex} */ (23):
+            return "year";
+          default:
+            return null;
+        }
+      },
+      /**
+       * @param {string} v
+       * @returns {ChartableIndex}
+       */
+      deserialize(v) {
+        switch (v) {
+          case "timestamp":
+            return /** @satisfies {Height} */ (5);
+          case "date":
+            return /** @satisfies {DateIndex} */ (0);
+          case "week":
+            return /** @satisfies {WeekIndex} */ (22);
+          case "month":
+            return /** @satisfies {MonthIndex} */ (7);
+          case "quarter":
+            return /** @satisfies {QuarterIndex} */ (19);
+          case "year":
+            return /** @satisfies {YearIndex} */ (23);
+          case "decade":
+            return /** @satisfies {DecadeIndex} */ (1);
+          default:
+            throw Error("Unsupported");
+        }
+      },
+    },
   };
 
   const formatters = {
@@ -1335,68 +1461,12 @@ function createUtils() {
 
     /**
      * @param {Index} index
-     */
-    function vecIndexToString(index) {
-      switch (index) {
-        case /** @satisfies {DateIndex} */ (0):
-          return "dateindex";
-        case /** @satisfies {DecadeIndex} */ (1):
-          return "decadeindex";
-        case /** @satisfies {DifficultyEpoch} */ (2):
-          return "difficultyepoch";
-        case /** @satisfies {EmptyOutputIndex} */ (3):
-          return "emptyoutputindex";
-        case /** @satisfies {HalvingEpoch} */ (4):
-          return "halvingepoch";
-        case /** @satisfies {Height} */ (5):
-          return "height";
-        case /** @satisfies {InputIndex} */ (6):
-          return "inputindex";
-        case /** @satisfies {MonthIndex} */ (7):
-          return "monthindex";
-        case /** @satisfies {OpReturnIndex} */ (8):
-          return "opreturnindex";
-        case /** @satisfies {OutputIndex} */ (9):
-          return "outputindex";
-        case /** @satisfies {P2AIndex} */ (10):
-          return "p2aindex";
-        case /** @satisfies {P2MSIndex} */ (11):
-          return "p2msindex";
-        case /** @satisfies {P2PK33Index} */ (12):
-          return "p2pk33index";
-        case /** @satisfies {P2PK65Index} */ (13):
-          return "p2pk65index";
-        case /** @satisfies {P2PKHIndex} */ (14):
-          return "p2pkhindex";
-        case /** @satisfies {P2SHIndex} */ (15):
-          return "p2shindex";
-        case /** @satisfies {P2TRIndex} */ (16):
-          return "p2trindex";
-        case /** @satisfies {P2WPKHIndex} */ (17):
-          return "p2wpkhindex";
-        case /** @satisfies {P2WSHIndex} */ (18):
-          return "p2wshindex";
-        case /** @satisfies {QuarterIndex} */ (19):
-          return "quarterindex";
-        case /** @satisfies {TxIndex} */ (20):
-          return "txindex";
-        case /** @satisfies {UnknownOutputIndex} */ (21):
-          return "unknownoutputindex";
-        case /** @satisfies {WeekIndex} */ (22):
-          return "weekindex";
-        case /** @satisfies {YearIndex} */ (23):
-          return "yearindex";
-      }
-    }
-
-    /**
-     * @param {Index} index
      * @param {VecId} vecId
      * @param {number} [from]
      * @param {number} [to]
      */
     function genPath(index, vecId, from, to) {
-      let path = `/query?index=${vecIndexToString(index)}&values=${vecId}`;
+      let path = `/query?index=${serde.index.serialize(index)}&values=${vecId}`;
       if (from !== undefined) {
         path += `&from=${from}`;
       }
@@ -2144,7 +2214,7 @@ function main() {
                                 colors,
                                 elements,
                                 lightweightCharts,
-                                selected: /** @type {Accessor<ChartOption>} */ (
+                                option: /** @type {Accessor<ChartOption>} */ (
                                   chartOption
                                 ),
                                 signals,
