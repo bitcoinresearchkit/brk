@@ -988,18 +988,21 @@ function createPriceLine(series, options, colors) {
   });
 }
 
-/** @param {number} value  */
-function numberToShortUSFormat(value) {
+/**
+ * @param {number} value
+ * @param {0 | 2} [digits]
+ */
+function numberToShortUSFormat(value, digits) {
   const absoluteValue = Math.abs(value);
 
   if (isNaN(value)) {
     return "";
   } else if (absoluteValue < 10) {
-    return numberToUSFormat(value, 3);
+    return numberToUSFormat(value, Math.min(3, digits || 10));
   } else if (absoluteValue < 1_000) {
-    return numberToUSFormat(value, 2);
+    return numberToUSFormat(value, Math.min(2, digits || 10));
   } else if (absoluteValue < 10_000) {
-    return numberToUSFormat(value, 1);
+    return numberToUSFormat(value, Math.min(1, digits || 10));
   } else if (absoluteValue < 1_000_000) {
     return numberToUSFormat(value, 0);
   } else if (absoluteValue >= 900_000_000_000_000_000) {

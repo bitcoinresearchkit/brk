@@ -1,7 +1,7 @@
 // @ts-check
 
 /**
- * @typedef {Height | DateIndex | WeekIndex | DifficultyEpoch | MonthIndex | QuarterIndex | YearIndex | HalvingEpoch | DecadeIndex} ChartableIndex
+ * @typedef {Height | DateIndex | WeekIndex | MonthIndex | QuarterIndex | YearIndex | DecadeIndex} ChartableIndex
  */
 /**
  * @template {readonly unknown[]} T
