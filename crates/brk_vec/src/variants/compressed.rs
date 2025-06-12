@@ -21,7 +21,9 @@ use crate::{
 const ONE_KIB: usize = 1024;
 const ONE_MIB: usize = ONE_KIB * ONE_KIB;
 pub const MAX_CACHE_SIZE: usize = 100 * ONE_MIB;
-pub const MAX_PAGE_SIZE: usize = 16 * ONE_KIB;
+pub const MAX_PAGE_SIZE: usize = 64 * ONE_KIB;
+
+const VERSION: Version = Version::ONE;
 
 #[derive(Debug)]
 pub struct CompressedVec<I, T> {
@@ -39,7 +41,9 @@ where
     pub const CACHE_LENGTH: usize = MAX_CACHE_SIZE / Self::PAGE_SIZE;
 
     /// Same as import but will reset the folder under certain errors, so be careful !
-    pub fn forced_import(path: &Path, version: Version) -> Result<Self> {
+    pub fn forced_import(path: &Path, mut version: Version) -> Result<Self> {
+        version = version + VERSION;
+
         let res = Self::import(path, version);
         match res {
             Err(Error::WrongEndian)

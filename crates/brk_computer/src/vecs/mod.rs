@@ -124,6 +124,7 @@ impl Vecs {
         fetcher: Option<&mut Fetcher>,
         exit: &Exit,
     ) -> color_eyre::Result<()> {
+        info!("Computing indexes...");
         let starting_indexes = self.indexes.compute(indexer, starting_indexes, exit)?;
 
         info!("Computing constants...");

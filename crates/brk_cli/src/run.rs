@@ -7,7 +7,7 @@ use std::{
 
 use bitcoincore_rpc::{self, Auth, Client, RpcApi};
 use brk_computer::Computer;
-use brk_core::{default_bitcoin_path, default_brk_path, dot_brk_path};
+use brk_core::{default_bitcoin_path, default_brk_path, default_on_error, dot_brk_path};
 use brk_exit::Exit;
 use brk_fetcher::Fetcher;
 use brk_indexer::Indexer;
@@ -29,7 +29,7 @@ pub fn run(config: RunConfig) -> color_eyre::Result<()> {
 
     let format = config.format();
 
-    let mut indexer = Indexer::new(&config.outputsdir(), format, config.check_collisions())?;
+    let mut indexer = Indexer::new(&config.outputsdir(), config.check_collisions())?;
     indexer.import_stores()?;
     indexer.import_vecs()?;
 
@@ -109,62 +109,77 @@ pub fn run(config: RunConfig) -> color_eyre::Result<()> {
 #[derive(Parser, Debug, Default, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize)]
 pub struct RunConfig {
     /// Bitcoin main directory path, defaults: ~/.bitcoin, ~/Library/Application\ Support/Bitcoin, saved
+    #[serde(default, deserialize_with = "default_on_error")]
     #[arg(long, value_name = "PATH")]
     bitcoindir: Option<String>,
 
     /// Bitcoin blocks directory path, default: --bitcoindir/blocks, saved
+    #[serde(default, deserialize_with = "default_on_error")]
     #[arg(long, value_name = "PATH")]
     blocksdir: Option<String>,
 
     /// Bitcoin Research Kit outputs directory path, default: ~/.brk, saved
+    #[serde(default, deserialize_with = "default_on_error")]
     #[arg(long, value_name = "PATH")]
     brkdir: Option<String>,
 
-    /// Executed by the runner, default: all, saved
+    /// Activated services, default: all, saved
+    #[serde(default, deserialize_with = "default_on_error")]
     #[arg(short, long)]
-    mode: Option<Mode>,
+    services: Option<Services>,
 
-    /// Computation mode for compatible datasets, `lazy` computes data whenever requested without saving it, `eager` computes the data once and saves it to disk, default: Lazy, saved
+    /// Computation of computed datasets, `lazy` computes data whenever requested without saving it, `eager` computes the data once and saves it to disk, default: `lazy`, saved
+    #[serde(default, deserialize_with = "default_on_error")]
     #[arg(short, long)]
     computation: Option<Computation>,
 
-    /// Activate compression of datasets, set to true to save disk space or false if prioritize speed, default: compressed, saved
-    #[arg(short, long, value_name = "FORMAT")]
+    /// Format of computed datasets, `compressed` to save disk space, `raw` to prioritize speed, default: `compressed`, saved
+    #[serde(default, deserialize_with = "default_on_error")]
+    #[arg(short, long)]
     format: Option<Format>,
 
     /// Activate fetching prices from exchanges APIs and the computation of all related datasets, default: true, saved
+    #[serde(default, deserialize_with = "default_on_error")]
     #[arg(short = 'F', long, value_name = "BOOL")]
     fetch: Option<bool>,
 
     /// Website served by the server (if active), default: default, saved
+    #[serde(default, deserialize_with = "default_on_error")]
     #[arg(short, long)]
     website: Option<Website>,
 
     /// Bitcoin RPC ip, default: localhost, saved
+    #[serde(default, deserialize_with = "default_on_error")]
     #[arg(long, value_name = "IP")]
     rpcconnect: Option<String>,
 
     /// Bitcoin RPC port, default: 8332, saved
+    #[serde(default, deserialize_with = "default_on_error")]
     #[arg(long, value_name = "PORT")]
     rpcport: Option<u16>,
 
     /// Bitcoin RPC cookie file, default: --bitcoindir/.cookie, saved
+    #[serde(default, deserialize_with = "default_on_error")]
     #[arg(long, value_name = "PATH")]
     rpccookiefile: Option<String>,
 
     /// Bitcoin RPC username, saved
+    #[serde(default, deserialize_with = "default_on_error")]
     #[arg(long, value_name = "USERNAME")]
     rpcuser: Option<String>,
 
     /// Bitcoin RPC password, saved
+    #[serde(default, deserialize_with = "default_on_error")]
     #[arg(long, value_name = "PASSWORD")]
     rpcpassword: Option<String>,
 
     /// Delay between runs, default: 0, saved
+    #[serde(default, deserialize_with = "default_on_error")]
     #[arg(long, value_name = "SECONDS")]
     delay: Option<u64>,
 
     /// DEV: Activate checking address hashes for collisions when indexing, default: false, saved
+    #[serde(default, deserialize_with = "default_on_error")]
     #[arg(long, value_name = "BOOL")]
     check_collisions: Option<bool>,
 }
@@ -192,8 +207,8 @@ impl RunConfig {
                 config_saved.brkdir = Some(brkdir);
             }
 
-            if let Some(mode) = config_args.mode.take() {
-                config_saved.mode = Some(mode);
+            if let Some(services) = config_args.services.take() {
+                config_saved.services = Some(services);
             }
 
             if let Some(computation) = config_args.computation.take() {
@@ -255,7 +270,7 @@ impl RunConfig {
         // info!("Configuration {{");
         // info!("  bitcoindir: {:?}", config.bitcoindir);
         // info!("  brkdir: {:?}", config.brkdir);
-        // info!("  mode: {:?}", config.mode);
+        // info!("  services: {:?}", config.services);
         // info!("  website: {:?}", config.website);
         // info!("  rpcconnect: {:?}", config.rpcconnect);
         // info!("  rpcport: {:?}", config.rpcport);
@@ -375,13 +390,13 @@ impl RunConfig {
     }
 
     pub fn process(&self) -> bool {
-        self.mode
-            .is_none_or(|m| m == Mode::All || m == Mode::Processor)
+        self.services
+            .is_none_or(|m| m == Services::All || m == Services::Processor)
     }
 
     pub fn serve(&self) -> bool {
-        self.mode
-            .is_none_or(|m| m == Mode::All || m == Mode::Server)
+        self.services
+            .is_none_or(|m| m == Services::All || m == Services::Server)
     }
 
     fn path_cookiefile(&self) -> PathBuf {
@@ -449,7 +464,7 @@ impl RunConfig {
     PartialOrd,
     Ord,
 )]
-pub enum Mode {
+pub enum Services {
     #[default]
     All,
     Processor,

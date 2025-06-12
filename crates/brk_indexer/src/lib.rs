@@ -19,7 +19,7 @@ use brk_core::{
 use bitcoin::{Transaction, TxIn, TxOut};
 use brk_exit::Exit;
 use brk_parser::Parser;
-use brk_vec::{AnyVec, Format, VecIterator};
+use brk_vec::{AnyVec, VecIterator};
 use color_eyre::eyre::{ContextCompat, eyre};
 use fjall::TransactionalKeyspace;
 use log::{error, info};
@@ -42,21 +42,15 @@ pub struct Indexer {
     vecs: Option<Vecs>,
     stores: Option<Stores>,
     check_collisions: bool,
-    format: Format,
 }
 
 impl Indexer {
-    pub fn new(
-        outputs_dir: &Path,
-        format: Format,
-        check_collisions: bool,
-    ) -> color_eyre::Result<Self> {
+    pub fn new(outputs_dir: &Path, check_collisions: bool) -> color_eyre::Result<Self> {
         setrlimit()?;
         Ok(Self {
             path: outputs_dir.to_owned(),
             vecs: None,
             stores: None,
-            format,
             check_collisions,
         })
     }
@@ -65,7 +59,6 @@ impl Indexer {
         self.vecs = Some(Vecs::forced_import(
             &self.path.join("vecs/indexed"),
             VERSION + Version::ZERO,
-            self.format,
         )?);
         Ok(())
     }
