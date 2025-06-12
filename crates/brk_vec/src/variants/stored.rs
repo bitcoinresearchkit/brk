@@ -73,6 +73,13 @@ where
             StoredVec::Compressed(v) => v.stored_len(),
         }
     }
+    #[inline]
+    fn stored_len_(&self, mmap: &Mmap) -> usize {
+        match self {
+            StoredVec::Raw(v) => v.stored_len_(mmap),
+            StoredVec::Compressed(v) => v.stored_len_(mmap),
+        }
+    }
 
     #[inline]
     fn pushed(&self) -> &[T] {

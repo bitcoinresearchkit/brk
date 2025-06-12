@@ -104,7 +104,11 @@ where
 
     #[inline]
     fn stored_len(&self) -> usize {
-        self.mmap.load().len() / Self::SIZE_OF_T
+        self.stored_len_(&self.mmap.load())
+    }
+    #[inline]
+    fn stored_len_(&self, mmap: &Mmap) -> usize {
+        mmap.len() / Self::SIZE_OF_T
     }
 
     #[inline]
