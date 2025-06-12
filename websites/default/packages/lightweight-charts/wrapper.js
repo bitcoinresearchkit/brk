@@ -14,9 +14,10 @@
 
 /**
  * @typedef {Object} Series
- * @property {ISeriesApi<SeriesType>} inner
+ * @property {ISeriesApi<SeriesType, number>} inner
  * @property {string} id
  * @property {Signal<boolean>} active
+ * @property {Signal<boolean>} hasData
  * @property {VoidFunction} remove
  */
 
@@ -26,8 +27,12 @@
  */
 
 /**
- * @typedef {ChartData<_SingleValueData>} SingleValueData
- * @typedef {ChartData<_CandlestickData>} CandlestickData
+ * @typedef {ChartData<_SingleValueData<number>>} SingleValueData
+ * @typedef {ChartData<_CandlestickData<number>>} CandlestickData
+ */
+
+/**
+ * @typedef {function({ iseries: ISeriesApi<any, number>; unit: Unit; index: Index }): void} SetDataCallback
  */
 
 export default import("./v5.0.7-treeshaked/script.js").then((lc) => {
@@ -123,7 +128,7 @@ export default import("./v5.0.7-treeshaked/script.js").then((lc) => {
             }
           : {}),
         // ..._options,
-      }),
+      })
     );
 
     ichart.priceScale("right").applyOptions({
@@ -155,7 +160,7 @@ export default import("./v5.0.7-treeshaked/script.js").then((lc) => {
             },
           },
         });
-      },
+      }
     );
 
     let timeScaleSet = false;
@@ -167,12 +172,12 @@ export default import("./v5.0.7-treeshaked/script.js").then((lc) => {
         index === /** @satisfies {MonthIndex} */ (7)
           ? 1
           : index === /** @satisfies {QuarterIndex} */ (19)
-            ? 3
-            : index === /** @satisfies {YearIndex} */ (23)
-              ? 12
-              : index === /** @satisfies {DecadeIndex} */ (1)
-                ? 120
-                : 0.5;
+          ? 3
+          : index === /** @satisfies {YearIndex} */ (23)
+          ? 12
+          : index === /** @satisfies {DecadeIndex} */ (1)
+          ? 120
+          : 0.5;
 
       ichart.applyOptions({
         timeScale: {
@@ -195,12 +200,12 @@ export default import("./v5.0.7-treeshaked/script.js").then((lc) => {
         activeResources.forEach((v) => {
           v.fetch();
         });
-      }),
+      })
     );
 
     if (fitContent) {
       new ResizeObserver(() => ichart.timeScale().fitContent()).observe(
-        chartDiv,
+        chartDiv
       );
     }
 
@@ -229,7 +234,7 @@ export default import("./v5.0.7-treeshaked/script.js").then((lc) => {
             const children = Array.from(parent.childNodes).filter(
               (element) =>
                 /** @type {HTMLElement} */ (element).dataset.position ===
-                position,
+                position
             );
 
             if (children.length === 1) {
@@ -251,7 +256,7 @@ export default import("./v5.0.7-treeshaked/script.js").then((lc) => {
 
             fieldset.append(createChild(pane));
           }),
-        paneIndex ? 50 : 0,
+        paneIndex ? 50 : 0
       );
     }
 
@@ -293,14 +298,15 @@ export default import("./v5.0.7-treeshaked/script.js").then((lc) => {
 
     /**
      * @param {Object} args
-     * @param {ISeriesApi<SeriesType>} args.iseries
+     * @param {ISeriesApi<SeriesType, number>} args.iseries
      * @param {string} args.name
      * @param {Unit} args.unit
      * @param {number} args.order
      * @param {Color[]} args.colors
      * @param {SeriesType} args.seriesType
      * @param {VecId} [args.vecId]
-     * @param {Accessor<WhitespaceData[]>} [args.data]
+     * @param {SetDataCallback} [args.setDataCallback]
+     * @param {Accessor<WhitespaceData<number>[]>} [args.data]
      * @param {number} args.paneIndex
      * @param {boolean} [args.defaultActive]
      */
@@ -311,6 +317,7 @@ export default import("./v5.0.7-treeshaked/script.js").then((lc) => {
       unit,
       order,
       seriesType,
+      setDataCallback,
       paneIndex,
       defaultActive,
       colors,
@@ -327,13 +334,15 @@ export default import("./v5.0.7-treeshaked/script.js").then((lc) => {
           },
         });
 
+        const hasData = signals.createSignal(false);
+
         let url = /** @type {string | undefined} */ (undefined);
 
         signals.createEffect(active, (active) =>
           // Or remove ?
           iseries.applyOptions({
             visible: active,
-          }),
+          })
         );
 
         iseries.setSeriesOrder(order);
@@ -345,9 +354,11 @@ export default import("./v5.0.7-treeshaked/script.js").then((lc) => {
         const series = {
           inner: iseries,
           active,
+          hasData,
           id,
           remove() {
             dispose();
+            // @ts-ignore
             chart.inner.removeSeries(iseries);
             if (_valuesResource) {
               activeResources.delete(_valuesResource);
@@ -361,7 +372,7 @@ export default import("./v5.0.7-treeshaked/script.js").then((lc) => {
               index,
               index === /** @satisfies {Height} */ (5)
                 ? "timestamp-fixed"
-                : "timestamp",
+                : "timestamp"
             );
             timeResource.fetch();
 
@@ -446,6 +457,12 @@ export default import("./v5.0.7-treeshaked/script.js").then((lc) => {
                     //     iseries.update(bar, true);
                     //   });
                     // }
+                    hasData.set(true);
+                    setDataCallback?.({
+                      iseries,
+                      index,
+                      unit,
+                    });
 
                     timeScaleSetCallback?.(() => {
                       if (
@@ -461,7 +478,7 @@ export default import("./v5.0.7-treeshaked/script.js").then((lc) => {
                       }
                     });
                     timeScaleSet = true;
-                  },
+                  }
                 );
               } else {
                 activeResources.delete(valuesResource);
@@ -471,6 +488,12 @@ export default import("./v5.0.7-treeshaked/script.js").then((lc) => {
         } else if (data) {
           signals.createEffect(data, (data) => {
             iseries.setData(data);
+            hasData.set(true);
+            setDataCallback?.({
+              iseries,
+              index: index(),
+              unit,
+            });
 
             if (fitContent) {
               ichart.timeScale().fitContent();
@@ -520,6 +543,7 @@ export default import("./v5.0.7-treeshaked/script.js").then((lc) => {
        * @param {number} [args.paneIndex]
        * @param {boolean} [args.defaultActive]
        * @param {boolean} [args.inverse]
+       * @param {SetDataCallback} [args.setDataCallback]
        * @param {DeepPartial<CandlestickStyleOptions & SeriesOptionsCommon & CreatePriceLineOptions>} [args.options]
        */
       addCandlestickSeries({
@@ -529,22 +553,29 @@ export default import("./v5.0.7-treeshaked/script.js").then((lc) => {
         order,
         paneIndex = 0,
         defaultActive,
+        setDataCallback,
         data,
         inverse,
       }) {
         const green = inverse ? colors.red : colors.green;
         const red = inverse ? colors.green : colors.red;
-        const iseries = ichart.addSeries(
-          /** @type {SeriesDefinition<'Candlestick'>} */ (lc.CandlestickSeries),
-          {
-            upColor: green(),
-            downColor: red(),
-            wickUpColor: green(),
-            wickDownColor: red(),
-            borderVisible: false,
-            visible: defaultActive !== false,
-          },
-          paneIndex,
+
+        /** @type {ISeriesApi<'Candlestick', number>} */
+        const iseries = /** @type {any} */ (
+          ichart.addSeries(
+            /** @type {SeriesDefinition<'Candlestick'>} */ (
+              lc.CandlestickSeries
+            ),
+            {
+              upColor: green(),
+              downColor: red(),
+              wickUpColor: green(),
+              wickDownColor: red(),
+              borderVisible: false,
+              visible: defaultActive !== false,
+            },
+            paneIndex
+          )
         );
 
         return addSeries({
@@ -556,6 +587,7 @@ export default import("./v5.0.7-treeshaked/script.js").then((lc) => {
           seriesType: "Candlestick",
           unit,
           data,
+          setDataCallback,
           defaultActive,
           vecId,
         });
@@ -565,9 +597,10 @@ export default import("./v5.0.7-treeshaked/script.js").then((lc) => {
        * @param {string} args.name
        * @param {Unit} args.unit
        * @param {number} args.order
-       * @param {Accessor<LineData[]>} [args.data]
+       * @param {Accessor<LineData<number>[]>} [args.data]
        * @param {VecId} [args.vecId]
        * @param {Color} [args.color]
+       * @param {SetDataCallback} [args.setDataCallback]
        * @param {number} [args.paneIndex]
        * @param {boolean} [args.defaultActive]
        * @param {DeepPartial<LineStyleOptions & SeriesOptionsCommon & CreatePriceLineOptions>} [args.options]
@@ -577,6 +610,7 @@ export default import("./v5.0.7-treeshaked/script.js").then((lc) => {
         name,
         unit,
         order,
+        setDataCallback,
         color,
         paneIndex = 0,
         defaultActive,
@@ -585,16 +619,19 @@ export default import("./v5.0.7-treeshaked/script.js").then((lc) => {
       }) {
         color ||= unit === "USD" ? colors.green : colors.orange;
 
-        const iseries = ichart.addSeries(
-          /** @type {SeriesDefinition<'Line'>} */ (lc.LineSeries),
-          {
-            lineWidth: /** @type {any} */ (1.5),
-            visible: defaultActive !== false,
-            priceLineVisible: false,
-            color: color(),
-            ...options,
-          },
-          paneIndex,
+        /** @type {ISeriesApi<'Line', number>} */
+        const iseries = /** @type {any} */ (
+          ichart.addSeries(
+            /** @type {SeriesDefinition<'Line'>} */ (lc.LineSeries),
+            {
+              lineWidth: /** @type {any} */ (1.5),
+              visible: defaultActive !== false,
+              priceLineVisible: false,
+              color: color(),
+              ...options,
+            },
+            paneIndex
+          )
         );
 
         const priceLineOptions = options?.createPriceLine;
@@ -610,6 +647,7 @@ export default import("./v5.0.7-treeshaked/script.js").then((lc) => {
           paneIndex,
           seriesType: "Line",
           unit,
+          setDataCallback,
           data,
           defaultActive,
           vecId,
@@ -620,8 +658,9 @@ export default import("./v5.0.7-treeshaked/script.js").then((lc) => {
        * @param {string} args.name
        * @param {Unit} args.unit
        * @param {number} args.order
-       * @param {Accessor<BaselineData[]>} [args.data]
+       * @param {Accessor<BaselineData<number>[]>} [args.data]
        * @param {VecId} [args.vecId]
+       * @param {SetDataCallback} [args.setDataCallback]
        * @param {number} [args.paneIndex]
        * @param {boolean} [args.defaultActive]
        * @param {DeepPartial<BaselineStyleOptions & SeriesOptionsCommon & CreatePriceLineOptions>} [args.options]
@@ -632,31 +671,35 @@ export default import("./v5.0.7-treeshaked/script.js").then((lc) => {
         unit,
         order,
         paneIndex: _paneIndex,
+        setDataCallback,
         defaultActive,
         data,
         options,
       }) {
         const paneIndex = _paneIndex ?? 0;
 
-        const iseries = ichart.addSeries(
-          /** @type {SeriesDefinition<'Baseline'>} */ (lc.BaselineSeries),
-          {
-            lineWidth: /** @type {any} */ (1.5),
-            visible: defaultActive !== false,
-            baseValue: {
-              price: options?.createPriceLine?.value ?? 0,
+        /** @type {ISeriesApi<'Baseline', number>} */
+        const iseries = /** @type {any} */ (
+          ichart.addSeries(
+            /** @type {SeriesDefinition<'Baseline'>} */ (lc.BaselineSeries),
+            {
+              lineWidth: /** @type {any} */ (1.5),
+              visible: defaultActive !== false,
+              baseValue: {
+                price: options?.createPriceLine?.value ?? 0,
+              },
+              ...options,
+              topLineColor: options?.topLineColor ?? colors.green(),
+              bottomLineColor: options?.bottomLineColor ?? colors.red(),
+              priceLineVisible: false,
+              bottomFillColor1: "transparent",
+              bottomFillColor2: "transparent",
+              topFillColor1: "transparent",
+              topFillColor2: "transparent",
+              lineVisible: true,
             },
-            ...options,
-            topLineColor: options?.topLineColor ?? colors.green(),
-            bottomLineColor: options?.bottomLineColor ?? colors.red(),
-            priceLineVisible: false,
-            bottomFillColor1: "transparent",
-            bottomFillColor2: "transparent",
-            topFillColor1: "transparent",
-            topFillColor2: "transparent",
-            lineVisible: true,
-          },
-          paneIndex,
+            paneIndex
+          )
         );
 
         const priceLineOptions = options?.createPriceLine;
@@ -674,6 +717,7 @@ export default import("./v5.0.7-treeshaked/script.js").then((lc) => {
           order,
           paneIndex,
           seriesType: "Baseline",
+          setDataCallback,
           unit,
           data,
           defaultActive,
@@ -824,7 +868,7 @@ function createLegend({ signals, utils }) {
             } else {
               spanColor.style.backgroundColor = tameColor(color);
             }
-          },
+          }
         );
       });
 
@@ -930,7 +974,7 @@ function createPaneHeightObserver({ ichart, paneIndex, signals, utils }) {
 }
 
 /**
- * @param {ISeriesApi<SeriesType>} series
+ * @param {ISeriesApi<SeriesType, number>} series
  * @param {DeepPartial<CreatePriceLine>} options
  * @param {Colors} colors
  */
@@ -978,17 +1022,17 @@ function numberToShortUSFormat(value) {
   if (modulused === 0) {
     return `${numberToUSFormat(
       value / (1_000_000 * 1_000 ** letterIndex),
-      3,
+      3
     )}${letter}`;
   } else if (modulused === 1) {
     return `${numberToUSFormat(
       value / (1_000_000 * 1_000 ** letterIndex),
-      2,
+      2
     )}${letter}`;
   } else {
     return `${numberToUSFormat(
       value / (1_000_000 * 1_000 ** letterIndex),
-      1,
+      1
     )}${letter}`;
   }
 }
@@ -1038,7 +1082,7 @@ function createOklchToRGBA() {
       return rgb.map((c) =>
         Math.abs(c) > 0.0031308
           ? (c < 0 ? -1 : 1) * (1.055 * Math.abs(c) ** (1 / 2.4) - 0.055)
-          : 12.92 * c,
+          : 12.92 * c
       );
     }
     /**
@@ -1050,7 +1094,7 @@ function createOklchToRGBA() {
           1, 0.3963377773761749, 0.2158037573099136, 1, -0.1055613458156586,
           -0.0638541728258133, 1, -0.0894841775298119, -1.2914855480194092,
         ]),
-        lab,
+        lab
       );
       const LMS = /** @type {[number, number, number]} */ (
         LMSg.map((val) => val ** 3)
@@ -1061,7 +1105,7 @@ function createOklchToRGBA() {
           -0.0405757452148008, 1.112286803280317, -0.0717110580655164,
           -0.0763729366746601, -0.4214933324022432, 1.5869240198367816,
         ]),
-        LMS,
+        LMS
       );
     }
     /**
@@ -1074,7 +1118,7 @@ function createOklchToRGBA() {
           -0.9692436362808796, 1.8759675015077202, 0.04155505740717559,
           0.05563007969699366, -0.20397695888897652, 1.0569715142428786,
         ],
-        xyz,
+        xyz
       );
     }
 
@@ -1097,8 +1141,8 @@ function createOklchToRGBA() {
       });
       const rgb = srgbLinear2rgb(
         xyz2rgbLinear(
-          oklab2xyz(oklch2oklab(/** @type {[number, number, number]} */ (lch))),
-        ),
+          oklab2xyz(oklch2oklab(/** @type {[number, number, number]} */ (lch)))
+        )
       ).map((v) => {
         return Math.max(Math.min(Math.round(v * 255), 255), 0);
       });
