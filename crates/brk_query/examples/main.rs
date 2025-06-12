@@ -12,7 +12,7 @@ pub fn main() -> color_eyre::Result<()> {
 
     let format = Format::Compressed;
 
-    let mut indexer = Indexer::new(outputs_dir, format, true)?;
+    let mut indexer = Indexer::new(outputs_dir, true)?;
     indexer.import_vecs()?;
 
     let mut computer = Computer::new(outputs_dir, None, format);

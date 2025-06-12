@@ -2,7 +2,7 @@
 // File auto-generated, any modifications will be overwritten
 //
 
-export const VERSION = "v0.0.48";
+export const VERSION = "v0.0.52";
 
 /** @typedef {0} DateIndex */
 /** @typedef {1} DecadeIndex */
@@ -1251,6 +1251,7 @@ export function createVecIdToIndexes() {
     "fee-75p": [5],
     "fee-90p": [5],
     "fee-average": [0, 1, 2, 5, 7, 19, 22, 23],
+    "fee-in-btc": [20],
     "fee-in-btc-10p": [5],
     "fee-in-btc-25p": [5],
     "fee-in-btc-75p": [5],
@@ -1260,6 +1261,7 @@ export function createVecIdToIndexes() {
     "fee-in-btc-median": [5],
     "fee-in-btc-min": [0, 1, 2, 5, 7, 19, 22, 23],
     "fee-in-btc-sum": [0, 1, 2, 5, 7, 19, 22, 23],
+    "fee-in-usd": [20],
     "fee-in-usd-10p": [5],
     "fee-in-usd-25p": [5],
     "fee-in-usd-75p": [5],

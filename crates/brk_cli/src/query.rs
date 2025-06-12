@@ -10,7 +10,7 @@ pub fn query(params: QueryParams) -> color_eyre::Result<()> {
 
     let format = config.format();
 
-    let mut indexer = Indexer::new(&config.outputsdir(), format, config.check_collisions())?;
+    let mut indexer = Indexer::new(&config.outputsdir(), config.check_collisions())?;
     indexer.import_vecs()?;
 
     let mut computer = Computer::new(&config.outputsdir(), config.fetcher(), format);
