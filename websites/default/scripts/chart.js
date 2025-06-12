@@ -2,6 +2,9 @@
 
 const keyPrefix = "chart";
 const ONE_BTC_IN_SATS = 100_000_000;
+const AUTO = "auto";
+const LINE = "line";
+const CANDLE = "candle";
 
 /**
  * @param {Object} args
@@ -95,14 +98,31 @@ export function init({
 
   elements.charts.append(fieldset);
 
-  const { field: seriesTypeField, selected: topSeriesType } =
+  const { field: seriesTypeField, selected: topSeriesType_ } =
     utils.dom.createHorizontalChoiceField({
-      defaultValue: "Line",
+      defaultValue: AUTO,
       keyPrefix,
       key: "seriestype-0",
-      choices: /** @type {const} */ (["Candles", "Line"]),
+      choices: /** @type {const} */ ([AUTO, CANDLE, LINE]),
       signals,
     });
+
+  const topSeriesType = signals.createMemo(() => {
+    const topSeriesType = topSeriesType_();
+    if (topSeriesType === AUTO) {
+      const t = to();
+      const f = from();
+      if (!t || !f) return null;
+      const diff = t - f;
+      if (diff / chart.inner.paneSize().width <= 0.5) {
+        return CANDLE;
+      } else {
+        return LINE;
+      }
+    } else {
+      return topSeriesType;
+    }
+  });
 
   const { field: topUnitField, selected: topUnit } =
     utils.dom.createHorizontalChoiceField({
@@ -241,7 +261,7 @@ export function init({
     chart.addFieldsetIfNeeded({
       id: "charts-seriestype-0",
       paneIndex: 0,
-      position: "ne",
+      position: "se",
       createChild() {
         return seriesTypeField;
       },
@@ -260,7 +280,7 @@ export function init({
           switch (topUnit) {
             case "USD": {
               switch (topSeriesType) {
-                case "Candles": {
+                case CANDLE: {
                   series = chart.addCandlestickSeries({
                     vecId: "ohlc",
                     name: "Price",
@@ -271,7 +291,7 @@ export function init({
 
                   break;
                 }
-                case "Line": {
+                case LINE: {
                   series = chart.addLineSeries({
                     vecId: "close",
                     name: "Price",
@@ -289,7 +309,7 @@ export function init({
             }
             case "Sats": {
               switch (topSeriesType) {
-                case "Candles": {
+                case CANDLE: {
                   series = chart.addCandlestickSeries({
                     vecId: "ohlc-in-sats",
                     name: "Price",
@@ -300,7 +320,7 @@ export function init({
                   });
                   break;
                 }
-                case "Line": {
+                case LINE: {
                   series = chart.addLineSeries({
                     vecId: "close-in-sats",
                     name: "Price",
