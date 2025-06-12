@@ -100,7 +100,7 @@ export function init({
 
   const { field: seriesTypeField, selected: topSeriesType_ } =
     utils.dom.createHorizontalChoiceField({
-      defaultValue: AUTO,
+      defaultValue: CANDLE,
       keyPrefix,
       key: "seriestype-0",
       choices: /** @type {const} */ ([AUTO, CANDLE, LINE]),
@@ -261,7 +261,7 @@ export function init({
     chart.addFieldsetIfNeeded({
       id: "charts-seriestype-0",
       paneIndex: 0,
-      position: "se",
+      position: "ne",
       createChild() {
         return seriesTypeField;
       },
