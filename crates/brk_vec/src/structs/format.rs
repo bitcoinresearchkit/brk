@@ -8,8 +8,8 @@ use serde::{Deserialize, Serialize};
     Default, Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, ValueEnum,
 )]
 pub enum Format {
-    #[default]
     Compressed,
+    #[default]
     Raw,
 }
 

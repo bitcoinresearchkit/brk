@@ -1,6 +1,7 @@
 // @ts-check
 
 const keyPrefix = "chart";
+const ONE_BTC_IN_SATS = 100_000_000;
 
 /**
  * @param {Object} args
@@ -34,7 +35,7 @@ export function init({
   const { index, fieldset } = createIndexSelector({ signals, utils });
 
   const TIMERANGE_LS_KEY = signals.createMemo(
-    () => `chart-timerange-${index()}`,
+    () => `chart-timerange-${index()}`
   );
 
   let firstRun = true;
@@ -89,7 +90,7 @@ export function init({
         from.set(t.from);
         to.set(t.to);
       }
-    }),
+    })
   );
 
   elements.charts.append(fieldset);
@@ -127,6 +128,88 @@ export function init({
 
   const seriesListTop = /** @type {Series[]} */ ([]);
   const seriesListBottom = /** @type {Series[]} */ ([]);
+
+  /**
+   * @param {Object} params
+   * @param {ISeriesApi<any, number>} params.iseries
+   * @param {Unit} params.unit
+   * @param {Index} params.index
+   */
+  function printLatest({ iseries, unit, index }) {
+    const _latest = webSockets.kraken1dCandle.latest();
+
+    if (!_latest) return;
+
+    const latest = { ..._latest };
+
+    if (unit === "Sats") {
+      latest.open = Math.floor(ONE_BTC_IN_SATS / latest.open);
+      latest.high = Math.floor(ONE_BTC_IN_SATS / latest.high);
+      latest.low = Math.floor(ONE_BTC_IN_SATS / latest.low);
+      latest.close = Math.floor(ONE_BTC_IN_SATS / latest.close);
+      latest.value = Math.floor(ONE_BTC_IN_SATS / latest.value);
+    }
+
+    const last_ = iseries.data().at(-1);
+    if (!last_) return;
+    const last = { ...last_ };
+
+    if ("close" in last) {
+      last.close = latest.close;
+    }
+    if ("value" in last) {
+      last.value = latest.value;
+    }
+    const date = new Date(latest.time * 1000);
+
+    switch (index) {
+      case /** @satisfies {Height} */ (5): {
+        if ("close" in last) {
+          last.low = Math.min(last.low, latest.close);
+          last.high = Math.max(last.high, latest.close);
+        }
+        iseries.update(last);
+        break;
+      }
+      case /** @satisfies {DateIndex} */ (0): {
+        iseries.update(latest);
+        break;
+      }
+      default: {
+        if (index === /** @satisfies {WeekIndex} */ (22)) {
+          date.setUTCDate(date.getUTCDate() - ((date.getUTCDay() + 6) % 7));
+        } else if (index === /** @satisfies {MonthIndex} */ (7)) {
+          date.setUTCDate(1);
+        } else if (index === /** @satisfies {QuarterIndex} */ (19)) {
+          const month = date.getUTCMonth();
+          date.setUTCMonth(month - (month % 3), 1);
+        } else if (index === /** @satisfies {YearIndex} */ (23)) {
+          date.setUTCMonth(0, 1);
+        } else if (index === /** @satisfies {DecadeIndex} */ (1)) {
+          date.setUTCFullYear(
+            Math.floor(date.getUTCFullYear() / 10) * 10,
+            0,
+            1
+          );
+        } else {
+          throw Error("Unsupported");
+        }
+
+        const time = date.valueOf() / 1000;
+
+        if (time === last.time) {
+          if ("close" in last) {
+            last.low = Math.min(last.low, latest.low);
+            last.high = Math.max(last.high, latest.high);
+          }
+          iseries.update(last);
+        } else {
+          latest.time = time;
+          iseries.update(latest);
+        }
+      }
+    }
+  }
 
   signals.createEffect(selected, (option) => {
     headingElement.innerHTML = option.title;
@@ -166,80 +249,92 @@ export function init({
 
     signals.createEffect(index, (index) => {
       signals.createEffect(
-        () => [topUnit(), topSeriesType()],
-        ([topUnit, topSeriesType]) => {
+        () => ({
+          topUnit: topUnit(),
+          topSeriesType: topSeriesType(),
+        }),
+        ({ topUnit, topSeriesType }) => {
+          /** @type {Series | undefined} */
+          let series;
+
           switch (topUnit) {
             case "USD": {
               switch (topSeriesType) {
                 case "Candles": {
-                  const series = chart.addCandlestickSeries({
+                  series = chart.addCandlestickSeries({
                     vecId: "ohlc",
                     name: "Price",
                     unit: topUnit,
+                    setDataCallback: printLatest,
                     order: 0,
                   });
-                  seriesListTop[0]?.remove();
-                  seriesListTop[0] = series;
+
                   break;
                 }
                 case "Line": {
-                  const series = chart.addLineSeries({
+                  series = chart.addLineSeries({
                     vecId: "close",
                     name: "Price",
                     unit: topUnit,
                     color: colors.default,
+                    setDataCallback: printLatest,
                     options: {
                       priceLineVisible: true,
                     },
                     order: 0,
                   });
-                  seriesListTop[0]?.remove();
-                  seriesListTop[0] = series;
                 }
               }
-              // signals.createEffect(webSockets.kraken1dCandle.latest, (latest) => {
-              //   if (!latest) return;
-              //   const last = /** @type { CandlestickData | undefined} */ (
-              //     candles.data().at(-1)
-              //   );
-              //   if (!last) return;
-              //   candles?.update({ ...last, close: latest.close });
-              // });
               break;
             }
             case "Sats": {
               switch (topSeriesType) {
                 case "Candles": {
-                  const series = chart.addCandlestickSeries({
+                  series = chart.addCandlestickSeries({
                     vecId: "ohlc-in-sats",
                     name: "Price",
                     unit: topUnit,
                     inverse: true,
+                    setDataCallback: printLatest,
                     order: 0,
                   });
-                  seriesListTop[0]?.remove();
-                  seriesListTop[0] = series;
                   break;
                 }
                 case "Line": {
-                  const series = chart.addLineSeries({
+                  series = chart.addLineSeries({
                     vecId: "close-in-sats",
                     name: "Price",
                     unit: topUnit,
                     color: colors.default,
+                    setDataCallback: printLatest,
                     options: {
                       priceLineVisible: true,
                     },
                     order: 0,
                   });
-                  seriesListTop[0]?.remove();
-                  seriesListTop[0] = series;
                 }
               }
               break;
             }
           }
-        },
+
+          if (!series) throw Error("Unreachable");
+
+          seriesListTop[0]?.remove();
+          seriesListTop[0] = series;
+
+          // setDataCallback insimport("./options").tead of hasData
+          signals.createEffect(
+            () => ({
+              latest: webSockets.kraken1dCandle.latest(),
+              hasData: series.hasData(),
+            }),
+            ({ latest, hasData }) => {
+              if (!series || !latest || !hasData) return;
+              printLatest({ iseries: series.inner, unit: topUnit, index });
+            }
+          );
+        }
       );
 
       [
@@ -300,7 +395,7 @@ export function init({
                             blueprint.color?.() ?? blueprint.colors?.[1](),
                         },
                         order,
-                      }),
+                      })
                     );
                     break;
                   }
@@ -318,13 +413,13 @@ export function init({
                         paneIndex,
                         options: blueprint.options,
                         order,
-                      }),
+                      })
                     );
                 }
               }
             });
           });
-        },
+        }
       );
 
       firstRun = false;
@@ -379,7 +474,7 @@ function createIndexSelector({ signals, utils }) {
         case "decade":
           return /** @satisfies {DecadeIndex} */ (1);
       }
-    },
+    }
   );
 
   return { fieldset, index };

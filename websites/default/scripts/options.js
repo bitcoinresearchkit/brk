@@ -27,7 +27,7 @@
  * @property {Color} [color]
  * @property {[Color, Color]} [colors]
  * @property {DeepPartial<BaselineStyleOptions & SeriesOptionsCommon & CreatePriceLineOptions>} [options]
- * @property {Accessor<BaselineData[]>} [data]
+ * @property {Accessor<BaselineData<number>[]>} [data]
  * @typedef {BaseSeriesBlueprint & BaselineSeriesBlueprintSpecific} BaselineSeriesBlueprint
  *
  * @typedef {Object} CandlestickSeriesBlueprintSpecific
@@ -41,7 +41,7 @@
  * @property {"Line"} [type]
  * @property {Color} [color]
  * @property {DeepPartial<LineStyleOptions & SeriesOptionsCommon & CreatePriceLineOptions>} [options]
- * @property {Accessor<LineData[]>} [data]
+ * @property {Accessor<LineData<number>[]>} [data]
  * @typedef {BaseSeriesBlueprint & LineSeriesBlueprintSpecific} LineSeriesBlueprint
  *
  * @typedef {BaselineSeriesBlueprint | CandlestickSeriesBlueprint | LineSeriesBlueprint} AnySeriesBlueprint
@@ -1430,7 +1430,7 @@ function createPartialOptions(colors) {
                       key: `${fixKey(key)}realized-price`,
                       name,
                       color,
-                    }),
+                    })
                   ),
                 }
               : createPriceWithRatio({
@@ -1512,7 +1512,9 @@ function createPartialOptions(colors) {
                 }),
                 /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
                   type: "Baseline",
-                  key: `${fixKey(key)}net-realized-profit-and-loss-relative-to-realized-cap`,
+                  key: `${fixKey(
+                    key
+                  )}net-realized-profit-and-loss-relative-to-realized-cap`,
                   title: useGroupName ? name : "Net",
                   color: useGroupName ? color : undefined,
                   options: {
@@ -1581,7 +1583,9 @@ function createPartialOptions(colors) {
                         bottom: list.flatMap(({ color, name, key }) => [
                           /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
                             type: "Baseline",
-                            key: `${fixKey(key)}adjusted-spent-output-profit-ratio`,
+                            key: `${fixKey(
+                              key
+                            )}adjusted-spent-output-profit-ratio`,
                             title: useGroupName ? name : "asopr",
                             color: useGroupName ? color : undefined,
                             options: {
@@ -1603,7 +1607,7 @@ function createPartialOptions(colors) {
                   key: `${fixKey(key)}sell-side-risk-ratio`,
                   name: useGroupName ? name : "Risk",
                   color: color,
-                }),
+                })
               ),
             },
           ],
@@ -1691,7 +1695,9 @@ function createPartialOptions(colors) {
                 }),
                 /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
                   type: "Baseline",
-                  key: `${fixKey(key)}net-unrealized-profit-and-loss-relative-to-market-cap`,
+                  key: `${fixKey(
+                    key
+                  )}net-unrealized-profit-and-loss-relative-to-market-cap`,
                   title: useGroupName ? name : "Net",
                   color: useGroupName ? color : undefined,
                   options: {
@@ -1868,7 +1874,7 @@ function createPartialOptions(colors) {
                       key: `${key}-sma`,
                       name: key,
                       color,
-                    }),
+                    })
                   ),
                 },
                 ...averages.map(({ key, name, color }) =>
@@ -1878,7 +1884,7 @@ function createPartialOptions(colors) {
                     title: `${name} Market Price Moving Average`,
                     legend: "average",
                     color,
-                  }),
+                  })
                 ),
               ],
             },
@@ -1969,7 +1975,7 @@ function createPartialOptions(colors) {
                           },
                         }),
                       ],
-                    }),
+                    })
                 ),
                 .../** @type {const} */ ([
                   { name: "2 Year", key: "2y" },
@@ -2040,7 +2046,7 @@ function createPartialOptions(colors) {
                           },
                         }),
                       ],
-                    }),
+                    })
                 ),
               ],
             },
@@ -2056,7 +2062,7 @@ function createPartialOptions(colors) {
                       name: `${year}`,
                       color,
                       defaultActive,
-                    }),
+                    })
                   ),
                 },
                 ...dcaClasses.map(
@@ -2083,7 +2089,7 @@ function createPartialOptions(colors) {
                           },
                         }),
                       ],
-                    }),
+                    })
                 ),
               ],
             },
@@ -2144,10 +2150,10 @@ function createPartialOptions(colors) {
               bottom: [
                 ...createAverageSumCumulativeMinMaxPercentilesSeries("fee"),
                 ...createAverageSumCumulativeMinMaxPercentilesSeries(
-                  "fee-in-btc",
+                  "fee-in-btc"
                 ),
                 ...createAverageSumCumulativeMinMaxPercentilesSeries(
-                  "fee-in-usd",
+                  "fee-in-usd"
                 ),
               ],
             },
@@ -2911,7 +2917,7 @@ export function initOptions({
   const detailsList = [];
 
   const treeElement = signals.createSignal(
-    /** @type {HTMLDivElement | null} */ (null),
+    /** @type {HTMLDivElement | null} */ (null)
   );
 
   /** @type {string[] | undefined} */
@@ -3030,7 +3036,7 @@ export function initOptions({
           return null;
         }
       },
-      null,
+      null
     );
 
     partialTree.forEach((anyPartial, partialIndex) => {
@@ -3053,7 +3059,7 @@ export function initOptions({
 
       if ("tree" in anyPartial) {
         const folderId = utils.stringToId(
-          `${(path || []).join(" ")} ${anyPartial.name} folder`,
+          `${(path || []).join(" ")} ${anyPartial.name} folder`
         );
 
         /** @type {Omit<OptionsGroup, keyof PartialOptionsGroup>} */
@@ -3068,13 +3074,13 @@ export function initOptions({
         const thisPath = groupAddons.id;
 
         const passedDetails = signals.createSignal(
-          /** @type {HTMLDivElement | HTMLDetailsElement | null} */ (null),
+          /** @type {HTMLDivElement | HTMLDetailsElement | null} */ (null)
         );
 
         const childOptionsCount = recursiveProcessPartialTree(
           anyPartial.tree,
           passedDetails,
-          [...(path || []), thisPath],
+          [...(path || []), thisPath]
         );
 
         listForSum.push(childOptionsCount);
@@ -3206,7 +3212,7 @@ export function initOptions({
     });
 
     return signals.createMemo(() =>
-      listForSum.reduce((acc, s) => acc + s(), 0),
+      listForSum.reduce((acc, s) => acc + s(), 0)
     );
   }
   recursiveProcessPartialTree(partialOptions, treeElement);
@@ -3233,7 +3239,7 @@ export function initOptions({
         console.log(
           [...m.entries()]
             .filter(([_, value]) => value > 1)
-            .map(([key, _]) => key),
+            .map(([key, _]) => key)
         );
 
         throw Error("ID duplicate");
