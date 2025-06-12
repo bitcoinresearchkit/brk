@@ -62,7 +62,7 @@ const importSignals = import("./v0.3.2-treeshaked/script.js").then(
       createSignal(initialValue, options) {
         const [get, set] = this.createSolidSignal(
           /** @type {any} */ (initialValue),
-          options,
+          options
         );
 
         // @ts-ignore
@@ -77,13 +77,17 @@ const importSignals = import("./v0.3.2-treeshaked/script.js").then(
           const paramKey = save.key;
           const storageKey = this.createMemo(
             () =>
-              `${typeof save.keyPrefix === "string" ? save.keyPrefix : save.keyPrefix()}-${paramKey}`,
+              `${
+                typeof save.keyPrefix === "string"
+                  ? save.keyPrefix
+                  : save.keyPrefix()
+              }-${paramKey}`
           );
 
           let serialized = /** @type {string | null} */ (null);
           if (options.save.serializeParam !== false) {
             serialized = new URLSearchParams(window.location.search).get(
-              paramKey,
+              paramKey
             );
           }
           if (serialized === null) {
@@ -91,7 +95,7 @@ const importSignals = import("./v0.3.2-treeshaked/script.js").then(
           }
           if (serialized) {
             set(() =>
-              serialized ? save.deserialize(serialized) : initialValue,
+              serialized ? save.deserialize(serialized) : initialValue
             );
           }
 
@@ -100,7 +104,7 @@ const importSignals = import("./v0.3.2-treeshaked/script.js").then(
             if (!firstRun1) {
               serialized = localStorage.getItem(storageKey);
               set(() =>
-                serialized ? save.deserialize(serialized) : initialValue,
+                serialized ? save.deserialize(serialized) : initialValue
               );
             }
             firstRun1 = false;
@@ -146,7 +150,7 @@ const importSignals = import("./v0.3.2-treeshaked/script.js").then(
     };
 
     return signals;
-  },
+  }
 );
 
 /**
@@ -166,7 +170,7 @@ function writeParam(key, value) {
     window.history.replaceState(
       null,
       "",
-      `${window.location.pathname}?${urlParams.toString()}`,
+      `${window.location.pathname}?${urlParams.toString()}`
     );
   } catch (_) {}
 }
