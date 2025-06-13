@@ -32,7 +32,7 @@ impl Kraken {
         )
     }
 
-    fn fetch_1mn() -> color_eyre::Result<BTreeMap<Timestamp, OHLCCents>> {
+    pub fn fetch_1mn() -> color_eyre::Result<BTreeMap<Timestamp, OHLCCents>> {
         info!("Fetching 1mn prices from Kraken...");
 
         retry(
@@ -54,7 +54,7 @@ impl Kraken {
             .ok_or(color_eyre::eyre::Error::msg("Couldn't find date"))
     }
 
-    fn fetch_1d() -> color_eyre::Result<BTreeMap<Date, OHLCCents>> {
+    pub fn fetch_1d() -> color_eyre::Result<BTreeMap<Date, OHLCCents>> {
         info!("Fetching daily prices from Kraken...");
 
         retry(
