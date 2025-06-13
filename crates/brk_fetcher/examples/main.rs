@@ -1,5 +1,5 @@
 use brk_core::{Date, Height};
-use brk_fetcher::{BRK, Fetcher};
+use brk_fetcher::{BRK, Binance, Fetcher, Kraken};
 
 fn main() -> color_eyre::Result<()> {
     color_eyre::install()?;
@@ -11,6 +11,19 @@ fn main() -> color_eyre::Result<()> {
     dbg!(brk.get_from_date(Date::new(2025, 6, 7))?);
 
     let mut fetcher = Fetcher::import(None)?;
+
+    Binance::fetch_1d().map(|b| {
+        dbg!(b.last_key_value());
+    });
+    Kraken::fetch_1d().map(|b| {
+        dbg!(b.last_key_value());
+    });
+    Binance::fetch_1mn().map(|b| {
+        dbg!(b.last_key_value());
+    });
+    Kraken::fetch_1mn().map(|b| {
+        dbg!(b.last_key_value());
+    });
 
     dbg!(fetcher.get_date(Date::new(2025, 6, 5))?);
     dbg!(fetcher.get_height(

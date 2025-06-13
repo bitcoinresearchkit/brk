@@ -40,11 +40,11 @@ impl Fetcher {
     }
 
     fn get_date_(&mut self, date: Date, tries: usize) -> color_eyre::Result<OHLCCents> {
-        self.binance
+        self.kraken
             .get_from_1d(&date)
             .or_else(|_| {
                 // eprintln!("{e}");
-                self.kraken.get_from_1d(&date)
+                self.binance.get_from_1d(&date)
             })
             .or_else(|_| {
                 // eprintln!("{e}");
@@ -90,11 +90,11 @@ impl Fetcher {
         let previous_timestamp = previous_timestamp.map(|t| t.floor_seconds());
 
         let ohlc = self
-            .binance
+            .kraken
             .get_from_1mn(timestamp, previous_timestamp)
             .unwrap_or_else(|_report| {
                 // eprintln!("{_report}");
-                self.kraken
+                self.binance
                     .get_from_1mn(timestamp, previous_timestamp)
                     .unwrap_or_else(|_report| {
                         //         // eprintln!("{_report}");
@@ -185,8 +185,8 @@ How to fix this:
     }
 
     pub fn clear(&mut self) {
+        self.kraken.clear();
         self.binance.clear();
         self.brk.clear();
-        self.kraken.clear();
     }
 }
