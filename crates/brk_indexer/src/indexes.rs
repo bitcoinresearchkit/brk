@@ -110,13 +110,7 @@ impl TryFrom<(&mut Vecs, &Stores, &Client)> for Indexes {
                 vecs.height_to_blockhash
                     .iter()
                     .get(*height)
-                    .is_none_or(|saved_blockhash| {
-                        let b = &rpc_blockhash != saved_blockhash.as_ref();
-                        if b {
-                            dbg!(rpc_blockhash, saved_blockhash.as_ref());
-                        }
-                        b
-                    })
+                    .is_none_or(|saved_blockhash| &rpc_blockhash != saved_blockhash.as_ref())
             })
             .unwrap_or(starting_height);
 
