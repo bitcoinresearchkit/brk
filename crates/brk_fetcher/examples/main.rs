@@ -14,16 +14,16 @@ fn main() -> color_eyre::Result<()> {
 
     Binance::fetch_1d().map(|b| {
         dbg!(b.last_key_value());
-    });
+    })?;
     Kraken::fetch_1d().map(|b| {
         dbg!(b.last_key_value());
-    });
+    })?;
     Binance::fetch_1mn().map(|b| {
         dbg!(b.last_key_value());
-    });
+    })?;
     Kraken::fetch_1mn().map(|b| {
         dbg!(b.last_key_value());
-    });
+    })?;
 
     dbg!(fetcher.get_date(Date::new(2025, 6, 5))?);
     dbg!(fetcher.get_height(

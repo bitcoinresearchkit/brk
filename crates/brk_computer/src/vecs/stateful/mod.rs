@@ -1289,7 +1289,7 @@ impl Vecs {
                 base_version + self.height_to_opreturn_supply.inner_version(),
             )?;
 
-        let mut chain_state: Vec<BlockState>;
+        let mut chain_state: Vec<BlockState> = vec![];
         let mut chain_state_starting_height = Height::from(self.chain_state.len());
 
         let stateful_starting_height = match separate_utxo_vecs
@@ -1322,24 +1322,26 @@ impl Vecs {
                     .collect::<Vec<_>>();
                 chain_state_starting_height
             }
-            Ordering::Less => {
-                // todo!("rollback instead");
-                chain_state = vec![];
-                chain_state_starting_height = Height::ZERO;
-                Height::ZERO
-            }
+            Ordering::Less => Height::ZERO,
         };
-        if stateful_starting_height.is_zero() {
-            info!("Starting processing utxos from the start");
-            separate_utxo_vecs
-                .par_iter_mut()
-                .try_for_each(|(_, v)| v.state.price_to_amount.reset())?;
-        }
+
         let starting_height = starting_indexes
             .height
             .min(stateful_starting_height)
             .min(Height::from(self.height_to_unspendable_supply.len()))
             .min(Height::from(self.height_to_opreturn_supply.len()));
+
+        if starting_height.is_zero() {
+            info!("Starting processing utxos from the start");
+
+            // todo!("rollback instead");
+            chain_state = vec![];
+            chain_state_starting_height = Height::ZERO;
+
+            separate_utxo_vecs
+                .par_iter_mut()
+                .try_for_each(|(_, v)| v.state.price_to_amount.reset())?;
+        }
 
         if starting_height == Height::from(height_to_date_fixed.len()) {
             return Ok(());
