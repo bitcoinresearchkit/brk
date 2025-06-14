@@ -32,16 +32,12 @@ fn any_handler(
     app_state: AppState,
     path: Option<extract::Path<String>>,
 ) -> Response {
-    let website_path = app_state
-        .websites_path
-        .as_ref()
-        .expect("Should never reach here is websites_path is None")
-        .join(app_state.website.to_folder_name());
+    let dist_path = app_state.dist_path();
 
     if let Some(path) = path.as_ref() {
         let path = path.0.replace("..", "").replace("\\", "");
 
-        let mut path = website_path.join(&path);
+        let mut path = dist_path.join(&path);
 
         if !path.exists() || path.is_dir() {
             if path.extension().is_some() {
@@ -55,13 +51,13 @@ fn any_handler(
 
                 return response;
             } else {
-                path = website_path.join("index.html");
+                path = dist_path.join("index.html");
             }
         }
 
         path_to_response(&headers, &path)
     } else {
-        path_to_response(&headers, &website_path.join("index.html"))
+        path_to_response(&headers, &dist_path.join("index.html"))
     }
 }
 

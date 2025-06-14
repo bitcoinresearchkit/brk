@@ -1,24 +1,36 @@
-const CACHE_NAME = "cache";
+// DO NOT CHANGE, Exact format is expected in `brk_bundler`
+const CACHE_VERSION = "__VERSION__";
+
+const SHELL_FILES = ["/", "/index.html"];
 
 /** @type {ServiceWorkerGlobalScope} */
 const sw = /** @type {any} */ (self);
 
 sw.addEventListener("install", (event) => {
   console.log("sw: install");
-  event.waitUntil(sw.skipWaiting());
+  event.waitUntil(
+    caches
+      .open(CACHE_VERSION)
+      .then((c) => c.addAll(SHELL_FILES))
+      .then(() => sw.skipWaiting()),
+  );
 });
 
 sw.addEventListener("activate", (event) => {
   console.log("sw: active");
-  sw.clients.claim();
   event.waitUntil(
-    caches
-      .keys()
-      .then((keys) =>
-        Promise.all(
-          keys.filter((key) => key !== "api").map((key) => caches.delete(key)),
+    Promise.all([
+      sw.clients.claim(),
+      caches
+        .keys()
+        .then((keys) =>
+          Promise.all(
+            keys
+              .filter((key) => key !== "api" && key !== CACHE_VERSION)
+              .map((key) => caches.delete(key)),
+          ),
         ),
-      ),
+    ]),
   );
 });
 
@@ -42,7 +54,7 @@ sw.addEventListener("fetch", (event) => {
     return; // let the browser handle it
   }
 
-  const cache = caches.open(CACHE_NAME);
+  const cache = caches.open(CACHE_VERSION);
 
   // 2) NAVIGATION: network‐first on your shell
   if (req.mode === "navigate") {
@@ -76,14 +88,13 @@ sw.addEventListener("fetch", (event) => {
         }
         return response;
       })
-      .catch(async () => {
-        return caches
+      .catch(async () =>
+        caches
           .match(req)
           .then((cached) => {
             return cached || indexHTMLOrOffline();
           })
-          .catch(indexHTMLOrOffline);
-      })
-      .catch(indexHTMLOrOffline),
+          .catch(indexHTMLOrOffline),
+      ),
   );
 });

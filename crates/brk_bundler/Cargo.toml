@@ -1,0 +1,16 @@
+[package]
+name = "brk_bundler"
+description = "A crate that bundles the selected website for the server"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+homepage.workspace = true
+repository.workspace = true
+
+[dependencies]
+log = { workspace = true }
+minify-html-onepass = "0.16.4"
+notify = "8.0.0"
+rolldown = { git = "https://github.com/rolldown/rolldown", branch = "main" }
+sugar_path = { version = "1.2.0", features = ["cached_current_dir"] }
+tokio = { workspace = true }

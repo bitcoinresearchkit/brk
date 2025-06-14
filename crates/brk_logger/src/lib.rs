@@ -25,7 +25,7 @@ pub fn init(path: Option<&Path>) {
             .unwrap()
     });
 
-    Builder::from_env(Env::default().default_filter_or("info,fjall=off,lsm_tree=off"))
+    Builder::from_env(Env::default().default_filter_or("info,fjall=off,lsm_tree=off,rolldown=off"))
         .format(move |buf, record| {
             let date_time = Timestamp::now()
                 .to_zoned(tz::TimeZone::system())
@@ -80,5 +80,9 @@ fn write(
     args: impl Display,
 ) -> Result<(), std::io::Error> {
     writeln!(buf, "{} {} {} {}", date_time, dash, level, args)
-    // writeln!(buf, "{} {} {} {}  {}", date_time, _target, level, dash, args)
+    // writeln!(
+    //     buf,
+    //     "{} {} {} {}  {}",
+    //     date_time, _target, level, dash, args
+    // )
 }
