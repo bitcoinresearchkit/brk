@@ -10,6 +10,7 @@ version.workspace = true
 
 [features]
 full = [
+    "bundler",
     "core",
     "computer",
     "exit",
@@ -23,6 +24,7 @@ full = [
     "store",
     "vec",
 ]
+bundler = ["brk_bundler"]
 core = ["brk_core"]
 computer = ["brk_computer"]
 exit = ["brk_exit"]
@@ -37,6 +39,7 @@ store = ["brk_store"]
 vec = ["brk_vec"]
 
 [dependencies]
+brk_bundler = { workspace = true, optional = true }
 brk_cli = { workspace = true }
 brk_core = { workspace = true, optional = true }
 brk_computer = { workspace = true, optional = true }

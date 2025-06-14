@@ -66,7 +66,6 @@ export function init({
   });
 
   const chart = lightweightCharts.createChartElement({
-    owner: signals.getOwner(),
     parent: elements.charts,
     signals,
     colors,
@@ -156,7 +155,7 @@ export function init({
 
   /**
    * @param {Object} params
-   * @param {ISeriesApi<any, number>} params.iseries
+   * @param {ISeries} params.iseries
    * @param {Unit} params.unit
    * @param {Index} params.index
    */

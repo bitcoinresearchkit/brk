@@ -1,6 +1,6 @@
 // @ts-check
 
-/** @import {IChartApi, ISeriesApi, SeriesDefinition, SingleValueData as _SingleValueData, CandlestickData as _CandlestickData, BaselineData, SeriesType, IPaneApi, BaselineStyleOptions, CandlestickStyleOptions, WhitespaceData} from './v5.0.7-treeshaked/types' */
+/** @import { IChartApi, ISeriesApi as _ISeriesApi, SeriesDefinition, SingleValueData as _SingleValueData, CandlestickData as _CandlestickData, BaselineData as _BaselineData, SeriesType, IPaneApi, LineSeriesPartialOptions, BaselineSeriesPartialOptions, CandlestickSeriesPartialOptions, WhitespaceData, DeepPartial, ChartOptions, Time, LineData as _LineData } from './v5.0.7/types' */
 
 /**
  * @typedef {[number, number, number, number]} OHLCTuple
@@ -10,764 +10,771 @@
  *
  * @typedef {Object} Indexed
  * @property {number} index
- */
-
-/**
+ *
+ * @typedef {_ISeriesApi<SeriesType, number>} ISeries
+ * @typedef {_ISeriesApi<'Candlestick', number>} CandlestickISeries
+ * @typedef {_ISeriesApi<'Line', number>} LineISeries
+ * @typedef {_ISeriesApi<'Baseline', number>} BaselineISeries
+ *
  * @typedef {Object} Series
- * @property {ISeriesApi<SeriesType, number>} inner
+ * @property {ISeries} inner
  * @property {string} id
  * @property {Signal<boolean>} active
  * @property {Signal<boolean>} hasData
  * @property {Signal<string | null>} url
  * @property {VoidFunction} remove
+ *
+ * @typedef {ChartData<_SingleValueData<number>>} SingleValueData
+ * @typedef {ChartData<_CandlestickData<number>>} CandlestickData
+ * @typedef {ChartData<_LineData<number>>} LineData
+ * @typedef {ChartData<_BaselineData<number>>} BaselineData
+ *
+ * @typedef {function({ iseries: ISeries; unit: Unit; index: Index }): void} SetDataCallback
+ *
+ * @typedef {Object} CreatePriceLine
+ * @property {number} value
+ *
+ * @typedef {Object} CreatePriceLineOptions
+ * @property {CreatePriceLine} createPriceLine
+ *
+ * @typedef {Partial<CreatePriceLineOptions>} PartialCreatePriceLineOptions
+ *
+ * @typedef {LineSeriesPartialOptions & PartialCreatePriceLineOptions} PartialLineStyleOptions
+ * @typedef {CandlestickSeriesPartialOptions & PartialCreatePriceLineOptions} PartialCandlestickStyleOptions
+ * @typedef {BaselineSeriesPartialOptions & PartialCreatePriceLineOptions} PartialBaselineStyleOptions
  */
 
 /**
  * @template T
- * @typedef {T & Valued & Indexed} ChartData<T>
+ * @typedef {T & Valued} ChartData<T>
  */
+
+import {
+  createChart,
+  CandlestickSeries,
+  LineSeries,
+  BaselineSeries,
+} from "./v5.0.7/script.js";
+
+const oklchToRGBA = createOklchToRGBA();
 
 /**
- * @typedef {ChartData<_SingleValueData<number>>} SingleValueData
- * @typedef {ChartData<_CandlestickData<number>>} CandlestickData
+ * @param {Object} args
+ * @param {string} args.id
+ * @param {HTMLElement} args.parent
+ * @param {Signals} args.signals
+ * @param {Colors} args.colors
+ * @param {Utilities} args.utils
+ * @param {Elements} args.elements
+ * @param {VecsResources} args.vecsResources
+ * @param {Accessor<Index>} args.index
+ * @param {((unknownTimeScaleCallback: VoidFunction) => void)} [args.timeScaleSetCallback]
+ * @param {true} [args.fitContent]
+ * @param {{unit: Unit; blueprints: AnySeriesBlueprint[]}[]} [args.config]
  */
+function createChartElement({
+  parent,
+  signals,
+  colors,
+  utils,
+  elements,
+  id: chartId,
+  index,
+  vecsResources,
+  timeScaleSetCallback,
+  fitContent,
+  config,
+}) {
+  const div = window.document.createElement("div");
+  div.classList.add("chart");
+  parent.append(div);
 
-/**
- * @typedef {function({ iseries: ISeriesApi<any, number>; unit: Unit; index: Index }): void} SetDataCallback
- */
+  const legendTop = createLegend({
+    utils,
+    signals,
+  });
+  div.append(legendTop.element);
 
-export default import("./v5.0.7-treeshaked/script.js").then((lc) => {
-  const oklchToRGBA = createOklchToRGBA();
+  const chartDiv = window.document.createElement("div");
+  chartDiv.classList.add("lightweight-chart");
+  div.append(chartDiv);
+
+  const legendBottom = createLegend({
+    utils,
+    signals,
+  });
+  div.append(legendBottom.element);
+
+  /** @type {IChartApi} */
+  const ichart = createChart(
+    chartDiv,
+    /** @satisfies {DeepPartial<ChartOptions>} */ ({
+      autoSize: true,
+      layout: {
+        fontFamily: elements.style.fontFamily,
+        background: { color: "transparent" },
+        attributionLogo: false,
+        colorSpace: "display-p3",
+        colorParsers: [oklchToRGBA],
+      },
+      grid: {
+        vertLines: { visible: false },
+        horzLines: { visible: false },
+      },
+      rightPriceScale: {
+        borderVisible: false,
+      },
+      timeScale: {
+        borderVisible: false,
+        ...(fitContent
+          ? {
+              minBarSpacing: 0.001,
+            }
+          : {}),
+      },
+      localization: {
+        priceFormatter: numberToShortUSFormat,
+        locale: "en-us",
+      },
+      crosshair: {
+        mode: 3,
+      },
+      ...(fitContent
+        ? {
+            handleScale: false,
+            handleScroll: false,
+          }
+        : {}),
+      // ..._options,
+    }),
+  );
+
+  ichart.priceScale("right").applyOptions({
+    minimumWidth: 80,
+  });
+
+  signals.createEffect(
+    () => ({
+      defaultColor: colors.default(),
+      offColor: colors.gray(),
+      borderColor: colors.border(),
+    }),
+    ({ defaultColor, offColor, borderColor }) => {
+      ichart.applyOptions({
+        layout: {
+          textColor: offColor,
+          panes: {
+            separatorColor: borderColor,
+          },
+        },
+        crosshair: {
+          horzLine: {
+            color: offColor,
+            labelBackgroundColor: defaultColor,
+          },
+          vertLine: {
+            color: offColor,
+            labelBackgroundColor: defaultColor,
+          },
+        },
+      });
+    },
+  );
+
+  let timeScaleSet = false;
+
+  signals.createEffect(index, (index) => {
+    timeScaleSet = false;
+
+    const minBarSpacing =
+      index === /** @satisfies {MonthIndex} */ (7)
+        ? 1
+        : index === /** @satisfies {QuarterIndex} */ (19)
+          ? 3
+          : index === /** @satisfies {YearIndex} */ (23)
+            ? 12
+            : index === /** @satisfies {DecadeIndex} */ (1)
+              ? 120
+              : 0.5;
+
+    ichart.applyOptions({
+      timeScale: {
+        timeVisible:
+          index === /** @satisfies {Height} */ (5) ||
+          index === /** @satisfies {DifficultyEpoch} */ (2) ||
+          index === /** @satisfies {HalvingEpoch} */ (4),
+        ...(!fitContent
+          ? {
+              minBarSpacing,
+            }
+          : {}),
+      },
+    });
+  });
+
+  const activeResources = /** @type {Set<VecResource>} */ (new Set());
+  ichart.subscribeCrosshairMove(
+    utils.debounce(() => {
+      activeResources.forEach((v) => {
+        v.fetch();
+      });
+    }),
+  );
+
+  if (fitContent) {
+    new ResizeObserver(() => ichart.timeScale().fitContent()).observe(chartDiv);
+  }
 
   /**
    * @param {Object} args
    * @param {string} args.id
-   * @param {HTMLElement} args.parent
-   * @param {Signals} args.signals
-   * @param {Colors} args.colors
-   * @param {Utilities} args.utils
-   * @param {Elements} args.elements
-   * @param {VecsResources} args.vecsResources
-   * @param {Accessor<Index>} args.index
-   * @param {((unknownTimeScaleCallback: VoidFunction) => void)} [args.timeScaleSetCallback]
-   * @param {Owner | null} args.owner
-   * @param {true} [args.fitContent]
-   * @param {{unit: Unit; blueprints: AnySeriesBlueprint[]}[]} [args.config]
+   * @param {number} args.paneIndex
+   * @param {"nw" | "ne" | "se" | "sw"} args.position
+   * @param {number} [args.timeout]
+   * @param {(pane: IPaneApi<Time>) => HTMLElement} args.createChild
    */
-  function createChartElement({
-    parent,
-    signals,
-    colors,
-    utils,
-    elements,
-    id: chartId,
-    index,
-    vecsResources,
-    timeScaleSetCallback,
-    owner: _owner,
-    fitContent,
-    config,
-  }) {
-    const div = window.document.createElement("div");
-    div.classList.add("chart");
-    parent.append(div);
+  function addFieldsetIfNeeded({ paneIndex, id, position, createChild }) {
+    const owner = signals.getOwner();
 
-    const legendTop = createLegend({
-      utils,
-      signals,
-    });
-    div.append(legendTop.element);
+    setTimeout(
+      () =>
+        signals.runWithOwner(owner, () => {
+          const parent = ichart
+            ?.panes()
+            .at(paneIndex)
+            ?.getHTMLElement()
+            .children?.item(1)?.firstChild;
 
-    const chartDiv = window.document.createElement("div");
-    chartDiv.classList.add("lightweight-chart");
-    div.append(chartDiv);
+          if (!parent) throw Error("Parent should exist");
 
-    const legendBottom = createLegend({
-      utils,
-      signals,
-    });
-    div.append(legendBottom.element);
+          const children = Array.from(parent.childNodes).filter(
+            (element) =>
+              /** @type {HTMLElement} */ (element).dataset.position ===
+              position,
+          );
 
-    /** @type {IChartApi} */
-    const ichart = lc.createChart(
-      chartDiv,
-      /** @satisfies {DeepPartial<ChartOptions>} */ ({
-        autoSize: true,
-        layout: {
-          fontFamily: elements.style.fontFamily,
-          background: { color: "transparent" },
-          attributionLogo: false,
-          colorSpace: "display-p3",
-          colorParsers: [oklchToRGBA],
-        },
-        grid: {
-          vertLines: { visible: false },
-          horzLines: { visible: false },
-        },
-        rightPriceScale: {
-          borderVisible: false,
-        },
-        timeScale: {
-          borderVisible: false,
-          ...(fitContent
-            ? {
-                minBarSpacing: 0.001,
-              }
-            : {}),
-        },
-        localization: {
-          priceFormatter: numberToShortUSFormat,
-          locale: "en-us",
-        },
-        crosshair: {
-          mode: 3,
-        },
-        ...(fitContent
-          ? {
-              handleScale: false,
-              handleScroll: false,
-            }
-          : {}),
-        // ..._options,
-      }),
+          if (children.length === 1) {
+            children[0].remove();
+          } else if (children.length > 1) {
+            throw Error("Unreacable");
+          }
+
+          const fieldset = window.document.createElement("fieldset");
+          fieldset.dataset.size = "xs";
+          fieldset.dataset.position = position;
+          fieldset.id = `${id}-${paneIndex}`;
+          const pane = ichart.panes().at(paneIndex);
+          if (!pane) throw Error("Expect pane");
+          pane
+            .getHTMLElement()
+            .children?.item(1)
+            ?.firstChild?.appendChild(fieldset);
+
+          fieldset.append(createChild(pane));
+        }),
+      paneIndex ? 50 : 0,
     );
+  }
 
-    ichart.priceScale("right").applyOptions({
-      minimumWidth: 80,
-    });
+  /**
+   * @param {Object} args
+   * @param {Unit} args.unit
+   * @param {SeriesType} args.seriesType
+   * @param {number} args.paneIndex
+   */
+  function addPriceScaleSelectorIfNeeded({ unit, paneIndex, seriesType }) {
+    const id = `${chartId}-scale`;
 
-    signals.createEffect(
-      () => ({
-        defaultColor: colors.default(),
-        offColor: colors.gray(),
-        borderColor: colors.border(),
-      }),
-      ({ defaultColor, offColor, borderColor }) => {
-        ichart.applyOptions({
-          layout: {
-            textColor: offColor,
-            panes: {
-              separatorColor: borderColor,
-            },
-          },
-          crosshair: {
-            horzLine: {
-              color: offColor,
-              labelBackgroundColor: defaultColor,
-            },
-            vertLine: {
-              color: offColor,
-              labelBackgroundColor: defaultColor,
-            },
-          },
+    addFieldsetIfNeeded({
+      id,
+      paneIndex,
+      position: "sw",
+      createChild(pane) {
+        const { field, selected } = utils.dom.createHorizontalChoiceField({
+          choices: /** @type {const} */ (["lin", "log"]),
+          id: utils.stringToId(`${id} ${paneIndex} ${unit}`),
+          defaultValue:
+            unit === "USD" && seriesType !== "Baseline" ? "log" : "lin",
+          key: `${id}-price-scale-${paneIndex}`,
+          signals,
         });
+
+        signals.createEffect(selected, (selected) => {
+          try {
+            pane.priceScale("right").applyOptions({
+              mode: selected === "lin" ? 0 : 1,
+            });
+          } catch {}
+        });
+
+        return field;
       },
-    );
-
-    let timeScaleSet = false;
-
-    signals.createEffect(index, (index) => {
-      timeScaleSet = false;
-
-      const minBarSpacing =
-        index === /** @satisfies {MonthIndex} */ (7)
-          ? 1
-          : index === /** @satisfies {QuarterIndex} */ (19)
-            ? 3
-            : index === /** @satisfies {YearIndex} */ (23)
-              ? 12
-              : index === /** @satisfies {DecadeIndex} */ (1)
-                ? 120
-                : 0.5;
-
-      ichart.applyOptions({
-        timeScale: {
-          timeVisible:
-            index === /** @satisfies {Height} */ (5) ||
-            index === /** @satisfies {DifficultyEpoch} */ (2) ||
-            index === /** @satisfies {HalvingEpoch} */ (4),
-          ...(!fitContent
-            ? {
-                minBarSpacing,
-              }
-            : {}),
-        },
-      });
     });
+  }
 
-    const activeResources = /** @type {Set<VecResource>} */ (new Set());
-    ichart.subscribeCrosshairMove(
-      utils.debounce(() => {
-        activeResources.forEach((v) => {
-          v.fetch();
-        });
-      }),
-    );
+  /**
+   * @param {Object} args
+   * @param {ISeries} args.iseries
+   * @param {string} args.name
+   * @param {Unit} args.unit
+   * @param {number} args.order
+   * @param {Color[]} args.colors
+   * @param {SeriesType} args.seriesType
+   * @param {VecId} [args.vecId]
+   * @param {SetDataCallback} [args.setDataCallback]
+   * @param {Accessor<WhitespaceData<number>[]>} [args.data]
+   * @param {number} args.paneIndex
+   * @param {boolean} [args.defaultActive]
+   */
+  function addSeries({
+    iseries,
+    vecId,
+    name,
+    unit,
+    order,
+    seriesType,
+    setDataCallback,
+    paneIndex,
+    defaultActive,
+    colors,
+    data,
+  }) {
+    return signals.createRoot((dispose) => {
+      const id = `${utils.stringToId(name)}-${paneIndex}`;
 
-    if (fitContent) {
-      new ResizeObserver(() => ichart.timeScale().fitContent()).observe(
-        chartDiv,
-      );
-    }
-
-    /**
-     * @param {Object} args
-     * @param {string} args.id
-     * @param {number} args.paneIndex
-     * @param {"nw" | "ne" | "se" | "sw"} args.position
-     * @param {number} [args.timeout]
-     * @param {(pane: IPaneApi<Time>) => HTMLElement} args.createChild
-     */
-    function addFieldsetIfNeeded({ paneIndex, id, position, createChild }) {
-      const owner = signals.getOwner();
-
-      setTimeout(
-        () =>
-          signals.runWithOwner(owner, () => {
-            const parent = ichart
-              ?.panes()
-              .at(paneIndex)
-              ?.getHTMLElement()
-              .children?.item(1)?.firstChild;
-
-            if (!parent) throw Error("Parent should exist");
-
-            const children = Array.from(parent.childNodes).filter(
-              (element) =>
-                /** @type {HTMLElement} */ (element).dataset.position ===
-                position,
-            );
-
-            if (children.length === 1) {
-              children[0].remove();
-            } else if (children.length > 1) {
-              throw Error("Unreacable");
-            }
-
-            const fieldset = window.document.createElement("fieldset");
-            fieldset.dataset.size = "xs";
-            fieldset.dataset.position = position;
-            fieldset.id = `${id}-${paneIndex}`;
-            const pane = ichart.panes().at(paneIndex);
-            if (!pane) throw Error("Expect pane");
-            pane
-              .getHTMLElement()
-              .children?.item(1)
-              ?.firstChild?.appendChild(fieldset);
-
-            fieldset.append(createChild(pane));
-          }),
-        paneIndex ? 50 : 0,
-      );
-    }
-
-    /**
-     * @param {Object} args
-     * @param {Unit} args.unit
-     * @param {SeriesType} args.seriesType
-     * @param {number} args.paneIndex
-     */
-    function addPriceScaleSelectorIfNeeded({ unit, paneIndex, seriesType }) {
-      const id = `${chartId}-scale`;
-
-      addFieldsetIfNeeded({
-        id,
-        paneIndex,
-        position: "sw",
-        createChild(pane) {
-          const { field, selected } = utils.dom.createHorizontalChoiceField({
-            choices: /** @type {const} */ (["lin", "log"]),
-            id: utils.stringToId(`${id} ${paneIndex} ${unit}`),
-            defaultValue:
-              unit === "USD" && seriesType !== "Baseline" ? "log" : "lin",
-            key: `${id}-price-scale-${paneIndex}`,
-            signals,
-          });
-
-          signals.createEffect(selected, (selected) => {
-            try {
-              pane.priceScale("right").applyOptions({
-                mode: selected === "lin" ? 0 : 1,
-              });
-            } catch {}
-          });
-
-          return field;
+      const active = signals.createSignal(defaultActive ?? true, {
+        save: {
+          keyPrefix: "",
+          key: id,
+          ...utils.serde.boolean,
         },
       });
-    }
+
+      const hasData = signals.createSignal(false);
+
+      signals.createEffect(active, (active) =>
+        // Or remove ?
+        iseries.applyOptions({
+          visible: active,
+        }),
+      );
+
+      iseries.setSeriesOrder(order);
+
+      /** @type {VecResource | undefined} */
+      let _valuesResource;
+
+      /** @type {Series} */
+      const series = {
+        inner: iseries,
+        active,
+        hasData,
+        id,
+        url: signals.createSignal(/** @type {string | null} */ (null)),
+        remove() {
+          dispose();
+          // @ts-ignore
+          chart.inner.removeSeries(iseries);
+          if (_valuesResource) {
+            activeResources.delete(_valuesResource);
+          }
+        },
+      };
+
+      if (vecId) {
+        signals.createEffect(index, (index) => {
+          const timeResource = vecsResources.getOrCreate(
+            index,
+            index === /** @satisfies {Height} */ (5)
+              ? "timestamp-fixed"
+              : "timestamp",
+          );
+          timeResource.fetch();
+
+          const valuesResource = vecsResources.getOrCreate(index, vecId);
+          _valuesResource = valuesResource;
+
+          series.url.set(() => valuesResource.url);
+
+          signals.createEffect(active, (active) => {
+            if (active) {
+              valuesResource.fetch();
+              activeResources.add(valuesResource);
+
+              const fetchedKey = vecsResources.defaultFetchedKey;
+              signals.createEffect(
+                () => [
+                  timeResource.fetched().get(fetchedKey)?.vec(),
+                  valuesResource.fetched().get(fetchedKey)?.vec(),
+                ],
+                ([indexes, _ohlcs]) => {
+                  if (!indexes?.length || !_ohlcs?.length) return;
+
+                  // const seriesData = series.inner.data();
+                  // const set = seriesData.length === 0;
+
+                  const ohlcs = /** @type {OHLCTuple[]} */ (_ohlcs);
+                  let length = Math.min(indexes.length, ohlcs.length);
+                  const data = new Array(length);
+                  let prevTime = null;
+                  let timeOffset = 0;
+
+                  for (let i = 0; i < length; i++) {
+                    const time = indexes[i];
+                    const sameTime = prevTime === time;
+                    if (sameTime) {
+                      timeOffset += 1;
+                    }
+                    const v = ohlcs[i];
+                    const offsetedI = i - timeOffset;
+                    if (v === null) {
+                      data[offsetedI] = {
+                        time,
+                        value: NaN,
+                      };
+                    } else if (typeof v === "number") {
+                      data[offsetedI] = {
+                        time,
+                        value: v,
+                      };
+                    } else {
+                      if (sameTime) {
+                        console.log(data[offsetedI]);
+                      }
+                      // const prev = sameTime ? data[offsetedI] : undefined;
+                      let [open, high, low, close] = v;
+                      data[offsetedI] = {
+                        time,
+                        open: sameTime ? data[offsetedI].open : open,
+                        high: sameTime
+                          ? Math.max(data[offsetedI].high, high)
+                          : high,
+                        low: sameTime
+                          ? Math.min(data[offsetedI].low, low)
+                          : low,
+                        close,
+                      };
+                    }
+                    prevTime = time;
+                  }
+
+                  data.length -= timeOffset;
+
+                  // if (set) {
+                  iseries.setData(data);
+
+                  if (fitContent) {
+                    ichart.timeScale().fitContent();
+                  }
+                  // } else {
+                  // let seriesDataOffset = 0;
+                  // while seriesData
+                  //   data.forEach((bar) => {
+                  //     iseries.update(bar, true);
+                  //   });
+                  // }
+                  hasData.set(true);
+                  setDataCallback?.({
+                    iseries,
+                    index,
+                    unit,
+                  });
+
+                  timeScaleSetCallback?.(() => {
+                    if (
+                      !timeScaleSet &&
+                      (index === /** @satisfies {QuarterIndex} */ (19) ||
+                        index === /** @satisfies {YearIndex} */ (23) ||
+                        index === /** @satisfies {DecadeIndex} */ (1))
+                    ) {
+                      ichart.timeScale().setVisibleLogicalRange({
+                        from: -1,
+                        to: data.length,
+                      });
+                    }
+                  });
+                  timeScaleSet = true;
+                },
+              );
+            } else {
+              activeResources.delete(valuesResource);
+            }
+          });
+        });
+      } else if (data) {
+        signals.createEffect(data, (data) => {
+          iseries.setData(data);
+          hasData.set(true);
+          setDataCallback?.({
+            iseries,
+            index: index(),
+            unit,
+          });
+
+          if (fitContent) {
+            ichart.timeScale().fitContent();
+          }
+        });
+      }
+
+      (paneIndex ? legendBottom : legendTop).addOrReplace({
+        series,
+        name,
+        colors,
+        order,
+      });
+
+      createPaneHeightObserver({
+        ichart,
+        paneIndex,
+        signals,
+        utils,
+      });
+
+      addPriceScaleSelectorIfNeeded({
+        paneIndex,
+        seriesType,
+        unit,
+      });
+
+      return series;
+    });
+  }
+
+  const chart = {
+    inner: ichart,
+    legendTop,
+    legendBottom,
+
+    addFieldsetIfNeeded,
 
     /**
      * @param {Object} args
-     * @param {ISeriesApi<SeriesType, number>} args.iseries
      * @param {string} args.name
      * @param {Unit} args.unit
      * @param {number} args.order
-     * @param {Color[]} args.colors
-     * @param {SeriesType} args.seriesType
      * @param {VecId} [args.vecId]
-     * @param {SetDataCallback} [args.setDataCallback]
-     * @param {Accessor<WhitespaceData<number>[]>} [args.data]
-     * @param {number} args.paneIndex
+     * @param {Accessor<CandlestickData[]>} [args.data]
+     * @param {number} [args.paneIndex]
      * @param {boolean} [args.defaultActive]
+     * @param {boolean} [args.inverse]
+     * @param {SetDataCallback} [args.setDataCallback]
+     * @param {PartialCandlestickStyleOptions} [args.options]
      */
-    function addSeries({
-      iseries,
+    addCandlestickSeries({
       vecId,
       name,
       unit,
       order,
-      seriesType,
-      setDataCallback,
-      paneIndex,
+      paneIndex = 0,
       defaultActive,
-      colors,
+      setDataCallback,
       data,
+      inverse,
     }) {
-      return signals.createRoot((dispose) => {
-        const id = `${utils.stringToId(name)}-${paneIndex}`;
+      const green = inverse ? colors.red : colors.green;
+      const red = inverse ? colors.green : colors.red;
 
-        const active = signals.createSignal(defaultActive ?? true, {
-          save: {
-            keyPrefix: "",
-            key: id,
-            ...utils.serde.boolean,
+      /** @type {CandlestickISeries} */
+      const iseries = /** @type {any} */ (
+        ichart.addSeries(
+          /** @type {SeriesDefinition<'Candlestick'>} */ (CandlestickSeries),
+          {
+            upColor: green(),
+            downColor: red(),
+            wickUpColor: green(),
+            wickDownColor: red(),
+            borderVisible: false,
+            visible: defaultActive !== false,
           },
-        });
+          paneIndex,
+        )
+      );
 
-        const hasData = signals.createSignal(false);
+      return addSeries({
+        colors: [green, red],
+        iseries,
+        name,
+        order,
+        paneIndex,
+        seriesType: "Candlestick",
+        unit,
+        data,
+        setDataCallback,
+        defaultActive,
+        vecId,
+      });
+    },
+    /**
+     * @param {Object} args
+     * @param {string} args.name
+     * @param {Unit} args.unit
+     * @param {number} args.order
+     * @param {Accessor<LineData[]>} [args.data]
+     * @param {VecId} [args.vecId]
+     * @param {Color} [args.color]
+     * @param {SetDataCallback} [args.setDataCallback]
+     * @param {number} [args.paneIndex]
+     * @param {boolean} [args.defaultActive]
+     * @param {PartialLineStyleOptions} [args.options]
+     */
+    addLineSeries({
+      vecId,
+      name,
+      unit,
+      order,
+      setDataCallback,
+      color,
+      paneIndex = 0,
+      defaultActive,
+      data,
+      options,
+    }) {
+      color ||= unit === "USD" ? colors.green : colors.orange;
 
-        signals.createEffect(active, (active) =>
-          // Or remove ?
-          iseries.applyOptions({
-            visible: active,
-          }),
-        );
-
-        iseries.setSeriesOrder(order);
-
-        /** @type {VecResource | undefined} */
-        let _valuesResource;
-
-        /** @type {Series} */
-        const series = {
-          inner: iseries,
-          active,
-          hasData,
-          id,
-          url: signals.createSignal(/** @type {string | null} */ (null)),
-          remove() {
-            dispose();
-            // @ts-ignore
-            chart.inner.removeSeries(iseries);
-            if (_valuesResource) {
-              activeResources.delete(_valuesResource);
-            }
+      /** @type {LineISeries} */
+      const iseries = /** @type {any} */ (
+        ichart.addSeries(
+          /** @type {SeriesDefinition<'Line'>} */ (LineSeries),
+          {
+            lineWidth: /** @type {any} */ (1.5),
+            visible: defaultActive !== false,
+            priceLineVisible: false,
+            color: color(),
+            ...options,
           },
-        };
-
-        if (vecId) {
-          signals.createEffect(index, (index) => {
-            const timeResource = vecsResources.getOrCreate(
-              index,
-              index === /** @satisfies {Height} */ (5)
-                ? "timestamp-fixed"
-                : "timestamp",
-            );
-            timeResource.fetch();
-
-            const valuesResource = vecsResources.getOrCreate(index, vecId);
-            _valuesResource = valuesResource;
-
-            series.url.set(() => valuesResource.url);
-
-            signals.createEffect(active, (active) => {
-              if (active) {
-                valuesResource.fetch();
-                activeResources.add(valuesResource);
-
-                const fetchedKey = vecsResources.defaultFetchedKey;
-                signals.createEffect(
-                  () => [
-                    timeResource.fetched().get(fetchedKey)?.vec(),
-                    valuesResource.fetched().get(fetchedKey)?.vec(),
-                  ],
-                  ([indexes, _ohlcs]) => {
-                    if (!indexes?.length || !_ohlcs?.length) return;
-
-                    // const seriesData = series.inner.data();
-                    // const set = seriesData.length === 0;
-
-                    const ohlcs = /** @type {OHLCTuple[]} */ (_ohlcs);
-                    let length = Math.min(indexes.length, ohlcs.length);
-                    const data = new Array(length);
-                    let prevTime = null;
-                    let timeOffset = 0;
-
-                    for (let i = 0; i < length; i++) {
-                      const time = indexes[i];
-                      const sameTime = prevTime === time;
-                      if (sameTime) {
-                        timeOffset += 1;
-                      }
-                      const v = ohlcs[i];
-                      const offsetedI = i - timeOffset;
-                      if (v === null) {
-                        data[offsetedI] = {
-                          time,
-                          value: NaN,
-                        };
-                      } else if (typeof v === "number") {
-                        data[offsetedI] = {
-                          time,
-                          value: v,
-                        };
-                      } else {
-                        if (sameTime) {
-                          console.log(data[offsetedI]);
-                        }
-                        // const prev = sameTime ? data[offsetedI] : undefined;
-                        let [open, high, low, close] = v;
-                        data[offsetedI] = {
-                          time,
-                          open: sameTime ? data[offsetedI].open : open,
-                          high: sameTime
-                            ? Math.max(data[offsetedI].high, high)
-                            : high,
-                          low: sameTime
-                            ? Math.min(data[offsetedI].low, low)
-                            : low,
-                          close,
-                        };
-                      }
-                      prevTime = time;
-                    }
-
-                    data.length -= timeOffset;
-
-                    // if (set) {
-                    iseries.setData(data);
-
-                    if (fitContent) {
-                      ichart.timeScale().fitContent();
-                    }
-                    // } else {
-                    // let seriesDataOffset = 0;
-                    // while seriesData
-                    //   data.forEach((bar) => {
-                    //     iseries.update(bar, true);
-                    //   });
-                    // }
-                    hasData.set(true);
-                    setDataCallback?.({
-                      iseries,
-                      index,
-                      unit,
-                    });
-
-                    timeScaleSetCallback?.(() => {
-                      if (
-                        !timeScaleSet &&
-                        (index === /** @satisfies {QuarterIndex} */ (19) ||
-                          index === /** @satisfies {YearIndex} */ (23) ||
-                          index === /** @satisfies {DecadeIndex} */ (1))
-                      ) {
-                        ichart.timeScale().setVisibleLogicalRange({
-                          from: -1,
-                          to: data.length,
-                        });
-                      }
-                    });
-                    timeScaleSet = true;
-                  },
-                );
-              } else {
-                activeResources.delete(valuesResource);
-              }
-            });
-          });
-        } else if (data) {
-          signals.createEffect(data, (data) => {
-            iseries.setData(data);
-            hasData.set(true);
-            setDataCallback?.({
-              iseries,
-              index: index(),
-              unit,
-            });
-
-            if (fitContent) {
-              ichart.timeScale().fitContent();
-            }
-          });
-        }
-
-        (paneIndex ? legendBottom : legendTop).addOrReplace({
-          series,
-          name,
-          colors,
-          order,
-        });
-
-        createPaneHeightObserver({
-          ichart,
           paneIndex,
-          signals,
-          utils,
-        });
+        )
+      );
 
-        addPriceScaleSelectorIfNeeded({
-          paneIndex,
-          seriesType,
-          unit,
-        });
+      const priceLineOptions = options?.createPriceLine;
+      if (priceLineOptions) {
+        createPriceLine(iseries, priceLineOptions, colors);
+      }
 
-        return series;
+      return addSeries({
+        colors: [color],
+        iseries,
+        name,
+        order,
+        paneIndex,
+        seriesType: "Line",
+        unit,
+        setDataCallback,
+        data,
+        defaultActive,
+        vecId,
       });
-    }
+    },
+    /**
+     * @param {Object} args
+     * @param {string} args.name
+     * @param {Unit} args.unit
+     * @param {number} args.order
+     * @param {Accessor<BaselineData[]>} [args.data]
+     * @param {VecId} [args.vecId]
+     * @param {SetDataCallback} [args.setDataCallback]
+     * @param {number} [args.paneIndex]
+     * @param {boolean} [args.defaultActive]
+     * @param {PartialBaselineStyleOptions} [args.options]
+     */
+    addBaselineSeries({
+      vecId,
+      name,
+      unit,
+      order,
+      paneIndex: _paneIndex,
+      setDataCallback,
+      defaultActive,
+      data,
+      options,
+    }) {
+      const paneIndex = _paneIndex ?? 0;
 
-    const chart = {
-      inner: ichart,
-      legendTop,
-      legendBottom,
-
-      addFieldsetIfNeeded,
-
-      /**
-       * @param {Object} args
-       * @param {string} args.name
-       * @param {Unit} args.unit
-       * @param {number} args.order
-       * @param {VecId} [args.vecId]
-       * @param {Accessor<CandlestickData[]>} [args.data]
-       * @param {number} [args.paneIndex]
-       * @param {boolean} [args.defaultActive]
-       * @param {boolean} [args.inverse]
-       * @param {SetDataCallback} [args.setDataCallback]
-       * @param {DeepPartial<CandlestickStyleOptions & SeriesOptionsCommon & CreatePriceLineOptions>} [args.options]
-       */
-      addCandlestickSeries({
-        vecId,
-        name,
-        unit,
-        order,
-        paneIndex = 0,
-        defaultActive,
-        setDataCallback,
-        data,
-        inverse,
-      }) {
-        const green = inverse ? colors.red : colors.green;
-        const red = inverse ? colors.green : colors.red;
-
-        /** @type {ISeriesApi<'Candlestick', number>} */
-        const iseries = /** @type {any} */ (
-          ichart.addSeries(
-            /** @type {SeriesDefinition<'Candlestick'>} */ (
-              lc.CandlestickSeries
-            ),
-            {
-              upColor: green(),
-              downColor: red(),
-              wickUpColor: green(),
-              wickDownColor: red(),
-              borderVisible: false,
-              visible: defaultActive !== false,
+      /** @type {BaselineISeries} */
+      const iseries = /** @type {any} */ (
+        ichart.addSeries(
+          /** @type {SeriesDefinition<'Baseline'>} */ (BaselineSeries),
+          {
+            lineWidth: /** @type {any} */ (1.5),
+            visible: defaultActive !== false,
+            baseValue: {
+              price: options?.createPriceLine?.value ?? 0,
             },
-            paneIndex,
-          )
-        );
-
-        return addSeries({
-          colors: [green, red],
-          iseries,
-          name,
-          order,
+            ...options,
+            topLineColor: options?.topLineColor ?? colors.green(),
+            bottomLineColor: options?.bottomLineColor ?? colors.red(),
+            priceLineVisible: false,
+            bottomFillColor1: "transparent",
+            bottomFillColor2: "transparent",
+            topFillColor1: "transparent",
+            topFillColor2: "transparent",
+            lineVisible: true,
+          },
           paneIndex,
-          seriesType: "Candlestick",
-          unit,
-          data,
-          setDataCallback,
-          defaultActive,
-          vecId,
-        });
-      },
-      /**
-       * @param {Object} args
-       * @param {string} args.name
-       * @param {Unit} args.unit
-       * @param {number} args.order
-       * @param {Accessor<LineData<number>[]>} [args.data]
-       * @param {VecId} [args.vecId]
-       * @param {Color} [args.color]
-       * @param {SetDataCallback} [args.setDataCallback]
-       * @param {number} [args.paneIndex]
-       * @param {boolean} [args.defaultActive]
-       * @param {DeepPartial<LineStyleOptions & SeriesOptionsCommon & CreatePriceLineOptions>} [args.options]
-       */
-      addLineSeries({
-        vecId,
+        )
+      );
+
+      const priceLineOptions = options?.createPriceLine;
+      if (priceLineOptions) {
+        createPriceLine(iseries, priceLineOptions, colors);
+      }
+
+      return addSeries({
+        colors: [
+          () => options?.topLineColor ?? colors.green(),
+          () => options?.bottomLineColor ?? colors.red(),
+        ],
+        iseries,
         name,
-        unit,
         order,
+        paneIndex,
+        seriesType: "Baseline",
         setDataCallback,
-        color,
-        paneIndex = 0,
-        defaultActive,
+        unit,
         data,
-        options,
-      }) {
-        color ||= unit === "USD" ? colors.green : colors.orange;
-
-        /** @type {ISeriesApi<'Line', number>} */
-        const iseries = /** @type {any} */ (
-          ichart.addSeries(
-            /** @type {SeriesDefinition<'Line'>} */ (lc.LineSeries),
-            {
-              lineWidth: /** @type {any} */ (1.5),
-              visible: defaultActive !== false,
-              priceLineVisible: false,
-              color: color(),
-              ...options,
-            },
-            paneIndex,
-          )
-        );
-
-        const priceLineOptions = options?.createPriceLine;
-        if (priceLineOptions) {
-          createPriceLine(iseries, priceLineOptions, colors);
-        }
-
-        return addSeries({
-          colors: [color],
-          iseries,
-          name,
-          order,
-          paneIndex,
-          seriesType: "Line",
-          unit,
-          setDataCallback,
-          data,
-          defaultActive,
-          vecId,
-        });
-      },
-      /**
-       * @param {Object} args
-       * @param {string} args.name
-       * @param {Unit} args.unit
-       * @param {number} args.order
-       * @param {Accessor<BaselineData<number>[]>} [args.data]
-       * @param {VecId} [args.vecId]
-       * @param {SetDataCallback} [args.setDataCallback]
-       * @param {number} [args.paneIndex]
-       * @param {boolean} [args.defaultActive]
-       * @param {DeepPartial<BaselineStyleOptions & SeriesOptionsCommon & CreatePriceLineOptions>} [args.options]
-       */
-      addBaselineSeries({
+        defaultActive,
         vecId,
-        name,
-        unit,
-        order,
-        paneIndex: _paneIndex,
-        setDataCallback,
-        defaultActive,
-        data,
-        options,
-      }) {
-        const paneIndex = _paneIndex ?? 0;
-
-        /** @type {ISeriesApi<'Baseline', number>} */
-        const iseries = /** @type {any} */ (
-          ichart.addSeries(
-            /** @type {SeriesDefinition<'Baseline'>} */ (lc.BaselineSeries),
-            {
-              lineWidth: /** @type {any} */ (1.5),
-              visible: defaultActive !== false,
-              baseValue: {
-                price: options?.createPriceLine?.value ?? 0,
-              },
-              ...options,
-              topLineColor: options?.topLineColor ?? colors.green(),
-              bottomLineColor: options?.bottomLineColor ?? colors.red(),
-              priceLineVisible: false,
-              bottomFillColor1: "transparent",
-              bottomFillColor2: "transparent",
-              topFillColor1: "transparent",
-              topFillColor2: "transparent",
-              lineVisible: true,
-            },
-            paneIndex,
-          )
-        );
-
-        const priceLineOptions = options?.createPriceLine;
-        if (priceLineOptions) {
-          createPriceLine(iseries, priceLineOptions, colors);
-        }
-
-        return addSeries({
-          colors: [
-            () => options?.topLineColor ?? colors.green(),
-            () => options?.bottomLineColor ?? colors.red(),
-          ],
-          iseries,
-          name,
-          order,
-          paneIndex,
-          seriesType: "Baseline",
-          setDataCallback,
-          unit,
-          data,
-          defaultActive,
-          vecId,
-        });
-      },
-    };
-
-    config?.forEach(({ unit, blueprints }, paneIndex) => {
-      blueprints.forEach((blueprint, order) => {
-        if (blueprint.type === "Candlestick") {
-          chart.addCandlestickSeries({
-            name: blueprint.title,
-            unit,
-            data: blueprint.data,
-            defaultActive: blueprint.defaultActive,
-            paneIndex,
-            order,
-          });
-        } else if (blueprint.type === "Baseline") {
-          chart.addBaselineSeries({
-            name: blueprint.title,
-            unit,
-            data: blueprint.data,
-            defaultActive: blueprint.defaultActive,
-            paneIndex,
-            order,
-          });
-        } else {
-          chart.addLineSeries({
-            name: blueprint.title,
-            unit,
-            data: blueprint.data,
-            defaultActive: blueprint.defaultActive,
-            paneIndex,
-            color: blueprint.color,
-            order,
-          });
-        }
       });
-    });
-
-    return chart;
-  }
-
-  return {
-    inner: lc,
-    createChartElement,
+    },
   };
-});
+
+  config?.forEach(({ unit, blueprints }, paneIndex) => {
+    blueprints.forEach((blueprint, order) => {
+      if (blueprint.type === "Candlestick") {
+        chart.addCandlestickSeries({
+          name: blueprint.title,
+          unit,
+          data: blueprint.data,
+          defaultActive: blueprint.defaultActive,
+          paneIndex,
+          order,
+        });
+      } else if (blueprint.type === "Baseline") {
+        chart.addBaselineSeries({
+          name: blueprint.title,
+          unit,
+          data: blueprint.data,
+          defaultActive: blueprint.defaultActive,
+          paneIndex,
+          order,
+        });
+      } else {
+        chart.addLineSeries({
+          name: blueprint.title,
+          unit,
+          data: blueprint.data,
+          defaultActive: blueprint.defaultActive,
+          paneIndex,
+          color: blueprint.color,
+          order,
+        });
+      }
+    });
+  });
+
+  return chart;
+}
 
 /**
  * @param {Object} args
@@ -976,7 +983,7 @@ function createPaneHeightObserver({ ichart, paneIndex, signals, utils }) {
 }
 
 /**
- * @param {ISeriesApi<SeriesType, number>} series
+ * @param {ISeries} series
  * @param {DeepPartial<CreatePriceLine>} options
  * @param {Colors} colors
  */
@@ -1155,3 +1162,5 @@ function createOklchToRGBA() {
     };
   }
 }
+
+export default { createChartElement };

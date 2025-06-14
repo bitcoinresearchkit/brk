@@ -19,6 +19,7 @@ use axum::{
     routing::get,
     serve,
 };
+use brk_bundler::bundle;
 use brk_computer::Computer;
 use brk_core::dot_brk_path;
 use brk_indexer::Indexer;
@@ -43,6 +44,15 @@ pub struct AppState {
     query: &'static Query<'static>,
     website: Website,
     websites_path: Option<PathBuf>,
+}
+
+impl AppState {
+    pub fn dist_path(&self) -> PathBuf {
+        self.websites_path
+            .as_ref()
+            .expect("Should never reach here is websites_path is None")
+            .join("dist")
+    }
 }
 
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
@@ -103,8 +113,12 @@ impl Server {
         }))
     }
 
-    pub async fn serve(self) -> color_eyre::Result<()> {
+    pub async fn serve(self, watch: bool) -> color_eyre::Result<()> {
         let state = self.0;
+
+        if let Some(websites_path) = state.websites_path.clone() {
+            bundle(&websites_path, state.website.to_folder_name(), watch).await?;
+        }
 
         let compression_layer = CompressionLayer::new()
             .br(true)

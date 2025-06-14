@@ -40,7 +40,7 @@ export function init({
      * @param {number} args.min
      * @param {number} args.step
      * @param {number} [args.max]
-     * @param {{createEffect: typeof CreateEffect}} args.signals
+     * @param {Signals} args.signals
      */
     createInputNumberElement({
       id,
@@ -76,7 +76,7 @@ export function init({
             input.value = value;
             stateValue = value;
           }
-        }
+        },
       );
 
       input.addEventListener("input", () => {
@@ -95,7 +95,7 @@ export function init({
      * @param {string} args.id
      * @param {string} args.title
      * @param {Signal<number | null>} args.signal
-     * @param {{createEffect: typeof CreateEffect}} args.signals
+     * @param {Signals} args.signals
      */
     createInputDollar({ id, title, signal, signals }) {
       return this.createInputNumberElement({
@@ -113,7 +113,7 @@ export function init({
      * @param {string} args.id
      * @param {string} args.title
      * @param {Signal<Date | null>} args.signal
-     * @param {{createEffect: typeof CreateEffect}} args.signals
+     * @param {Signals} args.signals
      */
     createInputDate({ id, title, signal, signals }) {
       const input = window.document.createElement("input");
@@ -139,7 +139,7 @@ export function init({
             input.value = value;
             stateValue = value;
           }
-        }
+        },
       );
 
       input.addEventListener("change", () => {
@@ -328,7 +328,7 @@ export function init({
               keyPrefix,
               key: "top-up-freq",
             },
-          }
+          },
         ),
       },
     },
@@ -356,7 +356,7 @@ export function init({
               keyPrefix,
               key: "swap-freq",
             },
-          }
+          },
         ),
       },
     },
@@ -369,7 +369,7 @@ export function init({
             keyPrefix,
             key: "interval-start",
           },
-        }
+        },
       ),
       end: signals.createSignal(/** @type {Date | null} */ (new Date()), {
         save: {
@@ -391,7 +391,7 @@ export function init({
   };
 
   parametersElement.append(
-    utils.dom.createHeader("Save in Bitcoin").headerElement
+    utils.dom.createHeader("Save in Bitcoin").headerElement,
   );
 
   /**
@@ -431,9 +431,9 @@ export function init({
           title: "Initial Dollar Amount",
           signal: settings.dollars.initial.amount,
           signals,
-        })
+        }),
       ),
-    })
+    }),
   );
 
   parametersElement.append(
@@ -451,9 +451,9 @@ export function init({
           list: frequencies.list,
           signal: settings.dollars.topUp.frenquency,
           deep: true,
-        })
+        }),
       ),
-    })
+    }),
   );
 
   parametersElement.append(
@@ -471,9 +471,9 @@ export function init({
           title: "Top Up Dollar Amount",
           signal: settings.dollars.topUp.amount,
           signals,
-        })
+        }),
       ),
-    })
+    }),
   );
 
   parametersElement.append(
@@ -491,9 +491,9 @@ export function init({
           title: "Initial Swap Amount",
           signal: settings.bitcoin.investment.initial,
           signals,
-        })
+        }),
       ),
-    })
+    }),
   );
 
   parametersElement.append(
@@ -510,9 +510,9 @@ export function init({
           list: frequencies.list,
           signal: settings.bitcoin.investment.frequency,
           deep: true,
-        })
+        }),
       ),
-    })
+    }),
   );
 
   parametersElement.append(
@@ -530,9 +530,9 @@ export function init({
           title: "Bitcoin Recurrent Investment",
           signal: settings.bitcoin.investment.recurrent,
           signals,
-        })
+        }),
       ),
-    })
+    }),
   );
 
   parametersElement.append(
@@ -549,9 +549,9 @@ export function init({
           title: "First Simulation Date",
           signal: settings.interval.start,
           signals,
-        })
+        }),
       ),
-    })
+    }),
   );
 
   parametersElement.append(
@@ -568,9 +568,9 @@ export function init({
           title: "Last Simulation Day",
           signal: settings.interval.end,
           signals,
-        })
+        }),
       ),
-    })
+    }),
   );
 
   parametersElement.append(
@@ -591,9 +591,9 @@ export function init({
           step: 0.01,
           signals,
           placeholder: "Fees",
-        })
+        }),
       ),
-    })
+    }),
   );
 
   const p1 = window.document.createElement("p");
@@ -608,101 +608,79 @@ export function init({
   const owner = signals.getOwner();
 
   const totalInvestedAmountData = signals.createSignal(
-    /** @type {LineData<number>[]} */ ([]),
+    /** @type {LineData[]} */ ([]),
     {
       equals: false,
-    }
+    },
   );
   const bitcoinValueData = signals.createSignal(
-    /** @type {LineData<number>[]} */ ([]),
+    /** @type {LineData[]} */ ([]),
     {
       equals: false,
-    }
+    },
   );
-  const bitcoinData = signals.createSignal(
-    /** @type {LineData<number>[]} */ ([]),
-    {
-      equals: false,
-    }
-  );
-  const resultData = signals.createSignal(
-    /** @type {LineData<number>[]} */ ([]),
-    {
-      equals: false,
-    }
-  );
-  const dollarsLeftData = signals.createSignal(
-    /** @type {LineData<number>[]} */ ([]),
-    {
-      equals: false,
-    }
-  );
-  const totalValueData = signals.createSignal(
-    /** @type {LineData<number>[]} */ ([]),
-    {
-      equals: false,
-    }
-  );
-  const investmentData = signals.createSignal(
-    /** @type {LineData<number>[]} */ ([]),
-    {
-      equals: false,
-    }
-  );
+  const bitcoinData = signals.createSignal(/** @type {LineData[]} */ ([]), {
+    equals: false,
+  });
+  const resultData = signals.createSignal(/** @type {LineData[]} */ ([]), {
+    equals: false,
+  });
+  const dollarsLeftData = signals.createSignal(/** @type {LineData[]} */ ([]), {
+    equals: false,
+  });
+  const totalValueData = signals.createSignal(/** @type {LineData[]} */ ([]), {
+    equals: false,
+  });
+  const investmentData = signals.createSignal(/** @type {LineData[]} */ ([]), {
+    equals: false,
+  });
   const bitcoinAddedData = signals.createSignal(
-    /** @type {LineData<number>[]} */ ([]),
+    /** @type {LineData[]} */ ([]),
     {
       equals: false,
-    }
+    },
   );
   const averagePricePaidData = signals.createSignal(
-    /** @type {LineData<number>[]} */ ([]),
+    /** @type {LineData[]} */ ([]),
     {
       equals: false,
-    }
+    },
   );
   const bitcoinPriceData = signals.createSignal(
-    /** @type {LineData<number>[]} */ ([]),
+    /** @type {LineData[]} */ ([]),
     {
       equals: false,
-    }
+    },
   );
-  const buyCountData = signals.createSignal(
-    /** @type {LineData<number>[]} */ ([]),
-    {
-      equals: false,
-    }
-  );
+  const buyCountData = signals.createSignal(/** @type {LineData[]} */ ([]), {
+    equals: false,
+  });
   const totalFeesPaidData = signals.createSignal(
-    /** @type {LineData<number>[]} */ ([]),
+    /** @type {LineData[]} */ ([]),
     {
       equals: false,
-    }
+    },
   );
-  const daysCountData = signals.createSignal(
-    /** @type {LineData<number>[]} */ ([]),
-    {
-      equals: false,
-    }
-  );
+  const daysCountData = signals.createSignal(/** @type {LineData[]} */ ([]), {
+    equals: false,
+  });
   const profitableDaysRatioData = signals.createSignal(
-    /** @type {LineData<number>[]} */ ([]),
+    /** @type {LineData[]} */ ([]),
     {
       equals: false,
-    }
+    },
   );
   const unprofitableDaysRatioData = signals.createSignal(
-    /** @type {LineData<number>[]} */ ([]),
+    /** @type {LineData[]} */ ([]),
     {
       equals: false,
-    }
+    },
   );
 
   const index = () => /** @type {DateIndex} */ (0);
 
   lightweightCharts.createChartElement({
     index,
-    owner,
     parent: resultsElement,
     signals,
     colors,
@@ -748,7 +726,6 @@ export function init({
 
   lightweightCharts.createChartElement({
     index,
-    owner,
     parent: resultsElement,
     signals,
     colors,
@@ -774,7 +751,6 @@ export function init({
 
   lightweightCharts.createChartElement({
     index,
-    owner,
     parent: resultsElement,
     signals,
     colors,
@@ -806,7 +782,6 @@ export function init({
 
   lightweightCharts.createChartElement({
     index,
-    owner,
     parent: resultsElement,
     signals,
     colors,
@@ -839,7 +814,6 @@ export function init({
     vecsResources,
     utils,
     elements,
-    owner,
     config: [
       {
         unit: "percentage",
@@ -1096,7 +1070,7 @@ export function init({
             p1.innerHTML = `After exchanging ${serInvestedAmount} in the span of ${serDaysCount} days, you would have accumulated ${serSats} Satoshis (${serBitcoin} Bitcoin) worth today ${serBitcoinValue} at an average price of ${serAveragePricePaid} per Bitcoin with a return of investment of ${serRoi}, have ${serDollars} left and paid a total of ${serTotalFeesPaid} in fees.`;
 
             const dayDiff = Math.floor(
-              utils.date.differenceBetween(new Date(), lastInvestDay)
+              utils.date.differenceBetween(new Date(), lastInvestDay),
             );
             const serDailyInvestment = c("emerald", fd(dailyInvestment));
             const setLastSatsAdded = c("orange", f(lastSatsAdded));
@@ -1104,13 +1078,13 @@ export function init({
               "blue",
               dayDiff
                 ? `${f(dayDiff)} ${dayDiff > 1 ? "days" : "day"} ago`
-                : "today"
+                : "today",
             )} and exchanged ${serDailyInvestment} for approximately ${setLastSatsAdded} Satoshis`;
 
             const serProfitableDaysRatio = c("green", fp(profitableDaysRatio));
             const serUnprofitableDaysRatio = c(
               "red",
-              fp(unprofitableDaysRatio)
+              fp(unprofitableDaysRatio),
             );
 
             p3.innerHTML = `You would've been ${serProfitableDaysRatio} of the time profitable and ${serUnprofitableDaysRatio} of the time unprofitable.`;
@@ -1120,7 +1094,7 @@ export function init({
               (lowestAnnual4YReturn) => {
                 const serLowestAnnual4YReturn = c(
                   "cyan",
-                  `${fp(lowestAnnual4YReturn)}`
+                  `${fp(lowestAnnual4YReturn)}`,
                 );
 
                 const lowestAnnual4YReturnPercentage = 1 + lowestAnnual4YReturn;
@@ -1136,22 +1110,22 @@ export function init({
                 const bitcoinValueAfter4y = bitcoinValueReturn(4);
                 const serBitcoinValueAfter4y = c(
                   "purple",
-                  fd(bitcoinValueAfter4y)
+                  fd(bitcoinValueAfter4y),
                 );
                 const bitcoinValueAfter10y = bitcoinValueReturn(10);
                 const serBitcoinValueAfter10y = c(
                   "fuchsia",
-                  fd(bitcoinValueAfter10y)
+                  fd(bitcoinValueAfter10y),
                 );
                 const bitcoinValueAfter21y = bitcoinValueReturn(21);
                 const serBitcoinValueAfter21y = c(
                   "pink",
-                  fd(bitcoinValueAfter21y)
+                  fd(bitcoinValueAfter21y),
                 );
 
                 /** @param {number} v */
                 p4.innerHTML = `The lowest annual return after 4 years has historically been ${serLowestAnnual4YReturn}.<br/>Using it as the baseline, your Bitcoin would be worth ${serBitcoinValueAfter4y} after 4 years, ${serBitcoinValueAfter10y} after 10 years and ${serBitcoinValueAfter21y} after 21 years.`;
-              }
+              },
             );
 
             totalInvestedAmountData.set((a) => a);
@@ -1169,7 +1143,7 @@ export function init({
             daysCountData.set((a) => a);
             profitableDaysRatioData.set((a) => a);
             unprofitableDaysRatioData.set((a) => a);
-          }
+          },
         );
       });
     });

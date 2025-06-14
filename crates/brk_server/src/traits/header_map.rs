@@ -167,7 +167,7 @@ impl HeaderMapExtended for HeaderMap {
     fn insert_content_type(&mut self, path: &Path) {
         match path.extension().unwrap().to_str().unwrap() {
             "js" => self.insert_content_type_application_javascript(),
-            "json" => self.insert_content_type_application_json(),
+            "json" | "map" => self.insert_content_type_application_json(),
             "html" => self.insert_content_type_text_html(),
             "css" => self.insert_content_type_text_css(),
             "toml" | "txt" => self.insert_content_type_text_plain(),

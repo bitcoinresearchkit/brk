@@ -3,6 +3,7 @@
 
 # Builds
 target
+dist
 
 # Copies
 *\ copy*

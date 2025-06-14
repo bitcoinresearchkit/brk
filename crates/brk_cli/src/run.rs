@@ -63,8 +63,9 @@ pub fn run(config: RunConfig) -> color_eyre::Result<()> {
 
                 let server = Server::new(served_indexer, served_computer, config.website())?;
 
+                let watch = config.watch();
                 let opt = Some(tokio::spawn(async move {
-                    server.serve().await.unwrap();
+                    server.serve(watch).await.unwrap();
                 }));
 
                 sleep(Duration::from_secs(1));
@@ -178,6 +179,11 @@ pub struct RunConfig {
     #[arg(long, value_name = "SECONDS")]
     delay: Option<u64>,
 
+    /// DEV: Activate to watch the selected website's folder for changes, default: false, saved
+    #[serde(default, deserialize_with = "default_on_error")]
+    #[arg(long, value_name = "BOOL")]
+    watch: Option<bool>,
+
     /// DEV: Activate checking address hashes for collisions when indexing, default: false, saved
     #[serde(default, deserialize_with = "default_on_error")]
     #[arg(long, value_name = "BOOL")]
@@ -255,6 +261,10 @@ impl RunConfig {
                 config_saved.check_collisions = Some(check_collisions);
             }
 
+            if let Some(watch) = config_args.watch.take() {
+                config_saved.watch = Some(watch);
+            }
+
             if config_args != RunConfig::default() {
                 dbg!(config_args);
                 panic!("Didn't consume the full config")
@@ -266,19 +276,6 @@ impl RunConfig {
         config.check();
 
         config.write(&path)?;
-
-        // info!("Configuration {{");
-        // info!("  bitcoindir: {:?}", config.bitcoindir);
-        // info!("  brkdir: {:?}", config.brkdir);
-        // info!("  services: {:?}", config.services);
-        // info!("  website: {:?}", config.website);
-        // info!("  rpcconnect: {:?}", config.rpcconnect);
-        // info!("  rpcport: {:?}", config.rpcport);
-        // info!("  rpccookiefile: {:?}", config.rpccookiefile);
-        // info!("  rpcuser: {:?}", config.rpcuser);
-        // info!("  rpcpassword: {:?}", config.rpcpassword);
-        // info!("  delay: {:?}", config.delay);
-        // info!("}}");
 
         Ok(config)
     }
@@ -447,6 +444,10 @@ impl RunConfig {
 
     pub fn check_collisions(&self) -> bool {
         self.check_collisions.is_some_and(|b| b)
+    }
+
+    pub fn watch(&self) -> bool {
+        self.watch.is_some_and(|b| b)
     }
 }
 

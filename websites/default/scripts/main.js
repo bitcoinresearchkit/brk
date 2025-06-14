@@ -1,14 +1,10 @@
 // @ts-check
 
 /**
- * @import { Option, PartialChartOption, ChartOption, AnyPartialOption, ProcessedOptionAddons, OptionsTree, SimulationOption, AnySeriesBlueprint, ChartableIndex,CreatePriceLineOptions, CreatePriceLine, SeriesType } from "./options"
- * @import { Valued,  SingleValueData, CandlestickData, ChartData, OHLCTuple, Series } from "../packages/lightweight-charts/wrapper"
+ * @import { Option, PartialChartOption, ChartOption, AnyPartialOption, ProcessedOptionAddons, OptionsTree, SimulationOption, AnySeriesBlueprint, ChartableIndex, SeriesType } from "./options"
+ * @import { Valued,  SingleValueData, CandlestickData, ChartData, OHLCTuple, Series, ISeries, LineData, BaselineData, PartialLineStyleOptions, PartialBaselineStyleOptions, PartialCandlestickStyleOptions } from "../packages/lightweight-charts/wrapper"
  * @import * as _ from "../packages/ufuzzy/v1.0.18/types"
- * @import { createChart as CreateClassicChart, LineStyleOptions, DeepPartial, ChartOptions, IChartApi, IHorzScaleBehavior, WhitespaceData, ISeriesApi, Time, LineData, LogicalRange, BaselineStyleOptions, SeriesOptionsCommon, BaselineData, CandlestickStyleOptions } from "../packages/lightweight-charts/v5.0.7-treeshaked/types"
- * @import { SignalOptions } from "../packages/solid-signals/v0.3.2-treeshaked/types/core/core"
- * @import {Signal, Signals} from "../packages/solid-signals/types";
- * @import { getOwner as GetOwner, onCleanup as OnCleanup, Owner } from "../packages/solid-signals/v0.3.2-treeshaked/types/core/owner"
- * @import { createEffect as CreateEffect, Accessor, Setter, createMemo as CreateMemo } from "../packages/solid-signals/v0.3.2-treeshaked/types/signals";
+ * @import { Signal, Signals, Accessor } from "../packages/solid-signals/wrapper";
  * @import { DateIndex, DecadeIndex, DifficultyEpoch, Index, HalvingEpoch, Height, MonthIndex, P2PK33Index, P2PK65Index, P2PKHIndex, P2SHIndex, P2MSIndex, P2AIndex, P2TRIndex, P2WPKHIndex, P2WSHIndex, TxIndex, InputIndex, OutputIndex, VecId, WeekIndex, YearIndex, VecIdToIndexes, QuarterIndex, EmptyOutputIndex, OpReturnIndex, UnknownOutputIndex } from "./vecid-to-indexes"
  */
 
@@ -66,14 +62,14 @@ const localhost = window.location.hostname === "localhost";
 function initPackages() {
   const imports = {
     async signals() {
-      return import("../packages/solid-signals/wrapper.js").then((d) =>
-        d.default.then((d) => d),
+      return import("../packages/solid-signals/wrapper.js").then(
+        (d) => d.default,
       );
     },
     async lightweightCharts() {
       return window.document.fonts.ready.then(() =>
-        import("../packages/lightweight-charts/wrapper.js").then((d) =>
-          d.default.then((d) => d),
+        import("../packages/lightweight-charts/wrapper.js").then(
+          (d) => d.default,
         ),
       );
     },
@@ -351,13 +347,6 @@ function createUtils() {
       return link;
     },
     /**
-     * @param {string} href
-     * @param {VoidFunction} callback
-     */
-    importStyleAndThen(href, callback) {
-      this.importStyle(href).addEventListener("load", callback);
-    },
-    /**
      * @template {Readonly<string[]>} T
      * @param {Object} args
      * @param {T[number]} args.defaultValue
@@ -366,7 +355,7 @@ function createUtils() {
      * @param {string} [args.keyPrefix]
      * @param {string} args.key
      * @param {boolean} [args.sorted]
-     * @param {{createEffect: CreateEffect, createMemo: CreateMemo, createSignal: Signals["createSignal"]}} args.signals
+     * @param {Signals} args.signals
      */
     createHorizontalChoiceField({
       id,
@@ -1269,15 +1258,6 @@ function createUtils() {
       return this.differenceBetween(date, new Date("2009-01-09"));
     },
     /**
-     * @param {Time} time
-     */
-    fromTime(time) {
-      return typeof time === "string"
-        ? new Date(time)
-        : // @ts-ignore
-          new Date(time.year, time.month, time.day);
-    },
-    /**
      * @param {Date} start
      */
     getRangeUpToToday(start) {
@@ -1924,7 +1904,7 @@ function initWebSockets(signals, utils) {
 
       /** @type {CandlestickData} */
       const candle = {
-        index: -1,
+        // index: -1,
         time: new Date(interval_begin).valueOf() / 1000,
         open: Number(open),
         high: Number(high),
@@ -2203,25 +2183,22 @@ function main() {
 
                     if (firstTimeLoadingChart) {
                       const lightweightCharts = packages.lightweightCharts();
-                      const chartScript = import("./chart.js");
-                      utils.dom.importStyleAndThen("/styles/chart.css", () =>
-                        chartScript.then(({ init: initChartsElement }) =>
-                          lightweightCharts.then((lightweightCharts) =>
-                            signals.runWithOwner(owner, () =>
-                              initChartsElement({
-                                colors,
-                                elements,
-                                lightweightCharts,
-                                option: /** @type {Accessor<ChartOption>} */ (
-                                  chartOption
-                                ),
-                                signals,
-                                utils,
-                                webSockets,
-                                vecsResources,
-                                vecIdToIndexes,
-                              }),
-                            ),
+                      import("./chart.js").then(({ init: initChartsElement }) =>
+                        lightweightCharts.then((lightweightCharts) =>
+                          signals.runWithOwner(owner, () =>
+                            initChartsElement({
+                              colors,
+                              elements,
+                              lightweightCharts,
+                              option: /** @type {Accessor<ChartOption>} */ (
+                                chartOption
+                              ),
+                              signals,
+                              utils,
+                              webSockets,
+                              vecsResources,
+                              vecIdToIndexes,
+                            }),
                           ),
                         ),
                       );
@@ -2234,20 +2211,17 @@ function main() {
                     element = elements.table;
 
                     if (firstTimeLoadingTable) {
-                      const tableScript = import("./table.js");
-                      utils.dom.importStyleAndThen("/styles/table.css", () =>
-                        tableScript.then(({ init }) =>
-                          signals.runWithOwner(owner, () =>
-                            init({
-                              colors,
-                              elements,
-                              signals,
-                              utils,
-                              vecsResources,
-                              option,
-                              vecIdToIndexes,
-                            }),
-                          ),
+                      import("./table.js").then(({ init }) =>
+                        signals.runWithOwner(owner, () =>
+                          init({
+                            colors,
+                            elements,
+                            signals,
+                            utils,
+                            vecsResources,
+                            option,
+                            vecIdToIndexes,
+                          }),
                         ),
                       );
                     }
@@ -2262,24 +2236,19 @@ function main() {
 
                     if (firstTimeLoadingSimulation) {
                       const lightweightCharts = packages.lightweightCharts();
-                      const simulationScript = import("./simulation.js");
-                      utils.dom.importStyleAndThen(
-                        "/styles/simulation.css",
-                        () =>
-                          simulationScript.then(({ init }) =>
-                            lightweightCharts.then((lightweightCharts) =>
-                              signals.runWithOwner(owner, () =>
-                                init({
-                                  colors,
-                                  elements,
-                                  lightweightCharts,
-                                  signals,
-                                  utils,
-                                  vecsResources,
-                                }),
-                              ),
-                            ),
+                      import("./simulation.js").then(({ init }) =>
+                        lightweightCharts.then((lightweightCharts) =>
+                          signals.runWithOwner(owner, () =>
+                            init({
+                              colors,
+                              elements,
+                              lightweightCharts,
+                              signals,
+                              utils,
+                              vecsResources,
+                            }),
                           ),
+                        ),
                       );
                     }
                     firstTimeLoadingSimulation = false;

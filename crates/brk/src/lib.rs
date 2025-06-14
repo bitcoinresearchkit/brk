@@ -1,5 +1,12 @@
 #![doc = include_str!(concat!("../", env!("CARGO_PKG_README")))]
 
+#[cfg(feature = "bundler")]
+#[doc(inline)]
+pub use brk_bundle as bundle;
+
+#[doc(inline)]
+pub use brk_cli as cli;
+
 #[cfg(feature = "core")]
 #[doc(inline)]
 pub use brk_core as core;
