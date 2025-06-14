@@ -5,12 +5,11 @@ use std::{
 
 use axum::http::{
     HeaderMap,
-    header::{self, HOST, IF_MODIFIED_SINCE},
+    header::{self, IF_MODIFIED_SINCE},
 };
 use jiff::{Timestamp, civil::DateTime, fmt::strtime, tz::TimeZone};
 use log::info;
 
-const STALE_IF_ERROR: u64 = 30_000_000; // 1 Year ish
 const MODIFIED_SINCE_FORMAT: &str = "%a, %d %b %Y %H:%M:%S GMT";
 
 #[derive(PartialEq, Eq)]
@@ -20,12 +19,6 @@ pub enum ModifiedState {
 }
 
 pub trait HeaderMapExtended {
-    fn _get_scheme(&self) -> &str;
-    fn get_host(&self) -> &str;
-    fn check_if_host_is_local(&self) -> bool;
-    fn check_if_host_is_0000(&self) -> bool;
-    fn check_if_host_is_localhost(&self) -> bool;
-
     fn insert_cors(&mut self);
 
     fn get_if_modified_since(&self) -> Option<DateTime>;
@@ -36,8 +29,8 @@ pub trait HeaderMapExtended {
         duration: Duration,
     ) -> color_eyre::Result<(ModifiedState, DateTime)>;
 
+    fn insert_cache_control_must_revalidate(&mut self);
     fn insert_cache_control_immutable(&mut self);
-    fn _insert_cache_control_revalidate(&mut self, max_age: u64, stale_while_revalidate: u64);
     fn insert_last_modified(&mut self, date: DateTime);
 
     fn insert_content_disposition_attachment(&mut self);
@@ -59,56 +52,27 @@ pub trait HeaderMapExtended {
 }
 
 impl HeaderMapExtended for HeaderMap {
-    fn _get_scheme(&self) -> &str {
-        if self.check_if_host_is_local() {
-            "http"
-        } else {
-            "https"
-        }
-    }
-
-    fn get_host(&self) -> &str {
-        self[HOST].to_str().unwrap()
-    }
-
-    fn check_if_host_is_local(&self) -> bool {
-        self.check_if_host_is_localhost() || self.check_if_host_is_0000()
-    }
-
-    fn check_if_host_is_0000(&self) -> bool {
-        self.get_host().contains("0.0.0.0")
-    }
-
-    fn check_if_host_is_localhost(&self) -> bool {
-        self.get_host().contains("localhost")
-    }
-
     fn insert_cors(&mut self) {
         self.insert(header::ACCESS_CONTROL_ALLOW_ORIGIN, "*".parse().unwrap());
         self.insert(header::ACCESS_CONTROL_ALLOW_HEADERS, "*".parse().unwrap());
     }
 
+    fn insert_cache_control_must_revalidate(&mut self) {
+        self.insert(
+            header::CACHE_CONTROL,
+            "public, max-age=0, must-revalidate".parse().unwrap(),
+        );
+    }
+
     fn insert_cache_control_immutable(&mut self) {
         self.insert(
             header::CACHE_CONTROL,
-            format!("public, max-age=604800, immutable, stale-if-error={STALE_IF_ERROR}")
-                .parse()
-                .unwrap(),
+            "public, max-age=31536000, immutable".parse().unwrap(),
         );
     }
 
     fn insert_content_disposition_attachment(&mut self) {
         self.insert(header::CONTENT_DISPOSITION, "attachment".parse().unwrap());
-    }
-
-    fn _insert_cache_control_revalidate(&mut self, max_age: u64, stale_while_revalidate: u64) {
-        self.insert(
-        header::CACHE_CONTROL,
-        format!(
-            "public, max-age={max_age}, stale-while-revalidate={stale_while_revalidate}, stale-if-error={STALE_IF_ERROR}")
-        .parse()
-        .unwrap(),
-    );
     }
 
     fn insert_last_modified(&mut self, date: DateTime) {
