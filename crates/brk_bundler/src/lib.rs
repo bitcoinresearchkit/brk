@@ -1,9 +1,9 @@
 use std::{fs, io, path::Path, sync::Arc};
 
+use brk_rolldown::{Bundler, BundlerOptions, RawMinifyOptions, SourceMapType};
 use log::error;
 use minify_html_onepass::Cfg;
 use notify::{EventKind, RecursiveMode, Watcher};
-use rolldown::{Bundler, BundlerOptions, RawMinifyOptions, SourceMapType};
 use sugar_path::SugarPath;
 use tokio::sync::Mutex;
 
@@ -32,16 +32,18 @@ pub async fn bundle(websites_path: &Path, source_folder: &str, watch: bool) -> i
 
     bundler.write().await.unwrap();
 
-    let absolute_source_path = source_path.absolutize();
-    let absolute_source_path_clone = absolute_source_path.clone();
-    let absolute_dist_path = dist_path.absolutize();
-    let absolute_dist_path_clone = absolute_dist_path.clone();
-    let absolute_source_scripts_path = websites_path.join(source_scripts).absolutize();
     let absolute_source_index_path = source_path.join("index.html").absolutize();
     let absolute_source_index_path_clone = absolute_source_index_path.clone();
-    let absolute_dist_index_path = dist_path.join("index.html").absolutize();
+    let absolute_source_path = source_path.absolutize();
+    let absolute_source_path_clone = absolute_source_path.clone();
+    let absolute_source_scripts_path = websites_path.join(source_scripts).absolutize();
     let absolute_source_sw_path = source_path.join("service-worker.js").absolutize();
     let absolute_source_sw_path_clone = absolute_source_sw_path.clone();
+
+    let absolute_dist_entry_path = dist_path.join("scripts/entry.js").absolutize();
+    let absolute_dist_index_path = dist_path.join("index.html").absolutize();
+    let absolute_dist_path = dist_path.absolutize();
+    let absolute_dist_path_clone = absolute_dist_path.clone();
     let absolute_dist_sw_path = dist_path.join("service-worker.js").absolutize();
 
     let write_index = move || {
@@ -80,7 +82,21 @@ pub async fn bundle(websites_path: &Path, source_folder: &str, watch: bool) -> i
     }
 
     tokio::spawn(async move {
-        let mut watcher = notify::recommended_watcher(
+        let write_index_clone = write_index.clone();
+
+        let mut entry_watcher = notify::recommended_watcher(
+            move |res: Result<notify::Event, notify::Error>| match res {
+                Ok(_) => write_index_clone(),
+                Err(e) => error!("watch error: {:?}", e),
+            },
+        )
+        .unwrap();
+
+        entry_watcher
+            .watch(&absolute_dist_entry_path, RecursiveMode::Recursive)
+            .unwrap();
+
+        let mut source_watcher = notify::recommended_watcher(
             move |res: Result<notify::Event, notify::Error>| match res {
                 Ok(event) => match event.kind {
                     EventKind::Create(_) => event.paths,
@@ -107,15 +123,14 @@ pub async fn bundle(websites_path: &Path, source_folder: &str, watch: bool) -> i
         )
         .unwrap();
 
-        if watch {
-            watcher
-                .watch(&absolute_source_path_clone, RecursiveMode::Recursive)
-                .unwrap();
+        source_watcher
+            .watch(&absolute_source_path_clone, RecursiveMode::Recursive)
+            .unwrap();
 
-            let watcher =
-                rolldown::Watcher::new(vec![Arc::new(Mutex::new(bundler))], None).unwrap();
-            watcher.start().await;
-        }
+        let watcher =
+            brk_rolldown::Watcher::new(vec![Arc::new(Mutex::new(bundler))], None).unwrap();
+
+        watcher.start().await;
     });
 
     Ok(())

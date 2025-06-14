@@ -11,6 +11,6 @@ repository.workspace = true
 log = { workspace = true }
 minify-html-onepass = "0.16.4"
 notify = "8.0.0"
-rolldown = { git = "https://github.com/rolldown/rolldown", branch = "main" }
-sugar_path = { version = "1.2.0", features = ["cached_current_dir"] }
+brk_rolldown = "0.0.1"
+sugar_path = "1.2.0"
 tokio = { workspace = true }
