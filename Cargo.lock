@@ -519,10 +519,10 @@ dependencies = [
 name = "brk_bundler"
 version = "0.0.57"
 dependencies = [
+ "brk_rolldown",
  "log",
  "minify-html-onepass",
  "notify",
- "rolldown",
  "sugar_path",
  "tokio",
 ]
@@ -678,6 +678,311 @@ dependencies = [
 ]
 
 [[package]]
+name = "brk_rolldown"
+version = "0.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e2a28608031195a1df827c2e9ac11f7b26acc2e447e0999e9914520941dd93a3"
+dependencies = [
+ "anyhow",
+ "append-only-vec",
+ "arcstr",
+ "brk_rolldown_common",
+ "brk_rolldown_debug",
+ "brk_rolldown_ecmascript",
+ "brk_rolldown_ecmascript_utils",
+ "brk_rolldown_error",
+ "brk_rolldown_fs",
+ "brk_rolldown_loader_utils",
+ "brk_rolldown_plugin",
+ "brk_rolldown_plugin_data_uri",
+ "brk_rolldown_resolver",
+ "brk_rolldown_rstr",
+ "brk_rolldown_sourcemap",
+ "brk_rolldown_std_utils",
+ "brk_rolldown_tracing",
+ "brk_rolldown_utils",
+ "brk_string_wizard",
+ "commondir",
+ "css-module-lexer",
+ "dunce",
+ "futures",
+ "indexmap 2.9.0",
+ "itertools 0.14.0",
+ "itoa",
+ "memchr",
+ "notify",
+ "oxc",
+ "oxc_index",
+ "petgraph",
+ "rustc-hash 2.1.1",
+ "serde",
+ "serde_json",
+ "sugar_path",
+ "tokio",
+ "tracing",
+ "xxhash-rust",
+]
+
+[[package]]
+name = "brk_rolldown_common"
+version = "0.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7bf1ae1dbbde9bd49b1202936e5ae4ecad753d0ddfbbd0c4b06a9c48d3889276"
+dependencies = [
+ "anyhow",
+ "arcstr",
+ "bitflags 2.9.1",
+ "brk_rolldown_ecmascript",
+ "brk_rolldown_error",
+ "brk_rolldown_fs",
+ "brk_rolldown_rstr",
+ "brk_rolldown_sourcemap",
+ "brk_rolldown_std_utils",
+ "brk_rolldown_utils",
+ "brk_string_wizard",
+ "dashmap 6.1.0",
+ "derive_more",
+ "fast-glob",
+ "itertools 0.14.0",
+ "oxc",
+ "oxc_index",
+ "oxc_resolver",
+ "rustc-hash 2.1.1",
+ "serde",
+ "serde_json",
+ "sugar_path",
+ "tokio",
+]
+
+[[package]]
+name = "brk_rolldown_debug"
+version = "0.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1966b2aa72cbb9442a3158b818d6352d344270e3d148d9e0c4eb07b355cef959"
+dependencies = [
+ "brk_rolldown_debug_action",
+ "dashmap 6.1.0",
+ "rustc-hash 2.1.1",
+ "serde",
+ "serde_json",
+ "tracing",
+ "tracing-subscriber",
+]
+
+[[package]]
+name = "brk_rolldown_debug_action"
+version = "0.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8b094d3b0275f415a6386251b9485c941edbf38833ae03db3da32aae803593de"
+dependencies = [
+ "serde",
+ "ts-rs",
+]
+
+[[package]]
+name = "brk_rolldown_ecmascript"
+version = "0.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f11ff89014347e7090ebf569c6ac7b32482690d5679c5073fb9050a7778d890b"
+dependencies = [
+ "arcstr",
+ "brk_rolldown_error",
+ "oxc",
+ "oxc_sourcemap",
+ "self_cell",
+]
+
+[[package]]
+name = "brk_rolldown_ecmascript_utils"
+version = "0.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "938a6078497d6841166f63354e9bc9e029c2afb80a5344ee8c416359e80e66bc"
+dependencies = [
+ "brk_rolldown_common",
+ "oxc",
+ "smallvec",
+]
+
+[[package]]
+name = "brk_rolldown_error"
+version = "0.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d71f9aa1cd9aacf8d66e2523a76dc8302718c344b11d3f81bec61e2a4fa97361"
+dependencies = [
+ "anyhow",
+ "arcstr",
+ "bitflags 2.9.1",
+ "brk_rolldown_utils",
+ "derive_more",
+ "heck",
+ "oxc",
+ "oxc_resolver",
+ "rolldown-ariadne",
+ "ropey",
+ "rustc-hash 2.1.1",
+ "sugar_path",
+]
+
+[[package]]
+name = "brk_rolldown_fs"
+version = "0.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c752f5bdf13702e5a515af3699b72206c4b4a1b87844eb5dc28e01ca065912dd"
+dependencies = [
+ "oxc_resolver",
+ "vfs",
+]
+
+[[package]]
+name = "brk_rolldown_loader_utils"
+version = "0.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b8397251ae82b01b89c723d30a67988e307dc76802e854f4a7c4824fd6560c1b"
+dependencies = [
+ "anyhow",
+ "brk_rolldown_common",
+ "serde_json",
+]
+
+[[package]]
+name = "brk_rolldown_plugin"
+version = "0.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c5be2dc55688443ebe37ef38d4e2912f6ec9a31c9490d3cef91f5cedf511f49f"
+dependencies = [
+ "anyhow",
+ "arcstr",
+ "async-trait",
+ "bitflags 2.9.1",
+ "brk_rolldown_common",
+ "brk_rolldown_debug",
+ "brk_rolldown_ecmascript",
+ "brk_rolldown_error",
+ "brk_rolldown_resolver",
+ "brk_rolldown_sourcemap",
+ "brk_rolldown_utils",
+ "brk_string_wizard",
+ "dashmap 6.1.0",
+ "derive_more",
+ "oxc_index",
+ "rustc-hash 2.1.1",
+ "serde",
+ "serde_json",
+ "sugar_path",
+ "tokio",
+ "tracing",
+ "typedmap",
+]
+
+[[package]]
+name = "brk_rolldown_plugin_data_uri"
+version = "0.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7bc4e963da4c646a8d9396042a1dd3414850bbb8411df9f052de6e69cd6d9495"
+dependencies = [
+ "arcstr",
+ "base64-simd 0.8.0",
+ "brk_rolldown_common",
+ "brk_rolldown_plugin",
+ "brk_rolldown_utils",
+ "urlencoding",
+]
+
+[[package]]
+name = "brk_rolldown_resolver"
+version = "0.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1955303e224ad9284a40415dce7ab10de6c8675d51f6b173ec664fda069b50b4"
+dependencies = [
+ "arcstr",
+ "brk_rolldown_common",
+ "brk_rolldown_fs",
+ "brk_rolldown_utils",
+ "dashmap 6.1.0",
+ "itertools 0.14.0",
+ "oxc_resolver",
+ "sugar_path",
+]
+
+[[package]]
+name = "brk_rolldown_rstr"
+version = "0.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "88fb9fe9f824838c4b74ecd63d9d4109ff24fafb43056c191fed58a778167230"
+dependencies = [
+ "oxc",
+]
+
+[[package]]
+name = "brk_rolldown_sourcemap"
+version = "0.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "607e6e8442cb0796834581e6922c5e1c648b6f139b135b81b31bed920c14ae10"
+dependencies = [
+ "brk_rolldown_utils",
+ "memchr",
+ "oxc",
+ "oxc_sourcemap",
+ "rustc-hash 2.1.1",
+]
+
+[[package]]
+name = "brk_rolldown_std_utils"
+version = "0.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4606e3131c5f4f7c9a0b02c3cd12d8b74501359d71b1e9af53bf6542934e02c7"
+dependencies = [
+ "regex",
+]
+
+[[package]]
+name = "brk_rolldown_tracing"
+version = "0.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "602c2dd4104cfc60f9207ea3f070ad1ed1f71f5676118ec4f0dd4be93f2eced9"
+dependencies = [
+ "tracing",
+ "tracing-chrome",
+ "tracing-subscriber",
+]
+
+[[package]]
+name = "brk_rolldown_utils"
+version = "0.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4c213fcc1635c4c9de882a10beb295743bd6baa551f789bde0aa16bab5c3919a"
+dependencies = [
+ "anyhow",
+ "arcstr",
+ "async-scoped",
+ "base-encode",
+ "base64-simd 0.8.0",
+ "brk_rolldown_std_utils",
+ "cow-utils",
+ "dashmap 6.1.0",
+ "fast-glob",
+ "form_urlencoded",
+ "futures",
+ "indexmap 2.9.0",
+ "infer",
+ "itoa",
+ "memchr",
+ "mime",
+ "nom",
+ "oxc",
+ "oxc_index",
+ "phf",
+ "rayon",
+ "regex",
+ "regress",
+ "rustc-hash 2.1.1",
+ "serde_json",
+ "simdutf8",
+ "sugar_path",
+ "xxhash-rust",
+]
+
+[[package]]
 name = "brk_server"
 version = "0.0.57"
 dependencies = [
@@ -729,6 +1034,18 @@ dependencies = [
  "brk_core",
  "byteview",
  "fjall",
+]
+
+[[package]]
+name = "brk_string_wizard"
+version = "0.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "455a8c39f673a5eedbeee3d131f87abb6a8a405476b9f0766cfdd7d047750fc0"
+dependencies = [
+ "oxc_index",
+ "oxc_sourcemap",
+ "rustc-hash 2.1.1",
+ "serde",
 ]
 
 [[package]]
@@ -3471,51 +3788,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "rolldown"
-version = "0.1.0"
-source = "git+https://github.com/rolldown/rolldown?branch=main#efbeae5f2f265cf7dcc224cad13d31e7fe61755f"
-dependencies = [
- "anyhow",
- "append-only-vec",
- "arcstr",
- "commondir",
- "css-module-lexer",
- "dunce",
- "futures",
- "indexmap 2.9.0",
- "itertools 0.14.0",
- "itoa",
- "memchr",
- "notify",
- "oxc",
- "oxc_index",
- "petgraph",
- "rolldown_common",
- "rolldown_debug",
- "rolldown_ecmascript",
- "rolldown_ecmascript_utils",
- "rolldown_error",
- "rolldown_fs",
- "rolldown_loader_utils",
- "rolldown_plugin",
- "rolldown_plugin_data_uri",
- "rolldown_resolver",
- "rolldown_rstr",
- "rolldown_sourcemap",
- "rolldown_std_utils",
- "rolldown_tracing",
- "rolldown_utils",
- "rustc-hash 2.1.1",
- "serde",
- "serde_json",
- "string_wizard",
- "sugar_path",
- "tokio",
- "tracing",
- "xxhash-rust",
-]
-
-[[package]]
 name = "rolldown-ariadne"
 version = "0.5.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3523,249 +3795,6 @@ checksum = "324d1b9754f0cb535f4032a6a654d3a56047a500f557c16060f12f70b0089c57"
 dependencies = [
  "unicode-width",
  "yansi",
-]
-
-[[package]]
-name = "rolldown_common"
-version = "0.1.0"
-source = "git+https://github.com/rolldown/rolldown?branch=main#efbeae5f2f265cf7dcc224cad13d31e7fe61755f"
-dependencies = [
- "anyhow",
- "arcstr",
- "bitflags 2.9.1",
- "dashmap 6.1.0",
- "derive_more",
- "fast-glob",
- "itertools 0.14.0",
- "oxc",
- "oxc_index",
- "oxc_resolver",
- "rolldown_ecmascript",
- "rolldown_error",
- "rolldown_fs",
- "rolldown_rstr",
- "rolldown_sourcemap",
- "rolldown_std_utils",
- "rolldown_utils",
- "rustc-hash 2.1.1",
- "serde",
- "serde_json",
- "string_wizard",
- "sugar_path",
- "tokio",
-]
-
-[[package]]
-name = "rolldown_debug"
-version = "0.1.0"
-source = "git+https://github.com/rolldown/rolldown?branch=main#efbeae5f2f265cf7dcc224cad13d31e7fe61755f"
-dependencies = [
- "dashmap 6.1.0",
- "rolldown_debug_action",
- "rustc-hash 2.1.1",
- "serde",
- "serde_json",
- "tracing",
- "tracing-subscriber",
-]
-
-[[package]]
-name = "rolldown_debug_action"
-version = "0.1.0"
-source = "git+https://github.com/rolldown/rolldown?branch=main#efbeae5f2f265cf7dcc224cad13d31e7fe61755f"
-dependencies = [
- "serde",
- "ts-rs",
-]
-
-[[package]]
-name = "rolldown_ecmascript"
-version = "0.1.0"
-source = "git+https://github.com/rolldown/rolldown?branch=main#efbeae5f2f265cf7dcc224cad13d31e7fe61755f"
-dependencies = [
- "arcstr",
- "oxc",
- "oxc_sourcemap",
- "rolldown_error",
- "self_cell",
-]
-
-[[package]]
-name = "rolldown_ecmascript_utils"
-version = "0.1.0"
-source = "git+https://github.com/rolldown/rolldown?branch=main#efbeae5f2f265cf7dcc224cad13d31e7fe61755f"
-dependencies = [
- "oxc",
- "rolldown_common",
- "smallvec",
-]
-
-[[package]]
-name = "rolldown_error"
-version = "0.1.0"
-source = "git+https://github.com/rolldown/rolldown?branch=main#efbeae5f2f265cf7dcc224cad13d31e7fe61755f"
-dependencies = [
- "anyhow",
- "arcstr",
- "bitflags 2.9.1",
- "derive_more",
- "heck",
- "oxc",
- "oxc_resolver",
- "rolldown-ariadne",
- "rolldown_utils",
- "ropey",
- "rustc-hash 2.1.1",
- "sugar_path",
-]
-
-[[package]]
-name = "rolldown_fs"
-version = "0.1.0"
-source = "git+https://github.com/rolldown/rolldown?branch=main#efbeae5f2f265cf7dcc224cad13d31e7fe61755f"
-dependencies = [
- "oxc_resolver",
- "vfs",
-]
-
-[[package]]
-name = "rolldown_loader_utils"
-version = "0.1.0"
-source = "git+https://github.com/rolldown/rolldown?branch=main#efbeae5f2f265cf7dcc224cad13d31e7fe61755f"
-dependencies = [
- "anyhow",
- "rolldown_common",
- "serde_json",
-]
-
-[[package]]
-name = "rolldown_plugin"
-version = "0.1.0"
-source = "git+https://github.com/rolldown/rolldown?branch=main#efbeae5f2f265cf7dcc224cad13d31e7fe61755f"
-dependencies = [
- "anyhow",
- "arcstr",
- "async-trait",
- "bitflags 2.9.1",
- "dashmap 6.1.0",
- "derive_more",
- "oxc_index",
- "rolldown_common",
- "rolldown_debug",
- "rolldown_ecmascript",
- "rolldown_error",
- "rolldown_resolver",
- "rolldown_sourcemap",
- "rolldown_utils",
- "rustc-hash 2.1.1",
- "serde",
- "serde_json",
- "string_wizard",
- "sugar_path",
- "tokio",
- "tracing",
- "typedmap",
-]
-
-[[package]]
-name = "rolldown_plugin_data_uri"
-version = "0.1.0"
-source = "git+https://github.com/rolldown/rolldown?branch=main#efbeae5f2f265cf7dcc224cad13d31e7fe61755f"
-dependencies = [
- "arcstr",
- "base64-simd 0.8.0",
- "rolldown_common",
- "rolldown_plugin",
- "rolldown_utils",
- "urlencoding",
-]
-
-[[package]]
-name = "rolldown_resolver"
-version = "0.1.0"
-source = "git+https://github.com/rolldown/rolldown?branch=main#efbeae5f2f265cf7dcc224cad13d31e7fe61755f"
-dependencies = [
- "arcstr",
- "dashmap 6.1.0",
- "itertools 0.14.0",
- "oxc_resolver",
- "rolldown_common",
- "rolldown_fs",
- "rolldown_utils",
- "sugar_path",
-]
-
-[[package]]
-name = "rolldown_rstr"
-version = "0.1.0"
-source = "git+https://github.com/rolldown/rolldown?branch=main#efbeae5f2f265cf7dcc224cad13d31e7fe61755f"
-dependencies = [
- "oxc",
-]
-
-[[package]]
-name = "rolldown_sourcemap"
-version = "0.1.0"
-source = "git+https://github.com/rolldown/rolldown?branch=main#efbeae5f2f265cf7dcc224cad13d31e7fe61755f"
-dependencies = [
- "memchr",
- "oxc",
- "oxc_sourcemap",
- "rolldown_utils",
- "rustc-hash 2.1.1",
-]
-
-[[package]]
-name = "rolldown_std_utils"
-version = "0.1.0"
-source = "git+https://github.com/rolldown/rolldown?branch=main#efbeae5f2f265cf7dcc224cad13d31e7fe61755f"
-dependencies = [
- "regex",
-]
-
-[[package]]
-name = "rolldown_tracing"
-version = "0.1.0"
-source = "git+https://github.com/rolldown/rolldown?branch=main#efbeae5f2f265cf7dcc224cad13d31e7fe61755f"
-dependencies = [
- "tracing",
- "tracing-chrome",
- "tracing-subscriber",
-]
-
-[[package]]
-name = "rolldown_utils"
-version = "0.1.0"
-source = "git+https://github.com/rolldown/rolldown?branch=main#efbeae5f2f265cf7dcc224cad13d31e7fe61755f"
-dependencies = [
- "anyhow",
- "arcstr",
- "async-scoped",
- "base-encode",
- "base64-simd 0.8.0",
- "cow-utils",
- "dashmap 6.1.0",
- "fast-glob",
- "form_urlencoded",
- "futures",
- "indexmap 2.9.0",
- "infer",
- "itoa",
- "memchr",
- "mime",
- "nom",
- "oxc",
- "oxc_index",
- "phf",
- "rayon",
- "regex",
- "regress",
- "rolldown_std_utils",
- "rustc-hash 2.1.1",
- "serde_json",
- "simdutf8",
- "sugar_path",
- "xxhash-rust",
 ]
 
 [[package]]
@@ -4127,17 +4156,6 @@ name = "str_indices"
 version = "0.4.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d08889ec5408683408db66ad89e0e1f93dff55c73a4ccc71c427d5b277ee47e6"
-
-[[package]]
-name = "string_wizard"
-version = "0.0.26"
-source = "git+https://github.com/rolldown/rolldown?branch=main#efbeae5f2f265cf7dcc224cad13d31e7fe61755f"
-dependencies = [
- "oxc_index",
- "oxc_sourcemap",
- "rustc-hash 2.1.1",
- "serde",
-]
 
 [[package]]
 name = "strsim"

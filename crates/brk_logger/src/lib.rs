@@ -25,50 +25,53 @@ pub fn init(path: Option<&Path>) {
             .unwrap()
     });
 
-    Builder::from_env(Env::default().default_filter_or("info,fjall=off,lsm_tree=off,rolldown=off"))
-        .format(move |buf, record| {
-            let date_time = Timestamp::now()
-                .to_zoned(tz::TimeZone::system())
-                .strftime("%Y-%m-%d %H:%M:%S")
-                .to_string();
-            let level = record.level().as_str().to_lowercase();
-            let level = format!("{:5}", level);
-            let target = record.target();
-            let dash = "-";
-            let args = record.args();
+    Builder::from_env(
+        Env::default()
+            .default_filter_or("info,fjall=off,lsm_tree=off,rolldown=off,brk_rolldown=off"),
+    )
+    .format(move |buf, record| {
+        let date_time = Timestamp::now()
+            .to_zoned(tz::TimeZone::system())
+            .strftime("%Y-%m-%d %H:%M:%S")
+            .to_string();
+        let level = record.level().as_str().to_lowercase();
+        let level = format!("{:5}", level);
+        let target = record.target();
+        let dash = "-";
+        let args = record.args();
 
-            if let Some(file) = file.as_ref() {
-                let _ = write(
-                    file.try_clone().unwrap(),
-                    &date_time,
-                    target,
-                    &level,
-                    dash,
-                    args,
-                );
-            }
-
-            let colored_date_time = date_time.bright_black();
-            let colored_level = match level.chars().next().unwrap() {
-                'e' => level.red().to_string(),
-                'w' => level.yellow().to_string(),
-                'i' => level.green().to_string(),
-                'd' => level.blue().to_string(),
-                't' => level.cyan().to_string(),
-                _ => panic!(),
-            };
-            let colored_dash = dash.bright_black();
-
-            write(
-                buf,
-                colored_date_time,
+        if let Some(file) = file.as_ref() {
+            let _ = write(
+                file.try_clone().unwrap(),
+                &date_time,
                 target,
-                colored_level,
-                colored_dash,
+                &level,
+                dash,
                 args,
-            )
-        })
-        .init();
+            );
+        }
+
+        let colored_date_time = date_time.bright_black();
+        let colored_level = match level.chars().next().unwrap() {
+            'e' => level.red().to_string(),
+            'w' => level.yellow().to_string(),
+            'i' => level.green().to_string(),
+            'd' => level.blue().to_string(),
+            't' => level.cyan().to_string(),
+            _ => panic!(),
+        };
+        let colored_dash = dash.bright_black();
+
+        write(
+            buf,
+            colored_date_time,
+            target,
+            colored_level,
+            colored_dash,
+            args,
+        )
+    })
+    .init();
 }
 
 fn write(
