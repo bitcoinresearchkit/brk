@@ -3,7 +3,6 @@ use axum::{Router, routing::get};
 use super::AppState;
 
 mod file;
-mod minify;
 mod website;
 
 use file::{file_handler, index_handler};

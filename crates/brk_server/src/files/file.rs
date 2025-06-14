@@ -13,8 +13,6 @@ use crate::{
     traits::{HeaderMapExtended, ModifiedState, ResponseExtended},
 };
 
-use super::minify::minify_js;
-
 pub async fn file_handler(
     headers: HeaderMap,
     State(app_state): State<AppState>,
@@ -81,49 +79,35 @@ fn path_to_response_(headers: &HeaderMap, path: &Path) -> color_eyre::Result<Res
         return Ok(Response::new_not_modified());
     }
 
-    let mut response;
+    let content = fs::read(path).unwrap_or_else(|error| {
+        error!("{error}");
+        let path = path.to_str().unwrap();
+        info!("Can't read file {path}");
+        panic!("")
+    });
 
-    let is_localhost = headers.check_if_host_is_localhost();
-
-    if !is_localhost
-        && path.extension().unwrap_or_else(|| {
-            dbg!(path);
-            panic!();
-        }) == "js"
-    {
-        let content = minify_js(path);
-
-        response = Response::new(content.into());
-    } else {
-        let content = fs::read(path).unwrap_or_else(|error| {
-            error!("{error}");
-            let path = path.to_str().unwrap();
-            info!("Can't read file {path}");
-            panic!("")
-        });
-
-        response = Response::new(content.into());
-    }
+    let mut response = Response::new(content.into());
 
     let headers = response.headers_mut();
     headers.insert_cors();
     headers.insert_content_type(path);
 
-    if !is_localhost {
-        let serialized_path = path.to_str().unwrap();
+    let serialized_path = path.to_str().unwrap();
 
-        if serialized_path.contains("fonts/")
-            || serialized_path.contains("assets/")
-            || serialized_path.contains("packages/")
-            || path.extension().is_some_and(|extension| {
-                extension == "pdf"
-                    || extension == "jpg"
-                    || extension == "png"
-                    || extension == "woff2"
-            })
-        {
-            headers.insert_cache_control_immutable();
-        }
+    if serialized_path.ends_with(".html") || serialized_path.ends_with("service-worker.js") {
+        headers.insert_cache_control_must_revalidate();
+    } else if serialized_path.contains("fonts/")
+        || serialized_path.contains("assets/")
+        || serialized_path.contains("packages/")
+        || path.extension().is_some_and(|extension| {
+            extension == "pdf"
+                || extension == "jpg"
+                || extension == "png"
+                || extension == "woff2"
+                || extension == "js"
+        })
+    {
+        headers.insert_cache_control_immutable();
     }
 
     headers.insert_last_modified(date);
