@@ -1424,7 +1424,7 @@ function createPartialOptions(colors) {
                       key: `${fixKey(key)}realized-price`,
                       name,
                       color,
-                    })
+                    }),
                   ),
                 }
               : createPriceWithRatio({
@@ -1507,7 +1507,7 @@ function createPartialOptions(colors) {
                 /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
                   type: "Baseline",
                   key: `${fixKey(
-                    key
+                    key,
                   )}net-realized-profit-and-loss-relative-to-realized-cap`,
                   title: useGroupName ? name : "Net",
                   color: useGroupName ? color : undefined,
@@ -1578,7 +1578,7 @@ function createPartialOptions(colors) {
                           /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
                             type: "Baseline",
                             key: `${fixKey(
-                              key
+                              key,
                             )}adjusted-spent-output-profit-ratio`,
                             title: useGroupName ? name : "asopr",
                             color: useGroupName ? color : undefined,
@@ -1601,7 +1601,7 @@ function createPartialOptions(colors) {
                   key: `${fixKey(key)}sell-side-risk-ratio`,
                   name: useGroupName ? name : "Risk",
                   color: color,
-                })
+                }),
               ),
             },
           ],
@@ -1690,7 +1690,7 @@ function createPartialOptions(colors) {
                 /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
                   type: "Baseline",
                   key: `${fixKey(
-                    key
+                    key,
                   )}net-unrealized-profit-and-loss-relative-to-market-cap`,
                   title: useGroupName ? name : "Net",
                   color: useGroupName ? color : undefined,
@@ -1868,7 +1868,7 @@ function createPartialOptions(colors) {
                       key: `${key}-sma`,
                       name: key,
                       color,
-                    })
+                    }),
                   ),
                 },
                 ...averages.map(({ key, name, color }) =>
@@ -1878,7 +1878,7 @@ function createPartialOptions(colors) {
                     title: `${name} Market Price Moving Average`,
                     legend: "average",
                     color,
-                  })
+                  }),
                 ),
               ],
             },
@@ -1969,7 +1969,7 @@ function createPartialOptions(colors) {
                           },
                         }),
                       ],
-                    })
+                    }),
                 ),
                 .../** @type {const} */ ([
                   { name: "2 Year", key: "2y" },
@@ -2040,7 +2040,7 @@ function createPartialOptions(colors) {
                           },
                         }),
                       ],
-                    })
+                    }),
                 ),
               ],
             },
@@ -2056,7 +2056,7 @@ function createPartialOptions(colors) {
                       name: `${year}`,
                       color,
                       defaultActive,
-                    })
+                    }),
                   ),
                 },
                 ...dcaClasses.map(
@@ -2083,7 +2083,7 @@ function createPartialOptions(colors) {
                           },
                         }),
                       ],
-                    })
+                    }),
                 ),
               ],
             },
@@ -2144,10 +2144,10 @@ function createPartialOptions(colors) {
               bottom: [
                 ...createAverageSumCumulativeMinMaxPercentilesSeries("fee"),
                 ...createAverageSumCumulativeMinMaxPercentilesSeries(
-                  "fee-in-btc"
+                  "fee-in-btc",
                 ),
                 ...createAverageSumCumulativeMinMaxPercentilesSeries(
-                  "fee-in-usd"
+                  "fee-in-usd",
                 ),
               ],
             },
@@ -2841,7 +2841,7 @@ function createPartialOptions(colors) {
         },
         {
           name: "Status",
-          url: () => "https://status.kibo.money/",
+          url: () => "https://status.bitcoinresearchkit.org/",
         },
         {
           name: "Crates",
@@ -2903,7 +2903,7 @@ export function initOptions({ colors, signals, env, utils, qrcode }) {
   const detailsList = [];
 
   const treeElement = signals.createSignal(
-    /** @type {HTMLDivElement | null} */ (null)
+    /** @type {HTMLDivElement | null} */ (null),
   );
 
   /** @type {string[] | undefined} */
@@ -3015,7 +3015,7 @@ export function initOptions({ colors, signals, env, utils, qrcode }) {
           return null;
         }
       },
-      null
+      null,
     );
 
     partialTree.forEach((anyPartial, partialIndex) => {
@@ -3038,7 +3038,7 @@ export function initOptions({ colors, signals, env, utils, qrcode }) {
 
       if ("tree" in anyPartial) {
         const folderId = utils.stringToId(
-          `${(path || []).join(" ")} ${anyPartial.name} folder`
+          `${(path || []).join(" ")} ${anyPartial.name} folder`,
         );
 
         /** @type {Omit<OptionsGroup, keyof PartialOptionsGroup>} */
@@ -3053,13 +3053,13 @@ export function initOptions({ colors, signals, env, utils, qrcode }) {
         const thisPath = groupAddons.id;
 
         const passedDetails = signals.createSignal(
-          /** @type {HTMLDivElement | HTMLDetailsElement | null} */ (null)
+          /** @type {HTMLDivElement | HTMLDetailsElement | null} */ (null),
         );
 
         const childOptionsCount = recursiveProcessPartialTree(
           anyPartial.tree,
           passedDetails,
-          [...(path || []), thisPath]
+          [...(path || []), thisPath],
         );
 
         listForSum.push(childOptionsCount);
@@ -3191,7 +3191,7 @@ export function initOptions({ colors, signals, env, utils, qrcode }) {
     });
 
     return signals.createMemo(() =>
-      listForSum.reduce((acc, s) => acc + s(), 0)
+      listForSum.reduce((acc, s) => acc + s(), 0),
     );
   }
   recursiveProcessPartialTree(partialOptions, treeElement);
@@ -3218,7 +3218,7 @@ export function initOptions({ colors, signals, env, utils, qrcode }) {
         console.log(
           [...m.entries()]
             .filter(([_, value]) => value > 1)
-            .map(([key, _]) => key)
+            .map(([key, _]) => key),
         );
 
         throw Error("ID duplicate");

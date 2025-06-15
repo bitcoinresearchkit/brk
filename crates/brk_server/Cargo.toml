@@ -30,7 +30,7 @@ oxc = { version = "0.73.0", features = ["codegen", "minifier"] }
 serde = { workspace = true }
 tokio = { workspace = true }
 tower-http = { version = "0.6.6", features = ["compression-full", "trace"] }
-zip = "4.0.0"
+zip = "4.1.0"
 tracing = "0.1.41"
 
 [package.metadata.cargo-machete]

@@ -2,7 +2,6 @@ use std::{fs, io, path::Path, sync::Arc};
 
 use brk_rolldown::{Bundler, BundlerOptions, RawMinifyOptions, SourceMapType};
 use log::error;
-use minify_html_onepass::Cfg;
 use notify::{EventKind, RecursiveMode, Watcher};
 use sugar_path::SugarPath;
 use tokio::sync::Mutex;
@@ -56,15 +55,7 @@ pub async fn bundle(websites_path: &Path, source_folder: &str, watch: bool) -> i
             contents = contents.replace("/scripts/main.js", &format!("/scripts/{main_hashed}.js"));
         }
 
-        if let Ok(contents) = minify_html_onepass::in_place_str(
-            contents.as_mut_str(),
-            &Cfg {
-                minify_js: false,
-                minify_css: false,
-            },
-        ) {
-            let _ = fs::write(&absolute_dist_index_path, contents);
-        }
+        let _ = fs::write(&absolute_dist_index_path, contents);
     };
 
     let write_sw = move || {

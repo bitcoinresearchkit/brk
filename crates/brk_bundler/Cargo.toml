@@ -1,6 +1,6 @@
 [package]
 name = "brk_bundler"
-description = "A crate that bundles the selected website for the server"
+description = "A thin wrapper around rolldown"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
@@ -9,7 +9,6 @@ repository.workspace = true
 
 [dependencies]
 log = { workspace = true }
-minify-html-onepass = "0.16.4"
 notify = "8.0.0"
 brk_rolldown = "0.0.1"
 sugar_path = "1.2.0"

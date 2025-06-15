@@ -2,7 +2,7 @@
 
 #[cfg(feature = "bundler")]
 #[doc(inline)]
-pub use brk_bundle as bundle;
+pub use brk_bundler as bundler;
 
 #[doc(inline)]
 pub use brk_cli as cli;
