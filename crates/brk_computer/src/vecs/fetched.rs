@@ -7,7 +7,7 @@ use brk_core::{
 use brk_exit::Exit;
 use brk_fetcher::Fetcher;
 use brk_indexer::Indexer;
-use brk_vec::{AnyCollectableVec, AnyIterableVec, Computation, EagerVec, Format};
+use brk_vec::{AnyCollectableVec, AnyIterableVec, Computation, EagerVec, Format, StoredIndex};
 
 use super::{
     Indexes,
@@ -429,8 +429,18 @@ impl Vecs {
         self.dateindex_to_ohlc_in_cents.compute_transform(
             starting_indexes.dateindex,
             &indexes.dateindex_to_date,
-            |(di, d, ..)| {
-                let ohlc = fetcher.get_date(d).unwrap();
+            |(di, d, this)| {
+                let mut ohlc = fetcher.get_date(d).unwrap();
+                if let Some(prev) = di.decremented() {
+                    let prev_open = *this
+                        .get_or_read(prev, &this.mmap().load())
+                        .unwrap()
+                        .unwrap()
+                        .close;
+                    *ohlc.open = prev_open;
+                    *ohlc.high = (*ohlc.high).max(prev_open);
+                    *ohlc.low = (*ohlc.low).min(prev_open);
+                }
                 (di, ohlc)
             },
             exit,
