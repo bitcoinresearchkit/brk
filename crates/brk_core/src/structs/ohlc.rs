@@ -1,6 +1,6 @@
 use std::ops::{Add, Div};
 
-use derive_deref::Deref;
+use derive_deref::{Deref, DerefMut};
 use serde::{Serialize, Serializer, ser::SerializeTuple};
 use zerocopy_derive::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
@@ -172,6 +172,7 @@ impl From<Close<Sats>> for OHLCSats {
     IntoBytes,
     KnownLayout,
     Deref,
+    DerefMut,
     Serialize,
 )]
 #[repr(C)]
@@ -259,6 +260,7 @@ where
     IntoBytes,
     KnownLayout,
     Deref,
+    DerefMut,
     Serialize,
 )]
 #[repr(C)]
@@ -346,6 +348,7 @@ where
     IntoBytes,
     KnownLayout,
     Deref,
+    DerefMut,
     Serialize,
 )]
 #[repr(C)]
@@ -433,6 +436,7 @@ where
     IntoBytes,
     KnownLayout,
     Deref,
+    DerefMut,
     Serialize,
 )]
 #[repr(C)]

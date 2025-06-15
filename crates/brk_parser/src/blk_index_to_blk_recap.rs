@@ -96,9 +96,10 @@ impl BlkIndexToBlkRecap {
     }
 
     pub fn export(&self) {
-        let file = File::create(&self.path).unwrap_or_else(|_| {
+        let file = File::create(&self.path).unwrap_or_else(|e| {
+            dbg!(e);
             dbg!(&self.path);
-            panic!("No such file or directory")
+            panic!("Cannot write file");
         });
 
         serde_json::to_writer(&mut BufWriter::new(file), &self.tree).unwrap();
