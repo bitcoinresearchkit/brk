@@ -42,7 +42,7 @@ clap_derive = "4.5.40"
 color-eyre = "0.6.5"
 derive_deref = "1.1.1"
 fjall = "2.11.0"
-jiff = "0.2.14"
+jiff = "0.2.15"
 log = { version = "0.4.27" }
 minreq = { version = "2.13.4", features = ["https", "serde_json"] }
 rayon = "1.10.0"

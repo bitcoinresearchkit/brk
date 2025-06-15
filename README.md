@@ -71,7 +71,7 @@ In contrast, existing alternatives tend to be either [very costly](https://studi
 - [`brk_state`](https://crates.io/crates/brk_state): Various states used mainly by the computer
 - [`brk_store`](https://crates.io/crates/brk_store): A thin wrapper around [`fjall`](https://crates.io/crates/fjall)
 - [`brk_vec`](https://crates.io/crates/brk_vec): A push-only, truncable, compressable, saveable Vec
-- [`brk_bundler`](https://crates.io/crates/brk_bundler): A crate that bundles the selected website for the server
+- [`brk_bundler`](https://crates.io/crates/brk_bundler): A thin wrapper around [`rolldown`](https://rolldown.rs/)
 
 ## Hosting as a service
 
