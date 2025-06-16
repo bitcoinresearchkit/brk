@@ -69,7 +69,7 @@ const signals = {
   /**
    * @template T
    * @param {T} initialValue
-   * @param {SignalOptions<T> & {save?: {keyPrefix: string | Accessor<string>; key: string; serialize: (v: T) => string; deserialize: (v: string) => T; serializeParam?: boolean}}} [options]
+   * @param {SignalOptions<T> & {save?: {keyPrefix: string | Accessor<string>; key: string; serialize: (v: T) => string; deserialize: (v: string) => T; serializeParam?: boolean; saveDefaultValue?: boolean}}} [options]
    * @returns {Signal<T>}
    */
   createSignal(initialValue, options) {
@@ -134,6 +134,7 @@ const signals = {
               value !== null &&
               (initialValue === undefined ||
                 initialValue === null ||
+                save.saveDefaultValue ||
                 save.serialize(value) !== save.serialize(initialValue))
             ) {
               localStorage.setItem(storageKey(), save.serialize(value));
@@ -148,6 +149,7 @@ const signals = {
           value !== null &&
           (initialValue === undefined ||
             initialValue === null ||
+            save.saveDefaultValue ||
             save.serialize(value) !== save.serialize(initialValue))
         ) {
           writeParam(paramKey, save.serialize(value));

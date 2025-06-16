@@ -171,7 +171,6 @@ export function init({
       latest.high = Math.floor(ONE_BTC_IN_SATS / latest.high);
       latest.low = Math.floor(ONE_BTC_IN_SATS / latest.low);
       latest.close = Math.floor(ONE_BTC_IN_SATS / latest.close);
-      latest.value = Math.floor(ONE_BTC_IN_SATS / latest.value);
     }
 
     const last_ = iseries.data().at(-1);
@@ -182,7 +181,7 @@ export function init({
       last.close = latest.close;
     }
     if ("value" in last) {
-      last.value = latest.value;
+      last.value = latest.close;
     }
     const date = new Date(latest.time * 1000);
 

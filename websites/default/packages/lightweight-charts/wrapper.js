@@ -176,20 +176,16 @@ function createChartElement({
     }
   );
 
-  let timeScaleSet = false;
-
   signals.createEffect(index, (index) => {
-    timeScaleSet = false;
-
     const minBarSpacing =
       index === /** @satisfies {MonthIndex} */ (7)
         ? 1
         : index === /** @satisfies {QuarterIndex} */ (19)
-        ? 3
+        ? 2
         : index === /** @satisfies {YearIndex} */ (23)
-        ? 12
+        ? 6
         : index === /** @satisfies {DecadeIndex} */ (1)
-        ? 120
+        ? 60
         : 0.5;
 
     ichart.applyOptions({
@@ -408,8 +404,10 @@ function createChartElement({
 
                   let length = Math.min(indexes.length, values.length);
 
+                  // TODO: Don't create new Array if data already present, update instead
                   /** @type {LineData[] | CandlestickData[]} */
                   const data = new Array(length);
+
                   let prevTime = null;
                   let timeOffset = 0;
 
@@ -458,11 +456,24 @@ function createChartElement({
 
                   const seriesData = series.inner.data();
                   if (!seriesData.length) {
-                    console.log("set: vecid:", vecId);
                     iseries.setData(data);
+
                     if (fitContent) {
                       ichart.timeScale().fitContent();
                     }
+
+                    timeScaleSetCallback?.(() => {
+                      if (
+                        index === /** @satisfies {QuarterIndex} */ (19) ||
+                        index === /** @satisfies {YearIndex} */ (23) ||
+                        index === /** @satisfies {DecadeIndex} */ (1)
+                      ) {
+                        ichart.timeScale().setVisibleLogicalRange({
+                          from: -1,
+                          to: data.length,
+                        });
+                      }
+                    });
                   } else if (data.length) {
                     let i = 0;
                     const first = seriesData[0];
@@ -517,21 +528,6 @@ function createChartElement({
                     index,
                     unit,
                   });
-
-                  timeScaleSetCallback?.(() => {
-                    if (
-                      !timeScaleSet &&
-                      (index === /** @satisfies {QuarterIndex} */ (19) ||
-                        index === /** @satisfies {YearIndex} */ (23) ||
-                        index === /** @satisfies {DecadeIndex} */ (1))
-                    ) {
-                      ichart.timeScale().setVisibleLogicalRange({
-                        from: -1,
-                        to: data.length,
-                      });
-                    }
-                  });
-                  timeScaleSet = true;
                 }
               );
             } else {
