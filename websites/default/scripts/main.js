@@ -388,6 +388,7 @@ function createUtils() {
           ...serde.string,
           keyPrefix: keyPrefix ?? "",
           key,
+          saveDefaultValue: true,
         },
       });
 
@@ -1163,7 +1164,7 @@ function createUtils() {
     },
     chartableIndex: {
       /**
-       * @param {Index} v
+       * @param {number} v
        */
       serialize(v) {
         switch (v) {
