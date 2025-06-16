@@ -1,17 +1,6 @@
 // @ts-check
 
 /**
- * @typedef {Height | DateIndex | WeekIndex | MonthIndex | QuarterIndex | YearIndex | DecadeIndex} ChartableIndex
- */
-/**
- * @template {readonly unknown[]} T
- * @typedef {Extract<T[number], ChartableIndex> extends never ? false : true} IncludesChartableIndex
- */
-/**
- * @typedef {{[K in VecId]: IncludesChartableIndex<VecIdToIndexes[K]> extends true ? K : never}[VecId]} ChartableVecId
- */
-
-/**
  * @typedef {Object} BaseSeriesBlueprint
  * @property {string} title
  * @property {boolean} [defaultActive]
@@ -42,7 +31,7 @@
  *
  * @typedef {AnySeriesBlueprint["type"]} SeriesType
  *
- * @typedef {{ key: ChartableVecId, unit?: Unit | Unit[] }} FetchedAnySeriesOptions
+ * @typedef {{ key: VecId, unit?: Unit | Unit[] }} FetchedAnySeriesOptions
  *
  * @typedef {BaselineSeriesBlueprint & FetchedAnySeriesOptions} FetchedBaselineSeriesBlueprint
  * @typedef {CandlestickSeriesBlueprint & FetchedAnySeriesOptions} FetchedCandlestickSeriesBlueprint
@@ -122,11 +111,11 @@
 function createPartialOptions(colors) {
   /**
    * @template {string} S
-   * @typedef {Extract<ChartableVecId, `${S}${string}`>} StartsWith
+   * @typedef {Extract<VecId, `${S}${string}`>} StartsWith
    */
   /**
    * @template {string} S
-   * @typedef {Extract<ChartableVecId, `${string}${S}`>} EndsWith
+   * @typedef {Extract<VecId, `${string}${S}`>} EndsWith
    */
   /**
    * @template {string} K
@@ -813,7 +802,7 @@ function createPartialOptions(colors) {
 
   /**
    * @param {Object} args
-   * @param {ChartableVecId} args.key
+   * @param {VecId} args.key
    * @param {string} args.name
    * @param {Color} [args.color]
    * @param {boolean} [args.defaultActive]
@@ -925,7 +914,7 @@ function createPartialOptions(colors) {
 
   /**
    * @param {Object} args
-   * @param {ChartableVecId & VecIdAverageBase & VecIdSumBase & CumulativeVecIdBase & VecIdMinBase & VecIdMaxBase & VecId90pBase & VecId75pBase & VecIdMedianBase & VecId25pBase & VecId10pBase} args.key
+   * @param {VecId & VecIdAverageBase & VecIdSumBase & CumulativeVecIdBase & VecIdMinBase & VecIdMaxBase & VecId90pBase & VecId75pBase & VecIdMedianBase & VecId25pBase & VecId10pBase} args.key
    * @param {string} args.name
    */
   function createBaseAverageSumCumulativeMinMaxPercentilesSeries({
@@ -943,7 +932,7 @@ function createPartialOptions(colors) {
 
   /**
    * @param {Object} args
-   * @param {ChartableVecId & VecIdSumBase & CumulativeVecIdBase} args.key
+   * @param {VecId & VecIdSumBase & CumulativeVecIdBase} args.key
    * @param {string} args.name
    */
   function createBaseSumCumulativeSeries({ key, name }) {
@@ -1424,7 +1413,7 @@ function createPartialOptions(colors) {
                       key: `${fixKey(key)}realized-price`,
                       name,
                       color,
-                    }),
+                    })
                   ),
                 }
               : createPriceWithRatio({
@@ -1507,7 +1496,7 @@ function createPartialOptions(colors) {
                 /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
                   type: "Baseline",
                   key: `${fixKey(
-                    key,
+                    key
                   )}net-realized-profit-and-loss-relative-to-realized-cap`,
                   title: useGroupName ? name : "Net",
                   color: useGroupName ? color : undefined,
@@ -1578,7 +1567,7 @@ function createPartialOptions(colors) {
                           /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
                             type: "Baseline",
                             key: `${fixKey(
-                              key,
+                              key
                             )}adjusted-spent-output-profit-ratio`,
                             title: useGroupName ? name : "asopr",
                             color: useGroupName ? color : undefined,
@@ -1601,7 +1590,7 @@ function createPartialOptions(colors) {
                   key: `${fixKey(key)}sell-side-risk-ratio`,
                   name: useGroupName ? name : "Risk",
                   color: color,
-                }),
+                })
               ),
             },
           ],
@@ -1690,7 +1679,7 @@ function createPartialOptions(colors) {
                 /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
                   type: "Baseline",
                   key: `${fixKey(
-                    key,
+                    key
                   )}net-unrealized-profit-and-loss-relative-to-market-cap`,
                   title: useGroupName ? name : "Net",
                   color: useGroupName ? color : undefined,
@@ -1868,7 +1857,7 @@ function createPartialOptions(colors) {
                       key: `${key}-sma`,
                       name: key,
                       color,
-                    }),
+                    })
                   ),
                 },
                 ...averages.map(({ key, name, color }) =>
@@ -1878,7 +1867,7 @@ function createPartialOptions(colors) {
                     title: `${name} Market Price Moving Average`,
                     legend: "average",
                     color,
-                  }),
+                  })
                 ),
               ],
             },
@@ -1969,7 +1958,7 @@ function createPartialOptions(colors) {
                           },
                         }),
                       ],
-                    }),
+                    })
                 ),
                 .../** @type {const} */ ([
                   { name: "2 Year", key: "2y" },
@@ -2040,7 +2029,7 @@ function createPartialOptions(colors) {
                           },
                         }),
                       ],
-                    }),
+                    })
                 ),
               ],
             },
@@ -2056,7 +2045,7 @@ function createPartialOptions(colors) {
                       name: `${year}`,
                       color,
                       defaultActive,
-                    }),
+                    })
                   ),
                 },
                 ...dcaClasses.map(
@@ -2083,7 +2072,7 @@ function createPartialOptions(colors) {
                           },
                         }),
                       ],
-                    }),
+                    })
                 ),
               ],
             },
@@ -2144,10 +2133,10 @@ function createPartialOptions(colors) {
               bottom: [
                 ...createAverageSumCumulativeMinMaxPercentilesSeries("fee"),
                 ...createAverageSumCumulativeMinMaxPercentilesSeries(
-                  "fee-in-btc",
+                  "fee-in-btc"
                 ),
                 ...createAverageSumCumulativeMinMaxPercentilesSeries(
-                  "fee-in-usd",
+                  "fee-in-usd"
                 ),
               ],
             },
@@ -2889,7 +2878,7 @@ export function initOptions({ colors, signals, env, utils, qrcode }) {
   const LS_SELECTED_KEY = `selected-id`;
 
   const urlSelected = utils.url.pathnameToSelectedId();
-  const savedSelectedId = localStorage.getItem(LS_SELECTED_KEY);
+  const savedSelectedId = utils.storage.read(LS_SELECTED_KEY);
 
   /** @type {Signal<Option>} */
   const selected = signals.createSignal(/** @type {any} */ (undefined));
@@ -2903,7 +2892,7 @@ export function initOptions({ colors, signals, env, utils, qrcode }) {
   const detailsList = [];
 
   const treeElement = signals.createSignal(
-    /** @type {HTMLDivElement | null} */ (null),
+    /** @type {HTMLDivElement | null} */ (null)
   );
 
   /** @type {string[] | undefined} */
@@ -2973,7 +2962,7 @@ export function initOptions({ colors, signals, env, utils, qrcode }) {
         signals.createEffect(selected, (selected) => {
           if (selected?.id === option.id) {
             input.checked = true;
-            localStorage.setItem(LS_SELECTED_KEY, option.id);
+            utils.storage.write(LS_SELECTED_KEY, option.id);
           } else if (input.checked) {
             input.checked = false;
           }
@@ -3015,7 +3004,7 @@ export function initOptions({ colors, signals, env, utils, qrcode }) {
           return null;
         }
       },
-      null,
+      null
     );
 
     partialTree.forEach((anyPartial, partialIndex) => {
@@ -3038,7 +3027,7 @@ export function initOptions({ colors, signals, env, utils, qrcode }) {
 
       if ("tree" in anyPartial) {
         const folderId = utils.stringToId(
-          `${(path || []).join(" ")} ${anyPartial.name} folder`,
+          `${(path || []).join(" ")} ${anyPartial.name} folder`
         );
 
         /** @type {Omit<OptionsGroup, keyof PartialOptionsGroup>} */
@@ -3053,13 +3042,13 @@ export function initOptions({ colors, signals, env, utils, qrcode }) {
         const thisPath = groupAddons.id;
 
         const passedDetails = signals.createSignal(
-          /** @type {HTMLDivElement | HTMLDetailsElement | null} */ (null),
+          /** @type {HTMLDivElement | HTMLDetailsElement | null} */ (null)
         );
 
         const childOptionsCount = recursiveProcessPartialTree(
           anyPartial.tree,
           passedDetails,
-          [...(path || []), thisPath],
+          [...(path || []), thisPath]
         );
 
         listForSum.push(childOptionsCount);
@@ -3191,7 +3180,7 @@ export function initOptions({ colors, signals, env, utils, qrcode }) {
     });
 
     return signals.createMemo(() =>
-      listForSum.reduce((acc, s) => acc + s(), 0),
+      listForSum.reduce((acc, s) => acc + s(), 0)
     );
   }
   recursiveProcessPartialTree(partialOptions, treeElement);
@@ -3218,7 +3207,7 @@ export function initOptions({ colors, signals, env, utils, qrcode }) {
         console.log(
           [...m.entries()]
             .filter(([_, value]) => value > 1)
-            .map(([key, _]) => key),
+            .map(([key, _]) => key)
         );
 
         throw Error("ID duplicate");

@@ -2,7 +2,7 @@
 // File auto-generated, any modifications will be overwritten
 //
 
-export const VERSION = "v0.0.58";
+export const VERSION = "v0.0.61";
 
 /** @typedef {0} DateIndex */
 /** @typedef {1} DecadeIndex */
@@ -31,8 +31,11 @@ export const VERSION = "v0.0.58";
 
 /** @typedef {DateIndex | DecadeIndex | DifficultyEpoch | EmptyOutputIndex | HalvingEpoch | Height | InputIndex | MonthIndex | OpReturnIndex | OutputIndex | P2AIndex | P2MSIndex | P2PK33Index | P2PK65Index | P2PKHIndex | P2SHIndex | P2TRIndex | P2WPKHIndex | P2WSHIndex | QuarterIndex | TxIndex | UnknownOutputIndex | WeekIndex | YearIndex} Index */
 
+/** @typedef {ReturnType<typeof createVecIdToIndexes>} VecIdToIndexes */
+/** @typedef {keyof VecIdToIndexes} VecId */
+
 export function createVecIdToIndexes() {
-  return /** @type {const} */ ({
+  return {
     "0": [0, 1, 2, 5, 7, 19, 22, 23],
     "0sats-adjusted-spent-output-profit-ratio": [0],
     "0sats-adjusted-value-created": [0, 1, 2, 5, 7, 19, 22, 23],
@@ -9037,7 +9040,5 @@ export function createVecIdToIndexes() {
     "weight": [5, 20],
     "yearindex": [7, 23],
     "yearindex-count": [1],
-  });
+  };
 }
-/** @typedef {ReturnType<typeof createVecIdToIndexes>} VecIdToIndexes */
-/** @typedef {keyof VecIdToIndexes} VecId */

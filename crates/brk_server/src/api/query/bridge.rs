@@ -61,9 +61,12 @@ export const VERSION = \"v{}\";
                 .join(" | ")
         );
 
-        contents += "\n\nexport function createVecIdToIndexes() {\n";
+        contents += "\n\n/** @typedef {ReturnType<typeof createVecIdToIndexes>} VecIdToIndexes */";
+        contents += "\n/** @typedef {keyof VecIdToIndexes} VecId */\n";
 
-        contents += "  return /** @type {const} */ ({\n";
+        contents += "\nexport function createVecIdToIndexes() {\n";
+
+        contents += "  return {\n";
 
         self.vec_trees
             .id_to_index_to_vec
@@ -79,11 +82,7 @@ export const VERSION = \"v{}\";
                 contents += &format!("    \"{id}\": [{indexes}],\n");
             });
 
-        contents += "  });\n";
-        contents.push('}');
-
-        contents += "\n/** @typedef {ReturnType<typeof createVecIdToIndexes>} VecIdToIndexes */";
-        contents += "\n/** @typedef {keyof VecIdToIndexes} VecId */\n";
+        contents += "  };\n}\n";
 
         fs::write(path, contents)
     }
