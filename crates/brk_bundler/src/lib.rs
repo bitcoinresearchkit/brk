@@ -49,10 +49,12 @@ pub async fn bundle(websites_path: &Path, source_folder: &str, watch: bool) -> i
         let mut contents = fs::read_to_string(&absolute_source_index_path).unwrap();
 
         if let Ok(entry) = fs::read_to_string(absolute_dist_path_clone.join("scripts/entry.js")) {
-            let start = entry.find("main").unwrap();
-            let end = entry.find(".js").unwrap();
-            let main_hashed = &entry[start..end];
-            contents = contents.replace("/scripts/main.js", &format!("/scripts/{main_hashed}.js"));
+            if let Some(start) = entry.find("main") {
+                if let Some(end) = entry.find(".js") {
+                    let main_hashed = &entry[start..end];
+                    contents = contents.replace("/scripts/main.js", &format!("/scripts/{main_hashed}.js"));
+                }
+            }
         }
 
         let _ = fs::write(&absolute_dist_index_path, contents);

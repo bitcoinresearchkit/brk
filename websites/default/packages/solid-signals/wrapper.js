@@ -75,7 +75,7 @@ const signals = {
   createSignal(initialValue, options) {
     const [get, set] = this.createSolidSignal(
       /** @type {any} */ (initialValue),
-      options,
+      options
     );
 
     // @ts-ignore
@@ -94,7 +94,7 @@ const signals = {
             typeof save.keyPrefix === "string"
               ? save.keyPrefix
               : save.keyPrefix()
-          }-${paramKey}`,
+          }-${paramKey}`
       );
 
       let serialized = /** @type {string | null} */ (null);
@@ -102,7 +102,9 @@ const signals = {
         serialized = new URLSearchParams(window.location.search).get(paramKey);
       }
       if (serialized === null) {
-        serialized = localStorage.getItem(storageKey());
+        try {
+          serialized = localStorage.getItem(storageKey());
+        } catch (_) {}
       }
       if (serialized) {
         set(() => (serialized ? save.deserialize(serialized) : initialValue));
@@ -111,8 +113,12 @@ const signals = {
       let firstRun1 = true;
       this.createEffect(storageKey, (storageKey) => {
         if (!firstRun1) {
-          serialized = localStorage.getItem(storageKey);
-          set(() => (serialized ? save.deserialize(serialized) : initialValue));
+          try {
+            serialized = localStorage.getItem(storageKey);
+            set(() =>
+              serialized ? save.deserialize(serialized) : initialValue
+            );
+          } catch (_) {}
         }
         firstRun1 = false;
       });
@@ -122,17 +128,19 @@ const signals = {
         if (!save) return;
 
         if (!firstRun2) {
-          if (
-            value !== undefined &&
-            value !== null &&
-            (initialValue === undefined ||
-              initialValue === null ||
-              save.serialize(value) !== save.serialize(initialValue))
-          ) {
-            localStorage.setItem(storageKey(), save.serialize(value));
-          } else {
-            localStorage.removeItem(storageKey());
-          }
+          try {
+            if (
+              value !== undefined &&
+              value !== null &&
+              (initialValue === undefined ||
+                initialValue === null ||
+                save.serialize(value) !== save.serialize(initialValue))
+            ) {
+              localStorage.setItem(storageKey(), save.serialize(value));
+            } else {
+              localStorage.removeItem(storageKey());
+            }
+          } catch (_) {}
         }
 
         if (
@@ -174,7 +182,7 @@ function writeParam(key, value) {
     window.history.replaceState(
       null,
       "",
-      `${window.location.pathname}?${urlParams.toString()}`,
+      `${window.location.pathname}?${urlParams.toString()}`
     );
   } catch (_) {}
 }

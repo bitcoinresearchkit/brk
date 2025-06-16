@@ -24,10 +24,10 @@
  * @property {Signal<string | null>} url
  * @property {VoidFunction} remove
  *
- * @typedef {ChartData<_SingleValueData<number>>} SingleValueData
- * @typedef {ChartData<_CandlestickData<number>>} CandlestickData
- * @typedef {ChartData<_LineData<number>>} LineData
- * @typedef {ChartData<_BaselineData<number>>} BaselineData
+ * @typedef {_SingleValueData<number>} SingleValueData
+ * @typedef {_CandlestickData<number>} CandlestickData
+ * @typedef {_LineData<number>} LineData
+ * @typedef {_BaselineData<number>} BaselineData
  *
  * @typedef {function({ iseries: ISeries; unit: Unit; index: Index }): void} SetDataCallback
  *
@@ -42,11 +42,6 @@
  * @typedef {LineSeriesPartialOptions & PartialCreatePriceLineOptions} PartialLineStyleOptions
  * @typedef {CandlestickSeriesPartialOptions & PartialCreatePriceLineOptions} PartialCandlestickStyleOptions
  * @typedef {BaselineSeriesPartialOptions & PartialCreatePriceLineOptions} PartialBaselineStyleOptions
- */
-
-/**
- * @template T
- * @typedef {T & Valued} ChartData<T>
  */
 
 import {
@@ -146,7 +141,7 @@ function createChartElement({
           }
         : {}),
       // ..._options,
-    }),
+    })
   );
 
   ichart.priceScale("right").applyOptions({
@@ -178,7 +173,7 @@ function createChartElement({
           },
         },
       });
-    },
+    }
   );
 
   let timeScaleSet = false;
@@ -190,12 +185,12 @@ function createChartElement({
       index === /** @satisfies {MonthIndex} */ (7)
         ? 1
         : index === /** @satisfies {QuarterIndex} */ (19)
-          ? 3
-          : index === /** @satisfies {YearIndex} */ (23)
-            ? 12
-            : index === /** @satisfies {DecadeIndex} */ (1)
-              ? 120
-              : 0.5;
+        ? 3
+        : index === /** @satisfies {YearIndex} */ (23)
+        ? 12
+        : index === /** @satisfies {DecadeIndex} */ (1)
+        ? 120
+        : 0.5;
 
     ichart.applyOptions({
       timeScale: {
@@ -218,7 +213,7 @@ function createChartElement({
       activeResources.forEach((v) => {
         v.fetch();
       });
-    }),
+    })
   );
 
   if (fitContent) {
@@ -249,8 +244,7 @@ function createChartElement({
 
           const children = Array.from(parent.childNodes).filter(
             (element) =>
-              /** @type {HTMLElement} */ (element).dataset.position ===
-              position,
+              /** @type {HTMLElement} */ (element).dataset.position === position
           );
 
           if (children.length === 1) {
@@ -272,7 +266,7 @@ function createChartElement({
 
           fieldset.append(createChild(pane));
         }),
-      paneIndex ? 50 : 0,
+      paneIndex ? 50 : 0
     );
   }
 
@@ -356,7 +350,7 @@ function createChartElement({
         // Or remove ?
         iseries.applyOptions({
           visible: active,
-        }),
+        })
       );
 
       iseries.setSeriesOrder(order);
@@ -387,7 +381,7 @@ function createChartElement({
             index,
             index === /** @satisfies {Height} */ (5)
               ? "timestamp-fixed"
-              : "timestamp",
+              : "timestamp"
           );
           timeResource.fetch();
 
@@ -403,18 +397,18 @@ function createChartElement({
 
               const fetchedKey = vecsResources.defaultFetchedKey;
               signals.createEffect(
-                () => [
-                  timeResource.fetched().get(fetchedKey)?.vec(),
-                  valuesResource.fetched().get(fetchedKey)?.vec(),
-                ],
-                ([indexes, _ohlcs]) => {
-                  if (!indexes?.length || !_ohlcs?.length) return;
+                () => ({
+                  _indexes: timeResource.fetched().get(fetchedKey)?.vec(),
+                  values: valuesResource.fetched().get(fetchedKey)?.vec(),
+                }),
+                ({ _indexes, values }) => {
+                  if (!_indexes?.length || !values?.length) return;
 
-                  // const seriesData = series.inner.data();
-                  // const set = seriesData.length === 0;
+                  const indexes = /** @type {number[]} */ (_indexes);
 
-                  const ohlcs = /** @type {OHLCTuple[]} */ (_ohlcs);
-                  let length = Math.min(indexes.length, ohlcs.length);
+                  let length = Math.min(indexes.length, values.length);
+
+                  /** @type {LineData[] | CandlestickData[]} */
                   const data = new Array(length);
                   let prevTime = null;
                   let timeOffset = 0;
@@ -425,7 +419,7 @@ function createChartElement({
                     if (sameTime) {
                       timeOffset += 1;
                     }
-                    const v = ohlcs[i];
+                    const v = values[i];
                     const offsetedI = i - timeOffset;
                     if (v === null) {
                       data[offsetedI] = {
@@ -441,16 +435,16 @@ function createChartElement({
                       if (sameTime) {
                         console.log(data[offsetedI]);
                       }
-                      // const prev = sameTime ? data[offsetedI] : undefined;
+                      const candles = /** @type {CandlestickData[]} */ (data);
                       let [open, high, low, close] = v;
-                      data[offsetedI] = {
+                      candles[offsetedI] = {
                         time,
-                        open: sameTime ? data[offsetedI].open : open,
+                        open: sameTime ? candles[offsetedI].open : open,
                         high: sameTime
-                          ? Math.max(data[offsetedI].high, high)
+                          ? Math.max(candles[offsetedI].high, high)
                           : high,
                         low: sameTime
-                          ? Math.min(data[offsetedI].low, low)
+                          ? Math.min(candles[offsetedI].low, low)
                           : low,
                         close,
                       };
@@ -460,20 +454,64 @@ function createChartElement({
 
                   data.length -= timeOffset;
 
-                  // if (set) {
-                  iseries.setData(data);
-
-                  if (fitContent) {
-                    ichart.timeScale().fitContent();
-                  }
-                  // } else {
-                  // let seriesDataOffset = 0;
-                  // while seriesData
-                  //   data.forEach((bar) => {
-                  //     iseries.update(bar, true);
-                  //   });
-                  // }
                   hasData.set(true);
+
+                  const seriesData = series.inner.data();
+                  if (!seriesData.length) {
+                    console.log("set: vecid:", vecId);
+                    iseries.setData(data);
+                    if (fitContent) {
+                      ichart.timeScale().fitContent();
+                    }
+                  } else if (data.length) {
+                    let i = 0;
+                    const first = seriesData[0];
+                    while (data[i].time < first.time) {
+                      iseries.update(data[i], true);
+                      i++;
+                    }
+                    const last = seriesData.at(-1);
+                    if (!last) throw Error("Unreachable");
+                    let j = 0;
+                    while (i < data.length) {
+                      const dataI = data[i];
+                      const iTime = dataI.time;
+                      const seriesDataJ = seriesData[j];
+                      const jTime = seriesDataJ.time;
+                      if (iTime === jTime) {
+                        const historicalUpdate = iTime < last.time;
+
+                        if ("value" in dataI) {
+                          // @ts-ignore
+                          if (dataI.value !== seriesDataJ.value) {
+                            iseries.update(dataI, historicalUpdate);
+                          }
+                        } else if (
+                          // @ts-ignore
+                          dataI.open !== seriesDataJ.open ||
+                          // @ts-ignore
+                          dataI.high !== seriesDataJ.high ||
+                          // @ts-ignore
+                          dataI.low !== seriesDataJ.low ||
+                          // @ts-ignore
+                          dataI.close !== seriesDataJ.close
+                        ) {
+                          iseries.update(dataI, historicalUpdate);
+                        }
+
+                        i++;
+                      } else if (iTime < jTime) {
+                        iseries.update(dataI, true);
+                        i++;
+                      } else if (iTime > last.time) {
+                        iseries.update(dataI);
+                        i++;
+                      } else if (iTime > jTime) {
+                        j++;
+                      }
+                    }
+                  }
+
                   setDataCallback?.({
                     iseries,
                     index,
@@ -494,7 +532,7 @@ function createChartElement({
                     }
                   });
                   timeScaleSet = true;
-                },
+                }
               );
             } else {
               activeResources.delete(valuesResource);
@@ -587,7 +625,7 @@ function createChartElement({
             borderVisible: false,
             visible: defaultActive !== false,
           },
-          paneIndex,
+          paneIndex
         )
       );
 
@@ -643,7 +681,7 @@ function createChartElement({
             color: color(),
             ...options,
           },
-          paneIndex,
+          paneIndex
         )
       );
 
@@ -711,7 +749,7 @@ function createChartElement({
             topFillColor2: "transparent",
             lineVisible: true,
           },
-          paneIndex,
+          paneIndex
         )
       );
 
@@ -874,7 +912,7 @@ function createLegend({ signals, utils }) {
             } else {
               spanColor.style.backgroundColor = tameColor(color);
             }
-          },
+          }
         );
       });
 
@@ -1034,17 +1072,17 @@ function numberToShortUSFormat(value, digits) {
   if (modulused === 0) {
     return `${numberToUSFormat(
       value / (1_000_000 * 1_000 ** letterIndex),
-      3,
+      3
     )}${letter}`;
   } else if (modulused === 1) {
     return `${numberToUSFormat(
       value / (1_000_000 * 1_000 ** letterIndex),
-      2,
+      2
     )}${letter}`;
   } else {
     return `${numberToUSFormat(
       value / (1_000_000 * 1_000 ** letterIndex),
-      1,
+      1
     )}${letter}`;
   }
 }
@@ -1094,7 +1132,7 @@ function createOklchToRGBA() {
       return rgb.map((c) =>
         Math.abs(c) > 0.0031308
           ? (c < 0 ? -1 : 1) * (1.055 * Math.abs(c) ** (1 / 2.4) - 0.055)
-          : 12.92 * c,
+          : 12.92 * c
       );
     }
     /**
@@ -1106,7 +1144,7 @@ function createOklchToRGBA() {
           1, 0.3963377773761749, 0.2158037573099136, 1, -0.1055613458156586,
           -0.0638541728258133, 1, -0.0894841775298119, -1.2914855480194092,
         ]),
-        lab,
+        lab
       );
       const LMS = /** @type {[number, number, number]} */ (
         LMSg.map((val) => val ** 3)
@@ -1117,7 +1155,7 @@ function createOklchToRGBA() {
           -0.0405757452148008, 1.112286803280317, -0.0717110580655164,
           -0.0763729366746601, -0.4214933324022432, 1.5869240198367816,
         ]),
-        LMS,
+        LMS
       );
     }
     /**
@@ -1130,7 +1168,7 @@ function createOklchToRGBA() {
           -0.9692436362808796, 1.8759675015077202, 0.04155505740717559,
           0.05563007969699366, -0.20397695888897652, 1.0569715142428786,
         ],
-        xyz,
+        xyz
       );
     }
 
@@ -1153,8 +1191,8 @@ function createOklchToRGBA() {
       });
       const rgb = srgbLinear2rgb(
         xyz2rgbLinear(
-          oklab2xyz(oklch2oklab(/** @type {[number, number, number]} */ (lch))),
-        ),
+          oklab2xyz(oklch2oklab(/** @type {[number, number, number]} */ (lch)))
+        )
       ).map((v) => {
         return Math.max(Math.min(Math.round(v * 255), 255), 0);
       });
