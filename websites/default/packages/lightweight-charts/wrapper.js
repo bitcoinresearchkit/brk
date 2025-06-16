@@ -476,25 +476,34 @@ function createChartElement({
                     });
                   } else if (data.length) {
                     let i = 0;
+                    // console.log(seriesData);
                     const first = seriesData[0];
+                    const last = seriesData.at(-1);
+                    if (!last) throw Error("Unreachable");
                     while (data[i].time < first.time) {
                       iseries.update(data[i], true);
                       i++;
                     }
-                    const last = seriesData.at(-1);
-                    if (!last) throw Error("Unreachable");
+                    // console.log(i);
                     let j = 0;
                     while (i < data.length) {
                       const dataI = data[i];
                       const iTime = dataI.time;
-                      const seriesDataJ = seriesData[j];
+                      const seriesDataJ = /** @type {typeof dataI} */ (
+                        seriesData[j]
+                      );
                       const jTime = seriesDataJ.time;
                       if (iTime === jTime) {
                         const historicalUpdate = iTime < last.time;
 
                         if ("value" in dataI) {
-                          // @ts-ignore
-                          if (dataI.value !== seriesDataJ.value) {
+                          if (
+                            // @ts-ignore
+                            dataI.value !== seriesDataJ.value &&
+                            // @ts-ignore
+                            (!isNaN(dataI.value) || !isNaN(seriesDataJ.value))
+                          ) {
+                            // console.log(vecId);
                             iseries.update(dataI, historicalUpdate);
                           }
                         } else if (
@@ -507,10 +516,19 @@ function createChartElement({
                           // @ts-ignore
                           dataI.close !== seriesDataJ.close
                         ) {
+                          // console.log({
+                          //   vecId,
+                          //   dataI,
+                          //   i,
+                          //   data,
+                          //   j,
+                          //   seriesDataJ,
+                          //   seriesData,
+                          // });
                           iseries.update(dataI, historicalUpdate);
                         }
-
                         i++;
+                        j++;
                       } else if (iTime < jTime) {
                         iseries.update(dataI, true);
                         i++;

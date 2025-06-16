@@ -94,19 +94,19 @@ fn path_to_response_(headers: &HeaderMap, path: &Path) -> color_eyre::Result<Res
 
     let serialized_path = path.to_str().unwrap();
 
-    if serialized_path.ends_with(".html") || serialized_path.ends_with("service-worker.js") {
-        headers.insert_cache_control_must_revalidate();
-    } else if serialized_path.contains("fonts/")
-        || serialized_path.contains("assets/")
-        || serialized_path.contains("packages/")
-        || path.extension().is_some_and(|extension| {
-            extension == "pdf"
-                || extension == "jpg"
-                || extension == "png"
-                || extension == "woff2"
-                || extension == "js"
-        })
+    if path
+        .extension()
+        .is_some_and(|extension| extension == "html")
+        || serialized_path.ends_with("service-worker.js")
     {
+        headers.insert_cache_control_must_revalidate();
+    } else if path.extension().is_some_and(|extension| {
+        extension == "jpg"
+            || extension == "png"
+            || extension == "woff2"
+            || extension == "js"
+            || extension == "map"
+    }) {
         headers.insert_cache_control_immutable();
     }
 
