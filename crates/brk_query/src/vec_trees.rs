@@ -28,9 +28,14 @@ impl<'a> VecTrees<'a> {
                         || s.starts_with("cumulative_from")
                 }))
             && !(split.len() == 4
-                && split
-                    .get(1)
-                    .is_some_and(|s| s == &"up" || s == &"start" || s.starts_with("from"))
+                && split.get(1).is_some_and(|s| {
+                    s == &"up"
+                        || s == &"start"
+                        || s.starts_with("from")
+                        || s == &"cumulative_up"
+                        || s == &"cumulative_start"
+                        || s.starts_with("cumulative_from")
+                })
                 && split.get(2).is_some_and(|s| s.ends_with("relative")))
         {
             dbg!(&name, &split);

@@ -4,8 +4,8 @@ use brk_core::{DateIndex, Height, InputIndex, OutputIndex, OutputType, Result, S
 use brk_exit::Exit;
 use brk_indexer::Indexer;
 use brk_vec::{
-    AnyCollectableVec, AnyVec, BaseVecIterator, CollectableVec, Computation, EagerVec, Format,
-    GenericStoredVec, StoredIndex, StoredVec, UnsafeSlice, VecIterator,
+    AnyCollectableVec, AnyVec, CollectableVec, Computation, EagerVec, Format, GenericStoredVec,
+    StoredIndex, StoredVec, UnsafeSlice, VecIterator,
 };
 use log::info;
 use outputs::OutputCohorts;
@@ -1343,268 +1343,265 @@ impl Vecs {
                 .try_for_each(|(_, v)| v.state.price_to_amount.reset())?;
         }
 
-        if starting_height == Height::from(height_to_date_fixed.len()) {
-            return Ok(());
-        }
+        if starting_height < Height::from(height_to_date_fixed.len()) {
+            starting_indexes.update_from_height(starting_height, indexes);
 
-        // ---
-        // INIT
-        // ---
+            separate_utxo_vecs
+                .par_iter_mut()
+                .for_each(|(_, v)| v.init(starting_height));
 
-        separate_utxo_vecs
-            .par_iter_mut()
-            .for_each(|(_, v)| v.init(starting_height));
-
-        let mut unspendable_supply = if let Some(prev_height) = starting_height.decremented() {
-            self.height_to_unspendable_supply
-                .into_iter()
-                .unwrap_get_inner(prev_height)
-        } else {
-            Sats::ZERO
-        };
-        let mut opreturn_supply = if let Some(prev_height) = starting_height.decremented() {
-            self.height_to_opreturn_supply
-                .into_iter()
-                .unwrap_get_inner(prev_height)
-        } else {
-            Sats::ZERO
-        };
-
-        let mut height = starting_height;
-        starting_indexes.update_from_height(height, indexes);
-
-        (height.unwrap_to_usize()..height_to_first_outputindex_iter.len())
-            .map(Height::from)
-            .try_for_each(|_height| -> color_eyre::Result<()> {
-                height = _height;
-
-                self.utxos_vecs
-                    .as_mut_separate_vecs()
-                    .iter_mut()
-                    .for_each(|(_, v)| v.state.reset_single_iteration_values());
-
-                info!("Processing chain at {height}...");
-
-                let timestamp = height_to_timestamp_fixed_iter.unwrap_get_inner(height);
-                let price = height_to_close_iter
-                    .as_mut()
-                    .map(|i| *i.unwrap_get_inner(height));
-                let first_outputindex = height_to_first_outputindex_iter
-                    .unwrap_get_inner(height)
-                    .unwrap_to_usize();
-                let first_inputindex = height_to_first_inputindex_iter
-                    .unwrap_get_inner(height)
-                    .unwrap_to_usize();
-                let output_count = height_to_output_count_iter.unwrap_get_inner(height);
-                let input_count = height_to_input_count_iter.unwrap_get_inner(height);
-
-                let (mut height_to_sent, mut received) = thread::scope(|s| {
-                    if chain_state_starting_height <= height {
-                        s.spawn(|| {
-                            self.utxos_vecs
-                                .tick_tock_next_block(&chain_state, timestamp);
-                        });
-                    }
-
-                    let sent_handle = s.spawn(|| {
-                        // Skip coinbase
-                        (first_inputindex + 1..first_inputindex + *input_count)
-                            .into_par_iter()
-                            .map(InputIndex::from)
-                            .map(|inputindex| {
-                                let outputindex = inputindex_to_outputindex
-                                    .get_or_read(inputindex, &inputindex_to_outputindex_mmap)
-                                    .unwrap()
-                                    .unwrap()
-                                    .into_inner();
-
-                                let value = outputindex_to_value
-                                    .get_or_read(outputindex, &outputindex_to_value_mmap)
-                                    .unwrap()
-                                    .unwrap()
-                                    .into_inner();
-
-                                let input_type = outputindex_to_outputtype
-                                    .get_or_read(outputindex, &outputindex_to_outputtype_mmap)
-                                    .unwrap()
-                                    .unwrap()
-                                    .into_inner();
-
-                                // dbg!(input_type);
-
-                                if input_type.is_unspendable() {
-                                    unreachable!()
-                                }
-
-                                let input_txindex = outputindex_to_txindex
-                                    .get_or_read(outputindex, &outputindex_to_txindex_mmap)
-                                    .unwrap()
-                                    .unwrap()
-                                    .into_inner();
-
-                                let height = txindex_to_height
-                                    .get_or_read(input_txindex, &txindex_to_height_mmap)
-                                    .unwrap()
-                                    .unwrap()
-                                    .into_inner();
-
-                                (height, value, input_type)
-                            })
-                            .fold(
-                                BTreeMap::<Height, Transacted>::default,
-                                |mut tree, (height, value, input_type)| {
-                                    tree.entry(height).or_default().iterate(value, input_type);
-                                    tree
-                                },
-                            )
-                            .reduce(BTreeMap::<Height, Transacted>::default, |first, second| {
-                                let (mut source, to_consume) = if first.len() > second.len() {
-                                    (first, second)
-                                } else {
-                                    (second, first)
-                                };
-                                to_consume.into_iter().for_each(|(k, v)| {
-                                    *source.entry(k).or_default() += v;
-                                });
-                                source
-                            })
-                    });
-
-                    let received_handle = s.spawn(|| {
-                        (first_outputindex..first_outputindex + *output_count)
-                            .into_par_iter()
-                            .map(OutputIndex::from)
-                            .map(|outputindex| {
-                                let value = outputindex_to_value
-                                    .get_or_read(outputindex, &outputindex_to_value_mmap)
-                                    .unwrap()
-                                    .unwrap()
-                                    .into_inner();
-
-                                let output_type = outputindex_to_outputtype
-                                    .get_or_read(outputindex, &outputindex_to_outputtype_mmap)
-                                    .unwrap()
-                                    .unwrap()
-                                    .into_inner();
-
-                                (value, output_type)
-                            })
-                            .fold(
-                                Transacted::default,
-                                |mut transacted, (value, output_type)| {
-                                    transacted.iterate(value, output_type);
-                                    transacted
-                                },
-                            )
-                            .reduce(Transacted::default, |acc, transacted| acc + transacted)
-                    });
-
-                    (sent_handle.join().unwrap(), received_handle.join().unwrap())
-                });
-
-                unspendable_supply += received
-                    .by_type
-                    .unspendable
-                    .as_vec()
+            let mut unspendable_supply = if let Some(prev_height) = starting_height.decremented() {
+                self.height_to_unspendable_supply
                     .into_iter()
-                    .map(|state| state.value)
-                    .sum::<Sats>()
-                    + height_to_unclaimed_rewards_iter.unwrap_get_inner(height);
-
-                opreturn_supply += received.by_type.unspendable.opreturn.value;
-
-                if height == Height::new(0) {
-                    received = Transacted::default();
-                    unspendable_supply += Sats::FIFTY_BTC;
-                } else if height == Height::new(91_842) || height == Height::new(91_880) {
-                    // Need to destroy invalid coinbases due to duplicate txids
-                    if height == Height::new(91_842) {
-                        height_to_sent.entry(Height::new(91_812)).or_default()
-                    } else {
-                        height_to_sent.entry(Height::new(91_722)).or_default()
-                    }
-                    .iterate(Sats::FIFTY_BTC, OutputType::P2PK65);
-                };
-
-                if chain_state_starting_height <= height {
-                    // Push current block state before processing sends and receives
-                    chain_state.push(BlockState {
-                        supply: received.spendable_supply.clone(),
-                        price,
-                        timestamp,
-                    });
-
-                    self.utxos_vecs.receive(received, height, price);
-
-                    let unsafe_chain_state = UnsafeSlice::new(&mut chain_state);
-
-                    height_to_sent.par_iter().for_each(|(height, sent)| unsafe {
-                        (*unsafe_chain_state.get(height.unwrap_to_usize())).supply -=
-                            &sent.spendable_supply;
-                    });
-
-                    self.utxos_vecs.send(height_to_sent, chain_state.as_slice());
-                } else {
-                    dbg!(chain_state_starting_height, height);
-                    panic!("temp, just making sure")
-                }
-
-                let mut separate_utxo_vecs = self.utxos_vecs.as_mut_separate_vecs();
-
-                separate_utxo_vecs
-                    .iter_mut()
-                    .try_for_each(|(_, v)| v.forced_pushed_at(height, exit))?;
-
-                self.height_to_unspendable_supply.forced_push_at(
-                    height,
-                    unspendable_supply,
-                    exit,
-                )?;
-
+                    .unwrap_get_inner(prev_height)
+            } else {
+                Sats::ZERO
+            };
+            let mut opreturn_supply = if let Some(prev_height) = starting_height.decremented() {
                 self.height_to_opreturn_supply
-                    .forced_push_at(height, opreturn_supply, exit)?;
+                    .into_iter()
+                    .unwrap_get_inner(prev_height)
+            } else {
+                Sats::ZERO
+            };
 
-                let date = height_to_date_fixed_iter.unwrap_get_inner(height);
-                let dateindex = DateIndex::try_from(date).unwrap();
-                let date_first_height = dateindex_to_first_height_iter.unwrap_get_inner(dateindex);
-                let date_height_count = dateindex_to_height_count_iter.unwrap_get_inner(dateindex);
-                let is_date_last_height = date_first_height
-                    + Height::from(date_height_count).decremented().unwrap()
-                    == height;
-                let date_price = dateindex_to_close_iter
-                    .as_mut()
-                    .map(|v| is_date_last_height.then(|| *v.unwrap_get_inner(dateindex)));
+            let mut height = starting_height;
 
-                separate_utxo_vecs.par_iter_mut().try_for_each(|(_, v)| {
-                    v.compute_then_force_push_unrealized_states(
+            (height.unwrap_to_usize()..height_to_date_fixed.len())
+                .map(Height::from)
+                .try_for_each(|_height| -> color_eyre::Result<()> {
+                    height = _height;
+
+                    self.utxos_vecs
+                        .as_mut_separate_vecs()
+                        .iter_mut()
+                        .for_each(|(_, v)| v.state.reset_single_iteration_values());
+
+                    info!("Processing chain at {height}...");
+
+                    let timestamp = height_to_timestamp_fixed_iter.unwrap_get_inner(height);
+                    let price = height_to_close_iter
+                        .as_mut()
+                        .map(|i| *i.unwrap_get_inner(height));
+                    let first_outputindex = height_to_first_outputindex_iter
+                        .unwrap_get_inner(height)
+                        .unwrap_to_usize();
+                    let first_inputindex = height_to_first_inputindex_iter
+                        .unwrap_get_inner(height)
+                        .unwrap_to_usize();
+                    let output_count = height_to_output_count_iter.unwrap_get_inner(height);
+                    let input_count = height_to_input_count_iter.unwrap_get_inner(height);
+
+                    let (mut height_to_sent, mut received) = thread::scope(|s| {
+                        if chain_state_starting_height <= height {
+                            s.spawn(|| {
+                                self.utxos_vecs
+                                    .tick_tock_next_block(&chain_state, timestamp);
+                            });
+                        }
+
+                        let sent_handle = s.spawn(|| {
+                            // Skip coinbase
+                            (first_inputindex + 1..first_inputindex + *input_count)
+                                .into_par_iter()
+                                .map(InputIndex::from)
+                                .map(|inputindex| {
+                                    let outputindex = inputindex_to_outputindex
+                                        .get_or_read(inputindex, &inputindex_to_outputindex_mmap)
+                                        .unwrap()
+                                        .unwrap()
+                                        .into_inner();
+
+                                    let value = outputindex_to_value
+                                        .get_or_read(outputindex, &outputindex_to_value_mmap)
+                                        .unwrap()
+                                        .unwrap()
+                                        .into_inner();
+
+                                    let input_type = outputindex_to_outputtype
+                                        .get_or_read(outputindex, &outputindex_to_outputtype_mmap)
+                                        .unwrap()
+                                        .unwrap()
+                                        .into_inner();
+
+                                    // dbg!(input_type);
+
+                                    if input_type.is_unspendable() {
+                                        unreachable!()
+                                    }
+
+                                    let input_txindex = outputindex_to_txindex
+                                        .get_or_read(outputindex, &outputindex_to_txindex_mmap)
+                                        .unwrap()
+                                        .unwrap()
+                                        .into_inner();
+
+                                    let height = txindex_to_height
+                                        .get_or_read(input_txindex, &txindex_to_height_mmap)
+                                        .unwrap()
+                                        .unwrap()
+                                        .into_inner();
+
+                                    (height, value, input_type)
+                                })
+                                .fold(
+                                    BTreeMap::<Height, Transacted>::default,
+                                    |mut tree, (height, value, input_type)| {
+                                        tree.entry(height).or_default().iterate(value, input_type);
+                                        tree
+                                    },
+                                )
+                                .reduce(BTreeMap::<Height, Transacted>::default, |first, second| {
+                                    let (mut source, to_consume) = if first.len() > second.len() {
+                                        (first, second)
+                                    } else {
+                                        (second, first)
+                                    };
+                                    to_consume.into_iter().for_each(|(k, v)| {
+                                        *source.entry(k).or_default() += v;
+                                    });
+                                    source
+                                })
+                        });
+
+                        let received_handle = s.spawn(|| {
+                            (first_outputindex..first_outputindex + *output_count)
+                                .into_par_iter()
+                                .map(OutputIndex::from)
+                                .map(|outputindex| {
+                                    let value = outputindex_to_value
+                                        .get_or_read(outputindex, &outputindex_to_value_mmap)
+                                        .unwrap()
+                                        .unwrap()
+                                        .into_inner();
+
+                                    let output_type = outputindex_to_outputtype
+                                        .get_or_read(outputindex, &outputindex_to_outputtype_mmap)
+                                        .unwrap()
+                                        .unwrap()
+                                        .into_inner();
+
+                                    (value, output_type)
+                                })
+                                .fold(
+                                    Transacted::default,
+                                    |mut transacted, (value, output_type)| {
+                                        transacted.iterate(value, output_type);
+                                        transacted
+                                    },
+                                )
+                                .reduce(Transacted::default, |acc, transacted| acc + transacted)
+                        });
+
+                        (sent_handle.join().unwrap(), received_handle.join().unwrap())
+                    });
+
+                    unspendable_supply += received
+                        .by_type
+                        .unspendable
+                        .as_vec()
+                        .into_iter()
+                        .map(|state| state.value)
+                        .sum::<Sats>()
+                        + height_to_unclaimed_rewards_iter.unwrap_get_inner(height);
+
+                    opreturn_supply += received.by_type.unspendable.opreturn.value;
+
+                    if height == Height::new(0) {
+                        received = Transacted::default();
+                        unspendable_supply += Sats::FIFTY_BTC;
+                    } else if height == Height::new(91_842) || height == Height::new(91_880) {
+                        // Need to destroy invalid coinbases due to duplicate txids
+                        if height == Height::new(91_842) {
+                            height_to_sent.entry(Height::new(91_812)).or_default()
+                        } else {
+                            height_to_sent.entry(Height::new(91_722)).or_default()
+                        }
+                        .iterate(Sats::FIFTY_BTC, OutputType::P2PK65);
+                    };
+
+                    if chain_state_starting_height <= height {
+                        // Push current block state before processing sends and receives
+                        chain_state.push(BlockState {
+                            supply: received.spendable_supply.clone(),
+                            price,
+                            timestamp,
+                        });
+
+                        self.utxos_vecs.receive(received, height, price);
+
+                        let unsafe_chain_state = UnsafeSlice::new(&mut chain_state);
+
+                        height_to_sent.par_iter().for_each(|(height, sent)| unsafe {
+                            (*unsafe_chain_state.get(height.unwrap_to_usize())).supply -=
+                                &sent.spendable_supply;
+                        });
+
+                        self.utxos_vecs.send(height_to_sent, chain_state.as_slice());
+                    } else {
+                        dbg!(chain_state_starting_height, height);
+                        panic!("temp, just making sure")
+                    }
+
+                    let mut separate_utxo_vecs = self.utxos_vecs.as_mut_separate_vecs();
+
+                    separate_utxo_vecs
+                        .iter_mut()
+                        .try_for_each(|(_, v)| v.forced_pushed_at(height, exit))?;
+
+                    self.height_to_unspendable_supply.forced_push_at(
                         height,
-                        price,
-                        is_date_last_height.then_some(dateindex),
-                        date_price,
+                        unspendable_supply,
                         exit,
-                    )
+                    )?;
+
+                    self.height_to_opreturn_supply
+                        .forced_push_at(height, opreturn_supply, exit)?;
+
+                    let date = height_to_date_fixed_iter.unwrap_get_inner(height);
+                    let dateindex = DateIndex::try_from(date).unwrap();
+                    let date_first_height =
+                        dateindex_to_first_height_iter.unwrap_get_inner(dateindex);
+                    let date_height_count =
+                        dateindex_to_height_count_iter.unwrap_get_inner(dateindex);
+                    let is_date_last_height = date_first_height
+                        + Height::from(date_height_count).decremented().unwrap()
+                        == height;
+                    let date_price = dateindex_to_close_iter
+                        .as_mut()
+                        .map(|v| is_date_last_height.then(|| *v.unwrap_get_inner(dateindex)));
+
+                    separate_utxo_vecs.par_iter_mut().try_for_each(|(_, v)| {
+                        v.compute_then_force_push_unrealized_states(
+                            height,
+                            price,
+                            is_date_last_height.then_some(dateindex),
+                            date_price,
+                            exit,
+                        )
+                    })?;
+
+                    if height != Height::ZERO && height.unwrap_to_usize() % 20_000 == 0 {
+                        info!("Flushing...");
+                        exit.block();
+                        self.flush_states(height, &chain_state, exit)?;
+                        exit.release();
+                    }
+
+                    Ok(())
                 })?;
 
-                if height != Height::ZERO && height.unwrap_to_usize() % 20_000 == 0 {
-                    info!("Flushing...");
-                    exit.block();
-                    self.flush_states(height, &chain_state, exit)?;
-                    exit.release();
-                }
+            exit.block();
 
-                Ok(())
-            })?;
+            info!("Flushing...");
 
-        exit.block();
+            self.flush_states(height, &chain_state, exit)?;
+        }
 
-        info!("Flushing...");
-
-        self.flush_states(height, &chain_state, exit)?;
-
-        info!("Computing overlaping...");
+        info!("Computing overlapping...");
 
         self.utxos_vecs
-            .compute_overlaping_vecs(&starting_indexes, exit)?;
+            .compute_overlapping_vecs(&starting_indexes, exit)?;
 
         info!("Computing rest part 1...");
 
@@ -1627,6 +1624,13 @@ impl Vecs {
             .dateindex
             .clone();
         let height_to_realized_cap = self.utxos_vecs.all.1.height_to_realized_cap.clone();
+        let dateindex_to_realized_cap = self
+            .utxos_vecs
+            .all
+            .1
+            .indexes_to_realized_cap
+            .as_ref()
+            .map(|v| v.dateindex.unwrap_last().clone());
 
         self.utxos_vecs
             .as_mut_vecs()
@@ -1641,6 +1645,7 @@ impl Vecs {
                     &height_to_supply,
                     dateindex_to_supply.as_ref().unwrap(),
                     height_to_realized_cap.as_ref(),
+                    dateindex_to_realized_cap.as_ref(),
                     exit,
                 )
             })?;

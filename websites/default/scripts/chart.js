@@ -396,6 +396,7 @@ export function init({
             blueprints[unit]?.forEach((blueprint, order) => {
               order += orderStart;
 
+              console.log(blueprint.key);
               const indexes = /** @type {readonly number[]} */ (
                 vecIdToIndexes[blueprint.key]
               );

@@ -57,7 +57,7 @@ pub struct Vecs {
     pub indexes_to_coinblocks_destroyed: ComputedVecsFromHeight<StoredF64>,
     pub indexes_to_coindays_destroyed: ComputedVecsFromHeight<StoredF64>,
     pub dateindex_to_adjusted_spent_output_profit_ratio: Option<EagerVec<DateIndex, StoredF32>>,
-    pub dateindex_to_realized_cap_30d_change: Option<EagerVec<DateIndex, Dollars>>,
+    pub indexes_to_realized_cap_30d_change: Option<ComputedVecsFromDateIndex<Dollars>>,
     pub dateindex_to_sell_side_risk_ratio: Option<EagerVec<DateIndex, StoredF32>>,
     pub dateindex_to_spent_output_profit_ratio: Option<EagerVec<DateIndex, StoredF32>>,
     pub indexes_to_adjusted_value_created: Option<ComputedVecsFromHeight<Dollars>>,
@@ -89,6 +89,10 @@ pub struct Vecs {
         Option<EagerVec<Height, StoredF32>>,
     pub indexes_to_net_unrealized_profit_and_loss_relative_to_market_cap:
         Option<ComputedVecsFromDateIndex<StoredF32>>,
+    pub indexes_to_realized_profit_relative_to_realized_cap:
+        Option<ComputedVecsFromHeight<StoredF32>>,
+    pub indexes_to_realized_loss_relative_to_realized_cap:
+        Option<ComputedVecsFromHeight<StoredF32>>,
     pub indexes_to_net_realized_profit_and_loss_relative_to_realized_cap:
         Option<ComputedVecsFromHeight<StoredF32>>,
     pub height_to_supply_even_value: Option<ComputedHeightValueVecs>,
@@ -117,6 +121,12 @@ pub struct Vecs {
         Option<ComputedVecsFromDateIndex<StoredF64>>,
     pub indexes_to_supply_in_profit_relative_to_circulating_supply:
         Option<ComputedVecsFromDateIndex<StoredF64>>,
+    pub indexes_to_cumulative_net_realized_profit_and_loss_30d_change:
+        Option<ComputedVecsFromDateIndex<Dollars>>,
+    pub indexes_to_cumulative_net_realized_profit_and_loss_30d_change_relative_to_realized_cap:
+        Option<ComputedVecsFromDateIndex<StoredF32>>,
+    pub indexes_to_cumulative_net_realized_profit_and_loss_30d_change_relative_to_market_cap:
+        Option<ComputedVecsFromDateIndex<StoredF32>>,
 }
 
 impl Vecs {
@@ -432,7 +442,9 @@ impl Vecs {
                     false,
                     version + VERSION + Version::ZERO,
                     format,
-                    StorableVecGeneatorOptions::default().add_sum(),
+                    StorableVecGeneatorOptions::default()
+                        .add_sum()
+                        .add_cumulative(),
                 )
                 .unwrap()
             }),
@@ -452,7 +464,9 @@ impl Vecs {
                     false,
                     version + VERSION + Version::ZERO,
                     format,
-                    StorableVecGeneatorOptions::default().add_sum(),
+                    StorableVecGeneatorOptions::default()
+                        .add_sum()
+                        .add_cumulative(),
                 )
                 .unwrap()
             }),
@@ -463,7 +477,7 @@ impl Vecs {
                     true,
                     version + VERSION + Version::ONE,
                     format,
-                    StorableVecGeneatorOptions::default().add_sum(),
+                    StorableVecGeneatorOptions::default().add_sum().add_cumulative(),
                 )
                 .unwrap()
             }),
@@ -558,12 +572,14 @@ impl Vecs {
                 )
                 .unwrap()
             }),
-            dateindex_to_realized_cap_30d_change: compute_dollars.then(|| {
-                EagerVec::forced_import(
+            indexes_to_realized_cap_30d_change: compute_dollars.then(|| {
+                ComputedVecsFromDateIndex::forced_import(
                     path,
                     &suffix("realized_cap_30d_change"),
+                    true,
                     version + VERSION + Version::ZERO,
                     format,
+                    StorableVecGeneatorOptions::default().add_last(),
                 )
                 .unwrap()
             }),
@@ -574,7 +590,9 @@ impl Vecs {
                     true,
                     version + VERSION + Version::ZERO,
                     format,
-                    StorableVecGeneatorOptions::default().add_sum(),
+                    StorableVecGeneatorOptions::default()
+                        .add_sum()
+                        .add_cumulative(),
                 )
                 .unwrap()
             }),
@@ -686,15 +704,37 @@ impl Vecs {
                     .unwrap()
                 },
             ),
+            indexes_to_realized_profit_relative_to_realized_cap: compute_dollars.then(|| {
+                ComputedVecsFromHeight::forced_import(
+                    path,
+                    &suffix("realized_profit_relative_to_realized_cap"),
+                    true,
+                    version + VERSION + Version::ZERO,
+                    format,
+                    StorableVecGeneatorOptions::default().add_sum(),
+                )
+                .unwrap()
+            }),
+            indexes_to_realized_loss_relative_to_realized_cap: compute_dollars.then(|| {
+                ComputedVecsFromHeight::forced_import(
+                    path,
+                    &suffix("realized_loss_relative_to_realized_cap"),
+                    true,
+                    version + VERSION + Version::ZERO,
+                    format,
+                    StorableVecGeneatorOptions::default().add_sum(),
+                )
+                .unwrap()
+            }),
             indexes_to_net_realized_profit_and_loss_relative_to_realized_cap: compute_dollars.then(
                 || {
                     ComputedVecsFromHeight::forced_import(
                         path,
                         &suffix("net_realized_profit_and_loss_relative_to_realized_cap"),
                         true,
-                        version + VERSION + Version::ZERO,
+                        version + VERSION + Version::ONE,
                         format,
-                        StorableVecGeneatorOptions::default().add_last(),
+                        StorableVecGeneatorOptions::default().add_sum(),
                     )
                     .unwrap()
                 },
@@ -903,6 +943,39 @@ impl Vecs {
                 format,
                 StorableVecGeneatorOptions::default().add_sum(),
             )?,
+            indexes_to_cumulative_net_realized_profit_and_loss_30d_change: compute_dollars.then(|| {
+                ComputedVecsFromDateIndex::forced_import(
+                    path,
+                    &format!("cumulative_{}", suffix("net_realized_profit_and_loss_30d_change")),
+                    true,
+                    version + VERSION + Version::TWO,
+                    format,
+                    StorableVecGeneatorOptions::default().add_last()
+                )
+                .unwrap()
+            }),
+            indexes_to_cumulative_net_realized_profit_and_loss_30d_change_relative_to_realized_cap: compute_dollars.then(|| {
+                ComputedVecsFromDateIndex::forced_import(
+                    path,
+                    &format!("cumulative_{}", suffix("net_realized_profit_and_loss_30d_change_relative_to_realized_cap")),
+                    true,
+                    version + VERSION + Version::TWO,
+                    format,
+                    StorableVecGeneatorOptions::default().add_last()
+                )
+                .unwrap()
+            }),
+            indexes_to_cumulative_net_realized_profit_and_loss_30d_change_relative_to_market_cap: compute_dollars.then(|| {
+                ComputedVecsFromDateIndex::forced_import(
+                    path,
+                    &format!("cumulative_{}", suffix("net_realized_profit_and_loss_30d_change_relative_to_market_cap")),
+                    true,
+                    version + VERSION + Version::TWO,
+                    format,
+                    StorableVecGeneatorOptions::default().add_last()
+                )
+                .unwrap()
+            }),
         })
     }
 
@@ -1877,6 +1950,7 @@ impl Vecs {
         height_to_supply: &impl AnyIterableVec<Height, Bitcoin>,
         dateindex_to_supply: &impl AnyIterableVec<DateIndex, Bitcoin>,
         height_to_realized_cap: Option<&impl AnyIterableVec<Height, Dollars>>,
+        dateindex_to_realized_cap: Option<&impl AnyIterableVec<DateIndex, Dollars>>,
         exit: &Exit,
     ) -> color_eyre::Result<()> {
         if let Some(v) = self
@@ -2021,18 +2095,26 @@ impl Vecs {
                     Some(self.height_to_adjusted_value_destroyed.as_ref().unwrap()),
                 )?;
 
-            self.dateindex_to_realized_cap_30d_change
+            self.indexes_to_realized_cap_30d_change
                 .as_mut()
                 .unwrap()
-                .compute_change(
-                    starting_indexes.dateindex,
-                    self.indexes_to_realized_cap
-                        .as_ref()
-                        .unwrap()
-                        .dateindex
-                        .unwrap_last(),
-                    30,
+                .compute_all(
+                    indexer,
+                    indexes,
+                    starting_indexes,
                     exit,
+                    |vec, _, _, starting_indexes, exit| {
+                        vec.compute_change(
+                            starting_indexes.dateindex,
+                            self.indexes_to_realized_cap
+                                .as_ref()
+                                .unwrap()
+                                .dateindex
+                                .unwrap_last(),
+                            30,
+                            exit,
+                        )
+                    },
                 )?;
 
             self.indexes_to_net_realized_profit_and_loss
@@ -2280,6 +2362,42 @@ impl Vecs {
                     },
                 )?;
 
+            self.indexes_to_realized_profit_relative_to_realized_cap
+                .as_mut()
+                .unwrap()
+                .compute_all(
+                    indexer,
+                    indexes,
+                    starting_indexes,
+                    exit,
+                    |vec, _, _, starting_indexes, exit| {
+                        vec.compute_percentage(
+                            starting_indexes.height,
+                            self.height_to_realized_profit.as_ref().unwrap(),
+                            *height_to_realized_cap.as_ref().unwrap(),
+                            exit,
+                        )
+                    },
+                )?;
+
+            self.indexes_to_realized_loss_relative_to_realized_cap
+                .as_mut()
+                .unwrap()
+                .compute_all(
+                    indexer,
+                    indexes,
+                    starting_indexes,
+                    exit,
+                    |vec, _, _, starting_indexes, exit| {
+                        vec.compute_percentage(
+                            starting_indexes.height,
+                            self.height_to_realized_loss.as_ref().unwrap(),
+                            *height_to_realized_cap.as_ref().unwrap(),
+                            exit,
+                        )
+                    },
+                )?;
+
             self.indexes_to_net_realized_profit_and_loss_relative_to_realized_cap
                 .as_mut()
                 .unwrap()
@@ -2430,6 +2548,64 @@ impl Vecs {
                                 .as_ref()
                                 .unwrap(),
                             self.indexes_to_supply.bitcoin.dateindex.as_ref().unwrap(),
+                            exit,
+                        )
+                    },
+                )?;
+
+            self.indexes_to_cumulative_net_realized_profit_and_loss_30d_change
+                .as_mut()
+                .unwrap()
+                .compute_all(
+                    indexer,
+                    indexes,
+                    starting_indexes,
+                    exit,
+                    |v, _, _, starting_indexes, exit| {
+                        v.compute_change(
+                            starting_indexes.dateindex,
+                            self.indexes_to_net_realized_profit_and_loss
+                                .as_ref()
+                                .unwrap()
+                                .dateindex
+                                .unwrap_cumulative(),
+                            30,
+                            exit,
+                        )
+                    },
+                )?;
+
+            self.indexes_to_cumulative_net_realized_profit_and_loss_30d_change_relative_to_realized_cap.
+                as_mut()
+                .unwrap()
+                .compute_all(
+                    indexer,
+                    indexes,
+                    starting_indexes,
+                    exit,
+                    |v, _, _, starting_indexes, exit| {
+                        v.compute_percentage(
+                            starting_indexes.dateindex,
+                            self.indexes_to_cumulative_net_realized_profit_and_loss_30d_change.as_ref().unwrap().dateindex.as_ref().unwrap(),
+                            *dateindex_to_realized_cap.as_ref().unwrap(),
+                            exit,
+                        )
+                    },
+                )?;
+
+            self.indexes_to_cumulative_net_realized_profit_and_loss_30d_change_relative_to_market_cap.
+                as_mut()
+                .unwrap()
+                .compute_all(
+                    indexer,
+                    indexes,
+                    starting_indexes,
+                    exit,
+                    |v, _, _, starting_indexes, exit| {
+                        v.compute_percentage(
+                            starting_indexes.dateindex,
+                            self.indexes_to_cumulative_net_realized_profit_and_loss_30d_change.as_ref().unwrap().dateindex.as_ref().unwrap(),
+                            market.indexes_to_marketcap.dateindex.as_ref().unwrap(),
                             exit,
                         )
                     },
@@ -2618,9 +2794,9 @@ impl Vecs {
             self.indexes_to_adjusted_value_destroyed
                 .as_ref()
                 .map_or(vec![], |v| v.vecs()),
-            self.dateindex_to_realized_cap_30d_change
+            self.indexes_to_realized_cap_30d_change
                 .as_ref()
-                .map_or(vec![], |v| vec![v]),
+                .map_or(vec![], |v| v.vecs()),
             self.indexes_to_net_realized_profit_and_loss
                 .as_ref()
                 .map_or(vec![], |v| v.vecs()),
@@ -2703,6 +2879,12 @@ impl Vecs {
             self.indexes_to_net_unrealized_profit_and_loss_relative_to_market_cap
                 .as_ref()
                 .map_or(vec![], |v| v.vecs()),
+            self.indexes_to_realized_profit_relative_to_realized_cap
+                .as_ref()
+                .map_or(vec![], |v| v.vecs()),
+            self.indexes_to_realized_loss_relative_to_realized_cap
+                .as_ref()
+                .map_or(vec![], |v| v.vecs()),
             self.indexes_to_net_realized_profit_and_loss_relative_to_realized_cap
                 .as_ref()
                 .map_or(vec![], |v| v.vecs()),
@@ -2756,6 +2938,12 @@ impl Vecs {
                 .map_or(vec![], |v| v.vecs()),
             self.indexes_to_coinblocks_destroyed.vecs(),
             self.indexes_to_coindays_destroyed.vecs(),
+            self.indexes_to_cumulative_net_realized_profit_and_loss_30d_change.as_ref()
+            .map_or(vec![], |v| v.vecs()),
+            self.indexes_to_cumulative_net_realized_profit_and_loss_30d_change_relative_to_realized_cap.as_ref()
+            .map_or(vec![], |v| v.vecs()),
+            self.indexes_to_cumulative_net_realized_profit_and_loss_30d_change_relative_to_market_cap.as_ref()
+            .map_or(vec![], |v| v.vecs()),
         ]
         .into_iter()
         .flatten()

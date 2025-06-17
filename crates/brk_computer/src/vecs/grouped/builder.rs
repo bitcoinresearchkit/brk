@@ -130,7 +130,11 @@ where
                 Box::new(
                     EagerVec::forced_import(
                         path,
-                        &maybe_suffix("sum"),
+                        &(if !options.last {
+                            name.to_string()
+                        } else {
+                            maybe_suffix("sum")
+                        }),
                         version + VERSION + Version::ZERO,
                         format,
                     )
