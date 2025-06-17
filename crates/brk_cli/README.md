@@ -33,7 +33,7 @@
 
 A command line interface to interact with the full Bitcoin Research Kit. It's built on top of every other create and gives the possility to use BRK using the terminal instead of Rust.
 
-It has 2 commandes for now (other than `help` and `version`) which are `run` and `query`. The former is used to run the processing (indexer + computer) and/or the server. The latter uses `brk_query` as its backend just like to server to be able to get datasets via the terminal instead of the API. Both commands are very costumizable by having all the parameters of their Rust counterparts ([`run`](https://github.com/bitcoinresearchkit/brk/blob/main/crates/brk_cli/src/run.rs#L91-L147), [`query`](https://github.com/bitcoinresearchkit/brk/blob/main/crates/brk_query/src/params.rs)).
+It has 2 commands (other than `help` and `version`) which are `run` and `query`. The former is used to run the processing (indexer + computer) and/or the server. The latter uses `brk_query` as its backend just like to server to be able to get datasets via the terminal instead of the API. Both commands are custumizable by supporting all the parameters of their Rust counterparts ([`run`](https://github.com/bitcoinresearchkit/brk/blob/c9c6b583338203b2b11bdf31e961b1c306f5d82b/crates/brk_cli/src/run.rs#L110-L191), and [`query`](https://github.com/bitcoinresearchkit/brk/blob/main/crates/brk_query/src/params.rs)).
 
 ## Requirements
 
@@ -54,13 +54,16 @@ To be determined
 - [Bitcoin](https://bitcoin.org/en/full-node)
 - [Rust](https://www.rust-lang.org/tools/install)
 - Unix based operating system (Mac OS or Linux)
-  - Ubuntu users need to install `open-ssl` via `sudo apt install libssl-dev pkg-config`
+
+> [!IMPORTANT]  
+> Ubuntu users need to install `open-ssl` via `sudo apt install libssl-dev pkg-config`
+
 
 ## Download
 
 ### Binaries
 
-You can find a pre-built binary for your operating system on the releases page ([link](https://github.com/bitcoinresearchkit/brk/releases/latest)).
+You can find a pre-built binary for your operating system in the [releases page](https://github.com/bitcoinresearchkit/brk/releases/latest).
 
 ### Cargo
 
@@ -84,8 +87,10 @@ cargo run -r
 
 Run `brk -h` to view each available command and their respective description.
 
-`-h` works also for commands, which mean that `brk run -h` will explain all the parameters of `brk run` for example.
+`-h` works also for commands, so `brk run -h` will enumerate all the parameters of `brk run`.
 
-Every parameter set for `brk run` will be saved at `~/.brk/config.toml`, which will allow you to simply run `brk run` next time.
+> [!TIP]  
+> Every parameter set for `brk run` will be saved at `~/.brk/config.toml`, which allows you to simply run `brk run` next time.
 
-Then the easiest to let others access your server is to use `cloudflared` which will also cache requests. For more information go to: https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/
+
+The easiest way to let others access your server is to use `cloudflared` which will also cache requests. For more information see [Cloudflare Tunnel](https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/) documentation.
