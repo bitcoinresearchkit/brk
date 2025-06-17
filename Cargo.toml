@@ -4,7 +4,7 @@ members = ["crates/*"]
 package.description = "The Bitcoin Research Kit is a suite of tools designed to extract, compute and display data stored on a Bitcoin Core node"
 package.license = "MIT"
 package.edition = "2024"
-package.version = "0.0.63"
+package.version = "0.0.64"
 package.homepage = "https://bitcoinresearchkit.org"
 package.repository = "https://github.com/bitcoinresearchkit/brk"
 
@@ -22,20 +22,20 @@ axum = "0.8.4"
 bincode = { version = "2.0.1", features = ["serde"] }
 bitcoin = { version = "0.32.6", features = ["serde"] }
 bitcoincore-rpc = "0.19.0"
-brk_bundler = { version = "0.0.63", path = "crates/brk_bundler" }
-brk_cli = { version = "0.0.63", path = "crates/brk_cli" }
-brk_computer = { version = "0.0.63", path = "crates/brk_computer" }
-brk_core = { version = "0.0.63", path = "crates/brk_core" }
-brk_exit = { version = "0.0.63", path = "crates/brk_exit" }
-brk_fetcher = { version = "0.0.63", path = "crates/brk_fetcher" }
-brk_indexer = { version = "0.0.63", path = "crates/brk_indexer" }
-brk_logger = { version = "0.0.63", path = "crates/brk_logger" }
-brk_parser = { version = "0.0.63", path = "crates/brk_parser" }
-brk_query = { version = "0.0.63", path = "crates/brk_query" }
-brk_server = { version = "0.0.63", path = "crates/brk_server" }
-brk_state = { version = "0.0.63", path = "crates/brk_state" }
-brk_store = { version = "0.0.63", path = "crates/brk_store" }
-brk_vec = { version = "0.0.63", path = "crates/brk_vec" }
+brk_bundler = { version = "0.0.64", path = "crates/brk_bundler" }
+brk_cli = { version = "0.0.64", path = "crates/brk_cli" }
+brk_computer = { version = "0.0.64", path = "crates/brk_computer" }
+brk_core = { version = "0.0.64", path = "crates/brk_core" }
+brk_exit = { version = "0.0.64", path = "crates/brk_exit" }
+brk_fetcher = { version = "0.0.64", path = "crates/brk_fetcher" }
+brk_indexer = { version = "0.0.64", path = "crates/brk_indexer" }
+brk_logger = { version = "0.0.64", path = "crates/brk_logger" }
+brk_parser = { version = "0.0.64", path = "crates/brk_parser" }
+brk_query = { version = "0.0.64", path = "crates/brk_query" }
+brk_server = { version = "0.0.64", path = "crates/brk_server" }
+brk_state = { version = "0.0.64", path = "crates/brk_state" }
+brk_store = { version = "0.0.64", path = "crates/brk_store" }
+brk_vec = { version = "0.0.64", path = "crates/brk_vec" }
 byteview = "=0.6.1"
 clap = { version = "4.5.40", features = ["string"] }
 clap_derive = "4.5.40"
