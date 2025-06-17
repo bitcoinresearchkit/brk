@@ -480,96 +480,12 @@ function createChartElement({
                         });
                       }
                     });
-                  } else if (data.length) {
-                    let i = 0;
-                    // console.log(seriesData);
-                    const first = seriesData[0];
+                  } else {
                     const last = seriesData.at(-1);
                     if (!last) throw Error("Unreachable");
-                    while (data[i].time < first.time) {
-                      iseries.update(data[i], true);
-                      i++;
-                    }
-                    // console.log(i);
-                    let j = 0;
-                    while (i < data.length) {
-                      const dataI = data[i];
-                      const iTime = dataI.time;
-                      if (iTime > last.time) {
-                        console.log(0, {
-                          vecId,
-                          dataI,
-                          i,
-                          data,
-                        });
-                        iseries.update(dataI);
-                        i++;
-                      } else {
-                        const seriesDataJ = /** @type {typeof dataI} */ (
-                          seriesData[j]
-                        );
-                        const jTime = seriesDataJ.time;
-                        if (iTime === jTime) {
-                          const historicalUpdate = iTime < last.time;
-
-                          if ("value" in dataI) {
-                            if (
-                              // @ts-ignore
-                              dataI.value !== seriesDataJ.value &&
-                              // @ts-ignore
-                              (!isNaN(dataI.value) || !isNaN(seriesDataJ.value))
-                            ) {
-                              console.log(1, {
-                                vecId,
-                                dataI,
-                                i,
-                                data,
-                                j,
-                                seriesDataJ,
-                                seriesData,
-                              });
-                              iseries.update(dataI, historicalUpdate);
-                            }
-                          } else if (
-                            // @ts-ignore
-                            dataI.open !== seriesDataJ.open ||
-                            // @ts-ignore
-                            dataI.high !== seriesDataJ.high ||
-                            // @ts-ignore
-                            dataI.low !== seriesDataJ.low ||
-                            // @ts-ignore
-                            dataI.close !== seriesDataJ.close
-                          ) {
-                            console.log(2, {
-                              vecId,
-                              dataI,
-                              i,
-                              data,
-                              j,
-                              seriesDataJ,
-                              seriesData,
-                            });
-                            iseries.update(dataI, historicalUpdate);
-                          }
-                          i++;
-                          j++;
-                        } else if (iTime < jTime) {
-                          console.log(3, {
-                            vecId,
-                            dataI,
-                            i,
-                            data,
-                            j,
-                            seriesDataJ,
-                            seriesData,
-                          });
-                          iseries.update(dataI, true);
-                          i++;
-                        } else if (iTime > jTime) {
-                          j++;
-                        } else {
-                          throw Error("Unreachable");
-                        }
+                    for (let i = 0; i < data.length; i++) {
+                      if (data[i].time >= last.time) {
+                        iseries.update(data[i]);
                       }
                     }
                   }

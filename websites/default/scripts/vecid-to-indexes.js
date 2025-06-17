@@ -2,7 +2,7 @@
 // File auto-generated, any modifications will be overwritten
 //
 
-export const VERSION = "v0.0.63";
+export const VERSION = "v0.0.64";
 
 /** @typedef {0} DateIndex */
 /** @typedef {1} DecadeIndex */

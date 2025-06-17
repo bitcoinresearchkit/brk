@@ -948,7 +948,7 @@ impl Vecs {
                     path,
                     &format!("cumulative_{}", suffix("net_realized_profit_and_loss_30d_change")),
                     true,
-                    version + VERSION + Version::TWO,
+                    version + VERSION + Version::new(3),
                     format,
                     StorableVecGeneatorOptions::default().add_last()
                 )
@@ -959,7 +959,7 @@ impl Vecs {
                     path,
                     &format!("cumulative_{}", suffix("net_realized_profit_and_loss_30d_change_relative_to_realized_cap")),
                     true,
-                    version + VERSION + Version::TWO,
+                    version + VERSION + Version::new(3),
                     format,
                     StorableVecGeneatorOptions::default().add_last()
                 )
@@ -970,7 +970,7 @@ impl Vecs {
                     path,
                     &format!("cumulative_{}", suffix("net_realized_profit_and_loss_30d_change_relative_to_market_cap")),
                     true,
-                    version + VERSION + Version::TWO,
+                    version + VERSION + Version::new(3),
                     format,
                     StorableVecGeneatorOptions::default().add_last()
                 )
