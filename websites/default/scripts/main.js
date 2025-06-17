@@ -63,14 +63,14 @@ function initPackages() {
   const imports = {
     async signals() {
       return import("../packages/solid-signals/wrapper.js").then(
-        (d) => d.default
+        (d) => d.default,
       );
     },
     async lightweightCharts() {
       return window.document.fonts.ready.then(() =>
         import("../packages/lightweight-charts/wrapper.js").then(
-          (d) => d.default
-        )
+          (d) => d.default,
+        ),
       );
     },
     async leanQr() {
@@ -78,7 +78,7 @@ function initPackages() {
     },
     async ufuzzy() {
       return import("../packages/ufuzzy/v1.0.18/script.js").then(
-        ({ default: d }) => d
+        ({ default: d }) => d,
       );
     },
   };
@@ -586,7 +586,7 @@ function createUtils() {
         window.history.pushState(
           null,
           "",
-          `${pathname}?${urlParams.toString()}`
+          `${pathname}?${urlParams.toString()}`,
         );
       } catch (_) {}
     },
@@ -603,7 +603,7 @@ function createUtils() {
         window.history.replaceState(
           null,
           "",
-          `${pathname}?${urlParams.toString()}`
+          `${pathname}?${urlParams.toString()}`,
         );
       } catch (_) {}
     },
@@ -752,7 +752,8 @@ function createUtils() {
         (id.includes("realized") &&
           !id.includes("ratio") &&
           !id.includes("relative-to")) ||
-        (id.endsWith("sma") && !id.includes("ratio")) ||
+        ((id.endsWith("sma") || id.includes("sma-x")) &&
+          !id.includes("ratio")) ||
         id === "ath")
     ) {
       if (unit) throw Error(`Unit "${unit}" already assigned "${id}"`);
@@ -1242,8 +1243,8 @@ function createUtils() {
           today.getUTCDate(),
           0,
           0,
-          0
-        )
+          0,
+        ),
       );
     },
     /**
@@ -1336,7 +1337,7 @@ function createUtils() {
    */
   function getNumberOfDaysBetweenTwoDates(oldest, youngest) {
     return Math.round(
-      Math.abs((youngest.getTime() - oldest.getTime()) / date.ONE_DAY_IN_MS)
+      Math.abs((youngest.getTime() - oldest.getTime()) / date.ONE_DAY_IN_MS),
     );
   }
 
@@ -1554,7 +1555,7 @@ function createVecsResources(signals, utils) {
       const fetchedRecord = signals.createSignal(
         /** @type {Map<string, {loading: boolean, at: Date | null, vec: Signal<T[] | null>}>} */ (
           new Map()
-        )
+        ),
       );
 
       return {
@@ -1602,7 +1603,7 @@ function createVecsResources(signals, utils) {
               index,
               id,
               from,
-              to
+              to,
             )
           );
           fetched.at = new Date();
@@ -1863,7 +1864,7 @@ function initWebSockets(signals, utils) {
 
         window.document.addEventListener(
           "visibilitychange",
-          reinitWebSocketIfDocumentNotHidden
+          reinitWebSocketIfDocumentNotHidden,
         );
 
         window.document.addEventListener("online", reinitWebSocket);
@@ -1872,7 +1873,7 @@ function initWebSockets(signals, utils) {
         ws?.close();
         window.document.removeEventListener(
           "visibilitychange",
-          reinitWebSocketIfDocumentNotHidden
+          reinitWebSocketIfDocumentNotHidden,
         );
         window.document.removeEventListener("online", reinitWebSocket);
         live.set(false);
@@ -1898,7 +1899,7 @@ function initWebSockets(signals, utils) {
             symbol: ["BTC/USD"],
             interval: 1440,
           },
-        })
+        }),
       );
     });
 
@@ -1927,7 +1928,7 @@ function initWebSockets(signals, utils) {
 
   /** @type {ReturnType<typeof createWebsocket<CandlestickData>>} */
   const kraken1dCandle = createWebsocket((callback) =>
-    krakenCandleWebSocketCreator(callback)
+    krakenCandleWebSocketCreator(callback),
   );
 
   kraken1dCandle.open();
@@ -1986,7 +1987,7 @@ function main() {
             }
 
             const frame = window.document.getElementById(
-              /** @type {string} */ (input.value)
+              /** @type {string} */ (input.value),
             );
 
             if (!frame) {
@@ -2084,23 +2085,23 @@ function main() {
 
           function initDark() {
             const preferredColorSchemeMatchMedia = window.matchMedia(
-              "(prefers-color-scheme: dark)"
+              "(prefers-color-scheme: dark)",
             );
             const dark = signals.createSignal(
-              preferredColorSchemeMatchMedia.matches
+              preferredColorSchemeMatchMedia.matches,
             );
             preferredColorSchemeMatchMedia.addEventListener(
               "change",
               ({ matches }) => {
                 dark.set(matches);
-              }
+              },
             );
             return dark;
           }
           const dark = initDark();
 
           const qrcode = signals.createSignal(
-            /** @type {string | null} */ (null)
+            /** @type {string | null} */ (null),
           );
 
           function createLastHeightResource() {
@@ -2111,7 +2112,7 @@ function main() {
                   lastHeight.set(h);
                 },
                 /** @satisfies {Height} */ (5),
-                "height"
+                "height",
               );
             }
             fetchLastHeight();
@@ -2155,10 +2156,10 @@ function main() {
               const owner = signals.getOwner();
 
               const chartOption = signals.createSignal(
-                /** @type {ChartOption | null} */ (null)
+                /** @type {ChartOption | null} */ (null),
               );
               const simOption = signals.createSignal(
-                /** @type {SimulationOption | null} */ (null)
+                /** @type {SimulationOption | null} */ (null),
               );
 
               let previousElement = /** @type {HTMLElement | undefined} */ (
@@ -2204,9 +2205,9 @@ function main() {
                               webSockets,
                               vecsResources,
                               vecIdToIndexes,
-                            })
-                          )
-                        )
+                            }),
+                          ),
+                        ),
                       );
                     }
                     firstTimeLoadingChart = false;
@@ -2227,8 +2228,8 @@ function main() {
                             vecsResources,
                             option,
                             vecIdToIndexes,
-                          })
-                        )
+                          }),
+                        ),
                       );
                     }
                     firstTimeLoadingTable = false;
@@ -2252,9 +2253,9 @@ function main() {
                               signals,
                               utils,
                               vecsResources,
-                            })
-                          )
-                        )
+                            }),
+                          ),
+                        ),
                       );
                     }
                     firstTimeLoadingSimulation = false;
@@ -2283,7 +2284,7 @@ function main() {
             createMobileSwitchEffect();
 
             utils.dom.onFirstIntersection(elements.aside, () =>
-              signals.runWithOwner(owner, initSelectedFrame)
+              signals.runWithOwner(owner, initSelectedFrame),
             );
           }
           initSelected();
@@ -2361,7 +2362,7 @@ function main() {
                   if (indexes?.length) {
                     const maxIndex = Math.min(
                       (order || indexes).length - 1,
-                      minIndex + RESULTS_PER_PAGE - 1
+                      minIndex + RESULTS_PER_PAGE - 1,
                     );
 
                     list = Array(maxIndex - minIndex + 1);
@@ -2437,7 +2438,7 @@ function main() {
                       haystack,
                       needle,
                       undefined,
-                      infoThresh
+                      infoThresh,
                     );
 
                     if (!result?.[0]?.length || !result?.[1]) {
@@ -2445,7 +2446,7 @@ function main() {
                         haystack,
                         needle,
                         outOfOrder,
-                        infoThresh
+                        infoThresh,
                       );
                     }
 
@@ -2454,7 +2455,7 @@ function main() {
                         haystack,
                         needle,
                         outOfOrder,
-                        infoThresh
+                        infoThresh,
                       );
                     }
 
@@ -2463,7 +2464,7 @@ function main() {
                         haystack,
                         needle,
                         outOfOrder,
-                        infoThresh
+                        infoThresh,
                       );
                     }
 
@@ -2472,7 +2473,7 @@ function main() {
                         haystack,
                         needle,
                         undefined,
-                        infoThresh
+                        infoThresh,
                       );
                     }
 
@@ -2481,7 +2482,7 @@ function main() {
                         haystack,
                         needle,
                         outOfOrder,
-                        infoThresh
+                        infoThresh,
                       );
                     }
 
@@ -2564,7 +2565,7 @@ function main() {
 
                   shareDiv.hidden = false;
                 });
-              })
+              }),
             );
           }
           initShare();
@@ -2588,7 +2589,7 @@ function main() {
                   utils.storage.write(barWidthLocalStorageKey, String(width));
                 } else {
                   elements.main.style.width = elements.style.getPropertyValue(
-                    "--default-main-width"
+                    "--default-main-width",
                   );
                   utils.storage.remove(barWidthLocalStorageKey);
                 }
@@ -2625,9 +2626,9 @@ function main() {
             window.addEventListener("mouseleave", setResizeFalse);
           }
           initDesktopResizeBar();
-        })
-      )
-    )
+        }),
+      ),
+    ),
   );
 }
 main();

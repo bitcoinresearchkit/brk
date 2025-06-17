@@ -1015,6 +1015,32 @@ where
 
         self.safe_flush(exit)
     }
+
+    pub fn compute_zscore(
+        &mut self,
+        max_from: I,
+        ratio: &impl AnyIterableVec<I, StoredF32>,
+        sma: &impl AnyIterableVec<I, StoredF32>,
+        sd: &impl AnyIterableVec<I, StoredF32>,
+        exit: &Exit,
+    ) -> Result<()>
+    where
+        T: From<StoredF32>,
+    {
+        let mut sma_iter = sma.iter();
+        let mut sd_iter = sd.iter();
+
+        self.compute_transform(
+            max_from,
+            ratio,
+            |(i, ratio, ..)| {
+                let sma = sma_iter.unwrap_get_inner(i);
+                let sd = sd_iter.unwrap_get_inner(i);
+                (i, T::from((ratio - sma) / sd))
+            },
+            exit,
+        )
+    }
 }
 
 impl EagerVec<DateIndex, Sats> {

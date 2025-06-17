@@ -24,8 +24,10 @@ pub struct ComputedRatioVecsFromDateIndex {
     pub ratio_1w_sma: ComputedVecsFromDateIndex<StoredF32>,
     pub ratio_1m_sma: ComputedVecsFromDateIndex<StoredF32>,
     pub ratio_1y_sma: ComputedVecsFromDateIndex<StoredF32>,
+    pub ratio_4y_sma: ComputedVecsFromDateIndex<StoredF32>,
     pub ratio_1y_sma_momentum_oscillator: ComputedVecsFromDateIndex<StoredF32>,
-    pub ratio_standard_deviation: ComputedVecsFromDateIndex<StoredF32>,
+    pub ratio_sd: ComputedVecsFromDateIndex<StoredF32>,
+    pub ratio_4y_sd: ComputedVecsFromDateIndex<StoredF32>,
     pub ratio_p99_9: ComputedVecsFromDateIndex<StoredF32>,
     pub ratio_p99_5: ComputedVecsFromDateIndex<StoredF32>,
     pub ratio_p99: ComputedVecsFromDateIndex<StoredF32>,
@@ -51,6 +53,7 @@ pub struct ComputedRatioVecsFromDateIndex {
     pub ratio_m2sd_as_price: ComputedVecsFromDateIndex<Dollars>,
     pub ratio_m3sd_as_price: ComputedVecsFromDateIndex<Dollars>,
     pub ratio_zscore: ComputedVecsFromDateIndex<StoredF32>,
+    pub ratio_4y_zscore: ComputedVecsFromDateIndex<StoredF32>,
 }
 
 const VERSION: Version = Version::ZERO;
@@ -116,6 +119,14 @@ impl ComputedRatioVecsFromDateIndex {
                 format,
                 options,
             )?,
+            ratio_4y_sma: ComputedVecsFromDateIndex::forced_import(
+                path,
+                &format!("{name}_ratio_4y_sma"),
+                true,
+                version + VERSION + Version::ZERO,
+                format,
+                options,
+            )?,
             ratio_1y_sma_momentum_oscillator: ComputedVecsFromDateIndex::forced_import(
                 path,
                 &format!("{name}_ratio_1y_sma_momentum_oscillator"),
@@ -124,9 +135,17 @@ impl ComputedRatioVecsFromDateIndex {
                 format,
                 options,
             )?,
-            ratio_standard_deviation: ComputedVecsFromDateIndex::forced_import(
+            ratio_sd: ComputedVecsFromDateIndex::forced_import(
                 path,
-                &format!("{name}_ratio_standard_deviation"),
+                &format!("{name}_ratio_sd"),
+                true,
+                version + VERSION + Version::ZERO,
+                format,
+                options,
+            )?,
+            ratio_4y_sd: ComputedVecsFromDateIndex::forced_import(
+                path,
+                &format!("{name}_ratio_4y_sd"),
                 true,
                 version + VERSION + Version::ZERO,
                 format,
@@ -332,6 +351,14 @@ impl ComputedRatioVecsFromDateIndex {
                 format,
                 options,
             )?,
+            ratio_4y_zscore: ComputedVecsFromDateIndex::forced_import(
+                path,
+                &format!("{name}_ratio_4y_zscore"),
+                true,
+                version + VERSION + Version::ZERO,
+                format,
+                options,
+            )?,
         })
     }
 
@@ -476,6 +503,22 @@ impl ComputedRatioVecsFromDateIndex {
             },
         )?;
 
+        self.ratio_4y_sma.compute_all(
+            indexer,
+            indexes,
+            starting_indexes,
+            exit,
+            |v, _, _, starting_indexes, exit| {
+                v.compute_sma_(
+                    starting_indexes.dateindex,
+                    self.ratio.dateindex.as_ref().unwrap(),
+                    4 * 365,
+                    exit,
+                    Some(min_ratio_date),
+                )
+            },
+        )?;
+
         self.ratio_1y_sma_momentum_oscillator.compute_all(
             indexer,
             indexes,
@@ -528,6 +571,8 @@ impl ComputedRatioVecsFromDateIndex {
 
         let mut sma_iter = self.ratio_sma.dateindex.as_ref().unwrap().into_iter();
 
+        let mut _4y_sma_iter = self.ratio_4y_sma.dateindex.as_ref().unwrap().into_iter();
+
         let nan = StoredF32::from(f32::NAN);
         self.ratio
             .dateindex
@@ -566,7 +611,12 @@ impl ComputedRatioVecsFromDateIndex {
                         .as_mut()
                         .unwrap()
                         .forced_push_at(index, nan, exit)?;
-                    self.ratio_standard_deviation
+                    self.ratio_sd
+                        .dateindex
+                        .as_mut()
+                        .unwrap()
+                        .forced_push_at(index, nan, exit)?;
+                    self.ratio_4y_sd
                         .dateindex
                         .as_mut()
                         .unwrap()
@@ -645,11 +695,25 @@ impl ComputedRatioVecsFromDateIndex {
                             .sqrt(),
                     );
 
-                    self.ratio_standard_deviation
+                    self.ratio_sd
                         .dateindex
                         .as_mut()
                         .unwrap()
                         .forced_push_at(index, sd, exit)?;
+
+                    let _4y_avg = _4y_sma_iter.unwrap_get_inner(index);
+
+                    let _4y_sd = StoredF32::from(
+                        (sorted.iter().map(|v| (**v - *_4y_avg).powi(2)).sum::<f32>()
+                            / (index.unwrap_to_usize() + 1) as f32)
+                            .sqrt(),
+                    );
+
+                    self.ratio_4y_sd
+                        .dateindex
+                        .as_mut()
+                        .unwrap()
+                        .forced_push_at(index, _4y_sd, exit)?;
 
                     self.ratio_p1sd.dateindex.as_mut().unwrap().forced_push_at(
                         index,
@@ -726,7 +790,13 @@ impl ComputedRatioVecsFromDateIndex {
             exit,
             None as Option<&EagerVec<_, _>>,
         )?;
-        self.ratio_standard_deviation.compute_rest(
+        self.ratio_sd.compute_rest(
+            indexes,
+            starting_indexes,
+            exit,
+            None as Option<&EagerVec<_, _>>,
+        )?;
+        self.ratio_4y_sd.compute_rest(
             indexes,
             starting_indexes,
             exit,
@@ -1007,21 +1077,27 @@ impl ComputedRatioVecsFromDateIndex {
             starting_indexes,
             exit,
             |vec, _, _, starting_indexes, exit| {
-                let mut sma_iter = self.ratio_sma.dateindex.as_ref().unwrap().into_iter();
-                let mut sd_iter = self
-                    .ratio_standard_deviation
-                    .dateindex
-                    .as_ref()
-                    .unwrap()
-                    .into_iter();
-                vec.compute_transform(
+                vec.compute_zscore(
                     starting_indexes.dateindex,
                     self.ratio.dateindex.as_ref().unwrap(),
-                    |(i, ratio, ..)| {
-                        let sma = sma_iter.unwrap_get_inner(i);
-                        let sd = sd_iter.unwrap_get_inner(i);
-                        (i, (ratio - sma) / sd)
-                    },
+                    self.ratio_sma.dateindex.as_ref().unwrap(),
+                    self.ratio_sd.dateindex.as_ref().unwrap(),
+                    exit,
+                )
+            },
+        )?;
+
+        self.ratio_4y_zscore.compute_all(
+            indexer,
+            indexes,
+            starting_indexes,
+            exit,
+            |vec, _, _, starting_indexes, exit| {
+                vec.compute_zscore(
+                    starting_indexes.dateindex,
+                    self.ratio.dateindex.as_ref().unwrap(),
+                    self.ratio_4y_sma.dateindex.as_ref().unwrap(),
+                    self.ratio_4y_sd.dateindex.as_ref().unwrap(),
                     exit,
                 )
             },
@@ -1032,7 +1108,8 @@ impl ComputedRatioVecsFromDateIndex {
 
     fn mut_ratio_vecs(&mut self) -> Vec<&mut EagerVec<DateIndex, StoredF32>> {
         vec![
-            self.ratio_standard_deviation.dateindex.as_mut().unwrap(),
+            self.ratio_sd.dateindex.as_mut().unwrap(),
+            self.ratio_4y_sd.dateindex.as_mut().unwrap(),
             self.ratio_p99_9.dateindex.as_mut().unwrap(),
             self.ratio_p99_5.dateindex.as_mut().unwrap(),
             self.ratio_p99.dateindex.as_mut().unwrap(),
@@ -1056,8 +1133,10 @@ impl ComputedRatioVecsFromDateIndex {
             self.ratio_1w_sma.vecs(),
             self.ratio_1m_sma.vecs(),
             self.ratio_1y_sma.vecs(),
+            self.ratio_4y_sma.vecs(),
             self.ratio_1y_sma_momentum_oscillator.vecs(),
-            self.ratio_standard_deviation.vecs(),
+            self.ratio_sd.vecs(),
+            self.ratio_4y_sd.vecs(),
             self.ratio_p99_9.vecs(),
             self.ratio_p99_5.vecs(),
             self.ratio_p99.vecs(),
@@ -1083,6 +1162,7 @@ impl ComputedRatioVecsFromDateIndex {
             self.ratio_m2sd_as_price.vecs(),
             self.ratio_m3sd_as_price.vecs(),
             self.ratio_zscore.vecs(),
+            self.ratio_4y_zscore.vecs(),
         ]
         .into_iter()
         .flatten()
