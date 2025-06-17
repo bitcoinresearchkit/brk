@@ -162,15 +162,16 @@ function createPartialOptions(colors) {
    */
 
   const averages = /** @type {const} */ ([
-    { name: "1 Week", key: "1w", days: 7, color: colors.orange },
-    { name: "8 Day", key: "8d", days: 8, color: colors.amber },
-    { name: "13 Day", key: "13d", days: 13, color: colors.yellow },
-    { name: "21 Day", key: "21d", days: 21, color: colors.lime },
-    { name: "1 Month", key: "1m", days: 30, color: colors.green },
-    { name: "34 Day", key: "34d", days: 34, color: colors.emerald },
-    { name: "55 Day", key: "55d", days: 55, color: colors.teal },
-    { name: "89 Day", key: "89d", days: 89, color: colors.cyan },
-    { name: "144 Day", key: "144d", days: 144, color: colors.sky },
+    { name: "1 Week", key: "1w", days: 7, color: colors.red },
+    { name: "8 Day", key: "8d", days: 8, color: colors.orange },
+    { name: "13 Day", key: "13d", days: 13, color: colors.amber },
+    { name: "21 Day", key: "21d", days: 21, color: colors.yellow },
+    { name: "1 Month", key: "1m", days: 30, color: colors.lime },
+    { name: "34 Day", key: "34d", days: 34, color: colors.green },
+    { name: "55 Day", key: "55d", days: 55, color: colors.emerald },
+    { name: "89 Day", key: "89d", days: 89, color: colors.teal },
+    { name: "144 Day", key: "144d", days: 144, color: colors.cyan },
+    { name: "200 Day", key: "200d", days: 200, color: colors.sky },
     { name: "1 Year", key: "1y", days: 365, color: colors.blue },
     { name: "2 Year", key: "2y", days: 2 * 365, color: colors.indigo },
     { name: "200 Week", key: "200w", days: 200 * 7, color: colors.violet },
@@ -1058,12 +1059,6 @@ function createPartialOptions(colors) {
           },
         }),
         createBaseSeries({
-          key: `${key}-ratio-sma`,
-          name: "sma",
-          color: colors.yellow,
-          defaultActive: false,
-        }),
-        createBaseSeries({
           key: `${key}-ratio-p1sd`,
           name: "+1σ",
           color: colors.orange,
@@ -1153,6 +1148,18 @@ function createPartialOptions(colors) {
           color: colors.rose,
           defaultActive: false,
         }),
+        createBaseSeries({
+          key: `${key}-ratio-4y-sma`,
+          name: "4y-sma",
+          color: colors.violet,
+          defaultActive: false,
+        }),
+        createBaseSeries({
+          key: `${key}-ratio-sma`,
+          name: "sma",
+          color: colors.yellow,
+          defaultActive: false,
+        }),
         /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
           key: `${key}-ratio-1y-sma-momentum-oscillator`,
           title: "1Y Momentum",
@@ -1165,8 +1172,19 @@ function createPartialOptions(colors) {
         }),
         /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
           key: `${key}-ratio-zscore`,
-          title: "Score",
+          title: "All time",
           type: "Baseline",
+          options: {
+            createPriceLine: {
+              value: 0,
+            },
+          },
+        }),
+        /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
+          key: `${key}-ratio-4y-zscore`,
+          title: "4y",
+          type: "Baseline",
+          colors: [colors.yellow, colors.pink],
           options: {
             createPriceLine: {
               value: 0,
@@ -1413,7 +1431,7 @@ function createPartialOptions(colors) {
                       key: `${fixKey(key)}realized-price`,
                       name,
                       color,
-                    })
+                    }),
                   ),
                 }
               : createPriceWithRatio({
@@ -1496,7 +1514,7 @@ function createPartialOptions(colors) {
                 /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
                   type: "Baseline",
                   key: `${fixKey(
-                    key
+                    key,
                   )}net-realized-profit-and-loss-relative-to-realized-cap`,
                   title: useGroupName ? name : "Net",
                   color: useGroupName ? color : undefined,
@@ -1530,6 +1548,9 @@ function createPartialOptions(colors) {
                         key: `${fixKey(key)}adjusted-spent-output-profit-ratio`,
                         title: useGroupName ? name : "asopr",
                         color: useGroupName ? color : undefined,
+                        colors: useGroupName
+                          ? undefined
+                          : [colors.yellow, colors.pink],
                         options: {
                           createPriceLine: {
                             value: 1,
@@ -1567,7 +1588,7 @@ function createPartialOptions(colors) {
                           /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
                             type: "Baseline",
                             key: `${fixKey(
-                              key
+                              key,
                             )}adjusted-spent-output-profit-ratio`,
                             title: useGroupName ? name : "asopr",
                             color: useGroupName ? color : undefined,
@@ -1590,7 +1611,7 @@ function createPartialOptions(colors) {
                   key: `${fixKey(key)}sell-side-risk-ratio`,
                   name: useGroupName ? name : "Risk",
                   color: color,
-                })
+                }),
               ),
             },
           ],
@@ -1679,7 +1700,7 @@ function createPartialOptions(colors) {
                 /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
                   type: "Baseline",
                   key: `${fixKey(
-                    key
+                    key,
                   )}net-unrealized-profit-and-loss-relative-to-market-cap`,
                   title: useGroupName ? name : "Net",
                   color: useGroupName ? color : undefined,
@@ -1857,7 +1878,7 @@ function createPartialOptions(colors) {
                       key: `${key}-sma`,
                       name: key,
                       color,
-                    })
+                    }),
                   ),
                 },
                 ...averages.map(({ key, name, color }) =>
@@ -1867,7 +1888,7 @@ function createPartialOptions(colors) {
                     title: `${name} Market Price Moving Average`,
                     legend: "average",
                     color,
-                  })
+                  }),
                 ),
               ],
             },
@@ -1903,6 +1924,32 @@ function createPartialOptions(colors) {
                   }),
                 ],
               })),
+            },
+            {
+              name: "Indicators",
+              tree: [
+                {
+                  name: "Mayer's multiple",
+                  title: "Mayer's multiple",
+                  top: [
+                    createBaseSeries({
+                      key: `200d-sma`,
+                      name: "200d sma",
+                      color: colors.yellow,
+                    }),
+                    createBaseSeries({
+                      key: `200d-sma-x2-4`,
+                      name: "200d sma x2.4",
+                      color: colors.green,
+                    }),
+                    createBaseSeries({
+                      key: `200d-sma-x0-8`,
+                      name: "200d sma x0.8",
+                      color: colors.red,
+                    }),
+                  ],
+                },
+              ],
             },
           ],
         },
@@ -1958,7 +2005,7 @@ function createPartialOptions(colors) {
                           },
                         }),
                       ],
-                    })
+                    }),
                 ),
                 .../** @type {const} */ ([
                   { name: "2 Year", key: "2y" },
@@ -2029,7 +2076,7 @@ function createPartialOptions(colors) {
                           },
                         }),
                       ],
-                    })
+                    }),
                 ),
               ],
             },
@@ -2045,7 +2092,7 @@ function createPartialOptions(colors) {
                       name: `${year}`,
                       color,
                       defaultActive,
-                    })
+                    }),
                   ),
                 },
                 ...dcaClasses.map(
@@ -2072,7 +2119,7 @@ function createPartialOptions(colors) {
                           },
                         }),
                       ],
-                    })
+                    }),
                 ),
               ],
             },
@@ -2133,10 +2180,10 @@ function createPartialOptions(colors) {
               bottom: [
                 ...createAverageSumCumulativeMinMaxPercentilesSeries("fee"),
                 ...createAverageSumCumulativeMinMaxPercentilesSeries(
-                  "fee-in-btc"
+                  "fee-in-btc",
                 ),
                 ...createAverageSumCumulativeMinMaxPercentilesSeries(
-                  "fee-in-usd"
+                  "fee-in-usd",
                 ),
               ],
             },
@@ -2892,7 +2939,7 @@ export function initOptions({ colors, signals, env, utils, qrcode }) {
   const detailsList = [];
 
   const treeElement = signals.createSignal(
-    /** @type {HTMLDivElement | null} */ (null)
+    /** @type {HTMLDivElement | null} */ (null),
   );
 
   /** @type {string[] | undefined} */
@@ -3004,7 +3051,7 @@ export function initOptions({ colors, signals, env, utils, qrcode }) {
           return null;
         }
       },
-      null
+      null,
     );
 
     partialTree.forEach((anyPartial, partialIndex) => {
@@ -3027,7 +3074,7 @@ export function initOptions({ colors, signals, env, utils, qrcode }) {
 
       if ("tree" in anyPartial) {
         const folderId = utils.stringToId(
-          `${(path || []).join(" ")} ${anyPartial.name} folder`
+          `${(path || []).join(" ")} ${anyPartial.name} folder`,
         );
 
         /** @type {Omit<OptionsGroup, keyof PartialOptionsGroup>} */
@@ -3042,13 +3089,13 @@ export function initOptions({ colors, signals, env, utils, qrcode }) {
         const thisPath = groupAddons.id;
 
         const passedDetails = signals.createSignal(
-          /** @type {HTMLDivElement | HTMLDetailsElement | null} */ (null)
+          /** @type {HTMLDivElement | HTMLDetailsElement | null} */ (null),
         );
 
         const childOptionsCount = recursiveProcessPartialTree(
           anyPartial.tree,
           passedDetails,
-          [...(path || []), thisPath]
+          [...(path || []), thisPath],
         );
 
         listForSum.push(childOptionsCount);
@@ -3180,7 +3227,7 @@ export function initOptions({ colors, signals, env, utils, qrcode }) {
     });
 
     return signals.createMemo(() =>
-      listForSum.reduce((acc, s) => acc + s(), 0)
+      listForSum.reduce((acc, s) => acc + s(), 0),
     );
   }
   recursiveProcessPartialTree(partialOptions, treeElement);
@@ -3207,7 +3254,7 @@ export function initOptions({ colors, signals, env, utils, qrcode }) {
         console.log(
           [...m.entries()]
             .filter(([_, value]) => value > 1)
-            .map(([key, _]) => key)
+            .map(([key, _]) => key),
         );
 
         throw Error("ID duplicate");

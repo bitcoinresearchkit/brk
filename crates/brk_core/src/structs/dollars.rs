@@ -178,6 +178,17 @@ impl Mul<usize> for Close<Dollars> {
     }
 }
 
+impl Mul<f64> for Dollars {
+    type Output = Dollars;
+    fn mul(self, rhs: f64) -> Self::Output {
+        if rhs.fract() != 0.0 {
+            Self::from(self.0 * rhs)
+        } else {
+            self * rhs as i64
+        }
+    }
+}
+
 impl Mul<Bitcoin> for Dollars {
     type Output = Self;
     fn mul(self, rhs: Bitcoin) -> Self::Output {
@@ -208,11 +219,14 @@ impl Mul<Sats> for Dollars {
 impl Mul<StoredF32> for Dollars {
     type Output = Self;
     fn mul(self, rhs: StoredF32) -> Self::Output {
-        if rhs.fract() != 0.0 {
-            Self::from(self.0 * *rhs as f64)
-        } else {
-            self * *rhs as i64
-        }
+        self * *rhs as f64
+    }
+}
+
+impl Mul<StoredF64> for Dollars {
+    type Output = Self;
+    fn mul(self, rhs: StoredF64) -> Self::Output {
+        self * *rhs
     }
 }
 

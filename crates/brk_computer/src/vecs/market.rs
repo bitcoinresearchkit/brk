@@ -36,10 +36,14 @@ pub struct Vecs {
     pub indexes_to_55d_sma: ComputedRatioVecsFromDateIndex,
     pub indexes_to_89d_sma: ComputedRatioVecsFromDateIndex,
     pub indexes_to_144d_sma: ComputedRatioVecsFromDateIndex,
+    pub indexes_to_200d_sma: ComputedRatioVecsFromDateIndex,
     pub indexes_to_1y_sma: ComputedRatioVecsFromDateIndex,
     pub indexes_to_2y_sma: ComputedRatioVecsFromDateIndex,
     pub indexes_to_200w_sma: ComputedRatioVecsFromDateIndex,
     pub indexes_to_4y_sma: ComputedRatioVecsFromDateIndex,
+
+    pub indexes_to_200d_sma_x2_4: ComputedVecsFromDateIndex<Dollars>,
+    pub indexes_to_200d_sma_x0_8: ComputedVecsFromDateIndex<Dollars>,
 
     pub price_1d_ago: ComputedVecsFromDateIndex<Dollars>,
     pub price_1w_ago: ComputedVecsFromDateIndex<Dollars>,
@@ -301,6 +305,14 @@ impl Vecs {
             indexes_to_144d_sma: ComputedRatioVecsFromDateIndex::forced_import(
                 path,
                 "144d_sma",
+                true,
+                version + VERSION + Version::ZERO,
+                format,
+                StorableVecGeneatorOptions::default().add_last(),
+            )?,
+            indexes_to_200d_sma: ComputedRatioVecsFromDateIndex::forced_import(
+                path,
+                "200d_sma",
                 true,
                 version + VERSION + Version::ZERO,
                 format,
@@ -1215,6 +1227,23 @@ impl Vecs {
                 format,
                 StorableVecGeneatorOptions::default().add_last(),
             )?,
+
+            indexes_to_200d_sma_x2_4: ComputedVecsFromDateIndex::forced_import(
+                path,
+                "200d_sma_x2_4",
+                true,
+                version + VERSION + Version::ZERO,
+                format,
+                StorableVecGeneatorOptions::default().add_last(),
+            )?,
+            indexes_to_200d_sma_x0_8: ComputedVecsFromDateIndex::forced_import(
+                path,
+                "200d_sma_x0_8",
+                true,
+                version + VERSION + Version::ZERO,
+                format,
+                StorableVecGeneatorOptions::default().add_last(),
+            )?,
         })
     }
 
@@ -1771,6 +1800,7 @@ impl Vecs {
                 (&mut self.indexes_to_55d_sma, 55),
                 (&mut self.indexes_to_89d_sma, 89),
                 (&mut self.indexes_to_144d_sma, 144),
+                (&mut self.indexes_to_200d_sma, 200),
                 (&mut self.indexes_to_1y_sma, 365),
                 (&mut self.indexes_to_2y_sma, 2 * 365),
                 (&mut self.indexes_to_200w_sma, 200 * 7),
@@ -1797,7 +1827,51 @@ impl Vecs {
                 });
             });
             Ok(())
-        })
+        })?;
+
+        self.indexes_to_200d_sma_x0_8.compute_all(
+            indexer,
+            indexes,
+            starting_indexes,
+            exit,
+            |v, _, _, starting_indexes, exit| {
+                v.compute_transform(
+                    starting_indexes.dateindex,
+                    self.indexes_to_200d_sma
+                        .price
+                        .as_ref()
+                        .unwrap()
+                        .dateindex
+                        .as_ref()
+                        .unwrap(),
+                    |(i, v, ..)| (i, v * 0.8),
+                    exit,
+                )
+            },
+        )?;
+
+        self.indexes_to_200d_sma_x2_4.compute_all(
+            indexer,
+            indexes,
+            starting_indexes,
+            exit,
+            |v, _, _, starting_indexes, exit| {
+                v.compute_transform(
+                    starting_indexes.dateindex,
+                    self.indexes_to_200d_sma
+                        .price
+                        .as_ref()
+                        .unwrap()
+                        .dateindex
+                        .as_ref()
+                        .unwrap(),
+                    |(i, v, ..)| (i, v * 2.4),
+                    exit,
+                )
+            },
+        )?;
+
+        Ok(())
     }
 
     pub fn vecs(&self) -> Vec<&dyn AnyCollectableVec> {
@@ -1817,10 +1891,13 @@ impl Vecs {
             self.indexes_to_55d_sma.vecs(),
             self.indexes_to_89d_sma.vecs(),
             self.indexes_to_144d_sma.vecs(),
+            self.indexes_to_200d_sma.vecs(),
             self.indexes_to_1y_sma.vecs(),
             self.indexes_to_2y_sma.vecs(),
             self.indexes_to_200w_sma.vecs(),
             self.indexes_to_4y_sma.vecs(),
+            self.indexes_to_200d_sma_x0_8.vecs(),
+            self.indexes_to_200d_sma_x2_4.vecs(),
             self.price_1d_ago.vecs(),
             self.price_1w_ago.vecs(),
             self.price_1m_ago.vecs(),
