@@ -70,7 +70,7 @@ impl<T> Outputs<T> {
             .collect::<Vec<_>>()
     }
 
-    pub fn as_mut_overlaping_vecs(&mut self) -> Vec<&mut T> {
+    pub fn as_mut_overlapping_vecs(&mut self) -> Vec<&mut T> {
         [&mut self.all]
             .into_iter()
             .chain(self.by_term.as_mut_vec())

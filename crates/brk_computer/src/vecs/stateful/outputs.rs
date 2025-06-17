@@ -14,7 +14,7 @@ pub trait OutputCohorts {
     fn tick_tock_next_block(&mut self, chain_state: &[BlockState], timestamp: Timestamp);
     fn send(&mut self, height_to_sent: BTreeMap<Height, Transacted>, chain_state: &[BlockState]);
     fn receive(&mut self, received: Transacted, height: Height, price: Option<Dollars>);
-    fn compute_overlaping_vecs(&mut self, starting_indexes: &Indexes, exit: &Exit) -> Result<()>;
+    fn compute_overlapping_vecs(&mut self, starting_indexes: &Indexes, exit: &Exit) -> Result<()>;
 }
 
 impl OutputCohorts for Outputs<(OutputFilter, cohort::Vecs)> {
@@ -172,7 +172,7 @@ impl OutputCohorts for Outputs<(OutputFilter, cohort::Vecs)> {
             });
     }
 
-    fn compute_overlaping_vecs(&mut self, starting_indexes: &Indexes, exit: &Exit) -> Result<()> {
+    fn compute_overlapping_vecs(&mut self, starting_indexes: &Indexes, exit: &Exit) -> Result<()> {
         let by_date_range = self.by_date_range.as_vec();
         let by_size_range = self.by_size_range.as_vec();
 

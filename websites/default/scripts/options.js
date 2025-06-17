@@ -132,9 +132,6 @@ function createPartialOptions(colors) {
    * @typedef {"cumulative-"} CumulativePrefix
    * @typedef {StartsWith<CumulativePrefix>} CumulativeVecId
    * @typedef {WithoutPrefix<CumulativeVecId, CumulativePrefix>} CumulativeVecIdBase
-   * @typedef {"-sum"} SumSuffix
-   * @typedef {EndsWith<SumSuffix>} VecIdSum
-   * @typedef {WithoutSuffix<VecIdSum, SumSuffix>} VecIdSumBase
    * @typedef {"-average"} AverageSuffix
    * @typedef {EndsWith<AverageSuffix>} VecIdAverage
    * @typedef {WithoutSuffix<VecIdAverage, AverageSuffix>} VecIdAverageBase
@@ -832,13 +829,13 @@ function createPartialOptions(colors) {
 
   /**
    * @param {Object} args
-   * @param {VecIdSumBase & CumulativeVecIdBase} args.concat
+   * @param {CumulativeVecIdBase} args.concat
    * @param {string} [args.name]
    */
   function createSumCumulativeSeries({ concat, name }) {
     return /** @satisfies {AnyFetchedSeriesBlueprint[]} */ ([
       {
-        key: `${concat}-sum`,
+        key: concat,
         title: name ? `${name} Sum` : "Sum",
         color: colors.orange,
       },
@@ -903,7 +900,7 @@ function createPartialOptions(colors) {
   }
 
   /**
-   * @param {VecIdAverageBase & VecIdSumBase & CumulativeVecIdBase & VecIdMinBase & VecIdMaxBase & VecId90pBase & VecId75pBase & VecIdMedianBase & VecId25pBase & VecId10pBase} key
+   * @param {VecIdAverageBase & CumulativeVecIdBase & VecIdMinBase & VecIdMaxBase & VecId90pBase & VecId75pBase & VecIdMedianBase & VecId25pBase & VecId10pBase} key
    */
   function createAverageSumCumulativeMinMaxPercentilesSeries(key) {
     return [
@@ -915,7 +912,7 @@ function createPartialOptions(colors) {
 
   /**
    * @param {Object} args
-   * @param {VecId & VecIdAverageBase & VecIdSumBase & CumulativeVecIdBase & VecIdMinBase & VecIdMaxBase & VecId90pBase & VecId75pBase & VecIdMedianBase & VecId25pBase & VecId10pBase} args.key
+   * @param {VecId & VecIdAverageBase & CumulativeVecIdBase & VecIdMinBase & VecIdMaxBase & VecId90pBase & VecId75pBase & VecIdMedianBase & VecId25pBase & VecId10pBase} args.key
    * @param {string} args.name
    */
   function createBaseAverageSumCumulativeMinMaxPercentilesSeries({
@@ -933,7 +930,7 @@ function createPartialOptions(colors) {
 
   /**
    * @param {Object} args
-   * @param {VecId & VecIdSumBase & CumulativeVecIdBase} args.key
+   * @param {VecId & CumulativeVecIdBase} args.key
    * @param {string} args.name
    */
   function createBaseSumCumulativeSeries({ key, name }) {
@@ -1431,7 +1428,7 @@ function createPartialOptions(colors) {
                       key: `${fixKey(key)}realized-price`,
                       name,
                       color,
-                    }),
+                    })
                   ),
                 }
               : createPriceWithRatio({
@@ -1453,8 +1450,20 @@ function createPartialOptions(colors) {
                         color: colors.green,
                       }),
                       createBaseSeries({
+                        key: `cumulative-${fixKey(args.key)}realized-profit`,
+                        name: "Cumulative Profit",
+                        color: colors.green,
+                        defaultActive: false,
+                      }),
+                      createBaseSeries({
                         key: `${fixKey(args.key)}realized-loss`,
                         name: "Loss",
+                        color: colors.red,
+                        defaultActive: false,
+                      }),
+                      createBaseSeries({
+                        key: `cumulative-${fixKey(args.key)}realized-loss`,
+                        name: "Cumulative Loss",
                         color: colors.red,
                         defaultActive: false,
                       }),
@@ -1463,7 +1472,146 @@ function createPartialOptions(colors) {
                         name: "Negative Loss",
                         color: colors.red,
                       }),
+                      createBaseSeries({
+                        key: `cumulative-${fixKey(
+                          args.key
+                        )}negative-realized-loss`,
+                        name: "Cumulative Negative Loss",
+                        color: colors.red,
+                        defaultActive: false,
+                      }),
+                      /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
+                        type: "Baseline",
+                        key: `${fixKey(
+                          args.key
+                        )}realized-profit-relative-to-realized-cap`,
+                        title: "Profit",
+                        color: colors.green,
+                        options: {
+                          createPriceLine: {
+                            value: 0,
+                          },
+                        },
+                      }),
+                      /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
+                        type: "Baseline",
+                        key: `${fixKey(
+                          args.key
+                        )}realized-loss-relative-to-realized-cap`,
+                        title: "Loss",
+                        color: colors.red,
+                        options: {
+                          createPriceLine: {
+                            value: 0,
+                          },
+                        },
+                      }),
                     ],
+                  },
+                  {
+                    name: "Net pnl",
+                    title: `${args.title} Net Realized Profit And Loss`,
+                    bottom: list.flatMap(({ color, name, key }) => [
+                      /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
+                        type: "Baseline",
+                        key: `${fixKey(key)}net-realized-profit-and-loss`,
+                        title: "Net",
+                        options: {
+                          createPriceLine: {
+                            value: 0,
+                          },
+                        },
+                      }),
+                      /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
+                        type: "Baseline",
+                        key: `cumulative-${fixKey(
+                          key
+                        )}net-realized-profit-and-loss`,
+                        title: "Cumulative net",
+                        defaultActive: false,
+                        options: {
+                          createPriceLine: {
+                            value: 0,
+                          },
+                        },
+                      }),
+                      /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
+                        type: "Baseline",
+                        key: `cumulative-${fixKey(
+                          key
+                        )}net-realized-profit-and-loss-30d-change`,
+                        title: "cum net 30d change",
+                        defaultActive: false,
+                        options: {
+                          createPriceLine: {
+                            value: 0,
+                          },
+                        },
+                      }),
+                      /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
+                        type: "Baseline",
+                        key: `${fixKey(
+                          key
+                        )}net-realized-profit-and-loss-relative-to-realized-cap`,
+                        title: "Net",
+                        options: {
+                          createPriceLine: {
+                            value: 0,
+                          },
+                        },
+                      }),
+                      /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
+                        type: "Baseline",
+                        key: `cumulative-${fixKey(
+                          key
+                        )}net-realized-profit-and-loss-30d-change-relative-to-realized-cap`,
+                        title: "cum net 30d change",
+                        options: {
+                          createPriceLine: {
+                            value: 0,
+                          },
+                        },
+                      }),
+                      /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
+                        type: "Baseline",
+                        key: `cumulative-${fixKey(
+                          key
+                        )}net-realized-profit-and-loss-30d-change-relative-to-market-cap`,
+                        title: "cum net 30d change",
+                        options: {
+                          createPriceLine: {
+                            value: 0,
+                          },
+                        },
+                      }),
+                    ]),
+                  },
+                  {
+                    name: "sopr",
+                    title: `${args.title} Spent Output Profit Ratio`,
+                    bottom: list.flatMap(({ color, name, key }) => [
+                      /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
+                        type: "Baseline",
+                        key: `${fixKey(key)}spent-output-profit-ratio`,
+                        title: "sopr",
+                        options: {
+                          createPriceLine: {
+                            value: 1,
+                          },
+                        },
+                      }),
+                      /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
+                        type: "Baseline",
+                        key: `${fixKey(key)}adjusted-spent-output-profit-ratio`,
+                        title: "asopr",
+                        colors: [colors.yellow, colors.pink],
+                        options: {
+                          createPriceLine: {
+                            value: 1,
+                          },
+                        },
+                      }),
+                    ]),
                   },
                 ]
               : [
@@ -1475,8 +1623,19 @@ function createPartialOptions(colors) {
                       return /** @type {const} */ ([
                         createBaseSeries({
                           key: `${key}realized-profit`,
-                          name: useGroupName ? name : "Profit",
-                          color: useGroupName ? color : colors.green,
+                          name,
+                          color,
+                        }),
+                        /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
+                          type: "Baseline",
+                          key: `${key}realized-profit-relative-to-realized-cap`,
+                          title: name,
+                          color,
+                          options: {
+                            createPriceLine: {
+                              value: 0,
+                            },
+                          },
                         }),
                       ]);
                     }),
@@ -1489,78 +1648,151 @@ function createPartialOptions(colors) {
                       return /** @type {const} */ ([
                         createBaseSeries({
                           key: `${key}realized-loss`,
-                          name: useGroupName ? name : "Loss",
-                          color: useGroupName ? color : colors.red,
+                          name,
+                          color,
+                        }),
+                        /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
+                          type: "Baseline",
+                          key: `${key}realized-loss-relative-to-realized-cap`,
+                          title: name,
+                          color,
+                          options: {
+                            createPriceLine: {
+                              value: 0,
+                            },
+                          },
                         }),
                       ]);
                     }),
                   },
-                ]),
-            {
-              name: "Net pnl",
-              title: `${args.title} Net Realized Profit And Loss`,
-              bottom: list.flatMap(({ color, name, key }) => [
-                /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
-                  type: "Baseline",
-                  key: `${fixKey(key)}net-realized-profit-and-loss`,
-                  title: useGroupName ? name : "Net",
-                  color: useGroupName ? color : undefined,
-                  options: {
-                    createPriceLine: {
-                      value: 0,
-                    },
-                  },
-                }),
-                /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
-                  type: "Baseline",
-                  key: `${fixKey(
-                    key,
-                  )}net-realized-profit-and-loss-relative-to-realized-cap`,
-                  title: useGroupName ? name : "Net",
-                  color: useGroupName ? color : undefined,
-                  options: {
-                    createPriceLine: {
-                      value: 0,
-                    },
-                  },
-                }),
-              ]),
-            },
-            ...(!("list" in args)
-              ? [
                   {
-                    name: "sopr",
-                    title: `${args.title} Spent Output Profit Ratio`,
+                    name: "Net pnl",
+                    title: `${args.title} Net Realized Profit And Loss`,
                     bottom: list.flatMap(({ color, name, key }) => [
                       /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
                         type: "Baseline",
-                        key: `${fixKey(key)}spent-output-profit-ratio`,
-                        title: useGroupName ? name : "sopr",
-                        color: useGroupName ? color : undefined,
+                        key: `${fixKey(key)}net-realized-profit-and-loss`,
+                        title: name,
+                        color,
                         options: {
                           createPriceLine: {
-                            value: 1,
+                            value: 0,
                           },
                         },
                       }),
                       /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
                         type: "Baseline",
-                        key: `${fixKey(key)}adjusted-spent-output-profit-ratio`,
-                        title: useGroupName ? name : "asopr",
-                        color: useGroupName ? color : undefined,
-                        colors: useGroupName
-                          ? undefined
-                          : [colors.yellow, colors.pink],
+                        key: `${fixKey(
+                          key
+                        )}net-realized-profit-and-loss-relative-to-realized-cap`,
+                        title: name,
+                        color,
                         options: {
                           createPriceLine: {
-                            value: 1,
+                            value: 0,
                           },
                         },
                       }),
                     ]),
                   },
-                ]
-              : [
+                  {
+                    name: "cumulative",
+                    tree: [
+                      {
+                        name: "profit",
+                        title: `Cumulative ${args.title} Realized Profit`,
+                        bottom: list.flatMap(({ color, name, key: _key }) => {
+                          const key = fixKey(_key);
+                          return /** @type {const} */ ([
+                            createBaseSeries({
+                              key: `cumulative-${key}realized-profit`,
+                              name,
+                              color,
+                            }),
+                          ]);
+                        }),
+                      },
+                      {
+                        name: "loss",
+                        title: `Cumulative ${args.title} Realized Loss`,
+                        bottom: list.flatMap(({ color, name, key: _key }) => {
+                          const key = fixKey(_key);
+                          return /** @type {const} */ ([
+                            createBaseSeries({
+                              key: `cumulative-${key}realized-loss`,
+                              name,
+                              color,
+                            }),
+                          ]);
+                        }),
+                      },
+                      {
+                        name: "Net pnl",
+                        title: `Cumulative ${args.title} Net Realized Profit And Loss`,
+                        bottom: list.flatMap(({ color, name, key }) => [
+                          /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
+                            type: "Baseline",
+                            key: `cumulative-${fixKey(
+                              key
+                            )}net-realized-profit-and-loss`,
+                            title: name,
+                            color,
+                            defaultActive: false,
+                            options: {
+                              createPriceLine: {
+                                value: 0,
+                              },
+                            },
+                          }),
+                        ]),
+                      },
+                      {
+                        name: "Net pnl 30d change",
+                        title: `Cumulative ${args.title} Net Realized Profit And Loss 30 Day Change`,
+                        bottom: list.flatMap(({ color, name, key }) => [
+                          /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
+                            type: "Baseline",
+                            key: `cumulative-${fixKey(
+                              key
+                            )}net-realized-profit-and-loss-30d-change`,
+                            title: name,
+                            color,
+                            options: {
+                              createPriceLine: {
+                                value: 0,
+                              },
+                            },
+                          }),
+                          /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
+                            type: "Baseline",
+                            key: `cumulative-${fixKey(
+                              key
+                            )}net-realized-profit-and-loss-30d-change-relative-to-realized-cap`,
+                            title: name,
+                            color,
+                            options: {
+                              createPriceLine: {
+                                value: 0,
+                              },
+                            },
+                          }),
+                          /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
+                            type: "Baseline",
+                            key: `cumulative-${fixKey(
+                              key
+                            )}net-realized-profit-and-loss-30d-change-relative-to-market-cap`,
+                            title: name,
+                            color,
+                            options: {
+                              createPriceLine: {
+                                value: 0,
+                              },
+                            },
+                          }),
+                        ]),
+                      },
+                    ],
+                  },
                   {
                     name: "sopr",
                     tree: [
@@ -1571,8 +1803,8 @@ function createPartialOptions(colors) {
                           /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
                             type: "Baseline",
                             key: `${fixKey(key)}spent-output-profit-ratio`,
-                            title: useGroupName ? name : "sopr",
-                            color: useGroupName ? color : undefined,
+                            title: name,
+                            color,
                             options: {
                               createPriceLine: {
                                 value: 1,
@@ -1588,10 +1820,10 @@ function createPartialOptions(colors) {
                           /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
                             type: "Baseline",
                             key: `${fixKey(
-                              key,
+                              key
                             )}adjusted-spent-output-profit-ratio`,
-                            title: useGroupName ? name : "asopr",
-                            color: useGroupName ? color : undefined,
+                            title: name,
+                            color,
                             options: {
                               createPriceLine: {
                                 value: 1,
@@ -1611,7 +1843,7 @@ function createPartialOptions(colors) {
                   key: `${fixKey(key)}sell-side-risk-ratio`,
                   name: useGroupName ? name : "Risk",
                   color: color,
-                }),
+                })
               ),
             },
           ],
@@ -1700,7 +1932,7 @@ function createPartialOptions(colors) {
                 /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
                   type: "Baseline",
                   key: `${fixKey(
-                    key,
+                    key
                   )}net-unrealized-profit-and-loss-relative-to-market-cap`,
                   title: useGroupName ? name : "Net",
                   color: useGroupName ? color : undefined,
@@ -1878,7 +2110,7 @@ function createPartialOptions(colors) {
                       key: `${key}-sma`,
                       name: key,
                       color,
-                    }),
+                    })
                   ),
                 },
                 ...averages.map(({ key, name, color }) =>
@@ -1888,7 +2120,7 @@ function createPartialOptions(colors) {
                     title: `${name} Market Price Moving Average`,
                     legend: "average",
                     color,
-                  }),
+                  })
                 ),
               ],
             },
@@ -1929,8 +2161,8 @@ function createPartialOptions(colors) {
               name: "Indicators",
               tree: [
                 {
-                  name: "Mayer's multiple",
-                  title: "Mayer's multiple",
+                  name: "Mayer multiple",
+                  title: "Mayer multiple",
                   top: [
                     createBaseSeries({
                       key: `200d-sma`,
@@ -2005,7 +2237,7 @@ function createPartialOptions(colors) {
                           },
                         }),
                       ],
-                    }),
+                    })
                 ),
                 .../** @type {const} */ ([
                   { name: "2 Year", key: "2y" },
@@ -2076,7 +2308,7 @@ function createPartialOptions(colors) {
                           },
                         }),
                       ],
-                    }),
+                    })
                 ),
               ],
             },
@@ -2092,7 +2324,7 @@ function createPartialOptions(colors) {
                       name: `${year}`,
                       color,
                       defaultActive,
-                    }),
+                    })
                   ),
                 },
                 ...dcaClasses.map(
@@ -2119,7 +2351,7 @@ function createPartialOptions(colors) {
                           },
                         }),
                       ],
-                    }),
+                    })
                 ),
               ],
             },
@@ -2180,10 +2412,10 @@ function createPartialOptions(colors) {
               bottom: [
                 ...createAverageSumCumulativeMinMaxPercentilesSeries("fee"),
                 ...createAverageSumCumulativeMinMaxPercentilesSeries(
-                  "fee-in-btc",
+                  "fee-in-btc"
                 ),
                 ...createAverageSumCumulativeMinMaxPercentilesSeries(
-                  "fee-in-usd",
+                  "fee-in-usd"
                 ),
               ],
             },
@@ -2779,7 +3011,7 @@ function createPartialOptions(colors) {
                   bottom: [
                     createBaseSeries({ key: "opreturn-count", name: "Count" }),
                     createBaseSeries({
-                      key: "opreturn-count-sum",
+                      key: "opreturn-count",
                       name: "sum",
                     }),
                     createBaseSeries({
@@ -2939,7 +3171,7 @@ export function initOptions({ colors, signals, env, utils, qrcode }) {
   const detailsList = [];
 
   const treeElement = signals.createSignal(
-    /** @type {HTMLDivElement | null} */ (null),
+    /** @type {HTMLDivElement | null} */ (null)
   );
 
   /** @type {string[] | undefined} */
@@ -3051,7 +3283,7 @@ export function initOptions({ colors, signals, env, utils, qrcode }) {
           return null;
         }
       },
-      null,
+      null
     );
 
     partialTree.forEach((anyPartial, partialIndex) => {
@@ -3074,7 +3306,7 @@ export function initOptions({ colors, signals, env, utils, qrcode }) {
 
       if ("tree" in anyPartial) {
         const folderId = utils.stringToId(
-          `${(path || []).join(" ")} ${anyPartial.name} folder`,
+          `${(path || []).join(" ")} ${anyPartial.name} folder`
         );
 
         /** @type {Omit<OptionsGroup, keyof PartialOptionsGroup>} */
@@ -3089,13 +3321,13 @@ export function initOptions({ colors, signals, env, utils, qrcode }) {
         const thisPath = groupAddons.id;
 
         const passedDetails = signals.createSignal(
-          /** @type {HTMLDivElement | HTMLDetailsElement | null} */ (null),
+          /** @type {HTMLDivElement | HTMLDetailsElement | null} */ (null)
         );
 
         const childOptionsCount = recursiveProcessPartialTree(
           anyPartial.tree,
           passedDetails,
-          [...(path || []), thisPath],
+          [...(path || []), thisPath]
         );
 
         listForSum.push(childOptionsCount);
@@ -3227,7 +3459,7 @@ export function initOptions({ colors, signals, env, utils, qrcode }) {
     });
 
     return signals.createMemo(() =>
-      listForSum.reduce((acc, s) => acc + s(), 0),
+      listForSum.reduce((acc, s) => acc + s(), 0)
     );
   }
   recursiveProcessPartialTree(partialOptions, treeElement);
@@ -3254,7 +3486,7 @@ export function initOptions({ colors, signals, env, utils, qrcode }) {
         console.log(
           [...m.entries()]
             .filter(([_, value]) => value > 1)
-            .map(([key, _]) => key),
+            .map(([key, _]) => key)
         );
 
         throw Error("ID duplicate");

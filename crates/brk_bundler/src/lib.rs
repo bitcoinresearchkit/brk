@@ -52,7 +52,8 @@ pub async fn bundle(websites_path: &Path, source_folder: &str, watch: bool) -> i
             if let Some(start) = entry.find("main") {
                 if let Some(end) = entry.find(".js") {
                     let main_hashed = &entry[start..end];
-                    contents = contents.replace("/scripts/main.js", &format!("/scripts/{main_hashed}.js"));
+                    contents =
+                        contents.replace("/scripts/main.js", &format!("/scripts/{main_hashed}.js"));
                 }
             }
         }
