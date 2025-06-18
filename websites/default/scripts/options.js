@@ -127,11 +127,17 @@ function createPartialOptions(colors) {
    * @template {string} S
    * @typedef {K extends `${infer Rest}${S}` ? Rest : never} WithoutSuffix
    */
+  /**
+   * @template {string} K
+   * @template {string} S
+   * @typedef {K extends `${infer _Prefix}${S}${infer _Suffix}` ? never : K} ExcludeSubstring
+   */
 
   /**
    * @typedef {"cumulative-"} CumulativePrefix
+   * @typedef {"-30d-change"} _30DChageSubString
    * @typedef {StartsWith<CumulativePrefix>} CumulativeVecId
-   * @typedef {WithoutPrefix<CumulativeVecId, CumulativePrefix>} CumulativeVecIdBase
+   * @typedef {ExcludeSubstring<WithoutPrefix<CumulativeVecId, CumulativePrefix>, _30DChageSubString>} CumulativeVecIdBase
    * @typedef {"-average"} AverageSuffix
    * @typedef {EndsWith<AverageSuffix>} VecIdAverage
    * @typedef {WithoutSuffix<VecIdAverage, AverageSuffix>} VecIdAverageBase
@@ -2029,13 +2035,25 @@ function createPartialOptions(colors) {
             return /** @type {const} */ ([
               createBaseSeries({
                 key: `${key}coinblocks-destroyed`,
-                name: useGroupName ? name : "destroyed",
+                name: useGroupName ? name : "sum",
                 color,
               }),
               createBaseSeries({
-                key: `${key}coindays-destroyed`,
-                name: useGroupName ? name : "destroyed",
+                key: `cumulative-${key}coinblocks-destroyed`,
+                name: useGroupName ? name : "cumulative",
                 color,
+                defaultActive: false,
+              }),
+              createBaseSeries({
+                key: `${key}coindays-destroyed`,
+                name: useGroupName ? name : "sum",
+                color,
+              }),
+              createBaseSeries({
+                key: `cumulative-${key}coindays-destroyed`,
+                name: useGroupName ? name : "cumulative",
+                color,
+                defaultActive: false,
               }),
             ]);
           }),
