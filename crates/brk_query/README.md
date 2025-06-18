@@ -10,7 +10,7 @@ The output will depend on the format chosen which can be Markdown, Json, CSV or 
 if there is a one or multiple datasets, and if one dataset one or multiple values.
 
 > [!NOTE]  
->In the future, BRK Query gradually acquire features such as: SQL queries, and the ability to fetch data by address, transaction ID, block hash, or block height, among others.
+>In the future, BRK Query will gradually acquire features such as: SQL queries, and the ability to fetch data by address, transaction ID, block hash, or block height, among others.
 
 ----
 <p align="left">
