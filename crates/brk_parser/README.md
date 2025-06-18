@@ -1,5 +1,46 @@
 # BRK Parser
 
+This Rust library reads raw block files (like `blkXXXXX.dat`) from Bitcoin Core data, and creates an iterator over the 
+requested range of blocks in sequential order.
+
+The element returned by the iterator is a tuple consisting of:
+- the block `Height`
+- the `Block` (from `bitcoin-rust`), and
+- the block's `BlockHash` (also from `bitcoin-rust`)
+
+Tested with Bitcoin Core `v25.0..=v28.1`
+
+## Requirements
+
+Even though this parser reads `blkXXXXX.dat` files directly, it **needs** `bitcoind` running to provide the RPC Server 
+to filter out blockchain tip-forks.
+
+Peak RAM required should be around 500 MB.
+
+XOR-ed blocks are supported.
+
+## Disclaimer
+
+> [!IMPORTANT]  
+> A state of the local chain is saved in `{bitcoindir}/blocks/blk_index_to_blk_recap.json` to allow for faster starts (see benchmark below) but presently doesn't support locking. Therfore you should run only one instance of `brk_parser` at a time.
+
+## Benchmark
+
+|  | [brk_parser](https://crates.io/crates/brk_parser) | [bitcoin-explorer (deprecated)](https://crates.io/crates/bitcoin-explorer) | [blocks_iterator](https://crates.io/crates/blocks_iterator)* |
+| --- | --- | --- | --- |
+| Runs **with** `bitcoind` | Yes ✅ | No ❌ | Yes ✅ |
+| Runs **without** `bitcoind` | No ❌ | Yes ✅ | Yes ✅ |
+| `0..=855_000` | 4mn 10s | 4mn 45s | > 2h |
+| `800_000..=855_000` | 0mn 52s (4mn 10s if first run) | 0mn 55s | > 2h |
+
+\* `blocks_iterator` is with the default config (and thus with `skip_prevout = false` which does 
+much more than just iterate over blocks) so this isn't strictly an apples to apples comparison.  
+So the results are somewhat misleading. You should expect much closer times. Will update the 
+benchmark with `skip_prevout = true` as soon as possible.
+
+*Benchmarked on a Macbook Pro M3 Pro*
+
+----
 <p align="left">
   <a href="https://github.com/bitcoinresearchkit/brk">
     <img alt="GitHub Repo stars" src="https://img.shields.io/github/stars/bitcoinresearchkit/brk?style=social">
@@ -7,15 +48,15 @@
   <a href="https://github.com/bitcoinresearchkit/brk/blob/main/LICENSE.md">
     <img src="https://img.shields.io/crates/l/brk" alt="License" />
   </a>
-  <a href="https://crates.io/crates/brk_parser">
-    <img src="https://img.shields.io/crates/v/brk_parser" alt="Version" />
+  <a href="https://crates.io/crates/brk_cli">
+    <img src="https://img.shields.io/crates/v/brk_cli" alt="Version" />
   </a>
-  <a href="https://docs.rs/brk_parser">
-    <img src="https://img.shields.io/docsrs/brk_parser" alt="Documentation" />
+  <a href="https://docs.rs/brk_cli">
+    <img src="https://img.shields.io/docsrs/brk_cli" alt="Documentation" />
   </a>
-  <img src="https://img.shields.io/crates/size/brk_parser" alt="Size" />
-  <a href="https://deps.rs/crate/brk_parser">
-    <img src="https://deps.rs/crate/brk_parser/latest/status.svg" alt="Dependency status">
+  <img src="https://img.shields.io/crates/size/brk_cli" alt="Size" />
+  <a href="https://deps.rs/crate/brk_cli">
+    <img src="https://deps.rs/crate/brk_cli/latest/status.svg" alt="Dependency status">
   </a>
   <a href="https://discord.gg/HaR3wpH3nr">
     <img src="https://img.shields.io/discord/1350431684562124850?label=discord" alt="Discord" />
@@ -30,37 +71,3 @@
     <img src="https://img.shields.io/badge/x.com-black" alt="X" />
   </a>
 </p>
-
-A very fast and simple Rust library which reads raw block files (*blkXXXXX.dat*) from Bitcoin Core node and creates an iterator over all the requested blocks in sequential order (0, 1, 2, ...).
-
-The element returned by the iterator is a tuple which includes the:
-- Height: `Height`
-- Block: `Block` (from `bitcoin-rust`)
-- Block's Hash: `BlockHash` (also from `bitcoin-rust`)
-
-Tested with Bitcoin Core `v25.0..=v28.1`
-
-## Requirements
-
-Even though it reads *blkXXXXX.dat* files, it **needs** `bitcoind` (with no particular parameters) to run with the RPC server to filter out forks.
-
-Peak memory should be around 500MB.
-
-XOR-ed blocks are supported.
-
-## Disclaimer
-
-A state of the local chain is saved in `{bitcoindir}/blocks/blk_index_to_blk_recap.json` to allow for faster starts (see benchmark below) but doesn't yet support locking. Thus, it is highly recommended to run one instance of `brk_parser` at a time.
-
-## Benchmark
-
-|  | [brk_parser](https://crates.io/crates/brk_parser) | [bitcoin-explorer (deprecated)](https://crates.io/crates/bitcoin-explorer) | [blocks_iterator](https://crates.io/crates/blocks_iterator)* |
-| --- | --- | --- | --- |
-| Runs **with** `bitcoind` | Yes ✅ | No ❌ | Yes ✅ |
-| Runs **without** `bitcoind` | No ❌ | Yes ✅ | Yes ✅ |
-| `0..=855_000` | 4mn 10s | 4mn 45s | > 2h |
-| `800_000..=855_000` | 0mn 52s (4mn 10s if first run) | 0mn 55s | > 2h |
-
-\* `blocks_iterator` is with the default config (and thus with `skip_prevout = false` which does a lot more than just iterate over blocks) so it isn't an apples to apples comparaison and the numbers are misleading. You should expect much closer times. Will update the benchmark with `skip_prevout = true` as soon as possible.
-
-*Benchmarked on a Macbook Pro M3 Pro*

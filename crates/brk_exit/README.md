@@ -1,5 +1,14 @@
 # BRK Exit
 
+A simple crate that stops the program from exitting when blocking is activated until it is released. 
+The purpose of BRK Exit is to prevent exitting when a program is in the middle of saving data and 
+thus preventing partial writes.
+
+It's built on top of [ctrlc](https://crates.io/crates/ctrlc) which handles Ctrl + C (SIGINT), 
+stopping the program using the `kill` command (SIGTERM) and closing the terminal (SIGHUP) but it 
+doesn't support force kills (`kill -9`).
+
+----
 <p align="left">
   <a href="https://github.com/bitcoinresearchkit/brk">
     <img alt="GitHub Repo stars" src="https://img.shields.io/github/stars/bitcoinresearchkit/brk?style=social">
@@ -7,15 +16,15 @@
   <a href="https://github.com/bitcoinresearchkit/brk/blob/main/LICENSE.md">
     <img src="https://img.shields.io/crates/l/brk" alt="License" />
   </a>
-  <a href="https://crates.io/crates/brk_exit">
-    <img src="https://img.shields.io/crates/v/brk_exit" alt="Version" />
+  <a href="https://crates.io/crates/brk_cli">
+    <img src="https://img.shields.io/crates/v/brk_cli" alt="Version" />
   </a>
-  <a href="https://docs.rs/brk_exit">
-    <img src="https://img.shields.io/docsrs/brk_exit" alt="Documentation" />
+  <a href="https://docs.rs/brk_cli">
+    <img src="https://img.shields.io/docsrs/brk_cli" alt="Documentation" />
   </a>
-  <img src="https://img.shields.io/crates/size/brk_exit" alt="Size" />
-  <a href="https://deps.rs/crate/brk_exit">
-    <img src="https://deps.rs/crate/brk_exit/latest/status.svg" alt="Dependency status">
+  <img src="https://img.shields.io/crates/size/brk_cli" alt="Size" />
+  <a href="https://deps.rs/crate/brk_cli">
+    <img src="https://deps.rs/crate/brk_cli/latest/status.svg" alt="Dependency status">
   </a>
   <a href="https://discord.gg/HaR3wpH3nr">
     <img src="https://img.shields.io/discord/1350431684562124850?label=discord" alt="Discord" />
@@ -30,7 +39,3 @@
     <img src="https://img.shields.io/badge/x.com-black" alt="X" />
   </a>
 </p>
-
-A simple crate that stops the program from exitting when blocking is activated until it is released. The purpose of that is to prevent exitting when a program is in the middle of saving data and thus prevent partial writes.
-
-It's built on top of [ctrlc](https://crates.io/crates/ctrlc) which handles Ctrl + C (SIGINT), stopping the program using the `kill` command (SIGTERM) and closing the terminal (SIGHUP) but it doesn't support force kills (`kill -9`).

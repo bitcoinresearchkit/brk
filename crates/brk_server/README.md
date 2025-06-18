@@ -1,39 +1,17 @@
 # BRK Server
 
-<p align="left">
-  <a href="https://github.com/bitcoinresearchkit/brk">
-    <img alt="GitHub Repo stars" src="https://img.shields.io/github/stars/bitcoinresearchkit/brk?style=social">
-  </a>
-  <a href="https://github.com/bitcoinresearchkit/brk/blob/main/LICENSE.md">
-    <img src="https://img.shields.io/crates/l/brk" alt="License" />
-  </a>
-  <a href="https://crates.io/crates/brk_server">
-    <img src="https://img.shields.io/crates/v/brk_server" alt="Version" />
-  </a>
-  <a href="https://docs.rs/brk_server">
-    <img src="https://img.shields.io/docsrs/brk_server" alt="Documentation" />
-  </a>
-  <img src="https://img.shields.io/crates/size/brk_server" alt="Size" />
-  <a href="https://deps.rs/crate/brk_server">
-    <img src="https://deps.rs/crate/brk_server/latest/status.svg" alt="Dependency status">
-  </a>
-  <a href="https://discord.gg/HaR3wpH3nr">
-    <img src="https://img.shields.io/discord/1350431684562124850?label=discord" alt="Discord" />
-  </a>
-  <a href="https://primal.net/p/nprofile1qqsfw5dacngjlahye34krvgz7u0yghhjgk7gxzl5ptm9v6n2y3sn03sqxu2e6">
-    <img src="https://img.shields.io/badge/nostr-purple?link=https%3A%2F%2Fprimal.net%2Fp%2Fnprofile1qqsfw5dacngjlahye34krvgz7u0yghhjgk7gxzl5ptm9v6n2y3sn03sqxu2e6" alt="Nostr" />
-  </a>
-  <a href="https://bsky.app/profile/bitcoinresearchkit.org">
-    <img src="https://img.shields.io/badge/bluesky-blue?link=https%3A%2F%2Fbsky.app%2Fprofile%2Fbitcoinresearchkit.org" alt="Bluesky" />
-  </a>
-  <a href="https://x.com/brkdotorg">
-    <img src="https://img.shields.io/badge/x.com-black" alt="X" />
-  </a>
-</p>
+This crate serves Bitcoin data within swappable front-ends, built on top of `brk_indexer`, 
+`brk_computer` and `brk_query`.
 
-A crate that serves Bitcoin data and swappable front-ends, built on top of `brk_indexer`, `brk_computer` and `brk_query`.
+BRK Server serves the website specified by the user. The website can be *no website*, *default*, 
+or *custom* (which is a blank folder for people to experiment). 
 
-The file handler, will serve the website specified by the user if any, which can be *no website*, *default* or *custom* (which is a blank folder for people to experiment). If a website is specified and the server is ran outside of the brk project and thus can't find the requested website, it will download the whole project with the correct version from Github and store it in `.brk` to be able to serve to website. This is due to the crate size limit on [crates.io](https://crates.io) and the various shenanigans that need to be done to have a website in a crate.
+> [!TIP]
+> **### Due to the [crates.io](https://crates.io) crate size limit, and the shenanigans required to package a website in a crate...**Optional information to help a user be more successful.
+> 
+> If a website is specified, and the server can't find it, BRK Server will download this project from Github and 
+> store it in `~/.brk/downloads/` and... there's the website it needs. 
+
 
 The API uses `brk_query` and so inherites all of its features including formats.
 
@@ -129,3 +107,35 @@ The version of the server and thus BRK.
 Catch all.
 
 When no pattern is found, the server will look for a match inside the folder of the chosen website, if any.
+
+----
+<p align="left">
+  <a href="https://github.com/bitcoinresearchkit/brk">
+    <img alt="GitHub Repo stars" src="https://img.shields.io/github/stars/bitcoinresearchkit/brk?style=social">
+  </a>
+  <a href="https://github.com/bitcoinresearchkit/brk/blob/main/LICENSE.md">
+    <img src="https://img.shields.io/crates/l/brk" alt="License" />
+  </a>
+  <a href="https://crates.io/crates/brk_cli">
+    <img src="https://img.shields.io/crates/v/brk_cli" alt="Version" />
+  </a>
+  <a href="https://docs.rs/brk_cli">
+    <img src="https://img.shields.io/docsrs/brk_cli" alt="Documentation" />
+  </a>
+  <img src="https://img.shields.io/crates/size/brk_cli" alt="Size" />
+  <a href="https://deps.rs/crate/brk_cli">
+    <img src="https://deps.rs/crate/brk_cli/latest/status.svg" alt="Dependency status">
+  </a>
+  <a href="https://discord.gg/HaR3wpH3nr">
+    <img src="https://img.shields.io/discord/1350431684562124850?label=discord" alt="Discord" />
+  </a>
+  <a href="https://primal.net/p/nprofile1qqsfw5dacngjlahye34krvgz7u0yghhjgk7gxzl5ptm9v6n2y3sn03sqxu2e6">
+    <img src="https://img.shields.io/badge/nostr-purple?link=https%3A%2F%2Fprimal.net%2Fp%2Fnprofile1qqsfw5dacngjlahye34krvgz7u0yghhjgk7gxzl5ptm9v6n2y3sn03sqxu2e6" alt="Nostr" />
+  </a>
+  <a href="https://bsky.app/profile/bitcoinresearchkit.org">
+    <img src="https://img.shields.io/badge/bluesky-blue?link=https%3A%2F%2Fbsky.app%2Fprofile%2Fbitcoinresearchkit.org" alt="Bluesky" />
+  </a>
+  <a href="https://x.com/brkdotorg">
+    <img src="https://img.shields.io/badge/x.com-black" alt="X" />
+  </a>
+</p>
