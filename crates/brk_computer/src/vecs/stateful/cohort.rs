@@ -933,7 +933,7 @@ impl Vecs {
                 true,
                 version + VERSION + Version::TWO,
                 format,
-                StorableVecGeneatorOptions::default().add_sum(),
+                StorableVecGeneatorOptions::default().add_sum().add_cumulative(),
             )?,
             indexes_to_coindays_destroyed: ComputedVecsFromHeight::forced_import(
                 path,
@@ -941,7 +941,7 @@ impl Vecs {
                 true,
                 version + VERSION + Version::TWO,
                 format,
-                StorableVecGeneatorOptions::default().add_sum(),
+                StorableVecGeneatorOptions::default().add_sum().add_cumulative(),
             )?,
             indexes_to_cumulative_net_realized_profit_and_loss_30d_change: compute_dollars.then(|| {
                 ComputedVecsFromDateIndex::forced_import(
