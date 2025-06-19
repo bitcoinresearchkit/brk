@@ -67,7 +67,7 @@ impl Index {
             Self::DecadeIndex => &["decade", "decadeindex"],
             Self::DifficultyEpoch => &["difficulty", "difficultyepoch"],
             Self::EmptyOutputIndex => &["empty", "emptyoutputindex"],
-            Self::HalvingEpoch => &["h", "halving", "halvingepoch"],
+            Self::HalvingEpoch => &["halving", "halvingepoch"],
             Self::Height => &["h", "height"],
             Self::InputIndex => &["txin", "inputindex"],
             Self::MonthIndex => &["m", "month", "monthindex"],
