@@ -7,6 +7,7 @@ use brk_indexer::Indexer;
 use brk_vec::{AnyCollectableVec, Computation, Format};
 
 pub mod blocks;
+pub mod cointime;
 pub mod constants;
 pub mod fetched;
 pub mod grouped;
@@ -31,6 +32,7 @@ pub struct Vecs {
     pub transactions: transactions::Vecs,
     pub stateful: stateful::Vecs,
     pub fetched: Option<fetched::Vecs>,
+    pub cointime: cointime::Vecs,
 }
 
 impl Vecs {
@@ -112,6 +114,13 @@ impl Vecs {
                 format,
                 fetched.as_ref(),
             )?,
+            cointime: cointime::Vecs::forced_import(
+                path,
+                version + VERSION + Version::ZERO,
+                computation,
+                format,
+                fetched.as_ref(),
+            )?,
             indexes,
             fetched,
         })
@@ -125,7 +134,7 @@ impl Vecs {
         exit: &Exit,
     ) -> color_eyre::Result<()> {
         info!("Computing indexes...");
-        let starting_indexes = self.indexes.compute(indexer, starting_indexes, exit)?;
+        let mut starting_indexes = self.indexes.compute(indexer, starting_indexes, exit)?;
 
         info!("Computing constants...");
         self.constants
@@ -178,7 +187,17 @@ impl Vecs {
             &self.transactions,
             self.fetched.as_ref(),
             &self.market,
-            starting_indexes,
+            &mut starting_indexes,
+            exit,
+        )?;
+
+        self.cointime.compute(
+            indexer,
+            &self.indexes,
+            &starting_indexes,
+            self.fetched.as_ref(),
+            &self.transactions,
+            &self.stateful,
             exit,
         )?;
 
@@ -194,6 +213,7 @@ impl Vecs {
             self.market.vecs(),
             self.transactions.vecs(),
             self.stateful.vecs(),
+            self.cointime.vecs(),
             self.fetched.as_ref().map_or(vec![], |v| v.vecs()),
         ]
         .into_iter()

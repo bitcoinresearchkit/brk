@@ -26,6 +26,7 @@ impl<'a> VecTrees<'a> {
                         || s == &"cumulative_up"
                         || s.starts_with("cumulative_start")
                         || s.starts_with("cumulative_from")
+                        || s == &"activity"
                 }))
             && !(split.len() == 4
                 && split.get(1).is_some_and(|s| {

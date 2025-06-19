@@ -524,3 +524,13 @@ where
         Self(self.0 / rhs)
     }
 }
+
+// impl<T> Mul<usize> for Close<T>
+// where
+//     T: Mul<usize, Output = T>,
+// {
+//     type Output = Self;
+//     fn mul(self, rhs: usize) -> Self::Output {
+//         Self(self.0 * rhs)
+//     }
+// }

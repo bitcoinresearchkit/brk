@@ -65,8 +65,9 @@ impl ComputedRatioVecsFromDateIndex {
         compute_source: bool,
         version: Version,
         format: Format,
-        options: StorableVecGeneatorOptions,
     ) -> color_eyre::Result<Self> {
+        let options = StorableVecGeneatorOptions::default().add_last();
+
         Ok(Self {
             price: compute_source.then(|| {
                 ComputedVecsFromDateIndex::forced_import(

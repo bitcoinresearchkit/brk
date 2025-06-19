@@ -744,12 +744,14 @@ function createUtils() {
         id === "open" ||
         id === "marketcap" ||
         id.includes("in-usd") ||
+        id.includes("cointime-value") ||
         id.startsWith("price") ||
         id.endsWith("price-paid") ||
         id.endsWith("price") ||
+        (id.endsWith("-cap") && !id.includes("relative-to")) ||
         id.endsWith("value-created") ||
         id.endsWith("value-destroyed") ||
-        (id.includes("realized") &&
+        ((id.includes("realized") || id.includes("true-market-mean")) &&
           !id.includes("ratio") &&
           !id.includes("relative-to")) ||
         ((id.endsWith("sma") || id.includes("sma-x")) &&
@@ -764,18 +766,20 @@ function createUtils() {
       unit = "Cents";
     }
     if (
-      (!unit || thoroughUnitCheck) &&
-      (id.endsWith("ratio") ||
-        (id.includes("ratio") && id.endsWith("sma")) ||
-        id.endsWith("1sd") ||
-        id.endsWith("2sd") ||
-        id.endsWith("3sd") ||
-        id.endsWith("p0-1") ||
-        id.endsWith("p0-5") ||
-        id.endsWith("p1") ||
-        id.endsWith("p99") ||
-        id.endsWith("p99-5") ||
-        id.endsWith("p99-9"))
+      ((!unit || thoroughUnitCheck) &&
+        (id.endsWith("ratio") ||
+          (id.includes("ratio") && id.endsWith("sma")) ||
+          id.endsWith("1sd") ||
+          id.endsWith("2sd") ||
+          id.endsWith("3sd") ||
+          id.endsWith("p0-1") ||
+          id.endsWith("p0-5") ||
+          id.endsWith("p1") ||
+          id.endsWith("p99") ||
+          id.endsWith("p99-5") ||
+          id.endsWith("p99-9"))) ||
+      id.includes("liveliness") ||
+      id.includes("vaultedness")
     ) {
       if (unit) throw Error(`Unit "${unit}" already assigned "${id}"`);
       unit = "Ratio";
