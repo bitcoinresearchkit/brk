@@ -210,7 +210,7 @@ function createPartialOptions(colors) {
     },
   ]);
 
-  const upTo = /** @type {const} */ ([
+  const upToDate = /** @type {const} */ ([
     {
       key: "up-to-1d",
       name: "1d",
@@ -321,7 +321,7 @@ function createPartialOptions(colors) {
     },
   ]);
 
-  const from = /** @type {const} */ ([
+  const fromDate = /** @type {const} */ ([
     {
       key: "from-1d",
       name: "1d",
@@ -432,7 +432,7 @@ function createPartialOptions(colors) {
     },
   ]);
 
-  const range = /** @type {const} */ ([
+  const dateRange = /** @type {const} */ ([
     {
       key: "start-to-1d",
       name: "24h",
@@ -801,6 +801,66 @@ function createPartialOptions(colors) {
       name: "empty",
       title: "Pay To Empty",
       color: colors.fuchsia,
+    },
+  ]);
+
+  const cointimePrices = /** @type {const} */ ([
+    {
+      key: `vaulted-price`,
+      name: "Vaulted",
+      title: "Vaulted Price",
+      color: colors.lime,
+    },
+    {
+      key: `active-price`,
+      name: "Active",
+      title: "Active Price",
+      color: colors.rose,
+    },
+    {
+      key: `true-market-mean`,
+      name: "True market mean",
+      title: "True market mean",
+      color: colors.blue,
+    },
+    {
+      key: `cointime-price`,
+      name: "cointime",
+      title: "Cointime Price",
+      color: colors.yellow,
+    },
+  ]);
+
+  const cointimeCapitalizations = /** @type {const} */ ([
+    {
+      key: `thermo-cap`,
+      name: "Thermo",
+      title: "Thermo Capitalization",
+      color: colors.emerald,
+    },
+    {
+      key: `investor-cap`,
+      name: "Investor",
+      title: "Investor Capitalization",
+      color: colors.fuchsia,
+    },
+    {
+      key: `active-cap`,
+      name: "Active",
+      title: "Active Capitalization",
+      color: colors.rose,
+    },
+    {
+      key: `vaulted-cap`,
+      name: "Vaulted",
+      title: "Vaulted Capitalization",
+      color: colors.lime,
+    },
+    {
+      key: `cointime-cap`,
+      name: "Cointime",
+      title: "Cointime Capitalization",
+      color: colors.yellow,
     },
   ]);
 
@@ -2915,9 +2975,9 @@ function createPartialOptions(colors) {
                 createUTXOGroupFolder({
                   name: "Compare",
                   title: "Compare By Up To",
-                  list: upTo,
+                  list: upToDate,
                 }),
-                ...upTo.map(createUTXOGroupFolder),
+                ...upToDate.map(createUTXOGroupFolder),
               ],
             },
             {
@@ -2926,9 +2986,9 @@ function createPartialOptions(colors) {
                 createUTXOGroupFolder({
                   name: "Compare",
                   title: "Compare By From",
-                  list: from,
+                  list: fromDate,
                 }),
-                ...from.map(createUTXOGroupFolder),
+                ...fromDate.map(createUTXOGroupFolder),
               ],
             },
             {
@@ -2937,9 +2997,9 @@ function createPartialOptions(colors) {
                 createUTXOGroupFolder({
                   name: "Compare",
                   title: "Compare By Range",
-                  list: range,
+                  list: dateRange,
                 }),
-                ...range.map(createUTXOGroupFolder),
+                ...dateRange.map(createUTXOGroupFolder),
               ],
             },
             {
@@ -3057,6 +3117,182 @@ function createPartialOptions(colors) {
                     }),
                   ],
                 },
+              ],
+            },
+          ],
+        },
+        {
+          name: "Cointime",
+          tree: [
+            {
+              name: "Coinblocks",
+              title: "Coinblocks",
+              bottom: [
+                createBaseSeries({
+                  key: "coinblocks-destroyed",
+                  name: "Destroyed",
+                  color: colors.red,
+                }),
+                createBaseSeries({
+                  key: "cumulative-coinblocks-destroyed",
+                  name: "Cumulative Destroyed",
+                  color: colors.red,
+                  defaultActive: false,
+                }),
+                createBaseSeries({
+                  key: "coinblocks-created",
+                  name: "created",
+                  color: colors.orange,
+                }),
+                createBaseSeries({
+                  key: "cumulative-coinblocks-created",
+                  name: "Cumulative created",
+                  color: colors.orange,
+                  defaultActive: false,
+                }),
+                createBaseSeries({
+                  key: "coinblocks-stored",
+                  name: "stored",
+                  color: colors.green,
+                }),
+                createBaseSeries({
+                  key: "cumulative-coinblocks-stored",
+                  name: "Cumulative stored",
+                  color: colors.green,
+                  defaultActive: false,
+                }),
+              ],
+            },
+            {
+              name: "Liveliness & Vaultedness",
+              title: "Liveliness & Vaultedness",
+              bottom: [
+                createBaseSeries({
+                  key: "liveliness",
+                  name: "Liveliness",
+                  color: colors.rose,
+                }),
+                createBaseSeries({
+                  key: "vaultedness",
+                  name: "Vaultedness",
+                  color: colors.lime,
+                }),
+              ],
+            },
+            {
+              name: "Supply",
+              title: "Cointime Supply",
+              bottom: /** @type {const} */ ([
+                {
+                  name: "all",
+                  color: colors.orange,
+                },
+                {
+                  name: "vaulted",
+                  color: colors.lime,
+                },
+                { name: "active", color: colors.rose },
+              ]).flatMap(
+                ({ name, color }) =>
+                  /** @type {const} */ ([
+                    createBaseSeries({
+                      key: `${
+                        name !== "all" ? /** @type {const} */ (`${name}-`) : ""
+                      }supply`,
+                      name,
+                      color,
+                    }),
+                    createBaseSeries({
+                      key: `${
+                        name !== "all" ? /** @type {const} */ (`${name}-`) : ""
+                      }supply-in-btc`,
+                      name,
+                      color,
+                    }),
+                    createBaseSeries({
+                      key: `${
+                        name !== "all" ? /** @type {const} */ (`${name}-`) : ""
+                      }supply-in-usd`,
+                      name,
+                      color,
+                    }),
+                  ])
+              ),
+            },
+            {
+              name: "Capitalization",
+              tree: [
+                {
+                  name: "Compare",
+                  title: "Compare Cointime Capitalizations",
+                  bottom: [
+                    createBaseSeries({
+                      key: `marketcap`,
+                      name: "Market",
+                      color: colors.default,
+                    }),
+                    createBaseSeries({
+                      key: `realized-cap`,
+                      name: "Realized",
+                      color: colors.orange,
+                    }),
+                    ...cointimeCapitalizations.map(({ key, name, color }) =>
+                      createBaseSeries({
+                        key,
+                        name,
+                        color,
+                      })
+                    ),
+                  ],
+                },
+                ...cointimeCapitalizations.map(
+                  ({ key, name, color, title }) => ({
+                    name,
+                    title,
+                    bottom: [
+                      createBaseSeries({
+                        key,
+                        name,
+                        color,
+                      }),
+                      createBaseSeries({
+                        key: `marketcap`,
+                        name: "Market",
+                        color: colors.default,
+                      }),
+                      createBaseSeries({
+                        key: `realized-cap`,
+                        name: "Realized",
+                        color: colors.orange,
+                      }),
+                    ],
+                  })
+                ),
+              ],
+            },
+            {
+              name: "Prices",
+              tree: [
+                {
+                  name: "Compare",
+                  title: "Compare Cointime Prices",
+                  top: cointimePrices.map(({ key, name, color }) =>
+                    createBaseSeries({
+                      key,
+                      name,
+                      color,
+                    })
+                  ),
+                },
+                ...cointimePrices.map(({ key, name, color, title }) =>
+                  createPriceWithRatio({
+                    key,
+                    legend: name,
+                    color,
+                    name,
+                    title,
+                  })
+                ),
               ],
             },
           ],

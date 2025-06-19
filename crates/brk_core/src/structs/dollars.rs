@@ -139,6 +139,24 @@ impl Div<usize> for Dollars {
     }
 }
 
+impl Div<StoredF64> for Dollars {
+    type Output = Self;
+    fn div(self, rhs: StoredF64) -> Self::Output {
+        self / f64::from(rhs)
+    }
+}
+
+impl Div<f64> for Dollars {
+    type Output = Self;
+    fn div(self, rhs: f64) -> Self::Output {
+        if self.is_nan() || rhs == 0.0 {
+            Dollars::NAN
+        } else {
+            Dollars::from(Cents::from(Self::from(self.0 / rhs)))
+        }
+    }
+}
+
 impl Div<Bitcoin> for Dollars {
     type Output = Self;
     fn div(self, rhs: Bitcoin) -> Self::Output {
@@ -175,6 +193,13 @@ impl Mul<usize> for Close<Dollars> {
     type Output = Dollars;
     fn mul(self, rhs: usize) -> Self::Output {
         Dollars::from(Cents::from(*self) * rhs)
+    }
+}
+
+impl Mul<StoredF64> for Close<Dollars> {
+    type Output = Dollars;
+    fn mul(self, rhs: StoredF64) -> Self::Output {
+        *self * rhs
     }
 }
 

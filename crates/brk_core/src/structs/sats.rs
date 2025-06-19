@@ -9,7 +9,7 @@ use byteview::ByteView;
 use serde::{Deserialize, Serialize};
 use zerocopy_derive::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
-use crate::{CheckedSub, copy_first_8bytes};
+use crate::{CheckedSub, StoredF64, copy_first_8bytes};
 
 use super::{Bitcoin, Cents, Dollars, Height};
 
@@ -109,6 +109,13 @@ impl Mul<Height> for Sats {
     type Output = Self;
     fn mul(self, rhs: Height) -> Self::Output {
         Sats::from(self.0.checked_mul(u64::from(rhs)).unwrap())
+    }
+}
+
+impl Mul<StoredF64> for Sats {
+    type Output = Self;
+    fn mul(self, rhs: StoredF64) -> Self::Output {
+        Sats::from((self.0 as f64 * f64::from(rhs)) as u64)
     }
 }
 

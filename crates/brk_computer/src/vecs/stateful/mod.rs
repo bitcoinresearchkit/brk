@@ -39,7 +39,7 @@ pub struct Vecs {
     pub indexes_to_unspendable_supply: ComputedValueVecsFromHeight,
     pub height_to_opreturn_supply: EagerVec<Height, Sats>,
     pub indexes_to_opreturn_supply: ComputedValueVecsFromHeight,
-    utxos_vecs: Outputs<(OutputFilter, cohort::Vecs)>,
+    pub utxos_vecs: Outputs<(OutputFilter, cohort::Vecs)>,
 }
 
 impl Vecs {
@@ -1202,7 +1202,7 @@ impl Vecs {
         fetched: Option<&fetched::Vecs>,
         market: &market::Vecs,
         // Must take ownership as its indexes will be updated for this specific function
-        mut starting_indexes: Indexes,
+        starting_indexes: &mut Indexes,
         exit: &Exit,
     ) -> color_eyre::Result<()> {
         let indexer_vecs = indexer.vecs();
@@ -1601,7 +1601,7 @@ impl Vecs {
         info!("Computing overlapping...");
 
         self.utxos_vecs
-            .compute_overlapping_vecs(&starting_indexes, exit)?;
+            .compute_overlapping_vecs(starting_indexes, exit)?;
 
         info!("Computing rest part 1...");
 
@@ -1609,7 +1609,7 @@ impl Vecs {
             .as_mut_vecs()
             .par_iter_mut()
             .try_for_each(|(_, v)| {
-                v.compute_rest_part1(indexer, indexes, fetched, &starting_indexes, exit)
+                v.compute_rest_part1(indexer, indexes, fetched, starting_indexes, exit)
             })?;
 
         info!("Computing rest part 2...");
@@ -1640,7 +1640,7 @@ impl Vecs {
                     indexer,
                     indexes,
                     fetched,
-                    &starting_indexes,
+                    starting_indexes,
                     market,
                     &height_to_supply,
                     dateindex_to_supply.as_ref().unwrap(),
@@ -1653,7 +1653,7 @@ impl Vecs {
             indexer,
             indexes,
             fetched,
-            &starting_indexes,
+            starting_indexes,
             exit,
             Some(&self.height_to_unspendable_supply),
         )?;
@@ -1661,7 +1661,7 @@ impl Vecs {
             indexer,
             indexes,
             fetched,
-            &starting_indexes,
+            starting_indexes,
             exit,
             Some(&self.height_to_opreturn_supply),
         )?;

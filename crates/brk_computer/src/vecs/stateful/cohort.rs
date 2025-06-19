@@ -422,7 +422,6 @@ impl Vecs {
                     false,
                     version + VERSION + Version::ZERO,
                     format,
-                    StorableVecGeneatorOptions::default().add_last(),
                 )
                 .unwrap()
             }),
