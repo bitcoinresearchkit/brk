@@ -3,13 +3,13 @@
 #![doc = include_str!("../examples/main.rs")]
 #![doc = "```"]
 
-use std::path::{Path, PathBuf};
+use std::path::Path;
 
 use brk_core::Version;
 use brk_exit::Exit;
 use brk_fetcher::Fetcher;
 use brk_indexer::Indexer;
-use brk_vec::{AnyCollectableVec, Computation, Format};
+use brk_vec::{Computation, Format};
 
 mod stores;
 mod utils;
@@ -21,53 +21,40 @@ use vecs::Vecs;
 
 #[derive(Clone)]
 pub struct Computer {
-    path: PathBuf,
     fetcher: Option<Fetcher>,
-    vecs: Option<Vecs>,
-    stores: Option<Stores>,
-    format: Format,
+    pub vecs: Vecs,
+    pub stores: Stores,
 }
 
 const VERSION: Version = Version::ONE;
 
 impl Computer {
-    pub fn new(outputs_dir: &Path, fetcher: Option<Fetcher>, format: Format) -> Self {
-        Self {
-            path: outputs_dir.to_owned(),
-            fetcher,
-            vecs: None,
-            stores: None,
-            format,
-        }
-    }
-
-    pub fn import_vecs(
-        &mut self,
+    /// Do NOT import multiple times or things will break !!!
+    pub fn forced_import(
+        outputs_dir: &Path,
         indexer: &Indexer,
         computation: Computation,
-    ) -> color_eyre::Result<()> {
-        self.vecs = Some(Vecs::import(
-            // TODO: Give self.path, join inside import
-            &self.path.join("vecs/computed"),
-            VERSION + Version::ZERO,
-            indexer,
-            self.fetcher.is_some(),
-            computation,
-            self.format,
-        )?);
-        Ok(())
-    }
-
-    /// Do NOT import multiple times or things will break !!!
-    /// Clone struct instead
-    pub fn import_stores(&mut self, indexer: &Indexer) -> color_eyre::Result<()> {
-        self.stores = Some(Stores::import(
-            // TODO: Give self.path, join inside import
-            &self.path.join("stores"),
-            VERSION + Version::ZERO,
-            indexer.keyspace(),
-        )?);
-        Ok(())
+        fetcher: Option<Fetcher>,
+        format: Format,
+    ) -> color_eyre::Result<Self> {
+        Ok(Self {
+            vecs: Vecs::import(
+                // TODO: Give self.path, join inside import
+                &outputs_dir.join("vecs/computed"),
+                VERSION + Version::ZERO,
+                indexer,
+                fetcher.is_some(),
+                computation,
+                format,
+            )?,
+            stores: Stores::import(
+                // TODO: Give self.path, join inside import
+                &outputs_dir.join("stores"),
+                VERSION + Version::ZERO,
+                &indexer.stores.keyspace,
+            )?,
+            fetcher,
+        })
     }
 }
 
@@ -80,25 +67,6 @@ impl Computer {
     ) -> color_eyre::Result<()> {
         info!("Computing...");
         self.vecs
-            .as_mut()
-            .unwrap()
             .compute(indexer, starting_indexes, self.fetcher.as_mut(), exit)
-    }
-
-    pub fn vecs(&self) -> Vec<&dyn AnyCollectableVec> {
-        // pub fn vecs(&self) -> &Vecs {
-        self.vecs.as_ref().unwrap().vecs()
-    }
-
-    // pub fn mut_vecs(&mut self) -> &mut Vecs {
-    //     self.vecs.as_mut().unwrap()
-    // }
-
-    pub fn stores(&self) -> &Stores {
-        self.stores.as_ref().unwrap()
-    }
-
-    pub fn mut_stores(&mut self) -> &mut Stores {
-        self.stores.as_mut().unwrap()
     }
 }

@@ -5,7 +5,7 @@ use tabled::Tabled as TabledTabled;
 
 use crate::Format;
 
-#[derive(Debug)]
+#[derive(Debug, Serialize)]
 pub enum Output {
     Json(Value),
     CSV(String),

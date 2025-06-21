@@ -371,12 +371,10 @@ impl Vecs {
         fetcher: &mut Fetcher,
         exit: &Exit,
     ) -> color_eyre::Result<()> {
-        let indexer_vecs = indexer.vecs();
-
-        let mut height_to_timestamp_iter = indexer_vecs.height_to_timestamp.iter();
+        let mut height_to_timestamp_iter = indexer.vecs.height_to_timestamp.iter();
         self.height_to_ohlc_in_cents.compute_transform(
             starting_indexes.height,
-            &indexer_vecs.height_to_timestamp,
+            &indexer.vecs.height_to_timestamp,
             |(h, t, ..)| {
                 let ohlc = fetcher
                     .get_height(

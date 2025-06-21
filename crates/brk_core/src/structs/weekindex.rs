@@ -3,7 +3,7 @@ use std::{fmt::Debug, ops::Add};
 use serde::{Deserialize, Serialize};
 use zerocopy_derive::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
-use crate::CheckedSub;
+use crate::{CheckedSub, Printable};
 
 use super::{Date, DateIndex};
 
@@ -84,5 +84,15 @@ impl From<Date> for WeekIndex {
 impl CheckedSub for WeekIndex {
     fn checked_sub(self, rhs: Self) -> Option<Self> {
         self.0.checked_sub(rhs.0).map(Self)
+    }
+}
+
+impl Printable for WeekIndex {
+    fn to_string() -> &'static str {
+        "weekindex"
+    }
+
+    fn to_possible_strings() -> &'static [&'static str] {
+        &["w", "week", "weekindex"]
     }
 }

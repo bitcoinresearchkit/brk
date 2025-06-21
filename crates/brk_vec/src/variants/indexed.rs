@@ -35,7 +35,7 @@ where
         let inner = StoredVec::forced_import(path, value_name, version, format)?;
 
         Ok(Self {
-            height: Height::try_from(Self::path_height_(inner.path()).as_path()).ok(),
+            height: Height::try_from(Self::path_height_(&inner.path()).as_path()).ok(),
             inner,
         })
     }
@@ -91,7 +91,7 @@ where
         Height::try_from(self.path_height().as_path())
     }
     fn path_height(&self) -> PathBuf {
-        Self::path_height_(self.inner.path())
+        Self::path_height_(&self.inner.path())
     }
     fn path_height_(path: &Path) -> PathBuf {
         path.join("height")
@@ -109,7 +109,7 @@ where
     }
 
     #[inline]
-    fn name(&self) -> String {
+    fn name(&self) -> &str {
         self.inner.name()
     }
 
@@ -124,7 +124,7 @@ where
     }
 
     #[inline]
-    fn index_type_to_string(&self) -> String {
+    fn index_type_to_string(&self) -> &'static str {
         I::to_string()
     }
 

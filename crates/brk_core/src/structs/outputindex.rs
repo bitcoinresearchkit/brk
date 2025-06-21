@@ -4,7 +4,7 @@ use derive_deref::{Deref, DerefMut};
 use serde::Serialize;
 use zerocopy_derive::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
-use crate::CheckedSub;
+use crate::{CheckedSub, Printable};
 
 use super::Vout;
 
@@ -100,5 +100,15 @@ impl From<usize> for OutputIndex {
 impl From<OutputIndex> for usize {
     fn from(value: OutputIndex) -> Self {
         value.0 as usize
+    }
+}
+
+impl Printable for OutputIndex {
+    fn to_string() -> &'static str {
+        "outputindex"
+    }
+
+    fn to_possible_strings() -> &'static [&'static str] {
+        &["out", "outputindex"]
     }
 }

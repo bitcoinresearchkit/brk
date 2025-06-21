@@ -4,7 +4,7 @@ use derive_deref::Deref;
 use serde::Serialize;
 use zerocopy_derive::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
-use crate::CheckedSub;
+use crate::{CheckedSub, Printable};
 
 pub type StoredPhantom = StoredU8;
 
@@ -91,5 +91,15 @@ impl Add<usize> for StoredU8 {
 impl From<StoredU8> for usize {
     fn from(value: StoredU8) -> Self {
         value.0 as usize
+    }
+}
+
+impl Printable for StoredU8 {
+    fn to_string() -> &'static str {
+        "u8"
+    }
+
+    fn to_possible_strings() -> &'static [&'static str] {
+        &["u8"]
     }
 }

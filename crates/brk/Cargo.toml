@@ -18,7 +18,7 @@ full = [
     "indexer",
     "logger",
     "parser",
-    "query",
+    "interface",
     "server",
     "state",
     "store",
@@ -32,7 +32,7 @@ fetcher = ["brk_fetcher"]
 indexer = ["brk_indexer"]
 logger = ["brk_logger"]
 parser = ["brk_parser"]
-query = ["brk_query"]
+interface = ["brk_interface"]
 server = ["brk_server"]
 state = ["brk_state"]
 store = ["brk_store"]
@@ -48,7 +48,7 @@ brk_fetcher = { workspace = true, optional = true }
 brk_indexer = { workspace = true, optional = true }
 brk_logger = { workspace = true, optional = true }
 brk_parser = { workspace = true, optional = true }
-brk_query = { workspace = true, optional = true }
+brk_interface = { workspace = true, optional = true }
 brk_server = { workspace = true, optional = true }
 brk_state = { workspace = true, optional = true }
 brk_store = { workspace = true, optional = true }

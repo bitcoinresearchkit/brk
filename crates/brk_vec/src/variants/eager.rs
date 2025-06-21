@@ -106,7 +106,7 @@ where
         Ok(())
     }
 
-    pub fn path(&self) -> &Path {
+    pub fn path(&self) -> PathBuf {
         self.inner.path()
     }
 
@@ -136,7 +136,11 @@ where
         self.computed_version.store(Arc::new(Some(version)));
 
         if self.is_empty() {
-            info!("Computing {}...", self.name())
+            info!(
+                "Computing {}_to_{}...",
+                self.index_type_to_string(),
+                self.name()
+            )
         }
 
         Ok(())
@@ -1306,7 +1310,7 @@ where
     }
 
     #[inline]
-    fn name(&self) -> String {
+    fn name(&self) -> &str {
         self.inner.name()
     }
 
@@ -1321,7 +1325,7 @@ where
     }
 
     #[inline]
-    fn index_type_to_string(&self) -> String {
+    fn index_type_to_string(&self) -> &'static str {
         I::to_string()
     }
 

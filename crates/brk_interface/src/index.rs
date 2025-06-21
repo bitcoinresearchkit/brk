@@ -1,8 +1,16 @@
 use std::fmt::{self, Debug};
 
+use brk_core::{
+    DateIndex, DecadeIndex, DifficultyEpoch, EmptyOutputIndex, HalvingEpoch, Height, InputIndex,
+    MonthIndex, OpReturnIndex, OutputIndex, P2AIndex, P2MSIndex, P2PK33Index, P2PK65Index,
+    P2PKHIndex, P2SHIndex, P2TRIndex, P2WPKHIndex, P2WSHIndex, Printable, QuarterIndex, TxIndex,
+    UnknownOutputIndex, WeekIndex, YearIndex,
+};
 use color_eyre::eyre::eyre;
+use schemars::JsonSchema;
+use serde::{Deserialize, de::Error};
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, JsonSchema)]
 pub enum Index {
     DateIndex,
     DecadeIndex,
@@ -60,53 +68,51 @@ impl Index {
         ]
     }
 
-    pub fn possible_values(&self) -> &[&str] {
-        // Always have the "correct" id at the end
+    pub fn possible_values(&self) -> &'static [&'static str] {
         match self {
-            Self::DateIndex => &["d", "date", "dateindex"],
-            Self::DecadeIndex => &["decade", "decadeindex"],
-            Self::DifficultyEpoch => &["difficulty", "difficultyepoch"],
-            Self::EmptyOutputIndex => &["empty", "emptyoutputindex"],
-            Self::HalvingEpoch => &["halving", "halvingepoch"],
-            Self::Height => &["h", "height"],
-            Self::InputIndex => &["txin", "inputindex"],
-            Self::MonthIndex => &["m", "month", "monthindex"],
-            Self::OpReturnIndex => &["opreturn", "opreturnindex"],
-            Self::OutputIndex => &["txout", "outputindex"],
-            Self::P2AIndex => &["p2a", "p2aindex"],
-            Self::P2MSIndex => &["p2ms", "p2msindex"],
-            Self::P2PK33Index => &["p2pk33", "p2pk33index"],
-            Self::P2PK65Index => &["p2pk65", "p2pk65index"],
-            Self::P2PKHIndex => &["p2pkh", "p2pkhindex"],
-            Self::P2SHIndex => &["p2sh", "p2shindex"],
-            Self::P2TRIndex => &["p2tr", "p2trindex"],
-            Self::P2WPKHIndex => &["p2wpkh", "p2wpkhindex"],
-            Self::P2WSHIndex => &["p2wsh", "p2wshindex"],
-            Self::QuarterIndex => &["q", "quarter", "quarterindex"],
-            Self::TxIndex => &["tx", "txindex"],
-            Self::UnknownOutputIndex => &["unknown", "unknownoutputindex"],
-            Self::WeekIndex => &["w", "week", "weekindex"],
-            Self::YearIndex => &["y", "year", "yearindex"],
+            Self::DateIndex => DateIndex::to_possible_strings(),
+            Self::DecadeIndex => DecadeIndex::to_possible_strings(),
+            Self::DifficultyEpoch => DifficultyEpoch::to_possible_strings(),
+            Self::EmptyOutputIndex => EmptyOutputIndex::to_possible_strings(),
+            Self::HalvingEpoch => HalvingEpoch::to_possible_strings(),
+            Self::Height => Height::to_possible_strings(),
+            Self::InputIndex => InputIndex::to_possible_strings(),
+            Self::MonthIndex => MonthIndex::to_possible_strings(),
+            Self::OpReturnIndex => OpReturnIndex::to_possible_strings(),
+            Self::OutputIndex => OutputIndex::to_possible_strings(),
+            Self::P2AIndex => P2AIndex::to_possible_strings(),
+            Self::P2MSIndex => P2MSIndex::to_possible_strings(),
+            Self::P2PK33Index => P2PK33Index::to_possible_strings(),
+            Self::P2PK65Index => P2PK65Index::to_possible_strings(),
+            Self::P2PKHIndex => P2PKHIndex::to_possible_strings(),
+            Self::P2SHIndex => P2SHIndex::to_possible_strings(),
+            Self::P2TRIndex => P2TRIndex::to_possible_strings(),
+            Self::P2WPKHIndex => P2WPKHIndex::to_possible_strings(),
+            Self::P2WSHIndex => P2WSHIndex::to_possible_strings(),
+            Self::QuarterIndex => QuarterIndex::to_possible_strings(),
+            Self::TxIndex => TxIndex::to_possible_strings(),
+            Self::UnknownOutputIndex => UnknownOutputIndex::to_possible_strings(),
+            Self::WeekIndex => WeekIndex::to_possible_strings(),
+            Self::YearIndex => YearIndex::to_possible_strings(),
         }
     }
 
-    pub fn all_possible_values() -> Vec<String> {
+    pub fn all_possible_values() -> Vec<&'static str> {
         Self::all()
-            .iter()
-            .flat_map(|i| i.possible_values().iter().map(|s| s.to_string()))
+            .into_iter()
+            .flat_map(|i| i.possible_values().iter().cloned())
             .collect::<Vec<_>>()
     }
 
-    pub fn serialize_short(&self) -> String {
+    pub fn serialize_short(&self) -> &'static str {
         self.possible_values()
             .iter()
             .find(|str| str.len() > 1)
             .unwrap()
-            .to_string()
     }
 
-    pub fn serialize_long(&self) -> String {
-        self.possible_values().last().unwrap().to_string()
+    pub fn serialize_long(&self) -> &'static str {
+        self.possible_values().last().unwrap()
     }
 }
 
@@ -148,6 +154,20 @@ impl TryFrom<&str> for Index {
 
 impl fmt::Display for Index {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        Debug::fmt(self, f)
+        write!(f, "{:?}", self)
+    }
+}
+
+impl<'de> Deserialize<'de> for Index {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        let str = String::deserialize(deserializer)?;
+        if let Ok(index) = Index::try_from(str.as_str()) {
+            Ok(index)
+        } else {
+            Err(Error::custom("Bad index"))
+        }
     }
 }

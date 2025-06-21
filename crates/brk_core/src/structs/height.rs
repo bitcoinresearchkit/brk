@@ -9,7 +9,7 @@ use serde::{Deserialize, Serialize};
 use zerocopy::{FromBytes, IntoBytes};
 use zerocopy_derive::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
-use crate::CheckedSub;
+use crate::{CheckedSub, Printable};
 
 use super::StoredUsize;
 
@@ -207,5 +207,15 @@ impl From<ByteView> for Height {
 impl From<Height> for byteview::ByteView {
     fn from(value: Height) -> Self {
         Self::new(value.as_bytes())
+    }
+}
+
+impl Printable for Height {
+    fn to_string() -> &'static str {
+        "height"
+    }
+
+    fn to_possible_strings() -> &'static [&'static str] {
+        &["h", "height"]
     }
 }

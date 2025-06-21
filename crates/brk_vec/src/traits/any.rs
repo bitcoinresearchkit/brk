@@ -6,13 +6,13 @@ use super::{BoxedVecIterator, StoredIndex, StoredType};
 
 pub trait AnyVec: Send + Sync {
     fn version(&self) -> Version;
-    fn name(&self) -> String;
+    fn name(&self) -> &str;
     fn len(&self) -> usize;
     fn is_empty(&self) -> bool {
         self.len() == 0
     }
     fn modified_time(&self) -> Result<Duration>;
-    fn index_type_to_string(&self) -> String;
+    fn index_type_to_string(&self) -> &'static str;
     fn value_type_to_size_of(&self) -> usize;
 }
 

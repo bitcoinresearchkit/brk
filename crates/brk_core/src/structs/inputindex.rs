@@ -4,7 +4,7 @@ use derive_deref::{Deref, DerefMut};
 use serde::Serialize;
 use zerocopy_derive::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
-use crate::CheckedSub;
+use crate::{CheckedSub, Printable};
 
 use super::Vin;
 
@@ -94,5 +94,15 @@ impl From<usize> for InputIndex {
 impl From<InputIndex> for usize {
     fn from(value: InputIndex) -> Self {
         value.0 as usize
+    }
+}
+
+impl Printable for InputIndex {
+    fn to_string() -> &'static str {
+        "inputindex"
+    }
+
+    fn to_possible_strings() -> &'static [&'static str] {
+        &["in", "inputindex"]
     }
 }

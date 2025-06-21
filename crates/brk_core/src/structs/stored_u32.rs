@@ -4,7 +4,7 @@ use derive_deref::Deref;
 use serde::Serialize;
 use zerocopy_derive::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
-use crate::CheckedSub;
+use crate::{CheckedSub, Printable};
 
 use super::{
     EmptyOutputIndex, OpReturnIndex, P2AIndex, P2MSIndex, P2PK33Index, P2PK65Index, P2PKHIndex,
@@ -162,5 +162,15 @@ impl From<UnknownOutputIndex> for StoredU32 {
 impl From<EmptyOutputIndex> for StoredU32 {
     fn from(value: EmptyOutputIndex) -> Self {
         Self::from(usize::from(value))
+    }
+}
+
+impl Printable for StoredU32 {
+    fn to_string() -> &'static str {
+        "u32"
+    }
+
+    fn to_possible_strings() -> &'static [&'static str] {
+        &["u32"]
     }
 }

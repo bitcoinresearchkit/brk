@@ -6,7 +6,7 @@ use serde::Serialize;
 use zerocopy::{FromBytes, IntoBytes};
 use zerocopy_derive::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
-use crate::CheckedSub;
+use crate::{CheckedSub, Printable};
 
 #[derive(
     Debug,
@@ -137,6 +137,15 @@ impl CheckedSub<EmptyOutputIndex> for EmptyOutputIndex {
         self.0.0.checked_sub(rhs.0.0).map(OutputTypeIndex).map(Self)
     }
 }
+impl Printable for EmptyOutputIndex {
+    fn to_string() -> &'static str {
+        "emptyoutputindex"
+    }
+
+    fn to_possible_strings() -> &'static [&'static str] {
+        &["empty", "emptyoutputindex"]
+    }
+}
 
 #[derive(
     Debug,
@@ -180,6 +189,16 @@ impl Add<usize> for P2MSIndex {
 impl CheckedSub<P2MSIndex> for P2MSIndex {
     fn checked_sub(self, rhs: Self) -> Option<Self> {
         self.0.0.checked_sub(rhs.0.0).map(OutputTypeIndex).map(Self)
+    }
+}
+
+impl Printable for P2MSIndex {
+    fn to_string() -> &'static str {
+        "p2msindex"
+    }
+
+    fn to_possible_strings() -> &'static [&'static str] {
+        &["ms", "p2ms", "p2msindex"]
     }
 }
 
@@ -228,6 +247,16 @@ impl CheckedSub<P2AIndex> for P2AIndex {
     }
 }
 
+impl Printable for P2AIndex {
+    fn to_string() -> &'static str {
+        "p2aindex"
+    }
+
+    fn to_possible_strings() -> &'static [&'static str] {
+        &["a", "p2a", "p2aindex"]
+    }
+}
+
 #[derive(
     Debug,
     PartialEq,
@@ -270,6 +299,16 @@ impl Add<usize> for OpReturnIndex {
 impl CheckedSub<OpReturnIndex> for OpReturnIndex {
     fn checked_sub(self, rhs: Self) -> Option<Self> {
         self.0.0.checked_sub(rhs.0.0).map(OutputTypeIndex).map(Self)
+    }
+}
+
+impl Printable for OpReturnIndex {
+    fn to_string() -> &'static str {
+        "opreturnindex"
+    }
+
+    fn to_possible_strings() -> &'static [&'static str] {
+        &["op", "opreturn", "opreturnindex"]
     }
 }
 
@@ -318,6 +357,16 @@ impl CheckedSub<UnknownOutputIndex> for UnknownOutputIndex {
     }
 }
 
+impl Printable for UnknownOutputIndex {
+    fn to_string() -> &'static str {
+        "unknownoutputindex"
+    }
+
+    fn to_possible_strings() -> &'static [&'static str] {
+        &["unknown", "unknownoutputindex"]
+    }
+}
+
 #[derive(
     Debug,
     PartialEq,
@@ -360,6 +409,16 @@ impl Add<usize> for P2PK33Index {
 impl CheckedSub<P2PK33Index> for P2PK33Index {
     fn checked_sub(self, rhs: Self) -> Option<Self> {
         self.0.0.checked_sub(rhs.0.0).map(OutputTypeIndex).map(Self)
+    }
+}
+
+impl Printable for P2PK33Index {
+    fn to_string() -> &'static str {
+        "p2pk33index"
+    }
+
+    fn to_possible_strings() -> &'static [&'static str] {
+        &["pk33", "p2pk33", "p2pk33index"]
     }
 }
 
@@ -408,6 +467,15 @@ impl CheckedSub<P2PK65Index> for P2PK65Index {
     }
 }
 
+impl Printable for P2PK65Index {
+    fn to_string() -> &'static str {
+        "p2pk65index"
+    }
+    fn to_possible_strings() -> &'static [&'static str] {
+        &["pk65", "p2pk65", "p2pk65index"]
+    }
+}
+
 #[derive(
     Debug,
     PartialEq,
@@ -450,6 +518,16 @@ impl Add<usize> for P2PKHIndex {
 impl CheckedSub<P2PKHIndex> for P2PKHIndex {
     fn checked_sub(self, rhs: Self) -> Option<Self> {
         self.0.0.checked_sub(rhs.0.0).map(OutputTypeIndex).map(Self)
+    }
+}
+
+impl Printable for P2PKHIndex {
+    fn to_string() -> &'static str {
+        "p2pkhindex"
+    }
+
+    fn to_possible_strings() -> &'static [&'static str] {
+        &["pkh", "p2pkh", "p2pkhindex"]
     }
 }
 
@@ -498,6 +576,16 @@ impl CheckedSub<P2SHIndex> for P2SHIndex {
     }
 }
 
+impl Printable for P2SHIndex {
+    fn to_string() -> &'static str {
+        "p2shindex"
+    }
+
+    fn to_possible_strings() -> &'static [&'static str] {
+        &["sh", "p2sh", "p2shindex"]
+    }
+}
+
 #[derive(
     Debug,
     PartialEq,
@@ -540,6 +628,16 @@ impl Add<usize> for P2TRIndex {
 impl CheckedSub<P2TRIndex> for P2TRIndex {
     fn checked_sub(self, rhs: Self) -> Option<Self> {
         self.0.0.checked_sub(rhs.0.0).map(OutputTypeIndex).map(Self)
+    }
+}
+
+impl Printable for P2TRIndex {
+    fn to_string() -> &'static str {
+        "p2trindex"
+    }
+
+    fn to_possible_strings() -> &'static [&'static str] {
+        &["tr", "p2tr", "p2trindex"]
     }
 }
 
@@ -588,6 +686,16 @@ impl CheckedSub<P2WPKHIndex> for P2WPKHIndex {
     }
 }
 
+impl Printable for P2WPKHIndex {
+    fn to_string() -> &'static str {
+        "p2wpkhindex"
+    }
+
+    fn to_possible_strings() -> &'static [&'static str] {
+        &["wpkh", "p2wpkh", "p2wpkhindex"]
+    }
+}
+
 #[derive(
     Debug,
     PartialEq,
@@ -630,5 +738,15 @@ impl Add<usize> for P2WSHIndex {
 impl CheckedSub<P2WSHIndex> for P2WSHIndex {
     fn checked_sub(self, rhs: Self) -> Option<Self> {
         self.0.0.checked_sub(rhs.0.0).map(OutputTypeIndex).map(Self)
+    }
+}
+
+impl Printable for P2WSHIndex {
+    fn to_string() -> &'static str {
+        "p2wshindex"
+    }
+
+    fn to_possible_strings() -> &'static [&'static str] {
+        &["wsh", "p2wsh", "p2wshindex"]
     }
 }

@@ -102,7 +102,7 @@ impl Vecs {
             "outputindex",
             version + VERSION + Version::ZERO,
             format,
-            indexer.vecs().outputindex_to_value.boxed_clone(),
+            indexer.vecs.outputindex_to_value.boxed_clone(),
             |index, _| Some(index),
         )?;
 
@@ -112,7 +112,7 @@ impl Vecs {
             "inputindex",
             version + VERSION + Version::ZERO,
             format,
-            indexer.vecs().inputindex_to_outputindex.boxed_clone(),
+            indexer.vecs.inputindex_to_outputindex.boxed_clone(),
             |index, _| Some(index),
         )?;
 
@@ -122,7 +122,7 @@ impl Vecs {
             "txindex",
             version + VERSION + Version::ZERO,
             format,
-            indexer.vecs().txindex_to_txid.boxed_clone(),
+            indexer.vecs.txindex_to_txid.boxed_clone(),
             |index, _| Some(index),
         )?;
 
@@ -132,8 +132,8 @@ impl Vecs {
             "input_count",
             version + VERSION + Version::ZERO,
             format,
-            indexer.vecs().txindex_to_first_inputindex.boxed_clone(),
-            indexer.vecs().inputindex_to_outputindex.boxed_clone(),
+            indexer.vecs.txindex_to_first_inputindex.boxed_clone(),
+            indexer.vecs.inputindex_to_outputindex.boxed_clone(),
             |index: TxIndex, txindex_to_first_inputindex_iter, inputindex_to_outputindex_iter| {
                 let txindex = index.unwrap_to_usize();
                 txindex_to_first_inputindex_iter
@@ -155,8 +155,8 @@ impl Vecs {
             "output_count",
             version + VERSION + Version::ZERO,
             format,
-            indexer.vecs().txindex_to_first_outputindex.boxed_clone(),
-            indexer.vecs().outputindex_to_value.boxed_clone(),
+            indexer.vecs.txindex_to_first_outputindex.boxed_clone(),
+            indexer.vecs.outputindex_to_value.boxed_clone(),
             |index: TxIndex, txindex_to_first_outputindex_iter, outputindex_to_value_iter| {
                 let txindex = index.unwrap_to_usize();
                 txindex_to_first_outputindex_iter
@@ -178,7 +178,7 @@ impl Vecs {
             "p2pk33index",
             version + VERSION + Version::ZERO,
             format,
-            indexer.vecs().p2pk33index_to_p2pk33bytes.boxed_clone(),
+            indexer.vecs.p2pk33index_to_p2pk33bytes.boxed_clone(),
             |index, _| Some(index),
         )?;
         let p2pk65index_to_p2pk65index = ComputedVec::forced_import_or_init_from_1(
@@ -187,7 +187,7 @@ impl Vecs {
             "p2pk65index",
             version + VERSION + Version::ZERO,
             format,
-            indexer.vecs().p2pk65index_to_p2pk65bytes.boxed_clone(),
+            indexer.vecs.p2pk65index_to_p2pk65bytes.boxed_clone(),
             |index, _| Some(index),
         )?;
         let p2pkhindex_to_p2pkhindex = ComputedVec::forced_import_or_init_from_1(
@@ -196,7 +196,7 @@ impl Vecs {
             "p2pkhindex",
             version + VERSION + Version::ZERO,
             format,
-            indexer.vecs().p2pkhindex_to_p2pkhbytes.boxed_clone(),
+            indexer.vecs.p2pkhindex_to_p2pkhbytes.boxed_clone(),
             |index, _| Some(index),
         )?;
         let p2shindex_to_p2shindex = ComputedVec::forced_import_or_init_from_1(
@@ -205,7 +205,7 @@ impl Vecs {
             "p2shindex",
             version + VERSION + Version::ZERO,
             format,
-            indexer.vecs().p2shindex_to_p2shbytes.boxed_clone(),
+            indexer.vecs.p2shindex_to_p2shbytes.boxed_clone(),
             |index, _| Some(index),
         )?;
         let p2trindex_to_p2trindex = ComputedVec::forced_import_or_init_from_1(
@@ -214,7 +214,7 @@ impl Vecs {
             "p2trindex",
             version + VERSION + Version::ZERO,
             format,
-            indexer.vecs().p2trindex_to_p2trbytes.boxed_clone(),
+            indexer.vecs.p2trindex_to_p2trbytes.boxed_clone(),
             |index, _| Some(index),
         )?;
         let p2wpkhindex_to_p2wpkhindex = ComputedVec::forced_import_or_init_from_1(
@@ -223,7 +223,7 @@ impl Vecs {
             "p2wpkhindex",
             version + VERSION + Version::ZERO,
             format,
-            indexer.vecs().p2wpkhindex_to_p2wpkhbytes.boxed_clone(),
+            indexer.vecs.p2wpkhindex_to_p2wpkhbytes.boxed_clone(),
             |index, _| Some(index),
         )?;
         let p2wshindex_to_p2wshindex = ComputedVec::forced_import_or_init_from_1(
@@ -232,7 +232,7 @@ impl Vecs {
             "p2wshindex",
             version + VERSION + Version::ZERO,
             format,
-            indexer.vecs().p2wshindex_to_p2wshbytes.boxed_clone(),
+            indexer.vecs.p2wshindex_to_p2wshbytes.boxed_clone(),
             |index, _| Some(index),
         )?;
         let p2aindex_to_p2aindex = ComputedVec::forced_import_or_init_from_1(
@@ -241,7 +241,7 @@ impl Vecs {
             "p2aindex",
             version + VERSION + Version::ZERO,
             format,
-            indexer.vecs().p2aindex_to_p2abytes.boxed_clone(),
+            indexer.vecs.p2aindex_to_p2abytes.boxed_clone(),
             |index, _| Some(index),
         )?;
         let p2msindex_to_p2msindex = ComputedVec::forced_import_or_init_from_1(
@@ -250,7 +250,7 @@ impl Vecs {
             "p2msindex",
             version + VERSION + Version::ZERO,
             format,
-            indexer.vecs().p2msindex_to_txindex.boxed_clone(),
+            indexer.vecs.p2msindex_to_txindex.boxed_clone(),
             |index, _| Some(index),
         )?;
         let emptyoutputindex_to_emptyoutputindex = ComputedVec::forced_import_or_init_from_1(
@@ -259,7 +259,7 @@ impl Vecs {
             "emptyoutputindex",
             version + VERSION + Version::ZERO,
             format,
-            indexer.vecs().emptyoutputindex_to_txindex.boxed_clone(),
+            indexer.vecs.emptyoutputindex_to_txindex.boxed_clone(),
             |index, _| Some(index),
         )?;
         let unknownoutputindex_to_unknownoutputindex = ComputedVec::forced_import_or_init_from_1(
@@ -268,7 +268,7 @@ impl Vecs {
             "unknownoutputindex",
             version + VERSION + Version::ZERO,
             format,
-            indexer.vecs().unknownoutputindex_to_txindex.boxed_clone(),
+            indexer.vecs.unknownoutputindex_to_txindex.boxed_clone(),
             |index, _| Some(index),
         )?;
         let opreturnindex_to_opreturnindex = ComputedVec::forced_import_or_init_from_1(
@@ -277,7 +277,7 @@ impl Vecs {
             "opreturnindex",
             version + VERSION + Version::ZERO,
             format,
-            indexer.vecs().opreturnindex_to_txindex.boxed_clone(),
+            indexer.vecs.opreturnindex_to_txindex.boxed_clone(),
             |index, _| Some(index),
         )?;
 
@@ -543,108 +543,106 @@ impl Vecs {
         starting_indexes: brk_indexer::Indexes,
         exit: &Exit,
     ) -> color_eyre::Result<Indexes> {
-        let indexer_vecs = indexer.vecs();
-
         // ---
         // OutputIndex
         // ---
 
         self.outputindex_to_outputindex.compute_if_necessary(
             starting_indexes.outputindex,
-            &indexer_vecs.outputindex_to_value,
+            &indexer.vecs.outputindex_to_value,
             exit,
         )?;
 
         self.txindex_to_output_count.compute_if_necessary(
             starting_indexes.txindex,
-            &indexer_vecs.txindex_to_txid,
+            &indexer.vecs.txindex_to_txid,
             exit,
         )?;
 
         self.txindex_to_input_count.compute_if_necessary(
             starting_indexes.txindex,
-            &indexer_vecs.txindex_to_txid,
+            &indexer.vecs.txindex_to_txid,
             exit,
         )?;
 
         self.outputindex_to_txindex.compute_inverse_less_to_more(
             starting_indexes.txindex,
-            &indexer_vecs.txindex_to_first_outputindex,
+            &indexer.vecs.txindex_to_first_outputindex,
             &self.txindex_to_output_count,
             exit,
         )?;
 
         self.p2pk33index_to_p2pk33index.compute_if_necessary(
             starting_indexes.p2pk33index,
-            &indexer_vecs.p2pk33index_to_p2pk33bytes,
+            &indexer.vecs.p2pk33index_to_p2pk33bytes,
             exit,
         )?;
 
         self.p2pk65index_to_p2pk65index.compute_if_necessary(
             starting_indexes.p2pk65index,
-            &indexer_vecs.p2pk65index_to_p2pk65bytes,
+            &indexer.vecs.p2pk65index_to_p2pk65bytes,
             exit,
         )?;
 
         self.p2pkhindex_to_p2pkhindex.compute_if_necessary(
             starting_indexes.p2pkhindex,
-            &indexer_vecs.p2pkhindex_to_p2pkhbytes,
+            &indexer.vecs.p2pkhindex_to_p2pkhbytes,
             exit,
         )?;
 
         self.p2shindex_to_p2shindex.compute_if_necessary(
             starting_indexes.p2shindex,
-            &indexer_vecs.p2shindex_to_p2shbytes,
+            &indexer.vecs.p2shindex_to_p2shbytes,
             exit,
         )?;
 
         self.p2trindex_to_p2trindex.compute_if_necessary(
             starting_indexes.p2trindex,
-            &indexer_vecs.p2trindex_to_p2trbytes,
+            &indexer.vecs.p2trindex_to_p2trbytes,
             exit,
         )?;
 
         self.p2wpkhindex_to_p2wpkhindex.compute_if_necessary(
             starting_indexes.p2wpkhindex,
-            &indexer_vecs.p2wpkhindex_to_p2wpkhbytes,
+            &indexer.vecs.p2wpkhindex_to_p2wpkhbytes,
             exit,
         )?;
 
         self.p2wshindex_to_p2wshindex.compute_if_necessary(
             starting_indexes.p2wshindex,
-            &indexer_vecs.p2wshindex_to_p2wshbytes,
+            &indexer.vecs.p2wshindex_to_p2wshbytes,
             exit,
         )?;
 
         self.emptyoutputindex_to_emptyoutputindex
             .compute_if_necessary(
                 starting_indexes.emptyoutputindex,
-                &indexer_vecs.emptyoutputindex_to_txindex,
+                &indexer.vecs.emptyoutputindex_to_txindex,
                 exit,
             )?;
 
         self.p2msindex_to_p2msindex.compute_if_necessary(
             starting_indexes.p2msindex,
-            &indexer_vecs.p2msindex_to_txindex,
+            &indexer.vecs.p2msindex_to_txindex,
             exit,
         )?;
 
         self.opreturnindex_to_opreturnindex.compute_if_necessary(
             starting_indexes.opreturnindex,
-            &indexer_vecs.opreturnindex_to_txindex,
+            &indexer.vecs.opreturnindex_to_txindex,
             exit,
         )?;
 
         self.p2aindex_to_p2aindex.compute_if_necessary(
             starting_indexes.p2aindex,
-            &indexer_vecs.p2aindex_to_p2abytes,
+            &indexer.vecs.p2aindex_to_p2abytes,
             exit,
         )?;
 
         self.unknownoutputindex_to_unknownoutputindex
             .compute_if_necessary(
                 starting_indexes.unknownoutputindex,
-                &indexer_vecs.unknownoutputindex_to_txindex,
+                &indexer.vecs.unknownoutputindex_to_txindex,
                 exit,
             )?;
 
@@ -654,7 +652,7 @@ impl Vecs {
 
         self.inputindex_to_inputindex.compute_if_necessary(
             starting_indexes.inputindex,
-            &indexer_vecs.inputindex_to_outputindex,
+            &indexer.vecs.inputindex_to_outputindex,
             exit,
         )?;
 
@@ -664,20 +662,20 @@ impl Vecs {
 
         self.txindex_to_txindex.compute_if_necessary(
             starting_indexes.txindex,
-            &indexer_vecs.txindex_to_txid,
+            &indexer.vecs.txindex_to_txid,
             exit,
         )?;
 
         self.height_to_txindex_count.compute_count_from_indexes(
             starting_indexes.height,
-            &indexer_vecs.height_to_first_txindex,
-            &indexer_vecs.txindex_to_txid,
+            &indexer.vecs.height_to_first_txindex,
+            &indexer.vecs.txindex_to_txid,
             exit,
         )?;
 
         self.txindex_to_height.compute_inverse_less_to_more(
             starting_indexes.height,
-            &indexer_vecs.height_to_first_txindex,
+            &indexer.vecs.height_to_first_txindex,
             &self.height_to_txindex_count,
             exit,
         )?;
@@ -688,13 +686,13 @@ impl Vecs {
 
         self.height_to_height.compute_from_index(
             starting_indexes.height,
-            &indexer_vecs.height_to_weight,
+            &indexer.vecs.height_to_weight,
             exit,
         )?;
 
         self.height_to_date.compute_transform(
             starting_indexes.height,
-            &indexer_vecs.height_to_timestamp,
+            &indexer.vecs.height_to_timestamp,
             |(h, t, ..)| (h, Date::from(t)),
             exit,
         )?;
@@ -702,7 +700,7 @@ impl Vecs {
         let mut prev_timestamp_fixed = None;
         self.height_to_timestamp_fixed.compute_transform(
             starting_indexes.height,
-            &indexer_vecs.height_to_timestamp,
+            &indexer.vecs.height_to_timestamp,
             |(h, timestamp, height_to_timestamp_fixed_iter)| {
                 if prev_timestamp_fixed.is_none() {
                     if let Some(prev_h) = h.decremented() {
@@ -779,7 +777,7 @@ impl Vecs {
         self.dateindex_to_height_count.compute_count_from_indexes(
             starting_dateindex,
             &self.dateindex_to_first_height,
-            &indexer_vecs.height_to_weight,
+            &indexer.vecs.height_to_weight,
             exit,
         )?;
 
@@ -829,7 +827,7 @@ impl Vecs {
 
         self.height_to_difficultyepoch.compute_from_index(
             starting_indexes.height,
-            &indexer_vecs.height_to_weight,
+            &indexer.vecs.height_to_weight,
             exit,
         )?;
 
@@ -979,7 +977,7 @@ impl Vecs {
 
         self.height_to_halvingepoch.compute_from_index(
             starting_indexes.height,
-            &indexer_vecs.height_to_weight,
+            &indexer.vecs.height_to_weight,
             exit,
         )?;
 

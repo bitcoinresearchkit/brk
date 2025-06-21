@@ -42,7 +42,7 @@ The toolkit can be used in various ways to accommodate as many needs as possible
   It has a wide range of functionalities including charts, tables and simulations which you can visit for free and without the need for an account. \
   Also available at: [kibo.money](https://kibo.money) // [satonomics.xyz](https://satonomics.xyz)
 - **[API](https://github.com/bitcoinresearchkit/brk/tree/main/crates/brk_server#endpoints)** \
-  Researchers and developers are free to use BRK's public API with ![Datasets variant count](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fbitcoinresearchkit.org%2Fapi%2Fvecs%2Fvariant-count&query=%24&style=flat&label=%20&color=white) dataset variants at your disposal. \
+  Researchers and developers are free to use BRK's public API with ![Datasets variant count](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fbitcoinresearchkit.org%2Fapi%2Fvecs%2Fvariant-count&query=%24&style=flat&label=%20&color=white) dataset variants at their disposal. \
   Just like the website, it's entirely free, with no authentication or rate-limiting.
 - **[CLI](https://crates.io/crates/brk_cli)** \
   Node runners are strongly encouraged to try out and self-host their own instance using BRK's command line interface. \
@@ -58,7 +58,7 @@ In contrast, existing alternatives tend to be either [very costly](https://studi
 ## Crates
 
 - [`brk`](https://crates.io/crates/brk): Wrapper around all other `brk-*` crates
-- [`brk_cli`](https://crates.io/crates/brk_cli): A standalone command line interface to interact with the Bitcoin Research Kit
+- [`brk_cli`](https://crates.io/crates/brk_cli): A command line interface to run a Bitcoin Research Kit instance
 - [`brk_computer`](https://crates.io/crates/brk_computer): A Bitcoin dataset computer, built on top of brk_indexer
 - [`brk_core`](https://crates.io/crates/brk_core): The Core (Structs and Errors) of the Bitcoin Research Kit
 - [`brk_exit`](https://crates.io/crates/brk_exit): An exit blocker built on top of ctrlc
@@ -66,7 +66,7 @@ In contrast, existing alternatives tend to be either [very costly](https://studi
 - [`brk_indexer`](https://crates.io/crates/brk_indexer): A Bitcoin Core indexer built on top of brk_parser
 - [`brk_logger`](https://crates.io/crates/brk_logger): A clean logger used in the Bitcoin Research Kit.
 - [`brk_parser`](https://crates.io/crates/brk_parser): A very fast Bitcoin Core block parser and iterator built on top of bitcoin-rust
-- [`brk_query`](https://crates.io/crates/brk_query): A library that finds requested datasets.
+- [`brk_interface`](https://crates.io/crates/brk_interface): An interface to BRK's engine
 - [`brk_server`](https://crates.io/crates/brk_server): A server that serves Bitcoin data and swappable front-ends, built on top of `brk_indexer`, `brk_fetcher` and `brk_computer`
 - [`brk_state`](https://crates.io/crates/brk_state): Various states used mainly by the computer
 - [`brk_store`](https://crates.io/crates/brk_store): A thin wrapper around [`fjall`](https://crates.io/crates/fjall)
@@ -92,7 +92,7 @@ Pricing: `0.01 BTC / month` *or* `0.1 BTC / year`
 
 Deepest gratitude to the [Open Sats](https://opensats.org/) public charity. Their grant — from December 2024 to the present — has been critical in sustaining this project.
 
-Heartfelt thanks go out to every donor on [Nostr](https://primal.net/p/npub1jagmm3x39lmwfnrtvxcs9ac7g300y3dusv9lgzhk2e4x5frpxlrqa73v44) and [Geyser.fund](https://geyser.fund/project/brk) whose support has ensured the availability of the [kibo.money](https://kibo.money) public instance.
+Heartfelt thanks go out to every donor on [Nostr](https://primal.net/p/npub1jagmm3x39lmwfnrtvxcs9ac7g300y3dusv9lgzhk2e4x5frpxlrqa73v44) and [Geyser.fund](https://geyser.fund/project/brk) whose support has ensured the availability of the [bitcoinresearchkit.org](https://bitcoinresearchkit.org) public instance.
 
 ## Donate
 

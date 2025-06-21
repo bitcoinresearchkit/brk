@@ -1,6 +1,6 @@
 [package]
 name = "brk_cli"
-description = "A command line interface to interact with the full Bitcoin Research Kit"
+description = "A command line interface to run a Bitcoin Research Kit instance"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
@@ -16,7 +16,7 @@ brk_fetcher = { workspace = true }
 brk_indexer = { workspace = true }
 brk_logger = { workspace = true }
 brk_parser = { workspace = true }
-brk_query = { workspace = true }
+brk_interface = { workspace = true }
 brk_server = { workspace = true }
 brk_vec = { workspace = true }
 clap = { workspace = true }

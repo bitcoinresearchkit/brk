@@ -205,7 +205,7 @@ impl ComputedValueVecsFromTxindex {
 
             dollars_txindex.compute_if_necessary(
                 starting_indexes.txindex,
-                &indexer.vecs().txindex_to_txid,
+                &indexer.vecs.txindex_to_txid,
                 exit,
             )?;
 

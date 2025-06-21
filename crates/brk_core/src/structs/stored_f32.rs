@@ -8,7 +8,7 @@ use derive_deref::Deref;
 use serde::Serialize;
 use zerocopy_derive::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
-use crate::CheckedSub;
+use crate::{CheckedSub, Printable};
 
 use super::{Dollars, StoredF64};
 
@@ -146,5 +146,15 @@ impl Ord for StoredF32 {
             (false, true) => Ordering::Greater,
             (false, false) => self.0.partial_cmp(&other.0).unwrap(),
         }
+    }
+}
+
+impl Printable for StoredF32 {
+    fn to_string() -> &'static str {
+        "f32"
+    }
+
+    fn to_possible_strings() -> &'static [&'static str] {
+        &["f32"]
     }
 }

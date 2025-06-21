@@ -4,7 +4,7 @@ use derive_deref::{Deref, DerefMut};
 use serde::Serialize;
 use zerocopy_derive::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
-use crate::CheckedSub;
+use crate::{CheckedSub, Printable};
 
 use super::{
     DateIndex, EmptyOutputIndex, Height, InputIndex, MonthIndex, OpReturnIndex, OutputIndex,
@@ -191,5 +191,15 @@ impl From<UnknownOutputIndex> for StoredUsize {
 impl From<EmptyOutputIndex> for StoredUsize {
     fn from(value: EmptyOutputIndex) -> Self {
         Self::from(usize::from(value))
+    }
+}
+
+impl Printable for StoredUsize {
+    fn to_string() -> &'static str {
+        "usize"
+    }
+
+    fn to_possible_strings() -> &'static [&'static str] {
+        &["usize"]
     }
 }

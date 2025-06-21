@@ -31,11 +31,11 @@
   </a>
 </p>
 
-A crate that serves Bitcoin data and swappable front-ends, built on top of `brk_indexer`, `brk_computer` and `brk_query`.
+A crate that serves Bitcoin data and swappable front-ends, built on top of `brk_indexer`, `brk_computer` and `brk_interface`.
 
 The file handler, will serve the website specified by the user if any, which can be *no website*, *default* or *custom* (which is a blank folder for people to experiment). If a website is specified and the server is ran outside of the brk project and thus can't find the requested website, it will download the whole project with the correct version from Github and store it in `.brk` to be able to serve to website. This is due to the crate size limit on [crates.io](https://crates.io) and the various shenanigans that need to be done to have a website in a crate.
 
-The API uses `brk_query` and so inherites all of its features including formats.
+The API uses `brk_interface` and so inherites all of its features including formats.
 
 ## Endpoints
 
@@ -55,7 +55,11 @@ Count of all possible variants
 
 #### [`GET /api/vecs/indexes`](https://bitcoinresearchkit.org/api/vecs/indexes)
 
-A list of all possible vec indexes and their accepted variants
+Get a list of all possible indexes
+
+#### [`GET /api/vecs/accepted-indexes`](https://bitcoinresearchkit.org/api/vecs/accepted-indexes)
+
+Get a list of possible indexes and all their accepted variants
 
 #### [`GET /api/vecs/ids`](https://bitcoinresearchkit.org/api/vecs/ids)
 
@@ -73,7 +77,7 @@ A list of all possible vec ids and their supported vec indexes
 
 A list of all possible vec indexes and their supported vec ids
 
-#### `GET /api/{INDEX}-to-{ID}`
+#### `GET /api/vecs/{INDEX}-to-{ID}`
 
 This endpoint retrieves data based on the specified vector index and id.
 
@@ -88,22 +92,27 @@ This endpoint retrieves data based on the specified vector index and id.
 
 **Examples:**
 
-```
-GET /api/date-to-close
-GET /date-to-close?from=-100
-GET /date-to-close?count=100&format=csv
+```sh
+# GET /api/vecs/date-to-close
+curl https://bitcoinresearchkit.org/api/vecs/date-to-close
+
+# GET /api/vecs/date-to-close?from=-100
+curl https://bitcoinresearchkit.org/api/vecs/date-to-close?from=-100
+
+# GET /api/vecs/date-to-close?count=100&format=csv
+curl https://bitcoinresearchkit.org/api/vecs/date-to-close?count=100&format=csv
 ```
 
-#### `GET /api/query`
+#### `GET /api/vecs/query`
 
-This endpoint retrieves data based on the specified vector index and values.
+This endpoint retrieves data based on the specified vector index and ids.
 
 **Parameters:**
 
 | Parameter | Type | Required | Description |
 | --- | --- | --- | --- |
 | `index` | `VecIndex` | Yes | The vector index to query. |
-| `values` | `VecId[]` | Yes | A comma or space-separated list of vector IDs to retrieve. |
+| `ids` | `VecId[]` | Yes | A comma or space-separated list of vector IDs to retrieve. |
 | `from` | `signed int` | No | Inclusive starting index for pagination (default is 0). |
 | `to` | `signed int` | No | Exclusive ending index for pagination (default is the total number of results). Overrides `count` |
 | `count` | `unsigned int` | No | The number of values requested |
@@ -111,9 +120,12 @@ This endpoint retrieves data based on the specified vector index and values.
 
 **Examples:**
 
-```
-GET /api/query?index=date&values=ohlc
-GET /api/query?index=week&values=ohlc,block-interval-average&from=0&to=20&format=md
+```sh
+# GET /api/vecs/query?index=date&ids=ohlc
+curl https://bitcoinresearchkit.org/api/vecs/query?index=date&ids=ohlc
+
+# GET /api/vecs/query?index=week&ids=ohlc,block-interval-average&from=0&to=20&format=md
+curl https://bitcoinresearchkit.org/api/vecs/query?index=week&ids=ohlc,block-interval-average&from=0&to=20&format=md
 ```
 
 ### Meta

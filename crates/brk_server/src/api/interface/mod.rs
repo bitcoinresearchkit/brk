@@ -1,10 +1,11 @@
 use axum::{
     Json,
-    extract::{Query as AxumQuery, State},
+    extract::{Query, State},
     http::{HeaderMap, StatusCode},
     response::{IntoResponse, Response},
 };
-use brk_query::{Format, Index, Output, Params};
+use brk_core::DateIndex;
+use brk_interface::{Format, Output, Params};
 use brk_vec::{CollectableVec, StoredVec};
 use color_eyre::eyre::eyre;
 
@@ -20,7 +21,7 @@ const MAX_WEIGHT: usize = 320_000;
 
 pub async fn handler(
     headers: HeaderMap,
-    query: AxumQuery<Params>,
+    query: Query<Params>,
     State(app_state): State<AppState>,
 ) -> Response {
     match req_to_response_res(headers, query, app_state) {
@@ -36,33 +37,24 @@ pub async fn handler(
 
 fn req_to_response_res(
     headers: HeaderMap,
-    AxumQuery(Params {
-        index,
-        values,
-        rest,
-    }): AxumQuery<Params>,
-    AppState { query, .. }: AppState,
+    Query(params): Query<Params>,
+    AppState { interface, .. }: AppState,
 ) -> color_eyre::Result<Response> {
-    let index = Index::try_from(index.as_str())?;
-
-    let vecs = query.search(
-        index,
-        &values.iter().map(|v| v.as_str()).collect::<Vec<_>>(),
-    );
+    let vecs = interface.search(&params);
 
     if vecs.is_empty() {
         return Ok(Json(vec![] as Vec<usize>).into_response());
     }
 
-    let from = rest.from();
-    let to = rest.to();
-    let format = rest.format();
+    let from = params.from();
+    let to = params.to();
+    let format = params.format();
 
     let weight = vecs
         .iter()
         .map(|(_, v)| {
             let len = v.len();
-            let count = StoredVec::<usize, usize>::range_count(from, to, len);
+            let count = StoredVec::<DateIndex, usize>::range_count(from, to, len);
             count * v.value_type_to_size_of()
         })
         .sum::<usize>();
@@ -91,15 +83,15 @@ fn req_to_response_res(
         }
     }
 
-    let output = query.format(vecs, from, to, format)?;
+    let output = interface.format(vecs, &params.rest)?;
 
     let mut response = match output {
         Output::CSV(s) => s.into_response(),
         Output::TSV(s) => s.into_response(),
         Output::Json(v) => match v {
-            brk_query::Value::Single(v) => Json(v).into_response(),
-            brk_query::Value::List(v) => Json(v).into_response(),
-            brk_query::Value::Matrix(v) => Json(v).into_response(),
+            brk_interface::Value::Single(v) => Json(v).into_response(),
+            brk_interface::Value::List(v) => Json(v).into_response(),
+            brk_interface::Value::Matrix(v) => Json(v).into_response(),
         },
         Output::MD(s) => s.into_response(),
     };

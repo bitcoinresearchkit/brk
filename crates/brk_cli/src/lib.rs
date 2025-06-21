@@ -1,30 +1,12 @@
 use std::{fs, thread};
 
 use brk_core::{dot_brk_log_path, dot_brk_path};
-use brk_query::Params as QueryArgs;
-use clap::Parser;
-use clap_derive::{Parser, Subcommand};
-use query::query;
-use run::{RunConfig, run};
 
-mod query;
+mod config;
 mod run;
+mod services;
 
-#[derive(Parser)]
-#[command(version, about)]
-#[command(propagate_version = true)]
-struct Cli {
-    #[command(subcommand)]
-    command: Commands,
-}
-
-#[derive(Subcommand, Debug)]
-enum Commands {
-    /// Run the indexer, computer and server, use `run -h` for more information
-    Run(RunConfig),
-    /// Query generated datasets via the `run` command in a similar fashion as the server's API, use `query -h` for more information
-    Query(QueryArgs),
-}
+use run::*;
 
 pub fn main() -> color_eyre::Result<()> {
     color_eyre::install()?;
@@ -33,14 +15,9 @@ pub fn main() -> color_eyre::Result<()> {
 
     brk_logger::init(Some(&dot_brk_log_path()));
 
-    let cli = Cli::parse();
-
     thread::Builder::new()
-        .stack_size(128 * 1024 * 1024)
-        .spawn(|| match cli.command {
-            Commands::Run(args) => run(args),
-            Commands::Query(args) => query(args),
-        })?
+        .stack_size(256 * 1024 * 1024)
+        .spawn(run)?
         .join()
         .unwrap()
 }

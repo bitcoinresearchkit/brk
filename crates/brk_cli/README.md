@@ -1,4 +1,4 @@
-# BRK Cli
+# BRK CLI
 
 <p align="left">
   <a href="https://github.com/bitcoinresearchkit/brk">
@@ -31,9 +31,11 @@
   </a>
 </p>
 
-A command line interface to interact with the full Bitcoin Research Kit. It's built on top of every other create and gives the possility to use BRK using the terminal instead of Rust.
+A command line interface to run a Bitcoin Research Kit instance.
 
-It has 2 commands (other than `help` and `version`) which are `run` and `query`. The former is used to run the processing (indexer + computer) and/or the server. The latter uses `brk_query` as its backend just like to server to be able to get datasets via the terminal instead of the API. Both commands are custumizable by supporting all the parameters of their Rust counterparts ([`run`](https://github.com/bitcoinresearchkit/brk/blob/c9c6b583338203b2b11bdf31e961b1c306f5d82b/crates/brk_cli/src/run.rs#L110-L191), and [`query`](https://github.com/bitcoinresearchkit/brk/blob/main/crates/brk_query/src/params.rs)).
+It's very customizable with all parameters from the underlying tools (crates) used inside.
+
+Run `brk -h` for more information.
 
 ## Requirements
 
@@ -55,9 +57,8 @@ To be determined
 - [Rust](https://www.rust-lang.org/tools/install)
 - Unix based operating system (Mac OS or Linux)
 
-> [!IMPORTANT]  
+> [!IMPORTANT]
 > Ubuntu users need to install `open-ssl` via `sudo apt install libssl-dev pkg-config`
-
 
 ## Download
 
@@ -85,12 +86,11 @@ cargo run -r
 
 ## Usage
 
-Run `brk -h` to view each available command and their respective description.
+Run `brk -h` to view each available parameter and their respective description.
 
-`-h` works also for commands, so `brk run -h` will enumerate all the parameters of `brk run`.
+> [!TIP]
+> Every parameter set will be saved at `~/.brk/config.toml`, which allows you to simply run `brk` next time.
 
-> [!TIP]  
-> Every parameter set for `brk run` will be saved at `~/.brk/config.toml`, which allows you to simply run `brk run` next time.
-
+## Tunnel
 
 The easiest way to let others access your server is to use `cloudflared` which will also cache requests. For more information see [Cloudflare Tunnel](https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/) documentation.

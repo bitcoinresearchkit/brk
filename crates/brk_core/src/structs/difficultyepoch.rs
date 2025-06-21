@@ -6,7 +6,7 @@ use std::{
 use serde::{Deserialize, Serialize};
 use zerocopy_derive::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
-use crate::CheckedSub;
+use crate::{CheckedSub, Printable};
 
 use super::Height;
 
@@ -78,5 +78,15 @@ impl From<Height> for DifficultyEpoch {
 impl CheckedSub for DifficultyEpoch {
     fn checked_sub(self, rhs: Self) -> Option<Self> {
         self.0.checked_sub(rhs.0).map(Self)
+    }
+}
+
+impl Printable for DifficultyEpoch {
+    fn to_string() -> &'static str {
+        "difficultyepoch"
+    }
+
+    fn to_possible_strings() -> &'static [&'static str] {
+        &["difficulty", "difficultyepoch"]
     }
 }

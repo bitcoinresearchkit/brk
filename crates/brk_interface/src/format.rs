@@ -1,9 +1,9 @@
-use clap_derive::ValueEnum;
 use color_eyre::eyre::eyre;
+use rmcp::schemars::JsonSchema;
 use serde::Deserialize;
 
 #[allow(clippy::upper_case_acronyms)]
-#[derive(Debug, Clone, Copy, PartialEq, Eq, ValueEnum, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize, JsonSchema)]
 pub enum Format {
     #[serde(alias = "json")]
     JSON,
@@ -12,7 +12,6 @@ pub enum Format {
     #[serde(alias = "tsv")]
     TSV,
     #[serde(alias = "md", alias = "markdown")]
-    #[value(alias("markdown"))]
     MD,
 }
 

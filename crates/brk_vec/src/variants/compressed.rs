@@ -1,7 +1,7 @@
 use std::{
     fs::{self, File},
     mem,
-    path::Path,
+    path::{Path, PathBuf},
     sync::Arc,
     time::Duration,
 };
@@ -41,39 +41,46 @@ where
     pub const CACHE_LENGTH: usize = MAX_CACHE_SIZE / Self::PAGE_SIZE;
 
     /// Same as import but will reset the folder under certain errors, so be careful !
-    pub fn forced_import(path: &Path, mut version: Version) -> Result<Self> {
+    pub fn forced_import(path: &Path, name: &str, mut version: Version) -> Result<Self> {
         version = version + VERSION;
 
-        let res = Self::import(path, version);
+        let res = Self::import(path, name, version);
         match res {
             Err(Error::WrongEndian)
             | Err(Error::DifferentVersion { .. })
             | Err(Error::DifferentCompressionMode) => {
                 fs::remove_dir_all(path)?;
-                Self::import(path, version)
+                Self::import(path, name, version)
             }
             _ => res,
         }
     }
 
-    pub fn import(path: &Path, version: Version) -> Result<Self> {
-        fs::create_dir_all(path)?;
+    pub fn import(path: &Path, name: &str, version: Version) -> Result<Self> {
+        let pages_meta = {
+            let path = path.join(name).join(I::to_string());
 
-        let vec_exists = fs::exists(Self::path_vec_(path)).is_ok_and(|b| b);
-        let compressed_path = Self::path_compressed_(path);
-        let compressed_exists = fs::exists(&compressed_path).is_ok_and(|b| b);
+            let vec_exists = fs::exists(Self::path_vec_(&path)).is_ok_and(|b| b);
+            let compressed_path = Self::path_compressed_(&path);
+            let compressed_exists = fs::exists(&compressed_path).is_ok_and(|b| b);
 
-        if vec_exists && !compressed_exists {
-            return Err(Error::DifferentCompressionMode);
-        }
+            if vec_exists && !compressed_exists {
+                return Err(Error::DifferentCompressionMode);
+            }
 
-        if !vec_exists && !compressed_exists {
-            File::create(&compressed_path)?;
-        }
+            if !vec_exists && !compressed_exists {
+                fs::create_dir_all(&path)?;
+                File::create(&compressed_path)?;
+            }
+
+            Arc::new(ArcSwap::new(Arc::new(CompressedPagesMetadata::read(
+                &path,
+            )?)))
+        };
 
         Ok(Self {
-            inner: RawVec::import(path, version)?,
-            pages_meta: Arc::new(ArcSwap::new(Arc::new(CompressedPagesMetadata::read(path)?))),
+            inner: RawVec::import(path, name, version)?,
+            pages_meta,
         })
     }
 
@@ -199,7 +206,7 @@ where
     }
 
     #[inline]
-    fn path(&self) -> &Path {
+    fn path(&self) -> PathBuf {
         self.inner.path()
     }
 
@@ -351,8 +358,8 @@ where
     }
 
     #[inline]
-    fn name(&self) -> String {
-        self.name_()
+    fn name(&self) -> &str {
+        self.inner.name()
     }
 
     #[inline]
@@ -366,7 +373,7 @@ where
     }
 
     #[inline]
-    fn index_type_to_string(&self) -> String {
+    fn index_type_to_string(&self) -> &'static str {
         I::to_string()
     }
 
@@ -421,8 +428,8 @@ where
     }
 
     #[inline]
-    fn path(&self) -> &Path {
-        self.vec.path()
+    fn name(&self) -> &str {
+        self.vec.name()
     }
 }
 

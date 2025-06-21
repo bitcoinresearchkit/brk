@@ -1,6 +1,6 @@
-use std::{iter::Skip, path::Path};
+use std::iter::Skip;
 
-use brk_core::Value;
+use brk_core::{Printable, Value};
 
 use super::{StoredIndex, StoredType};
 
@@ -20,7 +20,7 @@ pub trait BaseVecIterator: Iterator {
 
     fn len(&self) -> usize;
 
-    fn path(&self) -> &Path;
+    fn name(&self) -> &str;
 
     fn is_empty(&self) -> bool {
         self.len() == 0
@@ -62,7 +62,7 @@ pub trait VecIterator<'a>: BaseVecIterator<Item = (Self::I, Value<'a, Self::T>)>
     fn unwrap_get_inner_(&mut self, i: usize) -> Self::T {
         self.get_(i)
             .unwrap_or_else(|| {
-                dbg!(self.path(), i, self.len());
+                dbg!(self.name(), i, self.len());
                 panic!("unwrap_get_inner_")
             })
             .into_inner()
@@ -86,7 +86,7 @@ pub trait VecIterator<'a>: BaseVecIterator<Item = (Self::I, Value<'a, Self::T>)>
         self.next().map(|(i, v)| (i, Value::Owned(v.into_inner())))
     }
 
-    fn index_type_to_string(&self) -> String {
+    fn index_type_to_string(&self) -> &'static str {
         Self::I::to_string()
     }
 }

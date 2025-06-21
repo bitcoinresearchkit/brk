@@ -1,4 +1,4 @@
-# BRK Query
+# BRK Interface
 
 <p align="left">
   <a href="https://github.com/bitcoinresearchkit/brk">
@@ -7,15 +7,15 @@
   <a href="https://github.com/bitcoinresearchkit/brk/blob/main/LICENSE.md">
     <img src="https://img.shields.io/crates/l/brk" alt="License" />
   </a>
-  <a href="https://crates.io/crates/brk_query">
-    <img src="https://img.shields.io/crates/v/brk_query" alt="Version" />
+  <a href="https://crates.io/crates/brk_interface">
+    <img src="https://img.shields.io/crates/v/brk_interface" alt="Version" />
   </a>
-  <a href="https://docs.rs/brk_query">
-    <img src="https://img.shields.io/docsrs/brk_query" alt="Documentation" />
+  <a href="https://docs.rs/brk_interface">
+    <img src="https://img.shields.io/docsrs/brk_interface" alt="Documentation" />
   </a>
-  <img src="https://img.shields.io/crates/size/brk_query" alt="Size" />
-  <a href="https://deps.rs/crate/brk_query">
-    <img src="https://deps.rs/crate/brk_query/latest/status.svg" alt="Dependency status">
+  <img src="https://img.shields.io/crates/size/brk_interface" alt="Size" />
+  <a href="https://deps.rs/crate/brk_interface">
+    <img src="https://deps.rs/crate/brk_interface/latest/status.svg" alt="Dependency status">
   </a>
   <a href="https://discord.gg/HaR3wpH3nr">
     <img src="https://img.shields.io/discord/1350431684562124850?label=discord" alt="Discord" />

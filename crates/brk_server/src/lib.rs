@@ -23,7 +23,7 @@ use brk_bundler::bundle;
 use brk_computer::Computer;
 use brk_core::dot_brk_path;
 use brk_indexer::Indexer;
-use brk_query::Query;
+use brk_interface::Interface;
 use color_eyre::owo_colors::OwoColorize;
 use files::FilesRoutes;
 use log::{error, info};
@@ -32,16 +32,16 @@ use tower_http::{compression::CompressionLayer, trace::TraceLayer};
 
 mod api;
 mod files;
+mod mcp;
 mod traits;
 
 pub use files::Website;
+use mcp::*;
 use tracing::Span;
 
 #[derive(Clone)]
 pub struct AppState {
-    // indexer: &'static Indexer,
-    // computer: &'static Computer,
-    query: &'static Query<'static>,
+    interface: &'static Interface<'static>,
     website: Website,
     websites_path: Option<PathBuf>,
 }
@@ -67,7 +67,7 @@ impl Server {
     pub fn new(indexer: Indexer, computer: Computer, website: Website) -> color_eyre::Result<Self> {
         let indexer = Box::leak(Box::new(indexer));
         let computer = Box::leak(Box::new(computer));
-        let query = Box::leak(Box::new(Query::build(indexer, computer)));
+        let interface = Box::leak(Box::new(Interface::build(indexer, computer)));
 
         let websites_path = if website.is_some() {
             let websites_dev_path = Path::new(DEV_PATH).join(WEBSITES);
@@ -99,7 +99,7 @@ impl Server {
                 downloaded_websites_path
             };
 
-            query.generate_bridge_file(website, websites_path.as_path())?;
+            interface.generate_bridge_file(website, websites_path.as_path())?;
 
             Some(websites_path)
         } else {
@@ -107,7 +107,7 @@ impl Server {
         };
 
         Ok(Self(AppState {
-            query,
+            interface,
             website,
             websites_path,
         }))
@@ -162,6 +162,7 @@ impl Server {
         let router = Router::new()
             .add_api_routes()
             .add_website_routes(state.website)
+            .add_mcp_routes(state.interface)
             .route("/version", get(Json(VERSION)))
             .with_state(state)
             .layer(compression_layer)
