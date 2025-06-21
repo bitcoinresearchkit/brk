@@ -48,7 +48,7 @@ pub fn main() -> color_eyre::Result<()> {
             let server = Server::new(served_indexer, served_computer, Website::Default)?;
 
             let server = tokio::spawn(async move {
-                server.serve(true).await.unwrap();
+                server.serve(true, true).await.unwrap();
             });
 
             if process {

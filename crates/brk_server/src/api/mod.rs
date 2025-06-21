@@ -5,7 +5,7 @@ use axum::{
     response::{IntoResponse, Redirect, Response},
     routing::get,
 };
-use brk_interface::{Index, Pagination, Params, ParamsOpt};
+use brk_interface::{IdParam, Index, PaginatedIndexParam, PaginationParam, Params, ParamsOpt};
 
 use super::AppState;
 
@@ -18,7 +18,7 @@ pub trait ApiRoutes {
     fn add_api_routes(self) -> Self;
 }
 
-const TO_SEPARATOR: &str = "-to-";
+const TO_SEPARATOR: &str = "_to_";
 
 impl ApiRoutes for Router<AppState> {
     fn add_api_routes(self) -> Self {
@@ -56,29 +56,29 @@ impl ApiRoutes for Router<AppState> {
             "/api/vecs/ids",
             get(
                 async |State(app_state): State<AppState>,
-                       Query(pagination): Query<Pagination>|
+                       Query(pagination): Query<PaginationParam>|
                        -> Response {
                     Json(app_state.interface.get_vecids(pagination)).into_response()
                 },
             ),
         )
         .route(
-            "/api/vecs/indexes-to-ids",
+            "/api/vecs/index-to-ids",
             get(
                 async |State(app_state): State<AppState>,
-                       Query(pagination): Query<Pagination>|
+                       Query(paginated_index): Query<PaginatedIndexParam>|
                        -> Response {
-                    Json(app_state.interface.get_indexes_to_vecids(pagination)).into_response()
+                    Json(app_state.interface.get_index_to_vecids(paginated_index)).into_response()
                 },
             ),
         )
         .route(
-            "/api/vecs/ids-to-indexes",
+            "/api/vecs/id-to-indexes",
             get(
                 async |State(app_state): State<AppState>,
-                       Query(pagination): Query<Pagination>|
+                       Query(param): Query<IdParam>|
                        -> Response {
-                    Json(app_state.interface.get_vecids_to_indexes(pagination)).into_response()
+                    Json(app_state.interface.get_vecid_to_indexes(param.id)).into_response()
                 },
             ),
         )
@@ -92,16 +92,18 @@ impl ApiRoutes for Router<AppState> {
                        Query(params_opt): Query<ParamsOpt>,
                        state: State<AppState>|
                        -> Response {
-                    let variant = variant.replace("_", "-");
+                    let variant = variant.replace("-", "_");
                     let mut split = variant.split(TO_SEPARATOR);
-                    let params = Params::from((
-                        (
-                            Index::try_from(split.next().unwrap()).unwrap(),
-                            split.collect::<Vec<_>>().join(TO_SEPARATOR),
-                        ),
-                        params_opt,
-                    ));
-                    interface::handler(headers, Query(params), state).await
+
+                    if let Ok(index) = Index::try_from(split.next().unwrap()) {
+                        let params = Params::from((
+                            (index, split.collect::<Vec<_>>().join(TO_SEPARATOR)),
+                            params_opt,
+                        ));
+                        interface::handler(headers, Query(params), state).await
+                    } else {
+                        "Bad variant".into_response()
+                    }
                 },
             ),
         )

@@ -14,7 +14,7 @@ brk_indexer = { workspace = true }
 brk_vec = { workspace = true }
 color-eyre = { workspace = true }
 derive_deref = { workspace = true }
-rmcp = { workspace = true }
+brk_rmcp = { workspace = true }
 schemars = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }

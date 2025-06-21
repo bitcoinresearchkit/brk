@@ -43,27 +43,30 @@ The API uses `brk_interface` and so inherites all of its features including form
 
 #### [`GET /api/vecs/index-count`](https://bitcoinresearchkit.org/api/vecs/index-count)
 
-Count of all possible indexes
+Get the count of all existing indexes.
 
 #### [`GET /api/vecs/id-count`](https://bitcoinresearchkit.org/api/vecs/id-count)
 
-Count of all possible ids
+Get the count of all existing vec ids.
 
 #### [`GET /api/vecs/variant-count`](https://bitcoinresearchkit.org/api/vecs/variant-count)
 
-Count of all possible variants
+Get the count of all existing vecs. \
+Equals to the sum of supported Indexes of each vec id.
 
 #### [`GET /api/vecs/indexes`](https://bitcoinresearchkit.org/api/vecs/indexes)
 
-Get a list of all possible indexes
+Get the list of all existing indexes.
 
 #### [`GET /api/vecs/accepted-indexes`](https://bitcoinresearchkit.org/api/vecs/accepted-indexes)
 
-Get a list of possible indexes and all their accepted variants
+Get an object which has all existing indexes as keys and a list of their accepted variants as values.
 
 #### [`GET /api/vecs/ids`](https://bitcoinresearchkit.org/api/vecs/ids)
 
-A list of all possible vec ids
+Get a paginated list of all existing vec ids. \
+There are up to 1,000 values per page. \
+If the `page` param is omitted, it will default to page `0`.
 
 #### [`GET /api/vecs/variants`](https://bitcoinresearchkit.org/api/vecs/variants)
 
