@@ -1,4 +1,7 @@
-use std::{path::Path, time::Duration};
+use std::{
+    path::{Path, PathBuf},
+    time::Duration,
+};
 
 use arc_swap::ArcSwap;
 use brk_core::{Result, Value, Version};
@@ -24,23 +27,23 @@ where
 {
     pub fn forced_import(
         path: &Path,
-        value_name: &str,
+        name: &str,
         version: Version,
         format: Format,
     ) -> Result<Self> {
-        let path = I::path(path, value_name);
+        // let path = I::path(path, value_name);
 
         if version == Version::ZERO {
-            dbg!(path, value_name);
+            dbg!(path, name);
             panic!("Version must be at least 1, can't verify endianess otherwise");
         }
 
         if format.is_compressed() {
             Ok(Self::Compressed(CompressedVec::forced_import(
-                &path, version,
+                path, name, version,
             )?))
         } else {
-            Ok(Self::Raw(RawVec::forced_import(&path, version)?))
+            Ok(Self::Raw(RawVec::forced_import(path, name, version)?))
         }
     }
 }
@@ -97,7 +100,7 @@ where
     }
 
     #[inline]
-    fn path(&self) -> &Path {
+    fn path(&self) -> PathBuf {
         match self {
             StoredVec::Raw(v) => v.path(),
             StoredVec::Compressed(v) => v.path(),
@@ -133,7 +136,7 @@ where
     }
 
     #[inline]
-    fn index_type_to_string(&self) -> String {
+    fn index_type_to_string(&self) -> &'static str {
         I::to_string()
     }
 
@@ -150,7 +153,7 @@ where
         }
     }
 
-    fn name(&self) -> String {
+    fn name(&self) -> &str {
         match self {
             StoredVec::Raw(v) => v.name(),
             StoredVec::Compressed(v) => v.name(),
@@ -204,10 +207,10 @@ where
     }
 
     #[inline]
-    fn path(&self) -> &Path {
+    fn name(&self) -> &str {
         match self {
-            Self::Compressed(i) => i.path(),
-            Self::Raw(i) => i.path(),
+            Self::Compressed(i) => i.name(),
+            Self::Raw(i) => i.name(),
         }
     }
 }

@@ -24,12 +24,9 @@ fn main() -> color_eyre::Result<()> {
 
     let outputs = Path::new("../../_outputs");
 
-    let mut indexer = Indexer::new(outputs, false)?;
+    let mut indexer = Indexer::forced_import(outputs)?;
 
-    indexer.import_stores()?;
-    indexer.import_vecs()?;
-
-    indexer.index(&parser, rpc, &exit)?;
+    indexer.index(&parser, rpc, &exit, false)?;
 
     dbg!(i.elapsed());
 

@@ -35,9 +35,9 @@ pub use brk_logger as logger;
 #[doc(inline)]
 pub use brk_parser as parser;
 
-#[cfg(feature = "query")]
+#[cfg(feature = "interface")]
 #[doc(inline)]
-pub use brk_query as query;
+pub use brk_interface as interface;
 
 #[cfg(feature = "server")]
 #[doc(inline)]

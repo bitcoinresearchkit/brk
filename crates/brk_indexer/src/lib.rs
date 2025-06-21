@@ -3,12 +3,7 @@
 #![doc = include_str!("../examples/main.rs")]
 #![doc = "```"]
 
-use std::{
-    collections::BTreeMap,
-    path::{Path, PathBuf},
-    str::FromStr,
-    thread,
-};
+use std::{collections::BTreeMap, path::Path, str::FromStr, thread};
 
 use brk_core::{
     AddressBytes, AddressBytesHash, BlockHash, BlockHashPrefix, Height, InputIndex, OutputIndex,
@@ -21,7 +16,6 @@ use brk_exit::Exit;
 use brk_parser::Parser;
 use brk_vec::{AnyVec, VecIterator};
 use color_eyre::eyre::{ContextCompat, eyre};
-use fjall::TransactionalKeyspace;
 use log::{error, info};
 use rayon::prelude::*;
 mod indexes;
@@ -38,39 +32,17 @@ const VERSION: Version = Version::ONE;
 
 #[derive(Clone)]
 pub struct Indexer {
-    path: PathBuf,
-    vecs: Option<Vecs>,
-    stores: Option<Stores>,
-    check_collisions: bool,
+    pub vecs: Vecs,
+    pub stores: Stores,
 }
 
 impl Indexer {
-    pub fn new(outputs_dir: &Path, check_collisions: bool) -> color_eyre::Result<Self> {
+    pub fn forced_import(outputs_dir: &Path) -> color_eyre::Result<Self> {
         setrlimit()?;
         Ok(Self {
-            path: outputs_dir.to_owned(),
-            vecs: None,
-            stores: None,
-            check_collisions,
+            vecs: Vecs::forced_import(&outputs_dir.join("vecs/indexed"), VERSION + Version::ZERO)?,
+            stores: Stores::forced_import(&outputs_dir.join("stores"), VERSION + Version::ZERO)?,
         })
-    }
-
-    pub fn import_vecs(&mut self) -> color_eyre::Result<()> {
-        self.vecs = Some(Vecs::forced_import(
-            &self.path.join("vecs/indexed"),
-            VERSION + Version::ZERO,
-        )?);
-        Ok(())
-    }
-
-    /// Do NOT import multiple times are things will break !!!
-    /// Clone struct instead
-    pub fn import_stores(&mut self) -> color_eyre::Result<()> {
-        self.stores = Some(Stores::forced_import(
-            &self.path.join("stores"),
-            VERSION + Version::ZERO,
-        )?);
-        Ok(())
     }
 
     pub fn index(
@@ -78,31 +50,23 @@ impl Indexer {
         parser: &Parser,
         rpc: &'static bitcoincore_rpc::Client,
         exit: &Exit,
+        check_collisions: bool,
     ) -> color_eyre::Result<Indexes> {
-        let starting_indexes = Indexes::try_from((
-            self.vecs.as_mut().unwrap(),
-            self.stores.as_ref().unwrap(),
-            rpc,
-        ))
-        .unwrap_or_else(|_report| {
-            let indexes = Indexes::default();
-            indexes.push_if_needed(self.vecs.as_mut().unwrap()).unwrap();
-            indexes
-        });
+        let starting_indexes = Indexes::try_from((&mut self.vecs, &self.stores, rpc))
+            .unwrap_or_else(|_report| {
+                let indexes = Indexes::default();
+                indexes.push_if_needed(&mut self.vecs).unwrap();
+                indexes
+            });
 
         exit.block();
         self.stores
-            .as_mut()
-            .unwrap()
-            .rollback_if_needed(self.vecs.as_mut().unwrap(), &starting_indexes)?;
-        self.vecs
-            .as_mut()
-            .unwrap()
-            .rollback_if_needed(&starting_indexes)?;
+            .rollback_if_needed(&mut self.vecs, &starting_indexes)?;
+        self.vecs.rollback_if_needed(&starting_indexes)?;
         exit.release();
 
-        let vecs = self.vecs.as_mut().unwrap();
-        let stores = self.stores.as_mut().unwrap();
+        let vecs = &mut self.vecs;
+        let stores = &mut self.stores;
 
         // Cloned because we want to return starting indexes for the computer
         let mut idxs = starting_indexes.clone();
@@ -144,7 +108,7 @@ impl Indexer {
                 idxs.height = height;
 
                 // Used to check rapidhash collisions
-                let check_collisions = self.check_collisions && height > Height::new(COLLISIONS_CHECKED_UP_TO);
+                let check_collisions = check_collisions && height > Height::new(COLLISIONS_CHECKED_UP_TO);
 
                 let blockhash = BlockHash::from(blockhash);
                 let blockhash_prefix = BlockHashPrefix::from(&blockhash);
@@ -738,18 +702,6 @@ impl Indexer {
         stores.rotate_memtables();
 
         Ok(starting_indexes)
-    }
-
-    pub fn vecs(&self) -> &Vecs {
-        self.vecs.as_ref().unwrap()
-    }
-
-    pub fn stores(&self) -> &Stores {
-        self.stores.as_ref().unwrap()
-    }
-
-    pub fn keyspace(&self) -> &TransactionalKeyspace {
-        &self.stores().keyspace
     }
 }
 

@@ -1,6 +1,6 @@
 [package]
-name = "brk_query"
-description = "A library that finds requested datasets"
+name = "brk_interface"
+description = "An interface to BRK's engine"
 license.workspace = true
 edition.workspace = true
 version.workspace = true
@@ -12,10 +12,10 @@ brk_core = { workspace = true }
 brk_computer = { workspace = true }
 brk_indexer = { workspace = true }
 brk_vec = { workspace = true }
-clap = { workspace = true }
-clap_derive = { workspace = true }
 color-eyre = { workspace = true }
 derive_deref = { workspace = true }
+rmcp = { workspace = true }
+schemars = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
 serde_with = "3.13.0"

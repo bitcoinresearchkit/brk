@@ -1,6 +1,6 @@
 use std::{fs, io, path::Path};
 
-use brk_query::{Index, Query};
+use brk_interface::{Index, Interface};
 
 use crate::{VERSION, Website};
 
@@ -11,7 +11,7 @@ pub trait Bridge {
     fn generate_bridge_file(&self, website: Website, websites_path: &Path) -> io::Result<()>;
 }
 
-impl Bridge for Query<'static> {
+impl Bridge for Interface<'static> {
     fn generate_bridge_file(&self, website: Website, websites_path: &Path) -> io::Result<()> {
         if website.is_none() {
             return Ok(());
@@ -68,8 +68,7 @@ export const VERSION = \"v{}\";
 
         contents += "  return {\n";
 
-        self.vec_trees
-            .id_to_index_to_vec
+        self.id_to_index_to_vec()
             .iter()
             .for_each(|(id, index_to_vec)| {
                 let indexes = index_to_vec

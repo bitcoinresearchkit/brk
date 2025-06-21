@@ -6,7 +6,7 @@ use serde::Serialize;
 use zerocopy::{FromBytes, IntoBytes};
 use zerocopy_derive::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
-use crate::CheckedSub;
+use crate::{CheckedSub, Printable};
 
 use super::StoredU32;
 
@@ -109,5 +109,15 @@ impl From<TxIndex> for ByteView {
 impl From<TxIndex> for StoredU32 {
     fn from(value: TxIndex) -> Self {
         Self::from(value.0)
+    }
+}
+
+impl Printable for TxIndex {
+    fn to_string() -> &'static str {
+        "txindex"
+    }
+
+    fn to_possible_strings() -> &'static [&'static str] {
+        &["tx", "txindex"]
     }
 }

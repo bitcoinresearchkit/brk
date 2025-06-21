@@ -20,7 +20,8 @@ use crate::{
 #[derive(Debug)]
 pub struct RawVec<I, T> {
     version: Version,
-    pathbuf: PathBuf,
+    parent: PathBuf,
+    name: String,
     // Consider  Arc<ArcSwap<Option<Mmap>>> for dataraces when reorg ?
     mmap: Arc<ArcSwap<Mmap>>,
     pushed: Vec<T>,
@@ -33,33 +34,40 @@ where
     T: StoredType,
 {
     /// Same as import but will reset the folder under certain errors, so be careful !
-    pub fn forced_import(path: &Path, version: Version) -> Result<Self> {
-        let res = Self::import(path, version);
+    pub fn forced_import(path: &Path, name: &str, version: Version) -> Result<Self> {
+        let res = Self::import(path, name, version);
         match res {
             Err(Error::WrongEndian) | Err(Error::DifferentVersion { .. }) => {
                 fs::remove_dir_all(path)?;
-                Self::import(path, version)
+                Self::import(path, name, version)
             }
             _ => res,
         }
     }
 
-    pub fn import(path: &Path, version: Version) -> Result<Self> {
-        fs::create_dir_all(path)?;
+    pub fn import(path: &Path, name: &str, version: Version) -> Result<Self> {
+        let (version, mmap) = {
+            let path = path.join(name).join(I::to_string());
 
-        let version_path = Self::path_version_(path);
+            fs::create_dir_all(&path)?;
 
-        if !version.validate(version_path.as_ref())? {
-            version.write(version_path.as_ref())?;
-        }
+            let version_path = Self::path_version_(&path);
 
-        let file = Self::open_file_(Self::path_vec_(path).as_path())?;
-        let mmap = Arc::new(ArcSwap::new(Self::new_mmap(file)?));
+            if !version.validate(version_path.as_ref())? {
+                version.write(version_path.as_ref())?;
+            }
+
+            let file = Self::open_file_(Self::path_vec_(&path).as_path())?;
+            let mmap = Arc::new(ArcSwap::new(Self::new_mmap(file)?));
+
+            (version, mmap)
+        };
 
         Ok(Self {
             mmap,
             version,
-            pathbuf: path.to_owned(),
+            name: name.to_string(),
+            parent: path.to_owned(),
             pushed: vec![],
             phantom: PhantomData,
         })
@@ -121,8 +129,8 @@ where
     }
 
     #[inline]
-    fn path(&self) -> &Path {
-        self.pathbuf.as_path()
+    fn path(&self) -> PathBuf {
+        self.parent.join(self.name()).join(I::to_string())
     }
 
     fn flush(&mut self) -> Result<()> {
@@ -183,8 +191,8 @@ where
     }
 
     #[inline]
-    fn name(&self) -> String {
-        self.name_()
+    fn name(&self) -> &str {
+        self.name.as_str()
     }
 
     #[inline]
@@ -198,7 +206,7 @@ where
     }
 
     #[inline]
-    fn index_type_to_string(&self) -> String {
+    fn index_type_to_string(&self) -> &'static str {
         I::to_string()
     }
 
@@ -212,7 +220,8 @@ impl<I, T> Clone for RawVec<I, T> {
     fn clone(&self) -> Self {
         Self {
             version: self.version,
-            pathbuf: self.pathbuf.clone(),
+            parent: self.parent.clone(),
+            name: self.name.clone(),
             mmap: self.mmap.clone(),
             pushed: vec![],
             phantom: PhantomData,
@@ -243,8 +252,8 @@ where
     }
 
     #[inline]
-    fn path(&self) -> &Path {
-        self.vec.path()
+    fn name(&self) -> &str {
+        self.vec.name()
     }
 }
 

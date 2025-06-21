@@ -1,6 +1,6 @@
 [package]
 name = "brk_server"
-description = "A crate that serves Bitcoin data and swappable front-ends, built on top of brk_indexer, brk_computer and brk_query"
+description = "A crate that serves Bitcoin data and swappable front-ends, built on top of brk_indexer, brk_computer and brk_interface"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
@@ -12,13 +12,13 @@ axum = { workspace = true }
 bitcoincore-rpc = { workspace = true }
 brk_bundler = { workspace = true }
 brk_computer = { workspace = true }
-brk_exit = { workspace = true }
 brk_core = { workspace = true }
+brk_exit = { workspace = true }
 brk_fetcher = { workspace = true }
 brk_indexer = { workspace = true }
 brk_logger = { workspace = true }
 brk_parser = { workspace = true }
-brk_query = { workspace = true }
+brk_interface = { workspace = true }
 brk_vec = { workspace = true }
 clap = { workspace = true }
 clap_derive = { workspace = true }
@@ -26,12 +26,12 @@ color-eyre = { workspace = true }
 jiff = { workspace = true }
 log = { workspace = true }
 minreq = { workspace = true }
-oxc = { version = "0.73.0", features = ["codegen", "minifier"] }
+rmcp = { workspace = true }
 serde = { workspace = true }
 tokio = { workspace = true }
 tower-http = { version = "0.6.6", features = ["compression-full", "trace"] }
-zip = "4.1.0"
 tracing = "0.1.41"
+zip = "4.1.0"
 
 [package.metadata.cargo-machete]
 ignored = ["clap"]

@@ -6,7 +6,7 @@ use std::{
 use serde::{Deserialize, Serialize};
 use zerocopy_derive::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
-use crate::CheckedSub;
+use crate::{CheckedSub, Printable};
 
 use super::Height;
 
@@ -84,5 +84,15 @@ impl Div<usize> for HalvingEpoch {
     type Output = Self;
     fn div(self, rhs: usize) -> Self::Output {
         Self::from(self.0 as usize / rhs)
+    }
+}
+
+impl Printable for HalvingEpoch {
+    fn to_string() -> &'static str {
+        "halvingepoch"
+    }
+
+    fn to_possible_strings() -> &'static [&'static str] {
+        &["halving", "halvingepoch"]
     }
 }

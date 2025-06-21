@@ -7,6 +7,10 @@ const LINE = "line";
 const CANDLE = "candle";
 
 /**
+ * @typedef {"timestamp" | "date" | "week" | "diff. epoch" | "month" | "quarter" | "year" | "decade" } SerializedChartableIndex
+ */
+
+/**
  * @param {Object} args
  * @param {Colors} args.colors
  * @param {LightweightCharts} args.lightweightCharts
@@ -186,7 +190,9 @@ export function init({
     const date = new Date(latest.time * 1000);
 
     switch (index) {
-      case /** @satisfies {Height} */ (5): {
+      case /** @satisfies {Height} */ (5):
+      case /** @satisfies {DifficultyEpoch} */ (2):
+      case /** @satisfies {HalvingEpoch} */ (4): {
         if ("close" in last) {
           last.low = Math.min(last.low, latest.close);
           last.high = Math.max(last.high, latest.close);
@@ -314,7 +320,7 @@ export function init({
               switch (topSeriesType) {
                 case CANDLE: {
                   series = chart.addCandlestickSeries({
-                    vecId: "ohlc-in-sats",
+                    vecId: "ohlc_in_sats",
                     name: "Price",
                     unit: topUnit,
                     inverse: true,
@@ -325,7 +331,7 @@ export function init({
                 }
                 case LINE: {
                   series = chart.addLineSeries({
-                    vecId: "close-in-sats",
+                    vecId: "close_in_sats",
                     name: "Price",
                     unit: topUnit,
                     color: colors.default,
@@ -459,11 +465,11 @@ export function init({
  * @param {Utilities} args.utils
  */
 function createIndexSelector({ option, vecIdToIndexes, signals, utils }) {
-  const choices_ = /** @type {const} */ ([
+  const choices_ = /** @satisfies {SerializedChartableIndex[]} */ ([
     "timestamp",
     "date",
     "week",
-    // "difficulty epoch",
+    "diff. epoch",
     "month",
     "quarter",
     "year",

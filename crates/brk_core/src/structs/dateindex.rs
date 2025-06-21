@@ -7,7 +7,7 @@ use serde::Serialize;
 // use color_eyre::eyre::eyre;
 use zerocopy_derive::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
-use crate::{CheckedSub, Error};
+use crate::{CheckedSub, Error, Printable};
 
 use super::Date;
 
@@ -91,5 +91,15 @@ impl Rem<usize> for DateIndex {
 impl fmt::Display for DateIndex {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.0)
+    }
+}
+
+impl Printable for DateIndex {
+    fn to_string() -> &'static str {
+        "dateindex"
+    }
+
+    fn to_possible_strings() -> &'static [&'static str] {
+        &["d", "date", "dateindex"]
     }
 }

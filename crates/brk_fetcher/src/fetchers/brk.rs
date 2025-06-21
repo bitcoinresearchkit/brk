@@ -13,10 +13,8 @@ pub struct BRK {
     dateindex_to_ohlc: BTreeMap<DateIndex, Vec<OHLCCents>>,
 }
 
-const API_URL: &str = "https://bitcoinresearchkit.org/api";
-
+const API_URL: &str = "https://bitcoinresearchkit.org/api/vecs";
 const RETRIES: usize = 10;
-
 const CHUNK_SIZE: usize = 10_000;
 
 impl BRK {
@@ -40,11 +38,11 @@ impl BRK {
             .unwrap()
             .get(usize::from(height.checked_sub(key).unwrap()))
             .cloned()
-            .ok_or(eyre!("Couldn't find height in kibo"))
+            .ok_or(eyre!("Couldn't find height in BRK"))
     }
 
     fn fetch_height_prices(height: Height) -> color_eyre::Result<Vec<OHLCCents>> {
-        info!("Fetching Kibo height {height} prices...");
+        info!("Fetching BRK height {height} prices...");
 
         retry(
             |_| {
@@ -89,11 +87,11 @@ impl BRK {
             .unwrap()
             .get(usize::from(dateindex.checked_sub(key).unwrap()))
             .cloned()
-            .ok_or(eyre!("Couldn't find date in kibo"))
+            .ok_or(eyre!("Couldn't find date in BRK"))
     }
 
     fn fetch_date_prices(dateindex: DateIndex) -> color_eyre::Result<Vec<OHLCCents>> {
-        info!("Fetching Kibo dateindex {dateindex} prices...");
+        info!("Fetching BRK dateindex {dateindex} prices...");
 
         retry(
             |_| {

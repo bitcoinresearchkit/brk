@@ -1205,18 +1205,16 @@ impl Vecs {
         starting_indexes: &mut Indexes,
         exit: &Exit,
     ) -> color_eyre::Result<()> {
-        let indexer_vecs = indexer.vecs();
-
-        let height_to_first_outputindex = &indexer_vecs.height_to_first_outputindex;
-        let height_to_first_inputindex = &indexer_vecs.height_to_first_inputindex;
+        let height_to_first_outputindex = &indexer.vecs.height_to_first_outputindex;
+        let height_to_first_inputindex = &indexer.vecs.height_to_first_inputindex;
         let height_to_output_count = transactions.indexes_to_output_count.height.unwrap_sum();
         let height_to_input_count = transactions.indexes_to_input_count.height.unwrap_sum();
-        let inputindex_to_outputindex = &indexer_vecs.inputindex_to_outputindex;
-        let outputindex_to_value = &indexer_vecs.outputindex_to_value;
+        let inputindex_to_outputindex = &indexer.vecs.inputindex_to_outputindex;
+        let outputindex_to_value = &indexer.vecs.outputindex_to_value;
         let txindex_to_height = &indexes.txindex_to_height;
         let height_to_timestamp_fixed = &indexes.height_to_timestamp_fixed;
         let outputindex_to_txindex = &indexes.outputindex_to_txindex;
-        let outputindex_to_outputtype = &indexer_vecs.outputindex_to_outputtype;
+        let outputindex_to_outputtype = &indexer.vecs.outputindex_to_outputtype;
         let height_to_unclaimed_rewards = transactions
             .indexes_to_unclaimed_rewards
             .sats

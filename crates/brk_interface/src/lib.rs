@@ -3,6 +3,8 @@
 #![doc = include_str!("../examples/main.rs")]
 #![doc = "```"]
 
+use std::collections::BTreeMap;
+
 use brk_computer::Computer;
 use brk_core::Result;
 use brk_indexer::Indexer;
@@ -11,52 +13,43 @@ use tabled::settings::Style;
 
 mod format;
 mod index;
+mod maybe_ids;
 mod output;
 mod params;
 mod table;
-mod vec_trees;
+mod vecs;
 
 pub use format::Format;
 pub use index::Index;
 pub use output::{Output, Value};
-pub use params::{Params, ParamsOpt};
+pub use params::{Pagination, Params, ParamsOpt};
 pub use table::Tabled;
-use vec_trees::VecTrees;
+use vecs::Vecs;
 
-pub struct Query<'a> {
-    pub vec_trees: VecTrees<'a>,
+use crate::vecs::{IdToVec, IndexToVec};
+
+pub struct Interface<'a> {
+    vecs: Vecs<'a>,
     _indexer: &'a Indexer,
     _computer: &'a Computer,
 }
 
-impl<'a> Query<'a> {
+impl<'a> Interface<'a> {
     pub fn build(indexer: &'a Indexer, computer: &'a Computer) -> Self {
-        let mut vec_trees = VecTrees::default();
-
-        indexer
-            .vecs()
-            .vecs()
-            .into_iter()
-            .for_each(|vec| vec_trees.insert(vec));
-
-        computer
-            .vecs()
-            .into_iter()
-            .for_each(|vec| vec_trees.insert(vec));
-
         Self {
-            vec_trees,
+            vecs: Vecs::build(indexer, computer),
             _indexer: indexer,
             _computer: computer,
         }
     }
 
-    pub fn search(&self, index: Index, ids: &[&str]) -> Vec<(String, &&dyn AnyCollectableVec)> {
-        let tuples = ids
+    pub fn search(&self, params: &Params) -> Vec<(String, &&dyn AnyCollectableVec)> {
+        let tuples = params
+            .ids
             .iter()
             .flat_map(|s| {
                 s.to_lowercase()
-                    .replace("_", "-")
+                    .replace("-", "_")
                     .split_whitespace()
                     .flat_map(|s| {
                         s.split(',')
@@ -65,11 +58,11 @@ impl<'a> Query<'a> {
                     .collect::<Vec<_>>()
             })
             .map(|mut id| {
-                let mut res = self.vec_trees.id_to_index_to_vec.get(&id);
+                let mut res = self.vecs.id_to_index_to_vec.get(id.as_str());
                 if res.is_none() {
                     if let Ok(index) = Index::try_from(id.as_str()) {
                         id = index.possible_values().last().unwrap().to_string();
-                        res = self.vec_trees.id_to_index_to_vec.get(&id)
+                        res = self.vecs.id_to_index_to_vec.get(id.as_str())
                     }
                 }
                 (id, res)
@@ -80,17 +73,19 @@ impl<'a> Query<'a> {
 
         tuples
             .iter()
-            .flat_map(|(str, i_to_v)| i_to_v.get(&index).map(|vec| (str.to_owned(), vec)))
+            .flat_map(|(str, i_to_v)| i_to_v.get(&params.index).map(|vec| (str.to_owned(), vec)))
             .collect::<Vec<_>>()
     }
 
     pub fn format(
         &self,
         vecs: Vec<(String, &&dyn AnyCollectableVec)>,
-        from: Option<i64>,
-        to: Option<i64>,
-        format: Option<Format>,
+        params: &ParamsOpt,
     ) -> color_eyre::Result<Output> {
+        let from = params.from();
+        let to = params.to();
+        let format = params.format();
+
         let mut values = vecs
             .iter()
             .map(|(_, vec)| -> Result<Vec<serde_json::Value>> {
@@ -165,14 +160,53 @@ impl<'a> Query<'a> {
         })
     }
 
-    pub fn search_and_format(
+    pub fn search_and_format(&self, params: Params) -> color_eyre::Result<Output> {
+        self.format(self.search(&params), &params.rest)
+    }
+
+    pub fn id_to_index_to_vec(&self) -> &BTreeMap<&str, IndexToVec<'_>> {
+        &self.vecs.id_to_index_to_vec
+    }
+
+    pub fn index_to_id_to_vec(&self) -> &BTreeMap<Index, IdToVec<'_>> {
+        &self.vecs.index_to_id_to_vec
+    }
+
+    pub fn get_vecid_count(&self) -> usize {
+        self.vecs.id_count
+    }
+
+    pub fn get_index_count(&self) -> usize {
+        self.vecs.index_count
+    }
+
+    pub fn get_vec_count(&self) -> usize {
+        self.vecs.vec_count
+    }
+
+    pub fn get_indexes(&self) -> &[&'static str] {
+        &self.vecs.indexes
+    }
+
+    pub fn get_accepted_indexes(&self) -> &BTreeMap<&'static str, &'static [&'static str]> {
+        &self.vecs.accepted_indexes
+    }
+
+    pub fn get_vecids(&self, pagination: Pagination) -> &[&str] {
+        self.vecs.ids(pagination)
+    }
+
+    pub fn get_indexes_to_vecids(
         &self,
-        index: Index,
-        ids: &[&str],
-        from: Option<i64>,
-        to: Option<i64>,
-        format: Option<Format>,
-    ) -> color_eyre::Result<Output> {
-        self.format(self.search(index, ids), from, to, format)
+        pagination: Pagination,
+    ) -> BTreeMap<&'static str, Vec<&str>> {
+        self.vecs.indexes_to_ids(pagination)
+    }
+
+    pub fn get_vecids_to_indexes(
+        &self,
+        pagination: Pagination,
+    ) -> BTreeMap<&str, Vec<&'static str>> {
+        self.vecs.ids_to_indexes(pagination)
     }
 }

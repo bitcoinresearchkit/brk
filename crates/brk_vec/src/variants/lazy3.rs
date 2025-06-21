@@ -1,4 +1,4 @@
-use std::{marker::PhantomData, path::Path};
+use std::marker::PhantomData;
 
 use brk_core::{Result, Value, Version};
 
@@ -37,7 +37,7 @@ where
     S3T: StoredType,
 {
     pub fn init(
-        value_name: &str,
+        name: &str,
         version: Version,
         source1: BoxedAnyIterableVec<S1I, S1T>,
         source2: BoxedAnyIterableVec<S2I, S2T>,
@@ -58,7 +58,7 @@ where
         }
 
         Self {
-            name: I::to_folder_name(value_name),
+            name: name.to_string(),
             version,
             source1,
             source2,
@@ -149,8 +149,8 @@ where
     }
 
     #[inline]
-    fn path(&self) -> &Path {
-        self.source1.path()
+    fn name(&self) -> &str {
+        self.source1.name()
     }
 }
 
@@ -195,11 +195,11 @@ where
         self.version()
     }
 
-    fn name(&self) -> String {
-        self.name.clone()
+    fn name(&self) -> &str {
+        self.name.as_str()
     }
 
-    fn index_type_to_string(&self) -> String {
+    fn index_type_to_string(&self) -> &'static str {
         I::to_string()
     }
 

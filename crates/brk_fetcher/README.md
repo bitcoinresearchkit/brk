@@ -31,4 +31,4 @@
   </a>
 </p>
 
-A crate that can fetch the Bitcoin price, either by date or height, from Binance and Kibo.
+A crate that can fetch the Bitcoin price, either by date or height, from Binance, Kraken and the main instance of BRK.

@@ -116,7 +116,7 @@ impl Vecs {
             indexes,
             starting_indexes,
             exit,
-            Some(&indexer.vecs().height_to_difficulty),
+            Some(&indexer.vecs.height_to_difficulty),
         )?;
 
         Ok(())

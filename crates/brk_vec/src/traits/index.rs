@@ -1,10 +1,6 @@
-use std::{
-    fmt::Debug,
-    ops::Add,
-    path::{Path, PathBuf},
-};
+use std::{fmt::Debug, ops::Add};
 
-use brk_core::{Error, Result};
+use brk_core::{Error, Printable, Result};
 
 pub trait StoredIndex
 where
@@ -20,18 +16,12 @@ where
         + From<usize>
         + Add<usize, Output = Self>
         + Send
-        + Sync,
+        + Sync
+        + Printable,
 {
     fn unwrap_to_usize(self) -> usize;
     fn to_usize(self) -> Result<usize>;
-    fn to_string() -> String;
     fn decremented(self) -> Option<Self>;
-    fn to_folder_name(value_name: &str) -> String {
-        format!("{}_to_{value_name}", Self::to_string().to_lowercase())
-    }
-    fn path(path: &Path, value_name: &str) -> PathBuf {
-        path.join(Self::to_folder_name(value_name))
-    }
 }
 
 impl<I> StoredIndex for I
@@ -48,7 +38,8 @@ where
         + From<usize>
         + Add<usize, Output = Self>
         + Send
-        + Sync,
+        + Sync
+        + Printable,
 {
     #[inline]
     fn unwrap_to_usize(self) -> usize {
@@ -58,15 +49,6 @@ where
     #[inline]
     fn to_usize(self) -> Result<usize> {
         self.try_into().map_err(|_| Error::FailedKeyTryIntoUsize)
-    }
-
-    #[inline]
-    fn to_string() -> String {
-        std::any::type_name::<I>()
-            .split("::")
-            .last()
-            .unwrap()
-            .to_lowercase()
     }
 
     #[inline]

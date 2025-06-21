@@ -154,23 +154,19 @@ impl Vecs {
             starting_indexes,
             exit,
             |v, indexer, _, starting_indexes, exit| {
-                let indexer_vecs = indexer.vecs();
-
                 v.compute_range(
                     starting_indexes.height,
-                    &indexer_vecs.height_to_weight,
+                    &indexer.vecs.height_to_weight,
                     |h| (h, StoredU32::from(1_u32)),
                     exit,
                 )
             },
         )?;
 
-        let indexer_vecs = indexer.vecs();
-
-        let mut height_to_timestamp_iter = indexer_vecs.height_to_timestamp.iter();
+        let mut height_to_timestamp_iter = indexer.vecs.height_to_timestamp.iter();
         self.height_to_interval.compute_transform(
             starting_indexes.height,
-            &indexer_vecs.height_to_timestamp,
+            &indexer.vecs.height_to_timestamp,
             |(height, timestamp, ..)| {
                 let interval = height.decremented().map_or(Timestamp::ZERO, |prev_h| {
                     let prev_timestamp = height_to_timestamp_iter.unwrap_get_inner(prev_h);
@@ -194,19 +190,19 @@ impl Vecs {
             indexes,
             starting_indexes,
             exit,
-            Some(&indexer_vecs.height_to_weight),
+            Some(&indexer.vecs.height_to_weight),
         )?;
 
         self.indexes_to_block_size.compute_rest(
             indexes,
             starting_indexes,
             exit,
-            Some(&indexer_vecs.height_to_total_size),
+            Some(&indexer.vecs.height_to_total_size),
         )?;
 
         self.height_to_vbytes.compute_transform(
             starting_indexes.height,
-            &indexer_vecs.height_to_weight,
+            &indexer.vecs.height_to_weight,
             |(h, w, ..)| {
                 (
                     h,
@@ -223,7 +219,7 @@ impl Vecs {
             Some(&self.height_to_vbytes),
         )?;
 
-        let mut height_to_timestamp_iter = indexer_vecs.height_to_timestamp.iter();
+        let mut height_to_timestamp_iter = indexer.vecs.height_to_timestamp.iter();
 
         self.difficultyepoch_to_timestamp.compute_transform(
             starting_indexes.difficultyepoch,

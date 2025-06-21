@@ -33,17 +33,19 @@ pub fn main() -> color_eyre::Result<()> {
 
             let format = Format::Raw;
 
-            let mut indexer = Indexer::new(outputs_dir, true)?;
-            indexer.import_stores()?;
-            indexer.import_vecs()?;
+            let mut indexer = Indexer::forced_import(outputs_dir)?;
 
             let fetcher = Fetcher::import(None)?;
 
-            let mut computer = Computer::new(outputs_dir, Some(fetcher), format);
-            computer.import_stores(&indexer)?;
-            computer.import_vecs(&indexer, Computation::Lazy)?;
+            let mut computer = Computer::forced_import(
+                outputs_dir,
+                &indexer,
+                Computation::Lazy,
+                Some(fetcher),
+                format,
+            )?;
 
-            let starting_indexes = indexer.index(&parser, rpc, &exit)?;
+            let starting_indexes = indexer.index(&parser, rpc, &exit, true)?;
 
             computer.compute(&mut indexer, starting_indexes, &exit)?;
 

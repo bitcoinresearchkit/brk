@@ -4,6 +4,7 @@
  * @import { Option, PartialChartOption, ChartOption, AnyPartialOption, ProcessedOptionAddons, OptionsTree, SimulationOption, AnySeriesBlueprint, SeriesType } from "./options"
  * @import { Valued,  SingleValueData, CandlestickData, OHLCTuple, Series, ISeries, LineData, BaselineData, PartialLineStyleOptions, PartialBaselineStyleOptions, PartialCandlestickStyleOptions } from "../packages/lightweight-charts/wrapper"
  * @import * as _ from "../packages/ufuzzy/v1.0.18/types"
+ * @import { SerializedChartableIndex } from "./chart";
  * @import { Signal, Signals, Accessor } from "../packages/solid-signals/wrapper";
  * @import { DateIndex, DecadeIndex, DifficultyEpoch, Index, HalvingEpoch, Height, MonthIndex, P2PK33Index, P2PK65Index, P2PKHIndex, P2SHIndex, P2MSIndex, P2AIndex, P2TRIndex, P2WPKHIndex, P2WSHIndex, TxIndex, InputIndex, OutputIndex, VecId, WeekIndex, YearIndex, VecIdToIndexes, QuarterIndex, EmptyOutputIndex, OpReturnIndex, UnknownOutputIndex } from "./vecid-to-indexes"
  */
@@ -710,12 +711,12 @@ function createUtils() {
 
     if (
       (!unit || thoroughUnitCheck) &&
-      (id.includes("in-sats") ||
+      (id.includes("in_sats") ||
         (id.endsWith("supply") &&
-          !(id.endsWith("circulating-supply") || id.endsWith("-own-supply"))) ||
-        id.endsWith("supply-even") ||
-        id.endsWith("supply-in-profit") ||
-        id.endsWith("supply-in-loss") ||
+          !(id.endsWith("circulating_supply") || id.endsWith("_own_supply"))) ||
+        id.endsWith("supply_even") ||
+        id.endsWith("supply_in_profit") ||
+        id.endsWith("supply_in_loss") ||
         id.endsWith("stack") ||
         (id.endsWith("value") && !id.includes("realized")) ||
         ((id.includes("coinbase") ||
@@ -723,15 +724,15 @@ function createUtils() {
           id.includes("subsidy") ||
           id.includes("rewards")) &&
           !(
-            id.startsWith("is-") ||
-            id.includes("in-btc") ||
-            id.includes("in-usd")
+            id.startsWith("is_") ||
+            id.includes("in_btc") ||
+            id.includes("in_usd")
           )))
     ) {
       if (unit) throw Error(`Unit "${unit}" already assigned "${id}"`);
       unit = "Sats";
     }
-    if ((!unit || thoroughUnitCheck) && id.includes("in-btc")) {
+    if ((!unit || thoroughUnitCheck) && id.includes("in_btc")) {
       if (unit) throw Error(`Unit "${unit}" already assigned "${id}"`);
       unit = "BTC";
     }
@@ -743,18 +744,18 @@ function createUtils() {
         id === "close" ||
         id === "open" ||
         id === "marketcap" ||
-        id.includes("in-usd") ||
-        id.includes("cointime-value") ||
+        id.includes("in_usd") ||
+        id.includes("cointime_value") ||
         id.startsWith("price") ||
-        id.endsWith("price-paid") ||
+        id.endsWith("price_paid") ||
         id.endsWith("price") ||
-        (id.endsWith("-cap") && !id.includes("relative-to")) ||
-        id.endsWith("value-created") ||
-        id.endsWith("value-destroyed") ||
-        ((id.includes("realized") || id.includes("true-market-mean")) &&
+        (id.endsWith("_cap") && !id.includes("relative_to")) ||
+        id.endsWith("value_created") ||
+        id.endsWith("value_destroyed") ||
+        ((id.includes("realized") || id.includes("true_market_mean")) &&
           !id.includes("ratio") &&
-          !id.includes("relative-to")) ||
-        ((id.endsWith("sma") || id.includes("sma-x")) &&
+          !id.includes("relative_to")) ||
+        ((id.endsWith("sma") || id.includes("sma_x")) &&
           !id.includes("ratio")) ||
         id === "ath")
     ) {
@@ -772,12 +773,12 @@ function createUtils() {
           id.endsWith("1sd") ||
           id.endsWith("2sd") ||
           id.endsWith("3sd") ||
-          id.endsWith("p0-1") ||
-          id.endsWith("p0-5") ||
+          id.endsWith("p0_1") ||
+          id.endsWith("p0_5") ||
           id.endsWith("p1") ||
           id.endsWith("p99") ||
-          id.endsWith("p99-5") ||
-          id.endsWith("p99-9"))) ||
+          id.endsWith("p99_5") ||
+          id.endsWith("p99_9"))) ||
       id.includes("liveliness") ||
       id.includes("vaultedness")
     ) {
@@ -794,14 +795,14 @@ function createUtils() {
     if (
       (!unit || thoroughUnitCheck) &&
       (id.endsWith("count") ||
-        id.includes("-count-") ||
-        id.startsWith("block-count") ||
-        id.includes("tx-v"))
+        id.includes("_count_") ||
+        id.startsWith("block_count") ||
+        id.includes("tx_v"))
     ) {
       if (unit) throw Error(`Unit "${unit}" already assigned "${id}"`);
       unit = "Count";
     }
-    if ((!unit || thoroughUnitCheck) && id.startsWith("is-")) {
+    if ((!unit || thoroughUnitCheck) && id.startsWith("is_")) {
       if (unit) throw Error(`Unit "${unit}" already assigned "${id}"`);
       unit = "Bool";
     }
@@ -811,7 +812,7 @@ function createUtils() {
     }
     if (
       (!unit || thoroughUnitCheck) &&
-      (id === "interval" || id.startsWith("block-interval"))
+      (id === "interval" || id.startsWith("block_interval"))
     ) {
       if (unit) throw Error(`Unit "${unit}" already assigned "${id}"`);
       unit = "Seconds";
@@ -843,13 +844,13 @@ function createUtils() {
       if (unit) throw Error(`Unit "${unit}" already assigned "${id}"`);
       unit = "Bytes";
     }
-    if ((!unit || thoroughUnitCheck) && id.endsWith("-sd")) {
+    if ((!unit || thoroughUnitCheck) && id.endsWith("_sd")) {
       if (unit) throw Error(`Unit "${unit}" already assigned "${id}"`);
       unit = "sd";
     }
     if (
       (!unit || thoroughUnitCheck) &&
-      (id.endsWith("-size") || id.endsWith("-size-sum"))
+      (id.endsWith("_size") || id.endsWith("_size_sum"))
     ) {
       if (unit) throw Error(`Unit "${unit}" already assigned "${id}"`);
       unit = "mb";
@@ -858,7 +859,7 @@ function createUtils() {
       (!unit || thoroughUnitCheck) &&
       (id.endsWith("vsize") ||
         id.endsWith("vbytes") ||
-        id.endsWith("-vbytes-sum"))
+        id.endsWith("_vbytes_sum"))
     ) {
       if (unit) throw Error(`Unit "${unit}" already assigned "${id}"`);
       unit = "vB";
@@ -873,14 +874,14 @@ function createUtils() {
     }
     if (
       (!unit || thoroughUnitCheck) &&
-      (id === "date" || id === "date-fixed")
+      (id === "date" || id === "date_fixed")
     ) {
       if (unit) throw Error(`Unit "${unit}" already assigned "${id}"`);
       unit = "Date";
     }
     if (
       (!unit || thoroughUnitCheck) &&
-      (id === "timestamp" || id === "timestamp-fixed")
+      (id === "timestamp" || id === "timestamp_fixed")
     ) {
       if (unit) throw Error(`Unit "${unit}" already assigned "${id}"`);
       unit = "Timestamp";
@@ -905,25 +906,25 @@ function createUtils() {
       if (unit) throw Error(`Unit "${unit}" already assigned "${id}"`);
       unit = "Height";
     }
-    if ((!unit || thoroughUnitCheck) && id.endsWith("relative-to-market-cap")) {
+    if ((!unit || thoroughUnitCheck) && id.endsWith("relative_to_market_cap")) {
       if (unit) throw Error(`Unit "${unit}" already assigned "${id}"`);
       unit = "%mcap";
     }
     if (
       (!unit || thoroughUnitCheck) &&
-      id.endsWith("relative-to-realized-cap")
+      id.endsWith("relative_to_realized_cap")
     ) {
       if (unit) throw Error(`Unit "${unit}" already assigned "${id}"`);
       unit = "%rcap";
     }
     if (
       (!unit || thoroughUnitCheck) &&
-      id.endsWith("relative-to-circulating-supply")
+      id.endsWith("relative_to_circulating_supply")
     ) {
       if (unit) throw Error(`Unit "${unit}" already assigned "${id}"`);
       unit = "%all";
     }
-    if ((!unit || thoroughUnitCheck) && id.endsWith("relative-to-own-supply")) {
+    if ((!unit || thoroughUnitCheck) && id.endsWith("relative_to_own_supply")) {
       if (unit) throw Error(`Unit "${unit}" already assigned "${id}"`);
       unit = "%self";
     }
@@ -941,12 +942,12 @@ function createUtils() {
     }
     if (
       (!unit || thoroughUnitCheck) &&
-      (id.includes("days-between") || id.includes("days-since"))
+      (id.includes("days_between") || id.includes("days_since"))
     ) {
       if (unit) throw Error(`Unit "${unit}" already assigned "${id}"`);
       unit = "Days";
     }
-    if ((!unit || thoroughUnitCheck) && id.includes("years-between")) {
+    if ((!unit || thoroughUnitCheck) && id.includes("years_between")) {
       if (unit) throw Error(`Unit "${unit}" already assigned "${id}"`);
       unit = "Years";
     }
@@ -1170,6 +1171,7 @@ function createUtils() {
     chartableIndex: {
       /**
        * @param {number} v
+       * @returns {SerializedChartableIndex | null}
        */
       serialize(v) {
         switch (v) {
@@ -1177,8 +1179,8 @@ function createUtils() {
             return "date";
           case /** @satisfies {DecadeIndex} */ (1):
             return "decade";
-          // case /** @satisfies {DifficultyEpoch} */ (2):
-          //   return "difficulty";
+          case /** @satisfies {DifficultyEpoch} */ (2):
+            return "diff. epoch";
           // case /** @satisfies {HalvingEpoch} */ (4):
           //   return "halving";
           case /** @satisfies {Height} */ (5):
@@ -1196,7 +1198,7 @@ function createUtils() {
         }
       },
       /**
-       * @param {string} v
+       * @param {SerializedChartableIndex} v
        * @returns {Index}
        */
       deserialize(v) {
@@ -1207,6 +1209,8 @@ function createUtils() {
             return /** @satisfies {DateIndex} */ (0);
           case "week":
             return /** @satisfies {WeekIndex} */ (22);
+          case "diff. epoch":
+            return /** @satisfies {DifficultyEpoch} */ (2);
           case "month":
             return /** @satisfies {MonthIndex} */ (7);
           case "quarter":
@@ -1354,6 +1358,7 @@ function createUtils() {
 
   const api = (() => {
     const CACHE_NAME = "api";
+    const API_VECS_PREFIX = "/api/vecs";
 
     /**
      * @template T
@@ -1362,7 +1367,7 @@ function createUtils() {
      * @param {boolean} [mustBeArray]
      */
     async function fetchApi(callback, path, mustBeArray) {
-      const url = `/api${path}`;
+      const url = `${API_VECS_PREFIX}${path}`;
 
       /** @type {T | null} */
       let cachedJson = null;
@@ -1452,7 +1457,7 @@ function createUtils() {
      * @param {number} [to]
      */
     function genPath(index, vecId, from, to) {
-      let path = `/query?index=${serde.index.serialize(index)}&values=${vecId}`;
+      let path = `/query?index=${serde.index.serialize(index)}&ids=${vecId}`;
       if (from !== undefined) {
         path += `&from=${from}`;
       }
@@ -1469,7 +1474,7 @@ function createUtils() {
        * @param {number} from
        */
       genUrl(index, vecId, from) {
-        return `/api${genPath(index, vecId, from)}`;
+        return `${API_VECS_PREFIX}${genPath(index, vecId, from)}`;
       },
       /**
        * @template {number | OHLCTuple} [T=number]

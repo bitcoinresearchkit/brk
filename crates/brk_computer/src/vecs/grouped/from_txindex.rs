@@ -163,7 +163,7 @@ where
             self.height.compute(
                 starting_indexes.height,
                 txindex,
-                &indexer.vecs().height_to_first_txindex,
+                &indexer.vecs.height_to_first_txindex,
                 &indexes.height_to_txindex_count,
                 exit,
             )?;
@@ -173,7 +173,7 @@ where
             self.height.compute(
                 starting_indexes.height,
                 txindex,
-                &indexer.vecs().height_to_first_txindex,
+                &indexer.vecs.height_to_first_txindex,
                 &indexes.height_to_txindex_count,
                 exit,
             )?;
@@ -289,7 +289,7 @@ impl ComputedVecsFromTxindex<Bitcoin> {
 
         let starting_index = self.height.starting_index(starting_indexes.height);
 
-        (starting_index.unwrap_to_usize()..indexer.vecs().height_to_weight.len())
+        (starting_index.unwrap_to_usize()..indexer.vecs.height_to_weight.len())
             .map(Height::from)
             .try_for_each(|height| -> Result<()> {
                 if let Some(first) = self.height.first.as_mut() {
@@ -470,7 +470,7 @@ impl ComputedVecsFromTxindex<Dollars> {
 
         let mut close_iter = fetched.chainindexes_to_close.height.into_iter();
 
-        (starting_index.unwrap_to_usize()..indexer.vecs().height_to_weight.len())
+        (starting_index.unwrap_to_usize()..indexer.vecs.height_to_weight.len())
             .map(Height::from)
             .try_for_each(|height| -> Result<()> {
                 let price = *close_iter.unwrap_get_inner(height);

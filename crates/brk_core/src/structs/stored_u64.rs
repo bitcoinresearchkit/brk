@@ -4,7 +4,7 @@ use derive_deref::Deref;
 use serde::Serialize;
 use zerocopy_derive::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
-use crate::CheckedSub;
+use crate::{CheckedSub, Printable};
 
 use super::{InputIndex, OutputIndex, TxIndex};
 
@@ -95,5 +95,15 @@ impl From<InputIndex> for StoredU64 {
 impl From<OutputIndex> for StoredU64 {
     fn from(value: OutputIndex) -> Self {
         Self(*value)
+    }
+}
+
+impl Printable for StoredU64 {
+    fn to_string() -> &'static str {
+        "u64"
+    }
+
+    fn to_possible_strings() -> &'static [&'static str] {
+        &["u64"]
     }
 }

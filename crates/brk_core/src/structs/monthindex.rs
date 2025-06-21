@@ -3,7 +3,7 @@ use std::{fmt::Debug, ops::Add};
 use serde::{Deserialize, Serialize};
 use zerocopy_derive::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
-use crate::CheckedSub;
+use crate::{CheckedSub, Printable};
 
 use super::{Date, DateIndex, YearIndex};
 
@@ -66,5 +66,15 @@ impl From<Date> for MonthIndex {
 impl CheckedSub for MonthIndex {
     fn checked_sub(self, rhs: Self) -> Option<Self> {
         self.0.checked_sub(rhs.0).map(Self)
+    }
+}
+
+impl Printable for MonthIndex {
+    fn to_string() -> &'static str {
+        "monthindex"
+    }
+
+    fn to_possible_strings() -> &'static [&'static str] {
+        &["m", "month", "monthindex"]
     }
 }

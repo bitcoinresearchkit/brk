@@ -84,7 +84,7 @@ where
     pub fn forced_import_or_init_from_1(
         mode: Computation,
         path: &Path,
-        value_name: &str,
+        name: &str,
         version: Version,
         format: Format,
         source: BoxedAnyIterableVec<S1I, S1T>,
@@ -92,12 +92,12 @@ where
     ) -> Result<Self> {
         Ok(match mode {
             Computation::Eager => Self::Eager {
-                vec: EagerVec::forced_import(path, value_name, version, format)?,
+                vec: EagerVec::forced_import(path, name, version, format)?,
                 deps: Dependencies::From1(source, compute),
             },
             Computation::Lazy => {
-                let _ = fs::remove_dir_all(I::path(path, value_name));
-                Self::LazyFrom1(LazyVecFrom1::init(value_name, version, source, compute))
+                let _ = fs::remove_dir_all(path.join(name).join(I::to_string()));
+                Self::LazyFrom1(LazyVecFrom1::init(name, version, source, compute))
             }
         })
     }
@@ -106,7 +106,7 @@ where
     pub fn forced_import_or_init_from_2(
         mode: Computation,
         path: &Path,
-        value_name: &str,
+        name: &str,
         version: Version,
         format: Format,
         source1: BoxedAnyIterableVec<S1I, S1T>,
@@ -115,14 +115,12 @@ where
     ) -> Result<Self> {
         Ok(match mode {
             Computation::Eager => Self::Eager {
-                vec: EagerVec::forced_import(path, value_name, version, format)?,
+                vec: EagerVec::forced_import(path, name, version, format)?,
                 deps: Dependencies::From2((source1, source2), compute),
             },
             Computation::Lazy => {
-                let _ = fs::remove_dir_all(I::path(path, value_name));
-                Self::LazyFrom2(LazyVecFrom2::init(
-                    value_name, version, source1, source2, compute,
-                ))
+                let _ = fs::remove_dir_all(path.join(name).join(I::to_string()));
+                Self::LazyFrom2(LazyVecFrom2::init(name, version, source1, source2, compute))
             }
         })
     }
@@ -131,7 +129,7 @@ where
     pub fn forced_import_or_init_from_3(
         mode: Computation,
         path: &Path,
-        value_name: &str,
+        name: &str,
         version: Version,
         format: Format,
         source1: BoxedAnyIterableVec<S1I, S1T>,
@@ -141,13 +139,13 @@ where
     ) -> Result<Self> {
         Ok(match mode {
             Computation::Eager => Self::Eager {
-                vec: EagerVec::forced_import(path, value_name, version, format)?,
+                vec: EagerVec::forced_import(path, name, version, format)?,
                 deps: Dependencies::From3((source1, source2, source3), compute),
             },
             Computation::Lazy => {
-                let _ = fs::remove_dir_all(I::path(path, value_name));
+                let _ = fs::remove_dir_all(path.join(name).join(I::to_string()));
                 Self::LazyFrom3(LazyVecFrom3::init(
-                    value_name, version, source1, source2, source3, compute,
+                    name, version, source1, source2, source3, compute,
                 ))
             }
         })
@@ -225,7 +223,7 @@ where
         }
     }
 
-    fn name(&self) -> String {
+    fn name(&self) -> &str {
         match self {
             ComputedVec::Eager { vec, .. } => vec.name(),
             ComputedVec::LazyFrom1(v) => v.name(),
@@ -234,7 +232,7 @@ where
         }
     }
 
-    fn index_type_to_string(&self) -> String {
+    fn index_type_to_string(&self) -> &'static str {
         I::to_string()
     }
 
@@ -324,12 +322,12 @@ where
     }
 
     #[inline]
-    fn path(&self) -> &Path {
+    fn name(&self) -> &str {
         match self {
-            Self::Eager(i) => i.path(),
-            Self::LazyFrom1(i) => i.path(),
-            Self::LazyFrom2(i) => i.path(),
-            Self::LazyFrom3(i) => i.path(),
+            Self::Eager(i) => i.name(),
+            Self::LazyFrom1(i) => i.name(),
+            Self::LazyFrom2(i) => i.name(),
+            Self::LazyFrom3(i) => i.name(),
         }
     }
 }

@@ -66,7 +66,7 @@ where
         self.mut_pushed().push(value)
     }
 
-    fn path(&self) -> &Path;
+    fn path(&self) -> PathBuf;
 
     // ---
 
@@ -141,7 +141,7 @@ where
 
     #[inline]
     fn path_vec(&self) -> PathBuf {
-        Self::path_vec_(self.path())
+        Self::path_vec_(&self.path())
     }
     #[inline]
     fn path_vec_(path: &Path) -> PathBuf {
@@ -156,16 +156,6 @@ where
     #[inline]
     fn path_compressed_(path: &Path) -> PathBuf {
         path.join("compressed")
-    }
-
-    #[inline]
-    fn name_(&self) -> String {
-        self.path()
-            .file_name()
-            .unwrap()
-            .to_str()
-            .unwrap()
-            .to_owned()
     }
 
     fn modified_time_(&self) -> Result<Duration> {
