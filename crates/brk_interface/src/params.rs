@@ -1,6 +1,6 @@
 use std::ops::Deref;
 
-use rmcp::schemars::{self, JsonSchema};
+use brk_rmcp::schemars::{self, JsonSchema};
 use serde::{Deserialize, Deserializer};
 
 use crate::{Format, Index, maybe_ids::MaybeIds};
@@ -52,6 +52,7 @@ pub struct ParamsOpt {
     count: Option<usize>,
 
     /// Format of the output
+    #[serde(default)]
     format: Option<Format>,
 }
 
@@ -85,7 +86,7 @@ impl ParamsOpt {
             if let Some(c) = self.count {
                 let c = c as i64;
                 if let Some(f) = self.from {
-                    if f.is_positive() || f.abs() > c {
+                    if f >= 0 || f.abs() > c {
                         return Some(f + c);
                     }
                 } else {
@@ -99,6 +100,11 @@ impl ParamsOpt {
     pub fn format(&self) -> Option<Format> {
         self.format
     }
+}
+
+#[derive(Debug, Deserialize, JsonSchema)]
+pub struct IdParam {
+    pub id: String,
 }
 
 fn de_unquote_i64<'de, D>(deserializer: D) -> Result<Option<i64>, D::Error>
@@ -152,24 +158,5 @@ where
             dbg!(value);
             Err(serde::de::Error::custom("expected a string or number"))
         }
-    }
-}
-
-#[derive(Debug, Default, Deserialize, JsonSchema)]
-pub struct Pagination {
-    #[serde(alias = "p")]
-    #[schemars(description = "Pagination index")]
-    pub page: usize,
-}
-
-impl Pagination {
-    const PER_PAGE: usize = 1_000;
-
-    pub fn start(&self, len: usize) -> usize {
-        (self.page * Self::PER_PAGE).clamp(0, len)
-    }
-
-    pub fn end(&self, len: usize) -> usize {
-        ((self.page + 1) * Self::PER_PAGE).clamp(0, len)
     }
 }

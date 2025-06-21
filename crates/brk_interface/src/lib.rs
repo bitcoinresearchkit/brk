@@ -15,6 +15,7 @@ mod format;
 mod index;
 mod maybe_ids;
 mod output;
+mod pagination;
 mod params;
 mod table;
 mod vecs;
@@ -22,7 +23,8 @@ mod vecs;
 pub use format::Format;
 pub use index::Index;
 pub use output::{Output, Value};
-pub use params::{Pagination, Params, ParamsOpt};
+pub use pagination::{PaginatedIndexParam, PaginationParam};
+pub use params::{IdParam, Params, ParamsOpt};
 pub use table::Tabled;
 use vecs::Vecs;
 
@@ -192,21 +194,15 @@ impl<'a> Interface<'a> {
         &self.vecs.accepted_indexes
     }
 
-    pub fn get_vecids(&self, pagination: Pagination) -> &[&str] {
+    pub fn get_vecids(&self, pagination: PaginationParam) -> &[&str] {
         self.vecs.ids(pagination)
     }
 
-    pub fn get_indexes_to_vecids(
-        &self,
-        pagination: Pagination,
-    ) -> BTreeMap<&'static str, Vec<&str>> {
-        self.vecs.indexes_to_ids(pagination)
+    pub fn get_index_to_vecids(&self, paginated_index: PaginatedIndexParam) -> Vec<&str> {
+        self.vecs.index_to_ids(paginated_index)
     }
 
-    pub fn get_vecids_to_indexes(
-        &self,
-        pagination: Pagination,
-    ) -> BTreeMap<&str, Vec<&'static str>> {
-        self.vecs.ids_to_indexes(pagination)
+    pub fn get_vecid_to_indexes(&self, id: String) -> Option<&Vec<&'static str>> {
+        self.vecs.id_to_indexes(id)
     }
 }

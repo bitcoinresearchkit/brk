@@ -1,5 +1,5 @@
-use brk_interface::{Interface, Pagination, Params};
-use rmcp::{
+use brk_interface::{IdParam, Interface, PaginatedIndexParam, PaginationParam, Params};
+use brk_rmcp::{
     Error as McpError, RoleServer, ServerHandler,
     model::{
         CallToolResult, Content, Implementation, InitializeRequestParam, InitializeResult,
@@ -8,6 +8,7 @@ use rmcp::{
     service::RequestContext,
     tool,
 };
+use log::info;
 
 #[derive(Clone)]
 pub struct API {
@@ -23,88 +24,111 @@ impl API {
     }
 
     #[tool(description = "
-Get the count of all existing indexes
+Get the count of all existing indexes.
 ")]
     async fn get_index_count(&self) -> Result<CallToolResult, McpError> {
+        info!("mcp: get_index_count");
         Ok(CallToolResult::success(vec![
             Content::json(self.interface.get_index_count()).unwrap(),
         ]))
     }
 
     #[tool(description = "
-Get the count of all existing vec ids
+Get the count of all existing vec ids.
 ")]
     async fn get_vecid_count(&self) -> Result<CallToolResult, McpError> {
+        info!("mcp: get_vecid_count");
         Ok(CallToolResult::success(vec![
             Content::json(self.interface.get_vecid_count()).unwrap(),
         ]))
     }
 
     #[tool(description = "
-Get the count of all existing vecs
+Get the count of all existing vecs.
+Equals to the sum of supported Indexes of each vec id.
 ")]
     async fn get_variant_count(&self) -> Result<CallToolResult, McpError> {
+        info!("mcp: get_variant_count");
         Ok(CallToolResult::success(vec![
             Content::json(self.interface.get_vec_count()).unwrap(),
         ]))
     }
 
     #[tool(description = "
-Get the list of all existing indexes
+Get the list of all existing indexes.
 ")]
     async fn get_indexes(&self) -> Result<CallToolResult, McpError> {
+        info!("mcp: get_indexes");
         Ok(CallToolResult::success(vec![
             Content::json(self.interface.get_indexes()).unwrap(),
         ]))
     }
 
     #[tool(description = "
-Get an object which has all existing indexes as keys and a list of their accepted variants as values
+Get an object which has all existing indexes as keys and a list of their accepted variants as values.
 ")]
     async fn get_accepted_indexes(&self) -> Result<CallToolResult, McpError> {
+        info!("mcp: get_accepted_indexes");
         Ok(CallToolResult::success(vec![
             Content::json(self.interface.get_accepted_indexes()).unwrap(),
         ]))
     }
 
     #[tool(description = "
-Get the list of all existing vec ids
+Get a paginated list of all existing vec ids.
+There are up to 1,000 values per page.
+If the `page` param is omitted, it will default to page `0`.
 ")]
     async fn get_vecids(
         &self,
-        #[tool(aggr)] pagination: Pagination,
+        #[tool(aggr)] pagination: PaginationParam,
     ) -> Result<CallToolResult, McpError> {
+        info!("mcp: get_vecids");
         Ok(CallToolResult::success(vec![
             Content::json(self.interface.get_vecids(pagination)).unwrap(),
         ]))
     }
 
     #[tool(description = "
-Get an object which has all existing indexes as keys and a list of ids of vecs which support that index as values
+Get a paginated list of all vec ids which support a given index.
+There are up to 1,000 values per page.
+If the `page` param is omitted, it will default to page `0`.
 ")]
-    async fn get_indexes_to_vecids(
+    async fn get_index_to_vecids(
         &self,
-        #[tool(aggr)] pagination: Pagination,
+        #[tool(aggr)] paginated_index: PaginatedIndexParam,
     ) -> Result<CallToolResult, McpError> {
+        info!("mcp: get_index_to_vecids");
         Ok(CallToolResult::success(vec![
-            Content::json(self.interface.get_indexes_to_vecids(pagination)).unwrap(),
+            Content::json(self.interface.get_index_to_vecids(paginated_index)).unwrap(),
         ]))
     }
 
     #[tool(description = "
-Get an object which has all existing vec ids as keys and a list of indexes supported by that vec id as values
+Get a list of all indexes supported by a given vec id.
+The list will be empty if the vec id isn't correct.
 ")]
-    async fn get_vecids_to_indexes(
+    async fn get_vecid_to_indexes(
         &self,
-        #[tool(aggr)] pagination: Pagination,
+        #[tool(aggr)] param: IdParam,
     ) -> Result<CallToolResult, McpError> {
+        info!("mcp: get_vecid_to_indexes");
         Ok(CallToolResult::success(vec![
-            Content::json(self.interface.get_vecids_to_indexes(pagination)).unwrap(),
+            Content::json(self.interface.get_vecid_to_indexes(param.id)).unwrap(),
         ]))
     }
 
-    #[tool(description = "Get one or multiple vecs depending on given parameters")]
+    #[tool(description = "
+Get one or multiple vecs depending on given parameters.
+If you'd like to request multiple vec ids, simply separate them with a ','.
+To get the last value set `-1` to the `from` parameter.
+The response's format will depend on the given parameters, it will be:
+- A value: If requested only one vec and the given range returns one value (for example: `from=-1`)
+- A list: If requested only one vec and the given range returns multiple values (for example: `from=-1000&count=100` or `from=-444&to=-333`)
+- A matrix: When multiple vecs are requested, even if they each return one value.
+")]
     fn get_vecs(&self, #[tool(aggr)] params: Params) -> Result<CallToolResult, McpError> {
+        info!("mcp: get_vecs");
         Ok(CallToolResult::success(vec![
             Content::json(self.interface.search_and_format(params).unwrap()).unwrap(),
         ]))
@@ -114,6 +138,7 @@ Get an object which has all existing vec ids as keys and a list of indexes suppo
 Get the running version of the Bitcoin Research Kit
 ")]
     async fn get_version(&self) -> Result<CallToolResult, McpError> {
+        info!("mcp: get_version");
         Ok(CallToolResult::success(vec![Content::text(format!(
             "v{VERSION}"
         ))]))
@@ -124,14 +149,22 @@ Get the running version of the Bitcoin Research Kit
 impl ServerHandler for API {
     fn get_info(&self) -> ServerInfo {
         ServerInfo {
-            protocol_version: ProtocolVersion::V_2025_03_26,
+            protocol_version: ProtocolVersion::LATEST,
             capabilities: ServerCapabilities::builder().enable_tools().build(),
             server_info: Implementation::from_build_env(),
             instructions: Some(
                 "
-This server provides an interface to communicate with a running instance of the Bitcoin Research Kit (brk).
-Multiple tools are at your disposal including ones to fetch all sorts of Bitcoin on-chain data.
-Arrays are also called Vectors (or Vecs).
+This server provides an interface to communicate with a running instance of the Bitcoin Research Kit (also called brk or BRK).
+
+Multiple tools are at your disposal including ones to fetch all sorts of Bitcoin on-chain metrics and market prices.
+
+If you're unsure which datasets are available, try out different tools before browsing the web. Each tool gives important information about BRK's capabilities.
+
+Vectors can also be called 'Vecs', 'Arrays' or 'Datasets', they can all be used interchangeably.
+
+An 'Index' (or indexes) is the timeframe of a dataset.
+
+'VecId' (or vecids) are the name of the dataset and what it represents.
 "
                 .to_string(),
             ),

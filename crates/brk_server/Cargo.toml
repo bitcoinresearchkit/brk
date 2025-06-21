@@ -26,7 +26,7 @@ color-eyre = { workspace = true }
 jiff = { workspace = true }
 log = { workspace = true }
 minreq = { workspace = true }
-rmcp = { workspace = true }
+brk_rmcp = { workspace = true }
 serde = { workspace = true }
 tokio = { workspace = true }
 tower-http = { version = "0.6.6", features = ["compression-full", "trace"] }

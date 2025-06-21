@@ -57,8 +57,9 @@ pub fn run() -> color_eyre::Result<()> {
                 let server = Server::new(served_indexer, served_computer, config.website())?;
 
                 let watch = config.watch();
+                let mcp = config.mcp();
                 let opt = Some(tokio::spawn(async move {
-                    server.serve(watch).await.unwrap();
+                    server.serve(watch, mcp).await.unwrap();
                 }));
 
                 sleep(Duration::from_secs(1));

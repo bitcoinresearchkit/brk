@@ -22,9 +22,17 @@ impl<'de> Deserialize<'de> for MaybeIds {
     where
         D: serde::Deserializer<'de>,
     {
-        let str = String::deserialize(deserializer)?;
-        Ok(MaybeIds(
-            str.split(",").map(|s| s.to_string()).collect::<Vec<_>>(),
-        ))
+        let maybe_ids = match serde_json::Value::deserialize(deserializer)? {
+            serde_json::Value::String(str) => {
+                str.split(",").map(|s| s.to_string()).collect::<Vec<_>>()
+            }
+            serde_json::Value::Array(vec) => vec
+                .into_iter()
+                .map(|s| s.as_str().unwrap().to_string())
+                .collect::<Vec<_>>(),
+            _ => return Err(serde::de::Error::custom("Bad ids format")),
+        };
+        // dbg!(&maybe_ids);
+        Ok(MaybeIds(maybe_ids))
     }
 }

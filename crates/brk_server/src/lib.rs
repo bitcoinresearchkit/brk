@@ -113,7 +113,7 @@ impl Server {
         }))
     }
 
-    pub async fn serve(self, watch: bool) -> color_eyre::Result<()> {
+    pub async fn serve(self, watch: bool, mcp: bool) -> color_eyre::Result<()> {
         let state = self.0;
 
         if let Some(websites_path) = state.websites_path.clone() {
@@ -162,7 +162,7 @@ impl Server {
         let router = Router::new()
             .add_api_routes()
             .add_website_routes(state.website)
-            .add_mcp_routes(state.interface)
+            .add_mcp_routes(state.interface, mcp)
             .route("/version", get(Json(VERSION)))
             .with_state(state)
             .layer(compression_layer)

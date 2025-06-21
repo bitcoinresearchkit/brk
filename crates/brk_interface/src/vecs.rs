@@ -5,7 +5,7 @@ use brk_indexer::Indexer;
 use brk_vec::AnyCollectableVec;
 use derive_deref::{Deref, DerefMut};
 
-use crate::params::Pagination;
+use crate::pagination::{PaginatedIndexParam, PaginationParam};
 
 use super::index::Index;
 
@@ -19,8 +19,8 @@ pub struct Vecs<'a> {
     pub index_count: usize,
     pub id_count: usize,
     pub vec_count: usize,
-    serialized_id_to_indexes: BTreeMap<&'a str, Vec<&'static str>>,
-    serialized_indexes_to_ids: BTreeMap<&'static str, Vec<&'a str>>,
+    id_to_indexes: BTreeMap<&'a str, Vec<&'static str>>,
+    indexes_to_ids: BTreeMap<Index, Vec<&'a str>>,
 }
 
 impl<'a> Vecs<'a> {
@@ -40,17 +40,22 @@ impl<'a> Vecs<'a> {
             .for_each(|vec| this.insert(vec));
 
         let mut ids = this.id_to_index_to_vec.keys().cloned().collect::<Vec<_>>();
-        ids.sort_unstable_by(|a, b| {
-            let len_cmp = a.len().cmp(&b.len());
-            if len_cmp == std::cmp::Ordering::Equal {
-                a.cmp(b)
-            } else {
-                len_cmp
-            }
-        });
+
+        let sort_ids = |ids: &mut Vec<&str>| {
+            ids.sort_unstable_by(|a, b| {
+                let len_cmp = a.len().cmp(&b.len());
+                if len_cmp == std::cmp::Ordering::Equal {
+                    a.cmp(b)
+                } else {
+                    len_cmp
+                }
+            })
+        };
+
+        sort_ids(&mut ids);
 
         this.ids = ids;
-        this.id_count = this.index_to_id_to_vec.keys().count();
+        this.id_count = this.id_to_index_to_vec.keys().count();
         this.index_count = this.index_to_id_to_vec.keys().count();
         this.vec_count = this
             .index_to_id_to_vec
@@ -67,7 +72,7 @@ impl<'a> Vecs<'a> {
             .keys()
             .map(|i| (i.serialize_long(), i.possible_values()))
             .collect::<BTreeMap<_, _>>();
-        this.serialized_id_to_indexes = this
+        this.id_to_indexes = this
             .id_to_index_to_vec
             .iter()
             .map(|(id, index_to_vec)| {
@@ -80,16 +85,14 @@ impl<'a> Vecs<'a> {
                 )
             })
             .collect();
-        this.serialized_indexes_to_ids = this
+        this.indexes_to_ids = this
             .index_to_id_to_vec
             .iter()
-            .map(|(index, id_to_vec)| {
-                (
-                    index.serialize_long(),
-                    id_to_vec.keys().cloned().collect::<Vec<_>>(),
-                )
-            })
+            .map(|(index, id_to_vec)| (*index, id_to_vec.keys().cloned().collect::<Vec<_>>()))
             .collect();
+        this.indexes_to_ids
+            .values_mut()
+            .for_each(|ids| sort_ids(ids));
 
         this
     }
@@ -150,35 +153,28 @@ impl<'a> Vecs<'a> {
         }
     }
 
-    pub fn ids(&self, pagination: Pagination) -> &[&'_ str] {
+    pub fn ids(&self, pagination: PaginationParam) -> &[&'_ str] {
         let len = self.ids.len();
         let start = pagination.start(len);
         let end = pagination.end(len);
         &self.ids[start..end]
     }
 
-    pub fn ids_to_indexes(&self, pagination: Pagination) -> BTreeMap<&'_ str, Vec<&'static str>> {
-        let len = self.serialized_id_to_indexes.len();
-        let start = pagination.start(len);
-        let end = pagination.end(len);
-        self.serialized_id_to_indexes
-            .iter()
-            .skip(start)
-            .take(end)
-            .map(|(ids, indexes)| (*ids, indexes.clone()))
-            .collect()
+    pub fn id_to_indexes(&self, id: String) -> Option<&Vec<&'static str>> {
+        self.id_to_indexes.get(id.as_str())
     }
 
-    pub fn indexes_to_ids(&self, pagination: Pagination) -> BTreeMap<&'static str, Vec<&'a str>> {
-        let len = self.serialized_indexes_to_ids.len();
+    pub fn index_to_ids(
+        &self,
+        PaginatedIndexParam { index, pagination }: PaginatedIndexParam,
+    ) -> Vec<&'a str> {
+        let vec = self.indexes_to_ids.get(&index).unwrap();
+
+        let len = vec.len();
         let start = pagination.start(len);
         let end = pagination.end(len);
-        self.serialized_indexes_to_ids
-            .iter()
-            .skip(start)
-            .take(end)
-            .map(|(index, ids)| (*index, ids.clone()))
-            .collect()
+
+        vec.iter().skip(start).take(end).cloned().collect()
     }
 }
 

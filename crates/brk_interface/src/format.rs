@@ -1,5 +1,5 @@
+use brk_rmcp::schemars::JsonSchema;
 use color_eyre::eyre::eyre;
-use rmcp::schemars::JsonSchema;
 use serde::Deserialize;
 
 #[allow(clippy::upper_case_acronyms)]

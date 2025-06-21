@@ -87,7 +87,12 @@ pub struct Config {
     #[arg(long, value_name = "SECONDS")]
     delay: Option<u64>,
 
-    /// DEV: Activate to watch the selected website's folder for changes, default: false, saved
+    /// Activate the Model Context Protocol (MCP) endpoint to give LLMs access to BRK, default: false, saved
+    #[serde(default, deserialize_with = "default_on_error")]
+    #[arg(long, value_name = "BOOL")]
+    mcp: Option<bool>,
+
+    /// DEV: Activate watching the selected website's folder for changes, default: false, saved
     #[serde(default, deserialize_with = "default_on_error")]
     #[arg(long, value_name = "BOOL")]
     watch: Option<bool>,
@@ -169,6 +174,10 @@ impl Config {
 
             if let Some(check_collisions) = config_args.check_collisions.take() {
                 config_saved.check_collisions = Some(check_collisions);
+            }
+
+            if let Some(mcp) = config_args.mcp.take() {
+                config_saved.mcp = Some(mcp);
             }
 
             if let Some(watch) = config_args.watch.take() {
@@ -354,6 +363,10 @@ impl Config {
 
     pub fn check_collisions(&self) -> bool {
         self.check_collisions.is_some_and(|b| b)
+    }
+
+    pub fn mcp(&self) -> bool {
+        self.mcp.is_some_and(|b| b)
     }
 
     pub fn watch(&self) -> bool {

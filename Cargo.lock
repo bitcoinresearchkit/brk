@@ -585,11 +585,11 @@ dependencies = [
  "brk_computer",
  "brk_core",
  "brk_indexer",
+ "brk_rmcp",
  "brk_vec",
  "color-eyre",
  "derive_deref",
- "rmcp",
- "schemars",
+ "schemars 1.0.0-rc.2",
  "serde",
  "serde_json",
  "serde_with",
@@ -619,6 +619,48 @@ dependencies = [
  "serde",
  "serde_json",
  "zerocopy",
+]
+
+[[package]]
+name = "brk_rmcp"
+version = "0.1.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "90d257949059da288c47b4f88ac80abcaa18afe65972d8b543369ee2099b37db"
+dependencies = [
+ "base64 0.22.1",
+ "brk_rmcp-macros",
+ "bytes",
+ "chrono",
+ "futures",
+ "http",
+ "http-body",
+ "http-body-util",
+ "paste",
+ "pin-project-lite",
+ "rand 0.9.1",
+ "schemars 1.0.0-rc.2",
+ "serde",
+ "serde_json",
+ "sse-stream",
+ "thiserror 2.0.12",
+ "tokio",
+ "tokio-stream",
+ "tokio-util",
+ "tower-service",
+ "tracing",
+ "uuid",
+]
+
+[[package]]
+name = "brk_rmcp-macros"
+version = "0.1.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "12869ae1128aad2e0777db2688e661a55d389ecfb863936145ea1b789e0c2d34"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "serde_json",
+ "syn 2.0.103",
 ]
 
 [[package]]
@@ -941,6 +983,7 @@ dependencies = [
  "brk_interface",
  "brk_logger",
  "brk_parser",
+ "brk_rmcp",
  "brk_vec",
  "clap",
  "clap_derive",
@@ -948,7 +991,6 @@ dependencies = [
  "jiff",
  "log",
  "minreq",
- "rmcp",
  "serde",
  "tokio",
  "tower-http",
@@ -3403,44 +3445,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "rmcp"
-version = "0.1.6"
-dependencies = [
- "base64 0.22.1",
- "bytes",
- "chrono",
- "futures",
- "http",
- "http-body",
- "http-body-util",
- "paste",
- "pin-project-lite",
- "rand 0.9.1",
- "rmcp-macros",
- "schemars",
- "serde",
- "serde_json",
- "sse-stream",
- "thiserror 2.0.12",
- "tokio",
- "tokio-stream",
- "tokio-util",
- "tower-service",
- "tracing",
- "uuid",
-]
-
-[[package]]
-name = "rmcp-macros"
-version = "0.1.6"
-dependencies = [
- "proc-macro2",
- "quote",
- "serde_json",
- "syn 2.0.103",
-]
-
-[[package]]
 name = "rolldown-ariadne"
 version = "0.5.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3542,6 +3546,18 @@ checksum = "4cd191f9397d57d581cddd31014772520aa448f65ef991055d7f61582c65165f"
 dependencies = [
  "dyn-clone",
  "ref-cast",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
+name = "schemars"
+version = "1.0.0-rc.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "284cf8058b5165c2e1aedb8f56f4b09a838a764d1c110178e1747d1f77a01ceb"
+dependencies = [
+ "dyn-clone",
+ "ref-cast",
  "schemars_derive",
  "serde",
  "serde_json",
@@ -3549,9 +3565,9 @@ dependencies = [
 
 [[package]]
 name = "schemars_derive"
-version = "0.9.0"
+version = "1.0.0-rc.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5016d94c77c6d32f0b8e08b781f7dc8a90c2007d4e77472cc2807bc10a8438fe"
+checksum = "3ce51e6bea03670e88edba2d724eed817b97f4ab017a1001bae5da325ce93fe7"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -3713,7 +3729,7 @@ dependencies = [
  "hex",
  "indexmap 1.9.3",
  "indexmap 2.9.0",
- "schemars",
+ "schemars 0.9.0",
  "serde",
  "serde_derive",
  "serde_json",

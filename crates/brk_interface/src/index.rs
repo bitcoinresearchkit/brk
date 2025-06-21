@@ -165,6 +165,7 @@ impl<'de> Deserialize<'de> for Index {
     {
         let str = String::deserialize(deserializer)?;
         if let Ok(index) = Index::try_from(str.as_str()) {
+            // dbg!(index);
             Ok(index)
         } else {
             Err(Error::custom("Bad index"))
