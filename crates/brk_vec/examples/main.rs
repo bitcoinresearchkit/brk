@@ -3,6 +3,7 @@ use std::{fs, path::Path};
 use brk_core::{DateIndex, Height, Version};
 use brk_vec::{AnyVec, CollectableVec, Format, GenericStoredVec, StoredVec, VecIterator};
 
+#[allow(clippy::upper_case_acronyms)]
 type VEC = StoredVec<DateIndex, u32>;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {

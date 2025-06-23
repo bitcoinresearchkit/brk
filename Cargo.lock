@@ -653,9 +653,9 @@ dependencies = [
 
 [[package]]
 name = "brk_rmcp-macros"
-version = "0.1.6"
+version = "0.1.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "12869ae1128aad2e0777db2688e661a55d389ecfb863936145ea1b789e0c2d34"
+checksum = "e7e3a4b2b6bdb0508a756e9296321b6ce33234070060ad68f68c8372b7b53fc6"
 dependencies = [
  "proc-macro2",
  "quote",

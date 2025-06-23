@@ -931,8 +931,8 @@ impl Vecs {
             |v, indexer, _, starting_indexes, exit| {
                 v.compute_count_from_indexes(
                     starting_indexes.height,
-                    &indexer.vecs.height_to_first_p2aindex,
-                    &indexer.vecs.p2aindex_to_p2abytes,
+                    &indexer.vecs.height_to_first_p2aaddressindex,
+                    &indexer.vecs.p2aaddressindex_to_p2abytes,
                     exit,
                 )
             },
@@ -946,8 +946,8 @@ impl Vecs {
             |v, indexer, _, starting_indexes, exit| {
                 v.compute_count_from_indexes(
                     starting_indexes.height,
-                    &indexer.vecs.height_to_first_p2msindex,
-                    &indexer.vecs.p2msindex_to_txindex,
+                    &indexer.vecs.height_to_first_p2msoutputindex,
+                    &indexer.vecs.p2msoutputindex_to_txindex,
                     exit,
                 )
             },
@@ -961,8 +961,8 @@ impl Vecs {
             |v, indexer, _, starting_indexes, exit| {
                 v.compute_count_from_indexes(
                     starting_indexes.height,
-                    &indexer.vecs.height_to_first_p2pk33index,
-                    &indexer.vecs.p2pk33index_to_p2pk33bytes,
+                    &indexer.vecs.height_to_first_p2pk33addressindex,
+                    &indexer.vecs.p2pk33addressindex_to_p2pk33bytes,
                     exit,
                 )
             },
@@ -976,8 +976,8 @@ impl Vecs {
             |v, indexer, _, starting_indexes, exit| {
                 v.compute_count_from_indexes(
                     starting_indexes.height,
-                    &indexer.vecs.height_to_first_p2pk65index,
-                    &indexer.vecs.p2pk65index_to_p2pk65bytes,
+                    &indexer.vecs.height_to_first_p2pk65addressindex,
+                    &indexer.vecs.p2pk65addressindex_to_p2pk65bytes,
                     exit,
                 )
             },
@@ -991,8 +991,8 @@ impl Vecs {
             |v, indexer, _, starting_indexes, exit| {
                 v.compute_count_from_indexes(
                     starting_indexes.height,
-                    &indexer.vecs.height_to_first_p2pkhindex,
-                    &indexer.vecs.p2pkhindex_to_p2pkhbytes,
+                    &indexer.vecs.height_to_first_p2pkhaddressindex,
+                    &indexer.vecs.p2pkhaddressindex_to_p2pkhbytes,
                     exit,
                 )
             },
@@ -1006,8 +1006,8 @@ impl Vecs {
             |v, indexer, _, starting_indexes, exit| {
                 v.compute_count_from_indexes(
                     starting_indexes.height,
-                    &indexer.vecs.height_to_first_p2shindex,
-                    &indexer.vecs.p2shindex_to_p2shbytes,
+                    &indexer.vecs.height_to_first_p2shaddressindex,
+                    &indexer.vecs.p2shaddressindex_to_p2shbytes,
                     exit,
                 )
             },
@@ -1021,8 +1021,8 @@ impl Vecs {
             |v, indexer, _, starting_indexes, exit| {
                 v.compute_count_from_indexes(
                     starting_indexes.height,
-                    &indexer.vecs.height_to_first_p2trindex,
-                    &indexer.vecs.p2trindex_to_p2trbytes,
+                    &indexer.vecs.height_to_first_p2traddressindex,
+                    &indexer.vecs.p2traddressindex_to_p2trbytes,
                     exit,
                 )
             },
@@ -1036,8 +1036,8 @@ impl Vecs {
             |v, indexer, _, starting_indexes, exit| {
                 v.compute_count_from_indexes(
                     starting_indexes.height,
-                    &indexer.vecs.height_to_first_p2wpkhindex,
-                    &indexer.vecs.p2wpkhindex_to_p2wpkhbytes,
+                    &indexer.vecs.height_to_first_p2wpkhaddressindex,
+                    &indexer.vecs.p2wpkhaddressindex_to_p2wpkhbytes,
                     exit,
                 )
             },
@@ -1051,8 +1051,8 @@ impl Vecs {
             |v, indexer, _, starting_indexes, exit| {
                 v.compute_count_from_indexes(
                     starting_indexes.height,
-                    &indexer.vecs.height_to_first_p2wshindex,
-                    &indexer.vecs.p2wshindex_to_p2wshbytes,
+                    &indexer.vecs.height_to_first_p2wshaddressindex,
+                    &indexer.vecs.p2wshaddressindex_to_p2wshbytes,
                     exit,
                 )
             },

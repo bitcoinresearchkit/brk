@@ -411,15 +411,15 @@ function createSerializedIndexes() {
     /** @satisfies {VecId} */ ("monthindex"),
     /** @satisfies {VecId} */ ("opreturnindex"),
     /** @satisfies {VecId} */ ("outputindex"),
-    /** @satisfies {VecId} */ ("p2aindex"),
-    /** @satisfies {VecId} */ ("p2msindex"),
-    /** @satisfies {VecId} */ ("p2pk33index"),
-    /** @satisfies {VecId} */ ("p2pk65index"),
-    /** @satisfies {VecId} */ ("p2pkhindex"),
-    /** @satisfies {VecId} */ ("p2shindex"),
-    /** @satisfies {VecId} */ ("p2trindex"),
-    /** @satisfies {VecId} */ ("p2wpkhindex"),
-    /** @satisfies {VecId} */ ("p2wshindex"),
+    /** @satisfies {VecId} */ ("p2aaddressindex"),
+    /** @satisfies {VecId} */ ("p2msoutputindex"),
+    /** @satisfies {VecId} */ ("p2pk33addressindex"),
+    /** @satisfies {VecId} */ ("p2pk65addressindex"),
+    /** @satisfies {VecId} */ ("p2pkhaddressindex"),
+    /** @satisfies {VecId} */ ("p2shaddressindex"),
+    /** @satisfies {VecId} */ ("p2traddressindex"),
+    /** @satisfies {VecId} */ ("p2wpkhaddressindex"),
+    /** @satisfies {VecId} */ ("p2wshaddressindex"),
     /** @satisfies {VecId} */ ("quarterindex"),
     /** @satisfies {VecId} */ ("txindex"),
     /** @satisfies {VecId} */ ("unknownoutputindex"),
@@ -460,23 +460,23 @@ function serializedIndexToIndex(serializedIndex) {
       return /** @satisfies {InputIndex} */ (6);
     case "outputindex":
       return /** @satisfies {OutputIndex} */ (9);
-    case "p2pk33index":
+    case "p2pk33addressindex":
       return /** @satisfies {P2PK33Index} */ (12);
-    case "p2pk65index":
+    case "p2pk65addressindex":
       return /** @satisfies {P2PK65Index} */ (13);
-    case "p2pkhindex":
+    case "p2pkhaddressindex":
       return /** @satisfies {P2PKHIndex} */ (14);
-    case "p2shindex":
+    case "p2shaddressindex":
       return /** @satisfies {P2SHIndex} */ (15);
-    case "p2trindex":
+    case "p2traddressindex":
       return /** @satisfies {P2TRIndex} */ (16);
-    case "p2wpkhindex":
+    case "p2wpkhaddressindex":
       return /** @satisfies {P2WPKHIndex} */ (17);
-    case "p2wshindex":
+    case "p2wshaddressindex":
       return /** @satisfies {P2WSHIndex} */ (18);
-    case "p2aindex":
+    case "p2aaddressindex":
       return /** @satisfies {P2AIndex} */ (10);
-    case "p2msindex":
+    case "p2msoutputindex":
       return /** @satisfies {P2MSIndex} */ (11);
     case "opreturnindex":
       return /** @satisfies {OpReturnIndex} */ (8);

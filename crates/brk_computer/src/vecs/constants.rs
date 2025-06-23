@@ -15,10 +15,10 @@ const VERSION: Version = Version::ZERO;
 
 #[derive(Clone)]
 pub struct Vecs {
-    pub _0: ComputedVecsFromHeight<StoredU8>,
-    pub _1: ComputedVecsFromHeight<StoredU8>,
-    pub _50: ComputedVecsFromHeight<StoredU8>,
-    pub _100: ComputedVecsFromHeight<StoredU8>,
+    pub constant_0: ComputedVecsFromHeight<StoredU8>,
+    pub constant_1: ComputedVecsFromHeight<StoredU8>,
+    pub constant_50: ComputedVecsFromHeight<StoredU8>,
+    pub constant_100: ComputedVecsFromHeight<StoredU8>,
 }
 
 impl Vecs {
@@ -29,33 +29,33 @@ impl Vecs {
         format: Format,
     ) -> color_eyre::Result<Self> {
         Ok(Self {
-            _0: ComputedVecsFromHeight::forced_import(
+            constant_0: ComputedVecsFromHeight::forced_import(
                 path,
-                "0",
+                "constant_0",
                 true,
                 version + VERSION + Version::ZERO,
                 format,
                 StorableVecGeneatorOptions::default().add_last(),
             )?,
-            _1: ComputedVecsFromHeight::forced_import(
+            constant_1: ComputedVecsFromHeight::forced_import(
                 path,
-                "1",
+                "constant_1",
                 true,
                 version + VERSION + Version::ZERO,
                 format,
                 StorableVecGeneatorOptions::default().add_last(),
             )?,
-            _50: ComputedVecsFromHeight::forced_import(
+            constant_50: ComputedVecsFromHeight::forced_import(
                 path,
-                "50",
+                "constant_50",
                 true,
                 version + VERSION + Version::ZERO,
                 format,
                 StorableVecGeneatorOptions::default().add_last(),
             )?,
-            _100: ComputedVecsFromHeight::forced_import(
+            constant_100: ComputedVecsFromHeight::forced_import(
                 path,
-                "100",
+                "constant_100",
                 true,
                 version + VERSION + Version::ZERO,
                 format,
@@ -71,7 +71,7 @@ impl Vecs {
         starting_indexes: &Indexes,
         exit: &Exit,
     ) -> color_eyre::Result<()> {
-        self._0.compute_all(
+        self.constant_0.compute_all(
             indexer,
             indexes,
             starting_indexes,
@@ -87,7 +87,7 @@ impl Vecs {
             },
         )?;
 
-        self._1.compute_all(
+        self.constant_1.compute_all(
             indexer,
             indexes,
             starting_indexes,
@@ -103,7 +103,7 @@ impl Vecs {
             },
         )?;
 
-        self._50.compute_all(
+        self.constant_50.compute_all(
             indexer,
             indexes,
             starting_indexes,
@@ -119,7 +119,7 @@ impl Vecs {
             },
         )?;
 
-        self._100.compute_all(
+        self.constant_100.compute_all(
             indexer,
             indexes,
             starting_indexes,
@@ -140,10 +140,10 @@ impl Vecs {
 
     pub fn vecs(&self) -> Vec<&dyn AnyCollectableVec> {
         [
-            self._0.vecs(),
-            self._1.vecs(),
-            self._50.vecs(),
-            self._100.vecs(),
+            self.constant_0.vecs(),
+            self.constant_1.vecs(),
+            self.constant_50.vecs(),
+            self.constant_100.vecs(),
         ]
         .into_iter()
         .flatten()

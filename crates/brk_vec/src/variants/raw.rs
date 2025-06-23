@@ -42,14 +42,14 @@ where
         version = version + VERSION;
         let res = Self::import(parent, name, version);
         match res {
-            // Err(Error::DifferentCompressionMode)
-            // | Err(Error::WrongEndian)
-            // | Err(Error::WrongLength)
-            // | Err(Error::DifferentVersion { .. }) => {
-            //     let path = Self::path_(parent, name);
-            //     fs::remove_file(path)?;
-            //     Self::import(parent, name, version)
-            // }
+            Err(Error::DifferentCompressionMode)
+            | Err(Error::WrongEndian)
+            | Err(Error::WrongLength)
+            | Err(Error::DifferentVersion { .. }) => {
+                let path = Self::path_(parent, name);
+                fs::remove_file(path)?;
+                Self::import(parent, name, version)
+            }
             _ => res,
         }
     }

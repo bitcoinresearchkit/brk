@@ -4,6 +4,7 @@
 # Builds
 target
 dist
+vecid-to-indexes.js
 
 # Copies
 *\ copy*
