@@ -1,5 +1,6 @@
 use std::{
-    fs,
+    fs::{self, File},
+    io,
     marker::PhantomData,
     mem,
     path::{Path, PathBuf},
@@ -14,14 +15,17 @@ use rayon::prelude::*;
 
 use crate::{
     AnyCollectableVec, AnyIterableVec, AnyVec, BaseVecIterator, BoxedVecIterator, CollectableVec,
-    GenericStoredVec, StoredIndex, StoredType, UnsafeSlice,
+    Format, GenericStoredVec, HEADER_OFFSET, Header, StoredIndex, StoredType, UnsafeSlice,
 };
+
+const VERSION: Version = Version::ONE;
 
 #[derive(Debug)]
 pub struct RawVec<I, T> {
-    version: Version,
+    header: Header,
     parent: PathBuf,
     name: String,
+    file: Option<File>,
     // Consider  Arc<ArcSwap<Option<Mmap>>> for dataraces when reorg ?
     mmap: Arc<ArcSwap<Mmap>>,
     pushed: Vec<T>,
@@ -34,40 +38,58 @@ where
     T: StoredType,
 {
     /// Same as import but will reset the folder under certain errors, so be careful !
-    pub fn forced_import(path: &Path, name: &str, version: Version) -> Result<Self> {
-        let res = Self::import(path, name, version);
+    pub fn forced_import(parent: &Path, name: &str, mut version: Version) -> Result<Self> {
+        version = version + VERSION;
+        let res = Self::import(parent, name, version);
         match res {
-            Err(Error::WrongEndian) | Err(Error::DifferentVersion { .. }) => {
-                fs::remove_dir_all(path)?;
-                Self::import(path, name, version)
-            }
+            // Err(Error::DifferentCompressionMode)
+            // | Err(Error::WrongEndian)
+            // | Err(Error::WrongLength)
+            // | Err(Error::DifferentVersion { .. }) => {
+            //     let path = Self::path_(parent, name);
+            //     fs::remove_file(path)?;
+            //     Self::import(parent, name, version)
+            // }
             _ => res,
         }
     }
 
-    pub fn import(path: &Path, name: &str, version: Version) -> Result<Self> {
-        let (version, mmap) = {
-            let path = path.join(name).join(I::to_string());
-
-            fs::create_dir_all(&path)?;
-
-            let version_path = Self::path_version_(&path);
-
-            if !version.validate(version_path.as_ref())? {
-                version.write(version_path.as_ref())?;
+    pub fn import(parent: &Path, name: &str, version: Version) -> Result<Self> {
+        let path = Self::path_(parent, name);
+        let (file, mmap, header) = match Self::open_file_(&path) {
+            Ok(mut file) => {
+                if file.metadata()?.len() == 0 {
+                    let header = Header::create_and_write(&mut file, version, Format::Raw)?;
+                    let mmap = Self::new_mmap(&file)?;
+                    (file, mmap, header)
+                } else {
+                    let mmap = Self::new_mmap(&file)?;
+                    // dbg!(&mmap[..]);
+                    let header = Header::import_and_verify(&mmap, version, Format::Raw)?;
+                    // dbg!((&header, name, I::to_string()));
+                    (file, mmap, header)
+                }
             }
-
-            let file = Self::open_file_(Self::path_vec_(&path).as_path())?;
-            let mmap = Arc::new(ArcSwap::new(Self::new_mmap(file)?));
-
-            (version, mmap)
+            Err(e) => match e.kind() {
+                io::ErrorKind::NotFound => {
+                    fs::create_dir_all(Self::folder_(parent, name))?;
+                    let mut file = Self::open_file_(&path)?;
+                    let header = Header::create_and_write(&mut file, version, Format::Raw)?;
+                    let mmap = Self::new_mmap(&file)?;
+                    (file, mmap, header)
+                }
+                _ => return Err(e.into()),
+            },
         };
+
+        let mmap = Arc::new(ArcSwap::new(mmap));
 
         Ok(Self {
             mmap,
-            version,
+            header,
+            file: Some(file),
             name: name.to_string(),
-            parent: path.to_owned(),
+            parent: parent.to_owned(),
             pushed: vec![],
             phantom: PhantomData,
         })
@@ -89,6 +111,10 @@ where
         iter.set_(i);
         iter
     }
+
+    pub fn write_header_if_needed(&mut self) -> io::Result<()> {
+        self.header.write_if_needed(self.file.as_mut().unwrap())
+    }
 }
 
 impl<I, T> GenericStoredVec<I, T> for RawVec<I, T>
@@ -98,11 +124,19 @@ where
 {
     #[inline]
     fn read_(&self, index: usize, mmap: &Mmap) -> Result<Option<T>> {
-        let index = index * Self::SIZE_OF_T;
+        let index = index * Self::SIZE_OF_T + HEADER_OFFSET;
         let slice = &mmap[index..(index + Self::SIZE_OF_T)];
         T::try_read_from_bytes(slice)
             .map(|v| Some(v))
             .map_err(Error::from)
+    }
+
+    fn header(&self) -> &Header {
+        &self.header
+    }
+
+    fn mut_header(&mut self) -> &mut Header {
+        &mut self.header
     }
 
     #[inline]
@@ -111,12 +145,22 @@ where
     }
 
     #[inline]
+    fn file(&self) -> &File {
+        self.file.as_ref().unwrap()
+    }
+
+    #[inline]
+    fn mut_file(&mut self) -> &mut File {
+        self.file.as_mut().unwrap()
+    }
+
+    #[inline]
     fn stored_len(&self) -> usize {
         self.stored_len_(&self.mmap.load())
     }
     #[inline]
     fn stored_len_(&self, mmap: &Mmap) -> usize {
-        mmap.len() / Self::SIZE_OF_T
+        (mmap.len() - HEADER_OFFSET) / Self::SIZE_OF_T
     }
 
     #[inline]
@@ -129,11 +173,13 @@ where
     }
 
     #[inline]
-    fn path(&self) -> PathBuf {
-        self.parent.join(self.name()).join(I::to_string())
+    fn parent(&self) -> &Path {
+        &self.parent
     }
 
     fn flush(&mut self) -> Result<()> {
+        self.write_header_if_needed()?;
+
         let pushed_len = self.pushed_len();
 
         if pushed_len == 0 {
@@ -172,11 +218,15 @@ where
             return Ok(());
         }
 
-        let len = index * Self::SIZE_OF_T;
+        let len = index * Self::SIZE_OF_T + HEADER_OFFSET;
 
         self.file_set_len(len as u64)?;
 
         Ok(())
+    }
+
+    fn reset(&mut self) -> Result<()> {
+        self.reset_()
     }
 }
 
@@ -187,12 +237,12 @@ where
 {
     #[inline]
     fn version(&self) -> Version {
-        self.version
+        self.header.vec_version()
     }
 
     #[inline]
     fn name(&self) -> &str {
-        self.name.as_str()
+        &self.name
     }
 
     #[inline]
@@ -219,9 +269,10 @@ where
 impl<I, T> Clone for RawVec<I, T> {
     fn clone(&self) -> Self {
         Self {
-            version: self.version,
+            header: self.header.clone(),
             parent: self.parent.clone(),
             name: self.name.clone(),
+            file: None,
             mmap: self.mmap.clone(),
             pushed: vec![],
             phantom: PhantomData,

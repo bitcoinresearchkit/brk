@@ -1,4 +1,4 @@
-use std::{fs, path::Path};
+use std::path::Path;
 
 use brk_core::{
     CheckedSub, Feerate, HalvingEpoch, Height, InputIndex, OutputIndex, Sats, StoredU32,
@@ -97,8 +97,6 @@ impl Vecs {
         fetched: Option<&fetched::Vecs>,
     ) -> color_eyre::Result<Self> {
         let compute_dollars = fetched.is_some();
-
-        fs::create_dir_all(path)?;
 
         let inputindex_to_value = ComputedVec::forced_import_or_init_from_2(
             computation,

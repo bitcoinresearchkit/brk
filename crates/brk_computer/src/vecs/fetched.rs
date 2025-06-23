@@ -1,4 +1,4 @@
-use std::{fs, path::Path};
+use std::path::Path;
 
 use brk_core::{
     Cents, Close, DateIndex, DecadeIndex, DifficultyEpoch, Dollars, Height, High, Low, MonthIndex,
@@ -75,8 +75,6 @@ impl Vecs {
         _computation: Computation,
         format: Format,
     ) -> color_eyre::Result<Self> {
-        fs::create_dir_all(path)?;
-
         let mut fetched_path = path.to_owned();
         fetched_path.pop();
         fetched_path = fetched_path.join("fetched");

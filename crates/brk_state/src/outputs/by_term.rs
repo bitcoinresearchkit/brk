@@ -21,8 +21,8 @@ impl<T> OutputsByTerm<(OutputFilter, T)> {
 impl<T> From<OutputsByTerm<T>> for OutputsByTerm<(OutputFilter, T)> {
     fn from(value: OutputsByTerm<T>) -> Self {
         Self {
-            long: (OutputFilter::From(150), value.long),
-            short: (OutputFilter::To(150), value.short),
+            short: (OutputFilter::To(5 * 30), value.short),
+            long: (OutputFilter::From(5 * 30), value.long),
         }
     }
 }

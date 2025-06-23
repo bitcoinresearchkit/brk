@@ -10,10 +10,13 @@ use arc_swap::ArcSwap;
 use brk_core::{Result, Value};
 use memmap2::Mmap;
 
+use crate::{AnyVec, HEADER_OFFSET, Header};
+
 use super::{StoredIndex, StoredType};
 
 pub trait GenericStoredVec<I, T>: Send + Sync
 where
+    Self: AnyVec,
     I: StoredIndex,
     T: StoredType,
 {
@@ -50,6 +53,10 @@ where
         self.stored_len() + self.pushed_len()
     }
 
+    fn index_to_name(&self) -> String {
+        format!("{}_to_{}", I::to_string(), self.name())
+    }
+
     fn mmap(&self) -> &ArcSwap<Mmap>;
 
     fn stored_len(&self) -> usize;
@@ -66,26 +73,47 @@ where
         self.mut_pushed().push(value)
     }
 
-    fn path(&self) -> PathBuf;
+    fn header(&self) -> &Header;
+    fn mut_header(&mut self) -> &mut Header;
+
+    fn parent(&self) -> &Path;
+
+    fn folder(&self) -> PathBuf {
+        self.parent().join(self.name())
+    }
+
+    fn folder_(parent: &Path, name: &str) -> PathBuf {
+        parent.join(name)
+    }
+
+    fn path(&self) -> PathBuf {
+        Self::path_(self.parent(), self.name())
+    }
+
+    fn path_(parent: &Path, name: &str) -> PathBuf {
+        Self::folder_(parent, name).join(I::to_string())
+    }
 
     // ---
 
-    fn open_file(&self) -> io::Result<File> {
-        Self::open_file_(&self.path_vec())
-    }
     fn open_file_(path: &Path) -> io::Result<File> {
-        OpenOptions::new()
+        let mut file = OpenOptions::new()
             .read(true)
             .create(true)
+            .write(true)
             .truncate(false)
-            .append(true)
-            .open(path)
+            .open(path)?;
+        file.seek(SeekFrom::End(0))?;
+        Ok(file)
     }
 
+    fn file(&self) -> &File;
+    fn mut_file(&mut self) -> &mut File;
+
     fn file_set_len(&mut self, len: u64) -> Result<()> {
-        let mut file = self.open_file()?;
-        Self::file_set_len_(&mut file, len)?;
-        self.update_mmap(file)
+        let file = self.mut_file();
+        Self::file_set_len_(file, len)?;
+        self.update_mmap()
     }
     fn file_set_len_(file: &mut File, len: u64) -> Result<()> {
         file.set_len(len)?;
@@ -94,29 +122,31 @@ where
     }
 
     fn file_write_all(&mut self, buf: &[u8]) -> Result<()> {
-        let mut file = self.open_file()?;
+        let file = self.mut_file();
         file.write_all(buf)?;
-        self.update_mmap(file)
+        self.update_mmap()
     }
 
     fn file_truncate_and_write_all(&mut self, len: u64, buf: &[u8]) -> Result<()> {
-        let mut file = self.open_file()?;
-        Self::file_set_len_(&mut file, len)?;
+        let file = self.mut_file();
+        Self::file_set_len_(file, len)?;
         file.write_all(buf)?;
-        self.update_mmap(file)
+        self.update_mmap()
     }
+
+    fn reset(&mut self) -> Result<()>;
 
     #[inline]
-    fn reset(&mut self) -> Result<()> {
-        self.file_truncate_and_write_all(0, &[])
+    fn reset_(&mut self) -> Result<()> {
+        self.file_truncate_and_write_all(HEADER_OFFSET as u64, &[])
     }
 
-    fn new_mmap(file: File) -> Result<Arc<Mmap>> {
-        Ok(Arc::new(unsafe { Mmap::map(&file)? }))
+    fn new_mmap(file: &File) -> Result<Arc<Mmap>> {
+        Ok(Arc::new(unsafe { Mmap::map(file)? }))
     }
 
-    fn update_mmap(&mut self, file: File) -> Result<()> {
-        let mmap = Self::new_mmap(file)?;
+    fn update_mmap(&mut self) -> Result<()> {
+        let mmap = Self::new_mmap(self.file())?;
         self.mmap().store(mmap);
         Ok(())
     }
@@ -139,28 +169,9 @@ where
 
     fn truncate_if_needed(&mut self, index: I) -> Result<()>;
 
-    #[inline]
-    fn path_vec(&self) -> PathBuf {
-        Self::path_vec_(&self.path())
-    }
-    #[inline]
-    fn path_vec_(path: &Path) -> PathBuf {
-        path.join("vec")
-    }
-
-    #[inline]
-    fn path_version_(path: &Path) -> PathBuf {
-        path.join("version")
-    }
-
-    #[inline]
-    fn path_compressed_(path: &Path) -> PathBuf {
-        path.join("compressed")
-    }
-
     fn modified_time_(&self) -> Result<Duration> {
         Ok(self
-            .path_vec()
+            .file()
             .metadata()?
             .modified()?
             .duration_since(time::UNIX_EPOCH)?)

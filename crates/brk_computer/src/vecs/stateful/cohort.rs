@@ -1,5 +1,5 @@
 use core::panic;
-use std::{fs, path::Path};
+use std::path::Path;
 
 use brk_core::{
     Bitcoin, DateIndex, Dollars, Height, Result, Sats, StoredF32, StoredF64, StoredUsize, Version,
@@ -142,8 +142,6 @@ impl Vecs {
         compute_relative_to_all: bool,
     ) -> color_eyre::Result<Self> {
         let compute_dollars = fetched.is_some();
-
-        fs::create_dir_all(path)?;
 
         // let prefix = |s: &str| cohort_name.map_or(s.to_string(), |name| format!("{s}_{name}"));
 

@@ -37,7 +37,8 @@ impl StoreMeta {
         let mut partition = open_partition_handle()?;
 
         if !is_same_version {
-            Self::reset_(path)?;
+            fs::remove_dir_all(path)?;
+            fs::create_dir(path)?;
             keyspace.delete_partition(partition)?;
             keyspace.persist(fjall::PersistMode::SyncAll)?;
             partition = open_partition_handle()?;
@@ -76,12 +77,9 @@ impl StoreMeta {
         height.write(&self.path_height())
     }
 
-    // pub fn reset(&self) -> io::Result<()> {
-    //     Self::reset_(self.pathbuf.as_path())
-    // }
-    fn reset_(path: &Path) -> io::Result<()> {
-        fs::remove_dir_all(path)?;
-        fs::create_dir(path)
+    pub fn reset(&mut self) {
+        self.height.take();
+        self.len = 0
     }
 
     pub fn path(&self) -> &Path {

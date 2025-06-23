@@ -5,7 +5,7 @@ use brk_core::{
     P2SHIndex, P2TRIndex, P2WPKHIndex, P2WSHIndex, Result, TxIndex, UnknownOutputIndex,
 };
 use brk_parser::NUMBER_OF_UNSAFE_BLOCKS;
-use brk_vec::{AnyIterableVec, AnyVec, IndexedVec, StoredIndex, StoredType};
+use brk_vec::{AnyIndexedVec, AnyIterableVec, AnyVec, IndexedVec, StoredIndex, StoredType};
 use color_eyre::eyre::ContextCompat;
 
 use crate::{Stores, Vecs};
@@ -215,10 +215,10 @@ where
     I: StoredType + StoredIndex + From<usize>,
     T: StoredType,
 {
-    if height_to_index
-        .height()
-        .is_ok_and(|h| h + 1_u32 == starting_height)
-    {
+    let h = height_to_index.height();
+    if h.is_zero() {
+        None
+    } else if height_to_index.height() + 1_u32 == starting_height {
         Some(I::from(index_to_else.len()))
     } else {
         height_to_index.iter().get_inner(starting_height)

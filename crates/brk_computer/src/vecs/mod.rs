@@ -1,4 +1,4 @@
-use std::{fs, path::Path, thread};
+use std::{path::Path, thread};
 
 use brk_core::Version;
 use brk_exit::Exit;
@@ -44,8 +44,6 @@ impl Vecs {
         computation: Computation,
         format: Format,
     ) -> color_eyre::Result<Self> {
-        fs::create_dir_all(path)?;
-
         let (indexes, fetched) = thread::scope(|s| {
             let indexes_handle = s.spawn(|| {
                 indexes::Vecs::forced_import(

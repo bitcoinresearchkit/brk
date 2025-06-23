@@ -20,6 +20,7 @@ pub enum Error {
 
     WrongEndian,
     DifferentVersion { found: Version, expected: Version },
+    UnexpectedData,
     MmapsVecIsTooSmall,
     IndexTooHigh,
     EmptyVec,
@@ -102,12 +103,13 @@ impl fmt::Display for Error {
             Error::BincodeDecodeError(error) => Debug::fmt(&error, f),
             Error::BincodeEncodeError(error) => Debug::fmt(&error, f),
             Error::ZeroCopyError => write!(f, "ZeroCopy error"),
+            Error::UnexpectedData => write!(f, "Unexpected data"),
 
             Error::WrongEndian => write!(f, "Wrong endian"),
             Error::DifferentVersion { found, expected } => {
                 write!(
                     f,
-                    "Different version; found: {found:?}, expected: {expected:?}"
+                    "Different version found: {found:?}, expected: {expected:?}"
                 )
             }
             Error::MmapsVecIsTooSmall => write!(f, "Mmaps vec is too small"),

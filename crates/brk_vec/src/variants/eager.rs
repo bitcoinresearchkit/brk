@@ -5,7 +5,6 @@ use std::{
     fmt::Debug,
     ops::{Add, Div, Mul},
     path::{Path, PathBuf},
-    sync::Arc,
     time::Duration,
 };
 
@@ -29,10 +28,8 @@ const MAX_CACHE_SIZE: usize = 210 * ONE_MIB;
 const DCA_AMOUNT: Dollars = Dollars::mint(100.0);
 
 #[derive(Debug, Clone)]
-pub struct EagerVec<I, T> {
-    computed_version: Arc<ArcSwap<Option<Version>>>,
-    inner: StoredVec<I, T>,
-}
+pub struct EagerVec<I, T>(StoredVec<I, T>);
+// computed_version: Arc<ArcSwap<Option<Version>>>,
 
 impl<I, T> EagerVec<I, T>
 where
@@ -47,12 +44,9 @@ where
         version: Version,
         format: Format,
     ) -> Result<Self> {
-        let inner = StoredVec::forced_import(path, value_name, version, format)?;
-
-        Ok(Self {
-            computed_version: Arc::new(ArcSwap::from_pointee(None)),
-            inner,
-        })
+        Ok(Self(StoredVec::forced_import(
+            path, value_name, version, format,
+        )?))
     }
 
     fn safe_truncate_if_needed(&mut self, index: I, exit: &Exit) -> Result<()> {
@@ -63,7 +57,7 @@ where
         if !blocked {
             exit.block();
         }
-        self.inner.truncate_if_needed(index)?;
+        self.0.truncate_if_needed(index)?;
         if !blocked {
             exit.release();
         }
@@ -80,11 +74,11 @@ where
                 if ord == Ordering::Greater {
                     self.safe_truncate_if_needed(index, exit)?;
                 }
-                self.inner.push(value);
+                self.0.push(value);
             }
         }
 
-        if self.inner.pushed_len() * Self::SIZE_OF >= MAX_CACHE_SIZE {
+        if self.0.pushed_len() * Self::SIZE_OF >= MAX_CACHE_SIZE {
             self.safe_flush(exit)
         } else {
             Ok(())
@@ -99,7 +93,7 @@ where
         if !blocked {
             exit.block();
         }
-        self.inner.flush()?;
+        self.0.flush()?;
         if !blocked {
             exit.release();
         }
@@ -107,33 +101,34 @@ where
     }
 
     pub fn path(&self) -> PathBuf {
-        self.inner.path()
+        self.0.path()
     }
 
     pub fn get_or_read(&self, index: I, mmap: &Mmap) -> Result<Option<Value<T>>> {
-        self.inner.get_or_read(index, mmap)
+        self.0.get_or_read(index, mmap)
     }
 
     pub fn mmap(&self) -> &ArcSwap<Mmap> {
-        self.inner.mmap()
+        self.0.mmap()
     }
 
     pub fn inner_version(&self) -> Version {
-        self.inner.version()
+        self.0.version()
     }
 
-    #[inline]
-    fn path_computed_version(&self) -> PathBuf {
-        self.inner.path().join("computed_version")
+    fn update_computed_version(&mut self, computed_version: Version) {
+        self.0
+            .mut_header()
+            .update_computed_version(computed_version);
     }
 
     pub fn validate_computed_version_or_reset_file(&mut self, version: Version) -> Result<()> {
-        let path = self.path_computed_version();
-        if version.validate(path.as_ref()).is_err() {
-            self.inner.reset()?;
+        if version != self.0.header().computed_version() {
+            self.update_computed_version(version);
+            if !self.is_empty() {
+                self.0.reset()?;
+            }
         }
-        version.write(path.as_ref())?;
-        self.computed_version.store(Arc::new(Some(version)));
 
         if self.is_empty() {
             info!(
@@ -157,9 +152,7 @@ where
     where
         F: FnMut(I) -> (I, T),
     {
-        self.validate_computed_version_or_reset_file(
-            Version::ZERO + self.inner.version() + version,
-        )?;
+        self.validate_computed_version_or_reset_file(Version::ZERO + self.0.version() + version)?;
 
         let index = max_from.min(I::from(self.len()));
         (index.to_usize()?..to).try_for_each(|i| {
@@ -216,7 +209,7 @@ where
         F: FnMut((A, B, &Self)) -> (I, T),
     {
         self.validate_computed_version_or_reset_file(
-            Version::ZERO + self.inner.version() + other.version(),
+            Version::ZERO + self.0.version() + other.version(),
         )?;
 
         let index = max_from.min(A::from(self.len()));
@@ -239,7 +232,7 @@ where
         T: Add<Output = T>,
     {
         self.validate_computed_version_or_reset_file(
-            Version::ZERO + self.inner.version() + added.version() + adder.version(),
+            Version::ZERO + self.0.version() + added.version() + adder.version(),
         )?;
 
         let index = max_from.min(I::from(self.len()));
@@ -265,7 +258,7 @@ where
         T: CheckedSub,
     {
         self.validate_computed_version_or_reset_file(
-            Version::ZERO + self.inner.version() + subtracted.version() + subtracter.version(),
+            Version::ZERO + self.0.version() + subtracted.version() + subtracter.version(),
         )?;
 
         let index = max_from.min(I::from(self.len()));
@@ -294,7 +287,7 @@ where
         T2: StoredType,
     {
         self.validate_computed_version_or_reset_file(
-            Version::ZERO + self.inner.version() + source.version(),
+            Version::ZERO + self.0.version() + source.version(),
         )?;
 
         let index = max_from.min(I::from(self.len()));
@@ -333,7 +326,7 @@ where
         T: From<T4>,
     {
         self.validate_computed_version_or_reset_file(
-            Version::ZERO + self.inner.version() + multiplied.version() + multiplier.version(),
+            Version::ZERO + self.0.version() + multiplied.version() + multiplier.version(),
         )?;
 
         let index = max_from.min(I::from(self.len()));
@@ -416,7 +409,7 @@ where
         T: From<T5>,
     {
         self.validate_computed_version_or_reset_file(
-            Version::ONE + self.inner.version() + divided.version() + divider.version(),
+            Version::ONE + self.0.version() + divided.version() + divider.version(),
         )?;
 
         let index = max_from.min(I::from(self.len()));
@@ -453,7 +446,7 @@ where
         T: From<StoredF32>,
     {
         self.validate_computed_version_or_reset_file(
-            Version::ZERO + self.inner.version() + ath.version() + close.version(),
+            Version::ZERO + self.0.version() + ath.version() + close.version(),
         )?;
 
         let index = max_from.min(I::from(self.len()));
@@ -483,12 +476,11 @@ where
         T: StoredIndex,
     {
         self.validate_computed_version_or_reset_file(
-            Version::ZERO + self.inner.version() + other.version(),
+            Version::ZERO + self.0.version() + other.version(),
         )?;
 
         let index = max_from.min(
-            VecIterator::last(self.inner.into_iter())
-                .map_or_else(T::default, |(_, v)| v.into_inner()),
+            VecIterator::last(self.0.into_iter()).map_or_else(T::default, |(_, v)| v.into_inner()),
         );
         let mut prev_i = None;
         other.iter_at(index).try_for_each(|(v, i)| -> Result<()> {
@@ -518,10 +510,7 @@ where
         T: StoredIndex,
     {
         self.validate_computed_version_or_reset_file(
-            Version::ZERO
-                + self.inner.version()
-                + first_indexes.version()
-                + indexes_count.version(),
+            Version::ZERO + self.0.version() + first_indexes.version() + indexes_count.version(),
         )?;
 
         let mut indexes_count_iter = indexes_count.iter();
@@ -613,10 +602,7 @@ where
         <T2 as TryInto<T>>::Error: error::Error + 'static,
     {
         self.validate_computed_version_or_reset_file(
-            Version::ZERO
-                + self.inner.version()
-                + first_indexes.version()
-                + other_to_else.version(),
+            Version::ZERO + self.0.version() + first_indexes.version() + other_to_else.version(),
         )?;
 
         let mut other_iter = first_indexes.iter();
@@ -654,10 +640,7 @@ where
         A: StoredIndex + StoredType,
     {
         self.validate_computed_version_or_reset_file(
-            Version::ZERO
-                + self.inner.version()
-                + self_to_other.version()
-                + other_to_self.version(),
+            Version::ZERO + self.0.version() + self_to_other.version() + other_to_self.version(),
         )?;
 
         let mut other_to_self_iter = other_to_self.iter();
@@ -686,10 +669,7 @@ where
         T2: StoredIndex + StoredType,
     {
         self.validate_computed_version_or_reset_file(
-            Version::ZERO
-                + self.inner.version()
-                + first_indexes.version()
-                + indexes_count.version(),
+            Version::ZERO + self.0.version() + first_indexes.version() + indexes_count.version(),
         )?;
 
         let mut indexes_count_iter = indexes_count.iter();
@@ -721,7 +701,7 @@ where
         T: From<usize> + Add<T, Output = T>,
     {
         self.validate_computed_version_or_reset_file(
-            Version::ZERO + self.inner.version() + others.iter().map(|v| v.version()).sum(),
+            Version::ZERO + self.0.version() + others.iter().map(|v| v.version()).sum(),
         )?;
 
         if others.is_empty() {
@@ -756,7 +736,7 @@ where
         T: From<usize> + Add<T, Output = T> + Ord,
     {
         self.validate_computed_version_or_reset_file(
-            Version::ZERO + self.inner.version() + others.iter().map(|v| v.version()).sum(),
+            Version::ZERO + self.0.version() + others.iter().map(|v| v.version()).sum(),
         )?;
 
         if others.is_empty() {
@@ -793,7 +773,7 @@ where
         T: From<usize> + Add<T, Output = T> + Ord,
     {
         self.validate_computed_version_or_reset_file(
-            Version::ZERO + self.inner.version() + others.iter().map(|v| v.version()).sum(),
+            Version::ZERO + self.0.version() + others.iter().map(|v| v.version()).sum(),
         )?;
 
         if others.is_empty() {
@@ -849,12 +829,13 @@ where
         f32: From<T> + From<T2>,
     {
         self.validate_computed_version_or_reset_file(
-            Version::ZERO + self.inner.version() + source.version(),
+            Version::ONE + self.0.version() + source.version(),
         )?;
 
         let index = max_from.min(I::from(self.len()));
         let mut prev = None;
         let min_prev_i = min_i.unwrap_or_default().unwrap_to_usize();
+        let mut other_iter = source.iter();
         source.iter_at(index).try_for_each(|(i, value)| {
             let value = value.into_inner();
 
@@ -867,11 +848,21 @@ where
                         T::from(0.0)
                     });
                 }
-                let len = (i.unwrap_to_usize() - min_prev_i + 1).min(sma);
-                let sma = T::from(
-                    (f32::from(prev.clone().unwrap()) * (len - 1) as f32 + f32::from(value))
-                        / len as f32,
-                );
+
+                let processed_values_count = i.unwrap_to_usize() - min_prev_i + 1;
+                let len = (processed_values_count).min(sma);
+
+                let value = f32::from(value);
+
+                let sma = T::from(if processed_values_count > sma {
+                    let prev_sum = f32::from(prev.clone().unwrap()) * len as f32;
+                    let value_to_subtract = f32::from(
+                        other_iter.unwrap_get_inner_(i.unwrap_to_usize().checked_sub(sma).unwrap()),
+                    );
+                    (prev_sum - value_to_subtract + value) / len as f32
+                } else {
+                    (f32::from(prev.clone().unwrap()) * (len - 1) as f32 + value) / len as f32
+                });
 
                 prev.replace(sma.clone());
                 self.forced_push_at(i, sma, exit)
@@ -897,7 +888,7 @@ where
         T: From<f32>,
     {
         self.validate_computed_version_or_reset_file(
-            Version::ZERO + self.inner.version() + source.version(),
+            Version::ZERO + self.0.version() + source.version(),
         )?;
 
         let index = max_from.min(I::from(self.len()));
@@ -928,7 +919,7 @@ where
         T: CheckedSub + Default,
     {
         self.validate_computed_version_or_reset_file(
-            Version::ZERO + self.inner.version() + source.version(),
+            Version::ZERO + self.0.version() + source.version(),
         )?;
 
         let index = max_from.min(I::from(self.len()));
@@ -961,7 +952,7 @@ where
         T: From<f32>,
     {
         self.validate_computed_version_or_reset_file(
-            Version::ZERO + self.inner.version() + source.version(),
+            Version::ZERO + self.0.version() + source.version(),
         )?;
 
         let index = max_from.min(I::from(self.len()));
@@ -997,7 +988,7 @@ where
         T: From<f32>,
     {
         self.validate_computed_version_or_reset_file(
-            Version::ZERO + self.inner.version() + percentage_returns.version(),
+            Version::ZERO + self.0.version() + percentage_returns.version(),
         )?;
 
         if days % 365 != 0 {
@@ -1056,7 +1047,7 @@ impl EagerVec<DateIndex, Sats> {
         exit: &Exit,
     ) -> Result<()> {
         self.validate_computed_version_or_reset_file(
-            Version::ZERO + self.inner.version() + closes.version(),
+            Version::ZERO + self.0.version() + closes.version(),
         )?;
 
         let mut other_iter = closes.iter();
@@ -1105,7 +1096,7 @@ impl EagerVec<DateIndex, Sats> {
         exit: &Exit,
     ) -> Result<()> {
         self.validate_computed_version_or_reset_file(
-            Version::ZERO + self.inner.version() + closes.version(),
+            Version::ZERO + self.0.version() + closes.version(),
         )?;
 
         let mut prev = None;
@@ -1146,7 +1137,7 @@ impl EagerVec<DateIndex, Dollars> {
         exit: &Exit,
     ) -> Result<()> {
         self.validate_computed_version_or_reset_file(
-            Version::ONE + self.inner.version() + stacks.version(),
+            Version::ONE + self.0.version() + stacks.version(),
         )?;
 
         let index = max_from.min(DateIndex::from(self.len()));
@@ -1177,7 +1168,7 @@ impl EagerVec<DateIndex, Dollars> {
         exit: &Exit,
     ) -> Result<()> {
         self.validate_computed_version_or_reset_file(
-            Version::ZERO + self.inner.version() + stacks.version(),
+            Version::ZERO + self.0.version() + stacks.version(),
         )?;
 
         let index = max_from.min(DateIndex::from(self.len()));
@@ -1209,7 +1200,7 @@ where
         exit: &Exit,
     ) -> Result<()> {
         self.validate_computed_version_or_reset_file(
-            Version::ZERO + self.inner.version() + sats.version(),
+            Version::ZERO + self.0.version() + sats.version(),
         )?;
 
         let index = max_from.min(I::from(self.len()));
@@ -1234,7 +1225,7 @@ where
         exit: &Exit,
     ) -> Result<()> {
         self.validate_computed_version_or_reset_file(
-            Version::ZERO + self.inner.version() + bitcoin.version(),
+            Version::ZERO + self.0.version() + bitcoin.version(),
         )?;
 
         let mut price_iter = price.iter();
@@ -1260,7 +1251,7 @@ where
 //     ) -> Result<()> {
 //         self.validate_computed_version_or_reset_file(
 //             Version::ZERO
-//                 + self.inner.version()
+//                 + self.0.version()
 //                 + bitcoin.version()
 //                 + i_to_height.version()
 //                 + price.version(),
@@ -1289,7 +1280,7 @@ where
     type IntoIter = StoredVecIterator<'a, I, T>;
 
     fn into_iter(self) -> Self::IntoIter {
-        self.inner.into_iter()
+        self.0.into_iter()
     }
 }
 
@@ -1300,28 +1291,22 @@ where
 {
     #[inline]
     fn version(&self) -> Version {
-        self.computed_version
-            .load()
-            .or_else(|| {
-                dbg!(self.path());
-                None
-            })
-            .unwrap()
+        self.0.header().computed_version()
     }
 
     #[inline]
     fn name(&self) -> &str {
-        self.inner.name()
+        self.0.name()
     }
 
     #[inline]
     fn len(&self) -> usize {
-        self.inner.len()
+        self.0.len()
     }
 
     #[inline]
     fn modified_time(&self) -> Result<Duration> {
-        self.inner.modified_time()
+        self.0.modified_time()
     }
 
     #[inline]
@@ -1345,7 +1330,7 @@ where
         I: StoredIndex,
         T: StoredType + 'a,
     {
-        Box::new(self.inner.into_iter())
+        Box::new(self.0.into_iter())
     }
 }
 

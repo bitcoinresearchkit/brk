@@ -26,7 +26,7 @@ fn main() -> color_eyre::Result<()> {
 
     let mut indexer = Indexer::forced_import(outputs)?;
 
-    indexer.index(&parser, rpc, &exit, false)?;
+    indexer.index(&parser, rpc, &exit, true)?;
 
     dbg!(i.elapsed());
 

@@ -53,11 +53,7 @@ impl Indexer {
         check_collisions: bool,
     ) -> color_eyre::Result<Indexes> {
         let starting_indexes = Indexes::try_from((&mut self.vecs, &self.stores, rpc))
-            .unwrap_or_else(|_report| {
-                let indexes = Indexes::default();
-                indexes.push_if_needed(&mut self.vecs).unwrap();
-                indexes
-            });
+            .unwrap_or_else(|_report| Indexes::default());
 
         exit.block();
         self.stores

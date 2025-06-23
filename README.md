@@ -44,6 +44,10 @@ The toolkit can be used in various ways to accommodate as many needs as possible
 - **[API](https://github.com/bitcoinresearchkit/brk/tree/main/crates/brk_server#endpoints)** \
   Researchers and developers are free to use BRK's public API with ![Datasets variant count](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fbitcoinresearchkit.org%2Fapi%2Fvecs%2Fvariant-count&query=%24&style=flat&label=%20&color=white) dataset variants at their disposal. \
   Just like the website, it's entirely free, with no authentication or rate-limiting.
+- AI \
+  LLMs have to possibility to connect to BRK's backend through a [MCP](https://modelcontextprotocol.io/introduction). \
+  It will give them access to the same tools as the API, with no restrictions, and allow you to have your very own data analysts. \
+  One-shot output examples: [Document](https://claude.ai/public/artifacts/71194d29-f965-417c-ba09-fdf0e4ecb1d5) // [Dashboard](https://claude.ai/public/artifacts/beef143f-399a-4ed4-b8bf-c986b776de42) // [Dashboard 2](https://claude.ai/public/artifacts/5430ae49-bb3d-4fc1-ab24-f1e33deb40dc)
 - **[CLI](https://crates.io/crates/brk_cli)** \
   Node runners are strongly encouraged to try out and self-host their own instance using BRK's command line interface. \
   The CLI has multiple cogs available for users to tweak to adapt to all situations with even the possibility for web developers to create their own custom website which could later on be added as an alternative front-end.
