@@ -18,6 +18,10 @@ impl Format {
         fs::write(path, self.as_bytes())
     }
 
+    pub fn is_raw(&self) -> bool {
+        *self == Self::Raw
+    }
+
     pub fn is_compressed(&self) -> bool {
         *self == Self::Compressed
     }

@@ -87,7 +87,7 @@ pub struct Config {
     #[arg(long, value_name = "SECONDS")]
     delay: Option<u64>,
 
-    /// Activate the Model Context Protocol (MCP) endpoint to give LLMs access to BRK, default: false, saved
+    /// Activate the Model Context Protocol (MCP) endpoint to give LLMs access to BRK (experimental), default: false, saved
     #[serde(default, deserialize_with = "default_on_error")]
     #[arg(long, value_name = "BOOL")]
     mcp: Option<bool>,

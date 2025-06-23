@@ -1,4 +1,4 @@
-use std::{fs, path::Path};
+use std::path::Path;
 
 use brk_core::{StoredU8, Version};
 use brk_exit::Exit;
@@ -28,8 +28,6 @@ impl Vecs {
         _computation: Computation,
         format: Format,
     ) -> color_eyre::Result<Self> {
-        fs::create_dir_all(path)?;
-
         Ok(Self {
             _0: ComputedVecsFromHeight::forced_import(
                 path,

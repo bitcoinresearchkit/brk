@@ -31,7 +31,7 @@ use utils::*;
 use xor_bytes::*;
 use xor_index::*;
 
-pub const NUMBER_OF_UNSAFE_BLOCKS: usize = 1000;
+pub const NUMBER_OF_UNSAFE_BLOCKS: usize = 100;
 
 const MAGIC_BYTES: [u8; 4] = [249, 190, 180, 217];
 const BOUND_CAP: usize = 50;

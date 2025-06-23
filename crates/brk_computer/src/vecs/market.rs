@@ -1,4 +1,4 @@
-use std::{fs, path::Path, thread};
+use std::{path::Path, thread};
 
 use brk_core::{Date, DateIndex, Dollars, Height, Sats, StoredF32, StoredUsize, Version};
 use brk_exit::Exit;
@@ -168,8 +168,6 @@ impl Vecs {
         _computation: Computation,
         format: Format,
     ) -> color_eyre::Result<Self> {
-        fs::create_dir_all(path)?;
-
         Ok(Self {
             height_to_marketcap: EagerVec::forced_import(
                 path,

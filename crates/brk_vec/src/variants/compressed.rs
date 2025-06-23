@@ -14,8 +14,8 @@ use zstd::DEFAULT_COMPRESSION_LEVEL;
 
 use crate::{
     AnyCollectableVec, AnyIterableVec, AnyVec, BaseVecIterator, BoxedVecIterator, CollectableVec,
-    CompressedPageMetadata, CompressedPagesMetadata, GenericStoredVec, RawVec, StoredIndex,
-    StoredType, UnsafeSlice,
+    CompressedPageMetadata, CompressedPagesMetadata, GenericStoredVec, HEADER_OFFSET, Header,
+    RawVec, StoredIndex, StoredType, UnsafeSlice,
 };
 
 const ONE_KIB: usize = 1024;
@@ -23,7 +23,7 @@ const ONE_MIB: usize = ONE_KIB * ONE_KIB;
 pub const MAX_CACHE_SIZE: usize = 100 * ONE_MIB;
 pub const MAX_PAGE_SIZE: usize = 64 * ONE_KIB;
 
-const VERSION: Version = Version::ONE;
+const VERSION: Version = Version::TWO;
 
 #[derive(Debug)]
 pub struct CompressedVec<I, T> {
@@ -41,47 +41,38 @@ where
     pub const CACHE_LENGTH: usize = MAX_CACHE_SIZE / Self::PAGE_SIZE;
 
     /// Same as import but will reset the folder under certain errors, so be careful !
-    pub fn forced_import(path: &Path, name: &str, mut version: Version) -> Result<Self> {
+    pub fn forced_import(parent: &Path, name: &str, mut version: Version) -> Result<Self> {
         version = version + VERSION;
-
-        let res = Self::import(path, name, version);
+        let res = Self::import(parent, name, version);
         match res {
-            Err(Error::WrongEndian)
-            | Err(Error::DifferentVersion { .. })
-            | Err(Error::DifferentCompressionMode) => {
-                fs::remove_dir_all(path)?;
-                Self::import(path, name, version)
+            Err(Error::DifferentCompressionMode)
+            | Err(Error::WrongEndian)
+            | Err(Error::WrongLength)
+            | Err(Error::DifferentVersion { .. }) => {
+                let path = Self::path_(parent, name);
+                fs::remove_file(path)?;
+                Self::import(parent, name, version)
             }
             _ => res,
         }
     }
 
-    pub fn import(path: &Path, name: &str, version: Version) -> Result<Self> {
+    pub fn import(parent: &Path, name: &str, version: Version) -> Result<Self> {
+        let inner = RawVec::import(parent, name, version)?;
+
         let pages_meta = {
-            let path = path.join(name).join(I::to_string());
-
-            let vec_exists = fs::exists(Self::path_vec_(&path)).is_ok_and(|b| b);
-            let compressed_path = Self::path_compressed_(&path);
-            let compressed_exists = fs::exists(&compressed_path).is_ok_and(|b| b);
-
-            if vec_exists && !compressed_exists {
-                return Err(Error::DifferentCompressionMode);
+            let path = inner
+                .folder()
+                .join(format!("{}-pages-meta", I::to_string()));
+            if inner.is_empty() {
+                let _ = fs::remove_file(&path);
             }
-
-            if !vec_exists && !compressed_exists {
-                fs::create_dir_all(&path)?;
-                File::create(&compressed_path)?;
-            }
-
             Arc::new(ArcSwap::new(Arc::new(CompressedPagesMetadata::read(
                 &path,
             )?)))
         };
 
-        Ok(Self {
-            inner: RawVec::import(path, name, version)?,
-            pages_meta,
-        })
+        Ok(Self { inner, pages_meta })
     }
 
     fn decode_page(&self, page_index: usize, mmap: &Mmap) -> Result<Vec<T>> {
@@ -182,9 +173,29 @@ where
             .cloned())
     }
 
+    fn header(&self) -> &Header {
+        self.inner.header()
+    }
+
+    fn mut_header(&mut self) -> &mut Header {
+        self.inner.mut_header()
+    }
+
     #[inline]
     fn mmap(&self) -> &ArcSwap<Mmap> {
         self.inner.mmap()
+    }
+
+    fn parent(&self) -> &Path {
+        self.inner.parent()
+    }
+
+    fn file(&self) -> &File {
+        self.inner.file()
+    }
+
+    fn mut_file(&mut self) -> &mut File {
+        self.inner.mut_file()
     }
 
     #[inline]
@@ -211,6 +222,8 @@ where
     }
 
     fn flush(&mut self) -> Result<()> {
+        self.inner.write_header_if_needed()?;
+
         let pushed_len = self.pushed_len();
 
         if pushed_len == 0 {
@@ -266,11 +279,12 @@ where
                 } else {
                     0
                 };
+                let offsetted_start = start + HEADER_OFFSET as u64;
 
                 let bytes_len = compressed_bytes.len() as u32;
                 let values_len = *values_len as u32;
 
-                let page = CompressedPageMetadata::new(start, bytes_len, values_len);
+                let page = CompressedPageMetadata::new(offsetted_start, bytes_len, values_len);
 
                 pages_meta.push(page_index, page);
             });
@@ -298,7 +312,7 @@ where
         pages_meta.truncate(0);
         pages_meta.write()?;
         self.pages_meta.store(Arc::new(pages_meta));
-        self.file_truncate_and_write_all(0, &[])
+        self.reset_()
     }
 
     fn truncate_if_needed(&mut self, index: I) -> Result<()> {

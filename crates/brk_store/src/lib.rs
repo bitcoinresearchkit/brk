@@ -8,10 +8,8 @@ use std::{
     fmt::Debug,
     mem,
     path::Path,
-    sync::Arc,
 };
 
-use arc_swap::ArcSwap;
 use brk_core::{Height, Result, Value, Version};
 use byteview::ByteView;
 use fjall::{
@@ -26,7 +24,7 @@ pub struct Store<Key, Value> {
     meta: StoreMeta,
     name: String,
     keyspace: TransactionalKeyspace,
-    partition: Arc<ArcSwap<TransactionalPartitionHandle>>,
+    partition: Option<TransactionalPartitionHandle>,
     rtx: ReadTransaction,
     puts: BTreeMap<Key, Value>,
     dels: BTreeSet<Key>,
@@ -75,7 +73,7 @@ where
             meta,
             name: name.to_owned(),
             keyspace: keyspace.clone(),
-            partition: Arc::new(ArcSwap::from_pointee(partition)),
+            partition: Some(partition),
             rtx,
             puts: BTreeMap::new(),
             dels: BTreeSet::new(),
@@ -86,7 +84,10 @@ where
     pub fn get(&self, key: &'a K) -> Result<Option<Value<V>>> {
         if let Some(v) = self.puts.get(key) {
             Ok(Some(Value::Ref(v)))
-        } else if let Some(slice) = self.rtx.get(&self.partition.load(), ByteView::from(key))? {
+        } else if let Some(slice) = self
+            .rtx
+            .get(self.partition.as_ref().unwrap(), ByteView::from(key))?
+        {
             Ok(Some(Value::Owned(V::from(ByteView::from(slice)))))
         } else {
             Ok(None)
@@ -169,7 +170,7 @@ where
 
         let mut wtx = self.keyspace.write_tx();
 
-        let partition = &self.partition.load();
+        let partition = self.partition.as_ref().unwrap();
 
         mem::take(&mut self.dels)
             .into_iter()
@@ -201,7 +202,7 @@ where
     }
 
     pub fn rotate_memtable(&self) {
-        let _ = self.partition.load().inner().rotate_memtable();
+        let _ = self.partition.as_ref().unwrap().inner().rotate_memtable();
     }
 
     pub fn height(&self) -> Option<Height> {
@@ -250,22 +251,18 @@ where
     }
 
     pub fn reset_partition(&mut self) -> Result<()> {
-        let partition = Arc::try_unwrap(self.partition.swap(unsafe {
-            #[allow(clippy::uninit_assumed_init, invalid_value)]
-            mem::MaybeUninit::uninit().assume_init()
-        }))
-        .ok()
-        .unwrap();
+        let partition: TransactionalPartitionHandle = self.partition.take().unwrap();
 
         self.keyspace.delete_partition(partition)?;
 
         self.keyspace.persist(PersistMode::SyncAll)?;
 
-        self.partition.store(Arc::new(Self::open_partition_handle(
-            &self.keyspace,
-            &self.name,
-            self.bloom_filter_bits,
-        )?));
+        self.meta.reset();
+
+        let partition =
+            Self::open_partition_handle(&self.keyspace, &self.name, self.bloom_filter_bits)?;
+
+        self.partition.replace(partition);
 
         Ok(())
     }
@@ -281,7 +278,7 @@ where
             meta: self.meta.clone(),
             name: self.name.clone(),
             keyspace: self.keyspace.clone(),
-            partition: self.partition.clone(),
+            partition: None,
             rtx: self.keyspace.read_tx(),
             puts: self.puts.clone(),
             dels: self.dels.clone(),

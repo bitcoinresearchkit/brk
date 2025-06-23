@@ -1,4 +1,4 @@
-use std::{fs, path::Path};
+use std::path::Path;
 
 use brk_core::{
     AddressBytes, BlockHash, EmptyOutputIndex, Height, InputIndex, OpReturnIndex, OutputIndex,
@@ -67,8 +67,6 @@ pub struct Vecs {
 
 impl Vecs {
     pub fn forced_import(path: &Path, version: Version) -> color_eyre::Result<Self> {
-        fs::create_dir_all(path)?;
-
         Ok(Self {
             emptyoutputindex_to_txindex: IndexedVec::forced_import(
                 path,
@@ -493,7 +491,10 @@ impl Vecs {
     pub fn starting_height(&mut self) -> Height {
         self.mut_vecs()
             .into_iter()
-            .map(|vec| vec.height().map(Height::incremented).unwrap_or_default())
+            .map(|vec| {
+                let h = vec.height();
+                if h > Height::ZERO { h.incremented() } else { h }
+            })
             .min()
             .unwrap()
     }

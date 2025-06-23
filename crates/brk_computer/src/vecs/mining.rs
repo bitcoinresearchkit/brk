@@ -1,4 +1,4 @@
-use std::{fs, path::Path};
+use std::path::Path;
 
 use brk_core::{DifficultyEpoch, HalvingEpoch, StoredF64, Version};
 use brk_exit::Exit;
@@ -27,8 +27,6 @@ impl Vecs {
         _computation: Computation,
         format: Format,
     ) -> color_eyre::Result<Self> {
-        fs::create_dir_all(path)?;
-
         Ok(Self {
             indexes_to_difficulty: ComputedVecsFromHeight::forced_import(
                 path,

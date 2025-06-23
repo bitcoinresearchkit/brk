@@ -1,25 +1,17 @@
-use std::{
-    cmp::Ordering,
-    fmt::Debug,
-    path::{Path, PathBuf},
-    time::Duration,
-};
+use std::{cmp::Ordering, fmt::Debug, path::Path, time::Duration};
 
 use arc_swap::ArcSwap;
 use brk_core::{Error, Height, Result, Value, Version};
 
 use crate::{
     AnyCollectableVec, AnyIterableVec, AnyVec, BoxedVecIterator, CollectableVec, Format,
-    GenericStoredVec, Mmap, StoredIndex, StoredType, StoredVec,
+    GenericStoredVec, Header, Mmap, StoredIndex, StoredType, StoredVec,
 };
 
 use super::StoredVecIterator;
 
 #[derive(Debug, Clone)]
-pub struct IndexedVec<I, T> {
-    height: Option<Height>,
-    inner: StoredVec<I, T>,
-}
+pub struct IndexedVec<I, T>(StoredVec<I, T>);
 
 impl<I, T> IndexedVec<I, T>
 where
@@ -28,26 +20,23 @@ where
 {
     pub fn forced_import(
         path: &Path,
-        value_name: &str,
+        name: &str,
         version: Version,
         format: Format,
     ) -> Result<Self> {
-        let inner = StoredVec::forced_import(path, value_name, version, format)?;
-
-        Ok(Self {
-            height: Height::try_from(Self::path_height_(&inner.path()).as_path()).ok(),
-            inner,
-        })
+        Ok(Self(
+            StoredVec::forced_import(path, name, version, format).unwrap(),
+        ))
     }
 
     #[inline]
     pub fn get_or_read(&self, index: I, mmap: &Mmap) -> Result<Option<Value<T>>> {
-        self.inner.get_or_read(index, mmap)
+        self.0.get_or_read(index, mmap)
     }
 
     #[inline]
     pub fn push_if_needed(&mut self, index: I, value: T) -> Result<()> {
-        let len = self.inner.len();
+        let len = self.0.len();
         match len.cmp(&index.to_usize()?) {
             Ordering::Greater => {
                 // dbg!(len, index, &self.pathbuf);
@@ -55,46 +44,42 @@ where
                 Ok(())
             }
             Ordering::Equal => {
-                self.inner.push(value);
+                self.0.push(value);
                 Ok(())
             }
             Ordering::Less => {
-                dbg!(index, value, len, self.path_height());
+                dbg!(index, value, len, self.0.header());
                 Err(Error::IndexTooHigh)
             }
         }
     }
 
+    fn update_height(&mut self, height: Height) {
+        self.0.mut_header().update_height(height);
+    }
+
     pub fn truncate_if_needed(&mut self, index: I, height: Height) -> Result<()> {
-        if self.height.is_none_or(|self_height| self_height != height) {
-            height.write(&self.path_height())?;
-        }
-        self.inner.truncate_if_needed(index)?;
+        self.update_height(height);
+        self.0.truncate_if_needed(index)?;
         Ok(())
     }
 
     pub fn flush(&mut self, height: Height) -> Result<()> {
-        height.write(&self.path_height())?;
-        self.inner.flush()
+        self.update_height(height);
+        self.0.flush()
+    }
+
+    pub fn header(&self) -> &Header {
+        self.0.header()
     }
 
     pub fn mmap(&self) -> &ArcSwap<Mmap> {
-        self.inner.mmap()
+        self.0.mmap()
     }
 
     #[inline]
     pub fn hasnt(&self, index: I) -> Result<bool> {
-        self.inner.has(index).map(|b| !b)
-    }
-
-    pub fn height(&self) -> brk_core::Result<Height> {
-        Height::try_from(self.path_height().as_path())
-    }
-    fn path_height(&self) -> PathBuf {
-        Self::path_height_(&self.inner.path())
-    }
-    fn path_height_(path: &Path) -> PathBuf {
-        path.join("height")
+        self.0.has(index).map(|b| !b)
     }
 }
 
@@ -105,22 +90,22 @@ where
 {
     #[inline]
     fn version(&self) -> Version {
-        self.inner.version()
+        self.0.version()
     }
 
     #[inline]
     fn name(&self) -> &str {
-        self.inner.name()
+        self.0.name()
     }
 
     #[inline]
     fn len(&self) -> usize {
-        self.inner.len()
+        self.0.len()
     }
 
     #[inline]
     fn modified_time(&self) -> Result<Duration> {
-        self.inner.modified_time()
+        self.0.modified_time()
     }
 
     #[inline]
@@ -135,7 +120,7 @@ where
 }
 
 pub trait AnyIndexedVec: AnyVec {
-    fn height(&self) -> brk_core::Result<Height>;
+    fn height(&self) -> Height;
     fn flush(&mut self, height: Height) -> Result<()>;
 }
 
@@ -144,8 +129,8 @@ where
     I: StoredIndex,
     T: StoredType,
 {
-    fn height(&self) -> brk_core::Result<Height> {
-        self.height()
+    fn height(&self) -> Height {
+        self.0.header().height()
     }
 
     fn flush(&mut self, height: Height) -> Result<()> {
@@ -162,7 +147,7 @@ where
     type IntoIter = StoredVecIterator<'a, I, T>;
 
     fn into_iter(self) -> Self::IntoIter {
-        self.inner.into_iter()
+        self.0.into_iter()
     }
 }
 

@@ -1,4 +1,4 @@
-use std::{fs, path::Path};
+use std::path::Path;
 
 use brk_core::{
     CheckedSub, DifficultyEpoch, HalvingEpoch, Height, StoredU32, StoredU64, StoredUsize,
@@ -37,8 +37,6 @@ impl Vecs {
         _computation: Computation,
         format: Format,
     ) -> color_eyre::Result<Self> {
-        fs::create_dir_all(path)?;
-
         Ok(Self {
             height_to_interval: EagerVec::forced_import(
                 path,

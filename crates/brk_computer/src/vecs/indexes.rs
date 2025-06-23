@@ -1,4 +1,4 @@
-use std::{fs, ops::Deref, path::Path};
+use std::{ops::Deref, path::Path};
 
 use brk_core::{
     Date, DateIndex, DecadeIndex, DifficultyEpoch, EmptyOutputIndex, HalvingEpoch, Height,
@@ -94,8 +94,6 @@ impl Vecs {
         computation: Computation,
         format: Format,
     ) -> color_eyre::Result<Self> {
-        fs::create_dir_all(path)?;
-
         let outputindex_to_outputindex = ComputedVec::forced_import_or_init_from_1(
             computation,
             path,

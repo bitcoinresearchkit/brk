@@ -1,4 +1,4 @@
-use std::{fs, path::Path};
+use std::path::Path;
 
 use brk_core::{Bitcoin, CheckedSub, Dollars, StoredF64, Version};
 use brk_exit::Exit;
@@ -56,8 +56,6 @@ impl Vecs {
         fetched: Option<&fetched::Vecs>,
     ) -> color_eyre::Result<Self> {
         let compute_dollars = fetched.is_some();
-
-        fs::create_dir_all(path)?;
 
         Ok(Self {
             indexes_to_coinblocks_created: ComputedVecsFromHeight::forced_import(

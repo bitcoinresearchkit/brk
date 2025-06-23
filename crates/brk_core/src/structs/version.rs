@@ -12,7 +12,18 @@ use zerocopy_derive::{FromBytes, Immutable, IntoBytes, KnownLayout};
 use crate::{Error, Result};
 
 #[derive(
-    Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, FromBytes, IntoBytes, Immutable, KnownLayout,
+    Default,
+    Debug,
+    Clone,
+    Copy,
+    PartialEq,
+    Eq,
+    PartialOrd,
+    Ord,
+    FromBytes,
+    IntoBytes,
+    Immutable,
+    KnownLayout,
 )]
 pub struct Version(u64);
 

@@ -32,7 +32,7 @@ brk_indexer = { version = "0.0.66", path = "crates/brk_indexer" }
 brk_interface = { version = "0.0.66", path = "crates/brk_interface" }
 brk_logger = { version = "0.0.66", path = "crates/brk_logger" }
 brk_parser = { version = "0.0.66", path = "crates/brk_parser" }
-brk_rmcp = { version = "0.1.6", features = ["transport-streamable-http-server", "transport-worker"]}
+brk_rmcp = { version = "0.1.7", features = ["transport-streamable-http-server", "transport-worker"]}
 brk_server = { version = "0.0.66", path = "crates/brk_server" }
 brk_state = { version = "0.0.66", path = "crates/brk_state" }
 brk_store = { version = "0.0.66", path = "crates/brk_store" }
@@ -42,12 +42,12 @@ clap = { version = "4.5.40", features = ["string"] }
 clap_derive = "4.5.40"
 color-eyre = "0.6.5"
 derive_deref = "1.1.1"
-fjall = "2.11.0"
+fjall = "2.11.1"
 jiff = "0.2.15"
 log = { version = "0.4.27" }
 minreq = { version = "2.13.4", features = ["https", "serde_json"] }
 rayon = "1.10.0"
-schemars = "1.0.0-rc.2"
+schemars = "1.0.0"
 serde = { version = "1.0.219" }
 serde_bytes = "0.11.17"
 serde_derive = "1.0.219"

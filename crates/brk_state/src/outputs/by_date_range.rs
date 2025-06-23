@@ -42,7 +42,7 @@ impl<T> From<OutputsByDateRange<T>> for OutputsByDateRange<(OutputFilter, T)> {
             _5y_to_6y: (OutputFilter::Range(5 * 365..6 * 365), value._5y_to_6y),
             _6y_to_7y: (OutputFilter::Range(6 * 365..7 * 365), value._6y_to_7y),
             _7y_to_8y: (OutputFilter::Range(7 * 365..8 * 365), value._7y_to_8y),
-            _8y_to_10y: (OutputFilter::Range(7 * 365..10 * 365), value._8y_to_10y),
+            _8y_to_10y: (OutputFilter::Range(8 * 365..10 * 365), value._8y_to_10y),
             _10y_to_15y: (OutputFilter::Range(10 * 365..15 * 365), value._10y_to_15y),
             _15y_to_end: (OutputFilter::From(15 * 365), value._15y_to_end),
         }

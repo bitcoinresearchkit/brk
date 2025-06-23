@@ -3,7 +3,7 @@
 #![doc = include_str!("../examples/main.rs")]
 #![doc = "```"]
 
-use std::{collections::BTreeMap, fs, path::Path, thread::sleep, time::Duration};
+use std::{collections::BTreeMap, path::Path, thread::sleep, time::Duration};
 
 use brk_core::{Close, Date, Dollars, Height, High, Low, OHLCCents, Open, Timestamp};
 use color_eyre::eyre::Error;
@@ -24,10 +24,6 @@ pub struct Fetcher {
 
 impl Fetcher {
     pub fn import(hars_path: Option<&Path>) -> color_eyre::Result<Self> {
-        if let Some(path) = hars_path {
-            fs::create_dir_all(path)?;
-        }
-
         Ok(Self {
             binance: Binance::init(hars_path),
             kraken: Kraken::default(),

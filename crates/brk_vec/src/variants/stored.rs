@@ -1,4 +1,5 @@
 use std::{
+    fs::File,
     path::{Path, PathBuf},
     time::Duration,
 };
@@ -9,7 +10,7 @@ use memmap2::Mmap;
 
 use crate::{
     AnyCollectableVec, AnyIterableVec, AnyVec, BaseVecIterator, BoxedVecIterator, CollectableVec,
-    Format, GenericStoredVec, StoredIndex, StoredType,
+    Format, GenericStoredVec, Header, StoredIndex, StoredType,
 };
 
 use super::{CompressedVec, CompressedVecIterator, RawVec, RawVecIterator};
@@ -31,8 +32,6 @@ where
         version: Version,
         format: Format,
     ) -> Result<Self> {
-        // let path = I::path(path, value_name);
-
         if version == Version::ZERO {
             dbg!(path, name);
             panic!("Version must be at least 1, can't verify endianess otherwise");
@@ -62,10 +61,50 @@ where
     }
 
     #[inline]
+    fn header(&self) -> &Header {
+        match self {
+            StoredVec::Raw(v) => v.header(),
+            StoredVec::Compressed(v) => v.header(),
+        }
+    }
+
+    #[inline]
+    fn mut_header(&mut self) -> &mut Header {
+        match self {
+            StoredVec::Raw(v) => v.mut_header(),
+            StoredVec::Compressed(v) => v.mut_header(),
+        }
+    }
+
+    #[inline]
     fn mmap(&self) -> &ArcSwap<Mmap> {
         match self {
             StoredVec::Raw(v) => v.mmap(),
             StoredVec::Compressed(v) => v.mmap(),
+        }
+    }
+
+    #[inline]
+    fn parent(&self) -> &Path {
+        match self {
+            StoredVec::Raw(v) => v.parent(),
+            StoredVec::Compressed(v) => v.parent(),
+        }
+    }
+
+    #[inline]
+    fn file(&self) -> &File {
+        match self {
+            StoredVec::Raw(v) => v.file(),
+            StoredVec::Compressed(v) => v.file(),
+        }
+    }
+
+    #[inline]
+    fn mut_file(&mut self) -> &mut File {
+        match self {
+            StoredVec::Raw(v) => v.mut_file(),
+            StoredVec::Compressed(v) => v.mut_file(),
         }
     }
 
@@ -118,6 +157,13 @@ where
         match self {
             StoredVec::Raw(v) => v.truncate_if_needed(index),
             StoredVec::Compressed(v) => v.truncate_if_needed(index),
+        }
+    }
+
+    fn reset(&mut self) -> Result<()> {
+        match self {
+            StoredVec::Raw(v) => v.reset(),
+            StoredVec::Compressed(v) => v.reset(),
         }
     }
 }
