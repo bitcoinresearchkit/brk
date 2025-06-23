@@ -2,11 +2,11 @@ use std::path::Path;
 
 use brk_core::{
     AddressBytes, BlockHash, EmptyOutputIndex, Height, InputIndex, OpReturnIndex, OutputIndex,
-    OutputType, OutputTypeIndex, P2ABytes, P2AIndex, P2MSIndex, P2PK33Bytes, P2PK33Index,
-    P2PK65Bytes, P2PK65Index, P2PKHBytes, P2PKHIndex, P2SHBytes, P2SHIndex, P2TRBytes, P2TRIndex,
-    P2WPKHBytes, P2WPKHIndex, P2WSHBytes, P2WSHIndex, RawLockTime, Result, Sats, StoredF64,
-    StoredU32, StoredUsize, Timestamp, TxIndex, TxVersion, Txid, UnknownOutputIndex, Version,
-    Weight,
+    OutputType, P2AAddressIndex, P2ABytes, P2MSOutputIndex, P2PK33AddressIndex, P2PK33Bytes,
+    P2PK65AddressIndex, P2PK65Bytes, P2PKHAddressIndex, P2PKHBytes, P2SHAddressIndex, P2SHBytes,
+    P2TRAddressIndex, P2TRBytes, P2WPKHAddressIndex, P2WPKHBytes, P2WSHAddressIndex, P2WSHBytes,
+    RawLockTime, Result, Sats, StoredF64, StoredU32, StoredUsize, Timestamp, TxIndex, TxVersion,
+    Txid, TypeIndex, UnknownOutputIndex, Version, Weight,
 };
 use brk_vec::{AnyCollectableVec, AnyIndexedVec, Format, IndexedVec};
 use rayon::prelude::*;
@@ -24,15 +24,15 @@ pub struct Vecs {
     pub height_to_first_inputindex: IndexedVec<Height, InputIndex>,
     pub height_to_first_opreturnindex: IndexedVec<Height, OpReturnIndex>,
     pub height_to_first_outputindex: IndexedVec<Height, OutputIndex>,
-    pub height_to_first_p2aindex: IndexedVec<Height, P2AIndex>,
-    pub height_to_first_p2msindex: IndexedVec<Height, P2MSIndex>,
-    pub height_to_first_p2pk33index: IndexedVec<Height, P2PK33Index>,
-    pub height_to_first_p2pk65index: IndexedVec<Height, P2PK65Index>,
-    pub height_to_first_p2pkhindex: IndexedVec<Height, P2PKHIndex>,
-    pub height_to_first_p2shindex: IndexedVec<Height, P2SHIndex>,
-    pub height_to_first_p2trindex: IndexedVec<Height, P2TRIndex>,
-    pub height_to_first_p2wpkhindex: IndexedVec<Height, P2WPKHIndex>,
-    pub height_to_first_p2wshindex: IndexedVec<Height, P2WSHIndex>,
+    pub height_to_first_p2aaddressindex: IndexedVec<Height, P2AAddressIndex>,
+    pub height_to_first_p2msoutputindex: IndexedVec<Height, P2MSOutputIndex>,
+    pub height_to_first_p2pk33addressindex: IndexedVec<Height, P2PK33AddressIndex>,
+    pub height_to_first_p2pk65addressindex: IndexedVec<Height, P2PK65AddressIndex>,
+    pub height_to_first_p2pkhaddressindex: IndexedVec<Height, P2PKHAddressIndex>,
+    pub height_to_first_p2shaddressindex: IndexedVec<Height, P2SHAddressIndex>,
+    pub height_to_first_p2traddressindex: IndexedVec<Height, P2TRAddressIndex>,
+    pub height_to_first_p2wpkhaddressindex: IndexedVec<Height, P2WPKHAddressIndex>,
+    pub height_to_first_p2wshaddressindex: IndexedVec<Height, P2WSHAddressIndex>,
     pub height_to_first_txindex: IndexedVec<Height, TxIndex>,
     pub height_to_first_unknownoutputindex: IndexedVec<Height, UnknownOutputIndex>,
     /// Doesn't guarantee continuity due to possible reorgs
@@ -43,17 +43,17 @@ pub struct Vecs {
     pub inputindex_to_outputindex: IndexedVec<InputIndex, OutputIndex>,
     pub opreturnindex_to_txindex: IndexedVec<OpReturnIndex, TxIndex>,
     pub outputindex_to_outputtype: IndexedVec<OutputIndex, OutputType>,
-    pub outputindex_to_outputtypeindex: IndexedVec<OutputIndex, OutputTypeIndex>,
+    pub outputindex_to_typeindex: IndexedVec<OutputIndex, TypeIndex>,
     pub outputindex_to_value: IndexedVec<OutputIndex, Sats>,
-    pub p2aindex_to_p2abytes: IndexedVec<P2AIndex, P2ABytes>,
-    pub p2msindex_to_txindex: IndexedVec<P2MSIndex, TxIndex>,
-    pub p2pk33index_to_p2pk33bytes: IndexedVec<P2PK33Index, P2PK33Bytes>,
-    pub p2pk65index_to_p2pk65bytes: IndexedVec<P2PK65Index, P2PK65Bytes>,
-    pub p2pkhindex_to_p2pkhbytes: IndexedVec<P2PKHIndex, P2PKHBytes>,
-    pub p2shindex_to_p2shbytes: IndexedVec<P2SHIndex, P2SHBytes>,
-    pub p2trindex_to_p2trbytes: IndexedVec<P2TRIndex, P2TRBytes>,
-    pub p2wpkhindex_to_p2wpkhbytes: IndexedVec<P2WPKHIndex, P2WPKHBytes>,
-    pub p2wshindex_to_p2wshbytes: IndexedVec<P2WSHIndex, P2WSHBytes>,
+    pub p2aaddressindex_to_p2abytes: IndexedVec<P2AAddressIndex, P2ABytes>,
+    pub p2msoutputindex_to_txindex: IndexedVec<P2MSOutputIndex, TxIndex>,
+    pub p2pk33addressindex_to_p2pk33bytes: IndexedVec<P2PK33AddressIndex, P2PK33Bytes>,
+    pub p2pk65addressindex_to_p2pk65bytes: IndexedVec<P2PK65AddressIndex, P2PK65Bytes>,
+    pub p2pkhaddressindex_to_p2pkhbytes: IndexedVec<P2PKHAddressIndex, P2PKHBytes>,
+    pub p2shaddressindex_to_p2shbytes: IndexedVec<P2SHAddressIndex, P2SHBytes>,
+    pub p2traddressindex_to_p2trbytes: IndexedVec<P2TRAddressIndex, P2TRBytes>,
+    pub p2wpkhaddressindex_to_p2wpkhbytes: IndexedVec<P2WPKHAddressIndex, P2WPKHBytes>,
+    pub p2wshaddressindex_to_p2wshbytes: IndexedVec<P2WSHAddressIndex, P2WSHBytes>,
     pub txindex_to_base_size: IndexedVec<TxIndex, StoredU32>,
     pub txindex_to_first_inputindex: IndexedVec<TxIndex, InputIndex>,
     pub txindex_to_first_outputindex: IndexedVec<TxIndex, OutputIndex>,
@@ -110,57 +110,57 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 Format::Raw,
             )?,
-            height_to_first_p2aindex: IndexedVec::forced_import(
+            height_to_first_p2aaddressindex: IndexedVec::forced_import(
                 path,
-                "first_p2aindex",
+                "first_p2aaddressindex",
                 version + VERSION + Version::ZERO,
                 Format::Raw,
             )?,
-            height_to_first_p2msindex: IndexedVec::forced_import(
+            height_to_first_p2msoutputindex: IndexedVec::forced_import(
                 path,
-                "first_p2msindex",
+                "first_p2msoutputindex",
                 version + VERSION + Version::ZERO,
                 Format::Raw,
             )?,
-            height_to_first_p2pk33index: IndexedVec::forced_import(
+            height_to_first_p2pk33addressindex: IndexedVec::forced_import(
                 path,
-                "first_p2pk33index",
+                "first_p2pk33addressindex",
                 version + VERSION + Version::ZERO,
                 Format::Raw,
             )?,
-            height_to_first_p2pk65index: IndexedVec::forced_import(
+            height_to_first_p2pk65addressindex: IndexedVec::forced_import(
                 path,
-                "first_p2pk65index",
+                "first_p2pk65addressindex",
                 version + VERSION + Version::ZERO,
                 Format::Raw,
             )?,
-            height_to_first_p2pkhindex: IndexedVec::forced_import(
+            height_to_first_p2pkhaddressindex: IndexedVec::forced_import(
                 path,
-                "first_p2pkhindex",
+                "first_p2pkhaddressindex",
                 version + VERSION + Version::ZERO,
                 Format::Raw,
             )?,
-            height_to_first_p2shindex: IndexedVec::forced_import(
+            height_to_first_p2shaddressindex: IndexedVec::forced_import(
                 path,
-                "first_p2shindex",
+                "first_p2shaddressindex",
                 version + VERSION + Version::ZERO,
                 Format::Raw,
             )?,
-            height_to_first_p2trindex: IndexedVec::forced_import(
+            height_to_first_p2traddressindex: IndexedVec::forced_import(
                 path,
-                "first_p2trindex",
+                "first_p2traddressindex",
                 version + VERSION + Version::ZERO,
                 Format::Raw,
             )?,
-            height_to_first_p2wpkhindex: IndexedVec::forced_import(
+            height_to_first_p2wpkhaddressindex: IndexedVec::forced_import(
                 path,
-                "first_p2wpkhindex",
+                "first_p2wpkhaddressindex",
                 version + VERSION + Version::ZERO,
                 Format::Raw,
             )?,
-            height_to_first_p2wshindex: IndexedVec::forced_import(
+            height_to_first_p2wshaddressindex: IndexedVec::forced_import(
                 path,
-                "first_p2wshindex",
+                "first_p2wshaddressindex",
                 version + VERSION + Version::ZERO,
                 Format::Raw,
             )?,
@@ -212,9 +212,9 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 Format::Raw,
             )?,
-            outputindex_to_outputtypeindex: IndexedVec::forced_import(
+            outputindex_to_typeindex: IndexedVec::forced_import(
                 path,
-                "outputtypeindex",
+                "typeindex",
                 version + VERSION + Version::ZERO,
                 Format::Raw,
             )?,
@@ -224,55 +224,55 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 Format::Raw,
             )?,
-            p2aindex_to_p2abytes: IndexedVec::forced_import(
+            p2aaddressindex_to_p2abytes: IndexedVec::forced_import(
                 path,
                 "p2abytes",
                 version + VERSION + Version::ZERO,
                 Format::Raw,
             )?,
-            p2msindex_to_txindex: IndexedVec::forced_import(
+            p2msoutputindex_to_txindex: IndexedVec::forced_import(
                 path,
                 "txindex",
                 version + VERSION + Version::ZERO,
                 Format::Raw,
             )?,
-            p2pk33index_to_p2pk33bytes: IndexedVec::forced_import(
+            p2pk33addressindex_to_p2pk33bytes: IndexedVec::forced_import(
                 path,
                 "p2pk33bytes",
                 version + VERSION + Version::ZERO,
                 Format::Raw,
             )?,
-            p2pk65index_to_p2pk65bytes: IndexedVec::forced_import(
+            p2pk65addressindex_to_p2pk65bytes: IndexedVec::forced_import(
                 path,
                 "p2pk65bytes",
                 version + VERSION + Version::ZERO,
                 Format::Raw,
             )?,
-            p2pkhindex_to_p2pkhbytes: IndexedVec::forced_import(
+            p2pkhaddressindex_to_p2pkhbytes: IndexedVec::forced_import(
                 path,
                 "p2pkhbytes",
                 version + VERSION + Version::ZERO,
                 Format::Raw,
             )?,
-            p2shindex_to_p2shbytes: IndexedVec::forced_import(
+            p2shaddressindex_to_p2shbytes: IndexedVec::forced_import(
                 path,
                 "p2shbytes",
                 version + VERSION + Version::ZERO,
                 Format::Raw,
             )?,
-            p2trindex_to_p2trbytes: IndexedVec::forced_import(
+            p2traddressindex_to_p2trbytes: IndexedVec::forced_import(
                 path,
                 "p2trbytes",
                 version + VERSION + Version::ZERO,
                 Format::Raw,
             )?,
-            p2wpkhindex_to_p2wpkhbytes: IndexedVec::forced_import(
+            p2wpkhaddressindex_to_p2wpkhbytes: IndexedVec::forced_import(
                 path,
                 "p2wpkhbytes",
                 version + VERSION + Version::ZERO,
                 Format::Raw,
             )?,
-            p2wshindex_to_p2wshbytes: IndexedVec::forced_import(
+            p2wshaddressindex_to_p2wshbytes: IndexedVec::forced_import(
                 path,
                 "p2wshbytes",
                 version + VERSION + Version::ZERO,
@@ -344,15 +344,15 @@ impl Vecs {
             inputindex,
             opreturnindex,
             outputindex,
-            p2aindex,
-            p2msindex,
-            p2pk33index,
-            p2pk65index,
-            p2pkhindex,
-            p2shindex,
-            p2trindex,
-            p2wpkhindex,
-            p2wshindex,
+            p2aaddressindex,
+            p2msoutputindex,
+            p2pk33addressindex,
+            p2pk65addressindex,
+            p2pkhaddressindex,
+            p2shaddressindex,
+            p2traddressindex,
+            p2wpkhaddressindex,
+            p2wshaddressindex,
             txindex,
             unknownoutputindex,
         } = starting_indexes;
@@ -371,23 +371,23 @@ impl Vecs {
             .truncate_if_needed(height, saved_height)?;
         self.height_to_first_outputindex
             .truncate_if_needed(height, saved_height)?;
-        self.height_to_first_p2aindex
+        self.height_to_first_p2aaddressindex
             .truncate_if_needed(height, saved_height)?;
-        self.height_to_first_p2msindex
+        self.height_to_first_p2msoutputindex
             .truncate_if_needed(height, saved_height)?;
-        self.height_to_first_p2pk33index
+        self.height_to_first_p2pk33addressindex
             .truncate_if_needed(height, saved_height)?;
-        self.height_to_first_p2pk65index
+        self.height_to_first_p2pk65addressindex
             .truncate_if_needed(height, saved_height)?;
-        self.height_to_first_p2pkhindex
+        self.height_to_first_p2pkhaddressindex
             .truncate_if_needed(height, saved_height)?;
-        self.height_to_first_p2shindex
+        self.height_to_first_p2shaddressindex
             .truncate_if_needed(height, saved_height)?;
-        self.height_to_first_p2trindex
+        self.height_to_first_p2traddressindex
             .truncate_if_needed(height, saved_height)?;
-        self.height_to_first_p2wpkhindex
+        self.height_to_first_p2wpkhaddressindex
             .truncate_if_needed(height, saved_height)?;
-        self.height_to_first_p2wshindex
+        self.height_to_first_p2wshaddressindex
             .truncate_if_needed(height, saved_height)?;
         self.height_to_first_txindex
             .truncate_if_needed(height, saved_height)?;
@@ -405,28 +405,28 @@ impl Vecs {
             .truncate_if_needed(opreturnindex, saved_height)?;
         self.outputindex_to_outputtype
             .truncate_if_needed(outputindex, saved_height)?;
-        self.outputindex_to_outputtypeindex
+        self.outputindex_to_typeindex
             .truncate_if_needed(outputindex, saved_height)?;
         self.outputindex_to_value
             .truncate_if_needed(outputindex, saved_height)?;
-        self.p2aindex_to_p2abytes
-            .truncate_if_needed(p2aindex, saved_height)?;
-        self.p2msindex_to_txindex
-            .truncate_if_needed(p2msindex, saved_height)?;
-        self.p2pk33index_to_p2pk33bytes
-            .truncate_if_needed(p2pk33index, saved_height)?;
-        self.p2pk65index_to_p2pk65bytes
-            .truncate_if_needed(p2pk65index, saved_height)?;
-        self.p2pkhindex_to_p2pkhbytes
-            .truncate_if_needed(p2pkhindex, saved_height)?;
-        self.p2shindex_to_p2shbytes
-            .truncate_if_needed(p2shindex, saved_height)?;
-        self.p2trindex_to_p2trbytes
-            .truncate_if_needed(p2trindex, saved_height)?;
-        self.p2wpkhindex_to_p2wpkhbytes
-            .truncate_if_needed(p2wpkhindex, saved_height)?;
-        self.p2wshindex_to_p2wshbytes
-            .truncate_if_needed(p2wshindex, saved_height)?;
+        self.p2aaddressindex_to_p2abytes
+            .truncate_if_needed(p2aaddressindex, saved_height)?;
+        self.p2msoutputindex_to_txindex
+            .truncate_if_needed(p2msoutputindex, saved_height)?;
+        self.p2pk33addressindex_to_p2pk33bytes
+            .truncate_if_needed(p2pk33addressindex, saved_height)?;
+        self.p2pk65addressindex_to_p2pk65bytes
+            .truncate_if_needed(p2pk65addressindex, saved_height)?;
+        self.p2pkhaddressindex_to_p2pkhbytes
+            .truncate_if_needed(p2pkhaddressindex, saved_height)?;
+        self.p2shaddressindex_to_p2shbytes
+            .truncate_if_needed(p2shaddressindex, saved_height)?;
+        self.p2traddressindex_to_p2trbytes
+            .truncate_if_needed(p2traddressindex, saved_height)?;
+        self.p2wpkhaddressindex_to_p2wpkhbytes
+            .truncate_if_needed(p2wpkhaddressindex, saved_height)?;
+        self.p2wshaddressindex_to_p2wshbytes
+            .truncate_if_needed(p2wshaddressindex, saved_height)?;
         self.txindex_to_base_size
             .truncate_if_needed(txindex, saved_height)?;
         self.txindex_to_first_inputindex
@@ -449,35 +449,31 @@ impl Vecs {
         Ok(())
     }
 
-    pub fn push_bytes_if_needed(
-        &mut self,
-        index: OutputTypeIndex,
-        bytes: AddressBytes,
-    ) -> Result<()> {
+    pub fn push_bytes_if_needed(&mut self, index: TypeIndex, bytes: AddressBytes) -> Result<()> {
         match bytes {
             AddressBytes::P2PK65(bytes) => self
-                .p2pk65index_to_p2pk65bytes
+                .p2pk65addressindex_to_p2pk65bytes
                 .push_if_needed(index.into(), bytes),
             AddressBytes::P2PK33(bytes) => self
-                .p2pk33index_to_p2pk33bytes
+                .p2pk33addressindex_to_p2pk33bytes
                 .push_if_needed(index.into(), bytes),
             AddressBytes::P2PKH(bytes) => self
-                .p2pkhindex_to_p2pkhbytes
+                .p2pkhaddressindex_to_p2pkhbytes
                 .push_if_needed(index.into(), bytes),
             AddressBytes::P2SH(bytes) => self
-                .p2shindex_to_p2shbytes
+                .p2shaddressindex_to_p2shbytes
                 .push_if_needed(index.into(), bytes),
             AddressBytes::P2WPKH(bytes) => self
-                .p2wpkhindex_to_p2wpkhbytes
+                .p2wpkhaddressindex_to_p2wpkhbytes
                 .push_if_needed(index.into(), bytes),
             AddressBytes::P2WSH(bytes) => self
-                .p2wshindex_to_p2wshbytes
+                .p2wshaddressindex_to_p2wshbytes
                 .push_if_needed(index.into(), bytes),
             AddressBytes::P2TR(bytes) => self
-                .p2trindex_to_p2trbytes
+                .p2traddressindex_to_p2trbytes
                 .push_if_needed(index.into(), bytes),
             AddressBytes::P2A(bytes) => self
-                .p2aindex_to_p2abytes
+                .p2aaddressindex_to_p2abytes
                 .push_if_needed(index.into(), bytes),
         }
     }
@@ -508,15 +504,15 @@ impl Vecs {
             &self.height_to_first_inputindex,
             &self.height_to_first_opreturnindex,
             &self.height_to_first_outputindex,
-            &self.height_to_first_p2aindex,
-            &self.height_to_first_p2msindex,
-            &self.height_to_first_p2pk33index,
-            &self.height_to_first_p2pk65index,
-            &self.height_to_first_p2pkhindex,
-            &self.height_to_first_p2shindex,
-            &self.height_to_first_p2trindex,
-            &self.height_to_first_p2wpkhindex,
-            &self.height_to_first_p2wshindex,
+            &self.height_to_first_p2aaddressindex,
+            &self.height_to_first_p2msoutputindex,
+            &self.height_to_first_p2pk33addressindex,
+            &self.height_to_first_p2pk65addressindex,
+            &self.height_to_first_p2pkhaddressindex,
+            &self.height_to_first_p2shaddressindex,
+            &self.height_to_first_p2traddressindex,
+            &self.height_to_first_p2wpkhaddressindex,
+            &self.height_to_first_p2wshaddressindex,
             &self.height_to_first_txindex,
             &self.height_to_first_unknownoutputindex,
             &self.height_to_timestamp,
@@ -525,17 +521,17 @@ impl Vecs {
             &self.inputindex_to_outputindex,
             &self.opreturnindex_to_txindex,
             &self.outputindex_to_outputtype,
-            &self.outputindex_to_outputtypeindex,
+            &self.outputindex_to_typeindex,
             &self.outputindex_to_value,
-            &self.p2aindex_to_p2abytes,
-            &self.p2msindex_to_txindex,
-            &self.p2pk33index_to_p2pk33bytes,
-            &self.p2pk65index_to_p2pk65bytes,
-            &self.p2pkhindex_to_p2pkhbytes,
-            &self.p2shindex_to_p2shbytes,
-            &self.p2trindex_to_p2trbytes,
-            &self.p2wpkhindex_to_p2wpkhbytes,
-            &self.p2wshindex_to_p2wshbytes,
+            &self.p2aaddressindex_to_p2abytes,
+            &self.p2msoutputindex_to_txindex,
+            &self.p2pk33addressindex_to_p2pk33bytes,
+            &self.p2pk65addressindex_to_p2pk65bytes,
+            &self.p2pkhaddressindex_to_p2pkhbytes,
+            &self.p2shaddressindex_to_p2shbytes,
+            &self.p2traddressindex_to_p2trbytes,
+            &self.p2wpkhaddressindex_to_p2wpkhbytes,
+            &self.p2wshaddressindex_to_p2wshbytes,
             &self.txindex_to_base_size,
             &self.txindex_to_first_inputindex,
             &self.txindex_to_first_outputindex,
@@ -557,15 +553,15 @@ impl Vecs {
             &mut self.height_to_first_inputindex,
             &mut self.height_to_first_opreturnindex,
             &mut self.height_to_first_outputindex,
-            &mut self.height_to_first_p2aindex,
-            &mut self.height_to_first_p2msindex,
-            &mut self.height_to_first_p2pk33index,
-            &mut self.height_to_first_p2pk65index,
-            &mut self.height_to_first_p2pkhindex,
-            &mut self.height_to_first_p2shindex,
-            &mut self.height_to_first_p2trindex,
-            &mut self.height_to_first_p2wpkhindex,
-            &mut self.height_to_first_p2wshindex,
+            &mut self.height_to_first_p2aaddressindex,
+            &mut self.height_to_first_p2msoutputindex,
+            &mut self.height_to_first_p2pk33addressindex,
+            &mut self.height_to_first_p2pk65addressindex,
+            &mut self.height_to_first_p2pkhaddressindex,
+            &mut self.height_to_first_p2shaddressindex,
+            &mut self.height_to_first_p2traddressindex,
+            &mut self.height_to_first_p2wpkhaddressindex,
+            &mut self.height_to_first_p2wshaddressindex,
             &mut self.height_to_first_txindex,
             &mut self.height_to_first_unknownoutputindex,
             &mut self.height_to_timestamp,
@@ -574,17 +570,17 @@ impl Vecs {
             &mut self.inputindex_to_outputindex,
             &mut self.opreturnindex_to_txindex,
             &mut self.outputindex_to_outputtype,
-            &mut self.outputindex_to_outputtypeindex,
+            &mut self.outputindex_to_typeindex,
             &mut self.outputindex_to_value,
-            &mut self.p2aindex_to_p2abytes,
-            &mut self.p2msindex_to_txindex,
-            &mut self.p2pk33index_to_p2pk33bytes,
-            &mut self.p2pk65index_to_p2pk65bytes,
-            &mut self.p2pkhindex_to_p2pkhbytes,
-            &mut self.p2shindex_to_p2shbytes,
-            &mut self.p2trindex_to_p2trbytes,
-            &mut self.p2wpkhindex_to_p2wpkhbytes,
-            &mut self.p2wshindex_to_p2wshbytes,
+            &mut self.p2aaddressindex_to_p2abytes,
+            &mut self.p2msoutputindex_to_txindex,
+            &mut self.p2pk33addressindex_to_p2pk33bytes,
+            &mut self.p2pk65addressindex_to_p2pk65bytes,
+            &mut self.p2pkhaddressindex_to_p2pkhbytes,
+            &mut self.p2shaddressindex_to_p2shbytes,
+            &mut self.p2traddressindex_to_p2trbytes,
+            &mut self.p2wpkhaddressindex_to_p2wpkhbytes,
+            &mut self.p2wshaddressindex_to_p2wshbytes,
             &mut self.txindex_to_base_size,
             &mut self.txindex_to_first_inputindex,
             &mut self.txindex_to_first_outputindex,

@@ -2,10 +2,11 @@ use std::{ops::Deref, path::Path};
 
 use brk_core::{
     Date, DateIndex, DecadeIndex, DifficultyEpoch, EmptyOutputIndex, HalvingEpoch, Height,
-    InputIndex, MonthIndex, OpReturnIndex, OutputIndex, P2ABytes, P2AIndex, P2MSIndex, P2PK33Bytes,
-    P2PK33Index, P2PK65Bytes, P2PK65Index, P2PKHBytes, P2PKHIndex, P2SHBytes, P2SHIndex, P2TRBytes,
-    P2TRIndex, P2WPKHBytes, P2WPKHIndex, P2WSHBytes, P2WSHIndex, QuarterIndex, Sats, StoredUsize,
-    Timestamp, TxIndex, Txid, UnknownOutputIndex, Version, WeekIndex, YearIndex,
+    InputIndex, MonthIndex, OpReturnIndex, OutputIndex, P2AAddressIndex, P2ABytes, P2MSOutputIndex,
+    P2PK33AddressIndex, P2PK33Bytes, P2PK65AddressIndex, P2PK65Bytes, P2PKHAddressIndex,
+    P2PKHBytes, P2SHAddressIndex, P2SHBytes, P2TRAddressIndex, P2TRBytes, P2WPKHAddressIndex,
+    P2WPKHBytes, P2WSHAddressIndex, P2WSHBytes, QuarterIndex, Sats, StoredUsize, Timestamp,
+    TxIndex, Txid, UnknownOutputIndex, Version, WeekIndex, YearIndex,
 };
 use brk_exit::Exit;
 use brk_indexer::Indexer;
@@ -54,18 +55,24 @@ pub struct Vecs {
         ComputedVecFrom1<OpReturnIndex, OpReturnIndex, OpReturnIndex, TxIndex>,
     pub outputindex_to_outputindex: ComputedVecFrom1<OutputIndex, OutputIndex, OutputIndex, Sats>,
     pub outputindex_to_txindex: EagerVec<OutputIndex, TxIndex>,
-    pub p2aindex_to_p2aindex: ComputedVecFrom1<P2AIndex, P2AIndex, P2AIndex, P2ABytes>,
-    pub p2msindex_to_p2msindex: ComputedVecFrom1<P2MSIndex, P2MSIndex, P2MSIndex, TxIndex>,
-    pub p2pk33index_to_p2pk33index:
-        ComputedVecFrom1<P2PK33Index, P2PK33Index, P2PK33Index, P2PK33Bytes>,
-    pub p2pk65index_to_p2pk65index:
-        ComputedVecFrom1<P2PK65Index, P2PK65Index, P2PK65Index, P2PK65Bytes>,
-    pub p2pkhindex_to_p2pkhindex: ComputedVecFrom1<P2PKHIndex, P2PKHIndex, P2PKHIndex, P2PKHBytes>,
-    pub p2shindex_to_p2shindex: ComputedVecFrom1<P2SHIndex, P2SHIndex, P2SHIndex, P2SHBytes>,
-    pub p2trindex_to_p2trindex: ComputedVecFrom1<P2TRIndex, P2TRIndex, P2TRIndex, P2TRBytes>,
-    pub p2wpkhindex_to_p2wpkhindex:
-        ComputedVecFrom1<P2WPKHIndex, P2WPKHIndex, P2WPKHIndex, P2WPKHBytes>,
-    pub p2wshindex_to_p2wshindex: ComputedVecFrom1<P2WSHIndex, P2WSHIndex, P2WSHIndex, P2WSHBytes>,
+    pub p2aaddressindex_to_p2aaddressindex:
+        ComputedVecFrom1<P2AAddressIndex, P2AAddressIndex, P2AAddressIndex, P2ABytes>,
+    pub p2msoutputindex_to_p2msoutputindex:
+        ComputedVecFrom1<P2MSOutputIndex, P2MSOutputIndex, P2MSOutputIndex, TxIndex>,
+    pub p2pk33addressindex_to_p2pk33addressindex:
+        ComputedVecFrom1<P2PK33AddressIndex, P2PK33AddressIndex, P2PK33AddressIndex, P2PK33Bytes>,
+    pub p2pk65addressindex_to_p2pk65addressindex:
+        ComputedVecFrom1<P2PK65AddressIndex, P2PK65AddressIndex, P2PK65AddressIndex, P2PK65Bytes>,
+    pub p2pkhaddressindex_to_p2pkhaddressindex:
+        ComputedVecFrom1<P2PKHAddressIndex, P2PKHAddressIndex, P2PKHAddressIndex, P2PKHBytes>,
+    pub p2shaddressindex_to_p2shaddressindex:
+        ComputedVecFrom1<P2SHAddressIndex, P2SHAddressIndex, P2SHAddressIndex, P2SHBytes>,
+    pub p2traddressindex_to_p2traddressindex:
+        ComputedVecFrom1<P2TRAddressIndex, P2TRAddressIndex, P2TRAddressIndex, P2TRBytes>,
+    pub p2wpkhaddressindex_to_p2wpkhaddressindex:
+        ComputedVecFrom1<P2WPKHAddressIndex, P2WPKHAddressIndex, P2WPKHAddressIndex, P2WPKHBytes>,
+    pub p2wshaddressindex_to_p2wshaddressindex:
+        ComputedVecFrom1<P2WSHAddressIndex, P2WSHAddressIndex, P2WSHAddressIndex, P2WSHBytes>,
     pub quarterindex_to_first_monthindex: EagerVec<QuarterIndex, MonthIndex>,
     pub quarterindex_to_monthindex_count: EagerVec<QuarterIndex, StoredUsize>,
     pub quarterindex_to_quarterindex: EagerVec<QuarterIndex, QuarterIndex>,
@@ -170,85 +177,85 @@ impl Vecs {
             },
         )?;
 
-        let p2pk33index_to_p2pk33index = ComputedVec::forced_import_or_init_from_1(
+        let p2pk33addressindex_to_p2pk33addressindex = ComputedVec::forced_import_or_init_from_1(
             computation,
             path,
-            "p2pk33index",
+            "p2pk33addressindex",
             version + VERSION + Version::ZERO,
             format,
-            indexer.vecs.p2pk33index_to_p2pk33bytes.boxed_clone(),
+            indexer.vecs.p2pk33addressindex_to_p2pk33bytes.boxed_clone(),
             |index, _| Some(index),
         )?;
-        let p2pk65index_to_p2pk65index = ComputedVec::forced_import_or_init_from_1(
+        let p2pk65addressindex_to_p2pk65addressindex = ComputedVec::forced_import_or_init_from_1(
             computation,
             path,
-            "p2pk65index",
+            "p2pk65addressindex",
             version + VERSION + Version::ZERO,
             format,
-            indexer.vecs.p2pk65index_to_p2pk65bytes.boxed_clone(),
+            indexer.vecs.p2pk65addressindex_to_p2pk65bytes.boxed_clone(),
             |index, _| Some(index),
         )?;
-        let p2pkhindex_to_p2pkhindex = ComputedVec::forced_import_or_init_from_1(
+        let p2pkhaddressindex_to_p2pkhaddressindex = ComputedVec::forced_import_or_init_from_1(
             computation,
             path,
-            "p2pkhindex",
+            "p2pkhaddressindex",
             version + VERSION + Version::ZERO,
             format,
-            indexer.vecs.p2pkhindex_to_p2pkhbytes.boxed_clone(),
+            indexer.vecs.p2pkhaddressindex_to_p2pkhbytes.boxed_clone(),
             |index, _| Some(index),
         )?;
-        let p2shindex_to_p2shindex = ComputedVec::forced_import_or_init_from_1(
+        let p2shaddressindex_to_p2shaddressindex = ComputedVec::forced_import_or_init_from_1(
             computation,
             path,
-            "p2shindex",
+            "p2shaddressindex",
             version + VERSION + Version::ZERO,
             format,
-            indexer.vecs.p2shindex_to_p2shbytes.boxed_clone(),
+            indexer.vecs.p2shaddressindex_to_p2shbytes.boxed_clone(),
             |index, _| Some(index),
         )?;
-        let p2trindex_to_p2trindex = ComputedVec::forced_import_or_init_from_1(
+        let p2traddressindex_to_p2traddressindex = ComputedVec::forced_import_or_init_from_1(
             computation,
             path,
-            "p2trindex",
+            "p2traddressindex",
             version + VERSION + Version::ZERO,
             format,
-            indexer.vecs.p2trindex_to_p2trbytes.boxed_clone(),
+            indexer.vecs.p2traddressindex_to_p2trbytes.boxed_clone(),
             |index, _| Some(index),
         )?;
-        let p2wpkhindex_to_p2wpkhindex = ComputedVec::forced_import_or_init_from_1(
+        let p2wpkhaddressindex_to_p2wpkhaddressindex = ComputedVec::forced_import_or_init_from_1(
             computation,
             path,
-            "p2wpkhindex",
+            "p2wpkhaddressindex",
             version + VERSION + Version::ZERO,
             format,
-            indexer.vecs.p2wpkhindex_to_p2wpkhbytes.boxed_clone(),
+            indexer.vecs.p2wpkhaddressindex_to_p2wpkhbytes.boxed_clone(),
             |index, _| Some(index),
         )?;
-        let p2wshindex_to_p2wshindex = ComputedVec::forced_import_or_init_from_1(
+        let p2wshaddressindex_to_p2wshaddressindex = ComputedVec::forced_import_or_init_from_1(
             computation,
             path,
-            "p2wshindex",
+            "p2wshaddressindex",
             version + VERSION + Version::ZERO,
             format,
-            indexer.vecs.p2wshindex_to_p2wshbytes.boxed_clone(),
+            indexer.vecs.p2wshaddressindex_to_p2wshbytes.boxed_clone(),
             |index, _| Some(index),
         )?;
-        let p2aindex_to_p2aindex = ComputedVec::forced_import_or_init_from_1(
+        let p2aaddressindex_to_p2aaddressindex = ComputedVec::forced_import_or_init_from_1(
             computation,
             path,
-            "p2aindex",
+            "p2aaddressindex",
             version + VERSION + Version::ZERO,
             format,
-            indexer.vecs.p2aindex_to_p2abytes.boxed_clone(),
+            indexer.vecs.p2aaddressindex_to_p2abytes.boxed_clone(),
             |index, _| Some(index),
         )?;
-        let p2msindex_to_p2msindex = ComputedVec::forced_import_or_init_from_1(
+        let p2msoutputindex_to_p2msoutputindex = ComputedVec::forced_import_or_init_from_1(
             computation,
             path,
-            "p2msindex",
+            "p2msoutputindex",
             version + VERSION + Version::ZERO,
             format,
-            indexer.vecs.p2msindex_to_txindex.boxed_clone(),
+            indexer.vecs.p2msoutputindex_to_txindex.boxed_clone(),
             |index, _| Some(index),
         )?;
         let emptyoutputindex_to_emptyoutputindex = ComputedVec::forced_import_or_init_from_1(
@@ -284,15 +291,15 @@ impl Vecs {
             inputindex_to_inputindex,
             opreturnindex_to_opreturnindex,
             outputindex_to_outputindex,
-            p2aindex_to_p2aindex,
-            p2msindex_to_p2msindex,
-            p2pk33index_to_p2pk33index,
-            p2pk65index_to_p2pk65index,
-            p2pkhindex_to_p2pkhindex,
-            p2shindex_to_p2shindex,
-            p2trindex_to_p2trindex,
-            p2wpkhindex_to_p2wpkhindex,
-            p2wshindex_to_p2wshindex,
+            p2aaddressindex_to_p2aaddressindex,
+            p2msoutputindex_to_p2msoutputindex,
+            p2pk33addressindex_to_p2pk33addressindex,
+            p2pk65addressindex_to_p2pk65addressindex,
+            p2pkhaddressindex_to_p2pkhaddressindex,
+            p2shaddressindex_to_p2shaddressindex,
+            p2traddressindex_to_p2traddressindex,
+            p2wpkhaddressindex_to_p2wpkhaddressindex,
+            p2wshaddressindex_to_p2wshaddressindex,
             txindex_to_input_count,
             txindex_to_output_count,
             txindex_to_txindex,
@@ -570,47 +577,54 @@ impl Vecs {
             exit,
         )?;
 
-        self.p2pk33index_to_p2pk33index.compute_if_necessary(
-            starting_indexes.p2pk33index,
-            &indexer.vecs.p2pk33index_to_p2pk33bytes,
-            exit,
-        )?;
+        self.p2pk33addressindex_to_p2pk33addressindex
+            .compute_if_necessary(
+                starting_indexes.p2pk33addressindex,
+                &indexer.vecs.p2pk33addressindex_to_p2pk33bytes,
+                exit,
+            )?;
 
-        self.p2pk65index_to_p2pk65index.compute_if_necessary(
-            starting_indexes.p2pk65index,
-            &indexer.vecs.p2pk65index_to_p2pk65bytes,
-            exit,
-        )?;
+        self.p2pk65addressindex_to_p2pk65addressindex
+            .compute_if_necessary(
+                starting_indexes.p2pk65addressindex,
+                &indexer.vecs.p2pk65addressindex_to_p2pk65bytes,
+                exit,
+            )?;
 
-        self.p2pkhindex_to_p2pkhindex.compute_if_necessary(
-            starting_indexes.p2pkhindex,
-            &indexer.vecs.p2pkhindex_to_p2pkhbytes,
-            exit,
-        )?;
+        self.p2pkhaddressindex_to_p2pkhaddressindex
+            .compute_if_necessary(
+                starting_indexes.p2pkhaddressindex,
+                &indexer.vecs.p2pkhaddressindex_to_p2pkhbytes,
+                exit,
+            )?;
 
-        self.p2shindex_to_p2shindex.compute_if_necessary(
-            starting_indexes.p2shindex,
-            &indexer.vecs.p2shindex_to_p2shbytes,
-            exit,
-        )?;
+        self.p2shaddressindex_to_p2shaddressindex
+            .compute_if_necessary(
+                starting_indexes.p2shaddressindex,
+                &indexer.vecs.p2shaddressindex_to_p2shbytes,
+                exit,
+            )?;
 
-        self.p2trindex_to_p2trindex.compute_if_necessary(
-            starting_indexes.p2trindex,
-            &indexer.vecs.p2trindex_to_p2trbytes,
-            exit,
-        )?;
+        self.p2traddressindex_to_p2traddressindex
+            .compute_if_necessary(
+                starting_indexes.p2traddressindex,
+                &indexer.vecs.p2traddressindex_to_p2trbytes,
+                exit,
+            )?;
 
-        self.p2wpkhindex_to_p2wpkhindex.compute_if_necessary(
-            starting_indexes.p2wpkhindex,
-            &indexer.vecs.p2wpkhindex_to_p2wpkhbytes,
-            exit,
-        )?;
+        self.p2wpkhaddressindex_to_p2wpkhaddressindex
+            .compute_if_necessary(
+                starting_indexes.p2wpkhaddressindex,
+                &indexer.vecs.p2wpkhaddressindex_to_p2wpkhbytes,
+                exit,
+            )?;
 
-        self.p2wshindex_to_p2wshindex.compute_if_necessary(
-            starting_indexes.p2wshindex,
-            &indexer.vecs.p2wshindex_to_p2wshbytes,
-            exit,
-        )?;
+        self.p2wshaddressindex_to_p2wshaddressindex
+            .compute_if_necessary(
+                starting_indexes.p2wshaddressindex,
+                &indexer.vecs.p2wshaddressindex_to_p2wshbytes,
+                exit,
+            )?;
 
         self.emptyoutputindex_to_emptyoutputindex
             .compute_if_necessary(
@@ -619,11 +633,12 @@ impl Vecs {
                 exit,
             )?;
 
-        self.p2msindex_to_p2msindex.compute_if_necessary(
-            starting_indexes.p2msindex,
-            &indexer.vecs.p2msindex_to_txindex,
-            exit,
-        )?;
+        self.p2msoutputindex_to_p2msoutputindex
+            .compute_if_necessary(
+                starting_indexes.p2msoutputindex,
+                &indexer.vecs.p2msoutputindex_to_txindex,
+                exit,
+            )?;
 
         self.opreturnindex_to_opreturnindex.compute_if_necessary(
             starting_indexes.opreturnindex,
@@ -631,11 +646,12 @@ impl Vecs {
             exit,
         )?;
 
-        self.p2aindex_to_p2aindex.compute_if_necessary(
-            starting_indexes.p2aindex,
-            &indexer.vecs.p2aindex_to_p2abytes,
-            exit,
-        )?;
+        self.p2aaddressindex_to_p2aaddressindex
+            .compute_if_necessary(
+                starting_indexes.p2aaddressindex,
+                &indexer.vecs.p2aaddressindex_to_p2abytes,
+                exit,
+            )?;
 
         self.unknownoutputindex_to_unknownoutputindex
             .compute_if_necessary(
@@ -1075,15 +1091,15 @@ impl Vecs {
             &self.monthindex_to_yearindex,
             &self.opreturnindex_to_opreturnindex,
             &self.outputindex_to_outputindex,
-            &self.p2aindex_to_p2aindex,
-            &self.p2msindex_to_p2msindex,
-            &self.p2pk33index_to_p2pk33index,
-            &self.p2pk65index_to_p2pk65index,
-            &self.p2pkhindex_to_p2pkhindex,
-            &self.p2shindex_to_p2shindex,
-            &self.p2trindex_to_p2trindex,
-            &self.p2wpkhindex_to_p2wpkhindex,
-            &self.p2wshindex_to_p2wshindex,
+            &self.p2aaddressindex_to_p2aaddressindex,
+            &self.p2msoutputindex_to_p2msoutputindex,
+            &self.p2pk33addressindex_to_p2pk33addressindex,
+            &self.p2pk65addressindex_to_p2pk65addressindex,
+            &self.p2pkhaddressindex_to_p2pkhaddressindex,
+            &self.p2shaddressindex_to_p2shaddressindex,
+            &self.p2traddressindex_to_p2traddressindex,
+            &self.p2wpkhaddressindex_to_p2wpkhaddressindex,
+            &self.p2wshaddressindex_to_p2wshaddressindex,
             &self.quarterindex_to_first_monthindex,
             &self.quarterindex_to_monthindex_count,
             &self.quarterindex_to_quarterindex,

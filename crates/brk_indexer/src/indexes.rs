@@ -1,8 +1,9 @@
 use bitcoincore_rpc::Client;
 use brk_core::{
     BlockHash, CheckedSub, EmptyOutputIndex, Height, InputIndex, OpReturnIndex, OutputIndex,
-    OutputType, OutputTypeIndex, P2AIndex, P2MSIndex, P2PK33Index, P2PK65Index, P2PKHIndex,
-    P2SHIndex, P2TRIndex, P2WPKHIndex, P2WSHIndex, Result, TxIndex, UnknownOutputIndex,
+    OutputType, P2AAddressIndex, P2MSOutputIndex, P2PK33AddressIndex, P2PK65AddressIndex,
+    P2PKHAddressIndex, P2SHAddressIndex, P2TRAddressIndex, P2WPKHAddressIndex, P2WSHAddressIndex,
+    Result, TxIndex, TypeIndex, UnknownOutputIndex,
 };
 use brk_parser::NUMBER_OF_UNSAFE_BLOCKS;
 use brk_vec::{AnyIndexedVec, AnyIterableVec, AnyVec, IndexedVec, StoredIndex, StoredType};
@@ -15,15 +16,15 @@ pub struct Indexes {
     pub emptyoutputindex: EmptyOutputIndex,
     pub height: Height,
     pub opreturnindex: OpReturnIndex,
-    pub p2msindex: P2MSIndex,
-    pub p2pk33index: P2PK33Index,
-    pub p2pk65index: P2PK65Index,
-    pub p2pkhindex: P2PKHIndex,
-    pub p2shindex: P2SHIndex,
-    pub p2trindex: P2TRIndex,
-    pub p2wpkhindex: P2WPKHIndex,
-    pub p2wshindex: P2WSHIndex,
-    pub p2aindex: P2AIndex,
+    pub p2msoutputindex: P2MSOutputIndex,
+    pub p2pk33addressindex: P2PK33AddressIndex,
+    pub p2pk65addressindex: P2PK65AddressIndex,
+    pub p2pkhaddressindex: P2PKHAddressIndex,
+    pub p2shaddressindex: P2SHAddressIndex,
+    pub p2traddressindex: P2TRAddressIndex,
+    pub p2wpkhaddressindex: P2WPKHAddressIndex,
+    pub p2wshaddressindex: P2WSHAddressIndex,
+    pub p2aaddressindex: P2AAddressIndex,
     pub txindex: TxIndex,
     pub inputindex: InputIndex,
     pub outputindex: OutputIndex,
@@ -31,19 +32,19 @@ pub struct Indexes {
 }
 
 impl Indexes {
-    pub fn outputtypeindex(&self, outputtype: OutputType) -> OutputTypeIndex {
+    pub fn typeindex(&self, outputtype: OutputType) -> TypeIndex {
         match outputtype {
             OutputType::Empty => *self.emptyoutputindex,
             OutputType::OpReturn => *self.opreturnindex,
-            OutputType::P2A => *self.p2aindex,
-            OutputType::P2MS => *self.p2msindex,
-            OutputType::P2PK33 => *self.p2pkhindex,
-            OutputType::P2PK65 => *self.p2pk65index,
-            OutputType::P2PKH => *self.p2pkhindex,
-            OutputType::P2SH => *self.p2shindex,
-            OutputType::P2TR => *self.p2trindex,
-            OutputType::P2WPKH => *self.p2wpkhindex,
-            OutputType::P2WSH => *self.p2wshindex,
+            OutputType::P2A => *self.p2aaddressindex,
+            OutputType::P2MS => *self.p2msoutputindex,
+            OutputType::P2PK33 => *self.p2pkhaddressindex,
+            OutputType::P2PK65 => *self.p2pk65addressindex,
+            OutputType::P2PKH => *self.p2pkhaddressindex,
+            OutputType::P2SH => *self.p2shaddressindex,
+            OutputType::P2TR => *self.p2traddressindex,
+            OutputType::P2WPKH => *self.p2wpkhaddressindex,
+            OutputType::P2WSH => *self.p2wshaddressindex,
             OutputType::Unknown => *self.unknownoutputindex,
         }
     }
@@ -58,28 +59,28 @@ impl Indexes {
             .push_if_needed(height, self.outputindex)?;
         vecs.height_to_first_emptyoutputindex
             .push_if_needed(height, self.emptyoutputindex)?;
-        vecs.height_to_first_p2msindex
-            .push_if_needed(height, self.p2msindex)?;
+        vecs.height_to_first_p2msoutputindex
+            .push_if_needed(height, self.p2msoutputindex)?;
         vecs.height_to_first_opreturnindex
             .push_if_needed(height, self.opreturnindex)?;
-        vecs.height_to_first_p2aindex
-            .push_if_needed(height, self.p2aindex)?;
+        vecs.height_to_first_p2aaddressindex
+            .push_if_needed(height, self.p2aaddressindex)?;
         vecs.height_to_first_unknownoutputindex
             .push_if_needed(height, self.unknownoutputindex)?;
-        vecs.height_to_first_p2pk33index
-            .push_if_needed(height, self.p2pk33index)?;
-        vecs.height_to_first_p2pk65index
-            .push_if_needed(height, self.p2pk65index)?;
-        vecs.height_to_first_p2pkhindex
-            .push_if_needed(height, self.p2pkhindex)?;
-        vecs.height_to_first_p2shindex
-            .push_if_needed(height, self.p2shindex)?;
-        vecs.height_to_first_p2trindex
-            .push_if_needed(height, self.p2trindex)?;
-        vecs.height_to_first_p2wpkhindex
-            .push_if_needed(height, self.p2wpkhindex)?;
-        vecs.height_to_first_p2wshindex
-            .push_if_needed(height, self.p2wshindex)?;
+        vecs.height_to_first_p2pk33addressindex
+            .push_if_needed(height, self.p2pk33addressindex)?;
+        vecs.height_to_first_p2pk65addressindex
+            .push_if_needed(height, self.p2pk65addressindex)?;
+        vecs.height_to_first_p2pkhaddressindex
+            .push_if_needed(height, self.p2pkhaddressindex)?;
+        vecs.height_to_first_p2shaddressindex
+            .push_if_needed(height, self.p2shaddressindex)?;
+        vecs.height_to_first_p2traddressindex
+            .push_if_needed(height, self.p2traddressindex)?;
+        vecs.height_to_first_p2wpkhaddressindex
+            .push_if_needed(height, self.p2wpkhaddressindex)?;
+        vecs.height_to_first_p2wshaddressindex
+            .push_if_needed(height, self.p2wshaddressindex)?;
 
         Ok(())
     }
@@ -122,9 +123,9 @@ impl TryFrom<(&mut Vecs, &Stores, &Client)> for Indexes {
             )
             .context("")?,
             height,
-            p2msindex: starting_index(
-                &vecs.height_to_first_p2msindex,
-                &vecs.p2msindex_to_txindex,
+            p2msoutputindex: starting_index(
+                &vecs.height_to_first_p2msoutputindex,
+                &vecs.p2msoutputindex_to_txindex,
                 height,
             )
             .context("")?,
@@ -134,51 +135,51 @@ impl TryFrom<(&mut Vecs, &Stores, &Client)> for Indexes {
                 height,
             )
             .context("")?,
-            p2pk33index: starting_index(
-                &vecs.height_to_first_p2pk33index,
-                &vecs.p2pk33index_to_p2pk33bytes,
+            p2pk33addressindex: starting_index(
+                &vecs.height_to_first_p2pk33addressindex,
+                &vecs.p2pk33addressindex_to_p2pk33bytes,
                 height,
             )
             .context("")?,
-            p2pk65index: starting_index(
-                &vecs.height_to_first_p2pk65index,
-                &vecs.p2pk65index_to_p2pk65bytes,
+            p2pk65addressindex: starting_index(
+                &vecs.height_to_first_p2pk65addressindex,
+                &vecs.p2pk65addressindex_to_p2pk65bytes,
                 height,
             )
             .context("")?,
-            p2pkhindex: starting_index(
-                &vecs.height_to_first_p2pkhindex,
-                &vecs.p2pkhindex_to_p2pkhbytes,
+            p2pkhaddressindex: starting_index(
+                &vecs.height_to_first_p2pkhaddressindex,
+                &vecs.p2pkhaddressindex_to_p2pkhbytes,
                 height,
             )
             .context("")?,
-            p2shindex: starting_index(
-                &vecs.height_to_first_p2shindex,
-                &vecs.p2shindex_to_p2shbytes,
+            p2shaddressindex: starting_index(
+                &vecs.height_to_first_p2shaddressindex,
+                &vecs.p2shaddressindex_to_p2shbytes,
                 height,
             )
             .context("")?,
-            p2trindex: starting_index(
-                &vecs.height_to_first_p2trindex,
-                &vecs.p2trindex_to_p2trbytes,
+            p2traddressindex: starting_index(
+                &vecs.height_to_first_p2traddressindex,
+                &vecs.p2traddressindex_to_p2trbytes,
                 height,
             )
             .context("")?,
-            p2wpkhindex: starting_index(
-                &vecs.height_to_first_p2wpkhindex,
-                &vecs.p2wpkhindex_to_p2wpkhbytes,
+            p2wpkhaddressindex: starting_index(
+                &vecs.height_to_first_p2wpkhaddressindex,
+                &vecs.p2wpkhaddressindex_to_p2wpkhbytes,
                 height,
             )
             .context("")?,
-            p2wshindex: starting_index(
-                &vecs.height_to_first_p2wshindex,
-                &vecs.p2wshindex_to_p2wshbytes,
+            p2wshaddressindex: starting_index(
+                &vecs.height_to_first_p2wshaddressindex,
+                &vecs.p2wshaddressindex_to_p2wshbytes,
                 height,
             )
             .context("")?,
-            p2aindex: starting_index(
-                &vecs.height_to_first_p2aindex,
-                &vecs.p2aindex_to_p2abytes,
+            p2aaddressindex: starting_index(
+                &vecs.height_to_first_p2aaddressindex,
+                &vecs.p2aaddressindex_to_p2abytes,
                 height,
             )
             .context("")?,

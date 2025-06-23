@@ -2,9 +2,9 @@ use std::fmt::{self, Debug};
 
 use brk_core::{
     DateIndex, DecadeIndex, DifficultyEpoch, EmptyOutputIndex, HalvingEpoch, Height, InputIndex,
-    MonthIndex, OpReturnIndex, OutputIndex, P2AIndex, P2MSIndex, P2PK33Index, P2PK65Index,
-    P2PKHIndex, P2SHIndex, P2TRIndex, P2WPKHIndex, P2WSHIndex, Printable, QuarterIndex, TxIndex,
-    UnknownOutputIndex, WeekIndex, YearIndex,
+    MonthIndex, OpReturnIndex, OutputIndex, P2AAddressIndex, P2MSOutputIndex, P2PK33AddressIndex,
+    P2PK65AddressIndex, P2PKHAddressIndex, P2SHAddressIndex, P2TRAddressIndex, P2WPKHAddressIndex,
+    P2WSHAddressIndex, Printable, QuarterIndex, TxIndex, UnknownOutputIndex, WeekIndex, YearIndex,
 };
 use color_eyre::eyre::eyre;
 use schemars::JsonSchema;
@@ -22,15 +22,15 @@ pub enum Index {
     MonthIndex,
     OpReturnIndex,
     OutputIndex,
-    P2AIndex,
-    P2MSIndex,
-    P2PK33Index,
-    P2PK65Index,
-    P2PKHIndex,
-    P2SHIndex,
-    P2TRIndex,
-    P2WPKHIndex,
-    P2WSHIndex,
+    P2AAddressIndex,
+    P2MSOutputIndex,
+    P2PK33AddressIndex,
+    P2PK65AddressIndex,
+    P2PKHAddressIndex,
+    P2SHAddressIndex,
+    P2TRAddressIndex,
+    P2WPKHAddressIndex,
+    P2WSHAddressIndex,
     QuarterIndex,
     TxIndex,
     UnknownOutputIndex,
@@ -51,15 +51,15 @@ impl Index {
             Self::MonthIndex,
             Self::OpReturnIndex,
             Self::OutputIndex,
-            Self::P2AIndex,
-            Self::P2MSIndex,
-            Self::P2PK33Index,
-            Self::P2PK65Index,
-            Self::P2PKHIndex,
-            Self::P2SHIndex,
-            Self::P2TRIndex,
-            Self::P2WPKHIndex,
-            Self::P2WSHIndex,
+            Self::P2AAddressIndex,
+            Self::P2MSOutputIndex,
+            Self::P2PK33AddressIndex,
+            Self::P2PK65AddressIndex,
+            Self::P2PKHAddressIndex,
+            Self::P2SHAddressIndex,
+            Self::P2TRAddressIndex,
+            Self::P2WPKHAddressIndex,
+            Self::P2WSHAddressIndex,
             Self::QuarterIndex,
             Self::TxIndex,
             Self::UnknownOutputIndex,
@@ -80,15 +80,15 @@ impl Index {
             Self::MonthIndex => MonthIndex::to_possible_strings(),
             Self::OpReturnIndex => OpReturnIndex::to_possible_strings(),
             Self::OutputIndex => OutputIndex::to_possible_strings(),
-            Self::P2AIndex => P2AIndex::to_possible_strings(),
-            Self::P2MSIndex => P2MSIndex::to_possible_strings(),
-            Self::P2PK33Index => P2PK33Index::to_possible_strings(),
-            Self::P2PK65Index => P2PK65Index::to_possible_strings(),
-            Self::P2PKHIndex => P2PKHIndex::to_possible_strings(),
-            Self::P2SHIndex => P2SHIndex::to_possible_strings(),
-            Self::P2TRIndex => P2TRIndex::to_possible_strings(),
-            Self::P2WPKHIndex => P2WPKHIndex::to_possible_strings(),
-            Self::P2WSHIndex => P2WSHIndex::to_possible_strings(),
+            Self::P2AAddressIndex => P2AAddressIndex::to_possible_strings(),
+            Self::P2MSOutputIndex => P2MSOutputIndex::to_possible_strings(),
+            Self::P2PK33AddressIndex => P2PK33AddressIndex::to_possible_strings(),
+            Self::P2PK65AddressIndex => P2PK65AddressIndex::to_possible_strings(),
+            Self::P2PKHAddressIndex => P2PKHAddressIndex::to_possible_strings(),
+            Self::P2SHAddressIndex => P2SHAddressIndex::to_possible_strings(),
+            Self::P2TRAddressIndex => P2TRAddressIndex::to_possible_strings(),
+            Self::P2WPKHAddressIndex => P2WPKHAddressIndex::to_possible_strings(),
+            Self::P2WSHAddressIndex => P2WSHAddressIndex::to_possible_strings(),
             Self::QuarterIndex => QuarterIndex::to_possible_strings(),
             Self::TxIndex => TxIndex::to_possible_strings(),
             Self::UnknownOutputIndex => UnknownOutputIndex::to_possible_strings(),
@@ -130,15 +130,25 @@ impl TryFrom<&str> for Index {
             v if (Self::MonthIndex).possible_values().contains(&v) => Self::MonthIndex,
             v if (Self::OpReturnIndex).possible_values().contains(&v) => Self::OpReturnIndex,
             v if (Self::OutputIndex).possible_values().contains(&v) => Self::OutputIndex,
-            v if (Self::P2AIndex).possible_values().contains(&v) => Self::P2AIndex,
-            v if (Self::P2MSIndex).possible_values().contains(&v) => Self::P2MSIndex,
-            v if (Self::P2PK33Index).possible_values().contains(&v) => Self::P2PK33Index,
-            v if (Self::P2PK65Index).possible_values().contains(&v) => Self::P2PK65Index,
-            v if (Self::P2PKHIndex).possible_values().contains(&v) => Self::P2PKHIndex,
-            v if (Self::P2SHIndex).possible_values().contains(&v) => Self::P2SHIndex,
-            v if (Self::P2TRIndex).possible_values().contains(&v) => Self::P2TRIndex,
-            v if (Self::P2WPKHIndex).possible_values().contains(&v) => Self::P2WPKHIndex,
-            v if (Self::P2WSHIndex).possible_values().contains(&v) => Self::P2WSHIndex,
+            v if (Self::P2AAddressIndex).possible_values().contains(&v) => Self::P2AAddressIndex,
+            v if (Self::P2MSOutputIndex).possible_values().contains(&v) => Self::P2MSOutputIndex,
+            v if (Self::P2PK33AddressIndex).possible_values().contains(&v) => {
+                Self::P2PK33AddressIndex
+            }
+            v if (Self::P2PK65AddressIndex).possible_values().contains(&v) => {
+                Self::P2PK65AddressIndex
+            }
+            v if (Self::P2PKHAddressIndex).possible_values().contains(&v) => {
+                Self::P2PKHAddressIndex
+            }
+            v if (Self::P2SHAddressIndex).possible_values().contains(&v) => Self::P2SHAddressIndex,
+            v if (Self::P2TRAddressIndex).possible_values().contains(&v) => Self::P2TRAddressIndex,
+            v if (Self::P2WPKHAddressIndex).possible_values().contains(&v) => {
+                Self::P2WPKHAddressIndex
+            }
+            v if (Self::P2WSHAddressIndex).possible_values().contains(&v) => {
+                Self::P2WSHAddressIndex
+            }
             v if (Self::QuarterIndex).possible_values().contains(&v) => Self::QuarterIndex,
             v if (Self::QuarterIndex).possible_values().contains(&v) => Self::QuarterIndex,
             v if (Self::TxIndex).possible_values().contains(&v) => Self::TxIndex,

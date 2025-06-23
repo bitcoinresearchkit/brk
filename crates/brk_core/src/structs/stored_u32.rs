@@ -7,8 +7,9 @@ use zerocopy_derive::{FromBytes, Immutable, IntoBytes, KnownLayout};
 use crate::{CheckedSub, Printable};
 
 use super::{
-    EmptyOutputIndex, OpReturnIndex, P2AIndex, P2MSIndex, P2PK33Index, P2PK65Index, P2PKHIndex,
-    P2SHIndex, P2TRIndex, P2WPKHIndex, P2WSHIndex, UnknownOutputIndex,
+    EmptyOutputIndex, OpReturnIndex, P2AAddressIndex, P2MSOutputIndex, P2PK33AddressIndex,
+    P2PK65AddressIndex, P2PKHAddressIndex, P2SHAddressIndex, P2TRAddressIndex, P2WPKHAddressIndex,
+    P2WSHAddressIndex, UnknownOutputIndex,
 };
 
 #[derive(
@@ -93,20 +94,20 @@ impl From<StoredU32> for usize {
     }
 }
 
-impl From<P2PK65Index> for StoredU32 {
-    fn from(value: P2PK65Index) -> Self {
+impl From<P2PK65AddressIndex> for StoredU32 {
+    fn from(value: P2PK65AddressIndex) -> Self {
         Self::from(usize::from(value))
     }
 }
 
-impl From<P2PK33Index> for StoredU32 {
-    fn from(value: P2PK33Index) -> Self {
+impl From<P2PK33AddressIndex> for StoredU32 {
+    fn from(value: P2PK33AddressIndex) -> Self {
         Self::from(usize::from(value))
     }
 }
 
-impl From<P2PKHIndex> for StoredU32 {
-    fn from(value: P2PKHIndex) -> Self {
+impl From<P2PKHAddressIndex> for StoredU32 {
+    fn from(value: P2PKHAddressIndex) -> Self {
         Self::from(usize::from(value))
     }
 }
@@ -117,38 +118,38 @@ impl From<OpReturnIndex> for StoredU32 {
     }
 }
 
-impl From<P2MSIndex> for StoredU32 {
-    fn from(value: P2MSIndex) -> Self {
+impl From<P2MSOutputIndex> for StoredU32 {
+    fn from(value: P2MSOutputIndex) -> Self {
         Self::from(usize::from(value))
     }
 }
 
-impl From<P2SHIndex> for StoredU32 {
-    fn from(value: P2SHIndex) -> Self {
+impl From<P2SHAddressIndex> for StoredU32 {
+    fn from(value: P2SHAddressIndex) -> Self {
         Self::from(usize::from(value))
     }
 }
 
-impl From<P2WSHIndex> for StoredU32 {
-    fn from(value: P2WSHIndex) -> Self {
+impl From<P2WSHAddressIndex> for StoredU32 {
+    fn from(value: P2WSHAddressIndex) -> Self {
         Self::from(usize::from(value))
     }
 }
 
-impl From<P2WPKHIndex> for StoredU32 {
-    fn from(value: P2WPKHIndex) -> Self {
+impl From<P2WPKHAddressIndex> for StoredU32 {
+    fn from(value: P2WPKHAddressIndex) -> Self {
         Self::from(usize::from(value))
     }
 }
 
-impl From<P2TRIndex> for StoredU32 {
-    fn from(value: P2TRIndex) -> Self {
+impl From<P2TRAddressIndex> for StoredU32 {
+    fn from(value: P2TRAddressIndex) -> Self {
         Self::from(usize::from(value))
     }
 }
 
-impl From<P2AIndex> for StoredU32 {
-    fn from(value: P2AIndex) -> Self {
+impl From<P2AAddressIndex> for StoredU32 {
+    fn from(value: P2AAddressIndex) -> Self {
         Self::from(usize::from(value))
     }
 }
