@@ -57,6 +57,10 @@ impl Header {
         });
     }
 
+    pub fn modified(&self) -> bool {
+        self.modified
+    }
+
     pub fn vec_version(&self) -> Version {
         self.inner.load().vec_version
     }
@@ -69,11 +73,9 @@ impl Header {
         self.inner.load().height
     }
 
-    pub fn write_if_needed(&mut self, file: &mut File) -> io::Result<()> {
-        if self.modified {
-            self.inner.load().write(file)?;
-            self.modified = false;
-        }
+    pub fn write(&mut self, file: &mut File) -> io::Result<()> {
+        self.inner.load().write(file)?;
+        self.modified = false;
         Ok(())
     }
 }

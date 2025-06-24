@@ -1,6 +1,5 @@
 use std::{
-    fs::{self, File},
-    mem,
+    fs, mem,
     path::{Path, PathBuf},
     sync::Arc,
 };
@@ -189,14 +188,6 @@ where
         self.inner.parent()
     }
 
-    fn file(&self) -> &File {
-        self.inner.file()
-    }
-
-    fn mut_file(&mut self) -> &mut File {
-        self.inner.mut_file()
-    }
-
     #[inline]
     fn stored_len(&self) -> usize {
         Self::stored_len__(&self.pages_meta.load())
@@ -221,7 +212,7 @@ where
     }
 
     fn flush(&mut self) -> Result<()> {
-        self.inner.write_header_if_needed()?;
+        let file_opt = self.inner.write_header_if_needed()?;
 
         let pushed_len = self.pushed_len();
 
@@ -295,11 +286,13 @@ where
 
         pages_meta.write()?;
 
+        let mut file = file_opt.unwrap_or(self.open_file()?);
+
         if let Some(truncate_at) = truncate_at {
-            self.file_set_len(truncate_at)?;
+            self.file_set_len(&mut file, truncate_at)?;
         }
 
-        self.file_write_all(&buf)?;
+        self.file_write_all(&mut file, &buf)?;
 
         self.pages_meta.store(Arc::new(pages_meta));
 
@@ -354,7 +347,9 @@ where
 
         self.pages_meta.store(Arc::new(pages_meta));
 
-        self.file_truncate_and_write_all(len, &buf)?;
+        let mut file = self.open_file()?;
+
+        self.file_truncate_and_write_all(&mut file, len, &buf)?;
 
         Ok(())
     }

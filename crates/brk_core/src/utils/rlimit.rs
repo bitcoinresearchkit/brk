@@ -7,7 +7,7 @@ pub fn setrlimit() -> io::Result<()> {
 
     rlimit::setrlimit(
         Resource::NOFILE,
-        no_file_limit.0.max(420_000),
+        no_file_limit.0.max(210_000),
         no_file_limit.1,
     )?;
 

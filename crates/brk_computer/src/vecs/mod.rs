@@ -1,4 +1,4 @@
-use std::{path::Path, thread};
+use std::path::Path;
 
 use brk_core::Version;
 use brk_exit::Exit;
@@ -44,31 +44,22 @@ impl Vecs {
         computation: Computation,
         format: Format,
     ) -> color_eyre::Result<Self> {
-        let (indexes, fetched) = thread::scope(|s| {
-            let indexes_handle = s.spawn(|| {
-                indexes::Vecs::forced_import(
-                    path,
-                    version + VERSION + Version::ZERO,
-                    indexer,
-                    computation,
-                    format,
-                )
-                .unwrap()
-            });
+        let indexes = indexes::Vecs::forced_import(
+            path,
+            version + VERSION + Version::ZERO,
+            indexer,
+            computation,
+            format,
+        )?;
 
-            let fetch_handle = s.spawn(|| {
-                fetch.then(|| {
-                    fetched::Vecs::forced_import(
-                        path,
-                        version + VERSION + Version::ZERO,
-                        computation,
-                        format,
-                    )
-                    .unwrap()
-                })
-            });
-
-            (indexes_handle.join().unwrap(), fetch_handle.join().unwrap())
+        let fetched = fetch.then(|| {
+            fetched::Vecs::forced_import(
+                path,
+                version + VERSION + Version::ZERO,
+                computation,
+                format,
+            )
+            .unwrap()
         });
 
         Ok(Self {

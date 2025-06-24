@@ -24,7 +24,7 @@ pub struct RawVec<I, T> {
     header: Header,
     parent: PathBuf,
     name: String,
-    file: Option<File>,
+    // file: Option<File>,
     // Consider  Arc<ArcSwap<Option<Mmap>>> for dataraces when reorg ?
     mmap: Arc<ArcSwap<Mmap>>,
     pushed: Vec<T>,
@@ -55,18 +55,18 @@ where
 
     pub fn import(parent: &Path, name: &str, version: Version) -> Result<Self> {
         let path = Self::path_(parent, name);
-        let (file, mmap, header) = match Self::open_file_(&path) {
+        let (mmap, header) = match Self::open_file_(&path) {
             Ok(mut file) => {
                 if file.metadata()?.len() == 0 {
                     let header = Header::create_and_write(&mut file, version, Format::Raw)?;
                     let mmap = Self::new_mmap(&file)?;
-                    (file, mmap, header)
+                    (mmap, header)
                 } else {
                     let mmap = Self::new_mmap(&file)?;
                     // dbg!(&mmap[..]);
                     let header = Header::import_and_verify(&mmap, version, Format::Raw)?;
                     // dbg!((&header, name, I::to_string()));
-                    (file, mmap, header)
+                    (mmap, header)
                 }
             }
             Err(e) => match e.kind() {
@@ -75,7 +75,7 @@ where
                     let mut file = Self::open_file_(&path)?;
                     let header = Header::create_and_write(&mut file, version, Format::Raw)?;
                     let mmap = Self::new_mmap(&file)?;
-                    (file, mmap, header)
+                    (mmap, header)
                 }
                 _ => return Err(e.into()),
             },
@@ -86,7 +86,7 @@ where
         Ok(Self {
             mmap,
             header,
-            file: Some(file),
+            // file: Some(file),
             name: name.to_string(),
             parent: parent.to_owned(),
             pushed: vec![],
@@ -111,8 +111,14 @@ where
         iter
     }
 
-    pub fn write_header_if_needed(&mut self) -> io::Result<()> {
-        self.header.write_if_needed(self.file.as_mut().unwrap())
+    pub fn write_header_if_needed(&mut self) -> io::Result<Option<File>> {
+        if self.header.modified() {
+            let mut file = self.open_file()?;
+            self.header.write(&mut file)?;
+            Ok(Some(file))
+        } else {
+            Ok(None)
+        }
     }
 }
 
@@ -144,16 +150,6 @@ where
     }
 
     #[inline]
-    fn file(&self) -> &File {
-        self.file.as_ref().unwrap()
-    }
-
-    #[inline]
-    fn mut_file(&mut self) -> &mut File {
-        self.file.as_mut().unwrap()
-    }
-
-    #[inline]
     fn stored_len(&self) -> usize {
         self.stored_len_(&self.mmap.load())
     }
@@ -177,7 +173,7 @@ where
     }
 
     fn flush(&mut self) -> Result<()> {
-        self.write_header_if_needed()?;
+        let file_opt = self.write_header_if_needed()?;
 
         let pushed_len = self.pushed_len();
 
@@ -200,7 +196,9 @@ where
             bytes
         };
 
-        self.file_write_all(&bytes)?;
+        let mut file = file_opt.unwrap_or(self.open_file()?);
+
+        self.file_write_all(&mut file, &bytes)?;
 
         Ok(())
     }
@@ -219,7 +217,8 @@ where
 
         let len = index * Self::SIZE_OF_T + HEADER_OFFSET;
 
-        self.file_set_len(len as u64)?;
+        let mut file = self.open_file()?;
+        self.file_set_len(&mut file, len as u64)?;
 
         Ok(())
     }
@@ -266,7 +265,6 @@ impl<I, T> Clone for RawVec<I, T> {
             header: self.header.clone(),
             parent: self.parent.clone(),
             name: self.name.clone(),
-            file: None,
             mmap: self.mmap.clone(),
             pushed: vec![],
             phantom: PhantomData,
