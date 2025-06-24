@@ -5,9 +5,10 @@ use color_eyre::eyre::{ContextCompat, eyre};
 use log::info;
 use serde_json::Value;
 
-use crate::{Close, Dollars, High, Low, Open, fetchers::retry};
+use crate::{Close, Dollars, High, Low, Open, retry};
 
 #[derive(Default, Clone)]
+#[allow(clippy::upper_case_acronyms)]
 pub struct BRK {
     height_to_ohlc: BTreeMap<Height, Vec<OHLCCents>>,
     dateindex_to_ohlc: BTreeMap<DateIndex, Vec<OHLCCents>>,
@@ -47,7 +48,7 @@ impl BRK {
         retry(
             |_| {
                 let url = format!(
-                    "{API_URL}/query?index=height&values=ohlc&from={}&to={}",
+                    "{API_URL}/height-to-ohlc?from={}&to={}",
                     height,
                     height + CHUNK_SIZE
                 );
@@ -96,7 +97,7 @@ impl BRK {
         retry(
             |_| {
                 let url = format!(
-                    "{API_URL}/query?index=dateindex&values=ohlc&from={}&to={}",
+                    "{API_URL}/dateindex-to-ohlc?from={}&to={}",
                     dateindex,
                     dateindex + CHUNK_SIZE
                 );

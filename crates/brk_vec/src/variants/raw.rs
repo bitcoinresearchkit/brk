@@ -24,7 +24,6 @@ pub struct RawVec<I, T> {
     header: Header,
     parent: PathBuf,
     name: String,
-    // file: Option<File>,
     // Consider  Arc<ArcSwap<Option<Mmap>>> for dataraces when reorg ?
     mmap: Arc<ArcSwap<Mmap>>,
     pushed: Vec<T>,
@@ -63,9 +62,7 @@ where
                     (mmap, header)
                 } else {
                     let mmap = Self::new_mmap(&file)?;
-                    // dbg!(&mmap[..]);
                     let header = Header::import_and_verify(&mmap, version, Format::Raw)?;
-                    // dbg!((&header, name, I::to_string()));
                     (mmap, header)
                 }
             }
@@ -86,7 +83,6 @@ where
         Ok(Self {
             mmap,
             header,
-            // file: Some(file),
             name: name.to_string(),
             parent: parent.to_owned(),
             pushed: vec![],

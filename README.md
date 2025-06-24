@@ -42,7 +42,7 @@ The toolkit can be used in various ways to accommodate as many needs as possible
   It has a wide range of functionalities including charts, tables and simulations which you can visit for free and without the need for an account. \
   Also available at: [kibo.money](https://kibo.money) // [satonomics.xyz](https://satonomics.xyz)
 - **[API](https://github.com/bitcoinresearchkit/brk/tree/main/crates/brk_server#brk-server)** \
-  Researchers and developers are free to use BRK's public API with ![Datasets variant count](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fbitcoinresearchkit.org%2Fapi%2Fvecs%2Fvariant-count&query=%24&style=flat&label=%20&color=white) dataset variants at their disposal. \
+  Researchers and developers are free to use BRK's public API with ![Datasets variant count](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fbitcoinresearchkit.org%2Fapi%2Fvecs%2Fvec-count&query=%24&style=flat&label=%20&color=white) dataset variants at their disposal. \
   Just like the website, it's entirely free, with no authentication or rate-limiting.
 - **[AI](https://github.com/bitcoinresearchkit/brk/blob/main/crates/brk_mcp/README.md#brk-mcp)** \
   LLMs have to possibility to connect to BRK's backend through a [MCP](https://modelcontextprotocol.io/introduction). \
