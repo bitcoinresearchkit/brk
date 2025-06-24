@@ -7,11 +7,17 @@ use std::{collections::BTreeMap, path::Path, thread::sleep, time::Duration};
 
 use brk_core::{Close, Date, Dollars, Height, High, Low, OHLCCents, Open, Timestamp};
 use color_eyre::eyre::Error;
-
-mod fetchers;
-
-pub use fetchers::*;
 use log::info;
+
+mod binance;
+mod brk;
+mod kraken;
+mod retry;
+
+pub use binance::*;
+pub use brk::*;
+pub use kraken::*;
+use retry::*;
 
 const TRIES: usize = 12 * 60;
 

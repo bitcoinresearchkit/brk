@@ -11,7 +11,7 @@ use color_eyre::eyre::{ContextCompat, eyre};
 use log::info;
 use serde_json::Value;
 
-use crate::{Close, Date, Dollars, Fetcher, High, Low, Open, fetchers::retry};
+use crate::{Close, Date, Dollars, Fetcher, High, Low, Open, retry};
 
 #[derive(Clone)]
 pub struct Binance {

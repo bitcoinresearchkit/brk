@@ -142,7 +142,7 @@ The response's format will depend on the given parameters, it will be:
     }
 
     #[tool(description = "
-Get the running version of the Bitcoin Research Kit
+Get the running version of the Bitcoin Research Kit.
 ")]
     async fn get_version(&self) -> Result<CallToolResult, McpError> {
         info!("mcp: get_version");

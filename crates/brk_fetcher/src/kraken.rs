@@ -5,7 +5,7 @@ use color_eyre::eyre::ContextCompat;
 use log::info;
 use serde_json::Value;
 
-use crate::{Fetcher, fetchers::retry};
+use crate::{Fetcher, retry};
 
 #[derive(Default, Clone)]
 pub struct Kraken {
