@@ -1,0 +1,15 @@
+[package]
+name = "brk_mcp"
+description = "A Model Context Protocol (MCP) which gives LLMs access to all available tools in BRK"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+homepage.workspace = true
+repository.workspace = true
+
+[dependencies]
+axum = { workspace = true }
+brk_interface = { workspace = true }
+log = { workspace = true }
+brk_rmcp = { workspace = true }
+tracing = "0.1.41"

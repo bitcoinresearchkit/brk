@@ -951,10 +951,7 @@ function createUtils() {
       if (unit) throw Error(`Unit "${unit}" already assigned "${id}"`);
       unit = "Years";
     }
-    if (
-      (!unit || thoroughUnitCheck) &&
-      (id === "0" || id === "1" || id === "50" || id === "100")
-    ) {
+    if ((!unit || thoroughUnitCheck) && id.startsWith("constant")) {
       if (unit) throw Error(`Unit "${unit}" already assigned "${id}"`);
       unit = "constant";
     }
@@ -2226,7 +2223,6 @@ function main() {
                       import("./table.js").then(({ init }) =>
                         signals.runWithOwner(owner, () =>
                           init({
-                            colors,
                             elements,
                             signals,
                             utils,

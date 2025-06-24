@@ -1,3 +1,8 @@
+#![doc = include_str!("../README.md")]
+// #![doc = "\n## Example\n\n```rust"]
+// #![doc = include_str!("../examples/main.rs")]
+// #![doc = "```"]
+
 use brk_interface::{IdParam, Interface, PaginatedIndexParam, PaginationParam, Params};
 use brk_rmcp::{
     Error as McpError, RoleServer, ServerHandler,
@@ -10,15 +15,17 @@ use brk_rmcp::{
 };
 use log::info;
 
+pub mod route;
+
 #[derive(Clone)]
-pub struct API {
+pub struct MCP {
     interface: &'static Interface<'static>,
 }
 
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 
 #[tool(tool_box)]
-impl API {
+impl MCP {
     pub fn new(interface: &'static Interface<'static>) -> Self {
         Self { interface }
     }
@@ -146,7 +153,7 @@ Get the running version of the Bitcoin Research Kit
 }
 
 #[tool(tool_box)]
-impl ServerHandler for API {
+impl ServerHandler for MCP {
     fn get_info(&self) -> ServerInfo {
         ServerInfo {
             protocol_version: ProtocolVersion::LATEST,

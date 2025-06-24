@@ -24,6 +24,7 @@ use brk_computer::Computer;
 use brk_core::dot_brk_path;
 use brk_indexer::Indexer;
 use brk_interface::Interface;
+use brk_mcp::route::MCPRoutes;
 use color_eyre::owo_colors::OwoColorize;
 use files::FilesRoutes;
 use log::{error, info};
@@ -32,11 +33,9 @@ use tower_http::{compression::CompressionLayer, trace::TraceLayer};
 
 mod api;
 mod files;
-mod mcp;
 mod traits;
 
 pub use files::Website;
-use mcp::*;
 use tracing::Span;
 
 #[derive(Clone)]

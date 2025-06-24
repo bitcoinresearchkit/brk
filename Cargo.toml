@@ -31,6 +31,7 @@ brk_fetcher = { version = "0.0.66", path = "crates/brk_fetcher" }
 brk_indexer = { version = "0.0.66", path = "crates/brk_indexer" }
 brk_interface = { version = "0.0.66", path = "crates/brk_interface" }
 brk_logger = { version = "0.0.66", path = "crates/brk_logger" }
+brk_mcp = { version = "0.0.66", path = "crates/brk_mcp" }
 brk_parser = { version = "0.0.66", path = "crates/brk_parser" }
 brk_rmcp = { version = "0.1.7", features = ["transport-streamable-http-server", "transport-worker"]}
 brk_server = { version = "0.0.66", path = "crates/brk_server" }

@@ -5,7 +5,7 @@ use std::{
 
 use axum::http::{
     HeaderMap,
-    header::{self, IF_MODIFIED_SINCE},
+    header::{self, IF_MODIFIED_SINCE, IF_NONE_MATCH},
 };
 use jiff::{Timestamp, civil::DateTime, fmt::strtime, tz::TimeZone};
 use log::info;
@@ -21,6 +21,8 @@ pub enum ModifiedState {
 pub trait HeaderMapExtended {
     fn insert_cors(&mut self);
 
+    fn get_if_none_match(&self) -> Option<&str>;
+
     fn get_if_modified_since(&self) -> Option<DateTime>;
     fn check_if_modified_since(&self, path: &Path)
     -> color_eyre::Result<(ModifiedState, DateTime)>;
@@ -31,6 +33,7 @@ pub trait HeaderMapExtended {
 
     fn insert_cache_control_must_revalidate(&mut self);
     fn insert_cache_control_immutable(&mut self);
+    fn insert_etag(&mut self, etag: &str);
     fn insert_last_modified(&mut self, date: DateTime);
 
     fn insert_content_disposition_attachment(&mut self);
@@ -85,6 +88,10 @@ impl HeaderMapExtended for HeaderMap {
         self.insert(header::LAST_MODIFIED, formatted.parse().unwrap());
     }
 
+    fn insert_etag(&mut self, etag: &str) {
+        self.insert(header::ETAG, etag.parse().unwrap());
+    }
+
     fn check_if_modified_since(
         &self,
         path: &Path,
@@ -125,6 +132,10 @@ impl HeaderMapExtended for HeaderMap {
         }
 
         None
+    }
+
+    fn get_if_none_match(&self) -> Option<&str> {
+        self.get(IF_NONE_MATCH).and_then(|v| v.to_str().ok())
     }
 
     // https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/MIME_types/Common_types

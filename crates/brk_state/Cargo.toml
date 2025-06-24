@@ -1,6 +1,6 @@
 [package]
 name = "brk_state"
-description = "Various states used mainly by the computer"
+description = "Various states used in the Bitcoin Research Kit"
 version.workspace = true
 edition.workspace = true
 license.workspace = true

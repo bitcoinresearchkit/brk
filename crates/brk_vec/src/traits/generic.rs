@@ -3,7 +3,6 @@ use std::{
     io::{self, Seek, SeekFrom, Write},
     path::{Path, PathBuf},
     sync::Arc,
-    time::{self, Duration},
 };
 
 use arc_swap::ArcSwap;
@@ -168,12 +167,4 @@ where
     fn flush(&mut self) -> Result<()>;
 
     fn truncate_if_needed(&mut self, index: I) -> Result<()>;
-
-    fn modified_time_(&self) -> Result<Duration> {
-        Ok(self
-            .file()
-            .metadata()?
-            .modified()?
-            .duration_since(time::UNIX_EPOCH)?)
-    }
 }

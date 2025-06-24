@@ -61,7 +61,6 @@ pub use cents::*;
 pub use date::*;
 pub use dateindex::*;
 pub use decadeindex::*;
-pub use decadeindex::*;
 pub use difficultyepoch::*;
 pub use dollars::*;
 pub use emptyoutputindex::*;

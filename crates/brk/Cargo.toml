@@ -17,6 +17,7 @@ full = [
     "fetcher",
     "indexer",
     "logger",
+    "mcp",
     "parser",
     "interface",
     "server",
@@ -31,6 +32,7 @@ exit = ["brk_exit"]
 fetcher = ["brk_fetcher"]
 indexer = ["brk_indexer"]
 logger = ["brk_logger"]
+mcp = ["brk_mcp"]
 parser = ["brk_parser"]
 interface = ["brk_interface"]
 server = ["brk_server"]
@@ -47,6 +49,7 @@ brk_exit = { workspace = true, optional = true }
 brk_fetcher = { workspace = true, optional = true }
 brk_indexer = { workspace = true, optional = true }
 brk_logger = { workspace = true, optional = true }
+brk_mcp = { workspace = true, optional = true }
 brk_parser = { workspace = true, optional = true }
 brk_interface = { workspace = true, optional = true }
 brk_server = { workspace = true, optional = true }

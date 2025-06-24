@@ -1,7 +1,6 @@
 use std::{
     fs::File,
     path::{Path, PathBuf},
-    time::Duration,
 };
 
 use arc_swap::ArcSwap;
@@ -189,14 +188,6 @@ where
     #[inline]
     fn len(&self) -> usize {
         self.pushed_len() + self.stored_len()
-    }
-
-    #[inline]
-    fn modified_time(&self) -> Result<Duration> {
-        match self {
-            StoredVec::Raw(v) => v.modified_time(),
-            StoredVec::Compressed(v) => v.modified_time(),
-        }
     }
 
     fn name(&self) -> &str {
