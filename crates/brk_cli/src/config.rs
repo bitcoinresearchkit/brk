@@ -16,6 +16,7 @@ use serde::{Deserialize, Serialize};
 use crate::services::Services;
 
 #[derive(Parser, Debug, Default, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize)]
+#[command(version, about)]
 pub struct Config {
     /// Bitcoin main directory path, defaults: ~/.bitcoin, ~/Library/Application\ Support/Bitcoin, saved
     #[serde(default, deserialize_with = "default_on_error")]
