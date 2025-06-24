@@ -1,7 +1,4 @@
-use std::{
-    fs::File,
-    path::{Path, PathBuf},
-};
+use std::path::{Path, PathBuf};
 
 use arc_swap::ArcSwap;
 use brk_core::{Result, Value, Version};
@@ -88,22 +85,6 @@ where
         match self {
             StoredVec::Raw(v) => v.parent(),
             StoredVec::Compressed(v) => v.parent(),
-        }
-    }
-
-    #[inline]
-    fn file(&self) -> &File {
-        match self {
-            StoredVec::Raw(v) => v.file(),
-            StoredVec::Compressed(v) => v.file(),
-        }
-    }
-
-    #[inline]
-    fn mut_file(&mut self) -> &mut File {
-        match self {
-            StoredVec::Raw(v) => v.mut_file(),
-            StoredVec::Compressed(v) => v.mut_file(),
         }
     }
 

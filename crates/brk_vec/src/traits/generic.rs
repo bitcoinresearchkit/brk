@@ -95,6 +95,9 @@ where
 
     // ---
 
+    fn open_file(&self) -> io::Result<File> {
+        Self::open_file_(&self.path())
+    }
     fn open_file_(path: &Path) -> io::Result<File> {
         let mut file = OpenOptions::new()
             .read(true)
@@ -106,13 +109,9 @@ where
         Ok(file)
     }
 
-    fn file(&self) -> &File;
-    fn mut_file(&mut self) -> &mut File;
-
-    fn file_set_len(&mut self, len: u64) -> Result<()> {
-        let file = self.mut_file();
+    fn file_set_len(&mut self, file: &mut File, len: u64) -> Result<()> {
         Self::file_set_len_(file, len)?;
-        self.update_mmap()
+        self.update_mmap(file)
     }
     fn file_set_len_(file: &mut File, len: u64) -> Result<()> {
         file.set_len(len)?;
@@ -120,32 +119,31 @@ where
         Ok(())
     }
 
-    fn file_write_all(&mut self, buf: &[u8]) -> Result<()> {
-        let file = self.mut_file();
+    fn file_write_all(&mut self, file: &mut File, buf: &[u8]) -> Result<()> {
         file.write_all(buf)?;
-        self.update_mmap()
+        self.update_mmap(file)
     }
 
-    fn file_truncate_and_write_all(&mut self, len: u64, buf: &[u8]) -> Result<()> {
-        let file = self.mut_file();
+    fn file_truncate_and_write_all(&mut self, file: &mut File, len: u64, buf: &[u8]) -> Result<()> {
         Self::file_set_len_(file, len)?;
         file.write_all(buf)?;
-        self.update_mmap()
+        self.update_mmap(file)
     }
 
     fn reset(&mut self) -> Result<()>;
 
     #[inline]
     fn reset_(&mut self) -> Result<()> {
-        self.file_truncate_and_write_all(HEADER_OFFSET as u64, &[])
+        let mut file = self.open_file()?;
+        self.file_truncate_and_write_all(&mut file, HEADER_OFFSET as u64, &[])
     }
 
     fn new_mmap(file: &File) -> Result<Arc<Mmap>> {
         Ok(Arc::new(unsafe { Mmap::map(file)? }))
     }
 
-    fn update_mmap(&mut self) -> Result<()> {
-        let mmap = Self::new_mmap(self.file())?;
+    fn update_mmap(&mut self, file: &File) -> Result<()> {
+        let mmap = Self::new_mmap(file)?;
         self.mmap().store(mmap);
         Ok(())
     }
