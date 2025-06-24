@@ -113,7 +113,7 @@ Full rewrite
 - Added serving of the website
 - Improved `Cache-Control` behavior
 
-# [kibo-v0.3.0](https://github.com/bitcoinresearchkit/brk/tree/b68b016091c45b071218fba01bac5b76e8eaf18c) | [853930](https://mempool.space/block/00000000000000000002eb5e9a7950ca2d5d98bd1ed28fc9098aa630d417985d) - 2024/07/26
+# [satonomics-v0.3.0](https://github.com/bitcoinresearchkit/brk/tree/b68b016091c45b071218fba01bac5b76e8eaf18c) | [853930](https://mempool.space/block/00000000000000000002eb5e9a7950ca2d5d98bd1ed28fc9098aa630d417985d) - 2024/07/26
 
 ![Image of the Satonomics Web App version 0.3.0](https://github.com/bitcoinresearchkit/brk/blob/main/assets/satonomics-v0.3.0.jpg)
 
@@ -192,7 +192,7 @@ Full rewrite
   - Only run with a watcher if `cargo watch` is available
   - Removed id_to_path file in favor for only `paths.d.ts` in `app/src/types`
 
-# [kibo-v0.2.0](https://github.com/bitcoinresearchkit/brk/tree/248187889283597c5dbb806292297453c25e97b8) | [851286](https://mempool.space/block/0000000000000000000281ca7f1bf8c50702bfca168c7af1bdc67c977c1ac8ed) - 2024/07/08
+# [satonomics-v0.2.0](https://github.com/bitcoinresearchkit/brk/tree/248187889283597c5dbb806292297453c25e97b8) | [851286](https://mempool.space/block/0000000000000000000281ca7f1bf8c50702bfca168c7af1bdc67c977c1ac8ed) - 2024/07/08
 
 ![Image of the Satonomics Web App version 0.2.0](https://github.com/bitcoinresearchkit/brk/blob/main/assets/satonomics-v0.2.0.jpg)
 
@@ -228,7 +228,7 @@ Full rewrite
 
 - Fixed ulimit only being run in Mac OS instead of whenever the program is detected
 
-# [kibo-v0.1.1](https://github.com/bitcoinresearchkit/brk/tree/e55b5195a9de9aea306903c94ed63cb1720fda5f) | [849240](https://mempool.space/block/000000000000000000002b8653988655071c07bb5f7181c038f9326bc86db741) - 2024/06/24
+# [satonomics-v0.1.1](https://github.com/bitcoinresearchkit/brk/tree/e55b5195a9de9aea306903c94ed63cb1720fda5f) | [849240](https://mempool.space/block/000000000000000000002b8653988655071c07bb5f7181c038f9326bc86db741) - 2024/06/24
 
 ![Image of the Satonomics Web App version 0.1.1](https://github.com/bitcoinresearchkit/brk/blob/main/assets/satonomics-v0.1.1.jpg)
 
@@ -278,10 +278,10 @@ Full rewrite
 
 - Deleted old price datasets and their backups
 
-# [kibo-v0.1.0](https://github.com/bitcoinresearchkit/brk/tree/a1a576d088c8f83ed32d48753a7611f70a964574) | [848642](https://mempool.space/block/000000000000000000020be5761d70751252219a9557f55e91ecdfb86c4e026a) - 2024/06/19
+# [satonomics-v0.1.0](https://github.com/bitcoinresearchkit/brk/tree/a1a576d088c8f83ed32d48753a7611f70a964574) | [848642](https://mempool.space/block/000000000000000000020be5761d70751252219a9557f55e91ecdfb86c4e026a) - 2024/06/19
 
 ![Image of the Satonomics Web App version 0.1.0](https://github.com/bitcoinresearchkit/brk/blob/main/assets/satonomics-v0.1.0.jpg)
 
-# kibo-v0.0.1 | [835444](https://mempool.space/block/000000000000000000009f93907a0dd83c080d5585cc7ec82c076d45f6d7c872) - 2024/03/20
+# satonomics-v0.0.1 | [835444](https://mempool.space/block/000000000000000000009f93907a0dd83c080d5585cc7ec82c076d45f6d7c872) - 2024/03/20
 
 ![Image of the Satonomics Web App version 0.0.X](https://github.com/bitcoinresearchkit/brk/blob/main/assets/satonomics-v0.0.1.jpg)
