@@ -143,10 +143,6 @@ where
         self.source.len()
     }
 
-    fn modified_time(&self) -> Result<std::time::Duration> {
-        self.source.modified_time()
-    }
-
     #[inline]
     fn value_type_to_size_of(&self) -> usize {
         size_of::<T>()

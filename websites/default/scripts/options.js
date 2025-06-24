@@ -3484,7 +3484,7 @@ export function initOptions({ colors, signals, env, utils, qrcode }) {
       }
     } else {
       const { input, label } = utils.dom.createLabeledInput({
-        inputId: `${option.id}_${frame}${id || ""}_selector`,
+        inputId: `${option.id}-${frame}${id || ""}-selector`,
         inputValue: option.id,
         inputName: `option_${frame}${id || ""}`,
         labelTitle: option.title,
@@ -3667,7 +3667,7 @@ export function initOptions({ colors, signals, env, utils, qrcode }) {
         } else if ("url" in anyPartial) {
           option = /** @satisfies {UrlOption} */ ({
             kind: "url",
-            id: `${utils.stringToId(anyPartial.name)}_url`,
+            id: `${utils.stringToId(anyPartial.name)}-url`,
             name: anyPartial.name,
             path: path || [],
             title: anyPartial.name,
@@ -3676,7 +3676,7 @@ export function initOptions({ colors, signals, env, utils, qrcode }) {
           });
         } else {
           const title = anyPartial.title || anyPartial.name;
-          const id = `chart_${utils.stringToId(title)}`;
+          const id = `chart-${utils.stringToId(title)}`;
           option = /** @satisfies {ChartOption} */ ({
             kind: "chart",
             id,

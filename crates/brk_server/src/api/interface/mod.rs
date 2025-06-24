@@ -9,7 +9,7 @@ use brk_interface::{Format, Output, Params};
 use brk_vec::{CollectableVec, StoredVec};
 use color_eyre::eyre::eyre;
 
-use crate::traits::{HeaderMapExtended, ModifiedState, ResponseExtended};
+use crate::traits::{HeaderMapExtended, ResponseExtended};
 
 use super::AppState;
 
@@ -63,24 +63,13 @@ fn req_to_response_res(
         return Err(eyre!("Request is too heavy, max weight is {MAX_WEIGHT}"));
     }
 
-    let mut date_modified_opt = None;
+    let etag = vecs.first().unwrap().1.etag(to);
 
-    if to.is_none() {
-        let not_modified = vecs
-            .iter()
-            .map(|(_, vec)| headers.check_if_modified_since_(vec.modified_time()?))
-            .all(|res| {
-                res.ok().is_some_and(|(modified, date_modified)| {
-                    if date_modified_opt.is_none_or(|dm| dm > date_modified) {
-                        date_modified_opt.replace(date_modified);
-                    }
-                    modified == ModifiedState::NotModifiedSince
-                })
-            });
-
-        if not_modified {
-            return Ok(Response::new_not_modified());
-        }
+    if headers
+        .get_if_none_match()
+        .is_some_and(|prev_etag| etag == prev_etag)
+    {
+        return Ok(Response::new_not_modified());
     }
 
     let output = interface.format(vecs, &params.rest)?;
@@ -100,9 +89,7 @@ fn req_to_response_res(
 
     headers.insert_cors();
 
-    if let Some(date_modified) = date_modified_opt {
-        headers.insert_last_modified(date_modified);
-    }
+    headers.insert_etag(&etag);
 
     match format {
         Some(format) => {

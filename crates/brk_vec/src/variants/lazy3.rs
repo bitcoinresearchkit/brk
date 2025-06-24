@@ -222,14 +222,6 @@ where
         len1.min(len2).min(len3)
     }
 
-    fn modified_time(&self) -> Result<std::time::Duration> {
-        Ok(self
-            .source1
-            .modified_time()?
-            .min(self.source2.modified_time()?)
-            .min(self.source3.modified_time()?))
-    }
-
     #[inline]
     fn value_type_to_size_of(&self) -> usize {
         size_of::<T>()

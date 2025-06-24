@@ -353,7 +353,6 @@ function createTable({
 
 /**
  * @param {Object} args
- * @param {Colors} args.colors
  * @param {Signals} args.signals
  * @param {Utilities} args.utils
  * @param {Option} args.option
@@ -362,7 +361,6 @@ function createTable({
  * @param {VecIdToIndexes} args.vecIdToIndexes
  */
 export function init({
-  colors,
   elements,
   signals,
   option,
@@ -500,7 +498,7 @@ function createIndexToVecIds(vecIdToIndexes) {
       });
       return arr;
     },
-    /** @type {VecId[][]} */ (new Array(24)),
+    /** @type {VecId[][]} */ (Array.from({ length: 24 })),
   );
   indexToVecIds.forEach((arr) => {
     arr.sort();

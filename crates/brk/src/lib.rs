@@ -31,6 +31,10 @@ pub use brk_indexer as indexer;
 #[doc(inline)]
 pub use brk_logger as logger;
 
+#[cfg(feature = "mcp")]
+#[doc(inline)]
+pub use brk_mcp as mcp;
+
 #[cfg(feature = "parser")]
 #[doc(inline)]
 pub use brk_parser as parser;

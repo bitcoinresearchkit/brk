@@ -5,7 +5,6 @@ use std::{
     fmt::Debug,
     ops::{Add, Div, Mul},
     path::{Path, PathBuf},
-    time::Duration,
 };
 
 use arc_swap::ArcSwap;
@@ -1302,11 +1301,6 @@ where
     #[inline]
     fn len(&self) -> usize {
         self.0.len()
-    }
-
-    #[inline]
-    fn modified_time(&self) -> Result<Duration> {
-        self.0.modified_time()
     }
 
     #[inline]

@@ -3,7 +3,6 @@ use std::{
     mem,
     path::{Path, PathBuf},
     sync::Arc,
-    time::Duration,
 };
 
 use arc_swap::{ArcSwap, Guard};
@@ -379,11 +378,6 @@ where
     #[inline]
     fn len(&self) -> usize {
         self.len_()
-    }
-
-    #[inline]
-    fn modified_time(&self) -> Result<Duration> {
-        self.modified_time_()
     }
 
     #[inline]

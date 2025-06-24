@@ -268,7 +268,7 @@ export function init({
     /** @type {Record<string, Frequency>} */
     const idToFrequency = {};
 
-    list.forEach((anyFreq, index) => {
+    list.forEach((anyFreq) => {
       if ("list" in anyFreq) {
         anyFreq.list?.forEach((freq) => {
           idToFrequency[freq.value] = freq;

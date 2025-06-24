@@ -16,9 +16,10 @@ brk_core = { workspace = true }
 brk_exit = { workspace = true }
 brk_fetcher = { workspace = true }
 brk_indexer = { workspace = true }
-brk_logger = { workspace = true }
-brk_parser = { workspace = true }
 brk_interface = { workspace = true }
+brk_logger = { workspace = true }
+brk_mcp = { workspace = true }
+brk_parser = { workspace = true }
 brk_vec = { workspace = true }
 clap = { workspace = true }
 clap_derive = { workspace = true }
@@ -26,7 +27,6 @@ color-eyre = { workspace = true }
 jiff = { workspace = true }
 log = { workspace = true }
 minreq = { workspace = true }
-brk_rmcp = { workspace = true }
 serde = { workspace = true }
 tokio = { workspace = true }
 tower-http = { version = "0.6.6", features = ["compression-full", "trace"] }

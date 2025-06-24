@@ -1,4 +1,4 @@
-use std::{cmp::Ordering, fmt::Debug, path::Path, time::Duration};
+use std::{cmp::Ordering, fmt::Debug, path::Path};
 
 use arc_swap::ArcSwap;
 use brk_core::{Error, Height, Result, Value, Version};
@@ -101,11 +101,6 @@ where
     #[inline]
     fn len(&self) -> usize {
         self.0.len()
-    }
-
-    #[inline]
-    fn modified_time(&self) -> Result<Duration> {
-        self.0.modified_time()
     }
 
     #[inline]

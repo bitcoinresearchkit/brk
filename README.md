@@ -68,7 +68,8 @@ In contrast, existing alternatives tend to be either [very costly](https://studi
 - [`brk_exit`](https://crates.io/crates/brk_exit): An exit blocker built on top of ctrlc
 - [`brk_fetcher`](https://crates.io/crates/brk_fetcher): A Bitcoin price fetcher
 - [`brk_indexer`](https://crates.io/crates/brk_indexer): A Bitcoin Core indexer built on top of brk_parser
-- [`brk_logger`](https://crates.io/crates/brk_logger): A clean logger used in the Bitcoin Research Kit.
+- [`brk_logger`](https://crates.io/crates/brk_logger): A clean logger used in the Bitcoin Research Kit
+- [`brk_mcp`](https://crates.io/crates/brk_mcp): A Model Context Protocol (MCP) which gives LLMs access to all available tools in BRK
 - [`brk_parser`](https://crates.io/crates/brk_parser): A very fast Bitcoin Core block parser and iterator built on top of bitcoin-rust
 - [`brk_interface`](https://crates.io/crates/brk_interface): An interface to BRK's engine
 - [`brk_server`](https://crates.io/crates/brk_server): A server that serves Bitcoin data and swappable front-ends, built on top of `brk_indexer`, `brk_fetcher` and `brk_computer`

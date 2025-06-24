@@ -1,4 +1,4 @@
-use std::{fs, path::Path, time::Duration};
+use std::{fs, path::Path};
 
 use brk_exit::Exit;
 use clap_derive::ValueEnum;
@@ -242,15 +242,6 @@ where
             ComputedVec::LazyFrom1(v) => v.len(),
             ComputedVec::LazyFrom2(v) => v.len(),
             ComputedVec::LazyFrom3(v) => v.len(),
-        }
-    }
-
-    fn modified_time(&self) -> Result<Duration> {
-        match self {
-            ComputedVec::Eager { vec, .. } => vec.modified_time(),
-            ComputedVec::LazyFrom1(v) => v.modified_time(),
-            ComputedVec::LazyFrom2(v) => v.modified_time(),
-            ComputedVec::LazyFrom3(v) => v.modified_time(),
         }
     }
 

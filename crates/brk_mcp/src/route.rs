@@ -5,17 +5,18 @@ use brk_rmcp::transport::{
     streamable_http_server::{StreamableHttpService, session::local::LocalSessionManager},
 };
 
-mod api;
-use api::*;
 use log::info;
 
-use crate::AppState;
+use crate::MCP;
 
 pub trait MCPRoutes {
     fn add_mcp_routes(self, interface: &'static Interface<'static>, mcp: bool) -> Self;
 }
 
-impl MCPRoutes for Router<AppState> {
+impl<T> MCPRoutes for Router<T>
+where
+    T: Clone + Send + Sync + 'static,
+{
     fn add_mcp_routes(self, interface: &'static Interface<'static>, mcp: bool) -> Self {
         if !mcp {
             return self;
@@ -27,7 +28,7 @@ impl MCPRoutes for Router<AppState> {
         };
 
         let service = StreamableHttpService::new(
-            move || Ok(API::new(interface)),
+            move || Ok(MCP::new(interface)),
             LocalSessionManager::default().into(),
             config,
         );
