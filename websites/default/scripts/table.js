@@ -29,11 +29,11 @@ function createTable({
           keyPrefix: "table",
           key: "index",
         },
-      },
+      }
     )
   );
   const index = signals.createMemo(() =>
-    serializedIndexToIndex(serializedIndex()),
+    serializedIndexToIndex(serializedIndex())
   );
 
   const table = window.document.createElement("table");
@@ -73,7 +73,7 @@ function createTable({
     table.append(tbody);
 
     const rowElements = signals.createSignal(
-      /** @type {HTMLTableRowElement[]} */ ([]),
+      /** @type {HTMLTableRowElement[]} */ ([])
     );
 
     /**
@@ -322,11 +322,11 @@ function createTable({
                           unit,
                         });
                     }
-                  },
+                  }
                 );
 
                 return () => vecId;
-              },
+              }
             );
           });
         });
@@ -393,7 +393,7 @@ export function init({
       },
       inside: span,
       title: "Click or tap to add a column to the table",
-    }),
+    })
   );
 }
 
@@ -459,23 +459,23 @@ function serializedIndexToIndex(serializedIndex) {
     case "outputindex":
       return /** @satisfies {OutputIndex} */ (9);
     case "p2pk33addressindex":
-      return /** @satisfies {P2PK33Index} */ (12);
+      return /** @satisfies {P2PK33AddressIndex} */ (12);
     case "p2pk65addressindex":
-      return /** @satisfies {P2PK65Index} */ (13);
+      return /** @satisfies {P2PK65AddressIndex} */ (13);
     case "p2pkhaddressindex":
-      return /** @satisfies {P2PKHIndex} */ (14);
+      return /** @satisfies {P2PKHAddressIndex} */ (14);
     case "p2shaddressindex":
-      return /** @satisfies {P2SHIndex} */ (15);
+      return /** @satisfies {P2SHAddressIndex} */ (15);
     case "p2traddressindex":
-      return /** @satisfies {P2TRIndex} */ (16);
+      return /** @satisfies {P2TRAddressIndex} */ (16);
     case "p2wpkhaddressindex":
-      return /** @satisfies {P2WPKHIndex} */ (17);
+      return /** @satisfies {P2WPKHAddressIndex} */ (17);
     case "p2wshaddressindex":
-      return /** @satisfies {P2WSHIndex} */ (18);
+      return /** @satisfies {P2WSHAddressIndex} */ (18);
     case "p2aaddressindex":
-      return /** @satisfies {P2AIndex} */ (10);
+      return /** @satisfies {P2AAddressIndex} */ (10);
     case "p2msoutputindex":
-      return /** @satisfies {P2MSIndex} */ (11);
+      return /** @satisfies {P2MSOutputIndex} */ (11);
     case "opreturnindex":
       return /** @satisfies {OpReturnIndex} */ (8);
     case "emptyoutputindex":
@@ -498,7 +498,7 @@ function createIndexToVecIds(vecIdToIndexes) {
       });
       return arr;
     },
-    /** @type {VecId[][]} */ (Array.from({ length: 24 })),
+    /** @type {VecId[][]} */ (Array.from({ length: 24 }))
   );
   indexToVecIds.forEach((arr) => {
     arr.sort();
