@@ -84,7 +84,7 @@ Get an object which has all existing indexes as keys and a list of their accepte
     #[tool(description = "
 Get a paginated list of all existing vec ids.
 There are up to 1,000 values per page.
-If the `page` param is omitted, it will default to page `0`.
+If the `page` param is omitted, it will default to the first page.
 ")]
     async fn get_vecids(
         &self,
@@ -99,7 +99,7 @@ If the `page` param is omitted, it will default to page `0`.
     #[tool(description = "
 Get a paginated list of all vec ids which support a given index.
 There are up to 1,000 values per page.
-If the `page` param is omitted, it will default to page `0`.
+If the `page` param is omitted, it will default to the first page.
 ")]
     async fn get_index_to_vecids(
         &self,

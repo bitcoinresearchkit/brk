@@ -1454,12 +1454,19 @@ function createUtils() {
      * @param {number} [to]
      */
     function genPath(index, vecId, from, to) {
-      let path = `/query?index=${serde.index.serialize(index)}&ids=${vecId}`;
+      let path = `/${serde.index.serialize(index)}-to-${vecId.replaceAll(
+        "_",
+        "-"
+      )}?`;
+
       if (from !== undefined) {
-        path += `&from=${from}`;
+        path += `from=${from}`;
       }
       if (to !== undefined) {
-        path += `&to=${to}`;
+        if (!path.endsWith("?")) {
+          path += `&`;
+        }
+        path += `to=${to}`;
       }
       return path;
     }

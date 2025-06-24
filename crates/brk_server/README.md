@@ -68,17 +68,16 @@ Get a paginated list of all existing vec ids. \
 There are up to 1,000 values per page. \
 If the `page` param is omitted, it will default to page `0`.
 
-#### [`GET /api/vecs/variants`](https://bitcoinresearchkit.org/api/vecs/variants)
+#### [`GET /api/vecs/index-to-ids`](https://bitcoinresearchkit.org/api/vecs/index-to-ids)
 
-A list of all possible variants
+Get a paginated list of all vec ids which support a given index.
+There are up to 1,000 values per page.
+If the `page` param is omitted, it will default to the first page.
 
 #### [`GET /api/vecs/id-to-indexes`](https://bitcoinresearchkit.org/api/vecs/id-to-indexes)
 
-A list of all possible vec ids and their supported vec indexes
-
-#### [`GET /api/vecs/index-to-ids`](https://bitcoinresearchkit.org/api/vecs/index-to-ids)
-
-A list of all possible vec indexes and their supported vec ids
+Get a list of all indexes supported by a given vec id.
+The list will be empty if the vec id isn't correct.
 
 #### `GET /api/vecs/{INDEX}-to-{ID}`
 
@@ -108,7 +107,13 @@ curl https://bitcoinresearchkit.org/api/vecs/date-to-close?count=100&format=csv
 
 #### `GET /api/vecs/query`
 
-This endpoint retrieves data based on the specified vector index and ids.
+Get one or multiple vecs depending on given parameters.
+If you'd like to request multiple vec ids, simply separate them with a ','. \
+To get the last value set `-1` to the `from` parameter. \
+The response's format will depend on the given parameters, it will be:
+- A value: If requested only one vec and the given range returns one value (for example: `from=-1`)
+- A list: If requested only one vec and the given range returns multiple values (for example: `from=-1000&count=100` or `from=-444&to=-333`)
+- A matrix: When multiple vecs are requested, even if they each return one value.
 
 **Parameters:**
 

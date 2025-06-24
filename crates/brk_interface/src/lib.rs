@@ -11,6 +11,7 @@ use brk_indexer::Indexer;
 use brk_vec::AnyCollectableVec;
 use tabled::settings::Style;
 
+mod deser;
 mod format;
 mod index;
 mod maybe_ids;

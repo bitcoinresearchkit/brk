@@ -3326,8 +3326,52 @@ function createPartialOptions(colors) {
       ],
     },
     {
+      name: "Tools",
+      tree: [
+        {
+          name: "API",
+          url: () => "/api",
+        },
+        {
+          name: "MCP",
+          url: () =>
+            "https://github.com/bitcoinresearchkit/brk/tree/main/crates/brk_mcp#brk-mcp",
+        },
+        {
+          name: "Crates",
+          url: () => "https://crates.io/crates/brk",
+        },
+        {
+          name: "Source",
+          url: () => "https://github.com/bitcoinresearchkit/brk",
+        },
+      ],
+    },
+    {
+      name: "Hosting",
+      tree: [
+        {
+          name: "Status",
+          url: () => "https://status.bitcoinresearchkit.org/",
+        },
+        {
+          name: "Self",
+          url: () => "https://crates.io/crates/brk_cli",
+        },
+        {
+          name: "As a service",
+          url: () =>
+            "https://github.com/bitcoinresearchkit/brk?tab=readme-ov-file#hosting-as-a-service",
+        },
+      ],
+    },
+    {
       name: "Social",
       tree: [
+        {
+          name: "GitHub",
+          url: () => "https://github.com/bitcoinresearchkit/brk",
+        },
         {
           name: "Nostr",
           url: () =>
@@ -3344,41 +3388,6 @@ function createPartialOptions(colors) {
         {
           name: "x",
           url: () => "https://x.com/brkdotorg",
-        },
-      ],
-    },
-    {
-      name: "Hosting",
-      tree: [
-        {
-          name: "Self",
-          url: () => "https://crates.io/crates/brk_cli",
-        },
-        {
-          name: "As a service",
-          url: () =>
-            "https://github.com/bitcoinresearchkit/brk?tab=readme_ov_file#hosting_as_a_service",
-        },
-      ],
-    },
-    {
-      name: "Developers",
-      tree: [
-        {
-          name: "API",
-          url: () => "/api",
-        },
-        {
-          name: "Source",
-          url: () => "https://github.com/bitcoinresearchkit/brk",
-        },
-        {
-          name: "Status",
-          url: () => "https://status.bitcoinresearchkit.org/",
-        },
-        {
-          name: "Crates",
-          url: () => "https://crates.io/crates/brk",
         },
       ],
     },
