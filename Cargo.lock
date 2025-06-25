@@ -588,7 +588,7 @@ dependencies = [
  "brk_vec",
  "color-eyre",
  "derive_deref",
- "schemars 1.0.0",
+ "schemars 1.0.1",
  "serde",
  "serde_json",
  "serde_with",
@@ -633,9 +633,9 @@ dependencies = [
 
 [[package]]
 name = "brk_rmcp"
-version = "0.1.7"
+version = "0.1.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7ecf167efab04b87a8850e12196228388733aa43adaeafd5b4d6f9e29d850263"
+checksum = "26db177d2933b727fe5f53b52d5ebead13d57f94ed8637717117a8bb1a3f1bae"
 dependencies = [
  "base64 0.22.1",
  "brk_rmcp-macros",
@@ -648,7 +648,7 @@ dependencies = [
  "paste",
  "pin-project-lite",
  "rand 0.9.1",
- "schemars 1.0.0",
+ "schemars 1.0.1",
  "serde",
  "serde_json",
  "sse-stream",
@@ -663,10 +663,11 @@ dependencies = [
 
 [[package]]
 name = "brk_rmcp-macros"
-version = "0.1.7"
+version = "0.1.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e7e3a4b2b6bdb0508a756e9296321b6ce33234070060ad68f68c8372b7b53fc6"
+checksum = "4557e65ffea1466260a6ab13e3ba54bcee69c39576e4bfb8b81e50b375924540"
 dependencies = [
+ "darling",
  "proc-macro2",
  "quote",
  "serde_json",
@@ -2849,9 +2850,9 @@ dependencies = [
 
 [[package]]
 name = "oxc_resolver"
-version = "11.2.0"
+version = "11.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ce097520c87cb9aae8b43b39b333a6709342db75b88e76b5c6bcadf0cccf16ea"
+checksum = "3e9fbd425311540ada87997dbec6e9a2e0bab00b7e82db8e6ef79a0d0a9cfce1"
 dependencies = [
  "cfg-if",
  "indexmap 2.9.0",
@@ -3012,9 +3013,9 @@ dependencies = [
 
 [[package]]
 name = "papaya"
-version = "0.2.1"
+version = "0.2.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6827e3fc394523c21d4464d02c0bb1c19966ea4a58a9844ad6d746214179d2bc"
+checksum = "af228bb1296c9b044ee75e2a2325409c2d899bcfcc6150e5e41f148e0a87dd20"
 dependencies = [
  "equivalent",
  "seize",
@@ -3561,9 +3562,9 @@ dependencies = [
 
 [[package]]
 name = "schemars"
-version = "1.0.0"
+version = "1.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "febc07c7e70b5db4f023485653c754d76e1bbe8d9dbfa20193ce13da9f9633f4"
+checksum = "fe8c9d1c68d67dd9f97ecbc6f932b60eb289c5dbddd8aa1405484a8fd2fcd984"
 dependencies = [
  "dyn-clone",
  "ref-cast",
@@ -3574,9 +3575,9 @@ dependencies = [
 
 [[package]]
 name = "schemars_derive"
-version = "1.0.0"
+version = "1.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c1eeedaab7b1e1d09b5b4661121f4d27f9e7487089b0117833ccd7a882ee1ecc"
+checksum = "6ca9fcb757952f8e8629b9ab066fc62da523c46c2b247b1708a3be06dd82530b"
 dependencies = [
  "proc-macro2",
  "quote",

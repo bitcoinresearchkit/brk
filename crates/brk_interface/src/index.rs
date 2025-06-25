@@ -12,29 +12,53 @@ use serde::{Deserialize, de::Error};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, JsonSchema)]
 pub enum Index {
+    #[schemars(description = "Date/day index")]
     DateIndex,
+    #[schemars(description = "Decade index")]
     DecadeIndex,
+    #[schemars(description = "Difficulty epoch index (equivalent to ~2 weeks)")]
     DifficultyEpoch,
+    #[schemars(description = "Empty output index")]
     EmptyOutputIndex,
+    #[schemars(description = "Halving epoch index (equivalent to ~4 years)")]
     HalvingEpoch,
+    #[schemars(description = "Height/block index")]
     Height,
+    #[schemars(description = "Transaction input index (based on total)")]
     InputIndex,
+    #[schemars(description = "Month index")]
     MonthIndex,
+    #[schemars(description = "Op return index")]
     OpReturnIndex,
+    #[schemars(description = "Transaction output index (based on total)")]
     OutputIndex,
+    #[schemars(description = "Index of P2A address")]
     P2AAddressIndex,
+    #[schemars(description = "Index of P2MS output")]
     P2MSOutputIndex,
+    #[schemars(description = "Index of P2PK (33 bytes) address")]
     P2PK33AddressIndex,
+    #[schemars(description = "Index of P2PK (65 bytes) address")]
     P2PK65AddressIndex,
+    #[schemars(description = "Index of P2PKH address")]
     P2PKHAddressIndex,
+    #[schemars(description = "Index of P2SH address")]
     P2SHAddressIndex,
+    #[schemars(description = "Index of P2TR address")]
     P2TRAddressIndex,
+    #[schemars(description = "Index of P2WPKH address")]
     P2WPKHAddressIndex,
+    #[schemars(description = "Index of P2WSH address")]
     P2WSHAddressIndex,
+    #[schemars(description = "Quarter index")]
     QuarterIndex,
+    #[schemars(description = "Transaction index")]
     TxIndex,
+    #[schemars(description = "Unknown output index")]
     UnknownOutputIndex,
+    #[schemars(description = "Week index")]
     WeekIndex,
+    #[schemars(description = "Year index")]
     YearIndex,
 }
 
