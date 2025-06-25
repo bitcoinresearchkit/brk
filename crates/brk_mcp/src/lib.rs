@@ -6,12 +6,10 @@
 use brk_interface::{IdParam, Interface, PaginatedIndexParam, PaginationParam, Params};
 use brk_rmcp::{
     Error as McpError, RoleServer, ServerHandler,
-    model::{
-        CallToolResult, Content, Implementation, InitializeRequestParam, InitializeResult,
-        ProtocolVersion, ServerCapabilities, ServerInfo,
-    },
+    handler::server::{router::tool::ToolRouter, tool::Parameters},
+    model::*,
     service::RequestContext,
-    tool,
+    tool, tool_handler, tool_router,
 };
 use log::info;
 
@@ -20,14 +18,18 @@ pub mod route;
 #[derive(Clone)]
 pub struct MCP {
     interface: &'static Interface<'static>,
+    tool_router: ToolRouter<MCP>,
 }
 
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 
-#[tool(tool_box)]
+#[tool_router]
 impl MCP {
     pub fn new(interface: &'static Interface<'static>) -> Self {
-        Self { interface }
+        Self {
+            interface,
+            tool_router: Self::tool_router(),
+        }
     }
 
     #[tool(description = "
@@ -54,8 +56,8 @@ Get the count of all existing vec ids.
 Get the count of all existing vecs.
 Equals to the sum of supported Indexes of each vec id.
 ")]
-    async fn get_variant_count(&self) -> Result<CallToolResult, McpError> {
-        info!("mcp: get_variant_count");
+    async fn get_vec_count(&self) -> Result<CallToolResult, McpError> {
+        info!("mcp: get_vec_count");
         Ok(CallToolResult::success(vec![
             Content::json(self.interface.get_vec_count()).unwrap(),
         ]))
@@ -88,7 +90,7 @@ If the `page` param is omitted, it will default to the first page.
 ")]
     async fn get_vecids(
         &self,
-        #[tool(aggr)] pagination: PaginationParam,
+        Parameters(pagination): Parameters<PaginationParam>,
     ) -> Result<CallToolResult, McpError> {
         info!("mcp: get_vecids");
         Ok(CallToolResult::success(vec![
@@ -103,7 +105,7 @@ If the `page` param is omitted, it will default to the first page.
 ")]
     async fn get_index_to_vecids(
         &self,
-        #[tool(aggr)] paginated_index: PaginatedIndexParam,
+        Parameters(paginated_index): Parameters<PaginatedIndexParam>,
     ) -> Result<CallToolResult, McpError> {
         info!("mcp: get_index_to_vecids");
         Ok(CallToolResult::success(vec![
@@ -117,7 +119,7 @@ The list will be empty if the vec id isn't correct.
 ")]
     async fn get_vecid_to_indexes(
         &self,
-        #[tool(aggr)] param: IdParam,
+        Parameters(param): Parameters<IdParam>,
     ) -> Result<CallToolResult, McpError> {
         info!("mcp: get_vecid_to_indexes");
         Ok(CallToolResult::success(vec![
@@ -127,14 +129,12 @@ The list will be empty if the vec id isn't correct.
 
     #[tool(description = "
 Get one or multiple vecs depending on given parameters.
-If you'd like to request multiple vec ids, simply separate them with a ','.
-To get the last value set `-1` to the `from` parameter.
 The response's format will depend on the given parameters, it will be:
 - A value: If requested only one vec and the given range returns one value (for example: `from=-1`)
 - A list: If requested only one vec and the given range returns multiple values (for example: `from=-1000&count=100` or `from=-444&to=-333`)
 - A matrix: When multiple vecs are requested, even if they each return one value.
 ")]
-    fn get_vecs(&self, #[tool(aggr)] params: Params) -> Result<CallToolResult, McpError> {
+    fn get_vecs(&self, Parameters(params): Parameters<Params>) -> Result<CallToolResult, McpError> {
         info!("mcp: get_vecs");
         Ok(CallToolResult::success(vec![
             Content::json(self.interface.search_and_format(params).unwrap()).unwrap(),
@@ -152,7 +152,7 @@ Get the running version of the Bitcoin Research Kit.
     }
 }
 
-#[tool(tool_box)]
+#[tool_handler]
 impl ServerHandler for MCP {
     fn get_info(&self) -> ServerInfo {
         ServerInfo {
@@ -181,13 +181,8 @@ An 'Index' (or indexes) is the timeframe of a dataset.
     async fn initialize(
         &self,
         _request: InitializeRequestParam,
-        context: RequestContext<RoleServer>,
+        _context: RequestContext<RoleServer>,
     ) -> Result<InitializeResult, McpError> {
-        if let Some(http_request_part) = context.extensions.get::<axum::http::request::Parts>() {
-            let initialize_headers = &http_request_part.headers;
-            let initialize_uri = &http_request_part.uri;
-            tracing::info!(?initialize_headers, %initialize_uri, "initialize from http server");
-        }
         Ok(self.get_info())
     }
 }

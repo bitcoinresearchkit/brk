@@ -12,11 +12,11 @@ use crate::{
 #[derive(Debug, Deserialize, JsonSchema)]
 pub struct Params {
     #[serde(alias = "i")]
-    #[schemars(description = "Index of the values requested")]
+    #[schemars(description = "Index of requested vecs")]
     pub index: Index,
 
     #[serde(alias = "v")]
-    #[schemars(description = "Ids of the requested vecs")]
+    #[schemars(description = "Ids of requested vecs")]
     pub ids: MaybeIds,
 
     #[serde(flatten)]
@@ -45,18 +45,24 @@ impl From<((Index, String), ParamsOpt)> for Params {
 pub struct ParamsOpt {
     #[serde(default, alias = "f", deserialize_with = "de_unquote_i64")]
     /// Inclusive starting index, if negative will be from the end
+    #[schemars(description = "Inclusive starting index, if negative will be from the end")]
     from: Option<i64>,
 
     #[serde(default, alias = "t", deserialize_with = "de_unquote_i64")]
     /// Exclusive ending index, if negative will be from the end, overrides 'count'
+    #[schemars(
+        description = "Exclusive ending index, if negative will be from the end, overrides 'count'"
+    )]
     to: Option<i64>,
 
     #[serde(default, alias = "c", deserialize_with = "de_unquote_usize")]
-    /// Number of values
+    /// Number of values requested
+    #[schemars(description = "Number of values requested")]
     count: Option<usize>,
 
-    /// Format of the output
     #[serde(default)]
+    /// Format of the output
+    #[schemars(description = "Format of the output")]
     format: Option<Format>,
 }
 
