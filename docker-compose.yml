@@ -1,0 +1,57 @@
+services:
+  brk:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: brk:latest
+    container_name: brk
+    restart: unless-stopped
+    ports:
+      - 7070:3110  # Map host port 7070 to container port 3110
+    volumes:
+      # Bitcoin Core data directory (read-only)
+      # For access to raw block data
+      - ${BITCOIN_DATA_DIR:-/path/to/bitcoin}:/bitcoin:ro
+      # BRK data directory for outputs and state
+      # Option 1: Use a named volume (default)
+      - ${BRK_DATA_VOLUME:-brk-data}:/home/brk/.brk
+      # Option 2: Use a bind mount (uncomment and set BRK_DATA_DIR in .env)
+      # - ${BRK_DATA_DIR:-./brk-data}:/home/brk/.brk
+    environment:
+      # Bitcoin Core configuration
+      - BITCOINDIR=/bitcoin
+      - BLOCKSDIR=/bitcoin/blocks
+      
+      # RPC configuration
+      # RPC node access is for chain validation, chain sync status etc.
+      - RPCCONNECT=${BTC_RPC_HOST:-localhost}
+      - RPCPORT=${BTC_RPC_PORT:-8332}
+      # - RPCCOOKIEFILE=/bitcoin/.cookie
+      
+      # Username/password authentication
+      - RPCUSER=${BTC_RPC_USER}
+      - RPCPASSWORD=${BTC_RPC_PASSWORD}
+      
+      # BRK configuration
+      - BRKDIR=/home/brk/.brk
+      - COMPUTATION=${BRK_COMPUTATION:-lazy}
+      - FORMAT=${BRK_FORMAT:-raw}
+      - FETCH=${BRK_FETCH:-true}
+      - MCP=${BRK_MCP:-true}
+    command:
+      - --bitcoindir
+      - /bitcoin
+      - --brkdir
+      - /home/brk/.brk
+      - --rpcconnect
+      - "${BTC_RPC_HOST:-localhost}"
+      - --rpcuser
+      - "${BTC_RPC_USER:-bitcoin}"
+      - --rpcpassword
+      - "${BTC_RPC_PASSWORD:-bitcoin}"
+      - --services
+      - "${BRK_SERVICES:-all}"  # Can be: all, processor, server
+
+volumes:
+  brk-data:
+    driver: local

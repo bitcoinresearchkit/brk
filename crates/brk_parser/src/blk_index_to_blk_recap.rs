@@ -15,11 +15,11 @@ pub struct BlkIndexToBlkRecap {
 
 impl BlkIndexToBlkRecap {
     pub fn import(
-        bitcoin_dir: &Path,
+        outputs_dir: &Path,
         blk_index_to_blk_path: &BlkIndexToBlkPath,
         start: Option<Height>,
     ) -> (Self, u16) {
-        let path = bitcoin_dir.join("blk_index_to_blk_recap.json");
+        let path = outputs_dir.join("blk_index_to_blk_recap.json");
 
         let tree = {
             if let Ok(file) = File::open(&path) {

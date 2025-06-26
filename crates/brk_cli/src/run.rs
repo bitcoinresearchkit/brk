@@ -16,7 +16,7 @@ pub fn run() -> color_eyre::Result<()> {
 
     let exit = Exit::new();
 
-    let parser = brk_parser::Parser::new(config.blocksdir(), rpc);
+    let parser = brk_parser::Parser::new_with_outputs_dir(config.blocksdir(), config.outputsdir(), rpc);
 
     let format = config.format();
 
