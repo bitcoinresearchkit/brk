@@ -1,4 +1,3 @@
-use core::panic;
 use std::path::Path;
 
 use brk_core::{
@@ -6,10 +5,9 @@ use brk_core::{
 };
 use brk_exit::Exit;
 use brk_indexer::Indexer;
-use brk_state::CohortState;
+use brk_state::{CohortState, CohortStateTrait};
 use brk_vec::{
-    AnyCollectableVec, AnyIterableVec, AnyVec, Computation, EagerVec, Format, StoredIndex,
-    VecIterator,
+    AnyCollectableVec, AnyIterableVec, AnyVec, Computation, EagerVec, Format, VecIterator,
 };
 
 use crate::vecs::{
@@ -25,9 +23,6 @@ const VERSION: Version = Version::ZERO;
 
 #[derive(Clone)]
 pub struct Vecs {
-    starting_height: Height,
-    pub state: CohortState,
-
     // Cumulative
     pub height_to_realized_cap: Option<EagerVec<Height, Dollars>>,
     pub height_to_supply: EagerVec<Height, Sats>,
@@ -138,7 +133,6 @@ impl Vecs {
         format: Format,
         version: Version,
         fetched: Option<&fetched::Vecs>,
-        states_path: &Path,
         compute_relative_to_all: bool,
     ) -> color_eyre::Result<Self> {
         let compute_dollars = fetched.is_some();
@@ -147,15 +141,7 @@ impl Vecs {
 
         let suffix = |s: &str| cohort_name.map_or(s.to_string(), |name| format!("{name}_{s}"));
 
-        let state = CohortState::default_and_import(
-            states_path,
-            cohort_name.unwrap_or_default(),
-            compute_dollars,
-        )?;
-
         Ok(Self {
-            starting_height: Height::ZERO,
-            state,
 
             height_to_supply_in_profit: compute_dollars.then(|| {
                 EagerVec::forced_import(
@@ -978,10 +964,6 @@ impl Vecs {
 
     pub fn starting_height(&self) -> Height {
         [
-            self.state
-                .price_to_amount
-                .height()
-                .map_or(usize::MAX, |h| h.incremented().unwrap_to_usize()),
             self.height_to_supply.len(),
             self.height_to_utxo_count.len(),
             self.height_to_realized_cap
@@ -1035,25 +1017,19 @@ impl Vecs {
         .unwrap()
     }
 
-    pub fn init(&mut self, starting_height: Height) {
-        if starting_height > self.starting_height() {
-            unreachable!()
-        }
-
-        self.starting_height = starting_height;
-
+    pub fn init(&mut self, starting_height: &mut Height, state: &mut CohortState) {
         if let Some(prev_height) = starting_height.decremented() {
-            self.state.supply.value = self
+            state.supply.value = self
                 .height_to_supply
                 .into_iter()
                 .unwrap_get_inner(prev_height);
-            self.state.supply.utxos = *self
+            state.supply.utxos = *self
                 .height_to_utxo_count
                 .into_iter()
                 .unwrap_get_inner(prev_height);
 
             if let Some(height_to_realized_cap) = self.height_to_realized_cap.as_mut() {
-                self.state.realized.as_mut().unwrap().cap = height_to_realized_cap
+                state.realized.as_mut().unwrap().cap = height_to_realized_cap
                     .into_iter()
                     .unwrap_get_inner(prev_height);
             }
@@ -1286,35 +1262,33 @@ impl Vecs {
         Ok(())
     }
 
-    pub fn forced_pushed_at(&mut self, height: Height, exit: &Exit) -> Result<()> {
-        if self.starting_height > height {
-            return Ok(());
-        }
-
+    pub fn forced_pushed_at(
+        &mut self,
+        height: Height,
+        exit: &Exit,
+        state: &CohortState,
+    ) -> Result<()> {
         self.height_to_supply
-            .forced_push_at(height, self.state.supply.value, exit)?;
+            .forced_push_at(height, state.supply.value, exit)?;
 
         self.height_to_utxo_count.forced_push_at(
             height,
-            StoredUsize::from(self.state.supply.utxos),
+            StoredUsize::from(state.supply.utxos),
             exit,
         )?;
 
         self.height_to_satblocks_destroyed.forced_push_at(
             height,
-            self.state.satblocks_destroyed,
+            state.satblocks_destroyed,
             exit,
         )?;
 
-        self.height_to_satdays_destroyed.forced_push_at(
-            height,
-            self.state.satdays_destroyed,
-            exit,
-        )?;
+        self.height_to_satdays_destroyed
+            .forced_push_at(height, state.satdays_destroyed, exit)?;
 
         if let Some(height_to_realized_cap) = self.height_to_realized_cap.as_mut() {
-            let realized = self.state.realized.as_ref().unwrap_or_else(|| {
-                dbg!((&self.state.realized, &self.state.supply));
+            let realized = state.realized.as_ref().unwrap_or_else(|| {
+                dbg!((&state.realized, &state.supply));
                 panic!();
             });
 
@@ -1355,6 +1329,7 @@ impl Vecs {
         dateindex: Option<DateIndex>,
         date_price: Option<Option<Dollars>>,
         exit: &Exit,
+        state: &CohortState,
     ) -> Result<()> {
         if let Some(height_price) = height_price {
             self.height_to_min_price_paid
@@ -1362,7 +1337,7 @@ impl Vecs {
                 .unwrap()
                 .forced_push_at(
                     height,
-                    self.state
+                    state
                         .price_to_amount
                         .first_key_value()
                         .map(|(&dollars, _)| dollars)
@@ -1374,7 +1349,7 @@ impl Vecs {
                 .unwrap()
                 .forced_push_at(
                     height,
-                    self.state
+                    state
                         .price_to_amount
                         .last_key_value()
                         .map(|(&dollars, _)| dollars)
@@ -1382,9 +1357,8 @@ impl Vecs {
                     exit,
                 )?;
 
-            let (height_unrealized_state, date_unrealized_state) = self
-                .state
-                .compute_unrealized_states(height_price, date_price.unwrap());
+            let (height_unrealized_state, date_unrealized_state) =
+                state.compute_unrealized_states(height_price, date_price.unwrap());
 
             self.height_to_supply_even
                 .as_mut()
@@ -1436,7 +1410,12 @@ impl Vecs {
         Ok(())
     }
 
-    pub fn safe_flush_stateful_vecs(&mut self, height: Height, exit: &Exit) -> Result<()> {
+    pub fn safe_flush_stateful_vecs(
+        &mut self,
+        height: Height,
+        exit: &Exit,
+        state: &mut CohortState,
+    ) -> Result<()> {
         self.height_to_supply.safe_flush(exit)?;
         self.height_to_utxo_count.safe_flush(exit)?;
         self.height_to_satdays_destroyed.safe_flush(exit)?;
@@ -1518,7 +1497,7 @@ impl Vecs {
                 .safe_flush(exit)?;
         }
 
-        self.state.commit(height)?;
+        state.commit(height)?;
 
         Ok(())
     }

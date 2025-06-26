@@ -14,21 +14,26 @@ Please be aware thtat the technology is very rapidly evolving, thus having issue
 
 #### Step 1
 
-First we need to connect BRK to Claude.
+First we need to connect BRK to Claude. To do that we need to go to the "Connect apps" menu from the home screen of Claude desktop.
 
-![Caude MCP setup step 1](https://github.com/bitcoinresearchkit/brk/blob/main/assets/claude-step1.png)
+![Image of Claude Desktop home screen](https://github.com/bitcoinresearchkit/brk/blob/main/assets/claude-step1.png)
 
 #### Step 2
 
-Which is done by adding an integration.
+Then simply go to "Add integration".
 
-![Caude MCP setup step 2](https://github.com/bitcoinresearchkit/brk/blob/main/assets/claude-step2.png)
+![Image of the Connect app" menu of Claude Desktop](https://github.com/bitcoinresearchkit/brk/blob/main/assets/claude-step2.png)
 
 #### Step 3
 
-Since BRK's open and free, only a URL is needed.
+Claude's MCP client is (for now?) session based thus using a URL pointing to a load balancer will not work.
 
-![Caude MCP setup step 3](https://github.com/bitcoinresearchkit/brk/blob/main/assets/claude-step3.png)
+Use one of the following URL instead:
+
+- https://eu1.bitcoinresearchkit.org/mcp
+- https://eu2.bitcoinresearchkit.org/mcp
+
+![Image of Add Integration menu of Claude Desktop](https://github.com/bitcoinresearchkit/brk/blob/main/assets/claude-step3.png)
 
 #### Step 4
 
@@ -36,7 +41,7 @@ Verify that it has access to BRK's tools.
 
 Optionally and highly recommended, giving it unsupervised access gives a more fluid experience and prevents possible issues and errors.
 
-![Caude MCP setup step 4](https://github.com/bitcoinresearchkit/brk/blob/main/assets/claude-step4.png)
+![Image of edit integration meny on Claude Desktop](https://github.com/bitcoinresearchkit/brk/blob/main/assets/claude-step4.png)
 
 #### Results
 

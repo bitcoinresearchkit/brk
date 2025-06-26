@@ -1,14 +1,14 @@
 use std::{collections::BTreeMap, ops::ControlFlow};
 
-use brk_core::{CheckedSub, Dollars, HalvingEpoch, Height, Result, Timestamp};
+use brk_core::{
+    CheckedSub, Dollars, GroupFilter, HalvingEpoch, Height, Result, Timestamp, UTXOGroups,
+};
 use brk_exit::Exit;
-use brk_state::{BlockState, OutputFilter, Outputs, Transacted};
+use brk_state::{BlockState, CohortStateTrait, Transacted};
 use brk_vec::StoredIndex;
 use rayon::prelude::*;
 
-use crate::vecs::Indexes;
-
-use super::cohort;
+use crate::vecs::{Indexes, stateful::utxo_cohort};
 
 pub trait OutputCohorts {
     fn tick_tock_next_block(&mut self, chain_state: &[BlockState], timestamp: Timestamp);
@@ -17,7 +17,7 @@ pub trait OutputCohorts {
     fn compute_overlapping_vecs(&mut self, starting_indexes: &Indexes, exit: &Exit) -> Result<()>;
 }
 
-impl OutputCohorts for Outputs<(OutputFilter, cohort::Vecs)> {
+impl OutputCohorts for UTXOGroups<(GroupFilter, utxo_cohort::Vecs)> {
     fn tick_tock_next_block(&mut self, chain_state: &[BlockState], timestamp: Timestamp) {
         if chain_state.is_empty() {
             return;
@@ -92,10 +92,10 @@ impl OutputCohorts for Outputs<(OutputFilter, cohort::Vecs)> {
             time_based_vecs
                 .iter_mut()
                 .filter(|(filter, _)| match filter {
-                    OutputFilter::From(from) => *from <= days_old,
-                    OutputFilter::To(to) => *to > days_old,
-                    OutputFilter::Range(range) => range.contains(&days_old),
-                    OutputFilter::Epoch(epoch) => *epoch == HalvingEpoch::from(height),
+                    GroupFilter::From(from) => *from <= days_old,
+                    GroupFilter::To(to) => *to > days_old,
+                    GroupFilter::Range(range) => range.contains(&days_old),
+                    GroupFilter::Epoch(epoch) => *epoch == HalvingEpoch::from(height),
                     _ => unreachable!(),
                 })
                 .for_each(|(_, vecs)| {
@@ -123,6 +123,7 @@ impl OutputCohorts for Outputs<(OutputFilter, cohort::Vecs)> {
             );
 
             sent.by_size_group
+                .as_typed_vec()
                 .into_iter()
                 .for_each(|(group, supply_state)| {
                     self.by_size_range.get_mut(group).1.state.send(
@@ -154,7 +155,7 @@ impl OutputCohorts for Outputs<(OutputFilter, cohort::Vecs)> {
             .into_iter()
             .for_each(|(filter, vecs)| {
                 let output_type = match filter {
-                    OutputFilter::Type(output_type) => *output_type,
+                    GroupFilter::Type(output_type) => *output_type,
                     _ => unreachable!(),
                 };
                 vecs.state.receive(received.by_type.get(output_type), price)
@@ -162,6 +163,7 @@ impl OutputCohorts for Outputs<(OutputFilter, cohort::Vecs)> {
 
         received
             .by_size_group
+            .as_typed_vec()
             .into_iter()
             .for_each(|(group, supply_state)| {
                 self.by_size_range

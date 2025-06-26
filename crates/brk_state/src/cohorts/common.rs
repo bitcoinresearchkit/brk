@@ -2,9 +2,7 @@ use std::{cmp::Ordering, path::Path};
 
 use brk_core::{CheckedSub, Dollars, Height, Result, Sats};
 
-use crate::{PriceToAmount, UnrealizedState};
-
-use super::{RealizedState, SupplyState};
+use crate::{CohortStateTrait, PriceToAmount, RealizedState, SupplyState, UnrealizedState};
 
 #[derive(Clone)]
 pub struct CohortState {
@@ -15,8 +13,8 @@ pub struct CohortState {
     pub price_to_amount: PriceToAmount,
 }
 
-impl CohortState {
-    pub fn default_and_import(path: &Path, name: &str, compute_dollars: bool) -> Result<Self> {
+impl CohortStateTrait for CohortState {
+    fn default_and_import(path: &Path, name: &str, compute_dollars: bool) -> Result<Self> {
         Ok(Self {
             supply: SupplyState::default(),
             realized: compute_dollars.then_some(RealizedState::NAN),
@@ -26,7 +24,7 @@ impl CohortState {
         })
     }
 
-    pub fn reset_single_iteration_values(&mut self) {
+    fn reset_single_iteration_values(&mut self) {
         self.satdays_destroyed = Sats::ZERO;
         self.satblocks_destroyed = Sats::ZERO;
         if let Some(realized) = self.realized.as_mut() {
@@ -34,7 +32,7 @@ impl CohortState {
         }
     }
 
-    pub fn increment(&mut self, supply_state: &SupplyState, price: Option<Dollars>) {
+    fn increment(&mut self, supply_state: &SupplyState, price: Option<Dollars>) {
         self.supply += supply_state;
 
         if supply_state.value > Sats::ZERO {
@@ -46,7 +44,7 @@ impl CohortState {
         }
     }
 
-    pub fn decrement(&mut self, supply_state: &SupplyState, price: Option<Dollars>) {
+    fn decrement(&mut self, supply_state: &SupplyState, price: Option<Dollars>) {
         self.supply -= supply_state;
 
         if supply_state.value > Sats::ZERO {
@@ -66,7 +64,7 @@ impl CohortState {
         }
     }
 
-    pub fn receive(&mut self, supply_state: &SupplyState, price: Option<Dollars>) {
+    fn receive(&mut self, supply_state: &SupplyState, price: Option<Dollars>) {
         self.supply += supply_state;
 
         if supply_state.value > Sats::ZERO {
@@ -78,7 +76,7 @@ impl CohortState {
         }
     }
 
-    pub fn send(
+    fn send(
         &mut self,
         supply_state: &SupplyState,
         current_price: Option<Dollars>,
@@ -87,24 +85,26 @@ impl CohortState {
         days_old: f64,
         older_than_hour: bool,
     ) {
-        self.supply -= supply_state;
+        if supply_state.utxos > 0 {
+            self.supply -= supply_state;
 
-        if supply_state.value > Sats::ZERO {
-            self.satblocks_destroyed += supply_state.value * blocks_old;
+            if supply_state.value > Sats::ZERO {
+                self.satblocks_destroyed += supply_state.value * blocks_old;
 
-            self.satdays_destroyed +=
-                Sats::from((u64::from(supply_state.value) as f64 * days_old).floor() as u64);
+                self.satdays_destroyed +=
+                    Sats::from((u64::from(supply_state.value) as f64 * days_old).floor() as u64);
 
-            if let Some(realized) = self.realized.as_mut() {
-                let current_price = current_price.unwrap();
-                let prev_price = prev_price.unwrap();
-                realized.send(supply_state, current_price, prev_price, older_than_hour);
-                self.decrement_price_to_amount(supply_state, prev_price);
+                if let Some(realized) = self.realized.as_mut() {
+                    let current_price = current_price.unwrap();
+                    let prev_price = prev_price.unwrap();
+                    realized.send(supply_state, current_price, prev_price, older_than_hour);
+                    self.decrement_price_to_amount(supply_state, prev_price);
+                }
             }
         }
     }
 
-    pub fn compute_unrealized_states(
+    fn compute_unrealized_states(
         &self,
         height_price: Dollars,
         date_price: Option<Dollars>,
@@ -166,7 +166,7 @@ impl CohortState {
         (height_unrealized_state, date_unrealized_state)
     }
 
-    pub fn commit(&mut self, height: Height) -> Result<()> {
+    fn commit(&mut self, height: Height) -> Result<()> {
         self.price_to_amount.flush(height)
     }
 }

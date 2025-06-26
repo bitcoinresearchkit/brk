@@ -1,16 +1,16 @@
-use brk_core::Sats;
+use crate::Sats;
 
-use super::OutputFilter;
+use super::GroupFilter;
 
 #[derive(Default, Clone)]
-pub struct OutputsByFromSize<T> {
+pub struct GroupedByFromSize<T> {
     pub _1_000sats: T,
     pub _1btc: T,
     pub _10btc: T,
     pub _100btc: T,
 }
 
-impl<T> OutputsByFromSize<T> {
+impl<T> GroupedByFromSize<T> {
     pub fn as_mut_vec(&mut self) -> [&mut T; 4] {
         [
             &mut self._1_000sats,
@@ -21,7 +21,7 @@ impl<T> OutputsByFromSize<T> {
     }
 }
 
-impl<T> OutputsByFromSize<(OutputFilter, T)> {
+impl<T> GroupedByFromSize<(GroupFilter, T)> {
     pub fn vecs(&self) -> [&T; 4] {
         [
             &self._1_000sats.1,
@@ -32,17 +32,17 @@ impl<T> OutputsByFromSize<(OutputFilter, T)> {
     }
 }
 
-impl<T> From<OutputsByFromSize<T>> for OutputsByFromSize<(OutputFilter, T)> {
-    fn from(value: OutputsByFromSize<T>) -> Self {
+impl<T> From<GroupedByFromSize<T>> for GroupedByFromSize<(GroupFilter, T)> {
+    fn from(value: GroupedByFromSize<T>) -> Self {
         Self {
-            _1_000sats: (OutputFilter::From(1_000), value._1_000sats),
-            _1btc: (OutputFilter::From(usize::from(Sats::ONE_BTC)), value._1btc),
+            _1_000sats: (GroupFilter::From(1_000), value._1_000sats),
+            _1btc: (GroupFilter::From(usize::from(Sats::ONE_BTC)), value._1btc),
             _10btc: (
-                OutputFilter::From(usize::from(10 * Sats::ONE_BTC)),
+                GroupFilter::From(usize::from(10 * Sats::ONE_BTC)),
                 value._10btc,
             ),
             _100btc: (
-                OutputFilter::From(usize::from(100 * Sats::ONE_BTC)),
+                GroupFilter::From(usize::from(100 * Sats::ONE_BTC)),
                 value._100btc,
             ),
         }
