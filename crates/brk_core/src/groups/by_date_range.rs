@@ -1,7 +1,7 @@
-use super::OutputFilter;
+use super::GroupFilter;
 
 #[derive(Default, Clone)]
-pub struct OutputsByDateRange<T> {
+pub struct GroupedByDateRange<T> {
     pub start_to_1d: T,
     pub _1d_to_1w: T,
     pub _1w_to_1m: T,
@@ -23,33 +23,33 @@ pub struct OutputsByDateRange<T> {
     pub _15y_to_end: T,
 }
 
-impl<T> From<OutputsByDateRange<T>> for OutputsByDateRange<(OutputFilter, T)> {
-    fn from(value: OutputsByDateRange<T>) -> Self {
+impl<T> From<GroupedByDateRange<T>> for GroupedByDateRange<(GroupFilter, T)> {
+    fn from(value: GroupedByDateRange<T>) -> Self {
         Self {
-            start_to_1d: (OutputFilter::To(1), value.start_to_1d),
-            _1d_to_1w: (OutputFilter::Range(1..7), value._1d_to_1w),
-            _1w_to_1m: (OutputFilter::Range(7..30), value._1w_to_1m),
-            _1m_to_2m: (OutputFilter::Range(30..2 * 30), value._1m_to_2m),
-            _2m_to_3m: (OutputFilter::Range(2 * 30..3 * 30), value._2m_to_3m),
-            _3m_to_4m: (OutputFilter::Range(3 * 30..4 * 30), value._3m_to_4m),
-            _4m_to_5m: (OutputFilter::Range(4 * 30..5 * 30), value._4m_to_5m),
-            _5m_to_6m: (OutputFilter::Range(5 * 30..6 * 30), value._5m_to_6m),
-            _6m_to_1y: (OutputFilter::Range(6 * 30..365), value._6m_to_1y),
-            _1y_to_2y: (OutputFilter::Range(365..2 * 365), value._1y_to_2y),
-            _2y_to_3y: (OutputFilter::Range(2 * 365..3 * 365), value._2y_to_3y),
-            _3y_to_4y: (OutputFilter::Range(3 * 365..4 * 365), value._3y_to_4y),
-            _4y_to_5y: (OutputFilter::Range(4 * 365..5 * 365), value._4y_to_5y),
-            _5y_to_6y: (OutputFilter::Range(5 * 365..6 * 365), value._5y_to_6y),
-            _6y_to_7y: (OutputFilter::Range(6 * 365..7 * 365), value._6y_to_7y),
-            _7y_to_8y: (OutputFilter::Range(7 * 365..8 * 365), value._7y_to_8y),
-            _8y_to_10y: (OutputFilter::Range(8 * 365..10 * 365), value._8y_to_10y),
-            _10y_to_15y: (OutputFilter::Range(10 * 365..15 * 365), value._10y_to_15y),
-            _15y_to_end: (OutputFilter::From(15 * 365), value._15y_to_end),
+            start_to_1d: (GroupFilter::To(1), value.start_to_1d),
+            _1d_to_1w: (GroupFilter::Range(1..7), value._1d_to_1w),
+            _1w_to_1m: (GroupFilter::Range(7..30), value._1w_to_1m),
+            _1m_to_2m: (GroupFilter::Range(30..2 * 30), value._1m_to_2m),
+            _2m_to_3m: (GroupFilter::Range(2 * 30..3 * 30), value._2m_to_3m),
+            _3m_to_4m: (GroupFilter::Range(3 * 30..4 * 30), value._3m_to_4m),
+            _4m_to_5m: (GroupFilter::Range(4 * 30..5 * 30), value._4m_to_5m),
+            _5m_to_6m: (GroupFilter::Range(5 * 30..6 * 30), value._5m_to_6m),
+            _6m_to_1y: (GroupFilter::Range(6 * 30..365), value._6m_to_1y),
+            _1y_to_2y: (GroupFilter::Range(365..2 * 365), value._1y_to_2y),
+            _2y_to_3y: (GroupFilter::Range(2 * 365..3 * 365), value._2y_to_3y),
+            _3y_to_4y: (GroupFilter::Range(3 * 365..4 * 365), value._3y_to_4y),
+            _4y_to_5y: (GroupFilter::Range(4 * 365..5 * 365), value._4y_to_5y),
+            _5y_to_6y: (GroupFilter::Range(5 * 365..6 * 365), value._5y_to_6y),
+            _6y_to_7y: (GroupFilter::Range(6 * 365..7 * 365), value._6y_to_7y),
+            _7y_to_8y: (GroupFilter::Range(7 * 365..8 * 365), value._7y_to_8y),
+            _8y_to_10y: (GroupFilter::Range(8 * 365..10 * 365), value._8y_to_10y),
+            _10y_to_15y: (GroupFilter::Range(10 * 365..15 * 365), value._10y_to_15y),
+            _15y_to_end: (GroupFilter::From(15 * 365), value._15y_to_end),
         }
     }
 }
 
-impl<T> OutputsByDateRange<T> {
+impl<T> GroupedByDateRange<T> {
     pub fn as_vec(&mut self) -> [&T; 19] {
         [
             &self.start_to_1d,
@@ -99,7 +99,7 @@ impl<T> OutputsByDateRange<T> {
     }
 }
 
-impl<T> OutputsByDateRange<(OutputFilter, T)> {
+impl<T> GroupedByDateRange<(GroupFilter, T)> {
     pub fn vecs(&self) -> [&T; 19] {
         [
             &self.start_to_1d.1,

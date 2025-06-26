@@ -1,16 +1,16 @@
 use std::ops::{Add, AddAssign};
 
-use brk_core::OutputType;
+use crate::OutputType;
 
-use super::{OutputsBySpendableType, OutputsByUnspendableType};
+use super::{GroupedBySpendableType, GroupedByUnspendableType};
 
 #[derive(Default, Clone, Debug)]
-pub struct OutputsByType<T> {
-    pub spendable: OutputsBySpendableType<T>,
-    pub unspendable: OutputsByUnspendableType<T>,
+pub struct GroupedByType<T> {
+    pub spendable: GroupedBySpendableType<T>,
+    pub unspendable: GroupedByUnspendableType<T>,
 }
 
-impl<T> OutputsByType<T> {
+impl<T> GroupedByType<T> {
     pub fn get(&self, output_type: OutputType) -> &T {
         match output_type {
             OutputType::P2PK65 => &self.spendable.p2pk65,
@@ -44,25 +44,9 @@ impl<T> OutputsByType<T> {
             OutputType::OpReturn => &mut self.unspendable.opreturn,
         }
     }
-
-    // pub fn as_vec(&self) -> Vec<&T> {
-    // self.spendable
-    //     .as_vec()
-    //     .into_iter()
-    //     .chain(self.unspendable.as_vec())
-    //     .collect::<Vec<_>>()
-    // }
-
-    // pub fn as_mut_vec(&mut self) -> Vec<&mut T> {
-    //     self.spendable
-    //         .as_mut_vec()
-    //         .into_iter()
-    //         .chain(self.unspendable.as_mut_vec())
-    //         .collect::<Vec<_>>()
-    // }
 }
 
-impl<T> Add for OutputsByType<T>
+impl<T> Add for GroupedByType<T>
 where
     T: Add<Output = T>,
 {
@@ -75,7 +59,7 @@ where
     }
 }
 
-impl<T> AddAssign for OutputsByType<T>
+impl<T> AddAssign for GroupedByType<T>
 where
     T: AddAssign,
 {

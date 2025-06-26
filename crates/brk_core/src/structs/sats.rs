@@ -36,8 +36,22 @@ pub struct Sats(u64);
 #[allow(clippy::inconsistent_digit_grouping)]
 impl Sats {
     pub const ZERO: Self = Self(0);
-    pub const MAX: Self = Self(u64::MAX);
+    pub const _1: Self = Self(1);
+    pub const _10: Self = Self(10);
+    pub const _100: Self = Self(100);
+    pub const _1K: Self = Self(1_000);
+    pub const _10K: Self = Self(10_000);
+    pub const _100K: Self = Self(100_000);
+    pub const _1M: Self = Self(1_000_000);
+    pub const _10M: Self = Self(10_000_000);
+    pub const _1_BTC: Self = Self::ONE_BTC;
+    pub const _10_BTC: Self = Self(10_00_000_000);
+    pub const _100_BTC: Self = Self(100_00_000_000);
+    pub const _1K_BTC: Self = Self(1_000_00_000_000);
+    pub const _10K_BTC: Self = Self(10_000_00_000_000);
+    pub const _100K_BTC: Self = Self(100_000_00_000_000);
     pub const ONE_BTC: Self = Self(1_00_000_000);
+    pub const MAX: Self = Self(u64::MAX);
     pub const FIFTY_BTC: Self = Self(50_00_000_000);
 
     pub fn new(sats: u64) -> Self {

@@ -1,5 +1,5 @@
 #[derive(Default, Clone)]
-pub struct OutputsByValue<T> {
+pub struct GroupedByValue<T> {
     pub up_to_1cent: T,
     pub from_1c_to_10c: T,
     pub from_10c_to_1d: T,
@@ -16,7 +16,7 @@ pub struct OutputsByValue<T> {
     // ...
 }
 
-impl<T> OutputsByValue<T> {
+impl<T> GroupedByValue<T> {
     pub fn as_mut_vec(&mut self) -> Vec<&mut T> {
         vec![
             &mut self.up_to_1cent,

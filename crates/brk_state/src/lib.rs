@@ -4,21 +4,17 @@
 // #![doc = "```"]
 
 mod block;
-mod cohort;
-mod outputs;
-mod realized;
-// mod hot;
+mod cohorts;
 mod price_to_amount;
+mod realized;
 mod supply;
 mod transacted;
 mod unrealized;
 
 pub use block::*;
-pub use cohort::*;
-pub use outputs::*;
-pub use realized::*;
-pub use unrealized::*;
-// pub use hot::*;
+pub use cohorts::*;
 pub use price_to_amount::*;
+pub use realized::*;
 pub use supply::*;
 pub use transacted::*;
+pub use unrealized::*;

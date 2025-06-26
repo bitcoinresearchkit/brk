@@ -1,9 +1,9 @@
-use brk_core::{HalvingEpoch, Height};
+use crate::{HalvingEpoch, Height};
 
-use super::OutputFilter;
+use super::GroupFilter;
 
 #[derive(Default, Clone)]
-pub struct OutputsByEpoch<T> {
+pub struct GroupedByEpoch<T> {
     pub _0: T,
     pub _1: T,
     pub _2: T,
@@ -11,19 +11,19 @@ pub struct OutputsByEpoch<T> {
     pub _4: T,
 }
 
-impl<T> From<OutputsByEpoch<T>> for OutputsByEpoch<(OutputFilter, T)> {
-    fn from(value: OutputsByEpoch<T>) -> Self {
+impl<T> From<GroupedByEpoch<T>> for GroupedByEpoch<(GroupFilter, T)> {
+    fn from(value: GroupedByEpoch<T>) -> Self {
         Self {
-            _0: (OutputFilter::Epoch(HalvingEpoch::new(0)), value._0),
-            _1: (OutputFilter::Epoch(HalvingEpoch::new(1)), value._1),
-            _2: (OutputFilter::Epoch(HalvingEpoch::new(2)), value._2),
-            _3: (OutputFilter::Epoch(HalvingEpoch::new(3)), value._3),
-            _4: (OutputFilter::Epoch(HalvingEpoch::new(4)), value._4),
+            _0: (GroupFilter::Epoch(HalvingEpoch::new(0)), value._0),
+            _1: (GroupFilter::Epoch(HalvingEpoch::new(1)), value._1),
+            _2: (GroupFilter::Epoch(HalvingEpoch::new(2)), value._2),
+            _3: (GroupFilter::Epoch(HalvingEpoch::new(3)), value._3),
+            _4: (GroupFilter::Epoch(HalvingEpoch::new(4)), value._4),
         }
     }
 }
 
-impl<T> OutputsByEpoch<T> {
+impl<T> GroupedByEpoch<T> {
     pub fn as_mut_vec(&mut self) -> [&mut T; 5] {
         [
             &mut self._0,
@@ -52,7 +52,7 @@ impl<T> OutputsByEpoch<T> {
     }
 }
 
-impl<T> OutputsByEpoch<(OutputFilter, T)> {
+impl<T> GroupedByEpoch<(GroupFilter, T)> {
     pub fn vecs(&self) -> [&T; 5] {
         [&self._0.1, &self._1.1, &self._2.1, &self._3.1, &self._4.1]
     }
