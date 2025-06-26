@@ -2,13 +2,18 @@
 
 A Model Context Protocol (MCP) which gives LLMs access to all available tools in BRK
 
+## URLs
+
+- https://eu1.bitcoinresearchkit.org/mcp
+- https://eu2.bitcoinresearchkit.org/mcp
+
 ## Usage
 
-To connect to the MCP you only need the correct URL ([https://bitcoinresearchkit.org/mcp](https://bitcoinresearchkit.org/mcp)) no token or auth is needed.
+To connect to the MCP you only need the correct URL, no token or auth is needed.
 
 This implementation has only been tested with Claude and the [MCP inspector](https://modelcontextprotocol.io/docs/tools/inspector).
 
-Please be aware thtat the technology is very rapidly evolving, thus having issues if probably expected.
+Please be aware that the technology is evolving very rapidly, thus having issues is probably expected. If you, you can join the discord see if there is a solution.
 
 ### Claude
 
