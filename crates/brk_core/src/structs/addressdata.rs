@@ -1,11 +1,11 @@
 use byteview::ByteView;
 use zerocopy::{FromBytes, IntoBytes};
-use zerocopy_derive::{FromBytes, Immutable, IntoBytes, KnownLayout};
+use zerocopy_derive::{FromBytes, Immutable, KnownLayout};
 
-use crate::{Dollars, Sats};
+use crate::{CheckedSub, Dollars, EmptyAddressData, Error, Result, Sats};
 
-#[derive(Debug, Default, Clone, FromBytes, Immutable, IntoBytes, KnownLayout)]
-#[repr(C, packed)]
+#[derive(Debug, Default, Clone, FromBytes, Immutable, KnownLayout)]
+#[repr(C)]
 pub struct AddressData {
     pub sent: Sats,
     pub received: Sats,
@@ -16,6 +16,54 @@ pub struct AddressData {
 impl AddressData {
     pub fn amount(&self) -> Sats {
         (u64::from(self.received) - u64::from(self.sent)).into()
+    }
+
+    #[inline(always)]
+    pub fn is_empty(&self) -> bool {
+        if self.amount() == Sats::ZERO {
+            if self.outputs_len != 0 {
+                unreachable!();
+            }
+
+            true
+        } else {
+            false
+        }
+    }
+
+    pub fn receive(&mut self, amount: Sats, price: Dollars) {
+        self.received += amount;
+        self.outputs_len += 1;
+        self.realized_cap += price * amount;
+    }
+
+    pub fn send(&mut self, amount: Sats, previous_price: Dollars) -> Result<()> {
+        if self.amount() < amount {
+            return Err(Error::String("Previous_amount smaller than sent amount"));
+        }
+        self.sent += amount;
+        self.outputs_len -= 1;
+        self.realized_cap = self
+            .realized_cap
+            .checked_sub(previous_price * amount)
+            .unwrap();
+        Ok(())
+    }
+}
+
+impl From<EmptyAddressData> for AddressData {
+    fn from(value: EmptyAddressData) -> Self {
+        Self::from(&value)
+    }
+}
+impl From<&EmptyAddressData> for AddressData {
+    fn from(value: &EmptyAddressData) -> Self {
+        Self {
+            sent: value.transfered,
+            received: value.transfered,
+            realized_cap: Dollars::ZERO,
+            outputs_len: 0,
+        }
     }
 }
 
@@ -31,6 +79,14 @@ impl From<AddressData> for ByteView {
 }
 impl From<&AddressData> for ByteView {
     fn from(value: &AddressData) -> Self {
-        Self::new(value.as_bytes())
+        Self::new(
+            &[
+                value.sent.as_bytes(),
+                value.received.as_bytes(),
+                value.realized_cap.as_bytes(),
+                value.outputs_len.as_bytes(),
+            ]
+            .concat(),
+        )
     }
 }

@@ -1,7 +1,7 @@
 use std::path::Path;
 
 use brk_core::{Dollars, Height, Result, Sats, Version};
-use brk_store::Store;
+use brk_store::{AnyStore, Store};
 
 fn main() -> Result<()> {
     let p = Path::new("./examples/_fjall");

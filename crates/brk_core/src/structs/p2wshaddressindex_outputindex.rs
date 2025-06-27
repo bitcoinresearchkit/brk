@@ -11,6 +11,15 @@ pub struct P2WSHAddressIndexOutputindex {
     outputindex: OutputIndex,
 }
 
+impl From<(P2WSHAddressIndex, OutputIndex)> for P2WSHAddressIndexOutputindex {
+    fn from(value: (P2WSHAddressIndex, OutputIndex)) -> Self {
+        Self {
+            addressindex: value.0,
+            outputindex: value.1,
+        }
+    }
+}
+
 impl From<ByteView> for P2WSHAddressIndexOutputindex {
     fn from(value: ByteView) -> Self {
         let addressindex =

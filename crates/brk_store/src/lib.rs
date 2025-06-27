@@ -18,7 +18,10 @@ use fjall::{
 };
 
 mod meta;
+mod r#trait;
+
 use meta::*;
+pub use r#trait::*;
 
 pub struct Store<Key, Value> {
     meta: StoreMeta,
@@ -33,7 +36,7 @@ pub struct Store<Key, Value> {
 
 /// Use default if will read
 const DEFAULT_BLOOM_FILTER_BITS: Option<u8> = Some(5);
-// const CHECK_COLLISISONS: bool = true;
+// const CHECK_COLLISIONS: bool = true;
 const MAJOR_FJALL_VERSION: Version = Version::TWO;
 
 pub fn open_keyspace(path: &Path) -> fjall::Result<TransactionalKeyspace> {
@@ -161,79 +164,6 @@ where
     //     });
     // }
 
-    pub fn commit(&mut self, height: Height) -> Result<()> {
-        if self.has(height) && self.puts.is_empty() && self.dels.is_empty() {
-            return Ok(());
-        }
-
-        self.meta.export(self.len(), height)?;
-
-        let mut wtx = self.keyspace.write_tx();
-
-        let partition = self.partition.as_ref().unwrap();
-
-        mem::take(&mut self.dels)
-            .into_iter()
-            .for_each(|key| wtx.remove(partition, ByteView::from(key)));
-
-        mem::take(&mut self.puts)
-            .into_iter()
-            .for_each(|(key, value)| {
-                // if CHECK_COLLISISONS {
-                //     #[allow(unused_must_use)]
-                //     if let Ok(Some(value)) = wtx.get(&self.partition, key.as_bytes()) {
-                //         dbg!(
-                //             &key,
-                //             V::try_from(value.as_bytes().into()).unwrap(),
-                //             &self.meta,
-                //             self.rtx.get(&self.partition, key.as_bytes())
-                //         );
-                //         unreachable!();
-                //     }
-                // }
-                wtx.insert(partition, ByteView::from(key), ByteView::from(value))
-            });
-
-        wtx.commit()?;
-
-        self.rtx = self.keyspace.read_tx();
-
-        Ok(())
-    }
-
-    pub fn rotate_memtable(&self) {
-        let _ = self.partition.as_ref().unwrap().inner().rotate_memtable();
-    }
-
-    pub fn height(&self) -> Option<Height> {
-        self.meta.height()
-    }
-
-    pub fn len(&self) -> usize {
-        let len = self.meta.len() + self.puts.len() - self.dels.len();
-        if len > 18440000000000000000 {
-            dbg!((
-                len,
-                self.meta.path(),
-                self.meta.len(),
-                self.puts.len(),
-                &self.dels,
-            ));
-            unreachable!()
-        }
-        len
-    }
-    pub fn is_empty(&self) -> bool {
-        self.len() == 0
-    }
-
-    pub fn has(&self, height: Height) -> bool {
-        self.meta.has(height)
-    }
-    pub fn needs(&self, height: Height) -> bool {
-        self.meta.needs(height)
-    }
-
     fn open_partition_handle(
         keyspace: &TransactionalKeyspace,
         name: &str,
@@ -265,6 +195,83 @@ where
         self.partition.replace(partition);
 
         Ok(())
+    }
+}
+
+impl<'a, K, V> AnyStore for Store<K, V>
+where
+    K: Debug + Clone + From<ByteView> + Ord + 'a,
+    V: Debug + Clone + From<ByteView>,
+    ByteView: From<K> + From<&'a K> + From<V>,
+{
+    fn commit(&mut self, height: Height) -> Result<()> {
+        if self.has(height) && self.puts.is_empty() && self.dels.is_empty() {
+            return Ok(());
+        }
+
+        self.meta.export(self.len(), height)?;
+
+        let mut wtx = self.keyspace.write_tx();
+
+        let partition = self.partition.as_ref().unwrap();
+
+        mem::take(&mut self.dels)
+            .into_iter()
+            .for_each(|key| wtx.remove(partition, ByteView::from(key)));
+
+        mem::take(&mut self.puts)
+            .into_iter()
+            .for_each(|(key, value)| {
+                // if CHECK_COLLISIONS {
+                //     #[allow(unused_must_use)]
+                //     if let Ok(Some(value)) = wtx.get(&self.partition, key.as_bytes()) {
+                //         dbg!(
+                //             &key,
+                //             V::try_from(value.as_bytes().into()).unwrap(),
+                //             &self.meta,
+                //             self.rtx.get(&self.partition, key.as_bytes())
+                //         );
+                //         unreachable!();
+                //     }
+                // }
+                wtx.insert(partition, ByteView::from(key), ByteView::from(value))
+            });
+
+        wtx.commit()?;
+
+        self.rtx = self.keyspace.read_tx();
+
+        Ok(())
+    }
+
+    fn rotate_memtable(&self) {
+        let _ = self.partition.as_ref().unwrap().inner().rotate_memtable();
+    }
+
+    fn height(&self) -> Option<Height> {
+        self.meta.height()
+    }
+
+    fn len(&self) -> usize {
+        let len = self.meta.len() + self.puts.len() - self.dels.len();
+        if len > 18440000000000000000 {
+            dbg!((
+                len,
+                self.meta.path(),
+                self.meta.len(),
+                self.puts.len(),
+                &self.dels,
+            ));
+            unreachable!()
+        }
+        len
+    }
+
+    fn has(&self, height: Height) -> bool {
+        self.meta.has(height)
+    }
+    fn needs(&self, height: Height) -> bool {
+        self.meta.needs(height)
     }
 }
 

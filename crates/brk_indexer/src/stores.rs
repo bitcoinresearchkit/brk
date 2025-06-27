@@ -4,9 +4,10 @@ use brk_core::{
     AddressBytes, AddressBytesHash, BlockHashPrefix, Height, OutputType, Result, TxIndex,
     TxidPrefix, TypeIndex, Value, Version,
 };
-use brk_store::Store;
+use brk_store::{AnyStore, Store};
 use brk_vec::AnyIterableVec;
 use fjall::{PersistMode, TransactionalKeyspace};
+use rayon::prelude::*;
 
 use crate::Indexes;
 
@@ -283,34 +284,17 @@ impl Stores {
     }
 
     pub fn starting_height(&self) -> Height {
-        [
-            self.addressbyteshash_to_typeindex.height(),
-            self.blockhashprefix_to_height.height(),
-            self.txidprefix_to_txindex.height(),
-        ]
-        .into_iter()
-        .map(|height| height.map(Height::incremented).unwrap_or_default())
-        .min()
-        .unwrap()
+        self.as_slice()
+            .into_iter()
+            .map(|store| store.height().map(Height::incremented).unwrap_or_default())
+            .min()
+            .unwrap()
     }
 
     pub fn commit(&mut self, height: Height) -> Result<()> {
-        thread::scope(|scope| -> Result<()> {
-            let addressbyteshash_to_typeindex_commit_handle =
-                scope.spawn(|| self.addressbyteshash_to_typeindex.commit(height));
-            let blockhashprefix_to_height_commit_handle =
-                scope.spawn(|| self.blockhashprefix_to_height.commit(height));
-            let txidprefix_to_txindex_commit_handle =
-                scope.spawn(|| self.txidprefix_to_txindex.commit(height));
-
-            addressbyteshash_to_typeindex_commit_handle
-                .join()
-                .unwrap()?;
-            blockhashprefix_to_height_commit_handle.join().unwrap()?;
-            txidprefix_to_txindex_commit_handle.join().unwrap()?;
-
-            Ok(())
-        })?;
+        self.as_mut_slice()
+            .into_par_iter()
+            .try_for_each(|store| store.commit(height))?;
 
         self.keyspace
             .persist(PersistMode::SyncAll)
@@ -318,8 +302,24 @@ impl Stores {
     }
 
     pub fn rotate_memtables(&self) {
-        self.addressbyteshash_to_typeindex.rotate_memtable();
-        self.blockhashprefix_to_height.rotate_memtable();
-        self.txidprefix_to_txindex.rotate_memtable();
+        self.as_slice()
+            .into_iter()
+            .for_each(|store| store.rotate_memtable());
+    }
+
+    fn as_slice(&self) -> [&(dyn AnyStore + Send + Sync); 3] {
+        [
+            &self.addressbyteshash_to_typeindex,
+            &self.blockhashprefix_to_height,
+            &self.txidprefix_to_txindex,
+        ]
+    }
+
+    fn as_mut_slice(&mut self) -> [&mut (dyn AnyStore + Send + Sync); 3] {
+        [
+            &mut self.addressbyteshash_to_typeindex,
+            &mut self.blockhashprefix_to_height,
+            &mut self.txidprefix_to_txindex,
+        ]
     }
 }
