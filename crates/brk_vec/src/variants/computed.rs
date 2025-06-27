@@ -1,10 +1,10 @@
-use std::{fs, path::Path};
+use std::{borrow::Cow, fs, path::Path};
 
 use brk_exit::Exit;
 use clap_derive::ValueEnum;
 use serde::{Deserialize, Serialize};
 
-use brk_core::{Result, StoredPhantom, Value, Version};
+use brk_core::{Result, StoredPhantom, Version};
 
 use crate::{
     AnyCollectableVec, AnyIterableVec, AnyVec, BaseVecIterator, BoxedAnyIterableVec,
@@ -36,7 +36,12 @@ impl Computation {
 }
 
 #[derive(Clone)]
-pub enum Dependencies<I, T, S1I, S1T, S2I, S2T, S3I, S3T> {
+pub enum Dependencies<I, T, S1I, S1T, S2I, S2T, S3I, S3T>
+where
+    S1T: Clone,
+    S2T: Clone,
+    S3T: Clone,
+{
     From1(BoxedAnyIterableVec<S1I, S1T>, ComputeFrom1<I, T, S1I, S1T>),
     From2(
         (BoxedAnyIterableVec<S1I, S1T>, BoxedAnyIterableVec<S2I, S2T>),
@@ -60,7 +65,12 @@ pub type ComputedVecFrom3<I, T, S1I, S1T, S2I, S2T, S3I, S3T> =
     ComputedVec<I, T, S1I, S1T, S2I, S2T, S3I, S3T>;
 
 #[derive(Clone)]
-pub enum ComputedVec<I, T, S1I, S1T, S2I, S2T, S3I, S3T> {
+pub enum ComputedVec<I, T, S1I, S1T, S2I, S2T, S3I, S3T>
+where
+    S1T: Clone,
+    S2T: Clone,
+    S3T: Clone,
+{
     Eager {
         vec: EagerVec<I, T>,
         deps: Dependencies<I, T, S1I, S1T, S2I, S2T, S3I, S3T>,
@@ -251,7 +261,12 @@ where
     }
 }
 
-pub enum ComputedVecIterator<'a, I, T, S1I, S1T, S2I, S2T, S3I, S3T> {
+pub enum ComputedVecIterator<'a, I, T, S1I, S1T, S2I, S2T, S3I, S3T>
+where
+    S1T: Clone,
+    S2T: Clone,
+    S3T: Clone,
+{
     Eager(StoredVecIterator<'a, I, T>),
     LazyFrom1(LazyVecFrom1Iterator<'a, I, T, S1I, S1T>),
     LazyFrom2(LazyVecFrom2Iterator<'a, I, T, S1I, S1T, S2I, S2T>),
@@ -270,7 +285,7 @@ where
     S3I: StoredIndex,
     S3T: StoredType,
 {
-    type Item = (I, Value<'a, T>);
+    type Item = (I, Cow<'a, T>);
     fn next(&mut self) -> Option<Self::Item> {
         match self {
             Self::Eager(i) => i.next(),
@@ -335,7 +350,7 @@ where
     S3I: StoredIndex,
     S3T: StoredType,
 {
-    type Item = (I, Value<'a, T>);
+    type Item = (I, Cow<'a, T>);
     type IntoIter = ComputedVecIterator<'a, I, T, S1I, S1T, S2I, S2T, S3I, S3T>;
 
     fn into_iter(self) -> Self::IntoIter {

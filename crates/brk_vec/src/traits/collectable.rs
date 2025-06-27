@@ -20,7 +20,7 @@ where
         Ok(self
             .iter_at_(from)
             .take(to - from)
-            .map(|(_, v)| v.into_inner())
+            .map(|(_, v)| v.into_owned())
             .collect::<Vec<_>>())
     }
 

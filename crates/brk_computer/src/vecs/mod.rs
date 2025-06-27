@@ -20,6 +20,8 @@ pub mod transactions;
 pub use indexes::Indexes;
 use log::info;
 
+use crate::stores::Stores;
+
 const VERSION: Version = Version::ONE;
 
 #[derive(Clone)]
@@ -121,6 +123,7 @@ impl Vecs {
         starting_indexes: brk_indexer::Indexes,
         fetcher: Option<&mut Fetcher>,
         exit: &Exit,
+        stores: &mut Stores,
     ) -> color_eyre::Result<()> {
         info!("Computing indexes...");
         let mut starting_indexes = self.indexes.compute(indexer, starting_indexes, exit)?;
@@ -178,6 +181,7 @@ impl Vecs {
             &self.market,
             &mut starting_indexes,
             exit,
+            stores,
         )?;
 
         self.cointime.compute(

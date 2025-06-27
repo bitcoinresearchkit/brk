@@ -144,10 +144,10 @@ impl Vecs {
                 txindex_to_first_inputindex_iter
                     .next_at(txindex)
                     .map(|(_, start)| {
-                        let start = usize::from(start.into_inner());
+                        let start = usize::from(start.into_owned());
                         let end = txindex_to_first_inputindex_iter
                             .next_at(txindex + 1)
-                            .map(|(_, v)| usize::from(v.into_inner()))
+                            .map(|(_, v)| usize::from(v.into_owned()))
                             .unwrap_or_else(|| inputindex_to_outputindex_iter.len());
                         StoredUsize::from((start..end).count())
                     })
@@ -167,10 +167,10 @@ impl Vecs {
                 txindex_to_first_outputindex_iter
                     .next_at(txindex)
                     .map(|(_, start)| {
-                        let start = usize::from(start.into_inner());
+                        let start = usize::from(start.into_owned());
                         let end = txindex_to_first_outputindex_iter
                             .next_at(txindex + 1)
-                            .map(|(_, v)| usize::from(v.into_inner()))
+                            .map(|(_, v)| usize::from(v.into_owned()))
                             .unwrap_or_else(|| outputindex_to_value_iter.len());
                         StoredUsize::from((start..end).count())
                     })

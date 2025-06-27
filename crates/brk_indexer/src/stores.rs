@@ -1,8 +1,8 @@
-use std::{fs, path::Path, thread};
+use std::{borrow::Cow, fs, path::Path, thread};
 
 use brk_core::{
     AddressBytes, AddressBytesHash, BlockHashPrefix, Height, OutputType, Result, TxIndex,
-    TxidPrefix, TypeIndex, Value, Version,
+    TxidPrefix, TypeIndex, Version,
 };
 use brk_store::{AnyStore, Store};
 use brk_vec::AnyIterableVec;
@@ -89,7 +89,7 @@ impl Stores {
             vecs.height_to_blockhash
                 .iter_at(starting_indexes.height)
                 .for_each(|(_, v)| {
-                    let blockhashprefix = BlockHashPrefix::from(Value::into_inner(v));
+                    let blockhashprefix = BlockHashPrefix::from(v.into_owned());
                     self.blockhashprefix_to_height.remove(blockhashprefix);
                 });
 
@@ -97,14 +97,14 @@ impl Stores {
                 .height_to_first_p2pk65addressindex
                 .iter()
                 .get(starting_indexes.height)
-                .map(Value::into_inner)
+                .map(Cow::into_owned)
             {
                 let mut p2pk65addressindex_to_p2pk65bytes_iter =
                     vecs.p2pk65addressindex_to_p2pk65bytes.iter();
 
                 while let Some(typedbytes) = p2pk65addressindex_to_p2pk65bytes_iter
                     .get(index)
-                    .map(Value::into_inner)
+                    .map(Cow::into_owned)
                 {
                     let bytes = AddressBytes::from(typedbytes);
                     let hash = AddressBytesHash::from((&bytes, OutputType::P2PK65));
@@ -117,14 +117,14 @@ impl Stores {
                 .height_to_first_p2pk33addressindex
                 .iter()
                 .get(starting_indexes.height)
-                .map(Value::into_inner)
+                .map(Cow::into_owned)
             {
                 let mut p2pk33addressindex_to_p2pk33bytes_iter =
                     vecs.p2pk33addressindex_to_p2pk33bytes.iter();
 
                 while let Some(typedbytes) = p2pk33addressindex_to_p2pk33bytes_iter
                     .get(index)
-                    .map(Value::into_inner)
+                    .map(Cow::into_owned)
                 {
                     let bytes = AddressBytes::from(typedbytes);
                     let hash = AddressBytesHash::from((&bytes, OutputType::P2PK33));
@@ -137,14 +137,14 @@ impl Stores {
                 .height_to_first_p2pkhaddressindex
                 .iter()
                 .get(starting_indexes.height)
-                .map(Value::into_inner)
+                .map(Cow::into_owned)
             {
                 let mut p2pkhaddressindex_to_p2pkhbytes_iter =
                     vecs.p2pkhaddressindex_to_p2pkhbytes.iter();
 
                 while let Some(typedbytes) = p2pkhaddressindex_to_p2pkhbytes_iter
                     .get(index)
-                    .map(Value::into_inner)
+                    .map(Cow::into_owned)
                 {
                     let bytes = AddressBytes::from(typedbytes);
                     let hash = AddressBytesHash::from((&bytes, OutputType::P2PKH));
@@ -157,14 +157,14 @@ impl Stores {
                 .height_to_first_p2shaddressindex
                 .iter()
                 .get(starting_indexes.height)
-                .map(Value::into_inner)
+                .map(Cow::into_owned)
             {
                 let mut p2shaddressindex_to_p2shbytes_iter =
                     vecs.p2shaddressindex_to_p2shbytes.iter();
 
                 while let Some(typedbytes) = p2shaddressindex_to_p2shbytes_iter
                     .get(index)
-                    .map(Value::into_inner)
+                    .map(Cow::into_owned)
                 {
                     let bytes = AddressBytes::from(typedbytes);
                     let hash = AddressBytesHash::from((&bytes, OutputType::P2SH));
@@ -177,14 +177,14 @@ impl Stores {
                 .height_to_first_p2traddressindex
                 .iter()
                 .get(starting_indexes.height)
-                .map(Value::into_inner)
+                .map(Cow::into_owned)
             {
                 let mut p2traddressindex_to_p2trbytes_iter =
                     vecs.p2traddressindex_to_p2trbytes.iter();
 
                 while let Some(typedbytes) = p2traddressindex_to_p2trbytes_iter
                     .get(index)
-                    .map(Value::into_inner)
+                    .map(Cow::into_owned)
                 {
                     let bytes = AddressBytes::from(typedbytes);
                     let hash = AddressBytesHash::from((&bytes, OutputType::P2TR));
@@ -197,14 +197,14 @@ impl Stores {
                 .height_to_first_p2wpkhaddressindex
                 .iter()
                 .get(starting_indexes.height)
-                .map(Value::into_inner)
+                .map(Cow::into_owned)
             {
                 let mut p2wpkhaddressindex_to_p2wpkhbytes_iter =
                     vecs.p2wpkhaddressindex_to_p2wpkhbytes.iter();
 
                 while let Some(typedbytes) = p2wpkhaddressindex_to_p2wpkhbytes_iter
                     .get(index)
-                    .map(Value::into_inner)
+                    .map(Cow::into_owned)
                 {
                     let bytes = AddressBytes::from(typedbytes);
                     let hash = AddressBytesHash::from((&bytes, OutputType::P2WPKH));
@@ -217,14 +217,14 @@ impl Stores {
                 .height_to_first_p2wshaddressindex
                 .iter()
                 .get(starting_indexes.height)
-                .map(Value::into_inner)
+                .map(Cow::into_owned)
             {
                 let mut p2wshaddressindex_to_p2wshbytes_iter =
                     vecs.p2wshaddressindex_to_p2wshbytes.iter();
 
                 while let Some(typedbytes) = p2wshaddressindex_to_p2wshbytes_iter
                     .get(index)
-                    .map(Value::into_inner)
+                    .map(Cow::into_owned)
                 {
                     let bytes = AddressBytes::from(typedbytes);
                     let hash = AddressBytesHash::from((&bytes, OutputType::P2WSH));
@@ -237,13 +237,13 @@ impl Stores {
                 .height_to_first_p2aaddressindex
                 .iter()
                 .get(starting_indexes.height)
-                .map(Value::into_inner)
+                .map(Cow::into_owned)
             {
                 let mut p2aaddressindex_to_p2abytes_iter = vecs.p2aaddressindex_to_p2abytes.iter();
 
                 while let Some(typedbytes) = p2aaddressindex_to_p2abytes_iter
                     .get(index)
-                    .map(Value::into_inner)
+                    .map(Cow::into_owned)
                 {
                     let bytes = AddressBytes::from(typedbytes);
                     let hash = AddressBytesHash::from((&bytes, OutputType::P2A));
@@ -260,7 +260,7 @@ impl Stores {
             vecs.txindex_to_txid
                 .iter_at(starting_indexes.txindex)
                 .for_each(|(txindex, txid)| {
-                    let txidprefix = TxidPrefix::from(&txid.into_inner());
+                    let txidprefix = TxidPrefix::from(&txid.into_owned());
 
                     // "d5d27987d2a3dfc724e359870c6644b40e497bdc0589a033220fe15429d88599"
                     let is_not_first_dup = txindex != TxIndex::new(142783)

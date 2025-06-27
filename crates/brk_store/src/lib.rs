@@ -4,13 +4,14 @@
 #![doc = "```"]
 
 use std::{
+    borrow::Cow,
     collections::{BTreeMap, BTreeSet},
     fmt::Debug,
     mem,
     path::Path,
 };
 
-use brk_core::{Height, Result, Value, Version};
+use brk_core::{Height, Result, Version};
 use byteview::ByteView;
 use fjall::{
     PartitionCreateOptions, PersistMode, ReadTransaction, TransactionalKeyspace,
@@ -25,7 +26,7 @@ pub use r#trait::*;
 
 pub struct Store<Key, Value> {
     meta: StoreMeta,
-    name: String,
+    name: &'static str,
     keyspace: TransactionalKeyspace,
     partition: Option<TransactionalPartitionHandle>,
     rtx: ReadTransaction,
@@ -74,7 +75,7 @@ where
 
         Ok(Self {
             meta,
-            name: name.to_owned(),
+            name: Box::leak(Box::new(name.to_string())),
             keyspace: keyspace.clone(),
             partition: Some(partition),
             rtx,
@@ -84,14 +85,14 @@ where
         })
     }
 
-    pub fn get(&self, key: &'a K) -> Result<Option<Value<V>>> {
+    pub fn get(&self, key: &'a K) -> Result<Option<Cow<V>>> {
         if let Some(v) = self.puts.get(key) {
-            Ok(Some(Value::Ref(v)))
+            Ok(Some(Cow::Borrowed(v)))
         } else if let Some(slice) = self
             .rtx
             .get(self.partition.as_ref().unwrap(), ByteView::from(key))?
         {
-            Ok(Some(Value::Owned(V::from(ByteView::from(slice)))))
+            Ok(Some(Cow::Owned(V::from(ByteView::from(slice)))))
         } else {
             Ok(None)
         }
@@ -190,7 +191,7 @@ where
         self.meta.reset();
 
         let partition =
-            Self::open_partition_handle(&self.keyspace, &self.name, self.bloom_filter_bits)?;
+            Self::open_partition_handle(&self.keyspace, self.name, self.bloom_filter_bits)?;
 
         self.partition.replace(partition);
 
@@ -283,7 +284,7 @@ where
     fn clone(&self) -> Self {
         Self {
             meta: self.meta.clone(),
-            name: self.name.clone(),
+            name: self.name,
             keyspace: self.keyspace.clone(),
             partition: None,
             rtx: self.keyspace.read_tx(),

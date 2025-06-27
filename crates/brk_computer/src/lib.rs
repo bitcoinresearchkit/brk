@@ -66,7 +66,12 @@ impl Computer {
         exit: &Exit,
     ) -> color_eyre::Result<()> {
         info!("Computing...");
-        self.vecs
-            .compute(indexer, starting_indexes, self.fetcher.as_mut(), exit)
+        self.vecs.compute(
+            indexer,
+            starting_indexes,
+            self.fetcher.as_mut(),
+            exit,
+            &mut self.stores,
+        )
     }
 }

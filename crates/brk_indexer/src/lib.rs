@@ -242,7 +242,7 @@ impl Indexer {
                                     .context("Expect outputindex to not be none")
                                     .inspect_err(|_| {
                                         dbg!(outpoint.txid, prev_txindex, vout);
-                                    })?.into_inner()
+                                    })?.into_owned()
                                     + vout;
 
                                 Ok((inputindex, InputSource::PreviousBlock((
@@ -326,35 +326,35 @@ impl Indexer {
                                             OutputType::P2PK65 => vecs
                                                 .p2pk65addressindex_to_p2pk65bytes
                                                 .get_or_read(typeindex.into(), &p2pk65addressindex_to_p2pk65bytes_mmap)?
-                                                .map(|v| AddressBytes::from(v.into_inner())),
+                                                .map(|v| AddressBytes::from(v.into_owned())),
                                             OutputType::P2PK33 => vecs
                                                 .p2pk33addressindex_to_p2pk33bytes
                                                 .get_or_read(typeindex.into(), &p2pk33addressindex_to_p2pk33bytes_mmap)?
-                                                .map(|v| AddressBytes::from(v.into_inner())),
+                                                .map(|v| AddressBytes::from(v.into_owned())),
                                             OutputType::P2PKH => vecs
                                                 .p2pkhaddressindex_to_p2pkhbytes
                                                 .get_or_read(typeindex.into(), &p2pkhaddressindex_to_p2pkhbytes_mmap)?
-                                                .map(|v| AddressBytes::from(v.into_inner())),
+                                                .map(|v| AddressBytes::from(v.into_owned())),
                                             OutputType::P2SH => vecs
                                                 .p2shaddressindex_to_p2shbytes
                                                 .get_or_read(typeindex.into(), &p2shaddressindex_to_p2shbytes_mmap)?
-                                                .map(|v| AddressBytes::from(v.into_inner())),
+                                                .map(|v| AddressBytes::from(v.into_owned())),
                                             OutputType::P2WPKH => vecs
                                                 .p2wpkhaddressindex_to_p2wpkhbytes
                                                 .get_or_read(typeindex.into(), &p2wpkhaddressindex_to_p2wpkhbytes_mmap)?
-                                                .map(|v| AddressBytes::from(v.into_inner())),
+                                                .map(|v| AddressBytes::from(v.into_owned())),
                                             OutputType::P2WSH => vecs
                                                 .p2wshaddressindex_to_p2wshbytes
                                                 .get_or_read(typeindex.into(), &p2wshaddressindex_to_p2wshbytes_mmap)?
-                                                .map(|v| AddressBytes::from(v.into_inner())),
+                                                .map(|v| AddressBytes::from(v.into_owned())),
                                             OutputType::P2TR => vecs
                                                 .p2traddressindex_to_p2trbytes
                                                 .get_or_read(typeindex.into(), &p2traddressindex_to_p2trbytes_mmap)?
-                                                .map(|v| AddressBytes::from(v.into_inner())),
+                                                .map(|v| AddressBytes::from(v.into_owned())),
                                             OutputType::P2A => vecs
                                                 .p2aaddressindex_to_p2abytes
                                                 .get_or_read(typeindex.into(), &p2aaddressindex_to_p2abytes_mmap)?
-                                                .map(|v| AddressBytes::from(v.into_inner())),
+                                                .map(|v| AddressBytes::from(v.into_owned())),
                                             OutputType::Empty | OutputType::OpReturn | OutputType::P2MS | OutputType::Unknown => {
                                                 unreachable!()
                                             }
