@@ -110,13 +110,13 @@ impl Vecs {
                 inputindex_to_outputindex_iter
                     .next_at(index.unwrap_to_usize())
                     .map(|(inputindex, outputindex)| {
-                        let outputindex = outputindex.into_inner();
+                        let outputindex = outputindex.into_owned();
                         if outputindex == OutputIndex::COINBASE {
                             Sats::ZERO
                         } else if let Some((_, value)) =
                             outputindex_to_value_iter.next_at(outputindex.unwrap_to_usize())
                         {
-                            value.into_inner()
+                            value.into_owned()
                         } else {
                             dbg!(inputindex, outputindex);
                             panic!()
@@ -138,12 +138,12 @@ impl Vecs {
                 txindex_to_base_size_iter
                     .next_at(index)
                     .map(|(_, base_size)| {
-                        let base_size = base_size.into_inner();
+                        let base_size = base_size.into_owned();
                         let total_size = txindex_to_total_size_iter
                             .next_at(index)
                             .unwrap()
                             .1
-                            .into_inner();
+                            .into_owned();
 
                         // This is the exact definition of a weight unit, as defined by BIP-141 (quote above).
                         let wu = usize::from(base_size) * 3 + usize::from(total_size);
@@ -164,7 +164,7 @@ impl Vecs {
                 let index = index.unwrap_to_usize();
                 iter.next_at(index).map(|(_, weight)| {
                     StoredUsize::from(
-                        bitcoin::Weight::from(weight.into_inner()).to_vbytes_ceil() as usize
+                        bitcoin::Weight::from(weight.into_owned()).to_vbytes_ceil() as usize
                     )
                 })
             },
@@ -182,12 +182,12 @@ impl Vecs {
                 txindex_to_height_iter
                     .next_at(index.unwrap_to_usize())
                     .map(|(_, height)| {
-                        let height = height.into_inner();
+                        let height = height.into_owned();
                         let txindex = height_to_first_txindex_iter
                             .next_at(height.unwrap_to_usize())
                             .unwrap()
                             .1
-                            .into_inner();
+                            .into_owned();
 
                         index == txindex
                     })
@@ -211,12 +211,12 @@ impl Vecs {
                 txindex_to_first_inputindex_iter
                     .next_at(txindex)
                     .map(|(_, first_index)| {
-                        let first_index = usize::from(first_index.into_inner());
+                        let first_index = usize::from(first_index.into_owned());
                         let count = *txindex_to_input_count_iter
                             .next_at(txindex)
                             .unwrap()
                             .1
-                            .into_inner();
+                            .into_owned();
                         let range = first_index..first_index + count;
                         range.into_iter().fold(Sats::ZERO, |total, inputindex| {
                             total
@@ -224,7 +224,7 @@ impl Vecs {
                                     .next_at(inputindex)
                                     .unwrap()
                                     .1
-                                    .into_inner()
+                                    .into_owned()
                         })
                     })
             },
@@ -260,12 +260,12 @@ impl Vecs {
                 txindex_to_first_outputindex_iter
                     .next_at(txindex)
                     .map(|(_, first_index)| {
-                        let first_index = usize::from(first_index.into_inner());
+                        let first_index = usize::from(first_index.into_owned());
                         let count = *txindex_to_output_count_iter
                             .next_at(txindex)
                             .unwrap()
                             .1
-                            .into_inner();
+                            .into_owned();
                         let range = first_index..first_index + count;
                         range.into_iter().fold(Sats::ZERO, |total, outputindex| {
                             total
@@ -273,7 +273,7 @@ impl Vecs {
                                     .next_at(outputindex)
                                     .unwrap()
                                     .1
-                                    .into_inner()
+                                    .into_owned()
                         })
                     })
             },
@@ -303,12 +303,12 @@ impl Vecs {
             |txindex: TxIndex, input_iter, output_iter| {
                 let txindex = txindex.unwrap_to_usize();
                 input_iter.next_at(txindex).and_then(|(_, value)| {
-                    let input = value.into_inner();
+                    let input = value.into_owned();
                     if input.is_zero() {
                         return Some(Sats::ZERO);
                     }
                     output_iter.next_at(txindex).map(|(_, value)| {
-                        let output = value.into_inner();
+                        let output = value.into_owned();
                         input.checked_sub(output).unwrap()
                     })
                 })
@@ -326,9 +326,9 @@ impl Vecs {
             |txindex: TxIndex, fee_iter, vsize_iter| {
                 let txindex = txindex.unwrap_to_usize();
                 fee_iter.next_at(txindex).and_then(|(_, value)| {
-                    let fee = value.into_inner();
+                    let fee = value.into_owned();
                     vsize_iter.next_at(txindex).map(|(_, value)| {
-                        let vsize = value.into_inner();
+                        let vsize = value.into_owned();
                         Feerate::from((fee, vsize))
                     })
                 })

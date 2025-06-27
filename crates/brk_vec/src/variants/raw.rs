@@ -1,4 +1,5 @@
 use std::{
+    borrow::Cow,
     fs::{self, File},
     io,
     marker::PhantomData,
@@ -8,7 +9,7 @@ use std::{
 };
 
 use arc_swap::{ArcSwap, Guard};
-use brk_core::{Error, Result, Value, Version};
+use brk_core::{Error, Result, Version};
 use memmap2::Mmap;
 use rayon::prelude::*;
 
@@ -23,7 +24,7 @@ const VERSION: Version = Version::ONE;
 pub struct RawVec<I, T> {
     header: Header,
     parent: PathBuf,
-    name: String,
+    name: &'static str,
     // Consider  Arc<ArcSwap<Option<Mmap>>> for dataraces when reorg ?
     mmap: Arc<ArcSwap<Mmap>>,
     pushed: Vec<T>,
@@ -83,7 +84,7 @@ where
         Ok(Self {
             mmap,
             header,
-            name: name.to_string(),
+            name: Box::leak(Box::new(name.to_string())),
             parent: parent.to_owned(),
             pushed: vec![],
             phantom: PhantomData,
@@ -236,7 +237,7 @@ where
 
     #[inline]
     fn name(&self) -> &str {
-        &self.name
+        self.name
     }
 
     #[inline]
@@ -260,7 +261,7 @@ impl<I, T> Clone for RawVec<I, T> {
         Self {
             header: self.header.clone(),
             parent: self.parent.clone(),
-            name: self.name.clone(),
+            name: self.name,
             mmap: self.mmap.clone(),
             pushed: vec![],
             phantom: PhantomData,
@@ -301,7 +302,7 @@ where
     I: StoredIndex,
     T: StoredType,
 {
-    type Item = (I, Value<'a, T>);
+    type Item = (I, Cow<'a, T>);
 
     fn next(&mut self) -> Option<Self::Item> {
         let mmap = &self.guard;
@@ -326,7 +327,7 @@ where
     I: StoredIndex,
     T: StoredType,
 {
-    type Item = (I, Value<'a, T>);
+    type Item = (I, Cow<'a, T>);
     type IntoIter = RawVecIterator<'a, I, T>;
 
     fn into_iter(self) -> Self::IntoIter {

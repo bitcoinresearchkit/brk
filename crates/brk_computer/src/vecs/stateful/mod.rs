@@ -15,7 +15,10 @@ use rayon::prelude::*;
 
 use brk_state::{BlockState, CohortStateTrait, SupplyState, Transacted};
 
-use crate::vecs::{market, stateful::r#trait::CohortVecs};
+use crate::{
+    stores::Stores,
+    vecs::{market, stateful::r#trait::CohortVecs},
+};
 
 use super::{
     Indexes, fetched,
@@ -185,6 +188,7 @@ impl Vecs {
         // Must take ownership as its indexes will be updated for this specific function
         starting_indexes: &mut Indexes,
         exit: &Exit,
+        stores: &mut Stores,
     ) -> color_eyre::Result<()> {
         let height_to_first_outputindex = &indexer.vecs.height_to_first_outputindex;
         let height_to_first_inputindex = &indexer.vecs.height_to_first_inputindex;
@@ -389,19 +393,19 @@ impl Vecs {
                                         .get_or_read(inputindex, &inputindex_to_outputindex_mmap)
                                         .unwrap()
                                         .unwrap()
-                                        .into_inner();
+                                        .into_owned();
 
                                     let value = outputindex_to_value
                                         .get_or_read(outputindex, &outputindex_to_value_mmap)
                                         .unwrap()
                                         .unwrap()
-                                        .into_inner();
+                                        .into_owned();
 
                                     let input_type = outputindex_to_outputtype
                                         .get_or_read(outputindex, &outputindex_to_outputtype_mmap)
                                         .unwrap()
                                         .unwrap()
-                                        .into_inner();
+                                        .into_owned();
 
                                     // dbg!(input_type);
 
@@ -413,13 +417,13 @@ impl Vecs {
                                         .get_or_read(outputindex, &outputindex_to_txindex_mmap)
                                         .unwrap()
                                         .unwrap()
-                                        .into_inner();
+                                        .into_owned();
 
                                     let height = txindex_to_height
                                         .get_or_read(input_txindex, &txindex_to_height_mmap)
                                         .unwrap()
                                         .unwrap()
-                                        .into_inner();
+                                        .into_owned();
 
                                     (height, value, input_type)
                                 })
@@ -452,13 +456,13 @@ impl Vecs {
                                         .get_or_read(outputindex, &outputindex_to_value_mmap)
                                         .unwrap()
                                         .unwrap()
-                                        .into_inner();
+                                        .into_owned();
 
                                     let output_type = outputindex_to_outputtype
                                         .get_or_read(outputindex, &outputindex_to_outputtype_mmap)
                                         .unwrap()
                                         .unwrap()
-                                        .into_inner();
+                                        .into_owned();
 
                                     (value, output_type)
                                 })

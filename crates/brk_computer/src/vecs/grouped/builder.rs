@@ -221,7 +221,7 @@ where
             cumulative_vec.iter().unwrap_get_inner(index)
         });
         source.iter_at(index).try_for_each(|(i, v)| -> Result<()> {
-            cumulative = cumulative.clone() + v.into_inner();
+            cumulative = cumulative.clone() + v.into_owned();
             cumulative_vec.forced_push_at(i, cumulative.clone(), exit)
         })?;
 
@@ -261,7 +261,7 @@ where
         first_indexes
             .iter_at(index)
             .try_for_each(|(i, first_index)| -> Result<()> {
-                let first_index = first_index.into_inner();
+                let first_index = first_index.into_owned();
 
                 let count_index = count_indexes_iter.unwrap_get_inner(i);
 
@@ -284,7 +284,7 @@ where
                     //     dbg!(first_index, count_index, last_index);
                     // })
                     // .unwrap()
-                    // .into_inner();
+                    // .into_owned();
                     last.forced_push_at(index, v, exit)?;
                 }
 
@@ -304,7 +304,7 @@ where
                     source_iter.set(first_index);
                     let mut values = (&mut source_iter)
                         .take(*count_index)
-                        .map(|(_, v)| v.into_inner())
+                        .map(|(_, v)| v.into_owned())
                         .collect::<Vec<_>>();
 
                     if needs_sorted {
@@ -435,7 +435,7 @@ where
         first_indexes
             .iter_at(index)
             .try_for_each(|(i, first_index, ..)| -> Result<()> {
-                let first_index = first_index.into_inner();
+                let first_index = first_index.into_owned();
 
                 let count_index = count_indexes_iter.unwrap_get_inner(i);
 
@@ -473,7 +473,7 @@ where
                             source_max_iter.set(first_index);
                             let mut values = source_max_iter
                                 .take(*count_index)
-                                .map(|(_, v)| v.into_inner())
+                                .map(|(_, v)| v.into_owned())
                                 .collect::<Vec<_>>();
                             values.sort_unstable();
                             max.forced_push_at(i, values.last().unwrap().clone(), exit)?;
@@ -484,7 +484,7 @@ where
                             source_min_iter.set(first_index);
                             let mut values = source_min_iter
                                 .take(*count_index)
-                                .map(|(_, v)| v.into_inner())
+                                .map(|(_, v)| v.into_owned())
                                 .collect::<Vec<_>>();
                             values.sort_unstable();
                             min.forced_push_at(i, values.first().unwrap().clone(), exit)?;
@@ -497,7 +497,7 @@ where
                             source_average_iter.set(first_index);
                             let values = source_average_iter
                                 .take(*count_index)
-                                .map(|(_, v)| v.into_inner())
+                                .map(|(_, v)| v.into_owned())
                                 .collect::<Vec<_>>();
 
                             let len = values.len();
@@ -513,7 +513,7 @@ where
                             source_sum_iter.set(first_index);
                             let values = source_sum_iter
                                 .take(*count_index)
-                                .map(|(_, v)| v.into_inner())
+                                .map(|(_, v)| v.into_owned())
                                 .collect::<Vec<_>>();
 
                             let sum = values.into_iter().fold(T::from(0), |a, b| a + b);

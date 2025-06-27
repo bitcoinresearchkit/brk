@@ -1,4 +1,5 @@
 use std::{
+    borrow::Cow,
     fs::{File, OpenOptions},
     io::{self, Seek, SeekFrom, Write},
     path::{Path, PathBuf},
@@ -6,7 +7,7 @@ use std::{
 };
 
 use arc_swap::ArcSwap;
-use brk_core::{Result, Value};
+use brk_core::Result;
 use memmap2::Mmap;
 
 use crate::{AnyVec, HEADER_OFFSET, Header};
@@ -28,11 +29,11 @@ where
     fn read_(&self, index: usize, mmap: &Mmap) -> Result<Option<T>>;
 
     #[inline]
-    fn get_or_read(&self, index: I, mmap: &Mmap) -> Result<Option<Value<T>>> {
+    fn get_or_read(&self, index: I, mmap: &Mmap) -> Result<Option<Cow<T>>> {
         self.get_or_read_(index.to_usize()?, mmap)
     }
     #[inline]
-    fn get_or_read_(&self, index: usize, mmap: &Mmap) -> Result<Option<Value<T>>> {
+    fn get_or_read_(&self, index: usize, mmap: &Mmap) -> Result<Option<Cow<T>>> {
         let stored_len = self.stored_len_(mmap);
 
         if index >= stored_len {
@@ -41,9 +42,9 @@ where
             if j >= pushed.len() {
                 return Ok(None);
             }
-            Ok(pushed.get(j).map(Value::Ref))
+            Ok(pushed.get(j).map(Cow::Borrowed))
         } else {
-            Ok(self.read_(index, mmap)?.map(Value::Owned))
+            Ok(self.read_(index, mmap)?.map(Cow::Owned))
         }
     }
 

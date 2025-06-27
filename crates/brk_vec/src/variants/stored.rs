@@ -1,7 +1,10 @@
-use std::path::{Path, PathBuf};
+use std::{
+    borrow::Cow,
+    path::{Path, PathBuf},
+};
 
 use arc_swap::ArcSwap;
-use brk_core::{Result, Value, Version};
+use brk_core::{Result, Version};
 use memmap2::Mmap;
 
 use crate::{
@@ -195,7 +198,7 @@ where
     I: StoredIndex,
     T: StoredType,
 {
-    type Item = (I, Value<'a, T>);
+    type Item = (I, Cow<'a, T>);
     fn next(&mut self) -> Option<Self::Item> {
         match self {
             Self::Compressed(i) => i.next(),
@@ -238,7 +241,7 @@ where
     I: StoredIndex,
     T: StoredType,
 {
-    type Item = (I, Value<'a, T>);
+    type Item = (I, Cow<'a, T>);
     type IntoIter = StoredVecIterator<'a, I, T>;
 
     fn into_iter(self) -> Self::IntoIter {

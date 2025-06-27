@@ -1,11 +1,12 @@
 use std::{
+    borrow::Cow,
     fs, mem,
     path::{Path, PathBuf},
     sync::Arc,
 };
 
 use arc_swap::{ArcSwap, Guard};
-use brk_core::{Error, Result, Value, Version};
+use brk_core::{Error, Result, Version};
 use memmap2::Mmap;
 use rayon::prelude::*;
 use zstd::DEFAULT_COMPRESSION_LEVEL;
@@ -441,7 +442,7 @@ where
     I: StoredIndex,
     T: StoredType,
 {
-    type Item = (I, Value<'a, T>);
+    type Item = (I, Cow<'a, T>);
 
     fn next(&mut self) -> Option<Self::Item> {
         let mmap = &self.guard;
@@ -456,7 +457,7 @@ where
             self.vec
                 .pushed()
                 .get(j)
-                .map(|v| (I::from(i), Value::Ref(v)))
+                .map(|v| (I::from(i), Cow::Borrowed(v)))
         } else {
             let page_index = i / Self::PER_PAGE;
 
@@ -476,7 +477,7 @@ where
                 .unwrap()
                 .1
                 .get(i % Self::PER_PAGE)
-                .map(|v| (I::from(i), Value::Owned(v.clone())))
+                .map(|v| (I::from(i), Cow::Owned(v.clone())))
         };
 
         self.index += 1;
@@ -490,7 +491,7 @@ where
     I: StoredIndex,
     T: StoredType,
 {
-    type Item = (I, Value<'a, T>);
+    type Item = (I, Cow<'a, T>);
     type IntoIter = CompressedVecIterator<'a, I, T>;
 
     fn into_iter(self) -> Self::IntoIter {
