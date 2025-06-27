@@ -11,6 +11,15 @@ pub struct P2PKHAddressIndexOutputindex {
     outputindex: OutputIndex,
 }
 
+impl From<(P2PKHAddressIndex, OutputIndex)> for P2PKHAddressIndexOutputindex {
+    fn from(value: (P2PKHAddressIndex, OutputIndex)) -> Self {
+        Self {
+            addressindex: value.0,
+            outputindex: value.1,
+        }
+    }
+}
+
 impl From<ByteView> for P2PKHAddressIndexOutputindex {
     fn from(value: ByteView) -> Self {
         let addressindex =
