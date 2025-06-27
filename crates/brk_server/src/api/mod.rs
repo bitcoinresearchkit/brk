@@ -108,6 +108,16 @@ impl ApiRoutes for Router<AppState> {
             ),
         )
         .route(
+            "/health",
+            get(|| async {
+                Json(serde_json::json!({
+                    "status": "healthy",
+                    "service": "brk-server",
+                    "timestamp": jiff::Timestamp::now().to_string()
+                }))
+            }),
+        )
+        .route(
             "/api",
             get(|| async {
                 Redirect::temporary(
