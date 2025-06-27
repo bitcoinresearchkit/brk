@@ -1,8 +1,28 @@
+use byteview::ByteView;
+use zerocopy::{FromBytes, IntoBytes};
+use zerocopy_derive::{FromBytes, Immutable, IntoBytes, KnownLayout};
+
 use crate::Sats;
 
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Clone, FromBytes, Immutable, IntoBytes, KnownLayout)]
 pub struct EmptyAddressData {
     pub transfered: Sats,
 }
 
 impl EmptyAddressData {}
+
+impl From<ByteView> for EmptyAddressData {
+    fn from(value: ByteView) -> Self {
+        Self::read_from_bytes(&value).unwrap()
+    }
+}
+impl From<EmptyAddressData> for ByteView {
+    fn from(value: EmptyAddressData) -> Self {
+        Self::from(&value)
+    }
+}
+impl From<&EmptyAddressData> for ByteView {
+    fn from(value: &EmptyAddressData) -> Self {
+        Self::new(value.as_bytes())
+    }
+}

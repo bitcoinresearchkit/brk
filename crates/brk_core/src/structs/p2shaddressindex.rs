@@ -1,7 +1,9 @@
 use std::ops::Add;
 
+use byteview::ByteView;
 use derive_deref::{Deref, DerefMut};
 use serde::Serialize;
+use zerocopy::{FromBytes, IntoBytes};
 use zerocopy_derive::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 use crate::{CheckedSub, Printable, TypeIndex};
@@ -27,6 +29,16 @@ pub struct P2SHAddressIndex(TypeIndex);
 impl From<TypeIndex> for P2SHAddressIndex {
     fn from(value: TypeIndex) -> Self {
         Self(value)
+    }
+}
+impl From<P2SHAddressIndex> for u32 {
+    fn from(value: P2SHAddressIndex) -> Self {
+        Self::from(*value)
+    }
+}
+impl From<u32> for P2SHAddressIndex {
+    fn from(value: u32) -> Self {
+        Self(TypeIndex::from(value))
     }
 }
 impl From<P2SHAddressIndex> for usize {
@@ -58,5 +70,21 @@ impl Printable for P2SHAddressIndex {
 
     fn to_possible_strings() -> &'static [&'static str] {
         &["shaddr", "p2shaddr", "p2shaddressindex"]
+    }
+}
+
+impl From<ByteView> for P2SHAddressIndex {
+    fn from(value: ByteView) -> Self {
+        Self::read_from_bytes(&value).unwrap()
+    }
+}
+impl From<P2SHAddressIndex> for ByteView {
+    fn from(value: P2SHAddressIndex) -> Self {
+        Self::from(&value)
+    }
+}
+impl From<&P2SHAddressIndex> for ByteView {
+    fn from(value: &P2SHAddressIndex) -> Self {
+        Self::new(value.as_bytes())
     }
 }

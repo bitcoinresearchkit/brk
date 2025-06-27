@@ -1,7 +1,9 @@
 use std::ops::Add;
 
+use byteview::ByteView;
 use derive_deref::{Deref, DerefMut};
 use serde::Serialize;
+use zerocopy::{FromBytes, IntoBytes};
 use zerocopy_derive::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 use crate::{CheckedSub, Printable, TypeIndex};
@@ -34,6 +36,16 @@ impl From<P2WPKHAddressIndex> for usize {
         Self::from(*value)
     }
 }
+impl From<P2WPKHAddressIndex> for u32 {
+    fn from(value: P2WPKHAddressIndex) -> Self {
+        Self::from(*value)
+    }
+}
+impl From<u32> for P2WPKHAddressIndex {
+    fn from(value: u32) -> Self {
+        Self(TypeIndex::from(value))
+    }
+}
 impl From<usize> for P2WPKHAddressIndex {
     fn from(value: usize) -> Self {
         Self(TypeIndex::from(value))
@@ -58,5 +70,21 @@ impl Printable for P2WPKHAddressIndex {
 
     fn to_possible_strings() -> &'static [&'static str] {
         &["wpkhaddr", "p2wpkhaddr", "p2wpkhaddressindex"]
+    }
+}
+
+impl From<ByteView> for P2WPKHAddressIndex {
+    fn from(value: ByteView) -> Self {
+        Self::read_from_bytes(&value).unwrap()
+    }
+}
+impl From<P2WPKHAddressIndex> for ByteView {
+    fn from(value: P2WPKHAddressIndex) -> Self {
+        Self::from(&value)
+    }
+}
+impl From<&P2WPKHAddressIndex> for ByteView {
+    fn from(value: &P2WPKHAddressIndex) -> Self {
+        Self::new(value.as_bytes())
     }
 }
