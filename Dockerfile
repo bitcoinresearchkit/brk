@@ -1,10 +1,13 @@
-# Build stage
-FROM rust:nightly AS builder
+# *************
+# Builder
+# *************
+FROM rustlang/rust:nightly AS builder
 
 # Install build dependencies
 RUN apt-get update && apt-get install -y \
     pkg-config \
     libssl-dev \
+    build-essential \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
@@ -15,7 +18,9 @@ COPY . .
 # Build the application
 RUN cargo build --release --locked
 
-# Runtime stage
+# *************
+# Runtime
+# *************
 FROM debian:bookworm-slim
 
 # Install runtime dependencies

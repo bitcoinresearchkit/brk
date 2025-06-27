@@ -201,31 +201,35 @@ impl Config {
     }
 
     fn check(&self) {
-        if !self.bitcoindir().is_dir() {
-            println!("{:?} isn't a valid directory", self.bitcoindir());
-            println!("Please use the --bitcoindir parameter to set a valid path.");
-            println!("Run the program with '-h' for help.");
-            std::process::exit(1);
+        // Only check Bitcoin directories and RPC if we're running the processor
+        if self.process() {
+            if !self.bitcoindir().is_dir() {
+                println!("{:?} isn't a valid directory", self.bitcoindir());
+                println!("Please use the --bitcoindir parameter to set a valid path.");
+                println!("Run the program with '-h' for help.");
+                std::process::exit(1);
+            }
+
+            if !self.blocksdir().is_dir() {
+                println!("{:?} isn't a valid directory", self.blocksdir());
+                println!("Please use the --blocksdir parameter to set a valid path.");
+                println!("Run the program with '-h' for help.");
+                std::process::exit(1);
+            }
+
+            if self.rpc_auth().is_err() {
+                println!(
+                    "No way found to authenticate the RPC client, please either set --rpccookiefile or --rpcuser and --rpcpassword.\nRun the program with '-h' for help."
+                );
+                std::process::exit(1);
+            }
         }
 
-        if !self.blocksdir().is_dir() {
-            println!("{:?} isn't a valid directory", self.blocksdir());
-            println!("Please use the --blocksdir parameter to set a valid path.");
-            println!("Run the program with '-h' for help.");
-            std::process::exit(1);
-        }
-
+        // Always check BRK directory (needed by both processor and server)
         if !self.brkdir().is_dir() {
             println!("{:?} isn't a valid directory", self.brkdir());
             println!("Please use the --brkdir parameter to set a valid path.");
             println!("Run the program with '-h' for help.");
-            std::process::exit(1);
-        }
-
-        if self.rpc_auth().is_err() {
-            println!(
-                "No way found to authenticate the RPC client, please either set --rpccookiefile or --rpcuser and --rpcpassword.\nRun the program with '-h' for help."
-            );
             std::process::exit(1);
         }
     }
