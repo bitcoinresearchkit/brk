@@ -9,7 +9,7 @@ A Model Context Protocol (MCP) which gives LLMs access to all available tools in
 
 ## Usage
 
-To connect to the MCP you only need the correct URL, no token or auth is needed.
+To connect to the MCP use any of the previous URL, no token or auth is needed.
 
 This implementation has only been tested with Claude and the [MCP inspector](https://modelcontextprotocol.io/docs/tools/inspector).
 

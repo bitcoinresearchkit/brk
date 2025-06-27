@@ -45,6 +45,11 @@ impl From<u32> for TypeIndex {
         Self(value)
     }
 }
+impl From<TypeIndex> for u32 {
+    fn from(value: TypeIndex) -> Self {
+        value.0
+    }
+}
 
 impl From<u64> for TypeIndex {
     fn from(value: u64) -> Self {
