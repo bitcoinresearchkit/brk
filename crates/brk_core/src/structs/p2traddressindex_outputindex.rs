@@ -1,7 +1,7 @@
 use byteview::ByteView;
 use serde::Serialize;
 
-use crate::{copy_first_4bytes, copy_first_8bytes};
+use crate::{TypeIndex, copy_first_4bytes, copy_first_8bytes};
 
 use super::{OutputIndex, P2TRAddressIndex};
 
@@ -9,6 +9,12 @@ use super::{OutputIndex, P2TRAddressIndex};
 pub struct P2TRAddressIndexOutputindex {
     addressindex: P2TRAddressIndex,
     outputindex: OutputIndex,
+}
+
+impl From<(TypeIndex, OutputIndex)> for P2TRAddressIndexOutputindex {
+    fn from(value: (TypeIndex, OutputIndex)) -> Self {
+        Self::from((P2TRAddressIndex::from(value.0), value.1))
+    }
 }
 
 impl From<(P2TRAddressIndex, OutputIndex)> for P2TRAddressIndexOutputindex {

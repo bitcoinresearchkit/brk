@@ -34,7 +34,7 @@ pub fn init(path: Option<&Path>) {
             .strftime("%Y-%m-%d %H:%M:%S")
             .to_string();
         let level = record.level().as_str().to_lowercase();
-        let level = format!("{:5}", level);
+        let level = format!("{level:5}");
         let target = record.target();
         let dash = "-";
         let args = record.args();
@@ -81,7 +81,7 @@ fn write(
     dash: impl Display,
     args: impl Display,
 ) -> Result<(), std::io::Error> {
-    writeln!(buf, "{} {} {} {}", date_time, dash, level, args)
+    writeln!(buf, "{date_time} {dash} {level} {args}")
     // Don't remove, used to know the target of unwanted logs
     // writeln!(
     //     buf,

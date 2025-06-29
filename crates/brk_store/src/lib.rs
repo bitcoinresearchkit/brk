@@ -130,8 +130,8 @@ where
     pub fn insert_if_needed(&mut self, key: K, value: V, height: Height) {
         if self.needs(height) {
             if !self.dels.is_empty() {
-                // self.dels.remove(&key);
-                unreachable!("Shouldn't reach this");
+                self.dels.remove(&key);
+                // unreachable!("Shouldn't reach this");
             }
             self.puts.insert(key, value);
         }
@@ -181,19 +181,43 @@ where
             .map_err(|e| e.into())
     }
 
-    pub fn reset_partition(&mut self) -> Result<()> {
-        let partition: TransactionalPartitionHandle = self.partition.take().unwrap();
+    pub fn commit_(
+        &mut self,
+        height: Height,
+        remove: impl Iterator<Item = K>,
+        insert: impl Iterator<Item = (K, V)>,
+    ) -> Result<()> {
+        if self.has(height) {
+            return Ok(());
+        }
 
-        self.keyspace.delete_partition(partition)?;
+        self.meta.export(self.len(), height)?;
 
-        self.keyspace.persist(PersistMode::SyncAll)?;
+        let mut wtx = self.keyspace.write_tx();
 
-        self.meta.reset();
+        let partition = self.partition.as_ref().unwrap();
 
-        let partition =
-            Self::open_partition_handle(&self.keyspace, self.name, self.bloom_filter_bits)?;
+        remove.for_each(|key| wtx.remove(partition, ByteView::from(key)));
 
-        self.partition.replace(partition);
+        insert.for_each(|(key, value)| {
+            // if CHECK_COLLISIONS {
+            //     #[allow(unused_must_use)]
+            //     if let Ok(Some(value)) = wtx.get(&self.partition, key.as_bytes()) {
+            //         dbg!(
+            //             &key,
+            //             V::try_from(value.as_bytes().into()).unwrap(),
+            //             &self.meta,
+            //             self.rtx.get(&self.partition, key.as_bytes())
+            //         );
+            //         unreachable!();
+            //     }
+            // }
+            wtx.insert(partition, ByteView::from(key), ByteView::from(value))
+        });
+
+        wtx.commit()?;
+
+        self.rtx = self.keyspace.read_tx();
 
         Ok(())
     }
@@ -206,41 +230,29 @@ where
     ByteView: From<K> + From<&'a K> + From<V>,
 {
     fn commit(&mut self, height: Height) -> Result<()> {
-        if self.has(height) && self.puts.is_empty() && self.dels.is_empty() {
+        if self.puts.is_empty() && self.dels.is_empty() {
             return Ok(());
         }
 
-        self.meta.export(self.len(), height)?;
+        let dels = mem::take(&mut self.dels);
+        let puts = mem::take(&mut self.puts);
 
-        let mut wtx = self.keyspace.write_tx();
+        self.commit_(height, dels.into_iter(), puts.into_iter())
+    }
 
-        let partition = self.partition.as_ref().unwrap();
+    fn reset(&mut self) -> Result<()> {
+        let partition: TransactionalPartitionHandle = self.partition.take().unwrap();
 
-        mem::take(&mut self.dels)
-            .into_iter()
-            .for_each(|key| wtx.remove(partition, ByteView::from(key)));
+        self.keyspace.delete_partition(partition)?;
 
-        mem::take(&mut self.puts)
-            .into_iter()
-            .for_each(|(key, value)| {
-                // if CHECK_COLLISIONS {
-                //     #[allow(unused_must_use)]
-                //     if let Ok(Some(value)) = wtx.get(&self.partition, key.as_bytes()) {
-                //         dbg!(
-                //             &key,
-                //             V::try_from(value.as_bytes().into()).unwrap(),
-                //             &self.meta,
-                //             self.rtx.get(&self.partition, key.as_bytes())
-                //         );
-                //         unreachable!();
-                //     }
-                // }
-                wtx.insert(partition, ByteView::from(key), ByteView::from(value))
-            });
+        self.keyspace.persist(PersistMode::SyncAll)?;
 
-        wtx.commit()?;
+        self.meta.reset();
 
-        self.rtx = self.keyspace.read_tx();
+        let partition =
+            Self::open_partition_handle(&self.keyspace, self.name, self.bloom_filter_bits)?;
+
+        self.partition.replace(partition);
 
         Ok(())
     }
@@ -273,6 +285,10 @@ where
     }
     fn needs(&self, height: Height) -> bool {
         self.meta.needs(height)
+    }
+
+    fn version(&self) -> Version {
+        self.meta.version()
     }
 }
 

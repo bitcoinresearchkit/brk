@@ -36,10 +36,9 @@ impl Bridge for Interface<'static> {
 // File auto-generated, any modifications will be overwritten
 //
 
-export const VERSION = \"v{}\";
+export const VERSION = \"v{VERSION}\";
 
-",
-            VERSION
+"
         );
 
         contents += &indexes
