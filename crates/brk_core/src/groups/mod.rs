@@ -1,4 +1,5 @@
 mod address;
+mod addressindex_to_typeindex_to_outputindex;
 mod by_address_type;
 mod by_date_range;
 mod by_epoch;
@@ -15,6 +16,7 @@ mod filter;
 mod utxo;
 
 pub use address::*;
+pub use addressindex_to_typeindex_to_outputindex::*;
 pub use by_address_type::*;
 pub use by_date_range::*;
 pub use by_epoch::*;

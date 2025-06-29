@@ -81,7 +81,7 @@ pub async fn bundle(websites_path: &Path, source_folder: &str, watch: bool) -> i
         let mut entry_watcher = notify::recommended_watcher(
             move |res: Result<notify::Event, notify::Error>| match res {
                 Ok(_) => write_index_clone(),
-                Err(e) => error!("watch error: {:?}", e),
+                Err(e) => error!("watch error: {e:?}"),
             },
         )
         .unwrap();
@@ -112,7 +112,7 @@ pub async fn bundle(websites_path: &Path, source_folder: &str, watch: bool) -> i
                         let _ = fs::copy(&source_path, &dist_path);
                     }
                 }),
-                Err(e) => error!("watch error: {:?}", e),
+                Err(e) => error!("watch error: {e:?}"),
             },
         )
         .unwrap();

@@ -66,9 +66,9 @@ impl StoreMeta {
     //     self.len() == 0
     // }
 
-    // pub fn version(&self) -> Version {
-    //     self.version
-    // }
+    pub fn version(&self) -> Version {
+        self.version
+    }
 
     pub fn export(&mut self, len: usize, height: Height) -> io::Result<()> {
         self.len = len;

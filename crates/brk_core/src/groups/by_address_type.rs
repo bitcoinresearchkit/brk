@@ -17,17 +17,17 @@ pub struct GroupedByAddressType<T> {
 }
 
 impl<T> GroupedByAddressType<T> {
-    pub fn get_mut(&mut self, output_type: OutputType) -> &mut T {
-        match output_type {
-            OutputType::P2PK65 => &mut self.p2pk65,
-            OutputType::P2PK33 => &mut self.p2pk33,
-            OutputType::P2PKH => &mut self.p2pkh,
-            OutputType::P2SH => &mut self.p2sh,
-            OutputType::P2WPKH => &mut self.p2wpkh,
-            OutputType::P2WSH => &mut self.p2wsh,
-            OutputType::P2TR => &mut self.p2tr,
-            OutputType::P2A => &mut self.p2a,
-            _ => unreachable!(),
+    pub fn get_mut(&mut self, address_type: OutputType) -> Option<&mut T> {
+        match address_type {
+            OutputType::P2PK65 => Some(&mut self.p2pk65),
+            OutputType::P2PK33 => Some(&mut self.p2pk33),
+            OutputType::P2PKH => Some(&mut self.p2pkh),
+            OutputType::P2SH => Some(&mut self.p2sh),
+            OutputType::P2WPKH => Some(&mut self.p2wpkh),
+            OutputType::P2WSH => Some(&mut self.p2wsh),
+            OutputType::P2TR => Some(&mut self.p2tr),
+            OutputType::P2A => Some(&mut self.p2a),
+            _ => None,
         }
     }
 

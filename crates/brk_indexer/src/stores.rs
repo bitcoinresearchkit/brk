@@ -252,8 +252,8 @@ impl Stores {
                 }
             }
         } else {
-            self.blockhashprefix_to_height.reset_partition()?;
-            self.addressbyteshash_to_typeindex.reset_partition()?;
+            self.blockhashprefix_to_height.reset()?;
+            self.addressbyteshash_to_typeindex.reset()?;
         }
 
         if starting_indexes.txindex != TxIndex::ZERO {
@@ -275,7 +275,7 @@ impl Stores {
                     }
                 });
         } else {
-            self.txidprefix_to_txindex.reset_partition()?;
+            self.txidprefix_to_txindex.reset()?;
         }
 
         self.commit(starting_indexes.height.decremented().unwrap_or_default())?;

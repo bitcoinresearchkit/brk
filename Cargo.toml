@@ -47,9 +47,9 @@ derive_deref = "1.1.1"
 fjall = "2.11.1"
 jiff = "0.2.15"
 log = { version = "0.4.27" }
-minreq = { version = "2.13.4", features = ["https", "serde_json"] }
+minreq = { version = "2.14.0", features = ["https", "serde_json"] }
 rayon = "1.10.0"
-schemars = "1.0.1"
+schemars = "1.0.3"
 serde = { version = "1.0.219" }
 serde_bytes = "0.11.17"
 serde_derive = "1.0.219"
