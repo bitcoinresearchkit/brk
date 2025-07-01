@@ -31,22 +31,26 @@ impl AddressData {
         }
     }
 
-    pub fn receive(&mut self, amount: Sats, price: Dollars) {
+    pub fn receive(&mut self, amount: Sats, price: Option<Dollars>) {
         self.received += amount;
         self.outputs_len += 1;
-        self.realized_cap += price * amount;
+        if let Some(price) = price {
+            self.realized_cap += price * amount;
+        }
     }
 
-    pub fn send(&mut self, amount: Sats, previous_price: Dollars) -> Result<()> {
+    pub fn send(&mut self, amount: Sats, previous_price: Option<Dollars>) -> Result<()> {
         if self.amount() < amount {
             return Err(Error::String("Previous_amount smaller than sent amount"));
         }
         self.sent += amount;
         self.outputs_len -= 1;
-        self.realized_cap = self
-            .realized_cap
-            .checked_sub(previous_price * amount)
-            .unwrap();
+        if let Some(previous_price) = previous_price {
+            self.realized_cap = self
+                .realized_cap
+                .checked_sub(previous_price * amount)
+                .unwrap();
+        }
         Ok(())
     }
 }
