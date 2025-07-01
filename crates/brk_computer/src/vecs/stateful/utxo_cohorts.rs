@@ -7,7 +7,7 @@ use brk_core::{
     Version,
 };
 use brk_exit::Exit;
-use brk_state::{BlockState, CohortStateTrait, Transacted};
+use brk_state::{BlockState, Transacted};
 use brk_vec::{Computation, Format, StoredIndex};
 use derive_deref::{Deref, DerefMut};
 use rayon::prelude::*;
@@ -1103,7 +1103,7 @@ impl Vecs {
                 .timestamp
                 .difference_in_days_between(last_timestamp);
 
-            let days_old_foat = block_state
+            let days_old_float = block_state
                 .timestamp
                 .difference_in_days_between_float(last_timestamp);
 
@@ -1127,7 +1127,7 @@ impl Vecs {
                         current_price,
                         prev_price,
                         blocks_old,
-                        days_old_foat,
+                        days_old_float,
                         older_than_hour,
                     );
                 });
@@ -1139,7 +1139,7 @@ impl Vecs {
                         current_price,
                         prev_price,
                         blocks_old,
-                        days_old_foat,
+                        days_old_float,
                         older_than_hour,
                     )
                 },
@@ -1154,7 +1154,7 @@ impl Vecs {
                         current_price,
                         prev_price,
                         blocks_old,
-                        days_old_foat,
+                        days_old_float,
                         older_than_hour,
                     );
                 });

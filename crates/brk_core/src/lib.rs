@@ -1,12 +1,12 @@
 #![doc = include_str!("../README.md")]
 
-mod enums;
+mod error;
 mod groups;
 mod structs;
 mod traits;
 mod utils;
 
-pub use enums::*;
+pub use error::*;
 pub use groups::*;
 pub use structs::*;
 pub use traits::*;

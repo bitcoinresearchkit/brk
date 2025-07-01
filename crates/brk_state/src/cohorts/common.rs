@@ -2,7 +2,7 @@ use std::{cmp::Ordering, path::Path};
 
 use brk_core::{CheckedSub, Dollars, Height, Result, Sats};
 
-use crate::{CohortStateTrait, PriceToAmount, RealizedState, SupplyState, UnrealizedState};
+use crate::{PriceToAmount, RealizedState, SupplyState, UnrealizedState};
 
 #[derive(Clone)]
 pub struct CohortState {
@@ -13,8 +13,8 @@ pub struct CohortState {
     pub price_to_amount: PriceToAmount,
 }
 
-impl CohortStateTrait for CohortState {
-    fn default_and_import(path: &Path, name: &str, compute_dollars: bool) -> Result<Self> {
+impl CohortState {
+    pub fn default_and_import(path: &Path, name: &str, compute_dollars: bool) -> Result<Self> {
         Ok(Self {
             supply: SupplyState::default(),
             realized: compute_dollars.then_some(RealizedState::NAN),
@@ -24,7 +24,7 @@ impl CohortStateTrait for CohortState {
         })
     }
 
-    fn reset_single_iteration_values(&mut self) {
+    pub fn reset_single_iteration_values(&mut self) {
         self.satdays_destroyed = Sats::ZERO;
         self.satblocks_destroyed = Sats::ZERO;
         if let Some(realized) = self.realized.as_mut() {
@@ -32,7 +32,7 @@ impl CohortStateTrait for CohortState {
         }
     }
 
-    fn increment(&mut self, supply_state: &SupplyState, price: Option<Dollars>) {
+    pub fn increment(&mut self, supply_state: &SupplyState, price: Option<Dollars>) {
         self.supply += supply_state;
 
         if supply_state.value > Sats::ZERO {
@@ -44,7 +44,7 @@ impl CohortStateTrait for CohortState {
         }
     }
 
-    fn decrement(&mut self, supply_state: &SupplyState, price: Option<Dollars>) {
+    pub fn decrement(&mut self, supply_state: &SupplyState, price: Option<Dollars>) {
         self.supply -= supply_state;
 
         if supply_state.value > Sats::ZERO {
@@ -64,7 +64,7 @@ impl CohortStateTrait for CohortState {
         }
     }
 
-    fn receive(&mut self, supply_state: &SupplyState, price: Option<Dollars>) {
+    pub fn receive(&mut self, supply_state: &SupplyState, price: Option<Dollars>) {
         self.supply += supply_state;
 
         if supply_state.value > Sats::ZERO {
@@ -76,7 +76,7 @@ impl CohortStateTrait for CohortState {
         }
     }
 
-    fn send(
+    pub fn send(
         &mut self,
         supply_state: &SupplyState,
         current_price: Option<Dollars>,
@@ -104,7 +104,7 @@ impl CohortStateTrait for CohortState {
         }
     }
 
-    fn compute_unrealized_states(
+    pub fn compute_unrealized_states(
         &self,
         height_price: Dollars,
         date_price: Option<Dollars>,
@@ -166,7 +166,7 @@ impl CohortStateTrait for CohortState {
         (height_unrealized_state, date_unrealized_state)
     }
 
-    fn commit(&mut self, height: Height) -> Result<()> {
+    pub fn commit(&mut self, height: Height) -> Result<()> {
         self.price_to_amount.flush(height)
     }
 }
