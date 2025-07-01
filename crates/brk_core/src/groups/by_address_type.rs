@@ -1,4 +1,7 @@
-use std::ops::{Add, AddAssign};
+use std::{
+    mem,
+    ops::{Add, AddAssign},
+};
 
 use crate::OutputType;
 
@@ -17,6 +20,20 @@ pub struct GroupedByAddressType<T> {
 }
 
 impl<T> GroupedByAddressType<T> {
+    pub fn get(&self, address_type: OutputType) -> Option<&T> {
+        match address_type {
+            OutputType::P2PK65 => Some(&self.p2pk65),
+            OutputType::P2PK33 => Some(&self.p2pk33),
+            OutputType::P2PKH => Some(&self.p2pkh),
+            OutputType::P2SH => Some(&self.p2sh),
+            OutputType::P2WPKH => Some(&self.p2wpkh),
+            OutputType::P2WSH => Some(&self.p2wsh),
+            OutputType::P2TR => Some(&self.p2tr),
+            OutputType::P2A => Some(&self.p2a),
+            _ => None,
+        }
+    }
+
     pub fn get_mut(&mut self, address_type: OutputType) -> Option<&mut T> {
         match address_type {
             OutputType::P2PK65 => Some(&mut self.p2pk65),
@@ -54,6 +71,35 @@ impl<T> GroupedByAddressType<T> {
             (OutputType::P2WSH, &self.p2wsh),
             (OutputType::P2TR, &self.p2tr),
             (OutputType::P2A, &self.p2a),
+        ]
+    }
+
+    pub fn as_mut_typed_vec(&mut self) -> [(OutputType, &mut T); 8] {
+        [
+            (OutputType::P2PK65, &mut self.p2pk65),
+            (OutputType::P2PK33, &mut self.p2pk33),
+            (OutputType::P2PKH, &mut self.p2pkh),
+            (OutputType::P2SH, &mut self.p2sh),
+            (OutputType::P2WPKH, &mut self.p2wpkh),
+            (OutputType::P2WSH, &mut self.p2wsh),
+            (OutputType::P2TR, &mut self.p2tr),
+            (OutputType::P2A, &mut self.p2a),
+        ]
+    }
+
+    pub fn into_typed_vec(&mut self) -> [(OutputType, T); 8]
+    where
+        T: Default,
+    {
+        [
+            (OutputType::P2PK65, mem::take(&mut self.p2pk65)),
+            (OutputType::P2PK33, mem::take(&mut self.p2pk33)),
+            (OutputType::P2PKH, mem::take(&mut self.p2pkh)),
+            (OutputType::P2SH, mem::take(&mut self.p2sh)),
+            (OutputType::P2WPKH, mem::take(&mut self.p2wpkh)),
+            (OutputType::P2WSH, mem::take(&mut self.p2wsh)),
+            (OutputType::P2TR, mem::take(&mut self.p2tr)),
+            (OutputType::P2A, mem::take(&mut self.p2a)),
         ]
     }
 }

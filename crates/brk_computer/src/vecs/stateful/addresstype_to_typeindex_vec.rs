@@ -1,17 +1,14 @@
 use std::mem;
 
+use brk_core::TypeIndex;
 use derive_deref::{Deref, DerefMut};
-
-use crate::{OutputIndex, TypeIndex};
 
 use super::GroupedByAddressType;
 
 #[derive(Debug, Default, Deref, DerefMut)]
-pub struct AddressIndexToTypeIndedToOutputIndex(
-    GroupedByAddressType<Vec<(TypeIndex, OutputIndex)>>,
-);
+pub struct AddressTypeToTypeIndexVec<T>(GroupedByAddressType<Vec<(TypeIndex, T)>>);
 
-impl AddressIndexToTypeIndedToOutputIndex {
+impl<T> AddressTypeToTypeIndexVec<T> {
     pub fn merge(&mut self, mut other: Self) {
         Self::merge_(&mut self.p2pk65, &mut other.p2pk65);
         Self::merge_(&mut self.p2pk33, &mut other.p2pk33);
@@ -23,7 +20,7 @@ impl AddressIndexToTypeIndedToOutputIndex {
         Self::merge_(&mut self.p2a, &mut other.p2a);
     }
 
-    fn merge_(own: &mut Vec<(TypeIndex, OutputIndex)>, other: &mut Vec<(TypeIndex, OutputIndex)>) {
+    fn merge_(own: &mut Vec<(TypeIndex, T)>, other: &mut Vec<(TypeIndex, T)>) {
         if own.len() >= other.len() {
             own.append(other);
         } else {
@@ -32,7 +29,7 @@ impl AddressIndexToTypeIndedToOutputIndex {
         }
     }
 
-    pub fn inner(self) -> GroupedByAddressType<Vec<(TypeIndex, OutputIndex)>> {
+    pub fn unwrap(self) -> GroupedByAddressType<Vec<(TypeIndex, T)>> {
         self.0
     }
 }

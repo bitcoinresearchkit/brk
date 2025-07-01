@@ -1,17 +1,18 @@
 use std::{path::Path, thread};
 
 use brk_core::{
-    AddressData, AddressIndexToTypeIndedToOutputIndex, EmptyAddressData, GroupedByAddressType,
-    Height, P2AAddressIndex, P2AAddressIndexOutputindex, P2PK33AddressIndex,
-    P2PK33AddressIndexOutputindex, P2PK65AddressIndex, P2PK65AddressIndexOutputindex,
-    P2PKHAddressIndex, P2PKHAddressIndexOutputindex, P2SHAddressIndex, P2SHAddressIndexOutputindex,
-    P2TRAddressIndex, P2TRAddressIndexOutputindex, P2WPKHAddressIndex,
-    P2WPKHAddressIndexOutputindex, P2WSHAddressIndex, P2WSHAddressIndexOutputindex, Result, Unit,
-    Version,
+    AddressData, EmptyAddressData, GroupedByAddressType, Height, OutputIndex, OutputType,
+    P2AAddressIndex, P2AAddressIndexOutputindex, P2PK33AddressIndex, P2PK33AddressIndexOutputindex,
+    P2PK65AddressIndex, P2PK65AddressIndexOutputindex, P2PKHAddressIndex,
+    P2PKHAddressIndexOutputindex, P2SHAddressIndex, P2SHAddressIndexOutputindex, P2TRAddressIndex,
+    P2TRAddressIndexOutputindex, P2WPKHAddressIndex, P2WPKHAddressIndexOutputindex,
+    P2WSHAddressIndex, P2WSHAddressIndexOutputindex, Result, TypeIndex, Unit, Version,
 };
 use brk_store::{AnyStore, Store};
 use fjall::{PersistMode, TransactionalKeyspace};
 use rayon::prelude::*;
+
+use crate::vecs::stateful::AddressTypeToTypeIndexVec;
 
 const VERSION: Version = Version::ZERO;
 
@@ -487,11 +488,109 @@ impl Stores {
             .map_err(|e| e.into())
     }
 
+    pub fn get_addressdata(
+        &self,
+        address_type: OutputType,
+        type_index: TypeIndex,
+    ) -> Result<Option<AddressData>> {
+        Ok(match address_type {
+            OutputType::P2A => self
+                .p2aaddressindex_to_addressdata
+                .get(&type_index.into())?
+                .map(|c| c.into_owned()),
+            OutputType::P2PK33 => self
+                .p2pk33addressindex_to_addressdata
+                .get(&type_index.into())?
+                .map(|c| c.into_owned()),
+            OutputType::P2PK65 => self
+                .p2pk65addressindex_to_addressdata
+                .get(&type_index.into())?
+                .map(|c| c.into_owned()),
+            OutputType::P2PKH => self
+                .p2pkhaddressindex_to_addressdata
+                .get(&type_index.into())?
+                .map(|c| c.into_owned()),
+            OutputType::P2SH => self
+                .p2shaddressindex_to_addressdata
+                .get(&type_index.into())?
+                .map(|c| c.into_owned()),
+            OutputType::P2TR => self
+                .p2traddressindex_to_addressdata
+                .get(&type_index.into())?
+                .map(|c| c.into_owned()),
+            OutputType::P2WPKH => self
+                .p2wpkhaddressindex_to_addressdata
+                .get(&type_index.into())?
+                .map(|c| c.into_owned()),
+            OutputType::P2WSH => self
+                .p2wshaddressindex_to_addressdata
+                .get(&type_index.into())?
+                .map(|c| c.into_owned()),
+            _ => unreachable!(),
+        })
+    }
+
+    pub fn get_emptyaddressdata(
+        &self,
+        address_type: OutputType,
+        type_index: TypeIndex,
+    ) -> Result<Option<EmptyAddressData>> {
+        Ok(match address_type {
+            OutputType::P2A => self
+                .p2aaddressindex_to_emptyaddressdata
+                .get(&type_index.into())?
+                .map(|c| c.into_owned()),
+            OutputType::P2PK33 => self
+                .p2pk33addressindex_to_emptyaddressdata
+                .get(&type_index.into())?
+                .map(|c| c.into_owned()),
+            OutputType::P2PK65 => self
+                .p2pk65addressindex_to_emptyaddressdata
+                .get(&type_index.into())?
+                .map(|c| c.into_owned()),
+            OutputType::P2PKH => self
+                .p2pkhaddressindex_to_emptyaddressdata
+                .get(&type_index.into())?
+                .map(|c| c.into_owned()),
+            OutputType::P2SH => self
+                .p2shaddressindex_to_emptyaddressdata
+                .get(&type_index.into())?
+                .map(|c| c.into_owned()),
+            OutputType::P2TR => self
+                .p2traddressindex_to_emptyaddressdata
+                .get(&type_index.into())?
+                .map(|c| c.into_owned()),
+            OutputType::P2WPKH => self
+                .p2wpkhaddressindex_to_emptyaddressdata
+                .get(&type_index.into())?
+                .map(|c| c.into_owned()),
+            OutputType::P2WSH => self
+                .p2wshaddressindex_to_emptyaddressdata
+                .get(&type_index.into())?
+                .map(|c| c.into_owned()),
+            _ => unreachable!(),
+        })
+    }
+
+    // pub fn emptyaddressdata_store_increase_replaced(&mut self, address_type: OutputType) {
+    //     match address_type {
+    //         OutputType::P2A => self.p2aaddressindex_to_addressdata.increase_replaced(),
+    //         OutputType::P2PK33 => self.p2pk33addressindex_to_addressdata.increase_replaced(),
+    //         OutputType::P2PK65 => self.p2pk65addressindex_to_addressdata.increase_replaced(),
+    //         OutputType::P2PKH => self.p2pkhaddressindex_to_addressdata.increase_replaced(),
+    //         OutputType::P2SH => self.p2shaddressindex_to_addressdata.increase_replaced(),
+    //         OutputType::P2TR => self.p2traddressindex_to_addressdata.increase_replaced(),
+    //         OutputType::P2WPKH => self.p2wpkhaddressindex_to_addressdata.increase_replaced(),
+    //         OutputType::P2WSH => self.p2wshaddressindex_to_addressdata.increase_replaced(),
+    //         _ => unreachable!(),
+    //     }
+    // }
+
     pub fn commit(
         &mut self,
         height: Height,
-        sent: AddressIndexToTypeIndedToOutputIndex,
-        received: AddressIndexToTypeIndedToOutputIndex,
+        sent: AddressTypeToTypeIndexVec<OutputIndex>,
+        received: AddressTypeToTypeIndexVec<OutputIndex>,
     ) -> Result<()> {
         // &mut self.p2aaddressindex_to_addressdata,
         // &mut self.p2pk33addressindex_to_addressdata,
@@ -521,7 +620,7 @@ impl Stores {
                 p2wsh,
                 p2tr,
                 p2a,
-            } = received.inner();
+            } = received.unwrap();
 
             s.spawn(|| {
                 self.p2aaddressindex_to_outputs_received.commit_(
@@ -612,7 +711,7 @@ impl Stores {
                 p2wsh,
                 p2tr,
                 p2a,
-            } = sent.inner();
+            } = sent.unwrap();
 
             s.spawn(|| {
                 self.p2aaddressindex_to_outputs_sent.commit_(
