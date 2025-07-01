@@ -2,7 +2,7 @@ use std::ops::Range;
 
 use crate::{HalvingEpoch, OutputType};
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum GroupFilter {
     All,
     To(usize),

@@ -1,18 +1,22 @@
 use std::path::Path;
 
 use brk_core::{
-    AddressGroups, GroupFilter, GroupedByFromSize, GroupedBySizeRange, GroupedByUpToSize, Version,
+    AddressGroups, GroupFilter, GroupedByFromSize, GroupedBySizeRange, GroupedByUpToSize, Result,
+    Version,
 };
+use brk_exit::Exit;
 use brk_vec::{Computation, Format};
+use derive_deref::{Deref, DerefMut};
+use rayon::prelude::*;
 
 use crate::vecs::{
-    fetched,
+    Indexes, fetched,
     stateful::{address_cohort, r#trait::CohortVecs},
 };
 
 const VERSION: Version = Version::new(0);
 
-#[derive(Clone)]
+#[derive(Clone, Deref, DerefMut)]
 pub struct Vecs(AddressGroups<(GroupFilter, address_cohort::Vecs)>);
 
 impl Vecs {
@@ -275,5 +279,51 @@ impl Vecs {
             }
             .into(),
         ))
+    }
+
+    pub fn compute_overlapping_vecs(
+        &mut self,
+        starting_indexes: &Indexes,
+        exit: &Exit,
+    ) -> Result<()> {
+        let by_size_range = self.0.by_size_range.as_vec();
+
+        [
+            self.0
+                .by_from_size
+                .as_mut_vec()
+                .into_iter()
+                .map(|(filter, vecs)| {
+                    (
+                        vecs,
+                        by_size_range
+                            .into_iter()
+                            .filter(|(other, _)| filter.includes(other))
+                            .map(|(_, v)| v)
+                            .collect::<Vec<_>>(),
+                    )
+                })
+                .collect::<Vec<_>>(),
+            self.0
+                .by_up_to_size
+                .as_mut_vec()
+                .into_iter()
+                .map(|(filter, vecs)| {
+                    (
+                        vecs,
+                        by_size_range
+                            .into_iter()
+                            .filter(|(other, _)| filter.includes(other))
+                            .map(|(_, v)| v)
+                            .collect::<Vec<_>>(),
+                    )
+                })
+                .collect::<Vec<_>>(),
+        ]
+        .into_par_iter()
+        .flatten()
+        .try_for_each(|(vecs, stateful)| {
+            vecs.compute_from_stateful(starting_indexes, &stateful, exit)
+        })
     }
 }

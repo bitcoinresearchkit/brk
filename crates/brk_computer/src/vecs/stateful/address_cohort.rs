@@ -3,8 +3,10 @@ use std::{ops::Deref, path::Path};
 use brk_core::{Bitcoin, DateIndex, Dollars, Height, Result, StoredUsize, Version};
 use brk_exit::Exit;
 use brk_indexer::Indexer;
-use brk_state::{AddressCohortState, CohortStateTrait};
-use brk_vec::{AnyCollectableVec, AnyIterableVec, AnyVec, Computation, EagerVec, Format};
+use brk_state::AddressCohortState;
+use brk_vec::{
+    AnyCollectableVec, AnyIterableVec, AnyVec, Computation, EagerVec, Format, VecIterator,
+};
 
 use crate::vecs::{
     Indexes, fetched, indexes, market,
@@ -68,6 +70,7 @@ impl CohortVecs for Vecs {
     fn starting_height(&self) -> Height {
         [
             self.state
+                .inner
                 .price_to_amount
                 .height()
                 .map_or(Height::MAX, |h| h.incremented()),
@@ -86,7 +89,15 @@ impl CohortVecs for Vecs {
 
         self.starting_height = starting_height;
 
-        self.inner.init(&mut self.starting_height, &mut self.state);
+        if let Some(prev_height) = starting_height.decremented() {
+            self.state.address_count = *self
+                .height_to_address_count
+                .into_iter()
+                .unwrap_get_inner(prev_height);
+        }
+
+        self.inner
+            .init(&mut self.starting_height, &mut self.state.inner);
     }
 
     fn validate_computed_versions(&mut self, base_version: Version) -> Result<()> {
@@ -109,7 +120,7 @@ impl CohortVecs for Vecs {
             exit,
         )?;
 
-        self.inner.forced_pushed_at(height, exit, &self.state)
+        self.inner.forced_pushed_at(height, exit, &self.state.inner)
     }
 
     fn compute_then_force_push_unrealized_states(
@@ -126,7 +137,7 @@ impl CohortVecs for Vecs {
             dateindex,
             date_price,
             exit,
-            &self.state,
+            &self.state.inner,
         )
     }
 
@@ -134,7 +145,7 @@ impl CohortVecs for Vecs {
         self.height_to_address_count.safe_flush(exit)?;
 
         self.inner
-            .safe_flush_stateful_vecs(height, exit, &mut self.state)
+            .safe_flush_stateful_vecs(height, exit, &mut self.state.inner)
     }
 
     fn compute_from_stateful(

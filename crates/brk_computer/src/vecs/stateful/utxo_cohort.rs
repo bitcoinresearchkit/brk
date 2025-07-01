@@ -3,7 +3,7 @@ use std::{ops::Deref, path::Path};
 use brk_core::{Bitcoin, DateIndex, Dollars, Height, Result, Version};
 use brk_exit::Exit;
 use brk_indexer::Indexer;
-use brk_state::{CohortStateTrait, UTXOCohortState};
+use brk_state::UTXOCohortState;
 use brk_vec::{AnyCollectableVec, AnyIterableVec, Computation, Format};
 
 use crate::vecs::{

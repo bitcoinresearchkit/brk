@@ -12,6 +12,14 @@ impl<T> WithAddressDataSource<T> {
         matches!(self, Self::New(_))
     }
 
+    pub fn is_from_addressdata(&self) -> bool {
+        matches!(self, Self::FromAddressDataStore(_))
+    }
+
+    pub fn is_from_emptyaddressdata(&self) -> bool {
+        matches!(self, Self::FromEmptyAddressDataStore(_))
+    }
+
     pub fn deref(&self) -> &T {
         match self {
             Self::New(v) => v,

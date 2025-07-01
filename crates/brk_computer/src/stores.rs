@@ -12,7 +12,9 @@ use brk_store::{AnyStore, Store};
 use fjall::{PersistMode, TransactionalKeyspace};
 use rayon::prelude::*;
 
-use crate::vecs::stateful::AddressTypeToTypeIndexVec;
+use crate::vecs::stateful::{
+    AddressTypeToTypeIndexTree, AddressTypeToTypeIndexVec, WithAddressDataSource,
+};
 
 const VERSION: Version = Version::ZERO;
 
@@ -572,43 +574,234 @@ impl Stores {
         })
     }
 
-    // pub fn emptyaddressdata_store_increase_replaced(&mut self, address_type: OutputType) {
-    //     match address_type {
-    //         OutputType::P2A => self.p2aaddressindex_to_addressdata.increase_replaced(),
-    //         OutputType::P2PK33 => self.p2pk33addressindex_to_addressdata.increase_replaced(),
-    //         OutputType::P2PK65 => self.p2pk65addressindex_to_addressdata.increase_replaced(),
-    //         OutputType::P2PKH => self.p2pkhaddressindex_to_addressdata.increase_replaced(),
-    //         OutputType::P2SH => self.p2shaddressindex_to_addressdata.increase_replaced(),
-    //         OutputType::P2TR => self.p2traddressindex_to_addressdata.increase_replaced(),
-    //         OutputType::P2WPKH => self.p2wpkhaddressindex_to_addressdata.increase_replaced(),
-    //         OutputType::P2WSH => self.p2wshaddressindex_to_addressdata.increase_replaced(),
-    //         _ => unreachable!(),
-    //     }
-    // }
-
     pub fn commit(
         &mut self,
         height: Height,
         sent: AddressTypeToTypeIndexVec<OutputIndex>,
         received: AddressTypeToTypeIndexVec<OutputIndex>,
+        addresstype_to_typeindex_to_addressdata: AddressTypeToTypeIndexTree<
+            WithAddressDataSource<AddressData>,
+        >,
+        addresstype_to_typeindex_to_emptyaddressdata: AddressTypeToTypeIndexTree<
+            WithAddressDataSource<EmptyAddressData>,
+        >,
     ) -> Result<()> {
-        // &mut self.p2aaddressindex_to_addressdata,
-        // &mut self.p2pk33addressindex_to_addressdata,
-        // &mut self.p2pk65addressindex_to_addressdata,
-        // &mut self.p2pkhaddressindex_to_addressdata,
-        // &mut self.p2shaddressindex_to_addressdata,
-        // &mut self.p2traddressindex_to_addressdata,
-        // &mut self.p2wpkhaddressindex_to_addressdata,
-        // &mut self.p2wshaddressindex_to_addressdata,
+        let GroupedByAddressType {
+            p2pk65,
+            p2pk33,
+            p2pkh,
+            p2sh,
+            p2wpkh,
+            p2wsh,
+            p2tr,
+            p2a,
+        } = addresstype_to_typeindex_to_addressdata.unwrap();
 
-        // &mut self.p2aaddressindex_to_emptyaddressdata,
-        // &mut self.p2pk33addressindex_to_emptyaddressdata,
-        // &mut self.p2pk65addressindex_to_emptyaddressdata,
-        // &mut self.p2pkhaddressindex_to_emptyaddressdata,
-        // &mut self.p2shaddressindex_to_emptyaddressdata,
-        // &mut self.p2traddressindex_to_emptyaddressdata,
-        // &mut self.p2wpkhaddressindex_to_emptyaddressdata,
-        // &mut self.p2wshaddressindex_to_emptyaddressdata,
+        let GroupedByAddressType {
+            p2pk65: empty_p2pk65,
+            p2pk33: empty_p2pk33,
+            p2pkh: empty_p2pkh,
+            p2sh: empty_p2sh,
+            p2wpkh: empty_p2wpkh,
+            p2wsh: empty_p2wsh,
+            p2tr: empty_p2tr,
+            p2a: empty_p2a,
+        } = addresstype_to_typeindex_to_emptyaddressdata.unwrap();
+
+        thread::scope(|s| {
+            s.spawn(|| {
+                self.p2aaddressindex_to_addressdata.commit_(
+                    height,
+                    empty_p2a
+                        .iter()
+                        .filter(|(_, addressdata)| addressdata.is_from_addressdata())
+                        .map(|(typeindex, _)| (*typeindex).into()),
+                    p2a.iter().map(|(typeindex, addressdata)| {
+                        ((*typeindex).into(), addressdata.deref().clone())
+                    }),
+                )
+            });
+            s.spawn(|| {
+                self.p2pk33addressindex_to_addressdata.commit_(
+                    height,
+                    empty_p2pk33
+                        .iter()
+                        .filter(|(_, addressdata)| addressdata.is_from_addressdata())
+                        .map(|(typeindex, _)| (*typeindex).into()),
+                    p2pk33.iter().map(|(typeindex, addressdata)| {
+                        ((*typeindex).into(), addressdata.deref().clone())
+                    }),
+                )
+            });
+            s.spawn(|| {
+                self.p2pk65addressindex_to_addressdata.commit_(
+                    height,
+                    empty_p2pk65
+                        .iter()
+                        .filter(|(_, addressdata)| addressdata.is_from_addressdata())
+                        .map(|(typeindex, _)| (*typeindex).into()),
+                    p2pk65.iter().map(|(typeindex, addressdata)| {
+                        ((*typeindex).into(), addressdata.deref().clone())
+                    }),
+                )
+            });
+            s.spawn(|| {
+                self.p2pkhaddressindex_to_addressdata.commit_(
+                    height,
+                    empty_p2pkh
+                        .iter()
+                        .filter(|(_, addressdata)| addressdata.is_from_addressdata())
+                        .map(|(typeindex, _)| (*typeindex).into()),
+                    p2pkh.iter().map(|(typeindex, addressdata)| {
+                        ((*typeindex).into(), addressdata.deref().clone())
+                    }),
+                )
+            });
+            s.spawn(|| {
+                self.p2shaddressindex_to_addressdata.commit_(
+                    height,
+                    empty_p2sh
+                        .iter()
+                        .filter(|(_, addressdata)| addressdata.is_from_addressdata())
+                        .map(|(typeindex, _)| (*typeindex).into()),
+                    p2sh.iter().map(|(typeindex, addressdata)| {
+                        ((*typeindex).into(), addressdata.deref().clone())
+                    }),
+                )
+            });
+            s.spawn(|| {
+                self.p2traddressindex_to_addressdata.commit_(
+                    height,
+                    empty_p2tr
+                        .iter()
+                        .filter(|(_, addressdata)| addressdata.is_from_addressdata())
+                        .map(|(typeindex, _)| (*typeindex).into()),
+                    p2tr.iter().map(|(typeindex, addressdata)| {
+                        ((*typeindex).into(), addressdata.deref().clone())
+                    }),
+                )
+            });
+            s.spawn(|| {
+                self.p2wpkhaddressindex_to_addressdata.commit_(
+                    height,
+                    empty_p2wpkh
+                        .iter()
+                        .filter(|(_, addressdata)| addressdata.is_from_addressdata())
+                        .map(|(typeindex, _)| (*typeindex).into()),
+                    p2wpkh.iter().map(|(typeindex, addressdata)| {
+                        ((*typeindex).into(), addressdata.deref().clone())
+                    }),
+                )
+            });
+            s.spawn(|| {
+                self.p2wshaddressindex_to_addressdata.commit_(
+                    height,
+                    empty_p2wsh
+                        .iter()
+                        .filter(|(_, addressdata)| addressdata.is_from_addressdata())
+                        .map(|(typeindex, _)| (*typeindex).into()),
+                    p2wsh.iter().map(|(typeindex, addressdata)| {
+                        ((*typeindex).into(), addressdata.deref().clone())
+                    }),
+                )
+            });
+        });
+
+        thread::scope(|scope| {
+            scope.spawn(|| {
+                self.p2aaddressindex_to_emptyaddressdata.commit_(
+                    height,
+                    p2a.iter()
+                        .filter(|(_, addressdata)| addressdata.is_from_emptyaddressdata())
+                        .map(|(typeindex, _)| (*typeindex).into()),
+                    empty_p2a.iter().map(|(typeindex, addressdata)| {
+                        ((*typeindex).into(), addressdata.deref().clone())
+                    }),
+                )
+            });
+            scope.spawn(|| {
+                self.p2pk33addressindex_to_emptyaddressdata.commit_(
+                    height,
+                    p2pk33
+                        .iter()
+                        .filter(|(_, addressdata)| addressdata.is_from_emptyaddressdata())
+                        .map(|(typeindex, _)| (*typeindex).into()),
+                    empty_p2pk33.iter().map(|(typeindex, addressdata)| {
+                        ((*typeindex).into(), addressdata.deref().clone())
+                    }),
+                )
+            });
+            scope.spawn(|| {
+                self.p2pk65addressindex_to_emptyaddressdata.commit_(
+                    height,
+                    p2pk65
+                        .iter()
+                        .filter(|(_, addressdata)| addressdata.is_from_emptyaddressdata())
+                        .map(|(typeindex, _)| (*typeindex).into()),
+                    empty_p2pk65.iter().map(|(typeindex, addressdata)| {
+                        ((*typeindex).into(), addressdata.deref().clone())
+                    }),
+                )
+            });
+            scope.spawn(|| {
+                self.p2pkhaddressindex_to_emptyaddressdata.commit_(
+                    height,
+                    p2pkh
+                        .iter()
+                        .filter(|(_, addressdata)| addressdata.is_from_emptyaddressdata())
+                        .map(|(typeindex, _)| (*typeindex).into()),
+                    empty_p2pkh.iter().map(|(typeindex, addressdata)| {
+                        ((*typeindex).into(), addressdata.deref().clone())
+                    }),
+                )
+            });
+            scope.spawn(|| {
+                self.p2shaddressindex_to_emptyaddressdata.commit_(
+                    height,
+                    p2sh.iter()
+                        .filter(|(_, addressdata)| addressdata.is_from_emptyaddressdata())
+                        .map(|(typeindex, _)| (*typeindex).into()),
+                    empty_p2sh.iter().map(|(typeindex, addressdata)| {
+                        ((*typeindex).into(), addressdata.deref().clone())
+                    }),
+                )
+            });
+            scope.spawn(|| {
+                self.p2traddressindex_to_emptyaddressdata.commit_(
+                    height,
+                    p2tr.iter()
+                        .filter(|(_, addressdata)| addressdata.is_from_emptyaddressdata())
+                        .map(|(typeindex, _)| (*typeindex).into()),
+                    empty_p2tr.iter().map(|(typeindex, addressdata)| {
+                        ((*typeindex).into(), addressdata.deref().clone())
+                    }),
+                )
+            });
+            scope.spawn(|| {
+                self.p2wpkhaddressindex_to_emptyaddressdata.commit_(
+                    height,
+                    p2wpkh
+                        .iter()
+                        .filter(|(_, addressdata)| addressdata.is_from_emptyaddressdata())
+                        .map(|(typeindex, _)| (*typeindex).into()),
+                    empty_p2wpkh.iter().map(|(typeindex, addressdata)| {
+                        ((*typeindex).into(), addressdata.deref().clone())
+                    }),
+                )
+            });
+            scope.spawn(|| {
+                self.p2wshaddressindex_to_emptyaddressdata.commit_(
+                    height,
+                    p2wsh
+                        .iter()
+                        .filter(|(_, addressdata)| addressdata.is_from_emptyaddressdata())
+                        .map(|(typeindex, _)| (*typeindex).into()),
+                    empty_p2wsh.iter().map(|(typeindex, addressdata)| {
+                        ((*typeindex).into(), addressdata.deref().clone())
+                    }),
+                )
+            });
+        });
 
         thread::scope(|s| {
             let GroupedByAddressType {

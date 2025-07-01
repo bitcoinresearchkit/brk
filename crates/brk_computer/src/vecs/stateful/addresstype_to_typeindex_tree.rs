@@ -29,7 +29,7 @@ impl<T> AddressTypeToTypeIndexTree<T> {
         }
     }
 
-    pub fn inner(self) -> GroupedByAddressType<BTreeMap<TypeIndex, T>> {
+    pub fn unwrap(self) -> GroupedByAddressType<BTreeMap<TypeIndex, T>> {
         self.0
     }
 }
