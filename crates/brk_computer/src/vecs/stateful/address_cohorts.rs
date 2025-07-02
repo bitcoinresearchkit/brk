@@ -33,7 +33,7 @@ impl Vecs {
                 by_size_range: GroupedBySizeRange {
                     _0sats: address_cohort::Vecs::forced_import(
                         path,
-                        Some("0sats"),
+                        Some("addresses_0sats"),
                         _computation,
                         format,
                         version + VERSION + Version::ZERO,
@@ -43,7 +43,7 @@ impl Vecs {
                     )?,
                     from_1sat_to_10sats: address_cohort::Vecs::forced_import(
                         path,
-                        Some("from_1sat_to_10sats"),
+                        Some("addresses_from_1sat_to_10sats"),
                         _computation,
                         format,
                         version + VERSION + Version::ZERO,
@@ -53,7 +53,7 @@ impl Vecs {
                     )?,
                     from_10sats_to_100sats: address_cohort::Vecs::forced_import(
                         path,
-                        Some("from_10sats_to_100sats"),
+                        Some("addresses_from_10sats_to_100sats"),
                         _computation,
                         format,
                         version + VERSION + Version::ZERO,
@@ -63,7 +63,7 @@ impl Vecs {
                     )?,
                     from_100sats_to_1_000sats: address_cohort::Vecs::forced_import(
                         path,
-                        Some("from_100sats_to_1_000sats"),
+                        Some("addresses_from_100sats_to_1_000sats"),
                         _computation,
                         format,
                         version + VERSION + Version::ZERO,
@@ -73,7 +73,7 @@ impl Vecs {
                     )?,
                     from_1_000sats_to_10_000sats: address_cohort::Vecs::forced_import(
                         path,
-                        Some("from_1_000sats_to_10_000sats"),
+                        Some("addresses_from_1_000sats_to_10_000sats"),
                         _computation,
                         format,
                         version + VERSION + Version::ZERO,
@@ -83,7 +83,7 @@ impl Vecs {
                     )?,
                     from_10_000sats_to_100_000sats: address_cohort::Vecs::forced_import(
                         path,
-                        Some("from_10_000sats_to_100_000sats"),
+                        Some("addresses_from_10_000sats_to_100_000sats"),
                         _computation,
                         format,
                         version + VERSION + Version::ZERO,
@@ -93,7 +93,7 @@ impl Vecs {
                     )?,
                     from_100_000sats_to_1_000_000sats: address_cohort::Vecs::forced_import(
                         path,
-                        Some("from_100_000sats_to_1_000_000sats"),
+                        Some("addresses_from_100_000sats_to_1_000_000sats"),
                         _computation,
                         format,
                         version + VERSION + Version::ZERO,
@@ -103,7 +103,7 @@ impl Vecs {
                     )?,
                     from_1_000_000sats_to_10_000_000sats: address_cohort::Vecs::forced_import(
                         path,
-                        Some("from_1_000_000sats_to_10_000_000sats"),
+                        Some("addresses_from_1_000_000sats_to_10_000_000sats"),
                         _computation,
                         format,
                         version + VERSION + Version::ZERO,
@@ -113,7 +113,7 @@ impl Vecs {
                     )?,
                     from_10_000_000sats_to_1btc: address_cohort::Vecs::forced_import(
                         path,
-                        Some("from_10_000_000sats_to_1btc"),
+                        Some("addresses_from_10_000_000sats_to_1btc"),
                         _computation,
                         format,
                         version + VERSION + Version::ZERO,
@@ -123,7 +123,7 @@ impl Vecs {
                     )?,
                     from_1btc_to_10btc: address_cohort::Vecs::forced_import(
                         path,
-                        Some("from_1btc_to_10btc"),
+                        Some("addresses_from_1btc_to_10btc"),
                         _computation,
                         format,
                         version + VERSION + Version::ZERO,
@@ -133,7 +133,7 @@ impl Vecs {
                     )?,
                     from_10btc_to_100btc: address_cohort::Vecs::forced_import(
                         path,
-                        Some("from_10btc_to_100btc"),
+                        Some("addresses_from_10btc_to_100btc"),
                         _computation,
                         format,
                         version + VERSION + Version::ZERO,
@@ -143,7 +143,7 @@ impl Vecs {
                     )?,
                     from_100btc_to_1_000btc: address_cohort::Vecs::forced_import(
                         path,
-                        Some("from_100btc_to_1_000btc"),
+                        Some("addresses_from_100btc_to_1_000btc"),
                         _computation,
                         format,
                         version + VERSION + Version::ZERO,
@@ -153,7 +153,7 @@ impl Vecs {
                     )?,
                     from_1_000btc_to_10_000btc: address_cohort::Vecs::forced_import(
                         path,
-                        Some("from_1_000btc_to_10_000btc"),
+                        Some("addresses_from_1_000btc_to_10_000btc"),
                         _computation,
                         format,
                         version + VERSION + Version::ZERO,
@@ -163,7 +163,7 @@ impl Vecs {
                     )?,
                     from_10_000btc_to_100_000btc: address_cohort::Vecs::forced_import(
                         path,
-                        Some("from_10_000btc_to_100_000btc"),
+                        Some("addresses_from_10_000btc_to_100_000btc"),
                         _computation,
                         format,
                         version + VERSION + Version::ZERO,
@@ -173,7 +173,7 @@ impl Vecs {
                     )?,
                     from_100_000btc: address_cohort::Vecs::forced_import(
                         path,
-                        Some("from_100_000btc"),
+                        Some("addresses_from_100_000btc"),
                         _computation,
                         format,
                         version + VERSION + Version::ZERO,
@@ -185,7 +185,7 @@ impl Vecs {
                 by_up_to_size: GroupedByUpToSize {
                     _1_000sats: address_cohort::Vecs::forced_import(
                         path,
-                        Some("up_to_1_000sats"),
+                        Some("addresses_up_to_1_000sats"),
                         _computation,
                         format,
                         version + VERSION + Version::ZERO,
@@ -195,7 +195,7 @@ impl Vecs {
                     )?,
                     _10_000sats: address_cohort::Vecs::forced_import(
                         path,
-                        Some("up_to_10_000sats"),
+                        Some("addresses_up_to_10_000sats"),
                         _computation,
                         format,
                         version + VERSION + Version::ZERO,
@@ -205,7 +205,7 @@ impl Vecs {
                     )?,
                     _1btc: address_cohort::Vecs::forced_import(
                         path,
-                        Some("up_to_1btc"),
+                        Some("addresses_up_to_1btc"),
                         _computation,
                         format,
                         version + VERSION + Version::ZERO,
@@ -215,7 +215,7 @@ impl Vecs {
                     )?,
                     _10btc: address_cohort::Vecs::forced_import(
                         path,
-                        Some("up_to_10btc"),
+                        Some("addresses_up_to_10btc"),
                         _computation,
                         format,
                         version + VERSION + Version::ZERO,
@@ -225,7 +225,7 @@ impl Vecs {
                     )?,
                     _100btc: address_cohort::Vecs::forced_import(
                         path,
-                        Some("up_to_100btc"),
+                        Some("addresses_up_to_100btc"),
                         _computation,
                         format,
                         version + VERSION + Version::ZERO,
@@ -237,7 +237,7 @@ impl Vecs {
                 by_from_size: GroupedByFromSize {
                     _1_000sats: address_cohort::Vecs::forced_import(
                         path,
-                        Some("from_1_000sats"),
+                        Some("addresses_from_1_000sats"),
                         _computation,
                         format,
                         version + VERSION + Version::ZERO,
@@ -247,7 +247,7 @@ impl Vecs {
                     )?,
                     _1btc: address_cohort::Vecs::forced_import(
                         path,
-                        Some("from_1btc"),
+                        Some("addresses_from_1btc"),
                         _computation,
                         format,
                         version + VERSION + Version::ZERO,
@@ -257,7 +257,7 @@ impl Vecs {
                     )?,
                     _10btc: address_cohort::Vecs::forced_import(
                         path,
-                        Some("from_10btc"),
+                        Some("addresses_from_10btc"),
                         _computation,
                         format,
                         version + VERSION + Version::ZERO,
@@ -267,7 +267,7 @@ impl Vecs {
                     )?,
                     _100btc: address_cohort::Vecs::forced_import(
                         path,
-                        Some("from_100btc"),
+                        Some("addresses_from_100btc"),
                         _computation,
                         format,
                         version + VERSION + Version::ZERO,
