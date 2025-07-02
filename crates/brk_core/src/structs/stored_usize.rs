@@ -45,6 +45,11 @@ impl From<usize> for StoredUsize {
         Self(value)
     }
 }
+impl From<StoredUsize> for usize {
+    fn from(value: StoredUsize) -> Self {
+        *value
+    }
+}
 
 impl CheckedSub<StoredUsize> for StoredUsize {
     fn checked_sub(self, rhs: Self) -> Option<Self> {

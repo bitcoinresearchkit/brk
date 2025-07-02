@@ -101,33 +101,33 @@ impl<'a> Vecs<'a> {
     fn insert(&mut self, vec: &'a dyn AnyCollectableVec) {
         let name = vec.name();
         let serialized_index = vec.index_type_to_string();
-        let split = name.split("_to_").collect::<Vec<_>>();
-        if split.len() != 1
-            && !(split.len() == 2
-                && split.first().is_some_and(|s| {
-                    s == &"up"
-                        || s == &"start"
-                        || s.ends_with("relative")
-                        || s.starts_with("from")
-                        || s == &"cumulative_up"
-                        || s.starts_with("cumulative_start")
-                        || s.starts_with("cumulative_from")
-                        || s == &"activity"
-                }))
-            && !(split.len() == 3
-                && split.first().is_some_and(|s| {
-                    s == &"up"
-                        || s == &"start"
-                        || s.starts_with("from")
-                        || s == &"cumulative_up"
-                        || s == &"cumulative_start"
-                        || s.starts_with("cumulative_from")
-                })
-                && split.get(1).is_some_and(|s| s.ends_with("relative")))
-        {
-            dbg!((&serialized_index, &name, &split));
-            unreachable!();
-        }
+        // let split = name.split("_to_").collect::<Vec<_>>();
+        // if split.len() != 1
+        //     && !(split.len() == 2
+        //         && split.first().is_some_and(|s| {
+        //             s == &"up"
+        //                 || s == &"start"
+        //                 || s.ends_with("relative")
+        //                 || s.starts_with("from")
+        //                 || s == &"cumulative_up"
+        //                 || s.starts_with("cumulative_start")
+        //                 || s.starts_with("cumulative_from")
+        //                 || s == &"activity"
+        //         }))
+        //     && !(split.len() == 3
+        //         && split.first().is_some_and(|s| {
+        //             s == &"up"
+        //                 || s == &"start"
+        //                 || s.starts_with("from")
+        //                 || s == &"cumulative_up"
+        //                 || s == &"cumulative_start"
+        //                 || s.starts_with("cumulative_from")
+        //         })
+        //         && split.get(1).is_some_and(|s| s.ends_with("relative")))
+        // {
+        //     dbg!((&serialized_index, &name, &split));
+        //     unreachable!();
+        // }
         let index = Index::try_from(serialized_index)
             .inspect_err(|_| {
                 dbg!(&serialized_index);
