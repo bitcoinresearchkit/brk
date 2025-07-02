@@ -1,4 +1,4 @@
-use crate::{GroupFilter, GroupedByFromSize, GroupedBySizeRange, GroupedByUpToSize};
+use super::{GroupFilter, GroupedByFromSize, GroupedBySizeRange, GroupedByUpToSize};
 
 #[derive(Default, Clone)]
 pub struct AddressGroups<T> {

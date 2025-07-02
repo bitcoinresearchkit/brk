@@ -47,10 +47,6 @@ pub use brk_interface as interface;
 #[doc(inline)]
 pub use brk_server as server;
 
-#[cfg(feature = "state")]
-#[doc(inline)]
-pub use brk_state as state;
-
 #[cfg(feature = "store")]
 #[doc(inline)]
 pub use brk_store as store;

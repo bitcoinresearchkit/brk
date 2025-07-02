@@ -42,6 +42,10 @@ impl RealizedState {
             return;
         }
 
+        self.increment_(price * supply_state.value)
+    }
+
+    pub fn increment_(&mut self, realized_cap: Dollars) {
         if self.cap == Dollars::NAN {
             self.cap = Dollars::ZERO;
             self.profit = Dollars::ZERO;
@@ -52,13 +56,15 @@ impl RealizedState {
             self.adj_value_destroyed = Dollars::ZERO;
         }
 
-        let value = price * supply_state.value;
-        self.cap += value;
+        self.cap += realized_cap;
     }
 
     pub fn decrement(&mut self, supply_state: &SupplyState, price: Dollars) {
-        let value = price * supply_state.value;
-        self.cap = self.cap.checked_sub(value).unwrap();
+        self.decrement_(price * supply_state.value);
+    }
+
+    pub fn decrement_(&mut self, realized_cap: Dollars) {
+        self.cap = self.cap.checked_sub(realized_cap).unwrap();
     }
 
     pub fn receive(&mut self, supply_state: &SupplyState, current_price: Dollars) {

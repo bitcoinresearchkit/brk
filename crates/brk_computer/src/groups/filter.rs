@@ -1,6 +1,6 @@
 use std::ops::Range;
 
-use crate::{HalvingEpoch, OutputType};
+use brk_core::{HalvingEpoch, OutputType};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum GroupFilter {

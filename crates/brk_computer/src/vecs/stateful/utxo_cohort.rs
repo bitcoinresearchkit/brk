@@ -3,12 +3,14 @@ use std::{ops::Deref, path::Path};
 use brk_core::{Bitcoin, DateIndex, Dollars, Height, Result, Version};
 use brk_exit::Exit;
 use brk_indexer::Indexer;
-use brk_state::UTXOCohortState;
 use brk_vec::{AnyCollectableVec, AnyIterableVec, Computation, Format};
 
-use crate::vecs::{
-    Indexes, fetched, indexes, market,
-    stateful::{common, r#trait::CohortVecs},
+use crate::{
+    UTXOCohortState,
+    vecs::{
+        Indexes, fetched, indexes, market,
+        stateful::{common, r#trait::CohortVecs},
+    },
 };
 
 #[derive(Clone)]

@@ -1,21 +1,20 @@
 use std::{collections::BTreeMap, ops::ControlFlow, path::Path};
 
-use brk_core::{
-    CheckedSub, Dollars, GroupFilter, GroupedByDateRange, GroupedByEpoch, GroupedByFromDate,
-    GroupedByFromSize, GroupedBySizeRange, GroupedBySpendableType, GroupedByTerm,
-    GroupedByUpToDate, GroupedByUpToSize, HalvingEpoch, Height, Result, Timestamp, UTXOGroups,
-    Version,
-};
+use brk_core::{CheckedSub, Dollars, HalvingEpoch, Height, Result, Timestamp, Version};
 use brk_exit::Exit;
-use brk_state::{BlockState, Transacted};
 use brk_vec::{Computation, Format, StoredIndex};
 use derive_deref::{Deref, DerefMut};
 use rayon::prelude::*;
 
-use crate::vecs::{
-    Indexes, fetched,
-    stateful::{r#trait::CohortVecs, utxo_cohort},
+use crate::{
+    GroupFilter, GroupedByDateRange, GroupedByEpoch, GroupedByFromDate, GroupedByFromSize,
+    GroupedBySizeRange, GroupedBySpendableType, GroupedByTerm, GroupedByUpToDate,
+    GroupedByUpToSize, UTXOGroups,
+    states::{BlockState, Transacted},
+    vecs::{Indexes, fetched},
 };
+
+use super::{r#trait::CohortVecs, utxo_cohort};
 
 const VERSION: Version = Version::new(0);
 
@@ -1107,10 +1106,10 @@ impl Vecs {
                 .timestamp
                 .difference_in_days_between_float(last_timestamp);
 
-            let older_than_hour =
-                jiff::Timestamp::from(last_timestamp.checked_sub(block_state.timestamp).unwrap())
-                    .as_second()
-                    >= 60 * 60;
+            let older_than_hour = last_timestamp
+                .checked_sub(block_state.timestamp)
+                .unwrap()
+                .is_more_than_hour();
 
             time_based_vecs
                 .iter_mut()
@@ -1288,5 +1287,11 @@ impl Vecs {
         .try_for_each(|(vecs, stateful)| {
             vecs.compute_from_stateful(starting_indexes, &stateful, exit)
         })
+    }
+
+    pub fn safe_flush_stateful_vecs(&mut self, height: Height, exit: &Exit) -> Result<()> {
+        self.as_mut_separate_vecs()
+            .par_iter_mut()
+            .try_for_each(|(_, v)| v.safe_flush_stateful_vecs(height, exit))
     }
 }

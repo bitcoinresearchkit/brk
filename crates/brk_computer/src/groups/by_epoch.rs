@@ -1,4 +1,4 @@
-use crate::{HalvingEpoch, Height};
+use brk_core::{HalvingEpoch, Height};
 
 use super::GroupFilter;
 

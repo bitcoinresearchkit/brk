@@ -3,14 +3,16 @@ use std::{ops::Deref, path::Path};
 use brk_core::{Bitcoin, DateIndex, Dollars, Height, Result, StoredUsize, Version};
 use brk_exit::Exit;
 use brk_indexer::Indexer;
-use brk_state::AddressCohortState;
 use brk_vec::{
     AnyCollectableVec, AnyIterableVec, AnyVec, Computation, EagerVec, Format, VecIterator,
 };
 
-use crate::vecs::{
-    Indexes, fetched, indexes, market,
-    stateful::{common, r#trait::CohortVecs},
+use crate::{
+    states::AddressCohortState,
+    vecs::{
+        Indexes, fetched, indexes, market,
+        stateful::{common, r#trait::CohortVecs},
+    },
 };
 
 const VERSION: Version = Version::ZERO;

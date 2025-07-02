@@ -1,8 +1,3 @@
-#![doc = include_str!("../README.md")]
-// #![doc = "\n## Example\n\n```rust"]
-// #![doc = include_str!("../examples/main.rs")]
-// #![doc = "```"]
-
 mod block;
 mod cohorts;
 mod price_to_amount;

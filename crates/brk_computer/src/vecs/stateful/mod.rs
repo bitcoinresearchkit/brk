@@ -1,8 +1,8 @@
 use std::{cmp::Ordering, collections::BTreeMap, mem, path::Path, thread};
 
 use brk_core::{
-    AddressData, DateIndex, Dollars, EmptyAddressData, GroupedByAddressType, Height, InputIndex,
-    OutputIndex, OutputType, Result, Sats, StoredUsize, Version,
+    AddressData, CheckedSub, DateIndex, Dollars, EmptyAddressData, Height, InputIndex, OutputIndex,
+    OutputType, Result, Sats, StoredUsize, Version,
 };
 use brk_exit::Exit;
 use brk_indexer::Indexer;
@@ -13,9 +13,9 @@ use brk_vec::{
 use log::info;
 use rayon::prelude::*;
 
-use brk_state::{BlockState, SupplyState, Transacted};
-
-use crate::{stores::Stores, vecs::market};
+use crate::{
+    BlockState, GroupedByAddressType, SupplyState, Transacted, stores::Stores, vecs::market,
+};
 
 use super::{
     Indexes, fetched,
@@ -49,8 +49,11 @@ pub struct Vecs {
     pub height_to_opreturn_supply: EagerVec<Height, Sats>,
     pub indexes_to_opreturn_supply: ComputedValueVecsFromHeight,
     pub height_to_address_count: EagerVec<Height, StoredUsize>,
+    pub height_to_empty_address_count: EagerVec<Height, StoredUsize>,
     pub addresstype_to_height_to_address_count: GroupedByAddressType<EagerVec<Height, StoredUsize>>,
-    pub utxos_vecs: utxo_cohorts::Vecs,
+    pub addresstype_to_height_to_empty_address_count:
+        GroupedByAddressType<EagerVec<Height, StoredUsize>>,
+    pub utxo_vecs: utxo_cohorts::Vecs,
     pub address_vecs: address_cohorts::Vecs,
 }
 
@@ -113,6 +116,12 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
             )?,
+            height_to_empty_address_count: EagerVec::forced_import(
+                path,
+                "empty_address_count",
+                version + VERSION + Version::ZERO,
+                format,
+            )?,
             addresstype_to_height_to_address_count: GroupedByAddressType {
                 p2pk65: EagerVec::forced_import(
                     path,
@@ -163,7 +172,57 @@ impl Vecs {
                     format,
                 )?,
             },
-            utxos_vecs: utxo_cohorts::Vecs::forced_import(
+            addresstype_to_height_to_empty_address_count: GroupedByAddressType {
+                p2pk65: EagerVec::forced_import(
+                    path,
+                    "p2pk65_empty_address_count",
+                    version + VERSION + Version::ZERO,
+                    format,
+                )?,
+                p2pk33: EagerVec::forced_import(
+                    path,
+                    "p2pk33_empty_address_count",
+                    version + VERSION + Version::ZERO,
+                    format,
+                )?,
+                p2pkh: EagerVec::forced_import(
+                    path,
+                    "p2pkh_empty_address_count",
+                    version + VERSION + Version::ZERO,
+                    format,
+                )?,
+                p2sh: EagerVec::forced_import(
+                    path,
+                    "p2sh_empty_address_count",
+                    version + VERSION + Version::ZERO,
+                    format,
+                )?,
+                p2wpkh: EagerVec::forced_import(
+                    path,
+                    "p2wpkh_empty_address_count",
+                    version + VERSION + Version::ZERO,
+                    format,
+                )?,
+                p2wsh: EagerVec::forced_import(
+                    path,
+                    "p2wsh_empty_address_count",
+                    version + VERSION + Version::ZERO,
+                    format,
+                )?,
+                p2tr: EagerVec::forced_import(
+                    path,
+                    "p2tr_empty_address_count",
+                    version + VERSION + Version::ZERO,
+                    format,
+                )?,
+                p2a: EagerVec::forced_import(
+                    path,
+                    "p2a_empty_address_count",
+                    version + VERSION + Version::ZERO,
+                    format,
+                )?,
+            },
+            utxo_vecs: utxo_cohorts::Vecs::forced_import(
                 path,
                 version,
                 _computation,
@@ -229,6 +288,7 @@ impl Vecs {
         let outputindex_to_txindex_mmap = outputindex_to_txindex.mmap().load();
         let txindex_to_height_mmap = txindex_to_height.mmap().load();
         let height_to_close_mmap = height_to_close.map(|v| v.mmap().load());
+        let height_to_timestamp_fixed_mmap = height_to_timestamp_fixed.mmap().load();
 
         let mut height_to_first_outputindex_iter = height_to_first_outputindex.into_iter();
         let mut height_to_first_inputindex_iter = height_to_first_inputindex.into_iter();
@@ -242,7 +302,7 @@ impl Vecs {
         let mut dateindex_to_first_height_iter = dateindex_to_first_height.into_iter();
         let mut dateindex_to_height_count_iter = dateindex_to_height_count.into_iter();
 
-        let mut separate_utxo_vecs = self.utxos_vecs.as_mut_separate_vecs();
+        let mut separate_utxo_vecs = self.utxo_vecs.as_mut_separate_vecs();
 
         let base_version = Version::ZERO
             + height_to_first_outputindex.version()
@@ -373,7 +433,7 @@ impl Vecs {
                 .try_for_each(|_height| -> color_eyre::Result<()> {
                     height = _height;
 
-                    self.utxos_vecs
+                    self.utxo_vecs
                         .as_mut_separate_vecs()
                         .iter_mut()
                         .for_each(|(_, v)| v.state.reset_single_iteration_values());
@@ -398,10 +458,10 @@ impl Vecs {
                     let output_count = height_to_output_count_iter.unwrap_get_inner(height);
                     let input_count = height_to_input_count_iter.unwrap_get_inner(height);
 
-                    let ((mut height_to_sent, new_addresstype_to_typedindex_to_sent_outputindex, addresstype_to_typedindex_to_sent_sats_and_addressdata_opt), (mut received, new_addresstype_to_typedindex_to_received_outputindex, addresstype_to_typedindex_to_received_sats_and_addressdata_opt)) = thread::scope(|s| {
+                    let ((mut height_to_sent, new_addresstype_to_typedindex_to_sent_outputindex, addresstype_to_typedindex_to_sent_data), (mut received, new_addresstype_to_typedindex_to_received_outputindex, addresstype_to_typedindex_to_received_data)) = thread::scope(|s| {
                         if chain_state_starting_height <= height {
                             s.spawn(|| {
-                                self.utxos_vecs
+                                self.utxo_vecs
                                     .tick_tock_next_block(&chain_state, timestamp);
                             });
                         }
@@ -452,33 +512,48 @@ impl Vecs {
                                         .unwrap()
                                         .into_owned();
 
-                                    let height = txindex_to_height
+                                    let prev_height = txindex_to_height
                                         .get_or_read(input_txindex, &txindex_to_height_mmap)
                                         .unwrap()
                                         .unwrap()
                                         .into_owned();
 
-                                    let dollars_opt = height_to_close.map(|m| *m.get_or_read(height, height_to_close_mmap.as_ref().unwrap()).unwrap()
+                                    let prev_price = height_to_close.map(|m| *m.get_or_read(prev_height, height_to_close_mmap.as_ref().unwrap()).unwrap()
                                     .unwrap()
                                     .into_owned());
 
-                                    (height, value, input_type, typeindex, outputindex, addressdata_opt, dollars_opt)
+                                    let prev_timestamp = height_to_timestamp_fixed.get_or_read(prev_height, &height_to_timestamp_fixed_mmap)
+                                    .unwrap()
+                                    .unwrap()
+                                    .into_owned();
+
+                                    let blocks_old = height.unwrap_to_usize() - prev_height.unwrap_to_usize();
+
+                                    let days_old = prev_timestamp
+                                        .difference_in_days_between_float(timestamp);
+
+                                    let older_than_hour = timestamp
+                                        .checked_sub(prev_timestamp)
+                                        .unwrap()
+                                        .is_more_than_hour();
+
+                                    (prev_height, value, input_type, typeindex, outputindex, addressdata_opt, prev_price, blocks_old, days_old, older_than_hour)
                                 })
                                 .fold(
                                     || {
                                         (
                                             BTreeMap::<Height, Transacted>::default(),
                                             AddressTypeToTypeIndexVec::<OutputIndex>::default(),
-                                            AddressTypeToTypeIndexVec::<(Sats, Option<WithAddressDataSource<AddressData>>, Option<Dollars>)>::default(),
+                                            AddressTypeToTypeIndexVec::<(Sats, Option<WithAddressDataSource<AddressData>>, Option<Dollars>, usize, f64, bool)>::default(),
                                         )
                                     },
-                                    |(mut tree, mut vecs, mut vecs2), (height, value, input_type, typeindex, outputindex, addressdata_opt, dollars_opt)| {
+                                    |(mut tree, mut vecs, mut vecs2), (height, value, input_type, typeindex, outputindex, addressdata_opt, prev_price, blocks_old, days_old, older_than_hour)| {
                                         tree.entry(height).or_default().iterate(value, input_type);
                                         if let Some(vec) = vecs.get_mut(input_type) {
                                             vec.push((typeindex, outputindex));
                                         }
                                         if let Some(vec) = vecs2.get_mut(input_type) {
-                                            vec.push((typeindex, (value, addressdata_opt, dollars_opt)));
+                                            vec.push((typeindex, (value, addressdata_opt, prev_price, blocks_old, days_old, older_than_hour)));
                                         }
                                         (tree, vecs, vecs2)
                                     },
@@ -487,7 +562,7 @@ impl Vecs {
                                     (
                                         BTreeMap::<Height, Transacted>::default(),
                                         AddressTypeToTypeIndexVec::<OutputIndex>::default(),
-                                        AddressTypeToTypeIndexVec::<(Sats, Option<WithAddressDataSource<AddressData>>, Option<Dollars>)>::default(),
+                                        AddressTypeToTypeIndexVec::<(Sats, Option<WithAddressDataSource<AddressData>>, Option<Dollars>, usize, f64, bool)>::default(),
                                     )
                                 }, |(first_tree, mut source_vecs,mut source_vecs2), (second_tree, other_vecs, other_vecs2)| {
                                     let (mut tree_source, tree_to_consume) = if first_tree.len() > second_tree.len() {
@@ -571,14 +646,9 @@ impl Vecs {
                     addresstype_to_typeindex_to_sent_outputindex.merge(new_addresstype_to_typedindex_to_sent_outputindex);
                     addresstype_to_typeindex_to_received_outputindex.merge(new_addresstype_to_typedindex_to_received_outputindex);
 
-                    addresstype_to_typedindex_to_received_sats_and_addressdata_opt.process_received(&mut self.address_vecs, &mut addresstype_to_typeindex_to_addressdata, &mut addresstype_to_typeindex_to_emptyaddressdata, price);
+                    addresstype_to_typedindex_to_received_data.process_received(&mut self.address_vecs, &mut addresstype_to_typeindex_to_addressdata, &mut addresstype_to_typeindex_to_emptyaddressdata, price);
 
-                    addresstype_to_typedindex_to_sent_sats_and_addressdata_opt.process_sent(&mut self.address_vecs, &mut addresstype_to_typeindex_to_addressdata)?;
-
-                    // addresstype_to_typedindex_to_sent_sats_and_addressdata_opt;
-                    // take from addressdata store
-                    // apply
-                    // update vecs states if cohort changes
+                    addresstype_to_typedindex_to_sent_data.process_sent(&mut self.address_vecs, &mut addresstype_to_typeindex_to_addressdata, &mut addresstype_to_typeindex_to_emptyaddressdata, price)?;
 
                     unspendable_supply += received
                         .by_type
@@ -612,7 +682,7 @@ impl Vecs {
                             timestamp,
                         });
 
-                        self.utxos_vecs.receive(received, height, price);
+                        self.utxo_vecs.receive(received, height, price);
 
                         let unsafe_chain_state = UnsafeSlice::new(&mut chain_state);
 
@@ -621,15 +691,21 @@ impl Vecs {
                                 &sent.spendable_supply;
                         });
 
-                        self.utxos_vecs.send(height_to_sent, chain_state.as_slice());
+                        self.utxo_vecs.send(height_to_sent, chain_state.as_slice());
                     } else {
                         dbg!(chain_state_starting_height, height);
                         panic!("temp, just making sure")
                     }
 
-                    let mut separate_utxo_vecs = self.utxos_vecs.as_mut_separate_vecs();
+                    let mut separate_utxo_vecs = self.utxo_vecs.as_mut_separate_vecs();
 
                     separate_utxo_vecs
+                        .iter_mut()
+                        .try_for_each(|(_, v)| v.forced_pushed_at(height, exit))?;
+
+                    let mut separate_address_vecs = self.address_vecs.as_mut_separate_vecs();
+
+                    separate_address_vecs
                         .iter_mut()
                         .try_for_each(|(_, v)| v.forced_pushed_at(height, exit))?;
 
@@ -655,6 +731,8 @@ impl Vecs {
                         .as_mut()
                         .map(|v| is_date_last_height.then(|| *v.unwrap_get_inner(dateindex)));
 
+                    // thread::scope(|scope| {
+                    //     scope.spawn(|| {
                     separate_utxo_vecs.par_iter_mut().try_for_each(|(_, v)| {
                         v.compute_then_force_push_unrealized_states(
                             height,
@@ -664,6 +742,20 @@ impl Vecs {
                             exit,
                         )
                     })?;
+                    // });
+                    // scope.spawn(|| {
+                    separate_address_vecs.par_iter_mut().try_for_each(|(_, v)| {
+                        v.compute_then_force_push_unrealized_states(
+                            height,
+                            price,
+                            is_date_last_height.then_some(dateindex),
+                            date_price,
+                            exit,
+                        )
+                    })?;
+                    //     });
+                    // });
+
 
                     if height != Height::ZERO && height.unwrap_to_usize() % 10_000 == 0 {
                         info!("Flushing...");
@@ -703,39 +795,63 @@ impl Vecs {
 
         info!("Computing overlapping...");
 
-        self.utxos_vecs
+        // thread::scope(|scope| {
+        //     scope.spawn(|| {
+        self.utxo_vecs
             .compute_overlapping_vecs(starting_indexes, exit)?;
+        // });
+        // scope.spawn(|| {
+        self.address_vecs
+            .compute_overlapping_vecs(starting_indexes, exit)?;
+        //     });
+        // });
 
         info!("Computing rest part 1...");
 
-        self.utxos_vecs
+        // thread::scope(|scope| {
+        //     scope.spawn(|| {
+        self.utxo_vecs
             .as_mut_vecs()
             .par_iter_mut()
             .try_for_each(|(_, v)| {
                 v.compute_rest_part1(indexer, indexes, fetched, starting_indexes, exit)
-            })?;
+            })
+            .unwrap();
+        // });
+        // scope.spawn(|| {
+        self.address_vecs
+            .as_mut_vecs()
+            .par_iter_mut()
+            .try_for_each(|(_, v)| {
+                v.compute_rest_part1(indexer, indexes, fetched, starting_indexes, exit)
+            })
+            .unwrap();
+        //     });
+        // });
 
         info!("Computing rest part 2...");
 
-        let height_to_supply = self.utxos_vecs.all.1.height_to_supply_value.bitcoin.clone();
+        let height_to_supply = self.utxo_vecs.all.1.height_to_supply_value.bitcoin.clone();
         let dateindex_to_supply = self
-            .utxos_vecs
+            .utxo_vecs
             .all
             .1
             .indexes_to_supply
             .bitcoin
             .dateindex
             .clone();
-        let height_to_realized_cap = self.utxos_vecs.all.1.height_to_realized_cap.clone();
+        let height_to_realized_cap = self.utxo_vecs.all.1.height_to_realized_cap.clone();
         let dateindex_to_realized_cap = self
-            .utxos_vecs
+            .utxo_vecs
             .all
             .1
             .indexes_to_realized_cap
             .as_ref()
             .map(|v| v.dateindex.unwrap_last().clone());
 
-        self.utxos_vecs
+        // thread::scope(|scope| {
+        //     scope.spawn(|| {
+        self.utxo_vecs
             .as_mut_vecs()
             .par_iter_mut()
             .try_for_each(|(_, v)| {
@@ -752,6 +868,27 @@ impl Vecs {
                     exit,
                 )
             })?;
+        // });
+        // scope.spawn(|| {
+        self.address_vecs
+            .as_mut_vecs()
+            .par_iter_mut()
+            .try_for_each(|(_, v)| {
+                v.compute_rest_part2(
+                    indexer,
+                    indexes,
+                    fetched,
+                    starting_indexes,
+                    market,
+                    &height_to_supply,
+                    dateindex_to_supply.as_ref().unwrap(),
+                    height_to_realized_cap.as_ref(),
+                    dateindex_to_realized_cap.as_ref(),
+                    exit,
+                )
+            })?;
+        //     });
+        // });
         self.indexes_to_unspendable_supply.compute_rest(
             indexer,
             indexes,
@@ -782,12 +919,24 @@ impl Vecs {
         chain_state: &[BlockState],
         exit: &Exit,
     ) -> Result<()> {
-        self.utxos_vecs
+        self.utxo_vecs
+            .as_mut_separate_vecs()
+            .par_iter_mut()
+            .try_for_each(|(_, v)| v.safe_flush_stateful_vecs(height, exit))?;
+        self.address_vecs
             .as_mut_separate_vecs()
             .par_iter_mut()
             .try_for_each(|(_, v)| v.safe_flush_stateful_vecs(height, exit))?;
         self.height_to_unspendable_supply.safe_flush(exit)?;
         self.height_to_opreturn_supply.safe_flush(exit)?;
+        self.addresstype_to_height_to_address_count
+            .as_mut_vec()
+            .into_iter()
+            .try_for_each(|v| v.safe_flush(exit))?;
+        self.addresstype_to_height_to_empty_address_count
+            .as_mut_vec()
+            .into_iter()
+            .try_for_each(|v| v.safe_flush(exit))?;
 
         self.chain_state.truncate_if_needed(Height::ZERO)?;
         chain_state.iter().for_each(|block_state| {
@@ -800,16 +949,33 @@ impl Vecs {
 
     pub fn vecs(&self) -> Vec<&dyn AnyCollectableVec> {
         [
-            self.utxos_vecs
+            self.utxo_vecs
+                .vecs()
+                .into_iter()
+                .flat_map(|v| v.vecs())
+                .collect::<Vec<_>>(),
+            self.address_vecs
                 .vecs()
                 .into_iter()
                 .flat_map(|v| v.vecs())
                 .collect::<Vec<_>>(),
             self.indexes_to_unspendable_supply.vecs(),
             self.indexes_to_opreturn_supply.vecs(),
+            self.addresstype_to_height_to_address_count
+                .as_typed_vec()
+                .into_iter()
+                .map(|(_, v)| v as &dyn AnyCollectableVec)
+                .collect::<Vec<_>>(),
+            self.addresstype_to_height_to_empty_address_count
+                .as_typed_vec()
+                .into_iter()
+                .map(|(_, v)| v as &dyn AnyCollectableVec)
+                .collect::<Vec<_>>(),
             vec![
                 &self.height_to_unspendable_supply,
                 &self.height_to_opreturn_supply,
+                &self.height_to_address_count,
+                &self.height_to_empty_address_count,
             ],
         ]
         .into_iter()
@@ -833,11 +999,17 @@ impl AddressTypeToTypeIndexVec<(Sats, Option<WithAddressDataSource<AddressData>>
         self.into_typed_vec().into_iter().for_each(|(_type, vec)| {
             vec.into_iter()
                 .for_each(|(type_index, (value, addressdata_opt))| {
+                    let mut is_new = false;
+
                     let addressdata_withsource = addresstype_to_typeindex_to_addressdata
                         .get_mut(_type)
                         .unwrap()
                         .entry(type_index)
                         .or_insert_with(|| {
+                            is_new = addressdata_opt
+                                .as_ref()
+                                .is_some_and(|a| matches!(a, WithAddressDataSource::New(_)));
+
                             addressdata_opt.unwrap_or_else(|| {
                                 addresstype_to_typeindex_to_emptyaddressdata
                                     .get_mut(_type)
@@ -850,21 +1022,36 @@ impl AddressTypeToTypeIndexVec<(Sats, Option<WithAddressDataSource<AddressData>>
 
                     let addressdata = addressdata_withsource.deref_mut();
 
-                    let prev_filter = vecs.by_size_range.get_mut(addressdata.amount()).0.clone();
+                    let prev_amount = addressdata.amount();
 
-                    addressdata.receive(value, price);
+                    let amount = prev_amount + value;
 
-                    let (filter, vecs) = vecs.by_size_range.get_mut(addressdata.amount());
+                    if is_new
+                        || vecs.by_size_range.get_mut(amount).0.clone()
+                            != vecs.by_size_range.get_mut(prev_amount).0.clone()
+                    {
+                        if !is_new {
+                            vecs.by_size_range
+                                .get_mut(prev_amount)
+                                .1
+                                .state
+                                .subtract(addressdata);
+                        }
 
-                    if *filter != prev_filter {
-                        // vecs.state.decrement(supply_state, price);
+                        addressdata.receive(value, price);
+
+                        vecs.by_size_range.get_mut(amount).1.state.add(addressdata);
+                    } else {
+                        addressdata.receive(value, price);
+
+                        vecs.by_size_range
+                            .get_mut(amount)
+                            .1
+                            .state
+                            .receive(value, price);
                     }
 
-                    // update vecs states if cohort changes groups
-                    //
-                    // empty addresses ?
-                    //
-                    // count change ?
+                    // type count change ?
                 });
         });
     }
@@ -875,6 +1062,9 @@ impl
         Sats,
         Option<WithAddressDataSource<AddressData>>,
         Option<Dollars>,
+        usize,
+        f64,
+        bool,
     )>
 {
     fn process_sent(
@@ -883,26 +1073,76 @@ impl
         addresstype_to_typeindex_to_addressdata: &mut AddressTypeToTypeIndexTree<
             WithAddressDataSource<AddressData>,
         >,
+        addresstype_to_typeindex_to_emptyaddressdata: &mut AddressTypeToTypeIndexTree<
+            WithAddressDataSource<EmptyAddressData>,
+        >,
+        price: Option<Dollars>,
     ) -> Result<()> {
         self.into_typed_vec()
             .into_iter()
             .try_for_each(|(_type, vec)| {
-                vec.into_iter()
-                    .try_for_each(|(type_index, (value, addressdata_opt, price))| {
-                        let addressdata_withsource = addresstype_to_typeindex_to_addressdata
+                vec.into_iter().try_for_each(
+                    |(
+                        type_index,
+                        (value, addressdata_opt, prev_price, blocks_old, days_old, older_than_hour),
+                    )| {
+                        let typeindex_to_addressdata = addresstype_to_typeindex_to_addressdata
                             .get_mut(_type)
-                            .unwrap()
+                            .unwrap();
+
+                        let addressdata_withsource = typeindex_to_addressdata
                             .entry(type_index)
                             .or_insert(addressdata_opt.unwrap());
 
-                        addressdata_withsource.deref_mut().send(value, price)?;
+                        let addressdata = addressdata_withsource.deref_mut();
+
+                        let prev_amount = addressdata.amount();
+
+                        let amount = prev_amount.checked_sub(value).unwrap();
+
+                        let will_be_empty = addressdata.outputs_len - 1 == 0;
+
+                        if will_be_empty
+                            || vecs.by_size_range.get_mut(amount).0.clone()
+                                != vecs.by_size_range.get_mut(prev_amount).0.clone()
+                        {
+                            vecs.by_size_range
+                                .get_mut(prev_amount)
+                                .1
+                                .state
+                                .subtract(addressdata);
+
+                            addressdata.send(value, prev_price)?;
+
+                            if will_be_empty {
+                                let addressdata =
+                                    typeindex_to_addressdata.remove(&type_index).unwrap();
+
+                                addresstype_to_typeindex_to_emptyaddressdata
+                                    .get_mut(_type)
+                                    .unwrap()
+                                    .insert(type_index, addressdata.into());
+                            } else {
+                                vecs.by_size_range.get_mut(amount).1.state.add(addressdata);
+                            }
+                        } else {
+                            addressdata.send(value, prev_price)?;
+
+                            vecs.by_size_range.get_mut(amount).1.state.send(
+                                value,
+                                price,
+                                prev_price,
+                                blocks_old,
+                                days_old,
+                                older_than_hour,
+                            );
+                        }
+
+                        // type count change
 
                         Ok(())
-
-                        // move to empty if empty
-
-                        // update vecs states if cohort changes
-                    })
+                    },
+                )
             })
     }
 }

@@ -4,7 +4,6 @@ use brk_core::{
     CheckedSub, Dollars, GroupFilter, HalvingEpoch, Height, Result, Timestamp, UTXOGroups,
 };
 use brk_exit::Exit;
-use brk_state::{BlockState, CohortStateTrait, Transacted};
 use brk_vec::StoredIndex;
 use rayon::prelude::*;
 

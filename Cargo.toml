@@ -36,7 +36,6 @@ brk_parser = { version = "0.0.71", path = "crates/brk_parser" }
 brk_rmcp = { version = "0.1.8", features = ["transport-streamable-http-server", "transport-worker"]}
 # brk_rmcp = { path = "../rust-sdk/crates/rmcp", features = ["transport-streamable-http-server", "transport-worker"]}
 brk_server = { version = "0.0.71", path = "crates/brk_server" }
-brk_state = { version = "0.0.71", path = "crates/brk_state" }
 brk_store = { version = "0.0.71", path = "crates/brk_store" }
 brk_vec = { version = "0.0.71", path = "crates/brk_vec" }
 byteview = "=0.6.1"
