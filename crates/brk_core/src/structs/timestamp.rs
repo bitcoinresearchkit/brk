@@ -75,6 +75,10 @@ impl Timestamp {
             }
         }
     }
+
+    pub fn is_more_than_hour(&self) -> bool {
+        jiff::Timestamp::from(*self).as_second() >= 60 * 60
+    }
 }
 
 impl From<u32> for Timestamp {

@@ -5,7 +5,7 @@ use brk_exit::Exit;
 use brk_indexer::Indexer;
 use brk_vec::{AnyCollectableVec, EagerVec, Format};
 
-use crate::vecs::{Indexes, indexes};
+use crate::vecs::{indexes, Indexes};
 
 use super::{ComputedType, ComputedVecBuilder, StorableVecGeneatorOptions};
 

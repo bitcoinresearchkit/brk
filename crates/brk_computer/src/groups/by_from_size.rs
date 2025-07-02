@@ -1,4 +1,4 @@
-use crate::Sats;
+use brk_core::Sats;
 
 use super::GroupFilter;
 

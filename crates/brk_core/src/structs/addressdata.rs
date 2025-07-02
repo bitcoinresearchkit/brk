@@ -19,16 +19,13 @@ impl AddressData {
     }
 
     #[inline(always)]
-    pub fn is_empty(&self) -> bool {
-        if self.amount() == Sats::ZERO {
-            if self.outputs_len != 0 {
-                unreachable!();
-            }
+    pub fn has_0_sats(&self) -> bool {
+        self.amount() == Sats::ZERO
+    }
 
-            true
-        } else {
-            false
-        }
+    #[inline(always)]
+    pub fn has_0_utxos(&self) -> bool {
+        self.outputs_len == 0
     }
 
     pub fn receive(&mut self, amount: Sats, price: Option<Dollars>) {

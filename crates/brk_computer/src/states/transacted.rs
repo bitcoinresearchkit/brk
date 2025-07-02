@@ -1,6 +1,8 @@
 use std::ops::{Add, AddAssign};
 
-use brk_core::{GroupedBySizeRange, GroupedByType, OutputType, Sats};
+use brk_core::{OutputType, Sats};
+
+use crate::{GroupedBySizeRange, GroupedByType};
 
 use super::SupplyState;
 

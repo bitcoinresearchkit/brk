@@ -457,7 +457,6 @@ dependencies = [
  "brk_mcp",
  "brk_parser",
  "brk_server",
- "brk_state",
  "brk_store",
  "brk_vec",
 ]
@@ -500,6 +499,7 @@ dependencies = [
 name = "brk_computer"
 version = "0.0.71"
 dependencies = [
+ "bincode",
  "bitcoin",
  "bitcoincore-rpc",
  "brk_core",
@@ -508,7 +508,6 @@ dependencies = [
  "brk_indexer",
  "brk_logger",
  "brk_parser",
- "brk_state",
  "brk_store",
  "brk_vec",
  "color-eyre",
@@ -517,6 +516,9 @@ dependencies = [
  "jiff",
  "log",
  "rayon",
+ "serde",
+ "zerocopy",
+ "zerocopy-derive",
 ]
 
 [[package]]
@@ -1009,18 +1011,6 @@ dependencies = [
  "tower-http",
  "tracing",
  "zip",
-]
-
-[[package]]
-name = "brk_state"
-version = "0.0.71"
-dependencies = [
- "bincode",
- "brk_core",
- "derive_deref",
- "serde",
- "zerocopy",
- "zerocopy-derive",
 ]
 
 [[package]]

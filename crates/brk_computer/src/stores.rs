@@ -1,8 +1,8 @@
 use std::{path::Path, thread};
 
 use brk_core::{
-    AddressData, EmptyAddressData, GroupedByAddressType, Height, OutputIndex, OutputType,
-    P2AAddressIndex, P2AAddressIndexOutputindex, P2PK33AddressIndex, P2PK33AddressIndexOutputindex,
+    AddressData, EmptyAddressData, Height, OutputIndex, OutputType, P2AAddressIndex,
+    P2AAddressIndexOutputindex, P2PK33AddressIndex, P2PK33AddressIndexOutputindex,
     P2PK65AddressIndex, P2PK65AddressIndexOutputindex, P2PKHAddressIndex,
     P2PKHAddressIndexOutputindex, P2SHAddressIndex, P2SHAddressIndexOutputindex, P2TRAddressIndex,
     P2TRAddressIndexOutputindex, P2WPKHAddressIndex, P2WPKHAddressIndexOutputindex,
@@ -12,8 +12,11 @@ use brk_store::{AnyStore, Store};
 use fjall::{PersistMode, TransactionalKeyspace};
 use rayon::prelude::*;
 
-use crate::vecs::stateful::{
-    AddressTypeToTypeIndexTree, AddressTypeToTypeIndexVec, WithAddressDataSource,
+use crate::{
+    GroupedByAddressType,
+    vecs::stateful::{
+        AddressTypeToTypeIndexTree, AddressTypeToTypeIndexVec, WithAddressDataSource,
+    },
 };
 
 const VERSION: Version = Version::ZERO;

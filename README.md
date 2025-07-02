@@ -73,7 +73,6 @@ In contrast, existing alternatives tend to be either [very costly](https://studi
 - [`brk_parser`](https://crates.io/crates/brk_parser): A very fast Bitcoin Core block parser and iterator built on top of bitcoin-rust
 - [`brk_interface`](https://crates.io/crates/brk_interface): An interface to BRK's engine
 - [`brk_server`](https://crates.io/crates/brk_server): A server that serves Bitcoin data and swappable front-ends, built on top of `brk_indexer`, `brk_fetcher` and `brk_computer`
-- [`brk_state`](https://crates.io/crates/brk_state): Various states used mainly by the computer
 - [`brk_store`](https://crates.io/crates/brk_store): A thin wrapper around [`fjall`](https://crates.io/crates/fjall)
 - [`brk_vec`](https://crates.io/crates/brk_vec): A push-only, truncable, compressable, saveable Vec
 - [`brk_bundler`](https://crates.io/crates/brk_bundler): A thin wrapper around [`rolldown`](https://rolldown.rs/)

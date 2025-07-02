@@ -3,7 +3,7 @@ use std::{
     ops::{Add, AddAssign},
 };
 
-use crate::OutputType;
+use brk_core::OutputType;
 
 use super::GroupFilter;
 

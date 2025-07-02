@@ -1,17 +1,17 @@
 use std::path::Path;
 
-use brk_core::{
-    AddressGroups, GroupFilter, GroupedByFromSize, GroupedBySizeRange, GroupedByUpToSize, Result,
-    Version,
-};
+use brk_core::{Height, Result, Version};
 use brk_exit::Exit;
 use brk_vec::{Computation, Format};
 use derive_deref::{Deref, DerefMut};
 use rayon::prelude::*;
 
-use crate::vecs::{
-    Indexes, fetched,
-    stateful::{address_cohort, r#trait::CohortVecs},
+use crate::{
+    AddressGroups, GroupFilter, GroupedByFromSize, GroupedBySizeRange, GroupedByUpToSize,
+    vecs::{
+        Indexes, fetched,
+        stateful::{address_cohort, r#trait::CohortVecs},
+    },
 };
 
 const VERSION: Version = Version::new(0);
@@ -325,5 +325,11 @@ impl Vecs {
         .try_for_each(|(vecs, stateful)| {
             vecs.compute_from_stateful(starting_indexes, &stateful, exit)
         })
+    }
+
+    pub fn safe_flush_stateful_vecs(&mut self, height: Height, exit: &Exit) -> Result<()> {
+        self.as_mut_separate_vecs()
+            .par_iter_mut()
+            .try_for_each(|(_, v)| v.safe_flush_stateful_vecs(height, exit))
     }
 }

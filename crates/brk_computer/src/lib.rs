@@ -10,12 +10,16 @@ use brk_exit::Exit;
 use brk_fetcher::Fetcher;
 use brk_indexer::Indexer;
 use brk_vec::{Computation, Format};
+use log::info;
 
+mod groups;
+mod states;
 mod stores;
 mod utils;
 mod vecs;
 
-use log::info;
+use groups::*;
+use states::*;
 use stores::Stores;
 use vecs::Vecs;
 

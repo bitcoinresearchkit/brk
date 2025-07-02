@@ -1,11 +1,8 @@
-use std::{
-    ops::{Deref, DerefMut},
-    path::Path,
-};
+use std::path::Path;
 
-use brk_core::{Dollars, Height, Result};
+use brk_core::{AddressData, Dollars, Height, Result, Sats};
 
-use crate::{SupplyState, UnrealizedState};
+use crate::SupplyState;
 
 use super::CohortState;
 
@@ -26,11 +23,46 @@ impl AddressCohortState {
     pub fn reset_single_iteration_values(&mut self) {
         self.inner.reset_single_iteration_values();
     }
-}
 
-//     fn increment(&mut self, supply_state: &SupplyState, price: Option<Dollars>) {
-//         self.inner.increment(supply_state, price);
-//     }
+    pub fn send(
+        &mut self,
+        value: Sats,
+        current_price: Option<Dollars>,
+        prev_price: Option<Dollars>,
+        blocks_old: usize,
+        days_old: f64,
+        older_than_hour: bool,
+    ) {
+        self.inner.send(
+            &SupplyState { utxos: 1, value },
+            current_price,
+            prev_price,
+            blocks_old,
+            days_old,
+            older_than_hour,
+        );
+    }
+
+    pub fn receive(&mut self, value: Sats, price: Option<Dollars>) {
+        self.inner.receive(&SupplyState { utxos: 1, value }, price);
+    }
+
+    pub fn add(&mut self, addressdata: &AddressData) {
+        self.address_count += 1;
+        self.inner
+            .increment_(&addressdata.into(), addressdata.realized_cap);
+    }
+
+    pub fn subtract(&mut self, addressdata: &AddressData) {
+        self.address_count.checked_sub(1).unwrap();
+        self.inner
+            .decrement_(&addressdata.into(), addressdata.realized_cap);
+    }
+
+    pub fn commit(&mut self, height: Height) -> Result<()> {
+        self.inner.commit(height)
+    }
+}
 
 //     fn decrement(&mut self, supply_state: &SupplyState, price: Option<Dollars>) {
 //         self.inner.decrement(supply_state, price);
@@ -44,25 +76,6 @@ impl AddressCohortState {
 //         self.inner.receive(supply_state, price);
 //     }
 
-//     fn send(
-//         &mut self,
-//         supply_state: &SupplyState,
-//         current_price: Option<Dollars>,
-//         prev_price: Option<Dollars>,
-//         blocks_old: usize,
-//         days_old: f64,
-//         older_than_hour: bool,
-//     ) {
-//         self.inner.send(
-//             supply_state,
-//             current_price,
-//             prev_price,
-//             blocks_old,
-//             days_old,
-//             older_than_hour,
-//         );
-//     }
-
 //     fn compute_unrealized_states(
 //         &self,
 //         height_price: Dollars,
@@ -72,9 +85,6 @@ impl AddressCohortState {
 //             .compute_unrealized_states(height_price, date_price)
 //     }
 
-//     fn commit(&mut self, height: Height) -> Result<()> {
-//         self.inner.commit(height)
-//     }
 // }
 
 // impl Deref for AddressCohortState {

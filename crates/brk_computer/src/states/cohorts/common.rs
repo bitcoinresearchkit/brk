@@ -1,6 +1,6 @@
 use std::{cmp::Ordering, path::Path};
 
-use brk_core::{CheckedSub, Dollars, Height, Result, Sats};
+use brk_core::{Bitcoin, CheckedSub, Dollars, Height, Result, Sats};
 
 use crate::{PriceToAmount, RealizedState, SupplyState, UnrealizedState};
 
@@ -44,6 +44,20 @@ impl CohortState {
         }
     }
 
+    pub fn increment_(&mut self, supply_state: &SupplyState, realized_cap: Dollars) {
+        self.supply += supply_state;
+
+        if supply_state.value > Sats::ZERO {
+            if let Some(realized) = self.realized.as_mut() {
+                realized.increment_(realized_cap);
+                *self
+                    .price_to_amount
+                    .entry(realized_cap / Bitcoin::from(supply_state.value))
+                    .or_default() += supply_state.value;
+            }
+        }
+    }
+
     pub fn decrement(&mut self, supply_state: &SupplyState, price: Option<Dollars>) {
         self.supply -= supply_state;
 
@@ -52,6 +66,20 @@ impl CohortState {
                 let price = price.unwrap();
                 realized.decrement(supply_state, price);
                 self.decrement_price_to_amount(supply_state, price);
+            }
+        }
+    }
+
+    pub fn decrement_(&mut self, supply_state: &SupplyState, realized_cap: Dollars) {
+        self.supply -= supply_state;
+
+        if supply_state.value > Sats::ZERO {
+            if let Some(realized) = self.realized.as_mut() {
+                realized.decrement_(realized_cap);
+                self.decrement_price_to_amount(
+                    supply_state,
+                    realized_cap / Bitcoin::from(supply_state.value),
+                );
             }
         }
     }
@@ -85,21 +113,23 @@ impl CohortState {
         days_old: f64,
         older_than_hour: bool,
     ) {
-        if supply_state.utxos > 0 {
-            self.supply -= supply_state;
+        if supply_state.utxos == 0 {
+            return;
+        }
 
-            if supply_state.value > Sats::ZERO {
-                self.satblocks_destroyed += supply_state.value * blocks_old;
+        self.supply -= supply_state;
 
-                self.satdays_destroyed +=
-                    Sats::from((u64::from(supply_state.value) as f64 * days_old).floor() as u64);
+        if supply_state.value > Sats::ZERO {
+            self.satblocks_destroyed += supply_state.value * blocks_old;
 
-                if let Some(realized) = self.realized.as_mut() {
-                    let current_price = current_price.unwrap();
-                    let prev_price = prev_price.unwrap();
-                    realized.send(supply_state, current_price, prev_price, older_than_hour);
-                    self.decrement_price_to_amount(supply_state, prev_price);
-                }
+            self.satdays_destroyed +=
+                Sats::from((u64::from(supply_state.value) as f64 * days_old).floor() as u64);
+
+            if let Some(realized) = self.realized.as_mut() {
+                let current_price = current_price.unwrap();
+                let prev_price = prev_price.unwrap();
+                realized.send(supply_state, current_price, prev_price, older_than_hour);
+                self.decrement_price_to_amount(supply_state, prev_price);
             }
         }
     }
