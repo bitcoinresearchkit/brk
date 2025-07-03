@@ -1,10 +1,9 @@
 use byteview::ByteView;
 use zerocopy::{FromBytes, IntoBytes};
-use zerocopy_derive::{FromBytes, Immutable, KnownLayout};
 
-use crate::{CheckedSub, Dollars, EmptyAddressData, Error, Result, Sats};
+use crate::{Bitcoin, CheckedSub, Dollars, EmptyAddressData, Error, Result, Sats};
 
-#[derive(Debug, Default, Clone, FromBytes, Immutable, KnownLayout)]
+#[derive(Debug, Default, Clone)]
 #[repr(C)]
 pub struct AddressData {
     pub sent: Sats,
@@ -16,6 +15,10 @@ pub struct AddressData {
 impl AddressData {
     pub fn amount(&self) -> Sats {
         (u64::from(self.received) - u64::from(self.sent)).into()
+    }
+
+    pub fn realized_price(&self) -> Dollars {
+        (self.realized_cap / Bitcoin::from(self.amount())).round_nearest_cent()
     }
 
     #[inline(always)]
@@ -70,7 +73,13 @@ impl From<&EmptyAddressData> for AddressData {
 
 impl From<ByteView> for AddressData {
     fn from(value: ByteView) -> Self {
-        Self::read_from_bytes(&value).unwrap()
+        Self {
+            // MUST be same order as impl From<&AddressData> for ByteView
+            sent: Sats::read_from_bytes(&value[..8]).unwrap(),
+            received: Sats::read_from_bytes(&value[8..16]).unwrap(),
+            realized_cap: Dollars::read_from_bytes(&value[16..24]).unwrap(),
+            outputs_len: u32::read_from_bytes(&value[24..]).unwrap(),
+        }
     }
 }
 impl From<AddressData> for ByteView {

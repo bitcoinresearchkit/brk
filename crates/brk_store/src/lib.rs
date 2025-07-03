@@ -14,13 +14,13 @@ use std::{
 use brk_core::{Height, Result, Version};
 use byteview::ByteView;
 use fjall::{
-    PartitionCreateOptions, PersistMode, ReadTransaction, TransactionalKeyspace,
-    TransactionalPartitionHandle,
+    PartitionCreateOptions, ReadTransaction, TransactionalKeyspace, TransactionalPartitionHandle,
 };
 
 mod meta;
 mod r#trait;
 
+use log::info;
 use meta::*;
 pub use r#trait::*;
 
@@ -241,11 +241,11 @@ where
     }
 
     fn reset(&mut self) -> Result<()> {
+        info!("Resetting {}...", self.name);
+
         let partition: TransactionalPartitionHandle = self.partition.take().unwrap();
 
         self.keyspace.delete_partition(partition)?;
-
-        self.keyspace.persist(PersistMode::SyncAll)?;
 
         self.meta.reset();
 

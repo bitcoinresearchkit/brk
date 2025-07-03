@@ -10,7 +10,7 @@ use brk_core::{
 };
 use brk_store::{AnyStore, Store};
 use fjall::{PersistMode, TransactionalKeyspace};
-use rayon::prelude::*;
+use log::info;
 
 use crate::{
     GroupedByAddressType,
@@ -484,9 +484,14 @@ impl Stores {
     }
 
     pub fn reset(&mut self) -> Result<()> {
+        info!("Resetting stores...");
+        info!("> If it gets stuck here, stop the program and start it again");
+
         self.as_mut_slice()
-            .into_par_iter()
+            .into_iter()
             .try_for_each(|store| store.reset())?;
+
+        info!("Persisting stores...");
 
         self.keyspace
             .persist(PersistMode::SyncAll)

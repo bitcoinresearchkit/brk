@@ -359,8 +359,8 @@ where
 {
     fn collect_range_serde_json(
         &self,
-        from: Option<i64>,
-        to: Option<i64>,
+        from: Option<usize>,
+        to: Option<usize>,
     ) -> Result<Vec<serde_json::Value>> {
         CollectableVec::collect_range_serde_json(self, from, to)
     }

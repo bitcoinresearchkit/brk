@@ -2,7 +2,6 @@ use std::{
     collections::BTreeMap,
     fs::{self, File},
     io::{BufReader, BufWriter},
-    ops::{Deref, DerefMut},
     path::{Path, PathBuf},
 };
 
@@ -10,6 +9,8 @@ use bincode::{Decode, Encode, config, decode_from_std_read, encode_into_std_writ
 use brk_core::{Dollars, Height, Result, Sats};
 use derive_deref::{Deref, DerefMut};
 use serde::{Deserialize, Serialize};
+
+use crate::states::SupplyState;
 
 #[derive(Clone, Debug)]
 pub struct PriceToAmount {
@@ -46,8 +47,36 @@ impl PriceToAmount {
         })
     }
 
+    pub fn iter(&self) -> impl Iterator<Item = (&Dollars, &Sats)> {
+        self.state.iter()
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.state.is_empty()
+    }
+
+    pub fn first_key_value(&self) -> Option<(&Dollars, &Sats)> {
+        self.state.first_key_value()
+    }
+
+    pub fn last_key_value(&self) -> Option<(&Dollars, &Sats)> {
+        self.state.last_key_value()
+    }
+
+    pub fn increment(&mut self, price: Dollars, supply_state: &SupplyState) {
+        *self.state.entry(price).or_default() += supply_state.value;
+    }
+
+    pub fn decrement(&mut self, price: Dollars, supply_state: &SupplyState) {
+        let amount = self.state.get_mut(&price).unwrap();
+        *amount -= supply_state.value;
+        if *amount == Sats::ZERO {
+            self.state.remove(&price);
+        }
+    }
+
     pub fn reset(&mut self) -> Result<()> {
-        self.clear();
+        self.state.clear();
         self.height = None;
         fs::remove_dir_all(&self.pathbuf)?;
         fs::create_dir_all(&self.pathbuf)?;
@@ -87,18 +116,5 @@ impl PriceToAmount {
     }
     fn path_height_(path: &Path) -> PathBuf {
         path.join("height")
-    }
-}
-
-impl Deref for PriceToAmount {
-    type Target = BTreeMap<Dollars, Sats>;
-    fn deref(&self) -> &Self::Target {
-        &self.state
-    }
-}
-
-impl DerefMut for PriceToAmount {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.state
     }
 }

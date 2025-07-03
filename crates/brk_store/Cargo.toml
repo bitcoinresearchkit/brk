@@ -13,3 +13,4 @@ repository.workspace = true
 brk_core = { workspace = true }
 byteview = { workspace = true }
 fjall = { workspace = true }
+log = { workspace = true }

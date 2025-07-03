@@ -38,6 +38,10 @@ impl Dollars {
     pub const fn mint(dollars: f64) -> Self {
         Self(dollars)
     }
+
+    pub fn round_nearest_cent(self) -> Self {
+        Dollars((self.0 * 100.0).round() / 100.0)
+    }
 }
 
 impl From<f32> for Dollars {

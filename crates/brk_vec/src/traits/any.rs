@@ -2,6 +2,15 @@ use brk_core::Version;
 
 use super::{BoxedVecIterator, StoredIndex, StoredType};
 
+pub fn i64_to_usize(i: i64, len: usize) -> usize {
+    if i >= 0 {
+        (i as usize).min(len)
+    } else {
+        let v = len as i64 + i;
+        if v < 0 { 0 } else { v as usize }
+    }
+}
+
 pub trait AnyVec: Send + Sync {
     fn version(&self) -> Version;
     fn name(&self) -> &str;
@@ -25,6 +34,12 @@ pub trait AnyVec: Send + Sync {
             }),
             self.version()
         )
+    }
+
+    #[inline]
+    fn i64_to_usize(&self, i: i64) -> usize {
+        let len = self.len();
+        i64_to_usize(i, len)
     }
 }
 

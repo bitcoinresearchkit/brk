@@ -1,7 +1,9 @@
 use std::mem;
 
-use brk_core::TypeIndex;
+use brk_core::{AddressData, Dollars, OutputIndex, Sats, TypeIndex};
 use derive_deref::{Deref, DerefMut};
+
+use crate::vecs::stateful::WithAddressDataSource;
 
 use super::GroupedByAddressType;
 
@@ -31,5 +33,88 @@ impl<T> AddressTypeToTypeIndexVec<T> {
 
     pub fn unwrap(self) -> GroupedByAddressType<Vec<(TypeIndex, T)>> {
         self.0
+    }
+}
+
+impl AddressTypeToTypeIndexVec<OutputIndex> {
+    #[allow(clippy::type_complexity)]
+    pub fn extend_from_sent(
+        &mut self,
+        other: &AddressTypeToTypeIndexVec<(
+            OutputIndex,
+            Sats,
+            Option<WithAddressDataSource<AddressData>>,
+            Option<Dollars>,
+            usize,
+            f64,
+            bool,
+        )>,
+    ) {
+        Self::extend_from_sent_(&mut self.p2pk33, &other.p2pk33);
+        Self::extend_from_sent_(&mut self.p2pkh, &other.p2pkh);
+        Self::extend_from_sent_(&mut self.p2sh, &other.p2sh);
+        Self::extend_from_sent_(&mut self.p2wpkh, &other.p2wpkh);
+        Self::extend_from_sent_(&mut self.p2wsh, &other.p2wsh);
+        Self::extend_from_sent_(&mut self.p2tr, &other.p2tr);
+        Self::extend_from_sent_(&mut self.p2a, &other.p2a);
+    }
+
+    #[allow(clippy::type_complexity)]
+    fn extend_from_sent_(
+        own: &mut Vec<(TypeIndex, OutputIndex)>,
+        other: &[(
+            TypeIndex,
+            (
+                OutputIndex,
+                Sats,
+                Option<WithAddressDataSource<AddressData>>,
+                Option<Dollars>,
+                usize,
+                f64,
+                bool,
+            ),
+        )],
+    ) {
+        own.extend(
+            other
+                .iter()
+                .map(|(type_index, (output_index, ..))| (*type_index, *output_index)),
+        );
+    }
+
+    pub fn extend_from_received(
+        &mut self,
+        other: &AddressTypeToTypeIndexVec<(
+            OutputIndex,
+            Sats,
+            Option<WithAddressDataSource<AddressData>>,
+        )>,
+    ) {
+        Self::extend_from_received_(&mut self.p2pk33, &other.p2pk33);
+        Self::extend_from_received_(&mut self.p2pkh, &other.p2pkh);
+        Self::extend_from_received_(&mut self.p2sh, &other.p2sh);
+        Self::extend_from_received_(&mut self.p2wpkh, &other.p2wpkh);
+        Self::extend_from_received_(&mut self.p2wsh, &other.p2wsh);
+        Self::extend_from_received_(&mut self.p2tr, &other.p2tr);
+        Self::extend_from_received_(&mut self.p2a, &other.p2a);
+    }
+
+    #[allow(clippy::type_complexity)]
+    fn extend_from_received_(
+        own: &mut Vec<(TypeIndex, OutputIndex)>,
+        other: &[(
+            TypeIndex,
+            (
+                OutputIndex,
+                Sats,
+                Option<WithAddressDataSource<AddressData>>,
+            ),
+        )],
+    ) {
+        own.extend(
+            other
+                .iter()
+                .map(|(type_index, (output_index, ..))| (*type_index, *output_index)),
+        );
     }
 }

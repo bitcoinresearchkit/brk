@@ -1341,8 +1341,7 @@ impl Vecs {
                 .forced_push_at(
                     height,
                     state
-                        .price_to_amount
-                        .first_key_value()
+                        .price_to_amount_first_key_value()
                         .map(|(&dollars, _)| dollars)
                         .unwrap_or(Dollars::NAN),
                     exit,
@@ -1353,8 +1352,7 @@ impl Vecs {
                 .forced_push_at(
                     height,
                     state
-                        .price_to_amount
-                        .last_key_value()
+                        .price_to_amount_last_key_value()
                         .map(|(&dollars, _)| dollars)
                         .unwrap_or(Dollars::NAN),
                     exit,
