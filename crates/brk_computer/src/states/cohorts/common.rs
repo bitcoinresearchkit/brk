@@ -1,6 +1,6 @@
 use std::{cmp::Ordering, path::Path};
 
-use brk_core::{Bitcoin, CheckedSub, Dollars, Height, Result, Sats};
+use brk_core::{CheckedSub, Dollars, Height, Result, Sats};
 
 use crate::{PriceToAmount, RealizedState, SupplyState, UnrealizedState};
 
@@ -61,16 +61,18 @@ impl CohortState {
         }
     }
 
-    pub fn increment_(&mut self, supply_state: &SupplyState, realized_cap: Dollars) {
+    pub fn increment_(
+        &mut self,
+        supply_state: &SupplyState,
+        realized_cap: Dollars,
+        realized_price: Dollars,
+    ) {
         self.supply += supply_state;
 
         if supply_state.value > Sats::ZERO {
             if let Some(realized) = self.realized.as_mut() {
                 realized.increment_(realized_cap);
-                self.price_to_amount.increment(
-                    realized_cap / Bitcoin::from(supply_state.value),
-                    supply_state,
-                );
+                self.price_to_amount.increment(realized_price, supply_state);
             }
         }
     }
@@ -87,16 +89,18 @@ impl CohortState {
         }
     }
 
-    pub fn decrement_(&mut self, supply_state: &SupplyState, realized_cap: Dollars) {
+    pub fn decrement_(
+        &mut self,
+        supply_state: &SupplyState,
+        realized_cap: Dollars,
+        realized_price: Dollars,
+    ) {
         self.supply -= supply_state;
 
         if supply_state.value > Sats::ZERO {
             if let Some(realized) = self.realized.as_mut() {
                 realized.decrement_(realized_cap);
-                self.price_to_amount.decrement(
-                    (realized_cap / Bitcoin::from(supply_state.value)).round_nearest_cent(),
-                    supply_state,
-                );
+                self.price_to_amount.decrement(realized_price, supply_state);
             }
         }
     }

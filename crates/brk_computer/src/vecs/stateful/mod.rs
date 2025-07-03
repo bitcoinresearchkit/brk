@@ -38,7 +38,7 @@ pub use addresstype_to_typeindex_vec::*;
 use r#trait::CohortVecs;
 pub use withaddressdatasource::WithAddressDataSource;
 
-const VERSION: Version = Version::new(9);
+const VERSION: Version = Version::new(11);
 
 #[derive(Clone)]
 pub struct Vecs {

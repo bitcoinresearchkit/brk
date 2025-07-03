@@ -98,14 +98,20 @@ impl AddressCohortState {
 
     pub fn add(&mut self, addressdata: &AddressData) {
         self.address_count += 1;
-        self.inner
-            .increment_(&addressdata.into(), addressdata.realized_cap);
+        self.inner.increment_(
+            &addressdata.into(),
+            addressdata.realized_cap,
+            addressdata.realized_price(),
+        );
     }
 
     pub fn subtract(&mut self, addressdata: &AddressData) {
         self.address_count = self.address_count.checked_sub(1).unwrap();
-        self.inner
-            .decrement_(&addressdata.into(), addressdata.realized_cap);
+        self.inner.decrement_(
+            &addressdata.into(),
+            addressdata.realized_cap,
+            addressdata.realized_price(),
+        );
     }
 
     pub fn commit(&mut self, height: Height) -> Result<()> {
