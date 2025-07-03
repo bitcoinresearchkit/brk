@@ -71,11 +71,7 @@ impl CohortVecs for Vecs {
 
     fn starting_height(&self) -> Height {
         [
-            self.state
-                .inner
-                .price_to_amount
-                .height()
-                .map_or(Height::MAX, |h| h.incremented()),
+            self.state.height().map_or(Height::MAX, |h| h.incremented()),
             self.height_to_address_count.len().into(),
             self.inner.starting_height(),
         ]

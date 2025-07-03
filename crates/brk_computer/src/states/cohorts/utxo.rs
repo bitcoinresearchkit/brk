@@ -1,6 +1,6 @@
 use std::path::Path;
 
-use brk_core::Result;
+use brk_core::{Height, Result};
 use derive_deref::{Deref, DerefMut};
 
 use super::CohortState;
@@ -15,5 +15,13 @@ impl UTXOCohortState {
             name,
             compute_dollars,
         )?))
+    }
+
+    pub fn height(&self) -> Option<Height> {
+        self.0.height()
+    }
+
+    pub fn reset_price_to_amount(&mut self) -> Result<()> {
+        self.0.reset_price_to_amount()
     }
 }

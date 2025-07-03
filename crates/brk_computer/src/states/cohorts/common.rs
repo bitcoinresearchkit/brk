@@ -10,7 +10,8 @@ pub struct CohortState {
     pub realized: Option<RealizedState>,
     pub satblocks_destroyed: Sats,
     pub satdays_destroyed: Sats,
-    pub price_to_amount: PriceToAmount,
+
+    price_to_amount: PriceToAmount,
 }
 
 impl CohortState {
@@ -22,6 +23,22 @@ impl CohortState {
             satdays_destroyed: Sats::ZERO,
             price_to_amount: PriceToAmount::forced_import(path, name),
         })
+    }
+
+    pub fn height(&self) -> Option<Height> {
+        self.price_to_amount.height()
+    }
+
+    pub fn reset_price_to_amount(&mut self) -> Result<()> {
+        self.price_to_amount.reset()
+    }
+
+    pub fn price_to_amount_first_key_value(&self) -> Option<(&Dollars, &Sats)> {
+        self.price_to_amount.first_key_value()
+    }
+
+    pub fn price_to_amount_last_key_value(&self) -> Option<(&Dollars, &Sats)> {
+        self.price_to_amount.last_key_value()
     }
 
     pub fn reset_single_iteration_values(&mut self) {
@@ -39,7 +56,7 @@ impl CohortState {
             if let Some(realized) = self.realized.as_mut() {
                 let price = price.unwrap();
                 realized.increment(supply_state, price);
-                *self.price_to_amount.entry(price).or_default() += supply_state.value;
+                self.price_to_amount.increment(price, supply_state);
             }
         }
     }
@@ -50,10 +67,10 @@ impl CohortState {
         if supply_state.value > Sats::ZERO {
             if let Some(realized) = self.realized.as_mut() {
                 realized.increment_(realized_cap);
-                *self
-                    .price_to_amount
-                    .entry(realized_cap / Bitcoin::from(supply_state.value))
-                    .or_default() += supply_state.value;
+                self.price_to_amount.increment(
+                    realized_cap / Bitcoin::from(supply_state.value),
+                    supply_state,
+                );
             }
         }
     }
@@ -65,7 +82,7 @@ impl CohortState {
             if let Some(realized) = self.realized.as_mut() {
                 let price = price.unwrap();
                 realized.decrement(supply_state, price);
-                self.decrement_price_to_amount(supply_state, price);
+                self.price_to_amount.decrement(price, supply_state);
             }
         }
     }
@@ -76,30 +93,47 @@ impl CohortState {
         if supply_state.value > Sats::ZERO {
             if let Some(realized) = self.realized.as_mut() {
                 realized.decrement_(realized_cap);
-                self.decrement_price_to_amount(
+                self.price_to_amount.decrement(
+                    (realized_cap / Bitcoin::from(supply_state.value)).round_nearest_cent(),
                     supply_state,
-                    realized_cap / Bitcoin::from(supply_state.value),
                 );
             }
         }
     }
 
-    fn decrement_price_to_amount(&mut self, supply_state: &SupplyState, price: Dollars) {
-        let amount = self.price_to_amount.get_mut(&price).unwrap();
-        *amount -= supply_state.value;
-        if *amount == Sats::ZERO {
-            self.price_to_amount.remove(&price);
-        }
+    pub fn receive(&mut self, supply_state: &SupplyState, price: Option<Dollars>) {
+        self.receive_(
+            supply_state,
+            price,
+            price.map(|price| (price, supply_state)),
+            None,
+        );
     }
 
-    pub fn receive(&mut self, supply_state: &SupplyState, price: Option<Dollars>) {
+    pub fn receive_(
+        &mut self,
+        supply_state: &SupplyState,
+        price: Option<Dollars>,
+        price_to_amount_increment: Option<(Dollars, &SupplyState)>,
+        price_to_amount_decrement: Option<(Dollars, &SupplyState)>,
+    ) {
         self.supply += supply_state;
 
         if supply_state.value > Sats::ZERO {
             if let Some(realized) = self.realized.as_mut() {
                 let price = price.unwrap();
                 realized.receive(supply_state, price);
-                *self.price_to_amount.entry(price).or_default() += supply_state.value;
+
+                if let Some((price, supply)) = price_to_amount_increment
+                    && supply.value.is_not_zero()
+                {
+                    self.price_to_amount.increment(price, supply);
+                }
+                if let Some((price, supply)) = price_to_amount_decrement
+                    && supply.value.is_not_zero()
+                {
+                    self.price_to_amount.decrement(price, supply);
+                }
             }
         }
     }
@@ -112,6 +146,30 @@ impl CohortState {
         blocks_old: usize,
         days_old: f64,
         older_than_hour: bool,
+    ) {
+        self.send_(
+            supply_state,
+            current_price,
+            prev_price,
+            blocks_old,
+            days_old,
+            older_than_hour,
+            None,
+            prev_price.map(|prev_price| (prev_price, supply_state)),
+        );
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    pub fn send_(
+        &mut self,
+        supply_state: &SupplyState,
+        current_price: Option<Dollars>,
+        prev_price: Option<Dollars>,
+        blocks_old: usize,
+        days_old: f64,
+        older_than_hour: bool,
+        price_to_amount_increment: Option<(Dollars, &SupplyState)>,
+        price_to_amount_decrement: Option<(Dollars, &SupplyState)>,
     ) {
         if supply_state.utxos == 0 {
             return;
@@ -129,7 +187,16 @@ impl CohortState {
                 let current_price = current_price.unwrap();
                 let prev_price = prev_price.unwrap();
                 realized.send(supply_state, current_price, prev_price, older_than_hour);
-                self.decrement_price_to_amount(supply_state, prev_price);
+                if let Some((price, supply)) = price_to_amount_increment
+                    && supply.value.is_not_zero()
+                {
+                    self.price_to_amount.increment(price, supply);
+                }
+                if let Some((price, supply)) = price_to_amount_decrement
+                    && supply.value.is_not_zero()
+                {
+                    self.price_to_amount.decrement(price, supply);
+                }
             }
         }
     }

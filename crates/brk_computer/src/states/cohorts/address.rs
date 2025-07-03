@@ -20,31 +20,80 @@ impl AddressCohortState {
         })
     }
 
+    pub fn height(&self) -> Option<Height> {
+        self.inner.height()
+    }
+
+    pub fn reset_price_to_amount(&mut self) -> Result<()> {
+        self.inner.reset_price_to_amount()
+    }
+
     pub fn reset_single_iteration_values(&mut self) {
         self.inner.reset_single_iteration_values();
     }
 
+    #[allow(clippy::too_many_arguments)]
     pub fn send(
         &mut self,
+        addressdata: &mut AddressData,
         value: Sats,
         current_price: Option<Dollars>,
         prev_price: Option<Dollars>,
         blocks_old: usize,
         days_old: f64,
         older_than_hour: bool,
-    ) {
-        self.inner.send(
+    ) -> Result<()> {
+        let compute_price = current_price.is_some();
+
+        let prev_realized_price = compute_price.then(|| addressdata.realized_price());
+        let prev_supply_state = SupplyState {
+            utxos: addressdata.outputs_len as usize,
+            value: addressdata.amount(),
+        };
+
+        addressdata.send(value, prev_price)?;
+
+        let supply_state = SupplyState {
+            utxos: addressdata.outputs_len as usize,
+            value: addressdata.amount(),
+        };
+
+        self.inner.send_(
             &SupplyState { utxos: 1, value },
             current_price,
             prev_price,
             blocks_old,
             days_old,
             older_than_hour,
+            compute_price.then(|| (addressdata.realized_price(), &supply_state)),
+            prev_realized_price.map(|prev_price| (prev_price, &prev_supply_state)),
         );
+
+        Ok(())
     }
 
-    pub fn receive(&mut self, value: Sats, price: Option<Dollars>) {
-        self.inner.receive(&SupplyState { utxos: 1, value }, price);
+    pub fn receive(&mut self, address_data: &mut AddressData, value: Sats, price: Option<Dollars>) {
+        let compute_price = price.is_some();
+
+        let prev_realized_price = compute_price.then(|| address_data.realized_price());
+        let prev_supply_state = SupplyState {
+            utxos: address_data.outputs_len as usize,
+            value: address_data.amount(),
+        };
+
+        address_data.receive(value, price);
+
+        let supply_state = SupplyState {
+            utxos: address_data.outputs_len as usize,
+            value: address_data.amount(),
+        };
+
+        self.inner.receive_(
+            &SupplyState { utxos: 1, value },
+            price,
+            compute_price.then(|| (address_data.realized_price(), &supply_state)),
+            prev_realized_price.map(|prev_price| (prev_price, &prev_supply_state)),
+        );
     }
 
     pub fn add(&mut self, addressdata: &AddressData) {
@@ -54,7 +103,7 @@ impl AddressCohortState {
     }
 
     pub fn subtract(&mut self, addressdata: &AddressData) {
-        self.address_count.checked_sub(1).unwrap();
+        self.address_count = self.address_count.checked_sub(1).unwrap();
         self.inner
             .decrement_(&addressdata.into(), addressdata.realized_cap);
     }
@@ -63,39 +112,3 @@ impl AddressCohortState {
         self.inner.commit(height)
     }
 }
-
-//     fn decrement(&mut self, supply_state: &SupplyState, price: Option<Dollars>) {
-//         self.inner.decrement(supply_state, price);
-//     }
-
-//     fn decrement_price_to_amount(&mut self, supply_state: &SupplyState, price: Dollars) {
-//         self.inner.decrement_price_to_amount(supply_state, price);
-//     }
-
-//     fn receive(&mut self, supply_state: &SupplyState, price: Option<Dollars>) {
-//         self.inner.receive(supply_state, price);
-//     }
-
-//     fn compute_unrealized_states(
-//         &self,
-//         height_price: Dollars,
-//         date_price: Option<Dollars>,
-//     ) -> (UnrealizedState, Option<UnrealizedState>) {
-//         self.inner
-//             .compute_unrealized_states(height_price, date_price)
-//     }
-
-// }
-
-// impl Deref for AddressCohortState {
-//     type Target = CohortState;
-//     fn deref(&self) -> &Self::Target {
-//         &self.inner
-//     }
-// }
-
-// impl DerefMut for AddressCohortState {
-//     fn deref_mut(&mut self) -> &mut Self::Target {
-//         &mut self.inner
-//     }
-// }

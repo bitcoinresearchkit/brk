@@ -278,6 +278,8 @@ impl Stores {
             self.txidprefix_to_txindex.reset()?;
         }
 
+        self.keyspace.persist(PersistMode::SyncAll)?;
+
         self.commit(starting_indexes.height.decremented().unwrap_or_default())?;
 
         Ok(())
