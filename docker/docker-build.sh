@@ -50,8 +50,25 @@ done
 print_info "Building BRK Docker image..."
 print_info "Image: ${IMAGE_NAME}:${TAG}"
 
+# Detect script location and set paths accordingly
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
+
+# Determine if we're running from project root or docker directory
+if [[ "$(basename "$PWD")" == "docker" ]]; then
+    # Running from docker directory
+    DOCKERFILE_PATH="./Dockerfile"
+    BUILD_CONTEXT=".."
+    print_info "Running from docker directory"
+else
+    # Running from project root or elsewhere
+    DOCKERFILE_PATH="docker/Dockerfile"
+    BUILD_CONTEXT="."
+    print_info "Running from project root"
+fi
+
 # Execute the build
-if docker build -t "${IMAGE_NAME}:${TAG}" .; then
+if docker build -f "$DOCKERFILE_PATH" -t "${IMAGE_NAME}:${TAG}" "$BUILD_CONTEXT"; then
     print_info "Build completed successfully!"
     print_info "Image built as ${IMAGE_NAME}:${TAG}"
 else

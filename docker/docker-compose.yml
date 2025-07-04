@@ -1,10 +1,12 @@
 # BRK single-container Docker Compose configuration
 
+name: brk
+
 services:
   brk:
     build:
-      context: .
-      dockerfile: Dockerfile
+      context: ..
+      dockerfile: docker/Dockerfile
     image: brk:latest
     container_name: brk
     restart: unless-stopped
