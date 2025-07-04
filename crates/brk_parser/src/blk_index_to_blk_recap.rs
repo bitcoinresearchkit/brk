@@ -5,7 +5,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use crate::{BlkIndexToBlkPath, Height, blk_recap::BlkRecap};
+use crate::{blk_recap::BlkRecap, BlkIndexToBlkPath, Height};
 
 #[derive(Debug)]
 pub struct BlkIndexToBlkRecap {

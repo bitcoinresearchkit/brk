@@ -43,17 +43,12 @@ pub struct Parser {
 }
 
 impl Parser {
-    pub fn new(blocks_dir: PathBuf, rpc: &'static bitcoincore_rpc::Client) -> Self {
-        // For backward compatibility, use blocks_dir as outputs_dir
+    pub fn new(blocks_dir: PathBuf, brk_dir: PathBuf, rpc: &'static bitcoincore_rpc::Client) -> Self {
         Self { 
-            outputs_dir: blocks_dir.clone(),
-            blocks_dir, 
+            blocks_dir,
+            outputs_dir: brk_dir,
             rpc 
         }
-    }
-    
-    pub fn new_with_outputs_dir(blocks_dir: PathBuf, outputs_dir: PathBuf, rpc: &'static bitcoincore_rpc::Client) -> Self {
-        Self { blocks_dir, outputs_dir, rpc }
     }
 
     pub fn get(&self, height: Height) -> Block {
