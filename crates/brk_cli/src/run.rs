@@ -12,23 +12,13 @@ use crate::config::Config;
 pub fn run() -> color_eyre::Result<()> {
     let config = Config::import()?;
 
-    let rpc = if config.process() {
-        Some(config.rpc()?)
-    } else {
-        None
-    };
-
+    let rpc = config.rpc()?;
     let exit = Exit::new();
-
-    let parser = if config.process() && rpc.is_some() {
-        Some(brk_parser::Parser::new(
-            config.blocksdir(),
-            config.outputsdir(),
-            rpc.unwrap(),
-        ))
-    } else {
-        None
-    };
+    let parser = brk_parser::Parser::new(
+        config.blocksdir(),
+        config.brkdir(),
+        rpc,
+    );
 
     let format = config.format();
 
@@ -62,60 +52,42 @@ pub fn run() -> color_eyre::Result<()> {
         .enable_all()
         .build()?
         .block_on(async {
-            let server = if config.serve() {
-                let served_indexer = indexer.clone();
-                let served_computer = computer.clone();
+            // Always start the server
+            let served_indexer = indexer.clone();
+            let served_computer = computer.clone();
 
-                let server = Server::new(served_indexer, served_computer, config.website())?;
+            let server = Server::new(served_indexer, served_computer, config.website())?;
 
-                let watch = config.watch();
-                let mcp = config.mcp();
-                let opt = Some(tokio::spawn(async move {
-                    server.serve(watch, mcp).await.unwrap();
-                }));
+            let watch = config.watch();
+            let mcp = config.mcp();
+            let server_handle = tokio::spawn(async move {
+                server.serve(watch, mcp).await.unwrap();
+            });
 
-                sleep(Duration::from_secs(1));
+            sleep(Duration::from_secs(1));
 
-                opt
-            } else {
-                None
-            };
+            // Always run the processor
+            loop {
+                wait_for_synced_node(rpc)?;
 
-            if config.process() {
-                if let (Some(rpc_client), Some(parser)) = (rpc, parser) {
-                    loop {
-                        wait_for_synced_node(rpc_client)?;
+                let block_count = rpc.get_block_count()?;
 
-                        let block_count = rpc_client.get_block_count()?;
+                info!("{} blocks found.", block_count + 1);
 
-                        info!("{} blocks found.", block_count + 1);
+                let starting_indexes =
+                    indexer.index(&parser, rpc, &exit, config.check_collisions())?;
 
-                        let starting_indexes =
-                            indexer.index(&parser, rpc_client, &exit, config.check_collisions())?;
+                computer.compute(&mut indexer, starting_indexes, &exit)?;
 
-                        computer.compute(&mut indexer, starting_indexes, &exit)?;
+                if let Some(delay) = config.delay() {
+                    sleep(Duration::from_secs(delay))
+                }
 
-                        if let Some(delay) = config.delay() {
-                            sleep(Duration::from_secs(delay))
-                        }
+                info!("Waiting for new blocks...");
 
-                        info!("Waiting for new blocks...");
-
-                        while block_count == rpc_client.get_block_count()? {
-                            sleep(Duration::from_secs(1))
-                        }
-                    }
-                } else {
-                    return Err(color_eyre::eyre::eyre!(
-                        "RPC client and parser required for processing mode"
-                    ))?;
+                while block_count == rpc.get_block_count()? {
+                    sleep(Duration::from_secs(1))
                 }
             }
-
-            if let Some(handle) = server {
-                handle.await.unwrap();
-            }
-
-            Ok(())
         })
 }
