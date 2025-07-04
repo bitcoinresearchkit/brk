@@ -39,7 +39,7 @@ BRK runs as a single container that includes both the blockchain processor and A
 - Simplifies deployment and monitoring
 - Uses a single shared data directory
 
-The container runs the BRK binary with `--services all` to enable both processor and server functionality.
+The container runs the BRK binary which provides both processor and server functionality.
 
 ```bash
 # Start BRK

@@ -52,8 +52,6 @@ services:
       - "${BTC_RPC_USER:-bitcoin}"
       - --rpcpassword
       - "${BTC_RPC_PASSWORD:-bitcoin}"
-      - --services
-      - all
     healthcheck:
       test: ["CMD", "sh", "-c", "pgrep -f brk && nc -z localhost 3110"]
       interval: 30s
