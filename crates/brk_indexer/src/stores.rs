@@ -52,68 +52,68 @@ impl Stores {
                     None,
                 )
             });
-            let p2aaddressindex_with_outputindex_to_output_status = scope.spawn(|| {
+            let p2aaddressindex_with_outputindex = scope.spawn(|| {
                 Store::import(
                     path,
-                    "p2aaddressindex_with_outputindex_to_output_status",
+                    "p2aaddressindex_with_outputindex",
                     version + VERSION + Version::ZERO,
-                    None,
+                    Some(None),
                 )
             });
-            let p2pk33addressindex_with_outputindex_to_output_status = scope.spawn(|| {
+            let p2pk33addressindex_with_outputindex = scope.spawn(|| {
                 Store::import(
                     path,
-                    "p2pk33addressindex_with_outputindex_to_output_status",
+                    "p2pk33addressindex_with_outputindex",
                     version + VERSION + Version::ZERO,
-                    None,
+                    Some(None),
                 )
             });
-            let p2pk65addressindex_with_outputindex_to_output_status = scope.spawn(|| {
+            let p2pk65addressindex_with_outputindex = scope.spawn(|| {
                 Store::import(
                     path,
-                    "p2pk65addressindex_with_outputindex_to_output_status",
+                    "p2pk65addressindex_with_outputindex",
                     version + VERSION + Version::ZERO,
-                    None,
+                    Some(None),
                 )
             });
-            let p2pkhaddressindex_with_outputindex_to_output_status = scope.spawn(|| {
+            let p2pkhaddressindex_with_outputindex = scope.spawn(|| {
                 Store::import(
                     path,
-                    "p2pkhaddressindex_with_outputindex_to_output_status",
+                    "p2pkhaddressindex_with_outputindex",
                     version + VERSION + Version::ZERO,
-                    None,
+                    Some(None),
                 )
             });
-            let p2shaddressindex_with_outputindex_to_output_status = scope.spawn(|| {
+            let p2shaddressindex_with_outputindex = scope.spawn(|| {
                 Store::import(
                     path,
-                    "p2shaddressindex_with_outputindex_to_output_status",
+                    "p2shaddressindex_with_outputindex",
                     version + VERSION + Version::ZERO,
-                    None,
+                    Some(None),
                 )
             });
-            let p2traddressindex_with_outputindex_to_output_status = scope.spawn(|| {
+            let p2traddressindex_with_outputindex = scope.spawn(|| {
                 Store::import(
                     path,
-                    "p2traddressindex_with_outputindex_to_output_status",
+                    "p2traddressindex_with_outputindex",
                     version + VERSION + Version::ZERO,
-                    None,
+                    Some(None),
                 )
             });
-            let p2wpkhaddressindex_with_outputindex_to_output_status = scope.spawn(|| {
+            let p2wpkhaddressindex_with_outputindex = scope.spawn(|| {
                 Store::import(
                     path,
-                    "p2wpkhaddressindex_with_outputindex_to_output_status",
+                    "p2wpkhaddressindex_with_outputindex",
                     version + VERSION + Version::ZERO,
-                    None,
+                    Some(None),
                 )
             });
-            let p2wshaddressindex_with_outputindex_to_output_status = scope.spawn(|| {
+            let p2wshaddressindex_with_outputindex = scope.spawn(|| {
                 Store::import(
                     path,
-                    "p2wshaddressindex_with_outputindex_to_output_status",
+                    "p2wshaddressindex_with_outputindex",
                     version + VERSION + Version::ZERO,
-                    None,
+                    Some(None),
                 )
             });
 
@@ -122,30 +122,14 @@ impl Stores {
                 blockhashprefix_to_height: blockhashprefix_to_height.join().unwrap()?,
                 txidprefix_to_txindex: txidprefix_to_txindex.join().unwrap()?,
                 addresstype_to_typeindex_with_outputindex: GroupedByAddressType {
-                    p2pk65: p2pk65addressindex_with_outputindex_to_output_status
-                        .join()
-                        .unwrap()?,
-                    p2pk33: p2pk33addressindex_with_outputindex_to_output_status
-                        .join()
-                        .unwrap()?,
-                    p2pkh: p2pkhaddressindex_with_outputindex_to_output_status
-                        .join()
-                        .unwrap()?,
-                    p2sh: p2shaddressindex_with_outputindex_to_output_status
-                        .join()
-                        .unwrap()?,
-                    p2wpkh: p2wpkhaddressindex_with_outputindex_to_output_status
-                        .join()
-                        .unwrap()?,
-                    p2wsh: p2wshaddressindex_with_outputindex_to_output_status
-                        .join()
-                        .unwrap()?,
-                    p2tr: p2traddressindex_with_outputindex_to_output_status
-                        .join()
-                        .unwrap()?,
-                    p2a: p2aaddressindex_with_outputindex_to_output_status
-                        .join()
-                        .unwrap()?,
+                    p2pk65: p2pk65addressindex_with_outputindex.join().unwrap()?,
+                    p2pk33: p2pk33addressindex_with_outputindex.join().unwrap()?,
+                    p2pkh: p2pkhaddressindex_with_outputindex.join().unwrap()?,
+                    p2sh: p2shaddressindex_with_outputindex.join().unwrap()?,
+                    p2wpkh: p2wpkhaddressindex_with_outputindex.join().unwrap()?,
+                    p2wsh: p2wshaddressindex_with_outputindex.join().unwrap()?,
+                    p2tr: p2traddressindex_with_outputindex.join().unwrap()?,
+                    p2a: p2aaddressindex_with_outputindex.join().unwrap()?,
                 },
             })
         })
