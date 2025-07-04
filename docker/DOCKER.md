@@ -13,13 +13,18 @@ This guide explains how to run BRK using Docker and Docker Compose.
 
 1. **Create environment file**
    ```bash
-   cp .env.example .env
+   cp docker/.env.example docker/.env
    ```
-   Edit `.env` and set `BITCOIN_DATA_DIR` to your Bitcoin Core data directory.
+   Edit `docker/.env` and set `BITCOIN_DATA_DIR` to your Bitcoin Core data directory.
 
 2. **Run with Docker Compose**
    ```bash
-   docker compose up -d
+   docker compose -f docker/docker-compose.yml up -d
+   ```
+   
+   Or from the docker directory:
+   ```bash
+   cd docker && docker compose up -d
    ```
 
 3. **Access BRK**
@@ -38,10 +43,13 @@ The container runs the BRK binary with `--services all` to enable both processor
 
 ```bash
 # Start BRK
-docker compose up
+docker compose -f docker/docker-compose.yml up
 
 # Or run in background
-docker compose up -d
+docker compose -f docker/docker-compose.yml up -d
+
+# Alternative: from docker directory
+cd docker && docker compose up -d
 ```
 
 ## Configuration
@@ -87,7 +95,7 @@ BRK_MCP=true
 BRK will automatically use the `.cookie` file from your Bitcoin Core directory.
 
 #### Option 2: Username/Password
-Set `BTC_RPC_USER` and `BTC_RPC_PASSWORD` in your `.env` file.
+Set `BTC_RPC_USER` and `BTC_RPC_PASSWORD` in your `docker/.env` file.
 
 #### Network Connectivity
 - **Same host**: 
@@ -99,16 +107,16 @@ Set `BTC_RPC_USER` and `BTC_RPC_PASSWORD` in your `.env` file.
 
 ### Using Docker Compose
 ```bash
-docker compose build
+docker compose -f docker/docker-compose.yml build
 ```
 
 ### or ... Using Docker Build Script
 ```bash
 # Build with default settings
-./docker-build.sh
+./docker/docker-build.sh
 
 # Build with custom tag
-./docker-build.sh --tag v1.0.0
+./docker/docker-build.sh --tag v1.0.0
 ```
 
 ## Volumes and Data Storage
@@ -122,16 +130,16 @@ Uses a Docker-managed named volume called `brk-data`. This is the recommended ap
 Maps a specific directory on your host to the container's data directory.
 This may be desirable if you want to use a specific storage location for BRK data (e.g. a different disk).
 
-1. Set `BRK_DATA_DIR` in your `.env` file to your desired host directory
-2. In `docker-compose.yml`, comment out the named volume line and uncomment the bind mount line
+1. Set `BRK_DATA_DIR` in your `docker/.env` file to your desired host directory
+2. In `docker/docker-compose.yml`, comment out the named volume line and uncomment the bind mount line
 
 ```bash
-# In .env file
+# In docker/.env file
 BRK_DATA_DIR=/home/user/brk-data
 ```
 
 ```bash
-# In docker-compose.yml
+# In docker/docker-compose.yml
 # Comment out:
    - ${BRK_DATA_VOLUME:-brk-data}:/home/brk/.brk
 
@@ -139,7 +147,7 @@ BRK_DATA_DIR=/home/user/brk-data
    # - ${BRK_DATA_DIR:-./brk-data}:/home/brk/.brk
 ```
 
-Can also remove or comment out the `volumes` section from the docker-compose.yml file (right at the bottom):
+Can also remove or comment out the `volumes` section from the docker/docker-compose.yml file (right at the bottom):
 ```bash
 # Comment out:
 volumes:
@@ -158,19 +166,19 @@ The container includes a combined health check that verifies:
 ### Check Container Status
 ```bash
 # View running container
-docker compose ps
+docker compose -f docker/docker-compose.yml ps
 
 # Check health status
-docker compose ps --format \"table {{.Service}}\\t{{.Status}}\\t{{.Health}}\"
+docker compose -f docker/docker-compose.yml ps --format \"table {{.Service}}\\t{{.Status}}\\t{{.Health}}\"
 ```
 
 ### View Logs
 ```bash
 # View logs
-docker compose logs
+docker compose -f docker/docker-compose.yml logs
 
 # Follow logs in real-time
-docker compose logs -f
+docker compose -f docker/docker-compose.yml logs -f
 ```
 
 ## Troubleshooting
@@ -182,7 +190,7 @@ docker compose logs -f
 - The server component will serve data as the processor indexes blocks
 
 #### Server won't start
-- Check Docker Compose logs: `docker compose logs`
+- Check Docker Compose logs: `docker compose -f docker/docker-compose.yml logs`
 - Verify health endpoint: `curl http://localhost:7070/health`
 - Ensure no port conflicts on 7070
 
@@ -192,10 +200,10 @@ docker compose logs -f
 1. Ensure Bitcoin Core is running with `-server=1`
 2. Check RPC credentials are correct
 3. Verify network connectivity from container
-4. Test RPC connection: `docker compose exec brk brk --help`
+4. Test RPC connection: `docker compose -f docker/docker-compose.yml exec brk brk --help`
 
 #### Processor fails to start
-- Verify Bitcoin RPC credentials in `.env`
+- Verify Bitcoin RPC credentials in `docker/.env`
 - Ensure Bitcoin Core is running and accessible
 - Check Bitcoin data directory permissions (should be readable by UID 1000)
 
@@ -221,7 +229,7 @@ docker compose logs -f
 ### Network Issues
 
 #### Cannot access web interface
-- Verify port mapping: `docker compose ps`
+- Verify port mapping: `docker compose -f docker/docker-compose.yml ps`
 - Check firewall settings
 - Ensure no other services are using port 7070
 
@@ -247,11 +255,11 @@ tar czf brk-backup.tar.gz -C \"$BRK_DATA_DIR\" .
 
 ```bash
 # Stop container
-docker compose down
+docker compose -f docker/docker-compose.yml down
 
 # Restore from backup (named volume)
 docker run --rm -v brk_brk-data:/target -v \"$(pwd)\":/backup alpine tar xzf /backup/brk-backup.tar.gz -C /target
 
 # Start container
-docker compose up -d
+docker compose -f docker/docker-compose.yml up -d
 ```
