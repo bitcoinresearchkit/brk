@@ -1,6 +1,6 @@
 use std::ops::{Add, AddAssign};
 
-use brk_core::Sats;
+use crate::Sats;
 
 use super::GroupFilter;
 

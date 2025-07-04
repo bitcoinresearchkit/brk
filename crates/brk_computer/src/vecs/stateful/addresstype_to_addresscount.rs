@@ -1,0 +1,47 @@
+use brk_core::{GroupedByAddressType, Height};
+use brk_vec::VecIterator;
+use derive_deref::{Deref, DerefMut};
+
+use crate::vecs::stateful::addresstype_to_addresscount_vec::AddressTypeToAddressCountVec;
+
+#[derive(Debug, Default, Deref, DerefMut)]
+pub struct AddressTypeToAddressCount(GroupedByAddressType<usize>);
+
+impl From<(&AddressTypeToAddressCountVec, Height)> for AddressTypeToAddressCount {
+    fn from((groups, starting_height): (&AddressTypeToAddressCountVec, Height)) -> Self {
+        if let Some(prev_height) = starting_height.decremented() {
+            Self(GroupedByAddressType {
+                p2pk65: groups
+                    .p2pk65
+                    .into_iter()
+                    .unwrap_get_inner(prev_height)
+                    .into(),
+                p2pk33: groups
+                    .p2pk33
+                    .into_iter()
+                    .unwrap_get_inner(prev_height)
+                    .into(),
+                p2pkh: groups
+                    .p2pkh
+                    .into_iter()
+                    .unwrap_get_inner(prev_height)
+                    .into(),
+                p2sh: groups.p2sh.into_iter().unwrap_get_inner(prev_height).into(),
+                p2wpkh: groups
+                    .p2wpkh
+                    .into_iter()
+                    .unwrap_get_inner(prev_height)
+                    .into(),
+                p2wsh: groups
+                    .p2wsh
+                    .into_iter()
+                    .unwrap_get_inner(prev_height)
+                    .into(),
+                p2tr: groups.p2tr.into_iter().unwrap_get_inner(prev_height).into(),
+                p2a: groups.p2a.into_iter().unwrap_get_inner(prev_height).into(),
+            })
+        } else {
+            Default::default()
+        }
+    }
+}

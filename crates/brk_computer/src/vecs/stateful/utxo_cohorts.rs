@@ -1,15 +1,17 @@
 use std::{collections::BTreeMap, ops::ControlFlow, path::Path};
 
-use brk_core::{CheckedSub, Dollars, HalvingEpoch, Height, Result, Timestamp, Version};
+use brk_core::{
+    CheckedSub, Dollars, GroupFilter, GroupedByDateRange, GroupedByEpoch, GroupedByFromDate,
+    GroupedByFromSize, GroupedBySizeRange, GroupedBySpendableType, GroupedByTerm,
+    GroupedByUpToDate, GroupedByUpToSize, HalvingEpoch, Height, Result, Timestamp, UTXOGroups,
+    Version,
+};
 use brk_exit::Exit;
 use brk_vec::{Computation, Format, StoredIndex};
 use derive_deref::{Deref, DerefMut};
 use rayon::prelude::*;
 
 use crate::{
-    GroupFilter, GroupedByDateRange, GroupedByEpoch, GroupedByFromDate, GroupedByFromSize,
-    GroupedBySizeRange, GroupedBySpendableType, GroupedByTerm, GroupedByUpToDate,
-    GroupedByUpToSize, UTXOGroups,
     states::{BlockState, Transacted},
     vecs::{Indexes, fetched},
 };

@@ -6,10 +6,7 @@ use brk_store::{AnyStore, Store};
 fn main() -> Result<()> {
     let p = Path::new("./examples/_fjall");
 
-    let keyspace = brk_store::open_keyspace(p)?;
-
-    let mut store: Store<Dollars, Sats> =
-        brk_store::Store::import(&keyspace, p, "n", Version::ZERO, None)?;
+    let mut store: Store<Dollars, Sats> = brk_store::Store::import(p, "n", Version::ZERO, None)?;
 
     store.insert_if_needed(Dollars::from(10.0), Sats::FIFTY_BTC, Height::ZERO);
 

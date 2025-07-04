@@ -512,7 +512,6 @@ dependencies = [
  "brk_vec",
  "color-eyre",
  "derive_deref",
- "fjall",
  "jiff",
  "log",
  "rayon",
@@ -576,7 +575,6 @@ dependencies = [
  "brk_store",
  "brk_vec",
  "color-eyre",
- "fjall",
  "log",
  "rayon",
 ]
@@ -617,7 +615,6 @@ dependencies = [
  "brk_interface",
  "brk_rmcp",
  "log",
- "tracing",
 ]
 
 [[package]]

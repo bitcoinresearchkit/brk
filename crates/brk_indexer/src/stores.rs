@@ -1,12 +1,11 @@
 use std::{borrow::Cow, fs, path::Path, thread};
 
 use brk_core::{
-    AddressBytes, AddressBytesHash, BlockHashPrefix, Height, OutputType, Result, TxIndex,
-    TxidPrefix, TypeIndex, Version,
+    AddressBytes, AddressBytesHash, BlockHashPrefix, GroupedByAddressType, Height, OutputType,
+    Result, TxIndex, TxidPrefix, TypeIndex, TypeIndexWithOutputindex, Unit, Version,
 };
 use brk_store::{AnyStore, Store};
 use brk_vec::AnyIterableVec;
-use fjall::{PersistMode, TransactionalKeyspace};
 use rayon::prelude::*;
 
 use crate::Indexes;
@@ -15,10 +14,11 @@ use super::Vecs;
 
 #[derive(Clone)]
 pub struct Stores {
-    pub keyspace: TransactionalKeyspace,
     pub addressbyteshash_to_typeindex: Store<AddressBytesHash, TypeIndex>,
     pub blockhashprefix_to_height: Store<BlockHashPrefix, Height>,
     pub txidprefix_to_txindex: Store<TxidPrefix, TxIndex>,
+    pub addresstype_to_typeindex_with_outputindex:
+        GroupedByAddressType<Store<TypeIndexWithOutputindex, Unit>>,
 }
 
 const VERSION: Version = Version::ZERO;
@@ -27,18 +27,9 @@ impl Stores {
     pub fn forced_import(path: &Path, version: Version) -> color_eyre::Result<Self> {
         fs::create_dir_all(path)?;
 
-        let keyspace = match brk_store::open_keyspace(path) {
-            Ok(keyspace) => keyspace,
-            Err(_) => {
-                fs::remove_dir_all(path)?;
-                return Self::forced_import(path, version);
-            }
-        };
-
         thread::scope(|scope| {
             let addressbyteshash_to_typeindex = scope.spawn(|| {
                 Store::import(
-                    &keyspace,
                     path,
                     "addressbyteshash_to_typeindex",
                     version + VERSION + Version::ZERO,
@@ -47,7 +38,6 @@ impl Stores {
             });
             let blockhashprefix_to_height = scope.spawn(|| {
                 Store::import(
-                    &keyspace,
                     path,
                     "blockhashprefix_to_height",
                     version + VERSION + Version::ZERO,
@@ -56,19 +46,107 @@ impl Stores {
             });
             let txidprefix_to_txindex = scope.spawn(|| {
                 Store::import(
-                    &keyspace,
                     path,
                     "txidprefix_to_txindex",
                     version + VERSION + Version::ZERO,
                     None,
                 )
             });
+            let p2aaddressindex_with_outputindex_to_output_status = scope.spawn(|| {
+                Store::import(
+                    path,
+                    "p2aaddressindex_with_outputindex_to_output_status",
+                    version + VERSION + Version::ZERO,
+                    None,
+                )
+            });
+            let p2pk33addressindex_with_outputindex_to_output_status = scope.spawn(|| {
+                Store::import(
+                    path,
+                    "p2pk33addressindex_with_outputindex_to_output_status",
+                    version + VERSION + Version::ZERO,
+                    None,
+                )
+            });
+            let p2pk65addressindex_with_outputindex_to_output_status = scope.spawn(|| {
+                Store::import(
+                    path,
+                    "p2pk65addressindex_with_outputindex_to_output_status",
+                    version + VERSION + Version::ZERO,
+                    None,
+                )
+            });
+            let p2pkhaddressindex_with_outputindex_to_output_status = scope.spawn(|| {
+                Store::import(
+                    path,
+                    "p2pkhaddressindex_with_outputindex_to_output_status",
+                    version + VERSION + Version::ZERO,
+                    None,
+                )
+            });
+            let p2shaddressindex_with_outputindex_to_output_status = scope.spawn(|| {
+                Store::import(
+                    path,
+                    "p2shaddressindex_with_outputindex_to_output_status",
+                    version + VERSION + Version::ZERO,
+                    None,
+                )
+            });
+            let p2traddressindex_with_outputindex_to_output_status = scope.spawn(|| {
+                Store::import(
+                    path,
+                    "p2traddressindex_with_outputindex_to_output_status",
+                    version + VERSION + Version::ZERO,
+                    None,
+                )
+            });
+            let p2wpkhaddressindex_with_outputindex_to_output_status = scope.spawn(|| {
+                Store::import(
+                    path,
+                    "p2wpkhaddressindex_with_outputindex_to_output_status",
+                    version + VERSION + Version::ZERO,
+                    None,
+                )
+            });
+            let p2wshaddressindex_with_outputindex_to_output_status = scope.spawn(|| {
+                Store::import(
+                    path,
+                    "p2wshaddressindex_with_outputindex_to_output_status",
+                    version + VERSION + Version::ZERO,
+                    None,
+                )
+            });
 
             Ok(Self {
-                keyspace: keyspace.clone(),
                 addressbyteshash_to_typeindex: addressbyteshash_to_typeindex.join().unwrap()?,
                 blockhashprefix_to_height: blockhashprefix_to_height.join().unwrap()?,
                 txidprefix_to_txindex: txidprefix_to_txindex.join().unwrap()?,
+                addresstype_to_typeindex_with_outputindex: GroupedByAddressType {
+                    p2pk65: p2pk65addressindex_with_outputindex_to_output_status
+                        .join()
+                        .unwrap()?,
+                    p2pk33: p2pk33addressindex_with_outputindex_to_output_status
+                        .join()
+                        .unwrap()?,
+                    p2pkh: p2pkhaddressindex_with_outputindex_to_output_status
+                        .join()
+                        .unwrap()?,
+                    p2sh: p2shaddressindex_with_outputindex_to_output_status
+                        .join()
+                        .unwrap()?,
+                    p2wpkh: p2wpkhaddressindex_with_outputindex_to_output_status
+                        .join()
+                        .unwrap()?,
+                    p2wsh: p2wshaddressindex_with_outputindex_to_output_status
+                        .join()
+                        .unwrap()?,
+                    p2tr: p2traddressindex_with_outputindex_to_output_status
+                        .join()
+                        .unwrap()?,
+                    p2a: p2aaddressindex_with_outputindex_to_output_status
+                        .join()
+                        .unwrap()?,
+                },
             })
         })
     }
@@ -78,9 +156,41 @@ impl Stores {
         vecs: &mut Vecs,
         starting_indexes: &Indexes,
     ) -> color_eyre::Result<()> {
-        if self.addressbyteshash_to_typeindex.is_empty()
-            && self.blockhashprefix_to_height.is_empty()
-            && self.txidprefix_to_txindex.is_empty()
+        if self.addressbyteshash_to_typeindex.is_empty()?
+            && self.blockhashprefix_to_height.is_empty()?
+            && self.txidprefix_to_txindex.is_empty()?
+            && self
+                .addresstype_to_typeindex_with_outputindex
+                .p2a
+                .is_empty()?
+            && self
+                .addresstype_to_typeindex_with_outputindex
+                .p2pk33
+                .is_empty()?
+            && self
+                .addresstype_to_typeindex_with_outputindex
+                .p2pk65
+                .is_empty()?
+            && self
+                .addresstype_to_typeindex_with_outputindex
+                .p2pkh
+                .is_empty()?
+            && self
+                .addresstype_to_typeindex_with_outputindex
+                .p2sh
+                .is_empty()?
+            && self
+                .addresstype_to_typeindex_with_outputindex
+                .p2tr
+                .is_empty()?
+            && self
+                .addresstype_to_typeindex_with_outputindex
+                .p2wpkh
+                .is_empty()?
+            && self
+                .addresstype_to_typeindex_with_outputindex
+                .p2wsh
+                .is_empty()?
         {
             return Ok(());
         }
@@ -278,8 +388,6 @@ impl Stores {
             self.txidprefix_to_txindex.reset()?;
         }
 
-        self.keyspace.persist(PersistMode::SyncAll)?;
-
         self.commit(starting_indexes.height.decremented().unwrap_or_default())?;
 
         Ok(())
@@ -296,11 +404,7 @@ impl Stores {
     pub fn commit(&mut self, height: Height) -> Result<()> {
         self.as_mut_slice()
             .into_par_iter()
-            .try_for_each(|store| store.commit(height))?;
-
-        self.keyspace
-            .persist(PersistMode::SyncAll)
-            .map_err(|e| e.into())
+            .try_for_each(|store| store.commit(height))
     }
 
     pub fn rotate_memtables(&self) {
@@ -309,19 +413,35 @@ impl Stores {
             .for_each(|store| store.rotate_memtable());
     }
 
-    fn as_slice(&self) -> [&(dyn AnyStore + Send + Sync); 3] {
+    fn as_slice(&self) -> [&(dyn AnyStore + Send + Sync); 11] {
         [
             &self.addressbyteshash_to_typeindex,
             &self.blockhashprefix_to_height,
             &self.txidprefix_to_txindex,
+            &self.addresstype_to_typeindex_with_outputindex.p2a,
+            &self.addresstype_to_typeindex_with_outputindex.p2pk33,
+            &self.addresstype_to_typeindex_with_outputindex.p2pk65,
+            &self.addresstype_to_typeindex_with_outputindex.p2pkh,
+            &self.addresstype_to_typeindex_with_outputindex.p2sh,
+            &self.addresstype_to_typeindex_with_outputindex.p2tr,
+            &self.addresstype_to_typeindex_with_outputindex.p2wpkh,
+            &self.addresstype_to_typeindex_with_outputindex.p2wsh,
         ]
     }
 
-    fn as_mut_slice(&mut self) -> [&mut (dyn AnyStore + Send + Sync); 3] {
+    fn as_mut_slice(&mut self) -> [&mut (dyn AnyStore + Send + Sync); 11] {
         [
             &mut self.addressbyteshash_to_typeindex,
             &mut self.blockhashprefix_to_height,
             &mut self.txidprefix_to_txindex,
+            &mut self.addresstype_to_typeindex_with_outputindex.p2a,
+            &mut self.addresstype_to_typeindex_with_outputindex.p2pk33,
+            &mut self.addresstype_to_typeindex_with_outputindex.p2pk65,
+            &mut self.addresstype_to_typeindex_with_outputindex.p2pkh,
+            &mut self.addresstype_to_typeindex_with_outputindex.p2sh,
+            &mut self.addresstype_to_typeindex_with_outputindex.p2tr,
+            &mut self.addresstype_to_typeindex_with_outputindex.p2wpkh,
+            &mut self.addresstype_to_typeindex_with_outputindex.p2wsh,
         ]
     }
 }

@@ -21,10 +21,12 @@ brk_store = { workspace = true }
 brk_vec = { workspace = true }
 color-eyre = { workspace = true }
 derive_deref = { workspace = true }
-fjall = { workspace = true }
 jiff = { workspace = true }
 log = { workspace = true }
 rayon = { workspace = true }
 serde = { workspace = true }
 zerocopy = { workspace = true }
 zerocopy-derive = { workspace = true }
+
+[package.metadata.cargo-machete]
+ignored = ["zerocopy"]

@@ -12,13 +12,11 @@ use brk_indexer::Indexer;
 use brk_vec::{Computation, Format};
 use log::info;
 
-mod groups;
 mod states;
 mod stores;
 mod utils;
 mod vecs;
 
-use groups::*;
 use states::*;
 use stores::Stores;
 use vecs::Vecs;
@@ -55,7 +53,6 @@ impl Computer {
                 // TODO: Give self.path, join inside import
                 &outputs_dir.join("stores"),
                 VERSION + Version::ZERO,
-                &indexer.stores.keyspace,
             )?,
             fetcher,
         })

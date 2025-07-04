@@ -3,11 +3,8 @@ use std::{
     ops::{Add, AddAssign},
 };
 
-use brk_core::{Height, OutputType, Result, StoredUsize};
-use brk_exit::Exit;
-use brk_vec::{EagerVec, VecIterator};
-
 use super::GroupFilter;
+use crate::OutputType;
 
 #[derive(Default, Clone, Debug)]
 pub struct GroupedByAddressType<T> {
@@ -168,76 +165,5 @@ where
         self.p2wsh += rhs.p2wsh;
         self.p2tr += rhs.p2tr;
         self.p2a += rhs.p2a;
-    }
-}
-
-impl From<(&GroupedByAddressType<EagerVec<Height, StoredUsize>>, Height)>
-    for GroupedByAddressType<usize>
-{
-    fn from(
-        (groups, starting_height): (&GroupedByAddressType<EagerVec<Height, StoredUsize>>, Height),
-    ) -> Self {
-        if let Some(prev_height) = starting_height.decremented() {
-            Self {
-                p2pk65: groups
-                    .p2pk65
-                    .into_iter()
-                    .unwrap_get_inner(prev_height)
-                    .into(),
-                p2pk33: groups
-                    .p2pk33
-                    .into_iter()
-                    .unwrap_get_inner(prev_height)
-                    .into(),
-                p2pkh: groups
-                    .p2pkh
-                    .into_iter()
-                    .unwrap_get_inner(prev_height)
-                    .into(),
-                p2sh: groups.p2sh.into_iter().unwrap_get_inner(prev_height).into(),
-                p2wpkh: groups
-                    .p2wpkh
-                    .into_iter()
-                    .unwrap_get_inner(prev_height)
-                    .into(),
-                p2wsh: groups
-                    .p2wsh
-                    .into_iter()
-                    .unwrap_get_inner(prev_height)
-                    .into(),
-                p2tr: groups.p2tr.into_iter().unwrap_get_inner(prev_height).into(),
-                p2a: groups.p2a.into_iter().unwrap_get_inner(prev_height).into(),
-            }
-        } else {
-            Default::default()
-        }
-    }
-}
-
-impl GroupedByAddressType<EagerVec<Height, StoredUsize>> {
-    pub fn forced_push_at(
-        &mut self,
-        height: Height,
-        addresstype_to_usize: &GroupedByAddressType<usize>,
-        exit: &Exit,
-    ) -> Result<()> {
-        self.p2pk65
-            .forced_push_at(height, addresstype_to_usize.p2pk65.into(), exit)?;
-        self.p2pk33
-            .forced_push_at(height, addresstype_to_usize.p2pk33.into(), exit)?;
-        self.p2pkh
-            .forced_push_at(height, addresstype_to_usize.p2pkh.into(), exit)?;
-        self.p2sh
-            .forced_push_at(height, addresstype_to_usize.p2sh.into(), exit)?;
-        self.p2wpkh
-            .forced_push_at(height, addresstype_to_usize.p2wpkh.into(), exit)?;
-        self.p2wsh
-            .forced_push_at(height, addresstype_to_usize.p2wsh.into(), exit)?;
-        self.p2tr
-            .forced_push_at(height, addresstype_to_usize.p2tr.into(), exit)?;
-        self.p2a
-            .forced_push_at(height, addresstype_to_usize.p2a.into(), exit)?;
-
-        Ok(())
     }
 }
