@@ -7,8 +7,8 @@ use std::{collections::BTreeMap, path::Path, str::FromStr, thread};
 
 use brk_core::{
     AddressBytes, AddressBytesHash, BlockHash, BlockHashPrefix, Height, InputIndex, OutputIndex,
-    OutputType, Sats, Timestamp, TxIndex, Txid, TxidPrefix, TypeIndex, Version, Vin, Vout,
-    setrlimit,
+    OutputType, Sats, Timestamp, TxIndex, Txid, TxidPrefix, TypeIndex, TypeIndexWithOutputindex,
+    Unit, Version, Vin, Vout, setrlimit,
 };
 
 use bitcoin::{Transaction, TxIn, TxOut};
@@ -546,6 +546,10 @@ impl Indexer {
 
                         new_txindexvout_to_outputindex
                             .insert((txindex, vout), outputindex);
+
+                        if outputtype.is_address() {
+                            stores.addresstype_to_typeindex_with_outputindex.get_mut(outputtype).unwrap().insert_if_needed(TypeIndexWithOutputindex::from((typeindex, outputindex)), Unit, height);
+                        }
 
                         Ok(())
                     },

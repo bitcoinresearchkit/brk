@@ -3,7 +3,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use brk_core::{Result, Version, copy_first_8bytes};
+use brk_core::{Result, Version};
 use fjall::{TransactionalKeyspace, TransactionalPartitionHandle};
 
 use super::Height;
@@ -13,7 +13,6 @@ pub struct StoreMeta {
     pathbuf: PathBuf,
     version: Version,
     height: Option<Height>,
-    len: usize,
 }
 
 impl StoreMeta {
@@ -44,13 +43,10 @@ impl StoreMeta {
             partition = open_partition_handle()?;
         }
 
-        let len = Self::read_length_(path);
-
         let slf = Self {
             pathbuf: path.to_owned(),
             version,
             height: Height::try_from(Self::path_height_(path).as_path()).ok(),
-            len,
         };
 
         slf.version.write(&slf.path_version())?;
@@ -58,28 +54,17 @@ impl StoreMeta {
         Ok((slf, partition))
     }
 
-    pub fn len(&self) -> usize {
-        self.len
-    }
-
-    // pub fn is_empty(&self) -> bool {
-    //     self.len() == 0
-    // }
-
     pub fn version(&self) -> Version {
         self.version
     }
 
-    pub fn export(&mut self, len: usize, height: Height) -> io::Result<()> {
-        self.len = len;
-        self.write_length()?;
+    pub fn export(&mut self, height: Height) -> io::Result<()> {
         self.height = Some(height);
         height.write(&self.path_height())
     }
 
     pub fn reset(&mut self) {
         self.height.take();
-        self.len = 0
     }
 
     pub fn path(&self) -> &Path {
@@ -107,20 +92,5 @@ impl StoreMeta {
     }
     fn path_height_(path: &Path) -> PathBuf {
         path.join("height")
-    }
-
-    fn read_length_(path: &Path) -> usize {
-        fs::read(Self::path_length(path))
-            .map(|v| usize::from_ne_bytes(copy_first_8bytes(v.as_slice()).unwrap()))
-            .unwrap_or_default()
-    }
-    fn write_length(&self) -> io::Result<()> {
-        Self::write_length_(&self.pathbuf, self.len)
-    }
-    fn write_length_(path: &Path, len: usize) -> io::Result<()> {
-        fs::write(Self::path_length(path), len.to_ne_bytes())
-    }
-    fn path_length(path: &Path) -> PathBuf {
-        path.join("length")
     }
 }

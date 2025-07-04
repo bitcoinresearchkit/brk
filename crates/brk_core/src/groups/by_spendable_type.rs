@@ -1,6 +1,6 @@
 use std::ops::{Add, AddAssign};
 
-use brk_core::OutputType;
+use crate::OutputType;
 
 use super::GroupFilter;
 
