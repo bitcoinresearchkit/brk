@@ -18,3 +18,6 @@ _*
 
 # Logs
 .log
+
+# Environment variables/configs
+.env
