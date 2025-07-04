@@ -1,18 +1,20 @@
-# BRK multi-container Docker Compose configuration
+# BRK single-container Docker Compose configuration
 
 services:
-  brk-processor:
+  brk:
     build:
       context: .
       dockerfile: Dockerfile
     image: brk:latest
-    container_name: brk-processor
+    container_name: brk
     restart: unless-stopped
+    ports:
+      - 7070:3110  # Map host port 7070 to container port 3110
     volumes:
       # Bitcoin Core data directory (read-only)
       # For access to raw block data
       - ${BITCOIN_DATA_DIR:-/path/to/bitcoin}:/bitcoin:ro
-      # BRK data directory for outputs and state (shared with server)
+      # BRK data directory for outputs and state
       # Option 1: Use a named volume (default)
       - ${BRK_DATA_VOLUME:-brk-data}:/home/brk/.brk
       # Option 2: Use a bind mount (uncomment and set BRK_DATA_DIR in .env)
@@ -36,6 +38,7 @@ services:
       - COMPUTATION=${BRK_COMPUTATION:-lazy}
       - FORMAT=${BRK_FORMAT:-raw}
       - FETCH=${BRK_FETCH:-true}
+      - MCP=${BRK_MCP:-true}
     command:
       - --bitcoindir
       - /bitcoin
@@ -48,45 +51,13 @@ services:
       - --rpcpassword
       - "${BTC_RPC_PASSWORD:-bitcoin}"
       - --services
-      - processor
+      - all
     healthcheck:
-      test: ["CMD", "pgrep", "-f", "brk"]
+      test: ["CMD", "sh", "-c", "pgrep -f brk && nc -z localhost 3110"]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 60s
-
-  brk-server:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    image: brk:latest
-    container_name: brk-server
-    restart: unless-stopped
-    ports:
-      - 7070:3110  # Map host port 7070 to container port 3110
-    volumes:
-      # BRK data directory (shared with processor)
-      # Option 1: Use a named volume (default)
-      - ${BRK_DATA_VOLUME:-brk-data}:/home/brk/.brk
-      # Option 2: Use a bind mount (uncomment and set BRK_DATA_DIR in .env)
-      # - ${BRK_DATA_DIR:-./brk-data}:/home/brk/.brk
-    environment:
-      # BRK configuration (server doesn't need Bitcoin RPC)
-      - BRKDIR=/home/brk/.brk
-      - MCP=${BRK_MCP:-true}
-    command:
-      - --brkdir
-      - /home/brk/.brk
-      - --services
-      - server
-    # Note: Server can start without processor, will serve empty data until processor indexes blocks
-    healthcheck:
-      test: ["CMD", "sh", "-c", "nc -z localhost 3110 || exit 1"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 30s
 
 volumes:
   brk-data:

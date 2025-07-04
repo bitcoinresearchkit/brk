@@ -19,8 +19,7 @@ This guide explains how to run BRK using Docker and Docker Compose.
 
 2. **Run with Docker Compose**
    ```bash
-   # Multi-container mode (recommended)
-   docker compose up -d brk-processor brk-server
+   docker compose up -d
    ```
 
 3. **Access BRK**
@@ -28,59 +27,39 @@ This guide explains how to run BRK using Docker and Docker Compose.
    - API: http://localhost:7070/api
    - Health check: http://localhost:7070/health
 
-## Deployment Modes
+## Architecture
 
-BRK supports flexible deployment modes to suit different use cases:
+BRK runs as a single container that includes both the blockchain processor and API server. This simplified architecture:
+- Ensures processor and server are always in sync
+- Simplifies deployment and monitoring
+- Uses a single shared data directory
 
-### 1. Multi-Container Mode (Recommended)
-
-Deploy indexer and server as separate containers. This means the following:
-- Better resource isolation
-- Independent scaling of components
-- Server doesn't need Bitcoin Core or RPC access
-- Cleaner failure isolation
-- Server can start independently (will serve empty data until processor indexes blocks)
+The container runs the BRK binary with `--services all` to enable both processor and server functionality.
 
 ```bash
-# Start both processor and server
-docker compose up brk-processor brk-server
+# Start BRK
+docker compose up
 
 # Or run in background
-docker compose up -d brk-processor brk-server
-```
-
-### 2. Processor-Only Mode
-
-For indexing without web interface:
-
-```bash
-docker compose up brk-processor
-```
-
-### 3. Server-Only Mode
-
-For serving pre-indexed data:
-
-```bash
-docker compose up brk-server
+docker compose up -d
 ```
 
 ## Configuration
 
 ### Environment Variables
 
-| Variable | Description | Default | Required For |
-|----------|-------------|---------|-------------|
-| `BITCOIN_DATA_DIR` | Path to Bitcoin Core data directory | Required | Processor |
-| `BTC_RPC_HOST` | Bitcoin Core RPC host | `localhost` | Processor |
-| `BTC_RPC_PORT` | Bitcoin Core RPC port | `8332` | Processor |
-| `BTC_RPC_USER` | Bitcoin RPC username | - | Processor |
-| `BTC_RPC_PASSWORD` | Bitcoin RPC password | - | Processor |
-| `BRK_DATA_VOLUME` | Docker volume name for BRK data | `brk-data` | Both |
-| `BRK_COMPUTATION` | Computation mode (`lazy`, `eager`) | `lazy` | Processor |
-| `BRK_FORMAT` | Data format (`raw`, `compressed`) | `raw` | Processor |
-| `BRK_FETCH` | Enable price fetching | `true` | Processor |
-| `BRK_MCP` | Enable MCP for AI/LLM | `true` | Server |
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `BITCOIN_DATA_DIR` | Path to Bitcoin Core data directory | - |
+| `BTC_RPC_HOST` | Bitcoin Core RPC host | `localhost` |
+| `BTC_RPC_PORT` | Bitcoin Core RPC port | `8332` |
+| `BTC_RPC_USER` | Bitcoin RPC username | - |
+| `BTC_RPC_PASSWORD` | Bitcoin RPC password | - |
+| `BRK_DATA_VOLUME` | Docker volume name for BRK data | `brk-data` |
+| `BRK_COMPUTATION` | Computation mode (`lazy`, `eager`) | `lazy` |
+| `BRK_FORMAT` | Data format (`raw`, `compressed`) | `raw` |
+| `BRK_FETCH` | Enable price fetching | `true` |
+| `BRK_MCP` | Enable MCP for AI/LLM | `true` |
 
 ### Example .env File
 
@@ -89,7 +68,7 @@ docker compose up brk-server
 BITCOIN_DATA_DIR=/path/to/bitcoin/data
 BRK_DATA_VOLUME=brk-data
 
-# Bitcoin RPC (required for processor)
+# Bitcoin RPC configuration
 BTC_RPC_HOST=localhost
 BTC_RPC_PORT=8332
 BTC_RPC_USER=your_username
@@ -118,7 +97,7 @@ Set `BTC_RPC_USER` and `BTC_RPC_PASSWORD` in your `.env` file.
 
 ## Building the Image
 
-### Using Docker Compose...
+### Using Docker Compose
 ```bash
 docker compose build
 ```
@@ -152,7 +131,7 @@ BRK_DATA_DIR=/home/user/brk-data
 ```
 
 ```bash
-# In docker-compose.yml, for BOTH the processor and server services.
+# In docker-compose.yml
 # Comment out:
    - ${BRK_DATA_VOLUME:-brk-data}:/home/brk/.brk
 
@@ -170,16 +149,15 @@ volumes:
 
 ## Health Checks
 
-Both containers include health checks:
-
-- `brk-processor`: checks that the BRK process is running
-- `brk-server`: tests network connectivity on port 3110
+The container includes a combined health check that verifies:
+- The BRK process is running
+- The API server is responding on port 3110
 
 ## Monitoring
 
 ### Check Container Status
 ```bash
-# View running containers
+# View running container
 docker compose ps
 
 # Check health status
@@ -188,14 +166,11 @@ docker compose ps --format \"table {{.Service}}\\t{{.Status}}\\t{{.Health}}\"
 
 ### View Logs
 ```bash
-# View logs from both containers
-docker compose logs brk-processor brk-server
+# View logs
+docker compose logs
 
 # Follow logs in real-time
-docker compose logs -f brk-processor brk-server
-
-# View logs from specific container
-docker compose logs -f brk-server
+docker compose logs -f
 ```
 
 ## Troubleshooting
@@ -203,12 +178,11 @@ docker compose logs -f brk-server
 ### Server Issues
 
 #### Server returns empty data
-- This is normal if processor hasn't indexed any blocks yet
-- Server can start before processor and will serve data as it becomes available
-- Check that BRK data volume is properly shared between containers
+- This is normal if the processor hasn't indexed any blocks yet
+- The server component will serve data as the processor indexes blocks
 
 #### Server won't start
-- Check Docker Compose logs: `docker compose logs brk-server`
+- Check Docker Compose logs: `docker compose logs`
 - Verify health endpoint: `curl http://localhost:7070/health`
 - Ensure no port conflicts on 7070
 
@@ -218,7 +192,7 @@ docker compose logs -f brk-server
 1. Ensure Bitcoin Core is running with `-server=1`
 2. Check RPC credentials are correct
 3. Verify network connectivity from container
-4. Test RPC connection: `docker compose exec brk-processor brk --help`
+4. Test RPC connection: `docker compose exec brk brk --help`
 
 #### Processor fails to start
 - Verify Bitcoin RPC credentials in `.env`
@@ -272,12 +246,12 @@ tar czf brk-backup.tar.gz -C \"$BRK_DATA_DIR\" .
 ### Restoring BRK Data
 
 ```bash
-# Stop containers
+# Stop container
 docker compose down
 
 # Restore from backup (named volume)
 docker run --rm -v brk_brk-data:/target -v \"$(pwd)\":/backup alpine tar xzf /backup/brk-backup.tar.gz -C /target
 
-# Start containers
+# Start container
 docker compose up -d
 ```
