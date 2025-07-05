@@ -1,14 +1,13 @@
 use std::mem;
 
-use brk_core::TypeIndex;
 use derive_deref::{Deref, DerefMut};
 
 use super::GroupedByAddressType;
 
 #[derive(Debug, Default, Deref, DerefMut)]
-pub struct AddressTypeToTypeIndexVec<T>(GroupedByAddressType<Vec<(TypeIndex, T)>>);
+pub struct AddressTypeToVec<T>(GroupedByAddressType<Vec<T>>);
 
-impl<T> AddressTypeToTypeIndexVec<T> {
+impl<T> AddressTypeToVec<T> {
     pub fn merge(&mut self, mut other: Self) {
         Self::merge_(&mut self.p2pk65, &mut other.p2pk65);
         Self::merge_(&mut self.p2pk33, &mut other.p2pk33);
@@ -20,7 +19,7 @@ impl<T> AddressTypeToTypeIndexVec<T> {
         Self::merge_(&mut self.p2a, &mut other.p2a);
     }
 
-    fn merge_(own: &mut Vec<(TypeIndex, T)>, other: &mut Vec<(TypeIndex, T)>) {
+    fn merge_(own: &mut Vec<T>, other: &mut Vec<T>) {
         if own.len() >= other.len() {
             own.append(other);
         } else {

@@ -3,7 +3,11 @@ use brk_core::{Height, Result, Version};
 pub trait AnyStore {
     fn commit(&mut self, height: Height) -> Result<()>;
 
+    fn persist(&self) -> Result<()>;
+
     fn reset(&mut self) -> Result<()>;
+
+    fn name(&self) -> &'static str;
 
     fn rotate_memtable(&self);
 

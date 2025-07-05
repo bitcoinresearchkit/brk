@@ -4,7 +4,7 @@ use std::{
 };
 
 use brk_core::{Result, Version};
-use fjall::{TransactionalKeyspace, TransactionalPartitionHandle};
+use fjall::{PersistMode, TransactionalKeyspace, TransactionalPartitionHandle};
 
 use super::Height;
 
@@ -39,7 +39,7 @@ impl StoreMeta {
             fs::remove_dir_all(path)?;
             fs::create_dir(path)?;
             keyspace.delete_partition(partition)?;
-            keyspace.persist(fjall::PersistMode::SyncAll)?;
+            keyspace.persist(PersistMode::SyncAll)?;
             partition = open_partition_handle()?;
         }
 

@@ -28,6 +28,8 @@ use super::Vout;
 pub struct OutputIndex(u64);
 
 impl OutputIndex {
+    pub const ZERO: Self = Self(0);
+
     pub const COINBASE: Self = Self(u64::MAX);
 
     pub fn incremented(self) -> Self {

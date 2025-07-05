@@ -67,6 +67,10 @@ impl OutputType {
         }
     }
 
+    pub fn is_not_address(&self) -> bool {
+        !self.is_address()
+    }
+
     pub fn is_unspendable(&self) -> bool {
         !self.is_spendable()
     }

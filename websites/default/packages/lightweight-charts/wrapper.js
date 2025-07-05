@@ -141,7 +141,7 @@ function createChartElement({
           }
         : {}),
       // ..._options,
-    })
+    }),
   );
 
   ichart.priceScale("right").applyOptions({
@@ -173,7 +173,7 @@ function createChartElement({
           },
         },
       });
-    }
+    },
   );
 
   signals.createEffect(index, (index) => {
@@ -181,12 +181,12 @@ function createChartElement({
       index === /** @satisfies {MonthIndex} */ (7)
         ? 1
         : index === /** @satisfies {QuarterIndex} */ (19)
-        ? 2
-        : index === /** @satisfies {YearIndex} */ (23)
-        ? 6
-        : index === /** @satisfies {DecadeIndex} */ (1)
-        ? 60
-        : 0.5;
+          ? 2
+          : index === /** @satisfies {YearIndex} */ (23)
+            ? 6
+            : index === /** @satisfies {DecadeIndex} */ (1)
+              ? 60
+              : 0.5;
 
     ichart.applyOptions({
       timeScale: {
@@ -209,7 +209,7 @@ function createChartElement({
       activeResources.forEach((v) => {
         v.fetch();
       });
-    })
+    }),
   );
 
   if (fitContent) {
@@ -240,7 +240,8 @@ function createChartElement({
 
           const children = Array.from(parent.childNodes).filter(
             (element) =>
-              /** @type {HTMLElement} */ (element).dataset.position === position
+              /** @type {HTMLElement} */ (element).dataset.position ===
+              position,
           );
 
           if (children.length === 1) {
@@ -262,7 +263,7 @@ function createChartElement({
 
           fieldset.append(createChild(pane));
         }),
-      paneIndex ? 50 : 0
+      paneIndex ? 50 : 0,
     );
   }
 
@@ -346,7 +347,7 @@ function createChartElement({
         // Or remove ?
         iseries.applyOptions({
           visible: active,
-        })
+        }),
       );
 
       iseries.setSeriesOrder(order);
@@ -376,8 +377,8 @@ function createChartElement({
           const timeResource = vecsResources.getOrCreate(
             index,
             index === /** @satisfies {Height} */ (5)
-              ? "timestamp-fixed"
-              : "timestamp"
+              ? "timestamp_fixed"
+              : "timestamp",
           );
           timeResource.fetch();
 
@@ -497,7 +498,7 @@ function createChartElement({
                   });
 
                   console.timeEnd(consoleTimeLabel);
-                }
+                },
               );
             } else {
               activeResources.delete(valuesResource);
@@ -590,7 +591,7 @@ function createChartElement({
             borderVisible: false,
             visible: defaultActive !== false,
           },
-          paneIndex
+          paneIndex,
         )
       );
 
@@ -646,7 +647,7 @@ function createChartElement({
             color: color(),
             ...options,
           },
-          paneIndex
+          paneIndex,
         )
       );
 
@@ -714,7 +715,7 @@ function createChartElement({
             topFillColor2: "transparent",
             lineVisible: true,
           },
-          paneIndex
+          paneIndex,
         )
       );
 
@@ -877,7 +878,7 @@ function createLegend({ signals, utils }) {
             } else {
               spanColor.style.backgroundColor = tameColor(color);
             }
-          }
+          },
         );
       });
 
@@ -1037,17 +1038,17 @@ function numberToShortUSFormat(value, digits) {
   if (modulused === 0) {
     return `${numberToUSFormat(
       value / (1_000_000 * 1_000 ** letterIndex),
-      3
+      3,
     )}${letter}`;
   } else if (modulused === 1) {
     return `${numberToUSFormat(
       value / (1_000_000 * 1_000 ** letterIndex),
-      2
+      2,
     )}${letter}`;
   } else {
     return `${numberToUSFormat(
       value / (1_000_000 * 1_000 ** letterIndex),
-      1
+      1,
     )}${letter}`;
   }
 }
@@ -1097,7 +1098,7 @@ function createOklchToRGBA() {
       return rgb.map((c) =>
         Math.abs(c) > 0.0031308
           ? (c < 0 ? -1 : 1) * (1.055 * Math.abs(c) ** (1 / 2.4) - 0.055)
-          : 12.92 * c
+          : 12.92 * c,
       );
     }
     /**
@@ -1109,7 +1110,7 @@ function createOklchToRGBA() {
           1, 0.3963377773761749, 0.2158037573099136, 1, -0.1055613458156586,
           -0.0638541728258133, 1, -0.0894841775298119, -1.2914855480194092,
         ]),
-        lab
+        lab,
       );
       const LMS = /** @type {[number, number, number]} */ (
         LMSg.map((val) => val ** 3)
@@ -1120,7 +1121,7 @@ function createOklchToRGBA() {
           -0.0405757452148008, 1.112286803280317, -0.0717110580655164,
           -0.0763729366746601, -0.4214933324022432, 1.5869240198367816,
         ]),
-        LMS
+        LMS,
       );
     }
     /**
@@ -1133,7 +1134,7 @@ function createOklchToRGBA() {
           -0.9692436362808796, 1.8759675015077202, 0.04155505740717559,
           0.05563007969699366, -0.20397695888897652, 1.0569715142428786,
         ],
-        xyz
+        xyz,
       );
     }
 
@@ -1156,8 +1157,8 @@ function createOklchToRGBA() {
       });
       const rgb = srgbLinear2rgb(
         xyz2rgbLinear(
-          oklab2xyz(oklch2oklab(/** @type {[number, number, number]} */ (lch)))
-        )
+          oklab2xyz(oklch2oklab(/** @type {[number, number, number]} */ (lch))),
+        ),
       ).map((v) => {
         return Math.max(Math.min(Math.round(v * 255), 255), 0);
       });

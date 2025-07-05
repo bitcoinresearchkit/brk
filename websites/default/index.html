@@ -36,8 +36,9 @@
         line-height: 1.5;
         -webkit-text-size-adjust: 100%;
         tab-size: 4;
-        font-family: "Geist mono", ui-monospace, SFMono-Regular, Menlo, Monaco,
-          Consolas, "Liberation Mono", "Courier New", monospace;
+        font-family:
+          "Geist mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+          "Liberation Mono", "Courier New", monospace;
         font-feature-settings: "ss03";
         -webkit-tap-highlight-color: transparent;
       }
@@ -80,9 +81,9 @@
       kbd,
       samp,
       pre {
-        font-family: var(--default-mono-font-family), ui-monospace,
-          SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
-          "Courier New", monospace;
+        font-family:
+          var(--default-mono-font-family), ui-monospace, SFMono-Regular, Menlo,
+          Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
         font-feature-settings: var(
           --default-mono-font-feature-settings,
           normal
@@ -273,6 +274,8 @@
         --default-main-width: 25rem;
 
         --bottom-area: 69vh;
+
+        --cube: 50px;
       }
 
       [data-resize] {
@@ -1365,6 +1368,46 @@
           }
         }
       }
+
+      #explorer {
+        #chain {
+          display: flex;
+          flex-direction: column;
+          gap: calc(var(--cube) * 1.1);
+          padding: 1rem;
+
+          .cube {
+            width: var(--cube);
+            height: var(--cube);
+            overflow: hidden;
+
+            .face {
+              transform-origin: 0 0;
+              position: absolute;
+              width: var(--cube);
+              height: var(--cube);
+            }
+            .front {
+              background-color: var(--orange);
+              transform: rotate(-30deg) skewX(-30deg)
+                translate(calc(var(--cube) * 1.3), calc(var(--cube) * 1.725))
+                scaleY(0.864);
+            }
+            .top {
+              background-color: var(--yellow);
+              transform: rotate(30deg) skew(-30deg)
+                translate(calc(var(--cube) * 0.99), calc(var(--cube) * -0.265))
+                scaleY(0.864);
+            }
+            .side {
+              background-color: var(--amber);
+              transform: rotate(30deg) skewX(30deg)
+                translate(calc(var(--cube) * 0.3), calc(var(--cube) * 0.6))
+                scaleY(0.864);
+            }
+          }
+        }
+      }
     </style>
 
     <!-- ------- -->
@@ -1678,6 +1721,7 @@
       </footer>
     </main>
     <aside id="aside">
+      <div id="explorer" hidden></div>
       <div id="charts" hidden></div>
       <div id="table" hidden></div>
       <div id="simulation" hidden></div>

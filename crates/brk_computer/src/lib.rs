@@ -53,6 +53,7 @@ impl Computer {
                 // TODO: Give self.path, join inside import
                 &outputs_dir.join("stores"),
                 VERSION + Version::ZERO,
+                &indexer.stores.keyspace,
             )?,
             fetcher,
         })
