@@ -1,11 +1,12 @@
 use std::{borrow::Cow, fs, path::Path, thread};
 
 use brk_core::{
-    AddressBytes, AddressBytesHash, BlockHashPrefix, GroupedByAddressType, Height, OutputType,
-    Result, TxIndex, TxidPrefix, TypeIndex, TypeIndexWithOutputindex, Unit, Version,
+    AddressBytes, AddressBytesHash, BlockHashPrefix, GroupedByAddressType, Height, OutputIndex,
+    OutputType, Result, TxIndex, TxidPrefix, TypeIndex, TypeIndexWithOutputindex, Unit, Version,
 };
 use brk_store::{AnyStore, Store};
-use brk_vec::AnyIterableVec;
+use brk_vec::{AnyIterableVec, VecIterator};
+use fjall::{PersistMode, TransactionalKeyspace};
 use rayon::prelude::*;
 
 use crate::Indexes;
@@ -14,6 +15,8 @@ use super::Vecs;
 
 #[derive(Clone)]
 pub struct Stores {
+    pub keyspace: TransactionalKeyspace,
+
     pub addressbyteshash_to_typeindex: Store<AddressBytesHash, TypeIndex>,
     pub blockhashprefix_to_height: Store<BlockHashPrefix, Height>,
     pub txidprefix_to_txindex: Store<TxidPrefix, TxIndex>,
@@ -27,9 +30,18 @@ impl Stores {
     pub fn forced_import(path: &Path, version: Version) -> color_eyre::Result<Self> {
         fs::create_dir_all(path)?;
 
+        let keyspace = match brk_store::open_keyspace(path) {
+            Ok(keyspace) => keyspace,
+            Err(_) => {
+                fs::remove_dir_all(path)?;
+                return Self::forced_import(path, version);
+            }
+        };
+
         thread::scope(|scope| {
             let addressbyteshash_to_typeindex = scope.spawn(|| {
                 Store::import(
+                    &keyspace,
                     path,
                     "addressbyteshash_to_typeindex",
                     version + VERSION + Version::ZERO,
@@ -38,6 +50,7 @@ impl Stores {
             });
             let blockhashprefix_to_height = scope.spawn(|| {
                 Store::import(
+                    &keyspace,
                     path,
                     "blockhashprefix_to_height",
                     version + VERSION + Version::ZERO,
@@ -46,6 +59,7 @@ impl Stores {
             });
             let txidprefix_to_txindex = scope.spawn(|| {
                 Store::import(
+                    &keyspace,
                     path,
                     "txidprefix_to_txindex",
                     version + VERSION + Version::ZERO,
@@ -54,6 +68,7 @@ impl Stores {
             });
             let p2aaddressindex_with_outputindex = scope.spawn(|| {
                 Store::import(
+                    &keyspace,
                     path,
                     "p2aaddressindex_with_outputindex",
                     version + VERSION + Version::ZERO,
@@ -62,6 +77,7 @@ impl Stores {
             });
             let p2pk33addressindex_with_outputindex = scope.spawn(|| {
                 Store::import(
+                    &keyspace,
                     path,
                     "p2pk33addressindex_with_outputindex",
                     version + VERSION + Version::ZERO,
@@ -70,6 +86,7 @@ impl Stores {
             });
             let p2pk65addressindex_with_outputindex = scope.spawn(|| {
                 Store::import(
+                    &keyspace,
                     path,
                     "p2pk65addressindex_with_outputindex",
                     version + VERSION + Version::ZERO,
@@ -78,6 +95,7 @@ impl Stores {
             });
             let p2pkhaddressindex_with_outputindex = scope.spawn(|| {
                 Store::import(
+                    &keyspace,
                     path,
                     "p2pkhaddressindex_with_outputindex",
                     version + VERSION + Version::ZERO,
@@ -86,6 +104,7 @@ impl Stores {
             });
             let p2shaddressindex_with_outputindex = scope.spawn(|| {
                 Store::import(
+                    &keyspace,
                     path,
                     "p2shaddressindex_with_outputindex",
                     version + VERSION + Version::ZERO,
@@ -94,6 +113,7 @@ impl Stores {
             });
             let p2traddressindex_with_outputindex = scope.spawn(|| {
                 Store::import(
+                    &keyspace,
                     path,
                     "p2traddressindex_with_outputindex",
                     version + VERSION + Version::ZERO,
@@ -102,6 +122,7 @@ impl Stores {
             });
             let p2wpkhaddressindex_with_outputindex = scope.spawn(|| {
                 Store::import(
+                    &keyspace,
                     path,
                     "p2wpkhaddressindex_with_outputindex",
                     version + VERSION + Version::ZERO,
@@ -110,6 +131,7 @@ impl Stores {
             });
             let p2wshaddressindex_with_outputindex = scope.spawn(|| {
                 Store::import(
+                    &keyspace,
                     path,
                     "p2wshaddressindex_with_outputindex",
                     version + VERSION + Version::ZERO,
@@ -118,6 +140,8 @@ impl Stores {
             });
 
             Ok(Self {
+                keyspace: keyspace.clone(),
+
                 addressbyteshash_to_typeindex: addressbyteshash_to_typeindex.join().unwrap()?,
                 blockhashprefix_to_height: blockhashprefix_to_height.join().unwrap()?,
                 txidprefix_to_txindex: txidprefix_to_txindex.join().unwrap()?,
@@ -133,6 +157,66 @@ impl Stores {
                 },
             })
         })
+    }
+
+    pub fn starting_height(&self) -> Height {
+        self.as_slice()
+            .into_iter()
+            .map(|store| {
+                let height = store.height().map(Height::incremented).unwrap_or_default();
+                // dbg!((height, store.name()));
+                height
+            })
+            .min()
+            .unwrap()
+    }
+
+    pub fn commit(&mut self, height: Height) -> Result<()> {
+        self.as_mut_slice()
+            .into_par_iter()
+            .try_for_each(|store| store.commit(height))?;
+
+        self.keyspace
+            .persist(PersistMode::SyncAll)
+            .map_err(|e| e.into())
+    }
+
+    pub fn rotate_memtables(&self) {
+        self.as_slice()
+            .into_iter()
+            .for_each(|store| store.rotate_memtable());
+    }
+
+    fn as_slice(&self) -> [&(dyn AnyStore + Send + Sync); 11] {
+        [
+            &self.addressbyteshash_to_typeindex,
+            &self.blockhashprefix_to_height,
+            &self.txidprefix_to_txindex,
+            &self.addresstype_to_typeindex_with_outputindex.p2a,
+            &self.addresstype_to_typeindex_with_outputindex.p2pk33,
+            &self.addresstype_to_typeindex_with_outputindex.p2pk65,
+            &self.addresstype_to_typeindex_with_outputindex.p2pkh,
+            &self.addresstype_to_typeindex_with_outputindex.p2sh,
+            &self.addresstype_to_typeindex_with_outputindex.p2tr,
+            &self.addresstype_to_typeindex_with_outputindex.p2wpkh,
+            &self.addresstype_to_typeindex_with_outputindex.p2wsh,
+        ]
+    }
+
+    fn as_mut_slice(&mut self) -> [&mut (dyn AnyStore + Send + Sync); 11] {
+        [
+            &mut self.addressbyteshash_to_typeindex,
+            &mut self.blockhashprefix_to_height,
+            &mut self.txidprefix_to_txindex,
+            &mut self.addresstype_to_typeindex_with_outputindex.p2a,
+            &mut self.addresstype_to_typeindex_with_outputindex.p2pk33,
+            &mut self.addresstype_to_typeindex_with_outputindex.p2pk65,
+            &mut self.addresstype_to_typeindex_with_outputindex.p2pkh,
+            &mut self.addresstype_to_typeindex_with_outputindex.p2sh,
+            &mut self.addresstype_to_typeindex_with_outputindex.p2tr,
+            &mut self.addresstype_to_typeindex_with_outputindex.p2wpkh,
+            &mut self.addresstype_to_typeindex_with_outputindex.p2wsh,
+        ]
     }
 
     pub fn rollback_if_needed(
@@ -372,60 +456,48 @@ impl Stores {
             self.txidprefix_to_txindex.reset()?;
         }
 
+        if starting_indexes.outputindex != OutputIndex::ZERO {
+            let mut outputindex_to_typeindex_iter = vecs.outputindex_to_typeindex.into_iter();
+            vecs.outputindex_to_outputtype
+                .iter_at(starting_indexes.outputindex)
+                .filter(|(_, outputtype)| outputtype.is_address())
+                .for_each(|(outputindex, outputtype)| {
+                    let outputtype = outputtype.into_owned();
+
+                    let typeindex = outputindex_to_typeindex_iter.unwrap_get_inner(outputindex);
+
+                    self.addresstype_to_typeindex_with_outputindex
+                        .get_mut(outputtype)
+                        .unwrap()
+                        .remove(TypeIndexWithOutputindex::from((typeindex, outputindex)));
+                });
+        } else {
+            self.addresstype_to_typeindex_with_outputindex.p2a.reset()?;
+            self.addresstype_to_typeindex_with_outputindex
+                .p2pk33
+                .reset()?;
+            self.addresstype_to_typeindex_with_outputindex
+                .p2pk65
+                .reset()?;
+            self.addresstype_to_typeindex_with_outputindex
+                .p2pkh
+                .reset()?;
+            self.addresstype_to_typeindex_with_outputindex
+                .p2sh
+                .reset()?;
+            self.addresstype_to_typeindex_with_outputindex
+                .p2tr
+                .reset()?;
+            self.addresstype_to_typeindex_with_outputindex
+                .p2wpkh
+                .reset()?;
+            self.addresstype_to_typeindex_with_outputindex
+                .p2wsh
+                .reset()?;
+        }
+
         self.commit(starting_indexes.height.decremented().unwrap_or_default())?;
 
         Ok(())
-    }
-
-    pub fn starting_height(&self) -> Height {
-        self.as_slice()
-            .into_iter()
-            .map(|store| store.height().map(Height::incremented).unwrap_or_default())
-            .min()
-            .unwrap()
-    }
-
-    pub fn commit(&mut self, height: Height) -> Result<()> {
-        self.as_mut_slice()
-            .into_par_iter()
-            .try_for_each(|store| store.commit(height))
-    }
-
-    pub fn rotate_memtables(&self) {
-        self.as_slice()
-            .into_iter()
-            .for_each(|store| store.rotate_memtable());
-    }
-
-    fn as_slice(&self) -> [&(dyn AnyStore + Send + Sync); 11] {
-        [
-            &self.addressbyteshash_to_typeindex,
-            &self.blockhashprefix_to_height,
-            &self.txidprefix_to_txindex,
-            &self.addresstype_to_typeindex_with_outputindex.p2a,
-            &self.addresstype_to_typeindex_with_outputindex.p2pk33,
-            &self.addresstype_to_typeindex_with_outputindex.p2pk65,
-            &self.addresstype_to_typeindex_with_outputindex.p2pkh,
-            &self.addresstype_to_typeindex_with_outputindex.p2sh,
-            &self.addresstype_to_typeindex_with_outputindex.p2tr,
-            &self.addresstype_to_typeindex_with_outputindex.p2wpkh,
-            &self.addresstype_to_typeindex_with_outputindex.p2wsh,
-        ]
-    }
-
-    fn as_mut_slice(&mut self) -> [&mut (dyn AnyStore + Send + Sync); 11] {
-        [
-            &mut self.addressbyteshash_to_typeindex,
-            &mut self.blockhashprefix_to_height,
-            &mut self.txidprefix_to_txindex,
-            &mut self.addresstype_to_typeindex_with_outputindex.p2a,
-            &mut self.addresstype_to_typeindex_with_outputindex.p2pk33,
-            &mut self.addresstype_to_typeindex_with_outputindex.p2pk65,
-            &mut self.addresstype_to_typeindex_with_outputindex.p2pkh,
-            &mut self.addresstype_to_typeindex_with_outputindex.p2sh,
-            &mut self.addresstype_to_typeindex_with_outputindex.p2tr,
-            &mut self.addresstype_to_typeindex_with_outputindex.p2wpkh,
-            &mut self.addresstype_to_typeindex_with_outputindex.p2wsh,
-        ]
     }
 }

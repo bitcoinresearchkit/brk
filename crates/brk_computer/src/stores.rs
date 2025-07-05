@@ -6,6 +6,7 @@ use brk_core::{
     P2WPKHAddressIndex, P2WSHAddressIndex, Result, TypeIndex, Version,
 };
 use brk_store::{AnyStore, Store};
+use fjall::{PersistMode, TransactionalKeyspace};
 use log::info;
 
 use crate::vecs::stateful::{AddressTypeToTypeIndexTree, WithAddressDataSource};
@@ -14,6 +15,8 @@ const VERSION: Version = Version::ZERO;
 
 #[derive(Clone)]
 pub struct Stores {
+    keyspace: TransactionalKeyspace,
+
     pub p2aaddressindex_to_addressdata: Store<P2AAddressIndex, AddressData>,
     pub p2aaddressindex_to_emptyaddressdata: Store<P2AAddressIndex, EmptyAddressData>,
     pub p2pk33addressindex_to_addressdata: Store<P2PK33AddressIndex, AddressData>,
@@ -33,7 +36,11 @@ pub struct Stores {
 }
 
 impl Stores {
-    pub fn import(path: &Path, version: Version) -> color_eyre::Result<Self> {
+    pub fn import(
+        path: &Path,
+        version: Version,
+        keyspace: &TransactionalKeyspace,
+    ) -> color_eyre::Result<Self> {
         let (
             (p2aaddressindex_to_addressdata, p2aaddressindex_to_emptyaddressdata),
             (p2pk33addressindex_to_addressdata, p2pk33addressindex_to_emptyaddressdata),
@@ -47,6 +54,7 @@ impl Stores {
             let p2a = scope.spawn(|| {
                 (
                     Store::import(
+                        keyspace,
                         path,
                         "p2aaddressindex_to_addressdata",
                         version + VERSION + Version::ZERO,
@@ -54,6 +62,7 @@ impl Stores {
                     )
                     .unwrap(),
                     Store::import(
+                        keyspace,
                         path,
                         "p2aaddressindex_to_emptyaddressdata",
                         version + VERSION + Version::ZERO,
@@ -66,6 +75,7 @@ impl Stores {
             let p2pk33 = scope.spawn(|| {
                 (
                     Store::import(
+                        keyspace,
                         path,
                         "p2pk33addressindex_to_addressdata",
                         version + VERSION + Version::ZERO,
@@ -73,6 +83,7 @@ impl Stores {
                     )
                     .unwrap(),
                     Store::import(
+                        keyspace,
                         path,
                         "p2pk33addressindex_to_emptyaddressdata",
                         version + VERSION + Version::ZERO,
@@ -85,6 +96,7 @@ impl Stores {
             let p2pk65 = scope.spawn(|| {
                 (
                     Store::import(
+                        keyspace,
                         path,
                         "p2pk65addressindex_to_addressdata",
                         version + VERSION + Version::ZERO,
@@ -92,6 +104,7 @@ impl Stores {
                     )
                     .unwrap(),
                     Store::import(
+                        keyspace,
                         path,
                         "p2pk65addressindex_to_emptyaddressdata",
                         version + VERSION + Version::ZERO,
@@ -104,6 +117,7 @@ impl Stores {
             let p2pkh = scope.spawn(|| {
                 (
                     Store::import(
+                        keyspace,
                         path,
                         "p2pkhaddressindex_to_addressdata",
                         version + VERSION + Version::ZERO,
@@ -111,6 +125,7 @@ impl Stores {
                     )
                     .unwrap(),
                     Store::import(
+                        keyspace,
                         path,
                         "p2pkhaddressindex_to_emptyaddressdata",
                         version + VERSION + Version::ZERO,
@@ -123,6 +138,7 @@ impl Stores {
             let p2sh = scope.spawn(|| {
                 (
                     Store::import(
+                        keyspace,
                         path,
                         "p2shaddressindex_to_addressdata",
                         version + VERSION + Version::ZERO,
@@ -130,6 +146,7 @@ impl Stores {
                     )
                     .unwrap(),
                     Store::import(
+                        keyspace,
                         path,
                         "p2shaddressindex_to_emptyaddressdata",
                         version + VERSION + Version::ZERO,
@@ -142,6 +159,7 @@ impl Stores {
             let p2tr = scope.spawn(|| {
                 (
                     Store::import(
+                        keyspace,
                         path,
                         "p2traddressindex_to_addressdata",
                         version + VERSION + Version::ZERO,
@@ -149,6 +167,7 @@ impl Stores {
                     )
                     .unwrap(),
                     Store::import(
+                        keyspace,
                         path,
                         "p2traddressindex_to_emptyaddressdata",
                         version + VERSION + Version::ZERO,
@@ -161,6 +180,7 @@ impl Stores {
             let p2wpkh = scope.spawn(|| {
                 (
                     Store::import(
+                        keyspace,
                         path,
                         "p2wpkhaddressindex_to_addressdata",
                         version + VERSION + Version::ZERO,
@@ -168,6 +188,7 @@ impl Stores {
                     )
                     .unwrap(),
                     Store::import(
+                        keyspace,
                         path,
                         "p2wpkhaddressindex_to_emptyaddressdata",
                         version + VERSION + Version::ZERO,
@@ -180,6 +201,7 @@ impl Stores {
             let p2wsh = scope.spawn(|| {
                 (
                     Store::import(
+                        keyspace,
                         path,
                         "p2wshaddressindex_to_addressdata",
                         version + VERSION + Version::ZERO,
@@ -187,6 +209,7 @@ impl Stores {
                     )
                     .unwrap(),
                     Store::import(
+                        keyspace,
                         path,
                         "p2wshaddressindex_to_emptyaddressdata",
                         version + VERSION + Version::ZERO,
@@ -209,6 +232,8 @@ impl Stores {
         });
 
         Ok(Self {
+            keyspace: keyspace.clone(),
+
             p2aaddressindex_to_addressdata,
             p2aaddressindex_to_emptyaddressdata,
 
@@ -249,7 +274,11 @@ impl Stores {
 
         self.as_mut_slice()
             .into_iter()
-            .try_for_each(|store| store.reset())
+            .try_for_each(|store| store.reset())?;
+
+        self.keyspace
+            .persist(PersistMode::SyncAll)
+            .map_err(|e| e.into())
     }
 
     pub fn get_addressdata(
@@ -563,7 +592,9 @@ impl Stores {
             });
         });
 
-        Ok(())
+        self.keyspace
+            .persist(PersistMode::SyncAll)
+            .map_err(|e| e.into())
     }
 
     pub fn rotate_memtables(&self) {

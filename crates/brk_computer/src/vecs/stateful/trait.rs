@@ -1,25 +1,11 @@
-use std::path::Path;
-
 use brk_core::{Bitcoin, DateIndex, Dollars, Height, Result, Version};
 use brk_exit::Exit;
 use brk_indexer::Indexer;
-use brk_vec::{AnyCollectableVec, AnyIterableVec, Computation, Format};
+use brk_vec::{AnyCollectableVec, AnyIterableVec};
 
 use crate::vecs::{Indexes, fetched, indexes, market};
 
-pub trait CohortVecs: Sized {
-    #[allow(clippy::too_many_arguments)]
-    fn forced_import(
-        path: &Path,
-        cohort_name: Option<&str>,
-        computation: Computation,
-        format: Format,
-        version: Version,
-        fetched: Option<&fetched::Vecs>,
-        states_path: &Path,
-        compute_relative_to_all: bool,
-    ) -> color_eyre::Result<Self>;
-
+pub trait DynCohortVecs: Send + Sync {
     fn starting_height(&self) -> Height;
 
     fn init(&mut self, starting_height: Height);
@@ -39,13 +25,6 @@ pub trait CohortVecs: Sized {
 
     fn safe_flush_stateful_vecs(&mut self, height: Height, exit: &Exit) -> Result<()>;
 
-    fn compute_from_stateful(
-        &mut self,
-        starting_indexes: &Indexes,
-        others: &[&Self],
-        exit: &Exit,
-    ) -> Result<()>;
-
     #[allow(clippy::too_many_arguments)]
     fn compute_rest_part1(
         &mut self,
@@ -55,6 +34,17 @@ pub trait CohortVecs: Sized {
         starting_indexes: &Indexes,
         exit: &Exit,
     ) -> color_eyre::Result<()>;
+
+    fn vecs(&self) -> Vec<&dyn AnyCollectableVec>;
+}
+
+pub trait CohortVecs: DynCohortVecs {
+    fn compute_from_stateful(
+        &mut self,
+        starting_indexes: &Indexes,
+        others: &[&Self],
+        exit: &Exit,
+    ) -> Result<()>;
 
     #[allow(clippy::too_many_arguments)]
     fn compute_rest_part2(
@@ -70,6 +60,4 @@ pub trait CohortVecs: Sized {
         dateindex_to_realized_cap: Option<&impl AnyIterableVec<DateIndex, Dollars>>,
         exit: &Exit,
     ) -> color_eyre::Result<()>;
-
-    fn vecs(&self) -> Vec<&dyn AnyCollectableVec>;
 }

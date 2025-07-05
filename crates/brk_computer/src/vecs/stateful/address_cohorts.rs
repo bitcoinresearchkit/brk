@@ -11,7 +11,10 @@ use rayon::prelude::*;
 
 use crate::vecs::{
     Indexes, fetched,
-    stateful::{address_cohort, r#trait::CohortVecs},
+    stateful::{
+        address_cohort,
+        r#trait::{CohortVecs, DynCohortVecs},
+    },
 };
 
 const VERSION: Version = Version::new(0);

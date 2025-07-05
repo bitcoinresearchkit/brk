@@ -13,6 +13,10 @@ lto = "fat"
 codegen-units = 1
 panic = "abort"
 
+[profile.profiling]
+inherits = "release"
+debug = true
+
 [profile.dist]
 inherits = "release"
 

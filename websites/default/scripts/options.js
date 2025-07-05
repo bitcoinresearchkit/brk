@@ -46,6 +46,14 @@
  * @property {string} title
  * @property {string[]} path
  *
+ * @typedef {Object} PartialExplorerOptionSpecific
+ * @property {"explorer"} kind
+ * @property {string} title
+ *
+ * @typedef {PartialOption & PartialExplorerOptionSpecific} PartialExplorerOption
+ *
+ * @typedef {Required<PartialExplorerOption> & ProcessedOptionAddons} ExplorerOption
+ *
  * @typedef {Object} PartialChartOptionSpecific
  * @property {"chart"} [kind]
  * @property {string} title
@@ -85,9 +93,9 @@
  *
  * @typedef {Required<PartialUrlOption> & ProcessedOptionAddons} UrlOption
  *
- * @typedef {PartialChartOption | PartialTableOption | PartialSimulationOption | PartialUrlOption} AnyPartialOption
+ * @typedef {PartialExplorerOption | PartialChartOption | PartialTableOption | PartialSimulationOption | PartialUrlOption} AnyPartialOption
  *
- * @typedef {ChartOption | TableOption | SimulationOption | UrlOption} Option
+ * @typedef {ExplorerOption | ChartOption | TableOption | SimulationOption | UrlOption} Option
  *
  * @typedef {Object} PartialOptionsGroup
  * @property {string} name
@@ -105,10 +113,12 @@
  */
 
 /**
- * @param {Colors} colors
+ * @param {Object} args
+ * @param {Env} args.env
+ * @param {Colors} args.colors
  * @returns {PartialOptionsTree}
  */
-function createPartialOptions(colors) {
+function createPartialOptions({ env, colors }) {
   /**
    * @template {string} S
    * @typedef {Extract<VecId, `${S}${string}`>} StartsWith
@@ -1505,7 +1515,7 @@ function createPartialOptions(colors) {
                       key: `${fixKey(key)}realized_price`,
                       name,
                       color,
-                    })
+                    }),
                   ),
                 }
               : createPriceWithRatio({
@@ -1551,7 +1561,7 @@ function createPartialOptions(colors) {
                       }),
                       createBaseSeries({
                         key: `cumulative_${fixKey(
-                          args.key
+                          args.key,
                         )}negative_realized_loss`,
                         name: "Cumulative Negative Loss",
                         color: colors.red,
@@ -1560,7 +1570,7 @@ function createPartialOptions(colors) {
                       /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
                         type: "Baseline",
                         key: `${fixKey(
-                          args.key
+                          args.key,
                         )}realized_profit_relative_to_realized_cap`,
                         title: "Profit",
                         color: colors.green,
@@ -1573,7 +1583,7 @@ function createPartialOptions(colors) {
                       /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
                         type: "Baseline",
                         key: `${fixKey(
-                          args.key
+                          args.key,
                         )}realized_loss_relative_to_realized_cap`,
                         title: "Loss",
                         color: colors.red,
@@ -1602,7 +1612,7 @@ function createPartialOptions(colors) {
                       /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
                         type: "Baseline",
                         key: `cumulative_${fixKey(
-                          key
+                          key,
                         )}net_realized_profit_and_loss`,
                         title: "Cumulative net",
                         defaultActive: false,
@@ -1615,7 +1625,7 @@ function createPartialOptions(colors) {
                       /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
                         type: "Baseline",
                         key: `cumulative_${fixKey(
-                          key
+                          key,
                         )}net_realized_profit_and_loss_30d_change`,
                         title: "cum net 30d change",
                         defaultActive: false,
@@ -1628,7 +1638,7 @@ function createPartialOptions(colors) {
                       /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
                         type: "Baseline",
                         key: `${fixKey(
-                          key
+                          key,
                         )}net_realized_profit_and_loss_relative_to_realized_cap`,
                         title: "Net",
                         options: {
@@ -1640,7 +1650,7 @@ function createPartialOptions(colors) {
                       /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
                         type: "Baseline",
                         key: `cumulative_${fixKey(
-                          key
+                          key,
                         )}net_realized_profit_and_loss_30d_change_relative_to_realized_cap`,
                         title: "cum net 30d change",
                         options: {
@@ -1652,7 +1662,7 @@ function createPartialOptions(colors) {
                       /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
                         type: "Baseline",
                         key: `cumulative_${fixKey(
-                          key
+                          key,
                         )}net_realized_profit_and_loss_30d_change_relative_to_market_cap`,
                         title: "cum net 30d change",
                         options: {
@@ -1760,7 +1770,7 @@ function createPartialOptions(colors) {
                       /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
                         type: "Baseline",
                         key: `${fixKey(
-                          key
+                          key,
                         )}net_realized_profit_and_loss_relative_to_realized_cap`,
                         title: name,
                         color,
@@ -1810,7 +1820,7 @@ function createPartialOptions(colors) {
                           /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
                             type: "Baseline",
                             key: `cumulative_${fixKey(
-                              key
+                              key,
                             )}net_realized_profit_and_loss`,
                             title: name,
                             color,
@@ -1830,7 +1840,7 @@ function createPartialOptions(colors) {
                           /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
                             type: "Baseline",
                             key: `cumulative_${fixKey(
-                              key
+                              key,
                             )}net_realized_profit_and_loss_30d_change`,
                             title: name,
                             color,
@@ -1843,7 +1853,7 @@ function createPartialOptions(colors) {
                           /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
                             type: "Baseline",
                             key: `cumulative_${fixKey(
-                              key
+                              key,
                             )}net_realized_profit_and_loss_30d_change_relative_to_realized_cap`,
                             title: name,
                             color,
@@ -1856,7 +1866,7 @@ function createPartialOptions(colors) {
                           /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
                             type: "Baseline",
                             key: `cumulative_${fixKey(
-                              key
+                              key,
                             )}net_realized_profit_and_loss_30d_change_relative_to_market_cap`,
                             title: name,
                             color,
@@ -1897,7 +1907,7 @@ function createPartialOptions(colors) {
                           /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
                             type: "Baseline",
                             key: `${fixKey(
-                              key
+                              key,
                             )}adjusted_spent_output_profit_ratio`,
                             title: name,
                             color,
@@ -1920,7 +1930,7 @@ function createPartialOptions(colors) {
                   key: `${fixKey(key)}sell_side_risk_ratio`,
                   name: useGroupName ? name : "Risk",
                   color: color,
-                })
+                }),
               ),
             },
           ],
@@ -2009,7 +2019,7 @@ function createPartialOptions(colors) {
                 /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
                   type: "Baseline",
                   key: `${fixKey(
-                    key
+                    key,
                   )}net_unrealized_profit_and_loss_relative_to_market_cap`,
                   title: useGroupName ? name : "Net",
                   color: useGroupName ? color : undefined,
@@ -2134,6 +2144,15 @@ function createPartialOptions(colors) {
   }
 
   return [
+    ...(env.localhost
+      ? /** @type {const} */ ([
+          {
+            name: "Explorer",
+            title: "Explorer",
+            kind: "explorer",
+          },
+        ])
+      : []),
     {
       name: "Charts",
       tree: [
@@ -2199,7 +2218,7 @@ function createPartialOptions(colors) {
                       key: `${key}_sma`,
                       name: key,
                       color,
-                    })
+                    }),
                   ),
                 },
                 ...averages.map(({ key, name, color }) =>
@@ -2209,7 +2228,7 @@ function createPartialOptions(colors) {
                     title: `${name} Market Price Moving Average`,
                     legend: "average",
                     color,
-                  })
+                  }),
                 ),
               ],
             },
@@ -2326,7 +2345,7 @@ function createPartialOptions(colors) {
                           },
                         }),
                       ],
-                    })
+                    }),
                 ),
                 .../** @type {const} */ ([
                   { name: "2 Year", key: "2y" },
@@ -2397,7 +2416,7 @@ function createPartialOptions(colors) {
                           },
                         }),
                       ],
-                    })
+                    }),
                 ),
               ],
             },
@@ -2413,7 +2432,7 @@ function createPartialOptions(colors) {
                       name: `${year}`,
                       color,
                       defaultActive,
-                    })
+                    }),
                   ),
                 },
                 ...dcaClasses.map(
@@ -2440,7 +2459,7 @@ function createPartialOptions(colors) {
                           },
                         }),
                       ],
-                    })
+                    }),
                 ),
               ],
             },
@@ -2501,10 +2520,10 @@ function createPartialOptions(colors) {
               bottom: [
                 ...createAverageSumCumulativeMinMaxPercentilesSeries("fee"),
                 ...createAverageSumCumulativeMinMaxPercentilesSeries(
-                  "fee_in_btc"
+                  "fee_in_btc",
                 ),
                 ...createAverageSumCumulativeMinMaxPercentilesSeries(
-                  "fee_in_usd"
+                  "fee_in_usd",
                 ),
               ],
             },
@@ -3227,7 +3246,7 @@ function createPartialOptions(colors) {
                       name,
                       color,
                     }),
-                  ])
+                  ]),
               ),
             },
             {
@@ -3252,7 +3271,7 @@ function createPartialOptions(colors) {
                         key,
                         name,
                         color,
-                      })
+                      }),
                     ),
                   ],
                 },
@@ -3277,7 +3296,7 @@ function createPartialOptions(colors) {
                         color: colors.orange,
                       }),
                     ],
-                  })
+                  }),
                 ),
               ],
             },
@@ -3292,7 +3311,7 @@ function createPartialOptions(colors) {
                       key,
                       name,
                       color,
-                    })
+                    }),
                   ),
                 },
                 ...cointimePrices.map(({ key, name, color, title }) =>
@@ -3302,7 +3321,7 @@ function createPartialOptions(colors) {
                     color,
                     name,
                     title,
-                  })
+                  }),
                 ),
               ],
             },
@@ -3436,7 +3455,7 @@ export function initOptions({ colors, signals, env, utils, qrcode }) {
   /** @type {Signal<Option>} */
   const selected = signals.createSignal(/** @type {any} */ (undefined));
 
-  const partialOptions = createPartialOptions(colors);
+  const partialOptions = createPartialOptions({ env, colors });
 
   /** @type {Option[]} */
   const list = [];
@@ -3445,7 +3464,7 @@ export function initOptions({ colors, signals, env, utils, qrcode }) {
   const detailsList = [];
 
   const treeElement = signals.createSignal(
-    /** @type {HTMLDivElement | null} */ (null)
+    /** @type {HTMLDivElement | null} */ (null),
   );
 
   /** @type {string[] | undefined} */
@@ -3557,7 +3576,7 @@ export function initOptions({ colors, signals, env, utils, qrcode }) {
           return null;
         }
       },
-      null
+      null,
     );
 
     partialTree.forEach((anyPartial, partialIndex) => {
@@ -3580,7 +3599,7 @@ export function initOptions({ colors, signals, env, utils, qrcode }) {
 
       if ("tree" in anyPartial) {
         const folderId = utils.stringToId(
-          `${(path || []).join(" ")} ${anyPartial.name} folder`
+          `${(path || []).join(" ")} ${anyPartial.name} folder`,
         );
 
         /** @type {Omit<OptionsGroup, keyof PartialOptionsGroup>} */
@@ -3595,13 +3614,13 @@ export function initOptions({ colors, signals, env, utils, qrcode }) {
         const thisPath = groupAddons.id;
 
         const passedDetails = signals.createSignal(
-          /** @type {HTMLDivElement | HTMLDetailsElement | null} */ (null)
+          /** @type {HTMLDivElement | HTMLDetailsElement | null} */ (null),
         );
 
         const childOptionsCount = recursiveProcessPartialTree(
           anyPartial.tree,
           passedDetails,
-          [...(path || []), thisPath]
+          [...(path || []), thisPath],
         );
 
         listForSum.push(childOptionsCount);
@@ -3657,7 +3676,15 @@ export function initOptions({ colors, signals, env, utils, qrcode }) {
         /** @type {Option} */
         let option;
 
-        if ("kind" in anyPartial && anyPartial.kind === "table") {
+        if ("kind" in anyPartial && anyPartial.kind === "explorer") {
+          option = /** @satisfies {ExplorerOption} */ ({
+            kind: anyPartial.kind,
+            id: anyPartial.kind,
+            name: anyPartial.name,
+            path: path || [],
+            title: anyPartial.title,
+          });
+        } else if ("kind" in anyPartial && anyPartial.kind === "table") {
           option = /** @satisfies {TableOption} */ ({
             kind: anyPartial.kind,
             id: anyPartial.kind,
@@ -3733,14 +3760,17 @@ export function initOptions({ colors, signals, env, utils, qrcode }) {
     });
 
     return signals.createMemo(() =>
-      listForSum.reduce((acc, s) => acc + s(), 0)
+      listForSum.reduce((acc, s) => acc + s(), 0),
     );
   }
   recursiveProcessPartialTree(partialOptions, treeElement);
 
   function setDefaultSelectedIfNeeded() {
     if (!selected()) {
-      selected.set(list[0]);
+      const firstChartOption = list.find((option) => option.kind === "chart");
+      if (firstChartOption) {
+        selected.set(firstChartOption);
+      }
     }
   }
   setDefaultSelectedIfNeeded();
@@ -3760,7 +3790,7 @@ export function initOptions({ colors, signals, env, utils, qrcode }) {
         console.log(
           [...m.entries()]
             .filter(([_, value]) => value > 1)
-            .map(([key, _]) => key)
+            .map(([key, _]) => key),
         );
 
         throw Error("ID duplicate");

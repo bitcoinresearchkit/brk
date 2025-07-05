@@ -7,7 +7,7 @@ const LINE = "line";
 const CANDLE = "candle";
 
 /**
- * @typedef {"timestamp" | "date" | "week" | "diff. epoch" | "month" | "quarter" | "year" | "decade" } SerializedChartableIndex
+ * @typedef {"timestamp" | "date" | "week" | "d.epoch" | "month" | "quarter" | "year" | "decade" } SerializedChartableIndex
  */
 
 /**
@@ -47,7 +47,7 @@ export function init({
   });
 
   const TIMERANGE_LS_KEY = signals.createMemo(
-    () => `chart-timerange-${index()}`
+    () => `chart-timerange-${index()}`,
   );
 
   let firstRun = true;
@@ -101,7 +101,7 @@ export function init({
         from.set(t.from);
         to.set(t.to);
       }
-    })
+    }),
   );
 
   elements.charts.append(fieldset);
@@ -218,7 +218,7 @@ export function init({
           date.setUTCFullYear(
             Math.floor(date.getUTCFullYear() / 10) * 10,
             0,
-            1
+            1,
           );
         } else {
           throw Error("Unsupported");
@@ -361,9 +361,9 @@ export function init({
             ({ latest, hasData }) => {
               if (!series || !latest || !hasData) return;
               printLatest({ iseries: series.inner, unit: topUnit, index });
-            }
+            },
           );
-        }
+        },
       );
 
       [
@@ -425,7 +425,7 @@ export function init({
                             blueprint.color?.() ?? blueprint.colors?.[1](),
                         },
                         order,
-                      })
+                      }),
                     );
                     break;
                   }
@@ -443,13 +443,13 @@ export function init({
                         paneIndex,
                         options: blueprint.options,
                         order,
-                      })
+                      }),
                     );
                 }
               }
             });
           });
-        }
+        },
       );
 
       firstRun = false;
@@ -469,7 +469,7 @@ function createIndexSelector({ option, vecIdToIndexes, signals, utils }) {
     "timestamp",
     "date",
     "week",
-    "diff. epoch",
+    "d.epoch",
     "month",
     "quarter",
     "year",
@@ -488,7 +488,7 @@ function createIndexSelector({ option, vecIdToIndexes, signals, utils }) {
       [Object.values(o.top), Object.values(o.bottom)]
         .flat(2)
         .map((blueprint) => vecIdToIndexes[blueprint.key])
-        .flat()
+        .flat(),
     );
 
     const serializedIndexes = [...rawIndexes].flatMap((index) => {
@@ -515,7 +515,7 @@ function createIndexSelector({ option, vecIdToIndexes, signals, utils }) {
   fieldset.dataset.size = "sm";
 
   const index = signals.createMemo(() =>
-    utils.serde.chartableIndex.deserialize(selected())
+    utils.serde.chartableIndex.deserialize(selected()),
   );
 
   return { fieldset, index };

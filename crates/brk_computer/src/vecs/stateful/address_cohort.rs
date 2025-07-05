@@ -11,7 +11,10 @@ use crate::{
     states::AddressCohortState,
     vecs::{
         Indexes, fetched, indexes, market,
-        stateful::{common, r#trait::CohortVecs},
+        stateful::{
+            common,
+            r#trait::{CohortVecs, DynCohortVecs},
+        },
     },
 };
 
@@ -28,9 +31,9 @@ pub struct Vecs {
     pub inner: common::Vecs,
 }
 
-impl CohortVecs for Vecs {
+impl Vecs {
     #[allow(clippy::too_many_arguments)]
-    fn forced_import(
+    pub fn forced_import(
         path: &Path,
         cohort_name: Option<&str>,
         computation: Computation,
@@ -68,7 +71,9 @@ impl CohortVecs for Vecs {
             )?,
         })
     }
+}
 
+impl DynCohortVecs for Vecs {
     fn starting_height(&self) -> Height {
         [
             self.state.height().map_or(Height::MAX, |h| h.incremented()),
@@ -146,6 +151,25 @@ impl CohortVecs for Vecs {
             .safe_flush_stateful_vecs(height, exit, &mut self.state.inner)
     }
 
+    #[allow(clippy::too_many_arguments)]
+    fn compute_rest_part1(
+        &mut self,
+        indexer: &Indexer,
+        indexes: &indexes::Vecs,
+        fetched: Option<&fetched::Vecs>,
+        starting_indexes: &Indexes,
+        exit: &Exit,
+    ) -> color_eyre::Result<()> {
+        self.inner
+            .compute_rest_part1(indexer, indexes, fetched, starting_indexes, exit)
+    }
+
+    fn vecs(&self) -> Vec<&dyn AnyCollectableVec> {
+        [self.inner.vecs(), vec![&self.height_to_address_count]].concat()
+    }
+}
+
+impl CohortVecs for Vecs {
     fn compute_from_stateful(
         &mut self,
         starting_indexes: &Indexes,
@@ -166,19 +190,6 @@ impl CohortVecs for Vecs {
             &others.iter().map(|v| &v.inner).collect::<Vec<_>>(),
             exit,
         )
-    }
-
-    #[allow(clippy::too_many_arguments)]
-    fn compute_rest_part1(
-        &mut self,
-        indexer: &Indexer,
-        indexes: &indexes::Vecs,
-        fetched: Option<&fetched::Vecs>,
-        starting_indexes: &Indexes,
-        exit: &Exit,
-    ) -> color_eyre::Result<()> {
-        self.inner
-            .compute_rest_part1(indexer, indexes, fetched, starting_indexes, exit)
     }
 
     #[allow(clippy::too_many_arguments)]
@@ -207,10 +218,6 @@ impl CohortVecs for Vecs {
             dateindex_to_realized_cap,
             exit,
         )
-    }
-
-    fn vecs(&self) -> Vec<&dyn AnyCollectableVec> {
-        [self.inner.vecs(), vec![&self.height_to_address_count]].concat()
     }
 }
 

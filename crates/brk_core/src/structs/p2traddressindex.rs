@@ -31,6 +31,11 @@ impl From<TypeIndex> for P2TRAddressIndex {
         Self(value)
     }
 }
+impl From<P2TRAddressIndex> for TypeIndex {
+    fn from(value: P2TRAddressIndex) -> Self {
+        value.0
+    }
+}
 impl From<P2TRAddressIndex> for u32 {
     fn from(value: P2TRAddressIndex) -> Self {
         Self::from(*value)

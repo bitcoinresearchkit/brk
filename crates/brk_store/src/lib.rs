@@ -42,6 +42,12 @@ const DEFAULT_BLOOM_FILTER_BITS: Option<u8> = Some(5);
 // const CHECK_COLLISIONS: bool = true;
 const MAJOR_FJALL_VERSION: Version = Version::TWO;
 
+pub fn open_keyspace(path: &Path) -> fjall::Result<TransactionalKeyspace> {
+    fjall::Config::new(path.join("fjall"))
+        .max_write_buffer_size(32 * 1024 * 1024)
+        .open_transactional()
+}
+
 impl<'a, K, V> Store<K, V>
 where
     K: Debug + Clone + From<ByteView> + Ord + 'a,
@@ -49,32 +55,20 @@ where
     ByteView: From<K> + From<&'a K> + From<V>,
 {
     pub fn import(
-        path_: &Path,
+        keyspace: &TransactionalKeyspace,
+        path: &Path,
         name: &str,
         version: Version,
         bloom_filter_bits: Option<Option<u8>>,
     ) -> Result<Self> {
-        let path = path_.join(name);
-
-        fs::create_dir_all(&path)?;
-
-        let keyspace = match fjall::Config::new(path.join("fjall"))
-            .max_write_buffer_size(32 * 1024 * 1024)
-            .open_transactional()
-        {
-            Ok(keyspace) => keyspace,
-            Err(_) => {
-                fs::remove_dir_all(path)?;
-                return Self::import(path_, name, version, bloom_filter_bits);
-            }
-        };
+        fs::create_dir_all(path)?;
 
         let (meta, partition) = StoreMeta::checked_open(
-            &keyspace,
-            &path.join("meta"),
+            keyspace,
+            &path.join(format!("meta/{name}")),
             MAJOR_FJALL_VERSION + version,
             || {
-                Self::open_partition_handle(&keyspace, bloom_filter_bits).inspect_err(|e| {
+                Self::open_partition_handle(keyspace, name, bloom_filter_bits).inspect_err(|e| {
                     eprintln!("{e}");
                     eprintln!("Delete {path:?} and try again");
                 })
@@ -185,11 +179,12 @@ where
 
     fn open_partition_handle(
         keyspace: &TransactionalKeyspace,
+        name: &str,
         bloom_filter_bits: Option<Option<u8>>,
     ) -> Result<TransactionalPartitionHandle> {
         keyspace
             .open_partition(
-                "partition",
+                name,
                 PartitionCreateOptions::default()
                     .bloom_filter_bits(bloom_filter_bits.unwrap_or(DEFAULT_BLOOM_FILTER_BITS))
                     .max_memtable_size(8 * 1024 * 1024)
@@ -234,8 +229,6 @@ where
 
         wtx.commit()?;
 
-        self.keyspace.persist(PersistMode::SyncAll)?;
-
         self.rtx = self.keyspace.read_tx();
 
         Ok(())
@@ -250,6 +243,7 @@ where
 {
     fn commit(&mut self, height: Height) -> Result<()> {
         if self.puts.is_empty() && self.dels.is_empty() {
+            self.meta.export(height)?;
             return Ok(());
         }
 
@@ -257,6 +251,16 @@ where
         let puts = mem::take(&mut self.puts);
 
         self.commit_(height, dels.into_iter(), puts.into_iter())
+    }
+
+    fn persist(&self) -> Result<()> {
+        self.keyspace
+            .persist(PersistMode::SyncAll)
+            .map_err(|e| e.into())
+    }
+
+    fn name(&self) -> &'static str {
+        self.name
     }
 
     fn reset(&mut self) -> Result<()> {
@@ -268,11 +272,10 @@ where
 
         self.meta.reset();
 
-        let partition = Self::open_partition_handle(&self.keyspace, self.bloom_filter_bits)?;
+        let partition =
+            Self::open_partition_handle(&self.keyspace, self.name, self.bloom_filter_bits)?;
 
         self.partition.replace(partition);
-
-        self.keyspace.persist(PersistMode::SyncAll)?;
 
         Ok(())
     }

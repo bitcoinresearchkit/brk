@@ -13,7 +13,7 @@ use rayon::prelude::*;
 
 use crate::{
     states::{BlockState, Transacted},
-    vecs::{Indexes, fetched},
+    vecs::{Indexes, fetched, stateful::r#trait::DynCohortVecs},
 };
 
 use super::{r#trait::CohortVecs, utxo_cohort};

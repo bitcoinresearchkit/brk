@@ -56,6 +56,9 @@ impl Indexer {
         let starting_indexes = Indexes::try_from((&mut self.vecs, &self.stores, rpc))
             .unwrap_or_else(|_report| Indexes::default());
 
+        // dbg!(starting_indexes);
+        // panic!();
+
         exit.block();
         self.stores
             .rollback_if_needed(&mut self.vecs, &starting_indexes)?;

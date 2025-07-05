@@ -10,6 +10,10 @@ where
     I: StoredIndex,
     T: StoredType,
 {
+    fn collect(&self) -> Result<Vec<T>> {
+        self.collect_range(None, None)
+    }
+
     fn collect_range(&self, from: Option<usize>, to: Option<usize>) -> Result<Vec<T>> {
         let len = self.len();
         let from = from.unwrap_or_default();
