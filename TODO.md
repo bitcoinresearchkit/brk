@@ -1,0 +1,86 @@
+# TODO
+
+- __crates__
+  - _cli_
+    - check disk space on first launch
+    - add custom path support for config.toml
+    - maybe add bitcoind download and launch support
+      - via: https://github.com/rust-bitcoin/corepc/blob/master/node
+    - test read/write speed, add warning if too low (<2gb/s)
+    - pull latest version and notify is out of date
+  - _computer_
+    - **add rollback of states (in stateful)**
+    - add support for per index computation
+    - fix feerate which is always ZERO due to coinbase transaction
+    - before computing multiple sources check their length, panic if not equal
+    - add oracle price dataset (https://utxo.live/oracle/UTXOracle.py)
+    - add address counts relative to all datasets
+    - make decade, quarter, year datasets `computed` instead of `eager`
+    - add 6 months interval datasets to builder
+    - add revived/sent supply datasets
+    - add `in-sats` version of all price datasets (average and co)
+    - add `p2pk` group (sum of `p2pk33` and `p2pk65`)
+    - add more date ranges (3-6 months and more)
+    - add puell multiple dataset
+    - add pi cycle dataset
+    - add all possible charts from:
+      - https://mainnet.observer
+      - https://glassnode.com
+      - https://checkonchain.com
+      - https://researchbitcoin.net/exciting-update-coming-to-the-bitcoin-lab/
+      - https://mempool.space/research
+  - _indexer_
+    - parse only the needed block number
+      - maybe using https://developer.bitcoin.org/reference/rpc/getblockhash.html
+  - _interface_
+    - create pagination enum
+      - from to
+      - from option<count>
+      - to option<count>
+      - page + option<per page> default 1000 max 1000
+    - from/to/count params don’t cap all combinations
+      - example: from -10,000 count 10, won’t work if underlying vec isn’t 10k or more long
+  - _parser_
+    - save `vec` file instead of `json`
+    - support lock file, process in read only if already opened in write mode
+    - if less than X (10 maybe ?) get block using rpc instead of parsing the block files
+  - _server_
+    - api
+      - add extensions support (.json .csv …)
+      - if format instead of extension then don't download file
+  - _vec_
+    - add native lock file support (once it's available in stable rust)
+    - improve compressed mode (slow reads)
+- __docs__
+  - _README_
+    - add a comparison table with alternatives
+    - add contribution section where help is needed
+      - documentation/mcp/datasets/different front ends
+    - add faq
+- __websites__
+  - _default_
+    - explorer
+      - blocks
+      - transactions
+      - addresses
+      - miners
+      - maybe xpubs
+    - charts
+      - improve some names and colors
+      - remove `sum` series when it's a duplicate of the `base` (in subsidy for example)
+      - selected unit sometimes changes when going back end forth
+      - add support for custom charts
+      - price scale format depends on unit, hide digits for sats for example (if/when possible)
+    - table
+      - pagination
+      - exports (.json, .csv,…)
+    - search
+      - datasets add legend, and keywords ?
+      - height/address/txid
+    - api
+      - add api page with interactivity
+    - global
+      - **fix navigation/history**
+      - move share button to footer ?
+      - improve behavior when local storage is unavailable
+        - by having a global state

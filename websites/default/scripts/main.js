@@ -149,6 +149,13 @@ function createUtils() {
       }
       return range;
     },
+    /**
+     * @template T
+     * @param {T[]} array
+     */
+    random(array) {
+      return array[Math.floor(Math.random() * array.length)];
+    },
   };
 
   const dom = {

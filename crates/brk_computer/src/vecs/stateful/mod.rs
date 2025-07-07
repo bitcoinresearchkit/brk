@@ -2,7 +2,7 @@ use std::{cmp::Ordering, collections::BTreeMap, mem, path::Path, thread};
 
 use brk_core::{
     AddressData, CheckedSub, DateIndex, Dollars, EmptyAddressData, GroupedByAddressType, Height,
-    InputIndex, OutputIndex, OutputType, Result, Sats, TypeIndex, Version,
+    InputIndex, OutputIndex, OutputType, Result, Sats, StoredUsize, TypeIndex, Version,
 };
 use brk_exit::Exit;
 use brk_indexer::Indexer;
@@ -17,6 +17,7 @@ use crate::{
     BlockState, SupplyState, Transacted,
     stores::Stores,
     vecs::{
+        grouped::ComputedVecsFromHeight,
         market,
         stateful::{
             addresstype_to_addresscount::AddressTypeToAddressCount,
@@ -52,18 +53,19 @@ const VERSION: Version = Version::new(11);
 
 #[derive(Clone)]
 pub struct Vecs {
-    chain_state: StoredVec<Height, SupplyState>,
+    pub chain_state: StoredVec<Height, SupplyState>,
 
     pub height_to_unspendable_supply: EagerVec<Height, Sats>,
     pub indexes_to_unspendable_supply: ComputedValueVecsFromHeight,
     pub height_to_opreturn_supply: EagerVec<Height, Sats>,
     pub indexes_to_opreturn_supply: ComputedValueVecsFromHeight,
-    // pub height_to_address_count: EagerVec<Height, StoredUsize>,
-    // pub height_to_empty_address_count: EagerVec<Height, StoredUsize>,
     pub addresstype_to_height_to_address_count: AddressTypeToAddressCountVec,
     pub addresstype_to_height_to_empty_address_count: AddressTypeToAddressCountVec,
     pub utxo_vecs: utxo_cohorts::Vecs,
     pub address_vecs: address_cohorts::Vecs,
+
+    pub indexes_to_address_count: ComputedVecsFromHeight<StoredUsize>,
+    pub indexes_to_empty_address_count: ComputedVecsFromHeight<StoredUsize>,
 }
 
 impl Vecs {
@@ -119,18 +121,22 @@ impl Vecs {
                 StorableVecGeneatorOptions::default().add_last(),
                 compute_dollars,
             )?,
-            // height_to_address_count: EagerVec::forced_import(
-            //     path,
-            //     "address_count",
-            //     version + VERSION + Version::ZERO,
-            //     format,
-            // )?,
-            // height_to_empty_address_count: EagerVec::forced_import(
-            //     path,
-            //     "empty_address_count",
-            //     version + VERSION + Version::ZERO,
-            //     format,
-            // )?,
+            indexes_to_address_count: ComputedVecsFromHeight::forced_import(
+                path,
+                "address_count",
+                true,
+                version + VERSION + Version::ZERO,
+                format,
+                StorableVecGeneatorOptions::default().add_last(),
+            )?,
+            indexes_to_empty_address_count: ComputedVecsFromHeight::forced_import(
+                path,
+                "empty_address_count",
+                true,
+                version + VERSION + Version::ZERO,
+                format,
+                StorableVecGeneatorOptions::default().add_last(),
+            )?,
             addresstype_to_height_to_address_count: AddressTypeToAddressCountVec::from(
                 GroupedByAddressType {
                     p2pk65: EagerVec::forced_import(
@@ -976,6 +982,7 @@ impl Vecs {
                         .as_mut()
                         .map(|v| is_date_last_height.then(|| *v.unwrap_get_inner(dateindex)));
 
+                    let dateindex = is_date_last_height.then_some(dateindex);
                     separate_utxo_vecs
                         .into_par_iter()
                         .map(|(_, v)| v as &mut dyn DynCohortVecs).chain(
@@ -987,7 +994,7 @@ impl Vecs {
                             v.compute_then_force_push_unrealized_states(
                                 height,
                                 price,
-                                is_date_last_height.then_some(dateindex),
+                                dateindex,
                                 date_price,
                                 exit,
                             )
@@ -1038,6 +1045,44 @@ impl Vecs {
         });
 
         info!("Computing rest part 1...");
+
+        self.indexes_to_address_count.compute_all(
+            indexer,
+            indexes,
+            starting_indexes,
+            exit,
+            |v, _, _, starting_indexes, exit| {
+                v.compute_sum_of_others(
+                    starting_indexes.height,
+                    &self
+                        .addresstype_to_height_to_address_count
+                        .as_typed_vec()
+                        .into_iter()
+                        .map(|(_, v)| v)
+                        .collect::<Vec<_>>(),
+                    exit,
+                )
+            },
+        )?;
+
+        self.indexes_to_empty_address_count.compute_all(
+            indexer,
+            indexes,
+            starting_indexes,
+            exit,
+            |v, _, _, starting_indexes, exit| {
+                v.compute_sum_of_others(
+                    starting_indexes.height,
+                    &self
+                        .addresstype_to_height_to_empty_address_count
+                        .as_typed_vec()
+                        .into_iter()
+                        .map(|(_, v)| v)
+                        .collect::<Vec<_>>(),
+                    exit,
+                )
+            },
+        )?;
 
         thread::scope(|scope| {
             scope.spawn(|| {
@@ -1194,6 +1239,8 @@ impl Vecs {
                 .collect::<Vec<_>>(),
             self.indexes_to_unspendable_supply.vecs(),
             self.indexes_to_opreturn_supply.vecs(),
+            self.indexes_to_address_count.vecs(),
+            self.indexes_to_empty_address_count.vecs(),
             self.addresstype_to_height_to_address_count
                 .as_typed_vec()
                 .into_iter()
@@ -1207,8 +1254,6 @@ impl Vecs {
             vec![
                 &self.height_to_unspendable_supply,
                 &self.height_to_opreturn_supply,
-                // &self.height_to_address_count,
-                // &self.height_to_empty_address_count,
             ],
         ]
         .into_iter()
