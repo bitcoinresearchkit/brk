@@ -24,6 +24,7 @@ where
     pub difficultyepoch: ComputedVecBuilder<DifficultyEpoch, T>,
     pub monthindex: ComputedVecBuilder<MonthIndex, T>,
     pub quarterindex: ComputedVecBuilder<QuarterIndex, T>,
+    // 6 months
     pub yearindex: ComputedVecBuilder<YearIndex, T>,
     // TODO: pub halvingepoch: StorableVecGeneator<Halvingepoch, T>,
     pub decadeindex: ComputedVecBuilder<DecadeIndex, T>,
@@ -144,9 +145,9 @@ where
         indexes: &indexes::Vecs,
         starting_indexes: &Indexes,
         exit: &Exit,
-        height: Option<&impl AnyIterableVec<Height, T>>,
+        height_vec: Option<&impl AnyIterableVec<Height, T>>,
     ) -> color_eyre::Result<()> {
-        if let Some(height) = height {
+        if let Some(height) = height_vec {
             self.height_extra
                 .extend(starting_indexes.height, height, exit)?;
 

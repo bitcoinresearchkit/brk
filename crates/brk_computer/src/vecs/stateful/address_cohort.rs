@@ -10,7 +10,9 @@ use brk_vec::{
 use crate::{
     states::AddressCohortState,
     vecs::{
-        Indexes, fetched, indexes, market,
+        Indexes, fetched,
+        grouped::{ComputedVecsFromHeight, StorableVecGeneatorOptions},
+        indexes, market,
         stateful::{
             common,
             r#trait::{CohortVecs, DynCohortVecs},
@@ -26,9 +28,10 @@ pub struct Vecs {
 
     pub state: AddressCohortState,
 
-    pub height_to_address_count: EagerVec<Height, StoredUsize>,
-
     pub inner: common::Vecs,
+
+    pub height_to_address_count: EagerVec<Height, StoredUsize>,
+    pub indexes_to_address_count: ComputedVecsFromHeight<StoredUsize>,
 }
 
 impl Vecs {
@@ -59,6 +62,14 @@ impl Vecs {
                 &suffix("address_count"),
                 version + VERSION + Version::ZERO,
                 format,
+            )?,
+            indexes_to_address_count: ComputedVecsFromHeight::forced_import(
+                path,
+                &suffix("address_count"),
+                false,
+                version + VERSION + Version::ZERO,
+                format,
+                StorableVecGeneatorOptions::default().add_last(),
             )?,
             inner: common::Vecs::forced_import(
                 path,
@@ -160,12 +171,24 @@ impl DynCohortVecs for Vecs {
         starting_indexes: &Indexes,
         exit: &Exit,
     ) -> color_eyre::Result<()> {
+        self.indexes_to_address_count.compute_rest(
+            indexes,
+            starting_indexes,
+            exit,
+            Some(&self.height_to_address_count),
+        )?;
+
         self.inner
             .compute_rest_part1(indexer, indexes, fetched, starting_indexes, exit)
     }
 
     fn vecs(&self) -> Vec<&dyn AnyCollectableVec> {
-        [self.inner.vecs(), vec![&self.height_to_address_count]].concat()
+        [
+            self.inner.vecs(),
+            self.indexes_to_address_count.vecs(),
+            vec![&self.height_to_address_count],
+        ]
+        .concat()
     }
 }
 

@@ -1301,19 +1301,18 @@ function createPartialOptions({ env, colors }) {
    */
 
   /**
+   * @template {"" | CohortId} T
+   * @param {T} _key
+   */
+  const fixKey = (_key) =>
+    _key !== ""
+      ? /** @type {Exclude<"" | `${T}_`, "_">} */ (`${_key}_`)
+      : /** @type {const} */ ("");
+
+  /**
    * @param {UTXOGroupObject | UTXOGroupsObject} args
    */
-  function createUTXOGroupFolder(args) {
-    /**
-     * @template {"" | CohortId} T
-     * @param {T} _key
-     */
-    const fixKey = (_key) =>
-      _key !== ""
-        ? /** @type {Exclude<"" | `${T}_`, "_">} */ (`${_key}_`)
-        : /** @type {const} */ ("");
-    0;
-
+  function createCohortGroupFolder(args) {
     const list = "list" in args ? args.list : [args];
     const useGroupName = "list" in args;
 
@@ -1474,6 +1473,35 @@ function createPartialOptions({ env, colors }) {
             ]);
           }),
         },
+        // list.filter(({ key }) => key.endsWith("address_count")).map(callbackfn),
+        // {
+        //   name: "loaded",
+        //   title: `${args.title} Loaded Address Count`,
+        //   bottom: list.flatMap(({ color, name, key: _key }) => {
+        //     const key = fixKey(_key);
+        //     return /** @type {const} */ ([
+        //       createBaseSeries({
+        //         key: `${key}address_count`,
+        //         name: useGroupName ? name : "Loaded",
+        //         color,
+        //       }),
+        //       createBaseSeries({
+        //         key: `${key}empty_address_count`,
+        //         name: useGroupName ? name : "Empty",
+        //         color,
+        //       }),
+        //     ]);
+        //   }),
+        // },
+        // {
+        //   name: "empty",
+        //   title: `${args.title} Empty Address Count`,
+        //   bottom: list.flatMap(({ color, name, key: _key }) => {
+        //     const key = fixKey(_key);
+        //     return /** @type {const} */ ([
+        //     ]);
+        //   }),
+        // },
         {
           name: "Realized",
           tree: [
@@ -2980,9 +3008,9 @@ function createPartialOptions({ env, colors }) {
           ],
         },
         {
-          name: "UTXOs",
+          name: "Cohorts",
           tree: [
-            createUTXOGroupFolder({
+            createCohortGroupFolder({
               key: "",
               name: "",
               title: "",
@@ -2991,100 +3019,181 @@ function createPartialOptions({ env, colors }) {
             {
               name: "term",
               tree: [
-                createUTXOGroupFolder({
+                createCohortGroupFolder({
                   name: "Compare",
                   title: "Compare By Term",
                   list: terms,
                 }),
-                ...terms.map(createUTXOGroupFolder),
+                ...terms.map(createCohortGroupFolder),
               ],
             },
             {
               name: "Up to date",
               tree: [
-                createUTXOGroupFolder({
+                createCohortGroupFolder({
                   name: "Compare",
                   title: "Compare By Up To",
                   list: upToDate,
                 }),
-                ...upToDate.map(createUTXOGroupFolder),
+                ...upToDate.map(createCohortGroupFolder),
               ],
             },
             {
               name: "From Date",
               tree: [
-                createUTXOGroupFolder({
+                createCohortGroupFolder({
                   name: "Compare",
                   title: "Compare By From",
                   list: fromDate,
                 }),
-                ...fromDate.map(createUTXOGroupFolder),
+                ...fromDate.map(createCohortGroupFolder),
               ],
             },
             {
               name: "Date Range",
               tree: [
-                createUTXOGroupFolder({
+                createCohortGroupFolder({
                   name: "Compare",
                   title: "Compare By Range",
                   list: dateRange,
                 }),
-                ...dateRange.map(createUTXOGroupFolder),
+                ...dateRange.map(createCohortGroupFolder),
               ],
             },
             {
               name: "Epoch",
               tree: [
-                createUTXOGroupFolder({
+                createCohortGroupFolder({
                   name: "Compare",
                   title: "Compare By Epoch",
                   list: epoch,
                 }),
-                ...epoch.map(createUTXOGroupFolder),
-              ],
-            },
-            {
-              name: "Up to size",
-              tree: [
-                createUTXOGroupFolder({
-                  name: "Compare",
-                  title: "Compare By Up To Size",
-                  list: upToSize,
-                }),
-                ...upToSize.map(createUTXOGroupFolder),
-              ],
-            },
-            {
-              name: "From size",
-              tree: [
-                createUTXOGroupFolder({
-                  name: "Compare",
-                  title: "Compare By From Size",
-                  list: fromSize,
-                }),
-                ...fromSize.map(createUTXOGroupFolder),
-              ],
-            },
-            {
-              name: "Size range",
-              tree: [
-                createUTXOGroupFolder({
-                  name: "Compare",
-                  title: "Compare By Size Range",
-                  list: sizeRanges,
-                }),
-                ...sizeRanges.map(createUTXOGroupFolder),
+                ...epoch.map(createCohortGroupFolder),
               ],
             },
             {
               name: "type",
               tree: [
-                createUTXOGroupFolder({
+                createCohortGroupFolder({
                   name: "Compare",
                   title: "Compare By Type",
                   list: type,
                 }),
-                ...type.map(createUTXOGroupFolder),
+                ...type.map(createCohortGroupFolder),
+              ],
+            },
+            {
+              name: "UTXOs Up to size",
+              tree: [
+                createCohortGroupFolder({
+                  name: "Compare",
+                  title: "Compare UTXOs By Up To Size",
+                  list: upToSize,
+                }),
+                ...upToSize.map(createCohortGroupFolder),
+              ],
+            },
+            {
+              name: "UTXOs From size",
+              tree: [
+                createCohortGroupFolder({
+                  name: "Compare",
+                  title: "Compare UTXOs By From Size",
+                  list: fromSize,
+                }),
+                ...fromSize.map(createCohortGroupFolder),
+              ],
+            },
+            {
+              name: "UTXOs Size range",
+              tree: [
+                createCohortGroupFolder({
+                  name: "Compare",
+                  title: "Compare UTXOs By Size Range",
+                  list: sizeRanges,
+                }),
+                ...sizeRanges.map(createCohortGroupFolder),
+              ],
+            },
+            {
+              name: "Addresses Up to size",
+              tree: [
+                createCohortGroupFolder({
+                  name: "Compare",
+                  title: "Compare Addresses By Up To Size",
+                  list: upToSize.map(
+                    (obj) =>
+                      /** @type {const} */ ({
+                        ...obj,
+                        key: `addresses_${obj.key}`,
+                        title: `Addresses ${obj.title}`,
+                      }),
+                  ),
+                }),
+                ...upToSize
+                  .map(
+                    (obj) =>
+                      /** @type {const} */ ({
+                        ...obj,
+                        key: `addresses_${obj.key}`,
+                        title: `Addresses ${obj.title}`,
+                      }),
+                  )
+                  .map(createCohortGroupFolder),
+              ],
+            },
+            {
+              name: "Addresses From size",
+              tree: [
+                createCohortGroupFolder({
+                  name: "Compare",
+                  title: "Compare Addresses By From Size",
+                  list: fromSize.map(
+                    (obj) =>
+                      /** @type {const} */ ({
+                        ...obj,
+                        key: `addresses_${obj.key}`,
+                        title: `Addresses ${obj.title}`,
+                      }),
+                  ),
+                }),
+                ...fromSize
+                  .map(
+                    (obj) =>
+                      /** @type {const} */ ({
+                        ...obj,
+                        key: `addresses_${obj.key}`,
+                        title: `Addresses ${obj.title}`,
+                      }),
+                  )
+                  .map(createCohortGroupFolder),
+              ],
+            },
+            {
+              name: "Addresses Size range",
+              tree: [
+                createCohortGroupFolder({
+                  name: "Compare",
+                  title: "Compare Addresses By Size Range",
+                  list: sizeRanges.map(
+                    (obj) =>
+                      /** @type {const} */ ({
+                        ...obj,
+                        key: `addresses_${obj.key}`,
+                        title: `Addresses ${obj.title}`,
+                      }),
+                  ),
+                }),
+                ...sizeRanges
+                  .map(
+                    (obj) =>
+                      /** @type {const} */ ({
+                        ...obj,
+                        key: `addresses_${obj.key}`,
+                        title: `Addresses ${obj.title}`,
+                      }),
+                  )
+                  .map(createCohortGroupFolder),
               ],
             },
           ],

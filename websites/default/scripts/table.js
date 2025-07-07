@@ -29,11 +29,11 @@ function createTable({
           keyPrefix: "table",
           key: "index",
         },
-      }
+      },
     )
   );
   const index = signals.createMemo(() =>
-    serializedIndexToIndex(serializedIndex())
+    serializedIndexToIndex(serializedIndex()),
   );
 
   const table = window.document.createElement("table");
@@ -73,7 +73,7 @@ function createTable({
     table.append(tbody);
 
     const rowElements = signals.createSignal(
-      /** @type {HTMLTableRowElement[]} */ ([])
+      /** @type {HTMLTableRowElement[]} */ ([]),
     );
 
     /**
@@ -322,11 +322,11 @@ function createTable({
                           unit,
                         });
                     }
-                  }
+                  },
                 );
 
                 return () => vecId;
-              }
+              },
             );
           });
         });
@@ -340,9 +340,7 @@ function createTable({
     columns().forEach((vecId, colIndex) => addCol(vecId, colIndex));
 
     obj.addRandomCol = function () {
-      const vecId =
-        possibleVecIds[Math.floor(Math.random() * possibleVecIds.length)];
-      addCol(vecId);
+      addCol(utils.array.random(possibleVecIds));
     };
 
     return () => index;
@@ -393,7 +391,7 @@ export function init({
       },
       inside: span,
       title: "Click or tap to add a column to the table",
-    })
+    }),
   );
 }
 
@@ -498,7 +496,7 @@ function createIndexToVecIds(vecIdToIndexes) {
       });
       return arr;
     },
-    /** @type {VecId[][]} */ (Array.from({ length: 24 }))
+    /** @type {VecId[][]} */ (Array.from({ length: 24 })),
   );
   indexToVecIds.forEach((arr) => {
     arr.sort();
