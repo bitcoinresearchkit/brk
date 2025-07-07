@@ -44,9 +44,9 @@ impl Sats {
     pub const _100K: Self = Self(100_000);
     pub const _1M: Self = Self(1_000_000);
     pub const _10M: Self = Self(10_000_000);
-    pub const _1_BTC: Self = Self::ONE_BTC;
-    pub const _10_BTC: Self = Self(10_00_000_000);
-    pub const _100_BTC: Self = Self(100_00_000_000);
+    pub const _1BTC: Self = Self::ONE_BTC;
+    pub const _10BTC: Self = Self(10_00_000_000);
+    pub const _100BTC: Self = Self(100_00_000_000);
     pub const _1K_BTC: Self = Self(1_000_00_000_000);
     pub const _10K_BTC: Self = Self(10_000_00_000_000);
     pub const _100K_BTC: Self = Self(100_000_00_000_000);

@@ -2150,6 +2150,7 @@ function main() {
             signals,
             utils,
             qrcode,
+            vecIdToIndexes,
           });
 
           // window.addEventListener("popstate", (_) => {

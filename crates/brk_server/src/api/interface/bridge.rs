@@ -52,7 +52,7 @@ export const VERSION = \"v{VERSION}\";
             .join("\n");
 
         contents += &format!(
-            "\n\n/** @typedef {{{}}} Index */",
+            "\n\n/** @typedef {{{}}} Index */\n",
             indexes
                 .iter()
                 .map(|i| i.to_string())
@@ -60,10 +60,16 @@ export const VERSION = \"v{VERSION}\";
                 .join(" | ")
         );
 
-        contents += "\n\n/** @typedef {ReturnType<typeof createVecIdToIndexes>} VecIdToIndexes */";
-        contents += "\n/** @typedef {keyof VecIdToIndexes} VecId */\n";
+        contents += "
+/** @typedef {ReturnType<typeof createVecIdToIndexes>} VecIdToIndexes
+/** @typedef {keyof VecIdToIndexes} VecId */
+";
 
-        contents += "\nexport function createVecIdToIndexes() {\n";
+        contents += "
+/**
+ * @returns {Record<any, number[]>}
+ */
+export function createVecIdToIndexes() {\n";
 
         contents += "  return {\n";
 

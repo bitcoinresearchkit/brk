@@ -98,11 +98,11 @@ impl<T> GroupedBySizeRange<T> {
             &mut self.from_100_000sats_to_1_000_000sats
         } else if value < Sats::_10M {
             &mut self.from_1_000_000sats_to_10_000_000sats
-        } else if value < Sats::_1_BTC {
+        } else if value < Sats::_1BTC {
             &mut self.from_10_000_000sats_to_1btc
-        } else if value < Sats::_10_BTC {
+        } else if value < Sats::_10BTC {
             &mut self.from_1btc_to_10btc
-        } else if value < Sats::_100_BTC {
+        } else if value < Sats::_100BTC {
             &mut self.from_10btc_to_100btc
         } else if value < Sats::_1K_BTC {
             &mut self.from_100btc_to_1_000btc
@@ -146,9 +146,9 @@ impl<T> GroupedBySizeRange<T> {
             (Sats::_100K, &self.from_100_000sats_to_1_000_000sats),
             (Sats::_1M, &self.from_1_000_000sats_to_10_000_000sats),
             (Sats::_10M, &self.from_10_000_000sats_to_1btc),
-            (Sats::_1_BTC, &self.from_1btc_to_10btc),
-            (Sats::_10_BTC, &self.from_10btc_to_100btc),
-            (Sats::_100_BTC, &self.from_100btc_to_1_000btc),
+            (Sats::_1BTC, &self.from_1btc_to_10btc),
+            (Sats::_10BTC, &self.from_10btc_to_100btc),
+            (Sats::_100BTC, &self.from_100btc_to_1_000btc),
             (Sats::_1K_BTC, &self.from_1_000btc_to_10_000btc),
             (Sats::_10K_BTC, &self.from_10_000btc_to_100_000btc),
             (Sats::_100K_BTC, &self.from_100_000btc),

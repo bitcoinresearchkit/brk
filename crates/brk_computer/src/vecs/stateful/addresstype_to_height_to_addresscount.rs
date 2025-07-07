@@ -6,15 +6,17 @@ use derive_deref::{Deref, DerefMut};
 use crate::vecs::stateful::addresstype_to_addresscount::AddressTypeToAddressCount;
 
 #[derive(Debug, Clone, Deref, DerefMut)]
-pub struct AddressTypeToAddressCountVec(GroupedByAddressType<EagerVec<Height, StoredUsize>>);
+pub struct AddressTypeToHeightToAddressCount(GroupedByAddressType<EagerVec<Height, StoredUsize>>);
 
-impl From<GroupedByAddressType<EagerVec<Height, StoredUsize>>> for AddressTypeToAddressCountVec {
+impl From<GroupedByAddressType<EagerVec<Height, StoredUsize>>>
+    for AddressTypeToHeightToAddressCount
+{
     fn from(value: GroupedByAddressType<EagerVec<Height, StoredUsize>>) -> Self {
         Self(value)
     }
 }
 
-impl AddressTypeToAddressCountVec {
+impl AddressTypeToHeightToAddressCount {
     pub fn forced_push_at(
         &mut self,
         height: Height,
