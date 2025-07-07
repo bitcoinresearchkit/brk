@@ -21,7 +21,9 @@ use crate::{
         market,
         stateful::{
             addresstype_to_addresscount::AddressTypeToAddressCount,
-            addresstype_to_addresscount_vec::AddressTypeToAddressCountVec, r#trait::DynCohortVecs,
+            addresstype_to_height_to_addresscount::AddressTypeToHeightToAddressCount,
+            addresstype_to_indexes_to_addresscount::AddressTypeToIndexesToAddressCount,
+            r#trait::DynCohortVecs,
         },
     },
 };
@@ -35,7 +37,8 @@ use super::{
 mod address_cohort;
 mod address_cohorts;
 mod addresstype_to_addresscount;
-mod addresstype_to_addresscount_vec;
+mod addresstype_to_height_to_addresscount;
+mod addresstype_to_indexes_to_addresscount;
 mod addresstype_to_typeindex_tree;
 mod addresstype_to_typeindex_vec;
 mod common;
@@ -59,8 +62,10 @@ pub struct Vecs {
     pub indexes_to_unspendable_supply: ComputedValueVecsFromHeight,
     pub height_to_opreturn_supply: EagerVec<Height, Sats>,
     pub indexes_to_opreturn_supply: ComputedValueVecsFromHeight,
-    pub addresstype_to_height_to_address_count: AddressTypeToAddressCountVec,
-    pub addresstype_to_height_to_empty_address_count: AddressTypeToAddressCountVec,
+    pub addresstype_to_height_to_address_count: AddressTypeToHeightToAddressCount,
+    pub addresstype_to_height_to_empty_address_count: AddressTypeToHeightToAddressCount,
+    pub addresstype_to_indexes_to_address_count: AddressTypeToIndexesToAddressCount,
+    pub addresstype_to_indexes_to_empty_address_count: AddressTypeToIndexesToAddressCount,
     pub utxo_vecs: utxo_cohorts::Vecs,
     pub address_vecs: address_cohorts::Vecs,
 
@@ -137,7 +142,7 @@ impl Vecs {
                 format,
                 StorableVecGeneatorOptions::default().add_last(),
             )?,
-            addresstype_to_height_to_address_count: AddressTypeToAddressCountVec::from(
+            addresstype_to_height_to_address_count: AddressTypeToHeightToAddressCount::from(
                 GroupedByAddressType {
                     p2pk65: EagerVec::forced_import(
                         path,
@@ -189,7 +194,7 @@ impl Vecs {
                     )?,
                 },
             ),
-            addresstype_to_height_to_empty_address_count: AddressTypeToAddressCountVec::from(
+            addresstype_to_height_to_empty_address_count: AddressTypeToHeightToAddressCount::from(
                 GroupedByAddressType {
                     p2pk65: EagerVec::forced_import(
                         path,
@@ -238,6 +243,142 @@ impl Vecs {
                         "p2a_empty_address_count",
                         version + VERSION + Version::ZERO,
                         format,
+                    )?,
+                },
+            ),
+            addresstype_to_indexes_to_address_count: AddressTypeToIndexesToAddressCount::from(
+                GroupedByAddressType {
+                    p2pk65: ComputedVecsFromHeight::forced_import(
+                        path,
+                        "p2pk65_address_count",
+                        false,
+                        version + VERSION + Version::ZERO,
+                        format,
+                        StorableVecGeneatorOptions::default().add_last(),
+                    )?,
+                    p2pk33: ComputedVecsFromHeight::forced_import(
+                        path,
+                        "p2pk33_address_count",
+                        false,
+                        version + VERSION + Version::ZERO,
+                        format,
+                        StorableVecGeneatorOptions::default().add_last(),
+                    )?,
+                    p2pkh: ComputedVecsFromHeight::forced_import(
+                        path,
+                        "p2pkh_address_count",
+                        false,
+                        version + VERSION + Version::ZERO,
+                        format,
+                        StorableVecGeneatorOptions::default().add_last(),
+                    )?,
+                    p2sh: ComputedVecsFromHeight::forced_import(
+                        path,
+                        "p2sh_address_count",
+                        false,
+                        version + VERSION + Version::ZERO,
+                        format,
+                        StorableVecGeneatorOptions::default().add_last(),
+                    )?,
+                    p2wpkh: ComputedVecsFromHeight::forced_import(
+                        path,
+                        "p2wpkh_address_count",
+                        false,
+                        version + VERSION + Version::ZERO,
+                        format,
+                        StorableVecGeneatorOptions::default().add_last(),
+                    )?,
+                    p2wsh: ComputedVecsFromHeight::forced_import(
+                        path,
+                        "p2wsh_address_count",
+                        false,
+                        version + VERSION + Version::ZERO,
+                        format,
+                        StorableVecGeneatorOptions::default().add_last(),
+                    )?,
+                    p2tr: ComputedVecsFromHeight::forced_import(
+                        path,
+                        "p2tr_address_count",
+                        false,
+                        version + VERSION + Version::ZERO,
+                        format,
+                        StorableVecGeneatorOptions::default().add_last(),
+                    )?,
+                    p2a: ComputedVecsFromHeight::forced_import(
+                        path,
+                        "p2a_address_count",
+                        false,
+                        version + VERSION + Version::ZERO,
+                        format,
+                        StorableVecGeneatorOptions::default().add_last(),
+                    )?,
+                },
+            ),
+            addresstype_to_indexes_to_empty_address_count: AddressTypeToIndexesToAddressCount::from(
+                GroupedByAddressType {
+                    p2pk65: ComputedVecsFromHeight::forced_import(
+                        path,
+                        "p2pk65_empty_address_count",
+                        false,
+                        version + VERSION + Version::ZERO,
+                        format,
+                        StorableVecGeneatorOptions::default().add_last(),
+                    )?,
+                    p2pk33: ComputedVecsFromHeight::forced_import(
+                        path,
+                        "p2pk33_empty_address_count",
+                        false,
+                        version + VERSION + Version::ZERO,
+                        format,
+                        StorableVecGeneatorOptions::default().add_last(),
+                    )?,
+                    p2pkh: ComputedVecsFromHeight::forced_import(
+                        path,
+                        "p2pkh_empty_address_count",
+                        false,
+                        version + VERSION + Version::ZERO,
+                        format,
+                        StorableVecGeneatorOptions::default().add_last(),
+                    )?,
+                    p2sh: ComputedVecsFromHeight::forced_import(
+                        path,
+                        "p2sh_empty_address_count",
+                        false,
+                        version + VERSION + Version::ZERO,
+                        format,
+                        StorableVecGeneatorOptions::default().add_last(),
+                    )?,
+                    p2wpkh: ComputedVecsFromHeight::forced_import(
+                        path,
+                        "p2wpkh_empty_address_count",
+                        false,
+                        version + VERSION + Version::ZERO,
+                        format,
+                        StorableVecGeneatorOptions::default().add_last(),
+                    )?,
+                    p2wsh: ComputedVecsFromHeight::forced_import(
+                        path,
+                        "p2wsh_empty_address_count",
+                        false,
+                        version + VERSION + Version::ZERO,
+                        format,
+                        StorableVecGeneatorOptions::default().add_last(),
+                    )?,
+                    p2tr: ComputedVecsFromHeight::forced_import(
+                        path,
+                        "p2tr_empty_address_count",
+                        false,
+                        version + VERSION + Version::ZERO,
+                        format,
+                        StorableVecGeneatorOptions::default().add_last(),
+                    )?,
+                    p2a: ComputedVecsFromHeight::forced_import(
+                        path,
+                        "p2a_empty_address_count",
+                        false,
+                        version + VERSION + Version::ZERO,
+                        format,
+                        StorableVecGeneatorOptions::default().add_last(),
                     )?,
                 },
             ),
@@ -1084,6 +1225,19 @@ impl Vecs {
             },
         )?;
 
+        self.addresstype_to_indexes_to_address_count.compute(
+            indexes,
+            starting_indexes,
+            exit,
+            &self.addresstype_to_height_to_address_count,
+        )?;
+        self.addresstype_to_indexes_to_empty_address_count.compute(
+            indexes,
+            starting_indexes,
+            exit,
+            &self.addresstype_to_height_to_empty_address_count,
+        )?;
+
         thread::scope(|scope| {
             scope.spawn(|| {
                 self.utxo_vecs
@@ -1241,6 +1395,8 @@ impl Vecs {
             self.indexes_to_opreturn_supply.vecs(),
             self.indexes_to_address_count.vecs(),
             self.indexes_to_empty_address_count.vecs(),
+            self.addresstype_to_indexes_to_address_count.vecs(),
+            self.addresstype_to_indexes_to_empty_address_count.vecs(),
             self.addresstype_to_height_to_address_count
                 .as_typed_vec()
                 .into_iter()

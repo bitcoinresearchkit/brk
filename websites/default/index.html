@@ -1382,8 +1382,8 @@
             overflow: hidden;
             font-size: var(--font-size-sm);
             line-height: var(--line-height-sm);
-            --color: var(--dark-gray);
-            color: var(--white);
+            --face-color: var(--border-color);
+            color: var(--color);
 
             .face {
               transform-origin: 0 0;
@@ -1393,16 +1393,17 @@
               padding: 0.1rem;
             }
             .right {
-              background-color: var(--color);
+              background-color: oklch(
+                from var(--face-color) calc(l - 0.05) c h
+              );
               transform: rotate(-30deg) skewX(-30deg)
                 translate(calc(var(--cube) * 1.3), calc(var(--cube) * 1.725))
                 scaleY(0.864);
             }
             .top {
               background-color: oklch(
-                from var(--color) calc(l + 0.122) c calc(h + 6)
+                from var(--face-color) calc(l + 0.05) c h
               );
-              /* background-color: var(--yellow); */
               transform: rotate(30deg) skew(-30deg)
                 translate(calc(var(--cube) * 0.99), calc(var(--cube) * -0.265))
                 scaleY(0.864);
@@ -1418,9 +1419,7 @@
             .left {
               font-size: var(--font-size-xs);
               line-height: var(--line-height-xs);
-              background-color: oklch(
-                from var(--color) calc(l + 0.066) c calc(h + 3)
-              );
+              background-color: var(--face-color);
               /* background-color: var(--amber); */
               transform: rotate(30deg) skewX(30deg)
                 translate(calc(var(--cube) * 0.3), calc(var(--cube) * 0.6))

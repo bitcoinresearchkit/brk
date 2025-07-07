@@ -163,9 +163,9 @@ impl Stores {
         self.as_slice()
             .into_iter()
             .map(|store| {
-                let height = store.height().map(Height::incremented).unwrap_or_default();
+                // let height =
+                store.height().map(Height::incremented).unwrap_or_default()
                 // dbg!((height, store.name()));
-                height
             })
             .min()
             .unwrap()

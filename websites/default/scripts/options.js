@@ -116,9 +116,10 @@
  * @param {Object} args
  * @param {Env} args.env
  * @param {Colors} args.colors
+ * @param {VecIdToIndexes} args.vecIdToIndexes
  * @returns {PartialOptionsTree}
  */
-function createPartialOptions({ env, colors }) {
+function createPartialOptions({ env, colors, vecIdToIndexes }) {
   /**
    * @template {string} S
    * @typedef {Extract<VecId, `${S}${string}`>} StartsWith
@@ -594,61 +595,163 @@ function createPartialOptions({ env, colors }) {
 
   const fromSize = /** @type {const} */ ([
     {
-      key: "from_1_000sats",
-      name: "1K sats",
+      key: "from_1sat",
+      name: ">=1 sat",
+      title: "From 1 sat",
+      color: colors.orange,
+    },
+    {
+      key: "from_10sats",
+      name: ">=10 sats",
+      title: "From 10 sats",
+      color: colors.orange,
+    },
+    {
+      key: "from_100sats",
+      name: ">=100 sats",
+      title: "From 100 sats",
+      color: colors.yellow,
+    },
+    {
+      key: "from_1k_sats",
+      name: ">=1K sats",
       title: "From 1K sats",
+      color: colors.lime,
+    },
+    {
+      key: "from_10k_sats",
+      name: ">=10K sats",
+      title: "From 10K sats",
+      color: colors.green,
+    },
+    {
+      key: "from_100k_sats",
+      name: ">=100K sats",
+      title: "From 100K sats",
       color: colors.cyan,
     },
     {
-      key: "from_1btc",
-      name: "1btc",
-      title: "From 1 BTC",
-      color: colors.violet,
+      key: "from_1m_sats",
+      name: ">=1M sats",
+      title: "From 1M sats",
+      color: colors.blue,
     },
     {
-      key: "from_10btc",
-      name: "10btc",
-      title: "From 10 BTC",
+      key: "from_10m_sats",
+      name: ">=10M sats",
+      title: "From 10M sats",
+      color: colors.indigo,
+    },
+    {
+      key: "from_1btc",
+      name: ">=1 btc",
+      title: "From 1 BTC",
       color: colors.purple,
     },
     {
+      key: "from_10btc",
+      name: ">=10 btc",
+      title: "From 10 BTC",
+      color: colors.violet,
+    },
+    {
       key: "from_100btc",
-      name: "100btc",
+      name: ">=100 btc",
       title: "From 100 BTC",
+      color: colors.fuchsia,
+    },
+    {
+      key: "from_1k_btc",
+      name: ">=1K btc",
+      title: "From 1K BTC",
       color: colors.pink,
+    },
+    {
+      key: "from_10k_btc",
+      name: ">=10K btc",
+      title: "From 10K BTC",
+      color: colors.red,
     },
   ]);
 
   const upToSize = /** @type {const} */ ([
     {
-      key: "up_to_1_000sats",
-      name: "1K sats",
-      title: "Up to 1K sats",
+      key: "up_to_10sats",
+      name: "<10 sats",
+      title: "Up to 10 sats",
+      color: colors.orange,
+    },
+    {
+      key: "up_to_100sats",
+      name: "<100 sats",
+      title: "Up to 100 sats",
       color: colors.yellow,
     },
     {
-      key: "up_to_10_000sats",
-      name: "10K sats",
+      key: "up_to_1k_sats",
+      name: "<1K sats",
+      title: "Up to 1K sats",
+      color: colors.lime,
+    },
+    {
+      key: "up_to_10k_sats",
+      name: "<10K sats",
       title: "Up to 10K sats",
       color: colors.green,
     },
     {
-      key: "up_to_1btc",
-      name: "1btc",
-      title: "Up to 1 btc",
+      key: "up_to_100k_sats",
+      name: "<100K sats",
+      title: "Up to 100K sats",
       color: colors.cyan,
     },
     {
-      key: "up_to_10btc",
-      name: "10btc",
-      title: "Up to 10 btc",
+      key: "up_to_1m_sats",
+      name: "<1M sats",
+      title: "Up to 1M sats",
       color: colors.blue,
     },
     {
-      key: "up_to_100btc",
-      name: "100btc",
-      title: "Up to 100 btc",
+      key: "up_to_10m_sats",
+      name: "<10M sats",
+      title: "Up to 10M sats",
+      color: colors.indigo,
+    },
+    {
+      key: "up_to_1btc",
+      name: "<1 btc",
+      title: "up to 1 BTC",
+      color: colors.purple,
+    },
+    {
+      key: "up_to_10btc",
+      name: "<10 btc",
+      title: "Up to 10 BTC",
       color: colors.violet,
+    },
+    {
+      key: "up_to_100btc",
+      name: "<100 btc",
+      title: "Up to 100 BTC",
+      color: colors.fuchsia,
+    },
+    {
+      key: "up_to_1k_btc",
+      name: "<1K btc",
+      title: "up to 1K BTC",
+      color: colors.pink,
+    },
+    {
+      key: "up_to_10k_btc",
+      name: "<10K btc",
+      title: "up to 10K BTC",
+      color: colors.red,
+    },
+    {
+      key: "up_to_100k_btc",
+      name: "<100K btc",
+      title: "up to 100K BTC",
+      color: colors.orange,
     },
   ]);
 
@@ -1319,146 +1422,295 @@ function createPartialOptions({ env, colors }) {
     return /** @satisfies {PartialOptionsGroup} */ ({
       name: args.name || "all",
       tree: [
-        {
-          name: "supply",
-          title: `${args.title} Supply`,
-          bottom: list.flatMap(({ color, name, key: _key }) => {
-            const key = fixKey(_key);
-            return /** @type {const} */ ([
-              createBaseSeries({
-                key: `${key}supply`,
-                name: useGroupName ? name : "Supply",
-                color: "list" in args ? color : colors.default,
+        !("list" in args)
+          ? {
+              name: "supply",
+              title: `${args.title} Supply`,
+              bottom: list.flatMap(({ color, name, key: _key }) => {
+                const key = fixKey(_key);
+                return /** @type {const} */ ([
+                  createBaseSeries({
+                    key: `${key}supply`,
+                    name: "Supply",
+                    color: colors.default,
+                  }),
+                  createBaseSeries({
+                    key: `${key}supply_in_btc`,
+                    name: "Supply",
+                    color: colors.default,
+                  }),
+                  createBaseSeries({
+                    key: `${key}supply_in_usd`,
+                    name: "Supply",
+                    color: colors.default,
+                  }),
+                  ...(key
+                    ? [
+                        createBaseSeries({
+                          key: `${key}supply_relative_to_circulating_supply`,
+                          name: "Supply",
+                          color: colors.default,
+                        }),
+                      ]
+                    : []),
+                  createBaseSeries({
+                    key: `${key}halved_supply`,
+                    name: "Halved",
+                    color: colors.gray,
+                    options: {
+                      lineStyle: 4,
+                    },
+                  }),
+                  createBaseSeries({
+                    key: `${key}supply_in_profit`,
+                    name: "In Profit",
+                    color: colors.green,
+                  }),
+                  createBaseSeries({
+                    key: `${key}supply_in_profit_in_btc`,
+                    name: "In Profit",
+                    color: colors.green,
+                  }),
+                  createBaseSeries({
+                    key: `${key}supply_in_profit_in_usd`,
+                    name: "In Profit",
+                    color: colors.green,
+                  }),
+                  createBaseSeries({
+                    key: `${key}supply_in_loss`,
+                    name: "In Loss",
+                    color: colors.red,
+                  }),
+                  createBaseSeries({
+                    key: `${key}supply_in_loss_in_btc`,
+                    name: "In Loss",
+                    color: colors.red,
+                  }),
+                  createBaseSeries({
+                    key: `${key}supply_in_loss_in_usd`,
+                    name: "In Loss",
+                    color: colors.red,
+                  }),
+                  createBaseSeries({
+                    key: `${key}supply_even`,
+                    name: useGroupName ? name : "Even",
+                    color: colors.yellow,
+                  }),
+                  createBaseSeries({
+                    key: `${key}supply_even_in_btc`,
+                    name: useGroupName ? name : "Even",
+                    color: colors.yellow,
+                  }),
+                  createBaseSeries({
+                    key: `${key}supply_even_in_usd`,
+                    name: useGroupName ? name : "Even",
+                    color: colors.yellow,
+                  }),
+                  createBaseSeries({
+                    key: `${key}halved_supply_in_btc`,
+                    name: useGroupName ? name : "Halved",
+                    color: "list" in args ? color : colors.gray,
+                    options: {
+                      lineStyle: 4,
+                    },
+                  }),
+                  createBaseSeries({
+                    key: `${key}halved_supply_in_usd`,
+                    name: useGroupName ? name : "Halved",
+                    color: "list" in args ? color : colors.gray,
+                    options: {
+                      lineStyle: 4,
+                    },
+                  }),
+                  ...(key
+                    ? [
+                        createBaseSeries({
+                          key: `${key}supply_in_profit_relative_to_circulating_supply`,
+                          name: "In Profit",
+                          color: colors.green,
+                        }),
+                        createBaseSeries({
+                          key: `${key}supply_in_loss_relative_to_circulating_supply`,
+                          name: "In Loss",
+                          color: colors.red,
+                        }),
+                        createBaseSeries({
+                          key: `${key}supply_even_relative_to_circulating_supply`,
+                          name: "Even",
+                          color: colors.yellow,
+                        }),
+                      ]
+                    : []),
+                  createBaseSeries({
+                    key: `${key}supply_in_profit_relative_to_own_supply`,
+                    name: "In Profit",
+                    color: colors.green,
+                  }),
+                  createBaseSeries({
+                    key: `${key}supply_in_loss_relative_to_own_supply`,
+                    name: "In Loss",
+                    color: colors.red,
+                  }),
+                  createBaseSeries({
+                    key: `${key}supply_even_relative_to_own_supply`,
+                    name: "Even",
+                    color: colors.yellow,
+                  }),
+                ]);
               }),
-              createBaseSeries({
-                key: `${key}supply_in_btc`,
-                name: useGroupName ? name : "Supply",
-                color: "list" in args ? color : colors.default,
-              }),
-              createBaseSeries({
-                key: `${key}supply_in_usd`,
-                name: useGroupName ? name : "Supply",
-                color: "list" in args ? color : colors.default,
-              }),
-              ...(key
-                ? [
-                    createBaseSeries({
-                      key: `${key}supply_relative_to_circulating_supply`,
-                      name: useGroupName ? name : "Supply",
-                      color: "list" in args ? color : colors.default,
-                    }),
-                  ]
-                : []),
-              ...(!("list" in args)
-                ? [
-                    createBaseSeries({
-                      key: `${key}halved_supply`,
-                      name: useGroupName ? name : "Halved",
-                      color: "list" in args ? color : colors.gray,
-                      options: {
-                        lineStyle: 4,
-                      },
-                    }),
-                    createBaseSeries({
-                      key: `${key}supply_in_profit`,
-                      name: useGroupName ? name : "In Profit",
-                      color: colors.green,
-                    }),
-                    createBaseSeries({
-                      key: `${key}supply_in_loss`,
-                      name: useGroupName ? name : "In Loss",
-                      color: colors.red,
-                    }),
-                    createBaseSeries({
-                      key: `${key}supply_even`,
-                      name: useGroupName ? name : "Even",
-                      color: colors.yellow,
-                    }),
-                    createBaseSeries({
-                      key: `${key}halved_supply_in_btc`,
-                      name: useGroupName ? name : "Halved",
-                      color: "list" in args ? color : colors.gray,
-                      options: {
-                        lineStyle: 4,
-                      },
-                    }),
-                    createBaseSeries({
-                      key: `${key}supply_in_profit_in_btc`,
-                      name: useGroupName ? name : "In Profit",
-                      color: colors.green,
-                    }),
-                    createBaseSeries({
-                      key: `${key}supply_in_loss_in_btc`,
-                      name: useGroupName ? name : "In Loss",
-                      color: colors.red,
-                    }),
-                    createBaseSeries({
-                      key: `${key}supply_even_in_btc`,
-                      name: useGroupName ? name : "Even",
-                      color: colors.yellow,
-                    }),
-                    createBaseSeries({
-                      key: `${key}halved_supply_in_usd`,
-                      name: useGroupName ? name : "Halved",
-                      color: "list" in args ? color : colors.gray,
-                      options: {
-                        lineStyle: 4,
-                      },
-                    }),
-                    createBaseSeries({
-                      key: `${key}supply_in_profit_in_usd`,
-                      name: useGroupName ? name : "In Profit",
-                      color: colors.green,
-                    }),
-                    createBaseSeries({
-                      key: `${key}supply_in_loss_in_usd`,
-                      name: useGroupName ? name : "In Loss",
-                      color: colors.red,
-                    }),
-                    createBaseSeries({
-                      key: `${key}supply_even_in_usd`,
-                      name: useGroupName ? name : "Even",
-                      color: colors.yellow,
-                    }),
-                    ...(key
-                      ? [
-                          createBaseSeries({
-                            key: `${key}supply_in_profit_relative_to_circulating_supply`,
-                            name: useGroupName ? name : "In Profit",
-                            color: colors.green,
-                          }),
-                          createBaseSeries({
-                            key: `${key}supply_in_loss_relative_to_circulating_supply`,
-                            name: useGroupName ? name : "In Loss",
-                            color: colors.red,
-                          }),
-                          createBaseSeries({
-                            key: `${key}supply_even_relative_to_circulating_supply`,
-                            name: useGroupName ? name : "Even",
-                            color: colors.yellow,
-                          }),
-                        ]
-                      : []),
-                    createBaseSeries({
-                      key: `${key}supply_in_profit_relative_to_own_supply`,
-                      name: useGroupName ? name : "In Profit",
-                      color: colors.green,
-                    }),
-                    createBaseSeries({
-                      key: `${key}supply_in_loss_relative_to_own_supply`,
-                      name: useGroupName ? name : "In Loss",
-                      color: colors.red,
-                    }),
-                    createBaseSeries({
-                      key: `${key}supply_even_relative_to_own_supply`,
-                      name: useGroupName ? name : "Even",
-                      color: colors.yellow,
-                    }),
-                  ]
-                : []),
-            ]);
-          }),
-        },
+            }
+          : {
+              name: "supply",
+              tree: [
+                {
+                  name: "total",
+                  title: `${args.title} Supply`,
+                  bottom: list.flatMap(({ color, name, key: _key }) => {
+                    const key = fixKey(_key);
+                    return /** @type {const} */ ([
+                      createBaseSeries({
+                        key: `${key}supply`,
+                        name,
+                        color,
+                      }),
+                      createBaseSeries({
+                        key: `${key}supply_in_btc`,
+                        name,
+                        color,
+                      }),
+                      createBaseSeries({
+                        key: `${key}supply_in_usd`,
+                        name,
+                        color,
+                      }),
+                      ...(key
+                        ? [
+                            createBaseSeries({
+                              key: `${key}supply_relative_to_circulating_supply`,
+                              name,
+                              color,
+                            }),
+                          ]
+                        : []),
+                    ]);
+                  }),
+                },
+                {
+                  name: "in profit",
+                  title: `${args.title} Supply In Profit`,
+                  bottom: list.flatMap(({ color, name, key: _key }) => {
+                    const key = fixKey(_key);
+                    return /** @type {const} */ ([
+                      createBaseSeries({
+                        key: `${key}supply_in_profit`,
+                        name,
+                        color,
+                      }),
+                      createBaseSeries({
+                        key: `${key}supply_in_profit_in_btc`,
+                        name,
+                        color,
+                      }),
+                      createBaseSeries({
+                        key: `${key}supply_in_profit_in_usd`,
+                        name,
+                        color,
+                      }),
+                      ...(key
+                        ? [
+                            createBaseSeries({
+                              key: `${key}supply_in_profit_relative_to_circulating_supply`,
+                              name,
+                              color,
+                            }),
+                          ]
+                        : []),
+                      createBaseSeries({
+                        key: `${key}supply_in_profit_relative_to_own_supply`,
+                        name,
+                        color,
+                      }),
+                    ]);
+                  }),
+                },
+                {
+                  name: "in loss",
+                  title: `${args.title} Supply In loss`,
+                  bottom: list.flatMap(({ color, name, key: _key }) => {
+                    const key = fixKey(_key);
+                    return /** @type {const} */ ([
+                      createBaseSeries({
+                        key: `${key}supply_in_loss`,
+                        name,
+                        color,
+                      }),
+                      createBaseSeries({
+                        key: `${key}supply_in_loss_in_btc`,
+                        name,
+                        color,
+                      }),
+                      createBaseSeries({
+                        key: `${key}supply_in_loss_in_usd`,
+                        name,
+                        color,
+                      }),
+                      ...(key
+                        ? [
+                            createBaseSeries({
+                              key: `${key}supply_in_loss_relative_to_circulating_supply`,
+                              name,
+                              color,
+                            }),
+                          ]
+                        : []),
+                      createBaseSeries({
+                        key: `${key}supply_in_loss_relative_to_own_supply`,
+                        name,
+                        color,
+                      }),
+                    ]);
+                  }),
+                },
+                {
+                  name: "even",
+                  title: `${args.title} Supply Even`,
+                  bottom: list.flatMap(({ color, name, key: _key }) => {
+                    const key = fixKey(_key);
+                    return /** @type {const} */ ([
+                      createBaseSeries({
+                        key: `${key}supply_even`,
+                        name,
+                        color,
+                      }),
+                      createBaseSeries({
+                        key: `${key}supply_even_in_btc`,
+                        name,
+                        color,
+                      }),
+                      createBaseSeries({
+                        key: `${key}supply_even_in_usd`,
+                        name,
+                        color,
+                      }),
+                      ...(key
+                        ? [
+                            createBaseSeries({
+                              key: `${key}supply_even_relative_to_circulating_supply`,
+                              name,
+                              color,
+                            }),
+                          ]
+                        : []),
+                      createBaseSeries({
+                        key: `${key}supply_even_relative_to_own_supply`,
+                        name,
+                        color,
+                      }),
+                    ]);
+                  }),
+                },
+              ],
+            },
         {
           name: "utxo count",
           title: `${args.title} UTXO Count`,
@@ -1473,6 +1725,99 @@ function createPartialOptions({ env, colors }) {
             ]);
           }),
         },
+        ...(list.filter(
+          ({ key }) => `${fixKey(key)}address_count` in vecIdToIndexes,
+        ).length
+          ? !("list" in args) ||
+            list.filter(
+              ({ key }) =>
+                `${fixKey(key)}empty_address_count` in vecIdToIndexes,
+            ).length == 0
+            ? [
+                {
+                  name: "address count",
+                  title: `${args.title} Loaded Address Count`,
+                  bottom: list.flatMap(({ name, color, key: _key }) => {
+                    const key = fixKey(_key);
+                    return [
+                      ...(`${key}address_count` in vecIdToIndexes
+                        ? /** @type {const} */ ([
+                            createBaseSeries({
+                              key: `${key}address_count`,
+                              name: useGroupName ? name : "Loaded",
+                              color: useGroupName ? color : colors.orange,
+                            }),
+                          ])
+                        : []),
+                      ...(`${key}empty_address_count` in vecIdToIndexes
+                        ? /** @type {const} */ ([
+                            createBaseSeries({
+                              key: `${key}empty_address_count`,
+                              name: "Empty",
+                              color: colors.gray,
+                              defaultActive: false,
+                            }),
+                          ])
+                        : []),
+                    ];
+                  }),
+                },
+              ]
+            : [
+                {
+                  name: "address count",
+                  tree: [
+                    {
+                      name: "loaded",
+                      title: `${args.title} Loaded Address Count`,
+                      bottom: list
+                        .filter(
+                          ({ key }) =>
+                            key !== "empty" &&
+                            `${fixKey(key)}address_count` in vecIdToIndexes,
+                        )
+                        .flatMap(({ name, color, key: _key }) => {
+                          const key = fixKey(_key);
+                          return [
+                            createBaseSeries({
+                              key: `${key}address_count`,
+                              name,
+                              color,
+                            }),
+                          ];
+                        }),
+                    },
+                    ...(list.filter(
+                      ({ key }) =>
+                        `${fixKey(key)}empty_address_count` in vecIdToIndexes,
+                    ).length
+                      ? [
+                          {
+                            name: "empty",
+                            title: `${args.title} Empty Address Count`,
+                            bottom: list
+                              .filter(
+                                ({ key }) =>
+                                  `${fixKey(key)}empty_address_count` in
+                                  vecIdToIndexes,
+                              )
+                              .flatMap(({ name, color, key: _key }) => {
+                                const key = fixKey(_key);
+                                return [
+                                  createBaseSeries({
+                                    key: `${key}empty_address_count`,
+                                    name,
+                                    color,
+                                  }),
+                                ];
+                              }),
+                          },
+                        ]
+                      : []),
+                  ],
+                },
+              ]
+          : []),
         // list.filter(({ key }) => key.endsWith("address_count")).map(callbackfn),
         // {
         //   name: "loaded",
@@ -3553,9 +3898,17 @@ function createPartialOptions({ env, colors }) {
  * @param {Signals} args.signals
  * @param {Env} args.env
  * @param {Utilities} args.utils
+ * @param {VecIdToIndexes} args.vecIdToIndexes
  * @param {Signal<string | null>} args.qrcode
  */
-export function initOptions({ colors, signals, env, utils, qrcode }) {
+export function initOptions({
+  colors,
+  signals,
+  env,
+  utils,
+  qrcode,
+  vecIdToIndexes,
+}) {
   const LS_SELECTED_KEY = `selected_id`;
 
   const urlSelected = utils.url.pathnameToSelectedId();
@@ -3564,7 +3917,7 @@ export function initOptions({ colors, signals, env, utils, qrcode }) {
   /** @type {Signal<Option>} */
   const selected = signals.createSignal(/** @type {any} */ (undefined));
 
-  const partialOptions = createPartialOptions({ env, colors });
+  const partialOptions = createPartialOptions({ env, colors, vecIdToIndexes });
 
   /** @type {Option[]} */
   const list = [];
