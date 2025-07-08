@@ -84,6 +84,7 @@
       - add api page with interactivity
     - global
       - **fix navigation/history**
+      - **udpate lightweight-charts to v5.0.8**
       - move share button to footer ?
       - improve behavior when local storage is unavailable
         - by having a global state
