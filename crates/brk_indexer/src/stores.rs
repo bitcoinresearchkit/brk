@@ -1,7 +1,7 @@
 use std::{borrow::Cow, fs, path::Path, thread};
 
 use brk_core::{
-    AddressBytes, AddressBytesHash, BlockHashPrefix, GroupedByAddressType, Height, OutputIndex,
+    AddressBytes, AddressBytesHash, BlockHashPrefix, ByAddressType, Height, OutputIndex,
     OutputType, Result, TxIndex, TxidPrefix, TypeIndex, TypeIndexWithOutputindex, Unit, Version,
 };
 use brk_store::{AnyStore, Store};
@@ -21,7 +21,7 @@ pub struct Stores {
     pub blockhashprefix_to_height: Store<BlockHashPrefix, Height>,
     pub txidprefix_to_txindex: Store<TxidPrefix, TxIndex>,
     pub addresstype_to_typeindex_with_outputindex:
-        GroupedByAddressType<Store<TypeIndexWithOutputindex, Unit>>,
+        ByAddressType<Store<TypeIndexWithOutputindex, Unit>>,
 }
 
 const VERSION: Version = Version::ZERO;
@@ -145,7 +145,7 @@ impl Stores {
                 addressbyteshash_to_typeindex: addressbyteshash_to_typeindex.join().unwrap()?,
                 blockhashprefix_to_height: blockhashprefix_to_height.join().unwrap()?,
                 txidprefix_to_txindex: txidprefix_to_txindex.join().unwrap()?,
-                addresstype_to_typeindex_with_outputindex: GroupedByAddressType {
+                addresstype_to_typeindex_with_outputindex: ByAddressType {
                     p2pk65: p2pk65addressindex_with_outputindex.join().unwrap()?,
                     p2pk33: p2pk33addressindex_with_outputindex.join().unwrap()?,
                     p2pkh: p2pkhaddressindex_with_outputindex.join().unwrap()?,

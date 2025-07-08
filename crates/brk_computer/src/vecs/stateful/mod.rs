@@ -1,7 +1,7 @@
 use std::{cmp::Ordering, collections::BTreeMap, mem, path::Path, thread};
 
 use brk_core::{
-    AddressData, CheckedSub, DateIndex, Dollars, EmptyAddressData, GroupedByAddressType, Height,
+    AddressData, ByAddressType, CheckedSub, DateIndex, Dollars, EmptyAddressData, Height,
     InputIndex, OutputIndex, OutputType, Result, Sats, StoredUsize, TypeIndex, Version,
 };
 use brk_exit::Exit;
@@ -143,7 +143,7 @@ impl Vecs {
                 StorableVecGeneatorOptions::default().add_last(),
             )?,
             addresstype_to_height_to_address_count: AddressTypeToHeightToAddressCount::from(
-                GroupedByAddressType {
+                ByAddressType {
                     p2pk65: EagerVec::forced_import(
                         path,
                         "p2pk65_address_count",
@@ -195,7 +195,7 @@ impl Vecs {
                 },
             ),
             addresstype_to_height_to_empty_address_count: AddressTypeToHeightToAddressCount::from(
-                GroupedByAddressType {
+                ByAddressType {
                     p2pk65: EagerVec::forced_import(
                         path,
                         "p2pk65_empty_address_count",
@@ -247,7 +247,7 @@ impl Vecs {
                 },
             ),
             addresstype_to_indexes_to_address_count: AddressTypeToIndexesToAddressCount::from(
-                GroupedByAddressType {
+                ByAddressType {
                     p2pk65: ComputedVecsFromHeight::forced_import(
                         path,
                         "p2pk65_address_count",
@@ -315,7 +315,7 @@ impl Vecs {
                 },
             ),
             addresstype_to_indexes_to_empty_address_count: AddressTypeToIndexesToAddressCount::from(
-                GroupedByAddressType {
+                ByAddressType {
                     p2pk65: ComputedVecsFromHeight::forced_import(
                         path,
                         "p2pk65_empty_address_count",
@@ -679,8 +679,8 @@ impl Vecs {
                     let output_count = height_to_output_count_iter.unwrap_get_inner(height);
                     let input_count = height_to_input_count_iter.unwrap_get_inner(height);
 
-                    let first_addressindexes: GroupedByAddressType<TypeIndex> =
-                        GroupedByAddressType {
+                    let first_addressindexes: ByAddressType<TypeIndex> =
+                        ByAddressType {
                             p2a: height_to_first_p2aaddressindex_iter
                                 .unwrap_get_inner(height)
                                 .into(),
@@ -1429,8 +1429,8 @@ impl AddressTypeToVec<(TypeIndex, Sats, Option<WithAddressDataSource<AddressData
             WithAddressDataSource<EmptyAddressData>,
         >,
         price: Option<Dollars>,
-        addresstype_to_address_count: &mut GroupedByAddressType<usize>,
-        addresstype_to_empty_address_count: &mut GroupedByAddressType<usize>,
+        addresstype_to_address_count: &mut ByAddressType<usize>,
+        addresstype_to_empty_address_count: &mut ByAddressType<usize>,
     ) {
         self.into_typed_vec().into_iter().for_each(|(_type, vec)| {
             vec.into_iter()
@@ -1474,22 +1474,22 @@ impl AddressTypeToVec<(TypeIndex, Sats, Option<WithAddressDataSource<AddressData
 
                     if is_new
                         || from_any_empty
-                        || vecs.by_size_range.get_mut(amount).0.clone()
-                            != vecs.by_size_range.get_mut(prev_amount).0.clone()
+                        || vecs.amount_range.get_mut(amount).0.clone()
+                            != vecs.amount_range.get_mut(prev_amount).0.clone()
                     {
                         // dbg!((prev_amount, amount, is_new));
 
                         if !is_new && !from_any_empty {
-                            let state = &mut vecs.by_size_range.get_mut(prev_amount).1.state;
+                            let state = &mut vecs.amount_range.get_mut(prev_amount).1.state;
                             // dbg!((prev_amount, &state.address_count, &addressdata));
                             state.subtract(addressdata);
                         }
 
                         addressdata.receive(value, price);
 
-                        vecs.by_size_range.get_mut(amount).1.state.add(addressdata);
+                        vecs.amount_range.get_mut(amount).1.state.add(addressdata);
                     } else {
-                        vecs.by_size_range.get_mut(amount).1.state.receive(
+                        vecs.amount_range.get_mut(amount).1.state.receive(
                             addressdata,
                             value,
                             price,
@@ -1521,8 +1521,8 @@ impl
             WithAddressDataSource<EmptyAddressData>,
         >,
         price: Option<Dollars>,
-        addresstype_to_address_count: &mut GroupedByAddressType<usize>,
-        addresstype_to_empty_address_count: &mut GroupedByAddressType<usize>,
+        addresstype_to_address_count: &mut ByAddressType<usize>,
+        addresstype_to_empty_address_count: &mut ByAddressType<usize>,
     ) -> Result<()> {
         self.into_typed_vec()
             .into_iter()
@@ -1556,10 +1556,10 @@ impl
                         // dbg!((prev_amount, amount, will_be_empty));
 
                         if will_be_empty
-                            || vecs.by_size_range.get_mut(amount).0.clone()
-                                != vecs.by_size_range.get_mut(prev_amount).0.clone()
+                            || vecs.amount_range.get_mut(amount).0.clone()
+                                != vecs.amount_range.get_mut(prev_amount).0.clone()
                         {
-                            vecs.by_size_range
+                            vecs.amount_range
                                 .get_mut(prev_amount)
                                 .1
                                 .state
@@ -1583,10 +1583,10 @@ impl
                                     .unwrap()
                                     .insert(type_index, addressdata.into());
                             } else {
-                                vecs.by_size_range.get_mut(amount).1.state.add(addressdata);
+                                vecs.amount_range.get_mut(amount).1.state.add(addressdata);
                             }
                         } else {
-                            vecs.by_size_range.get_mut(amount).1.state.send(
+                            vecs.amount_range.get_mut(amount).1.state.send(
                                 addressdata,
                                 value,
                                 price,

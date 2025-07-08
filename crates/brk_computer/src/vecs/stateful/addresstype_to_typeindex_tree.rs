@@ -3,10 +3,10 @@ use std::{collections::BTreeMap, mem};
 use brk_core::TypeIndex;
 use derive_deref::{Deref, DerefMut};
 
-use super::GroupedByAddressType;
+use super::ByAddressType;
 
 #[derive(Debug, Deref, DerefMut)]
-pub struct AddressTypeToTypeIndexTree<T>(GroupedByAddressType<BTreeMap<TypeIndex, T>>);
+pub struct AddressTypeToTypeIndexTree<T>(ByAddressType<BTreeMap<TypeIndex, T>>);
 
 impl<T> AddressTypeToTypeIndexTree<T> {
     pub fn merge(&mut self, mut other: Self) {
@@ -29,14 +29,14 @@ impl<T> AddressTypeToTypeIndexTree<T> {
         }
     }
 
-    pub fn unwrap(self) -> GroupedByAddressType<BTreeMap<TypeIndex, T>> {
+    pub fn unwrap(self) -> ByAddressType<BTreeMap<TypeIndex, T>> {
         self.0
     }
 }
 
 impl<T> Default for AddressTypeToTypeIndexTree<T> {
     fn default() -> Self {
-        Self(GroupedByAddressType {
+        Self(ByAddressType {
             p2pk65: BTreeMap::default(),
             p2pk33: BTreeMap::default(),
             p2pkh: BTreeMap::default(),

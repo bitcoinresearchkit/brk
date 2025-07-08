@@ -7,7 +7,7 @@ use super::GroupFilter;
 use crate::OutputType;
 
 #[derive(Default, Clone, Debug)]
-pub struct GroupedByAddressType<T> {
+pub struct ByAddressType<T> {
     pub p2pk65: T,
     pub p2pk33: T,
     pub p2pkh: T,
@@ -18,7 +18,7 @@ pub struct GroupedByAddressType<T> {
     pub p2a: T,
 }
 
-impl<T> GroupedByAddressType<T> {
+impl<T> ByAddressType<T> {
     pub fn get(&self, address_type: OutputType) -> Option<&T> {
         match address_type {
             OutputType::P2PK65 => Some(&self.p2pk65),
@@ -103,7 +103,7 @@ impl<T> GroupedByAddressType<T> {
     }
 }
 
-impl<T> GroupedByAddressType<(GroupFilter, T)> {
+impl<T> ByAddressType<(GroupFilter, T)> {
     pub fn vecs(&self) -> [&T; 8] {
         [
             &self.p2pk65.1,
@@ -118,8 +118,8 @@ impl<T> GroupedByAddressType<(GroupFilter, T)> {
     }
 }
 
-impl<T> From<GroupedByAddressType<T>> for GroupedByAddressType<(GroupFilter, T)> {
-    fn from(value: GroupedByAddressType<T>) -> Self {
+impl<T> From<ByAddressType<T>> for ByAddressType<(GroupFilter, T)> {
+    fn from(value: ByAddressType<T>) -> Self {
         Self {
             p2pk65: (GroupFilter::Type(OutputType::P2PK65), value.p2pk65),
             p2pk33: (GroupFilter::Type(OutputType::P2PK33), value.p2pk33),
@@ -133,7 +133,7 @@ impl<T> From<GroupedByAddressType<T>> for GroupedByAddressType<(GroupFilter, T)>
     }
 }
 
-impl<T> Add for GroupedByAddressType<T>
+impl<T> Add for ByAddressType<T>
 where
     T: Add<Output = T>,
 {
@@ -152,7 +152,7 @@ where
     }
 }
 
-impl<T> AddAssign for GroupedByAddressType<T>
+impl<T> AddAssign for ByAddressType<T>
 where
     T: AddAssign,
 {

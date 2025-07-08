@@ -45,16 +45,6 @@ where
     ) -> color_eyre::Result<Self> {
         let only_one_active = options.is_only_one_active();
 
-        let prefix = |s: &str| format!("{s}_{name}");
-
-        let maybe_prefix = |s: &str| {
-            if only_one_active {
-                name.to_string()
-            } else {
-                prefix(s)
-            }
-        };
-
         let suffix = |s: &str| format!("{name}_{s}");
 
         let maybe_suffix = |s: &str| {
@@ -70,7 +60,7 @@ where
                 Box::new(
                     EagerVec::forced_import(
                         path,
-                        &maybe_prefix("first"),
+                        &maybe_suffix("first"),
                         version + VERSION + Version::ZERO,
                         format,
                     )
@@ -130,7 +120,7 @@ where
                 Box::new(
                     EagerVec::forced_import(
                         path,
-                        &(if !options.last {
+                        &(if !options.last && !options.average && !options.min && !options.max {
                             name.to_string()
                         } else {
                             maybe_suffix("sum")
@@ -145,7 +135,7 @@ where
                 Box::new(
                     EagerVec::forced_import(
                         path,
-                        &prefix("cumulative"),
+                        &suffix("cumulative"),
                         version + VERSION + Version::ZERO,
                         format,
                     )

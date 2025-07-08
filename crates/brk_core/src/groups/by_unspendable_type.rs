@@ -1,17 +1,17 @@
 use std::ops::{Add, AddAssign};
 
 #[derive(Default, Clone, Debug)]
-pub struct GroupedByUnspendableType<T> {
+pub struct ByUnspendableType<T> {
     pub opreturn: T,
 }
 
-impl<T> GroupedByUnspendableType<T> {
+impl<T> ByUnspendableType<T> {
     pub fn as_vec(&self) -> [&T; 1] {
         [&self.opreturn]
     }
 }
 
-impl<T> Add for GroupedByUnspendableType<T>
+impl<T> Add for ByUnspendableType<T>
 where
     T: Add<Output = T>,
 {
@@ -23,7 +23,7 @@ where
     }
 }
 
-impl<T> AddAssign for GroupedByUnspendableType<T>
+impl<T> AddAssign for ByUnspendableType<T>
 where
     T: AddAssign,
 {

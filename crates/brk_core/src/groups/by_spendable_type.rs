@@ -5,7 +5,7 @@ use crate::OutputType;
 use super::GroupFilter;
 
 #[derive(Default, Clone, Debug)]
-pub struct GroupedBySpendableType<T> {
+pub struct BySpendableType<T> {
     pub p2pk65: T,
     pub p2pk33: T,
     pub p2pkh: T,
@@ -19,7 +19,7 @@ pub struct GroupedBySpendableType<T> {
     pub empty: T,
 }
 
-impl<T> GroupedBySpendableType<T> {
+impl<T> BySpendableType<T> {
     pub fn get_mut(&mut self, output_type: OutputType) -> &mut T {
         match output_type {
             OutputType::P2PK65 => &mut self.p2pk65,
@@ -70,7 +70,7 @@ impl<T> GroupedBySpendableType<T> {
     }
 }
 
-impl<T> GroupedBySpendableType<(GroupFilter, T)> {
+impl<T> BySpendableType<(GroupFilter, T)> {
     pub fn vecs(&self) -> [&T; 11] {
         [
             &self.p2pk65.1,
@@ -88,8 +88,8 @@ impl<T> GroupedBySpendableType<(GroupFilter, T)> {
     }
 }
 
-impl<T> From<GroupedBySpendableType<T>> for GroupedBySpendableType<(GroupFilter, T)> {
-    fn from(value: GroupedBySpendableType<T>) -> Self {
+impl<T> From<BySpendableType<T>> for BySpendableType<(GroupFilter, T)> {
+    fn from(value: BySpendableType<T>) -> Self {
         Self {
             p2pk65: (GroupFilter::Type(OutputType::P2PK65), value.p2pk65),
             p2pk33: (GroupFilter::Type(OutputType::P2PK33), value.p2pk33),
@@ -106,7 +106,7 @@ impl<T> From<GroupedBySpendableType<T>> for GroupedBySpendableType<(GroupFilter,
     }
 }
 
-impl<T> Add for GroupedBySpendableType<T>
+impl<T> Add for BySpendableType<T>
 where
     T: Add<Output = T>,
 {
@@ -128,7 +128,7 @@ where
     }
 }
 
-impl<T> AddAssign for GroupedBySpendableType<T>
+impl<T> AddAssign for BySpendableType<T>
 where
     T: AddAssign,
 {
