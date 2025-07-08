@@ -384,14 +384,7 @@ export function init({
           legend: chart.legendBottom,
         },
       ].forEach(
-        ({
-          blueprints,
-          paneIndex,
-          unit,
-          seriesList: seriesList,
-          orderStart,
-          legend,
-        }) => {
+        ({ blueprints, paneIndex, unit, seriesList, orderStart, legend }) => {
           signals.createEffect(unit, (unit) => {
             legend.removeFrom(orderStart);
 

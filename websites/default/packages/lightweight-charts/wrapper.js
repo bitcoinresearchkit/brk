@@ -1,6 +1,6 @@
 // @ts-check
 
-/** @import { IChartApi, ISeriesApi as _ISeriesApi, SeriesDefinition, SingleValueData as _SingleValueData, CandlestickData as _CandlestickData, BaselineData as _BaselineData, SeriesType, IPaneApi, LineSeriesPartialOptions, BaselineSeriesPartialOptions, CandlestickSeriesPartialOptions, WhitespaceData, DeepPartial, ChartOptions, Time, LineData as _LineData } from './v5.0.7/types' */
+/** @import { IChartApi, ISeriesApi as _ISeriesApi, SeriesDefinition, SingleValueData as _SingleValueData, CandlestickData as _CandlestickData, BaselineData as _BaselineData, SeriesType, IPaneApi, LineSeriesPartialOptions, BaselineSeriesPartialOptions, CandlestickSeriesPartialOptions, WhitespaceData, DeepPartial, ChartOptions, Time, LineData as _LineData } from './v5.0.8/types' */
 
 /**
  * @typedef {[number, number, number, number]} OHLCTuple
@@ -49,7 +49,7 @@ import {
   CandlestickSeries,
   LineSeries,
   BaselineSeries,
-} from "./v5.0.7/script.js";
+} from "./v5.0.8/script.js";
 
 const oklchToRGBA = createOklchToRGBA();
 
@@ -148,6 +148,8 @@ function createChartElement({
     minimumWidth: 80,
   });
 
+  ichart.panes().at(0)?.setStretchFactor(1);
+
   signals.createEffect(
     () => ({
       defaultColor: colors.default(),
@@ -234,7 +236,7 @@ function createChartElement({
             ?.panes()
             .at(paneIndex)
             ?.getHTMLElement()
-            .children?.item(1)?.firstChild;
+            ?.children?.item(1)?.firstChild;
 
           if (!parent) throw Error("Parent should exist");
 
@@ -247,7 +249,7 @@ function createChartElement({
           if (children.length === 1) {
             children[0].remove();
           } else if (children.length > 1) {
-            throw Error("Unreacable");
+            throw Error("Untraceable");
           }
 
           const fieldset = window.document.createElement("fieldset");
@@ -258,7 +260,7 @@ function createChartElement({
           if (!pane) throw Error("Expect pane");
           pane
             .getHTMLElement()
-            .children?.item(1)
+            ?.children?.item(1)
             ?.firstChild?.appendChild(fieldset);
 
           fieldset.append(createChild(pane));
@@ -526,13 +528,6 @@ function createChartElement({
         name,
         colors,
         order,
-      });
-
-      createPaneHeightObserver({
-        ichart,
-        paneIndex,
-        signals,
-        utils,
       });
 
       addPriceScaleSelectorIfNeeded({
@@ -927,63 +922,6 @@ function createLegend({ signals, utils }) {
       legends.splice(start).forEach((child) => child.remove());
     },
   };
-}
-
-/**
- * @param {Object} args
- * @param {IChartApi} args.ichart
- * @param {number} args.paneIndex
- * @param {Signals} args.signals
- * @param {Utilities} args.utils
- */
-function createPaneHeightObserver({ ichart, paneIndex, signals, utils }) {
-  if (!paneIndex) return;
-
-  const owner = signals.getOwner();
-
-  const one = "1";
-
-  const callback = () =>
-    setTimeout(() => {
-      try {
-        const _element = ichart.panes().at(paneIndex)?.getHTMLElement();
-        if (!_element) return callback();
-        const element = _element;
-
-        if (element.dataset.observed === one) return;
-        element.dataset.observed = one;
-
-        signals.runWithOwner(owner, () => {
-          const height = signals.createSignal(null, {
-            save: {
-              keyPrefix: "charts",
-              key: `height-${paneIndex}`,
-              ...utils.serde.optNumber,
-            },
-          });
-
-          const savedHeight = height();
-          if (savedHeight !== null) {
-            ichart.panes().at(paneIndex)?.setHeight(savedHeight);
-          }
-
-          let firstRun = true;
-          new ResizeObserver(() => {
-            if (firstRun && savedHeight !== null) {
-              firstRun = false;
-            } else {
-              const h = ichart.panes().at(paneIndex)?.getHeight();
-              if (h === undefined) return;
-              height.set(h);
-            }
-          }).observe(element);
-        });
-      } catch {
-        callback();
-      }
-    }, 5);
-
-  callback();
 }
 
 /**
