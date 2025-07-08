@@ -37,7 +37,7 @@ brk_interface = { version = "0.0.71", path = "crates/brk_interface" }
 brk_logger = { version = "0.0.71", path = "crates/brk_logger" }
 brk_mcp = { version = "0.0.71", path = "crates/brk_mcp" }
 brk_parser = { version = "0.0.71", path = "crates/brk_parser" }
-brk_rmcp = { version = "0.1.8", features = ["transport-streamable-http-server", "transport-worker"]}
+brk_rmcp = { version = "0.2.1", features = ["transport-streamable-http-server", "transport-worker"]}
 # brk_rmcp = { path = "../rust-sdk/crates/rmcp", features = ["transport-streamable-http-server", "transport-worker"]}
 brk_server = { version = "0.0.71", path = "crates/brk_server" }
 brk_store = { version = "0.0.71", path = "crates/brk_store" }
@@ -52,13 +52,13 @@ jiff = "0.2.15"
 log = { version = "0.4.27" }
 minreq = { version = "2.14.0", features = ["https", "serde_json"] }
 rayon = "1.10.0"
-schemars = "1.0.3"
+schemars = "1.0.4"
 serde = { version = "1.0.219" }
 serde_bytes = "0.11.17"
 serde_derive = "1.0.219"
 serde_json = { version = "1.0.140", features = ["float_roundtrip"] }
 tabled = "0.20.0"
-tokio = { version = "1.45.1", features = ["rt-multi-thread"] }
+tokio = { version = "1.46.1", features = ["rt-multi-thread"] }
 zerocopy = { version = "0.8.26" }
 zerocopy-derive = "0.8.26"
 

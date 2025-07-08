@@ -7,9 +7,7 @@ use brk_core::{
 use brk_exit::Exit;
 use brk_fetcher::Fetcher;
 use brk_indexer::Indexer;
-use brk_vec::{
-    AnyCollectableVec, AnyIterableVec, AnyVec, Computation, EagerVec, Format, StoredIndex,
-};
+use brk_vec::{AnyCollectableVec, AnyIterableVec, Computation, EagerVec, Format, StoredIndex};
 
 use super::{
     Indexes,
