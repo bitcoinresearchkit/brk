@@ -61,17 +61,34 @@ export const VERSION = \"v{VERSION}\";
         );
 
         contents += "
-/** @typedef {ReturnType<typeof createVecIdToIndexes>} VecIdToIndexes
-/** @typedef {keyof VecIdToIndexes} VecId */
+/** @typedef {ReturnType<typeof createIndexes>} Indexes */
+
+export function createIndexes() {
+  return {
 ";
 
+        contents += &indexes
+            .iter()
+            .enumerate()
+            .map(|(i_of_i, i)| {
+                let lowered = i.to_string().to_lowercase();
+                format!("    {lowered}: /** @satisfies {{{i}}} */ ({i_of_i}),",)
+            })
+            .collect::<Vec<_>>()
+            .join("\n");
+
+        contents += "  };\n}\n";
+
         contents += "
+/** @typedef {ReturnType<typeof createVecIdToIndexes>} VecIdToIndexes
+/** @typedef {keyof VecIdToIndexes} VecId */
+
 /**
  * @returns {Record<any, number[]>}
  */
-export function createVecIdToIndexes() {\n";
-
-        contents += "  return {\n";
+export function createVecIdToIndexes() {
+  return {
+";
 
         self.id_to_index_to_vec()
             .iter()

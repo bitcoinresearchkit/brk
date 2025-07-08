@@ -1,8 +1,8 @@
 use super::GroupFilter;
 
 #[derive(Default, Clone)]
-pub struct GroupedByDateRange<T> {
-    pub start_to_1d: T,
+pub struct ByAgeRange<T> {
+    pub up_to_1d: T,
     pub _1d_to_1w: T,
     pub _1w_to_1m: T,
     pub _1m_to_2m: T,
@@ -19,14 +19,15 @@ pub struct GroupedByDateRange<T> {
     pub _6y_to_7y: T,
     pub _7y_to_8y: T,
     pub _8y_to_10y: T,
-    pub _10y_to_15y: T,
-    pub _15y_to_end: T,
+    pub _10y_to_12y: T,
+    pub _12y_to_15y: T,
+    pub from_15y: T,
 }
 
-impl<T> From<GroupedByDateRange<T>> for GroupedByDateRange<(GroupFilter, T)> {
-    fn from(value: GroupedByDateRange<T>) -> Self {
+impl<T> From<ByAgeRange<T>> for ByAgeRange<(GroupFilter, T)> {
+    fn from(value: ByAgeRange<T>) -> Self {
         Self {
-            start_to_1d: (GroupFilter::To(1), value.start_to_1d),
+            up_to_1d: (GroupFilter::LowerThan(1), value.up_to_1d),
             _1d_to_1w: (GroupFilter::Range(1..7), value._1d_to_1w),
             _1w_to_1m: (GroupFilter::Range(7..30), value._1w_to_1m),
             _1m_to_2m: (GroupFilter::Range(30..2 * 30), value._1m_to_2m),
@@ -43,16 +44,17 @@ impl<T> From<GroupedByDateRange<T>> for GroupedByDateRange<(GroupFilter, T)> {
             _6y_to_7y: (GroupFilter::Range(6 * 365..7 * 365), value._6y_to_7y),
             _7y_to_8y: (GroupFilter::Range(7 * 365..8 * 365), value._7y_to_8y),
             _8y_to_10y: (GroupFilter::Range(8 * 365..10 * 365), value._8y_to_10y),
-            _10y_to_15y: (GroupFilter::Range(10 * 365..15 * 365), value._10y_to_15y),
-            _15y_to_end: (GroupFilter::From(15 * 365), value._15y_to_end),
+            _10y_to_12y: (GroupFilter::Range(10 * 365..12 * 365), value._10y_to_12y),
+            _12y_to_15y: (GroupFilter::Range(12 * 365..15 * 365), value._12y_to_15y),
+            from_15y: (GroupFilter::GreaterOrEqual(15 * 365), value.from_15y),
         }
     }
 }
 
-impl<T> GroupedByDateRange<T> {
-    pub fn as_vec(&mut self) -> [&T; 19] {
+impl<T> ByAgeRange<T> {
+    pub fn as_vec(&mut self) -> [&T; 20] {
         [
-            &self.start_to_1d,
+            &self.up_to_1d,
             &self._1d_to_1w,
             &self._1w_to_1m,
             &self._1m_to_2m,
@@ -69,14 +71,15 @@ impl<T> GroupedByDateRange<T> {
             &self._6y_to_7y,
             &self._7y_to_8y,
             &self._8y_to_10y,
-            &self._10y_to_15y,
-            &self._15y_to_end,
+            &self._10y_to_12y,
+            &self._12y_to_15y,
+            &self.from_15y,
         ]
     }
 
-    pub fn as_mut_vec(&mut self) -> [&mut T; 19] {
+    pub fn as_mut_vec(&mut self) -> [&mut T; 20] {
         [
-            &mut self.start_to_1d,
+            &mut self.up_to_1d,
             &mut self._1d_to_1w,
             &mut self._1w_to_1m,
             &mut self._1m_to_2m,
@@ -93,16 +96,17 @@ impl<T> GroupedByDateRange<T> {
             &mut self._6y_to_7y,
             &mut self._7y_to_8y,
             &mut self._8y_to_10y,
-            &mut self._10y_to_15y,
-            &mut self._15y_to_end,
+            &mut self._10y_to_12y,
+            &mut self._12y_to_15y,
+            &mut self.from_15y,
         ]
     }
 }
 
-impl<T> GroupedByDateRange<(GroupFilter, T)> {
-    pub fn vecs(&self) -> [&T; 19] {
+impl<T> ByAgeRange<(GroupFilter, T)> {
+    pub fn vecs(&self) -> [&T; 20] {
         [
-            &self.start_to_1d.1,
+            &self.up_to_1d.1,
             &self._1d_to_1w.1,
             &self._1w_to_1m.1,
             &self._1m_to_2m.1,
@@ -119,8 +123,9 @@ impl<T> GroupedByDateRange<(GroupFilter, T)> {
             &self._6y_to_7y.1,
             &self._7y_to_8y.1,
             &self._8y_to_10y.1,
-            &self._10y_to_15y.1,
-            &self._15y_to_end.1,
+            &self._10y_to_12y.1,
+            &self._12y_to_15y.1,
+            &self.from_15y.1,
         ]
     }
 }

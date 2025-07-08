@@ -208,13 +208,13 @@ function createPartialOptions({ env, colors, vecIdToIndexes }) {
 
   const terms = /** @type {const} */ ([
     {
-      key: "sth",
+      key: "short_term_holders",
       name: "short",
       title: "Short Term Holders",
       color: colors.yellow,
     },
     {
-      key: "lth",
+      key: "long_term_holders",
       name: "long",
       title: "Long Term Holders",
       color: colors.fuchsia,
@@ -223,340 +223,358 @@ function createPartialOptions({ env, colors, vecIdToIndexes }) {
 
   const upToDate = /** @type {const} */ ([
     {
-      key: "up_to_1d",
+      key: "utxos_up_to_1d_old",
       name: "1d",
-      title: "Up to 1 Day",
+      title: "UTXOs Up to 1 Day old",
       color: colors.pink,
     },
     {
-      key: "up_to_1w",
+      key: "utxos_up_to_1w_old",
       name: "1w",
-      title: "Up to 1 Week",
+      title: "UTXOs Up to 1 Week old",
       color: colors.red,
     },
     {
-      key: "up_to_1m",
+      key: "utxos_up_to_1m_old",
       name: "1m",
-      title: "Up to 1 Month",
+      title: "UTXOs Up to 1 Month old",
       color: colors.orange,
     },
     {
-      key: "up_to_2m",
+      key: "utxos_up_to_2m_old",
       name: "2m",
-      title: "Up to 2 Months",
+      title: "UTXOs Up to 2 Months old",
       color: colors.amber,
     },
     {
-      key: "up_to_3m",
+      key: "utxos_up_to_3m_old",
       name: "3m",
-      title: "Up to 3 Months",
+      title: "UTXOs Up to 3 Months old",
       color: colors.yellow,
     },
     {
-      key: "up_to_4m",
+      key: "utxos_up_to_4m_old",
       name: "4m",
-      title: "Up to 4 Months",
+      title: "UTXOs Up to 4 Months old",
       color: colors.lime,
     },
     {
-      key: "up_to_5m",
+      key: "utxos_up_to_5m_old",
       name: "5m",
-      title: "Up to 5 Months",
+      title: "UTXOs Up to 5 Months old",
       color: colors.green,
     },
     {
-      key: "up_to_6m",
+      key: "utxos_up_to_6m_old",
       name: "6m",
-      title: "Up to 6 Months",
+      title: "UTXOs Up to 6 Months old",
       color: colors.teal,
     },
     {
-      key: "up_to_1y",
+      key: "utxos_up_to_1y_old",
       name: "1y",
-      title: "Up to 1 Year",
+      title: "UTXOs Up to 1 Year old",
       color: colors.sky,
     },
     {
-      key: "up_to_2y",
+      key: "utxos_up_to_2y_old",
       name: "2y",
-      title: "Up to 2 Years",
+      title: "UTXOs Up to 2 Years old",
       color: colors.indigo,
     },
     {
-      key: "up_to_3y",
+      key: "utxos_up_to_3y_old",
       name: "3y",
-      title: "Up to 3 Years",
+      title: "UTXOs Up to 3 Years old",
       color: colors.violet,
     },
     {
-      key: "up_to_4y",
+      key: "utxos_up_to_4y_old",
       name: "4y",
-      title: "Up to 4 Years",
+      title: "UTXOs Up to 4 Years old",
       color: colors.purple,
     },
     {
-      key: "up_to_5y",
+      key: "utxos_up_to_5y_old",
       name: "5y",
-      title: "Up to 5 Years",
+      title: "UTXOs Up to 5 Years old",
       color: colors.fuchsia,
     },
     {
-      key: "up_to_6y",
+      key: "utxos_up_to_6y_old",
       name: "6y",
-      title: "Up to 6 Years",
+      title: "UTXOs Up to 6 Years old",
       color: colors.pink,
     },
     {
-      key: "up_to_7y",
+      key: "utxos_up_to_7y_old",
       name: "7y",
-      title: "Up to 7 Years",
+      title: "UTXOs Up to 7 Years old",
       color: colors.red,
     },
     {
-      key: "up_to_8y",
+      key: "utxos_up_to_8y_old",
       name: "8y",
-      title: "Up to 8 Years",
+      title: "UTXOs Up to 8 Years old",
       color: colors.orange,
     },
     {
-      key: "up_to_10y",
+      key: "utxos_up_to_10y_old",
       name: "10y",
-      title: "Up to 10 Years",
+      title: "UTXOs Up to 10 Years old",
       color: colors.amber,
     },
     {
-      key: "up_to_15y",
-      name: "15y",
-      title: "Up to 15 Years",
+      key: "utxos_up_to_12y_old",
+      name: "12y",
+      title: "UTXOs Up to 12 Years old",
       color: colors.yellow,
+    },
+    {
+      key: "utxos_up_to_15y_old",
+      name: "15y",
+      title: "UTXOs Up to 15 Years old",
+      color: colors.lime,
     },
   ]);
 
   const fromDate = /** @type {const} */ ([
     {
-      key: "from_1d",
+      key: "utxos_at_least_1d_old",
       name: "1d",
-      title: "From 1 Day",
+      title: "UTXOs at least 1 Day old",
       color: colors.red,
     },
     {
-      key: "from_1w",
+      key: "utxos_at_least_1w_old",
       name: "1w",
-      title: "From 1 Week",
+      title: "UTXOs at least 1 Week old",
       color: colors.orange,
     },
     {
-      key: "from_1m",
+      key: "utxos_at_least_1m_old",
       name: "1m",
-      title: "From 1 Month",
+      title: "UTXOs at least 1 Month old",
       color: colors.yellow,
     },
     {
-      key: "from_2m",
+      key: "utxos_at_least_2m_old",
       name: "2m",
-      title: "From 2 Months",
+      title: "UTXOs at least 2 Months old",
       color: colors.lime,
     },
     {
-      key: "from_3m",
+      key: "utxos_at_least_3m_old",
       name: "3m",
-      title: "From 3 Months",
+      title: "UTXOs at least 3 Months old",
       color: colors.green,
     },
     {
-      key: "from_4m",
+      key: "utxos_at_least_4m_old",
       name: "4m",
-      title: "From 4 Months",
+      title: "UTXOs at least 4 Months old",
       color: colors.teal,
     },
     {
-      key: "from_5m",
+      key: "utxos_at_least_5m_old",
       name: "5m",
-      title: "From 5 Months",
+      title: "UTXOs at least 5 Months old",
       color: colors.cyan,
     },
     {
-      key: "from_6m",
+      key: "utxos_at_least_6m_old",
       name: "6m",
-      title: "From 6 Months",
+      title: "UTXOs at least 6 Months old",
       color: colors.blue,
     },
     {
-      key: "from_1y",
+      key: "utxos_at_least_1y_old",
       name: "1y",
-      title: "From 1 Year",
+      title: "UTXOs at least 1 Year old",
       color: colors.indigo,
     },
     {
-      key: "from_2y",
+      key: "utxos_at_least_2y_old",
       name: "2y",
-      title: "From 2 Years",
+      title: "UTXOs at least 2 Years old",
       color: colors.violet,
     },
     {
-      key: "from_3y",
+      key: "utxos_at_least_3y_old",
       name: "3y",
-      title: "From 3 Years",
+      title: "UTXOs at least 3 Years old",
       color: colors.purple,
     },
     {
-      key: "from_4y",
+      key: "utxos_at_least_4y_old",
       name: "4y",
-      title: "From 4 Years",
+      title: "UTXOs at least 4 Years old",
       color: colors.fuchsia,
     },
     {
-      key: "from_5y",
+      key: "utxos_at_least_5y_old",
       name: "5y",
-      title: "From 5 Years",
+      title: "UTXOs at least 5 Years old",
       color: colors.pink,
     },
     {
-      key: "from_6y",
+      key: "utxos_at_least_6y_old",
       name: "6y",
-      title: "From 6 Years",
+      title: "UTXOs at least 6 Years old",
       color: colors.rose,
     },
     {
-      key: "from_7y",
+      key: "utxos_at_least_7y_old",
       name: "7y",
-      title: "From 7 Years",
+      title: "UTXOs at least 7 Years old",
       color: colors.red,
     },
     {
-      key: "from_8y",
+      key: "utxos_at_least_8y_old",
       name: "8y",
-      title: "From 8 Years",
+      title: "UTXOs at least 8 Years old",
       color: colors.orange,
     },
     {
-      key: "from_10y",
+      key: "utxos_at_least_10y_old",
       name: "10y",
-      title: "From 10 Years",
+      title: "UTXOs at least 10 Years old",
       color: colors.yellow,
     },
     {
-      key: "from_15y",
-      name: "15y",
-      title: "From 15 Years",
+      key: "utxos_at_least_12y_old",
+      name: "12y",
+      title: "UTXOs at least 12 Years old",
       color: colors.lime,
+    },
+    {
+      key: "utxos_at_least_15y_old",
+      name: "15y",
+      title: "UTXOs at least 15 Years old",
+      color: colors.green,
     },
   ]);
 
   const dateRange = /** @type {const} */ ([
     {
-      key: "start_to_1d",
-      name: "24h",
-      title: "Last 24 hours",
+      key: "utxos_up_to_1d_old",
+      name: "1d",
+      title: "UTXOs New Up to 1 Day old",
       color: colors.pink,
     },
     {
-      key: "from_1d_to_1w",
+      key: "utxos_at_least_1d_up_to_1w_old",
       name: "1d..1w",
-      title: "From 1 Day ago to 1 Week ago",
+      title: "UTXOs At least 1 Day ago Up to 1 Week old",
       color: colors.red,
     },
     {
-      key: "from_1w_to_1m",
+      key: "utxos_at_least_1w_up_to_1m_old",
       name: "1w..1m",
-      title: "From 1 Week ago to 1 Month ago",
+      title: "UTXOs At least 1 Week ago Up to 1 Month old",
       color: colors.orange,
     },
     {
-      key: "from_1m_to_2m",
+      key: "utxos_at_least_1m_up_to_2m_old",
       name: "1m..2m",
-      title: "From 1 Month ago to 2 Months ago",
+      title: "UTXOs At least 1 Month ago Up to 2 Months old",
       color: colors.yellow,
     },
     {
-      key: "from_2m_to_3m",
+      key: "utxos_at_least_2m_up_to_3m_old",
       name: "2m..3m",
-      title: "From 2 Month ago to 3 Months ago",
+      title: "UTXOs At least 2 Month ago Up to 3 Months old",
       color: colors.yellow,
     },
     {
-      key: "from_3m_to_4m",
+      key: "utxos_at_least_3m_up_to_4m_old",
       name: "3m..4m",
-      title: "From 3 Month ago to 4 Months ago",
+      title: "UTXOs At least 3 Month ago Up to 4 Months old",
       color: colors.lime,
     },
     {
-      key: "from_4m_to_5m",
+      key: "utxos_at_least_4m_up_to_5m_old",
       name: "4m..5m",
-      title: "From 4 Month ago to 5 Months ago",
+      title: "UTXOs At least 4 Month ago Up to 5 Months old",
       color: colors.lime,
     },
     {
-      key: "from_5m_to_6m",
+      key: "utxos_at_least_5m_up_to_6m_old",
       name: "5m..6m",
-      title: "From 5 Month ago to 6 Months ago",
+      title: "UTXOs At least 5 Month ago Up to 6 Months old",
       color: colors.lime,
     },
     {
-      key: "from_6m_to_1y",
+      key: "utxos_at_least_6m_up_to_1y_old",
       name: "6m..1y",
-      title: "From 6 Months ago to 1 Year ago",
+      title: "UTXOs At least 6 Months ago Up to 1 Year old",
       color: colors.green,
     },
     {
-      key: "from_1y_to_2y",
+      key: "utxos_at_least_1y_up_to_2y_old",
       name: "1y..2y",
-      title: "From 1 Year ago to 2 Years ago",
+      title: "UTXOs At least 1 Year ago Up to 2 Years old",
       color: colors.cyan,
     },
     {
-      key: "from_2y_to_3y",
+      key: "utxos_at_least_2y_up_to_3y_old",
       name: "2y..3y",
-      title: "From 2 Years ago to 3 Years ago",
+      title: "UTXOs At least 2 Years ago Up to 3 Years old",
       color: colors.blue,
     },
     {
-      key: "from_3y_to_4y",
+      key: "utxos_at_least_3y_up_to_4y_old",
       name: "3y..4y",
-      title: "From 3 Years ago to 4 Years ago",
+      title: "UTXOs At least 3 Years ago Up to 4 Years old",
       color: colors.indigo,
     },
     {
-      key: "from_4y_to_5y",
+      key: "utxos_at_least_4y_up_to_5y_old",
       name: "4y..5y",
-      title: "From 4 Years ago to 5 Years ago",
+      title: "UTXOs At least 4 Years ago Up to 5 Years old",
       color: colors.violet,
     },
     {
-      key: "from_5y_to_6y",
+      key: "utxos_at_least_5y_up_to_6y_old",
       name: "5y..6y",
-      title: "From 5 Years ago to 6 Years ago",
+      title: "UTXOs At least 5 Years ago Up to 6 Years old",
       color: colors.purple,
     },
     {
-      key: "from_6y_to_7y",
+      key: "utxos_at_least_6y_up_to_7y_old",
       name: "6y..7y",
-      title: "From 6 Years ago to 7 Years ago",
+      title: "UTXOs At least 6 Years ago Up to 7 Years old",
       color: colors.purple,
     },
     {
-      key: "from_7y_to_8y",
+      key: "utxos_at_least_7y_up_to_8y_old",
       name: "7y..8y",
-      title: "From 7 Years ago to 8 Years ago",
+      title: "UTXOs At least 7 Years ago Up to 8 Years old",
       color: colors.fuchsia,
     },
     {
-      key: "from_8y_to_10y",
+      key: "utxos_at_least_8y_up_to_10y_old",
       name: "8y..10y",
-      title: "From 8 Years ago to 10 Years ago",
+      title: "UTXOs At least 8 Years ago Up to 10 Years old",
       color: colors.fuchsia,
     },
     {
-      key: "from_10y_to_15y",
-      name: "10y..15y",
-      title: "From 10 Years ago to 15 Years ago",
+      key: "utxos_at_least_10y_up_to_12y_old",
+      name: "10y..12y",
+      title: "UTXOs At least 10 Years ago Up to 12 Years old",
       color: colors.pink,
     },
     {
-      key: "from_15y_to_end",
-      name: "15y+",
-      title: "From 15 Years ago to genesis (2009_01_03)",
+      key: "utxos_at_least_12y_up_to_15y_old",
+      name: "12y..15y",
+      title: "UTXOs At least 12 Years ago Up to 15 Years old",
       color: colors.red,
+    },
+    {
+      key: "utxos_at_least_15y_old",
+      name: "15y+",
+      title: "UTXOs At least 15 Years old up to genesis",
+      color: colors.orange,
     },
   ]);
 
@@ -593,260 +611,320 @@ function createPartialOptions({ env, colors, vecIdToIndexes }) {
     },
   ]);
 
-  const fromSize = /** @type {const} */ ([
+  const aboveAmount = /** @type {const} */ ([
     {
-      key: "from_1sat",
+      key: "above_1sat",
       name: ">=1 sat",
-      title: "From 1 sat",
+      title: "Above 1 sat",
       color: colors.orange,
     },
     {
-      key: "from_10sats",
+      key: "above_10sats",
       name: ">=10 sats",
-      title: "From 10 sats",
+      title: "Above 10 sats",
       color: colors.orange,
     },
     {
-      key: "from_100sats",
+      key: "above_100sats",
       name: ">=100 sats",
-      title: "From 100 sats",
+      title: "Above 100 sats",
       color: colors.yellow,
     },
     {
-      key: "from_1k_sats",
+      key: "above_1k_sats",
       name: ">=1K sats",
-      title: "From 1K sats",
+      title: "Above 1K sats",
       color: colors.lime,
     },
     {
-      key: "from_10k_sats",
+      key: "above_10k_sats",
       name: ">=10K sats",
-      title: "From 10K sats",
+      title: "Above 10K sats",
       color: colors.green,
     },
     {
-      key: "from_100k_sats",
+      key: "above_100k_sats",
       name: ">=100K sats",
-      title: "From 100K sats",
+      title: "Above 100K sats",
       color: colors.cyan,
     },
     {
-      key: "from_1m_sats",
+      key: "above_1m_sats",
       name: ">=1M sats",
-      title: "From 1M sats",
+      title: "Above 1M sats",
       color: colors.blue,
     },
     {
-      key: "from_10m_sats",
+      key: "above_10m_sats",
       name: ">=10M sats",
-      title: "From 10M sats",
+      title: "Above 10M sats",
       color: colors.indigo,
     },
     {
-      key: "from_1btc",
+      key: "above_1btc",
       name: ">=1 btc",
-      title: "From 1 BTC",
+      title: "Above 1 BTC",
       color: colors.purple,
     },
     {
-      key: "from_10btc",
+      key: "above_10btc",
       name: ">=10 btc",
-      title: "From 10 BTC",
+      title: "Above 10 BTC",
       color: colors.violet,
     },
     {
-      key: "from_100btc",
+      key: "above_100btc",
       name: ">=100 btc",
-      title: "From 100 BTC",
+      title: "Above 100 BTC",
       color: colors.fuchsia,
     },
     {
-      key: "from_1k_btc",
+      key: "above_1k_btc",
       name: ">=1K btc",
-      title: "From 1K BTC",
+      title: "Above 1K BTC",
       color: colors.pink,
     },
     {
-      key: "from_10k_btc",
+      key: "above_10k_btc",
       name: ">=10K btc",
-      title: "From 10K BTC",
+      title: "Above 10K BTC",
       color: colors.red,
     },
   ]);
 
-  const upToSize = /** @type {const} */ ([
+  const utxosAboveAmount = aboveAmount.map(
+    ({ key, name, title, color }) =>
+      /** @type {const} */ ({
+        key: `utxos_${key}`,
+        name,
+        title: `UTXOs ${title}`,
+        color,
+      }),
+  );
+
+  const addressesAboveAmount = aboveAmount.map(
+    ({ key, name, title, color }) =>
+      /** @type {const} */ ({
+        key: `addrs_${key}`,
+        name,
+        title: `Addresses ${title}`,
+        color,
+      }),
+  );
+
+  const underAmount = /** @type {const} */ ([
     {
-      key: "up_to_10sats",
+      key: "under_10sats",
       name: "<10 sats",
-      title: "Up to 10 sats",
+      title: "under 10 sats",
       color: colors.orange,
     },
     {
-      key: "up_to_100sats",
+      key: "under_100sats",
       name: "<100 sats",
-      title: "Up to 100 sats",
+      title: "under 100 sats",
       color: colors.yellow,
     },
     {
-      key: "up_to_1k_sats",
-      name: "<1K sats",
-      title: "Up to 1K sats",
+      key: "under_1k_sats",
+      name: "<1k sats",
+      title: "under 1k sats",
       color: colors.lime,
     },
     {
-      key: "up_to_10k_sats",
-      name: "<10K sats",
-      title: "Up to 10K sats",
+      key: "under_10k_sats",
+      name: "<10k sats",
+      title: "under 10k sats",
       color: colors.green,
     },
     {
-      key: "up_to_100k_sats",
-      name: "<100K sats",
-      title: "Up to 100K sats",
+      key: "under_100k_sats",
+      name: "<100k sats",
+      title: "under 100k sats",
       color: colors.cyan,
     },
     {
-      key: "up_to_1m_sats",
-      name: "<1M sats",
-      title: "Up to 1M sats",
+      key: "under_1m_sats",
+      name: "<1m sats",
+      title: "under 1m sats",
       color: colors.blue,
     },
     {
-      key: "up_to_10m_sats",
-      name: "<10M sats",
-      title: "Up to 10M sats",
+      key: "under_10m_sats",
+      name: "<10m sats",
+      title: "under 10m sats",
       color: colors.indigo,
     },
     {
-      key: "up_to_1btc",
+      key: "under_1btc",
       name: "<1 btc",
-      title: "up to 1 BTC",
+      title: "under 1 btc",
       color: colors.purple,
     },
     {
-      key: "up_to_10btc",
+      key: "under_10btc",
       name: "<10 btc",
-      title: "Up to 10 BTC",
+      title: "under 10 btc",
       color: colors.violet,
     },
     {
-      key: "up_to_100btc",
+      key: "under_100btc",
       name: "<100 btc",
-      title: "Up to 100 BTC",
+      title: "under 100 btc",
       color: colors.fuchsia,
     },
     {
-      key: "up_to_1k_btc",
-      name: "<1K btc",
-      title: "up to 1K BTC",
+      key: "under_1k_btc",
+      name: "<1k btc",
+      title: "under 1k btc",
       color: colors.pink,
     },
     {
-      key: "up_to_10k_btc",
-      name: "<10K btc",
-      title: "up to 10K BTC",
+      key: "under_10k_btc",
+      name: "<10k btc",
+      title: "under 10k btc",
       color: colors.red,
     },
     {
-      key: "up_to_100k_btc",
-      name: "<100K btc",
-      title: "up to 100K BTC",
+      key: "under_100k_btc",
+      name: "<100k btc",
+      title: "under 100k btc",
       color: colors.orange,
     },
   ]);
 
-  const sizeRanges = /** @type {const} */ ([
+  const utxosUnderAmount = underAmount.map(
+    ({ key, name, title, color }) =>
+      /** @type {const} */ ({
+        key: `utxos_${key}`,
+        name,
+        title: `UTXOs ${title}`,
+        color,
+      }),
+  );
+
+  const addressesUnderAmount = underAmount.map(
+    ({ key, name, title, color }) =>
+      /** @type {const} */ ({
+        key: `addrs_${key}`,
+        name,
+        title: `Addresses ${title}`,
+        color,
+      }),
+  );
+
+  const amountRanges = /** @type {const} */ ([
     {
-      key: "0sats",
+      key: "with_0sats",
       name: "0 sats",
-      title: "0 sats",
+      title: "valued 0 sats",
       color: colors.red,
     },
     {
-      key: "from_1sat_to_10sats",
+      key: "above_1sat_under_10sats",
       name: "1 sat..10 sats",
-      title: "From 1 sat to 10 sats",
+      title: "Above 1 sat Under 10 sats",
       color: colors.orange,
     },
     {
-      key: "from_10sats_to_100sats",
+      key: "above_10sats_under_100sats",
       name: "10 sats..100 sats",
-      title: "From 10 sats to 100 sats",
+      title: "Above 10 sats Under 100 sats",
       color: colors.yellow,
     },
     {
-      key: "from_100sats_to_1_000sats",
+      key: "above_100sats_under_1k_sats",
       name: "100 sats..1K sats",
-      title: "From 100 sats to 1K sats",
+      title: "Above 100 sats Under 1K sats",
       color: colors.lime,
     },
     {
-      key: "from_1_000sats_to_10_000sats",
+      key: "above_1k_sats_under_10k_sats",
       name: "1K sats..10K sats",
-      title: "From 1K sats to 10K sats",
+      title: "Above 1K sats Under 10K sats",
       color: colors.green,
     },
     {
-      key: "from_10_000sats_to_100_000sats",
+      key: "above_10k_sats_under_100k_sats",
       name: "10K sats..100K sats",
-      title: "From 10K sats to 100K sats",
+      title: "Above 10K sats Under 100K sats",
       color: colors.cyan,
     },
     {
-      key: "from_100_000sats_to_1_000_000sats",
+      key: "above_100k_sats_under_1m_sats",
       name: "100K sats .. 1M sats",
-      title: "From 100K sats to 1M sats",
+      title: "Above 100K sats Under 1M sats",
       color: colors.blue,
     },
     {
-      key: "from_1_000_000sats_to_10_000_000sats",
+      key: "above_1m_sats_under_10m_sats",
       name: "1M sats..10M sats",
-      title: "From 1M sats to 10M sats",
+      title: "Above 1M sats Under 10M sats",
       color: colors.indigo,
     },
     {
-      key: "from_10_000_000sats_to_1btc",
+      key: "above_10m_sats_under_1btc",
       name: "10M sats..1 btc",
-      title: "From 10M sats to 1 BTC",
+      title: "Above 10M sats Under 1 BTC",
       color: colors.purple,
     },
     {
-      key: "from_1btc_to_10btc",
+      key: "above_1btc_under_10btc",
       name: "1 btc..10 btc",
-      title: "From 1 BTC to 10 BTC",
+      title: "Above 1 BTC Under 10 BTC",
       color: colors.violet,
     },
     {
-      key: "from_10btc_to_100btc",
+      key: "above_10btc_under_100btc",
       name: "10 btc..100 btc",
-      title: "From 10 BTC to 100 BTC",
+      title: "Above 10 BTC Under 100 BTC",
       color: colors.fuchsia,
     },
     {
-      key: "from_100btc_to_1_000btc",
+      key: "above_100btc_under_1k_btc",
       name: "100 btc..1K btc",
-      title: "From 100 BTC to 1K BTC",
+      title: "Above 100 BTC Under 1K BTC",
       color: colors.pink,
     },
     {
-      key: "from_1_000btc_to_10_000btc",
+      key: "above_1k_btc_under_10k_btc",
       name: "1K btc..10K btc",
-      title: "From 1K BTC to 10K BTC",
+      title: "Above 1K BTC Under 10K BTC",
       color: colors.red,
     },
     {
-      key: "from_10_000btc_to_100_000btc",
+      key: "above_10k_btc_under_100k_btc",
       name: "10K btc..100K btc",
-      title: "From 10K BTC to 100K BTC",
+      title: "Above 10K BTC Under 100K BTC",
       color: colors.orange,
     },
     {
-      key: "from_100_000btc",
+      key: "above_100k_btc",
       name: "100K btc+",
-      title: "From 100K BTC",
+      title: "Above 100K BTC",
       color: colors.yellow,
     },
   ]);
+
+  const utxosAmountRanges = amountRanges.map(
+    ({ key, name, title, color }) =>
+      /** @type {const} */ ({
+        key: `utxos_${key}`,
+        name,
+        title: `UTXOs ${title}`,
+        color,
+      }),
+  );
+
+  const addressesAmountRanges = amountRanges.map(
+    ({ key, name, title, color }) =>
+      /** @type {const} */ ({
+        key: `addrs_${key}`,
+        name,
+        title: `Addresses ${title}`,
+        color,
+      }),
+  );
 
   const type = /** @type {const} */ ([
     {
@@ -868,7 +946,7 @@ function createPartialOptions({ env, colors, vecIdToIndexes }) {
       color: colors.yellow,
     },
     {
-      key: "p2ms",
+      key: "p2ms_outputs",
       name: "p2ms",
       title: "Pay To Bare Multisig",
       color: colors.lime,
@@ -904,13 +982,13 @@ function createPartialOptions({ env, colors, vecIdToIndexes }) {
       color: colors.purple,
     },
     {
-      key: "unknown",
+      key: "unknown_outputs",
       name: "unknown",
       title: "Pay To Unknown",
       color: colors.violet,
     },
     {
-      key: "empty",
+      key: "empty_outputs",
       name: "empty",
       title: "Pay To Empty",
       color: colors.fuchsia,
@@ -1019,7 +1097,7 @@ function createPartialOptions({ env, colors, vecIdToIndexes }) {
         color: colors.orange,
       },
       {
-        key: `cumulative_${concat}`,
+        key: `${concat}_cumulative`,
         title: name ? `Cumulative ${name}` : "Cumulative",
         color: colors.red,
         defaultActive: false,
@@ -1419,13 +1497,17 @@ function createPartialOptions({ env, colors, vecIdToIndexes }) {
     const list = "list" in args ? args.list : [args];
     const useGroupName = "list" in args;
 
+    const title = args.title
+      ? `${useGroupName ? "by" : "of"} ${args.title}`
+      : "";
+
     return /** @satisfies {PartialOptionsGroup} */ ({
       name: args.name || "all",
       tree: [
         !("list" in args)
           ? {
               name: "supply",
-              title: `${args.title} Supply`,
+              title: `Supply ${title}`,
               bottom: list.flatMap(({ color, name, key: _key }) => {
                 const key = fixKey(_key);
                 return /** @type {const} */ ([
@@ -1564,7 +1646,7 @@ function createPartialOptions({ env, colors, vecIdToIndexes }) {
               tree: [
                 {
                   name: "total",
-                  title: `${args.title} Supply`,
+                  title: `Supply ${title}`,
                   bottom: list.flatMap(({ color, name, key: _key }) => {
                     const key = fixKey(_key);
                     return /** @type {const} */ ([
@@ -1597,7 +1679,7 @@ function createPartialOptions({ env, colors, vecIdToIndexes }) {
                 },
                 {
                   name: "in profit",
-                  title: `${args.title} Supply In Profit`,
+                  title: `Supply In Profit ${title}`,
                   bottom: list.flatMap(({ color, name, key: _key }) => {
                     const key = fixKey(_key);
                     return /** @type {const} */ ([
@@ -1635,7 +1717,7 @@ function createPartialOptions({ env, colors, vecIdToIndexes }) {
                 },
                 {
                   name: "in loss",
-                  title: `${args.title} Supply In loss`,
+                  title: `Supply In loss ${title}`,
                   bottom: list.flatMap(({ color, name, key: _key }) => {
                     const key = fixKey(_key);
                     return /** @type {const} */ ([
@@ -1673,7 +1755,7 @@ function createPartialOptions({ env, colors, vecIdToIndexes }) {
                 },
                 {
                   name: "even",
-                  title: `${args.title} Supply Even`,
+                  title: `Even Supply ${title}`,
                   bottom: list.flatMap(({ color, name, key: _key }) => {
                     const key = fixKey(_key);
                     return /** @type {const} */ ([
@@ -1713,7 +1795,7 @@ function createPartialOptions({ env, colors, vecIdToIndexes }) {
             },
         {
           name: "utxo count",
-          title: `${args.title} UTXO Count`,
+          title: `UTXO Count ${title}`,
           bottom: list.flatMap(({ color, name, key: _key }) => {
             const key = fixKey(_key);
             return /** @type {const} */ ([
@@ -1736,7 +1818,7 @@ function createPartialOptions({ env, colors, vecIdToIndexes }) {
             ? [
                 {
                   name: "address count",
-                  title: `${args.title} Loaded Address Count`,
+                  title: `Address Count ${title}`,
                   bottom: list.flatMap(({ name, color, key: _key }) => {
                     const key = fixKey(_key);
                     return [
@@ -1769,11 +1851,10 @@ function createPartialOptions({ env, colors, vecIdToIndexes }) {
                   tree: [
                     {
                       name: "loaded",
-                      title: `${args.title} Loaded Address Count`,
+                      title: `Loaded Address Count ${title}`,
                       bottom: list
                         .filter(
                           ({ key }) =>
-                            key !== "empty" &&
                             `${fixKey(key)}address_count` in vecIdToIndexes,
                         )
                         .flatMap(({ name, color, key: _key }) => {
@@ -1794,7 +1875,7 @@ function createPartialOptions({ env, colors, vecIdToIndexes }) {
                       ? [
                           {
                             name: "empty",
-                            title: `${args.title} Empty Address Count`,
+                            title: `Empty Address Count ${title}`,
                             bottom: list
                               .filter(
                                 ({ key }) =>
@@ -1818,41 +1899,12 @@ function createPartialOptions({ env, colors, vecIdToIndexes }) {
                 },
               ]
           : []),
-        // list.filter(({ key }) => key.endsWith("address_count")).map(callbackfn),
-        // {
-        //   name: "loaded",
-        //   title: `${args.title} Loaded Address Count`,
-        //   bottom: list.flatMap(({ color, name, key: _key }) => {
-        //     const key = fixKey(_key);
-        //     return /** @type {const} */ ([
-        //       createBaseSeries({
-        //         key: `${key}address_count`,
-        //         name: useGroupName ? name : "Loaded",
-        //         color,
-        //       }),
-        //       createBaseSeries({
-        //         key: `${key}empty_address_count`,
-        //         name: useGroupName ? name : "Empty",
-        //         color,
-        //       }),
-        //     ]);
-        //   }),
-        // },
-        // {
-        //   name: "empty",
-        //   title: `${args.title} Empty Address Count`,
-        //   bottom: list.flatMap(({ color, name, key: _key }) => {
-        //     const key = fixKey(_key);
-        //     return /** @type {const} */ ([
-        //     ]);
-        //   }),
-        // },
         {
           name: "Realized",
           tree: [
             {
               name: "cap",
-              title: `${args.title} Realized Capitalization`,
+              title: `Realized Capitalization ${title}`,
               bottom: list.flatMap(({ color, name, key: _key }) => {
                 const key = fixKey(_key);
                 return /** @type {const} */ ([
@@ -1882,7 +1934,7 @@ function createPartialOptions({ env, colors, vecIdToIndexes }) {
             "list" in args
               ? {
                   name: "Price",
-                  title: `${args.title} Realized Prices`,
+                  title: `Realized Price ${title}`,
                   top: args.list.map(({ color, name, key }) =>
                     createBaseSeries({
                       key: `${fixKey(key)}realized_price`,
@@ -1892,7 +1944,7 @@ function createPartialOptions({ env, colors, vecIdToIndexes }) {
                   ),
                 }
               : createPriceWithRatio({
-                  title: `${args.title} Realized Price`,
+                  title: `Realized Price ${title}`,
                   key: `${fixKey(args.key)}realized_price`,
                   name: "price",
                   legend: "realized",
@@ -1902,7 +1954,7 @@ function createPartialOptions({ env, colors, vecIdToIndexes }) {
               ? [
                   {
                     name: "pnl",
-                    title: `${args.title} Realized Profit And Loss`,
+                    title: `Realized Profit And Loss ${title}`,
                     bottom: [
                       createBaseSeries({
                         key: `${fixKey(args.key)}realized_profit`,
@@ -1910,7 +1962,7 @@ function createPartialOptions({ env, colors, vecIdToIndexes }) {
                         color: colors.green,
                       }),
                       createBaseSeries({
-                        key: `cumulative_${fixKey(args.key)}realized_profit`,
+                        key: `${fixKey(args.key)}realized_profit_cumulative`,
                         name: "Cumulative Profit",
                         color: colors.green,
                         defaultActive: false,
@@ -1922,7 +1974,7 @@ function createPartialOptions({ env, colors, vecIdToIndexes }) {
                         defaultActive: false,
                       }),
                       createBaseSeries({
-                        key: `cumulative_${fixKey(args.key)}realized_loss`,
+                        key: `${fixKey(args.key)}realized_loss_cumulative`,
                         name: "Cumulative Loss",
                         color: colors.red,
                         defaultActive: false,
@@ -1933,9 +1985,9 @@ function createPartialOptions({ env, colors, vecIdToIndexes }) {
                         color: colors.red,
                       }),
                       createBaseSeries({
-                        key: `cumulative_${fixKey(
+                        key: `${fixKey(
                           args.key,
-                        )}negative_realized_loss`,
+                        )}negative_realized_loss_cumulative`,
                         name: "Cumulative Negative Loss",
                         color: colors.red,
                         defaultActive: false,
@@ -1970,7 +2022,7 @@ function createPartialOptions({ env, colors, vecIdToIndexes }) {
                   },
                   {
                     name: "Net pnl",
-                    title: `${args.title} Net Realized Profit And Loss`,
+                    title: `Net Realized Profit And Loss ${title}`,
                     bottom: list.flatMap(({ color, name, key }) => [
                       /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
                         type: "Baseline",
@@ -1984,9 +2036,9 @@ function createPartialOptions({ env, colors, vecIdToIndexes }) {
                       }),
                       /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
                         type: "Baseline",
-                        key: `cumulative_${fixKey(
+                        key: `${fixKey(
                           key,
-                        )}net_realized_profit_and_loss`,
+                        )}net_realized_profit_and_loss_cumulative`,
                         title: "Cumulative net",
                         defaultActive: false,
                         options: {
@@ -1997,9 +2049,9 @@ function createPartialOptions({ env, colors, vecIdToIndexes }) {
                       }),
                       /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
                         type: "Baseline",
-                        key: `cumulative_${fixKey(
+                        key: `${fixKey(
                           key,
-                        )}net_realized_profit_and_loss_30d_change`,
+                        )}net_realized_profit_and_loss_cumulative_30d_change`,
                         title: "cum net 30d change",
                         defaultActive: false,
                         options: {
@@ -2022,9 +2074,9 @@ function createPartialOptions({ env, colors, vecIdToIndexes }) {
                       }),
                       /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
                         type: "Baseline",
-                        key: `cumulative_${fixKey(
+                        key: `${fixKey(
                           key,
-                        )}net_realized_profit_and_loss_30d_change_relative_to_realized_cap`,
+                        )}net_realized_profit_and_loss_cumulative_30d_change_relative_to_realized_cap`,
                         title: "cum net 30d change",
                         options: {
                           createPriceLine: {
@@ -2034,10 +2086,10 @@ function createPartialOptions({ env, colors, vecIdToIndexes }) {
                       }),
                       /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
                         type: "Baseline",
-                        key: `cumulative_${fixKey(
+                        key: `${fixKey(
                           key,
-                        )}net_realized_profit_and_loss_30d_change_relative_to_market_cap`,
-                        title: "cum net 30d change",
+                        )}net_realized_profit_and_loss_cumulative_30d_change_relative_to_market_cap`,
+                        title: "cumulative net 30d change",
                         options: {
                           createPriceLine: {
                             value: 0,
@@ -2048,7 +2100,7 @@ function createPartialOptions({ env, colors, vecIdToIndexes }) {
                   },
                   {
                     name: "sopr",
-                    title: `${args.title} Spent Output Profit Ratio`,
+                    title: `Spent Output Profit Ratio ${title}`,
                     bottom: list.flatMap(({ color, name, key }) => [
                       /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
                         type: "Baseline",
@@ -2077,7 +2129,7 @@ function createPartialOptions({ env, colors, vecIdToIndexes }) {
               : [
                   {
                     name: "profit",
-                    title: `${args.title} Realized Profit`,
+                    title: `Realized Profit ${title}`,
                     bottom: list.flatMap(({ color, name, key: _key }) => {
                       const key = fixKey(_key);
                       return /** @type {const} */ ([
@@ -2102,7 +2154,7 @@ function createPartialOptions({ env, colors, vecIdToIndexes }) {
                   },
                   {
                     name: "loss",
-                    title: `${args.title} Realized Loss`,
+                    title: `Realized Loss ${title}`,
                     bottom: list.flatMap(({ color, name, key: _key }) => {
                       const key = fixKey(_key);
                       return /** @type {const} */ ([
@@ -2127,7 +2179,7 @@ function createPartialOptions({ env, colors, vecIdToIndexes }) {
                   },
                   {
                     name: "Net pnl",
-                    title: `${args.title} Net Realized Profit And Loss`,
+                    title: `Net Realized Profit And Loss ${title}`,
                     bottom: list.flatMap(({ color, name, key }) => [
                       /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
                         type: "Baseline",
@@ -2160,12 +2212,12 @@ function createPartialOptions({ env, colors, vecIdToIndexes }) {
                     tree: [
                       {
                         name: "profit",
-                        title: `Cumulative ${args.title} Realized Profit`,
+                        title: `Cumulative Realized Profit ${title}`,
                         bottom: list.flatMap(({ color, name, key: _key }) => {
                           const key = fixKey(_key);
                           return /** @type {const} */ ([
                             createBaseSeries({
-                              key: `cumulative_${key}realized_profit`,
+                              key: `${key}realized_profit_cumulative`,
                               name,
                               color,
                             }),
@@ -2174,12 +2226,12 @@ function createPartialOptions({ env, colors, vecIdToIndexes }) {
                       },
                       {
                         name: "loss",
-                        title: `Cumulative ${args.title} Realized Loss`,
+                        title: `Cumulative Realized Loss ${title}`,
                         bottom: list.flatMap(({ color, name, key: _key }) => {
                           const key = fixKey(_key);
                           return /** @type {const} */ ([
                             createBaseSeries({
-                              key: `cumulative_${key}realized_loss`,
+                              key: `${key}realized_loss_cumulative`,
                               name,
                               color,
                             }),
@@ -2188,13 +2240,13 @@ function createPartialOptions({ env, colors, vecIdToIndexes }) {
                       },
                       {
                         name: "Net pnl",
-                        title: `Cumulative ${args.title} Net Realized Profit And Loss`,
+                        title: `Cumulative Net Realized Profit And Loss ${title}`,
                         bottom: list.flatMap(({ color, name, key }) => [
                           /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
                             type: "Baseline",
-                            key: `cumulative_${fixKey(
+                            key: `${fixKey(
                               key,
-                            )}net_realized_profit_and_loss`,
+                            )}net_realized_profit_and_loss_cumulative`,
                             title: name,
                             color,
                             defaultActive: false,
@@ -2208,13 +2260,13 @@ function createPartialOptions({ env, colors, vecIdToIndexes }) {
                       },
                       {
                         name: "Net pnl 30d change",
-                        title: `Cumulative ${args.title} Net Realized Profit And Loss 30 Day Change`,
+                        title: `Cumulative Net Realized Profit And Loss 30 Day Change ${title}`,
                         bottom: list.flatMap(({ color, name, key }) => [
                           /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
                             type: "Baseline",
-                            key: `cumulative_${fixKey(
+                            key: `${fixKey(
                               key,
-                            )}net_realized_profit_and_loss_30d_change`,
+                            )}net_realized_profit_and_loss_cumulative_30d_change`,
                             title: name,
                             color,
                             options: {
@@ -2225,9 +2277,9 @@ function createPartialOptions({ env, colors, vecIdToIndexes }) {
                           }),
                           /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
                             type: "Baseline",
-                            key: `cumulative_${fixKey(
+                            key: `${fixKey(
                               key,
-                            )}net_realized_profit_and_loss_30d_change_relative_to_realized_cap`,
+                            )}net_realized_profit_and_loss_cumulative_30d_change_relative_to_realized_cap`,
                             title: name,
                             color,
                             options: {
@@ -2238,9 +2290,9 @@ function createPartialOptions({ env, colors, vecIdToIndexes }) {
                           }),
                           /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
                             type: "Baseline",
-                            key: `cumulative_${fixKey(
+                            key: `${fixKey(
                               key,
-                            )}net_realized_profit_and_loss_30d_change_relative_to_market_cap`,
+                            )}net_realized_profit_and_loss_cumulative_30d_change_relative_to_market_cap`,
                             title: name,
                             color,
                             options: {
@@ -2258,7 +2310,7 @@ function createPartialOptions({ env, colors, vecIdToIndexes }) {
                     tree: [
                       {
                         name: "Normal",
-                        title: `${args.title} Spent Output Profit Ratio`,
+                        title: `Spent Output Profit Ratio ${title}`,
                         bottom: list.flatMap(({ color, name, key }) => [
                           /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
                             type: "Baseline",
@@ -2275,7 +2327,7 @@ function createPartialOptions({ env, colors, vecIdToIndexes }) {
                       },
                       {
                         name: "Adjusted",
-                        title: `${args.title} Adjusted Spent Output Profit Ratio`,
+                        title: `Adjusted Spent Output Profit Ratio ${title}`,
                         bottom: list.flatMap(({ color, name, key }) => [
                           /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
                             type: "Baseline",
@@ -2297,7 +2349,7 @@ function createPartialOptions({ env, colors, vecIdToIndexes }) {
                 ]),
             {
               name: "Sell Side Risk Ratio",
-              title: `${args.title} Sell Side Risk Ratio`,
+              title: `Sell Side Risk Ratio ${title}`,
               bottom: list.flatMap(({ color, name, key }) =>
                 createBaseSeries({
                   key: `${fixKey(key)}sell_side_risk_ratio`,
@@ -2315,7 +2367,7 @@ function createPartialOptions({ env, colors, vecIdToIndexes }) {
               ? [
                   {
                     name: "pnl",
-                    title: `${args.title} Unrealized Profit And Loss`,
+                    title: `Unrealized Profit And Loss ${title}`,
                     bottom: [
                       // createBaseSeries({
                       //   key: `0`,
@@ -2347,7 +2399,7 @@ function createPartialOptions({ env, colors, vecIdToIndexes }) {
               : [
                   {
                     name: "profit",
-                    title: `${args.title} Unrealized Profit`,
+                    title: `Unrealized Profit ${title}`,
                     bottom: list.flatMap(({ color, name, key: _key }) => {
                       const key = fixKey(_key);
                       return /** @type {const} */ ([
@@ -2361,7 +2413,7 @@ function createPartialOptions({ env, colors, vecIdToIndexes }) {
                   },
                   {
                     name: "loss",
-                    title: `${args.title} Unrealized Loss`,
+                    title: `Unrealized Loss ${title}`,
                     bottom: list.flatMap(({ color, name, key: _key }) => {
                       const key = fixKey(_key);
                       return /** @type {const} */ ([
@@ -2376,7 +2428,7 @@ function createPartialOptions({ env, colors, vecIdToIndexes }) {
                 ]),
             {
               name: "Net pnl",
-              title: `${args.title} Net Unrealized Profit And Loss`,
+              title: `Net Unrealized Profit And Loss ${title}`,
               bottom: list.flatMap(({ color, name, key }) => [
                 /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
                   type: "Baseline",
@@ -2413,7 +2465,7 @@ function createPartialOptions({ env, colors, vecIdToIndexes }) {
                 tree: [
                   {
                     name: "Average",
-                    title: `${args.title} Average Price Paid`,
+                    title: `Average Price Paid ${title}`,
                     top: list.flatMap(({ color, name, key: _key }) => {
                       const key = fixKey(_key);
                       return /** @type {const} */ ([
@@ -2427,7 +2479,7 @@ function createPartialOptions({ env, colors, vecIdToIndexes }) {
                   },
                   {
                     name: "Min",
-                    title: `${args.title} Min Price Paid`,
+                    title: `Min Price Paid ${title}`,
                     top: list.flatMap(({ color, name, key: _key }) => {
                       const key = fixKey(_key);
                       return /** @type {const} */ ([
@@ -2441,7 +2493,7 @@ function createPartialOptions({ env, colors, vecIdToIndexes }) {
                   },
                   {
                     name: "Max",
-                    title: `${args.title} Max Price Paid`,
+                    title: `Max Price Paid ${title}`,
                     top: list.flatMap(({ color, name, key: _key }) => {
                       const key = fixKey(_key);
                       return /** @type {const} */ ([
@@ -2459,7 +2511,7 @@ function createPartialOptions({ env, colors, vecIdToIndexes }) {
           : [
               {
                 name: "Price paid",
-                title: `${args.title} Prices Paid`,
+                title: `Prices Paid ${title}`,
                 top: [
                   createBaseSeries({
                     key: `${fixKey(args.key)}realized_price`,
@@ -2483,7 +2535,7 @@ function createPartialOptions({ env, colors, vecIdToIndexes }) {
             ]),
         {
           name: "Coins Destroyed",
-          title: `${args.title} Coins Destroyed`,
+          title: `Coins Destroyed ${title}`,
           bottom: list.flatMap(({ color, name, key: _key }) => {
             const key = fixKey(_key);
             return /** @type {const} */ ([
@@ -2493,7 +2545,7 @@ function createPartialOptions({ env, colors, vecIdToIndexes }) {
                 color,
               }),
               createBaseSeries({
-                key: `cumulative_${key}coinblocks_destroyed`,
+                key: `${key}coinblocks_destroyed_cumulative`,
                 name: useGroupName ? name : "cumulative",
                 color,
                 defaultActive: false,
@@ -2504,7 +2556,7 @@ function createPartialOptions({ env, colors, vecIdToIndexes }) {
                 color,
               }),
               createBaseSeries({
-                key: `cumulative_${key}coindays_destroyed`,
+                key: `${key}coindays_destroyed_cumulative`,
                 name: useGroupName ? name : "cumulative",
                 color,
                 defaultActive: false,
@@ -2846,7 +2898,7 @@ function createPartialOptions({ env, colors, vecIdToIndexes }) {
               title: "Circulating Supply",
               bottom: [
                 createBaseSeries({
-                  key: "cumulative_subsidy_in_btc",
+                  key: "subsidy_in_btc_cumulative",
                   name: "Mined",
                 }),
               ],
@@ -3362,183 +3414,135 @@ function createPartialOptions({ env, colors, vecIdToIndexes }) {
               color: colors.orange,
             }),
             {
-              name: "term",
+              name: "terms",
               tree: [
                 createCohortGroupFolder({
                   name: "Compare",
-                  title: "Compare By Term",
+                  title: "UTXOs Term",
                   list: terms,
                 }),
                 ...terms.map(createCohortGroupFolder),
               ],
             },
             {
-              name: "Up to date",
+              name: "Epochs",
               tree: [
                 createCohortGroupFolder({
                   name: "Compare",
-                  title: "Compare By Up To",
-                  list: upToDate,
-                }),
-                ...upToDate.map(createCohortGroupFolder),
-              ],
-            },
-            {
-              name: "From Date",
-              tree: [
-                createCohortGroupFolder({
-                  name: "Compare",
-                  title: "Compare By From",
-                  list: fromDate,
-                }),
-                ...fromDate.map(createCohortGroupFolder),
-              ],
-            },
-            {
-              name: "Date Range",
-              tree: [
-                createCohortGroupFolder({
-                  name: "Compare",
-                  title: "Compare By Range",
-                  list: dateRange,
-                }),
-                ...dateRange.map(createCohortGroupFolder),
-              ],
-            },
-            {
-              name: "Epoch",
-              tree: [
-                createCohortGroupFolder({
-                  name: "Compare",
-                  title: "Compare By Epoch",
+                  title: "Epoch",
                   list: epoch,
                 }),
                 ...epoch.map(createCohortGroupFolder),
               ],
             },
             {
-              name: "type",
+              name: "types",
               tree: [
                 createCohortGroupFolder({
                   name: "Compare",
-                  title: "Compare By Type",
+                  title: "Type",
                   list: type,
                 }),
                 ...type.map(createCohortGroupFolder),
               ],
             },
             {
-              name: "UTXOs Up to size",
+              name: "UTXOs Up to age",
               tree: [
                 createCohortGroupFolder({
                   name: "Compare",
-                  title: "Compare UTXOs By Up To Size",
-                  list: upToSize,
+                  title: "UTXOs Up To Age",
+                  list: upToDate,
                 }),
-                ...upToSize.map(createCohortGroupFolder),
+                ...upToDate.map(createCohortGroupFolder),
               ],
             },
             {
-              name: "UTXOs From size",
+              name: "UTXOs at least age",
               tree: [
                 createCohortGroupFolder({
                   name: "Compare",
-                  title: "Compare UTXOs By From Size",
-                  list: fromSize,
+                  title: "UTXOs at least age",
+                  list: fromDate,
                 }),
-                ...fromSize.map(createCohortGroupFolder),
+                ...fromDate.map(createCohortGroupFolder),
               ],
             },
             {
-              name: "UTXOs Size range",
+              name: "UTXOs age Ranges",
               tree: [
                 createCohortGroupFolder({
                   name: "Compare",
-                  title: "Compare UTXOs By Size Range",
-                  list: sizeRanges,
+                  title: "UTXOs Age Range",
+                  list: dateRange,
                 }),
-                ...sizeRanges.map(createCohortGroupFolder),
+                ...dateRange.map(createCohortGroupFolder),
               ],
             },
             {
-              name: "Addresses Up to size",
+              name: "UTXOs under amounts",
               tree: [
                 createCohortGroupFolder({
                   name: "Compare",
-                  title: "Compare Addresses By Up To Size",
-                  list: upToSize.map(
-                    (obj) =>
-                      /** @type {const} */ ({
-                        ...obj,
-                        key: `addresses_${obj.key}`,
-                        title: `Addresses ${obj.title}`,
-                      }),
-                  ),
+                  title: "UTXOs under amount",
+                  list: utxosUnderAmount,
                 }),
-                ...upToSize
-                  .map(
-                    (obj) =>
-                      /** @type {const} */ ({
-                        ...obj,
-                        key: `addresses_${obj.key}`,
-                        title: `Addresses ${obj.title}`,
-                      }),
-                  )
-                  .map(createCohortGroupFolder),
+                ...utxosUnderAmount.map(createCohortGroupFolder),
               ],
             },
             {
-              name: "Addresses From size",
+              name: "UTXOs Above Amounts",
               tree: [
                 createCohortGroupFolder({
                   name: "Compare",
-                  title: "Compare Addresses By From Size",
-                  list: fromSize.map(
-                    (obj) =>
-                      /** @type {const} */ ({
-                        ...obj,
-                        key: `addresses_${obj.key}`,
-                        title: `Addresses ${obj.title}`,
-                      }),
-                  ),
+                  title: "UTXOs Above Amount",
+                  list: utxosAboveAmount,
                 }),
-                ...fromSize
-                  .map(
-                    (obj) =>
-                      /** @type {const} */ ({
-                        ...obj,
-                        key: `addresses_${obj.key}`,
-                        title: `Addresses ${obj.title}`,
-                      }),
-                  )
-                  .map(createCohortGroupFolder),
+                ...utxosAboveAmount.map(createCohortGroupFolder),
               ],
             },
             {
-              name: "Addresses Size range",
+              name: "UTXOs between amounts",
               tree: [
                 createCohortGroupFolder({
                   name: "Compare",
-                  title: "Compare Addresses By Size Range",
-                  list: sizeRanges.map(
-                    (obj) =>
-                      /** @type {const} */ ({
-                        ...obj,
-                        key: `addresses_${obj.key}`,
-                        title: `Addresses ${obj.title}`,
-                      }),
-                  ),
+                  title: "UTXOs between amounts",
+                  list: utxosAmountRanges,
                 }),
-                ...sizeRanges
-                  .map(
-                    (obj) =>
-                      /** @type {const} */ ({
-                        ...obj,
-                        key: `addresses_${obj.key}`,
-                        title: `Addresses ${obj.title}`,
-                      }),
-                  )
-                  .map(createCohortGroupFolder),
+                ...utxosAmountRanges.map(createCohortGroupFolder),
+              ],
+            },
+            {
+              name: "Addresses under amount",
+              tree: [
+                createCohortGroupFolder({
+                  name: "Compare",
+                  title: "Addresses under Amount",
+                  list: addressesUnderAmount,
+                }),
+                ...addressesUnderAmount.map(createCohortGroupFolder),
+              ],
+            },
+            {
+              name: "Addresses above amount",
+              tree: [
+                createCohortGroupFolder({
+                  name: "Compare",
+                  title: "Addresses above amount",
+                  list: addressesAboveAmount,
+                }),
+                ...addressesAboveAmount.map(createCohortGroupFolder),
+              ],
+            },
+            {
+              name: "Addresses between amounts",
+              tree: [
+                createCohortGroupFolder({
+                  name: "Compare",
+                  title: "Addresses between amounts",
+                  list: addressesAmountRanges,
+                }),
+                ...addressesAmountRanges.map(createCohortGroupFolder),
               ],
             },
           ],
@@ -3577,7 +3581,7 @@ function createPartialOptions({ env, colors, vecIdToIndexes }) {
                       name: "sum",
                     }),
                     createBaseSeries({
-                      key: "cumulative_opreturn_count",
+                      key: "opreturn_count_cumulative",
                       name: "cumulative",
                       color: colors.red,
                     }),
@@ -3618,7 +3622,7 @@ function createPartialOptions({ env, colors, vecIdToIndexes }) {
                   color: colors.red,
                 }),
                 createBaseSeries({
-                  key: "cumulative_coinblocks_destroyed",
+                  key: "coinblocks_destroyed_cumulative",
                   name: "Cumulative Destroyed",
                   color: colors.red,
                   defaultActive: false,
@@ -3629,7 +3633,7 @@ function createPartialOptions({ env, colors, vecIdToIndexes }) {
                   color: colors.orange,
                 }),
                 createBaseSeries({
-                  key: "cumulative_coinblocks_created",
+                  key: "coinblocks_created_cumulative",
                   name: "Cumulative created",
                   color: colors.orange,
                   defaultActive: false,
@@ -3640,7 +3644,7 @@ function createPartialOptions({ env, colors, vecIdToIndexes }) {
                   color: colors.green,
                 }),
                 createBaseSeries({
-                  key: "cumulative_coinblocks_stored",
+                  key: "coinblocks_stored_cumulative",
                   name: "Cumulative stored",
                   color: colors.green,
                   defaultActive: false,
@@ -3938,6 +3942,9 @@ export function initOptions({
    */
   function arrayToRecord(id, arr = []) {
     return (arr || []).reduce((record, blueprint) => {
+      if (env.localhost && !(blueprint.key in vecIdToIndexes)) {
+        throw Error(`${blueprint.key} not recognized`);
+      }
       const unit = utils.vecidToUnit(blueprint.key);
       record[unit] ??= [];
       record[unit].push(blueprint);

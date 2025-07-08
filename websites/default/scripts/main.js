@@ -857,7 +857,9 @@ function createUtils() {
     }
     if (
       (!unit || thoroughUnitCheck) &&
-      (id.endsWith("_size") || id.endsWith("_size_sum"))
+      (id.endsWith("_size") ||
+        id.endsWith("_size_sum") ||
+        id.endsWith("_size_cumulative"))
     ) {
       if (unit) throw Error(`Unit "${unit}" already assigned "${id}"`);
       unit = "mb";
@@ -866,7 +868,8 @@ function createUtils() {
       (!unit || thoroughUnitCheck) &&
       (id.endsWith("vsize") ||
         id.endsWith("vbytes") ||
-        id.endsWith("_vbytes_sum"))
+        id.endsWith("_vbytes_sum") ||
+        id.endsWith("_vbytes_cumulative"))
     ) {
       if (unit) throw Error(`Unit "${unit}" already assigned "${id}"`);
       unit = "vB";
@@ -1535,8 +1538,10 @@ function createUtils() {
 /**
  * @param {Signals} signals
  * @param {Utilities} utils
+ * @param {Env} env
+ * @param {VecIdToIndexes} vecIdToIndexes
  */
-function createVecsResources(signals, utils) {
+function createVecsResources(signals, utils, env, vecIdToIndexes) {
   const owner = signals.getOwner();
 
   const defaultFrom = -10_000;
@@ -1563,6 +1568,10 @@ function createVecsResources(signals, utils) {
    * @param {VecId} id
    */
   function createVecResource(index, id) {
+    if (env.localhost && !(id in vecIdToIndexes)) {
+      throw Error(`${id} not recognized`);
+    }
+
     return signals.runWithOwner(owner, () => {
       /** @typedef {T extends number ? SingleValueData : CandlestickData} Value */
 
@@ -2140,7 +2149,12 @@ function main() {
 
           const webSockets = initWebSockets(signals, utils);
 
-          const vecsResources = createVecsResources(signals, utils);
+          const vecsResources = createVecsResources(
+            signals,
+            utils,
+            env,
+            vecIdToIndexes,
+          );
 
           const colors = createColors(dark, elements);
 

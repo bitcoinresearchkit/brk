@@ -1,4 +1,4 @@
-use brk_core::{GroupedByAddressType, Height, Result, StoredUsize};
+use brk_core::{ByAddressType, Height, Result, StoredUsize};
 use brk_exit::Exit;
 use brk_vec::EagerVec;
 use derive_deref::{Deref, DerefMut};
@@ -6,12 +6,10 @@ use derive_deref::{Deref, DerefMut};
 use crate::vecs::stateful::addresstype_to_addresscount::AddressTypeToAddressCount;
 
 #[derive(Debug, Clone, Deref, DerefMut)]
-pub struct AddressTypeToHeightToAddressCount(GroupedByAddressType<EagerVec<Height, StoredUsize>>);
+pub struct AddressTypeToHeightToAddressCount(ByAddressType<EagerVec<Height, StoredUsize>>);
 
-impl From<GroupedByAddressType<EagerVec<Height, StoredUsize>>>
-    for AddressTypeToHeightToAddressCount
-{
-    fn from(value: GroupedByAddressType<EagerVec<Height, StoredUsize>>) -> Self {
+impl From<ByAddressType<EagerVec<Height, StoredUsize>>> for AddressTypeToHeightToAddressCount {
+    fn from(value: ByAddressType<EagerVec<Height, StoredUsize>>) -> Self {
         Self(value)
     }
 }

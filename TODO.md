@@ -16,13 +16,15 @@
     - add oracle price dataset (https://utxo.live/oracle/UTXOracle.py)
     - add address counts relative to all datasets
     - make decade, quarter, year datasets `computed` instead of `eager`
-    - add 6 months interval datasets to builder
+    - add 6 months (semester) interval datasets to builder
     - add revived/sent supply datasets
     - add `in-sats` version of all price datasets (average and co)
     - add `p2pk` group (sum of `p2pk33` and `p2pk65`)
     - add more date ranges (3-6 months and more)
     - add puell multiple dataset
     - add pi cycle dataset
+    - add ema of price
+    - add 7d and 30d ema to sell side risk ratio and sopr
     - add all possible charts from:
       - https://mainnet.observer
       - https://glassnode.com
@@ -51,6 +53,7 @@
   - _vec_
     - add native lock file support (once it's available in stable rust)
     - improve compressed mode (slow reads)
+    - add ema support
 - __docs__
   - _README_
     - add a comparison table with alternatives

@@ -3,7 +3,7 @@ use crate::{HalvingEpoch, Height};
 use super::GroupFilter;
 
 #[derive(Default, Clone)]
-pub struct GroupedByEpoch<T> {
+pub struct ByEpoch<T> {
     pub _0: T,
     pub _1: T,
     pub _2: T,
@@ -11,8 +11,8 @@ pub struct GroupedByEpoch<T> {
     pub _4: T,
 }
 
-impl<T> From<GroupedByEpoch<T>> for GroupedByEpoch<(GroupFilter, T)> {
-    fn from(value: GroupedByEpoch<T>) -> Self {
+impl<T> From<ByEpoch<T>> for ByEpoch<(GroupFilter, T)> {
+    fn from(value: ByEpoch<T>) -> Self {
         Self {
             _0: (GroupFilter::Epoch(HalvingEpoch::new(0)), value._0),
             _1: (GroupFilter::Epoch(HalvingEpoch::new(1)), value._1),
@@ -23,7 +23,7 @@ impl<T> From<GroupedByEpoch<T>> for GroupedByEpoch<(GroupFilter, T)> {
     }
 }
 
-impl<T> GroupedByEpoch<T> {
+impl<T> ByEpoch<T> {
     pub fn as_mut_vec(&mut self) -> [&mut T; 5] {
         [
             &mut self._0,
@@ -52,7 +52,7 @@ impl<T> GroupedByEpoch<T> {
     }
 }
 
-impl<T> GroupedByEpoch<(GroupFilter, T)> {
+impl<T> ByEpoch<(GroupFilter, T)> {
     pub fn vecs(&self) -> [&T; 5] {
         [&self._0.1, &self._1.1, &self._2.1, &self._3.1, &self._4.1]
     }

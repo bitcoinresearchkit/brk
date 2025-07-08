@@ -2,12 +2,12 @@ use std::ops::{Add, AddAssign};
 
 use crate::OutputType;
 
-use super::{GroupedBySpendableType, GroupedByUnspendableType};
+use super::{BySpendableType, ByUnspendableType};
 
 #[derive(Default, Clone, Debug)]
 pub struct GroupedByType<T> {
-    pub spendable: GroupedBySpendableType<T>,
-    pub unspendable: GroupedByUnspendableType<T>,
+    pub spendable: BySpendableType<T>,
+    pub unspendable: ByUnspendableType<T>,
 }
 
 impl<T> GroupedByType<T> {

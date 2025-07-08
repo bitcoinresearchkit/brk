@@ -49,7 +49,7 @@ Get the count of all existing indexes.
 
 Get the count of all existing vec ids.
 
-#### [`GET /api/vecs/variant-count`](https://bitcoinresearchkit.org/api/vecs/variant-count)
+#### [`GET /api/vecs/vec-count`](https://bitcoinresearchkit.org/api/vecs/vec-count)
 
 Get the count of all existing vecs. \
 Equals to the sum of supported Indexes of each vec id.

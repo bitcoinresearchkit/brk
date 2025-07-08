@@ -2,10 +2,10 @@ use std::mem;
 
 use derive_deref::{Deref, DerefMut};
 
-use super::GroupedByAddressType;
+use super::ByAddressType;
 
 #[derive(Debug, Default, Deref, DerefMut)]
-pub struct AddressTypeToVec<T>(GroupedByAddressType<Vec<T>>);
+pub struct AddressTypeToVec<T>(ByAddressType<Vec<T>>);
 
 impl<T> AddressTypeToVec<T> {
     pub fn merge(&mut self, mut other: Self) {

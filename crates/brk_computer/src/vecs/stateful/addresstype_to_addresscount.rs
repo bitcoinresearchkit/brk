@@ -1,16 +1,16 @@
-use brk_core::{GroupedByAddressType, Height};
+use brk_core::{ByAddressType, Height};
 use brk_vec::VecIterator;
 use derive_deref::{Deref, DerefMut};
 
 use crate::vecs::stateful::addresstype_to_height_to_addresscount::AddressTypeToHeightToAddressCount;
 
 #[derive(Debug, Default, Deref, DerefMut)]
-pub struct AddressTypeToAddressCount(GroupedByAddressType<usize>);
+pub struct AddressTypeToAddressCount(ByAddressType<usize>);
 
 impl From<(&AddressTypeToHeightToAddressCount, Height)> for AddressTypeToAddressCount {
     fn from((groups, starting_height): (&AddressTypeToHeightToAddressCount, Height)) -> Self {
         if let Some(prev_height) = starting_height.decremented() {
-            Self(GroupedByAddressType {
+            Self(ByAddressType {
                 p2pk65: groups
                     .p2pk65
                     .into_iter()

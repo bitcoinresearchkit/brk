@@ -1,45 +1,45 @@
-use super::{GroupFilter, GroupedByFromSize, GroupedBySizeRange, GroupedByUpToSize};
+use super::{ByAmountRange, ByGreatEqualAmount, ByLowerThanAmount, GroupFilter};
 
 #[derive(Default, Clone)]
 pub struct AddressGroups<T> {
-    pub by_from_size: GroupedByFromSize<T>,
-    pub by_size_range: GroupedBySizeRange<T>,
-    pub by_up_to_size: GroupedByUpToSize<T>,
+    pub ge_amount: ByGreatEqualAmount<T>,
+    pub amount_range: ByAmountRange<T>,
+    pub lt_amount: ByLowerThanAmount<T>,
 }
 
 impl<T> AddressGroups<T> {
     pub fn as_mut_vecs(&mut self) -> Vec<&mut T> {
-        self.by_from_size
+        self.ge_amount
             .as_mut_vec()
             .into_iter()
-            .chain(self.by_size_range.as_mut_vec())
-            .chain(self.by_up_to_size.as_mut_vec())
+            .chain(self.amount_range.as_mut_vec())
+            .chain(self.lt_amount.as_mut_vec())
             .collect::<Vec<_>>()
     }
 
     pub fn as_mut_separate_vecs(&mut self) -> Vec<&mut T> {
-        self.by_size_range
+        self.amount_range
             .as_mut_vec()
             .into_iter()
             .collect::<Vec<_>>()
     }
 
     pub fn as_mut_overlapping_vecs(&mut self) -> Vec<&mut T> {
-        self.by_up_to_size
+        self.lt_amount
             .as_mut_vec()
             .into_iter()
-            .chain(self.by_from_size.as_mut_vec())
+            .chain(self.ge_amount.as_mut_vec())
             .collect::<Vec<_>>()
     }
 }
 
 impl<T> AddressGroups<(GroupFilter, T)> {
     pub fn vecs(&self) -> Vec<&T> {
-        self.by_size_range
+        self.amount_range
             .vecs()
             .into_iter()
-            .chain(self.by_up_to_size.vecs())
-            .chain(self.by_from_size.vecs())
+            .chain(self.lt_amount.vecs())
+            .chain(self.ge_amount.vecs())
             .collect::<Vec<_>>()
     }
 }
@@ -47,9 +47,9 @@ impl<T> AddressGroups<(GroupFilter, T)> {
 impl<T> From<AddressGroups<T>> for AddressGroups<(GroupFilter, T)> {
     fn from(value: AddressGroups<T>) -> Self {
         Self {
-            by_size_range: GroupedBySizeRange::from(value.by_size_range),
-            by_up_to_size: GroupedByUpToSize::from(value.by_up_to_size),
-            by_from_size: GroupedByFromSize::from(value.by_from_size),
+            amount_range: ByAmountRange::from(value.amount_range),
+            lt_amount: ByLowerThanAmount::from(value.lt_amount),
+            ge_amount: ByGreatEqualAmount::from(value.ge_amount),
         }
     }
 }

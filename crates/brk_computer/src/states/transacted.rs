@@ -1,6 +1,6 @@
 use std::ops::{Add, AddAssign};
 
-use brk_core::{GroupedBySizeRange, GroupedByType, OutputType, Sats};
+use brk_core::{ByAmountRange, GroupedByType, OutputType, Sats};
 
 use super::SupplyState;
 
@@ -8,7 +8,7 @@ use super::SupplyState;
 pub struct Transacted {
     pub spendable_supply: SupplyState,
     pub by_type: GroupedByType<SupplyState>,
-    pub by_size_group: GroupedBySizeRange<SupplyState>,
+    pub by_size_group: ByAmountRange<SupplyState>,
 }
 
 impl Transacted {

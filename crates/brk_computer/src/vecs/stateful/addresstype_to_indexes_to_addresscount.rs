@@ -1,4 +1,4 @@
-use brk_core::{GroupedByAddressType, StoredUsize};
+use brk_core::{ByAddressType, StoredUsize};
 use brk_exit::Exit;
 use brk_vec::AnyCollectableVec;
 use derive_deref::{Deref, DerefMut};
@@ -9,14 +9,12 @@ use crate::vecs::{
 };
 
 #[derive(Clone, Deref, DerefMut)]
-pub struct AddressTypeToIndexesToAddressCount(
-    GroupedByAddressType<ComputedVecsFromHeight<StoredUsize>>,
-);
+pub struct AddressTypeToIndexesToAddressCount(ByAddressType<ComputedVecsFromHeight<StoredUsize>>);
 
-impl From<GroupedByAddressType<ComputedVecsFromHeight<StoredUsize>>>
+impl From<ByAddressType<ComputedVecsFromHeight<StoredUsize>>>
     for AddressTypeToIndexesToAddressCount
 {
-    fn from(value: GroupedByAddressType<ComputedVecsFromHeight<StoredUsize>>) -> Self {
+    fn from(value: ByAddressType<ComputedVecsFromHeight<StoredUsize>>) -> Self {
         Self(value)
     }
 }

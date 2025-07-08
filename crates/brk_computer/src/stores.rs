@@ -1,7 +1,7 @@
 use std::{path::Path, thread};
 
 use brk_core::{
-    AddressData, EmptyAddressData, GroupedByAddressType, Height, OutputType, P2AAddressIndex,
+    AddressData, ByAddressType, EmptyAddressData, Height, OutputType, P2AAddressIndex,
     P2PK33AddressIndex, P2PK65AddressIndex, P2PKHAddressIndex, P2SHAddressIndex, P2TRAddressIndex,
     P2WPKHAddressIndex, P2WSHAddressIndex, Result, TypeIndex, Version,
 };
@@ -375,7 +375,7 @@ impl Stores {
             WithAddressDataSource<EmptyAddressData>,
         >,
     ) -> Result<()> {
-        let GroupedByAddressType {
+        let ByAddressType {
             p2pk65,
             p2pk33,
             p2pkh,
@@ -386,7 +386,7 @@ impl Stores {
             p2a,
         } = addresstype_to_typeindex_to_addressdata.unwrap();
 
-        let GroupedByAddressType {
+        let ByAddressType {
             p2pk65: empty_p2pk65,
             p2pk33: empty_p2pk33,
             p2pkh: empty_p2pkh,

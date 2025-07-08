@@ -119,11 +119,11 @@ pub struct Vecs {
         Option<ComputedVecsFromDateIndex<StoredF64>>,
     pub indexes_to_supply_in_profit_relative_to_circulating_supply:
         Option<ComputedVecsFromDateIndex<StoredF64>>,
-    pub indexes_to_cumulative_net_realized_profit_and_loss_30d_change:
+    pub indexes_to_net_realized_profit_and_loss_cumulative_30d_change:
         Option<ComputedVecsFromDateIndex<Dollars>>,
-    pub indexes_to_cumulative_net_realized_profit_and_loss_30d_change_relative_to_realized_cap:
+    pub indexes_to_net_realized_profit_and_loss_cumulative_30d_change_relative_to_realized_cap:
         Option<ComputedVecsFromDateIndex<StoredF32>>,
-    pub indexes_to_cumulative_net_realized_profit_and_loss_30d_change_relative_to_market_cap:
+    pub indexes_to_net_realized_profit_and_loss_cumulative_30d_change_relative_to_market_cap:
         Option<ComputedVecsFromDateIndex<StoredF32>>,
 }
 
@@ -929,10 +929,10 @@ impl Vecs {
                 format,
                 StorableVecGeneatorOptions::default().add_sum().add_cumulative(),
             )?,
-            indexes_to_cumulative_net_realized_profit_and_loss_30d_change: compute_dollars.then(|| {
+            indexes_to_net_realized_profit_and_loss_cumulative_30d_change: compute_dollars.then(|| {
                 ComputedVecsFromDateIndex::forced_import(
                     path,
-                    &format!("cumulative_{}", suffix("net_realized_profit_and_loss_30d_change")),
+                    &suffix("net_realized_profit_and_loss_cumulative_30d_change"),
                     true,
                     version + VERSION + Version::new(3),
                     format,
@@ -940,10 +940,10 @@ impl Vecs {
                 )
                 .unwrap()
             }),
-            indexes_to_cumulative_net_realized_profit_and_loss_30d_change_relative_to_realized_cap: compute_dollars.then(|| {
+            indexes_to_net_realized_profit_and_loss_cumulative_30d_change_relative_to_realized_cap: compute_dollars.then(|| {
                 ComputedVecsFromDateIndex::forced_import(
                     path,
-                    &format!("cumulative_{}", suffix("net_realized_profit_and_loss_30d_change_relative_to_realized_cap")),
+                    &suffix("net_realized_profit_and_loss_cumulative_30d_change_relative_to_realized_cap"),
                     true,
                     version + VERSION + Version::new(3),
                     format,
@@ -951,10 +951,10 @@ impl Vecs {
                 )
                 .unwrap()
             }),
-            indexes_to_cumulative_net_realized_profit_and_loss_30d_change_relative_to_market_cap: compute_dollars.then(|| {
+            indexes_to_net_realized_profit_and_loss_cumulative_30d_change_relative_to_market_cap: compute_dollars.then(|| {
                 ComputedVecsFromDateIndex::forced_import(
                     path,
-                    &format!("cumulative_{}", suffix("net_realized_profit_and_loss_30d_change_relative_to_market_cap")),
+                    &suffix("net_realized_profit_and_loss_cumulative_30d_change_relative_to_market_cap"),
                     true,
                     version + VERSION + Version::new(3),
                     format,
@@ -2530,7 +2530,7 @@ impl Vecs {
                     },
                 )?;
 
-            self.indexes_to_cumulative_net_realized_profit_and_loss_30d_change
+            self.indexes_to_net_realized_profit_and_loss_cumulative_30d_change
                 .as_mut()
                 .unwrap()
                 .compute_all(
@@ -2552,7 +2552,7 @@ impl Vecs {
                     },
                 )?;
 
-            self.indexes_to_cumulative_net_realized_profit_and_loss_30d_change_relative_to_realized_cap.
+            self.indexes_to_net_realized_profit_and_loss_cumulative_30d_change_relative_to_realized_cap.
                 as_mut()
                 .unwrap()
                 .compute_all(
@@ -2563,14 +2563,14 @@ impl Vecs {
                     |v, _, _, starting_indexes, exit| {
                         v.compute_percentage(
                             starting_indexes.dateindex,
-                            self.indexes_to_cumulative_net_realized_profit_and_loss_30d_change.as_ref().unwrap().dateindex.as_ref().unwrap(),
+                            self.indexes_to_net_realized_profit_and_loss_cumulative_30d_change.as_ref().unwrap().dateindex.as_ref().unwrap(),
                             *dateindex_to_realized_cap.as_ref().unwrap(),
                             exit,
                         )
                     },
                 )?;
 
-            self.indexes_to_cumulative_net_realized_profit_and_loss_30d_change_relative_to_market_cap.
+            self.indexes_to_net_realized_profit_and_loss_cumulative_30d_change_relative_to_market_cap.
                 as_mut()
                 .unwrap()
                 .compute_all(
@@ -2581,7 +2581,7 @@ impl Vecs {
                     |v, _, _, starting_indexes, exit| {
                         v.compute_percentage(
                             starting_indexes.dateindex,
-                            self.indexes_to_cumulative_net_realized_profit_and_loss_30d_change.as_ref().unwrap().dateindex.as_ref().unwrap(),
+                            self.indexes_to_net_realized_profit_and_loss_cumulative_30d_change.as_ref().unwrap().dateindex.as_ref().unwrap(),
                             market.indexes_to_marketcap.dateindex.as_ref().unwrap(),
                             exit,
                         )
@@ -2915,11 +2915,11 @@ impl Vecs {
                 .map_or(vec![], |v| v.vecs()),
             self.indexes_to_coinblocks_destroyed.vecs(),
             self.indexes_to_coindays_destroyed.vecs(),
-            self.indexes_to_cumulative_net_realized_profit_and_loss_30d_change.as_ref()
+            self.indexes_to_net_realized_profit_and_loss_cumulative_30d_change.as_ref()
             .map_or(vec![], |v| v.vecs()),
-            self.indexes_to_cumulative_net_realized_profit_and_loss_30d_change_relative_to_realized_cap.as_ref()
+            self.indexes_to_net_realized_profit_and_loss_cumulative_30d_change_relative_to_realized_cap.as_ref()
             .map_or(vec![], |v| v.vecs()),
-            self.indexes_to_cumulative_net_realized_profit_and_loss_30d_change_relative_to_market_cap.as_ref()
+            self.indexes_to_net_realized_profit_and_loss_cumulative_30d_change_relative_to_market_cap.as_ref()
             .map_or(vec![], |v| v.vecs()),
         ]
         .into_iter()
