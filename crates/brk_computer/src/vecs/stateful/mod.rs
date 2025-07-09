@@ -1301,7 +1301,7 @@ impl Vecs {
             .collect::<Vec<Either<&mut utxo_cohort::Vecs, &mut address_cohort::Vecs>>>();
 
         // Capped as external drives (even thunderbolt 4 SSDs) can be overwhelmed
-        let chunk_size = (vecs.len() as f64 / 4.0).ceil() as usize;
+        let chunk_size = (vecs.len() as f64 / 3.0).ceil() as usize;
         vecs.into_par_iter().chunks(chunk_size).try_for_each(|v| {
             v.into_iter().try_for_each(|either| match either {
                 Either::Left(v) => v.compute_rest_part2(
@@ -1331,7 +1331,6 @@ impl Vecs {
             })
         })?;
 
-        info!("Computing rest part 2 (others)...");
         self.indexes_to_unspendable_supply.compute_rest(
             indexer,
             indexes,
