@@ -546,6 +546,7 @@ dependencies = [
  "brk_vec",
  "color-eyre",
  "derive_deref",
+ "either",
  "fjall",
  "jiff",
  "log",

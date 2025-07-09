@@ -598,6 +598,7 @@ impl Stores {
     }
 
     pub fn rotate_memtables(&self) {
+        info!("Rotatin memtables...");
         self.as_slice()
             .into_iter()
             .for_each(|store| store.rotate_memtable());
