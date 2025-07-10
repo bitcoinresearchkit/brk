@@ -35,6 +35,10 @@ where
         source: BoxedAnyIterableVec<S1I, S1T>,
         compute: ComputeFrom1<I, T, S1I, S1T>,
     ) -> Self {
+        if I::to_string() != S1I::to_string() {
+            unreachable!()
+        }
+
         Self {
             name: name.to_string(),
             version,

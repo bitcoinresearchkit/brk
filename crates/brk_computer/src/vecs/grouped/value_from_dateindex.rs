@@ -7,7 +7,7 @@ use brk_vec::{AnyCollectableVec, CollectableVec, Computation, EagerVec, Format, 
 
 use crate::vecs::{Indexes, fetched, grouped::ComputedVecsFromDateIndex, indexes};
 
-use super::{EagerVecBuilderOptions, Source};
+use super::{Source, VecBuilderOptions};
 
 #[derive(Clone)]
 pub struct ComputedValueVecsFromDateIndex {
@@ -27,7 +27,7 @@ impl ComputedValueVecsFromDateIndex {
         version: Version,
         format: Format,
         computation: Computation,
-        options: EagerVecBuilderOptions,
+        options: VecBuilderOptions,
         compute_dollars: bool,
     ) -> color_eyre::Result<Self> {
         Ok(Self {

@@ -7,7 +7,7 @@ use brk_vec::{
     ComputedVec, ComputedVecFrom1, Format, StoredIndex,
 };
 
-use crate::vecs::grouped::{EagerVecBuilder, EagerVecBuilderOptions};
+use crate::vecs::grouped::{EagerVecBuilder, VecBuilderOptions};
 
 use super::ComputedType;
 
@@ -101,7 +101,7 @@ where
                         ),
                         |i, source| {
                             source
-                                .next_at(S1I::max_from(i))
+                                .next_at(S1I::max_from(i, source.len()))
                                 .map(|(_, cow)| cow.into_owned())
                         },
                     )
@@ -121,7 +121,7 @@ where
                             .as_ref()
                             .map_or_else(|| source.as_ref().unwrap().clone(), |v| v.clone()),
                         |i, source| {
-                            S1I::inclusive_range_from(i)
+                            S1I::inclusive_range_from(i, source.len())
                                 .flat_map(|i| source.next_at(i).map(|(_, cow)| cow.into_owned()))
                                 .min()
                         },
@@ -142,7 +142,7 @@ where
                             .as_ref()
                             .map_or_else(|| source.as_ref().unwrap().clone(), |v| v.clone()),
                         |i, source| {
-                            S1I::inclusive_range_from(i)
+                            S1I::inclusive_range_from(i, source.len())
                                 .flat_map(|i| source.next_at(i).map(|(_, cow)| cow.into_owned()))
                                 .max()
                         },
@@ -163,7 +163,7 @@ where
                             .as_ref()
                             .map_or_else(|| source.as_ref().unwrap().clone(), |v| v.clone()),
                         |i, source| {
-                            let vec = S1I::inclusive_range_from(i)
+                            let vec = S1I::inclusive_range_from(i, source.len())
                                 .flat_map(|i| source.next_at(i).map(|(_, cow)| cow.into_owned()))
                                 .collect::<Vec<_>>();
                             if vec.is_empty() {
@@ -195,7 +195,7 @@ where
                             .as_ref()
                             .map_or_else(|| source.as_ref().unwrap().clone(), |v| v.clone()),
                         |i, source| {
-                            let vec = S1I::inclusive_range_from(i)
+                            let vec = S1I::inclusive_range_from(i, source.len())
                                 .flat_map(|i| source.next_at(i).map(|(_, cow)| cow.into_owned()))
                                 .collect::<Vec<_>>();
                             if vec.is_empty() {
@@ -220,7 +220,7 @@ where
                         source_extra.cumulative.as_ref().unwrap().boxed_clone(),
                         |i, source| {
                             source
-                                .next_at(S1I::max_from(i))
+                                .next_at(S1I::max_from(i, source.len()))
                                 .map(|(_, cow)| cow.into_owned())
                         },
                     )
@@ -331,8 +331,8 @@ pub struct ComputedVecBuilderOptions {
     cumulative: bool,
 }
 
-impl From<EagerVecBuilderOptions> for ComputedVecBuilderOptions {
-    fn from(value: EagerVecBuilderOptions) -> Self {
+impl From<VecBuilderOptions> for ComputedVecBuilderOptions {
+    fn from(value: VecBuilderOptions) -> Self {
         Self {
             average: value.average(),
             sum: value.sum(),

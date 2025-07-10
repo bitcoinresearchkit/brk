@@ -12,7 +12,7 @@ use brk_vec::{
 
 use crate::vecs::{Indexes, grouped::ComputedVecBuilder, indexes};
 
-use super::{ComputedType, EagerVecBuilder, EagerVecBuilderOptions, Source};
+use super::{ComputedType, EagerVecBuilder, Source, VecBuilderOptions};
 
 #[derive(Clone)]
 pub struct ComputedVecsFromDateIndex<T>
@@ -42,7 +42,7 @@ where
         version: Version,
         format: Format,
         computation: Computation,
-        options: EagerVecBuilderOptions,
+        options: VecBuilderOptions,
     ) -> color_eyre::Result<Self> {
         let dateindex = source.is_compute().then(|| {
             EagerVec::forced_import(path, name, version + VERSION + Version::ZERO, format).unwrap()
@@ -76,7 +76,7 @@ where
                 name,
                 version + VERSION + Version::ZERO,
                 format,
-                computation,
+                Computation::Lazy,
                 dateindex_source.clone(),
                 &dateindex_extra,
                 options.into(),
@@ -86,7 +86,7 @@ where
                 name,
                 version + VERSION + Version::ZERO,
                 format,
-                computation,
+                Computation::Lazy,
                 dateindex_source.clone(),
                 &dateindex_extra,
                 options.into(),
@@ -96,7 +96,7 @@ where
                 name,
                 version + VERSION + Version::ZERO,
                 format,
-                computation,
+                Computation::Lazy,
                 dateindex_source.clone(),
                 &dateindex_extra,
                 options.into(),
@@ -106,7 +106,7 @@ where
                 name,
                 version + VERSION + Version::ZERO,
                 format,
-                computation,
+                Computation::Lazy,
                 dateindex_source.clone(),
                 &dateindex_extra,
                 options.into(),
@@ -116,7 +116,7 @@ where
                 name,
                 version + VERSION + Version::ZERO,
                 format,
-                computation,
+                Computation::Lazy,
                 dateindex_source.clone(),
                 &dateindex_extra,
                 options.into(),

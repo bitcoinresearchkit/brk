@@ -13,7 +13,7 @@ use crate::{
     vecs::{Indexes, fetched, grouped::source::Source, indexes},
 };
 
-use super::{ComputedVecsFromDateIndex, EagerVecBuilderOptions};
+use super::{ComputedVecsFromDateIndex, VecBuilderOptions};
 
 #[derive(Clone)]
 pub struct ComputedRatioVecsFromDateIndex {
@@ -69,7 +69,7 @@ impl ComputedRatioVecsFromDateIndex {
         format: Format,
         computation: Computation,
     ) -> color_eyre::Result<Self> {
-        let options = EagerVecBuilderOptions::default().add_last();
+        let options = VecBuilderOptions::default().add_last();
 
         Ok(Self {
             price: source.is_compute().then(|| {

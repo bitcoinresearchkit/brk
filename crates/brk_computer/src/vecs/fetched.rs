@@ -16,7 +16,7 @@ use crate::vecs::grouped::Source;
 
 use super::{
     Indexes,
-    grouped::{ComputedVecsFromDateIndex, ComputedVecsFromHeightStrict, EagerVecBuilderOptions},
+    grouped::{ComputedVecsFromDateIndex, ComputedVecsFromHeightStrict, VecBuilderOptions},
     indexes,
 };
 
@@ -176,7 +176,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
-                EagerVecBuilderOptions::default().add_first(),
+                VecBuilderOptions::default().add_first(),
             )?,
             timeindexes_to_high: ComputedVecsFromDateIndex::forced_import(
                 path,
@@ -185,7 +185,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
-                EagerVecBuilderOptions::default().add_max(),
+                VecBuilderOptions::default().add_max(),
             )?,
             timeindexes_to_low: ComputedVecsFromDateIndex::forced_import(
                 path,
@@ -194,7 +194,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
-                EagerVecBuilderOptions::default().add_min(),
+                VecBuilderOptions::default().add_min(),
             )?,
             timeindexes_to_close: ComputedVecsFromDateIndex::forced_import(
                 path,
@@ -203,7 +203,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
-                EagerVecBuilderOptions::default().add_last(),
+                VecBuilderOptions::default().add_last(),
             )?,
             timeindexes_to_open_in_sats: ComputedVecsFromDateIndex::forced_import(
                 path,
@@ -212,7 +212,7 @@ impl Vecs {
                 version + VERSION + VERSION_IN_SATS + Version::ZERO,
                 format,
                 computation,
-                EagerVecBuilderOptions::default().add_first(),
+                VecBuilderOptions::default().add_first(),
             )?,
             timeindexes_to_high_in_sats: ComputedVecsFromDateIndex::forced_import(
                 path,
@@ -221,7 +221,7 @@ impl Vecs {
                 version + VERSION + VERSION_IN_SATS + Version::ZERO,
                 format,
                 computation,
-                EagerVecBuilderOptions::default().add_max(),
+                VecBuilderOptions::default().add_max(),
             )?,
             timeindexes_to_low_in_sats: ComputedVecsFromDateIndex::forced_import(
                 path,
@@ -230,7 +230,7 @@ impl Vecs {
                 version + VERSION + VERSION_IN_SATS + Version::ZERO,
                 format,
                 computation,
-                EagerVecBuilderOptions::default().add_min(),
+                VecBuilderOptions::default().add_min(),
             )?,
             timeindexes_to_close_in_sats: ComputedVecsFromDateIndex::forced_import(
                 path,
@@ -239,63 +239,63 @@ impl Vecs {
                 version + VERSION + VERSION_IN_SATS + Version::ZERO,
                 format,
                 computation,
-                EagerVecBuilderOptions::default().add_last(),
+                VecBuilderOptions::default().add_last(),
             )?,
             chainindexes_to_open: ComputedVecsFromHeightStrict::forced_import(
                 path,
                 "open",
                 version + VERSION + Version::ZERO,
                 format,
-                EagerVecBuilderOptions::default().add_first(),
+                VecBuilderOptions::default().add_first(),
             )?,
             chainindexes_to_high: ComputedVecsFromHeightStrict::forced_import(
                 path,
                 "high",
                 version + VERSION + Version::ZERO,
                 format,
-                EagerVecBuilderOptions::default().add_max(),
+                VecBuilderOptions::default().add_max(),
             )?,
             chainindexes_to_low: ComputedVecsFromHeightStrict::forced_import(
                 path,
                 "low",
                 version + VERSION + Version::ZERO,
                 format,
-                EagerVecBuilderOptions::default().add_min(),
+                VecBuilderOptions::default().add_min(),
             )?,
             chainindexes_to_close: ComputedVecsFromHeightStrict::forced_import(
                 path,
                 "close",
                 version + VERSION + Version::ZERO,
                 format,
-                EagerVecBuilderOptions::default().add_last(),
+                VecBuilderOptions::default().add_last(),
             )?,
             chainindexes_to_open_in_sats: ComputedVecsFromHeightStrict::forced_import(
                 path,
                 "open_in_sats",
                 version + VERSION + VERSION_IN_SATS + Version::ZERO,
                 format,
-                EagerVecBuilderOptions::default().add_first(),
+                VecBuilderOptions::default().add_first(),
             )?,
             chainindexes_to_high_in_sats: ComputedVecsFromHeightStrict::forced_import(
                 path,
                 "high_in_sats",
                 version + VERSION + VERSION_IN_SATS + Version::ZERO,
                 format,
-                EagerVecBuilderOptions::default().add_max(),
+                VecBuilderOptions::default().add_max(),
             )?,
             chainindexes_to_low_in_sats: ComputedVecsFromHeightStrict::forced_import(
                 path,
                 "low_in_sats",
                 version + VERSION + VERSION_IN_SATS + Version::ZERO,
                 format,
-                EagerVecBuilderOptions::default().add_min(),
+                VecBuilderOptions::default().add_min(),
             )?,
             chainindexes_to_close_in_sats: ComputedVecsFromHeightStrict::forced_import(
                 path,
                 "close_in_sats",
                 version + VERSION + VERSION_IN_SATS + Version::ZERO,
                 format,
-                EagerVecBuilderOptions::default().add_last(),
+                VecBuilderOptions::default().add_last(),
             )?,
             weekindex_to_ohlc: EagerVec::forced_import(
                 path,
@@ -458,7 +458,7 @@ impl Vecs {
                         .into_owned()
                 };
 
-                let mut ohlc = if di.unwrap_to_usize() + 1 >= this.len() {
+                let mut ohlc = if di.unwrap_to_usize() + 100 >= this.len() {
                     fetcher.get_date(d).unwrap_or_else(|_| get_prev())
                 } else {
                     get_prev()

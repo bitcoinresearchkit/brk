@@ -12,7 +12,7 @@ use crate::vecs::grouped::Source;
 
 use super::{
     Indexes,
-    grouped::{ComputedVecsFromDateIndex, ComputedVecsFromHeight, EagerVecBuilderOptions},
+    grouped::{ComputedVecsFromDateIndex, ComputedVecsFromHeight, VecBuilderOptions},
     indexes,
 };
 
@@ -53,7 +53,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
-                EagerVecBuilderOptions::default().add_first(),
+                VecBuilderOptions::default().add_first(),
             )?,
             indexes_to_block_interval: ComputedVecsFromHeight::forced_import(
                 path,
@@ -62,7 +62,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
-                EagerVecBuilderOptions::default()
+                VecBuilderOptions::default()
                     .add_percentiles()
                     .add_minmax()
                     .add_average(),
@@ -74,7 +74,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
-                EagerVecBuilderOptions::default().add_sum().add_cumulative(),
+                VecBuilderOptions::default().add_sum().add_cumulative(),
             )?,
             indexes_to_block_weight: ComputedVecsFromHeight::forced_import(
                 path,
@@ -83,7 +83,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
-                EagerVecBuilderOptions::default().add_sum().add_cumulative(),
+                VecBuilderOptions::default().add_sum().add_cumulative(),
             )?,
             indexes_to_block_size: ComputedVecsFromHeight::forced_import(
                 path,
@@ -92,7 +92,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
-                EagerVecBuilderOptions::default().add_sum().add_cumulative(),
+                VecBuilderOptions::default().add_sum().add_cumulative(),
             )?,
             height_to_vbytes: EagerVec::forced_import(
                 path,
@@ -107,7 +107,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
-                EagerVecBuilderOptions::default().add_sum().add_cumulative(),
+                VecBuilderOptions::default().add_sum().add_cumulative(),
             )?,
             difficultyepoch_to_timestamp: EagerVec::forced_import(
                 path,

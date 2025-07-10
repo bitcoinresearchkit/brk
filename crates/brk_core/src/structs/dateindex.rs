@@ -119,7 +119,7 @@ impl FromCoarserIndex<WeekIndex> for DateIndex {
         }
     }
 
-    fn max_from(coarser: WeekIndex) -> usize {
+    fn max_from_(coarser: WeekIndex) -> usize {
         let coarser = usize::from(coarser);
         if coarser == 0 {
             0
@@ -145,7 +145,7 @@ impl FromCoarserIndex<MonthIndex> for DateIndex {
         }
     }
 
-    fn max_from(coarser: MonthIndex) -> usize {
+    fn max_from_(coarser: MonthIndex) -> usize {
         let d = Date::new(2009, 1, 31)
             .into_jiff()
             .checked_add(Span::new().months(u16::from(coarser)))
@@ -168,7 +168,7 @@ impl FromCoarserIndex<QuarterIndex> for DateIndex {
         }
     }
 
-    fn max_from(coarser: QuarterIndex) -> usize {
+    fn max_from_(coarser: QuarterIndex) -> usize {
         let d = Date::new(2009, 3, 31)
             .into_jiff()
             .checked_add(Span::new().months(3 * u16::from(coarser)))
@@ -191,7 +191,7 @@ impl FromCoarserIndex<SemesterIndex> for DateIndex {
         }
     }
 
-    fn max_from(coarser: SemesterIndex) -> usize {
+    fn max_from_(coarser: SemesterIndex) -> usize {
         let d = Date::new(2009, 5, 31)
             .into_jiff()
             .checked_add(Span::new().months(1 + 6 * u16::from(coarser)))
@@ -212,7 +212,7 @@ impl FromCoarserIndex<YearIndex> for DateIndex {
         }
     }
 
-    fn max_from(coarser: YearIndex) -> usize {
+    fn max_from_(coarser: YearIndex) -> usize {
         Self::try_from(Date::new(2009 + u16::from(coarser), 12, 31))
             .unwrap()
             .into()
@@ -231,7 +231,7 @@ impl FromCoarserIndex<DecadeIndex> for DateIndex {
         }
     }
 
-    fn max_from(coarser: DecadeIndex) -> usize {
+    fn max_from_(coarser: DecadeIndex) -> usize {
         let coarser = u16::from(coarser);
         Self::try_from(Date::new(2009 + (10 * coarser), 12, 31))
             .unwrap()

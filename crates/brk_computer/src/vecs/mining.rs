@@ -9,7 +9,7 @@ use crate::vecs::grouped::Source;
 
 use super::{
     Indexes,
-    grouped::{ComputedVecsFromDateIndex, ComputedVecsFromHeight, EagerVecBuilderOptions},
+    grouped::{ComputedVecsFromDateIndex, ComputedVecsFromHeight, VecBuilderOptions},
     indexes,
 };
 
@@ -37,7 +37,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
-                EagerVecBuilderOptions::default().add_last(),
+                VecBuilderOptions::default().add_last(),
             )?,
             indexes_to_difficultyepoch: ComputedVecsFromDateIndex::forced_import(
                 path,
@@ -46,7 +46,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
-                EagerVecBuilderOptions::default().add_last(),
+                VecBuilderOptions::default().add_last(),
             )?,
             indexes_to_halvingepoch: ComputedVecsFromDateIndex::forced_import(
                 path,
@@ -55,7 +55,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
-                EagerVecBuilderOptions::default().add_last(),
+                VecBuilderOptions::default().add_last(),
             )?,
         })
     }

@@ -17,7 +17,7 @@ use crate::vecs::{
     indexes,
 };
 
-use super::{ComputedType, EagerVecBuilder, EagerVecBuilderOptions};
+use super::{ComputedType, EagerVecBuilder, VecBuilderOptions};
 
 #[derive(Clone)]
 pub struct ComputedVecsFromTxindex<T>
@@ -51,7 +51,7 @@ where
         version: Version,
         format: Format,
         computation: Computation,
-        options: EagerVecBuilderOptions,
+        options: VecBuilderOptions,
     ) -> color_eyre::Result<Self> {
         let txindex = source.is_compute().then(|| {
             Box::new(
@@ -94,7 +94,7 @@ where
                 name,
                 version + VERSION + Version::ZERO,
                 format,
-                computation,
+                Computation::Lazy,
                 None,
                 &dateindex,
                 options.into(),
@@ -104,7 +104,7 @@ where
                 name,
                 version + VERSION + Version::ZERO,
                 format,
-                computation,
+                Computation::Lazy,
                 None,
                 &dateindex,
                 options.into(),
@@ -114,7 +114,7 @@ where
                 name,
                 version + VERSION + Version::ZERO,
                 format,
-                computation,
+                Computation::Lazy,
                 None,
                 &dateindex,
                 options.into(),
@@ -124,7 +124,7 @@ where
                 name,
                 version + VERSION + Version::ZERO,
                 format,
-                computation,
+                Computation::Lazy,
                 None,
                 &dateindex,
                 options.into(),
@@ -134,7 +134,7 @@ where
                 name,
                 version + VERSION + Version::ZERO,
                 format,
-                computation,
+                Computation::Lazy,
                 None,
                 &dateindex,
                 options.into(),
