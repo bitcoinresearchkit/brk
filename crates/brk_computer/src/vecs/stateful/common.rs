@@ -17,7 +17,7 @@ use crate::{
         grouped::{
             ComputedHeightValueVecs, ComputedRatioVecsFromDateIndex,
             ComputedValueVecsFromDateIndex, ComputedVecsFromDateIndex, ComputedVecsFromHeight,
-            EagerVecBuilderOptions, Source,
+            Source, VecBuilderOptions,
         },
         indexes, market,
     },
@@ -213,7 +213,7 @@ impl Vecs {
                     version + VERSION + Version::ZERO,
                     format,
                     computation,
-                    EagerVecBuilderOptions::default().add_last(),
+                    VecBuilderOptions::default().add_last(),
                     compute_dollars,
                 )
                 .unwrap()
@@ -236,7 +236,7 @@ impl Vecs {
                     version + VERSION + Version::ZERO,
                     format,
                     computation,
-                    EagerVecBuilderOptions::default().add_last(),
+                    VecBuilderOptions::default().add_last(),
                     compute_dollars,
                 )
                 .unwrap()
@@ -259,7 +259,7 @@ impl Vecs {
                     version + VERSION + Version::ZERO,
                     format,
                     computation,
-                    EagerVecBuilderOptions::default().add_last(),
+                    VecBuilderOptions::default().add_last(),
                     compute_dollars,
                 )
                 .unwrap()
@@ -282,7 +282,7 @@ impl Vecs {
                     version + VERSION + Version::ZERO,
                     format,
                     computation,
-                    EagerVecBuilderOptions::default().add_last(),
+                    VecBuilderOptions::default().add_last(),
                 )
                 .unwrap()
             }),
@@ -322,7 +322,7 @@ impl Vecs {
                     version + VERSION + Version::ZERO,
                     format,
                     computation,
-                    EagerVecBuilderOptions::default().add_last(),
+                    VecBuilderOptions::default().add_last(),
                 )
                 .unwrap()
             }),
@@ -344,7 +344,7 @@ impl Vecs {
                     version + VERSION + Version::ZERO,
                     format,
                     computation,
-                    EagerVecBuilderOptions::default().add_last(),
+                    VecBuilderOptions::default().add_last(),
                 )
                 .unwrap()
             }),
@@ -356,7 +356,7 @@ impl Vecs {
                     version + VERSION + Version::ZERO,
                     format,
                     computation,
-                    EagerVecBuilderOptions::default().add_last(),
+                    VecBuilderOptions::default().add_last(),
                 )
                 .unwrap()
             }),
@@ -368,7 +368,7 @@ impl Vecs {
                     version + VERSION + Version::ZERO,
                     format,
                     computation,
-                    EagerVecBuilderOptions::default().add_last(),
+                    VecBuilderOptions::default().add_last(),
                 )
                 .unwrap()
             }),
@@ -393,7 +393,7 @@ impl Vecs {
                 version + VERSION + Version::ONE,
                 format,
                 computation,
-                EagerVecBuilderOptions::default().add_last(),
+                VecBuilderOptions::default().add_last(),
                 compute_dollars,
             )?,
             height_to_utxo_count: EagerVec::forced_import(
@@ -409,7 +409,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
-                EagerVecBuilderOptions::default().add_last(),
+                VecBuilderOptions::default().add_last(),
             )?,
             indexes_to_realized_price: compute_dollars.then(|| {
                 ComputedVecsFromHeight::forced_import(
@@ -419,7 +419,7 @@ impl Vecs {
                     version + VERSION + Version::ZERO,
                     format,
                    computation,
-                    EagerVecBuilderOptions::default().add_last(),
+                    VecBuilderOptions::default().add_last(),
                 )
                 .unwrap()
             }),
@@ -451,7 +451,7 @@ impl Vecs {
                     version + VERSION + Version::ZERO,
                     format,
                    computation,
-                    EagerVecBuilderOptions::default()
+                    VecBuilderOptions::default()
                         .add_sum()
                         .add_cumulative(),
                 )
@@ -474,7 +474,7 @@ impl Vecs {
                     version + VERSION + Version::ZERO,
                     format,
                    computation,
-                    EagerVecBuilderOptions::default()
+                    VecBuilderOptions::default()
                         .add_sum()
                         .add_cumulative(),
                 )
@@ -488,7 +488,7 @@ impl Vecs {
                     version + VERSION + Version::ONE,
                     format,
                    computation,
-                    EagerVecBuilderOptions::default().add_sum().add_cumulative(),
+                    VecBuilderOptions::default().add_sum().add_cumulative(),
                 )
                 .unwrap()
             }),
@@ -509,7 +509,7 @@ impl Vecs {
                     version + VERSION + Version::ZERO,
                     format,
                    computation,
-                    EagerVecBuilderOptions::default().add_sum(),
+                    VecBuilderOptions::default().add_sum(),
                 )
                 .unwrap()
             }),
@@ -521,7 +521,7 @@ impl Vecs {
                     version + VERSION + Version::ZERO,
                     format,
                    computation,
-                    EagerVecBuilderOptions::default().add_sum(),
+                    VecBuilderOptions::default().add_sum(),
                 )
                 .unwrap()
             }),
@@ -542,7 +542,7 @@ impl Vecs {
                     version + VERSION + Version::ZERO,
                     format,
                    computation,
-                    EagerVecBuilderOptions::default().add_sum(),
+                    VecBuilderOptions::default().add_sum(),
                 )
                 .unwrap()
             }),
@@ -563,7 +563,7 @@ impl Vecs {
                     version + VERSION + Version::ZERO,
                     format,
                    computation,
-                    EagerVecBuilderOptions::default().add_sum(),
+                    VecBuilderOptions::default().add_sum(),
                 )
                 .unwrap()
             }),
@@ -584,7 +584,7 @@ impl Vecs {
                     version + VERSION + Version::ZERO,
                     format,
                    computation,
-                    EagerVecBuilderOptions::default().add_sum(),
+                    VecBuilderOptions::default().add_sum(),
                 )
                 .unwrap()
             }),
@@ -596,7 +596,7 @@ impl Vecs {
                     version + VERSION + Version::ZERO,
                     format,
                    computation,
-                    EagerVecBuilderOptions::default().add_last(),
+                    VecBuilderOptions::default().add_last(),
                 )
                 .unwrap()
             }),
@@ -608,7 +608,7 @@ impl Vecs {
                     version + VERSION + Version::ZERO,
                     format,
                    computation,
-                    EagerVecBuilderOptions::default()
+                    VecBuilderOptions::default()
                         .add_sum()
                         .add_cumulative(),
                 )
@@ -656,7 +656,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                computation,
-                EagerVecBuilderOptions::default().add_last(),
+                VecBuilderOptions::default().add_last(),
                 compute_dollars,
             )?,
             height_to_negative_unrealized_loss: compute_dollars.then(|| {
@@ -676,7 +676,7 @@ impl Vecs {
                     version + VERSION + Version::ZERO,
                     format,
                    computation,
-                    EagerVecBuilderOptions::default().add_last(),
+                    VecBuilderOptions::default().add_last(),
                 )
                 .unwrap()
             }),
@@ -697,7 +697,7 @@ impl Vecs {
                     version + VERSION + Version::ZERO,
                     format,
                    computation,
-                    EagerVecBuilderOptions::default().add_last(),
+                    VecBuilderOptions::default().add_last(),
                 )
                 .unwrap()
             }),
@@ -721,7 +721,7 @@ impl Vecs {
                         version + VERSION + Version::ONE,
                         format,
                        computation,
-                        EagerVecBuilderOptions::default().add_last(),
+                        VecBuilderOptions::default().add_last(),
                     )
                     .unwrap()
                 },
@@ -734,7 +734,7 @@ impl Vecs {
                     version + VERSION + Version::ZERO,
                     format,
                    computation,
-                    EagerVecBuilderOptions::default().add_sum(),
+                    VecBuilderOptions::default().add_sum(),
                 )
                 .unwrap()
             }),
@@ -746,7 +746,7 @@ impl Vecs {
                     version + VERSION + Version::ZERO,
                     format,
                    computation,
-                    EagerVecBuilderOptions::default().add_sum(),
+                    VecBuilderOptions::default().add_sum(),
                 )
                 .unwrap()
             }),
@@ -759,7 +759,7 @@ impl Vecs {
                         version + VERSION + Version::ONE,
                         format,
                        computation,
-                        EagerVecBuilderOptions::default().add_sum(),
+                        VecBuilderOptions::default().add_sum(),
                     )
                     .unwrap()
                 },
@@ -832,7 +832,7 @@ impl Vecs {
                     version + VERSION + Version::ONE,
                     format,
                     computation,
-                    EagerVecBuilderOptions::default().add_last(),
+                    VecBuilderOptions::default().add_last(),
                 )
                 .unwrap()
             }),
@@ -844,7 +844,7 @@ impl Vecs {
                     version + VERSION + Version::ONE,
                     format,
                     computation,
-                    EagerVecBuilderOptions::default().add_last(),
+                    VecBuilderOptions::default().add_last(),
                 )
                 .unwrap()
             }),
@@ -856,7 +856,7 @@ impl Vecs {
                     version + VERSION + Version::ONE,
                     format,
                     computation,
-                    EagerVecBuilderOptions::default().add_last(),
+                    VecBuilderOptions::default().add_last(),
                 )
                 .unwrap()
             }),
@@ -868,7 +868,7 @@ impl Vecs {
                     version + VERSION + Version::ONE,
                     format,
                     computation,
-                    EagerVecBuilderOptions::default().add_last(),
+                    VecBuilderOptions::default().add_last(),
                 )
                 .unwrap()
             }),
@@ -915,7 +915,7 @@ impl Vecs {
                         version + VERSION + Version::ONE,
                         format,
                        computation,
-                        EagerVecBuilderOptions::default().add_last(),
+                        VecBuilderOptions::default().add_last(),
                     )
                     .unwrap()
                 }),
@@ -929,7 +929,7 @@ impl Vecs {
                         version + VERSION + Version::ONE,
                         format,
                        computation,
-                        EagerVecBuilderOptions::default().add_last(),
+                        VecBuilderOptions::default().add_last(),
                     )
                     .unwrap()
                 }),
@@ -943,7 +943,7 @@ impl Vecs {
                         version + VERSION + Version::ONE,
                         format,
                        computation,
-                        EagerVecBuilderOptions::default().add_last(),
+                        VecBuilderOptions::default().add_last(),
                     )
                     .unwrap()
                 }),
@@ -966,7 +966,7 @@ impl Vecs {
                 version + VERSION + Version::TWO,
                 format,
                 computation,
-                EagerVecBuilderOptions::default().add_sum().add_cumulative(),
+                VecBuilderOptions::default().add_sum().add_cumulative(),
             )?,
             indexes_to_coindays_destroyed: ComputedVecsFromHeight::forced_import(
                 path,
@@ -975,7 +975,7 @@ impl Vecs {
                 version + VERSION + Version::TWO,
                 format,
                computation,
-                EagerVecBuilderOptions::default().add_sum().add_cumulative(),
+                VecBuilderOptions::default().add_sum().add_cumulative(),
             )?,
             indexes_to_net_realized_profit_and_loss_cumulative_30d_change: compute_dollars.then(|| {
                 ComputedVecsFromDateIndex::forced_import(
@@ -985,7 +985,7 @@ impl Vecs {
                     version + VERSION + Version::new(3),
                     format,
                    computation,
-                    EagerVecBuilderOptions::default().add_last()
+                    VecBuilderOptions::default().add_last()
                 )
                 .unwrap()
             }),
@@ -997,7 +997,7 @@ impl Vecs {
                     version + VERSION + Version::new(3),
                     format,
                    computation,
-                    EagerVecBuilderOptions::default().add_last()
+                    VecBuilderOptions::default().add_last()
                 )
                 .unwrap()
             }),
@@ -1009,7 +1009,7 @@ impl Vecs {
                     version + VERSION + Version::new(3),
                     format,
                    computation,
-                    EagerVecBuilderOptions::default().add_last()
+                    VecBuilderOptions::default().add_last()
                 )
                 .unwrap()
             }),

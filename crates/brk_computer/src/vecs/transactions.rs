@@ -17,7 +17,7 @@ use super::{
     Indexes, fetched,
     grouped::{
         ComputedValueVecsFromHeight, ComputedValueVecsFromTxindex, ComputedVecsFromHeight,
-        ComputedVecsFromTxindex, EagerVecBuilderOptions,
+        ComputedVecsFromTxindex, VecBuilderOptions,
     },
     indexes,
 };
@@ -347,7 +347,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
-                EagerVecBuilderOptions::default()
+                VecBuilderOptions::default()
                     .add_average()
                     .add_minmax()
                     .add_percentiles()
@@ -361,7 +361,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
-                EagerVecBuilderOptions::default()
+                VecBuilderOptions::default()
                     .add_average()
                     .add_minmax()
                     .add_percentiles()
@@ -375,7 +375,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
-                EagerVecBuilderOptions::default()
+                VecBuilderOptions::default()
                     .add_average()
                     .add_minmax()
                     .add_percentiles()
@@ -389,7 +389,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
-                EagerVecBuilderOptions::default().add_sum().add_cumulative(),
+                VecBuilderOptions::default().add_sum().add_cumulative(),
             )?,
             indexes_to_tx_v2: ComputedVecsFromHeight::forced_import(
                 path,
@@ -398,7 +398,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
-                EagerVecBuilderOptions::default().add_sum().add_cumulative(),
+                VecBuilderOptions::default().add_sum().add_cumulative(),
             )?,
             indexes_to_tx_v3: ComputedVecsFromHeight::forced_import(
                 path,
@@ -407,7 +407,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
-                EagerVecBuilderOptions::default().add_sum().add_cumulative(),
+                VecBuilderOptions::default().add_sum().add_cumulative(),
             )?,
             indexes_to_fee: ComputedValueVecsFromTxindex::forced_import(
                 path,
@@ -418,7 +418,7 @@ impl Vecs {
                 computation,
                 format,
                 fetched,
-                EagerVecBuilderOptions::default()
+                VecBuilderOptions::default()
                     .add_sum()
                     .add_cumulative()
                     .add_percentiles()
@@ -432,7 +432,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
-                EagerVecBuilderOptions::default()
+                VecBuilderOptions::default()
                     .add_percentiles()
                     .add_minmax()
                     .add_average(),
@@ -444,7 +444,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
-                EagerVecBuilderOptions::default()
+                VecBuilderOptions::default()
                     .add_percentiles()
                     .add_minmax()
                     .add_average(),
@@ -456,7 +456,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
-                EagerVecBuilderOptions::default()
+                VecBuilderOptions::default()
                     .add_percentiles()
                     .add_minmax()
                     .add_average(),
@@ -468,7 +468,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
-                EagerVecBuilderOptions::default()
+                VecBuilderOptions::default()
                     .add_percentiles()
                     .add_sum()
                     .add_cumulative()
@@ -483,7 +483,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
-                EagerVecBuilderOptions::default()
+                VecBuilderOptions::default()
                     .add_sum()
                     .add_cumulative()
                     .add_percentiles()
@@ -498,7 +498,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
-                EagerVecBuilderOptions::default().add_sum().add_cumulative(),
+                VecBuilderOptions::default().add_sum().add_cumulative(),
                 compute_dollars,
             )?,
             indexes_to_p2a_count: ComputedVecsFromHeight::forced_import(
@@ -508,7 +508,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
-                EagerVecBuilderOptions::default()
+                VecBuilderOptions::default()
                     .add_average()
                     .add_minmax()
                     .add_percentiles()
@@ -522,7 +522,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
-                EagerVecBuilderOptions::default()
+                VecBuilderOptions::default()
                     .add_average()
                     .add_minmax()
                     .add_percentiles()
@@ -536,7 +536,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
-                EagerVecBuilderOptions::default()
+                VecBuilderOptions::default()
                     .add_average()
                     .add_minmax()
                     .add_percentiles()
@@ -550,7 +550,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
-                EagerVecBuilderOptions::default()
+                VecBuilderOptions::default()
                     .add_average()
                     .add_minmax()
                     .add_percentiles()
@@ -564,7 +564,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
-                EagerVecBuilderOptions::default()
+                VecBuilderOptions::default()
                     .add_average()
                     .add_minmax()
                     .add_percentiles()
@@ -578,7 +578,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
-                EagerVecBuilderOptions::default()
+                VecBuilderOptions::default()
                     .add_average()
                     .add_minmax()
                     .add_percentiles()
@@ -592,7 +592,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
-                EagerVecBuilderOptions::default()
+                VecBuilderOptions::default()
                     .add_average()
                     .add_minmax()
                     .add_percentiles()
@@ -606,7 +606,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
-                EagerVecBuilderOptions::default()
+                VecBuilderOptions::default()
                     .add_average()
                     .add_minmax()
                     .add_percentiles()
@@ -620,7 +620,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
-                EagerVecBuilderOptions::default()
+                VecBuilderOptions::default()
                     .add_average()
                     .add_minmax()
                     .add_percentiles()
@@ -634,7 +634,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
-                EagerVecBuilderOptions::default()
+                VecBuilderOptions::default()
                     .add_average()
                     .add_minmax()
                     .add_percentiles()
@@ -648,7 +648,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
-                EagerVecBuilderOptions::default()
+                VecBuilderOptions::default()
                     .add_average()
                     .add_minmax()
                     .add_percentiles()
@@ -662,7 +662,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
-                EagerVecBuilderOptions::default()
+                VecBuilderOptions::default()
                     .add_average()
                     .add_minmax()
                     .add_percentiles()
@@ -676,7 +676,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
-                EagerVecBuilderOptions::default().add_last(),
+                VecBuilderOptions::default().add_last(),
             )?,
             txindex_to_is_coinbase,
             inputindex_to_value,

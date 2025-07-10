@@ -14,7 +14,7 @@ use crate::vecs::{
     indexes,
 };
 
-use super::{ComputedType, EagerVecBuilder, EagerVecBuilderOptions};
+use super::{ComputedType, EagerVecBuilder, VecBuilderOptions};
 
 #[derive(Clone)]
 pub struct ComputedVecsFromHeight<T>
@@ -48,7 +48,7 @@ where
         version: Version,
         format: Format,
         computation: Computation,
-        options: EagerVecBuilderOptions,
+        options: VecBuilderOptions,
     ) -> color_eyre::Result<Self> {
         let height = source.is_compute().then(|| {
             EagerVec::forced_import(path, name, version + VERSION + Version::ZERO, format).unwrap()
@@ -88,7 +88,7 @@ where
                 name,
                 version + VERSION + Version::ZERO,
                 format,
-                computation,
+                Computation::Lazy,
                 None,
                 &dateindex,
                 options.into(),
@@ -98,7 +98,7 @@ where
                 name,
                 version + VERSION + Version::ZERO,
                 format,
-                computation,
+                Computation::Lazy,
                 None,
                 &dateindex,
                 options.into(),
@@ -108,7 +108,7 @@ where
                 name,
                 version + VERSION + Version::ZERO,
                 format,
-                computation,
+                Computation::Lazy,
                 None,
                 &dateindex,
                 options.into(),
@@ -118,7 +118,7 @@ where
                 name,
                 version + VERSION + Version::ZERO,
                 format,
-                computation,
+                Computation::Lazy,
                 None,
                 &dateindex,
                 options.into(),
@@ -128,7 +128,7 @@ where
                 name,
                 version + VERSION + Version::ZERO,
                 format,
-                computation,
+                Computation::Lazy,
                 None,
                 &dateindex,
                 options.into(),

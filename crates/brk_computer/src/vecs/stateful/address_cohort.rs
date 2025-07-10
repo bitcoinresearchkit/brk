@@ -11,7 +11,7 @@ use crate::{
     states::AddressCohortState,
     vecs::{
         Indexes, fetched,
-        grouped::{ComputedVecsFromHeight, EagerVecBuilderOptions, Source},
+        grouped::{ComputedVecsFromHeight, Source, VecBuilderOptions},
         indexes, market,
         stateful::{
             common,
@@ -70,7 +70,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
-                EagerVecBuilderOptions::default().add_last(),
+                VecBuilderOptions::default().add_last(),
             )?,
             inner: common::Vecs::forced_import(
                 path,

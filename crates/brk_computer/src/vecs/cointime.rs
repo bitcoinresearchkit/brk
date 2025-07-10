@@ -13,7 +13,7 @@ use crate::vecs::{
 
 use super::{
     Indexes,
-    grouped::{ComputedVecsFromHeight, EagerVecBuilderOptions},
+    grouped::{ComputedVecsFromHeight, VecBuilderOptions},
     indexes,
 };
 
@@ -65,7 +65,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
-                EagerVecBuilderOptions::default().add_sum().add_cumulative(),
+                VecBuilderOptions::default().add_sum().add_cumulative(),
             )?,
             indexes_to_coinblocks_stored: ComputedVecsFromHeight::forced_import(
                 path,
@@ -74,7 +74,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
-                EagerVecBuilderOptions::default().add_sum().add_cumulative(),
+                VecBuilderOptions::default().add_sum().add_cumulative(),
             )?,
             indexes_to_liveliness: ComputedVecsFromHeight::forced_import(
                 path,
@@ -83,7 +83,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
-                EagerVecBuilderOptions::default().add_last(),
+                VecBuilderOptions::default().add_last(),
             )?,
             indexes_to_vaultedness: ComputedVecsFromHeight::forced_import(
                 path,
@@ -92,7 +92,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
-                EagerVecBuilderOptions::default().add_last(),
+                VecBuilderOptions::default().add_last(),
             )?,
             indexes_to_activity_to_vaultedness_ratio: ComputedVecsFromHeight::forced_import(
                 path,
@@ -101,7 +101,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
-                EagerVecBuilderOptions::default().add_last(),
+                VecBuilderOptions::default().add_last(),
             )?,
             indexes_to_vaulted_supply: ComputedValueVecsFromHeight::forced_import(
                 path,
@@ -110,7 +110,7 @@ impl Vecs {
                 version + VERSION + Version::ONE,
                 format,
                 computation,
-                EagerVecBuilderOptions::default().add_last(),
+                VecBuilderOptions::default().add_last(),
                 compute_dollars,
             )?,
             indexes_to_active_supply: ComputedValueVecsFromHeight::forced_import(
@@ -120,7 +120,7 @@ impl Vecs {
                 version + VERSION + Version::ONE,
                 format,
                 computation,
-                EagerVecBuilderOptions::default().add_last(),
+                VecBuilderOptions::default().add_last(),
                 compute_dollars,
             )?,
             indexes_to_thermo_cap: ComputedVecsFromHeight::forced_import(
@@ -130,7 +130,7 @@ impl Vecs {
                 version + VERSION + Version::ONE,
                 format,
                 computation,
-                EagerVecBuilderOptions::default().add_last(),
+                VecBuilderOptions::default().add_last(),
             )?,
             indexes_to_investor_cap: ComputedVecsFromHeight::forced_import(
                 path,
@@ -139,7 +139,7 @@ impl Vecs {
                 version + VERSION + Version::ONE,
                 format,
                 computation,
-                EagerVecBuilderOptions::default().add_last(),
+                VecBuilderOptions::default().add_last(),
             )?,
             indexes_to_vaulted_cap: ComputedVecsFromHeight::forced_import(
                 path,
@@ -148,7 +148,7 @@ impl Vecs {
                 version + VERSION + Version::ONE,
                 format,
                 computation,
-                EagerVecBuilderOptions::default().add_last(),
+                VecBuilderOptions::default().add_last(),
             )?,
             indexes_to_active_cap: ComputedVecsFromHeight::forced_import(
                 path,
@@ -157,7 +157,7 @@ impl Vecs {
                 version + VERSION + Version::ONE,
                 format,
                 computation,
-                EagerVecBuilderOptions::default().add_last(),
+                VecBuilderOptions::default().add_last(),
             )?,
             indexes_to_vaulted_price: ComputedVecsFromHeight::forced_import(
                 path,
@@ -166,7 +166,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
-                EagerVecBuilderOptions::default().add_last(),
+                VecBuilderOptions::default().add_last(),
             )?,
             indexes_to_vaulted_price_ratio: ComputedRatioVecsFromDateIndex::forced_import(
                 path,
@@ -183,7 +183,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
-                EagerVecBuilderOptions::default().add_last(),
+                VecBuilderOptions::default().add_last(),
             )?,
             indexes_to_active_price_ratio: ComputedRatioVecsFromDateIndex::forced_import(
                 path,
@@ -200,7 +200,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
-                EagerVecBuilderOptions::default().add_last(),
+                VecBuilderOptions::default().add_last(),
             )?,
             indexes_to_true_market_mean_ratio: ComputedRatioVecsFromDateIndex::forced_import(
                 path,
@@ -217,7 +217,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
-                EagerVecBuilderOptions::default().add_sum().add_cumulative(),
+                VecBuilderOptions::default().add_sum().add_cumulative(),
             )?,
             indexes_to_cointime_value_created: ComputedVecsFromHeight::forced_import(
                 path,
@@ -226,7 +226,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
-                EagerVecBuilderOptions::default().add_sum().add_cumulative(),
+                VecBuilderOptions::default().add_sum().add_cumulative(),
             )?,
             indexes_to_cointime_value_stored: ComputedVecsFromHeight::forced_import(
                 path,
@@ -235,7 +235,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
-                EagerVecBuilderOptions::default().add_sum().add_cumulative(),
+                VecBuilderOptions::default().add_sum().add_cumulative(),
             )?,
             indexes_to_cointime_price: ComputedVecsFromHeight::forced_import(
                 path,
@@ -244,7 +244,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
-                EagerVecBuilderOptions::default().add_last(),
+                VecBuilderOptions::default().add_last(),
             )?,
             indexes_to_cointime_cap: ComputedVecsFromHeight::forced_import(
                 path,
@@ -253,7 +253,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
-                EagerVecBuilderOptions::default().add_last(),
+                VecBuilderOptions::default().add_last(),
             )?,
             indexes_to_cointime_price_ratio: ComputedRatioVecsFromDateIndex::forced_import(
                 path,

@@ -7,7 +7,7 @@ use brk_vec::{AnyCollectableVec, EagerVec, Format};
 
 use crate::vecs::{Indexes, indexes};
 
-use super::{ComputedType, EagerVecBuilder, EagerVecBuilderOptions};
+use super::{ComputedType, EagerVecBuilder, VecBuilderOptions};
 
 #[derive(Clone)]
 pub struct ComputedVecsFromHeightStrict<T>
@@ -32,7 +32,7 @@ where
         name: &str,
         version: Version,
         format: Format,
-        options: EagerVecBuilderOptions,
+        options: VecBuilderOptions,
     ) -> color_eyre::Result<Self> {
         let height =
             EagerVec::forced_import(path, name, version + VERSION + Version::ZERO, format)?;

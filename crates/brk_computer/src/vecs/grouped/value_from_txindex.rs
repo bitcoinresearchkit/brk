@@ -10,7 +10,7 @@ use brk_vec::{
 
 use crate::vecs::{Indexes, fetched, grouped::Source, indexes};
 
-use super::{ComputedVecsFromTxindex, EagerVecBuilderOptions};
+use super::{ComputedVecsFromTxindex, VecBuilderOptions};
 
 #[derive(Clone)]
 pub struct ComputedValueVecsFromTxindex {
@@ -46,7 +46,7 @@ impl ComputedValueVecsFromTxindex {
         computation: Computation,
         format: Format,
         fetched: Option<&fetched::Vecs>,
-        options: EagerVecBuilderOptions,
+        options: VecBuilderOptions,
     ) -> color_eyre::Result<Self> {
         let compute_dollars = fetched.is_some();
 

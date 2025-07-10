@@ -41,7 +41,7 @@ where
         name: &str,
         version: Version,
         format: Format,
-        options: EagerVecBuilderOptions,
+        options: VecBuilderOptions,
     ) -> color_eyre::Result<Self> {
         let only_one_active = options.is_only_one_active();
 
@@ -706,7 +706,7 @@ where
 }
 
 #[derive(Default, Clone, Copy)]
-pub struct EagerVecBuilderOptions {
+pub struct VecBuilderOptions {
     average: bool,
     sum: bool,
     max: bool,
@@ -721,7 +721,7 @@ pub struct EagerVecBuilderOptions {
     cumulative: bool,
 }
 
-impl EagerVecBuilderOptions {
+impl VecBuilderOptions {
     pub fn average(&self) -> bool {
         self.average
     }

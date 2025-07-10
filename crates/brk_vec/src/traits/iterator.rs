@@ -62,7 +62,7 @@ pub trait VecIterator<'a>: BaseVecIterator<Item = (Self::I, Cow<'a, Self::T>)> {
     fn unwrap_get_inner_(&mut self, i: usize) -> Self::T {
         self.get_(i)
             .unwrap_or_else(|| {
-                dbg!(self.name(), i, self.len());
+                dbg!(self.name(), i, self.len(), Self::I::to_string());
                 panic!("unwrap_get_inner_")
             })
             .into_owned()
