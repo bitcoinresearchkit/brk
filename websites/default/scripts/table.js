@@ -406,6 +406,7 @@ function createSerializedIndexes() {
     /** @satisfies {VecId} */ ("inputindex"),
     /** @satisfies {VecId} */ ("monthindex"),
     /** @satisfies {VecId} */ ("opreturnindex"),
+    /** @satisfies {VecId} */ ("semesterindex"),
     /** @satisfies {VecId} */ ("outputindex"),
     /** @satisfies {VecId} */ ("p2aaddressindex"),
     /** @satisfies {VecId} */ ("p2msoutputindex"),
@@ -437,21 +438,23 @@ function serializedIndexToIndex(serializedIndex) {
     case "dateindex":
       return /** @satisfies {DateIndex} */ (0);
     case "weekindex":
-      return /** @satisfies {WeekIndex} */ (22);
+      return /** @satisfies {WeekIndex} */ (23);
     case "difficultyepoch":
       return /** @satisfies {DifficultyEpoch} */ (2);
     case "monthindex":
       return /** @satisfies {MonthIndex} */ (7);
     case "quarterindex":
       return /** @satisfies {QuarterIndex} */ (19);
+    case "semesterindex":
+      return /** @satisfies {SemesterIndex} */ (20);
     case "yearindex":
-      return /** @satisfies {YearIndex} */ (23);
+      return /** @satisfies {YearIndex} */ (24);
     case "decadeindex":
       return /** @satisfies {DecadeIndex} */ (1);
     case "halvingepoch":
       return /** @satisfies {HalvingEpoch} */ (4);
     case "txindex":
-      return /** @satisfies {TxIndex} */ (20);
+      return /** @satisfies {TxIndex} */ (21);
     case "inputindex":
       return /** @satisfies {InputIndex} */ (6);
     case "outputindex":
@@ -479,7 +482,7 @@ function serializedIndexToIndex(serializedIndex) {
     case "emptyoutputindex":
       return /** @satisfies {EmptyOutputIndex} */ (3);
     case "unknownoutputindex":
-      return /** @satisfies {UnknownOutputIndex} */ (21);
+      return /** @satisfies {UnknownOutputIndex} */ (22);
   }
 }
 

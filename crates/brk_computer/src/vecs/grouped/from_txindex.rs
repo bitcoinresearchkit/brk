@@ -2,17 +2,22 @@ use std::path::Path;
 
 use brk_core::{
     Bitcoin, DateIndex, DecadeIndex, DifficultyEpoch, Dollars, Height, MonthIndex, QuarterIndex,
-    Result, Sats, TxIndex, Version, WeekIndex, YearIndex,
+    Result, Sats, SemesterIndex, TxIndex, Version, WeekIndex, YearIndex,
 };
 use brk_exit::Exit;
 use brk_indexer::Indexer;
 use brk_vec::{
-    AnyCollectableVec, AnyVec, CollectableVec, EagerVec, Format, StoredIndex, VecIterator,
+    AnyCollectableVec, AnyVec, CollectableVec, Computation, EagerVec, Format, StoredIndex,
+    VecIterator,
 };
 
-use crate::vecs::{Indexes, fetched, indexes};
+use crate::vecs::{
+    Indexes, fetched,
+    grouped::{ComputedVecBuilder, Source},
+    indexes,
+};
 
-use super::{ComputedType, ComputedVecBuilder, StorableVecGeneatorOptions};
+use super::{ComputedType, EagerVecBuilder, EagerVecBuilderOptions};
 
 #[derive(Clone)]
 pub struct ComputedVecsFromTxindex<T>
@@ -20,40 +25,42 @@ where
     T: ComputedType + PartialOrd,
 {
     pub txindex: Option<Box<EagerVec<TxIndex, T>>>,
-    pub height: ComputedVecBuilder<Height, T>,
-    pub dateindex: ComputedVecBuilder<DateIndex, T>,
-    pub weekindex: ComputedVecBuilder<WeekIndex, T>,
-    pub difficultyepoch: ComputedVecBuilder<DifficultyEpoch, T>,
-    pub monthindex: ComputedVecBuilder<MonthIndex, T>,
-    pub quarterindex: ComputedVecBuilder<QuarterIndex, T>,
-    pub yearindex: ComputedVecBuilder<YearIndex, T>,
+    pub height: EagerVecBuilder<Height, T>,
+    pub dateindex: EagerVecBuilder<DateIndex, T>,
+    pub weekindex: ComputedVecBuilder<WeekIndex, T, DateIndex>,
+    pub difficultyepoch: EagerVecBuilder<DifficultyEpoch, T>,
+    pub monthindex: ComputedVecBuilder<MonthIndex, T, DateIndex>,
+    pub quarterindex: ComputedVecBuilder<QuarterIndex, T, DateIndex>,
+    pub semesterindex: ComputedVecBuilder<SemesterIndex, T, DateIndex>,
+    pub yearindex: ComputedVecBuilder<YearIndex, T, DateIndex>,
     // TODO: pub halvingepoch: StorableVecGeneator<Halvingepoch, T>,
-    pub decadeindex: ComputedVecBuilder<DecadeIndex, T>,
+    pub decadeindex: ComputedVecBuilder<DecadeIndex, T, DateIndex>,
 }
 
 const VERSION: Version = Version::ZERO;
 
 impl<T> ComputedVecsFromTxindex<T>
 where
-    T: ComputedType + Ord + From<f64>,
+    T: ComputedType + Ord + From<f64> + 'static,
     f64: From<T>,
 {
     pub fn forced_import(
         path: &Path,
         name: &str,
-        compute_source: bool,
+        source: Source<TxIndex, T>,
         version: Version,
         format: Format,
-        options: StorableVecGeneatorOptions,
+        computation: Computation,
+        options: EagerVecBuilderOptions,
     ) -> color_eyre::Result<Self> {
-        let txindex = compute_source.then(|| {
+        let txindex = source.is_compute().then(|| {
             Box::new(
                 EagerVec::forced_import(path, name, version + VERSION + Version::ZERO, format)
                     .unwrap(),
             )
         });
 
-        let height = ComputedVecBuilder::forced_import(
+        let height = EagerVecBuilder::forced_import(
             path,
             name,
             version + VERSION + Version::ZERO,
@@ -63,45 +70,80 @@ where
 
         let options = options.remove_percentiles();
 
+        let dateindex = EagerVecBuilder::forced_import(
+            path,
+            name,
+            version + VERSION + Version::ZERO,
+            format,
+            options,
+        )?;
+
         Ok(Self {
-            txindex,
-            height,
-            dateindex: ComputedVecBuilder::forced_import(
-                path,
-                name,
-                version + VERSION + Version::ZERO,
-                format,
-                options,
-            )?,
             weekindex: ComputedVecBuilder::forced_import(
                 path,
                 name,
                 version + VERSION + Version::ZERO,
                 format,
-                options,
-            )?,
-            difficultyepoch: ComputedVecBuilder::forced_import(
-                path,
-                name,
-                version + VERSION + Version::ZERO,
-                format,
-                options,
+                computation,
+                None,
+                &dateindex,
+                options.into(),
             )?,
             monthindex: ComputedVecBuilder::forced_import(
                 path,
                 name,
                 version + VERSION + Version::ZERO,
                 format,
-                options,
+                computation,
+                None,
+                &dateindex,
+                options.into(),
             )?,
             quarterindex: ComputedVecBuilder::forced_import(
                 path,
                 name,
                 version + VERSION + Version::ZERO,
                 format,
-                options,
+                computation,
+                None,
+                &dateindex,
+                options.into(),
+            )?,
+            semesterindex: ComputedVecBuilder::forced_import(
+                path,
+                name,
+                version + VERSION + Version::ZERO,
+                format,
+                computation,
+                None,
+                &dateindex,
+                options.into(),
             )?,
             yearindex: ComputedVecBuilder::forced_import(
+                path,
+                name,
+                version + VERSION + Version::ZERO,
+                format,
+                computation,
+                None,
+                &dateindex,
+                options.into(),
+            )?,
+            decadeindex: ComputedVecBuilder::forced_import(
+                path,
+                name,
+                version + VERSION + Version::ZERO,
+                format,
+                computation,
+                None,
+                &dateindex,
+                options.into(),
+            )?,
+
+            txindex,
+            height,
+            dateindex,
+            difficultyepoch: EagerVecBuilder::forced_import(
                 path,
                 name,
                 version + VERSION + Version::ZERO,
@@ -109,13 +151,6 @@ where
                 options,
             )?,
             // halvingepoch: StorableVecGeneator::forced_import(path, name, version + VERSION + Version::ZERO, format, options)?,
-            decadeindex: ComputedVecBuilder::forced_import(
-                path,
-                name,
-                version + VERSION + Version::ZERO,
-                format,
-                options,
-            )?,
         })
     }
 
@@ -196,42 +231,38 @@ where
             exit,
         )?;
 
-        self.weekindex.from_aligned(
+        self.weekindex.compute_if_necessary(
             starting_indexes.weekindex,
-            &self.dateindex,
             &indexes.weekindex_to_first_dateindex,
-            &indexes.weekindex_to_dateindex_count,
             exit,
         )?;
 
-        self.monthindex.from_aligned(
+        self.monthindex.compute_if_necessary(
             starting_indexes.monthindex,
-            &self.dateindex,
-            &indexes.monthindex_to_first_dateindex,
             &indexes.monthindex_to_dateindex_count,
             exit,
         )?;
 
-        self.quarterindex.from_aligned(
+        self.quarterindex.compute_if_necessary(
             starting_indexes.quarterindex,
-            &self.monthindex,
-            &indexes.quarterindex_to_first_monthindex,
             &indexes.quarterindex_to_monthindex_count,
             exit,
         )?;
 
-        self.yearindex.from_aligned(
+        self.semesterindex.compute_if_necessary(
+            starting_indexes.semesterindex,
+            &indexes.semesterindex_to_monthindex_count,
+            exit,
+        )?;
+
+        self.yearindex.compute_if_necessary(
             starting_indexes.yearindex,
-            &self.monthindex,
-            &indexes.yearindex_to_first_monthindex,
             &indexes.yearindex_to_monthindex_count,
             exit,
         )?;
 
-        self.decadeindex.from_aligned(
+        self.decadeindex.compute_if_necessary(
             starting_indexes.decadeindex,
-            &self.yearindex,
-            &indexes.decadeindex_to_first_yearindex,
             &indexes.decadeindex_to_yearindex_count,
             exit,
         )?;
@@ -258,6 +289,7 @@ where
             self.difficultyepoch.vecs(),
             self.monthindex.vecs(),
             self.quarterindex.vecs(),
+            self.semesterindex.vecs(),
             self.yearindex.vecs(),
             // self.halvingepoch.vecs(),
             self.decadeindex.vecs(),

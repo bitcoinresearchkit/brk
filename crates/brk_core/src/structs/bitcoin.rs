@@ -1,6 +1,6 @@
 use std::{
     cmp::Ordering,
-    ops::{Add, Div, Mul},
+    ops::{Add, AddAssign, Div, Mul},
 };
 
 use serde::Serialize;
@@ -17,6 +17,12 @@ impl Add for Bitcoin {
     type Output = Self;
     fn add(self, rhs: Self) -> Self::Output {
         Self::from(Sats::from(self) + Sats::from(rhs))
+    }
+}
+
+impl AddAssign for Bitcoin {
+    fn add_assign(&mut self, rhs: Self) {
+        *self = *self + rhs
     }
 }
 

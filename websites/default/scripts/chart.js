@@ -7,7 +7,7 @@ const LINE = "line";
 const CANDLE = "candle";
 
 /**
- * @typedef {"timestamp" | "date" | "week" | "d.epoch" | "month" | "quarter" | "year" | "decade" } SerializedChartableIndex
+ * @typedef {"timestamp" | "date" | "week" | "d.epoch" | "month" | "quarter" | "semester" | "year" | "decade" } SerializedChartableIndex
  */
 
 /**
@@ -205,14 +205,17 @@ export function init({
         break;
       }
       default: {
-        if (index === /** @satisfies {WeekIndex} */ (22)) {
+        if (index === /** @satisfies {WeekIndex} */ (23)) {
           date.setUTCDate(date.getUTCDate() - ((date.getUTCDay() + 6) % 7));
         } else if (index === /** @satisfies {MonthIndex} */ (7)) {
           date.setUTCDate(1);
         } else if (index === /** @satisfies {QuarterIndex} */ (19)) {
           const month = date.getUTCMonth();
           date.setUTCMonth(month - (month % 3), 1);
-        } else if (index === /** @satisfies {YearIndex} */ (23)) {
+        } else if (index === /** @satisfies {SemesterIndex} */ (20)) {
+          const month = date.getUTCMonth();
+          date.setUTCMonth(month - (month % 6), 1);
+        } else if (index === /** @satisfies {YearIndex} */ (24)) {
           date.setUTCMonth(0, 1);
         } else if (index === /** @satisfies {DecadeIndex} */ (1)) {
           date.setUTCFullYear(
@@ -465,6 +468,7 @@ function createIndexSelector({ option, vecIdToIndexes, signals, utils }) {
     "d.epoch",
     "month",
     "quarter",
+    "semester",
     "year",
     // "halving epoch",
     "decade",

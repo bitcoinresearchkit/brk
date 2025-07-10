@@ -5,7 +5,7 @@ use zerocopy_derive::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 use crate::{CheckedSub, Printable};
 
-use super::{Date, DateIndex, YearIndex};
+use super::MonthIndex;
 
 #[derive(
     Debug,
@@ -23,33 +23,33 @@ use super::{Date, DateIndex, YearIndex};
     IntoBytes,
     KnownLayout,
 )]
-pub struct MonthIndex(u16);
+pub struct SemesterIndex(u16);
 
-impl From<u16> for MonthIndex {
+impl From<u16> for SemesterIndex {
     fn from(value: u16) -> Self {
         Self(value)
     }
 }
 
-impl From<MonthIndex> for u16 {
-    fn from(value: MonthIndex) -> Self {
-        value.0
-    }
-}
-
-impl From<usize> for MonthIndex {
+impl From<usize> for SemesterIndex {
     fn from(value: usize) -> Self {
         Self(value as u16)
     }
 }
 
-impl From<MonthIndex> for usize {
-    fn from(value: MonthIndex) -> Self {
+impl From<SemesterIndex> for u16 {
+    fn from(value: SemesterIndex) -> Self {
+        value.0
+    }
+}
+
+impl From<SemesterIndex> for usize {
+    fn from(value: SemesterIndex) -> Self {
         value.0 as usize
     }
 }
 
-impl Add<usize> for MonthIndex {
+impl Add<usize> for SemesterIndex {
     type Output = Self;
 
     fn add(self, rhs: usize) -> Self::Output {
@@ -57,30 +57,24 @@ impl Add<usize> for MonthIndex {
     }
 }
 
-impl From<DateIndex> for MonthIndex {
-    fn from(value: DateIndex) -> Self {
-        Self::from(Date::from(value))
+impl From<MonthIndex> for SemesterIndex {
+    fn from(value: MonthIndex) -> Self {
+        Self((usize::from(value) / 6) as u16)
     }
 }
 
-impl From<Date> for MonthIndex {
-    fn from(value: Date) -> Self {
-        Self(u16::from(YearIndex::from(value)) * 12 + value.month() as u16 - 1)
-    }
-}
-
-impl CheckedSub for MonthIndex {
+impl CheckedSub for SemesterIndex {
     fn checked_sub(self, rhs: Self) -> Option<Self> {
         self.0.checked_sub(rhs.0).map(Self)
     }
 }
 
-impl Printable for MonthIndex {
+impl Printable for SemesterIndex {
     fn to_string() -> &'static str {
-        "monthindex"
+        "semesterindex"
     }
 
     fn to_possible_strings() -> &'static [&'static str] {
-        &["m", "month", "monthindex"]
+        &["s", "semester", "semesterindex"]
     }
 }

@@ -3,11 +3,11 @@ use std::path::Path;
 use brk_core::{Bitcoin, DateIndex, Dollars, Result, Sats, Version};
 use brk_exit::Exit;
 use brk_indexer::Indexer;
-use brk_vec::{AnyCollectableVec, CollectableVec, EagerVec, Format, StoredVec};
+use brk_vec::{AnyCollectableVec, CollectableVec, Computation, EagerVec, Format, StoredVec};
 
 use crate::vecs::{Indexes, fetched, grouped::ComputedVecsFromDateIndex, indexes};
 
-use super::StorableVecGeneatorOptions;
+use super::{EagerVecBuilderOptions, Source};
 
 #[derive(Clone)]
 pub struct ComputedValueVecsFromDateIndex {
@@ -19,39 +19,44 @@ pub struct ComputedValueVecsFromDateIndex {
 const VERSION: Version = Version::ZERO;
 
 impl ComputedValueVecsFromDateIndex {
+    #[allow(clippy::too_many_arguments)]
     pub fn forced_import(
         path: &Path,
         name: &str,
-        compute_source: bool,
+        source: Source<DateIndex, Sats>,
         version: Version,
         format: Format,
-        options: StorableVecGeneatorOptions,
+        computation: Computation,
+        options: EagerVecBuilderOptions,
         compute_dollars: bool,
     ) -> color_eyre::Result<Self> {
         Ok(Self {
             sats: ComputedVecsFromDateIndex::forced_import(
                 path,
                 name,
-                compute_source,
+                source,
                 version + VERSION,
                 format,
+                computation,
                 options,
             )?,
             bitcoin: ComputedVecsFromDateIndex::forced_import(
                 path,
                 &format!("{name}_in_btc"),
-                true,
+                Source::Compute,
                 version + VERSION,
                 format,
+                computation,
                 options,
             )?,
             dollars: compute_dollars.then(|| {
                 ComputedVecsFromDateIndex::forced_import(
                     path,
                     &format!("{name}_in_usd"),
-                    true,
+                    Source::Compute,
                     version + VERSION,
                     format,
+                    computation,
                     options,
                 )
                 .unwrap()

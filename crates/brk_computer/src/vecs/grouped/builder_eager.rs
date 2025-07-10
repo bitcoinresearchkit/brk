@@ -10,7 +10,7 @@ use crate::utils::get_percentile;
 use super::ComputedType;
 
 #[derive(Clone, Debug)]
-pub struct ComputedVecBuilder<I, T>
+pub struct EagerVecBuilder<I, T>
 where
     I: StoredIndex,
     T: ComputedType,
@@ -31,7 +31,7 @@ where
 
 const VERSION: Version = Version::ZERO;
 
-impl<I, T> ComputedVecBuilder<I, T>
+impl<I, T> EagerVecBuilder<I, T>
 where
     I: StoredIndex,
     T: ComputedType,
@@ -41,7 +41,7 @@ where
         name: &str,
         version: Version,
         format: Format,
-        options: StorableVecGeneatorOptions,
+        options: EagerVecBuilderOptions,
     ) -> color_eyre::Result<Self> {
         let only_one_active = options.is_only_one_active();
 
@@ -384,7 +384,7 @@ where
     pub fn from_aligned<I2>(
         &mut self,
         max_from: I,
-        source: &ComputedVecBuilder<I2, T>,
+        source: &EagerVecBuilder<I2, T>,
         first_indexes: &impl AnyIterableVec<I, I2>,
         count_indexes: &impl AnyIterableVec<I, StoredUsize>,
         exit: &Exit,
@@ -706,7 +706,7 @@ where
 }
 
 #[derive(Default, Clone, Copy)]
-pub struct StorableVecGeneatorOptions {
+pub struct EagerVecBuilderOptions {
     average: bool,
     sum: bool,
     max: bool,
@@ -721,7 +721,55 @@ pub struct StorableVecGeneatorOptions {
     cumulative: bool,
 }
 
-impl StorableVecGeneatorOptions {
+impl EagerVecBuilderOptions {
+    pub fn average(&self) -> bool {
+        self.average
+    }
+
+    pub fn sum(&self) -> bool {
+        self.sum
+    }
+
+    pub fn max(&self) -> bool {
+        self.max
+    }
+
+    pub fn _90p(&self) -> bool {
+        self._90p
+    }
+
+    pub fn _75p(&self) -> bool {
+        self._75p
+    }
+
+    pub fn median(&self) -> bool {
+        self.median
+    }
+
+    pub fn _25p(&self) -> bool {
+        self._25p
+    }
+
+    pub fn _10p(&self) -> bool {
+        self._10p
+    }
+
+    pub fn min(&self) -> bool {
+        self.min
+    }
+
+    pub fn first(&self) -> bool {
+        self.first
+    }
+
+    pub fn last(&self) -> bool {
+        self.last
+    }
+
+    pub fn cumulative(&self) -> bool {
+        self.cumulative
+    }
+
     pub fn add_first(mut self) -> Self {
         self.first = true;
         self

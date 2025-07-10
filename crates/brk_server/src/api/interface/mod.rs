@@ -48,6 +48,8 @@ fn req_to_response_res(
     let to = params.to();
     let format = params.format();
 
+    // TODO: From and to should be capped here
+
     let weight = vecs
         .iter()
         .map(|(_, v)| v.range_weight(from, to))
@@ -57,7 +59,8 @@ fn req_to_response_res(
         return Err(eyre!("Request is too heavy, max weight is {MAX_WEIGHT}"));
     }
 
-    let etag = vecs.first().unwrap().1.etag(to);
+    // TODO: height should be from vec, but good enough for now
+    let etag = vecs.first().unwrap().1.etag(interface.get_height(), to);
 
     if headers
         .get_if_none_match()

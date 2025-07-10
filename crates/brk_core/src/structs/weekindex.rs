@@ -31,6 +31,12 @@ impl From<u16> for WeekIndex {
     }
 }
 
+impl From<WeekIndex> for u16 {
+    fn from(value: WeekIndex) -> Self {
+        value.0
+    }
+}
+
 impl From<usize> for WeekIndex {
     fn from(value: usize) -> Self {
         Self(value as u16)
@@ -68,7 +74,6 @@ impl From<Date> for WeekIndex {
             let d = jiff::civil::Date::new(year, 6, 6).unwrap();
             let i = d.iso_week_date();
             let w = i.weeks_in_year();
-            // dbg!(d, w);
             week += w as u16;
             year += 1;
         }

@@ -6,9 +6,9 @@
 use std::collections::BTreeMap;
 
 use brk_computer::Computer;
-use brk_core::Result;
+use brk_core::{Height, Result};
 use brk_indexer::Indexer;
-use brk_vec::AnyCollectableVec;
+use brk_vec::{AnyCollectableVec, AnyIndexedVec};
 use tabled::settings::Style;
 
 mod deser;
@@ -44,6 +44,10 @@ impl<'a> Interface<'a> {
             _indexer: indexer,
             _computer: computer,
         }
+    }
+
+    pub fn get_height(&self) -> Height {
+        self._indexer.vecs.height_to_blockhash.height()
     }
 
     pub fn search(&self, params: &Params) -> Vec<(String, &&dyn AnyCollectableVec)> {

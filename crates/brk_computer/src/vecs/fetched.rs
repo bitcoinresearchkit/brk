@@ -2,18 +2,19 @@ use std::path::Path;
 
 use brk_core::{
     Cents, Close, DateIndex, DecadeIndex, DifficultyEpoch, Dollars, Height, High, Low, MonthIndex,
-    OHLCCents, OHLCDollars, OHLCSats, Open, QuarterIndex, Sats, Version, WeekIndex, YearIndex,
+    OHLCCents, OHLCDollars, OHLCSats, Open, QuarterIndex, Sats, SemesterIndex, Version, WeekIndex,
+    YearIndex,
 };
 use brk_exit::Exit;
 use brk_fetcher::Fetcher;
 use brk_indexer::Indexer;
 use brk_vec::{AnyCollectableVec, AnyIterableVec, Computation, EagerVec, Format, StoredIndex};
 
+use crate::vecs::grouped::Source;
+
 use super::{
     Indexes,
-    grouped::{
-        ComputedVecsFromDateIndex, ComputedVecsFromHeightStrict, StorableVecGeneatorOptions,
-    },
+    grouped::{ComputedVecsFromDateIndex, ComputedVecsFromHeightStrict, EagerVecBuilderOptions},
     indexes,
 };
 
@@ -57,6 +58,8 @@ pub struct Vecs {
     pub monthindex_to_ohlc_in_sats: EagerVec<MonthIndex, OHLCSats>,
     pub quarterindex_to_ohlc: EagerVec<QuarterIndex, OHLCDollars>,
     pub quarterindex_to_ohlc_in_sats: EagerVec<QuarterIndex, OHLCSats>,
+    pub semesterindex_to_ohlc: EagerVec<SemesterIndex, OHLCDollars>,
+    pub semesterindex_to_ohlc_in_sats: EagerVec<SemesterIndex, OHLCSats>,
     pub yearindex_to_ohlc: EagerVec<YearIndex, OHLCDollars>,
     pub yearindex_to_ohlc_in_sats: EagerVec<YearIndex, OHLCSats>,
     // pub halvingepoch_to_ohlc: StorableVec<Halvingepoch, OHLCDollars>,
@@ -72,7 +75,7 @@ impl Vecs {
     pub fn forced_import(
         path: &Path,
         version: Version,
-        _computation: Computation,
+        computation: Computation,
         format: Format,
     ) -> color_eyre::Result<Self> {
         let mut fetched_path = path.to_owned();
@@ -167,122 +170,130 @@ impl Vecs {
             timeindexes_to_open: ComputedVecsFromDateIndex::forced_import(
                 path,
                 "open",
-                true,
+                Source::Compute,
                 version + VERSION + Version::ZERO,
                 format,
-                StorableVecGeneatorOptions::default().add_first(),
+                computation,
+                EagerVecBuilderOptions::default().add_first(),
             )?,
             timeindexes_to_high: ComputedVecsFromDateIndex::forced_import(
                 path,
                 "high",
-                true,
+                Source::Compute,
                 version + VERSION + Version::ZERO,
                 format,
-                StorableVecGeneatorOptions::default().add_max(),
+                computation,
+                EagerVecBuilderOptions::default().add_max(),
             )?,
             timeindexes_to_low: ComputedVecsFromDateIndex::forced_import(
                 path,
                 "low",
-                true,
+                Source::Compute,
                 version + VERSION + Version::ZERO,
                 format,
-                StorableVecGeneatorOptions::default().add_min(),
+                computation,
+                EagerVecBuilderOptions::default().add_min(),
             )?,
             timeindexes_to_close: ComputedVecsFromDateIndex::forced_import(
                 path,
                 "close",
-                true,
+                Source::Compute,
                 version + VERSION + Version::ZERO,
                 format,
-                StorableVecGeneatorOptions::default().add_last(),
+                computation,
+                EagerVecBuilderOptions::default().add_last(),
             )?,
             timeindexes_to_open_in_sats: ComputedVecsFromDateIndex::forced_import(
                 path,
                 "open_in_sats",
-                true,
+                Source::Compute,
                 version + VERSION + VERSION_IN_SATS + Version::ZERO,
                 format,
-                StorableVecGeneatorOptions::default().add_first(),
+                computation,
+                EagerVecBuilderOptions::default().add_first(),
             )?,
             timeindexes_to_high_in_sats: ComputedVecsFromDateIndex::forced_import(
                 path,
                 "high_in_sats",
-                true,
+                Source::Compute,
                 version + VERSION + VERSION_IN_SATS + Version::ZERO,
                 format,
-                StorableVecGeneatorOptions::default().add_max(),
+                computation,
+                EagerVecBuilderOptions::default().add_max(),
             )?,
             timeindexes_to_low_in_sats: ComputedVecsFromDateIndex::forced_import(
                 path,
                 "low_in_sats",
-                true,
+                Source::Compute,
                 version + VERSION + VERSION_IN_SATS + Version::ZERO,
                 format,
-                StorableVecGeneatorOptions::default().add_min(),
+                computation,
+                EagerVecBuilderOptions::default().add_min(),
             )?,
             timeindexes_to_close_in_sats: ComputedVecsFromDateIndex::forced_import(
                 path,
                 "close_in_sats",
-                true,
+                Source::Compute,
                 version + VERSION + VERSION_IN_SATS + Version::ZERO,
                 format,
-                StorableVecGeneatorOptions::default().add_last(),
+                computation,
+                EagerVecBuilderOptions::default().add_last(),
             )?,
             chainindexes_to_open: ComputedVecsFromHeightStrict::forced_import(
                 path,
                 "open",
                 version + VERSION + Version::ZERO,
                 format,
-                StorableVecGeneatorOptions::default().add_first(),
+                EagerVecBuilderOptions::default().add_first(),
             )?,
             chainindexes_to_high: ComputedVecsFromHeightStrict::forced_import(
                 path,
                 "high",
                 version + VERSION + Version::ZERO,
                 format,
-                StorableVecGeneatorOptions::default().add_max(),
+                EagerVecBuilderOptions::default().add_max(),
             )?,
             chainindexes_to_low: ComputedVecsFromHeightStrict::forced_import(
                 path,
                 "low",
                 version + VERSION + Version::ZERO,
                 format,
-                StorableVecGeneatorOptions::default().add_min(),
+                EagerVecBuilderOptions::default().add_min(),
             )?,
             chainindexes_to_close: ComputedVecsFromHeightStrict::forced_import(
                 path,
                 "close",
                 version + VERSION + Version::ZERO,
                 format,
-                StorableVecGeneatorOptions::default().add_last(),
+                EagerVecBuilderOptions::default().add_last(),
             )?,
             chainindexes_to_open_in_sats: ComputedVecsFromHeightStrict::forced_import(
                 path,
                 "open_in_sats",
                 version + VERSION + VERSION_IN_SATS + Version::ZERO,
                 format,
-                StorableVecGeneatorOptions::default().add_first(),
+                EagerVecBuilderOptions::default().add_first(),
             )?,
             chainindexes_to_high_in_sats: ComputedVecsFromHeightStrict::forced_import(
                 path,
                 "high_in_sats",
                 version + VERSION + VERSION_IN_SATS + Version::ZERO,
                 format,
-                StorableVecGeneatorOptions::default().add_max(),
+                EagerVecBuilderOptions::default().add_max(),
             )?,
             chainindexes_to_low_in_sats: ComputedVecsFromHeightStrict::forced_import(
                 path,
                 "low_in_sats",
                 version + VERSION + VERSION_IN_SATS + Version::ZERO,
                 format,
-                StorableVecGeneatorOptions::default().add_min(),
+                EagerVecBuilderOptions::default().add_min(),
             )?,
             chainindexes_to_close_in_sats: ComputedVecsFromHeightStrict::forced_import(
                 path,
                 "close_in_sats",
                 version + VERSION + VERSION_IN_SATS + Version::ZERO,
                 format,
-                StorableVecGeneatorOptions::default().add_last(),
+                EagerVecBuilderOptions::default().add_last(),
             )?,
             weekindex_to_ohlc: EagerVec::forced_import(
                 path,
@@ -327,6 +338,18 @@ impl Vecs {
                 format,
             )?,
             quarterindex_to_ohlc_in_sats: EagerVec::forced_import(
+                path,
+                "ohlc_in_sats",
+                version + VERSION + VERSION_IN_SATS + Version::ZERO,
+                format,
+            )?,
+            semesterindex_to_ohlc: EagerVec::forced_import(
+                path,
+                "ohlc",
+                version + VERSION + Version::ZERO,
+                format,
+            )?,
+            semesterindex_to_ohlc_in_sats: EagerVec::forced_import(
                 path,
                 "ohlc_in_sats",
                 version + VERSION + VERSION_IN_SATS + Version::ZERO,
@@ -693,6 +716,27 @@ impl Vecs {
             exit,
         )?;
 
+        let mut semesterindex_first_iter =
+            self.timeindexes_to_open.semesterindex.unwrap_first().iter();
+        let mut semesterindex_max_iter = self.timeindexes_to_high.semesterindex.unwrap_max().iter();
+        let mut semesterindex_min_iter = self.timeindexes_to_low.semesterindex.unwrap_min().iter();
+        self.semesterindex_to_ohlc.compute_transform(
+            starting_indexes.semesterindex,
+            self.timeindexes_to_close.semesterindex.unwrap_last(),
+            |(i, close, ..)| {
+                (
+                    i,
+                    OHLCDollars {
+                        open: semesterindex_first_iter.unwrap_get_inner(i),
+                        high: semesterindex_max_iter.unwrap_get_inner(i),
+                        low: semesterindex_min_iter.unwrap_get_inner(i),
+                        close,
+                    },
+                )
+            },
+            exit,
+        )?;
+
         let mut yearindex_first_iter = self.timeindexes_to_open.yearindex.unwrap_first().iter();
         let mut yearindex_max_iter = self.timeindexes_to_high.yearindex.unwrap_max().iter();
         let mut yearindex_min_iter = self.timeindexes_to_low.yearindex.unwrap_min().iter();
@@ -1044,6 +1088,40 @@ impl Vecs {
             exit,
         )?;
 
+        let mut semesterindex_first_iter = self
+            .timeindexes_to_open_in_sats
+            .semesterindex
+            .unwrap_first()
+            .iter();
+        let mut semesterindex_max_iter = self
+            .timeindexes_to_high_in_sats
+            .semesterindex
+            .unwrap_max()
+            .iter();
+        let mut semesterindex_min_iter = self
+            .timeindexes_to_low_in_sats
+            .semesterindex
+            .unwrap_min()
+            .iter();
+        self.semesterindex_to_ohlc_in_sats.compute_transform(
+            starting_indexes.semesterindex,
+            self.timeindexes_to_close_in_sats
+                .semesterindex
+                .unwrap_last(),
+            |(i, close, ..)| {
+                (
+                    i,
+                    OHLCSats {
+                        open: semesterindex_first_iter.unwrap_get_inner(i),
+                        high: semesterindex_max_iter.unwrap_get_inner(i),
+                        low: semesterindex_min_iter.unwrap_get_inner(i),
+                        close,
+                    },
+                )
+            },
+            exit,
+        )?;
+
         let mut yearindex_first_iter = self
             .timeindexes_to_open_in_sats
             .yearindex
@@ -1133,6 +1211,7 @@ impl Vecs {
                 &self.difficultyepoch_to_ohlc,
                 &self.monthindex_to_ohlc,
                 &self.quarterindex_to_ohlc,
+                &self.semesterindex_to_ohlc,
                 &self.yearindex_to_ohlc,
                 // &self.halvingepoch_to_ohlc,
                 &self.decadeindex_to_ohlc,
@@ -1142,6 +1221,7 @@ impl Vecs {
                 &self.difficultyepoch_to_ohlc_in_sats,
                 &self.monthindex_to_ohlc_in_sats,
                 &self.quarterindex_to_ohlc_in_sats,
+                &self.semesterindex_to_ohlc_in_sats,
                 &self.yearindex_to_ohlc_in_sats,
                 // &self.halvingepoch_to_ohlc_in_sats,
                 &self.decadeindex_to_ohlc_in_sats,

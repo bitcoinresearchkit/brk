@@ -184,11 +184,13 @@ function createChartElement({
         ? 1
         : index === /** @satisfies {QuarterIndex} */ (19)
           ? 2
-          : index === /** @satisfies {YearIndex} */ (23)
-            ? 6
-            : index === /** @satisfies {DecadeIndex} */ (1)
-              ? 60
-              : 0.5;
+          : index === /** @satisfies {SemesterIndex} */ (20)
+            ? 3
+            : index === /** @satisfies {YearIndex} */ (24)
+              ? 6
+              : index === /** @satisfies {DecadeIndex} */ (1)
+                ? 60
+                : 0.5;
 
     ichart.applyOptions({
       timeScale: {
@@ -474,7 +476,8 @@ function createChartElement({
                     timeScaleSetCallback?.(() => {
                       if (
                         index === /** @satisfies {QuarterIndex} */ (19) ||
-                        index === /** @satisfies {YearIndex} */ (23) ||
+                        index === /** @satisfies {SemesterIndex} */ (20) ||
+                        index === /** @satisfies {YearIndex} */ (24) ||
                         index === /** @satisfies {DecadeIndex} */ (1)
                       ) {
                         ichart.timeScale().setVisibleLogicalRange({

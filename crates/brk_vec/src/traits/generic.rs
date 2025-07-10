@@ -122,13 +122,14 @@ where
 
     fn file_write_all(&mut self, file: &mut File, buf: &[u8]) -> Result<()> {
         file.write_all(buf)?;
+        // file.flush()?;
+        // file.sync_data()?;
         self.update_mmap(file)
     }
 
     fn file_truncate_and_write_all(&mut self, file: &mut File, len: u64, buf: &[u8]) -> Result<()> {
         Self::file_set_len_(file, len)?;
-        file.write_all(buf)?;
-        self.update_mmap(file)
+        self.file_write_all(file, buf)
     }
 
     fn reset(&mut self) -> Result<()>;

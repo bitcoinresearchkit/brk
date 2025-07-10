@@ -1,4 +1,4 @@
-use std::ops::{Add, Div};
+use std::ops::{Add, AddAssign, Div};
 
 use derive_deref::Deref;
 use serde::Serialize;
@@ -70,6 +70,12 @@ impl Add for StoredU32 {
     type Output = Self;
     fn add(self, rhs: Self) -> Self::Output {
         Self(self.0 + rhs.0)
+    }
+}
+
+impl AddAssign for StoredU32 {
+    fn add_assign(&mut self, rhs: Self) {
+        *self = *self + rhs
     }
 }
 
