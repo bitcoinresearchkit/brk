@@ -31,6 +31,18 @@ impl From<u8> for DecadeIndex {
     }
 }
 
+impl From<DecadeIndex> for u8 {
+    fn from(value: DecadeIndex) -> Self {
+        value.0
+    }
+}
+
+impl From<DecadeIndex> for u16 {
+    fn from(value: DecadeIndex) -> Self {
+        value.0 as u16
+    }
+}
+
 impl From<usize> for DecadeIndex {
     fn from(value: usize) -> Self {
         Self(value as u8)

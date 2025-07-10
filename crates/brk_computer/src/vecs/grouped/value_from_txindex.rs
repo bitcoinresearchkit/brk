@@ -4,13 +4,13 @@ use brk_core::{Bitcoin, Close, Dollars, Height, Sats, TxIndex, Version};
 use brk_exit::Exit;
 use brk_indexer::Indexer;
 use brk_vec::{
-    AnyCollectableVec, BoxedAnyIterableVec, CloneableAnyIterableVec, CollectableVec, Computation,
-    ComputedVecFrom3, Format, LazyVecFrom1, StoredIndex, StoredVec,
+    AnyCollectableVec, CloneableAnyIterableVec, CollectableVec, Computation, ComputedVecFrom3,
+    Format, LazyVecFrom1, StoredIndex, StoredVec,
 };
 
-use crate::vecs::{Indexes, fetched, indexes};
+use crate::vecs::{Indexes, fetched, grouped::Source, indexes};
 
-use super::{ComputedVecsFromTxindex, StorableVecGeneatorOptions};
+use super::{ComputedVecsFromTxindex, EagerVecBuilderOptions};
 
 #[derive(Clone)]
 pub struct ComputedValueVecsFromTxindex {
@@ -41,14 +41,13 @@ impl ComputedValueVecsFromTxindex {
         path: &Path,
         name: &str,
         indexes: &indexes::Vecs,
-        source: Option<BoxedAnyIterableVec<TxIndex, Sats>>,
+        source: Source<TxIndex, Sats>,
         version: Version,
         computation: Computation,
         format: Format,
         fetched: Option<&fetched::Vecs>,
-        options: StorableVecGeneatorOptions,
+        options: EagerVecBuilderOptions,
     ) -> color_eyre::Result<Self> {
-        let compute_source = source.is_none();
         let compute_dollars = fetched.is_some();
 
         let name_in_btc = format!("{name}_in_btc");
@@ -57,16 +56,19 @@ impl ComputedValueVecsFromTxindex {
         let sats = ComputedVecsFromTxindex::forced_import(
             path,
             name,
-            compute_source,
+            source.clone(),
             version + VERSION,
             format,
+            computation,
             options,
         )?;
+
+        let source_vec = source.vec();
 
         let bitcoin_txindex = LazyVecFrom1::init(
             &name_in_btc,
             version + VERSION,
-            source.map_or_else(|| sats.txindex.as_ref().unwrap().boxed_clone(), |s| s),
+            source_vec.map_or_else(|| sats.txindex.as_ref().unwrap().boxed_clone(), |s| s),
             |txindex: TxIndex, iter| {
                 iter.next_at(txindex.unwrap_to_usize()).map(|(_, value)| {
                     let sats = value.into_owned();
@@ -78,9 +80,10 @@ impl ComputedValueVecsFromTxindex {
         let bitcoin = ComputedVecsFromTxindex::forced_import(
             path,
             &name_in_btc,
-            false,
+            Source::None,
             version + VERSION,
             format,
+            computation,
             options,
         )?;
 
@@ -124,9 +127,10 @@ impl ComputedValueVecsFromTxindex {
                 ComputedVecsFromTxindex::forced_import(
                     path,
                     &name_in_usd,
-                    false,
+                    Source::None,
                     version + VERSION,
                     format,
+                    computation,
                     options,
                 )
                 .unwrap()

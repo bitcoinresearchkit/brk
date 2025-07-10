@@ -1,6 +1,6 @@
 use std::{
     cmp::Ordering,
-    ops::{Add, Div},
+    ops::{Add, AddAssign, Div},
 };
 
 use derive_deref::Deref;
@@ -139,6 +139,12 @@ impl Add for Timestamp {
     type Output = Self;
     fn add(self, rhs: Self) -> Self::Output {
         Self(self.0 + rhs.0)
+    }
+}
+
+impl AddAssign for Timestamp {
+    fn add_assign(&mut self, rhs: Self) {
+        *self = *self + rhs
     }
 }
 

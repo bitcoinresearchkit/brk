@@ -3,11 +3,11 @@ use std::path::Path;
 use brk_core::{Bitcoin, Dollars, Height, Result, Sats, Version};
 use brk_exit::Exit;
 use brk_indexer::Indexer;
-use brk_vec::{AnyCollectableVec, CollectableVec, EagerVec, Format, StoredVec};
+use brk_vec::{AnyCollectableVec, CollectableVec, Computation, EagerVec, Format, StoredVec};
 
-use crate::vecs::{Indexes, fetched, indexes};
+use crate::vecs::{Indexes, fetched, grouped::Source, indexes};
 
-use super::{ComputedVecsFromHeight, StorableVecGeneatorOptions};
+use super::{ComputedVecsFromHeight, EagerVecBuilderOptions};
 
 #[derive(Clone)]
 pub struct ComputedValueVecsFromHeight {
@@ -19,39 +19,44 @@ pub struct ComputedValueVecsFromHeight {
 const VERSION: Version = Version::ZERO;
 
 impl ComputedValueVecsFromHeight {
+    #[allow(clippy::too_many_arguments)]
     pub fn forced_import(
         path: &Path,
         name: &str,
-        compute_source: bool,
+        source: Source<Height, Sats>,
         version: Version,
         format: Format,
-        options: StorableVecGeneatorOptions,
+        computation: Computation,
+        options: EagerVecBuilderOptions,
         compute_dollars: bool,
     ) -> color_eyre::Result<Self> {
         Ok(Self {
             sats: ComputedVecsFromHeight::forced_import(
                 path,
                 name,
-                compute_source,
+                source,
                 version + VERSION,
                 format,
+                computation,
                 options,
             )?,
             bitcoin: ComputedVecsFromHeight::forced_import(
                 path,
                 &format!("{name}_in_btc"),
-                true,
+                Source::Compute,
                 version + VERSION,
                 format,
+                computation,
                 options,
             )?,
             dollars: compute_dollars.then(|| {
                 ComputedVecsFromHeight::forced_import(
                     path,
                     &format!("{name}_in_usd"),
-                    true,
+                    Source::Compute,
                     version + VERSION,
                     format,
+                    computation,
                     options,
                 )
                 .unwrap()

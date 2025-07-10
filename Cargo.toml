@@ -43,8 +43,8 @@ brk_server = { version = "0.0.76", path = "crates/brk_server" }
 brk_store = { version = "0.0.76", path = "crates/brk_store" }
 brk_vec = { version = "0.0.76", path = "crates/brk_vec" }
 byteview = "=0.6.1"
-clap = { version = "4.5.40", features = ["string"] }
-clap_derive = "4.5.40"
+clap = { version = "4.5.41", features = ["string"] }
+clap_derive = "4.5.41"
 color-eyre = "0.6.5"
 derive_deref = "1.1.1"
 fjall = "2.11.1"

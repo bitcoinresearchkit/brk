@@ -6,7 +6,8 @@ use brk_core::{
 use brk_exit::Exit;
 use brk_indexer::Indexer;
 use brk_vec::{
-    AnyCollectableVec, AnyIterableVec, AnyVec, Computation, EagerVec, Format, VecIterator,
+    AnyCollectableVec, AnyIterableVec, AnyVec, CloneableAnyIterableVec, Computation, EagerVec,
+    Format, VecIterator,
 };
 
 use crate::{
@@ -16,7 +17,7 @@ use crate::{
         grouped::{
             ComputedHeightValueVecs, ComputedRatioVecsFromDateIndex,
             ComputedValueVecsFromDateIndex, ComputedVecsFromDateIndex, ComputedVecsFromHeight,
-            StorableVecGeneatorOptions,
+            EagerVecBuilderOptions, Source,
         },
         indexes, market,
     },
@@ -132,7 +133,7 @@ impl Vecs {
     pub fn forced_import(
         path: &Path,
         cohort_name: Option<&str>,
-        _computation: Computation,
+        computation: Computation,
         format: Format,
         version: Version,
         fetched: Option<&fetched::Vecs>,
@@ -144,18 +145,58 @@ impl Vecs {
 
         let suffix = |s: &str| cohort_name.map_or(s.to_string(), |name| format!("{name}_{s}"));
 
-        Ok(Self {
+        let dateindex_to_supply_in_profit = compute_dollars.then(|| {
+            EagerVec::forced_import(
+                path,
+                &suffix("supply_in_profit"),
+                version + VERSION + Version::ZERO,
+                format,
+            )
+            .unwrap()
+        });
 
+        let dateindex_to_supply_even = compute_dollars.then(|| {
+            EagerVec::forced_import(
+                path,
+                &suffix("supply_even"),
+                version + VERSION + Version::ZERO,
+                format,
+            )
+            .unwrap()
+        });
+
+        let dateindex_to_supply_in_loss = compute_dollars.then(|| {
+            EagerVec::forced_import(
+                path,
+                &suffix("supply_in_loss"),
+                version + VERSION + Version::ZERO,
+                format,
+            )
+            .unwrap()
+        });
+
+        let dateindex_to_unrealized_profit = compute_dollars.then(|| {
+            EagerVec::forced_import(
+                path,
+                &suffix("unrealized_profit"),
+                version + VERSION + Version::ZERO,
+                format,
+            )
+            .unwrap()
+        });
+
+        let dateindex_to_unrealized_loss = compute_dollars.then(|| {
+            EagerVec::forced_import(
+                path,
+                &suffix("unrealized_loss"),
+                version + VERSION + Version::ZERO,
+                format,
+            )
+            .unwrap()
+        });
+
+        Ok(Self {
             height_to_supply_in_profit: compute_dollars.then(|| {
-                EagerVec::forced_import(
-                    path,
-                    &suffix("supply_in_profit"),
-                    version + VERSION + Version::ZERO,
-                    format,
-                )
-                .unwrap()
-            }),
-            dateindex_to_supply_in_profit: compute_dollars.then(|| {
                 EagerVec::forced_import(
                     path,
                     &suffix("supply_in_profit"),
@@ -168,24 +209,17 @@ impl Vecs {
                 ComputedValueVecsFromDateIndex::forced_import(
                     path,
                     &suffix("supply_in_profit"),
-                    false,
+                    dateindex_to_supply_in_profit.as_ref().map(|v | v.boxed_clone()).into(),
                     version + VERSION + Version::ZERO,
                     format,
-                    StorableVecGeneatorOptions::default().add_last(),
+                    computation,
+                    EagerVecBuilderOptions::default().add_last(),
                     compute_dollars,
                 )
                 .unwrap()
             }),
+            dateindex_to_supply_in_profit,
             height_to_supply_even: compute_dollars.then(|| {
-                EagerVec::forced_import(
-                    path,
-                    &suffix("supply_even"),
-                    version + VERSION + Version::ZERO,
-                    format,
-                )
-                .unwrap()
-            }),
-            dateindex_to_supply_even: compute_dollars.then(|| {
                 EagerVec::forced_import(
                     path,
                     &suffix("supply_even"),
@@ -198,24 +232,17 @@ impl Vecs {
                 ComputedValueVecsFromDateIndex::forced_import(
                     path,
                     &suffix("supply_even"),
-                    false,
+                    dateindex_to_supply_even.as_ref().map(|v | v.boxed_clone()).into(),
                     version + VERSION + Version::ZERO,
                     format,
-                    StorableVecGeneatorOptions::default().add_last(),
+                    computation,
+                    EagerVecBuilderOptions::default().add_last(),
                     compute_dollars,
                 )
                 .unwrap()
             }),
+            dateindex_to_supply_even,
             height_to_supply_in_loss: compute_dollars.then(|| {
-                EagerVec::forced_import(
-                    path,
-                    &suffix("supply_in_loss"),
-                    version + VERSION + Version::ZERO,
-                    format,
-                )
-                .unwrap()
-            }),
-            dateindex_to_supply_in_loss: compute_dollars.then(|| {
                 EagerVec::forced_import(
                     path,
                     &suffix("supply_in_loss"),
@@ -228,24 +255,17 @@ impl Vecs {
                 ComputedValueVecsFromDateIndex::forced_import(
                     path,
                     &suffix("supply_in_loss"),
-                    false,
+                    dateindex_to_supply_in_loss.as_ref().map(|v | v.boxed_clone()).into(),
                     version + VERSION + Version::ZERO,
                     format,
-                    StorableVecGeneatorOptions::default().add_last(),
+                    computation,
+                    EagerVecBuilderOptions::default().add_last(),
                     compute_dollars,
                 )
                 .unwrap()
             }),
+            dateindex_to_supply_in_loss,
             height_to_unrealized_profit: compute_dollars.then(|| {
-                EagerVec::forced_import(
-                    path,
-                    &suffix("unrealized_profit"),
-                    version + VERSION + Version::ZERO,
-                    format,
-                )
-                .unwrap()
-            }),
-            dateindex_to_unrealized_profit: compute_dollars.then(|| {
                 EagerVec::forced_import(
                     path,
                     &suffix("unrealized_profit"),
@@ -258,13 +278,15 @@ impl Vecs {
                 ComputedVecsFromDateIndex::forced_import(
                     path,
                     &suffix("unrealized_profit"),
-                    false,
+                    dateindex_to_unrealized_profit.as_ref().map(|v | v.boxed_clone()).into(),
                     version + VERSION + Version::ZERO,
                     format,
-                    StorableVecGeneatorOptions::default().add_last(),
+                    computation,
+                    EagerVecBuilderOptions::default().add_last(),
                 )
                 .unwrap()
             }),
+            dateindex_to_unrealized_profit,
             height_to_unrealized_loss: compute_dollars.then(|| {
                 EagerVec::forced_import(
                     path,
@@ -292,26 +314,19 @@ impl Vecs {
                 )
                 .unwrap()
             }),
-            dateindex_to_unrealized_loss: compute_dollars.then(|| {
-                EagerVec::forced_import(
-                    path,
-                    &suffix("unrealized_loss"),
-                    version + VERSION + Version::ZERO,
-                    format,
-                )
-                .unwrap()
-            }),
             indexes_to_unrealized_loss: compute_dollars.then(|| {
                 ComputedVecsFromDateIndex::forced_import(
                     path,
                     &suffix("unrealized_loss"),
-                    false,
+                    dateindex_to_unrealized_loss.as_ref().map(|v | v.boxed_clone()).into(),
                     version + VERSION + Version::ZERO,
                     format,
-                    StorableVecGeneatorOptions::default().add_last(),
+                    computation,
+                    EagerVecBuilderOptions::default().add_last(),
                 )
                 .unwrap()
             }),
+            dateindex_to_unrealized_loss,
             height_to_realized_cap: compute_dollars.then(|| {
                 EagerVec::forced_import(
                     path,
@@ -325,10 +340,11 @@ impl Vecs {
                 ComputedVecsFromHeight::forced_import(
                     path,
                     &suffix("realized_cap"),
-                    false,
+                    Source::None,
                     version + VERSION + Version::ZERO,
                     format,
-                    StorableVecGeneatorOptions::default().add_last(),
+                    computation,
+                    EagerVecBuilderOptions::default().add_last(),
                 )
                 .unwrap()
             }),
@@ -336,10 +352,11 @@ impl Vecs {
                 ComputedVecsFromHeight::forced_import(
                     path,
                     &suffix("min_price_paid"),
-                    false,
+                    Source::None,
                     version + VERSION + Version::ZERO,
                     format,
-                    StorableVecGeneatorOptions::default().add_last(),
+                    computation,
+                    EagerVecBuilderOptions::default().add_last(),
                 )
                 .unwrap()
             }),
@@ -347,10 +364,11 @@ impl Vecs {
                 ComputedVecsFromHeight::forced_import(
                     path,
                     &suffix("max_price_paid"),
-                    false,
+                    Source::None,
                     version + VERSION + Version::ZERO,
                     format,
-                    StorableVecGeneatorOptions::default().add_last(),
+                    computation,
+                    EagerVecBuilderOptions::default().add_last(),
                 )
                 .unwrap()
             }),
@@ -363,7 +381,7 @@ impl Vecs {
             height_to_supply_value: ComputedHeightValueVecs::forced_import(
                 path,
                 &suffix("supply"),
-                false,
+                Source::None,
                 version + VERSION + Version::ZERO,
                 format,
                 compute_dollars,
@@ -371,10 +389,11 @@ impl Vecs {
             indexes_to_supply: ComputedValueVecsFromDateIndex::forced_import(
                 path,
                 &suffix("supply"),
-                true,
+                Source::Compute,
                 version + VERSION + Version::ONE,
                 format,
-                StorableVecGeneatorOptions::default().add_last(),
+                computation,
+                EagerVecBuilderOptions::default().add_last(),
                 compute_dollars,
             )?,
             height_to_utxo_count: EagerVec::forced_import(
@@ -386,19 +405,21 @@ impl Vecs {
             indexes_to_utxo_count: ComputedVecsFromHeight::forced_import(
                 path,
                 &suffix("utxo_count"),
-                false,
+                Source::None,
                 version + VERSION + Version::ZERO,
                 format,
-                StorableVecGeneatorOptions::default().add_last(),
+                computation,
+                EagerVecBuilderOptions::default().add_last(),
             )?,
             indexes_to_realized_price: compute_dollars.then(|| {
                 ComputedVecsFromHeight::forced_import(
                     path,
                     &suffix("realized_price"),
-                    true,
+                    Source::Compute,
                     version + VERSION + Version::ZERO,
                     format,
-                    StorableVecGeneatorOptions::default().add_last(),
+                   computation,
+                    EagerVecBuilderOptions::default().add_last(),
                 )
                 .unwrap()
             }),
@@ -406,9 +427,10 @@ impl Vecs {
                 ComputedRatioVecsFromDateIndex::forced_import(
                     path,
                     &suffix("realized_price"),
-                    false,
+                    Source::None,
                     version + VERSION + Version::ZERO,
                     format,
+                    computation,
                 )
                 .unwrap()
             }),
@@ -425,10 +447,11 @@ impl Vecs {
                 ComputedVecsFromHeight::forced_import(
                     path,
                     &suffix("realized_profit"),
-                    false,
+                    Source::None,
                     version + VERSION + Version::ZERO,
                     format,
-                    StorableVecGeneatorOptions::default()
+                   computation,
+                    EagerVecBuilderOptions::default()
                         .add_sum()
                         .add_cumulative(),
                 )
@@ -447,10 +470,11 @@ impl Vecs {
                 ComputedVecsFromHeight::forced_import(
                     path,
                     &suffix("realized_loss"),
-                    false,
+                    Source::None,
                     version + VERSION + Version::ZERO,
                     format,
-                    StorableVecGeneatorOptions::default()
+                   computation,
+                    EagerVecBuilderOptions::default()
                         .add_sum()
                         .add_cumulative(),
                 )
@@ -460,10 +484,11 @@ impl Vecs {
                 ComputedVecsFromHeight::forced_import(
                     path,
                     &suffix("negative_realized_loss"),
-                    true,
+                    Source::Compute,
                     version + VERSION + Version::ONE,
                     format,
-                    StorableVecGeneatorOptions::default().add_sum().add_cumulative(),
+                   computation,
+                    EagerVecBuilderOptions::default().add_sum().add_cumulative(),
                 )
                 .unwrap()
             }),
@@ -480,10 +505,11 @@ impl Vecs {
                 ComputedVecsFromHeight::forced_import(
                     path,
                     &suffix("value_created"),
-                    false,
+                    Source::None,
                     version + VERSION + Version::ZERO,
                     format,
-                    StorableVecGeneatorOptions::default().add_sum(),
+                   computation,
+                    EagerVecBuilderOptions::default().add_sum(),
                 )
                 .unwrap()
             }),
@@ -491,10 +517,11 @@ impl Vecs {
                 ComputedVecsFromHeight::forced_import(
                     path,
                     &suffix("realized_value"),
-                    true,
+                    Source::Compute,
                     version + VERSION + Version::ZERO,
                     format,
-                    StorableVecGeneatorOptions::default().add_sum(),
+                   computation,
+                    EagerVecBuilderOptions::default().add_sum(),
                 )
                 .unwrap()
             }),
@@ -511,10 +538,11 @@ impl Vecs {
                 ComputedVecsFromHeight::forced_import(
                     path,
                     &suffix("adjusted_value_created"),
-                    false,
+                    Source::None,
                     version + VERSION + Version::ZERO,
                     format,
-                    StorableVecGeneatorOptions::default().add_sum(),
+                   computation,
+                    EagerVecBuilderOptions::default().add_sum(),
                 )
                 .unwrap()
             }),
@@ -531,10 +559,11 @@ impl Vecs {
                 ComputedVecsFromHeight::forced_import(
                     path,
                     &suffix("value_destroyed"),
-                    false,
+                    Source::None,
                     version + VERSION + Version::ZERO,
                     format,
-                    StorableVecGeneatorOptions::default().add_sum(),
+                   computation,
+                    EagerVecBuilderOptions::default().add_sum(),
                 )
                 .unwrap()
             }),
@@ -551,10 +580,11 @@ impl Vecs {
                 ComputedVecsFromHeight::forced_import(
                     path,
                     &suffix("adjusted_value_destroyed"),
-                    false,
+                    Source::None,
                     version + VERSION + Version::ZERO,
                     format,
-                    StorableVecGeneatorOptions::default().add_sum(),
+                   computation,
+                    EagerVecBuilderOptions::default().add_sum(),
                 )
                 .unwrap()
             }),
@@ -562,10 +592,11 @@ impl Vecs {
                 ComputedVecsFromDateIndex::forced_import(
                     path,
                     &suffix("realized_cap_30d_change"),
-                    true,
+                    Source::Compute,
                     version + VERSION + Version::ZERO,
                     format,
-                    StorableVecGeneatorOptions::default().add_last(),
+                   computation,
+                    EagerVecBuilderOptions::default().add_last(),
                 )
                 .unwrap()
             }),
@@ -573,10 +604,11 @@ impl Vecs {
                 ComputedVecsFromHeight::forced_import(
                     path,
                     &suffix("net_realized_profit_and_loss"),
-                    true,
+                    Source::Compute,
                     version + VERSION + Version::ZERO,
                     format,
-                    StorableVecGeneatorOptions::default()
+                   computation,
+                    EagerVecBuilderOptions::default()
                         .add_sum()
                         .add_cumulative(),
                 )
@@ -612,7 +644,7 @@ impl Vecs {
             height_to_halved_supply_value: ComputedHeightValueVecs::forced_import(
                 path,
                 &suffix("halved_supply"),
-                true,
+                Source::Compute,
                 version + VERSION + Version::ZERO,
                 format,
                 compute_dollars,
@@ -620,10 +652,11 @@ impl Vecs {
             indexes_to_halved_supply: ComputedValueVecsFromDateIndex::forced_import(
                 path,
                 &suffix("halved_supply"),
-                true,
+                Source::Compute,
                 version + VERSION + Version::ZERO,
                 format,
-                StorableVecGeneatorOptions::default().add_last(),
+               computation,
+                EagerVecBuilderOptions::default().add_last(),
                 compute_dollars,
             )?,
             height_to_negative_unrealized_loss: compute_dollars.then(|| {
@@ -639,10 +672,11 @@ impl Vecs {
                 ComputedVecsFromDateIndex::forced_import(
                     path,
                     &suffix("negative_unrealized_loss"),
-                    true,
+                    Source::Compute,
                     version + VERSION + Version::ZERO,
                     format,
-                    StorableVecGeneatorOptions::default().add_last(),
+                   computation,
+                    EagerVecBuilderOptions::default().add_last(),
                 )
                 .unwrap()
             }),
@@ -659,10 +693,11 @@ impl Vecs {
                 ComputedVecsFromDateIndex::forced_import(
                     path,
                     &suffix("net_unrealized_profit_and_loss"),
-                    true,
+                    Source::Compute,
                     version + VERSION + Version::ZERO,
                     format,
-                    StorableVecGeneatorOptions::default().add_last(),
+                   computation,
+                    EagerVecBuilderOptions::default().add_last(),
                 )
                 .unwrap()
             }),
@@ -682,10 +717,11 @@ impl Vecs {
                     ComputedVecsFromDateIndex::forced_import(
                         path,
                         &suffix("net_unrealized_profit_and_loss_relative_to_market_cap"),
-                        true,
+                        Source::Compute,
                         version + VERSION + Version::ONE,
                         format,
-                        StorableVecGeneatorOptions::default().add_last(),
+                       computation,
+                        EagerVecBuilderOptions::default().add_last(),
                     )
                     .unwrap()
                 },
@@ -694,10 +730,11 @@ impl Vecs {
                 ComputedVecsFromHeight::forced_import(
                     path,
                     &suffix("realized_profit_relative_to_realized_cap"),
-                    true,
+                    Source::Compute,
                     version + VERSION + Version::ZERO,
                     format,
-                    StorableVecGeneatorOptions::default().add_sum(),
+                   computation,
+                    EagerVecBuilderOptions::default().add_sum(),
                 )
                 .unwrap()
             }),
@@ -705,10 +742,11 @@ impl Vecs {
                 ComputedVecsFromHeight::forced_import(
                     path,
                     &suffix("realized_loss_relative_to_realized_cap"),
-                    true,
+                    Source::Compute,
                     version + VERSION + Version::ZERO,
                     format,
-                    StorableVecGeneatorOptions::default().add_sum(),
+                   computation,
+                    EagerVecBuilderOptions::default().add_sum(),
                 )
                 .unwrap()
             }),
@@ -717,10 +755,11 @@ impl Vecs {
                     ComputedVecsFromHeight::forced_import(
                         path,
                         &suffix("net_realized_profit_and_loss_relative_to_realized_cap"),
-                        true,
+                        Source::Compute,
                         version + VERSION + Version::ONE,
                         format,
-                        StorableVecGeneatorOptions::default().add_sum(),
+                       computation,
+                        EagerVecBuilderOptions::default().add_sum(),
                     )
                     .unwrap()
                 },
@@ -729,7 +768,7 @@ impl Vecs {
                 ComputedHeightValueVecs::forced_import(
                     path,
                     &suffix("supply_even"),
-                    false,
+                    Source::None,
                     version + VERSION + Version::ZERO,
                     format,
                     compute_dollars,
@@ -740,7 +779,7 @@ impl Vecs {
                 ComputedHeightValueVecs::forced_import(
                     path,
                     &suffix("supply_in_loss"),
-                    false,
+                    Source::None,
                     version + VERSION + Version::ZERO,
                     format,
                     compute_dollars,
@@ -751,7 +790,7 @@ impl Vecs {
                 ComputedHeightValueVecs::forced_import(
                     path,
                     &suffix("supply_in_profit"),
-                    false,
+                    Source::None,
                     version + VERSION + Version::ZERO,
                     format,
                     compute_dollars,
@@ -789,10 +828,11 @@ impl Vecs {
                 ComputedVecsFromDateIndex::forced_import(
                     path,
                     &suffix("supply_even_relative_to_own_supply"),
-                    true,
+                    Source::Compute,
                     version + VERSION + Version::ONE,
                     format,
-                    StorableVecGeneatorOptions::default().add_last(),
+                    computation,
+                    EagerVecBuilderOptions::default().add_last(),
                 )
                 .unwrap()
             }),
@@ -800,10 +840,11 @@ impl Vecs {
                 ComputedVecsFromDateIndex::forced_import(
                     path,
                     &suffix("supply_in_loss_relative_to_own_supply"),
-                    true,
+                    Source::Compute,
                     version + VERSION + Version::ONE,
                     format,
-                    StorableVecGeneatorOptions::default().add_last(),
+                    computation,
+                    EagerVecBuilderOptions::default().add_last(),
                 )
                 .unwrap()
             }),
@@ -811,10 +852,11 @@ impl Vecs {
                 ComputedVecsFromDateIndex::forced_import(
                     path,
                     &suffix("supply_in_profit_relative_to_own_supply"),
-                    true,
+                    Source::Compute,
                     version + VERSION + Version::ONE,
                     format,
-                    StorableVecGeneatorOptions::default().add_last(),
+                    computation,
+                    EagerVecBuilderOptions::default().add_last(),
                 )
                 .unwrap()
             }),
@@ -822,10 +864,11 @@ impl Vecs {
                 ComputedVecsFromHeight::forced_import(
                     path,
                     &suffix("supply_relative_to_circulating_supply"),
-                    true,
+                    Source::Compute,
                     version + VERSION + Version::ONE,
                     format,
-                    StorableVecGeneatorOptions::default().add_last(),
+                    computation,
+                    EagerVecBuilderOptions::default().add_last(),
                 )
                 .unwrap()
             }),
@@ -868,10 +911,11 @@ impl Vecs {
                     ComputedVecsFromDateIndex::forced_import(
                         path,
                         &suffix("supply_even_relative_to_circulating_supply"),
-                        true,
+                        Source::Compute,
                         version + VERSION + Version::ONE,
                         format,
-                        StorableVecGeneatorOptions::default().add_last(),
+                       computation,
+                        EagerVecBuilderOptions::default().add_last(),
                     )
                     .unwrap()
                 }),
@@ -881,10 +925,11 @@ impl Vecs {
                     ComputedVecsFromDateIndex::forced_import(
                         path,
                         &suffix("supply_in_loss_relative_to_circulating_supply"),
-                        true,
+                        Source::Compute,
                         version + VERSION + Version::ONE,
                         format,
-                        StorableVecGeneatorOptions::default().add_last(),
+                       computation,
+                        EagerVecBuilderOptions::default().add_last(),
                     )
                     .unwrap()
                 }),
@@ -894,10 +939,11 @@ impl Vecs {
                     ComputedVecsFromDateIndex::forced_import(
                         path,
                         &suffix("supply_in_profit_relative_to_circulating_supply"),
-                        true,
+                        Source::Compute,
                         version + VERSION + Version::ONE,
                         format,
-                        StorableVecGeneatorOptions::default().add_last(),
+                       computation,
+                        EagerVecBuilderOptions::default().add_last(),
                     )
                     .unwrap()
                 }),
@@ -916,27 +962,30 @@ impl Vecs {
             indexes_to_coinblocks_destroyed: ComputedVecsFromHeight::forced_import(
                 path,
                 &suffix("coinblocks_destroyed"),
-                true,
+                Source::Compute,
                 version + VERSION + Version::TWO,
                 format,
-                StorableVecGeneatorOptions::default().add_sum().add_cumulative(),
+                computation,
+                EagerVecBuilderOptions::default().add_sum().add_cumulative(),
             )?,
             indexes_to_coindays_destroyed: ComputedVecsFromHeight::forced_import(
                 path,
                 &suffix("coindays_destroyed"),
-                true,
+                Source::Compute,
                 version + VERSION + Version::TWO,
                 format,
-                StorableVecGeneatorOptions::default().add_sum().add_cumulative(),
+               computation,
+                EagerVecBuilderOptions::default().add_sum().add_cumulative(),
             )?,
             indexes_to_net_realized_profit_and_loss_cumulative_30d_change: compute_dollars.then(|| {
                 ComputedVecsFromDateIndex::forced_import(
                     path,
                     &suffix("net_realized_profit_and_loss_cumulative_30d_change"),
-                    true,
+                    Source::Compute,
                     version + VERSION + Version::new(3),
                     format,
-                    StorableVecGeneatorOptions::default().add_last()
+                   computation,
+                    EagerVecBuilderOptions::default().add_last()
                 )
                 .unwrap()
             }),
@@ -944,10 +993,11 @@ impl Vecs {
                 ComputedVecsFromDateIndex::forced_import(
                     path,
                     &suffix("net_realized_profit_and_loss_cumulative_30d_change_relative_to_realized_cap"),
-                    true,
+                    Source::Compute,
                     version + VERSION + Version::new(3),
                     format,
-                    StorableVecGeneatorOptions::default().add_last()
+                   computation,
+                    EagerVecBuilderOptions::default().add_last()
                 )
                 .unwrap()
             }),
@@ -955,10 +1005,11 @@ impl Vecs {
                 ComputedVecsFromDateIndex::forced_import(
                     path,
                     &suffix("net_realized_profit_and_loss_cumulative_30d_change_relative_to_market_cap"),
-                    true,
+                    Source::Compute,
                     version + VERSION + Version::new(3),
                     format,
-                    StorableVecGeneatorOptions::default().add_last()
+                   computation,
+                    EagerVecBuilderOptions::default().add_last()
                 )
                 .unwrap()
             }),

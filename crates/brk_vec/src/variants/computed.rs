@@ -92,7 +92,7 @@ where
     S3T: StoredType,
 {
     pub fn forced_import_or_init_from_1(
-        mode: Computation,
+        computation: Computation,
         path: &Path,
         name: &str,
         version: Version,
@@ -100,7 +100,7 @@ where
         source: BoxedAnyIterableVec<S1I, S1T>,
         compute: ComputeFrom1<I, T, S1I, S1T>,
     ) -> Result<Self> {
-        Ok(match mode {
+        Ok(match computation {
             Computation::Eager => Self::Eager {
                 vec: EagerVec::forced_import(path, name, version, format)?,
                 deps: Dependencies::From1(source, compute),
@@ -114,7 +114,7 @@ where
 
     #[allow(clippy::too_many_arguments)]
     pub fn forced_import_or_init_from_2(
-        mode: Computation,
+        computation: Computation,
         path: &Path,
         name: &str,
         version: Version,
@@ -123,7 +123,7 @@ where
         source2: BoxedAnyIterableVec<S2I, S2T>,
         compute: ComputeFrom2<I, T, S1I, S1T, S2I, S2T>,
     ) -> Result<Self> {
-        Ok(match mode {
+        Ok(match computation {
             Computation::Eager => Self::Eager {
                 vec: EagerVec::forced_import(path, name, version, format)?,
                 deps: Dependencies::From2((source1, source2), compute),
@@ -137,7 +137,7 @@ where
 
     #[allow(clippy::too_many_arguments)]
     pub fn forced_import_or_init_from_3(
-        mode: Computation,
+        computation: Computation,
         path: &Path,
         name: &str,
         version: Version,
@@ -147,7 +147,7 @@ where
         source3: BoxedAnyIterableVec<S3I, S3T>,
         compute: ComputeFrom3<I, T, S1I, S1T, S2I, S2T, S3I, S3T>,
     ) -> Result<Self> {
-        Ok(match mode {
+        Ok(match computation {
             Computation::Eager => Self::Eager {
                 vec: EagerVec::forced_import(path, name, version, format)?,
                 deps: Dependencies::From3((source1, source2, source3), compute),

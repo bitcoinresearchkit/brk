@@ -37,6 +37,12 @@ impl From<usize> for QuarterIndex {
     }
 }
 
+impl From<QuarterIndex> for u16 {
+    fn from(value: QuarterIndex) -> Self {
+        value.0
+    }
+}
+
 impl From<QuarterIndex> for usize {
     fn from(value: QuarterIndex) -> Self {
         value.0 as usize

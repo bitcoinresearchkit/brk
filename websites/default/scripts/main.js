@@ -6,7 +6,7 @@
  * @import * as _ from "../packages/ufuzzy/v1.0.18/types"
  * @import { SerializedChartableIndex } from "./chart";
  * @import { Signal, Signals, Accessor } from "../packages/solid-signals/wrapper";
- * @import { DateIndex, DecadeIndex, DifficultyEpoch, Index, HalvingEpoch, Height, MonthIndex, P2PK33AddressIndex, P2PK65AddressIndex, P2PKHAddressIndex, P2SHAddressIndex, P2MSOutputIndex, P2AAddressIndex, P2TRAddressIndex, P2WPKHAddressIndex, P2WSHAddressIndex, TxIndex, InputIndex, OutputIndex, VecId, WeekIndex, YearIndex, VecIdToIndexes, QuarterIndex, EmptyOutputIndex, OpReturnIndex, UnknownOutputIndex } from "./vecid-to-indexes"
+ * @import { DateIndex, DecadeIndex, DifficultyEpoch, Index, HalvingEpoch, Height, MonthIndex, P2PK33AddressIndex, P2PK65AddressIndex, P2PKHAddressIndex, P2SHAddressIndex, P2MSOutputIndex, P2AAddressIndex, P2TRAddressIndex, P2WPKHAddressIndex, P2WSHAddressIndex, TxIndex, InputIndex, OutputIndex, VecId, WeekIndex, SemesterIndex, YearIndex, VecIdToIndexes, QuarterIndex, EmptyOutputIndex, OpReturnIndex, UnknownOutputIndex } from "./vecid-to-indexes"
  */
 
 /**
@@ -1164,13 +1164,15 @@ function createUtils() {
             return "p2wshaddressindex";
           case /** @satisfies {QuarterIndex} */ (19):
             return "quarterindex";
-          case /** @satisfies {TxIndex} */ (20):
+          case /** @satisfies {SemesterIndex} */ (20):
+            return "semesterindex";
+          case /** @satisfies {TxIndex} */ (21):
             return "txindex";
-          case /** @satisfies {UnknownOutputIndex} */ (21):
+          case /** @satisfies {UnknownOutputIndex} */ (22):
             return "unknownoutputindex";
-          case /** @satisfies {WeekIndex} */ (22):
+          case /** @satisfies {WeekIndex} */ (23):
             return "weekindex";
-          case /** @satisfies {YearIndex} */ (23):
+          case /** @satisfies {YearIndex} */ (24):
             return "yearindex";
         }
       },
@@ -1196,9 +1198,11 @@ function createUtils() {
             return "month";
           case /** @satisfies {QuarterIndex} */ (19):
             return "quarter";
-          case /** @satisfies {WeekIndex} */ (22):
+          case /** @satisfies {SemesterIndex} */ (20):
+            return "semester";
+          case /** @satisfies {WeekIndex} */ (23):
             return "week";
-          case /** @satisfies {YearIndex} */ (23):
+          case /** @satisfies {YearIndex} */ (24):
             return "year";
           default:
             return null;
@@ -1215,15 +1219,17 @@ function createUtils() {
           case "date":
             return /** @satisfies {DateIndex} */ (0);
           case "week":
-            return /** @satisfies {WeekIndex} */ (22);
+            return /** @satisfies {WeekIndex} */ (23);
           case "d.epoch":
             return /** @satisfies {DifficultyEpoch} */ (2);
           case "month":
             return /** @satisfies {MonthIndex} */ (7);
           case "quarter":
             return /** @satisfies {QuarterIndex} */ (19);
+          case "semester":
+            return /** @satisfies {SemesterIndex} */ (20);
           case "year":
-            return /** @satisfies {YearIndex} */ (23);
+            return /** @satisfies {YearIndex} */ (24);
           case "decade":
             return /** @satisfies {DecadeIndex} */ (1);
           default:

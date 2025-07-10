@@ -17,14 +17,19 @@
     - add address counts relative to all datasets
     - make decade, quarter, year datasets `computed` instead of `eager`
     - add 6 months (semester) interval datasets to builder
+    - some datasets in `indexes` can probably be removed
     - add revived/sent supply datasets
     - add `in-sats` version of all price datasets (average and co)
     - add `p2pk` group (sum of `p2pk33` and `p2pk65`)
+    - add chopiness datasets
+    - add utxo count, address count, supply data for  by reused addresses in groups by address type
     - add more date ranges (3-6 months and more)
     - add puell multiple dataset
     - add pi cycle dataset
-    - add ema of price
+    - add emas of price
     - add 7d and 30d ema to sell side risk ratio and sopr
+    - don't compute everything for all cohorts as some datasets combinations are irrelevant
+      - addresses/utxos by amount don't need mvrvz for example
     - add all possible charts from:
       - https://mainnet.observer
       - https://glassnode.com
@@ -73,6 +78,7 @@
       - remove `sum` series when it's a duplicate of the `base` (in subsidy for example)
       - selected unit sometimes changes when going back end forth
       - add support for custom charts
+      - separate z-score charts from "realized price" (with their own prices), have 4y, 2y and 1y
       - price scale format depends on unit, hide digits for sats for example (if/when possible)
     - table
       - pagination

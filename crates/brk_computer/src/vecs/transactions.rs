@@ -11,11 +11,13 @@ use brk_vec::{
     ComputedVecFrom1, ComputedVecFrom2, ComputedVecFrom3, Format, StoredIndex, VecIterator,
 };
 
+use crate::vecs::grouped::Source;
+
 use super::{
     Indexes, fetched,
     grouped::{
         ComputedValueVecsFromHeight, ComputedValueVecsFromTxindex, ComputedVecsFromHeight,
-        ComputedVecsFromTxindex, StorableVecGeneatorOptions,
+        ComputedVecsFromTxindex, EagerVecBuilderOptions,
     },
     indexes,
 };
@@ -237,7 +239,8 @@ impl Vecs {
         //         true,
         //         version + VERSION + Version::ZERO,
         //         format,
-        //         StorableVecGeneatorOptions::default()
+        // computation,
+        // StorableVecGeneatorOptions::default()
         //             .add_average()
         //             .add_sum()
         //             .add_cumulative(),
@@ -286,7 +289,8 @@ impl Vecs {
         //         true,
         //         version + VERSION + Version::ZERO,
         //         format,
-        //         StorableVecGeneatorOptions::default()
+        // computation,
+        // StorableVecGeneatorOptions::default()
         //             .add_average()
         //             .add_sum()
         //             .add_cumulative(),
@@ -339,10 +343,11 @@ impl Vecs {
             indexes_to_tx_count: ComputedVecsFromHeight::forced_import(
                 path,
                 "tx_count",
-                true,
+                Source::Compute,
                 version + VERSION + Version::ZERO,
                 format,
-                StorableVecGeneatorOptions::default()
+                computation,
+                EagerVecBuilderOptions::default()
                     .add_average()
                     .add_minmax()
                     .add_percentiles()
@@ -352,10 +357,11 @@ impl Vecs {
             indexes_to_input_count: ComputedVecsFromTxindex::forced_import(
                 path,
                 "input_count",
-                false,
+                Source::None,
                 version + VERSION + Version::ZERO,
                 format,
-                StorableVecGeneatorOptions::default()
+                computation,
+                EagerVecBuilderOptions::default()
                     .add_average()
                     .add_minmax()
                     .add_percentiles()
@@ -365,10 +371,11 @@ impl Vecs {
             indexes_to_output_count: ComputedVecsFromTxindex::forced_import(
                 path,
                 "output_count",
-                false,
+                Source::None,
                 version + VERSION + Version::ZERO,
                 format,
-                StorableVecGeneatorOptions::default()
+                computation,
+                EagerVecBuilderOptions::default()
                     .add_average()
                     .add_minmax()
                     .add_percentiles()
@@ -378,43 +385,40 @@ impl Vecs {
             indexes_to_tx_v1: ComputedVecsFromHeight::forced_import(
                 path,
                 "tx_v1",
-                true,
+                Source::Compute,
                 version + VERSION + Version::ZERO,
                 format,
-                StorableVecGeneatorOptions::default()
-                    .add_sum()
-                    .add_cumulative(),
+                computation,
+                EagerVecBuilderOptions::default().add_sum().add_cumulative(),
             )?,
             indexes_to_tx_v2: ComputedVecsFromHeight::forced_import(
                 path,
                 "tx_v2",
-                true,
+                Source::Compute,
                 version + VERSION + Version::ZERO,
                 format,
-                StorableVecGeneatorOptions::default()
-                    .add_sum()
-                    .add_cumulative(),
+                computation,
+                EagerVecBuilderOptions::default().add_sum().add_cumulative(),
             )?,
             indexes_to_tx_v3: ComputedVecsFromHeight::forced_import(
                 path,
                 "tx_v3",
-                true,
+                Source::Compute,
                 version + VERSION + Version::ZERO,
                 format,
-                StorableVecGeneatorOptions::default()
-                    .add_sum()
-                    .add_cumulative(),
+                computation,
+                EagerVecBuilderOptions::default().add_sum().add_cumulative(),
             )?,
             indexes_to_fee: ComputedValueVecsFromTxindex::forced_import(
                 path,
                 "fee",
                 indexes,
-                Some(txindex_to_fee.boxed_clone()),
+                Source::Vec(txindex_to_fee.boxed_clone()),
                 version + VERSION + Version::ZERO,
                 computation,
                 format,
                 fetched,
-                StorableVecGeneatorOptions::default()
+                EagerVecBuilderOptions::default()
                     .add_sum()
                     .add_cumulative()
                     .add_percentiles()
@@ -424,10 +428,11 @@ impl Vecs {
             indexes_to_feerate: ComputedVecsFromTxindex::forced_import(
                 path,
                 "feerate",
-                false,
+                Source::None,
                 version + VERSION + Version::ZERO,
                 format,
-                StorableVecGeneatorOptions::default()
+                computation,
+                EagerVecBuilderOptions::default()
                     .add_percentiles()
                     .add_minmax()
                     .add_average(),
@@ -435,10 +440,11 @@ impl Vecs {
             indexes_to_tx_vsize: ComputedVecsFromTxindex::forced_import(
                 path,
                 "tx_vsize",
-                false,
+                Source::None,
                 version + VERSION + Version::ZERO,
                 format,
-                StorableVecGeneatorOptions::default()
+                computation,
+                EagerVecBuilderOptions::default()
                     .add_percentiles()
                     .add_minmax()
                     .add_average(),
@@ -446,10 +452,11 @@ impl Vecs {
             indexes_to_tx_weight: ComputedVecsFromTxindex::forced_import(
                 path,
                 "tx_weight",
-                false,
+                Source::None,
                 version + VERSION + Version::ZERO,
                 format,
-                StorableVecGeneatorOptions::default()
+                computation,
+                EagerVecBuilderOptions::default()
                     .add_percentiles()
                     .add_minmax()
                     .add_average(),
@@ -457,10 +464,11 @@ impl Vecs {
             indexes_to_subsidy: ComputedValueVecsFromHeight::forced_import(
                 path,
                 "subsidy",
-                true,
+                Source::Compute,
                 version + VERSION + Version::ZERO,
                 format,
-                StorableVecGeneatorOptions::default()
+                computation,
+                EagerVecBuilderOptions::default()
                     .add_percentiles()
                     .add_sum()
                     .add_cumulative()
@@ -471,10 +479,11 @@ impl Vecs {
             indexes_to_coinbase: ComputedValueVecsFromHeight::forced_import(
                 path,
                 "coinbase",
-                true,
+                Source::Compute,
                 version + VERSION + Version::ZERO,
                 format,
-                StorableVecGeneatorOptions::default()
+                computation,
+                EagerVecBuilderOptions::default()
                     .add_sum()
                     .add_cumulative()
                     .add_percentiles()
@@ -485,21 +494,21 @@ impl Vecs {
             indexes_to_unclaimed_rewards: ComputedValueVecsFromHeight::forced_import(
                 path,
                 "unclaimed_rewards",
-                true,
+                Source::Compute,
                 version + VERSION + Version::ZERO,
                 format,
-                StorableVecGeneatorOptions::default()
-                    .add_sum()
-                    .add_cumulative(),
+                computation,
+                EagerVecBuilderOptions::default().add_sum().add_cumulative(),
                 compute_dollars,
             )?,
             indexes_to_p2a_count: ComputedVecsFromHeight::forced_import(
                 path,
                 "p2a_count",
-                true,
+                Source::Compute,
                 version + VERSION + Version::ZERO,
                 format,
-                StorableVecGeneatorOptions::default()
+                computation,
+                EagerVecBuilderOptions::default()
                     .add_average()
                     .add_minmax()
                     .add_percentiles()
@@ -509,10 +518,11 @@ impl Vecs {
             indexes_to_p2ms_count: ComputedVecsFromHeight::forced_import(
                 path,
                 "p2ms_count",
-                true,
+                Source::Compute,
                 version + VERSION + Version::ZERO,
                 format,
-                StorableVecGeneatorOptions::default()
+                computation,
+                EagerVecBuilderOptions::default()
                     .add_average()
                     .add_minmax()
                     .add_percentiles()
@@ -522,10 +532,11 @@ impl Vecs {
             indexes_to_p2pk33_count: ComputedVecsFromHeight::forced_import(
                 path,
                 "p2pk33_count",
-                true,
+                Source::Compute,
                 version + VERSION + Version::ZERO,
                 format,
-                StorableVecGeneatorOptions::default()
+                computation,
+                EagerVecBuilderOptions::default()
                     .add_average()
                     .add_minmax()
                     .add_percentiles()
@@ -535,10 +546,11 @@ impl Vecs {
             indexes_to_p2pk65_count: ComputedVecsFromHeight::forced_import(
                 path,
                 "p2pk65_count",
-                true,
+                Source::Compute,
                 version + VERSION + Version::ZERO,
                 format,
-                StorableVecGeneatorOptions::default()
+                computation,
+                EagerVecBuilderOptions::default()
                     .add_average()
                     .add_minmax()
                     .add_percentiles()
@@ -548,10 +560,11 @@ impl Vecs {
             indexes_to_p2pkh_count: ComputedVecsFromHeight::forced_import(
                 path,
                 "p2pkh_count",
-                true,
+                Source::Compute,
                 version + VERSION + Version::ZERO,
                 format,
-                StorableVecGeneatorOptions::default()
+                computation,
+                EagerVecBuilderOptions::default()
                     .add_average()
                     .add_minmax()
                     .add_percentiles()
@@ -561,10 +574,11 @@ impl Vecs {
             indexes_to_p2sh_count: ComputedVecsFromHeight::forced_import(
                 path,
                 "p2sh_count",
-                true,
+                Source::Compute,
                 version + VERSION + Version::ZERO,
                 format,
-                StorableVecGeneatorOptions::default()
+                computation,
+                EagerVecBuilderOptions::default()
                     .add_average()
                     .add_minmax()
                     .add_percentiles()
@@ -574,10 +588,11 @@ impl Vecs {
             indexes_to_p2tr_count: ComputedVecsFromHeight::forced_import(
                 path,
                 "p2tr_count",
-                true,
+                Source::Compute,
                 version + VERSION + Version::ZERO,
                 format,
-                StorableVecGeneatorOptions::default()
+                computation,
+                EagerVecBuilderOptions::default()
                     .add_average()
                     .add_minmax()
                     .add_percentiles()
@@ -587,10 +602,11 @@ impl Vecs {
             indexes_to_p2wpkh_count: ComputedVecsFromHeight::forced_import(
                 path,
                 "p2wpkh_count",
-                true,
+                Source::Compute,
                 version + VERSION + Version::ZERO,
                 format,
-                StorableVecGeneatorOptions::default()
+                computation,
+                EagerVecBuilderOptions::default()
                     .add_average()
                     .add_minmax()
                     .add_percentiles()
@@ -600,10 +616,11 @@ impl Vecs {
             indexes_to_p2wsh_count: ComputedVecsFromHeight::forced_import(
                 path,
                 "p2wsh_count",
-                true,
+                Source::Compute,
                 version + VERSION + Version::ZERO,
                 format,
-                StorableVecGeneatorOptions::default()
+                computation,
+                EagerVecBuilderOptions::default()
                     .add_average()
                     .add_minmax()
                     .add_percentiles()
@@ -613,10 +630,11 @@ impl Vecs {
             indexes_to_opreturn_count: ComputedVecsFromHeight::forced_import(
                 path,
                 "opreturn_count",
-                true,
+                Source::Compute,
                 version + VERSION + Version::ZERO,
                 format,
-                StorableVecGeneatorOptions::default()
+                computation,
+                EagerVecBuilderOptions::default()
                     .add_average()
                     .add_minmax()
                     .add_percentiles()
@@ -626,10 +644,11 @@ impl Vecs {
             indexes_to_unknownoutput_count: ComputedVecsFromHeight::forced_import(
                 path,
                 "unknownoutput_count",
-                true,
+                Source::Compute,
                 version + VERSION + Version::ZERO,
                 format,
-                StorableVecGeneatorOptions::default()
+                computation,
+                EagerVecBuilderOptions::default()
                     .add_average()
                     .add_minmax()
                     .add_percentiles()
@@ -639,10 +658,11 @@ impl Vecs {
             indexes_to_emptyoutput_count: ComputedVecsFromHeight::forced_import(
                 path,
                 "emptyoutput_count",
-                true,
+                Source::Compute,
                 version + VERSION + Version::ZERO,
                 format,
-                StorableVecGeneatorOptions::default()
+                computation,
+                EagerVecBuilderOptions::default()
                     .add_average()
                     .add_minmax()
                     .add_percentiles()
@@ -652,10 +672,11 @@ impl Vecs {
             indexes_to_exact_utxo_count: ComputedVecsFromHeight::forced_import(
                 path,
                 "exact_utxo_count",
-                true,
+                Source::Compute,
                 version + VERSION + Version::ZERO,
                 format,
-                StorableVecGeneatorOptions::default().add_last(),
+                computation,
+                EagerVecBuilderOptions::default().add_last(),
             )?,
             txindex_to_is_coinbase,
             inputindex_to_value,
