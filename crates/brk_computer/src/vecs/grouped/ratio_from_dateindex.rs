@@ -68,6 +68,7 @@ impl ComputedRatioVecsFromDateIndex {
         version: Version,
         format: Format,
         computation: Computation,
+        indexes: &indexes::Vecs,
     ) -> color_eyre::Result<Self> {
         let options = VecBuilderOptions::default().add_last();
 
@@ -80,6 +81,7 @@ impl ComputedRatioVecsFromDateIndex {
                     version + VERSION,
                     format,
                     computation,
+                    indexes,
                     options,
                 )
                 .unwrap()
@@ -91,6 +93,7 @@ impl ComputedRatioVecsFromDateIndex {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 options,
             )?,
             ratio_sma: ComputedVecsFromDateIndex::forced_import(
@@ -100,6 +103,7 @@ impl ComputedRatioVecsFromDateIndex {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 options,
             )?,
             ratio_1w_sma: ComputedVecsFromDateIndex::forced_import(
@@ -109,6 +113,7 @@ impl ComputedRatioVecsFromDateIndex {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 options,
             )?,
             ratio_1m_sma: ComputedVecsFromDateIndex::forced_import(
@@ -118,6 +123,7 @@ impl ComputedRatioVecsFromDateIndex {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 options,
             )?,
             ratio_1y_sma: ComputedVecsFromDateIndex::forced_import(
@@ -127,6 +133,7 @@ impl ComputedRatioVecsFromDateIndex {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 options,
             )?,
             ratio_4y_sma: ComputedVecsFromDateIndex::forced_import(
@@ -136,6 +143,7 @@ impl ComputedRatioVecsFromDateIndex {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 options,
             )?,
             ratio_1y_sma_momentum_oscillator: ComputedVecsFromDateIndex::forced_import(
@@ -145,6 +153,7 @@ impl ComputedRatioVecsFromDateIndex {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 options,
             )?,
             ratio_sd: ComputedVecsFromDateIndex::forced_import(
@@ -154,6 +163,7 @@ impl ComputedRatioVecsFromDateIndex {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 options,
             )?,
             ratio_4y_sd: ComputedVecsFromDateIndex::forced_import(
@@ -163,6 +173,7 @@ impl ComputedRatioVecsFromDateIndex {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 options,
             )?,
             ratio_1y_sd: ComputedVecsFromDateIndex::forced_import(
@@ -172,6 +183,7 @@ impl ComputedRatioVecsFromDateIndex {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 options,
             )?,
             ratio_p99_9: ComputedVecsFromDateIndex::forced_import(
@@ -181,6 +193,7 @@ impl ComputedRatioVecsFromDateIndex {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 options,
             )?,
             ratio_p99_5: ComputedVecsFromDateIndex::forced_import(
@@ -190,6 +203,7 @@ impl ComputedRatioVecsFromDateIndex {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 options,
             )?,
             ratio_p99: ComputedVecsFromDateIndex::forced_import(
@@ -199,6 +213,7 @@ impl ComputedRatioVecsFromDateIndex {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 options,
             )?,
             ratio_p1: ComputedVecsFromDateIndex::forced_import(
@@ -208,6 +223,7 @@ impl ComputedRatioVecsFromDateIndex {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 options,
             )?,
             ratio_p0_5: ComputedVecsFromDateIndex::forced_import(
@@ -217,6 +233,7 @@ impl ComputedRatioVecsFromDateIndex {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 options,
             )?,
             ratio_p0_1: ComputedVecsFromDateIndex::forced_import(
@@ -226,6 +243,7 @@ impl ComputedRatioVecsFromDateIndex {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 options,
             )?,
             ratio_p1sd: ComputedVecsFromDateIndex::forced_import(
@@ -235,6 +253,7 @@ impl ComputedRatioVecsFromDateIndex {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 options,
             )?,
             ratio_p2sd: ComputedVecsFromDateIndex::forced_import(
@@ -244,6 +263,7 @@ impl ComputedRatioVecsFromDateIndex {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 options,
             )?,
             ratio_p3sd: ComputedVecsFromDateIndex::forced_import(
@@ -253,6 +273,7 @@ impl ComputedRatioVecsFromDateIndex {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 options,
             )?,
             ratio_m1sd: ComputedVecsFromDateIndex::forced_import(
@@ -262,6 +283,7 @@ impl ComputedRatioVecsFromDateIndex {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 options,
             )?,
             ratio_m2sd: ComputedVecsFromDateIndex::forced_import(
@@ -271,6 +293,7 @@ impl ComputedRatioVecsFromDateIndex {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 options,
             )?,
             ratio_m3sd: ComputedVecsFromDateIndex::forced_import(
@@ -280,6 +303,7 @@ impl ComputedRatioVecsFromDateIndex {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 options,
             )?,
             ratio_p99_9_as_price: ComputedVecsFromDateIndex::forced_import(
@@ -289,6 +313,7 @@ impl ComputedRatioVecsFromDateIndex {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 options,
             )?,
             ratio_p99_5_as_price: ComputedVecsFromDateIndex::forced_import(
@@ -298,6 +323,7 @@ impl ComputedRatioVecsFromDateIndex {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 options,
             )?,
             ratio_p99_as_price: ComputedVecsFromDateIndex::forced_import(
@@ -307,6 +333,7 @@ impl ComputedRatioVecsFromDateIndex {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 options,
             )?,
             ratio_p1_as_price: ComputedVecsFromDateIndex::forced_import(
@@ -316,6 +343,7 @@ impl ComputedRatioVecsFromDateIndex {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 options,
             )?,
             ratio_p0_5_as_price: ComputedVecsFromDateIndex::forced_import(
@@ -325,6 +353,7 @@ impl ComputedRatioVecsFromDateIndex {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 options,
             )?,
             ratio_p0_1_as_price: ComputedVecsFromDateIndex::forced_import(
@@ -334,6 +363,7 @@ impl ComputedRatioVecsFromDateIndex {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 options,
             )?,
             ratio_p1sd_as_price: ComputedVecsFromDateIndex::forced_import(
@@ -343,6 +373,7 @@ impl ComputedRatioVecsFromDateIndex {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 options,
             )?,
             ratio_p2sd_as_price: ComputedVecsFromDateIndex::forced_import(
@@ -352,6 +383,7 @@ impl ComputedRatioVecsFromDateIndex {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 options,
             )?,
             ratio_p3sd_as_price: ComputedVecsFromDateIndex::forced_import(
@@ -361,6 +393,7 @@ impl ComputedRatioVecsFromDateIndex {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 options,
             )?,
             ratio_m1sd_as_price: ComputedVecsFromDateIndex::forced_import(
@@ -370,6 +403,7 @@ impl ComputedRatioVecsFromDateIndex {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 options,
             )?,
             ratio_m2sd_as_price: ComputedVecsFromDateIndex::forced_import(
@@ -379,6 +413,7 @@ impl ComputedRatioVecsFromDateIndex {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 options,
             )?,
             ratio_m3sd_as_price: ComputedVecsFromDateIndex::forced_import(
@@ -388,6 +423,7 @@ impl ComputedRatioVecsFromDateIndex {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 options,
             )?,
             ratio_zscore: ComputedVecsFromDateIndex::forced_import(
@@ -397,6 +433,7 @@ impl ComputedRatioVecsFromDateIndex {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 options,
             )?,
             ratio_4y_zscore: ComputedVecsFromDateIndex::forced_import(
@@ -406,6 +443,7 @@ impl ComputedRatioVecsFromDateIndex {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 options,
             )?,
             ratio_1y_zscore: ComputedVecsFromDateIndex::forced_import(
@@ -415,6 +453,7 @@ impl ComputedRatioVecsFromDateIndex {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 options,
             )?,
         })

@@ -136,6 +136,7 @@ impl Vecs {
         computation: Computation,
         format: Format,
         version: Version,
+        indexes: &indexes::Vecs,
         fetched: Option<&fetched::Vecs>,
         compute_relative_to_all: bool,
     ) -> color_eyre::Result<Self> {
@@ -215,6 +216,7 @@ impl Vecs {
                     computation,
                     VecBuilderOptions::default().add_last(),
                     compute_dollars,
+                    indexes,
                 )
                 .unwrap()
             }),
@@ -238,6 +240,7 @@ impl Vecs {
                     computation,
                     VecBuilderOptions::default().add_last(),
                     compute_dollars,
+                    indexes,
                 )
                 .unwrap()
             }),
@@ -261,6 +264,7 @@ impl Vecs {
                     computation,
                     VecBuilderOptions::default().add_last(),
                     compute_dollars,
+                    indexes,
                 )
                 .unwrap()
             }),
@@ -282,6 +286,7 @@ impl Vecs {
                     version + VERSION + Version::ZERO,
                     format,
                     computation,
+                    indexes,
                     VecBuilderOptions::default().add_last(),
                 )
                 .unwrap()
@@ -322,6 +327,7 @@ impl Vecs {
                     version + VERSION + Version::ZERO,
                     format,
                     computation,
+                    indexes,
                     VecBuilderOptions::default().add_last(),
                 )
                 .unwrap()
@@ -344,6 +350,7 @@ impl Vecs {
                     version + VERSION + Version::ZERO,
                     format,
                     computation,
+                    indexes,
                     VecBuilderOptions::default().add_last(),
                 )
                 .unwrap()
@@ -356,6 +363,7 @@ impl Vecs {
                     version + VERSION + Version::ZERO,
                     format,
                     computation,
+                    indexes,
                     VecBuilderOptions::default().add_last(),
                 )
                 .unwrap()
@@ -368,6 +376,7 @@ impl Vecs {
                     version + VERSION + Version::ZERO,
                     format,
                     computation,
+                    indexes,
                     VecBuilderOptions::default().add_last(),
                 )
                 .unwrap()
@@ -395,6 +404,7 @@ impl Vecs {
                 computation,
                 VecBuilderOptions::default().add_last(),
                 compute_dollars,
+                indexes,
             )?,
             height_to_utxo_count: EagerVec::forced_import(
                 path,
@@ -409,6 +419,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
             indexes_to_realized_price: compute_dollars.then(|| {
@@ -419,6 +430,7 @@ impl Vecs {
                     version + VERSION + Version::ZERO,
                     format,
                    computation,
+                   indexes,
                     VecBuilderOptions::default().add_last(),
                 )
                 .unwrap()
@@ -431,6 +443,7 @@ impl Vecs {
                     version + VERSION + Version::ZERO,
                     format,
                     computation,
+                    indexes,
                 )
                 .unwrap()
             }),
@@ -451,6 +464,7 @@ impl Vecs {
                     version + VERSION + Version::ZERO,
                     format,
                    computation,
+                   indexes,
                     VecBuilderOptions::default()
                         .add_sum()
                         .add_cumulative(),
@@ -474,6 +488,7 @@ impl Vecs {
                     version + VERSION + Version::ZERO,
                     format,
                    computation,
+                   indexes,
                     VecBuilderOptions::default()
                         .add_sum()
                         .add_cumulative(),
@@ -488,6 +503,7 @@ impl Vecs {
                     version + VERSION + Version::ONE,
                     format,
                    computation,
+                   indexes,
                     VecBuilderOptions::default().add_sum().add_cumulative(),
                 )
                 .unwrap()
@@ -509,6 +525,7 @@ impl Vecs {
                     version + VERSION + Version::ZERO,
                     format,
                    computation,
+                   indexes,
                     VecBuilderOptions::default().add_sum(),
                 )
                 .unwrap()
@@ -521,6 +538,7 @@ impl Vecs {
                     version + VERSION + Version::ZERO,
                     format,
                    computation,
+                   indexes,
                     VecBuilderOptions::default().add_sum(),
                 )
                 .unwrap()
@@ -542,6 +560,7 @@ impl Vecs {
                     version + VERSION + Version::ZERO,
                     format,
                    computation,
+                   indexes,
                     VecBuilderOptions::default().add_sum(),
                 )
                 .unwrap()
@@ -563,6 +582,7 @@ impl Vecs {
                     version + VERSION + Version::ZERO,
                     format,
                    computation,
+                   indexes,
                     VecBuilderOptions::default().add_sum(),
                 )
                 .unwrap()
@@ -584,6 +604,7 @@ impl Vecs {
                     version + VERSION + Version::ZERO,
                     format,
                    computation,
+                   indexes,
                     VecBuilderOptions::default().add_sum(),
                 )
                 .unwrap()
@@ -596,6 +617,7 @@ impl Vecs {
                     version + VERSION + Version::ZERO,
                     format,
                    computation,
+                   indexes,
                     VecBuilderOptions::default().add_last(),
                 )
                 .unwrap()
@@ -608,6 +630,7 @@ impl Vecs {
                     version + VERSION + Version::ZERO,
                     format,
                    computation,
+                   indexes,
                     VecBuilderOptions::default()
                         .add_sum()
                         .add_cumulative(),
@@ -658,6 +681,7 @@ impl Vecs {
                computation,
                 VecBuilderOptions::default().add_last(),
                 compute_dollars,
+               indexes,
             )?,
             height_to_negative_unrealized_loss: compute_dollars.then(|| {
                 EagerVec::forced_import(
@@ -676,6 +700,7 @@ impl Vecs {
                     version + VERSION + Version::ZERO,
                     format,
                    computation,
+                   indexes,
                     VecBuilderOptions::default().add_last(),
                 )
                 .unwrap()
@@ -697,6 +722,7 @@ impl Vecs {
                     version + VERSION + Version::ZERO,
                     format,
                    computation,
+                   indexes,
                     VecBuilderOptions::default().add_last(),
                 )
                 .unwrap()
@@ -721,6 +747,7 @@ impl Vecs {
                         version + VERSION + Version::ONE,
                         format,
                        computation,
+                       indexes,
                         VecBuilderOptions::default().add_last(),
                     )
                     .unwrap()
@@ -734,6 +761,7 @@ impl Vecs {
                     version + VERSION + Version::ZERO,
                     format,
                    computation,
+                   indexes,
                     VecBuilderOptions::default().add_sum(),
                 )
                 .unwrap()
@@ -746,6 +774,7 @@ impl Vecs {
                     version + VERSION + Version::ZERO,
                     format,
                    computation,
+                   indexes,
                     VecBuilderOptions::default().add_sum(),
                 )
                 .unwrap()
@@ -759,6 +788,7 @@ impl Vecs {
                         version + VERSION + Version::ONE,
                         format,
                        computation,
+                       indexes,
                         VecBuilderOptions::default().add_sum(),
                     )
                     .unwrap()
@@ -832,6 +862,7 @@ impl Vecs {
                     version + VERSION + Version::ONE,
                     format,
                     computation,
+                    indexes,
                     VecBuilderOptions::default().add_last(),
                 )
                 .unwrap()
@@ -844,6 +875,7 @@ impl Vecs {
                     version + VERSION + Version::ONE,
                     format,
                     computation,
+                    indexes,
                     VecBuilderOptions::default().add_last(),
                 )
                 .unwrap()
@@ -856,6 +888,7 @@ impl Vecs {
                     version + VERSION + Version::ONE,
                     format,
                     computation,
+                    indexes,
                     VecBuilderOptions::default().add_last(),
                 )
                 .unwrap()
@@ -868,6 +901,7 @@ impl Vecs {
                     version + VERSION + Version::ONE,
                     format,
                     computation,
+                    indexes,
                     VecBuilderOptions::default().add_last(),
                 )
                 .unwrap()
@@ -915,6 +949,7 @@ impl Vecs {
                         version + VERSION + Version::ONE,
                         format,
                        computation,
+                       indexes,
                         VecBuilderOptions::default().add_last(),
                     )
                     .unwrap()
@@ -929,6 +964,7 @@ impl Vecs {
                         version + VERSION + Version::ONE,
                         format,
                        computation,
+                       indexes,
                         VecBuilderOptions::default().add_last(),
                     )
                     .unwrap()
@@ -943,6 +979,7 @@ impl Vecs {
                         version + VERSION + Version::ONE,
                         format,
                        computation,
+                       indexes,
                         VecBuilderOptions::default().add_last(),
                     )
                     .unwrap()
@@ -966,6 +1003,7 @@ impl Vecs {
                 version + VERSION + Version::TWO,
                 format,
                 computation,
+                indexes,
                 VecBuilderOptions::default().add_sum().add_cumulative(),
             )?,
             indexes_to_coindays_destroyed: ComputedVecsFromHeight::forced_import(
@@ -975,6 +1013,7 @@ impl Vecs {
                 version + VERSION + Version::TWO,
                 format,
                computation,
+               indexes,
                 VecBuilderOptions::default().add_sum().add_cumulative(),
             )?,
             indexes_to_net_realized_profit_and_loss_cumulative_30d_change: compute_dollars.then(|| {
@@ -985,6 +1024,7 @@ impl Vecs {
                     version + VERSION + Version::new(3),
                     format,
                    computation,
+                   indexes,
                     VecBuilderOptions::default().add_last()
                 )
                 .unwrap()
@@ -997,6 +1037,7 @@ impl Vecs {
                     version + VERSION + Version::new(3),
                     format,
                    computation,
+                   indexes,
                     VecBuilderOptions::default().add_last()
                 )
                 .unwrap()
@@ -1009,6 +1050,7 @@ impl Vecs {
                     version + VERSION + Version::new(3),
                     format,
                    computation,
+                   indexes,
                     VecBuilderOptions::default().add_last()
                 )
                 .unwrap()

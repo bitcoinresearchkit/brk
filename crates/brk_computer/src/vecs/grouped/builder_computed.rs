@@ -4,35 +4,38 @@ use brk_core::{FromCoarserIndex, Result, Version};
 use brk_exit::Exit;
 use brk_vec::{
     AnyCollectableVec, AnyIterableVec, BoxedAnyIterableVec, CloneableAnyIterableVec, Computation,
-    ComputedVec, ComputedVecFrom1, Format, StoredIndex,
+    ComputedVec, ComputedVecFrom2, Format, StoredIndex,
 };
 
 use crate::vecs::grouped::{EagerVecBuilder, VecBuilderOptions};
 
 use super::ComputedType;
 
+#[allow(clippy::type_complexity)]
 #[derive(Clone)]
-pub struct ComputedVecBuilder<I, T, S1I>
+pub struct ComputedVecBuilder<I, T, S1I, S2T>
 where
     I: StoredIndex,
     T: ComputedType,
+    S2T: ComputedType,
 {
-    pub first: Option<Box<ComputedVecFrom1<I, T, S1I, T>>>,
-    pub average: Option<Box<ComputedVecFrom1<I, T, S1I, T>>>,
-    pub sum: Option<Box<ComputedVecFrom1<I, T, S1I, T>>>,
-    pub max: Option<Box<ComputedVecFrom1<I, T, S1I, T>>>,
-    pub min: Option<Box<ComputedVecFrom1<I, T, S1I, T>>>,
-    pub last: Option<Box<ComputedVecFrom1<I, T, S1I, T>>>,
-    pub cumulative: Option<Box<ComputedVecFrom1<I, T, S1I, T>>>,
+    pub first: Option<Box<ComputedVecFrom2<I, T, S1I, T, I, S2T>>>,
+    pub average: Option<Box<ComputedVecFrom2<I, T, S1I, T, I, S2T>>>,
+    pub sum: Option<Box<ComputedVecFrom2<I, T, S1I, T, I, S2T>>>,
+    pub max: Option<Box<ComputedVecFrom2<I, T, S1I, T, I, S2T>>>,
+    pub min: Option<Box<ComputedVecFrom2<I, T, S1I, T, I, S2T>>>,
+    pub last: Option<Box<ComputedVecFrom2<I, T, S1I, T, I, S2T>>>,
+    pub cumulative: Option<Box<ComputedVecFrom2<I, T, S1I, T, I, S2T>>>,
 }
 
 const VERSION: Version = Version::ZERO;
 
-impl<I, T, S1I> ComputedVecBuilder<I, T, S1I>
+impl<I, T, S1I, S2T> ComputedVecBuilder<I, T, S1I, S2T>
 where
     I: StoredIndex,
     T: ComputedType + 'static,
     S1I: StoredIndex + 'static + FromCoarserIndex<I>,
+    S2T: ComputedType,
 {
     #[allow(clippy::too_many_arguments)]
     pub fn forced_import(
@@ -43,6 +46,7 @@ where
         computation: Computation,
         source: Option<BoxedAnyIterableVec<S1I, T>>,
         source_extra: &EagerVecBuilder<S1I, T>,
+        len_source: BoxedAnyIterableVec<I, S2T>,
         options: ComputedVecBuilderOptions,
     ) -> color_eyre::Result<Self> {
         let only_one_active = options.is_only_one_active();
@@ -60,7 +64,7 @@ where
         Ok(Self {
             first: options.first.then(|| {
                 Box::new(
-                    ComputedVec::forced_import_or_init_from_1(
+                    ComputedVec::forced_import_or_init_from_2(
                         computation,
                         path,
                         &maybe_suffix("first"),
@@ -70,7 +74,11 @@ where
                             .first
                             .as_ref()
                             .map_or_else(|| source.as_ref().unwrap().clone(), |v| v.clone()),
-                        |i, source| {
+                        len_source.clone(),
+                        |i: I, source, len_source| {
+                            if i.unwrap_to_usize() >= len_source.len() {
+                                return None;
+                            }
                             source
                                 .next_at(S1I::min_from(i))
                                 .map(|(_, cow)| cow.into_owned())
@@ -81,7 +89,7 @@ where
             }),
             last: options.last.then(|| {
                 Box::new(
-                    ComputedVec::forced_import_or_init_from_1(
+                    ComputedVec::forced_import_or_init_from_2(
                         computation,
                         path,
                         name,
@@ -99,7 +107,11 @@ where
                             },
                             |v| v.clone(),
                         ),
-                        |i, source| {
+                        len_source.clone(),
+                        |i: I, source, len_source| {
+                            if i.unwrap_to_usize() >= len_source.len() {
+                                return None;
+                            }
                             source
                                 .next_at(S1I::max_from(i, source.len()))
                                 .map(|(_, cow)| cow.into_owned())
@@ -110,7 +122,7 @@ where
             }),
             min: options.min.then(|| {
                 Box::new(
-                    ComputedVec::forced_import_or_init_from_1(
+                    ComputedVec::forced_import_or_init_from_2(
                         computation,
                         path,
                         &maybe_suffix("min"),
@@ -120,7 +132,11 @@ where
                             .min
                             .as_ref()
                             .map_or_else(|| source.as_ref().unwrap().clone(), |v| v.clone()),
-                        |i, source| {
+                        len_source.clone(),
+                        |i: I, source, len_source| {
+                            if i.unwrap_to_usize() >= len_source.len() {
+                                return None;
+                            }
                             S1I::inclusive_range_from(i, source.len())
                                 .flat_map(|i| source.next_at(i).map(|(_, cow)| cow.into_owned()))
                                 .min()
@@ -131,7 +147,7 @@ where
             }),
             max: options.max.then(|| {
                 Box::new(
-                    ComputedVec::forced_import_or_init_from_1(
+                    ComputedVec::forced_import_or_init_from_2(
                         computation,
                         path,
                         &maybe_suffix("max"),
@@ -141,7 +157,11 @@ where
                             .max
                             .as_ref()
                             .map_or_else(|| source.as_ref().unwrap().clone(), |v| v.clone()),
-                        |i, source| {
+                        len_source.clone(),
+                        |i: I, source, len_source| {
+                            if i.unwrap_to_usize() >= len_source.len() {
+                                return None;
+                            }
                             S1I::inclusive_range_from(i, source.len())
                                 .flat_map(|i| source.next_at(i).map(|(_, cow)| cow.into_owned()))
                                 .max()
@@ -152,7 +172,7 @@ where
             }),
             average: options.average.then(|| {
                 Box::new(
-                    ComputedVec::forced_import_or_init_from_1(
+                    ComputedVec::forced_import_or_init_from_2(
                         computation,
                         path,
                         &maybe_suffix("average"),
@@ -162,7 +182,11 @@ where
                             .average
                             .as_ref()
                             .map_or_else(|| source.as_ref().unwrap().clone(), |v| v.clone()),
-                        |i, source| {
+                        len_source.clone(),
+                        |i: I, source, len_source| {
+                            if i.unwrap_to_usize() >= len_source.len() {
+                                return None;
+                            }
                             let vec = S1I::inclusive_range_from(i, source.len())
                                 .flat_map(|i| source.next_at(i).map(|(_, cow)| cow.into_owned()))
                                 .collect::<Vec<_>>();
@@ -180,7 +204,7 @@ where
             }),
             sum: options.sum.then(|| {
                 Box::new(
-                    ComputedVec::forced_import_or_init_from_1(
+                    ComputedVec::forced_import_or_init_from_2(
                         computation,
                         path,
                         &(if !options.last && !options.average && !options.min && !options.max {
@@ -194,7 +218,11 @@ where
                             .sum
                             .as_ref()
                             .map_or_else(|| source.as_ref().unwrap().clone(), |v| v.clone()),
-                        |i, source| {
+                        len_source.clone(),
+                        |i: I, source, len_source| {
+                            if i.unwrap_to_usize() >= len_source.len() {
+                                return None;
+                            }
                             let vec = S1I::inclusive_range_from(i, source.len())
                                 .flat_map(|i| source.next_at(i).map(|(_, cow)| cow.into_owned()))
                                 .collect::<Vec<_>>();
@@ -211,14 +239,18 @@ where
             }),
             cumulative: options.cumulative.then(|| {
                 Box::new(
-                    ComputedVec::forced_import_or_init_from_1(
+                    ComputedVec::forced_import_or_init_from_2(
                         computation,
                         path,
                         &suffix("cumulative"),
                         version + VERSION + Version::ZERO,
                         format,
                         source_extra.cumulative.as_ref().unwrap().boxed_clone(),
-                        |i, source| {
+                        len_source.clone(),
+                        |i: I, source, len_source| {
+                            if i.unwrap_to_usize() >= len_source.len() {
+                                return None;
+                            }
                             source
                                 .next_at(S1I::max_from(i, source.len()))
                                 .map(|(_, cow)| cow.into_owned())
@@ -267,27 +299,27 @@ where
         ))
     }
 
-    pub fn unwrap_first(&self) -> &ComputedVecFrom1<I, T, S1I, T> {
+    pub fn unwrap_first(&self) -> &ComputedVecFrom2<I, T, S1I, T, I, S2T> {
         self.first.as_ref().unwrap()
     }
     #[allow(unused)]
-    pub fn unwrap_average(&self) -> &ComputedVecFrom1<I, T, S1I, T> {
+    pub fn unwrap_average(&self) -> &ComputedVecFrom2<I, T, S1I, T, I, S2T> {
         self.average.as_ref().unwrap()
     }
-    pub fn unwrap_sum(&self) -> &ComputedVecFrom1<I, T, S1I, T> {
+    pub fn unwrap_sum(&self) -> &ComputedVecFrom2<I, T, S1I, T, I, S2T> {
         self.sum.as_ref().unwrap()
     }
-    pub fn unwrap_max(&self) -> &ComputedVecFrom1<I, T, S1I, T> {
+    pub fn unwrap_max(&self) -> &ComputedVecFrom2<I, T, S1I, T, I, S2T> {
         self.max.as_ref().unwrap()
     }
-    pub fn unwrap_min(&self) -> &ComputedVecFrom1<I, T, S1I, T> {
+    pub fn unwrap_min(&self) -> &ComputedVecFrom2<I, T, S1I, T, I, S2T> {
         self.min.as_ref().unwrap()
     }
-    pub fn unwrap_last(&self) -> &ComputedVecFrom1<I, T, S1I, T> {
+    pub fn unwrap_last(&self) -> &ComputedVecFrom2<I, T, S1I, T, I, S2T> {
         self.last.as_ref().unwrap()
     }
     #[allow(unused)]
-    pub fn unwrap_cumulative(&self) -> &ComputedVecFrom1<I, T, S1I, T> {
+    pub fn unwrap_cumulative(&self) -> &ComputedVecFrom2<I, T, S1I, T, I, S2T> {
         self.cumulative.as_ref().unwrap()
     }
 

@@ -21,12 +21,12 @@ where
 {
     pub dateindex: Option<EagerVec<DateIndex, T>>,
     pub dateindex_extra: EagerVecBuilder<DateIndex, T>,
-    pub weekindex: ComputedVecBuilder<WeekIndex, T, DateIndex>,
-    pub monthindex: ComputedVecBuilder<MonthIndex, T, DateIndex>,
-    pub quarterindex: ComputedVecBuilder<QuarterIndex, T, DateIndex>,
-    pub semesterindex: ComputedVecBuilder<SemesterIndex, T, DateIndex>,
-    pub yearindex: ComputedVecBuilder<YearIndex, T, DateIndex>,
-    pub decadeindex: ComputedVecBuilder<DecadeIndex, T, DateIndex>,
+    pub weekindex: ComputedVecBuilder<WeekIndex, T, DateIndex, WeekIndex>,
+    pub monthindex: ComputedVecBuilder<MonthIndex, T, DateIndex, MonthIndex>,
+    pub quarterindex: ComputedVecBuilder<QuarterIndex, T, DateIndex, QuarterIndex>,
+    pub semesterindex: ComputedVecBuilder<SemesterIndex, T, DateIndex, SemesterIndex>,
+    pub yearindex: ComputedVecBuilder<YearIndex, T, DateIndex, YearIndex>,
+    pub decadeindex: ComputedVecBuilder<DecadeIndex, T, DateIndex, DecadeIndex>,
 }
 
 const VERSION: Version = Version::ZERO;
@@ -35,6 +35,7 @@ impl<T> ComputedVecsFromDateIndex<T>
 where
     T: ComputedType + 'static,
 {
+    #[allow(clippy::too_many_arguments)]
     pub fn forced_import(
         path: &Path,
         name: &str,
@@ -42,6 +43,7 @@ where
         version: Version,
         format: Format,
         computation: Computation,
+        indexes: &indexes::Vecs,
         options: VecBuilderOptions,
     ) -> color_eyre::Result<Self> {
         let dateindex = source.is_compute().then(|| {
@@ -69,6 +71,7 @@ where
                 computation,
                 dateindex_source.clone(),
                 &dateindex_extra,
+                indexes.weekindex_to_weekindex.boxed_clone(),
                 options.into(),
             )?,
             monthindex: ComputedVecBuilder::forced_import(
@@ -79,6 +82,7 @@ where
                 Computation::Lazy,
                 dateindex_source.clone(),
                 &dateindex_extra,
+                indexes.monthindex_to_monthindex.boxed_clone(),
                 options.into(),
             )?,
             quarterindex: ComputedVecBuilder::forced_import(
@@ -89,6 +93,7 @@ where
                 Computation::Lazy,
                 dateindex_source.clone(),
                 &dateindex_extra,
+                indexes.quarterindex_to_quarterindex.boxed_clone(),
                 options.into(),
             )?,
             semesterindex: ComputedVecBuilder::forced_import(
@@ -99,6 +104,7 @@ where
                 Computation::Lazy,
                 dateindex_source.clone(),
                 &dateindex_extra,
+                indexes.semesterindex_to_semesterindex.boxed_clone(),
                 options.into(),
             )?,
             yearindex: ComputedVecBuilder::forced_import(
@@ -109,6 +115,7 @@ where
                 Computation::Lazy,
                 dateindex_source.clone(),
                 &dateindex_extra,
+                indexes.yearindex_to_yearindex.boxed_clone(),
                 options.into(),
             )?,
             decadeindex: ComputedVecBuilder::forced_import(
@@ -119,6 +126,7 @@ where
                 Computation::Lazy,
                 dateindex_source.clone(),
                 &dateindex_extra,
+                indexes.decadeindex_to_decadeindex.boxed_clone(),
                 options.into(),
             )?,
             dateindex,

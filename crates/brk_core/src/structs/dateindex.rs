@@ -115,7 +115,7 @@ impl FromCoarserIndex<WeekIndex> for DateIndex {
         } else if coarser == 1 {
             1
         } else {
-            4 + (coarser - 1) * 7
+            4 + (coarser - 2) * 7
         }
     }
 
@@ -126,7 +126,7 @@ impl FromCoarserIndex<WeekIndex> for DateIndex {
         } else if coarser == 1 {
             3
         } else {
-            3 + coarser * 7
+            3 + (coarser - 1) * 7
         }
     }
 }

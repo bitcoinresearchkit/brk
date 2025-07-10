@@ -7,8 +7,8 @@ use brk_core::{
 use brk_exit::Exit;
 use brk_indexer::Indexer;
 use brk_vec::{
-    AnyCollectableVec, AnyVec, CollectableVec, Computation, EagerVec, Format, StoredIndex,
-    VecIterator,
+    AnyCollectableVec, AnyVec, CloneableAnyIterableVec, CollectableVec, Computation, EagerVec,
+    Format, StoredIndex, VecIterator,
 };
 
 use crate::vecs::{
@@ -27,14 +27,14 @@ where
     pub txindex: Option<Box<EagerVec<TxIndex, T>>>,
     pub height: EagerVecBuilder<Height, T>,
     pub dateindex: EagerVecBuilder<DateIndex, T>,
-    pub weekindex: ComputedVecBuilder<WeekIndex, T, DateIndex>,
+    pub weekindex: ComputedVecBuilder<WeekIndex, T, DateIndex, WeekIndex>,
     pub difficultyepoch: EagerVecBuilder<DifficultyEpoch, T>,
-    pub monthindex: ComputedVecBuilder<MonthIndex, T, DateIndex>,
-    pub quarterindex: ComputedVecBuilder<QuarterIndex, T, DateIndex>,
-    pub semesterindex: ComputedVecBuilder<SemesterIndex, T, DateIndex>,
-    pub yearindex: ComputedVecBuilder<YearIndex, T, DateIndex>,
+    pub monthindex: ComputedVecBuilder<MonthIndex, T, DateIndex, MonthIndex>,
+    pub quarterindex: ComputedVecBuilder<QuarterIndex, T, DateIndex, QuarterIndex>,
+    pub semesterindex: ComputedVecBuilder<SemesterIndex, T, DateIndex, SemesterIndex>,
+    pub yearindex: ComputedVecBuilder<YearIndex, T, DateIndex, YearIndex>,
     // TODO: pub halvingepoch: StorableVecGeneator<Halvingepoch, T>,
-    pub decadeindex: ComputedVecBuilder<DecadeIndex, T, DateIndex>,
+    pub decadeindex: ComputedVecBuilder<DecadeIndex, T, DateIndex, DecadeIndex>,
 }
 
 const VERSION: Version = Version::ZERO;
@@ -44,6 +44,7 @@ where
     T: ComputedType + Ord + From<f64> + 'static,
     f64: From<T>,
 {
+    #[allow(clippy::too_many_arguments)]
     pub fn forced_import(
         path: &Path,
         name: &str,
@@ -51,6 +52,7 @@ where
         version: Version,
         format: Format,
         computation: Computation,
+        indexes: &indexes::Vecs,
         options: VecBuilderOptions,
     ) -> color_eyre::Result<Self> {
         let txindex = source.is_compute().then(|| {
@@ -87,6 +89,7 @@ where
                 computation,
                 None,
                 &dateindex,
+                indexes.weekindex_to_weekindex.boxed_clone(),
                 options.into(),
             )?,
             monthindex: ComputedVecBuilder::forced_import(
@@ -97,6 +100,7 @@ where
                 Computation::Lazy,
                 None,
                 &dateindex,
+                indexes.monthindex_to_monthindex.boxed_clone(),
                 options.into(),
             )?,
             quarterindex: ComputedVecBuilder::forced_import(
@@ -107,6 +111,7 @@ where
                 Computation::Lazy,
                 None,
                 &dateindex,
+                indexes.quarterindex_to_quarterindex.boxed_clone(),
                 options.into(),
             )?,
             semesterindex: ComputedVecBuilder::forced_import(
@@ -117,6 +122,7 @@ where
                 Computation::Lazy,
                 None,
                 &dateindex,
+                indexes.semesterindex_to_semesterindex.boxed_clone(),
                 options.into(),
             )?,
             yearindex: ComputedVecBuilder::forced_import(
@@ -127,6 +133,7 @@ where
                 Computation::Lazy,
                 None,
                 &dateindex,
+                indexes.yearindex_to_yearindex.boxed_clone(),
                 options.into(),
             )?,
             decadeindex: ComputedVecBuilder::forced_import(
@@ -137,6 +144,7 @@ where
                 Computation::Lazy,
                 None,
                 &dateindex,
+                indexes.decadeindex_to_decadeindex.boxed_clone(),
                 options.into(),
             )?,
 
