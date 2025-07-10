@@ -80,6 +80,7 @@ impl Vecs {
         version: Version,
         computation: Computation,
         format: Format,
+        indexes: &indexes::Vecs,
         fetched: Option<&fetched::Vecs>,
     ) -> color_eyre::Result<Self> {
         let compute_dollars = fetched.is_some();
@@ -112,6 +113,7 @@ impl Vecs {
                 computation,
                 VecBuilderOptions::default().add_last(),
                 compute_dollars,
+                indexes,
             )?,
             height_to_opreturn_supply: EagerVec::forced_import(
                 path,
@@ -128,6 +130,7 @@ impl Vecs {
                 computation,
                 VecBuilderOptions::default().add_last(),
                 compute_dollars,
+                indexes,
             )?,
             indexes_to_address_count: ComputedVecsFromHeight::forced_import(
                 path,
@@ -136,6 +139,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
             indexes_to_empty_address_count: ComputedVecsFromHeight::forced_import(
@@ -145,6 +149,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
             addresstype_to_height_to_address_count: AddressTypeToHeightToAddressCount::from(
@@ -260,6 +265,7 @@ impl Vecs {
                         version + VERSION + Version::ZERO,
                         format,
                         computation,
+                        indexes,
                         VecBuilderOptions::default().add_last(),
                     )?,
                     p2pk33: ComputedVecsFromHeight::forced_import(
@@ -269,6 +275,7 @@ impl Vecs {
                         version + VERSION + Version::ZERO,
                         format,
                         computation,
+                        indexes,
                         VecBuilderOptions::default().add_last(),
                     )?,
                     p2pkh: ComputedVecsFromHeight::forced_import(
@@ -278,6 +285,7 @@ impl Vecs {
                         version + VERSION + Version::ZERO,
                         format,
                         computation,
+                        indexes,
                         VecBuilderOptions::default().add_last(),
                     )?,
                     p2sh: ComputedVecsFromHeight::forced_import(
@@ -287,6 +295,7 @@ impl Vecs {
                         version + VERSION + Version::ZERO,
                         format,
                         computation,
+                        indexes,
                         VecBuilderOptions::default().add_last(),
                     )?,
                     p2wpkh: ComputedVecsFromHeight::forced_import(
@@ -296,6 +305,7 @@ impl Vecs {
                         version + VERSION + Version::ZERO,
                         format,
                         computation,
+                        indexes,
                         VecBuilderOptions::default().add_last(),
                     )?,
                     p2wsh: ComputedVecsFromHeight::forced_import(
@@ -305,6 +315,7 @@ impl Vecs {
                         version + VERSION + Version::ZERO,
                         format,
                         computation,
+                        indexes,
                         VecBuilderOptions::default().add_last(),
                     )?,
                     p2tr: ComputedVecsFromHeight::forced_import(
@@ -314,6 +325,7 @@ impl Vecs {
                         version + VERSION + Version::ZERO,
                         format,
                         computation,
+                        indexes,
                         VecBuilderOptions::default().add_last(),
                     )?,
                     p2a: ComputedVecsFromHeight::forced_import(
@@ -323,6 +335,7 @@ impl Vecs {
                         version + VERSION + Version::ZERO,
                         format,
                         computation,
+                        indexes,
                         VecBuilderOptions::default().add_last(),
                     )?,
                 },
@@ -336,6 +349,7 @@ impl Vecs {
                         version + VERSION + Version::ZERO,
                         format,
                         computation,
+                        indexes,
                         VecBuilderOptions::default().add_last(),
                     )?,
                     p2pk33: ComputedVecsFromHeight::forced_import(
@@ -345,6 +359,7 @@ impl Vecs {
                         version + VERSION + Version::ZERO,
                         format,
                         computation,
+                        indexes,
                         VecBuilderOptions::default().add_last(),
                     )?,
                     p2pkh: ComputedVecsFromHeight::forced_import(
@@ -354,6 +369,7 @@ impl Vecs {
                         version + VERSION + Version::ZERO,
                         format,
                         computation,
+                        indexes,
                         VecBuilderOptions::default().add_last(),
                     )?,
                     p2sh: ComputedVecsFromHeight::forced_import(
@@ -363,6 +379,7 @@ impl Vecs {
                         version + VERSION + Version::ZERO,
                         format,
                         computation,
+                        indexes,
                         VecBuilderOptions::default().add_last(),
                     )?,
                     p2wpkh: ComputedVecsFromHeight::forced_import(
@@ -372,6 +389,7 @@ impl Vecs {
                         version + VERSION + Version::ZERO,
                         format,
                         computation,
+                        indexes,
                         VecBuilderOptions::default().add_last(),
                     )?,
                     p2wsh: ComputedVecsFromHeight::forced_import(
@@ -381,6 +399,7 @@ impl Vecs {
                         version + VERSION + Version::ZERO,
                         format,
                         computation,
+                        indexes,
                         VecBuilderOptions::default().add_last(),
                     )?,
                     p2tr: ComputedVecsFromHeight::forced_import(
@@ -390,6 +409,7 @@ impl Vecs {
                         version + VERSION + Version::ZERO,
                         format,
                         computation,
+                        indexes,
                         VecBuilderOptions::default().add_last(),
                     )?,
                     p2a: ComputedVecsFromHeight::forced_import(
@@ -399,6 +419,7 @@ impl Vecs {
                         version + VERSION + Version::ZERO,
                         format,
                         computation,
+                        indexes,
                         VecBuilderOptions::default().add_last(),
                     )?,
                 },
@@ -408,6 +429,7 @@ impl Vecs {
                 version,
                 computation,
                 format,
+                indexes,
                 fetched,
                 &states_path,
             )?,
@@ -416,6 +438,7 @@ impl Vecs {
                 version,
                 computation,
                 format,
+                indexes,
                 fetched,
                 &states_path,
             )?,

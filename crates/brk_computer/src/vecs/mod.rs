@@ -60,6 +60,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 computation,
                 format,
+                &indexes,
             )
             .unwrap()
         });
@@ -70,30 +71,35 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 computation,
                 format,
+                &indexes,
             )?,
             mining: mining::Vecs::forced_import(
                 path,
                 version + VERSION + Version::ZERO,
                 computation,
                 format,
+                &indexes,
             )?,
             constants: constants::Vecs::forced_import(
                 path,
                 version + VERSION + Version::ZERO,
                 computation,
                 format,
+                &indexes,
             )?,
             market: market::Vecs::forced_import(
                 path,
                 version + VERSION + Version::ZERO,
                 computation,
                 format,
+                &indexes,
             )?,
             stateful: stateful::Vecs::forced_import(
                 path,
                 version + VERSION + Version::ZERO,
                 computation,
                 format,
+                &indexes,
                 fetched.as_ref(),
             )?,
             transactions: transactions::Vecs::forced_import(
@@ -110,6 +116,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 computation,
                 format,
+                &indexes,
                 fetched.as_ref(),
             )?,
             indexes,

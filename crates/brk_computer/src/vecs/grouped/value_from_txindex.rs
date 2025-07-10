@@ -60,6 +60,7 @@ impl ComputedValueVecsFromTxindex {
             version + VERSION,
             format,
             computation,
+            indexes,
             options,
         )?;
 
@@ -84,6 +85,7 @@ impl ComputedValueVecsFromTxindex {
             version + VERSION,
             format,
             computation,
+            indexes,
             options,
         )?;
 
@@ -131,6 +133,7 @@ impl ComputedValueVecsFromTxindex {
                     version + VERSION,
                     format,
                     computation,
+                    indexes,
                     options,
                 )
                 .unwrap()

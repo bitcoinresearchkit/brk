@@ -53,6 +53,7 @@ impl Vecs {
         version: Version,
         computation: Computation,
         format: Format,
+        indexes: &indexes::Vecs,
         fetched: Option<&fetched::Vecs>,
     ) -> color_eyre::Result<Self> {
         let compute_dollars = fetched.is_some();
@@ -65,6 +66,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 VecBuilderOptions::default().add_sum().add_cumulative(),
             )?,
             indexes_to_coinblocks_stored: ComputedVecsFromHeight::forced_import(
@@ -74,6 +76,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 VecBuilderOptions::default().add_sum().add_cumulative(),
             )?,
             indexes_to_liveliness: ComputedVecsFromHeight::forced_import(
@@ -83,6 +86,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
             indexes_to_vaultedness: ComputedVecsFromHeight::forced_import(
@@ -92,6 +96,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
             indexes_to_activity_to_vaultedness_ratio: ComputedVecsFromHeight::forced_import(
@@ -101,6 +106,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
             indexes_to_vaulted_supply: ComputedValueVecsFromHeight::forced_import(
@@ -112,6 +118,7 @@ impl Vecs {
                 computation,
                 VecBuilderOptions::default().add_last(),
                 compute_dollars,
+                indexes,
             )?,
             indexes_to_active_supply: ComputedValueVecsFromHeight::forced_import(
                 path,
@@ -122,6 +129,7 @@ impl Vecs {
                 computation,
                 VecBuilderOptions::default().add_last(),
                 compute_dollars,
+                indexes,
             )?,
             indexes_to_thermo_cap: ComputedVecsFromHeight::forced_import(
                 path,
@@ -130,6 +138,7 @@ impl Vecs {
                 version + VERSION + Version::ONE,
                 format,
                 computation,
+                indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
             indexes_to_investor_cap: ComputedVecsFromHeight::forced_import(
@@ -139,6 +148,7 @@ impl Vecs {
                 version + VERSION + Version::ONE,
                 format,
                 computation,
+                indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
             indexes_to_vaulted_cap: ComputedVecsFromHeight::forced_import(
@@ -148,6 +158,7 @@ impl Vecs {
                 version + VERSION + Version::ONE,
                 format,
                 computation,
+                indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
             indexes_to_active_cap: ComputedVecsFromHeight::forced_import(
@@ -157,6 +168,7 @@ impl Vecs {
                 version + VERSION + Version::ONE,
                 format,
                 computation,
+                indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
             indexes_to_vaulted_price: ComputedVecsFromHeight::forced_import(
@@ -166,6 +178,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
             indexes_to_vaulted_price_ratio: ComputedRatioVecsFromDateIndex::forced_import(
@@ -175,6 +188,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
             )?,
             indexes_to_active_price: ComputedVecsFromHeight::forced_import(
                 path,
@@ -183,6 +197,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
             indexes_to_active_price_ratio: ComputedRatioVecsFromDateIndex::forced_import(
@@ -192,6 +207,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
             )?,
             indexes_to_true_market_mean: ComputedVecsFromHeight::forced_import(
                 path,
@@ -200,6 +216,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
             indexes_to_true_market_mean_ratio: ComputedRatioVecsFromDateIndex::forced_import(
@@ -209,6 +226,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
             )?,
             indexes_to_cointime_value_destroyed: ComputedVecsFromHeight::forced_import(
                 path,
@@ -217,6 +235,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 VecBuilderOptions::default().add_sum().add_cumulative(),
             )?,
             indexes_to_cointime_value_created: ComputedVecsFromHeight::forced_import(
@@ -226,6 +245,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 VecBuilderOptions::default().add_sum().add_cumulative(),
             )?,
             indexes_to_cointime_value_stored: ComputedVecsFromHeight::forced_import(
@@ -235,6 +255,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 VecBuilderOptions::default().add_sum().add_cumulative(),
             )?,
             indexes_to_cointime_price: ComputedVecsFromHeight::forced_import(
@@ -244,6 +265,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
             indexes_to_cointime_cap: ComputedVecsFromHeight::forced_import(
@@ -253,6 +275,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
             indexes_to_cointime_price_ratio: ComputedRatioVecsFromDateIndex::forced_import(
@@ -262,6 +285,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
             )?,
         })
     }

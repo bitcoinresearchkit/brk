@@ -42,6 +42,7 @@ impl Vecs {
         computation: Computation,
         format: Format,
         version: Version,
+        indexes: &indexes::Vecs,
         fetched: Option<&fetched::Vecs>,
         states_path: &Path,
         compute_relative_to_all: bool,
@@ -70,6 +71,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
             inner: common::Vecs::forced_import(
@@ -78,6 +80,7 @@ impl Vecs {
                 computation,
                 format,
                 version,
+                indexes,
                 fetched,
                 compute_relative_to_all,
             )?,

@@ -167,6 +167,7 @@ impl Vecs {
         version: Version,
         computation: Computation,
         format: Format,
+        indexes: &indexes::Vecs,
     ) -> color_eyre::Result<Self> {
         Ok(Self {
             height_to_marketcap: EagerVec::forced_import(
@@ -194,6 +195,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
             indexes_to_ath: ComputedVecsFromDateIndex::forced_import(
@@ -203,6 +205,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
             indexes_to_drawdown: ComputedVecsFromDateIndex::forced_import(
@@ -212,6 +215,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
             indexes_to_days_since_ath: ComputedVecsFromDateIndex::forced_import(
@@ -221,6 +225,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
             indexes_to_max_days_between_aths: ComputedVecsFromDateIndex::forced_import(
@@ -230,6 +235,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
             indexes_to_max_years_between_aths: ComputedVecsFromDateIndex::forced_import(
@@ -239,6 +245,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
 
@@ -249,6 +256,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
             )?,
             indexes_to_8d_sma: ComputedRatioVecsFromDateIndex::forced_import(
                 path,
@@ -257,6 +265,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
             )?,
             indexes_to_13d_sma: ComputedRatioVecsFromDateIndex::forced_import(
                 path,
@@ -265,6 +274,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
             )?,
             indexes_to_21d_sma: ComputedRatioVecsFromDateIndex::forced_import(
                 path,
@@ -273,6 +283,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
             )?,
             indexes_to_1m_sma: ComputedRatioVecsFromDateIndex::forced_import(
                 path,
@@ -281,6 +292,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
             )?,
             indexes_to_34d_sma: ComputedRatioVecsFromDateIndex::forced_import(
                 path,
@@ -289,6 +301,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
             )?,
             indexes_to_55d_sma: ComputedRatioVecsFromDateIndex::forced_import(
                 path,
@@ -297,6 +310,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
             )?,
             indexes_to_89d_sma: ComputedRatioVecsFromDateIndex::forced_import(
                 path,
@@ -305,6 +319,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
             )?,
             indexes_to_144d_sma: ComputedRatioVecsFromDateIndex::forced_import(
                 path,
@@ -313,6 +328,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
             )?,
             indexes_to_200d_sma: ComputedRatioVecsFromDateIndex::forced_import(
                 path,
@@ -321,6 +337,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
             )?,
             indexes_to_1y_sma: ComputedRatioVecsFromDateIndex::forced_import(
                 path,
@@ -329,6 +346,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
             )?,
             indexes_to_2y_sma: ComputedRatioVecsFromDateIndex::forced_import(
                 path,
@@ -337,6 +355,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
             )?,
             indexes_to_200w_sma: ComputedRatioVecsFromDateIndex::forced_import(
                 path,
@@ -345,6 +364,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
             )?,
             indexes_to_4y_sma: ComputedRatioVecsFromDateIndex::forced_import(
                 path,
@@ -353,6 +373,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
             )?,
 
             _1d_returns: ComputedVecsFromDateIndex::forced_import(
@@ -362,6 +383,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
             _1w_returns: ComputedVecsFromDateIndex::forced_import(
@@ -371,6 +393,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
             _1m_returns: ComputedVecsFromDateIndex::forced_import(
@@ -380,6 +403,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
             _3m_returns: ComputedVecsFromDateIndex::forced_import(
@@ -389,6 +413,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
             _6m_returns: ComputedVecsFromDateIndex::forced_import(
@@ -398,6 +423,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
             _1y_returns: ComputedVecsFromDateIndex::forced_import(
@@ -407,6 +433,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
             _2y_returns: ComputedVecsFromDateIndex::forced_import(
@@ -416,6 +443,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
             _3y_returns: ComputedVecsFromDateIndex::forced_import(
@@ -425,6 +453,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
             _4y_returns: ComputedVecsFromDateIndex::forced_import(
@@ -434,6 +463,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
             _5y_returns: ComputedVecsFromDateIndex::forced_import(
@@ -443,6 +473,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
             _6y_returns: ComputedVecsFromDateIndex::forced_import(
@@ -452,6 +483,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
             _8y_returns: ComputedVecsFromDateIndex::forced_import(
@@ -461,6 +493,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
             _10y_returns: ComputedVecsFromDateIndex::forced_import(
@@ -470,6 +503,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
             _2y_cagr: ComputedVecsFromDateIndex::forced_import(
@@ -479,6 +513,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
             _3y_cagr: ComputedVecsFromDateIndex::forced_import(
@@ -488,6 +523,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
             _4y_cagr: ComputedVecsFromDateIndex::forced_import(
@@ -497,6 +533,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
             _5y_cagr: ComputedVecsFromDateIndex::forced_import(
@@ -506,6 +543,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
             _6y_cagr: ComputedVecsFromDateIndex::forced_import(
@@ -515,6 +553,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
             _8y_cagr: ComputedVecsFromDateIndex::forced_import(
@@ -524,6 +563,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
             _10y_cagr: ComputedVecsFromDateIndex::forced_import(
@@ -533,6 +573,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
 
@@ -543,6 +584,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
             _1m_dca_returns: ComputedVecsFromDateIndex::forced_import(
@@ -552,6 +594,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
             _3m_dca_returns: ComputedVecsFromDateIndex::forced_import(
@@ -561,6 +604,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
             _6m_dca_returns: ComputedVecsFromDateIndex::forced_import(
@@ -570,6 +614,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
             _1y_dca_returns: ComputedVecsFromDateIndex::forced_import(
@@ -579,6 +624,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
             _2y_dca_returns: ComputedVecsFromDateIndex::forced_import(
@@ -588,6 +634,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
             _3y_dca_returns: ComputedVecsFromDateIndex::forced_import(
@@ -597,6 +644,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
             _4y_dca_returns: ComputedVecsFromDateIndex::forced_import(
@@ -606,6 +654,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
             _5y_dca_returns: ComputedVecsFromDateIndex::forced_import(
@@ -615,6 +664,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
             _6y_dca_returns: ComputedVecsFromDateIndex::forced_import(
@@ -624,6 +674,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
             _8y_dca_returns: ComputedVecsFromDateIndex::forced_import(
@@ -633,6 +684,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
             _10y_dca_returns: ComputedVecsFromDateIndex::forced_import(
@@ -642,6 +694,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
             _2y_dca_cagr: ComputedVecsFromDateIndex::forced_import(
@@ -651,6 +704,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
             _3y_dca_cagr: ComputedVecsFromDateIndex::forced_import(
@@ -660,6 +714,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
             _4y_dca_cagr: ComputedVecsFromDateIndex::forced_import(
@@ -669,6 +724,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
             _5y_dca_cagr: ComputedVecsFromDateIndex::forced_import(
@@ -678,6 +734,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
             _6y_dca_cagr: ComputedVecsFromDateIndex::forced_import(
@@ -687,6 +744,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
             _8y_dca_cagr: ComputedVecsFromDateIndex::forced_import(
@@ -696,6 +754,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
             _10y_dca_cagr: ComputedVecsFromDateIndex::forced_import(
@@ -705,6 +764,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
             _1w_dca_avg_price: ComputedVecsFromDateIndex::forced_import(
@@ -714,6 +774,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
             _1m_dca_avg_price: ComputedVecsFromDateIndex::forced_import(
@@ -723,6 +784,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
             _3m_dca_avg_price: ComputedVecsFromDateIndex::forced_import(
@@ -732,6 +794,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
             _6m_dca_avg_price: ComputedVecsFromDateIndex::forced_import(
@@ -741,6 +804,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
             _1y_dca_avg_price: ComputedVecsFromDateIndex::forced_import(
@@ -750,6 +814,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
             _2y_dca_avg_price: ComputedVecsFromDateIndex::forced_import(
@@ -759,6 +824,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
             _3y_dca_avg_price: ComputedVecsFromDateIndex::forced_import(
@@ -768,6 +834,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
             _4y_dca_avg_price: ComputedVecsFromDateIndex::forced_import(
@@ -777,6 +844,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
             _5y_dca_avg_price: ComputedVecsFromDateIndex::forced_import(
@@ -786,6 +854,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
             _6y_dca_avg_price: ComputedVecsFromDateIndex::forced_import(
@@ -795,6 +864,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
             _8y_dca_avg_price: ComputedVecsFromDateIndex::forced_import(
@@ -804,6 +874,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
             _10y_dca_avg_price: ComputedVecsFromDateIndex::forced_import(
@@ -813,6 +884,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
             price_1d_ago: ComputedVecsFromDateIndex::forced_import(
@@ -822,6 +894,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
             price_1w_ago: ComputedVecsFromDateIndex::forced_import(
@@ -831,6 +904,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
             price_1m_ago: ComputedVecsFromDateIndex::forced_import(
@@ -840,6 +914,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
             price_3m_ago: ComputedVecsFromDateIndex::forced_import(
@@ -849,6 +924,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
             price_6m_ago: ComputedVecsFromDateIndex::forced_import(
@@ -858,6 +934,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
             price_1y_ago: ComputedVecsFromDateIndex::forced_import(
@@ -867,6 +944,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
             price_2y_ago: ComputedVecsFromDateIndex::forced_import(
@@ -876,6 +954,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
             price_3y_ago: ComputedVecsFromDateIndex::forced_import(
@@ -885,6 +964,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
             price_4y_ago: ComputedVecsFromDateIndex::forced_import(
@@ -894,6 +974,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
             price_5y_ago: ComputedVecsFromDateIndex::forced_import(
@@ -903,6 +984,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
             price_6y_ago: ComputedVecsFromDateIndex::forced_import(
@@ -912,6 +994,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
             price_8y_ago: ComputedVecsFromDateIndex::forced_import(
@@ -921,6 +1004,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
             price_10y_ago: ComputedVecsFromDateIndex::forced_import(
@@ -930,6 +1014,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
             _1w_dca_stack: ComputedVecsFromDateIndex::forced_import(
@@ -939,6 +1024,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
             _1m_dca_stack: ComputedVecsFromDateIndex::forced_import(
@@ -948,6 +1034,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
             _3m_dca_stack: ComputedVecsFromDateIndex::forced_import(
@@ -957,6 +1044,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
             _6m_dca_stack: ComputedVecsFromDateIndex::forced_import(
@@ -966,6 +1054,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
             _1y_dca_stack: ComputedVecsFromDateIndex::forced_import(
@@ -975,6 +1064,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
             _2y_dca_stack: ComputedVecsFromDateIndex::forced_import(
@@ -984,6 +1074,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
             _3y_dca_stack: ComputedVecsFromDateIndex::forced_import(
@@ -993,6 +1084,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
             _4y_dca_stack: ComputedVecsFromDateIndex::forced_import(
@@ -1002,6 +1094,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
             _5y_dca_stack: ComputedVecsFromDateIndex::forced_import(
@@ -1011,6 +1104,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
             _6y_dca_stack: ComputedVecsFromDateIndex::forced_import(
@@ -1020,6 +1114,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
             _8y_dca_stack: ComputedVecsFromDateIndex::forced_import(
@@ -1029,6 +1124,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
             _10y_dca_stack: ComputedVecsFromDateIndex::forced_import(
@@ -1038,6 +1134,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
 
@@ -1048,6 +1145,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
             dca_class_2024_stack: ComputedVecsFromDateIndex::forced_import(
@@ -1057,6 +1155,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
             dca_class_2023_stack: ComputedVecsFromDateIndex::forced_import(
@@ -1066,6 +1165,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
             dca_class_2022_stack: ComputedVecsFromDateIndex::forced_import(
@@ -1075,6 +1175,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
             dca_class_2021_stack: ComputedVecsFromDateIndex::forced_import(
@@ -1084,6 +1185,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
             dca_class_2020_stack: ComputedVecsFromDateIndex::forced_import(
@@ -1093,6 +1195,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
             dca_class_2019_stack: ComputedVecsFromDateIndex::forced_import(
@@ -1102,6 +1205,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
             dca_class_2018_stack: ComputedVecsFromDateIndex::forced_import(
@@ -1111,6 +1215,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
             dca_class_2017_stack: ComputedVecsFromDateIndex::forced_import(
@@ -1120,6 +1225,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
             dca_class_2016_stack: ComputedVecsFromDateIndex::forced_import(
@@ -1129,6 +1235,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
             dca_class_2015_stack: ComputedVecsFromDateIndex::forced_import(
@@ -1138,6 +1245,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
 
@@ -1148,6 +1256,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
             dca_class_2024_avg_price: ComputedVecsFromDateIndex::forced_import(
@@ -1157,6 +1266,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
             dca_class_2023_avg_price: ComputedVecsFromDateIndex::forced_import(
@@ -1166,6 +1276,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
             dca_class_2022_avg_price: ComputedVecsFromDateIndex::forced_import(
@@ -1175,6 +1286,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
             dca_class_2021_avg_price: ComputedVecsFromDateIndex::forced_import(
@@ -1184,6 +1296,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
             dca_class_2020_avg_price: ComputedVecsFromDateIndex::forced_import(
@@ -1193,6 +1306,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
             dca_class_2019_avg_price: ComputedVecsFromDateIndex::forced_import(
@@ -1202,6 +1316,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
             dca_class_2018_avg_price: ComputedVecsFromDateIndex::forced_import(
@@ -1211,6 +1326,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
             dca_class_2017_avg_price: ComputedVecsFromDateIndex::forced_import(
@@ -1220,6 +1336,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
             dca_class_2016_avg_price: ComputedVecsFromDateIndex::forced_import(
@@ -1229,6 +1346,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
             dca_class_2015_avg_price: ComputedVecsFromDateIndex::forced_import(
@@ -1238,6 +1356,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
 
@@ -1248,6 +1367,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
             dca_class_2024_returns: ComputedVecsFromDateIndex::forced_import(
@@ -1257,6 +1377,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
             dca_class_2023_returns: ComputedVecsFromDateIndex::forced_import(
@@ -1266,6 +1387,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
             dca_class_2022_returns: ComputedVecsFromDateIndex::forced_import(
@@ -1275,6 +1397,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
             dca_class_2021_returns: ComputedVecsFromDateIndex::forced_import(
@@ -1284,6 +1407,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
             dca_class_2020_returns: ComputedVecsFromDateIndex::forced_import(
@@ -1293,6 +1417,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
             dca_class_2019_returns: ComputedVecsFromDateIndex::forced_import(
@@ -1302,6 +1427,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
             dca_class_2018_returns: ComputedVecsFromDateIndex::forced_import(
@@ -1311,6 +1437,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
             dca_class_2017_returns: ComputedVecsFromDateIndex::forced_import(
@@ -1320,6 +1447,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
             dca_class_2016_returns: ComputedVecsFromDateIndex::forced_import(
@@ -1329,6 +1457,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
             dca_class_2015_returns: ComputedVecsFromDateIndex::forced_import(
@@ -1338,6 +1467,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
 
@@ -1348,6 +1478,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
             indexes_to_200d_sma_x0_8: ComputedVecsFromDateIndex::forced_import(
@@ -1357,6 +1488,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
         })

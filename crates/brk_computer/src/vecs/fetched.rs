@@ -1,9 +1,9 @@
 use std::path::Path;
 
 use brk_core::{
-    Cents, Close, DateIndex, DecadeIndex, DifficultyEpoch, Dollars, Height, High, Low, MonthIndex,
-    OHLCCents, OHLCDollars, OHLCSats, Open, QuarterIndex, Sats, SemesterIndex, Version, WeekIndex,
-    YearIndex,
+    Cents, Close, DateIndex, DecadeIndex, DifficultyEpoch, Dollars, FromCoarserIndex, Height, High,
+    Low, MonthIndex, OHLCCents, OHLCDollars, OHLCSats, Open, QuarterIndex, Sats, SemesterIndex,
+    Version, WeekIndex, YearIndex,
 };
 use brk_exit::Exit;
 use brk_fetcher::Fetcher;
@@ -79,6 +79,7 @@ impl Vecs {
         version: Version,
         computation: Computation,
         format: Format,
+        indexes: &indexes::Vecs,
     ) -> color_eyre::Result<Self> {
         let mut fetched_path = path.to_owned();
         fetched_path.pop();
@@ -88,7 +89,7 @@ impl Vecs {
             dateindex_to_ohlc_in_cents: EagerVec::forced_import(
                 &fetched_path,
                 "ohlc_in_cents",
-                version + VERSION + Version::ZERO,
+                version + Version::ZERO,
                 format,
             )?,
             dateindex_to_ohlc: EagerVec::forced_import(
@@ -130,7 +131,7 @@ impl Vecs {
             height_to_ohlc_in_cents: EagerVec::forced_import(
                 &fetched_path,
                 "ohlc_in_cents",
-                version + VERSION + Version::ZERO,
+                version + Version::ZERO,
                 format,
             )?,
             height_to_ohlc: EagerVec::forced_import(
@@ -176,6 +177,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 VecBuilderOptions::default().add_first(),
             )?,
             timeindexes_to_high: ComputedVecsFromDateIndex::forced_import(
@@ -185,6 +187,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 VecBuilderOptions::default().add_max(),
             )?,
             timeindexes_to_low: ComputedVecsFromDateIndex::forced_import(
@@ -194,6 +197,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 VecBuilderOptions::default().add_min(),
             )?,
             timeindexes_to_close: ComputedVecsFromDateIndex::forced_import(
@@ -203,6 +207,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
             timeindexes_to_open_in_sats: ComputedVecsFromDateIndex::forced_import(
@@ -212,6 +217,7 @@ impl Vecs {
                 version + VERSION + VERSION_IN_SATS + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 VecBuilderOptions::default().add_first(),
             )?,
             timeindexes_to_high_in_sats: ComputedVecsFromDateIndex::forced_import(
@@ -221,6 +227,7 @@ impl Vecs {
                 version + VERSION + VERSION_IN_SATS + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 VecBuilderOptions::default().add_max(),
             )?,
             timeindexes_to_low_in_sats: ComputedVecsFromDateIndex::forced_import(
@@ -230,6 +237,7 @@ impl Vecs {
                 version + VERSION + VERSION_IN_SATS + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 VecBuilderOptions::default().add_min(),
             )?,
             timeindexes_to_close_in_sats: ComputedVecsFromDateIndex::forced_import(
@@ -239,6 +247,7 @@ impl Vecs {
                 version + VERSION + VERSION_IN_SATS + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
             chainindexes_to_open: ComputedVecsFromHeightStrict::forced_import(
@@ -641,12 +650,25 @@ impl Vecs {
             starting_indexes.weekindex,
             self.timeindexes_to_close.weekindex.unwrap_last(),
             |(i, close, ..)| {
+                dbg!(
+                    i,
+                    close,
+                    DateIndex::max_from(i, 10000),
+                    DateIndex::min_from(i),
+                    DateIndex::inclusive_range_from(i, 10000)
+                );
+                let open = weekindex_first_iter.unwrap_get_inner(i);
+                dbg!(open);
+                let high = weekindex_max_iter.unwrap_get_inner(i);
+                dbg!(high);
+                let low = weekindex_min_iter.unwrap_get_inner(i);
+                dbg!(low);
                 (
                     i,
                     OHLCDollars {
-                        open: weekindex_first_iter.unwrap_get_inner(i),
-                        high: weekindex_max_iter.unwrap_get_inner(i),
-                        low: weekindex_min_iter.unwrap_get_inner(i),
+                        open,
+                        high,
+                        low,
                         close,
                     },
                 )

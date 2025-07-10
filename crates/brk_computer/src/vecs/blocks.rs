@@ -38,6 +38,7 @@ impl Vecs {
         version: Version,
         computation: Computation,
         format: Format,
+        indexes: &indexes::Vecs,
     ) -> color_eyre::Result<Self> {
         Ok(Self {
             height_to_interval: EagerVec::forced_import(
@@ -53,6 +54,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 VecBuilderOptions::default().add_first(),
             )?,
             indexes_to_block_interval: ComputedVecsFromHeight::forced_import(
@@ -62,6 +64,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 VecBuilderOptions::default()
                     .add_percentiles()
                     .add_minmax()
@@ -74,6 +77,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 VecBuilderOptions::default().add_sum().add_cumulative(),
             )?,
             indexes_to_block_weight: ComputedVecsFromHeight::forced_import(
@@ -83,6 +87,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 VecBuilderOptions::default().add_sum().add_cumulative(),
             )?,
             indexes_to_block_size: ComputedVecsFromHeight::forced_import(
@@ -92,6 +97,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 VecBuilderOptions::default().add_sum().add_cumulative(),
             )?,
             height_to_vbytes: EagerVec::forced_import(
@@ -107,6 +113,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 VecBuilderOptions::default().add_sum().add_cumulative(),
             )?,
             difficultyepoch_to_timestamp: EagerVec::forced_import(

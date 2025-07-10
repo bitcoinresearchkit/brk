@@ -1,6 +1,9 @@
 use std::ops::RangeInclusive;
 
-pub trait FromCoarserIndex<T> {
+pub trait FromCoarserIndex<T>
+where
+    T: Ord + From<usize>,
+{
     fn min_from(coarser: T) -> usize;
     fn max_from_(coarser: T) -> usize;
     fn max_from(coarser: T, len: usize) -> usize {

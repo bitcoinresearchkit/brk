@@ -29,6 +29,7 @@ impl ComputedValueVecsFromDateIndex {
         computation: Computation,
         options: VecBuilderOptions,
         compute_dollars: bool,
+        indexes: &indexes::Vecs,
     ) -> color_eyre::Result<Self> {
         Ok(Self {
             sats: ComputedVecsFromDateIndex::forced_import(
@@ -38,6 +39,7 @@ impl ComputedValueVecsFromDateIndex {
                 version + VERSION,
                 format,
                 computation,
+                indexes,
                 options,
             )?,
             bitcoin: ComputedVecsFromDateIndex::forced_import(
@@ -47,6 +49,7 @@ impl ComputedValueVecsFromDateIndex {
                 version + VERSION,
                 format,
                 computation,
+                indexes,
                 options,
             )?,
             dollars: compute_dollars.then(|| {
@@ -57,6 +60,7 @@ impl ComputedValueVecsFromDateIndex {
                     version + VERSION,
                     format,
                     computation,
+                    indexes,
                     options,
                 )
                 .unwrap()

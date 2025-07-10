@@ -347,6 +347,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 VecBuilderOptions::default()
                     .add_average()
                     .add_minmax()
@@ -361,6 +362,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 VecBuilderOptions::default()
                     .add_average()
                     .add_minmax()
@@ -375,6 +377,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 VecBuilderOptions::default()
                     .add_average()
                     .add_minmax()
@@ -389,6 +392,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 VecBuilderOptions::default().add_sum().add_cumulative(),
             )?,
             indexes_to_tx_v2: ComputedVecsFromHeight::forced_import(
@@ -398,6 +402,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 VecBuilderOptions::default().add_sum().add_cumulative(),
             )?,
             indexes_to_tx_v3: ComputedVecsFromHeight::forced_import(
@@ -407,6 +412,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 VecBuilderOptions::default().add_sum().add_cumulative(),
             )?,
             indexes_to_fee: ComputedValueVecsFromTxindex::forced_import(
@@ -432,6 +438,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 VecBuilderOptions::default()
                     .add_percentiles()
                     .add_minmax()
@@ -444,6 +451,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 VecBuilderOptions::default()
                     .add_percentiles()
                     .add_minmax()
@@ -456,6 +464,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 VecBuilderOptions::default()
                     .add_percentiles()
                     .add_minmax()
@@ -475,6 +484,7 @@ impl Vecs {
                     .add_minmax()
                     .add_average(),
                 compute_dollars,
+                indexes,
             )?,
             indexes_to_coinbase: ComputedValueVecsFromHeight::forced_import(
                 path,
@@ -490,6 +500,7 @@ impl Vecs {
                     .add_minmax()
                     .add_average(),
                 compute_dollars,
+                indexes,
             )?,
             indexes_to_unclaimed_rewards: ComputedValueVecsFromHeight::forced_import(
                 path,
@@ -500,6 +511,7 @@ impl Vecs {
                 computation,
                 VecBuilderOptions::default().add_sum().add_cumulative(),
                 compute_dollars,
+                indexes,
             )?,
             indexes_to_p2a_count: ComputedVecsFromHeight::forced_import(
                 path,
@@ -508,6 +520,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 VecBuilderOptions::default()
                     .add_average()
                     .add_minmax()
@@ -522,6 +535,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 VecBuilderOptions::default()
                     .add_average()
                     .add_minmax()
@@ -536,6 +550,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 VecBuilderOptions::default()
                     .add_average()
                     .add_minmax()
@@ -550,6 +565,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 VecBuilderOptions::default()
                     .add_average()
                     .add_minmax()
@@ -564,6 +580,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 VecBuilderOptions::default()
                     .add_average()
                     .add_minmax()
@@ -578,6 +595,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 VecBuilderOptions::default()
                     .add_average()
                     .add_minmax()
@@ -592,6 +610,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 VecBuilderOptions::default()
                     .add_average()
                     .add_minmax()
@@ -606,6 +625,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 VecBuilderOptions::default()
                     .add_average()
                     .add_minmax()
@@ -620,6 +640,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 VecBuilderOptions::default()
                     .add_average()
                     .add_minmax()
@@ -634,6 +655,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 VecBuilderOptions::default()
                     .add_average()
                     .add_minmax()
@@ -648,6 +670,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 VecBuilderOptions::default()
                     .add_average()
                     .add_minmax()
@@ -662,6 +685,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 VecBuilderOptions::default()
                     .add_average()
                     .add_minmax()
@@ -676,6 +700,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
                 computation,
+                indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
             txindex_to_is_coinbase,
