@@ -123,7 +123,7 @@ where
     fn file_write_all(&mut self, file: &mut File, buf: &[u8]) -> Result<()> {
         file.write_all(buf)?;
         // file.flush()?;
-        // file.sync_data()?;
+        file.sync_data()?;
         self.update_mmap(file)
     }
 

@@ -8,7 +8,9 @@ use brk_core::{
 use brk_exit::Exit;
 use brk_fetcher::Fetcher;
 use brk_indexer::Indexer;
-use brk_vec::{AnyCollectableVec, AnyIterableVec, Computation, EagerVec, Format, StoredIndex};
+use brk_vec::{
+    AnyCollectableVec, AnyIterableVec, AnyVec, Computation, EagerVec, Format, StoredIndex,
+};
 
 use crate::vecs::grouped::Source;
 
@@ -449,12 +451,18 @@ impl Vecs {
             starting_indexes.dateindex,
             &indexes.dateindex_to_date,
             |(di, d, this)| {
-                let mut ohlc = fetcher.get_date(d).unwrap_or_else(|_| {
+                let get_prev = || {
                     this.get_or_read(di, &this.mmap().load())
                         .unwrap()
                         .unwrap()
                         .into_owned()
-                });
+                };
+
+                let mut ohlc = if di.unwrap_to_usize() + 1 >= this.len() {
+                    fetcher.get_date(d).unwrap_or_else(|_| get_prev())
+                } else {
+                    get_prev()
+                };
 
                 if let Some(prev) = di.decremented() {
                     let prev_open = *this
