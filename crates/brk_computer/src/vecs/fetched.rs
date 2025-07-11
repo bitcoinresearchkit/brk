@@ -1,9 +1,9 @@
 use std::path::Path;
 
 use brk_core::{
-    Cents, Close, DateIndex, DecadeIndex, DifficultyEpoch, Dollars, FromCoarserIndex, Height, High,
-    Low, MonthIndex, OHLCCents, OHLCDollars, OHLCSats, Open, QuarterIndex, Sats, SemesterIndex,
-    Version, WeekIndex, YearIndex,
+    Cents, Close, DateIndex, DecadeIndex, DifficultyEpoch, Dollars, Height, High, Low, MonthIndex,
+    OHLCCents, OHLCDollars, OHLCSats, Open, QuarterIndex, Sats, SemesterIndex, Version, WeekIndex,
+    YearIndex,
 };
 use brk_exit::Exit;
 use brk_fetcher::Fetcher;
@@ -650,19 +650,9 @@ impl Vecs {
             starting_indexes.weekindex,
             self.timeindexes_to_close.weekindex.unwrap_last(),
             |(i, close, ..)| {
-                dbg!(
-                    i,
-                    close,
-                    DateIndex::max_from(i, 10000),
-                    DateIndex::min_from(i),
-                    DateIndex::inclusive_range_from(i, 10000)
-                );
                 let open = weekindex_first_iter.unwrap_get_inner(i);
-                dbg!(open);
                 let high = weekindex_max_iter.unwrap_get_inner(i);
-                dbg!(high);
                 let low = weekindex_min_iter.unwrap_get_inner(i);
-                dbg!(low);
                 (
                     i,
                     OHLCDollars {
