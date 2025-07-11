@@ -1047,6 +1047,7 @@ dependencies = [
  "log",
  "minreq",
  "serde",
+ "serde_json",
  "tokio",
  "tower-http",
  "tracing",
