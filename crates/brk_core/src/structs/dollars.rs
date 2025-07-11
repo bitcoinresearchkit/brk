@@ -42,6 +42,10 @@ impl Dollars {
     pub fn round_nearest_cent(self) -> Self {
         Dollars((self.0 * 100.0).round() / 100.0)
     }
+
+    pub fn round_to_4_digits(self) -> Self {
+        Self::from(Cents::from(self).round_to_4_digits())
+    }
 }
 
 impl From<f32> for Dollars {

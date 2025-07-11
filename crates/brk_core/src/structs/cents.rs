@@ -24,9 +24,27 @@ use super::Dollars;
 )]
 pub struct Cents(i64);
 
+const SIGNIFICANT_DIGITS: i32 = 4;
+
 impl Cents {
     pub const fn mint(value: i64) -> Self {
         Self(value)
+    }
+
+    pub fn round_to_4_digits(self) -> Self {
+        let v = self.0;
+
+        let ilog10 = v.checked_ilog10().unwrap_or(0) as i32;
+
+        Self::from(if ilog10 >= SIGNIFICANT_DIGITS {
+            let log_diff = ilog10 - SIGNIFICANT_DIGITS + 1;
+
+            let pow = 10.0_f64.powi(log_diff);
+
+            ((v as f64 / pow).round() * pow) as i64
+        } else {
+            v
+        })
     }
 }
 
