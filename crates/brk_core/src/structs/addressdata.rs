@@ -18,7 +18,7 @@ impl AddressData {
     }
 
     pub fn realized_price(&self) -> Dollars {
-        (self.realized_cap / Bitcoin::from(self.amount())).round_nearest_cent()
+        (self.realized_cap / Bitcoin::from(self.amount())).round_to_4_digits()
     }
 
     #[inline(always)]
