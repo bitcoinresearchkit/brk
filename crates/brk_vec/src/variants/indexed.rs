@@ -30,6 +30,11 @@ where
     }
 
     #[inline]
+    pub fn unwrap_read(&self, index: I, mmap: &Mmap) -> T {
+        self.0.unwrap_read(index, mmap)
+    }
+
+    #[inline]
     pub fn get_or_read(&self, index: I, mmap: &Mmap) -> Result<Option<Cow<T>>> {
         self.0.get_or_read(index, mmap)
     }

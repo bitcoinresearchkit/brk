@@ -24,7 +24,7 @@ use crate::{
 
 const ONE_KIB: usize = 1024;
 const ONE_MIB: usize = ONE_KIB * ONE_KIB;
-const MAX_CACHE_SIZE: usize = 210 * ONE_MIB;
+const MAX_CACHE_SIZE: usize = 256 * ONE_MIB;
 const DCA_AMOUNT: Dollars = Dollars::mint(100.0);
 
 #[derive(Debug, Clone)]

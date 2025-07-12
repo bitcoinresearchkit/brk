@@ -14,7 +14,7 @@ use color_eyre::owo_colors::OwoColorize;
 use env_logger::{Builder, Env};
 use jiff::{Timestamp, tz};
 
-#[inline(always)]
+#[inline]
 pub fn init(path: Option<&Path>) {
     let file = path.map(|path| {
         let _ = fs::remove_file(path);

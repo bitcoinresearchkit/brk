@@ -120,12 +120,12 @@ where
         zstd::encode_all(bytes.as_slice(), DEFAULT_COMPRESSION_LEVEL).unwrap()
     }
 
-    #[inline(always)]
+    #[inline]
     fn index_to_page_index(index: usize) -> usize {
         index / Self::PER_PAGE
     }
 
-    #[inline(always)]
+    #[inline]
     fn page_index_to_index(page_index: usize) -> usize {
         page_index * Self::PER_PAGE
     }

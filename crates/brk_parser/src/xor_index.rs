@@ -17,14 +17,14 @@ impl XORIndex {
         bytes
     }
 
-    #[inline(always)]
+    #[inline]
     pub fn byte(&mut self, mut byte: u8, xor_bytes: &XORBytes) -> u8 {
         byte ^= xor_bytes[self.0];
         self.increment();
         byte
     }
 
-    #[inline(always)]
+    #[inline]
     pub fn increment(&mut self) {
         self.0 += 1;
         if self.0 == XOR_LEN {
@@ -32,7 +32,7 @@ impl XORIndex {
         }
     }
 
-    #[inline(always)]
+    #[inline]
     pub fn add_assign(&mut self, i: usize) {
         self.0 = (self.0 + i) % XOR_LEN;
     }
