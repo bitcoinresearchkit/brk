@@ -13,7 +13,8 @@ pub fn main() -> color_eyre::Result<()> {
 
     brk_logger::init(Some(Path::new(".log")));
 
-    let bitcoin_dir = default_bitcoin_path();
+    // let bitcoin_dir = default_bitcoin_path();
+    let bitcoin_dir = Path::new("/Volumes/WD_BLACK/bitcoin");
 
     let rpc = Box::leak(Box::new(bitcoincore_rpc::Client::new(
         "http://localhost:8332",
@@ -23,11 +24,11 @@ pub fn main() -> color_eyre::Result<()> {
 
     // Can't increase main thread's stack programatically, thus we need to use another thread
     thread::Builder::new()
-        .stack_size(32 * 1024 * 1024)
+        .stack_size(256 * 1024 * 1024)
         .spawn(move || -> color_eyre::Result<()> {
             let parser = Parser::new(bitcoin_dir.join("blocks"), rpc);
 
-            let _outputs_dir = default_brk_path().join("outputs");
+            let _outputs_dir = Path::new("/Volumes/WD_BLACK/brk").join("outputs");
             let outputs_dir = _outputs_dir.as_path();
             // let outputs_dir = Path::new("../../_outputs");
 

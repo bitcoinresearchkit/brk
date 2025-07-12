@@ -1342,17 +1342,15 @@ impl Vecs {
 
         self.age_range
             .as_mut_vec()
-            .into_par_iter()
-            .for_each(|(filter, v)| {
-                let state = &mut v.state;
-
+            .into_iter()
+            .map(|(filter, v)| (filter, &mut v.state))
+            .for_each(|(filter, state)| {
                 let _ = chain_state
                     .iter()
                     .try_for_each(|block_state| -> ControlFlow<()> {
-                        let prev_days_old = block_state
-                            .timestamp
-                            .difference_in_days_between(prev_timestamp);
-                        let days_old = block_state.timestamp.difference_in_days_between(timestamp);
+                        let prev_days_old =
+                            prev_timestamp.difference_in_days_between(block_state.timestamp);
+                        let days_old = timestamp.difference_in_days_between(block_state.timestamp);
 
                         if prev_days_old == days_old {
                             return ControlFlow::Continue(());
@@ -1375,7 +1373,7 @@ impl Vecs {
     pub fn send(
         &mut self,
         height_to_sent: BTreeMap<Height, Transacted>,
-        chain_state: &[BlockState],
+        chain_state: &mut [BlockState],
     ) {
         let mut time_based_vecs = self
             .0
@@ -1388,21 +1386,17 @@ impl Vecs {
         let last_timestamp = chain_state.last().unwrap().timestamp;
         let current_price = chain_state.last().unwrap().price;
 
-        // dbg!(&height_to_sent);
-
         height_to_sent.into_iter().for_each(|(height, sent)| {
+            chain_state[height.unwrap_to_usize()].supply -= &sent.spendable_supply;
+
             let block_state = chain_state.get(height.unwrap_to_usize()).unwrap();
             let prev_price = block_state.price;
 
             let blocks_old = chain_state.len() - 1 - height.unwrap_to_usize();
 
-            let days_old = block_state
-                .timestamp
-                .difference_in_days_between(last_timestamp);
-
-            let days_old_float = block_state
-                .timestamp
-                .difference_in_days_between_float(last_timestamp);
+            let days_old = last_timestamp.difference_in_days_between(block_state.timestamp);
+            let days_old_float =
+                last_timestamp.difference_in_days_between_float(block_state.timestamp);
 
             let older_than_hour = last_timestamp
                 .checked_sub(block_state.timestamp)

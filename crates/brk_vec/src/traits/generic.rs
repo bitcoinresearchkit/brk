@@ -23,6 +23,10 @@ where
     const SIZE_OF_T: usize = size_of::<T>();
 
     #[inline]
+    fn unwrap_read(&self, index: I, mmap: &Mmap) -> T {
+        self.read(index, mmap).unwrap().unwrap()
+    }
+    #[inline]
     fn read(&self, index: I, mmap: &Mmap) -> Result<Option<T>> {
         self.read_(index.to_usize()?, mmap)
     }

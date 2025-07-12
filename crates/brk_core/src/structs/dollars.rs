@@ -243,7 +243,7 @@ impl Mul<Sats> for Dollars {
             self
         } else {
             Self::from(Cents::from(
-                u128::from(rhs) * u128::from(Cents::from(self)) / u128::from(Sats::ONE_BTC),
+                u128::from(rhs) * u128::from(Cents::from(self)) / Sats::ONE_BTC_U128,
             ))
         }
     }

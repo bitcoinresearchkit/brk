@@ -18,3 +18,8 @@ _*
 
 # Logs
 .log
+
+# Profiling
+profile.json.gz
+flamegraph.svg
+*.trace

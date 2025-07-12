@@ -1,7 +1,4 @@
-use std::{
-    cmp::Ordering,
-    ops::{Add, AddAssign, Div},
-};
+use std::ops::{Add, AddAssign, Div};
 
 use derive_deref::Deref;
 use jiff::{civil::date, tz::TimeZone};
@@ -29,7 +26,9 @@ use super::Date;
 )]
 pub struct Timestamp(u32);
 
-const ONE_DAY_IN_SEC: i64 = 24 * 60 * 60;
+const ONE_HOUR_IN_SEC: u32 = 60 * 60;
+const ONE_DAY_IN_SEC: u32 = 24 * 60 * 60;
+const ONE_DAY_IN_SEC_F64: f64 = ONE_DAY_IN_SEC as f64;
 
 impl Timestamp {
     pub const ZERO: Self = Self(0);
@@ -50,34 +49,25 @@ impl Timestamp {
         Self::from(trunc_date_time.to_zoned(TimeZone::UTC).unwrap().timestamp())
     }
 
-    pub fn difference_in_days_between(&self, other: Self) -> usize {
-        match self.cmp(&other) {
-            Ordering::Equal => 0,
-            Ordering::Greater => other.difference_in_days_between(*self),
-            Ordering::Less => {
-                (jiff::Timestamp::from(*self)
-                    .duration_until(jiff::Timestamp::from(other))
-                    .as_secs()
-                    / ONE_DAY_IN_SEC) as usize
-            }
-        }
+    #[inline]
+    pub fn difference_in_days_between(&self, older: Self) -> usize {
+        // if self.0 < older.0 {
+        //     unreachable!()
+        // }
+        ((self.0 - older.0) / ONE_DAY_IN_SEC) as usize
     }
 
-    pub fn difference_in_days_between_float(&self, other: Self) -> f64 {
-        match self.cmp(&other) {
-            Ordering::Equal => 0.0,
-            Ordering::Greater => other.difference_in_days_between_float(*self),
-            Ordering::Less => {
-                jiff::Timestamp::from(*self)
-                    .duration_until(jiff::Timestamp::from(other))
-                    .as_secs() as f64
-                    / ONE_DAY_IN_SEC as f64
-            }
-        }
+    #[inline]
+    pub fn difference_in_days_between_float(&self, older: Self) -> f64 {
+        // if self.0 < older.0 {
+        //     unreachable!()
+        // }
+        (self.0 - older.0) as f64 / ONE_DAY_IN_SEC_F64
     }
 
+    #[inline]
     pub fn is_more_than_hour(&self) -> bool {
-        jiff::Timestamp::from(*self).as_second() >= 60 * 60
+        self.0 >= ONE_HOUR_IN_SEC
     }
 }
 

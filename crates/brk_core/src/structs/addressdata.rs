@@ -21,12 +21,12 @@ impl AddressData {
         (self.realized_cap / Bitcoin::from(self.amount())).round_to_4_digits()
     }
 
-    #[inline(always)]
+    #[inline]
     pub fn has_0_sats(&self) -> bool {
         self.amount() == Sats::ZERO
     }
 
-    #[inline(always)]
+    #[inline]
     pub fn has_0_utxos(&self) -> bool {
         self.outputs_len == 0
     }
