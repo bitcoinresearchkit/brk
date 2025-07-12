@@ -9,7 +9,7 @@ use super::ByAddressType;
 pub struct AddressTypeToTypeIndexTree<T>(ByAddressType<BTreeMap<TypeIndex, T>>);
 
 impl<T> AddressTypeToTypeIndexTree<T> {
-    pub fn merge(&mut self, mut other: Self) {
+    pub fn merge(mut self, mut other: Self) -> Self {
         Self::merge_(&mut self.p2pk65, &mut other.p2pk65);
         Self::merge_(&mut self.p2pk33, &mut other.p2pk33);
         Self::merge_(&mut self.p2pkh, &mut other.p2pkh);
@@ -18,6 +18,7 @@ impl<T> AddressTypeToTypeIndexTree<T> {
         Self::merge_(&mut self.p2wsh, &mut other.p2wsh);
         Self::merge_(&mut self.p2tr, &mut other.p2tr);
         Self::merge_(&mut self.p2a, &mut other.p2a);
+        self
     }
 
     fn merge_(own: &mut BTreeMap<TypeIndex, T>, other: &mut BTreeMap<TypeIndex, T>) {

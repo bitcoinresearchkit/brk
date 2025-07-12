@@ -24,7 +24,7 @@ use crate::{
             addresstype_to_addresscount::AddressTypeToAddressCount,
             addresstype_to_height_to_addresscount::AddressTypeToHeightToAddressCount,
             addresstype_to_indexes_to_addresscount::AddressTypeToIndexesToAddressCount,
-            r#trait::DynCohortVecs,
+            addresstype_to_typeindex_set::AddressTypeToTypeIndexSet, r#trait::DynCohortVecs,
         },
     },
 };
@@ -40,6 +40,7 @@ mod address_cohorts;
 mod addresstype_to_addresscount;
 mod addresstype_to_height_to_addresscount;
 mod addresstype_to_indexes_to_addresscount;
+mod addresstype_to_typeindex_set;
 mod addresstype_to_typeindex_tree;
 mod addresstype_to_vec;
 mod common;
@@ -758,6 +759,7 @@ impl Vecs {
                         addresstype_to_typedindex_to_received_data,
                         mut height_to_sent,
                         addresstype_to_typedindex_to_sent_data,
+                        mut stored_addressindexes,
                     ) = thread::scope(|scope| {
                         scope.spawn(|| {
                             self.utxo_vecs.tick_tock_next_block(&chain_state, timestamp);
@@ -766,10 +768,10 @@ impl Vecs {
                         let received = scope.spawn(|| {
                             let mut transacted = Transacted::default();
 
-                            let mut addresstype_to_typedindex_to_received_data = AddressTypeToVec::<
-                                (TypeIndex, Sats, Option<WithAddressDataSource<AddressData>>),
-                            >::default(
-                            );
+                            let mut addresstype_to_typedindex_to_received_data =
+                                AddressTypeToVec::<(TypeIndex, Sats)>::default();
+
+                            let mut receiving_addressindexes = AddressTypeToTypeIndexSet::default();
 
                             let _ = (first_outputindex..first_outputindex + *output_count)
                                 .map(OutputIndex::from)
@@ -789,61 +791,32 @@ impl Vecs {
                                     let typeindex = outputindex_to_typeindex
                                         .unwrap_read(outputindex, &outputindex_to_typeindex_mmap);
 
-                                    let addressdata_opt = if *first_addressindexes
-                                        .get(output_type)
+                                    receiving_addressindexes
+                                        .get_mut(output_type)
                                         .unwrap()
-                                        <= typeindex
-                                    {
-                                        Some(WithAddressDataSource::New(AddressData::default()))
-                                    } else if !addresstype_to_typeindex_to_addressdata
-                                        .get(output_type)
-                                        .unwrap()
-                                        .contains_key(&typeindex)
-                                        && !addresstype_to_typeindex_to_emptyaddressdata
-                                            .get(output_type)
-                                            .unwrap()
-                                            .contains_key(&typeindex)
-                                    {
-                                        Some(
-                                            if let Some(addressdata) = stores
-                                                .get_addressdata(output_type, typeindex)
-                                                .unwrap()
-                                            {
-                                                WithAddressDataSource::FromAddressDataStore(
-                                                    addressdata,
-                                                )
-                                            } else if let Some(emptyaddressdata) = stores
-                                                .get_emptyaddressdata(output_type, typeindex)
-                                                .unwrap()
-                                            {
-                                                WithAddressDataSource::FromEmptyAddressDataStore(
-                                                    emptyaddressdata.into(),
-                                                )
-                                            } else {
-                                                unreachable!("I think ?")
-                                            },
-                                        )
-                                    } else {
-                                        None
-                                    };
+                                        .insert(typeindex);
 
                                     addresstype_to_typedindex_to_received_data
                                         .get_mut(output_type)
                                         .unwrap()
-                                        .push((typeindex, value, addressdata_opt));
+                                        .push((typeindex, value));
 
                                     ControlFlow::Continue(())
                                 });
 
-                            (transacted, addresstype_to_typedindex_to_received_data)
+                            (
+                                transacted,
+                                addresstype_to_typedindex_to_received_data,
+                                receiving_addressindexes,
+                            )
                         });
 
                         let mut height_to_sent = BTreeMap::<Height, Transacted>::default();
 
-                        let mut addresstype_to_typedindex_to_sent_data = HeightToAddressTypeToVec::<
-                            (TypeIndex, Sats, Option<WithAddressDataSource<AddressData>>),
-                        >::default(
-                        );
+                        let mut addresstype_to_typedindex_to_sent_data =
+                            HeightToAddressTypeToVec::<(TypeIndex, Sats)>::default();
+
+                        let mut sending_addressindexes = AddressTypeToTypeIndexSet::default();
 
                         // Skip coinbase
                         let _ = (first_inputindex + 1..first_inputindex + *input_count)
@@ -873,43 +846,92 @@ impl Vecs {
                                 let typeindex = outputindex_to_typeindex
                                     .unwrap_read(outputindex, &outputindex_to_typeindex_mmap);
 
-                                let addressdata_opt = if *first_addressindexes
-                                    .get(input_type)
+                                sending_addressindexes
+                                    .get_mut(input_type)
                                     .unwrap()
-                                    > typeindex
-                                    && !addresstype_to_typeindex_to_addressdata
-                                        .get(input_type)
-                                        .unwrap()
-                                        .contains_key(&typeindex)
-                                    && let Some(address_data) =
-                                        stores.get_addressdata(input_type, typeindex).unwrap()
-                                // Otherwise it was empty and got funds in the same block before sending them
-                                {
-                                    Some(WithAddressDataSource::FromAddressDataStore(address_data))
-                                } else {
-                                    None
-                                };
+                                    .insert(typeindex);
 
                                 addresstype_to_typedindex_to_sent_data
                                     .entry(prev_height)
                                     .or_default()
                                     .get_mut(input_type)
                                     .unwrap()
-                                    .push((typeindex, value, addressdata_opt));
+                                    .push((typeindex, value));
 
                                 ControlFlow::Continue(())
                             });
 
-                        let (transacted, addresstype_to_typedindex_to_received_data) =
-                            received.join().unwrap();
+                        let (
+                            transacted,
+                            addresstype_to_typedindex_to_received_data,
+                            receiving_addressindexes,
+                        ) = received.join().unwrap();
+
+                        let stored_addressindexes =
+                            sending_addressindexes.merge(receiving_addressindexes);
 
                         (
                             transacted,
                             addresstype_to_typedindex_to_received_data,
                             height_to_sent,
                             addresstype_to_typedindex_to_sent_data,
+                            stored_addressindexes,
                         )
                     });
+
+                    let mut stored_addressdata_with_source = stored_addressindexes
+                        .into_typed_vec()
+                        .into_par_iter()
+                        .flat_map(|(_type, set)| {
+                            set.into_par_iter().map(move |index| (_type, index))
+                        })
+                        .flat_map(|(_type, index)| {
+                            if *first_addressindexes.get(_type).unwrap() <= index {
+                                Some((
+                                    _type,
+                                    index,
+                                    WithAddressDataSource::New(AddressData::default()),
+                                ))
+                            } else if addresstype_to_typeindex_to_addressdata
+                                .get(_type)
+                                .unwrap()
+                                .contains_key(&index)
+                                || addresstype_to_typeindex_to_emptyaddressdata
+                                    .get(_type)
+                                    .unwrap()
+                                    .contains_key(&index)
+                            {
+                                None
+                            } else if let Some(addressdata) =
+                                stores.get_addressdata(_type, index).unwrap()
+                            {
+                                Some((
+                                    _type,
+                                    index,
+                                    WithAddressDataSource::FromAddressDataStore(addressdata),
+                                ))
+                            } else if let Some(emptyaddressdata) =
+                                stores.get_emptyaddressdata(_type, index).unwrap()
+                            {
+                                Some((
+                                    _type,
+                                    index,
+                                    WithAddressDataSource::FromEmptyAddressDataStore(
+                                        emptyaddressdata.into(),
+                                    ),
+                                ))
+                            } else {
+                                unreachable!()
+                            }
+                        })
+                        .fold(
+                            AddressTypeToTypeIndexTree::default,
+                            |mut tree, (_type, index, addressdata)| {
+                                tree.get_mut(_type).unwrap().insert(index, addressdata);
+                                tree
+                            },
+                        )
+                        .reduce(AddressTypeToTypeIndexTree::default, |a, b| a.merge(b));
 
                     thread::scope(|scope| {
                         scope.spawn(|| {
@@ -920,6 +942,7 @@ impl Vecs {
                                 price,
                                 &mut addresstype_to_address_count,
                                 &mut addresstype_to_empty_address_count,
+                                &mut stored_addressdata_with_source,
                             );
 
                             addresstype_to_typedindex_to_sent_data
@@ -934,6 +957,7 @@ impl Vecs {
                                     &height_to_timestamp_fixed_vec,
                                     height,
                                     timestamp,
+                                    &mut stored_addressdata_with_source,
                                 )
                                 .unwrap();
                         });
@@ -1332,7 +1356,8 @@ impl Vecs {
     }
 }
 
-impl AddressTypeToVec<(TypeIndex, Sats, Option<WithAddressDataSource<AddressData>>)> {
+impl AddressTypeToVec<(TypeIndex, Sats)> {
+    #[allow(clippy::too_many_arguments)]
     fn process_received(
         mut self,
         vecs: &mut address_cohorts::Vecs,
@@ -1345,76 +1370,82 @@ impl AddressTypeToVec<(TypeIndex, Sats, Option<WithAddressDataSource<AddressData
         price: Option<Dollars>,
         addresstype_to_address_count: &mut ByAddressType<usize>,
         addresstype_to_empty_address_count: &mut ByAddressType<usize>,
+        stored_addressdata_with_source: &mut AddressTypeToTypeIndexTree<
+            WithAddressDataSource<AddressData>,
+        >,
     ) {
         self.into_typed_vec().into_iter().for_each(|(_type, vec)| {
-            vec.into_iter()
-                .for_each(|(type_index, value, addressdata_opt)| {
-                    let mut is_new = false;
-                    let mut from_any_empty = false;
+            vec.into_iter().for_each(|(type_index, value)| {
+                let mut is_new = false;
+                let mut from_any_empty = false;
 
-                    let addressdata_withsource = addresstype_to_typeindex_to_addressdata
-                        .get_mut(_type)
-                        .unwrap()
-                        .entry(type_index)
-                        .or_insert_with(|| {
-                            addresstype_to_typeindex_to_emptyaddressdata
-                                .get_mut(_type)
-                                .unwrap()
-                                .remove(&type_index)
-                                .map(|ad| {
-                                    from_any_empty = true;
-                                    ad.into()
-                                })
-                                .unwrap_or_else(|| {
-                                    let addressdata = addressdata_opt.unwrap();
-                                    is_new = addressdata.is_new();
-                                    from_any_empty = addressdata.is_from_emptyaddressdata();
-                                    addressdata
-                                })
-                        });
+                let addressdata_withsource = addresstype_to_typeindex_to_addressdata
+                    .get_mut(_type)
+                    .unwrap()
+                    .entry(type_index)
+                    .or_insert_with(|| {
+                        addresstype_to_typeindex_to_emptyaddressdata
+                            .get_mut(_type)
+                            .unwrap()
+                            .remove(&type_index)
+                            .map(|ad| {
+                                from_any_empty = true;
+                                ad.into()
+                            })
+                            .unwrap_or_else(|| {
+                                let addressdata = stored_addressdata_with_source
+                                    .get_mut(_type)
+                                    .unwrap()
+                                    .remove(&type_index)
+                                    .unwrap();
+                                is_new = addressdata.is_new();
+                                from_any_empty = addressdata.is_from_emptyaddressdata();
+                                addressdata
+                            })
+                    });
 
-                    if is_new || from_any_empty {
-                        (*addresstype_to_address_count.get_mut(_type).unwrap()) += 1;
-                        if from_any_empty {
-                            (*addresstype_to_empty_address_count.get_mut(_type).unwrap()) -= 1;
-                        }
+                if is_new || from_any_empty {
+                    (*addresstype_to_address_count.get_mut(_type).unwrap()) += 1;
+                    if from_any_empty {
+                        (*addresstype_to_empty_address_count.get_mut(_type).unwrap()) -= 1;
+                    }
+                }
+
+                let addressdata = addressdata_withsource.deref_mut();
+
+                let prev_amount = addressdata.amount();
+
+                let amount = prev_amount + value;
+
+                if is_new
+                    || from_any_empty
+                    || vecs.amount_range.get_mut(amount).0.clone()
+                        != vecs.amount_range.get_mut(prev_amount).0.clone()
+                {
+                    // dbg!((prev_amount, amount, is_new));
+
+                    if !is_new && !from_any_empty {
+                        let state = &mut vecs.amount_range.get_mut(prev_amount).1.state;
+                        // dbg!((prev_amount, &state.address_count, &addressdata));
+                        state.subtract(addressdata);
                     }
 
-                    let addressdata = addressdata_withsource.deref_mut();
+                    addressdata.receive(value, price);
 
-                    let prev_amount = addressdata.amount();
-
-                    let amount = prev_amount + value;
-
-                    if is_new
-                        || from_any_empty
-                        || vecs.amount_range.get_mut(amount).0.clone()
-                            != vecs.amount_range.get_mut(prev_amount).0.clone()
-                    {
-                        // dbg!((prev_amount, amount, is_new));
-
-                        if !is_new && !from_any_empty {
-                            let state = &mut vecs.amount_range.get_mut(prev_amount).1.state;
-                            // dbg!((prev_amount, &state.address_count, &addressdata));
-                            state.subtract(addressdata);
-                        }
-
-                        addressdata.receive(value, price);
-
-                        vecs.amount_range.get_mut(amount).1.state.add(addressdata);
-                    } else {
-                        vecs.amount_range.get_mut(amount).1.state.receive(
-                            addressdata,
-                            value,
-                            price,
-                        );
-                    }
-                });
+                    vecs.amount_range.get_mut(amount).1.state.add(addressdata);
+                } else {
+                    vecs.amount_range
+                        .get_mut(amount)
+                        .1
+                        .state
+                        .receive(addressdata, value, price);
+                }
+            });
         });
     }
 }
 
-impl HeightToAddressTypeToVec<(TypeIndex, Sats, Option<WithAddressDataSource<AddressData>>)> {
+impl HeightToAddressTypeToVec<(TypeIndex, Sats)> {
     #[allow(clippy::too_many_arguments)]
     fn process_sent(
         self,
@@ -1432,6 +1463,9 @@ impl HeightToAddressTypeToVec<(TypeIndex, Sats, Option<WithAddressDataSource<Add
         height_to_timestamp_fixed_vec: &[Timestamp],
         height: Height,
         timestamp: Timestamp,
+        stored_addressdata_with_source: &mut AddressTypeToTypeIndexTree<
+            WithAddressDataSource<AddressData>,
+        >,
     ) -> Result<()> {
         self.0.into_iter().try_for_each(|(prev_height, mut v)| {
             let prev_price = height_to_close_vec
@@ -1452,70 +1486,74 @@ impl HeightToAddressTypeToVec<(TypeIndex, Sats, Option<WithAddressDataSource<Add
                 .is_more_than_hour();
 
             v.into_typed_vec().into_iter().try_for_each(|(_type, vec)| {
-                vec.into_iter()
-                    .try_for_each(|(type_index, value, addressdata_opt)| {
-                        let typeindex_to_addressdata = addresstype_to_typeindex_to_addressdata
-                            .get_mut(_type)
-                            .unwrap();
+                vec.into_iter().try_for_each(|(type_index, value)| {
+                    let typeindex_to_addressdata = addresstype_to_typeindex_to_addressdata
+                        .get_mut(_type)
+                        .unwrap();
 
-                        let addressdata_withsource = typeindex_to_addressdata
-                            .entry(type_index)
-                            .or_insert_with(|| addressdata_opt.unwrap());
+                    let addressdata_withsource = typeindex_to_addressdata
+                        .entry(type_index)
+                        .or_insert_with(|| {
+                            stored_addressdata_with_source
+                                .get_mut(_type)
+                                .unwrap()
+                                .remove(&type_index)
+                                .unwrap()
+                        });
 
-                        let addressdata = addressdata_withsource.deref_mut();
+                    let addressdata = addressdata_withsource.deref_mut();
 
-                        let prev_amount = addressdata.amount();
+                    let prev_amount = addressdata.amount();
 
-                        let amount = prev_amount.checked_sub(value).unwrap();
+                    let amount = prev_amount.checked_sub(value).unwrap();
 
-                        let will_be_empty = addressdata.outputs_len - 1 == 0;
+                    let will_be_empty = addressdata.outputs_len - 1 == 0;
 
-                        // dbg!((prev_amount, amount, will_be_empty));
+                    // dbg!((prev_amount, amount, will_be_empty));
 
-                        if will_be_empty
-                            || vecs.amount_range.get_mut(amount).0.clone()
-                                != vecs.amount_range.get_mut(prev_amount).0.clone()
-                        {
-                            vecs.amount_range
-                                .get_mut(prev_amount)
-                                .1
-                                .state
-                                .subtract(addressdata);
+                    if will_be_empty
+                        || vecs.amount_range.get_mut(amount).0.clone()
+                            != vecs.amount_range.get_mut(prev_amount).0.clone()
+                    {
+                        vecs.amount_range
+                            .get_mut(prev_amount)
+                            .1
+                            .state
+                            .subtract(addressdata);
 
-                            addressdata.send(value, prev_price)?;
+                        addressdata.send(value, prev_price)?;
 
-                            if will_be_empty {
-                                if amount.is_not_zero() {
-                                    unreachable!()
-                                }
-
-                                (*addresstype_to_address_count.get_mut(_type).unwrap()) -= 1;
-                                (*addresstype_to_empty_address_count.get_mut(_type).unwrap()) += 1;
-
-                                let addressdata =
-                                    typeindex_to_addressdata.remove(&type_index).unwrap();
-
-                                addresstype_to_typeindex_to_emptyaddressdata
-                                    .get_mut(_type)
-                                    .unwrap()
-                                    .insert(type_index, addressdata.into());
-                            } else {
-                                vecs.amount_range.get_mut(amount).1.state.add(addressdata);
+                        if will_be_empty {
+                            if amount.is_not_zero() {
+                                unreachable!()
                             }
-                        } else {
-                            vecs.amount_range.get_mut(amount).1.state.send(
-                                addressdata,
-                                value,
-                                price,
-                                prev_price,
-                                blocks_old,
-                                days_old,
-                                older_than_hour,
-                            )?;
-                        }
 
-                        Ok(())
-                    })
+                            (*addresstype_to_address_count.get_mut(_type).unwrap()) -= 1;
+                            (*addresstype_to_empty_address_count.get_mut(_type).unwrap()) += 1;
+
+                            let addressdata = typeindex_to_addressdata.remove(&type_index).unwrap();
+
+                            addresstype_to_typeindex_to_emptyaddressdata
+                                .get_mut(_type)
+                                .unwrap()
+                                .insert(type_index, addressdata.into());
+                        } else {
+                            vecs.amount_range.get_mut(amount).1.state.add(addressdata);
+                        }
+                    } else {
+                        vecs.amount_range.get_mut(amount).1.state.send(
+                            addressdata,
+                            value,
+                            price,
+                            prev_price,
+                            blocks_old,
+                            days_old,
+                            older_than_hour,
+                        )?;
+                    }
+
+                    Ok(())
+                })
             })
         })
     }
