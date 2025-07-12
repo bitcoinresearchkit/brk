@@ -8,7 +8,6 @@ use axum::http::{
     header::{self, IF_MODIFIED_SINCE, IF_NONE_MATCH},
 };
 use jiff::{Timestamp, civil::DateTime, fmt::strtime, tz::TimeZone};
-use log::info;
 
 const MODIFIED_SINCE_FORMAT: &str = "%a, %d %b %Y %H:%M:%S GMT";
 
@@ -140,7 +139,11 @@ impl HeaderMapExtended for HeaderMap {
 
     // https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/MIME_types/Common_types
     fn insert_content_type(&mut self, path: &Path) {
-        match path.extension().unwrap().to_str().unwrap() {
+        match path
+            .extension()
+            .map(|s| s.to_str().unwrap_or_default())
+            .unwrap_or_default()
+        {
             "js" => self.insert_content_type_application_javascript(),
             "json" | "map" => self.insert_content_type_application_json(),
             "html" => self.insert_content_type_text_html(),
@@ -152,10 +155,7 @@ impl HeaderMapExtended for HeaderMap {
             "jpg" | "jpeg" => self.insert_content_type_image_jpeg(),
             "png" => self.insert_content_type_image_png(),
             "webmanifest" => self.insert_content_type_application_manifest_json(),
-            extension => {
-                info!("Extension unsupported: {extension}");
-                panic!()
-            }
+            _ => {}
         }
     }
 
