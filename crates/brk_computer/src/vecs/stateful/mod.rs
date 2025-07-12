@@ -57,7 +57,7 @@ use range_map::*;
 use r#trait::CohortVecs;
 pub use withaddressdatasource::WithAddressDataSource;
 
-const VERSION: Version = Version::new(11);
+const VERSION: Version = Version::new(12);
 
 #[derive(Clone)]
 pub struct Vecs {
@@ -666,11 +666,6 @@ impl Vecs {
             let height_to_timestamp_fixed_vec = height_to_timestamp_fixed.collect().unwrap();
             let outputindex_range_to_height = RangeMap::from(height_to_first_outputindex);
 
-            let mut outputindex_to_value_type_typeindex: BTreeMap<
-                OutputIndex,
-                (Sats, OutputType, Option<TypeIndex>),
-            > = BTreeMap::default();
-
             let mut unspendable_supply = if let Some(prev_height) = starting_height.decremented() {
                 self.height_to_unspendable_supply
                     .into_iter()
@@ -731,37 +726,36 @@ impl Vecs {
                     let output_count = height_to_output_count_iter.unwrap_get_inner(height);
                     let input_count = height_to_input_count_iter.unwrap_get_inner(height);
 
-                    let first_addressindexes: ByAddressType<TypeIndex> =
-                        ByAddressType {
-                            p2a: height_to_first_p2aaddressindex_iter
-                                .unwrap_get_inner(height)
-                                .into(),
-                            p2pk33: height_to_first_p2pk33addressindex_iter
-                                .unwrap_get_inner(height)
-                                .into(),
-                            p2pk65: height_to_first_p2pk65addressindex_iter
-                                .unwrap_get_inner(height)
-                                .into(),
-                            p2pkh: height_to_first_p2pkhaddressindex_iter
-                                .unwrap_get_inner(height)
-                                .into(),
-                            p2sh: height_to_first_p2shaddressindex_iter
-                                .unwrap_get_inner(height)
-                                .into(),
-                            p2tr: height_to_first_p2traddressindex_iter
-                                .unwrap_get_inner(height)
-                                .into(),
-                            p2wpkh: height_to_first_p2wpkhaddressindex_iter
-                                .unwrap_get_inner(height)
-                                .into(),
-                            p2wsh: height_to_first_p2wshaddressindex_iter
-                                .unwrap_get_inner(height)
-                                .into(),
-                        };
+                    let first_addressindexes: ByAddressType<TypeIndex> = ByAddressType {
+                        p2a: height_to_first_p2aaddressindex_iter
+                            .unwrap_get_inner(height)
+                            .into(),
+                        p2pk33: height_to_first_p2pk33addressindex_iter
+                            .unwrap_get_inner(height)
+                            .into(),
+                        p2pk65: height_to_first_p2pk65addressindex_iter
+                            .unwrap_get_inner(height)
+                            .into(),
+                        p2pkh: height_to_first_p2pkhaddressindex_iter
+                            .unwrap_get_inner(height)
+                            .into(),
+                        p2sh: height_to_first_p2shaddressindex_iter
+                            .unwrap_get_inner(height)
+                            .into(),
+                        p2tr: height_to_first_p2traddressindex_iter
+                            .unwrap_get_inner(height)
+                            .into(),
+                        p2wpkh: height_to_first_p2wpkhaddressindex_iter
+                            .unwrap_get_inner(height)
+                            .into(),
+                        p2wsh: height_to_first_p2wshaddressindex_iter
+                            .unwrap_get_inner(height)
+                            .into(),
+                    };
 
                     let (
-                        (sent_outputindexes, mut height_to_sent, addresstype_to_typedindex_to_sent_data),
-                        (mut received_outputindexes, mut transacted, addresstype_to_typedindex_to_received_data),
+                        (mut height_to_sent, addresstype_to_typedindex_to_sent_data),
+                        (mut transacted, addresstype_to_typedindex_to_received_data),
                     ) = thread::scope(|s| {
                         if chain_state_starting_height <= height {
                             s.spawn(|| {
@@ -772,158 +766,157 @@ impl Vecs {
                         let sent_handle = s.spawn(|| {
                             // Skip coinbase
                             (first_inputindex + 1..first_inputindex + *input_count)
-                                .into_par_iter()
-                                .map(InputIndex::from)
-                                .map(|inputindex| {
-                                    let outputindex = inputindex_to_outputindex
-                                        .get_or_read(inputindex, &inputindex_to_outputindex_mmap)
-                                        .unwrap()
-                                        .unwrap()
-                                        .into_owned();
+                                    .into_par_iter()
+                                    .map(InputIndex::from)
+                                    .map(|inputindex| {
+                                        let outputindex = inputindex_to_outputindex
+                                            .get_or_read(
+                                                inputindex,
+                                                &inputindex_to_outputindex_mmap,
+                                            )
+                                            .unwrap()
+                                            .unwrap()
+                                            .into_owned();
 
-                                    let cached = outputindex_to_value_type_typeindex.get(&outputindex).cloned();
-
-                                    let (value, input_type) = cached.map_or_else(|| (
-                                        outputindex_to_value
+                                        let value = outputindex_to_value
                                             .get_or_read(outputindex, &outputindex_to_value_mmap)
                                             .unwrap()
                                             .unwrap()
-                                            .into_owned(),
-                                        outputindex_to_outputtype
-                                            .get_or_read(outputindex, &outputindex_to_outputtype_mmap)
+                                            .into_owned();
+
+                                        let input_type = outputindex_to_outputtype
+                                            .get_or_read(
+                                                outputindex,
+                                                &outputindex_to_outputtype_mmap,
+                                            )
                                             .unwrap()
                                             .unwrap()
-                                            .into_owned()
-                                        ), |(value,_type,..)| (value, _type));
+                                            .into_owned();
 
-                                    let prev_height = *outputindex_range_to_height.get(outputindex).unwrap();
+                                        let prev_height =
+                                            *outputindex_range_to_height.get(outputindex).unwrap();
 
-                                    if input_type.is_unspendable() {
-                                        unreachable!()
-                                    } else if input_type.is_not_address() {
-                                        return (
-                                            outputindex,
+                                        if input_type.is_unspendable() {
+                                            unreachable!()
+                                        } else if input_type.is_not_address() {
+                                            return (
+                                                prev_height,
+                                                value,
+                                                input_type,
+                                                None,
+                                            );
+                                        }
+
+                                        let typeindex = outputindex_to_typeindex
+                                            .get_or_read(
+                                                outputindex,
+                                                &outputindex_to_typeindex_mmap,
+                                            )
+                                            .unwrap()
+                                            .unwrap()
+                                            .into_owned();
+
+                                        let addressdata_opt = if input_type.is_address()
+                                            && *first_addressindexes.get(input_type).unwrap()
+                                                > typeindex
+                                            && !addresstype_to_typeindex_to_addressdata
+                                                .get(input_type)
+                                                .unwrap()
+                                                .contains_key(&typeindex)
+                                            && let Some(address_data) = stores
+                                                .get_addressdata(input_type, typeindex)
+                                                .unwrap()
+                                        // Otherwise it was empty and got funds in the same block before sending them
+                                        {
+                                            Some(WithAddressDataSource::FromAddressDataStore(
+                                                address_data,
+                                            ))
+                                        } else {
+                                            None
+                                        };
+
+                                        (
                                             prev_height,
                                             value,
                                             input_type,
-                                            None
+                                            Some((typeindex, addressdata_opt)),
                                         )
-                                    }
-
-                                    let typeindex = cached.map_or_else(|| outputindex_to_typeindex
-                                        .get_or_read(outputindex, &outputindex_to_typeindex_mmap)
-                                        .unwrap()
-                                        .unwrap()
-                                        .into_owned(), |(_, _, typeindex)| typeindex.unwrap());
-
-                                    let addressdata_opt = if input_type.is_address()
-                                        && *first_addressindexes.get(input_type).unwrap()
-                                            > typeindex
-                                        && !addresstype_to_typeindex_to_addressdata
-                                            .get(input_type)
-                                            .unwrap()
-                                            .contains_key(&typeindex)
-                                    && let Some(address_data) =
-                                        stores.get_addressdata(input_type, typeindex).unwrap()
-                                        // Otherwise it was empty and got funds in the same block before sending them
-                                    {
-                                        Some(WithAddressDataSource::FromAddressDataStore(
-                                            address_data,
-                                        ))
-                                    } else {
-                                        None
-                                    };
-
-                                    (
-                                        outputindex,
-                                        prev_height,
-                                        value,
-                                        input_type,
-                                        Some((typeindex,
-                                            addressdata_opt
-                                        ))
+                                    })
+                                    .fold(
+                                        || {
+                                            (
+                                                BTreeMap::<Height, Transacted>::default(),
+                                                HeightToAddressTypeToVec::<(
+                                                    TypeIndex,
+                                                    Sats,
+                                                    Option<WithAddressDataSource<AddressData>>,
+                                                )>::default(
+                                                ),
+                                            )
+                                        },
+                                        |(mut tree, mut tree2),
+                                         (
+                                            height,
+                                            value,
+                                            input_type,
+                                            address_data_opt,
+                                        )| {
+                                            tree.entry(height)
+                                                .or_default()
+                                                .iterate(value, input_type);
+                                            if let Some((typeindex, addressdata_opt)) =
+                                                address_data_opt
+                                            {
+                                                tree2
+                                                    .entry(height)
+                                                    .or_default()
+                                                    .get_mut(input_type)
+                                                    .unwrap()
+                                                    .push((typeindex, value, addressdata_opt));
+                                            }
+                                            (tree, tree2)
+                                        },
                                     )
-                                })
-                                .fold(
-                                    || {
-                                        (
-                                            Vec::<OutputIndex>::default(),
-                                            BTreeMap::<Height, Transacted>::default(),
-                                            HeightToAddressTypeToVec::<(
-                                                TypeIndex,
-                                                Sats,
-                                                Option<WithAddressDataSource<AddressData>>,
-                                            )>::default(),
-                                        )
-                                    },
-                                    |(mut vec, mut tree, mut tree2),
-                                     (
-                                        outputindex,
-                                        height,
-                                        value,
-                                        input_type,
-                                        address_data_opt
-                                    )| {
-                                        vec.push(outputindex);
-                                        tree.entry(height).or_default().iterate(value, input_type);
-                                        if let Some((typeindex,
-                                        addressdata_opt)) = address_data_opt {
-                                            tree2.entry(height).or_default().get_mut(input_type).unwrap().push((
-                                                typeindex,
-                                                value,
-                                                addressdata_opt,
-                                            ));
-                                        }
-                                        (vec, tree, tree2)
-                                    },
-                                )
-                                .reduce(
-                                    || {
-                                        (
-                                            Vec::<OutputIndex>::default(),
-                                            BTreeMap::<Height, Transacted>::default(),
-                                            HeightToAddressTypeToVec::<(
-                                                TypeIndex,
-                                                Sats,
-                                                Option<WithAddressDataSource<AddressData>>,
-                                            )>::default(),
-                                        )
-                                    },
-                                    |(mut first_vec, first_tree, first_tree2), (mut second_vec, second_tree, second_tree2)| {
-                                        let vec = if first_vec.len() > second_vec.len() {
-                                            first_vec.append(&mut second_vec);
-                                            first_vec
-                                        } else {
-                                            second_vec.append(&mut first_vec);
-                                            second_vec
-                                        };
+                                    .reduce(
+                                        || {
+                                            (
+                                                BTreeMap::<Height, Transacted>::default(),
+                                                HeightToAddressTypeToVec::<(
+                                                    TypeIndex,
+                                                    Sats,
+                                                    Option<WithAddressDataSource<AddressData>>,
+                                                )>::default(
+                                                ),
+                                            )
+                                        },
+                                        |(first_tree, first_tree2), (second_tree, second_tree2)| {
+                                            let (mut tree_source, tree_to_consume) =
+                                                if first_tree.len() > second_tree.len() {
+                                                    (first_tree, second_tree)
+                                                } else {
+                                                    (second_tree, first_tree)
+                                                };
+                                            tree_to_consume.into_iter().for_each(|(k, v)| {
+                                                *tree_source.entry(k).or_default() += v;
+                                            });
 
-                                        let (mut tree_source, tree_to_consume) =
-                                            if first_tree.len() > second_tree.len() {
-                                                (first_tree, second_tree)
-                                            } else {
-                                                (second_tree, first_tree)
-                                            };
-                                        tree_to_consume.into_iter().for_each(|(k, v)| {
-                                            *tree_source.entry(k).or_default() += v;
-                                        });
+                                            let (mut tree_source2, tree_to_consume2) =
+                                                if first_tree2.len() > second_tree2.len() {
+                                                    (first_tree2, second_tree2)
+                                                } else {
+                                                    (second_tree2, first_tree2)
+                                                };
+                                            tree_to_consume2.0.into_iter().for_each(|(k, v)| {
+                                                tree_source2.entry(k).or_default().merge(v);
+                                            });
 
-                                        let (mut tree_source2, tree_to_consume2) =
-                                            if first_tree2.len() > second_tree2.len() {
-                                                (first_tree2, second_tree2)
-                                            } else {
-                                                (second_tree2, first_tree2)
-                                            };
-                                        tree_to_consume2.0.into_iter().for_each(|(k, v)| {
-                                            tree_source2.entry(k).or_default().merge(v);
-                                        });
-
-                                        (vec, tree_source, tree_source2)
-                                    },
-                                )
+                                            (tree_source, tree_source2)
+                                        },
+                                    )
                         });
 
-                        let received_output = (first_outputindex..first_outputindex + *output_count)
+                        let received_output = (first_outputindex
+                            ..first_outputindex + *output_count)
                             .into_par_iter()
                             .map(OutputIndex::from)
                             .map(|outputindex| {
@@ -940,7 +933,7 @@ impl Vecs {
                                     .into_owned();
 
                                 if output_type.is_not_address() {
-                                    return (outputindex, value, output_type, None);
+                                    return (value, output_type, None);
                                 }
 
                                 let typeindex = outputindex_to_typeindex
@@ -949,25 +942,26 @@ impl Vecs {
                                     .unwrap()
                                     .into_owned();
 
-                                let addressdata_opt = if *first_addressindexes.get(output_type).unwrap()
-                                    <= typeindex {
+                                let addressdata_opt = if *first_addressindexes
+                                    .get(output_type)
+                                    .unwrap()
+                                    <= typeindex
+                                {
                                     Some(WithAddressDataSource::New(AddressData::default()))
                                 } else if !addresstype_to_typeindex_to_addressdata
                                     .get(output_type)
                                     .unwrap()
                                     .contains_key(&typeindex)
-                                && !addresstype_to_typeindex_to_emptyaddressdata
-                                    .get(output_type)
-                                    .unwrap()
-                                    .contains_key(&typeindex) {
+                                    && !addresstype_to_typeindex_to_emptyaddressdata
+                                        .get(output_type)
+                                        .unwrap()
+                                        .contains_key(&typeindex)
+                                {
                                     Some(
-                                        if let Some(addressdata) = stores
-                                            .get_addressdata(output_type, typeindex)
-                                            .unwrap()
+                                        if let Some(addressdata) =
+                                            stores.get_addressdata(output_type, typeindex).unwrap()
                                         {
-                                            WithAddressDataSource::FromAddressDataStore(
-                                                addressdata,
-                                            )
+                                            WithAddressDataSource::FromAddressDataStore(addressdata)
                                         } else if let Some(emptyaddressdata) = stores
                                             .get_emptyaddressdata(output_type, typeindex)
                                             .unwrap()
@@ -983,56 +977,15 @@ impl Vecs {
                                     None
                                 };
 
-                                (outputindex, value, output_type, Some((typeindex, addressdata_opt)))
+                                (
+                                    value,
+                                    output_type,
+                                    Some((typeindex, addressdata_opt)),
+                                )
                             })
                             .fold(
                                 || {
                                     (
-                                        BTreeMap::<
-                                            OutputIndex,
-                                            (Sats, OutputType, Option<TypeIndex>),
-                                        >::default(),
-                                        Transacted::default(),
-                                        AddressTypeToVec::<(
-                                            TypeIndex,
-                                            Sats,
-                                            Option<WithAddressDataSource<AddressData>>,
-                                        )>::default(
-                                        ),
-                                    )
-                                },
-                                |(mut received_outputindexes, mut transacted, mut vecs),
-                                    (
-                                    outputindex,
-                                    value,
-                                    output_type,
-                                    typeindex_with_addressdata_opt,
-                                )| {
-                                    if output_type.is_address() {
-                                        received_outputindexes.insert(outputindex, (value, output_type, typeindex_with_addressdata_opt.as_ref().map(|(v, ..)| *v)));
-                                    }
-
-                                    transacted.iterate(value, output_type);
-                                    if let Some(vec) = vecs.get_mut(output_type) {
-                                        let (typeindex,
-                                        addressdata_opt) = typeindex_with_addressdata_opt.unwrap();
-                                        vec.push((
-                                            typeindex,
-                                            value,
-                                            addressdata_opt,
-                                        ));
-                                    }
-
-                                    (received_outputindexes, transacted, vecs)
-                                },
-                            )
-                            .reduce(
-                                || {
-                                    (
-                                        BTreeMap::<
-                                            OutputIndex,
-                                            (Sats, OutputType, Option<TypeIndex>),
-                                        >::default(),
                                         Transacted::default(),
                                         AddressTypeToVec::<(
                                             TypeIndex,
@@ -1041,18 +994,37 @@ impl Vecs {
                                         )>::default(),
                                     )
                                 },
-                                |(received_outputindexes, transacted, mut vecs), (other_received_outputindexes, other_transacted, other_vecs)| {
-                                    let (mut tree_source, mut tree_to_consume) =
-                                        if received_outputindexes.len() > other_received_outputindexes.len() {
-                                            (received_outputindexes, other_received_outputindexes)
-                                        } else {
-                                            (other_received_outputindexes, received_outputindexes)
-                                        };
-                                    tree_source.append(&mut tree_to_consume);
+                                |(mut transacted, mut vecs),
+                                 (
+                                    value,
+                                    output_type,
+                                    typeindex_with_addressdata_opt,
+                                )| {
+                                    transacted.iterate(value, output_type);
+                                    if let Some(vec) = vecs.get_mut(output_type) {
+                                        let (typeindex, addressdata_opt) =
+                                            typeindex_with_addressdata_opt.unwrap();
+                                        vec.push((typeindex, value, addressdata_opt));
+                                    }
 
+                                    (transacted, vecs)
+                                },
+                            )
+                            .reduce(
+                                || {
+                                    (
+                                        Transacted::default(),
+                                        AddressTypeToVec::<(
+                                            TypeIndex,
+                                            Sats,
+                                            Option<WithAddressDataSource<AddressData>>,
+                                        )>::default(),
+                                    )
+                                },
+                                |(transacted, mut vecs), (other_transacted, other_vecs)| {
                                     vecs.merge(other_vecs);
 
-                                    (tree_source, transacted + other_transacted, vecs)
+                                    (transacted + other_transacted, vecs)
                                 },
                             );
 
@@ -1088,26 +1060,7 @@ impl Vecs {
                         .iterate(Sats::FIFTY_BTC, OutputType::P2PK65);
                     };
 
-
-
                     thread::scope(|scope| -> Result<()> {
-                        scope.spawn(|| {
-                            let min_outputindex = if let Some(min_height) = height.checked_sub(Height::new(5000)) {
-                                height_to_first_outputindex.into_iter().unwrap_get_inner(min_height)
-                            } else {
-                                OutputIndex::ZERO
-                            };
-                            outputindex_to_value_type_typeindex.retain(|k, _| *k >= min_outputindex);
-                            sent_outputindexes
-                                .into_iter()
-                                .filter(|k| *k >= min_outputindex)
-                                .for_each(|outputindex| {
-                                outputindex_to_value_type_typeindex.remove(&outputindex);
-                            });
-                            outputindex_to_value_type_typeindex.append(&mut received_outputindexes);
-
-                        });
-
                         scope.spawn(|| {
                             // Push current block state before processing sends and receives
                             chain_state.push(BlockState {
@@ -1147,7 +1100,7 @@ impl Vecs {
                             height_to_close_vec.as_ref(),
                             &height_to_timestamp_fixed_vec,
                             height,
-                            timestamp
+                            timestamp,
                         )?;
 
                         Ok(())
@@ -1199,18 +1152,15 @@ impl Vecs {
                     let dateindex = is_date_last_height.then_some(dateindex);
                     separate_utxo_vecs
                         .into_par_iter()
-                        .map(|(_, v)| v as &mut dyn DynCohortVecs).chain(
+                        .map(|(_, v)| v as &mut dyn DynCohortVecs)
+                        .chain(
                             separate_address_vecs
                                 .into_par_iter()
-                                .map(|(_, v)| v as &mut dyn DynCohortVecs)
+                                .map(|(_, v)| v as &mut dyn DynCohortVecs),
                         )
                         .try_for_each(|v| {
                             v.compute_then_force_push_unrealized_states(
-                                height,
-                                price,
-                                dateindex,
-                                date_price,
-                                exit,
+                                height, price, dateindex, date_price, exit,
                             )
                         })?;
 
