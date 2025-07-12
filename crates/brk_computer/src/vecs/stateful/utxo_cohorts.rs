@@ -1340,33 +1340,36 @@ impl Vecs {
 
         let prev_timestamp = chain_state.last().unwrap().timestamp;
 
-        self.age_range
+        let mut vecs = self
+            .age_range
             .as_mut_vec()
             .into_iter()
             .map(|(filter, v)| (filter, &mut v.state))
-            .for_each(|(filter, state)| {
-                let _ = chain_state
-                    .iter()
-                    .try_for_each(|block_state| -> ControlFlow<()> {
-                        let prev_days_old =
-                            prev_timestamp.difference_in_days_between(block_state.timestamp);
-                        let days_old = timestamp.difference_in_days_between(block_state.timestamp);
+            .collect::<Vec<_>>();
 
-                        if prev_days_old == days_old {
-                            return ControlFlow::Continue(());
-                        }
+        let _ = chain_state
+            .iter()
+            .try_for_each(|block_state| -> ControlFlow<()> {
+                let prev_days_old =
+                    prev_timestamp.difference_in_days_between(block_state.timestamp);
+                let days_old = timestamp.difference_in_days_between(block_state.timestamp);
 
-                        let is = filter.contains(days_old);
-                        let was = filter.contains(prev_days_old);
+                if prev_days_old == days_old {
+                    return ControlFlow::Continue(());
+                }
 
-                        if is && !was {
-                            state.increment(&block_state.supply, block_state.price);
-                        } else if was && !is {
-                            state.decrement(&block_state.supply, block_state.price);
-                        }
+                vecs.iter_mut().for_each(|(filter, state)| {
+                    let is = filter.contains(days_old);
+                    let was = filter.contains(prev_days_old);
 
-                        ControlFlow::Continue(())
-                    });
+                    if is && !was {
+                        state.increment(&block_state.supply, block_state.price);
+                    } else if was && !is {
+                        state.decrement(&block_state.supply, block_state.price);
+                    }
+                });
+
+                ControlFlow::Continue(())
             });
     }
 
