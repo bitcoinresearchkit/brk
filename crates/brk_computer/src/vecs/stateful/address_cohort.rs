@@ -83,6 +83,7 @@ impl Vecs {
                 indexes,
                 fetched,
                 compute_relative_to_all,
+                false,
             )?,
         })
     }

@@ -139,6 +139,7 @@ impl Vecs {
         indexes: &indexes::Vecs,
         fetched: Option<&fetched::Vecs>,
         compute_relative_to_all: bool,
+        ratio_extended: bool,
     ) -> color_eyre::Result<Self> {
         let compute_dollars = fetched.is_some();
 
@@ -444,6 +445,7 @@ impl Vecs {
                     format,
                     computation,
                     indexes,
+                    ratio_extended,
                 )
                 .unwrap()
             }),

@@ -189,6 +189,7 @@ impl Vecs {
                 format,
                 computation,
                 indexes,
+                true,
             )?,
             indexes_to_active_price: ComputedVecsFromHeight::forced_import(
                 path,
@@ -208,6 +209,7 @@ impl Vecs {
                 format,
                 computation,
                 indexes,
+                true,
             )?,
             indexes_to_true_market_mean: ComputedVecsFromHeight::forced_import(
                 path,
@@ -227,6 +229,7 @@ impl Vecs {
                 format,
                 computation,
                 indexes,
+                true,
             )?,
             indexes_to_cointime_value_destroyed: ComputedVecsFromHeight::forced_import(
                 path,
@@ -286,6 +289,7 @@ impl Vecs {
                 format,
                 computation,
                 indexes,
+                true,
             )?,
         })
     }

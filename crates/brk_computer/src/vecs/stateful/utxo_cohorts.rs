@@ -44,6 +44,7 @@ impl Vecs {
                     fetched,
                     states_path,
                     false,
+                    true,
                 )?,
                 term: ByTerm {
                     short: utxo_cohort::Vecs::forced_import(
@@ -56,6 +57,7 @@ impl Vecs {
                         fetched,
                         states_path,
                         true,
+                        true,
                     )?,
                     long: utxo_cohort::Vecs::forced_import(
                         path,
@@ -66,6 +68,7 @@ impl Vecs {
                         indexes,
                         fetched,
                         states_path,
+                        true,
                         true,
                     )?,
                 },
@@ -80,6 +83,7 @@ impl Vecs {
                         fetched,
                         states_path,
                         true,
+                        true,
                     )?,
                     _1: utxo_cohort::Vecs::forced_import(
                         path,
@@ -90,6 +94,7 @@ impl Vecs {
                         indexes,
                         fetched,
                         states_path,
+                        true,
                         true,
                     )?,
                     _2: utxo_cohort::Vecs::forced_import(
@@ -102,6 +107,7 @@ impl Vecs {
                         fetched,
                         states_path,
                         true,
+                        true,
                     )?,
                     _3: utxo_cohort::Vecs::forced_import(
                         path,
@@ -113,6 +119,7 @@ impl Vecs {
                         fetched,
                         states_path,
                         true,
+                        true,
                     )?,
                     _4: utxo_cohort::Vecs::forced_import(
                         path,
@@ -123,6 +130,7 @@ impl Vecs {
                         indexes,
                         fetched,
                         states_path,
+                        true,
                         true,
                     )?,
                 },
@@ -137,6 +145,7 @@ impl Vecs {
                         fetched,
                         states_path,
                         true,
+                        false,
                     )?,
                     p2pk33: utxo_cohort::Vecs::forced_import(
                         path,
@@ -148,6 +157,7 @@ impl Vecs {
                         fetched,
                         states_path,
                         true,
+                        false,
                     )?,
                     p2pkh: utxo_cohort::Vecs::forced_import(
                         path,
@@ -159,6 +169,7 @@ impl Vecs {
                         fetched,
                         states_path,
                         true,
+                        false,
                     )?,
                     p2sh: utxo_cohort::Vecs::forced_import(
                         path,
@@ -170,6 +181,7 @@ impl Vecs {
                         fetched,
                         states_path,
                         true,
+                        false,
                     )?,
                     p2wpkh: utxo_cohort::Vecs::forced_import(
                         path,
@@ -181,6 +193,7 @@ impl Vecs {
                         fetched,
                         states_path,
                         true,
+                        false,
                     )?,
                     p2wsh: utxo_cohort::Vecs::forced_import(
                         path,
@@ -192,6 +205,7 @@ impl Vecs {
                         fetched,
                         states_path,
                         true,
+                        false,
                     )?,
                     p2tr: utxo_cohort::Vecs::forced_import(
                         path,
@@ -203,6 +217,7 @@ impl Vecs {
                         fetched,
                         states_path,
                         true,
+                        false,
                     )?,
                     p2a: utxo_cohort::Vecs::forced_import(
                         path,
@@ -214,6 +229,7 @@ impl Vecs {
                         fetched,
                         states_path,
                         true,
+                        false,
                     )?,
                     p2ms: utxo_cohort::Vecs::forced_import(
                         path,
@@ -225,6 +241,7 @@ impl Vecs {
                         fetched,
                         states_path,
                         true,
+                        false,
                     )?,
                     empty: utxo_cohort::Vecs::forced_import(
                         path,
@@ -236,6 +253,7 @@ impl Vecs {
                         fetched,
                         states_path,
                         true,
+                        false,
                     )?,
                     unknown: utxo_cohort::Vecs::forced_import(
                         path,
@@ -247,6 +265,7 @@ impl Vecs {
                         fetched,
                         states_path,
                         true,
+                        false,
                     )?,
                 },
                 max_age: ByMaxAge {
@@ -260,6 +279,7 @@ impl Vecs {
                         fetched,
                         states_path,
                         true,
+                        true,
                     )?,
                     _1m: utxo_cohort::Vecs::forced_import(
                         path,
@@ -270,6 +290,7 @@ impl Vecs {
                         indexes,
                         fetched,
                         states_path,
+                        true,
                         true,
                     )?,
                     _2m: utxo_cohort::Vecs::forced_import(
@@ -282,6 +303,7 @@ impl Vecs {
                         fetched,
                         states_path,
                         true,
+                        true,
                     )?,
                     _3m: utxo_cohort::Vecs::forced_import(
                         path,
@@ -292,6 +314,7 @@ impl Vecs {
                         indexes,
                         fetched,
                         states_path,
+                        true,
                         true,
                     )?,
                     _4m: utxo_cohort::Vecs::forced_import(
@@ -304,6 +327,7 @@ impl Vecs {
                         fetched,
                         states_path,
                         true,
+                        true,
                     )?,
                     _5m: utxo_cohort::Vecs::forced_import(
                         path,
@@ -314,6 +338,7 @@ impl Vecs {
                         indexes,
                         fetched,
                         states_path,
+                        true,
                         true,
                     )?,
                     _6m: utxo_cohort::Vecs::forced_import(
@@ -326,6 +351,7 @@ impl Vecs {
                         fetched,
                         states_path,
                         true,
+                        true,
                     )?,
                     _1y: utxo_cohort::Vecs::forced_import(
                         path,
@@ -336,6 +362,7 @@ impl Vecs {
                         indexes,
                         fetched,
                         states_path,
+                        true,
                         true,
                     )?,
                     _2y: utxo_cohort::Vecs::forced_import(
@@ -348,6 +375,7 @@ impl Vecs {
                         fetched,
                         states_path,
                         true,
+                        true,
                     )?,
                     _3y: utxo_cohort::Vecs::forced_import(
                         path,
@@ -358,6 +386,7 @@ impl Vecs {
                         indexes,
                         fetched,
                         states_path,
+                        true,
                         true,
                     )?,
                     _4y: utxo_cohort::Vecs::forced_import(
@@ -370,6 +399,7 @@ impl Vecs {
                         fetched,
                         states_path,
                         true,
+                        true,
                     )?,
                     _5y: utxo_cohort::Vecs::forced_import(
                         path,
@@ -380,6 +410,7 @@ impl Vecs {
                         indexes,
                         fetched,
                         states_path,
+                        true,
                         true,
                     )?,
                     _6y: utxo_cohort::Vecs::forced_import(
@@ -392,6 +423,7 @@ impl Vecs {
                         fetched,
                         states_path,
                         true,
+                        true,
                     )?,
                     _7y: utxo_cohort::Vecs::forced_import(
                         path,
@@ -402,6 +434,7 @@ impl Vecs {
                         indexes,
                         fetched,
                         states_path,
+                        true,
                         true,
                     )?,
                     _8y: utxo_cohort::Vecs::forced_import(
@@ -414,6 +447,7 @@ impl Vecs {
                         fetched,
                         states_path,
                         true,
+                        true,
                     )?,
                     _10y: utxo_cohort::Vecs::forced_import(
                         path,
@@ -424,6 +458,7 @@ impl Vecs {
                         indexes,
                         fetched,
                         states_path,
+                        true,
                         true,
                     )?,
                     _12y: utxo_cohort::Vecs::forced_import(
@@ -436,6 +471,7 @@ impl Vecs {
                         fetched,
                         states_path,
                         true,
+                        true,
                     )?,
                     _15y: utxo_cohort::Vecs::forced_import(
                         path,
@@ -446,6 +482,7 @@ impl Vecs {
                         indexes,
                         fetched,
                         states_path,
+                        true,
                         true,
                     )?,
                 },
@@ -460,6 +497,7 @@ impl Vecs {
                         fetched,
                         states_path,
                         true,
+                        true,
                     )?,
                     _1w: utxo_cohort::Vecs::forced_import(
                         path,
@@ -470,6 +508,7 @@ impl Vecs {
                         indexes,
                         fetched,
                         states_path,
+                        true,
                         true,
                     )?,
                     _1m: utxo_cohort::Vecs::forced_import(
@@ -482,6 +521,7 @@ impl Vecs {
                         fetched,
                         states_path,
                         true,
+                        true,
                     )?,
                     _2m: utxo_cohort::Vecs::forced_import(
                         path,
@@ -492,6 +532,7 @@ impl Vecs {
                         indexes,
                         fetched,
                         states_path,
+                        true,
                         true,
                     )?,
                     _3m: utxo_cohort::Vecs::forced_import(
@@ -504,6 +545,7 @@ impl Vecs {
                         fetched,
                         states_path,
                         true,
+                        true,
                     )?,
                     _4m: utxo_cohort::Vecs::forced_import(
                         path,
@@ -514,6 +556,7 @@ impl Vecs {
                         indexes,
                         fetched,
                         states_path,
+                        true,
                         true,
                     )?,
                     _5m: utxo_cohort::Vecs::forced_import(
@@ -526,6 +569,7 @@ impl Vecs {
                         fetched,
                         states_path,
                         true,
+                        true,
                     )?,
                     _6m: utxo_cohort::Vecs::forced_import(
                         path,
@@ -536,6 +580,7 @@ impl Vecs {
                         indexes,
                         fetched,
                         states_path,
+                        true,
                         true,
                     )?,
                     _1y: utxo_cohort::Vecs::forced_import(
@@ -548,6 +593,7 @@ impl Vecs {
                         fetched,
                         states_path,
                         true,
+                        true,
                     )?,
                     _2y: utxo_cohort::Vecs::forced_import(
                         path,
@@ -558,6 +604,7 @@ impl Vecs {
                         indexes,
                         fetched,
                         states_path,
+                        true,
                         true,
                     )?,
                     _3y: utxo_cohort::Vecs::forced_import(
@@ -570,6 +617,7 @@ impl Vecs {
                         fetched,
                         states_path,
                         true,
+                        true,
                     )?,
                     _4y: utxo_cohort::Vecs::forced_import(
                         path,
@@ -580,6 +628,7 @@ impl Vecs {
                         indexes,
                         fetched,
                         states_path,
+                        true,
                         true,
                     )?,
                     _5y: utxo_cohort::Vecs::forced_import(
@@ -592,6 +641,7 @@ impl Vecs {
                         fetched,
                         states_path,
                         true,
+                        true,
                     )?,
                     _6y: utxo_cohort::Vecs::forced_import(
                         path,
@@ -602,6 +652,7 @@ impl Vecs {
                         indexes,
                         fetched,
                         states_path,
+                        true,
                         true,
                     )?,
                     _7y: utxo_cohort::Vecs::forced_import(
@@ -614,6 +665,7 @@ impl Vecs {
                         fetched,
                         states_path,
                         true,
+                        true,
                     )?,
                     _8y: utxo_cohort::Vecs::forced_import(
                         path,
@@ -624,6 +676,7 @@ impl Vecs {
                         indexes,
                         fetched,
                         states_path,
+                        true,
                         true,
                     )?,
                     _10y: utxo_cohort::Vecs::forced_import(
@@ -636,6 +689,7 @@ impl Vecs {
                         fetched,
                         states_path,
                         true,
+                        true,
                     )?,
                     _12y: utxo_cohort::Vecs::forced_import(
                         path,
@@ -646,6 +700,7 @@ impl Vecs {
                         indexes,
                         fetched,
                         states_path,
+                        true,
                         true,
                     )?,
                 },
@@ -660,6 +715,7 @@ impl Vecs {
                         fetched,
                         states_path,
                         true,
+                        true,
                     )?,
                     _1d_to_1w: utxo_cohort::Vecs::forced_import(
                         path,
@@ -670,6 +726,7 @@ impl Vecs {
                         indexes,
                         fetched,
                         states_path,
+                        true,
                         true,
                     )?,
                     _1w_to_1m: utxo_cohort::Vecs::forced_import(
@@ -682,6 +739,7 @@ impl Vecs {
                         fetched,
                         states_path,
                         true,
+                        true,
                     )?,
                     _1m_to_2m: utxo_cohort::Vecs::forced_import(
                         path,
@@ -692,6 +750,7 @@ impl Vecs {
                         indexes,
                         fetched,
                         states_path,
+                        true,
                         true,
                     )?,
                     _2m_to_3m: utxo_cohort::Vecs::forced_import(
@@ -704,6 +763,7 @@ impl Vecs {
                         fetched,
                         states_path,
                         true,
+                        true,
                     )?,
                     _3m_to_4m: utxo_cohort::Vecs::forced_import(
                         path,
@@ -714,6 +774,7 @@ impl Vecs {
                         indexes,
                         fetched,
                         states_path,
+                        true,
                         true,
                     )?,
                     _4m_to_5m: utxo_cohort::Vecs::forced_import(
@@ -726,6 +787,7 @@ impl Vecs {
                         fetched,
                         states_path,
                         true,
+                        true,
                     )?,
                     _5m_to_6m: utxo_cohort::Vecs::forced_import(
                         path,
@@ -736,6 +798,7 @@ impl Vecs {
                         indexes,
                         fetched,
                         states_path,
+                        true,
                         true,
                     )?,
                     _6m_to_1y: utxo_cohort::Vecs::forced_import(
@@ -748,6 +811,7 @@ impl Vecs {
                         fetched,
                         states_path,
                         true,
+                        true,
                     )?,
                     _1y_to_2y: utxo_cohort::Vecs::forced_import(
                         path,
@@ -758,6 +822,7 @@ impl Vecs {
                         indexes,
                         fetched,
                         states_path,
+                        true,
                         true,
                     )?,
                     _2y_to_3y: utxo_cohort::Vecs::forced_import(
@@ -770,6 +835,7 @@ impl Vecs {
                         fetched,
                         states_path,
                         true,
+                        true,
                     )?,
                     _3y_to_4y: utxo_cohort::Vecs::forced_import(
                         path,
@@ -780,6 +846,7 @@ impl Vecs {
                         indexes,
                         fetched,
                         states_path,
+                        true,
                         true,
                     )?,
                     _4y_to_5y: utxo_cohort::Vecs::forced_import(
@@ -792,6 +859,7 @@ impl Vecs {
                         fetched,
                         states_path,
                         true,
+                        true,
                     )?,
                     _5y_to_6y: utxo_cohort::Vecs::forced_import(
                         path,
@@ -802,6 +870,7 @@ impl Vecs {
                         indexes,
                         fetched,
                         states_path,
+                        true,
                         true,
                     )?,
                     _6y_to_7y: utxo_cohort::Vecs::forced_import(
@@ -814,6 +883,7 @@ impl Vecs {
                         fetched,
                         states_path,
                         true,
+                        true,
                     )?,
                     _7y_to_8y: utxo_cohort::Vecs::forced_import(
                         path,
@@ -824,6 +894,7 @@ impl Vecs {
                         indexes,
                         fetched,
                         states_path,
+                        true,
                         true,
                     )?,
                     _8y_to_10y: utxo_cohort::Vecs::forced_import(
@@ -836,6 +907,7 @@ impl Vecs {
                         fetched,
                         states_path,
                         true,
+                        true,
                     )?,
                     _10y_to_12y: utxo_cohort::Vecs::forced_import(
                         path,
@@ -846,6 +918,7 @@ impl Vecs {
                         indexes,
                         fetched,
                         states_path,
+                        true,
                         true,
                     )?,
                     _12y_to_15y: utxo_cohort::Vecs::forced_import(
@@ -858,6 +931,7 @@ impl Vecs {
                         fetched,
                         states_path,
                         true,
+                        true,
                     )?,
                     from_15y: utxo_cohort::Vecs::forced_import(
                         path,
@@ -868,6 +942,7 @@ impl Vecs {
                         indexes,
                         fetched,
                         states_path,
+                        true,
                         true,
                     )?,
                 },
@@ -882,6 +957,7 @@ impl Vecs {
                         fetched,
                         states_path,
                         true,
+                        false,
                     )?,
                     _1sat_to_10sats: utxo_cohort::Vecs::forced_import(
                         path,
@@ -893,6 +969,7 @@ impl Vecs {
                         fetched,
                         states_path,
                         true,
+                        false,
                     )?,
                     _10sats_to_100sats: utxo_cohort::Vecs::forced_import(
                         path,
@@ -904,6 +981,7 @@ impl Vecs {
                         fetched,
                         states_path,
                         true,
+                        false,
                     )?,
                     _100sats_to_1k_sats: utxo_cohort::Vecs::forced_import(
                         path,
@@ -915,6 +993,7 @@ impl Vecs {
                         fetched,
                         states_path,
                         true,
+                        false,
                     )?,
                     _1k_sats_to_10k_sats: utxo_cohort::Vecs::forced_import(
                         path,
@@ -926,6 +1005,7 @@ impl Vecs {
                         fetched,
                         states_path,
                         true,
+                        false,
                     )?,
                     _10k_sats_to_100k_sats: utxo_cohort::Vecs::forced_import(
                         path,
@@ -937,6 +1017,7 @@ impl Vecs {
                         fetched,
                         states_path,
                         true,
+                        false,
                     )?,
                     _100k_sats_to_1m_sats: utxo_cohort::Vecs::forced_import(
                         path,
@@ -948,6 +1029,7 @@ impl Vecs {
                         fetched,
                         states_path,
                         true,
+                        false,
                     )?,
                     _1m_sats_to_10m_sats: utxo_cohort::Vecs::forced_import(
                         path,
@@ -959,6 +1041,7 @@ impl Vecs {
                         fetched,
                         states_path,
                         true,
+                        false,
                     )?,
                     _10m_sats_to_1btc: utxo_cohort::Vecs::forced_import(
                         path,
@@ -970,6 +1053,7 @@ impl Vecs {
                         fetched,
                         states_path,
                         true,
+                        false,
                     )?,
                     _1btc_to_10btc: utxo_cohort::Vecs::forced_import(
                         path,
@@ -981,6 +1065,7 @@ impl Vecs {
                         fetched,
                         states_path,
                         true,
+                        false,
                     )?,
                     _10btc_to_100btc: utxo_cohort::Vecs::forced_import(
                         path,
@@ -992,6 +1077,7 @@ impl Vecs {
                         fetched,
                         states_path,
                         true,
+                        false,
                     )?,
                     _100btc_to_1k_btc: utxo_cohort::Vecs::forced_import(
                         path,
@@ -1003,6 +1089,7 @@ impl Vecs {
                         fetched,
                         states_path,
                         true,
+                        false,
                     )?,
                     _1k_btc_to_10k_btc: utxo_cohort::Vecs::forced_import(
                         path,
@@ -1014,6 +1101,7 @@ impl Vecs {
                         fetched,
                         states_path,
                         true,
+                        false,
                     )?,
                     _10k_btc_to_100k_btc: utxo_cohort::Vecs::forced_import(
                         path,
@@ -1025,6 +1113,7 @@ impl Vecs {
                         fetched,
                         states_path,
                         true,
+                        false,
                     )?,
                     _100k_btc_or_more: utxo_cohort::Vecs::forced_import(
                         path,
@@ -1036,6 +1125,7 @@ impl Vecs {
                         fetched,
                         states_path,
                         true,
+                        false,
                     )?,
                 },
                 lt_amount: ByLowerThanAmount {
@@ -1049,6 +1139,7 @@ impl Vecs {
                         fetched,
                         states_path,
                         true,
+                        false,
                     )?,
                     _100sats: utxo_cohort::Vecs::forced_import(
                         path,
@@ -1060,6 +1151,7 @@ impl Vecs {
                         fetched,
                         states_path,
                         true,
+                        false,
                     )?,
                     _1k_sats: utxo_cohort::Vecs::forced_import(
                         path,
@@ -1071,6 +1163,7 @@ impl Vecs {
                         fetched,
                         states_path,
                         true,
+                        false,
                     )?,
                     _10k_sats: utxo_cohort::Vecs::forced_import(
                         path,
@@ -1082,6 +1175,7 @@ impl Vecs {
                         fetched,
                         states_path,
                         true,
+                        false,
                     )?,
                     _100k_sats: utxo_cohort::Vecs::forced_import(
                         path,
@@ -1093,6 +1187,7 @@ impl Vecs {
                         fetched,
                         states_path,
                         true,
+                        false,
                     )?,
                     _1m_sats: utxo_cohort::Vecs::forced_import(
                         path,
@@ -1104,6 +1199,7 @@ impl Vecs {
                         fetched,
                         states_path,
                         true,
+                        false,
                     )?,
                     _10m_sats: utxo_cohort::Vecs::forced_import(
                         path,
@@ -1115,6 +1211,7 @@ impl Vecs {
                         fetched,
                         states_path,
                         true,
+                        false,
                     )?,
                     _1btc: utxo_cohort::Vecs::forced_import(
                         path,
@@ -1126,6 +1223,7 @@ impl Vecs {
                         fetched,
                         states_path,
                         true,
+                        false,
                     )?,
                     _10btc: utxo_cohort::Vecs::forced_import(
                         path,
@@ -1137,6 +1235,7 @@ impl Vecs {
                         fetched,
                         states_path,
                         true,
+                        false,
                     )?,
                     _100btc: utxo_cohort::Vecs::forced_import(
                         path,
@@ -1148,6 +1247,7 @@ impl Vecs {
                         fetched,
                         states_path,
                         true,
+                        false,
                     )?,
                     _1k_btc: utxo_cohort::Vecs::forced_import(
                         path,
@@ -1159,6 +1259,7 @@ impl Vecs {
                         fetched,
                         states_path,
                         true,
+                        false,
                     )?,
                     _10k_btc: utxo_cohort::Vecs::forced_import(
                         path,
@@ -1170,6 +1271,7 @@ impl Vecs {
                         fetched,
                         states_path,
                         true,
+                        false,
                     )?,
                     _100k_btc: utxo_cohort::Vecs::forced_import(
                         path,
@@ -1181,6 +1283,7 @@ impl Vecs {
                         fetched,
                         states_path,
                         true,
+                        false,
                     )?,
                 },
                 ge_amount: ByGreatEqualAmount {
@@ -1194,6 +1297,7 @@ impl Vecs {
                         fetched,
                         states_path,
                         true,
+                        false,
                     )?,
                     _10sats: utxo_cohort::Vecs::forced_import(
                         path,
@@ -1205,6 +1309,7 @@ impl Vecs {
                         fetched,
                         states_path,
                         true,
+                        false,
                     )?,
                     _100sats: utxo_cohort::Vecs::forced_import(
                         path,
@@ -1216,6 +1321,7 @@ impl Vecs {
                         fetched,
                         states_path,
                         true,
+                        false,
                     )?,
                     _1k_sats: utxo_cohort::Vecs::forced_import(
                         path,
@@ -1227,6 +1333,7 @@ impl Vecs {
                         fetched,
                         states_path,
                         true,
+                        false,
                     )?,
                     _10k_sats: utxo_cohort::Vecs::forced_import(
                         path,
@@ -1238,6 +1345,7 @@ impl Vecs {
                         fetched,
                         states_path,
                         true,
+                        false,
                     )?,
                     _100k_sats: utxo_cohort::Vecs::forced_import(
                         path,
@@ -1249,6 +1357,7 @@ impl Vecs {
                         fetched,
                         states_path,
                         true,
+                        false,
                     )?,
                     _1m_sats: utxo_cohort::Vecs::forced_import(
                         path,
@@ -1260,6 +1369,7 @@ impl Vecs {
                         fetched,
                         states_path,
                         true,
+                        false,
                     )?,
                     _10m_sats: utxo_cohort::Vecs::forced_import(
                         path,
@@ -1271,6 +1381,7 @@ impl Vecs {
                         fetched,
                         states_path,
                         true,
+                        false,
                     )?,
                     _1btc: utxo_cohort::Vecs::forced_import(
                         path,
@@ -1282,6 +1393,7 @@ impl Vecs {
                         fetched,
                         states_path,
                         true,
+                        false,
                     )?,
                     _10btc: utxo_cohort::Vecs::forced_import(
                         path,
@@ -1293,6 +1405,7 @@ impl Vecs {
                         fetched,
                         states_path,
                         true,
+                        false,
                     )?,
                     _100btc: utxo_cohort::Vecs::forced_import(
                         path,
@@ -1304,6 +1417,7 @@ impl Vecs {
                         fetched,
                         states_path,
                         true,
+                        false,
                     )?,
                     _1k_btc: utxo_cohort::Vecs::forced_import(
                         path,
@@ -1315,6 +1429,7 @@ impl Vecs {
                         fetched,
                         states_path,
                         true,
+                        false,
                     )?,
                     _10k_btc: utxo_cohort::Vecs::forced_import(
                         path,
@@ -1326,6 +1441,7 @@ impl Vecs {
                         fetched,
                         states_path,
                         true,
+                        false,
                     )?,
                 },
             }

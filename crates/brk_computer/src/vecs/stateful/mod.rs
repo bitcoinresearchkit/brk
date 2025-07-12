@@ -1422,12 +1422,12 @@ impl AddressTypeToVec<(TypeIndex, Sats)> {
                     || vecs.amount_range.get_mut(amount).0.clone()
                         != vecs.amount_range.get_mut(prev_amount).0.clone()
                 {
-                    // dbg!((prev_amount, amount, is_new));
-
                     if !is_new && !from_any_empty {
-                        let state = &mut vecs.amount_range.get_mut(prev_amount).1.state;
-                        // dbg!((prev_amount, &state.address_count, &addressdata));
-                        state.subtract(addressdata);
+                        vecs.amount_range
+                            .get_mut(prev_amount)
+                            .1
+                            .state
+                            .subtract(addressdata);
                     }
 
                     addressdata.receive(value, price);
@@ -1508,8 +1508,6 @@ impl HeightToAddressTypeToVec<(TypeIndex, Sats)> {
                     let amount = prev_amount.checked_sub(value).unwrap();
 
                     let will_be_empty = addressdata.outputs_len - 1 == 0;
-
-                    // dbg!((prev_amount, amount, will_be_empty));
 
                     if will_be_empty
                         || vecs.amount_range.get_mut(amount).0.clone()
