@@ -28,7 +28,8 @@ pub struct RawVec<I, T> {
     parent: PathBuf,
     name: &'static str,
     pushed: Vec<T>,
-    stored_len: Arc<AtomicUsize>,
+    local_stored_len: Option<usize>,
+    shared_stored_len: Arc<AtomicUsize>,
     phantom: PhantomData<I>,
 }
 
@@ -94,9 +95,15 @@ where
             name: Box::leak(Box::new(name.to_string())),
             parent: parent.to_owned(),
             pushed: vec![],
-            stored_len: Arc::new(AtomicUsize::new(stored_len)),
+            local_stored_len: Some(stored_len),
+            shared_stored_len: Arc::new(AtomicUsize::new(stored_len)),
             phantom: PhantomData,
         })
+    }
+
+    pub fn set_stored_len(&mut self, len: usize) {
+        self.local_stored_len.replace(len);
+        self.shared_stored_len.store(len, Ordering::Relaxed);
     }
 
     #[inline]
@@ -151,7 +158,8 @@ where
 
     #[inline]
     fn stored_len(&self) -> usize {
-        self.stored_len.load(Ordering::SeqCst)
+        self.local_stored_len
+            .unwrap_or_else(|| self.shared_stored_len.load(Ordering::Relaxed))
     }
 
     #[inline]
@@ -195,7 +203,11 @@ where
         let mut file = file_opt.unwrap_or(self.open_file()?);
         self.file_write_all(&mut file, &bytes)?;
 
-        self.stored_len.fetch_add(pushed_len, Ordering::SeqCst);
+        if let Some(local_stored_len) = self.local_stored_len.as_mut() {
+            *local_stored_len += pushed_len;
+        }
+        self.shared_stored_len
+            .fetch_add(pushed_len, Ordering::Relaxed);
 
         Ok(())
     }
@@ -212,7 +224,7 @@ where
             return Ok(());
         }
 
-        self.stored_len.store(index, Ordering::SeqCst);
+        self.set_stored_len(index);
 
         let len = index * Self::SIZE_OF_T + HEADER_OFFSET;
 
@@ -223,7 +235,7 @@ where
     }
 
     fn reset(&mut self) -> Result<()> {
-        self.stored_len.store(0, Ordering::SeqCst);
+        self.set_stored_len(0);
         self.reset_()
     }
 }
@@ -267,7 +279,8 @@ impl<I, T> Clone for RawVec<I, T> {
             name: self.name,
             pushed: vec![],
             phantom: PhantomData,
-            stored_len: self.stored_len.clone(),
+            local_stored_len: None,
+            shared_stored_len: self.shared_stored_len.clone(),
         }
     }
 }
