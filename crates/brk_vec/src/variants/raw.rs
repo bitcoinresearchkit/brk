@@ -28,8 +28,8 @@ pub struct RawVec<I, T> {
     parent: PathBuf,
     name: &'static str,
     pushed: Vec<T>,
-    phantom: PhantomData<I>,
     stored_len: Arc<AtomicUsize>,
+    phantom: PhantomData<I>,
 }
 
 impl<I, T> RawVec<I, T>
@@ -77,7 +77,9 @@ where
                     let header = Header::create_and_write(&mut file, version, Format::Raw)?;
                     (header, None)
                 }
-                _ => return Err(e.into()),
+                _ => {
+                    return Err(e.into());
+                }
             },
         };
 
@@ -92,8 +94,8 @@ where
             name: Box::leak(Box::new(name.to_string())),
             parent: parent.to_owned(),
             pushed: vec![],
-            phantom: PhantomData,
             stored_len: Arc::new(AtomicUsize::new(stored_len)),
+            phantom: PhantomData,
         })
     }
 
@@ -306,12 +308,11 @@ where
     type Item = (I, Cow<'a, T>);
 
     fn next(&mut self) -> Option<Self::Item> {
-        let mmap = &self.mmap;
         let index = self.index;
 
         let opt = self
             .vec
-            .get_or_read_(index, mmap)
+            .get_or_read_(index, &self.mmap)
             .unwrap()
             .map(|v| (I::from(index), v));
 
