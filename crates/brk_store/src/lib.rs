@@ -34,11 +34,9 @@ pub struct Store<Key, Value> {
     rtx: ReadTransaction,
     puts: BTreeMap<Key, Value>,
     dels: BTreeSet<Key>,
-    bloom_filter_bits: Option<Option<u8>>,
+    bloom_filters: Option<bool>,
 }
 
-/// Use default if will read
-const DEFAULT_BLOOM_FILTER_BITS: Option<u8> = Some(5);
 // const CHECK_COLLISIONS: bool = true;
 const MAJOR_FJALL_VERSION: Version = Version::TWO;
 
@@ -59,7 +57,7 @@ where
         path: &Path,
         name: &str,
         version: Version,
-        bloom_filter_bits: Option<Option<u8>>,
+        bloom_filters: Option<bool>,
     ) -> Result<Self> {
         fs::create_dir_all(path)?;
 
@@ -68,7 +66,7 @@ where
             &path.join(format!("meta/{name}")),
             MAJOR_FJALL_VERSION + version,
             || {
-                Self::open_partition_handle(keyspace, name, bloom_filter_bits).inspect_err(|e| {
+                Self::open_partition_handle(keyspace, name, bloom_filters).inspect_err(|e| {
                     eprintln!("{e}");
                     eprintln!("Delete {path:?} and try again");
                 })
@@ -85,7 +83,7 @@ where
             rtx,
             puts: BTreeMap::new(),
             dels: BTreeSet::new(),
-            bloom_filter_bits,
+            bloom_filters,
         })
     }
 
@@ -180,17 +178,17 @@ where
     fn open_partition_handle(
         keyspace: &TransactionalKeyspace,
         name: &str,
-        bloom_filter_bits: Option<Option<u8>>,
+        bloom_filters: Option<bool>,
     ) -> Result<TransactionalPartitionHandle> {
-        keyspace
-            .open_partition(
-                name,
-                PartitionCreateOptions::default()
-                    .bloom_filter_bits(bloom_filter_bits.unwrap_or(DEFAULT_BLOOM_FILTER_BITS))
-                    .max_memtable_size(8 * 1024 * 1024)
-                    .manual_journal_persist(true),
-            )
-            .map_err(|e| e.into())
+        let mut options = PartitionCreateOptions::default()
+            .max_memtable_size(8 * 1024 * 1024)
+            .manual_journal_persist(true);
+
+        if bloom_filters.is_some_and(|b| !b) {
+            options = options.bloom_filter_bits(None);
+        }
+
+        keyspace.open_partition(name, options).map_err(|e| e.into())
     }
 
     pub fn commit_(
@@ -272,8 +270,7 @@ where
 
         self.meta.reset();
 
-        let partition =
-            Self::open_partition_handle(&self.keyspace, self.name, self.bloom_filter_bits)?;
+        let partition = Self::open_partition_handle(&self.keyspace, self.name, self.bloom_filters)?;
 
         self.partition.replace(partition);
 
@@ -314,7 +311,7 @@ where
             rtx: self.keyspace.read_tx(),
             puts: self.puts.clone(),
             dels: self.dels.clone(),
-            bloom_filter_bits: self.bloom_filter_bits,
+            bloom_filters: self.bloom_filters,
         }
     }
 }
