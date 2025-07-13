@@ -72,7 +72,7 @@ impl Stores {
                     path,
                     "p2aaddressindex_with_outputindex",
                     version + VERSION + Version::ZERO,
-                    Some(None),
+                    Some(false),
                 )
             });
             let p2pk33addressindex_with_outputindex = scope.spawn(|| {
@@ -81,7 +81,7 @@ impl Stores {
                     path,
                     "p2pk33addressindex_with_outputindex",
                     version + VERSION + Version::ZERO,
-                    Some(None),
+                    Some(false),
                 )
             });
             let p2pk65addressindex_with_outputindex = scope.spawn(|| {
@@ -90,7 +90,7 @@ impl Stores {
                     path,
                     "p2pk65addressindex_with_outputindex",
                     version + VERSION + Version::ZERO,
-                    Some(None),
+                    Some(false),
                 )
             });
             let p2pkhaddressindex_with_outputindex = scope.spawn(|| {
@@ -99,7 +99,7 @@ impl Stores {
                     path,
                     "p2pkhaddressindex_with_outputindex",
                     version + VERSION + Version::ZERO,
-                    Some(None),
+                    Some(false),
                 )
             });
             let p2shaddressindex_with_outputindex = scope.spawn(|| {
@@ -108,7 +108,7 @@ impl Stores {
                     path,
                     "p2shaddressindex_with_outputindex",
                     version + VERSION + Version::ZERO,
-                    Some(None),
+                    Some(false),
                 )
             });
             let p2traddressindex_with_outputindex = scope.spawn(|| {
@@ -117,7 +117,7 @@ impl Stores {
                     path,
                     "p2traddressindex_with_outputindex",
                     version + VERSION + Version::ZERO,
-                    Some(None),
+                    Some(false),
                 )
             });
             let p2wpkhaddressindex_with_outputindex = scope.spawn(|| {
@@ -126,7 +126,7 @@ impl Stores {
                     path,
                     "p2wpkhaddressindex_with_outputindex",
                     version + VERSION + Version::ZERO,
-                    Some(None),
+                    Some(false),
                 )
             });
             let p2wshaddressindex_with_outputindex = scope.spawn(|| {
@@ -135,7 +135,7 @@ impl Stores {
                     path,
                     "p2wshaddressindex_with_outputindex",
                     version + VERSION + Version::ZERO,
-                    Some(None),
+                    Some(false),
                 )
             });
 
