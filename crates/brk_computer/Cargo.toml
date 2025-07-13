@@ -23,7 +23,6 @@ color-eyre = { workspace = true }
 derive_deref = { workspace = true }
 either = "1.15.0"
 fjall = { workspace = true }
-jiff = { workspace = true }
 log = { workspace = true }
 rayon = { workspace = true }
 serde = { workspace = true }

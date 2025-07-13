@@ -10,6 +10,7 @@ use brk_fetcher::Fetcher;
 use brk_indexer::Indexer;
 use brk_vec::{
     AnyCollectableVec, AnyIterableVec, AnyVec, Computation, EagerVec, Format, StoredIndex,
+    VecIterator,
 };
 
 use crate::vecs::grouped::Source;
@@ -456,33 +457,34 @@ impl Vecs {
             exit,
         )?;
 
+        let mut prev = None;
         self.dateindex_to_ohlc_in_cents.compute_transform(
             starting_indexes.dateindex,
             &indexes.dateindex_to_date,
             |(di, d, this)| {
-                let get_prev = || {
-                    this.get_or_read(di, &this.mmap().load())
-                        .unwrap()
-                        .unwrap()
-                        .into_owned()
-                };
+                if prev.is_none() {
+                    let i = di.unwrap_to_usize();
+                    prev.replace(if i > 0 {
+                        this.into_iter().unwrap_get_inner_(i - 1)
+                    } else {
+                        OHLCCents::default()
+                    });
+                }
 
-                let mut ohlc = if di.unwrap_to_usize() + 100 >= this.len() {
-                    fetcher.get_date(d).unwrap_or_else(|_| get_prev())
-                } else {
-                    get_prev()
-                };
-
-                if let Some(prev) = di.decremented() {
-                    let prev_open = *this
-                        .get_or_read(prev, &this.mmap().load())
-                        .unwrap()
-                        .unwrap()
-                        .close;
+                let ohlc = if di.unwrap_to_usize() + 100 >= this.len()
+                    && let Ok(mut ohlc) = fetcher.get_date(d)
+                {
+                    let prev_open = *prev.as_ref().unwrap().close;
                     *ohlc.open = prev_open;
                     *ohlc.high = (*ohlc.high).max(prev_open);
                     *ohlc.low = (*ohlc.low).min(prev_open);
-                }
+                    ohlc
+                } else {
+                    prev.clone().unwrap()
+                };
+
+                prev.replace(ohlc.clone());
+
                 (di, ohlc)
             },
             exit,

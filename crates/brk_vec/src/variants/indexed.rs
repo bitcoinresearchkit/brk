@@ -1,6 +1,5 @@
 use std::{borrow::Cow, cmp::Ordering, fmt::Debug, path::Path};
 
-use arc_swap::ArcSwap;
 use brk_core::{Error, Height, Result, Version};
 
 use crate::{
@@ -78,8 +77,8 @@ where
         self.0.header()
     }
 
-    pub fn mmap(&self) -> &ArcSwap<Mmap> {
-        self.0.mmap()
+    pub fn create_mmap(&self) -> Result<Mmap> {
+        self.0.create_mmap()
     }
 
     #[inline]

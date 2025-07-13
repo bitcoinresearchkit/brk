@@ -8,7 +8,6 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use arc_swap::ArcSwap;
 use brk_core::{
     Bitcoin, CheckedSub, Close, Date, DateIndex, Dollars, Error, Result, Sats, StoredF32,
     StoredUsize, Version,
@@ -106,10 +105,6 @@ where
 
     pub fn get_or_read(&self, index: I, mmap: &Mmap) -> Result<Option<Cow<T>>> {
         self.0.get_or_read(index, mmap)
-    }
-
-    pub fn mmap(&self) -> &ArcSwap<Mmap> {
-        self.0.mmap()
     }
 
     pub fn inner_version(&self) -> Version {
