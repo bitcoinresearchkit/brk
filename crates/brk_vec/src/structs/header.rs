@@ -1,6 +1,6 @@
 use std::{
     fs::File,
-    io::{self, Read, Seek, SeekFrom},
+    io::{self, Seek, SeekFrom},
     os::unix::fs::FileExt,
     sync::Arc,
 };
@@ -103,7 +103,6 @@ impl HeaderInner {
             compressed: ZeroCopyBool::from(format),
         };
         header.write(file)?;
-        // dbg!(file.bytes().map(|b| b.unwrap()).collect::<Vec<_>>());
         file.seek(SeekFrom::End(0))?;
         Ok(header)
     }
@@ -117,12 +116,14 @@ impl HeaderInner {
         vec_version: Version,
         format: Format,
     ) -> Result<Self> {
-        if file.metadata()?.len() < HEADER_OFFSET as u64 {
+        let len = file.metadata()?.len();
+
+        if len < HEADER_OFFSET as u64 {
             return Err(Error::WrongLength);
         }
 
         let mut buf = [0; HEADER_OFFSET];
-        file.read_exact(&mut buf)?;
+        file.read_exact_at(&mut buf, 0)?;
 
         let header = HeaderInner::read_from_bytes(&buf)?;
 
