@@ -57,7 +57,7 @@ where
     }
 
     pub fn import(parent: &Path, name: &str, version: Version) -> Result<Self> {
-        let inner = RawVec::import(parent, name, version)?;
+        let mut inner = RawVec::import(parent, name, version)?;
 
         let pages_meta = {
             let path = inner
@@ -66,12 +66,19 @@ where
             if inner.is_empty() {
                 let _ = fs::remove_file(&path);
             }
-            Arc::new(ArcSwap::new(Arc::new(CompressedPagesMetadata::read(
-                &path,
-            )?)))
+            CompressedPagesMetadata::read(&path)?
         };
 
-        Ok(Self { inner, pages_meta })
+        inner.set_stored_len(if let Some(last) = pages_meta.last() {
+            (pages_meta.len() - 1) * Self::PER_PAGE + last.values_len as usize
+        } else {
+            0
+        });
+
+        Ok(Self {
+            inner,
+            pages_meta: Arc::new(ArcSwap::new(Arc::new(pages_meta))),
+        })
     }
 
     fn decode_page(&self, page_index: usize, mmap: &Mmap) -> Result<Vec<T>> {
@@ -130,14 +137,6 @@ where
         page_index * Self::PER_PAGE
     }
 
-    fn stored_len__(pages_meta: &Guard<Arc<CompressedPagesMetadata>>) -> usize {
-        if let Some(last) = pages_meta.last() {
-            (pages_meta.len() - 1) * Self::PER_PAGE + last.values_len as usize
-        } else {
-            0
-        }
-    }
-
     #[inline]
     pub fn iter(&self) -> CompressedVecIterator<'_, I, T> {
         self.into_iter()
@@ -186,7 +185,7 @@ where
 
     #[inline]
     fn stored_len(&self) -> usize {
-        Self::stored_len__(&self.pages_meta.load())
+        self.inner.stored_len()
     }
 
     #[inline]
@@ -486,14 +485,15 @@ where
 
     fn into_iter(self) -> Self::IntoIter {
         let pages_meta = self.pages_meta.load();
-        let stored_len = CompressedVec::<I, T>::stored_len__(&pages_meta);
+        let stored_len = self.stored_len();
+
         CompressedVecIterator {
             vec: self,
             mmap: self.create_mmap().unwrap(),
             decoded_page: None,
             pages_meta,
-            stored_len,
             index: 0,
+            stored_len,
         }
     }
 }
