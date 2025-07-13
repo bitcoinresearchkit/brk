@@ -12,12 +12,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let _ = fs::remove_file("./vec");
 
     let version = Version::TWO;
-    let format = Format::Compressed;
+    let format = Format::Raw;
 
     {
         let mut vec: VEC = StoredVec::forced_import(Path::new("."), "vec", version, format)?;
 
-        (0..4_u32).for_each(|v| {
+        (0..21_u32).for_each(|v| {
             vec.push(v);
         });
 
@@ -42,6 +42,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         dbg!(iter.get(0.into()));
         dbg!(iter.get(1.into()));
         dbg!(iter.get(2.into()));
+        dbg!(iter.get(3.into()));
+        dbg!(iter.get(4.into()));
+        dbg!(iter.get(5.into()));
         dbg!(iter.get(20.into()));
         dbg!(iter.get(20.into()));
         dbg!(iter.get(0.into()));

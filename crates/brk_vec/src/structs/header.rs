@@ -147,6 +147,7 @@ impl HeaderInner {
         {
             return Err(Error::DifferentCompressionMode);
         }
+
         Ok(header)
     }
 }

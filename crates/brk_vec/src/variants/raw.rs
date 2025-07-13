@@ -66,7 +66,7 @@ where
                 } else {
                     (
                         Header::import_and_verify(&mut file, version, Format::Raw)?,
-                        None,
+                        Some(file),
                     )
                 }
             }
