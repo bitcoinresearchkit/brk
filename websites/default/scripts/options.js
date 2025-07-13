@@ -1227,78 +1227,82 @@ function createPartialOptions({ env, colors, vecIdToIndexes }) {
           name: legend,
           color,
         }),
-        createBaseSeries({
-          key: `${key}_ratio_p1sd_as_price`,
-          name: "+1σ",
-          color: colors.orange,
-          defaultActive: false,
-        }),
-        createBaseSeries({
-          key: `${key}_ratio_p2sd_as_price`,
-          name: "+2σ",
-          color: colors.red,
-          defaultActive: false,
-        }),
-        createBaseSeries({
-          key: `${key}_ratio_p3sd_as_price`,
-          name: "+3σ",
-          color: colors.pink,
-          defaultActive: false,
-        }),
-        createBaseSeries({
-          key: `${key}_ratio_m1sd_as_price`,
-          name: "−1σ",
-          color: colors.cyan,
-          defaultActive: false,
-        }),
-        createBaseSeries({
-          key: `${key}_ratio_m2sd_as_price`,
-          name: "−2σ",
-          color: colors.blue,
-          defaultActive: false,
-        }),
-        createBaseSeries({
-          key: `${key}_ratio_m3sd_as_price`,
-          name: "−3σ",
-          color: colors.violet,
-          defaultActive: false,
-        }),
-        createBaseSeries({
-          key: `${key}_ratio_p99_as_price`,
-          name: "p99",
-          color: colors.orange,
-          defaultActive: false,
-        }),
-        createBaseSeries({
-          key: `${key}_ratio_p99_5_as_price`,
-          name: "p99.5",
-          color: colors.red,
-          defaultActive: false,
-        }),
-        createBaseSeries({
-          key: `${key}_ratio_p99_9_as_price`,
-          name: "p99.9",
-          color: colors.pink,
-          defaultActive: false,
-        }),
-        createBaseSeries({
-          key: `${key}_ratio_p1_as_price`,
-          name: "p1",
-          color: colors.cyan,
-          defaultActive: false,
-        }),
-        createBaseSeries({
-          key: `${key}_ratio_p0_5_as_price`,
-          name: "p0.5",
-          color: colors.blue,
-          defaultActive: false,
-        }),
-        createBaseSeries({
-          key: `${key}_ratio_p0_1_as_price`,
-          name: "p0.1",
-          color: colors.violet,
-          defaultActive: false,
-        }),
+        ...(`${key}_ratio_p1sd_as_price` in vecIdToIndexes
+          ? [
+              createBaseSeries({
+                key: `${key}_ratio_p1sd_as_price`,
+                name: "+1σ",
+                color: colors.orange,
+                defaultActive: false,
+              }),
+              createBaseSeries({
+                key: `${key}_ratio_p2sd_as_price`,
+                name: "+2σ",
+                color: colors.red,
+                defaultActive: false,
+              }),
+              createBaseSeries({
+                key: `${key}_ratio_p3sd_as_price`,
+                name: "+3σ",
+                color: colors.pink,
+                defaultActive: false,
+              }),
+              createBaseSeries({
+                key: `${key}_ratio_m1sd_as_price`,
+                name: "−1σ",
+                color: colors.cyan,
+                defaultActive: false,
+              }),
+              createBaseSeries({
+                key: `${key}_ratio_m2sd_as_price`,
+                name: "−2σ",
+                color: colors.blue,
+                defaultActive: false,
+              }),
+              createBaseSeries({
+                key: `${key}_ratio_m3sd_as_price`,
+                name: "−3σ",
+                color: colors.violet,
+                defaultActive: false,
+              }),
+              createBaseSeries({
+                key: `${key}_ratio_p99_as_price`,
+                name: "p99",
+                color: colors.orange,
+                defaultActive: false,
+              }),
+              createBaseSeries({
+                key: `${key}_ratio_p99_5_as_price`,
+                name: "p99.5",
+                color: colors.red,
+                defaultActive: false,
+              }),
+              createBaseSeries({
+                key: `${key}_ratio_p99_9_as_price`,
+                name: "p99.9",
+                color: colors.pink,
+                defaultActive: false,
+              }),
+              createBaseSeries({
+                key: `${key}_ratio_p1_as_price`,
+                name: "p1",
+                color: colors.cyan,
+                defaultActive: false,
+              }),
+              createBaseSeries({
+                key: `${key}_ratio_p0_5_as_price`,
+                name: "p0.5",
+                color: colors.blue,
+                defaultActive: false,
+              }),
+              createBaseSeries({
+                key: `${key}_ratio_p0_1_as_price`,
+                name: "p0.1",
+                color: colors.violet,
+                defaultActive: false,
+              }),
+            ]
+          : []),
       ],
       bottom: [
         /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
@@ -1312,150 +1316,154 @@ function createPartialOptions({ env, colors, vecIdToIndexes }) {
             },
           },
         }),
-        createBaseSeries({
-          key: `${key}_ratio_p1sd`,
-          name: "+1σ",
-          color: colors.orange,
-          defaultActive: false,
-        }),
-        createBaseSeries({
-          key: `${key}_ratio_p2sd`,
-          name: "+2σ",
-          color: colors.red,
-          defaultActive: false,
-        }),
-        createBaseSeries({
-          key: `${key}_ratio_p3sd`,
-          name: "+3σ",
-          color: colors.pink,
-          defaultActive: false,
-        }),
-        createBaseSeries({
-          key: `${key}_ratio_m1sd`,
-          name: "−1σ",
-          color: colors.cyan,
-          defaultActive: false,
-        }),
-        createBaseSeries({
-          key: `${key}_ratio_m2sd`,
-          name: "−2σ",
-          color: colors.blue,
-          defaultActive: false,
-        }),
-        createBaseSeries({
-          key: `${key}_ratio_m3sd`,
-          name: "−3σ",
-          color: colors.violet,
-          defaultActive: false,
-        }),
-        createBaseSeries({
-          key: `${key}_ratio_p99`,
-          name: "p99",
-          color: colors.orange,
-          defaultActive: false,
-        }),
-        createBaseSeries({
-          key: `${key}_ratio_p99_5`,
-          name: "p99.5",
-          color: colors.red,
-          defaultActive: false,
-        }),
-        createBaseSeries({
-          key: `${key}_ratio_p99_9`,
-          name: "p99.9",
-          color: colors.pink,
-          defaultActive: false,
-        }),
-        createBaseSeries({
-          key: `${key}_ratio_p1`,
-          name: "p1",
-          color: colors.cyan,
-          defaultActive: false,
-        }),
-        createBaseSeries({
-          key: `${key}_ratio_p0_5`,
-          name: "p0.5",
-          color: colors.blue,
-          defaultActive: false,
-        }),
-        createBaseSeries({
-          key: `${key}_ratio_p0_1`,
-          name: "p0.1",
-          color: colors.violet,
-          defaultActive: false,
-        }),
-        createBaseSeries({
-          key: `${key}_ratio_1w_sma`,
-          name: "1w sma",
-          color: colors.fuchsia,
-          defaultActive: false,
-        }),
-        createBaseSeries({
-          key: `${key}_ratio_1m_sma`,
-          name: "1m sma",
-          color: colors.pink,
-          defaultActive: false,
-        }),
-        createBaseSeries({
-          key: `${key}_ratio_1y_sma`,
-          name: "1y sma",
-          color: colors.rose,
-          defaultActive: false,
-        }),
-        createBaseSeries({
-          key: `${key}_ratio_4y_sma`,
-          name: "4y_sma",
-          color: colors.purple,
-          defaultActive: false,
-        }),
-        createBaseSeries({
-          key: `${key}_ratio_sma`,
-          name: "sma",
-          color: colors.yellow,
-          defaultActive: false,
-        }),
-        /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
-          key: `${key}_ratio_1y_sma_momentum_oscillator`,
-          title: "1Y Momentum",
-          type: "Baseline",
-          options: {
-            createPriceLine: {
-              value: 0,
-            },
-          },
-        }),
-        /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
-          key: `${key}_ratio_zscore`,
-          title: "All time",
-          type: "Baseline",
-          options: {
-            createPriceLine: {
-              value: 0,
-            },
-          },
-        }),
-        /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
-          key: `${key}_ratio_4y_zscore`,
-          title: "4y",
-          type: "Baseline",
-          colors: [colors.yellow, colors.pink],
-          options: {
-            createPriceLine: {
-              value: 0,
-            },
-          },
-        }),
-        /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
-          key: `${key}_ratio_1y_zscore`,
-          title: "1y",
-          type: "Baseline",
-          colors: [colors.orange, colors.purple],
-          options: {
-            createPriceLine: {
-              value: 0,
-            },
-          },
-        }),
+        ...(`${key}_ratio_p1sd` in vecIdToIndexes
+          ? [
+              createBaseSeries({
+                key: `${key}_ratio_p1sd`,
+                name: "+1σ",
+                color: colors.orange,
+                defaultActive: false,
+              }),
+              createBaseSeries({
+                key: `${key}_ratio_p2sd`,
+                name: "+2σ",
+                color: colors.red,
+                defaultActive: false,
+              }),
+              createBaseSeries({
+                key: `${key}_ratio_p3sd`,
+                name: "+3σ",
+                color: colors.pink,
+                defaultActive: false,
+              }),
+              createBaseSeries({
+                key: `${key}_ratio_m1sd`,
+                name: "−1σ",
+                color: colors.cyan,
+                defaultActive: false,
+              }),
+              createBaseSeries({
+                key: `${key}_ratio_m2sd`,
+                name: "−2σ",
+                color: colors.blue,
+                defaultActive: false,
+              }),
+              createBaseSeries({
+                key: `${key}_ratio_m3sd`,
+                name: "−3σ",
+                color: colors.violet,
+                defaultActive: false,
+              }),
+              createBaseSeries({
+                key: `${key}_ratio_p99`,
+                name: "p99",
+                color: colors.orange,
+                defaultActive: false,
+              }),
+              createBaseSeries({
+                key: `${key}_ratio_p99_5`,
+                name: "p99.5",
+                color: colors.red,
+                defaultActive: false,
+              }),
+              createBaseSeries({
+                key: `${key}_ratio_p99_9`,
+                name: "p99.9",
+                color: colors.pink,
+                defaultActive: false,
+              }),
+              createBaseSeries({
+                key: `${key}_ratio_p1`,
+                name: "p1",
+                color: colors.cyan,
+                defaultActive: false,
+              }),
+              createBaseSeries({
+                key: `${key}_ratio_p0_5`,
+                name: "p0.5",
+                color: colors.blue,
+                defaultActive: false,
+              }),
+              createBaseSeries({
+                key: `${key}_ratio_p0_1`,
+                name: "p0.1",
+                color: colors.violet,
+                defaultActive: false,
+              }),
+              createBaseSeries({
+                key: `${key}_ratio_1w_sma`,
+                name: "1w sma",
+                color: colors.fuchsia,
+                defaultActive: false,
+              }),
+              createBaseSeries({
+                key: `${key}_ratio_1m_sma`,
+                name: "1m sma",
+                color: colors.pink,
+                defaultActive: false,
+              }),
+              createBaseSeries({
+                key: `${key}_ratio_1y_sma`,
+                name: "1y sma",
+                color: colors.rose,
+                defaultActive: false,
+              }),
+              createBaseSeries({
+                key: `${key}_ratio_4y_sma`,
+                name: "4y_sma",
+                color: colors.purple,
+                defaultActive: false,
+              }),
+              createBaseSeries({
+                key: `${key}_ratio_sma`,
+                name: "sma",
+                color: colors.yellow,
+                defaultActive: false,
+              }),
+              /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
+                key: `${key}_ratio_1y_sma_momentum_oscillator`,
+                title: "1Y Momentum",
+                type: "Baseline",
+                options: {
+                  createPriceLine: {
+                    value: 0,
+                  },
+                },
+              }),
+              /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
+                key: `${key}_ratio_zscore`,
+                title: "All time",
+                type: "Baseline",
+                options: {
+                  createPriceLine: {
+                    value: 0,
+                  },
+                },
+              }),
+              /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
+                key: `${key}_ratio_4y_zscore`,
+                title: "4y",
+                type: "Baseline",
+                colors: [colors.yellow, colors.pink],
+                options: {
+                  createPriceLine: {
+                    value: 0,
+                  },
+                },
+              }),
+              /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
+                key: `${key}_ratio_1y_zscore`,
+                title: "1y",
+                type: "Baseline",
+                colors: [colors.orange, colors.purple],
+                options: {
+                  createPriceLine: {
+                    value: 0,
+                  },
+                },
+              }),
+            ]
+          : []),
       ],
     };
   }
