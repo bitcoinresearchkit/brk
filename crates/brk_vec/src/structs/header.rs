@@ -1,13 +1,12 @@
 use std::{
     fs::File,
-    io::{self, Seek, SeekFrom},
+    io::{self, Read, Seek, SeekFrom},
     os::unix::fs::FileExt,
     sync::Arc,
 };
 
 use arc_swap::ArcSwap;
 use brk_core::{Error, Height, Result, Version};
-use memmap2::Mmap;
 use zerocopy::{FromBytes, IntoBytes};
 use zerocopy_derive::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
@@ -31,8 +30,12 @@ impl Header {
         })
     }
 
-    pub fn import_and_verify(mmap: &Mmap, vec_version: Version, format: Format) -> Result<Self> {
-        let inner = HeaderInner::import_and_verify(mmap, vec_version, format)?;
+    pub fn import_and_verify(
+        file: &mut File,
+        vec_version: Version,
+        format: Format,
+    ) -> Result<Self> {
+        let inner = HeaderInner::import_and_verify(file, vec_version, format)?;
         Ok(Self {
             inner: Arc::new(ArcSwap::from_pointee(inner)),
             modified: false,
@@ -109,13 +112,20 @@ impl HeaderInner {
         file.write_all_at(self.as_bytes(), 0)
     }
 
-    pub fn import_and_verify(mmap: &Mmap, vec_version: Version, format: Format) -> Result<Self> {
-        if mmap.len() < HEADER_OFFSET {
+    pub fn import_and_verify(
+        file: &mut File,
+        vec_version: Version,
+        format: Format,
+    ) -> Result<Self> {
+        if file.metadata()?.len() < HEADER_OFFSET as u64 {
             return Err(Error::WrongLength);
         }
-        // dbg!(mmap.len());
-        let header = HeaderInner::read_from_bytes(&mmap[..HEADER_OFFSET])?;
-        // dbg!(&header);
+
+        let mut buf = [0; HEADER_OFFSET];
+        file.read_exact(&mut buf)?;
+
+        let header = HeaderInner::read_from_bytes(&buf)?;
+
         if header.header_version != HEADER_VERSION {
             return Err(Error::DifferentVersion {
                 found: header.header_version,

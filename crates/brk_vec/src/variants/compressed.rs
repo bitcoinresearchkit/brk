@@ -180,11 +180,6 @@ where
         self.inner.mut_header()
     }
 
-    #[inline]
-    fn mmap(&self) -> &ArcSwap<Mmap> {
-        self.inner.mmap()
-    }
-
     fn parent(&self) -> &Path {
         self.inner.parent()
     }
@@ -192,10 +187,6 @@ where
     #[inline]
     fn stored_len(&self) -> usize {
         Self::stored_len__(&self.pages_meta.load())
-    }
-    #[inline]
-    fn stored_len_(&self, _: &Mmap) -> usize {
-        self.stored_len()
     }
 
     #[inline]
@@ -223,6 +214,8 @@ where
 
         let stored_len = self.stored_len();
 
+        let mut file = file_opt.unwrap_or(self.open_file()?);
+
         let mut pages_meta = (**self.pages_meta.load()).clone();
 
         let mut starting_page_index = pages_meta.len();
@@ -236,16 +229,13 @@ where
 
             let last_page_index = pages_meta.len() - 1;
 
-            values = Self::decode_page_(
-                stored_len,
-                last_page_index,
-                &self.mmap().load(),
-                &pages_meta,
-            )
-            .inspect_err(|_| {
-                dbg!(last_page_index, &pages_meta);
-            })
-            .unwrap();
+            let mmap = unsafe { Mmap::map(&file)? };
+
+            values = Self::decode_page_(stored_len, last_page_index, &mmap, &pages_meta)
+                .inspect_err(|_| {
+                    dbg!(last_page_index, &pages_meta);
+                })
+                .unwrap();
 
             truncate_at.replace(pages_meta.pop().unwrap().start);
             starting_page_index = last_page_index;
@@ -287,8 +277,6 @@ where
 
         pages_meta.write()?;
 
-        let mut file = file_opt.unwrap_or(self.open_file()?);
-
         if let Some(truncate_at) = truncate_at {
             self.file_set_len(&mut file, truncate_at)?;
         }
@@ -324,7 +312,11 @@ where
 
         let page_index = Self::index_to_page_index(index);
 
-        let values = self.decode_page(page_index, &self.mmap().load())?;
+        let mut file = self.open_file()?;
+
+        let mmap = unsafe { Mmap::map(&file)? };
+
+        let values = self.decode_page(page_index, &mmap)?;
         let mut buf = vec![];
 
         let mut page = pages_meta.truncate(page_index).unwrap();
@@ -347,8 +339,6 @@ where
         pages_meta.write()?;
 
         self.pages_meta.store(Arc::new(pages_meta));
-
-        let mut file = self.open_file()?;
 
         self.file_truncate_and_write_all(&mut file, len, &buf)?;
 
@@ -399,7 +389,7 @@ impl<I, T> Clone for CompressedVec<I, T> {
 #[derive(Debug)]
 pub struct CompressedVecIterator<'a, I, T> {
     vec: &'a CompressedVec<I, T>,
-    guard: Guard<Arc<Mmap>>,
+    mmap: Mmap,
     decoded_page: Option<(usize, Vec<T>)>,
     // second_decoded_page?: Option<(usize, Vec<T>)>,
     pages_meta: Guard<Arc<CompressedPagesMetadata>>,
@@ -445,7 +435,7 @@ where
     type Item = (I, Cow<'a, T>);
 
     fn next(&mut self) -> Option<Self::Item> {
-        let mmap = &self.guard;
+        let mmap = &self.mmap;
         let i = self.index;
         let stored_len = self.stored_len;
 
@@ -499,7 +489,7 @@ where
         let stored_len = CompressedVec::<I, T>::stored_len__(&pages_meta);
         CompressedVecIterator {
             vec: self,
-            guard: self.mmap().load(),
+            mmap: self.create_mmap().unwrap(),
             decoded_page: None,
             pages_meta,
             stored_len,

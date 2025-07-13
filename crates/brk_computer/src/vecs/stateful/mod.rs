@@ -498,9 +498,9 @@ impl Vecs {
         let dateindex_to_first_height = &indexes.dateindex_to_first_height;
         let dateindex_to_height_count = &indexes.dateindex_to_height_count;
 
-        let outputindex_to_value_mmap = outputindex_to_value.mmap().load();
-        let outputindex_to_outputtype_mmap = outputindex_to_outputtype.mmap().load();
-        let outputindex_to_typeindex_mmap = outputindex_to_typeindex.mmap().load();
+        let outputindex_to_value_mmap = outputindex_to_value.create_mmap()?;
+        let outputindex_to_outputtype_mmap = outputindex_to_outputtype.create_mmap()?;
+        let outputindex_to_typeindex_mmap = outputindex_to_typeindex.create_mmap()?;
 
         let mut inputindex_to_outputindex_iter = inputindex_to_outputindex.into_iter();
         let mut height_to_first_outputindex_iter = height_to_first_outputindex.into_iter();

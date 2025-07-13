@@ -3,7 +3,6 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use arc_swap::ArcSwap;
 use brk_core::{Result, Version};
 use memmap2::Mmap;
 
@@ -76,14 +75,6 @@ where
     }
 
     #[inline]
-    fn mmap(&self) -> &ArcSwap<Mmap> {
-        match self {
-            StoredVec::Raw(v) => v.mmap(),
-            StoredVec::Compressed(v) => v.mmap(),
-        }
-    }
-
-    #[inline]
     fn parent(&self) -> &Path {
         match self {
             StoredVec::Raw(v) => v.parent(),
@@ -96,13 +87,6 @@ where
         match self {
             StoredVec::Raw(v) => v.stored_len(),
             StoredVec::Compressed(v) => v.stored_len(),
-        }
-    }
-    #[inline]
-    fn stored_len_(&self, mmap: &Mmap) -> usize {
-        match self {
-            StoredVec::Raw(v) => v.stored_len_(mmap),
-            StoredVec::Compressed(v) => v.stored_len_(mmap),
         }
     }
 

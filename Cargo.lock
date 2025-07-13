@@ -548,7 +548,6 @@ dependencies = [
  "derive_deref",
  "either",
  "fjall",
- "jiff",
  "log",
  "rayon",
  "serde",

@@ -15,7 +15,7 @@ use bitcoin::{Transaction, TxIn, TxOut};
 use brk_exit::Exit;
 use brk_parser::Parser;
 use brk_store::AnyStore;
-use brk_vec::{AnyVec, VecIterator};
+use brk_vec::{AnyVec, Mmap, VecIterator};
 use color_eyre::eyre::{ContextCompat, eyre};
 use log::{error, info};
 use rayon::prelude::*;
@@ -40,6 +40,7 @@ pub struct Indexer {
 impl Indexer {
     pub fn forced_import(outputs_dir: &Path) -> color_eyre::Result<Self> {
         setrlimit()?;
+
         Ok(Self {
             vecs: Vecs::forced_import(&outputs_dir.join("vecs/indexed"), VERSION + Version::ZERO)?,
             stores: Stores::forced_import(&outputs_dir.join("stores"), VERSION + Version::ZERO)?,
@@ -88,9 +89,9 @@ impl Indexer {
                                 height: Height,
                                 rem: bool,
                                 exit: &Exit|
-         -> color_eyre::Result<()> {
+         -> color_eyre::Result<bool> {
             if height == 0 || (height % SNAPSHOT_BLOCK_RANGE != 0) != rem || exit.triggered() {
-                return Ok(());
+                return Ok(false);
             }
 
             info!("Exporting...");
@@ -98,14 +99,87 @@ impl Indexer {
             stores.commit(height)?;
             vecs.flush(height)?;
             exit.release();
-            Ok(())
+            Ok(true)
         };
+
+        let mut txindex_to_first_outputindex_mmap_opt = None;
+        let mut p2pk65addressindex_to_p2pk65bytes_mmap_opt = None;
+        let mut p2pk33addressindex_to_p2pk33bytes_mmap_opt = None;
+        let mut p2pkhaddressindex_to_p2pkhbytes_mmap_opt = None;
+        let mut p2shaddressindex_to_p2shbytes_mmap_opt = None;
+        let mut p2wpkhaddressindex_to_p2wpkhbytes_mmap_opt = None;
+        let mut p2wshaddressindex_to_p2wshbytes_mmap_opt = None;
+        let mut p2traddressindex_to_p2trbytes_mmap_opt = None;
+        let mut p2aaddressindex_to_p2abytes_mmap_opt = None;
+
+        let reset_mmaps_options =
+            |vecs: &mut Vecs,
+             txindex_to_first_outputindex_mmap_opt: &mut Option<Mmap>,
+             p2pk65addressindex_to_p2pk65bytes_mmap_opt: &mut Option<Mmap>,
+             p2pk33addressindex_to_p2pk33bytes_mmap_opt: &mut Option<Mmap>,
+             p2pkhaddressindex_to_p2pkhbytes_mmap_opt: &mut Option<Mmap>,
+             p2shaddressindex_to_p2shbytes_mmap_opt: &mut Option<Mmap>,
+             p2wpkhaddressindex_to_p2wpkhbytes_mmap_opt: &mut Option<Mmap>,
+             p2wshaddressindex_to_p2wshbytes_mmap_opt: &mut Option<Mmap>,
+             p2traddressindex_to_p2trbytes_mmap_opt: &mut Option<Mmap>,
+             p2aaddressindex_to_p2abytes_mmap_opt: &mut Option<Mmap>| {
+                txindex_to_first_outputindex_mmap_opt
+                    .replace(vecs.txindex_to_first_outputindex.create_mmap().unwrap());
+                p2pk65addressindex_to_p2pk65bytes_mmap_opt.replace(
+                    vecs.p2pk65addressindex_to_p2pk65bytes
+                        .create_mmap()
+                        .unwrap(),
+                );
+                p2pk33addressindex_to_p2pk33bytes_mmap_opt.replace(
+                    vecs.p2pk33addressindex_to_p2pk33bytes
+                        .create_mmap()
+                        .unwrap(),
+                );
+                p2pkhaddressindex_to_p2pkhbytes_mmap_opt
+                    .replace(vecs.p2pkhaddressindex_to_p2pkhbytes.create_mmap().unwrap());
+                p2shaddressindex_to_p2shbytes_mmap_opt
+                    .replace(vecs.p2shaddressindex_to_p2shbytes.create_mmap().unwrap());
+                p2wpkhaddressindex_to_p2wpkhbytes_mmap_opt.replace(
+                    vecs.p2wpkhaddressindex_to_p2wpkhbytes
+                        .create_mmap()
+                        .unwrap(),
+                );
+                p2wshaddressindex_to_p2wshbytes_mmap_opt
+                    .replace(vecs.p2wshaddressindex_to_p2wshbytes.create_mmap().unwrap());
+                p2traddressindex_to_p2trbytes_mmap_opt
+                    .replace(vecs.p2traddressindex_to_p2trbytes.create_mmap().unwrap());
+                p2aaddressindex_to_p2abytes_mmap_opt
+                    .replace(vecs.p2aaddressindex_to_p2abytes.create_mmap().unwrap());
+            };
+
+        reset_mmaps_options(
+            vecs,
+            &mut txindex_to_first_outputindex_mmap_opt,
+            &mut p2pk65addressindex_to_p2pk65bytes_mmap_opt,
+            &mut p2pk33addressindex_to_p2pk33bytes_mmap_opt,
+            &mut p2pkhaddressindex_to_p2pkhbytes_mmap_opt,
+            &mut p2shaddressindex_to_p2shbytes_mmap_opt,
+            &mut p2wpkhaddressindex_to_p2wpkhbytes_mmap_opt,
+            &mut p2wshaddressindex_to_p2wshbytes_mmap_opt,
+            &mut p2traddressindex_to_p2trbytes_mmap_opt,
+            &mut p2aaddressindex_to_p2abytes_mmap_opt,
+        );
 
         parser.parse(start, end).iter().try_for_each(
             |(height, block, blockhash)| -> color_eyre::Result<()> {
                 info!("Indexing block {height}...");
 
                 idxs.height = height;
+
+                let txindex_to_first_outputindex_mmap = txindex_to_first_outputindex_mmap_opt.as_ref().unwrap();
+                let p2pk65addressindex_to_p2pk65bytes_mmap = p2pk65addressindex_to_p2pk65bytes_mmap_opt.as_ref().unwrap();
+                let p2pk33addressindex_to_p2pk33bytes_mmap = p2pk33addressindex_to_p2pk33bytes_mmap_opt.as_ref().unwrap();
+                let p2pkhaddressindex_to_p2pkhbytes_mmap = p2pkhaddressindex_to_p2pkhbytes_mmap_opt.as_ref().unwrap();
+                let p2shaddressindex_to_p2shbytes_mmap = p2shaddressindex_to_p2shbytes_mmap_opt.as_ref().unwrap();
+                let p2wpkhaddressindex_to_p2wpkhbytes_mmap = p2wpkhaddressindex_to_p2wpkhbytes_mmap_opt.as_ref().unwrap();
+                let p2wshaddressindex_to_p2wshbytes_mmap = p2wshaddressindex_to_p2wshbytes_mmap_opt.as_ref().unwrap();
+                let p2traddressindex_to_p2trbytes_mmap = p2traddressindex_to_p2trbytes_mmap_opt.as_ref().unwrap();
+                let p2aaddressindex_to_p2abytes_mmap = p2aaddressindex_to_p2abytes_mmap_opt.as_ref().unwrap();
 
                 // Used to check rapidhash collisions
                 let check_collisions = check_collisions && height > Height::new(COLLISIONS_CHECKED_UP_TO);
@@ -166,9 +240,6 @@ impl Indexer {
                         });
 
                     let input_source_vec_handle = scope.spawn(|| {
-                        let txindex_to_first_outputindex_mmap = vecs
-                            .txindex_to_first_outputindex.mmap().load();
-
                         let inputs = block
                             .txdata
                             .iter()
@@ -211,7 +282,7 @@ impl Indexer {
 
                                 let vout = Vout::from(outpoint.vout);
 
-                                let outputindex = vecs.txindex_to_first_outputindex.get_or_read(prev_txindex, &txindex_to_first_outputindex_mmap)?
+                                let outputindex = vecs.txindex_to_first_outputindex.get_or_read(prev_txindex, txindex_to_first_outputindex_mmap)?
                                     .context("Expect outputindex to not be none")
                                     .inspect_err(|_| {
                                         dbg!(outpoint.txid, prev_txindex, vout);
@@ -239,16 +310,6 @@ impl Indexer {
                                 }
                             })
                     });
-
-                    let p2pk65addressindex_to_p2pk65bytes_mmap = vecs
-                        .p2pk65addressindex_to_p2pk65bytes.mmap().load();
-                    let p2pk33addressindex_to_p2pk33bytes_mmap = vecs.p2pk33addressindex_to_p2pk33bytes.mmap().load();
-                    let p2pkhaddressindex_to_p2pkhbytes_mmap = vecs.p2pkhaddressindex_to_p2pkhbytes.mmap().load();
-                    let p2shaddressindex_to_p2shbytes_mmap = vecs.p2shaddressindex_to_p2shbytes.mmap().load();
-                    let p2wpkhaddressindex_to_p2wpkhbytes_mmap = vecs.p2wpkhaddressindex_to_p2wpkhbytes.mmap().load();
-                    let p2wshaddressindex_to_p2wshbytes_mmap = vecs.p2wshaddressindex_to_p2wshbytes.mmap().load();
-                    let p2traddressindex_to_p2trbytes_mmap = vecs.p2traddressindex_to_p2trbytes.mmap().load();
-                    let p2aaddressindex_to_p2abytes_mmap = vecs.p2aaddressindex_to_p2abytes.mmap().load();
 
                     let outputs = block
                         .txdata
@@ -307,35 +368,35 @@ impl Indexer {
                                     let prev_addressbytes_opt = match outputtype {
                                         OutputType::P2PK65 => vecs
                                             .p2pk65addressindex_to_p2pk65bytes
-                                            .get_or_read(typeindex.into(), &p2pk65addressindex_to_p2pk65bytes_mmap)?
+                                            .get_or_read(typeindex.into(), p2pk65addressindex_to_p2pk65bytes_mmap)?
                                             .map(|v| AddressBytes::from(v.into_owned())),
                                         OutputType::P2PK33 => vecs
                                             .p2pk33addressindex_to_p2pk33bytes
-                                            .get_or_read(typeindex.into(), &p2pk33addressindex_to_p2pk33bytes_mmap)?
+                                            .get_or_read(typeindex.into(), p2pk33addressindex_to_p2pk33bytes_mmap)?
                                             .map(|v| AddressBytes::from(v.into_owned())),
                                         OutputType::P2PKH => vecs
                                             .p2pkhaddressindex_to_p2pkhbytes
-                                            .get_or_read(typeindex.into(), &p2pkhaddressindex_to_p2pkhbytes_mmap)?
+                                            .get_or_read(typeindex.into(), p2pkhaddressindex_to_p2pkhbytes_mmap)?
                                             .map(|v| AddressBytes::from(v.into_owned())),
                                         OutputType::P2SH => vecs
                                             .p2shaddressindex_to_p2shbytes
-                                            .get_or_read(typeindex.into(), &p2shaddressindex_to_p2shbytes_mmap)?
+                                            .get_or_read(typeindex.into(), p2shaddressindex_to_p2shbytes_mmap)?
                                             .map(|v| AddressBytes::from(v.into_owned())),
                                         OutputType::P2WPKH => vecs
                                             .p2wpkhaddressindex_to_p2wpkhbytes
-                                            .get_or_read(typeindex.into(), &p2wpkhaddressindex_to_p2wpkhbytes_mmap)?
+                                            .get_or_read(typeindex.into(), p2wpkhaddressindex_to_p2wpkhbytes_mmap)?
                                             .map(|v| AddressBytes::from(v.into_owned())),
                                         OutputType::P2WSH => vecs
                                             .p2wshaddressindex_to_p2wshbytes
-                                            .get_or_read(typeindex.into(), &p2wshaddressindex_to_p2wshbytes_mmap)?
+                                            .get_or_read(typeindex.into(), p2wshaddressindex_to_p2wshbytes_mmap)?
                                             .map(|v| AddressBytes::from(v.into_owned())),
                                         OutputType::P2TR => vecs
                                             .p2traddressindex_to_p2trbytes
-                                            .get_or_read(typeindex.into(), &p2traddressindex_to_p2trbytes_mmap)?
+                                            .get_or_read(typeindex.into(), p2traddressindex_to_p2trbytes_mmap)?
                                             .map(|v| AddressBytes::from(v.into_owned())),
                                         OutputType::P2A => vecs
                                             .p2aaddressindex_to_p2abytes
-                                            .get_or_read(typeindex.into(), &p2aaddressindex_to_p2abytes_mmap)?
+                                            .get_or_read(typeindex.into(), p2aaddressindex_to_p2abytes_mmap)?
                                             .map(|v| AddressBytes::from(v.into_owned())),
                                         OutputType::Empty | OutputType::OpReturn | OutputType::P2MS | OutputType::Unknown => {
                                             unreachable!()
@@ -677,7 +738,22 @@ impl Indexer {
                 idxs.inputindex += InputIndex::from(inputs_len);
                 idxs.outputindex += OutputIndex::from(outputs_len);
 
-                export_if_needed(stores, vecs, height, false, exit)?;
+                let exported = export_if_needed(stores, vecs, height, false, exit)?;
+
+                if exported {
+                    reset_mmaps_options(
+                        vecs,
+                        &mut txindex_to_first_outputindex_mmap_opt,
+                        &mut p2pk65addressindex_to_p2pk65bytes_mmap_opt,
+                        &mut p2pk33addressindex_to_p2pk33bytes_mmap_opt,
+                        &mut p2pkhaddressindex_to_p2pkhbytes_mmap_opt,
+                        &mut p2shaddressindex_to_p2shbytes_mmap_opt,
+                        &mut p2wpkhaddressindex_to_p2wpkhbytes_mmap_opt,
+                        &mut p2wshaddressindex_to_p2wshbytes_mmap_opt,
+                        &mut p2traddressindex_to_p2trbytes_mmap_opt,
+                        &mut p2aaddressindex_to_p2abytes_mmap_opt,
+                    );
+                }
 
                 Ok(())
             },
