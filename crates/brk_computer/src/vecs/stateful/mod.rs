@@ -1210,8 +1210,7 @@ impl Vecs {
         let height_to_realized_cap_ref = height_to_realized_cap.as_ref();
         let dateindex_to_realized_cap_ref = dateindex_to_realized_cap.as_ref();
 
-        let vecs = self
-            .utxo_vecs
+        self.utxo_vecs
             .as_mut_vecs()
             .into_iter()
             .map(|(_, v)| v)
@@ -1223,40 +1222,33 @@ impl Vecs {
                     .map(|(_, v)| v)
                     .map(Either::Right),
             )
-            .collect::<Vec<Either<&mut utxo_cohort::Vecs, &mut address_cohort::Vecs>>>();
-
-        // Capped as external drives (even thunderbolt 4 SSDs) can be overwhelmed
-        let chunk_size = (vecs.len() as f64 / 3.0).ceil() as usize;
-        vecs.into_par_iter()
-            // .into_iter()
-            .chunks(chunk_size)
-            .try_for_each(|v| {
-                v.into_iter().try_for_each(|either| match either {
-                    Either::Left(v) => v.compute_rest_part2(
-                        indexer,
-                        indexes,
-                        fetched,
-                        starting_indexes,
-                        market,
-                        &height_to_supply,
-                        dateindex_to_supply_ref,
-                        height_to_realized_cap_ref,
-                        dateindex_to_realized_cap_ref,
-                        exit,
-                    ),
-                    Either::Right(v) => v.compute_rest_part2(
-                        indexer,
-                        indexes,
-                        fetched,
-                        starting_indexes,
-                        market,
-                        &height_to_supply,
-                        dateindex_to_supply_ref,
-                        height_to_realized_cap_ref,
-                        dateindex_to_realized_cap_ref,
-                        exit,
-                    ),
-                })
+            .collect::<Vec<Either<&mut utxo_cohort::Vecs, &mut address_cohort::Vecs>>>()
+            .into_par_iter()
+            .try_for_each(|either| match either {
+                Either::Left(v) => v.compute_rest_part2(
+                    indexer,
+                    indexes,
+                    fetched,
+                    starting_indexes,
+                    market,
+                    &height_to_supply,
+                    dateindex_to_supply_ref,
+                    height_to_realized_cap_ref,
+                    dateindex_to_realized_cap_ref,
+                    exit,
+                ),
+                Either::Right(v) => v.compute_rest_part2(
+                    indexer,
+                    indexes,
+                    fetched,
+                    starting_indexes,
+                    market,
+                    &height_to_supply,
+                    dateindex_to_supply_ref,
+                    height_to_realized_cap_ref,
+                    dateindex_to_realized_cap_ref,
+                    exit,
+                ),
             })?;
 
         self.indexes_to_unspendable_supply.compute_rest(
@@ -1275,8 +1267,6 @@ impl Vecs {
             exit,
             Some(&self.height_to_opreturn_supply),
         )?;
-
-        stores.rotate_memtables();
 
         exit.release();
 

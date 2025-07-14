@@ -9,8 +9,6 @@ pub trait AnyStore {
 
     fn name(&self) -> &'static str;
 
-    fn rotate_memtable(&self);
-
     fn height(&self) -> Option<Height>;
 
     fn has(&self, height: Height) -> bool;

@@ -277,10 +277,6 @@ where
         Ok(())
     }
 
-    fn rotate_memtable(&self) {
-        let _ = self.partition.as_ref().unwrap().inner().rotate_memtable();
-    }
-
     fn height(&self) -> Option<Height> {
         self.meta.height()
     }
