@@ -597,12 +597,6 @@ impl Stores {
             .map_err(|e| e.into())
     }
 
-    pub fn rotate_memtables(&self) {
-        self.as_slice()
-            .into_iter()
-            .for_each(|store| store.rotate_memtable());
-    }
-
     pub fn as_slice(&self) -> [&(dyn AnyStore + Send + Sync); 16] {
         [
             &self.p2aaddressindex_to_addressdata,

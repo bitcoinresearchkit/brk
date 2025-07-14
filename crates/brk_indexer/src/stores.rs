@@ -181,12 +181,6 @@ impl Stores {
             .map_err(|e| e.into())
     }
 
-    pub fn rotate_memtables(&self) {
-        self.as_slice()
-            .into_iter()
-            .for_each(|store| store.rotate_memtable());
-    }
-
     fn as_slice(&self) -> [&(dyn AnyStore + Send + Sync); 11] {
         [
             &self.addressbyteshash_to_typeindex,

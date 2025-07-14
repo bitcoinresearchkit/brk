@@ -761,8 +761,6 @@ impl Indexer {
 
         export_if_needed(stores, vecs, idxs.height, true, exit)?;
 
-        stores.rotate_memtables();
-
         Ok(starting_indexes)
     }
 }
