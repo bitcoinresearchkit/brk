@@ -26,7 +26,7 @@ pub fn main() -> color_eyre::Result<()> {
     thread::Builder::new()
         .stack_size(256 * 1024 * 1024)
         .spawn(move || -> color_eyre::Result<()> {
-            let parser = Parser::new(bitcoin_dir.join("blocks"), rpc);
+            let parser = Parser::new(bitcoin_dir.join("blocks"), default_brk_path(), rpc);
 
             let _outputs_dir = Path::new("/Volumes/WD_BLACK/brk").join("outputs");
             let outputs_dir = _outputs_dir.as_path();

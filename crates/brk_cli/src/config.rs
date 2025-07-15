@@ -13,7 +13,6 @@ use clap_derive::Parser;
 use color_eyre::eyre::eyre;
 use serde::{Deserialize, Serialize};
 
-use crate::services::Services;
 
 #[derive(Parser, Debug, Default, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize)]
 #[command(version, about)]
@@ -33,10 +32,6 @@ pub struct Config {
     #[arg(long, value_name = "PATH")]
     brkdir: Option<String>,
 
-    /// Activated services, default: all, saved
-    #[serde(default, deserialize_with = "default_on_error")]
-    #[arg(short, long)]
-    services: Option<Services>,
 
     /// Computation of computed datasets, `lazy` computes data whenever requested without saving it, `eager` computes the data once and saves it to disk, default: `lazy`, saved
     #[serde(default, deserialize_with = "default_on_error")]
@@ -129,9 +124,6 @@ impl Config {
                 config_saved.brkdir = Some(brkdir);
             }
 
-            if let Some(services) = config_args.services.take() {
-                config_saved.services = Some(services);
-            }
 
             if let Some(computation) = config_args.computation.take() {
                 config_saved.computation = Some(computation);
@@ -306,15 +298,6 @@ impl Config {
         self.outputsdir().join("hars")
     }
 
-    pub fn process(&self) -> bool {
-        self.services
-            .is_none_or(|m| m == Services::All || m == Services::Processor)
-    }
-
-    pub fn serve(&self) -> bool {
-        self.services
-            .is_none_or(|m| m == Services::All || m == Services::Server)
-    }
 
     fn path_cookiefile(&self) -> PathBuf {
         self.rpccookiefile.as_ref().map_or_else(

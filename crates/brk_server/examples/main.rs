@@ -2,7 +2,7 @@ use std::{path::Path, thread::sleep, time::Duration};
 
 use bitcoincore_rpc::RpcApi;
 use brk_computer::Computer;
-use brk_core::default_bitcoin_path;
+use brk_core::{default_bitcoin_path, default_brk_path};
 use brk_exit::Exit;
 use brk_fetcher::Fetcher;
 use brk_indexer::Indexer;
@@ -18,6 +18,7 @@ pub fn main() -> color_eyre::Result<()> {
     let process = true;
 
     let bitcoin_dir = default_bitcoin_path();
+    let brk_dir = default_brk_path();
 
     let rpc = Box::leak(Box::new(bitcoincore_rpc::Client::new(
         "http://localhost:8332",
@@ -25,7 +26,7 @@ pub fn main() -> color_eyre::Result<()> {
     )?));
     let exit = Exit::new();
 
-    let parser = Parser::new(bitcoin_dir.join("blocks"), rpc);
+    let parser = Parser::new(bitcoin_dir.join("blocks"), brk_dir, rpc);
 
     let outputs_dir = Path::new("../../_outputs");
 

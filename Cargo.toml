@@ -7,6 +7,7 @@ package.edition = "2024"
 package.version = "0.0.80"
 package.homepage = "https://bitcoinresearchkit.org"
 package.repository = "https://github.com/bitcoinresearchkit/brk"
+package.readme = "README.md"
 
 [profile.release]
 lto = "fat"
