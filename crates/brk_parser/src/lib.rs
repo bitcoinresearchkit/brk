@@ -43,10 +43,10 @@ pub struct Parser {
 }
 
 impl Parser {
-    pub fn new(blocks_dir: PathBuf, brk_dir: PathBuf, rpc: &'static bitcoincore_rpc::Client) -> Self {
+    pub fn new(blocks_dir: PathBuf, outputs_dir: PathBuf, rpc: &'static bitcoincore_rpc::Client) -> Self {
         Self { 
             blocks_dir,
-            outputs_dir: brk_dir,
+            outputs_dir: outputs_dir,
             rpc 
         }
     }

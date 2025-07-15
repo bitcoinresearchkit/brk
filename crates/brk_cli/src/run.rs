@@ -52,7 +52,6 @@ pub fn run() -> color_eyre::Result<()> {
         .enable_all()
         .build()?
         .block_on(async {
-            // Always start the server
             let served_indexer = indexer.clone();
             let served_computer = computer.clone();
 
@@ -66,7 +65,6 @@ pub fn run() -> color_eyre::Result<()> {
 
             sleep(Duration::from_secs(1));
 
-            // Always run the processor
             loop {
                 wait_for_synced_node(rpc)?;
 
