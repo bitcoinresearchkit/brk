@@ -46,6 +46,14 @@
  * @property {string} title
  * @property {string[]} path
  *
+ * @typedef {Object} PartialExplorerOptionSpecific
+ * @property {"explorer"} kind
+ * @property {string} title
+ *
+ * @typedef {PartialOption & PartialExplorerOptionSpecific} PartialExplorerOption
+ *
+ * @typedef {Required<PartialExplorerOption> & ProcessedOptionAddons} ExplorerOption
+ *
  * @typedef {Object} PartialChartOptionSpecific
  * @property {"chart"} [kind]
  * @property {string} title
@@ -85,9 +93,9 @@
  *
  * @typedef {Required<PartialUrlOption> & ProcessedOptionAddons} UrlOption
  *
- * @typedef {PartialChartOption | PartialTableOption | PartialSimulationOption | PartialUrlOption} AnyPartialOption
+ * @typedef {PartialExplorerOption | PartialChartOption | PartialTableOption | PartialSimulationOption | PartialUrlOption} AnyPartialOption
  *
- * @typedef {ChartOption | TableOption | SimulationOption | UrlOption} Option
+ * @typedef {ExplorerOption | ChartOption | TableOption | SimulationOption | UrlOption} Option
  *
  * @typedef {Object} PartialOptionsGroup
  * @property {string} name
@@ -105,10 +113,13 @@
  */
 
 /**
- * @param {Colors} colors
+ * @param {Object} args
+ * @param {Env} args.env
+ * @param {Colors} args.colors
+ * @param {VecIdToIndexes} args.vecIdToIndexes
  * @returns {PartialOptionsTree}
  */
-function createPartialOptions(colors) {
+function createPartialOptions({ env, colors, vecIdToIndexes }) {
   /**
    * @template {string} S
    * @typedef {Extract<VecId, `${S}${string}`>} StartsWith
@@ -197,13 +208,13 @@ function createPartialOptions(colors) {
 
   const terms = /** @type {const} */ ([
     {
-      key: "sth",
+      key: "short_term_holders",
       name: "short",
       title: "Short Term Holders",
       color: colors.yellow,
     },
     {
-      key: "lth",
+      key: "long_term_holders",
       name: "long",
       title: "Long Term Holders",
       color: colors.fuchsia,
@@ -212,340 +223,358 @@ function createPartialOptions(colors) {
 
   const upToDate = /** @type {const} */ ([
     {
-      key: "up_to_1d",
+      key: "utxos_up_to_1d_old",
       name: "1d",
-      title: "Up to 1 Day",
+      title: "UTXOs Up to 1 Day old",
       color: colors.pink,
     },
     {
-      key: "up_to_1w",
+      key: "utxos_up_to_1w_old",
       name: "1w",
-      title: "Up to 1 Week",
+      title: "UTXOs Up to 1 Week old",
       color: colors.red,
     },
     {
-      key: "up_to_1m",
+      key: "utxos_up_to_1m_old",
       name: "1m",
-      title: "Up to 1 Month",
+      title: "UTXOs Up to 1 Month old",
       color: colors.orange,
     },
     {
-      key: "up_to_2m",
+      key: "utxos_up_to_2m_old",
       name: "2m",
-      title: "Up to 2 Months",
+      title: "UTXOs Up to 2 Months old",
       color: colors.amber,
     },
     {
-      key: "up_to_3m",
+      key: "utxos_up_to_3m_old",
       name: "3m",
-      title: "Up to 3 Months",
+      title: "UTXOs Up to 3 Months old",
       color: colors.yellow,
     },
     {
-      key: "up_to_4m",
+      key: "utxos_up_to_4m_old",
       name: "4m",
-      title: "Up to 4 Months",
+      title: "UTXOs Up to 4 Months old",
       color: colors.lime,
     },
     {
-      key: "up_to_5m",
+      key: "utxos_up_to_5m_old",
       name: "5m",
-      title: "Up to 5 Months",
+      title: "UTXOs Up to 5 Months old",
       color: colors.green,
     },
     {
-      key: "up_to_6m",
+      key: "utxos_up_to_6m_old",
       name: "6m",
-      title: "Up to 6 Months",
+      title: "UTXOs Up to 6 Months old",
       color: colors.teal,
     },
     {
-      key: "up_to_1y",
+      key: "utxos_up_to_1y_old",
       name: "1y",
-      title: "Up to 1 Year",
+      title: "UTXOs Up to 1 Year old",
       color: colors.sky,
     },
     {
-      key: "up_to_2y",
+      key: "utxos_up_to_2y_old",
       name: "2y",
-      title: "Up to 2 Years",
+      title: "UTXOs Up to 2 Years old",
       color: colors.indigo,
     },
     {
-      key: "up_to_3y",
+      key: "utxos_up_to_3y_old",
       name: "3y",
-      title: "Up to 3 Years",
+      title: "UTXOs Up to 3 Years old",
       color: colors.violet,
     },
     {
-      key: "up_to_4y",
+      key: "utxos_up_to_4y_old",
       name: "4y",
-      title: "Up to 4 Years",
+      title: "UTXOs Up to 4 Years old",
       color: colors.purple,
     },
     {
-      key: "up_to_5y",
+      key: "utxos_up_to_5y_old",
       name: "5y",
-      title: "Up to 5 Years",
+      title: "UTXOs Up to 5 Years old",
       color: colors.fuchsia,
     },
     {
-      key: "up_to_6y",
+      key: "utxos_up_to_6y_old",
       name: "6y",
-      title: "Up to 6 Years",
+      title: "UTXOs Up to 6 Years old",
       color: colors.pink,
     },
     {
-      key: "up_to_7y",
+      key: "utxos_up_to_7y_old",
       name: "7y",
-      title: "Up to 7 Years",
+      title: "UTXOs Up to 7 Years old",
       color: colors.red,
     },
     {
-      key: "up_to_8y",
+      key: "utxos_up_to_8y_old",
       name: "8y",
-      title: "Up to 8 Years",
+      title: "UTXOs Up to 8 Years old",
       color: colors.orange,
     },
     {
-      key: "up_to_10y",
+      key: "utxos_up_to_10y_old",
       name: "10y",
-      title: "Up to 10 Years",
+      title: "UTXOs Up to 10 Years old",
       color: colors.amber,
     },
     {
-      key: "up_to_15y",
-      name: "15y",
-      title: "Up to 15 Years",
+      key: "utxos_up_to_12y_old",
+      name: "12y",
+      title: "UTXOs Up to 12 Years old",
       color: colors.yellow,
+    },
+    {
+      key: "utxos_up_to_15y_old",
+      name: "15y",
+      title: "UTXOs Up to 15 Years old",
+      color: colors.lime,
     },
   ]);
 
   const fromDate = /** @type {const} */ ([
     {
-      key: "from_1d",
+      key: "utxos_at_least_1d_old",
       name: "1d",
-      title: "From 1 Day",
+      title: "UTXOs at least 1 Day old",
       color: colors.red,
     },
     {
-      key: "from_1w",
+      key: "utxos_at_least_1w_old",
       name: "1w",
-      title: "From 1 Week",
+      title: "UTXOs at least 1 Week old",
       color: colors.orange,
     },
     {
-      key: "from_1m",
+      key: "utxos_at_least_1m_old",
       name: "1m",
-      title: "From 1 Month",
+      title: "UTXOs at least 1 Month old",
       color: colors.yellow,
     },
     {
-      key: "from_2m",
+      key: "utxos_at_least_2m_old",
       name: "2m",
-      title: "From 2 Months",
+      title: "UTXOs at least 2 Months old",
       color: colors.lime,
     },
     {
-      key: "from_3m",
+      key: "utxos_at_least_3m_old",
       name: "3m",
-      title: "From 3 Months",
+      title: "UTXOs at least 3 Months old",
       color: colors.green,
     },
     {
-      key: "from_4m",
+      key: "utxos_at_least_4m_old",
       name: "4m",
-      title: "From 4 Months",
+      title: "UTXOs at least 4 Months old",
       color: colors.teal,
     },
     {
-      key: "from_5m",
+      key: "utxos_at_least_5m_old",
       name: "5m",
-      title: "From 5 Months",
+      title: "UTXOs at least 5 Months old",
       color: colors.cyan,
     },
     {
-      key: "from_6m",
+      key: "utxos_at_least_6m_old",
       name: "6m",
-      title: "From 6 Months",
+      title: "UTXOs at least 6 Months old",
       color: colors.blue,
     },
     {
-      key: "from_1y",
+      key: "utxos_at_least_1y_old",
       name: "1y",
-      title: "From 1 Year",
+      title: "UTXOs at least 1 Year old",
       color: colors.indigo,
     },
     {
-      key: "from_2y",
+      key: "utxos_at_least_2y_old",
       name: "2y",
-      title: "From 2 Years",
+      title: "UTXOs at least 2 Years old",
       color: colors.violet,
     },
     {
-      key: "from_3y",
+      key: "utxos_at_least_3y_old",
       name: "3y",
-      title: "From 3 Years",
+      title: "UTXOs at least 3 Years old",
       color: colors.purple,
     },
     {
-      key: "from_4y",
+      key: "utxos_at_least_4y_old",
       name: "4y",
-      title: "From 4 Years",
+      title: "UTXOs at least 4 Years old",
       color: colors.fuchsia,
     },
     {
-      key: "from_5y",
+      key: "utxos_at_least_5y_old",
       name: "5y",
-      title: "From 5 Years",
+      title: "UTXOs at least 5 Years old",
       color: colors.pink,
     },
     {
-      key: "from_6y",
+      key: "utxos_at_least_6y_old",
       name: "6y",
-      title: "From 6 Years",
+      title: "UTXOs at least 6 Years old",
       color: colors.rose,
     },
     {
-      key: "from_7y",
+      key: "utxos_at_least_7y_old",
       name: "7y",
-      title: "From 7 Years",
+      title: "UTXOs at least 7 Years old",
       color: colors.red,
     },
     {
-      key: "from_8y",
+      key: "utxos_at_least_8y_old",
       name: "8y",
-      title: "From 8 Years",
+      title: "UTXOs at least 8 Years old",
       color: colors.orange,
     },
     {
-      key: "from_10y",
+      key: "utxos_at_least_10y_old",
       name: "10y",
-      title: "From 10 Years",
+      title: "UTXOs at least 10 Years old",
       color: colors.yellow,
     },
     {
-      key: "from_15y",
-      name: "15y",
-      title: "From 15 Years",
+      key: "utxos_at_least_12y_old",
+      name: "12y",
+      title: "UTXOs at least 12 Years old",
       color: colors.lime,
+    },
+    {
+      key: "utxos_at_least_15y_old",
+      name: "15y",
+      title: "UTXOs at least 15 Years old",
+      color: colors.green,
     },
   ]);
 
   const dateRange = /** @type {const} */ ([
     {
-      key: "start_to_1d",
-      name: "24h",
-      title: "Last 24 hours",
+      key: "utxos_up_to_1d_old",
+      name: "1d",
+      title: "UTXOs New Up to 1 Day old",
       color: colors.pink,
     },
     {
-      key: "from_1d_to_1w",
+      key: "utxos_at_least_1d_up_to_1w_old",
       name: "1d..1w",
-      title: "From 1 Day ago to 1 Week ago",
+      title: "UTXOs At least 1 Day ago Up to 1 Week old",
       color: colors.red,
     },
     {
-      key: "from_1w_to_1m",
+      key: "utxos_at_least_1w_up_to_1m_old",
       name: "1w..1m",
-      title: "From 1 Week ago to 1 Month ago",
+      title: "UTXOs At least 1 Week ago Up to 1 Month old",
       color: colors.orange,
     },
     {
-      key: "from_1m_to_2m",
+      key: "utxos_at_least_1m_up_to_2m_old",
       name: "1m..2m",
-      title: "From 1 Month ago to 2 Months ago",
+      title: "UTXOs At least 1 Month ago Up to 2 Months old",
       color: colors.yellow,
     },
     {
-      key: "from_2m_to_3m",
+      key: "utxos_at_least_2m_up_to_3m_old",
       name: "2m..3m",
-      title: "From 2 Month ago to 3 Months ago",
+      title: "UTXOs At least 2 Month ago Up to 3 Months old",
       color: colors.yellow,
     },
     {
-      key: "from_3m_to_4m",
+      key: "utxos_at_least_3m_up_to_4m_old",
       name: "3m..4m",
-      title: "From 3 Month ago to 4 Months ago",
+      title: "UTXOs At least 3 Month ago Up to 4 Months old",
       color: colors.lime,
     },
     {
-      key: "from_4m_to_5m",
+      key: "utxos_at_least_4m_up_to_5m_old",
       name: "4m..5m",
-      title: "From 4 Month ago to 5 Months ago",
+      title: "UTXOs At least 4 Month ago Up to 5 Months old",
       color: colors.lime,
     },
     {
-      key: "from_5m_to_6m",
+      key: "utxos_at_least_5m_up_to_6m_old",
       name: "5m..6m",
-      title: "From 5 Month ago to 6 Months ago",
+      title: "UTXOs At least 5 Month ago Up to 6 Months old",
       color: colors.lime,
     },
     {
-      key: "from_6m_to_1y",
+      key: "utxos_at_least_6m_up_to_1y_old",
       name: "6m..1y",
-      title: "From 6 Months ago to 1 Year ago",
+      title: "UTXOs At least 6 Months ago Up to 1 Year old",
       color: colors.green,
     },
     {
-      key: "from_1y_to_2y",
+      key: "utxos_at_least_1y_up_to_2y_old",
       name: "1y..2y",
-      title: "From 1 Year ago to 2 Years ago",
+      title: "UTXOs At least 1 Year ago Up to 2 Years old",
       color: colors.cyan,
     },
     {
-      key: "from_2y_to_3y",
+      key: "utxos_at_least_2y_up_to_3y_old",
       name: "2y..3y",
-      title: "From 2 Years ago to 3 Years ago",
+      title: "UTXOs At least 2 Years ago Up to 3 Years old",
       color: colors.blue,
     },
     {
-      key: "from_3y_to_4y",
+      key: "utxos_at_least_3y_up_to_4y_old",
       name: "3y..4y",
-      title: "From 3 Years ago to 4 Years ago",
+      title: "UTXOs At least 3 Years ago Up to 4 Years old",
       color: colors.indigo,
     },
     {
-      key: "from_4y_to_5y",
+      key: "utxos_at_least_4y_up_to_5y_old",
       name: "4y..5y",
-      title: "From 4 Years ago to 5 Years ago",
+      title: "UTXOs At least 4 Years ago Up to 5 Years old",
       color: colors.violet,
     },
     {
-      key: "from_5y_to_6y",
+      key: "utxos_at_least_5y_up_to_6y_old",
       name: "5y..6y",
-      title: "From 5 Years ago to 6 Years ago",
+      title: "UTXOs At least 5 Years ago Up to 6 Years old",
       color: colors.purple,
     },
     {
-      key: "from_6y_to_7y",
+      key: "utxos_at_least_6y_up_to_7y_old",
       name: "6y..7y",
-      title: "From 6 Years ago to 7 Years ago",
+      title: "UTXOs At least 6 Years ago Up to 7 Years old",
       color: colors.purple,
     },
     {
-      key: "from_7y_to_8y",
+      key: "utxos_at_least_7y_up_to_8y_old",
       name: "7y..8y",
-      title: "From 7 Years ago to 8 Years ago",
+      title: "UTXOs At least 7 Years ago Up to 8 Years old",
       color: colors.fuchsia,
     },
     {
-      key: "from_8y_to_10y",
+      key: "utxos_at_least_8y_up_to_10y_old",
       name: "8y..10y",
-      title: "From 8 Years ago to 10 Years ago",
+      title: "UTXOs At least 8 Years ago Up to 10 Years old",
       color: colors.fuchsia,
     },
     {
-      key: "from_10y_to_15y",
-      name: "10y..15y",
-      title: "From 10 Years ago to 15 Years ago",
+      key: "utxos_at_least_10y_up_to_12y_old",
+      name: "10y..12y",
+      title: "UTXOs At least 10 Years ago Up to 12 Years old",
       color: colors.pink,
     },
     {
-      key: "from_15y_to_end",
-      name: "15y+",
-      title: "From 15 Years ago to genesis (2009_01_03)",
+      key: "utxos_at_least_12y_up_to_15y_old",
+      name: "12y..15y",
+      title: "UTXOs At least 12 Years ago Up to 15 Years old",
       color: colors.red,
+    },
+    {
+      key: "utxos_at_least_15y_old",
+      name: "15y+",
+      title: "UTXOs At least 15 Years old up to genesis",
+      color: colors.orange,
     },
   ]);
 
@@ -582,158 +611,320 @@ function createPartialOptions(colors) {
     },
   ]);
 
-  const fromSize = /** @type {const} */ ([
+  const aboveAmount = /** @type {const} */ ([
     {
-      key: "from_1_000sats",
-      name: "1K sats",
-      title: "From 1K sats",
-      color: colors.cyan,
-    },
-    {
-      key: "from_1btc",
-      name: "1btc",
-      title: "From 1 BTC",
-      color: colors.violet,
-    },
-    {
-      key: "from_10btc",
-      name: "10btc",
-      title: "From 10 BTC",
-      color: colors.purple,
-    },
-    {
-      key: "from_100btc",
-      name: "100btc",
-      title: "From 100 BTC",
-      color: colors.pink,
-    },
-  ]);
-
-  const upToSize = /** @type {const} */ ([
-    {
-      key: "up_to_1_000sats",
-      name: "1K sats",
-      title: "Up to 1K sats",
-      color: colors.yellow,
-    },
-    {
-      key: "up_to_10_000sats",
-      name: "10K sats",
-      title: "Up to 10K sats",
-      color: colors.green,
-    },
-    {
-      key: "up_to_1btc",
-      name: "1btc",
-      title: "Up to 1 btc",
-      color: colors.cyan,
-    },
-    {
-      key: "up_to_10btc",
-      name: "10btc",
-      title: "Up to 10 btc",
-      color: colors.blue,
-    },
-    {
-      key: "up_to_100btc",
-      name: "100btc",
-      title: "Up to 100 btc",
-      color: colors.violet,
-    },
-  ]);
-
-  const sizeRanges = /** @type {const} */ ([
-    {
-      key: "0sats",
-      name: "0 sats",
-      title: "0 sats",
-      color: colors.red,
-    },
-    {
-      key: "from_1sat_to_10sats",
-      name: "1 sat..10 sats",
-      title: "From 1 sat to 10 sats",
+      key: "above_1sat",
+      name: ">=1 sat",
+      title: "Above 1 sat",
       color: colors.orange,
     },
     {
-      key: "from_10sats_to_100sats",
-      name: "10 sats..100 sats",
-      title: "From 10 sats to 100 sats",
+      key: "above_10sats",
+      name: ">=10 sats",
+      title: "Above 10 sats",
+      color: colors.orange,
+    },
+    {
+      key: "above_100sats",
+      name: ">=100 sats",
+      title: "Above 100 sats",
       color: colors.yellow,
     },
     {
-      key: "from_100sats_to_1_000sats",
-      name: "100 sats..1K sats",
-      title: "From 100 sats to 1K sats",
+      key: "above_1k_sats",
+      name: ">=1K sats",
+      title: "Above 1K sats",
       color: colors.lime,
     },
     {
-      key: "from_1_000sats_to_10_000sats",
-      name: "1K sats..10K sats",
-      title: "From 1K sats to 10K sats",
+      key: "above_10k_sats",
+      name: ">=10K sats",
+      title: "Above 10K sats",
       color: colors.green,
     },
     {
-      key: "from_10_000sats_to_100_000sats",
-      name: "10K sats..100K sats",
-      title: "From 10K sats to 100K sats",
+      key: "above_100k_sats",
+      name: ">=100K sats",
+      title: "Above 100K sats",
       color: colors.cyan,
     },
     {
-      key: "from_100_000sats_to_1_000_000sats",
-      name: "100K sats .. 1M sats",
-      title: "From 100K sats to 1M sats",
+      key: "above_1m_sats",
+      name: ">=1M sats",
+      title: "Above 1M sats",
       color: colors.blue,
     },
     {
-      key: "from_1_000_000sats_to_10_000_000sats",
-      name: "1M sats..10M sats",
-      title: "From 1M sats to 10M sats",
+      key: "above_10m_sats",
+      name: ">=10M sats",
+      title: "Above 10M sats",
       color: colors.indigo,
     },
     {
-      key: "from_10_000_000sats_to_1btc",
-      name: "10M sats..1 btc",
-      title: "From 10M sats to 1 BTC",
+      key: "above_1btc",
+      name: ">=1 btc",
+      title: "Above 1 BTC",
       color: colors.purple,
     },
     {
-      key: "from_1btc_to_10btc",
-      name: "1 btc..10 btc",
-      title: "From 1 BTC to 10 BTC",
+      key: "above_10btc",
+      name: ">=10 btc",
+      title: "Above 10 BTC",
       color: colors.violet,
     },
     {
-      key: "from_10btc_to_100btc",
-      name: "10 btc..100 btc",
-      title: "From 10 BTC to 100 BTC",
+      key: "above_100btc",
+      name: ">=100 btc",
+      title: "Above 100 BTC",
       color: colors.fuchsia,
     },
     {
-      key: "from_100btc_to_1_000btc",
-      name: "100 btc..1K btc",
-      title: "From 100 BTC to 1K BTC",
+      key: "above_1k_btc",
+      name: ">=1K btc",
+      title: "Above 1K BTC",
       color: colors.pink,
     },
     {
-      key: "from_1_000btc_to_10_000btc",
-      name: "1K btc..10K btc",
-      title: "From 1K BTC to 10K BTC",
+      key: "above_10k_btc",
+      name: ">=10K btc",
+      title: "Above 10K BTC",
       color: colors.red,
     },
+  ]);
+
+  const utxosAboveAmount = aboveAmount.map(
+    ({ key, name, title, color }) =>
+      /** @type {const} */ ({
+        key: `utxos_${key}`,
+        name,
+        title: `UTXOs ${title}`,
+        color,
+      }),
+  );
+
+  const addressesAboveAmount = aboveAmount.map(
+    ({ key, name, title, color }) =>
+      /** @type {const} */ ({
+        key: `addrs_${key}`,
+        name,
+        title: `Addresses ${title}`,
+        color,
+      }),
+  );
+
+  const underAmount = /** @type {const} */ ([
     {
-      key: "from_10_000btc_to_100_000btc",
-      name: "10K btc..100K btc",
-      title: "From 10K BTC to 100K BTC",
+      key: "under_10sats",
+      name: "<10 sats",
+      title: "under 10 sats",
       color: colors.orange,
     },
     {
-      key: "from_100_000btc",
+      key: "under_100sats",
+      name: "<100 sats",
+      title: "under 100 sats",
+      color: colors.yellow,
+    },
+    {
+      key: "under_1k_sats",
+      name: "<1k sats",
+      title: "under 1k sats",
+      color: colors.lime,
+    },
+    {
+      key: "under_10k_sats",
+      name: "<10k sats",
+      title: "under 10k sats",
+      color: colors.green,
+    },
+    {
+      key: "under_100k_sats",
+      name: "<100k sats",
+      title: "under 100k sats",
+      color: colors.cyan,
+    },
+    {
+      key: "under_1m_sats",
+      name: "<1m sats",
+      title: "under 1m sats",
+      color: colors.blue,
+    },
+    {
+      key: "under_10m_sats",
+      name: "<10m sats",
+      title: "under 10m sats",
+      color: colors.indigo,
+    },
+    {
+      key: "under_1btc",
+      name: "<1 btc",
+      title: "under 1 btc",
+      color: colors.purple,
+    },
+    {
+      key: "under_10btc",
+      name: "<10 btc",
+      title: "under 10 btc",
+      color: colors.violet,
+    },
+    {
+      key: "under_100btc",
+      name: "<100 btc",
+      title: "under 100 btc",
+      color: colors.fuchsia,
+    },
+    {
+      key: "under_1k_btc",
+      name: "<1k btc",
+      title: "under 1k btc",
+      color: colors.pink,
+    },
+    {
+      key: "under_10k_btc",
+      name: "<10k btc",
+      title: "under 10k btc",
+      color: colors.red,
+    },
+    {
+      key: "under_100k_btc",
+      name: "<100k btc",
+      title: "under 100k btc",
+      color: colors.orange,
+    },
+  ]);
+
+  const utxosUnderAmount = underAmount.map(
+    ({ key, name, title, color }) =>
+      /** @type {const} */ ({
+        key: `utxos_${key}`,
+        name,
+        title: `UTXOs ${title}`,
+        color,
+      }),
+  );
+
+  const addressesUnderAmount = underAmount.map(
+    ({ key, name, title, color }) =>
+      /** @type {const} */ ({
+        key: `addrs_${key}`,
+        name,
+        title: `Addresses ${title}`,
+        color,
+      }),
+  );
+
+  const amountRanges = /** @type {const} */ ([
+    {
+      key: "with_0sats",
+      name: "0 sats",
+      title: "valued 0 sats",
+      color: colors.red,
+    },
+    {
+      key: "above_1sat_under_10sats",
+      name: "1 sat..10 sats",
+      title: "Above 1 sat Under 10 sats",
+      color: colors.orange,
+    },
+    {
+      key: "above_10sats_under_100sats",
+      name: "10 sats..100 sats",
+      title: "Above 10 sats Under 100 sats",
+      color: colors.yellow,
+    },
+    {
+      key: "above_100sats_under_1k_sats",
+      name: "100 sats..1K sats",
+      title: "Above 100 sats Under 1K sats",
+      color: colors.lime,
+    },
+    {
+      key: "above_1k_sats_under_10k_sats",
+      name: "1K sats..10K sats",
+      title: "Above 1K sats Under 10K sats",
+      color: colors.green,
+    },
+    {
+      key: "above_10k_sats_under_100k_sats",
+      name: "10K sats..100K sats",
+      title: "Above 10K sats Under 100K sats",
+      color: colors.cyan,
+    },
+    {
+      key: "above_100k_sats_under_1m_sats",
+      name: "100K sats .. 1M sats",
+      title: "Above 100K sats Under 1M sats",
+      color: colors.blue,
+    },
+    {
+      key: "above_1m_sats_under_10m_sats",
+      name: "1M sats..10M sats",
+      title: "Above 1M sats Under 10M sats",
+      color: colors.indigo,
+    },
+    {
+      key: "above_10m_sats_under_1btc",
+      name: "10M sats..1 btc",
+      title: "Above 10M sats Under 1 BTC",
+      color: colors.purple,
+    },
+    {
+      key: "above_1btc_under_10btc",
+      name: "1 btc..10 btc",
+      title: "Above 1 BTC Under 10 BTC",
+      color: colors.violet,
+    },
+    {
+      key: "above_10btc_under_100btc",
+      name: "10 btc..100 btc",
+      title: "Above 10 BTC Under 100 BTC",
+      color: colors.fuchsia,
+    },
+    {
+      key: "above_100btc_under_1k_btc",
+      name: "100 btc..1K btc",
+      title: "Above 100 BTC Under 1K BTC",
+      color: colors.pink,
+    },
+    {
+      key: "above_1k_btc_under_10k_btc",
+      name: "1K btc..10K btc",
+      title: "Above 1K BTC Under 10K BTC",
+      color: colors.red,
+    },
+    {
+      key: "above_10k_btc_under_100k_btc",
+      name: "10K btc..100K btc",
+      title: "Above 10K BTC Under 100K BTC",
+      color: colors.orange,
+    },
+    {
+      key: "above_100k_btc",
       name: "100K btc+",
-      title: "From 100K BTC",
+      title: "Above 100K BTC",
       color: colors.yellow,
     },
   ]);
+
+  const utxosAmountRanges = amountRanges.map(
+    ({ key, name, title, color }) =>
+      /** @type {const} */ ({
+        key: `utxos_${key}`,
+        name,
+        title: `UTXOs ${title}`,
+        color,
+      }),
+  );
+
+  const addressesAmountRanges = amountRanges.map(
+    ({ key, name, title, color }) =>
+      /** @type {const} */ ({
+        key: `addrs_${key}`,
+        name,
+        title: `Addresses ${title}`,
+        color,
+      }),
+  );
 
   const type = /** @type {const} */ ([
     {
@@ -755,7 +946,7 @@ function createPartialOptions(colors) {
       color: colors.yellow,
     },
     {
-      key: "p2ms",
+      key: "p2ms_outputs",
       name: "p2ms",
       title: "Pay To Bare Multisig",
       color: colors.lime,
@@ -791,13 +982,13 @@ function createPartialOptions(colors) {
       color: colors.purple,
     },
     {
-      key: "unknown",
+      key: "unknown_outputs",
       name: "unknown",
       title: "Pay To Unknown",
       color: colors.violet,
     },
     {
-      key: "empty",
+      key: "empty_outputs",
       name: "empty",
       title: "Pay To Empty",
       color: colors.fuchsia,
@@ -906,7 +1097,7 @@ function createPartialOptions(colors) {
         color: colors.orange,
       },
       {
-        key: `cumulative_${concat}`,
+        key: `${concat}_cumulative`,
         title: name ? `Cumulative ${name}` : "Cumulative",
         color: colors.red,
         defaultActive: false,
@@ -1036,78 +1227,82 @@ function createPartialOptions(colors) {
           name: legend,
           color,
         }),
-        createBaseSeries({
-          key: `${key}_ratio_p1sd_as_price`,
-          name: "+1σ",
-          color: colors.orange,
-          defaultActive: false,
-        }),
-        createBaseSeries({
-          key: `${key}_ratio_p2sd_as_price`,
-          name: "+2σ",
-          color: colors.red,
-          defaultActive: false,
-        }),
-        createBaseSeries({
-          key: `${key}_ratio_p3sd_as_price`,
-          name: "+3σ",
-          color: colors.pink,
-          defaultActive: false,
-        }),
-        createBaseSeries({
-          key: `${key}_ratio_m1sd_as_price`,
-          name: "−1σ",
-          color: colors.cyan,
-          defaultActive: false,
-        }),
-        createBaseSeries({
-          key: `${key}_ratio_m2sd_as_price`,
-          name: "−2σ",
-          color: colors.blue,
-          defaultActive: false,
-        }),
-        createBaseSeries({
-          key: `${key}_ratio_m3sd_as_price`,
-          name: "−3σ",
-          color: colors.violet,
-          defaultActive: false,
-        }),
-        createBaseSeries({
-          key: `${key}_ratio_p99_as_price`,
-          name: "p99",
-          color: colors.orange,
-          defaultActive: false,
-        }),
-        createBaseSeries({
-          key: `${key}_ratio_p99_5_as_price`,
-          name: "p99.5",
-          color: colors.red,
-          defaultActive: false,
-        }),
-        createBaseSeries({
-          key: `${key}_ratio_p99_9_as_price`,
-          name: "p99.9",
-          color: colors.pink,
-          defaultActive: false,
-        }),
-        createBaseSeries({
-          key: `${key}_ratio_p1_as_price`,
-          name: "p1",
-          color: colors.cyan,
-          defaultActive: false,
-        }),
-        createBaseSeries({
-          key: `${key}_ratio_p0_5_as_price`,
-          name: "p0.5",
-          color: colors.blue,
-          defaultActive: false,
-        }),
-        createBaseSeries({
-          key: `${key}_ratio_p0_1_as_price`,
-          name: "p0.1",
-          color: colors.violet,
-          defaultActive: false,
-        }),
+        ...(`${key}_ratio_p1sd_as_price` in vecIdToIndexes
+          ? [
+              createBaseSeries({
+                key: `${key}_ratio_p1sd_as_price`,
+                name: "+1σ",
+                color: colors.orange,
+                defaultActive: false,
+              }),
+              createBaseSeries({
+                key: `${key}_ratio_p2sd_as_price`,
+                name: "+2σ",
+                color: colors.red,
+                defaultActive: false,
+              }),
+              createBaseSeries({
+                key: `${key}_ratio_p3sd_as_price`,
+                name: "+3σ",
+                color: colors.pink,
+                defaultActive: false,
+              }),
+              createBaseSeries({
+                key: `${key}_ratio_m1sd_as_price`,
+                name: "−1σ",
+                color: colors.cyan,
+                defaultActive: false,
+              }),
+              createBaseSeries({
+                key: `${key}_ratio_m2sd_as_price`,
+                name: "−2σ",
+                color: colors.blue,
+                defaultActive: false,
+              }),
+              createBaseSeries({
+                key: `${key}_ratio_m3sd_as_price`,
+                name: "−3σ",
+                color: colors.violet,
+                defaultActive: false,
+              }),
+              createBaseSeries({
+                key: `${key}_ratio_p99_as_price`,
+                name: "p99",
+                color: colors.orange,
+                defaultActive: false,
+              }),
+              createBaseSeries({
+                key: `${key}_ratio_p99_5_as_price`,
+                name: "p99.5",
+                color: colors.red,
+                defaultActive: false,
+              }),
+              createBaseSeries({
+                key: `${key}_ratio_p99_9_as_price`,
+                name: "p99.9",
+                color: colors.pink,
+                defaultActive: false,
+              }),
+              createBaseSeries({
+                key: `${key}_ratio_p1_as_price`,
+                name: "p1",
+                color: colors.cyan,
+                defaultActive: false,
+              }),
+              createBaseSeries({
+                key: `${key}_ratio_p0_5_as_price`,
+                name: "p0.5",
+                color: colors.blue,
+                defaultActive: false,
+              }),
+              createBaseSeries({
+                key: `${key}_ratio_p0_1_as_price`,
+                name: "p0.1",
+                color: colors.violet,
+                defaultActive: false,
+              }),
+            ]
+          : []),
       ],
       bottom: [
         /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
@@ -1121,150 +1316,154 @@ function createPartialOptions(colors) {
             },
           },
         }),
-        createBaseSeries({
-          key: `${key}_ratio_p1sd`,
-          name: "+1σ",
-          color: colors.orange,
-          defaultActive: false,
-        }),
-        createBaseSeries({
-          key: `${key}_ratio_p2sd`,
-          name: "+2σ",
-          color: colors.red,
-          defaultActive: false,
-        }),
-        createBaseSeries({
-          key: `${key}_ratio_p3sd`,
-          name: "+3σ",
-          color: colors.pink,
-          defaultActive: false,
-        }),
-        createBaseSeries({
-          key: `${key}_ratio_m1sd`,
-          name: "−1σ",
-          color: colors.cyan,
-          defaultActive: false,
-        }),
-        createBaseSeries({
-          key: `${key}_ratio_m2sd`,
-          name: "−2σ",
-          color: colors.blue,
-          defaultActive: false,
-        }),
-        createBaseSeries({
-          key: `${key}_ratio_m3sd`,
-          name: "−3σ",
-          color: colors.violet,
-          defaultActive: false,
-        }),
-        createBaseSeries({
-          key: `${key}_ratio_p99`,
-          name: "p99",
-          color: colors.orange,
-          defaultActive: false,
-        }),
-        createBaseSeries({
-          key: `${key}_ratio_p99_5`,
-          name: "p99.5",
-          color: colors.red,
-          defaultActive: false,
-        }),
-        createBaseSeries({
-          key: `${key}_ratio_p99_9`,
-          name: "p99.9",
-          color: colors.pink,
-          defaultActive: false,
-        }),
-        createBaseSeries({
-          key: `${key}_ratio_p1`,
-          name: "p1",
-          color: colors.cyan,
-          defaultActive: false,
-        }),
-        createBaseSeries({
-          key: `${key}_ratio_p0_5`,
-          name: "p0.5",
-          color: colors.blue,
-          defaultActive: false,
-        }),
-        createBaseSeries({
-          key: `${key}_ratio_p0_1`,
-          name: "p0.1",
-          color: colors.violet,
-          defaultActive: false,
-        }),
-        createBaseSeries({
-          key: `${key}_ratio_1w_sma`,
-          name: "1w sma",
-          color: colors.fuchsia,
-          defaultActive: false,
-        }),
-        createBaseSeries({
-          key: `${key}_ratio_1m_sma`,
-          name: "1m sma",
-          color: colors.pink,
-          defaultActive: false,
-        }),
-        createBaseSeries({
-          key: `${key}_ratio_1y_sma`,
-          name: "1y sma",
-          color: colors.rose,
-          defaultActive: false,
-        }),
-        createBaseSeries({
-          key: `${key}_ratio_4y_sma`,
-          name: "4y_sma",
-          color: colors.purple,
-          defaultActive: false,
-        }),
-        createBaseSeries({
-          key: `${key}_ratio_sma`,
-          name: "sma",
-          color: colors.yellow,
-          defaultActive: false,
-        }),
-        /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
-          key: `${key}_ratio_1y_sma_momentum_oscillator`,
-          title: "1Y Momentum",
-          type: "Baseline",
-          options: {
-            createPriceLine: {
-              value: 0,
-            },
-          },
-        }),
-        /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
-          key: `${key}_ratio_zscore`,
-          title: "All time",
-          type: "Baseline",
-          options: {
-            createPriceLine: {
-              value: 0,
-            },
-          },
-        }),
-        /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
-          key: `${key}_ratio_4y_zscore`,
-          title: "4y",
-          type: "Baseline",
-          colors: [colors.yellow, colors.pink],
-          options: {
-            createPriceLine: {
-              value: 0,
-            },
-          },
-        }),
-        /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
-          key: `${key}_ratio_1y_zscore`,
-          title: "1y",
-          type: "Baseline",
-          colors: [colors.orange, colors.purple],
-          options: {
-            createPriceLine: {
-              value: 0,
-            },
-          },
-        }),
+        ...(`${key}_ratio_p1sd` in vecIdToIndexes
+          ? [
+              createBaseSeries({
+                key: `${key}_ratio_p1sd`,
+                name: "+1σ",
+                color: colors.orange,
+                defaultActive: false,
+              }),
+              createBaseSeries({
+                key: `${key}_ratio_p2sd`,
+                name: "+2σ",
+                color: colors.red,
+                defaultActive: false,
+              }),
+              createBaseSeries({
+                key: `${key}_ratio_p3sd`,
+                name: "+3σ",
+                color: colors.pink,
+                defaultActive: false,
+              }),
+              createBaseSeries({
+                key: `${key}_ratio_m1sd`,
+                name: "−1σ",
+                color: colors.cyan,
+                defaultActive: false,
+              }),
+              createBaseSeries({
+                key: `${key}_ratio_m2sd`,
+                name: "−2σ",
+                color: colors.blue,
+                defaultActive: false,
+              }),
+              createBaseSeries({
+                key: `${key}_ratio_m3sd`,
+                name: "−3σ",
+                color: colors.violet,
+                defaultActive: false,
+              }),
+              createBaseSeries({
+                key: `${key}_ratio_p99`,
+                name: "p99",
+                color: colors.orange,
+                defaultActive: false,
+              }),
+              createBaseSeries({
+                key: `${key}_ratio_p99_5`,
+                name: "p99.5",
+                color: colors.red,
+                defaultActive: false,
+              }),
+              createBaseSeries({
+                key: `${key}_ratio_p99_9`,
+                name: "p99.9",
+                color: colors.pink,
+                defaultActive: false,
+              }),
+              createBaseSeries({
+                key: `${key}_ratio_p1`,
+                name: "p1",
+                color: colors.cyan,
+                defaultActive: false,
+              }),
+              createBaseSeries({
+                key: `${key}_ratio_p0_5`,
+                name: "p0.5",
+                color: colors.blue,
+                defaultActive: false,
+              }),
+              createBaseSeries({
+                key: `${key}_ratio_p0_1`,
+                name: "p0.1",
+                color: colors.violet,
+                defaultActive: false,
+              }),
+              createBaseSeries({
+                key: `${key}_ratio_1w_sma`,
+                name: "1w sma",
+                color: colors.fuchsia,
+                defaultActive: false,
+              }),
+              createBaseSeries({
+                key: `${key}_ratio_1m_sma`,
+                name: "1m sma",
+                color: colors.pink,
+                defaultActive: false,
+              }),
+              createBaseSeries({
+                key: `${key}_ratio_1y_sma`,
+                name: "1y sma",
+                color: colors.rose,
+                defaultActive: false,
+              }),
+              createBaseSeries({
+                key: `${key}_ratio_4y_sma`,
+                name: "4y_sma",
+                color: colors.purple,
+                defaultActive: false,
+              }),
+              createBaseSeries({
+                key: `${key}_ratio_sma`,
+                name: "sma",
+                color: colors.yellow,
+                defaultActive: false,
+              }),
+              /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
+                key: `${key}_ratio_1y_sma_momentum_oscillator`,
+                title: "1Y Momentum",
+                type: "Baseline",
+                options: {
+                  createPriceLine: {
+                    value: 0,
+                  },
+                },
+              }),
+              /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
+                key: `${key}_ratio_zscore`,
+                title: "All time",
+                type: "Baseline",
+                options: {
+                  createPriceLine: {
+                    value: 0,
+                  },
+                },
+              }),
+              /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
+                key: `${key}_ratio_4y_zscore`,
+                title: "4y",
+                type: "Baseline",
+                colors: [colors.yellow, colors.pink],
+                options: {
+                  createPriceLine: {
+                    value: 0,
+                  },
+                },
+              }),
+              /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
+                key: `${key}_ratio_1y_zscore`,
+                title: "1y",
+                type: "Baseline",
+                colors: [colors.orange, colors.purple],
+                options: {
+                  createPriceLine: {
+                    value: 0,
+                  },
+                },
+              }),
+            ]
+          : []),
       ],
     };
   }
@@ -1291,168 +1490,320 @@ function createPartialOptions(colors) {
    */
 
   /**
+   * @template {"" | CohortId} T
+   * @param {T} _key
+   */
+  const fixKey = (_key) =>
+    _key !== ""
+      ? /** @type {Exclude<"" | `${T}_`, "_">} */ (`${_key}_`)
+      : /** @type {const} */ ("");
+
+  /**
    * @param {UTXOGroupObject | UTXOGroupsObject} args
    */
-  function createUTXOGroupFolder(args) {
-    /**
-     * @template {"" | CohortId} T
-     * @param {T} _key
-     */
-    const fixKey = (_key) =>
-      _key !== ""
-        ? /** @type {Exclude<"" | `${T}_`, "_">} */ (`${_key}_`)
-        : /** @type {const} */ ("");
-    0;
-
+  function createCohortGroupFolder(args) {
     const list = "list" in args ? args.list : [args];
     const useGroupName = "list" in args;
+
+    const title = args.title
+      ? `${useGroupName ? "by" : "of"} ${args.title}`
+      : "";
 
     return /** @satisfies {PartialOptionsGroup} */ ({
       name: args.name || "all",
       tree: [
-        {
-          name: "supply",
-          title: `${args.title} Supply`,
-          bottom: list.flatMap(({ color, name, key: _key }) => {
-            const key = fixKey(_key);
-            return /** @type {const} */ ([
-              createBaseSeries({
-                key: `${key}supply`,
-                name: useGroupName ? name : "Supply",
-                color: "list" in args ? color : colors.default,
+        !("list" in args)
+          ? {
+              name: "supply",
+              title: `Supply ${title}`,
+              bottom: list.flatMap(({ color, name, key: _key }) => {
+                const key = fixKey(_key);
+                return /** @type {const} */ ([
+                  createBaseSeries({
+                    key: `${key}supply`,
+                    name: "Supply",
+                    color: colors.default,
+                  }),
+                  createBaseSeries({
+                    key: `${key}supply_in_btc`,
+                    name: "Supply",
+                    color: colors.default,
+                  }),
+                  createBaseSeries({
+                    key: `${key}supply_in_usd`,
+                    name: "Supply",
+                    color: colors.default,
+                  }),
+                  ...(key
+                    ? [
+                        createBaseSeries({
+                          key: `${key}supply_relative_to_circulating_supply`,
+                          name: "Supply",
+                          color: colors.default,
+                        }),
+                      ]
+                    : []),
+                  createBaseSeries({
+                    key: `${key}halved_supply`,
+                    name: "Halved",
+                    color: colors.gray,
+                    options: {
+                      lineStyle: 4,
+                    },
+                  }),
+                  createBaseSeries({
+                    key: `${key}supply_in_profit`,
+                    name: "In Profit",
+                    color: colors.green,
+                  }),
+                  createBaseSeries({
+                    key: `${key}supply_in_profit_in_btc`,
+                    name: "In Profit",
+                    color: colors.green,
+                  }),
+                  createBaseSeries({
+                    key: `${key}supply_in_profit_in_usd`,
+                    name: "In Profit",
+                    color: colors.green,
+                  }),
+                  createBaseSeries({
+                    key: `${key}supply_in_loss`,
+                    name: "In Loss",
+                    color: colors.red,
+                  }),
+                  createBaseSeries({
+                    key: `${key}supply_in_loss_in_btc`,
+                    name: "In Loss",
+                    color: colors.red,
+                  }),
+                  createBaseSeries({
+                    key: `${key}supply_in_loss_in_usd`,
+                    name: "In Loss",
+                    color: colors.red,
+                  }),
+                  createBaseSeries({
+                    key: `${key}supply_even`,
+                    name: useGroupName ? name : "Even",
+                    color: colors.yellow,
+                  }),
+                  createBaseSeries({
+                    key: `${key}supply_even_in_btc`,
+                    name: useGroupName ? name : "Even",
+                    color: colors.yellow,
+                  }),
+                  createBaseSeries({
+                    key: `${key}supply_even_in_usd`,
+                    name: useGroupName ? name : "Even",
+                    color: colors.yellow,
+                  }),
+                  createBaseSeries({
+                    key: `${key}halved_supply_in_btc`,
+                    name: useGroupName ? name : "Halved",
+                    color: "list" in args ? color : colors.gray,
+                    options: {
+                      lineStyle: 4,
+                    },
+                  }),
+                  createBaseSeries({
+                    key: `${key}halved_supply_in_usd`,
+                    name: useGroupName ? name : "Halved",
+                    color: "list" in args ? color : colors.gray,
+                    options: {
+                      lineStyle: 4,
+                    },
+                  }),
+                  ...(key
+                    ? [
+                        createBaseSeries({
+                          key: `${key}supply_in_profit_relative_to_circulating_supply`,
+                          name: "In Profit",
+                          color: colors.green,
+                        }),
+                        createBaseSeries({
+                          key: `${key}supply_in_loss_relative_to_circulating_supply`,
+                          name: "In Loss",
+                          color: colors.red,
+                        }),
+                        createBaseSeries({
+                          key: `${key}supply_even_relative_to_circulating_supply`,
+                          name: "Even",
+                          color: colors.yellow,
+                        }),
+                      ]
+                    : []),
+                  createBaseSeries({
+                    key: `${key}supply_in_profit_relative_to_own_supply`,
+                    name: "In Profit",
+                    color: colors.green,
+                  }),
+                  createBaseSeries({
+                    key: `${key}supply_in_loss_relative_to_own_supply`,
+                    name: "In Loss",
+                    color: colors.red,
+                  }),
+                  createBaseSeries({
+                    key: `${key}supply_even_relative_to_own_supply`,
+                    name: "Even",
+                    color: colors.yellow,
+                  }),
+                ]);
               }),
-              createBaseSeries({
-                key: `${key}supply_in_btc`,
-                name: useGroupName ? name : "Supply",
-                color: "list" in args ? color : colors.default,
-              }),
-              createBaseSeries({
-                key: `${key}supply_in_usd`,
-                name: useGroupName ? name : "Supply",
-                color: "list" in args ? color : colors.default,
-              }),
-              ...(key
-                ? [
-                    createBaseSeries({
-                      key: `${key}supply_relative_to_circulating_supply`,
-                      name: useGroupName ? name : "Supply",
-                      color: "list" in args ? color : colors.default,
-                    }),
-                  ]
-                : []),
-              ...(!("list" in args)
-                ? [
-                    createBaseSeries({
-                      key: `${key}halved_supply`,
-                      name: useGroupName ? name : "Halved",
-                      color: "list" in args ? color : colors.gray,
-                      options: {
-                        lineStyle: 4,
-                      },
-                    }),
-                    createBaseSeries({
-                      key: `${key}supply_in_profit`,
-                      name: useGroupName ? name : "In Profit",
-                      color: colors.green,
-                    }),
-                    createBaseSeries({
-                      key: `${key}supply_in_loss`,
-                      name: useGroupName ? name : "In Loss",
-                      color: colors.red,
-                    }),
-                    createBaseSeries({
-                      key: `${key}supply_even`,
-                      name: useGroupName ? name : "Even",
-                      color: colors.yellow,
-                    }),
-                    createBaseSeries({
-                      key: `${key}halved_supply_in_btc`,
-                      name: useGroupName ? name : "Halved",
-                      color: "list" in args ? color : colors.gray,
-                      options: {
-                        lineStyle: 4,
-                      },
-                    }),
-                    createBaseSeries({
-                      key: `${key}supply_in_profit_in_btc`,
-                      name: useGroupName ? name : "In Profit",
-                      color: colors.green,
-                    }),
-                    createBaseSeries({
-                      key: `${key}supply_in_loss_in_btc`,
-                      name: useGroupName ? name : "In Loss",
-                      color: colors.red,
-                    }),
-                    createBaseSeries({
-                      key: `${key}supply_even_in_btc`,
-                      name: useGroupName ? name : "Even",
-                      color: colors.yellow,
-                    }),
-                    createBaseSeries({
-                      key: `${key}halved_supply_in_usd`,
-                      name: useGroupName ? name : "Halved",
-                      color: "list" in args ? color : colors.gray,
-                      options: {
-                        lineStyle: 4,
-                      },
-                    }),
-                    createBaseSeries({
-                      key: `${key}supply_in_profit_in_usd`,
-                      name: useGroupName ? name : "In Profit",
-                      color: colors.green,
-                    }),
-                    createBaseSeries({
-                      key: `${key}supply_in_loss_in_usd`,
-                      name: useGroupName ? name : "In Loss",
-                      color: colors.red,
-                    }),
-                    createBaseSeries({
-                      key: `${key}supply_even_in_usd`,
-                      name: useGroupName ? name : "Even",
-                      color: colors.yellow,
-                    }),
-                    ...(key
-                      ? [
-                          createBaseSeries({
-                            key: `${key}supply_in_profit_relative_to_circulating_supply`,
-                            name: useGroupName ? name : "In Profit",
-                            color: colors.green,
-                          }),
-                          createBaseSeries({
-                            key: `${key}supply_in_loss_relative_to_circulating_supply`,
-                            name: useGroupName ? name : "In Loss",
-                            color: colors.red,
-                          }),
-                          createBaseSeries({
-                            key: `${key}supply_even_relative_to_circulating_supply`,
-                            name: useGroupName ? name : "Even",
-                            color: colors.yellow,
-                          }),
-                        ]
-                      : []),
-                    createBaseSeries({
-                      key: `${key}supply_in_profit_relative_to_own_supply`,
-                      name: useGroupName ? name : "In Profit",
-                      color: colors.green,
-                    }),
-                    createBaseSeries({
-                      key: `${key}supply_in_loss_relative_to_own_supply`,
-                      name: useGroupName ? name : "In Loss",
-                      color: colors.red,
-                    }),
-                    createBaseSeries({
-                      key: `${key}supply_even_relative_to_own_supply`,
-                      name: useGroupName ? name : "Even",
-                      color: colors.yellow,
-                    }),
-                  ]
-                : []),
-            ]);
-          }),
-        },
+            }
+          : {
+              name: "supply",
+              tree: [
+                {
+                  name: "total",
+                  title: `Supply ${title}`,
+                  bottom: list.flatMap(({ color, name, key: _key }) => {
+                    const key = fixKey(_key);
+                    return /** @type {const} */ ([
+                      createBaseSeries({
+                        key: `${key}supply`,
+                        name,
+                        color,
+                      }),
+                      createBaseSeries({
+                        key: `${key}supply_in_btc`,
+                        name,
+                        color,
+                      }),
+                      createBaseSeries({
+                        key: `${key}supply_in_usd`,
+                        name,
+                        color,
+                      }),
+                      ...(key
+                        ? [
+                            createBaseSeries({
+                              key: `${key}supply_relative_to_circulating_supply`,
+                              name,
+                              color,
+                            }),
+                          ]
+                        : []),
+                    ]);
+                  }),
+                },
+                {
+                  name: "in profit",
+                  title: `Supply In Profit ${title}`,
+                  bottom: list.flatMap(({ color, name, key: _key }) => {
+                    const key = fixKey(_key);
+                    return /** @type {const} */ ([
+                      createBaseSeries({
+                        key: `${key}supply_in_profit`,
+                        name,
+                        color,
+                      }),
+                      createBaseSeries({
+                        key: `${key}supply_in_profit_in_btc`,
+                        name,
+                        color,
+                      }),
+                      createBaseSeries({
+                        key: `${key}supply_in_profit_in_usd`,
+                        name,
+                        color,
+                      }),
+                      ...(key
+                        ? [
+                            createBaseSeries({
+                              key: `${key}supply_in_profit_relative_to_circulating_supply`,
+                              name,
+                              color,
+                            }),
+                          ]
+                        : []),
+                      createBaseSeries({
+                        key: `${key}supply_in_profit_relative_to_own_supply`,
+                        name,
+                        color,
+                      }),
+                    ]);
+                  }),
+                },
+                {
+                  name: "in loss",
+                  title: `Supply In loss ${title}`,
+                  bottom: list.flatMap(({ color, name, key: _key }) => {
+                    const key = fixKey(_key);
+                    return /** @type {const} */ ([
+                      createBaseSeries({
+                        key: `${key}supply_in_loss`,
+                        name,
+                        color,
+                      }),
+                      createBaseSeries({
+                        key: `${key}supply_in_loss_in_btc`,
+                        name,
+                        color,
+                      }),
+                      createBaseSeries({
+                        key: `${key}supply_in_loss_in_usd`,
+                        name,
+                        color,
+                      }),
+                      ...(key
+                        ? [
+                            createBaseSeries({
+                              key: `${key}supply_in_loss_relative_to_circulating_supply`,
+                              name,
+                              color,
+                            }),
+                          ]
+                        : []),
+                      createBaseSeries({
+                        key: `${key}supply_in_loss_relative_to_own_supply`,
+                        name,
+                        color,
+                      }),
+                    ]);
+                  }),
+                },
+                {
+                  name: "even",
+                  title: `Even Supply ${title}`,
+                  bottom: list.flatMap(({ color, name, key: _key }) => {
+                    const key = fixKey(_key);
+                    return /** @type {const} */ ([
+                      createBaseSeries({
+                        key: `${key}supply_even`,
+                        name,
+                        color,
+                      }),
+                      createBaseSeries({
+                        key: `${key}supply_even_in_btc`,
+                        name,
+                        color,
+                      }),
+                      createBaseSeries({
+                        key: `${key}supply_even_in_usd`,
+                        name,
+                        color,
+                      }),
+                      ...(key
+                        ? [
+                            createBaseSeries({
+                              key: `${key}supply_even_relative_to_circulating_supply`,
+                              name,
+                              color,
+                            }),
+                          ]
+                        : []),
+                      createBaseSeries({
+                        key: `${key}supply_even_relative_to_own_supply`,
+                        name,
+                        color,
+                      }),
+                    ]);
+                  }),
+                },
+              ],
+            },
         {
           name: "utxo count",
-          title: `${args.title} UTXO Count`,
+          title: `UTXO Count ${title}`,
           bottom: list.flatMap(({ color, name, key: _key }) => {
             const key = fixKey(_key);
             return /** @type {const} */ ([
@@ -1464,12 +1815,104 @@ function createPartialOptions(colors) {
             ]);
           }),
         },
+        ...(list.filter(
+          ({ key }) => `${fixKey(key)}address_count` in vecIdToIndexes,
+        ).length
+          ? !("list" in args) ||
+            list.filter(
+              ({ key }) =>
+                `${fixKey(key)}empty_address_count` in vecIdToIndexes,
+            ).length == 0
+            ? [
+                {
+                  name: "address count",
+                  title: `Address Count ${title}`,
+                  bottom: list.flatMap(({ name, color, key: _key }) => {
+                    const key = fixKey(_key);
+                    return [
+                      ...(`${key}address_count` in vecIdToIndexes
+                        ? /** @type {const} */ ([
+                            createBaseSeries({
+                              key: `${key}address_count`,
+                              name: useGroupName ? name : "Loaded",
+                              color: useGroupName ? color : colors.orange,
+                            }),
+                          ])
+                        : []),
+                      ...(`${key}empty_address_count` in vecIdToIndexes
+                        ? /** @type {const} */ ([
+                            createBaseSeries({
+                              key: `${key}empty_address_count`,
+                              name: "Empty",
+                              color: colors.gray,
+                              defaultActive: false,
+                            }),
+                          ])
+                        : []),
+                    ];
+                  }),
+                },
+              ]
+            : [
+                {
+                  name: "address count",
+                  tree: [
+                    {
+                      name: "loaded",
+                      title: `Loaded Address Count ${title}`,
+                      bottom: list
+                        .filter(
+                          ({ key }) =>
+                            `${fixKey(key)}address_count` in vecIdToIndexes,
+                        )
+                        .flatMap(({ name, color, key: _key }) => {
+                          const key = fixKey(_key);
+                          return [
+                            createBaseSeries({
+                              key: `${key}address_count`,
+                              name,
+                              color,
+                            }),
+                          ];
+                        }),
+                    },
+                    ...(list.filter(
+                      ({ key }) =>
+                        `${fixKey(key)}empty_address_count` in vecIdToIndexes,
+                    ).length
+                      ? [
+                          {
+                            name: "empty",
+                            title: `Empty Address Count ${title}`,
+                            bottom: list
+                              .filter(
+                                ({ key }) =>
+                                  `${fixKey(key)}empty_address_count` in
+                                  vecIdToIndexes,
+                              )
+                              .flatMap(({ name, color, key: _key }) => {
+                                const key = fixKey(_key);
+                                return [
+                                  createBaseSeries({
+                                    key: `${key}empty_address_count`,
+                                    name,
+                                    color,
+                                  }),
+                                ];
+                              }),
+                          },
+                        ]
+                      : []),
+                  ],
+                },
+              ]
+          : []),
         {
           name: "Realized",
           tree: [
             {
               name: "cap",
-              title: `${args.title} Realized Capitalization`,
+              title: `Realized Capitalization ${title}`,
               bottom: list.flatMap(({ color, name, key: _key }) => {
                 const key = fixKey(_key);
                 return /** @type {const} */ ([
@@ -1499,17 +1942,17 @@ function createPartialOptions(colors) {
             "list" in args
               ? {
                   name: "Price",
-                  title: `${args.title} Realized Prices`,
+                  title: `Realized Price ${title}`,
                   top: args.list.map(({ color, name, key }) =>
                     createBaseSeries({
                       key: `${fixKey(key)}realized_price`,
                       name,
                       color,
-                    })
+                    }),
                   ),
                 }
               : createPriceWithRatio({
-                  title: `${args.title} Realized Price`,
+                  title: `Realized Price ${title}`,
                   key: `${fixKey(args.key)}realized_price`,
                   name: "price",
                   legend: "realized",
@@ -1519,7 +1962,7 @@ function createPartialOptions(colors) {
               ? [
                   {
                     name: "pnl",
-                    title: `${args.title} Realized Profit And Loss`,
+                    title: `Realized Profit And Loss ${title}`,
                     bottom: [
                       createBaseSeries({
                         key: `${fixKey(args.key)}realized_profit`,
@@ -1527,7 +1970,7 @@ function createPartialOptions(colors) {
                         color: colors.green,
                       }),
                       createBaseSeries({
-                        key: `cumulative_${fixKey(args.key)}realized_profit`,
+                        key: `${fixKey(args.key)}realized_profit_cumulative`,
                         name: "Cumulative Profit",
                         color: colors.green,
                         defaultActive: false,
@@ -1539,7 +1982,7 @@ function createPartialOptions(colors) {
                         defaultActive: false,
                       }),
                       createBaseSeries({
-                        key: `cumulative_${fixKey(args.key)}realized_loss`,
+                        key: `${fixKey(args.key)}realized_loss_cumulative`,
                         name: "Cumulative Loss",
                         color: colors.red,
                         defaultActive: false,
@@ -1550,9 +1993,9 @@ function createPartialOptions(colors) {
                         color: colors.red,
                       }),
                       createBaseSeries({
-                        key: `cumulative_${fixKey(
-                          args.key
-                        )}negative_realized_loss`,
+                        key: `${fixKey(
+                          args.key,
+                        )}negative_realized_loss_cumulative`,
                         name: "Cumulative Negative Loss",
                         color: colors.red,
                         defaultActive: false,
@@ -1560,7 +2003,7 @@ function createPartialOptions(colors) {
                       /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
                         type: "Baseline",
                         key: `${fixKey(
-                          args.key
+                          args.key,
                         )}realized_profit_relative_to_realized_cap`,
                         title: "Profit",
                         color: colors.green,
@@ -1573,7 +2016,7 @@ function createPartialOptions(colors) {
                       /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
                         type: "Baseline",
                         key: `${fixKey(
-                          args.key
+                          args.key,
                         )}realized_loss_relative_to_realized_cap`,
                         title: "Loss",
                         color: colors.red,
@@ -1587,7 +2030,7 @@ function createPartialOptions(colors) {
                   },
                   {
                     name: "Net pnl",
-                    title: `${args.title} Net Realized Profit And Loss`,
+                    title: `Net Realized Profit And Loss ${title}`,
                     bottom: list.flatMap(({ color, name, key }) => [
                       /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
                         type: "Baseline",
@@ -1601,9 +2044,9 @@ function createPartialOptions(colors) {
                       }),
                       /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
                         type: "Baseline",
-                        key: `cumulative_${fixKey(
-                          key
-                        )}net_realized_profit_and_loss`,
+                        key: `${fixKey(
+                          key,
+                        )}net_realized_profit_and_loss_cumulative`,
                         title: "Cumulative net",
                         defaultActive: false,
                         options: {
@@ -1614,9 +2057,9 @@ function createPartialOptions(colors) {
                       }),
                       /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
                         type: "Baseline",
-                        key: `cumulative_${fixKey(
-                          key
-                        )}net_realized_profit_and_loss_30d_change`,
+                        key: `${fixKey(
+                          key,
+                        )}net_realized_profit_and_loss_cumulative_30d_change`,
                         title: "cum net 30d change",
                         defaultActive: false,
                         options: {
@@ -1628,7 +2071,7 @@ function createPartialOptions(colors) {
                       /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
                         type: "Baseline",
                         key: `${fixKey(
-                          key
+                          key,
                         )}net_realized_profit_and_loss_relative_to_realized_cap`,
                         title: "Net",
                         options: {
@@ -1639,9 +2082,9 @@ function createPartialOptions(colors) {
                       }),
                       /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
                         type: "Baseline",
-                        key: `cumulative_${fixKey(
-                          key
-                        )}net_realized_profit_and_loss_30d_change_relative_to_realized_cap`,
+                        key: `${fixKey(
+                          key,
+                        )}net_realized_profit_and_loss_cumulative_30d_change_relative_to_realized_cap`,
                         title: "cum net 30d change",
                         options: {
                           createPriceLine: {
@@ -1651,10 +2094,10 @@ function createPartialOptions(colors) {
                       }),
                       /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
                         type: "Baseline",
-                        key: `cumulative_${fixKey(
-                          key
-                        )}net_realized_profit_and_loss_30d_change_relative_to_market_cap`,
-                        title: "cum net 30d change",
+                        key: `${fixKey(
+                          key,
+                        )}net_realized_profit_and_loss_cumulative_30d_change_relative_to_market_cap`,
+                        title: "cumulative net 30d change",
                         options: {
                           createPriceLine: {
                             value: 0,
@@ -1665,7 +2108,7 @@ function createPartialOptions(colors) {
                   },
                   {
                     name: "sopr",
-                    title: `${args.title} Spent Output Profit Ratio`,
+                    title: `Spent Output Profit Ratio ${title}`,
                     bottom: list.flatMap(({ color, name, key }) => [
                       /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
                         type: "Baseline",
@@ -1694,7 +2137,7 @@ function createPartialOptions(colors) {
               : [
                   {
                     name: "profit",
-                    title: `${args.title} Realized Profit`,
+                    title: `Realized Profit ${title}`,
                     bottom: list.flatMap(({ color, name, key: _key }) => {
                       const key = fixKey(_key);
                       return /** @type {const} */ ([
@@ -1719,7 +2162,7 @@ function createPartialOptions(colors) {
                   },
                   {
                     name: "loss",
-                    title: `${args.title} Realized Loss`,
+                    title: `Realized Loss ${title}`,
                     bottom: list.flatMap(({ color, name, key: _key }) => {
                       const key = fixKey(_key);
                       return /** @type {const} */ ([
@@ -1744,7 +2187,7 @@ function createPartialOptions(colors) {
                   },
                   {
                     name: "Net pnl",
-                    title: `${args.title} Net Realized Profit And Loss`,
+                    title: `Net Realized Profit And Loss ${title}`,
                     bottom: list.flatMap(({ color, name, key }) => [
                       /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
                         type: "Baseline",
@@ -1760,7 +2203,7 @@ function createPartialOptions(colors) {
                       /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
                         type: "Baseline",
                         key: `${fixKey(
-                          key
+                          key,
                         )}net_realized_profit_and_loss_relative_to_realized_cap`,
                         title: name,
                         color,
@@ -1777,12 +2220,12 @@ function createPartialOptions(colors) {
                     tree: [
                       {
                         name: "profit",
-                        title: `Cumulative ${args.title} Realized Profit`,
+                        title: `Cumulative Realized Profit ${title}`,
                         bottom: list.flatMap(({ color, name, key: _key }) => {
                           const key = fixKey(_key);
                           return /** @type {const} */ ([
                             createBaseSeries({
-                              key: `cumulative_${key}realized_profit`,
+                              key: `${key}realized_profit_cumulative`,
                               name,
                               color,
                             }),
@@ -1791,12 +2234,12 @@ function createPartialOptions(colors) {
                       },
                       {
                         name: "loss",
-                        title: `Cumulative ${args.title} Realized Loss`,
+                        title: `Cumulative Realized Loss ${title}`,
                         bottom: list.flatMap(({ color, name, key: _key }) => {
                           const key = fixKey(_key);
                           return /** @type {const} */ ([
                             createBaseSeries({
-                              key: `cumulative_${key}realized_loss`,
+                              key: `${key}realized_loss_cumulative`,
                               name,
                               color,
                             }),
@@ -1805,13 +2248,13 @@ function createPartialOptions(colors) {
                       },
                       {
                         name: "Net pnl",
-                        title: `Cumulative ${args.title} Net Realized Profit And Loss`,
+                        title: `Cumulative Net Realized Profit And Loss ${title}`,
                         bottom: list.flatMap(({ color, name, key }) => [
                           /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
                             type: "Baseline",
-                            key: `cumulative_${fixKey(
-                              key
-                            )}net_realized_profit_and_loss`,
+                            key: `${fixKey(
+                              key,
+                            )}net_realized_profit_and_loss_cumulative`,
                             title: name,
                             color,
                             defaultActive: false,
@@ -1825,13 +2268,13 @@ function createPartialOptions(colors) {
                       },
                       {
                         name: "Net pnl 30d change",
-                        title: `Cumulative ${args.title} Net Realized Profit And Loss 30 Day Change`,
+                        title: `Cumulative Net Realized Profit And Loss 30 Day Change ${title}`,
                         bottom: list.flatMap(({ color, name, key }) => [
                           /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
                             type: "Baseline",
-                            key: `cumulative_${fixKey(
-                              key
-                            )}net_realized_profit_and_loss_30d_change`,
+                            key: `${fixKey(
+                              key,
+                            )}net_realized_profit_and_loss_cumulative_30d_change`,
                             title: name,
                             color,
                             options: {
@@ -1842,9 +2285,9 @@ function createPartialOptions(colors) {
                           }),
                           /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
                             type: "Baseline",
-                            key: `cumulative_${fixKey(
-                              key
-                            )}net_realized_profit_and_loss_30d_change_relative_to_realized_cap`,
+                            key: `${fixKey(
+                              key,
+                            )}net_realized_profit_and_loss_cumulative_30d_change_relative_to_realized_cap`,
                             title: name,
                             color,
                             options: {
@@ -1855,9 +2298,9 @@ function createPartialOptions(colors) {
                           }),
                           /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
                             type: "Baseline",
-                            key: `cumulative_${fixKey(
-                              key
-                            )}net_realized_profit_and_loss_30d_change_relative_to_market_cap`,
+                            key: `${fixKey(
+                              key,
+                            )}net_realized_profit_and_loss_cumulative_30d_change_relative_to_market_cap`,
                             title: name,
                             color,
                             options: {
@@ -1875,7 +2318,7 @@ function createPartialOptions(colors) {
                     tree: [
                       {
                         name: "Normal",
-                        title: `${args.title} Spent Output Profit Ratio`,
+                        title: `Spent Output Profit Ratio ${title}`,
                         bottom: list.flatMap(({ color, name, key }) => [
                           /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
                             type: "Baseline",
@@ -1892,12 +2335,12 @@ function createPartialOptions(colors) {
                       },
                       {
                         name: "Adjusted",
-                        title: `${args.title} Adjusted Spent Output Profit Ratio`,
+                        title: `Adjusted Spent Output Profit Ratio ${title}`,
                         bottom: list.flatMap(({ color, name, key }) => [
                           /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
                             type: "Baseline",
                             key: `${fixKey(
-                              key
+                              key,
                             )}adjusted_spent_output_profit_ratio`,
                             title: name,
                             color,
@@ -1914,13 +2357,13 @@ function createPartialOptions(colors) {
                 ]),
             {
               name: "Sell Side Risk Ratio",
-              title: `${args.title} Sell Side Risk Ratio`,
+              title: `Sell Side Risk Ratio ${title}`,
               bottom: list.flatMap(({ color, name, key }) =>
                 createBaseSeries({
                   key: `${fixKey(key)}sell_side_risk_ratio`,
                   name: useGroupName ? name : "Risk",
                   color: color,
-                })
+                }),
               ),
             },
           ],
@@ -1932,7 +2375,7 @@ function createPartialOptions(colors) {
               ? [
                   {
                     name: "pnl",
-                    title: `${args.title} Unrealized Profit And Loss`,
+                    title: `Unrealized Profit And Loss ${title}`,
                     bottom: [
                       // createBaseSeries({
                       //   key: `0`,
@@ -1964,7 +2407,7 @@ function createPartialOptions(colors) {
               : [
                   {
                     name: "profit",
-                    title: `${args.title} Unrealized Profit`,
+                    title: `Unrealized Profit ${title}`,
                     bottom: list.flatMap(({ color, name, key: _key }) => {
                       const key = fixKey(_key);
                       return /** @type {const} */ ([
@@ -1978,7 +2421,7 @@ function createPartialOptions(colors) {
                   },
                   {
                     name: "loss",
-                    title: `${args.title} Unrealized Loss`,
+                    title: `Unrealized Loss ${title}`,
                     bottom: list.flatMap(({ color, name, key: _key }) => {
                       const key = fixKey(_key);
                       return /** @type {const} */ ([
@@ -1993,7 +2436,7 @@ function createPartialOptions(colors) {
                 ]),
             {
               name: "Net pnl",
-              title: `${args.title} Net Unrealized Profit And Loss`,
+              title: `Net Unrealized Profit And Loss ${title}`,
               bottom: list.flatMap(({ color, name, key }) => [
                 /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
                   type: "Baseline",
@@ -2009,7 +2452,7 @@ function createPartialOptions(colors) {
                 /** @satisfies {FetchedBaselineSeriesBlueprint} */ ({
                   type: "Baseline",
                   key: `${fixKey(
-                    key
+                    key,
                   )}net_unrealized_profit_and_loss_relative_to_market_cap`,
                   title: useGroupName ? name : "Net",
                   color: useGroupName ? color : undefined,
@@ -2030,7 +2473,7 @@ function createPartialOptions(colors) {
                 tree: [
                   {
                     name: "Average",
-                    title: `${args.title} Average Price Paid`,
+                    title: `Average Price Paid ${title}`,
                     top: list.flatMap(({ color, name, key: _key }) => {
                       const key = fixKey(_key);
                       return /** @type {const} */ ([
@@ -2044,7 +2487,7 @@ function createPartialOptions(colors) {
                   },
                   {
                     name: "Min",
-                    title: `${args.title} Min Price Paid`,
+                    title: `Min Price Paid ${title}`,
                     top: list.flatMap(({ color, name, key: _key }) => {
                       const key = fixKey(_key);
                       return /** @type {const} */ ([
@@ -2058,7 +2501,7 @@ function createPartialOptions(colors) {
                   },
                   {
                     name: "Max",
-                    title: `${args.title} Max Price Paid`,
+                    title: `Max Price Paid ${title}`,
                     top: list.flatMap(({ color, name, key: _key }) => {
                       const key = fixKey(_key);
                       return /** @type {const} */ ([
@@ -2076,7 +2519,7 @@ function createPartialOptions(colors) {
           : [
               {
                 name: "Price paid",
-                title: `${args.title} Prices Paid`,
+                title: `Prices Paid ${title}`,
                 top: [
                   createBaseSeries({
                     key: `${fixKey(args.key)}realized_price`,
@@ -2100,7 +2543,7 @@ function createPartialOptions(colors) {
             ]),
         {
           name: "Coins Destroyed",
-          title: `${args.title} Coins Destroyed`,
+          title: `Coins Destroyed ${title}`,
           bottom: list.flatMap(({ color, name, key: _key }) => {
             const key = fixKey(_key);
             return /** @type {const} */ ([
@@ -2110,7 +2553,7 @@ function createPartialOptions(colors) {
                 color,
               }),
               createBaseSeries({
-                key: `cumulative_${key}coinblocks_destroyed`,
+                key: `${key}coinblocks_destroyed_cumulative`,
                 name: useGroupName ? name : "cumulative",
                 color,
                 defaultActive: false,
@@ -2121,7 +2564,7 @@ function createPartialOptions(colors) {
                 color,
               }),
               createBaseSeries({
-                key: `cumulative_${key}coindays_destroyed`,
+                key: `${key}coindays_destroyed_cumulative`,
                 name: useGroupName ? name : "cumulative",
                 color,
                 defaultActive: false,
@@ -2134,6 +2577,15 @@ function createPartialOptions(colors) {
   }
 
   return [
+    ...(env.localhost
+      ? /** @type {const} */ ([
+          {
+            name: "Explorer",
+            title: "Explorer",
+            kind: "explorer",
+          },
+        ])
+      : []),
     {
       name: "Charts",
       tree: [
@@ -2199,7 +2651,7 @@ function createPartialOptions(colors) {
                       key: `${key}_sma`,
                       name: key,
                       color,
-                    })
+                    }),
                   ),
                 },
                 ...averages.map(({ key, name, color }) =>
@@ -2209,7 +2661,7 @@ function createPartialOptions(colors) {
                     title: `${name} Market Price Moving Average`,
                     legend: "average",
                     color,
-                  })
+                  }),
                 ),
               ],
             },
@@ -2326,7 +2778,7 @@ function createPartialOptions(colors) {
                           },
                         }),
                       ],
-                    })
+                    }),
                 ),
                 .../** @type {const} */ ([
                   { name: "2 Year", key: "2y" },
@@ -2397,7 +2849,7 @@ function createPartialOptions(colors) {
                           },
                         }),
                       ],
-                    })
+                    }),
                 ),
               ],
             },
@@ -2413,7 +2865,7 @@ function createPartialOptions(colors) {
                       name: `${year}`,
                       color,
                       defaultActive,
-                    })
+                    }),
                   ),
                 },
                 ...dcaClasses.map(
@@ -2440,7 +2892,7 @@ function createPartialOptions(colors) {
                           },
                         }),
                       ],
-                    })
+                    }),
                 ),
               ],
             },
@@ -2454,7 +2906,7 @@ function createPartialOptions(colors) {
               title: "Circulating Supply",
               bottom: [
                 createBaseSeries({
-                  key: "cumulative_subsidy_in_btc",
+                  key: "subsidy_in_btc_cumulative",
                   name: "Mined",
                 }),
               ],
@@ -2501,10 +2953,10 @@ function createPartialOptions(colors) {
               bottom: [
                 ...createAverageSumCumulativeMinMaxPercentilesSeries("fee"),
                 ...createAverageSumCumulativeMinMaxPercentilesSeries(
-                  "fee_in_btc"
+                  "fee_in_btc",
                 ),
                 ...createAverageSumCumulativeMinMaxPercentilesSeries(
-                  "fee_in_usd"
+                  "fee_in_usd",
                 ),
               ],
             },
@@ -2724,16 +3176,6 @@ function createPartialOptions(colors) {
               ],
             },
             // {
-            //   name: "Unspent Count",
-            //   title: "Unspent Transaction Output Count",
-            //   bottom: [
-            //     createBaseSeries({
-            //       key: "exact_utxo_count",
-            //       name: "cumulative",
-            //     }),
-            //   ],
-            // },
-            // {
             //   name: "Value",
             //   title: "Transaction Output Value",
             //   bottom: [
@@ -2741,331 +3183,147 @@ function createPartialOptions(colors) {
             //     ...createSumCumulativeSeries({ concat: "output_value" }),
             //   ],
             // },
-            // {
-            //   name: "types",
-            //   tree: [
-            //     {
-            //       name: "p2pk",
-            //       title: "Pay To Public Key Outputs",
-            //       bottom: [
-            //         createBaseSeries({
-            //           key: "p2pk33_count",
-            //           name: "33B Count",
-            //         }),
-            //         createBaseSeries({
-            //           key: "p2pk33_count_sum",
-            //           name: "33B sum",
-            //         }),
-            //         createBaseSeries({
-            //           key: "cumulative_p2pk33_count",
-            //           name: "33B cumulative",
-            //         }),
-            //         createBaseSeries({
-            //           key: "p2pk65_count",
-            //           name: "65B Count",
-            //         }),
-            //         createBaseSeries({
-            //           key: "p2pk65_count_sum",
-            //           name: "65B sum",
-            //         }),
-            //         createBaseSeries({
-            //           key: "cumulative_p2pk65_count",
-            //           name: "65B cumulative",
-            //         }),
-            //       ],
-            //     },
-            //     {
-            //       name: "p2pkh",
-            //       title: "Pay To Public Key Hash Outputs",
-            //       bottom: [
-            //         createBaseSeries({
-            //           key: "p2pkh_count",
-            //           name: "Count",
-            //         }),
-            //         createBaseSeries({
-            //           key: "p2pkh_count_sum",
-            //           name: "sum",
-            //         }),
-            //         createBaseSeries({
-            //           key: "cumulative_p2pkh_count",
-            //           name: "cumulative",
-            //         }),
-            //       ],
-            //     },
-            //     {
-            //       name: "p2ms",
-            //       title: "Pay To Multisig Outputs",
-            //       bottom: [
-            //         createBaseSeries({
-            //           key: "p2ms_count",
-            //           name: "Count",
-            //         }),
-            //         createBaseSeries({
-            //           key: "p2ms_count_sum",
-            //           name: "sum",
-            //         }),
-            //         createBaseSeries({
-            //           key: "cumulative_p2ms_count",
-            //           name: "cumulative",
-            //         }),
-            //       ],
-            //     },
-            //     {
-            //       name: "p2sh",
-            //       title: "Pay To Script Hash Outputs",
-            //       bottom: [
-            //         createBaseSeries({
-            //           key: "p2sh_count",
-            //           name: "Count",
-            //         }),
-            //         createBaseSeries({
-            //           key: "p2sh_count_sum",
-            //           name: "sum",
-            //         }),
-            //         createBaseSeries({
-            //           key: "cumulative_p2sh_count",
-            //           name: "cumulative",
-            //         }),
-            //       ],
-            //     },
-            //     {
-            //       name: "op_return",
-            //       title: "op_return outputs",
-            //       bottom: [
-            //         createBaseSeries({ key: "opreturn_count", name: "Count" }),
-            //         createBaseSeries({
-            //           key: "opreturn_count_sum",
-            //           name: "sum",
-            //         }),
-            //         createBaseSeries({
-            //           key: "cumulative_opreturn_count",
-            //           name: "cumulative",
-            //         }),
-            //       ],
-            //     },
-            //     {
-            //       name: "p2wpkh",
-            //       title: "Pay To Witness Public Key Hash Outputs",
-            //       bottom: [
-            //         createBaseSeries({
-            //           key: "p2wpkh_count",
-            //           name: "Count",
-            //         }),
-            //         createBaseSeries({
-            //           key: "p2wpkh_count_sum",
-            //           name: "sum",
-            //         }),
-            //         createBaseSeries({
-            //           key: "cumulative_p2wpkh_count",
-            //           name: "cumulative",
-            //         }),
-            //       ],
-            //     },
-            //     {
-            //       name: "p2wsh",
-            //       title: "Pay To Witness Script Hash Outputs",
-            //       bottom: [
-            //         createBaseSeries({
-            //           key: "p2wsh_count",
-            //           name: "Count",
-            //         }),
-            //         createBaseSeries({
-            //           key: "p2wsh_count_sum",
-            //           name: "sum",
-            //         }),
-            //         createBaseSeries({
-            //           key: "cumulative_p2wsh_count",
-            //           name: "cumulative",
-            //         }),
-            //       ],
-            //     },
-            //     {
-            //       name: "p2tr",
-            //       title: "Pay To Taproot Outputs",
-            //       bottom: [
-            //         createBaseSeries({
-            //           key: "p2tr_count",
-            //           name: "Count",
-            //         }),
-            //         createBaseSeries({
-            //           key: "p2tr_count_sum",
-            //           name: "sum",
-            //         }),
-            //         createBaseSeries({
-            //           key: "cumulative_p2tr_count",
-            //           name: "cumulative",
-            //         }),
-            //       ],
-            //     },
-            //     {
-            //       name: "p2a",
-            //       title: "Pay To Anchor outputs",
-            //       bottom: [
-            //         createBaseSeries({
-            //           key: "p2a_count",
-            //           name: "Count",
-            //         }),
-            //         createBaseSeries({
-            //           key: "p2a_count_sum",
-            //           name: "sum",
-            //         }),
-            //         createBaseSeries({
-            //           key: "cumulative_p2a_count",
-            //           name: "cumulative",
-            //         }),
-            //       ],
-            //     },
-            //     {
-            //       name: "empty",
-            //       title: "empty outputs",
-            //       bottom: [
-            //         createBaseSeries({
-            //           key: "emptyoutput_count",
-            //           name: "Count",
-            //         }),
-            //         createBaseSeries({
-            //           key: "emptyoutput_count_sum",
-            //           name: "sum",
-            //         }),
-            //         createBaseSeries({
-            //           key: "cumulative_emptyoutput_count",
-            //           name: "cumulative",
-            //         }),
-            //       ],
-            //     },
-            //     {
-            //       name: "unknown",
-            //       title: "unknown outputs",
-            //       bottom: [
-            //         createBaseSeries({
-            //           key: "unknownoutput_count",
-            //           name: "Count",
-            //         }),
-            //         createBaseSeries({
-            //           key: "unknownoutput_count_sum",
-            //           name: "sum",
-            //         }),
-            //         createBaseSeries({
-            //           key: "cumulative_unknownoutput_count",
-            //           name: "cumulative",
-            //         }),
-            //       ],
-            //     },
-            //   ],
-            //   // title: "Transaction Output Value",
-            //   // bottom: [
-            //   //   createAverageSeries({ concat: "output_value" }),
-            //   //   ...createSumCumulativeSeries({ concat: "output_value" }),
-            //   // ],
-            // },
           ],
         },
         {
-          name: "UTXOs",
+          name: "Cohorts",
           tree: [
-            createUTXOGroupFolder({
+            createCohortGroupFolder({
               key: "",
               name: "",
               title: "",
               color: colors.orange,
             }),
             {
-              name: "term",
+              name: "terms",
               tree: [
-                createUTXOGroupFolder({
+                createCohortGroupFolder({
                   name: "Compare",
-                  title: "Compare By Term",
+                  title: "UTXOs Term",
                   list: terms,
                 }),
-                ...terms.map(createUTXOGroupFolder),
+                ...terms.map(createCohortGroupFolder),
               ],
             },
             {
-              name: "Up to date",
+              name: "Epochs",
               tree: [
-                createUTXOGroupFolder({
+                createCohortGroupFolder({
                   name: "Compare",
-                  title: "Compare By Up To",
-                  list: upToDate,
-                }),
-                ...upToDate.map(createUTXOGroupFolder),
-              ],
-            },
-            {
-              name: "From Date",
-              tree: [
-                createUTXOGroupFolder({
-                  name: "Compare",
-                  title: "Compare By From",
-                  list: fromDate,
-                }),
-                ...fromDate.map(createUTXOGroupFolder),
-              ],
-            },
-            {
-              name: "Date Range",
-              tree: [
-                createUTXOGroupFolder({
-                  name: "Compare",
-                  title: "Compare By Range",
-                  list: dateRange,
-                }),
-                ...dateRange.map(createUTXOGroupFolder),
-              ],
-            },
-            {
-              name: "Epoch",
-              tree: [
-                createUTXOGroupFolder({
-                  name: "Compare",
-                  title: "Compare By Epoch",
+                  title: "Epoch",
                   list: epoch,
                 }),
-                ...epoch.map(createUTXOGroupFolder),
+                ...epoch.map(createCohortGroupFolder),
               ],
             },
             {
-              name: "Up to size",
+              name: "types",
               tree: [
-                createUTXOGroupFolder({
+                createCohortGroupFolder({
                   name: "Compare",
-                  title: "Compare By Up To Size",
-                  list: upToSize,
-                }),
-                ...upToSize.map(createUTXOGroupFolder),
-              ],
-            },
-            {
-              name: "From size",
-              tree: [
-                createUTXOGroupFolder({
-                  name: "Compare",
-                  title: "Compare By From Size",
-                  list: fromSize,
-                }),
-                ...fromSize.map(createUTXOGroupFolder),
-              ],
-            },
-            {
-              name: "Size range",
-              tree: [
-                createUTXOGroupFolder({
-                  name: "Compare",
-                  title: "Compare By Size Range",
-                  list: sizeRanges,
-                }),
-                ...sizeRanges.map(createUTXOGroupFolder),
-              ],
-            },
-            {
-              name: "type",
-              tree: [
-                createUTXOGroupFolder({
-                  name: "Compare",
-                  title: "Compare By Type",
+                  title: "Type",
                   list: type,
                 }),
-                ...type.map(createUTXOGroupFolder),
+                ...type.map(createCohortGroupFolder),
+              ],
+            },
+            {
+              name: "UTXOs Up to age",
+              tree: [
+                createCohortGroupFolder({
+                  name: "Compare",
+                  title: "UTXOs Up To Age",
+                  list: upToDate,
+                }),
+                ...upToDate.map(createCohortGroupFolder),
+              ],
+            },
+            {
+              name: "UTXOs from age",
+              tree: [
+                createCohortGroupFolder({
+                  name: "Compare",
+                  title: "UTXOs from age",
+                  list: fromDate,
+                }),
+                ...fromDate.map(createCohortGroupFolder),
+              ],
+            },
+            {
+              name: "UTXOs age Ranges",
+              tree: [
+                createCohortGroupFolder({
+                  name: "Compare",
+                  title: "UTXOs Age Range",
+                  list: dateRange,
+                }),
+                ...dateRange.map(createCohortGroupFolder),
+              ],
+            },
+            {
+              name: "UTXOs under amounts",
+              tree: [
+                createCohortGroupFolder({
+                  name: "Compare",
+                  title: "UTXOs under amount",
+                  list: utxosUnderAmount,
+                }),
+                ...utxosUnderAmount.map(createCohortGroupFolder),
+              ],
+            },
+            {
+              name: "UTXOs Above Amounts",
+              tree: [
+                createCohortGroupFolder({
+                  name: "Compare",
+                  title: "UTXOs Above Amount",
+                  list: utxosAboveAmount,
+                }),
+                ...utxosAboveAmount.map(createCohortGroupFolder),
+              ],
+            },
+            {
+              name: "UTXOs between amounts",
+              tree: [
+                createCohortGroupFolder({
+                  name: "Compare",
+                  title: "UTXOs between amounts",
+                  list: utxosAmountRanges,
+                }),
+                ...utxosAmountRanges.map(createCohortGroupFolder),
+              ],
+            },
+            {
+              name: "Addresses under amount",
+              tree: [
+                createCohortGroupFolder({
+                  name: "Compare",
+                  title: "Addresses under Amount",
+                  list: addressesUnderAmount,
+                }),
+                ...addressesUnderAmount.map(createCohortGroupFolder),
+              ],
+            },
+            {
+              name: "Addresses above amount",
+              tree: [
+                createCohortGroupFolder({
+                  name: "Compare",
+                  title: "Addresses above amount",
+                  list: addressesAboveAmount,
+                }),
+                ...addressesAboveAmount.map(createCohortGroupFolder),
+              ],
+            },
+            {
+              name: "Addresses between amounts",
+              tree: [
+                createCohortGroupFolder({
+                  name: "Compare",
+                  title: "Addresses between amounts",
+                  list: addressesAmountRanges,
+                }),
+                ...addressesAmountRanges.map(createCohortGroupFolder),
               ],
             },
           ],
@@ -3104,7 +3362,7 @@ function createPartialOptions(colors) {
                       name: "sum",
                     }),
                     createBaseSeries({
-                      key: "cumulative_opreturn_count",
+                      key: "opreturn_count_cumulative",
                       name: "cumulative",
                       color: colors.red,
                     }),
@@ -3145,7 +3403,7 @@ function createPartialOptions(colors) {
                   color: colors.red,
                 }),
                 createBaseSeries({
-                  key: "cumulative_coinblocks_destroyed",
+                  key: "coinblocks_destroyed_cumulative",
                   name: "Cumulative Destroyed",
                   color: colors.red,
                   defaultActive: false,
@@ -3156,7 +3414,7 @@ function createPartialOptions(colors) {
                   color: colors.orange,
                 }),
                 createBaseSeries({
-                  key: "cumulative_coinblocks_created",
+                  key: "coinblocks_created_cumulative",
                   name: "Cumulative created",
                   color: colors.orange,
                   defaultActive: false,
@@ -3167,7 +3425,7 @@ function createPartialOptions(colors) {
                   color: colors.green,
                 }),
                 createBaseSeries({
-                  key: "cumulative_coinblocks_stored",
+                  key: "coinblocks_stored_cumulative",
                   name: "Cumulative stored",
                   color: colors.green,
                   defaultActive: false,
@@ -3227,7 +3485,7 @@ function createPartialOptions(colors) {
                       name,
                       color,
                     }),
-                  ])
+                  ]),
               ),
             },
             {
@@ -3252,7 +3510,7 @@ function createPartialOptions(colors) {
                         key,
                         name,
                         color,
-                      })
+                      }),
                     ),
                   ],
                 },
@@ -3277,7 +3535,7 @@ function createPartialOptions(colors) {
                         color: colors.orange,
                       }),
                     ],
-                  })
+                  }),
                 ),
               ],
             },
@@ -3292,7 +3550,7 @@ function createPartialOptions(colors) {
                       key,
                       name,
                       color,
-                    })
+                    }),
                   ),
                 },
                 ...cointimePrices.map(({ key, name, color, title }) =>
@@ -3302,7 +3560,7 @@ function createPartialOptions(colors) {
                     color,
                     name,
                     title,
-                  })
+                  }),
                 ),
               ],
             },
@@ -3425,9 +3683,17 @@ function createPartialOptions(colors) {
  * @param {Signals} args.signals
  * @param {Env} args.env
  * @param {Utilities} args.utils
+ * @param {VecIdToIndexes} args.vecIdToIndexes
  * @param {Signal<string | null>} args.qrcode
  */
-export function initOptions({ colors, signals, env, utils, qrcode }) {
+export function initOptions({
+  colors,
+  signals,
+  env,
+  utils,
+  qrcode,
+  vecIdToIndexes,
+}) {
   const LS_SELECTED_KEY = `selected_id`;
 
   const urlSelected = utils.url.pathnameToSelectedId();
@@ -3436,7 +3702,7 @@ export function initOptions({ colors, signals, env, utils, qrcode }) {
   /** @type {Signal<Option>} */
   const selected = signals.createSignal(/** @type {any} */ (undefined));
 
-  const partialOptions = createPartialOptions(colors);
+  const partialOptions = createPartialOptions({ env, colors, vecIdToIndexes });
 
   /** @type {Option[]} */
   const list = [];
@@ -3445,7 +3711,7 @@ export function initOptions({ colors, signals, env, utils, qrcode }) {
   const detailsList = [];
 
   const treeElement = signals.createSignal(
-    /** @type {HTMLDivElement | null} */ (null)
+    /** @type {HTMLDivElement | null} */ (null),
   );
 
   /** @type {string[] | undefined} */
@@ -3457,6 +3723,9 @@ export function initOptions({ colors, signals, env, utils, qrcode }) {
    */
   function arrayToRecord(id, arr = []) {
     return (arr || []).reduce((record, blueprint) => {
+      if (env.localhost && !(blueprint.key in vecIdToIndexes)) {
+        throw Error(`${blueprint.key} not recognized`);
+      }
       const unit = utils.vecidToUnit(blueprint.key);
       record[unit] ??= [];
       record[unit].push(blueprint);
@@ -3557,7 +3826,7 @@ export function initOptions({ colors, signals, env, utils, qrcode }) {
           return null;
         }
       },
-      null
+      null,
     );
 
     partialTree.forEach((anyPartial, partialIndex) => {
@@ -3580,7 +3849,7 @@ export function initOptions({ colors, signals, env, utils, qrcode }) {
 
       if ("tree" in anyPartial) {
         const folderId = utils.stringToId(
-          `${(path || []).join(" ")} ${anyPartial.name} folder`
+          `${(path || []).join(" ")} ${anyPartial.name} folder`,
         );
 
         /** @type {Omit<OptionsGroup, keyof PartialOptionsGroup>} */
@@ -3595,13 +3864,13 @@ export function initOptions({ colors, signals, env, utils, qrcode }) {
         const thisPath = groupAddons.id;
 
         const passedDetails = signals.createSignal(
-          /** @type {HTMLDivElement | HTMLDetailsElement | null} */ (null)
+          /** @type {HTMLDivElement | HTMLDetailsElement | null} */ (null),
         );
 
         const childOptionsCount = recursiveProcessPartialTree(
           anyPartial.tree,
           passedDetails,
-          [...(path || []), thisPath]
+          [...(path || []), thisPath],
         );
 
         listForSum.push(childOptionsCount);
@@ -3657,7 +3926,15 @@ export function initOptions({ colors, signals, env, utils, qrcode }) {
         /** @type {Option} */
         let option;
 
-        if ("kind" in anyPartial && anyPartial.kind === "table") {
+        if ("kind" in anyPartial && anyPartial.kind === "explorer") {
+          option = /** @satisfies {ExplorerOption} */ ({
+            kind: anyPartial.kind,
+            id: anyPartial.kind,
+            name: anyPartial.name,
+            path: path || [],
+            title: anyPartial.title,
+          });
+        } else if ("kind" in anyPartial && anyPartial.kind === "table") {
           option = /** @satisfies {TableOption} */ ({
             kind: anyPartial.kind,
             id: anyPartial.kind,
@@ -3733,14 +4010,17 @@ export function initOptions({ colors, signals, env, utils, qrcode }) {
     });
 
     return signals.createMemo(() =>
-      listForSum.reduce((acc, s) => acc + s(), 0)
+      listForSum.reduce((acc, s) => acc + s(), 0),
     );
   }
   recursiveProcessPartialTree(partialOptions, treeElement);
 
   function setDefaultSelectedIfNeeded() {
     if (!selected()) {
-      selected.set(list[0]);
+      const firstChartOption = list.find((option) => option.kind === "chart");
+      if (firstChartOption) {
+        selected.set(firstChartOption);
+      }
     }
   }
   setDefaultSelectedIfNeeded();
@@ -3760,7 +4040,7 @@ export function initOptions({ colors, signals, env, utils, qrcode }) {
         console.log(
           [...m.entries()]
             .filter(([_, value]) => value > 1)
-            .map(([key, _]) => key)
+            .map(([key, _]) => key),
         );
 
         throw Error("ID duplicate");

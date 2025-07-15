@@ -6,9 +6,9 @@
 use std::collections::BTreeMap;
 
 use brk_computer::Computer;
-use brk_core::Result;
+use brk_core::{Height, Result};
 use brk_indexer::Indexer;
-use brk_vec::AnyCollectableVec;
+use brk_vec::{AnyCollectableVec, AnyIndexedVec};
 use tabled::settings::Style;
 
 mod deser;
@@ -44,6 +44,10 @@ impl<'a> Interface<'a> {
             _indexer: indexer,
             _computer: computer,
         }
+    }
+
+    pub fn get_height(&self) -> Height {
+        self._indexer.vecs.height_to_blockhash.height()
     }
 
     pub fn search(&self, params: &Params) -> Vec<(String, &&dyn AnyCollectableVec)> {
@@ -85,9 +89,19 @@ impl<'a> Interface<'a> {
         vecs: Vec<(String, &&dyn AnyCollectableVec)>,
         params: &ParamsOpt,
     ) -> color_eyre::Result<Output> {
-        let from = params.from();
-        let to = params.to();
-        let format = params.format();
+        let from = params.from().map(|from| {
+            vecs.iter()
+                .map(|(_, v)| v.i64_to_usize(from))
+                .min()
+                .unwrap_or_default()
+        });
+
+        let to = params.to().map(|to| {
+            vecs.iter()
+                .map(|(_, v)| v.i64_to_usize(to))
+                .min()
+                .unwrap_or_default()
+        });
 
         let mut values = vecs
             .iter()
@@ -95,6 +109,8 @@ impl<'a> Interface<'a> {
                 vec.collect_range_serde_json(from, to)
             })
             .collect::<Result<Vec<_>>>()?;
+
+        let format = params.format();
 
         if values.is_empty() {
             return Ok(Output::default(format));

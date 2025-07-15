@@ -1,14 +1,17 @@
 use std::{
+    borrow::Cow,
     fs::{self, File},
     io,
     marker::PhantomData,
     mem,
     path::{Path, PathBuf},
-    sync::Arc,
+    sync::{
+        Arc,
+        atomic::{AtomicUsize, Ordering},
+    },
 };
 
-use arc_swap::{ArcSwap, Guard};
-use brk_core::{Error, Result, Value, Version};
+use brk_core::{Error, Result, Version};
 use memmap2::Mmap;
 use rayon::prelude::*;
 
@@ -23,10 +26,10 @@ const VERSION: Version = Version::ONE;
 pub struct RawVec<I, T> {
     header: Header,
     parent: PathBuf,
-    name: String,
-    // Consider  Arc<ArcSwap<Option<Mmap>>> for dataraces when reorg ?
-    mmap: Arc<ArcSwap<Mmap>>,
+    name: &'static str,
     pushed: Vec<T>,
+    local_stored_len: Option<usize>,
+    shared_stored_len: Arc<AtomicUsize>,
     phantom: PhantomData<I>,
 }
 
@@ -54,16 +57,18 @@ where
 
     pub fn import(parent: &Path, name: &str, version: Version) -> Result<Self> {
         let path = Self::path_(parent, name);
-        let (mmap, header) = match Self::open_file_(&path) {
+        let (header, file) = match Self::open_file_(&path) {
             Ok(mut file) => {
                 if file.metadata()?.len() == 0 {
-                    let header = Header::create_and_write(&mut file, version, Format::Raw)?;
-                    let mmap = Self::new_mmap(&file)?;
-                    (mmap, header)
+                    (
+                        Header::create_and_write(&mut file, version, Format::Raw)?,
+                        Some(file),
+                    )
                 } else {
-                    let mmap = Self::new_mmap(&file)?;
-                    let header = Header::import_and_verify(&mmap, version, Format::Raw)?;
-                    (mmap, header)
+                    (
+                        Header::import_and_verify(&mut file, version, Format::Raw)?,
+                        Some(file),
+                    )
                 }
             }
             Err(e) => match e.kind() {
@@ -71,23 +76,34 @@ where
                     fs::create_dir_all(Self::folder_(parent, name))?;
                     let mut file = Self::open_file_(&path)?;
                     let header = Header::create_and_write(&mut file, version, Format::Raw)?;
-                    let mmap = Self::new_mmap(&file)?;
-                    (mmap, header)
+                    (header, None)
                 }
-                _ => return Err(e.into()),
+                _ => {
+                    return Err(e.into());
+                }
             },
         };
 
-        let mmap = Arc::new(ArcSwap::new(mmap));
+        let stored_len = if let Some(file) = file {
+            (file.metadata()?.len() as usize - HEADER_OFFSET) / Self::SIZE_OF_T
+        } else {
+            0
+        };
 
         Ok(Self {
-            mmap,
             header,
-            name: name.to_string(),
+            name: Box::leak(Box::new(name.to_string())),
             parent: parent.to_owned(),
             pushed: vec![],
+            local_stored_len: Some(stored_len),
+            shared_stored_len: Arc::new(AtomicUsize::new(stored_len)),
             phantom: PhantomData,
         })
+    }
+
+    pub fn set_stored_len(&mut self, len: usize) {
+        self.local_stored_len.replace(len);
+        self.shared_stored_len.store(len, Ordering::Relaxed);
     }
 
     #[inline]
@@ -141,17 +157,9 @@ where
     }
 
     #[inline]
-    fn mmap(&self) -> &ArcSwap<Mmap> {
-        &self.mmap
-    }
-
-    #[inline]
     fn stored_len(&self) -> usize {
-        self.stored_len_(&self.mmap.load())
-    }
-    #[inline]
-    fn stored_len_(&self, mmap: &Mmap) -> usize {
-        (mmap.len() - HEADER_OFFSET) / Self::SIZE_OF_T
+        self.local_stored_len
+            .unwrap_or_else(|| self.shared_stored_len.load(Ordering::Relaxed))
     }
 
     #[inline]
@@ -193,8 +201,13 @@ where
         };
 
         let mut file = file_opt.unwrap_or(self.open_file()?);
-
         self.file_write_all(&mut file, &bytes)?;
+
+        if let Some(local_stored_len) = self.local_stored_len.as_mut() {
+            *local_stored_len += pushed_len;
+        }
+        self.shared_stored_len
+            .fetch_add(pushed_len, Ordering::Relaxed);
 
         Ok(())
     }
@@ -211,6 +224,8 @@ where
             return Ok(());
         }
 
+        self.set_stored_len(index);
+
         let len = index * Self::SIZE_OF_T + HEADER_OFFSET;
 
         let mut file = self.open_file()?;
@@ -220,6 +235,7 @@ where
     }
 
     fn reset(&mut self) -> Result<()> {
+        self.set_stored_len(0);
         self.reset_()
     }
 }
@@ -236,7 +252,7 @@ where
 
     #[inline]
     fn name(&self) -> &str {
-        &self.name
+        self.name
     }
 
     #[inline]
@@ -260,10 +276,11 @@ impl<I, T> Clone for RawVec<I, T> {
         Self {
             header: self.header.clone(),
             parent: self.parent.clone(),
-            name: self.name.clone(),
-            mmap: self.mmap.clone(),
+            name: self.name,
             pushed: vec![],
             phantom: PhantomData,
+            local_stored_len: None,
+            shared_stored_len: self.shared_stored_len.clone(),
         }
     }
 }
@@ -271,7 +288,7 @@ impl<I, T> Clone for RawVec<I, T> {
 #[derive(Debug)]
 pub struct RawVecIterator<'a, I, T> {
     vec: &'a RawVec<I, T>,
-    guard: Guard<Arc<Mmap>>,
+    mmap: Mmap,
     index: usize,
 }
 
@@ -301,15 +318,14 @@ where
     I: StoredIndex,
     T: StoredType,
 {
-    type Item = (I, Value<'a, T>);
+    type Item = (I, Cow<'a, T>);
 
     fn next(&mut self) -> Option<Self::Item> {
-        let mmap = &self.guard;
         let index = self.index;
 
         let opt = self
             .vec
-            .get_or_read_(index, mmap)
+            .get_or_read_(index, &self.mmap)
             .unwrap()
             .map(|v| (I::from(index), v));
 
@@ -326,13 +342,13 @@ where
     I: StoredIndex,
     T: StoredType,
 {
-    type Item = (I, Value<'a, T>);
+    type Item = (I, Cow<'a, T>);
     type IntoIter = RawVecIterator<'a, I, T>;
 
     fn into_iter(self) -> Self::IntoIter {
         RawVecIterator {
             vec: self,
-            guard: self.mmap.load(),
+            mmap: self.create_mmap().unwrap(),
             index: 0,
         }
     }
@@ -358,8 +374,8 @@ where
 {
     fn collect_range_serde_json(
         &self,
-        from: Option<i64>,
-        to: Option<i64>,
+        from: Option<usize>,
+        to: Option<usize>,
     ) -> Result<Vec<serde_json::Value>> {
         CollectableVec::collect_range_serde_json(self, from, to)
     }

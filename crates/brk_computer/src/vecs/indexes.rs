@@ -5,8 +5,8 @@ use brk_core::{
     InputIndex, MonthIndex, OpReturnIndex, OutputIndex, P2AAddressIndex, P2ABytes, P2MSOutputIndex,
     P2PK33AddressIndex, P2PK33Bytes, P2PK65AddressIndex, P2PK65Bytes, P2PKHAddressIndex,
     P2PKHBytes, P2SHAddressIndex, P2SHBytes, P2TRAddressIndex, P2TRBytes, P2WPKHAddressIndex,
-    P2WPKHBytes, P2WSHAddressIndex, P2WSHBytes, QuarterIndex, Sats, StoredUsize, Timestamp,
-    TxIndex, Txid, UnknownOutputIndex, Version, WeekIndex, YearIndex,
+    P2WPKHBytes, P2WSHAddressIndex, P2WSHBytes, QuarterIndex, Sats, SemesterIndex, StoredUsize,
+    Timestamp, TxIndex, Txid, UnknownOutputIndex, Version, WeekIndex, YearIndex,
 };
 use brk_exit::Exit;
 use brk_indexer::Indexer;
@@ -50,6 +50,7 @@ pub struct Vecs {
     pub monthindex_to_first_dateindex: EagerVec<MonthIndex, DateIndex>,
     pub monthindex_to_monthindex: EagerVec<MonthIndex, MonthIndex>,
     pub monthindex_to_quarterindex: EagerVec<MonthIndex, QuarterIndex>,
+    pub monthindex_to_semesterindex: EagerVec<MonthIndex, SemesterIndex>,
     pub monthindex_to_yearindex: EagerVec<MonthIndex, YearIndex>,
     pub opreturnindex_to_opreturnindex:
         ComputedVecFrom1<OpReturnIndex, OpReturnIndex, OpReturnIndex, TxIndex>,
@@ -76,6 +77,9 @@ pub struct Vecs {
     pub quarterindex_to_first_monthindex: EagerVec<QuarterIndex, MonthIndex>,
     pub quarterindex_to_monthindex_count: EagerVec<QuarterIndex, StoredUsize>,
     pub quarterindex_to_quarterindex: EagerVec<QuarterIndex, QuarterIndex>,
+    pub semesterindex_to_first_monthindex: EagerVec<SemesterIndex, MonthIndex>,
+    pub semesterindex_to_monthindex_count: EagerVec<SemesterIndex, StoredUsize>,
+    pub semesterindex_to_semesterindex: EagerVec<SemesterIndex, SemesterIndex>,
     pub txindex_to_height: EagerVec<TxIndex, Height>,
     pub txindex_to_input_count:
         ComputedVecFrom2<TxIndex, StoredUsize, TxIndex, InputIndex, InputIndex, OutputIndex>,
@@ -144,10 +148,10 @@ impl Vecs {
                 txindex_to_first_inputindex_iter
                     .next_at(txindex)
                     .map(|(_, start)| {
-                        let start = usize::from(start.into_inner());
+                        let start = usize::from(start.into_owned());
                         let end = txindex_to_first_inputindex_iter
                             .next_at(txindex + 1)
-                            .map(|(_, v)| usize::from(v.into_inner()))
+                            .map(|(_, v)| usize::from(v.into_owned()))
                             .unwrap_or_else(|| inputindex_to_outputindex_iter.len());
                         StoredUsize::from((start..end).count())
                     })
@@ -167,10 +171,10 @@ impl Vecs {
                 txindex_to_first_outputindex_iter
                     .next_at(txindex)
                     .map(|(_, start)| {
-                        let start = usize::from(start.into_inner());
+                        let start = usize::from(start.into_owned());
                         let end = txindex_to_first_outputindex_iter
                             .next_at(txindex + 1)
-                            .map(|(_, v)| usize::from(v.into_inner()))
+                            .map(|(_, v)| usize::from(v.into_owned()))
                             .unwrap_or_else(|| outputindex_to_value_iter.len());
                         StoredUsize::from((start..end).count())
                     })
@@ -413,6 +417,12 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 format,
             )?,
+            monthindex_to_semesterindex: EagerVec::forced_import(
+                path,
+                "semesterindex",
+                version + VERSION + Version::ZERO,
+                format,
+            )?,
             monthindex_to_yearindex: EagerVec::forced_import(
                 path,
                 "yearindex",
@@ -420,6 +430,12 @@ impl Vecs {
                 format,
             )?,
             quarterindex_to_first_monthindex: EagerVec::forced_import(
+                path,
+                "first_monthindex",
+                version + VERSION + Version::ZERO,
+                format,
+            )?,
+            semesterindex_to_first_monthindex: EagerVec::forced_import(
                 path,
                 "first_monthindex",
                 version + VERSION + Version::ZERO,
@@ -440,6 +456,12 @@ impl Vecs {
             quarterindex_to_quarterindex: EagerVec::forced_import(
                 path,
                 "quarterindex",
+                version + VERSION + Version::ZERO,
+                format,
+            )?,
+            semesterindex_to_semesterindex: EagerVec::forced_import(
+                path,
+                "semesterindex",
                 version + VERSION + Version::ZERO,
                 format,
             )?,
@@ -516,6 +538,12 @@ impl Vecs {
                 format,
             )?,
             quarterindex_to_monthindex_count: EagerVec::forced_import(
+                path,
+                "monthindex_count",
+                version + VERSION + Version::ZERO,
+                format,
+            )?,
+            semesterindex_to_monthindex_count: EagerVec::forced_import(
                 path,
                 "monthindex_count",
                 version + VERSION + Version::ZERO,
@@ -944,6 +972,45 @@ impl Vecs {
             )?;
 
         // ---
+        // SemesterIndex
+        // ---
+
+        let starting_semesterindex = self
+            .monthindex_to_semesterindex
+            .into_iter()
+            .get_inner(starting_monthindex)
+            .unwrap_or_default();
+
+        self.monthindex_to_semesterindex.compute_from_index(
+            starting_monthindex,
+            &self.monthindex_to_first_dateindex,
+            exit,
+        )?;
+
+        self.semesterindex_to_first_monthindex
+            .compute_inverse_more_to_less(
+                starting_monthindex,
+                &self.monthindex_to_semesterindex,
+                exit,
+            )?;
+
+        // let semester_count = self.semesterindex_to_first_monthindex.len();
+
+        self.semesterindex_to_semesterindex.compute_from_index(
+            starting_semesterindex,
+            &self.semesterindex_to_first_monthindex,
+            exit,
+        )?;
+
+        self.semesterindex_to_monthindex_count
+            .compute_count_from_indexes(
+                starting_semesterindex,
+                &self.semesterindex_to_first_monthindex,
+                &self.monthindex_to_monthindex,
+                exit,
+            )?;
+
+        // ---
         // YearIndex
         // ---
 
@@ -1051,6 +1118,7 @@ impl Vecs {
             weekindex: starting_weekindex,
             monthindex: starting_monthindex,
             quarterindex: starting_quarterindex,
+            semesterindex: starting_semesterindex,
             yearindex: starting_yearindex,
             decadeindex: starting_decadeindex,
             difficultyepoch: starting_difficultyepoch,
@@ -1088,6 +1156,7 @@ impl Vecs {
             &self.monthindex_to_first_dateindex,
             &self.monthindex_to_monthindex,
             &self.monthindex_to_quarterindex,
+            &self.monthindex_to_semesterindex,
             &self.monthindex_to_yearindex,
             &self.opreturnindex_to_opreturnindex,
             &self.outputindex_to_outputindex,
@@ -1103,6 +1172,9 @@ impl Vecs {
             &self.quarterindex_to_first_monthindex,
             &self.quarterindex_to_monthindex_count,
             &self.quarterindex_to_quarterindex,
+            &self.semesterindex_to_first_monthindex,
+            &self.semesterindex_to_monthindex_count,
+            &self.semesterindex_to_semesterindex,
             &self.txindex_to_height,
             &self.txindex_to_txindex,
             &self.txindex_to_input_count,
@@ -1126,6 +1198,7 @@ pub struct Indexes {
     pub weekindex: WeekIndex,
     pub monthindex: MonthIndex,
     pub quarterindex: QuarterIndex,
+    pub semesterindex: SemesterIndex,
     pub yearindex: YearIndex,
     pub decadeindex: DecadeIndex,
     pub difficultyepoch: DifficultyEpoch,
@@ -1145,6 +1218,7 @@ impl Indexes {
         self.weekindex = WeekIndex::from(self.dateindex);
         self.monthindex = MonthIndex::from(self.dateindex);
         self.quarterindex = QuarterIndex::from(self.monthindex);
+        self.semesterindex = SemesterIndex::from(self.monthindex);
         self.yearindex = YearIndex::from(self.monthindex);
         self.decadeindex = DecadeIndex::from(self.dateindex);
         self.difficultyepoch = DifficultyEpoch::from(self.height);

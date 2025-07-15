@@ -36,10 +36,9 @@ impl Bridge for Interface<'static> {
 // File auto-generated, any modifications will be overwritten
 //
 
-export const VERSION = \"v{}\";
+export const VERSION = \"v{VERSION}\";
 
-",
-            VERSION
+"
         );
 
         contents += &indexes
@@ -53,7 +52,7 @@ export const VERSION = \"v{}\";
             .join("\n");
 
         contents += &format!(
-            "\n\n/** @typedef {{{}}} Index */",
+            "\n\n/** @typedef {{{}}} Index */\n",
             indexes
                 .iter()
                 .map(|i| i.to_string())
@@ -61,12 +60,35 @@ export const VERSION = \"v{}\";
                 .join(" | ")
         );
 
-        contents += "\n\n/** @typedef {ReturnType<typeof createVecIdToIndexes>} VecIdToIndexes */";
-        contents += "\n/** @typedef {keyof VecIdToIndexes} VecId */\n";
+        contents += "
+/** @typedef {ReturnType<typeof createIndexes>} Indexes */
 
-        contents += "\nexport function createVecIdToIndexes() {\n";
+export function createIndexes() {
+  return {
+";
 
-        contents += "  return {\n";
+        contents += &indexes
+            .iter()
+            .enumerate()
+            .map(|(i_of_i, i)| {
+                let lowered = i.to_string().to_lowercase();
+                format!("    {lowered}: /** @satisfies {{{i}}} */ ({i_of_i}),",)
+            })
+            .collect::<Vec<_>>()
+            .join("\n");
+
+        contents += "  };\n}\n";
+
+        contents += "
+/** @typedef {ReturnType<typeof createVecIdToIndexes>} VecIdToIndexes
+/** @typedef {keyof VecIdToIndexes} VecId */
+
+/**
+ * @returns {Record<any, number[]>}
+ */
+export function createVecIdToIndexes() {
+  return {
+";
 
         self.id_to_index_to_vec()
             .iter()

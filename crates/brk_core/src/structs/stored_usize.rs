@@ -1,4 +1,4 @@
-use std::ops::{Add, Div};
+use std::ops::{Add, AddAssign, Div};
 
 use derive_deref::{Deref, DerefMut};
 use serde::Serialize;
@@ -45,6 +45,11 @@ impl From<usize> for StoredUsize {
         Self(value)
     }
 }
+impl From<StoredUsize> for usize {
+    fn from(value: StoredUsize) -> Self {
+        *value
+    }
+}
 
 impl CheckedSub<StoredUsize> for StoredUsize {
     fn checked_sub(self, rhs: Self) -> Option<Self> {
@@ -63,6 +68,12 @@ impl Add for StoredUsize {
     type Output = Self;
     fn add(self, rhs: Self) -> Self::Output {
         Self(self.0 + rhs.0)
+    }
+}
+
+impl AddAssign for StoredUsize {
+    fn add_assign(&mut self, rhs: Self) {
+        *self = *self + rhs
     }
 }
 

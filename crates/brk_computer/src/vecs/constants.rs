@@ -5,9 +5,11 @@ use brk_exit::Exit;
 use brk_indexer::Indexer;
 use brk_vec::{AnyCollectableVec, AnyVec, Computation, Format};
 
+use crate::vecs::grouped::Source;
+
 use super::{
     Indexes,
-    grouped::{ComputedVecsFromHeight, StorableVecGeneatorOptions},
+    grouped::{ComputedVecsFromHeight, VecBuilderOptions},
     indexes,
 };
 
@@ -25,41 +27,50 @@ impl Vecs {
     pub fn forced_import(
         path: &Path,
         version: Version,
-        _computation: Computation,
+        computation: Computation,
         format: Format,
+        indexes: &indexes::Vecs,
     ) -> color_eyre::Result<Self> {
         Ok(Self {
             constant_0: ComputedVecsFromHeight::forced_import(
                 path,
                 "constant_0",
-                true,
+                Source::Compute,
                 version + VERSION + Version::ZERO,
                 format,
-                StorableVecGeneatorOptions::default().add_last(),
+                computation,
+                indexes,
+                VecBuilderOptions::default().add_last(),
             )?,
             constant_1: ComputedVecsFromHeight::forced_import(
                 path,
                 "constant_1",
-                true,
+                Source::Compute,
                 version + VERSION + Version::ZERO,
                 format,
-                StorableVecGeneatorOptions::default().add_last(),
+                computation,
+                indexes,
+                VecBuilderOptions::default().add_last(),
             )?,
             constant_50: ComputedVecsFromHeight::forced_import(
                 path,
                 "constant_50",
-                true,
+                Source::Compute,
                 version + VERSION + Version::ZERO,
                 format,
-                StorableVecGeneatorOptions::default().add_last(),
+                computation,
+                indexes,
+                VecBuilderOptions::default().add_last(),
             )?,
             constant_100: ComputedVecsFromHeight::forced_import(
                 path,
                 "constant_100",
-                true,
+                Source::Compute,
                 version + VERSION + Version::ZERO,
                 format,
-                StorableVecGeneatorOptions::default().add_last(),
+                computation,
+                indexes,
+                VecBuilderOptions::default().add_last(),
             )?,
         })
     }

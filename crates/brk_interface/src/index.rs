@@ -4,7 +4,8 @@ use brk_core::{
     DateIndex, DecadeIndex, DifficultyEpoch, EmptyOutputIndex, HalvingEpoch, Height, InputIndex,
     MonthIndex, OpReturnIndex, OutputIndex, P2AAddressIndex, P2MSOutputIndex, P2PK33AddressIndex,
     P2PK65AddressIndex, P2PKHAddressIndex, P2SHAddressIndex, P2TRAddressIndex, P2WPKHAddressIndex,
-    P2WSHAddressIndex, Printable, QuarterIndex, TxIndex, UnknownOutputIndex, WeekIndex, YearIndex,
+    P2WSHAddressIndex, Printable, QuarterIndex, SemesterIndex, TxIndex, UnknownOutputIndex,
+    WeekIndex, YearIndex,
 };
 use color_eyre::eyre::eyre;
 use schemars::JsonSchema;
@@ -52,6 +53,8 @@ pub enum Index {
     P2WSHAddressIndex,
     #[schemars(description = "Quarter index")]
     QuarterIndex,
+    #[schemars(description = "Semester index")]
+    SemesterIndex,
     #[schemars(description = "Transaction index")]
     TxIndex,
     #[schemars(description = "Unknown output index")]
@@ -63,7 +66,7 @@ pub enum Index {
 }
 
 impl Index {
-    pub fn all() -> [Self; 24] {
+    pub fn all() -> [Self; 25] {
         [
             Self::DateIndex,
             Self::DecadeIndex,
@@ -85,6 +88,7 @@ impl Index {
             Self::P2WPKHAddressIndex,
             Self::P2WSHAddressIndex,
             Self::QuarterIndex,
+            Self::SemesterIndex,
             Self::TxIndex,
             Self::UnknownOutputIndex,
             Self::WeekIndex,
@@ -114,6 +118,7 @@ impl Index {
             Self::P2WPKHAddressIndex => P2WPKHAddressIndex::to_possible_strings(),
             Self::P2WSHAddressIndex => P2WSHAddressIndex::to_possible_strings(),
             Self::QuarterIndex => QuarterIndex::to_possible_strings(),
+            Self::SemesterIndex => SemesterIndex::to_possible_strings(),
             Self::TxIndex => TxIndex::to_possible_strings(),
             Self::UnknownOutputIndex => UnknownOutputIndex::to_possible_strings(),
             Self::WeekIndex => WeekIndex::to_possible_strings(),
@@ -174,7 +179,7 @@ impl TryFrom<&str> for Index {
                 Self::P2WSHAddressIndex
             }
             v if (Self::QuarterIndex).possible_values().contains(&v) => Self::QuarterIndex,
-            v if (Self::QuarterIndex).possible_values().contains(&v) => Self::QuarterIndex,
+            v if (Self::SemesterIndex).possible_values().contains(&v) => Self::SemesterIndex,
             v if (Self::TxIndex).possible_values().contains(&v) => Self::TxIndex,
             v if (Self::WeekIndex).possible_values().contains(&v) => Self::WeekIndex,
             v if (Self::YearIndex).possible_values().contains(&v) => Self::YearIndex,
@@ -188,7 +193,7 @@ impl TryFrom<&str> for Index {
 
 impl fmt::Display for Index {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{:?}", self)
+        write!(f, "{self:?}")
     }
 }
 

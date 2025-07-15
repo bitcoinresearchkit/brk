@@ -12,4 +12,3 @@ axum = { workspace = true }
 brk_interface = { workspace = true }
 log = { workspace = true }
 brk_rmcp = { workspace = true }
-tracing = "0.1.41"

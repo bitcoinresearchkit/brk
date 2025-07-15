@@ -5,7 +5,7 @@ use brk_exit::Exit;
 use brk_indexer::Indexer;
 use brk_vec::{AnyCollectableVec, CollectableVec, EagerVec, Format, StoredVec};
 
-use crate::vecs::{Indexes, fetched, indexes};
+use crate::vecs::{Indexes, fetched, grouped::Source, indexes};
 
 #[derive(Clone)]
 pub struct ComputedHeightValueVecs {
@@ -20,13 +20,13 @@ impl ComputedHeightValueVecs {
     pub fn forced_import(
         path: &Path,
         name: &str,
-        compute_source: bool,
+        source: Source<Height, Sats>,
         version: Version,
         format: Format,
         compute_dollars: bool,
     ) -> color_eyre::Result<Self> {
         Ok(Self {
-            sats: compute_source.then(|| {
+            sats: source.is_compute().then(|| {
                 EagerVec::forced_import(path, name, version + VERSION + Version::ZERO, format)
                     .unwrap()
             }),

@@ -32,7 +32,7 @@ serde_json = { workspace = true }
 tokio = { workspace = true }
 tower-http = { version = "0.6.6", features = ["compression-full", "trace"] }
 tracing = "0.1.41"
-zip = "4.2.0"
+zip = "4.3.0"
 
 [package.metadata.cargo-machete]
 ignored = ["clap"]

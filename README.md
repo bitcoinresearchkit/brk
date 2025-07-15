@@ -46,8 +46,7 @@ The toolkit can be used in various ways to accommodate as many needs as possible
   Just like the website, it's entirely free, with no authentication or rate-limiting.
 - **[AI](https://github.com/bitcoinresearchkit/brk/blob/main/crates/brk_mcp/README.md#brk-mcp)** \
   LLMs have to possibility to connect to BRK's backend through a [MCP](https://modelcontextprotocol.io/introduction). \
-  It will give them access to the same tools as the API, with no restrictions, and allow you to have your very own data analysts. \
-  One-shot output examples: [Document](https://claude.ai/public/artifacts/71194d29-f965-417c-ba09-fdf0e4ecb1d5) // [Dashboard](https://claude.ai/public/artifacts/beef143f-399a-4ed4-b8bf-c986b776de42) // [Dashboard 2](https://claude.ai/public/artifacts/5430ae49-bb3d-4fc1-ab24-f1e33deb40dc)
+  It will give them access to the same tools as the API, with no restrictions, and allow you to have your very own data analysts.
 - **[CLI](https://crates.io/crates/brk_cli)** \
   Node runners are strongly encouraged to try out and self-host their own instance using BRK's command line interface. \
   The CLI has multiple cogs available for users to tweak to adapt to all situations with even the possibility for web developers to create their own custom website which could later on be added as an alternative front-end.
@@ -73,7 +72,6 @@ In contrast, existing alternatives tend to be either [very costly](https://studi
 - [`brk_parser`](https://crates.io/crates/brk_parser): A very fast Bitcoin Core block parser and iterator built on top of bitcoin-rust
 - [`brk_interface`](https://crates.io/crates/brk_interface): An interface to BRK's engine
 - [`brk_server`](https://crates.io/crates/brk_server): A server that serves Bitcoin data and swappable front-ends, built on top of `brk_indexer`, `brk_fetcher` and `brk_computer`
-- [`brk_state`](https://crates.io/crates/brk_state): Various states used mainly by the computer
 - [`brk_store`](https://crates.io/crates/brk_store): A thin wrapper around [`fjall`](https://crates.io/crates/fjall)
 - [`brk_vec`](https://crates.io/crates/brk_vec): A push-only, truncable, compressable, saveable Vec
 - [`brk_bundler`](https://crates.io/crates/brk_bundler): A thin wrapper around [`rolldown`](https://rolldown.rs/)

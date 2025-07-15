@@ -1,6 +1,6 @@
-use std::iter::Skip;
+use std::{borrow::Cow, iter::Skip};
 
-use brk_core::{Printable, Value};
+use brk_core::Printable;
 
 use super::{StoredIndex, StoredType};
 
@@ -34,7 +34,7 @@ pub trait BaseVecIterator: Iterator {
     }
 }
 
-pub trait VecIterator<'a>: BaseVecIterator<Item = (Self::I, Value<'a, Self::T>)> {
+pub trait VecIterator<'a>: BaseVecIterator<Item = (Self::I, Cow<'a, Self::T>)> {
     type I: StoredIndex;
     type T: StoredType + 'a;
 
@@ -44,12 +44,12 @@ pub trait VecIterator<'a>: BaseVecIterator<Item = (Self::I, Value<'a, Self::T>)>
     }
 
     #[inline]
-    fn get_(&mut self, i: usize) -> Option<Value<'a, Self::T>> {
+    fn get_(&mut self, i: usize) -> Option<Cow<'a, Self::T>> {
         self.next_at(i).map(|(_, v)| v)
     }
 
     #[inline]
-    fn get(&mut self, i: Self::I) -> Option<Value<'a, Self::T>> {
+    fn get(&mut self, i: Self::I) -> Option<Cow<'a, Self::T>> {
         self.get_(i.unwrap_to_usize())
     }
 
@@ -62,15 +62,15 @@ pub trait VecIterator<'a>: BaseVecIterator<Item = (Self::I, Value<'a, Self::T>)>
     fn unwrap_get_inner_(&mut self, i: usize) -> Self::T {
         self.get_(i)
             .unwrap_or_else(|| {
-                dbg!(self.name(), i, self.len());
+                dbg!(self.name(), i, self.len(), Self::I::to_string());
                 panic!("unwrap_get_inner_")
             })
-            .into_inner()
+            .into_owned()
     }
 
     #[inline]
     fn get_inner(&mut self, i: Self::I) -> Option<Self::T> {
-        self.get_(i.unwrap_to_usize()).map(|v| v.into_inner())
+        self.get_(i.unwrap_to_usize()).map(|v| v.into_owned())
     }
 
     fn last(mut self) -> Option<Self::Item>
@@ -83,7 +83,7 @@ pub trait VecIterator<'a>: BaseVecIterator<Item = (Self::I, Value<'a, Self::T>)>
         }
         let i = len - 1;
         self.set_(i);
-        self.next().map(|(i, v)| (i, Value::Owned(v.into_inner())))
+        self.next()
     }
 
     fn index_type_to_string(&self) -> &'static str {
@@ -93,7 +93,7 @@ pub trait VecIterator<'a>: BaseVecIterator<Item = (Self::I, Value<'a, Self::T>)>
 
 impl<'a, I, T, Iter> VecIterator<'a> for Iter
 where
-    Iter: BaseVecIterator<Item = (I, Value<'a, T>)>,
+    Iter: BaseVecIterator<Item = (I, Cow<'a, T>)>,
     I: StoredIndex,
     T: StoredType + 'a,
 {
@@ -102,4 +102,4 @@ where
 }
 
 pub type BoxedVecIterator<'a, I, T> =
-    Box<dyn VecIterator<'a, I = I, T = T, Item = (I, Value<'a, T>)> + 'a>;
+    Box<dyn VecIterator<'a, I = I, T = T, Item = (I, Cow<'a, T>)> + 'a>;

@@ -1,16 +1,18 @@
 use std::{fs, path::Path};
 
-use brk_core::{DateIndex, Height, Version};
+use brk_core::{DateIndex, Height, Printable, Version};
 use brk_vec::{AnyVec, CollectableVec, Format, GenericStoredVec, StoredVec, VecIterator};
 
+type I = DateIndex;
 #[allow(clippy::upper_case_acronyms)]
-type VEC = StoredVec<DateIndex, u32>;
+type VEC = StoredVec<I, u32>;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let _ = fs::remove_dir_all("./vec");
+    let _ = fs::remove_file("./vec");
 
     let version = Version::TWO;
-    let format = Format::Compressed;
+    let format = Format::Raw;
 
     {
         let mut vec: VEC = StoredVec::forced_import(Path::new("."), "vec", version, format)?;
@@ -21,6 +23,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
         let mut iter = vec.into_iter();
         dbg!(iter.get(0.into()));
+        dbg!(iter.get(1.into()));
+        dbg!(iter.get(2.into()));
         dbg!(iter.get(20.into()));
         dbg!(iter.get(21.into()));
 
@@ -38,6 +42,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         dbg!(iter.get(0.into()));
         dbg!(iter.get(1.into()));
         dbg!(iter.get(2.into()));
+        dbg!(iter.get(3.into()));
+        dbg!(iter.get(4.into()));
+        dbg!(iter.get(5.into()));
         dbg!(iter.get(20.into()));
         dbg!(iter.get(20.into()));
         dbg!(iter.get(0.into()));

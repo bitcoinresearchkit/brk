@@ -7,7 +7,7 @@ use brk_vec::{AnyCollectableVec, EagerVec, Format};
 
 use crate::vecs::{Indexes, indexes};
 
-use super::{ComputedType, ComputedVecBuilder, StorableVecGeneatorOptions};
+use super::{ComputedType, EagerVecBuilder, VecBuilderOptions};
 
 #[derive(Clone)]
 pub struct ComputedVecsFromHeightStrict<T>
@@ -15,8 +15,8 @@ where
     T: ComputedType + PartialOrd,
 {
     pub height: EagerVec<Height, T>,
-    pub height_extra: ComputedVecBuilder<Height, T>,
-    pub difficultyepoch: ComputedVecBuilder<DifficultyEpoch, T>,
+    pub height_extra: EagerVecBuilder<Height, T>,
+    pub difficultyepoch: EagerVecBuilder<DifficultyEpoch, T>,
     // TODO: pub halvingepoch: StorableVecGeneator<Halvingepoch, T>,
 }
 
@@ -32,12 +32,12 @@ where
         name: &str,
         version: Version,
         format: Format,
-        options: StorableVecGeneatorOptions,
+        options: VecBuilderOptions,
     ) -> color_eyre::Result<Self> {
         let height =
             EagerVec::forced_import(path, name, version + VERSION + Version::ZERO, format)?;
 
-        let height_extra = ComputedVecBuilder::forced_import(
+        let height_extra = EagerVecBuilder::forced_import(
             path,
             name,
             version + VERSION + Version::ZERO,
@@ -50,7 +50,7 @@ where
         Ok(Self {
             height,
             height_extra,
-            difficultyepoch: ComputedVecBuilder::forced_import(
+            difficultyepoch: EagerVecBuilder::forced_import(
                 path,
                 name,
                 version + VERSION + Version::ZERO,

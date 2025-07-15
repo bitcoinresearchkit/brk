@@ -10,12 +10,14 @@ use brk_exit::Exit;
 use brk_fetcher::Fetcher;
 use brk_indexer::Indexer;
 use brk_vec::{Computation, Format};
+use log::info;
 
+mod states;
 mod stores;
 mod utils;
 mod vecs;
 
-use log::info;
+use states::*;
 use stores::Stores;
 use vecs::Vecs;
 
@@ -66,7 +68,12 @@ impl Computer {
         exit: &Exit,
     ) -> color_eyre::Result<()> {
         info!("Computing...");
-        self.vecs
-            .compute(indexer, starting_indexes, self.fetcher.as_mut(), exit)
+        self.vecs.compute(
+            indexer,
+            starting_indexes,
+            self.fetcher.as_mut(),
+            exit,
+            &mut self.stores,
+        )
     }
 }

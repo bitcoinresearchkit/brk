@@ -1,7 +1,6 @@
-use std::{cmp::Ordering, fmt::Debug, path::Path};
+use std::{borrow::Cow, cmp::Ordering, fmt::Debug, path::Path};
 
-use arc_swap::ArcSwap;
-use brk_core::{Error, Height, Result, Value, Version};
+use brk_core::{Error, Height, Result, Version};
 
 use crate::{
     AnyCollectableVec, AnyIterableVec, AnyVec, BoxedVecIterator, CollectableVec, Format,
@@ -30,7 +29,12 @@ where
     }
 
     #[inline]
-    pub fn get_or_read(&self, index: I, mmap: &Mmap) -> Result<Option<Value<T>>> {
+    pub fn unwrap_read(&self, index: I, mmap: &Mmap) -> T {
+        self.0.unwrap_read(index, mmap)
+    }
+
+    #[inline]
+    pub fn get_or_read(&self, index: I, mmap: &Mmap) -> Result<Option<Cow<T>>> {
         self.0.get_or_read(index, mmap)
     }
 
@@ -73,8 +77,8 @@ where
         self.0.header()
     }
 
-    pub fn mmap(&self) -> &ArcSwap<Mmap> {
-        self.0.mmap()
+    pub fn create_mmap(&self) -> Result<Mmap> {
+        self.0.create_mmap()
     }
 
     #[inline]
@@ -138,7 +142,7 @@ where
     I: StoredIndex,
     T: StoredType,
 {
-    type Item = (I, Value<'a, T>);
+    type Item = (I, Cow<'a, T>);
     type IntoIter = StoredVecIterator<'a, I, T>;
 
     fn into_iter(self) -> Self::IntoIter {
@@ -166,8 +170,8 @@ where
 {
     fn collect_range_serde_json(
         &self,
-        from: Option<i64>,
-        to: Option<i64>,
+        from: Option<usize>,
+        to: Option<usize>,
     ) -> Result<Vec<serde_json::Value>> {
         CollectableVec::collect_range_serde_json(self, from, to)
     }

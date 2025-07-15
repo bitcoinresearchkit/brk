@@ -8,9 +8,11 @@ use brk_exit::Exit;
 use brk_indexer::Indexer;
 use brk_vec::{AnyCollectableVec, AnyIterableVec, Computation, EagerVec, Format};
 
+use crate::vecs::grouped::Source;
+
 use super::{
     Indexes,
-    grouped::{ComputedVecsFromDateIndex, ComputedVecsFromHeight, StorableVecGeneatorOptions},
+    grouped::{ComputedVecsFromDateIndex, ComputedVecsFromHeight, VecBuilderOptions},
     indexes,
 };
 
@@ -34,8 +36,9 @@ impl Vecs {
     pub fn forced_import(
         path: &Path,
         version: Version,
-        _computation: Computation,
+        computation: Computation,
         format: Format,
+        indexes: &indexes::Vecs,
     ) -> color_eyre::Result<Self> {
         Ok(Self {
             height_to_interval: EagerVec::forced_import(
@@ -47,18 +50,22 @@ impl Vecs {
             timeindexes_to_timestamp: ComputedVecsFromDateIndex::forced_import(
                 path,
                 "timestamp",
-                true,
+                Source::Compute,
                 version + VERSION + Version::ZERO,
                 format,
-                StorableVecGeneatorOptions::default().add_first(),
+                computation,
+                indexes,
+                VecBuilderOptions::default().add_first(),
             )?,
             indexes_to_block_interval: ComputedVecsFromHeight::forced_import(
                 path,
                 "block_interval",
-                false,
+                Source::None,
                 version + VERSION + Version::ZERO,
                 format,
-                StorableVecGeneatorOptions::default()
+                computation,
+                indexes,
+                VecBuilderOptions::default()
                     .add_percentiles()
                     .add_minmax()
                     .add_average(),
@@ -66,32 +73,32 @@ impl Vecs {
             indexes_to_block_count: ComputedVecsFromHeight::forced_import(
                 path,
                 "block_count",
-                true,
+                Source::Compute,
                 version + VERSION + Version::ZERO,
                 format,
-                StorableVecGeneatorOptions::default()
-                    .add_sum()
-                    .add_cumulative(),
+                computation,
+                indexes,
+                VecBuilderOptions::default().add_sum().add_cumulative(),
             )?,
             indexes_to_block_weight: ComputedVecsFromHeight::forced_import(
                 path,
                 "block_weight",
-                false,
+                Source::None,
                 version + VERSION + Version::ZERO,
                 format,
-                StorableVecGeneatorOptions::default()
-                    .add_sum()
-                    .add_cumulative(),
+                computation,
+                indexes,
+                VecBuilderOptions::default().add_sum().add_cumulative(),
             )?,
             indexes_to_block_size: ComputedVecsFromHeight::forced_import(
                 path,
                 "block_size",
-                false,
+                Source::None,
                 version + VERSION + Version::ZERO,
                 format,
-                StorableVecGeneatorOptions::default()
-                    .add_sum()
-                    .add_cumulative(),
+                computation,
+                indexes,
+                VecBuilderOptions::default().add_sum().add_cumulative(),
             )?,
             height_to_vbytes: EagerVec::forced_import(
                 path,
@@ -102,12 +109,12 @@ impl Vecs {
             indexes_to_block_vbytes: ComputedVecsFromHeight::forced_import(
                 path,
                 "block_vbytes",
-                false,
+                Source::None,
                 version + VERSION + Version::ZERO,
                 format,
-                StorableVecGeneatorOptions::default()
-                    .add_sum()
-                    .add_cumulative(),
+                computation,
+                indexes,
+                VecBuilderOptions::default().add_sum().add_cumulative(),
             )?,
             difficultyepoch_to_timestamp: EagerVec::forced_import(
                 path,
