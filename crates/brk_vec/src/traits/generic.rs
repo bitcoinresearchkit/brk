@@ -1,11 +1,12 @@
 use std::{
     borrow::Cow,
-    fs::{File, OpenOptions},
+    collections::{BTreeMap, BTreeSet},
+    fs::{self, File, OpenOptions},
     io::{self, Seek, SeekFrom, Write},
     path::{Path, PathBuf},
 };
 
-use brk_core::Result;
+use brk_core::{Error, Result};
 use memmap2::Mmap;
 
 use crate::{AnyVec, HEADER_OFFSET, Header};
@@ -44,10 +45,22 @@ where
             if j >= pushed.len() {
                 return Ok(None);
             }
-            Ok(pushed.get(j).map(Cow::Borrowed))
-        } else {
-            Ok(self.read_(index, mmap)?.map(Cow::Owned))
+            return Ok(pushed.get(j).map(Cow::Borrowed));
         }
+
+        let updated = self.updated();
+        if !updated.is_empty()
+            && let Some(updated) = updated.get(&index)
+        {
+            return Ok(Some(Cow::Borrowed(updated)));
+        }
+
+        let holes = self.holes();
+        if !holes.is_empty() && holes.contains(&index) {
+            return Ok(None);
+        }
+
+        Ok(self.read_(index, mmap)?.map(Cow::Owned))
     }
 
     #[inline]
@@ -72,6 +85,47 @@ where
         self.mut_pushed().push(value)
     }
 
+    fn holes(&self) -> &BTreeSet<usize>;
+    fn mut_holes(&mut self) -> &mut BTreeSet<usize>;
+    fn take(&mut self, index: I, mmap: &Mmap) -> Result<Option<T>> {
+        let opt = self.get_or_read(index, mmap)?.map(|v| v.into_owned());
+        if opt.is_some() {
+            let uindex = index.unwrap_to_usize();
+            let updated = self.mut_updated();
+            if !updated.is_empty() {
+                updated.remove(&uindex);
+            }
+            self.mut_holes().insert(uindex);
+        }
+        Ok(opt)
+    }
+
+    fn updated(&self) -> &BTreeMap<usize, T>;
+    fn mut_updated(&mut self) -> &mut BTreeMap<usize, T>;
+    #[inline]
+    fn update(&mut self, index: I, value: T) -> Result<()> {
+        let uindex = index.unwrap_to_usize();
+        let stored_len = self.stored_len();
+
+        if uindex >= stored_len {
+            if let Some(prev) = self.mut_pushed().get_mut(uindex - stored_len) {
+                *prev = value;
+                return Ok(());
+            } else {
+                return Err(Error::IndexTooHigh);
+            }
+        }
+
+        let holes = self.mut_holes();
+        if !holes.is_empty() {
+            holes.remove(&index.unwrap_to_usize());
+        }
+
+        self.mut_updated().insert(index.unwrap_to_usize(), value);
+
+        Ok(())
+    }
+
     fn header(&self) -> &Header;
     fn mut_header(&mut self) -> &mut Header;
 
@@ -85,12 +139,22 @@ where
         parent.join(name)
     }
 
+    #[inline]
     fn path(&self) -> PathBuf {
         Self::path_(self.parent(), self.name())
     }
-
+    #[inline]
     fn path_(parent: &Path, name: &str) -> PathBuf {
         Self::folder_(parent, name).join(I::to_string())
+    }
+
+    #[inline]
+    fn holes_path(&self) -> PathBuf {
+        Self::holes_path_(self.parent(), self.name())
+    }
+    #[inline]
+    fn holes_path_(parent: &Path, name: &str) -> PathBuf {
+        Self::folder_(parent, name).join(format!("{}_holes", I::to_string()))
     }
 
     // ---
@@ -134,6 +198,10 @@ where
 
     #[inline]
     fn reset_(&mut self) -> Result<()> {
+        let holes_path = self.holes_path();
+        if fs::exists(&holes_path)? {
+            fs::remove_file(&holes_path)?;
+        }
         let mut file = self.open_file()?;
         self.file_truncate_and_write_all(&mut file, HEADER_OFFSET as u64, &[])
     }

@@ -1,6 +1,7 @@
 mod addressbytes;
 mod addressbyteshash;
 mod addressdata;
+mod anyaddressdataindex;
 mod bitcoin;
 mod blockhash;
 mod blockhashprefix;
@@ -59,6 +60,7 @@ mod yearindex;
 pub use addressbytes::*;
 pub use addressbyteshash::*;
 pub use addressdata::*;
+pub use anyaddressdataindex::*;
 pub use bitcoin::*;
 pub use blockhash::*;
 pub use blockhashprefix::*;

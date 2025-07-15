@@ -73,7 +73,7 @@ In contrast, existing alternatives tend to be either [very costly](https://studi
 - [`brk_interface`](https://crates.io/crates/brk_interface): An interface to BRK's engine
 - [`brk_server`](https://crates.io/crates/brk_server): A server that serves Bitcoin data and swappable front-ends, built on top of `brk_indexer`, `brk_fetcher` and `brk_computer`
 - [`brk_store`](https://crates.io/crates/brk_store): A thin wrapper around [`fjall`](https://crates.io/crates/fjall)
-- [`brk_vec`](https://crates.io/crates/brk_vec): A push-only, truncable, compressable, saveable Vec
+- [`brk_vec`](https://crates.io/crates/brk_vec): A storeable vec
 - [`brk_bundler`](https://crates.io/crates/brk_bundler): A thin wrapper around [`rolldown`](https://rolldown.rs/)
 
 ## Hosting as a service

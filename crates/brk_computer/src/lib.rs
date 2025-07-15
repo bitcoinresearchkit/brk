@@ -12,20 +12,28 @@ use brk_indexer::Indexer;
 use brk_vec::{Computation, Format};
 use log::info;
 
+mod all;
+mod blocks;
+mod cointime;
+mod constants;
+mod fetched;
+mod grouped;
+mod indexes;
+mod market;
+mod mining;
+mod stateful;
 mod states;
-mod stores;
+mod transactions;
 mod utils;
-mod vecs;
+
+use indexes::Indexes;
 
 use states::*;
-use stores::Stores;
-use vecs::Vecs;
 
 #[derive(Clone)]
 pub struct Computer {
     fetcher: Option<Fetcher>,
-    pub vecs: Vecs,
-    pub stores: Stores,
+    pub vecs: all::Vecs,
 }
 
 const VERSION: Version = Version::ONE;
@@ -40,7 +48,7 @@ impl Computer {
         format: Format,
     ) -> color_eyre::Result<Self> {
         Ok(Self {
-            vecs: Vecs::import(
+            vecs: all::Vecs::import(
                 // TODO: Give self.path, join inside import
                 &outputs_dir.join("vecs/computed"),
                 VERSION + Version::ZERO,
@@ -48,12 +56,6 @@ impl Computer {
                 fetcher.is_some(),
                 computation,
                 format,
-            )?,
-            stores: Stores::import(
-                // TODO: Give self.path, join inside import
-                &outputs_dir.join("stores"),
-                VERSION + Version::ZERO,
-                &indexer.stores.keyspace,
             )?,
             fetcher,
         })
@@ -68,12 +70,7 @@ impl Computer {
         exit: &Exit,
     ) -> color_eyre::Result<()> {
         info!("Computing...");
-        self.vecs.compute(
-            indexer,
-            starting_indexes,
-            self.fetcher.as_mut(),
-            exit,
-            &mut self.stores,
-        )
+        self.vecs
+            .compute(indexer, starting_indexes, self.fetcher.as_mut(), exit)
     }
 }

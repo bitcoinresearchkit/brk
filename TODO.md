@@ -56,6 +56,7 @@
       - add extensions support (.json .csv …)
       - if format instead of extension then don't download file
     - add support for https (rustls)
+    - lru cache
   - _vec_
     - add native lock file support (once it's available in stable rust)
     - improve compressed mode (slow reads)

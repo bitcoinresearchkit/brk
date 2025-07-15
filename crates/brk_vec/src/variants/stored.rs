@@ -1,5 +1,6 @@
 use std::{
     borrow::Cow,
+    collections::{BTreeMap, BTreeSet},
     path::{Path, PathBuf},
 };
 
@@ -102,6 +103,36 @@ where
         match self {
             StoredVec::Raw(v) => v.mut_pushed(),
             StoredVec::Compressed(v) => v.mut_pushed(),
+        }
+    }
+
+    #[inline]
+    fn holes(&self) -> &BTreeSet<usize> {
+        match self {
+            StoredVec::Raw(v) => v.holes(),
+            StoredVec::Compressed(v) => v.holes(),
+        }
+    }
+    #[inline]
+    fn mut_holes(&mut self) -> &mut BTreeSet<usize> {
+        match self {
+            StoredVec::Raw(v) => v.mut_holes(),
+            StoredVec::Compressed(v) => v.mut_holes(),
+        }
+    }
+
+    #[inline]
+    fn updated(&self) -> &BTreeMap<usize, T> {
+        match self {
+            StoredVec::Raw(v) => v.updated(),
+            StoredVec::Compressed(v) => v.updated(),
+        }
+    }
+    #[inline]
+    fn mut_updated(&mut self) -> &mut BTreeMap<usize, T> {
+        match self {
+            StoredVec::Raw(v) => v.mut_updated(),
+            StoredVec::Compressed(v) => v.mut_updated(),
         }
     }
 
