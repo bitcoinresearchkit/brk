@@ -21,3 +21,8 @@ _*
 
 # Environment variables/configs
 .env
+
+# Profiling
+profile.json.gz
+flamegraph.svg
+*.trace

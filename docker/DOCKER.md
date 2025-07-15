@@ -39,8 +39,6 @@ BRK runs as a single container that includes both the blockchain processor and A
 - Simplifies deployment and monitoring
 - Uses a single shared data directory
 
-The container runs the BRK binary which provides both processor and server functionality.
-
 ```bash
 # Start BRK
 docker compose -f docker/docker-compose.yml up
@@ -210,7 +208,7 @@ docker compose -f docker/docker-compose.yml logs -f
 ### Performance Issues
 
 #### Slow indexing
-- Ensure adequate disk space for indexed data
+- Ensure adequate disk space for indexed data - a minimum of 3GB/s is recommended
 - Monitor memory usage during initial indexing
 - Use `BRK_COMPUTATION=lazy` to reduce memory usage
 
