@@ -1,5 +1,6 @@
 use std::{
     borrow::Cow,
+    collections::{BTreeMap, BTreeSet},
     fs, mem,
     path::{Path, PathBuf},
     sync::Arc,
@@ -57,6 +58,8 @@ where
     }
 
     pub fn import(parent: &Path, name: &str, version: Version) -> Result<Self> {
+        panic!("Compressed vecs are a work in progress right now, please use raw vecs instead");
+
         let mut inner = RawVec::import(parent, name, version)?;
 
         let pages_meta = {
@@ -195,6 +198,22 @@ where
     #[inline]
     fn mut_pushed(&mut self) -> &mut Vec<T> {
         self.inner.mut_pushed()
+    }
+    #[inline]
+    fn holes(&self) -> &BTreeSet<usize> {
+        self.inner.holes()
+    }
+    #[inline]
+    fn mut_holes(&mut self) -> &mut BTreeSet<usize> {
+        self.inner.mut_holes()
+    }
+    #[inline]
+    fn updated(&self) -> &BTreeMap<usize, T> {
+        self.inner.updated()
+    }
+    #[inline]
+    fn mut_updated(&mut self) -> &mut BTreeMap<usize, T> {
+        self.inner.mut_updated()
     }
 
     #[inline]

@@ -1,6 +1,7 @@
 use std::{fmt::Debug, ops::Add};
 
 use brk_core::{Error, Printable, Result};
+use zerocopy::{Immutable, IntoBytes, KnownLayout, TryFromBytes};
 
 pub trait StoredIndex
 where
@@ -15,6 +16,10 @@ where
         + TryInto<usize>
         + From<usize>
         + Add<usize, Output = Self>
+        + TryFromBytes
+        + IntoBytes
+        + Immutable
+        + KnownLayout
         + Send
         + Sync
         + Printable,
@@ -37,6 +42,10 @@ where
         + TryInto<usize>
         + From<usize>
         + Add<usize, Output = Self>
+        + TryFromBytes
+        + IntoBytes
+        + Immutable
+        + KnownLayout
         + Send
         + Sync
         + Printable,

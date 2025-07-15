@@ -29,7 +29,7 @@ pub use params::{IdParam, Params, ParamsOpt};
 pub use table::Tabled;
 use vecs::Vecs;
 
-use crate::vecs::{IdToVec, IndexToVec};
+use crate::{IdToVec, IndexToVec};
 
 pub struct Interface<'a> {
     vecs: Vecs<'a>,

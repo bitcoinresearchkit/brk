@@ -9,7 +9,7 @@ use brk_store::{AnyStore, Store};
 use fjall::{PersistMode, TransactionalKeyspace};
 use log::info;
 
-use crate::vecs::stateful::{AddressTypeToTypeIndexTree, WithAddressDataSource};
+use crate::stateful::{AddressTypeToTypeIndexTree, WithAddressDataSource};
 
 const VERSION: Version = Version::ZERO;
 

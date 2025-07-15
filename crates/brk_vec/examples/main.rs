@@ -9,7 +9,6 @@ type VEC = StoredVec<I, u32>;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let _ = fs::remove_dir_all("./vec");
-    let _ = fs::remove_file("./vec");
 
     let version = Version::TWO;
     let format = Format::Raw;
@@ -102,6 +101,38 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         dbg!(iter.get(0.into()));
         dbg!(iter.get(20.into()));
         dbg!(iter.get(21.into()));
+
+        let mmap = vec.create_mmap()?;
+        dbg!(vec.take(10.into(), &mmap)?);
+        dbg!(vec.get_or_read(10.into(), &mmap));
+        dbg!(vec.holes());
+        vec.flush()?;
+        dbg!(vec.holes());
+    }
+
+    {
+        let mut vec: VEC = StoredVec::forced_import(Path::new("."), "vec", version, format)?;
+
+        let mmap = vec.create_mmap()?;
+
+        dbg!(vec.holes());
+        dbg!(vec.get_or_read(10.into(), &mmap)?);
+
+        vec.update(10.into(), 10);
+        vec.update(0.into(), 10);
+        dbg!(
+            vec.holes(),
+            vec.get_or_read(0.into(), &mmap),
+            vec.get_or_read(10.into(), &mmap)?
+        );
+
+        vec.flush()?;
+    }
+
+    {
+        let mut vec: VEC = StoredVec::forced_import(Path::new("."), "vec", version, format)?;
+
+        dbg!(vec.collect());
     }
 
     Ok(())

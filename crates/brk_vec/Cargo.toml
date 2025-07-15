@@ -1,6 +1,6 @@
 [package]
 name = "brk_vec"
-description = "A push-only, truncable, compressable, saveable Vec"
+description = "A storeable vec"
 keywords = ["vec", "disk", "data"]
 categories = ["database"]
 version.workspace = true
