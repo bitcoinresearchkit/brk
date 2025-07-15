@@ -1,7 +1,7 @@
 use std::path::Path;
 
 use brk_core::{Dollars, Height, Result, Sats, Version};
-use brk_store::Store;
+use brk_store::{AnyStore, Store};
 
 fn main() -> Result<()> {
     let p = Path::new("./examples/_fjall");
@@ -14,6 +14,8 @@ fn main() -> Result<()> {
     store.insert_if_needed(Dollars::from(10.0), Sats::FIFTY_BTC, Height::ZERO);
 
     store.commit(Height::ZERO)?;
+
+    store.persist()?;
 
     Ok(())
 }

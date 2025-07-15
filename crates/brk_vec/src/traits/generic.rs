@@ -1,12 +1,11 @@
 use std::{
+    borrow::Cow,
     fs::{File, OpenOptions},
     io::{self, Seek, SeekFrom, Write},
     path::{Path, PathBuf},
-    sync::Arc,
 };
 
-use arc_swap::ArcSwap;
-use brk_core::{Result, Value};
+use brk_core::Result;
 use memmap2::Mmap;
 
 use crate::{AnyVec, HEADER_OFFSET, Header};
@@ -22,18 +21,22 @@ where
     const SIZE_OF_T: usize = size_of::<T>();
 
     #[inline]
+    fn unwrap_read(&self, index: I, mmap: &Mmap) -> T {
+        self.read(index, mmap).unwrap().unwrap()
+    }
+    #[inline]
     fn read(&self, index: I, mmap: &Mmap) -> Result<Option<T>> {
         self.read_(index.to_usize()?, mmap)
     }
     fn read_(&self, index: usize, mmap: &Mmap) -> Result<Option<T>>;
 
     #[inline]
-    fn get_or_read(&self, index: I, mmap: &Mmap) -> Result<Option<Value<T>>> {
+    fn get_or_read(&self, index: I, mmap: &Mmap) -> Result<Option<Cow<T>>> {
         self.get_or_read_(index.to_usize()?, mmap)
     }
     #[inline]
-    fn get_or_read_(&self, index: usize, mmap: &Mmap) -> Result<Option<Value<T>>> {
-        let stored_len = self.stored_len_(mmap);
+    fn get_or_read_(&self, index: usize, mmap: &Mmap) -> Result<Option<Cow<T>>> {
+        let stored_len = self.stored_len();
 
         if index >= stored_len {
             let pushed = self.pushed();
@@ -41,9 +44,9 @@ where
             if j >= pushed.len() {
                 return Ok(None);
             }
-            Ok(pushed.get(j).map(Value::Ref))
+            Ok(pushed.get(j).map(Cow::Borrowed))
         } else {
-            Ok(self.read_(index, mmap)?.map(Value::Owned))
+            Ok(self.read_(index, mmap)?.map(Cow::Owned))
         }
     }
 
@@ -56,10 +59,7 @@ where
         format!("{}_to_{}", I::to_string(), self.name())
     }
 
-    fn mmap(&self) -> &ArcSwap<Mmap>;
-
     fn stored_len(&self) -> usize;
-    fn stored_len_(&self, mmap: &Mmap) -> usize;
 
     fn pushed(&self) -> &[T];
     #[inline]
@@ -111,7 +111,7 @@ where
 
     fn file_set_len(&mut self, file: &mut File, len: u64) -> Result<()> {
         Self::file_set_len_(file, len)?;
-        self.update_mmap(file)
+        Ok(())
     }
     fn file_set_len_(file: &mut File, len: u64) -> Result<()> {
         file.set_len(len)?;
@@ -121,13 +121,13 @@ where
 
     fn file_write_all(&mut self, file: &mut File, buf: &[u8]) -> Result<()> {
         file.write_all(buf)?;
-        self.update_mmap(file)
+        file.flush()?;
+        Ok(())
     }
 
     fn file_truncate_and_write_all(&mut self, file: &mut File, len: u64, buf: &[u8]) -> Result<()> {
         Self::file_set_len_(file, len)?;
-        file.write_all(buf)?;
-        self.update_mmap(file)
+        self.file_write_all(file, buf)
     }
 
     fn reset(&mut self) -> Result<()>;
@@ -138,14 +138,10 @@ where
         self.file_truncate_and_write_all(&mut file, HEADER_OFFSET as u64, &[])
     }
 
-    fn new_mmap(file: &File) -> Result<Arc<Mmap>> {
-        Ok(Arc::new(unsafe { Mmap::map(file)? }))
-    }
-
-    fn update_mmap(&mut self, file: &File) -> Result<()> {
-        let mmap = Self::new_mmap(file)?;
-        self.mmap().store(mmap);
-        Ok(())
+    #[inline]
+    fn create_mmap(&self) -> Result<Mmap> {
+        let file = self.open_file()?;
+        unsafe { Mmap::map(&file).map_err(|e| e.into()) }
     }
 
     #[inline]

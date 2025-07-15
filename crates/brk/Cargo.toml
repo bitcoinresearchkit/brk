@@ -21,7 +21,6 @@ full = [
     "parser",
     "interface",
     "server",
-    "state",
     "store",
     "vec",
 ]
@@ -36,7 +35,6 @@ mcp = ["brk_mcp"]
 parser = ["brk_parser"]
 interface = ["brk_interface"]
 server = ["brk_server"]
-state = ["brk_state"]
 store = ["brk_store"]
 vec = ["brk_vec"]
 
@@ -53,7 +51,6 @@ brk_mcp = { workspace = true, optional = true }
 brk_parser = { workspace = true, optional = true }
 brk_interface = { workspace = true, optional = true }
 brk_server = { workspace = true, optional = true }
-brk_state = { workspace = true, optional = true }
 brk_store = { workspace = true, optional = true }
 brk_vec = { workspace = true, optional = true }
 

@@ -1,4 +1,4 @@
-use std::ops::{Add, Div};
+use std::ops::{Add, AddAssign, Div};
 
 use derive_deref::{Deref, DerefMut};
 use serde::{Serialize, Serializer, ser::SerializeTuple};
@@ -236,6 +236,15 @@ where
     }
 }
 
+impl<T> AddAssign for Open<T>
+where
+    T: Add<Output = T> + Clone,
+{
+    fn add_assign(&mut self, rhs: Self) {
+        **self = self.0.clone() + rhs.0
+    }
+}
+
 impl<T> Div<usize> for Open<T>
 where
     T: Div<usize, Output = T>,
@@ -324,6 +333,15 @@ where
     }
 }
 
+impl<T> AddAssign for High<T>
+where
+    T: Add<Output = T> + Clone,
+{
+    fn add_assign(&mut self, rhs: Self) {
+        **self = self.0.clone() + rhs.0
+    }
+}
+
 impl<T> Div<usize> for High<T>
 where
     T: Div<usize, Output = T>,
@@ -409,6 +427,15 @@ where
     type Output = Self;
     fn add(self, rhs: Self) -> Self::Output {
         Self(self.0 + rhs.0)
+    }
+}
+
+impl<T> AddAssign for Low<T>
+where
+    T: Add<Output = T> + Clone,
+{
+    fn add_assign(&mut self, rhs: Self) {
+        **self = self.0.clone() + rhs.0
     }
 }
 
@@ -512,6 +539,15 @@ where
     type Output = Self;
     fn add(self, rhs: Self) -> Self::Output {
         Self(self.0 + rhs.0)
+    }
+}
+
+impl<T> AddAssign for Close<T>
+where
+    T: Add<Output = T> + Clone,
+{
+    fn add_assign(&mut self, rhs: Self) {
+        **self = self.0.clone() + rhs.0
     }
 }
 

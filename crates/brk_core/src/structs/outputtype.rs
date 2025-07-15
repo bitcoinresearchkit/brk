@@ -50,6 +50,27 @@ impl OutputType {
         }
     }
 
+    pub fn is_address(&self) -> bool {
+        match self {
+            Self::P2PK65 => true,
+            Self::P2PK33 => true,
+            Self::P2PKH => true,
+            Self::P2MS => false,
+            Self::P2SH => true,
+            Self::OpReturn => false,
+            Self::P2WPKH => true,
+            Self::P2WSH => true,
+            Self::P2TR => true,
+            Self::P2A => true,
+            Self::Empty => false,
+            Self::Unknown => false,
+        }
+    }
+
+    pub fn is_not_address(&self) -> bool {
+        !self.is_address()
+    }
+
     pub fn is_unspendable(&self) -> bool {
         !self.is_spendable()
     }

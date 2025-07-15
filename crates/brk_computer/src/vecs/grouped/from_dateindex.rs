@@ -1,15 +1,18 @@
 use std::path::Path;
 
 use brk_core::{
-    DateIndex, DecadeIndex, MonthIndex, QuarterIndex, Result, Version, WeekIndex, YearIndex,
+    DateIndex, DecadeIndex, MonthIndex, QuarterIndex, Result, SemesterIndex, Version, WeekIndex,
+    YearIndex,
 };
 use brk_exit::Exit;
 use brk_indexer::Indexer;
-use brk_vec::{AnyCollectableVec, AnyIterableVec, EagerVec, Format};
+use brk_vec::{
+    AnyCollectableVec, AnyIterableVec, CloneableAnyIterableVec, Computation, EagerVec, Format,
+};
 
-use crate::vecs::{Indexes, indexes};
+use crate::vecs::{Indexes, grouped::ComputedVecBuilder, indexes};
 
-use super::{ComputedType, ComputedVecBuilder, StorableVecGeneatorOptions};
+use super::{ComputedType, EagerVecBuilder, Source, VecBuilderOptions};
 
 #[derive(Clone)]
 pub struct ComputedVecsFromDateIndex<T>
@@ -17,33 +20,37 @@ where
     T: ComputedType + PartialOrd,
 {
     pub dateindex: Option<EagerVec<DateIndex, T>>,
-    pub dateindex_extra: ComputedVecBuilder<DateIndex, T>,
-    pub weekindex: ComputedVecBuilder<WeekIndex, T>,
-    pub monthindex: ComputedVecBuilder<MonthIndex, T>,
-    pub quarterindex: ComputedVecBuilder<QuarterIndex, T>,
-    pub yearindex: ComputedVecBuilder<YearIndex, T>,
-    pub decadeindex: ComputedVecBuilder<DecadeIndex, T>,
+    pub dateindex_extra: EagerVecBuilder<DateIndex, T>,
+    pub weekindex: ComputedVecBuilder<WeekIndex, T, DateIndex, WeekIndex>,
+    pub monthindex: ComputedVecBuilder<MonthIndex, T, DateIndex, MonthIndex>,
+    pub quarterindex: ComputedVecBuilder<QuarterIndex, T, DateIndex, QuarterIndex>,
+    pub semesterindex: ComputedVecBuilder<SemesterIndex, T, DateIndex, SemesterIndex>,
+    pub yearindex: ComputedVecBuilder<YearIndex, T, DateIndex, YearIndex>,
+    pub decadeindex: ComputedVecBuilder<DecadeIndex, T, DateIndex, DecadeIndex>,
 }
 
 const VERSION: Version = Version::ZERO;
 
 impl<T> ComputedVecsFromDateIndex<T>
 where
-    T: ComputedType,
+    T: ComputedType + 'static,
 {
+    #[allow(clippy::too_many_arguments)]
     pub fn forced_import(
         path: &Path,
         name: &str,
-        compute_source: bool,
+        source: Source<DateIndex, T>,
         version: Version,
         format: Format,
-        options: StorableVecGeneatorOptions,
+        computation: Computation,
+        indexes: &indexes::Vecs,
+        options: VecBuilderOptions,
     ) -> color_eyre::Result<Self> {
-        let dateindex = compute_source.then(|| {
+        let dateindex = source.is_compute().then(|| {
             EagerVec::forced_import(path, name, version + VERSION + Version::ZERO, format).unwrap()
         });
 
-        let dateindex_extra = ComputedVecBuilder::forced_import(
+        let dateindex_extra = EagerVecBuilder::forced_import(
             path,
             name,
             version + VERSION + Version::ZERO,
@@ -53,44 +60,77 @@ where
 
         let options = options.remove_percentiles();
 
+        let dateindex_source = source.vec().or(dateindex.as_ref().map(|v| v.boxed_clone()));
+
         Ok(Self {
-            dateindex,
-            dateindex_extra,
             weekindex: ComputedVecBuilder::forced_import(
                 path,
                 name,
                 version + VERSION + Version::ZERO,
                 format,
-                options,
+                computation,
+                dateindex_source.clone(),
+                &dateindex_extra,
+                indexes.weekindex_to_weekindex.boxed_clone(),
+                options.into(),
             )?,
             monthindex: ComputedVecBuilder::forced_import(
                 path,
                 name,
                 version + VERSION + Version::ZERO,
                 format,
-                options,
+                Computation::Lazy,
+                dateindex_source.clone(),
+                &dateindex_extra,
+                indexes.monthindex_to_monthindex.boxed_clone(),
+                options.into(),
             )?,
             quarterindex: ComputedVecBuilder::forced_import(
                 path,
                 name,
                 version + VERSION + Version::ZERO,
                 format,
-                options,
+                Computation::Lazy,
+                dateindex_source.clone(),
+                &dateindex_extra,
+                indexes.quarterindex_to_quarterindex.boxed_clone(),
+                options.into(),
+            )?,
+            semesterindex: ComputedVecBuilder::forced_import(
+                path,
+                name,
+                version + VERSION + Version::ZERO,
+                format,
+                Computation::Lazy,
+                dateindex_source.clone(),
+                &dateindex_extra,
+                indexes.semesterindex_to_semesterindex.boxed_clone(),
+                options.into(),
             )?,
             yearindex: ComputedVecBuilder::forced_import(
                 path,
                 name,
                 version + VERSION + Version::ZERO,
                 format,
-                options,
+                Computation::Lazy,
+                dateindex_source.clone(),
+                &dateindex_extra,
+                indexes.yearindex_to_yearindex.boxed_clone(),
+                options.into(),
             )?,
             decadeindex: ComputedVecBuilder::forced_import(
                 path,
                 name,
                 version + VERSION + Version::ZERO,
                 format,
-                options,
+                Computation::Lazy,
+                dateindex_source.clone(),
+                &dateindex_extra,
+                indexes.decadeindex_to_decadeindex.boxed_clone(),
+                options.into(),
             )?,
+            dateindex,
+            dateindex_extra,
         })
     }
 
@@ -133,65 +173,45 @@ where
         if let Some(dateindex) = dateindex {
             self.dateindex_extra
                 .extend(starting_indexes.dateindex, dateindex, exit)?;
-
-            self.weekindex.compute(
-                starting_indexes.weekindex,
-                dateindex,
-                &indexes.weekindex_to_first_dateindex,
-                &indexes.weekindex_to_dateindex_count,
-                exit,
-            )?;
-
-            self.monthindex.compute(
-                starting_indexes.monthindex,
-                dateindex,
-                &indexes.monthindex_to_first_dateindex,
-                &indexes.monthindex_to_dateindex_count,
-                exit,
-            )?;
         } else {
             let dateindex = self.dateindex.as_ref().unwrap();
 
             self.dateindex_extra
                 .extend(starting_indexes.dateindex, dateindex, exit)?;
-
-            self.weekindex.compute(
-                starting_indexes.weekindex,
-                dateindex,
-                &indexes.weekindex_to_first_dateindex,
-                &indexes.weekindex_to_dateindex_count,
-                exit,
-            )?;
-
-            self.monthindex.compute(
-                starting_indexes.monthindex,
-                dateindex,
-                &indexes.monthindex_to_first_dateindex,
-                &indexes.monthindex_to_dateindex_count,
-                exit,
-            )?;
         }
 
-        self.quarterindex.from_aligned(
+        self.weekindex.compute_if_necessary(
+            starting_indexes.weekindex,
+            &indexes.weekindex_to_dateindex_count,
+            exit,
+        )?;
+
+        self.monthindex.compute_if_necessary(
+            starting_indexes.monthindex,
+            &indexes.monthindex_to_dateindex_count,
+            exit,
+        )?;
+
+        self.quarterindex.compute_if_necessary(
             starting_indexes.quarterindex,
-            &self.monthindex,
-            &indexes.quarterindex_to_first_monthindex,
             &indexes.quarterindex_to_monthindex_count,
             exit,
         )?;
 
-        self.yearindex.from_aligned(
+        self.semesterindex.compute_if_necessary(
+            starting_indexes.semesterindex,
+            &indexes.semesterindex_to_monthindex_count,
+            exit,
+        )?;
+
+        self.yearindex.compute_if_necessary(
             starting_indexes.yearindex,
-            &self.monthindex,
-            &indexes.yearindex_to_first_monthindex,
             &indexes.yearindex_to_monthindex_count,
             exit,
         )?;
 
-        self.decadeindex.from_aligned(
+        self.decadeindex.compute_if_necessary(
             starting_indexes.decadeindex,
-            &self.yearindex,
-            &indexes.decadeindex_to_first_yearindex,
             &indexes.decadeindex_to_yearindex_count,
             exit,
         )?;
@@ -208,6 +228,7 @@ where
             self.weekindex.vecs(),
             self.monthindex.vecs(),
             self.quarterindex.vecs(),
+            self.semesterindex.vecs(),
             self.yearindex.vecs(),
             self.decadeindex.vecs(),
         ]

@@ -20,6 +20,8 @@ pub mod transactions;
 pub use indexes::Indexes;
 use log::info;
 
+use crate::stores::Stores;
+
 const VERSION: Version = Version::ONE;
 
 #[derive(Clone)]
@@ -58,6 +60,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 computation,
                 format,
+                &indexes,
             )
             .unwrap()
         });
@@ -68,30 +71,35 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 computation,
                 format,
+                &indexes,
             )?,
             mining: mining::Vecs::forced_import(
                 path,
                 version + VERSION + Version::ZERO,
                 computation,
                 format,
+                &indexes,
             )?,
             constants: constants::Vecs::forced_import(
                 path,
                 version + VERSION + Version::ZERO,
                 computation,
                 format,
+                &indexes,
             )?,
             market: market::Vecs::forced_import(
                 path,
                 version + VERSION + Version::ZERO,
                 computation,
                 format,
+                &indexes,
             )?,
             stateful: stateful::Vecs::forced_import(
                 path,
                 version + VERSION + Version::ZERO,
                 computation,
                 format,
+                &indexes,
                 fetched.as_ref(),
             )?,
             transactions: transactions::Vecs::forced_import(
@@ -108,6 +116,7 @@ impl Vecs {
                 version + VERSION + Version::ZERO,
                 computation,
                 format,
+                &indexes,
                 fetched.as_ref(),
             )?,
             indexes,
@@ -121,6 +130,7 @@ impl Vecs {
         starting_indexes: brk_indexer::Indexes,
         fetcher: Option<&mut Fetcher>,
         exit: &Exit,
+        stores: &mut Stores,
     ) -> color_eyre::Result<()> {
         info!("Computing indexes...");
         let mut starting_indexes = self.indexes.compute(indexer, starting_indexes, exit)?;
@@ -178,6 +188,7 @@ impl Vecs {
             &self.market,
             &mut starting_indexes,
             exit,
+            stores,
         )?;
 
         self.cointime.compute(

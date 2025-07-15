@@ -1,6 +1,6 @@
 use std::{
     fmt::Debug,
-    ops::{Add, Div},
+    ops::{Add, AddAssign, Div},
 };
 
 use serde::{Deserialize, Serialize};
@@ -57,6 +57,12 @@ impl Add for HalvingEpoch {
 
     fn add(self, rhs: Self) -> Self::Output {
         Self::from(self.0 + rhs.0)
+    }
+}
+
+impl AddAssign for HalvingEpoch {
+    fn add_assign(&mut self, rhs: Self) {
+        *self = *self + rhs
     }
 }
 

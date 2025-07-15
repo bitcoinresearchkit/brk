@@ -7,7 +7,7 @@ const LINE = "line";
 const CANDLE = "candle";
 
 /**
- * @typedef {"timestamp" | "date" | "week" | "diff. epoch" | "month" | "quarter" | "year" | "decade" } SerializedChartableIndex
+ * @typedef {"timestamp" | "date" | "week" | "d.epoch" | "month" | "quarter" | "semester" | "year" | "decade" } SerializedChartableIndex
  */
 
 /**
@@ -47,7 +47,7 @@ export function init({
   });
 
   const TIMERANGE_LS_KEY = signals.createMemo(
-    () => `chart-timerange-${index()}`
+    () => `chart-timerange-${index()}`,
   );
 
   let firstRun = true;
@@ -101,7 +101,7 @@ export function init({
         from.set(t.from);
         to.set(t.to);
       }
-    })
+    }),
   );
 
   elements.charts.append(fieldset);
@@ -205,20 +205,23 @@ export function init({
         break;
       }
       default: {
-        if (index === /** @satisfies {WeekIndex} */ (22)) {
+        if (index === /** @satisfies {WeekIndex} */ (23)) {
           date.setUTCDate(date.getUTCDate() - ((date.getUTCDay() + 6) % 7));
         } else if (index === /** @satisfies {MonthIndex} */ (7)) {
           date.setUTCDate(1);
         } else if (index === /** @satisfies {QuarterIndex} */ (19)) {
           const month = date.getUTCMonth();
           date.setUTCMonth(month - (month % 3), 1);
-        } else if (index === /** @satisfies {YearIndex} */ (23)) {
+        } else if (index === /** @satisfies {SemesterIndex} */ (20)) {
+          const month = date.getUTCMonth();
+          date.setUTCMonth(month - (month % 6), 1);
+        } else if (index === /** @satisfies {YearIndex} */ (24)) {
           date.setUTCMonth(0, 1);
         } else if (index === /** @satisfies {DecadeIndex} */ (1)) {
           date.setUTCFullYear(
             Math.floor(date.getUTCFullYear() / 10) * 10,
             0,
-            1
+            1,
           );
         } else {
           throw Error("Unsupported");
@@ -361,9 +364,9 @@ export function init({
             ({ latest, hasData }) => {
               if (!series || !latest || !hasData) return;
               printLatest({ iseries: series.inner, unit: topUnit, index });
-            }
+            },
           );
-        }
+        },
       );
 
       [
@@ -384,14 +387,7 @@ export function init({
           legend: chart.legendBottom,
         },
       ].forEach(
-        ({
-          blueprints,
-          paneIndex,
-          unit,
-          seriesList: seriesList,
-          orderStart,
-          legend,
-        }) => {
+        ({ blueprints, paneIndex, unit, seriesList, orderStart, legend }) => {
           signals.createEffect(unit, (unit) => {
             legend.removeFrom(orderStart);
 
@@ -425,7 +421,7 @@ export function init({
                             blueprint.color?.() ?? blueprint.colors?.[1](),
                         },
                         order,
-                      })
+                      }),
                     );
                     break;
                   }
@@ -443,13 +439,13 @@ export function init({
                         paneIndex,
                         options: blueprint.options,
                         order,
-                      })
+                      }),
                     );
                 }
               }
             });
           });
-        }
+        },
       );
 
       firstRun = false;
@@ -469,9 +465,10 @@ function createIndexSelector({ option, vecIdToIndexes, signals, utils }) {
     "timestamp",
     "date",
     "week",
-    "diff. epoch",
+    "d.epoch",
     "month",
     "quarter",
+    "semester",
     "year",
     // "halving epoch",
     "decade",
@@ -488,7 +485,7 @@ function createIndexSelector({ option, vecIdToIndexes, signals, utils }) {
       [Object.values(o.top), Object.values(o.bottom)]
         .flat(2)
         .map((blueprint) => vecIdToIndexes[blueprint.key])
-        .flat()
+        .flat(),
     );
 
     const serializedIndexes = [...rawIndexes].flatMap((index) => {
@@ -515,7 +512,7 @@ function createIndexSelector({ option, vecIdToIndexes, signals, utils }) {
   fieldset.dataset.size = "sm";
 
   const index = signals.createMemo(() =>
-    utils.serde.chartableIndex.deserialize(selected())
+    utils.serde.chartableIndex.deserialize(selected()),
   );
 
   return { fieldset, index };

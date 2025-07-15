@@ -31,6 +31,10 @@ impl Date {
     pub fn day(&self) -> u8 {
         (self.0 % 1_00) as u8
     }
+
+    pub fn into_jiff(self) -> Date_ {
+        self.into()
+    }
 }
 
 impl Default for Date {

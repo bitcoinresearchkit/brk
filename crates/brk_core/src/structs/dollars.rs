@@ -38,6 +38,14 @@ impl Dollars {
     pub const fn mint(dollars: f64) -> Self {
         Self(dollars)
     }
+
+    pub fn round_nearest_cent(self) -> Self {
+        Dollars((self.0 * 100.0).round() / 100.0)
+    }
+
+    pub fn round_to_4_digits(self) -> Self {
+        Self::from(Cents::from(self).round_to_4_digits())
+    }
 }
 
 impl From<f32> for Dollars {
@@ -235,7 +243,7 @@ impl Mul<Sats> for Dollars {
             self
         } else {
             Self::from(Cents::from(
-                u128::from(rhs) * u128::from(Cents::from(self)) / u128::from(Sats::ONE_BTC),
+                u128::from(rhs) * u128::from(Cents::from(self)) / Sats::ONE_BTC_U128,
             ))
         }
     }

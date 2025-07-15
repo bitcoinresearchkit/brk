@@ -3,11 +3,14 @@ use std::{
     ops::{Add, Rem},
 };
 
+use jiff::Span;
 use serde::Serialize;
-// use color_eyre::eyre::eyre;
 use zerocopy_derive::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
-use crate::{CheckedSub, Error, Printable};
+use crate::{
+    CheckedSub, DecadeIndex, Error, FromCoarserIndex, MonthIndex, Printable, QuarterIndex,
+    SemesterIndex, WeekIndex, YearIndex,
+};
 
 use super::Date;
 
@@ -101,5 +104,137 @@ impl Printable for DateIndex {
 
     fn to_possible_strings() -> &'static [&'static str] {
         &["d", "date", "dateindex"]
+    }
+}
+
+impl FromCoarserIndex<WeekIndex> for DateIndex {
+    fn min_from(coarser: WeekIndex) -> usize {
+        let coarser = usize::from(coarser);
+        if coarser == 0 {
+            0
+        } else if coarser == 1 {
+            1
+        } else {
+            4 + (coarser - 2) * 7
+        }
+    }
+
+    fn max_from_(coarser: WeekIndex) -> usize {
+        let coarser = usize::from(coarser);
+        if coarser == 0 {
+            0
+        } else if coarser == 1 {
+            3
+        } else {
+            3 + (coarser - 1) * 7
+        }
+    }
+}
+
+impl FromCoarserIndex<MonthIndex> for DateIndex {
+    fn min_from(coarser: MonthIndex) -> usize {
+        let coarser = u16::from(coarser);
+        if coarser == 0 {
+            0
+        } else {
+            let d = Date::new(2009, 1, 1)
+                .into_jiff()
+                .checked_add(Span::new().months(coarser))
+                .unwrap();
+            DateIndex::try_from(Date::from(d)).unwrap().into()
+        }
+    }
+
+    fn max_from_(coarser: MonthIndex) -> usize {
+        let d = Date::new(2009, 1, 31)
+            .into_jiff()
+            .checked_add(Span::new().months(u16::from(coarser)))
+            .unwrap();
+        DateIndex::try_from(Date::from(d)).unwrap().into()
+    }
+}
+
+impl FromCoarserIndex<QuarterIndex> for DateIndex {
+    fn min_from(coarser: QuarterIndex) -> usize {
+        let coarser = u16::from(coarser);
+        if coarser == 0 {
+            0
+        } else {
+            let d = Date::new(2009, 1, 1)
+                .into_jiff()
+                .checked_add(Span::new().months(3 * coarser))
+                .unwrap();
+            DateIndex::try_from(Date::from(d)).unwrap().into()
+        }
+    }
+
+    fn max_from_(coarser: QuarterIndex) -> usize {
+        let d = Date::new(2009, 3, 31)
+            .into_jiff()
+            .checked_add(Span::new().months(3 * u16::from(coarser)))
+            .unwrap();
+        DateIndex::try_from(Date::from(d)).unwrap().into()
+    }
+}
+
+impl FromCoarserIndex<SemesterIndex> for DateIndex {
+    fn min_from(coarser: SemesterIndex) -> usize {
+        let coarser = u16::from(coarser);
+        if coarser == 0 {
+            0
+        } else {
+            let d = Date::new(2009, 1, 1)
+                .into_jiff()
+                .checked_add(Span::new().months(6 * coarser))
+                .unwrap();
+            DateIndex::try_from(Date::from(d)).unwrap().into()
+        }
+    }
+
+    fn max_from_(coarser: SemesterIndex) -> usize {
+        let d = Date::new(2009, 5, 31)
+            .into_jiff()
+            .checked_add(Span::new().months(1 + 6 * u16::from(coarser)))
+            .unwrap();
+        DateIndex::try_from(Date::from(d)).unwrap().into()
+    }
+}
+
+impl FromCoarserIndex<YearIndex> for DateIndex {
+    fn min_from(coarser: YearIndex) -> usize {
+        let coarser = u16::from(coarser);
+        if coarser == 0 {
+            0
+        } else {
+            Self::try_from(Date::new(2009 + coarser, 1, 1))
+                .unwrap()
+                .into()
+        }
+    }
+
+    fn max_from_(coarser: YearIndex) -> usize {
+        Self::try_from(Date::new(2009 + u16::from(coarser), 12, 31))
+            .unwrap()
+            .into()
+    }
+}
+
+impl FromCoarserIndex<DecadeIndex> for DateIndex {
+    fn min_from(coarser: DecadeIndex) -> usize {
+        let coarser = u16::from(coarser);
+        if coarser == 0 {
+            0
+        } else {
+            Self::try_from(Date::new(2000 + 10 * coarser, 1, 1))
+                .unwrap()
+                .into()
+        }
+    }
+
+    fn max_from_(coarser: DecadeIndex) -> usize {
+        let coarser = u16::from(coarser);
+        Self::try_from(Date::new(2009 + (10 * coarser), 12, 31))
+            .unwrap()
+            .into()
     }
 }

@@ -36,9 +36,9 @@ impl fmt::Display for Output {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::Json(value) => write!(f, "{}", serde_json::to_string_pretty(value).unwrap()),
-            Self::CSV(string) => write!(f, "{}", string),
-            Self::TSV(string) => write!(f, "{}", string),
-            Self::MD(string) => write!(f, "{}", string),
+            Self::CSV(string) => write!(f, "{string}"),
+            Self::TSV(string) => write!(f, "{string}"),
+            Self::MD(string) => write!(f, "{string}"),
         }
     }
 }

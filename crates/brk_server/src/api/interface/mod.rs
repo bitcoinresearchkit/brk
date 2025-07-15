@@ -4,9 +4,7 @@ use axum::{
     http::{HeaderMap, StatusCode},
     response::{IntoResponse, Response},
 };
-use brk_core::DateIndex;
 use brk_interface::{Format, Output, Params};
-use brk_vec::{CollectableVec, StoredVec};
 use color_eyre::eyre::eyre;
 
 use crate::traits::{HeaderMapExtended, ResponseExtended};
@@ -50,20 +48,19 @@ fn req_to_response_res(
     let to = params.to();
     let format = params.format();
 
+    // TODO: From and to should be capped here
+
     let weight = vecs
         .iter()
-        .map(|(_, v)| {
-            let len = v.len();
-            let count = StoredVec::<DateIndex, usize>::range_count(from, to, len);
-            count * v.value_type_to_size_of()
-        })
+        .map(|(_, v)| v.range_weight(from, to))
         .sum::<usize>();
 
     if weight > MAX_WEIGHT {
         return Err(eyre!("Request is too heavy, max weight is {MAX_WEIGHT}"));
     }
 
-    let etag = vecs.first().unwrap().1.etag(to);
+    // TODO: height should be from vec, but good enough for now
+    let etag = vecs.first().unwrap().1.etag(interface.get_height(), to);
 
     if headers
         .get_if_none_match()

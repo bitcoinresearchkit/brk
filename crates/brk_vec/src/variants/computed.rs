@@ -1,10 +1,10 @@
-use std::{fs, path::Path};
+use std::{borrow::Cow, fs, path::Path};
 
 use brk_exit::Exit;
 use clap_derive::ValueEnum;
 use serde::{Deserialize, Serialize};
 
-use brk_core::{Result, StoredPhantom, Value, Version};
+use brk_core::{Result, StoredPhantom, Version};
 
 use crate::{
     AnyCollectableVec, AnyIterableVec, AnyVec, BaseVecIterator, BoxedAnyIterableVec,
@@ -36,7 +36,12 @@ impl Computation {
 }
 
 #[derive(Clone)]
-pub enum Dependencies<I, T, S1I, S1T, S2I, S2T, S3I, S3T> {
+pub enum Dependencies<I, T, S1I, S1T, S2I, S2T, S3I, S3T>
+where
+    S1T: Clone,
+    S2T: Clone,
+    S3T: Clone,
+{
     From1(BoxedAnyIterableVec<S1I, S1T>, ComputeFrom1<I, T, S1I, S1T>),
     From2(
         (BoxedAnyIterableVec<S1I, S1T>, BoxedAnyIterableVec<S2I, S2T>),
@@ -60,7 +65,12 @@ pub type ComputedVecFrom3<I, T, S1I, S1T, S2I, S2T, S3I, S3T> =
     ComputedVec<I, T, S1I, S1T, S2I, S2T, S3I, S3T>;
 
 #[derive(Clone)]
-pub enum ComputedVec<I, T, S1I, S1T, S2I, S2T, S3I, S3T> {
+pub enum ComputedVec<I, T, S1I, S1T, S2I, S2T, S3I, S3T>
+where
+    S1T: Clone,
+    S2T: Clone,
+    S3T: Clone,
+{
     Eager {
         vec: EagerVec<I, T>,
         deps: Dependencies<I, T, S1I, S1T, S2I, S2T, S3I, S3T>,
@@ -82,7 +92,7 @@ where
     S3T: StoredType,
 {
     pub fn forced_import_or_init_from_1(
-        mode: Computation,
+        computation: Computation,
         path: &Path,
         name: &str,
         version: Version,
@@ -90,7 +100,7 @@ where
         source: BoxedAnyIterableVec<S1I, S1T>,
         compute: ComputeFrom1<I, T, S1I, S1T>,
     ) -> Result<Self> {
-        Ok(match mode {
+        Ok(match computation {
             Computation::Eager => Self::Eager {
                 vec: EagerVec::forced_import(path, name, version, format)?,
                 deps: Dependencies::From1(source, compute),
@@ -104,7 +114,7 @@ where
 
     #[allow(clippy::too_many_arguments)]
     pub fn forced_import_or_init_from_2(
-        mode: Computation,
+        computation: Computation,
         path: &Path,
         name: &str,
         version: Version,
@@ -113,7 +123,7 @@ where
         source2: BoxedAnyIterableVec<S2I, S2T>,
         compute: ComputeFrom2<I, T, S1I, S1T, S2I, S2T>,
     ) -> Result<Self> {
-        Ok(match mode {
+        Ok(match computation {
             Computation::Eager => Self::Eager {
                 vec: EagerVec::forced_import(path, name, version, format)?,
                 deps: Dependencies::From2((source1, source2), compute),
@@ -127,7 +137,7 @@ where
 
     #[allow(clippy::too_many_arguments)]
     pub fn forced_import_or_init_from_3(
-        mode: Computation,
+        computation: Computation,
         path: &Path,
         name: &str,
         version: Version,
@@ -137,7 +147,7 @@ where
         source3: BoxedAnyIterableVec<S3I, S3T>,
         compute: ComputeFrom3<I, T, S1I, S1T, S2I, S2T, S3I, S3T>,
     ) -> Result<Self> {
-        Ok(match mode {
+        Ok(match computation {
             Computation::Eager => Self::Eager {
                 vec: EagerVec::forced_import(path, name, version, format)?,
                 deps: Dependencies::From3((source1, source2, source3), compute),
@@ -251,7 +261,12 @@ where
     }
 }
 
-pub enum ComputedVecIterator<'a, I, T, S1I, S1T, S2I, S2T, S3I, S3T> {
+pub enum ComputedVecIterator<'a, I, T, S1I, S1T, S2I, S2T, S3I, S3T>
+where
+    S1T: Clone,
+    S2T: Clone,
+    S3T: Clone,
+{
     Eager(StoredVecIterator<'a, I, T>),
     LazyFrom1(LazyVecFrom1Iterator<'a, I, T, S1I, S1T>),
     LazyFrom2(LazyVecFrom2Iterator<'a, I, T, S1I, S1T, S2I, S2T>),
@@ -270,7 +285,7 @@ where
     S3I: StoredIndex,
     S3T: StoredType,
 {
-    type Item = (I, Value<'a, T>);
+    type Item = (I, Cow<'a, T>);
     fn next(&mut self) -> Option<Self::Item> {
         match self {
             Self::Eager(i) => i.next(),
@@ -335,7 +350,7 @@ where
     S3I: StoredIndex,
     S3T: StoredType,
 {
-    type Item = (I, Value<'a, T>);
+    type Item = (I, Cow<'a, T>);
     type IntoIter = ComputedVecIterator<'a, I, T, S1I, S1T, S2I, S2T, S3I, S3T>;
 
     fn into_iter(self) -> Self::IntoIter {
@@ -382,8 +397,8 @@ where
 {
     fn collect_range_serde_json(
         &self,
-        from: Option<i64>,
-        to: Option<i64>,
+        from: Option<usize>,
+        to: Option<usize>,
     ) -> Result<Vec<serde_json::Value>> {
         CollectableVec::collect_range_serde_json(self, from, to)
     }

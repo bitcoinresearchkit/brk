@@ -1,7 +1,7 @@
 use std::{
     cmp::Ordering,
     f64,
-    ops::{Add, Div, Mul},
+    ops::{Add, AddAssign, Div, Mul},
 };
 
 use derive_deref::Deref;
@@ -62,6 +62,12 @@ impl Add for StoredF64 {
     type Output = Self;
     fn add(self, rhs: Self) -> Self::Output {
         Self(self.0 + rhs.0)
+    }
+}
+
+impl AddAssign for StoredF64 {
+    fn add_assign(&mut self, rhs: Self) {
+        *self = *self + rhs
     }
 }
 

@@ -162,7 +162,7 @@ impl fmt::Display for P2PKHBytes {
             .push_opcode(opcodes::all::OP_CHECKSIG)
             .into_script();
         let address = Address::from_script(&script, Network::Bitcoin).unwrap();
-        write!(f, "{}", address)
+        write!(f, "{address}")
     }
 }
 
@@ -192,7 +192,7 @@ impl fmt::Display for P2SHBytes {
             .push_opcode(opcodes::all::OP_EQUAL)
             .into_script();
         let address = Address::from_script(&script, Network::Bitcoin).unwrap();
-        write!(f, "{}", address)
+        write!(f, "{address}")
     }
 }
 
@@ -218,7 +218,7 @@ impl fmt::Display for P2WPKHBytes {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let script = Builder::new().push_int(0).push_slice(*self.0).into_script();
         let address = Address::from_script(&script, Network::Bitcoin).unwrap();
-        write!(f, "{}", address)
+        write!(f, "{address}")
     }
 }
 
@@ -244,7 +244,7 @@ impl fmt::Display for P2WSHBytes {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let script = Builder::new().push_int(0).push_slice(*self.0).into_script();
         let address = Address::from_script(&script, Network::Bitcoin).unwrap();
-        write!(f, "{}", address)
+        write!(f, "{address}")
     }
 }
 
@@ -270,7 +270,7 @@ impl fmt::Display for P2TRBytes {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let script = Builder::new().push_int(1).push_slice(*self.0).into_script();
         let address = Address::from_script(&script, Network::Bitcoin).unwrap();
-        write!(f, "{}", address)
+        write!(f, "{address}")
     }
 }
 
@@ -296,7 +296,7 @@ impl fmt::Display for P2ABytes {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let script = Builder::new().push_int(1).push_slice(*self.0).into_script();
         let address = Address::from_script(&script, Network::Bitcoin).unwrap();
-        write!(f, "{}", address)
+        write!(f, "{address}")
     }
 }
 

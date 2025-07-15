@@ -1,7 +1,9 @@
-use std::path::{Path, PathBuf};
+use std::{
+    borrow::Cow,
+    path::{Path, PathBuf},
+};
 
-use arc_swap::ArcSwap;
-use brk_core::{Result, Value, Version};
+use brk_core::{Result, Version};
 use memmap2::Mmap;
 
 use crate::{
@@ -73,14 +75,6 @@ where
     }
 
     #[inline]
-    fn mmap(&self) -> &ArcSwap<Mmap> {
-        match self {
-            StoredVec::Raw(v) => v.mmap(),
-            StoredVec::Compressed(v) => v.mmap(),
-        }
-    }
-
-    #[inline]
     fn parent(&self) -> &Path {
         match self {
             StoredVec::Raw(v) => v.parent(),
@@ -93,13 +87,6 @@ where
         match self {
             StoredVec::Raw(v) => v.stored_len(),
             StoredVec::Compressed(v) => v.stored_len(),
-        }
-    }
-    #[inline]
-    fn stored_len_(&self, mmap: &Mmap) -> usize {
-        match self {
-            StoredVec::Raw(v) => v.stored_len_(mmap),
-            StoredVec::Compressed(v) => v.stored_len_(mmap),
         }
     }
 
@@ -195,7 +182,7 @@ where
     I: StoredIndex,
     T: StoredType,
 {
-    type Item = (I, Value<'a, T>);
+    type Item = (I, Cow<'a, T>);
     fn next(&mut self) -> Option<Self::Item> {
         match self {
             Self::Compressed(i) => i.next(),
@@ -238,7 +225,7 @@ where
     I: StoredIndex,
     T: StoredType,
 {
-    type Item = (I, Value<'a, T>);
+    type Item = (I, Cow<'a, T>);
     type IntoIter = StoredVecIterator<'a, I, T>;
 
     fn into_iter(self) -> Self::IntoIter {
@@ -269,8 +256,8 @@ where
 {
     fn collect_range_serde_json(
         &self,
-        from: Option<i64>,
-        to: Option<i64>,
+        from: Option<usize>,
+        to: Option<usize>,
     ) -> Result<Vec<serde_json::Value>> {
         CollectableVec::collect_range_serde_json(self, from, to)
     }

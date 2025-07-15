@@ -1,6 +1,6 @@
-use std::marker::PhantomData;
+use std::{borrow::Cow, marker::PhantomData};
 
-use brk_core::{Result, Value, Version};
+use brk_core::{Result, Version};
 
 use crate::{
     AnyCollectableVec, AnyIterableVec, AnyVec, BaseVecIterator, BoxedAnyIterableVec,
@@ -9,13 +9,18 @@ use crate::{
 
 pub type ComputeFrom3<I, T, S1I, S1T, S2I, S2T, S3I, S3T> = for<'a> fn(
     I,
-    &mut dyn BaseVecIterator<Item = (S1I, Value<'a, S1T>)>,
-    &mut dyn BaseVecIterator<Item = (S2I, Value<'a, S2T>)>,
-    &mut dyn BaseVecIterator<Item = (S3I, Value<'a, S3T>)>,
+    &mut dyn BaseVecIterator<Item = (S1I, Cow<'a, S1T>)>,
+    &mut dyn BaseVecIterator<Item = (S2I, Cow<'a, S2T>)>,
+    &mut dyn BaseVecIterator<Item = (S3I, Cow<'a, S3T>)>,
 ) -> Option<T>;
 
 #[derive(Clone)]
-pub struct LazyVecFrom3<I, T, S1I, S1T, S2I, S2T, S3I, S3T> {
+pub struct LazyVecFrom3<I, T, S1I, S1T, S2I, S2T, S3I, S3T>
+where
+    S1T: Clone,
+    S2T: Clone,
+    S3T: Clone,
+{
     name: String,
     version: Version,
     source1: BoxedAnyIterableVec<S1I, S1T>,
@@ -73,7 +78,12 @@ where
     }
 }
 
-pub struct LazyVecFrom3Iterator<'a, I, T, S1I, S1T, S2I, S2T, S3I, S3T> {
+pub struct LazyVecFrom3Iterator<'a, I, T, S1I, S1T, S2I, S2T, S3I, S3T>
+where
+    S1T: Clone,
+    S2T: Clone,
+    S3T: Clone,
+{
     lazy: &'a LazyVecFrom3<I, T, S1I, S1T, S2I, S2T, S3I, S3T>,
     source1: BoxedVecIterator<'a, S1I, S1T>,
     source2: BoxedVecIterator<'a, S2I, S2T>,
@@ -93,7 +103,7 @@ where
     S3I: StoredIndex,
     S3T: StoredType,
 {
-    type Item = (I, Value<'a, T>);
+    type Item = (I, Cow<'a, T>);
 
     fn next(&mut self) -> Option<Self::Item> {
         let index = I::from(self.index);
@@ -103,7 +113,7 @@ where
             &mut *self.source2,
             &mut *self.source3,
         )
-        .map(|v| (index, Value::Owned(v)));
+        .map(|v| (index, Cow::Owned(v)));
         if opt.is_some() {
             self.index += 1;
         }
@@ -166,7 +176,7 @@ where
     S3I: StoredIndex,
     S3T: StoredType,
 {
-    type Item = (I, Value<'a, T>);
+    type Item = (I, Cow<'a, T>);
     type IntoIter = LazyVecFrom3Iterator<'a, I, T, S1I, S1T, S2I, S2T, S3I, S3T>;
 
     fn into_iter(self) -> Self::IntoIter {
@@ -262,8 +272,8 @@ where
 {
     fn collect_range_serde_json(
         &self,
-        from: Option<i64>,
-        to: Option<i64>,
+        from: Option<usize>,
+        to: Option<usize>,
     ) -> Result<Vec<serde_json::Value>> {
         CollectableVec::collect_range_serde_json(self, from, to)
     }

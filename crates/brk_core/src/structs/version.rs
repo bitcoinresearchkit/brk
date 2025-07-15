@@ -65,6 +65,12 @@ impl Version {
     }
 }
 
+impl From<Version> for u64 {
+    fn from(value: Version) -> u64 {
+        value.0
+    }
+}
+
 impl From<u64> for Version {
     fn from(value: u64) -> Self {
         Self(value)

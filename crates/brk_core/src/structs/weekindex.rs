@@ -1,4 +1,7 @@
-use std::{fmt::Debug, ops::Add};
+use std::{
+    fmt::Debug,
+    ops::{Add, AddAssign, Div},
+};
 
 use serde::{Deserialize, Serialize};
 use zerocopy_derive::{FromBytes, Immutable, IntoBytes, KnownLayout};
@@ -31,6 +34,12 @@ impl From<u16> for WeekIndex {
     }
 }
 
+impl From<WeekIndex> for u16 {
+    fn from(value: WeekIndex) -> Self {
+        value.0
+    }
+}
+
 impl From<usize> for WeekIndex {
     fn from(value: usize) -> Self {
         Self(value as u16)
@@ -40,6 +49,27 @@ impl From<usize> for WeekIndex {
 impl From<WeekIndex> for usize {
     fn from(value: WeekIndex) -> Self {
         value.0 as usize
+    }
+}
+
+impl Add<WeekIndex> for WeekIndex {
+    type Output = Self;
+
+    fn add(self, rhs: Self) -> Self::Output {
+        Self::from(self.0 + rhs.0)
+    }
+}
+
+impl AddAssign for WeekIndex {
+    fn add_assign(&mut self, rhs: Self) {
+        *self = Self(self.0 + rhs.0)
+    }
+}
+
+impl Div<usize> for WeekIndex {
+    type Output = Self;
+    fn div(self, _: usize) -> Self::Output {
+        unreachable!()
     }
 }
 
@@ -68,7 +98,6 @@ impl From<Date> for WeekIndex {
             let d = jiff::civil::Date::new(year, 6, 6).unwrap();
             let i = d.iso_week_date();
             let w = i.weeks_in_year();
-            // dbg!(d, w);
             week += w as u16;
             year += 1;
         }

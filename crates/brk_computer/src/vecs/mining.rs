@@ -5,9 +5,11 @@ use brk_exit::Exit;
 use brk_indexer::Indexer;
 use brk_vec::{AnyCollectableVec, Computation, Format, VecIterator};
 
+use crate::vecs::grouped::Source;
+
 use super::{
     Indexes,
-    grouped::{ComputedVecsFromDateIndex, ComputedVecsFromHeight, StorableVecGeneatorOptions},
+    grouped::{ComputedVecsFromDateIndex, ComputedVecsFromHeight, VecBuilderOptions},
     indexes,
 };
 
@@ -24,33 +26,40 @@ impl Vecs {
     pub fn forced_import(
         path: &Path,
         version: Version,
-        _computation: Computation,
+        computation: Computation,
         format: Format,
+        indexes: &indexes::Vecs,
     ) -> color_eyre::Result<Self> {
         Ok(Self {
             indexes_to_difficulty: ComputedVecsFromHeight::forced_import(
                 path,
                 "difficulty",
-                false,
+                Source::None,
                 version + VERSION + Version::ZERO,
                 format,
-                StorableVecGeneatorOptions::default().add_last(),
+                computation,
+                indexes,
+                VecBuilderOptions::default().add_last(),
             )?,
             indexes_to_difficultyepoch: ComputedVecsFromDateIndex::forced_import(
                 path,
                 "difficultyepoch",
-                true,
+                Source::Compute,
                 version + VERSION + Version::ZERO,
                 format,
-                StorableVecGeneatorOptions::default().add_last(),
+                computation,
+                indexes,
+                VecBuilderOptions::default().add_last(),
             )?,
             indexes_to_halvingepoch: ComputedVecsFromDateIndex::forced_import(
                 path,
                 "halvingepoch",
-                true,
+                Source::Compute,
                 version + VERSION + Version::ZERO,
                 format,
-                StorableVecGeneatorOptions::default().add_last(),
+                computation,
+                indexes,
+                VecBuilderOptions::default().add_last(),
             )?,
         })
     }

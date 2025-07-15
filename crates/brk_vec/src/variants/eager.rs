@@ -1,5 +1,6 @@
 use core::error;
 use std::{
+    borrow::Cow,
     cmp::Ordering,
     f32,
     fmt::Debug,
@@ -7,10 +8,9 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use arc_swap::ArcSwap;
 use brk_core::{
     Bitcoin, CheckedSub, Close, Date, DateIndex, Dollars, Error, Result, Sats, StoredF32,
-    StoredUsize, Value, Version,
+    StoredUsize, Version,
 };
 use brk_exit::Exit;
 use log::info;
@@ -23,7 +23,7 @@ use crate::{
 
 const ONE_KIB: usize = 1024;
 const ONE_MIB: usize = ONE_KIB * ONE_KIB;
-const MAX_CACHE_SIZE: usize = 210 * ONE_MIB;
+const MAX_CACHE_SIZE: usize = 256 * ONE_MIB;
 const DCA_AMOUNT: Dollars = Dollars::mint(100.0);
 
 #[derive(Debug, Clone)]
@@ -103,12 +103,8 @@ where
         self.0.path()
     }
 
-    pub fn get_or_read(&self, index: I, mmap: &Mmap) -> Result<Option<Value<T>>> {
+    pub fn get_or_read(&self, index: I, mmap: &Mmap) -> Result<Option<Cow<T>>> {
         self.0.get_or_read(index, mmap)
-    }
-
-    pub fn mmap(&self) -> &ArcSwap<Mmap> {
-        self.0.mmap()
     }
 
     pub fn inner_version(&self) -> Version {
@@ -213,7 +209,7 @@ where
 
         let index = max_from.min(A::from(self.len()));
         other.iter_at(index).try_for_each(|(a, b)| {
-            let (i, v) = t((a, b.into_inner(), self));
+            let (i, v) = t((a, b.into_owned(), self));
             self.forced_push_at(i, v, exit)
         })?;
 
@@ -238,7 +234,7 @@ where
         let mut adder_iter = adder.iter();
 
         added.iter_at(index).try_for_each(|(i, v)| {
-            let v = v.into_inner() + adder_iter.unwrap_get_inner(i);
+            let v = v.into_owned() + adder_iter.unwrap_get_inner(i);
 
             self.forced_push_at(i, v, exit)
         })?;
@@ -265,7 +261,7 @@ where
 
         subtracted.iter_at(index).try_for_each(|(i, v)| {
             let v = v
-                .into_inner()
+                .into_owned()
                 .checked_sub(subtracter_iter.unwrap_get_inner(i))
                 .unwrap();
 
@@ -302,7 +298,7 @@ where
                     T::from(source.iter().unwrap_get_inner_(0))
                 });
             }
-            let max = prev.clone().unwrap().max(T::from(v.into_inner()));
+            let max = prev.clone().unwrap().max(T::from(v.into_owned()));
             prev.replace(max.clone());
 
             self.forced_push_at(i, max, exit)
@@ -332,7 +328,7 @@ where
         let mut multiplier_iter = multiplier.iter();
 
         multiplied.iter_at(index).try_for_each(|(i, v)| {
-            let v = v.into_inner() * multiplier_iter.unwrap_get_inner(i);
+            let v = v.into_owned() * multiplier_iter.unwrap_get_inner(i);
 
             self.forced_push_at(i, v.into(), exit)
         })?;
@@ -416,7 +412,7 @@ where
 
         let mut divider_iter = divider.iter();
         divided.iter_at(index).try_for_each(|(i, divided)| {
-            let divided = divided.into_inner();
+            let divided = divided.into_owned();
             let divider = divider_iter.unwrap_get_inner(i);
 
             let v = if as_percentage {
@@ -451,7 +447,7 @@ where
         let index = max_from.min(I::from(self.len()));
         let mut close_iter = close.iter();
         ath.iter_at(index).try_for_each(|(i, ath)| {
-            let ath = ath.into_inner();
+            let ath = ath.into_owned();
             if ath == Dollars::ZERO {
                 self.forced_push_at(i, T::from(StoredF32::default()), exit)
             } else {
@@ -479,11 +475,11 @@ where
         )?;
 
         let index = max_from.min(
-            VecIterator::last(self.0.into_iter()).map_or_else(T::default, |(_, v)| v.into_inner()),
+            VecIterator::last(self.0.into_iter()).map_or_else(T::default, |(_, v)| v.into_owned()),
         );
         let mut prev_i = None;
         other.iter_at(index).try_for_each(|(v, i)| -> Result<()> {
-            let i = i.into_inner();
+            let i = i.into_owned();
             if prev_i.is_some_and(|prev_i| prev_i == i) {
                 return Ok(());
             }
@@ -647,7 +643,7 @@ where
         self_to_other.iter_at(index).try_for_each(|(i, other)| {
             self.forced_push_at(
                 i,
-                T::from(other_to_self_iter.unwrap_get_inner(other.into_inner()) == i),
+                T::from(other_to_self_iter.unwrap_get_inner(other.into_owned()) == i),
                 exit,
             )
         })?;
@@ -715,7 +711,7 @@ where
             .unwrap()
             .iter_at(index)
             .try_for_each(|(i, v)| {
-                let mut sum = v.into_inner();
+                let mut sum = v.into_owned();
                 others_iter.iter_mut().for_each(|iter| {
                     sum = sum.clone() + iter.unwrap_get_inner(i);
                 });
@@ -750,7 +746,7 @@ where
             .unwrap()
             .iter_at(index)
             .try_for_each(|(i, v)| {
-                let min = v.into_inner();
+                let min = v.into_owned();
                 let min = others_iter
                     .iter_mut()
                     .map(|iter| iter.unwrap_get_inner(i))
@@ -787,7 +783,7 @@ where
             .unwrap()
             .iter_at(index)
             .try_for_each(|(i, v)| {
-                let max = v.into_inner();
+                let max = v.into_owned();
                 let max = others_iter
                     .iter_mut()
                     .map(|iter| iter.unwrap_get_inner(i))
@@ -836,7 +832,7 @@ where
         let min_prev_i = min_i.unwrap_or_default().unwrap_to_usize();
         let mut other_iter = source.iter();
         source.iter_at(index).try_for_each(|(i, value)| {
-            let value = value.into_inner();
+            let value = value.into_owned();
 
             if min_i.is_none() || min_i.is_some_and(|min_i| min_i <= i) {
                 if prev.is_none() {
@@ -924,7 +920,7 @@ where
         let index = max_from.min(I::from(self.len()));
         let mut source_iter = source.iter();
         source.iter_at(index).try_for_each(|(i, current)| {
-            let current = current.into_inner();
+            let current = current.into_owned();
 
             let prev = i
                 .checked_sub(I::from(len))
@@ -963,7 +959,7 @@ where
                     .unwrap_or_default(),
             );
 
-            let last_value = f32::from(b.into_inner());
+            let last_value = f32::from(b.into_owned());
 
             let percentage_change = ((last_value / previous_value) - 1.0) * 100.0;
 
@@ -999,7 +995,7 @@ where
         percentage_returns
             .iter_at(index)
             .try_for_each(|(i, percentage)| {
-                let percentage = percentage.into_inner();
+                let percentage = percentage.into_owned();
 
                 let cagr = (((f32::from(percentage) / 100.0 + 1.0).powf(1.0 / years as f32)) - 1.0)
                     * 100.0;
@@ -1054,7 +1050,7 @@ impl EagerVec<DateIndex, Sats> {
 
         let index = max_from.min(DateIndex::from(self.len()));
         closes.iter_at(index).try_for_each(|(i, closes)| {
-            let price = *closes.into_inner();
+            let price = *closes.into_owned();
             let i_usize = i.unwrap_to_usize();
             if prev.is_none() {
                 if i_usize == 0 {
@@ -1102,7 +1098,7 @@ impl EagerVec<DateIndex, Sats> {
 
         let index = max_from.min(DateIndex::from(self.len()));
         closes.iter_at(index).try_for_each(|(i, closes)| {
-            let price = *closes.into_inner();
+            let price = *closes.into_owned();
             let i_usize = i.unwrap_to_usize();
             if prev.is_none() {
                 if i_usize == 0 {
@@ -1144,7 +1140,7 @@ impl EagerVec<DateIndex, Dollars> {
         let first_price_date = DateIndex::try_from(Date::new(2010, 7, 12)).unwrap();
 
         stacks.iter_at(index).try_for_each(|(i, stack)| {
-            let stack = stack.into_inner();
+            let stack = stack.into_owned();
             let mut avg_price = Dollars::from(f64::NAN);
             if i > first_price_date {
                 avg_price = DCA_AMOUNT
@@ -1175,7 +1171,7 @@ impl EagerVec<DateIndex, Dollars> {
         let from_usize = from.unwrap_to_usize();
 
         stacks.iter_at(index).try_for_each(|(i, stack)| {
-            let stack = stack.into_inner();
+            let stack = stack.into_owned();
             let mut avg_price = Dollars::from(f64::NAN);
             if i >= from {
                 avg_price =
@@ -1204,7 +1200,7 @@ where
 
         let index = max_from.min(I::from(self.len()));
         sats.iter_at(index).try_for_each(|(i, sats)| {
-            let (i, v) = (i, Bitcoin::from(sats.into_inner()));
+            let (i, v) = (i, Bitcoin::from(sats.into_owned()));
             self.forced_push_at(i, v, exit)
         })?;
 
@@ -1231,7 +1227,7 @@ where
         let index = max_from.min(I::from(self.len()));
         bitcoin.iter_at(index).try_for_each(|(i, bitcoin)| {
             let dollars = price_iter.unwrap_get_inner(i);
-            let (i, v) = (i, *dollars * bitcoin.into_inner());
+            let (i, v) = (i, *dollars * bitcoin.into_owned());
             self.forced_push_at(i, v, exit)
         })?;
 
@@ -1262,7 +1258,7 @@ where
 //         bitcoin.iter_at(index).try_for_each(|(i, bitcoin, ..)| {
 //             let height = i_to_height_iter.unwrap_get_inner(i);
 //             let dollars = price_iter.unwrap_get_inner(height);
-//             let (i, v) = (i, *dollars * bitcoin.into_inner());
+//             let (i, v) = (i, *dollars * bitcoin.into_owned());
 //             self.forced_push_at(i, v, exit)
 //         })?;
 
@@ -1275,7 +1271,7 @@ where
     I: StoredIndex,
     T: StoredType,
 {
-    type Item = (I, Value<'a, T>);
+    type Item = (I, Cow<'a, T>);
     type IntoIter = StoredVecIterator<'a, I, T>;
 
     fn into_iter(self) -> Self::IntoIter {
@@ -1335,8 +1331,8 @@ where
 {
     fn collect_range_serde_json(
         &self,
-        from: Option<i64>,
-        to: Option<i64>,
+        from: Option<usize>,
+        to: Option<usize>,
     ) -> Result<Vec<serde_json::Value>> {
         CollectableVec::collect_range_serde_json(self, from, to)
     }
