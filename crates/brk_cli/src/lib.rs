@@ -4,7 +4,6 @@ use brk_core::{dot_brk_log_path, dot_brk_path};
 
 mod config;
 mod run;
-mod services;
 
 use run::*;
 

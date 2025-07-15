@@ -19,6 +19,9 @@ _*
 # Logs
 .log
 
+# Environment variables/configs
+.env
+
 # Profiling
 profile.json.gz
 flamegraph.svg

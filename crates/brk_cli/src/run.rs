@@ -13,18 +13,20 @@ pub fn run() -> color_eyre::Result<()> {
     let config = Config::import()?;
 
     let rpc = config.rpc()?;
-
     let exit = Exit::new();
-
-    let parser = brk_parser::Parser::new(config.blocksdir(), rpc);
+    let parser = brk_parser::Parser::new(
+        config.blocksdir(),
+        config.brkdir(),
+        rpc,
+    );
 
     let format = config.format();
 
     let mut indexer = Indexer::forced_import(&config.outputsdir())?;
 
-    let wait_for_synced_node = || -> color_eyre::Result<()> {
+    let wait_for_synced_node = |rpc_client: &bitcoincore_rpc::Client| -> color_eyre::Result<()> {
         let is_synced = || -> color_eyre::Result<bool> {
-            let info = rpc.get_blockchain_info()?;
+            let info = rpc_client.get_blockchain_info()?;
             Ok(info.headers == info.blocks)
         };
 
@@ -50,54 +52,40 @@ pub fn run() -> color_eyre::Result<()> {
         .enable_all()
         .build()?
         .block_on(async {
-            let server = if config.serve() {
-                let served_indexer = indexer.clone();
-                let served_computer = computer.clone();
+            let served_indexer = indexer.clone();
+            let served_computer = computer.clone();
 
-                let server = Server::new(served_indexer, served_computer, config.website())?;
+            let server = Server::new(served_indexer, served_computer, config.website())?;
 
-                let watch = config.watch();
-                let mcp = config.mcp();
-                let opt = Some(tokio::spawn(async move {
-                    server.serve(watch, mcp).await.unwrap();
-                }));
+            let watch = config.watch();
+            let mcp = config.mcp();
+            let server_handle = tokio::spawn(async move {
+                server.serve(watch, mcp).await.unwrap();
+            });
 
-                sleep(Duration::from_secs(1));
+            sleep(Duration::from_secs(1));
 
-                opt
-            } else {
-                None
-            };
+            loop {
+                wait_for_synced_node(rpc)?;
 
-            if config.process() {
-                loop {
-                    wait_for_synced_node()?;
+                let block_count = rpc.get_block_count()?;
 
-                    let block_count = rpc.get_block_count()?;
+                info!("{} blocks found.", block_count + 1);
 
-                    info!("{} blocks found.", block_count + 1);
+                let starting_indexes =
+                    indexer.index(&parser, rpc, &exit, config.check_collisions())?;
 
-                    let starting_indexes =
-                        indexer.index(&parser, rpc, &exit, config.check_collisions())?;
+                computer.compute(&mut indexer, starting_indexes, &exit)?;
 
-                    computer.compute(&mut indexer, starting_indexes, &exit)?;
+                if let Some(delay) = config.delay() {
+                    sleep(Duration::from_secs(delay))
+                }
 
-                    if let Some(delay) = config.delay() {
-                        sleep(Duration::from_secs(delay))
-                    }
+                info!("Waiting for new blocks...");
 
-                    info!("Waiting for new blocks...");
-
-                    while block_count == rpc.get_block_count()? {
-                        sleep(Duration::from_secs(1))
-                    }
+                while block_count == rpc.get_block_count()? {
+                    sleep(Duration::from_secs(1))
                 }
             }
-
-            if let Some(handle) = server {
-                handle.await.unwrap();
-            }
-
-            Ok(())
         })
 }
