@@ -40,7 +40,7 @@ The toolkit can be used in various ways to accommodate as many needs as possible
 - **[Website](https://bitcoinresearchkit.org)** \
   Everyone is welcome to visit the official instance and showcase of the suite's capabilities. \
   It has a wide range of functionalities including charts, tables and simulations which you can visit for free and without the need for an account. \
-  Also available at: [kibo.money](https://kibo.money) // [satonomics.xyz](https://satonomics.xyz)
+  Also available at: [brekit.org](https://brekit.org) // [kibo.money](https://kibo.money) // [satonomics.xyz](https://satonomics.xyz)
 - **[API](https://github.com/bitcoinresearchkit/brk/tree/main/crates/brk_server#brk-server)** \
   Researchers and developers are free to use BRK's public API with ![Datasets variant count](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fbitcoinresearchkit.org%2Fapi%2Fvecs%2Fvec-count&query=%24&style=flat&label=%20&color=white) dataset variants at their disposal. \
   Just like the website, it's entirely free, with no authentication or rate-limiting.

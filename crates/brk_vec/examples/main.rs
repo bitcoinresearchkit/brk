@@ -1,6 +1,6 @@
 use std::{fs, path::Path};
 
-use brk_core::{DateIndex, Height, Printable, Version};
+use brk_core::{DateIndex, Height, Version};
 use brk_vec::{AnyVec, CollectableVec, Format, GenericStoredVec, StoredVec, VecIterator};
 
 type I = DateIndex;
@@ -104,7 +104,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
         let mmap = vec.create_mmap()?;
         dbg!(vec.take(10.into(), &mmap)?);
-        dbg!(vec.get_or_read(10.into(), &mmap));
+        dbg!(vec.get_or_read(10.into(), &mmap)?);
         dbg!(vec.holes());
         vec.flush()?;
         dbg!(vec.holes());
@@ -118,11 +118,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         dbg!(vec.holes());
         dbg!(vec.get_or_read(10.into(), &mmap)?);
 
-        vec.update(10.into(), 10);
-        vec.update(0.into(), 10);
+        vec.update(10.into(), 10)?;
+        vec.update(0.into(), 10)?;
         dbg!(
             vec.holes(),
-            vec.get_or_read(0.into(), &mmap),
+            vec.get_or_read(0.into(), &mmap)?,
             vec.get_or_read(10.into(), &mmap)?
         );
 
@@ -130,9 +130,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     {
-        let mut vec: VEC = StoredVec::forced_import(Path::new("."), "vec", version, format)?;
+        let vec: VEC = StoredVec::forced_import(Path::new("."), "vec", version, format)?;
 
-        dbg!(vec.collect());
+        dbg!(vec.collect()?);
     }
 
     Ok(())

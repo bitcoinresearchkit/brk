@@ -57,6 +57,7 @@ where
         }
     }
 
+    #[allow(unreachable_code, unused_variables)]
     pub fn import(parent: &Path, name: &str, version: Version) -> Result<Self> {
         panic!("Compressed vecs are a work in progress right now, please use raw vecs instead");
 
