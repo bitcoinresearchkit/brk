@@ -62,6 +62,11 @@ where
         self.0.mut_header().update_height(height);
     }
 
+    pub fn reset(&mut self) -> Result<()> {
+        self.update_height(Height::ZERO);
+        self.0.reset()
+    }
+
     pub fn truncate_if_needed(&mut self, index: I, height: Height) -> Result<()> {
         self.update_height(height);
         self.0.truncate_if_needed(index)?;

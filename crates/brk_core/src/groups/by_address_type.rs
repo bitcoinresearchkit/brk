@@ -19,6 +19,10 @@ pub struct ByAddressType<T> {
 }
 
 impl<T> ByAddressType<T> {
+    pub fn get_unwrap(&self, address_type: OutputType) -> &T {
+        self.get(address_type).unwrap()
+    }
+
     pub fn get(&self, address_type: OutputType) -> Option<&T> {
         match address_type {
             OutputType::P2PK65 => Some(&self.p2pk65),

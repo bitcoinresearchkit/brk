@@ -1,6 +1,6 @@
 use std::ops::{Add, AddAssign, SubAssign};
 
-use brk_core::{AddressData, CheckedSub, Sats};
+use brk_core::{CheckedSub, LoadedAddressData, Sats};
 use serde::Serialize;
 use zerocopy_derive::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
@@ -40,8 +40,8 @@ impl SubAssign<&SupplyState> for SupplyState {
     }
 }
 
-impl From<&AddressData> for SupplyState {
-    fn from(value: &AddressData) -> Self {
+impl From<&LoadedAddressData> for SupplyState {
+    fn from(value: &LoadedAddressData) -> Self {
         Self {
             utxos: value.outputs_len as usize,
             value: value.amount(),

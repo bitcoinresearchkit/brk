@@ -1,6 +1,6 @@
 use std::path::Path;
 
-use brk_core::{AddressData, Dollars, Height, Result, Sats};
+use brk_core::{Dollars, Height, LoadedAddressData, Result, Sats};
 
 use crate::SupplyState;
 
@@ -35,7 +35,7 @@ impl AddressCohortState {
     #[allow(clippy::too_many_arguments)]
     pub fn send(
         &mut self,
-        addressdata: &mut AddressData,
+        addressdata: &mut LoadedAddressData,
         value: Sats,
         current_price: Option<Dollars>,
         prev_price: Option<Dollars>,
@@ -72,7 +72,12 @@ impl AddressCohortState {
         Ok(())
     }
 
-    pub fn receive(&mut self, address_data: &mut AddressData, value: Sats, price: Option<Dollars>) {
+    pub fn receive(
+        &mut self,
+        address_data: &mut LoadedAddressData,
+        value: Sats,
+        price: Option<Dollars>,
+    ) {
         let compute_price = price.is_some();
 
         let prev_realized_price = compute_price.then(|| address_data.realized_price());
@@ -96,7 +101,7 @@ impl AddressCohortState {
         );
     }
 
-    pub fn add(&mut self, addressdata: &AddressData) {
+    pub fn add(&mut self, addressdata: &LoadedAddressData) {
         self.address_count += 1;
         self.inner.increment_(
             &addressdata.into(),
@@ -105,7 +110,7 @@ impl AddressCohortState {
         );
     }
 
-    pub fn subtract(&mut self, addressdata: &AddressData) {
+    pub fn subtract(&mut self, addressdata: &LoadedAddressData) {
         self.address_count = self.address_count.checked_sub(1).unwrap();
         self.inner.decrement_(
             &addressdata.into(),

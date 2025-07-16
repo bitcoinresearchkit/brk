@@ -1,18 +1,21 @@
 use byteview::ByteView;
+use serde::Serialize;
 use zerocopy::{FromBytes, IntoBytes};
+use zerocopy_derive::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 use crate::{Bitcoin, CheckedSub, Dollars, EmptyAddressData, Error, Result, Sats};
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, Serialize, FromBytes, Immutable, IntoBytes, KnownLayout)]
 #[repr(C)]
-pub struct AddressData {
+pub struct LoadedAddressData {
     pub sent: Sats,
     pub received: Sats,
     pub realized_cap: Dollars,
     pub outputs_len: u32,
+    padding: u32,
 }
 
-impl AddressData {
+impl LoadedAddressData {
     pub fn amount(&self) -> Sats {
         (u64::from(self.received) - u64::from(self.sent)).into()
     }
@@ -55,23 +58,24 @@ impl AddressData {
     }
 }
 
-impl From<EmptyAddressData> for AddressData {
+impl From<EmptyAddressData> for LoadedAddressData {
     fn from(value: EmptyAddressData) -> Self {
         Self::from(&value)
     }
 }
-impl From<&EmptyAddressData> for AddressData {
+impl From<&EmptyAddressData> for LoadedAddressData {
     fn from(value: &EmptyAddressData) -> Self {
         Self {
             sent: value.transfered,
             received: value.transfered,
             realized_cap: Dollars::ZERO,
             outputs_len: 0,
+            padding: 0,
         }
     }
 }
 
-impl From<ByteView> for AddressData {
+impl From<ByteView> for LoadedAddressData {
     fn from(value: ByteView) -> Self {
         Self {
             // MUST be same order as impl From<&AddressData> for ByteView
@@ -79,16 +83,17 @@ impl From<ByteView> for AddressData {
             received: Sats::read_from_bytes(&value[8..16]).unwrap(),
             realized_cap: Dollars::read_from_bytes(&value[16..24]).unwrap(),
             outputs_len: u32::read_from_bytes(&value[24..]).unwrap(),
+            padding: 0,
         }
     }
 }
-impl From<AddressData> for ByteView {
-    fn from(value: AddressData) -> Self {
+impl From<LoadedAddressData> for ByteView {
+    fn from(value: LoadedAddressData) -> Self {
         Self::from(&value)
     }
 }
-impl From<&AddressData> for ByteView {
-    fn from(value: &AddressData) -> Self {
+impl From<&LoadedAddressData> for ByteView {
+    fn from(value: &LoadedAddressData) -> Self {
         Self::new(
             &[
                 value.sent.as_bytes(),

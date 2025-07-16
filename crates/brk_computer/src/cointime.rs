@@ -302,7 +302,7 @@ impl Vecs {
         stateful: &stateful::Vecs,
         exit: &Exit,
     ) -> color_eyre::Result<()> {
-        let circulating_supply = &stateful.utxo_vecs.all.1.height_to_supply;
+        let circulating_supply = &stateful.utxo_cohorts.all.1.height_to_supply;
 
         self.indexes_to_coinblocks_created.compute_all(
             indexer,
@@ -320,7 +320,7 @@ impl Vecs {
         )?;
 
         let indexes_to_coinblocks_destroyed =
-            &stateful.utxo_vecs.all.1.indexes_to_coinblocks_destroyed;
+            &stateful.utxo_cohorts.all.1.indexes_to_coinblocks_destroyed;
 
         self.indexes_to_coinblocks_stored.compute_all(
             indexer,
@@ -430,7 +430,7 @@ impl Vecs {
 
         if let Some(fetched) = fetched {
             let realized_cap = stateful
-                .utxo_vecs
+                .utxo_cohorts
                 .all
                 .1
                 .height_to_realized_cap
@@ -438,7 +438,7 @@ impl Vecs {
                 .unwrap();
 
             let realized_price = stateful
-                .utxo_vecs
+                .utxo_cohorts
                 .all
                 .1
                 .indexes_to_realized_price

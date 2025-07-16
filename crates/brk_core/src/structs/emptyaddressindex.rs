@@ -1,6 +1,5 @@
 use std::ops::Add;
 
-use derive_deref::{Deref, DerefMut};
 use serde::Serialize;
 use zerocopy_derive::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
@@ -14,8 +13,6 @@ use crate::{CheckedSub, Printable, TypeIndex};
     Ord,
     Clone,
     Copy,
-    Deref,
-    DerefMut,
     Default,
     FromBytes,
     Immutable,
@@ -23,39 +20,43 @@ use crate::{CheckedSub, Printable, TypeIndex};
     KnownLayout,
     Serialize,
 )]
-pub struct EmptyOutputIndex(TypeIndex);
-impl From<TypeIndex> for EmptyOutputIndex {
+pub struct EmptyAddressIndex(TypeIndex);
+
+impl From<TypeIndex> for EmptyAddressIndex {
     fn from(value: TypeIndex) -> Self {
         Self(value)
     }
 }
-impl From<EmptyOutputIndex> for usize {
-    fn from(value: EmptyOutputIndex) -> Self {
-        Self::from(value.0)
-    }
-}
-impl From<usize> for EmptyOutputIndex {
+
+impl From<usize> for EmptyAddressIndex {
     fn from(value: usize) -> Self {
         Self(TypeIndex::from(value))
     }
 }
-impl Add<usize> for EmptyOutputIndex {
+
+impl From<EmptyAddressIndex> for usize {
+    fn from(value: EmptyAddressIndex) -> Self {
+        usize::from(value.0)
+    }
+}
+
+impl Add<usize> for EmptyAddressIndex {
     type Output = Self;
     fn add(self, rhs: usize) -> Self::Output {
         Self(self.0 + rhs)
     }
 }
-impl CheckedSub<EmptyOutputIndex> for EmptyOutputIndex {
+impl CheckedSub<EmptyAddressIndex> for EmptyAddressIndex {
     fn checked_sub(self, rhs: Self) -> Option<Self> {
         self.0.checked_sub(rhs.0).map(Self)
     }
 }
-impl Printable for EmptyOutputIndex {
+impl Printable for EmptyAddressIndex {
     fn to_string() -> &'static str {
-        "emptyoutputindex"
+        "emptyaddressindex"
     }
 
     fn to_possible_strings() -> &'static [&'static str] {
-        &["emptyout", "emptyoutputindex"]
+        &["emptyaddr", "emptyaddressindex"]
     }
 }
