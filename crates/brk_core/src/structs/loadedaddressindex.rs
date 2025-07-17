@@ -1,5 +1,6 @@
 use std::ops::Add;
 
+use derive_deref::Deref;
 use serde::Serialize;
 use zerocopy_derive::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
@@ -13,6 +14,7 @@ use crate::{CheckedSub, Printable, TypeIndex};
     Ord,
     Clone,
     Copy,
+    Deref,
     Default,
     FromBytes,
     Immutable,
@@ -36,6 +38,11 @@ impl From<usize> for LoadedAddressIndex {
 impl From<LoadedAddressIndex> for usize {
     fn from(value: LoadedAddressIndex) -> Self {
         usize::from(value.0)
+    }
+}
+impl From<LoadedAddressIndex> for u32 {
+    fn from(value: LoadedAddressIndex) -> Self {
+        u32::from(value.0)
     }
 }
 impl Add<usize> for LoadedAddressIndex {

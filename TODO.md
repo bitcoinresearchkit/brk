@@ -10,8 +10,12 @@
     - pull latest version and notify is out of date
   - _computer_
     - **add rollback of states (in stateful)**
+    - remove configurable format (raw/compressed) and chose sane ones instead
+      - linear reads: compressed (height/date/... + txindex_to_height + txindex_to_version + ...)
+      - random reads: raw (outputindex_to_value + ...)
+    - add prices paid by percentile (percentile cost basis) back
     - add support for per index computation
-    - fix feerate which is always ZERO due to coinbase transaction
+    - fix min feerate which is always ZERO due to coinbase transaction
     - before computing multiple sources check their length, panic if not equal
     - add oracle price dataset (https://utxo.live/oracle/UTXOracle.py)
     - add address counts relative to all datasets

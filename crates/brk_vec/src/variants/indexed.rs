@@ -39,6 +39,30 @@ where
     }
 
     #[inline]
+    pub fn update_or_push(&mut self, index: I, value: T) -> Result<()> {
+        self.0.update_or_push(index, value)
+    }
+
+    #[inline]
+    pub fn checked_push(&mut self, index: I, value: T) -> Result<()> {
+        let len = self.0.len();
+        match len.cmp(&index.to_usize()?) {
+            Ordering::Greater => {
+                dbg!(index, value, len, self.0.header());
+                Err(Error::IndexTooLow)
+            }
+            Ordering::Equal => {
+                self.0.push(value);
+                Ok(())
+            }
+            Ordering::Less => {
+                dbg!(index, value, len, self.0.header());
+                Err(Error::IndexTooHigh)
+            }
+        }
+    }
+
+    #[inline]
     pub fn push_if_needed(&mut self, index: I, value: T) -> Result<()> {
         let len = self.0.len();
         match len.cmp(&index.to_usize()?) {
@@ -56,6 +80,23 @@ where
                 Err(Error::IndexTooHigh)
             }
         }
+    }
+
+    #[inline]
+    pub fn fill_first_hole_or_push(&mut self, value: T) -> Result<I> {
+        self.0.fill_first_hole_or_push(value)
+    }
+
+    pub fn update(&mut self, index: I, value: T) -> Result<()> {
+        self.0.update(index, value)
+    }
+
+    pub fn take(&mut self, index: I, mmap: &Mmap) -> Result<Option<T>> {
+        self.0.take(index, mmap)
+    }
+
+    pub fn delete(&mut self, index: I) {
+        self.0.delete(index)
     }
 
     fn update_height(&mut self, height: Height) {

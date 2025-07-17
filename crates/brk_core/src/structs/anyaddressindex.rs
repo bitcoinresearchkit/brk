@@ -19,6 +19,21 @@ impl AnyAddressIndex {
     }
 }
 
+impl From<LoadedAddressIndex> for AnyAddressIndex {
+    fn from(value: LoadedAddressIndex) -> Self {
+        if u32::from(value) >= MIN_EMPTY_INDEX {
+            panic!("")
+        }
+        Self(*value)
+    }
+}
+
+impl From<EmptyAddressIndex> for AnyAddressIndex {
+    fn from(value: EmptyAddressIndex) -> Self {
+        Self(*value + MIN_EMPTY_INDEX)
+    }
+}
+
 impl Serialize for AnyAddressIndex {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
@@ -38,9 +53,7 @@ impl From<AnyAddressIndex> for AnyAddressDataIndexEnum {
     fn from(value: AnyAddressIndex) -> Self {
         let uvalue = u32::from(value.0);
         if uvalue >= MIN_EMPTY_INDEX {
-            Self::Empty(EmptyAddressIndex::from(TypeIndex::from(
-                uvalue - MIN_EMPTY_INDEX,
-            )))
+            Self::Empty(EmptyAddressIndex::from(uvalue - MIN_EMPTY_INDEX))
         } else {
             Self::Loaded(LoadedAddressIndex::from(value.0))
         }

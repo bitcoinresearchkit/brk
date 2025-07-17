@@ -1,2 +1,1 @@
-cargo build --profile profiling
-flamegraph -- ../../target/profiling/brk
+sudo cargo flamegraph --profile profiling --root

@@ -1,7 +1,6 @@
 use std::{path::Path, thread};
 
 use brk_computer::Computer;
-use brk_core::{default_bitcoin_path, default_brk_path};
 use brk_exit::Exit;
 use brk_fetcher::Fetcher;
 use brk_indexer::Indexer;
@@ -13,7 +12,7 @@ pub fn main() -> color_eyre::Result<()> {
 
     brk_logger::init(Some(Path::new(".log")));
 
-    // let bitcoin_dir = default_bitcoin_path();
+    // let bitcoin_dir = brk_core::default_bitcoin_path();
     let bitcoin_dir = Path::new("/Volumes/WD_BLACK/bitcoin");
 
     let rpc = Box::leak(Box::new(bitcoincore_rpc::Client::new(
@@ -26,7 +25,11 @@ pub fn main() -> color_eyre::Result<()> {
     thread::Builder::new()
         .stack_size(256 * 1024 * 1024)
         .spawn(move || -> color_eyre::Result<()> {
-            let parser = Parser::new(bitcoin_dir.join("blocks"), default_brk_path(), rpc);
+            let parser = Parser::new(
+                bitcoin_dir.join("blocks"),
+                brk_core::default_brk_path(),
+                rpc,
+            );
 
             let _outputs_dir = Path::new("/Volumes/WD_BLACK/brk").join("outputs");
             let outputs_dir = _outputs_dir.as_path();

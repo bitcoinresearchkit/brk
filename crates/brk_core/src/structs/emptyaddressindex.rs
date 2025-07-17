@@ -1,5 +1,6 @@
 use std::ops::Add;
 
+use derive_deref::Deref;
 use serde::Serialize;
 use zerocopy_derive::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
@@ -7,13 +8,14 @@ use crate::{CheckedSub, Printable, TypeIndex};
 
 #[derive(
     Debug,
+    Default,
+    Clone,
+    Copy,
     PartialEq,
     Eq,
     PartialOrd,
     Ord,
-    Clone,
-    Copy,
-    Default,
+    Deref,
     FromBytes,
     Immutable,
     IntoBytes,
@@ -30,6 +32,11 @@ impl From<TypeIndex> for EmptyAddressIndex {
 
 impl From<usize> for EmptyAddressIndex {
     fn from(value: usize) -> Self {
+        Self(TypeIndex::from(value))
+    }
+}
+impl From<u32> for EmptyAddressIndex {
+    fn from(value: u32) -> Self {
         Self(TypeIndex::from(value))
     }
 }

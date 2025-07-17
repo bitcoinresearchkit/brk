@@ -1,3 +1,5 @@
+#![doc = include_str!("../README.md")]
+
 use std::{fs, thread};
 
 use brk_core::{dot_brk_log_path, dot_brk_path};

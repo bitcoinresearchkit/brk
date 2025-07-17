@@ -1,5 +1,6 @@
 use std::{
     borrow::Cow,
+    cmp::Ordering,
     collections::{BTreeMap, BTreeSet},
     fs::{self, File, OpenOptions},
     io::{self, Seek, SeekFrom, Write},
@@ -85,19 +86,67 @@ where
         self.mut_pushed().push(value)
     }
 
+    #[inline]
+    fn update_or_push(&mut self, index: I, value: T) -> Result<()> {
+        let len = self.len();
+        match len.cmp(&index.to_usize()?) {
+            Ordering::Less => {
+                dbg!(index, value, len, self.header());
+                Err(Error::IndexTooHigh)
+            }
+            Ordering::Equal => {
+                self.push(value);
+                Ok(())
+            }
+            Ordering::Greater => self.update(index, value),
+        }
+    }
+
+    fn get_first_empty_index(&self) -> I {
+        self.holes()
+            .first()
+            .cloned()
+            .unwrap_or_else(|| self.len_())
+            .into()
+    }
+
+    #[inline]
+    fn fill_first_hole_or_push(&mut self, value: T) -> Result<I> {
+        Ok(
+            if let Some(hole) = self.mut_holes().pop_first().map(I::from) {
+                self.update(hole, value)?;
+                hole
+            } else {
+                self.push(value);
+                I::from(self.len() - 1)
+            },
+        )
+    }
+
     fn holes(&self) -> &BTreeSet<usize>;
     fn mut_holes(&mut self) -> &mut BTreeSet<usize>;
     fn take(&mut self, index: I, mmap: &Mmap) -> Result<Option<T>> {
         let opt = self.get_or_read(index, mmap)?.map(|v| v.into_owned());
         if opt.is_some() {
-            let uindex = index.unwrap_to_usize();
-            let updated = self.mut_updated();
-            if !updated.is_empty() {
-                updated.remove(&uindex);
-            }
-            self.mut_holes().insert(uindex);
+            self.unchecked_delete(index);
         }
         Ok(opt)
+    }
+    #[inline]
+    fn delete(&mut self, index: I) {
+        if index.unwrap_to_usize() < self.len() {
+            self.unchecked_delete(index);
+        }
+    }
+    #[inline]
+    #[doc(hidden)]
+    fn unchecked_delete(&mut self, index: I) {
+        let uindex = index.unwrap_to_usize();
+        let updated = self.mut_updated();
+        if !updated.is_empty() {
+            updated.remove(&uindex);
+        }
+        self.mut_holes().insert(uindex);
     }
 
     fn updated(&self) -> &BTreeMap<usize, T>;
