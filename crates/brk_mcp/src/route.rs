@@ -1,6 +1,6 @@
 use axum::Router;
 use brk_interface::Interface;
-use brk_rmcp::transport::{
+use rmcp::transport::{
     StreamableHttpServerConfig,
     streamable_http_server::{StreamableHttpService, session::local::LocalSessionManager},
 };
@@ -22,15 +22,13 @@ where
             return self;
         }
 
-        let config = StreamableHttpServerConfig {
-            // stateful_mode: false, // breaks Claude
-            ..Default::default()
-        };
-
         let service = StreamableHttpService::new(
             move || Ok(MCP::new(interface)),
             LocalSessionManager::default().into(),
-            config,
+            StreamableHttpServerConfig {
+                // stateful_mode: false, // breaks Claude
+                ..Default::default()
+            },
         );
 
         info!("Setting MCP...");
