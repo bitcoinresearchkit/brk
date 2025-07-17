@@ -15,12 +15,11 @@ pub enum GroupFilter {
 impl GroupFilter {
     pub fn contains(&self, value: usize) -> bool {
         match self {
-            GroupFilter::All => true,
+            GroupFilter::Range(r) => r.contains(&value),
             GroupFilter::LowerThan(max) => *max > value,
             GroupFilter::GreaterOrEqual(min) => *min <= value,
-            GroupFilter::Range(r) => r.contains(&value),
-            GroupFilter::Epoch(_) => false,
-            GroupFilter::Type(_) => false,
+            GroupFilter::All => true,
+            GroupFilter::Epoch(_) | GroupFilter::Type(_) => false,
         }
     }
 
@@ -28,24 +27,22 @@ impl GroupFilter {
         match self {
             GroupFilter::All => true,
             GroupFilter::LowerThan(max) => match other {
-                GroupFilter::All => false,
                 GroupFilter::LowerThan(max2) => max >= max2,
                 GroupFilter::Range(range) => range.end <= *max,
-                GroupFilter::GreaterOrEqual(_) => false,
-                GroupFilter::Epoch(_) => false,
-                GroupFilter::Type(_) => false,
+                GroupFilter::All
+                | GroupFilter::GreaterOrEqual(_)
+                | GroupFilter::Epoch(_)
+                | GroupFilter::Type(_) => false,
             },
             GroupFilter::GreaterOrEqual(min) => match other {
-                GroupFilter::All => false,
-                GroupFilter::LowerThan(_) => false,
                 GroupFilter::Range(range) => range.start >= *min,
                 GroupFilter::GreaterOrEqual(min2) => min <= min2,
-                GroupFilter::Epoch(_) => false,
-                GroupFilter::Type(_) => false,
+                GroupFilter::All
+                | GroupFilter::LowerThan(_)
+                | GroupFilter::Epoch(_)
+                | GroupFilter::Type(_) => false,
             },
-            GroupFilter::Range(_) => false,
-            GroupFilter::Epoch(_) => false,
-            GroupFilter::Type(_) => false,
+            GroupFilter::Range(_) | GroupFilter::Epoch(_) | GroupFilter::Type(_) => false,
         }
     }
 }
