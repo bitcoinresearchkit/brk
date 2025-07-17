@@ -4,14 +4,14 @@
 // #![doc = "```"]
 
 use brk_interface::{IdParam, Interface, PaginatedIndexParam, PaginationParam, Params};
-use brk_rmcp::{
-    Error as McpError, RoleServer, ServerHandler,
+use log::info;
+use rmcp::{
+    ErrorData as McpError, RoleServer, ServerHandler,
     handler::server::{router::tool::ToolRouter, tool::Parameters},
     model::*,
     service::RequestContext,
     tool, tool_handler, tool_router,
 };
-use log::info;
 
 pub mod route;
 
