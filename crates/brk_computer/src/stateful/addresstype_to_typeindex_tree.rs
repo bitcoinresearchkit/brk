@@ -29,10 +29,6 @@ impl<T> AddressTypeToTypeIndexTree<T> {
             mem::swap(own, other);
         }
     }
-
-    pub fn unwrap(self) -> ByAddressType<BTreeMap<TypeIndex, T>> {
-        self.0
-    }
 }
 
 impl<T> Default for AddressTypeToTypeIndexTree<T> {

@@ -14,11 +14,7 @@ pub fn run() -> color_eyre::Result<()> {
 
     let rpc = config.rpc()?;
     let exit = Exit::new();
-    let parser = brk_parser::Parser::new(
-        config.blocksdir(),
-        config.brkdir(),
-        rpc,
-    );
+    let parser = brk_parser::Parser::new(config.blocksdir(), config.brkdir(), rpc);
 
     let format = config.format();
 
@@ -59,7 +55,8 @@ pub fn run() -> color_eyre::Result<()> {
 
             let watch = config.watch();
             let mcp = config.mcp();
-            let server_handle = tokio::spawn(async move {
+
+            tokio::spawn(async move {
                 server.serve(watch, mcp).await.unwrap();
             });
 

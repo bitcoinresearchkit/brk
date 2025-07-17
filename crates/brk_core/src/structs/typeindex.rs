@@ -73,6 +73,12 @@ impl From<TypeIndex> for usize {
     }
 }
 
+impl Add<u32> for TypeIndex {
+    type Output = Self;
+    fn add(self, rhs: u32) -> Self::Output {
+        Self(self.0 + rhs)
+    }
+}
 impl Add<usize> for TypeIndex {
     type Output = Self;
     fn add(self, rhs: usize) -> Self::Output {
