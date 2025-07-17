@@ -55,7 +55,7 @@ use range_map::*;
 use r#trait::*;
 pub use withaddressdatasource::WithAddressDataSource;
 
-const VERSION: Version = Version::new(19);
+const VERSION: Version = Version::new(21);
 
 #[derive(Clone)]
 pub struct Vecs {

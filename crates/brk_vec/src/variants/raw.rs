@@ -56,6 +56,10 @@ where
             | Err(Error::DifferentVersion { .. }) => {
                 let path = Self::path_(parent, name);
                 fs::remove_file(path)?;
+                let holes_path = Self::holes_path_(parent, name);
+                if fs::exists(&holes_path)? {
+                    fs::remove_file(holes_path)?;
+                }
                 Self::import(parent, name, version)
             }
             _ => res,
@@ -97,19 +101,18 @@ where
             0
         };
 
-        let mut has_stored_holes = false;
         let holes_path = Self::holes_path_(parent, name);
         let holes = if fs::exists(&holes_path)? {
-            has_stored_holes = true;
-            let bytes = fs::read(&holes_path)?;
-            bytes
-                .chunks(size_of::<usize>())
-                .map(|b| -> Result<usize> {
-                    Ok(usize::from_ne_bytes(brk_core::copy_first_8bytes(b)?))
-                })
-                .collect::<Result<BTreeSet<usize>>>()?
+            Some(
+                fs::read(&holes_path)?
+                    .chunks(size_of::<usize>())
+                    .map(|b| -> Result<usize> {
+                        Ok(usize::from_ne_bytes(brk_core::copy_first_8bytes(b)?))
+                    })
+                    .collect::<Result<BTreeSet<usize>>>()?,
+            )
         } else {
-            BTreeSet::new()
+            None
         };
 
         Ok(Self {
@@ -117,8 +120,8 @@ where
             name: Box::leak(Box::new(name.to_string())),
             parent: parent.to_owned(),
             pushed: vec![],
-            has_stored_holes,
-            holes,
+            has_stored_holes: holes.is_some(),
+            holes: holes.unwrap_or_default(),
             updated: BTreeMap::new(),
             local_stored_len: Some(stored_len),
             shared_stored_len: Arc::new(AtomicUsize::new(stored_len)),
@@ -278,6 +281,7 @@ where
         if has_holes || had_holes {
             let holes_path = self.holes_path();
             if has_holes {
+                self.has_stored_holes = true;
                 fs::write(
                     &holes_path,
                     self.holes
@@ -286,6 +290,7 @@ where
                         .collect::<Vec<_>>(),
                 )?;
             } else if had_holes {
+                self.has_stored_holes = false;
                 let _ = fs::remove_file(&holes_path);
             }
         }

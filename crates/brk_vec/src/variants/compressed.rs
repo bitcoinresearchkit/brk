@@ -59,8 +59,6 @@ where
 
     #[allow(unreachable_code, unused_variables)]
     pub fn import(parent: &Path, name: &str, version: Version) -> Result<Self> {
-        panic!("Compressed vecs are a work in progress right now, please use raw vecs instead");
-
         let mut inner = RawVec::import(parent, name, version)?;
 
         let pages_meta = {
@@ -220,6 +218,22 @@ where
     #[inline]
     fn path(&self) -> PathBuf {
         self.inner.path()
+    }
+
+    fn delete(&mut self, _: I) {
+        panic!("unsupported")
+    }
+
+    fn unchecked_delete(&mut self, _: I) {
+        panic!("unsupported")
+    }
+
+    fn fill_first_hole_or_push(&mut self, _: T) -> Result<I> {
+        panic!("unsupported")
+    }
+
+    fn update(&mut self, _: I, _: T) -> Result<()> {
+        panic!("unsupported")
     }
 
     fn flush(&mut self) -> Result<()> {
