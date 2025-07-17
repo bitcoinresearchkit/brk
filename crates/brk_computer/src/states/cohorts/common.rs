@@ -223,17 +223,15 @@ impl CohortState {
         let update_state =
             |price: Dollars, current_price: Dollars, sats: Sats, state: &mut UnrealizedState| {
                 match price.cmp(&current_price) {
-                    Ordering::Equal => {
-                        state.supply_even += sats;
-                    }
                     Ordering::Less => {
                         state.supply_in_profit += sats;
                         if price > Dollars::ZERO && current_price > Dollars::ZERO {
                             let diff = current_price.checked_sub(price).unwrap();
-                            if diff <= Dollars::ZERO {
-                                dbg!(price, current_price, diff, sats);
-                                panic!();
-                            }
+                            // Add back once in a while to verify, but generally not needed
+                            // if diff <= Dollars::ZERO {
+                            //     dbg!(price, current_price, diff, sats);
+                            //     panic!();
+                            // }
                             state.unrealized_profit += diff * sats;
                         }
                     }
@@ -241,12 +239,16 @@ impl CohortState {
                         state.supply_in_loss += sats;
                         if price > Dollars::ZERO && current_price > Dollars::ZERO {
                             let diff = price.checked_sub(current_price).unwrap();
-                            if diff <= Dollars::ZERO {
-                                dbg!(price, current_price, diff, sats);
-                                panic!();
-                            }
+                            // Add back once in a while to verify, but generally not needed
+                            // if diff <= Dollars::ZERO {
+                            //     dbg!(price, current_price, diff, sats);
+                            //     panic!();
+                            // }
                             state.unrealized_loss += diff * sats;
                         }
+                    }
+                    Ordering::Equal => {
+                        state.supply_even += sats;
                     }
                 }
             };

@@ -1506,13 +1506,16 @@ impl Vecs {
         let last_timestamp = chain_state.last().unwrap().timestamp;
         let current_price = chain_state.last().unwrap().price;
 
+        let chain_state_len = chain_state.len();
+
         height_to_sent.into_iter().for_each(|(height, sent)| {
             chain_state[height.unwrap_to_usize()].supply -= &sent.spendable_supply;
 
             let block_state = chain_state.get(height.unwrap_to_usize()).unwrap();
+
             let prev_price = block_state.price;
 
-            let blocks_old = chain_state.len() - 1 - height.unwrap_to_usize();
+            let blocks_old = chain_state_len - 1 - height.unwrap_to_usize();
 
             let days_old = last_timestamp.difference_in_days_between(block_state.timestamp);
             let days_old_float =
