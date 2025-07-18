@@ -8,6 +8,14 @@ pub struct AddressGroups<T> {
 }
 
 impl<T> AddressGroups<T> {
+    pub fn as_boxed_mut_vecs(&mut self) -> Vec<Box<[&mut T]>> {
+        vec![
+            Box::new(self.ge_amount.as_mut_vec()),
+            Box::new(self.amount_range.as_mut_vec()),
+            Box::new(self.lt_amount.as_mut_vec()),
+        ]
+    }
+
     pub fn as_mut_vecs(&mut self) -> Vec<&mut T> {
         self.ge_amount
             .as_mut_vec()

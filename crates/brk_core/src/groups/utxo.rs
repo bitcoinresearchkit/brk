@@ -18,6 +18,21 @@ pub struct UTXOGroups<T> {
 }
 
 impl<T> UTXOGroups<T> {
+    pub fn as_boxed_mut_vecs(&mut self) -> Vec<Box<[&mut T]>> {
+        vec![
+            Box::new([&mut self.all]),
+            Box::new(self.term.as_mut_vec()),
+            Box::new(self.max_age.as_mut_vec()),
+            Box::new(self.min_age.as_mut_vec()),
+            Box::new(self.ge_amount.as_mut_vec()),
+            Box::new(self.age_range.as_mut_vec()),
+            Box::new(self.epoch.as_mut_vec()),
+            Box::new(self.amount_range.as_mut_vec()),
+            Box::new(self.lt_amount.as_mut_vec()),
+            Box::new(self._type.as_mut_vec()),
+        ]
+    }
+
     pub fn as_mut_vecs(&mut self) -> Vec<&mut T> {
         [&mut self.all]
             .into_iter()

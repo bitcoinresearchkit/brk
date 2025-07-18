@@ -1,16 +1,17 @@
-use std::path::Path;
+use std::{path::Path, time::Instant};
 
 use brk_core::{
-    AddressGroups, ByAmountRange, ByGreatEqualAmount, ByLowerThanAmount, GroupFilter, Height,
-    Result, Version,
+    AddressGroups, Bitcoin, ByAmountRange, ByGreatEqualAmount, ByLowerThanAmount, DateIndex,
+    Dollars, GroupFilter, Height, Result, Version,
 };
 use brk_exit::Exit;
-use brk_vec::{Computation, Format};
+use brk_indexer::Indexer;
+use brk_vec::{AnyIterableVec, Computation, Format};
 use derive_deref::{Deref, DerefMut};
 use rayon::prelude::*;
 
 use crate::{
-    Indexes, fetched, indexes,
+    Indexes, fetched, indexes, market,
     stateful::{
         address_cohort,
         r#trait::{CohortVecs, DynCohortVecs},
@@ -540,6 +541,55 @@ impl Vecs {
         .try_for_each(|(vecs, stateful)| {
             vecs.compute_from_stateful(starting_indexes, &stateful, exit)
         })
+    }
+
+    pub fn compute_rest_part1(
+        &mut self,
+        indexer: &Indexer,
+        indexes: &indexes::Vecs,
+        fetched: Option<&fetched::Vecs>,
+        starting_indexes: &Indexes,
+        exit: &Exit,
+    ) -> color_eyre::Result<()> {
+        self.as_mut_vecs().into_par_iter().try_for_each(|(_, v)| {
+            v.compute_rest_part1(indexer, indexes, fetched, starting_indexes, exit)
+        })
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    pub fn compute_rest_part2(
+        &mut self,
+        indexer: &Indexer,
+        indexes: &indexes::Vecs,
+        fetched: Option<&fetched::Vecs>,
+        starting_indexes: &Indexes,
+        market: &market::Vecs,
+        height_to_supply: &impl AnyIterableVec<Height, Bitcoin>,
+        dateindex_to_supply: &impl AnyIterableVec<DateIndex, Bitcoin>,
+        height_to_realized_cap: Option<&impl AnyIterableVec<Height, Dollars>>,
+        dateindex_to_realized_cap: Option<&impl AnyIterableVec<DateIndex, Dollars>>,
+        exit: &Exit,
+    ) -> color_eyre::Result<()> {
+        self.0
+            .as_boxed_mut_vecs()
+            .into_iter()
+            .try_for_each(|mut v| {
+                unsafe { libc::sync() }
+                v.par_iter_mut().try_for_each(|(_, v)| {
+                    v.compute_rest_part2(
+                        indexer,
+                        indexes,
+                        fetched,
+                        starting_indexes,
+                        market,
+                        height_to_supply,
+                        dateindex_to_supply,
+                        height_to_realized_cap,
+                        dateindex_to_realized_cap,
+                        exit,
+                    )
+                })
+            })
     }
 
     pub fn safe_flush_stateful_vecs(&mut self, height: Height, exit: &Exit) -> Result<()> {
