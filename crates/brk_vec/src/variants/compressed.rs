@@ -204,7 +204,7 @@ where
     }
     #[inline]
     fn mut_holes(&mut self) -> &mut BTreeSet<usize> {
-        self.inner.mut_holes()
+        panic!("unsupported")
     }
     #[inline]
     fn updated(&self) -> &BTreeMap<usize, T> {
@@ -212,28 +212,12 @@ where
     }
     #[inline]
     fn mut_updated(&mut self) -> &mut BTreeMap<usize, T> {
-        self.inner.mut_updated()
+        panic!("unsupported")
     }
 
     #[inline]
     fn path(&self) -> PathBuf {
         self.inner.path()
-    }
-
-    fn delete(&mut self, _: I) {
-        panic!("unsupported")
-    }
-
-    fn unchecked_delete(&mut self, _: I) {
-        panic!("unsupported")
-    }
-
-    fn fill_first_hole_or_push(&mut self, _: T) -> Result<I> {
-        panic!("unsupported")
-    }
-
-    fn update(&mut self, _: I, _: T) -> Result<()> {
-        panic!("unsupported")
     }
 
     fn flush(&mut self) -> Result<()> {
