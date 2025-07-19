@@ -1,4 +1,4 @@
-use std::{borrow::Cow, marker::PhantomData};
+use std::borrow::Cow;
 
 use brk_core::{Result, Version};
 
@@ -27,7 +27,6 @@ where
     source2: BoxedAnyIterableVec<S2I, S2T>,
     source3: BoxedAnyIterableVec<S3I, S3T>,
     compute: ComputeFrom3<I, T, S1I, S1T, S2I, S2T, S3I, S3T>,
-    phantom: PhantomData<I>,
 }
 
 impl<I, T, S1I, S1T, S2I, S2T, S3I, S3T> LazyVecFrom3<I, T, S1I, S1T, S2I, S2T, S3I, S3T>
@@ -69,7 +68,6 @@ where
             source2,
             source3,
             compute,
-            phantom: PhantomData,
         }
     }
 
