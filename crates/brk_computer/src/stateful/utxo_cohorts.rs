@@ -1,4 +1,4 @@
-use std::{collections::BTreeMap, ops::ControlFlow, path::Path, time::Instant};
+use std::{collections::BTreeMap, ops::ControlFlow, path::Path};
 
 use brk_core::{
     Bitcoin, ByAgeRange, ByAmountRange, ByEpoch, ByGreatEqualAmount, ByLowerThanAmount, ByMaxAge,

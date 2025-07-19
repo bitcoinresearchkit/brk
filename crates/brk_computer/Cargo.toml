@@ -22,7 +22,7 @@ brk_vec = { workspace = true }
 color-eyre = { workspace = true }
 derive_deref = { workspace = true }
 fjall = { workspace = true }
-libc = "0.2.174"
+libc = { workspace = true }
 log = { workspace = true }
 rayon = { workspace = true }
 serde = { workspace = true }

@@ -761,6 +761,8 @@ impl Indexer {
 
         export_if_needed(stores, vecs, idxs.height, true, exit)?;
 
+        unsafe { libc::sync() }
+
         Ok(starting_indexes)
     }
 }

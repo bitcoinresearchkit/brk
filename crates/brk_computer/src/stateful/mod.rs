@@ -1,4 +1,4 @@
-use std::{cmp::Ordering, collections::BTreeMap, mem, path::Path, thread, time::Instant};
+use std::{cmp::Ordering, collections::BTreeMap, mem, path::Path, thread};
 
 use brk_core::{
     AnyAddressDataIndexEnum, AnyAddressIndex, ByAddressType, ByAnyAddress, CheckedSub, DateIndex,
@@ -531,6 +531,8 @@ impl Vecs {
         starting_indexes: &mut Indexes,
         exit: &Exit,
     ) -> color_eyre::Result<()> {
+        unsafe { libc::sync() }
+
         let height_to_first_outputindex = &indexer.vecs.height_to_first_outputindex;
         let height_to_first_inputindex = &indexer.vecs.height_to_first_inputindex;
         let height_to_first_p2aaddressindex = &indexer.vecs.height_to_first_p2aaddressindex;
@@ -1265,6 +1267,10 @@ impl Vecs {
             exit.block();
         }
 
+        unsafe { libc::sync() }
+
+        // return Ok(());
+
         info!("Computing overlapping...");
 
         self.utxo_cohorts
@@ -1346,6 +1352,8 @@ impl Vecs {
 
         self.utxo_cohorts
             .compute_rest_part1(indexer, indexes, fetched, starting_indexes, exit)?;
+
+        unsafe { libc::sync() }
 
         self.address_cohorts.compute_rest_part1(
             indexer,
