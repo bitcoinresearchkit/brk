@@ -178,15 +178,15 @@ impl Vecs {
             exit,
         )?;
 
-        // self.cointime.compute(
-        //     indexer,
-        //     &self.indexes,
-        //     &starting_indexes,
-        //     self.fetched.as_ref(),
-        //     &self.transactions,
-        //     &self.stateful,
-        //     exit,
-        // )?;
+        self.cointime.compute(
+            indexer,
+            &self.indexes,
+            &starting_indexes,
+            self.fetched.as_ref(),
+            &self.transactions,
+            &self.stateful,
+            exit,
+        )?;
 
         Ok(())
     }
