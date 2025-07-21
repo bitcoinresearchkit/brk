@@ -26,3 +26,6 @@ _*
 profile.json.gz
 flamegraph.svg
 *.trace
+
+# AI
+CLAUDE.md

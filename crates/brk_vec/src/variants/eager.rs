@@ -49,17 +49,8 @@ where
     }
 
     fn safe_truncate_if_needed(&mut self, index: I, exit: &Exit) -> Result<()> {
-        if exit.triggered() {
-            return Ok(());
-        }
-        let blocked = exit.blocked();
-        if !blocked {
-            exit.block();
-        }
+        let _lock = exit.lock();
         self.0.truncate_if_needed(index)?;
-        if !blocked {
-            exit.release();
-        }
         Ok(())
     }
 
@@ -85,17 +76,8 @@ where
     }
 
     pub fn safe_flush(&mut self, exit: &Exit) -> Result<()> {
-        if exit.triggered() {
-            return Ok(());
-        }
-        let blocked = exit.blocked();
-        if !blocked {
-            exit.block();
-        }
+        let _lock = exit.lock();
         self.0.flush()?;
-        if !blocked {
-            exit.release();
-        }
         Ok(())
     }
 

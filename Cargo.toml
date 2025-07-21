@@ -41,6 +41,7 @@ brk_parser = { version = "0.0.81", path = "crates/brk_parser" }
 brk_server = { version = "0.0.81", path = "crates/brk_server" }
 brk_store = { version = "0.0.81", path = "crates/brk_store" }
 brk_vec = { version = "0.0.81", path = "crates/brk_vec" }
+brk_vecs = { version = "0.0.81", path = "crates/brk_vecs" }
 byteview = "=0.6.1"
 clap = { version = "4.5.41", features = ["string"] }
 clap_derive = "4.5.41"
@@ -51,6 +52,7 @@ jiff = "0.2.15"
 libc = "0.2.174"
 log = { version = "0.4.27" }
 minreq = { version = "2.14.0", features = ["https", "serde_json"] }
+parking_lot = "0.12.4"
 rayon = "1.10.0"
 rmcp = { version = "0.3.0", features = [
     "transport-worker",

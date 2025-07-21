@@ -11,3 +11,4 @@ repository.workspace = true
 brk_logger = { workspace = true }
 ctrlc = { version = "3.4.7", features = ["termination"] }
 log = { workspace = true }
+parking_lot = { workspace = true }

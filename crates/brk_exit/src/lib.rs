@@ -3,69 +3,34 @@
 #![doc = include_str!("../examples/main.rs")]
 #![doc = "```"]
 
-use std::{
-    process::exit,
-    sync::{
-        Arc,
-        atomic::{AtomicBool, Ordering},
-    },
-    thread::sleep,
-    time::Duration,
-};
+use std::{process::exit, sync::Arc};
 
 use log::info;
+use parking_lot::{RwLock, RwLockReadGuard};
 
 #[derive(Default, Clone)]
-pub struct Exit {
-    blocking: Arc<AtomicBool>,
-    triggered: Arc<AtomicBool>,
-}
+pub struct Exit(Arc<RwLock<()>>);
 
 impl Exit {
     pub fn new() -> Self {
-        let s = Self {
-            triggered: Arc::new(AtomicBool::new(false)),
-            blocking: Arc::new(AtomicBool::new(false)),
-        };
+        let arc = Arc::new(RwLock::new(()));
 
-        let triggered = s.triggered.clone();
-
-        let blocking = s.blocking.clone();
-        let is_blocking = move || blocking.load(Ordering::SeqCst);
+        let copy = arc.clone();
 
         ctrlc::set_handler(move || {
-            info!("Exitting...");
-
-            triggered.store(true, Ordering::SeqCst);
-
-            if is_blocking() {
+            if copy.is_locked() {
                 info!("Waiting to exit safely...");
-
-                while is_blocking() {
-                    sleep(Duration::from_millis(50));
-                }
             }
-
+            let _lock = copy.write();
+            info!("Exiting...");
             exit(0);
         })
         .expect("Error setting Ctrl-C handler");
 
-        s
+        Self(arc)
     }
 
-    pub fn block(&self) {
-        self.blocking.store(true, Ordering::SeqCst);
-    }
-
-    pub fn blocked(&self) -> bool {
-        self.blocking.load(Ordering::SeqCst)
-    }
-
-    pub fn release(&self) {
-        self.blocking.store(false, Ordering::SeqCst);
-    }
-
-    pub fn triggered(&self) -> bool {
-        self.triggered.load(Ordering::SeqCst)
+    pub fn lock(&self) -> RwLockReadGuard<'_, ()> {
+        self.0.read()
     }
 }

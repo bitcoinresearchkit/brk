@@ -35,7 +35,8 @@ pub enum Error {
     WrongAddressType,
     UnindexableDate,
 
-    String(&'static str),
+    Str(&'static str),
+    String(String),
 }
 
 impl From<time::SystemTimeError> for Error {
@@ -134,6 +135,7 @@ impl fmt::Display for Error {
                 "Date cannot be indexed, must be 2009-01-03, 2009-01-09 or greater"
             ),
 
+            Error::Str(s) => write!(f, "{s}"),
             Error::String(s) => write!(f, "{s}"),
         }
     }
