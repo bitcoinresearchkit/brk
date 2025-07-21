@@ -44,7 +44,7 @@ impl LoadedAddressData {
 
     pub fn send(&mut self, amount: Sats, previous_price: Option<Dollars>) -> Result<()> {
         if self.amount() < amount {
-            return Err(Error::String("Previous_amount smaller than sent amount"));
+            return Err(Error::Str("Previous_amount smaller than sent amount"));
         }
         self.sent += amount;
         self.outputs_len -= 1;

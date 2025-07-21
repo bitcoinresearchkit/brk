@@ -747,9 +747,10 @@ impl Vecs {
             separate_address_vecs
                 .par_iter_mut()
                 .try_for_each(|(_, v)| v.state.reset_price_to_amount())?;
-        }
+        };
 
         let last_height = indexer.vecs.height_to_blockhash.height();
+
         if starting_height <= last_height {
             let inputindex_to_outputindex_mmap = inputindex_to_outputindex.create_mmap()?;
             let outputindex_to_value_mmap = outputindex_to_value.create_mmap()?;
@@ -1237,7 +1238,7 @@ impl Vecs {
                     if height != Height::ZERO && height.unwrap_to_usize() % 10_000 == 0 {
                         info!("Flushing...");
 
-                        exit.block();
+                        let _lock = exit.lock();
 
                         self.flush_states(height, &chain_state, mem::take(&mut addresstype_to_typeindex_to_loadedaddressdata), mem::take(&mut addresstype_to_typeindex_to_emptyaddressdata), exit)?;
 
@@ -1245,14 +1246,12 @@ impl Vecs {
                             &mut addresstypeindex_to_anyaddressindex_mmap_opt,
                             &mut anyaddressindex_to_anyaddressdata_mmap_opt,
                         );
-
-                        exit.release();
                     }
 
                     Ok(())
                 })?;
 
-            exit.block();
+            let _lock = exit.lock();
 
             info!("Flushing...");
 
@@ -1263,8 +1262,6 @@ impl Vecs {
                 mem::take(&mut addresstype_to_typeindex_to_emptyaddressdata),
                 exit,
             )?;
-        } else {
-            exit.block();
         }
 
         unsafe { libc::sync() }
@@ -1419,8 +1416,6 @@ impl Vecs {
         )?;
 
         unsafe { libc::sync() }
-
-        exit.release();
 
         Ok(())
     }

@@ -8,7 +8,7 @@ fn main() {
 
     brk_logger::init(Some(Path::new(".log")));
 
-    exit.block();
+    let lock = exit.lock();
 
     let mut i = 0;
     while i < 21 {
@@ -17,7 +17,7 @@ fn main() {
         i += 1;
     }
 
-    exit.release();
+    drop(lock);
 
     let mut j = 0;
     while j < 10 {

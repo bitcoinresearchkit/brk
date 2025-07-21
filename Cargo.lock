@@ -583,6 +583,7 @@ dependencies = [
  "brk_logger",
  "ctrlc",
  "log",
+ "parking_lot",
 ]
 
 [[package]]
@@ -1047,6 +1048,44 @@ dependencies = [
  "rayon",
  "serde",
  "serde_json",
+ "zerocopy",
+ "zerocopy-derive",
+ "zstd",
+]
+
+[[package]]
+name = "brk_vecs"
+version = "0.0.81"
+dependencies = [
+ "arc-swap",
+ "bincode",
+ "brk_core",
+ "brk_exit",
+ "libc",
+ "log",
+ "memmap2",
+ "parking_lot",
+ "rayon",
+ "serde",
+ "serde_derive",
+ "serde_json",
+ "zerocopy",
+ "zerocopy-derive",
+ "zstd",
+]
+
+[[package]]
+name = "brk_vecs_gen"
+version = "0.0.81"
+dependencies = [
+ "brk_core",
+ "env_logger",
+ "log",
+ "memmap2",
+ "rayon",
+ "serde",
+ "serde_json",
+ "thiserror 2.0.12",
  "zerocopy",
  "zerocopy-derive",
  "zstd",
@@ -3104,6 +3143,16 @@ dependencies = [
  "bytecount",
  "fnv",
  "unicode-width",
+]
+
+[[package]]
+name = "parking_lot"
+version = "0.12.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "70d58bf43669b5795d1576d0641cfb6fbb2057bf629506267a92807158584a13"
+dependencies = [
+ "lock_api",
+ "parking_lot_core",
 ]
 
 [[package]]

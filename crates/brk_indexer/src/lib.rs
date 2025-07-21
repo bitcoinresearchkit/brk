@@ -60,11 +60,11 @@ impl Indexer {
         // dbg!(starting_indexes);
         // panic!();
 
-        exit.block();
+        let lock = exit.lock();
         self.stores
             .rollback_if_needed(&mut self.vecs, &starting_indexes)?;
         self.vecs.rollback_if_needed(&starting_indexes)?;
-        exit.release();
+        drop(lock);
 
         let vecs = &mut self.vecs;
         let stores = &mut self.stores;
@@ -90,15 +90,14 @@ impl Indexer {
                                 rem: bool,
                                 exit: &Exit|
          -> color_eyre::Result<bool> {
-            if height == 0 || (height % SNAPSHOT_BLOCK_RANGE != 0) != rem || exit.triggered() {
+            if height == 0 || (height % SNAPSHOT_BLOCK_RANGE != 0) != rem {
                 return Ok(false);
             }
 
             info!("Exporting...");
-            exit.block();
+            let _lock = exit.lock();
             stores.commit(height)?;
             vecs.flush(height)?;
-            exit.release();
             Ok(true)
         };
 
