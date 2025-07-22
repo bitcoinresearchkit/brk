@@ -1,8 +1,9 @@
-use bincode::{Decode, Encode};
+use zerocopy_derive::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 use crate::PAGE_SIZE;
 
-#[derive(Debug, Clone, Encode, Decode)]
+#[derive(Debug, Clone, FromBytes, IntoBytes, Immutable, KnownLayout)]
+#[repr(C)]
 pub struct Region {
     /// Must be multiple of 4096
     start: u64,
@@ -10,6 +11,8 @@ pub struct Region {
     /// Must be multiple of 4096
     reserved: u64,
 }
+
+pub const SIZE_OF_REGION: usize = size_of::<Region>();
 
 impl Region {
     pub fn new(start: u64, length: u64, reserved: u64) -> Self {

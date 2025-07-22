@@ -1,95 +1,52 @@
 use std::collections::BTreeMap;
-use std::fs::OpenOptions;
-use std::sync::Arc;
-use std::{collections::HashMap, fs, io::BufReader, path::Path};
 
-use bincode::decode_from_std_read;
-use bincode::{Decode, Encode, config};
+use brk_core::Error;
 use brk_core::Result;
-use parking_lot::RwLock;
 
-use crate::PAGE_SIZE;
-
-use super::Region;
+use super::{PAGE_SIZE, Region, Regions};
 
 #[derive(Debug)]
 pub struct Layout {
-    file: fs::File,
-    id_to_index: HashMap<String, usize>,
     start_to_index: BTreeMap<u64, usize>,
-    index_to_region: Vec<Option<Arc<RwLock<Region>>>>,
     /// key: start, value: gap
     start_to_hole: BTreeMap<u64, u64>,
 }
 
-impl Layout {
-    pub fn open(path: &Path) -> Result<Self> {
-        let file = OpenOptions::new()
-            .read(true)
-            .create(true)
-            .write(true)
-            .truncate(false)
-            .open(path)?;
+impl From<&Regions> for Layout {
+    fn from(value: &Regions) -> Self {
+        let mut start_to_index = BTreeMap::new();
+        let mut start_to_hole = BTreeMap::new();
 
-        Ok(if file.metadata()?.len() != 0 {
-            let config = config::standard();
+        let mut prev_end = 0;
 
-            let mut reader = BufReader::new(&file);
-            let serialized: SerializedRegions = decode_from_std_read(&mut reader, config)?;
-
-            let mut id_to_index = HashMap::new();
-            let mut start_to_index = BTreeMap::new();
-            let mut index_to_region = vec![];
-
-            serialized.0.into_iter().for_each(|(str, region)| {
-                let index = index_to_region.len();
-                id_to_index.insert(str, index);
-                start_to_index.insert(region.start(), index);
-                index_to_region.push(Some(Arc::new(RwLock::new(region))));
+        value
+            .as_array()
+            .into_iter()
+            .enumerate()
+            .flat_map(|(index, opt)| opt.as_ref().map(|region| (index, region)))
+            .for_each(|(index, region)| {
+                let region = region.read();
+                let start = region.start();
+                start_to_index.insert(start, index);
+                if prev_end != start {
+                    start_to_hole.insert(prev_end, start - prev_end);
+                }
+                let reserved = region.reserved();
+                prev_end = start + reserved;
             });
 
-            Self {
-                file,
-                id_to_index,
-                start_to_index,
-                index_to_region,
-                start_to_hole: BTreeMap::new(),
-            }
-        } else {
-            Self {
-                file,
-                id_to_index: HashMap::new(),
-                index_to_region: Vec::new(),
-                start_to_index: BTreeMap::new(),
-                start_to_hole: BTreeMap::new(),
-            }
-        })
+        Self {
+            start_to_index,
+            start_to_hole,
+        }
     }
+}
 
-    pub fn get_region_from_index(&self, index: usize) -> Option<Arc<RwLock<Region>>> {
-        self.index_to_region.get(index).cloned().flatten()
-    }
-
-    pub fn get_region_index_from_id(&self, id: String) -> Option<usize> {
-        self.id_to_index.get(&id).copied()
-    }
-
-    pub fn create_region_from_hole(&mut self, id: String) -> Option<usize> {
-        let index = self.index_to_region.len();
-
-        let start = self.find_smallest_adequate_hole(PAGE_SIZE)?;
-
-        self.remove_or_compress_hole_to_right(start, PAGE_SIZE);
-
-        self.id_to_index.insert(id, index);
-        self.start_to_index.insert(start, index);
-
-        self.index_to_region
-            .push(Some(Arc::new(RwLock::new(Region::new(
-                start, PAGE_SIZE, PAGE_SIZE,
-            )))));
-
-        Some(index)
+impl Layout {
+    pub fn get_last_region(&self) -> Option<usize> {
+        self.start_to_index
+            .last_key_value()
+            .map(|(_, index)| *index)
     }
 
     pub fn find_smallest_adequate_hole(&self, reserved: u64) -> Option<u64> {
@@ -102,44 +59,23 @@ impl Layout {
             .map(|(_, s)| *s)
     }
 
-    pub fn push_region(&mut self, id: String) -> (usize, Region) {
-        let index = self.index_to_region.len();
-
-        self.id_to_index.insert(id, index);
-
-        let start = self
-            .start_to_index
-            .last_key_value()
-            .map(|(_, index)| {
-                let region = self
-                    .index_to_region
-                    .get(*index)
-                    .unwrap()
-                    .as_ref()
-                    .unwrap()
-                    .read();
-                region.start() + region.reserved()
-            })
-            .unwrap_or_default();
-
-        let region = Region::new(start, PAGE_SIZE, PAGE_SIZE);
-
-        self.index_to_region
-            .push(Some(Arc::new(RwLock::new(region.clone()))));
-
-        (index, region)
+    pub fn insert_region(&mut self, start: u64, index: usize) {
+        assert!(self.start_to_index.insert(start, index).is_none())
     }
 
-    pub fn remove_region(&mut self, index: usize) -> Option<Arc<RwLock<Region>>> {
-        let region = self.index_to_region.get_mut(index).and_then(Option::take)?;
+    pub fn remove_region(&mut self, index: usize, region: &Region) -> Result<()> {
+        let start = region.start();
+        let reserved = region.reserved();
 
-        self.id_to_index
-            .remove(&self.find_id_from_index(index).unwrap().to_owned());
-        self.start_to_index.remove(&region.read().start());
-
-        let lock = region.read();
-        let start = lock.start();
-        let reserved = lock.reserved();
+        if self
+            .start_to_index
+            .remove(&start)
+            .is_none_or(|index_| index != index_)
+        {
+            return Err(Error::Str(
+                "Something went wrong, indexes of removed region should be the same",
+            ));
+        }
 
         if self
             .widen_hole_to_the_left_if_any(start + reserved, reserved)
@@ -150,9 +86,21 @@ impl Layout {
             self.widen_hole_to_the_right_if_any(hole_start, reserved);
         }
 
-        drop(lock);
+        if self
+            .start_to_index
+            .keys()
+            .last()
+            .is_none_or(|&region_start| {
+                self.start_to_hole
+                    .keys()
+                    .last()
+                    .is_some_and(|&hole_start| hole_start > region_start)
+            })
+        {
+            self.start_to_hole.pop_last();
+        }
 
-        Some(region)
+        Ok(())
     }
 
     pub fn get_hole(&self, start: u64) -> Option<u64> {
@@ -209,17 +157,4 @@ impl Layout {
 
         Some(start)
     }
-
-    fn find_id_from_index(&self, index: usize) -> Option<&String> {
-        Some(
-            self.id_to_index
-                .iter()
-                .find(|(_, v)| **v == index)
-                .unwrap()
-                .0,
-        )
-    }
 }
-
-#[derive(Debug, Encode, Decode)]
-struct SerializedRegions(HashMap<String, Region>);
