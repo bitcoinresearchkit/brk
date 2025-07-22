@@ -8,7 +8,6 @@ use super::{PAGE_SIZE, Region, Regions};
 #[derive(Debug)]
 pub struct Layout {
     start_to_index: BTreeMap<u64, usize>,
-    /// key: start, value: gap
     start_to_hole: BTreeMap<u64, u64>,
 }
 
@@ -21,7 +20,7 @@ impl From<&Regions> for Layout {
 
         value
             .as_array()
-            .into_iter()
+            .iter()
             .enumerate()
             .flat_map(|(index, opt)| opt.as_ref().map(|region| (index, region)))
             .for_each(|(index, region)| {
@@ -43,24 +42,34 @@ impl From<&Regions> for Layout {
 }
 
 impl Layout {
-    pub fn get_last_region(&self) -> Option<usize> {
+    pub fn get_last_region(&self) -> Option<(u64, usize)> {
         self.start_to_index
             .last_key_value()
-            .map(|(_, index)| *index)
+            .map(|(start, index)| (*start, *index))
     }
 
-    pub fn find_smallest_adequate_hole(&self, reserved: u64) -> Option<u64> {
-        self.start_to_hole
-            .iter()
-            .filter(|(_, gap)| **gap >= reserved)
-            .map(|(start, gap)| (gap, start))
-            .collect::<BTreeMap<_, _>>()
-            .pop_first()
-            .map(|(_, s)| *s)
+    pub fn get_last_region_index(&self) -> Option<usize> {
+        self.get_last_region().map(|(_, index)| index)
+    }
+
+    pub fn is_last_region(&self, index: usize) -> bool {
+        let last = self.get_last_region();
+        let is_last = last.is_some_and(|(_, other_index)| index == other_index);
+        if is_last {
+            debug_assert!(self.start_to_hole.range(last.unwrap().0..).next().is_none());
+        }
+        is_last
     }
 
     pub fn insert_region(&mut self, start: u64, index: usize) {
-        assert!(self.start_to_index.insert(start, index).is_none())
+        debug_assert!(self.start_to_index.insert(start, index).is_none())
+        // TODO: Other checks related to holes ?
+    }
+
+    pub fn move_region(&mut self, start: u64, index: usize, region: &Region) -> Result<()> {
+        self.remove_region(index, region)?;
+        self.insert_region(start, index);
+        Ok(())
     }
 
     pub fn remove_region(&mut self, index: usize, region: &Region) -> Result<()> {
@@ -107,6 +116,16 @@ impl Layout {
         self.start_to_hole.get(&start).copied()
     }
 
+    pub fn find_smallest_adequate_hole(&self, reserved: u64) -> Option<u64> {
+        self.start_to_hole
+            .iter()
+            .filter(|(_, gap)| **gap >= reserved)
+            .map(|(start, gap)| (gap, start))
+            .collect::<BTreeMap<_, _>>()
+            .pop_first()
+            .map(|(_, s)| *s)
+    }
+
     pub fn remove_or_compress_hole_to_right(&mut self, start: u64, compress_by: u64) {
         if let Some(gap) = self.start_to_hole.remove(&start)
             && gap != compress_by
@@ -121,14 +140,14 @@ impl Layout {
     }
 
     fn widen_hole_to_the_left_if_any(&mut self, start: u64, widen_by: u64) -> Option<u64> {
-        assert!(start % PAGE_SIZE == 0);
+        debug_assert!(start % PAGE_SIZE == 0);
 
         if widen_by > start {
             panic!("Hole too small")
         }
 
         let gap = self.start_to_hole.remove(&start)?;
-        assert!(widen_by % PAGE_SIZE == 0);
+        debug_assert!(widen_by % PAGE_SIZE == 0);
         let start = start - widen_by;
         let gap = gap + widen_by;
 
@@ -137,17 +156,17 @@ impl Layout {
         {
             *prev_gap += gap;
         } else {
-            assert!(self.start_to_hole.insert(start, gap).is_none());
+            debug_assert!(self.start_to_hole.insert(start, gap).is_none());
         }
 
         Some(start)
     }
 
     fn widen_hole_to_the_right_if_any(&mut self, start: u64, widen_by: u64) -> Option<u64> {
-        assert!(start % PAGE_SIZE == 0);
+        debug_assert!(start % PAGE_SIZE == 0);
 
         let gap = self.start_to_hole.get_mut(&start)?;
-        assert!(widen_by % PAGE_SIZE == 0);
+        debug_assert!(widen_by % PAGE_SIZE == 0);
         *gap += widen_by;
 
         let next_hole_start = start + *gap;

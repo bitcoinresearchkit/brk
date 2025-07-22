@@ -79,6 +79,14 @@ impl Regions {
         })
     }
 
+    pub fn set_min_len(&mut self, len: u64) -> Result<()> {
+        if self.index_to_region_mmap.len() < len as usize {
+            self.index_to_region_file.set_len(len)?;
+            self.index_to_region_mmap = unsafe { MmapMut::map_mut(&self.index_to_region_file)? };
+        }
+        Ok(())
+    }
+
     pub fn create_region(&mut self, id: String, start: u64) -> Result<usize> {
         let index = self
             .index_to_region
@@ -93,11 +101,7 @@ impl Regions {
         self.index_to_region
             .push(Some(Arc::new(RwLock::new(region.clone()))));
 
-        let end = index * SIZE_OF_REGION + SIZE_OF_REGION;
-        if self.index_to_region_mmap.len() < end {
-            self.index_to_region_file.set_len(end as u64);
-            self.index_to_region_mmap = unsafe { MmapMut::map_mut(&self.index_to_region_file)? };
-        }
+        self.set_min_len(((index + 1) * SIZE_OF_REGION) as u64)?;
 
         self.write_to_mmap(&region, index);
 
@@ -150,7 +154,7 @@ impl Regions {
         &self.index_to_region
     }
 
-    fn write_to_mmap(&self, region: &Region, index: usize) {
+    pub fn write_to_mmap(&self, region: &Region, index: usize) {
         let start = index * SIZE_OF_REGION;
         let end = start + SIZE_OF_REGION;
         let mmap = &self.index_to_region_mmap;

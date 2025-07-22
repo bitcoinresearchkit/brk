@@ -21,6 +21,7 @@ use region::*;
 use regions::*;
 
 pub const PAGE_SIZE: u64 = 4096;
+pub const PAGE_SIZE_MINUS_1: u64 = PAGE_SIZE - 1;
 
 pub struct File {
     regions: RwLock<Regions>,
@@ -53,9 +54,9 @@ impl File {
         })
     }
 
-    /// len % PAGE_SIZE == 0
     pub fn set_min_len(&self, len: u64) -> Result<()> {
-        assert!(len % PAGE_SIZE == 0);
+        let len = Self::ceil_number_to_page_size_multiple(len);
+
         if self.file.read().metadata()?.len() < len {
             let mut mmap = self.mmap.write();
             let file = self.file.write();
@@ -65,6 +66,13 @@ impl File {
         } else {
             Ok(())
         }
+    }
+
+    pub fn set_min_regions(&self, regions: usize) -> Result<()> {
+        self.regions
+            .write()
+            .set_min_len((regions * SIZE_OF_REGION) as u64)?;
+        self.set_min_len(regions as u64 * PAGE_SIZE)
     }
 
     pub fn get_or_create(&self, id: String) -> Result<usize> {
@@ -79,7 +87,7 @@ impl File {
             start
         } else {
             let start = layout
-                .get_last_region()
+                .get_last_region_index()
                 .map(|index| {
                     let region_opt = regions.get_region_from_index(index);
                     let region = region_opt.as_ref().unwrap().read();
@@ -121,88 +129,126 @@ impl File {
         self.write_all_at_(region, data, Some(at))
     }
 
-    fn write_all_at_(&mut self, region: usize, data: &[u8], at: Option<u64>) -> Result<()> {
-        let Some(region) = self.regions.read().get_region_from_index(region) else {
+    fn write_all_at_(&mut self, region_index: usize, data: &[u8], at: Option<u64>) -> Result<()> {
+        let Some(region) = self.regions.read().get_region_from_index(region_index) else {
             return Err(Error::Str("Unknown region"));
         };
         let region_lock = region.read();
         let start = region_lock.start();
         let reserved = region_lock.reserved();
         let left = region_lock.left();
+        let len = region_lock.len();
+        let end = start + len;
         let data_len = data.len() as u64;
         drop(region_lock);
 
         let new_left = at.map_or_else(|| left, |at| reserved - (at - start));
         let new_len = reserved - new_left;
+        let write_start = at.unwrap_or(start + len);
 
         // Write to reserved space if possible
         if new_left >= data_len {
-            Self::write_to_mmap(&self.mmap.read(), at.unwrap_or(start), data);
+            self.write(write_start, data);
 
+            let regions = self.regions.read();
             let mut region_lock = region.write();
             region_lock.set_len(new_len);
-
-            // TODO: Flush layout
+            regions.write_to_mmap(&region_lock, region_index);
             return Ok(());
         }
 
         let mut layout_lock = self.layout.write();
 
-        let hole_start = start + reserved;
-        let hole = layout_lock.get_hole(hole_start);
+        let new_len = len + data_len;
+        debug_assert!(new_len > reserved);
+        let mut new_reserved = reserved;
+        while new_len < new_reserved {
+            new_reserved *= 2;
+        }
+        let added_reserve = new_reserved - reserved;
 
-        // Expand region to the right if possible
-        if hole.is_some_and(|gap| gap >= reserved) {
-            Self::write_to_mmap(&self.mmap.read(), at.unwrap_or(start), data);
+        // If is last continue writing
+        if layout_lock.is_last_region(region_index) {
+            self.set_min_len(start + new_reserved)?;
 
-            layout_lock.remove_or_compress_hole_to_right(hole_start, reserved);
-            drop(layout_lock);
+            self.write(write_start, data);
 
+            let regions = self.regions.read();
             let mut region_lock = region.write();
             region_lock.set_len(new_len);
-            region_lock.set_reserved(reserved * 2);
-
-            // TODO: Flush layout
+            region_lock.set_reserved(new_reserved);
+            regions.write_to_mmap(&region_lock, region_index);
             return Ok(());
         }
 
-        let reserved = reserved * 2;
+        // Expand region to the right if gap is wide enough
+        let hole_start = start + reserved;
+        let gap = layout_lock.get_hole(hole_start);
+        if gap.is_some_and(|gap| gap >= added_reserve) {
+            self.write(write_start, data);
 
-        // Find hole big enough to move the current region or the next region depending on which is smaller to if possible
-        if let Some(hole_start) = layout_lock.find_smallest_adequate_hole(reserved) {
-            layout_lock.remove_or_compress_hole_to_right(hole_start, reserved);
-            // TODO: Before every drop of layout.write flush to disk
+            layout_lock.remove_or_compress_hole_to_right(hole_start, added_reserve);
             drop(layout_lock);
 
-            // write
-            Self::write_to_mmap(&self.mmap.read(), at.unwrap_or(start), data);
-
+            let regions = self.regions.read();
             let mut region_lock = region.write();
+            region_lock.set_len(new_len);
+            region_lock.set_reserved(new_reserved);
+            regions.write_to_mmap(&region_lock, region_index);
+            return Ok(());
+        }
+
+        // Find hole big enough to move the region
+        if let Some(hole_start) = layout_lock.find_smallest_adequate_hole(new_reserved) {
+            self.write(hole_start, &self.mmap.read()[start as usize..end as usize]);
+            self.write(hole_start + len, data);
+
+            let regions = self.regions.read();
+            let mut region_lock = region.write();
+
+            layout_lock.remove_or_compress_hole_to_right(hole_start, new_reserved);
+            layout_lock.move_region(hole_start, region_index, &region_lock)?;
+
             region_lock.set_start(hole_start);
             region_lock.set_len(new_len);
-            region_lock.set_reserved(reserved * 2);
+            region_lock.set_reserved(new_reserved);
+            regions.write_to_mmap(&region_lock, region_index);
 
-            // TODO: create hole in prev position
+            drop(layout_lock);
 
-            Self::write_to_mmap(&self.mmap.read(), at.unwrap_or(start), data);
+            self.punch_hole(start, reserved)?;
 
-            // TODO: Flush layout
             return Ok(());
         }
 
-        // copy region to new position then lock and update region meta then remove
+        // Write at the end
+        let regions = self.regions.read();
+        let mut region_lock = region.write();
+        let (last_region_start, last_region_index) = layout_lock.get_last_region().unwrap();
+        let new_start = last_region_start
+            + regions
+                .get_region_from_index(last_region_index)
+                .unwrap()
+                .read()
+                .reserved();
+        self.set_min_len(new_start + new_reserved)?;
 
-        // let old_length = region_lock.len();
-        // let new_length = old_length + data_len as u64;
+        self.write(new_start, &self.mmap.read()[start as usize..end as usize]);
+        self.write(new_start + len, data);
 
-        // self.layout.ho
+        region_lock.set_start(new_start);
+        region_lock.set_len(new_len);
+        region_lock.set_reserved(new_reserved);
+        regions.write_to_mmap(&region_lock, region_index);
 
-        todo!();
+        self.punch_hole(start, reserved)?;
 
         Ok(())
     }
 
-    fn write_to_mmap(mmap: &MmapMut, start: u64, data: &[u8]) {
+    fn write(&self, start: u64, data: &[u8]) {
+        let mmap = self.mmap.read();
+
         let data_len = data.len();
         let start = start as usize;
         let end = start + data_len;
@@ -223,6 +269,7 @@ impl File {
         let mut region_ = region.write();
         let start = region_.start();
         let len = region_.len();
+        let reserved = region_.reserved();
 
         if from <= start {
             return Err(Error::Str("Truncating too much"));
@@ -232,10 +279,14 @@ impl File {
 
         region_.set_len(from);
 
-        // TODO: Widen hole if present and needed (if truncating a big portion)
-        // Not needed in BRK and with hole punching it's not a big deal but good to have nonetheless
-
-        self.punch_hole(from, region_.left())
+        let end = start + reserved;
+        let start = Self::ceil_number_to_page_size_multiple(from);
+        if start > end {
+            unreachable!("Should not be possible");
+        } else if start < end {
+            self.punch_hole(start, end - start)?;
+        }
+        Ok(())
     }
 
     pub fn remove(&self, index: usize) -> Result<Option<Arc<RwLock<Region>>>> {
@@ -283,6 +334,10 @@ impl File {
         }
 
         Ok(())
+    }
+
+    fn ceil_number_to_page_size_multiple(num: u64) -> u64 {
+        (num + PAGE_SIZE_MINUS_1) & !PAGE_SIZE_MINUS_1
     }
 }
 
