@@ -1,41 +1,26 @@
 use memmap2::MmapMut;
 use parking_lot::RwLockReadGuard;
 
-use crate::file::layout::Layout;
-
 use super::Region;
 
-pub struct Reader<'a, 'b>
-where
-    'a: 'b,
-{
-    layout: RwLockReadGuard<'a, Layout>,
+pub struct Reader<'a> {
     mmap: RwLockReadGuard<'a, MmapMut>,
-    region: RwLockReadGuard<'b, Region>,
+    region: RwLockReadGuard<'static, Region>,
 }
 
-impl<'a, 'b> Reader<'a, 'b>
-where
-    'a: 'b,
-{
+impl<'a> Reader<'a> {
     pub fn new(
         mmap: RwLockReadGuard<'a, MmapMut>,
-        layout: RwLockReadGuard<'a, Layout>,
-        region: RwLockReadGuard<'b, Region>,
+        region: RwLockReadGuard<'static, Region>,
     ) -> Self {
-        Self {
-            mmap,
-            layout,
-            region,
-        }
+        Self { mmap, region }
     }
 
-    pub fn read(&self, offset: usize, len: usize) -> &[u8] {
-        assert!(offset + len < self.region.length());
-
+    pub fn read(&self, offset: u64, len: u64) -> &[u8] {
+        assert!(offset + len < self.region.len());
         let start = self.region.start() + offset;
         let end = start + len;
-        &self.mmap[start..end]
+        &self.mmap[start as usize..end as usize]
     }
 
     pub fn region(&self) -> &Region {
