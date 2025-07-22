@@ -5,7 +5,7 @@ use std::{collections::HashMap, fs, io::BufReader, path::Path};
 
 use bincode::decode_from_std_read;
 use bincode::{Decode, Encode, config};
-use brk_core::{Error, Result};
+use brk_core::Result;
 use parking_lot::RwLock;
 
 use crate::PAGE_SIZE;
@@ -155,10 +155,8 @@ impl Layout {
         Some(region)
     }
 
-    pub fn has_hole_and_is_big_enough(&self, start: u64, gap_needed: u64) -> bool {
-        self.start_to_hole
-            .get(&start)
-            .is_some_and(|gap| *gap >= gap_needed)
+    pub fn get_hole(&self, start: u64) -> Option<u64> {
+        self.start_to_hole.get(&start).copied()
     }
 
     pub fn remove_or_compress_hole_to_right(&mut self, start: u64, compress_by: u64) {

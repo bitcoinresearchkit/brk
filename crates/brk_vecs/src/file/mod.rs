@@ -13,11 +13,12 @@ use parking_lot::{RwLock, RwLockReadGuard};
 mod layout;
 mod reader;
 mod region;
+mod regions;
 
 use layout::*;
+use reader::*;
 use region::*;
-
-use crate::file::reader::Reader;
+use regions::*;
 
 pub const PAGE_SIZE: u64 = 4096;
 
@@ -109,46 +110,53 @@ impl File {
         let reserved = region_lock.reserved();
         let left = region_lock.left();
         let data_len = data.len() as u64;
+        drop(region_lock);
 
         let new_left = at.map_or_else(|| left, |at| reserved - (at - start));
         let new_len = reserved - new_left;
 
+        // Write to reserved space if possible
         if new_left >= data_len {
-            drop(region_lock);
+            Self::write_to_mmap(&self.mmap.read(), at.unwrap_or(start), data);
+
             let mut region_lock = region.write();
             region_lock.set_len(new_len);
 
-            Self::write_to_mmap(&self.mmap.read(), at.unwrap_or(start), data);
+            // TODO: Flush layout
             return Ok(());
         }
 
-        let layout_lock = self.layout.read();
+        let mut layout_lock = self.layout.write();
 
         let hole_start = start + reserved;
-        if layout_lock.has_hole_and_is_big_enough(hole_start, reserved) {
-            drop(layout_lock);
-            let mut layout_lock = self.layout.write();
+        let hole = layout_lock.get_hole(hole_start);
+
+        // Expand region to the right if possible
+        if hole.is_some_and(|gap| gap >= reserved) {
+            Self::write_to_mmap(&self.mmap.read(), at.unwrap_or(start), data);
+
             layout_lock.remove_or_compress_hole_to_right(hole_start, reserved);
             drop(layout_lock);
 
-            drop(region_lock);
             let mut region_lock = region.write();
             region_lock.set_len(new_len);
             region_lock.set_reserved(reserved * 2);
 
-            Self::write_to_mmap(&self.mmap.read(), at.unwrap_or(start), data);
+            // TODO: Flush layout
             return Ok(());
         }
 
         let reserved = reserved * 2;
 
+        // Find hole big enough to move the region or the next depending on which is smaller to if possible
         if let Some(hole_start) = layout_lock.find_smallest_adequate_hole(reserved) {
-            drop(layout_lock);
-            let mut layout_lock = self.layout.write();
             layout_lock.remove_or_compress_hole_to_right(hole_start, reserved);
+            // TODO: Before every drop of layout.write flush to disk
             drop(layout_lock);
 
-            drop(region_lock);
+            // write
+            Self::write_to_mmap(&self.mmap.read(), at.unwrap_or(start), data);
+
             let mut region_lock = region.write();
             region_lock.set_start(hole_start);
             region_lock.set_len(new_len);
@@ -157,6 +165,9 @@ impl File {
             // TODO: create hole in prev position
 
             Self::write_to_mmap(&self.mmap.read(), at.unwrap_or(start), data);
+
+            // TODO: Flush layout
+            return Ok(());
         }
 
         // copy region to new position then lock and update region meta then remove
