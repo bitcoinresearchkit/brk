@@ -16,10 +16,10 @@ pub const SIZE_OF_REGION: usize = size_of::<Region>();
 
 impl Region {
     pub fn new(start: u64, length: u64, reserved: u64) -> Self {
-        assert!(reserved > 0);
-        assert!(start % PAGE_SIZE == 0);
-        assert!(reserved % PAGE_SIZE == 0);
-        assert!(length <= reserved);
+        debug_assert!(reserved > 0);
+        debug_assert!(start % PAGE_SIZE == 0);
+        debug_assert!(reserved % PAGE_SIZE == 0);
+        debug_assert!(length <= reserved);
 
         Self {
             start,
@@ -33,7 +33,7 @@ impl Region {
     }
 
     pub fn set_start(&mut self, start: u64) {
-        assert!(start % PAGE_SIZE == 0);
+        debug_assert!(start % PAGE_SIZE == 0);
         self.start = start
     }
 
