@@ -1,25 +1,18 @@
-// use std::sync::Arc;
-
 use bincode::{Decode, Encode};
-// use parking_lot::{RwLock, RwLockReadGuard};
 
 use crate::PAGE_SIZE;
 
-// #[derive(Debug, Encode, Decode)]
-#[derive(Debug, Encode, Decode)]
+#[derive(Debug, Clone, Encode, Decode)]
 pub struct Region {
-    // Bad name
     /// Must be multiple of 4096
-    start: usize,
-    length: usize,
+    start: u64,
+    length: u64,
     /// Must be multiple of 4096
-    reserved: usize,
-    // lock: Arc<RwLock<()>>,
-    // variant: usize, // Raw or Compressed or something else ? to know if there is a header ? Since blocks 4096, storing headers individually would be dumb
+    reserved: u64,
 }
 
 impl Region {
-    pub fn new(start: usize, length: usize, reserved: usize) -> Self {
+    pub fn new(start: u64, length: u64, reserved: u64) -> Self {
         assert!(reserved > 0);
         assert!(start % PAGE_SIZE == 0);
         assert!(reserved % PAGE_SIZE == 0);
@@ -29,51 +22,35 @@ impl Region {
             start,
             length,
             reserved,
-            // lock: Arc::new(RwLock::new(())),
         }
     }
 
-    pub fn start(&self) -> usize {
+    pub fn start(&self) -> u64 {
         self.start
     }
 
-    pub fn length(&self) -> usize {
+    pub fn set_start(&mut self, start: u64) {
+        assert!(start % PAGE_SIZE == 0);
+        self.start = start
+    }
+
+    pub fn len(&self) -> u64 {
         self.length
     }
 
-    pub fn reserved(&self) -> usize {
+    pub fn set_len(&mut self, len: u64) {
+        self.length = len
+    }
+
+    pub fn reserved(&self) -> u64 {
         self.reserved
     }
 
-    // pub fn lock(&self) -> RwLockReadGuard<'_, ()> {
-    //     self.lock.read()
-    // }
+    pub fn set_reserved(&mut self, reserved: u64) {
+        self.reserved = reserved;
+    }
+
+    pub fn left(&self) -> u64 {
+        self.reserved - self.length
+    }
 }
-
-// #[derive(Debug, Encode, Decode)]
-// pub struct RegionInner {
-//     start: usize,
-//     length: usize,
-//     reserved: usize,
-// }
-
-// impl From<Region> for RegionInner {
-//     fn from(value: Region) -> Self {
-//         Self {
-//             start: value.start,
-//             length: value.length,
-//             reserved: value.reserved,
-//         }
-//     }
-// }
-
-// impl From<RegionInner> for Region {
-//     fn from(value: RegionInner) -> Self {
-//         Self {
-//             start: value.start,
-//             length: value.length,
-//             reserved: value.reserved,
-//             lock: Arc::new(RwLock::new(())),
-//         }
-//     }
-// }
