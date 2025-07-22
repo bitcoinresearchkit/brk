@@ -23,6 +23,7 @@ use regions::*;
 pub const PAGE_SIZE: u64 = 4096;
 
 pub struct File {
+    regions: RwLock<Regions>,
     layout: RwLock<Layout>,
     file: RwLock<fs::File>,
     mmap: RwLock<MmapMut>,
@@ -32,20 +33,22 @@ impl File {
     pub fn open(path: &Path) -> Result<Self> {
         fs::create_dir_all(path)?;
 
-        let layout = Layout::open(&path.join("layout.dat"))?;
+        let regions = Regions::open(path)?;
+        let layout = Layout::from(&regions);
 
         let file = OpenOptions::new()
             .read(true)
             .create(true)
             .write(true)
             .truncate(false)
-            .open(path.join("data.dat"))?;
+            .open(path.join("data"))?;
 
         let mmap = Self::mmap(&file)?;
 
         Ok(Self {
             file: RwLock::new(file),
             mmap: RwLock::new(mmap),
+            regions: RwLock::new(regions),
             layout: RwLock::new(layout),
         })
     }
@@ -65,15 +68,32 @@ impl File {
     }
 
     pub fn get_or_create(&self, id: String) -> Result<usize> {
-        if let Some(index) = self.layout.read().get_region_index_from_id(id.clone()) {
+        if let Some(index) = self.regions.read().get_region_index_from_id(id.clone()) {
             return Ok(index);
         }
+        let mut regions = self.regions.write();
         let mut layout = self.layout.write();
-        if let Some(index) = layout.create_region_from_hole(id.clone()) {
-            return Ok(index);
-        }
-        let (index, region) = layout.push_region(id);
-        self.set_min_len(region.start() + region.reserved())?;
+
+        let start = if let Some(start) = layout.find_smallest_adequate_hole(PAGE_SIZE) {
+            layout.remove_or_compress_hole_to_right(start, PAGE_SIZE);
+            start
+        } else {
+            let start = layout
+                .get_last_region()
+                .map(|index| {
+                    let region_opt = regions.get_region_from_index(index);
+                    let region = region_opt.as_ref().unwrap().read();
+                    region.start() + region.reserved()
+                })
+                .unwrap_or_default();
+            self.set_min_len(start + PAGE_SIZE)?;
+            start
+        };
+
+        let index = regions.create_region(id, start)?;
+
+        layout.insert_region(start, index);
+
         Ok(index)
     }
 
@@ -81,7 +101,7 @@ impl File {
         let mmap: RwLockReadGuard<'a, MmapMut> = self.mmap.read();
         let region: RwLockReadGuard<'static, Region> = unsafe {
             std::mem::transmute(
-                self.layout
+                self.regions
                     .read()
                     .get_region_from_index(index)
                     .ok_or(Error::Str("Unknown region"))?
@@ -102,7 +122,7 @@ impl File {
     }
 
     fn write_all_at_(&mut self, region: usize, data: &[u8], at: Option<u64>) -> Result<()> {
-        let Some(region) = self.layout.read().get_region_from_index(region) else {
+        let Some(region) = self.regions.read().get_region_from_index(region) else {
             return Err(Error::Str("Unknown region"));
         };
         let region_lock = region.read();
@@ -148,7 +168,7 @@ impl File {
 
         let reserved = reserved * 2;
 
-        // Find hole big enough to move the region or the next depending on which is smaller to if possible
+        // Find hole big enough to move the current region or the next region depending on which is smaller to if possible
         if let Some(hole_start) = layout_lock.find_smallest_adequate_hole(reserved) {
             layout_lock.remove_or_compress_hole_to_right(hole_start, reserved);
             // TODO: Before every drop of layout.write flush to disk
@@ -187,14 +207,17 @@ impl File {
         let start = start as usize;
         let end = start + data_len;
 
+        if end > mmap.len() {
+            unreachable!("Trying to write beyond mmap")
+        }
+
         let slice = unsafe { std::slice::from_raw_parts_mut(mmap.as_ptr() as *mut u8, mmap.len()) };
 
         slice[start..end].copy_from_slice(data);
     }
 
     pub fn truncate(&self, index: usize, from: u64) -> Result<()> {
-        let layout = self.layout.read();
-        let Some(region) = layout.get_region_from_index(index) else {
+        let Some(region) = self.regions.read().get_region_from_index(index) else {
             return Err(Error::Str("Unknown region"));
         };
         let mut region_ = region.write();
@@ -216,11 +239,13 @@ impl File {
     }
 
     pub fn remove(&self, index: usize) -> Result<Option<Arc<RwLock<Region>>>> {
+        let mut regions = self.regions.write();
         let mut layout = self.layout.write();
-        let Some(region) = layout.remove_region(index) else {
+        let Some(region) = regions.remove_region(index)? else {
             return Ok(None);
         };
         let region_ = region.write();
+        layout.remove_region(index, &region_)?;
         self.punch_hole(region_.start(), region_.len())?;
         drop(region_);
         Ok(Some(region))

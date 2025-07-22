@@ -87,12 +87,12 @@ impl PriceToAmount {
         self.height = Some(height);
         height.write(&self.path_height())?;
 
-        let config = config::standard();
         let file = File::create(self.path_state()).inspect_err(|_| {
             dbg!(self.path_state());
         })?;
         let mut writer = BufWriter::new(file);
-        encode_into_std_write(&self.state, &mut writer, config)?;
+        encode_into_std_write(&self.state, &mut writer, config::standard())?;
+
         Ok(())
     }
 
