@@ -30,6 +30,8 @@ impl Regions {
     pub fn open(path: &Path) -> Result<Self> {
         let path = path.join("regions");
 
+        fs::create_dir_all(&path)?;
+
         let id_to_index_file = OpenOptions::new()
             .read(true)
             .create(true)
@@ -37,9 +39,12 @@ impl Regions {
             .truncate(false)
             .open(path.join("id_to_index"))?;
 
-        let mut reader = BufReader::new(&id_to_index_file);
-        let id_to_index: HashMap<String, usize> =
-            decode_from_std_read(&mut reader, bincode::config::standard())?;
+        let mut id_to_index: HashMap<String, usize> = HashMap::new();
+
+        if id_to_index_file.metadata()?.len() > 0 {
+            let mut reader = BufReader::new(&id_to_index_file);
+            id_to_index = decode_from_std_read(&mut reader, bincode::config::standard())?;
+        }
 
         let index_to_region_file = OpenOptions::new()
             .read(true)
@@ -96,7 +101,7 @@ impl Regions {
             .map(|(index, _)| index)
             .unwrap_or_else(|| self.index_to_region.len());
 
-        let region = Region::new(start, PAGE_SIZE, PAGE_SIZE);
+        let region = Region::new(start, 0, PAGE_SIZE);
 
         self.index_to_region
             .push(Some(Arc::new(RwLock::new(region.clone()))));

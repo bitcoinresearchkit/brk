@@ -1057,7 +1057,6 @@ dependencies = [
 name = "brk_vecs"
 version = "0.0.81"
 dependencies = [
- "arc-swap",
  "bincode",
  "brk_core",
  "brk_exit",
@@ -1066,9 +1065,6 @@ dependencies = [
  "memmap2",
  "parking_lot",
  "rayon",
- "serde",
- "serde_derive",
- "serde_json",
  "zerocopy",
  "zerocopy-derive",
  "zstd",
