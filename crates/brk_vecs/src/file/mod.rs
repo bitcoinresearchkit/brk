@@ -24,10 +24,11 @@ pub const PAGE_SIZE: u64 = 4096;
 pub const PAGE_SIZE_MINUS_1: u64 = PAGE_SIZE - 1;
 
 pub struct File {
-    regions: RwLock<Regions>,
-    layout: RwLock<Layout>,
-    file: RwLock<fs::File>,
-    mmap: RwLock<MmapMut>,
+    // TODO: Remove pub
+    pub regions: RwLock<Regions>,
+    pub layout: RwLock<Layout>,
+    pub file: RwLock<fs::File>,
+    pub mmap: RwLock<MmapMut>,
 }
 
 impl File {
@@ -75,8 +76,8 @@ impl File {
         self.set_min_len(regions as u64 * PAGE_SIZE)
     }
 
-    pub fn get_or_create(&self, id: String) -> Result<usize> {
-        if let Some(index) = self.regions.read().get_region_index_from_id(id.clone()) {
+    pub fn create_region_if_needed(&self, id: &str) -> Result<usize> {
+        if let Some(index) = self.regions.read().get_region_index_from_id(id.to_owned()) {
             return Ok(index);
         }
         let mut regions = self.regions.write();
@@ -98,11 +99,15 @@ impl File {
             start
         };
 
-        let index = regions.create_region(id, start)?;
+        let index = regions.create_region(id.to_owned(), start)?;
 
         layout.insert_region(start, index);
 
         Ok(index)
+    }
+
+    pub fn get_region(&self, index: usize) -> Option<Arc<RwLock<Region>>> {
+        self.regions.read().get_region_from_index(index)
     }
 
     pub fn read<'a>(&'a self, index: usize) -> Result<Reader<'a>> {
@@ -120,16 +125,16 @@ impl File {
     }
 
     #[inline]
-    pub fn write_all(&mut self, region: usize, data: &[u8]) -> Result<()> {
+    pub fn write_all(&self, region: usize, data: &[u8]) -> Result<()> {
         self.write_all_at_(region, data, None)
     }
 
     #[inline]
-    pub fn write_all_at(&mut self, region: usize, data: &[u8], at: u64) -> Result<()> {
+    pub fn write_all_at(&self, region: usize, data: &[u8], at: u64) -> Result<()> {
         self.write_all_at_(region, data, Some(at))
     }
 
-    fn write_all_at_(&mut self, region_index: usize, data: &[u8], at: Option<u64>) -> Result<()> {
+    fn write_all_at_(&self, region_index: usize, data: &[u8], at: Option<u64>) -> Result<()> {
         let Some(region) = self.regions.read().get_region_from_index(region_index) else {
             return Err(Error::Str("Unknown region"));
         };
@@ -138,21 +143,27 @@ impl File {
         let reserved = region_lock.reserved();
         let left = region_lock.left();
         let len = region_lock.len();
-        let end = start + len;
         let data_len = data.len() as u64;
         drop(region_lock);
-
-        let new_left = at.map_or_else(|| left, |at| reserved - (at - start));
-        let new_len = reserved - new_left;
         let write_start = at.unwrap_or(start + len);
 
+        if at.is_some_and(|at| at < start || at >= start + reserved) {
+            return Err(Error::Str("Invalid at parameter"));
+        }
+
         // Write to reserved space if possible
-        if new_left >= data_len {
+        let at_left = at.map_or_else(|| left, |at| reserved - at);
+        if at_left >= data_len {
+            let len = reserved - at_left.min(left) + data_len;
+
+            dbg!(write_start);
+
             self.write(write_start, data);
 
             let regions = self.regions.read();
             let mut region_lock = region.write();
-            region_lock.set_len(new_len);
+            dbg!(len);
+            region_lock.set_len(len);
             regions.write_to_mmap(&region_lock, region_index);
             return Ok(());
         }
@@ -200,7 +211,10 @@ impl File {
 
         // Find hole big enough to move the region
         if let Some(hole_start) = layout_lock.find_smallest_adequate_hole(new_reserved) {
-            self.write(hole_start, &self.mmap.read()[start as usize..end as usize]);
+            self.write(
+                hole_start,
+                &self.mmap.read()[start as usize..(start + len) as usize],
+            );
             self.write(hole_start + len, data);
 
             let regions = self.regions.read();
@@ -233,7 +247,10 @@ impl File {
                 .reserved();
         self.set_min_len(new_start + new_reserved)?;
 
-        self.write(new_start, &self.mmap.read()[start as usize..end as usize]);
+        self.write(
+            new_start,
+            &self.mmap.read()[start as usize..(start + len) as usize],
+        );
         self.write(new_start + len, data);
 
         region_lock.set_start(new_start);
@@ -271,7 +288,7 @@ impl File {
         let len = region_.len();
         let reserved = region_.reserved();
 
-        if from <= start {
+        if from < start {
             return Err(Error::Str("Truncating too much"));
         } else if from >= len {
             return Err(Error::Str("Not truncating enough"));
