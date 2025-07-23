@@ -3,6 +3,7 @@ use parking_lot::RwLockReadGuard;
 
 use super::Region;
 
+#[derive(Debug)]
 pub struct Reader<'a> {
     mmap: RwLockReadGuard<'a, MmapMut>,
     region: RwLockReadGuard<'static, Region>,

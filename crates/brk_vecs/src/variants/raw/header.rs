@@ -1,0 +1,195 @@
+use std::{
+    fs::File,
+    io::{self, Seek, SeekFrom},
+    os::unix::fs::FileExt,
+    sync::Arc,
+};
+
+use brk_core::{Error, Result, Version};
+use parking_lot::RwLock;
+use zerocopy::{FromBytes, IntoBytes};
+use zerocopy_derive::{FromBytes, Immutable, IntoBytes, KnownLayout};
+
+use crate::Stamp;
+
+use super::Format;
+
+const HEADER_VERSION: Version = Version::ONE;
+pub const HEADER_OFFSET: usize = size_of::<HeaderInner>();
+
+#[derive(Debug, Clone)]
+pub struct Header {
+    inner: Arc<RwLock<HeaderInner>>,
+    modified: bool,
+}
+
+impl Header {
+    pub fn create_and_write(file: &mut File, vec_version: Version, format: Format) -> Result<Self> {
+        let inner = HeaderInner::create_and_write(file, vec_version, format)?;
+        Ok(Self {
+            inner: Arc::new(RwLock::new(inner)),
+            modified: false,
+        })
+    }
+
+    pub fn import_and_verify(
+        file: &mut File,
+        vec_version: Version,
+        format: Format,
+    ) -> Result<Self> {
+        let inner = HeaderInner::import_and_verify(file, vec_version, format)?;
+        Ok(Self {
+            inner: Arc::new(RwLock::new(inner)),
+            modified: false,
+        })
+    }
+
+    pub fn update_stamp(&mut self, stamp: Stamp) {
+        self.modified = true;
+        self.inner.write().stamp = stamp;
+    }
+
+    pub fn update_computed_version(&mut self, computed_version: Version) {
+        self.modified = true;
+        self.inner.write().computed_version = computed_version;
+    }
+
+    pub fn modified(&self) -> bool {
+        self.modified
+    }
+
+    pub fn vec_version(&self) -> Version {
+        self.inner.read().vec_version
+    }
+
+    pub fn computed_version(&self) -> Version {
+        self.inner.read().computed_version
+    }
+
+    pub fn stamp(&self) -> Stamp {
+        self.inner.read().stamp
+    }
+
+    pub fn write(&mut self, file: &mut File) -> io::Result<()> {
+        self.inner.read().write(file)?;
+        self.modified = false;
+        Ok(())
+    }
+
+    pub fn inner(&self) -> &Arc<RwLock<HeaderInner>> {
+        &self.inner
+    }
+}
+
+#[repr(C)]
+#[derive(Debug, Clone, FromBytes, IntoBytes, Immutable, KnownLayout)]
+struct HeaderInner {
+    pub header_version: Version,
+    pub vec_version: Version,
+    pub computed_version: Version,
+    pub stamp: Stamp,
+    pub compressed: ZeroCopyBool,
+}
+
+impl HeaderInner {
+    pub fn create_and_write(file: &mut File, vec_version: Version, format: Format) -> Result<Self> {
+        let header = Self {
+            header_version: HEADER_VERSION,
+            vec_version,
+            computed_version: Version::default(),
+            stamp: Stamp::default(),
+            compressed: ZeroCopyBool::from(format),
+        };
+        header.write(file)?;
+        file.seek(SeekFrom::End(0))?;
+        Ok(header)
+    }
+
+    pub fn write(&self, file: &mut File) -> io::Result<()> {
+        file.write_all_at(self.as_bytes(), 0)
+    }
+
+    pub fn import_and_verify(
+        file: &mut File,
+        vec_version: Version,
+        format: Format,
+    ) -> Result<Self> {
+        let len = file.metadata()?.len();
+
+        if len < HEADER_OFFSET as u64 {
+            return Err(Error::WrongLength);
+        }
+
+        let mut buf = [0; HEADER_OFFSET];
+        file.read_exact_at(&mut buf, 0)?;
+
+        let header = HeaderInner::read_from_bytes(&buf)?;
+
+        if header.header_version != HEADER_VERSION {
+            return Err(Error::DifferentVersion {
+                found: header.header_version,
+                expected: HEADER_VERSION,
+            });
+        }
+        if header.vec_version != vec_version {
+            return Err(Error::DifferentVersion {
+                found: header.vec_version,
+                expected: vec_version,
+            });
+        }
+        if header.compressed.is_broken() {
+            return Err(Error::WrongEndian);
+        }
+        if (header.compressed.is_true() && format.is_raw())
+            || (header.compressed.is_false() && format.is_compressed())
+        {
+            return Err(Error::DifferentCompressionMode);
+        }
+
+        Ok(header)
+    }
+}
+
+#[derive(
+    Debug,
+    Clone,
+    Copy,
+    Default,
+    PartialEq,
+    Eq,
+    PartialOrd,
+    Ord,
+    FromBytes,
+    IntoBytes,
+    Immutable,
+    KnownLayout,
+)]
+#[repr(C)]
+pub struct ZeroCopyBool(u64);
+
+impl ZeroCopyBool {
+    pub const TRUE: Self = Self(1);
+    pub const FALSE: Self = Self(0);
+
+    pub fn is_true(&self) -> bool {
+        *self == Self::TRUE
+    }
+
+    pub fn is_false(&self) -> bool {
+        *self == Self::FALSE
+    }
+
+    pub fn is_broken(&self) -> bool {
+        *self > Self::TRUE
+    }
+}
+
+impl From<Format> for ZeroCopyBool {
+    fn from(value: Format) -> Self {
+        if value.is_raw() {
+            Self::FALSE
+        } else {
+            Self::TRUE
+        }
+    }
+}

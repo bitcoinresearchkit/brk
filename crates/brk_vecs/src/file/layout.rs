@@ -3,7 +3,7 @@ use std::collections::BTreeMap;
 use brk_core::Error;
 use brk_core::Result;
 
-use super::{PAGE_SIZE, Region, Regions};
+use super::{Region, Regions};
 
 #[derive(Debug)]
 pub struct Layout {
@@ -19,7 +19,7 @@ impl From<&Regions> for Layout {
         let mut prev_end = 0;
 
         value
-            .as_array()
+            .index_to_region()
             .iter()
             .enumerate()
             .flat_map(|(index, opt)| opt.as_ref().map(|region| (index, region)))
@@ -42,6 +42,14 @@ impl From<&Regions> for Layout {
 }
 
 impl Layout {
+    pub fn start_to_index(&self) -> &BTreeMap<u64, usize> {
+        &self.start_to_index
+    }
+
+    pub fn start_to_hole(&self) -> &BTreeMap<u64, u64> {
+        &self.start_to_hole
+    }
+
     pub fn get_last_region(&self) -> Option<(u64, usize)> {
         self.start_to_index
             .last_key_value()
@@ -66,15 +74,15 @@ impl Layout {
         // TODO: Other checks related to holes ?
     }
 
-    pub fn move_region(&mut self, start: u64, index: usize, region: &Region) -> Result<()> {
+    pub fn move_region(&mut self, new_start: u64, index: usize, region: &Region) -> Result<()> {
         self.remove_region(index, region)?;
-        self.insert_region(start, index);
+        self.insert_region(new_start, index);
         Ok(())
     }
 
     pub fn remove_region(&mut self, index: usize, region: &Region) -> Result<()> {
         let start = region.start();
-        let reserved = region.reserved();
+        let mut reserved = region.reserved();
 
         if self
             .start_to_index
@@ -86,14 +94,10 @@ impl Layout {
             ));
         }
 
-        if self
-            .widen_hole_to_the_left_if_any(start + reserved, reserved)
-            .is_none()
-            && let Some((&hole_start, gap)) = self.start_to_hole.range(..start).next_back()
-            && hole_start + *gap == start
-        {
-            self.widen_hole_to_the_right_if_any(hole_start, reserved);
-        }
+        reserved += self
+            .start_to_hole
+            .remove(&(start + reserved))
+            .unwrap_or_default();
 
         if self
             .start_to_index
@@ -106,7 +110,16 @@ impl Layout {
                     .is_some_and(|&hole_start| hole_start > region_start)
             })
         {
+            // dbg!("Remove last hole");
             self.start_to_hole.pop_last();
+        } else if let Some((&hole_start, gap)) = self.start_to_hole.range_mut(..start).next_back()
+            && hole_start + *gap == start
+        {
+            // dbg!("Expand hole");
+            *gap += reserved;
+        } else {
+            // dbg!("Insert hole");
+            self.start_to_hole.insert(start, reserved);
         }
 
         Ok(())
@@ -137,43 +150,5 @@ impl Layout {
                 panic!("Hole too small");
             }
         }
-    }
-
-    fn widen_hole_to_the_left_if_any(&mut self, start: u64, widen_by: u64) -> Option<u64> {
-        debug_assert!(start % PAGE_SIZE == 0);
-
-        if widen_by > start {
-            panic!("Hole too small")
-        }
-
-        let gap = self.start_to_hole.remove(&start)?;
-        debug_assert!(widen_by % PAGE_SIZE == 0);
-        let start = start - widen_by;
-        let gap = gap + widen_by;
-
-        if let Some((&prev_start, prev_gap)) = self.start_to_hole.range_mut(..start).next_back()
-            && prev_start + *prev_gap == start
-        {
-            *prev_gap += gap;
-        } else {
-            debug_assert!(self.start_to_hole.insert(start, gap).is_none());
-        }
-
-        Some(start)
-    }
-
-    fn widen_hole_to_the_right_if_any(&mut self, start: u64, widen_by: u64) -> Option<u64> {
-        debug_assert!(start % PAGE_SIZE == 0);
-
-        let gap = self.start_to_hole.get_mut(&start)?;
-        debug_assert!(widen_by % PAGE_SIZE == 0);
-        *gap += widen_by;
-
-        let next_hole_start = start + *gap;
-        if let Some(next_gap) = self.start_to_hole.remove(&next_hole_start) {
-            *self.start_to_hole.get_mut(&start).unwrap() += next_gap;
-        }
-
-        Some(start)
     }
 }
