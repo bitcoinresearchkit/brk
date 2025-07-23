@@ -103,8 +103,12 @@ impl Regions {
 
         let region = Region::new(start, 0, PAGE_SIZE);
 
-        self.index_to_region
-            .push(Some(Arc::new(RwLock::new(region.clone()))));
+        let region_arc = Some(Arc::new(RwLock::new(region.clone())));
+        if index < self.index_to_region.len() {
+            self.index_to_region[index] = region_arc
+        } else {
+            self.index_to_region.push(region_arc);
+        }
 
         self.set_min_len(((index + 1) * SIZE_OF_REGION) as u64)?;
 
@@ -141,8 +145,8 @@ impl Regions {
         self.index_to_region.get(index).cloned().flatten()
     }
 
-    pub fn get_region_index_from_id(&self, id: String) -> Option<usize> {
-        self.id_to_index.get(&id).copied()
+    pub fn get_region_index_from_id(&self, id: &str) -> Option<usize> {
+        self.id_to_index.get(id).copied()
     }
 
     fn find_id_from_index(&self, index: usize) -> Option<&String> {
@@ -155,8 +159,12 @@ impl Regions {
         )
     }
 
-    pub fn as_array(&self) -> &[Option<Arc<RwLock<Region>>>] {
+    pub fn index_to_region(&self) -> &[Option<Arc<RwLock<Region>>>] {
         &self.index_to_region
+    }
+
+    pub fn id_to_index(&self) -> &HashMap<String, usize> {
+        &self.id_to_index
     }
 
     pub fn write_to_mmap(&self, region: &Region, index: usize) {
