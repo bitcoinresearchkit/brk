@@ -1,6 +1,8 @@
+use memmap2::MmapMut;
+use parking_lot::RwLockReadGuard;
 use zerocopy_derive::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
-use crate::PAGE_SIZE;
+use super::{File, PAGE_SIZE, Reader};
 
 #[derive(Debug, Clone, FromBytes, IntoBytes, Immutable, KnownLayout)]
 #[repr(C)]
@@ -60,5 +62,18 @@ impl Region {
 
     pub fn left(&self) -> u64 {
         self.reserved - self.len
+    }
+}
+
+pub trait RegionReader {
+    fn create_reader(self, file: &File) -> Reader<'_>;
+}
+
+impl<'a> RegionReader for RwLockReadGuard<'a, Region> {
+    fn create_reader(self, file: &File) -> Reader<'static> {
+        let region: RwLockReadGuard<'static, Region> = unsafe { std::mem::transmute(self) };
+        let mmap: RwLockReadGuard<'static, MmapMut> =
+            unsafe { std::mem::transmute(file.mmap.read()) };
+        Reader::new(mmap, region)
     }
 }

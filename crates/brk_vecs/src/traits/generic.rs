@@ -5,9 +5,8 @@ use std::{
 };
 
 use brk_core::{Error, Result};
-use memmap2::Mmap;
 
-use crate::{AnyVec, HEADER_OFFSET, Header};
+use crate::{AnyVec, File, HEADER_OFFSET, Header, file::Reader};
 
 use super::{StoredIndex, StoredType};
 
@@ -20,21 +19,21 @@ where
     const SIZE_OF_T: usize = size_of::<T>();
 
     #[inline]
-    fn unwrap_read(&self, index: I, mmap: &Mmap) -> T {
-        self.read(index, mmap).unwrap().unwrap()
+    fn unwrap_read(&self, index: I, reader: &Reader<'_>) -> T {
+        self.read(index, reader).unwrap().unwrap()
     }
     #[inline]
-    fn read(&self, index: I, mmap: &Mmap) -> Result<Option<T>> {
-        self.read_(index.to_usize()?, mmap)
+    fn read(&self, index: I, reader: &Reader<'_>) -> Result<Option<T>> {
+        self.read_(index.to_usize()?, reader)
     }
-    fn read_(&self, index: usize, mmap: &Mmap) -> Result<Option<T>>;
+    fn read_(&self, index: usize, reader: &Reader<'_>) -> Result<Option<T>>;
 
     #[inline]
-    fn get_or_read(&self, index: I, mmap: &Mmap) -> Result<Option<Cow<T>>> {
-        self.get_or_read_(index.to_usize()?, mmap)
+    fn get_or_read(&self, index: I, reader: &Reader<'_>) -> Result<Option<Cow<T>>> {
+        self.get_or_read_(index.to_usize()?, reader)
     }
     #[inline]
-    fn get_or_read_(&self, index: usize, mmap: &Mmap) -> Result<Option<Cow<T>>> {
+    fn get_or_read_(&self, index: usize, reader: &Reader<'_>) -> Result<Option<Cow<T>>> {
         let stored_len = self.stored_len();
 
         if index >= stored_len {
@@ -58,16 +57,12 @@ where
             return Ok(None);
         }
 
-        Ok(self.read_(index, mmap)?.map(Cow::Owned))
+        Ok(self.read_(index, reader)?.map(Cow::Owned))
     }
 
     #[inline]
     fn len_(&self) -> usize {
         self.stored_len() + self.pushed_len()
-    }
-
-    fn index_to_name(&self) -> String {
-        format!("{}_to_{}", I::to_string(), self.name())
     }
 
     fn stored_len(&self) -> usize;
@@ -122,8 +117,8 @@ where
 
     fn holes(&self) -> &BTreeSet<usize>;
     fn mut_holes(&mut self) -> &mut BTreeSet<usize>;
-    fn take(&mut self, index: I, mmap: &Mmap) -> Result<Option<T>> {
-        let opt = self.get_or_read(index, mmap)?.map(|v| v.into_owned());
+    fn take(&mut self, index: I, reader: &Reader<'_>) -> Result<Option<T>> {
+        let opt = self.get_or_read(index, reader)?.map(|v| v.into_owned());
         if opt.is_some() {
             self.unchecked_delete(index);
         }
@@ -179,12 +174,9 @@ where
 
     #[inline]
     fn reset_(&mut self) -> Result<()> {
-        let holes_path = self.holes_path();
-        if fs::exists(&holes_path)? {
-            fs::remove_file(&holes_path)?;
-        }
-        let mut file = self.open_file()?;
-        self.file_truncate_and_write_all(&mut file, HEADER_OFFSET as u64, &[])
+        self.file().remove_region(self.holes_region_name().into())?;
+        self.file()
+            .truncate_region(self.region_index().into(), HEADER_OFFSET as u64)
     }
 
     #[inline]
@@ -201,7 +193,49 @@ where
         index < self.len_()
     }
 
+    fn file(&self) -> &File;
+
+    fn region_index(&self) -> usize;
+
+    /// Be careful with deadlocks
+    ///
+    /// You'll want to drop the reader before mutable ops
+    fn create_reader(&self) -> Reader<'_> {
+        self.create_static_reader()
+    }
+
+    /// Be careful with deadlocks
+    ///
+    /// You'll want to drop the reader before mutable ops
+    fn create_static_reader(&self) -> Reader<'static> {
+        unsafe {
+            std::mem::transmute(
+                self.file()
+                    .create_region_reader(self.region_index().into())
+                    .unwrap(),
+            )
+        }
+    }
+
     fn flush(&mut self) -> Result<()>;
 
     fn truncate_if_needed(&mut self, index: I) -> Result<()>;
+
+    fn index_to_name(&self) -> String {
+        format!("{}_to_{}", I::to_string(), self.name())
+    }
+
+    fn vec_region_name(&self) -> String {
+        Self::vec_region_name_(self.name())
+    }
+    fn vec_region_name_(name: &str) -> String {
+        format!("{name}_{}", I::to_string())
+    }
+
+    fn holes_region_name(&self) -> String {
+        Self::holes_region_name_(self.name())
+    }
+    fn holes_region_name_(name: &str) -> String {
+        format!("{}_holes", Self::vec_region_name_(name))
+    }
 }

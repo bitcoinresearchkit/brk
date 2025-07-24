@@ -8,9 +8,13 @@ fn main() -> Result<()> {
 
     let file = File::open(Path::new("vecs"))?;
 
-    // file.set_min_len(PAGE_SIZE * 1_000_000)?;
+    let file_min_len = PAGE_SIZE * 1_000_000;
+    let min_regions = 20_000;
 
-    let region1_i = file.create_region_if_needed("region1")?;
+    file.set_min_len(file_min_len)?;
+    file.set_min_regions(min_regions)?;
+
+    let (region1_i, region1) = file.create_region_if_needed("region1")?;
 
     {
         let layout = file.layout();
@@ -25,16 +29,16 @@ fn main() -> Result<()> {
                 .is_some_and(|i| i == region1_i)
         );
 
-        let region = file.get_region(region1_i)?;
+        let region = file.get_region(region1_i.into())?;
         assert!(region.start() == 0);
         assert!(region.len() == 0);
         assert!(region.reserved() == PAGE_SIZE);
     }
 
-    file.write_all_to_region(region1_i, &[0, 1, 2, 3, 4])?;
+    file.write_all_to_region(region1_i.into(), &[0, 1, 2, 3, 4])?;
 
     {
-        let region = file.get_region(region1_i)?;
+        let region = file.get_region(region1_i.into())?;
         assert!(region.start() == 0);
         assert!(region.len() == 5);
         assert!(region.reserved() == PAGE_SIZE);
@@ -42,10 +46,10 @@ fn main() -> Result<()> {
         assert!(file.mmap()[0..10] == [0, 1, 2, 3, 4, 0, 0, 0, 0, 0]);
     }
 
-    file.write_all_to_region(region1_i, &[5, 6, 7, 8, 9])?;
+    file.write_all_to_region(region1_i.into(), &[5, 6, 7, 8, 9])?;
 
     {
-        let region = file.get_region(region1_i)?;
+        let region = file.get_region(region1_i.into())?;
         assert!(region.start() == 0);
         assert!(region.len() == 10);
         assert!(region.reserved() == PAGE_SIZE);
@@ -53,10 +57,10 @@ fn main() -> Result<()> {
         assert!(file.mmap()[0..10] == [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]);
     }
 
-    file.write_all_to_region_at(region1_i, &[1, 2], 0)?;
+    file.write_all_to_region_at(region1_i.into(), &[1, 2], 0)?;
 
     {
-        let region = file.get_region(region1_i)?;
+        let region = file.get_region(region1_i.into())?;
         assert!(region.start() == 0);
         assert!(region.len() == 10);
         assert!(region.reserved() == PAGE_SIZE);
@@ -64,10 +68,10 @@ fn main() -> Result<()> {
         assert!(file.mmap()[0..10] == [1, 2, 2, 3, 4, 5, 6, 7, 8, 9]);
     }
 
-    file.write_all_to_region_at(region1_i, &[10, 11, 12, 13, 14, 15, 16, 17, 18], 4)?;
+    file.write_all_to_region_at(region1_i.into(), &[10, 11, 12, 13, 14, 15, 16, 17, 18], 4)?;
 
     {
-        let region = file.get_region(region1_i)?;
+        let region = file.get_region(region1_i.into())?;
         assert!(region.start() == 0);
         assert!(region.len() == 13);
         assert!(region.reserved() == PAGE_SIZE);
@@ -80,10 +84,10 @@ fn main() -> Result<()> {
         );
     }
 
-    file.write_all_to_region_at(region1_i, &[1], 18)?;
+    file.write_all_to_region_at(region1_i.into(), &[1], 18)?;
 
     {
-        let region = file.get_region(region1_i)?;
+        let region = file.get_region(region1_i.into())?;
         assert!(region.start() == 0);
         assert!(region.len() == 19);
         assert!(region.reserved() == PAGE_SIZE);
@@ -96,10 +100,10 @@ fn main() -> Result<()> {
         );
     }
 
-    file.write_all_to_region_at(region1_i, &[1; 8000], 0)?;
+    file.write_all_to_region_at(region1_i.into(), &[1; 8000], 0)?;
 
     {
-        let region = file.get_region(region1_i)?;
+        let region = file.get_region(region1_i.into())?;
         assert!(region.start() == 0);
         assert!(region.len() == 8000);
         assert!(region.reserved() == PAGE_SIZE * 2);
@@ -109,13 +113,13 @@ fn main() -> Result<()> {
     }
 
     println!("Disk usage - pre sync: {}", file.disk_usage());
-    file.sync_data()?;
+    file.flush()?;
     println!("Disk usage - post sync: {}", file.disk_usage());
 
-    file.truncate_region(region1_i, 10)?;
+    file.truncate_region(region1_i.into(), 10)?;
 
     {
-        let region = file.get_region(region1_i)?;
+        let region = file.get_region(region1_i.into())?;
         assert!(region.start() == 0);
         assert!(region.len() == 10);
         assert!(region.reserved() == PAGE_SIZE * 2);
@@ -125,10 +129,12 @@ fn main() -> Result<()> {
         assert!(file.mmap()[4095..=4096] == [1, 0]);
     }
 
-    file.sync_data()?;
+    file.flush()?;
     println!("Disk usage - post trunc: {}", file.disk_usage());
 
-    file.remove_region(region1_i)?;
+    file.remove_region(region1_i.into())?;
+
+    file.flush()?;
 
     println!("Disk usage - post remove: {}", file.disk_usage());
 
@@ -144,23 +150,23 @@ fn main() -> Result<()> {
         assert!(layout.start_to_hole().is_empty());
     }
 
-    let region1_i = file.create_region_if_needed("region1")?;
-    let region2_i = file.create_region_if_needed("region2")?;
-    let region3_i = file.create_region_if_needed("region3")?;
+    let (region1_i, region1) = file.create_region_if_needed("region1")?;
+    let (region2_i, region2) = file.create_region_if_needed("region2")?;
+    let (region3_i, region3) = file.create_region_if_needed("region3")?;
 
     {
         let regions = file.regions();
         let index_to_region = regions.index_to_region();
         assert!(index_to_region.len() == 3);
-        let region1 = file.get_region(region1_i)?;
+        let region1 = file.get_region(region1_i.into())?;
         assert!(region1.start() == 0);
         assert!(region1.len() == 0);
         assert!(region1.reserved() == PAGE_SIZE);
-        let region2 = file.get_region(region2_i)?;
+        let region2 = file.get_region(region2_i.into())?;
         assert!(region2.start() == PAGE_SIZE);
         assert!(region2.len() == 0);
         assert!(region2.reserved() == PAGE_SIZE);
-        let region3 = file.get_region(region3_i)?;
+        let region3 = file.get_region(region3_i.into())?;
         assert!(region3.start() == PAGE_SIZE * 2);
         assert!(region3.len() == 0);
         assert!(region3.reserved() == PAGE_SIZE);
@@ -179,23 +185,23 @@ fn main() -> Result<()> {
         assert!(layout.start_to_hole().is_empty());
     }
 
-    file.remove_region(region2_i)?;
+    file.remove_region(region2_i.into())?;
 
     {
         let regions = file.regions();
         let index_to_region = regions.index_to_region();
         assert!(index_to_region.len() == 3);
-        let region1 = file.get_region(region1_i)?;
+        let region1 = file.get_region(region1_i.into())?;
         assert!(region1.start() == 0);
         assert!(region1.len() == 0);
         assert!(region1.reserved() == PAGE_SIZE);
-        assert!(file.get_region(region2_i).is_err());
+        assert!(file.get_region(region2_i.into()).is_err());
         assert!(
             index_to_region
                 .get(region2_i)
                 .is_some_and(|opt| opt.is_none())
         );
-        let region3 = file.get_region(region3_i)?;
+        let region3 = file.get_region(region3_i.into())?;
         assert!(region3.start() == PAGE_SIZE * 2);
         assert!(region3.len() == 0);
         assert!(region3.reserved() == PAGE_SIZE);
@@ -216,32 +222,35 @@ fn main() -> Result<()> {
 
         drop(regions);
         drop(layout);
-        assert!(file.remove_region(region2_i).is_ok_and(|o| o.is_none()));
+        assert!(
+            file.remove_region(region2_i.into())
+                .is_ok_and(|o| o.is_none())
+        );
     }
 
-    let region2_i = file.create_region_if_needed("region2")?;
+    let (region2_i, region2) = file.create_region_if_needed("region2")?;
 
     {
         assert!(region2_i == 1)
     }
 
-    file.remove_region(region2_i)?;
+    file.remove_region(region2_i.into())?;
 
     {
         let regions = file.regions();
         let index_to_region = regions.index_to_region();
         assert!(index_to_region.len() == 3);
-        let region1 = file.get_region(region1_i)?;
+        let region1 = file.get_region(region1_i.into())?;
         assert!(region1.start() == 0);
         assert!(region1.len() == 0);
         assert!(region1.reserved() == PAGE_SIZE);
-        assert!(file.get_region(region2_i).is_err());
+        assert!(file.get_region(region2_i.into()).is_err());
         assert!(
             index_to_region
                 .get(region2_i)
                 .is_some_and(|opt| opt.is_none())
         );
-        let region3 = file.get_region(region3_i)?;
+        let region3 = file.get_region(region3_i.into())?;
         assert!(region3.start() == PAGE_SIZE * 2);
         assert!(region3.len() == 0);
         assert!(region3.reserved() == PAGE_SIZE);
@@ -262,26 +271,29 @@ fn main() -> Result<()> {
 
         drop(regions);
         drop(layout);
-        assert!(file.remove_region(region2_i).is_ok_and(|o| o.is_none()));
+        assert!(
+            file.remove_region(region2_i.into())
+                .is_ok_and(|o| o.is_none())
+        );
     }
 
-    file.write_all_to_region_at(region1_i, &[1; 8000], 0)?;
+    file.write_all_to_region_at(region1_i.into(), &[1; 8000], 0)?;
 
     {
         let regions = file.regions();
         let index_to_region = regions.index_to_region();
         assert!(index_to_region.len() == 3);
-        let region1 = file.get_region(region1_i)?;
+        let region1 = file.get_region(region1_i.into())?;
         assert!(region1.start() == 0);
         assert!(region1.len() == 8000);
         assert!(region1.reserved() == 2 * PAGE_SIZE);
-        assert!(file.get_region(region2_i).is_err());
+        assert!(file.get_region(region2_i.into()).is_err());
         assert!(
             index_to_region
                 .get(region2_i)
                 .is_some_and(|opt| opt.is_none())
         );
-        let region3 = file.get_region(region3_i)?;
+        let region3 = file.get_region(region3_i.into())?;
         assert!(region3.start() == PAGE_SIZE * 2);
         assert!(region3.len() == 0);
         assert!(region3.reserved() == PAGE_SIZE);
@@ -300,21 +312,21 @@ fn main() -> Result<()> {
         assert!(start_to_hole.is_empty());
     }
 
-    let region2_i = file.create_region_if_needed("region2")?;
+    let (region2_i, region2) = file.create_region_if_needed("region2")?;
 
     {
         let regions = file.regions();
         let index_to_region = regions.index_to_region();
         assert!(index_to_region.len() == 3);
-        let region1 = file.get_region(region1_i)?;
+        let region1 = file.get_region(region1_i.into())?;
         assert!(region1.start() == 0);
         assert!(region1.len() == 8000);
         assert!(region1.reserved() == 2 * PAGE_SIZE);
-        let region2 = file.get_region(region2_i)?;
+        let region2 = file.get_region(region2_i.into())?;
         assert!(region2.start() == PAGE_SIZE * 3);
         assert!(region2.len() == 0);
         assert!(region2.reserved() == PAGE_SIZE);
-        let region3 = file.get_region(region3_i)?;
+        let region3 = file.get_region(region3_i.into())?;
         assert!(region3.start() == PAGE_SIZE * 2);
         assert!(region3.len() == 0);
         assert!(region3.reserved() == PAGE_SIZE);
@@ -334,21 +346,21 @@ fn main() -> Result<()> {
         assert!(start_to_hole.is_empty());
     }
 
-    file.remove_region(region3_i)?;
+    file.remove_region(region3_i.into())?;
 
     {
         let regions = file.regions();
         let index_to_region = regions.index_to_region();
         assert!(index_to_region.len() == 3);
-        let region1 = file.get_region(region1_i)?;
+        let region1 = file.get_region(region1_i.into())?;
         assert!(region1.start() == 0);
         assert!(region1.len() == 8000);
         assert!(region1.reserved() == 2 * PAGE_SIZE);
-        let region2 = file.get_region(region2_i)?;
+        let region2 = file.get_region(region2_i.into())?;
         assert!(region2.start() == PAGE_SIZE * 3);
         assert!(region2.len() == 0);
         assert!(region2.reserved() == PAGE_SIZE);
-        assert!(file.get_region(region3_i).is_err());
+        assert!(file.get_region(region3_i.into()).is_err());
         let id_to_index = regions.id_to_index();
         assert!(id_to_index.len() == 2);
         assert!(id_to_index.get("region1") == Some(&0));
@@ -364,21 +376,21 @@ fn main() -> Result<()> {
         assert!(start_to_hole.get(&(PAGE_SIZE * 2)) == Some(&PAGE_SIZE));
     }
 
-    file.write_all_to_region(region1_i, &[1; 8000])?;
+    file.write_all_to_region(region1_i.into(), &[1; 8000])?;
 
     {
         let regions = file.regions();
         let index_to_region = regions.index_to_region();
         assert!(index_to_region.len() == 3);
-        let region1 = file.get_region(region1_i)?;
+        let region1 = file.get_region(region1_i.into())?;
         assert!(region1.start() == PAGE_SIZE * 4);
         assert!(region1.len() == 16_000);
         assert!(region1.reserved() == 4 * PAGE_SIZE);
-        let region2 = file.get_region(region2_i)?;
+        let region2 = file.get_region(region2_i.into())?;
         assert!(region2.start() == PAGE_SIZE * 3);
         assert!(region2.len() == 0);
         assert!(region2.reserved() == PAGE_SIZE);
-        assert!(file.get_region(region3_i).is_err());
+        assert!(file.get_region(region3_i.into()).is_err());
         let id_to_index = regions.id_to_index();
         assert!(id_to_index.len() == 2);
         assert!(id_to_index.get("region1") == Some(&0));
@@ -394,11 +406,11 @@ fn main() -> Result<()> {
         assert!(start_to_hole.get(&0) == Some(&(PAGE_SIZE * 3)));
     }
 
-    file.write_all_to_region(region2_i, &[1; 6000])?;
+    file.write_all_to_region(region2_i.into(), &[1; 6000])?;
 
-    let region4_i = file.create_region_if_needed("region4")?;
-    file.remove_region(region2_i);
-    file.remove_region(region4_i);
+    let (region4_i, region4) = file.create_region_if_needed("region4")?;
+    file.remove_region(region2_i.into());
+    file.remove_region(region4_i.into());
 
     dbg!(file.regions());
     dbg!(file.layout());

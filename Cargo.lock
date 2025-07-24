@@ -1073,23 +1073,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "brk_vecs_gen"
-version = "0.0.81"
-dependencies = [
- "brk_core",
- "env_logger",
- "log",
- "memmap2",
- "rayon",
- "serde",
- "serde_json",
- "thiserror 2.0.12",
- "zerocopy",
- "zerocopy-derive",
- "zstd",
-]
-
-[[package]]
 name = "brotli"
 version = "8.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"

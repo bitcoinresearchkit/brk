@@ -3,7 +3,7 @@ use std::{fs, io, path::Path};
 use brk_core::{Error, Result};
 use serde::{Deserialize, Serialize};
 
-#[derive(Default, Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
+#[derive(Default, Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum Format {
     Compressed,
     #[default]
