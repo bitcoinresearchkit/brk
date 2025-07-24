@@ -47,7 +47,7 @@ clap = { version = "4.5.41", features = ["string"] }
 clap_derive = "4.5.41"
 color-eyre = "0.6.5"
 derive_deref = "1.1.1"
-fjall = "2.11.1"
+fjall = "2.11.2"
 jiff = "0.2.15"
 libc = "0.2.174"
 log = { version = "0.4.27" }
