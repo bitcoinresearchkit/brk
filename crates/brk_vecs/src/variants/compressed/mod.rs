@@ -189,14 +189,6 @@ where
             .cloned())
     }
 
-    fn file(&self) -> &File {
-        self.inner.file()
-    }
-
-    fn region_index(&self) -> usize {
-        self.inner.region_index()
-    }
-
     fn header(&self) -> &Header {
         self.inner.header()
     }
@@ -250,7 +242,7 @@ where
 
         // let mut file = file_opt.unwrap_or(self.open_file()?);
 
-        let mut pages_meta = self.pages_meta.read();
+        // let mut pages_meta = self.pages_meta.read();
 
         // let mut starting_page_index = pages_meta.len();
         // let mut values = vec![];
@@ -309,7 +301,7 @@ where
         //     .flat_map(|(v, _)| v)
         //     .collect::<Vec<_>>();
 
-        pages_meta.write()?;
+        // pages_meta.write()?;
 
         // if let Some(truncate_at) = truncate_at {
         //     self.file_set_len(&mut file, truncate_at)?;
@@ -405,6 +397,14 @@ where
     #[inline]
     fn value_type_to_size_of(&self) -> usize {
         size_of::<T>()
+    }
+
+    fn file(&self) -> &File {
+        self.inner.file()
+    }
+
+    fn region_index(&self) -> usize {
+        self.inner.region_index()
     }
 }
 

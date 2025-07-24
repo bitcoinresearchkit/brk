@@ -5,7 +5,7 @@ use brk_core::{
     OutputType, Result, TxIndex, TxidPrefix, TypeIndex, TypeIndexWithOutputindex, Unit, Version,
 };
 use brk_store::{AnyStore, Store};
-use brk_vec::{AnyIterableVec, VecIterator};
+use brk_vecs::{AnyIterableVec, VecIterator};
 use fjall::{PersistMode, TransactionalKeyspace};
 use rayon::prelude::*;
 

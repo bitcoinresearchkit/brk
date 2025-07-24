@@ -289,14 +289,6 @@ where
     fn reset(&mut self) -> Result<()> {
         self.reset_()
     }
-
-    fn file(&self) -> &File {
-        &self.file
-    }
-
-    fn region_index(&self) -> usize {
-        self.region_index
-    }
 }
 
 impl<I, T> AnyVec for RawVec<I, T>
@@ -327,6 +319,14 @@ where
     #[inline]
     fn value_type_to_size_of(&self) -> usize {
         size_of::<T>()
+    }
+
+    fn file(&self) -> &File {
+        &self.file
+    }
+
+    fn region_index(&self) -> usize {
+        self.region_index
     }
 }
 

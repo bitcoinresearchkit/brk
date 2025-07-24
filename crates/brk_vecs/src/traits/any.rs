@@ -1,5 +1,7 @@
 use brk_core::{Height, Version};
 
+use crate::{File, Reader};
+
 use super::{BoxedVecIterator, StoredIndex, StoredType};
 
 pub fn i64_to_usize(i: i64, len: usize) -> usize {
@@ -35,6 +37,30 @@ pub trait AnyVec: Send + Sync {
             u64::from(self.version()),
             u32::from(height),
         )
+    }
+
+    fn file(&self) -> &File;
+
+    fn region_index(&self) -> usize;
+
+    /// Be careful with deadlocks
+    ///
+    /// You'll want to drop the reader before mutable ops
+    fn create_reader(&self) -> Reader<'_> {
+        self.create_static_reader()
+    }
+
+    /// Be careful with deadlocks
+    ///
+    /// You'll want to drop the reader before mutable ops
+    fn create_static_reader(&self) -> Reader<'static> {
+        unsafe {
+            std::mem::transmute(
+                self.file()
+                    .create_region_reader(self.region_index().into())
+                    .unwrap(),
+            )
+        }
     }
 
     #[inline]

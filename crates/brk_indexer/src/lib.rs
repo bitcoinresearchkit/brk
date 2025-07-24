@@ -1,21 +1,20 @@
 #![doc = include_str!("../README.md")]
 #![doc = "\n## Example\n\n```rust"]
-#![doc = include_str!("../examples/main.rs")]
+#![doc = include_str!("../examples/indexer.rs")]
 #![doc = "```"]
 
-use std::{collections::BTreeMap, path::Path, str::FromStr, thread};
+use std::{collections::BTreeMap, path::Path, str::FromStr, sync::Arc, thread};
 
+use bitcoin::{Transaction, TxIn, TxOut};
 use brk_core::{
     AddressBytes, AddressBytesHash, BlockHash, BlockHashPrefix, Height, InputIndex, OutputIndex,
     OutputType, Sats, Timestamp, TxIndex, Txid, TxidPrefix, TypeIndex, TypeIndexWithOutputindex,
     Unit, Version, Vin, Vout, setrlimit,
 };
-
-use bitcoin::{Transaction, TxIn, TxOut};
 use brk_exit::Exit;
 use brk_parser::Parser;
 use brk_store::AnyStore;
-use brk_vec::{AnyVec, Mmap, VecIterator};
+use brk_vecs::{AnyVec, File, Reader, VecIterator};
 use color_eyre::eyre::{ContextCompat, eyre};
 use log::{error, info};
 use rayon::prelude::*;
@@ -33,6 +32,7 @@ const VERSION: Version = Version::ONE;
 
 #[derive(Clone)]
 pub struct Indexer {
+    pub file: Arc<File>,
     pub vecs: Vecs,
     pub stores: Stores,
 }
@@ -41,9 +41,12 @@ impl Indexer {
     pub fn forced_import(outputs_dir: &Path) -> color_eyre::Result<Self> {
         setrlimit()?;
 
+        let file = Arc::new(File::open(&outputs_dir.join("vecs"))?);
+
         Ok(Self {
-            vecs: Vecs::forced_import(&outputs_dir.join("vecs/indexed"), VERSION + Version::ZERO)?,
+            vecs: Vecs::forced_import(&file, VERSION + Version::ZERO)?,
             stores: Stores::forced_import(&outputs_dir.join("stores"), VERSION + Version::ZERO)?,
+            file,
         })
     }
 
@@ -101,67 +104,64 @@ impl Indexer {
             Ok(true)
         };
 
-        let mut txindex_to_first_outputindex_mmap_opt = None;
-        let mut p2pk65addressindex_to_p2pk65bytes_mmap_opt = None;
-        let mut p2pk33addressindex_to_p2pk33bytes_mmap_opt = None;
-        let mut p2pkhaddressindex_to_p2pkhbytes_mmap_opt = None;
-        let mut p2shaddressindex_to_p2shbytes_mmap_opt = None;
-        let mut p2wpkhaddressindex_to_p2wpkhbytes_mmap_opt = None;
-        let mut p2wshaddressindex_to_p2wshbytes_mmap_opt = None;
-        let mut p2traddressindex_to_p2trbytes_mmap_opt = None;
-        let mut p2aaddressindex_to_p2abytes_mmap_opt = None;
+        let mut txindex_to_first_outputindex_reader_opt = None;
+        let mut p2pk65addressindex_to_p2pk65bytes_reader_opt = None;
+        let mut p2pk33addressindex_to_p2pk33bytes_reader_opt = None;
+        let mut p2pkhaddressindex_to_p2pkhbytes_reader_opt = None;
+        let mut p2shaddressindex_to_p2shbytes_reader_opt = None;
+        let mut p2wpkhaddressindex_to_p2wpkhbytes_reader_opt = None;
+        let mut p2wshaddressindex_to_p2wshbytes_reader_opt = None;
+        let mut p2traddressindex_to_p2trbytes_reader_opt = None;
+        let mut p2aaddressindex_to_p2abytes_reader_opt = None;
 
         let reset_mmaps_options =
             |vecs: &mut Vecs,
-             txindex_to_first_outputindex_mmap_opt: &mut Option<Mmap>,
-             p2pk65addressindex_to_p2pk65bytes_mmap_opt: &mut Option<Mmap>,
-             p2pk33addressindex_to_p2pk33bytes_mmap_opt: &mut Option<Mmap>,
-             p2pkhaddressindex_to_p2pkhbytes_mmap_opt: &mut Option<Mmap>,
-             p2shaddressindex_to_p2shbytes_mmap_opt: &mut Option<Mmap>,
-             p2wpkhaddressindex_to_p2wpkhbytes_mmap_opt: &mut Option<Mmap>,
-             p2wshaddressindex_to_p2wshbytes_mmap_opt: &mut Option<Mmap>,
-             p2traddressindex_to_p2trbytes_mmap_opt: &mut Option<Mmap>,
-             p2aaddressindex_to_p2abytes_mmap_opt: &mut Option<Mmap>| {
-                txindex_to_first_outputindex_mmap_opt
-                    .replace(vecs.txindex_to_first_outputindex.create_mmap().unwrap());
-                p2pk65addressindex_to_p2pk65bytes_mmap_opt.replace(
+             txindex_to_first_outputindex_reader_opt: &mut Option<Reader<'static>>,
+             p2pk65addressindex_to_p2pk65bytes_reader_opt: &mut Option<Reader<'static>>,
+             p2pk33addressindex_to_p2pk33bytes_reader_opt: &mut Option<Reader<'static>>,
+             p2pkhaddressindex_to_p2pkhbytes_reader_opt: &mut Option<Reader<'static>>,
+             p2shaddressindex_to_p2shbytes_reader_opt: &mut Option<Reader<'static>>,
+             p2wpkhaddressindex_to_p2wpkhbytes_reader_opt: &mut Option<Reader<'static>>,
+             p2wshaddressindex_to_p2wshbytes_reader_opt: &mut Option<Reader<'static>>,
+             p2traddressindex_to_p2trbytes_reader_opt: &mut Option<Reader<'static>>,
+             p2aaddressindex_to_p2abytes_reader_opt: &mut Option<Reader<'static>>| {
+                txindex_to_first_outputindex_reader_opt
+                    .replace(vecs.txindex_to_first_outputindex.create_static_reader());
+                p2pk65addressindex_to_p2pk65bytes_reader_opt.replace(
                     vecs.p2pk65addressindex_to_p2pk65bytes
-                        .create_mmap()
-                        .unwrap(),
+                        .create_static_reader(),
                 );
-                p2pk33addressindex_to_p2pk33bytes_mmap_opt.replace(
+                p2pk33addressindex_to_p2pk33bytes_reader_opt.replace(
                     vecs.p2pk33addressindex_to_p2pk33bytes
-                        .create_mmap()
-                        .unwrap(),
+                        .create_static_reader(),
                 );
-                p2pkhaddressindex_to_p2pkhbytes_mmap_opt
-                    .replace(vecs.p2pkhaddressindex_to_p2pkhbytes.create_mmap().unwrap());
-                p2shaddressindex_to_p2shbytes_mmap_opt
-                    .replace(vecs.p2shaddressindex_to_p2shbytes.create_mmap().unwrap());
-                p2wpkhaddressindex_to_p2wpkhbytes_mmap_opt.replace(
+                p2pkhaddressindex_to_p2pkhbytes_reader_opt
+                    .replace(vecs.p2pkhaddressindex_to_p2pkhbytes.create_static_reader());
+                p2shaddressindex_to_p2shbytes_reader_opt
+                    .replace(vecs.p2shaddressindex_to_p2shbytes.create_static_reader());
+                p2wpkhaddressindex_to_p2wpkhbytes_reader_opt.replace(
                     vecs.p2wpkhaddressindex_to_p2wpkhbytes
-                        .create_mmap()
-                        .unwrap(),
+                        .create_static_reader(),
                 );
-                p2wshaddressindex_to_p2wshbytes_mmap_opt
-                    .replace(vecs.p2wshaddressindex_to_p2wshbytes.create_mmap().unwrap());
-                p2traddressindex_to_p2trbytes_mmap_opt
-                    .replace(vecs.p2traddressindex_to_p2trbytes.create_mmap().unwrap());
-                p2aaddressindex_to_p2abytes_mmap_opt
-                    .replace(vecs.p2aaddressindex_to_p2abytes.create_mmap().unwrap());
+                p2wshaddressindex_to_p2wshbytes_reader_opt
+                    .replace(vecs.p2wshaddressindex_to_p2wshbytes.create_static_reader());
+                p2traddressindex_to_p2trbytes_reader_opt
+                    .replace(vecs.p2traddressindex_to_p2trbytes.create_static_reader());
+                p2aaddressindex_to_p2abytes_reader_opt
+                    .replace(vecs.p2aaddressindex_to_p2abytes.create_static_reader());
             };
 
         reset_mmaps_options(
             vecs,
-            &mut txindex_to_first_outputindex_mmap_opt,
-            &mut p2pk65addressindex_to_p2pk65bytes_mmap_opt,
-            &mut p2pk33addressindex_to_p2pk33bytes_mmap_opt,
-            &mut p2pkhaddressindex_to_p2pkhbytes_mmap_opt,
-            &mut p2shaddressindex_to_p2shbytes_mmap_opt,
-            &mut p2wpkhaddressindex_to_p2wpkhbytes_mmap_opt,
-            &mut p2wshaddressindex_to_p2wshbytes_mmap_opt,
-            &mut p2traddressindex_to_p2trbytes_mmap_opt,
-            &mut p2aaddressindex_to_p2abytes_mmap_opt,
+            &mut txindex_to_first_outputindex_reader_opt,
+            &mut p2pk65addressindex_to_p2pk65bytes_reader_opt,
+            &mut p2pk33addressindex_to_p2pk33bytes_reader_opt,
+            &mut p2pkhaddressindex_to_p2pkhbytes_reader_opt,
+            &mut p2shaddressindex_to_p2shbytes_reader_opt,
+            &mut p2wpkhaddressindex_to_p2wpkhbytes_reader_opt,
+            &mut p2wshaddressindex_to_p2wshbytes_reader_opt,
+            &mut p2traddressindex_to_p2trbytes_reader_opt,
+            &mut p2aaddressindex_to_p2abytes_reader_opt,
         );
 
         parser.parse(start, end).iter().try_for_each(
@@ -170,15 +170,15 @@ impl Indexer {
 
                 idxs.height = height;
 
-                let txindex_to_first_outputindex_mmap = txindex_to_first_outputindex_mmap_opt.as_ref().unwrap();
-                let p2pk65addressindex_to_p2pk65bytes_mmap = p2pk65addressindex_to_p2pk65bytes_mmap_opt.as_ref().unwrap();
-                let p2pk33addressindex_to_p2pk33bytes_mmap = p2pk33addressindex_to_p2pk33bytes_mmap_opt.as_ref().unwrap();
-                let p2pkhaddressindex_to_p2pkhbytes_mmap = p2pkhaddressindex_to_p2pkhbytes_mmap_opt.as_ref().unwrap();
-                let p2shaddressindex_to_p2shbytes_mmap = p2shaddressindex_to_p2shbytes_mmap_opt.as_ref().unwrap();
-                let p2wpkhaddressindex_to_p2wpkhbytes_mmap = p2wpkhaddressindex_to_p2wpkhbytes_mmap_opt.as_ref().unwrap();
-                let p2wshaddressindex_to_p2wshbytes_mmap = p2wshaddressindex_to_p2wshbytes_mmap_opt.as_ref().unwrap();
-                let p2traddressindex_to_p2trbytes_mmap = p2traddressindex_to_p2trbytes_mmap_opt.as_ref().unwrap();
-                let p2aaddressindex_to_p2abytes_mmap = p2aaddressindex_to_p2abytes_mmap_opt.as_ref().unwrap();
+                let txindex_to_first_outputindex_mmap = txindex_to_first_outputindex_reader_opt.as_ref().unwrap();
+                let p2pk65addressindex_to_p2pk65bytes_mmap = p2pk65addressindex_to_p2pk65bytes_reader_opt.as_ref().unwrap();
+                let p2pk33addressindex_to_p2pk33bytes_mmap = p2pk33addressindex_to_p2pk33bytes_reader_opt.as_ref().unwrap();
+                let p2pkhaddressindex_to_p2pkhbytes_mmap = p2pkhaddressindex_to_p2pkhbytes_reader_opt.as_ref().unwrap();
+                let p2shaddressindex_to_p2shbytes_mmap = p2shaddressindex_to_p2shbytes_reader_opt.as_ref().unwrap();
+                let p2wpkhaddressindex_to_p2wpkhbytes_mmap = p2wpkhaddressindex_to_p2wpkhbytes_reader_opt.as_ref().unwrap();
+                let p2wshaddressindex_to_p2wshbytes_mmap = p2wshaddressindex_to_p2wshbytes_reader_opt.as_ref().unwrap();
+                let p2traddressindex_to_p2trbytes_mmap = p2traddressindex_to_p2trbytes_reader_opt.as_ref().unwrap();
+                let p2aaddressindex_to_p2abytes_mmap = p2aaddressindex_to_p2abytes_reader_opt.as_ref().unwrap();
 
                 // Used to check rapidhash collisions
                 let check_collisions = check_collisions && height > Height::new(COLLISIONS_CHECKED_UP_TO);
@@ -721,6 +721,8 @@ impl Indexer {
                         },
                     )?;
 
+                drop(txindex_to_txid_iter);
+
                 txindex_to_tx_and_txid
                     .into_iter()
                     .try_for_each(|(txindex, (tx, txid))| -> color_eyre::Result<()> {
@@ -737,20 +739,30 @@ impl Indexer {
                 idxs.inputindex += InputIndex::from(inputs_len);
                 idxs.outputindex += OutputIndex::from(outputs_len);
 
+                txindex_to_first_outputindex_reader_opt.take();
+                p2pk65addressindex_to_p2pk65bytes_reader_opt.take();
+                p2pk33addressindex_to_p2pk33bytes_reader_opt.take();
+                p2pkhaddressindex_to_p2pkhbytes_reader_opt.take();
+                p2shaddressindex_to_p2shbytes_reader_opt.take();
+                p2wpkhaddressindex_to_p2wpkhbytes_reader_opt.take();
+                p2wshaddressindex_to_p2wshbytes_reader_opt.take();
+                p2traddressindex_to_p2trbytes_reader_opt.take();
+                p2aaddressindex_to_p2abytes_reader_opt.take();
+
                 let exported = export_if_needed(stores, vecs, height, false, exit)?;
 
                 if exported {
                     reset_mmaps_options(
                         vecs,
-                        &mut txindex_to_first_outputindex_mmap_opt,
-                        &mut p2pk65addressindex_to_p2pk65bytes_mmap_opt,
-                        &mut p2pk33addressindex_to_p2pk33bytes_mmap_opt,
-                        &mut p2pkhaddressindex_to_p2pkhbytes_mmap_opt,
-                        &mut p2shaddressindex_to_p2shbytes_mmap_opt,
-                        &mut p2wpkhaddressindex_to_p2wpkhbytes_mmap_opt,
-                        &mut p2wshaddressindex_to_p2wshbytes_mmap_opt,
-                        &mut p2traddressindex_to_p2trbytes_mmap_opt,
-                        &mut p2aaddressindex_to_p2abytes_mmap_opt,
+                        &mut txindex_to_first_outputindex_reader_opt,
+                        &mut p2pk65addressindex_to_p2pk65bytes_reader_opt,
+                        &mut p2pk33addressindex_to_p2pk33bytes_reader_opt,
+                        &mut p2pkhaddressindex_to_p2pkhbytes_reader_opt,
+                        &mut p2shaddressindex_to_p2shbytes_reader_opt,
+                        &mut p2wpkhaddressindex_to_p2wpkhbytes_reader_opt,
+                        &mut p2wshaddressindex_to_p2wshbytes_reader_opt,
+                        &mut p2traddressindex_to_p2trbytes_reader_opt,
+                        &mut p2aaddressindex_to_p2abytes_reader_opt,
                     );
                 }
 

@@ -609,7 +609,7 @@ dependencies = [
  "brk_logger",
  "brk_parser",
  "brk_store",
- "brk_vec",
+ "brk_vecs",
  "color-eyre",
  "fjall",
  "libc",
