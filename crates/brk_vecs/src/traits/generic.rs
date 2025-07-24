@@ -6,7 +6,7 @@ use std::{
 
 use brk_core::{Error, Result};
 
-use crate::{AnyVec, File, HEADER_OFFSET, Header, file::Reader};
+use crate::{AnyVec, HEADER_OFFSET, Header, file::Reader};
 
 use super::{StoredIndex, StoredType};
 
@@ -191,30 +191,6 @@ where
     #[inline]
     fn has_(&self, index: usize) -> bool {
         index < self.len_()
-    }
-
-    fn file(&self) -> &File;
-
-    fn region_index(&self) -> usize;
-
-    /// Be careful with deadlocks
-    ///
-    /// You'll want to drop the reader before mutable ops
-    fn create_reader(&self) -> Reader<'_> {
-        self.create_static_reader()
-    }
-
-    /// Be careful with deadlocks
-    ///
-    /// You'll want to drop the reader before mutable ops
-    fn create_static_reader(&self) -> Reader<'static> {
-        unsafe {
-            std::mem::transmute(
-                self.file()
-                    .create_region_reader(self.region_index().into())
-                    .unwrap(),
-            )
-        }
     }
 
     fn flush(&mut self) -> Result<()>;

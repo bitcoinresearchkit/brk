@@ -6,7 +6,7 @@ use brk_core::{
     Result, TxIndex, TypeIndex, UnknownOutputIndex,
 };
 use brk_parser::NUMBER_OF_UNSAFE_BLOCKS;
-use brk_vec::{AnyIndexedVec, AnyIterableVec, AnyVec, IndexedVec, StoredIndex, StoredType};
+use brk_vecs::{AnyIterableVec, AnyStampedVec, AnyVec, StampedVec, StoredIndex, StoredType};
 use color_eyre::eyre::ContextCompat;
 
 use crate::{Stores, Vecs};
@@ -208,18 +208,18 @@ impl TryFrom<(&mut Vecs, &Stores, &Client)> for Indexes {
 }
 
 pub fn starting_index<I, T>(
-    height_to_index: &IndexedVec<Height, I>,
-    index_to_else: &IndexedVec<I, T>,
+    height_to_index: &StampedVec<Height, I>,
+    index_to_else: &StampedVec<I, T>,
     starting_height: Height,
 ) -> Option<I>
 where
     I: StoredType + StoredIndex + From<usize>,
     T: StoredType,
 {
-    let h = height_to_index.height();
+    let h = Height::from(u64::from(height_to_index.stamp()));
     if h.is_zero() {
         None
-    } else if height_to_index.height() + 1_u32 == starting_height {
+    } else if h + 1_u32 == starting_height {
         Some(I::from(index_to_else.len()))
     } else {
         height_to_index.iter().get_inner(starting_height)

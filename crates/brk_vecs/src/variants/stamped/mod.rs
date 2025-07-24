@@ -162,6 +162,14 @@ where
     fn value_type_to_size_of(&self) -> usize {
         size_of::<T>()
     }
+
+    fn file(&self) -> &File {
+        self.0.file()
+    }
+
+    fn region_index(&self) -> usize {
+        self.0.region_index()
+    }
 }
 
 pub trait AnyStampedVec: AnyVec {

@@ -71,22 +71,6 @@ where
     }
 
     #[inline]
-    fn file(&self) -> &File {
-        match self {
-            StoredVec::Raw(v) => v.file(),
-            StoredVec::Compressed(v) => v.file(),
-        }
-    }
-
-    #[inline]
-    fn region_index(&self) -> usize {
-        match self {
-            StoredVec::Raw(v) => v.region_index(),
-            StoredVec::Compressed(v) => v.region_index(),
-        }
-    }
-
-    #[inline]
     fn mut_header(&mut self) -> &mut Header {
         match self {
             StoredVec::Raw(v) => v.mut_header(),
@@ -202,6 +186,22 @@ where
     #[inline]
     fn value_type_to_size_of(&self) -> usize {
         size_of::<T>()
+    }
+
+    #[inline]
+    fn file(&self) -> &File {
+        match self {
+            StoredVec::Raw(v) => v.file(),
+            StoredVec::Compressed(v) => v.file(),
+        }
+    }
+
+    #[inline]
+    fn region_index(&self) -> usize {
+        match self {
+            StoredVec::Raw(v) => v.region_index(),
+            StoredVec::Compressed(v) => v.region_index(),
+        }
     }
 }
 
