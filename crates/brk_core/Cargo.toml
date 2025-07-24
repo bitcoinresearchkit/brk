@@ -16,7 +16,7 @@ derive_deref = { workspace = true }
 fjall = { workspace = true }
 jiff = { workspace = true }
 log = { workspace = true }
-rapidhash = "1.4.0"
+rapidhash = "2.0.2"
 rlimit = "0.10.2"
 serde = { workspace = true }
 serde_bytes = { workspace = true }

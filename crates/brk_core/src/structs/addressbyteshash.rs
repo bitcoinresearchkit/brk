@@ -25,9 +25,7 @@ pub struct AddressBytesHash([u8; 8]);
 
 impl From<(&AddressBytes, OutputType)> for AddressBytesHash {
     fn from((address_bytes, outputtype): (&AddressBytes, OutputType)) -> Self {
-        let mut hasher = rapidhash::RapidHasher::default();
-        hasher.write(address_bytes.as_slice());
-        let mut slice = hasher.finish().to_le_bytes();
+        let mut slice = rapidhash::v3::rapidhash_v3(address_bytes.as_slice()).to_le_bytes();
         slice[0] = slice[0].wrapping_add(outputtype as u8);
         Self(slice)
     }
