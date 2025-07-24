@@ -1,16 +1,11 @@
-use std::{
-    fs::File,
-    io::{self, Seek, SeekFrom},
-    os::unix::fs::FileExt,
-    sync::Arc,
-};
+use std::sync::Arc;
 
 use brk_core::{Error, Result, Version};
 use parking_lot::RwLock;
 use zerocopy::{FromBytes, IntoBytes};
 use zerocopy_derive::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
-use crate::Stamp;
+use crate::{File, Stamp};
 
 use super::Format;
 
@@ -24,8 +19,13 @@ pub struct Header {
 }
 
 impl Header {
-    pub fn create_and_write(file: &mut File, vec_version: Version, format: Format) -> Result<Self> {
-        let inner = HeaderInner::create_and_write(file, vec_version, format)?;
+    pub fn create_and_write(
+        file: &File,
+        region_index: usize,
+        vec_version: Version,
+        format: Format,
+    ) -> Result<Self> {
+        let inner = HeaderInner::create_and_write(file, region_index, vec_version, format)?;
         Ok(Self {
             inner: Arc::new(RwLock::new(inner)),
             modified: false,
@@ -33,11 +33,14 @@ impl Header {
     }
 
     pub fn import_and_verify(
-        file: &mut File,
+        file: &File,
+        region_index: usize,
+        region_len: u64,
         vec_version: Version,
         format: Format,
     ) -> Result<Self> {
-        let inner = HeaderInner::import_and_verify(file, vec_version, format)?;
+        let inner =
+            HeaderInner::import_and_verify(file, region_index, region_len, vec_version, format)?;
         Ok(Self {
             inner: Arc::new(RwLock::new(inner)),
             modified: false,
@@ -70,14 +73,10 @@ impl Header {
         self.inner.read().stamp
     }
 
-    pub fn write(&mut self, file: &mut File) -> io::Result<()> {
-        self.inner.read().write(file)?;
+    pub fn write(&mut self, file: &File, region_index: usize) -> Result<()> {
+        self.inner.read().write(file, region_index)?;
         self.modified = false;
         Ok(())
-    }
-
-    pub fn inner(&self) -> &Arc<RwLock<HeaderInner>> {
-        &self.inner
     }
 }
 
@@ -92,7 +91,12 @@ struct HeaderInner {
 }
 
 impl HeaderInner {
-    pub fn create_and_write(file: &mut File, vec_version: Version, format: Format) -> Result<Self> {
+    pub fn create_and_write(
+        file: &File,
+        region_index: usize,
+        vec_version: Version,
+        format: Format,
+    ) -> Result<Self> {
         let header = Self {
             header_version: HEADER_VERSION,
             vec_version,
@@ -100,30 +104,30 @@ impl HeaderInner {
             stamp: Stamp::default(),
             compressed: ZeroCopyBool::from(format),
         };
-        header.write(file)?;
-        file.seek(SeekFrom::End(0))?;
+        header.write(file, region_index)?;
         Ok(header)
     }
 
-    pub fn write(&self, file: &mut File) -> io::Result<()> {
-        file.write_all_at(self.as_bytes(), 0)
+    pub fn write(&self, file: &File, region_index: usize) -> Result<()> {
+        file.write_all_to_region_at(region_index.into(), self.as_bytes(), 0)
     }
 
     pub fn import_and_verify(
-        file: &mut File,
+        file: &File,
+        region_index: usize,
+        region_len: u64,
         vec_version: Version,
         format: Format,
     ) -> Result<Self> {
-        let len = file.metadata()?.len();
+        let len = region_len;
 
         if len < HEADER_OFFSET as u64 {
             return Err(Error::WrongLength);
         }
 
-        let mut buf = [0; HEADER_OFFSET];
-        file.read_exact_at(&mut buf, 0)?;
-
-        let header = HeaderInner::read_from_bytes(&buf)?;
+        let reader = file.create_region_reader(region_index.into())?;
+        let slice = reader.read(0, HEADER_OFFSET as u64);
+        let header = HeaderInner::read_from_bytes(slice)?;
 
         if header.header_version != HEADER_VERSION {
             return Err(Error::DifferentVersion {

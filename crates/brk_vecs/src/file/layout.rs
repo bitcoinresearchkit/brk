@@ -110,15 +110,12 @@ impl Layout {
                     .is_some_and(|&hole_start| hole_start > region_start)
             })
         {
-            // dbg!("Remove last hole");
             self.start_to_hole.pop_last();
         } else if let Some((&hole_start, gap)) = self.start_to_hole.range_mut(..start).next_back()
             && hole_start + *gap == start
         {
-            // dbg!("Expand hole");
             *gap += reserved;
         } else {
-            // dbg!("Insert hole");
             self.start_to_hole.insert(start, reserved);
         }
 

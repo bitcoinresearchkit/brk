@@ -12,9 +12,9 @@ use memmap2::MmapMut;
 use parking_lot::RwLock;
 use zerocopy::{FromBytes, IntoBytes};
 
-use crate::{
-    PAGE_SIZE,
-    file::region::{Region, SIZE_OF_REGION},
+use super::{
+    Identifier, PAGE_SIZE,
+    region::{Region, SIZE_OF_REGION},
 };
 
 #[derive(Debug)]
@@ -92,7 +92,11 @@ impl Regions {
         Ok(())
     }
 
-    pub fn create_region(&mut self, id: String, start: u64) -> Result<usize> {
+    pub fn create_region(
+        &mut self,
+        id: String,
+        start: u64,
+    ) -> Result<(usize, Arc<RwLock<Region>>)> {
         let index = self
             .index_to_region
             .iter()
@@ -103,36 +107,25 @@ impl Regions {
 
         let region = Region::new(start, 0, PAGE_SIZE);
 
-        let region_arc = Some(Arc::new(RwLock::new(region.clone())));
-        if index < self.index_to_region.len() {
-            self.index_to_region[index] = region_arc
-        } else {
-            self.index_to_region.push(region_arc);
-        }
-
         self.set_min_len(((index + 1) * SIZE_OF_REGION) as u64)?;
 
         self.write_to_mmap(&region, index);
+
+        let region_arc = Arc::new(RwLock::new(region));
+
+        let region_opt = Some(region_arc.clone());
+        if index < self.index_to_region.len() {
+            self.index_to_region[index] = region_opt
+        } else {
+            self.index_to_region.push(region_opt);
+        }
 
         if self.id_to_index.insert(id, index).is_some() {
             return Err(Error::Str("Already exists"));
         }
         self.flush_id_to_index()?;
 
-        Ok(index)
-    }
-
-    pub fn remove_region(&mut self, index: usize) -> Result<Option<Arc<RwLock<Region>>>> {
-        let Some(region) = self.index_to_region.get_mut(index).and_then(Option::take) else {
-            return Ok(None);
-        };
-
-        self.id_to_index
-            .remove(&self.find_id_from_index(index).unwrap().to_owned());
-
-        self.flush_id_to_index()?;
-
-        Ok(Some(region))
+        Ok((index, region_arc))
     }
 
     fn flush_id_to_index(&mut self) -> Result<()> {
@@ -141,10 +134,26 @@ impl Regions {
         Ok(())
     }
 
+    #[inline]
+    pub fn get_region(&self, identifier: Identifier) -> Option<Arc<RwLock<Region>>> {
+        match identifier {
+            Identifier::Number(index) => self.get_region_from_index(index),
+            Identifier::String(id) => self.get_region_from_id(&id),
+        }
+    }
+
+    #[inline]
     pub fn get_region_from_index(&self, index: usize) -> Option<Arc<RwLock<Region>>> {
         self.index_to_region.get(index).cloned().flatten()
     }
 
+    #[inline]
+    pub fn get_region_from_id(&self, id: &str) -> Option<Arc<RwLock<Region>>> {
+        self.get_region_index_from_id(id)
+            .and_then(|index| self.get_region_from_index(index))
+    }
+
+    #[inline]
     pub fn get_region_index_from_id(&self, id: &str) -> Option<usize> {
         self.id_to_index.get(id).copied()
     }
@@ -159,22 +168,65 @@ impl Regions {
         )
     }
 
+    #[inline]
     pub fn index_to_region(&self) -> &[Option<Arc<RwLock<Region>>>] {
         &self.index_to_region
     }
 
+    #[inline]
     pub fn id_to_index(&self) -> &HashMap<String, usize> {
         &self.id_to_index
+    }
+
+    #[inline]
+    pub fn identifier_to_index(&self, identifier: Identifier) -> Option<usize> {
+        match identifier {
+            Identifier::Number(index) => Some(index),
+            Identifier::String(id) => self.get_region_index_from_id(&id),
+        }
+    }
+
+    pub fn remove_region(&mut self, identifier: Identifier) -> Result<Option<Arc<RwLock<Region>>>> {
+        match identifier {
+            Identifier::Number(index) => self.remove_region_from_index(index),
+            Identifier::String(id) => self.remove_region_from_id(&id),
+        }
+    }
+
+    pub fn remove_region_from_id(&mut self, id: &str) -> Result<Option<Arc<RwLock<Region>>>> {
+        let Some(index) = self.get_region_index_from_id(id) else {
+            return Ok(None);
+        };
+        self.remove_region_from_index(index)
+    }
+
+    pub fn remove_region_from_index(
+        &mut self,
+        index: usize,
+    ) -> Result<Option<Arc<RwLock<Region>>>> {
+        let Some(region) = self.index_to_region.get_mut(index).and_then(Option::take) else {
+            return Ok(None);
+        };
+
+        self.id_to_index
+            .remove(&self.find_id_from_index(index).unwrap().to_owned());
+
+        self.flush_id_to_index()?;
+
+        Ok(Some(region))
     }
 
     pub fn write_to_mmap(&self, region: &Region, index: usize) {
         let start = index * SIZE_OF_REGION;
         let end = start + SIZE_OF_REGION;
         let mmap = &self.index_to_region_mmap;
+
         if end > mmap.len() {
             unreachable!("Trying to write beyond mmap")
         }
+
         let slice = unsafe { std::slice::from_raw_parts_mut(mmap.as_ptr() as *mut u8, mmap.len()) };
+
         slice[start..end].copy_from_slice(region.as_bytes());
     }
 }

@@ -1,21 +1,18 @@
 use std::{
     borrow::Cow,
     collections::{BTreeMap, BTreeSet},
-    fs, io,
     marker::PhantomData,
     mem,
-    os::unix::fs::FileExt,
     sync::Arc,
 };
 
 use brk_core::{Error, Result, Version};
-use memmap2::Mmap;
 use rayon::prelude::*;
-use zerocopy::IntoBytes;
 
 use crate::{
     AnyCollectableVec, AnyIterableVec, AnyVec, BaseVecIterator, BoxedVecIterator, CollectableVec,
-    File, GenericStoredVec, StoredIndex, StoredType, file::Reader,
+    File, GenericStoredVec, StoredIndex, StoredType,
+    file::{Reader, RegionReader},
 };
 
 use super::Format;
@@ -30,8 +27,8 @@ const VERSION: Version = Version::ONE;
 
 #[derive(Debug)]
 pub struct RawVec<I, T> {
-    region: usize,
     file: Arc<File>,
+    region_index: usize,
 
     header: Header,
     name: &'static str,
@@ -47,7 +44,7 @@ where
     I: StoredIndex,
     T: StoredType,
 {
-    /// Same as import but will reset the folder under certain errors, so be careful !
+    /// Same as import but will reset the vec under certain errors, so be careful !
     pub fn forced_import(file: &Arc<File>, name: &str, mut version: Version) -> Result<Self> {
         version = version + VERSION;
         let res = Self::import(file, name, version);
@@ -56,11 +53,8 @@ where
             | Err(Error::WrongEndian)
             | Err(Error::WrongLength)
             | Err(Error::DifferentVersion { .. }) => {
-                fs::remove_file(path)?;
-                let holes_path = Self::holes_path_(parent, name);
-                if fs::exists(&holes_path)? {
-                    fs::remove_file(holes_path)?;
-                }
+                let _ = file.remove_region(Self::vec_region_name_(name).into());
+                let _ = file.remove_region(Self::holes_region_name_(name).into());
                 Self::import(file, name, version)
             }
             _ => res,
@@ -68,45 +62,33 @@ where
     }
 
     pub fn import(file: &Arc<File>, name: &str, version: Version) -> Result<Self> {
-        let region = file.create_region_if_needed(&format!("{name}_{}", I::to_string()))?;
+        let (region_index, region) = file.create_region_if_needed(&Self::vec_region_name_(name))?;
 
-        let (header, file) = match Self::open_file_(&path) {
-            Ok(mut file) => {
-                if file.metadata()?.len() == 0 {
-                    (
-                        Header::create_and_write(&mut file, version, Format::Raw)?,
-                        Some(file),
-                    )
-                } else {
-                    (
-                        Header::import_and_verify(&mut file, version, Format::Raw)?,
-                        Some(file),
-                    )
-                }
-            }
-            Err(e) => match e.kind() {
-                io::ErrorKind::NotFound => {
-                    fs::create_dir_all(Self::folder_(parent, name))?;
-                    let mut file = Self::open_file_(&path)?;
-                    let header = Header::create_and_write(&mut file, version, Format::Raw)?;
-                    (header, None)
-                }
-                _ => {
-                    return Err(e.into());
-                }
-            },
-        };
+        let region_len = region.read().len() as usize;
+        if region_len > 0
+            && (region_len < HEADER_OFFSET || (region_len - HEADER_OFFSET) % Self::SIZE_OF_T != 0)
+        {
+            dbg!(region_len);
+            return Err(Error::Str("Region was saved incorrectly"));
+        }
 
-        let stored_len = if let Some(file) = file {
-            (file.metadata()?.len() as usize - HEADER_OFFSET) / Self::SIZE_OF_T
+        let header = if region_len == 0 {
+            Header::create_and_write(file, region_index, version, Format::Raw)?
         } else {
-            0
+            Header::import_and_verify(
+                file,
+                region_index,
+                region.read().len(),
+                version,
+                Format::Raw,
+            )?
         };
 
-        let holes_path = Self::holes_path_(parent, name);
-        let holes = if fs::exists(&holes_path)? {
+        let holes = if let Ok(holes) = file.get_region(Self::holes_region_name_(name).into()) {
             Some(
-                fs::read(&holes_path)?
+                holes
+                    .create_reader(file)
+                    .read_all()
                     .chunks(size_of::<usize>())
                     .map(|b| -> Result<usize> {
                         Ok(usize::from_ne_bytes(brk_core::copy_first_8bytes(b)?))
@@ -118,8 +100,8 @@ where
         };
 
         Ok(Self {
-            file,
-            region,
+            file: file.clone(),
+            region_index,
             header,
             name: Box::leak(Box::new(name.to_string())),
             pushed: vec![],
@@ -149,11 +131,7 @@ where
 
     pub fn write_header_if_needed(&mut self) -> Result<()> {
         if self.header.modified() {
-            self.file.write_all_to_region_at(
-                self.region,
-                self.header.inner().read().as_bytes(),
-                0,
-            )?;
+            self.header.write(&self.file, self.region_index)?;
         }
         Ok(())
     }
@@ -165,9 +143,11 @@ where
     T: StoredType,
 {
     #[inline]
-    fn read_(&self, index: usize, mmap: &Mmap) -> Result<Option<T>> {
-        let index = index * Self::SIZE_OF_T + HEADER_OFFSET;
-        let slice = &mmap[index..(index + Self::SIZE_OF_T)];
+    fn read_(&self, index: usize, reader: &Reader<'_>) -> Result<Option<T>> {
+        let slice = reader.read(
+            (index * Self::SIZE_OF_T + HEADER_OFFSET) as u64,
+            (Self::SIZE_OF_T) as u64,
+        );
         T::try_read_from_bytes(slice)
             .map(|v| Some(v))
             .map_err(Error::from)
@@ -183,7 +163,13 @@ where
 
     #[inline]
     fn stored_len(&self) -> usize {
-        self.file.get_region(self.region).unwrap().len() as usize / Self::SIZE_OF_T
+        (self
+            .file
+            .get_region(self.region_index.into())
+            .unwrap()
+            .len() as usize
+            - HEADER_OFFSET)
+            / Self::SIZE_OF_T
     }
 
     #[inline]
@@ -214,7 +200,7 @@ where
     }
 
     fn flush(&mut self) -> Result<()> {
-        let file_opt = self.write_header_if_needed()?;
+        self.write_header_if_needed()?;
 
         let pushed_len = self.pushed_len();
 
@@ -228,7 +214,7 @@ where
         }
 
         if has_new_data || has_updated_data {
-            let mut file = file_opt.unwrap_or(self.open_file()?);
+            let file = &self.file;
 
             if has_new_data {
                 let bytes = {
@@ -246,36 +232,37 @@ where
                     bytes
                 };
 
-                self.file_write_all(&mut file, &bytes)?;
+                file.write_all_to_region(self.region_index.into(), &bytes)?;
             }
 
             if has_updated_data {
                 mem::take(&mut self.updated)
                     .into_iter()
                     .try_for_each(|(i, v)| -> Result<()> {
-                        file.write_all_at(
-                            v.as_bytes(),
-                            ((i * Self::SIZE_OF_T) + HEADER_OFFSET) as u64,
-                        )?;
+                        let bytes = v.as_bytes();
+                        let at = ((i * Self::SIZE_OF_T) + HEADER_OFFSET) as u64;
+                        file.write_all_to_region_at(self.region_index.into(), bytes, at)?;
                         Ok(())
                     })?;
             }
         }
 
         if has_holes || had_holes {
-            let holes_path = self.holes_path();
             if has_holes {
                 self.has_stored_holes = true;
-                fs::write(
-                    &holes_path,
-                    self.holes
-                        .iter()
-                        .flat_map(|i| i.to_ne_bytes())
-                        .collect::<Vec<_>>(),
-                )?;
+                let (holes_index, _) = self
+                    .file
+                    .create_region_if_needed(&self.holes_region_name())?;
+                self.file.truncate_region(holes_index.into(), 0)?;
+                let bytes = self
+                    .holes
+                    .iter()
+                    .flat_map(|i| i.to_ne_bytes())
+                    .collect::<Vec<_>>();
+                self.file.write_all_to_region(holes_index.into(), &bytes)?;
             } else if had_holes {
                 self.has_stored_holes = false;
-                let _ = fs::remove_file(&holes_path);
+                let _ = self.file.remove_region(self.holes_region_name().into());
             }
         }
 
@@ -295,12 +282,20 @@ where
         }
 
         let from = index * Self::SIZE_OF_T + HEADER_OFFSET;
-        self.file.truncate_region(self.region, from as u64)
+        self.file
+            .truncate_region(self.region_index.into(), from as u64)
     }
 
     fn reset(&mut self) -> Result<()> {
-        self.set_stored_len(0);
         self.reset_()
+    }
+
+    fn file(&self) -> &File {
+        &self.file
+    }
+
+    fn region_index(&self) -> usize {
+        self.region_index
     }
 }
 
@@ -339,7 +334,7 @@ impl<I, T> Clone for RawVec<I, T> {
     fn clone(&self) -> Self {
         Self {
             file: self.file.clone(),
-            region: self.region,
+            region_index: self.region_index,
             header: self.header.clone(),
             name: self.name,
             pushed: vec![],
@@ -391,7 +386,7 @@ where
 
         let opt = self
             .vec
-            .get_or_read_(index, &self.mmap)
+            .get_or_read_(index, &self.reader)
             .unwrap()
             .map(|v| (I::from(index), v));
 
@@ -414,7 +409,7 @@ where
     fn into_iter(self) -> Self::IntoIter {
         RawVecIterator {
             vec: self,
-            reader: self.file.read_region(self.region).unwrap(),
+            reader: self.create_static_reader(),
             index: 0,
         }
     }
