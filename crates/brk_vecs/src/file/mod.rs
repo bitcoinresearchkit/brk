@@ -7,6 +7,7 @@ use std::{
 
 use brk_core::{Error, Result};
 use libc::off_t;
+use log::info;
 use memmap2::{MmapMut, MmapOptions};
 use parking_lot::{RwLock, RwLockReadGuard};
 
@@ -461,10 +462,10 @@ impl File {
             .try_for_each(|(&start, &hole)| -> Result<()> {
                 assert!(start % PAGE_SIZE == 0);
                 assert!(hole % PAGE_SIZE == 0);
-                let has_old_data = (((start / PAGE_SIZE) as usize)
-                    ..((start + hole) / PAGE_SIZE) as usize)
-                    .any(|i| mmap[i * PAGE_SIZE as usize] != 0);
+                let has_old_data =
+                    mmap[start as usize] != 0 || mmap[(start + hole - PAGE_SIZE) as usize] != 0;
                 if has_old_data {
+                    info!("Punching a hole of {hole} bytes at {start}...");
                     Self::punch_hole_(file, start, hole)
                 } else {
                     Ok(())
