@@ -1,4 +1,4 @@
-use std::path::Path;
+use std::sync::Arc;
 
 use brk_core::{
     Bitcoin, DateIndex, DecadeIndex, DifficultyEpoch, Dollars, Height, MonthIndex, QuarterIndex,
@@ -6,9 +6,9 @@ use brk_core::{
 };
 use brk_exit::Exit;
 use brk_indexer::Indexer;
-use brk_vec::{
+use brk_vecs::{
     AnyCollectableVec, AnyVec, CloneableAnyIterableVec, CollectableVec, Computation, EagerVec,
-    Format, StoredIndex, VecIterator,
+    File, Format, StoredIndex, VecIterator,
 };
 
 use crate::{
@@ -46,7 +46,7 @@ where
 {
     #[allow(clippy::too_many_arguments)]
     pub fn forced_import(
-        path: &Path,
+        file: &Arc<File>,
         name: &str,
         source: Source<TxIndex, T>,
         version: Version,
@@ -57,13 +57,13 @@ where
     ) -> color_eyre::Result<Self> {
         let txindex = source.is_compute().then(|| {
             Box::new(
-                EagerVec::forced_import(path, name, version + VERSION + Version::ZERO, format)
+                EagerVec::forced_import(file, name, version + VERSION + Version::ZERO, format)
                     .unwrap(),
             )
         });
 
         let height = EagerVecBuilder::forced_import(
-            path,
+            file,
             name,
             version + VERSION + Version::ZERO,
             format,
@@ -73,7 +73,7 @@ where
         let options = options.remove_percentiles();
 
         let dateindex = EagerVecBuilder::forced_import(
-            path,
+            file,
             name,
             version + VERSION + Version::ZERO,
             format,
@@ -82,7 +82,7 @@ where
 
         Ok(Self {
             weekindex: ComputedVecBuilder::forced_import(
-                path,
+                file,
                 name,
                 version + VERSION + Version::ZERO,
                 format,
@@ -93,7 +93,7 @@ where
                 options.into(),
             )?,
             monthindex: ComputedVecBuilder::forced_import(
-                path,
+                file,
                 name,
                 version + VERSION + Version::ZERO,
                 format,
@@ -104,7 +104,7 @@ where
                 options.into(),
             )?,
             quarterindex: ComputedVecBuilder::forced_import(
-                path,
+                file,
                 name,
                 version + VERSION + Version::ZERO,
                 format,
@@ -115,7 +115,7 @@ where
                 options.into(),
             )?,
             semesterindex: ComputedVecBuilder::forced_import(
-                path,
+                file,
                 name,
                 version + VERSION + Version::ZERO,
                 format,
@@ -126,7 +126,7 @@ where
                 options.into(),
             )?,
             yearindex: ComputedVecBuilder::forced_import(
-                path,
+                file,
                 name,
                 version + VERSION + Version::ZERO,
                 format,
@@ -137,7 +137,7 @@ where
                 options.into(),
             )?,
             decadeindex: ComputedVecBuilder::forced_import(
-                path,
+                file,
                 name,
                 version + VERSION + Version::ZERO,
                 format,
@@ -152,13 +152,13 @@ where
             height,
             dateindex,
             difficultyepoch: EagerVecBuilder::forced_import(
-                path,
+                file,
                 name,
                 version + VERSION + Version::ZERO,
                 format,
                 options,
             )?,
-            // halvingepoch: StorableVecGeneator::forced_import(path, name, version + VERSION + Version::ZERO, format, options)?,
+            // halvingepoch: StorableVecGeneator::forced_import(file, name, version + VERSION + Version::ZERO, format, options)?,
         })
     }
 

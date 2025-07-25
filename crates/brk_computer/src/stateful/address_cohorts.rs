@@ -1,4 +1,4 @@
-use std::path::Path;
+use std::{path::Path, sync::Arc};
 
 use brk_core::{
     AddressGroups, Bitcoin, ByAmountRange, ByGreatEqualAmount, ByLowerThanAmount, DateIndex,
@@ -6,7 +6,7 @@ use brk_core::{
 };
 use brk_exit::Exit;
 use brk_indexer::Indexer;
-use brk_vec::{AnyIterableVec, Computation, Format};
+use brk_vecs::{AnyIterableVec, Computation, File, Format};
 use derive_deref::{Deref, DerefMut};
 use rayon::prelude::*;
 
@@ -25,7 +25,7 @@ pub struct Vecs(AddressGroups<(GroupFilter, address_cohort::Vecs)>);
 
 impl Vecs {
     pub fn forced_import(
-        path: &Path,
+        file: &Arc<File>,
         version: Version,
         _computation: Computation,
         format: Format,
@@ -37,7 +37,7 @@ impl Vecs {
             AddressGroups {
                 amount_range: ByAmountRange {
                     _0sats: address_cohort::Vecs::forced_import(
-                        path,
+                        file,
                         Some("addrs_with_0sats"),
                         _computation,
                         format,
@@ -48,7 +48,7 @@ impl Vecs {
                         true,
                     )?,
                     _1sat_to_10sats: address_cohort::Vecs::forced_import(
-                        path,
+                        file,
                         Some("addrs_above_1sat_under_10sats"),
                         _computation,
                         format,
@@ -59,7 +59,7 @@ impl Vecs {
                         true,
                     )?,
                     _10sats_to_100sats: address_cohort::Vecs::forced_import(
-                        path,
+                        file,
                         Some("addrs_above_10sats_under_100sats"),
                         _computation,
                         format,
@@ -70,7 +70,7 @@ impl Vecs {
                         true,
                     )?,
                     _100sats_to_1k_sats: address_cohort::Vecs::forced_import(
-                        path,
+                        file,
                         Some("addrs_above_100sats_under_1k_sats"),
                         _computation,
                         format,
@@ -81,7 +81,7 @@ impl Vecs {
                         true,
                     )?,
                     _1k_sats_to_10k_sats: address_cohort::Vecs::forced_import(
-                        path,
+                        file,
                         Some("addrs_above_1k_sats_under_10k_sats"),
                         _computation,
                         format,
@@ -92,7 +92,7 @@ impl Vecs {
                         true,
                     )?,
                     _10k_sats_to_100k_sats: address_cohort::Vecs::forced_import(
-                        path,
+                        file,
                         Some("addrs_above_10k_sats_under_100k_sats"),
                         _computation,
                         format,
@@ -103,7 +103,7 @@ impl Vecs {
                         true,
                     )?,
                     _100k_sats_to_1m_sats: address_cohort::Vecs::forced_import(
-                        path,
+                        file,
                         Some("addrs_above_100k_sats_under_1m_sats"),
                         _computation,
                         format,
@@ -114,7 +114,7 @@ impl Vecs {
                         true,
                     )?,
                     _1m_sats_to_10m_sats: address_cohort::Vecs::forced_import(
-                        path,
+                        file,
                         Some("addrs_above_1m_sats_under_10m_sats"),
                         _computation,
                         format,
@@ -125,7 +125,7 @@ impl Vecs {
                         true,
                     )?,
                     _10m_sats_to_1btc: address_cohort::Vecs::forced_import(
-                        path,
+                        file,
                         Some("addrs_above_10m_sats_under_1btc"),
                         _computation,
                         format,
@@ -136,7 +136,7 @@ impl Vecs {
                         true,
                     )?,
                     _1btc_to_10btc: address_cohort::Vecs::forced_import(
-                        path,
+                        file,
                         Some("addrs_above_1btc_under_10btc"),
                         _computation,
                         format,
@@ -147,7 +147,7 @@ impl Vecs {
                         true,
                     )?,
                     _10btc_to_100btc: address_cohort::Vecs::forced_import(
-                        path,
+                        file,
                         Some("addrs_above_10btc_under_100btc"),
                         _computation,
                         format,
@@ -158,7 +158,7 @@ impl Vecs {
                         true,
                     )?,
                     _100btc_to_1k_btc: address_cohort::Vecs::forced_import(
-                        path,
+                        file,
                         Some("addrs_above_100btc_under_1k_btc"),
                         _computation,
                         format,
@@ -169,7 +169,7 @@ impl Vecs {
                         true,
                     )?,
                     _1k_btc_to_10k_btc: address_cohort::Vecs::forced_import(
-                        path,
+                        file,
                         Some("addrs_above_1k_btc_under_10k_btc"),
                         _computation,
                         format,
@@ -180,7 +180,7 @@ impl Vecs {
                         true,
                     )?,
                     _10k_btc_to_100k_btc: address_cohort::Vecs::forced_import(
-                        path,
+                        file,
                         Some("addrs_above_10k_btc_under_100k_btc"),
                         _computation,
                         format,
@@ -191,7 +191,7 @@ impl Vecs {
                         true,
                     )?,
                     _100k_btc_or_more: address_cohort::Vecs::forced_import(
-                        path,
+                        file,
                         Some("addrs_above_100k_btc"),
                         _computation,
                         format,
@@ -204,7 +204,7 @@ impl Vecs {
                 },
                 lt_amount: ByLowerThanAmount {
                     _10sats: address_cohort::Vecs::forced_import(
-                        path,
+                        file,
                         Some("addrs_under_10sats"),
                         _computation,
                         format,
@@ -215,7 +215,7 @@ impl Vecs {
                         true,
                     )?,
                     _100sats: address_cohort::Vecs::forced_import(
-                        path,
+                        file,
                         Some("addrs_under_100sats"),
                         _computation,
                         format,
@@ -226,7 +226,7 @@ impl Vecs {
                         true,
                     )?,
                     _1k_sats: address_cohort::Vecs::forced_import(
-                        path,
+                        file,
                         Some("addrs_under_1k_sats"),
                         _computation,
                         format,
@@ -237,7 +237,7 @@ impl Vecs {
                         true,
                     )?,
                     _10k_sats: address_cohort::Vecs::forced_import(
-                        path,
+                        file,
                         Some("addrs_under_10k_sats"),
                         _computation,
                         format,
@@ -248,7 +248,7 @@ impl Vecs {
                         true,
                     )?,
                     _100k_sats: address_cohort::Vecs::forced_import(
-                        path,
+                        file,
                         Some("addrs_under_100k_sats"),
                         _computation,
                         format,
@@ -259,7 +259,7 @@ impl Vecs {
                         true,
                     )?,
                     _1m_sats: address_cohort::Vecs::forced_import(
-                        path,
+                        file,
                         Some("addrs_under_1m_sats"),
                         _computation,
                         format,
@@ -270,7 +270,7 @@ impl Vecs {
                         true,
                     )?,
                     _10m_sats: address_cohort::Vecs::forced_import(
-                        path,
+                        file,
                         Some("addrs_under_10m_sats"),
                         _computation,
                         format,
@@ -281,7 +281,7 @@ impl Vecs {
                         true,
                     )?,
                     _1btc: address_cohort::Vecs::forced_import(
-                        path,
+                        file,
                         Some("addrs_under_1btc"),
                         _computation,
                         format,
@@ -292,7 +292,7 @@ impl Vecs {
                         true,
                     )?,
                     _10btc: address_cohort::Vecs::forced_import(
-                        path,
+                        file,
                         Some("addrs_under_10btc"),
                         _computation,
                         format,
@@ -303,7 +303,7 @@ impl Vecs {
                         true,
                     )?,
                     _100btc: address_cohort::Vecs::forced_import(
-                        path,
+                        file,
                         Some("addrs_under_100btc"),
                         _computation,
                         format,
@@ -314,7 +314,7 @@ impl Vecs {
                         true,
                     )?,
                     _1k_btc: address_cohort::Vecs::forced_import(
-                        path,
+                        file,
                         Some("addrs_under_1k_btc"),
                         _computation,
                         format,
@@ -325,7 +325,7 @@ impl Vecs {
                         true,
                     )?,
                     _10k_btc: address_cohort::Vecs::forced_import(
-                        path,
+                        file,
                         Some("addrs_under_10k_btc"),
                         _computation,
                         format,
@@ -336,7 +336,7 @@ impl Vecs {
                         true,
                     )?,
                     _100k_btc: address_cohort::Vecs::forced_import(
-                        path,
+                        file,
                         Some("addrs_under_100k_btc"),
                         _computation,
                         format,
@@ -349,7 +349,7 @@ impl Vecs {
                 },
                 ge_amount: ByGreatEqualAmount {
                     _1sat: address_cohort::Vecs::forced_import(
-                        path,
+                        file,
                         Some("addrs_above_1sat"),
                         _computation,
                         format,
@@ -360,7 +360,7 @@ impl Vecs {
                         true,
                     )?,
                     _10sats: address_cohort::Vecs::forced_import(
-                        path,
+                        file,
                         Some("addrs_above_10sats"),
                         _computation,
                         format,
@@ -371,7 +371,7 @@ impl Vecs {
                         true,
                     )?,
                     _100sats: address_cohort::Vecs::forced_import(
-                        path,
+                        file,
                         Some("addrs_above_100sats"),
                         _computation,
                         format,
@@ -382,7 +382,7 @@ impl Vecs {
                         true,
                     )?,
                     _1k_sats: address_cohort::Vecs::forced_import(
-                        path,
+                        file,
                         Some("addrs_above_1k_sats"),
                         _computation,
                         format,
@@ -393,7 +393,7 @@ impl Vecs {
                         true,
                     )?,
                     _10k_sats: address_cohort::Vecs::forced_import(
-                        path,
+                        file,
                         Some("addrs_above_10k_sats"),
                         _computation,
                         format,
@@ -404,7 +404,7 @@ impl Vecs {
                         true,
                     )?,
                     _100k_sats: address_cohort::Vecs::forced_import(
-                        path,
+                        file,
                         Some("addrs_above_100k_sats"),
                         _computation,
                         format,
@@ -415,7 +415,7 @@ impl Vecs {
                         true,
                     )?,
                     _1m_sats: address_cohort::Vecs::forced_import(
-                        path,
+                        file,
                         Some("addrs_above_1m_sats"),
                         _computation,
                         format,
@@ -426,7 +426,7 @@ impl Vecs {
                         true,
                     )?,
                     _10m_sats: address_cohort::Vecs::forced_import(
-                        path,
+                        file,
                         Some("addrs_above_10m_sats"),
                         _computation,
                         format,
@@ -437,7 +437,7 @@ impl Vecs {
                         true,
                     )?,
                     _1btc: address_cohort::Vecs::forced_import(
-                        path,
+                        file,
                         Some("addrs_above_1btc"),
                         _computation,
                         format,
@@ -448,7 +448,7 @@ impl Vecs {
                         true,
                     )?,
                     _10btc: address_cohort::Vecs::forced_import(
-                        path,
+                        file,
                         Some("addrs_above_10btc"),
                         _computation,
                         format,
@@ -459,7 +459,7 @@ impl Vecs {
                         true,
                     )?,
                     _100btc: address_cohort::Vecs::forced_import(
-                        path,
+                        file,
                         Some("addrs_above_100btc"),
                         _computation,
                         format,
@@ -470,7 +470,7 @@ impl Vecs {
                         true,
                     )?,
                     _1k_btc: address_cohort::Vecs::forced_import(
-                        path,
+                        file,
                         Some("addrs_above_1k_btc"),
                         _computation,
                         format,
@@ -481,7 +481,7 @@ impl Vecs {
                         true,
                     )?,
                     _10k_btc: address_cohort::Vecs::forced_import(
-                        path,
+                        file,
                         Some("addrs_above_10k_btc"),
                         _computation,
                         format,

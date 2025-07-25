@@ -1,10 +1,10 @@
-use std::{f32, path::Path};
+use std::{f32, sync::Arc};
 
 use brk_core::{Date, DateIndex, Dollars, Result, StoredF32, Version};
 use brk_exit::Exit;
 use brk_indexer::Indexer;
-use brk_vec::{
-    AnyCollectableVec, AnyIterableVec, AnyVec, CollectableVec, Computation, EagerVec, Format,
+use brk_vecs::{
+    AnyCollectableVec, AnyIterableVec, AnyVec, CollectableVec, Computation, EagerVec, File, Format,
     StoredIndex, VecIterator,
 };
 
@@ -60,7 +60,7 @@ const VERSION: Version = Version::ZERO;
 impl ComputedRatioVecsFromDateIndex {
     #[allow(clippy::too_many_arguments)]
     pub fn forced_import(
-        path: &Path,
+        file: &Arc<File>,
         name: &str,
         source: Source<DateIndex, Dollars>,
         version: Version,
@@ -74,7 +74,7 @@ impl ComputedRatioVecsFromDateIndex {
         Ok(Self {
             price: source.is_compute().then(|| {
                 ComputedVecsFromDateIndex::forced_import(
-                    path,
+                    file,
                     name,
                     Source::Compute,
                     version + VERSION,
@@ -86,7 +86,7 @@ impl ComputedRatioVecsFromDateIndex {
                 .unwrap()
             }),
             ratio: ComputedVecsFromDateIndex::forced_import(
-                path,
+                file,
                 &format!("{name}_ratio"),
                 Source::Compute,
                 version + VERSION + Version::ZERO,
@@ -97,7 +97,7 @@ impl ComputedRatioVecsFromDateIndex {
             )?,
             ratio_sma: extended.then(|| {
                 ComputedVecsFromDateIndex::forced_import(
-                    path,
+                    file,
                     &format!("{name}_ratio_sma"),
                     Source::Compute,
                     version + VERSION + Version::ZERO,
@@ -110,7 +110,7 @@ impl ComputedRatioVecsFromDateIndex {
             }),
             ratio_1w_sma: extended.then(|| {
                 ComputedVecsFromDateIndex::forced_import(
-                    path,
+                    file,
                     &format!("{name}_ratio_1w_sma"),
                     Source::Compute,
                     version + VERSION + Version::ZERO,
@@ -123,7 +123,7 @@ impl ComputedRatioVecsFromDateIndex {
             }),
             ratio_1m_sma: extended.then(|| {
                 ComputedVecsFromDateIndex::forced_import(
-                    path,
+                    file,
                     &format!("{name}_ratio_1m_sma"),
                     Source::Compute,
                     version + VERSION + Version::ZERO,
@@ -136,7 +136,7 @@ impl ComputedRatioVecsFromDateIndex {
             }),
             ratio_1y_sma: extended.then(|| {
                 ComputedVecsFromDateIndex::forced_import(
-                    path,
+                    file,
                     &format!("{name}_ratio_1y_sma"),
                     Source::Compute,
                     version + VERSION + Version::ZERO,
@@ -149,7 +149,7 @@ impl ComputedRatioVecsFromDateIndex {
             }),
             ratio_4y_sma: extended.then(|| {
                 ComputedVecsFromDateIndex::forced_import(
-                    path,
+                    file,
                     &format!("{name}_ratio_4y_sma"),
                     Source::Compute,
                     version + VERSION + Version::ZERO,
@@ -162,7 +162,7 @@ impl ComputedRatioVecsFromDateIndex {
             }),
             ratio_1y_sma_momentum_oscillator: extended.then(|| {
                 ComputedVecsFromDateIndex::forced_import(
-                    path,
+                    file,
                     &format!("{name}_ratio_1y_sma_momentum_oscillator"),
                     Source::Compute,
                     version + VERSION + Version::ZERO,
@@ -175,7 +175,7 @@ impl ComputedRatioVecsFromDateIndex {
             }),
             ratio_sd: extended.then(|| {
                 ComputedVecsFromDateIndex::forced_import(
-                    path,
+                    file,
                     &format!("{name}_ratio_sd"),
                     Source::Compute,
                     version + VERSION + Version::ZERO,
@@ -188,7 +188,7 @@ impl ComputedRatioVecsFromDateIndex {
             }),
             ratio_4y_sd: extended.then(|| {
                 ComputedVecsFromDateIndex::forced_import(
-                    path,
+                    file,
                     &format!("{name}_ratio_4y_sd"),
                     Source::Compute,
                     version + VERSION + Version::ZERO,
@@ -201,7 +201,7 @@ impl ComputedRatioVecsFromDateIndex {
             }),
             ratio_1y_sd: extended.then(|| {
                 ComputedVecsFromDateIndex::forced_import(
-                    path,
+                    file,
                     &format!("{name}_ratio_1y_sd"),
                     Source::Compute,
                     version + VERSION + Version::ZERO,
@@ -214,7 +214,7 @@ impl ComputedRatioVecsFromDateIndex {
             }),
             ratio_p99_9: extended.then(|| {
                 ComputedVecsFromDateIndex::forced_import(
-                    path,
+                    file,
                     &format!("{name}_ratio_p99_9"),
                     Source::Compute,
                     version + VERSION + Version::ZERO,
@@ -227,7 +227,7 @@ impl ComputedRatioVecsFromDateIndex {
             }),
             ratio_p99_5: extended.then(|| {
                 ComputedVecsFromDateIndex::forced_import(
-                    path,
+                    file,
                     &format!("{name}_ratio_p99_5"),
                     Source::Compute,
                     version + VERSION + Version::ZERO,
@@ -240,7 +240,7 @@ impl ComputedRatioVecsFromDateIndex {
             }),
             ratio_p99: extended.then(|| {
                 ComputedVecsFromDateIndex::forced_import(
-                    path,
+                    file,
                     &format!("{name}_ratio_p99"),
                     Source::Compute,
                     version + VERSION + Version::ZERO,
@@ -253,7 +253,7 @@ impl ComputedRatioVecsFromDateIndex {
             }),
             ratio_p1: extended.then(|| {
                 ComputedVecsFromDateIndex::forced_import(
-                    path,
+                    file,
                     &format!("{name}_ratio_p1"),
                     Source::Compute,
                     version + VERSION + Version::ZERO,
@@ -266,7 +266,7 @@ impl ComputedRatioVecsFromDateIndex {
             }),
             ratio_p0_5: extended.then(|| {
                 ComputedVecsFromDateIndex::forced_import(
-                    path,
+                    file,
                     &format!("{name}_ratio_p0_5"),
                     Source::Compute,
                     version + VERSION + Version::ZERO,
@@ -279,7 +279,7 @@ impl ComputedRatioVecsFromDateIndex {
             }),
             ratio_p0_1: extended.then(|| {
                 ComputedVecsFromDateIndex::forced_import(
-                    path,
+                    file,
                     &format!("{name}_ratio_p0_1"),
                     Source::Compute,
                     version + VERSION + Version::ZERO,
@@ -292,7 +292,7 @@ impl ComputedRatioVecsFromDateIndex {
             }),
             ratio_p1sd: extended.then(|| {
                 ComputedVecsFromDateIndex::forced_import(
-                    path,
+                    file,
                     &format!("{name}_ratio_p1sd"),
                     Source::Compute,
                     version + VERSION + Version::ZERO,
@@ -305,7 +305,7 @@ impl ComputedRatioVecsFromDateIndex {
             }),
             ratio_p2sd: extended.then(|| {
                 ComputedVecsFromDateIndex::forced_import(
-                    path,
+                    file,
                     &format!("{name}_ratio_p2sd"),
                     Source::Compute,
                     version + VERSION + Version::ZERO,
@@ -318,7 +318,7 @@ impl ComputedRatioVecsFromDateIndex {
             }),
             ratio_p3sd: extended.then(|| {
                 ComputedVecsFromDateIndex::forced_import(
-                    path,
+                    file,
                     &format!("{name}_ratio_p3sd"),
                     Source::Compute,
                     version + VERSION + Version::ZERO,
@@ -331,7 +331,7 @@ impl ComputedRatioVecsFromDateIndex {
             }),
             ratio_m1sd: extended.then(|| {
                 ComputedVecsFromDateIndex::forced_import(
-                    path,
+                    file,
                     &format!("{name}_ratio_m1sd"),
                     Source::Compute,
                     version + VERSION + Version::ZERO,
@@ -344,7 +344,7 @@ impl ComputedRatioVecsFromDateIndex {
             }),
             ratio_m2sd: extended.then(|| {
                 ComputedVecsFromDateIndex::forced_import(
-                    path,
+                    file,
                     &format!("{name}_ratio_m2sd"),
                     Source::Compute,
                     version + VERSION + Version::ZERO,
@@ -357,7 +357,7 @@ impl ComputedRatioVecsFromDateIndex {
             }),
             ratio_m3sd: extended.then(|| {
                 ComputedVecsFromDateIndex::forced_import(
-                    path,
+                    file,
                     &format!("{name}_ratio_m3sd"),
                     Source::Compute,
                     version + VERSION + Version::ZERO,
@@ -370,7 +370,7 @@ impl ComputedRatioVecsFromDateIndex {
             }),
             ratio_p99_9_as_price: extended.then(|| {
                 ComputedVecsFromDateIndex::forced_import(
-                    path,
+                    file,
                     &format!("{name}_ratio_p99_9_as_price"),
                     Source::Compute,
                     version + VERSION + Version::ZERO,
@@ -383,7 +383,7 @@ impl ComputedRatioVecsFromDateIndex {
             }),
             ratio_p99_5_as_price: extended.then(|| {
                 ComputedVecsFromDateIndex::forced_import(
-                    path,
+                    file,
                     &format!("{name}_ratio_p99_5_as_price"),
                     Source::Compute,
                     version + VERSION + Version::ZERO,
@@ -396,7 +396,7 @@ impl ComputedRatioVecsFromDateIndex {
             }),
             ratio_p99_as_price: extended.then(|| {
                 ComputedVecsFromDateIndex::forced_import(
-                    path,
+                    file,
                     &format!("{name}_ratio_p99_as_price"),
                     Source::Compute,
                     version + VERSION + Version::ZERO,
@@ -409,7 +409,7 @@ impl ComputedRatioVecsFromDateIndex {
             }),
             ratio_p1_as_price: extended.then(|| {
                 ComputedVecsFromDateIndex::forced_import(
-                    path,
+                    file,
                     &format!("{name}_ratio_p1_as_price"),
                     Source::Compute,
                     version + VERSION + Version::ZERO,
@@ -422,7 +422,7 @@ impl ComputedRatioVecsFromDateIndex {
             }),
             ratio_p0_5_as_price: extended.then(|| {
                 ComputedVecsFromDateIndex::forced_import(
-                    path,
+                    file,
                     &format!("{name}_ratio_p0_5_as_price"),
                     Source::Compute,
                     version + VERSION + Version::ZERO,
@@ -435,7 +435,7 @@ impl ComputedRatioVecsFromDateIndex {
             }),
             ratio_p0_1_as_price: extended.then(|| {
                 ComputedVecsFromDateIndex::forced_import(
-                    path,
+                    file,
                     &format!("{name}_ratio_p0_1_as_price"),
                     Source::Compute,
                     version + VERSION + Version::ZERO,
@@ -448,7 +448,7 @@ impl ComputedRatioVecsFromDateIndex {
             }),
             ratio_p1sd_as_price: extended.then(|| {
                 ComputedVecsFromDateIndex::forced_import(
-                    path,
+                    file,
                     &format!("{name}_ratio_p1sd_as_price"),
                     Source::Compute,
                     version + VERSION + Version::ZERO,
@@ -461,7 +461,7 @@ impl ComputedRatioVecsFromDateIndex {
             }),
             ratio_p2sd_as_price: extended.then(|| {
                 ComputedVecsFromDateIndex::forced_import(
-                    path,
+                    file,
                     &format!("{name}_ratio_p2sd_as_price"),
                     Source::Compute,
                     version + VERSION + Version::ZERO,
@@ -474,7 +474,7 @@ impl ComputedRatioVecsFromDateIndex {
             }),
             ratio_p3sd_as_price: extended.then(|| {
                 ComputedVecsFromDateIndex::forced_import(
-                    path,
+                    file,
                     &format!("{name}_ratio_p3sd_as_price"),
                     Source::Compute,
                     version + VERSION + Version::ZERO,
@@ -487,7 +487,7 @@ impl ComputedRatioVecsFromDateIndex {
             }),
             ratio_m1sd_as_price: extended.then(|| {
                 ComputedVecsFromDateIndex::forced_import(
-                    path,
+                    file,
                     &format!("{name}_ratio_m1sd_as_price"),
                     Source::Compute,
                     version + VERSION + Version::ZERO,
@@ -500,7 +500,7 @@ impl ComputedRatioVecsFromDateIndex {
             }),
             ratio_m2sd_as_price: extended.then(|| {
                 ComputedVecsFromDateIndex::forced_import(
-                    path,
+                    file,
                     &format!("{name}_ratio_m2sd_as_price"),
                     Source::Compute,
                     version + VERSION + Version::ZERO,
@@ -513,7 +513,7 @@ impl ComputedRatioVecsFromDateIndex {
             }),
             ratio_m3sd_as_price: extended.then(|| {
                 ComputedVecsFromDateIndex::forced_import(
-                    path,
+                    file,
                     &format!("{name}_ratio_m3sd_as_price"),
                     Source::Compute,
                     version + VERSION + Version::ZERO,
@@ -526,7 +526,7 @@ impl ComputedRatioVecsFromDateIndex {
             }),
             ratio_zscore: extended.then(|| {
                 ComputedVecsFromDateIndex::forced_import(
-                    path,
+                    file,
                     &format!("{name}_ratio_zscore"),
                     Source::Compute,
                     version + VERSION + Version::ZERO,
@@ -539,7 +539,7 @@ impl ComputedRatioVecsFromDateIndex {
             }),
             ratio_4y_zscore: extended.then(|| {
                 ComputedVecsFromDateIndex::forced_import(
-                    path,
+                    file,
                     &format!("{name}_ratio_4y_zscore"),
                     Source::Compute,
                     version + VERSION + Version::ZERO,
@@ -552,7 +552,7 @@ impl ComputedRatioVecsFromDateIndex {
             }),
             ratio_1y_zscore: extended.then(|| {
                 ComputedVecsFromDateIndex::forced_import(
-                    path,
+                    file,
                     &format!("{name}_ratio_1y_zscore"),
                     Source::Compute,
                     version + VERSION + Version::ZERO,
@@ -1068,6 +1068,10 @@ impl ComputedRatioVecsFromDateIndex {
 
                 Ok(())
             })?;
+
+        drop(sma_iter);
+        drop(_4y_sma_iter);
+        drop(_1y_sma_iter);
 
         self.mut_ratio_vecs()
             .into_iter()

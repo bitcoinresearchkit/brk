@@ -1,6 +1,6 @@
 use brk_core::{ByAddressType, StoredUsize};
 use brk_exit::Exit;
-use brk_vec::AnyCollectableVec;
+use brk_vecs::AnyCollectableVec;
 use derive_deref::{Deref, DerefMut};
 
 use crate::{

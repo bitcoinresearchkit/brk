@@ -1,9 +1,9 @@
-use std::path::Path;
+use std::sync::Arc;
 
 use brk_core::{DifficultyEpoch, Height, Result, Version};
 use brk_exit::Exit;
 use brk_indexer::Indexer;
-use brk_vec::{AnyCollectableVec, EagerVec, Format};
+use brk_vecs::{AnyCollectableVec, EagerVec, File, Format};
 
 use crate::{Indexes, indexes};
 
@@ -28,17 +28,17 @@ where
     f64: From<T>,
 {
     pub fn forced_import(
-        path: &Path,
+        file: &Arc<File>,
         name: &str,
         version: Version,
         format: Format,
         options: VecBuilderOptions,
     ) -> color_eyre::Result<Self> {
         let height =
-            EagerVec::forced_import(path, name, version + VERSION + Version::ZERO, format)?;
+            EagerVec::forced_import(file, name, version + VERSION + Version::ZERO, format)?;
 
         let height_extra = EagerVecBuilder::forced_import(
-            path,
+            file,
             name,
             version + VERSION + Version::ZERO,
             format,
@@ -51,13 +51,13 @@ where
             height,
             height_extra,
             difficultyepoch: EagerVecBuilder::forced_import(
-                path,
+                file,
                 name,
                 version + VERSION + Version::ZERO,
                 format,
                 options,
             )?,
-            // halvingepoch: StorableVecGeneator::forced_import(path, name, version + VERSION + Version::ZERO, format, options)?,
+            // halvingepoch: StorableVecGeneator::forced_import(file, name, version + VERSION + Version::ZERO, format, options)?,
         })
     }
 

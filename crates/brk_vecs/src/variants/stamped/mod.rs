@@ -27,18 +27,16 @@ where
         version: Version,
         format: Format,
     ) -> Result<Self> {
-        Ok(Self(
-            StoredVec::forced_import(file, name, version, format).unwrap(),
-        ))
+        Ok(Self(StoredVec::forced_import(file, name, version, format)?))
     }
 
     #[inline]
-    pub fn unwrap_read(&self, index: I, reader: &Reader<'_>) -> T {
+    pub fn unwrap_read(&self, index: I, reader: &Reader) -> T {
         self.0.unwrap_read(index, reader)
     }
 
     #[inline]
-    pub fn get_or_read(&self, index: I, reader: &Reader<'_>) -> Result<Option<Cow<T>>> {
+    pub fn get_or_read(&self, index: I, reader: &Reader) -> Result<Option<Cow<T>>> {
         self.0.get_or_read(index, reader)
     }
 
@@ -95,7 +93,7 @@ where
         self.0.update(index, value)
     }
 
-    pub fn take(&mut self, index: I, reader: &Reader<'_>) -> Result<Option<T>> {
+    pub fn take(&mut self, index: I, reader: &Reader) -> Result<Option<T>> {
         self.0.take(index, reader)
     }
 
@@ -131,6 +129,14 @@ where
     pub fn hasnt(&self, index: I) -> Result<bool> {
         self.0.has(index).map(|b| !b)
     }
+
+    pub fn create_reader(&self) -> Reader {
+        self.0.create_reader()
+    }
+
+    pub fn create_static_reader(&self) -> Reader<'static> {
+        self.0.create_static_reader()
+    }
 }
 
 impl<I, T> AnyVec for StampedVec<I, T>
@@ -161,14 +167,6 @@ where
     #[inline]
     fn value_type_to_size_of(&self) -> usize {
         size_of::<T>()
-    }
-
-    fn file(&self) -> &File {
-        self.0.file()
-    }
-
-    fn region_index(&self) -> usize {
-        self.0.region_index()
     }
 }
 

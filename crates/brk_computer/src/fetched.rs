@@ -1,4 +1,4 @@
-use std::path::Path;
+use std::sync::Arc;
 
 use brk_core::{
     Cents, Close, DateIndex, DecadeIndex, DifficultyEpoch, Dollars, Height, High, Low, MonthIndex,
@@ -8,8 +8,8 @@ use brk_core::{
 use brk_exit::Exit;
 use brk_fetcher::Fetcher;
 use brk_indexer::Indexer;
-use brk_vec::{
-    AnyCollectableVec, AnyIterableVec, AnyVec, Computation, EagerVec, Format, StoredIndex,
+use brk_vecs::{
+    AnyCollectableVec, AnyIterableVec, AnyVec, Computation, EagerVec, File, Format, StoredIndex,
     VecIterator,
 };
 
@@ -76,103 +76,100 @@ const VERSION_IN_SATS: Version = Version::ZERO;
 
 impl Vecs {
     pub fn forced_import(
-        path: &Path,
+        file: &Arc<File>,
+        fetched_file: &Arc<File>,
         version: Version,
         computation: Computation,
         format: Format,
         indexes: &indexes::Vecs,
     ) -> color_eyre::Result<Self> {
-        let mut fetched_path = path.to_owned();
-        fetched_path.pop();
-        fetched_path = fetched_path.join("fetched");
-
         Ok(Self {
             dateindex_to_ohlc_in_cents: EagerVec::forced_import(
-                &fetched_path,
+                fetched_file,
                 "ohlc_in_cents",
                 version + Version::ZERO,
                 format,
             )?,
             dateindex_to_ohlc: EagerVec::forced_import(
-                path,
+                file,
                 "ohlc",
                 version + VERSION + Version::ZERO,
                 format,
             )?,
             dateindex_to_ohlc_in_sats: EagerVec::forced_import(
-                path,
+                file,
                 "ohlc_in_sats",
                 version + VERSION + VERSION_IN_SATS + Version::ZERO,
                 format,
             )?,
             dateindex_to_close_in_cents: EagerVec::forced_import(
-                path,
+                file,
                 "close_in_cents",
                 version + VERSION + Version::ZERO,
                 format,
             )?,
             dateindex_to_high_in_cents: EagerVec::forced_import(
-                path,
+                file,
                 "high_in_cents",
                 version + VERSION + Version::ZERO,
                 format,
             )?,
             dateindex_to_low_in_cents: EagerVec::forced_import(
-                path,
+                file,
                 "low_in_cents",
                 version + VERSION + Version::ZERO,
                 format,
             )?,
             dateindex_to_open_in_cents: EagerVec::forced_import(
-                path,
+                file,
                 "open_in_cents",
                 version + VERSION + Version::ZERO,
                 format,
             )?,
             height_to_ohlc_in_cents: EagerVec::forced_import(
-                &fetched_path,
+                fetched_file,
                 "ohlc_in_cents",
                 version + Version::ZERO,
                 format,
             )?,
             height_to_ohlc: EagerVec::forced_import(
-                path,
+                file,
                 "ohlc",
                 version + VERSION + Version::ZERO,
                 format,
             )?,
             height_to_ohlc_in_sats: EagerVec::forced_import(
-                path,
+                file,
                 "ohlc_in_sats",
                 version + VERSION + VERSION_IN_SATS + Version::ZERO,
                 format,
             )?,
             height_to_close_in_cents: EagerVec::forced_import(
-                path,
+                file,
                 "close_in_cents",
                 version + VERSION + Version::ZERO,
                 format,
             )?,
             height_to_high_in_cents: EagerVec::forced_import(
-                path,
+                file,
                 "high_in_cents",
                 version + VERSION + Version::ZERO,
                 format,
             )?,
             height_to_low_in_cents: EagerVec::forced_import(
-                path,
+                file,
                 "low_in_cents",
                 version + VERSION + Version::ZERO,
                 format,
             )?,
             height_to_open_in_cents: EagerVec::forced_import(
-                path,
+                file,
                 "open_in_cents",
                 version + VERSION + Version::ZERO,
                 format,
             )?,
             timeindexes_to_open: ComputedVecsFromDateIndex::forced_import(
-                path,
+                file,
                 "open",
                 Source::Compute,
                 version + VERSION + Version::ZERO,
@@ -182,7 +179,7 @@ impl Vecs {
                 VecBuilderOptions::default().add_first(),
             )?,
             timeindexes_to_high: ComputedVecsFromDateIndex::forced_import(
-                path,
+                file,
                 "high",
                 Source::Compute,
                 version + VERSION + Version::ZERO,
@@ -192,7 +189,7 @@ impl Vecs {
                 VecBuilderOptions::default().add_max(),
             )?,
             timeindexes_to_low: ComputedVecsFromDateIndex::forced_import(
-                path,
+                file,
                 "low",
                 Source::Compute,
                 version + VERSION + Version::ZERO,
@@ -202,7 +199,7 @@ impl Vecs {
                 VecBuilderOptions::default().add_min(),
             )?,
             timeindexes_to_close: ComputedVecsFromDateIndex::forced_import(
-                path,
+                file,
                 "close",
                 Source::Compute,
                 version + VERSION + Version::ZERO,
@@ -212,7 +209,7 @@ impl Vecs {
                 VecBuilderOptions::default().add_last(),
             )?,
             timeindexes_to_open_in_sats: ComputedVecsFromDateIndex::forced_import(
-                path,
+                file,
                 "open_in_sats",
                 Source::Compute,
                 version + VERSION + VERSION_IN_SATS + Version::ZERO,
@@ -222,7 +219,7 @@ impl Vecs {
                 VecBuilderOptions::default().add_first(),
             )?,
             timeindexes_to_high_in_sats: ComputedVecsFromDateIndex::forced_import(
-                path,
+                file,
                 "high_in_sats",
                 Source::Compute,
                 version + VERSION + VERSION_IN_SATS + Version::ZERO,
@@ -232,7 +229,7 @@ impl Vecs {
                 VecBuilderOptions::default().add_max(),
             )?,
             timeindexes_to_low_in_sats: ComputedVecsFromDateIndex::forced_import(
-                path,
+                file,
                 "low_in_sats",
                 Source::Compute,
                 version + VERSION + VERSION_IN_SATS + Version::ZERO,
@@ -242,7 +239,7 @@ impl Vecs {
                 VecBuilderOptions::default().add_min(),
             )?,
             timeindexes_to_close_in_sats: ComputedVecsFromDateIndex::forced_import(
-                path,
+                file,
                 "close_in_sats",
                 Source::Compute,
                 version + VERSION + VERSION_IN_SATS + Version::ZERO,
@@ -252,143 +249,143 @@ impl Vecs {
                 VecBuilderOptions::default().add_last(),
             )?,
             chainindexes_to_open: ComputedVecsFromHeightStrict::forced_import(
-                path,
+                file,
                 "open",
                 version + VERSION + Version::ZERO,
                 format,
                 VecBuilderOptions::default().add_first(),
             )?,
             chainindexes_to_high: ComputedVecsFromHeightStrict::forced_import(
-                path,
+                file,
                 "high",
                 version + VERSION + Version::ZERO,
                 format,
                 VecBuilderOptions::default().add_max(),
             )?,
             chainindexes_to_low: ComputedVecsFromHeightStrict::forced_import(
-                path,
+                file,
                 "low",
                 version + VERSION + Version::ZERO,
                 format,
                 VecBuilderOptions::default().add_min(),
             )?,
             chainindexes_to_close: ComputedVecsFromHeightStrict::forced_import(
-                path,
+                file,
                 "close",
                 version + VERSION + Version::ZERO,
                 format,
                 VecBuilderOptions::default().add_last(),
             )?,
             chainindexes_to_open_in_sats: ComputedVecsFromHeightStrict::forced_import(
-                path,
+                file,
                 "open_in_sats",
                 version + VERSION + VERSION_IN_SATS + Version::ZERO,
                 format,
                 VecBuilderOptions::default().add_first(),
             )?,
             chainindexes_to_high_in_sats: ComputedVecsFromHeightStrict::forced_import(
-                path,
+                file,
                 "high_in_sats",
                 version + VERSION + VERSION_IN_SATS + Version::ZERO,
                 format,
                 VecBuilderOptions::default().add_max(),
             )?,
             chainindexes_to_low_in_sats: ComputedVecsFromHeightStrict::forced_import(
-                path,
+                file,
                 "low_in_sats",
                 version + VERSION + VERSION_IN_SATS + Version::ZERO,
                 format,
                 VecBuilderOptions::default().add_min(),
             )?,
             chainindexes_to_close_in_sats: ComputedVecsFromHeightStrict::forced_import(
-                path,
+                file,
                 "close_in_sats",
                 version + VERSION + VERSION_IN_SATS + Version::ZERO,
                 format,
                 VecBuilderOptions::default().add_last(),
             )?,
             weekindex_to_ohlc: EagerVec::forced_import(
-                path,
+                file,
                 "ohlc",
                 version + VERSION + Version::ZERO,
                 format,
             )?,
             weekindex_to_ohlc_in_sats: EagerVec::forced_import(
-                path,
+                file,
                 "ohlc_in_sats",
                 version + VERSION + VERSION_IN_SATS + Version::ZERO,
                 format,
             )?,
             difficultyepoch_to_ohlc: EagerVec::forced_import(
-                path,
+                file,
                 "ohlc",
                 version + VERSION + Version::ZERO,
                 format,
             )?,
             difficultyepoch_to_ohlc_in_sats: EagerVec::forced_import(
-                path,
+                file,
                 "ohlc_in_sats",
                 version + VERSION + VERSION_IN_SATS + Version::ZERO,
                 format,
             )?,
             monthindex_to_ohlc: EagerVec::forced_import(
-                path,
+                file,
                 "ohlc",
                 version + VERSION + Version::ZERO,
                 format,
             )?,
             monthindex_to_ohlc_in_sats: EagerVec::forced_import(
-                path,
+                file,
                 "ohlc_in_sats",
                 version + VERSION + VERSION_IN_SATS + Version::ZERO,
                 format,
             )?,
             quarterindex_to_ohlc: EagerVec::forced_import(
-                path,
+                file,
                 "ohlc",
                 version + VERSION + Version::ZERO,
                 format,
             )?,
             quarterindex_to_ohlc_in_sats: EagerVec::forced_import(
-                path,
+                file,
                 "ohlc_in_sats",
                 version + VERSION + VERSION_IN_SATS + Version::ZERO,
                 format,
             )?,
             semesterindex_to_ohlc: EagerVec::forced_import(
-                path,
+                file,
                 "ohlc",
                 version + VERSION + Version::ZERO,
                 format,
             )?,
             semesterindex_to_ohlc_in_sats: EagerVec::forced_import(
-                path,
+                file,
                 "ohlc_in_sats",
                 version + VERSION + VERSION_IN_SATS + Version::ZERO,
                 format,
             )?,
             yearindex_to_ohlc: EagerVec::forced_import(
-                path,
+                file,
                 "ohlc",
                 version + VERSION + Version::ZERO,
                 format,
             )?,
             yearindex_to_ohlc_in_sats: EagerVec::forced_import(
-                path,
+                file,
                 "ohlc_in_sats",
                 version + VERSION + VERSION_IN_SATS + Version::ZERO,
                 format,
             )?,
-            // halvingepoch_to_ohlc: StorableVec::forced_import(path,
+            // halvingepoch_to_ohlc: StorableVec::forced_import(file,
             // "halvingepoch_to_ohlc"), version + VERSION + Version::ZERO, format)?,
             decadeindex_to_ohlc: EagerVec::forced_import(
-                path,
+                file,
                 "ohlc",
                 version + VERSION + Version::ZERO,
                 format,
             )?,
             decadeindex_to_ohlc_in_sats: EagerVec::forced_import(
-                path,
+                file,
                 "ohlc_in_sats",
                 version + VERSION + VERSION_IN_SATS + Version::ZERO,
                 format,

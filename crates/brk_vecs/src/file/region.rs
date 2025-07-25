@@ -18,10 +18,10 @@ pub const SIZE_OF_REGION: usize = size_of::<Region>();
 
 impl Region {
     pub fn new(start: u64, len: u64, reserved: u64) -> Self {
-        debug_assert!(start % PAGE_SIZE == 0);
-        debug_assert!(reserved >= PAGE_SIZE);
-        debug_assert!(reserved % PAGE_SIZE == 0);
-        debug_assert!(len <= reserved);
+        assert!(start % PAGE_SIZE == 0);
+        assert!(reserved >= PAGE_SIZE);
+        assert!(reserved % PAGE_SIZE == 0);
+        assert!(len <= reserved);
 
         Self {
             start,
@@ -35,7 +35,7 @@ impl Region {
     }
 
     pub fn set_start(&mut self, start: u64) {
-        debug_assert!(start % PAGE_SIZE == 0);
+        assert!(start % PAGE_SIZE == 0);
         self.start = start
     }
 
@@ -44,7 +44,7 @@ impl Region {
     }
 
     pub fn set_len(&mut self, len: u64) {
-        debug_assert!(len <= self.reserved());
+        assert!(len <= self.reserved());
         self.len = len
     }
 
@@ -53,9 +53,9 @@ impl Region {
     }
 
     pub fn set_reserved(&mut self, reserved: u64) {
-        debug_assert!(self.len() <= reserved);
-        debug_assert!(reserved >= PAGE_SIZE);
-        debug_assert!(reserved % PAGE_SIZE == 0);
+        assert!(self.len() <= reserved);
+        assert!(reserved >= PAGE_SIZE);
+        assert!(reserved % PAGE_SIZE == 0);
 
         self.reserved = reserved;
     }
@@ -66,7 +66,7 @@ impl Region {
 }
 
 pub trait RegionReader {
-    fn create_reader(self, file: &File) -> Reader<'_>;
+    fn create_reader(self, file: &File) -> Reader;
 }
 
 impl<'a> RegionReader for RwLockReadGuard<'a, Region> {

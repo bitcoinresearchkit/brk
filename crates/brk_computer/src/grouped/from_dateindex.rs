@@ -1,4 +1,4 @@
-use std::path::Path;
+use std::sync::Arc;
 
 use brk_core::{
     DateIndex, DecadeIndex, MonthIndex, QuarterIndex, Result, SemesterIndex, Version, WeekIndex,
@@ -6,8 +6,8 @@ use brk_core::{
 };
 use brk_exit::Exit;
 use brk_indexer::Indexer;
-use brk_vec::{
-    AnyCollectableVec, AnyIterableVec, CloneableAnyIterableVec, Computation, EagerVec, Format,
+use brk_vecs::{
+    AnyCollectableVec, AnyIterableVec, CloneableAnyIterableVec, Computation, EagerVec, File, Format,
 };
 
 use crate::{Indexes, grouped::ComputedVecBuilder, indexes};
@@ -37,7 +37,7 @@ where
 {
     #[allow(clippy::too_many_arguments)]
     pub fn forced_import(
-        path: &Path,
+        file: &Arc<File>,
         name: &str,
         source: Source<DateIndex, T>,
         version: Version,
@@ -47,11 +47,11 @@ where
         options: VecBuilderOptions,
     ) -> color_eyre::Result<Self> {
         let dateindex = source.is_compute().then(|| {
-            EagerVec::forced_import(path, name, version + VERSION + Version::ZERO, format).unwrap()
+            EagerVec::forced_import(file, name, version + VERSION + Version::ZERO, format).unwrap()
         });
 
         let dateindex_extra = EagerVecBuilder::forced_import(
-            path,
+            file,
             name,
             version + VERSION + Version::ZERO,
             format,
@@ -64,7 +64,7 @@ where
 
         Ok(Self {
             weekindex: ComputedVecBuilder::forced_import(
-                path,
+                file,
                 name,
                 version + VERSION + Version::ZERO,
                 format,
@@ -75,7 +75,7 @@ where
                 options.into(),
             )?,
             monthindex: ComputedVecBuilder::forced_import(
-                path,
+                file,
                 name,
                 version + VERSION + Version::ZERO,
                 format,
@@ -86,7 +86,7 @@ where
                 options.into(),
             )?,
             quarterindex: ComputedVecBuilder::forced_import(
-                path,
+                file,
                 name,
                 version + VERSION + Version::ZERO,
                 format,
@@ -97,7 +97,7 @@ where
                 options.into(),
             )?,
             semesterindex: ComputedVecBuilder::forced_import(
-                path,
+                file,
                 name,
                 version + VERSION + Version::ZERO,
                 format,
@@ -108,7 +108,7 @@ where
                 options.into(),
             )?,
             yearindex: ComputedVecBuilder::forced_import(
-                path,
+                file,
                 name,
                 version + VERSION + Version::ZERO,
                 format,
@@ -119,7 +119,7 @@ where
                 options.into(),
             )?,
             decadeindex: ComputedVecBuilder::forced_import(
-                path,
+                file,
                 name,
                 version + VERSION + Version::ZERO,
                 format,

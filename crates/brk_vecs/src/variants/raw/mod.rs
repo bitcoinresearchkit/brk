@@ -7,12 +7,13 @@ use std::{
 };
 
 use brk_core::{Error, Result, Version};
+use parking_lot::RwLock;
 use rayon::prelude::*;
 
 use crate::{
     AnyCollectableVec, AnyIterableVec, AnyVec, BaseVecIterator, BoxedVecIterator, CollectableVec,
-    File, GenericStoredVec, StoredIndex, StoredType,
-    file::{Reader, RegionReader},
+    File, GenericStoredVec, Reader, StoredIndex, StoredType,
+    file::{Region, RegionReader},
 };
 
 use super::Format;
@@ -28,6 +29,7 @@ const VERSION: Version = Version::ONE;
 #[derive(Debug)]
 pub struct RawVec<I, T> {
     file: Arc<File>,
+    region: Arc<RwLock<Region>>,
     region_index: usize,
 
     header: Header,
@@ -68,7 +70,6 @@ where
         if region_len > 0
             && (region_len < HEADER_OFFSET || (region_len - HEADER_OFFSET) % Self::SIZE_OF_T != 0)
         {
-            dbg!(region_len);
             return Err(Error::Str("Region was saved incorrectly"));
         }
 
@@ -101,6 +102,7 @@ where
 
         Ok(Self {
             file: file.clone(),
+            region: region.clone(),
             region_index,
             header,
             name: Box::leak(Box::new(name.to_string())),
@@ -143,7 +145,7 @@ where
     T: StoredType,
 {
     #[inline]
-    fn read_(&self, index: usize, reader: &Reader<'_>) -> Result<Option<T>> {
+    fn read_(&self, index: usize, reader: &Reader) -> Result<Option<T>> {
         let slice = reader.read(
             (index * Self::SIZE_OF_T + HEADER_OFFSET) as u64,
             (Self::SIZE_OF_T) as u64,
@@ -289,6 +291,14 @@ where
     fn reset(&mut self) -> Result<()> {
         self.reset_()
     }
+
+    fn file(&self) -> &File {
+        &self.file
+    }
+
+    fn region_index(&self) -> usize {
+        self.region_index
+    }
 }
 
 impl<I, T> AnyVec for RawVec<I, T>
@@ -320,20 +330,13 @@ where
     fn value_type_to_size_of(&self) -> usize {
         size_of::<T>()
     }
-
-    fn file(&self) -> &File {
-        &self.file
-    }
-
-    fn region_index(&self) -> usize {
-        self.region_index
-    }
 }
 
 impl<I, T> Clone for RawVec<I, T> {
     fn clone(&self) -> Self {
         Self {
             file: self.file.clone(),
+            region: self.region.clone(),
             region_index: self.region_index,
             header: self.header.clone(),
             name: self.name,

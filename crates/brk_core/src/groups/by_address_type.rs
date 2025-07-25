@@ -171,3 +171,11 @@ where
         self.p2a += rhs.p2a;
     }
 }
+
+impl<T> ByAddressType<Option<T>> {
+    pub fn take(&mut self) {
+        self.as_mut_vec().into_iter().for_each(|opt| {
+            opt.take();
+        });
+    }
+}

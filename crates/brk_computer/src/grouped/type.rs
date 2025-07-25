@@ -1,6 +1,6 @@
 use std::ops::{Add, AddAssign, Div};
 
-use brk_vec::StoredType;
+use brk_vecs::StoredType;
 
 pub trait ComputedType
 where

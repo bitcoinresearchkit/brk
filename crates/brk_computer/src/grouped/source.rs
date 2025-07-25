@@ -1,4 +1,4 @@
-use brk_vec::BoxedAnyIterableVec;
+use brk_vecs::BoxedAnyIterableVec;
 
 #[derive(Clone)]
 pub enum Source<I, T> {

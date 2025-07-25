@@ -14,9 +14,8 @@ pub struct Layout {
 impl From<&Regions> for Layout {
     fn from(value: &Regions) -> Self {
         let mut start_to_index = BTreeMap::new();
-        let mut start_to_hole = BTreeMap::new();
 
-        let mut prev_end = 0;
+        let index_to_region = value.index_to_region();
 
         value
             .index_to_region()
@@ -27,12 +26,19 @@ impl From<&Regions> for Layout {
                 let region = region.read();
                 let start = region.start();
                 start_to_index.insert(start, index);
-                if prev_end != start {
-                    start_to_hole.insert(prev_end, start - prev_end);
-                }
-                let reserved = region.reserved();
-                prev_end = start + reserved;
             });
+
+        let mut start_to_hole = BTreeMap::new();
+
+        let mut prev_end = 0;
+
+        start_to_index.iter().for_each(|(&start, &index)| {
+            if prev_end != start {
+                start_to_hole.insert(prev_end, start - prev_end);
+            }
+            let reserved = index_to_region[index].as_ref().unwrap().read().reserved();
+            prev_end = start + reserved;
+        });
 
         Self {
             start_to_index,
@@ -64,13 +70,13 @@ impl Layout {
         let last = self.get_last_region();
         let is_last = last.is_some_and(|(_, other_index)| index == other_index);
         if is_last {
-            debug_assert!(self.start_to_hole.range(last.unwrap().0..).next().is_none());
+            assert!(self.start_to_hole.range(last.unwrap().0..).next().is_none());
         }
         is_last
     }
 
     pub fn insert_region(&mut self, start: u64, index: usize) {
-        debug_assert!(self.start_to_index.insert(start, index).is_none())
+        assert!(self.start_to_index.insert(start, index).is_none())
         // TODO: Other checks related to holes ?
     }
 

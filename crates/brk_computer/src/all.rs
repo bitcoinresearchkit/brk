@@ -1,10 +1,10 @@
-use std::path::Path;
+use std::{path::Path, sync::Arc};
 
 use brk_core::Version;
 use brk_exit::Exit;
 use brk_fetcher::Fetcher;
 use brk_indexer::Indexer;
-use brk_vec::{AnyCollectableVec, Computation, Format};
+use brk_vecs::{AnyCollectableVec, Computation, File, Format};
 use log::info;
 
 use crate::{blocks, cointime, constants, fetched, indexes, market, mining, transactions};
@@ -27,16 +27,19 @@ pub struct Vecs {
 }
 
 impl Vecs {
+    #[allow(clippy::too_many_arguments)]
     pub fn import(
-        path: &Path,
+        file: &Arc<File>,
         version: Version,
         indexer: &Indexer,
         fetch: bool,
         computation: Computation,
         format: Format,
+        fetched_file: &Arc<File>,
+        states_path: &Path,
     ) -> color_eyre::Result<Self> {
         let indexes = indexes::Vecs::forced_import(
-            path,
+            file,
             version + VERSION + Version::ZERO,
             indexer,
             computation,
@@ -45,7 +48,8 @@ impl Vecs {
 
         let fetched = fetch.then(|| {
             fetched::Vecs::forced_import(
-                path,
+                file,
+                fetched_file,
                 version + VERSION + Version::ZERO,
                 computation,
                 format,
@@ -56,43 +60,44 @@ impl Vecs {
 
         Ok(Self {
             blocks: blocks::Vecs::forced_import(
-                path,
+                file,
                 version + VERSION + Version::ZERO,
                 computation,
                 format,
                 &indexes,
             )?,
             mining: mining::Vecs::forced_import(
-                path,
+                file,
                 version + VERSION + Version::ZERO,
                 computation,
                 format,
                 &indexes,
             )?,
             constants: constants::Vecs::forced_import(
-                path,
+                file,
                 version + VERSION + Version::ZERO,
                 computation,
                 format,
                 &indexes,
             )?,
             market: market::Vecs::forced_import(
-                path,
+                file,
                 version + VERSION + Version::ZERO,
                 computation,
                 format,
                 &indexes,
             )?,
             stateful: stateful::Vecs::forced_import(
-                path,
+                file,
                 version + VERSION + Version::ZERO,
                 computation,
                 format,
                 &indexes,
                 fetched.as_ref(),
+                states_path,
             )?,
             transactions: transactions::Vecs::forced_import(
-                path,
+                file,
                 version + VERSION + Version::ZERO,
                 indexer,
                 &indexes,
@@ -101,7 +106,7 @@ impl Vecs {
                 fetched.as_ref(),
             )?,
             cointime: cointime::Vecs::forced_import(
-                path,
+                file,
                 version + VERSION + Version::ZERO,
                 computation,
                 format,

@@ -1,9 +1,9 @@
-use std::path::Path;
+use std::sync::Arc;
 
 use brk_core::{Bitcoin, Dollars, Height, Result, Sats, Version};
 use brk_exit::Exit;
 use brk_indexer::Indexer;
-use brk_vec::{AnyCollectableVec, CollectableVec, Computation, EagerVec, Format, StoredVec};
+use brk_vecs::{AnyCollectableVec, CollectableVec, Computation, EagerVec, File, Format, StoredVec};
 
 use crate::{Indexes, fetched, grouped::Source, indexes};
 
@@ -21,7 +21,7 @@ const VERSION: Version = Version::ZERO;
 impl ComputedValueVecsFromHeight {
     #[allow(clippy::too_many_arguments)]
     pub fn forced_import(
-        path: &Path,
+        file: &Arc<File>,
         name: &str,
         source: Source<Height, Sats>,
         version: Version,
@@ -33,7 +33,7 @@ impl ComputedValueVecsFromHeight {
     ) -> color_eyre::Result<Self> {
         Ok(Self {
             sats: ComputedVecsFromHeight::forced_import(
-                path,
+                file,
                 name,
                 source,
                 version + VERSION,
@@ -43,7 +43,7 @@ impl ComputedValueVecsFromHeight {
                 options,
             )?,
             bitcoin: ComputedVecsFromHeight::forced_import(
-                path,
+                file,
                 &format!("{name}_in_btc"),
                 Source::Compute,
                 version + VERSION,
@@ -54,7 +54,7 @@ impl ComputedValueVecsFromHeight {
             )?,
             dollars: compute_dollars.then(|| {
                 ComputedVecsFromHeight::forced_import(
-                    path,
+                    file,
                     &format!("{name}_in_usd"),
                     Source::Compute,
                     version + VERSION,

@@ -1,4 +1,4 @@
-use std::path::Path;
+use std::sync::Arc;
 
 use brk_core::{
     CheckedSub, DifficultyEpoch, HalvingEpoch, Height, StoredU32, StoredU64, StoredUsize,
@@ -6,7 +6,7 @@ use brk_core::{
 };
 use brk_exit::Exit;
 use brk_indexer::Indexer;
-use brk_vec::{AnyCollectableVec, AnyIterableVec, Computation, EagerVec, Format};
+use brk_vecs::{AnyCollectableVec, AnyIterableVec, Computation, EagerVec, File, Format};
 
 use crate::grouped::Source;
 
@@ -34,7 +34,7 @@ pub struct Vecs {
 
 impl Vecs {
     pub fn forced_import(
-        path: &Path,
+        file: &Arc<File>,
         version: Version,
         computation: Computation,
         format: Format,
@@ -42,13 +42,13 @@ impl Vecs {
     ) -> color_eyre::Result<Self> {
         Ok(Self {
             height_to_interval: EagerVec::forced_import(
-                path,
+                file,
                 "interval",
                 version + VERSION + Version::ZERO,
                 format,
             )?,
             timeindexes_to_timestamp: ComputedVecsFromDateIndex::forced_import(
-                path,
+                file,
                 "timestamp",
                 Source::Compute,
                 version + VERSION + Version::ZERO,
@@ -58,7 +58,7 @@ impl Vecs {
                 VecBuilderOptions::default().add_first(),
             )?,
             indexes_to_block_interval: ComputedVecsFromHeight::forced_import(
-                path,
+                file,
                 "block_interval",
                 Source::None,
                 version + VERSION + Version::ZERO,
@@ -71,7 +71,7 @@ impl Vecs {
                     .add_average(),
             )?,
             indexes_to_block_count: ComputedVecsFromHeight::forced_import(
-                path,
+                file,
                 "block_count",
                 Source::Compute,
                 version + VERSION + Version::ZERO,
@@ -81,7 +81,7 @@ impl Vecs {
                 VecBuilderOptions::default().add_sum().add_cumulative(),
             )?,
             indexes_to_block_weight: ComputedVecsFromHeight::forced_import(
-                path,
+                file,
                 "block_weight",
                 Source::None,
                 version + VERSION + Version::ZERO,
@@ -91,7 +91,7 @@ impl Vecs {
                 VecBuilderOptions::default().add_sum().add_cumulative(),
             )?,
             indexes_to_block_size: ComputedVecsFromHeight::forced_import(
-                path,
+                file,
                 "block_size",
                 Source::None,
                 version + VERSION + Version::ZERO,
@@ -101,13 +101,13 @@ impl Vecs {
                 VecBuilderOptions::default().add_sum().add_cumulative(),
             )?,
             height_to_vbytes: EagerVec::forced_import(
-                path,
+                file,
                 "vbytes",
                 version + VERSION + Version::ZERO,
                 format,
             )?,
             indexes_to_block_vbytes: ComputedVecsFromHeight::forced_import(
-                path,
+                file,
                 "block_vbytes",
                 Source::None,
                 version + VERSION + Version::ZERO,
@@ -117,13 +117,13 @@ impl Vecs {
                 VecBuilderOptions::default().add_sum().add_cumulative(),
             )?,
             difficultyepoch_to_timestamp: EagerVec::forced_import(
-                path,
+                file,
                 "timestamp",
                 version + VERSION + Version::ZERO,
                 format,
             )?,
             halvingepoch_to_timestamp: EagerVec::forced_import(
-                path,
+                file,
                 "timestamp",
                 version + VERSION + Version::ZERO,
                 format,

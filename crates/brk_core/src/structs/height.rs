@@ -35,7 +35,7 @@ impl Height {
     pub const ZERO: Self = Self(0);
     pub const MAX: Self = Self(u32::MAX);
 
-    pub fn new(height: u32) -> Self {
+    pub const fn new(height: u32) -> Self {
         Self(height)
     }
 

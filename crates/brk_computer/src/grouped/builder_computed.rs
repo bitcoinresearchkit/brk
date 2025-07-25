@@ -1,10 +1,10 @@
-use std::path::Path;
+use std::sync::Arc;
 
 use brk_core::{FromCoarserIndex, Result, Version};
 use brk_exit::Exit;
-use brk_vec::{
+use brk_vecs::{
     AnyCollectableVec, AnyIterableVec, BoxedAnyIterableVec, CloneableAnyIterableVec, Computation,
-    ComputedVec, ComputedVecFrom2, Format, StoredIndex,
+    ComputedVec, ComputedVecFrom2, File, Format, StoredIndex,
 };
 
 use crate::grouped::{EagerVecBuilder, VecBuilderOptions};
@@ -39,7 +39,7 @@ where
 {
     #[allow(clippy::too_many_arguments)]
     pub fn forced_import(
-        path: &Path,
+        file: &Arc<File>,
         name: &str,
         version: Version,
         format: Format,
@@ -66,7 +66,7 @@ where
                 Box::new(
                     ComputedVec::forced_import_or_init_from_2(
                         computation,
-                        path,
+                        file,
                         &maybe_suffix("first"),
                         version + VERSION + Version::ZERO,
                         format,
@@ -91,7 +91,7 @@ where
                 Box::new(
                     ComputedVec::forced_import_or_init_from_2(
                         computation,
-                        path,
+                        file,
                         name,
                         version + VERSION + Version::ZERO,
                         format,
@@ -100,7 +100,7 @@ where
                                 source
                                     .as_ref()
                                     .unwrap_or_else(|| {
-                                        dbg!(path, name, I::to_string());
+                                        dbg!(file, name, I::to_string());
                                         panic!()
                                     })
                                     .clone()
@@ -124,7 +124,7 @@ where
                 Box::new(
                     ComputedVec::forced_import_or_init_from_2(
                         computation,
-                        path,
+                        file,
                         &maybe_suffix("min"),
                         version + VERSION + Version::ZERO,
                         format,
@@ -149,7 +149,7 @@ where
                 Box::new(
                     ComputedVec::forced_import_or_init_from_2(
                         computation,
-                        path,
+                        file,
                         &maybe_suffix("max"),
                         version + VERSION + Version::ZERO,
                         format,
@@ -174,7 +174,7 @@ where
                 Box::new(
                     ComputedVec::forced_import_or_init_from_2(
                         computation,
-                        path,
+                        file,
                         &maybe_suffix("average"),
                         version + VERSION + Version::ZERO,
                         format,
@@ -206,7 +206,7 @@ where
                 Box::new(
                     ComputedVec::forced_import_or_init_from_2(
                         computation,
-                        path,
+                        file,
                         &(if !options.last && !options.average && !options.min && !options.max {
                             name.to_string()
                         } else {
@@ -241,7 +241,7 @@ where
                 Box::new(
                     ComputedVec::forced_import_or_init_from_2(
                         computation,
-                        path,
+                        file,
                         &suffix("cumulative"),
                         version + VERSION + Version::ZERO,
                         format,

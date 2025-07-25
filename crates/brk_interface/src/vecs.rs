@@ -2,7 +2,7 @@ use std::collections::BTreeMap;
 
 use brk_computer::Computer;
 use brk_indexer::Indexer;
-use brk_vec::AnyCollectableVec;
+use brk_vecs::AnyCollectableVec;
 use derive_deref::{Deref, DerefMut};
 
 use crate::pagination::{PaginatedIndexParam, PaginationParam};

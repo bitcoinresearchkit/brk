@@ -1,10 +1,10 @@
-use std::{ops::Deref, path::Path};
+use std::{ops::Deref, path::Path, sync::Arc};
 
 use brk_core::{Bitcoin, DateIndex, Dollars, Height, Result, StoredUsize, Version};
 use brk_exit::Exit;
 use brk_indexer::Indexer;
-use brk_vec::{
-    AnyCollectableVec, AnyIterableVec, AnyVec, Computation, EagerVec, Format, VecIterator,
+use brk_vecs::{
+    AnyCollectableVec, AnyIterableVec, AnyVec, Computation, EagerVec, File, Format, VecIterator,
 };
 
 use crate::{
@@ -35,7 +35,7 @@ pub struct Vecs {
 impl Vecs {
     #[allow(clippy::too_many_arguments)]
     pub fn forced_import(
-        path: &Path,
+        file: &Arc<File>,
         cohort_name: Option<&str>,
         computation: Computation,
         format: Format,
@@ -57,13 +57,13 @@ impl Vecs {
                 compute_dollars,
             )?,
             height_to_address_count: EagerVec::forced_import(
-                path,
+                file,
                 &suffix("address_count"),
                 version + VERSION + Version::ZERO,
                 format,
             )?,
             indexes_to_address_count: ComputedVecsFromHeight::forced_import(
-                path,
+                file,
                 &suffix("address_count"),
                 Source::None,
                 version + VERSION + Version::ZERO,
@@ -73,7 +73,7 @@ impl Vecs {
                 VecBuilderOptions::default().add_last(),
             )?,
             inner: common::Vecs::forced_import(
-                path,
+                file,
                 cohort_name,
                 computation,
                 format,

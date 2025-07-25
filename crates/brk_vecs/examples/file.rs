@@ -8,13 +8,13 @@ fn main() -> Result<()> {
 
     let file = File::open(Path::new("vecs"))?;
 
-    let file_min_len = PAGE_SIZE * 1_000_000;
-    let min_regions = 20_000;
+    // let file_min_len = PAGE_SIZE * 1_000_000;
+    // let min_regions = 20_000;
 
-    file.set_min_len(file_min_len)?;
-    file.set_min_regions(min_regions)?;
+    // file.set_min_len(file_min_len)?;
+    // file.set_min_regions(min_regions)?;
 
-    let (region1_i, region1) = file.create_region_if_needed("region1")?;
+    let (region1_i, _) = file.create_region_if_needed("region1")?;
 
     {
         let layout = file.layout();
@@ -150,9 +150,11 @@ fn main() -> Result<()> {
         assert!(layout.start_to_hole().is_empty());
     }
 
-    let (region1_i, region1) = file.create_region_if_needed("region1")?;
-    let (region2_i, region2) = file.create_region_if_needed("region2")?;
-    let (region3_i, region3) = file.create_region_if_needed("region3")?;
+    let (region1_i, _) = file.create_region_if_needed("region1")?;
+    let (region2_i, _) = file.create_region_if_needed("region2")?;
+    let (region3_i, _) = file.create_region_if_needed("region3")?;
+
+    // dbg!(file.layout());
 
     {
         let regions = file.regions();
@@ -228,7 +230,7 @@ fn main() -> Result<()> {
         );
     }
 
-    let (region2_i, region2) = file.create_region_if_needed("region2")?;
+    let (region2_i, _) = file.create_region_if_needed("region2")?;
 
     {
         assert!(region2_i == 1)
@@ -312,7 +314,7 @@ fn main() -> Result<()> {
         assert!(start_to_hole.is_empty());
     }
 
-    let (region2_i, region2) = file.create_region_if_needed("region2")?;
+    let (region2_i, _) = file.create_region_if_needed("region2")?;
 
     {
         let regions = file.regions();
@@ -408,12 +410,14 @@ fn main() -> Result<()> {
 
     file.write_all_to_region(region2_i.into(), &[1; 6000])?;
 
-    let (region4_i, region4) = file.create_region_if_needed("region4")?;
-    file.remove_region(region2_i.into());
-    file.remove_region(region4_i.into());
+    let (region4_i, _) = file.create_region_if_needed("region4")?;
+    file.remove_region(region2_i.into())?;
+    file.remove_region(region4_i.into())?;
 
-    dbg!(file.regions());
-    dbg!(file.layout());
+    let regions = file.regions();
+    dbg!(&regions);
+    let layout = file.layout();
+    dbg!(&layout);
 
     Ok(())
 }

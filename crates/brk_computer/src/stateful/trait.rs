@@ -1,7 +1,7 @@
 use brk_core::{Bitcoin, DateIndex, Dollars, Height, Result, Version};
 use brk_exit::Exit;
 use brk_indexer::Indexer;
-use brk_vec::{AnyCollectableVec, AnyIterableVec};
+use brk_vecs::{AnyCollectableVec, AnyIterableVec};
 
 use crate::{Indexes, fetched, indexes, market};
 
