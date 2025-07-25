@@ -32,6 +32,7 @@ use states::*;
 
 #[derive(Clone)]
 pub struct Computer {
+    file: Arc<File>,
     fetcher: Option<Fetcher>,
     pub vecs: all::Vecs,
 }
@@ -65,6 +66,7 @@ impl Computer {
                 &states_path,
             )?,
             fetcher,
+            file,
         })
     }
 }
@@ -78,6 +80,9 @@ impl Computer {
     ) -> color_eyre::Result<()> {
         info!("Computing...");
         self.vecs
-            .compute(indexer, starting_indexes, self.fetcher.as_mut(), exit)
+            .compute(indexer, starting_indexes, self.fetcher.as_mut(), exit)?;
+        self.file.flush()?;
+        self.file.punch_holes()?;
+        Ok(())
     }
 }
