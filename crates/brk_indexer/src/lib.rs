@@ -27,7 +27,7 @@ pub use stores::*;
 pub use vecs::*;
 
 const SNAPSHOT_BLOCK_RANGE: usize = 1000;
-const COLLISIONS_CHECKED_UP_TO: Height = Height::new(415_000);
+const COLLISIONS_CHECKED_UP_TO: Height = Height::new(907_000);
 const VERSION: Version = Version::ONE;
 
 #[derive(Clone)]
@@ -104,20 +104,16 @@ impl Indexer {
             |stores: &mut Stores, vecs: &mut Vecs, height: Height, exit: &Exit| -> Result<()> {
                 info!("Exporting...");
                 let _lock = exit.lock();
-                thread::scope(|scope| -> Result<()> {
-                    scope.spawn(|| {
-                        let i = Instant::now();
-                        stores.commit(height).unwrap();
-                        info!("Commited stores in {}s", i.elapsed().as_secs());
-                    });
-                    let i = Instant::now();
-                    vecs.flush(height)?;
-                    info!("Flushed vecs in {}s", i.elapsed().as_secs());
-                    let i = Instant::now();
-                    file.flush()?;
-                    info!("Flushed file in {}s", i.elapsed().as_secs());
-                    Ok(())
-                })
+                let i = Instant::now();
+                stores.commit(height).unwrap();
+                info!("Commited stores in {}s", i.elapsed().as_secs());
+                let i = Instant::now();
+                vecs.flush(height)?;
+                info!("Flushed vecs in {}s", i.elapsed().as_secs());
+                let i = Instant::now();
+                file.flush()?;
+                info!("Flushed file in {}s", i.elapsed().as_secs());
+                Ok(())
             };
 
         let mut txindex_to_first_outputindex_reader_opt = None;
