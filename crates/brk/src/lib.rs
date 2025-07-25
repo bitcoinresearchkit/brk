@@ -51,6 +51,6 @@ pub use brk_server as server;
 #[doc(inline)]
 pub use brk_store as store;
 
-#[cfg(feature = "vec")]
+#[cfg(feature = "vecs")]
 #[doc(inline)]
-pub use brk_vec as vec;
+pub use brk_vecs as vecs;

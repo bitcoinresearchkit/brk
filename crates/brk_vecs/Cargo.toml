@@ -24,3 +24,6 @@ serde_json = { workspace = true }
 zerocopy = { workspace = true }
 zerocopy-derive = { workspace = true }
 zstd = "0.13.3"
+
+[package.metadata.cargo-machete]
+ignored = ["clap"]

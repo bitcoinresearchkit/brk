@@ -18,6 +18,5 @@ brk_store = { workspace = true }
 brk_vecs = { workspace = true }
 color-eyre = { workspace = true }
 fjall = { workspace = true }
-libc = { workspace = true }
 log = { workspace = true }
 rayon = { workspace = true }
