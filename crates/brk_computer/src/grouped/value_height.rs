@@ -1,9 +1,9 @@
-use std::path::Path;
+use std::sync::Arc;
 
 use brk_core::{Bitcoin, Dollars, Height, Result, Sats, Version};
 use brk_exit::Exit;
 use brk_indexer::Indexer;
-use brk_vec::{AnyCollectableVec, CollectableVec, EagerVec, Format, StoredVec};
+use brk_vecs::{AnyCollectableVec, CollectableVec, EagerVec, File, Format, StoredVec};
 
 use crate::{Indexes, fetched, grouped::Source, indexes};
 
@@ -18,7 +18,7 @@ const VERSION: Version = Version::ZERO;
 
 impl ComputedHeightValueVecs {
     pub fn forced_import(
-        path: &Path,
+        file: &Arc<File>,
         name: &str,
         source: Source<Height, Sats>,
         version: Version,
@@ -27,18 +27,18 @@ impl ComputedHeightValueVecs {
     ) -> color_eyre::Result<Self> {
         Ok(Self {
             sats: source.is_compute().then(|| {
-                EagerVec::forced_import(path, name, version + VERSION + Version::ZERO, format)
+                EagerVec::forced_import(file, name, version + VERSION + Version::ZERO, format)
                     .unwrap()
             }),
             bitcoin: EagerVec::forced_import(
-                path,
+                file,
                 &format!("{name}_in_btc"),
                 version + VERSION + Version::ZERO,
                 format,
             )?,
             dollars: compute_dollars.then(|| {
                 EagerVec::forced_import(
-                    path,
+                    file,
                     &format!("{name}_in_usd"),
                     version + VERSION + Version::ZERO,
                     format,

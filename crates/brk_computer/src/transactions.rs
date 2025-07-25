@@ -1,4 +1,4 @@
-use std::path::Path;
+use std::sync::Arc;
 
 use brk_core::{
     CheckedSub, Feerate, HalvingEpoch, Height, InputIndex, OutputIndex, Sats, StoredU32,
@@ -6,9 +6,9 @@ use brk_core::{
 };
 use brk_exit::Exit;
 use brk_indexer::Indexer;
-use brk_vec::{
+use brk_vecs::{
     AnyCollectableVec, AnyIterableVec, CloneableAnyIterableVec, Computation, ComputedVec,
-    ComputedVecFrom1, ComputedVecFrom2, ComputedVecFrom3, Format, StoredIndex, VecIterator,
+    ComputedVecFrom1, ComputedVecFrom2, ComputedVecFrom3, File, Format, StoredIndex, VecIterator,
 };
 
 use crate::grouped::{
@@ -86,7 +86,7 @@ pub struct Vecs {
 
 impl Vecs {
     pub fn forced_import(
-        path: &Path,
+        file: &Arc<File>,
         version: Version,
         indexer: &Indexer,
         indexes: &indexes::Vecs,
@@ -98,7 +98,7 @@ impl Vecs {
 
         let inputindex_to_value = ComputedVec::forced_import_or_init_from_2(
             computation,
-            path,
+            file,
             "value",
             version + VERSION + Version::ZERO,
             format,
@@ -125,7 +125,7 @@ impl Vecs {
 
         let txindex_to_weight = ComputedVec::forced_import_or_init_from_2(
             computation,
-            path,
+            file,
             "weight",
             version + VERSION + Version::ZERO,
             format,
@@ -153,7 +153,7 @@ impl Vecs {
 
         let txindex_to_vsize = ComputedVec::forced_import_or_init_from_1(
             computation,
-            path,
+            file,
             "vsize",
             version + VERSION + Version::ZERO,
             format,
@@ -170,7 +170,7 @@ impl Vecs {
 
         let txindex_to_is_coinbase = ComputedVec::forced_import_or_init_from_2(
             computation,
-            path,
+            file,
             "is_coinbase",
             version + VERSION + Version::ZERO,
             format,
@@ -194,7 +194,7 @@ impl Vecs {
 
         let txindex_to_input_value = ComputedVec::forced_import_or_init_from_3(
             computation,
-            path,
+            file,
             "input_value",
             version + VERSION + Version::ZERO,
             format,
@@ -230,7 +230,7 @@ impl Vecs {
 
         // let indexes_to_input_value: ComputedVecsFromTxindex<Sats> =
         //     ComputedVecsFromTxindex::forced_import(
-        //         path,
+        //         file,
         //         "input_value",
         //         true,
         //         version + VERSION + Version::ZERO,
@@ -244,7 +244,7 @@ impl Vecs {
 
         let txindex_to_output_value = ComputedVec::forced_import_or_init_from_3(
             computation,
-            path,
+            file,
             "output_value",
             version + VERSION + Version::ZERO,
             format,
@@ -280,7 +280,7 @@ impl Vecs {
 
         // let indexes_to_output_value: ComputedVecsFromTxindex<Sats> =
         //     ComputedVecsFromTxindex::forced_import(
-        //         path,
+        //         file,
         //         "output_value",
         //         true,
         //         version + VERSION + Version::ZERO,
@@ -294,7 +294,7 @@ impl Vecs {
 
         let txindex_to_fee = ComputedVecFrom2::forced_import_or_init_from_2(
             computation,
-            path,
+            file,
             "fee",
             version + VERSION + Version::ZERO,
             format,
@@ -317,7 +317,7 @@ impl Vecs {
 
         let txindex_to_feerate = ComputedVecFrom2::forced_import_or_init_from_2(
             computation,
-            path,
+            file,
             "feerate",
             version + VERSION + Version::ZERO,
             format,
@@ -337,7 +337,7 @@ impl Vecs {
 
         Ok(Self {
             indexes_to_tx_count: ComputedVecsFromHeight::forced_import(
-                path,
+                file,
                 "tx_count",
                 Source::Compute,
                 version + VERSION + Version::ZERO,
@@ -352,7 +352,7 @@ impl Vecs {
                     .add_cumulative(),
             )?,
             indexes_to_input_count: ComputedVecsFromTxindex::forced_import(
-                path,
+                file,
                 "input_count",
                 Source::None,
                 version + VERSION + Version::ZERO,
@@ -367,7 +367,7 @@ impl Vecs {
                     .add_cumulative(),
             )?,
             indexes_to_output_count: ComputedVecsFromTxindex::forced_import(
-                path,
+                file,
                 "output_count",
                 Source::None,
                 version + VERSION + Version::ZERO,
@@ -382,7 +382,7 @@ impl Vecs {
                     .add_cumulative(),
             )?,
             indexes_to_tx_v1: ComputedVecsFromHeight::forced_import(
-                path,
+                file,
                 "tx_v1",
                 Source::Compute,
                 version + VERSION + Version::ZERO,
@@ -392,7 +392,7 @@ impl Vecs {
                 VecBuilderOptions::default().add_sum().add_cumulative(),
             )?,
             indexes_to_tx_v2: ComputedVecsFromHeight::forced_import(
-                path,
+                file,
                 "tx_v2",
                 Source::Compute,
                 version + VERSION + Version::ZERO,
@@ -402,7 +402,7 @@ impl Vecs {
                 VecBuilderOptions::default().add_sum().add_cumulative(),
             )?,
             indexes_to_tx_v3: ComputedVecsFromHeight::forced_import(
-                path,
+                file,
                 "tx_v3",
                 Source::Compute,
                 version + VERSION + Version::ZERO,
@@ -412,7 +412,7 @@ impl Vecs {
                 VecBuilderOptions::default().add_sum().add_cumulative(),
             )?,
             indexes_to_fee: ComputedValueVecsFromTxindex::forced_import(
-                path,
+                file,
                 "fee",
                 indexes,
                 Source::Vec(txindex_to_fee.boxed_clone()),
@@ -428,7 +428,7 @@ impl Vecs {
                     .add_average(),
             )?,
             indexes_to_feerate: ComputedVecsFromTxindex::forced_import(
-                path,
+                file,
                 "feerate",
                 Source::None,
                 version + VERSION + Version::ZERO,
@@ -441,7 +441,7 @@ impl Vecs {
                     .add_average(),
             )?,
             indexes_to_tx_vsize: ComputedVecsFromTxindex::forced_import(
-                path,
+                file,
                 "tx_vsize",
                 Source::None,
                 version + VERSION + Version::ZERO,
@@ -454,7 +454,7 @@ impl Vecs {
                     .add_average(),
             )?,
             indexes_to_tx_weight: ComputedVecsFromTxindex::forced_import(
-                path,
+                file,
                 "tx_weight",
                 Source::None,
                 version + VERSION + Version::ZERO,
@@ -467,7 +467,7 @@ impl Vecs {
                     .add_average(),
             )?,
             indexes_to_subsidy: ComputedValueVecsFromHeight::forced_import(
-                path,
+                file,
                 "subsidy",
                 Source::Compute,
                 version + VERSION + Version::ZERO,
@@ -483,7 +483,7 @@ impl Vecs {
                 indexes,
             )?,
             indexes_to_coinbase: ComputedValueVecsFromHeight::forced_import(
-                path,
+                file,
                 "coinbase",
                 Source::Compute,
                 version + VERSION + Version::ZERO,
@@ -499,7 +499,7 @@ impl Vecs {
                 indexes,
             )?,
             indexes_to_unclaimed_rewards: ComputedValueVecsFromHeight::forced_import(
-                path,
+                file,
                 "unclaimed_rewards",
                 Source::Compute,
                 version + VERSION + Version::ZERO,
@@ -510,7 +510,7 @@ impl Vecs {
                 indexes,
             )?,
             indexes_to_p2a_count: ComputedVecsFromHeight::forced_import(
-                path,
+                file,
                 "p2a_count",
                 Source::Compute,
                 version + VERSION + Version::ZERO,
@@ -525,7 +525,7 @@ impl Vecs {
                     .add_cumulative(),
             )?,
             indexes_to_p2ms_count: ComputedVecsFromHeight::forced_import(
-                path,
+                file,
                 "p2ms_count",
                 Source::Compute,
                 version + VERSION + Version::ZERO,
@@ -540,7 +540,7 @@ impl Vecs {
                     .add_cumulative(),
             )?,
             indexes_to_p2pk33_count: ComputedVecsFromHeight::forced_import(
-                path,
+                file,
                 "p2pk33_count",
                 Source::Compute,
                 version + VERSION + Version::ZERO,
@@ -555,7 +555,7 @@ impl Vecs {
                     .add_cumulative(),
             )?,
             indexes_to_p2pk65_count: ComputedVecsFromHeight::forced_import(
-                path,
+                file,
                 "p2pk65_count",
                 Source::Compute,
                 version + VERSION + Version::ZERO,
@@ -570,7 +570,7 @@ impl Vecs {
                     .add_cumulative(),
             )?,
             indexes_to_p2pkh_count: ComputedVecsFromHeight::forced_import(
-                path,
+                file,
                 "p2pkh_count",
                 Source::Compute,
                 version + VERSION + Version::ZERO,
@@ -585,7 +585,7 @@ impl Vecs {
                     .add_cumulative(),
             )?,
             indexes_to_p2sh_count: ComputedVecsFromHeight::forced_import(
-                path,
+                file,
                 "p2sh_count",
                 Source::Compute,
                 version + VERSION + Version::ZERO,
@@ -600,7 +600,7 @@ impl Vecs {
                     .add_cumulative(),
             )?,
             indexes_to_p2tr_count: ComputedVecsFromHeight::forced_import(
-                path,
+                file,
                 "p2tr_count",
                 Source::Compute,
                 version + VERSION + Version::ZERO,
@@ -615,7 +615,7 @@ impl Vecs {
                     .add_cumulative(),
             )?,
             indexes_to_p2wpkh_count: ComputedVecsFromHeight::forced_import(
-                path,
+                file,
                 "p2wpkh_count",
                 Source::Compute,
                 version + VERSION + Version::ZERO,
@@ -630,7 +630,7 @@ impl Vecs {
                     .add_cumulative(),
             )?,
             indexes_to_p2wsh_count: ComputedVecsFromHeight::forced_import(
-                path,
+                file,
                 "p2wsh_count",
                 Source::Compute,
                 version + VERSION + Version::ZERO,
@@ -645,7 +645,7 @@ impl Vecs {
                     .add_cumulative(),
             )?,
             indexes_to_opreturn_count: ComputedVecsFromHeight::forced_import(
-                path,
+                file,
                 "opreturn_count",
                 Source::Compute,
                 version + VERSION + Version::ZERO,
@@ -660,7 +660,7 @@ impl Vecs {
                     .add_cumulative(),
             )?,
             indexes_to_unknownoutput_count: ComputedVecsFromHeight::forced_import(
-                path,
+                file,
                 "unknownoutput_count",
                 Source::Compute,
                 version + VERSION + Version::ZERO,
@@ -675,7 +675,7 @@ impl Vecs {
                     .add_cumulative(),
             )?,
             indexes_to_emptyoutput_count: ComputedVecsFromHeight::forced_import(
-                path,
+                file,
                 "emptyoutput_count",
                 Source::Compute,
                 version + VERSION + Version::ZERO,
@@ -690,7 +690,7 @@ impl Vecs {
                     .add_cumulative(),
             )?,
             indexes_to_exact_utxo_count: ComputedVecsFromHeight::forced_import(
-                path,
+                file,
                 "exact_utxo_count",
                 Source::Compute,
                 version + VERSION + Version::ZERO,

@@ -1,9 +1,9 @@
-use std::path::Path;
+use std::sync::Arc;
 
 use brk_core::{DifficultyEpoch, HalvingEpoch, StoredF64, Version};
 use brk_exit::Exit;
 use brk_indexer::Indexer;
-use brk_vec::{AnyCollectableVec, Computation, Format, VecIterator};
+use brk_vecs::{AnyCollectableVec, Computation, File, Format, VecIterator};
 
 use crate::grouped::Source;
 
@@ -24,7 +24,7 @@ pub struct Vecs {
 
 impl Vecs {
     pub fn forced_import(
-        path: &Path,
+        file: &Arc<File>,
         version: Version,
         computation: Computation,
         format: Format,
@@ -32,7 +32,7 @@ impl Vecs {
     ) -> color_eyre::Result<Self> {
         Ok(Self {
             indexes_to_difficulty: ComputedVecsFromHeight::forced_import(
-                path,
+                file,
                 "difficulty",
                 Source::None,
                 version + VERSION + Version::ZERO,
@@ -42,7 +42,7 @@ impl Vecs {
                 VecBuilderOptions::default().add_last(),
             )?,
             indexes_to_difficultyepoch: ComputedVecsFromDateIndex::forced_import(
-                path,
+                file,
                 "difficultyepoch",
                 Source::Compute,
                 version + VERSION + Version::ZERO,
@@ -52,7 +52,7 @@ impl Vecs {
                 VecBuilderOptions::default().add_last(),
             )?,
             indexes_to_halvingepoch: ComputedVecsFromDateIndex::forced_import(
-                path,
+                file,
                 "halvingepoch",
                 Source::Compute,
                 version + VERSION + Version::ZERO,

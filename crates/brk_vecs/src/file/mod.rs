@@ -18,6 +18,7 @@ mod regions;
 
 pub use identifier::*;
 use layout::*;
+use rayon::prelude::*;
 pub use reader::*;
 pub use region::*;
 use regions::*;
@@ -39,6 +40,7 @@ impl File {
         fs::create_dir_all(path)?;
 
         let regions = Regions::open(path)?;
+
         let layout = Layout::from(&regions);
 
         let file = OpenOptions::new()
@@ -159,91 +161,113 @@ impl File {
         at: Option<u64>,
     ) -> Result<()> {
         let regions = self.regions.read();
-        let Some(region) = regions.get_region(identifier.clone()) else {
+        let Some(region_lock) = regions.get_region(identifier.clone()) else {
             return Err(Error::Str("Unknown region"));
         };
+
         let region_index = regions.identifier_to_index(identifier).unwrap();
-        drop(regions);
 
-        let region_lock = region.read();
-        let start = region_lock.start();
-        let reserved = region_lock.reserved();
-        let len = region_lock.len();
+        let region = region_lock.read();
+        let start = region.start();
+        let reserved = region.reserved();
+        let len = region.len();
+        drop(region);
+
         let data_len = data.len() as u64;
-        drop(region_lock);
         let new_len = at.map_or(len + data_len, |at| (at + data_len).max(len));
-        // dbg!(new_len);
-        let write_start = at.unwrap_or(start + len);
 
-        if at.is_some_and(|at| at < start || at >= start + reserved) {
+        if at.is_some_and(|at| at >= start + reserved) {
             return Err(Error::Str("Invalid at parameter"));
         }
 
         // Write to reserved space if possible
         if new_len <= reserved {
-            // dbh!("Write to reserved space");
-            // dbg!(write_start);
+            // println!(
+            //     "Write to {region_index} reserved space at {}",
+            //     start + at.unwrap_or(len)
+            // );
 
-            self.write(write_start, data);
-
-            let regions = self.regions.read();
-            let mut region_lock = region.write();
-            if len != new_len {
-                region_lock.set_len(new_len);
+            if at.is_none() {
+                self.write(start + len, data);
             }
-            regions.write_to_mmap(&region_lock, region_index);
+
+            let mut region = region_lock.write();
+            if let Some(at) = at {
+                self.write(start + at, data);
+            }
+            if len != new_len {
+                region.set_len(new_len);
+            }
+            regions.write_to_mmap(&region, region_index);
+
             return Ok(());
         }
 
-        let mut layout_lock = self.layout.write();
+        // let layouat_lock = self.layout.read();
 
-        debug_assert!(new_len > reserved);
+        assert!(new_len > reserved);
         let mut new_reserved = reserved;
         while new_len > new_reserved {
             new_reserved *= 2;
         }
-        debug_assert!(new_len <= new_reserved);
+        assert!(new_len <= new_reserved);
         let added_reserve = new_reserved - reserved;
 
+        let mut layout = self.layout.write();
+
         // If is last continue writing
-        if layout_lock.is_last_region(region_index) {
-            // dbg!("Append to file");
-            // dbg!(start, new_reserved, start + new_reserved);
+        if layout.is_last_region(region_index) {
+            // println!(
+            //     "{region_index} Append to file at {}",
+            //     start + at.unwrap_or(len)
+            // );
 
             self.set_min_len(start + new_reserved)?;
 
-            self.write(write_start, data);
+            if at.is_none() {
+                self.write(start + len, data);
+            }
+            let mut region = region_lock.write();
+            region.set_reserved(new_reserved);
+            if let Some(at) = at {
+                self.write(start + at, data);
+            }
+            region.set_len(new_len);
+            regions.write_to_mmap(&region, region_index);
 
-            let regions = self.regions.read();
-            let mut region_lock = region.write();
-            region_lock.set_reserved(new_reserved);
-            region_lock.set_len(new_len);
-            regions.write_to_mmap(&region_lock, region_index);
             return Ok(());
         }
 
         // Expand region to the right if gap is wide enough
         let hole_start = start + reserved;
-        let gap = layout_lock.get_hole(hole_start);
-        if gap.is_some_and(|gap| gap >= added_reserve) {
-            // dbg!("Expand to hole");
+        if layout
+            .get_hole(hole_start)
+            .is_some_and(|gap| gap >= added_reserve)
+        {
+            // println!("Expand {region_index} to hole");
 
-            self.write(write_start, data);
+            layout.remove_or_compress_hole_to_right(hole_start, added_reserve);
+            drop(layout);
 
-            layout_lock.remove_or_compress_hole_to_right(hole_start, added_reserve);
-            drop(layout_lock);
-
-            let regions = self.regions.read();
-            let mut region_lock = region.write();
-            region_lock.set_reserved(new_reserved);
-            region_lock.set_len(new_len);
-            regions.write_to_mmap(&region_lock, region_index);
+            if at.is_none() {
+                self.write(start + len, data);
+            }
+            let mut region = region_lock.write();
+            region.set_reserved(new_reserved);
+            if let Some(at) = at {
+                self.write(start + at, data);
+            }
+            region.set_len(new_len);
+            regions.write_to_mmap(&region, region_index);
             return Ok(());
         }
 
         // Find hole big enough to move the region
-        if let Some(hole_start) = layout_lock.find_smallest_adequate_hole(new_reserved) {
-            // dbg!("Move to hole");
+        if let Some(hole_start) = layout.find_smallest_adequate_hole(new_reserved) {
+            // println!("Move {region_index} to hole at {hole_start}");
+
+            layout.remove_or_compress_hole_to_right(hole_start, new_reserved);
+            // drop(layout);
 
             self.write(
                 hole_start,
@@ -251,36 +275,39 @@ impl File {
             );
             self.write(hole_start + len, data);
 
-            let regions = self.regions.read();
-            let mut region_lock = region.write();
+            // let mut layout = self.layout.write();
+            let mut region = region_lock.write();
+            layout.move_region(hole_start, region_index, &region)?;
+            region.set_start(hole_start);
+            region.set_reserved(new_reserved);
+            region.set_len(new_len);
 
-            layout_lock.remove_or_compress_hole_to_right(hole_start, new_reserved);
-            layout_lock.move_region(hole_start, region_index, &region_lock)?;
+            drop(layout);
 
-            region_lock.set_start(hole_start);
-            region_lock.set_reserved(new_reserved);
-            region_lock.set_len(new_len);
-            regions.write_to_mmap(&region_lock, region_index);
-
-            drop(layout_lock);
-
-            self.punch_hole(start, reserved)?;
+            regions.write_to_mmap(&region, region_index);
 
             return Ok(());
         }
 
         // Write at the end
-        // dbg!("Move and write at the end");
-        let regions = self.regions.read();
-        let mut region_lock = region.write();
-        let (last_region_start, last_region_index) = layout_lock.get_last_region().unwrap();
+        // let mut region_lock = region.write();
+        let (last_region_start, last_region_index) = layout.get_last_region().unwrap();
         let new_start = last_region_start
             + regions
                 .get_region_from_index(last_region_index)
                 .unwrap()
                 .read()
                 .reserved();
+        // println!(
+        //     "Move {region_index} to the end, from {start}..{} to {new_start}..{}",
+        //     start + reserved,
+        //     new_start + new_reserved
+        // );
+
         self.set_min_len(new_start + new_reserved)?;
+
+        let mut region = region_lock.write();
+        layout.move_region(new_start, region_index, &region)?;
 
         self.write(
             new_start,
@@ -290,23 +317,22 @@ impl File {
 
         // dbg!(new_start, region_index, &region_lock, new_reserved, new_len);
 
-        layout_lock.move_region(new_start, region_index, &region_lock)?;
+        region.set_start(new_start);
+        region.set_reserved(new_reserved);
+        region.set_len(new_len);
 
-        region_lock.set_start(new_start);
-        region_lock.set_reserved(new_reserved);
-        region_lock.set_len(new_len);
-        regions.write_to_mmap(&region_lock, region_index);
+        drop(layout);
 
-        self.punch_hole(start, reserved)?;
+        regions.write_to_mmap(&region, region_index);
 
         Ok(())
     }
 
-    fn write(&self, start: u64, data: &[u8]) {
+    fn write(&self, at: u64, data: &[u8]) {
         let mmap = self.mmap.read();
 
         let data_len = data.len();
-        let start = start as usize;
+        let start = at as usize;
         let end = start + data_len;
 
         if end > mmap.len() {
@@ -376,9 +402,83 @@ impl File {
         Ok(unsafe { MmapOptions::new().map_mut(file)? })
     }
 
+    pub fn regions(&self) -> RwLockReadGuard<'_, Regions> {
+        self.regions.read()
+    }
+
+    pub fn layout(&self) -> RwLockReadGuard<'_, Layout> {
+        self.layout.read()
+    }
+
+    pub fn mmap(&self) -> RwLockReadGuard<'_, MmapMut> {
+        self.mmap.read()
+    }
+
+    fn ceil_number_to_page_size_multiple(num: u64) -> u64 {
+        (num + PAGE_SIZE_MINUS_1) & !PAGE_SIZE_MINUS_1
+    }
+
+    fn data_path(&self) -> PathBuf {
+        Self::data_path_(&self.path)
+    }
+    fn data_path_(path: &Path) -> PathBuf {
+        path.join("data")
+    }
+
+    pub fn disk_usage(&self) -> String {
+        let path = self.data_path();
+
+        let output = std::process::Command::new("du")
+            .arg("-h")
+            .arg(&path)
+            .output()
+            .expect("Failed to run du");
+
+        String::from_utf8_lossy(&output.stdout)
+            .replace(path.to_str().unwrap(), " ")
+            .trim()
+            .to_string()
+    }
+
+    pub fn flush(&self) -> Result<()> {
+        let mmap = self.mmap.read();
+        let regions = self.regions.read();
+        mmap.flush()?;
+        regions.flush()
+    }
+
+    pub fn punch_holes(&self) -> Result<()> {
+        let file = self.file.write();
+        let mmap = self.mmap.read();
+        let layout = self.layout.read();
+        Self::punch_holes_(&file, &mmap, &layout)
+    }
+
+    fn punch_holes_(file: &fs::File, mmap: &MmapMut, layout: &Layout) -> Result<()> {
+        layout
+            .start_to_hole()
+            .par_iter()
+            .try_for_each(|(&start, &hole)| -> Result<()> {
+                assert!(start % PAGE_SIZE == 0);
+                assert!(hole % PAGE_SIZE == 0);
+                let has_old_data = (((start / PAGE_SIZE) as usize)
+                    ..((start + hole) / PAGE_SIZE) as usize)
+                    .any(|i| mmap[i * PAGE_SIZE as usize] != 0);
+                if has_old_data {
+                    Self::punch_hole_(file, start, hole)
+                } else {
+                    Ok(())
+                }
+            })
+    }
+
     fn punch_hole(&self, start: u64, length: u64) -> Result<()> {
         let file = self.file.write();
         Self::punch_hole_macos(&file, start, length)
+    }
+
+    fn punch_hole_(file: &fs::File, start: u64, length: u64) -> Result<()> {
+        Self::punch_hole_macos(file, start, length)
     }
 
     #[cfg(target_os = "macos")]
@@ -404,56 +504,6 @@ impl File {
         }
 
         Ok(())
-    }
-
-    pub fn regions(&self) -> RwLockReadGuard<'_, Regions> {
-        self.regions.read()
-    }
-
-    pub fn layout(&self) -> RwLockReadGuard<'_, Layout> {
-        self.layout.read()
-    }
-
-    pub fn mmap(&self) -> RwLockReadGuard<'_, MmapMut> {
-        self.mmap.read()
-    }
-
-    fn ceil_number_to_page_size_multiple(num: u64) -> u64 {
-        (num + PAGE_SIZE_MINUS_1) & !PAGE_SIZE_MINUS_1
-    }
-
-    fn data_path(&self) -> PathBuf {
-        Self::data_path_(&self.path)
-    }
-    fn data_path_(path: &Path) -> PathBuf {
-        path.join("data")
-    }
-
-    pub fn flush(&self) -> Result<()> {
-        self.mmap.write().flush().map_err(|e| e.into())
-    }
-
-    pub fn sync_data(&self) -> Result<()> {
-        self.file.read().sync_data().map_err(|e| e.into())
-    }
-
-    pub fn sync_all(&self) -> Result<()> {
-        self.file.read().sync_all().map_err(|e| e.into())
-    }
-
-    pub fn disk_usage(&self) -> String {
-        let path = self.data_path();
-
-        let output = std::process::Command::new("du")
-            .arg("-h")
-            .arg(&path)
-            .output()
-            .expect("Failed to run du");
-
-        String::from_utf8_lossy(&output.stdout)
-            .replace(path.to_str().unwrap(), " ")
-            .trim()
-            .to_string()
     }
 }
 

@@ -1,9 +1,9 @@
-use std::path::Path;
+use std::sync::Arc;
 
 use brk_core::{StoredU8, Version};
 use brk_exit::Exit;
 use brk_indexer::Indexer;
-use brk_vec::{AnyCollectableVec, AnyVec, Computation, Format};
+use brk_vecs::{AnyCollectableVec, AnyVec, Computation, File, Format};
 
 use crate::grouped::Source;
 
@@ -25,7 +25,7 @@ pub struct Vecs {
 
 impl Vecs {
     pub fn forced_import(
-        path: &Path,
+        file: &Arc<File>,
         version: Version,
         computation: Computation,
         format: Format,
@@ -33,7 +33,7 @@ impl Vecs {
     ) -> color_eyre::Result<Self> {
         Ok(Self {
             constant_0: ComputedVecsFromHeight::forced_import(
-                path,
+                file,
                 "constant_0",
                 Source::Compute,
                 version + VERSION + Version::ZERO,
@@ -43,7 +43,7 @@ impl Vecs {
                 VecBuilderOptions::default().add_last(),
             )?,
             constant_1: ComputedVecsFromHeight::forced_import(
-                path,
+                file,
                 "constant_1",
                 Source::Compute,
                 version + VERSION + Version::ZERO,
@@ -53,7 +53,7 @@ impl Vecs {
                 VecBuilderOptions::default().add_last(),
             )?,
             constant_50: ComputedVecsFromHeight::forced_import(
-                path,
+                file,
                 "constant_50",
                 Source::Compute,
                 version + VERSION + Version::ZERO,
@@ -63,7 +63,7 @@ impl Vecs {
                 VecBuilderOptions::default().add_last(),
             )?,
             constant_100: ComputedVecsFromHeight::forced_import(
-                path,
+                file,
                 "constant_100",
                 Source::Compute,
                 version + VERSION + Version::ZERO,

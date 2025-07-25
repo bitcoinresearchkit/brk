@@ -89,8 +89,10 @@ impl Indexes {
 impl TryFrom<(&mut Vecs, &Stores, &Client)> for Indexes {
     type Error = color_eyre::Report;
     fn try_from((vecs, stores, rpc): (&mut Vecs, &Stores, &Client)) -> color_eyre::Result<Self> {
-        // Height at which we wanna start: min last saved + 1 or 0
-        let starting_height = vecs.starting_height().min(stores.starting_height());
+        // Height at which we want to start: min last saved + 1 or 0
+        let vecs_starting_height = vecs.starting_height();
+        let stores_starting_height = stores.starting_height();
+        let starting_height = vecs_starting_height.min(stores_starting_height);
 
         let range = u32::from(
             starting_height

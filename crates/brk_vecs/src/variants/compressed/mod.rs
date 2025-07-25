@@ -92,7 +92,7 @@ where
         // })
     }
 
-    fn decode_page(&self, page_index: usize, reader: &Reader<'_>) -> Result<Vec<T>> {
+    fn decode_page(&self, page_index: usize, reader: &Reader) -> Result<Vec<T>> {
         Self::decode_page_(
             self.stored_len(),
             page_index,
@@ -104,7 +104,7 @@ where
     fn decode_page_(
         stored_len: usize,
         page_index: usize,
-        reader: &Reader<'_>,
+        reader: &Reader,
         compressed_pages_meta: &CompressedPagesMetadata,
     ) -> Result<Vec<T>> {
         if Self::page_index_to_index(page_index) >= stored_len {
@@ -178,8 +178,16 @@ where
     I: StoredIndex,
     T: StoredType,
 {
+    fn file(&self) -> &File {
+        self.inner.file()
+    }
+
+    fn region_index(&self) -> usize {
+        self.inner.region_index()
+    }
+
     #[inline]
-    fn read_(&self, index: usize, reader: &Reader<'_>) -> Result<Option<T>> {
+    fn read_(&self, index: usize, reader: &Reader) -> Result<Option<T>> {
         let page_index = Self::index_to_page_index(index);
         let decoded_index = index % Self::PER_PAGE;
 
@@ -397,14 +405,6 @@ where
     #[inline]
     fn value_type_to_size_of(&self) -> usize {
         size_of::<T>()
-    }
-
-    fn file(&self) -> &File {
-        self.inner.file()
-    }
-
-    fn region_index(&self) -> usize {
-        self.inner.region_index()
     }
 }
 

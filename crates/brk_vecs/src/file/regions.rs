@@ -1,15 +1,14 @@
 use std::{
     collections::HashMap,
     fs::{self, OpenOptions},
-    io::{BufReader, BufWriter},
-    path::Path,
+    io::{Cursor, Read},
+    path::{Path, PathBuf},
     sync::Arc,
 };
 
-use bincode::{decode_from_std_read, encode_into_std_write};
 use brk_core::{Error, Result};
 use memmap2::MmapMut;
-use parking_lot::RwLock;
+use parking_lot::{RwLock, RwLockWriteGuard};
 use zerocopy::{FromBytes, IntoBytes};
 
 use super::{
@@ -20,7 +19,7 @@ use super::{
 #[derive(Debug)]
 pub struct Regions {
     id_to_index: HashMap<String, usize>,
-    id_to_index_file: fs::File,
+    id_to_index_path: PathBuf,
     index_to_region: Vec<Option<Arc<RwLock<Region>>>>,
     index_to_region_file: fs::File,
     index_to_region_mmap: MmapMut,
@@ -32,19 +31,11 @@ impl Regions {
 
         fs::create_dir_all(&path)?;
 
-        let id_to_index_file = OpenOptions::new()
-            .read(true)
-            .create(true)
-            .write(true)
-            .truncate(false)
-            .open(path.join("id_to_index"))?;
+        let id_to_index_path = path.join("id_to_index");
 
-        let mut id_to_index: HashMap<String, usize> = HashMap::new();
-
-        if id_to_index_file.metadata()?.len() > 0 {
-            let mut reader = BufReader::new(&id_to_index_file);
-            id_to_index = decode_from_std_read(&mut reader, bincode::config::standard())?;
-        }
+        let id_to_index: HashMap<String, usize> =
+            deserialize_hashmap_binary(&fs::read(&id_to_index_path).unwrap_or_default())
+                .unwrap_or_default();
 
         let index_to_region_file = OpenOptions::new()
             .read(true)
@@ -77,7 +68,7 @@ impl Regions {
 
         Ok(Self {
             id_to_index,
-            id_to_index_file,
+            id_to_index_path,
             index_to_region,
             index_to_region_file,
             index_to_region_mmap,
@@ -109,15 +100,18 @@ impl Regions {
 
         self.set_min_len(((index + 1) * SIZE_OF_REGION) as u64)?;
 
-        self.write_to_mmap(&region, index);
+        let region_lock = RwLock::new(region);
 
-        let region_arc = Arc::new(RwLock::new(region));
+        self.write_to_mmap(&region_lock.write(), index);
+
+        let region_arc = Arc::new(region_lock);
 
         let region_opt = Some(region_arc.clone());
         if index < self.index_to_region.len() {
             self.index_to_region[index] = region_opt
         } else {
             self.index_to_region.push(region_opt);
+            self.index_to_region_mmap.flush()?;
         }
 
         if self.id_to_index.insert(id, index).is_some() {
@@ -129,8 +123,10 @@ impl Regions {
     }
 
     fn flush_id_to_index(&mut self) -> Result<()> {
-        let mut writer = BufWriter::new(&mut self.id_to_index_file);
-        encode_into_std_write(&self.id_to_index, &mut writer, bincode::config::standard())?;
+        fs::write(
+            &self.id_to_index_path,
+            serialize_hashmap_binary(&self.id_to_index),
+        )?;
         Ok(())
     }
 
@@ -208,6 +204,8 @@ impl Regions {
             return Ok(None);
         };
 
+        self.index_to_region_mmap.flush()?;
+
         self.id_to_index
             .remove(&self.find_id_from_index(index).unwrap().to_owned());
 
@@ -216,10 +214,10 @@ impl Regions {
         Ok(Some(region))
     }
 
-    pub fn write_to_mmap(&self, region: &Region, index: usize) {
+    pub fn write_to_mmap(&self, region: &RwLockWriteGuard<Region>, index: usize) {
+        let mmap = &self.index_to_region_mmap;
         let start = index * SIZE_OF_REGION;
         let end = start + SIZE_OF_REGION;
-        let mmap = &self.index_to_region_mmap;
 
         if end > mmap.len() {
             unreachable!("Trying to write beyond mmap")
@@ -229,4 +227,56 @@ impl Regions {
 
         slice[start..end].copy_from_slice(region.as_bytes());
     }
+
+    pub fn flush(&self) -> Result<()> {
+        self.index_to_region_mmap.flush().map_err(|e| e.into())
+    }
+}
+
+fn serialize_hashmap_binary(map: &HashMap<String, usize>) -> Vec<u8> {
+    let mut buffer = Vec::new();
+
+    buffer.extend_from_slice(&map.len().to_ne_bytes());
+
+    for (key, value) in map {
+        buffer.extend_from_slice(&key.len().to_ne_bytes());
+        buffer.extend_from_slice(key.as_bytes());
+        buffer.extend_from_slice(&value.to_ne_bytes());
+    }
+
+    buffer
+}
+
+fn deserialize_hashmap_binary(data: &[u8]) -> Result<HashMap<String, usize>> {
+    let mut cursor = Cursor::new(data);
+    let mut buffer = [0u8; 8];
+
+    cursor
+        .read_exact(&mut buffer)
+        .map_err(|_| Error::Str("Failed to read entry count"))?;
+    let entry_count = usize::from_ne_bytes(buffer);
+
+    let mut map = HashMap::with_capacity(entry_count);
+
+    for _ in 0..entry_count {
+        cursor
+            .read_exact(&mut buffer)
+            .map_err(|_| Error::Str("Failed to read key length"))?;
+        let key_len = usize::from_ne_bytes(buffer);
+
+        let mut key_bytes = vec![0u8; key_len];
+        cursor
+            .read_exact(&mut key_bytes)
+            .map_err(|_| Error::Str("Failed to read key"))?;
+        let key = String::from_utf8(key_bytes).map_err(|_| Error::Str("Invalid UTF-8 in key"))?;
+
+        cursor
+            .read_exact(&mut buffer)
+            .map_err(|_| Error::Str("Failed to read value"))?;
+        let value = usize::from_ne_bytes(buffer);
+
+        map.insert(key, value);
+    }
+
+    Ok(map)
 }

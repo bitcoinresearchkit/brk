@@ -3,18 +3,18 @@
 #![doc = include_str!("../examples/indexer.rs")]
 #![doc = "```"]
 
-use std::{collections::BTreeMap, path::Path, str::FromStr, sync::Arc, thread};
+use std::{collections::BTreeMap, path::Path, str::FromStr, sync::Arc, thread, time::Instant};
 
 use bitcoin::{Transaction, TxIn, TxOut};
 use brk_core::{
     AddressBytes, AddressBytesHash, BlockHash, BlockHashPrefix, Height, InputIndex, OutputIndex,
-    OutputType, Sats, Timestamp, TxIndex, Txid, TxidPrefix, TypeIndex, TypeIndexWithOutputindex,
-    Unit, Version, Vin, Vout, setrlimit,
+    OutputType, Result, Sats, Timestamp, TxIndex, Txid, TxidPrefix, TypeIndex,
+    TypeIndexWithOutputindex, Unit, Version, Vin, Vout, setrlimit,
 };
 use brk_exit::Exit;
 use brk_parser::Parser;
 use brk_store::AnyStore;
-use brk_vecs::{AnyVec, File, Reader, VecIterator};
+use brk_vecs::{AnyVec, File, PAGE_SIZE, Reader, VecIterator};
 use color_eyre::eyre::{ContextCompat, eyre};
 use log::{error, info};
 use rayon::prelude::*;
@@ -27,7 +27,7 @@ pub use stores::*;
 pub use vecs::*;
 
 const SNAPSHOT_BLOCK_RANGE: usize = 1000;
-const COLLISIONS_CHECKED_UP_TO: u32 = 893_000;
+const COLLISIONS_CHECKED_UP_TO: Height = Height::new(415_000);
 const VERSION: Version = Version::ONE;
 
 #[derive(Clone)]
@@ -41,11 +41,18 @@ impl Indexer {
     pub fn forced_import(outputs_dir: &Path) -> color_eyre::Result<Self> {
         setrlimit()?;
 
-        let file = Arc::new(File::open(&outputs_dir.join("vecs"))?);
+        let file = Arc::new(File::open(&outputs_dir.join("indexed/vecs"))?);
+
+        let vecs = Vecs::forced_import(&file, VERSION + Version::ZERO)?;
+
+        file.set_min_len(PAGE_SIZE * 50_000_000)?;
 
         Ok(Self {
-            vecs: Vecs::forced_import(&file, VERSION + Version::ZERO)?,
-            stores: Stores::forced_import(&outputs_dir.join("stores"), VERSION + Version::ZERO)?,
+            vecs,
+            stores: Stores::forced_import(
+                &outputs_dir.join("indexed/stores"),
+                VERSION + Version::ZERO,
+            )?,
             file,
         })
     }
@@ -57,6 +64,8 @@ impl Indexer {
         exit: &Exit,
         check_collisions: bool,
     ) -> color_eyre::Result<Indexes> {
+        let file = self.file.clone();
+
         let starting_indexes = Indexes::try_from((&mut self.vecs, &self.stores, rpc))
             .unwrap_or_else(|_report| Indexes::default());
 
@@ -87,22 +96,29 @@ impl Indexer {
 
         info!("Started indexing...");
 
-        let export_if_needed = |stores: &mut Stores,
-                                vecs: &mut Vecs,
-                                height: Height,
-                                rem: bool,
-                                exit: &Exit|
-         -> color_eyre::Result<bool> {
-            if height == 0 || (height % SNAPSHOT_BLOCK_RANGE != 0) != rem {
-                return Ok(false);
-            }
-
-            info!("Exporting...");
-            let _lock = exit.lock();
-            stores.commit(height)?;
-            vecs.flush(height)?;
-            Ok(true)
+        let should_export = |height: Height, rem: bool| -> bool {
+            height != 0 && (height % SNAPSHOT_BLOCK_RANGE == 0) != rem
         };
+
+        let export =
+            |stores: &mut Stores, vecs: &mut Vecs, height: Height, exit: &Exit| -> Result<()> {
+                info!("Exporting...");
+                let _lock = exit.lock();
+                thread::scope(|scope| -> Result<()> {
+                    scope.spawn(|| {
+                        let i = Instant::now();
+                        stores.commit(height).unwrap();
+                        info!("Commited stores in {}s", i.elapsed().as_secs());
+                    });
+                    let i = Instant::now();
+                    vecs.flush(height)?;
+                    info!("Flushed vecs in {}s", i.elapsed().as_secs());
+                    let i = Instant::now();
+                    file.flush()?;
+                    info!("Flushed file in {}s", i.elapsed().as_secs());
+                    Ok(())
+                })
+            };
 
         let mut txindex_to_first_outputindex_reader_opt = None;
         let mut p2pk65addressindex_to_p2pk65bytes_reader_opt = None;
@@ -181,7 +197,7 @@ impl Indexer {
                 let p2aaddressindex_to_p2abytes_mmap = p2aaddressindex_to_p2abytes_reader_opt.as_ref().unwrap();
 
                 // Used to check rapidhash collisions
-                let check_collisions = check_collisions && height > Height::new(COLLISIONS_CHECKED_UP_TO);
+                let check_collisions = check_collisions && height > COLLISIONS_CHECKED_UP_TO ;
 
                 let blockhash = BlockHash::from(blockhash);
                 let blockhash_prefix = BlockHashPrefix::from(&blockhash);
@@ -739,19 +755,18 @@ impl Indexer {
                 idxs.inputindex += InputIndex::from(inputs_len);
                 idxs.outputindex += OutputIndex::from(outputs_len);
 
-                txindex_to_first_outputindex_reader_opt.take();
-                p2pk65addressindex_to_p2pk65bytes_reader_opt.take();
-                p2pk33addressindex_to_p2pk33bytes_reader_opt.take();
-                p2pkhaddressindex_to_p2pkhbytes_reader_opt.take();
-                p2shaddressindex_to_p2shbytes_reader_opt.take();
-                p2wpkhaddressindex_to_p2wpkhbytes_reader_opt.take();
-                p2wshaddressindex_to_p2wshbytes_reader_opt.take();
-                p2traddressindex_to_p2trbytes_reader_opt.take();
-                p2aaddressindex_to_p2abytes_reader_opt.take();
 
-                let exported = export_if_needed(stores, vecs, height, false, exit)?;
-
-                if exported {
+                if should_export(height, false) {
+                    txindex_to_first_outputindex_reader_opt.take();
+                    p2pk65addressindex_to_p2pk65bytes_reader_opt.take();
+                    p2pk33addressindex_to_p2pk33bytes_reader_opt.take();
+                    p2pkhaddressindex_to_p2pkhbytes_reader_opt.take();
+                    p2shaddressindex_to_p2shbytes_reader_opt.take();
+                    p2wpkhaddressindex_to_p2wpkhbytes_reader_opt.take();
+                    p2wshaddressindex_to_p2wshbytes_reader_opt.take();
+                    p2traddressindex_to_p2trbytes_reader_opt.take();
+                    p2aaddressindex_to_p2abytes_reader_opt.take();
+                    export(stores, vecs, height, exit)?;
                     reset_mmaps_options(
                         vecs,
                         &mut txindex_to_first_outputindex_reader_opt,
@@ -770,9 +785,13 @@ impl Indexer {
             },
         )?;
 
-        export_if_needed(stores, vecs, idxs.height, true, exit)?;
+        if should_export(idxs.height, true) {
+            export(stores, vecs, idxs.height, exit)?;
+        }
 
-        unsafe { libc::sync() }
+        let i = Instant::now();
+        file.punch_holes()?;
+        info!("Punched holes in file in {}s", i.elapsed().as_secs());
 
         Ok(starting_indexes)
     }

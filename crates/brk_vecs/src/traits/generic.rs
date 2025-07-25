@@ -6,7 +6,7 @@ use std::{
 
 use brk_core::{Error, Result};
 
-use crate::{AnyVec, HEADER_OFFSET, Header, file::Reader};
+use crate::{AnyVec, File, HEADER_OFFSET, Header, file::Reader};
 
 use super::{StoredIndex, StoredType};
 
@@ -18,22 +18,46 @@ where
 {
     const SIZE_OF_T: usize = size_of::<T>();
 
+    fn file(&self) -> &File;
+
+    fn region_index(&self) -> usize;
+
+    /// Be careful with deadlocks
+    ///
+    /// You'll want to drop the reader before mutable ops
+    fn create_reader(&self) -> Reader {
+        self.create_static_reader()
+    }
+
+    /// Be careful with deadlocks
+    ///
+    /// You'll want to drop the reader before mutable ops
+    fn create_static_reader(&self) -> Reader<'static> {
+        unsafe {
+            std::mem::transmute(
+                self.file()
+                    .create_region_reader(self.region_index().into())
+                    .unwrap(),
+            )
+        }
+    }
+
     #[inline]
-    fn unwrap_read(&self, index: I, reader: &Reader<'_>) -> T {
+    fn unwrap_read(&self, index: I, reader: &Reader) -> T {
         self.read(index, reader).unwrap().unwrap()
     }
     #[inline]
-    fn read(&self, index: I, reader: &Reader<'_>) -> Result<Option<T>> {
+    fn read(&self, index: I, reader: &Reader) -> Result<Option<T>> {
         self.read_(index.to_usize()?, reader)
     }
-    fn read_(&self, index: usize, reader: &Reader<'_>) -> Result<Option<T>>;
+    fn read_(&self, index: usize, reader: &Reader) -> Result<Option<T>>;
 
     #[inline]
-    fn get_or_read(&self, index: I, reader: &Reader<'_>) -> Result<Option<Cow<T>>> {
+    fn get_or_read(&self, index: I, reader: &Reader) -> Result<Option<Cow<T>>> {
         self.get_or_read_(index.to_usize()?, reader)
     }
     #[inline]
-    fn get_or_read_(&self, index: usize, reader: &Reader<'_>) -> Result<Option<Cow<T>>> {
+    fn get_or_read_(&self, index: usize, reader: &Reader) -> Result<Option<Cow<T>>> {
         let stored_len = self.stored_len();
 
         if index >= stored_len {
@@ -117,7 +141,7 @@ where
 
     fn holes(&self) -> &BTreeSet<usize>;
     fn mut_holes(&mut self) -> &mut BTreeSet<usize>;
-    fn take(&mut self, index: I, reader: &Reader<'_>) -> Result<Option<T>> {
+    fn take(&mut self, index: I, reader: &Reader) -> Result<Option<T>> {
         let opt = self.get_or_read(index, reader)?.map(|v| v.into_owned());
         if opt.is_some() {
             self.unchecked_delete(index);
@@ -205,7 +229,7 @@ where
         Self::vec_region_name_(self.name())
     }
     fn vec_region_name_(name: &str) -> String {
-        format!("{name}_{}", I::to_string())
+        format!("{}_to_{name}", I::to_string())
     }
 
     fn holes_region_name(&self) -> String {

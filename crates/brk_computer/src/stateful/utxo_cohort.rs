@@ -1,9 +1,9 @@
-use std::{ops::Deref, path::Path};
+use std::{ops::Deref, path::Path, sync::Arc};
 
 use brk_core::{Bitcoin, DateIndex, Dollars, Height, Result, Version};
 use brk_exit::Exit;
 use brk_indexer::Indexer;
-use brk_vec::{AnyCollectableVec, AnyIterableVec, Computation, Format};
+use brk_vecs::{AnyCollectableVec, AnyIterableVec, Computation, File, Format};
 
 use crate::{
     Indexes, UTXOCohortState, fetched, indexes, market,
@@ -25,7 +25,7 @@ pub struct Vecs {
 impl Vecs {
     #[allow(clippy::too_many_arguments)]
     pub fn forced_import(
-        path: &Path,
+        file: &Arc<File>,
         cohort_name: Option<&str>,
         computation: Computation,
         format: Format,
@@ -48,7 +48,7 @@ impl Vecs {
             )?,
 
             inner: common::Vecs::forced_import(
-                path,
+                file,
                 cohort_name,
                 computation,
                 format,

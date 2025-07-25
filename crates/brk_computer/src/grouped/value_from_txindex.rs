@@ -1,11 +1,11 @@
-use std::path::Path;
+use std::sync::Arc;
 
 use brk_core::{Bitcoin, Close, Dollars, Height, Sats, TxIndex, Version};
 use brk_exit::Exit;
 use brk_indexer::Indexer;
-use brk_vec::{
+use brk_vecs::{
     AnyCollectableVec, CloneableAnyIterableVec, CollectableVec, Computation, ComputedVecFrom3,
-    Format, LazyVecFrom1, StoredIndex, StoredVec,
+    File, Format, LazyVecFrom1, StoredIndex, StoredVec,
 };
 
 use crate::{Indexes, fetched, grouped::Source, indexes};
@@ -38,7 +38,7 @@ const VERSION: Version = Version::ZERO;
 impl ComputedValueVecsFromTxindex {
     #[allow(clippy::too_many_arguments)]
     pub fn forced_import(
-        path: &Path,
+        file: &Arc<File>,
         name: &str,
         indexes: &indexes::Vecs,
         source: Source<TxIndex, Sats>,
@@ -54,7 +54,7 @@ impl ComputedValueVecsFromTxindex {
         let name_in_usd = format!("{name}_in_usd");
 
         let sats = ComputedVecsFromTxindex::forced_import(
-            path,
+            file,
             name,
             source.clone(),
             version + VERSION,
@@ -79,7 +79,7 @@ impl ComputedValueVecsFromTxindex {
         );
 
         let bitcoin = ComputedVecsFromTxindex::forced_import(
-            path,
+            file,
             &name_in_btc,
             Source::None,
             version + VERSION,
@@ -92,7 +92,7 @@ impl ComputedValueVecsFromTxindex {
         let dollars_txindex = fetched.map(|fetched| {
             ComputedVecFrom3::forced_import_or_init_from_3(
                 computation,
-                path,
+                file,
                 &name_in_usd,
                 version + VERSION,
                 format,
@@ -127,7 +127,7 @@ impl ComputedValueVecsFromTxindex {
             dollars_txindex,
             dollars: compute_dollars.then(|| {
                 ComputedVecsFromTxindex::forced_import(
-                    path,
+                    file,
                     &name_in_usd,
                     Source::None,
                     version + VERSION,

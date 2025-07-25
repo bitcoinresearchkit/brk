@@ -1,6 +1,6 @@
 [package]
 name = "brk_vecs"
-description = "A storeable vec"
+description = "A simple index/value store"
 keywords = ["vec", "disk", "data"]
 categories = ["database"]
 version.workspace = true
@@ -10,13 +10,14 @@ homepage.workspace = true
 repository.workspace = true
 
 [dependencies]
-bincode = { workspace = true }
 brk_core = { workspace = true }
 brk_exit = { workspace = true }
+clap = { workspace = true }
+clap_derive = { workspace = true }
 libc = "0.2.174"
 log = { workspace = true }
 memmap2 = "0.9.7"
-parking_lot = {workspace = true}
+parking_lot = { workspace = true }
 rayon = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }

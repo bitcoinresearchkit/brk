@@ -17,7 +17,7 @@ brk_indexer = { workspace = true }
 brk_logger = { workspace = true }
 brk_parser = { workspace = true }
 brk_server = { workspace = true }
-brk_vec = { workspace = true }
+brk_vecs = { workspace = true }
 clap = { workspace = true }
 clap_derive = { workspace = true }
 color-eyre = { workspace = true }

@@ -5,7 +5,7 @@ use brk_exit::Exit;
 use brk_fetcher::Fetcher;
 use brk_indexer::Indexer;
 use brk_parser::Parser;
-use brk_vec::{Computation, Format};
+use brk_vecs::{Computation, Format};
 
 pub fn main() -> color_eyre::Result<()> {
     color_eyre::install()?;

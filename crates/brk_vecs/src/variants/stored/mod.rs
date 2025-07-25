@@ -40,9 +40,10 @@ where
         }
 
         if format.is_compressed() {
-            Ok(Self::Compressed(CompressedVec::forced_import(
-                file, name, version,
-            )?))
+            todo!();
+            // Ok(Self::Compressed(CompressedVec::forced_import(
+            //     file, name, version,
+            // )?))
         } else {
             Ok(Self::Raw(RawVec::forced_import(file, name, version)?))
         }
@@ -55,7 +56,23 @@ where
     T: StoredType,
 {
     #[inline]
-    fn read_(&self, index: usize, reader: &Reader<'_>) -> Result<Option<T>> {
+    fn file(&self) -> &File {
+        match self {
+            StoredVec::Raw(v) => v.file(),
+            StoredVec::Compressed(v) => v.file(),
+        }
+    }
+
+    #[inline]
+    fn region_index(&self) -> usize {
+        match self {
+            StoredVec::Raw(v) => v.region_index(),
+            StoredVec::Compressed(v) => v.region_index(),
+        }
+    }
+
+    #[inline]
+    fn read_(&self, index: usize, reader: &Reader) -> Result<Option<T>> {
         match self {
             StoredVec::Raw(v) => v.read_(index, reader),
             StoredVec::Compressed(v) => v.read_(index, reader),
@@ -186,22 +203,6 @@ where
     #[inline]
     fn value_type_to_size_of(&self) -> usize {
         size_of::<T>()
-    }
-
-    #[inline]
-    fn file(&self) -> &File {
-        match self {
-            StoredVec::Raw(v) => v.file(),
-            StoredVec::Compressed(v) => v.file(),
-        }
-    }
-
-    #[inline]
-    fn region_index(&self) -> usize {
-        match self {
-            StoredVec::Raw(v) => v.region_index(),
-            StoredVec::Compressed(v) => v.region_index(),
-        }
     }
 }
 

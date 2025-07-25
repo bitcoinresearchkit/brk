@@ -7,12 +7,11 @@ use bitcoincore_rpc::{self, Auth, Client};
 use brk_core::{default_bitcoin_path, default_brk_path, default_on_error, dot_brk_path};
 use brk_fetcher::Fetcher;
 use brk_server::Website;
-use brk_vec::{Computation, Format};
+use brk_vecs::{Computation, Format};
 use clap::Parser;
 use clap_derive::Parser;
 use color_eyre::eyre::eyre;
 use serde::{Deserialize, Serialize};
-
 
 #[derive(Parser, Debug, Default, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize)]
 #[command(version, about)]
@@ -31,7 +30,6 @@ pub struct Config {
     #[serde(default, deserialize_with = "default_on_error")]
     #[arg(long, value_name = "PATH")]
     brkdir: Option<String>,
-
 
     /// Computation of computed datasets, `lazy` computes data whenever requested without saving it, `eager` computes the data once and saves it to disk, default: `lazy`, saved
     #[serde(default, deserialize_with = "default_on_error")]
@@ -123,7 +121,6 @@ impl Config {
             if let Some(brkdir) = config_args.brkdir.take() {
                 config_saved.brkdir = Some(brkdir);
             }
-
 
             if let Some(computation) = config_args.computation.take() {
                 config_saved.computation = Some(computation);
@@ -297,7 +294,6 @@ impl Config {
     pub fn harsdir(&self) -> PathBuf {
         self.outputsdir().join("hars")
     }
-
 
     fn path_cookiefile(&self) -> PathBuf {
         self.rpccookiefile.as_ref().map_or_else(

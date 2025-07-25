@@ -1,8 +1,10 @@
-use std::path::Path;
+use std::sync::Arc;
 
 use brk_core::{CheckedSub, Result, StoredUsize, Version};
 use brk_exit::Exit;
-use brk_vec::{AnyCollectableVec, AnyIterableVec, EagerVec, Format, StoredIndex, StoredType};
+use brk_vecs::{
+    AnyCollectableVec, AnyIterableVec, AnyVec, EagerVec, File, Format, StoredIndex, StoredType,
+};
 use color_eyre::eyre::ContextCompat;
 
 use crate::utils::get_percentile;
@@ -37,7 +39,7 @@ where
     T: ComputedType,
 {
     pub fn forced_import(
-        path: &Path,
+        file: &Arc<File>,
         name: &str,
         version: Version,
         format: Format,
@@ -59,7 +61,7 @@ where
             first: options.first.then(|| {
                 Box::new(
                     EagerVec::forced_import(
-                        path,
+                        file,
                         &maybe_suffix("first"),
                         version + VERSION + Version::ZERO,
                         format,
@@ -69,13 +71,13 @@ where
             }),
             last: options.last.then(|| {
                 Box::new(
-                    EagerVec::forced_import(path, name, version + Version::ZERO, format).unwrap(),
+                    EagerVec::forced_import(file, name, version + Version::ZERO, format).unwrap(),
                 )
             }),
             min: options.min.then(|| {
                 Box::new(
                     EagerVec::forced_import(
-                        path,
+                        file,
                         &maybe_suffix("min"),
                         version + VERSION + Version::ZERO,
                         format,
@@ -86,7 +88,7 @@ where
             max: options.max.then(|| {
                 Box::new(
                     EagerVec::forced_import(
-                        path,
+                        file,
                         &maybe_suffix("max"),
                         version + VERSION + Version::ZERO,
                         format,
@@ -97,7 +99,7 @@ where
             median: options.median.then(|| {
                 Box::new(
                     EagerVec::forced_import(
-                        path,
+                        file,
                         &maybe_suffix("median"),
                         version + VERSION + Version::ZERO,
                         format,
@@ -108,7 +110,7 @@ where
             average: options.average.then(|| {
                 Box::new(
                     EagerVec::forced_import(
-                        path,
+                        file,
                         &maybe_suffix("average"),
                         version + VERSION + Version::ZERO,
                         format,
@@ -119,7 +121,7 @@ where
             sum: options.sum.then(|| {
                 Box::new(
                     EagerVec::forced_import(
-                        path,
+                        file,
                         &(if !options.last && !options.average && !options.min && !options.max {
                             name.to_string()
                         } else {
@@ -134,7 +136,7 @@ where
             cumulative: options.cumulative.then(|| {
                 Box::new(
                     EagerVec::forced_import(
-                        path,
+                        file,
                         &suffix("cumulative"),
                         version + VERSION + Version::ZERO,
                         format,
@@ -145,7 +147,7 @@ where
             _90p: options._90p.then(|| {
                 Box::new(
                     EagerVec::forced_import(
-                        path,
+                        file,
                         &maybe_suffix("90p"),
                         version + VERSION + Version::ZERO,
                         format,
@@ -156,7 +158,7 @@ where
             _75p: options._75p.then(|| {
                 Box::new(
                     EagerVec::forced_import(
-                        path,
+                        file,
                         &maybe_suffix("75p"),
                         version + VERSION + Version::ZERO,
                         format,
@@ -167,7 +169,7 @@ where
             _25p: options._25p.then(|| {
                 Box::new(
                     EagerVec::forced_import(
-                        path,
+                        file,
                         &maybe_suffix("25p"),
                         version + VERSION + Version::ZERO,
                         format,
@@ -178,7 +180,7 @@ where
             _10p: options._10p.then(|| {
                 Box::new(
                     EagerVec::forced_import(
-                        path,
+                        file,
                         &maybe_suffix("10p"),
                         version + VERSION + Version::ZERO,
                         format,
@@ -309,7 +311,7 @@ where
                                     .inspect_err(|_| {
                                         dbg!(
                                             &values,
-                                            max.path(),
+                                            max.name(),
                                             first_indexes.name(),
                                             first_index,
                                             count_indexes.name(),
