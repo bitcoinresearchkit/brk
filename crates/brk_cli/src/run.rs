@@ -18,7 +18,7 @@ pub fn run() -> color_eyre::Result<()> {
 
     let format = config.format();
 
-    let mut indexer = Indexer::forced_import(&config.outputsdir())?;
+    let mut indexer = Indexer::forced_import(&config.brkdir())?;
 
     let wait_for_synced_node = |rpc_client: &bitcoincore_rpc::Client| -> color_eyre::Result<()> {
         let is_synced = || -> color_eyre::Result<bool> {
@@ -37,7 +37,7 @@ pub fn run() -> color_eyre::Result<()> {
     };
 
     let mut computer = Computer::forced_import(
-        &config.outputsdir(),
+        &config.brkdir(),
         &indexer,
         config.computation(),
         config.fetcher(),
