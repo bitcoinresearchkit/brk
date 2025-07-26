@@ -287,12 +287,8 @@ impl Config {
             .map_or_else(default_brk_path, |s| Self::fix_user_path(s.as_ref()))
     }
 
-    pub fn outputsdir(&self) -> PathBuf {
-        self.brkdir().join("outputs")
-    }
-
     pub fn harsdir(&self) -> PathBuf {
-        self.outputsdir().join("hars")
+        self.brkdir().join("hars")
     }
 
     fn path_cookiefile(&self) -> PathBuf {

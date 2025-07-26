@@ -1232,8 +1232,6 @@ impl Vecs {
                         })?;
 
                     if height != Height::ZERO && height.unwrap_to_usize() % 10_000 == 0 {
-                        info!("Flushing...");
-
                         let _lock = exit.lock();
 
                         addresstypeindex_to_anyaddressindex_reader_opt.take();
@@ -1254,8 +1252,6 @@ impl Vecs {
 
             addresstypeindex_to_anyaddressindex_reader_opt.take();
             anyaddressindex_to_anyaddressdata_reader_opt.take();
-
-            info!("Flushing...");
 
             self.flush_states(
                 height,
@@ -1597,6 +1593,8 @@ impl Vecs {
         >,
         exit: &Exit,
     ) -> Result<()> {
+        info!("Flushing...");
+
         self.utxo_cohorts
             .as_mut_separate_vecs()
             .par_iter_mut()

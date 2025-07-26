@@ -9,7 +9,6 @@ use brk_exit::Exit;
 use brk_indexer::Indexer;
 use brk_vecs::{AnyIterableVec, Computation, File, Format, StoredIndex};
 use derive_deref::{Deref, DerefMut};
-use rayon::prelude::*;
 
 use crate::{
     Indexes, fetched, indexes, market,
@@ -1698,7 +1697,7 @@ impl Vecs {
                 })
                 .collect::<Vec<_>>(),
         ]
-        .into_par_iter()
+        .into_iter()
         .flatten()
         .try_for_each(|(vecs, stateful)| {
             vecs.compute_from_stateful(starting_indexes, &stateful, exit)
@@ -1713,7 +1712,7 @@ impl Vecs {
         starting_indexes: &Indexes,
         exit: &Exit,
     ) -> color_eyre::Result<()> {
-        self.as_mut_vecs().into_par_iter().try_for_each(|(_, v)| {
+        self.as_mut_vecs().into_iter().try_for_each(|(_, v)| {
             v.compute_rest_part1(indexer, indexes, fetched, starting_indexes, exit)
         })
     }
@@ -1732,30 +1731,27 @@ impl Vecs {
         dateindex_to_realized_cap: Option<&impl AnyIterableVec<DateIndex, Dollars>>,
         exit: &Exit,
     ) -> color_eyre::Result<()> {
-        self.0
-            .as_boxed_mut_vecs()
-            .into_iter()
-            .try_for_each(|mut v| {
-                v.par_iter_mut().try_for_each(|(_, v)| {
-                    v.compute_rest_part2(
-                        indexer,
-                        indexes,
-                        fetched,
-                        starting_indexes,
-                        market,
-                        height_to_supply,
-                        dateindex_to_supply,
-                        height_to_realized_cap,
-                        dateindex_to_realized_cap,
-                        exit,
-                    )
-                })
+        self.0.as_boxed_mut_vecs().into_iter().try_for_each(|v| {
+            v.into_iter().try_for_each(|(_, v)| {
+                v.compute_rest_part2(
+                    indexer,
+                    indexes,
+                    fetched,
+                    starting_indexes,
+                    market,
+                    height_to_supply,
+                    dateindex_to_supply,
+                    height_to_realized_cap,
+                    dateindex_to_realized_cap,
+                    exit,
+                )
             })
+        })
     }
 
     pub fn safe_flush_stateful_vecs(&mut self, height: Height, exit: &Exit) -> Result<()> {
         self.as_mut_separate_vecs()
-            .par_iter_mut()
+            .into_iter()
             .try_for_each(|(_, v)| v.safe_flush_stateful_vecs(height, exit))
     }
 }
