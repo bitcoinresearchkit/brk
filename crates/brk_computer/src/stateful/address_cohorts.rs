@@ -574,7 +574,6 @@ impl Vecs {
             .as_boxed_mut_vecs()
             .into_iter()
             .try_for_each(|mut v| {
-                unsafe { libc::sync() }
                 v.par_iter_mut().try_for_each(|(_, v)| {
                     v.compute_rest_part2(
                         indexer,
