@@ -529,8 +529,6 @@ impl Vecs {
         starting_indexes: &mut Indexes,
         exit: &Exit,
     ) -> color_eyre::Result<()> {
-        unsafe { libc::sync() }
-
         let height_to_first_outputindex = &indexer.vecs.height_to_first_outputindex;
         let height_to_first_inputindex = &indexer.vecs.height_to_first_inputindex;
         let height_to_first_p2aaddressindex = &indexer.vecs.height_to_first_p2aaddressindex;
@@ -1254,6 +1252,9 @@ impl Vecs {
 
             let _lock = exit.lock();
 
+            addresstypeindex_to_anyaddressindex_reader_opt.take();
+            anyaddressindex_to_anyaddressdata_reader_opt.take();
+
             info!("Flushing...");
 
             self.flush_states(
@@ -1264,10 +1265,6 @@ impl Vecs {
                 exit,
             )?;
         }
-
-        unsafe { libc::sync() }
-
-        // return Ok(());
 
         info!("Computing overlapping...");
 
@@ -1351,8 +1348,6 @@ impl Vecs {
         self.utxo_cohorts
             .compute_rest_part1(indexer, indexes, fetched, starting_indexes, exit)?;
 
-        unsafe { libc::sync() }
-
         self.address_cohorts.compute_rest_part1(
             indexer,
             indexes,
@@ -1415,8 +1410,6 @@ impl Vecs {
             dateindex_to_realized_cap_ref,
             exit,
         )?;
-
-        unsafe { libc::sync() }
 
         Ok(())
     }
