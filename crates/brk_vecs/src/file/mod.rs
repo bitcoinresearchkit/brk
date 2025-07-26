@@ -475,15 +475,15 @@ impl File {
 
     fn punch_hole(&self, start: u64, length: u64) -> Result<()> {
         let file = self.file.write();
-        Self::punch_hole_macos(&file, start, length)
+        Self::punch_hole_impl(&file, start, length)
     }
 
     fn punch_hole_(file: &fs::File, start: u64, length: u64) -> Result<()> {
-        Self::punch_hole_macos(file, start, length)
+        Self::punch_hole_impl(file, start, length)
     }
 
     #[cfg(target_os = "macos")]
-    fn punch_hole_macos(file: &fs::File, start: u64, length: u64) -> Result<()> {
+    fn punch_hole_impl(file: &fs::File, start: u64, length: u64) -> Result<()> {
         let fpunchhole = FPunchhole {
             fp_flags: 0,
             reserved: 0,
@@ -505,6 +505,32 @@ impl File {
         }
 
         Ok(())
+    }
+
+    #[cfg(target_os = "linux")]
+    fn punch_hole_impl(file: &fs::File, start: u64, length: u64) -> Result<()> {
+        let result = unsafe {
+            libc::fallocate(
+                file.as_raw_fd(),
+                libc::FALLOC_FL_PUNCH_HOLE | libc::FALLOC_FL_KEEP_SIZE,
+                start as libc::off_t,
+                length as libc::off_t,
+            )
+        };
+
+        if result == -1 {
+            let err = std::io::Error::last_os_error();
+            return Err(Error::String(format!("Failed to punch hole: {err}")));
+        }
+
+        Ok(())
+    }
+
+    #[cfg(not(any(target_os = "macos", target_os = "linux")))]
+    fn punch_hole_impl(_file: &fs::File, _start: u64, _length: u64) -> Result<()> {
+        Err(Error::String(
+            "Hole punching not supported on this platform".to_string(),
+        ))
     }
 }
 
