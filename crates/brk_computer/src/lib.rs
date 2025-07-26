@@ -9,7 +9,7 @@ use brk_core::Version;
 use brk_exit::Exit;
 use brk_fetcher::Fetcher;
 use brk_indexer::Indexer;
-use brk_vecs::{Computation, File, Format};
+use brk_vecs::{Computation, File, Format, PAGE_SIZE};
 use log::info;
 
 mod all;
@@ -52,6 +52,9 @@ impl Computer {
         let states_path = computed_path.join("states");
 
         let file = Arc::new(File::open(&computed_path.join("vecs"))?);
+        file.set_min_len(PAGE_SIZE * 100_000_000)?;
+        file.set_min_regions(50_000)?;
+
         let file_fetched = Arc::new(File::open(&outputs_dir.join("fetched/vecs"))?);
 
         Ok(Self {
