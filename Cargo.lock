@@ -145,12 +145,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "arc-swap"
-version = "1.7.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "69f7f8c3906b62b754cd5326047894316021dcfe5a194c8ea52bdd94934a3457"
-
-[[package]]
 name = "arcstr"
 version = "1.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1028,25 +1022,6 @@ dependencies = [
  "oxc_sourcemap",
  "rustc-hash",
  "serde",
-]
-
-[[package]]
-name = "brk_vec"
-version = "0.0.81"
-dependencies = [
- "arc-swap",
- "brk_core",
- "brk_exit",
- "clap",
- "clap_derive",
- "log",
- "memmap2",
- "rayon",
- "serde",
- "serde_json",
- "zerocopy",
- "zerocopy-derive",
- "zstd",
 ]
 
 [[package]]

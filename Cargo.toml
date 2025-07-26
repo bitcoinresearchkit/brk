@@ -22,7 +22,6 @@ debug = true
 inherits = "release"
 
 [workspace.dependencies]
-arc-swap = "1.7.1"
 axum = "0.8.4"
 bincode = { version = "2.0.1", features = ["serde"] }
 bitcoin = { version = "0.32.6", features = ["serde"] }
