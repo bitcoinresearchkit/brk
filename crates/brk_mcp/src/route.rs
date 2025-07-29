@@ -1,6 +1,6 @@
 use axum::Router;
 use brk_interface::Interface;
-use rmcp::transport::{
+use brk_rmcp::transport::{
     StreamableHttpServerConfig,
     streamable_http_server::{StreamableHttpService, session::local::LocalSessionManager},
 };

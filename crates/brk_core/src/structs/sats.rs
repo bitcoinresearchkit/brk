@@ -3,13 +3,12 @@ use std::{
     ops::{Add, AddAssign, Div, Mul, SubAssign},
 };
 
-use bincode::{Decode, Encode};
 use bitcoin::Amount;
-use byteview::ByteView;
+use derive_deref::Deref;
 use serde::{Deserialize, Serialize};
 use zerocopy_derive::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
-use crate::{CheckedSub, StoredF64, copy_first_8bytes};
+use crate::{CheckedSub, StoredF64};
 
 use super::{Bitcoin, Cents, Dollars, Height};
 
@@ -21,6 +20,7 @@ use super::{Bitcoin, Cents, Dollars, Height};
     Ord,
     Clone,
     Copy,
+    Deref,
     Default,
     FromBytes,
     Immutable,
@@ -28,8 +28,6 @@ use super::{Bitcoin, Cents, Dollars, Height};
     KnownLayout,
     Serialize,
     Deserialize,
-    Encode,
-    Decode,
 )]
 pub struct Sats(u64);
 
@@ -240,25 +238,6 @@ impl From<u128> for Sats {
 impl From<Sats> for u128 {
     fn from(value: Sats) -> Self {
         value.0 as u128
-    }
-}
-
-impl From<ByteView> for Sats {
-    fn from(value: ByteView) -> Self {
-        let bytes = copy_first_8bytes(&value).unwrap();
-        Self::from(u64::from_be_bytes(bytes))
-    }
-}
-
-impl From<&Sats> for ByteView {
-    fn from(value: &Sats) -> Self {
-        Self::new(&value.0.to_be_bytes())
-    }
-}
-
-impl From<Sats> for ByteView {
-    fn from(value: Sats) -> Self {
-        Self::from(&value)
     }
 }
 

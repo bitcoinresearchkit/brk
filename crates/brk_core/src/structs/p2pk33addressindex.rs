@@ -1,9 +1,7 @@
 use std::ops::Add;
 
-use byteview::ByteView;
 use derive_deref::{Deref, DerefMut};
 use serde::Serialize;
-use zerocopy::{FromBytes, IntoBytes};
 use zerocopy_derive::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 use crate::{CheckedSub, Printable, TypeIndex};
@@ -75,21 +73,5 @@ impl Printable for P2PK33AddressIndex {
 
     fn to_possible_strings() -> &'static [&'static str] {
         &["pk33addr", "p2pk33addr", "p2pk33addressindex"]
-    }
-}
-
-impl From<ByteView> for P2PK33AddressIndex {
-    fn from(value: ByteView) -> Self {
-        Self::read_from_bytes(&value).unwrap()
-    }
-}
-impl From<P2PK33AddressIndex> for ByteView {
-    fn from(value: P2PK33AddressIndex) -> Self {
-        Self::from(&value)
-    }
-}
-impl From<&P2PK33AddressIndex> for ByteView {
-    fn from(value: &P2PK33AddressIndex) -> Self {
-        Self::new(value.as_bytes())
     }
 }

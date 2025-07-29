@@ -34,8 +34,7 @@ impl Regions {
         let id_to_index_path = path.join("id_to_index");
 
         let id_to_index: HashMap<String, usize> =
-            deserialize_hashmap_binary(&fs::read(&id_to_index_path).unwrap_or_default())
-                .unwrap_or_default();
+            Self::deserialize(&fs::read(&id_to_index_path).unwrap_or_default()).unwrap_or_default();
 
         let index_to_region_file = OpenOptions::new()
             .read(true)
@@ -123,10 +122,7 @@ impl Regions {
     }
 
     fn flush_id_to_index(&mut self) -> Result<()> {
-        fs::write(
-            &self.id_to_index_path,
-            serialize_hashmap_binary(&self.id_to_index),
-        )?;
+        fs::write(&self.id_to_index_path, Self::serialize(&self.id_to_index))?;
         Ok(())
     }
 
@@ -231,52 +227,49 @@ impl Regions {
     pub fn flush(&self) -> Result<()> {
         self.index_to_region_mmap.flush().map_err(|e| e.into())
     }
-}
 
-fn serialize_hashmap_binary(map: &HashMap<String, usize>) -> Vec<u8> {
-    let mut buffer = Vec::new();
+    fn serialize(map: &HashMap<String, usize>) -> Vec<u8> {
+        let mut buffer = Vec::new();
 
-    buffer.extend_from_slice(&map.len().to_ne_bytes());
+        buffer.extend_from_slice(&map.len().to_ne_bytes());
 
-    for (key, value) in map {
-        buffer.extend_from_slice(&key.len().to_ne_bytes());
-        buffer.extend_from_slice(key.as_bytes());
-        buffer.extend_from_slice(&value.to_ne_bytes());
+        for (key, value) in map {
+            buffer.extend_from_slice(key.len().as_bytes());
+            buffer.extend_from_slice(key.as_bytes());
+            buffer.extend_from_slice(value.as_bytes());
+        }
+
+        buffer
     }
 
-    buffer
-}
-
-fn deserialize_hashmap_binary(data: &[u8]) -> Result<HashMap<String, usize>> {
-    let mut cursor = Cursor::new(data);
-    let mut buffer = [0u8; 8];
-
-    cursor
-        .read_exact(&mut buffer)
-        .map_err(|_| Error::Str("Failed to read entry count"))?;
-    let entry_count = usize::from_ne_bytes(buffer);
-
-    let mut map = HashMap::with_capacity(entry_count);
-
-    for _ in 0..entry_count {
-        cursor
-            .read_exact(&mut buffer)
-            .map_err(|_| Error::Str("Failed to read key length"))?;
-        let key_len = usize::from_ne_bytes(buffer);
-
-        let mut key_bytes = vec![0u8; key_len];
-        cursor
-            .read_exact(&mut key_bytes)
-            .map_err(|_| Error::Str("Failed to read key"))?;
-        let key = String::from_utf8(key_bytes).map_err(|_| Error::Str("Invalid UTF-8 in key"))?;
+    fn deserialize(data: &[u8]) -> Result<HashMap<String, usize>> {
+        let mut cursor = Cursor::new(data);
+        let mut buffer = [0u8; 8];
 
         cursor
             .read_exact(&mut buffer)
-            .map_err(|_| Error::Str("Failed to read value"))?;
-        let value = usize::from_ne_bytes(buffer);
+            .map_err(|_| Error::Str("Failed to read entry count"))?;
+        let entry_count = usize::read_from_bytes(&buffer)?;
 
-        map.insert(key, value);
+        let mut map = HashMap::with_capacity(entry_count);
+
+        for _ in 0..entry_count {
+            cursor
+                .read_exact(&mut buffer)
+                .map_err(|_| Error::Str("Failed to read key length"))?;
+            let key_len = usize::read_from_bytes(&buffer)?;
+
+            let mut key_bytes = vec![0u8; key_len];
+            cursor.read_exact(&mut key_bytes)?;
+            let key =
+                String::from_utf8(key_bytes).map_err(|_| Error::Str("Invalid UTF-8 in key"))?;
+
+            cursor.read_exact(&mut buffer)?;
+            let value = usize::read_from_bytes(&buffer)?;
+
+            map.insert(key, value);
+        }
+
+        Ok(map)
     }
-
-    Ok(map)
 }
