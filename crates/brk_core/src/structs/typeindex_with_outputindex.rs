@@ -30,6 +30,7 @@ impl From<ByteView> for TypeIndexWithOutputindex {
         }
     }
 }
+
 impl From<TypeIndexWithOutputindex> for ByteView {
     fn from(value: TypeIndexWithOutputindex) -> Self {
         ByteView::from(&value)

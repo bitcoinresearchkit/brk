@@ -23,7 +23,6 @@ inherits = "release"
 
 [workspace.dependencies]
 axum = "0.8.4"
-bincode = { version = "2.0.1", features = ["serde"] }
 bitcoin = { version = "0.32.6", features = ["serde"] }
 bitcoincore-rpc = "0.19.0"
 brk_bundler = { version = "0.0.83", path = "crates/brk_bundler" }
@@ -47,22 +46,15 @@ color-eyre = "0.6.5"
 derive_deref = "1.1.1"
 fjall = "2.11.2"
 jiff = "0.2.15"
-libc = "0.2.174"
 log = { version = "0.4.27" }
 minreq = { version = "2.14.0", features = ["https", "serde_json"] }
 parking_lot = "0.12.4"
 rayon = "1.10.0"
-rmcp = { version = "0.3.0", features = [
-    "transport-worker",
-    "transport-streamable-http-server",
-] }
-schemars = "1.0.4"
 serde = { version = "1.0.219" }
 serde_bytes = "0.11.17"
 serde_derive = "1.0.219"
 serde_json = { version = "1.0.141", features = ["float_roundtrip"] }
-tabled = "0.20.0"
-tokio = { version = "1.46.1", features = ["rt-multi-thread"] }
+tokio = { version = "1.47.0", features = ["rt-multi-thread"] }
 zerocopy = { version = "0.8.26" }
 zerocopy-derive = "0.8.26"
 

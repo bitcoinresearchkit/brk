@@ -1,6 +1,6 @@
 use std::ops::Deref;
 
-use rmcp::schemars::{self, JsonSchema};
+use schemars::JsonSchema;
 use serde::Deserialize;
 
 use crate::{

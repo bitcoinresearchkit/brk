@@ -4,13 +4,11 @@ use std::{
     ops::{Add, AddAssign, Div, Mul},
 };
 
-use bincode::{Decode, Encode};
-use byteview::ByteView;
 use derive_deref::Deref;
 use serde::{Deserialize, Serialize};
 use zerocopy_derive::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
-use crate::{CheckedSub, copy_first_8bytes};
+use crate::CheckedSub;
 
 use super::{Bitcoin, Cents, Close, High, Sats, StoredF32, StoredF64};
 
@@ -26,8 +24,6 @@ use super::{Bitcoin, Cents, Close, High, Sats, StoredF32, StoredF64};
     KnownLayout,
     Serialize,
     Deserialize,
-    Encode,
-    Decode,
 )]
 pub struct Dollars(f64);
 
@@ -360,24 +356,5 @@ impl Ord for Dollars {
             (false, true) => Ordering::Greater,
             (false, false) => self.0.partial_cmp(&other.0).unwrap(),
         }
-    }
-}
-
-impl From<ByteView> for Dollars {
-    fn from(value: ByteView) -> Self {
-        let bytes = copy_first_8bytes(&value).unwrap();
-        Self::from(f64::from_be_bytes(bytes))
-    }
-}
-
-impl From<Dollars> for ByteView {
-    fn from(value: Dollars) -> Self {
-        Self::from(&value)
-    }
-}
-
-impl From<&Dollars> for ByteView {
-    fn from(value: &Dollars) -> Self {
-        Self::new(&value.to_be_bytes())
     }
 }

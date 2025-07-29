@@ -14,10 +14,12 @@ fn main() -> color_eyre::Result<()> {
 
     brk_logger::init(Some(Path::new(".log")));
 
-    // let bitcoin_dir = brk_core::default_bitcoin_path();
-    let bitcoin_dir = Path::new("/Volumes/WD_BLACK1/bitcoin");
+    let bitcoin_dir = brk_core::default_bitcoin_path();
+    // let bitcoin_dir = Path::new("/Volumes/WD_BLACK1/bitcoin");
+    let outputs_dir = Path::new("./_outputs");
+    fs::create_dir_all(outputs_dir)?;
     // let outputs_dir = brk_core::default_brk_path().join("outputs");
-    let outputs_dir = Path::new("/Volumes/WD_BLACK1/brk");
+    // let outputs_dir = Path::new("/Volumes/WD_BLACK1/brk");
 
     let rpc = Box::leak(Box::new(bitcoincore_rpc::Client::new(
         "http://localhost:8332",
