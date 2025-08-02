@@ -10,10 +10,8 @@ homepage.workspace = true
 repository.workspace = true
 
 [dependencies]
-brk_core = { workspace = true }
-brk_exit = { workspace = true }
-clap = { workspace = true }
-clap_derive = { workspace = true }
+brk_vecs_macros = { workspace = true }
+ctrlc = { version = "3.4.7", features = ["termination"] }
 libc = "0.2.174"
 log = { workspace = true }
 memmap2 = "0.9.7"
@@ -23,7 +21,4 @@ serde = { workspace = true }
 serde_json = { workspace = true }
 zerocopy = { workspace = true }
 zerocopy-derive = { workspace = true }
-zstd = "0.13.3"
-
-[package.metadata.cargo-machete]
-ignored = ["clap"]
+pco = "0.4.6"

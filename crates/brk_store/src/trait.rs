@@ -1,4 +1,5 @@
-use brk_core::{Height, Result, Version};
+use brk_error::Result;
+use brk_structs::{Height, Version};
 
 pub trait AnyStore {
     fn commit(&mut self, height: Height) -> Result<()>;

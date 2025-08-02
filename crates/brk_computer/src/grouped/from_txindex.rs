@@ -1,20 +1,20 @@
 use std::sync::Arc;
 
-use brk_core::{
-    Bitcoin, DateIndex, DecadeIndex, DifficultyEpoch, Dollars, Height, MonthIndex, QuarterIndex,
-    Result, Sats, SemesterIndex, TxIndex, Version, WeekIndex, YearIndex,
-};
-use brk_exit::Exit;
+use brk_error::Result;
 use brk_indexer::Indexer;
+use brk_structs::{
+    Bitcoin, DateIndex, DecadeIndex, DifficultyEpoch, Dollars, Height, MonthIndex, QuarterIndex,
+    Sats, SemesterIndex, TxIndex, Version, WeekIndex, YearIndex,
+};
 use brk_vecs::{
-    AnyCollectableVec, AnyVec, CloneableAnyIterableVec, CollectableVec, Computation, EagerVec,
-    File, Format, StoredIndex, VecIterator,
+    AnyCloneableIterableVec, AnyCollectableVec, AnyVec, CollectableVec, Computation, EagerVec,
+    Exit, File, Format, GenericStoredVec, StoredIndex, VecIterator,
 };
 
 use crate::{
-    Indexes, fetched,
+    Indexes,
     grouped::{ComputedVecBuilder, Source},
-    indexes,
+    indexes, price,
 };
 
 use super::{ComputedType, EagerVecBuilder, VecBuilderOptions};
@@ -54,7 +54,7 @@ where
         computation: Computation,
         indexes: &indexes::Vecs,
         options: VecBuilderOptions,
-    ) -> color_eyre::Result<Self> {
+    ) -> Result<Self> {
         let txindex = source.is_compute().then(|| {
             Box::new(
                 EagerVec::forced_import(file, name, version + VERSION + Version::ZERO, format)
@@ -170,7 +170,7 @@ where
     //     starting_indexes: &Indexes,
     //     exit: &Exit,
     //     mut compute: F,
-    // ) -> color_eyre::Result<()>
+    // ) -> Result<()>
     // where
     //     F: FnMut(
     //         &mut EagerVec<TxIndex, T>,
@@ -495,7 +495,7 @@ impl ComputedVecsFromTxindex<Dollars> {
         exit: &Exit,
         bitcoin: &ComputedVecsFromTxindex<Bitcoin>,
         txindex: Option<&impl CollectableVec<TxIndex, Dollars>>,
-        fetched: &fetched::Vecs,
+        price: &price::Vecs,
     ) -> Result<()> {
         let txindex_version = if let Some(txindex) = txindex {
             txindex.version()
@@ -508,7 +508,7 @@ impl ComputedVecsFromTxindex<Dollars> {
 
         let starting_index = self.height.starting_index(starting_indexes.height);
 
-        let mut close_iter = fetched.chainindexes_to_close.height.into_iter();
+        let mut close_iter = price.chainindexes_to_close.height.into_iter();
 
         (starting_index.unwrap_to_usize()..indexer.vecs.height_to_weight.len())
             .map(Height::from)

@@ -1,22 +1,22 @@
 use std::sync::Arc;
 
-use brk_core::{
-    Bitcoin, DateIndex, Dollars, Height, Result, Sats, StoredF32, StoredF64, StoredUsize, Version,
-};
-use brk_exit::Exit;
+use brk_error::Result;
 use brk_indexer::Indexer;
+use brk_structs::{
+    Bitcoin, DateIndex, Dollars, Height, Sats, StoredF32, StoredF64, StoredU64, Version,
+};
 use brk_vecs::{
-    AnyCollectableVec, AnyIterableVec, AnyVec, CloneableAnyIterableVec, Computation, EagerVec,
-    File, Format, VecIterator,
+    AnyCloneableIterableVec, AnyCollectableVec, AnyIterableVec, AnyStoredVec, AnyVec, Computation,
+    EagerVec, Exit, File, Format, GenericStoredVec, VecIterator,
 };
 
 use crate::{
-    Indexes, fetched,
+    Indexes,
     grouped::{
         ComputedHeightValueVecs, ComputedRatioVecsFromDateIndex, ComputedValueVecsFromDateIndex,
         ComputedVecsFromDateIndex, ComputedVecsFromHeight, Source, VecBuilderOptions,
     },
-    indexes, market,
+    indexes, market, price,
     states::CohortState,
 };
 
@@ -27,7 +27,7 @@ pub struct Vecs {
     // Cumulative
     pub height_to_realized_cap: Option<EagerVec<Height, Dollars>>,
     pub height_to_supply: EagerVec<Height, Sats>,
-    pub height_to_utxo_count: EagerVec<Height, StoredUsize>,
+    pub height_to_utxo_count: EagerVec<Height, StoredU64>,
     // Single
     pub dateindex_to_supply_even: Option<EagerVec<DateIndex, Sats>>,
     pub dateindex_to_supply_in_loss: Option<EagerVec<DateIndex, Sats>>,
@@ -68,7 +68,7 @@ pub struct Vecs {
     pub indexes_to_realized_value: Option<ComputedVecsFromHeight<Dollars>>,
     pub height_to_supply_value: ComputedHeightValueVecs,
     pub indexes_to_supply: ComputedValueVecsFromDateIndex,
-    pub indexes_to_utxo_count: ComputedVecsFromHeight<StoredUsize>,
+    pub indexes_to_utxo_count: ComputedVecsFromHeight<StoredU64>,
     pub indexes_to_value_created: Option<ComputedVecsFromHeight<Dollars>>,
     pub indexes_to_value_destroyed: Option<ComputedVecsFromHeight<Dollars>>,
     pub indexes_to_unrealized_profit: Option<ComputedVecsFromDateIndex<Dollars>>,
@@ -134,11 +134,11 @@ impl Vecs {
         format: Format,
         version: Version,
         indexes: &indexes::Vecs,
-        fetched: Option<&fetched::Vecs>,
+        price: Option<&price::Vecs>,
         compute_relative_to_all: bool,
         ratio_extended: bool,
-    ) -> color_eyre::Result<Self> {
-        let compute_dollars = fetched.is_some();
+    ) -> Result<Self> {
+        let compute_dollars = price.is_some();
 
         // let prefix = |s: &str| cohort_name.map_or(s.to_string(), |name| format!("{s}_{name}"));
 
@@ -1368,7 +1368,7 @@ impl Vecs {
 
         self.height_to_utxo_count.forced_push_at(
             height,
-            StoredUsize::from(state.supply.utxos),
+            StoredU64::from(state.supply.utxos),
             exit,
         )?;
 
@@ -1899,12 +1899,12 @@ impl Vecs {
         &mut self,
         indexer: &Indexer,
         indexes: &indexes::Vecs,
-        fetched: Option<&fetched::Vecs>,
+        price: Option<&price::Vecs>,
         starting_indexes: &Indexes,
         exit: &Exit,
-    ) -> color_eyre::Result<()> {
+    ) -> Result<()> {
         self.height_to_supply_value.compute_rest(
-            fetched,
+            price,
             starting_indexes,
             exit,
             Some(&self.height_to_supply),
@@ -1913,7 +1913,7 @@ impl Vecs {
         self.indexes_to_supply.compute_all(
             indexer,
             indexes,
-            fetched,
+            price,
             starting_indexes,
             exit,
             |v, _, indexes, starting_indexes, exit| {
@@ -1925,14 +1925,15 @@ impl Vecs {
                     &indexes.dateindex_to_first_height,
                     |(i, height, ..)| {
                         let count = dateindex_to_height_count_iter.unwrap_get_inner(i);
-                        if count == StoredUsize::default() {
+                        if count == StoredU64::default() {
                             unreachable!()
                         }
                         let supply = height_to_supply_iter.unwrap_get_inner(height + (*count - 1));
                         (i, supply)
                     },
                     exit,
-                )
+                )?;
+                Ok(())
             },
         )?;
 
@@ -1946,7 +1947,7 @@ impl Vecs {
         self.height_to_halved_supply_value.compute_all(
             indexer,
             indexes,
-            fetched,
+            price,
             starting_indexes,
             exit,
             |v, _, _, starting_indexes, exit| {
@@ -1955,14 +1956,15 @@ impl Vecs {
                     &self.height_to_supply,
                     |(h, v, ..)| (h, v / 2),
                     exit,
-                )
+                )?;
+                Ok(())
             },
         )?;
 
         self.indexes_to_halved_supply.compute_all(
             indexer,
             indexes,
-            fetched,
+            price,
             starting_indexes,
             exit,
             |v, _, _, starting_indexes, exit| {
@@ -1971,7 +1973,8 @@ impl Vecs {
                     self.indexes_to_supply.sats.dateindex.as_ref().unwrap(),
                     |(i, sats, ..)| (i, sats / 2),
                     exit,
-                )
+                )?;
+                Ok(())
             },
         )?;
 
@@ -1986,7 +1989,8 @@ impl Vecs {
                     &self.height_to_satblocks_destroyed,
                     |(i, v, ..)| (i, StoredF64::from(Bitcoin::from(v))),
                     exit,
-                )
+                )?;
+                Ok(())
             },
         )?;
 
@@ -2001,7 +2005,8 @@ impl Vecs {
                     &self.height_to_satdays_destroyed,
                     |(i, v, ..)| (i, StoredF64::from(Bitcoin::from(v))),
                     exit,
-                )
+                )?;
+                Ok(())
             },
         )?;
 
@@ -2013,7 +2018,7 @@ impl Vecs {
         &mut self,
         indexer: &Indexer,
         indexes: &indexes::Vecs,
-        fetched: Option<&fetched::Vecs>,
+        price: Option<&price::Vecs>,
         starting_indexes: &Indexes,
         market: &market::Vecs,
         height_to_supply: &impl AnyIterableVec<Height, Bitcoin>,
@@ -2021,7 +2026,7 @@ impl Vecs {
         height_to_realized_cap: Option<&impl AnyIterableVec<Height, Dollars>>,
         dateindex_to_realized_cap: Option<&impl AnyIterableVec<DateIndex, Dollars>>,
         exit: &Exit,
-    ) -> color_eyre::Result<()> {
+    ) -> Result<()> {
         if let Some(v) = self
             .indexes_to_supply_relative_to_circulating_supply
             .as_mut()
@@ -2037,7 +2042,8 @@ impl Vecs {
                         &self.height_to_supply_value.bitcoin,
                         height_to_supply,
                         exit,
-                    )
+                    )?;
+                    Ok(())
                 },
             )?;
         }
@@ -2064,7 +2070,8 @@ impl Vecs {
                             self.height_to_realized_cap.as_ref().unwrap(),
                             &self.height_to_supply_value.bitcoin,
                             exit,
-                        )
+                        )?;
+                        Ok(())
                     },
                 )?;
 
@@ -2074,7 +2081,7 @@ impl Vecs {
                 .compute_rest(
                     indexer,
                     indexes,
-                    fetched.as_ref().unwrap(),
+                    price.as_ref().unwrap(),
                     starting_indexes,
                     exit,
                     Some(
@@ -2120,7 +2127,8 @@ impl Vecs {
                             self.height_to_realized_loss.as_ref().unwrap(),
                             |(i, v, ..)| (i, v * -1_i64),
                             exit,
-                        )
+                        )?;
+                        Ok(())
                     },
                 )?;
 
@@ -2182,7 +2190,8 @@ impl Vecs {
                                 .unwrap_last(),
                             30,
                             exit,
-                        )
+                        )?;
+                        Ok(())
                     },
                 )?;
 
@@ -2200,7 +2209,8 @@ impl Vecs {
                             self.height_to_realized_profit.as_ref().unwrap(),
                             self.height_to_realized_loss.as_ref().unwrap(),
                             exit,
-                        )
+                        )?;
+                        Ok(())
                     },
                 )?;
 
@@ -2218,7 +2228,8 @@ impl Vecs {
                             self.height_to_realized_profit.as_ref().unwrap(),
                             self.height_to_realized_loss.as_ref().unwrap(),
                             exit,
-                        )
+                        )?;
+                        Ok(())
                     },
                 )?;
 
@@ -2282,7 +2293,7 @@ impl Vecs {
                 .compute_rest(
                     indexer,
                     indexes,
-                    fetched,
+                    price,
                     starting_indexes,
                     exit,
                     Some(self.dateindex_to_supply_in_profit.as_ref().unwrap()),
@@ -2293,7 +2304,7 @@ impl Vecs {
                 .compute_rest(
                     indexer,
                     indexes,
-                    fetched,
+                    price,
                     starting_indexes,
                     exit,
                     Some(self.dateindex_to_supply_in_loss.as_ref().unwrap()),
@@ -2301,7 +2312,7 @@ impl Vecs {
             self.indexes_to_supply_even.as_mut().unwrap().compute_rest(
                 indexer,
                 indexes,
-                fetched,
+                price,
                 starting_indexes,
                 exit,
                 Some(self.dateindex_to_supply_even.as_ref().unwrap()),
@@ -2367,7 +2378,8 @@ impl Vecs {
                             self.dateindex_to_unrealized_loss.as_ref().unwrap(),
                             |(h, v, ..)| (h, v * -1_i64),
                             exit,
-                        )
+                        )?;
+                        Ok(())
                     },
                 )?;
             self.height_to_net_unrealized_profit_and_loss
@@ -2394,7 +2406,8 @@ impl Vecs {
                             self.dateindex_to_unrealized_profit.as_ref().unwrap(),
                             self.dateindex_to_unrealized_loss.as_ref().unwrap(),
                             exit,
-                        )
+                        )?;
+                        Ok(())
                     },
                 )?;
             self.height_to_net_unrealized_profit_and_loss_relative_to_market_cap
@@ -2427,7 +2440,8 @@ impl Vecs {
                                 .unwrap(),
                             market.indexes_to_marketcap.dateindex.as_ref().unwrap(),
                             exit,
-                        )
+                        )?;
+                        Ok(())
                     },
                 )?;
 
@@ -2445,7 +2459,8 @@ impl Vecs {
                             self.height_to_realized_profit.as_ref().unwrap(),
                             *height_to_realized_cap.as_ref().unwrap(),
                             exit,
-                        )
+                        )?;
+                        Ok(())
                     },
                 )?;
 
@@ -2463,7 +2478,8 @@ impl Vecs {
                             self.height_to_realized_loss.as_ref().unwrap(),
                             *height_to_realized_cap.as_ref().unwrap(),
                             exit,
-                        )
+                        )?;
+                        Ok(())
                     },
                 )?;
 
@@ -2486,7 +2502,8 @@ impl Vecs {
                                 .unwrap(),
                             *height_to_realized_cap.as_ref().unwrap(),
                             exit,
-                        )
+                        )?;
+                        Ok(())
                     },
                 )?;
 
@@ -2494,7 +2511,7 @@ impl Vecs {
                 .as_mut()
                 .unwrap()
                 .compute_rest(
-                    fetched,
+                    price,
                     starting_indexes,
                     exit,
                     Some(self.height_to_supply_even.as_ref().unwrap()),
@@ -2503,7 +2520,7 @@ impl Vecs {
                 .as_mut()
                 .unwrap()
                 .compute_rest(
-                    fetched,
+                    price,
                     starting_indexes,
                     exit,
                     Some(self.height_to_supply_in_loss.as_ref().unwrap()),
@@ -2512,7 +2529,7 @@ impl Vecs {
                 .as_mut()
                 .unwrap()
                 .compute_rest(
-                    fetched,
+                    price,
                     starting_indexes,
                     exit,
                     Some(self.height_to_supply_in_profit.as_ref().unwrap()),
@@ -2572,7 +2589,8 @@ impl Vecs {
                                 .unwrap(),
                             self.indexes_to_supply.bitcoin.dateindex.as_ref().unwrap(),
                             exit,
-                        )
+                        )?;
+                        Ok(())
                     },
                 )?;
             self.indexes_to_supply_in_loss_relative_to_own_supply
@@ -2595,7 +2613,8 @@ impl Vecs {
                                 .unwrap(),
                             self.indexes_to_supply.bitcoin.dateindex.as_ref().unwrap(),
                             exit,
-                        )
+                        )?;
+                        Ok(())
                     },
                 )?;
             self.indexes_to_supply_in_profit_relative_to_own_supply
@@ -2618,7 +2637,8 @@ impl Vecs {
                                 .unwrap(),
                             self.indexes_to_supply.bitcoin.dateindex.as_ref().unwrap(),
                             exit,
-                        )
+                        )?;
+                        Ok(())
                     },
                 )?;
 
@@ -2640,7 +2660,8 @@ impl Vecs {
                                 .unwrap_cumulative(),
                             30,
                             exit,
-                        )
+                        )?;
+                        Ok(())
                     },
                 )?;
 
@@ -2658,7 +2679,8 @@ impl Vecs {
                             self.indexes_to_net_realized_profit_and_loss_cumulative_30d_change.as_ref().unwrap().dateindex.as_ref().unwrap(),
                             *dateindex_to_realized_cap.as_ref().unwrap(),
                             exit,
-                        )
+                        )?;
+                        Ok(())
                     },
                 )?;
 
@@ -2676,7 +2698,8 @@ impl Vecs {
                             self.indexes_to_net_realized_profit_and_loss_cumulative_30d_change.as_ref().unwrap().dateindex.as_ref().unwrap(),
                             market.indexes_to_marketcap.dateindex.as_ref().unwrap(),
                             exit,
-                        )
+                        )?;
+                        Ok(())
                     },
                 )?;
 
@@ -2736,7 +2759,8 @@ impl Vecs {
                                     .unwrap(),
                                 dateindex_to_supply,
                                 exit,
-                            )
+                            )?;
+                            Ok(())
                         },
                     )?;
                 self.indexes_to_supply_in_loss_relative_to_circulating_supply
@@ -2759,7 +2783,8 @@ impl Vecs {
                                     .unwrap(),
                                 dateindex_to_supply,
                                 exit,
-                            )
+                            )?;
+                            Ok(())
                         },
                     )?;
                 self.indexes_to_supply_in_profit_relative_to_circulating_supply
@@ -2782,7 +2807,8 @@ impl Vecs {
                                     .unwrap(),
                                 dateindex_to_supply,
                                 exit,
-                            )
+                            )?;
+                            Ok(())
                         },
                     )?;
             }

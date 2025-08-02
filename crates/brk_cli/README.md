@@ -23,12 +23,6 @@
   <a href="https://primal.net/p/nprofile1qqsfw5dacngjlahye34krvgz7u0yghhjgk7gxzl5ptm9v6n2y3sn03sqxu2e6">
     <img src="https://img.shields.io/badge/nostr-purple?link=https%3A%2F%2Fprimal.net%2Fp%2Fnprofile1qqsfw5dacngjlahye34krvgz7u0yghhjgk7gxzl5ptm9v6n2y3sn03sqxu2e6" alt="Nostr" />
   </a>
-  <a href="https://bsky.app/profile/bitcoinresearchkit.org">
-    <img src="https://img.shields.io/badge/bluesky-blue?link=https%3A%2F%2Fbsky.app%2Fprofile%2Fbitcoinresearchkit.org" alt="Bluesky" />
-  </a>
-  <a href="https://x.com/brkdotorg">
-    <img src="https://img.shields.io/badge/x.com-black" alt="X" />
-  </a>
 </p>
 
 A command line interface to run a Bitcoin Research Kit instance.

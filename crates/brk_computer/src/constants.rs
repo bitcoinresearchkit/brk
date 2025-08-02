@@ -1,9 +1,9 @@
-use std::sync::Arc;
+use std::{path::Path, sync::Arc};
 
-use brk_core::{StoredU8, Version};
-use brk_exit::Exit;
+use brk_error::Result;
 use brk_indexer::Indexer;
-use brk_vecs::{AnyCollectableVec, AnyVec, Computation, File, Format};
+use brk_structs::{StoredU16, Version};
+use brk_vecs::{AnyCollectableVec, AnyVec, Computation, Exit, File, Format};
 
 use crate::grouped::Source;
 
@@ -17,23 +17,27 @@ const VERSION: Version = Version::ZERO;
 
 #[derive(Clone)]
 pub struct Vecs {
-    pub constant_0: ComputedVecsFromHeight<StoredU8>,
-    pub constant_1: ComputedVecsFromHeight<StoredU8>,
-    pub constant_50: ComputedVecsFromHeight<StoredU8>,
-    pub constant_100: ComputedVecsFromHeight<StoredU8>,
+    file: Arc<File>,
+
+    pub constant_0: ComputedVecsFromHeight<StoredU16>,
+    pub constant_1: ComputedVecsFromHeight<StoredU16>,
+    pub constant_50: ComputedVecsFromHeight<StoredU16>,
+    pub constant_100: ComputedVecsFromHeight<StoredU16>,
 }
 
 impl Vecs {
     pub fn forced_import(
-        file: &Arc<File>,
+        parent: &Path,
         version: Version,
         computation: Computation,
         format: Format,
         indexes: &indexes::Vecs,
-    ) -> color_eyre::Result<Self> {
+    ) -> Result<Self> {
+        let file = Arc::new(File::open(&parent.join("constants"))?);
+
         Ok(Self {
             constant_0: ComputedVecsFromHeight::forced_import(
-                file,
+                &file,
                 "constant_0",
                 Source::Compute,
                 version + VERSION + Version::ZERO,
@@ -43,7 +47,7 @@ impl Vecs {
                 VecBuilderOptions::default().add_last(),
             )?,
             constant_1: ComputedVecsFromHeight::forced_import(
-                file,
+                &file,
                 "constant_1",
                 Source::Compute,
                 version + VERSION + Version::ZERO,
@@ -53,7 +57,7 @@ impl Vecs {
                 VecBuilderOptions::default().add_last(),
             )?,
             constant_50: ComputedVecsFromHeight::forced_import(
-                file,
+                &file,
                 "constant_50",
                 Source::Compute,
                 version + VERSION + Version::ZERO,
@@ -63,7 +67,7 @@ impl Vecs {
                 VecBuilderOptions::default().add_last(),
             )?,
             constant_100: ComputedVecsFromHeight::forced_import(
-                file,
+                &file,
                 "constant_100",
                 Source::Compute,
                 version + VERSION + Version::ZERO,
@@ -72,6 +76,8 @@ impl Vecs {
                 indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
+
+            file,
         })
     }
 
@@ -81,7 +87,7 @@ impl Vecs {
         indexes: &indexes::Vecs,
         starting_indexes: &Indexes,
         exit: &Exit,
-    ) -> color_eyre::Result<()> {
+    ) -> Result<()> {
         self.constant_0.compute_all(
             indexer,
             indexes,
@@ -92,9 +98,10 @@ impl Vecs {
                     starting_indexes.height,
                     indexes.height_to_date.len(),
                     indexes.height_to_date.version(),
-                    |i| (i, StoredU8::new(0)),
+                    |i| (i, StoredU16::new(0)),
                     exit,
-                )
+                )?;
+                Ok(())
             },
         )?;
 
@@ -108,9 +115,10 @@ impl Vecs {
                     starting_indexes.height,
                     indexes.height_to_date.len(),
                     indexes.height_to_date.version(),
-                    |i| (i, StoredU8::new(1)),
+                    |i| (i, StoredU16::new(1)),
                     exit,
-                )
+                )?;
+                Ok(())
             },
         )?;
 
@@ -124,9 +132,10 @@ impl Vecs {
                     starting_indexes.height,
                     indexes.height_to_date.len(),
                     indexes.height_to_date.version(),
-                    |i| (i, StoredU8::new(50)),
+                    |i| (i, StoredU16::new(50)),
                     exit,
-                )
+                )?;
+                Ok(())
             },
         )?;
 
@@ -140,12 +149,15 @@ impl Vecs {
                     starting_indexes.height,
                     indexes.height_to_date.len(),
                     indexes.height_to_date.version(),
-                    |i| (i, StoredU8::new(100)),
+                    |i| (i, StoredU16::new(100)),
                     exit,
-                )
+                )?;
+                Ok(())
             },
         )?;
 
+        self.file.flush()?;
+        self.file.punch_holes()?;
         Ok(())
     }
 

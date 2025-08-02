@@ -1,11 +1,11 @@
-use brk_core::{ByAddressType, Height};
+use brk_structs::{ByAddressType, Height};
 use brk_vecs::VecIterator;
 use derive_deref::{Deref, DerefMut};
 
 use crate::stateful::addresstype_to_height_to_addresscount::AddressTypeToHeightToAddressCount;
 
 #[derive(Debug, Default, Deref, DerefMut)]
-pub struct AddressTypeToAddressCount(ByAddressType<usize>);
+pub struct AddressTypeToAddressCount(ByAddressType<u64>);
 
 impl From<(&AddressTypeToHeightToAddressCount, Height)> for AddressTypeToAddressCount {
     fn from((groups, starting_height): (&AddressTypeToHeightToAddressCount, Height)) -> Self {

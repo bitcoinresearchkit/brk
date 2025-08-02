@@ -1,12 +1,14 @@
+use std::path::Path;
+
 use bitcoincore_rpc::{Auth, Client};
-use brk_core::{Height, OutputType, default_bitcoin_path, default_brk_path};
 use brk_parser::Parser;
+use brk_structs::{Height, OutputType};
 
 fn main() {
     let i = std::time::Instant::now();
 
-    let bitcoin_dir = default_bitcoin_path();
-    let brk_dir = default_brk_path();
+    let bitcoin_dir = Path::new("").join("");
+    let brk_dir = Path::new("").join("");
 
     let rpc = Box::leak(Box::new(
         Client::new(

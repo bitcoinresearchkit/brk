@@ -10,7 +10,8 @@ homepage.workspace = true
 repository.workspace = true
 
 [dependencies]
-brk_core = { workspace = true }
+brk_error = { workspace = true }
+brk_structs = { workspace = true }
 byteview = { workspace = true }
 fjall = { workspace = true }
 log = { workspace = true }

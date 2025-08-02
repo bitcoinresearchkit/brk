@@ -1,10 +1,8 @@
 use std::borrow::Cow;
 
-use brk_core::{Result, Version};
-
 use crate::{
-    AnyCollectableVec, AnyIterableVec, AnyVec, BaseVecIterator, BoxedAnyIterableVec,
-    BoxedVecIterator, CollectableVec, StoredIndex, StoredType,
+    AnyCollectableVec, AnyIterableVec, AnyVec, BaseVecIterator, AnyBoxedIterableVec,
+    BoxedVecIterator, CollectableVec, Result, StoredIndex, StoredRaw, Version,
 };
 
 pub type ComputeFrom1<I, T, S1I, S1T> =
@@ -17,21 +15,21 @@ where
 {
     name: String,
     version: Version,
-    source: BoxedAnyIterableVec<S1I, S1T>,
+    source: AnyBoxedIterableVec<S1I, S1T>,
     compute: ComputeFrom1<I, T, S1I, S1T>,
 }
 
 impl<I, T, S1I, S1T> LazyVecFrom1<I, T, S1I, S1T>
 where
     I: StoredIndex,
-    T: StoredType,
+    T: StoredRaw,
     S1I: StoredIndex,
-    S1T: StoredType,
+    S1T: StoredRaw,
 {
     pub fn init(
         name: &str,
         version: Version,
-        source: BoxedAnyIterableVec<S1I, S1T>,
+        source: AnyBoxedIterableVec<S1I, S1T>,
         compute: ComputeFrom1<I, T, S1I, S1T>,
     ) -> Self {
         if I::to_string() != S1I::to_string() {
@@ -63,9 +61,9 @@ where
 impl<'a, I, T, S1I, S1T> Iterator for LazyVecFrom1Iterator<'a, I, T, S1I, S1T>
 where
     I: StoredIndex,
-    T: StoredType + 'a,
+    T: StoredRaw + 'a,
     S1I: StoredIndex,
-    S1T: StoredType,
+    S1T: StoredRaw,
 {
     type Item = (I, Cow<'a, T>);
 
@@ -85,9 +83,9 @@ where
 impl<I, T, S1I, S1T> BaseVecIterator for LazyVecFrom1Iterator<'_, I, T, S1I, S1T>
 where
     I: StoredIndex,
-    T: StoredType,
+    T: StoredRaw,
     S1I: StoredIndex,
-    S1T: StoredType,
+    S1T: StoredRaw,
 {
     #[inline]
     fn mut_index(&mut self) -> &mut usize {
@@ -108,9 +106,9 @@ where
 impl<'a, I, T, S1I, S1T> IntoIterator for &'a LazyVecFrom1<I, T, S1I, S1T>
 where
     I: StoredIndex,
-    T: StoredType + 'a,
+    T: StoredRaw + 'a,
     S1I: StoredIndex,
-    S1T: StoredType,
+    S1T: StoredRaw,
 {
     type Item = (I, Cow<'a, T>);
     type IntoIter = LazyVecFrom1Iterator<'a, I, T, S1I, S1T>;
@@ -127,9 +125,9 @@ where
 impl<I, T, S1I, S1T> AnyVec for LazyVecFrom1<I, T, S1I, S1T>
 where
     I: StoredIndex,
-    T: StoredType,
+    T: StoredRaw,
     S1I: StoredIndex,
-    S1T: StoredType,
+    S1T: StoredRaw,
 {
     fn version(&self) -> Version {
         self.version()
@@ -156,9 +154,9 @@ where
 impl<I, T, S1I, S1T> AnyIterableVec<I, T> for LazyVecFrom1<I, T, S1I, S1T>
 where
     I: StoredIndex,
-    T: StoredType,
+    T: StoredRaw,
     S1I: StoredIndex,
-    S1T: StoredType,
+    S1T: StoredRaw,
 {
     fn boxed_iter<'a>(&'a self) -> BoxedVecIterator<'a, I, T>
     where
@@ -171,9 +169,9 @@ where
 impl<I, T, S1I, S1T> AnyCollectableVec for LazyVecFrom1<I, T, S1I, S1T>
 where
     I: StoredIndex,
-    T: StoredType,
+    T: StoredRaw,
     S1I: StoredIndex,
-    S1T: StoredType,
+    S1T: StoredRaw,
 {
     fn collect_range_serde_json(
         &self,

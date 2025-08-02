@@ -1,0 +1,16 @@
+[package]
+name = "brk_error"
+description = "Errors used throughout the Bitcoin Research Kit"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+homepage.workspace = true
+repository.workspace = true
+
+[dependencies]
+brk_vecs = { workspace = true }
+bitcoincore-rpc = { workspace = true }
+fjall = { workspace = true }
+jiff = { workspace = true }
+minreq = { workspace = true }
+zerocopy = { workspace = true }

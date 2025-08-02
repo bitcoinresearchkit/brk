@@ -1,11 +1,10 @@
 use std::sync::Arc;
 
-use brk_core::{Error, Result, Version};
 use parking_lot::RwLock;
 use zerocopy::{FromBytes, IntoBytes};
 use zerocopy_derive::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
-use crate::{File, Stamp};
+use crate::{Error, File, Result, Stamp, Version};
 
 use super::Format;
 
@@ -168,7 +167,6 @@ impl HeaderInner {
     Immutable,
     KnownLayout,
 )]
-#[repr(C)]
 pub struct ZeroCopyBool(u64);
 
 impl ZeroCopyBool {

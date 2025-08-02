@@ -1,7 +1,7 @@
 use std::collections::BTreeMap;
 
-use brk_core::{Cents, Close, Date, Dollars, High, Low, OHLCCents, Open, Timestamp};
-use color_eyre::eyre::ContextCompat;
+use brk_error::{Error, Result};
+use brk_structs::{Cents, Close, Date, Dollars, High, Low, OHLCCents, Open, Timestamp};
 use log::info;
 use serde_json::Value;
 
@@ -18,7 +18,7 @@ impl Kraken {
         &mut self,
         timestamp: Timestamp,
         previous_timestamp: Option<Timestamp>,
-    ) -> color_eyre::Result<OHLCCents> {
+    ) -> Result<OHLCCents> {
         if self._1mn.is_none()
             || self._1mn.as_ref().unwrap().last_key_value().unwrap().0 <= &timestamp
         {
@@ -32,7 +32,7 @@ impl Kraken {
         )
     }
 
-    pub fn fetch_1mn() -> color_eyre::Result<BTreeMap<Timestamp, OHLCCents>> {
+    pub fn fetch_1mn() -> Result<BTreeMap<Timestamp, OHLCCents>> {
         info!("Fetching 1mn prices from Kraken...");
 
         retry(
@@ -42,7 +42,7 @@ impl Kraken {
         )
     }
 
-    pub fn get_from_1d(&mut self, date: &Date) -> color_eyre::Result<OHLCCents> {
+    pub fn get_from_1d(&mut self, date: &Date) -> Result<OHLCCents> {
         if self._1d.is_none() || self._1d.as_ref().unwrap().last_key_value().unwrap().0 <= date {
             self._1d.replace(Kraken::fetch_1d()?);
         }
@@ -51,10 +51,10 @@ impl Kraken {
             .unwrap()
             .get(date)
             .cloned()
-            .ok_or(color_eyre::eyre::Error::msg("Couldn't find date"))
+            .ok_or(Error::Str("Couldn't find date"))
     }
 
-    pub fn fetch_1d() -> color_eyre::Result<BTreeMap<Date, OHLCCents>> {
+    pub fn fetch_1d() -> Result<BTreeMap<Date, OHLCCents>> {
         info!("Fetching daily prices from Kraken...");
 
         retry(
@@ -64,38 +64,36 @@ impl Kraken {
         )
     }
 
-    fn json_to_timestamp_to_ohlc(
-        json: &Value,
-    ) -> color_eyre::Result<BTreeMap<Timestamp, OHLCCents>> {
+    fn json_to_timestamp_to_ohlc(json: &Value) -> Result<BTreeMap<Timestamp, OHLCCents>> {
         Self::json_to_btree(json, Self::array_to_timestamp_and_ohlc)
     }
 
-    fn json_to_date_to_ohlc(json: &Value) -> color_eyre::Result<BTreeMap<Date, OHLCCents>> {
+    fn json_to_date_to_ohlc(json: &Value) -> Result<BTreeMap<Date, OHLCCents>> {
         Self::json_to_btree(json, Self::array_to_date_and_ohlc)
     }
 
-    fn json_to_btree<F, K, V>(json: &Value, fun: F) -> color_eyre::Result<BTreeMap<K, V>>
+    fn json_to_btree<F, K, V>(json: &Value, fun: F) -> Result<BTreeMap<K, V>>
     where
-        F: Fn(&Value) -> color_eyre::Result<(K, V)>,
+        F: Fn(&Value) -> Result<(K, V)>,
         K: Ord,
     {
         json.as_object()
-            .context("Expect to be an object")?
+            .ok_or(Error::Str("Expect to be an object"))?
             .get("result")
-            .context("Expect object to have result")?
+            .ok_or(Error::Str("Expect object to have result"))?
             .as_object()
-            .context("Expect to be an object")?
+            .ok_or(Error::Str("Expect to be an object"))?
             .get("XXBTZUSD")
-            .context("Expect to have XXBTZUSD")?
+            .ok_or(Error::Str("Expect to have XXBTZUSD"))?
             .as_array()
-            .context("Expect to be an array")?
+            .ok_or(Error::Str("Expect to be an array"))?
             .iter()
             .map(fun)
             .collect::<Result<BTreeMap<_, _>, _>>()
     }
 
-    fn array_to_timestamp_and_ohlc(array: &Value) -> color_eyre::Result<(Timestamp, OHLCCents)> {
-        let array = array.as_array().context("Expect to be array")?;
+    fn array_to_timestamp_and_ohlc(array: &Value) -> Result<(Timestamp, OHLCCents)> {
+        let array = array.as_array().ok_or(Error::Str("Expect to be array"))?;
 
         let timestamp = Timestamp::from(array.first().unwrap().as_u64().unwrap() as u32);
 
@@ -122,7 +120,7 @@ impl Kraken {
         ))
     }
 
-    fn array_to_date_and_ohlc(array: &Value) -> color_eyre::Result<(Date, OHLCCents)> {
+    fn array_to_date_and_ohlc(array: &Value) -> Result<(Date, OHLCCents)> {
         Self::array_to_timestamp_and_ohlc(array).map(|(t, ohlc)| (Date::from(t), ohlc))
     }
 

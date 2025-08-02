@@ -4,11 +4,10 @@ use std::{
     sync::Arc,
 };
 
-use brk_core::{Result, Version};
-
 use crate::{
-    AnyCollectableVec, AnyIterableVec, AnyVec, BaseVecIterator, BoxedVecIterator, CollectableVec,
-    File, GenericStoredVec, Header, StoredIndex, StoredType, file::Reader,
+    AnyCollectableVec, AnyIterableVec, AnyStoredVec, AnyVec, BaseVecIterator, BoxedVecIterator,
+    CollectableVec, File, GenericStoredVec, Header, Result, StoredCompressed, StoredIndex, Version,
+    file::Reader,
 };
 
 use super::{CompressedVec, CompressedVecIterator, RawVec, RawVecIterator};
@@ -26,7 +25,7 @@ pub enum StoredVec<I, T> {
 impl<I, T> StoredVec<I, T>
 where
     I: StoredIndex,
-    T: StoredType,
+    T: StoredCompressed,
 {
     pub fn forced_import(
         file: &Arc<File>,
@@ -50,10 +49,46 @@ where
     }
 }
 
-impl<I, T> GenericStoredVec<I, T> for StoredVec<I, T>
+impl<I, T> AnyVec for StoredVec<I, T>
 where
     I: StoredIndex,
-    T: StoredType,
+    T: StoredCompressed,
+{
+    #[inline]
+    fn version(&self) -> Version {
+        match self {
+            StoredVec::Raw(v) => v.version(),
+            StoredVec::Compressed(v) => v.version(),
+        }
+    }
+
+    #[inline]
+    fn index_type_to_string(&self) -> &'static str {
+        I::to_string()
+    }
+
+    #[inline]
+    fn len(&self) -> usize {
+        self.pushed_len() + self.stored_len()
+    }
+
+    fn name(&self) -> &str {
+        match self {
+            StoredVec::Raw(v) => v.name(),
+            StoredVec::Compressed(v) => v.name(),
+        }
+    }
+
+    #[inline]
+    fn value_type_to_size_of(&self) -> usize {
+        size_of::<T>()
+    }
+}
+
+impl<I, T> AnyStoredVec for StoredVec<I, T>
+where
+    I: StoredIndex,
+    T: StoredCompressed,
 {
     #[inline]
     fn file(&self) -> &File {
@@ -68,14 +103,6 @@ where
         match self {
             StoredVec::Raw(v) => v.region_index(),
             StoredVec::Compressed(v) => v.region_index(),
-        }
-    }
-
-    #[inline]
-    fn read_(&self, index: usize, reader: &Reader) -> Result<Option<T>> {
-        match self {
-            StoredVec::Raw(v) => v.read_(index, reader),
-            StoredVec::Compressed(v) => v.read_(index, reader),
         }
     }
 
@@ -100,6 +127,27 @@ where
         match self {
             StoredVec::Raw(v) => v.stored_len(),
             StoredVec::Compressed(v) => v.stored_len(),
+        }
+    }
+
+    fn flush(&mut self) -> Result<()> {
+        match self {
+            StoredVec::Raw(v) => v.flush(),
+            StoredVec::Compressed(v) => v.flush(),
+        }
+    }
+}
+
+impl<I, T> GenericStoredVec<I, T> for StoredVec<I, T>
+where
+    I: StoredIndex,
+    T: StoredCompressed,
+{
+    #[inline]
+    fn read_(&self, index: usize, reader: &Reader) -> Result<T> {
+        match self {
+            StoredVec::Raw(v) => v.read_(index, reader),
+            StoredVec::Compressed(v) => v.read_(index, reader),
         }
     }
 
@@ -148,13 +196,7 @@ where
         }
     }
 
-    fn flush(&mut self) -> Result<()> {
-        match self {
-            StoredVec::Raw(v) => v.flush(),
-            StoredVec::Compressed(v) => v.flush(),
-        }
-    }
-
+    #[inline]
     fn truncate_if_needed(&mut self, index: I) -> Result<()> {
         match self {
             StoredVec::Raw(v) => v.truncate_if_needed(index),
@@ -162,47 +204,12 @@ where
         }
     }
 
+    #[inline]
     fn reset(&mut self) -> Result<()> {
         match self {
             StoredVec::Raw(v) => v.reset(),
             StoredVec::Compressed(v) => v.reset(),
         }
-    }
-}
-
-impl<I, T> AnyVec for StoredVec<I, T>
-where
-    I: StoredIndex,
-    T: StoredType,
-{
-    #[inline]
-    fn version(&self) -> Version {
-        match self {
-            StoredVec::Raw(v) => v.version(),
-            StoredVec::Compressed(v) => v.version(),
-        }
-    }
-
-    #[inline]
-    fn index_type_to_string(&self) -> &'static str {
-        I::to_string()
-    }
-
-    #[inline]
-    fn len(&self) -> usize {
-        self.pushed_len() + self.stored_len()
-    }
-
-    fn name(&self) -> &str {
-        match self {
-            StoredVec::Raw(v) => v.name(),
-            StoredVec::Compressed(v) => v.name(),
-        }
-    }
-
-    #[inline]
-    fn value_type_to_size_of(&self) -> usize {
-        size_of::<T>()
     }
 }
 
@@ -215,7 +222,7 @@ pub enum StoredVecIterator<'a, I, T> {
 impl<'a, I, T> Iterator for StoredVecIterator<'a, I, T>
 where
     I: StoredIndex,
-    T: StoredType,
+    T: StoredCompressed,
 {
     type Item = (I, Cow<'a, T>);
     fn next(&mut self) -> Option<Self::Item> {
@@ -229,7 +236,7 @@ where
 impl<I, T> BaseVecIterator for StoredVecIterator<'_, I, T>
 where
     I: StoredIndex,
-    T: StoredType,
+    T: StoredCompressed,
 {
     #[inline]
     fn mut_index(&mut self) -> &mut usize {
@@ -258,7 +265,7 @@ where
 impl<'a, I, T> IntoIterator for &'a StoredVec<I, T>
 where
     I: StoredIndex,
-    T: StoredType,
+    T: StoredCompressed,
 {
     type Item = (I, Cow<'a, T>);
     type IntoIter = StoredVecIterator<'a, I, T>;
@@ -274,7 +281,7 @@ where
 impl<I, T> AnyIterableVec<I, T> for StoredVec<I, T>
 where
     I: StoredIndex,
-    T: StoredType,
+    T: StoredCompressed,
 {
     fn boxed_iter<'a>(&'a self) -> BoxedVecIterator<'a, I, T>
     where
@@ -287,7 +294,7 @@ where
 impl<I, T> AnyCollectableVec for StoredVec<I, T>
 where
     I: StoredIndex,
-    T: StoredType,
+    T: StoredCompressed,
 {
     fn collect_range_serde_json(
         &self,

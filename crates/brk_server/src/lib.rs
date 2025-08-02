@@ -21,13 +21,13 @@ use axum::{
 };
 use brk_bundler::bundle;
 use brk_computer::Computer;
-use brk_core::dot_brk_path;
+use brk_error::Result;
 use brk_indexer::Indexer;
 use brk_interface::Interface;
 use brk_mcp::route::MCPRoutes;
-use color_eyre::owo_colors::OwoColorize;
 use files::FilesRoutes;
 use log::{error, info};
+use owo_colors::OwoColorize;
 use tokio::net::TcpListener;
 use tower_http::{compression::CompressionLayer, trace::TraceLayer};
 
@@ -57,13 +57,17 @@ impl AppState {
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 
 const DEV_PATH: &str = "../..";
-const DOWNLOADS: &str = "downloads";
 const WEBSITES: &str = "websites";
 
 pub struct Server(AppState);
 
 impl Server {
-    pub fn new(indexer: Indexer, computer: Computer, website: Website) -> color_eyre::Result<Self> {
+    pub fn new(
+        indexer: Indexer,
+        computer: Computer,
+        website: Website,
+        downloads_path: &Path,
+    ) -> Result<Self> {
         let indexer = Box::leak(Box::new(indexer));
         let computer = Box::leak(Box::new(computer));
         let interface = Box::leak(Box::new(Interface::build(indexer, computer)));
@@ -74,8 +78,6 @@ impl Server {
             let websites_path = if fs::exists(&websites_dev_path)? {
                 websites_dev_path
             } else {
-                let downloads_path = dot_brk_path().join(DOWNLOADS);
-
                 let downloaded_websites_path =
                     downloads_path.join(format!("brk-{VERSION}")).join(WEBSITES);
 
@@ -90,9 +92,9 @@ impl Server {
                     let bytes = response.as_bytes();
                     let cursor = Cursor::new(bytes);
 
-                    let mut zip = zip::ZipArchive::new(cursor)?;
+                    let mut zip = zip::ZipArchive::new(cursor).unwrap();
 
-                    zip.extract(&downloads_path)?;
+                    zip.extract(downloads_path).unwrap();
                 }
 
                 downloaded_websites_path
@@ -112,7 +114,7 @@ impl Server {
         }))
     }
 
-    pub async fn serve(self, watch: bool, mcp: bool) -> color_eyre::Result<()> {
+    pub async fn serve(self, watch: bool, mcp: bool) -> Result<()> {
         let state = self.0;
 
         if let Some(websites_path) = state.websites_path.clone() {

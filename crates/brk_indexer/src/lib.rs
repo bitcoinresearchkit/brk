@@ -6,16 +6,16 @@
 use std::{collections::BTreeMap, path::Path, str::FromStr, sync::Arc, thread, time::Instant};
 
 use bitcoin::{Transaction, TxIn, TxOut};
-use brk_core::{
-    AddressBytes, AddressBytesHash, BlockHash, BlockHashPrefix, Height, InputIndex, OutputIndex,
-    OutputType, Result, Sats, Timestamp, TxIndex, Txid, TxidPrefix, TypeIndex,
-    TypeIndexWithOutputindex, Unit, Version, Vin, Vout, setrlimit,
-};
-use brk_exit::Exit;
+use brk_error::{Error, Result};
+
 use brk_parser::Parser;
 use brk_store::AnyStore;
-use brk_vecs::{AnyVec, File, PAGE_SIZE, Reader, VecIterator};
-use color_eyre::eyre::{ContextCompat, eyre};
+use brk_structs::{
+    AddressBytes, AddressBytesHash, BlockHash, BlockHashPrefix, Height, InputIndex, OutputIndex,
+    OutputType, Sats, StoredBool, Timestamp, TxIndex, Txid, TxidPrefix, TypeIndex,
+    TypeIndexWithOutputindex, Unit, Version, Vin, Vout,
+};
+use brk_vecs::{AnyVec, Exit, File, GenericStoredVec, PAGE_SIZE, Reader, VecIterator};
 use log::{error, info};
 use rayon::prelude::*;
 mod indexes;
@@ -38,9 +38,7 @@ pub struct Indexer {
 }
 
 impl Indexer {
-    pub fn forced_import(outputs_dir: &Path) -> color_eyre::Result<Self> {
-        setrlimit()?;
-
+    pub fn forced_import(outputs_dir: &Path) -> Result<Self> {
         let file = Arc::new(File::open(&outputs_dir.join("indexed/vecs"))?);
 
         let vecs = Vecs::forced_import(&file, VERSION + Version::ZERO)?;
@@ -63,7 +61,7 @@ impl Indexer {
         rpc: &'static bitcoincore_rpc::Client,
         exit: &Exit,
         check_collisions: bool,
-    ) -> color_eyre::Result<Indexes> {
+    ) -> Result<Indexes> {
         let file = self.file.clone();
 
         let starting_indexes = Indexes::try_from((&mut self.vecs, &self.stores, rpc))
@@ -177,7 +175,7 @@ impl Indexer {
         );
 
         parser.parse(start, end).iter().try_for_each(
-            |(height, block, blockhash)| -> color_eyre::Result<()> {
+            |(height, block, blockhash)| -> Result<()> {
                 info!("Indexing block {height}...");
 
                 idxs.height = height;
@@ -204,7 +202,7 @@ impl Indexer {
                     .is_some_and(|prev_height| *prev_height != height)
                 {
                     error!("BlockHash: {blockhash}");
-                    return Err(eyre!("Collision, expect prefix to need be set yet"));
+                    return Err(Error::Str("Collision, expect prefix to need be set yet"));
                 }
 
                 idxs.push_if_needed(vecs)?;
@@ -227,7 +225,7 @@ impl Indexer {
                     outputindex_to_txout_outputtype_addressbytes_res_addressindex_opt_handle,
                 ) = thread::scope(|scope| {
                     let txid_prefix_to_txid_and_block_txindex_and_prev_txindex_handle =
-                        scope.spawn(|| -> color_eyre::Result<_> {
+                        scope.spawn(|| -> Result<_> {
                             block
                                 .txdata
                                 .iter()
@@ -247,7 +245,7 @@ impl Indexer {
 
                                     Ok((txid_prefix, (tx, txid, TxIndex::from(index), prev_txindex_opt)))
                                 })
-                                .collect::<color_eyre::Result<BTreeMap<_, _>>>()
+                                .collect::<Result<BTreeMap<_, _>>>()
                         });
 
                     let input_source_vec_handle = scope.spawn(|| {
@@ -266,7 +264,7 @@ impl Indexer {
                         inputs
                             .into_par_iter()
                             .enumerate()
-                            .map(|(block_inputindex, (block_txindex, vin, txin, tx))| -> color_eyre::Result<(InputIndex, InputSource)> {
+                            .map(|(block_inputindex, (block_txindex, vin, txin, tx))| -> Result<(InputIndex, InputSource)> {
                                 let txindex = idxs.txindex + block_txindex;
                                 let inputindex = idxs.inputindex + InputIndex::from(block_inputindex);
 
@@ -294,7 +292,7 @@ impl Indexer {
                                 let vout = Vout::from(outpoint.vout);
 
                                 let outputindex = vecs.txindex_to_first_outputindex.get_or_read(prev_txindex, txindex_to_first_outputindex_mmap)?
-                                    .context("Expect outputindex to not be none")
+                                    .ok_or(Error::Str("Expect outputindex to not be none"))
                                     .inspect_err(|_| {
                                         dbg!(outpoint.txid, prev_txindex, vout);
                                     })?.into_owned()
@@ -306,7 +304,7 @@ impl Indexer {
                                     outputindex,
                                 ))))
                             })
-                            .try_fold(BTreeMap::new, |mut map, tuple| -> color_eyre::Result<_> {
+                            .try_fold(BTreeMap::new, |mut map, tuple| -> Result<_> {
                                 let (key, value) = tuple?;
                                 map.insert(key, value);
                                 Ok(map)
@@ -337,14 +335,14 @@ impl Indexer {
                         .enumerate()
                         .map(
                             #[allow(clippy::type_complexity)]
-                            |(block_outputindex, (block_txindex, vout, txout, tx))| -> color_eyre::Result<(
+                            |(block_outputindex, (block_txindex, vout, txout, tx))| -> Result<(
                                 OutputIndex,
                                 (
                                     &TxOut,
                                     TxIndex,
                                     Vout,
                                     OutputType,
-                                    brk_core::Result<AddressBytes>,
+                                    Result<AddressBytes>,
                                     Option<TypeIndex>,
                                     &Transaction,
                                 ),
@@ -409,12 +407,12 @@ impl Indexer {
                                             .p2aaddressindex_to_p2abytes
                                             .get_or_read(typeindex.into(), p2aaddressindex_to_p2abytes_mmap)?
                                             .map(|v| AddressBytes::from(v.into_owned())),
-                                        OutputType::Empty | OutputType::OpReturn | OutputType::P2MS | OutputType::Unknown => {
+                                        _ => {
                                             unreachable!()
                                         }
                                     };
                                     let prev_addressbytes =
-                                        prev_addressbytes_opt.as_ref().context("Expect to have addressbytes")?;
+                                        prev_addressbytes_opt.as_ref().ok_or(Error::Str("Expect to have addressbytes"))?;
 
                                     if stores.addressbyteshash_to_typeindex.needs(height)
                                             && prev_addressbytes != addressbytes
@@ -452,7 +450,7 @@ impl Indexer {
                                 ))
                             },
                         )
-                        .try_fold(BTreeMap::new, |mut map, tuple| -> color_eyre::Result<_> {
+                        .try_fold(BTreeMap::new, |mut map, tuple| -> Result<_> {
                             let (key, value) = tuple?;
                             map.insert(key, value);
                             Ok(map)
@@ -476,20 +474,19 @@ impl Indexer {
 
                 let txid_prefix_to_txid_and_block_txindex_and_prev_txindex =
                     txid_prefix_to_txid_and_block_txindex_and_prev_txindex_join_handle
-                        .ok()
-                        .context(
-                            "Expect txid_prefix_to_txid_and_block_txindex_and_prev_txindex_join_handle to join",
+                        .map_err(|_|
+                            Error::Str("Expect txid_prefix_to_txid_and_block_txindex_and_prev_txindex_join_handle to join")
                         )??;
 
                 let input_source_vec = input_source_vec_handle
-                    .ok()
-                    .context("Export input_source_vec_handle to join")??;
+                    .map_err(|_|
+                        Error::Str("Export input_source_vec_handle to join")
+                    )??;
 
                 let outputindex_to_txout_outputtype_addressbytes_res_addressindex_opt =
                     outputindex_to_txout_outputtype_addressbytes_res_addressindex_opt_handle
-                        .ok()
-                        .context(
-                            "Expect outputindex_to_txout_outputtype_addressbytes_res_addressindex_opt_handle to join",
+                        .map_err(|_|
+                            Error::Str("Expect outputindex_to_txout_outputtype_addressbytes_res_addressindex_opt_handle to join")
                         )?;
 
                 let outputs_len = outputindex_to_txout_outputtype_addressbytes_res_addressindex_opt.len();
@@ -510,7 +507,7 @@ impl Indexer {
                         outputindex,
                         (txout, txindex, vout, outputtype, addressbytes_res, typeindex_opt, _tx),
                     )|
-                     -> color_eyre::Result<()> {
+                     -> Result<()> {
                         let sats = Sats::from(txout.value);
 
                         if vout.is_zero() {
@@ -580,6 +577,7 @@ impl Indexer {
                                     vecs.unknownoutputindex_to_txindex.push_if_needed(idxs.unknownoutputindex, txindex)?;
                                     idxs.unknownoutputindex.copy_then_increment()
                                 },
+                                _ => unreachable!()
                             };
 
                             if let Ok(addressbytes) = addressbytes_res {
@@ -618,7 +616,7 @@ impl Indexer {
                     .into_iter()
                     .map(
                         #[allow(clippy::type_complexity)]
-                        |(inputindex, input_source)| -> color_eyre::Result<(
+                        |(inputindex, input_source)| -> Result<(
                             InputIndex, Vin, TxIndex, OutputIndex
                         )> {
                             match input_source {
@@ -634,7 +632,7 @@ impl Indexer {
 
                                     let block_txindex = txid_prefix_to_txid_and_block_txindex_and_prev_txindex
                                         .get(&TxidPrefix::from(&txid))
-                                        .context("txid should be in same block").inspect_err(|_| {
+                                        .ok_or(Error::Str("txid should be in same block")).inspect_err(|_| {
                                             dbg!(&txid_prefix_to_txid_and_block_txindex_and_prev_txindex);
                                             // panic!();
                                         })?
@@ -643,7 +641,7 @@ impl Indexer {
 
                                     let prev_outputindex = new_txindexvout_to_outputindex
                                         .remove(&(prev_txindex, vout))
-                                        .context("should have found addressindex from same block")
+                                        .ok_or(Error::Str("should have found addressindex from same block"))
                                         .inspect_err(|_| {
                                             dbg!(&new_txindexvout_to_outputindex, txin, prev_txindex, vout, txid);
                                         })?;
@@ -653,7 +651,7 @@ impl Indexer {
                             }
                         },
                     )
-                    .try_for_each(|res| -> color_eyre::Result<()> {
+                    .try_for_each(|res| -> Result<()> {
                         let (inputindex, vin, txindex, outputindex) = res?;
 
                         if vin.is_zero() {
@@ -675,7 +673,7 @@ impl Indexer {
                 txid_prefix_to_txid_and_block_txindex_and_prev_txindex
                     .into_iter()
                     .try_for_each(
-                        |(txid_prefix, (tx, txid, index, prev_txindex_opt))| -> color_eyre::Result<()> {
+                        |(txid_prefix, (tx, txid, index, prev_txindex_opt))| -> Result<()> {
                             let txindex = idxs.txindex + index;
 
                             txindex_to_tx_and_txid.insert(txindex, (tx, txid));
@@ -700,7 +698,7 @@ impl Indexer {
                                     // Ok if `get` is not par as should happen only twice
                                     let prev_txid = txindex_to_txid_iter
                                         .get(prev_txindex)
-                                        .context("To have txid for txindex")
+                                        .ok_or(Error::Str("To have txid for txindex"))
                                         .inspect_err(|_| {
                                             dbg!(txindex, len);
                                         })?;
@@ -712,11 +710,13 @@ impl Indexer {
                                     let only_known_dup_txids = [
                                         bitcoin::Txid::from_str(
                                             "d5d27987d2a3dfc724e359870c6644b40e497bdc0589a033220fe15429d88599",
-                                        )?
+                                        )
+                                        .unwrap()
                                         .into(),
                                         bitcoin::Txid::from_str(
                                             "e3bf3d07d4b0375638d5f1db5255fe07ba2c4cb067cd81b84ee974b6585fb468",
-                                        )?
+                                        )
+                                        .unwrap()
                                         .into(),
                                     ];
 
@@ -724,7 +724,7 @@ impl Indexer {
 
                                     if !is_dup {
                                         dbg!(height, txindex, prev_txid, prev_txindex);
-                                        return Err(eyre!("Expect none"));
+                                        return Err(Error::Str("Expect none"));
                                     }
                                 }
                             }
@@ -737,13 +737,13 @@ impl Indexer {
 
                 txindex_to_tx_and_txid
                     .into_iter()
-                    .try_for_each(|(txindex, (tx, txid))| -> color_eyre::Result<()> {
+                    .try_for_each(|(txindex, (tx, txid))| -> Result<()> {
                         vecs.txindex_to_txversion.push_if_needed(txindex, tx.version.into())?;
                         vecs.txindex_to_txid.push_if_needed(txindex, txid)?;
                         vecs.txindex_to_rawlocktime.push_if_needed(txindex, tx.lock_time.into())?;
                         vecs.txindex_to_base_size.push_if_needed(txindex, tx.base_size().into())?;
                         vecs.txindex_to_total_size.push_if_needed(txindex, tx.total_size().into())?;
-                        vecs.txindex_to_is_explicitly_rbf.push_if_needed(txindex, tx.is_explicitly_rbf())?;
+                        vecs.txindex_to_is_explicitly_rbf.push_if_needed(txindex, StoredBool::from(tx.is_explicitly_rbf()))?;
                         Ok(())
                     })?;
 

@@ -1,6 +1,6 @@
 use std::collections::BTreeMap;
 
-use brk_core::Height;
+use brk_structs::Height;
 use derive_deref::{Deref, DerefMut};
 
 use crate::stateful::AddressTypeToVec;

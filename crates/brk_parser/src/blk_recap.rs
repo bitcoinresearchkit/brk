@@ -1,6 +1,6 @@
 use std::path::Path;
 
-use brk_core::Height;
+use brk_structs::Height;
 use serde::{Deserialize, Serialize};
 
 use crate::path_to_modified_time;

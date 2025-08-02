@@ -1,13 +1,13 @@
 use std::{path::Path, sync::Arc};
 
-use brk_core::Version;
-use brk_exit::Exit;
+use brk_error::Result;
 use brk_fetcher::Fetcher;
 use brk_indexer::Indexer;
-use brk_vecs::{AnyCollectableVec, Computation, File, Format};
+use brk_structs::Version;
+use brk_vecs::{AnyCollectableVec, Computation, Exit, File, Format};
 use log::info;
 
-use crate::{blocks, cointime, constants, fetched, indexes, market, mining, transactions};
+use crate::{blocks, cointime, constants, fetched, indexes, market, mining, price, transactions};
 
 use super::stateful;
 
@@ -20,6 +20,7 @@ pub struct Vecs {
     pub blocks: blocks::Vecs,
     pub mining: mining::Vecs,
     pub market: market::Vecs,
+    pub price: Option<price::Vecs>,
     pub transactions: transactions::Vecs,
     pub stateful: stateful::Vecs,
     pub fetched: Option<fetched::Vecs>,
@@ -32,12 +33,12 @@ impl Vecs {
         file: &Arc<File>,
         version: Version,
         indexer: &Indexer,
-        fetch: bool,
+        fetcher: Option<Fetcher>,
         computation: Computation,
         format: Format,
         fetched_file: &Arc<File>,
         states_path: &Path,
-    ) -> color_eyre::Result<Self> {
+    ) -> Result<Self> {
         let indexes = indexes::Vecs::forced_import(
             file,
             version + VERSION + Version::ZERO,
@@ -46,10 +47,19 @@ impl Vecs {
             format,
         )?;
 
-        let fetched = fetch.then(|| {
+        let fetched = fetcher.map(|fetcher| {
             fetched::Vecs::forced_import(
                 file,
                 fetched_file,
+                fetcher,
+                version + VERSION + Version::ZERO,
+            )
+            .unwrap()
+        });
+
+        let price = fetched.is_some().then(|| {
+            price::Vecs::forced_import(
+                file,
                 version + VERSION + Version::ZERO,
                 computation,
                 format,
@@ -93,7 +103,7 @@ impl Vecs {
                 computation,
                 format,
                 &indexes,
-                fetched.as_ref(),
+                price.as_ref(),
                 states_path,
             )?,
             transactions: transactions::Vecs::forced_import(
@@ -103,7 +113,7 @@ impl Vecs {
                 &indexes,
                 computation,
                 format,
-                fetched.as_ref(),
+                price.as_ref(),
             )?,
             cointime: cointime::Vecs::forced_import(
                 file,
@@ -111,10 +121,11 @@ impl Vecs {
                 computation,
                 format,
                 &indexes,
-                fetched.as_ref(),
+                price.as_ref(),
             )?,
             indexes,
             fetched,
+            price,
         })
     }
 
@@ -122,9 +133,8 @@ impl Vecs {
         &mut self,
         indexer: &Indexer,
         starting_indexes: brk_indexer::Indexes,
-        fetcher: Option<&mut Fetcher>,
         exit: &Exit,
-    ) -> color_eyre::Result<()> {
+    ) -> Result<()> {
         info!("Computing indexes...");
         let mut starting_indexes = self.indexes.compute(indexer, starting_indexes, exit)?;
 
@@ -142,11 +152,13 @@ impl Vecs {
 
         if let Some(fetched) = self.fetched.as_mut() {
             info!("Computing fetched...");
-            fetched.compute(
+            fetched.compute(indexer, &self.indexes, &starting_indexes, exit)?;
+
+            self.price.as_mut().unwrap().compute(
                 indexer,
                 &self.indexes,
                 &starting_indexes,
-                fetcher.unwrap(),
+                fetched,
                 exit,
             )?;
         }
@@ -156,16 +168,16 @@ impl Vecs {
             indexer,
             &self.indexes,
             &starting_indexes,
-            self.fetched.as_ref(),
+            self.price.as_ref(),
             exit,
         )?;
 
-        if let Some(fetched) = self.fetched.as_ref() {
+        if let Some(price) = self.price.as_ref() {
             info!("Computing market...");
             self.market.compute(
                 indexer,
                 &self.indexes,
-                fetched,
+                price,
                 &mut self.transactions,
                 &starting_indexes,
                 exit,
@@ -177,7 +189,7 @@ impl Vecs {
             indexer,
             &self.indexes,
             &self.transactions,
-            self.fetched.as_ref(),
+            self.price.as_ref(),
             &self.market,
             &mut starting_indexes,
             exit,
@@ -187,7 +199,7 @@ impl Vecs {
             indexer,
             &self.indexes,
             &starting_indexes,
-            self.fetched.as_ref(),
+            self.price.as_ref(),
             &self.transactions,
             &self.stateful,
             exit,
@@ -207,6 +219,7 @@ impl Vecs {
             self.stateful.vecs(),
             self.cointime.vecs(),
             self.fetched.as_ref().map_or(vec![], |v| v.vecs()),
+            self.price.as_ref().map_or(vec![], |v| v.vecs()),
         ]
         .into_iter()
         .flatten()

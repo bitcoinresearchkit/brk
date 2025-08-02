@@ -12,7 +12,7 @@ repository.workspace = true
 [dependencies]
 bitcoin = { workspace = true }
 bitcoincore-rpc = { workspace = true }
-brk_core = { workspace = true }
+brk_structs = { workspace = true }
 crossbeam = { version = "0.8.4", features = ["crossbeam-channel"] }
 derive_deref = { workspace = true }
 rayon = { workspace = true }

@@ -6,6 +6,7 @@ use axum::{
     http::{HeaderMap, StatusCode},
     response::{IntoResponse, Response},
 };
+use brk_error::Result;
 use log::{error, info};
 
 use crate::{
@@ -73,7 +74,7 @@ fn path_to_response(headers: &HeaderMap, path: &Path) -> Response {
     }
 }
 
-fn path_to_response_(headers: &HeaderMap, path: &Path) -> color_eyre::Result<Response> {
+fn path_to_response_(headers: &HeaderMap, path: &Path) -> Result<Response> {
     let (modified, date) = headers.check_if_modified_since(path)?;
     if modified == ModifiedState::NotModifiedSince {
         return Ok(Response::new_not_modified());

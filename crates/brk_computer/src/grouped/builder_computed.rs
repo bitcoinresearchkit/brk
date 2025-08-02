@@ -1,10 +1,11 @@
 use std::sync::Arc;
 
-use brk_core::{FromCoarserIndex, Result, Version};
-use brk_exit::Exit;
+use brk_error::Result;
+
+use brk_structs::Version;
 use brk_vecs::{
-    AnyCollectableVec, AnyIterableVec, BoxedAnyIterableVec, CloneableAnyIterableVec, Computation,
-    ComputedVec, ComputedVecFrom2, File, Format, StoredIndex,
+    AnyBoxedIterableVec, AnyCloneableIterableVec, AnyCollectableVec, AnyIterableVec, Computation,
+    ComputedVec, ComputedVecFrom2, Exit, File, Format, FromCoarserIndex, StoredIndex,
 };
 
 use crate::grouped::{EagerVecBuilder, VecBuilderOptions};
@@ -44,11 +45,11 @@ where
         version: Version,
         format: Format,
         computation: Computation,
-        source: Option<BoxedAnyIterableVec<S1I, T>>,
+        source: Option<AnyBoxedIterableVec<S1I, T>>,
         source_extra: &EagerVecBuilder<S1I, T>,
-        len_source: BoxedAnyIterableVec<I, S2T>,
+        len_source: AnyBoxedIterableVec<I, S2T>,
         options: ComputedVecBuilderOptions,
-    ) -> color_eyre::Result<Self> {
+    ) -> Result<Self> {
         let only_one_active = options.is_only_one_active();
 
         let suffix = |s: &str| format!("{name}_{s}");

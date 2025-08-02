@@ -1,15 +1,15 @@
 use std::fmt::{self, Debug};
 
-use brk_core::{
+use brk_error::Error;
+use brk_structs::{
     DateIndex, DecadeIndex, DifficultyEpoch, EmptyOutputIndex, HalvingEpoch, Height, InputIndex,
     MonthIndex, OpReturnIndex, OutputIndex, P2AAddressIndex, P2MSOutputIndex, P2PK33AddressIndex,
     P2PK65AddressIndex, P2PKHAddressIndex, P2SHAddressIndex, P2TRAddressIndex, P2WPKHAddressIndex,
     P2WSHAddressIndex, Printable, QuarterIndex, SemesterIndex, TxIndex, UnknownOutputIndex,
     WeekIndex, YearIndex,
 };
-use color_eyre::eyre::eyre;
 use schemars::JsonSchema;
-use serde::{Deserialize, de::Error};
+use serde::Deserialize;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, JsonSchema)]
 pub enum Index {
@@ -146,7 +146,7 @@ impl Index {
 }
 
 impl TryFrom<&str> for Index {
-    type Error = color_eyre::Report;
+    type Error = Error;
     fn try_from(value: &str) -> Result<Self, Self::Error> {
         Ok(match value.to_lowercase().as_str() {
             v if (Self::DateIndex).possible_values().contains(&v) => Self::DateIndex,
@@ -186,7 +186,7 @@ impl TryFrom<&str> for Index {
             v if (Self::UnknownOutputIndex).possible_values().contains(&v) => {
                 Self::UnknownOutputIndex
             }
-            _ => return Err(eyre!("Bad index")),
+            _ => return Err(Error::Str("Bad index")),
         })
     }
 }
@@ -207,7 +207,7 @@ impl<'de> Deserialize<'de> for Index {
             // dbg!(index);
             Ok(index)
         } else {
-            Err(Error::custom("Bad index"))
+            Err(serde::de::Error::custom("Bad index"))
         }
     }
 }

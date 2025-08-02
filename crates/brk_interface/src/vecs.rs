@@ -33,11 +33,7 @@ impl<'a> Vecs<'a> {
             .into_iter()
             .for_each(|vec| this.insert(vec));
 
-        computer
-            .vecs
-            .vecs()
-            .into_iter()
-            .for_each(|vec| this.insert(vec));
+        computer.vecs().into_iter().for_each(|vec| this.insert(vec));
 
         let mut ids = this.id_to_index_to_vec.keys().cloned().collect::<Vec<_>>();
 

@@ -5,8 +5,8 @@
 
 use std::{collections::BTreeMap, path::Path, thread::sleep, time::Duration};
 
-use brk_core::{Close, Date, Dollars, Height, High, Low, OHLCCents, Open, Timestamp};
-use color_eyre::eyre::Error;
+use brk_error::{Error, Result};
+use brk_structs::{Close, Date, Dollars, Height, High, Low, OHLCCents, Open, Timestamp};
 use log::info;
 
 mod binance;
@@ -29,7 +29,7 @@ pub struct Fetcher {
 }
 
 impl Fetcher {
-    pub fn import(hars_path: Option<&Path>) -> color_eyre::Result<Self> {
+    pub fn import(hars_path: Option<&Path>) -> Result<Self> {
         Ok(Self {
             binance: Binance::init(hars_path),
             kraken: Kraken::default(),
@@ -37,11 +37,11 @@ impl Fetcher {
         })
     }
 
-    pub fn get_date(&mut self, date: Date) -> color_eyre::Result<OHLCCents> {
+    pub fn get_date(&mut self, date: Date) -> Result<OHLCCents> {
         self.get_date_(date, 0)
     }
 
-    fn get_date_(&mut self, date: Date, tries: usize) -> color_eyre::Result<OHLCCents> {
+    fn get_date_(&mut self, date: Date, tries: usize) -> Result<OHLCCents> {
         self.kraken
             .get_from_1d(&date)
             .or_else(|_| {
@@ -72,7 +72,7 @@ impl Fetcher {
         height: Height,
         timestamp: Timestamp,
         previous_timestamp: Option<Timestamp>,
-    ) -> color_eyre::Result<OHLCCents> {
+    ) -> Result<OHLCCents> {
         self.get_height_(height, timestamp, previous_timestamp, 0)
     }
 
@@ -82,7 +82,7 @@ impl Fetcher {
         timestamp: Timestamp,
         previous_timestamp: Option<Timestamp>,
         tries: usize,
-    ) -> color_eyre::Result<OHLCCents> {
+    ) -> Result<OHLCCents> {
         let timestamp = timestamp.floor_seconds();
 
         if previous_timestamp.is_none() && height != Height::ZERO {
@@ -149,7 +149,7 @@ How to fix this:
         timestamp: Timestamp,
         previous_timestamp: Option<Timestamp>,
         name: &str,
-    ) -> color_eyre::Result<OHLCCents> {
+    ) -> Result<OHLCCents> {
         let previous_ohlc = previous_timestamp
             .map_or(Some(OHLCCents::default()), |previous_timestamp| {
                 tree.get(&previous_timestamp).cloned()
@@ -158,7 +158,7 @@ How to fix this:
         let last_ohlc = tree.get(&timestamp);
 
         if previous_ohlc.is_none() || last_ohlc.is_none() {
-            return Err(Error::msg(format!("Couldn't find timestamp in {name}")));
+            return Err(Error::String(format!("Couldn't find timestamp in {name}")));
         }
 
         let previous_ohlc = previous_ohlc.unwrap();

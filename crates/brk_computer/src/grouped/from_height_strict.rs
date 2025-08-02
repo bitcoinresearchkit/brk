@@ -1,9 +1,10 @@
 use std::sync::Arc;
 
-use brk_core::{DifficultyEpoch, Height, Result, Version};
-use brk_exit::Exit;
+use brk_error::Result;
+
 use brk_indexer::Indexer;
-use brk_vecs::{AnyCollectableVec, EagerVec, File, Format};
+use brk_structs::{DifficultyEpoch, Height, Version};
+use brk_vecs::{AnyCollectableVec, EagerVec, Exit, File, Format};
 
 use crate::{Indexes, indexes};
 
@@ -33,7 +34,7 @@ where
         version: Version,
         format: Format,
         options: VecBuilderOptions,
-    ) -> color_eyre::Result<Self> {
+    ) -> Result<Self> {
         let height =
             EagerVec::forced_import(file, name, version + VERSION + Version::ZERO, format)?;
 
@@ -68,7 +69,7 @@ where
         starting_indexes: &Indexes,
         exit: &Exit,
         mut compute: F,
-    ) -> color_eyre::Result<()>
+    ) -> Result<()>
     where
         F: FnMut(&mut EagerVec<Height, T>, &Indexer, &indexes::Vecs, &Indexes, &Exit) -> Result<()>,
     {

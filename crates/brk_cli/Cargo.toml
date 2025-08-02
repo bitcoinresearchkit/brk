@@ -10,8 +10,6 @@ repository.workspace = true
 [dependencies]
 bitcoincore-rpc = { workspace = true }
 brk_computer = { workspace = true }
-brk_core = { workspace = true }
-brk_exit = { workspace = true }
 brk_fetcher = { workspace = true }
 brk_indexer = { workspace = true }
 brk_logger = { workspace = true }
@@ -20,11 +18,11 @@ brk_server = { workspace = true }
 brk_vecs = { workspace = true }
 clap = { workspace = true }
 clap_derive = { workspace = true }
-color-eyre = { workspace = true }
+color-eyre = "0.6.5"
 log = { workspace = true }
 serde = { workspace = true }
 tokio = { workspace = true }
-toml = "0.9.3"
+toml = "0.9.4"
 
 [[bin]]
 name = "brk"

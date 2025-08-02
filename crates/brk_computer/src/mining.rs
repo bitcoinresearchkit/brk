@@ -1,9 +1,9 @@
-use std::sync::Arc;
+use std::{path::Path, sync::Arc};
 
-use brk_core::{DifficultyEpoch, HalvingEpoch, StoredF64, Version};
-use brk_exit::Exit;
+use brk_error::Result;
 use brk_indexer::Indexer;
-use brk_vecs::{AnyCollectableVec, Computation, File, Format, VecIterator};
+use brk_structs::{DifficultyEpoch, HalvingEpoch, StoredF64, Version};
+use brk_vecs::{AnyCollectableVec, Computation, Exit, File, Format, VecIterator};
 
 use crate::grouped::Source;
 
@@ -17,6 +17,8 @@ const VERSION: Version = Version::ZERO;
 
 #[derive(Clone)]
 pub struct Vecs {
+    file: Arc<File>,
+
     pub indexes_to_difficulty: ComputedVecsFromHeight<StoredF64>,
     pub indexes_to_difficultyepoch: ComputedVecsFromDateIndex<DifficultyEpoch>,
     pub indexes_to_halvingepoch: ComputedVecsFromDateIndex<HalvingEpoch>,
@@ -24,15 +26,17 @@ pub struct Vecs {
 
 impl Vecs {
     pub fn forced_import(
-        file: &Arc<File>,
+        parent: &Path,
         version: Version,
         computation: Computation,
         format: Format,
         indexes: &indexes::Vecs,
-    ) -> color_eyre::Result<Self> {
+    ) -> Result<Self> {
+        let file = Arc::new(File::open(&parent.join("mining"))?);
+
         Ok(Self {
             indexes_to_difficulty: ComputedVecsFromHeight::forced_import(
-                file,
+                &file,
                 "difficulty",
                 Source::None,
                 version + VERSION + Version::ZERO,
@@ -42,7 +46,7 @@ impl Vecs {
                 VecBuilderOptions::default().add_last(),
             )?,
             indexes_to_difficultyepoch: ComputedVecsFromDateIndex::forced_import(
-                file,
+                &file,
                 "difficultyepoch",
                 Source::Compute,
                 version + VERSION + Version::ZERO,
@@ -52,7 +56,7 @@ impl Vecs {
                 VecBuilderOptions::default().add_last(),
             )?,
             indexes_to_halvingepoch: ComputedVecsFromDateIndex::forced_import(
-                file,
+                &file,
                 "halvingepoch",
                 Source::Compute,
                 version + VERSION + Version::ZERO,
@@ -61,6 +65,8 @@ impl Vecs {
                 indexes,
                 VecBuilderOptions::default().add_last(),
             )?,
+
+            file,
         })
     }
 
@@ -70,7 +76,7 @@ impl Vecs {
         indexes: &indexes::Vecs,
         starting_indexes: &Indexes,
         exit: &Exit,
-    ) -> color_eyre::Result<()> {
+    ) -> Result<()> {
         let mut height_to_difficultyepoch_iter = indexes.height_to_difficultyepoch.into_iter();
         self.indexes_to_difficultyepoch.compute_all(
             indexer,
@@ -91,7 +97,8 @@ impl Vecs {
                         )
                     },
                     exit,
-                )
+                )?;
+                Ok(())
             },
         )?;
 
@@ -115,7 +122,8 @@ impl Vecs {
                         )
                     },
                     exit,
-                )
+                )?;
+                Ok(())
             },
         )?;
 
@@ -126,6 +134,8 @@ impl Vecs {
             Some(&indexer.vecs.height_to_difficulty),
         )?;
 
+        self.file.flush()?;
+        self.file.punch_holes()?;
         Ok(())
     }
 

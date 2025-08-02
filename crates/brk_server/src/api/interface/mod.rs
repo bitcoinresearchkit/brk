@@ -4,8 +4,9 @@ use axum::{
     http::{HeaderMap, StatusCode},
     response::{IntoResponse, Response},
 };
+use brk_error::{Error, Result};
 use brk_interface::{Format, Output, Params};
-use color_eyre::eyre::eyre;
+use brk_vecs::Stamp;
 
 use crate::traits::{HeaderMapExtended, ResponseExtended};
 
@@ -37,7 +38,7 @@ fn req_to_response_res(
     headers: HeaderMap,
     Query(params): Query<Params>,
     AppState { interface, .. }: AppState,
-) -> color_eyre::Result<Response> {
+) -> Result<Response> {
     let vecs = interface.search(&params);
 
     if vecs.is_empty() {
@@ -56,11 +57,17 @@ fn req_to_response_res(
         .sum::<usize>();
 
     if weight > MAX_WEIGHT {
-        return Err(eyre!("Request is too heavy, max weight is {MAX_WEIGHT}"));
+        return Err(Error::Str(
+            "Request is too heavy, max weight is {MAX_WEIGHT}",
+        ));
     }
 
     // TODO: height should be from vec, but good enough for now
-    let etag = vecs.first().unwrap().1.etag(interface.get_height(), to);
+    let etag = vecs
+        .first()
+        .unwrap()
+        .1
+        .etag(Stamp::from(u64::from(interface.get_height())), to);
 
     if headers
         .get_if_none_match()

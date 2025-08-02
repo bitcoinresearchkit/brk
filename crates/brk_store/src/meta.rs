@@ -3,7 +3,8 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use brk_core::{Result, Version};
+use brk_error::Result;
+use brk_structs::Version;
 use fjall::{PersistMode, TransactionalKeyspace, TransactionalPartitionHandle};
 
 use super::Height;

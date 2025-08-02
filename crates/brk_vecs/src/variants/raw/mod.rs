@@ -6,13 +6,13 @@ use std::{
     sync::Arc,
 };
 
-use brk_core::{Error, Result, Version};
 use parking_lot::RwLock;
 use rayon::prelude::*;
+use zerocopy::FromBytes;
 
 use crate::{
-    AnyCollectableVec, AnyIterableVec, AnyVec, BaseVecIterator, BoxedVecIterator, CollectableVec,
-    File, GenericStoredVec, Reader, StoredIndex, StoredType,
+    AnyCollectableVec, AnyIterableVec, AnyStoredVec, AnyVec, BaseVecIterator, BoxedVecIterator,
+    CollectableVec, Error, File, GenericStoredVec, Reader, Result, StoredIndex, StoredRaw, Version,
     file::{Region, RegionReader},
 };
 
@@ -44,7 +44,7 @@ pub struct RawVec<I, T> {
 impl<I, T> RawVec<I, T>
 where
     I: StoredIndex,
-    T: StoredType,
+    T: StoredRaw,
 {
     /// Same as import but will reset the vec under certain errors, so be careful !
     pub fn forced_import(file: &Arc<File>, name: &str, mut version: Version) -> Result<Self> {
@@ -91,9 +91,7 @@ where
                     .create_reader(file)
                     .read_all()
                     .chunks(size_of::<usize>())
-                    .map(|b| -> Result<usize> {
-                        Ok(usize::from_ne_bytes(brk_core::copy_first_8bytes(b)?))
-                    })
+                    .map(|b| -> Result<usize> { usize::read_from_bytes(b).map_err(|e| e.into()) })
                     .collect::<Result<BTreeSet<usize>>>()?,
             )
         } else {
@@ -139,22 +137,59 @@ where
     }
 }
 
-impl<I, T> GenericStoredVec<I, T> for RawVec<I, T>
+impl<I, T> Clone for RawVec<I, T> {
+    fn clone(&self) -> Self {
+        Self {
+            file: self.file.clone(),
+            region: self.region.clone(),
+            region_index: self.region_index,
+            header: self.header.clone(),
+            name: self.name,
+            pushed: vec![],
+            updated: BTreeMap::new(),
+            has_stored_holes: false,
+            holes: BTreeSet::new(),
+            phantom: PhantomData,
+        }
+    }
+}
+
+impl<I, T> AnyVec for RawVec<I, T>
 where
     I: StoredIndex,
-    T: StoredType,
+    T: StoredRaw,
 {
     #[inline]
-    fn read_(&self, index: usize, reader: &Reader) -> Result<Option<T>> {
-        let slice = reader.read(
-            (index * Self::SIZE_OF_T + HEADER_OFFSET) as u64,
-            (Self::SIZE_OF_T) as u64,
-        );
-        T::try_read_from_bytes(slice)
-            .map(|v| Some(v))
-            .map_err(Error::from)
+    fn version(&self) -> Version {
+        self.header.vec_version()
     }
 
+    #[inline]
+    fn name(&self) -> &str {
+        self.name
+    }
+
+    #[inline]
+    fn len(&self) -> usize {
+        self.len_()
+    }
+
+    #[inline]
+    fn index_type_to_string(&self) -> &'static str {
+        I::to_string()
+    }
+
+    #[inline]
+    fn value_type_to_size_of(&self) -> usize {
+        size_of::<T>()
+    }
+}
+
+impl<I, T> AnyStoredVec for RawVec<I, T>
+where
+    I: StoredIndex,
+    T: StoredRaw,
+{
     fn header(&self) -> &Header {
         &self.header
     }
@@ -172,33 +207,6 @@ where
             .len() as usize
             - HEADER_OFFSET)
             / Self::SIZE_OF_T
-    }
-
-    #[inline]
-    fn pushed(&self) -> &[T] {
-        self.pushed.as_slice()
-    }
-    #[inline]
-    fn mut_pushed(&mut self) -> &mut Vec<T> {
-        &mut self.pushed
-    }
-
-    #[inline]
-    fn holes(&self) -> &BTreeSet<usize> {
-        &self.holes
-    }
-    #[inline]
-    fn mut_holes(&mut self) -> &mut BTreeSet<usize> {
-        &mut self.holes
-    }
-
-    #[inline]
-    fn updated(&self) -> &BTreeMap<usize, T> {
-        &self.updated
-    }
-    #[inline]
-    fn mut_updated(&mut self) -> &mut BTreeMap<usize, T> {
-        &mut self.updated
     }
 
     fn flush(&mut self) -> Result<()> {
@@ -271,6 +279,54 @@ where
         Ok(())
     }
 
+    fn file(&self) -> &File {
+        &self.file
+    }
+
+    fn region_index(&self) -> usize {
+        self.region_index
+    }
+}
+
+impl<I, T> GenericStoredVec<I, T> for RawVec<I, T>
+where
+    I: StoredIndex,
+    T: StoredRaw,
+{
+    #[inline]
+    fn read_(&self, index: usize, reader: &Reader) -> Result<T> {
+        T::read_from_prefix(reader.prefixed(index * Self::SIZE_OF_T + HEADER_OFFSET))
+            .map(|(v, _)| v)
+            .map_err(Error::from)
+    }
+
+    #[inline]
+    fn pushed(&self) -> &[T] {
+        self.pushed.as_slice()
+    }
+    #[inline]
+    fn mut_pushed(&mut self) -> &mut Vec<T> {
+        &mut self.pushed
+    }
+
+    #[inline]
+    fn holes(&self) -> &BTreeSet<usize> {
+        &self.holes
+    }
+    #[inline]
+    fn mut_holes(&mut self) -> &mut BTreeSet<usize> {
+        &mut self.holes
+    }
+
+    #[inline]
+    fn updated(&self) -> &BTreeMap<usize, T> {
+        &self.updated
+    }
+    #[inline]
+    fn mut_updated(&mut self) -> &mut BTreeMap<usize, T> {
+        &mut self.updated
+    }
+
     fn truncate_if_needed(&mut self, index: I) -> Result<()> {
         let index = index.to_usize()?;
 
@@ -291,62 +347,6 @@ where
     fn reset(&mut self) -> Result<()> {
         self.reset_()
     }
-
-    fn file(&self) -> &File {
-        &self.file
-    }
-
-    fn region_index(&self) -> usize {
-        self.region_index
-    }
-}
-
-impl<I, T> AnyVec for RawVec<I, T>
-where
-    I: StoredIndex,
-    T: StoredType,
-{
-    #[inline]
-    fn version(&self) -> Version {
-        self.header.vec_version()
-    }
-
-    #[inline]
-    fn name(&self) -> &str {
-        self.name
-    }
-
-    #[inline]
-    fn len(&self) -> usize {
-        self.len_()
-    }
-
-    #[inline]
-    fn index_type_to_string(&self) -> &'static str {
-        I::to_string()
-    }
-
-    #[inline]
-    fn value_type_to_size_of(&self) -> usize {
-        size_of::<T>()
-    }
-}
-
-impl<I, T> Clone for RawVec<I, T> {
-    fn clone(&self) -> Self {
-        Self {
-            file: self.file.clone(),
-            region: self.region.clone(),
-            region_index: self.region_index,
-            header: self.header.clone(),
-            name: self.name,
-            pushed: vec![],
-            updated: BTreeMap::new(),
-            has_stored_holes: false,
-            holes: BTreeSet::new(),
-            phantom: PhantomData,
-        }
-    }
 }
 
 #[derive(Debug)]
@@ -359,7 +359,7 @@ pub struct RawVecIterator<'a, I, T> {
 impl<I, T> BaseVecIterator for RawVecIterator<'_, I, T>
 where
     I: StoredIndex,
-    T: StoredType,
+    T: StoredRaw,
 {
     #[inline]
     fn mut_index(&mut self) -> &mut usize {
@@ -380,7 +380,7 @@ where
 impl<'a, I, T> Iterator for RawVecIterator<'a, I, T>
 where
     I: StoredIndex,
-    T: StoredType,
+    T: StoredRaw,
 {
     type Item = (I, Cow<'a, T>);
 
@@ -404,7 +404,7 @@ where
 impl<'a, I, T> IntoIterator for &'a RawVec<I, T>
 where
     I: StoredIndex,
-    T: StoredType,
+    T: StoredRaw,
 {
     type Item = (I, Cow<'a, T>);
     type IntoIter = RawVecIterator<'a, I, T>;
@@ -421,7 +421,7 @@ where
 impl<I, T> AnyIterableVec<I, T> for RawVec<I, T>
 where
     I: StoredIndex,
-    T: StoredType,
+    T: StoredRaw,
 {
     fn boxed_iter<'a>(&'a self) -> BoxedVecIterator<'a, I, T>
     where
@@ -434,7 +434,7 @@ where
 impl<I, T> AnyCollectableVec for RawVec<I, T>
 where
     I: StoredIndex,
-    T: StoredType,
+    T: StoredRaw,
 {
     fn collect_range_serde_json(
         &self,

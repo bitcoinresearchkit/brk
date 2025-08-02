@@ -8,9 +8,9 @@ homepage.workspace = true
 repository.workspace = true
 
 [dependencies]
-brk_core = { workspace = true }
+brk_error = { workspace = true }
 brk_logger = { workspace = true }
-color-eyre = { workspace = true }
+brk_structs = { workspace = true }
 log = { workspace = true }
 minreq = { workspace = true }
 serde_json = { workspace = true }

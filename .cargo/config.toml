@@ -1,0 +1,14 @@
+# Release profile: all targets get native CPU
+[profile.release.target.'cfg()']
+rustflags = ["-C", "target-cpu=native"]
+
+# Release profile: x86_64 gets native CPU + extra features (overrides the above)
+[profile.release.target.'cfg(target_arch = "x86_64")']
+rustflags = [
+    "-C", "target-cpu=native",
+    "-C", "target-feature=+bmi1,+bmi2,+avx2"
+]
+
+# Dist profile: x86_64 gets only extra features (no native CPU)
+[profile.dist.target.'cfg(target_arch = "x86_64")']
+rustflags = ["-C", "target-feature=+bmi1,+bmi2,+avx2"]

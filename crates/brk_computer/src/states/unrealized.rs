@@ -1,4 +1,4 @@
-use brk_core::{Dollars, Sats};
+use brk_structs::{Dollars, Sats};
 
 #[derive(Debug, Default, Clone)]
 pub struct UnrealizedState {

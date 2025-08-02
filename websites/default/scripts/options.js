@@ -3639,14 +3639,6 @@ function createPartialOptions({ env, colors, vecIdToIndexes }) {
           name: "Discord",
           url: () => "https://discord.com/invite/HaR3wpH3nr",
         },
-        {
-          name: "Bluesky",
-          url: () => "https://bsky.app/profile/bitcoinresearchkit.org",
-        },
-        {
-          name: "x",
-          url: () => "https://x.com/brkdotorg",
-        },
       ],
     },
     {

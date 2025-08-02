@@ -10,9 +10,9 @@ use std::{
     path::Path,
 };
 
-use color_eyre::owo_colors::OwoColorize;
 use env_logger::{Builder, Env};
 use jiff::{Timestamp, tz};
+use owo_colors::OwoColorize;
 
 #[inline]
 pub fn init(path: Option<&Path>) {

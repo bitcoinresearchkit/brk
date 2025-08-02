@@ -1,23 +1,25 @@
-use std::sync::Arc;
+use std::{path::Path, sync::Arc};
 
-use brk_core::{Bitcoin, CheckedSub, Dollars, StoredF64, Version};
-use brk_exit::Exit;
+use brk_error::Result;
 use brk_indexer::Indexer;
-use brk_vecs::{AnyCollectableVec, Computation, File, Format, VecIterator};
+use brk_structs::{Bitcoin, CheckedSub, Dollars, StoredF64, Version};
+use brk_vecs::{AnyCollectableVec, Computation, Exit, File, Format, VecIterator};
 
 use super::{
-    Indexes, fetched,
+    Indexes,
     grouped::{
         ComputedRatioVecsFromDateIndex, ComputedValueVecsFromHeight, ComputedVecsFromHeight,
         Source, VecBuilderOptions,
     },
-    indexes, stateful, transactions,
+    indexes, price, stateful, transactions,
 };
 
 const VERSION: Version = Version::ZERO;
 
 #[derive(Clone)]
 pub struct Vecs {
+    file: Arc<File>,
+
     pub indexes_to_coinblocks_created: ComputedVecsFromHeight<StoredF64>,
     pub indexes_to_coinblocks_stored: ComputedVecsFromHeight<StoredF64>,
     pub indexes_to_liveliness: ComputedVecsFromHeight<StoredF64>,
@@ -46,18 +48,20 @@ pub struct Vecs {
 
 impl Vecs {
     pub fn forced_import(
-        file: &Arc<File>,
+        parent: &Path,
         version: Version,
         computation: Computation,
         format: Format,
         indexes: &indexes::Vecs,
-        fetched: Option<&fetched::Vecs>,
-    ) -> color_eyre::Result<Self> {
-        let compute_dollars = fetched.is_some();
+        price: Option<&price::Vecs>,
+    ) -> Result<Self> {
+        let file = Arc::new(File::open(&parent.join("cointime"))?);
+
+        let compute_dollars = price.is_some();
 
         Ok(Self {
             indexes_to_coinblocks_created: ComputedVecsFromHeight::forced_import(
-                file,
+                &file,
                 "coinblocks_created",
                 Source::Compute,
                 version + VERSION + Version::ZERO,
@@ -67,7 +71,7 @@ impl Vecs {
                 VecBuilderOptions::default().add_sum().add_cumulative(),
             )?,
             indexes_to_coinblocks_stored: ComputedVecsFromHeight::forced_import(
-                file,
+                &file,
                 "coinblocks_stored",
                 Source::Compute,
                 version + VERSION + Version::ZERO,
@@ -77,7 +81,7 @@ impl Vecs {
                 VecBuilderOptions::default().add_sum().add_cumulative(),
             )?,
             indexes_to_liveliness: ComputedVecsFromHeight::forced_import(
-                file,
+                &file,
                 "liveliness",
                 Source::Compute,
                 version + VERSION + Version::ZERO,
@@ -87,7 +91,7 @@ impl Vecs {
                 VecBuilderOptions::default().add_last(),
             )?,
             indexes_to_vaultedness: ComputedVecsFromHeight::forced_import(
-                file,
+                &file,
                 "vaultedness",
                 Source::Compute,
                 version + VERSION + Version::ZERO,
@@ -97,7 +101,7 @@ impl Vecs {
                 VecBuilderOptions::default().add_last(),
             )?,
             indexes_to_activity_to_vaultedness_ratio: ComputedVecsFromHeight::forced_import(
-                file,
+                &file,
                 "activity_to_vaultedness_ratio",
                 Source::Compute,
                 version + VERSION + Version::ZERO,
@@ -107,7 +111,7 @@ impl Vecs {
                 VecBuilderOptions::default().add_last(),
             )?,
             indexes_to_vaulted_supply: ComputedValueVecsFromHeight::forced_import(
-                file,
+                &file,
                 "vaulted_supply",
                 Source::Compute,
                 version + VERSION + Version::ONE,
@@ -118,7 +122,7 @@ impl Vecs {
                 indexes,
             )?,
             indexes_to_active_supply: ComputedValueVecsFromHeight::forced_import(
-                file,
+                &file,
                 "active_supply",
                 Source::Compute,
                 version + VERSION + Version::ONE,
@@ -129,7 +133,7 @@ impl Vecs {
                 indexes,
             )?,
             indexes_to_thermo_cap: ComputedVecsFromHeight::forced_import(
-                file,
+                &file,
                 "thermo_cap",
                 Source::Compute,
                 version + VERSION + Version::ONE,
@@ -139,7 +143,7 @@ impl Vecs {
                 VecBuilderOptions::default().add_last(),
             )?,
             indexes_to_investor_cap: ComputedVecsFromHeight::forced_import(
-                file,
+                &file,
                 "investor_cap",
                 Source::Compute,
                 version + VERSION + Version::ONE,
@@ -149,7 +153,7 @@ impl Vecs {
                 VecBuilderOptions::default().add_last(),
             )?,
             indexes_to_vaulted_cap: ComputedVecsFromHeight::forced_import(
-                file,
+                &file,
                 "vaulted_cap",
                 Source::Compute,
                 version + VERSION + Version::ONE,
@@ -159,7 +163,7 @@ impl Vecs {
                 VecBuilderOptions::default().add_last(),
             )?,
             indexes_to_active_cap: ComputedVecsFromHeight::forced_import(
-                file,
+                &file,
                 "active_cap",
                 Source::Compute,
                 version + VERSION + Version::ONE,
@@ -169,7 +173,7 @@ impl Vecs {
                 VecBuilderOptions::default().add_last(),
             )?,
             indexes_to_vaulted_price: ComputedVecsFromHeight::forced_import(
-                file,
+                &file,
                 "vaulted_price",
                 Source::Compute,
                 version + VERSION + Version::ZERO,
@@ -179,7 +183,7 @@ impl Vecs {
                 VecBuilderOptions::default().add_last(),
             )?,
             indexes_to_vaulted_price_ratio: ComputedRatioVecsFromDateIndex::forced_import(
-                file,
+                &file,
                 "vaulted_price",
                 Source::None,
                 version + VERSION + Version::ZERO,
@@ -189,7 +193,7 @@ impl Vecs {
                 true,
             )?,
             indexes_to_active_price: ComputedVecsFromHeight::forced_import(
-                file,
+                &file,
                 "active_price",
                 Source::Compute,
                 version + VERSION + Version::ZERO,
@@ -199,7 +203,7 @@ impl Vecs {
                 VecBuilderOptions::default().add_last(),
             )?,
             indexes_to_active_price_ratio: ComputedRatioVecsFromDateIndex::forced_import(
-                file,
+                &file,
                 "active_price",
                 Source::None,
                 version + VERSION + Version::ZERO,
@@ -209,7 +213,7 @@ impl Vecs {
                 true,
             )?,
             indexes_to_true_market_mean: ComputedVecsFromHeight::forced_import(
-                file,
+                &file,
                 "true_market_mean",
                 Source::Compute,
                 version + VERSION + Version::ZERO,
@@ -219,7 +223,7 @@ impl Vecs {
                 VecBuilderOptions::default().add_last(),
             )?,
             indexes_to_true_market_mean_ratio: ComputedRatioVecsFromDateIndex::forced_import(
-                file,
+                &file,
                 "true_market_mean",
                 Source::None,
                 version + VERSION + Version::ZERO,
@@ -229,7 +233,7 @@ impl Vecs {
                 true,
             )?,
             indexes_to_cointime_value_destroyed: ComputedVecsFromHeight::forced_import(
-                file,
+                &file,
                 "cointime_value_destroyed",
                 Source::Compute,
                 version + VERSION + Version::ZERO,
@@ -239,7 +243,7 @@ impl Vecs {
                 VecBuilderOptions::default().add_sum().add_cumulative(),
             )?,
             indexes_to_cointime_value_created: ComputedVecsFromHeight::forced_import(
-                file,
+                &file,
                 "cointime_value_created",
                 Source::Compute,
                 version + VERSION + Version::ZERO,
@@ -249,7 +253,7 @@ impl Vecs {
                 VecBuilderOptions::default().add_sum().add_cumulative(),
             )?,
             indexes_to_cointime_value_stored: ComputedVecsFromHeight::forced_import(
-                file,
+                &file,
                 "cointime_value_stored",
                 Source::Compute,
                 version + VERSION + Version::ZERO,
@@ -259,7 +263,7 @@ impl Vecs {
                 VecBuilderOptions::default().add_sum().add_cumulative(),
             )?,
             indexes_to_cointime_price: ComputedVecsFromHeight::forced_import(
-                file,
+                &file,
                 "cointime_price",
                 Source::Compute,
                 version + VERSION + Version::ZERO,
@@ -269,7 +273,7 @@ impl Vecs {
                 VecBuilderOptions::default().add_last(),
             )?,
             indexes_to_cointime_cap: ComputedVecsFromHeight::forced_import(
-                file,
+                &file,
                 "cointime_cap",
                 Source::Compute,
                 version + VERSION + Version::ZERO,
@@ -279,7 +283,7 @@ impl Vecs {
                 VecBuilderOptions::default().add_last(),
             )?,
             indexes_to_cointime_price_ratio: ComputedRatioVecsFromDateIndex::forced_import(
-                file,
+                &file,
                 "cointime_price",
                 Source::None,
                 version + VERSION + Version::ZERO,
@@ -288,6 +292,8 @@ impl Vecs {
                 indexes,
                 true,
             )?,
+
+            file,
         })
     }
 
@@ -297,11 +303,11 @@ impl Vecs {
         indexer: &Indexer,
         indexes: &indexes::Vecs,
         starting_indexes: &Indexes,
-        fetched: Option<&fetched::Vecs>,
+        price: Option<&price::Vecs>,
         transactions: &transactions::Vecs,
         stateful: &stateful::Vecs,
         exit: &Exit,
-    ) -> color_eyre::Result<()> {
+    ) -> Result<()> {
         let circulating_supply = &stateful.utxo_cohorts.all.1.height_to_supply;
 
         self.indexes_to_coinblocks_created.compute_all(
@@ -315,7 +321,8 @@ impl Vecs {
                     circulating_supply,
                     |(i, v, ..)| (i, StoredF64::from(Bitcoin::from(v))),
                     exit,
-                )
+                )?;
+                Ok(())
             },
         )?;
 
@@ -341,7 +348,8 @@ impl Vecs {
                         (i, created.checked_sub(destroyed).unwrap())
                     },
                     exit,
-                )
+                )?;
+                Ok(())
             },
         )?;
 
@@ -360,7 +368,8 @@ impl Vecs {
                         .height_extra
                         .unwrap_cumulative(),
                     exit,
-                )
+                )?;
+                Ok(())
             },
         )?;
         let liveliness = &self.indexes_to_liveliness;
@@ -376,7 +385,8 @@ impl Vecs {
                     liveliness.height.as_ref().unwrap(),
                     |(i, v, ..)| (i, StoredF64::from(1.0).checked_sub(v).unwrap()),
                     exit,
-                )
+                )?;
+                Ok(())
             },
         )?;
         let vaultedness = &self.indexes_to_vaultedness;
@@ -392,14 +402,15 @@ impl Vecs {
                     liveliness.height.as_ref().unwrap(),
                     vaultedness.height.as_ref().unwrap(),
                     exit,
-                )
+                )?;
+                Ok(())
             },
         )?;
 
         self.indexes_to_vaulted_supply.compute_all(
             indexer,
             indexes,
-            fetched,
+            price,
             starting_indexes,
             exit,
             |vec, _, _, starting_indexes, exit| {
@@ -408,14 +419,15 @@ impl Vecs {
                     circulating_supply,
                     vaultedness.height.as_ref().unwrap(),
                     exit,
-                )
+                )?;
+                Ok(())
             },
         )?;
 
         self.indexes_to_active_supply.compute_all(
             indexer,
             indexes,
-            fetched,
+            price,
             starting_indexes,
             exit,
             |vec, _, _, starting_indexes, exit| {
@@ -424,11 +436,12 @@ impl Vecs {
                     circulating_supply,
                     liveliness.height.as_ref().unwrap(),
                     exit,
-                )
+                )?;
+                Ok(())
             },
         )?;
 
-        if let Some(fetched) = fetched {
+        if let Some(price) = price {
             let realized_cap = stateful
                 .utxo_cohorts
                 .all
@@ -465,7 +478,8 @@ impl Vecs {
                             .unwrap_cumulative(),
                         |(i, v, ..)| (i, v),
                         exit,
-                    )
+                    )?;
+                    Ok(())
                 },
             )?;
 
@@ -480,7 +494,8 @@ impl Vecs {
                         realized_cap,
                         self.indexes_to_thermo_cap.height.as_ref().unwrap(),
                         exit,
-                    )
+                    )?;
+                    Ok(())
                 },
             )?;
 
@@ -495,7 +510,8 @@ impl Vecs {
                         realized_cap,
                         self.indexes_to_vaultedness.height.as_ref().unwrap(),
                         exit,
-                    )
+                    )?;
+                    Ok(())
                 },
             )?;
 
@@ -510,7 +526,8 @@ impl Vecs {
                         realized_cap,
                         self.indexes_to_liveliness.height.as_ref().unwrap(),
                         exit,
-                    )
+                    )?;
+                    Ok(())
                 },
             )?;
 
@@ -525,14 +542,15 @@ impl Vecs {
                         realized_price,
                         self.indexes_to_vaultedness.height.as_ref().unwrap(),
                         exit,
-                    )
+                    )?;
+                    Ok(())
                 },
             )?;
 
             self.indexes_to_vaulted_price_ratio.compute_rest(
                 indexer,
                 indexes,
-                fetched,
+                price,
                 starting_indexes,
                 exit,
                 Some(self.indexes_to_vaulted_price.dateindex.unwrap_last()),
@@ -549,14 +567,15 @@ impl Vecs {
                         realized_price,
                         self.indexes_to_liveliness.height.as_ref().unwrap(),
                         exit,
-                    )
+                    )?;
+                    Ok(())
                 },
             )?;
 
             self.indexes_to_active_price_ratio.compute_rest(
                 indexer,
                 indexes,
-                fetched,
+                price,
                 starting_indexes,
                 exit,
                 Some(self.indexes_to_active_price.dateindex.unwrap_last()),
@@ -577,14 +596,15 @@ impl Vecs {
                             .as_ref()
                             .unwrap(),
                         exit,
-                    )
+                    )?;
+                    Ok(())
                 },
             )?;
 
             self.indexes_to_true_market_mean_ratio.compute_rest(
                 indexer,
                 indexes,
-                fetched,
+                price,
                 starting_indexes,
                 exit,
                 Some(self.indexes_to_true_market_mean.dateindex.unwrap_last()),
@@ -600,10 +620,11 @@ impl Vecs {
                     // The price taken won't be correct for time based indexes
                     vec.compute_multiply(
                         starting_indexes.height,
-                        &fetched.chainindexes_to_close.height,
+                        &price.chainindexes_to_close.height,
                         indexes_to_coinblocks_destroyed.height.as_ref().unwrap(),
                         exit,
-                    )
+                    )?;
+                    Ok(())
                 },
             )?;
 
@@ -615,10 +636,11 @@ impl Vecs {
                 |vec, _, _, starting_indexes, exit| {
                     vec.compute_multiply(
                         starting_indexes.height,
-                        &fetched.chainindexes_to_close.height,
+                        &price.chainindexes_to_close.height,
                         self.indexes_to_coinblocks_created.height.as_ref().unwrap(),
                         exit,
-                    )
+                    )?;
+                    Ok(())
                 },
             )?;
 
@@ -630,10 +652,11 @@ impl Vecs {
                 |vec, _, _, starting_indexes, exit| {
                     vec.compute_multiply(
                         starting_indexes.height,
-                        &fetched.chainindexes_to_close.height,
+                        &price.chainindexes_to_close.height,
                         self.indexes_to_coinblocks_stored.height.as_ref().unwrap(),
                         exit,
-                    )
+                    )?;
+                    Ok(())
                 },
             )?;
 
@@ -652,7 +675,8 @@ impl Vecs {
                             .height_extra
                             .unwrap_cumulative(),
                         exit,
-                    )
+                    )?;
+                    Ok(())
                 },
             )?;
 
@@ -667,20 +691,23 @@ impl Vecs {
                         self.indexes_to_cointime_price.height.as_ref().unwrap(),
                         circulating_supply,
                         exit,
-                    )
+                    )?;
+                    Ok(())
                 },
             )?;
 
             self.indexes_to_cointime_price_ratio.compute_rest(
                 indexer,
                 indexes,
-                fetched,
+                price,
                 starting_indexes,
                 exit,
                 Some(self.indexes_to_cointime_price.dateindex.unwrap_last()),
             )?;
         }
 
+        self.file.flush()?;
+        self.file.punch_holes()?;
         Ok(())
     }
 

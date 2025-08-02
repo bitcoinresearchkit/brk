@@ -1,11 +1,18 @@
 use std::sync::Arc;
 
-use brk_core::{Bitcoin, DateIndex, Dollars, Result, Sats, Version};
-use brk_exit::Exit;
+use brk_error::Result;
 use brk_indexer::Indexer;
-use brk_vecs::{AnyCollectableVec, CollectableVec, Computation, EagerVec, File, Format, StoredVec};
+use brk_structs::{Bitcoin, DateIndex, Dollars, Sats, Version};
+use brk_vecs::{
+    AnyCollectableVec, CollectableVec, Computation, EagerVec, Exit, File, Format, StoredVec,
+};
 
-use crate::{Indexes, fetched, grouped::ComputedVecsFromDateIndex, indexes};
+use crate::{
+    Indexes,
+    grouped::ComputedVecsFromDateIndex,
+    indexes, price,
+    traits::{ComputeFromBitcoin, ComputeFromSats},
+};
 
 use super::{Source, VecBuilderOptions};
 
@@ -30,7 +37,7 @@ impl ComputedValueVecsFromDateIndex {
         options: VecBuilderOptions,
         compute_dollars: bool,
         indexes: &indexes::Vecs,
-    ) -> color_eyre::Result<Self> {
+    ) -> Result<Self> {
         Ok(Self {
             sats: ComputedVecsFromDateIndex::forced_import(
                 file,
@@ -72,11 +79,11 @@ impl ComputedValueVecsFromDateIndex {
         &mut self,
         indexer: &Indexer,
         indexes: &indexes::Vecs,
-        fetched: Option<&fetched::Vecs>,
+        price: Option<&price::Vecs>,
         starting_indexes: &Indexes,
         exit: &Exit,
         mut compute: F,
-    ) -> color_eyre::Result<()>
+    ) -> Result<()>
     where
         F: FnMut(
             &mut EagerVec<DateIndex, Sats>,
@@ -95,7 +102,7 @@ impl ComputedValueVecsFromDateIndex {
         )?;
 
         let dateindex: Option<&StoredVec<DateIndex, Sats>> = None;
-        self.compute_rest(indexer, indexes, fetched, starting_indexes, exit, dateindex)?;
+        self.compute_rest(indexer, indexes, price, starting_indexes, exit, dateindex)?;
 
         Ok(())
     }
@@ -104,11 +111,11 @@ impl ComputedValueVecsFromDateIndex {
         &mut self,
         indexer: &Indexer,
         indexes: &indexes::Vecs,
-        fetched: Option<&fetched::Vecs>,
+        price: Option<&price::Vecs>,
         starting_indexes: &Indexes,
         exit: &Exit,
         dateindex: Option<&impl CollectableVec<DateIndex, Sats>>,
-    ) -> color_eyre::Result<()> {
+    ) -> Result<()> {
         if let Some(dateindex) = dateindex {
             self.sats
                 .compute_rest(indexes, starting_indexes, exit, Some(dateindex))?;
@@ -144,7 +151,7 @@ impl ComputedValueVecsFromDateIndex {
         }
 
         let dateindex_to_bitcoin = self.bitcoin.dateindex.as_ref().unwrap();
-        let dateindex_to_close = fetched
+        let dateindex_to_close = price
             .as_ref()
             .unwrap()
             .timeindexes_to_close
