@@ -1,11 +1,18 @@
 use std::sync::Arc;
 
-use brk_core::{Bitcoin, Dollars, Height, Result, Sats, Version};
-use brk_exit::Exit;
+use brk_error::Result;
 use brk_indexer::Indexer;
-use brk_vecs::{AnyCollectableVec, CollectableVec, Computation, EagerVec, File, Format, StoredVec};
+use brk_structs::{Bitcoin, Dollars, Height, Sats, Version};
+use brk_vecs::{
+    AnyCollectableVec, CollectableVec, Computation, EagerVec, Exit, File, Format, StoredVec,
+};
 
-use crate::{Indexes, fetched, grouped::Source, indexes};
+use crate::{
+    Indexes,
+    grouped::Source,
+    indexes, price,
+    traits::{ComputeFromBitcoin, ComputeFromSats},
+};
 
 use super::{ComputedVecsFromHeight, VecBuilderOptions};
 
@@ -30,7 +37,7 @@ impl ComputedValueVecsFromHeight {
         options: VecBuilderOptions,
         compute_dollars: bool,
         indexes: &indexes::Vecs,
-    ) -> color_eyre::Result<Self> {
+    ) -> Result<Self> {
         Ok(Self {
             sats: ComputedVecsFromHeight::forced_import(
                 file,
@@ -72,11 +79,11 @@ impl ComputedValueVecsFromHeight {
         &mut self,
         indexer: &Indexer,
         indexes: &indexes::Vecs,
-        fetched: Option<&fetched::Vecs>,
+        price: Option<&price::Vecs>,
         starting_indexes: &Indexes,
         exit: &Exit,
         mut compute: F,
-    ) -> color_eyre::Result<()>
+    ) -> Result<()>
     where
         F: FnMut(
             &mut EagerVec<Height, Sats>,
@@ -95,7 +102,7 @@ impl ComputedValueVecsFromHeight {
         )?;
 
         let height: Option<&StoredVec<Height, Sats>> = None;
-        self.compute_rest(indexer, indexes, fetched, starting_indexes, exit, height)?;
+        self.compute_rest(indexer, indexes, price, starting_indexes, exit, height)?;
 
         Ok(())
     }
@@ -104,11 +111,11 @@ impl ComputedValueVecsFromHeight {
         &mut self,
         indexer: &Indexer,
         indexes: &indexes::Vecs,
-        fetched: Option<&fetched::Vecs>,
+        price: Option<&price::Vecs>,
         starting_indexes: &Indexes,
         exit: &Exit,
         height: Option<&impl CollectableVec<Height, Sats>>,
-    ) -> color_eyre::Result<()> {
+    ) -> Result<()> {
         if let Some(height) = height {
             self.sats
                 .compute_rest(indexes, starting_indexes, exit, Some(height))?;
@@ -144,7 +151,7 @@ impl ComputedValueVecsFromHeight {
         }
 
         let height_to_bitcoin = self.bitcoin.height.as_ref().unwrap();
-        let height_to_close = &fetched.as_ref().unwrap().chainindexes_to_close.height;
+        let height_to_close = &price.as_ref().unwrap().chainindexes_to_close.height;
 
         if let Some(dollars) = self.dollars.as_mut() {
             dollars.compute_all(

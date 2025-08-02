@@ -6,10 +6,11 @@ use std::{
     sync::Arc,
 };
 
-use brk_core::{Error, Result};
 use memmap2::MmapMut;
 use parking_lot::{RwLock, RwLockWriteGuard};
 use zerocopy::{FromBytes, IntoBytes};
+
+use crate::{Error, Result};
 
 use super::{
     Identifier, PAGE_SIZE,

@@ -28,8 +28,8 @@ bitcoincore-rpc = "0.19.0"
 brk_bundler = { version = "0.0.83", path = "crates/brk_bundler" }
 brk_cli = { version = "0.0.83", path = "crates/brk_cli" }
 brk_computer = { version = "0.0.83", path = "crates/brk_computer" }
-brk_core = { version = "0.0.83", path = "crates/brk_core" }
-brk_exit = { version = "0.0.83", path = "crates/brk_exit" }
+brk_structs = { version = "0.0.83", path = "crates/brk_structs" }
+brk_error = { version = "0.0.83", path = "crates/brk_error" }
 brk_fetcher = { version = "0.0.83", path = "crates/brk_fetcher" }
 brk_indexer = { version = "0.0.83", path = "crates/brk_indexer" }
 brk_interface = { version = "0.0.83", path = "crates/brk_interface" }
@@ -39,23 +39,24 @@ brk_parser = { version = "0.0.83", path = "crates/brk_parser" }
 brk_server = { version = "0.0.83", path = "crates/brk_server" }
 brk_store = { version = "0.0.83", path = "crates/brk_store" }
 brk_vecs = { version = "0.0.83", path = "crates/brk_vecs" }
+brk_vecs_macros = { version = "0.0.83", path = "crates/brk_vecs_macros" }
 byteview = "=0.6.1"
-clap = { version = "4.5.41", features = ["string"] }
+clap = { version = "4.5.42", features = ["string"] }
 clap_derive = "4.5.41"
-color-eyre = "0.6.5"
 derive_deref = "1.1.1"
 fjall = "2.11.2"
 jiff = "0.2.15"
-log = { version = "0.4.27" }
+log = "0.4.27"
 minreq = { version = "2.14.0", features = ["https", "serde_json"] }
+owo-colors = "4.2.2"
 parking_lot = "0.12.4"
 rayon = "1.10.0"
-serde = { version = "1.0.219" }
+serde = "1.0.219"
 serde_bytes = "0.11.17"
 serde_derive = "1.0.219"
-serde_json = { version = "1.0.141", features = ["float_roundtrip"] }
-tokio = { version = "1.47.0", features = ["rt-multi-thread"] }
-zerocopy = { version = "0.8.26" }
+serde_json = { version = "1.0.142", features = ["float_roundtrip"] }
+tokio = { version = "1.47.1", features = ["rt-multi-thread"] }
+zerocopy = "0.8.26"
 zerocopy-derive = "0.8.26"
 
 [workspace.metadata.release]

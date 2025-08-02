@@ -1,6 +1,6 @@
 use std::{collections::BTreeMap, mem};
 
-use brk_core::TypeIndex;
+use brk_structs::TypeIndex;
 use derive_deref::{Deref, DerefMut};
 
 use super::ByAddressType;

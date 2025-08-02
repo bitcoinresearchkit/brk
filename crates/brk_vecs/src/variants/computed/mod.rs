@@ -1,11 +1,9 @@
 use std::{borrow::Cow, sync::Arc};
 
-use brk_core::{Result, StoredPhantom, Version};
-use brk_exit::Exit;
-
 use crate::{
-    AnyCollectableVec, AnyIterableVec, AnyVec, BaseVecIterator, BoxedAnyIterableVec,
-    BoxedVecIterator, CollectableVec, File, Format, StoredIndex, StoredType,
+    AnyBoxedIterableVec, AnyCollectableVec, AnyIterableVec, AnyVec, BaseVecIterator,
+    BoxedVecIterator, CollectableVec, Exit, File, Format, Result, StoredCompressed, StoredIndex,
+    StoredRaw, Version,
 };
 
 use super::{
@@ -24,25 +22,24 @@ where
     S2T: Clone,
     S3T: Clone,
 {
-    From1(BoxedAnyIterableVec<S1I, S1T>, ComputeFrom1<I, T, S1I, S1T>),
+    From1(AnyBoxedIterableVec<S1I, S1T>, ComputeFrom1<I, T, S1I, S1T>),
     From2(
-        (BoxedAnyIterableVec<S1I, S1T>, BoxedAnyIterableVec<S2I, S2T>),
+        (AnyBoxedIterableVec<S1I, S1T>, AnyBoxedIterableVec<S2I, S2T>),
         ComputeFrom2<I, T, S1I, S1T, S2I, S2T>,
     ),
     From3(
         (
-            BoxedAnyIterableVec<S1I, S1T>,
-            BoxedAnyIterableVec<S2I, S2T>,
-            BoxedAnyIterableVec<S3I, S3T>,
+            AnyBoxedIterableVec<S1I, S1T>,
+            AnyBoxedIterableVec<S2I, S2T>,
+            AnyBoxedIterableVec<S3I, S3T>,
         ),
         ComputeFrom3<I, T, S1I, S1T, S2I, S2T, S3I, S3T>,
     ),
 }
 
-pub type ComputedVecFrom1<I, T, S1I, S1T> =
-    ComputedVec<I, T, S1I, S1T, StoredPhantom, StoredPhantom, StoredPhantom, StoredPhantom>;
+pub type ComputedVecFrom1<I, T, S1I, S1T> = ComputedVec<I, T, S1I, S1T, usize, (), usize, ()>;
 pub type ComputedVecFrom2<I, T, S1I, S1T, S2I, S2T> =
-    ComputedVec<I, T, S1I, S1T, S2I, S2T, StoredPhantom, StoredPhantom>;
+    ComputedVec<I, T, S1I, S1T, S2I, S2T, usize, ()>;
 pub type ComputedVecFrom3<I, T, S1I, S1T, S2I, S2T, S3I, S3T> =
     ComputedVec<I, T, S1I, S1T, S2I, S2T, S3I, S3T>;
 
@@ -65,13 +62,13 @@ where
 impl<I, T, S1I, S1T, S2I, S2T, S3I, S3T> ComputedVec<I, T, S1I, S1T, S2I, S2T, S3I, S3T>
 where
     I: StoredIndex,
-    T: StoredType,
+    T: StoredCompressed,
     S1I: StoredIndex,
-    S1T: StoredType,
+    S1T: StoredRaw,
     S2I: StoredIndex,
-    S2T: StoredType,
+    S2T: StoredRaw,
     S3I: StoredIndex,
-    S3T: StoredType,
+    S3T: StoredRaw,
 {
     pub fn forced_import_or_init_from_1(
         computation: Computation,
@@ -79,7 +76,7 @@ where
         name: &str,
         version: Version,
         format: Format,
-        source: BoxedAnyIterableVec<S1I, S1T>,
+        source: AnyBoxedIterableVec<S1I, S1T>,
         compute: ComputeFrom1<I, T, S1I, S1T>,
     ) -> Result<Self> {
         Ok(match computation {
@@ -100,8 +97,8 @@ where
         name: &str,
         version: Version,
         format: Format,
-        source1: BoxedAnyIterableVec<S1I, S1T>,
-        source2: BoxedAnyIterableVec<S2I, S2T>,
+        source1: AnyBoxedIterableVec<S1I, S1T>,
+        source2: AnyBoxedIterableVec<S2I, S2T>,
         compute: ComputeFrom2<I, T, S1I, S1T, S2I, S2T>,
     ) -> Result<Self> {
         Ok(match computation {
@@ -122,9 +119,9 @@ where
         name: &str,
         version: Version,
         format: Format,
-        source1: BoxedAnyIterableVec<S1I, S1T>,
-        source2: BoxedAnyIterableVec<S2I, S2T>,
-        source3: BoxedAnyIterableVec<S3I, S3T>,
+        source1: AnyBoxedIterableVec<S1I, S1T>,
+        source2: AnyBoxedIterableVec<S2I, S2T>,
+        source3: AnyBoxedIterableVec<S3I, S3T>,
         compute: ComputeFrom3<I, T, S1I, S1T, S2I, S2T, S3I, S3T>,
     ) -> Result<Self> {
         Ok(match computation {
@@ -193,13 +190,13 @@ where
 impl<I, T, S1I, S1T, S2I, S2T, S3I, S3T> AnyVec for ComputedVec<I, T, S1I, S1T, S2I, S2T, S3I, S3T>
 where
     I: StoredIndex,
-    T: StoredType,
+    T: StoredCompressed,
     S1I: StoredIndex,
-    S1T: StoredType,
+    S1T: StoredRaw,
     S2I: StoredIndex,
-    S2T: StoredType,
+    S2T: StoredRaw,
     S3I: StoredIndex,
-    S3T: StoredType,
+    S3T: StoredRaw,
 {
     fn version(&self) -> Version {
         match self {
@@ -254,13 +251,13 @@ impl<'a, I, T, S1I, S1T, S2I, S2T, S3I, S3T> Iterator
     for ComputedVecIterator<'a, I, T, S1I, S1T, S2I, S2T, S3I, S3T>
 where
     I: StoredIndex,
-    T: StoredType,
+    T: StoredCompressed,
     S1I: StoredIndex,
-    S1T: StoredType,
+    S1T: StoredRaw,
     S2I: StoredIndex,
-    S2T: StoredType,
+    S2T: StoredRaw,
     S3I: StoredIndex,
-    S3T: StoredType,
+    S3T: StoredRaw,
 {
     type Item = (I, Cow<'a, T>);
     fn next(&mut self) -> Option<Self::Item> {
@@ -277,13 +274,13 @@ impl<I, T, S1I, S1T, S2I, S2T, S3I, S3T> BaseVecIterator
     for ComputedVecIterator<'_, I, T, S1I, S1T, S2I, S2T, S3I, S3T>
 where
     I: StoredIndex,
-    T: StoredType,
+    T: StoredCompressed,
     S1I: StoredIndex,
-    S1T: StoredType,
+    S1T: StoredRaw,
     S2I: StoredIndex,
-    S2T: StoredType,
+    S2T: StoredRaw,
     S3I: StoredIndex,
-    S3T: StoredType,
+    S3T: StoredRaw,
 {
     #[inline]
     fn mut_index(&mut self) -> &mut usize {
@@ -319,13 +316,13 @@ impl<'a, I, T, S1I, S1T, S2I, S2T, S3I, S3T> IntoIterator
     for &'a ComputedVec<I, T, S1I, S1T, S2I, S2T, S3I, S3T>
 where
     I: StoredIndex,
-    T: StoredType,
+    T: StoredCompressed,
     S1I: StoredIndex,
-    S1T: StoredType,
+    S1T: StoredRaw,
     S2I: StoredIndex,
-    S2T: StoredType,
+    S2T: StoredRaw,
     S3I: StoredIndex,
-    S3T: StoredType,
+    S3T: StoredRaw,
 {
     type Item = (I, Cow<'a, T>);
     type IntoIter = ComputedVecIterator<'a, I, T, S1I, S1T, S2I, S2T, S3I, S3T>;
@@ -344,13 +341,13 @@ impl<I, T, S1I, S1T, S2I, S2T, S3I, S3T> AnyIterableVec<I, T>
     for ComputedVec<I, T, S1I, S1T, S2I, S2T, S3I, S3T>
 where
     I: StoredIndex,
-    T: StoredType,
+    T: StoredCompressed,
     S1I: StoredIndex,
-    S1T: StoredType,
+    S1T: StoredRaw,
     S2I: StoredIndex,
-    S2T: StoredType,
+    S2T: StoredRaw,
     S3I: StoredIndex,
-    S3T: StoredType,
+    S3T: StoredRaw,
 {
     fn boxed_iter<'a>(&'a self) -> BoxedVecIterator<'a, I, T>
     where
@@ -364,13 +361,13 @@ impl<I, T, S1I, S1T, S2I, S2T, S3I, S3T> AnyCollectableVec
     for ComputedVec<I, T, S1I, S1T, S2I, S2T, S3I, S3T>
 where
     I: StoredIndex,
-    T: StoredType,
+    T: StoredCompressed,
     S1I: StoredIndex,
-    S1T: StoredType,
+    S1T: StoredRaw,
     S2I: StoredIndex,
-    S2T: StoredType,
+    S2T: StoredRaw,
     S3I: StoredIndex,
-    S3T: StoredType,
+    S3T: StoredRaw,
 {
     fn collect_range_serde_json(
         &self,

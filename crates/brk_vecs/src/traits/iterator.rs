@@ -1,8 +1,6 @@
 use std::{borrow::Cow, iter::Skip};
 
-use brk_core::Printable;
-
-use super::{StoredIndex, StoredType};
+use super::{Printable, StoredIndex, StoredRaw};
 
 pub trait BaseVecIterator: Iterator {
     fn mut_index(&mut self) -> &mut usize;
@@ -36,7 +34,7 @@ pub trait BaseVecIterator: Iterator {
 
 pub trait VecIterator<'a>: BaseVecIterator<Item = (Self::I, Cow<'a, Self::T>)> {
     type I: StoredIndex;
-    type T: StoredType + 'a;
+    type T: StoredRaw + 'a;
 
     #[inline]
     fn set(&mut self, i: Self::I) {
@@ -62,7 +60,7 @@ pub trait VecIterator<'a>: BaseVecIterator<Item = (Self::I, Cow<'a, Self::T>)> {
     fn unwrap_get_inner_(&mut self, i: usize) -> Self::T {
         self.get_(i)
             .unwrap_or_else(|| {
-                dbg!(self.name(), i, self.len(), Self::I::to_string());
+                dbg!(self.name(), i, self.len(), std::any::type_name::<Self::I>());
                 panic!("unwrap_get_inner_")
             })
             .into_owned()
@@ -95,7 +93,7 @@ impl<'a, I, T, Iter> VecIterator<'a> for Iter
 where
     Iter: BaseVecIterator<Item = (I, Cow<'a, T>)>,
     I: StoredIndex,
-    T: StoredType + 'a,
+    T: StoredRaw + 'a,
 {
     type I = I;
     type T = T;

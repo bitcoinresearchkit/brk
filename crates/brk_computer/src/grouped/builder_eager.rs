@@ -1,11 +1,11 @@
 use std::sync::Arc;
 
-use brk_core::{CheckedSub, Result, StoredUsize, Version};
-use brk_exit::Exit;
+use brk_error::{Error, Result};
+use brk_structs::{CheckedSub, StoredU64, Version};
 use brk_vecs::{
-    AnyCollectableVec, AnyIterableVec, AnyVec, EagerVec, File, Format, StoredIndex, StoredType,
+    AnyCollectableVec, AnyIterableVec, AnyStoredVec, AnyVec, EagerVec, Exit, File, Format,
+    GenericStoredVec, StoredIndex, StoredRaw,
 };
-use color_eyre::eyre::ContextCompat;
 
 use crate::utils::get_percentile;
 
@@ -44,7 +44,7 @@ where
         version: Version,
         format: Format,
         options: VecBuilderOptions,
-    ) -> color_eyre::Result<Self> {
+    ) -> Result<Self> {
         let only_one_active = options.is_only_one_active();
 
         let suffix = |s: &str| format!("{name}_{s}");
@@ -213,8 +213,9 @@ where
             cumulative_vec.iter().unwrap_get_inner(index)
         });
         source.iter_at(index).try_for_each(|(i, v)| -> Result<()> {
-            cumulative = cumulative.clone() + v.into_owned();
-            cumulative_vec.forced_push_at(i, cumulative.clone(), exit)
+            cumulative += v.into_owned();
+            cumulative_vec.forced_push_at(i, cumulative, exit)?;
+            Ok(())
         })?;
 
         self.safe_flush(exit)?;
@@ -227,11 +228,11 @@ where
         max_from: I,
         source: &impl AnyIterableVec<I2, T>,
         first_indexes: &impl AnyIterableVec<I, I2>,
-        count_indexes: &impl AnyIterableVec<I, StoredUsize>,
+        count_indexes: &impl AnyIterableVec<I, StoredU64>,
         exit: &Exit,
     ) -> Result<()>
     where
-        I2: StoredIndex + StoredType + CheckedSub<I2>,
+        I2: StoredIndex + StoredRaw + CheckedSub<I2>,
     {
         self.validate_computed_version_or_reset_file(
             source.version() + first_indexes.version() + count_indexes.version(),
@@ -265,7 +266,7 @@ where
                 }
 
                 if let Some(last) = self.last.as_mut() {
-                    let count_index = *count_index;
+                    let count_index = *count_index as usize;
                     if count_index == 0 {
                         panic!("should compute last if count can be 0")
                     }
@@ -295,7 +296,7 @@ where
                 if needs_values {
                     source_iter.set(first_index);
                     let mut values = (&mut source_iter)
-                        .take(*count_index)
+                        .take(*count_index as usize)
                         .map(|(_, v)| v.into_owned())
                         .collect::<Vec<_>>();
 
@@ -305,9 +306,9 @@ where
                         if let Some(max) = self.max.as_mut() {
                             max.forced_push_at(
                                 i,
-                                values
+                                *values
                                     .last()
-                                    .context("expect some")
+                                    .ok_or(Error::Str("expect some"))
                                     .inspect_err(|_| {
                                         dbg!(
                                             &values,
@@ -320,8 +321,7 @@ where
                                             source.name()
                                         );
                                     })
-                                    .unwrap()
-                                    .clone(),
+                                    .unwrap(),
                                 exit,
                             )?;
                         }
@@ -347,7 +347,7 @@ where
                         }
 
                         if let Some(min) = self.min.as_mut() {
-                            min.forced_push_at(i, values.first().unwrap().clone(), exit)?;
+                            min.forced_push_at(i, *values.first().unwrap(), exit)?;
                         }
                     }
 
@@ -356,18 +356,18 @@ where
                         let sum = values.into_iter().fold(T::from(0), |a, b| a + b);
 
                         if let Some(average) = self.average.as_mut() {
-                            let avg = sum.clone() / len;
+                            let avg = sum / len;
                             average.forced_push_at(i, avg, exit)?;
                         }
 
                         if needs_sum_or_cumulative {
                             if let Some(sum_vec) = self.sum.as_mut() {
-                                sum_vec.forced_push_at(i, sum.clone(), exit)?;
+                                sum_vec.forced_push_at(i, sum, exit)?;
                             }
 
                             if let Some(cumulative_vec) = self.cumulative.as_mut() {
-                                let t = cumulative.as_ref().unwrap().clone() + sum;
-                                cumulative.replace(t.clone());
+                                let t = cumulative.unwrap() + sum;
+                                cumulative.replace(t);
                                 cumulative_vec.forced_push_at(i, t, exit)?;
                             }
                         }
@@ -388,11 +388,11 @@ where
         max_from: I,
         source: &EagerVecBuilder<I2, T>,
         first_indexes: &impl AnyIterableVec<I, I2>,
-        count_indexes: &impl AnyIterableVec<I, StoredUsize>,
+        count_indexes: &impl AnyIterableVec<I, StoredU64>,
         exit: &Exit,
     ) -> Result<()>
     where
-        I2: StoredIndex + StoredType + CheckedSub<I2>,
+        I2: StoredIndex + StoredRaw + CheckedSub<I2>,
     {
         if self._90p.is_some()
             || self._75p.is_some()
@@ -440,7 +440,7 @@ where
                 }
 
                 if let Some(last) = self.last.as_mut() {
-                    let count_index = *count_index;
+                    let count_index = *count_index as usize;
                     if count_index == 0 {
                         panic!("should compute last if count can be 0")
                     }
@@ -464,22 +464,22 @@ where
                             let source_max_iter = source_max_iter.as_mut().unwrap();
                             source_max_iter.set(first_index);
                             let mut values = source_max_iter
-                                .take(*count_index)
+                                .take(*count_index as usize)
                                 .map(|(_, v)| v.into_owned())
                                 .collect::<Vec<_>>();
                             values.sort_unstable();
-                            max.forced_push_at(i, values.last().unwrap().clone(), exit)?;
+                            max.forced_push_at(i, *values.last().unwrap(), exit)?;
                         }
 
                         if let Some(min) = self.min.as_mut() {
                             let source_min_iter = source_min_iter.as_mut().unwrap();
                             source_min_iter.set(first_index);
                             let mut values = source_min_iter
-                                .take(*count_index)
+                                .take(*count_index as usize)
                                 .map(|(_, v)| v.into_owned())
                                 .collect::<Vec<_>>();
                             values.sort_unstable();
-                            min.forced_push_at(i, values.first().unwrap().clone(), exit)?;
+                            min.forced_push_at(i, *values.first().unwrap(), exit)?;
                         }
                     }
 
@@ -488,7 +488,7 @@ where
                             let source_average_iter = source_average_iter.as_mut().unwrap();
                             source_average_iter.set(first_index);
                             let values = source_average_iter
-                                .take(*count_index)
+                                .take(*count_index as usize)
                                 .map(|(_, v)| v.into_owned())
                                 .collect::<Vec<_>>();
 
@@ -504,19 +504,19 @@ where
                             let source_sum_iter = source_sum_iter.as_mut().unwrap();
                             source_sum_iter.set(first_index);
                             let values = source_sum_iter
-                                .take(*count_index)
+                                .take(*count_index as usize)
                                 .map(|(_, v)| v.into_owned())
                                 .collect::<Vec<_>>();
 
                             let sum = values.into_iter().fold(T::from(0), |a, b| a + b);
 
                             if let Some(sum_vec) = self.sum.as_mut() {
-                                sum_vec.forced_push_at(i, sum.clone(), exit)?;
+                                sum_vec.forced_push_at(i, sum, exit)?;
                             }
 
                             if let Some(cumulative_vec) = self.cumulative.as_mut() {
-                                let t = cumulative.as_ref().unwrap().clone() + sum;
-                                cumulative.replace(t.clone());
+                                let t = cumulative.unwrap() + sum;
+                                cumulative.replace(t);
                                 cumulative_vec.forced_push_at(i, t, exit)?;
                             }
                         }

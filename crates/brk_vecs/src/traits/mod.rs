@@ -1,13 +1,25 @@
 mod any;
+mod checked_sub;
 mod collectable;
+mod compressed;
+mod from_coarser;
 mod generic;
 mod index;
+mod iterable;
 mod iterator;
-mod r#type;
+mod printable;
+mod raw;
+mod stored;
 
 pub use any::*;
+pub use checked_sub::*;
 pub use collectable::*;
+pub use compressed::*;
+pub use from_coarser::*;
 pub use generic::*;
 pub use index::*;
+pub use iterable::*;
 pub use iterator::*;
-pub use r#type::*;
+pub use printable::*;
+pub use raw::*;
+pub use stored::*;

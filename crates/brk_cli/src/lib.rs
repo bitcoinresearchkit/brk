@@ -2,11 +2,11 @@
 
 use std::{fs, thread};
 
-use brk_core::{dot_brk_log_path, dot_brk_path};
-
 mod config;
+mod paths;
 mod run;
 
+pub use paths::*;
 use run::*;
 
 pub fn main() -> color_eyre::Result<()> {

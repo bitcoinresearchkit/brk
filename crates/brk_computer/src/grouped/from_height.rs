@@ -1,13 +1,15 @@
 use std::sync::Arc;
 
-use brk_core::{
-    DateIndex, DecadeIndex, DifficultyEpoch, Height, MonthIndex, QuarterIndex, Result,
-    SemesterIndex, Version, WeekIndex, YearIndex,
-};
-use brk_exit::Exit;
+use brk_error::Result;
+
 use brk_indexer::Indexer;
+use brk_structs::{
+    DateIndex, DecadeIndex, DifficultyEpoch, Height, MonthIndex, QuarterIndex, SemesterIndex,
+    Version, WeekIndex, YearIndex,
+};
 use brk_vecs::{
-    AnyCollectableVec, AnyIterableVec, CloneableAnyIterableVec, Computation, EagerVec, File, Format,
+    AnyCloneableIterableVec, AnyCollectableVec, AnyIterableVec, Computation, EagerVec, Exit, File,
+    Format,
 };
 
 use crate::{
@@ -53,7 +55,7 @@ where
         computation: Computation,
         indexes: &indexes::Vecs,
         options: VecBuilderOptions,
-    ) -> color_eyre::Result<Self> {
+    ) -> Result<Self> {
         let height = source.is_compute().then(|| {
             EagerVec::forced_import(file, name, version + VERSION + Version::ZERO, format).unwrap()
         });
@@ -164,7 +166,7 @@ where
         starting_indexes: &Indexes,
         exit: &Exit,
         mut compute: F,
-    ) -> color_eyre::Result<()>
+    ) -> Result<()>
     where
         F: FnMut(&mut EagerVec<Height, T>, &Indexer, &indexes::Vecs, &Indexes, &Exit) -> Result<()>,
     {
@@ -186,7 +188,7 @@ where
         starting_indexes: &Indexes,
         exit: &Exit,
         height_vec: Option<&impl AnyIterableVec<Height, T>>,
-    ) -> color_eyre::Result<()> {
+    ) -> Result<()> {
         if let Some(height) = height_vec {
             self.height_extra
                 .extend(starting_indexes.height, height, exit)?;

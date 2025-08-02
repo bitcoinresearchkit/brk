@@ -1,6 +1,7 @@
 use std::path::Path;
 
-use brk_core::{Dollars, Height, LoadedAddressData, Result, Sats};
+use brk_error::Result;
+use brk_structs::{Dollars, Height, LoadedAddressData, Sats};
 
 use crate::SupplyState;
 
@@ -8,7 +9,7 @@ use super::CohortState;
 
 #[derive(Clone)]
 pub struct AddressCohortState {
-    pub address_count: usize,
+    pub address_count: u64,
     pub inner: CohortState,
 }
 
@@ -47,14 +48,14 @@ impl AddressCohortState {
 
         let prev_realized_price = compute_price.then(|| addressdata.realized_price());
         let prev_supply_state = SupplyState {
-            utxos: addressdata.outputs_len as usize,
+            utxos: addressdata.outputs_len as u64,
             value: addressdata.amount(),
         };
 
         addressdata.send(value, prev_price)?;
 
         let supply_state = SupplyState {
-            utxos: addressdata.outputs_len as usize,
+            utxos: addressdata.outputs_len as u64,
             value: addressdata.amount(),
         };
 
@@ -82,14 +83,14 @@ impl AddressCohortState {
 
         let prev_realized_price = compute_price.then(|| address_data.realized_price());
         let prev_supply_state = SupplyState {
-            utxos: address_data.outputs_len as usize,
+            utxos: address_data.outputs_len as u64,
             value: address_data.amount(),
         };
 
         address_data.receive(value, price);
 
         let supply_state = SupplyState {
-            utxos: address_data.outputs_len as usize,
+            utxos: address_data.outputs_len as u64,
             value: address_data.amount(),
         };
 

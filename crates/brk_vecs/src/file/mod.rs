@@ -5,7 +5,6 @@ use std::{
     sync::Arc,
 };
 
-use brk_core::{Error, Result};
 use libc::off_t;
 use log::info;
 use memmap2::{MmapMut, MmapOptions};
@@ -23,6 +22,8 @@ use rayon::prelude::*;
 pub use reader::*;
 pub use region::*;
 use regions::*;
+
+use crate::{Error, Result};
 
 pub const PAGE_SIZE: u64 = 4096;
 pub const PAGE_SIZE_MINUS_1: u64 = PAGE_SIZE - 1;

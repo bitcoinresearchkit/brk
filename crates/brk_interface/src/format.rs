@@ -1,4 +1,4 @@
-use color_eyre::eyre::eyre;
+use brk_error::Error;
 use schemars::JsonSchema;
 use serde::Deserialize;
 
@@ -16,7 +16,7 @@ pub enum Format {
 }
 
 impl TryFrom<Option<String>> for Format {
-    type Error = color_eyre::Report;
+    type Error = Error;
     fn try_from(value: Option<String>) -> Result<Self, Self::Error> {
         if let Some(value) = value {
             let value = value.to_lowercase();
@@ -30,10 +30,10 @@ impl TryFrom<Option<String>> for Format {
             } else if value == "json" {
                 Ok(Self::JSON)
             } else {
-                Err(eyre!("Fail"))
+                Err(Error::Str("Fail"))
             }
         } else {
-            Err(eyre!("Fail"))
+            Err(Error::Str("Fail"))
         }
     }
 }

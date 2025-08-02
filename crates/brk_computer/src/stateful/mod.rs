@@ -1,31 +1,26 @@
 use std::{cmp::Ordering, collections::BTreeMap, mem, path::Path, sync::Arc, thread};
 
-use brk_core::{
+use brk_error::Result;
+use brk_indexer::Indexer;
+use brk_structs::{
     AnyAddressDataIndexEnum, AnyAddressIndex, ByAddressType, ByAnyAddress, CheckedSub, DateIndex,
     Dollars, EmptyAddressData, EmptyAddressIndex, Height, InputIndex, LoadedAddressData,
     LoadedAddressIndex, OutputIndex, OutputType, P2AAddressIndex, P2PK33AddressIndex,
     P2PK65AddressIndex, P2PKHAddressIndex, P2SHAddressIndex, P2TRAddressIndex, P2WPKHAddressIndex,
-    P2WSHAddressIndex, Result, Sats, StoredUsize, Timestamp, TypeIndex, Version,
+    P2WSHAddressIndex, Sats, StoredU64, Timestamp, TypeIndex, Version,
 };
-use brk_exit::Exit;
-use brk_indexer::Indexer;
 use brk_vecs::{
-    AnyCollectableVec, AnyStampedVec, AnyVec, CollectableVec, Computation, EagerVec, File, Format,
-    GenericStoredVec, Reader, Stamp, StampedVec, StoredIndex, StoredVec, VecIterator,
+    AnyCollectableVec, AnyStoredVec, AnyVec, CollectableVec, Computation, EagerVec, Exit, File,
+    Format, GenericStoredVec, RawVec, Reader, Stamp, StoredIndex, VecIterator,
 };
 use log::info;
 use rayon::prelude::*;
 
 use crate::{
-    BlockState, SupplyState, Transacted,
-    grouped::{ComputedVecsFromHeight, Source},
-    market,
-};
-
-use super::{
-    Indexes, fetched,
+    BlockState, Indexes, SupplyState, Transacted,
     grouped::{ComputedValueVecsFromHeight, VecBuilderOptions},
-    indexes, transactions,
+    grouped::{ComputedVecsFromHeight, Source},
+    indexes, market, price, transactions,
 };
 
 mod address_cohort;
@@ -58,7 +53,9 @@ const VERSION: Version = Version::new(21);
 
 #[derive(Clone)]
 pub struct Vecs {
-    pub chain_state: StoredVec<Height, SupplyState>,
+    file: Arc<File>,
+
+    pub chain_state: RawVec<Height, SupplyState>,
 
     pub height_to_unspendable_supply: EagerVec<Height, Sats>,
     pub indexes_to_unspendable_supply: ComputedValueVecsFromHeight,
@@ -71,51 +68,52 @@ pub struct Vecs {
     pub utxo_cohorts: utxo_cohorts::Vecs,
     pub address_cohorts: address_cohorts::Vecs,
 
-    pub p2pk33addressindex_to_anyaddressindex: StampedVec<P2PK33AddressIndex, AnyAddressIndex>,
-    pub p2pk65addressindex_to_anyaddressindex: StampedVec<P2PK65AddressIndex, AnyAddressIndex>,
-    pub p2pkhaddressindex_to_anyaddressindex: StampedVec<P2PKHAddressIndex, AnyAddressIndex>,
-    pub p2shaddressindex_to_anyaddressindex: StampedVec<P2SHAddressIndex, AnyAddressIndex>,
-    pub p2traddressindex_to_anyaddressindex: StampedVec<P2TRAddressIndex, AnyAddressIndex>,
-    pub p2wpkhaddressindex_to_anyaddressindex: StampedVec<P2WPKHAddressIndex, AnyAddressIndex>,
-    pub p2wshaddressindex_to_anyaddressindex: StampedVec<P2WSHAddressIndex, AnyAddressIndex>,
-    pub p2aaddressindex_to_anyaddressindex: StampedVec<P2AAddressIndex, AnyAddressIndex>,
-    pub loadedaddressindex_to_loadedaddressdata: StampedVec<LoadedAddressIndex, LoadedAddressData>,
-    pub emptyaddressindex_to_emptyaddressdata: StampedVec<EmptyAddressIndex, EmptyAddressData>,
+    pub p2pk33addressindex_to_anyaddressindex: RawVec<P2PK33AddressIndex, AnyAddressIndex>,
+    pub p2pk65addressindex_to_anyaddressindex: RawVec<P2PK65AddressIndex, AnyAddressIndex>,
+    pub p2pkhaddressindex_to_anyaddressindex: RawVec<P2PKHAddressIndex, AnyAddressIndex>,
+    pub p2shaddressindex_to_anyaddressindex: RawVec<P2SHAddressIndex, AnyAddressIndex>,
+    pub p2traddressindex_to_anyaddressindex: RawVec<P2TRAddressIndex, AnyAddressIndex>,
+    pub p2wpkhaddressindex_to_anyaddressindex: RawVec<P2WPKHAddressIndex, AnyAddressIndex>,
+    pub p2wshaddressindex_to_anyaddressindex: RawVec<P2WSHAddressIndex, AnyAddressIndex>,
+    pub p2aaddressindex_to_anyaddressindex: RawVec<P2AAddressIndex, AnyAddressIndex>,
+    pub loadedaddressindex_to_loadedaddressdata: RawVec<LoadedAddressIndex, LoadedAddressData>,
+    pub emptyaddressindex_to_emptyaddressdata: RawVec<EmptyAddressIndex, EmptyAddressData>,
 
-    pub indexes_to_address_count: ComputedVecsFromHeight<StoredUsize>,
-    pub indexes_to_empty_address_count: ComputedVecsFromHeight<StoredUsize>,
+    pub indexes_to_address_count: ComputedVecsFromHeight<StoredU64>,
+    pub indexes_to_empty_address_count: ComputedVecsFromHeight<StoredU64>,
 }
 
 impl Vecs {
     pub fn forced_import(
-        file: &Arc<File>,
+        parent: &Path,
         version: Version,
         computation: Computation,
         format: Format,
         indexes: &indexes::Vecs,
-        fetched: Option<&fetched::Vecs>,
+        price: Option<&price::Vecs>,
         states_path: &Path,
-    ) -> color_eyre::Result<Self> {
-        let compute_dollars = fetched.is_some();
+    ) -> Result<Self> {
+        let file = Arc::new(File::open(&parent.join("stateful"))?);
 
-        let chain_file = Arc::new(File::open(&states_path.join("chain"))?);
+        let compute_dollars = price.is_some();
+
+        let chain_file = Arc::new(File::open(&parent.join("chain"))?);
 
         Ok(Self {
-            chain_state: StoredVec::forced_import(
+            chain_state: RawVec::forced_import(
                 &chain_file,
                 "chain",
                 version + VERSION + Version::ZERO,
-                Format::Raw,
             )?,
 
             height_to_unspendable_supply: EagerVec::forced_import(
-                file,
+                &file,
                 "unspendable_supply",
                 version + VERSION + Version::ZERO,
                 format,
             )?,
             indexes_to_unspendable_supply: ComputedValueVecsFromHeight::forced_import(
-                file,
+                &file,
                 "unspendable_supply",
                 Source::None,
                 version + VERSION + Version::ZERO,
@@ -126,13 +124,13 @@ impl Vecs {
                 indexes,
             )?,
             height_to_opreturn_supply: EagerVec::forced_import(
-                file,
+                &file,
                 "opreturn_supply",
                 version + VERSION + Version::ZERO,
                 format,
             )?,
             indexes_to_opreturn_supply: ComputedValueVecsFromHeight::forced_import(
-                file,
+                &file,
                 "opreturn_supply",
                 Source::None,
                 version + VERSION + Version::ZERO,
@@ -143,7 +141,7 @@ impl Vecs {
                 indexes,
             )?,
             indexes_to_address_count: ComputedVecsFromHeight::forced_import(
-                file,
+                &file,
                 "address_count",
                 Source::Compute,
                 version + VERSION + Version::ZERO,
@@ -153,7 +151,7 @@ impl Vecs {
                 VecBuilderOptions::default().add_last(),
             )?,
             indexes_to_empty_address_count: ComputedVecsFromHeight::forced_import(
-                file,
+                &file,
                 "empty_address_count",
                 Source::Compute,
                 version + VERSION + Version::ZERO,
@@ -165,49 +163,49 @@ impl Vecs {
             addresstype_to_height_to_address_count: AddressTypeToHeightToAddressCount::from(
                 ByAddressType {
                     p2pk65: EagerVec::forced_import(
-                        file,
+                        &file,
                         "p2pk65_address_count",
                         version + VERSION + Version::ZERO,
                         format,
                     )?,
                     p2pk33: EagerVec::forced_import(
-                        file,
+                        &file,
                         "p2pk33_address_count",
                         version + VERSION + Version::ZERO,
                         format,
                     )?,
                     p2pkh: EagerVec::forced_import(
-                        file,
+                        &file,
                         "p2pkh_address_count",
                         version + VERSION + Version::ZERO,
                         format,
                     )?,
                     p2sh: EagerVec::forced_import(
-                        file,
+                        &file,
                         "p2sh_address_count",
                         version + VERSION + Version::ZERO,
                         format,
                     )?,
                     p2wpkh: EagerVec::forced_import(
-                        file,
+                        &file,
                         "p2wpkh_address_count",
                         version + VERSION + Version::ZERO,
                         format,
                     )?,
                     p2wsh: EagerVec::forced_import(
-                        file,
+                        &file,
                         "p2wsh_address_count",
                         version + VERSION + Version::ZERO,
                         format,
                     )?,
                     p2tr: EagerVec::forced_import(
-                        file,
+                        &file,
                         "p2tr_address_count",
                         version + VERSION + Version::ZERO,
                         format,
                     )?,
                     p2a: EagerVec::forced_import(
-                        file,
+                        &file,
                         "p2a_address_count",
                         version + VERSION + Version::ZERO,
                         format,
@@ -217,49 +215,49 @@ impl Vecs {
             addresstype_to_height_to_empty_address_count: AddressTypeToHeightToAddressCount::from(
                 ByAddressType {
                     p2pk65: EagerVec::forced_import(
-                        file,
+                        &file,
                         "p2pk65_empty_address_count",
                         version + VERSION + Version::ZERO,
                         format,
                     )?,
                     p2pk33: EagerVec::forced_import(
-                        file,
+                        &file,
                         "p2pk33_empty_address_count",
                         version + VERSION + Version::ZERO,
                         format,
                     )?,
                     p2pkh: EagerVec::forced_import(
-                        file,
+                        &file,
                         "p2pkh_empty_address_count",
                         version + VERSION + Version::ZERO,
                         format,
                     )?,
                     p2sh: EagerVec::forced_import(
-                        file,
+                        &file,
                         "p2sh_empty_address_count",
                         version + VERSION + Version::ZERO,
                         format,
                     )?,
                     p2wpkh: EagerVec::forced_import(
-                        file,
+                        &file,
                         "p2wpkh_empty_address_count",
                         version + VERSION + Version::ZERO,
                         format,
                     )?,
                     p2wsh: EagerVec::forced_import(
-                        file,
+                        &file,
                         "p2wsh_empty_address_count",
                         version + VERSION + Version::ZERO,
                         format,
                     )?,
                     p2tr: EagerVec::forced_import(
-                        file,
+                        &file,
                         "p2tr_empty_address_count",
                         version + VERSION + Version::ZERO,
                         format,
                     )?,
                     p2a: EagerVec::forced_import(
-                        file,
+                        &file,
                         "p2a_empty_address_count",
                         version + VERSION + Version::ZERO,
                         format,
@@ -269,7 +267,7 @@ impl Vecs {
             addresstype_to_indexes_to_address_count: AddressTypeToIndexesToAddressCount::from(
                 ByAddressType {
                     p2pk65: ComputedVecsFromHeight::forced_import(
-                        file,
+                        &file,
                         "p2pk65_address_count",
                         Source::None,
                         version + VERSION + Version::ZERO,
@@ -279,7 +277,7 @@ impl Vecs {
                         VecBuilderOptions::default().add_last(),
                     )?,
                     p2pk33: ComputedVecsFromHeight::forced_import(
-                        file,
+                        &file,
                         "p2pk33_address_count",
                         Source::None,
                         version + VERSION + Version::ZERO,
@@ -289,7 +287,7 @@ impl Vecs {
                         VecBuilderOptions::default().add_last(),
                     )?,
                     p2pkh: ComputedVecsFromHeight::forced_import(
-                        file,
+                        &file,
                         "p2pkh_address_count",
                         Source::None,
                         version + VERSION + Version::ZERO,
@@ -299,7 +297,7 @@ impl Vecs {
                         VecBuilderOptions::default().add_last(),
                     )?,
                     p2sh: ComputedVecsFromHeight::forced_import(
-                        file,
+                        &file,
                         "p2sh_address_count",
                         Source::None,
                         version + VERSION + Version::ZERO,
@@ -309,7 +307,7 @@ impl Vecs {
                         VecBuilderOptions::default().add_last(),
                     )?,
                     p2wpkh: ComputedVecsFromHeight::forced_import(
-                        file,
+                        &file,
                         "p2wpkh_address_count",
                         Source::None,
                         version + VERSION + Version::ZERO,
@@ -319,7 +317,7 @@ impl Vecs {
                         VecBuilderOptions::default().add_last(),
                     )?,
                     p2wsh: ComputedVecsFromHeight::forced_import(
-                        file,
+                        &file,
                         "p2wsh_address_count",
                         Source::None,
                         version + VERSION + Version::ZERO,
@@ -329,7 +327,7 @@ impl Vecs {
                         VecBuilderOptions::default().add_last(),
                     )?,
                     p2tr: ComputedVecsFromHeight::forced_import(
-                        file,
+                        &file,
                         "p2tr_address_count",
                         Source::None,
                         version + VERSION + Version::ZERO,
@@ -339,7 +337,7 @@ impl Vecs {
                         VecBuilderOptions::default().add_last(),
                     )?,
                     p2a: ComputedVecsFromHeight::forced_import(
-                        file,
+                        &file,
                         "p2a_address_count",
                         Source::None,
                         version + VERSION + Version::ZERO,
@@ -353,7 +351,7 @@ impl Vecs {
             addresstype_to_indexes_to_empty_address_count: AddressTypeToIndexesToAddressCount::from(
                 ByAddressType {
                     p2pk65: ComputedVecsFromHeight::forced_import(
-                        file,
+                        &file,
                         "p2pk65_empty_address_count",
                         Source::None,
                         version + VERSION + Version::ZERO,
@@ -363,7 +361,7 @@ impl Vecs {
                         VecBuilderOptions::default().add_last(),
                     )?,
                     p2pk33: ComputedVecsFromHeight::forced_import(
-                        file,
+                        &file,
                         "p2pk33_empty_address_count",
                         Source::None,
                         version + VERSION + Version::ZERO,
@@ -373,7 +371,7 @@ impl Vecs {
                         VecBuilderOptions::default().add_last(),
                     )?,
                     p2pkh: ComputedVecsFromHeight::forced_import(
-                        file,
+                        &file,
                         "p2pkh_empty_address_count",
                         Source::None,
                         version + VERSION + Version::ZERO,
@@ -383,7 +381,7 @@ impl Vecs {
                         VecBuilderOptions::default().add_last(),
                     )?,
                     p2sh: ComputedVecsFromHeight::forced_import(
-                        file,
+                        &file,
                         "p2sh_empty_address_count",
                         Source::None,
                         version + VERSION + Version::ZERO,
@@ -393,7 +391,7 @@ impl Vecs {
                         VecBuilderOptions::default().add_last(),
                     )?,
                     p2wpkh: ComputedVecsFromHeight::forced_import(
-                        file,
+                        &file,
                         "p2wpkh_empty_address_count",
                         Source::None,
                         version + VERSION + Version::ZERO,
@@ -403,7 +401,7 @@ impl Vecs {
                         VecBuilderOptions::default().add_last(),
                     )?,
                     p2wsh: ComputedVecsFromHeight::forced_import(
-                        file,
+                        &file,
                         "p2wsh_empty_address_count",
                         Source::None,
                         version + VERSION + Version::ZERO,
@@ -413,7 +411,7 @@ impl Vecs {
                         VecBuilderOptions::default().add_last(),
                     )?,
                     p2tr: ComputedVecsFromHeight::forced_import(
-                        file,
+                        &file,
                         "p2tr_empty_address_count",
                         Source::None,
                         version + VERSION + Version::ZERO,
@@ -423,7 +421,7 @@ impl Vecs {
                         VecBuilderOptions::default().add_last(),
                     )?,
                     p2a: ComputedVecsFromHeight::forced_import(
-                        file,
+                        &file,
                         "p2a_empty_address_count",
                         Source::None,
                         version + VERSION + Version::ZERO,
@@ -435,85 +433,77 @@ impl Vecs {
                 },
             ),
             utxo_cohorts: utxo_cohorts::Vecs::forced_import(
-                file,
+                &file,
                 version,
                 computation,
                 format,
                 indexes,
-                fetched,
+                price,
                 states_path,
             )?,
             address_cohorts: address_cohorts::Vecs::forced_import(
-                file,
+                &file,
                 version,
                 computation,
                 format,
                 indexes,
-                fetched,
+                price,
                 states_path,
             )?,
 
-            p2aaddressindex_to_anyaddressindex: StampedVec::forced_import(
-                file,
+            p2aaddressindex_to_anyaddressindex: RawVec::forced_import(
+                &file,
                 "anyaddressindex",
                 version + VERSION + Version::ZERO,
-                Format::Raw,
             )?,
-            p2pk33addressindex_to_anyaddressindex: StampedVec::forced_import(
-                file,
+            p2pk33addressindex_to_anyaddressindex: RawVec::forced_import(
+                &file,
                 "anyaddressindex",
                 version + VERSION + Version::ZERO,
-                Format::Raw,
             )?,
-            p2pk65addressindex_to_anyaddressindex: StampedVec::forced_import(
-                file,
+            p2pk65addressindex_to_anyaddressindex: RawVec::forced_import(
+                &file,
                 "anyaddressindex",
                 version + VERSION + Version::ZERO,
-                Format::Raw,
             )?,
-            p2pkhaddressindex_to_anyaddressindex: StampedVec::forced_import(
-                file,
+            p2pkhaddressindex_to_anyaddressindex: RawVec::forced_import(
+                &file,
                 "anyaddressindex",
                 version + VERSION + Version::ZERO,
-                Format::Raw,
             )?,
-            p2shaddressindex_to_anyaddressindex: StampedVec::forced_import(
-                file,
+            p2shaddressindex_to_anyaddressindex: RawVec::forced_import(
+                &file,
                 "anyaddressindex",
                 version + VERSION + Version::ZERO,
-                Format::Raw,
             )?,
-            p2traddressindex_to_anyaddressindex: StampedVec::forced_import(
-                file,
+            p2traddressindex_to_anyaddressindex: RawVec::forced_import(
+                &file,
                 "anyaddressindex",
                 version + VERSION + Version::ZERO,
-                Format::Raw,
             )?,
-            p2wpkhaddressindex_to_anyaddressindex: StampedVec::forced_import(
-                file,
+            p2wpkhaddressindex_to_anyaddressindex: RawVec::forced_import(
+                &file,
                 "anyaddressindex",
                 version + VERSION + Version::ZERO,
-                Format::Raw,
             )?,
-            p2wshaddressindex_to_anyaddressindex: StampedVec::forced_import(
-                file,
+            p2wshaddressindex_to_anyaddressindex: RawVec::forced_import(
+                &file,
                 "anyaddressindex",
                 version + VERSION + Version::ZERO,
-                Format::Raw,
             )?,
 
-            loadedaddressindex_to_loadedaddressdata: StampedVec::forced_import(
-                file,
+            loadedaddressindex_to_loadedaddressdata: RawVec::forced_import(
+                &file,
                 "loadedaddressdata",
                 version + VERSION + Version::ZERO,
-                Format::Raw,
             )?,
-            emptyaddressindex_to_emptyaddressdata: StampedVec::forced_import(
-                file,
+            emptyaddressindex_to_emptyaddressdata: RawVec::forced_import(
+                &file,
                 "emptyaddressdata",
                 version + VERSION + Version::ZERO,
-                Format::Raw,
             )?,
+
+            file,
         })
     }
 
@@ -523,12 +513,12 @@ impl Vecs {
         indexer: &Indexer,
         indexes: &indexes::Vecs,
         transactions: &transactions::Vecs,
-        fetched: Option<&fetched::Vecs>,
+        price: Option<&price::Vecs>,
         market: &market::Vecs,
         // Must take ownership as its indexes will be updated for this specific function
         starting_indexes: &mut Indexes,
         exit: &Exit,
-    ) -> color_eyre::Result<()> {
+    ) -> Result<()> {
         let height_to_first_outputindex = &indexer.vecs.height_to_first_outputindex;
         let height_to_first_inputindex = &indexer.vecs.height_to_first_inputindex;
         let height_to_first_p2aaddressindex = &indexer.vecs.height_to_first_p2aaddressindex;
@@ -554,12 +544,12 @@ impl Vecs {
             .height
             .as_ref()
             .unwrap();
-        let height_to_close = fetched
+        let height_to_close = price
             .as_ref()
-            .map(|fetched| &fetched.chainindexes_to_close.height);
-        let dateindex_to_close = fetched
+            .map(|price| &price.chainindexes_to_close.height);
+        let dateindex_to_close = price
             .as_ref()
-            .map(|fetched| fetched.timeindexes_to_close.dateindex.as_ref().unwrap());
+            .map(|price| price.timeindexes_to_close.dateindex.as_ref().unwrap());
         let height_to_date_fixed = &indexes.height_to_date_fixed;
         let dateindex_to_first_height = &indexes.dateindex_to_first_height;
         let dateindex_to_height_count = &indexes.dateindex_to_height_count;
@@ -632,56 +622,16 @@ impl Vecs {
                     .unwrap_or_default(),
             )
             .min(chain_state_starting_height)
-            .min(
-                Height::from(u64::from(
-                    self.p2pk33addressindex_to_anyaddressindex.stamp(),
-                ))
-                .incremented(),
-            )
-            .min(
-                Height::from(u64::from(
-                    self.p2pk65addressindex_to_anyaddressindex.stamp(),
-                ))
-                .incremented(),
-            )
-            .min(
-                Height::from(u64::from(self.p2pkhaddressindex_to_anyaddressindex.stamp()))
-                    .incremented(),
-            )
-            .min(
-                Height::from(u64::from(self.p2shaddressindex_to_anyaddressindex.stamp()))
-                    .incremented(),
-            )
-            .min(
-                Height::from(u64::from(self.p2traddressindex_to_anyaddressindex.stamp()))
-                    .incremented(),
-            )
-            .min(
-                Height::from(u64::from(
-                    self.p2wpkhaddressindex_to_anyaddressindex.stamp(),
-                ))
-                .incremented(),
-            )
-            .min(
-                Height::from(u64::from(self.p2wshaddressindex_to_anyaddressindex.stamp()))
-                    .incremented(),
-            )
-            .min(
-                Height::from(u64::from(self.p2aaddressindex_to_anyaddressindex.stamp()))
-                    .incremented(),
-            )
-            .min(
-                Height::from(u64::from(
-                    self.loadedaddressindex_to_loadedaddressdata.stamp(),
-                ))
-                .incremented(),
-            )
-            .min(
-                Height::from(u64::from(
-                    self.emptyaddressindex_to_emptyaddressdata.stamp(),
-                ))
-                .incremented(),
-            )
+            .min(Height::from(self.p2pk33addressindex_to_anyaddressindex.stamp()).incremented())
+            .min(Height::from(self.p2pk65addressindex_to_anyaddressindex.stamp()).incremented())
+            .min(Height::from(self.p2pkhaddressindex_to_anyaddressindex.stamp()).incremented())
+            .min(Height::from(self.p2shaddressindex_to_anyaddressindex.stamp()).incremented())
+            .min(Height::from(self.p2traddressindex_to_anyaddressindex.stamp()).incremented())
+            .min(Height::from(self.p2wpkhaddressindex_to_anyaddressindex.stamp()).incremented())
+            .min(Height::from(self.p2wshaddressindex_to_anyaddressindex.stamp()).incremented())
+            .min(Height::from(self.p2aaddressindex_to_anyaddressindex.stamp()).incremented())
+            .min(Height::from(self.loadedaddressindex_to_loadedaddressdata.stamp()).incremented())
+            .min(Height::from(self.emptyaddressindex_to_emptyaddressdata.stamp()).incremented())
             .min(Height::from(self.height_to_unspendable_supply.len()))
             .min(Height::from(self.height_to_opreturn_supply.len()))
             .cmp(&chain_state_starting_height)
@@ -745,7 +695,7 @@ impl Vecs {
                 .try_for_each(|(_, v)| v.state.reset_price_to_amount())?;
         };
 
-        let last_height = Height::from(u64::from(indexer.vecs.height_to_blockhash.stamp()));
+        let last_height = Height::from(indexer.vecs.height_to_blockhash.stamp());
 
         if starting_height <= last_height {
             let inputindex_to_outputindex_reader = inputindex_to_outputindex.create_reader();
@@ -836,7 +786,7 @@ impl Vecs {
 
             (height.unwrap_to_usize()..height_to_date_fixed.len())
                 .map(Height::from)
-                .try_for_each(|_height| -> color_eyre::Result<()> {
+                .try_for_each(|_height| -> Result<()> {
                     height = _height;
 
                     info!("Processing chain at {height}...");
@@ -903,7 +853,7 @@ impl Vecs {
                                 .tick_tock_next_block(&chain_state, timestamp);
                         });
 
-                        let (transacted, addresstype_to_typedindex_to_received_data, receiving_addresstype_to_typeindex_to_addressdatawithsource) = (first_outputindex..first_outputindex + *output_count)
+                        let (transacted, addresstype_to_typedindex_to_received_data, receiving_addresstype_to_typeindex_to_addressdatawithsource) = (first_outputindex..first_outputindex + usize::from(output_count))
                             .into_par_iter()
                             .map(OutputIndex::from)
                             .map(|outputindex| {
@@ -987,7 +937,7 @@ impl Vecs {
                             );
 
                         // Skip coinbase
-                        let (height_to_sent, addresstype_to_typedindex_to_sent_data, sending_addresstype_to_typeindex_to_addressdatawithsource) = (first_inputindex + 1..first_inputindex + *input_count)
+                        let (height_to_sent, addresstype_to_typedindex_to_sent_data, sending_addresstype_to_typeindex_to_addressdatawithsource) = (first_inputindex + 1..first_inputindex + usize::from(input_count))
                             .into_par_iter()
                             .map(InputIndex::from)
                             .map(|inputindex| {
@@ -1287,7 +1237,8 @@ impl Vecs {
                         .map(|(_, v)| v)
                         .collect::<Vec<_>>(),
                     exit,
-                )
+                )?;
+                Ok(())
             },
         )?;
 
@@ -1306,14 +1257,15 @@ impl Vecs {
                         .map(|(_, v)| v)
                         .collect::<Vec<_>>(),
                     exit,
-                )
+                )?;
+                Ok(())
             },
         )?;
 
         self.indexes_to_unspendable_supply.compute_rest(
             indexer,
             indexes,
-            fetched,
+            price,
             starting_indexes,
             exit,
             Some(&self.height_to_unspendable_supply),
@@ -1321,7 +1273,7 @@ impl Vecs {
         self.indexes_to_opreturn_supply.compute_rest(
             indexer,
             indexes,
-            fetched,
+            price,
             starting_indexes,
             exit,
             Some(&self.height_to_opreturn_supply),
@@ -1342,15 +1294,10 @@ impl Vecs {
         )?;
 
         self.utxo_cohorts
-            .compute_rest_part1(indexer, indexes, fetched, starting_indexes, exit)?;
+            .compute_rest_part1(indexer, indexes, price, starting_indexes, exit)?;
 
-        self.address_cohorts.compute_rest_part1(
-            indexer,
-            indexes,
-            fetched,
-            starting_indexes,
-            exit,
-        )?;
+        self.address_cohorts
+            .compute_rest_part1(indexer, indexes, price, starting_indexes, exit)?;
 
         info!("Computing rest part 2...");
 
@@ -1384,7 +1331,7 @@ impl Vecs {
         self.utxo_cohorts.compute_rest_part2(
             indexer,
             indexes,
-            fetched,
+            price,
             starting_indexes,
             market,
             height_to_supply,
@@ -1397,7 +1344,7 @@ impl Vecs {
         self.address_cohorts.compute_rest_part2(
             indexer,
             indexes,
-            fetched,
+            price,
             starting_indexes,
             market,
             height_to_supply,
@@ -1407,6 +1354,8 @@ impl Vecs {
             exit,
         )?;
 
+        self.file.flush()?;
+        self.file.punch_holes()?;
         Ok(())
     }
 
@@ -1423,16 +1372,16 @@ impl Vecs {
         >,
         addresstypeindex_to_anyaddressindex_reader_opt: &ByAddressType<Option<Reader>>,
         anyaddressindex_to_anyaddressdata_reader_opt: &ByAnyAddress<Option<Reader>>,
-        p2pk33addressindex_to_anyaddressindex: &StampedVec<P2PK33AddressIndex, AnyAddressIndex>,
-        p2pk65addressindex_to_anyaddressindex: &StampedVec<P2PK65AddressIndex, AnyAddressIndex>,
-        p2pkhaddressindex_to_anyaddressindex: &StampedVec<P2PKHAddressIndex, AnyAddressIndex>,
-        p2shaddressindex_to_anyaddressindex: &StampedVec<P2SHAddressIndex, AnyAddressIndex>,
-        p2traddressindex_to_anyaddressindex: &StampedVec<P2TRAddressIndex, AnyAddressIndex>,
-        p2wpkhaddressindex_to_anyaddressindex: &StampedVec<P2WPKHAddressIndex, AnyAddressIndex>,
-        p2wshaddressindex_to_anyaddressindex: &StampedVec<P2WSHAddressIndex, AnyAddressIndex>,
-        p2aaddressindex_to_anyaddressindex: &StampedVec<P2AAddressIndex, AnyAddressIndex>,
-        loadedaddressindex_to_loadedaddressdata: &StampedVec<LoadedAddressIndex, LoadedAddressData>,
-        emptyaddressindex_to_emptyaddressdata: &StampedVec<EmptyAddressIndex, EmptyAddressData>,
+        p2pk33addressindex_to_anyaddressindex: &RawVec<P2PK33AddressIndex, AnyAddressIndex>,
+        p2pk65addressindex_to_anyaddressindex: &RawVec<P2PK65AddressIndex, AnyAddressIndex>,
+        p2pkhaddressindex_to_anyaddressindex: &RawVec<P2PKHAddressIndex, AnyAddressIndex>,
+        p2shaddressindex_to_anyaddressindex: &RawVec<P2SHAddressIndex, AnyAddressIndex>,
+        p2traddressindex_to_anyaddressindex: &RawVec<P2TRAddressIndex, AnyAddressIndex>,
+        p2wpkhaddressindex_to_anyaddressindex: &RawVec<P2WPKHAddressIndex, AnyAddressIndex>,
+        p2wshaddressindex_to_anyaddressindex: &RawVec<P2WSHAddressIndex, AnyAddressIndex>,
+        p2aaddressindex_to_anyaddressindex: &RawVec<P2AAddressIndex, AnyAddressIndex>,
+        loadedaddressindex_to_loadedaddressdata: &RawVec<LoadedAddressIndex, LoadedAddressData>,
+        emptyaddressindex_to_emptyaddressdata: &RawVec<EmptyAddressIndex, EmptyAddressData>,
     ) -> Option<WithAddressDataSource<LoadedAddressData>> {
         if *first_addressindexes.get(address_type).unwrap() <= typeindex {
             return Some(WithAddressDataSource::New(LoadedAddressData::default()));
@@ -1643,7 +1592,8 @@ impl Vecs {
                                 emptyaddressdata,
                             )) => self
                                 .emptyaddressindex_to_emptyaddressdata
-                                .update(emptyaddressindex, emptyaddressdata),
+                                .update(emptyaddressindex, emptyaddressdata)
+                                .map_err(|e| e.into()),
                             WithAddressDataSource::FromLoadedAddressDataVec((
                                 loadedaddressindex,
                                 emptyaddressdata,
@@ -1695,7 +1645,8 @@ impl Vecs {
                                 loadedaddressdata,
                             )) => self
                                 .loadedaddressindex_to_loadedaddressdata
-                                .update(loadedaddressindex, loadedaddressdata),
+                                .update(loadedaddressindex, loadedaddressdata)
+                                .map_err(|e| e.into()),
                             WithAddressDataSource::FromEmptyAddressDataVec((
                                 emptyaddressindex,
                                 loadedaddressdata,
@@ -1753,30 +1704,31 @@ impl Vecs {
                                 .p2aaddressindex_to_anyaddressindex
                                 .update_or_push(typeindex.into(), anyaddressindex),
                             _ => unreachable!(),
-                        }
+                        }?;
+                        Ok(())
                     })
             })?;
 
         self.p2pk33addressindex_to_anyaddressindex
-            .flush(Stamp::from(u64::from(height)))?;
+            .stamped_flush(Stamp::from(height))?;
         self.p2pk65addressindex_to_anyaddressindex
-            .flush(Stamp::from(u64::from(height)))?;
+            .stamped_flush(Stamp::from(height))?;
         self.p2pkhaddressindex_to_anyaddressindex
-            .flush(Stamp::from(u64::from(height)))?;
+            .stamped_flush(Stamp::from(height))?;
         self.p2shaddressindex_to_anyaddressindex
-            .flush(Stamp::from(u64::from(height)))?;
+            .stamped_flush(Stamp::from(height))?;
         self.p2traddressindex_to_anyaddressindex
-            .flush(Stamp::from(u64::from(height)))?;
+            .stamped_flush(Stamp::from(height))?;
         self.p2wpkhaddressindex_to_anyaddressindex
-            .flush(Stamp::from(u64::from(height)))?;
+            .stamped_flush(Stamp::from(height))?;
         self.p2wshaddressindex_to_anyaddressindex
-            .flush(Stamp::from(u64::from(height)))?;
+            .stamped_flush(Stamp::from(height))?;
         self.p2aaddressindex_to_anyaddressindex
-            .flush(Stamp::from(u64::from(height)))?;
+            .stamped_flush(Stamp::from(height))?;
         self.loadedaddressindex_to_loadedaddressdata
-            .flush(Stamp::from(u64::from(height)))?;
+            .stamped_flush(Stamp::from(height))?;
         self.emptyaddressindex_to_emptyaddressdata
-            .flush(Stamp::from(u64::from(height)))?;
+            .stamped_flush(Stamp::from(height))?;
 
         self.chain_state.truncate_if_needed(Height::ZERO)?;
         chain_state.iter().for_each(|block_state| {
@@ -1838,8 +1790,8 @@ impl AddressTypeToVec<(TypeIndex, Sats)> {
             WithAddressDataSource<EmptyAddressData>,
         >,
         price: Option<Dollars>,
-        addresstype_to_address_count: &mut ByAddressType<usize>,
-        addresstype_to_empty_address_count: &mut ByAddressType<usize>,
+        addresstype_to_address_count: &mut ByAddressType<u64>,
+        addresstype_to_empty_address_count: &mut ByAddressType<u64>,
         stored_or_new_addresstype_to_typeindex_to_addressdatawithsource: &mut AddressTypeToTypeIndexTree<
             WithAddressDataSource<LoadedAddressData>,
         >,
@@ -1928,9 +1880,9 @@ impl HeightToAddressTypeToVec<(TypeIndex, Sats)> {
             WithAddressDataSource<EmptyAddressData>,
         >,
         price: Option<Dollars>,
-        addresstype_to_address_count: &mut ByAddressType<usize>,
-        addresstype_to_empty_address_count: &mut ByAddressType<usize>,
-        height_to_close_vec: Option<&Vec<brk_core::Close<Dollars>>>,
+        addresstype_to_address_count: &mut ByAddressType<u64>,
+        addresstype_to_empty_address_count: &mut ByAddressType<u64>,
+        height_to_close_vec: Option<&Vec<brk_structs::Close<Dollars>>>,
         height_to_timestamp_fixed_vec: &[Timestamp],
         height: Height,
         timestamp: Timestamp,

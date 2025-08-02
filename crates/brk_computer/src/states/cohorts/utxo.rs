@@ -1,6 +1,7 @@
 use std::path::Path;
 
-use brk_core::{Height, Result};
+use brk_error::Result;
+use brk_structs::Height;
 use derive_deref::{Deref, DerefMut};
 
 use super::CohortState;

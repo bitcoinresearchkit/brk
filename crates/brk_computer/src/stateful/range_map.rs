@@ -1,6 +1,6 @@
 use std::collections::BTreeMap;
 
-use brk_vecs::{StampedVec, StoredIndex, StoredType};
+use brk_vecs::{CompressedVec, RawVec, StoredCompressed, StoredIndex, StoredRaw};
 
 #[derive(Debug)]
 pub struct RangeMap<I, T>(BTreeMap<I, T>);
@@ -20,12 +20,26 @@ where
     }
 }
 
-impl<I, T> From<&StampedVec<I, T>> for RangeMap<T, I>
+impl<I, T> From<&RawVec<I, T>> for RangeMap<T, I>
 where
     I: StoredIndex,
-    T: StoredIndex + StoredType,
+    T: StoredIndex + StoredRaw,
 {
-    fn from(vec: &StampedVec<I, T>) -> Self {
+    fn from(vec: &RawVec<I, T>) -> Self {
+        Self(
+            vec.into_iter()
+                .map(|(i, v)| (v.into_owned(), i))
+                .collect::<BTreeMap<_, _>>(),
+        )
+    }
+}
+
+impl<I, T> From<&CompressedVec<I, T>> for RangeMap<T, I>
+where
+    I: StoredIndex,
+    T: StoredIndex + StoredCompressed,
+{
+    fn from(vec: &CompressedVec<I, T>) -> Self {
         Self(
             vec.into_iter()
                 .map(|(i, v)| (v.into_owned(), i))

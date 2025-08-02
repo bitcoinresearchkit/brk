@@ -1,6 +1,6 @@
 use std::ops::{Add, AddAssign};
 
-use brk_core::{ByAmountRange, GroupedByType, OutputType, Sats};
+use brk_structs::{ByAmountRange, GroupedByType, OutputType, Sats};
 
 use super::SupplyState;
 

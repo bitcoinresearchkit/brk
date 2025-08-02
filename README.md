@@ -23,12 +23,6 @@
   <a href="https://primal.net/p/nprofile1qqsfw5dacngjlahye34krvgz7u0yghhjgk7gxzl5ptm9v6n2y3sn03sqxu2e6">
     <img src="https://img.shields.io/badge/nostr-purple?link=https%3A%2F%2Fprimal.net%2Fp%2Fnprofile1qqsfw5dacngjlahye34krvgz7u0yghhjgk7gxzl5ptm9v6n2y3sn03sqxu2e6" alt="Nostr" />
   </a>
-  <a href="https://bsky.app/profile/bitcoinresearchkit.org">
-    <img src="https://img.shields.io/badge/bluesky-blue?link=https%3A%2F%2Fbsky.app%2Fprofile%2Fbitcoinresearchkit.org" alt="Bluesky" />
-  </a>
-  <a href="https://x.com/brkdotorg">
-    <img src="https://img.shields.io/badge/x.com-black" alt="X" />
-  </a>
 </p>
 
 The Bitcoin Research Kit is a high-performance toolchain designed to parse, index, compute, serve and visualize data from a Bitcoin node, enabling users to gain deeper insights into the Bitcoin network.
@@ -63,8 +57,7 @@ In contrast, existing alternatives tend to be either [very costly](https://studi
 - [`brk`](https://crates.io/crates/brk): Wrapper around all other `brk-*` crates
 - [`brk_cli`](https://crates.io/crates/brk_cli): A command line interface to run a Bitcoin Research Kit instance
 - [`brk_computer`](https://crates.io/crates/brk_computer): A Bitcoin dataset computer, built on top of brk_indexer
-- [`brk_core`](https://crates.io/crates/brk_core): The Core (Structs and Errors) of the Bitcoin Research Kit
-- [`brk_exit`](https://crates.io/crates/brk_exit): An exit blocker built on top of ctrlc
+- [`brk_structs`](https://crates.io/crates/brk_structs): The Core (Structs and Errors) of the Bitcoin Research Kit
 - [`brk_fetcher`](https://crates.io/crates/brk_fetcher): A Bitcoin price fetcher
 - [`brk_indexer`](https://crates.io/crates/brk_indexer): A Bitcoin Core indexer built on top of brk_parser
 - [`brk_logger`](https://crates.io/crates/brk_logger): A clean logger used in the Bitcoin Research Kit

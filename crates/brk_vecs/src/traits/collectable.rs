@@ -1,14 +1,12 @@
-use brk_core::{Error, Result};
+use crate::{Error, Result, i64_to_usize};
 
-use crate::i64_to_usize;
-
-use super::{AnyIterableVec, AnyVec, StoredIndex, StoredType};
+use super::{AnyIterableVec, AnyVec, StoredIndex, StoredRaw};
 
 pub trait CollectableVec<I, T>: AnyVec + AnyIterableVec<I, T>
 where
     Self: Clone,
     I: StoredIndex,
-    T: StoredType,
+    T: StoredRaw,
 {
     fn collect(&self) -> Result<Vec<T>> {
         self.collect_range(None, None)
@@ -63,7 +61,7 @@ impl<I, T, V> CollectableVec<I, T> for V
 where
     V: AnyVec + AnyIterableVec<I, T> + Clone,
     I: StoredIndex,
-    T: StoredType,
+    T: StoredRaw,
 {
 }
 

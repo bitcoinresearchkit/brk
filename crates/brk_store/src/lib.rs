@@ -11,7 +11,8 @@ use std::{
     path::Path,
 };
 
-use brk_core::{Height, Result, Version};
+use brk_error::Result;
+use brk_structs::{Height, Version};
 use byteview::ByteView;
 use fjall::{
     PartitionCreateOptions, PersistMode, ReadTransaction, TransactionalKeyspace,

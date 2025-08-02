@@ -5,16 +5,15 @@ use std::{
     sync::Arc,
 };
 
-use brk_core::{Error, Result, Version};
 use memmap2::Mmap;
 use parking_lot::{RwLock, RwLockReadGuard};
+use pco::data_types::Number;
 use rayon::prelude::*;
-use zstd::DEFAULT_COMPRESSION_LEVEL;
 
 use crate::{
-    AnyCollectableVec, AnyIterableVec, AnyVec, BaseVecIterator, BoxedVecIterator, CollectableVec,
-    File, GenericStoredVec, HEADER_OFFSET, Header, RawVec, Reader, StoredIndex, StoredType,
-    UnsafeSlice,
+    AnyCollectableVec, AnyIterableVec, AnyStoredVec, AnyVec, AsInnerSlice, BaseVecIterator,
+    BoxedVecIterator, CollectableVec, Error, File, FromInnerSlice, GenericStoredVec, HEADER_OFFSET,
+    Header, RawVec, Reader, Result, StoredCompressed, StoredIndex, UnsafeSlice, Version,
 };
 
 mod compressed_page_meta;
@@ -24,9 +23,8 @@ use compressed_page_meta::*;
 use compressed_pages_meta::*;
 
 const ONE_KIB: usize = 1024;
-const ONE_MIB: usize = ONE_KIB * ONE_KIB;
-pub const MAX_CACHE_SIZE: usize = 100 * ONE_MIB;
-pub const MAX_PAGE_SIZE: usize = 64 * ONE_KIB;
+const MAX_PAGE_SIZE: usize = 16 * ONE_KIB;
+const PCO_COMPRESSION_LEVEL: usize = 4;
 
 const VERSION: Version = Version::TWO;
 
@@ -39,11 +37,10 @@ pub struct CompressedVec<I, T> {
 impl<I, T> CompressedVec<I, T>
 where
     I: StoredIndex,
-    T: StoredType,
+    T: StoredCompressed,
 {
     pub const PER_PAGE: usize = MAX_PAGE_SIZE / Self::SIZE_OF_T;
     pub const PAGE_SIZE: usize = Self::PER_PAGE * Self::SIZE_OF_T;
-    pub const CACHE_LENGTH: usize = MAX_CACHE_SIZE / Self::PAGE_SIZE;
 
     /// Same as import but will reset the vec under certain errors, so be careful !
     pub fn forced_import(file: &Arc<File>, name: &str, mut version: Version) -> Result<Self> {
@@ -117,15 +114,12 @@ where
         let len = page.bytes_len as usize;
         let offset = page.start as usize;
 
-        let slice = reader.read(offset as u64, (offset + len) as u64);
+        let slice: &[u8] = reader.read(offset as u64, (offset + len) as u64);
 
-        Ok(zstd::decode_all(slice)
-            .inspect_err(|_| {
-                dbg!((len, offset, page_index, slice));
-            })?
-            .chunks(Self::SIZE_OF_T)
-            .map(|slice| T::try_read_from_bytes(slice).unwrap())
-            .collect::<Vec<_>>())
+        let vec: Vec<T::NumberType> = pco::standalone::simple_decompress(slice)?;
+        let vec: Vec<T> = T::from_inner_slice(vec);
+
+        Ok(vec)
     }
 
     fn compress_page(chunk: &[T]) -> Vec<u8> {
@@ -133,16 +127,7 @@ where
             panic!();
         }
 
-        let mut bytes: Vec<u8> = vec![0; chunk.len() * Self::SIZE_OF_T];
-
-        let unsafe_bytes = UnsafeSlice::new(&mut bytes);
-
-        chunk
-            .into_par_iter()
-            .enumerate()
-            .for_each(|(i, v)| unsafe_bytes.copy_slice(i * Self::SIZE_OF_T, v.as_bytes()));
-
-        zstd::encode_all(bytes.as_slice(), DEFAULT_COMPRESSION_LEVEL).unwrap()
+        pco::standalone::simpler_compress(chunk.as_inner_slice(), PCO_COMPRESSION_LEVEL).unwrap()
     }
 
     #[inline]
@@ -173,10 +158,50 @@ where
     }
 }
 
-impl<I, T> GenericStoredVec<I, T> for CompressedVec<I, T>
+impl<I, T> Clone for CompressedVec<I, T> {
+    fn clone(&self) -> Self {
+        Self {
+            inner: self.inner.clone(),
+            pages_meta: self.pages_meta.clone(),
+        }
+    }
+}
+
+impl<I, T> AnyVec for CompressedVec<I, T>
 where
     I: StoredIndex,
-    T: StoredType,
+    T: StoredCompressed,
+{
+    #[inline]
+    fn version(&self) -> Version {
+        self.inner.version()
+    }
+
+    #[inline]
+    fn name(&self) -> &str {
+        self.inner.name()
+    }
+
+    #[inline]
+    fn len(&self) -> usize {
+        self.len_()
+    }
+
+    #[inline]
+    fn index_type_to_string(&self) -> &'static str {
+        I::to_string()
+    }
+
+    #[inline]
+    fn value_type_to_size_of(&self) -> usize {
+        size_of::<T>()
+    }
+}
+
+impl<I, T> AnyStoredVec for CompressedVec<I, T>
+where
+    I: StoredIndex,
+    T: StoredCompressed,
 {
     fn file(&self) -> &File {
         self.inner.file()
@@ -184,17 +209,6 @@ where
 
     fn region_index(&self) -> usize {
         self.inner.region_index()
-    }
-
-    #[inline]
-    fn read_(&self, index: usize, reader: &Reader) -> Result<Option<T>> {
-        let page_index = Self::index_to_page_index(index);
-        let decoded_index = index % Self::PER_PAGE;
-
-        Ok(self
-            .decode_page(page_index, reader)?
-            .get(decoded_index)
-            .cloned())
     }
 
     fn header(&self) -> &Header {
@@ -208,31 +222,6 @@ where
     #[inline]
     fn stored_len(&self) -> usize {
         self.inner.stored_len()
-    }
-
-    #[inline]
-    fn pushed(&self) -> &[T] {
-        self.inner.pushed()
-    }
-    #[inline]
-    fn mut_pushed(&mut self) -> &mut Vec<T> {
-        self.inner.mut_pushed()
-    }
-    #[inline]
-    fn holes(&self) -> &BTreeSet<usize> {
-        self.inner.holes()
-    }
-    #[inline]
-    fn mut_holes(&mut self) -> &mut BTreeSet<usize> {
-        panic!("unsupported")
-    }
-    #[inline]
-    fn updated(&self) -> &BTreeMap<usize, T> {
-        self.inner.updated()
-    }
-    #[inline]
-    fn mut_updated(&mut self) -> &mut BTreeMap<usize, T> {
-        panic!("unsupported")
     }
 
     fn flush(&mut self) -> Result<()> {
@@ -321,6 +310,49 @@ where
 
         Ok(())
     }
+}
+
+impl<I, T> GenericStoredVec<I, T> for CompressedVec<I, T>
+where
+    I: StoredIndex,
+    T: StoredCompressed,
+{
+    #[inline]
+    fn read_(&self, index: usize, reader: &Reader) -> Result<T> {
+        let page_index = Self::index_to_page_index(index);
+        let decoded_index = index % Self::PER_PAGE;
+
+        Ok(unsafe {
+            self.decode_page(page_index, reader)?
+                .get_unchecked(decoded_index)
+                .clone()
+        })
+    }
+
+    #[inline]
+    fn pushed(&self) -> &[T] {
+        self.inner.pushed()
+    }
+    #[inline]
+    fn mut_pushed(&mut self) -> &mut Vec<T> {
+        self.inner.mut_pushed()
+    }
+    #[inline]
+    fn holes(&self) -> &BTreeSet<usize> {
+        self.inner.holes()
+    }
+    #[inline]
+    fn mut_holes(&mut self) -> &mut BTreeSet<usize> {
+        panic!("unsupported")
+    }
+    #[inline]
+    fn updated(&self) -> &BTreeMap<usize, T> {
+        self.inner.updated()
+    }
+    #[inline]
+    fn mut_updated(&mut self) -> &mut BTreeMap<usize, T> {
+        panic!("unsupported")
+    }
 
     fn reset(&mut self) -> Result<()> {
         // let mut pages_meta = (**self.pages_meta.load()).clone();
@@ -377,46 +409,6 @@ where
     }
 }
 
-impl<I, T> AnyVec for CompressedVec<I, T>
-where
-    I: StoredIndex,
-    T: StoredType,
-{
-    #[inline]
-    fn version(&self) -> Version {
-        self.inner.version()
-    }
-
-    #[inline]
-    fn name(&self) -> &str {
-        self.inner.name()
-    }
-
-    #[inline]
-    fn len(&self) -> usize {
-        self.len_()
-    }
-
-    #[inline]
-    fn index_type_to_string(&self) -> &'static str {
-        I::to_string()
-    }
-
-    #[inline]
-    fn value_type_to_size_of(&self) -> usize {
-        size_of::<T>()
-    }
-}
-
-impl<I, T> Clone for CompressedVec<I, T> {
-    fn clone(&self) -> Self {
-        Self {
-            inner: self.inner.clone(),
-            pages_meta: self.pages_meta.clone(),
-        }
-    }
-}
-
 #[derive(Debug)]
 pub struct CompressedVecIterator<'a, I, T> {
     vec: &'a CompressedVec<I, T>,
@@ -430,7 +422,7 @@ pub struct CompressedVecIterator<'a, I, T> {
 impl<I, T> CompressedVecIterator<'_, I, T>
 where
     I: StoredIndex,
-    T: StoredType,
+    T: StoredCompressed,
 {
     const SIZE_OF_T: usize = size_of::<T>();
     const PER_PAGE: usize = MAX_PAGE_SIZE / Self::SIZE_OF_T;
@@ -439,7 +431,7 @@ where
 impl<I, T> BaseVecIterator for CompressedVecIterator<'_, I, T>
 where
     I: StoredIndex,
-    T: StoredType,
+    T: StoredCompressed,
 {
     #[inline]
     fn mut_index(&mut self) -> &mut usize {
@@ -460,7 +452,7 @@ where
 impl<'a, I, T> Iterator for CompressedVecIterator<'a, I, T>
 where
     I: StoredIndex,
-    T: StoredType,
+    T: StoredCompressed,
 {
     type Item = (I, Cow<'a, T>);
 
@@ -508,7 +500,7 @@ where
 impl<'a, I, T> IntoIterator for &'a CompressedVec<I, T>
 where
     I: StoredIndex,
-    T: StoredType,
+    T: StoredCompressed,
 {
     type Item = (I, Cow<'a, T>);
     type IntoIter = CompressedVecIterator<'a, I, T>;
@@ -531,7 +523,7 @@ where
 impl<I, T> AnyIterableVec<I, T> for CompressedVec<I, T>
 where
     I: StoredIndex,
-    T: StoredType,
+    T: StoredCompressed,
 {
     fn boxed_iter<'a>(&'a self) -> BoxedVecIterator<'a, I, T>
     where
@@ -544,7 +536,7 @@ where
 impl<I, T> AnyCollectableVec for CompressedVec<I, T>
 where
     I: StoredIndex,
-    T: StoredType,
+    T: StoredCompressed,
 {
     fn collect_range_serde_json(
         &self,

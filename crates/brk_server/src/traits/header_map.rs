@@ -7,6 +7,7 @@ use axum::http::{
     HeaderMap,
     header::{self, IF_MODIFIED_SINCE, IF_NONE_MATCH},
 };
+use brk_error::Result;
 use jiff::{Timestamp, civil::DateTime, fmt::strtime, tz::TimeZone};
 
 const MODIFIED_SINCE_FORMAT: &str = "%a, %d %b %Y %H:%M:%S GMT";
@@ -23,12 +24,8 @@ pub trait HeaderMapExtended {
     fn get_if_none_match(&self) -> Option<&str>;
 
     fn get_if_modified_since(&self) -> Option<DateTime>;
-    fn check_if_modified_since(&self, path: &Path)
-    -> color_eyre::Result<(ModifiedState, DateTime)>;
-    fn check_if_modified_since_(
-        &self,
-        duration: Duration,
-    ) -> color_eyre::Result<(ModifiedState, DateTime)>;
+    fn check_if_modified_since(&self, path: &Path) -> Result<(ModifiedState, DateTime)>;
+    fn check_if_modified_since_(&self, duration: Duration) -> Result<(ModifiedState, DateTime)>;
 
     fn insert_cache_control_must_revalidate(&mut self);
     fn insert_cache_control_immutable(&mut self);
@@ -91,10 +88,7 @@ impl HeaderMapExtended for HeaderMap {
         self.insert(header::ETAG, etag.parse().unwrap());
     }
 
-    fn check_if_modified_since(
-        &self,
-        path: &Path,
-    ) -> color_eyre::Result<(ModifiedState, DateTime)> {
+    fn check_if_modified_since(&self, path: &Path) -> Result<(ModifiedState, DateTime)> {
         self.check_if_modified_since_(
             path.metadata()?
                 .modified()?
@@ -102,10 +96,7 @@ impl HeaderMapExtended for HeaderMap {
         )
     }
 
-    fn check_if_modified_since_(
-        &self,
-        duration: Duration,
-    ) -> color_eyre::Result<(ModifiedState, DateTime)> {
+    fn check_if_modified_since_(&self, duration: Duration) -> Result<(ModifiedState, DateTime)> {
         let date = Timestamp::new(duration.as_secs() as i64, 0)
             .unwrap()
             .to_zoned(TimeZone::UTC)

@@ -1,14 +1,14 @@
 use std::sync::Arc;
 
-use brk_core::{Bitcoin, Close, Dollars, Height, Sats, TxIndex, Version};
-use brk_exit::Exit;
+use brk_error::Result;
 use brk_indexer::Indexer;
+use brk_structs::{Bitcoin, Close, Dollars, Height, Sats, TxIndex, Version};
 use brk_vecs::{
-    AnyCollectableVec, CloneableAnyIterableVec, CollectableVec, Computation, ComputedVecFrom3,
-    File, Format, LazyVecFrom1, StoredIndex, StoredVec,
+    AnyCloneableIterableVec, AnyCollectableVec, CollectableVec, Computation, ComputedVecFrom3,
+    Exit, File, Format, LazyVecFrom1, StoredIndex, StoredVec,
 };
 
-use crate::{Indexes, fetched, grouped::Source, indexes};
+use crate::{Indexes, grouped::Source, indexes, price};
 
 use super::{ComputedVecsFromTxindex, VecBuilderOptions};
 
@@ -45,10 +45,10 @@ impl ComputedValueVecsFromTxindex {
         version: Version,
         computation: Computation,
         format: Format,
-        fetched: Option<&fetched::Vecs>,
+        price: Option<&price::Vecs>,
         options: VecBuilderOptions,
-    ) -> color_eyre::Result<Self> {
-        let compute_dollars = fetched.is_some();
+    ) -> Result<Self> {
+        let compute_dollars = price.is_some();
 
         let name_in_btc = format!("{name}_in_btc");
         let name_in_usd = format!("{name}_in_usd");
@@ -89,7 +89,7 @@ impl ComputedValueVecsFromTxindex {
             options,
         )?;
 
-        let dollars_txindex = fetched.map(|fetched| {
+        let dollars_txindex = price.map(|price| {
             ComputedVecFrom3::forced_import_or_init_from_3(
                 computation,
                 file,
@@ -98,7 +98,7 @@ impl ComputedValueVecsFromTxindex {
                 format,
                 bitcoin_txindex.boxed_clone(),
                 indexes.txindex_to_height.boxed_clone(),
-                fetched.chainindexes_to_close.height.boxed_clone(),
+                price.chainindexes_to_close.height.boxed_clone(),
                 |txindex: TxIndex,
                  txindex_to_btc_iter,
                  txindex_to_height_iter,
@@ -145,11 +145,11 @@ impl ComputedValueVecsFromTxindex {
     //     &mut self,
     //     indexer: &Indexer,
     //     indexes: &indexes::Vecs,
-    //     fetched: Option<&marketprice::Vecs>,
+    //     price: Option<&marketprice::Vecs>,
     //     starting_indexes: &Indexes,
     //     exit: &Exit,
     //     mut compute: F,
-    // ) -> color_eyre::Result<()>
+    // ) -> Result<()>
     // where
     //     F: FnMut(
     //         &mut EagerVec<TxIndex, Sats>,
@@ -187,8 +187,8 @@ impl ComputedValueVecsFromTxindex {
         starting_indexes: &Indexes,
         exit: &Exit,
         txindex: Option<&impl CollectableVec<TxIndex, Sats>>,
-        fetched: Option<&fetched::Vecs>,
-    ) -> color_eyre::Result<()> {
+        price: Option<&price::Vecs>,
+    ) -> Result<()> {
         if let Some(txindex) = txindex {
             self.sats
                 .compute_rest(indexer, indexes, starting_indexes, exit, Some(txindex))?;
@@ -223,7 +223,7 @@ impl ComputedValueVecsFromTxindex {
                 exit,
                 &self.bitcoin,
                 Some(dollars_txindex),
-                fetched.as_ref().unwrap(),
+                price.as_ref().unwrap(),
             )?;
         }
 

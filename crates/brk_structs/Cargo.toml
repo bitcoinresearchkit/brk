@@ -1,0 +1,27 @@
+[package]
+name = "brk_structs"
+description = "Structs used throughout the Bitcoin Research Kit"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+homepage.workspace = true
+repository.workspace = true
+
+[dependencies]
+bitcoin = { workspace = true }
+bitcoincore-rpc = { workspace = true }
+brk_error = {workspace = true}
+brk_vecs = {workspace = true}
+byteview = { workspace = true }
+derive_deref = { workspace = true }
+fjall = { workspace = true }
+jiff = { workspace = true }
+rapidhash = "2.0.2"
+serde = { workspace = true }
+serde_bytes = { workspace = true }
+serde_json = { workspace = true }
+zerocopy = { workspace = true }
+zerocopy-derive = { workspace = true }
+
+[package.metadata.cargo-machete]
+ignored = ["serde_bytes"]

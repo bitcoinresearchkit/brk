@@ -1,13 +1,14 @@
 use std::sync::Arc;
 
-use brk_core::{
-    DateIndex, DecadeIndex, MonthIndex, QuarterIndex, Result, SemesterIndex, Version, WeekIndex,
-    YearIndex,
-};
-use brk_exit::Exit;
+use brk_error::Result;
+
 use brk_indexer::Indexer;
+use brk_structs::{
+    DateIndex, DecadeIndex, MonthIndex, QuarterIndex, SemesterIndex, Version, WeekIndex, YearIndex,
+};
 use brk_vecs::{
-    AnyCollectableVec, AnyIterableVec, CloneableAnyIterableVec, Computation, EagerVec, File, Format,
+    AnyCloneableIterableVec, AnyCollectableVec, AnyIterableVec, Computation, EagerVec, Exit, File,
+    Format,
 };
 
 use crate::{Indexes, grouped::ComputedVecBuilder, indexes};
@@ -45,7 +46,7 @@ where
         computation: Computation,
         indexes: &indexes::Vecs,
         options: VecBuilderOptions,
-    ) -> color_eyre::Result<Self> {
+    ) -> Result<Self> {
         let dateindex = source.is_compute().then(|| {
             EagerVec::forced_import(file, name, version + VERSION + Version::ZERO, format).unwrap()
         });
@@ -141,7 +142,7 @@ where
         starting_indexes: &Indexes,
         exit: &Exit,
         mut compute: F,
-    ) -> color_eyre::Result<()>
+    ) -> Result<()>
     where
         F: FnMut(
             &mut EagerVec<DateIndex, T>,
@@ -169,7 +170,7 @@ where
         starting_indexes: &Indexes,
         exit: &Exit,
         dateindex: Option<&impl AnyIterableVec<DateIndex, T>>,
-    ) -> color_eyre::Result<()> {
+    ) -> Result<()> {
         if let Some(dateindex) = dateindex {
             self.dateindex_extra
                 .extend(starting_indexes.dateindex, dateindex, exit)?;

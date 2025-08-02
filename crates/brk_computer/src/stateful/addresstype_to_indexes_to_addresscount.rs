@@ -1,6 +1,6 @@
-use brk_core::{ByAddressType, StoredUsize};
-use brk_exit::Exit;
-use brk_vecs::AnyCollectableVec;
+use brk_error::Result;
+use brk_structs::{ByAddressType, StoredU64};
+use brk_vecs::{AnyCollectableVec, Exit};
 use derive_deref::{Deref, DerefMut};
 
 use crate::{
@@ -9,12 +9,10 @@ use crate::{
 };
 
 #[derive(Clone, Deref, DerefMut)]
-pub struct AddressTypeToIndexesToAddressCount(ByAddressType<ComputedVecsFromHeight<StoredUsize>>);
+pub struct AddressTypeToIndexesToAddressCount(ByAddressType<ComputedVecsFromHeight<StoredU64>>);
 
-impl From<ByAddressType<ComputedVecsFromHeight<StoredUsize>>>
-    for AddressTypeToIndexesToAddressCount
-{
-    fn from(value: ByAddressType<ComputedVecsFromHeight<StoredUsize>>) -> Self {
+impl From<ByAddressType<ComputedVecsFromHeight<StoredU64>>> for AddressTypeToIndexesToAddressCount {
+    fn from(value: ByAddressType<ComputedVecsFromHeight<StoredU64>>) -> Self {
         Self(value)
     }
 }
@@ -27,7 +25,7 @@ impl AddressTypeToIndexesToAddressCount {
         starting_indexes: &Indexes,
         exit: &Exit,
         addresstype_to_height_to_addresscount: &AddressTypeToHeightToAddressCount,
-    ) -> color_eyre::Result<()> {
+    ) -> Result<()> {
         self.p2pk65.compute_rest(
             indexes,
             starting_indexes,

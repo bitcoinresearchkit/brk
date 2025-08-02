@@ -4,14 +4,16 @@ use std::{
 };
 
 use bitcoincore_rpc::{self, Auth, Client};
-use brk_core::{default_bitcoin_path, default_brk_path, default_on_error, dot_brk_path};
 use brk_fetcher::Fetcher;
 use brk_server::Website;
-use brk_vecs::{Computation, Format};
 use clap::Parser;
 use clap_derive::Parser;
 use color_eyre::eyre::eyre;
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Deserializer, Serialize};
+
+use crate::{default_bitcoin_path, default_brk_path, dot_brk_path};
+
+const DOWNLOADS: &str = "downloads";
 
 #[derive(Parser, Debug, Default, PartialEq, Eq, PartialOrd, Ord, Deserialize, Serialize)]
 #[command(version, about)]
@@ -30,16 +32,6 @@ pub struct Config {
     #[serde(default, deserialize_with = "default_on_error")]
     #[arg(long, value_name = "PATH")]
     brkdir: Option<String>,
-
-    /// Computation of computed datasets, `lazy` computes data whenever requested without saving it, `eager` computes the data once and saves it to disk, default: `lazy`, saved
-    #[serde(default, deserialize_with = "default_on_error")]
-    #[arg(short, long)]
-    computation: Option<Computation>,
-
-    /// Format of computed datasets, `compressed` to save disk space (experimental), `raw` to prioritize speed, default: `raw`, saved
-    #[serde(default, deserialize_with = "default_on_error")]
-    #[arg(short, long)]
-    format: Option<Format>,
 
     /// Activate fetching prices from exchanges APIs and the computation of all related datasets, default: true, saved
     #[serde(default, deserialize_with = "default_on_error")]
@@ -122,16 +114,8 @@ impl Config {
                 config_saved.brkdir = Some(brkdir);
             }
 
-            if let Some(computation) = config_args.computation.take() {
-                config_saved.computation = Some(computation);
-            }
-
             if let Some(fetch) = config_args.fetch.take() {
                 config_saved.fetch = Some(fetch);
-            }
-
-            if let Some(format) = config_args.format.take() {
-                config_saved.format = Some(format);
             }
 
             if let Some(website) = config_args.website.take() {
@@ -291,6 +275,10 @@ impl Config {
         self.brkdir().join("hars")
     }
 
+    pub fn downloads_dir(&self) -> PathBuf {
+        dot_brk_path().join(DOWNLOADS)
+    }
+
     fn path_cookiefile(&self) -> PathBuf {
         self.rpccookiefile.as_ref().map_or_else(
             || self.bitcoindir().join(".cookie"),
@@ -329,14 +317,6 @@ impl Config {
             .then(|| Fetcher::import(Some(self.harsdir().as_path())).unwrap())
     }
 
-    pub fn computation(&self) -> Computation {
-        self.computation.unwrap_or_default()
-    }
-
-    pub fn format(&self) -> Format {
-        self.format.unwrap_or_default()
-    }
-
     pub fn check_collisions(&self) -> bool {
         self.check_collisions.is_some_and(|b| b)
     }
@@ -347,5 +327,16 @@ impl Config {
 
     pub fn watch(&self) -> bool {
         self.watch.is_some_and(|b| b)
+    }
+}
+
+fn default_on_error<'de, D, T>(deserializer: D) -> Result<T, D::Error>
+where
+    D: Deserializer<'de>,
+    T: Deserialize<'de> + Default,
+{
+    match T::deserialize(deserializer) {
+        Ok(v) => Ok(v),
+        Err(_) => Ok(T::default()),
     }
 }

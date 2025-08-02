@@ -1,11 +1,16 @@
 use std::sync::Arc;
 
-use brk_core::{Bitcoin, Dollars, Height, Result, Sats, Version};
-use brk_exit::Exit;
+use brk_error::Result;
 use brk_indexer::Indexer;
-use brk_vecs::{AnyCollectableVec, CollectableVec, EagerVec, File, Format, StoredVec};
+use brk_structs::{Bitcoin, Dollars, Height, Sats, Version};
+use brk_vecs::{AnyCollectableVec, CollectableVec, EagerVec, Exit, File, Format, StoredVec};
 
-use crate::{Indexes, fetched, grouped::Source, indexes};
+use crate::{
+    Indexes,
+    grouped::Source,
+    indexes, price,
+    traits::{ComputeFromBitcoin, ComputeFromSats},
+};
 
 #[derive(Clone)]
 pub struct ComputedHeightValueVecs {
@@ -24,7 +29,7 @@ impl ComputedHeightValueVecs {
         version: Version,
         format: Format,
         compute_dollars: bool,
-    ) -> color_eyre::Result<Self> {
+    ) -> Result<Self> {
         Ok(Self {
             sats: source.is_compute().then(|| {
                 EagerVec::forced_import(file, name, version + VERSION + Version::ZERO, format)
@@ -52,11 +57,11 @@ impl ComputedHeightValueVecs {
         &mut self,
         indexer: &Indexer,
         indexes: &indexes::Vecs,
-        fetched: Option<&fetched::Vecs>,
+        price: Option<&price::Vecs>,
         starting_indexes: &Indexes,
         exit: &Exit,
         mut compute: F,
-    ) -> color_eyre::Result<()>
+    ) -> Result<()>
     where
         F: FnMut(
             &mut EagerVec<Height, Sats>,
@@ -75,18 +80,18 @@ impl ComputedHeightValueVecs {
         )?;
 
         let height: Option<&StoredVec<Height, Sats>> = None;
-        self.compute_rest(fetched, starting_indexes, exit, height)?;
+        self.compute_rest(price, starting_indexes, exit, height)?;
 
         Ok(())
     }
 
     pub fn compute_rest(
         &mut self,
-        fetched: Option<&fetched::Vecs>,
+        price: Option<&price::Vecs>,
         starting_indexes: &Indexes,
         exit: &Exit,
         height: Option<&impl CollectableVec<Height, Sats>>,
-    ) -> color_eyre::Result<()> {
+    ) -> Result<()> {
         if let Some(height) = height {
             self.bitcoin
                 .compute_from_sats(starting_indexes.height, height, exit)?;
@@ -99,7 +104,7 @@ impl ComputedHeightValueVecs {
         }
 
         let height_to_bitcoin = &self.bitcoin;
-        let height_to_close = &fetched.as_ref().unwrap().chainindexes_to_close.height;
+        let height_to_close = &price.as_ref().unwrap().chainindexes_to_close.height;
 
         if let Some(dollars) = self.dollars.as_mut() {
             dollars.compute_from_bitcoin(

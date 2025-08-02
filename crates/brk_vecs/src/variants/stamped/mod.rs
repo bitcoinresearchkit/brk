@@ -1,10 +1,9 @@
 use std::{borrow::Cow, cmp::Ordering, fmt::Debug, sync::Arc};
 
-use brk_core::{Error, Result, Version};
-
 use crate::{
-    AnyCollectableVec, AnyIterableVec, AnyVec, BoxedVecIterator, CollectableVec, File, Format,
-    GenericStoredVec, Header, StoredIndex, StoredType, StoredVec, file::Reader,
+    AnyCollectableVec, AnyIterableVec, AnyVec, BoxedVecIterator, CollectableVec, Error, File,
+    Format, GenericStoredVec, Header, Result, StoredCompressed, StoredIndex, StoredVec, Version,
+    file::Reader,
 };
 
 use super::StoredVecIterator;
@@ -19,7 +18,7 @@ pub struct StampedVec<I, T>(StoredVec<I, T>);
 impl<I, T> StampedVec<I, T>
 where
     I: StoredIndex,
-    T: StoredType,
+    T: StoredCompressed,
 {
     pub fn forced_import(
         file: &Arc<File>,
@@ -36,7 +35,10 @@ where
     }
 
     #[inline]
-    pub fn get_or_read(&self, index: I, reader: &Reader) -> Result<Option<Cow<T>>> {
+    pub fn get_or_read<'a, 'b>(&'a self, index: I, reader: &'b Reader) -> Result<Option<Cow<'b, T>>>
+    where
+        'a: 'b,
+    {
         self.0.get_or_read(index, reader)
     }
 
@@ -142,7 +144,7 @@ where
 impl<I, T> AnyVec for StampedVec<I, T>
 where
     I: StoredIndex,
-    T: StoredType,
+    T: StoredCompressed,
 {
     #[inline]
     fn version(&self) -> Version {
@@ -178,7 +180,7 @@ pub trait AnyStampedVec: AnyVec {
 impl<I, T> AnyStampedVec for StampedVec<I, T>
 where
     I: StoredIndex,
-    T: StoredType,
+    T: StoredCompressed,
 {
     fn stamp(&self) -> Stamp {
         self.0.header().stamp()
@@ -192,7 +194,7 @@ where
 impl<'a, I, T> IntoIterator for &'a StampedVec<I, T>
 where
     I: StoredIndex,
-    T: StoredType,
+    T: StoredCompressed,
 {
     type Item = (I, Cow<'a, T>);
     type IntoIter = StoredVecIterator<'a, I, T>;
@@ -205,7 +207,7 @@ where
 impl<I, T> AnyIterableVec<I, T> for StampedVec<I, T>
 where
     I: StoredIndex,
-    T: StoredType,
+    T: StoredCompressed,
 {
     fn boxed_iter<'a>(&'a self) -> BoxedVecIterator<'a, I, T>
     where
@@ -218,7 +220,7 @@ where
 impl<I, T> AnyCollectableVec for StampedVec<I, T>
 where
     I: StoredIndex,
-    T: StoredType,
+    T: StoredCompressed,
 {
     fn collect_range_serde_json(
         &self,

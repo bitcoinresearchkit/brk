@@ -1,9 +1,8 @@
-use brk_core::{Date, Height};
+use brk_error::Result;
 use brk_fetcher::{BRK, Binance, Fetcher, Kraken};
+use brk_structs::{Date, Height};
 
-fn main() -> color_eyre::Result<()> {
-    color_eyre::install()?;
-
+fn main() -> Result<()> {
     brk_logger::init(None);
 
     let mut brk = BRK::default();

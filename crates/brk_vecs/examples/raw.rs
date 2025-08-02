@@ -1,11 +1,12 @@
 use std::{fs, path::Path, sync::Arc};
 
-use brk_core::{DateIndex, Version};
-use brk_vecs::{AnyVec, CollectableVec, File, GenericStoredVec, RawVec, Stamp, VecIterator};
+use brk_vecs::{
+    AnyStoredVec, AnyVec, CollectableVec, File, GenericStoredVec, RawVec, Stamp, VecIterator,
+    Version,
+};
 
-type I = DateIndex;
 #[allow(clippy::upper_case_acronyms)]
-type VEC = RawVec<I, u32>;
+type VEC = RawVec<usize, u32>;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let _ = fs::remove_dir_all("raw");
@@ -23,11 +24,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         });
 
         let mut iter = vec.into_iter();
-        dbg!(iter.get(0.into()));
-        dbg!(iter.get(1.into()));
-        dbg!(iter.get(2.into()));
-        dbg!(iter.get(20.into()));
-        dbg!(iter.get(21.into()));
+        dbg!(iter.get(0));
+        dbg!(iter.get(1));
+        dbg!(iter.get(2));
+        dbg!(iter.get(20));
+        dbg!(iter.get(21));
         drop(iter);
 
         vec.flush()?;
@@ -41,25 +42,25 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         vec.mut_header().update_stamp(Stamp::new(100));
 
         let mut iter = vec.into_iter();
-        dbg!(iter.get(0.into()));
-        dbg!(iter.get(1.into()));
-        dbg!(iter.get(2.into()));
-        dbg!(iter.get(3.into()));
-        dbg!(iter.get(4.into()));
-        dbg!(iter.get(5.into()));
-        dbg!(iter.get(20.into()));
-        dbg!(iter.get(20.into()));
-        dbg!(iter.get(0.into()));
+        dbg!(iter.get(0));
+        dbg!(iter.get(1));
+        dbg!(iter.get(2));
+        dbg!(iter.get(3));
+        dbg!(iter.get(4));
+        dbg!(iter.get(5));
+        dbg!(iter.get(20));
+        dbg!(iter.get(20));
+        dbg!(iter.get(0));
         drop(iter);
 
         vec.push(21);
         vec.push(22);
 
         let mut iter = vec.into_iter();
-        dbg!(iter.get(20.into()));
-        dbg!(iter.get(21.into()));
-        dbg!(iter.get(22.into()));
-        dbg!(iter.get(23.into()));
+        dbg!(iter.get(20));
+        dbg!(iter.get(21));
+        dbg!(iter.get(22));
+        dbg!(iter.get(23));
         drop(iter);
 
         vec.flush()?;
@@ -69,18 +70,18 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         let mut vec: VEC = RawVec::forced_import(&file, "vec", version)?;
 
         let mut iter = vec.into_iter();
-        dbg!(iter.get(0.into()));
-        dbg!(iter.get(20.into()));
-        dbg!(iter.get(21.into()));
-        dbg!(iter.get(22.into()));
+        dbg!(iter.get(0));
+        dbg!(iter.get(20));
+        dbg!(iter.get(21));
+        dbg!(iter.get(22));
         drop(iter);
 
-        vec.truncate_if_needed(14.into())?;
+        vec.truncate_if_needed(14)?;
 
         let mut iter = vec.into_iter();
-        dbg!(iter.get(0.into()));
-        dbg!(iter.get(5.into()));
-        dbg!(iter.get(20.into()));
+        dbg!(iter.get(0));
+        dbg!(iter.get(5));
+        dbg!(iter.get(20));
         drop(iter);
 
         dbg!(vec.collect_signed_range(Some(-5), None)?);
@@ -103,14 +104,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         });
 
         let mut iter = vec.into_iter();
-        dbg!(iter.get(0.into()));
-        dbg!(iter.get(20.into()));
-        dbg!(iter.get(21.into()));
+        dbg!(iter.get(0));
+        dbg!(iter.get(20));
+        dbg!(iter.get(21));
         drop(iter);
 
         let reader = vec.create_static_reader();
-        dbg!(vec.take(10.into(), &reader)?);
-        dbg!(vec.get_or_read(10.into(), &reader)?);
+        dbg!(vec.take(10, &reader)?);
+        dbg!(vec.get_or_read(10, &reader)?);
         dbg!(vec.holes());
         drop(reader);
 
@@ -124,17 +125,17 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         dbg!(vec.holes());
 
         let reader = vec.create_static_reader();
-        dbg!(vec.get_or_read(10.into(), &reader)?);
+        dbg!(vec.get_or_read(10, &reader)?);
         drop(reader);
 
-        vec.update(10.into(), 10)?;
-        vec.update(0.into(), 10)?;
+        vec.update(10, 10)?;
+        vec.update(0, 10)?;
 
         let reader = vec.create_static_reader();
         dbg!(
             vec.holes(),
-            vec.get_or_read(0.into(), &reader)?,
-            vec.get_or_read(10.into(), &reader)?
+            vec.get_or_read(0, &reader)?,
+            vec.get_or_read(10, &reader)?
         );
         drop(reader);
 

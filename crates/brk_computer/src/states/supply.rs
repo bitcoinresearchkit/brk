@@ -1,12 +1,12 @@
 use std::ops::{Add, AddAssign, SubAssign};
 
-use brk_core::{CheckedSub, LoadedAddressData, Sats};
+use brk_structs::{CheckedSub, LoadedAddressData, Sats};
 use serde::Serialize;
 use zerocopy_derive::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 #[derive(Debug, Default, Clone, FromBytes, Immutable, IntoBytes, KnownLayout, Serialize)]
 pub struct SupplyState {
-    pub utxos: usize,
+    pub utxos: u64,
     pub value: Sats,
 }
 
@@ -43,7 +43,7 @@ impl SubAssign<&SupplyState> for SupplyState {
 impl From<&LoadedAddressData> for SupplyState {
     fn from(value: &LoadedAddressData) -> Self {
         Self {
-            utxos: value.outputs_len as usize,
+            utxos: value.outputs_len as u64,
             value: value.amount(),
         }
     }

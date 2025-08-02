@@ -1,9 +1,6 @@
-use clap_derive::ValueEnum;
 use serde::{Deserialize, Serialize};
 
-#[derive(
-    Default, Debug, PartialEq, PartialOrd, Ord, Eq, Clone, Copy, Serialize, Deserialize, ValueEnum,
-)]
+#[derive(Default, Debug, PartialEq, PartialOrd, Ord, Eq, Clone, Copy, Serialize, Deserialize)]
 pub enum Computation {
     Eager,
     #[default]

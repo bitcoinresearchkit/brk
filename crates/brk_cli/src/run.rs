@@ -2,9 +2,9 @@ use std::{thread::sleep, time::Duration};
 
 use bitcoincore_rpc::{self, RpcApi};
 use brk_computer::Computer;
-use brk_exit::Exit;
 use brk_indexer::Indexer;
 use brk_server::Server;
+use brk_vecs::Exit;
 use log::info;
 
 use crate::config::Config;
@@ -13,10 +13,11 @@ pub fn run() -> color_eyre::Result<()> {
     let config = Config::import()?;
 
     let rpc = config.rpc()?;
-    let exit = Exit::new();
-    let parser = brk_parser::Parser::new(config.blocksdir(), config.brkdir(), rpc);
 
-    let format = config.format();
+    let exit = Exit::new();
+    exit.set_ctrlc_handler();
+
+    let parser = brk_parser::Parser::new(config.blocksdir(), config.brkdir(), rpc);
 
     let mut indexer = Indexer::forced_import(&config.brkdir())?;
 
@@ -36,13 +37,7 @@ pub fn run() -> color_eyre::Result<()> {
         Ok(())
     };
 
-    let mut computer = Computer::forced_import(
-        &config.brkdir(),
-        &indexer,
-        config.computation(),
-        config.fetcher(),
-        format,
-    )?;
+    let mut computer = Computer::forced_import(&config.brkdir(), &indexer, config.fetcher())?;
 
     tokio::runtime::Builder::new_multi_thread()
         .enable_all()
@@ -51,7 +46,12 @@ pub fn run() -> color_eyre::Result<()> {
             let served_indexer = indexer.clone();
             let served_computer = computer.clone();
 
-            let server = Server::new(served_indexer, served_computer, config.website())?;
+            let server = Server::new(
+                served_indexer,
+                served_computer,
+                config.website(),
+                &config.downloads_dir(),
+            )?;
 
             let watch = config.watch();
             let mcp = config.mcp();
@@ -72,7 +72,7 @@ pub fn run() -> color_eyre::Result<()> {
                 let starting_indexes =
                     indexer.index(&parser, rpc, &exit, config.check_collisions())?;
 
-                computer.compute(&mut indexer, starting_indexes, &exit)?;
+                computer.compute(&indexer, starting_indexes, &exit)?;
 
                 if let Some(delay) = config.delay() {
                     sleep(Duration::from_secs(delay))

@@ -6,9 +6,10 @@
 use std::collections::BTreeMap;
 
 use brk_computer::Computer;
-use brk_core::{Height, Result};
+use brk_error::Result;
 use brk_indexer::Indexer;
-use brk_vecs::{AnyCollectableVec, AnyStampedVec};
+use brk_structs::Height;
+use brk_vecs::{AnyCollectableVec, AnyStoredVec};
 use tabled::settings::Style;
 
 mod deser;
@@ -88,7 +89,7 @@ impl<'a> Interface<'a> {
         &self,
         vecs: Vec<(String, &&dyn AnyCollectableVec)>,
         params: &ParamsOpt,
-    ) -> color_eyre::Result<Output> {
+    ) -> Result<Output> {
         let from = params.from().map(|from| {
             vecs.iter()
                 .map(|(_, v)| v.i64_to_usize(from))
@@ -106,7 +107,7 @@ impl<'a> Interface<'a> {
         let mut values = vecs
             .iter()
             .map(|(_, vec)| -> Result<Vec<serde_json::Value>> {
-                vec.collect_range_serde_json(from, to)
+                Ok(vec.collect_range_serde_json(from, to)?)
             })
             .collect::<Result<Vec<_>>>()?;
 
@@ -179,7 +180,7 @@ impl<'a> Interface<'a> {
         })
     }
 
-    pub fn search_and_format(&self, params: Params) -> color_eyre::Result<Output> {
+    pub fn search_and_format(&self, params: Params) -> Result<Output> {
         self.format(self.search(&params), &params.rest)
     }
 

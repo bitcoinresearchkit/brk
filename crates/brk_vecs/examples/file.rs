@@ -1,7 +1,6 @@
 use std::{fs, path::Path};
 
-use brk_core::Result;
-use brk_vecs::{File, PAGE_SIZE};
+use brk_vecs::{File, PAGE_SIZE, Result};
 
 fn main() -> Result<()> {
     let _ = fs::remove_dir_all("vecs");

@@ -4,23 +4,21 @@ use std::{
     collections::{BTreeMap, BTreeSet},
 };
 
-use brk_core::{Error, Result};
+use crate::{AnyStoredVec, Error, Exit, HEADER_OFFSET, Result, Stamp, file::Reader};
 
-use crate::{AnyVec, File, HEADER_OFFSET, Header, file::Reader};
+const ONE_KIB: usize = 1024;
+const ONE_MIB: usize = ONE_KIB * ONE_KIB;
+const MAX_CACHE_SIZE: usize = 256 * ONE_MIB;
 
-use super::{StoredIndex, StoredType};
+use super::{StoredIndex, StoredRaw};
 
 pub trait GenericStoredVec<I, T>: Send + Sync
 where
-    Self: AnyVec,
+    Self: AnyStoredVec,
     I: StoredIndex,
-    T: StoredType,
+    T: StoredRaw,
 {
     const SIZE_OF_T: usize = size_of::<T>();
-
-    fn file(&self) -> &File;
-
-    fn region_index(&self) -> usize;
 
     /// Be careful with deadlocks
     ///
@@ -44,13 +42,13 @@ where
 
     #[inline]
     fn unwrap_read(&self, index: I, reader: &Reader) -> T {
-        self.read(index, reader).unwrap().unwrap()
+        self.read(index, reader).unwrap()
     }
     #[inline]
-    fn read(&self, index: I, reader: &Reader) -> Result<Option<T>> {
+    fn read(&self, index: I, reader: &Reader) -> Result<T> {
         self.read_(index.to_usize()?, reader)
     }
-    fn read_(&self, index: usize, reader: &Reader) -> Result<Option<T>>;
+    fn read_(&self, index: usize, reader: &Reader) -> Result<T>;
 
     #[inline]
     fn get_or_read(&self, index: I, reader: &Reader) -> Result<Option<Cow<T>>> {
@@ -81,15 +79,13 @@ where
             return Ok(None);
         }
 
-        Ok(self.read_(index, reader)?.map(Cow::Owned))
+        Ok(Some(Cow::Owned(self.read_(index, reader)?)))
     }
 
     #[inline]
     fn len_(&self) -> usize {
         self.stored_len() + self.pushed_len()
     }
-
-    fn stored_len(&self) -> usize;
 
     fn pushed(&self) -> &[T];
     #[inline]
@@ -100,6 +96,47 @@ where
     #[inline]
     fn push(&mut self, value: T) {
         self.mut_pushed().push(value)
+    }
+
+    #[inline]
+    fn push_if_needed(&mut self, index: I, value: T) -> Result<()> {
+        let len = self.len();
+        match len.cmp(&index.to_usize()?) {
+            Ordering::Greater => {
+                // dbg!(len, index, &self.pathbuf);
+                // panic!();
+                Ok(())
+            }
+            Ordering::Equal => {
+                self.push(value);
+                Ok(())
+            }
+            Ordering::Less => {
+                dbg!(index, value, len, self.header());
+                Err(Error::IndexTooHigh)
+            }
+        }
+    }
+
+    #[inline]
+    fn forced_push_at(&mut self, index: I, value: T, exit: &Exit) -> Result<()> {
+        match self.len().cmp(&index.to_usize()?) {
+            Ordering::Less => {
+                return Err(Error::IndexTooHigh);
+            }
+            ord => {
+                if ord == Ordering::Greater {
+                    self.safe_truncate_if_needed(index, exit)?;
+                }
+                self.push(value);
+            }
+        }
+
+        if self.pushed_len() * Self::SIZE_OF_T >= MAX_CACHE_SIZE {
+            self.safe_flush(exit)
+        } else {
+            Ok(())
+        }
     }
 
     #[inline]
@@ -191,9 +228,6 @@ where
         Ok(())
     }
 
-    fn header(&self) -> &Header;
-    fn mut_header(&mut self) -> &mut Header;
-
     fn reset(&mut self) -> Result<()>;
 
     #[inline]
@@ -217,9 +251,18 @@ where
         index < self.len_()
     }
 
-    fn flush(&mut self) -> Result<()>;
-
     fn truncate_if_needed(&mut self, index: I) -> Result<()>;
+
+    fn safe_truncate_if_needed(&mut self, index: I, exit: &Exit) -> Result<()> {
+        let _lock = exit.lock();
+        self.truncate_if_needed(index)
+    }
+
+    #[inline]
+    fn truncate_if_needed_with_stamp(&mut self, index: I, stamp: Stamp) -> Result<()> {
+        self.update_stamp(stamp);
+        self.truncate_if_needed(index)
+    }
 
     fn index_to_name(&self) -> String {
         format!("{}_to_{}", I::to_string(), self.name())

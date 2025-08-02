@@ -1,11 +1,12 @@
 use std::{borrow::Cow, fs, path::Path, thread};
 
-use brk_core::{
-    AddressBytes, AddressBytesHash, BlockHashPrefix, ByAddressType, Height, OutputIndex,
-    OutputType, Result, TxIndex, TxidPrefix, TypeIndex, TypeIndexWithOutputindex, Unit, Version,
-};
+use brk_error::Result;
 use brk_store::{AnyStore, Store};
-use brk_vecs::{AnyIterableVec, VecIterator};
+use brk_structs::{
+    AddressBytes, AddressBytesHash, BlockHashPrefix, ByAddressType, Height, OutputIndex,
+    OutputType, TxIndex, TxidPrefix, TypeIndex, TypeIndexWithOutputindex, Unit, Version,
+};
+use brk_vecs::VecIterator;
 use fjall::{PersistMode, TransactionalKeyspace};
 use rayon::prelude::*;
 
@@ -27,7 +28,7 @@ pub struct Stores {
 const VERSION: Version = Version::ZERO;
 
 impl Stores {
-    pub fn forced_import(path: &Path, version: Version) -> color_eyre::Result<Self> {
+    pub fn forced_import(path: &Path, version: Version) -> Result<Self> {
         fs::create_dir_all(path)?;
 
         let keyspace = match brk_store::open_keyspace(path) {
@@ -217,7 +218,7 @@ impl Stores {
         &mut self,
         vecs: &mut Vecs,
         starting_indexes: &Indexes,
-    ) -> color_eyre::Result<()> {
+    ) -> Result<()> {
         if self.addressbyteshash_to_typeindex.is_empty()?
             && self.blockhashprefix_to_height.is_empty()?
             && self.txidprefix_to_txindex.is_empty()?

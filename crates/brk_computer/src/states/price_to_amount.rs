@@ -5,7 +5,8 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use brk_core::{Dollars, Error, Height, Result, Sats};
+use brk_error::{Error, Result};
+use brk_structs::{Dollars, Height, Sats};
 use derive_deref::{Deref, DerefMut};
 use serde::{Deserialize, Serialize};
 use zerocopy::{FromBytes, IntoBytes};

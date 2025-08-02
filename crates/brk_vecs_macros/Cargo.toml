@@ -1,0 +1,17 @@
+[package]
+name = "brk_vecs_macros"
+description = "Macros for brk_vecs"
+keywords = ["vec", "disk", "data"]
+categories = ["database"]
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+homepage.workspace = true
+repository.workspace = true
+
+[lib]
+proc-macro = true
+
+[dependencies]
+syn = "2.0"
+quote = "1.0"

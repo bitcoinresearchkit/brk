@@ -1,16 +1,17 @@
 use std::{ops::Deref, path::Path, sync::Arc};
 
-use brk_core::{Bitcoin, DateIndex, Dollars, Height, Result, StoredUsize, Version};
-use brk_exit::Exit;
+use brk_error::Result;
 use brk_indexer::Indexer;
+use brk_structs::{Bitcoin, DateIndex, Dollars, Height, StoredU64, Version};
 use brk_vecs::{
-    AnyCollectableVec, AnyIterableVec, AnyVec, Computation, EagerVec, File, Format, VecIterator,
+    AnyCollectableVec, AnyIterableVec, AnyStoredVec, AnyVec, Computation, EagerVec, Exit, File,
+    Format, GenericStoredVec, VecIterator,
 };
 
 use crate::{
-    Indexes, fetched,
+    Indexes,
     grouped::{ComputedVecsFromHeight, Source, VecBuilderOptions},
-    indexes, market,
+    indexes, market, price,
     stateful::{
         common,
         r#trait::{CohortVecs, DynCohortVecs},
@@ -28,8 +29,8 @@ pub struct Vecs {
 
     pub inner: common::Vecs,
 
-    pub height_to_address_count: EagerVec<Height, StoredUsize>,
-    pub indexes_to_address_count: ComputedVecsFromHeight<StoredUsize>,
+    pub height_to_address_count: EagerVec<Height, StoredU64>,
+    pub indexes_to_address_count: ComputedVecsFromHeight<StoredU64>,
 }
 
 impl Vecs {
@@ -41,11 +42,11 @@ impl Vecs {
         format: Format,
         version: Version,
         indexes: &indexes::Vecs,
-        fetched: Option<&fetched::Vecs>,
+        price: Option<&price::Vecs>,
         states_path: &Path,
         compute_relative_to_all: bool,
-    ) -> color_eyre::Result<Self> {
-        let compute_dollars = fetched.is_some();
+    ) -> Result<Self> {
+        let compute_dollars = price.is_some();
 
         let suffix = |s: &str| cohort_name.map_or(s.to_string(), |name| format!("{name}_{s}"));
 
@@ -79,7 +80,7 @@ impl Vecs {
                 format,
                 version,
                 indexes,
-                fetched,
+                price,
                 compute_relative_to_all,
                 false,
             )?,
@@ -170,10 +171,10 @@ impl DynCohortVecs for Vecs {
         &mut self,
         indexer: &Indexer,
         indexes: &indexes::Vecs,
-        fetched: Option<&fetched::Vecs>,
+        price: Option<&price::Vecs>,
         starting_indexes: &Indexes,
         exit: &Exit,
-    ) -> color_eyre::Result<()> {
+    ) -> Result<()> {
         self.indexes_to_address_count.compute_rest(
             indexes,
             starting_indexes,
@@ -182,7 +183,7 @@ impl DynCohortVecs for Vecs {
         )?;
 
         self.inner
-            .compute_rest_part1(indexer, indexes, fetched, starting_indexes, exit)
+            .compute_rest_part1(indexer, indexes, price, starting_indexes, exit)
     }
 
     fn vecs(&self) -> Vec<&dyn AnyCollectableVec> {
@@ -223,7 +224,7 @@ impl CohortVecs for Vecs {
         &mut self,
         indexer: &Indexer,
         indexes: &indexes::Vecs,
-        fetched: Option<&fetched::Vecs>,
+        price: Option<&price::Vecs>,
         starting_indexes: &Indexes,
         market: &market::Vecs,
         height_to_supply: &impl AnyIterableVec<Height, Bitcoin>,
@@ -231,11 +232,11 @@ impl CohortVecs for Vecs {
         height_to_realized_cap: Option<&impl AnyIterableVec<Height, Dollars>>,
         dateindex_to_realized_cap: Option<&impl AnyIterableVec<DateIndex, Dollars>>,
         exit: &Exit,
-    ) -> color_eyre::Result<()> {
+    ) -> Result<()> {
         self.inner.compute_rest_part2(
             indexer,
             indexes,
-            fetched,
+            price,
             starting_indexes,
             market,
             height_to_supply,

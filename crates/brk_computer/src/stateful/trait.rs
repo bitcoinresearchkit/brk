@@ -1,9 +1,9 @@
-use brk_core::{Bitcoin, DateIndex, Dollars, Height, Result, Version};
-use brk_exit::Exit;
+use brk_error::Result;
 use brk_indexer::Indexer;
-use brk_vecs::{AnyCollectableVec, AnyIterableVec};
+use brk_structs::{Bitcoin, DateIndex, Dollars, Height, Version};
+use brk_vecs::{AnyCollectableVec, AnyIterableVec, Exit};
 
-use crate::{Indexes, fetched, indexes, market};
+use crate::{Indexes, indexes, market, price};
 
 pub trait DynCohortVecs: Send + Sync {
     fn starting_height(&self) -> Height;
@@ -30,10 +30,10 @@ pub trait DynCohortVecs: Send + Sync {
         &mut self,
         indexer: &Indexer,
         indexes: &indexes::Vecs,
-        fetched: Option<&fetched::Vecs>,
+        price: Option<&price::Vecs>,
         starting_indexes: &Indexes,
         exit: &Exit,
-    ) -> color_eyre::Result<()>;
+    ) -> Result<()>;
 
     fn vecs(&self) -> Vec<&dyn AnyCollectableVec>;
 }
@@ -51,7 +51,7 @@ pub trait CohortVecs: DynCohortVecs {
         &mut self,
         indexer: &Indexer,
         indexes: &indexes::Vecs,
-        fetched: Option<&fetched::Vecs>,
+        price: Option<&price::Vecs>,
         starting_indexes: &Indexes,
         market: &market::Vecs,
         height_to_supply: &impl AnyIterableVec<Height, Bitcoin>,
@@ -59,5 +59,5 @@ pub trait CohortVecs: DynCohortVecs {
         height_to_realized_cap: Option<&impl AnyIterableVec<Height, Dollars>>,
         dateindex_to_realized_cap: Option<&impl AnyIterableVec<DateIndex, Dollars>>,
         exit: &Exit,
-    ) -> color_eyre::Result<()>;
+    ) -> Result<()>;
 }

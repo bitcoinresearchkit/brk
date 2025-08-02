@@ -5,20 +5,19 @@ use std::{
     time::{Duration, Instant},
 };
 
-use brk_exit::Exit;
+use brk_error::Result;
 use brk_indexer::Indexer;
 use brk_parser::Parser;
+use brk_vecs::Exit;
 
-fn main() -> color_eyre::Result<()> {
-    color_eyre::install()?;
-
+fn main() -> Result<()> {
     brk_logger::init(Some(Path::new(".log")));
 
-    let bitcoin_dir = brk_core::default_bitcoin_path();
-    // let bitcoin_dir = Path::new("/Volumes/WD_BLACK1/bitcoin");
+    // let bitcoin_dir = brk_structs::default_bitcoin_path();
+    let bitcoin_dir = Path::new("/Volumes/WD_BLACK1/bitcoin");
     let outputs_dir = Path::new("./_outputs");
     fs::create_dir_all(outputs_dir)?;
-    // let outputs_dir = brk_core::default_brk_path().join("outputs");
+    // let outputs_dir = brk_structs::default_brk_path().join("outputs");
     // let outputs_dir = Path::new("/Volumes/WD_BLACK1/brk");
 
     let rpc = Box::leak(Box::new(bitcoincore_rpc::Client::new(
@@ -26,6 +25,7 @@ fn main() -> color_eyre::Result<()> {
         bitcoincore_rpc::Auth::CookieFile(bitcoin_dir.join(".cookie")),
     )?));
     let exit = Exit::new();
+    exit.set_ctrlc_handler();
 
     let parser = Parser::new(bitcoin_dir.join("blocks"), outputs_dir.to_path_buf(), rpc);
 

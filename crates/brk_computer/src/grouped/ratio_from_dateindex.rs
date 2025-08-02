@@ -1,14 +1,14 @@
 use std::{f32, sync::Arc};
 
-use brk_core::{Date, DateIndex, Dollars, Result, StoredF32, Version};
-use brk_exit::Exit;
+use brk_error::Result;
 use brk_indexer::Indexer;
+use brk_structs::{Date, DateIndex, Dollars, StoredF32, Version};
 use brk_vecs::{
-    AnyCollectableVec, AnyIterableVec, AnyVec, CollectableVec, Computation, EagerVec, File, Format,
-    StoredIndex, VecIterator,
+    AnyCollectableVec, AnyIterableVec, AnyStoredVec, AnyVec, CollectableVec, Computation, EagerVec,
+    Exit, File, Format, GenericStoredVec, StoredIndex, VecIterator,
 };
 
-use crate::{Indexes, fetched, grouped::source::Source, indexes, utils::get_percentile};
+use crate::{Indexes, grouped::source::Source, indexes, price, utils::get_percentile};
 
 use super::{ComputedVecsFromDateIndex, VecBuilderOptions};
 
@@ -68,7 +68,7 @@ impl ComputedRatioVecsFromDateIndex {
         computation: Computation,
         indexes: &indexes::Vecs,
         extended: bool,
-    ) -> color_eyre::Result<Self> {
+    ) -> Result<Self> {
         let options = VecBuilderOptions::default().add_last();
 
         Ok(Self {
@@ -570,11 +570,11 @@ impl ComputedRatioVecsFromDateIndex {
         &mut self,
         indexer: &Indexer,
         indexes: &indexes::Vecs,
-        fetched: &fetched::Vecs,
+        price: &price::Vecs,
         starting_indexes: &Indexes,
         exit: &Exit,
         compute: F,
-    ) -> color_eyre::Result<()>
+    ) -> Result<()>
     where
         F: FnMut(
             &mut EagerVec<DateIndex, Dollars>,
@@ -596,7 +596,7 @@ impl ComputedRatioVecsFromDateIndex {
         self.compute_rest(
             indexer,
             indexes,
-            fetched,
+            price,
             starting_indexes,
             exit,
             date_to_price_opt,
@@ -607,16 +607,16 @@ impl ComputedRatioVecsFromDateIndex {
         &mut self,
         indexer: &Indexer,
         indexes: &indexes::Vecs,
-        fetched: &fetched::Vecs,
+        price: &price::Vecs,
         starting_indexes: &Indexes,
         exit: &Exit,
         date_to_price_opt: Option<&impl AnyIterableVec<DateIndex, Dollars>>,
-    ) -> color_eyre::Result<()> {
+    ) -> Result<()> {
         let date_to_price = date_to_price_opt.unwrap_or_else(|| unsafe {
             std::mem::transmute(&self.price.as_ref().unwrap().dateindex)
         });
 
-        let closes = fetched.timeindexes_to_close.dateindex.as_ref().unwrap();
+        let closes = price.timeindexes_to_close.dateindex.as_ref().unwrap();
 
         self.ratio.compute_all(
             indexer,
@@ -637,7 +637,8 @@ impl ComputedRatioVecsFromDateIndex {
                         }
                     },
                     exit,
-                )
+                )?;
+                Ok(())
             },
         )?;
 
@@ -659,7 +660,8 @@ impl ComputedRatioVecsFromDateIndex {
                     usize::MAX,
                     exit,
                     Some(min_ratio_date),
-                )
+                )?;
+                Ok(())
             },
         )?;
 
@@ -675,7 +677,8 @@ impl ComputedRatioVecsFromDateIndex {
                     7,
                     exit,
                     Some(min_ratio_date),
-                )
+                )?;
+                Ok(())
             },
         )?;
 
@@ -691,7 +694,8 @@ impl ComputedRatioVecsFromDateIndex {
                     30,
                     exit,
                     Some(min_ratio_date),
-                )
+                )?;
+                Ok(())
             },
         )?;
 
@@ -707,7 +711,8 @@ impl ComputedRatioVecsFromDateIndex {
                     365,
                     exit,
                     Some(min_ratio_date),
-                )
+                )?;
+                Ok(())
             },
         )?;
 
@@ -723,7 +728,8 @@ impl ComputedRatioVecsFromDateIndex {
                     4 * 365,
                     exit,
                     Some(min_ratio_date),
-                )
+                )?;
+                Ok(())
             },
         )?;
 
@@ -756,7 +762,8 @@ impl ComputedRatioVecsFromDateIndex {
                             )
                         },
                         exit,
-                    )
+                    )?;
+                    Ok(())
                 },
             )?;
 
@@ -766,7 +773,8 @@ impl ComputedRatioVecsFromDateIndex {
             .try_for_each(|v| -> Result<()> {
                 v.validate_computed_version_or_reset_file(
                     Version::ZERO + v.inner_version() + ratio_version,
-                )
+                )?;
+                Ok(())
             })?;
 
         let starting_dateindex = self
@@ -1194,7 +1202,8 @@ impl ComputedRatioVecsFromDateIndex {
                         (i, price * multiplier)
                     },
                     exit,
-                )
+                )?;
+                Ok(())
             },
         )?;
 
@@ -1220,7 +1229,8 @@ impl ComputedRatioVecsFromDateIndex {
                         (i, price * multiplier)
                     },
                     exit,
-                )
+                )?;
+                Ok(())
             },
         )?;
 
@@ -1246,7 +1256,8 @@ impl ComputedRatioVecsFromDateIndex {
                         (i, price * multiplier)
                     },
                     exit,
-                )
+                )?;
+                Ok(())
             },
         )?;
 
@@ -1272,7 +1283,8 @@ impl ComputedRatioVecsFromDateIndex {
                         (i, price * multiplier)
                     },
                     exit,
-                )
+                )?;
+                Ok(())
             },
         )?;
 
@@ -1298,7 +1310,8 @@ impl ComputedRatioVecsFromDateIndex {
                         (i, price * multiplier)
                     },
                     exit,
-                )
+                )?;
+                Ok(())
             },
         )?;
 
@@ -1324,7 +1337,8 @@ impl ComputedRatioVecsFromDateIndex {
                         (i, price * multiplier)
                     },
                     exit,
-                )
+                )?;
+                Ok(())
             },
         )?;
 
@@ -1350,7 +1364,8 @@ impl ComputedRatioVecsFromDateIndex {
                         (i, price * multiplier)
                     },
                     exit,
-                )
+                )?;
+                Ok(())
             },
         )?;
 
@@ -1376,7 +1391,8 @@ impl ComputedRatioVecsFromDateIndex {
                         (i, price * multiplier)
                     },
                     exit,
-                )
+                )?;
+                Ok(())
             },
         )?;
 
@@ -1402,7 +1418,8 @@ impl ComputedRatioVecsFromDateIndex {
                         (i, price * multiplier)
                     },
                     exit,
-                )
+                )?;
+                Ok(())
             },
         )?;
 
@@ -1428,7 +1445,8 @@ impl ComputedRatioVecsFromDateIndex {
                         (i, price * multiplier)
                     },
                     exit,
-                )
+                )?;
+                Ok(())
             },
         )?;
 
@@ -1454,7 +1472,8 @@ impl ComputedRatioVecsFromDateIndex {
                         (i, price * multiplier)
                     },
                     exit,
-                )
+                )?;
+                Ok(())
             },
         )?;
 
@@ -1480,7 +1499,8 @@ impl ComputedRatioVecsFromDateIndex {
                         (i, price * multiplier)
                     },
                     exit,
-                )
+                )?;
+                Ok(())
             },
         )?;
 
@@ -1496,7 +1516,8 @@ impl ComputedRatioVecsFromDateIndex {
                     self.ratio_sma.as_ref().unwrap().dateindex.as_ref().unwrap(),
                     self.ratio_sd.as_ref().unwrap().dateindex.as_ref().unwrap(),
                     exit,
-                )
+                )?;
+                Ok(())
             },
         )?;
 
@@ -1522,7 +1543,8 @@ impl ComputedRatioVecsFromDateIndex {
                         .as_ref()
                         .unwrap(),
                     exit,
-                )
+                )?;
+                Ok(())
             },
         )?;
 
@@ -1548,7 +1570,8 @@ impl ComputedRatioVecsFromDateIndex {
                         .as_ref()
                         .unwrap(),
                     exit,
-                )
+                )?;
+                Ok(())
             },
         )?;
 

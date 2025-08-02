@@ -1,13 +1,15 @@
 use bitcoincore_rpc::Client;
-use brk_core::{
+use brk_error::{Error, Result};
+use brk_parser::NUMBER_OF_UNSAFE_BLOCKS;
+use brk_structs::{
     BlockHash, CheckedSub, EmptyOutputIndex, Height, InputIndex, OpReturnIndex, OutputIndex,
     OutputType, P2AAddressIndex, P2MSOutputIndex, P2PK33AddressIndex, P2PK65AddressIndex,
     P2PKHAddressIndex, P2SHAddressIndex, P2TRAddressIndex, P2WPKHAddressIndex, P2WSHAddressIndex,
-    Result, TxIndex, TypeIndex, UnknownOutputIndex,
+    TxIndex, TypeIndex, UnknownOutputIndex,
 };
-use brk_parser::NUMBER_OF_UNSAFE_BLOCKS;
-use brk_vecs::{AnyIterableVec, AnyStampedVec, AnyVec, StampedVec, StoredIndex, StoredType};
-use color_eyre::eyre::ContextCompat;
+use brk_vecs::{
+    AnyIterableVec, AnyStoredIterableVec, GenericStoredVec, StoredIndex, StoredRaw, VecIterator,
+};
 
 use crate::{Stores, Vecs};
 
@@ -46,6 +48,7 @@ impl Indexes {
             OutputType::P2WPKH => *self.p2wpkhaddressindex,
             OutputType::P2WSH => *self.p2wshaddressindex,
             OutputType::Unknown => *self.unknownoutputindex,
+            _ => unreachable!(),
         }
     }
 
@@ -87,8 +90,8 @@ impl Indexes {
 }
 
 impl TryFrom<(&mut Vecs, &Stores, &Client)> for Indexes {
-    type Error = color_eyre::Report;
-    fn try_from((vecs, stores, rpc): (&mut Vecs, &Stores, &Client)) -> color_eyre::Result<Self> {
+    type Error = Error;
+    fn try_from((vecs, stores, rpc): (&mut Vecs, &Stores, &Client)) -> Result<Self> {
         // Height at which we want to start: min last saved + 1 or 0
         let vecs_starting_height = vecs.starting_height();
         let stores_starting_height = stores.starting_height();
@@ -123,100 +126,100 @@ impl TryFrom<(&mut Vecs, &Stores, &Client)> for Indexes {
                 &vecs.emptyoutputindex_to_txindex,
                 height,
             )
-            .context("")?,
+            .ok_or(Error::Str(""))?,
             height,
             p2msoutputindex: starting_index(
                 &vecs.height_to_first_p2msoutputindex,
                 &vecs.p2msoutputindex_to_txindex,
                 height,
             )
-            .context("")?,
+            .ok_or(Error::Str(""))?,
             opreturnindex: starting_index(
                 &vecs.height_to_first_opreturnindex,
                 &vecs.opreturnindex_to_txindex,
                 height,
             )
-            .context("")?,
+            .ok_or(Error::Str(""))?,
             p2pk33addressindex: starting_index(
                 &vecs.height_to_first_p2pk33addressindex,
                 &vecs.p2pk33addressindex_to_p2pk33bytes,
                 height,
             )
-            .context("")?,
+            .ok_or(Error::Str(""))?,
             p2pk65addressindex: starting_index(
                 &vecs.height_to_first_p2pk65addressindex,
                 &vecs.p2pk65addressindex_to_p2pk65bytes,
                 height,
             )
-            .context("")?,
+            .ok_or(Error::Str(""))?,
             p2pkhaddressindex: starting_index(
                 &vecs.height_to_first_p2pkhaddressindex,
                 &vecs.p2pkhaddressindex_to_p2pkhbytes,
                 height,
             )
-            .context("")?,
+            .ok_or(Error::Str(""))?,
             p2shaddressindex: starting_index(
                 &vecs.height_to_first_p2shaddressindex,
                 &vecs.p2shaddressindex_to_p2shbytes,
                 height,
             )
-            .context("")?,
+            .ok_or(Error::Str(""))?,
             p2traddressindex: starting_index(
                 &vecs.height_to_first_p2traddressindex,
                 &vecs.p2traddressindex_to_p2trbytes,
                 height,
             )
-            .context("")?,
+            .ok_or(Error::Str(""))?,
             p2wpkhaddressindex: starting_index(
                 &vecs.height_to_first_p2wpkhaddressindex,
                 &vecs.p2wpkhaddressindex_to_p2wpkhbytes,
                 height,
             )
-            .context("")?,
+            .ok_or(Error::Str(""))?,
             p2wshaddressindex: starting_index(
                 &vecs.height_to_first_p2wshaddressindex,
                 &vecs.p2wshaddressindex_to_p2wshbytes,
                 height,
             )
-            .context("")?,
+            .ok_or(Error::Str(""))?,
             p2aaddressindex: starting_index(
                 &vecs.height_to_first_p2aaddressindex,
                 &vecs.p2aaddressindex_to_p2abytes,
                 height,
             )
-            .context("")?,
+            .ok_or(Error::Str(""))?,
             txindex: starting_index(&vecs.height_to_first_txindex, &vecs.txindex_to_txid, height)
-                .context("")?,
+                .ok_or(Error::Str(""))?,
             inputindex: starting_index(
                 &vecs.height_to_first_inputindex,
                 &vecs.inputindex_to_outputindex,
                 height,
             )
-            .context("")?,
+            .ok_or(Error::Str(""))?,
             outputindex: starting_index(
                 &vecs.height_to_first_outputindex,
                 &vecs.outputindex_to_value,
                 height,
             )
-            .context("")?,
+            .ok_or(Error::Str(""))?,
             unknownoutputindex: starting_index(
                 &vecs.height_to_first_unknownoutputindex,
                 &vecs.unknownoutputindex_to_txindex,
                 height,
             )
-            .context("")?,
+            .ok_or(Error::Str(""))?,
         })
     }
 }
 
 pub fn starting_index<I, T>(
-    height_to_index: &StampedVec<Height, I>,
-    index_to_else: &StampedVec<I, T>,
+    height_to_index: &impl AnyStoredIterableVec<Height, I>,
+    index_to_else: &impl AnyIterableVec<I, T>,
     starting_height: Height,
 ) -> Option<I>
 where
-    I: StoredType + StoredIndex + From<usize>,
-    T: StoredType,
+    I: StoredRaw + StoredIndex + From<usize>,
+    T: StoredRaw,
 {
     let h = Height::from(u64::from(height_to_index.stamp()));
     if h.is_zero() {

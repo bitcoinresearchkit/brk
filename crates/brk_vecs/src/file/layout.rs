@@ -1,7 +1,6 @@
 use std::collections::BTreeMap;
 
-use brk_core::Error;
-use brk_core::Result;
+use crate::{Error, Result};
 
 use super::{Region, Regions};
 

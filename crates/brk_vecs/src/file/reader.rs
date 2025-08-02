@@ -31,4 +31,8 @@ impl<'a> Reader<'a> {
     pub fn region(&self) -> &Region {
         &self.region
     }
+
+    pub fn prefixed(&self, offset: usize) -> &[u8] {
+        &self.mmap[offset..]
+    }
 }

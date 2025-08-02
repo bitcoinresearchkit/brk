@@ -2,42 +2,38 @@ use std::{path::Path, thread::sleep, time::Duration};
 
 use bitcoincore_rpc::RpcApi;
 use brk_computer::Computer;
-use brk_core::{default_bitcoin_path, default_brk_path};
-use brk_exit::Exit;
+
+use brk_error::Result;
 use brk_fetcher::Fetcher;
 use brk_indexer::Indexer;
 use brk_parser::Parser;
 use brk_server::{Server, Website};
-use brk_vecs::{Computation, Format};
+use brk_vecs::Exit;
 
-pub fn main() -> color_eyre::Result<()> {
-    color_eyre::install()?;
-
+pub fn main() -> Result<()> {
     brk_logger::init(Some(Path::new(".log")));
 
     let process = true;
 
-    let bitcoin_dir = default_bitcoin_path();
-    let brk_dir = default_brk_path();
+    let bitcoin_dir = Path::new("");
+    let brk_dir = Path::new("");
 
     let rpc = Box::leak(Box::new(bitcoincore_rpc::Client::new(
         "http://localhost:8332",
         bitcoincore_rpc::Auth::CookieFile(bitcoin_dir.join(".cookie")),
     )?));
     let exit = Exit::new();
+    exit.set_ctrlc_handler();
 
-    let parser = Parser::new(bitcoin_dir.join("blocks"), brk_dir, rpc);
+    let parser = Parser::new(bitcoin_dir.join("blocks"), brk_dir.to_path_buf(), rpc);
 
     let outputs_dir = Path::new("../../_outputs");
-
-    let format = Format::Compressed;
 
     let mut indexer = Indexer::forced_import(outputs_dir)?;
 
     let fetcher = Some(Fetcher::import(None)?);
 
-    let mut computer =
-        Computer::forced_import(outputs_dir, &indexer, Computation::Lazy, fetcher, format)?;
+    let mut computer = Computer::forced_import(outputs_dir, &indexer, fetcher)?;
 
     tokio::runtime::Builder::new_multi_thread()
         .enable_all()
@@ -46,7 +42,12 @@ pub fn main() -> color_eyre::Result<()> {
             let served_indexer = indexer.clone();
             let served_computer = computer.clone();
 
-            let server = Server::new(served_indexer, served_computer, Website::Default)?;
+            let server = Server::new(
+                served_indexer,
+                served_computer,
+                Website::Default,
+                Path::new(""),
+            )?;
 
             let server = tokio::spawn(async move {
                 server.serve(true, true).await.unwrap();
@@ -58,7 +59,7 @@ pub fn main() -> color_eyre::Result<()> {
 
                     let starting_indexes = indexer.index(&parser, rpc, &exit, true)?;
 
-                    computer.compute(&mut indexer, starting_indexes, &exit)?;
+                    computer.compute(&indexer, starting_indexes, &exit)?;
 
                     while block_count == rpc.get_block_count()? {
                         sleep(Duration::from_secs(1))
@@ -70,5 +71,5 @@ pub fn main() -> color_eyre::Result<()> {
             server.await.unwrap();
 
             Ok(())
-        }) as color_eyre::Result<()>
+        })
 }

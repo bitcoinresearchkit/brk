@@ -9,7 +9,7 @@ use bitcoin::{Block, BlockHash};
 use bitcoincore_rpc::RpcApi;
 use blk_index_to_blk_path::*;
 use blk_recap::BlkRecap;
-use brk_core::Height;
+use brk_structs::Height;
 use crossbeam::channel::{Receiver, bounded};
 use rayon::prelude::*;
 

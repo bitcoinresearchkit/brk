@@ -1,10 +1,10 @@
-use brk_vecs::BoxedAnyIterableVec;
+use brk_vecs::AnyBoxedIterableVec;
 
 #[derive(Clone)]
 pub enum Source<I, T> {
     Compute,
     None,
-    Vec(BoxedAnyIterableVec<I, T>),
+    Vec(AnyBoxedIterableVec<I, T>),
 }
 
 impl<I, T> Source<I, T> {
@@ -20,7 +20,7 @@ impl<I, T> Source<I, T> {
         matches!(self, Self::Vec(_))
     }
 
-    pub fn vec(self) -> Option<BoxedAnyIterableVec<I, T>> {
+    pub fn vec(self) -> Option<AnyBoxedIterableVec<I, T>> {
         match self {
             Self::Vec(v) => Some(v),
             _ => None,
@@ -34,14 +34,14 @@ impl<I, T> From<bool> for Source<I, T> {
     }
 }
 
-impl<I, T> From<BoxedAnyIterableVec<I, T>> for Source<I, T> {
-    fn from(value: BoxedAnyIterableVec<I, T>) -> Self {
+impl<I, T> From<AnyBoxedIterableVec<I, T>> for Source<I, T> {
+    fn from(value: AnyBoxedIterableVec<I, T>) -> Self {
         Self::Vec(value)
     }
 }
 
-impl<I, T> From<Option<BoxedAnyIterableVec<I, T>>> for Source<I, T> {
-    fn from(value: Option<BoxedAnyIterableVec<I, T>>) -> Self {
+impl<I, T> From<Option<AnyBoxedIterableVec<I, T>>> for Source<I, T> {
+    fn from(value: Option<AnyBoxedIterableVec<I, T>>) -> Self {
         if let Some(v) = value {
             Self::Vec(v)
         } else {

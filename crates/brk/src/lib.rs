@@ -7,17 +7,17 @@ pub use brk_bundler as bundler;
 #[doc(inline)]
 pub use brk_cli as cli;
 
-#[cfg(feature = "core")]
+#[cfg(feature = "structs")]
 #[doc(inline)]
-pub use brk_core as core;
+pub use brk_structs as structs;
 
 #[cfg(feature = "computer")]
 #[doc(inline)]
 pub use brk_computer as computer;
 
-#[cfg(feature = "exit")]
+#[cfg(feature = "error")]
 #[doc(inline)]
-pub use brk_exit as exit;
+pub use brk_error as error;
 
 #[cfg(feature = "fetcher")]
 #[doc(inline)]
