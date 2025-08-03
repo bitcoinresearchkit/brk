@@ -32,23 +32,28 @@ use vecs::Vecs;
 
 use crate::vecs::{IdToVec, IndexToVec};
 
+#[allow(dead_code)]
 pub struct Interface<'a> {
     vecs: Vecs<'a>,
-    _indexer: &'a Indexer,
-    _computer: &'a Computer,
+    indexer: &'a Indexer,
+    computer: &'a Computer,
 }
 
 impl<'a> Interface<'a> {
-    pub fn build(indexer: &'a Indexer, computer: &'a Computer) -> Self {
+    pub fn build(indexer: &Indexer, computer: &Computer) -> Self {
+        let indexer = indexer.static_clone();
+        let computer = computer.static_clone();
+        let vecs = Vecs::build(indexer, computer);
+
         Self {
-            vecs: Vecs::build(indexer, computer),
-            _indexer: indexer,
-            _computer: computer,
+            vecs,
+            indexer,
+            computer,
         }
     }
 
     pub fn get_height(&self) -> Height {
-        Height::from(u64::from(self._indexer.vecs.height_to_blockhash.stamp()))
+        Height::from(self.indexer.vecs.height_to_blockhash.stamp())
     }
 
     pub fn search(&self, params: &Params) -> Vec<(String, &&dyn AnyCollectableVec)> {

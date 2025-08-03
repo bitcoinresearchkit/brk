@@ -10,7 +10,6 @@ repository.workspace = true
 [dependencies]
 axum = { workspace = true }
 bitcoincore-rpc = { workspace = true }
-brk_bundler = { workspace = true }
 brk_computer = { workspace = true }
 brk_error = { workspace = true }
 brk_fetcher = { workspace = true }
@@ -20,19 +19,13 @@ brk_logger = { workspace = true }
 brk_mcp = { workspace = true }
 brk_parser = { workspace = true }
 brk_vecs = { workspace = true }
-clap = { workspace = true }
-clap_derive = { workspace = true }
 jiff = { workspace = true }
 log = { workspace = true }
-minreq = { workspace = true }
-owo-colors = { workspace = true }
-quick_cache = "0.6.15"
-serde = { workspace = true }
+quick_cache = "0.6.16"
 serde_json = { workspace = true }
 tokio = { workspace = true }
 tower-http = { version = "0.6.6", features = ["compression-full", "trace"] }
 tracing = "0.1.41"
-zip = { version = "4.3.0", default-features = false, features = ["deflate"] }
 
 [package.metadata.cargo-machete]
 ignored = ["clap"]

@@ -443,7 +443,7 @@ impl Vecs {
     pub fn flush(&mut self, height: Height) -> Result<()> {
         self.mut_vecs()
             .into_par_iter()
-            .try_for_each(|vec| vec.stamped_flush(Stamp::from(u64::from(height))))?;
+            .try_for_each(|vec| vec.stamped_flush(Stamp::from(height)))?;
         Ok(())
     }
 
@@ -451,7 +451,7 @@ impl Vecs {
         self.mut_vecs()
             .into_iter()
             .map(|vec| {
-                let h = Height::from(u64::from(vec.stamp()));
+                let h = Height::from(vec.stamp());
                 if h > Height::ZERO { h.incremented() } else { h }
             })
             .min()

@@ -41,14 +41,11 @@ brk_store = { version = "0.0.83", path = "crates/brk_store" }
 brk_vecs = { version = "0.0.83", path = "crates/brk_vecs" }
 brk_vecs_macros = { version = "0.0.83", path = "crates/brk_vecs_macros" }
 byteview = "=0.6.1"
-clap = { version = "4.5.42", features = ["string"] }
-clap_derive = "4.5.41"
 derive_deref = "1.1.1"
 fjall = "2.11.2"
 jiff = "0.2.15"
 log = "0.4.27"
 minreq = { version = "2.14.0", features = ["https", "serde_json"] }
-owo-colors = "4.2.2"
 parking_lot = "0.12.4"
 rayon = "1.10.0"
 serde = "1.0.219"

@@ -5,13 +5,12 @@ use std::{
 
 use bitcoincore_rpc::{self, Auth, Client};
 use brk_fetcher::Fetcher;
-use brk_server::Website;
 use clap::Parser;
 use clap_derive::Parser;
 use color_eyre::eyre::eyre;
 use serde::{Deserialize, Deserializer, Serialize};
 
-use crate::{default_bitcoin_path, default_brk_path, dot_brk_path};
+use crate::{default_bitcoin_path, default_brk_path, dot_brk_path, website::Website};
 
 const DOWNLOADS: &str = "downloads";
 

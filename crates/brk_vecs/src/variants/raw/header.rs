@@ -51,6 +51,11 @@ impl Header {
         self.inner.write().stamp = stamp;
     }
 
+    pub fn update_format(&mut self, format: Format) {
+        self.modified = true;
+        self.inner.write().compressed = ZeroCopyBool::from(format);
+    }
+
     pub fn update_computed_version(&mut self, computed_version: Version) {
         self.modified = true;
         self.inner.write().computed_version = computed_version;

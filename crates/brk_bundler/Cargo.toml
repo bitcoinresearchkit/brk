@@ -9,7 +9,7 @@ repository.workspace = true
 
 [dependencies]
 log = { workspace = true }
-notify = "8.1.0"
+notify = "8.2.0"
 brk_rolldown = "0.1.1"
 # brk_rolldown = { path = "../../../rolldown/crates/rolldown"}
 sugar_path = "1.2.0"

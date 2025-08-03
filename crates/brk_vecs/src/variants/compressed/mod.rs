@@ -1,37 +1,35 @@
 use std::{
     borrow::Cow,
     collections::{BTreeMap, BTreeSet},
-    fs, mem,
+    mem,
     sync::Arc,
 };
 
-use memmap2::Mmap;
 use parking_lot::{RwLock, RwLockReadGuard};
-use pco::data_types::Number;
 use rayon::prelude::*;
 
 use crate::{
     AnyCollectableVec, AnyIterableVec, AnyStoredVec, AnyVec, AsInnerSlice, BaseVecIterator,
-    BoxedVecIterator, CollectableVec, Error, File, FromInnerSlice, GenericStoredVec, HEADER_OFFSET,
-    Header, RawVec, Reader, Result, StoredCompressed, StoredIndex, UnsafeSlice, Version,
+    BoxedVecIterator, CollectableVec, Error, File, Format, FromInnerSlice, GenericStoredVec,
+    HEADER_OFFSET, Header, RawVec, Reader, Result, StoredCompressed, StoredIndex, Version,
 };
 
-mod compressed_page_meta;
-mod compressed_pages_meta;
+mod page;
+mod pages;
 
-use compressed_page_meta::*;
-use compressed_pages_meta::*;
+use page::*;
+use pages::*;
 
 const ONE_KIB: usize = 1024;
 const MAX_PAGE_SIZE: usize = 16 * ONE_KIB;
 const PCO_COMPRESSION_LEVEL: usize = 4;
 
-const VERSION: Version = Version::TWO;
+const VERSION: Version = Version::ONE;
 
 #[derive(Debug)]
 pub struct CompressedVec<I, T> {
     inner: RawVec<I, T>,
-    pages_meta: Arc<RwLock<CompressedPagesMetadata>>,
+    pages: Arc<RwLock<Pages>>,
 }
 
 impl<I, T> CompressedVec<I, T>
@@ -39,8 +37,7 @@ where
     I: StoredIndex,
     T: StoredCompressed,
 {
-    pub const PER_PAGE: usize = MAX_PAGE_SIZE / Self::SIZE_OF_T;
-    pub const PAGE_SIZE: usize = Self::PER_PAGE * Self::SIZE_OF_T;
+    const PER_PAGE: usize = MAX_PAGE_SIZE / Self::SIZE_OF_T;
 
     /// Same as import but will reset the vec under certain errors, so be careful !
     pub fn forced_import(file: &Arc<File>, name: &str, mut version: Version) -> Result<Self> {
@@ -51,73 +48,50 @@ where
             | Err(Error::WrongEndian)
             | Err(Error::WrongLength)
             | Err(Error::DifferentVersion { .. }) => {
-                todo!();
-
-                // let path = Self::path_(file, name);
-                // fs::remove_file(path)?;
-                // Self::import(file, name, version)
+                let _ = file.remove_region(Self::vec_region_name_(name).into());
+                let _ = file.remove_region(Self::holes_region_name_(name).into());
+                let _ = file.remove_region(Self::pages_region_name_(name).into());
+                Self::import(file, name, version)
             }
             _ => res,
         }
     }
 
-    #[allow(unreachable_code, unused_variables)]
     pub fn import(file: &Arc<File>, name: &str, version: Version) -> Result<Self> {
-        // let mut inner = RawVec::import(file, name, version)?;
+        let inner = RawVec::import_(file, name, version, Format::Compressed)?;
 
-        todo!();
+        let pages = Pages::import(file, &Self::pages_region_name_(name))?;
 
-        // let pages_meta = {
-        //     let path = inner
-        //         .folder()
-        //         .join(format!("{}-pages-meta", I::to_string()));
-        //     if inner.is_empty() {
-        //         let _ = fs::remove_file(&path);
-        //     }
-        //     CompressedPagesMetadata::read(&path)?
-        // };
-
-        // inner.set_stored_len(if let Some(last) = pages_meta.last() {
-        //     (pages_meta.len() - 1) * Self::PER_PAGE + last.values_len as usize
-        // } else {
-        //     0
-        // });
-
-        // Ok(Self {
-        //     inner,
-        //     pages_meta: Arc::new(RwLock::new(pages_meta)),
-        // })
+        Ok(Self {
+            inner,
+            pages: Arc::new(RwLock::new(pages)),
+        })
     }
 
     fn decode_page(&self, page_index: usize, reader: &Reader) -> Result<Vec<T>> {
-        Self::decode_page_(
-            self.stored_len(),
-            page_index,
-            reader,
-            &self.pages_meta.read(),
-        )
+        Self::decode_page_(self.stored_len(), page_index, reader, &self.pages.read())
     }
 
     fn decode_page_(
         stored_len: usize,
         page_index: usize,
         reader: &Reader,
-        compressed_pages_meta: &CompressedPagesMetadata,
+        pages: &Pages,
     ) -> Result<Vec<T>> {
         if Self::page_index_to_index(page_index) >= stored_len {
             return Err(Error::IndexTooHigh);
-        } else if compressed_pages_meta.len() <= page_index {
+        } else if page_index >= pages.len() {
             return Err(Error::ExpectVecToHaveIndex);
         }
 
-        let page = compressed_pages_meta.get(page_index).unwrap();
-        let len = page.bytes_len as usize;
-        let offset = page.start as usize;
+        let page = pages.get(page_index).unwrap();
+        let len = page.bytes as u64;
+        let offset = page.start;
 
-        let slice: &[u8] = reader.read(offset as u64, (offset + len) as u64);
+        let slice = reader.read(offset, len);
 
         let vec: Vec<T::NumberType> = pco::standalone::simple_decompress(slice)?;
-        let vec: Vec<T> = T::from_inner_slice(vec);
+        let vec = T::from_inner_slice(vec);
 
         Ok(vec)
     }
@@ -156,13 +130,17 @@ where
         iter.set_(i);
         iter
     }
+
+    fn pages_region_name_(name: &str) -> String {
+        format!("{}_pages", Self::vec_region_name_(name))
+    }
 }
 
 impl<I, T> Clone for CompressedVec<I, T> {
     fn clone(&self) -> Self {
         Self {
             inner: self.inner.clone(),
-            pages_meta: self.pages_meta.clone(),
+            pages: self.pages.clone(),
         }
     }
 }
@@ -221,92 +199,87 @@ where
 
     #[inline]
     fn stored_len(&self) -> usize {
-        self.inner.stored_len()
+        self.pages.read().stored_len(Self::PER_PAGE)
     }
 
     fn flush(&mut self) -> Result<()> {
-        todo!();
+        self.inner.write_header_if_needed()?;
 
-        // let file_opt = self.inner.write_header_if_needed()?;
+        let pushed_len = self.pushed_len();
 
-        // let pushed_len = self.pushed_len();
+        let has_new_data = pushed_len != 0;
 
-        // if pushed_len == 0 {
-        //     return Ok(());
-        // }
+        if !has_new_data {
+            return Ok(());
+        }
 
-        // let stored_len = self.stored_len();
+        let stored_len = self.stored_len();
 
-        // let mut file = file_opt.unwrap_or(self.open_file()?);
+        let mut pages = self.pages.write();
 
-        // let mut pages_meta = self.pages_meta.read();
+        let mut starting_page_index = pages.len();
+        let mut values = vec![];
+        let mut truncate_at = None;
 
-        // let mut starting_page_index = pages_meta.len();
-        // let mut values = vec![];
-        // let mut truncate_at = None;
+        if stored_len % Self::PER_PAGE != 0 {
+            if pages.is_empty() {
+                unreachable!()
+            }
 
-        // if self.stored_len() % Self::PER_PAGE != 0 {
-        //     if pages_meta.is_empty() {
-        //         unreachable!()
-        //     }
+            let last_page_index = pages.len() - 1;
 
-        //     let last_page_index = pages_meta.len() - 1;
+            let reader = self.create_reader();
 
-        //     let mmap = unsafe { Mmap::map(&file)? };
+            values = Self::decode_page_(stored_len, last_page_index, &reader, &pages)
+                .inspect_err(|_| {
+                    dbg!(last_page_index, &pages);
+                })
+                .unwrap();
 
-        //     values = Self::decode_page_(stored_len, last_page_index, &mmap, &pages_meta)
-        //         .inspect_err(|_| {
-        //             dbg!(last_page_index, &pages_meta);
-        //         })
-        //         .unwrap();
+            truncate_at.replace(pages.pop().unwrap().start);
+            starting_page_index = last_page_index;
+        }
 
-        //     truncate_at.replace(pages_meta.pop().unwrap().start);
-        //     starting_page_index = last_page_index;
-        // }
+        let compressed = values
+            .into_par_iter()
+            .chain(mem::take(self.inner.mut_pushed()).into_par_iter())
+            .chunks(Self::PER_PAGE)
+            .map(|chunk| (Self::compress_page(chunk.as_slice()), chunk.len()))
+            .collect::<Vec<_>>();
 
-        // let compressed = values
-        //     .into_par_iter()
-        //     .chain(mem::take(self.mut_pushed()).into_par_iter())
-        //     .chunks(Self::PER_PAGE)
-        //     .map(|chunk| (Self::compress_page(chunk.as_ref()), chunk.len()))
-        //     .collect::<Vec<_>>();
+        compressed.iter().enumerate().for_each(|(i, (bytes, len))| {
+            let page_index = starting_page_index + i;
 
-        // compressed
-        //     .iter()
-        //     .enumerate()
-        //     .for_each(|(i, (compressed_bytes, values_len))| {
-        //         let page_index = starting_page_index + i;
+            let start = if page_index != 0 {
+                let prev = pages.get(page_index - 1).unwrap();
+                prev.start + prev.bytes as u64
+            } else {
+                0
+            };
 
-        //         let start = if page_index != 0 {
-        //             let prev = pages_meta.get(page_index - 1).unwrap();
-        //             prev.start + prev.bytes_len as u64
-        //         } else {
-        //             0
-        //         };
-        //         let offsetted_start = start + HEADER_OFFSET as u64;
+            let page = Page::new(
+                start + HEADER_OFFSET as u64,
+                bytes.len() as u32,
+                *len as u32,
+            );
 
-        //         let bytes_len = compressed_bytes.len() as u32;
-        //         let values_len = *values_len as u32;
+            pages.checked_push(page_index, page);
+        });
 
-        //         let page = CompressedPageMetadata::new(offsetted_start, bytes_len, values_len);
+        let buf = compressed
+            .into_iter()
+            .flat_map(|(v, _)| v)
+            .collect::<Vec<_>>();
 
-        //         pages_meta.push(page_index, page);
-        //     });
+        let file = self.file();
 
-        // let buf = compressed
-        //     .into_iter()
-        //     .flat_map(|(v, _)| v)
-        //     .collect::<Vec<_>>();
+        if let Some(truncate_at) = truncate_at {
+            file.truncate_region(self.region_index().into(), truncate_at)?;
+        }
 
-        // pages_meta.write()?;
+        file.write_all_to_region(self.region_index().into(), &buf)?;
 
-        // if let Some(truncate_at) = truncate_at {
-        //     self.file_set_len(&mut file, truncate_at)?;
-        // }
-
-        // self.file_write_all(&mut file, &buf)?;
-
-        // self.pages_meta.store(Arc::new(pages_meta));
+        pages.flush(file)?;
 
         Ok(())
     }
@@ -321,11 +294,10 @@ where
     fn read_(&self, index: usize, reader: &Reader) -> Result<T> {
         let page_index = Self::index_to_page_index(index);
         let decoded_index = index % Self::PER_PAGE;
-
         Ok(unsafe {
-            self.decode_page(page_index, reader)?
+            *self
+                .decode_page(page_index, reader)?
                 .get_unchecked(decoded_index)
-                .clone()
         })
     }
 
@@ -355,10 +327,8 @@ where
     }
 
     fn reset(&mut self) -> Result<()> {
-        // let mut pages_meta = (**self.pages_meta.load()).clone();
-        // pages_meta.truncate(0);
-        // pages_meta.write()?;
-        // self.pages_meta.store(Arc::new(pages_meta));
+        let file = self.file();
+        self.pages.write().reset(file)?;
         self.reset_()
     }
 
@@ -374,36 +344,47 @@ where
             return Ok(());
         }
 
-        let mut pages_meta = self.pages_meta.write();
+        let stored_len = self.stored_len();
+
+        let mut pages = self.pages.write();
+
+        let last_page_index = pages.len() - 1;
 
         let page_index = Self::index_to_page_index(index);
 
-        let reader = self.create_static_reader();
-        let values = self.decode_page(page_index, &reader)?;
-        drop(reader);
+        let values = Self::decode_page_(
+            stored_len,
+            last_page_index,
+            &self.create_static_reader(),
+            &pages,
+        )?;
 
         let mut buf = vec![];
 
-        let mut page = pages_meta.truncate(page_index).unwrap();
-
-        let len = page.start;
+        let mut page = pages.truncate(page_index).unwrap();
 
         let decoded_index = index % Self::PER_PAGE;
+
+        let from = page.start;
 
         if decoded_index != 0 {
             let chunk = &values[..decoded_index];
 
             buf = Self::compress_page(chunk);
 
-            page.values_len = chunk.len() as u32;
-            page.bytes_len = buf.len() as u32;
+            page.values = chunk.len() as u32;
+            page.bytes = buf.len() as u32;
 
-            pages_meta.push(page_index, page);
+            pages.checked_push(page_index, page);
         }
 
-        pages_meta.write()?;
+        let file = self.file();
 
-        // self.file_truncate_and_write_all(&mut file, len, &buf)?;
+        pages.flush(file)?;
+
+        file.truncate_region(self.region_index().into(), from)?;
+
+        file.write_all_to_region(self.region_index().into(), &buf)?;
 
         Ok(())
     }
@@ -413,8 +394,8 @@ where
 pub struct CompressedVecIterator<'a, I, T> {
     vec: &'a CompressedVec<I, T>,
     reader: Reader<'a>,
-    decoded_page: Option<(usize, Vec<T>)>,
-    pages_meta: RwLockReadGuard<'a, CompressedPagesMetadata>,
+    decoded: Option<(usize, Vec<T>)>,
+    pages: RwLockReadGuard<'a, Pages>,
     stored_len: usize,
     index: usize,
 }
@@ -472,23 +453,23 @@ where
         } else {
             let page_index = i / Self::PER_PAGE;
 
-            if self.decoded_page.as_ref().is_none_or(|b| b.0 != page_index) {
+            if self.decoded.as_ref().is_none_or(|b| b.0 != page_index) {
                 let values = CompressedVec::<I, T>::decode_page_(
                     stored_len,
                     page_index,
                     &self.reader,
-                    &self.pages_meta,
+                    &self.pages,
                 )
                 .unwrap();
-                self.decoded_page.replace((page_index, values));
+                self.decoded.replace((page_index, values));
             }
 
-            self.decoded_page
+            self.decoded
                 .as_ref()
                 .unwrap()
                 .1
                 .get(i % Self::PER_PAGE)
-                .map(|v| (I::from(i), Cow::Owned(v.clone())))
+                .map(|v| (I::from(i), Cow::Owned(*v)))
         };
 
         self.index += 1;
@@ -506,14 +487,14 @@ where
     type IntoIter = CompressedVecIterator<'a, I, T>;
 
     fn into_iter(self) -> Self::IntoIter {
-        let pages_meta = self.pages_meta.read();
+        let pages = self.pages.read();
         let stored_len = self.stored_len();
 
         CompressedVecIterator {
             vec: self,
             reader: self.create_static_reader(),
-            decoded_page: None,
-            pages_meta,
+            decoded: None,
+            pages,
             index: 0,
             stored_len,
         }

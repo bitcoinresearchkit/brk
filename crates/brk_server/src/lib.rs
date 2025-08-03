@@ -3,123 +3,56 @@
 #![doc = include_str!("../examples/main.rs")]
 #![doc = "```"]
 
-use std::{
-    fs,
-    io::Cursor,
-    path::{Path, PathBuf},
-    time::Duration,
-};
+use std::{path::PathBuf, sync::Arc, time::Duration};
 
-use api::{ApiRoutes, Bridge};
+use api::ApiRoutes;
 use axum::{
     Json, Router,
-    body::Body,
+    body::{Body, Bytes},
     http::{Request, Response, StatusCode, Uri},
     middleware::Next,
     routing::get,
     serve,
 };
-use brk_bundler::bundle;
-use brk_computer::Computer;
 use brk_error::Result;
-use brk_indexer::Indexer;
 use brk_interface::Interface;
+use brk_logger::OwoColorize;
 use brk_mcp::route::MCPRoutes;
 use files::FilesRoutes;
 use log::{error, info};
-use owo_colors::OwoColorize;
+use quick_cache::sync::Cache;
 use tokio::net::TcpListener;
 use tower_http::{compression::CompressionLayer, trace::TraceLayer};
+use tracing::Span;
 
 mod api;
+mod extended;
 mod files;
-mod traits;
 
-pub use files::Website;
-use tracing::Span;
+use extended::*;
 
 #[derive(Clone)]
 pub struct AppState {
     interface: &'static Interface<'static>,
-    website: Website,
-    websites_path: Option<PathBuf>,
-}
-
-impl AppState {
-    pub fn dist_path(&self) -> PathBuf {
-        self.websites_path
-            .as_ref()
-            .expect("Should never reach here is websites_path is None")
-            .join("dist")
-    }
+    path: Option<PathBuf>,
+    cache: Arc<Cache<String, Bytes>>,
 }
 
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 
-const DEV_PATH: &str = "../..";
-const WEBSITES: &str = "websites";
-
 pub struct Server(AppState);
 
 impl Server {
-    pub fn new(
-        indexer: Indexer,
-        computer: Computer,
-        website: Website,
-        downloads_path: &Path,
-    ) -> Result<Self> {
-        let indexer = Box::leak(Box::new(indexer));
-        let computer = Box::leak(Box::new(computer));
-        let interface = Box::leak(Box::new(Interface::build(indexer, computer)));
-
-        let websites_path = if website.is_some() {
-            let websites_dev_path = Path::new(DEV_PATH).join(WEBSITES);
-
-            let websites_path = if fs::exists(&websites_dev_path)? {
-                websites_dev_path
-            } else {
-                let downloaded_websites_path =
-                    downloads_path.join(format!("brk-{VERSION}")).join(WEBSITES);
-
-                if !fs::exists(&downloaded_websites_path)? {
-                    info!("Downloading websites from Github...");
-
-                    let url = format!(
-                        "https://github.com/bitcoinresearchkit/brk/archive/refs/tags/v{VERSION}.zip",
-                    );
-
-                    let response = minreq::get(url).send()?;
-                    let bytes = response.as_bytes();
-                    let cursor = Cursor::new(bytes);
-
-                    let mut zip = zip::ZipArchive::new(cursor).unwrap();
-
-                    zip.extract(downloads_path).unwrap();
-                }
-
-                downloaded_websites_path
-            };
-
-            interface.generate_bridge_file(website, websites_path.as_path())?;
-
-            Some(websites_path)
-        } else {
-            None
-        };
-
-        Ok(Self(AppState {
-            interface,
-            website,
-            websites_path,
-        }))
+    pub fn new(interface: Interface<'static>, files_path: Option<PathBuf>) -> Self {
+        Self(AppState {
+            interface: Box::leak(Box::new(interface)),
+            path: files_path,
+            cache: Arc::new(Cache::new(10_000)),
+        })
     }
 
-    pub async fn serve(self, watch: bool, mcp: bool) -> Result<()> {
+    pub async fn serve(self, mcp: bool) -> Result<()> {
         let state = self.0;
-
-        if let Some(websites_path) = state.websites_path.clone() {
-            bundle(&websites_path, state.website.to_folder_name(), watch).await?;
-        }
 
         let compression_layer = CompressionLayer::new()
             .br(true)
@@ -162,7 +95,7 @@ impl Server {
 
         let router = Router::new()
             .add_api_routes()
-            .add_website_routes(state.website)
+            .add_files_routes(state.path.as_ref())
             .add_mcp_routes(state.interface, mcp)
             .route("/version", get(Json(VERSION)))
             .with_state(state)

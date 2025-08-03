@@ -64,10 +64,10 @@ You can find a pre-built binary for your operating system in the [releases page]
 
 ```bash
 # Install
-cargo install brk # or `cargo install brk_cli`, the result is the same
+cargo install brk --locked # or `cargo install brk_cli`, the result is the same
 
 # Update
-cargo install brk # or `cargo install-update -a` if you have `cargo-update` installed
+cargo install brk --locked # or `cargo install-update -a` if you have `cargo-update` installed
 ```
 
 ### Source

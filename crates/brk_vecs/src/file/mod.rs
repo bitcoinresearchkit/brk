@@ -178,28 +178,27 @@ impl File {
         let data_len = data.len() as u64;
         let new_len = at.map_or(len + data_len, |at| (at + data_len).max(len));
 
+        let write_start = start + at.unwrap_or(len);
+
         if at.is_some_and(|at| at >= start + reserved) {
             return Err(Error::Str("Invalid at parameter"));
         }
 
         // Write to reserved space if possible
         if new_len <= reserved {
-            // println!(
-            //     "Write to {region_index} reserved space at {}",
-            //     start + at.unwrap_or(len)
-            // );
+            println!("Write to {region_index} reserved space at {write_start}");
 
             if at.is_none() {
-                self.write(start + len, data);
+                self.write(write_start, data);
             }
 
             let mut region = region_lock.write();
-            if let Some(at) = at {
-                self.write(start + at, data);
+
+            if at.is_some() {
+                self.write(write_start, data);
             }
-            if len != new_len {
-                region.set_len(new_len);
-            }
+
+            region.set_len(new_len);
             regions.write_to_mmap(&region, region_index);
 
             return Ok(());
@@ -217,10 +216,7 @@ impl File {
 
         // If is last continue writing
         if layout.is_last_anything(region_index) {
-            // println!(
-            //     "{region_index} Append to file at {}",
-            //     start + at.unwrap_or(len)
-            // );
+            println!("{region_index} Append to file at {write_start}");
 
             self.set_min_len(start + new_reserved)?;
             let mut region = region_lock.write();
@@ -228,7 +224,7 @@ impl File {
             drop(region);
             drop(layout);
 
-            self.write(start + len, data);
+            self.write(write_start, data);
 
             let mut region = region_lock.write();
             region.set_len(new_len);
@@ -243,7 +239,7 @@ impl File {
             .get_hole(hole_start)
             .is_some_and(|gap| gap >= added_reserve)
         {
-            // println!("Expand {region_index} to hole");
+            println!("Expand {region_index} to hole");
 
             layout.remove_or_compress_hole(hole_start, added_reserve);
             let mut region = region_lock.write();
@@ -251,7 +247,7 @@ impl File {
             drop(region);
             drop(layout);
 
-            self.write(start + len, data);
+            self.write(write_start, data);
 
             let mut region = region_lock.write();
             region.set_len(new_len);
@@ -262,16 +258,16 @@ impl File {
 
         // Find hole big enough to move the region
         if let Some(hole_start) = layout.find_smallest_adequate_hole(new_reserved) {
-            // println!("Move {region_index} to hole at {hole_start}");
+            println!("Move {region_index} to hole at {hole_start}");
 
             layout.remove_or_compress_hole(hole_start, new_reserved);
             drop(layout);
 
             self.write(
                 hole_start,
-                &self.mmap.read()[start as usize..(start + len) as usize],
+                &self.mmap.read()[start as usize..write_start as usize],
             );
-            self.write(hole_start + len, data);
+            self.write(hole_start + at.unwrap_or(len), data);
 
             let mut region = region_lock.write();
             let mut layout = self.layout.write();
@@ -288,24 +284,25 @@ impl File {
 
         let new_start = layout.len(&regions);
         // Write at the end
-        // println!(
-        //     "Move {region_index} to the end, from {start}..{} to {new_start}..{}",
-        //     start + reserved,
-        //     new_start + new_reserved
-        // );
+        println!(
+            "Move {region_index} to the end, from {start}..{} to {new_start}..{}",
+            start + reserved,
+            new_start + new_reserved
+        );
         self.set_min_len(new_start + new_reserved)?;
         layout.reserve(new_start, new_reserved);
         drop(layout);
 
         self.write(
             new_start,
-            &self.mmap.read()[start as usize..(start + len) as usize],
+            &self.mmap.read()[start as usize..write_start as usize],
         );
-        self.write(new_start + len, data);
+        self.write(new_start + at.unwrap_or(len), data);
 
         let mut region = region_lock.write();
         let mut layout = self.layout.write();
         layout.move_region(new_start, region_index, &region)?;
+        assert!(layout.reserved(new_start) == Some(new_reserved));
         drop(layout);
 
         region.set_start(new_start);

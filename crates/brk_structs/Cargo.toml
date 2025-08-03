@@ -14,12 +14,10 @@ brk_error = {workspace = true}
 brk_vecs = {workspace = true}
 byteview = { workspace = true }
 derive_deref = { workspace = true }
-fjall = { workspace = true }
 jiff = { workspace = true }
 rapidhash = "2.0.2"
 serde = { workspace = true }
 serde_bytes = { workspace = true }
-serde_json = { workspace = true }
 zerocopy = { workspace = true }
 zerocopy-derive = { workspace = true }
 

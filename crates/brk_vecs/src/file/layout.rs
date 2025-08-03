@@ -195,4 +195,8 @@ impl Layout {
             unreachable!();
         }
     }
+
+    pub fn reserved(&mut self, start: u64) -> Option<u64> {
+        self.start_to_reserved.remove(&start)
+    }
 }
