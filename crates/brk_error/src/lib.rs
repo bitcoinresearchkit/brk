@@ -13,12 +13,14 @@ pub enum Error {
     Fjall(fjall::Error),
     Minreq(minreq::Error),
     SystemTimeError(time::SystemTimeError),
+    SerdeJson(serde_json::Error),
     ZeroCopyError,
     Vecs(brk_vecs::Error),
 
     WrongLength,
     WrongAddressType,
     UnindexableDate,
+    QuickCacheError,
     Str(&'static str),
     String(String),
 }
@@ -26,6 +28,12 @@ pub enum Error {
 impl From<time::SystemTimeError> for Error {
     fn from(value: time::SystemTimeError) -> Self {
         Self::SystemTimeError(value)
+    }
+}
+
+impl From<serde_json::Error> for Error {
+    fn from(error: serde_json::Error) -> Self {
+        Self::SerdeJson(error)
     }
 }
 
@@ -82,6 +90,7 @@ impl fmt::Display for Error {
         match self {
             Error::IO(error) => Debug::fmt(&error, f),
             Error::Minreq(error) => Debug::fmt(&error, f),
+            Error::SerdeJson(error) => Debug::fmt(&error, f),
             Error::Vecs(error) => Debug::fmt(&error, f),
             Error::BitcoinRPC(error) => Debug::fmt(&error, f),
             Error::SystemTimeError(error) => Debug::fmt(&error, f),
@@ -90,6 +99,7 @@ impl fmt::Display for Error {
             Error::ZeroCopyError => write!(f, "ZeroCopy error"),
 
             Error::WrongLength => write!(f, "Wrong length"),
+            Error::QuickCacheError => write!(f, "Quick cache error"),
             Error::WrongAddressType => write!(f, "Wrong address type"),
             Error::UnindexableDate => write!(
                 f,

@@ -99,6 +99,8 @@ fn main() -> Result<()> {
         );
     }
 
+    dbg!(1);
+
     file.write_all_to_region_at(region1_i.into(), &[1; 8000], 0)?;
 
     {
@@ -146,7 +148,7 @@ fn main() -> Result<()> {
 
         let layout = file.layout();
         assert!(layout.start_to_index().is_empty());
-        assert!(layout.start_to_hole().is_empty());
+        assert!(layout.start_to_hole().len() == 1);
     }
 
     let (region1_i, _) = file.create_region_if_needed("region1")?;

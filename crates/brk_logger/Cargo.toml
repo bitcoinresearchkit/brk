@@ -11,4 +11,4 @@ repository.workspace = true
 env_logger = "0.11.8"
 jiff = { workspace = true }
 log = { workspace = true }
-owo-colors = { workspace = true }
+owo-colors = "4.2.2"

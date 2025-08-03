@@ -239,4 +239,8 @@ impl Computer {
         .flatten()
         .collect::<Vec<_>>()
     }
+
+    pub fn static_clone(&self) -> &'static Self {
+        Box::leak(Box::new(self.clone()))
+    }
 }

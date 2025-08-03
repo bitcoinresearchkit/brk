@@ -7,8 +7,7 @@ use std::{
 };
 
 use parking_lot::RwLock;
-use rayon::prelude::*;
-use zerocopy::FromBytes;
+use zerocopy::{FromBytes, IntoBytes};
 
 use crate::{
     AnyCollectableVec, AnyIterableVec, AnyStoredVec, AnyVec, BaseVecIterator, BoxedVecIterator,
@@ -19,10 +18,8 @@ use crate::{
 use super::Format;
 
 mod header;
-mod unsafe_slice;
 
 pub use header::*;
-pub use unsafe_slice::*;
 
 const VERSION: Version = Version::ONE;
 
@@ -64,25 +61,24 @@ where
     }
 
     pub fn import(file: &Arc<File>, name: &str, version: Version) -> Result<Self> {
+        Self::import_(file, name, version, Format::Raw)
+    }
+
+    pub fn import_(file: &Arc<File>, name: &str, version: Version, format: Format) -> Result<Self> {
         let (region_index, region) = file.create_region_if_needed(&Self::vec_region_name_(name))?;
 
         let region_len = region.read().len() as usize;
         if region_len > 0
-            && (region_len < HEADER_OFFSET || (region_len - HEADER_OFFSET) % Self::SIZE_OF_T != 0)
+            && (region_len < HEADER_OFFSET
+                || (format.is_raw() && (region_len - HEADER_OFFSET) % Self::SIZE_OF_T != 0))
         {
             return Err(Error::Str("Region was saved incorrectly"));
         }
 
         let header = if region_len == 0 {
-            Header::create_and_write(file, region_index, version, Format::Raw)?
+            Header::create_and_write(file, region_index, version, format)?
         } else {
-            Header::import_and_verify(
-                file,
-                region_index,
-                region.read().len(),
-                version,
-                Format::Raw,
-            )?
+            Header::import_and_verify(file, region_index, region.read().len(), version, format)?
         };
 
         let holes = if let Ok(holes) = file.get_region(Self::holes_region_name_(name).into()) {
@@ -200,13 +196,7 @@ where
 
     #[inline]
     fn stored_len(&self) -> usize {
-        (self
-            .file
-            .get_region(self.region_index.into())
-            .unwrap()
-            .len() as usize
-            - HEADER_OFFSET)
-            / Self::SIZE_OF_T
+        (self.region.read().len() as usize - HEADER_OFFSET) / Self::SIZE_OF_T
     }
 
     fn flush(&mut self) -> Result<()> {
@@ -227,22 +217,10 @@ where
             let file = &self.file;
 
             if has_new_data {
-                let bytes = {
-                    let mut bytes: Vec<u8> = vec![0; pushed_len * Self::SIZE_OF_T];
-
-                    let unsafe_bytes = UnsafeSlice::new(&mut bytes);
-
-                    mem::take(&mut self.pushed)
-                        .into_par_iter()
-                        .enumerate()
-                        .for_each(|(i, v)| {
-                            unsafe_bytes.copy_slice(i * Self::SIZE_OF_T, v.as_bytes())
-                        });
-
-                    bytes
-                };
-
-                file.write_all_to_region(self.region_index.into(), &bytes)?;
+                file.write_all_to_region(
+                    self.region_index.into(),
+                    mem::take(&mut self.pushed).as_bytes(),
+                )?;
             }
 
             if has_updated_data {

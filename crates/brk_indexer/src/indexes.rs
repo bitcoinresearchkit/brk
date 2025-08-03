@@ -221,7 +221,7 @@ where
     I: StoredRaw + StoredIndex + From<usize>,
     T: StoredRaw,
 {
-    let h = Height::from(u64::from(height_to_index.stamp()));
+    let h = Height::from(height_to_index.stamp());
     if h.is_zero() {
         None
     } else if h + 1_u32 == starting_height {

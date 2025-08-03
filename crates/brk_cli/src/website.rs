@@ -17,7 +17,7 @@ impl Website {
         !self.is_none()
     }
 
-    pub fn to_folder_name(&self) -> &str {
+    pub fn to_folder_name(self) -> &'static str {
         match self {
             Self::Custom => "custom",
             Self::Default => "default",

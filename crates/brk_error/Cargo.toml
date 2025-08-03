@@ -13,4 +13,5 @@ bitcoincore-rpc = { workspace = true }
 fjall = { workspace = true }
 jiff = { workspace = true }
 minreq = { workspace = true }
+serde_json = { workspace = true }
 zerocopy = { workspace = true }

@@ -1,4 +1,8 @@
-use std::{fs, io, path::Path, sync::Arc};
+use std::{
+    fs, io,
+    path::{Path, PathBuf},
+    sync::Arc,
+};
 
 use brk_rolldown::{Bundler, BundlerOptions, RawMinifyOptions, SourceMapType};
 use log::error;
@@ -8,7 +12,7 @@ use tokio::sync::Mutex;
 
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 
-pub async fn bundle(websites_path: &Path, source_folder: &str, watch: bool) -> io::Result<()> {
+pub async fn bundle(websites_path: &Path, source_folder: &str, watch: bool) -> io::Result<PathBuf> {
     let source_path = websites_path.join(source_folder);
     let dist_path = websites_path.join("dist");
 
@@ -72,7 +76,7 @@ pub async fn bundle(websites_path: &Path, source_folder: &str, watch: bool) -> i
     write_sw();
 
     if !watch {
-        return Ok(());
+        return Ok(dist_path);
     }
 
     tokio::spawn(async move {
@@ -127,7 +131,7 @@ pub async fn bundle(websites_path: &Path, source_folder: &str, watch: bool) -> i
         watcher.start().await;
     });
 
-    Ok(())
+    Ok(dist_path)
 }
 
 fn copy_dir_all(src: impl AsRef<Path>, dst: impl AsRef<Path>) -> io::Result<()> {

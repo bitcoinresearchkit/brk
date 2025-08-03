@@ -1,7 +1,7 @@
 use axum::{
     Json, Router,
     extract::{Path, Query, State},
-    http::HeaderMap,
+    http::{HeaderMap, Uri},
     response::{IntoResponse, Redirect, Response},
     routing::get,
 };
@@ -11,8 +11,6 @@ use super::AppState;
 
 mod explorer;
 mod interface;
-
-pub use interface::Bridge;
 
 pub trait ApiRoutes {
     fn add_api_routes(self) -> Self;
@@ -87,7 +85,8 @@ impl ApiRoutes for Router<AppState> {
         .route(
             "/api/vecs/{variant}",
             get(
-                async |headers: HeaderMap,
+                async |uri: Uri,
+                       headers: HeaderMap,
                        Path(variant): Path<String>,
                        Query(params_opt): Query<ParamsOpt>,
                        state: State<AppState>|
@@ -100,7 +99,7 @@ impl ApiRoutes for Router<AppState> {
                             (index, split.collect::<Vec<_>>().join(TO_SEPARATOR)),
                             params_opt,
                         ));
-                        interface::handler(headers, Query(params), state).await
+                        interface::handler(uri, headers, Query(params), state).await
                     } else {
                         "Bad variant".into_response()
                     }
@@ -127,22 +126,3 @@ impl ApiRoutes for Router<AppState> {
         )
     }
 }
-
-// pub async fn variants_handler(State(app_state): State<AppState>) -> Response {
-//     Json(
-//         app_state
-//             .query
-//             .vec_trees
-//             .index_to_id_to_vec
-//             .iter()
-//             .flat_map(|(index, id_to_vec)| {
-//                 let index_ser = index.serialize_long();
-//                 id_to_vec
-//                     .keys()
-//                     .map(|id| format!("{}-to-{}", index_ser, id))
-//                     .collect::<Vec<_>>()
-//             })
-//             .collect::<Vec<_>>(),
-//     )
-//     .into_response()
-// }

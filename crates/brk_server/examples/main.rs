@@ -6,8 +6,9 @@ use brk_computer::Computer;
 use brk_error::Result;
 use brk_fetcher::Fetcher;
 use brk_indexer::Indexer;
+use brk_interface::Interface;
 use brk_parser::Parser;
-use brk_server::{Server, Website};
+use brk_server::Server;
 use brk_vecs::Exit;
 
 pub fn main() -> Result<()> {
@@ -39,18 +40,12 @@ pub fn main() -> Result<()> {
         .enable_all()
         .build()?
         .block_on(async {
-            let served_indexer = indexer.clone();
-            let served_computer = computer.clone();
+            let interface = Interface::build(&indexer, &computer);
 
-            let server = Server::new(
-                served_indexer,
-                served_computer,
-                Website::Default,
-                Path::new(""),
-            )?;
+            let server = Server::new(interface, None);
 
             let server = tokio::spawn(async move {
-                server.serve(true, true).await.unwrap();
+                server.serve(true).await.unwrap();
             });
 
             if process {

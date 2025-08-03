@@ -1,29 +1,30 @@
+use std::time::Duration;
+
 use axum::{
     Json,
+    body::Body,
     extract::{Query, State},
-    http::{HeaderMap, StatusCode},
+    http::{HeaderMap, StatusCode, Uri},
     response::{IntoResponse, Response},
 };
 use brk_error::{Error, Result};
 use brk_interface::{Format, Output, Params};
 use brk_vecs::Stamp;
+use quick_cache::sync::GuardResult;
 
-use crate::traits::{HeaderMapExtended, ResponseExtended};
+use crate::{HeaderMapExtended, ResponseExtended};
 
 use super::AppState;
-
-mod bridge;
-
-pub use bridge::*;
 
 const MAX_WEIGHT: usize = 320_000;
 
 pub async fn handler(
+    uri: Uri,
     headers: HeaderMap,
     query: Query<Params>,
     State(app_state): State<AppState>,
 ) -> Response {
-    match req_to_response_res(headers, query, app_state) {
+    match req_to_response_res(uri, headers, query, app_state) {
         Ok(response) => response,
         Err(error) => {
             let mut response =
@@ -35,9 +36,12 @@ pub async fn handler(
 }
 
 fn req_to_response_res(
+    uri: Uri,
     headers: HeaderMap,
     Query(params): Query<Params>,
-    AppState { interface, .. }: AppState,
+    AppState {
+        interface, cache, ..
+    }: AppState,
 ) -> Result<Response> {
     let vecs = interface.search(&params);
 
@@ -67,7 +71,7 @@ fn req_to_response_res(
         .first()
         .unwrap()
         .1
-        .etag(Stamp::from(u64::from(interface.get_height())), to);
+        .etag(Stamp::from(interface.get_height()), to);
 
     if headers
         .get_if_none_match()
@@ -76,17 +80,51 @@ fn req_to_response_res(
         return Ok(Response::new_not_modified());
     }
 
-    let output = interface.format(vecs, &params.rest)?;
+    let guard_res = cache.get_value_or_guard(
+        &format!("{}{}{etag}", uri.path(), uri.query().unwrap_or("")),
+        Some(Duration::from_millis(500)),
+    );
 
-    let mut response = match output {
-        Output::CSV(s) => s.into_response(),
-        Output::TSV(s) => s.into_response(),
-        Output::Json(v) => match v {
-            brk_interface::Value::Single(v) => Json(v).into_response(),
-            brk_interface::Value::List(v) => Json(v).into_response(),
-            brk_interface::Value::Matrix(v) => Json(v).into_response(),
-        },
-        Output::MD(s) => s.into_response(),
+    let mut response = if let GuardResult::Value(v) = guard_res {
+        Response::new(Body::from(v))
+    } else {
+        match interface.format(vecs, &params.rest)? {
+            Output::CSV(s) => {
+                if let GuardResult::Guard(g) = guard_res {
+                    g.insert(s.clone().into())
+                        .map_err(|_| Error::QuickCacheError)?;
+                }
+                s.into_response()
+            }
+            Output::TSV(s) => {
+                if let GuardResult::Guard(g) = guard_res {
+                    g.insert(s.clone().into())
+                        .map_err(|_| Error::QuickCacheError)?;
+                }
+                s.into_response()
+            }
+            Output::MD(s) => {
+                if let GuardResult::Guard(g) = guard_res {
+                    g.insert(s.clone().into())
+                        .map_err(|_| Error::QuickCacheError)?;
+                }
+                s.into_response()
+            }
+            Output::Json(v) => {
+                let json = match v {
+                    brk_interface::Value::Single(v) => serde_json::to_vec(&v)?,
+                    brk_interface::Value::List(v) => serde_json::to_vec(&v)?,
+                    brk_interface::Value::Matrix(v) => serde_json::to_vec(&v)?,
+                };
+
+                if let GuardResult::Guard(g) = guard_res {
+                    g.insert(json.clone().into())
+                        .map_err(|_| Error::QuickCacheError)?;
+                }
+
+                json.into_response()
+            }
+        }
     };
 
     let headers = response.headers_mut();

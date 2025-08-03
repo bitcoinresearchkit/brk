@@ -1,22 +1,22 @@
 use std::{fs, path::Path, sync::Arc};
 
 use brk_vecs::{
-    AnyStoredVec, AnyVec, CollectableVec, File, GenericStoredVec, RawVec, Stamp, VecIterator,
-    Version,
+    AnyStoredVec, AnyVec, CollectableVec, CompressedVec, File, GenericStoredVec, Stamp,
+    VecIterator, Version,
 };
 
 #[allow(clippy::upper_case_acronyms)]
-type VEC = RawVec<usize, u32>;
+type VEC = CompressedVec<usize, u32>;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let _ = fs::remove_dir_all("raw");
+    let _ = fs::remove_dir_all("compressed");
 
     let version = Version::TWO;
 
-    let file = Arc::new(File::open(Path::new("raw"))?);
+    let file = Arc::new(File::open(Path::new("compressed"))?);
 
     {
-        let mut vec: VEC = RawVec::forced_import(&file, "vec", version)?;
+        let mut vec: VEC = CompressedVec::forced_import(&file, "vec", version)?;
 
         (0..21_u32).for_each(|v| {
             vec.push(v);
@@ -30,13 +30,15 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         dbg!(iter.get(21));
         drop(iter);
 
+        dbg!("flush");
         vec.flush()?;
+        dbg!("flushed");
 
         dbg!(vec.header());
     }
 
     {
-        let mut vec: VEC = RawVec::forced_import(&file, "vec", version)?;
+        let mut vec: VEC = CompressedVec::forced_import(&file, "vec", version)?;
 
         vec.mut_header().update_stamp(Stamp::new(100));
 
@@ -66,7 +68,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     {
-        let mut vec: VEC = RawVec::forced_import(&file, "vec", version)?;
+        let mut vec: VEC = CompressedVec::forced_import(&file, "vec", version)?;
 
         let mut iter = vec.into_iter();
         dbg!(iter.get(0));
@@ -92,7 +94,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     {
-        let mut vec: VEC = RawVec::forced_import(&file, "vec", version)?;
+        let mut vec: VEC = CompressedVec::forced_import(&file, "vec", version)?;
 
         vec.reset()?;
 
@@ -108,18 +110,18 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         dbg!(iter.get(21));
         drop(iter);
 
-        let reader = vec.create_static_reader();
-        dbg!(vec.take(10, &reader)?);
-        dbg!(vec.get_or_read(10, &reader)?);
-        dbg!(vec.holes());
-        drop(reader);
+        // let reader = vec.create_static_reader();
+        // dbg!(vec.take(10, &reader)?);
+        // dbg!(vec.get_or_read(10, &reader)?);
+        // dbg!(vec.holes());
+        // drop(reader);
 
         vec.flush()?;
         dbg!(vec.holes());
     }
 
     {
-        let mut vec: VEC = RawVec::forced_import(&file, "vec", version)?;
+        let mut vec: VEC = CompressedVec::forced_import(&file, "vec", version)?;
 
         dbg!(vec.holes());
 
@@ -127,8 +129,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         dbg!(vec.get_or_read(10, &reader)?);
         drop(reader);
 
-        vec.update(10, 10)?;
-        vec.update(0, 10)?;
+        // vec.update(10, 10)?;
+        // vec.update(0, 10)?;
 
         let reader = vec.create_static_reader();
         dbg!(
@@ -142,7 +144,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     {
-        let vec: VEC = RawVec::forced_import(&file, "vec", version)?;
+        let vec: VEC = CompressedVec::forced_import(&file, "vec", version)?;
 
         dbg!(vec.collect()?);
     }

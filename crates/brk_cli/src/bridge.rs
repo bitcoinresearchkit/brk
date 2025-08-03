@@ -1,8 +1,9 @@
 use std::{fs, io, path::Path};
 
 use brk_interface::{Index, Interface};
+use brk_server::VERSION;
 
-use crate::{VERSION, Website};
+use crate::website::Website;
 
 const SCRIPTS: &str = "scripts";
 

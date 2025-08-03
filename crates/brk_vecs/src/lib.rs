@@ -2,7 +2,7 @@
 #![doc = "\n## Examples\n"]
 #![doc = "\n### File\n\n```rust"]
 #![doc = include_str!("../examples/file.rs")]
-#![doc = "```"]
+#![doc = "```\n"]
 #![doc = "\n### Raw\n\n```rust"]
 #![doc = include_str!("../examples/raw.rs")]
 #![doc = "```"]
