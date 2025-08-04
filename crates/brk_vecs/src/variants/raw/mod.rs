@@ -202,9 +202,7 @@ where
     fn flush(&mut self) -> Result<()> {
         self.write_header_if_needed()?;
 
-        let pushed_len = self.pushed_len();
-
-        let has_new_data = pushed_len != 0;
+        let has_new_data = !self.is_pushed_empty();
         let has_updated_data = !self.updated.is_empty();
         let has_holes = !self.holes.is_empty();
         let had_holes = self.has_stored_holes && !has_holes;
@@ -273,7 +271,7 @@ where
 {
     #[inline]
     fn read_(&self, index: usize, reader: &Reader) -> Result<T> {
-        T::read_from_prefix(reader.prefixed(index * Self::SIZE_OF_T + HEADER_OFFSET))
+        T::read_from_prefix(reader.prefixed((index * Self::SIZE_OF_T + HEADER_OFFSET) as u64))
             .map(|(v, _)| v)
             .map_err(Error::from)
     }
@@ -318,6 +316,7 @@ where
         }
 
         let from = index * Self::SIZE_OF_T + HEADER_OFFSET;
+
         self.file
             .truncate_region(self.region_index.into(), from as u64)
     }

@@ -26,7 +26,7 @@ pub use indexes::*;
 pub use stores::*;
 pub use vecs::*;
 
-const SNAPSHOT_BLOCK_RANGE: usize = 1000;
+const SNAPSHOT_BLOCK_RANGE: usize = 1_000;
 const COLLISIONS_CHECKED_UP_TO: Height = Height::new(907_000);
 const VERSION: Version = Version::ONE;
 
@@ -64,11 +64,13 @@ impl Indexer {
     ) -> Result<Indexes> {
         let file = self.file.clone();
 
+        // dbg!(self.file.regions().id_to_index());
+        // dbg!(self.file.layout());
+
         let starting_indexes = Indexes::try_from((&mut self.vecs, &self.stores, rpc))
             .unwrap_or_else(|_report| Indexes::default());
 
-        // dbg!(starting_indexes);
-        // panic!();
+        // dbg!(&starting_indexes);
 
         let lock = exit.lock();
         self.stores
@@ -180,15 +182,15 @@ impl Indexer {
 
                 idxs.height = height;
 
-                let txindex_to_first_outputindex_mmap = txindex_to_first_outputindex_reader_opt.as_ref().unwrap();
-                let p2pk65addressindex_to_p2pk65bytes_mmap = p2pk65addressindex_to_p2pk65bytes_reader_opt.as_ref().unwrap();
-                let p2pk33addressindex_to_p2pk33bytes_mmap = p2pk33addressindex_to_p2pk33bytes_reader_opt.as_ref().unwrap();
-                let p2pkhaddressindex_to_p2pkhbytes_mmap = p2pkhaddressindex_to_p2pkhbytes_reader_opt.as_ref().unwrap();
-                let p2shaddressindex_to_p2shbytes_mmap = p2shaddressindex_to_p2shbytes_reader_opt.as_ref().unwrap();
-                let p2wpkhaddressindex_to_p2wpkhbytes_mmap = p2wpkhaddressindex_to_p2wpkhbytes_reader_opt.as_ref().unwrap();
-                let p2wshaddressindex_to_p2wshbytes_mmap = p2wshaddressindex_to_p2wshbytes_reader_opt.as_ref().unwrap();
-                let p2traddressindex_to_p2trbytes_mmap = p2traddressindex_to_p2trbytes_reader_opt.as_ref().unwrap();
-                let p2aaddressindex_to_p2abytes_mmap = p2aaddressindex_to_p2abytes_reader_opt.as_ref().unwrap();
+                let txindex_to_first_outputindex_reader = txindex_to_first_outputindex_reader_opt.as_ref().unwrap();
+                let p2pk65addressindex_to_p2pk65bytes_reader = p2pk65addressindex_to_p2pk65bytes_reader_opt.as_ref().unwrap();
+                let p2pk33addressindex_to_p2pk33bytes_reader = p2pk33addressindex_to_p2pk33bytes_reader_opt.as_ref().unwrap();
+                let p2pkhaddressindex_to_p2pkhbytes_reader = p2pkhaddressindex_to_p2pkhbytes_reader_opt.as_ref().unwrap();
+                let p2shaddressindex_to_p2shbytes_reader = p2shaddressindex_to_p2shbytes_reader_opt.as_ref().unwrap();
+                let p2wpkhaddressindex_to_p2wpkhbytes_reader = p2wpkhaddressindex_to_p2wpkhbytes_reader_opt.as_ref().unwrap();
+                let p2wshaddressindex_to_p2wshbytes_reader = p2wshaddressindex_to_p2wshbytes_reader_opt.as_ref().unwrap();
+                let p2traddressindex_to_p2trbytes_reader = p2traddressindex_to_p2trbytes_reader_opt.as_ref().unwrap();
+                let p2aaddressindex_to_p2abytes_reader = p2aaddressindex_to_p2abytes_reader_opt.as_ref().unwrap();
 
                 // Used to check rapidhash collisions
                 let check_collisions = check_collisions && height > COLLISIONS_CHECKED_UP_TO ;
@@ -291,7 +293,7 @@ impl Indexer {
 
                                 let vout = Vout::from(outpoint.vout);
 
-                                let outputindex = vecs.txindex_to_first_outputindex.get_or_read(prev_txindex, txindex_to_first_outputindex_mmap)?
+                                let outputindex = vecs.txindex_to_first_outputindex.get_or_read(prev_txindex, txindex_to_first_outputindex_reader)?
                                     .ok_or(Error::Str("Expect outputindex to not be none"))
                                     .inspect_err(|_| {
                                         dbg!(outpoint.txid, prev_txindex, vout);
@@ -377,35 +379,35 @@ impl Indexer {
                                     let prev_addressbytes_opt = match outputtype {
                                         OutputType::P2PK65 => vecs
                                             .p2pk65addressindex_to_p2pk65bytes
-                                            .get_or_read(typeindex.into(), p2pk65addressindex_to_p2pk65bytes_mmap)?
+                                            .get_or_read(typeindex.into(), p2pk65addressindex_to_p2pk65bytes_reader)?
                                             .map(|v| AddressBytes::from(v.into_owned())),
                                         OutputType::P2PK33 => vecs
                                             .p2pk33addressindex_to_p2pk33bytes
-                                            .get_or_read(typeindex.into(), p2pk33addressindex_to_p2pk33bytes_mmap)?
+                                            .get_or_read(typeindex.into(), p2pk33addressindex_to_p2pk33bytes_reader)?
                                             .map(|v| AddressBytes::from(v.into_owned())),
                                         OutputType::P2PKH => vecs
                                             .p2pkhaddressindex_to_p2pkhbytes
-                                            .get_or_read(typeindex.into(), p2pkhaddressindex_to_p2pkhbytes_mmap)?
+                                            .get_or_read(typeindex.into(), p2pkhaddressindex_to_p2pkhbytes_reader)?
                                             .map(|v| AddressBytes::from(v.into_owned())),
                                         OutputType::P2SH => vecs
                                             .p2shaddressindex_to_p2shbytes
-                                            .get_or_read(typeindex.into(), p2shaddressindex_to_p2shbytes_mmap)?
+                                            .get_or_read(typeindex.into(), p2shaddressindex_to_p2shbytes_reader)?
                                             .map(|v| AddressBytes::from(v.into_owned())),
                                         OutputType::P2WPKH => vecs
                                             .p2wpkhaddressindex_to_p2wpkhbytes
-                                            .get_or_read(typeindex.into(), p2wpkhaddressindex_to_p2wpkhbytes_mmap)?
+                                            .get_or_read(typeindex.into(), p2wpkhaddressindex_to_p2wpkhbytes_reader)?
                                             .map(|v| AddressBytes::from(v.into_owned())),
                                         OutputType::P2WSH => vecs
                                             .p2wshaddressindex_to_p2wshbytes
-                                            .get_or_read(typeindex.into(), p2wshaddressindex_to_p2wshbytes_mmap)?
+                                            .get_or_read(typeindex.into(), p2wshaddressindex_to_p2wshbytes_reader)?
                                             .map(|v| AddressBytes::from(v.into_owned())),
                                         OutputType::P2TR => vecs
                                             .p2traddressindex_to_p2trbytes
-                                            .get_or_read(typeindex.into(), p2traddressindex_to_p2trbytes_mmap)?
+                                            .get_or_read(typeindex.into(), p2traddressindex_to_p2trbytes_reader)?
                                             .map(|v| AddressBytes::from(v.into_owned())),
                                         OutputType::P2A => vecs
                                             .p2aaddressindex_to_p2abytes
-                                            .get_or_read(typeindex.into(), p2aaddressindex_to_p2abytes_mmap)?
+                                            .get_or_read(typeindex.into(), p2aaddressindex_to_p2abytes_reader)?
                                             .map(|v| AddressBytes::from(v.into_owned())),
                                         _ => {
                                             unreachable!()

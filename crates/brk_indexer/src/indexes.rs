@@ -97,11 +97,19 @@ impl TryFrom<(&mut Vecs, &Stores, &Client)> for Indexes {
         let stores_starting_height = stores.starting_height();
         let starting_height = vecs_starting_height.min(stores_starting_height);
 
+        // dbg!(
+        //     vecs_starting_height,
+        //     stores_starting_height,
+        //     starting_height
+        // );
+
         let range = u32::from(
             starting_height
                 .checked_sub(NUMBER_OF_UNSAFE_BLOCKS as u32)
                 .unwrap_or_default(),
         )..u32::from(starting_height);
+
+        let mut height_to_blockhash_iter = vecs.height_to_blockhash.iter();
 
         // But we also need to check the chain and start earlier in case of a reorg
         let height = range // ..= because of last saved + 1
@@ -113,101 +121,160 @@ impl TryFrom<(&mut Vecs, &Stores, &Client)> for Indexes {
                     })
                     .unwrap();
 
-                vecs.height_to_blockhash
-                    .iter()
+                height_to_blockhash_iter
                     .get(*height)
                     .is_none_or(|saved_blockhash| &rpc_blockhash != saved_blockhash.as_ref())
             })
             .unwrap_or(starting_height);
 
-        Ok(Self {
-            emptyoutputindex: starting_index(
-                &vecs.height_to_first_emptyoutputindex,
-                &vecs.emptyoutputindex_to_txindex,
-                height,
-            )
-            .ok_or(Error::Str(""))?,
+        let emptyoutputindex = starting_index(
+            &vecs.height_to_first_emptyoutputindex,
+            &vecs.emptyoutputindex_to_txindex,
             height,
-            p2msoutputindex: starting_index(
-                &vecs.height_to_first_p2msoutputindex,
-                &vecs.p2msoutputindex_to_txindex,
-                height,
-            )
-            .ok_or(Error::Str(""))?,
-            opreturnindex: starting_index(
-                &vecs.height_to_first_opreturnindex,
-                &vecs.opreturnindex_to_txindex,
-                height,
-            )
-            .ok_or(Error::Str(""))?,
-            p2pk33addressindex: starting_index(
-                &vecs.height_to_first_p2pk33addressindex,
-                &vecs.p2pk33addressindex_to_p2pk33bytes,
-                height,
-            )
-            .ok_or(Error::Str(""))?,
-            p2pk65addressindex: starting_index(
-                &vecs.height_to_first_p2pk65addressindex,
-                &vecs.p2pk65addressindex_to_p2pk65bytes,
-                height,
-            )
-            .ok_or(Error::Str(""))?,
-            p2pkhaddressindex: starting_index(
-                &vecs.height_to_first_p2pkhaddressindex,
-                &vecs.p2pkhaddressindex_to_p2pkhbytes,
-                height,
-            )
-            .ok_or(Error::Str(""))?,
-            p2shaddressindex: starting_index(
-                &vecs.height_to_first_p2shaddressindex,
-                &vecs.p2shaddressindex_to_p2shbytes,
-                height,
-            )
-            .ok_or(Error::Str(""))?,
-            p2traddressindex: starting_index(
-                &vecs.height_to_first_p2traddressindex,
-                &vecs.p2traddressindex_to_p2trbytes,
-                height,
-            )
-            .ok_or(Error::Str(""))?,
-            p2wpkhaddressindex: starting_index(
-                &vecs.height_to_first_p2wpkhaddressindex,
-                &vecs.p2wpkhaddressindex_to_p2wpkhbytes,
-                height,
-            )
-            .ok_or(Error::Str(""))?,
-            p2wshaddressindex: starting_index(
-                &vecs.height_to_first_p2wshaddressindex,
-                &vecs.p2wshaddressindex_to_p2wshbytes,
-                height,
-            )
-            .ok_or(Error::Str(""))?,
-            p2aaddressindex: starting_index(
-                &vecs.height_to_first_p2aaddressindex,
-                &vecs.p2aaddressindex_to_p2abytes,
-                height,
-            )
-            .ok_or(Error::Str(""))?,
-            txindex: starting_index(&vecs.height_to_first_txindex, &vecs.txindex_to_txid, height)
-                .ok_or(Error::Str(""))?,
-            inputindex: starting_index(
-                &vecs.height_to_first_inputindex,
-                &vecs.inputindex_to_outputindex,
-                height,
-            )
-            .ok_or(Error::Str(""))?,
-            outputindex: starting_index(
-                &vecs.height_to_first_outputindex,
-                &vecs.outputindex_to_value,
-                height,
-            )
-            .ok_or(Error::Str(""))?,
-            unknownoutputindex: starting_index(
-                &vecs.height_to_first_unknownoutputindex,
-                &vecs.unknownoutputindex_to_txindex,
-                height,
-            )
-            .ok_or(Error::Str(""))?,
+        )
+        .ok_or(Error::Str(""))?;
+
+        // dbg!(emptyoutputindex);
+
+        let p2msoutputindex = starting_index(
+            &vecs.height_to_first_p2msoutputindex,
+            &vecs.p2msoutputindex_to_txindex,
+            height,
+        )
+        .ok_or(Error::Str(""))?;
+
+        // dbg!(p2msoutputindex);
+
+        let opreturnindex = starting_index(
+            &vecs.height_to_first_opreturnindex,
+            &vecs.opreturnindex_to_txindex,
+            height,
+        )
+        .ok_or(Error::Str(""))?;
+
+        // dbg!(opreturnindex);
+
+        let p2pk33addressindex = starting_index(
+            &vecs.height_to_first_p2pk33addressindex,
+            &vecs.p2pk33addressindex_to_p2pk33bytes,
+            height,
+        )
+        .ok_or(Error::Str(""))?;
+
+        // dbg!(p2pk33addressindex);
+
+        let p2pk65addressindex = starting_index(
+            &vecs.height_to_first_p2pk65addressindex,
+            &vecs.p2pk65addressindex_to_p2pk65bytes,
+            height,
+        )
+        .ok_or(Error::Str(""))?;
+
+        // dbg!(p2pk65addressindex);
+
+        let p2pkhaddressindex = starting_index(
+            &vecs.height_to_first_p2pkhaddressindex,
+            &vecs.p2pkhaddressindex_to_p2pkhbytes,
+            height,
+        )
+        .ok_or(Error::Str(""))?;
+
+        // dbg!(p2pkhaddressindex);
+
+        let p2shaddressindex = starting_index(
+            &vecs.height_to_first_p2shaddressindex,
+            &vecs.p2shaddressindex_to_p2shbytes,
+            height,
+        )
+        .ok_or(Error::Str(""))?;
+
+        // dbg!(p2shaddressindex);
+
+        let p2traddressindex = starting_index(
+            &vecs.height_to_first_p2traddressindex,
+            &vecs.p2traddressindex_to_p2trbytes,
+            height,
+        )
+        .ok_or(Error::Str(""))?;
+
+        // dbg!(p2traddressindex);
+
+        let p2wpkhaddressindex = starting_index(
+            &vecs.height_to_first_p2wpkhaddressindex,
+            &vecs.p2wpkhaddressindex_to_p2wpkhbytes,
+            height,
+        )
+        .ok_or(Error::Str(""))?;
+
+        // dbg!(p2wpkhaddressindex);
+
+        let p2wshaddressindex = starting_index(
+            &vecs.height_to_first_p2wshaddressindex,
+            &vecs.p2wshaddressindex_to_p2wshbytes,
+            height,
+        )
+        .ok_or(Error::Str(""))?;
+
+        // dbg!(p2wshaddressindex);
+
+        let p2aaddressindex = starting_index(
+            &vecs.height_to_first_p2aaddressindex,
+            &vecs.p2aaddressindex_to_p2abytes,
+            height,
+        )
+        .ok_or(Error::Str(""))?;
+
+        // dbg!(p2aaddressindex);
+
+        let txindex = starting_index(&vecs.height_to_first_txindex, &vecs.txindex_to_txid, height)
+            .ok_or(Error::Str(""))?;
+
+        // dbg!(txindex);
+
+        let inputindex = starting_index(
+            &vecs.height_to_first_inputindex,
+            &vecs.inputindex_to_outputindex,
+            height,
+        )
+        .ok_or(Error::Str(""))?;
+
+        // dbg!(inputindex);
+
+        let outputindex = starting_index(
+            &vecs.height_to_first_outputindex,
+            &vecs.outputindex_to_value,
+            height,
+        )
+        .ok_or(Error::Str(""))?;
+
+        // dbg!(outputindex);
+
+        let unknownoutputindex = starting_index(
+            &vecs.height_to_first_unknownoutputindex,
+            &vecs.unknownoutputindex_to_txindex,
+            height,
+        )
+        .ok_or(Error::Str(""))?;
+
+        // dbg!(unknownoutputindex);
+
+        Ok(Self {
+            emptyoutputindex,
+            height,
+            p2msoutputindex,
+            opreturnindex,
+            p2pk33addressindex,
+            p2pk65addressindex,
+            p2pkhaddressindex,
+            p2shaddressindex,
+            p2traddressindex,
+            p2wpkhaddressindex,
+            p2wshaddressindex,
+            p2aaddressindex,
+            txindex,
+            inputindex,
+            outputindex,
+            unknownoutputindex,
         })
     }
 }
