@@ -19,12 +19,12 @@ use fjall::{
     TransactionalPartitionHandle,
 };
 
+mod any;
 mod meta;
-mod r#trait;
 
+pub use any::*;
 use log::info;
 use meta::*;
-pub use r#trait::*;
 
 pub struct Store<Key, Value> {
     meta: StoreMeta,

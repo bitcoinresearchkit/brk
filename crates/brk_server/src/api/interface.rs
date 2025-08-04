@@ -89,21 +89,7 @@ fn req_to_response_res(
         Response::new(Body::from(v))
     } else {
         match interface.format(vecs, &params.rest)? {
-            Output::CSV(s) => {
-                if let GuardResult::Guard(g) = guard_res {
-                    g.insert(s.clone().into())
-                        .map_err(|_| Error::QuickCacheError)?;
-                }
-                s.into_response()
-            }
-            Output::TSV(s) => {
-                if let GuardResult::Guard(g) = guard_res {
-                    g.insert(s.clone().into())
-                        .map_err(|_| Error::QuickCacheError)?;
-                }
-                s.into_response()
-            }
-            Output::MD(s) => {
+            Output::CSV(s) | Output::TSV(s) | Output::MD(s) => {
                 if let GuardResult::Guard(g) = guard_res {
                     g.insert(s.clone().into())
                         .map_err(|_| Error::QuickCacheError)?;
@@ -143,7 +129,7 @@ fn req_to_response_res(
                 Format::JSON => headers.insert_content_type_application_json(),
             }
         }
-        _ => headers.insert_content_type_application_json(),
+        None => headers.insert_content_type_application_json(),
     };
 
     Ok(response)
