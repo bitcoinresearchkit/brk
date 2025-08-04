@@ -20,16 +20,20 @@ where
 {
     const SIZE_OF_T: usize = size_of::<T>();
 
+    ///
     /// Be careful with deadlocks
     ///
     /// You'll want to drop the reader before mutable ops
+    ///
     fn create_reader(&self) -> Reader {
         self.create_static_reader()
     }
 
+    ///
     /// Be careful with deadlocks
     ///
     /// You'll want to drop the reader before mutable ops
+    ///
     fn create_static_reader(&self) -> Reader<'static> {
         unsafe {
             std::mem::transmute(
@@ -58,6 +62,11 @@ where
     fn get_or_read_(&self, index: usize, reader: &Reader) -> Result<Option<Cow<T>>> {
         let stored_len = self.stored_len();
 
+        let holes = self.holes();
+        if !holes.is_empty() && holes.contains(&index) {
+            return Ok(None);
+        }
+
         if index >= stored_len {
             let pushed = self.pushed();
             let j = index - stored_len;
@@ -72,11 +81,6 @@ where
             && let Some(updated) = updated.get(&index)
         {
             return Ok(Some(Cow::Borrowed(updated)));
-        }
-
-        let holes = self.holes();
-        if !holes.is_empty() && holes.contains(&index) {
-            return Ok(None);
         }
 
         Ok(Some(Cow::Owned(self.read_(index, reader)?)))
@@ -112,7 +116,7 @@ where
                 Ok(())
             }
             Ordering::Less => {
-                dbg!(index, value, len, self.header());
+                dbg!(index, value, len, self.header(), self.region_index());
                 Err(Error::IndexTooHigh)
             }
         }

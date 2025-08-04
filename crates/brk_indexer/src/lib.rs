@@ -124,7 +124,7 @@ impl Indexer {
         let mut p2traddressindex_to_p2trbytes_reader_opt = None;
         let mut p2aaddressindex_to_p2abytes_reader_opt = None;
 
-        let reset_mmaps_options =
+        let reset_readers =
             |vecs: &mut Vecs,
              txindex_to_first_outputindex_reader_opt: &mut Option<Reader<'static>>,
              p2pk65addressindex_to_p2pk65bytes_reader_opt: &mut Option<Reader<'static>>,
@@ -161,7 +161,7 @@ impl Indexer {
                     .replace(vecs.p2aaddressindex_to_p2abytes.create_static_reader());
             };
 
-        reset_mmaps_options(
+        reset_readers(
             vecs,
             &mut txindex_to_first_outputindex_reader_opt,
             &mut p2pk65addressindex_to_p2pk65bytes_reader_opt,
@@ -762,8 +762,10 @@ impl Indexer {
                     p2wshaddressindex_to_p2wshbytes_reader_opt.take();
                     p2traddressindex_to_p2trbytes_reader_opt.take();
                     p2aaddressindex_to_p2abytes_reader_opt.take();
+
                     export(stores, vecs, height, exit)?;
-                    reset_mmaps_options(
+
+                    reset_readers(
                         vecs,
                         &mut txindex_to_first_outputindex_reader_opt,
                         &mut p2pk65addressindex_to_p2pk65bytes_reader_opt,

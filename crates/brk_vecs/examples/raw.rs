@@ -1,4 +1,4 @@
-use std::{fs, path::Path, sync::Arc};
+use std::{borrow::Cow, collections::BTreeSet, fs, path::Path, sync::Arc};
 
 use brk_vecs::{
     AnyStoredVec, AnyVec, CollectableVec, File, GenericStoredVec, RawVec, Stamp, VecIterator,
@@ -23,16 +23,16 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         });
 
         let mut iter = vec.into_iter();
-        dbg!(iter.get(0));
-        dbg!(iter.get(1));
-        dbg!(iter.get(2));
-        dbg!(iter.get(20));
-        dbg!(iter.get(21));
+        assert!(iter.get(0) == Some(Cow::Borrowed(&0)));
+        assert!(iter.get(1) == Some(Cow::Borrowed(&1)));
+        assert!(iter.get(2) == Some(Cow::Borrowed(&2)));
+        assert!(iter.get(20) == Some(Cow::Borrowed(&20)));
+        assert!(iter.get(21).is_none());
         drop(iter);
 
         vec.flush()?;
 
-        dbg!(vec.header());
+        assert!(vec.header().stamp() == Stamp::new(0));
     }
 
     {
@@ -40,26 +40,32 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
         vec.mut_header().update_stamp(Stamp::new(100));
 
+        assert!(vec.header().stamp() == Stamp::new(100));
+
         let mut iter = vec.into_iter();
-        dbg!(iter.get(0));
-        dbg!(iter.get(1));
-        dbg!(iter.get(2));
-        dbg!(iter.get(3));
-        dbg!(iter.get(4));
-        dbg!(iter.get(5));
-        dbg!(iter.get(20));
-        dbg!(iter.get(20));
-        dbg!(iter.get(0));
+        assert!(iter.get(0) == Some(Cow::Borrowed(&0)));
+        assert!(iter.get(1) == Some(Cow::Borrowed(&1)));
+        assert!(iter.get(2) == Some(Cow::Borrowed(&2)));
+        assert!(iter.get(3) == Some(Cow::Borrowed(&3)));
+        assert!(iter.get(4) == Some(Cow::Borrowed(&4)));
+        assert!(iter.get(5) == Some(Cow::Borrowed(&5)));
+        assert!(iter.get(20) == Some(Cow::Borrowed(&20)));
+        assert!(iter.get(20) == Some(Cow::Borrowed(&20)));
+        assert!(iter.get(0) == Some(Cow::Borrowed(&0)));
         drop(iter);
 
         vec.push(21);
         vec.push(22);
 
+        assert!(vec.stored_len() == 21);
+        assert!(vec.pushed_len() == 2);
+        assert!(vec.len() == 23);
+
         let mut iter = vec.into_iter();
-        dbg!(iter.get(20));
-        dbg!(iter.get(21));
-        dbg!(iter.get(22));
-        dbg!(iter.get(23));
+        assert!(iter.get(20) == Some(Cow::Borrowed(&20)));
+        assert!(iter.get(21) == Some(Cow::Borrowed(&21)));
+        assert!(iter.get(22) == Some(Cow::Borrowed(&22)));
+        assert!(iter.get(23).is_none());
         drop(iter);
 
         vec.flush()?;
@@ -68,27 +74,42 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     {
         let mut vec: VEC = RawVec::forced_import(&file, "vec", version)?;
 
+        assert!(vec.header().stamp() == Stamp::new(100));
+
+        assert!(vec.stored_len() == 23);
+        assert!(vec.pushed_len() == 0);
+        assert!(vec.len() == 23);
+
         let mut iter = vec.into_iter();
-        dbg!(iter.get(0));
-        dbg!(iter.get(20));
-        dbg!(iter.get(21));
-        dbg!(iter.get(22));
+        assert!(iter.get(0) == Some(Cow::Borrowed(&0)));
+        assert!(iter.get(20) == Some(Cow::Borrowed(&20)));
+        assert!(iter.get(21) == Some(Cow::Borrowed(&21)));
+        assert!(iter.get(22) == Some(Cow::Borrowed(&22)));
         drop(iter);
 
         vec.truncate_if_needed(14)?;
 
+        assert!(vec.stored_len() == 14);
+        assert!(vec.pushed_len() == 0);
+        assert!(vec.len() == 14);
+
         let mut iter = vec.into_iter();
-        dbg!(iter.get(0));
-        dbg!(iter.get(5));
-        dbg!(iter.get(20));
+        assert!(iter.get(0) == Some(Cow::Borrowed(&0)));
+        assert!(iter.get(5) == Some(Cow::Borrowed(&5)));
+        assert!(iter.get(20).is_none());
         drop(iter);
 
-        dbg!(vec.collect_signed_range(Some(-5), None)?);
+        assert!(vec.collect_signed_range(Some(-5), None)? == vec![9, 10, 11, 12, 13]);
 
         vec.push(vec.len() as u32);
-        dbg!(VecIterator::last(vec.into_iter()));
+        assert!(VecIterator::last(vec.into_iter()) == Some((14, Cow::Borrowed(&14))));
 
-        dbg!(vec.into_iter().collect::<Vec<_>>());
+        assert!(
+            vec.into_iter()
+                .map(|(_, v)| v.into_owned())
+                .collect::<Vec<_>>()
+                == vec![0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]
+        );
     }
 
     {
@@ -96,46 +117,54 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
         vec.reset()?;
 
-        dbg!(vec.header(), vec.pushed_len(), vec.stored_len(), vec.len());
+        // dbg!(vec.header());
+        // assert len
+
+        assert!(vec.pushed_len() == 0);
+        assert!(vec.stored_len() == 0);
+        assert!(vec.len() == 0);
 
         (0..21_u32).for_each(|v| {
             vec.push(v);
         });
 
+        assert!(vec.pushed_len() == 21);
+        assert!(vec.stored_len() == 0);
+        assert!(vec.len() == 21);
+
         let mut iter = vec.into_iter();
-        dbg!(iter.get(0));
-        dbg!(iter.get(20));
-        dbg!(iter.get(21));
+        assert!(iter.get(0) == Some(Cow::Borrowed(&0)));
+        assert!(iter.get(20) == Some(Cow::Borrowed(&20)));
+        assert!(iter.get(21).is_none());
         drop(iter);
 
         let reader = vec.create_static_reader();
-        dbg!(vec.take(10, &reader)?);
-        dbg!(vec.get_or_read(10, &reader)?);
-        dbg!(vec.holes());
+        assert!(vec.take(10, &reader)? == Some(10));
+        assert!(vec.holes() == &BTreeSet::from([10]));
+        assert!(vec.get_or_read(10, &reader)?.is_none());
         drop(reader);
 
         vec.flush()?;
-        dbg!(vec.holes());
+
+        assert!(vec.holes() == &BTreeSet::from([10]));
     }
 
     {
         let mut vec: VEC = RawVec::forced_import(&file, "vec", version)?;
 
-        dbg!(vec.holes());
+        assert!(vec.holes() == &BTreeSet::from([10]));
 
         let reader = vec.create_static_reader();
-        dbg!(vec.get_or_read(10, &reader)?);
+        assert!(vec.get_or_read(10, &reader)?.is_none());
         drop(reader);
 
         vec.update(10, 10)?;
         vec.update(0, 10)?;
 
         let reader = vec.create_static_reader();
-        dbg!(
-            vec.holes(),
-            vec.get_or_read(0, &reader)?,
-            vec.get_or_read(10, &reader)?
-        );
+        assert!(vec.holes() == &BTreeSet::new());
+        assert!(vec.get_or_read(0, &reader)? == Some(Cow::Borrowed(&10)));
+        assert!(vec.get_or_read(10, &reader)? == Some(Cow::Borrowed(&10)));
         drop(reader);
 
         vec.flush()?;
@@ -144,7 +173,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     {
         let vec: VEC = RawVec::forced_import(&file, "vec", version)?;
 
-        dbg!(vec.collect()?);
+        assert!(
+            vec.collect()?
+                == vec![
+                    10, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
+                ]
+        );
     }
 
     Ok(())
