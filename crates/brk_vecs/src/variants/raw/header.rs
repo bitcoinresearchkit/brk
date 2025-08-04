@@ -84,14 +84,15 @@ impl Header {
     }
 }
 
-#[repr(C)]
 #[derive(Debug, Clone, FromBytes, IntoBytes, Immutable, KnownLayout)]
+#[repr(C)]
 struct HeaderInner {
     pub header_version: Version,
     pub vec_version: Version,
     pub computed_version: Version,
     pub stamp: Stamp,
     pub compressed: ZeroCopyBool,
+    pub padding: [u8; 31],
 }
 
 impl HeaderInner {
@@ -107,6 +108,7 @@ impl HeaderInner {
             computed_version: Version::default(),
             stamp: Stamp::default(),
             compressed: ZeroCopyBool::from(format),
+            padding: Default::default(),
         };
         header.write(file, region_index)?;
         Ok(header)
@@ -172,7 +174,7 @@ impl HeaderInner {
     Immutable,
     KnownLayout,
 )]
-pub struct ZeroCopyBool(u64);
+pub struct ZeroCopyBool(u8);
 
 impl ZeroCopyBool {
     pub const TRUE: Self = Self(1);

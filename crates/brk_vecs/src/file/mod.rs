@@ -143,7 +143,7 @@ impl File {
 
     #[inline]
     pub fn write_all_to_region(&self, identifier: Identifier, data: &[u8]) -> Result<()> {
-        self.write_all_to_region_at_(identifier, data, None)
+        self.write_all_to_region_at_(identifier, data, None, false)
     }
 
     #[inline]
@@ -153,14 +153,25 @@ impl File {
         data: &[u8],
         at: u64,
     ) -> Result<()> {
-        self.write_all_to_region_at_(identifier, data, Some(at))
+        self.write_all_to_region_at_(identifier, data, Some(at), false)
     }
 
+    pub fn truncate_write_all_to_region(
+        &self,
+        identifier: Identifier,
+        at: u64,
+        data: &[u8],
+    ) -> Result<()> {
+        self.write_all_to_region_at_(identifier, data, Some(at), true)
+    }
+
+    // NEW
     fn write_all_to_region_at_(
         &self,
         identifier: Identifier,
         data: &[u8],
         at: Option<u64>,
+        truncate: bool,
     ) -> Result<()> {
         let regions = self.regions.read();
         let Some(region_lock) = regions.get_region(identifier.clone()) else {
@@ -176,17 +187,22 @@ impl File {
         drop(region);
 
         let data_len = data.len() as u64;
-        let new_len = at.map_or(len + data_len, |at| (at + data_len).max(len));
-
+        let new_len = at.map_or(len + data_len, |at| {
+            assert!(at <= len);
+            let new_len = at + data_len;
+            if truncate { new_len } else { new_len.max(len) }
+        });
         let write_start = start + at.unwrap_or(len);
 
-        if at.is_some_and(|at| at >= start + reserved) {
+        if at.is_some_and(|at| at >= reserved) {
             return Err(Error::Str("Invalid at parameter"));
         }
 
         // Write to reserved space if possible
         if new_len <= reserved {
-            println!("Write to {region_index} reserved space at {write_start}");
+            // println!(
+            //     "Write {data_len} bytes to {region_index} reserved space at {write_start} (start = {start}, at = {at:?}, len = {len})"
+            // );
 
             if at.is_none() {
                 self.write(write_start, data);
@@ -216,7 +232,7 @@ impl File {
 
         // If is last continue writing
         if layout.is_last_anything(region_index) {
-            println!("{region_index} Append to file at {write_start}");
+            // println!("{region_index} Append to file at {write_start}");
 
             self.set_min_len(start + new_reserved)?;
             let mut region = region_lock.write();
@@ -239,7 +255,7 @@ impl File {
             .get_hole(hole_start)
             .is_some_and(|gap| gap >= added_reserve)
         {
-            println!("Expand {region_index} to hole");
+            // println!("Expand {region_index} to hole");
 
             layout.remove_or_compress_hole(hole_start, added_reserve);
             let mut region = region_lock.write();
@@ -258,7 +274,7 @@ impl File {
 
         // Find hole big enough to move the region
         if let Some(hole_start) = layout.find_smallest_adequate_hole(new_reserved) {
-            println!("Move {region_index} to hole at {hole_start}");
+            // println!("Move {region_index} to hole at {hole_start}");
 
             layout.remove_or_compress_hole(hole_start, new_reserved);
             drop(layout);
@@ -284,11 +300,11 @@ impl File {
 
         let new_start = layout.len(&regions);
         // Write at the end
-        println!(
-            "Move {region_index} to the end, from {start}..{} to {new_start}..{}",
-            start + reserved,
-            new_start + new_reserved
-        );
+        // println!(
+        //     "Move {region_index} to the end, from {start}..{} to {new_start}..{}",
+        //     start + reserved,
+        //     new_start + new_reserved
+        // );
         self.set_min_len(new_start + new_reserved)?;
         layout.reserve(new_start, new_reserved);
         drop(layout);
@@ -329,9 +345,13 @@ impl File {
         slice[start..end].copy_from_slice(data);
     }
 
+    ///
     /// From relative to start
+    ///
+    /// DO NOT call any `write_all` function right after as there could be a race condition if hole punching happens
+    ///
     pub fn truncate_region(&self, identifier: Identifier, from: u64) -> Result<()> {
-        let Some(region) = self.regions.read().get_region(identifier) else {
+        let Some(region) = self.regions.read().get_region(identifier.clone()) else {
             return Err(Error::Str("Unknown region"));
         };
         let mut region_ = region.write();
@@ -354,7 +374,10 @@ impl File {
         if start > end {
             unreachable!("Should not be possible");
         } else if start < end {
-            self.punch_hole(start, end - start)?;
+            let length = end - start;
+            // if length > PAGE_SIZE {
+            self.punch_hole(start, length)?;
+            // }
         }
         Ok(())
     }
@@ -457,12 +480,15 @@ impl File {
             })
     }
 
+    #[inline]
     fn punch_hole(&self, start: u64, length: u64) -> Result<()> {
         let file = self.file.write();
-        Self::punch_hole_impl(&file, start, length)
+        Self::punch_hole_(&file, start, length)
     }
 
+    #[inline]
     fn punch_hole_(file: &fs::File, start: u64, length: u64) -> Result<()> {
+        // println!("Punching {length} bytes hole at {start}");
         Self::punch_hole_impl(file, start, length)
     }
 

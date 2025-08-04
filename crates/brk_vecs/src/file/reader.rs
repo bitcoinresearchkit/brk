@@ -32,7 +32,8 @@ impl<'a> Reader<'a> {
         &self.region
     }
 
-    pub fn prefixed(&self, offset: usize) -> &[u8] {
-        &self.mmap[offset..]
+    pub fn prefixed(&self, offset: u64) -> &[u8] {
+        let start = self.region.start() + offset;
+        &self.mmap[start as usize..]
     }
 }

@@ -93,6 +93,12 @@ where
         let vec: Vec<T::NumberType> = pco::standalone::simple_decompress(slice)?;
         let vec = T::from_inner_slice(vec);
 
+        if vec.len() != page.values as usize {
+            dbg!((offset, len));
+            dbg!(vec);
+            unreachable!()
+        }
+
         Ok(vec)
     }
 
@@ -205,11 +211,7 @@ where
     fn flush(&mut self) -> Result<()> {
         self.inner.write_header_if_needed()?;
 
-        let pushed_len = self.pushed_len();
-
-        let has_new_data = pushed_len != 0;
-
-        if !has_new_data {
+        if self.is_pushed_empty() {
             return Ok(());
         }
 
@@ -222,9 +224,7 @@ where
         let mut truncate_at = None;
 
         if stored_len % Self::PER_PAGE != 0 {
-            if pages.is_empty() {
-                unreachable!()
-            }
+            assert!(!pages.is_empty());
 
             let last_page_index = pages.len() - 1;
 
@@ -236,7 +236,8 @@ where
                 })
                 .unwrap();
 
-            truncate_at.replace(pages.pop().unwrap().start);
+            let start = pages.pop().unwrap().start;
+            truncate_at.replace(start);
             starting_page_index = last_page_index;
         }
 
@@ -254,14 +255,10 @@ where
                 let prev = pages.get(page_index - 1).unwrap();
                 prev.start + prev.bytes as u64
             } else {
-                0
+                HEADER_OFFSET as u64
             };
 
-            let page = Page::new(
-                start + HEADER_OFFSET as u64,
-                bytes.len() as u32,
-                *len as u32,
-            );
+            let page = Page::new(start, bytes.len() as u32, *len as u32);
 
             pages.checked_push(page_index, page);
         });
@@ -274,10 +271,10 @@ where
         let file = self.file();
 
         if let Some(truncate_at) = truncate_at {
-            file.truncate_region(self.region_index().into(), truncate_at)?;
+            file.truncate_write_all_to_region(self.region_index().into(), truncate_at, &buf)?;
+        } else {
+            file.write_all_to_region(self.region_index().into(), &buf)?;
         }
-
-        file.write_all_to_region(self.region_index().into(), &buf)?;
 
         pages.flush(file)?;
 

@@ -49,12 +49,10 @@ impl Pages {
         let change_at = self.change_at.take().unwrap();
         let at = (change_at * Self::SIZE_OF_PAGE) as u64;
 
-        file.truncate_region(self.region_index.into(), at)?;
-
-        file.write_all_to_region_at(
+        file.truncate_write_all_to_region(
             self.region_index.into(),
-            self.vec[change_at..].as_bytes(),
             at,
+            self.vec[change_at..].as_bytes(),
         )?;
 
         Ok(())

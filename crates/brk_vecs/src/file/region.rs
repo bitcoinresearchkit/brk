@@ -12,6 +12,7 @@ pub struct Region {
     len: u64,
     /// Must be multiple of 4096, greater or equal to len
     reserved: u64,
+    padding: u64,
 }
 
 pub const SIZE_OF_REGION: usize = size_of::<Region>();
@@ -27,6 +28,7 @@ impl Region {
             start,
             len,
             reserved,
+            padding: 0,
         }
     }
 
