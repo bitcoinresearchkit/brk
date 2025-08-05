@@ -3,7 +3,7 @@ use std::{path::Path, sync::Arc};
 use brk_error::Result;
 use brk_indexer::Indexer;
 use brk_structs::{Bitcoin, CheckedSub, Dollars, StoredF64, Version};
-use brk_vecs::{AnyCollectableVec, Computation, Exit, File, Format, VecIterator};
+use brk_vecs::{AnyCollectableVec, Computation, Exit, File, Format, PAGE_SIZE, VecIterator};
 
 use super::{
     Indexes,
@@ -56,6 +56,7 @@ impl Vecs {
         price: Option<&price::Vecs>,
     ) -> Result<Self> {
         let file = Arc::new(File::open(&parent.join("cointime"))?);
+        file.set_min_len(PAGE_SIZE * 1_000_000)?;
 
         let compute_dollars = price.is_some();
 

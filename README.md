@@ -54,20 +54,22 @@ In contrast, existing alternatives tend to be either [very costly](https://studi
 
 ## Crates
 
-- [`brk`](https://crates.io/crates/brk): Wrapper around all other `brk-*` crates
-- [`brk_cli`](https://crates.io/crates/brk_cli): A command line interface to run a Bitcoin Research Kit instance
-- [`brk_computer`](https://crates.io/crates/brk_computer): A Bitcoin dataset computer, built on top of brk_indexer
-- [`brk_structs`](https://crates.io/crates/brk_structs): The Core (Structs and Errors) of the Bitcoin Research Kit
-- [`brk_fetcher`](https://crates.io/crates/brk_fetcher): A Bitcoin price fetcher
-- [`brk_indexer`](https://crates.io/crates/brk_indexer): A Bitcoin Core indexer built on top of brk_parser
-- [`brk_logger`](https://crates.io/crates/brk_logger): A clean logger used in the Bitcoin Research Kit
-- [`brk_mcp`](https://crates.io/crates/brk_mcp): A Model Context Protocol (MCP) which gives LLMs access to all available tools in BRK
-- [`brk_parser`](https://crates.io/crates/brk_parser): A very fast Bitcoin Core block parser and iterator built on top of bitcoin-rust
-- [`brk_interface`](https://crates.io/crates/brk_interface): An interface to BRK's engine
-- [`brk_server`](https://crates.io/crates/brk_server): A server that serves Bitcoin data and swappable front-ends, built on top of `brk_indexer`, `brk_fetcher` and `brk_computer`
-- [`brk_store`](https://crates.io/crates/brk_store): A thin wrapper around [`fjall`](https://crates.io/crates/fjall)
-- [`brk_vec`](https://crates.io/crates/brk_vec): A storeable vec
+- [`brk`](https://crates.io/crates/brk): A wrapper around all other `brk-*` crates
 - [`brk_bundler`](https://crates.io/crates/brk_bundler): A thin wrapper around [`rolldown`](https://rolldown.rs/)
+- [`brk_cli`](https://crates.io/crates/brk_cli): A command line interface to run a BRK instance
+- [`brk_computer`](https://crates.io/crates/brk_computer): A Bitcoin dataset computer built on top of [`brk_indexer`](https://crates.io/crates/brk_indexer)
+- [`brk_error`](https://crates.io/crates/brk_error): Errors used throughout BRK
+- [`brk_fetcher`](https://crates.io/crates/brk_fetcher): A Bitcoin price fetcher
+- [`brk_indexer`](https://crates.io/crates/brk_indexer): A Bitcoin indexer built on top of [`brk_parser`](https://crates.io/crates/brk_parser)
+- [`brk_interface`](https://crates.io/crates/brk_interface): An interface to find and format data from BRK
+- [`brk_logger`](https://crates.io/crates/brk_logger): A thin wrapper around [`env_logger`](https://crates.io/crates/env_logger)
+- [`brk_mcp`](https://crates.io/crates/brk_mcp): A bridge for LLMs to access BRK
+- [`brk_parser`](https://crates.io/crates/brk_parser): A very fast Bitcoin block parser and iterator built on top of [`bitcoin-rust`](https://crates.io/crates/bitcoin)
+- [`brk_server`](https://crates.io/crates/brk_server): A server with an API for anything from BRK
+- [`brk_store`](https://crates.io/crates/brk_store): A thin wrapper around [`fjall`](https://crates.io/crates/fjall)
+- [`brk_structs`](https://crates.io/crates/brk_structs): Structs used throughout BRK
+- [`brk_vecs`](https://crates.io/crates/brk_vecs): A KISS index/value store
+- [`brk_vecs_macros`](https://crates.io/crates/brk_vecs_macros): Macros for [`brk_vecs`](https://crates.io/crates/brk_vecs)
 
 ## Hosting as a service
 

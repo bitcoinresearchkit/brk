@@ -11,7 +11,7 @@ use brk_structs::{
 };
 use brk_vecs::{
     AnyCollectableVec, AnyStoredVec, AnyVec, CollectableVec, Computation, EagerVec, Exit, File,
-    Format, GenericStoredVec, RawVec, Reader, Stamp, StoredIndex, VecIterator,
+    Format, GenericStoredVec, PAGE_SIZE, RawVec, Reader, Stamp, StoredIndex, VecIterator,
 };
 use log::info;
 use rayon::prelude::*;
@@ -94,6 +94,8 @@ impl Vecs {
         states_path: &Path,
     ) -> Result<Self> {
         let file = Arc::new(File::open(&parent.join("stateful"))?);
+        file.set_min_len(PAGE_SIZE * 20_000_000)?;
+        file.set_min_regions(50_000)?;
 
         let compute_dollars = price.is_some();
 

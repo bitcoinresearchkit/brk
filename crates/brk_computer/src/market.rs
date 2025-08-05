@@ -4,7 +4,8 @@ use brk_error::Result;
 use brk_indexer::Indexer;
 use brk_structs::{Date, DateIndex, Dollars, Height, Sats, StoredF32, StoredU16, Version};
 use brk_vecs::{
-    AnyCollectableVec, Computation, EagerVec, Exit, File, Format, StoredIndex, VecIterator,
+    AnyCollectableVec, Computation, EagerVec, Exit, File, Format, PAGE_SIZE, StoredIndex,
+    VecIterator,
 };
 
 use crate::{
@@ -178,6 +179,7 @@ impl Vecs {
         indexes: &indexes::Vecs,
     ) -> Result<Self> {
         let file = Arc::new(File::open(&parent.join("market"))?);
+        file.set_min_len(PAGE_SIZE * 1_000_000)?;
 
         Ok(Self {
             height_to_marketcap: EagerVec::forced_import(

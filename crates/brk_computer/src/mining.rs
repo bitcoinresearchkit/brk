@@ -3,7 +3,7 @@ use std::{path::Path, sync::Arc};
 use brk_error::Result;
 use brk_indexer::Indexer;
 use brk_structs::{DifficultyEpoch, HalvingEpoch, StoredF64, Version};
-use brk_vecs::{AnyCollectableVec, Computation, Exit, File, Format, VecIterator};
+use brk_vecs::{AnyCollectableVec, Computation, Exit, File, Format, PAGE_SIZE, VecIterator};
 
 use crate::grouped::Source;
 
@@ -33,6 +33,7 @@ impl Vecs {
         indexes: &indexes::Vecs,
     ) -> Result<Self> {
         let file = Arc::new(File::open(&parent.join("mining"))?);
+        file.set_min_len(PAGE_SIZE * 1_000_000)?;
 
         Ok(Self {
             indexes_to_difficulty: ComputedVecsFromHeight::forced_import(

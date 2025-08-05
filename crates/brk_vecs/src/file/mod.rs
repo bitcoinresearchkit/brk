@@ -27,6 +27,7 @@ use crate::{Error, Result};
 
 pub const PAGE_SIZE: u64 = 4096;
 pub const PAGE_SIZE_MINUS_1: u64 = PAGE_SIZE - 1;
+const GB: u64 = 1024 * 1024 * 1024;
 
 #[derive(Debug)]
 pub struct File {
@@ -156,6 +157,7 @@ impl File {
         self.write_all_to_region_at_(identifier, data, Some(at), false)
     }
 
+    #[inline]
     pub fn truncate_write_all_to_region(
         &self,
         identifier: Identifier,
@@ -165,7 +167,6 @@ impl File {
         self.write_all_to_region_at_(identifier, data, Some(at), true)
     }
 
-    // NEW
     fn write_all_to_region_at_(
         &self,
         identifier: Identifier,
@@ -194,7 +195,7 @@ impl File {
         });
         let write_start = start + at.unwrap_or(len);
 
-        if at.is_some_and(|at| at >= reserved) {
+        if at.is_some_and(|at| at > reserved) {
             return Err(Error::Str("Invalid at parameter"));
         }
 
@@ -455,29 +456,99 @@ impl File {
         regions.flush()
     }
 
+    /// Do not write, right after as there might be a race condition
     pub fn punch_holes(&self) -> Result<()> {
         let file = self.file.write();
         let mmap = self.mmap.read();
+        let regions = self.regions.read();
         let layout = self.layout.read();
-        Self::punch_holes_(&file, &mmap, &layout)
+        Self::punch_holes_(&file, &mmap, &regions, &layout)
     }
 
-    fn punch_holes_(file: &fs::File, mmap: &MmapMut, layout: &Layout) -> Result<()> {
+    fn punch_holes_(
+        file: &fs::File,
+        mmap: &MmapMut,
+        regions: &Regions,
+        layout: &Layout,
+    ) -> Result<()> {
+        regions
+            .index_to_region()
+            .iter()
+            .flatten()
+            .try_for_each(|region_lock| -> Result<()> {
+                let region = region_lock.read();
+                let start = region.start();
+                let len = region.len();
+                let ceil_len = Self::ceil_number_to_page_size_multiple(len);
+                assert!(len <= ceil_len);
+                let reserved = region.reserved();
+                if ceil_len > reserved {
+                    panic!()
+                } else if ceil_len < reserved {
+                    let start = start + ceil_len;
+                    let hole = reserved - ceil_len;
+                    if Self::approx_has_punchable_data(mmap, start, hole) {
+                        info!("Punching a hole of {hole} bytes at {start}...");
+                        Self::punch_hole_(file, start, hole)?;
+                    }
+                }
+                Ok(())
+            })?;
+
         layout
             .start_to_hole()
             .par_iter()
             .try_for_each(|(&start, &hole)| -> Result<()> {
-                assert!(start % PAGE_SIZE == 0);
-                assert!(hole % PAGE_SIZE == 0);
-                let has_old_data =
-                    mmap[start as usize] != 0 || mmap[(start + hole - PAGE_SIZE) as usize] != 0;
-                if has_old_data {
+                if Self::approx_has_punchable_data(mmap, start, hole) {
                     info!("Punching a hole of {hole} bytes at {start}...");
                     Self::punch_hole_(file, start, hole)
                 } else {
                     Ok(())
                 }
             })
+    }
+
+    fn approx_has_punchable_data(mmap: &MmapMut, start: u64, len: u64) -> bool {
+        assert!(start % PAGE_SIZE == 0);
+        assert!(len % PAGE_SIZE == 0);
+
+        let min = start as usize;
+        let max = (start + len) as usize;
+        let check = |start, end| {
+            assert!(start >= min);
+            assert!(end < max);
+            mmap[start] != 0 || mmap[end] != 0
+        };
+
+        // Check first page (first and last byte)
+        let first_page_start = start as usize;
+        let first_page_end = (start + PAGE_SIZE - 1) as usize;
+        if check(first_page_start, first_page_end) {
+            return true;
+        }
+
+        // Check last page (first and last byte)
+        let last_page_start = (start + len - PAGE_SIZE) as usize;
+        let last_page_end = (start + len - 1) as usize;
+        if check(last_page_start, last_page_end) {
+            return true;
+        }
+
+        // For large lengths, check at 1GB intervals
+        if len > GB {
+            let num_gb_checks = (len / GB) as usize;
+            for i in 1..num_gb_checks {
+                let gb_boundary = start + (i as u64 * GB);
+                let page_start = gb_boundary as usize;
+                let page_end = (gb_boundary + PAGE_SIZE - 1) as usize;
+
+                if check(page_start, page_end) {
+                    return true;
+                }
+            }
+        }
+
+        false
     }
 
     #[inline]

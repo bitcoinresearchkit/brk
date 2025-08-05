@@ -1,6 +1,6 @@
 [package]
 name = "brk_vecs"
-description = "A simple index/value store"
+description = "A KISS index/value store"
 keywords = ["vec", "disk", "data"]
 categories = ["database"]
 version.workspace = true
@@ -8,6 +8,7 @@ edition.workspace = true
 license.workspace = true
 homepage.workspace = true
 repository.workspace = true
+build = "../../build.rs"
 
 [dependencies]
 brk_vecs_macros = { workspace = true }

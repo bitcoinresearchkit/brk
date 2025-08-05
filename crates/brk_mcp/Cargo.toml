@@ -1,11 +1,12 @@
 [package]
 name = "brk_mcp"
-description = "A Model Context Protocol (MCP) which gives LLMs access to all available tools in BRK"
+description = "A bridge for LLMs to access BRK"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
 homepage.workspace = true
 repository.workspace = true
+build = "../../build.rs"
 
 [dependencies]
 axum = { workspace = true }

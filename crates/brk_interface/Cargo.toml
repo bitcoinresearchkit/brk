@@ -1,11 +1,12 @@
 [package]
 name = "brk_interface"
-description = "An interface to BRK's engine"
+description = "An interface to find and format data from BRK"
 license.workspace = true
 edition.workspace = true
 version.workspace = true
 homepage.workspace = true
 repository.workspace = true
+build = "../../build.rs"
 
 [dependencies]
 brk_computer = { workspace = true }

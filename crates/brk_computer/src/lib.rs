@@ -1,6 +1,6 @@
 #![doc = include_str!("../README.md")]
 #![doc = "\n## Example\n\n```rust"]
-#![doc = include_str!("../examples/main.rs")]
+#![doc = include_str!("../examples/computer.rs")]
 #![doc = "```"]
 
 use std::path::Path;
@@ -168,6 +168,7 @@ impl Computer {
             info!("Computing fetched...");
             fetched.compute(indexer, &self.indexes, &starting_indexes, exit)?;
 
+            info!("Computing prices...");
             self.price.as_mut().unwrap().compute(
                 indexer,
                 &self.indexes,

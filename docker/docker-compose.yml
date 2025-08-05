@@ -11,7 +11,7 @@ services:
     container_name: brk
     restart: unless-stopped
     ports:
-      - 7070:3110  # Map host port 7070 to container port 3110
+      - 7070:3110 # Map host port 7070 to container port 3110
     volumes:
       # Bitcoin Core data directory (read-only)
       # For access to raw block data
@@ -25,20 +25,18 @@ services:
       # Bitcoin Core configuration
       - BITCOINDIR=/bitcoin
       - BLOCKSDIR=/bitcoin/blocks
-      
+
       # RPC configuration (required for processor)
       - RPCCONNECT=${BTC_RPC_HOST:-localhost}
       - RPCPORT=${BTC_RPC_PORT:-8332}
       # - RPCCOOKIEFILE=/bitcoin/.cookie
-      
+
       # Username/password authentication
       - RPCUSER=${BTC_RPC_USER}
       - RPCPASSWORD=${BTC_RPC_PASSWORD}
-      
+
       # BRK configuration
       - BRKDIR=/home/brk/.brk
-      - COMPUTATION=${BRK_COMPUTATION:-lazy}
-      - FORMAT=${BRK_FORMAT:-raw}
       - FETCH=${BRK_FETCH:-true}
       - MCP=${BRK_MCP:-true}
     command:

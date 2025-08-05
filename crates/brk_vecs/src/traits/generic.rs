@@ -137,10 +137,10 @@ where
         }
 
         if self.pushed_len() * Self::SIZE_OF_T >= MAX_CACHE_SIZE {
-            self.safe_flush(exit)
-        } else {
-            Ok(())
+            self.safe_flush(exit)?;
         }
+
+        Ok(())
     }
 
     #[inline]

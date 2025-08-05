@@ -8,8 +8,8 @@ use brk_structs::{
 };
 use brk_vecs::{
     AnyCloneableIterableVec, AnyCollectableVec, AnyIterableVec, Computation, ComputedVec,
-    ComputedVecFrom1, ComputedVecFrom2, ComputedVecFrom3, Exit, File, Format, StoredIndex,
-    VecIterator,
+    ComputedVecFrom1, ComputedVecFrom2, ComputedVecFrom3, Exit, File, Format, PAGE_SIZE,
+    StoredIndex, VecIterator,
 };
 
 use crate::grouped::{
@@ -91,6 +91,7 @@ impl Vecs {
         price: Option<&price::Vecs>,
     ) -> Result<Self> {
         let file = Arc::new(File::open(&parent.join("transactions"))?);
+        file.set_min_len(PAGE_SIZE * 10_000_000)?;
 
         let compute_dollars = price.is_some();
 
