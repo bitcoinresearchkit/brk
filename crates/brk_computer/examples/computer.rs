@@ -10,8 +10,11 @@ use brk_vecs::Exit;
 pub fn main() -> Result<()> {
     brk_logger::init(Some(Path::new(".log")));
 
-    // let bitcoin_dir = brk_structs::default_bitcoin_path();
-    let bitcoin_dir = Path::new("/Volumes/WD_BLACK/bitcoin");
+    let bitcoin_dir = Path::new(&std::env::var("HOME").unwrap())
+        .join("Library")
+        .join("Application Support")
+        .join("Bitcoin");
+    // let bitcoin_dir = Path::new("/Volumes/WD_BLACK/bitcoin");
 
     let rpc = Box::leak(Box::new(bitcoincore_rpc::Client::new(
         "http://localhost:8332",
@@ -24,11 +27,9 @@ pub fn main() -> Result<()> {
     thread::Builder::new()
         .stack_size(256 * 1024 * 1024)
         .spawn(move || -> Result<()> {
-            let parser = Parser::new(bitcoin_dir.join("blocks"), Path::new("").to_path_buf(), rpc);
+            let outputs_dir = Path::new("../../_outputs");
 
-            let _outputs_dir = Path::new("/Volumes/WD_BLACK/brk").join("outputs");
-            let outputs_dir = _outputs_dir.as_path();
-            // let outputs_dir = Path::new("../../_outputs");
+            let parser = Parser::new(bitcoin_dir.join("blocks"), outputs_dir.to_path_buf(), rpc);
 
             let mut indexer = Indexer::forced_import(outputs_dir)?;
 

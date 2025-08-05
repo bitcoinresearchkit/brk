@@ -1,11 +1,12 @@
 [package]
 name = "brk_server"
-description = "A crate that serves Bitcoin data and swappable front-ends, built on top of brk_indexer, brk_computer and brk_interface"
+description = "A server with an API for anything from BRK"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
 homepage.workspace = true
 repository.workspace = true
+build = "../../build.rs"
 
 [dependencies]
 axum = { workspace = true }

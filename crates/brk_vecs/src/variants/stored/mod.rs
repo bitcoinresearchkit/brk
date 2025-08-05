@@ -39,10 +39,9 @@ where
         }
 
         if format.is_compressed() {
-            todo!();
-            // Ok(Self::Compressed(CompressedVec::forced_import(
-            //     file, name, version,
-            // )?))
+            Ok(Self::Compressed(CompressedVec::forced_import(
+                file, name, version,
+            )?))
         } else {
             Ok(Self::Raw(RawVec::forced_import(file, name, version)?))
         }

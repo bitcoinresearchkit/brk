@@ -21,7 +21,7 @@ fn main() -> Result<()> {
 
     let blocks_dir = bitcoin_dir.join("blocks");
 
-    let outputs_dir = Path::new("./_outputs");
+    let outputs_dir = Path::new("../../_outputs");
     fs::create_dir_all(outputs_dir)?;
     // let outputs_dir = Path::new("/Volumes/WD_BLACK1/brk");
 

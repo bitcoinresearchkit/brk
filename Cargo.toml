@@ -23,7 +23,7 @@ inherits = "release"
 
 [workspace.dependencies]
 axum = "0.8.4"
-bitcoin = { version = "0.32.6", features = ["serde"] }
+bitcoin = { version = "0.32.7", features = ["serde"] }
 bitcoincore-rpc = "0.19.0"
 brk_bundler = { version = "0.0.83", path = "crates/brk_bundler" }
 brk_cli = { version = "0.0.83", path = "crates/brk_cli" }
@@ -63,7 +63,7 @@ pre-release-commit-message = "release: v{{version}}"
 tag-message = "release: v{{version}}"
 
 [workspace.metadata.dist]
-cargo-dist-version = "0.28.0"
+cargo-dist-version = "0.29.0"
 ci = "github"
 installers = []
 targets = [
@@ -73,10 +73,10 @@ targets = [
     "x86_64-unknown-linux-gnu",
 ]
 
-[workspace.metadata.dist.github-custom-runners]
-global = "ubuntu-latest"
-aarch64-apple-darwin.runner = "macos-14"
-x86_64-unknown-linux-gnu.runner = "ubuntu-latest"
-x86_64-unknown-linux-gnu.container = { image = "quay.io/pypa/manylinux_2_28_x86_64", host = "x86_64-unknown-linux-musl" }
-aarch64-unknown-linux-gnu.runner = "ubuntu-latest"
-aarch64-unknown-linux-gnu.container = { image = "quay.io/pypa/manylinux_2_28_x86_64", host = "x86_64-unknown-linux-musl" }
+# [workspace.metadata.dist.github-custom-runners]
+# global = "ubuntu-latest"
+# aarch64-apple-darwin.runner = "macos-14"
+# x86_64-unknown-linux-gnu.runner = "ubuntu-latest"
+# x86_64-unknown-linux-gnu.container = { image = "quay.io/pypa/manylinux_2_28_x86_64", host = "x86_64-unknown-linux-musl" }
+# aarch64-unknown-linux-gnu.runner = "ubuntu-latest"
+# aarch64-unknown-linux-gnu.container = { image = "quay.io/pypa/manylinux_2_28_x86_64", host = "x86_64-unknown-linux-musl" }

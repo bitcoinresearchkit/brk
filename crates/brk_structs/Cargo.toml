@@ -1,11 +1,12 @@
 [package]
 name = "brk_structs"
-description = "Structs used throughout the Bitcoin Research Kit"
+description = "Structs used throughout BRK"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
 homepage.workspace = true
 repository.workspace = true
+build = "../../build.rs"
 
 [dependencies]
 bitcoin = { workspace = true }
@@ -15,7 +16,7 @@ brk_vecs = {workspace = true}
 byteview = { workspace = true }
 derive_deref = { workspace = true }
 jiff = { workspace = true }
-rapidhash = "2.0.2"
+rapidhash = "3.0.0"
 serde = { workspace = true }
 serde_bytes = { workspace = true }
 zerocopy = { workspace = true }

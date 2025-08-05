@@ -50,8 +50,11 @@ impl Vecs {
         exit: &Exit,
     ) -> Result<()> {
         let height_to_timestamp = &indexer.vecs.height_to_timestamp;
+        let index = starting_indexes
+            .height
+            .min(Height::from(self.height_to_ohlc_in_cents.len()));
         height_to_timestamp
-            .iter_at(starting_indexes.height)
+            .iter_at(index)
             .try_for_each(|(i, v)| -> Result<()> {
                 let v = v.into_owned();
                 self.height_to_ohlc_in_cents.forced_push_at(
@@ -71,10 +74,13 @@ impl Vecs {
             })?;
         self.height_to_ohlc_in_cents.safe_flush(exit)?;
 
+        let index = starting_indexes
+            .dateindex
+            .min(DateIndex::from(self.dateindex_to_ohlc_in_cents.len()));
         let mut prev = None;
         indexes
             .dateindex_to_date
-            .iter_at(starting_indexes.dateindex)
+            .iter_at(index)
             .try_for_each(|(i, v)| -> Result<()> {
                 let d = v.into_owned();
                 if prev.is_none() {

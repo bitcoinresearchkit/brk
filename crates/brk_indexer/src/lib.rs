@@ -27,7 +27,7 @@ pub use stores::*;
 pub use vecs::*;
 
 const SNAPSHOT_BLOCK_RANGE: usize = 1_000;
-const COLLISIONS_CHECKED_UP_TO: Height = Height::new(907_000);
+const COLLISIONS_CHECKED_UP_TO: Height = Height::new(908_700);
 const VERSION: Version = Version::ONE;
 
 #[derive(Clone)]

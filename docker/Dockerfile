@@ -55,6 +55,3 @@ WORKDIR /home/brk
 
 # Default entrypoint
 ENTRYPOINT ["brk"]
-
-# Default command (can be overridden)
-CMD ["--services", "all"]

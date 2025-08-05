@@ -21,7 +21,7 @@ This guide explains how to run BRK using Docker and Docker Compose.
    ```bash
    docker compose -f docker/docker-compose.yml up -d
    ```
-   
+
    Or from the docker directory:
    ```bash
    cd docker && docker compose up -d
@@ -62,8 +62,6 @@ cd docker && docker compose up -d
 | `BTC_RPC_USER` | Bitcoin RPC username | - |
 | `BTC_RPC_PASSWORD` | Bitcoin RPC password | - |
 | `BRK_DATA_VOLUME` | Docker volume name for BRK data | `brk-data` |
-| `BRK_COMPUTATION` | Computation mode (`lazy`, `eager`) | `lazy` |
-| `BRK_FORMAT` | Data format (`raw`, `compressed`) | `raw` |
 | `BRK_FETCH` | Enable price fetching | `true` |
 | `BRK_MCP` | Enable MCP for AI/LLM | `true` |
 
@@ -81,8 +79,6 @@ BTC_RPC_USER=your_username
 BTC_RPC_PASSWORD=your_password
 
 # BRK settings
-BRK_COMPUTATION=lazy
-BRK_FORMAT=raw
 BRK_FETCH=true
 BRK_MCP=true
 ```
@@ -96,7 +92,7 @@ BRK will automatically use the `.cookie` file from your Bitcoin Core directory.
 Set `BTC_RPC_USER` and `BTC_RPC_PASSWORD` in your `docker/.env` file.
 
 #### Network Connectivity
-- **Same host**: 
+- **Same host**:
   - If Bitcoin Core is running natively (not in Docker): Use `host.docker.internal` on macOS/Windows or `172.17.0.1` on Linux
   - If Bitcoin Core is also in Docker: Use the service name or container IP
 - **Remote host**: Use the actual IP address or hostname
@@ -210,11 +206,9 @@ docker compose -f docker/docker-compose.yml logs -f
 #### Slow indexing
 - Ensure adequate disk space for indexed data - a minimum of 3GB/s is recommended
 - Monitor memory usage during initial indexing
-- Use `BRK_COMPUTATION=lazy` to reduce memory usage
 
 #### Out of memory
 - Increase Docker's memory limit
-- Use `BRK_COMPUTATION=lazy` mode
 - Monitor container resource usage: `docker stats`
 
 ### Permission Issues

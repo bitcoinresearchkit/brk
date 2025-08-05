@@ -1,6 +1,6 @@
 [package]
 name = "brk_parser"
-description = "A very fast Bitcoin Core block parser and iterator built on top of bitcoin-rust"
+description = "A very fast Bitcoin block parser and iterator built on top of bitcoin-rust"
 keywords = ["bitcoin", "block", "iterator"]
 categories = ["cryptography::cryptocurrencies", "encoding"]
 version.workspace = true
@@ -8,6 +8,7 @@ edition.workspace = true
 license.workspace = true
 homepage.workspace = true
 repository.workspace = true
+build = "../../build.rs"
 
 [dependencies]
 bitcoin = { workspace = true }

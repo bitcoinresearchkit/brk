@@ -44,7 +44,7 @@ where
     }
 
     pub fn inner_version(&self) -> Version {
-        self.version()
+        self.0.header().vec_version()
     }
 
     fn update_computed_version(&mut self, computed_version: Version) {

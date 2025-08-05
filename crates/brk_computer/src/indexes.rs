@@ -12,7 +12,7 @@ use brk_structs::{
 };
 use brk_vecs::{
     AnyCloneableIterableVec, AnyCollectableVec, Computation, ComputedVec, ComputedVecFrom1,
-    ComputedVecFrom2, EagerVec, Exit, File, Format, StoredIndex, VecIterator,
+    ComputedVecFrom2, EagerVec, Exit, File, Format, PAGE_SIZE, StoredIndex, VecIterator,
 };
 
 const VERSION: Version = Version::ZERO;
@@ -106,6 +106,7 @@ impl Vecs {
         format: Format,
     ) -> Result<Self> {
         let file = Arc::new(File::open(&parent.join("indexes"))?);
+        file.set_min_len(PAGE_SIZE * 10_000_000)?;
 
         let outputindex_to_outputindex = ComputedVec::forced_import_or_init_from_1(
             computation,

@@ -6,6 +6,7 @@ edition.workspace = true
 license.workspace = true
 homepage.workspace = true
 repository.workspace = true
+build = "../../build.rs"
 
 [dependencies]
 log = { workspace = true }

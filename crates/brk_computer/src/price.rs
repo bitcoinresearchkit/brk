@@ -7,8 +7,8 @@ use brk_structs::{
     OHLCDollars, OHLCSats, Open, QuarterIndex, Sats, SemesterIndex, Version, WeekIndex, YearIndex,
 };
 use brk_vecs::{
-    AnyCollectableVec, AnyIterableVec, AnyStoredVec, Computation, EagerVec, Exit, File, Format,
-    GenericStoredVec, RawVec,
+    AnyCollectableVec, AnyIterableVec, AnyStoredVec, AnyVec, Computation, EagerVec, Exit, File,
+    Format, GenericStoredVec, PAGE_SIZE, RawVec,
 };
 
 use crate::{fetched, grouped::Source};
@@ -81,6 +81,7 @@ impl Vecs {
         indexes: &indexes::Vecs,
     ) -> Result<Self> {
         let file = Arc::new(File::open(&parent.join("price"))?);
+        file.set_min_len(PAGE_SIZE * 1_000_000)?;
 
         Ok(Self {
             dateindex_to_ohlc: RawVec::forced_import(
@@ -400,9 +401,12 @@ impl Vecs {
             exit,
         )?;
 
+        let index = starting_indexes
+            .height
+            .min(Height::from(self.height_to_ohlc.len()));
         fetched
             .height_to_ohlc_in_cents
-            .iter_at(starting_indexes.height)
+            .iter_at(index)
             .try_for_each(|(i, v)| -> Result<()> {
                 self.height_to_ohlc
                     .forced_push_at(i, OHLCDollars::from(v.into_owned()), exit)?;
@@ -438,9 +442,12 @@ impl Vecs {
             exit,
         )?;
 
+        let index = starting_indexes
+            .dateindex
+            .min(DateIndex::from(self.dateindex_to_ohlc.len()));
         fetched
             .dateindex_to_ohlc_in_cents
-            .iter_at(starting_indexes.dateindex)
+            .iter_at(index)
             .try_for_each(|(i, v)| -> Result<()> {
                 self.dateindex_to_ohlc.forced_push_at(
                     i,
@@ -582,10 +589,13 @@ impl Vecs {
         let mut weekindex_first_iter = self.timeindexes_to_open.weekindex.unwrap_first().iter();
         let mut weekindex_max_iter = self.timeindexes_to_high.weekindex.unwrap_max().iter();
         let mut weekindex_min_iter = self.timeindexes_to_low.weekindex.unwrap_min().iter();
+        let index = starting_indexes
+            .weekindex
+            .min(WeekIndex::from(self.weekindex_to_ohlc.len()));
         self.timeindexes_to_close
             .weekindex
             .unwrap_last()
-            .iter_at(starting_indexes.weekindex)
+            .iter_at(index)
             .try_for_each(|(i, v)| -> Result<()> {
                 let close = v.into_owned();
                 let open = weekindex_first_iter.unwrap_get_inner(i);
@@ -617,10 +627,13 @@ impl Vecs {
             .iter();
         let mut difficultyepoch_min_iter =
             self.chainindexes_to_low.difficultyepoch.unwrap_min().iter();
+        let index = starting_indexes
+            .difficultyepoch
+            .min(DifficultyEpoch::from(self.difficultyepoch_to_ohlc.len()));
         self.chainindexes_to_close
             .difficultyepoch
             .unwrap_last()
-            .iter_at(starting_indexes.difficultyepoch)
+            .iter_at(index)
             .try_for_each(|(i, v)| -> Result<()> {
                 let close = v.into_owned();
                 let open = difficultyepoch_first_iter.unwrap_get_inner(i);
@@ -643,10 +656,13 @@ impl Vecs {
         let mut monthindex_first_iter = self.timeindexes_to_open.monthindex.unwrap_first().iter();
         let mut monthindex_max_iter = self.timeindexes_to_high.monthindex.unwrap_max().iter();
         let mut monthindex_min_iter = self.timeindexes_to_low.monthindex.unwrap_min().iter();
+        let index = starting_indexes
+            .monthindex
+            .min(MonthIndex::from(self.monthindex_to_ohlc.len()));
         self.timeindexes_to_close
             .monthindex
             .unwrap_last()
-            .iter_at(starting_indexes.monthindex)
+            .iter_at(index)
             .try_for_each(|(i, v)| -> Result<()> {
                 let close = v.into_owned();
                 let open = monthindex_first_iter.unwrap_get_inner(i);
@@ -670,10 +686,13 @@ impl Vecs {
             self.timeindexes_to_open.quarterindex.unwrap_first().iter();
         let mut quarterindex_max_iter = self.timeindexes_to_high.quarterindex.unwrap_max().iter();
         let mut quarterindex_min_iter = self.timeindexes_to_low.quarterindex.unwrap_min().iter();
+        let index = starting_indexes
+            .quarterindex
+            .min(QuarterIndex::from(self.quarterindex_to_ohlc.len()));
         self.timeindexes_to_close
             .quarterindex
             .unwrap_last()
-            .iter_at(starting_indexes.quarterindex)
+            .iter_at(index)
             .try_for_each(|(i, v)| -> Result<()> {
                 let close = v.into_owned();
                 let open = quarterindex_first_iter.unwrap_get_inner(i);
@@ -697,10 +716,13 @@ impl Vecs {
             self.timeindexes_to_open.semesterindex.unwrap_first().iter();
         let mut semesterindex_max_iter = self.timeindexes_to_high.semesterindex.unwrap_max().iter();
         let mut semesterindex_min_iter = self.timeindexes_to_low.semesterindex.unwrap_min().iter();
+        let index = starting_indexes
+            .semesterindex
+            .min(SemesterIndex::from(self.semesterindex_to_ohlc.len()));
         self.timeindexes_to_close
             .semesterindex
             .unwrap_last()
-            .iter_at(starting_indexes.semesterindex)
+            .iter_at(index)
             .try_for_each(|(i, v)| -> Result<()> {
                 let close = v.into_owned();
                 let open = semesterindex_first_iter.unwrap_get_inner(i);
@@ -723,10 +745,13 @@ impl Vecs {
         let mut yearindex_first_iter = self.timeindexes_to_open.yearindex.unwrap_first().iter();
         let mut yearindex_max_iter = self.timeindexes_to_high.yearindex.unwrap_max().iter();
         let mut yearindex_min_iter = self.timeindexes_to_low.yearindex.unwrap_min().iter();
+        let index = starting_indexes
+            .yearindex
+            .min(YearIndex::from(self.yearindex_to_ohlc.len()));
         self.timeindexes_to_close
             .yearindex
             .unwrap_last()
-            .iter_at(starting_indexes.yearindex)
+            .iter_at(index)
             .try_for_each(|(i, v)| -> Result<()> {
                 let close = v.into_owned();
                 let open = yearindex_first_iter.unwrap_get_inner(i);
@@ -752,10 +777,13 @@ impl Vecs {
         let mut decadeindex_first_iter = self.timeindexes_to_open.decadeindex.unwrap_first().iter();
         let mut decadeindex_max_iter = self.timeindexes_to_high.decadeindex.unwrap_max().iter();
         let mut decadeindex_min_iter = self.timeindexes_to_low.decadeindex.unwrap_min().iter();
+        let index = starting_indexes
+            .decadeindex
+            .min(DecadeIndex::from(self.decadeindex_to_ohlc.len()));
         self.timeindexes_to_close
             .decadeindex
             .unwrap_last()
-            .iter_at(starting_indexes.decadeindex)
+            .iter_at(index)
             .try_for_each(|(i, v)| -> Result<()> {
                 let close = v.into_owned();
                 let open = decadeindex_first_iter.unwrap_get_inner(i);
@@ -906,9 +934,12 @@ impl Vecs {
         let mut height_first_iter = self.chainindexes_to_open_in_sats.height.iter();
         let mut height_max_iter = self.chainindexes_to_high_in_sats.height.iter();
         let mut height_min_iter = self.chainindexes_to_low_in_sats.height.iter();
+        let index = starting_indexes
+            .height
+            .min(Height::from(self.height_to_ohlc_in_sats.len()));
         self.chainindexes_to_close_in_sats
             .height
-            .iter_at(starting_indexes.height)
+            .iter_at(index)
             .try_for_each(|(i, v)| -> Result<()> {
                 let close = v.into_owned();
                 self.height_to_ohlc_in_sats.forced_push_at(
@@ -943,11 +974,14 @@ impl Vecs {
             .as_ref()
             .unwrap()
             .iter();
+        let index = starting_indexes
+            .dateindex
+            .min(DateIndex::from(self.dateindex_to_ohlc_in_sats.len()));
         self.timeindexes_to_close_in_sats
             .dateindex
             .as_ref()
             .unwrap()
-            .iter_at(starting_indexes.dateindex)
+            .iter_at(index)
             .try_for_each(|(i, v)| -> Result<()> {
                 let close = v.into_owned();
                 self.dateindex_to_ohlc_in_sats.forced_push_at(
@@ -979,10 +1013,13 @@ impl Vecs {
             .weekindex
             .unwrap_min()
             .iter();
+        let index = starting_indexes
+            .weekindex
+            .min(WeekIndex::from(self.weekindex_to_ohlc_in_sats.len()));
         self.timeindexes_to_close_in_sats
             .weekindex
             .unwrap_last()
-            .iter_at(starting_indexes.weekindex)
+            .iter_at(index)
             .try_for_each(|(i, v)| -> Result<()> {
                 let close = v.into_owned();
                 self.weekindex_to_ohlc_in_sats.forced_push_at(
@@ -1014,10 +1051,13 @@ impl Vecs {
             .difficultyepoch
             .unwrap_min()
             .iter();
+        let index = starting_indexes.difficultyepoch.min(DifficultyEpoch::from(
+            self.difficultyepoch_to_ohlc_in_sats.len(),
+        ));
         self.chainindexes_to_close_in_sats
             .difficultyepoch
             .unwrap_last()
-            .iter_at(starting_indexes.difficultyepoch)
+            .iter_at(index)
             .try_for_each(|(i, v)| -> Result<()> {
                 let close = v.into_owned();
                 self.difficultyepoch_to_ohlc_in_sats.forced_push_at(
@@ -1049,10 +1089,13 @@ impl Vecs {
             .monthindex
             .unwrap_min()
             .iter();
+        let index = starting_indexes
+            .monthindex
+            .min(MonthIndex::from(self.monthindex_to_ohlc_in_sats.len()));
         self.timeindexes_to_close_in_sats
             .monthindex
             .unwrap_last()
-            .iter_at(starting_indexes.monthindex)
+            .iter_at(index)
             .try_for_each(|(i, v)| -> Result<()> {
                 let close = v.into_owned();
                 self.monthindex_to_ohlc_in_sats.forced_push_at(
@@ -1084,10 +1127,13 @@ impl Vecs {
             .quarterindex
             .unwrap_min()
             .iter();
+        let index = starting_indexes
+            .quarterindex
+            .min(QuarterIndex::from(self.quarterindex_to_ohlc_in_sats.len()));
         self.timeindexes_to_close_in_sats
             .quarterindex
             .unwrap_last()
-            .iter_at(starting_indexes.quarterindex)
+            .iter_at(index)
             .try_for_each(|(i, v)| -> Result<()> {
                 let close = v.into_owned();
                 self.quarterindex_to_ohlc_in_sats.forced_push_at(
@@ -1119,10 +1165,13 @@ impl Vecs {
             .semesterindex
             .unwrap_min()
             .iter();
+        let index = starting_indexes.semesterindex.min(SemesterIndex::from(
+            self.semesterindex_to_ohlc_in_sats.len(),
+        ));
         self.timeindexes_to_close_in_sats
             .semesterindex
             .unwrap_last()
-            .iter_at(starting_indexes.semesterindex)
+            .iter_at(index)
             .try_for_each(|(i, v)| -> Result<()> {
                 let close = v.into_owned();
                 self.semesterindex_to_ohlc_in_sats.forced_push_at(
@@ -1154,10 +1203,13 @@ impl Vecs {
             .yearindex
             .unwrap_min()
             .iter();
+        let index = starting_indexes
+            .yearindex
+            .min(YearIndex::from(self.yearindex_to_ohlc_in_sats.len()));
         self.timeindexes_to_close_in_sats
             .yearindex
             .unwrap_last()
-            .iter_at(starting_indexes.yearindex)
+            .iter_at(index)
             .try_for_each(|(i, v)| -> Result<()> {
                 let close = v.into_owned();
                 self.yearindex_to_ohlc_in_sats.forced_push_at(
@@ -1192,10 +1244,13 @@ impl Vecs {
             .decadeindex
             .unwrap_min()
             .iter();
+        let index = starting_indexes
+            .decadeindex
+            .min(DecadeIndex::from(self.decadeindex_to_ohlc_in_sats.len()));
         self.timeindexes_to_close_in_sats
             .decadeindex
             .unwrap_last()
-            .iter_at(starting_indexes.decadeindex)
+            .iter_at(index)
             .try_for_each(|(i, v)| -> Result<()> {
                 let close = v.into_owned();
                 self.decadeindex_to_ohlc_in_sats.forced_push_at(

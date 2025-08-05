@@ -22,10 +22,13 @@ pub struct PriceToAmount {
 
 impl PriceToAmount {
     pub fn forced_import(path: &Path, name: &str) -> Self {
-        Self::import(path, name).unwrap_or_else(|_| Self {
-            pathbuf: Self::path_(path, name),
-            height: None,
-            state: State::default(),
+        Self::import(path, name).unwrap_or_else(|_| {
+            // dbg!(e);
+            Self {
+                pathbuf: Self::path_(path, name),
+                height: None,
+                state: State::default(),
+            }
         })
     }
 
@@ -33,7 +36,7 @@ impl PriceToAmount {
         let path = Self::path_(path, name);
         fs::create_dir_all(&path)?;
 
-        let state = State::deserialize(&fs::read(&path)?)?;
+        let state = State::deserialize(&fs::read(Self::path_state_(&path))?)?;
 
         Ok(Self {
             height: Height::try_from(Self::path_height_(&path).as_path()).ok(),
@@ -63,10 +66,14 @@ impl PriceToAmount {
     }
 
     pub fn decrement(&mut self, price: Dollars, supply_state: &SupplyState) {
-        let amount = self.state.get_mut(&price).unwrap();
-        *amount -= supply_state.value;
-        if *amount == Sats::ZERO {
-            self.state.remove(&price);
+        if let Some(amount) = self.state.get_mut(&price) {
+            *amount -= supply_state.value;
+            if *amount == Sats::ZERO {
+                self.state.remove(&price);
+            }
+        } else {
+            dbg!(&self.state, price, &self.pathbuf);
+            unreachable!();
         }
     }
 
@@ -117,11 +124,11 @@ impl State {
 
         let mut buffer = Vec::with_capacity(8 + len * 16);
 
-        buffer.extend_from_slice(len.as_bytes());
+        buffer.extend(len.as_bytes());
 
         self.iter().for_each(|(key, value)| {
-            buffer.extend_from_slice(key.as_bytes());
-            buffer.extend_from_slice(value.as_bytes());
+            buffer.extend(key.as_bytes());
+            buffer.extend(value.as_bytes());
         });
 
         buffer
