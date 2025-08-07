@@ -28,7 +28,6 @@ mod address_cohorts;
 mod addresstype_to_addresscount;
 mod addresstype_to_height_to_addresscount;
 mod addresstype_to_indexes_to_addresscount;
-mod addresstype_to_typeindex_set;
 mod addresstype_to_typeindex_tree;
 mod addresstype_to_vec;
 mod common;
@@ -511,6 +510,31 @@ impl Vecs {
 
     #[allow(clippy::too_many_arguments)]
     pub fn compute(
+        &mut self,
+        indexer: &Indexer,
+        indexes: &indexes::Vecs,
+        transactions: &transactions::Vecs,
+        price: Option<&price::Vecs>,
+        market: &market::Vecs,
+        // Must take ownership as its indexes will be updated for this specific function
+        starting_indexes: &mut Indexes,
+        exit: &Exit,
+    ) -> Result<()> {
+        self.compute_(
+            indexer,
+            indexes,
+            transactions,
+            price,
+            market,
+            starting_indexes,
+            exit,
+        )?;
+        self.file.flush_then_punch()?;
+        Ok(())
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    fn compute_(
         &mut self,
         indexer: &Indexer,
         indexes: &indexes::Vecs,
@@ -1356,8 +1380,6 @@ impl Vecs {
             exit,
         )?;
 
-        self.file.flush()?;
-        self.file.punch_holes()?;
         Ok(())
     }
 

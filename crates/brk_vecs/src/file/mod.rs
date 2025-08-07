@@ -6,7 +6,6 @@ use std::{
 };
 
 use libc::off_t;
-use log::info;
 use memmap2::{MmapMut, MmapOptions};
 use parking_lot::{RwLock, RwLockReadGuard};
 
@@ -52,6 +51,7 @@ impl File {
             .write(true)
             .truncate(false)
             .open(Self::data_path_(path))?;
+        file.try_lock()?;
 
         let mmap = Self::create_mmap(&file)?;
 
@@ -201,7 +201,7 @@ impl File {
 
         // Write to reserved space if possible
         if new_len <= reserved {
-            // println!(
+            // info!(
             //     "Write {data_len} bytes to {region_index} reserved space at {write_start} (start = {start}, at = {at:?}, len = {len})"
             // );
 
@@ -233,7 +233,7 @@ impl File {
 
         // If is last continue writing
         if layout.is_last_anything(region_index) {
-            // println!("{region_index} Append to file at {write_start}");
+            // info!("{region_index} Append to file at {write_start}");
 
             self.set_min_len(start + new_reserved)?;
             let mut region = region_lock.write();
@@ -256,7 +256,7 @@ impl File {
             .get_hole(hole_start)
             .is_some_and(|gap| gap >= added_reserve)
         {
-            // println!("Expand {region_index} to hole");
+            // info!("Expand {region_index} to hole");
 
             layout.remove_or_compress_hole(hole_start, added_reserve);
             let mut region = region_lock.write();
@@ -275,7 +275,7 @@ impl File {
 
         // Find hole big enough to move the region
         if let Some(hole_start) = layout.find_smallest_adequate_hole(new_reserved) {
-            // println!("Move {region_index} to hole at {hole_start}");
+            // info!("Move {region_index} to hole at {hole_start}");
 
             layout.remove_or_compress_hole(hole_start, new_reserved);
             drop(layout);
@@ -301,7 +301,7 @@ impl File {
 
         let new_start = layout.len(&regions);
         // Write at the end
-        // println!(
+        // info!(
         //     "Move {region_index} to the end, from {start}..{} to {new_start}..{}",
         //     start + reserved,
         //     new_start + new_reserved
@@ -349,37 +349,20 @@ impl File {
     ///
     /// From relative to start
     ///
-    /// DO NOT call any `write_all` function right after as there could be a race condition if hole punching happens
+    /// Non destructive
     ///
     pub fn truncate_region(&self, identifier: Identifier, from: u64) -> Result<()> {
         let Some(region) = self.regions.read().get_region(identifier.clone()) else {
             return Err(Error::Str("Unknown region"));
         };
         let mut region_ = region.write();
-        let start = region_.start();
         let len = region_.len();
-        let reserved = region_.reserved();
-
-        // dbg!(from, start);
-
         if from == len {
             return Ok(());
         } else if from > len {
             return Err(Error::Str("Truncating further than length"));
         }
-
         region_.set_len(from);
-
-        let end = start + reserved;
-        let start = Self::ceil_number_to_page_size_multiple(start + from);
-        if start > end {
-            unreachable!("Should not be possible");
-        } else if start < end {
-            let length = end - start;
-            // if length > PAGE_SIZE {
-            self.punch_hole(start, length)?;
-            // }
-        }
         Ok(())
     }
 
@@ -399,8 +382,6 @@ impl File {
         let region_ = region.write();
 
         layout.remove_region(index, &region_)?;
-
-        self.punch_hole(region_.start(), region_.reserved())?;
 
         drop(region_);
 
@@ -456,56 +437,71 @@ impl File {
         regions.flush()
     }
 
-    /// Do not write, right after as there might be a race condition
-    pub fn punch_holes(&self) -> Result<()> {
-        let file = self.file.write();
-        let mmap = self.mmap.read();
-        let regions = self.regions.read();
-        let layout = self.layout.read();
-        Self::punch_holes_(&file, &mmap, &regions, &layout)
+    pub fn flush_then_punch(&self) -> Result<()> {
+        self.flush()?;
+        self.punch_holes()
     }
 
-    fn punch_holes_(
-        file: &fs::File,
-        mmap: &MmapMut,
-        regions: &Regions,
-        layout: &Layout,
-    ) -> Result<()> {
-        regions
+    pub fn punch_holes(&self) -> Result<()> {
+        let file = self.file.write();
+        let mut mmap = self.mmap.write();
+        let regions = self.regions.read();
+        let layout = self.layout.read();
+
+        let mut punched = regions
             .index_to_region()
-            .iter()
+            .par_iter()
             .flatten()
-            .try_for_each(|region_lock| -> Result<()> {
+            .map(|region_lock| -> Result<usize> {
                 let region = region_lock.read();
-                let start = region.start();
+                let rstart = region.start();
                 let len = region.len();
+                let reserved = region.reserved();
                 let ceil_len = Self::ceil_number_to_page_size_multiple(len);
                 assert!(len <= ceil_len);
-                let reserved = region.reserved();
                 if ceil_len > reserved {
                     panic!()
                 } else if ceil_len < reserved {
-                    let start = start + ceil_len;
+                    let start = rstart + ceil_len;
                     let hole = reserved - ceil_len;
-                    if Self::approx_has_punchable_data(mmap, start, hole) {
-                        info!("Punching a hole of {hole} bytes at {start}...");
-                        Self::punch_hole_(file, start, hole)?;
+                    if Self::approx_has_punchable_data(&mmap, start, hole) {
+                        // info!(
+                        //     "dbg: {:?}",
+                        //     (region, rstart, len, ceil_len, reserved, start, hole)
+                        // );
+                        // info!("Punching a hole of {hole} bytes at {start}...");
+                        Self::punch_hole(&file, start, hole)?;
+                        return Ok(1);
                     }
                 }
-                Ok(())
-            })?;
+                Ok(0)
+            })
+            .sum::<Result<usize>>()?;
 
-        layout
+        punched += layout
             .start_to_hole()
             .par_iter()
-            .try_for_each(|(&start, &hole)| -> Result<()> {
-                if Self::approx_has_punchable_data(mmap, start, hole) {
-                    info!("Punching a hole of {hole} bytes at {start}...");
-                    Self::punch_hole_(file, start, hole)
+            .map(|(&start, &hole)| -> Result<usize> {
+                if Self::approx_has_punchable_data(&mmap, start, hole) {
+                    // info!("dbg: {:?}", (start, hole));
+                    // info!("Punching a hole of {hole} bytes at {start}...");
+                    Self::punch_hole(&file, start, hole)?;
+                    Ok(1)
                 } else {
-                    Ok(())
+                    Ok(0)
                 }
             })
+            .sum::<Result<usize>>()?;
+
+        if punched > 0 {
+            // info!("Remaping post hole punching...");
+            unsafe {
+                libc::fsync(file.as_raw_fd());
+            }
+            *mmap = Self::create_mmap(&file)?;
+        }
+
+        Ok(())
     }
 
     fn approx_has_punchable_data(mmap: &MmapMut, start: u64, len: u64) -> bool {
@@ -517,7 +513,15 @@ impl File {
         let check = |start, end| {
             assert!(start >= min);
             assert!(end < max);
-            mmap[start] != 0 || mmap[end] != 0
+            let start_is_some = mmap[start] != 0;
+            // if start_is_some {
+            // info!("mmap[start = {}] = {}", start, mmap[start])
+            // }
+            let end_is_some = mmap[end] != 0;
+            // if end_is_some {
+            // info!("mmap[end = {}] = {}", end, mmap[end])
+            // }
+            start_is_some || end_is_some
         };
 
         // Check first page (first and last byte)
@@ -551,20 +555,8 @@ impl File {
         false
     }
 
-    #[inline]
-    fn punch_hole(&self, start: u64, length: u64) -> Result<()> {
-        let file = self.file.write();
-        Self::punch_hole_(&file, start, length)
-    }
-
-    #[inline]
-    fn punch_hole_(file: &fs::File, start: u64, length: u64) -> Result<()> {
-        // println!("Punching {length} bytes hole at {start}");
-        Self::punch_hole_impl(file, start, length)
-    }
-
     #[cfg(target_os = "macos")]
-    fn punch_hole_impl(file: &fs::File, start: u64, length: u64) -> Result<()> {
+    fn punch_hole(file: &fs::File, start: u64, length: u64) -> Result<()> {
         let fpunchhole = FPunchhole {
             fp_flags: 0,
             reserved: 0,
@@ -589,7 +581,7 @@ impl File {
     }
 
     #[cfg(target_os = "linux")]
-    fn punch_hole_impl(file: &fs::File, start: u64, length: u64) -> Result<()> {
+    fn punch_hole(file: &fs::File, start: u64, length: u64) -> Result<()> {
         let result = unsafe {
             libc::fallocate(
                 file.as_raw_fd(),
@@ -608,7 +600,7 @@ impl File {
     }
 
     #[cfg(not(any(target_os = "macos", target_os = "linux")))]
-    fn punch_hole_impl(_file: &fs::File, _start: u64, _length: u64) -> Result<()> {
+    fn punch_hole(_file: &fs::File, _start: u64, _length: u64) -> Result<()> {
         Err(Error::String(
             "Hole punching not supported on this platform".to_string(),
         ))

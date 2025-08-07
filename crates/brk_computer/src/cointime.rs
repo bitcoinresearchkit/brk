@@ -309,6 +309,30 @@ impl Vecs {
         stateful: &stateful::Vecs,
         exit: &Exit,
     ) -> Result<()> {
+        self.compute_(
+            indexer,
+            indexes,
+            starting_indexes,
+            price,
+            transactions,
+            stateful,
+            exit,
+        )?;
+        self.file.flush_then_punch()?;
+        Ok(())
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    fn compute_(
+        &mut self,
+        indexer: &Indexer,
+        indexes: &indexes::Vecs,
+        starting_indexes: &Indexes,
+        price: Option<&price::Vecs>,
+        transactions: &transactions::Vecs,
+        stateful: &stateful::Vecs,
+        exit: &Exit,
+    ) -> Result<()> {
         let circulating_supply = &stateful.utxo_cohorts.all.1.height_to_supply;
 
         self.indexes_to_coinblocks_created.compute_all(
@@ -707,8 +731,6 @@ impl Vecs {
             )?;
         }
 
-        self.file.flush()?;
-        self.file.punch_holes()?;
         Ok(())
     }
 

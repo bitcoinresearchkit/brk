@@ -78,6 +78,18 @@ impl Vecs {
         starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
+        self.compute_(indexer, indexes, starting_indexes, exit)?;
+        self.file.flush_then_punch()?;
+        Ok(())
+    }
+
+    fn compute_(
+        &mut self,
+        indexer: &Indexer,
+        indexes: &indexes::Vecs,
+        starting_indexes: &Indexes,
+        exit: &Exit,
+    ) -> Result<()> {
         let mut height_to_difficultyepoch_iter = indexes.height_to_difficultyepoch.into_iter();
         self.indexes_to_difficultyepoch.compute_all(
             indexer,
@@ -135,8 +147,6 @@ impl Vecs {
             Some(&indexer.vecs.height_to_difficulty),
         )?;
 
-        self.file.flush()?;
-        self.file.punch_holes()?;
         Ok(())
     }
 

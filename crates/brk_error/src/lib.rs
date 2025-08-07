@@ -1,5 +1,5 @@
 use std::{
-    fmt::{self, Debug},
+    fmt::{self, Debug, Display},
     io, result, time,
 };
 
@@ -88,14 +88,14 @@ impl<A, B> From<zerocopy::error::SizeError<A, B>> for Error {
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            Error::IO(error) => Debug::fmt(&error, f),
-            Error::Minreq(error) => Debug::fmt(&error, f),
-            Error::SerdeJson(error) => Debug::fmt(&error, f),
-            Error::Vecs(error) => Debug::fmt(&error, f),
-            Error::BitcoinRPC(error) => Debug::fmt(&error, f),
-            Error::SystemTimeError(error) => Debug::fmt(&error, f),
-            Error::Jiff(error) => Debug::fmt(&error, f),
-            Error::Fjall(error) => Debug::fmt(&error, f),
+            Error::IO(error) => Display::fmt(&error, f),
+            Error::Minreq(error) => Display::fmt(&error, f),
+            Error::SerdeJson(error) => Display::fmt(&error, f),
+            Error::Vecs(error) => Display::fmt(&error, f),
+            Error::BitcoinRPC(error) => Display::fmt(&error, f),
+            Error::SystemTimeError(error) => Display::fmt(&error, f),
+            Error::Jiff(error) => Display::fmt(&error, f),
+            Error::Fjall(error) => Display::fmt(&error, f),
             Error::ZeroCopyError => write!(f, "ZeroCopy error"),
 
             Error::WrongLength => write!(f, "Wrong length"),

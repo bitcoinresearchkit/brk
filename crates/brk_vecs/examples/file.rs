@@ -83,7 +83,7 @@ fn main() -> Result<()> {
         );
     }
 
-    file.write_all_to_region_at(region1_i.into(), &[1], 18)?;
+    file.write_all_to_region_at(region1_i.into(), &[0, 0, 0, 0, 0, 1], 13)?;
 
     {
         let region = file.get_region(region1_i.into())?;
@@ -118,6 +118,7 @@ fn main() -> Result<()> {
     println!("Disk usage - post sync: {}", file.disk_usage());
 
     file.truncate_region(region1_i.into(), 10)?;
+    file.punch_holes()?;
 
     {
         let region = file.get_region(region1_i.into())?;

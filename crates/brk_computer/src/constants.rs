@@ -88,6 +88,18 @@ impl Vecs {
         starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
+        self.compute_(indexer, indexes, starting_indexes, exit)?;
+        self.file.flush_then_punch()?;
+        Ok(())
+    }
+
+    fn compute_(
+        &mut self,
+        indexer: &Indexer,
+        indexes: &indexes::Vecs,
+        starting_indexes: &Indexes,
+        exit: &Exit,
+    ) -> Result<()> {
         self.constant_0.compute_all(
             indexer,
             indexes,
@@ -156,8 +168,6 @@ impl Vecs {
             },
         )?;
 
-        self.file.flush()?;
-        self.file.punch_holes()?;
         Ok(())
     }
 

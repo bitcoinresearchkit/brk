@@ -88,7 +88,7 @@ where
         })
     }
 
-    pub fn get(&self, key: &'a K) -> Result<Option<Cow<V>>> {
+    pub fn get(&'_ self, key: &'a K) -> Result<Option<Cow<'_, V>>> {
         if let Some(v) = self.puts.get(key) {
             Ok(Some(Cow::Borrowed(v)))
         } else if let Some(slice) = self

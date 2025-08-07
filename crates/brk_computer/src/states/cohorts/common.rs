@@ -53,12 +53,12 @@ impl CohortState {
     pub fn increment(&mut self, supply_state: &SupplyState, price: Option<Dollars>) {
         self.supply += supply_state;
 
-        if supply_state.value > Sats::ZERO {
-            if let Some(realized) = self.realized.as_mut() {
-                let price = price.unwrap();
-                realized.increment(supply_state, price);
-                self.price_to_amount.increment(price, supply_state);
-            }
+        if supply_state.value > Sats::ZERO
+            && let Some(realized) = self.realized.as_mut()
+        {
+            let price = price.unwrap();
+            realized.increment(supply_state, price);
+            self.price_to_amount.increment(price, supply_state);
         }
     }
 
@@ -70,23 +70,23 @@ impl CohortState {
     ) {
         self.supply += supply_state;
 
-        if supply_state.value > Sats::ZERO {
-            if let Some(realized) = self.realized.as_mut() {
-                realized.increment_(realized_cap);
-                self.price_to_amount.increment(realized_price, supply_state);
-            }
+        if supply_state.value > Sats::ZERO
+            && let Some(realized) = self.realized.as_mut()
+        {
+            realized.increment_(realized_cap);
+            self.price_to_amount.increment(realized_price, supply_state);
         }
     }
 
     pub fn decrement(&mut self, supply_state: &SupplyState, price: Option<Dollars>) {
         self.supply -= supply_state;
 
-        if supply_state.value > Sats::ZERO {
-            if let Some(realized) = self.realized.as_mut() {
-                let price = price.unwrap();
-                realized.decrement(supply_state, price);
-                self.price_to_amount.decrement(price, supply_state);
-            }
+        if supply_state.value > Sats::ZERO
+            && let Some(realized) = self.realized.as_mut()
+        {
+            let price = price.unwrap();
+            realized.decrement(supply_state, price);
+            self.price_to_amount.decrement(price, supply_state);
         }
     }
 
@@ -98,11 +98,11 @@ impl CohortState {
     ) {
         self.supply -= supply_state;
 
-        if supply_state.value > Sats::ZERO {
-            if let Some(realized) = self.realized.as_mut() {
-                realized.decrement_(realized_cap);
-                self.price_to_amount.decrement(realized_price, supply_state);
-            }
+        if supply_state.value > Sats::ZERO
+            && let Some(realized) = self.realized.as_mut()
+        {
+            realized.decrement_(realized_cap);
+            self.price_to_amount.decrement(realized_price, supply_state);
         }
     }
 
@@ -124,21 +124,22 @@ impl CohortState {
     ) {
         self.supply += supply_state;
 
-        if supply_state.value > Sats::ZERO {
-            if let Some(realized) = self.realized.as_mut() {
-                let price = price.unwrap();
-                realized.receive(supply_state, price);
+        if supply_state.value > Sats::ZERO
+            && let Some(realized) = self.realized.as_mut()
+        {
+            let price = price.unwrap();
+            realized.receive(supply_state, price);
 
-                if let Some((price, supply)) = price_to_amount_increment
-                    && supply.value.is_not_zero()
-                {
-                    self.price_to_amount.increment(price, supply);
-                }
-                if let Some((price, supply)) = price_to_amount_decrement
-                    && supply.value.is_not_zero()
-                {
-                    self.price_to_amount.decrement(price, supply);
-                }
+            if let Some((price, supply)) = price_to_amount_increment
+                && supply.value.is_not_zero()
+            {
+                self.price_to_amount.increment(price, supply);
+            }
+
+            if let Some((price, supply)) = price_to_amount_decrement
+                && supply.value.is_not_zero()
+            {
+                self.price_to_amount.decrement(price, supply);
             }
         }
     }

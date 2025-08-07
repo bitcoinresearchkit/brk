@@ -25,7 +25,7 @@ where
     ///
     /// You'll want to drop the reader before mutable ops
     ///
-    fn create_reader(&self) -> Reader {
+    fn create_reader(&'_ self) -> Reader<'_> {
         self.create_static_reader()
     }
 
@@ -55,11 +55,11 @@ where
     fn read_(&self, index: usize, reader: &Reader) -> Result<T>;
 
     #[inline]
-    fn get_or_read(&self, index: I, reader: &Reader) -> Result<Option<Cow<T>>> {
+    fn get_or_read(&'_ self, index: I, reader: &Reader) -> Result<Option<Cow<'_, T>>> {
         self.get_or_read_(index.to_usize()?, reader)
     }
     #[inline]
-    fn get_or_read_(&self, index: usize, reader: &Reader) -> Result<Option<Cow<T>>> {
+    fn get_or_read_(&'_ self, index: usize, reader: &Reader) -> Result<Option<Cow<'_, T>>> {
         let stored_len = self.stored_len();
 
         let holes = self.holes();
@@ -136,7 +136,9 @@ where
             }
         }
 
-        if self.pushed_len() * Self::SIZE_OF_T >= MAX_CACHE_SIZE {
+        let pushed_bytes = self.pushed_len() * Self::SIZE_OF_T;
+        if pushed_bytes >= MAX_CACHE_SIZE {
+            // info!("pushed_bytes ({pushed_bytes}) >= MAX_CACHE_SIZE ({MAX_CACHE_SIZE})");
             self.safe_flush(exit)?;
         }
 

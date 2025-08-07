@@ -7,7 +7,7 @@ use std::{
 use crate::{
     AnyCollectableVec, AnyIterableVec, AnyStoredVec, AnyVec, BaseVecIterator, BoxedVecIterator,
     CollectableVec, File, GenericStoredVec, Header, Result, StoredCompressed, StoredIndex, Version,
-    file::Reader,
+    file::{Reader, Region},
 };
 
 use super::{CompressedVec, CompressedVecIterator, RawVec, RawVecIterator};
@@ -15,6 +15,7 @@ use super::{CompressedVec, CompressedVecIterator, RawVec, RawVecIterator};
 mod format;
 
 pub use format::*;
+use parking_lot::RwLock;
 
 #[derive(Debug, Clone)]
 pub enum StoredVec<I, T> {
@@ -102,6 +103,14 @@ where
         match self {
             StoredVec::Raw(v) => v.region_index(),
             StoredVec::Compressed(v) => v.region_index(),
+        }
+    }
+
+    #[inline]
+    fn region(&self) -> &RwLock<Region> {
+        match self {
+            StoredVec::Raw(v) => v.region(),
+            StoredVec::Compressed(v) => v.region(),
         }
     }
 

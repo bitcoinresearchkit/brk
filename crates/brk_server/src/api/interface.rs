@@ -97,17 +97,11 @@ fn req_to_response_res(
                 s.into_response()
             }
             Output::Json(v) => {
-                let json = match v {
-                    brk_interface::Value::Single(v) => serde_json::to_vec(&v)?,
-                    brk_interface::Value::List(v) => serde_json::to_vec(&v)?,
-                    brk_interface::Value::Matrix(v) => serde_json::to_vec(&v)?,
-                };
-
+                let json = serde_json::to_vec(&v)?;
                 if let GuardResult::Guard(g) = guard_res {
                     g.insert(json.clone().into())
                         .map_err(|_| Error::QuickCacheError)?;
                 }
-
                 json.into_response()
             }
         }

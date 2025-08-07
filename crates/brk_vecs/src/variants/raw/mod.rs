@@ -61,10 +61,15 @@ where
     }
 
     pub fn import(file: &Arc<File>, name: &str, version: Version) -> Result<Self> {
-        Self::import_(file, name, version, Format::Raw)
+        Self::any_import(file, name, version, Format::Raw)
     }
 
-    pub fn import_(file: &Arc<File>, name: &str, version: Version, format: Format) -> Result<Self> {
+    pub fn any_import(
+        file: &Arc<File>,
+        name: &str,
+        version: Version,
+        format: Format,
+    ) -> Result<Self> {
         let (region_index, region) = file.create_region_if_needed(&Self::vec_region_name_(name))?;
 
         let region_len = region.read().len() as usize;
@@ -239,13 +244,13 @@ where
                 let (holes_index, _) = self
                     .file
                     .create_region_if_needed(&self.holes_region_name())?;
-                self.file.truncate_region(holes_index.into(), 0)?;
                 let bytes = self
                     .holes
                     .iter()
                     .flat_map(|i| i.to_ne_bytes())
                     .collect::<Vec<_>>();
-                self.file.write_all_to_region(holes_index.into(), &bytes)?;
+                self.file
+                    .truncate_write_all_to_region(holes_index.into(), 0, &bytes)?;
             } else if had_holes {
                 self.has_stored_holes = false;
                 let _ = self.file.remove_region(self.holes_region_name().into());
@@ -261,6 +266,10 @@ where
 
     fn region_index(&self) -> usize {
         self.region_index
+    }
+
+    fn region(&self) -> &RwLock<Region> {
+        &self.region
     }
 }
 

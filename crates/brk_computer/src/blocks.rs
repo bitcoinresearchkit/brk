@@ -147,6 +147,18 @@ impl Vecs {
         starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
+        self.compute_(indexer, indexes, starting_indexes, exit)?;
+        self.file.flush_then_punch()?;
+        Ok(())
+    }
+
+    fn compute_(
+        &mut self,
+        indexer: &Indexer,
+        indexes: &indexes::Vecs,
+        starting_indexes: &Indexes,
+        exit: &Exit,
+    ) -> Result<()> {
         self.timeindexes_to_timestamp.compute_all(
             indexer,
             indexes,
@@ -251,8 +263,6 @@ impl Vecs {
             exit,
         )?;
 
-        self.file.flush()?;
-        self.file.punch_holes()?;
         Ok(())
     }
 

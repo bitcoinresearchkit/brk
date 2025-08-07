@@ -1,6 +1,6 @@
 use std::{
-    fmt::{self, Debug},
-    io, result, time,
+    fmt::{self, Debug, Display},
+    fs, io, result, time,
 };
 
 use crate::Version;
@@ -10,6 +10,7 @@ pub type Result<T, E = Error> = result::Result<T, E>;
 #[derive(Debug)]
 pub enum Error {
     IO(io::Error),
+    TryLockError(fs::TryLockError),
     SerdeJson(serde_json::Error),
     SystemTimeError(time::SystemTimeError),
     PCO(pco::errors::PcoError),
@@ -35,6 +36,12 @@ impl From<time::SystemTimeError> for Error {
 impl From<io::Error> for Error {
     fn from(value: io::Error) -> Self {
         Self::IO(value)
+    }
+}
+
+impl From<fs::TryLockError> for Error {
+    fn from(value: fs::TryLockError) -> Self {
+        Self::TryLockError(value)
     }
 }
 
@@ -65,10 +72,14 @@ impl From<serde_json::Error> for Error {
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            Error::IO(error) => Debug::fmt(&error, f),
-            Error::PCO(error) => Debug::fmt(&error, f),
-            Error::SystemTimeError(error) => Debug::fmt(&error, f),
-            Error::SerdeJson(error) => Debug::fmt(&error, f),
+            Error::IO(error) => Display::fmt(&error, f),
+            Error::TryLockError(_) => write!(
+                f,
+                "Couldn't lock file. It must be already opened by another process."
+            ),
+            Error::PCO(error) => Display::fmt(&error, f),
+            Error::SystemTimeError(error) => Display::fmt(&error, f),
+            Error::SerdeJson(error) => Display::fmt(&error, f),
             Error::ZeroCopyError => write!(f, "ZeroCopy error"),
 
             Error::WrongEndian => write!(f, "Wrong endian"),

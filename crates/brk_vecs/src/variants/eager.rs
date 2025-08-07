@@ -9,11 +9,13 @@ use std::{
 };
 
 use log::info;
+use parking_lot::RwLock;
 
 use crate::{
     AnyCollectableVec, AnyIterableVec, AnyStoredVec, AnyVec, BoxedVecIterator, CheckedSub,
     CollectableVec, Exit, File, Format, GenericStoredVec, Reader, Result, StoredCompressed,
-    StoredIndex, StoredRaw, StoredVec, StoredVecIterator, VecIterator, Version, variants::Header,
+    StoredIndex, StoredRaw, StoredVec, StoredVecIterator, VecIterator, Version, file::Region,
+    variants::Header,
 };
 
 #[derive(Debug, Clone)]
@@ -960,19 +962,6 @@ where
     }
 }
 
-impl<'a, I, T> IntoIterator for &'a EagerVec<I, T>
-where
-    I: StoredIndex,
-    T: StoredCompressed,
-{
-    type Item = (I, Cow<'a, T>);
-    type IntoIter = StoredVecIterator<'a, I, T>;
-
-    fn into_iter(self) -> Self::IntoIter {
-        self.0.into_iter()
-    }
-}
-
 impl<I, T> AnyVec for EagerVec<I, T>
 where
     I: StoredIndex,
@@ -1015,6 +1004,10 @@ where
 
     fn region_index(&self) -> usize {
         self.0.region_index()
+    }
+
+    fn region(&self) -> &RwLock<Region> {
+        self.0.region()
     }
 
     fn header(&self) -> &Header {
@@ -1079,6 +1072,19 @@ where
     #[inline]
     fn reset(&mut self) -> Result<()> {
         self.0.reset()
+    }
+}
+
+impl<'a, I, T> IntoIterator for &'a EagerVec<I, T>
+where
+    I: StoredIndex,
+    T: StoredCompressed,
+{
+    type Item = (I, Cow<'a, T>);
+    type IntoIter = StoredVecIterator<'a, I, T>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.0.into_iter()
     }
 }
 

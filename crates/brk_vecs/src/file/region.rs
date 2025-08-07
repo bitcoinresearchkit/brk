@@ -68,7 +68,7 @@ impl Region {
 }
 
 pub trait RegionReader {
-    fn create_reader(self, file: &File) -> Reader;
+    fn create_reader(self, file: &'_ File) -> Reader<'_>;
 }
 
 impl<'a> RegionReader for RwLockReadGuard<'a, Region> {

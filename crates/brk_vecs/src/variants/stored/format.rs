@@ -46,10 +46,10 @@ impl Format {
     }
 
     pub fn validate(&self, path: &Path) -> Result<()> {
-        if let Ok(prev_compressed) = Format::try_from(path) {
-            if prev_compressed != *self {
-                return Err(Error::DifferentCompressionMode);
-            }
+        if let Ok(prev_compressed) = Format::try_from(path)
+            && prev_compressed != *self
+        {
+            return Err(Error::DifferentCompressionMode);
         }
 
         Ok(())
