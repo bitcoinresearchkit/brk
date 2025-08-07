@@ -291,7 +291,7 @@ impl Vecs {
         //     )?;
 
         let txindex_to_fee = ComputedVecFrom2::forced_import_or_init_from_2(
-            computation,
+            Computation::Eager,
             &file,
             "fee",
             version + VERSION + Version::ZERO,
@@ -314,7 +314,7 @@ impl Vecs {
         )?;
 
         let txindex_to_feerate = ComputedVecFrom2::forced_import_or_init_from_2(
-            computation,
+            Computation::Eager,
             &file,
             "feerate",
             version + VERSION + Version::ZERO,
@@ -713,6 +713,19 @@ impl Vecs {
     }
 
     pub fn compute(
+        &mut self,
+        indexer: &Indexer,
+        indexes: &indexes::Vecs,
+        starting_indexes: &Indexes,
+        price: Option<&price::Vecs>,
+        exit: &Exit,
+    ) -> Result<()> {
+        self.compute_(indexer, indexes, starting_indexes, price, exit)?;
+        self.file.flush_then_punch()?;
+        Ok(())
+    }
+
+    fn compute_(
         &mut self,
         indexer: &Indexer,
         indexes: &indexes::Vecs,
@@ -1214,8 +1227,6 @@ impl Vecs {
             },
         )?;
 
-        self.file.flush()?;
-        self.file.punch_holes()?;
         Ok(())
     }
 

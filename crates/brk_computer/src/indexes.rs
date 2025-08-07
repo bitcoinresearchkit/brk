@@ -581,6 +581,17 @@ impl Vecs {
         starting_indexes: brk_indexer::Indexes,
         exit: &Exit,
     ) -> Result<Indexes> {
+        let idxs = self.compute_(indexer, starting_indexes, exit)?;
+        self.file.flush_then_punch()?;
+        Ok(idxs)
+    }
+
+    fn compute_(
+        &mut self,
+        indexer: &Indexer,
+        starting_indexes: brk_indexer::Indexes,
+        exit: &Exit,
+    ) -> Result<Indexes> {
         // ---
         // OutputIndex
         // ---
@@ -749,14 +760,14 @@ impl Vecs {
             starting_indexes.height,
             &indexer.vecs.height_to_timestamp,
             |(h, timestamp, height_to_timestamp_fixed_iter)| {
-                if prev_timestamp_fixed.is_none() {
-                    if let Some(prev_h) = h.decremented() {
-                        prev_timestamp_fixed.replace(
-                            height_to_timestamp_fixed_iter
-                                .into_iter()
-                                .unwrap_get_inner(prev_h),
-                        );
-                    }
+                if prev_timestamp_fixed.is_none()
+                    && let Some(prev_h) = h.decremented()
+                {
+                    prev_timestamp_fixed.replace(
+                        height_to_timestamp_fixed_iter
+                            .into_iter()
+                            .unwrap_get_inner(prev_h),
+                    );
                 }
                 let timestamp_fixed =
                     prev_timestamp_fixed.map_or(timestamp, |prev_d| prev_d.max(timestamp));
@@ -1116,9 +1127,6 @@ impl Vecs {
                 &self.yearindex_to_yearindex,
                 exit,
             )?;
-
-        self.file.flush()?;
-        self.file.punch_holes()?;
 
         Ok(Indexes {
             indexes: starting_indexes,

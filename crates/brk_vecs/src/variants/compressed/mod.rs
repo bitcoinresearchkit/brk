@@ -12,6 +12,7 @@ use crate::{
     AnyCollectableVec, AnyIterableVec, AnyStoredVec, AnyVec, AsInnerSlice, BaseVecIterator,
     BoxedVecIterator, CollectableVec, Error, File, Format, FromInnerSlice, GenericStoredVec,
     HEADER_OFFSET, Header, RawVec, Reader, Result, StoredCompressed, StoredIndex, Version,
+    file::Region,
 };
 
 mod page;
@@ -58,7 +59,7 @@ where
     }
 
     pub fn import(file: &Arc<File>, name: &str, version: Version) -> Result<Self> {
-        let inner = RawVec::import_(file, name, version, Format::Compressed)?;
+        let inner = RawVec::any_import(file, name, version, Format::Compressed)?;
 
         let pages = Pages::import(file, &Self::pages_region_name_(name))?;
 
@@ -191,6 +192,10 @@ where
         self.inner.file()
     }
 
+    fn region(&self) -> &RwLock<Region> {
+        self.inner.region()
+    }
+
     fn region_index(&self) -> usize {
         self.inner.region_index()
     }
@@ -212,6 +217,7 @@ where
         self.inner.write_header_if_needed()?;
 
         if self.is_pushed_empty() {
+            // info!("Nothing to push {}", self.region_index());
             return Ok(());
         }
 
@@ -232,7 +238,12 @@ where
 
             values = Self::decode_page_(stored_len, last_page_index, &reader, &pages)
                 .inspect_err(|_| {
-                    dbg!(last_page_index, &pages);
+                    dbg!((
+                        last_page_index,
+                        &pages,
+                        self.region_index(),
+                        &self.region().read()
+                    ));
                 })
                 .unwrap();
 
@@ -271,8 +282,10 @@ where
         let file = self.file();
 
         if let Some(truncate_at) = truncate_at {
+            // info!("truncate_write_all_to_region {}", self.region_index());
             file.truncate_write_all_to_region(self.region_index().into(), truncate_at, &buf)?;
         } else {
+            // info!("write_all_to_region {}", self.region_index());
             file.write_all_to_region(self.region_index().into(), &buf)?;
         }
 
@@ -379,9 +392,7 @@ where
 
         pages.flush(file)?;
 
-        file.truncate_region(self.region_index().into(), from)?;
-
-        file.write_all_to_region(self.region_index().into(), &buf)?;
+        file.truncate_write_all_to_region(self.region_index().into(), from, &buf)?;
 
         Ok(())
     }

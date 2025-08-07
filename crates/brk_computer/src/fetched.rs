@@ -49,6 +49,18 @@ impl Vecs {
         starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
+        self.compute_(indexer, indexes, starting_indexes, exit)?;
+        self.file.flush_then_punch()?;
+        Ok(())
+    }
+
+    fn compute_(
+        &mut self,
+        indexer: &Indexer,
+        indexes: &indexes::Vecs,
+        starting_indexes: &Indexes,
+        exit: &Exit,
+    ) -> Result<()> {
         let height_to_timestamp = &indexer.vecs.height_to_timestamp;
         let index = starting_indexes
             .height
@@ -115,8 +127,6 @@ impl Vecs {
             })?;
         self.dateindex_to_ohlc_in_cents.safe_flush(exit)?;
 
-        self.file.flush()?;
-        self.file.punch_holes()?;
         Ok(())
     }
 

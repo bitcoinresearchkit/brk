@@ -43,6 +43,7 @@ impl Regions {
             .write(true)
             .truncate(false)
             .open(path.join("index_to_region"))?;
+        index_to_region_file.try_lock()?;
 
         let index_to_region_mmap = unsafe { MmapMut::map_mut(&index_to_region_file)? };
 

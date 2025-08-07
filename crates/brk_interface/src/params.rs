@@ -92,16 +92,16 @@ impl ParamsOpt {
     }
 
     pub fn to(&self) -> Option<i64> {
-        if self.to.is_none() {
-            if let Some(c) = self.count {
-                let c = c as i64;
-                if let Some(f) = self.from {
-                    if f >= 0 || f.abs() > c {
-                        return Some(f + c);
-                    }
-                } else {
-                    return Some(c);
+        if self.to.is_none()
+            && let Some(c) = self.count
+        {
+            let c = c as i64;
+            if let Some(f) = self.from {
+                if f >= 0 || f.abs() > c {
+                    return Some(f + c);
                 }
+            } else {
+                return Some(c);
             }
         }
         self.to

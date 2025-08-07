@@ -1531,6 +1531,27 @@ impl Vecs {
         starting_indexes: &Indexes,
         exit: &Exit,
     ) -> Result<()> {
+        self.compute_(
+            indexer,
+            indexes,
+            price,
+            transactions,
+            starting_indexes,
+            exit,
+        )?;
+        self.file.flush_then_punch()?;
+        Ok(())
+    }
+
+    fn compute_(
+        &mut self,
+        indexer: &Indexer,
+        indexes: &indexes::Vecs,
+        price: &price::Vecs,
+        transactions: &mut transactions::Vecs,
+        starting_indexes: &Indexes,
+        exit: &Exit,
+    ) -> Result<()> {
         self.height_to_marketcap.compute_multiply(
             starting_indexes.height,
             &price.chainindexes_to_close.height,
@@ -2163,8 +2184,6 @@ impl Vecs {
             },
         )?;
 
-        self.file.flush()?;
-        self.file.punch_holes()?;
         Ok(())
     }
 

@@ -1,9 +1,13 @@
-use crate::{AnyVec, Exit, File, Result, Stamp, variants::Header};
+use parking_lot::RwLock;
+
+use crate::{AnyVec, Exit, File, Result, Stamp, file::Region, variants::Header};
 
 pub trait AnyStoredVec: AnyVec {
     fn file(&self) -> &File;
 
     fn region_index(&self) -> usize;
+
+    fn region(&self) -> &RwLock<Region>;
 
     fn header(&self) -> &Header;
 
@@ -13,6 +17,7 @@ pub trait AnyStoredVec: AnyVec {
 
     #[inline]
     fn safe_flush(&mut self, exit: &Exit) -> Result<()> {
+        // info!("safe flush {}", self.name());
         let _lock = exit.lock();
         self.flush()
     }

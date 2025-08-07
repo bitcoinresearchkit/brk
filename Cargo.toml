@@ -66,12 +66,7 @@ tag-message = "release: v{{version}}"
 cargo-dist-version = "0.29.0"
 ci = "github"
 installers = []
-targets = [
-    "aarch64-apple-darwin",
-    "aarch64-unknown-linux-gnu",
-    "x86_64-apple-darwin",
-    "x86_64-unknown-linux-gnu",
-]
+targets = ["aarch64-apple-darwin", "aarch64-unknown-linux-gnu", "x86_64-unknown-linux-gnu"]
 
 # [workspace.metadata.dist.github-custom-runners]
 # global = "ubuntu-latest"

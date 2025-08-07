@@ -72,11 +72,11 @@ impl<'a> Interface<'a> {
             })
             .map(|mut id| {
                 let mut res = self.vecs.id_to_index_to_vec.get(id.as_str());
-                if res.is_none() {
-                    if let Ok(index) = Index::try_from(id.as_str()) {
-                        id = index.possible_values().last().unwrap().to_string();
-                        res = self.vecs.id_to_index_to_vec.get(id.as_str())
-                    }
+                if res.is_none()
+                    && let Ok(index) = Index::try_from(id.as_str())
+                {
+                    id = index.possible_values().last().unwrap().to_string();
+                    res = self.vecs.id_to_index_to_vec.get(id.as_str())
                 }
                 (id, res)
             })

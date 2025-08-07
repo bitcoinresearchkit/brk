@@ -102,23 +102,23 @@ impl HeaderMapExtended for HeaderMap {
             .to_zoned(TimeZone::UTC)
             .datetime();
 
-        if let Some(if_modified_since) = self.get_if_modified_since() {
-            if if_modified_since == date {
-                return Ok((ModifiedState::NotModifiedSince, date));
-            }
+        if let Some(if_modified_since) = self.get_if_modified_since()
+            && if_modified_since == date
+        {
+            return Ok((ModifiedState::NotModifiedSince, date));
         }
 
         Ok((ModifiedState::ModifiedSince, date))
     }
 
     fn get_if_modified_since(&self) -> Option<DateTime> {
-        if let Some(modified_since) = self.get(IF_MODIFIED_SINCE) {
-            if let Ok(modified_since) = modified_since.to_str() {
-                return strtime::parse(MODIFIED_SINCE_FORMAT, modified_since)
-                    .unwrap()
-                    .to_datetime()
-                    .ok();
-            }
+        if let Some(modified_since) = self.get(IF_MODIFIED_SINCE)
+            && let Ok(modified_since) = modified_since.to_str()
+        {
+            return strtime::parse(MODIFIED_SINCE_FORMAT, modified_since)
+                .unwrap()
+                .to_datetime()
+                .ok();
         }
 
         None

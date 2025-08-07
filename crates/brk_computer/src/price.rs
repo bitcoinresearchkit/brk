@@ -373,6 +373,19 @@ impl Vecs {
         fetched: &fetched::Vecs,
         exit: &Exit,
     ) -> Result<()> {
+        self.compute_(indexer, indexes, starting_indexes, fetched, exit)?;
+        self.file.flush_then_punch()?;
+        Ok(())
+    }
+
+    fn compute_(
+        &mut self,
+        indexer: &Indexer,
+        indexes: &indexes::Vecs,
+        starting_indexes: &Indexes,
+        fetched: &fetched::Vecs,
+        exit: &Exit,
+    ) -> Result<()> {
         self.height_to_open_in_cents.compute_transform(
             starting_indexes.height,
             &fetched.height_to_ohlc_in_cents,
@@ -1267,8 +1280,6 @@ impl Vecs {
             })?;
         self.decadeindex_to_ohlc_in_sats.safe_flush(exit)?;
 
-        self.file.flush()?;
-        self.file.punch_holes()?;
         Ok(())
     }
 

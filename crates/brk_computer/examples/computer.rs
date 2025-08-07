@@ -1,4 +1,8 @@
-use std::{path::Path, thread};
+use std::{
+    path::Path,
+    thread::{self, sleep},
+    time::{Duration, Instant},
+};
 
 use brk_computer::Computer;
 use brk_error::Result;
@@ -23,25 +27,28 @@ pub fn main() -> Result<()> {
     let exit = Exit::new();
     exit.set_ctrlc_handler();
 
-    // Can't increase main thread's stack programatically, thus we need to use another thread
+    // Can't increase main thread's stack size, thus we need to use another thread
     thread::Builder::new()
         .stack_size(256 * 1024 * 1024)
         .spawn(move || -> Result<()> {
-            let outputs_dir = Path::new("../../_outputs");
+            let outputs_dir = Path::new(&std::env::var("HOME").unwrap()).join(".brk");
+            // let outputs_dir = Path::new("../../_outputs");
 
             let parser = Parser::new(bitcoin_dir.join("blocks"), outputs_dir.to_path_buf(), rpc);
 
-            let mut indexer = Indexer::forced_import(outputs_dir)?;
+            let mut indexer = Indexer::forced_import(&outputs_dir)?;
 
             let fetcher = Fetcher::import(None)?;
 
-            let mut computer = Computer::forced_import(outputs_dir, &indexer, Some(fetcher))?;
+            let mut computer = Computer::forced_import(&outputs_dir, &indexer, Some(fetcher))?;
 
-            let starting_indexes = indexer.index(&parser, rpc, &exit, true)?;
-
-            computer.compute(&indexer, starting_indexes, &exit)?;
-
-            Ok(())
+            loop {
+                let i = Instant::now();
+                let starting_indexes = indexer.index(&parser, rpc, &exit, true)?;
+                computer.compute(&indexer, starting_indexes, &exit)?;
+                dbg!(i.elapsed());
+                sleep(Duration::from_secs(10));
+            }
         })?
         .join()
         .unwrap()
