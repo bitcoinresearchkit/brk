@@ -7,7 +7,7 @@ homepage.workspace = true
 repository.workspace = true
 edition.workspace = true
 version.workspace = true
-build = "../../build.rs"
+build = "build.rs"
 
 [features]
 full = [
