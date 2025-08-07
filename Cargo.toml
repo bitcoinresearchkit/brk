@@ -67,11 +67,3 @@ cargo-dist-version = "0.29.0"
 ci = "github"
 installers = []
 targets = ["aarch64-apple-darwin", "aarch64-unknown-linux-gnu", "x86_64-unknown-linux-gnu"]
-
-# [workspace.metadata.dist.github-custom-runners]
-# global = "ubuntu-latest"
-# aarch64-apple-darwin.runner = "macos-14"
-# x86_64-unknown-linux-gnu.runner = "ubuntu-latest"
-# x86_64-unknown-linux-gnu.container = { image = "quay.io/pypa/manylinux_2_28_x86_64", host = "x86_64-unknown-linux-musl" }
-# aarch64-unknown-linux-gnu.runner = "ubuntu-latest"
-# aarch64-unknown-linux-gnu.container = { image = "quay.io/pypa/manylinux_2_28_x86_64", host = "x86_64-unknown-linux-musl" }
