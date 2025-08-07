@@ -26,7 +26,7 @@ where
             move || Ok(MCP::new(interface)),
             LocalSessionManager::default().into(),
             StreamableHttpServerConfig {
-                // stateful_mode: false, // breaks Claude
+                stateful_mode: false,
                 ..Default::default()
             },
         );
