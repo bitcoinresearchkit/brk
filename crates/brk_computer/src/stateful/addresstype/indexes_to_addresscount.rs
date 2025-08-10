@@ -3,10 +3,9 @@ use brk_structs::{ByAddressType, StoredU64};
 use derive_deref::{Deref, DerefMut};
 use vecdb::{AnyCollectableVec, Exit};
 
-use crate::{
-    Indexes, grouped::ComputedVecsFromHeight, indexes,
-    stateful::addresstype_to_height_to_addresscount::AddressTypeToHeightToAddressCount,
-};
+use crate::{Indexes, grouped::ComputedVecsFromHeight, indexes};
+
+use super::AddressTypeToHeightToAddressCount;
 
 #[derive(Clone, Deref, DerefMut)]
 pub struct AddressTypeToIndexesToAddressCount(ByAddressType<ComputedVecsFromHeight<StoredU64>>);

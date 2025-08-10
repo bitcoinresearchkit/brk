@@ -88,7 +88,7 @@ fn path_to_response_(headers: &HeaderMap, app_state: &AppState, path: &Path) -> 
     let guard_res = if !must_revalidate {
         Some(app_state.cache.get_value_or_guard(
             &path.to_str().unwrap().to_owned(),
-            Some(Duration::from_millis(500)),
+            Some(Duration::from_millis(50)),
         ))
     } else {
         None

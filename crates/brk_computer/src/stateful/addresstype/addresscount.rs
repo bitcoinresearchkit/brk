@@ -2,7 +2,7 @@ use brk_structs::{ByAddressType, Height};
 use derive_deref::{Deref, DerefMut};
 use vecdb::VecIterator;
 
-use crate::stateful::addresstype_to_height_to_addresscount::AddressTypeToHeightToAddressCount;
+use super::AddressTypeToHeightToAddressCount;
 
 #[derive(Debug, Default, Deref, DerefMut)]
 pub struct AddressTypeToAddressCount(ByAddressType<u64>);

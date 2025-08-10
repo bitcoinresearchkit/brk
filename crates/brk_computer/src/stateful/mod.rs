@@ -25,28 +25,18 @@ use crate::{
 
 mod address_cohort;
 mod address_cohorts;
-mod addresstype_to_addresscount;
-mod addresstype_to_height_to_addresscount;
-mod addresstype_to_indexes_to_addresscount;
-mod addresstype_to_typeindex_tree;
-mod addresstype_to_vec;
+mod addresstype;
 mod common;
-mod height_to_addresstype_to_vec;
 mod range_map;
 mod r#trait;
 mod utxo_cohort;
 mod utxo_cohorts;
 mod withaddressdatasource;
 
-use addresstype_to_addresscount::*;
-use addresstype_to_height_to_addresscount::*;
-use addresstype_to_indexes_to_addresscount::*;
-pub use addresstype_to_typeindex_tree::*;
-pub use addresstype_to_vec::*;
-use height_to_addresstype_to_vec::*;
+use addresstype::*;
 use range_map::*;
 use r#trait::*;
-pub use withaddressdatasource::WithAddressDataSource;
+use withaddressdatasource::*;
 
 const VERSION: Version = Version::new(21);
 

@@ -82,7 +82,7 @@ fn req_to_response_res(
 
     let guard_res = cache.get_value_or_guard(
         &format!("{}{}{etag}", uri.path(), uri.query().unwrap_or("")),
-        Some(Duration::from_millis(500)),
+        Some(Duration::from_millis(50)),
     );
 
     let mut response = if let GuardResult::Value(v) = guard_res {
