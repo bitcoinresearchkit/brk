@@ -479,7 +479,7 @@ dependencies = [
 
 [[package]]
 name = "brk"
-version = "0.0.87"
+version = "0.0.88"
 dependencies = [
  "brk_bundler",
  "brk_cli",
@@ -499,7 +499,7 @@ dependencies = [
 
 [[package]]
 name = "brk_bundler"
-version = "0.0.87"
+version = "0.0.88"
 dependencies = [
  "brk_rolldown",
  "log",
@@ -510,7 +510,7 @@ dependencies = [
 
 [[package]]
 name = "brk_cli"
-version = "0.0.87"
+version = "0.0.88"
 dependencies = [
  "bitcoincore-rpc",
  "brk_bundler",
@@ -535,7 +535,7 @@ dependencies = [
 
 [[package]]
 name = "brk_computer"
-version = "0.0.87"
+version = "0.0.88"
 dependencies = [
  "bitcoin",
  "bitcoincore-rpc",
@@ -556,7 +556,7 @@ dependencies = [
 
 [[package]]
 name = "brk_error"
-version = "0.0.87"
+version = "0.0.88"
 dependencies = [
  "bitcoincore-rpc",
  "fjall",
@@ -569,7 +569,7 @@ dependencies = [
 
 [[package]]
 name = "brk_fetcher"
-version = "0.0.87"
+version = "0.0.88"
 dependencies = [
  "brk_error",
  "brk_logger",
@@ -581,7 +581,7 @@ dependencies = [
 
 [[package]]
 name = "brk_indexer"
-version = "0.0.87"
+version = "0.0.88"
 dependencies = [
  "bitcoin",
  "bitcoincore-rpc",
@@ -598,7 +598,7 @@ dependencies = [
 
 [[package]]
 name = "brk_interface"
-version = "0.0.87"
+version = "0.0.88"
 dependencies = [
  "brk_computer",
  "brk_error",
@@ -615,7 +615,7 @@ dependencies = [
 
 [[package]]
 name = "brk_logger"
-version = "0.0.87"
+version = "0.0.88"
 dependencies = [
  "env_logger",
  "jiff",
@@ -625,7 +625,7 @@ dependencies = [
 
 [[package]]
 name = "brk_mcp"
-version = "0.0.87"
+version = "0.0.88"
 dependencies = [
  "axum",
  "brk_interface",
@@ -635,7 +635,7 @@ dependencies = [
 
 [[package]]
 name = "brk_parser"
-version = "0.0.87"
+version = "0.0.88"
 dependencies = [
  "bitcoin",
  "bitcoincore-rpc",
@@ -1013,7 +1013,7 @@ dependencies = [
 
 [[package]]
 name = "brk_server"
-version = "0.0.87"
+version = "0.0.88"
 dependencies = [
  "axum",
  "bitcoincore-rpc",
@@ -1037,7 +1037,7 @@ dependencies = [
 
 [[package]]
 name = "brk_store"
-version = "0.0.87"
+version = "0.0.88"
 dependencies = [
  "brk_error",
  "brk_structs",
@@ -1060,7 +1060,7 @@ dependencies = [
 
 [[package]]
 name = "brk_structs"
-version = "0.0.87"
+version = "0.0.88"
 dependencies = [
  "bitcoin",
  "bitcoincore-rpc",
