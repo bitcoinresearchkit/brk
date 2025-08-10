@@ -1,8 +1,7 @@
 use std::mem;
 
+use brk_structs::ByAddressType;
 use derive_deref::{Deref, DerefMut};
-
-use super::ByAddressType;
 
 #[derive(Debug, Deref, DerefMut)]
 pub struct AddressTypeToVec<T>(ByAddressType<Vec<T>>);

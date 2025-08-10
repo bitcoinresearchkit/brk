@@ -1,9 +1,7 @@
 use std::{collections::BTreeMap, mem};
 
-use brk_structs::TypeIndex;
+use brk_structs::{ByAddressType, TypeIndex};
 use derive_deref::{Deref, DerefMut};
-
-use super::ByAddressType;
 
 #[derive(Debug, Deref, DerefMut)]
 pub struct AddressTypeToTypeIndexTree<T>(ByAddressType<BTreeMap<TypeIndex, T>>);

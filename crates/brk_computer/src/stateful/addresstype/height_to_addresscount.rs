@@ -1,9 +1,9 @@
 use brk_error::Result;
 use brk_structs::{ByAddressType, Height, StoredU64};
-use vecdb::{EagerVec, Exit, GenericStoredVec};
 use derive_deref::{Deref, DerefMut};
+use vecdb::{EagerVec, Exit, GenericStoredVec};
 
-use crate::stateful::addresstype_to_addresscount::AddressTypeToAddressCount;
+use super::AddressTypeToAddressCount;
 
 #[derive(Debug, Clone, Deref, DerefMut)]
 pub struct AddressTypeToHeightToAddressCount(ByAddressType<EagerVec<Height, StoredU64>>);
