@@ -3864,6 +3864,8 @@ checksum = "1bc711410fbe7399f390ca1c3b60ad0f53f80e95c5eb935e52268a0e2cd49acc"
 [[package]]
 name = "seqdb"
 version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ec6a01a38293848cd0b051176e2f77b2013b5386e3433220473d2daab91b81ae"
 dependencies = [
  "libc",
  "log",
@@ -4689,6 +4691,8 @@ checksum = "8f54a172d0620933a27a4360d3db3e2ae0dd6cceae9730751a036bbf182c4b23"
 [[package]]
 name = "vecdb"
 version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6f897e9d013ba5650ee2d36843170e01d16100336af876d56f903367e9544791"
 dependencies = [
  "ctrlc",
  "log",
@@ -4707,6 +4711,8 @@ dependencies = [
 [[package]]
 name = "vecdb_derive"
 version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d000b504a1c700eecaf37779b5f5d1733878b372e83fca238c7645d1a8b592e1"
 dependencies = [
  "quote",
  "syn 2.0.104",

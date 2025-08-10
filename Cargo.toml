@@ -38,8 +38,8 @@ brk_mcp = { version = "0.0.86", path = "crates/brk_mcp" }
 brk_parser = { version = "0.0.86", path = "crates/brk_parser" }
 brk_server = { version = "0.0.86", path = "crates/brk_server" }
 brk_store = { version = "0.0.86", path = "crates/brk_store" }
-# vecdb = { version = "0.0.2", features = ["derive"]}
-vecdb = { path = "../seqdb/crates/vecdb", features = ["derive"]}
+vecdb = { version = "0.1.0", features = ["derive"]}
+# vecdb = { path = "../seqdb/crates/vecdb", features = ["derive"]}
 byteview = "=0.6.1"
 derive_deref = "1.1.1"
 fjall = "2.11.2"
