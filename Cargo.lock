@@ -3863,7 +3863,7 @@ checksum = "1bc711410fbe7399f390ca1c3b60ad0f53f80e95c5eb935e52268a0e2cd49acc"
 
 [[package]]
 name = "seqdb"
-version = "0.0.2"
+version = "0.1.0"
 dependencies = [
  "libc",
  "log",
@@ -4688,7 +4688,7 @@ checksum = "8f54a172d0620933a27a4360d3db3e2ae0dd6cceae9730751a036bbf182c4b23"
 
 [[package]]
 name = "vecdb"
-version = "0.0.2"
+version = "0.1.0"
 dependencies = [
  "ctrlc",
  "log",
@@ -4706,7 +4706,7 @@ dependencies = [
 
 [[package]]
 name = "vecdb_derive"
-version = "0.0.2"
+version = "0.1.0"
 dependencies = [
  "quote",
  "syn 2.0.104",
